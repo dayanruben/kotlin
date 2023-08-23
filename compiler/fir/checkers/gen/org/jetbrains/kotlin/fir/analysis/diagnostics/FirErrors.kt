@@ -172,6 +172,7 @@ object FirErrors {
     val API_NOT_AVAILABLE by error2<PsiElement, ApiVersion, ApiVersion>(SourceElementPositioningStrategies.SELECTOR_BY_QUALIFIED)
     val UNRESOLVED_REFERENCE_WRONG_RECEIVER by error1<PsiElement, Collection<FirBasedSymbol<*>>>()
     val UNRESOLVED_IMPORT by error1<PsiElement, String>(SourceElementPositioningStrategies.IMPORT_LAST_NAME)
+    val DUPLICATE_PARAMETER_NAME_IN_FUNCTION_TYPE by error0<KtTypeReference>()
 
     // Call resolution
     val CREATING_AN_INSTANCE_OF_ABSTRACT_CLASS by error0<KtExpression>()
@@ -275,7 +276,7 @@ object FirErrors {
     val WRONG_ANNOTATION_TARGET by error1<KtAnnotationEntry, String>()
     val WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET by error2<KtAnnotationEntry, String, String>()
     val INAPPLICABLE_TARGET_ON_PROPERTY by error1<KtAnnotationEntry, String>()
-    val INAPPLICABLE_TARGET_ON_PROPERTY_WARNING by error1<KtAnnotationEntry, String>()
+    val INAPPLICABLE_TARGET_ON_PROPERTY_WARNING by warning1<KtAnnotationEntry, String>()
     val INAPPLICABLE_TARGET_PROPERTY_IMMUTABLE by error1<KtAnnotationEntry, String>()
     val INAPPLICABLE_TARGET_PROPERTY_HAS_NO_DELEGATE by error0<KtAnnotationEntry>()
     val INAPPLICABLE_TARGET_PROPERTY_HAS_NO_BACKING_FIELD by error0<KtAnnotationEntry>()
@@ -292,6 +293,7 @@ object FirErrors {
     val AMBIGUOUS_ANNOTATION_ARGUMENT by error1<PsiElement, List<FirBasedSymbol<*>>>()
     val VOLATILE_ON_VALUE by error0<KtAnnotationEntry>()
     val VOLATILE_ON_DELEGATE by error0<KtAnnotationEntry>()
+    val NON_SOURCE_ANNOTATION_ON_INLINED_LAMBDA_EXPRESSION by error0<KtAnnotationEntry>()
 
     // OptIn
     val OPT_IN_USAGE by warning2<PsiElement, FqName, String>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)

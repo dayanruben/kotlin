@@ -331,6 +331,10 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         val reference: String
     }
 
+    interface DuplicateParameterNameInFunctionType : KtFirDiagnostic<KtTypeReference> {
+        override val diagnosticClass get() = DuplicateParameterNameInFunctionType::class
+    }
+
     interface CreatingAnInstanceOfAbstractClass : KtFirDiagnostic<KtExpression> {
         override val diagnosticClass get() = CreatingAnInstanceOfAbstractClass::class
     }
@@ -838,6 +842,10 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     interface VolatileOnDelegate : KtFirDiagnostic<KtAnnotationEntry> {
         override val diagnosticClass get() = VolatileOnDelegate::class
+    }
+
+    interface NonSourceAnnotationOnInlinedLambdaExpression : KtFirDiagnostic<KtAnnotationEntry> {
+        override val diagnosticClass get() = NonSourceAnnotationOnInlinedLambdaExpression::class
     }
 
     interface WrongJsQualifier : KtFirDiagnostic<KtElement> {

@@ -381,6 +381,11 @@ internal class UnresolvedImportImpl(
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.UnresolvedImport
 
+internal class DuplicateParameterNameInFunctionTypeImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtTypeReference>(firDiagnostic, token), KtFirDiagnostic.DuplicateParameterNameInFunctionType
+
 internal class CreatingAnInstanceOfAbstractClassImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
@@ -1005,6 +1010,11 @@ internal class VolatileOnDelegateImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KtFirDiagnostic.VolatileOnDelegate
+
+internal class NonSourceAnnotationOnInlinedLambdaExpressionImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KtFirDiagnostic.NonSourceAnnotationOnInlinedLambdaExpression
 
 internal class WrongJsQualifierImpl(
     firDiagnostic: KtPsiDiagnostic,

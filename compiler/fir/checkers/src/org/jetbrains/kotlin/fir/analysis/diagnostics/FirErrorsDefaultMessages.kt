@@ -192,6 +192,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DESERIALIZATION_E
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DIVISION_BY_ZERO
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DSL_SCOPE_VIOLATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DUPLICATE_LABEL_IN_WHEN
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DUPLICATE_PARAMETER_NAME_IN_FUNCTION_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DYNAMIC_NOT_ALLOWED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DYNAMIC_RECEIVER_NOT_ALLOWED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DYNAMIC_SUPERTYPE
@@ -398,6 +399,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_MODIFIER_FORM
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_PRIVATE_CONSTRUCTOR_IN_ENUM
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_PRIVATE_OR_PROTECTED_CONSTRUCTOR_IN_SEALED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_PUBLIC_CALL_FROM_PUBLIC_INLINE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_SOURCE_ANNOTATION_ON_INLINED_LAMBDA_EXPRESSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_TAIL_RECURSIVE_CALL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_VARARG_SPREAD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NOTHING_TO_INLINE
@@ -769,6 +771,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(MISSING_CONSTRUCTOR_KEYWORD, "Use the 'constructor' keyword after the modifiers of the primary constructor.")
         map.put(UNRESOLVED_REFERENCE, "Unresolved reference ''{0}''.", NULLABLE_STRING)
         map.put(UNRESOLVED_IMPORT, "Unresolved reference ''{0}''.", NULLABLE_STRING) // &
+        map.put(DUPLICATE_PARAMETER_NAME_IN_FUNCTION_TYPE, "Duplicate parameter name in a function type.")
         map.put(UNRESOLVED_LABEL, "Unresolved label.")
         map.put(DESERIALIZATION_ERROR, "Deserialization error.")
         map.put(ERROR_FROM_JAVA_RESOLUTION, "Java resolution error.")
@@ -982,6 +985,10 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(NON_INTERNAL_PUBLISHED_API, "'@PublishedApi' annotation is only applicable to internal declaration.")
         map.put(VOLATILE_ON_VALUE, "'@Volatile' annotation cannot be used on immutable properties.")
         map.put(VOLATILE_ON_DELEGATE, "'@Volatile' annotation cannot be used on delegated properties.")
+        map.put(
+            NON_SOURCE_ANNOTATION_ON_INLINED_LAMBDA_EXPRESSION,
+            "The lambda expression here is an inlined argument, so this annotation cannot be stored anywhere.",
+        )
 
         // OptIn
         map.put(OPT_IN_USAGE, "{1}", TO_STRING, STRING)

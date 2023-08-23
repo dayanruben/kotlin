@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.resolve.multiplatform
 
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
+import org.jetbrains.kotlin.descriptors.annotations.KotlinRetention
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.mpp.*
 import org.jetbrains.kotlin.name.CallableId
@@ -355,32 +356,51 @@ class ClassicExpectActualMatchingContext(
         get() = asDescriptor().annotations.map(::AnnotationCallInfoImpl)
 
     override fun areAnnotationArgumentsEqual(
-        annotation1: AnnotationCallInfo,
-        annotation2: AnnotationCallInfo,
+        expectAnnotation: AnnotationCallInfo,
+        actualAnnotation: AnnotationCallInfo,
         collectionArgumentsCompatibilityCheckStrategy: ExpectActualCollectionArgumentsCompatibilityCheckStrategy,
     ): Boolean {
         fun AnnotationCallInfo.getDescriptor(): AnnotationDescriptor = (this as AnnotationCallInfoImpl).annotationDescriptor
 
         return areExpressionConstValuesEqual(
-            annotation1.getDescriptor(),
-            annotation2.getDescriptor(),
+            expectAnnotation.getDescriptor(),
+            actualAnnotation.getDescriptor(),
             collectionArgumentsCompatibilityCheckStrategy,
         )
     }
 
-    private class AnnotationCallInfoImpl(
+    private inner class AnnotationCallInfoImpl(
         val annotationDescriptor: AnnotationDescriptor,
     ) : AnnotationCallInfo {
         override val annotationSymbol: AnnotationDescriptor = annotationDescriptor
 
         override val classId: ClassId?
-            get() = annotationDescriptor.annotationClass?.classId
+            get() = getAnnotationClassDescriptor()?.classId
 
         override val isRetentionSource: Boolean
-            get() = annotationDescriptor.isSourceAnnotation
+            get() = getAnnotationClassDescriptor()?.getAnnotationRetention() == KotlinRetention.SOURCE
 
         override val isOptIn: Boolean
-            get() = annotationDescriptor.annotationClass?.annotations?.hasAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME) ?: false
+            get() = getAnnotationClassDescriptor()?.annotations?.hasAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME) ?: false
+
+        private fun getAnnotationClassDescriptor(): ClassDescriptor? {
+            val classDescriptor = annotationDescriptor.annotationClass ?: return null
+            if (!classDescriptor.isExpect) {
+                return classDescriptor
+            }
+            val classId = classDescriptor.classId
+            return findExpandedExpectClassInPlatformModule(classId) ?: classDescriptor
+        }
+    }
+
+    // For IDE composite module analysis, when actual class may differ
+    internal fun findExpandedExpectClassInPlatformModule(originalClassId: ClassId): ClassDescriptor? {
+        val classifier = platformModule.findClassifierAcrossModuleDependencies(originalClassId)
+        return when (classifier) {
+            is TypeAliasDescriptor -> classifier.classDescriptor
+            is ClassDescriptor -> classifier
+            else -> null
+        }
     }
 
     override val DeclarationSymbolMarker.hasSourceAnnotationsErased: Boolean

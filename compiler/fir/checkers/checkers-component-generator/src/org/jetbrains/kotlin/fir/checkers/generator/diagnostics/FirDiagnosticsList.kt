@@ -174,6 +174,8 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val UNRESOLVED_IMPORT by error<PsiElement>(PositioningStrategy.IMPORT_LAST_NAME) {
             parameter<String>("reference")
         }
+
+        val DUPLICATE_PARAMETER_NAME_IN_FUNCTION_TYPE by error<KtTypeReference>()
     }
 
     val CALL_RESOLUTION by object : DiagnosticGroup("Call resolution") {
@@ -351,7 +353,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val INAPPLICABLE_TARGET_ON_PROPERTY by error<KtAnnotationEntry> {
             parameter<String>("useSiteDescription")
         }
-        val INAPPLICABLE_TARGET_ON_PROPERTY_WARNING by error<KtAnnotationEntry> {
+        val INAPPLICABLE_TARGET_ON_PROPERTY_WARNING by warning<KtAnnotationEntry> {
             parameter<String>("useSiteDescription")
         }
         val INAPPLICABLE_TARGET_PROPERTY_IMMUTABLE by error<KtAnnotationEntry> {
@@ -382,6 +384,8 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
 
         val VOLATILE_ON_VALUE by error<KtAnnotationEntry>()
         val VOLATILE_ON_DELEGATE by error<KtAnnotationEntry>()
+
+        val NON_SOURCE_ANNOTATION_ON_INLINED_LAMBDA_EXPRESSION by error<KtAnnotationEntry>()
     }
 
     val OPT_IN by object : DiagnosticGroup("OptIn") {

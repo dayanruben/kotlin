@@ -2944,6 +2944,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("propertyTargetOnEnumEntry_error.kt")
+                public void testPropertyTargetOnEnumEntry_error() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/withUseSiteTarget/propertyTargetOnEnumEntry_error.kt");
+                }
+
+                @Test
+                @TestMetadata("propertyTargetOnEnumEntry_warning.kt")
+                public void testPropertyTargetOnEnumEntry_warning() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/withUseSiteTarget/propertyTargetOnEnumEntry_warning.kt");
+                }
+
+                @Test
                 @TestMetadata("ReceiverAnnotations.kt")
                 public void testReceiverAnnotations() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/annotations/withUseSiteTarget/ReceiverAnnotations.kt");
@@ -8252,6 +8264,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("CalleeExpression.kt")
             public void testCalleeExpression() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/dataFlow/CalleeExpression.kt");
+            }
+
+            @Test
+            @TestMetadata("desugaredAssignment.kt")
+            public void testDesugaredAssignment() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/dataFlow/desugaredAssignment.kt");
             }
 
             @Test
@@ -24161,6 +24179,40 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                     public void testSealedInheritorsInComplexModuleStructure() throws Exception {
                         runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/multiplatformCompositeAnalysis/sealedInheritorsInComplexModuleStructure.kt");
                     }
+
+                    @Nested
+                    @TestMetadata("compiler/testData/diagnostics/tests/multiplatform/hmpp/multiplatformCompositeAnalysis/annotationMatching")
+                    @TestDataPath("$PROJECT_ROOT")
+                    public class AnnotationMatching {
+                        @Test
+                        public void testAllFilesPresentInAnnotationMatching() throws Exception {
+                            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform/hmpp/multiplatformCompositeAnalysis/annotationMatching"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+                        }
+
+                        @Test
+                        @TestMetadata("sourceRetentionAnnotationsWhenTypealias.kt")
+                        public void testSourceRetentionAnnotationsWhenTypealias() throws Exception {
+                            runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/multiplatformCompositeAnalysis/annotationMatching/sourceRetentionAnnotationsWhenTypealias.kt");
+                        }
+
+                        @Test
+                        @TestMetadata("typealiasedAnnotation.kt")
+                        public void testTypealiasedAnnotation() throws Exception {
+                            runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/multiplatformCompositeAnalysis/annotationMatching/typealiasedAnnotation.kt");
+                        }
+
+                        @Test
+                        @TestMetadata("typealiasedAnnotationAsArgument.kt")
+                        public void testTypealiasedAnnotationAsArgument() throws Exception {
+                            runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/multiplatformCompositeAnalysis/annotationMatching/typealiasedAnnotationAsArgument.kt");
+                        }
+
+                        @Test
+                        @TestMetadata("typealiasedAsKClassArg.kt")
+                        public void testTypealiasedAsKClassArg() throws Exception {
+                            runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/multiplatformCompositeAnalysis/annotationMatching/typealiasedAsKClassArg.kt");
+                        }
+                    }
                 }
             }
 
@@ -28685,6 +28737,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("kt55956.kt")
+            public void testKt55956() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/regressions/kt55956.kt");
+            }
+
+            @Test
             @TestMetadata("kt571.kt")
             public void testKt571() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/regressions/kt571.kt");
@@ -28694,6 +28752,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("kt575.kt")
             public void testKt575() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/regressions/kt575.kt");
+            }
+
+            @Test
+            @TestMetadata("kt57845.kt")
+            public void testKt57845() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/regressions/kt57845.kt");
             }
 
             @Test
