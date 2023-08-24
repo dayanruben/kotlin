@@ -164,7 +164,26 @@ open class PsiRawFirBuilder(
             }
         }
 
-    protected open inner class Visitor : KtVisitor<FirElement, FirElement?>() {
+    protected open inner class Visitor : KtVisitor<FirElement, FirElement?>(), DestructuringContext<KtDestructuringDeclarationEntry> {
+
+        override val KtDestructuringDeclarationEntry.returnTypeRef: FirTypeRef
+            get() = typeReference.toFirOrImplicitType()
+
+        @Suppress("ConflictingExtensionProperty")
+        override val KtDestructuringDeclarationEntry.name: Name
+            get() = if (nameIdentifier?.text == "_") {
+                SpecialNames.UNDERSCORE_FOR_UNUSED_VAR
+            } else {
+                nameAsSafeName
+            }
+
+        override val KtDestructuringDeclarationEntry.source: KtSourceElement
+            get() = toKtPsiSourceElement()
+
+        override fun KtDestructuringDeclarationEntry.extractAnnotationsTo(target: FirAnnotationContainerBuilder) {
+            (this as KtAnnotated).extractAnnotationsTo(target)
+        }
+
         private inline fun <reified R : FirElement> KtElement?.convertSafe(): R? =
             this?.let { convertElement(it, null)} as? R
 
@@ -1192,10 +1211,7 @@ open class PsiRawFirBuilder(
                                 destructuringContainerVar,
                                 tmpVariable = false,
                                 localEntries = false,
-                                extractAnnotationsTo = { extractAnnotationsTo(it) },
-                            ) {
-                                toFirOrImplicitType()
-                            }.apply {
+                            ).apply {
                                 statements.forEach {
                                     (it as FirProperty).destructuringDeclarationContainerVariable = destructuringContainerVar.symbol
                                 }
@@ -1738,14 +1754,13 @@ open class PsiRawFirBuilder(
                             isNoinline = false
                             isVararg = false
                         }
-                        destructuringStatements += generateDestructuringBlock(
+                        destructuringStatements.addDestructuringStatements(
                             baseModuleData,
                             multiDeclaration,
                             multiParameter,
                             tmpVariable = false,
                             localEntries = true,
-                            extractAnnotationsTo = { extractAnnotationsTo(it) },
-                        ) { toFirOrImplicitType() }.statements
+                        )
                         multiParameter
                     } else {
                         val typeRef = valueParameter.typeReference?.convertSafe() ?: FirImplicitTypeRefImplWithoutSource
@@ -1768,7 +1783,10 @@ open class PsiRawFirBuilder(
                         val errorExpression = buildErrorExpression(source, ConeSyntaxDiagnostic("Lambda has no body"))
                         FirSingleExpressionBlock(errorExpression.toReturn())
                     } else {
-                        configureBlockWithoutBuilding(ktBody).apply {
+                        val kind = runIf(destructuringStatements.isNotEmpty()) {
+                            KtFakeSourceElementKind.LambdaDestructuringBlock
+                        }
+                        val bodyBlock = configureBlockWithoutBuilding(ktBody, kind).apply {
                             statements.firstOrNull()?.let {
                                 if (it.isContractBlockFirCheck()) {
                                     this@buildAnonymousFunction.contractDescription = it.toLegacyRawContractDescription()
@@ -1787,8 +1805,18 @@ open class PsiRawFirBuilder(
                                     }
                                 )
                             }
-                            statements.addAll(0, destructuringStatements)
                         }.build()
+
+                        if (destructuringStatements.isNotEmpty()) {
+                            // Destructured variables must be in a separate block so that they can be shadowed.
+                            buildBlock {
+                                source = bodyBlock.source?.realElement()
+                                statements.addAll(destructuringStatements)
+                                statements.add(bodyBlock)
+                            }
+                        } else {
+                            bodyBlock
+                        }
                     }
                 }
                 context.firFunctionTargets.removeLast()
@@ -2244,9 +2272,9 @@ open class PsiRawFirBuilder(
             return configureBlockWithoutBuilding(expression).build()
         }
 
-        private fun configureBlockWithoutBuilding(expression: KtBlockExpression): FirBlockBuilder {
+        private fun configureBlockWithoutBuilding(expression: KtBlockExpression, kind: KtFakeSourceElementKind? = null): FirBlockBuilder {
             return FirBlockBuilder().apply {
-                source = expression.toFirSourceElement()
+                source = expression.toFirSourceElement(kind)
                 for (statement in expression.statements) {
                     val firStatement = statement.toFirStatement { "Statement expected: ${statement.text}" }
                     val isForLoopBlock =
@@ -2583,15 +2611,13 @@ open class PsiRawFirBuilder(
                             typeRef = ktParameter.typeReference.toFirOrImplicitType(),
                         )
                         if (multiDeclaration != null) {
-                            val destructuringBlock = generateDestructuringBlock(
+                            blockBuilder.statements.addDestructuringStatements(
                                 baseModuleData,
                                 multiDeclaration = multiDeclaration,
                                 container = firLoopParameter,
                                 tmpVariable = true,
                                 localEntries = true,
-                                extractAnnotationsTo = { extractAnnotationsTo(it) },
-                            ) { toFirOrImplicitType() }
-                            blockBuilder.statements.addAll(destructuringBlock.statements)
+                            )
                         } else {
                             blockBuilder.statements.add(firLoopParameter)
                         }
@@ -2955,10 +2981,7 @@ open class PsiRawFirBuilder(
                 baseVariable,
                 tmpVariable = true,
                 localEntries = true,
-                extractAnnotationsTo = { extractAnnotationsTo(it) },
-            ) {
-                toFirOrImplicitType()
-            }
+            )
         }
 
         override fun visitClassLiteralExpression(expression: KtClassLiteralExpression, data: FirElement?): FirElement {

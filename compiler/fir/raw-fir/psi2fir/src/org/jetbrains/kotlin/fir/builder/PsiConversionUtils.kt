@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.fir.types.impl.FirImplicitTypeRefImplWithoutSource
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
 
 internal fun KtWhenCondition.toFirWhenCondition(
@@ -120,46 +119,33 @@ internal fun generateTemporaryVariable(
         extractAnnotationsTo,
     )
 
+context(DestructuringContext<KtDestructuringDeclarationEntry>)
 internal fun generateDestructuringBlock(
     moduleData: FirModuleData,
     multiDeclaration: KtDestructuringDeclaration,
     container: FirVariable,
     tmpVariable: Boolean,
     localEntries: Boolean,
-    extractAnnotationsTo: KtAnnotated.(FirAnnotationContainerBuilder) -> Unit,
-    toFirOrImplicitTypeRef: KtTypeReference?.() -> FirTypeRef,
 ): FirBlock {
     return buildBlock {
         source = multiDeclaration.toKtPsiSourceElement()
-        if (tmpVariable) {
-            statements += container
-        }
-        val isVar = multiDeclaration.isVar
-        for ((index, entry) in multiDeclaration.entries.withIndex()) {
-            val name = if (entry.nameIdentifier?.text == "_") {
-                SpecialNames.UNDERSCORE_FOR_UNUSED_VAR
-            } else {
-                entry.nameAsSafeName
-            }
-            val entrySource = entry.toKtPsiSourceElement()
-            statements += buildProperty {
-                source = entrySource
-                this.moduleData = moduleData
-                origin = FirDeclarationOrigin.Source
-                returnTypeRef = entry.typeReference.toFirOrImplicitTypeRef()
-                this.name = name
-                initializer = buildComponentCall {
-                    val componentCallSource = entrySource.fakeElement(KtFakeSourceElementKind.DesugaredComponentFunctionCall)
-                    source = componentCallSource
-                    explicitReceiver = generateResolvedAccessExpression(componentCallSource, container)
-                    componentIndex = index + 1
-                }
-                this.isVar = isVar
-                isLocal = localEntries
-                status = FirDeclarationStatusImpl(if (localEntries) Visibilities.Local else Visibilities.Public, Modality.FINAL)
-                symbol = FirPropertySymbol(name)
-                entry.extractAnnotationsTo(this)
-            }
-        }
+        statements.addDestructuringStatements(
+            moduleData,
+            multiDeclaration,
+            container,
+            tmpVariable,
+            localEntries
+        )
     }
+}
+
+context(DestructuringContext<KtDestructuringDeclarationEntry>)
+internal fun MutableList<FirStatement>.addDestructuringStatements(
+    moduleData: FirModuleData,
+    multiDeclaration: KtDestructuringDeclaration,
+    container: FirVariable,
+    tmpVariable: Boolean,
+    localEntries: Boolean,
+) {
+    addDestructuringStatements(moduleData, container, multiDeclaration.entries, multiDeclaration.isVar, tmpVariable, localEntries)
 }

@@ -268,7 +268,11 @@ internal class ClassMemberGenerator(
                         val irExpression = visitor.convertToIrExpression(initializerExpression, isDelegate = property.delegate != null)
                         if (property.delegate == null) {
                             with(visitor.implicitCastInserter) {
-                                irExpression.cast(initializerExpression, initializerExpression.typeRef, property.returnTypeRef)
+                                irExpression.cast(
+                                    initializerExpression,
+                                    initializerExpression.resolvedType,
+                                    property.returnTypeRef.coneType
+                                )
                             }
                         } else {
                             irExpression

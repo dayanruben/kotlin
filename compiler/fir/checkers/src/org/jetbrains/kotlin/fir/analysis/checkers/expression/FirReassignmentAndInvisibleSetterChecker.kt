@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.fir.analysis.cfa.evaluatedInPlace
 import org.jetbrains.kotlin.fir.analysis.cfa.requiresInitialization
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.context.findClosest
-import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
@@ -25,6 +24,8 @@ import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeDiagnosticWithCandidates
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeUnresolvedNameError
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
+import org.jetbrains.kotlin.fir.types.resolvedType
+import org.jetbrains.kotlin.fir.types.toRegularClassSymbol
 import org.jetbrains.kotlin.fir.visibilityChecker
 
 object FirReassignmentAndInvisibleSetterChecker : FirVariableAssignmentChecker() {
@@ -62,7 +63,7 @@ object FirReassignmentAndInvisibleSetterChecker : FirVariableAssignmentChecker()
             val explicitReceiver = expression.explicitReceiver
             // Try to get type from smartcast
             if (explicitReceiver is FirSmartCastExpression) {
-                val symbol = explicitReceiver.originalExpression.typeRef.toRegularClassSymbol(context.session)
+                val symbol = explicitReceiver.originalExpression.resolvedType.toRegularClassSymbol(context.session)
                 if (symbol != null) {
                     for (declarationSymbol in symbol.declarationSymbols) {
                         if (declarationSymbol is FirPropertySymbol && declarationSymbol.name == callableSymbol.name) {

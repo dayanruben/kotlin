@@ -118,9 +118,9 @@ class FirCallResolver(
             candidate?.updateSourcesOfReceivers()
             functionCall
         }
-        val typeRef = components.typeFromCallee(resultFunctionCall)
-        if (typeRef.type is ConeErrorType) {
-            resultFunctionCall.resultType = typeRef
+        val type = components.typeFromCallee(resultFunctionCall).type
+        if (type is ConeErrorType) {
+            resultFunctionCall.resultType = type
         }
 
         return resultFunctionCall
@@ -344,7 +344,7 @@ class FirCallResolver(
                 return buildResolvedReifiedParameterReference {
                     source = nameReference.source
                     symbol = referencedSymbol
-                    typeRef = typeForReifiedParameterReference(this)
+                    coneTypeOrNull = typeForReifiedParameterReference(this)
                 }
             }
         }
@@ -585,7 +585,7 @@ class FirCallResolver(
                 //calleeReference and annotationTypeRef are both error nodes so we need to avoid doubling of the diagnostic report
                 else ConeStubDiagnostic(
                     //prefer diagnostic with symbol, e.g. to use the symbol during navigation in IDE
-                    (annotation.typeRef.coneType as? ConeErrorType)?.diagnostic as? ConeDiagnosticWithSymbol<*>
+                    (annotation.resolvedType as? ConeErrorType)?.diagnostic as? ConeDiagnosticWithSymbol<*>
                         ?: ConeUnresolvedNameError(reference.name)),
                 reference.source
             )
@@ -722,7 +722,7 @@ class FirCallResolver(
                                 ConeResolutionToClassifierError(singleExpectedCandidate!!, fir.symbol)
                             }
                             else -> {
-                                val coneType = explicitReceiver?.typeRef?.coneType
+                                val coneType = explicitReceiver?.resolvedType
                                 when {
                                     coneType != null && !coneType.isUnit -> {
                                         ConeFunctionExpectedError(
@@ -751,7 +751,7 @@ class FirCallResolver(
                     name.asString() == "invoke" && explicitReceiver is FirConstExpression<*> ->
                         ConeFunctionExpectedError(
                             explicitReceiver.value?.toString() ?: "",
-                            explicitReceiver.typeRef.coneType,
+                            explicitReceiver.resolvedType,
                         )
                     reference is FirSuperReference && (reference.superTypeRef.firClassLike(session) as? FirClass)?.isInterface == true -> ConeNoConstructorError
                     else -> ConeUnresolvedNameError(name)
@@ -810,7 +810,7 @@ class FirCallResolver(
          */
         if (components.context.inferenceSession !is FirBuilderInferenceSession &&
             createResolvedReferenceWithoutCandidateForLocalVariables &&
-            explicitReceiver?.typeRef?.coneTypeSafe<ConeIntegerLiteralType>() == null &&
+            explicitReceiver?.coneTypeSafe<ConeIntegerLiteralType>() == null &&
             coneSymbol is FirVariableSymbol &&
             (coneSymbol !is FirPropertySymbol || (coneSymbol.fir as FirMemberDeclaration).typeParameters.isEmpty())
         ) {

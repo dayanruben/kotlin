@@ -450,7 +450,7 @@ internal class AdapterGenerator(
         if (!samType.isSamType) return this
         return IrTypeOperatorCallImpl(
             this.startOffset, this.endOffset, samType, IrTypeOperator.SAM_CONVERSION, samType,
-            castArgumentToFunctionalInterfaceForSamType(this, argument.typeRef.coneType, samFirType)
+            castArgumentToFunctionalInterfaceForSamType(this, argument.resolvedType, samFirType)
         )
     }
 
@@ -551,12 +551,12 @@ internal class AdapterGenerator(
 
     private fun needSamConversion(argument: FirExpression, parameter: FirValueParameter): Boolean {
         // If the type of the argument is already an explicitly subtype of the type of the parameter, we don't need SAM conversion.
-        if (argument.typeRef !is FirResolvedTypeRef ||
+        if (argument.coneTypeOrNull == null ||
             AbstractTypeChecker.isSubtypeOf(
                 session.typeContext.newTypeCheckerState(
                     errorTypesEqualToAnything = false, stubTypesEqualToAnything = true
                 ),
-                argument.typeRef.coneType,
+                argument.resolvedType,
                 parameter.returnTypeRef.coneType,
                 isFromNullabilityConstraint = true
             )
@@ -638,7 +638,7 @@ internal class AdapterGenerator(
         expectedFunctionalType: ConeClassLikeType,
         argument: FirExpression
     ): IrSimpleFunctionSymbol? {
-        val argumentType = argument.typeRef.coneType
+        val argumentType = argument.resolvedType
         val argumentTypeWithInvoke = argumentType.findSubtypeOfBasicFunctionType(session, expectedFunctionalType) ?: return null
 
         return if (argumentTypeWithInvoke.isSomeFunctionType(session)) {

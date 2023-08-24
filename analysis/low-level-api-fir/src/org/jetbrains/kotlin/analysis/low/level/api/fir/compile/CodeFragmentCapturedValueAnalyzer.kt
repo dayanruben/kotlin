@@ -15,11 +15,11 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.util.parentsCodeFragmentA
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.analysis.checkers.toClassLikeSymbol
 import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isInline
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
+import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirResolvable
 import org.jetbrains.kotlin.fir.expressions.FirVariableAssignment
 import org.jetbrains.kotlin.fir.expressions.toResolvedCallableSymbol
@@ -30,15 +30,16 @@ import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.resolve.defaultType
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
+import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
+import org.jetbrains.kotlin.fir.types.toSymbol
 import org.jetbrains.kotlin.fir.visitors.FirDefaultVisitorVoid
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi
 import org.jetbrains.kotlin.psi.*
 import java.util.*
-import kotlin.collections.LinkedHashMap
 
 class CodeFragmentCapturedSymbol(
     val value: CodeFragmentCapturedValue,
@@ -109,6 +110,13 @@ private class CodeFragmentCapturedValueVisitor(
     }
 
     private fun processElement(element: FirElement) {
+        if (element is FirExpression) {
+            val symbol = element.coneTypeOrNull?.toSymbol(session)
+            if (symbol != null) {
+                registerFile(symbol)
+            }
+        }
+
         when (element) {
             is FirSuperReference -> {
                 val symbol = (element.superTypeRef as? FirResolvedTypeRef)?.toRegularClassSymbol(session)
@@ -163,12 +171,6 @@ private class CodeFragmentCapturedValueVisitor(
                     processCall(element, symbol)
                 }
             }
-            is FirTypeRef -> {
-                val symbol = element.toClassLikeSymbol(session)
-                if (symbol != null && symbol !in selfSymbols) {
-                    registerFile(symbol)
-                }
-            }
         }
     }
 
@@ -188,6 +190,9 @@ private class CodeFragmentCapturedValueVisitor(
                         else -> CodeFragmentCapturedValue.Local(symbol.name, symbol.isMutated, isCrossingInlineBounds)
                     }
                     register(CodeFragmentCapturedSymbol(capturedValue, symbol, symbol.resolvedReturnTypeRef))
+                } else {
+                    // Property call generation depends on complete backing field resolution (Fir2IrLazyProperty.backingField)
+                    symbol.lazyResolveToPhase(FirResolvePhase.BODY_RESOLVE)
                 }
             }
             is FirBackingFieldSymbol -> {

@@ -933,7 +933,7 @@ class Fir2IrDeclarationStorage(
         firInitializerExpression: FirExpression?,
         type: IrType? = null
     ): IrField = convertCatching(property) {
-        val inferredType = type ?: firInitializerExpression!!.typeRef.toIrType()
+        val inferredType = type ?: firInitializerExpression!!.resolvedType.toIrType()
         return declareIrField { symbol ->
             irFactory.createField(
                 startOffset = startOffset,
@@ -1088,7 +1088,7 @@ class Fir2IrDeclarationStorage(
                                 NameUtils.propertyDelegateName(property.name), true, delegate
                             )
                         } else {
-                            val initializer = property.backingField?.initializer ?: property.initializer
+                            val initializer = getEffectivePropertyInitializer(property, resolveIfNeeded = true)
                             // There are cases when we get here for properties
                             // that have no backing field. For example, in the
                             // funExpression.kt test there's an attempt
@@ -1101,7 +1101,7 @@ class Fir2IrDeclarationStorage(
                                 property.name, property.isVal, initializer, typeToUse
                             ).also { field ->
                                 if (initializer is FirConstExpression<*>) {
-                                    val constType = initializer.typeRef.toIrType()
+                                    val constType = initializer.resolvedType.toIrType()
                                     field.initializer = factory.createExpressionBody(initializer.toIrConst(constType))
                                 }
                             }
@@ -1155,6 +1155,22 @@ class Fir2IrDeclarationStorage(
             }
             result
         }
+    }
+
+    /**
+     * In partial module compilation (see [org.jetbrains.kotlin.analysis.api.fir.components.KtFirCompilerFacility]),
+     * referenced properties might be resolved only up to [FirResolvePhase.CONTRACTS],
+     * however the backend requires the exact initializer type.
+     */
+    private fun getEffectivePropertyInitializer(property: FirProperty, resolveIfNeeded: Boolean): FirExpression? {
+        val initializer = property.backingField?.initializer ?: property.initializer
+
+        if (resolveIfNeeded && initializer is FirConstExpression<*>) {
+            property.lazyResolveToPhase(FirResolvePhase.BODY_RESOLVE)
+            return getEffectivePropertyInitializer(property, resolveIfNeeded = false)
+        }
+
+        return initializer
     }
 
     fun getCachedIrProperty(property: FirProperty): IrProperty? {
@@ -1291,7 +1307,7 @@ class Fir2IrDeclarationStorage(
         return createIrField(
             field,
             irParent = irClass,
-            typeRef = initializer?.typeRef ?: field.returnTypeRef,
+            type = initializer?.resolvedType ?: field.returnTypeRef.coneType,
             origin = IrDeclarationOrigin.DELEGATE
         ).apply {
             metadata = FirMetadataSource.Field(field)
@@ -1301,10 +1317,10 @@ class Fir2IrDeclarationStorage(
     internal fun createIrField(
         field: FirField,
         irParent: IrDeclarationParent?,
-        typeRef: FirTypeRef = field.returnTypeRef,
+        type: ConeKotlinType = field.returnTypeRef.coneType,
         origin: IrDeclarationOrigin = IrDeclarationOrigin.IR_EXTERNAL_JAVA_DECLARATION_STUB
     ): IrField = convertCatching(field) {
-        val type = typeRef.toIrType()
+        val irType = type.toIrType()
         val classId = (irParent as? IrClass)?.classId
         val containingClassLookupTag = classId?.toLookupTag()
         val signature = signatureComposer.composeSignature(field, containingClassLookupTag)
@@ -1320,7 +1336,7 @@ class Fir2IrDeclarationStorage(
                         name = field.name,
                         visibility = components.visibilityConverter.convertToDescriptorVisibility(field.visibility),
                         symbol = symbol,
-                        type = type,
+                        type = irType,
                         isFinal = field.modality == Modality.FINAL,
                         isStatic = field.isStatic,
                         isExternal = false
@@ -1334,7 +1350,7 @@ class Fir2IrDeclarationStorage(
                     name = field.name,
                     visibility = components.visibilityConverter.convertToDescriptorVisibility(field.visibility),
                     symbol = IrFieldSymbolImpl(),
-                    type = type,
+                    type = irType,
                     isFinal = field.modality == Modality.FINAL,
                     isStatic = field.isStatic,
                     isExternal = false
@@ -1349,7 +1365,7 @@ class Fir2IrDeclarationStorage(
                 }
                 val initializer = field.unwrapFakeOverrides().initializer
                 if (initializer is FirConstExpression<*>) {
-                    this.initializer = factory.createExpressionBody(initializer.toIrConst(type))
+                    this.initializer = factory.createExpressionBody(initializer.toIrConst(irType))
                 }
                 setAndModifyParent(irParent)
             }
@@ -1467,7 +1483,7 @@ class Fir2IrDeclarationStorage(
         // Note: for components call, we have to change type here (to original component type) to keep compatibility with PSI2IR
         // Some backend optimizations related to withIndex() probably depend on this type: index should always be Int
         // See e.g. forInStringWithIndexWithExplicitlyTypedIndexVariable.kt from codegen box tests
-        val type = ((variable.initializer as? FirComponentCall)?.typeRef ?: variable.returnTypeRef).toIrType()
+        val type = ((variable.initializer as? FirComponentCall)?.resolvedType ?: variable.returnTypeRef.coneType).toIrType()
         // Some temporary variables are produced in RawFirBuilder, but we consistently use special names for them.
         val origin = when {
             givenOrigin != null -> givenOrigin
@@ -1509,7 +1525,7 @@ class Fir2IrDeclarationStorage(
             enterScope(this)
             delegate = declareIrVariable(
                 startOffset, endOffset, IrDeclarationOrigin.PROPERTY_DELEGATE,
-                NameUtils.propertyDelegateName(property.name), property.delegate!!.typeRef.toIrType(),
+                NameUtils.propertyDelegateName(property.name), property.delegate!!.resolvedType.toIrType(),
                 isVar = false, isConst = false, isLateinit = false
             )
             delegate.parent = irParent
