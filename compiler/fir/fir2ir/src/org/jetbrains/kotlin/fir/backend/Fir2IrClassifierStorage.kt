@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.fir.resolve.providers.firProvider
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.toSymbol
 import org.jetbrains.kotlin.fir.resolve.toSymbol
-import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.Fir2IrClassSymbol
 import org.jetbrains.kotlin.fir.symbols.Fir2IrEnumEntrySymbol
@@ -37,7 +36,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.utils.addToStdlib.getOrPut
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 
@@ -211,7 +209,7 @@ class Fir2IrClassifierStorage(
     }
 
     private fun FirRegularClass.hasAbstractMembersInScope(): Boolean {
-        val scope = unsubstitutedScope(session, scopeSession, withForcedTypeCalculator = false, memberRequiredPhase = null)
+        val scope = unsubstitutedScope()
         val names = scope.getCallableNames()
         var hasAbstract = false
         for (name in names) {
@@ -613,7 +611,7 @@ class Fir2IrClassifierStorage(
                     name = enumEntry.name,
                     symbol = symbol,
                 ).apply {
-                    declarationStorage.enterScope(this)
+                    declarationStorage.enterScope(this.symbol)
                     if (irParent != null) {
                         this.parent = irParent
                     }
@@ -626,7 +624,7 @@ class Fir2IrClassifierStorage(
                         )
                         this.correspondingClass = klass
                     }
-                    declarationStorage.leaveScope(this)
+                    declarationStorage.leaveScope(this.symbol)
                 }
             }
             enumEntryCache[enumEntry] = result

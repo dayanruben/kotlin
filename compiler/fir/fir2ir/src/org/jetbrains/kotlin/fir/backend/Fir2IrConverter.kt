@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.*
+import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
 import org.jetbrains.kotlin.fir.backend.generators.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
@@ -42,13 +43,11 @@ import org.jetbrains.kotlin.ir.interpreter.IrInterpreterConfiguration
 import org.jetbrains.kotlin.ir.interpreter.IrInterpreterEnvironment
 import org.jetbrains.kotlin.ir.interpreter.checker.EvaluationMode
 import org.jetbrains.kotlin.ir.interpreter.transformer.transformConst
-import org.jetbrains.kotlin.ir.symbols.IrSymbolInternals
 import org.jetbrains.kotlin.ir.util.KotlinMangler
 import org.jetbrains.kotlin.ir.util.NaiveSourceBasedFileEntryImpl
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
 class Fir2IrConverter(
     private val moduleDescriptor: FirModuleDescriptor,
@@ -218,7 +217,7 @@ class Fir2IrConverter(
         // Add synthetic members *before* fake override generations.
         // Otherwise, redundant members, e.g., synthetic toString _and_ fake override toString, will be added.
         if (klass is FirRegularClass && irConstructor != null && (irClass.isValue || irClass.isData)) {
-            declarationStorage.enterScope(irConstructor)
+            declarationStorage.enterScope(irConstructor.symbol)
             val dataClassMembersGenerator = DataClassMembersGenerator(components)
             if (irClass.isSingleFieldValueClass) {
                 allDeclarations += dataClassMembersGenerator.generateSingleFieldValueClassMembers(klass, irClass)
@@ -229,7 +228,7 @@ class Fir2IrConverter(
             if (irClass.isData) {
                 allDeclarations += dataClassMembersGenerator.generateDataClassMembers(klass, irClass)
             }
-            declarationStorage.leaveScope(irConstructor)
+            declarationStorage.leaveScope(irConstructor.symbol)
         }
         with(fakeOverrideGenerator) {
             irClass.addFakeOverrides(klass, allDeclarations)
@@ -238,14 +237,13 @@ class Fir2IrConverter(
         return irClass
     }
 
-    @OptIn(IrSymbolInternals::class)
     private fun processCodeFragmentMembers(
         codeFragment: FirCodeFragment,
         irClass: IrClass = classifierStorage.getCachedIrCodeFragment(codeFragment)!!
     ): IrClass {
         val conversionData = codeFragment.conversionData
 
-        declarationStorage.enterScope(irClass)
+        declarationStorage.enterScope(irClass.symbol)
 
         val signature = irClass.symbol.signature!!
 
@@ -263,11 +261,15 @@ class Fir2IrConverter(
                 isPrimary = true
             ).apply {
                 parent = irClass
+                val firAnyConstructor = session.builtinTypes.anyType.toRegularClassSymbol(session)!!.fir.primaryConstructorIfAny(session)!!
+                val irAnyConstructor = declarationStorage.getIrConstructorSymbol(firAnyConstructor)
                 body = irFactory.createBlockBody(UNDEFINED_OFFSET, UNDEFINED_OFFSET).apply {
-                    statements += IrDelegatingConstructorCallImpl.fromSymbolOwner(
+                    statements += IrDelegatingConstructorCallImpl(
                         UNDEFINED_OFFSET, UNDEFINED_OFFSET,
                         irBuiltIns.unitType,
-                        irBuiltIns.anyClass.owner.declarations.firstIsInstance<IrConstructor>().symbol
+                        irAnyConstructor,
+                        typeArgumentsCount = 0,
+                        valueArgumentsCount = 0
                     )
                 }
             }
@@ -321,7 +323,7 @@ class Fir2IrConverter(
         irClass.declarations.add(irPrimaryConstructor)
         irClass.declarations.add(irFragmentFunction)
 
-        declarationStorage.leaveScope(irClass)
+        declarationStorage.leaveScope(irClass.symbol)
         return irClass
     }
 
@@ -428,7 +430,7 @@ class Fir2IrConverter(
             is FirScript -> {
                 parent as IrFile
                 declarationStorage.getOrCreateIrScript(declaration).also { irScript ->
-                    declarationStorage.enterScope(irScript)
+                    declarationStorage.enterScope(irScript.symbol)
                     irScript.parent = parent
                     for (scriptStatement in declaration.statements) {
                         when (scriptStatement) {
@@ -445,7 +447,7 @@ class Fir2IrConverter(
                             processMemberDeclaration(scriptStatement, null, irScript)
                         }
                     }
-                    declarationStorage.leaveScope(irScript)
+                    declarationStorage.leaveScope(irScript.symbol)
                 }
             }
             is FirSimpleFunction -> {
@@ -566,7 +568,7 @@ class Fir2IrConverter(
                 components, fir2IrConfiguration.languageVersionSettings, moduleDescriptor, irMangler
             )
             components.irBuiltIns = irBuiltIns
-            val conversionScope = Fir2IrConversionScope()
+            val conversionScope = Fir2IrConversionScope(components.configuration)
             val fir2irVisitor = Fir2IrVisitor(components, conversionScope)
             components.builtIns = Fir2IrBuiltIns(components, specialSymbolProvider)
             components.annotationGenerator = AnnotationGenerator(components)

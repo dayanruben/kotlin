@@ -39,9 +39,8 @@ import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.calls.FirSimpleSyntheticPropertySymbol
 import org.jetbrains.kotlin.fir.resolve.providers.FirProvider
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
-import org.jetbrains.kotlin.fir.scopes.FirTypeScope
-import org.jetbrains.kotlin.fir.scopes.ProcessorAction
-import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
+import org.jetbrains.kotlin.fir.scopes.*
+import org.jetbrains.kotlin.fir.scopes.impl.declaredMemberScope
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
@@ -57,7 +56,6 @@ import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.types.impl.IrErrorTypeImpl
-import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -66,6 +64,8 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffsetSkippingComments
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 fun AbstractKtSourceElement?.startOffsetSkippingComments(): Int? {
     return when (this) {
@@ -185,47 +185,33 @@ private fun FirBasedSymbol<*>.toSymbolForCall(
 }
 
 context(Fir2IrComponents)
-@OptIn(IrSymbolInternals::class)
+@OptIn(ExperimentalContracts::class)
 fun FirReference.toSymbolForCall(
     dispatchReceiver: FirExpression,
-    conversionScope: Fir2IrConversionScope,
     explicitReceiver: FirExpression?,
     preferGetter: Boolean = true,
     isDelegate: Boolean = false,
     isReference: Boolean = false,
 ): IrSymbol? {
-    return when (this) {
-        is FirResolvedNamedReference -> {
-            var symbol = resolvedSymbol
-
-            if (symbol is FirCallableSymbol<*> && symbol.origin == FirDeclarationOrigin.SubstitutionOverride.CallSite) {
-                symbol = symbol.fir.unwrapUseSiteSubstitutionOverrides<FirCallableDeclaration>().symbol
-            }
-
-            symbol.toSymbolForCall(
-                dispatchReceiver,
-                preferGetter,
-                explicitReceiver,
-                isDelegate,
-                isReference
-            )
-        }
-
-        is FirThisReference -> {
-            when (val boundSymbol = boundSymbol) {
-                is FirClassSymbol<*> -> classifierStorage.getIrClassSymbol(boundSymbol).owner.thisReceiver?.symbol
-                is FirFunctionSymbol -> declarationStorage.getIrFunctionSymbol(boundSymbol).owner.extensionReceiverParameter?.symbol
-                is FirPropertySymbol -> {
-                    val property = declarationStorage.getIrPropertySymbol(boundSymbol).owner as? IrProperty
-                    property?.let { conversionScope.parentAccessorOfPropertyFromStack(it) }?.symbol
-                }
-                is FirScriptSymbol -> declarationStorage.getCachedIrScript(boundSymbol.fir)?.thisReceiver?.symbol
-                else -> null
-            }
-        }
-
-        else -> null
+    contract {
+        returnsNotNull() implies (this@toSymbolForCall is FirResolvedNamedReference)
     }
+    if (this !is FirResolvedNamedReference) {
+        return null
+    }
+    var symbol = resolvedSymbol
+
+    if (symbol is FirCallableSymbol<*> && symbol.origin == FirDeclarationOrigin.SubstitutionOverride.CallSite) {
+        symbol = symbol.fir.unwrapUseSiteSubstitutionOverrides<FirCallableDeclaration>().symbol
+    }
+
+    return symbol.toSymbolForCall(
+        dispatchReceiver,
+        preferGetter,
+        explicitReceiver,
+        isDelegate,
+        isReference
+    )
 }
 
 private fun FirResolvedQualifier.toLookupTag(session: FirSession): ConeClassLikeLookupTag? =
@@ -407,7 +393,7 @@ internal fun FirSimpleFunction.processOverriddenFunctionSymbols(
     containingClass: FirClass,
     processor: (FirNamedFunctionSymbol) -> Unit
 ) {
-    val scope = containingClass.unsubstitutedScope(session, scopeSession, withForcedTypeCalculator = true, memberRequiredPhase = null)
+    val scope = containingClass.unsubstitutedScope()
     scope.processFunctionsByName(name) {}
     scope.processOverriddenFunctionsFromSuperClasses(symbol, containingClass) { overriddenSymbol ->
         if (!session.visibilityChecker.isVisibleForOverriding(
@@ -420,21 +406,6 @@ internal fun FirSimpleFunction.processOverriddenFunctionSymbols(
 
         ProcessorAction.NEXT
     }
-}
-
-context(Fir2IrComponents)
-internal fun FirSimpleFunction.generateOverriddenFunctionSymbols(containingClass: FirClass): List<IrSimpleFunctionSymbol> {
-    val superClasses = containingClass.getSuperTypesAsIrClasses() ?: return emptyList()
-    val overriddenSet = mutableSetOf<IrSimpleFunctionSymbol>()
-
-    processOverriddenFunctionSymbols(containingClass) {
-        for (overridden in fakeOverrideGenerator.getOverriddenSymbolsInSupertypes(it, superClasses)) {
-            assert(overridden != symbol) { "Cannot add function $overridden to its own overriddenSymbols" }
-            overriddenSet += overridden
-        }
-    }
-
-    return overriddenSet.toList()
 }
 
 fun FirTypeScope.processOverriddenFunctionsFromSuperClasses(
@@ -470,20 +441,11 @@ fun FirTypeScope.processOverriddenPropertiesFromSuperClasses(
     }
 
 context(Fir2IrComponents)
-@OptIn(IrSymbolInternals::class)
-private fun FirClass.getSuperTypesAsIrClasses(): Set<IrClass>? {
-    val irClass =
-        declarationStorage.classifierStorage.getIrClassSymbol(symbol).owner as? IrClass ?: return null
-
-    return irClass.superTypes.mapNotNull { it.classifierOrNull?.owner as? IrClass }.toSet()
-}
-
-context(Fir2IrComponents)
 internal fun FirProperty.processOverriddenPropertySymbols(
     containingClass: FirClass,
     processor: (FirPropertySymbol) -> Unit
 ): List<IrPropertySymbol> {
-    val scope = containingClass.unsubstitutedScope(session, scopeSession, withForcedTypeCalculator = true, memberRequiredPhase = null)
+    val scope = containingClass.unsubstitutedScope()
     scope.processPropertiesByName(name) {}
     val overriddenSet = mutableSetOf<IrPropertySymbol>()
     scope.processOverriddenPropertiesFromSuperClasses(symbol, containingClass) { overriddenSymbol ->
@@ -498,51 +460,6 @@ internal fun FirProperty.processOverriddenPropertySymbols(
         ProcessorAction.NEXT
     }
 
-    return overriddenSet.toList()
-}
-
-context(Fir2IrComponents)
-internal fun FirProperty.generateOverriddenPropertySymbols(containingClass: FirClass): List<IrPropertySymbol> {
-    val superClasses = containingClass.getSuperTypesAsIrClasses() ?: return emptyList()
-    val overriddenSet = mutableSetOf<IrPropertySymbol>()
-
-    processOverriddenPropertySymbols(containingClass) {
-        for (overridden in fakeOverrideGenerator.getOverriddenSymbolsInSupertypes(it, superClasses)) {
-            assert(overridden != symbol) { "Cannot add property $overridden to its own overriddenSymbols" }
-            overriddenSet += overridden
-        }
-    }
-
-    return overriddenSet.toList()
-}
-
-context(Fir2IrComponents)
-@OptIn(IrSymbolInternals::class)
-internal fun FirProperty.generateOverriddenAccessorSymbols(containingClass: FirClass, isGetter: Boolean): List<IrSimpleFunctionSymbol> {
-    val scope = containingClass.unsubstitutedScope(session, scopeSession, withForcedTypeCalculator = true, memberRequiredPhase = null)
-    scope.processPropertiesByName(name) {}
-    val overriddenSet = mutableSetOf<IrSimpleFunctionSymbol>()
-    val superClasses = containingClass.getSuperTypesAsIrClasses() ?: return emptyList()
-
-    scope.processOverriddenPropertiesFromSuperClasses(symbol, containingClass) { overriddenSymbol ->
-        if (!session.visibilityChecker.isVisibleForOverriding(
-                candidateInDerivedClass = symbol.fir, candidateInBaseClass = overriddenSymbol.fir
-            )
-        ) {
-            return@processOverriddenPropertiesFromSuperClasses ProcessorAction.NEXT
-        }
-
-        for (overriddenIrPropertySymbol in fakeOverrideGenerator.getOverriddenSymbolsInSupertypes(overriddenSymbol, superClasses)) {
-            val overriddenIrAccessorSymbol =
-                if (isGetter) overriddenIrPropertySymbol.owner.getter?.symbol
-                else overriddenIrPropertySymbol.owner.setter?.symbol
-            if (overriddenIrAccessorSymbol != null) {
-                assert(overriddenIrAccessorSymbol != symbol) { "Cannot add property $overriddenIrAccessorSymbol to its own overriddenSymbols" }
-                overriddenSet += overriddenIrAccessorSymbol
-            }
-        }
-        ProcessorAction.NEXT
-    }
     return overriddenSet.toList()
 }
 
@@ -627,15 +544,6 @@ fun FirClass.irOrigin(firProvider: FirProvider): IrDeclarationOrigin = when {
         else -> IrDeclarationOrigin.IR_EXTERNAL_DECLARATION_STUB
     }
 }
-
-@OptIn(IrSymbolInternals::class)
-val IrType.isSamType: Boolean
-    get() {
-        val irClass = classOrNull ?: return false
-        if (irClass.owner.kind != ClassKind.INTERFACE) return false
-        val am = irClass.functions.singleOrNull { it.owner.modality == Modality.ABSTRACT }
-        return am != null
-    }
 
 fun Fir2IrComponents.createSafeCallConstruction(
     receiverVariable: IrVariable,
@@ -808,9 +716,70 @@ fun IrActualizedResult?.extractFirDeclarations(): Set<FirDeclaration>? {
 // This method is intended to be used for default values of annotation parameters (compile-time strings, numbers, enum values, KClasses)
 // where they are needed and may produce incorrect results for values that may be encountered outside annotations.
 fun FirExpression.asCompileTimeIrInitializer(components: Fir2IrComponents): IrExpressionBody? {
-    return when (val elem = this.accept(Fir2IrVisitor(components, Fir2IrConversionScope()), null)) {
+    return when (val elem = this.accept(Fir2IrVisitor(components, Fir2IrConversionScope(components.configuration)), null)) {
         is IrExpressionBody -> elem
         is IrExpression -> components.irFactory.createExpressionBody(elem)
         else -> null
     }
+}
+
+/**
+ * Note: for componentN call, we have to change the type here (to the original component type) to keep compatibility with PSI2IR
+ * Some backend optimizations related to withIndex() probably depend on this type: index should always be Int
+ * See e.g. forInStringWithIndexWithExplicitlyTypedIndexVariable.kt from codegen box tests
+ *
+ * [predefinedType] is needed for case, when this function is used to convert some variable access, and
+ *   default IR type, for it is already known
+ *   It's not correct to always use converted [this.returnTypeRef] in one particular case:
+ *
+ * val <T> T.some: T
+ *     get() = ...
+ *     set(value) {
+ *         field = value <----
+ *     }
+ *
+ *  Here `value` has type `T`. In FIR there is one type parameter `T` for the whole property
+ *  But in IR we have different type parameters for getter and setter. And by default `toIrType()` transforms
+ *    `T` as type parameter of getter, but here we are in context of the setter. And in CallAndReferenceGenerator.convertToIrCall
+ *    we already know that `value` should have type `T[set-some]`, so this type is provided as [predefinedType]
+ *
+ *  The alternative could be to determine outside that we are in scope of setter and pass type origin, but it's
+ *    much more complicated and messy
+ */
+context(Fir2IrComponents)
+internal fun FirVariable.irTypeForPotentiallyComponentCall(predefinedType: IrType? = null): IrType {
+    val typeRef = when (val initializer = initializer) {
+        is FirComponentCall -> initializer.resolvedType
+        else -> {
+            if (predefinedType != null) return predefinedType
+            this.returnTypeRef.coneType
+        }
+    }
+    return typeRef.toIrType(typeConverter)
+}
+
+internal val FirValueParameter.varargElementType: ConeKotlinType?
+    get() {
+        if (!isVararg) return null
+        return returnTypeRef.coneType.arrayElementType()
+    }
+
+context(Fir2IrComponents)
+internal fun FirClassSymbol<*>.unsubstitutedScope(): FirTypeScope {
+    return this.unsubstitutedScope(session, scopeSession, withForcedTypeCalculator = true, memberRequiredPhase = null)
+}
+
+context(Fir2IrComponents)
+internal fun FirClass.unsubstitutedScope(): FirTypeScope {
+    return symbol.unsubstitutedScope()
+}
+
+context(Fir2IrComponents)
+internal fun FirClassSymbol<*>.declaredScope(): FirContainingNamesAwareScope {
+    return this.declaredMemberScope(session, memberRequiredPhase = null)
+}
+
+context(Fir2IrComponents)
+internal fun FirClass.declaredScope(): FirContainingNamesAwareScope {
+    return symbol.declaredScope()
 }

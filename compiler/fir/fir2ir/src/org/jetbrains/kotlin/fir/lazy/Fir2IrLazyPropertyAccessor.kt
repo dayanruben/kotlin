@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.lazy
 
 import org.jetbrains.kotlin.fir.backend.*
+import org.jetbrains.kotlin.fir.backend.generators.generateOverriddenAccessorSymbols
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.declarations.FirPropertyAccessor
@@ -77,7 +78,7 @@ class Fir2IrLazyPropertyAccessor(
     override var valueParameters: List<IrValueParameter> by lazyVar(lock) {
         if (!isSetter && contextReceiverParametersCount == 0) emptyList()
         else {
-            declarationStorage.enterScope(this)
+            declarationStorage.enterScope(this.symbol)
 
             buildList {
                 declarationStorage.addContextReceiverParametersTo(
@@ -103,7 +104,7 @@ class Fir2IrLazyPropertyAccessor(
                     )
                 }
             }.apply {
-                declarationStorage.leaveScope(this@Fir2IrLazyPropertyAccessor)
+                declarationStorage.leaveScope(this@Fir2IrLazyPropertyAccessor.symbol)
             }
         }
     }

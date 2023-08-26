@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.builtins.StandardNames.BUILT_INS_PACKAGE_FQ_NAMES
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.fir.*
+import org.jetbrains.kotlin.fir.backend.generators.generateOverriddenAccessorSymbols
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.buildProperty
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyGetter
@@ -19,7 +20,6 @@ import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.descriptors.FirBuiltInsPackageFragment
 import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
 import org.jetbrains.kotlin.fir.descriptors.FirPackageFragmentDescriptor
-import org.jetbrains.kotlin.fir.expressions.FirComponentCall
 import org.jetbrains.kotlin.fir.expressions.FirConstExpression
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
@@ -34,7 +34,6 @@ import org.jetbrains.kotlin.fir.resolve.dfa.cfg.isLocalClassOrAnonymousObject
 import org.jetbrains.kotlin.fir.resolve.isKFunctionInvoke
 import org.jetbrains.kotlin.fir.resolve.providers.firProvider
 import org.jetbrains.kotlin.fir.resolve.toSymbol
-import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
 import org.jetbrains.kotlin.fir.symbols.*
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
@@ -63,6 +62,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerAbiStability
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
+import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.threadLocal
@@ -95,6 +95,16 @@ class Fir2IrDeclarationStorage(
     private val initializerCache: ConcurrentHashMap<FirAnonymousInitializer, IrAnonymousInitializer> = ConcurrentHashMap()
 
     private val propertyCache: ConcurrentHashMap<FirProperty, IrProperty> = commonMemberStorage.propertyCache
+    private val getterForPropertyCache: ConcurrentHashMap<IrSymbol, IrSimpleFunctionSymbol> =
+        commonMemberStorage.getterForPropertyCache
+    private val setterForPropertyCache: ConcurrentHashMap<IrSymbol, IrSimpleFunctionSymbol> =
+        commonMemberStorage.setterForPropertyCache
+    private val backingFieldForPropertyCache: ConcurrentHashMap<IrPropertySymbol, IrFieldSymbol> =
+        commonMemberStorage.backingFieldForPropertyCache
+    private val propertyForBackingFieldCache: ConcurrentHashMap<IrFieldSymbol, IrPropertySymbol> =
+        commonMemberStorage.propertyForBackingFieldCache
+    private val delegateVariableForPropertyCache: ConcurrentHashMap<IrLocalDelegatedPropertySymbol, IrVariableSymbol> =
+        commonMemberStorage.delegateVariableForPropertyCache
 
     // interface A { /* $1 */ fun foo() }
     // interface B : A {
@@ -216,7 +226,7 @@ class Fir2IrDeclarationStorage(
                 else -> {}
             }
         }
-        val scope = firClass.unsubstitutedScope(session, scopeSession, withForcedTypeCalculator = false, memberRequiredPhase = null)
+        val scope = firClass.unsubstitutedScope()
         scope.getCallableNames().forEach { callableName ->
             buildList {
                 fakeOverrideGenerator.generateFakeOverridesForName(
@@ -234,30 +244,30 @@ class Fir2IrDeclarationStorage(
         return fileCache[firFile]!!
     }
 
-    fun enterScope(declaration: IrDeclaration) {
-        symbolTable.enterScope(declaration)
-        if (declaration is IrSimpleFunction ||
-            declaration is IrConstructor ||
-            declaration is IrAnonymousInitializer ||
-            declaration is IrProperty ||
-            declaration is IrEnumEntry ||
-            declaration is IrScript
+    fun enterScope(symbol: IrSymbol) {
+        symbolTable.enterScope(symbol)
+        if (symbol is IrSimpleFunctionSymbol ||
+            symbol is IrConstructorSymbol ||
+            symbol is IrAnonymousInitializerSymbol ||
+            symbol is IrPropertySymbol ||
+            symbol is IrEnumEntrySymbol ||
+            symbol is IrScriptSymbol
         ) {
             localStorage.enterCallable()
         }
     }
 
-    fun leaveScope(declaration: IrDeclaration) {
-        if (declaration is IrSimpleFunction ||
-            declaration is IrConstructor ||
-            declaration is IrAnonymousInitializer ||
-            declaration is IrProperty ||
-            declaration is IrEnumEntry ||
-            declaration is IrScript
+    fun leaveScope(symbol: IrSymbol) {
+        if (symbol is IrSimpleFunctionSymbol ||
+            symbol is IrConstructorSymbol ||
+            symbol is IrAnonymousInitializerSymbol ||
+            symbol is IrPropertySymbol ||
+            symbol is IrEnumEntrySymbol ||
+            symbol is IrScriptSymbol
         ) {
             localStorage.leaveCallable()
         }
-        symbolTable.leaveScope(declaration)
+        symbolTable.leaveScope(symbol)
     }
 
     private fun FirTypeRef.toIrType(typeOrigin: ConversionTypeOrigin = ConversionTypeOrigin.DEFAULT): IrType =
@@ -393,15 +403,52 @@ class Fir2IrDeclarationStorage(
         override fun getContainingFile(): SourceFile = SourceFile.NO_SOURCE_FILE
     }
 
-    private fun computeThisReceiverOwner(parent: IrDeclarationParent?): IrClass? {
-        if (parent is IrClass && parent !is NonCachedSourceFileFacadeClass) {
-            return parent
-        }
+    /**
+     * [firCallable] is function or property (if [irFunction] is a property accessor) for
+     *   which [irFunction] was build
+     *
+     * It is needed to determine proper dispatch receiver type if this declaration is fake-override
+     */
+    private fun computeDispatchReceiverType(
+        irFunction: IrSimpleFunction,
+        firCallable: FirCallableDeclaration?,
+        parent: IrDeclarationParent?,
+    ): IrType? {
+        /*
+         * If some function is not fake-override, then its type should be just
+         *   default type of containing class
+         * For fake overrides the default type calculated in the following way:
+         * 1. Find first overridden function, which is not fake override
+         * 2. Take its containing class
+         * 3. Find supertype of current containing class with type constructor of
+          *   class from step 2
+         */
+        if (firCallable is FirProperty && firCallable.isLocal) return null
+        val containingClass = computeContainingClass(parent) ?: return null
+        val defaultType = containingClass.defaultType
+        if (firCallable == null) return defaultType
+        if (irFunction.origin != IrDeclarationOrigin.FAKE_OVERRIDE) return defaultType
 
-        return null
+        val originalCallable = firCallable.unwrapFakeOverrides()
+        val containerOfOriginalCallable = originalCallable.containingClassLookupTag() ?: return defaultType
+        val containerOfFakeOverride = firCallable.dispatchReceiverType ?: return defaultType
+        val correspondingSupertype = AbstractTypeChecker.findCorrespondingSupertypes(
+            session.typeContext.newTypeCheckerState(errorTypesEqualToAnything = false, stubTypesEqualToAnything = false),
+            containerOfFakeOverride,
+            containerOfOriginalCallable
+        ).firstOrNull() as ConeKotlinType? ?: return defaultType
+        return correspondingSupertype.toIrType()
     }
 
-    internal fun findIrParent(callableDeclaration: FirCallableDeclaration): IrDeclarationParent? {
+    private fun computeContainingClass(parent: IrDeclarationParent?): IrClass? {
+        return if (parent is IrClass && parent !is NonCachedSourceFileFacadeClass) {
+            parent
+        } else {
+            null
+        }
+    }
+
+    private fun findIrParent(callableDeclaration: FirCallableDeclaration): IrDeclarationParent? {
         val firBasedSymbol = callableDeclaration.symbol
         val callableId = firBasedSymbol.callableId
         val callableOrigin = callableDeclaration.origin
@@ -455,14 +502,32 @@ class Fir2IrDeclarationStorage(
         }
     }
 
-    private fun <T : IrFunction> T.declareParameters(
+    fun addContextReceiverParametersTo(
+        contextReceivers: List<FirContextReceiver>,
+        parent: IrFunction,
+        result: MutableList<IrValueParameter>,
+    ) {
+        contextReceivers.mapIndexedTo(result) { index, contextReceiver ->
+            createIrParameterFromContextReceiver(contextReceiver, index).apply {
+                this.parent = parent
+            }
+        }
+    }
+
+    /*
+     * In perfect world dispatchReceiverType should always be the default type of containing class
+     * But fake-overrides for members from Any have special rules for type of dispatch receiver
+     */
+    private fun IrFunction.declareParameters(
         function: FirFunction?,
-        containingClass: IrClass?,
+        irParent: IrDeclarationParent?,
+        dispatchReceiverType: IrType?, // has no sense for constructors
         isStatic: Boolean,
         forSetter: Boolean,
         // Can be not-null only for property accessors
-        parentPropertyReceiver: FirReceiverParameter?
+        parentPropertyReceiver: FirReceiverParameter? = null
     ) {
+        val containingClass = computeContainingClass(irParent)
         val parent = this
         if (function is FirSimpleFunction || function is FirConstructor) {
             with(classifierStorage) {
@@ -517,9 +582,9 @@ class Fir2IrDeclarationStorage(
             }
             // See [LocalDeclarationsLowering]: "local function must not have dispatch receiver."
             val isLocal = function is FirSimpleFunction && function.isLocal
-            if (function !is FirAnonymousFunction && containingClass != null && !isStatic && !isLocal) {
+            if (function !is FirAnonymousFunction && dispatchReceiverType != null && !isStatic && !isLocal) {
                 dispatchReceiverParameter = declareThisReceiverParameter(
-                    thisType = containingClass.thisReceiver?.type ?: error("No this receiver"),
+                    thisType = dispatchReceiverType,
                     thisOrigin = thisOrigin
                 )
             }
@@ -533,31 +598,6 @@ class Fir2IrDeclarationStorage(
                 )
             }
         }
-    }
-
-    fun addContextReceiverParametersTo(
-        contextReceivers: List<FirContextReceiver>,
-        parent: IrFunction,
-        result: MutableList<IrValueParameter>,
-    ) {
-        contextReceivers.mapIndexedTo(result) { index, contextReceiver ->
-            createIrParameterFromContextReceiver(contextReceiver, index).apply {
-                this.parent = parent
-            }
-        }
-    }
-
-    private fun <T : IrFunction> T.bindAndDeclareParameters(
-        function: FirFunction?,
-        irParent: IrDeclarationParent?,
-        thisReceiverOwner: IrClass?,
-        isStatic: Boolean,
-        forSetter: Boolean,
-        parentPropertyReceiver: FirReceiverParameter? = null
-    ): T {
-        setAndModifyParent(irParent)
-        declareParameters(function, thisReceiverOwner, isStatic, forSetter, parentPropertyReceiver)
-        return this
     }
 
     fun <T : IrFunction> T.putParametersInScope(function: FirFunction): T {
@@ -632,7 +672,6 @@ class Fir2IrDeclarationStorage(
     fun createIrFunction(
         function: FirFunction,
         irParent: IrDeclarationParent?,
-        thisReceiverOwner: IrClass? = computeThisReceiverOwner(irParent),
         predefinedOrigin: IrDeclarationOrigin? = null,
         isLocal: Boolean = false,
         fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag? = null,
@@ -699,14 +738,16 @@ class Fir2IrDeclarationStorage(
                     containerSource = simpleFunction?.containerSource,
                 ).apply {
                     metadata = FirMetadataSource.Function(function)
-                    enterScope(this)
-                    bindAndDeclareParameters(
+                    enterScope(this.symbol)
+                    setAndModifyParent(irParent)
+                    declareParameters(
                         function, irParent,
-                        thisReceiverOwner, isStatic = simpleFunction?.isStatic == true,
+                        dispatchReceiverType = computeDispatchReceiverType(this, simpleFunction, irParent),
+                        isStatic = simpleFunction?.isStatic == true,
                         forSetter = false,
                     )
                     convertAnnotationsForNonDeclaredMembers(function, origin)
-                    leaveScope(this)
+                    leaveScope(this.symbol)
                 }
             }
             result
@@ -808,9 +849,10 @@ class Fir2IrDeclarationStorage(
                     // Add to cache before generating parameters to prevent an infinite loop when an annotation value parameter is annotated
                     // with the annotation itself.
                     constructorCache[constructor] = this
-                    enterScope(this)
-                    bindAndDeclareParameters(constructor, irParent, irParent, isStatic = false, forSetter = false)
-                    leaveScope(this)
+                    enterScope(this.symbol)
+                    setAndModifyParent(irParent)
+                    declareParameters(constructor, irParent, dispatchReceiverType = null, isStatic = false, forSetter = false)
+                    leaveScope(this.symbol)
                 }
             }
         }
@@ -841,7 +883,6 @@ class Fir2IrDeclarationStorage(
         correspondingProperty: IrDeclarationWithName,
         propertyType: IrType,
         irParent: IrDeclarationParent?,
-        thisReceiverOwner: IrClass? = computeThisReceiverOwner(irParent),
         isSetter: Boolean,
         origin: IrDeclarationOrigin,
         startOffset: Int,
@@ -898,24 +939,22 @@ class Fir2IrDeclarationStorage(
                 }
                 // NB: we should enter accessor' scope before declaring its parameters
                 // (both setter default and receiver ones, if any)
-                enterScope(this)
+                enterScope(this.symbol)
                 if (propertyAccessor == null && isSetter) {
                     declareDefaultSetterParameter(
                         property.returnTypeRef.toIrType(ConversionTypeOrigin.SETTER),
                         firValueParameter = null
                     )
                 }
-                bindAndDeclareParameters(
-                    propertyAccessor, irParent,
-                    thisReceiverOwner, isStatic = irParent !is IrClass || propertyAccessor?.isStatic == true,
-                    forSetter = isSetter,
+                setAndModifyParent(irParent)
+                val dispatchReceiverType = computeDispatchReceiverType(this, property, irParent)
+                declareParameters(
+                    propertyAccessor, irParent, dispatchReceiverType,
+                    isStatic = irParent !is IrClass || propertyAccessor?.isStatic == true, forSetter = isSetter,
                     parentPropertyReceiver = property.receiverParameter,
                 )
-                leaveScope(this)
-                if (irParent != null) {
-                    parent = irParent
-                }
-                if (correspondingProperty is Fir2IrLazyProperty && correspondingProperty.containingClass != null && !isFakeOverride && thisReceiverOwner != null) {
+                leaveScope(this.symbol)
+                if (correspondingProperty is Fir2IrLazyProperty && correspondingProperty.containingClass != null && !isFakeOverride && dispatchReceiverType != null) {
                     this.overriddenSymbols = correspondingProperty.fir.generateOverriddenAccessorSymbols(
                         correspondingProperty.containingClass, !isSetter
                     )
@@ -1023,10 +1062,37 @@ class Fir2IrDeclarationStorage(
 
     private var FirProperty.isStubPropertyForPureField: Boolean? by FirDeclarationDataRegistry.data(IsStubPropertyForPureFieldKey)
 
+    fun findGetterOfProperty(propertySymbol: IrPropertySymbol): IrSimpleFunctionSymbol? {
+        return getterForPropertyCache[propertySymbol]
+    }
+
+    fun findSetterOfProperty(propertySymbol: IrPropertySymbol): IrSimpleFunctionSymbol? {
+        return setterForPropertyCache[propertySymbol]
+    }
+
+    fun findBackingFieldOfProperty(propertySymbol: IrPropertySymbol): IrFieldSymbol? {
+        return backingFieldForPropertyCache[propertySymbol]
+    }
+
+    fun findPropertyForBackingField(fieldSymbol: IrFieldSymbol): IrPropertySymbol? {
+        return propertyForBackingFieldCache[fieldSymbol]
+    }
+
+    fun findGetterOfProperty(propertySymbol: IrLocalDelegatedPropertySymbol): IrSimpleFunctionSymbol {
+        return getterForPropertyCache.getValue(propertySymbol)
+    }
+
+    fun findSetterOfProperty(propertySymbol: IrLocalDelegatedPropertySymbol): IrSimpleFunctionSymbol? {
+        return setterForPropertyCache[propertySymbol]
+    }
+
+    fun findDelegateVariableOfProperty(propertySymbol: IrLocalDelegatedPropertySymbol): IrVariableSymbol {
+        return delegateVariableForPropertyCache.getValue(propertySymbol)
+    }
+
     fun createIrProperty(
         property: FirProperty,
         irParent: IrDeclarationParent?,
-        thisReceiverOwner: IrClass? = computeThisReceiverOwner(irParent),
         predefinedOrigin: IrDeclarationOrigin? = null,
         isLocal: Boolean = false,
         fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag? = null,
@@ -1069,7 +1135,7 @@ class Fir2IrDeclarationStorage(
                 ).apply {
                     metadata = FirMetadataSource.Property(property)
                     convertAnnotationsForNonDeclaredMembers(property, origin)
-                    enterScope(this)
+                    enterScope(this.symbol)
                     if (irParent != null) {
                         parent = irParent
                     }
@@ -1078,7 +1144,7 @@ class Fir2IrDeclarationStorage(
                     val getter = property.getter
                     val setter = property.setter
                     if (delegate != null || property.hasBackingField) {
-                        backingField = if (delegate != null) {
+                        val backingField = if (delegate != null) {
                             ((delegate as? FirQualifiedAccessExpression)?.calleeReference?.toResolvedBaseSymbol()?.fir as? FirTypeParameterRefsOwner)?.let {
                                 classifierStorage.preCacheTypeParameters(it, symbol)
                             }
@@ -1106,12 +1172,17 @@ class Fir2IrDeclarationStorage(
                                 }
                             }
                         }
+                        backingField.symbol.let {
+                            backingFieldForPropertyCache[symbol] = it
+                            propertyForBackingFieldCache[it] = symbol
+                        }
+                        this.backingField = backingField
                     }
                     if (irParent != null) {
                         backingField?.parent = irParent
                     }
                     this.getter = createIrPropertyAccessor(
-                        getter, property, this, type, irParent, thisReceiverOwner, false,
+                        getter, property, this, type, irParent, false,
                         when {
                             origin == IrDeclarationOrigin.IR_EXTERNAL_DECLARATION_STUB -> origin
                             origin == IrDeclarationOrigin.ENUM_CLASS_SPECIAL_MEMBER -> origin
@@ -1124,10 +1195,12 @@ class Fir2IrDeclarationStorage(
                         startOffset, endOffset,
                         dontUseSignature = signature == null, fakeOverrideOwnerLookupTag,
                         property.unwrapFakeOverrides().getter,
-                    )
+                    ).also {
+                        getterForPropertyCache[symbol] = it.symbol
+                    }
                     if (property.isVar) {
                         this.setter = createIrPropertyAccessor(
-                            setter, property, this, type, irParent, thisReceiverOwner, true,
+                            setter, property, this, type, irParent, true,
                             when {
                                 delegate != null -> IrDeclarationOrigin.DELEGATED_PROPERTY_ACCESSOR
                                 origin == IrDeclarationOrigin.FAKE_OVERRIDE -> origin
@@ -1138,9 +1211,11 @@ class Fir2IrDeclarationStorage(
                             startOffset, endOffset,
                             dontUseSignature = signature == null, fakeOverrideOwnerLookupTag,
                             property.unwrapFakeOverrides().setter,
-                        )
+                        ).also {
+                            setterForPropertyCache[symbol] = it.symbol
+                        }
                     }
-                    leaveScope(this)
+                    leaveScope(this.symbol)
                 }
             }
             if (property.isFakeOverride(fakeOverrideOwnerLookupTag)) {
@@ -1404,9 +1479,7 @@ class Fir2IrDeclarationStorage(
                 isAssignable = false,
                 symbol = IrValueParameterSymbolImpl(),
                 index = index,
-                varargElementType =
-                    if (!valueParameter.isVararg) null
-                    else valueParameter.returnTypeRef.coneType.arrayElementType()?.toIrType(typeOrigin),
+                varargElementType = valueParameter.varargElementType?.toIrType(typeOrigin),
                 isCrossinline = valueParameter.isCrossinline,
                 isNoinline = valueParameter.isNoinline,
                 isHidden = false,
@@ -1480,10 +1553,7 @@ class Fir2IrDeclarationStorage(
         irParent: IrDeclarationParent,
         givenOrigin: IrDeclarationOrigin? = null
     ): IrVariable = convertCatching(variable) {
-        // Note: for components call, we have to change type here (to original component type) to keep compatibility with PSI2IR
-        // Some backend optimizations related to withIndex() probably depend on this type: index should always be Int
-        // See e.g. forInStringWithIndexWithExplicitlyTypedIndexVariable.kt from codegen box tests
-        val type = ((variable.initializer as? FirComponentCall)?.resolvedType ?: variable.returnTypeRef.coneType).toIrType()
+        val type = variable.irTypeForPotentiallyComponentCall()
         // Some temporary variables are produced in RawFirBuilder, but we consistently use special names for them.
         val origin = when {
             givenOrigin != null -> givenOrigin
@@ -1509,38 +1579,45 @@ class Fir2IrDeclarationStorage(
     ): IrLocalDelegatedProperty = convertCatching(property) {
         val type = property.returnTypeRef.toIrType()
         val origin = IrDeclarationOrigin.DEFINED
+        val symbol = IrLocalDelegatedPropertySymbolImpl()
         val irProperty = property.convertWithOffsets { startOffset, endOffset ->
             irFactory.createLocalDelegatedProperty(
                 startOffset = startOffset,
                 endOffset = endOffset,
                 origin = origin,
                 name = property.name,
-                symbol = IrLocalDelegatedPropertySymbolImpl(),
+                symbol = symbol,
                 type = type,
                 isVar = property.isVar
             )
         }.apply {
             parent = irParent
             metadata = FirMetadataSource.Property(property)
-            enterScope(this)
+            enterScope(this.symbol)
             delegate = declareIrVariable(
                 startOffset, endOffset, IrDeclarationOrigin.PROPERTY_DELEGATE,
                 NameUtils.propertyDelegateName(property.name), property.delegate!!.resolvedType.toIrType(),
                 isVar = false, isConst = false, isLateinit = false
-            )
+            ).also {
+                delegateVariableForPropertyCache[symbol] = it.symbol
+            }
             delegate.parent = irParent
             getter = createIrPropertyAccessor(
-                property.getter, property, this, type, irParent, null, false,
+                property.getter, property, this, type, irParent, false,
                 IrDeclarationOrigin.DELEGATED_PROPERTY_ACCESSOR, startOffset, endOffset, dontUseSignature = true
-            )
+            ).also {
+                getterForPropertyCache[symbol] = it.symbol
+            }
             if (property.isVar) {
                 setter = createIrPropertyAccessor(
-                    property.setter, property, this, type, irParent, null, true,
+                    property.setter, property, this, type, irParent, true,
                     IrDeclarationOrigin.DELEGATED_PROPERTY_ACCESSOR, startOffset, endOffset, dontUseSignature = true
-                )
+                ).also {
+                    setterForPropertyCache[symbol] = it.symbol
+                }
             }
             annotationGenerator.generate(this, property)
-            leaveScope(this)
+            leaveScope(this.symbol)
         }
         localStorage.putDelegatedProperty(property, irProperty)
         return irProperty
@@ -1745,6 +1822,12 @@ class Fir2IrDeclarationStorage(
             }
         }
         propertyCache[fir] = irProperty
+        irProperty.getter?.symbol?.let { getterForPropertyCache[symbol] = it }
+        irProperty.setter?.symbol?.let { setterForPropertyCache[symbol] = it }
+        irProperty.backingField?.symbol?.let {
+            backingFieldForPropertyCache[symbol] = it
+            propertyForBackingFieldCache[it] = symbol
+        }
         return irProperty
     }
 
@@ -1961,7 +2044,8 @@ class Fir2IrDeclarationStorage(
         internal val ENUM_SYNTHETIC_NAMES = mapOf(
             Name.identifier("values") to IrSyntheticBodyKind.ENUM_VALUES,
             Name.identifier("valueOf") to IrSyntheticBodyKind.ENUM_VALUEOF,
-            Name.identifier("entries") to IrSyntheticBodyKind.ENUM_ENTRIES
+            Name.identifier("entries") to IrSyntheticBodyKind.ENUM_ENTRIES,
+            Name.special("<get-entries>") to IrSyntheticBodyKind.ENUM_ENTRIES
         )
     }
 

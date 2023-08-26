@@ -508,6 +508,18 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         }
 
         @Test
+        @TestMetadata("inlineConstructorParameter.kt")
+        public void testInlineConstructorParameter() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/inlineConstructorParameter.kt");
+        }
+
+        @Test
+        @TestMetadata("inlineConstructorParameter_on.kt")
+        public void testInlineConstructorParameter_on() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/inlineConstructorParameter_on.kt");
+        }
+
+        @Test
         @TestMetadata("inlineDeprecationsOnImplicitCalls.kt")
         public void testInlineDeprecationsOnImplicitCalls() throws Exception {
             runTest("compiler/testData/diagnostics/tests/inlineDeprecationsOnImplicitCalls.kt");
@@ -3416,6 +3428,40 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                             @TestMetadata("ThroughDelegatedLocalVariableMaterializeCase.kt")
                             public void testThroughDelegatedLocalVariableMaterializeCase() throws Exception {
                                 runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts/ThroughDelegatedLocalVariableMaterializeCase.kt");
+                            }
+                        }
+
+                        @Nested
+                        @TestMetadata("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/targetTypes")
+                        @TestDataPath("$PROJECT_ROOT")
+                        public class TargetTypes {
+                            @Test
+                            public void testAllFilesPresentInTargetTypes() throws Exception {
+                                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/targetTypes"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true, "multiplatform");
+                            }
+
+                            @Test
+                            @TestMetadata("FunctionWithParameterToUnitImplicitLiteralsCase.kt")
+                            public void testFunctionWithParameterToUnitImplicitLiteralsCase() throws Exception {
+                                runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/targetTypes/FunctionWithParameterToUnitImplicitLiteralsCase.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("FunctionWithReceiverToUnitImplicitLiteralsCase.kt")
+                            public void testFunctionWithReceiverToUnitImplicitLiteralsCase() throws Exception {
+                                runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/targetTypes/FunctionWithReceiverToUnitImplicitLiteralsCase.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("NothingMaterializeCase.kt")
+                            public void testNothingMaterializeCase() throws Exception {
+                                runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/targetTypes/NothingMaterializeCase.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("NullableNothingNullLiteralMaterializeCase.kt")
+                            public void testNullableNothingNullLiteralMaterializeCase() throws Exception {
+                                runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/targetTypes/NullableNothingNullLiteralMaterializeCase.kt");
                             }
                         }
                     }
