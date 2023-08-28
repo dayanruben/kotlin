@@ -251,6 +251,7 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
     interface UnresolvedReference : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = UnresolvedReference::class
         val reference: String
+        val operator: String?
     }
 
     interface UnresolvedLabel : KtFirDiagnostic<PsiElement> {
@@ -1836,6 +1837,36 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         val overridingVisibility: Visibility
         val overridden: KtCallableSymbol
         val containingClassName: Name
+    }
+
+    interface MultipleDefaultsInheritedFromSupertypes : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = MultipleDefaultsInheritedFromSupertypes::class
+        val valueParameter: KtSymbol
+    }
+
+    interface MultipleDefaultsInheritedFromSupertypesWhenNoExplicitOverride : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = MultipleDefaultsInheritedFromSupertypesWhenNoExplicitOverride::class
+        val valueParameter: KtSymbol
+    }
+
+    interface MultipleDefaultsInheritedFromSupertypesDeprecationError : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = MultipleDefaultsInheritedFromSupertypesDeprecationError::class
+        val valueParameter: KtSymbol
+    }
+
+    interface MultipleDefaultsInheritedFromSupertypesDeprecationWarning : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = MultipleDefaultsInheritedFromSupertypesDeprecationWarning::class
+        val valueParameter: KtSymbol
+    }
+
+    interface MultipleDefaultsInheritedFromSupertypesWhenNoExplicitOverrideDeprecationError : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = MultipleDefaultsInheritedFromSupertypesWhenNoExplicitOverrideDeprecationError::class
+        val valueParameter: KtSymbol
+    }
+
+    interface MultipleDefaultsInheritedFromSupertypesWhenNoExplicitOverrideDeprecationWarning : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = MultipleDefaultsInheritedFromSupertypesWhenNoExplicitOverrideDeprecationWarning::class
+        val valueParameter: KtSymbol
     }
 
     interface TypealiasExpandsToArrayOfNothings : KtFirDiagnostic<KtElement> {

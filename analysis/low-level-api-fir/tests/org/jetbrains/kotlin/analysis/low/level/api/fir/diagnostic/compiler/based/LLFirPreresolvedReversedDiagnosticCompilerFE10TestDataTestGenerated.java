@@ -358,6 +358,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("falseNegativeDuplicateDefaultValues1_error.kt")
+        public void testFalseNegativeDuplicateDefaultValues1_error() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/falseNegativeDuplicateDefaultValues1_error.kt");
+        }
+
+        @Test
         @TestMetadata("falseNegativeDuplicateDefaultValues2.kt")
         public void testFalseNegativeDuplicateDefaultValues2() throws Exception {
             runTest("compiler/testData/diagnostics/tests/falseNegativeDuplicateDefaultValues2.kt");
@@ -754,9 +760,27 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("missingMultipleDefaultsOnTransitiveInheritance1.kt")
+        public void testMissingMultipleDefaultsOnTransitiveInheritance1() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/missingMultipleDefaultsOnTransitiveInheritance1.kt");
+        }
+
+        @Test
+        @TestMetadata("missingMultipleDefaultsOnTransitiveInheritance2.kt")
+        public void testMissingMultipleDefaultsOnTransitiveInheritance2() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/missingMultipleDefaultsOnTransitiveInheritance2.kt");
+        }
+
+        @Test
         @TestMetadata("missingWrongAnnotationTarget.kt")
         public void testMissingWrongAnnotationTarget() throws Exception {
             runTest("compiler/testData/diagnostics/tests/missingWrongAnnotationTarget.kt");
+        }
+
+        @Test
+        @TestMetadata("moreThanOneOverriddenMissingK2.kt")
+        public void testMoreThanOneOverriddenMissingK2() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/moreThanOneOverriddenMissingK2.kt");
         }
 
         @Test
@@ -769,6 +793,18 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         @TestMetadata("MultipleBounds.kt")
         public void testMultipleBounds() throws Exception {
             runTest("compiler/testData/diagnostics/tests/MultipleBounds.kt");
+        }
+
+        @Test
+        @TestMetadata("multipleDefaultsIncorrectlyAllowed1.kt")
+        public void testMultipleDefaultsIncorrectlyAllowed1() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multipleDefaultsIncorrectlyAllowed1.kt");
+        }
+
+        @Test
+        @TestMetadata("multipleDefaultsIncorrectlyAllowed2.kt")
+        public void testMultipleDefaultsIncorrectlyAllowed2() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multipleDefaultsIncorrectlyAllowed2.kt");
         }
 
         @Test
@@ -23958,6 +23994,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
                 runTest("compiler/testData/diagnostics/tests/operatorsOverloading/plusAssignOnVarAndCollections.kt");
             }
 
+            @Test
+            @TestMetadata("unresolvedOperator.kt")
+            public void testUnresolvedOperator() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/operatorsOverloading/unresolvedOperator.kt");
+            }
+
             @Nested
             @TestMetadata("compiler/testData/diagnostics/tests/operatorsOverloading/until")
             @TestDataPath("$PROJECT_ROOT")
@@ -37874,6 +37916,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
             @Test
             public void testAllFilesPresentInBuilderInference() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/testsWithStdLib/builderInference"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+            }
+
+            @Test
+            @TestMetadata("buildListRemoveAddInBranches.kt")
+            public void testBuildListRemoveAddInBranches() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/buildListRemoveAddInBranches.kt");
             }
 
             @Test
