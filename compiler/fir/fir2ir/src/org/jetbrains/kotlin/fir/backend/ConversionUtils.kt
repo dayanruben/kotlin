@@ -441,10 +441,9 @@ context(Fir2IrComponents)
 internal fun FirProperty.processOverriddenPropertySymbols(
     containingClass: FirClass,
     processor: (FirPropertySymbol) -> Unit
-): List<IrPropertySymbol> {
+) {
     val scope = containingClass.unsubstitutedScope()
     scope.processPropertiesByName(name) {}
-    val overriddenSet = mutableSetOf<IrPropertySymbol>()
     scope.processOverriddenPropertiesFromSuperClasses(symbol, containingClass) { overriddenSymbol ->
         if (!session.visibilityChecker.isVisibleForOverriding(
                 candidateInDerivedClass = symbol.fir, candidateInBaseClass = overriddenSymbol.fir
@@ -456,8 +455,6 @@ internal fun FirProperty.processOverriddenPropertySymbols(
 
         ProcessorAction.NEXT
     }
-
-    return overriddenSet.toList()
 }
 
 private val nameToOperationConventionOrigin = mutableMapOf(
@@ -480,13 +477,13 @@ internal fun FirReference.statementOrigin(): IrStatementOrigin? = when (this) {
             symbol.callableId.isInvoke() ->
                 IrStatementOrigin.INVOKE
 
-            source?.elementType == KtNodeTypes.FOR && symbol.callableId.isIteratorNext() ->
+            source?.kind == KtFakeSourceElementKind.DesugaredForLoop && symbol.callableId.isIteratorNext() ->
                 IrStatementOrigin.FOR_LOOP_NEXT
 
-            source?.elementType == KtNodeTypes.FOR && symbol.callableId.isIteratorHasNext() ->
+            source?.kind == KtFakeSourceElementKind.DesugaredForLoop && symbol.callableId.isIteratorHasNext() ->
                 IrStatementOrigin.FOR_LOOP_HAS_NEXT
 
-            source?.elementType == KtNodeTypes.FOR && symbol.callableId.isIterator() ->
+            source?.kind == KtFakeSourceElementKind.DesugaredForLoop && symbol.callableId.isIterator() ->
                 IrStatementOrigin.FOR_LOOP_ITERATOR
 
             source?.elementType == KtNodeTypes.OPERATION_REFERENCE ->
