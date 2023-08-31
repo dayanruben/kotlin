@@ -7,9 +7,11 @@ buildscript {
     // kotlin-stdlib external dependency with local project :kotlin-stdlib in kotlinCompilerClasspath configuration.
     // see also configureCompilerClasspath@
     val bootstrapCompilerClasspath by configurations.creating
+    val bootstrapBuildToolsApiClasspath by configurations.creating
 
     dependencies {
         bootstrapCompilerClasspath(kotlin("compiler-embeddable", bootstrapKotlinVersion))
+        bootstrapBuildToolsApiClasspath(kotlin("build-tools-impl", bootstrapKotlinVersion))
 
         classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:${kotlinBuildProperties.buildGradlePluginVersion}")
     }
@@ -406,7 +408,6 @@ val gradlePluginProjects = listOf(
     ":kotlin-gradle-plugin-annotations",
     ":kotlin-gradle-plugin-idea",
     ":kotlin-gradle-plugin-idea-proto",
-    ":kotlin-gradle-plugin-kpm-android",
     ":kotlin-gradle-plugin-model",
     ":kotlin-gradle-plugin-tcs-android",
     ":kotlin-allopen",

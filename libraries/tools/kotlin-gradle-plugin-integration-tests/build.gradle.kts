@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.pill.PillExtension
 
 plugins {
     kotlin("jvm")
+    kotlin("plugin.serialization")
     id("jps-compatible")
 }
 
@@ -62,7 +63,6 @@ dependencies {
 
     testImplementation(project(":kotlin-gradle-plugin-model"))
     testImplementation(project(":kotlin-gradle-build-metrics"))
-    testImplementation(project(":kotlin-project-model"))
     testImplementation(project(":kotlin-tooling-metadata"))
     testImplementation(kotlinGradlePluginTest)
     testImplementation(project(":kotlin-gradle-subplugin-example"))
@@ -85,6 +85,7 @@ dependencies {
     testImplementation(kotlinStdlib("jdk8"))
     testImplementation(project(":kotlin-parcelize-compiler"))
     testImplementation(commonDependency("org.jetbrains.intellij.deps", "trove4j"))
+    testImplementation(commonDependency("org.jetbrains.kotlinx", "kotlinx-serialization-json"))
     testImplementation(libs.ktor.client.cio)
     testImplementation(libs.ktor.client.mock)
     testImplementation(libs.ktor.server.core)
@@ -162,27 +163,6 @@ projectTest(
 ) {
     advanceGradleVersion()
     includeMppAndAndroid(false)
-    includeNative(false)
-}
-
-projectTest(
-    "testKpmModelMapping",
-    shortenTempRootName = shortenTempRootName,
-    jUnitMode = JUnitMode.JUnit5
-) {
-    systemProperty("kotlin.gradle.kpm.enableModelMapping", "true")
-    includeMppAndAndroid(true)
-    includeNative(false)
-}
-
-projectTest(
-    "testAdvanceGradleVersionKpmModelMapping",
-    shortenTempRootName = shortenTempRootName,
-    jUnitMode = JUnitMode.JUnit5
-) {
-    systemProperty("kotlin.gradle.kpm.enableModelMapping", "true")
-    advanceGradleVersion()
-    includeMppAndAndroid(true)
     includeNative(false)
 }
 

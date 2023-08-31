@@ -3327,6 +3327,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
             }
 
             @Test
+            @TestMetadata("kt61548.kt")
+            public void testKt61548() throws Exception {
+                runTest("compiler/testData/codegen/box/builtinStubMethods/extendJavaClasses/kt61548.kt");
+            }
+
+            @Test
             @TestMetadata("mapEntry.kt")
             public void testMapEntry() throws Exception {
                 runTest("compiler/testData/codegen/box/builtinStubMethods/extendJavaClasses/mapEntry.kt");
@@ -23486,6 +23492,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
         }
 
         @Test
+        @TestMetadata("nonImmediateInlineClassUpperBound.kt")
+        public void testNonImmediateInlineClassUpperBound() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/nonImmediateInlineClassUpperBound.kt");
+        }
+
+        @Test
         @TestMetadata("nullableEqeqNonNull.kt")
         public void testNullableEqeqNonNull() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/nullableEqeqNonNull.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
@@ -34145,6 +34157,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
                 @TestMetadata("expectActualTypealiasCoercion.kt")
                 public void testExpectActualTypealiasCoercion() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectActualTypealiasCoercion.kt");
+                }
+
+                @Test
+                @TestMetadata("expectAndCommonFunctionOverloads.kt")
+                public void testExpectAndCommonFunctionOverloads() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectAndCommonFunctionOverloads.kt");
                 }
 
                 @Test

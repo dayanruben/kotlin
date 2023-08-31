@@ -3153,6 +3153,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             }
 
             @Test
+            @TestMetadata("kt61548.kt")
+            public void testKt61548() throws Exception {
+                runTest("compiler/testData/codegen/box/builtinStubMethods/extendJavaClasses/kt61548.kt");
+            }
+
+            @Test
             @TestMetadata("mapEntry.kt")
             public void testMapEntry() throws Exception {
                 runTest("compiler/testData/codegen/box/builtinStubMethods/extendJavaClasses/mapEntry.kt");
@@ -32483,6 +32489,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
                 @TestMetadata("expectActualTypealias.kt")
                 public void testExpectActualTypealias() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectActualTypealias.kt");
+                }
+
+                @Test
+                @TestMetadata("expectAndCommonFunctionOverloads.kt")
+                public void testExpectAndCommonFunctionOverloads() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectAndCommonFunctionOverloads.kt");
                 }
 
                 @Test

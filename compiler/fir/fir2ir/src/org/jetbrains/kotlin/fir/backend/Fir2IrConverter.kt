@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
-import org.jetbrains.kotlin.fir.backend.generators.*
+import org.jetbrains.kotlin.fir.backend.generators.DataClassMembersGenerator
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.declarations.utils.isSynthetic
@@ -28,8 +28,6 @@ import org.jetbrains.kotlin.fir.extensions.extensionService
 import org.jetbrains.kotlin.fir.extensions.generatedMembers
 import org.jetbrains.kotlin.fir.extensions.generatedNestedClassifiers
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
-import org.jetbrains.kotlin.fir.symbols.Fir2IrConstructorSymbol
-import org.jetbrains.kotlin.fir.symbols.Fir2IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.lazyDeclarationResolver
 import org.jetbrains.kotlin.ir.PsiIrFileEntry
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
@@ -42,6 +40,8 @@ import org.jetbrains.kotlin.ir.interpreter.IrInterpreterConfiguration
 import org.jetbrains.kotlin.ir.interpreter.IrInterpreterEnvironment
 import org.jetbrains.kotlin.ir.interpreter.checker.EvaluationMode
 import org.jetbrains.kotlin.ir.interpreter.transformer.transformConst
+import org.jetbrains.kotlin.ir.symbols.impl.IrConstructorPublicSymbolImpl
+import org.jetbrains.kotlin.ir.symbols.impl.IrSimpleFunctionPublicSymbolImpl
 import org.jetbrains.kotlin.ir.util.KotlinMangler
 import org.jetbrains.kotlin.ir.util.NaiveSourceBasedFileEntryImpl
 import org.jetbrains.kotlin.ir.util.defaultType
@@ -156,7 +156,7 @@ class Fir2IrConverter(
         for (declaration in file.declarations) {
             when (declaration) {
                 is FirRegularClass -> registerClassAndNestedClasses(declaration, irFile)
-                is FirCodeFragment -> classifierStorage.registerCodeFragmentClass(declaration, irFile)
+                is FirCodeFragment -> classifierStorage.createAndCacheCodeFragmentClass(declaration, irFile)
                 else -> {}
             }
         }
@@ -167,7 +167,7 @@ class Fir2IrConverter(
         file.declarations.forEach {
             when (it) {
                 is FirRegularClass -> processClassAndNestedClassHeaders(it)
-                is FirTypeAlias -> classifierStorage.registerTypeAlias(it, declarationStorage.getIrFile(file))
+                is FirTypeAlias -> classifierStorage.createAndCacheIrTypeAlias(it, declarationStorage.getIrFile(file))
                 else -> {}
             }
         }
@@ -246,7 +246,7 @@ class Fir2IrConverter(
 
         val signature = irClass.symbol.signature!!
 
-        val irPrimaryConstructor = symbolTable.declareConstructor(signature, { Fir2IrConstructorSymbol(signature) }) { irSymbol ->
+        val irPrimaryConstructor = symbolTable.declareConstructor(signature, { IrConstructorPublicSymbolImpl(signature) }) { irSymbol ->
             irFactory.createConstructor(
                 UNDEFINED_OFFSET, UNDEFINED_OFFSET,
                 IrDeclarationOrigin.DEFINED,
@@ -274,7 +274,7 @@ class Fir2IrConverter(
             }
         }
 
-        val irFragmentFunction = symbolTable.declareSimpleFunction(signature, { Fir2IrSimpleFunctionSymbol(signature) }) { irSymbol ->
+        val irFragmentFunction = symbolTable.declareSimpleFunction(signature, { IrSimpleFunctionPublicSymbolImpl(signature) }) { irSymbol ->
             val lastStatement = codeFragment.block.statements.lastOrNull()
             val returnType = (lastStatement as? FirExpression)?.coneTypeOrNull?.toIrType(typeConverter) ?: irBuiltIns.unitType
 
@@ -373,8 +373,8 @@ class Fir2IrConverter(
             classifierStorage.getCachedIrClass(klass)?.apply {
                 this.parent = parent
             } ?: when (klass) {
-                is FirRegularClass -> classifierStorage.registerIrClass(klass, parent)
-                is FirAnonymousObject -> classifierStorage.registerIrAnonymousObject(klass, irParent = parent)
+                is FirRegularClass -> classifierStorage.createAndCacheIrClass(klass, parent)
+                is FirAnonymousObject -> classifierStorage.createAndCacheAnonymousObject(klass, irParent = parent)
             }
         registerNestedClasses(klass, irClass)
         return irClass
@@ -396,7 +396,7 @@ class Fir2IrConverter(
     }
 
     private fun processClassAndNestedClassHeaders(klass: FirClass) {
-        classifierStorage.processClassHeader(klass)
+        classifiersGenerator.processClassHeader(klass)
         processNestedClassHeaders(klass)
     }
 
@@ -437,7 +437,7 @@ class Fir2IrConverter(
                                 registerClassAndNestedClasses(scriptStatement, irScript)
                                 processClassAndNestedClassHeaders(scriptStatement)
                             }
-                            is FirTypeAlias -> classifierStorage.registerTypeAlias(scriptStatement, irScript)
+                            is FirTypeAlias -> classifierStorage.createAndCacheIrTypeAlias(scriptStatement, irScript)
                             else -> {}
                         }
                     }
@@ -470,7 +470,7 @@ class Fir2IrConverter(
             }
             is FirField -> {
                 if (declaration.isSynthetic) {
-                    declarationStorage.createIrFieldAndDelegatedMembers(declaration, containingClass!!, parent as IrClass)
+                    callablesGenerator.createIrFieldAndDelegatedMembers(declaration, containingClass!!, parent as IrClass)
                 } else {
                     throw AssertionError("Unexpected non-synthetic field: ${declaration::class}")
                 }
@@ -486,7 +486,7 @@ class Fir2IrConverter(
                 classifierStorage.getIrEnumEntry(declaration, parent as IrClass)
             }
             is FirAnonymousInitializer -> {
-                declarationStorage.createIrAnonymousInitializer(declaration, parent as IrClass)
+                declarationStorage.getOrCreateIrAnonymousInitializer(declaration, parent as IrClass)
             }
             is FirTypeAlias -> {
                 // DO NOTHING

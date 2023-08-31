@@ -2916,6 +2916,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/builtinStubMethods/extendJavaClasses/hashSet.kt");
             }
 
+            @TestMetadata("kt61548.kt")
+            public void testKt61548() throws Exception {
+                runTest("compiler/testData/codegen/box/builtinStubMethods/extendJavaClasses/kt61548.kt");
+            }
+
             @TestMetadata("mapEntry.kt")
             public void testMapEntry() throws Exception {
                 runTest("compiler/testData/codegen/box/builtinStubMethods/extendJavaClasses/mapEntry.kt");
@@ -19618,6 +19623,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/inlineClasses/noReturnTypeManglingJvmNameGeneric.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
         }
 
+        @TestMetadata("nonImmediateInlineClassUpperBound.kt")
+        public void testNonImmediateInlineClassUpperBound() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/nonImmediateInlineClassUpperBound.kt");
+        }
+
         @TestMetadata("nullableEqeqNonNull.kt")
         public void testNullableEqeqNonNull() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/nullableEqeqNonNull.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
@@ -29124,6 +29134,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 @TestMetadata("expectActualTypealiasCoercion.kt")
                 public void testExpectActualTypealiasCoercion() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectActualTypealiasCoercion.kt");
+                }
+
+                @TestMetadata("expectAndCommonFunctionOverloads.kt")
+                public void testExpectAndCommonFunctionOverloads() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectAndCommonFunctionOverloads.kt");
                 }
 
                 @TestMetadata("expectInterfaceInSupertypes.kt")
