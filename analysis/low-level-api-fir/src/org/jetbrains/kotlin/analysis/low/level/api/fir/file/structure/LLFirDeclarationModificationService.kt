@@ -11,13 +11,22 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getFirResolveSession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirFile
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.resolveToFirSymbol
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirDeclarationModificationService.ModificationType
+import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirResolvableModuleSession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.llFirResolvableSession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.codeFragment
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.errorWithFirSpecificEntries
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.analysis.providers.analysisMessageBus
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics.MODULE_OUT_OF_BLOCK_MODIFICATION
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.KtAnnotated
 import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
 
 /**
  * This service is responsible for processing incoming [PsiElement] changes to reflect them on FIR tree.
@@ -56,12 +65,44 @@ class LLFirDeclarationModificationService(val project: Project) {
 
         when (val changeType = calculateChangeType(element, modificationType)) {
             is ChangeType.Invisible -> {}
-            is ChangeType.InBlock -> invalidateAfterInBlockModification(changeType.blockOwner)
-            is ChangeType.OutOfBlock -> {
-                val ktModule = ProjectStructureProvider.getModule(project, element, contextualModule = null)
-                project.analysisMessageBus.syncPublisher(MODULE_OUT_OF_BLOCK_MODIFICATION).onModification(ktModule)
-            }
+            is ChangeType.InBlock -> inBlockModification(changeType.blockOwner)
+            is ChangeType.OutOfBlock -> outOfBlockModification(element)
         }
+    }
+
+    private fun inBlockModification(declaration: KtElement) {
+        val ktModule = ProjectStructureProvider.getModule(project, declaration, contextualModule = null)
+        val resolveSession = ktModule.getFirResolveSession(project)
+        val firDeclaration = when (declaration) {
+            is KtCodeFragment -> declaration.getOrBuildFirFile(resolveSession).codeFragment
+            is KtDeclaration -> declaration.resolveToFirSymbol(resolveSession).fir
+            else -> errorWithFirSpecificEntries(
+                "Unexpected declaration kind: ${declaration::class.simpleName}",
+                psi = declaration,
+            )
+        }
+
+        invalidateAfterInBlockModification(firDeclaration)
+
+        val moduleSession = firDeclaration.llFirResolvableSession ?: errorWithFirSpecificEntries(
+            "${LLFirResolvableModuleSession::class.simpleName} is not found",
+            fir = firDeclaration,
+            psi = declaration,
+        ) {
+            withEntry("session", resolveSession) { it.toString() }
+        }
+
+        val fileStructure = moduleSession.moduleComponents
+            .fileStructureCache
+            .getCachedFileStructure(declaration.containingKtFile)
+            ?: return // we do not have a cache for this file
+
+        fileStructure.invalidateElement(declaration)
+    }
+
+    private fun outOfBlockModification(element: PsiElement) {
+        val ktModule = ProjectStructureProvider.getModule(project, element, contextualModule = null)
+        project.analysisMessageBus.syncPublisher(MODULE_OUT_OF_BLOCK_MODIFICATION).onModification(ktModule)
     }
 
     /**

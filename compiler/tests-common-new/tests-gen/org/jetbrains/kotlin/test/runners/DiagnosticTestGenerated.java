@@ -94,6 +94,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("assigningAssignments.kt")
+        public void testAssigningAssignments() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/assigningAssignments.kt");
+        }
+
+        @Test
         @TestMetadata("AutoCreatedIt.kt")
         public void testAutoCreatedIt() throws Exception {
             runTest("compiler/testData/diagnostics/tests/AutoCreatedIt.kt");
@@ -709,6 +715,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("kt58583.kt")
         public void testKt58583() throws Exception {
             runTest("compiler/testData/diagnostics/tests/kt58583.kt");
+        }
+
+        @Test
+        @TestMetadata("Kt60343.kt")
+        public void testKt60343() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/Kt60343.kt");
         }
 
         @Test
