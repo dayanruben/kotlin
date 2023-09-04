@@ -23033,6 +23033,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("expectActualClassesAreExperimentalWarning.kt")
+            public void testExpectActualClassesAreExperimentalWarning() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/expectActualClassesAreExperimentalWarning.kt");
+            }
+
+            @Test
             @TestMetadata("expectDataObject.kt")
             public void testExpectDataObject() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/expectDataObject.kt");
@@ -29298,6 +29304,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("localObject.kt")
             public void testLocalObject() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/resolve/localObject.kt");
+            }
+
+            @Test
+            @TestMetadata("nestedClassUnresolvedReference.kt")
+            public void testNestedClassUnresolvedReference() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/resolve/nestedClassUnresolvedReference.kt");
             }
 
             @Test

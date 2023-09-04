@@ -3,11 +3,10 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package primitives
+package org.jetbrains.kotlin.generators.builtins.numbers.primitives
 
 import org.jetbrains.kotlin.generators.builtins.PrimitiveType
 import org.jetbrains.kotlin.generators.builtins.generateBuiltIns.BuiltInsGenerator
-import org.jetbrains.kotlin.generators.builtins.numbers.primitives.*
 import org.jetbrains.kotlin.generators.builtins.numbers.primitives.NativePrimitivesGenerator.Companion.setAsExternal
 import org.jetbrains.kotlin.generators.builtins.numbers.primitives.WasmPrimitivesGenerator.Companion.implementAsIntrinsic
 import org.jetbrains.kotlin.generators.builtins.numbers.primitives.WasmPrimitivesGenerator.Companion.implementedAsIntrinsic
@@ -19,7 +18,7 @@ abstract class BooleanGenerator(private val writer: PrintWriter) : BuiltInsGener
     }
 
     private fun generateFile(): FileBuilder {
-        return file { generateClass() }.apply { this.modifyGeneratedFile() }
+        return file(this::class) { generateClass() }.apply { this.modifyGeneratedFile() }
     }
 
     private fun FileBuilder.generateClass() {
@@ -145,6 +144,7 @@ abstract class BooleanGenerator(private val writer: PrintWriter) : BuiltInsGener
                 methodName = "hashCode"
                 returnType = PrimitiveType.INT.capitalized
             }
+            "if (this) 1231 else 1237".setAsExpressionBody()
         }.modifyGeneratedHashCode()
     }
 
@@ -166,12 +166,20 @@ class JvmBooleanGenerator(writer: PrintWriter) : BooleanGenerator(writer) {
     override fun ClassBuilder.modifyGeneratedClass() {
         appendDoc("On the JVM, non-nullable values of this type are represented as values of the primitive type `boolean`.")
     }
+
+    override fun MethodBuilder.modifyGeneratedHashCode() {
+        noBody()
+    }
 }
 
 class JsBooleanGenerator(writer: PrintWriter) : BooleanGenerator(writer) {
     override fun FileBuilder.modifyGeneratedFile() {
         suppress("NON_ABSTRACT_FUNCTION_WITH_NO_BODY")
         suppress("UNUSED_PARAMETER")
+    }
+
+    override fun MethodBuilder.modifyGeneratedHashCode() {
+        noBody()
     }
 }
 
@@ -212,28 +220,21 @@ class WasmBooleanGenerator(writer: PrintWriter) : BooleanGenerator(writer) {
     }
 
     override fun MethodBuilder.modifyGeneratedCompareTo() {
-        "wasm_i32_compareTo(this.toInt(), other.toInt())".addAsSingleLineBody(bodyOnNewLine = true)
+        "wasm_i32_compareTo(this.toInt(), other.toInt())".setAsExpressionBody()
     }
 
     override fun MethodBuilder.modifyGeneratedToString() {
-        modifySignature { visibility = null }
-        "if (this) \"true\" else \"false\"".addAsSingleLineBody(bodyOnNewLine = true)
+        "if (this) \"true\" else \"false\"".setAsExpressionBody()
     }
 
     override fun MethodBuilder.modifyGeneratedEquals() {
-        modifySignature { visibility = null }
         """
             return if (other !is Boolean) {
                 false
             } else {
                 wasm_i32_eq(this.toInt(), other.toInt())
             }
-        """.trimIndent().addAsMultiLineBody()
-    }
-
-    override fun MethodBuilder.modifyGeneratedHashCode() {
-        modifySignature { visibility = null }
-        "if (this) 1231 else 1237".addAsSingleLineBody(bodyOnNewLine = true)
+        """.trimIndent().setAsBlockBody()
     }
 
     override fun ClassBuilder.generateAdditionalMethods() {
@@ -244,7 +245,7 @@ class WasmBooleanGenerator(writer: PrintWriter) : BooleanGenerator(writer) {
                 methodName = "toInt"
                 returnType = PrimitiveType.INT.capitalized
             }
-            implementedAsIntrinsic.addAsSingleLineBody(bodyOnNewLine = true)
+            implementedAsIntrinsic.setAsExpressionBody()
         }
     }
 }
@@ -276,11 +277,11 @@ class NativeBooleanGenerator(writer: PrintWriter) : BooleanGenerator(writer) {
     }
 
     override fun MethodBuilder.modifyGeneratedToString() {
-        "if (this) \"true\" else \"false\"".addAsSingleLineBody()
+        "if (this) \"true\" else \"false\"".setAsExpressionBody()
     }
 
     override fun MethodBuilder.modifyGeneratedEquals() {
-        "other is Boolean && kotlin.native.internal.areEqualByValue(this, other)".addAsSingleLineBody(bodyOnNewLine = true)
+        "other is Boolean && kotlin.native.internal.areEqualByValue(this, other)".setAsExpressionBody()
     }
 
     private fun ClassBuilder.generateCustomEquals() {
@@ -296,13 +297,8 @@ class NativeBooleanGenerator(writer: PrintWriter) : BooleanGenerator(writer) {
                 returnType = PrimitiveType.BOOLEAN.capitalized
             }
 
-            "kotlin.native.internal.areEqualByValue(this, other)".addAsSingleLineBody(bodyOnNewLine = false)
+            "kotlin.native.internal.areEqualByValue(this, other)".setAsExpressionBody()
         }
-    }
-
-    override fun MethodBuilder.modifyGeneratedHashCode() {
-        modifySignature { visibility = MethodVisibility.PUBLIC }
-        "if (this) 1231 else 1237".addAsSingleLineBody(bodyOnNewLine = true)
     }
 
     override fun ClassBuilder.generateAdditionalMethods() {
