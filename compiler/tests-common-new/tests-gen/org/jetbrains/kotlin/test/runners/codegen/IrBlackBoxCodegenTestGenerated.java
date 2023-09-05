@@ -16192,6 +16192,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("doubleDelegationEqualsHashcode.kt")
+        public void testDoubleDelegationEqualsHashcode() throws Exception {
+            runTest("compiler/testData/codegen/box/delegation/doubleDelegationEqualsHashcode.kt");
+        }
+
+        @Test
         @TestMetadata("genericProperty.kt")
         public void testGenericProperty() throws Exception {
             runTest("compiler/testData/codegen/box/delegation/genericProperty.kt");
@@ -29168,6 +29174,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             @TestMetadata("equals_after.kt")
             public void testEquals_after() throws Exception {
                 runTest("compiler/testData/codegen/box/involvesIrInterpreter/intrinsicConst/equals_after.kt");
+            }
+
+            @Test
+            @TestMetadata("ifConstVal.kt")
+            public void testIfConstVal() throws Exception {
+                runTest("compiler/testData/codegen/box/involvesIrInterpreter/intrinsicConst/ifConstVal.kt");
             }
 
             @Test
@@ -44206,6 +44218,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
                 runTest("compiler/testData/codegen/box/reflection/annotations/simpleValAnnotation.kt");
             }
 
+            @Test
+            @TestMetadata("spread.kt")
+            public void testSpread() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/annotations/spread.kt");
+            }
+
             @Nested
             @TestMetadata("compiler/testData/codegen/box/reflection/annotations/onTypes")
             @TestDataPath("$PROJECT_ROOT")
@@ -45043,6 +45061,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             }
 
             @Test
+            @TestMetadata("kt61304.kt")
+            public void testKt61304() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/callBy/kt61304.kt");
+            }
+
+            @Test
             @TestMetadata("manyArgumentsNoneDefaultConstructor.kt")
             public void testManyArgumentsNoneDefaultConstructor() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/callBy/manyArgumentsNoneDefaultConstructor.kt");
@@ -45076,6 +45100,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             @TestMetadata("mfvcFunctionsAndConstructors.kt")
             public void testMfvcFunctionsAndConstructors() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/callBy/mfvcFunctionsAndConstructors.kt");
+            }
+
+            @Test
+            @TestMetadata("mfvcKt61304.kt")
+            public void testMfvcKt61304() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/callBy/mfvcKt61304.kt");
             }
 
             @Test

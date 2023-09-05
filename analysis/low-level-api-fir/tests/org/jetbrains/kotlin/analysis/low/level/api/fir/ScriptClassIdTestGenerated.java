@@ -35,4 +35,28 @@ public class ScriptClassIdTestGenerated extends AbstractScriptClassIdTest {
     public void testClassWithMembersWithPackage() throws Exception {
         runTest("analysis/low-level-api-fir/testdata/classId/classWithMembersWithPackage.kts");
     }
+
+    @Test
+    @TestMetadata("enum.kts")
+    public void testEnum() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/classId/enum.kts");
+    }
+
+    @Test
+    @TestMetadata("enumEntry.kts")
+    public void testEnumEntry() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/classId/enumEntry.kts");
+    }
+
+    @Test
+    @TestMetadata("namelessClasses.kts")
+    public void testNamelessClasses() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/classId/namelessClasses.kts");
+    }
+
+    @Test
+    @TestMetadata("namelessInsideNamelessClasses.kts")
+    public void testNamelessInsideNamelessClasses() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/classId/namelessInsideNamelessClasses.kts");
+    }
 }

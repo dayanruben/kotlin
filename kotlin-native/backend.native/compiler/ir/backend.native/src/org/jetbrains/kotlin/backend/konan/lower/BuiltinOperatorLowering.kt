@@ -90,7 +90,7 @@ internal class BuiltinOperatorLowering(val context: Context) : FileLoweringPass,
             reinterpret(expression, expression.type, toType)
 
     private fun IrBuilderWithScope.reinterpret(expression: IrExpression, fromType: IrType, toType: IrType) =
-            irCall(symbols.reinterpret.owner, listOf(fromType, toType)).apply {
+            irCallWithSubstitutedType(symbols.reinterpret.owner, listOf(fromType, toType)).apply {
                 extensionReceiver = expression
             }
 
@@ -152,9 +152,9 @@ internal class BuiltinOperatorLowering(val context: Context) : FileLoweringPass,
 
             is BinaryType.Reference -> {
                 // TODO: don't use binaryType.nullable.
-                val lhsRawType = irBuiltins.anyClass.owner.defaultOrNullableType(lhsBinaryType.nullable)
+                val lhsRawType = if (lhsBinaryType.nullable) irBuiltins.anyNType else irBuiltins.anyType
                 val rhsBinaryType = rhs.type.computeBinaryType() as BinaryType.Reference<*>
-                val rhsRawType = irBuiltins.anyClass.owner.defaultOrNullableType(rhsBinaryType.nullable)
+                val rhsRawType = if (rhsBinaryType.nullable) irBuiltins.anyNType else irBuiltins.anyType
 
                 genFloatingOrReferenceEquals(
                         symbol,

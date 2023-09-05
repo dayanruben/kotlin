@@ -15832,6 +15832,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("doubleDelegationEqualsHashcode.kt")
+        public void testDoubleDelegationEqualsHashcode() throws Exception {
+            runTest("compiler/testData/codegen/box/delegation/doubleDelegationEqualsHashcode.kt");
+        }
+
+        @Test
         @TestMetadata("genericProperty.kt")
         public void testGenericProperty() throws Exception {
             runTest("compiler/testData/codegen/box/delegation/genericProperty.kt");
@@ -41632,6 +41638,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
                 runTest("compiler/testData/codegen/box/reflection/annotations/simpleValAnnotation.kt");
             }
 
+            @Test
+            @TestMetadata("spread.kt")
+            public void testSpread() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/annotations/spread.kt");
+            }
+
             @Nested
             @TestMetadata("compiler/testData/codegen/box/reflection/annotations/onTypes")
             @TestDataPath("$PROJECT_ROOT")
@@ -42322,6 +42334,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             @TestMetadata("jvmStaticInObject.kt")
             public void testJvmStaticInObject() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/callBy/jvmStaticInObject.kt");
+            }
+
+            @Test
+            @TestMetadata("kt61304.kt")
+            public void testKt61304() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/callBy/kt61304.kt");
             }
 
             @Test

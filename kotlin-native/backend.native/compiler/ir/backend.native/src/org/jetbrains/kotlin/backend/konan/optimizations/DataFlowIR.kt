@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.ir.types.isUnit
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
+import org.jetbrains.kotlin.library.metadata.impl.KlibResolvedModuleDescriptorsFactoryImpl.Companion.FORWARD_DECLARATIONS_MODULE_NAME
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
@@ -483,7 +484,7 @@ internal object DataFlowIR {
         @OptIn(ObsoleteDescriptorBasedAPI::class)
         fun mapClassReferenceType(irClass: IrClass): Type {
             // Do not try to devirtualize ObjC classes.
-            if (irClass.module.name == Name.special("<forward declarations>") || irClass.isObjCClass())
+            if (irClass.module.name == FORWARD_DECLARATIONS_MODULE_NAME || irClass.isObjCClass())
                 return Type.Virtual
 
             val isFinal = irClass.isFinalClass
@@ -508,7 +509,7 @@ internal object DataFlowIR {
                 type.vtable += layoutBuilder.vtableEntries.map {
                     val implementation = it.getImplementation(context)
                             ?: error(
-                                    irClass.getContainingFile(),
+                                    irClass.fileOrNull,
                                     irClass,
                                     """
                                         no implementation found for ${it.overriddenFunction.render()}
@@ -523,7 +524,7 @@ internal object DataFlowIR {
                     type.itable[iface.classId] = iface.interfaceVTableEntries.map {
                         val implementation = layoutBuilder.overridingOf(it)
                                 ?: error(
-                                        irClass.getContainingFile(),
+                                        irClass.fileOrNull,
                                         irClass,
                                         """
                                             no implementation found for ${it.render()}

@@ -31,6 +31,18 @@ public class SourceClassIdTestGenerated extends AbstractSourceClassIdTest {
     }
 
     @Test
+    @TestMetadata("enum.kt")
+    public void testEnum() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/classId/enum.kt");
+    }
+
+    @Test
+    @TestMetadata("enumEntry.kt")
+    public void testEnumEntry() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/classId/enumEntry.kt");
+    }
+
+    @Test
     @TestMetadata("localClassInsideFunctionLiteral.kt")
     public void testLocalClassInsideFunctionLiteral() throws Exception {
         runTest("analysis/low-level-api-fir/testdata/classId/localClassInsideFunctionLiteral.kt");
@@ -46,5 +58,17 @@ public class SourceClassIdTestGenerated extends AbstractSourceClassIdTest {
     @TestMetadata("localClassInsideSuperEntryCall.kt")
     public void testLocalClassInsideSuperEntryCall() throws Exception {
         runTest("analysis/low-level-api-fir/testdata/classId/localClassInsideSuperEntryCall.kt");
+    }
+
+    @Test
+    @TestMetadata("namelessClasses.kt")
+    public void testNamelessClasses() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/classId/namelessClasses.kt");
+    }
+
+    @Test
+    @TestMetadata("namelessInsideNamelessClasses.kt")
+    public void testNamelessInsideNamelessClasses() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/classId/namelessInsideNamelessClasses.kt");
     }
 }

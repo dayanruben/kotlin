@@ -49,6 +49,7 @@ import org.jetbrains.kotlin.fir.scopes.FirOverrideService
 import org.jetbrains.kotlin.fir.scopes.FirPlatformClassMapper
 import org.jetbrains.kotlin.fir.scopes.PlatformSpecificOverridabilityRules
 import org.jetbrains.kotlin.fir.scopes.impl.*
+import org.jetbrains.kotlin.fir.scopes.jvm.JvmMappedScope.FirMappedSymbolStorage
 import org.jetbrains.kotlin.fir.serialization.FirProvidedDeclarationsForMetadataService
 import org.jetbrains.kotlin.fir.symbols.FirLazyDeclarationResolver
 import org.jetbrains.kotlin.fir.types.*
@@ -90,9 +91,12 @@ fun FirSession.registerCommonComponentsAfterExtensionsAreConfigured() {
     register(FirProvidedDeclarationsForMetadataService::class, FirProvidedDeclarationsForMetadataService.create(this))
 }
 
+val firCachesFactoryForCliMode: FirCachesFactory
+    get() = FirThreadUnsafeCachesFactory
+
 @OptIn(SessionConfiguration::class)
 fun FirSession.registerCliCompilerOnlyComponents() {
-    register(FirCachesFactory::class, FirThreadUnsafeCachesFactory)
+    register(FirCachesFactory::class, firCachesFactoryForCliMode)
     register(SealedClassInheritorsProvider::class, SealedClassInheritorsProviderImpl)
     register(FirLazyDeclarationResolver::class, FirDummyCompilerLazyDeclarationResolver)
     register(FirExceptionHandler::class, FirCliExceptionHandler)
@@ -101,11 +105,25 @@ fun FirSession.registerCliCompilerOnlyComponents() {
     register(FirPredicateBasedProvider::class, FirPredicateBasedProviderImpl(this))
 }
 
+class FirSharableJavaComponents(
+    val enhancementStorage: FirEnhancedSymbolsStorage,
+    val mappedStorage: FirMappedSymbolStorage
+) {
+    constructor(cachesFactory: FirCachesFactory) : this(
+        FirEnhancedSymbolsStorage(cachesFactory),
+        FirMappedSymbolStorage(cachesFactory)
+    )
+}
+
 @OptIn(SessionConfiguration::class)
-fun FirSession.registerCommonJavaComponents(javaModuleResolver: JavaModuleResolver) {
+fun FirSession.registerCommonJavaComponents(
+    javaModuleResolver: JavaModuleResolver,
+    predefinedComponents: FirSharableJavaComponents? = null,
+) {
     val jsr305State = languageVersionSettings.getFlag(JvmAnalysisFlags.javaTypeEnhancementState)
     register(FirAnnotationTypeQualifierResolver::class, FirAnnotationTypeQualifierResolver(this, jsr305State, javaModuleResolver))
-    register(FirEnhancedSymbolsStorage::class, FirEnhancedSymbolsStorage(this))
+    register(FirEnhancedSymbolsStorage::class, predefinedComponents?.enhancementStorage ?: FirEnhancedSymbolsStorage(this))
+    register(FirMappedSymbolStorage::class, predefinedComponents?.mappedStorage ?: FirMappedSymbolStorage(this))
     register(FirSyntheticPropertiesStorage::class, FirSyntheticPropertiesStorage(this))
     register(
         FirJvmDefaultModeComponent::class,

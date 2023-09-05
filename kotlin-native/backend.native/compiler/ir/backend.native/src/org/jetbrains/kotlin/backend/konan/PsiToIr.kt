@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.builders.TranslationPluginContext
+import org.jetbrains.kotlin.ir.declarations.DescriptorMetadataSource
 import org.jetbrains.kotlin.ir.linkage.IrDeserializer
 import org.jetbrains.kotlin.ir.linkage.partial.partialLinkageConfig
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
@@ -216,7 +217,7 @@ internal fun PsiToIrContext.psiToIr(
             environment.getSourceFiles(),
             irProviders = listOf(irDeserializer),
             linkerExtensions = pluginExtensions,
-    ).toKonanModule()
+    )
 
     irDeserializer.postProcess(inOrAfterLinkageStep = true)
 
@@ -248,9 +249,9 @@ internal fun PsiToIrContext.psiToIr(
                 (modules.values + mainModule).single { it.descriptor == this.stdlibModule }
     }
 
-    mainModule.files.forEach { it.metadata = KonanFileMetadataSource(mainModule) }
+    mainModule.files.forEach { it.metadata = DescriptorMetadataSource.File(listOf(mainModule.descriptor)) }
     modules.values.forEach { module ->
-        module.files.forEach { it.metadata = KonanFileMetadataSource(module as KonanIrModuleFragmentImpl) }
+        module.files.forEach { it.metadata = DescriptorMetadataSource.File(listOf(module.descriptor)) }
     }
 
     return if (isProducingLibrary) {

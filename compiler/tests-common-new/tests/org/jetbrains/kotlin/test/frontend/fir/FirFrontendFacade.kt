@@ -25,10 +25,7 @@ import org.jetbrains.kotlin.fir.checkers.registerExtendedCommonCheckers
 import org.jetbrains.kotlin.fir.deserialization.ModuleDataProvider
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.java.FirProjectSessionProvider
-import org.jetbrains.kotlin.fir.session.FirCommonSessionFactory
-import org.jetbrains.kotlin.fir.session.FirJvmSessionFactory
-import org.jetbrains.kotlin.fir.session.FirNativeSessionFactory
-import org.jetbrains.kotlin.fir.session.FirSessionConfigurator
+import org.jetbrains.kotlin.fir.session.*
 import org.jetbrains.kotlin.fir.session.environment.AbstractProjectEnvironment
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.js.config.WasmTarget
@@ -54,6 +51,7 @@ import org.jetbrains.kotlin.test.services.*
 import org.jetbrains.kotlin.test.services.configuration.JsEnvironmentConfigurator
 import org.jetbrains.kotlin.test.services.configuration.NativeEnvironmentConfigurator
 import org.jetbrains.kotlin.test.services.configuration.WasmEnvironmentConfigurator
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import java.nio.file.Paths
 
 open class FirFrontendFacade(
@@ -97,6 +95,10 @@ open class FirFrontendFacade(
 
         val project = testServices.compilerConfigurationProvider.getProject(module)
         val extensionRegistrars = FirExtensionRegistrar.getInstances(project)
+        val targetPlatform = module.targetPlatform
+        val predefinedJavaComponents = runIf(targetPlatform.isJvm()) {
+            FirSharableJavaComponents(firCachesFactoryForCliMode)
+        }
         val projectEnvironment = createLibrarySession(
             module,
             project,
@@ -104,12 +106,12 @@ open class FirFrontendFacade(
             testServices.firModuleInfoProvider.firSessionProvider,
             moduleDataProvider,
             testServices.compilerConfigurationProvider.getCompilerConfiguration(module),
-            extensionRegistrars
+            extensionRegistrars,
+            predefinedJavaComponents
         )
 
-        val targetPlatform = module.targetPlatform
         val firOutputPartForDependsOnModules = sortedModules.map {
-            analyze(it, moduleDataMap[it]!!, targetPlatform, projectEnvironment, extensionRegistrars)
+            analyze(it, moduleDataMap[it]!!, targetPlatform, projectEnvironment, extensionRegistrars, predefinedJavaComponents)
         }
 
         return FirOutputArtifactImpl(firOutputPartForDependsOnModules)
@@ -170,7 +172,8 @@ open class FirFrontendFacade(
         sessionProvider: FirProjectSessionProvider,
         moduleDataProvider: ModuleDataProvider,
         configuration: CompilerConfiguration,
-        extensionRegistrars: List<FirExtensionRegistrar>
+        extensionRegistrars: List<FirExtensionRegistrar>,
+        predefinedJavaComponents: FirSharableJavaComponents?
     ): AbstractProjectEnvironment? {
         val compilerConfigurationProvider = testServices.compilerConfigurationProvider
         val projectEnvironment: AbstractProjectEnvironment?
@@ -208,6 +211,7 @@ open class FirFrontendFacade(
                         projectFileSearchScope,
                         packagePartProvider,
                         languageVersionSettings,
+                        predefinedJavaComponents = predefinedJavaComponents,
                         registerExtraComponents = ::registerExtraComponents,
                     )
                 }
@@ -264,6 +268,7 @@ open class FirFrontendFacade(
         targetPlatform: TargetPlatform,
         projectEnvironment: AbstractProjectEnvironment?,
         extensionRegistrars: List<FirExtensionRegistrar>,
+        predefinedJavaComponents: FirSharableJavaComponents?,
     ): FirOutputPartForDependsOnModule {
         val compilerConfigurationProvider = testServices.compilerConfigurationProvider
         val moduleInfoProvider = testServices.firModuleInfoProvider
@@ -297,6 +302,7 @@ open class FirFrontendFacade(
             projectEnvironment,
             extensionRegistrars,
             sessionConfigurator,
+            predefinedJavaComponents,
             project,
             ktFiles
         )
@@ -325,8 +331,9 @@ open class FirFrontendFacade(
         projectEnvironment: AbstractProjectEnvironment?,
         extensionRegistrars: List<FirExtensionRegistrar>,
         sessionConfigurator: FirSessionConfigurator.() -> Unit,
+        predefinedJavaComponents: FirSharableJavaComponents?,
         project: Project,
-        ktFiles: Collection<KtFile>
+        ktFiles: Collection<KtFile>,
     ): FirSession {
         val languageVersionSettings = module.languageVersionSettings
         return when {
@@ -351,6 +358,7 @@ open class FirFrontendFacade(
                     incrementalCompilationContext = null,
                     extensionRegistrars,
                     languageVersionSettings,
+                    predefinedJavaComponents = predefinedJavaComponents,
                     needRegisterJavaElementFinder = true,
                     registerExtraComponents = ::registerExtraComponents,
                     init = sessionConfigurator,

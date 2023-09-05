@@ -171,6 +171,9 @@ fun IrMemberAccessExpression<*>.addArguments(args: Map<ParameterDescriptor, IrEx
     }
 }
 
+val IrField.hasNonConstInitializer: Boolean
+    get() = initializer?.expression.let { it != null && it !is IrConst<*> && it !is IrConstantValue }
+
 fun IrExpression.isNullConst() = this is IrConst<*> && this.kind == IrConstKind.Null
 
 fun IrExpression.isTrueConst() = this is IrConst<*> && this.kind == IrConstKind.Boolean && this.value == true
@@ -1066,10 +1069,13 @@ fun IrType.remapTypeParameters(
         else -> this
     }
 
-/* Copied from K/N */
 fun IrDeclarationContainer.addChild(declaration: IrDeclaration) {
     this.declarations += declaration
     declaration.setDeclarationsParent(this)
+}
+
+fun IrDeclarationContainer.addChildren(declarations: List<IrDeclaration>) {
+    declarations.forEach { this.addChild(it) }
 }
 
 fun <T : IrElement> T.setDeclarationsParent(parent: IrDeclarationParent): T {
