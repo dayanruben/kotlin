@@ -11,11 +11,13 @@ import org.jetbrains.kotlin.gradle.dsl.multiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinMetadataTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.external.createCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.external.createExternalKotlinTarget
+import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile as KotlinJvmCompileTask
 import org.jetbrains.kotlin.gradle.tasks.withType
 import org.jetbrains.kotlin.gradle.util.*
 import org.jetbrains.kotlin.gradle.utils.named
+import org.jetbrains.kotlin.test.util.JUnit4Assertions.assertTrue
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -306,6 +308,107 @@ class ProjectCompilerOptionsTests {
         }
 
         assertEquals("2.0", project.multiplatformExtension.sourceSets.getByName("commonTest").languageSettings.languageVersion)
+    }
+
+    @Test
+    fun testJvmModuleNameInMppIsConfigured() {
+        val project = buildProjectWithMPP()
+        project.runLifecycleAwareTest {
+            with(multiplatformExtension) {
+                jvm {
+                    compilerOptions.moduleName.set("my-custom-module-name")
+                }
+            }
+        }
+
+        assertEquals("my-custom-module-name", project.kotlinJvmTask("compileKotlinJvm").compilerOptions.moduleName.orNull)
+    }
+
+    @Test
+    fun testJsOptionsIsConfigured() {
+        val project = buildProjectWithMPP()
+        project.runLifecycleAwareTest {
+            with(multiplatformExtension) {
+                js {
+                    compilerOptions {
+                        moduleName.set("js-module-name")
+                        freeCompilerArgs.add("-Xstrict-implicit-export-types")
+                    }
+                }
+            }
+        }
+
+        val kotlinJsCompileTask = project.kotlinJsTask("compileKotlinJs")
+        assertEquals("js-module-name", kotlinJsCompileTask.compilerOptions.moduleName.orNull)
+        assertTrue(
+            kotlinJsCompileTask
+                .compilerOptions
+                .freeCompilerArgs.get()
+                .contains("-Xstrict-implicit-export-types")
+        )
+    }
+
+    @Test
+    fun testJsBrowserConfigDoesNotOverrideFreeCompilerArgsFromTarget() {
+        val project = buildProjectWithMPP()
+        project.runLifecycleAwareTest {
+            with(multiplatformExtension) {
+                js {
+                    binaries.executable()
+                    browser()
+                    compilerOptions {
+                        freeCompilerArgs.addAll("-Xstrict-implicit-export-types", "-Xexplicit-api=warning")
+                    }
+                }
+            }
+        }
+
+        val kotlinJsCompileTask = project.kotlinJsTask("compileKotlinJs")
+        assertTrue(
+            (kotlinJsCompileTask as Kotlin2JsCompile)
+                .enhancedFreeCompilerArgs.get()
+                .containsAll(listOf("-Xstrict-implicit-export-types", "-Xexplicit-api=warning"))
+        )
+    }
+
+    @Test
+    fun testJsLinkTaskAreAlsoConfiguredWithOptionsFromDSL() {
+        val project = buildProjectWithMPP()
+        project.runLifecycleAwareTest {
+            with(multiplatformExtension) {
+                js {
+                    nodejs()
+                    binaries.library()
+                    compilerOptions {
+                        moduleName.set("my-custom-module")
+                        languageVersion.set(KotlinVersion.KOTLIN_1_8)
+                        apiVersion.set(KotlinVersion.KOTLIN_1_8)
+                        moduleKind.set(JsModuleKind.MODULE_PLAIN)
+                        freeCompilerArgs.addAll("-Xstrict-implicit-export-types", "-Xexplicit-api=warning")
+                    }
+                }
+            }
+        }
+
+        val jsTasks = listOf(
+            project.kotlinJsTask("compileKotlinJs"),
+            project.kotlinJsTask("compileDevelopmentLibraryKotlinJs"),
+            project.kotlinJsTask("compileProductionLibraryKotlinJs")
+        )
+        jsTasks.forEach { jsTask ->
+            if (jsTask.name == "compileKotlinJs") {
+                // JS IR has different module name from 'compileKotlinJs'
+                assertEquals("my-custom-module", jsTask.compilerOptions.moduleName.orNull)
+            }
+            assertEquals(KotlinVersion.KOTLIN_1_8, jsTask.compilerOptions.languageVersion.orNull)
+            assertEquals(KotlinVersion.KOTLIN_1_8, jsTask.compilerOptions.apiVersion.orNull)
+            assertEquals(JsModuleKind.MODULE_PLAIN, jsTask.compilerOptions.moduleKind.orNull)
+            assertTrue(
+                jsTask.compilerOptions.freeCompilerArgs.get().containsAll(
+                    listOf("-Xstrict-implicit-export-types", "-Xexplicit-api=warning")
+                )
+            )
+        }
     }
 
     private fun Project.kotlinNativeTask(name: String): KotlinCompilationTask<KotlinNativeCompilerOptions> = tasks

@@ -7,9 +7,8 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir.util
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
-import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.FirDesignation
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.FirDesignationWithScript
 import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.getNonLocalContainingOrThisDeclaration
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.ContextCollector.ContextKind
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.ContextCollector.Context
@@ -23,14 +22,21 @@ import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.SessionHolder
 import org.jetbrains.kotlin.fir.resolve.dfa.DataFlowAnalyzerContext
+import org.jetbrains.kotlin.fir.resolve.dfa.PropertyStability
+import org.jetbrains.kotlin.fir.resolve.dfa.RealVariable
+import org.jetbrains.kotlin.fir.resolve.dfa.cfg.CFGNode
+import org.jetbrains.kotlin.fir.resolve.dfa.cfg.ClassExitNode
+import org.jetbrains.kotlin.fir.resolve.dfa.controlFlowGraph
+import org.jetbrains.kotlin.fir.resolve.dfa.smartCastedType
 import org.jetbrains.kotlin.fir.resolve.transformers.ReturnTypeCalculatorForFullBodyResolve
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.BodyResolveContext
-import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
+import org.jetbrains.kotlin.fir.types.typeContext
 import org.jetbrains.kotlin.fir.visitors.FirDefaultVisitorVoid
 import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.utils.yieldIfNotNull
 
 internal object ContextCollector {
     enum class ContextKind {
@@ -43,7 +49,7 @@ internal object ContextCollector {
 
     class Context(
         val towerDataContext: FirTowerDataContext,
-        val smartCasts: Map<FirBasedSymbol<*>, Set<ConeKotlinType>>,
+        val smartCasts: Map<RealVariable, Set<ConeKotlinType>>,
     )
 
     enum class FilterResponse {
@@ -102,7 +108,13 @@ internal object ContextCollector {
         if (contextKtDeclaration != null) {
             val designationPath = FirElementFinder.collectDesignationPath(file, contextKtDeclaration)
             if (designationPath != null) {
-                return FirDesignation(designationPath.path, designationPath.target)
+                val script = file.declarations.singleOrNull() as? FirScript
+
+                return if (script == null || script === designationPath.target) {
+                    FirDesignation(designationPath.path, designationPath.target)
+                } else {
+                    FirDesignationWithScript(designationPath.path, designationPath.target, script)
+                }
             }
         }
 
@@ -134,6 +146,7 @@ internal object ContextCollector {
 
     private class DesignationInterceptor(private val designation: FirDesignation) : () -> FirElement? {
         private val targetIterator = iterator {
+            yieldIfNotNull((designation as? FirDesignationWithScript)?.firScript)
             yieldAll(designation.path)
             yield(designation.target)
         }
@@ -152,7 +165,7 @@ private class ContextCollectorVisitor(
     private val holder: SessionHolder,
     private val shouldCollectBodyContext: Boolean,
     private val filter: (PsiElement) -> FilterResponse,
-    private val interceptor: () -> FirElement?
+    private val designationPathInterceptor: () -> FirElement?
 ) : FirDefaultVisitorVoid() {
     private data class ContextKey(val element: PsiElement, val kind: ContextKind)
 
@@ -171,28 +184,24 @@ private class ContextCollectorVisitor(
         dataFlowAnalyzerContext = DataFlowAnalyzerContext(session)
     )
 
-    private var smartCasts: PersistentMap<FirBasedSymbol<*>, Set<ConeKotlinType>> = persistentMapOf()
-
     private val result = HashMap<ContextKey, Context>()
 
     override fun visitElement(element: FirElement) {
-        dumpContext(element.psi, ContextKind.SELF)
+        dumpContext(element, ContextKind.SELF)
 
         onActive {
             element.acceptChildren(this)
         }
     }
 
-    private fun dumpContext(psi: PsiElement?, kind: ContextKind) {
+    private fun dumpContext(fir: FirElement, kind: ContextKind) {
         ProgressManager.checkCanceled()
-
-        if (psi == null) {
-            return
-        }
 
         if (kind == ContextKind.BODY && !shouldCollectBodyContext) {
             return
         }
+
+        val psi = fir.psi ?: return
 
         val key = ContextKey(psi, kind)
         if (key in result) {
@@ -201,11 +210,88 @@ private class ContextCollectorVisitor(
 
         val response = filter(psi)
         if (response != FilterResponse.SKIP) {
-            result[key] = Context(context.towerDataContext, smartCasts)
+            result[key] = computeContext(fir)
         }
 
         if (response == FilterResponse.STOP) {
             isActive = false
+        }
+    }
+
+    private fun computeContext(fir: FirElement): Context {
+        val implicitReceiverStack = context.towerDataContext.implicitReceiverStack
+
+        val smartCasts = mutableMapOf<RealVariable, Set<ConeKotlinType>>()
+
+        // Receiver types cannot be updated in an immutable snapshot.
+        // So here we modify the types inside the 'context', then make a snapshot, and restore the types back.
+        val oldReceiverTypes = mutableListOf<Pair<Int, ConeKotlinType>>()
+
+        val cfgNode = getControlFlowNode(fir)
+
+        if (cfgNode != null) {
+            val flow = cfgNode.flow
+
+            for (realVariable in flow.knownVariables) {
+                val typeStatement = flow.getTypeStatement(realVariable) ?: continue
+                if (realVariable.stability != PropertyStability.STABLE_VALUE && realVariable.stability != PropertyStability.LOCAL_VAR) {
+                    continue
+                }
+
+                smartCasts[typeStatement.variable] = typeStatement.exactType
+
+                // The compiler pushes smart-cast types for implicit receivers to ease later lookups.
+                // Here we emulate such behavior. Unlike the compiler, though, modified types are only reflected in the created snapshot.
+                // See other usages of 'replaceReceiverType()' for more information.
+                if (realVariable.isThisReference) {
+                    val identifier = typeStatement.variable.identifier
+                    val receiverIndex = implicitReceiverStack.getReceiverIndex(identifier.symbol)
+                    if (receiverIndex != null) {
+                        oldReceiverTypes.add(receiverIndex to implicitReceiverStack.getType(receiverIndex))
+
+                        val originalType = implicitReceiverStack.getOriginalType(receiverIndex)
+                        val smartCastedType = typeStatement.smartCastedType(session.typeContext, originalType)
+                        implicitReceiverStack.replaceReceiverType(receiverIndex, smartCastedType)
+                    }
+                }
+            }
+        }
+
+        val towerDataContextSnapshot = context.towerDataContext.createSnapshot()
+
+        for ((index, oldType) in oldReceiverTypes) {
+            implicitReceiverStack.replaceReceiverType(index, oldType)
+        }
+
+        return Context(towerDataContextSnapshot, smartCasts)
+    }
+
+    private fun getControlFlowNode(fir: FirElement): CFGNode<*>? {
+        for (container in context.containers.asReversed()) {
+            val cfgOwner = container as? FirControlFlowGraphOwner ?: continue
+            val cfgReference = cfgOwner.controlFlowGraphReference ?: continue
+            val cfg = cfgReference.controlFlowGraph ?: continue
+
+            val node = cfg.nodes.lastOrNull { isAcceptedControlFlowNode(it) && it.fir === fir }
+            if (node != null) {
+                return node
+            } else if (!cfg.isSubGraph) {
+                return null
+            }
+        }
+
+        return null
+    }
+
+    private fun isAcceptedControlFlowNode(node: CFGNode<*>): Boolean {
+        return node !is ClassExitNode
+    }
+
+    override fun visitScript(script: FirScript) {
+        context.withScopesForScript(script, holder) {
+            withInterceptor {
+                super.visitScript(script)
+            }
         }
     }
 
@@ -218,11 +304,11 @@ private class ContextCollectorVisitor(
     }
 
     override fun visitAnnotationCall(annotationCall: FirAnnotationCall) {
-        dumpContext(annotationCall.psi, ContextKind.SELF)
+        dumpContext(annotationCall, ContextKind.SELF)
 
         onActiveBody {
             context.forAnnotation {
-                dumpContext(annotationCall.psi, ContextKind.BODY)
+                dumpContext(annotationCall, ContextKind.BODY)
 
                 // Technically, annotation arguments might contain arbitrary expressions.
                 // However, such cases are very rare, as it's currently forbidden in Kotlin.
@@ -232,7 +318,7 @@ private class ContextCollectorVisitor(
     }
 
     override fun visitRegularClass(regularClass: FirRegularClass) = withProcessor {
-        dumpContext(regularClass.psi, ContextKind.SELF)
+        dumpContext(regularClass, ContextKind.SELF)
 
         processSignatureAnnotations(regularClass)
 
@@ -243,7 +329,7 @@ private class ContextCollectorVisitor(
                 processList(regularClass.typeParameters)
 
                 context.withRegularClass(regularClass, holder) {
-                    dumpContext(regularClass.psi, ContextKind.BODY)
+                    dumpContext(regularClass, ContextKind.BODY)
 
                     onActive {
                         withInterceptor {
@@ -260,7 +346,7 @@ private class ContextCollectorVisitor(
     }
 
     override fun visitConstructor(constructor: FirConstructor) = withProcessor {
-        dumpContext(constructor.psi, ContextKind.SELF)
+        dumpContext(constructor, ContextKind.SELF)
 
         processSignatureAnnotations(constructor)
 
@@ -276,7 +362,7 @@ private class ContextCollectorVisitor(
                 context.forConstructorBody(constructor, session) {
                     processList(constructor.valueParameters)
 
-                    dumpContext(constructor.psi, ContextKind.BODY)
+                    dumpContext(constructor, ContextKind.BODY)
 
                     onActive {
                         process(constructor.body)
@@ -297,13 +383,13 @@ private class ContextCollectorVisitor(
     }
 
     override fun visitEnumEntry(enumEntry: FirEnumEntry) {
-        dumpContext(enumEntry.psi, ContextKind.SELF)
+        dumpContext(enumEntry, ContextKind.SELF)
 
         onActiveBody {
             enumEntry.lazyResolveToPhase(FirResolvePhase.BODY_RESOLVE)
 
             context.forEnumEntry {
-                dumpContext(enumEntry.psi, ContextKind.BODY)
+                dumpContext(enumEntry, ContextKind.BODY)
 
                 onActive {
                     super.visitEnumEntry(enumEntry)
@@ -313,7 +399,7 @@ private class ContextCollectorVisitor(
     }
 
     override fun visitSimpleFunction(simpleFunction: FirSimpleFunction) = withProcessor {
-        dumpContext(simpleFunction.psi, ContextKind.SELF)
+        dumpContext(simpleFunction, ContextKind.SELF)
 
         processSignatureAnnotations(simpleFunction)
 
@@ -324,7 +410,7 @@ private class ContextCollectorVisitor(
                 context.forFunctionBody(simpleFunction, holder) {
                     processList(simpleFunction.valueParameters)
 
-                    dumpContext(simpleFunction.psi, ContextKind.BODY)
+                    dumpContext(simpleFunction, ContextKind.BODY)
 
                     onActive {
                         process(simpleFunction.body)
@@ -339,7 +425,7 @@ private class ContextCollectorVisitor(
     }
 
     override fun visitProperty(property: FirProperty) = withProcessor {
-        dumpContext(property.psi, ContextKind.SELF)
+        dumpContext(property, ContextKind.SELF)
 
         processSignatureAnnotations(property)
 
@@ -347,7 +433,7 @@ private class ContextCollectorVisitor(
             property.lazyResolveToPhase(FirResolvePhase.BODY_RESOLVE)
 
             context.withProperty(property) {
-                dumpContext(property.psi, ContextKind.BODY)
+                dumpContext(property, ContextKind.BODY)
 
                 onActive {
                     context.forPropertyInitializer {
@@ -375,13 +461,13 @@ private class ContextCollectorVisitor(
     }
 
     override fun visitPropertyAccessor(propertyAccessor: FirPropertyAccessor) = withProcessor {
-        dumpContext(propertyAccessor.psi, ContextKind.SELF)
+        dumpContext(propertyAccessor, ContextKind.SELF)
 
         processSignatureAnnotations(propertyAccessor)
 
         onActiveBody {
             context.withPropertyAccessor(propertyAccessor.propertySymbol.fir, propertyAccessor, holder) {
-                dumpContext(propertyAccessor.psi, ContextKind.BODY)
+                dumpContext(propertyAccessor, ContextKind.BODY)
 
                 onActive {
                     processChildren(propertyAccessor)
@@ -391,13 +477,13 @@ private class ContextCollectorVisitor(
     }
 
     override fun visitValueParameter(valueParameter: FirValueParameter) = withProcessor {
-        dumpContext(valueParameter.psi, ContextKind.SELF)
+        dumpContext(valueParameter, ContextKind.SELF)
 
         processSignatureAnnotations(valueParameter)
 
         onActiveBody {
             context.withValueParameter(valueParameter, session) {
-                dumpContext(valueParameter.psi, ContextKind.BODY)
+                dumpContext(valueParameter, ContextKind.BODY)
 
                 onActive {
                     processChildren(valueParameter)
@@ -408,13 +494,13 @@ private class ContextCollectorVisitor(
     }
 
     override fun visitAnonymousInitializer(anonymousInitializer: FirAnonymousInitializer) = withProcessor {
-        dumpContext(anonymousInitializer.psi, ContextKind.SELF)
+        dumpContext(anonymousInitializer, ContextKind.SELF)
 
         processSignatureAnnotations(anonymousInitializer)
 
         onActiveBody {
             context.withAnonymousInitializer(anonymousInitializer, session) {
-                dumpContext(anonymousInitializer.psi, ContextKind.BODY)
+                dumpContext(anonymousInitializer, ContextKind.BODY)
 
                 onActive {
                     anonymousInitializer.lazyResolveToPhase(FirResolvePhase.BODY_RESOLVE)
@@ -425,7 +511,7 @@ private class ContextCollectorVisitor(
     }
 
     override fun visitAnonymousFunction(anonymousFunction: FirAnonymousFunction) = withProcessor {
-        dumpContext(anonymousFunction.psi, ContextKind.SELF)
+        dumpContext(anonymousFunction, ContextKind.SELF)
 
         processSignatureAnnotations(anonymousFunction)
 
@@ -436,7 +522,7 @@ private class ContextCollectorVisitor(
                     context.storeVariable(parameter, holder.session)
                 }
 
-                dumpContext(anonymousFunction.psi, ContextKind.BODY)
+                dumpContext(anonymousFunction, ContextKind.BODY)
 
                 onActive {
                     process(anonymousFunction.body)
@@ -451,13 +537,13 @@ private class ContextCollectorVisitor(
     }
 
     override fun visitAnonymousObject(anonymousObject: FirAnonymousObject) = withProcessor {
-        dumpContext(anonymousObject.psi, ContextKind.SELF)
+        dumpContext(anonymousObject, ContextKind.SELF)
 
         processSignatureAnnotations(anonymousObject)
 
         onActiveBody {
             context.withAnonymousObject(anonymousObject, holder) {
-                dumpContext(anonymousObject.psi, ContextKind.BODY)
+                dumpContext(anonymousObject, ContextKind.BODY)
 
                 onActive {
                     processChildren(anonymousObject)
@@ -468,33 +554,15 @@ private class ContextCollectorVisitor(
     }
 
     override fun visitBlock(block: FirBlock) = withProcessor {
-        dumpContext(block.psi, ContextKind.SELF)
+        dumpContext(block, ContextKind.SELF)
 
         onActiveBody {
             context.forBlock(session) {
                 processChildren(block)
 
-                dumpContext(block.psi, ContextKind.BODY)
+                dumpContext(block, ContextKind.BODY)
             }
         }
-    }
-
-    override fun visitSmartCastExpression(smartCastExpression: FirSmartCastExpression) {
-        if (smartCastExpression.isStable) {
-            val symbol = smartCastExpression.originalExpression.toResolvedCallableSymbol()
-            if (symbol != null) {
-                val previousSmartCasts = smartCasts
-                try {
-                    smartCasts = smartCasts.put(symbol, smartCastExpression.typesFromSmartCast.toSet())
-                    super.visitSmartCastExpression(smartCastExpression)
-                    return
-                } finally {
-                    smartCasts = previousSmartCasts
-                }
-            }
-        }
-
-        super.visitSmartCastExpression(smartCastExpression)
     }
 
     @ContextCollectorDsl
@@ -544,8 +612,13 @@ private class ContextCollectorVisitor(
         }
     }
 
-    private inline fun withInterceptor(block: () -> Unit) {
-        val target = interceptor()
+    /**
+     * Ensures that the visitor is going through the path specified by the initial [FirDesignation].
+     *
+     * If the designation is over, then allows the [block] code to take control.
+     */
+    private fun withInterceptor(block: () -> Unit) {
+        val target = designationPathInterceptor()
         if (target != null) {
             target.accept(this)
         } else {
