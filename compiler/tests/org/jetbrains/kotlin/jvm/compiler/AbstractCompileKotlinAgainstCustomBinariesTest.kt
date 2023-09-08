@@ -106,7 +106,8 @@ abstract class AbstractCompileKotlinAgainstCustomBinariesTest : AbstractKotlinCo
     ) {
         // Compiles the library with some non-stable language version, then compiles a usage of this library with stable LV.
         // If there's no non-stable language version yet, the test does nothing.
-        val someNonStableVersion = LanguageVersion.entries.firstOrNull { it > LanguageVersion.LATEST_STABLE } ?: return
+        val someNonStableVersion =
+            LanguageVersion.entries.firstOrNull { it > languageVersion && it > LanguageVersion.LATEST_STABLE } ?: return
 
         val libraryOptions = listOf(
             "-language-version", someNonStableVersion.versionString,
@@ -244,17 +245,17 @@ abstract class AbstractCompileKotlinAgainstCustomBinariesTest : AbstractKotlinCo
         doTestBrokenLibrary("library", "test/A\$Anno.class")
     }
 
-    // KT-60780 K2: missing PRE_RELEASE_CLASS
+    // TODO: unmute this test after switching LanguageVersion.LATEST_STABLE to 2.0.
     fun testReleaseCompilerAgainstPreReleaseLibrary() = muteForK2 {
         doTestPreReleaseKotlinLibrary(K2JVMCompiler(), "library", tmpdir)
     }
 
-    // KT-60780 K2: missing PRE_RELEASE_CLASS
+    // KT-61596 K2 JS: support reporting PRE_RELEASE_CLASS
     fun testReleaseCompilerAgainstPreReleaseLibraryJs() = muteForK2 {
         doTestPreReleaseKotlinLibrary(K2JSCompiler(), "library", File(tmpdir, "usage.js"))
     }
 
-    // KT-60780 K2: missing PRE_RELEASE_CLASS
+    // TODO: unmute this test after switching LanguageVersion.LATEST_STABLE to 2.0.
     fun testReleaseCompilerAgainstPreReleaseLibrarySkipPrereleaseCheck() = muteForK2 {
         doTestPreReleaseKotlinLibrary(K2JVMCompiler(), "library", tmpdir, "-Xskip-prerelease-check")
     }
@@ -263,12 +264,12 @@ abstract class AbstractCompileKotlinAgainstCustomBinariesTest : AbstractKotlinCo
         doTestPreReleaseKotlinLibrary(K2JSCompiler(), "library", File(tmpdir, "usage.js"), "-Xskip-prerelease-check")
     }
 
-    // KT-60780 K2: missing PRE_RELEASE_CLASS
-    fun testReleaseCompilerAgainstPreReleaseLibrarySkipMetadataVersionCheck() = muteForK2 {
+    fun testReleaseCompilerAgainstPreReleaseLibrarySkipMetadataVersionCheck() {
         doTestPreReleaseKotlinLibrary(K2JVMCompiler(), "library", tmpdir, "-Xskip-metadata-version-check")
     }
 
-    fun testReleaseCompilerAgainstPreReleaseLibrarySkipPrereleaseCheckAllowUnstableDependencies() {
+    // TODO: unmute this test after switching LanguageVersion.LATEST_STABLE to 2.0.
+    fun testReleaseCompilerAgainstPreReleaseLibrarySkipPrereleaseCheckAllowUnstableDependencies() = muteForK2 {
         doTestPreReleaseKotlinLibrary(K2JVMCompiler(), "library", tmpdir, "-Xallow-unstable-dependencies", "-Xskip-prerelease-check")
     }
 
@@ -282,13 +283,15 @@ abstract class AbstractCompileKotlinAgainstCustomBinariesTest : AbstractKotlinCo
         )
     }
 
-    // KT-60795 K2: missing INCOMPATIBLE_CLASS and corresponding CLI error
-    fun testWrongMetadataVersion() = muteForK2 {
+    fun testWrongMetadataVersion() {
         doTestKotlinLibraryWithWrongMetadataVersion("library", null)
     }
 
-    // KT-60795 K2: missing INCOMPATIBLE_CLASS and corresponding CLI error
-    fun testWrongMetadataVersionBadMetadata() = muteForK2 {
+    // This test compiles a library with a "future" metadata version, then intentionally inserts some gibberish to the metadata, and tries
+    // to compile something against this library. It emulates the scenario when a future Kotlin version has a completely different metadata
+    // format -- so different that reading it as if it's the current (protobuf-based) format would most likely result in an exception.
+    // Expected result is that the compiler does NOT try to read it, and instead reports incompatible version & unresolved reference errors.
+    fun testWrongMetadataVersionBadMetadata() {
         doTestKotlinLibraryWithWrongMetadataVersion("library", { name, value ->
             if (JvmAnnotationNames.METADATA_DATA_FIELD_NAME == name) {
                 @Suppress("UNCHECKED_CAST")
@@ -300,20 +303,17 @@ abstract class AbstractCompileKotlinAgainstCustomBinariesTest : AbstractKotlinCo
         })
     }
 
-    // KT-60795 K2: missing INCOMPATIBLE_CLASS and corresponding CLI error
-    fun testWrongMetadataVersionBadMetadata2() = muteForK2 {
+    fun testWrongMetadataVersionBadMetadata2() {
         doTestKotlinLibraryWithWrongMetadataVersion("library", { name, _ ->
             if (JvmAnnotationNames.METADATA_STRINGS_FIELD_NAME == name) arrayOf<String>() else null
         })
     }
 
-    // KT-60795 K2: missing INCOMPATIBLE_CLASS and corresponding CLI error
-    fun testWrongMetadataVersionSkipVersionCheck() = muteForK2 {
+    fun testWrongMetadataVersionSkipVersionCheck() {
         doTestKotlinLibraryWithWrongMetadataVersion("library", null, "-Xskip-metadata-version-check")
     }
 
-    // KT-60795 K2: missing INCOMPATIBLE_CLASS and corresponding CLI error
-    fun testWrongMetadataVersionSkipPrereleaseCheckHasNoEffect() = muteForK2 {
+    fun testWrongMetadataVersionSkipPrereleaseCheckHasNoEffect() {
         doTestKotlinLibraryWithWrongMetadataVersion("library", null, "-Xskip-prerelease-check")
     }
 
@@ -346,9 +346,8 @@ abstract class AbstractCompileKotlinAgainstCustomBinariesTest : AbstractKotlinCo
         compileKotlin("source.kt", tmpdir, listOf(library))
     }
 
-    // KT-60795 K2: missing INCOMPATIBLE_CLASS and corresponding CLI error
-    fun testStrictMetadataVersionSemanticsOldVersion() = muteForK2 {
-        val nextMetadataVersion = JvmMetadataVersion.INSTANCE.next()
+    fun testStrictMetadataVersionSemanticsOldVersion() {
+        val nextMetadataVersion = languageVersion.toMetadataVersion().next()
         val library = compileLibrary(
             "library", additionalOptions = listOf("-Xgenerate-strict-metadata-version", "-Xmetadata-version=$nextMetadataVersion")
         )

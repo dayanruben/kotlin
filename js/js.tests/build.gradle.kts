@@ -33,7 +33,10 @@ val testJsRuntime by configurations.creating {
 }
 
 dependencies {
-    testApiJUnit5(vintageEngine = true)
+    testApi(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.vintage.engine)
 
     testApi(protobufFull())
     testApi(projectTests(":compiler:tests-common"))
@@ -54,7 +57,7 @@ dependencies {
     testApi(project(":js:js.dce"))
     testApi(project(":js:js.engines"))
     testApi(project(":compiler:incremental-compilation-impl"))
-    testApi(commonDependency("junit:junit"))
+    testImplementation(libs.junit4)
     testApi(projectTests(":kotlin-build-common"))
     testApi(projectTests(":generators:test-generator"))
 
@@ -79,7 +82,7 @@ dependencies {
     antLauncherJar(commonDependency("org.apache.ant", "ant"))
     antLauncherJar(toolsJar())
 
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:${commonDependencyVersion("org.junit", "junit-bom")}")
+    testRuntimeOnly(libs.junit.vintage.engine)
 
     testImplementation(commonDependency("org.jetbrains.kotlinx", "kotlinx-serialization-json"))
     testImplementation(libs.ktor.client.cio)

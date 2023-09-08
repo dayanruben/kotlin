@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
 import org.jetbrains.kotlin.mpp.MppJavaImplicitActualizatorMarker
-import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.resolve.*
@@ -42,7 +42,7 @@ import org.jetbrains.kotlin.resolve.source.PsiSourceFile
 import org.jetbrains.kotlin.types.KotlinType
 import java.io.File
 
-private val implicitlyActualizedAnnotationFqn = FqName("kotlin.jvm.ImplicitlyActualizedByJvmDeclaration")
+private val implicitlyActualizedAnnotationFqn = StandardClassIds.Annotations.ImplicitlyActualizedByJvmDeclaration.asSingleFqName()
 
 class ExpectedActualDeclarationChecker(
     val moduleStructureOracle: ModuleStructureOracle,
@@ -70,7 +70,7 @@ class ExpectedActualDeclarationChecker(
                 declaration, descriptor, context.trace,
                 checkActualModifier, context
             )
-            checkOptInAnnotation(declaration, descriptor, descriptor, context.trace)
+            checkOptInAnnotation(declaration, descriptor, descriptor, context)
         }
         if (descriptor.isActualOrSomeContainerIsActual()) {
             val allDependsOnModules = moduleStructureOracle.findAllDependsOnPaths(descriptor.module).flatMap { it.nodes }.toHashSet()
@@ -78,7 +78,7 @@ class ExpectedActualDeclarationChecker(
                 declaration,
                 descriptor,
                 checkActualModifier,
-                context.trace,
+                context,
                 moduleVisibilityFilter = { it in allDependsOnModules }
             )
         }
@@ -124,8 +124,9 @@ class ExpectedActualDeclarationChecker(
         module: ModuleDescriptor,
         context: DeclarationCheckerContext
     ) {
+        if (!context.languageVersionSettings.supportsFeature(LanguageFeature.MultiplatformRestrictions)) return
         val actualMembers = actuals
-            .filter { (compatibility, _) -> compatibility.isCompatibleOrWeakCompatible() }
+            .filter { (compatibility, _) -> compatibility.isCompatibleOrWeaklyIncompatible }
             .flatMap { (_, members) -> members }
             .takeIf(List<MemberDescriptor>::isNotEmpty)
             ?: return
@@ -149,7 +150,7 @@ class ExpectedActualDeclarationChecker(
         trace: BindingTrace,
     ) {
         val atLeastWeaklyCompatibleActuals = actuals
-            .filterKeys { compatibility -> compatibility.isCompatibleOrWeakCompatible() }
+            .filterKeys { compatibility -> compatibility.isCompatibleOrWeaklyIncompatible }
             .values.flatten()
 
         // Eagerly return here: We won't find a duplicate in any module path in this case
@@ -217,7 +218,7 @@ class ExpectedActualDeclarationChecker(
 
         // Here we have exactly one compatible actual and/or some weakly incompatible. In either case, we don't report anything on expect...
         val actualMembers = actuals.asSequence()
-            .filter { it.key.isCompatibleOrWeakCompatible() }.flatMap { it.value.asSequence() }
+            .filter { it.key.isCompatibleOrWeaklyIncompatible }.flatMap { it.value.asSequence() }
 
         // ...except diagnostics regarding missing actual keyword, because in that case we won't start looking for the actual at all
         if (checkActualModifier) {
@@ -240,8 +241,9 @@ class ExpectedActualDeclarationChecker(
     private fun checkIfExpectHasDefaultArgumentsAndActualizedWithTypealias(
         expectDescriptor: MemberDescriptor,
         actualDeclaration: KtNamedDeclaration,
-        trace: BindingTrace,
+        context: DeclarationCheckerContext,
     ) {
+        if (!context.languageVersionSettings.supportsFeature(LanguageFeature.MultiplatformRestrictions)) return
         if (expectDescriptor !is ClassDescriptor ||
             actualDeclaration !is KtTypeAlias ||
             expectDescriptor.kind == ClassKind.ANNOTATION_CLASS
@@ -256,7 +258,7 @@ class ExpectedActualDeclarationChecker(
 
         if (membersWithDefaultValueParameters.isEmpty()) return
 
-        trace.report(
+        context.trace.report(
             Errors.DEFAULT_ARGUMENTS_IN_EXPECT_WITH_ACTUAL_TYPEALIAS.on(
                 actualDeclaration,
                 expectDescriptor,
@@ -293,9 +295,10 @@ class ExpectedActualDeclarationChecker(
         reportOn: KtNamedDeclaration,
         descriptor: MemberDescriptor,
         checkActualModifier: Boolean,
-        trace: BindingTrace,
+        context: DeclarationCheckerContext,
         moduleVisibilityFilter: ModuleFilter
     ) {
+        val trace = context.trace
         val compatibility = ExpectedActualResolver
             .findExpectedForActual(descriptor, moduleVisibilityFilter, shouldCheckAbsenceOfDefaultParamsInActual = true)
             ?: return
@@ -305,7 +308,7 @@ class ExpectedActualDeclarationChecker(
         // For top-level declaration missing actual error reported in Actual checker
         if (checkActualModifier
             && descriptor.containingDeclaration !is PackageFragmentDescriptor
-            && compatibility.any { it.key.isCompatibleOrWeakCompatible() }
+            && compatibility.any { it.key.isCompatibleOrWeaklyIncompatible }
         ) {
             reportMissingActualModifier(descriptor, reportOn, trace)
         }
@@ -373,14 +376,14 @@ class ExpectedActualDeclarationChecker(
                 if (expectedConstructor != null && actualConstructor != null) {
                     checkAnnotationConstructors(expectedConstructor, actualConstructor, trace, reportOn)
                 }
-                checkOptInAnnotation(reportOn, descriptor, expected, trace)
+                checkOptInAnnotation(reportOn, descriptor, expected, context)
             }
         }
         // We want to report errors even if a candidate is incompatible, but it's single
         val expectSingleCandidate = (compatibility[Compatible] ?: compatibility.values.singleOrNull())?.singleOrNull()
         if (expectSingleCandidate != null) {
-            checkIfExpectHasDefaultArgumentsAndActualizedWithTypealias(expectSingleCandidate, reportOn, trace)
-            checkAnnotationsMatch(expectSingleCandidate, descriptor, reportOn, trace)
+            checkIfExpectHasDefaultArgumentsAndActualizedWithTypealias(expectSingleCandidate, reportOn, context)
+            checkAnnotationsMatch(expectSingleCandidate, descriptor, reportOn, context)
         }
     }
 
@@ -392,7 +395,7 @@ class ExpectedActualDeclarationChecker(
     ) {
         val filesWithAtLeastWeaklyCompatibleExpects = compatibility.asSequence()
             .filter { (compatibility, _) ->
-                compatibility.isCompatibleOrWeakCompatible()
+                compatibility.isCompatibleOrWeaklyIncompatible
             }
             .map { (_, members) -> members }
             .flatten()
@@ -472,14 +475,15 @@ class ExpectedActualDeclarationChecker(
         reportOn: KtNamedDeclaration,
         descriptor: MemberDescriptor,
         expectDescriptor: MemberDescriptor,
-        trace: BindingTrace,
+        context: DeclarationCheckerContext,
     ) {
-        if (descriptor is ClassDescriptor &&
+        if (context.languageVersionSettings.supportsFeature(LanguageFeature.MultiplatformRestrictions) &&
+            descriptor is ClassDescriptor &&
             descriptor.kind == ClassKind.ANNOTATION_CLASS &&
             descriptor.annotations.hasAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME) &&
             !expectDescriptor.annotations.hasAnnotation(OptionalAnnotationUtil.OPTIONAL_EXPECTATION_FQ_NAME)
         ) {
-            trace.report(Errors.EXPECT_ACTUAL_OPT_IN_ANNOTATION.on(reportOn))
+            context.trace.report(Errors.EXPECT_ACTUAL_OPT_IN_ANNOTATION.on(reportOn))
         }
     }
 
@@ -487,12 +491,13 @@ class ExpectedActualDeclarationChecker(
         expectDescriptor: MemberDescriptor,
         actualDescriptor: MemberDescriptor,
         reportOn: KtNamedDeclaration,
-        trace: BindingTrace
+        context: DeclarationCheckerContext
     ) {
-        val context = ClassicExpectActualMatchingContext(actualDescriptor.module)
+        if (!context.languageVersionSettings.supportsFeature(LanguageFeature.MultiplatformRestrictions)) return
+        val matchingContext = ClassicExpectActualMatchingContext(actualDescriptor.module)
         val incompatibility =
-            AbstractExpectActualAnnotationMatchChecker.areAnnotationsCompatible(expectDescriptor, actualDescriptor, context) ?: return
-        trace.report(
+            AbstractExpectActualAnnotationMatchChecker.areAnnotationsCompatible(expectDescriptor, actualDescriptor, matchingContext) ?: return
+        context.trace.report(
             Errors.ACTUAL_ANNOTATIONS_NOT_MATCH_EXPECT.on(
                 reportOn,
                 incompatibility.expectSymbol as DeclarationDescriptor,
@@ -505,9 +510,6 @@ class ExpectedActualDeclarationChecker(
     companion object {
         fun Map<out ExpectActualCompatibility<MemberDescriptor>, Collection<MemberDescriptor>>.allStrongIncompatibilities(): Boolean =
             this.keys.all { it is Incompatible.StrongIncompatible }
-
-        internal fun ExpectActualCompatibility<MemberDescriptor>.isCompatibleOrWeakCompatible() =
-            this is Compatible || this is Incompatible.WeakIncompatible
     }
 }
 

@@ -12455,6 +12455,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/delegatedProperty/genericDelegateUncheckedCast2.kt");
         }
 
+        @TestMetadata("withInvoke.kt")
+        public void ignoreWithInvoke() throws Exception {
+            runTest("compiler/testData/codegen/box/delegatedProperty/withInvoke.kt");
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
         }
@@ -12636,6 +12641,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("kt9712.kt")
         public void testKt9712() throws Exception {
             runTest("compiler/testData/codegen/box/delegatedProperty/kt9712.kt");
+        }
+
+        @TestMetadata("noTypeVariablesLeft.kt")
+        public void testNoTypeVariablesLeft() throws Exception {
+            runTest("compiler/testData/codegen/box/delegatedProperty/noTypeVariablesLeft.kt");
         }
 
         @TestMetadata("privateInSubClass.kt")
@@ -15084,6 +15094,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt52207.kt");
             }
 
+            @TestMetadata("kt52213.kt")
+            public void testKt52213() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt52213.kt");
+            }
+
             @TestMetadata("kt52373.kt")
             public void testKt52373() throws Exception {
                 runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt52373.kt");
@@ -15092,6 +15107,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             @TestMetadata("kt52459.kt")
             public void testKt52459() throws Exception {
                 runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt52459.kt");
+            }
+
+            @TestMetadata("kt53551.kt")
+            public void testKt53551() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt53551.kt");
             }
 
             @TestMetadata("kt53846.kt")
@@ -15107,6 +15127,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             @TestMetadata("kt56508.kt")
             public void testKt56508() throws Exception {
                 runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt56508.kt");
+            }
+
+            @TestMetadata("kt58476.kt")
+            public void testKt58476() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt58476.kt");
             }
 
             @TestMetadata("overload.kt")
@@ -15819,6 +15844,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("JKEnumConstant.kt")
         public void testJKEnumConstant() throws Exception {
             runTest("compiler/testData/codegen/box/fir/JKEnumConstant.kt");
+        }
+
+        @TestMetadata("javaAnnotationWithDefaultValueForenumArray.kt")
+        public void testJavaAnnotationWithDefaultValueForenumArray() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/javaAnnotationWithDefaultValueForenumArray.kt");
         }
 
         @TestMetadata("jvmFieldInLocalClass.kt")

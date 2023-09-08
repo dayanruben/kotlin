@@ -53,15 +53,39 @@ public class FirStandaloneNormalAnalysisSourceModuleMemberScopeByFqNameTestGener
     }
 
     @Test
-    @TestMetadata("emumEntryWithoutMembers.kt")
-    public void testEmumEntryWithoutMembers() throws Exception {
-        runTest("analysis/analysis-api/testData/components/scopeProvider/memberScopeByFqName/emumEntryWithoutMembers.kt");
+    @TestMetadata("enumClass.kt")
+    public void testEnumClass() throws Exception {
+        runTest("analysis/analysis-api/testData/components/scopeProvider/memberScopeByFqName/enumClass.kt");
     }
 
     @Test
-    @TestMetadata("enumEntry.kt")
-    public void testEnumEntry() throws Exception {
-        runTest("analysis/analysis-api/testData/components/scopeProvider/memberScopeByFqName/enumEntry.kt");
+    @TestMetadata("enumClassWithAbstractMembers.kt")
+    public void testEnumClassWithAbstractMembers() throws Exception {
+        runTest("analysis/analysis-api/testData/components/scopeProvider/memberScopeByFqName/enumClassWithAbstractMembers.kt");
+    }
+
+    @Test
+    @TestMetadata("enumClassWithFinalMembers.kt")
+    public void testEnumClassWithFinalMembers() throws Exception {
+        runTest("analysis/analysis-api/testData/components/scopeProvider/memberScopeByFqName/enumClassWithFinalMembers.kt");
+    }
+
+    @Test
+    @TestMetadata("enumEntryInitializer.kt")
+    public void testEnumEntryInitializer() throws Exception {
+        runTest("analysis/analysis-api/testData/components/scopeProvider/memberScopeByFqName/enumEntryInitializer.kt");
+    }
+
+    @Test
+    @TestMetadata("enumEntryInitializerWithFinalEnumMember.kt")
+    public void testEnumEntryInitializerWithFinalEnumMember() throws Exception {
+        runTest("analysis/analysis-api/testData/components/scopeProvider/memberScopeByFqName/enumEntryInitializerWithFinalEnumMember.kt");
+    }
+
+    @Test
+    @TestMetadata("enumEntryInitializerWithOverriddenMember.kt")
+    public void testEnumEntryInitializerWithOverriddenMember() throws Exception {
+        runTest("analysis/analysis-api/testData/components/scopeProvider/memberScopeByFqName/enumEntryInitializerWithOverriddenMember.kt");
     }
 
     @Test

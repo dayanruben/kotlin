@@ -7,6 +7,8 @@
 
 #include <atomic>
 #include <cstddef>
+#include <memory>
+#include <vector>
 
 #include "AllocatorImpl.hpp"
 #include "Barriers.hpp"
@@ -22,7 +24,6 @@
 #include "ThreadData.hpp"
 #include "Types.h"
 #include "Utils.hpp"
-#include "std_support/Memory.hpp"
 
 namespace kotlin {
 namespace gc {
@@ -62,10 +63,7 @@ public:
     };
 
     ConcurrentMarkAndSweep(
-            alloc::Allocator::Impl& allocator,
-            gcScheduler::GCScheduler& scheduler,
-            bool mutatorsCooperate,
-            std::size_t auxGCThreads) noexcept;
+            alloc::Allocator& allocator, gcScheduler::GCScheduler& scheduler, bool mutatorsCooperate, std::size_t auxGCThreads) noexcept;
     ~ConcurrentMarkAndSweep();
 
     void StartFinalizerThreadIfNeeded() noexcept;
@@ -81,7 +79,7 @@ private:
     void auxiliaryGCThreadBody();
     void PerformFullGC(int64_t epoch) noexcept;
 
-    alloc::Allocator::Impl& allocator_;
+    alloc::Allocator& allocator_;
     gcScheduler::GCScheduler& gcScheduler_;
 
     GCStateHolder state_;
@@ -89,7 +87,7 @@ private:
 
     mark::ParallelMark markDispatcher_;
     ScopedThread mainThread_;
-    std_support::vector<ScopedThread> auxThreads_;
+    std::vector<ScopedThread> auxThreads_;
 };
 
 } // namespace gc

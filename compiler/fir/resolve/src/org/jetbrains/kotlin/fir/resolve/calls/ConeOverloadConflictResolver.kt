@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirMemberDeclaration
 import org.jetbrains.kotlin.fir.declarations.getSingleExpectForActualOrNull
+import org.jetbrains.kotlin.fir.declarations.getSingleCompatibleOrWeaklyIncompatibleExpectForActualOrNull
 import org.jetbrains.kotlin.fir.declarations.utils.isActual
 import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.declarations.utils.modality
@@ -116,9 +117,10 @@ class ConeOverloadConflictResolver(
     }
 
     private fun Candidate.overrides(other: Candidate): Boolean {
+        val symbol = symbol
         if (symbol !is FirCallableSymbol || other.symbol !is FirCallableSymbol) return false
 
-        val otherOriginal = other.symbol.unwrapSubstitutionOverrides()
+        val otherOriginal = (other.symbol as FirCallableSymbol).unwrapSubstitutionOverrides()
         if (symbol.unwrapSubstitutionOverrides<FirCallableSymbol<*>>() == otherOriginal) return true
 
         val scope = originScope as? FirTypeScope ?: return false
@@ -289,7 +291,10 @@ class ConeOverloadConflictResolver(
         val expectForActualSymbols = candidates
             .mapNotNullTo(mutableSetOf()) {
                 val callableSymbol = it.symbol as? FirCallableSymbol<*> ?: return@mapNotNullTo null
-                runIf(callableSymbol.isActual) { callableSymbol.getSingleExpectForActualOrNull() }
+                runIf(callableSymbol.isActual) {
+                    callableSymbol.getSingleExpectForActualOrNull()
+                        ?: callableSymbol.getSingleCompatibleOrWeaklyIncompatibleExpectForActualOrNull()
+                }
             }
 
         return if (expectForActualSymbols.isEmpty()) {

@@ -2042,6 +2042,24 @@ public class FirJsBoxTestGenerated extends AbstractFirJsBoxTest {
             }
 
             @Test
+            @TestMetadata("eagerInitializationGlobal1.kt")
+            public void testEagerInitializationGlobal1() throws Exception {
+                runTest("js/js.translator/testData/box/esModules/crossModuleRefPerFile/eagerInitializationGlobal1.kt");
+            }
+
+            @Test
+            @TestMetadata("eagerInitializationGlobal2.kt")
+            public void testEagerInitializationGlobal2() throws Exception {
+                runTest("js/js.translator/testData/box/esModules/crossModuleRefPerFile/eagerInitializationGlobal2.kt");
+            }
+
+            @Test
+            @TestMetadata("eagerInitializationGlobal3.kt")
+            public void testEagerInitializationGlobal3() throws Exception {
+                runTest("js/js.translator/testData/box/esModules/crossModuleRefPerFile/eagerInitializationGlobal3.kt");
+            }
+
+            @Test
             @TestMetadata("inheritance.kt")
             public void testInheritance() throws Exception {
                 runTest("js/js.translator/testData/box/esModules/crossModuleRefPerFile/inheritance.kt");
@@ -5125,6 +5143,12 @@ public class FirJsBoxTestGenerated extends AbstractFirJsBoxTest {
         }
 
         @Test
+        @TestMetadata("classInheritsJsNameFromOtherModule.kt")
+        public void testClassInheritsJsNameFromOtherModule() throws Exception {
+            runTest("js/js.translator/testData/box/inheritance/classInheritsJsNameFromOtherModule.kt");
+        }
+
+        @Test
         @TestMetadata("complexInitializationOrder.kt")
         public void testComplexInitializationOrder() throws Exception {
             runTest("js/js.translator/testData/box/inheritance/complexInitializationOrder.kt");
@@ -5158,6 +5182,12 @@ public class FirJsBoxTestGenerated extends AbstractFirJsBoxTest {
         @TestMetadata("fromNestedNativeClass.kt")
         public void testFromNestedNativeClass() throws Exception {
             runTest("js/js.translator/testData/box/inheritance/fromNestedNativeClass.kt");
+        }
+
+        @Test
+        @TestMetadata("inheritExtensionsWithSameNames.kt")
+        public void testInheritExtensionsWithSameNames() throws Exception {
+            runTest("js/js.translator/testData/box/inheritance/inheritExtensionsWithSameNames.kt");
         }
 
         @Test

@@ -96,7 +96,11 @@ dependencies {
     testImplementation(gradleApi())
     testImplementation(gradleTestKit())
     testImplementation(commonDependency("com.google.code.gson:gson"))
-    testApiJUnit5(vintageEngine = true, jupiterParams = true)
+    testApi(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.vintage.engine)
+    testImplementation(libs.junit.jupiter.params)
 
     testRuntimeOnly(project(":compiler:tests-mutes"))
 

@@ -326,7 +326,7 @@ private class ContextCollectorVisitor(
             regularClass.lazyResolveToPhase(FirResolvePhase.STATUS)
 
             context.withContainingClass(regularClass) {
-                processList(regularClass.typeParameters)
+                processClassHeader(regularClass)
 
                 context.withRegularClass(regularClass, holder) {
                     dumpContext(regularClass, ContextKind.BODY)
@@ -343,6 +343,19 @@ private class ContextCollectorVisitor(
         if (regularClass.isLocal) {
             context.storeClassIfNotNested(regularClass, session)
         }
+    }
+
+    /**
+     * Process the parts of the class declaration which resolution is not affected
+     * by the class own supertypes.
+     *
+     * Processing those parts before adding the implicit receiver of the class
+     * to the [context] allows to not collect incorrect contexts for them later on.
+     */
+    private fun Processor.processClassHeader(regularClass: FirRegularClass) {
+        processList(regularClass.contextReceivers)
+        processList(regularClass.typeParameters)
+        processList(regularClass.superTypeRefs)
     }
 
     override fun visitConstructor(constructor: FirConstructor) = withProcessor {
@@ -457,6 +470,35 @@ private class ContextCollectorVisitor(
 
         if (property.isLocal) {
             context.storeVariable(property, session)
+        }
+    }
+
+    /**
+     * We visit fields to properly handle supertypes delegation:
+     *
+     * ```kt
+     * class Foo : Bar by baz
+     * ```
+     *
+     * In the code above, `baz` expression is saved into a separate synthetic field.
+     * It's not accessible from the delegated constructor, it's just added to the
+     * `Foo` class body.
+     */
+    override fun visitField(field: FirField) = withProcessor {
+        dumpContext(field, ContextKind.SELF)
+
+        processSignatureAnnotations(field)
+
+        onActiveBody {
+            field.lazyResolveToPhase(FirResolvePhase.BODY_RESOLVE)
+
+            context.withField(field) {
+                dumpContext(field, ContextKind.BODY)
+
+                onActive {
+                    process(field.initializer)
+                }
+            }
         }
     }
 

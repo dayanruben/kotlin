@@ -1,9 +1,13 @@
+/*
+ * Copyright 2010-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
+ * that can be found in the LICENSE file.
+ */
+
 #include "ParallelMark.hpp"
 
 #include "MarkAndSweepUtils.hpp"
 #include "GCStatistics.hpp"
 #include "Utils.hpp"
-#include "std_support/Memory.hpp"
 
 // required to access gc thread data
 #include "GCImpl.hpp"
@@ -22,19 +26,19 @@ void spinWait(Cond&& until) {
 } // namespace
 
 bool gc::mark::MarkPacer::is(gc::mark::MarkPacer::Phase phase) const {
-    return phase_.load(std::memory_order_relaxed) == phase;
+    std::unique_lock lock(mutex_);
+    return phase_ == phase;
 }
 
 void gc::mark::MarkPacer::begin(gc::mark::MarkPacer::Phase phase) {
     {
         std::unique_lock lock(mutex_);
-        phase_.store(phase, std::memory_order_relaxed);
+        phase_ = phase;
     }
     cond_.notify_all();
 }
 
 void gc::mark::MarkPacer::wait(gc::mark::MarkPacer::Phase phase) {
-    if (phase_.load(std::memory_order_relaxed) >= phase) return;
     std::unique_lock lock(mutex_);
     cond_.wait(lock, [=]() { return phase_ >= phase; });
 }
@@ -47,17 +51,18 @@ void gc::mark::MarkPacer::beginEpoch(uint64_t epoch) {
 
 void gc::mark::MarkPacer::waitNewEpochReadyOrShutdown() const {
     std::unique_lock lock(mutex_);
-    cond_.wait(lock, [this]() { return (phase_.load(std::memory_order_relaxed) >= Phase::kReady); });
+    cond_.wait(lock, [this]() { return phase_ >= Phase::kReady; });
 }
 
 void gc::mark::MarkPacer::waitEpochFinished(uint64_t currentEpoch) const {
     std::unique_lock lock(mutex_);
     cond_.wait(lock, [this, currentEpoch]() {
-        return is(Phase::kIdle) || is(Phase::kShutdown) || epoch_.load(std::memory_order_relaxed) > currentEpoch;
+        return phase_ == Phase::kIdle || phase_ == Phase::kShutdown || epoch_.load(std::memory_order_relaxed) > currentEpoch;
     });
 }
 
 bool gc::mark::MarkPacer::acceptingNewWorkers() const {
+    std::unique_lock lock(mutex_);
     return Phase::kReady <= phase_ && phase_ <= Phase::kParallelMark;
 }
 
@@ -127,10 +132,9 @@ void gc::mark::ParallelMark::runMainInSTW() {
 void gc::mark::ParallelMark::runOnMutator(mm::ThreadData& mutatorThread) {
     if (compiler::gcMarkSingleThreaded() || !mutatorsCooperate_) return;
 
-    auto epoch = gcHandle().getEpoch();
     auto parallelWorker = createWorker();
     if (parallelWorker) {
-        GCLogDebug(epoch, "Mutator thread cooperates in marking");
+        GCLogDebug(gcHandle().getEpoch(), "Mutator thread cooperates in marking");
 
         tryCollectRootSet(mutatorThread, *parallelWorker);
 

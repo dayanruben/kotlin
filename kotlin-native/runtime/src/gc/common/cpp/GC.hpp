@@ -7,14 +7,18 @@
 
 #include <atomic>
 #include <cstdint>
+#include <memory>
 
 #include "ExtraObjectData.hpp"
 #include "GCScheduler.hpp"
 #include "Memory.h"
 #include "Utils.hpp"
-#include "std_support/Memory.hpp"
 
 namespace kotlin {
+
+namespace alloc {
+class Allocator;
+}
 
 namespace mm {
 class ThreadData;
@@ -35,22 +39,16 @@ public:
 
         Impl& impl() noexcept { return *impl_; }
 
-        void PublishObjectFactory() noexcept;
-        void ClearForTests() noexcept;
-
-        ObjHeader* CreateObject(const TypeInfo* typeInfo) noexcept;
-        ArrayHeader* CreateArray(const TypeInfo* typeInfo, uint32_t elements) noexcept;
-        mm::ExtraObjectData& CreateExtraObjectDataForObject(ObjHeader* object, const TypeInfo* typeInfo) noexcept;
-        void DestroyUnattachedExtraObjectData(mm::ExtraObjectData& extraObject) noexcept;
-
         void OnSuspendForGC() noexcept;
 
         void safePoint() noexcept;
 
         void onThreadRegistration() noexcept;
 
+        void onAllocation(ObjHeader* object) noexcept;
+
     private:
-        std_support::unique_ptr<Impl> impl_;
+        std::unique_ptr<Impl> impl_;
     };
 
     // Header to be placed before each heap object. GC will use this to keep its data if needed.
@@ -61,7 +59,7 @@ public:
     //       the destructor is a trivial one.
     class ObjectData;
 
-    explicit GC(gcScheduler::GCScheduler& gcScheduler) noexcept;
+    GC(alloc::Allocator& allocator, gcScheduler::GCScheduler& gcScheduler) noexcept;
     ~GC();
 
     Impl& impl() noexcept { return *impl_; }
@@ -81,10 +79,8 @@ public:
     void WaitFinished(int64_t epoch) noexcept;
     void WaitFinalizers(int64_t epoch) noexcept;
 
-    static void DestroyExtraObjectData(mm::ExtraObjectData& extraObject) noexcept;
-
 private:
-    std_support::unique_ptr<Impl> impl_;
+    std::unique_ptr<Impl> impl_;
 };
 
 bool isMarked(ObjHeader* object) noexcept;

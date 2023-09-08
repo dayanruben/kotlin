@@ -19,7 +19,9 @@ dependencies {
     embedded(project(":plugins:parcelize:parcelize-compiler:parcelize.backend")) { isTransitive = false }
     embedded(project(":plugins:parcelize:parcelize-compiler:parcelize.cli")) { isTransitive = false }
 
-    testApiJUnit5()
+    testApi(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
 
     testApi(intellijCore())
 
@@ -53,7 +55,7 @@ dependencies {
     testRuntimeOnly(commonDependency("com.fasterxml:aalto-xml"))
     testRuntimeOnly("com.jetbrains.intellij.platform:util-xml-dom:$intellijVersion") { isTransitive = false }
 
-    testApi(commonDependency("junit:junit"))
+    testImplementation(libs.junit4)
 
     robolectricDependency("org.robolectric:android-all:5.0.2_r3-robolectric-r0")
 

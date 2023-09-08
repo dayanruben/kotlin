@@ -86,6 +86,7 @@ import org.jetbrains.kotlin.resolve.deprecation.DeprecationInfo
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualAnnotationsIncompatibilityType
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility.Incompatible
+import org.jetbrains.kotlin.serialization.deserialization.IncompatibleVersionErrorData
 import org.jetbrains.kotlin.types.Variance
 
 /*
@@ -953,6 +954,19 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     interface NameContainsIllegalChars : KtFirDiagnostic<KtElement> {
         override val diagnosticClass get() = NameContainsIllegalChars::class
+    }
+
+    interface JsNameClash : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = JsNameClash::class
+        val name: String
+        val existing: List<KtSymbol>
+    }
+
+    interface JsFakeNameClash : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = JsFakeNameClash::class
+        val name: String
+        val override: KtSymbol
+        val existing: List<KtSymbol>
     }
 
     interface OptInUsage : KtFirDiagnostic<PsiElement> {
@@ -3689,6 +3703,17 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     interface NoReflectionInClassPath : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = NoReflectionInClassPath::class
+    }
+
+    interface IncompatibleClass : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = IncompatibleClass::class
+        val presentableString: String
+        val incompatibility: IncompatibleVersionErrorData<*>
+    }
+
+    interface PreReleaseClass : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = PreReleaseClass::class
+        val presentableString: String
     }
 
     interface ImplementingFunctionInterface : KtFirDiagnostic<KtClassOrObject> {

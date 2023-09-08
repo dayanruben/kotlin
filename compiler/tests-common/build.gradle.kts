@@ -53,7 +53,7 @@ dependencies {
     testApi(project(":kotlin-test:kotlin-test-jvm"))
     testApi(project(":kotlin-scripting-compiler-impl"))
     testApi(projectTests(":compiler:test-infrastructure-utils"))
-    testApi(commonDependency("junit:junit"))
+    testApi(libs.junit4) // for ComparisonFailure
     testApi(commonDependency("com.android.tools:r8"))
     testApi(project(":analysis:analysis-internal-utils"))
     testCompileOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
@@ -73,7 +73,7 @@ dependencies {
 
     testApi(jpsModel()) { isTransitive = false }
     testApi(jpsModelImpl()) { isTransitive = false }
-    testApi(intellijJavaRt())
+    testApi(intellijJavaRt()) // for FileComparisonFailure
 
     testImplementation(libs.guava)
     testImplementation(commonDependency("org.jetbrains.intellij.deps:trove4j"))
@@ -81,7 +81,9 @@ dependencies {
     testImplementation(commonDependency("org.jetbrains.intellij.deps:log4j"))
     testImplementation(commonDependency("org.jetbrains.intellij.deps:jdom"))
 
-    testApiJUnit5()
+    testApi(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
 }
 
 optInToExperimentalCompilerApi()

@@ -191,14 +191,16 @@ class DeclarationsChecker(
             return
         }
 
-        if (rhs.isNothing()) {
-            trace.report(ACTUAL_TYPE_ALIAS_TO_NOTHING.on(declaration))
-            return
-        }
+        if (languageVersionSettings.supportsFeature(LanguageFeature.MultiplatformRestrictions)) {
+            if (rhs.isNothing()) {
+                trace.report(ACTUAL_TYPE_ALIAS_TO_NOTHING.on(declaration))
+                return
+            }
 
-        if (rhs.isMarkedNullable) {
-            trace.report(ACTUAL_TYPE_ALIAS_TO_NULLABLE_TYPE.on(declaration))
-            return
+            if (rhs.isMarkedNullable) {
+                trace.report(ACTUAL_TYPE_ALIAS_TO_NULLABLE_TYPE.on(declaration))
+                return
+            }
         }
     }
 
@@ -635,7 +637,7 @@ class DeclarationsChecker(
         }
 
         checkExpectDeclarationHasNoExternalModifier(declaration)
-        if (declaration is KtFunction) {
+        if (declaration is KtFunction && languageVersionSettings.supportsFeature(LanguageFeature.MultiplatformRestrictions)) {
             declaration.modifierList?.getModifier(KtTokens.TAILREC_KEYWORD)?.let {
                 trace.report(EXPECTED_TAILREC_FUNCTION.on(it))
             }
@@ -643,8 +645,10 @@ class DeclarationsChecker(
     }
 
     private fun checkExpectDeclarationHasNoExternalModifier(declaration: KtDeclaration) {
-        declaration.modifierList?.getModifier(KtTokens.EXTERNAL_KEYWORD)?.let {
-            trace.report(EXPECTED_EXTERNAL_DECLARATION.on(it))
+        if (languageVersionSettings.supportsFeature(LanguageFeature.MultiplatformRestrictions)) {
+            declaration.modifierList?.getModifier(KtTokens.EXTERNAL_KEYWORD)?.let {
+                trace.report(EXPECTED_EXTERNAL_DECLARATION.on(it))
+            }
         }
     }
 

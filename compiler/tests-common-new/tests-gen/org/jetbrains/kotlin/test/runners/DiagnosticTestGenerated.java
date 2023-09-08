@@ -1414,6 +1414,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("unnamedArgsInJavaAnnotations.kt")
+        public void testUnnamedArgsInJavaAnnotations() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/unnamedArgsInJavaAnnotations.kt");
+        }
+
+        @Test
         @TestMetadata("unproperDefaultInitializationInTailrec.kt")
         public void testUnproperDefaultInitializationInTailrec() throws Exception {
             runTest("compiler/testData/diagnostics/tests/unproperDefaultInitializationInTailrec.kt");
@@ -9551,6 +9557,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("withInvokes.kt")
+            public void testWithInvokes() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/delegatedProperty/withInvokes.kt");
+            }
+
+            @Test
             @TestMetadata("wrongCountOfParametersInGet.kt")
             public void testWrongCountOfParametersInGet() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/delegatedProperty/wrongCountOfParametersInGet.kt");
@@ -9575,6 +9587,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @Test
                 public void testAllFilesPresentInInference() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/delegatedProperty/inference"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("annotatedAccessor.kt")
+                public void testAnnotatedAccessor() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/annotatedAccessor.kt");
                 }
 
                 @Test
@@ -9626,6 +9644,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("fullyCompleteDelegateWhenPossible.kt")
+                public void testFullyCompleteDelegateWhenPossible() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/fullyCompleteDelegateWhenPossible.kt");
+                }
+
+                @Test
                 @TestMetadata("genericMethodInGenericClass.kt")
                 public void testGenericMethodInGenericClass() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/genericMethodInGenericClass.kt");
@@ -9653,6 +9677,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("labeledDelegatedExpression.kt")
                 public void testLabeledDelegatedExpression() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/labeledDelegatedExpression.kt");
+                }
+
+                @Test
+                @TestMetadata("lambdaWithMultipleReturns.kt")
+                public void testLambdaWithMultipleReturns() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/lambdaWithMultipleReturns.kt");
                 }
 
                 @Test
@@ -9692,9 +9722,33 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("nothingTypeThisRef.kt")
+                public void testNothingTypeThisRef() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/nothingTypeThisRef.kt");
+                }
+
+                @Test
+                @TestMetadata("provideDelegateFixationResultContainsOtherInnerVariable.kt")
+                public void testProvideDelegateFixationResultContainsOtherInnerVariable() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/provideDelegateFixationResultContainsOtherInnerVariable.kt");
+                }
+
+                @Test
+                @TestMetadata("provideDelegateReturningOuterTypeVariable.kt")
+                public void testProvideDelegateReturningOuterTypeVariable() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/provideDelegateReturningOuterTypeVariable.kt");
+                }
+
+                @Test
                 @TestMetadata("resultTypeOfLambdaForConventionMethods.kt")
                 public void testResultTypeOfLambdaForConventionMethods() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/resultTypeOfLambdaForConventionMethods.kt");
+                }
+
+                @Test
+                @TestMetadata("successfulProvideDelegateLeadsToRedGetValue.kt")
+                public void testSuccessfulProvideDelegateLeadsToRedGetValue() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/successfulProvideDelegateLeadsToRedGetValue.kt");
                 }
 
                 @Test
@@ -9707,6 +9761,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("typeOfLazyDelegatedPropertyWithObject.kt")
                 public void testTypeOfLazyDelegatedPropertyWithObject() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/typeOfLazyDelegatedPropertyWithObject.kt");
+                }
+
+                @Test
+                @TestMetadata("typeVariablesFlow.kt")
+                public void testTypeVariablesFlow() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/typeVariablesFlow.kt");
+                }
+
+                @Test
+                @TestMetadata("typeVariablesFlowComplex.kt")
+                public void testTypeVariablesFlowComplex() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/typeVariablesFlowComplex.kt");
                 }
 
                 @Test
@@ -9831,6 +9897,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("provideDelegateResolutionWithStubTypes.kt")
                 public void testProvideDelegateResolutionWithStubTypes() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/delegatedProperty/provideDelegate/provideDelegateResolutionWithStubTypes.kt");
+                }
+
+                @Test
+                @TestMetadata("provideDelegateResolutionWithStubTypesAndExtensionGetValue.kt")
+                public void testProvideDelegateResolutionWithStubTypesAndExtensionGetValue() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/delegatedProperty/provideDelegate/provideDelegateResolutionWithStubTypesAndExtensionGetValue.kt");
                 }
 
                 @Test
@@ -13747,6 +13819,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("importedInner.kt")
                 public void testImportedInner() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/generics/innerClasses/importedInner.kt");
+                }
+
+                @Test
+                @TestMetadata("innerClassGenericBounds.kt")
+                public void testInnerClassGenericBounds() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/generics/innerClasses/innerClassGenericBounds.kt");
                 }
 
                 @Test
@@ -18057,6 +18135,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @Test
                 public void testAllFilesPresentInRecursiveTypes() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/inference/recursiveTypes"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("kt61717.kt")
+                public void testKt61717() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/kt61717.kt");
                 }
 
                 @Test
@@ -22986,6 +23070,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("actualTypealiasToSpecialAnnotation_oldLanguageVersion.kt")
+            public void testActualTypealiasToSpecialAnnotation_oldLanguageVersion() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/actualTypealiasToSpecialAnnotation_oldLanguageVersion.kt");
+            }
+
+            @Test
             @TestMetadata("actualTypealias_defaultParamsIncompatibility.kt")
             public void testActualTypealias_defaultParamsIncompatibility() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/actualTypealias_defaultParamsIncompatibility.kt");
@@ -23006,6 +23096,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("arraySortFixed.kt")
             public void testArraySortFixed() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/arraySortFixed.kt");
+            }
+
+            @Test
+            @TestMetadata("callConflictsOnExpectAndActualWeaklyCompatible.kt")
+            public void testCallConflictsOnExpectAndActualWeaklyCompatible() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/callConflictsOnExpectAndActualWeaklyCompatible.kt");
             }
 
             @Test
@@ -23051,6 +23147,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("expectExternal_oldLanguageVersion.kt")
+            public void testExpectExternal_oldLanguageVersion() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/expectExternal_oldLanguageVersion.kt");
+            }
+
+            @Test
             @TestMetadata("expectInterfaceApplicability.kt")
             public void testExpectInterfaceApplicability() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/expectInterfaceApplicability.kt");
@@ -23069,9 +23171,21 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("expectOptInAnnotation_oldLanguageVersion.kt")
+            public void testExpectOptInAnnotation_oldLanguageVersion() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/expectOptInAnnotation_oldLanguageVersion.kt");
+            }
+
+            @Test
             @TestMetadata("expectTailrec.kt")
             public void testExpectTailrec() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/expectTailrec.kt");
+            }
+
+            @Test
+            @TestMetadata("expectTailrec_oldLanguageVersion.kt")
+            public void testExpectTailrec_oldLanguageVersion() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/expectTailrec_oldLanguageVersion.kt");
             }
 
             @Test
@@ -23516,6 +23630,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("memberScopeMismatch_oldLanguageVersion.kt")
+                public void testMemberScopeMismatch_oldLanguageVersion() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/actualClassifierMustHasTheSameMembersAsNonFinalExpectClassifierChecker/memberScopeMismatch_oldLanguageVersion.kt");
+                }
+
+                @Test
                 @TestMetadata("nestedExpectOpenClass.kt")
                 public void testNestedExpectOpenClass() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/actualClassifierMustHasTheSameMembersAsNonFinalExpectClassifierChecker/nestedExpectOpenClass.kt");
@@ -23643,6 +23763,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("annotationArgumentsDefaults.kt")
                 public void testAnnotationArgumentsDefaults() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/annotationArgumentsDefaults.kt");
+                }
+
+                @Test
+                @TestMetadata("annotationMatching_oldLanguageVersion.kt")
+                public void testAnnotationMatching_oldLanguageVersion() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/annotationMatching_oldLanguageVersion.kt");
                 }
 
                 @Test
@@ -23891,6 +24017,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("methodDefaultArgsViaActualTypealias.kt")
                 public void testMethodDefaultArgsViaActualTypealias() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/defaultArguments/methodDefaultArgsViaActualTypealias.kt");
+                }
+
+                @Test
+                @TestMetadata("methodDefaultArgsViaActualTypealias_oldLanguageVersion.kt")
+                public void testMethodDefaultArgsViaActualTypealias_oldLanguageVersion() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/defaultArguments/methodDefaultArgsViaActualTypealias_oldLanguageVersion.kt");
                 }
             }
 
@@ -24432,6 +24564,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("implicitJavaActualization_oldLanguageVersion.kt")
+                public void testImplicitJavaActualization_oldLanguageVersion() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/java/implicitJavaActualization_oldLanguageVersion.kt");
+                }
+
+                @Test
                 @TestMetadata("inheritedJavaMembers.kt")
                 public void testInheritedJavaMembers() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/java/inheritedJavaMembers.kt");
@@ -24565,9 +24703,21 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("actualTypealiasToNothing_oldLanguageVersion.kt")
+                public void testActualTypealiasToNothing_oldLanguageVersion() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/typealias/actualTypealiasToNothing_oldLanguageVersion.kt");
+                }
+
+                @Test
                 @TestMetadata("actualTypealiasToNullableType.kt")
                 public void testActualTypealiasToNullableType() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/typealias/actualTypealiasToNullableType.kt");
+                }
+
+                @Test
+                @TestMetadata("actualTypealiasToNullableType_oldLanguageVersion.kt")
+                public void testActualTypealiasToNullableType_oldLanguageVersion() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/typealias/actualTypealiasToNullableType_oldLanguageVersion.kt");
                 }
 
                 @Test

@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.fir.expressions.FirSmartCastExpression
 import org.jetbrains.kotlin.fir.expressions.FirThisReceiverExpression
 import org.jetbrains.kotlin.fir.expressions.builder.buildThisReceiverExpressionCopy
 import org.jetbrains.kotlin.fir.expressions.impl.FirExpressionStub
-import org.jetbrains.kotlin.fir.expressions.impl.FirNoReceiverExpression
 import org.jetbrains.kotlin.fir.resolve.inference.InferenceComponents
 import org.jetbrains.kotlin.fir.resolve.inference.PostponedResolvedAtom
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
@@ -31,7 +30,7 @@ import org.jetbrains.kotlin.resolve.calls.tower.isSuccess
 import org.jetbrains.kotlin.util.CodeFragmentAdjustment
 
 class Candidate(
-    override val symbol: FirBasedSymbol<*>,
+    symbol: FirBasedSymbol<*>,
     // Here we may have an ExpressionReceiverValue
     // - in case a use-site receiver is explicit
     // - in some cases with static entities, no matter is a use-site receiver explicit or not
@@ -50,10 +49,27 @@ class Candidate(
     val isFromOriginalTypeInPresenceOfSmartCast: Boolean = false,
 ) : AbstractCandidate() {
 
+    override var symbol: FirBasedSymbol<*> = symbol
+        private set
+
+
+    /**
+     * Please avoid updating symbol in the candidate whenever it's possible.
+     * The only case when currently it seems to be unavoidable is at
+     * [org.jetbrains.kotlin.fir.resolve.transformers.FirCallCompletionResultsWriterTransformer.refineSubstitutedMemberIfReceiverContainsTypeVariable]
+     */
+    @RequiresOptIn
+    annotation class UpdatingSymbol
+
+    @UpdatingSymbol
+    fun updateSymbol(symbol: FirBasedSymbol<*>) {
+        this.symbol = symbol
+    }
+
     private var systemInitialized: Boolean = false
     val system: NewConstraintSystemImpl by lazy(LazyThreadSafetyMode.NONE) {
         val system = constraintSystemFactory.createConstraintSystem()
-        system.addOtherSystem(baseSystem)
+        system.setBaseSystem(baseSystem)
         systemInitialized = true
         system
     }
@@ -61,6 +77,9 @@ class Candidate(
     override val errors: List<ConstraintSystemError>
         get() = system.errors
 
+    /**
+     * Substitutor from declared type parameters to type variables created for that candidate
+     */
     lateinit var substitutor: ConeSubstitutor
     lateinit var freshVariables: List<ConeTypeVariable>
     var resultingTypeForCallableReference: ConeKotlinType? = null
@@ -118,13 +137,13 @@ class Candidate(
     private var sourcesWereUpdated = false
 
     // FirExpressionStub can be located here in case of callable reference resolution
-    fun dispatchReceiverExpression(): FirExpression {
-        return dispatchReceiver?.takeIf { it !is FirExpressionStub } ?: FirNoReceiverExpression
+    fun dispatchReceiverExpression(): FirExpression? {
+        return dispatchReceiver?.takeIf { it !is FirExpressionStub }
     }
 
     // FirExpressionStub can be located here in case of callable reference resolution
-    fun chosenExtensionReceiverExpression(): FirExpression {
-        return chosenExtensionReceiver?.takeIf { it !is FirExpressionStub } ?: FirNoReceiverExpression
+    fun chosenExtensionReceiverExpression(): FirExpression? {
+        return chosenExtensionReceiver?.takeIf { it !is FirExpressionStub }
     }
 
     fun contextReceiverArguments(): List<FirExpression> {

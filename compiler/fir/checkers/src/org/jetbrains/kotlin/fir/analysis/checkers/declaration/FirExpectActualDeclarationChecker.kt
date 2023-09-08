@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.resolve.calls.mpp.AbstractExpectActualAnnotationMatc
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility.*
+import org.jetbrains.kotlin.resolve.multiplatform.isCompatibleOrWeaklyIncompatible
 
 @Suppress("DuplicatedCode")
 object FirExpectActualDeclarationChecker : FirBasicDeclarationChecker() {
@@ -75,7 +76,9 @@ object FirExpectActualDeclarationChecker : FirBasicDeclarationChecker() {
         if (declaration is FirProperty) {
             checkExpectPropertyAccessorsModifiers(declaration, context, reporter)
         }
-        if (declaration is FirFunction && declaration.isTailRec) {
+        if (context.languageVersionSettings.supportsFeature(LanguageFeature.MultiplatformRestrictions) &&
+            declaration is FirFunction && declaration.isTailRec
+        ) {
             reporter.reportOn(declaration.source, FirErrors.EXPECTED_TAILREC_FUNCTION, context)
         }
     }
@@ -107,7 +110,9 @@ object FirExpectActualDeclarationChecker : FirBasicDeclarationChecker() {
         context: CheckerContext,
         reporter: DiagnosticReporter,
     ) {
-        if (declaration.isExternal) {
+        if (context.languageVersionSettings.supportsFeature(LanguageFeature.MultiplatformRestrictions) &&
+            declaration.isExternal
+        ) {
             reporter.reportOn(declaration.source, FirErrors.EXPECTED_EXTERNAL_DECLARATION, context)
         }
     }
@@ -205,7 +210,7 @@ object FirExpectActualDeclarationChecker : FirBasicDeclarationChecker() {
     ) {
         val filesWithAtLeastWeaklyCompatibleExpects = compatibility.asSequence()
             .filter { (compatibility, _) ->
-                compatibility.isCompatibleOrWeakCompatible()
+                compatibility.isCompatibleOrWeaklyIncompatible
             }
             .map { (_, members) -> members }
             .flatten()
@@ -230,6 +235,7 @@ object FirExpectActualDeclarationChecker : FirBasicDeclarationChecker() {
         context: CheckerContext,
         reporter: DiagnosticReporter,
     ) {
+        if (!context.languageVersionSettings.supportsFeature(LanguageFeature.MultiplatformRestrictions)) return
         if (expectSymbol !is FirClassSymbol ||
             actualSymbol !is FirTypeAliasSymbol ||
             expectSymbol.classKind == ClassKind.ANNOTATION_CLASS
@@ -257,6 +263,7 @@ object FirExpectActualDeclarationChecker : FirBasicDeclarationChecker() {
         context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
+        if (!context.languageVersionSettings.supportsFeature(LanguageFeature.MultiplatformRestrictions)) return
         val matchingContext = context.session.expectActualMatchingContextFactory.create(context.session, context.scopeSession)
         val incompatibility =
             AbstractExpectActualAnnotationMatchChecker.areAnnotationsCompatible(expectSymbol, actualSymbol, matchingContext) ?: return
@@ -271,10 +278,6 @@ object FirExpectActualDeclarationChecker : FirBasicDeclarationChecker() {
 
     fun Map<out ExpectActualCompatibility<*>, *>.allStrongIncompatibilities(): Boolean {
         return keys.all { it is Incompatible.StrongIncompatible }
-    }
-
-    private fun ExpectActualCompatibility<FirBasedSymbol<*>>.isCompatibleOrWeakCompatible(): Boolean {
-        return this is Compatible || this is Incompatible.WeakIncompatible
     }
 
     // we don't require `actual` modifier on
@@ -292,7 +295,8 @@ object FirExpectActualDeclarationChecker : FirBasicDeclarationChecker() {
         context: CheckerContext,
         reporter: DiagnosticReporter,
     ) {
-        if (declaration is FirClass &&
+        if (context.languageVersionSettings.supportsFeature(LanguageFeature.MultiplatformRestrictions) &&
+            declaration is FirClass &&
             declaration.classKind == ClassKind.ANNOTATION_CLASS &&
             !expectDeclarationSymbol.hasAnnotation(StandardClassIds.Annotations.OptionalExpectation, context.session) &&
             declaration.hasAnnotation(OptInNames.REQUIRES_OPT_IN_CLASS_ID, context.session)
