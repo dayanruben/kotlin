@@ -67,6 +67,12 @@ public class ContextCollectorSourceTestGenerated extends AbstractContextCollecto
     }
 
     @Test
+    @TestMetadata("KT-61728.kt")
+    public void testKT_61728() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/contextCollector/KT-61728.kt");
+    }
+
+    @Test
     @TestMetadata("lambdaArguments.kt")
     public void testLambdaArguments() throws Exception {
         runTest("analysis/low-level-api-fir/testdata/contextCollector/lambdaArguments.kt");
@@ -249,6 +255,12 @@ public class ContextCollectorSourceTestGenerated extends AbstractContextCollecto
         @TestMetadata("extensionReceiver.kt")
         public void testExtensionReceiver() throws Exception {
             runTest("analysis/low-level-api-fir/testdata/contextCollector/smartCasts/extensionReceiver.kt");
+        }
+
+        @Test
+        @TestMetadata("insideLetOnNullableReceiver.kt")
+        public void testInsideLetOnNullableReceiver() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/contextCollector/smartCasts/insideLetOnNullableReceiver.kt");
         }
 
         @Test
