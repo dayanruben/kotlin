@@ -76,7 +76,7 @@ private val annotationImplementationPhase = createFileLoweringPhase(
 )
 
 private val lowerBeforeInlinePhase = createFileLoweringPhase(
-        ::PreInlineLowering,
+        ::TypeOfLowering,
         name = "LowerBeforeInline",
         description = "Special operations processing before inlining"
 )
@@ -487,6 +487,12 @@ private val objectClassesPhase = createFileLoweringPhase(
         description = "Object classes lowering"
 )
 
+private val assertsRemovalPhase = createFileLoweringPhase(
+        lowering = ::AssertRemovalLowering,
+        name = "AssertsRemoval",
+        description = "Asserts removal"
+)
+
 private val constEvaluationPhase = createFileLoweringPhase(
         lowering = { context: Context ->
             val configuration = IrInterpreterConfiguration(printOnlyExceptionMessage = true)
@@ -498,8 +504,6 @@ private val constEvaluationPhase = createFileLoweringPhase(
 )
 
 private fun PhaseEngine<NativeGenerationState>.getAllLowerings() = listOfNotNull<AbstractNamedCompilerPhase<NativeGenerationState, IrFile, IrFile>>(
-        removeExpectDeclarationsPhase,
-        stripTypeAliasDeclarationsPhase,
         lowerBeforeInlinePhase,
         arrayConstructorPhase,
         lateinitPhase,
@@ -509,6 +513,9 @@ private fun PhaseEngine<NativeGenerationState>.getAllLowerings() = listOfNotNull
         extractLocalClassesFromInlineBodies,
         wrapInlineDeclarationsWithReifiedTypeParametersLowering,
         inlinePhase,
+        removeExpectDeclarationsPhase,
+        stripTypeAliasDeclarationsPhase,
+        assertsRemovalPhase.takeUnless { context.config.assertsEnabled },
         constEvaluationPhase,
         provisionalFunctionExpressionPhase,
         postInlinePhase,
