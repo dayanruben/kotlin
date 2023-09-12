@@ -23814,6 +23814,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("deprecatedAnnotationOnlyOnActual_useInPlatform.kt")
+                public void testDeprecatedAnnotationOnlyOnActual_useInPlatform() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/deprecatedAnnotationOnlyOnActual_useInPlatform.kt");
+                }
+
+                @Test
                 @TestMetadata("differentOrder.kt")
                 public void testDifferentOrder() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/differentOrder.kt");
@@ -26563,6 +26569,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("kt9550.kt")
                 public void testKt9550() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/override/clashesOnInheritance/kt9550.kt");
+                }
+
+                @Test
+                @TestMetadata("packagePrivateAndPublic.kt")
+                public void testPackagePrivateAndPublic() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/override/clashesOnInheritance/packagePrivateAndPublic.kt");
                 }
 
                 @Test
