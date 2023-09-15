@@ -5,11 +5,7 @@
 
 package org.jetbrains.kotlin.backend.konan.descriptors
 
-import org.jetbrains.kotlin.backend.common.atMostOne
-import org.jetbrains.kotlin.backend.konan.RuntimeNames
-import org.jetbrains.kotlin.builtins.konan.KonanBuiltIns
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.OverridingUtil
@@ -81,11 +77,6 @@ fun ClassDescriptor.isAbstract() = this.modality == Modality.SEALED || this.moda
 internal val FunctionDescriptor.target: FunctionDescriptor
     get() = (if (modality == Modality.ABSTRACT) this else resolveFakeOverride()).original
 
-tailrec internal fun DeclarationDescriptor.findPackage(): PackageFragmentDescriptor {
-    return if (this is PackageFragmentDescriptor) this
-    else this.containingDeclaration!!.findPackage()
-}
-
 internal fun DeclarationDescriptor.findPackageView(): PackageViewDescriptor {
     val packageFragment = this.findPackage()
     return packageFragment.module.getPackage(packageFragment.fqName)
@@ -100,23 +91,6 @@ internal fun DeclarationDescriptor.allContainingDeclarations(): List<Declaration
     }
     return list
 }
-
-fun AnnotationDescriptor.getStringValueOrNull(name: String): String? {
-    val constantValue = this.allValueArguments.entries.atMostOne {
-        it.key.asString() == name
-    }?.value
-    return constantValue?.value as String?
-}
-
-inline fun <reified T> AnnotationDescriptor.getArgumentValueOrNull(name: String): T? {
-    val constantValue = this.allValueArguments.entries.atMostOne {
-        it.key.asString() == name
-    }?.value
-    return constantValue?.value as T?
-}
-
-
-fun AnnotationDescriptor.getStringValue(name: String): String = this.getStringValueOrNull(name)!!
 
 private fun getPackagesFqNames(module: ModuleDescriptor): Set<FqName> {
     val result = mutableSetOf<FqName>()

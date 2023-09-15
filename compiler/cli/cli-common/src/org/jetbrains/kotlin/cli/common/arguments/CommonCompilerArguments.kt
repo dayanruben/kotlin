@@ -543,6 +543,16 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
         }
 
     @Argument(
+        value = "-Xuse-ir-fake-override-builder",
+        description = "Generate fake overrides via IR. See KT-61514"
+    )
+    var useIrFakeOverrideBuilder = false
+        set(value) {
+            checkFrozen()
+            field = value
+        }
+
+    @Argument(
         value = "-Xdisable-ultra-light-classes",
         description = "Do not use the ultra light classes implementation"
     )
@@ -797,7 +807,7 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
                 )
             }
             put(AnalysisFlags.optIn, useExperimentalFqNames + optIn?.toList().orEmpty())
-            put(AnalysisFlags.expectActualLinker, expectActualLinker)
+            put(AnalysisFlags.skipExpectedActualDeclarationChecker, expectActualLinker)
             put(AnalysisFlags.explicitApiVersion, apiVersion != null)
             put(AnalysisFlags.allowResultReturnType, allowResultReturnType)
             ExplicitApiMode.fromString(explicitApi)?.also { put(AnalysisFlags.explicitApiMode, it) } ?: collector.report(

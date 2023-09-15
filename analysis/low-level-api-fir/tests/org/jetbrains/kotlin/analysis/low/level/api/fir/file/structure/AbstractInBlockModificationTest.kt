@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.analysis.test.framework.services.expressionMarkerPro
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
-import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
+import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhaseRecursively
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
@@ -70,19 +70,27 @@ internal fun testInBlockModification(
     val declaration = elementToModify.getNonLocalContainingOrThisDeclaration() ?: file
     val firDeclarationBefore = declaration.getOrBuildFirOfType<FirDeclaration>(firSession)
     val declarationToRender = if (dumpFirFile) {
-        file.getOrBuildFirFile(firSession).also { it.lazyResolveToPhase(FirResolvePhase.BODY_RESOLVE) }
+        file.getOrBuildFirFile(firSession).also { it.lazyResolveToPhaseRecursively(FirResolvePhase.BODY_RESOLVE) }
     } else {
         firDeclarationBefore
     }
 
     val textBefore = declarationToRender.render()
 
-    val isOutOfBlock = LLFirDeclarationModificationService.getInstance(elementToModify.project).modifyElement(elementToModify)
+    val modificationService = LLFirDeclarationModificationService.getInstance(elementToModify.project)
+    val isOutOfBlock = modificationService.modifyElement(elementToModify)
     if (isOutOfBlock) {
         return "IN-BLOCK MODIFICATION IS NOT APPLICABLE FOR THIS PLACE"
     }
 
     elementToModify.modify()
+
+    val textAfterPsiModification = declarationToRender.render()
+    testServices.assertions.assertEquals(textBefore, textAfterPsiModification) {
+        "The declaration before and after modification must be in the same state, because changes in not flushed yet"
+    }
+
+    modificationService.flushModifications()
 
     val textAfterModification = declarationToRender.render()
     testServices.assertions.assertNotEquals(textBefore, textAfterModification) {
@@ -92,7 +100,7 @@ internal fun testInBlockModification(
     val textAfter = if (dumpFirFile) {
         // we should resolve the entire file instead of the declaration to be sure that this declaration will be
         // resolved by file resolution as well
-        declarationToRender.lazyResolveToPhase(FirResolvePhase.BODY_RESOLVE)
+        declarationToRender.lazyResolveToPhaseRecursively(FirResolvePhase.BODY_RESOLVE)
         declarationToRender.render()
     } else {
         declaration.getOrBuildFirOfType<FirDeclaration>(firSession)

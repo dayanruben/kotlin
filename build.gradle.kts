@@ -108,6 +108,8 @@ val irCompilerModules = arrayOf(
     ":compiler:ir.serialization.common",
     ":compiler:ir.serialization.js",
     ":compiler:ir.serialization.jvm",
+    ":compiler:ir.serialization.native",
+    ":compiler:ir.objcinterop",
     ":compiler:ir.backend.common",
     ":compiler:ir.interpreter",
     ":wasm:wasm.ir"
@@ -542,10 +544,6 @@ allprojects {
         jcenter {
             content {
                 includeVersionByRegex("net\\.rubygrapefruit", ".+", "0\\.14")
-                includeVersionByRegex("io\\.ktor", ".+", "1\\.1\\.5")
-                includeVersion("khttp", "khttp", "1.0.0")
-                includeVersion("org.jetbrains.kotlinx", "kotlinx-serialization-runtime", "0.4.2")
-                includeVersion("org.jetbrains.kotlinx", "kotlinx-serialization-runtime", "0.14.0")
             }
         }
     }
@@ -700,10 +698,6 @@ tasks {
 
     register("nightlyFirCompilerTest") {
         dependsOn(":compiler:fir:fir2ir:nightlyTests")
-    }
-
-    register("compilerFrontendVisualizerTest") {
-        dependsOn("compiler:visualizer:test")
     }
 
     register("scriptingJvmTest") {

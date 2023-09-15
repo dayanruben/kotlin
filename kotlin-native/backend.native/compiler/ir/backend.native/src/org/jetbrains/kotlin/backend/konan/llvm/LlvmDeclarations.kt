@@ -7,16 +7,14 @@ package org.jetbrains.kotlin.backend.konan.llvm
 
 import kotlinx.cinterop.toCValues
 import llvm.*
-import org.jetbrains.kotlin.backend.common.serialization.mangle.MangleConstant
 import org.jetbrains.kotlin.backend.konan.*
 import org.jetbrains.kotlin.backend.konan.descriptors.ClassLayoutBuilder
 import org.jetbrains.kotlin.backend.konan.descriptors.isTypedIntrinsic
 import org.jetbrains.kotlin.backend.konan.descriptors.requiredAlignment
 import org.jetbrains.kotlin.backend.konan.ir.*
-import org.jetbrains.kotlin.backend.konan.lower.isStaticInitializer
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.objcinterop.*
 import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
@@ -209,7 +207,7 @@ private class DeclarationsGeneratorVisitor(override val generationState: NativeG
             declaration.computeTypeInfoSymbolName()
         } else {
             if (!context.config.producePerFileCache)
-                "${MangleConstant.CLASS_PREFIX}:$internalName"
+                "${KonanBinaryInterface.MANGLE_CLASS_PREFIX}:$internalName"
             else {
                 val containerName = (generationState.cacheDeserializationStrategy as CacheDeserializationStrategy.SingleFile).filePath
                 declaration.computePrivateTypeInfoSymbolName(containerName)
@@ -388,7 +386,7 @@ private class DeclarationsGeneratorVisitor(override val generationState: NativeG
                 }
             } else {
                 if (!context.config.producePerFileCache)
-                    "${MangleConstant.FUN_PREFIX}:${qualifyInternalName(declaration)}"
+                    "${KonanBinaryInterface.MANGLE_FUN_PREFIX}:${qualifyInternalName(declaration)}"
                 else {
                     val containerName = declaration.parentClassOrNull?.fqNameForIrSerialization?.asString()
                             ?: (generationState.cacheDeserializationStrategy as CacheDeserializationStrategy.SingleFile).filePath

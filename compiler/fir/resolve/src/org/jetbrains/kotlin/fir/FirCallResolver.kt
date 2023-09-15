@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBod
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirExpressionsResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
 import org.jetbrains.kotlin.fir.resolve.transformers.doesResolutionResultOverrideOtherToPreserveCompatibility
+import org.jetbrains.kotlin.fir.scopes.impl.originalConstructorIfTypeAlias
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
@@ -246,6 +247,16 @@ class FirCallResolver(
 
         @Suppress("NAME_SHADOWING")
         val qualifiedAccess = qualifiedAccess.let(transformer::transformExplicitReceiver)
+
+        // In red code, annotations can call arbitrary non-const declarations.
+        // During annotation arguments phase, we exit out if the receiver has unresolved type so that we don't throw exceptions.
+        // During body resolve, we will report something like ANNOTATION_ARGUMENT_MUST_BE_CONST.
+        if (transformer.baseTransformerPhase == FirResolvePhase.ARGUMENTS_OF_ANNOTATIONS &&
+            qualifiedAccess.explicitReceiver?.isResolved == false
+        ) {
+            return qualifiedAccess
+        }
+
         val nonFatalDiagnosticFromExpression = (qualifiedAccess as? FirPropertyAccessExpression)?.nonFatalDiagnostics
 
         val basicResult by lazy(LazyThreadSafetyMode.NONE) {
@@ -825,7 +836,7 @@ class FirCallResolver(
          */
         if (components.context.inferenceSession !is FirBuilderInferenceSession &&
             createResolvedReferenceWithoutCandidateForLocalVariables &&
-            explicitReceiver?.coneTypeSafe<ConeIntegerLiteralType>() == null &&
+            explicitReceiver?.resolvedType !is ConeIntegerLiteralType &&
             coneSymbol is FirVariableSymbol &&
             (coneSymbol !is FirPropertySymbol || (coneSymbol.fir as FirMemberDeclaration).typeParameters.isEmpty()) &&
             !candidate.doesResolutionResultOverrideOtherToPreserveCompatibility()

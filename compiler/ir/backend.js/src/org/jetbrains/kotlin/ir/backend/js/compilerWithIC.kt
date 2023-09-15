@@ -27,7 +27,6 @@ class JsIrCompilerWithIC(
     granularity: JsGenerationGranularity,
     private val phaseConfig: PhaseConfig,
     exportedDeclarations: Set<FqName> = emptySet(),
-    es6mode: Boolean = false
 ) : JsIrCompilerICInterface {
     private val context: JsIrBackendContext
 
@@ -42,7 +41,6 @@ class JsIrCompilerWithIC(
             exportedDeclarations,
             keep = emptySet(),
             configuration = configuration,
-            es6mode = es6mode,
             granularity = granularity,
             incrementalCacheEnabled = true
         )
@@ -52,7 +50,7 @@ class JsIrCompilerWithIC(
         allModules: Collection<IrModuleFragment>,
         dirtyFiles: Collection<IrFile>,
         mainArguments: List<String>?
-    ): List<() -> List<JsIrProgramFragment>> {
+    ): List<() -> JsIrProgramFragments> {
         val shouldGeneratePolyfills = context.configuration.getBoolean(JSConfigurationKeys.GENERATE_POLYFILLS)
 
         allModules.forEach {

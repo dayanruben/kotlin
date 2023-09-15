@@ -77,9 +77,11 @@
 /compiler/ir/ir.ir2cfg/ Mikhail.Glukhikh
 /compiler/ir/ir.psi2ir/ "Kotlin JVM"
 /compiler/ir/ir.tree/ "Kotlin JVM" "Kotlin JS" "Kotlin Native" "Kotlin Wasm"
+/compiler/ir/ir.objcinterop/ "Kotlin Native"
 /compiler/ir/serialization.common/ "Kotlin Native"
 /compiler/ir/serialization.js/ "Kotlin JS"
 /compiler/ir/serialization.jvm/ "Kotlin JVM"
+/compiler/ir/serialization.native/ "Kotlin Native"
 /compiler/javac-wrapper/ "Kotlin Compiler Core"
 /compiler/light-classes/ "Kotlin IDE Analysis Core"
 /compiler/plugin-api/ "Kotlin Compiler Core"
@@ -207,7 +209,6 @@
 /compiler/util-klib/ "Kotlin Native"
 /compiler/util-klib-abi/ "Kotlin Native"
 /compiler/util-klib-metadata/ "Kotlin Native"
-/compiler/visualizer/ "Kotlin Compiler Core"
 
 /core/builtins/ "Kotlin Compiler Core"
 /core/compiler.common/ "Kotlin Compiler Core"

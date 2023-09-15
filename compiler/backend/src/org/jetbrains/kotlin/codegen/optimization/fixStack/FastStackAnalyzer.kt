@@ -33,11 +33,10 @@
 
 package org.jetbrains.kotlin.codegen.optimization.fixStack
 
-import org.jetbrains.kotlin.codegen.inline.insnText
+import org.jetbrains.kotlin.codegen.optimization.common.FastAnalyzer
 import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.tree.*
-import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException
 import org.jetbrains.org.objectweb.asm.tree.analysis.Frame
 import org.jetbrains.org.objectweb.asm.tree.analysis.Interpreter
 import org.jetbrains.org.objectweb.asm.tree.analysis.Value
@@ -45,114 +44,66 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.Value
 /**
  * @see org.jetbrains.kotlin.codegen.optimization.common.FastMethodAnalyzer
  */
-@Suppress("DuplicatedCode")
-internal open class FastStackAnalyzer<V : Value>(
-    private val owner: String,
-    val method: MethodNode,
-    protected val interpreter: Interpreter<V>
-) {
-    protected val insnsArray: Array<AbstractInsnNode> = method.instructions.toArray()
-    private val nInsns = insnsArray.size
+// This is a very specific version of method bytecode analyzer that doesn't perform any DFA,
+// but infers stack types for reachable instructions instead.
+internal open class FastStackAnalyzer<V : Value, F : Frame<V>>(
+    owner: String,
+    method: MethodNode,
+    interpreter: Interpreter<V>
+) : FastAnalyzer<V, Interpreter<V>, F>(owner, method, interpreter) {
+    @Suppress("UNCHECKED_CAST")
+    override fun newFrame(nLocals: Int, nStack: Int): F = Frame<V>(nLocals, nStack) as F
 
-    private val frames: Array<Frame<V>?> = arrayOfNulls(nInsns)
-
-    private val handlers: Array<MutableList<TryCatchBlockNode>?> = arrayOfNulls(nInsns)
-    private val queued = BooleanArray(nInsns)
-    private val queue = IntArray(nInsns)
-    private var top = 0
-
-    protected open fun newFrame(nLocals: Int, nStack: Int): Frame<V> = Frame(nLocals, nStack)
-
-    protected open fun visitControlFlowEdge(insn: Int, successor: Int): Boolean = true
+    protected open fun visitControlFlowEdge(insnNode: AbstractInsnNode, successor: Int): Boolean = true
 
     protected open fun visitControlFlowExceptionEdge(insn: Int, successor: Int): Boolean = true
 
-    fun analyze(): Array<Frame<V>?> {
-        if (nInsns == 0) return frames
+    // Don't have to visit the same exception handler multiple times - we care only about stack state at TCB start.
+    override fun useFastComputeExceptionHandlers(): Boolean = true
 
-        // This is a very specific version of method bytecode analyzer that doesn't perform any DFA,
-        // but infers stack types for reachable instructions instead.
-
-        checkAssertions()
-
-        computeExceptionEdges()
-
-        val current = newFrame(method.maxLocals, method.maxStack)
-        val handler = newFrame(method.maxLocals, method.maxStack)
-        initControlFlowAnalysis(current, method, owner)
-
-        while (top > 0) {
-            val insn = queue[--top]
-            val f = frames[insn]!!
-            queued[insn] = false
-
-            val insnNode = method.instructions[insn]
-            val insnOpcode = insnNode.opcode
-            val insnType = insnNode.type
-
-            try {
-                if (insnType == AbstractInsnNode.LABEL || insnType == AbstractInsnNode.LINE || insnType == AbstractInsnNode.FRAME) {
-                    visitNopInsn(f, insn)
-                } else {
-                    current.init(f)
-                    if (insnOpcode != Opcodes.RETURN) {
-                        // Don't care about possibly incompatible return type
-                        current.execute(insnNode, interpreter)
-                    }
-
-                    when {
-                        insnType == AbstractInsnNode.JUMP_INSN ->
-                            visitJumpInsnNode(insnNode as JumpInsnNode, current, insn, insnOpcode)
-                        insnType == AbstractInsnNode.LOOKUPSWITCH_INSN ->
-                            visitLookupSwitchInsnNode(insnNode as LookupSwitchInsnNode, current, insn)
-                        insnType == AbstractInsnNode.TABLESWITCH_INSN ->
-                            visitTableSwitchInsnNode(insnNode as TableSwitchInsnNode, current, insn)
-                        insnOpcode != Opcodes.ATHROW && (insnOpcode < Opcodes.IRETURN || insnOpcode > Opcodes.RETURN) ->
-                            visitOpInsn(current, insn)
-                        else -> {
-                        }
-                    }
-                }
-
-                handlers[insn]?.forEach { tcb ->
-                    val exnType = Type.getObjectType(tcb.type ?: "java/lang/Throwable")
-                    val jump = tcb.handler.indexOf()
-                    if (visitControlFlowExceptionEdge(insn, tcb.handler.indexOf())) {
-                        handler.init(f)
-                        handler.clearStack()
-                        handler.push(interpreter.newValue(exnType))
-                        mergeControlFlowEdge(jump, handler)
-                    }
-                }
-
-            } catch (e: AnalyzerException) {
-                throw AnalyzerException(e.node, "Error at instruction #$insn ${insnNode.insnText}: ${e.message}", e)
-            } catch (e: Exception) {
-                throw AnalyzerException(insnNode, "Error at instruction #$insn ${insnNode.insnText}: ${e.message}", e)
+    override fun analyzeInstruction(
+        insnNode: AbstractInsnNode,
+        insnIndex: Int,
+        insnType: Int,
+        insnOpcode: Int,
+        currentlyAnalyzing: F,
+        current: F,
+        handler: F,
+    ) {
+        if (insnType == AbstractInsnNode.LABEL || insnType == AbstractInsnNode.LINE || insnType == AbstractInsnNode.FRAME) {
+            visitNopInsn(insnNode, currentlyAnalyzing, insnIndex)
+        } else {
+            current.init(currentlyAnalyzing)
+            if (insnOpcode != Opcodes.RETURN) {
+                // Don't care about possibly incompatible return type
+                current.execute(insnNode, interpreter)
             }
-
+            visitMeaningfulInstruction(insnNode, insnType, insnOpcode, current, insnIndex)
         }
 
-        return frames
+        handlers[insnIndex]?.forEach { tcb ->
+            val exnType = Type.getObjectType(tcb.type ?: "java/lang/Throwable")
+            val jump = tcb.handler.indexOf()
+            if (visitControlFlowExceptionEdge(insnIndex, jump)) {
+                handler.init(currentlyAnalyzing)
+                handler.clearStack()
+                handler.push(interpreter.newValue(exnType))
+                mergeControlFlowEdge(jump, handler)
+            }
+        }
     }
 
-    private fun AbstractInsnNode.indexOf() = method.instructions.indexOf(this)
-
-    fun getFrame(insn: AbstractInsnNode): Frame<V>? =
-        frames[insn.indexOf()]
-
-    private fun checkAssertions() {
-        if (insnsArray.any { it.opcode == Opcodes.JSR || it.opcode == Opcodes.RET })
-            throw AssertionError("Subroutines are deprecated since Java 6")
+    override fun visitOpInsn(insnNode: AbstractInsnNode, current: F, insn: Int) {
+        processControlFlowEdge(current, insnNode, insn + 1)
     }
 
-    private fun visitOpInsn(current: Frame<V>, insn: Int) {
-        processControlFlowEdge(current, insn, insn + 1)
+    private fun visitNopInsn(insnNode: AbstractInsnNode, f: F, insn: Int) {
+        processControlFlowEdge(f, insnNode, insn + 1)
     }
 
-    private fun visitTableSwitchInsnNode(insnNode: TableSwitchInsnNode, current: Frame<V>, insn: Int) {
+    override fun visitTableSwitchInsnNode(insnNode: TableSwitchInsnNode, current: F) {
         var jump = insnNode.dflt.indexOf()
-        processControlFlowEdge(current, insn, jump)
+        processControlFlowEdge(current, insnNode, jump)
         // In most cases order of visiting switch labels should not matter
         // The only one is a tableswitch being added in the beginning of coroutine method, these switch' labels may lead
         // in the middle of try/catch block, and FixStackAnalyzer is not ready for this (trying to restore stack before it was saved)
@@ -160,80 +111,44 @@ internal open class FastStackAnalyzer<V : Value>(
         // Using 'reversed' is because nodes are processed in LIFO order
         for (label in insnNode.labels.reversed()) {
             jump = label.indexOf()
-            processControlFlowEdge(current, insn, jump)
+            processControlFlowEdge(current, insnNode, jump)
         }
     }
 
-    private fun visitLookupSwitchInsnNode(insnNode: LookupSwitchInsnNode, current: Frame<V>, insn: Int) {
+    override fun visitLookupSwitchInsnNode(insnNode: LookupSwitchInsnNode, current: F) {
         var jump = insnNode.dflt.indexOf()
-        processControlFlowEdge(current, insn, jump)
+        processControlFlowEdge(current, insnNode, jump)
         for (label in insnNode.labels) {
             jump = label.indexOf()
-            processControlFlowEdge(current, insn, jump)
+            processControlFlowEdge(current, insnNode, jump)
         }
     }
 
-    private fun visitJumpInsnNode(insnNode: JumpInsnNode, current: Frame<V>, insn: Int, insnOpcode: Int) {
+    override fun visitJumpInsnNode(insnNode: JumpInsnNode, current: F, insn: Int, insnOpcode: Int) {
         if (insnOpcode != Opcodes.GOTO) {
-            processControlFlowEdge(current, insn, insn + 1)
+            processControlFlowEdge(current, insnNode, insn + 1)
         }
         val jump = insnNode.label.indexOf()
-        processControlFlowEdge(current, insn, jump)
+        processControlFlowEdge(current, insnNode, jump)
     }
 
-    private fun visitNopInsn(f: Frame<V>, insn: Int) {
-        processControlFlowEdge(f, insn, insn + 1)
-    }
-
-    private fun processControlFlowEdge(current: Frame<V>, insn: Int, jump: Int) {
-        if (visitControlFlowEdge(insn, jump)) {
+    private fun processControlFlowEdge(current: F, insnNode: AbstractInsnNode, jump: Int) {
+        if (visitControlFlowEdge(insnNode, jump)) {
             mergeControlFlowEdge(jump, current)
         }
     }
 
-    private fun initControlFlowAnalysis(current: Frame<V>, m: MethodNode, owner: String) {
-        current.setReturn(interpreter.newValue(Type.getReturnType(m.desc)))
-        val args = Type.getArgumentTypes(m.desc)
-        var local = 0
-        if ((m.access and Opcodes.ACC_STATIC) == 0) {
-            val ctype = Type.getObjectType(owner)
-            current.setLocal(local++, interpreter.newValue(ctype))
-        }
-        for (arg in args) {
-            current.setLocal(local++, interpreter.newValue(arg))
-            if (arg.size == 2) {
-                current.setLocal(local++, interpreter.newValue(null))
+    override fun mergeControlFlowEdge(dest: Int, frame: F, canReuse: Boolean) {
+        val oldFrame = getFrame(dest)
+        val changes = when {
+            // Don't have to visit the same instruction multiple times - we care only about "initial" stack state.
+            oldFrame == null -> {
+                setFrame(dest, newFrame(frame.locals, frame.maxStackSize).apply { init(frame) })
+                true
             }
+            else -> false
         }
-        while (local < m.maxLocals) {
-            current.setLocal(local++, interpreter.newValue(null))
-        }
-        mergeControlFlowEdge(0, current)
-    }
-
-    private fun computeExceptionEdges() {
-        for (tcb in method.tryCatchBlocks) {
-            // Don't have to visit same exception handler multiple times - we care only about stack state at TCB start.
-            val start = tcb.start.indexOf()
-            var insnHandlers: MutableList<TryCatchBlockNode>? = handlers[start]
-            if (insnHandlers == null) {
-                insnHandlers = ArrayList()
-                handlers[start] = insnHandlers
-            }
-            insnHandlers.add(tcb)
-        }
-    }
-
-    private fun mergeControlFlowEdge(dest: Int, frame: Frame<V>) {
-        val destFrame = frames[dest]
-        if (destFrame == null) {
-            // Don't have to visit same instruction multiple times - we care only about "initial" stack state.
-            frames[dest] = newFrame(frame.locals, frame.maxStackSize).apply { init(frame) }
-            if (!queued[dest]) {
-                queued[dest] = true
-                queue[top++] = dest
-            }
-        }
+        updateQueue(changes, dest)
     }
 
 }

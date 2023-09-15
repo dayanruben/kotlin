@@ -2456,6 +2456,12 @@ public class IrBoxJsES6TestGenerated extends AbstractIrBoxJsES6Test {
             }
 
             @Test
+            @TestMetadata("fileNameClash.kt")
+            public void testFileNameClash() throws Exception {
+                runTest("js/js.translator/testData/box/esModules/export/fileNameClash.kt");
+            }
+
+            @Test
             @TestMetadata("nonIndetifierModuleName.kt")
             public void testNonIndetifierModuleName() throws Exception {
                 runTest("js/js.translator/testData/box/esModules/export/nonIndetifierModuleName.kt");
@@ -8456,6 +8462,12 @@ public class IrBoxJsES6TestGenerated extends AbstractIrBoxJsES6Test {
         @TestMetadata("overloadMethodsWithSameParameterTypeName.kt")
         public void testOverloadMethodsWithSameParameterTypeName() throws Exception {
             runTest("js/js.translator/testData/box/nameClashes/overloadMethodsWithSameParameterTypeName.kt");
+        }
+
+        @Test
+        @TestMetadata("promiseThen.kt")
+        public void testPromiseThen() throws Exception {
+            runTest("js/js.translator/testData/box/nameClashes/promiseThen.kt");
         }
 
         @Test

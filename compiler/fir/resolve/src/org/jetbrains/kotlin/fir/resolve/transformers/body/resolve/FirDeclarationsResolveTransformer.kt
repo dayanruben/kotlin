@@ -233,8 +233,8 @@ open class FirDeclarationsResolveTransformer(
         //     get() = delegate.getValue(thisRef, kProperty: KProperty0/1/2<..., SomeType>)
         //     set() = delegate.getValue(thisRef, kProperty: KProperty0/1/2<..., SomeType>, value)
         val propertyReferenceAccess = resolvedArgumentMapping?.keys?.toList()?.getOrNull(1) as? FirCallableReferenceAccess ?: return
-        val type = propertyReferenceAccess.coneTypeOrNull
-        if (type != null && property.returnTypeRef is FirResolvedTypeRef) {
+        val type = propertyReferenceAccess.resolvedType
+        if (property.returnTypeRef is FirResolvedTypeRef) {
             val typeArguments = (type.type as ConeClassLikeType).typeArguments
             val extensionType = property.receiverParameter?.typeRef?.coneType
             val dispatchType = context.containingClass?.let { containingClass ->
@@ -325,7 +325,7 @@ open class FirDeclarationsResolveTransformer(
         dataFlowAnalyzer.exitDelegateExpression(delegate)
     }
 
-    override fun transformPropertyAccessor(propertyAccessor: FirPropertyAccessor, data: ResolutionMode): FirStatement {
+    override fun transformPropertyAccessor(propertyAccessor: FirPropertyAccessor, data: ResolutionMode): FirPropertyAccessor {
         return propertyAccessor.also {
             transformProperty(it.propertySymbol.fir, data)
         }
@@ -604,7 +604,7 @@ open class FirDeclarationsResolveTransformer(
     override fun transformRegularClass(
         regularClass: FirRegularClass,
         data: ResolutionMode
-    ): FirStatement =
+    ): FirRegularClass =
         whileAnalysing(session, regularClass) {
             return context.withContainingClass(regularClass) {
                 if (regularClass.isLocal && regularClass !in context.targetedLocalClasses) {
@@ -618,7 +618,7 @@ open class FirDeclarationsResolveTransformer(
 
     fun withScript(script: FirScript, action: () -> FirScript): FirScript {
         dataFlowAnalyzer.enterScript(script)
-        val result = context.withScopesForScript(script, components) {
+        val result = context.withScript(script, components) {
             action()
         }
         dataFlowAnalyzer.exitScript() // TODO: FirScript should be a FirControlFlowGraphOwner, KT-59683
@@ -705,7 +705,7 @@ open class FirDeclarationsResolveTransformer(
     override fun transformAnonymousObject(
         anonymousObject: FirAnonymousObject,
         data: ResolutionMode
-    ): FirStatement = whileAnalysing(session, anonymousObject) {
+    ): FirAnonymousObject = whileAnalysing(session, anonymousObject) {
         if (anonymousObject !in context.targetedLocalClasses) {
             return anonymousObject.runAllPhasesForLocalClass(transformer, components, data, transformer.firResolveContextCollector)
         }
@@ -763,7 +763,7 @@ open class FirDeclarationsResolveTransformer(
         if (result.returnTypeRef is FirImplicitTypeRef) {
             val simpleFunction = function as? FirSimpleFunction
             val returnExpression = (body?.statements?.singleOrNull() as? FirReturnExpression)?.result
-            val expressionType = returnExpression?.coneTypeOrNull
+            val expressionType = returnExpression?.resolvedType
             val returnTypeRef = expressionType
                 ?.toFirResolvedTypeRef(result.returnTypeRef.source)
                 ?.approximateDeclarationType(
@@ -785,14 +785,14 @@ open class FirDeclarationsResolveTransformer(
     override fun transformFunction(
         function: FirFunction,
         data: ResolutionMode
-    ): FirStatement = whileAnalysing(session, function) {
+    ): FirFunction = whileAnalysing(session, function) {
         if (function.bodyResolved) return function
         dataFlowAnalyzer.enterFunction(function)
         return transformDeclarationContent(function, data).also {
             val result = it as FirFunction
             val controlFlowGraphReference = dataFlowAnalyzer.exitFunction(result)
             result.replaceControlFlowGraphReference(controlFlowGraphReference)
-        } as FirStatement
+        } as FirFunction
     }
 
     override fun transformConstructor(constructor: FirConstructor, data: ResolutionMode): FirConstructor =
@@ -809,8 +809,10 @@ open class FirDeclarationsResolveTransformer(
             return doTransformConstructor(constructor, data)
         }
 
-    override fun transformErrorPrimaryConstructor(errorPrimaryConstructor: FirErrorPrimaryConstructor, data: ResolutionMode) =
-        transformConstructor(errorPrimaryConstructor, data)
+    override fun transformErrorPrimaryConstructor(
+        errorPrimaryConstructor: FirErrorPrimaryConstructor,
+        data: ResolutionMode,
+    ): FirErrorPrimaryConstructor = transformConstructor(errorPrimaryConstructor, data) as FirErrorPrimaryConstructor
 
     private fun doTransformConstructor(constructor: FirConstructor, data: ResolutionMode): FirConstructor {
         val owningClass = context.containerIfAny as? FirRegularClass
@@ -863,7 +865,7 @@ open class FirDeclarationsResolveTransformer(
     override fun transformValueParameter(
         valueParameter: FirValueParameter,
         data: ResolutionMode
-    ): FirStatement = whileAnalysing(session, valueParameter) {
+    ): FirValueParameter = whileAnalysing(session, valueParameter) {
         dataFlowAnalyzer.enterValueParameter(valueParameter)
         val result = context.withValueParameter(valueParameter, session) {
             transformDeclarationContent(
@@ -882,7 +884,7 @@ open class FirDeclarationsResolveTransformer(
     override fun transformAnonymousFunction(
         anonymousFunction: FirAnonymousFunction,
         data: ResolutionMode
-    ): FirStatement = whileAnalysing(session, anonymousFunction) {
+    ): FirAnonymousFunction = whileAnalysing(session, anonymousFunction) {
         // Either ContextDependent, ContextIndependent or WithExpectedType could be here
         anonymousFunction.transformAnnotations(transformer, ResolutionMode.ContextIndependent)
         if (data !is ResolutionMode.LambdaResolution) {
@@ -1079,7 +1081,7 @@ open class FirDeclarationsResolveTransformer(
     override fun transformBackingField(
         backingField: FirBackingField,
         data: ResolutionMode,
-    ): FirStatement = whileAnalysing(session, backingField) {
+    ): FirBackingField = whileAnalysing(session, backingField) {
         val propertyType = data.expectedType
         val initializerData = when {
             backingField.returnTypeRef is FirResolvedTypeRef -> withExpectedType(backingField.returnTypeRef)
@@ -1102,7 +1104,7 @@ open class FirDeclarationsResolveTransformer(
         val inferredType = if (backingField is FirDefaultPropertyBackingField) {
             propertyType
         } else {
-            backingField.initializer?.unwrapSmartcastExpression()?.coneTypeOrNull?.toFirResolvedTypeRef()
+            backingField.initializer?.unwrapSmartcastExpression()?.resolvedType?.toFirResolvedTypeRef()
         }
         val resultType = inferredType
             ?: return backingField.transformReturnTypeRef(
@@ -1131,7 +1133,7 @@ open class FirDeclarationsResolveTransformer(
             val resultType = when {
                 initializer != null -> {
                     val unwrappedInitializer = initializer.unwrapSmartcastExpression()
-                    unwrappedInitializer.resultType?.toFirResolvedTypeRef()
+                    unwrappedInitializer.resolvedType.toFirResolvedTypeRef()
                 }
                 variable.getter != null && variable.getter !is FirDefaultPropertyAccessor -> variable.getter?.returnTypeRef
                 else -> null
@@ -1214,10 +1216,10 @@ open class FirDeclarationsResolveTransformer(
     private val FirVariable.initializerResolved: Boolean
         get() {
             val initializer = initializer ?: return false
-            return initializer.coneTypeOrNull != null && initializer !is FirErrorExpression
+            return initializer.isResolved && initializer !is FirErrorExpression
         }
 
     protected val FirFunction.bodyResolved: Boolean
-        get() = body !is FirLazyBlock && body?.coneTypeOrNull != null
+        get() = body !is FirLazyBlock && body?.isResolved == true
 
 }

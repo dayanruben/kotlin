@@ -415,7 +415,7 @@ internal class KtFirCallResolver(
                 }
 
             // Specially handle @ExtensionFunctionType
-            if (dispatchReceiver?.coneTypeSafe<ConeKotlinType>()?.isExtensionFunctionType == true) {
+            if (dispatchReceiver?.resolvedType?.isExtensionFunctionType == true) {
                 firstArgIsExtensionReceiver = true
             }
 
@@ -923,7 +923,7 @@ internal class KtFirCallResolver(
     private fun FirArrayLiteral.toTypeArgumentsMapping(
         partiallyAppliedSymbol: KtPartiallyAppliedSymbol<*, *>
     ): Map<KtTypeParameterSymbol, KtType> {
-        val elementType = coneTypeSafe<ConeClassLikeType>()?.arrayElementType()?.asKtType() ?: return emptyMap()
+        val elementType = resolvedType.arrayElementType()?.asKtType() ?: return emptyMap()
         val typeParameter = partiallyAppliedSymbol.symbol.typeParameters.singleOrNull() ?: return emptyMap()
         return mapOf(typeParameter to elementType)
     }
@@ -1157,7 +1157,8 @@ internal class KtFirCallResolver(
 
     private fun FirArrayLiteral.toKtCallInfo(): KtCallInfo? {
         val arrayOfSymbol = with(analysisSession) {
-            val type = coneTypeSafe<ConeClassLikeType>()
+
+            val type = resolvedType as? ConeClassLikeType
                 ?: return run {
                     val defaultArrayOfSymbol = arrayOfSymbol(arrayOf) ?: return null
                     val substitutor = createSubstitutorFromTypeArguments(defaultArrayOfSymbol)
@@ -1202,7 +1203,8 @@ internal class KtFirCallResolver(
         val firSymbol = arrayOfSymbol.firSymbol
         // No type parameter means this is an arrayOf call of primitives, in which case there is no type arguments
         val typeParameter = firSymbol.fir.typeParameters.singleOrNull() ?: return KtSubstitutor.Empty(token)
-        val elementType = coneTypeSafe<ConeClassLikeType>()?.arrayElementType() ?: return KtSubstitutor.Empty(token)
+
+        val elementType = resolvedType.arrayElementType() ?: return KtSubstitutor.Empty(token)
         val coneSubstitutor = substitutorByMap(mapOf(typeParameter.symbol to elementType), rootModuleSession)
         return firSymbolBuilder.typeBuilder.buildSubstitutor(coneSubstitutor)
     }

@@ -1507,6 +1507,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("AnnotatedCatchValueParameter.kt")
+            public void testAnnotatedCatchValueParameter() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/AnnotatedCatchValueParameter.kt");
+            }
+
+            @Test
             @TestMetadata("AnnotatedConstructor.kt")
             public void testAnnotatedConstructor() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/AnnotatedConstructor.kt");
@@ -23318,6 +23324,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("smartcastOnMemberPropertyFromCommonClass.kt")
             public void testSmartcastOnMemberPropertyFromCommonClass() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/smartcastOnMemberPropertyFromCommonClass.kt");
+            }
+
+            @Test
+            @TestMetadata("superCallDefaultArguments.kt")
+            public void testSuperCallDefaultArguments() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/superCallDefaultArguments.kt");
             }
 
             @Test
