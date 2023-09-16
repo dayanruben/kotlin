@@ -472,12 +472,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
-        @TestMetadata("IncDecOperatorsInExpectClass.kt")
-        public void testIncDecOperatorsInExpectClass() throws Exception {
-            runTest("compiler/testData/diagnostics/tests/IncDecOperatorsInExpectClass.kt");
-        }
-
-        @Test
         @TestMetadata("IncorrectCharacterLiterals.kt")
         public void testIncorrectCharacterLiterals() throws Exception {
             runTest("compiler/testData/diagnostics/tests/IncorrectCharacterLiterals.kt");
@@ -23856,6 +23850,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("gettersAndSetters.kt")
+                public void testGettersAndSetters() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/gettersAndSetters.kt");
+                }
+
+                @Test
                 @TestMetadata("intrinsicConstEvaluation.kt")
                 public void testIntrinsicConstEvaluation() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/intrinsicConstEvaluation.kt");
@@ -23910,6 +23910,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("typeParameters.kt")
+                public void testTypeParameters() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/typeParameters.kt");
+                }
+
+                @Test
                 @TestMetadata("typealias.kt")
                 public void testTypealias() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/typealias.kt");
@@ -23925,6 +23931,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("typealiasToKtLibrary.kt")
                 public void testTypealiasToKtLibrary() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/typealiasToKtLibrary.kt");
+                }
+
+                @Test
+                @TestMetadata("valueParameters.kt")
+                public void testValueParameters() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/valueParameters.kt");
                 }
 
                 @Test

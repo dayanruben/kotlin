@@ -3133,6 +3133,7 @@ internal class ActualTypealiasToSpecialAnnotationImpl(
 internal class ActualAnnotationsNotMatchExpectImpl(
     override val expectSymbol: KtSymbol,
     override val actualSymbol: KtSymbol,
+    override val actualAnnotationTargetSourceElement: PsiElement?,
     override val incompatibilityType: ExpectActualAnnotationsIncompatibilityType<FirAnnotation>,
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
@@ -4070,6 +4071,19 @@ internal class DeprecatedDeclarationOfEnumEntryImpl(
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtEnumEntry>(firDiagnostic, token), KtFirDiagnostic.DeprecatedDeclarationOfEnumEntry
 
+internal class IncompatibleClassImpl(
+    override val presentableString: String,
+    override val incompatibility: IncompatibleVersionErrorData<*>,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.IncompatibleClass
+
+internal class PreReleaseClassImpl(
+    override val presentableString: String,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.PreReleaseClass
+
 internal class ConflictingJvmDeclarationsImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
@@ -4476,19 +4490,6 @@ internal class NoReflectionInClassPathImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.NoReflectionInClassPath
-
-internal class IncompatibleClassImpl(
-    override val presentableString: String,
-    override val incompatibility: IncompatibleVersionErrorData<*>,
-    firDiagnostic: KtPsiDiagnostic,
-    token: KtLifetimeToken,
-) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.IncompatibleClass
-
-internal class PreReleaseClassImpl(
-    override val presentableString: String,
-    firDiagnostic: KtPsiDiagnostic,
-    token: KtLifetimeToken,
-) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.PreReleaseClass
 
 internal class ImplementingFunctionInterfaceImpl(
     firDiagnostic: KtPsiDiagnostic,

@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.calls.mpp.ExpectActualCollectionArgumentsCompatibilityCheckStrategy
 import org.jetbrains.kotlin.resolve.calls.mpp.ExpectActualMatchingContext.AnnotationCallInfo
+import org.jetbrains.kotlin.mpp.SourceElementMarker
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility
 import org.jetbrains.kotlin.types.AbstractTypeChecker
@@ -141,6 +142,9 @@ class FirExpectActualMatchingContextImpl private constructor(
     override val PropertySymbolMarker.isConst: Boolean
         get() = asSymbol().resolvedStatus.isConst
 
+    override val PropertySymbolMarker.getter: FunctionSymbolMarker?
+        get() = asSymbol().getterSymbol
+
     override val PropertySymbolMarker.setter: FunctionSymbolMarker?
         get() = asSymbol().setterSymbol
 
@@ -174,7 +178,7 @@ class FirExpectActualMatchingContextImpl private constructor(
         val scope = symbol.defaultType().scope(
             useSiteSession = session,
             scopeSession,
-            FakeOverrideTypeCalculator.DoNothing,
+            CallableCopyTypeCalculator.DoNothing,
             requiredMembersPhase = FirResolvePhase.STATUS,
         ) ?: return emptyList()
 
@@ -200,7 +204,7 @@ class FirExpectActualMatchingContextImpl private constructor(
         val scope = symbol.defaultType().scope(
             useSiteSession = symbol.moduleData.session,
             scopeSession,
-            FakeOverrideTypeCalculator.DoNothing,
+            CallableCopyTypeCalculator.DoNothing,
             requiredMembersPhase = FirResolvePhase.STATUS,
         ) ?: return emptyList()
 
@@ -479,6 +483,8 @@ class FirExpectActualMatchingContextImpl private constructor(
         val mapping = actualClass.asSymbol().fir.memberExpectForActual
         return mapping?.get(actualMember to expectClass) ?: emptyMap()
     }
+
+    override fun DeclarationSymbolMarker.getSourceElement(): SourceElementMarker = FirSourceElement(asSymbol().source)
 
     object Factory : FirExpectActualMatchingContextFactory {
         override fun create(

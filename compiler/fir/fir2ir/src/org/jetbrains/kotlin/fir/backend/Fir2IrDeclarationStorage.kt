@@ -12,12 +12,14 @@ import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.buildProperty
+import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
 import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.declarations.utils.isStatic
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.descriptors.FirBuiltInsPackageFragment
 import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
+import org.jetbrains.kotlin.fir.java.symbols.FirJavaOverriddenSyntheticPropertySymbol
 import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
 import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyConstructor
 import org.jetbrains.kotlin.fir.references.toResolvedValueParameterSymbol
@@ -352,6 +354,10 @@ class Fir2IrDeclarationStorage(
         delegatedReverseCache[irFunction] = function
     }
 
+    internal fun cacheGeneratedFunction(firFunction: FirSimpleFunction, irFunction: IrSimpleFunction) {
+        functionCache[firFunction] = irFunction
+    }
+
     // ------------------------------------ constructors ------------------------------------
 
     @OptIn(IrSymbolInternals::class)
@@ -405,6 +411,43 @@ class Fir2IrDeclarationStorage(
 
     // ------------------------------------ properties ------------------------------------
 
+    /**
+     *    There is a difference in how FIR and IR treat synthetic properties (properties built upon java getter + optional java setter)
+     *    For FIR they are really synthetic and exist only during call resolution, so FIR creates a new instance of FirSyntheticProperty
+     *    each time it resolves some call to such property
+     *    In IR synthetic properties are fair properties that are present in IR Java classes
+     *
+     *    This leads to the situation when synthetic property does not have a stable key (because FIR instance is new each time) and the only
+     *    source of truth is a symbol table. To fix it (and avoid using symbol table as a storage), a pair of original getter and setter is
+     *    used as a key for storage IR for synthetic properties. And to avoid introducing special cache of FirSyntheticPropertyKey -> IrProperty
+     *    additional mapping level is introduced
+     *
+     *    - FirSyntheticPropertyKey is mapped to the first FIR synthetic property which was processed by FIR2IR
+     *    - this property is mapped to IrProperty using regular propertyCache
+     *
+     * IMPORTANT: this whole story requires to call [prepareProperty] or [preparePropertySymbol] in the beginning of any public method
+     *   which accepts arbitary FirProperty or FirPropertySymbol
+     */
+    private data class FirSyntheticPropertyKey(
+        val originalForGetter: FirSimpleFunction,
+        val originalForSetter: FirSimpleFunction?,
+    ) {
+        constructor(property: FirSyntheticProperty) : this(property.getter.delegate, property.setter?.delegate)
+    }
+
+    private val originalForSyntheticProperty: ConcurrentHashMap<FirSyntheticPropertyKey, FirSyntheticProperty> = ConcurrentHashMap()
+
+    private fun prepareProperty(property: FirProperty): FirProperty {
+        return when (property) {
+            is FirSyntheticProperty -> originalForSyntheticProperty.getOrPut(FirSyntheticPropertyKey(property)) { property }
+            else -> property
+        }
+    }
+
+    private fun preparePropertySymbol(symbol: FirPropertySymbol): FirPropertySymbol {
+        return prepareProperty(symbol.fir).symbol
+    }
+
     fun getOrCreateIrProperty(
         property: FirProperty,
         irParent: IrDeclarationParent?,
@@ -412,6 +455,8 @@ class Fir2IrDeclarationStorage(
         isLocal: Boolean = false,
         fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag? = null
     ): IrProperty {
+        @Suppress("NAME_SHADOWING")
+        val property = prepareProperty(property)
         getCachedIrProperty(property)?.let { return it }
         return createAndCacheIrProperty(property, irParent, predefinedOrigin, isLocal, fakeOverrideOwnerLookupTag)
     }
@@ -438,6 +483,8 @@ class Fir2IrDeclarationStorage(
         isLocal: Boolean = false,
         fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag? = null
     ): IrProperty {
+        @Suppress("NAME_SHADOWING")
+        val property = prepareProperty(property)
         val irProperty = callablesGenerator.createIrProperty(property, irParent, predefinedOrigin, isLocal, fakeOverrideOwnerLookupTag)
         cacheIrProperty(property, irProperty, fakeOverrideOwnerLookupTag)
         return irProperty
@@ -495,6 +542,8 @@ class Fir2IrDeclarationStorage(
         firPropertySymbol: FirPropertySymbol,
         fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag? = null,
     ): IrSymbol {
+        @Suppress("NAME_SHADOWING")
+        val firPropertySymbol = preparePropertySymbol(firPropertySymbol)
         val fir = firPropertySymbol.fir
         if (fir.isLocal) {
             return localStorage.getDelegatedProperty(fir)?.symbol ?: getIrVariableSymbol(fir)
@@ -557,6 +606,8 @@ class Fir2IrDeclarationStorage(
         fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag?,
         signatureCalculator: () -> IdSignature?
     ): IrProperty? {
+        @Suppress("NAME_SHADOWING")
+        val property = prepareProperty(property)
         return getCachedIrCallable(
             property,
             fakeOverrideOwnerLookupTag,
@@ -604,7 +655,7 @@ class Fir2IrDeclarationStorage(
             return fieldStaticOverrideCache[staticFakeOverrideKey]!!.symbol
         }
         // In case of type parameters from the parent as the field's return type, find the parent ahead to cache type parameters.
-        val irParent = findIrParent(fir)
+        val irParent = findIrParent(fir, fakeOverrideOwnerLookupTag)
 
         val unwrapped = fir.unwrapFakeOverrides()
         if (unwrapped !== fir) {
@@ -645,7 +696,7 @@ class Fir2IrDeclarationStorage(
                     return localStorage.getDelegatedProperty(fir)?.delegate?.symbol ?: getIrVariableSymbol(fir)
                 }
                 propertyCache[fir]?.let { return it.backingField!!.symbol }
-                val irParent = findIrParent(fir)
+                val irParent = findIrParent(fir, fakeOverrideOwnerLookupTag = null)
                 val parentOrigin = (irParent as? IrDeclaration)?.origin ?: IrDeclarationOrigin.DEFINED
                 createAndCacheIrProperty(fir, irParent, predefinedOrigin = parentOrigin).backingField!!.symbol
             }
@@ -856,7 +907,7 @@ class Fir2IrDeclarationStorage(
         return when (val fir = firFunctionSymbol.fir) {
             is FirAnonymousFunction -> {
                 getCachedIrFunction(fir)?.let { return it.symbol }
-                val irParent = findIrParent(fir)
+                val irParent = findIrParent(fir, fakeOverrideOwnerLookupTag)
                 val parentOrigin = (irParent as? IrDeclaration)?.origin ?: IrDeclarationOrigin.DEFINED
                 val declarationOrigin = computeDeclarationOrigin(firFunctionSymbol, parentOrigin)
                 createAndCacheIrFunction(fir, irParent, predefinedOrigin = declarationOrigin).symbol
@@ -879,7 +930,7 @@ class Fir2IrDeclarationStorage(
                     },
                     createIrLazyDeclaration = { signature, lazyParent, declarationOrigin ->
                         lazyDeclarationsGenerator.createIrLazyFunction(fir, signature, lazyParent, declarationOrigin).also {
-                            cacheIrFunction(fir, it, fakeOverrideOwnerLookupTag = null)
+                            cacheIrFunction(fir, it, fakeOverrideOwnerLookupTag)
                         }
                     },
                 ) as IrFunctionSymbol
@@ -936,14 +987,79 @@ class Fir2IrDeclarationStorage(
             cache[declaration]?.let { return it }
         }
 
-        return signatureCalculator()?.let { signature ->
-            referenceIfAny(signature)?.let { irDeclaration ->
-                if (!isFakeOverride) {
-                    cache[declaration] = irDeclaration
+        /*
+         * There are cases when two different f/o identifiers may represent the same IR f/o
+         *
+         * // MODULE: common
+         * expect open class Base<T>() {
+         *     fun foo(param: T) // (1)
+         * }
+         *
+         * class Derived : Base<String>() {
+         *     // substitution override fun foo(param: String)
+         * }
+         *
+         * // MODULE: platform()()(common)
+         * actual open class Base<T> {
+         *     actual fun foo(param: T) {} // (2)
+         * }
+         *
+         * fun test(d: Derived) {
+         *     d.foo()
+         * }
+         *
+         * In this case we have two different FIR functions for substitution override Derived.foo, because substitution and two different
+         *   original functions for them depending on the module we are watching
+         * - during conversion of the common module we will create and save IR f/o for derived with identifier (function (1), Derived)
+         * - during conversion of the platform module for each call of `Derived.foo` we will use identifier (function (2), Derived).
+         * But we actually must use the f/o which was created in common module. So here we should reuse the symbol from symbol table if we
+         *   find one.
+         *
+         * TODO: Most likely check for `isFakeOverride` may be removed after fix of KT-61774
+         */
+        signatureCalculator()?.let { signature ->
+            val cachedInSymbolTable = referenceIfAny(signature) ?: return@let
+            when {
+                isFakeOverride -> {
+                    val key = FakeOverrideIdentifier(
+                        declaration.symbol.unwrapFakeOverrides(),
+                        fakeOverrideOwnerLookupTag ?: declaration.containingClassLookupTag()!!
+                    )
+                    irFakeOverridesForFirFakeOverrideMap[key] = cachedInSymbolTable
                 }
-                irDeclaration
+                configuration.useIrFakeOverrideBuilder -> {
+                    /*
+                     * If IR fake override builder is used for building fake-overrides, they are generated bypassing Fir2IrDeclarationStorage,
+                     *   and are written directly to SymbolTable. So in this case it is normal to save the result from symbol table into
+                     *   storage
+                     *
+                     * TODO: potentially this situation won't happen after migration from FIR2IR f/o generator to IR f/o generator (see KT-58861)
+                     */
+                    cache[declaration] = cachedInSymbolTable
+                }
+                declaration.initialSignatureAttr != null -> {
+                    /*
+                     * FIR creates remapped functions for builtin JVM classes based on use-site session, not declaration site
+                     * It leads to the situations when we have two different mapped FIR functions for the same original function
+                     *   (and same IR function)
+                     */
+                    cache[declaration] = cachedInSymbolTable
+                }
+                declaration.symbol is FirJavaOverriddenSyntheticPropertySymbol -> {
+                    /*
+                     * Synthetic properties for java classes, if those properties are based on real Kotlin properties are also session
+                     *   dependant
+                     */
+                    cache[declaration] = cachedInSymbolTable
+                }
+                else -> {
+                    error("IR declaration with signature \"$signature\" found in SymbolTable and not found in declaration storage")
+                }
             }
+            return cachedInSymbolTable
         }
+
+        return null
     }
 
     @OptIn(IrSymbolInternals::class)
@@ -969,7 +1085,7 @@ class Fir2IrDeclarationStorage(
         createIrLazyDeclaration: (signature: IdSignature, lazyOwner: IrDeclarationParent, origin: IrDeclarationOrigin) -> I,
     ): IrSymbol {
         val fir = firSymbol.fir as F
-        val irParent by lazy { findIrParent(fir) }
+        val irParent by lazy { findIrParent(fir, fakeOverrideOwnerLookupTag) }
         val signature by lazy {
             signatureComposer.composeSignature(
                 fir,
@@ -1135,11 +1251,24 @@ class Fir2IrDeclarationStorage(
         return parentPackage
     }
 
-    private fun findIrParent(callableDeclaration: FirCallableDeclaration): IrDeclarationParent? {
+    private fun findIrParent(
+        callableDeclaration: FirCallableDeclaration,
+        fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag?,
+    ): IrDeclarationParent? {
         val firBasedSymbol = callableDeclaration.symbol
         val callableId = firBasedSymbol.callableId
         val callableOrigin = callableDeclaration.origin
-        return findIrParent(callableId.packageName, callableDeclaration.containingClassLookupTag(), firBasedSymbol, callableOrigin)
+        val parentLookupTag = when {
+            // non-static fields can not be fake overrides
+            firBasedSymbol is FirFieldSymbol && !firBasedSymbol.isStatic -> callableDeclaration.containingClassLookupTag()
+            else -> fakeOverrideOwnerLookupTag ?: callableDeclaration.containingClassLookupTag()
+        }
+        return findIrParent(
+            callableId.packageName,
+            parentLookupTag,
+            firBasedSymbol,
+            callableOrigin
+        )
     }
 
     @OptIn(IrSymbolInternals::class)

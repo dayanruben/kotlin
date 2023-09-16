@@ -18586,6 +18586,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
         }
 
         @Test
+        @TestMetadata("methodOfAnyFromInterface.kt")
+        public void testMethodOfAnyFromInterface() throws Exception {
+            runTest("compiler/testData/codegen/box/fakeOverride/methodOfAnyFromInterface.kt");
+        }
+
+        @Test
         @TestMetadata("privateFakeOverrides0.kt")
         public void testPrivateFakeOverrides0() throws Exception {
             runTest("compiler/testData/codegen/box/fakeOverride/privateFakeOverrides0.kt");
@@ -34036,6 +34042,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
             @TestMetadata("javaMethodWithTypeParameter.kt")
             public void testJavaMethodWithTypeParameter() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/k2/javaMethodWithTypeParameter.kt");
+            }
+
+            @Test
+            @TestMetadata("jvmDeclarationsUpdatedMembersInCommonModule.kt")
+            public void testJvmDeclarationsUpdatedMembersInCommonModule() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/k2/jvmDeclarationsUpdatedMembersInCommonModule.kt");
             }
 
             @Nested

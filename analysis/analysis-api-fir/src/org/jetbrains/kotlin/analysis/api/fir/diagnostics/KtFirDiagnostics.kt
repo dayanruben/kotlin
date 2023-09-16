@@ -2601,6 +2601,7 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = ActualAnnotationsNotMatchExpect::class
         val expectSymbol: KtSymbol
         val actualSymbol: KtSymbol
+        val actualAnnotationTargetSourceElement: PsiElement?
         val incompatibilityType: ExpectActualAnnotationsIncompatibilityType<FirAnnotation>
     }
 
@@ -3373,6 +3374,17 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = DeprecatedDeclarationOfEnumEntry::class
     }
 
+    interface IncompatibleClass : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = IncompatibleClass::class
+        val presentableString: String
+        val incompatibility: IncompatibleVersionErrorData<*>
+    }
+
+    interface PreReleaseClass : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = PreReleaseClass::class
+        val presentableString: String
+    }
+
     interface ConflictingJvmDeclarations : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = ConflictingJvmDeclarations::class
     }
@@ -3703,17 +3715,6 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     interface NoReflectionInClassPath : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = NoReflectionInClassPath::class
-    }
-
-    interface IncompatibleClass : KtFirDiagnostic<PsiElement> {
-        override val diagnosticClass get() = IncompatibleClass::class
-        val presentableString: String
-        val incompatibility: IncompatibleVersionErrorData<*>
-    }
-
-    interface PreReleaseClass : KtFirDiagnostic<PsiElement> {
-        override val diagnosticClass get() = PreReleaseClass::class
-        val presentableString: String
     }
 
     interface ImplementingFunctionInterface : KtFirDiagnostic<KtClassOrObject> {

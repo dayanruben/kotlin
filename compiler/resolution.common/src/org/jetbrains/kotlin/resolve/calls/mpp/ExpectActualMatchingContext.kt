@@ -99,6 +99,7 @@ interface ExpectActualMatchingContext<T : DeclarationSymbolMarker> : TypeSystemC
     val PropertySymbolMarker.isLateinit: Boolean
     val PropertySymbolMarker.isConst: Boolean
 
+    val PropertySymbolMarker.getter: FunctionSymbolMarker?
     val PropertySymbolMarker.setter: FunctionSymbolMarker?
 
     fun createExpectActualTypeParameterSubstitutor(
@@ -213,4 +214,6 @@ interface ExpectActualMatchingContext<T : DeclarationSymbolMarker> : TypeSystemC
         actualMember: DeclarationSymbolMarker,
         checkClassScopesCompatibility: Boolean,
     ): Map<out DeclarationSymbolMarker, ExpectActualCompatibility<*>>
+
+    fun DeclarationSymbolMarker.getSourceElement(): SourceElementMarker
 }

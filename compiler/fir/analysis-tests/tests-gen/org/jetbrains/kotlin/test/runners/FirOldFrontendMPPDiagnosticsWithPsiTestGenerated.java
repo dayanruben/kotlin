@@ -855,6 +855,12 @@ public class FirOldFrontendMPPDiagnosticsWithPsiTestGenerated extends AbstractFi
         }
 
         @Test
+        @TestMetadata("gettersAndSetters.kt")
+        public void testGettersAndSetters() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/gettersAndSetters.kt");
+        }
+
+        @Test
         @TestMetadata("intrinsicConstEvaluation.kt")
         public void testIntrinsicConstEvaluation() throws Exception {
             runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/intrinsicConstEvaluation.kt");
@@ -909,6 +915,12 @@ public class FirOldFrontendMPPDiagnosticsWithPsiTestGenerated extends AbstractFi
         }
 
         @Test
+        @TestMetadata("typeParameters.kt")
+        public void testTypeParameters() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/typeParameters.kt");
+        }
+
+        @Test
         @TestMetadata("typealias.kt")
         public void testTypealias() throws Exception {
             runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/typealias.kt");
@@ -924,6 +936,12 @@ public class FirOldFrontendMPPDiagnosticsWithPsiTestGenerated extends AbstractFi
         @TestMetadata("typealiasToKtLibrary.kt")
         public void testTypealiasToKtLibrary() throws Exception {
             runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/typealiasToKtLibrary.kt");
+        }
+
+        @Test
+        @TestMetadata("valueParameters.kt")
+        public void testValueParameters() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/valueParameters.kt");
         }
 
         @Test

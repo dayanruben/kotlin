@@ -28,8 +28,23 @@ object AbstractExpectActualAnnotationMatchChecker {
     )
 
     class Incompatibility(
+        /**
+         * [expectSymbol] and [actualSymbol] are declaration symbols where annotation been mismatched.
+         * They are needed for writing whole declarations in diagnostic text.
+         * They are not the same as symbols passed to checker as arguments in [areAnnotationsCompatible] in following cases:
+         * 1. If [actualSymbol] is typealias, it will be expanded.
+         * 2. If problem is in class member, [expectSymbol] will be mismatched member, not the original class.
+         * 3. If annotation mismatched on function value parameter, symbols will be whole functions, not value parameter symbols.
+         */
         val expectSymbol: DeclarationSymbolMarker,
         val actualSymbol: DeclarationSymbolMarker,
+
+        /**
+         * Link to source code element (possibly holding null, if no source) from actual declaration
+         * where mismatched actual annotation is set (or should be set if it is missing).
+         * Needed for the implementation of IDE intention.
+         */
+        val actualAnnotationTargetElement: SourceElementMarker,
         val type: IncompatibilityType<ExpectActualMatchingContext.AnnotationCallInfo>,
     )
 
@@ -63,7 +78,31 @@ object AbstractExpectActualAnnotationMatchChecker {
         actualSymbol: CallableSymbolMarker,
     ): Incompatibility? {
         commonForClassAndCallableChecks(expectSymbol, actualSymbol)?.let { return it }
+        areAnnotationsOnValueParametersCompatible(expectSymbol, actualSymbol)?.let { return it }
 
+        if (expectSymbol is PropertySymbolMarker && actualSymbol is PropertySymbolMarker) {
+            arePropertyGetterAndSetterAnnotationsCompatible(expectSymbol, actualSymbol)?.let { return it }
+        }
+
+        return null
+    }
+
+    context (ExpectActualMatchingContext<*>)
+    private fun arePropertyGetterAndSetterAnnotationsCompatible(
+        expectSymbol: PropertySymbolMarker,
+        actualSymbol: PropertySymbolMarker,
+    ): Incompatibility? {
+        listOf(
+            expectSymbol.getter to actualSymbol.getter,
+            expectSymbol.setter to actualSymbol.setter,
+        ).forEach { (expectAccessor, actualAccessor) ->
+            if (expectAccessor != null && actualAccessor != null) {
+                areAnnotationsSetOnDeclarationsCompatible(expectAccessor, actualAccessor)?.let {
+                    // Write containing declarations into diagnostic
+                    return Incompatibility(expectSymbol, actualSymbol, actualAccessor.getSourceElement(), it.type)
+                }
+            }
+        }
         return null
     }
 
@@ -96,8 +135,52 @@ object AbstractExpectActualAnnotationMatchChecker {
         actualSymbol: DeclarationSymbolMarker,
     ): Incompatibility? {
         areAnnotationsSetOnDeclarationsCompatible(expectSymbol, actualSymbol)?.let { return it }
+        areAnnotationsOnTypeParametersCompatible(expectSymbol, actualSymbol)?.let { return it }
 
         return null
+    }
+
+    context (ExpectActualMatchingContext<*>)
+    private fun areAnnotationsOnValueParametersCompatible(
+        expectSymbol: CallableSymbolMarker,
+        actualSymbol: CallableSymbolMarker,
+    ): Incompatibility? {
+        val expectParams = expectSymbol.valueParameters
+        val actualParams = actualSymbol.valueParameters
+
+        if (expectParams.size != actualParams.size) return null
+
+        return expectParams.zip(actualParams).firstNotNullOfOrNull { (expectParam, actualParam) ->
+            areAnnotationsSetOnDeclarationsCompatible(expectParam, actualParam)?.let {
+                // Write containing declarations into diagnostic
+                Incompatibility(expectSymbol, actualSymbol, actualParam.getSourceElement(), it.type)
+            }
+        }
+    }
+
+    context (ExpectActualMatchingContext<*>)
+    private fun areAnnotationsOnTypeParametersCompatible(
+        expectSymbol: DeclarationSymbolMarker,
+        actualSymbol: DeclarationSymbolMarker,
+    ): Incompatibility? {
+        fun DeclarationSymbolMarker.getTypeParameters(): List<TypeParameterSymbolMarker>? {
+            return when (this) {
+                is FunctionSymbolMarker -> typeParameters
+                is RegularClassSymbolMarker -> typeParameters
+                else -> null
+            }
+        }
+
+        val expectParams = expectSymbol.getTypeParameters() ?: return null
+        val actualParams = actualSymbol.getTypeParameters() ?: return null
+        if (expectParams.size != actualParams.size) return null
+
+        return expectParams.zip(actualParams).firstNotNullOfOrNull { (expectParam, actualParam) ->
+            areAnnotationsSetOnDeclarationsCompatible(expectParam, actualParam)?.let {
+                // Write containing declarations into diagnostic
+                Incompatibility(expectSymbol, actualSymbol, actualParam.getSourceElement(), it.type)
+            }
+        }
     }
 
     context (ExpectActualMatchingContext<*>)
@@ -105,7 +188,7 @@ object AbstractExpectActualAnnotationMatchChecker {
         expectSymbol: DeclarationSymbolMarker,
         actualSymbol: DeclarationSymbolMarker,
     ): Incompatibility? {
-        // TODO(Roman.Efremov, KT-58551): check other annotation targets (constructors, types, value parameters, etc)
+        // TODO(Roman.Efremov, KT-60671): check annotations set on types
 
         val skipSourceAnnotations = actualSymbol.hasSourceAnnotationsErased
         val actualAnnotationsByName = actualSymbol.annotations.groupBy { it.classId }
@@ -123,6 +206,7 @@ object AbstractExpectActualAnnotationMatchChecker {
                 return Incompatibility(
                     expectSymbol,
                     actualSymbol,
+                    actualSymbol.getSourceElement(),
                     IncompatibilityType.MissingOnActual(expectAnnotation)
                 )
             }
@@ -136,7 +220,7 @@ object AbstractExpectActualAnnotationMatchChecker {
                     // In the case of repeatable annotations, we can't choose on which to report
                     IncompatibilityType.MissingOnActual(expectAnnotation)
                 }
-                return Incompatibility(expectSymbol, actualSymbol, incompatibilityType)
+                return Incompatibility(expectSymbol, actualSymbol, actualSymbol.getSourceElement(), incompatibilityType)
             }
         }
         return null

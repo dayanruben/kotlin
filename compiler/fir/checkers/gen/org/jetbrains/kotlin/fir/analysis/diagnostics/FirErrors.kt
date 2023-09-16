@@ -111,6 +111,7 @@ import org.jetbrains.kotlin.resolve.deprecation.DeprecationInfo
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualAnnotationsIncompatibilityType
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility.Incompatible
+import org.jetbrains.kotlin.serialization.deserialization.IncompatibleVersionErrorData
 import org.jetbrains.kotlin.types.Variance
 
 /*
@@ -661,7 +662,7 @@ object FirErrors {
     val NOT_A_MULTIPLATFORM_COMPILATION by error0<PsiElement>()
     val EXPECT_ACTUAL_OPT_IN_ANNOTATION by error0<KtNamedDeclaration>(SourceElementPositioningStrategies.EXPECT_ACTUAL_MODIFIER)
     val ACTUAL_TYPEALIAS_TO_SPECIAL_ANNOTATION by error1<KtTypeAlias, ClassId>(SourceElementPositioningStrategies.TYPEALIAS_TYPE_REFERENCE)
-    val ACTUAL_ANNOTATIONS_NOT_MATCH_EXPECT by warning3<KtElement, FirBasedSymbol<*>, FirBasedSymbol<*>, ExpectActualAnnotationsIncompatibilityType<FirAnnotation>>(SourceElementPositioningStrategies.DECLARATION_NAME_ONLY)
+    val ACTUAL_ANNOTATIONS_NOT_MATCH_EXPECT by warning4<KtElement, FirBasedSymbol<*>, FirBasedSymbol<*>, KtSourceElement?, ExpectActualAnnotationsIncompatibilityType<FirAnnotation>>(SourceElementPositioningStrategies.DECLARATION_NAME_ONLY)
     val OPTIONAL_DECLARATION_OUTSIDE_OF_ANNOTATION_ENTRY by error0<PsiElement>()
     val OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE by error0<PsiElement>()
     val OPTIONAL_EXPECTATION_NOT_ON_EXPECTED by error0<PsiElement>()
@@ -852,6 +853,10 @@ object FirErrors {
     val DEPRECATED_ACCESS_TO_ENTRY_PROPERTY_FROM_ENUM by warning0<PsiElement>()
     val DEPRECATED_ACCESS_TO_ENUM_ENTRY_PROPERTY_AS_REFERENCE by warning0<PsiElement>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
     val DEPRECATED_DECLARATION_OF_ENUM_ENTRY by warning0<KtEnumEntry>()
+
+    // Compatibility issues
+    val INCOMPATIBLE_CLASS by error2<PsiElement, String, IncompatibleVersionErrorData<*>>()
+    val PRE_RELEASE_CLASS by error1<PsiElement, String>()
 
     init {
         RootDiagnosticRendererFactory.registerFactory(FirErrorsDefaultMessages)
