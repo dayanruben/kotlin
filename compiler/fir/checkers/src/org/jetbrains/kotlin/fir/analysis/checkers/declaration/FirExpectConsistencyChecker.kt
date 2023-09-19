@@ -6,15 +6,20 @@
 package org.jetbrains.kotlin.fir.analysis.checkers.declaration
 
 import org.jetbrains.kotlin.KtFakeSourceElementKind
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
+import org.jetbrains.kotlin.fir.analysis.checkers.valOrVarKeyword
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.impl.FirPrimaryConstructor
 import org.jetbrains.kotlin.fir.declarations.utils.hasBody
 import org.jetbrains.kotlin.fir.declarations.utils.isExpect
+import org.jetbrains.kotlin.fir.declarations.utils.isInline
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
+import org.jetbrains.kotlin.fir.expressions.FirDelegatedConstructorCall
 
 // See old FE's [DeclarationsChecker]
 object FirExpectConsistencyChecker : FirBasicDeclarationChecker() {
@@ -22,10 +27,7 @@ object FirExpectConsistencyChecker : FirBasicDeclarationChecker() {
         val source = declaration.source ?: return
         if (source.kind is KtFakeSourceElementKind) return
 
-        val isTopLevel = context.containingDeclarations.size == 1
         val lastClass = context.containingDeclarations.lastOrNull() as? FirClass
-        val isInsideClass = lastClass != null
-
         if (declaration is FirAnonymousInitializer) {
             if (lastClass?.isExpect == true) {
                 reporter.reportOn(source, FirErrors.EXPECTED_DECLARATION_WITH_BODY, context)
@@ -33,27 +35,63 @@ object FirExpectConsistencyChecker : FirBasicDeclarationChecker() {
             return
         }
 
-        if (
-            declaration !is FirMemberDeclaration ||
-            !isTopLevel && !isInsideClass ||
-            !declaration.isExpect
-        ) {
+        if (declaration !is FirMemberDeclaration || !declaration.isExpect) {
             return
         }
 
-        if (declaration is FirConstructor) {
-            if (!declaration.isPrimary) {
-                val delegatedConstructorSource = declaration.delegatedConstructor?.source
-                if (delegatedConstructorSource?.kind !is KtFakeSourceElementKind) {
-                    reporter.reportOn(delegatedConstructorSource, FirErrors.EXPECTED_CLASS_CONSTRUCTOR_DELEGATION_CALL, context)
-                }
-            }
-        } else if (Visibilities.isPrivate(declaration.visibility)) {
+        getConstructorDelegationCall(declaration)?.let { delegatedConstructor ->
+            reporter.reportOn(delegatedConstructor.source, FirErrors.EXPECTED_CLASS_CONSTRUCTOR_DELEGATION_CALL, context)
+        }
+        for (propertyParameter in getConstructorProhibitedPropertyParameters(declaration, lastClass)) {
+            reporter.reportOn(propertyParameter.source, FirErrors.EXPECTED_CLASS_CONSTRUCTOR_PROPERTY_PARAMETER, context)
+        }
+        if (isProhibitedEnumConstructor(declaration, lastClass)) {
+            reporter.reportOn(source, FirErrors.EXPECTED_ENUM_CONSTRUCTOR, context)
+        }
+
+        if (isProhibitedPrivateDeclaration(declaration)) {
             reporter.reportOn(source, FirErrors.EXPECTED_PRIVATE_DECLARATION, context)
         }
 
-        if (declaration is FirFunction && declaration.hasBody) {
+        if (isProhibitedDeclarationWithBody(declaration)) {
             reporter.reportOn(source, FirErrors.EXPECTED_DECLARATION_WITH_BODY, context)
         }
+    }
+
+    private fun getConstructorProhibitedPropertyParameters(
+        declaration: FirMemberDeclaration,
+        containingClass: FirClass?,
+    ): List<FirValueParameter> {
+        if (declaration is FirPrimaryConstructor &&
+            containingClass != null && containingClass.classKind != ClassKind.ANNOTATION_CLASS && !containingClass.isInline
+        ) {
+            return declaration.valueParameters.filter { it.source.valOrVarKeyword != null }
+        }
+        return emptyList()
+    }
+
+    private fun getConstructorDelegationCall(declaration: FirMemberDeclaration): FirDelegatedConstructorCall? {
+        if (declaration is FirConstructor) {
+            if (!declaration.isPrimary) {
+                val delegatedConstructor = declaration.delegatedConstructor
+                val delegatedConstructorSource = delegatedConstructor?.source
+                if (delegatedConstructorSource?.kind !is KtFakeSourceElementKind) {
+                    return delegatedConstructor
+                }
+            }
+        }
+        return null
+    }
+
+    private fun isProhibitedPrivateDeclaration(declaration: FirMemberDeclaration): Boolean {
+        return declaration !is FirConstructor && declaration !is FirPropertyAccessor && Visibilities.isPrivate(declaration.visibility)
+    }
+
+    private fun isProhibitedEnumConstructor(declaration: FirMemberDeclaration, lastClass: FirClass?): Boolean {
+        return declaration is FirConstructor && lastClass?.classKind == ClassKind.ENUM_CLASS
+    }
+
+    private fun isProhibitedDeclarationWithBody(declaration: FirMemberDeclaration): Boolean {
+        return declaration is FirFunction && declaration.hasBody
     }
 }

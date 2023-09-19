@@ -826,6 +826,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("nestedClassConstructorVsMemberFunctionConflict.kt")
+        public void testNestedClassConstructorVsMemberFunctionConflict() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/nestedClassConstructorVsMemberFunctionConflict.kt");
+        }
+
+        @Test
         @TestMetadata("noLibraryProvidersDuplication.kt")
         public void testNoLibraryProvidersDuplication() throws Exception {
             runTest("compiler/testData/diagnostics/tests/noLibraryProvidersDuplication.kt");
@@ -24313,6 +24319,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("expectFunInterface.kt")
                 public void testExpectFunInterface() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/headerClass/expectFunInterface.kt");
+                }
+
+                @Test
+                @TestMetadata("expectedClassConstructorPropertyParameters.kt")
+                public void testExpectedClassConstructorPropertyParameters() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/headerClass/expectedClassConstructorPropertyParameters.kt");
                 }
 
                 @Test
