@@ -32352,6 +32352,18 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
                 runTest("compiler/testData/codegen/box/multiplatform/k2/dataClassInCommonAndPlatform.kt");
             }
 
+            @Test
+            @TestMetadata("expectValInInlineClass.kt")
+            public void testExpectValInInlineClass() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/k2/expectValInInlineClass.kt");
+            }
+
+            @Test
+            @TestMetadata("expectValInInlineClassJVM.kt")
+            public void testExpectValInInlineClassJVM() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/k2/expectValInInlineClassJVM.kt");
+            }
+
             @Nested
             @TestMetadata("compiler/testData/codegen/box/multiplatform/k2/annotations")
             @TestDataPath("$PROJECT_ROOT")
@@ -34183,6 +34195,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("kt57353.kt")
         public void testKt57353() throws Exception {
             runTest("compiler/testData/codegen/box/package/kt57353.kt");
+        }
+
+        @Test
+        @TestMetadata("kt62017.kt")
+        public void testKt62017() throws Exception {
+            runTest("compiler/testData/codegen/box/package/kt62017.kt");
         }
 
         @Test

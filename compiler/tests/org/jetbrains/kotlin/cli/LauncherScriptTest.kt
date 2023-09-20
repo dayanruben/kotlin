@@ -205,7 +205,6 @@ class LauncherScriptTest : TestCaseWithTmpdir() {
             "-a",
             "b",
             expectedStdout = "-a, b\n",
-            expectedStderr = "warning: language version 2.0 is experimental, there are no backwards compatibility guarantees for new language and library features\n"
         )
     }
 
@@ -269,10 +268,7 @@ class LauncherScriptTest : TestCaseWithTmpdir() {
         runProcess(
             "kotlin", "-no-stdlib", "-e", "println(42)",
             expectedExitCode = 1,
-            expectedStderr = """script.kts:1:1: error: unresolved reference: println
-println(42)
-^
-script.kts:1:1: error: no script runtime was found in the classpath: class 'kotlin.script.templates.standard.ScriptTemplateWithArgs' not found. Please add kotlin-script-runtime.jar to the module dependencies.
+            expectedStderr = """script.kts:1:1: error: unresolved reference 'println'.
 println(42)
 ^
 """
@@ -322,7 +318,7 @@ println(42)
         )
         runProcess(
             "kotlin", "-Xallow-any-scripts-in-source-roots", "-howtorun", ".kts", "$testDataDirectory/noInline.myscript",
-            expectedExitCode = 1, expectedStderr = """compiler/testData/launcher/noInline.myscript:1:7: error: unresolved reference: CompilerOptions
+            expectedExitCode = 1, expectedStderr = """compiler/testData/launcher/noInline.myscript:1:7: error: unresolved reference 'CompilerOptions'.
 @file:CompilerOptions("-Xno-inline")
       ^
 """
@@ -539,7 +535,6 @@ println(42)
             "-cp", ".", "-d", ".", "-language-version", "2.0", file2kt.absolutePath,
             workDirectory = tmpdir,
             expectedStdout = "",
-            expectedStderr = "warning: language version 2.0 is experimental, there are no backwards compatibility guarantees for new language and library features\n"
         )
     }
 }

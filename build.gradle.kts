@@ -99,7 +99,7 @@ IdeVersionConfigurator.setCurrentIde(project)
 
 if (!project.hasProperty("versions.kotlin-native")) {
     // BEWARE! Bumping this version doesn't take an immediate effect on TeamCity: KTI-1107
-    extra["versions.kotlin-native"] = "1.9.30-dev-1903"
+    extra["versions.kotlin-native"] = "1.9.30-dev-3194"
 }
 
 val irCompilerModules = arrayOf(
@@ -345,7 +345,6 @@ val coreLibProjects by extra {
     listOfNotNull(
         ":kotlin-stdlib",
         ":kotlin-stdlib-common",
-        ":kotlin-stdlib-js".takeIf { !kotlinBuildProperties.kotlinStdlibMpp },
         ":kotlin-stdlib-jdk7",
         ":kotlin-stdlib-jdk8",
         ":kotlin-test",
@@ -360,9 +359,8 @@ val coreLibProjects by extra {
     )
 }
 val mppProjects by extra {
-    listOfNotNull(
-        ":kotlin-stdlib-mpp".takeUnless { kotlinBuildProperties.kotlinStdlibMpp },
-        ":kotlin-stdlib".takeIf { kotlinBuildProperties.kotlinStdlibMpp },
+    listOf(
+        ":kotlin-stdlib",
     )
 }
 
@@ -609,7 +607,6 @@ tasks {
     register("coreLibsTest") {
         (coreLibProjects + listOfNotNull(
             ":kotlin-stdlib:samples",
-            ":kotlin-stdlib-js-ir".takeIf { !kotlinBuildProperties.kotlinStdlibMpp },
             ":kotlin-test:kotlin-test-js-ir".takeIf { !kotlinBuildProperties.isInJpsBuildIdeaSync },
             ":kotlin-test:kotlin-test-js:kotlin-test-js-it".takeIf { !kotlinBuildProperties.isInJpsBuildIdeaSync },
             ":kotlin-test:kotlin-test-js-ir:kotlin-test-js-ir-it".takeIf { !kotlinBuildProperties.isInJpsBuildIdeaSync },
@@ -708,24 +705,24 @@ tasks {
         dependsOn(":kotlin-scripting-dependencies:test")
         dependsOn(":kotlin-scripting-dependencies-maven:test")
         dependsOn(":kotlin-scripting-dependencies-maven-all:test")
-        dependsOn(":kotlin-scripting-jsr223-test:test")
         // see comments on the task in kotlin-scripting-jvm-host-test
 //        dependsOn(":kotlin-scripting-jvm-host-test:embeddableTest")
-        dependsOn(":kotlin-scripting-jsr223-test:embeddableTest")
-        dependsOn(":kotlin-scripting-ide-services-test:test")
-        dependsOn(":kotlin-scripting-ide-services-test:embeddableTest")
         dependsOn(":kotlin-main-kts-test:test")
     }
 
-    register("scriptingK2Test") {
-        dependsOn(":kotlin-scripting-compiler:testWithK2")
-        dependsOn(":kotlin-scripting-jvm-host-test:testWithK2")
-        dependsOn(":kotlin-main-kts-test:testWithK2")
+    register("scriptingK1JvmTest") {
+        dependsOn(":kotlin-scripting-compiler:testWithK1")
+        dependsOn(":kotlin-scripting-jvm-host-test:testWithK1")
+        dependsOn(":kotlin-main-kts-test:testWithK1")
+        dependsOn(":kotlin-scripting-jsr223-test:test")
+        dependsOn(":kotlin-scripting-jsr223-test:embeddableTest")
+        dependsOn(":kotlin-scripting-ide-services-test:test")
+        dependsOn(":kotlin-scripting-ide-services-test:embeddableTest")
     }
 
     register("scriptingTest") {
         dependsOn("scriptingJvmTest")
-        dependsOn("scriptingK2Test")
+        dependsOn("scriptingK1JvmTest")
     }
 
     register("compilerTest") {
@@ -964,8 +961,15 @@ gradle.taskGraph.whenReady(checkYarnAndNPMSuppressed)
 
 plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin::class) {
     extensions.configure(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension::class.java) {
+        // Node.js with canary v8 that supports recent Wasm GC changes
+        nodeVersion = "21.0.0-v8-canary202309167e82ab1fa2"
+        nodeDownloadBaseUrl = "https://nodejs.org/download/v8-canary"
+
         npmInstallTaskProvider.configure {
             args += listOf("--network-concurrency", "1", "--mutex", "network")
+            // It's required to pass compatibility checks in some NPM packages while using Node.js with Canary v8.
+            // TODO remove as soon as we switch to release build of Node.js.
+            args += listOf("--ignore-engines")
         }
     }
 }

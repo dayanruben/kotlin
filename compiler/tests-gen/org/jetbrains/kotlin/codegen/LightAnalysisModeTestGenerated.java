@@ -29011,6 +29011,16 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/multiplatform/k2/dataClassInCommonAndPlatform.kt");
             }
 
+            @TestMetadata("expectValInInlineClass.kt")
+            public void testExpectValInInlineClass() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/k2/expectValInInlineClass.kt");
+            }
+
+            @TestMetadata("expectValInInlineClassJVM.kt")
+            public void testExpectValInInlineClassJVM() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/k2/expectValInInlineClassJVM.kt");
+            }
+
             @TestMetadata("javaMethodWithTypeParameter.kt")
             public void testJavaMethodWithTypeParameter() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/k2/javaMethodWithTypeParameter.kt");
@@ -30725,6 +30735,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("kt57353.kt")
         public void testKt57353() throws Exception {
             runTest("compiler/testData/codegen/box/package/kt57353.kt");
+        }
+
+        @TestMetadata("kt62017.kt")
+        public void testKt62017() throws Exception {
+            runTest("compiler/testData/codegen/box/package/kt62017.kt");
         }
 
         @TestMetadata("mainInFiles.kt")

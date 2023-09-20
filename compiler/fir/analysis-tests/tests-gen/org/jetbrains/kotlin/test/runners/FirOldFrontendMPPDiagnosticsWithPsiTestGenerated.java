@@ -641,6 +641,12 @@ public class FirOldFrontendMPPDiagnosticsWithPsiTestGenerated extends AbstractFi
         }
 
         @Test
+        @TestMetadata("kt62027.kt")
+        public void testKt62027() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multiplatform/actualClassifierMustHasTheSameMembersAsNonFinalExpectClassifierChecker/kt62027.kt");
+        }
+
+        @Test
         @TestMetadata("memberScopeMismatch_oldLanguageVersion.kt")
         public void testMemberScopeMismatch_oldLanguageVersion() throws Exception {
             runTest("compiler/testData/diagnostics/tests/multiplatform/actualClassifierMustHasTheSameMembersAsNonFinalExpectClassifierChecker/memberScopeMismatch_oldLanguageVersion.kt");
@@ -936,6 +942,12 @@ public class FirOldFrontendMPPDiagnosticsWithPsiTestGenerated extends AbstractFi
         @TestMetadata("typealiasToKtLibrary.kt")
         public void testTypealiasToKtLibrary() throws Exception {
             runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/typealiasToKtLibrary.kt");
+        }
+
+        @Test
+        @TestMetadata("unresolvedReference.kt")
+        public void testUnresolvedReference() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/unresolvedReference.kt");
         }
 
         @Test

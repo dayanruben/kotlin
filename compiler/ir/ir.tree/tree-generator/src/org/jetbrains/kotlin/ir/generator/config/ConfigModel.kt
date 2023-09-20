@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.ir.generator.config
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
+import org.jetbrains.kotlin.generators.tree.TypeKind
 import org.jetbrains.kotlin.ir.generator.BASE_PACKAGE
 import org.jetbrains.kotlin.ir.generator.util.*
 
@@ -52,7 +53,6 @@ class ElementConfig(
     var typeKind: TypeKind? = null
 
     var generationCallback: (TypeSpec.Builder.() -> Unit)? = null
-    var suppressPrint = false
     var kDoc: String? = null
 
     override val element get() = this

@@ -26,8 +26,8 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirConstructorSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlinx.serialization.compiler.fir.services.serializablePropertiesProvider
@@ -107,7 +107,7 @@ class SerializationFirDeclarationsForMetadataProvider(session: FirSession) : Fir
 
     private fun createJvmStaticAnnotation(): FirAnnotation? {
         val jvmStatic =
-            session.symbolProvider.getClassLikeSymbolByClassId(StandardClassIds.Annotations.JvmStatic) as? FirRegularClassSymbol
+            session.symbolProvider.getClassLikeSymbolByClassId(JvmStandardClassIds.Annotations.JvmStatic) as? FirRegularClassSymbol
                 ?: return null
         val jvmStaticCtor =
             jvmStatic.declarationSymbols.firstIsInstanceOrNull<FirConstructorSymbol>() ?: return null

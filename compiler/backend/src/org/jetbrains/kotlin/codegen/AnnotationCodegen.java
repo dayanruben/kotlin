@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper;
 import org.jetbrains.kotlin.config.JVMConfigurationKeys;
 import org.jetbrains.kotlin.descriptors.*;
 import org.jetbrains.kotlin.descriptors.annotations.*;
+import org.jetbrains.kotlin.descriptors.annotations.Annotations;
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor;
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation;
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames;
@@ -45,7 +46,7 @@ import org.jetbrains.org.objectweb.asm.*;
 import java.lang.annotation.*;
 import java.util.*;
 
-import static org.jetbrains.kotlin.name.JvmNames.*;
+import static org.jetbrains.kotlin.name.JvmStandardClassIds.*;
 import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilsKt.getAnnotationClass;
 
 public abstract class AnnotationCodegen {

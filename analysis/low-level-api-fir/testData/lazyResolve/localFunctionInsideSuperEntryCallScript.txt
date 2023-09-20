@@ -1,7 +1,7 @@
 RAW_FIR:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(TYPES)] 
+    SCRIPT: [ResolvedTo(TYPES)] <script-localFunctionInsideSuperEntryCallScript.kts>
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public abstract [ResolvedTo(STATUS)] interface Interface : R|kotlin/Any| {
@@ -19,7 +19,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
         public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
             public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(object : R|one/Interface| {
-                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
+                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|one/<anonymous>| {
                         super<R|kotlin/Any|>()
                     }
 
@@ -36,7 +36,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
 IMPORTS:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(TYPES)] 
+    SCRIPT: [ResolvedTo(TYPES)] <script-localFunctionInsideSuperEntryCallScript.kts>
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public abstract [ResolvedTo(STATUS)] interface Interface : R|kotlin/Any| {
@@ -54,7 +54,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
         public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
             public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(object : R|one/Interface| {
-                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
+                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|one/<anonymous>| {
                         super<R|kotlin/Any|>()
                     }
 
@@ -71,7 +71,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
 COMPILER_REQUIRED_ANNOTATIONS:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(TYPES)] 
+    SCRIPT: [ResolvedTo(TYPES)] <script-localFunctionInsideSuperEntryCallScript.kts>
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public abstract [ResolvedTo(STATUS)] interface Interface : R|kotlin/Any| {
@@ -89,7 +89,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
         public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
             public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(object : R|one/Interface| {
-                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
+                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|one/<anonymous>| {
                         super<R|kotlin/Any|>()
                     }
 
@@ -106,7 +106,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
 COMPANION_GENERATION:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(TYPES)] 
+    SCRIPT: [ResolvedTo(TYPES)] <script-localFunctionInsideSuperEntryCallScript.kts>
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public abstract [ResolvedTo(STATUS)] interface Interface : R|kotlin/Any| {
@@ -124,7 +124,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
         public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
             public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(object : R|one/Interface| {
-                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
+                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|one/<anonymous>| {
                         super<R|kotlin/Any|>()
                     }
 
@@ -141,7 +141,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
 SUPER_TYPES:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(TYPES)] 
+    SCRIPT: [ResolvedTo(TYPES)] <script-localFunctionInsideSuperEntryCallScript.kts>
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public abstract [ResolvedTo(STATUS)] interface Interface : R|kotlin/Any| {
@@ -159,7 +159,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
         public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
             public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(object : R|one/Interface| {
-                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
+                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|one/<anonymous>| {
                         super<R|kotlin/Any|>()
                     }
 
@@ -176,7 +176,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
 TYPES:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(TYPES)] 
+    SCRIPT: [ResolvedTo(TYPES)] <script-localFunctionInsideSuperEntryCallScript.kts>
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public abstract [ResolvedTo(STATUS)] interface Interface : R|kotlin/Any| {
@@ -194,7 +194,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
         public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
             public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(object : R|one/Interface| {
-                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
+                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|one/<anonymous>| {
                         super<R|kotlin/Any|>()
                     }
 
@@ -211,7 +211,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
 STATUS:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(TYPES)] 
+    SCRIPT: [ResolvedTo(TYPES)] <script-localFunctionInsideSuperEntryCallScript.kts>
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public abstract [ResolvedTo(STATUS)] interface Interface : R|kotlin/Any| {
@@ -229,7 +229,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
         public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
             public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(object : R|one/Interface| {
-                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
+                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|one/<anonymous>| {
                         super<R|kotlin/Any|>()
                     }
 
@@ -246,7 +246,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
 EXPECT_ACTUAL_MATCHING:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(TYPES)] 
+    SCRIPT: [ResolvedTo(TYPES)] <script-localFunctionInsideSuperEntryCallScript.kts>
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public abstract [ResolvedTo(STATUS)] interface Interface : R|kotlin/Any| {
@@ -264,7 +264,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
         public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
             public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(object : R|one/Interface| {
-                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
+                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|one/<anonymous>| {
                         super<R|kotlin/Any|>()
                     }
 
@@ -281,7 +281,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
 ARGUMENTS_OF_ANNOTATIONS:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(TYPES)] 
+    SCRIPT: [ResolvedTo(TYPES)] <script-localFunctionInsideSuperEntryCallScript.kts>
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public abstract [ResolvedTo(STATUS)] interface Interface : R|kotlin/Any| {
@@ -299,7 +299,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
         public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
             public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(object : R|one/Interface| {
-                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
+                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|one/<anonymous>| {
                         super<R|kotlin/Any|>()
                     }
 
@@ -316,7 +316,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
 CONTRACTS:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(TYPES)] 
+    SCRIPT: [ResolvedTo(TYPES)] <script-localFunctionInsideSuperEntryCallScript.kts>
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public abstract [ResolvedTo(STATUS)] interface Interface : R|kotlin/Any| {
@@ -334,7 +334,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
         public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
             public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(object : R|one/Interface| {
-                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
+                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|one/<anonymous>| {
                         super<R|kotlin/Any|>()
                     }
 
@@ -351,7 +351,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
 IMPLICIT_TYPES_BODY_RESOLVE:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(TYPES)] 
+    SCRIPT: [ResolvedTo(TYPES)] <script-localFunctionInsideSuperEntryCallScript.kts>
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public abstract [ResolvedTo(STATUS)] interface Interface : R|kotlin/Any| {
@@ -369,7 +369,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
         public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
             public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(object : R|one/Interface| {
-                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
+                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|one/<anonymous>| {
                         super<R|kotlin/Any|>()
                     }
 
@@ -386,7 +386,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
 ANNOTATIONS_ARGUMENTS_MAPPING:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(TYPES)] 
+    SCRIPT: [ResolvedTo(TYPES)] <script-localFunctionInsideSuperEntryCallScript.kts>
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public abstract [ResolvedTo(STATUS)] interface Interface : R|kotlin/Any| {
@@ -404,7 +404,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
         public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
             public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(object : R|one/Interface| {
-                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
+                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|one/<anonymous>| {
                         super<R|kotlin/Any|>()
                     }
 
@@ -421,7 +421,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
 BODY_RESOLVE:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(TYPES)] 
+    SCRIPT: [ResolvedTo(TYPES)] <script-localFunctionInsideSuperEntryCallScript.kts>
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public abstract [ResolvedTo(STATUS)] interface Interface : R|kotlin/Any| {
@@ -439,7 +439,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
         public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
             public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(object : R|one/Interface| {
-                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
+                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|one/<anonymous>| {
                         super<R|kotlin/Any|>()
                     }
 
@@ -456,7 +456,7 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideSuperEntryCallScript.kts
 FILE RAW TO BODY:
 FILE: [ResolvedTo(BODY_RESOLVE)] localFunctionInsideSuperEntryCallScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(BODY_RESOLVE)] <script-localFunctionInsideSuperEntryCallScript.kts>
         [ResolvedTo(BODY_RESOLVE)] lval args: R|kotlin/Array<kotlin/String>|
 
         public abstract [ResolvedTo(BODY_RESOLVE)] interface Interface : R|kotlin/Any| {
@@ -474,7 +474,7 @@ FILE: [ResolvedTo(BODY_RESOLVE)] localFunctionInsideSuperEntryCallScript.kts
         public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
             public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(object : R|one/Interface| {
-                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
+                    private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|one/<anonymous>| {
                         super<R|kotlin/Any|>()
                     }
 
@@ -486,4 +486,3 @@ FILE: [ResolvedTo(BODY_RESOLVE)] localFunctionInsideSuperEntryCallScript.kts
             }
 
         }
-

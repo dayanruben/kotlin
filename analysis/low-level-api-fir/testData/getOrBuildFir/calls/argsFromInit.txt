@@ -10,7 +10,7 @@ FIR element rendered:
 FIR FILE:
 FILE: [ResolvedTo(IMPORTS)] argsFromInit.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(TYPES)] 
+    SCRIPT: [ResolvedTo(TYPES)] <script-argsFromInit.kts>
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public final [ResolvedTo(STATUS)] class A : R|kotlin/Any| {
@@ -18,8 +18,8 @@ FILE: [ResolvedTo(IMPORTS)] argsFromInit.kts
                 LAZY_super<R|kotlin/Any|>
             }
 
-            init {
-                <Unresolved name: foo>#(<L> = [ResolvedTo(RAW_FIR)] foo@fun <anonymous>(): R|kotlin/Int| <inline=Unknown>  {
+            [ResolvedTo(BODY_RESOLVE)] init {
+                <Unresolved name: foo>#(<L> = [ResolvedTo(BODY_RESOLVE)] foo@fun <anonymous>(): R|kotlin/Int| <inline=Unknown>  {
                     ^ R|<local>/args|.R|SubstitutionOverride<kotlin/Array.size: R|kotlin/Int|>|
                 }
                 )

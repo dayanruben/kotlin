@@ -7,8 +7,9 @@ package org.jetbrains.kotlin.gradle.native
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.testbase.*
+import org.junit.jupiter.api.condition.OS
 
-@MppGradlePluginTests
+@NativeGradlePluginTests
 class CinteropIT : KGPBaseTest() {
 
     @GradleTest
@@ -26,12 +27,29 @@ class CinteropIT : KGPBaseTest() {
             headerFile.writeText("void foo();")
             buildAndFail(":compileKotlinLinux") {
                 assertTasksExecuted(":cinteropNlibLinux")
-                assertOutputContains("src/linuxMain/kotlin/org/sample/Platform.kt:3:10 Unresolved reference: sample")
+                assertOutputContains("src/linuxMain/kotlin/org/sample/Platform.kt:3:10 Unresolved reference 'sample'")
             }
 
             headerFile.writeText("void sample(int i);")
             build(":compileKotlinLinux") {
                 assertTasksExecuted(":cinteropNlibLinux")
+            }
+        }
+    }
+
+    @GradleTest
+    @OsCondition(supportedOn = [OS.MAC], enabledOnCI = [OS.MAC])
+    fun `cinterop gives hint about -fmodules`(gradleVersion: GradleVersion) {
+        nativeProject("cinterop-fmodules", gradleVersion = gradleVersion) {
+            val defFile = projectPath.resolve("native_lib/nlib.def").toFile()
+
+            buildAndFail(":cinteropNlibIosX64") {
+                assertOutputContains("Try adding `-compiler-option -fmodules` to cinterop.")
+            }
+
+            defFile.appendText("\ncompilerOpts = -fmodules")
+            build(":cinteropNlibIosX64") {
+                assertOutputDoesNotContain("Try adding `-compiler-option -fmodules` to cinterop.")
             }
         }
     }

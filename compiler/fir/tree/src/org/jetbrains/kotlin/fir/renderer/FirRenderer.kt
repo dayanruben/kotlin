@@ -191,7 +191,7 @@ class FirRenderer(
             annotationRenderer?.render(script)
             printer.print("SCRIPT: ")
             declarationRenderer?.renderPhaseAndAttributes(script) ?: resolvePhaseRenderer?.render(script)
-            printer.newLine()
+            printer.println(script.name)
 
             printer.pushIndent()
             script.parameters.forEach {
@@ -458,11 +458,13 @@ class FirRenderer(
         }
 
         override fun visitAnonymousInitializer(anonymousInitializer: FirAnonymousInitializer) {
+            resolvePhaseRenderer?.render(anonymousInitializer)
             print("init")
             bodyRenderer?.renderBody(anonymousInitializer.body)
         }
 
         override fun visitDanglingModifierList(danglingModifierList: FirDanglingModifierList) {
+            resolvePhaseRenderer?.render(danglingModifierList)
             annotationRenderer?.render(danglingModifierList)
             print("<DANGLING MODIFIER: ${danglingModifierList.diagnostic.reason}>")
         }

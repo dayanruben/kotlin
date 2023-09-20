@@ -5,9 +5,10 @@
 
 package org.jetbrains.kotlin.ir.generator.model
 
+import org.jetbrains.kotlin.generators.tree.ImplementationKind
+import org.jetbrains.kotlin.generators.tree.TypeKind
 import org.jetbrains.kotlin.generators.util.Node
 import org.jetbrains.kotlin.generators.util.solveGraphForClassVsInterface
-import org.jetbrains.kotlin.ir.generator.util.TypeKind
 
 private class NodeImpl(val element: Element) : Node {
     override val parents: List<Node>
@@ -39,9 +40,9 @@ private fun updateKinds(nodes: List<NodeImpl>, solution: List<Boolean>) {
         val element = nodes[index].element
         if (isClass) {
             check(element.targetKind != TypeKind.Interface) { element }
-            element.kind = Element.Kind.AbstractClass
+            element.kind = ImplementationKind.AbstractClass
         } else {
-            element.kind = Element.Kind.Interface
+            element.kind = ImplementationKind.Interface
         }
     }
 }
