@@ -15866,6 +15866,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/fir/KotlinDocumentationProvider.kt");
         }
 
+        @TestMetadata("kt61856.kt")
+        public void testKt61856() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/kt61856.kt");
+        }
+
         @TestMetadata("linkViaSignatures.kt")
         public void testLinkViaSignatures() throws Exception {
             runTest("compiler/testData/codegen/box/fir/linkViaSignatures.kt");
@@ -42438,6 +42443,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
 
         public void testAllFilesPresentInTypealias() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/typealias"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        }
+
+        @TestMetadata("deserializedAbbreviationWithRedundantArgument.kt")
+        public void testDeserializedAbbreviationWithRedundantArgument() throws Exception {
+            runTest("compiler/testData/codegen/box/typealias/deserializedAbbreviationWithRedundantArgument.kt");
         }
 
         @TestMetadata("enumEntryQualifier.kt")

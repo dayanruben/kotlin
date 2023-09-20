@@ -65,14 +65,10 @@ class Fir2IrConverter(
     private fun runSourcesConversion(
         allFirFiles: List<FirFile>,
         irModuleFragment: IrModuleFragmentImpl,
-        fir2irVisitor: Fir2IrVisitor,
-        runPreCacheBuiltinClasses: Boolean
+        fir2irVisitor: Fir2IrVisitor
     ) {
         for (firFile in allFirFiles) {
             registerFileAndClasses(firFile, irModuleFragment)
-        }
-        if (runPreCacheBuiltinClasses) {
-            classifierStorage.preCacheBuiltinClasses()
         }
         // The file processing is performed phase-to-phase:
         //   1. Creation of all non-local regular classes
@@ -487,7 +483,7 @@ class Fir2IrConverter(
                 null
             }
             is FirEnumEntry -> {
-                classifierStorage.getIrEnumEntry(declaration, parent as IrClass)
+                classifierStorage.getOrCreateIrEnumEntry(declaration, parent as IrClass)
             }
             is FirAnonymousInitializer -> {
                 declarationStorage.getOrCreateIrAnonymousInitializer(declaration, parent as IrClass)
@@ -573,7 +569,9 @@ class Fir2IrConverter(
             }
 
             components.converter.runSourcesConversion(
-                allFirFiles, irModuleFragment, components.fir2IrVisitor, runPreCacheBuiltinClasses = initializedIrBuiltIns == null
+                allFirFiles,
+                irModuleFragment,
+                components.fir2IrVisitor
             )
 
             if (fir2IrConfiguration.useIrFakeOverrideBuilder) {

@@ -12,7 +12,8 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeTokenProvider
 import org.jetbrains.kotlin.analysis.api.standalone.KtAlwaysAccessibleLifetimeTokenProvider
 import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.KtStaticModuleProvider
-import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.JvmFirDeserializedSymbolProviderFactory
+import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.LLFirStandaloneLibrarySymbolProviderFactory
+import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirLibrarySymbolProviderFactory
 import org.jetbrains.kotlin.analysis.project.structure.KtBinaryModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.analysis.providers.KotlinPsiDeclarationProviderFactory
@@ -29,6 +30,7 @@ public object StandaloneModeTestServiceRegistrar : AnalysisApiTestServiceRegistr
     override fun registerProjectServices(project: MockProject, testServices: TestServices) {
         project.apply {
             registerService(KtLifetimeTokenProvider::class.java, KtAlwaysAccessibleLifetimeTokenProvider::class.java)
+            registerService(LLFirLibrarySymbolProviderFactory::class.java, LLFirStandaloneLibrarySymbolProviderFactory::class.java)
         }
     }
 
@@ -47,7 +49,6 @@ public object StandaloneModeTestServiceRegistrar : AnalysisApiTestServiceRegistr
                     projectEnvironment.environment.jarFileSystem as CoreJarFileSystem
                 )
             )
-            registerService(JvmFirDeserializedSymbolProviderFactory::class.java, JvmFirDeserializedSymbolProviderFactory::class.java)
         }
     }
 
