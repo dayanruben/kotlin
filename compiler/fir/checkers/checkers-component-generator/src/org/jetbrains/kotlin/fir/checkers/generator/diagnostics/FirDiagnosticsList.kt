@@ -890,22 +890,30 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         }
 
         val MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES by error<KtElement>(PositioningStrategy.DECLARATION_SIGNATURE_OR_DEFAULT) {
+            parameter<Name>("name")
             parameter<FirValueParameterSymbol>("valueParameter")
+            parameter<List<FirCallableSymbol<*>>>("baseFunctions")
         }
         val MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_WHEN_NO_EXPLICIT_OVERRIDE by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
+            parameter<Name>("name")
             parameter<FirValueParameterSymbol>("valueParameter")
+            parameter<List<FirCallableSymbol<*>>>("baseFunctions")
         }
         val MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION by deprecationError<KtElement>(
             LanguageFeature.ProhibitAllMultipleDefaultsInheritedFromSupertypes,
             PositioningStrategy.DECLARATION_SIGNATURE_OR_DEFAULT
         ) {
+            parameter<Name>("name")
             parameter<FirValueParameterSymbol>("valueParameter")
+            parameter<List<FirCallableSymbol<*>>>("baseFunctions")
         }
         val MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_WHEN_NO_EXPLICIT_OVERRIDE_DEPRECATION by deprecationError<KtElement>(
             LanguageFeature.ProhibitAllMultipleDefaultsInheritedFromSupertypes,
             PositioningStrategy.DECLARATION_NAME
         ) {
+            parameter<Name>("name")
             parameter<FirValueParameterSymbol>("valueParameter")
+            parameter<List<FirCallableSymbol<*>>>("baseFunctions")
         }
 
         val TYPEALIAS_EXPANDS_TO_ARRAY_OF_NOTHINGS by error<KtElement> {
@@ -1223,10 +1231,6 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<FirClassSymbol<*>>("expectClassSymbol")
             parameter<Collection<FirCallableSymbol<*>>>("members")
         }
-        val ACTUAL_ANNOTATION_CONFLICTING_DEFAULT_ARGUMENT_VALUE by error<PsiElement> {
-            parameter<FirVariableSymbol<*>>("parameter")
-        }
-
         val EXPECTED_FUNCTION_SOURCE_WITH_DEFAULT_ARGUMENTS_NOT_FOUND by error<PsiElement>()
 
         val NO_ACTUAL_FOR_EXPECT by error<KtNamedDeclaration>(PositioningStrategy.INCOMPATIBLE_DECLARATION) {

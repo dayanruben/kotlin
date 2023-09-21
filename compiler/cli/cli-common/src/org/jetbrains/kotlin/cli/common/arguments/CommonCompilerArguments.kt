@@ -573,6 +573,17 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
         }
 
     @Argument(
+        value = "-Xmetadata-klib",
+        description = "Produce a klib that only contains the declarations metadata"
+    )
+    var metadataKlib: Boolean = false
+        set(value) {
+            checkFrozen()
+            field = value
+        }
+
+    /** TODO: replace by [metadataKlib] */
+    @Argument(
         value = "-Xexpect-actual-linker",
         description = "Enable experimental expect/actual linker"
     )
@@ -807,7 +818,7 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
                 )
             }
             put(AnalysisFlags.optIn, useExperimentalFqNames + optIn?.toList().orEmpty())
-            put(AnalysisFlags.skipExpectedActualDeclarationChecker, expectActualLinker)
+            put(AnalysisFlags.skipExpectedActualDeclarationChecker, expectActualLinker || metadataKlib) // TODO (KT-61136): drop `expectActualLinker` later, after the appropriate changes in the Gradle plugin
             put(AnalysisFlags.explicitApiVersion, apiVersion != null)
             put(AnalysisFlags.allowResultReturnType, allowResultReturnType)
             ExplicitApiMode.fromString(explicitApi)?.also { put(AnalysisFlags.explicitApiMode, it) } ?: collector.report(

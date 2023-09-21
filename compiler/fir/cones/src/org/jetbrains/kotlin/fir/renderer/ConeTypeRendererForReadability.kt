@@ -8,28 +8,23 @@ package org.jetbrains.kotlin.fir.renderer
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.fir.types.ConeFlexibleType
 import org.jetbrains.kotlin.fir.types.ConeIntegerLiteralType
+import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.renderer.replacePrefixesInTypeRepresentations
 import org.jetbrains.kotlin.renderer.typeStringsDifferOnlyInNullability
 
-class ConeTypeRendererWithJavaFlexibleTypes : ConeTypeRenderer {
-
-    private val idRendererCreator: () -> ConeIdRenderer
-
-    constructor(idRendererCreator: () -> ConeIdRenderer) : super() {
-        this.idRendererCreator = idRendererCreator
-    }
-
-    constructor(builder: StringBuilder, idRendererCreator: () -> ConeIdRenderer) : super() {
+class ConeTypeRendererForReadability(
+    private val idRendererCreator: () -> ConeIdRenderer,
+) : ConeTypeRenderer(ConeAttributeRenderer.ForReadability) {
+    constructor(builder: StringBuilder, idRendererCreator: () -> ConeIdRenderer) : this(idRendererCreator) {
         this.builder = builder
-        this.idRendererCreator = idRendererCreator
         this.idRenderer = idRendererCreator()
         idRenderer.builder = builder
     }
 
     override fun render(flexibleType: ConeFlexibleType) {
-        val lowerRenderer = ConeTypeRendererWithJavaFlexibleTypes(StringBuilder(), idRendererCreator)
+        val lowerRenderer = ConeTypeRendererForReadability(StringBuilder(), idRendererCreator)
         lowerRenderer.render(flexibleType.lowerBound)
-        val upperRenderer = ConeTypeRendererWithJavaFlexibleTypes(StringBuilder(), idRendererCreator)
+        val upperRenderer = ConeTypeRendererForReadability(StringBuilder(), idRendererCreator)
         upperRenderer.render(flexibleType.upperBound)
         builder.append(renderFlexibleType(lowerRenderer.builder.toString(), upperRenderer.builder.toString()))
     }
@@ -80,5 +75,9 @@ class ConeTypeRendererWithJavaFlexibleTypes : ConeTypeRenderer {
 
     override fun render(type: ConeIntegerLiteralType) {
         render(type.getApproximatedType())
+    }
+
+    override fun ConeKotlinType.renderAttributes() {
+        renderNonCompilerAttributes()
     }
 }

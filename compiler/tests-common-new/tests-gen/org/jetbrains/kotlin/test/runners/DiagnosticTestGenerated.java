@@ -13440,6 +13440,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("LocalReturnWithFlexibleUnitType.kt")
+                public void testLocalReturnWithFlexibleUnitType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/functionLiterals/return/LocalReturnWithFlexibleUnitType.kt");
+                }
+
+                @Test
                 @TestMetadata("LocalReturnsWithExplicitReturnType.kt")
                 public void testLocalReturnsWithExplicitReturnType() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/functionLiterals/return/LocalReturnsWithExplicitReturnType.kt");
@@ -13449,6 +13455,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("MixedReturnsFromLambda.kt")
                 public void testMixedReturnsFromLambda() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/functionLiterals/return/MixedReturnsFromLambda.kt");
+                }
+
+                @Test
+                @TestMetadata("MultipleLocalUnitReturns.kt")
+                public void testMultipleLocalUnitReturns() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/functionLiterals/return/MultipleLocalUnitReturns.kt");
                 }
 
                 @Test
@@ -26473,6 +26485,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("MultipleDefaultsAndSubstitutionOverrides.kt")
+            public void testMultipleDefaultsAndSubstitutionOverrides() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/override/MultipleDefaultsAndSubstitutionOverrides.kt");
+            }
+
+            @Test
             @TestMetadata("MultipleDefaultsInSupertypesNoExplicitOverride.kt")
             public void testMultipleDefaultsInSupertypesNoExplicitOverride() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/override/MultipleDefaultsInSupertypesNoExplicitOverride.kt");
@@ -35300,6 +35318,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("chainedFunSuspendConversionForSimpleExpression.kt")
             public void testChainedFunSuspendConversionForSimpleExpression() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/suspendConversion/chainedFunSuspendConversionForSimpleExpression.kt");
+            }
+
+            @Test
+            @TestMetadata("inGenericArgument.kt")
+            public void testInGenericArgument() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/suspendConversion/inGenericArgument.kt");
             }
 
             @Test

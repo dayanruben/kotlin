@@ -16,12 +16,14 @@ import org.jetbrains.kotlin.diagnostics.KtDiagnosticRenderers.TO_STRING
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticRenderers.VISIBILITY
 import org.jetbrains.kotlin.diagnostics.rendering.BaseDiagnosticRendererFactory
 import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers.CLASS_KIND
+import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers.NAME
 import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers.RENDER_POSITION_VARIANCE
 import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers.STRING
 import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers.commaSeparated
 import org.jetbrains.kotlin.diagnostics.rendering.LanguageFeatureMessageRenderer
 import org.jetbrains.kotlin.diagnostics.rendering.Renderer
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.AMBIGUOUS_CALLS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.CALLABLES_FQ_NAMES
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.CALLEE_NAME
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.DECLARATION_NAME
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.FOR_OPTIONAL_OPERATOR
@@ -57,7 +59,6 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ABSTRACT_SUPER_CA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ABSTRACT_SUPER_CALL_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ACCESSOR_FOR_DELEGATED_PROPERTY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ACTUAL_ANNOTATIONS_NOT_MATCH_EXPECT
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ACTUAL_ANNOTATION_CONFLICTING_DEFAULT_ARGUMENT_VALUE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ACTUAL_MISSING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ACTUAL_TYPEALIAS_TO_SPECIAL_ANNOTATION
@@ -1514,28 +1515,37 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             FQ_NAMES_IN_TYPES
         )
 
-        val multipleDefaultsMessage = "More than one overridden function declares a default value for ''{0}''."
-        val multipleDefaultsNotAllowed = " As the compiler can not make sure these values agree, this is not allowed."
+        val multipleDefaultsMessage = "More than one function overridden by ''{0}'' declares a default value for ''{1}'': {2}"
+        val multipleDefaultsNotAllowed = "As the compiler can not make sure these values agree, this is not allowed."
         map.put(
             MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES,
             multipleDefaultsMessage + multipleDefaultsNotAllowed,
-            SYMBOL
+            NAME,
+            SYMBOL,
+            CALLABLES_FQ_NAMES,
         )
         map.put(
             MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_WHEN_NO_EXPLICIT_OVERRIDE,
             multipleDefaultsMessage + multipleDefaultsNotAllowed,
-            SYMBOL
+            NAME,
+            SYMBOL,
+            CALLABLES_FQ_NAMES,
         )
-        val multipleDefaultsDiscouraged = " As the compiler can not make sure these values agree, this will be prohibited in the Future."
+        val multipleDefaultsDiscouraged = "As the compiler can not make sure these values agree, this will be prohibited in the future." +
+                " See: https://youtrack.jetbrains.com/issue/KT-36188"
         map.put(
             MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION,
             multipleDefaultsMessage + multipleDefaultsDiscouraged,
-            SYMBOL
+            NAME,
+            SYMBOL,
+            CALLABLES_FQ_NAMES,
         )
         map.put(
             MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_WHEN_NO_EXPLICIT_OVERRIDE_DEPRECATION,
             multipleDefaultsMessage + multipleDefaultsDiscouraged,
-            SYMBOL
+            NAME,
+            SYMBOL,
+            CALLABLES_FQ_NAMES,
         )
 
         map.put(TYPEALIAS_EXPANDS_TO_ARRAY_OF_NOTHINGS, "Type alias expanded to malformed type ''{0}''", RENDER_TYPE)
@@ -1960,11 +1970,6 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             SYMBOLS_ON_NEWLINE_WITH_INDENT,
         )
         map.put(
-            ACTUAL_ANNOTATION_CONFLICTING_DEFAULT_ARGUMENT_VALUE,
-            "Parameter ''{0}'' has conflicting values in expected and actual annotations.",
-            SYMBOL
-        )
-        map.put(
             EXPECTED_FUNCTION_SOURCE_WITH_DEFAULT_ARGUMENTS_NOT_FOUND,
             "Expected function source is not found, so generating default argument values declared there is impossible. Please add the corresponding file to compilation sources."
         )
@@ -1985,7 +1990,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(AMBIGUOUS_EXPECTS, "''{0}'' has several compatible expect declarations in modules {1}.", SYMBOL, COLLECTION(MODULE_DATA))
         map.put(
             NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS,
-            "Actual class ''{0}'' has no corresponding members for expected class members:{1}",
+            "''{0}'' has no corresponding members for expected class members:{1}",
             SYMBOL,
             FirIncompatibleExpectedActualClassScopesRenderer.TEXT
         )
