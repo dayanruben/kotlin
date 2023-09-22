@@ -17,9 +17,13 @@ import org.jetbrains.kotlin.fir.FirFileAnnotationsContainer
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.contracts.FirRawContractDescription
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.impl.FirPrimaryConstructor
+import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirResolveContextCollector
 import org.jetbrains.kotlin.fir.resolve.transformers.contracts.FirContractResolveTransformer
+import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
+import org.jetbrains.kotlin.fir.types.FirImplicitTypeRef
 
 internal object LLFirContractsLazyResolver : LLFirLazyResolver(FirResolvePhase.CONTRACTS) {
     override fun resolve(
@@ -52,12 +56,40 @@ private class LLFirContractsTargetResolver(
 ) {
     override val transformer = FirContractResolveTransformer(session, scopeSession)
 
+    override fun doResolveWithoutLock(target: FirElementWithResolveState): Boolean {
+        if (target is FirSyntheticProperty) {
+            target.getter.delegate.lazyResolveToPhase(resolverPhase)
+
+            performCustomResolveUnderLock(target) {
+                // just update phase
+            }
+
+            return true
+        }
+
+        return super.doResolveWithoutLock(target)
+    }
+
     override fun doLazyResolveUnderLock(target: FirElementWithResolveState) {
         when (target) {
-            is FirSimpleFunction -> resolve(target, ContractStateKeepers.SIMPLE_FUNCTION)
+            is FirPrimaryConstructor, is FirErrorPrimaryConstructor -> {
+                // No contracts here
+            }
+
+            is FirSimpleFunction -> {
+                // There is no sense to try to transform functions without a block body and without a raw contract
+                if (target.returnTypeRef !is FirImplicitTypeRef || target.contractDescription is FirRawContractDescription) {
+                    resolve(target, ContractStateKeepers.SIMPLE_FUNCTION)
+                }
+            }
+
             is FirConstructor -> resolve(target, ContractStateKeepers.CONSTRUCTOR)
-            is FirProperty -> resolve(target, ContractStateKeepers.PROPERTY)
-            is FirPropertyAccessor -> resolve(target, ContractStateKeepers.PROPERTY_ACCESSOR)
+            is FirProperty -> {
+                // Property with delegate can't have any contracts
+                if (target.delegate == null) {
+                    resolve(target, ContractStateKeepers.PROPERTY)
+                }
+            }
             is FirRegularClass,
             is FirTypeAlias,
             is FirVariable,
@@ -105,7 +137,7 @@ private object ContractStateKeepers {
         add(BODY_OWNER, designation)
     }
 
-    val PROPERTY_ACCESSOR: StateKeeper<FirPropertyAccessor, FirDesignationWithFile> = stateKeeper { _, designation ->
+    private val PROPERTY_ACCESSOR: StateKeeper<FirPropertyAccessor, FirDesignationWithFile> = stateKeeper { _, designation ->
         add(CONTRACT_DESCRIPTION_OWNER, designation)
         add(BODY_OWNER, designation)
     }
