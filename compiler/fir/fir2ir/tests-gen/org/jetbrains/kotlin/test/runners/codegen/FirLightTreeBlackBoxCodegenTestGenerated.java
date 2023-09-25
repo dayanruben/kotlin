@@ -18358,6 +18358,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
                 runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/useFromAnotherModuleWithDefaultParameterValues.kt");
             }
 
+            @Test
+            @TestMetadata("withTwoContextReceivers.kt")
+            public void testWithTwoContextReceivers() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/withTwoContextReceivers.kt");
+            }
+
             @Nested
             @TestMetadata("compiler/testData/codegen/box/extensionFunctions/contextReceivers/fromKEEP")
             @TestDataPath("$PROJECT_ROOT")
@@ -54011,6 +54017,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
         @TestMetadata("noElseNoMatch.kt")
         public void testNoElseNoMatch() throws Exception {
             runTest("compiler/testData/codegen/box/when/noElseNoMatch.kt");
+        }
+
+        @Test
+        @TestMetadata("nothingTyped.kt")
+        public void testNothingTyped() throws Exception {
+            runTest("compiler/testData/codegen/box/when/nothingTyped.kt");
         }
 
         @Test

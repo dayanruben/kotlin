@@ -6,7 +6,7 @@
 package org.jetbrains.kotlin.ir.generator.model
 
 import com.squareup.kotlinpoet.CodeBlock
-import org.jetbrains.kotlin.generators.tree.ImplementationKind
+import org.jetbrains.kotlin.generators.tree.*
 import org.jetbrains.kotlin.ir.generator.config.ElementConfig
 import org.jetbrains.kotlin.ir.generator.config.FieldConfig
 import org.jetbrains.kotlin.ir.generator.util.*
@@ -87,6 +87,14 @@ data class ElementRef(
     override fun copy(args: Map<NamedTypeParameterRef, TypeRef>) = ElementRef(element, args, nullable)
     override fun copy(nullable: Boolean) = ElementRef(element, args, nullable)
     override fun toString() = "${element.name}<${args}>"
+
+    override val type: String
+        get() = element.typeName
+
+    override val packageName: String
+        get() = element.packageName
+
+    override fun getTypeWithArguments(notNull: Boolean): String = type + generics
 }
 
 sealed class Field(

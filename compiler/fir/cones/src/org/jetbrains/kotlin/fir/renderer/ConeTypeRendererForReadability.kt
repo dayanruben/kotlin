@@ -6,11 +6,13 @@
 package org.jetbrains.kotlin.fir.renderer
 
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.fir.types.ConeDefinitelyNotNullType
 import org.jetbrains.kotlin.fir.types.ConeFlexibleType
 import org.jetbrains.kotlin.fir.types.ConeIntegerLiteralType
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.renderer.replacePrefixesInTypeRepresentations
 import org.jetbrains.kotlin.renderer.typeStringsDifferOnlyInNullability
+import org.jetbrains.kotlin.utils.addToStdlib.applyIf
 
 class ConeTypeRendererForReadability(
     private val idRendererCreator: () -> ConeIdRenderer,
@@ -22,14 +24,30 @@ class ConeTypeRendererForReadability(
     }
 
     override fun render(flexibleType: ConeFlexibleType) {
-        val lowerRenderer = ConeTypeRendererForReadability(StringBuilder(), idRendererCreator)
-        lowerRenderer.render(flexibleType.lowerBound)
-        val upperRenderer = ConeTypeRendererForReadability(StringBuilder(), idRendererCreator)
-        upperRenderer.render(flexibleType.upperBound)
-        builder.append(renderFlexibleType(lowerRenderer.builder.toString(), upperRenderer.builder.toString()))
+        val lower = flexibleType.lowerBound
+
+        val lowerRendered = renderBound(lower)
+        val upperRendered = renderBound(flexibleType.upperBound)
+
+        val rendered =
+            renderFlexibleTypeCompact(lowerRendered, upperRendered)
+                ?: run {
+                    if (lower is ConeDefinitelyNotNullType) {
+                        renderFlexibleTypeCompact(renderBound(lower.original), upperRendered)
+                    } else null
+                }
+                ?: "($lowerRendered..$upperRendered)"
+
+        builder.append(rendered)
     }
 
-    private fun renderFlexibleType(lowerRendered: String, upperRendered: String): String {
+    private fun renderBound(bound: ConeKotlinType): String {
+        val renderer = ConeTypeRendererForReadability(StringBuilder(), idRendererCreator)
+        renderer.render(bound)
+        return renderer.builder.toString()
+    }
+
+    private fun renderFlexibleTypeCompact(lowerRendered: String, upperRendered: String): String? {
         if (typeStringsDifferOnlyInNullability(lowerRendered, upperRendered)) {
             if (upperRendered.startsWith("(")) {
                 // the case of complex type, e.g. (() -> Unit)?
@@ -38,7 +56,7 @@ class ConeTypeRendererForReadability(
             return "$lowerRendered!"
         }
 
-        val kotlinCollectionsPrefix = StandardNames.COLLECTIONS_PACKAGE_FQ_NAME.asString().replace(".", "/") + "/"
+        val kotlinCollectionsPrefix = StandardNames.COLLECTIONS_PACKAGE_FQ_NAME.asString() + "."
         val mutablePrefix = "Mutable"
         // java.util.List<Foo> -> (Mutable)List<Foo!>!
         val simpleCollection = replacePrefixesInTypeRepresentations(
@@ -59,7 +77,7 @@ class ConeTypeRendererForReadability(
         )
         if (mutableEntry != null) return mutableEntry
 
-        val kotlinPrefix = StandardNames.BUILT_INS_PACKAGE_FQ_NAME.asString() + "/"
+        val kotlinPrefix = StandardNames.BUILT_INS_PACKAGE_FQ_NAME.asString() + "."
         // Foo[] -> Array<(out) Foo!>!
         val array = replacePrefixesInTypeRepresentations(
             lowerRendered = lowerRendered,
@@ -69,8 +87,7 @@ class ConeTypeRendererForReadability(
             foldedPrefix = kotlinPrefix + "Array<(out) "
         )
         if (array != null) return array
-
-        return "ft<$lowerRendered, $upperRendered>"
+        return null
     }
 
     override fun render(type: ConeIntegerLiteralType) {

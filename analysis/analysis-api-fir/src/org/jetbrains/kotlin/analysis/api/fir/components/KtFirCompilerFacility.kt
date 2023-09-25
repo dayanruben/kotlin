@@ -6,6 +6,8 @@
 package org.jetbrains.kotlin.analysis.api.fir.components
 
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.psi.PsiErrorElement
+import org.jetbrains.kotlin.KtRealPsiSourceElement
 import org.jetbrains.kotlin.analysis.api.compile.CodeFragmentCapturedValue
 import org.jetbrains.kotlin.analysis.api.components.KtCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.KtCompilerFacility
@@ -26,6 +28,8 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.llFirMo
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.llFirSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.codeFragment
+import org.jetbrains.kotlin.analysis.project.structure.KtCodeFragmentModule
+import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
 import org.jetbrains.kotlin.backend.jvm.*
@@ -37,15 +41,15 @@ import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.constant.EvaluatedConstTracker
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.diagnostics.DiagnosticMarker
-import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
-import org.jetbrains.kotlin.diagnostics.DiagnosticReporterFactory
-import org.jetbrains.kotlin.diagnostics.KtPsiDiagnostic
-import org.jetbrains.kotlin.diagnostics.Severity
+import org.jetbrains.kotlin.diagnostics.*
+import org.jetbrains.kotlin.fir.analysis.diagnostics.toFirDiagnostics
 import org.jetbrains.kotlin.fir.backend.*
 import org.jetbrains.kotlin.fir.backend.jvm.*
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.hasBody
+import org.jetbrains.kotlin.fir.diagnostics.ConeSyntaxDiagnostic
 import org.jetbrains.kotlin.fir.languageVersionSettings
+import org.jetbrains.kotlin.fir.lazy.AbstractFir2IrLazyDeclaration
 import org.jetbrains.kotlin.fir.pipeline.applyIrGenerationExtensions
 import org.jetbrains.kotlin.fir.pipeline.signatureComposerForJvmFir2Ir
 import org.jetbrains.kotlin.fir.psi
@@ -102,6 +106,12 @@ internal class KtFirCompilerFacility(
             is KtCompilerTarget.Jvm -> target.classBuilderFactory
         }
 
+        val syntaxErrors = SyntaxErrorReportingVisitor().also(file::accept).diagnostics
+
+        if (syntaxErrors.isNotEmpty()) {
+            return KtCompilationResult.Failure(syntaxErrors)
+        }
+
         val mainFirFile = getFullyResolvedFirFile(file)
 
         val frontendDiagnostics = file.collectDiagnosticsForFile(firResolveSession, DiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
@@ -131,8 +141,8 @@ internal class KtFirCompilerFacility(
         }
 
         // Files in the code fragment context module are compiled together with the code fragment itself.
-        val targetModule = mainFirFile.llFirModuleData.ktModule
-        val (targetFiles, dependencyFiles) = filesToCompile.partition { firResolveSession.getModule(it) == targetModule }
+        val targetModules = computeTargetModules(mainFirFile.llFirModuleData.ktModule)
+        val (targetFiles, dependencyFiles) = filesToCompile.partition { firResolveSession.getModule(it) in targetModules }
         require(targetFiles.isNotEmpty())
 
         val jvmIrDeserializer = JvmIrDeserializerImpl()
@@ -233,6 +243,13 @@ internal class KtFirCompilerFacility(
             return KtCompilationResult.Success(outputFiles, capturedValues)
         } finally {
             generationState.destroy()
+        }
+    }
+
+    private fun computeTargetModules(module: KtModule): List<KtModule> {
+        return when (module) {
+            is KtCodeFragmentModule -> listOf(module.contextModule, module)
+            else -> listOf(module)
         }
     }
 
@@ -429,7 +446,15 @@ internal class KtFirCompilerFacility(
          * [org.jetbrains.kotlin.backend.jvm.lower.ReflectiveAccessLowering.visitGetField] (or visitSetField) generates the access without
          * asking.
          */
-        override fun isAccessorWithExplicitImplementation(accessor: IrSimpleFunction) = true
+        override fun isAccessorWithExplicitImplementation(accessor: IrSimpleFunction): Boolean {
+            if (accessor is AbstractFir2IrLazyDeclaration<*>) {
+                val fir = accessor.fir
+                if (fir is FirFunction && fir.hasBody) {
+                    return true
+                }
+            }
+            return false
+        }
     }
 
     private class CompilerFacilityFir2IrExtensions(
@@ -684,5 +709,21 @@ private class DeclarationRegistrarVisitor(private val consumer: SymbolTable) : I
         val symbol = declaration.symbol as S
         val signature = symbol.signature ?: return
         registrar(signature, { symbol }, { declaration })
+    }
+}
+
+context(KtFirAnalysisSessionComponent)
+private class SyntaxErrorReportingVisitor : KtTreeVisitorVoid() {
+    private val collectedDiagnostics = mutableListOf<KtDiagnostic>()
+
+    val diagnostics: List<KtDiagnostic>
+        get() = Collections.unmodifiableList(collectedDiagnostics)
+
+    override fun visitErrorElement(element: PsiErrorElement) {
+        collectedDiagnostics += ConeSyntaxDiagnostic(element.errorDescription)
+            .toFirDiagnostics(analysisSession.useSiteSession, KtRealPsiSourceElement(element), callOrAssignmentSource = null)
+            .map { (it as KtPsiDiagnostic).asKtDiagnostic() }
+
+        super.visitErrorElement(element)
     }
 }

@@ -5,15 +5,23 @@
 
 package org.jetbrains.kotlin.ir.generator.model
 
-import org.jetbrains.kotlin.generators.tree.TypeKind
+import org.jetbrains.kotlin.generators.tree.*
 import org.jetbrains.kotlin.ir.generator.config.*
 import org.jetbrains.kotlin.ir.generator.elementBaseType
-import org.jetbrains.kotlin.ir.generator.util.*
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.castAll
 import org.jetbrains.kotlin.utils.addToStdlib.partitionIsInstance
 
-private object InferredOverriddenType : TypeRef
+private object InferredOverriddenType : TypeRef {
+    override val type: String
+        get() = error("not supported")
+    override val packageName: String?
+        get() = null
+
+    override fun getTypeWithArguments(notNull: Boolean): String {
+        error("not supported")
+    }
+}
 
 data class Model(val elements: List<Element>, val rootElement: Element)
 

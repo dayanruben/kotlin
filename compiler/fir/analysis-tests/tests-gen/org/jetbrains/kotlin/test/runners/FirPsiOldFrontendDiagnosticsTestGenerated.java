@@ -9198,6 +9198,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 }
 
                 @Test
+                @TestMetadata("missingComponentN.kt")
+                public void testMissingComponentN() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/declarationChecks/destructuringDeclarations/missingComponentN.kt");
+                }
+
+                @Test
                 @TestMetadata("RedeclarationInForLoop.kt")
                 public void testRedeclarationInForLoop() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/declarationChecks/destructuringDeclarations/RedeclarationInForLoop.kt");
@@ -28273,6 +28279,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 @TestMetadata("kt9805.kt")
                 public void testKt9805() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/resolve/invoke/kt9805.kt");
+                }
+
+                @Test
+                @TestMetadata("privateInvokeOwner.kt")
+                public void testPrivateInvokeOwner() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/resolve/invoke/privateInvokeOwner.kt");
                 }
 
                 @Test

@@ -17,9 +17,9 @@ import org.jetbrains.kotlin.ir.builders.irImplicitCast
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.*
-import org.jetbrains.kotlin.ir.linkage.partial.IrUnimplementedOverridesStrategy.ProcessAsFakeOverrides
+import org.jetbrains.kotlin.ir.overrides.IrUnimplementedOverridesStrategy
 import org.jetbrains.kotlin.ir.overrides.FakeOverrideBuilderStrategy
-import org.jetbrains.kotlin.ir.overrides.IrOverridingUtil
+import org.jetbrains.kotlin.ir.overrides.IrFakeOverrideBuilder
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.symbols.impl.IrPropertySymbolImpl
 import org.jetbrains.kotlin.ir.symbols.impl.IrSimpleFunctionSymbolImpl
@@ -1225,12 +1225,9 @@ val IrFunction.allParameters: List<IrValueParameter>
 val IrFunction.allParametersCount: Int
     get() = if (this is IrConstructor) explicitParametersCount + 1 else explicitParametersCount
 
-// This is essentially the same as FakeOverrideBuilder,
-// but it bypasses SymbolTable.
-// TODO: merge it with FakeOverrideBuilder.
-private class FakeOverrideBuilderForLowerings : FakeOverrideBuilderStrategy(
-    friendModules = emptyMap(),
-    unimplementedOverridesStrategy = ProcessAsFakeOverrides
+private object BindToNewEmptySymbols : FakeOverrideBuilderStrategy(
+    friendModules = emptyMap(), // TODO: this is probably not correct. Should be fixed by KT-61384. But it's not important for current usages
+    unimplementedOverridesStrategy = IrUnimplementedOverridesStrategy.ProcessAsFakeOverrides
 ) {
     override fun linkFunctionFakeOverride(function: IrFunctionWithLateBinding, manglerCompatibleMode: Boolean) {
         function.acquireSymbol(IrSimpleFunctionSymbolImpl())
@@ -1252,6 +1249,8 @@ private class FakeOverrideBuilderForLowerings : FakeOverrideBuilderStrategy(
             linkFunctionFakeOverride(it as? IrFunctionWithLateBinding ?: error("Unexpected fake override setter: $it"), manglerCompatibleMode)
         }
     }
+
+    override fun inFile(file: IrFile?, block: () -> Unit) { block() }
 }
 
 fun IrClass.addFakeOverrides(
@@ -1259,7 +1258,7 @@ fun IrClass.addFakeOverrides(
     implementedMembers: List<IrOverridableMember> = emptyList(),
     ignoredParentSymbols: List<IrSymbol> = emptyList()
 ) {
-    IrOverridingUtil(typeSystem, FakeOverrideBuilderForLowerings(), emptyList())
+    IrFakeOverrideBuilder(typeSystem, BindToNewEmptySymbols, emptyList())
         .buildFakeOverridesForClassUsingOverriddenSymbols(this,
                                                           implementedMembers = implementedMembers,
                                                           compatibilityMode = false,

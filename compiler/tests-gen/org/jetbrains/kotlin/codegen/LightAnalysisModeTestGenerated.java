@@ -15234,6 +15234,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/useFromAnotherModuleWithDefaultParameterValues.kt");
             }
 
+            @TestMetadata("withTwoContextReceivers.kt")
+            public void testWithTwoContextReceivers() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/withTwoContextReceivers.kt");
+            }
+
             @TestMetadata("compiler/testData/codegen/box/extensionFunctions/contextReceivers/fromKEEP")
             @TestDataPath("$PROJECT_ROOT")
             @RunWith(JUnit3RunnerWithInners.class)
@@ -43682,6 +43687,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("noElseNoMatch.kt")
         public void testNoElseNoMatch() throws Exception {
             runTest("compiler/testData/codegen/box/when/noElseNoMatch.kt");
+        }
+
+        @TestMetadata("nothingTyped.kt")
+        public void testNothingTyped() throws Exception {
+            runTest("compiler/testData/codegen/box/when/nothingTyped.kt");
         }
 
         @TestMetadata("nullableWhen.kt")
