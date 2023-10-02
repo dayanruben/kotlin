@@ -137,6 +137,7 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirDelegateFieldTypeMismatchChecker,
             FirMultipleDefaultsInheritedFromSupertypesChecker,
             FirFiniteBoundRestrictionChecker,
+            FirDefaultArgumentsInExpectActualizedByFakeOverrideChecker,
         )
 
     override val constructorCheckers: Set<FirConstructorChecker>
@@ -174,6 +175,7 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirTopLevelTypeAliasChecker,
             FirActualTypeAliasChecker,
             FirActualTypealiasToSpecialAnnotationChecker,
+            FirDefaultArgumentsInExpectWithActualTypealiasChecker,
             FirTypeAliasExpandsToArrayOfNothingsChecker,
         )
 
