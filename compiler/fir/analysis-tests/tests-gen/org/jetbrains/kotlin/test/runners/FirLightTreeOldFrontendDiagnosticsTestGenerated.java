@@ -18174,6 +18174,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                 }
 
                 @Test
+                @TestMetadata("nestedClassesWithSelfTypes.kt")
+                public void testNestedClassesWithSelfTypes() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/nestedClassesWithSelfTypes.kt");
+                }
+
+                @Test
                 @TestMetadata("recursiveInIn.kt")
                 public void testRecursiveInIn() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/recursiveInIn.kt");
@@ -24028,6 +24034,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             @TestMetadata("AssignOperatorAmbiguity.kt")
             public void testAssignOperatorAmbiguity() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/operatorsOverloading/AssignOperatorAmbiguity.kt");
+            }
+
+            @Test
+            @TestMetadata("AssignOperatorAmbiguityExtension.kt")
+            public void testAssignOperatorAmbiguityExtension() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/operatorsOverloading/AssignOperatorAmbiguityExtension.kt");
             }
 
             @Test
@@ -34550,6 +34562,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             @TestMetadata("misplacedConstraints.kt")
             public void testMisplacedConstraints() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/typeParameters/misplacedConstraints.kt");
+            }
+
+            @Test
+            @TestMetadata("outerTypeParameterAsBound.kt")
+            public void testOuterTypeParameterAsBound() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/typeParameters/outerTypeParameterAsBound.kt");
             }
 
             @Test
