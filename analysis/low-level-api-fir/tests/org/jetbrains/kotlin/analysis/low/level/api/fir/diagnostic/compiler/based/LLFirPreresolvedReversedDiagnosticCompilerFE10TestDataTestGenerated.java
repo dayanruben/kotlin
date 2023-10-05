@@ -6985,6 +6985,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
             }
 
             @Test
+            @TestMetadata("reassignmentInLambda.kt")
+            public void testReassignmentInLambda() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/reassignmentInLambda.kt");
+            }
+
+            @Test
             @TestMetadata("reassignmentInTryCatch.kt")
             public void testReassignmentInTryCatch() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/reassignmentInTryCatch.kt");
@@ -15274,6 +15280,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
             @TestMetadata("annotatedUnderscoredTypeArgument.kt")
             public void testAnnotatedUnderscoredTypeArgument() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/annotatedUnderscoredTypeArgument.kt");
+            }
+
+            @Test
+            @TestMetadata("assertThatInNumerousIf.kt")
+            public void testAssertThatInNumerousIf() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/assertThatInNumerousIf.kt");
             }
 
             @Test
@@ -24321,9 +24333,21 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
             }
 
             @Test
+            @TestMetadata("kt22004.kt")
+            public void testKt22004() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/overload/kt22004.kt");
+            }
+
+            @Test
             @TestMetadata("kt2493.kt")
             public void testKt2493() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/overload/kt2493.kt");
+            }
+
+            @Test
+            @TestMetadata("kt61168WithFix.kt")
+            public void testKt61168WithFix() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/overload/kt61168WithFix.kt");
             }
 
             @Test
@@ -24408,6 +24432,76 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
             @TestMetadata("UnsubstitutedJavaGenetics.kt")
             public void testUnsubstitutedJavaGenetics() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/overload/UnsubstitutedJavaGenetics.kt");
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/diagnostics/tests/overload/noConflictingOverloadsWithDeprecated")
+            @TestDataPath("$PROJECT_ROOT")
+            public class NoConflictingOverloadsWithDeprecated {
+                @Test
+                public void testAllFilesPresentInNoConflictingOverloadsWithDeprecated() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/overload/noConflictingOverloadsWithDeprecated"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true, "multiplatform");
+                }
+
+                @Test
+                @TestMetadata("ConflictingOverloadsFunsDifferentReturnInClass.kt")
+                public void testConflictingOverloadsFunsDifferentReturnInClass() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/overload/noConflictingOverloadsWithDeprecated/ConflictingOverloadsFunsDifferentReturnInClass.kt");
+                }
+
+                @Test
+                @TestMetadata("ConflictingOverloadsFunsDifferentReturnInPackage.kt")
+                public void testConflictingOverloadsFunsDifferentReturnInPackage() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/overload/noConflictingOverloadsWithDeprecated/ConflictingOverloadsFunsDifferentReturnInPackage.kt");
+                }
+
+                @Test
+                @TestMetadata("ConflictingOverloadsGenericFunctions.kt")
+                public void testConflictingOverloadsGenericFunctions() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/overload/noConflictingOverloadsWithDeprecated/ConflictingOverloadsGenericFunctions.kt");
+                }
+
+                @Test
+                @TestMetadata("ConflictingOverloadsIdenticalExtFunsInPackage.kt")
+                public void testConflictingOverloadsIdenticalExtFunsInPackage() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/overload/noConflictingOverloadsWithDeprecated/ConflictingOverloadsIdenticalExtFunsInPackage.kt");
+                }
+
+                @Test
+                @TestMetadata("ConflictingOverloadsIdenticalFunsInClass.kt")
+                public void testConflictingOverloadsIdenticalFunsInClass() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/overload/noConflictingOverloadsWithDeprecated/ConflictingOverloadsIdenticalFunsInClass.kt");
+                }
+
+                @Test
+                @TestMetadata("ConflictingOverloadsIdenticalValsInClass.kt")
+                public void testConflictingOverloadsIdenticalValsInClass() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/overload/noConflictingOverloadsWithDeprecated/ConflictingOverloadsIdenticalValsInClass.kt");
+                }
+
+                @Test
+                @TestMetadata("ConflictingOverloadsValsDifferentTypeInClass.kt")
+                public void testConflictingOverloadsValsDifferentTypeInClass() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/overload/noConflictingOverloadsWithDeprecated/ConflictingOverloadsValsDifferentTypeInClass.kt");
+                }
+
+                @Test
+                @TestMetadata("ConstructorVsFunOverload.kt")
+                public void testConstructorVsFunOverload() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/overload/noConflictingOverloadsWithDeprecated/ConstructorVsFunOverload.kt");
+                }
+
+                @Test
+                @TestMetadata("LocalFunctions.kt")
+                public void testLocalFunctions() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/overload/noConflictingOverloadsWithDeprecated/LocalFunctions.kt");
+                }
+
+                @Test
+                @TestMetadata("TypeParameterMultipleBounds.kt")
+                public void testTypeParameterMultipleBounds() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/overload/noConflictingOverloadsWithDeprecated/TypeParameterMultipleBounds.kt");
+                }
             }
         }
 
@@ -26056,6 +26150,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
             @TestMetadata("extensionPropertyMustHaveAccessorsOrBeAbstract.kt")
             public void testExtensionPropertyMustHaveAccessorsOrBeAbstract() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/properties/extensionPropertyMustHaveAccessorsOrBeAbstract.kt");
+            }
+
+            @Test
+            @TestMetadata("flexibleTypeReceiver.kt")
+            public void testFlexibleTypeReceiver() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/properties/flexibleTypeReceiver.kt");
             }
 
             @Test
