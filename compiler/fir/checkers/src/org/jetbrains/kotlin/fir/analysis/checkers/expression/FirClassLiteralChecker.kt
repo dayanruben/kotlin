@@ -6,8 +6,11 @@
 package org.jetbrains.kotlin.fir.analysis.checkers.expression
 
 import org.jetbrains.kotlin.KtFakeSourceElementKind
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.FirSessionComponent
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.analysis.getChild
@@ -117,7 +120,10 @@ object FirClassLiteralChecker : FirGetClassCallChecker() {
     private fun ConeKotlinType.isAllowedInClassLiteral(context: CheckerContext): Boolean =
         when (this) {
             is ConeClassLikeType -> {
-                if (isNonPrimitiveArray) {
+                val isPlatformThatAllowsNonPrimitiveArrays = context.session.firGenericArrayClassLiteralSupport.isEnabled
+                val isOldVersionThatAllowsNonPrimitiveArrays =
+                    !context.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitGenericArrayClassLiteral)
+                if (isNonPrimitiveArray && (isPlatformThatAllowsNonPrimitiveArrays || isOldVersionThatAllowsNonPrimitiveArrays)) {
                     typeArguments.none { typeArgument ->
                         when (typeArgument) {
                             is ConeStarProjection -> true
@@ -131,3 +137,17 @@ object FirClassLiteralChecker : FirGetClassCallChecker() {
             else -> false
         }
 }
+
+interface FirGenericArrayClassLiteralSupport : FirSessionComponent {
+    val isEnabled: Boolean
+
+    object Enabled : FirGenericArrayClassLiteralSupport {
+        override val isEnabled: Boolean = true
+    }
+
+    object Disabled : FirGenericArrayClassLiteralSupport {
+        override val isEnabled: Boolean = false
+    }
+}
+
+val FirSession.firGenericArrayClassLiteralSupport: FirGenericArrayClassLiteralSupport by FirSession.sessionComponentAccessor()

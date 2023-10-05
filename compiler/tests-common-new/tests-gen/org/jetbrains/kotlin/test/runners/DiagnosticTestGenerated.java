@@ -13840,6 +13840,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("castAnElementToInnerClassWithTypeParameter.kt")
+                public void testCastAnElementToInnerClassWithTypeParameter() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/generics/innerClasses/castAnElementToInnerClassWithTypeParameter.kt");
+                }
+
+                @Test
                 @TestMetadata("checkBoundsOuter.kt")
                 public void testCheckBoundsOuter() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/generics/innerClasses/checkBoundsOuter.kt");
@@ -24053,6 +24059,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("annotationsViaActualTypeAlias2.kt")
                 public void testAnnotationsViaActualTypeAlias2() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/defaultArguments/annotationsViaActualTypeAlias2.kt");
+                }
+
+                @Test
+                @TestMetadata("annotationsViaActualTypeAliasExpectEnumArg.kt")
+                public void testAnnotationsViaActualTypeAliasExpectEnumArg() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/defaultArguments/annotationsViaActualTypeAliasExpectEnumArg.kt");
                 }
 
                 @Test

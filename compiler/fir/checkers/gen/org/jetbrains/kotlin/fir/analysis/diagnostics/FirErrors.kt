@@ -178,6 +178,7 @@ object FirErrors {
     val UNRESOLVED_IMPORT by error1<PsiElement, String>(SourceElementPositioningStrategies.IMPORT_LAST_NAME)
     val DUPLICATE_PARAMETER_NAME_IN_FUNCTION_TYPE by error0<KtTypeReference>()
     val MISSING_DEPENDENCY_CLASS by error1<PsiElement, ConeKotlinType>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
+    val MISSING_DEPENDENCY_SUPERCLASS by error2<PsiElement, ConeKotlinType, ConeKotlinType>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
 
     // Call resolution
     val CREATING_AN_INSTANCE_OF_ABSTRACT_CLASS by error0<KtExpression>()
@@ -421,6 +422,7 @@ object FirErrors {
     val UPPER_BOUND_VIOLATED by error2<PsiElement, ConeKotlinType, ConeKotlinType>()
     val UPPER_BOUND_VIOLATED_IN_TYPEALIAS_EXPANSION by error2<PsiElement, ConeKotlinType, ConeKotlinType>()
     val TYPE_ARGUMENTS_NOT_ALLOWED by error0<PsiElement>()
+    val TYPE_ARGUMENTS_FOR_OUTER_CLASS_WHEN_NESTED_REFERENCED by error0<PsiElement>()
     val WRONG_NUMBER_OF_TYPE_ARGUMENTS by error2<PsiElement, Int, FirClassLikeSymbol<*>>()
     val NO_TYPE_ARGUMENTS_ON_RHS by error2<PsiElement, Int, FirClassLikeSymbol<*>>()
     val OUTER_CLASS_ARGUMENTS_REQUIRED by error1<PsiElement, FirClassLikeSymbol<*>>()

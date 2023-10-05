@@ -423,6 +423,14 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.MISSING_DEPENDENCY_SUPERCLASS) { firDiagnostic ->
+        MissingDependencySuperclassImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.CREATING_AN_INSTANCE_OF_ABSTRACT_CLASS) { firDiagnostic ->
         CreatingAnInstanceOfAbstractClassImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -2119,6 +2127,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.TYPE_ARGUMENTS_NOT_ALLOWED) { firDiagnostic ->
         TypeArgumentsNotAllowedImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.TYPE_ARGUMENTS_FOR_OUTER_CLASS_WHEN_NESTED_REFERENCED) { firDiagnostic ->
+        TypeArgumentsForOuterClassWhenNestedReferencedImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

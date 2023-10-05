@@ -373,6 +373,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.METHOD_OF_ANY_IMP
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISPLACED_TYPE_PARAMETER_CONSTRAINTS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_CONSTRUCTOR_KEYWORD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_DEPENDENCY_CLASS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_DEPENDENCY_SUPERCLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_STDLIB_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_VAL_ON_ANNOTATION_PARAMETER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MIXING_FUNCTIONAL_KINDS_IN_SUPERTYPES
@@ -596,6 +597,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPEALIAS_EXPANSI
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPEALIAS_SHOULD_EXPAND_TO_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPECHECKER_HAS_RUN_INTO_RECURSIVE_PROBLEM
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_ARGUMENTS_NOT_ALLOWED
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_ARGUMENTS_FOR_OUTER_CLASS_WHEN_NESTED_REFERENCED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_ARGUMENTS_REDUNDANT_IN_SUPER_QUALIFIER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_ARGUMENT_ON_TYPED_VALUE_CLASS_EQUALS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_CANT_BE_USED_FOR_CONST_VAL
@@ -762,6 +764,12 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(
             MISSING_DEPENDENCY_CLASS,
             "Cannot access class ''{0}''. Check your module classpath for missing or conflicting dependencies.",
+            RENDER_TYPE,
+        )
+        map.put(
+            MISSING_DEPENDENCY_SUPERCLASS,
+            "Cannot access ''{0}'' which is a supertype of ''{1}''. Check your module classpath for missing or conflicting dependencies.",
+            RENDER_TYPE,
             RENDER_TYPE,
         )
 
@@ -1273,6 +1281,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
 
         map.put(TYPE_ARGUMENTS_NOT_ALLOWED, "Type parameters cannot be parameterized with type arguments.") // *
+        map.put(TYPE_ARGUMENTS_FOR_OUTER_CLASS_WHEN_NESTED_REFERENCED, "Type arguments for outer class are redundant when nested class is referenced")
         val wrongNumberOfTypeArguments = "{0,choice,0#No type arguments|1#One type argument|1<{0,number,integer} type arguments} expected"
         map.put(
             WRONG_NUMBER_OF_TYPE_ARGUMENTS,
