@@ -123,6 +123,10 @@ fun generateJUnit5CompilerTests(args: Array<String>, mainClassName: String?) {
                 model("ir/irText")
             }
 
+            testClass<AbstractClassicJvmIrSourceRangesTest> {
+                model("ir/sourceRanges")
+            }
+
             testClass<AbstractBytecodeTextTest> {
                 model("codegen/bytecodeText")
             }
@@ -373,6 +377,14 @@ fun generateJUnit5CompilerTests(args: Array<String>, mainClassName: String?) {
 
             testClass<AbstractFirPsiJvmIrTextTest> {
                 model("ir/irText")
+            }
+
+            testClass<AbstractFirLightTreeJvmIrSourceRangesTest> {
+                model("ir/sourceRanges")
+            }
+
+            testClass<AbstractFirPsiJvmIrSourceRangesTest> {
+                model("ir/sourceRanges")
             }
 
             testClass<AbstractFirLightTreeBytecodeTextTest> {

@@ -476,15 +476,22 @@ private fun AnalysisApiTestGroup.generateAnalysisApiComponentsTests() {
             }
 
             test(
-                AbstractMemberScopeByFqNameTest::class,
+                AbstractMemberScopeTest::class,
                 filter = frontendIs(FrontendKind.Fir),
             ) {
                 when (it.analysisApiMode) {
                     AnalysisApiMode.Ide ->
-                        model(it, "memberScopeByFqName")
+                        model(it, "memberScope")
                     AnalysisApiMode.Standalone ->
-                        model(it, "memberScopeByFqName", excludeDirsRecursively = listOf("withTestCompilerPluginEnabled"))
+                        model(it, "memberScope", excludeDirsRecursively = listOf("withTestCompilerPluginEnabled"))
                 }
+            }
+
+            test(
+                AbstractStaticMemberScopeTest::class,
+                filter = frontendIs(FrontendKind.Fir),
+            ) {
+                model(it, "staticMemberScope")
             }
 
             test(AbstractFileScopeTest::class) {
@@ -500,6 +507,20 @@ private fun AnalysisApiTestGroup.generateAnalysisApiComponentsTests() {
                 filter = frontendIs(FrontendKind.Fir),
             ) {
                 model(it, "declaredMemberScope")
+            }
+
+            test(
+                AbstractStaticDeclaredMemberScopeTest::class,
+                filter = frontendIs(FrontendKind.Fir),
+            ) {
+                model(it, "staticDeclaredMemberScope")
+            }
+
+            test(
+                AbstractCombinedDeclaredMemberScopeTest::class,
+                filter = frontendIs(FrontendKind.Fir),
+            ) {
+                model(it, "combinedDeclaredMemberScope")
             }
         }
     }
