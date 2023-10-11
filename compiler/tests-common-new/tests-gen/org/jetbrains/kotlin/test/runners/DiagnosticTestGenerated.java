@@ -1252,6 +1252,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("suppressOnPlusAssign.kt")
+        public void testSuppressOnPlusAssign() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/suppressOnPlusAssign.kt");
+        }
+
+        @Test
         @TestMetadata("suspendConflictingOverloads.kt")
         public void testSuspendConflictingOverloads() throws Exception {
             runTest("compiler/testData/diagnostics/tests/suspendConflictingOverloads.kt");
@@ -24883,6 +24889,28 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("parameterNames.kt")
                 public void testParameterNames() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/java/parameterNames.kt");
+                }
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/diagnostics/tests/multiplatform/smartCasts")
+            @TestDataPath("$PROJECT_ROOT")
+            public class SmartCasts {
+                @Test
+                public void testAllFilesPresentInSmartCasts() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform/smartCasts"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("kt61340_commonCode.kt")
+                public void testKt61340_commonCode() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/smartCasts/kt61340_commonCode.kt");
+                }
+
+                @Test
+                @TestMetadata("kt61340_platformCode.kt")
+                public void testKt61340_platformCode() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/smartCasts/kt61340_platformCode.kt");
                 }
             }
 
