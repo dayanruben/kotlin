@@ -33,7 +33,6 @@ import org.jetbrains.kotlin.fir.tree.generator.context.AbstractFieldConfigurator
 import org.jetbrains.kotlin.fir.tree.generator.context.AbstractFirTreeBuilder.Companion.baseFirElement
 import org.jetbrains.kotlin.fir.tree.generator.context.type
 import org.jetbrains.kotlin.fir.tree.generator.model.*
-import org.jetbrains.kotlin.generators.tree.SimpleTypeArgument
 import org.jetbrains.kotlin.generators.tree.StandardTypes
 import org.jetbrains.kotlin.generators.tree.TypeRef
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
@@ -162,8 +161,8 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
         }
 
         jump.configure {
-            withArg("E", targetElement)
-            +field("target", jumpTargetType.withArgs("E"))
+            val e = withArg("E", targetElement)
+            +field("target", jumpTargetType to listOf(e))
         }
 
         loopJump.configure {
@@ -171,7 +170,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
         }
 
         returnExpression.configure {
-            parentArg(jump, "E", function.withArgs("E" to TypeRef.Star))
+            parentArg(jump, "E", function)
             +field("result", expression).withTransform()
             needTransformOtherChildren()
         }
@@ -227,9 +226,9 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
         }
 
         constExpression.configure {
-            withArg("T")
-            +field("kind", constKindType.withArgs("T"), withReplace = true)
-            +field("value", "T", null)
+            val t = withArg("T")
+            +field("kind", constKindType to listOf(t), withReplace = true)
+            +field("value", t)
         }
 
         functionCall.configure {
@@ -572,7 +571,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
 
         smartCastExpression.configure {
             +field("originalExpression", expression, withReplace = true).withTransform()
-            +field("typesFromSmartCast", "Collection<ConeKotlinType>", null, customType = coneKotlinTypeType)
+            +field("typesFromSmartCast", StandardTypes.collection to listOf(coneKotlinTypeType))
             +field("smartcastType", typeRef)
             +field("smartcastTypeWithoutNullableNothing", typeRef, nullable = true)
             +booleanField("isStable")
@@ -748,7 +747,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
 
         whenExpression.configure {
             +field("subject", expression, nullable = true).withTransform()
-            +field("subjectVariable", variable.withArgs("E" to TypeRef.Star), nullable = true)
+            +field("subjectVariable", variable, nullable = true)
             +fieldList("branches", whenBranch).withTransform()
             +field("exhaustivenessStatus", exhaustivenessStatusType, nullable = true, withReplace = true)
             +booleanField("usedAsExpression")
@@ -781,13 +780,4 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +field("contractCall", functionCall)
         }
     }
-}
-
-// TODO: Replace with org.jetbrains.kotlin.generators.tree.withArgs
-fun Element.withArgs(vararg replacements: Pair<String, TypeRef>): AbstractElement {
-    val replaceMap = replacements.toMap()
-    val newArguments = typeArguments.map { typeArgument ->
-        replaceMap[typeArgument.name]?.let { SimpleTypeArgument(it.type, null) } ?: typeArgument
-    }
-    return ElementWithArguments(this, newArguments)
 }

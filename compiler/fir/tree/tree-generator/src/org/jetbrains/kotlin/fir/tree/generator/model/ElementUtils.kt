@@ -5,18 +5,12 @@
 
 package org.jetbrains.kotlin.fir.tree.generator.model
 
-import org.jetbrains.kotlin.fir.tree.generator.context.AbstractFirTreeBuilder
-import org.jetbrains.kotlin.fir.tree.generator.context.type
-import org.jetbrains.kotlin.generators.tree.typeWithArguments
-import org.jetbrains.kotlin.generators.tree.Importable
 import org.jetbrains.kotlin.generators.tree.NamedTypeParameterRef
+import org.jetbrains.kotlin.generators.tree.StandardTypes
 import org.jetbrains.kotlin.generators.tree.TypeRef
+import org.jetbrains.kotlin.generators.tree.typeWithArguments
 
 // ----------- Simple field -----------
-
-fun field(name: String, type: String, packageName: String?, customType: TypeRef? = null, nullable: Boolean = false, withReplace: Boolean = false): Field {
-    return SimpleField(name, type, packageName, customType, nullable, withReplace)
-}
 
 fun field(name: String, type: TypeRef, nullable: Boolean = false, withReplace: Boolean = false): Field {
     return SimpleField(name, type.typeWithArguments, type.packageName, null, nullable, withReplace)
@@ -34,15 +28,15 @@ fun field(type: TypeRef, nullable: Boolean = false, withReplace: Boolean = false
 }
 
 fun booleanField(name: String, withReplace: Boolean = false): Field {
-    return field(name, AbstractFirTreeBuilder.boolean, null, withReplace = withReplace)
+    return field(name, StandardTypes.boolean, withReplace = withReplace)
 }
 
 fun stringField(name: String, nullable: Boolean = false): Field {
-    return field(name, AbstractFirTreeBuilder.string, null, null, nullable)
+    return field(name, StandardTypes.string, nullable = nullable)
 }
 
 fun intField(name: String, withReplace: Boolean = false): Field {
-    return field(name, AbstractFirTreeBuilder.int, null, withReplace = withReplace)
+    return field(name, StandardTypes.int, withReplace = withReplace)
 }
 
 // ----------- Fir field -----------
@@ -55,7 +49,7 @@ fun field(name: String, type: TypeRef, argument: String? = null, nullable: Boole
     }
 }
 
-fun field(name: String, element: AbstractElement, nullable: Boolean = false, withReplace: Boolean = false): Field {
+fun field(name: String, element: ElementOrRef, nullable: Boolean = false, withReplace: Boolean = false): Field {
     return FirField(name, element, nullable, withReplace)
 }
 
@@ -69,8 +63,8 @@ fun fieldList(name: String, type: TypeRef, withReplace: Boolean = false, useMuta
     return FieldList(name, type, withReplace, useMutableOrEmpty)
 }
 
-fun fieldList(element: AbstractElement, withReplace: Boolean = false, useMutableOrEmpty: Boolean = false): Field {
-    return FieldList(element.name.replaceFirstChar(Char::lowercaseChar) + "s", element, withReplace, useMutableOrEmpty)
+fun fieldList(elementOrRef: ElementOrRef, withReplace: Boolean = false, useMutableOrEmpty: Boolean = false): Field {
+    return FieldList(elementOrRef.element.name.replaceFirstChar(Char::lowercaseChar) + "s", elementOrRef, withReplace, useMutableOrEmpty)
 }
 
 // ----------- Field set -----------

@@ -32,7 +32,9 @@ import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import org.jetbrains.kotlin.utils.PathUtil
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
@@ -79,7 +81,7 @@ class StandaloneSessionBuilderTest {
 
     @Test
     fun testKotlinStdlibJvm() {
-        doTestKotlinStdLibResolve(JvmPlatforms.defaultJvmPlatform, ForTestCompileRuntime.runtimeJarForTests().toPath())
+        doTestKotlinStdLibResolve(JvmPlatforms.defaultJvmPlatform, PathUtil.kotlinPathsForDistDirectory.stdlibPath.toPath())
     }
 
     @Test
@@ -89,7 +91,19 @@ class StandaloneSessionBuilderTest {
 
     @Test
     fun testKotlinStdLibJs() {
-        doTestKotlinStdLibResolve(JsPlatforms.defaultJsPlatform, Paths.get("dist/kotlinc/lib/kotlin-stdlib-js.jar"))
+        doTestKotlinStdLibResolve(JsPlatforms.defaultJsPlatform, PathUtil.kotlinPathsForDistDirectory.jsStdLibJarPath.toPath())
+    }
+
+    @Test
+    fun testKotlinStdLibJsWithInvalidKlib() {
+        doTestKotlinStdLibResolve(
+            JsPlatforms.defaultJsPlatform,
+            PathUtil.kotlinPathsForDistDirectory.jsStdLibJarPath.toPath(),
+            additionalStdlibRoots = listOf(
+                Paths.get(System.getProperty("java.home")), // directory which exists and does not contain KLibs inside
+                PathUtil.kotlinPathsForDistDirectory.stdlibPath.toPath(), // file which exists and not a KLib
+            )
+        )
     }
 
     @Test
@@ -122,7 +136,10 @@ class StandaloneSessionBuilderTest {
         ktCallExpression.assertIsCallOf(CallableId(FqName.ROOT, Name.identifier("foo")))
     }
 
-    private fun doTestKotlinStdLibResolve(targetPlatform: TargetPlatform, platformStdlibPath: Path) {
+    private fun doTestKotlinStdLibResolve(
+        targetPlatform: TargetPlatform, platformStdlibPath: Path,
+        additionalStdlibRoots: List<Path> = emptyList(),
+    ) {
         lateinit var sourceModule: KtSourceModule
         val session = buildStandaloneAnalysisAPISession {
             registerProjectService(KtLifetimeTokenProvider::class.java, KtAlwaysAccessibleLifetimeTokenProvider())
@@ -132,6 +149,7 @@ class StandaloneSessionBuilderTest {
                 val stdlib = addModule(
                     buildKtLibraryModule {
                         addBinaryRoot(platformStdlibPath)
+                        addBinaryRoots(additionalStdlibRoots)
                         platform = targetPlatform
                         libraryName = "stdlib"
                     }
