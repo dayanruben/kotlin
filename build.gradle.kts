@@ -114,6 +114,15 @@ val irCompilerModules = arrayOf(
     ":wasm:wasm.ir"
 ).also { extra["irCompilerModules"] = it }
 
+val irCompilerModulesForIDE = arrayOf(
+    ":compiler:ir.tree",
+    ":compiler:ir.serialization.common",
+    ":compiler:ir.serialization.jvm",
+    ":compiler:ir.serialization.js", // used in IJ android plugin in `ComposeIrGenerationExtension`
+    ":compiler:ir.backend.common",
+    ":compiler:ir.interpreter",
+).also { extra["irCompilerModulesForIDE"] = it }
+
 val commonCompilerModules = arrayOf(
     ":compiler:psi",
     ":compiler:frontend.common-psi",
@@ -290,7 +299,6 @@ extra["compilerArtifactsForIde"] = listOfNotNull(
     ":prepare:ide-plugin-dependencies:incremental-compilation-impl-tests-for-ide",
     ":prepare:ide-plugin-dependencies:js-ir-runtime-for-ide",
     ":prepare:ide-plugin-dependencies:kotlin-build-common-tests-for-ide",
-    ":prepare:ide-plugin-dependencies:kotlin-compiler-for-ide",
     ":prepare:ide-plugin-dependencies:kotlin-compiler-cli-for-ide",
     ":prepare:ide-plugin-dependencies:kotlin-gradle-statistics-for-ide",
     ":prepare:ide-plugin-dependencies:kotlin-jps-common-for-ide",
@@ -306,7 +314,6 @@ extra["compilerArtifactsForIde"] = listOfNotNull(
     ":prepare:ide-plugin-dependencies:kotlin-backend-native-for-ide".takeIf { kotlinBuildProperties.isKotlinNativeEnabled },
     ":prepare:ide-plugin-dependencies:kotlin-compiler-tests-for-ide",
     ":prepare:ide-plugin-dependencies:kotlin-compiler-testdata-for-ide",
-    ":prepare:ide-plugin-dependencies:kotlin-stdlib-minimal-for-test-for-ide",
     ":prepare:ide-plugin-dependencies:low-level-api-fir-for-ide",
     ":prepare:ide-plugin-dependencies:high-level-api-for-ide",
     ":prepare:ide-plugin-dependencies:high-level-api-impl-base-for-ide",
@@ -978,6 +985,16 @@ plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin:
             // TODO remove as soon as we switch to release build of Node.js.
             args += listOf("--ignore-engines")
         }
+    }
+}
+
+dependencies {
+    // Drop when KT-61766 fixed
+    add(
+        configurations.implicitDependencies.name,
+        "org.jetbrains.kotlinx:kotlinx-collections-immutable-metadata:${rootProject.extra["versions.kotlinx-collections-immutable"]}"
+    ) {
+        isTransitive = false
     }
 }
 
