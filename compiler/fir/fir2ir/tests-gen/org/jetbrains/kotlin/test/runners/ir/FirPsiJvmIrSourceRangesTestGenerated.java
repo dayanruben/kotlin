@@ -50,6 +50,12 @@ public class FirPsiJvmIrSourceRangesTestGenerated extends AbstractFirPsiJvmIrSou
     }
 
     @Test
+    @TestMetadata("extensionLambdaCall.kt")
+    public void testExtensionLambdaCall() throws Exception {
+        runTest("compiler/testData/ir/sourceRanges/extensionLambdaCall.kt");
+    }
+
+    @Test
     @TestMetadata("kt17108.kt")
     public void testKt17108() throws Exception {
         runTest("compiler/testData/ir/sourceRanges/kt17108.kt");
@@ -59,6 +65,18 @@ public class FirPsiJvmIrSourceRangesTestGenerated extends AbstractFirPsiJvmIrSou
     @TestMetadata("kt24258.kt")
     public void testKt24258() throws Exception {
         runTest("compiler/testData/ir/sourceRanges/kt24258.kt");
+    }
+
+    @Test
+    @TestMetadata("multiLineCall.kt")
+    public void testMultiLineCall() throws Exception {
+        runTest("compiler/testData/ir/sourceRanges/multiLineCall.kt");
+    }
+
+    @Test
+    @TestMetadata("operators.kt")
+    public void testOperators() throws Exception {
+        runTest("compiler/testData/ir/sourceRanges/operators.kt");
     }
 
     @Test

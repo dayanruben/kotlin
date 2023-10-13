@@ -74,6 +74,12 @@ internal inline fun <T : IrElement> FirElement.convertWithOffsets(f: (startOffse
     return source.convertWithOffsets(f)
 }
 
+internal fun <T : IrElement> FirPropertyAccessor?.convertWithOffsets(
+    defaultStartOffset: Int, defaultEndOffset: Int, f: (startOffset: Int, endOffset: Int) -> T
+): T {
+    return if (this == null) return f(defaultStartOffset, defaultEndOffset) else source.convertWithOffsets(f)
+}
+
 internal inline fun <T : IrElement> KtSourceElement?.convertWithOffsets(f: (startOffset: Int, endOffset: Int) -> T): T {
     val startOffset: Int
     val endOffset: Int
@@ -89,8 +95,30 @@ internal inline fun <T : IrElement> KtSourceElement?.convertWithOffsets(f: (star
     return f(startOffset, endOffset)
 }
 
-internal inline fun <T : IrElement> FirQualifiedAccessExpression.convertWithOffsets(f: (startOffset: Int, endOffset: Int) -> T): T {
-    return convertWithOffsets(this.calleeReference, f)
+internal fun <T : IrElement> FirQualifiedAccessExpression.convertWithOffsets(f: (startOffset: Int, endOffset: Int) -> T): T {
+    if (shouldUseCalleeReferenceAsItsSourceInIr()) {
+        return convertWithOffsets(calleeReference, f)
+    }
+    return (this as FirElement).convertWithOffsets(f)
+}
+
+/**
+ * This function determines which source should be used for IR counterpart of this FIR expression.
+ *
+ * At the moment, this function reproduces (~) K1 logic.
+ * Currently, K1 uses full qualified expression source (from receiver to selector)
+ * in case of an operator call, an infix call, a callable reference, or a referenced class/object.
+ * Otherwise, only selector is used as a source.
+ *
+ * See also KT-60111 about an operator call case (xxx + yyy).
+ */
+fun FirQualifiedAccessExpression.shouldUseCalleeReferenceAsItsSourceInIr(): Boolean {
+    return when {
+        this is FirImplicitInvokeCall -> true
+        this is FirFunctionCall && origin != FirFunctionCallOrigin.Regular -> false
+        this is FirCallableReferenceAccess -> false
+        else -> (calleeReference as? FirResolvedNamedReference)?.resolvedSymbol is FirCallableSymbol
+    }
 }
 
 internal inline fun <T : IrElement> FirThisReceiverExpression.convertWithOffsets(f: (startOffset: Int, endOffset: Int) -> T): T {
@@ -494,6 +522,15 @@ internal fun FirReference.statementOrigin(): IrStatementOrigin? = when (this) {
 
             source?.kind is KtFakeSourceElementKind.DesugaredComponentFunctionCall ->
                 IrStatementOrigin.COMPONENT_N.withIndex(name.asString().removePrefix(DATA_CLASS_COMPONENT_PREFIX).toInt())
+
+            source?.kind is KtFakeSourceElementKind.DesugaredCompoundAssignment -> when (name) {
+                OperatorNameConventions.PLUS_ASSIGN -> IrStatementOrigin.PLUSEQ
+                OperatorNameConventions.MINUS_ASSIGN -> IrStatementOrigin.MINUSEQ
+                OperatorNameConventions.TIMES_ASSIGN -> IrStatementOrigin.MULTEQ
+                OperatorNameConventions.DIV_ASSIGN -> IrStatementOrigin.DIVEQ
+                OperatorNameConventions.MOD_ASSIGN, OperatorNameConventions.REM_ASSIGN -> IrStatementOrigin.PERCEQ
+                else -> null
+            }
 
             else ->
                 null
