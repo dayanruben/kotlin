@@ -21232,12 +21232,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
-                @TestMetadata("removeAtInt.kt")
-                public void testRemoveAtInt() throws Exception {
-                    runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/removeAtInt.kt");
-                }
-
-                @Test
                 @TestMetadata("sizeFromKotlinOverriddenInJava.kt")
                 public void testSizeFromKotlinOverriddenInJava() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/sizeFromKotlinOverriddenInJava.kt");
@@ -22821,6 +22815,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("expectActualAnnotationsWithLazyResolve.kt")
+            public void testExpectActualAnnotationsWithLazyResolve() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multimodule/expectActualAnnotationsWithLazyResolve.kt");
+            }
+
+            @Test
             @TestMetadata("friendModule.kt")
             public void testFriendModule() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multimodule/friendModule.kt");
@@ -24102,6 +24102,30 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("typeUsage.kt")
+                public void testTypeUsage() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/typeUsage.kt");
+                }
+
+                @Test
+                @TestMetadata("typeUsageTypealiasInSuper.kt")
+                public void testTypeUsageTypealiasInSuper() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/typeUsageTypealiasInSuper.kt");
+                }
+
+                @Test
+                @TestMetadata("typeUsageWithImplicitType.kt")
+                public void testTypeUsageWithImplicitType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/typeUsageWithImplicitType.kt");
+                }
+
+                @Test
+                @TestMetadata("typeUsageWithUnresolvedReference.kt")
+                public void testTypeUsageWithUnresolvedReference() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/typeUsageWithUnresolvedReference.kt");
+                }
+
+                @Test
                 @TestMetadata("typealias.kt")
                 public void testTypealias() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/typealias.kt");
@@ -24801,6 +24825,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                         @TestMetadata("sourceRetentionAnnotationsWhenTypealias.kt")
                         public void testSourceRetentionAnnotationsWhenTypealias() throws Exception {
                             runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/multiplatformCompositeAnalysis/annotationMatching/sourceRetentionAnnotationsWhenTypealias.kt");
+                        }
+
+                        @Test
+                        @TestMetadata("typealiasToJavaWithAnnotationArgument.kt")
+                        public void testTypealiasToJavaWithAnnotationArgument() throws Exception {
+                            runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/multiplatformCompositeAnalysis/annotationMatching/typealiasToJavaWithAnnotationArgument.kt");
                         }
 
                         @Test

@@ -21232,12 +21232,6 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 }
 
                 @Test
-                @TestMetadata("removeAtInt.kt")
-                public void testRemoveAtInt() throws Exception {
-                    runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/removeAtInt.kt");
-                }
-
-                @Test
                 @TestMetadata("sizeFromKotlinOverriddenInJava.kt")
                 public void testSizeFromKotlinOverriddenInJava() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/sizeFromKotlinOverriddenInJava.kt");
@@ -22818,6 +22812,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             @TestMetadata("dependsOnModule.kt")
             public void testDependsOnModule() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multimodule/dependsOnModule.kt");
+            }
+
+            @Test
+            @TestMetadata("expectActualAnnotationsWithLazyResolve.kt")
+            public void testExpectActualAnnotationsWithLazyResolve() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multimodule/expectActualAnnotationsWithLazyResolve.kt");
             }
 
             @Test

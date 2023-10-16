@@ -707,6 +707,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
         resolvedTypeRef.configure {
             +field("type", coneKotlinTypeType)
             +field("delegatedTypeRef", typeRef, nullable = true)
+            element.additionalSupertypeInterfaces.add(typeRefMarkerType)
         }
 
         typeRefWithNullability.configure {
