@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.ir.generator.model.*
 import org.jetbrains.kotlin.generators.tree.TypeRefWithNullability
 import org.jetbrains.kotlin.ir.generator.util.tryParameterizedBy
 import java.io.File
+import org.jetbrains.kotlin.generators.tree.ElementRef as GenericElementRef
 
 fun printElements(generationPath: File, model: Model) = sequence {
     for (element in model.elements) {
@@ -39,7 +40,7 @@ fun printElements(generationPath: File, model: Model) = sequence {
             )
             addTypeVariables(element.params.map { it.toPoet() })
 
-            val (classes, interfaces) = element.allParents.partition { it.typeKind == TypeKind.Class }
+            val (classes, interfaces) = (element.elementParents + element.otherParents).partition { it.typeKind == TypeKind.Class }
             classes.singleOrNull()?.let {
                 superclass(it.toPoet())
             }
@@ -47,9 +48,9 @@ fun printElements(generationPath: File, model: Model) = sequence {
 
             for (field in element.fields) {
                 if (!field.printProperty) continue
-                val poetType = field.type.toPoet().copy(nullable = field.nullable)
+                val poetType = field.typeRef.toPoet().copy(nullable = field.nullable)
                 addProperty(PropertySpec.builder(field.name, poetType).apply {
-                    mutable(field.mutable)
+                    mutable(field.isMutable)
                     if (field.isOverride) {
                         addModifiers(KModifier.OVERRIDE)
                     }
@@ -215,13 +216,13 @@ fun printElements(generationPath: File, model: Model) = sequence {
                                     args.add(transformMethodName)
                                 }
                                 is ListField -> {
-                                    if (child.mutable) {
+                                    if (child.isMutable) {
                                         append(" = ")
                                         append(child.name)
                                         if (child.nullable) append("?")
                                     }
                                     append(".%M(%N, %N)")
-                                    args.add(if (child.mutable) transformIfNeeded else transformInPlace)
+                                    args.add(if (child.isMutable) transformIfNeeded else transformInPlace)
                                 }
                             }
 
@@ -229,7 +230,8 @@ fun printElements(generationPath: File, model: Model) = sequence {
                             args.add(dataParam)
 
                             if (child is SingleField) {
-                                val elRef = child.type as ElementRef
+                                @Suppress("UNCHECKED_CAST")
+                                val elRef = child.typeRef as GenericElementRef<Element, Field>
                                 if (!elRef.element.transform) {
                                     append(" as %T")
                                     if (child.nullable) append("?")
