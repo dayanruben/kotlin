@@ -2143,6 +2143,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("typealiasWithAnnotatedAbstractClass.kt")
+            public void testTypealiasWithAnnotatedAbstractClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/typealiasWithAnnotatedAbstractClass.kt");
+            }
+
+            @Test
             @TestMetadata("UnresolvedAnnotationOnObject.kt")
             public void testUnresolvedAnnotationOnObject() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/UnresolvedAnnotationOnObject.kt");
@@ -23976,6 +23982,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("arrayVsOutArray.kt")
+                public void testArrayVsOutArray() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/arrayVsOutArray.kt");
+                }
+
+                @Test
+                @TestMetadata("arrayVsVararg.kt")
+                public void testArrayVsVararg() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/arrayVsVararg.kt");
+                }
+
+                @Test
                 @TestMetadata("basicOnDeclaration.kt")
                 public void testBasicOnDeclaration() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/basicOnDeclaration.kt");
@@ -24093,6 +24111,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("twoActualTypealiasesToSameClass.kt")
                 public void testTwoActualTypealiasesToSameClass() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/twoActualTypealiasesToSameClass.kt");
+                }
+
+                @Test
+                @TestMetadata("typeAliasWithArray.kt")
+                public void testTypeAliasWithArray() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/typeAliasWithArray.kt");
                 }
 
                 @Test

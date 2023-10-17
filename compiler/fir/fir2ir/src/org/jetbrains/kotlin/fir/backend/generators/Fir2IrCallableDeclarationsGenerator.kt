@@ -55,6 +55,8 @@ import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fir2IrComponents by components {
     // ------------------------------------ package fragments ------------------------------------
@@ -103,8 +105,13 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
             // See org.jetbrains.kotlin.backend.jvm.lower.InheritedDefaultMethodsOnClassesLoweringKt.isDefinitelyNotDefaultImplsMethod
             (irParent as? IrClass)?.origin == IrDeclarationOrigin.IR_EXTERNAL_DECLARATION_STUB &&
                     function.isJavaOrEnhancement -> IrDeclarationOrigin.IR_EXTERNAL_JAVA_DECLARATION_STUB
-            else -> function.computeIrOrigin(predefinedOrigin)
+            else -> function.computeIrOrigin(
+                predefinedOrigin,
+                parentOrigin = (irParent as? IrDeclaration)?.origin,
+                fakeOverrideOwnerLookupTag
+            )
         }
+        val parentIsExternal = irParent.isExternalParent()
         // We don't generate signatures for local classes
         // We attempt to avoid signature generation for non-local classes, with the following exceptions:
         // - special mode (generateSignatures) oriented on special backend modes
@@ -115,15 +122,15 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
         val signature =
             runUnless(
                 isLocal ||
-                        !configuration.linkViaSignatures && irParent !is Fir2IrLazyClass &&
+                        !configuration.linkViaSignatures && !parentIsExternal &&
                         function.dispatchReceiverType?.isPrimitive != true && function.containerSource == null &&
                         updatedOrigin != IrDeclarationOrigin.FAKE_OVERRIDE && !function.isOverride
             ) {
                 signatureComposer.composeSignature(function, fakeOverrideOwnerLookupTag)
             }
-        if (irParent is Fir2IrLazyClass && signature != null) {
+        if (parentIsExternal && signature != null) {
             // For private functions signature is null, fallback to non-lazy function
-            return lazyDeclarationsGenerator.createIrLazyFunction(function as FirSimpleFunction, signature, irParent, updatedOrigin)
+            return lazyDeclarationsGenerator.createIrLazyFunction(function as FirSimpleFunction, signature, irParent!!, updatedOrigin)
         }
         val name = simpleFunction?.name
             ?: if (isLambda) SpecialNames.ANONYMOUS else SpecialNames.NO_NAME_PROVIDED
@@ -132,7 +139,7 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
             if (isLambda) ((function as FirAnonymousFunction).typeRef as? FirResolvedTypeRef)?.type?.isSuspendOrKSuspendFunctionType(session) == true
             else function.isSuspend
         val created = function.convertWithOffsets { startOffset, endOffset ->
-            val result = declareIrSimpleFunction(signature) { symbol ->
+            declareIrSimpleFunction(signature) { symbol ->
                 classifierStorage.preCacheTypeParameters(function, symbol)
                 irFactory.createSimpleFunction(
                     startOffset = if (updatedOrigin == IrDeclarationOrigin.DELEGATED_MEMBER) SYNTHETIC_OFFSET else startOffset,
@@ -154,7 +161,14 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
                 ).apply {
                     metadata = FirMetadataSource.Function(function)
                     declarationStorage.withScope(symbol) {
-                        setAndModifyParent(this, irParent)
+                        /*
+                         * `isLocal = true` indicates that a function is local or member of a local class
+                         * containingClassLookupTag allows to distinguish those two cases
+                         */
+                        setParent(irParent)
+                        if (!(isLocal && function.containingClassLookupTag() == null)) {
+                            addDeclarationToParent(this, irParent)
+                        }
                         declareParameters(
                             function, irParent,
                             dispatchReceiverType = computeDispatchReceiverType(this, simpleFunction, irParent),
@@ -165,7 +179,6 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
                     }
                 }
             }
-            result
         }
 
         if (visibility == Visibilities.Local) {
@@ -197,12 +210,13 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
         predefinedOrigin: IrDeclarationOrigin? = null,
         isLocal: Boolean = false,
     ): IrConstructor = convertCatching(constructor) {
-        val origin = constructor.computeIrOrigin(predefinedOrigin)
+        val origin = constructor.computeIrOrigin(predefinedOrigin, irParent.origin)
         val isPrimary = constructor.isPrimary
-        val signature =
-            runUnless(isLocal || !configuration.linkViaSignatures) {
-                signatureComposer.composeSignature(constructor)
-            }
+        // we need to compose signature even if `linkViaSignatures` set to false, because otherwise we will never
+        // create lazy constructor (it requires not nullable signature)
+        val signature = runUnless(isLocal) {
+            signatureComposer.composeSignature(constructor)
+        }
 
         if (irParent is Fir2IrLazyClass && signature != null) {
             val lazyConstructor = lazyDeclarationsGenerator.createIrLazyConstructor(constructor, signature, origin, irParent) as Fir2IrLazyConstructor
@@ -215,7 +229,7 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
         }
         val visibility = if (irParent.isAnonymousObject) Visibilities.Public else constructor.visibility
         return constructor.convertWithOffsets { startOffset, endOffset ->
-            declareIrConstructor(signature) { symbol ->
+            declareIrConstructor(signature.takeIf { components.configuration.linkViaSignatures }) { symbol ->
                 classifierStorage.preCacheTypeParameters(constructor, symbol)
                 irFactory.createConstructor(
                     startOffset = startOffset,
@@ -237,7 +251,8 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
                     @OptIn(LeakedDeclarationCaches::class)
                     declarationStorage.cacheIrConstructor(constructor, this)
                     declarationStorage.withScope(symbol) {
-                        setAndModifyParent(this, irParent)
+                        setParent(irParent)
+                        addDeclarationToParent(this, irParent)
                         declareParameters(constructor, irParent, dispatchReceiverType = null, isStatic = false, forSetter = false)
                     }
                 }
@@ -264,28 +279,32 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
         isLocal: Boolean = false,
         fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag? = null,
     ): IrProperty = convertCatching(property) {
-        val origin =
-            when {
-                !predefinedOrigin.isExternal &&
-                        property.isStatic &&
-                        property.name in Fir2IrDeclarationStorage.ENUM_SYNTHETIC_NAMES
-                -> IrDeclarationOrigin.ENUM_CLASS_SPECIAL_MEMBER
+        val origin = when {
+            !predefinedOrigin.isExternal &&
+                    property.isStatic &&
+                    property.name in Fir2IrDeclarationStorage.ENUM_SYNTHETIC_NAMES
+            -> IrDeclarationOrigin.ENUM_CLASS_SPECIAL_MEMBER
 
-                else -> property.computeIrOrigin(predefinedOrigin)
-            }
+            else -> property.computeIrOrigin(
+                predefinedOrigin,
+                parentOrigin = (irParent as? IrDeclaration)?.origin,
+                fakeOverrideOwnerLookupTag
+            )
+        }
         // See similar comments in createIrFunction above
+        val parentIsExternal = irParent.isExternalParent()
         val signature =
             runUnless(
                 isLocal ||
-                        !configuration.linkViaSignatures && irParent !is Fir2IrLazyClass &&
+                        !configuration.linkViaSignatures && !parentIsExternal &&
                         property.dispatchReceiverType?.isPrimitive != true && property.containerSource == null &&
                         origin != IrDeclarationOrigin.FAKE_OVERRIDE && !property.isOverride
             ) {
                 signatureComposer.composeSignature(property, fakeOverrideOwnerLookupTag)
             }
-        if (irParent is Fir2IrLazyClass && signature != null) {
+        if (parentIsExternal && signature != null) {
             // For private functions signature is null, fallback to non-lazy property
-            return lazyDeclarationsGenerator.createIrLazyProperty(property, signature, irParent, origin)
+            return lazyDeclarationsGenerator.createIrLazyProperty(property, signature, irParent!!, origin)
         }
         return property.convertWithOffsets { startOffset, endOffset ->
             val result = declareIrProperty(signature) { symbol ->
@@ -309,9 +328,9 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
                     metadata = FirMetadataSource.Property(property)
                     convertAnnotationsForNonDeclaredMembers(property, origin)
                     declarationStorage.withScope(symbol) {
-                        if (irParent != null) {
-                            parent = irParent
-                        }
+                        // IrProperty is never created for local variables
+                        setParent(irParent)
+                        addDeclarationToParent(this, irParent)
                         val type = property.returnTypeRef.toIrType()
                         val delegate = property.delegate
                         val getter = property.getter
@@ -398,6 +417,14 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
             }
             result
         }
+    }
+
+    @OptIn(ExperimentalContracts::class)
+    private fun IrDeclarationParent?.isExternalParent(): Boolean {
+        contract {
+            returns(true) implies (this@isExternalParent != null)
+        }
+        return this is Fir2IrLazyClass || this is IrExternalPackageFragment
     }
 
     /**
@@ -508,7 +535,9 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
                             firValueParameter = null
                         )
                     }
-                    setAndModifyParent(this, irParent)
+                    // property accessors does not belong to declarations of class/file, but are referenced via property,
+                    //   so there is no need to add accessor to list of parents declarations
+                    setParent(irParent)
                     declareParameters(
                         propertyAccessor, irParent, dispatchReceiverType,
                         isStatic = irParent !is IrClass || propertyAccessor?.isStatic == true, forSetter = isSetter,
@@ -631,7 +660,14 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
                 if (initializer is FirConstExpression<*>) {
                     this.initializer = factory.createExpressionBody(initializer.toIrConst(irType))
                 }
-                setAndModifyParent(this, irParent)
+                /*
+                 * fields of regular properties are stored inside IrProperty
+                 * fields for delegates (inheritance by delegation) are stored in the corresponding class directly
+                 */
+                setParent(irParent)
+                if (origin == IrDeclarationOrigin.DELEGATE) {
+                    addDeclarationToParent(this, irParent)
+                }
             }
         }
     }
@@ -961,7 +997,8 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
                 IrDeclarationOrigin.DEFINED,
                 irParent.descriptor
             ).apply {
-                this.parent = irParent
+                setParent(irParent)
+                addDeclarationToParent(this, irParent)
             }
         }
     }
@@ -1031,15 +1068,6 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
         }
     }
 
-    fun setAndModifyParent(declaration: IrDeclaration, irParent: IrDeclarationParent?) {
-        if (irParent != null) {
-            declaration.parent = irParent
-            if (irParent is IrExternalPackageFragment) {
-                irParent.declarations += declaration
-            }
-        }
-    }
-
     private fun IrMutableAnnotationContainer.convertAnnotationsForNonDeclaredMembers(
         firAnnotationContainer: FirAnnotationContainer, origin: IrDeclarationOrigin,
     ) {
@@ -1062,3 +1090,40 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
         }
     }
 }
+
+internal fun IrDeclaration.setParent(irParent: IrDeclarationParent?) {
+    if (irParent != null) {
+        parent = irParent
+    }
+}
+
+/**
+ * We should not try to add declaration to list of parents declarations in two cases:
+ * 1. getters, setters, and backing fields are not stored in parent directly. They are stored in IrProperty instead,
+ *      which is stored in parent
+ * 2. if a declaration is declared in a local scope (in some body) then it will have contained class/function as a parent. But the declaration
+ *      should be listed in statements list of the corresponding IrBlock instead of IrClass.declarations
+ *      Note that IrClass will be a parent if some declaration is declared inside anonymous initializer, because IrAnonymousInitializer
+ *      is not a IrDeclarationParent
+ */
+internal fun addDeclarationToParent(declaration: IrDeclaration, irParent: IrDeclarationParent?) {
+    if (irParent == null) return
+    when (irParent) {
+        is Fir2IrLazyClass -> {
+            /*
+             * Declaration list of lazy class is lazy by itself, and it will collect and store all required members
+             * automatically on the first access to Fir2IrLazyClass.declarations
+             */
+        }
+        is IrClass -> irParent.declarations += declaration
+        is IrFile -> irParent.declarations += declaration
+        is IrExternalPackageFragment -> irParent.declarations += declaration
+        is IrScript -> {
+            /*
+             * All declarations of the script will be added during main script conversion
+             */
+        }
+        else -> error("Can't add declaration ${declaration.render()} to parent ${irParent.render()}")
+    }
+}
+

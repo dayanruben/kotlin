@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.gradle.targets.native.internal.sharedCommonizerTarge
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinTasksProvider
 import org.jetbrains.kotlin.gradle.tasks.registerTask
+import org.jetbrains.kotlin.gradle.utils.whenEvaluated
 import org.jetbrains.kotlin.gradle.utils.*
 import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
 import org.jetbrains.kotlin.tooling.core.extrasLazyProperty
@@ -399,7 +400,7 @@ internal fun Project.createGenerateProjectStructureMetadataTask(): TaskProvider<
         task.description = "Generates serialized project structure metadata of the current project (for tooling)"
     }
 
-internal val KotlinSourceSet.isNativeSourceSet: Future<Boolean> by futureExtension("isNativeSourceSet") {
+internal val KotlinSourceSet.isNativeSourceSet: Future<Boolean> by extrasStoredFuture {
     val compilations = internal.awaitPlatformCompilations()
     compilations.isNotEmpty() && compilations.all { it.platformType == KotlinPlatformType.native }
 }

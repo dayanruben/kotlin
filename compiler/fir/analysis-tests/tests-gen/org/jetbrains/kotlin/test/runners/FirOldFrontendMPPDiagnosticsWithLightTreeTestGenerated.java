@@ -801,6 +801,18 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
         }
 
         @Test
+        @TestMetadata("arrayVsOutArray.kt")
+        public void testArrayVsOutArray() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/arrayVsOutArray.kt");
+        }
+
+        @Test
+        @TestMetadata("arrayVsVararg.kt")
+        public void testArrayVsVararg() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/arrayVsVararg.kt");
+        }
+
+        @Test
         @TestMetadata("basicOnDeclaration.kt")
         public void testBasicOnDeclaration() throws Exception {
             runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/basicOnDeclaration.kt");
@@ -918,6 +930,12 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
         @TestMetadata("twoActualTypealiasesToSameClass.kt")
         public void testTwoActualTypealiasesToSameClass() throws Exception {
             runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/twoActualTypealiasesToSameClass.kt");
+        }
+
+        @Test
+        @TestMetadata("typeAliasWithArray.kt")
+        public void testTypeAliasWithArray() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/typeAliasWithArray.kt");
         }
 
         @Test

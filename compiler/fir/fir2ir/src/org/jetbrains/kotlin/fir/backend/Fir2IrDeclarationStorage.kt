@@ -15,24 +15,26 @@ import org.jetbrains.kotlin.fir.declarations.builder.buildProperty
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
 import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.declarations.utils.isStatic
+import org.jetbrains.kotlin.fir.declarations.utils.nameOrSpecialName
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.descriptors.FirBuiltInsPackageFragment
 import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
 import org.jetbrains.kotlin.fir.java.symbols.FirJavaOverriddenSyntheticPropertySymbol
 import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
-import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyConstructor
 import org.jetbrains.kotlin.fir.references.toResolvedValueParameterSymbol
 import org.jetbrains.kotlin.fir.resolve.providers.firProvider
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
-import org.jetbrains.kotlin.fir.types.*
+import org.jetbrains.kotlin.fir.types.ConeKotlinType
+import org.jetbrains.kotlin.fir.types.coneType
+import org.jetbrains.kotlin.fir.types.resolvedType
+import org.jetbrains.kotlin.fir.types.toLookupTag
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.declarations.UNDEFINED_PARAMETER_INDEX
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin.GeneratedByPlugin
 import org.jetbrains.kotlin.ir.declarations.impl.IrClassImpl
 import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyClass
 import org.jetbrains.kotlin.ir.expressions.IrSyntheticBodyKind
@@ -40,7 +42,8 @@ import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.symbols.impl.IrClassSymbolImpl
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.load.kotlin.FacadeClassSource
-import org.jetbrains.kotlin.name.*
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerAbiStability
@@ -228,13 +231,15 @@ class Fir2IrDeclarationStorage(
 
     // ------------------------------------ functions ------------------------------------
 
-    fun getCachedIrFunction(function: FirFunction): IrSimpleFunction? {
-        return if (function is FirSimpleFunction) getCachedIrFunction(function)
+    fun getCachedIrFunction(function: FirFunction, fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag? = null): IrSimpleFunction? {
+        return if (function is FirSimpleFunction) getCachedIrFunction(function, fakeOverrideOwnerLookupTag)
         else localStorage.getLocalFunction(function)
     }
 
-    fun getCachedIrFunction(function: FirSimpleFunction): IrSimpleFunction? {
-        return getCachedIrFunction(function, fakeOverrideOwnerLookupTag = null) { signatureComposer.composeSignature(function) }
+    fun getCachedIrFunction(function: FirSimpleFunction, fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag? = null): IrSimpleFunction? {
+        return getCachedIrFunction(function, fakeOverrideOwnerLookupTag) {
+            signatureComposer.composeSignature(function, fakeOverrideOwnerLookupTag)
+        }
     }
 
     fun getCachedIrFunction(
@@ -264,8 +269,29 @@ class Fir2IrDeclarationStorage(
         isLocal: Boolean = false,
         fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag? = null
     ): IrSimpleFunction {
-        getCachedIrFunction(function)?.let { return it }
-        return createAndCacheIrFunction(function, irParent, predefinedOrigin, isLocal, fakeOverrideOwnerLookupTag)
+        return getOrCreateIrFunction(function, { irParent }, predefinedOrigin, isLocal, fakeOverrideOwnerLookupTag)
+    }
+
+    private fun getOrCreateIrFunction(
+        function: FirFunction,
+        irParent: () -> IrDeclarationParent?,
+        predefinedOrigin: IrDeclarationOrigin? = null,
+        isLocal: Boolean = false,
+        fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag? = null
+    ): IrSimpleFunction {
+        getCachedIrFunction(function, fakeOverrideOwnerLookupTag)?.let { return it }
+        /*
+         * Declaration storage doesn't know how to create lazy fake-overrides, it is responsibility of
+         *   FakeOverrideGenerator. So if function to be created is potentially lazy fake-override, we
+         *   need to call FakeOverrideGenerator before checking any caches. Otherwise it will lead to
+         *   the situation when lazy fake override is created based on original FIR function, not
+         *   its f/o copy (which causes troubles with type parameters mapping)
+         */
+        if (fakeOverrideOwnerLookupTag != function.containingClassLookupTag()) {
+            generateLazyFakeOverrides(function.nameOrSpecialName, fakeOverrideOwnerLookupTag)
+            getCachedIrFunction(function, fakeOverrideOwnerLookupTag)?.let { return it }
+        }
+        return createAndCacheIrFunction(function, irParent(), predefinedOrigin, isLocal, fakeOverrideOwnerLookupTag)
     }
 
     @LeakedDeclarationCaches
@@ -349,8 +375,18 @@ class Fir2IrDeclarationStorage(
         predefinedOrigin: IrDeclarationOrigin? = null,
         isLocal: Boolean = false,
     ): IrConstructor {
+        return getOrCreateIrConstructor(constructor, { irParent }, predefinedOrigin, isLocal)
+    }
+
+    fun getOrCreateIrConstructor(
+        constructor: FirConstructor,
+        irParent: () -> IrClass,
+        predefinedOrigin: IrDeclarationOrigin? = null,
+        isLocal: Boolean = false,
+    ): IrConstructor {
         getCachedIrConstructor(constructor)?.let { return it }
-        return callablesGenerator.createIrConstructor(constructor, irParent, predefinedOrigin, isLocal)
+        // caching of created constructor is not called here, because `callablesGenerator` calls `cacheIrConstructor` by itself
+        return callablesGenerator.createIrConstructor(constructor, irParent(), predefinedOrigin, isLocal)
     }
 
     @LeakedDeclarationCaches
@@ -360,21 +396,10 @@ class Fir2IrDeclarationStorage(
 
     fun getIrConstructorSymbol(firConstructorSymbol: FirConstructorSymbol): IrConstructorSymbol {
         val fir = firConstructorSymbol.fir
-        return getIrCallableSymbol(
-            firConstructorSymbol,
-            fakeOverrideOwnerLookupTag = null,
-            getCachedIrDeclaration = { constructor: FirConstructor, _, calculator -> getCachedIrConstructor(constructor, calculator) },
-            createIrDeclaration = { parent, origin ->
-                callablesGenerator.createIrConstructor(fir, parent as IrClass, predefinedOrigin = origin)
-            },
-            createIrLazyDeclaration = { signature, lazyParent, declarationOrigin ->
-                val irConstructor = lazyDeclarationsGenerator.createIrLazyConstructor(fir, signature, declarationOrigin, lazyParent)
-                constructorCache[fir] = irConstructor
-                // NB: this is needed to prevent recursions in case of self bounds
-                (irConstructor as Fir2IrLazyConstructor).prepareTypeParameters()
-                irConstructor
-            },
-        ) as IrConstructorSymbol
+        return getOrCreateIrConstructor(
+            fir,
+            { findIrParent(fir, fakeOverrideOwnerLookupTag = null) as IrClass }
+        ).symbol
     }
 
 
@@ -424,10 +449,25 @@ class Fir2IrDeclarationStorage(
         isLocal: Boolean = false,
         fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag? = null
     ): IrProperty {
+        return getOrCreateIrProperty(property, { irParent }, predefinedOrigin, isLocal, fakeOverrideOwnerLookupTag)
+    }
+
+    fun getOrCreateIrProperty(
+        property: FirProperty,
+        irParent: () -> IrDeclarationParent?,
+        predefinedOrigin: IrDeclarationOrigin? = null,
+        isLocal: Boolean = false,
+        fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag? = null
+    ): IrProperty {
         @Suppress("NAME_SHADOWING")
         val property = prepareProperty(property)
-        getCachedIrProperty(property)?.let { return it }
-        return createAndCacheIrProperty(property, irParent, predefinedOrigin, isLocal, fakeOverrideOwnerLookupTag)
+        getCachedIrProperty(property, fakeOverrideOwnerLookupTag)?.let { return it }
+        // See comment in [getOrCreateIrFunction]
+        if (fakeOverrideOwnerLookupTag != property.containingClassLookupTag()) {
+            generateLazyFakeOverrides(property.name, fakeOverrideOwnerLookupTag)
+            getCachedIrProperty(property, fakeOverrideOwnerLookupTag)?.let { return it }
+        }
+        return createAndCacheIrProperty(property, irParent(), predefinedOrigin, isLocal, fakeOverrideOwnerLookupTag)
     }
 
     fun getOrCreateIrPropertyByPureField(
@@ -510,71 +550,22 @@ class Fir2IrDeclarationStorage(
         firPropertySymbol: FirPropertySymbol,
         fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag? = null,
     ): IrSymbol {
-        @Suppress("NAME_SHADOWING")
-        val firPropertySymbol = preparePropertySymbol(firPropertySymbol)
-        val fir = firPropertySymbol.fir
-        if (fir.isLocal) {
-            return localStorage.getDelegatedProperty(fir)?.symbol ?: getIrVariableSymbol(fir)
+        val firProperty = prepareProperty(firPropertySymbol.fir)
+        if (firProperty.isLocal) {
+            return localStorage.getDelegatedProperty(firProperty)?.symbol ?: getIrVariableSymbol(firProperty)
         }
-        val containingClassLookupTag = firPropertySymbol.containingClassLookupTag()
-        val unmatchedOwner = fakeOverrideOwnerLookupTag != containingClassLookupTag
-        if (unmatchedOwner) {
-            generateLazyFakeOverrides(fir.name, fakeOverrideOwnerLookupTag)
-        }
-
-        fun ConeClassLikeLookupTag?.getIrCallableSymbol() = getIrCallableSymbol(
-            firPropertySymbol,
-            fakeOverrideOwnerLookupTag = this,
-            getCachedIrDeclaration = ::getCachedIrProperty,
-            createIrDeclaration = { parent, origin ->
-                createAndCacheIrProperty(
-                    fir, parent, predefinedOrigin = origin, fakeOverrideOwnerLookupTag = fakeOverrideOwnerLookupTag,
-                )
-            },
-            createIrLazyDeclaration = { signature, lazyParent, declarationOrigin ->
-                lazyDeclarationsGenerator.createIrLazyProperty(fir, signature, lazyParent, declarationOrigin).also {
-                    cacheIrProperty(fir, it, fakeOverrideOwnerLookupTag = null)
-                }
-            },
+        val result = getOrCreateIrProperty(
+            firProperty,
+            { findIrParent(firProperty, fakeOverrideOwnerLookupTag) },
+            fakeOverrideOwnerLookupTag = fakeOverrideOwnerLookupTag
         )
-
-        val originalSymbol = fakeOverrideOwnerLookupTag.getIrCallableSymbol()
-
-        @OptIn(IrSymbolInternals::class)
-        val originalProperty = originalSymbol.owner as IrProperty
-
-        fun IrProperty.isIllegalFakeOverride(): Boolean {
-            if (!isFakeOverride) return false
-            val overriddenSymbols = overriddenSymbols
-            @OptIn(IrSymbolInternals::class)
-            return overriddenSymbols.isEmpty() || overriddenSymbols.any { it.owner.isIllegalFakeOverride() }
-        }
-
-        if (fakeOverrideOwnerLookupTag != null &&
-            firPropertySymbol is FirSyntheticPropertySymbol &&
-            originalProperty.isIllegalFakeOverride()
-        ) {
-            // Fallback for a synthetic property complex case
-            return containingClassLookupTag.getIrCallableSymbol()
-        }
-
-        return if (unmatchedOwner && fakeOverrideOwnerLookupTag is ConeClassLookupTagWithFixedSymbol) {
-            fakeOverrideOwnerLookupTag.findIrFakeOverride(fir.name, originalProperty) as IrPropertySymbol
-        } else {
-            originalSymbol
-        }
-    }
-
-    fun getCachedIrProperty(property: FirProperty): IrProperty? {
-        return getCachedIrProperty(property, fakeOverrideOwnerLookupTag = null) {
-            signatureComposer.composeSignature(property)
-        }
+        return result.symbol
     }
 
     fun getCachedIrProperty(
         property: FirProperty,
         fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag?,
-        signatureCalculator: () -> IdSignature?
+        signatureCalculator: () -> IdSignature? = { signatureComposer.composeSignature(property, fakeOverrideOwnerLookupTag) }
     ): IrProperty? {
         @Suppress("NAME_SHADOWING")
         val property = prepareProperty(property)
@@ -875,47 +866,16 @@ class Fir2IrDeclarationStorage(
         fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag? = null,
     ): IrFunctionSymbol {
         return when (val fir = firFunctionSymbol.fir) {
-            is FirAnonymousFunction -> {
-                getCachedIrFunction(fir)?.let { return it.symbol }
-                val irParent = findIrParent(fir, fakeOverrideOwnerLookupTag)
-                val parentOrigin = (irParent as? IrDeclaration)?.origin ?: IrDeclarationOrigin.DEFINED
-                val declarationOrigin = computeDeclarationOrigin(firFunctionSymbol, parentOrigin)
-                createAndCacheIrFunction(fir, irParent, predefinedOrigin = declarationOrigin).symbol
-            }
-            is FirSimpleFunction -> {
-                val unmatchedOwner = fakeOverrideOwnerLookupTag != firFunctionSymbol.containingClassLookupTag()
-                if (unmatchedOwner) {
-                    generateLazyFakeOverrides(fir.name, fakeOverrideOwnerLookupTag)
-                }
-                val originalSymbol = getIrCallableSymbol(
-                    firFunctionSymbol,
-                    fakeOverrideOwnerLookupTag,
-                    getCachedIrDeclaration = ::getCachedIrFunction,
-                    createIrDeclaration = { parent, origin ->
-                        createAndCacheIrFunction(
-                            fir, parent,
-                            predefinedOrigin = origin,
-                            fakeOverrideOwnerLookupTag = fakeOverrideOwnerLookupTag,
-                        )
-                    },
-                    createIrLazyDeclaration = { signature, lazyParent, declarationOrigin ->
-                        lazyDeclarationsGenerator.createIrLazyFunction(fir, signature, lazyParent, declarationOrigin).also {
-                            cacheIrFunction(fir, it, fakeOverrideOwnerLookupTag)
-                        }
-                    },
-                ) as IrFunctionSymbol
-                if (unmatchedOwner && fakeOverrideOwnerLookupTag is ConeClassLookupTagWithFixedSymbol) {
-                    @OptIn(IrSymbolInternals::class)
-                    val originalFunction = originalSymbol.owner as IrSimpleFunction
-                    fakeOverrideOwnerLookupTag.findIrFakeOverride(fir.name, originalFunction) as IrFunctionSymbol? ?: originalSymbol
-                } else {
-                    originalSymbol
-                }
-            }
             is FirConstructor -> {
                 getIrConstructorSymbol(fir.symbol)
             }
-            else -> error("Unknown kind of function: ${fir::class.java}: ${fir.render()}")
+            else -> {
+                getOrCreateIrFunction(
+                    fir,
+                    { findIrParent(fir, fakeOverrideOwnerLookupTag) },
+                    fakeOverrideOwnerLookupTag = fakeOverrideOwnerLookupTag
+                ).symbol
+            }
         }
     }
 
@@ -1046,69 +1006,6 @@ class Fir2IrDeclarationStorage(
             if (irClass is Fir2IrLazyClass) {
                 irClass.getFakeOverridesByName(name)
             }
-        }
-    }
-
-    private inline fun <
-            reified FS : FirCallableSymbol<*>,
-            reified F : FirCallableDeclaration,
-            I : IrSymbolOwner,
-            > getIrCallableSymbol(
-        firSymbol: FS,
-        fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag?,
-        getCachedIrDeclaration: (firDeclaration: F, dispatchReceiverLookupTag: ConeClassLikeLookupTag?, () -> IdSignature?) -> I?,
-        createIrDeclaration: (parent: IrDeclarationParent?, origin: IrDeclarationOrigin) -> I,
-        createIrLazyDeclaration: (signature: IdSignature, lazyOwner: IrDeclarationParent, origin: IrDeclarationOrigin) -> I,
-    ): IrSymbol {
-        val fir = firSymbol.fir as F
-        val irParent by lazy { findIrParent(fir, fakeOverrideOwnerLookupTag) }
-        val signature by lazy {
-            signatureComposer.composeSignature(
-                fir,
-                fakeOverrideOwnerLookupTag,
-                forceExpect = fakeOverrideOwnerLookupTag?.toSymbol(session)?.isExpect == true
-            )
-        }
-        synchronized(symbolTable.lock) {
-            getCachedIrDeclaration(fir, fakeOverrideOwnerLookupTag.takeIf { it !is ConeClassLookupTagWithFixedSymbol }) {
-                // Parent calculation provokes declaration calculation for some members from IrBuiltIns
-                @Suppress("UNUSED_EXPRESSION") irParent
-                signature
-            }?.let { return it.symbol }
-
-            val parentOrigin = (irParent as? IrDeclaration)?.origin ?: IrDeclarationOrigin.DEFINED
-            val declarationOrigin = computeDeclarationOrigin(firSymbol, parentOrigin)
-            when (val parent = irParent) {
-                is Fir2IrLazyClass -> {
-                    assert(parentOrigin != IrDeclarationOrigin.DEFINED || configuration.allowNonCachedDeclarations) {
-                        "Should not have reference to public API uncached property from source code"
-                    }
-                    signature?.let {
-                        return createIrLazyDeclaration(it, parent, declarationOrigin).symbol
-                    }
-                }
-                is IrLazyClass -> {
-                    val unwrapped = fir.unwrapFakeOverrides()
-                    if (unwrapped !== fir) {
-                        when (unwrapped) {
-                            is FirSimpleFunction -> {
-                                return getIrFunctionSymbol(unwrapped.symbol)
-                            }
-                            is FirProperty -> {
-                                return getIrPropertySymbol(unwrapped.symbol)
-                            }
-                        }
-                    }
-                }
-                is IrExternalPackageFragment -> {
-                    signature?.let {
-                        return createIrLazyDeclaration(it, parent, declarationOrigin).symbol
-                    }
-                }
-            }
-            return createIrDeclaration(irParent, declarationOrigin).apply {
-                callablesGenerator.setAndModifyParent((this as IrDeclaration), irParent)
-            }.symbol
         }
     }
 
@@ -1245,28 +1142,6 @@ class Fir2IrDeclarationStorage(
             firBasedSymbol,
             callableOrigin
         )
-    }
-
-    private inline fun <reified S : IrSymbol, reified D : IrOverridableDeclaration<S>> ConeClassLookupTagWithFixedSymbol.findIrFakeOverride(
-        name: Name, originalDeclaration: IrOverridableDeclaration<S>
-    ): IrSymbol? {
-        val dispatchReceiverIrClass =
-            classifierStorage.getOrCreateIrClass(toSymbol(session) as FirClassSymbol)
-        return dispatchReceiverIrClass.declarations.find {
-            it is D && it.isFakeOverride && it.name == name && it.overrides(originalDeclaration)
-        }?.symbol
-    }
-
-    private fun computeDeclarationOrigin(
-        symbol: FirCallableSymbol<*>,
-        parentOrigin: IrDeclarationOrigin
-    ): IrDeclarationOrigin = when {
-        symbol.fir.isIntersectionOverride || symbol.fir.isSubstitutionOverride -> IrDeclarationOrigin.FAKE_OVERRIDE
-        parentOrigin == IrDeclarationOrigin.IR_EXTERNAL_DECLARATION_STUB && symbol.isJavaOrEnhancement -> {
-            IrDeclarationOrigin.IR_EXTERNAL_JAVA_DECLARATION_STUB
-        }
-        symbol.origin is FirDeclarationOrigin.Plugin -> GeneratedByPlugin((symbol.origin as FirDeclarationOrigin.Plugin).key)
-        else -> parentOrigin
     }
 
     companion object {

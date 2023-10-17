@@ -419,8 +419,6 @@ class LightTreeRawFirDeclarationBuilder(
         }
     }
 
-    private val LighterASTNode.isDirectlyInsideEnumEntry get() = getParent()?.getParent()?.elementType == ENUM_ENTRY
-
     /*****    DECLARATIONS    *****/
     /**
      * @see org.jetbrains.kotlin.parsing.KotlinParsing.parseClassOrObject
@@ -460,8 +458,7 @@ class LightTreeRawFirDeclarationBuilder(
         }
 
         val className = identifier.nameAsSafeName(if (modifiers.isCompanion()) "Companion" else "")
-        val isLocalWithinParent = classNode.isDirectlyInsideEnumEntry
-                || classNode.getParent()?.elementType != CLASS_BODY && isClassLocal(classNode) { getParent() }
+        val isLocalWithinParent = classNode.getParent()?.elementType != CLASS_BODY && isClassLocal(classNode) { getParent() }
         val classIsExpect = modifiers.hasExpect() || context.containerIsExpect
 
         return withChildClassName(className, isExpect = classIsExpect, isLocalWithinParent) {
@@ -1167,7 +1164,8 @@ class LightTreeRawFirDeclarationBuilder(
                 moduleData = baseModuleData
                 origin = FirDeclarationOrigin.Source
                 name = typeAliasName
-                status = FirDeclarationStatusImpl(modifiers.getVisibility(), Modality.FINAL).apply {
+                val isLocal = context.inLocalContext
+                status = FirDeclarationStatusImpl(if (isLocal) Visibilities.Local else modifiers.getVisibility(), Modality.FINAL).apply {
                     isExpect = typeAliasIsExpect
                     isActual = modifiers.hasActual()
                 }

@@ -188,14 +188,14 @@ fun FirClassifierSymbol<*>.toSymbol(
 }
 
 context(Fir2IrComponents)
-fun FirBasedSymbol<*>.toSymbolForCall(
+private fun FirBasedSymbol<*>.toSymbolForCall(
     dispatchReceiver: FirExpression?,
     preferGetter: Boolean,
     explicitReceiver: FirExpression? = null,
     isDelegate: Boolean = false,
     isReference: Boolean = false
 ): IrSymbol? = when (this) {
-    is FirCallableSymbol<*> -> unwrapCallRepresentative().toSymbolForCall(
+    is FirCallableSymbol<*> -> toSymbolForCall(
         dispatchReceiver,
         preferGetter,
         explicitReceiver,
@@ -207,16 +207,19 @@ fun FirBasedSymbol<*>.toSymbolForCall(
     else -> error("Unknown symbol: $this")
 }
 
+context(Fir2IrComponents)
 fun FirReference.extractSymbolForCall(): FirBasedSymbol<*>? {
     if (this !is FirResolvedNamedReference) {
         return null
     }
     var symbol = resolvedSymbol
 
-    if (symbol is FirCallableSymbol<*> && symbol.origin == FirDeclarationOrigin.SubstitutionOverride.CallSite) {
-        symbol = symbol.fir.unwrapUseSiteSubstitutionOverrides<FirCallableDeclaration>().symbol
+    if (symbol is FirCallableSymbol<*>) {
+        if (symbol.origin == FirDeclarationOrigin.SubstitutionOverride.CallSite) {
+            symbol = symbol.fir.unwrapUseSiteSubstitutionOverrides<FirCallableDeclaration>().symbol
+        }
+        symbol = (symbol as FirCallableSymbol<*>).unwrapCallRepresentative()
     }
-
     return symbol
 }
 
@@ -302,7 +305,7 @@ fun FirCallableSymbol<*>.toSymbolForCall(
                 } ?: declarationStorage.getIrPropertySymbol(this)
             }
         }
-
+        is FirConstructorSymbol -> declarationStorage.getIrConstructorSymbol(fir.originalConstructorIfTypeAlias?.symbol ?: this)
         is FirFunctionSymbol<*> -> declarationStorage.getIrFunctionSymbol(this, fakeOverrideOwnerLookupTag)
         is FirPropertySymbol -> declarationStorage.getIrPropertySymbol(this, fakeOverrideOwnerLookupTag)
         is FirFieldSymbol -> declarationStorage.getOrCreateIrField(this, fakeOverrideOwnerLookupTag).symbol
@@ -681,17 +684,38 @@ fun FirSession.createFilesWithGeneratedDeclarations(): List<FirFile> {
     }
 }
 
-fun FirDeclaration?.computeIrOrigin(predefinedOrigin: IrDeclarationOrigin? = null): IrDeclarationOrigin {
-    return predefinedOrigin
-        ?: (this?.origin as? FirDeclarationOrigin.Plugin)?.let { GeneratedByPlugin(it.key) }
-        ?: (this as? FirValueParameter)?.name?.let {
-            when (it) {
-                SpecialNames.UNDERSCORE_FOR_UNUSED_VAR -> IrDeclarationOrigin.UNDERSCORE_PARAMETER
-                SpecialNames.DESTRUCT -> IrDeclarationOrigin.DESTRUCTURED_OBJECT_PARAMETER
-                else -> null
-            }
+fun FirDeclaration?.computeIrOrigin(
+    predefinedOrigin: IrDeclarationOrigin? = null,
+    parentOrigin: IrDeclarationOrigin? = null,
+    fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag? = null
+): IrDeclarationOrigin {
+    if (this == null) {
+        return predefinedOrigin ?: parentOrigin ?: IrDeclarationOrigin.DEFINED
+    }
+
+    val firOrigin = origin
+    val computed = when {
+        firOrigin is FirDeclarationOrigin.Plugin -> GeneratedByPlugin(firOrigin.key)
+
+        this is FirValueParameter -> when (name) {
+            SpecialNames.UNDERSCORE_FOR_UNUSED_VAR -> IrDeclarationOrigin.UNDERSCORE_PARAMETER
+            SpecialNames.DESTRUCT -> IrDeclarationOrigin.DESTRUCTURED_OBJECT_PARAMETER
+            else -> null
         }
-        ?: IrDeclarationOrigin.DEFINED
+
+        this is FirCallableDeclaration -> when {
+            fakeOverrideOwnerLookupTag != null && fakeOverrideOwnerLookupTag != containingClassLookupTag() -> IrDeclarationOrigin.FAKE_OVERRIDE
+            symbol.fir.isIntersectionOverride || symbol.fir.isSubstitutionOverride -> IrDeclarationOrigin.FAKE_OVERRIDE
+            parentOrigin == IrDeclarationOrigin.IR_EXTERNAL_DECLARATION_STUB && symbol.isJavaOrEnhancement -> {
+                IrDeclarationOrigin.IR_EXTERNAL_JAVA_DECLARATION_STUB
+            }
+            symbol.origin is FirDeclarationOrigin.Plugin -> GeneratedByPlugin((symbol.origin as FirDeclarationOrigin.Plugin).key)
+            else -> null
+        }
+        else -> null
+    }
+
+    return computed ?: predefinedOrigin ?: parentOrigin ?: IrDeclarationOrigin.DEFINED
 }
 
 private typealias NameWithElementType = Pair<Name, IElementType>
