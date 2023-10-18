@@ -29,12 +29,6 @@ import org.jetbrains.kotlin.gradle.internal.KOTLIN_BUILD_TOOLS_API_IMPL
 import org.jetbrains.kotlin.gradle.internal.KOTLIN_COMPILER_EMBEDDABLE
 import org.jetbrains.kotlin.gradle.internal.KOTLIN_MODULE_GROUP
 import org.jetbrains.kotlin.gradle.logging.kotlinDebug
-import org.jetbrains.kotlin.gradle.plugin.KotlinMultiplatformAndroidGradlePluginCompatibilityHealthCheck.runMultiplatformAndroidGradlePluginCompatibilityHealthCheckWhenAndroidIsApplied
-import org.jetbrains.kotlin.gradle.plugin.diagnostics.*
-import org.jetbrains.kotlin.gradle.plugin.diagnostics.ToolingDiagnosticRenderingOptions
-import org.jetbrains.kotlin.gradle.plugin.diagnostics.UsesKotlinToolingDiagnostics
-import org.jetbrains.kotlin.gradle.plugin.diagnostics.kotlinToolingDiagnosticsCollectorProvider
-import org.jetbrains.kotlin.gradle.plugin.diagnostics.launchKotlinGradleProjectCheckers
 import org.jetbrains.kotlin.gradle.plugin.internal.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinMultiplatformPlugin
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
@@ -47,14 +41,12 @@ import org.jetbrains.kotlin.gradle.targets.js.KotlinJsPlugin
 import org.jetbrains.kotlin.gradle.targets.js.KotlinWasmTargetAttribute
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.DefaultUnameExecutorVariantFactory
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.UnameExecutor
-import org.jetbrains.kotlin.gradle.targets.js.npm.addNpmDependencyExtension
 import org.jetbrains.kotlin.gradle.targets.metadata.isKotlinGranularMetadataEnabled
-import org.jetbrains.kotlin.gradle.targets.native.internal.CInteropKlibLibraryElements
 import org.jetbrains.kotlin.gradle.targets.native.internal.CInteropCommonizerArtifactTypeAttribute
+import org.jetbrains.kotlin.gradle.targets.native.internal.CInteropKlibLibraryElements
 import org.jetbrains.kotlin.gradle.targets.native.internal.CommonizerTargetAttribute
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompileTool
 import org.jetbrains.kotlin.gradle.testing.internal.KotlinTestsRegistry
-import org.jetbrains.kotlin.gradle.tooling.registerBuildKotlinToolingMetadataTask
 import org.jetbrains.kotlin.gradle.utils.*
 import org.jetbrains.kotlin.statistics.metrics.StringMetrics
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
@@ -263,11 +255,7 @@ abstract class KotlinBasePluginWrapper : DefaultKotlinBasePlugin() {
 
         plugin.apply(project)
 
-        project.addNpmDependencyExtension()
-
-        project.registerBuildKotlinToolingMetadataTask()
-
-        project.setupDiagnosticsChecksAndReporting()
+        project.runKotlinProjectSetupActions()
     }
 
     internal open fun createTestRegistry(project: Project) = KotlinTestsRegistry(project)
@@ -275,42 +263,6 @@ abstract class KotlinBasePluginWrapper : DefaultKotlinBasePlugin() {
     internal abstract fun getPlugin(
         project: Project,
     ): Plugin<Project>
-}
-
-private fun Project.setupDiagnosticsChecksAndReporting() {
-    val collectorProvider = kotlinToolingDiagnosticsCollectorProvider
-    val diagnosticRenderingOptions = ToolingDiagnosticRenderingOptions.forProject(this)
-
-    // Setup reporting from tasks
-    tasks.withType(UsesKotlinToolingDiagnostics::class.java).configureEach {
-        it.usesService(collectorProvider)
-        it.toolingDiagnosticsCollector.value(collectorProvider)
-        it.diagnosticRenderingOptions.set(diagnosticRenderingOptions)
-    }
-
-    // Launch checkers. Note that they are invoked eagerly to give them a fine-grained
-    // control over the lifecycle
-    launchKotlinGradleProjectCheckers()
-
-    // Setup a task that will abort the build if errors will be reported. This task should be the first in the taskgraph
-    project.locateOrRegisterCheckKotlinGradlePluginErrorsTask()
-
-    // Schedule diagnostics rendering
-    launch {
-        configurationResult.await()
-        renderReportedDiagnostics(
-            collectorProvider.get().getDiagnosticsForProject(project),
-            logger,
-            diagnosticRenderingOptions
-        )
-    }
-
-    // Schedule switching of Collector to transparent mode, so that any diagnostics reported
-    // after projects are evaluated will be transparently rendered right away instead of being
-    // silently swallowed
-    gradle.projectsEvaluated {
-        collectorProvider.get().switchToTransparentMode()
-    }
 }
 
 abstract class AbstractKotlinPluginWrapper(
@@ -367,8 +319,7 @@ abstract class AbstractKotlinJsPluginWrapper : KotlinBasePluginWrapper() {
         get() = KotlinJsProjectExtension::class
 
     override fun whenBuildEvaluated(project: Project) = project.runProjectConfigurationHealthCheck {
-        val isJsTargetUninitialized = (project.kotlinExtension as KotlinJsProjectExtension)
-            ._target == null
+        val isJsTargetUninitialized = !(project.kotlinExtension as KotlinJsProjectExtension).targetFuture.isCompleted
 
         if (isJsTargetUninitialized) {
             throw GradleException(
@@ -393,11 +344,6 @@ abstract class AbstractKotlinJsPluginWrapper : KotlinBasePluginWrapper() {
 abstract class AbstractKotlinMultiplatformPluginWrapper : KotlinBasePluginWrapper() {
     override fun getPlugin(project: Project): Plugin<Project> =
         KotlinMultiplatformPlugin()
-
-    override fun apply(project: Project) {
-        super.apply(project)
-        project.runMultiplatformAndroidGradlePluginCompatibilityHealthCheckWhenAndroidIsApplied()
-    }
 
     override val projectExtensionClass: KClass<out KotlinMultiplatformExtension>
         get() = KotlinMultiplatformExtension::class

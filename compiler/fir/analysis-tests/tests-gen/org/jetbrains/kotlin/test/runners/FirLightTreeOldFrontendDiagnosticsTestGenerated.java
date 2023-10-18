@@ -1879,6 +1879,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             }
 
             @Test
+            @TestMetadata("DeprecationOnAny.kt")
+            public void testDeprecationOnAny() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/DeprecationOnAny.kt");
+            }
+
+            @Test
             @TestMetadata("dontReportWarningAboutChangingExecutionOrderForVararg.kt")
             public void testDontReportWarningAboutChangingExecutionOrderForVararg() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/dontReportWarningAboutChangingExecutionOrderForVararg.kt");
@@ -39193,6 +39199,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                 @TestMetadata("reifiedGeneric.kt")
                 public void testReifiedGeneric() throws Exception {
                     runTest("compiler/testData/diagnostics/testsWithStdLib/contracts/smartcasts/reifiedGeneric.kt");
+                }
+
+                @Test
+                @TestMetadata("returnsImpliesAndSafeCalls.kt")
+                public void testReturnsImpliesAndSafeCalls() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/contracts/smartcasts/returnsImpliesAndSafeCalls.kt");
                 }
 
                 @Test
