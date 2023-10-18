@@ -598,6 +598,24 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
         }
 
         @Test
+        @TestMetadata("annotationWithArgumentInsideSuperTypeCall.kt")
+        public void testAnnotationWithArgumentInsideSuperTypeCall() throws Exception {
+            runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/annotationWithArgumentInsideSuperTypeCall.kt");
+        }
+
+        @Test
+        @TestMetadata("annotationWithArgumentInsideSuperTypeCallUnresolved.kt")
+        public void testAnnotationWithArgumentInsideSuperTypeCallUnresolved() throws Exception {
+            runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/annotationWithArgumentInsideSuperTypeCallUnresolved.kt");
+        }
+
+        @Test
+        @TestMetadata("annotationWithConstantFromNestedClass.kt")
+        public void testAnnotationWithConstantFromNestedClass() throws Exception {
+            runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/annotationWithConstantFromNestedClass.kt");
+        }
+
+        @Test
         @TestMetadata("annotationWithTarget.kt")
         public void testAnnotationWithTarget() throws Exception {
             runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/annotationWithTarget.kt");
@@ -652,9 +670,33 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
         }
 
         @Test
+        @TestMetadata("nestedClassAsAnnotationArgument.kt")
+        public void testNestedClassAsAnnotationArgument() throws Exception {
+            runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/nestedClassAsAnnotationArgument.kt");
+        }
+
+        @Test
+        @TestMetadata("nestedClassAsAnnotationArgument2.kt")
+        public void testNestedClassAsAnnotationArgument2() throws Exception {
+            runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/nestedClassAsAnnotationArgument2.kt");
+        }
+
+        @Test
         @TestMetadata("nestedClassWithPropertiesOverrides.kt")
         public void testNestedClassWithPropertiesOverrides() throws Exception {
             runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/nestedClassWithPropertiesOverrides.kt");
+        }
+
+        @Test
+        @TestMetadata("qualifiedNestedClassAsAnnotationArgument.kt")
+        public void testQualifiedNestedClassAsAnnotationArgument() throws Exception {
+            runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/qualifiedNestedClassAsAnnotationArgument.kt");
+        }
+
+        @Test
+        @TestMetadata("qualifiedNestedClassAsAnnotationArgument2.kt")
+        public void testQualifiedNestedClassAsAnnotationArgument2() throws Exception {
+            runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/qualifiedNestedClassAsAnnotationArgument2.kt");
         }
 
         @Test
@@ -766,6 +808,12 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
         public void testSimpleLoopInOverride2() throws Exception {
             runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/simpleLoopInOverride2.kt");
         }
+
+        @Test
+        @TestMetadata("unresolvedAnnotationOnFunctionType.kt")
+        public void testUnresolvedAnnotationOnFunctionType() throws Exception {
+            runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/unresolvedAnnotationOnFunctionType.kt");
+        }
     }
 
     @Nested
@@ -876,6 +924,12 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
         public void testSimpleLoopInOverride2() throws Exception {
             runTest("analysis/low-level-api-fir/testData/lazyResolve/properties/simpleLoopInOverride2.kt");
         }
+
+        @Test
+        @TestMetadata("unresolvedAnnotationOnPropertyType.kt")
+        public void testUnresolvedAnnotationOnPropertyType() throws Exception {
+            runTest("analysis/low-level-api-fir/testData/lazyResolve/properties/unresolvedAnnotationOnPropertyType.kt");
+        }
     }
 
     @Nested
@@ -961,6 +1015,12 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
         @TestMetadata("typeAliasWithTypeParameters.kt")
         public void testTypeAliasWithTypeParameters() throws Exception {
             runTest("analysis/low-level-api-fir/testData/lazyResolve/typeAliases/typeAliasWithTypeParameters.kt");
+        }
+
+        @Test
+        @TestMetadata("unresolvedAnnotationOnTypeAlias.kt")
+        public void testUnresolvedAnnotationOnTypeAlias() throws Exception {
+            runTest("analysis/low-level-api-fir/testData/lazyResolve/typeAliases/unresolvedAnnotationOnTypeAlias.kt");
         }
     }
 }
