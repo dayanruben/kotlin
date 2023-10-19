@@ -24000,6 +24000,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("annotationArgRendering.kt")
+                public void testAnnotationArgRendering() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/annotationArgRendering.kt");
+                }
+
+                @Test
                 @TestMetadata("annotationArgumentsConstExpressions.kt")
                 public void testAnnotationArgumentsConstExpressions() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/annotationArgumentsConstExpressions.kt");
@@ -24069,6 +24075,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("compatibleOverrides.kt")
                 public void testCompatibleOverrides() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/compatibleOverrides.kt");
+                }
+
+                @Test
+                @TestMetadata("defaultValueParametersRendering.kt")
+                public void testDefaultValueParametersRendering() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/defaultValueParametersRendering.kt");
                 }
 
                 @Test
