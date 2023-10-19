@@ -49,12 +49,9 @@ dependencies {
 val builtinsDir = "${rootDir}/core/builtins"
 val builtinsSrcDir = "${buildDir}/src/builtin-sources"
 
-val jsCommonDir = "${projectDir}/js"
-val jsCommonSrcDir = "${jsCommonDir}/src"
-val jsCommonTestSrcDir = "${jsCommonDir}/test"
+val jsDir = "${projectDir}/js"
 
 // for js-ir
-val jsIrDir = "${projectDir}/js-ir"
 val jsIrMainSources = "${buildDir}/src/jsMainSources"
 lateinit var jsIrTarget: KotlinJsTargetDsl
 
@@ -329,31 +326,27 @@ kotlin {
             val prepareJsIrMainSources by tasks.registering(Sync::class)
             kotlin {
                 srcDir(prepareJsIrMainSources)
-                srcDir("$jsIrDir/builtins")
-                srcDir("$jsIrDir/runtime")
-                srcDir("$jsIrDir/src")
+                srcDir("$jsDir/builtins")
+                srcDir("$jsDir/runtime")
+                srcDir("$jsDir/src").apply {
+                    exclude("kotlin/browser")
+                    exclude("kotlin/dom")
+                    exclude("kotlinx")
+                    exclude("org.w3c")
+                }
             }
 
             prepareJsIrMainSources.configure {
                 val unimplementedNativeBuiltIns =
-                    (file("$builtinsDir/native/kotlin/").list()!!.toSortedSet() - file("$jsIrDir/builtins/").list()!!)
+                    (file("$builtinsDir/native/kotlin/").list()!!.toSortedSet() - file("$jsDir/builtins/").list()!!)
                         .map { "core/builtins/native/kotlin/$it" }
 
                 // TODO: try to reuse absolute paths defined in the beginning
                 val sources = listOf(
                     "core/builtins/src/kotlin/",
-                    "libraries/stdlib/js/src/",
-                    "libraries/stdlib/js/runtime/"
                 ) + unimplementedNativeBuiltIns
 
                 val excluded = listOf(
-                    // stdlib/js/src/generated is used exclusively for current `js-v1` backend.
-                    "libraries/stdlib/js/src/generated/**",
-                    "libraries/stdlib/js/src/kotlin/browser",
-                    "libraries/stdlib/js/src/kotlin/dom",
-                    "libraries/stdlib/js/src/org.w3c",
-                    "libraries/stdlib/js/src/kotlinx",
-
                     // JS-specific optimized version of emptyArray() already defined
                     "core/builtins/src/kotlin/ArrayIntrinsics.kt",
                     // included in common
@@ -394,7 +387,7 @@ kotlin {
             dependencies {
                 api(project(":kotlin-test:kotlin-test-js-ir"))
             }
-            kotlin.srcDir(jsCommonTestSrcDir)
+            kotlin.srcDir("${jsDir}/test")
         }
 
         val nativeWasmMain by creating {
@@ -604,14 +597,14 @@ tasks {
             }
             from("$jsIrMainSources/core/builtins/src")
             from("$jsIrMainSources/libraries/stdlib/js/src")
-            from("$jsIrDir/builtins") {
+            from("$jsDir/builtins") {
                 into("kotlin")
                 exclude("Enum.kt")
             }
-            from("$jsIrDir/runtime") {
+            from("$jsDir/runtime") {
                 into("runtime")
             }
-            from("$jsIrDir/src") {
+            from("$jsDir/src") {
                 include("**/*.kt")
             }
         }
