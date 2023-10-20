@@ -88,6 +88,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("argumentTypeMismatchVsTooManyArgs.kt")
+        public void testArgumentTypeMismatchVsTooManyArgs() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/argumentTypeMismatchVsTooManyArgs.kt");
+        }
+
+        @Test
         @TestMetadata("AssignToArrayElement.kt")
         public void testAssignToArrayElement() throws Exception {
             runTest("compiler/testData/diagnostics/tests/AssignToArrayElement.kt");
@@ -12685,6 +12691,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("labelsFromClassNameForbidden.kt")
                 public void testLabelsFromClassNameForbidden() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/labelsFromClassNameForbidden.kt");
+                }
+
+                @Test
+                @TestMetadata("lambdaReceiverFromContext.kt")
+                public void testLambdaReceiverFromContext() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/lambdaReceiverFromContext.kt");
                 }
 
                 @Test

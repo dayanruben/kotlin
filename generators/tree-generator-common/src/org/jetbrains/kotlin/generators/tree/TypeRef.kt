@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.generators.tree
 
+import org.jetbrains.kotlin.generators.tree.printer.braces
 import org.jetbrains.kotlin.types.Variance
 import java.util.*
 import kotlin.reflect.KClass
@@ -23,7 +24,7 @@ interface TypeRef : Importable {
     }
 }
 
-interface ClassOrElementRef : TypeRefWithNullability
+sealed interface ClassOrElementRef : TypeRefWithNullability
 
 // Based on com.squareup.kotlinpoet.ClassName
 class ClassRef<P : TypeParameterRef> private constructor(
@@ -196,3 +197,17 @@ inline fun <reified T : Any> type(vararg args: TypeRef) = T::class.asRef<Positio
 
 fun type(packageName: String, name: String, kind: TypeKind = TypeKind.Interface) =
     ClassRef<PositionTypeParameterRef>(kind, packageName, name)
+
+val ClassOrElementRef.typeKind: TypeKind
+    get() = when (this) {
+        is ElementOrRef<*, *> -> element.kind!!.typeKind
+        is ClassRef<*> -> kind
+    }
+
+fun ClassOrElementRef.inheritanceClauseParenthesis(): String = when (this) {
+    is ElementOrRef<*, *> -> element.kind.braces()
+    is ClassRef<*> -> when (kind) {
+        TypeKind.Class -> "()"
+        TypeKind.Interface -> ""
+    }
+}

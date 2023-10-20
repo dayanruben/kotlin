@@ -23820,6 +23820,12 @@ public class IrJsES6CodegenBoxTestGenerated extends AbstractIrJsES6CodegenBoxTes
                 runTest("compiler/testData/codegen/box/multiplatform/k2/expectValInInlineClass.kt");
             }
 
+            @Test
+            @TestMetadata("internalOverride.kt")
+            public void testInternalOverride() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/k2/internalOverride.kt");
+            }
+
             @Nested
             @TestMetadata("compiler/testData/codegen/box/multiplatform/k2/annotations")
             @TestDataPath("$PROJECT_ROOT")
@@ -24139,6 +24145,12 @@ public class IrJsES6CodegenBoxTestGenerated extends AbstractIrJsES6CodegenBoxTes
                 @TestMetadata("constructor.kt")
                 public void testConstructor() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/defaultArguments/constructor.kt");
+                }
+
+                @Test
+                @TestMetadata("defaultArgumentInDelegatedFunction.kt")
+                public void testDefaultArgumentInDelegatedFunction() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/defaultArguments/defaultArgumentInDelegatedFunction.kt");
                 }
 
                 @Test

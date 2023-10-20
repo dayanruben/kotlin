@@ -16294,6 +16294,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("valueClassImplementingJavaInterfaceWithDefault.kt")
+        public void testValueClassImplementingJavaInterfaceWithDefault() throws Exception {
+            runTest("compiler/testData/codegen/box/delegation/valueClassImplementingJavaInterfaceWithDefault.kt");
+        }
+
+        @Test
         @TestMetadata("viaTypeAlias.kt")
         public void testViaTypeAlias() throws Exception {
             runTest("compiler/testData/codegen/box/delegation/viaTypeAlias.kt");
@@ -17875,6 +17881,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("generics.kt")
         public void testGenerics() throws Exception {
             runTest("compiler/testData/codegen/box/extensionClasses/generics.kt");
+        }
+
+        @Test
+        @TestMetadata("lambdaReceiverFromContext.kt")
+        public void testLambdaReceiverFromContext() throws Exception {
+            runTest("compiler/testData/codegen/box/extensionClasses/lambdaReceiverFromContext.kt");
         }
 
         @Test
@@ -34111,6 +34123,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             }
 
             @Test
+            @TestMetadata("internalOverride.kt")
+            public void testInternalOverride() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/k2/internalOverride.kt");
+            }
+
+            @Test
             @TestMetadata("javaMethodWithTypeParameter.kt")
             public void testJavaMethodWithTypeParameter() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/k2/javaMethodWithTypeParameter.kt");
@@ -34507,6 +34525,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
                 @TestMetadata("constructor.kt")
                 public void testConstructor() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/defaultArguments/constructor.kt");
+                }
+
+                @Test
+                @TestMetadata("defaultArgumentInDelegatedFunction.kt")
+                public void testDefaultArgumentInDelegatedFunction() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/defaultArguments/defaultArgumentInDelegatedFunction.kt");
                 }
 
                 @Test
@@ -45850,6 +45874,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             @TestMetadata("javaMethodsSmokeTest.kt")
             public void testJavaMethodsSmokeTest() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/functions/javaMethodsSmokeTest.kt");
+            }
+
+            @Test
+            @TestMetadata("parentheses.kt")
+            public void testParentheses() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/functions/parentheses.kt");
             }
 
             @Test

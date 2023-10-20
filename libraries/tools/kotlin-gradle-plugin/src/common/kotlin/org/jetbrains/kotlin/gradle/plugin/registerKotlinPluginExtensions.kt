@@ -32,11 +32,14 @@ import org.jetbrains.kotlin.gradle.plugin.diagnostics.checkers.UnusedSourceSetsC
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.checkers.WasmSourceSetsNotFoundChecker
 import org.jetbrains.kotlin.gradle.plugin.ide.IdeMultiplatformImportSetupAction
 import org.jetbrains.kotlin.gradle.plugin.ide.IdeResolveDependenciesTaskSetupAction
+import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.GlobalProjectStructureMetadataStorageSetupAction
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinMultiplatformTargetPresetAction
 import org.jetbrains.kotlin.gradle.plugin.mpp.MultiplatformPublishingSetupAction
 import org.jetbrains.kotlin.gradle.plugin.mpp.SyncLanguageSettingsWithKotlinExtensionSetupAction
 import org.jetbrains.kotlin.gradle.plugin.mpp.UserDefinedAttributesSetupAction
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.AddBuildListenerForXCodeSetupAction
+import org.jetbrains.kotlin.gradle.plugin.mpp.internal.DeprecatedMppGradlePropertiesMigrationSetupAction
 import org.jetbrains.kotlin.gradle.plugin.sources.KotlinMultiplatformSourceSetSetupAction
 import org.jetbrains.kotlin.gradle.plugin.sources.LanguageSettingsSetupAction
 import org.jetbrains.kotlin.gradle.plugin.statistics.MultiplatformBuildStatsReportSetupAction
@@ -66,6 +69,9 @@ internal fun Project.registerKotlinPluginExtensions() {
         }
 
         if (isMultiplatform) {
+            register(project, ApplyJavaBasePluginSetupAction)
+            register(project, DeprecatedMppGradlePropertiesMigrationSetupAction)
+            register(project, KotlinMultiplatformTargetPresetAction)
             register(project, KotlinMultiplatformSourceSetSetupAction)
             register(project, MultiplatformBuildStatsReportSetupAction)
             register(project, KotlinMetadataTargetSetupAction)

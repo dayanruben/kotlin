@@ -13420,6 +13420,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/delegation/smartCastedDelegation.kt");
         }
 
+        @TestMetadata("valueClassImplementingJavaInterfaceWithDefault.kt")
+        public void testValueClassImplementingJavaInterfaceWithDefault() throws Exception {
+            runTest("compiler/testData/codegen/box/delegation/valueClassImplementingJavaInterfaceWithDefault.kt");
+        }
+
         @TestMetadata("viaTypeAlias.kt")
         public void testViaTypeAlias() throws Exception {
             runTest("compiler/testData/codegen/box/delegation/viaTypeAlias.kt");
@@ -14822,6 +14827,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("generics.kt")
         public void testGenerics() throws Exception {
             runTest("compiler/testData/codegen/box/extensionClasses/generics.kt");
+        }
+
+        @TestMetadata("lambdaReceiverFromContext.kt")
+        public void testLambdaReceiverFromContext() throws Exception {
+            runTest("compiler/testData/codegen/box/extensionClasses/lambdaReceiverFromContext.kt");
         }
 
         @TestMetadata("multiple.kt")
@@ -29066,6 +29076,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/multiplatform/k2/expectValInInlineClassJVM.kt");
             }
 
+            @TestMetadata("internalOverride.kt")
+            public void testInternalOverride() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/k2/internalOverride.kt");
+            }
+
             @TestMetadata("javaMethodWithTypeParameter.kt")
             public void testJavaMethodWithTypeParameter() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/k2/javaMethodWithTypeParameter.kt");
@@ -29520,6 +29535,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 @TestMetadata("annotations.kt")
                 public void testAnnotations() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/defaultArguments/annotations.kt");
+                }
+
+                @TestMetadata("defaultArgumentInDelegatedFunction.kt")
+                public void testDefaultArgumentInDelegatedFunction() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/defaultArguments/defaultArgumentInDelegatedFunction.kt");
                 }
 
                 @TestMetadata("expectPropertyAsDefaultArgument.kt")
@@ -36485,6 +36505,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             @TestMetadata("javaMethodsSmokeTest.kt")
             public void testJavaMethodsSmokeTest() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/functions/javaMethodsSmokeTest.kt");
+            }
+
+            @TestMetadata("parentheses.kt")
+            public void testParentheses() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/functions/parentheses.kt");
             }
 
             @TestMetadata("platformName.kt")

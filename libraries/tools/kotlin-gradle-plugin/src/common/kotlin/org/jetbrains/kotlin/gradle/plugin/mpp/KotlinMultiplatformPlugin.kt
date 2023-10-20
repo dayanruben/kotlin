@@ -7,63 +7,47 @@ package org.jetbrains.kotlin.gradle.plugin.mpp
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.plugins.JavaBasePlugin
-import org.jetbrains.kotlin.gradle.dsl.multiplatformExtension
-import org.jetbrains.kotlin.gradle.plugin.mpp.internal.runDeprecationDiagnostics
-import org.jetbrains.kotlin.gradle.targets.js.KotlinWasmTargetType
-import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTargetPreset
-import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinWasmTargetPreset
-import org.jetbrains.kotlin.gradle.utils.checkGradleCompatibility
-import org.jetbrains.kotlin.konan.target.HostManager
-import org.jetbrains.kotlin.konan.target.KonanTarget.*
-import org.jetbrains.kotlin.konan.target.presetName
+import org.jetbrains.kotlin.gradle.plugin.KotlinProjectSetupAction
+import org.jetbrains.kotlin.gradle.plugin.registerKotlinPluginExtensions
 
+/**
+ * This class is not needed anymore;
+ *
+ * ### Previous Usage:
+ * Previously the Kotlin Gradle Plugin used to distinguish between two kinds of 'plugins'
+ * The 'wrapper' (see 'KotlinMultiplatformPluginWrapper') and the plugin.
+ *
+ * The Wrappers were the plugins that were actually applied to the project when users requested Kotlin:
+ * ```kotlin
+ * plugins {
+ *     kotlin("multiplatform")
+ * }
+ * ```
+ *
+ * The code above would have applied the 'KotlinMultiplatformPluginWrapper'.
+ * Those 'wrapper plugins' then did run the 'main configuration code' and at some point created this 'wrapped' plugins manually
+ * and called the [apply] function.
+ *
+ * Its quite unfortunate that both entities implemented [Plugin] of [Project] and therefore the differentiation was not clear.
+ *
+ * ### Replaced by: Kotlin Gradle Plugin Extension Points:
+ *  See [registerKotlinPluginExtensions]:
+ *  Kotlin Multiplatform will register corresponding extension points to customise its behavior.
+ *  At the time of writing this comment: We take heavy usage of the [KotlinProjectSetupAction.extensionPoint] to provide
+ *  additional project configuration for multiplatform.
+ */
+@Deprecated("Scheduled for removal in Kotlin 2.1")
 class KotlinMultiplatformPlugin : Plugin<Project> {
-
-    override fun apply(project: Project) {
-        checkGradleCompatibility("the Kotlin Multiplatform plugin")
-        runDeprecationDiagnostics(project)
-
-        project.plugins.apply(JavaBasePlugin::class.java)
-
-        setupDefaultPresets(project)
-    }
-
-    fun setupDefaultPresets(project: Project) {
-        with(project.multiplatformExtension.presets) {
-            add(KotlinJvmTargetPreset(project))
-            add(KotlinJsIrTargetPreset(project))
-            add(KotlinWasmTargetPreset(project, KotlinWasmTargetType.JS))
-            add(KotlinWasmTargetPreset(project, KotlinWasmTargetType.WASI))
-            add(project.objects.newInstance(KotlinAndroidTargetPreset::class.java, project))
-            add(KotlinJvmWithJavaTargetPreset(project))
-
-            // Note: modifying these sets should also be reflected in the DSL code generator, see 'presetEntries.kt'
-            val nativeTargetsWithHostTests = setOf(LINUX_X64, MACOS_X64, MACOS_ARM64, MINGW_X64)
-            val nativeTargetsWithSimulatorTests =
-                setOf(IOS_X64, IOS_SIMULATOR_ARM64, WATCHOS_X86, WATCHOS_X64, WATCHOS_SIMULATOR_ARM64, TVOS_X64, TVOS_SIMULATOR_ARM64)
-
-            HostManager().targets
-                .forEach { (_, konanTarget) ->
-                    val targetToAdd = when (konanTarget) {
-                        in nativeTargetsWithHostTests ->
-                            KotlinNativeTargetWithHostTestsPreset(konanTarget.presetName, project, konanTarget)
-
-                        in nativeTargetsWithSimulatorTests ->
-                            KotlinNativeTargetWithSimulatorTestsPreset(konanTarget.presetName, project, konanTarget)
-
-                        else -> KotlinNativeTargetPreset(konanTarget.presetName, project, konanTarget)
-                    }
-
-                    add(targetToAdd)
-                }
-        }
-    }
+    override fun apply(project: Project) = Unit
 
     companion object {
-        const val METADATA_TARGET_NAME = "metadata"
-
-        internal fun sourceSetFreeCompilerArgsPropertyName(sourceSetName: String) =
-            "kotlin.mpp.freeCompilerArgsForSourceSet.$sourceSetName"
+        @Deprecated(
+            "Scheduled for removal in Kotlin 2.1",
+            replaceWith = ReplaceWith(
+                "KotlinMetadataTarget.METADATA_TARGET_NAME",
+                imports = ["org.jetbrains.kotlin.gradle.plugin.mpp.KotlinMetadataTarget"]
+            )
+        )
+        const val METADATA_TARGET_NAME = KotlinMetadataTarget.METADATA_TARGET_NAME
     }
 }

@@ -5,10 +5,8 @@
 
 package org.jetbrains.kotlin.fir.tree.generator.printer
 
-import org.jetbrains.kotlin.fir.tree.generator.context.AbstractFirTreeBuilder
 import org.jetbrains.kotlin.fir.tree.generator.model.Element
 import org.jetbrains.kotlin.fir.tree.generator.model.Field
-import org.jetbrains.kotlin.fir.tree.generator.pureAbstractElementType
 import org.jetbrains.kotlin.fir.tree.generator.util.get
 import org.jetbrains.kotlin.generators.tree.*
 import org.jetbrains.kotlin.generators.tree.printer.*
@@ -36,32 +34,20 @@ fun SmartPrinter.printElement(element: Element) {
         }
 
         fun override() {
-            if (this != AbstractFirTreeBuilder.baseFirElement) {
+            if (!isRootElement) {
                 print("override ")
             }
         }
 
         print("${kind!!.title} $type")
         print(typeParameters())
-        val needPureAbstractElement = !isInterface && !allParents.any { it.kind == ImplementationKind.AbstractClass || it.kind == ImplementationKind.SealedClass }
-        val superTypesStrings = parentRefs.map {
-            // TODO: Factor out
-            var result = it.element.type
-            if (it.args.isNotEmpty()) {
-                result += it.args.values.joinToString(", ", "<", ">") { it.typeWithArguments }
-            }
-            result + it.element.kind.braces()
-        } + additionalSupertypeInterfaces.map { it.type }
-
-        if (superTypesStrings.isNotEmpty() || needPureAbstractElement) {
-            print(" : ")
-            if (needPureAbstractElement) {
-                print("${pureAbstractElementType.type}()")
-                if (superTypesStrings.isNotEmpty()) {
-                    print(", ")
+        val parentRefs = element.parentRefs
+        if (parentRefs.isNotEmpty()) {
+            print(
+                parentRefs.sortedBy { it.typeKind }.joinToString(prefix = " : ") { parent ->
+                    parent.typeWithArguments + parent.inheritanceClauseParenthesis()
                 }
-            }
-            print(superTypesStrings.joinToString(", "),)
+            )
         }
         print(multipleUpperBoundsList())
         println(" {")
@@ -123,13 +109,13 @@ fun SmartPrinter.printElement(element: Element) {
             if (needTransformOtherChildren) {
                 println()
                 abstract()
-                if (element.parentRefs.any { it.element.needTransformOtherChildren }) {
+                if (element.elementParents.any { it.element.needTransformOtherChildren }) {
                     print("override ")
                 }
                 println(transformFunctionDeclaration("OtherChildren", typeWithArguments))
             }
 
-            if (element == AbstractFirTreeBuilder.baseFirElement) {
+            if (element.isRootElement) {
                 require(isInterface) {
                     "$element must be an interface"
                 }

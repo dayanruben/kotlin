@@ -66,9 +66,3 @@ fun TypeVariable.toPoet() = TypeVariableName(
     }
 )
 
-val ClassOrElementRef.typeKind: TypeKind
-    get() = when (this) {
-        is GenericElementRef<*, *> -> element.kind!!.typeKind
-        is ClassRef<*> -> kind
-        else -> error("Unexpected type: $this")
-    }

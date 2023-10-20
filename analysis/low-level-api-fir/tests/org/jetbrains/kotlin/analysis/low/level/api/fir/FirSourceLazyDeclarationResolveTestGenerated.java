@@ -49,6 +49,18 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
     }
 
     @Test
+    @TestMetadata("annotationInsideWhereFunction.kt")
+    public void testAnnotationInsideWhereFunction() throws Exception {
+        runTest("analysis/low-level-api-fir/testData/lazyResolve/annotationInsideWhereFunction.kt");
+    }
+
+    @Test
+    @TestMetadata("annotationInsideWhereProperty.kt")
+    public void testAnnotationInsideWhereProperty() throws Exception {
+        runTest("analysis/low-level-api-fir/testData/lazyResolve/annotationInsideWhereProperty.kt");
+    }
+
+    @Test
     @TestMetadata("annotationOnLocalClass.kt")
     public void testAnnotationOnLocalClass() throws Exception {
         runTest("analysis/low-level-api-fir/testData/lazyResolve/annotationOnLocalClass.kt");
@@ -289,6 +301,12 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
     }
 
     @Test
+    @TestMetadata("functionWithWhere.kt")
+    public void testFunctionWithWhere() throws Exception {
+        runTest("analysis/low-level-api-fir/testData/lazyResolve/functionWithWhere.kt");
+    }
+
+    @Test
     @TestMetadata("implicitTypeOnFunctionWithRawContract.kt")
     public void testImplicitTypeOnFunctionWithRawContract() throws Exception {
         runTest("analysis/low-level-api-fir/testData/lazyResolve/implicitTypeOnFunctionWithRawContract.kt");
@@ -454,6 +472,12 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
     @TestMetadata("propertyWithInitializer.kt")
     public void testPropertyWithInitializer() throws Exception {
         runTest("analysis/low-level-api-fir/testData/lazyResolve/propertyWithInitializer.kt");
+    }
+
+    @Test
+    @TestMetadata("propertyWithWhere.kt")
+    public void testPropertyWithWhere() throws Exception {
+        runTest("analysis/low-level-api-fir/testData/lazyResolve/propertyWithWhere.kt");
     }
 
     @Test
@@ -625,6 +649,18 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
         @TestMetadata("classWithTypeParameters.kt")
         public void testClassWithTypeParameters() throws Exception {
             runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/classWithTypeParameters.kt");
+        }
+
+        @Test
+        @TestMetadata("compilerRequiredAnnotationConflict.kt")
+        public void testCompilerRequiredAnnotationConflict() throws Exception {
+            runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/compilerRequiredAnnotationConflict.kt");
+        }
+
+        @Test
+        @TestMetadata("compilerRequiredAnnotationConflict2.kt")
+        public void testCompilerRequiredAnnotationConflict2() throws Exception {
+            runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/compilerRequiredAnnotationConflict2.kt");
         }
 
         @Test
@@ -807,6 +843,12 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
         @TestMetadata("simpleLoopInOverride2.kt")
         public void testSimpleLoopInOverride2() throws Exception {
             runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/simpleLoopInOverride2.kt");
+        }
+
+        @Test
+        @TestMetadata("typeArgumentInAnnotation.kt")
+        public void testTypeArgumentInAnnotation() throws Exception {
+            runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/typeArgumentInAnnotation.kt");
         }
 
         @Test
