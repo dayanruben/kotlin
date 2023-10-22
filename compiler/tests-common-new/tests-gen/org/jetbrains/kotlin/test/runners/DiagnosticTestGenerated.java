@@ -1891,6 +1891,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("DeprecatedInJavaDoc.kt")
+            public void testDeprecatedInJavaDoc() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/DeprecatedInJavaDoc.kt");
+            }
+
+            @Test
             @TestMetadata("DeprecationOnAny.kt")
             public void testDeprecationOnAny() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/DeprecationOnAny.kt");
@@ -22806,6 +22812,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("kt57802.kt")
+                public void testKt57802() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/modifiers/const/kt57802.kt");
+                }
+
+                @Test
                 @TestMetadata("stdlibConstFun.kt")
                 public void testStdlibConstFun() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/modifiers/const/stdlibConstFun.kt");
@@ -23624,18 +23636,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
-                @TestMetadata("allowDifferentMembersInActual_class.kt")
-                public void testAllowDifferentMembersInActual_class() throws Exception {
-                    runTest("compiler/testData/diagnostics/tests/multiplatform/actualClassifierMustHasTheSameMembersAsNonFinalExpectClassifierChecker/allowDifferentMembersInActual_class.kt");
-                }
-
-                @Test
-                @TestMetadata("allowDifferentMembersInActual_typealias.kt")
-                public void testAllowDifferentMembersInActual_typealias() throws Exception {
-                    runTest("compiler/testData/diagnostics/tests/multiplatform/actualClassifierMustHasTheSameMembersAsNonFinalExpectClassifierChecker/allowDifferentMembersInActual_typealias.kt");
-                }
-
-                @Test
                 @TestMetadata("changeClassTypeParameterNames.kt")
                 public void testChangeClassTypeParameterNames() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/actualClassifierMustHasTheSameMembersAsNonFinalExpectClassifierChecker/changeClassTypeParameterNames.kt");
@@ -23699,6 +23699,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("changeSetterVisibilityInOverride.kt")
                 public void testChangeSetterVisibilityInOverride() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/actualClassifierMustHasTheSameMembersAsNonFinalExpectClassifierChecker/changeSetterVisibilityInOverride.kt");
+                }
+
+                @Test
+                @TestMetadata("changeVarargModifierInOverride.kt")
+                public void testChangeVarargModifierInOverride() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/actualClassifierMustHasTheSameMembersAsNonFinalExpectClassifierChecker/changeVarargModifierInOverride.kt");
                 }
 
                 @Test
@@ -23897,6 +23903,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("nestedExpectOpenClass.kt")
                 public void testNestedExpectOpenClass() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/actualClassifierMustHasTheSameMembersAsNonFinalExpectClassifierChecker/nestedExpectOpenClass.kt");
+                }
+
+                @Test
+                @TestMetadata("overloadMethodInjectedInSuper.kt")
+                public void testOverloadMethodInjectedInSuper() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/actualClassifierMustHasTheSameMembersAsNonFinalExpectClassifierChecker/overloadMethodInjectedInSuper.kt");
                 }
 
                 @Test

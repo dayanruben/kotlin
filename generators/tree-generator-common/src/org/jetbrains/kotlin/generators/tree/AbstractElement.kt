@@ -36,9 +36,14 @@ abstract class AbstractElement<Element, Field> : ElementOrRef<Element, Field>, F
     override val allParents: List<Element>
         get() = elementParents.map { it.element }
 
-    final override fun getTypeWithArguments(notNull: Boolean): String = type + generics
+    final override val typeWithArguments: String
+        get() = type + generics
 
     abstract override val allFields: List<Field>
+
+    abstract override val walkableChildren: List<Field>
+
+    abstract override val transformableChildren: List<Field>
 
     final override fun get(fieldName: String): Field? {
         return allFields.firstOrNull { it.name == fieldName }
@@ -51,4 +56,7 @@ abstract class AbstractElement<Element, Field> : ElementOrRef<Element, Field>, F
     @Suppress("UNCHECKED_CAST")
     final override fun copy(args: Map<NamedTypeParameterRef, TypeRef>) =
         ElementRef(this as Element, args, nullable)
+
+    @Suppress("UNCHECKED_CAST")
+    override fun substitute(map: TypeParameterSubstitutionMap): Element = this as Element
 }

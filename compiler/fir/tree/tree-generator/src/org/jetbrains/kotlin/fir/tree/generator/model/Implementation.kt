@@ -15,7 +15,8 @@ class ImplementationWithArg(
 ) : FieldContainer by implementation, ImplementationKindOwner by implementation {
     val element: Element get() = implementation.element
 
-    override fun getTypeWithArguments(notNull: Boolean): String = type + generics
+    override val typeWithArguments: String
+        get() = type + generics
 }
 
 class Implementation(val element: Element, val name: String?) : FieldContainer, ImplementationKindOwner {
@@ -41,7 +42,8 @@ class Implementation(val element: Element, val name: String?) : FieldContainer, 
             }
         }
 
-    override fun getTypeWithArguments(notNull: Boolean): String = type + element.generics
+    override val typeWithArguments: String
+        get() = type + element.generics
 
     override val packageName = element.packageName + ".impl"
     val usedTypes = mutableListOf<Importable>()
@@ -58,6 +60,22 @@ class Implementation(val element: Element, val name: String?) : FieldContainer, 
             element.customImplementations += this
         }
     }
+
+    override val hasAcceptChildrenMethod: Boolean
+        get() {
+            val isInterface = kind == ImplementationKind.Interface || kind == ImplementationKind.SealedInterface
+            val isAbstract = kind == ImplementationKind.AbstractClass || kind == ImplementationKind.SealedClass
+            return !isInterface && !isAbstract
+        }
+
+    override val hasTransformChildrenMethod: Boolean
+        get() = true
+
+    override val walkableChildren: List<FieldWithDefault>
+        get() = allFields.filter { it.isFirType && !it.withGetter && it.needAcceptAndTransform }
+
+    override val transformableChildren: List<FieldWithDefault>
+        get() = walkableChildren.filter { it.isMutable }
 
     fun addParent(parent: Implementation, arg: Importable? = null) {
         _parents += ImplementationWithArg(parent, arg)

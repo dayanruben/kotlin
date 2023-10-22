@@ -414,11 +414,6 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         val suggestedFunction: String
     }
 
-    interface NestedClassAccessedViaInstanceReference : KtFirDiagnostic<PsiElement> {
-        override val diagnosticClass get() = NestedClassAccessedViaInstanceReference::class
-        val symbol: KtClassLikeSymbol
-    }
-
     interface SuperIsNotAnExpression : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = SuperIsNotAnExpression::class
     }
@@ -1450,6 +1445,11 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
     interface InferenceUnsuccessfulFork : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = InferenceUnsuccessfulFork::class
         val message: String
+    }
+
+    interface NestedClassAccessedViaInstanceReference : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = NestedClassAccessedViaInstanceReference::class
+        val symbol: KtClassLikeSymbol
     }
 
     interface OverloadResolutionAmbiguity : KtFirDiagnostic<PsiElement> {
@@ -3423,10 +3423,6 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
     interface PreReleaseClass : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = PreReleaseClass::class
         val presentableString: String
-    }
-
-    interface ConflictingJvmDeclarations : KtFirDiagnostic<PsiElement> {
-        override val diagnosticClass get() = ConflictingJvmDeclarations::class
     }
 
     interface OverrideCannotBeStatic : KtFirDiagnostic<PsiElement> {

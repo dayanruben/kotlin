@@ -7,9 +7,9 @@ package org.jetbrains.kotlin.fir.tree.generator.printer
 
 import org.jetbrains.kotlin.fir.tree.generator.declarationAttributesType
 import org.jetbrains.kotlin.fir.tree.generator.model.*
+import org.jetbrains.kotlin.generators.tree.StandardTypes
 import org.jetbrains.kotlin.generators.tree.printer.GeneratedFile
 import org.jetbrains.kotlin.generators.tree.printer.printGeneratedType
-import org.jetbrains.kotlin.generators.tree.typeWithArguments
 import org.jetbrains.kotlin.utils.SmartPrinter
 import org.jetbrains.kotlin.utils.withIndent
 import java.io.File
@@ -129,7 +129,8 @@ private fun FieldWithDefault.needBackingField(fieldIsUseless: Boolean) =
         defaultValueInBuilder == null
     }
 
-private fun FieldWithDefault.needNotNullDelegate(fieldIsUseless: Boolean) = needBackingField(fieldIsUseless) && (type == "Boolean" || type == "Int")
+private fun FieldWithDefault.needNotNullDelegate(fieldIsUseless: Boolean) =
+    needBackingField(fieldIsUseless) && (typeRef == StandardTypes.boolean || typeRef == StandardTypes.int)
 
 
 private fun SmartPrinter.printFieldInBuilder(field: FieldWithDefault, builder: Builder, fieldIsUseless: Boolean): Pair<Boolean, Boolean> {
@@ -139,7 +140,7 @@ private fun SmartPrinter.printFieldInBuilder(field: FieldWithDefault, builder: B
         return true to false
     }
     val name = field.name
-    val type = field.getTypeWithArguments(field.notNull)
+    val type = field.typeRef.typeWithArguments
     val defaultValue = if (fieldIsUseless)
         field.defaultValueInImplementation.also { requireNotNull(it) }
     else
@@ -168,7 +169,7 @@ private fun SmartPrinter.printFieldInBuilder(field: FieldWithDefault, builder: B
             false
         }
         field.needNotNullDelegate(fieldIsUseless) -> {
-            println(" by kotlin.properties.Delegates.notNull<${field.type}>()")
+            println(" by kotlin.properties.Delegates.notNull<${field.typeRef.type}>()")
             hasRequiredFields = true
             true
         }
@@ -206,7 +207,7 @@ private fun SmartPrinter.printDeprecationOnUselessFieldIfNeeded(field: Field, bu
 private fun SmartPrinter.printFieldListInBuilder(field: FieldList, builder: Builder, fieldIsUseless: Boolean) {
     printDeprecationOnUselessFieldIfNeeded(field, builder, fieldIsUseless)
     printModifiers(builder, field, fieldIsUseless)
-    print("val ${field.name}: ${field.getMutableType(forBuilder = true)}")
+    print("val ${field.name}: ${field.getMutableType(forBuilder = true).typeWithArguments}")
     if (builder is LeafBuilder) {
         print(" = mutableListOf()")
     }
@@ -301,7 +302,7 @@ private fun SmartPrinter.printDslBuildCopyFunction(
             when {
                 field.invisibleField -> {}
                 field.origin is FieldList -> println("copyBuilder.${field.name}.addAll(original.${field.name})")
-                field.type == declarationAttributesType.type -> println("copyBuilder.${field.name} = original.${field.name}.copy()")
+                field.typeRef == declarationAttributesType -> println("copyBuilder.${field.name} = original.${field.name}.copy()")
                 field.notNull -> println("original.${field.name}?.let { copyBuilder.${field.name} = it }")
                 else -> println("copyBuilder.${field.name} = original.${field.name}")
             }

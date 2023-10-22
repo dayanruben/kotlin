@@ -1785,7 +1785,10 @@ internal class CodeGeneratorVisitor(
             }
         }
         return functionGenerationContext.loadSlot(
-                fieldAddress, !value.symbol.owner.isFinal, resultSlot,
+                value.type.toLLVMType(llvm),
+                fieldAddress,
+                !value.symbol.owner.isFinal,
+                resultSlot,
                 memoryOrder = order,
                 alignment = alignment
         )
@@ -1873,11 +1876,9 @@ internal class CodeGeneratorVisitor(
     //-------------------------------------------------------------------------//
     private fun fieldPtrOfClass(thisPtr: LLVMValueRef, value: IrField): LLVMValueRef {
         val fieldInfo = generationState.llvmDeclarations.forField(value)
-
-        val typePtr = pointerType(fieldInfo.classBodyType)
-
-        val typedBodyPtr = functionGenerationContext.bitcast(typePtr, thisPtr)
-        val fieldPtr = LLVMBuildStructGEP(functionGenerationContext.builder, typedBodyPtr, fieldInfo.index, "")
+        val classBodyType = fieldInfo.classBodyType
+        val typedBodyPtr = functionGenerationContext.bitcast(pointerType(classBodyType), thisPtr)
+        val fieldPtr = LLVMBuildStructGEP2(functionGenerationContext.builder, classBodyType, typedBodyPtr, fieldInfo.index, "")
         return fieldPtr!!
     }
 
@@ -2507,7 +2508,7 @@ internal class CodeGeneratorVisitor(
         val bbExit = basicBlock("label_continue", null)
         moveBlockAfterEntry(bbExit)
         moveBlockAfterEntry(bbInit)
-        val state = load(statePtr, memoryOrder = LLVMAtomicOrdering.LLVMAtomicOrderingAcquire)
+        val state = load(llvm.int32Type, statePtr, memoryOrder = LLVMAtomicOrdering.LLVMAtomicOrderingAcquire)
         condBr(icmpEq(state, llvm.int32(FILE_INITIALIZED)), bbExit, bbInit)
         positionAtEnd(bbInit)
         call(llvm.callInitGlobalPossiblyLock, listOf(statePtr, initializerPtr),
@@ -2529,13 +2530,13 @@ internal class CodeGeneratorVisitor(
         moveBlockAfterEntry(bbExit)
         moveBlockAfterEntry(bbCheckLocalState)
         moveBlockAfterEntry(bbInit)
-        val globalState = load(globalStatePtr)
+        val globalState = load(llvm.int32Type, globalStatePtr)
         LLVMSetVolatile(globalState, 1)
         // Make sure we're not in the middle of global initializer invocation -
         // thread locals can be initialized only after all shared globals have been initialized.
         condBr(icmpNe(globalState, llvm.int32(FILE_INITIALIZED)), bbExit, bbCheckLocalState)
         positionAtEnd(bbCheckLocalState)
-        condBr(icmpNe(load(localStatePtr), llvm.int32(FILE_INITIALIZED)), bbInit, bbExit)
+        condBr(icmpNe(load(llvm.int32Type, localStatePtr), llvm.int32(FILE_INITIALIZED)), bbInit, bbExit)
         positionAtEnd(bbInit)
         call(llvm.callInitThreadLocal, listOf(globalStatePtr, localStatePtr, initializerPtr),
                 exceptionHandler = currentCodeContext.exceptionHandler)
@@ -2553,7 +2554,7 @@ internal class CodeGeneratorVisitor(
         val bbExit = basicBlock("label_continue", null)
         moveBlockAfterEntry(bbExit)
         moveBlockAfterEntry(bbInit)
-        condBr(icmpEq(load(statePtr), llvm.int32(FILE_INITIALIZED)), bbExit, bbInit)
+        condBr(icmpEq(load(llvm.int32Type, statePtr), llvm.int32(FILE_INITIALIZED)), bbExit, bbInit)
         positionAtEnd(bbInit)
         call(llvm.callInitThreadLocal, listOf(llvm.kNullInt32Ptr, statePtr, initializerPtr),
                 exceptionHandler = currentCodeContext.exceptionHandler)
@@ -2940,7 +2941,7 @@ internal class CodeGeneratorVisitor(
             val bbNeedInit = basicBlock("need_init", null)
 
 
-            val value = LLVMBuildLoad(builder, initGuard, "")!!
+            val value = LLVMBuildLoad2(builder, llvm.int32Type, initGuard, "")!!
             condBr(icmpEq(value, llvm.kImmInt32Zero), bbNeedInit, bbInited)
 
             appendingTo(bbInited) {

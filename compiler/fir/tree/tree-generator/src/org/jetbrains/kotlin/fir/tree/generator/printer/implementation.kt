@@ -79,9 +79,11 @@ fun SmartPrinter.printImplementation(implementation: Implementation) {
             withIndent {
                 fieldsWithoutDefault.forEachIndexed { _, field ->
                     if (field.isParameter) {
-                        println("${field.name}: ${field.typeWithArguments},")
+                        print("${field.name}: ${field.typeRef.typeWithArguments}")
+                        if (field.nullable) print("?")
+                        println(",")
                     } else if (!field.isFinal) {
-                        printField(field, isImplementation = true, override = true, inConstructor = true, notNull = field.notNull)
+                        printField(field, isImplementation = true, override = true, inConstructor = true)
                     }
                 }
             }
@@ -99,7 +101,7 @@ fun SmartPrinter.printImplementation(implementation: Implementation) {
                 allFields.forEach {
 
                     abstract()
-                    printField(it, isImplementation = true, override = true, notNull = it.notNull)
+                    printField(it, isImplementation = true, override = true)
                 }
             } else {
                 fieldsWithDefault.forEach {
@@ -112,7 +114,7 @@ fun SmartPrinter.printImplementation(implementation: Implementation) {
 
 
             val bindingCalls = element.allFields.filter {
-                it.withBindThis && it.type.contains("Symbol") && it !is FieldList && it.name != "companionObjectSymbol"
+                it.withBindThis && it.typeRef.type.contains("Symbol") && it !is FieldList && it.name != "companionObjectSymbol"
             }.takeIf {
                 it.isNotEmpty() && !isInterface && !isAbstract &&
                         !element.type.contains("Reference")
@@ -138,14 +140,14 @@ fun SmartPrinter.printImplementation(implementation: Implementation) {
             }
 
             fun Field.acceptString(): String = "${name}${call()}accept(visitor, data)"
-            if (!isInterface && !isAbstract) {
+            if (hasAcceptChildrenMethod) {
                 print("override fun <R, D> acceptChildren(visitor: FirVisitor<R, D>, data: D) {")
 
-                if (element.allFirFields.isNotEmpty()) {
+                val walkableFields = walkableChildren
+                if (walkableFields.isNotEmpty()) {
                     println()
                     withIndent {
-                        for (field in allFields.filter { it.isFirType }) {
-                            if (field.withGetter || !field.needAcceptAndTransform) continue
+                        for (field in walkableFields) {
                             when (field.name) {
                                 "explicitReceiver" -> {
                                     val explicitReceiver = implementation["explicitReceiver"]!!
@@ -202,65 +204,65 @@ fun SmartPrinter.printImplementation(implementation: Implementation) {
                 println()
             }
 
-            abstract()
-            print("override fun <D> transformChildren(transformer: FirTransformer<D>, data: D): $typeWithArguments")
-            if (!isInterface && !isAbstract) {
-                println(" {")
-                withIndent {
-                    for (field in allFields) {
-                        when {
-                            !field.isMutable || !field.isFirType || field.withGetter || !field.needAcceptAndTransform -> {}
-
-                            field.name == "explicitReceiver" -> {
-                                val explicitReceiver = implementation["explicitReceiver"]!!
-                                val dispatchReceiver = implementation["dispatchReceiver"]!!
-                                val extensionReceiver = implementation["extensionReceiver"]!!
-                                if (explicitReceiver.isMutable) {
-                                    println("explicitReceiver = explicitReceiver${explicitReceiver.call()}transform(transformer, data)")
-                                }
-                                if (dispatchReceiver.isMutable) {
-                                    println(
-                                        """
+            if (hasTransformChildrenMethod) {
+                abstract()
+                print("override fun <D> transformChildren(transformer: FirTransformer<D>, data: D): $typeWithArguments")
+                if (!isInterface && !isAbstract) {
+                    println(" {")
+                    withIndent {
+                        for (field in transformableChildren) {
+                            when {
+                                field.name == "explicitReceiver" -> {
+                                    val explicitReceiver = implementation["explicitReceiver"]!!
+                                    val dispatchReceiver = implementation["dispatchReceiver"]!!
+                                    val extensionReceiver = implementation["extensionReceiver"]!!
+                                    if (explicitReceiver.isMutable) {
+                                        println("explicitReceiver = explicitReceiver${explicitReceiver.call()}transform(transformer, data)")
+                                    }
+                                    if (dispatchReceiver.isMutable) {
+                                        println(
+                                            """
                                     |if (dispatchReceiver !== explicitReceiver) {
                                     |            dispatchReceiver = dispatchReceiver?.transform(transformer, data)
                                     |        }
                                 """.trimMargin(),
-                                    )
-                                }
-                                if (extensionReceiver.isMutable) {
-                                    println(
-                                        """
+                                        )
+                                    }
+                                    if (extensionReceiver.isMutable) {
+                                        println(
+                                            """
                                     |if (extensionReceiver !== explicitReceiver && extensionReceiver !== dispatchReceiver) {
                                     |            extensionReceiver = extensionReceiver?.transform(transformer, data)
                                     |        }
                                 """.trimMargin(),
-                                    )
+                                        )
+                                    }
                                 }
-                            }
 
-                            field.name in setOf("dispatchReceiver", "extensionReceiver") -> {}
+                                field.name in setOf("dispatchReceiver", "extensionReceiver") -> {}
 
-                            field.needsSeparateTransform -> {
-                                if (!(element.needTransformOtherChildren && field.needTransformInOtherChildren)) {
-                                    println("transform${field.name.replaceFirstChar(Char::uppercaseChar)}(transformer, data)")
+                                field.needsSeparateTransform -> {
+                                    if (!(element.needTransformOtherChildren && field.needTransformInOtherChildren)) {
+                                        println("transform${field.name.replaceFirstChar(Char::uppercaseChar)}(transformer, data)")
+                                    }
                                 }
-                            }
 
-                            !element.needTransformOtherChildren -> {
-                                field.transform()
-                            }
+                                !element.needTransformOtherChildren -> {
+                                    field.transform()
+                                }
 
-                            else -> {}
+                                else -> {}
+                            }
                         }
+                        if (element.needTransformOtherChildren) {
+                            println("transformOtherChildren(transformer, data)")
+                        }
+                        println("return this")
                     }
-                    if (element.needTransformOtherChildren) {
-                        println("transformOtherChildren(transformer, data)")
-                    }
-                    println("return this")
+                    println("}")
+                } else {
+                    println()
                 }
-                println("}")
-            } else {
-                println()
             }
 
             for (field in allFields) {
@@ -322,7 +324,7 @@ fun SmartPrinter.printImplementation(implementation: Implementation) {
 
             fun generateReplace(
                 field: Field,
-                overridenType: TypeRef? = null,
+                overridenType: TypeRefWithNullability? = null,
                 forceNullable: Boolean = false,
                 body: () -> Unit,
             ) {
@@ -375,7 +377,7 @@ fun SmartPrinter.printImplementation(implementation: Implementation) {
 
                 for (overridenType in field.overridenTypes) {
                     generateReplace(field, overridenType) {
-                        println("require($newValue is ${field.typeWithArguments})")
+                        println("require($newValue is ${field.typeRef.typeWithArguments})")
                         println("replace$capitalizedFieldName($newValue)")
                     }
                 }

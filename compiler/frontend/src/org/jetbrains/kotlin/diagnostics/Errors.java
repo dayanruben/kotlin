@@ -841,7 +841,7 @@ public interface Errors {
             ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER_WARNING =
             DiagnosticFactory3.create(WARNING, DECLARATION_NAME);
     DiagnosticFactory1<KtCallableDeclaration, K1ExpectActualMemberDiff<CallableMemberDescriptor, ClassDescriptor>>
-            NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION_WARNING = DiagnosticFactory1.create(WARNING, DECLARATION_NAME);
+            UNKNOWN_PROBLEM_DURING_NON_FINAL_CLASSIFIER_ACTUALIZATION_WARNING = DiagnosticFactory1.create(WARNING, DECLARATION_NAME);
     DiagnosticFactory1<KtCallableDeclaration, K1ExpectActualMemberDiff<CallableMemberDescriptor, ClassDescriptor>>
             RETURN_TYPE_CHANGED_IN_NON_FINAL_EXPECT_CLASSIFIER_ACTUALIZATION_WARNING = DiagnosticFactory1.create(WARNING, DECLARATION_RETURN_TYPE);
     DiagnosticFactory1<KtCallableDeclaration, K1ExpectActualMemberDiff<CallableMemberDescriptor, ClassDescriptor>>
@@ -857,11 +857,9 @@ public interface Errors {
     DiagnosticFactory1<KtCallableDeclaration, K1ExpectActualMemberDiff<CallableMemberDescriptor, ClassDescriptor>>
             LATEINIT_CHANGED_IN_NON_FINAL_EXPECT_CLASSIFIER_ACTUALIZATION_WARNING = DiagnosticFactory1.create(WARNING, LATEINIT_MODIFIER);
     DiagnosticFactory1<KtCallableDeclaration, K1ExpectActualMemberDiff<CallableMemberDescriptor, ClassDescriptor>>
+            VARARG_CHANGED_IN_NON_FINAL_EXPECT_CLASSIFIER_ACTUALIZATION_WARNING = DiagnosticFactory1.create(WARNING, LATEINIT_MODIFIER);
+    DiagnosticFactory1<KtCallableDeclaration, K1ExpectActualMemberDiff<CallableMemberDescriptor, ClassDescriptor>>
             TYPE_PARAMETER_NAMES_CHANGED_IN_NON_FINAL_EXPECT_CLASSIFIER_ACTUALIZATION_WARNING = DiagnosticFactory1.create(WARNING, TYPE_PARAMETERS_OR_DECLARATION_SIGNATURE);
-
-    DiagnosticFactory3<KtClassLikeDeclaration, ClassifierDescriptorWithTypeParameters, List<Name>, ClassDescriptor>
-            ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_SUPERTYPES_AS_NON_FINAL_EXPECT_CLASSIFIER_WARNING =
-            DiagnosticFactory3.create(WARNING, DECLARATION_NAME);
 
     DiagnosticFactory0<KtClassLikeDeclaration> EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING = DiagnosticFactory0.create(WARNING, EXPECT_ACTUAL_MODIFIER);
 

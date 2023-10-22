@@ -13,10 +13,6 @@ data class K1ExpectActualMemberDiff<out M, out C>(val kind: Kind, val actualMemb
      * Also see: [toMemberDiffKind]
      */
     enum class Kind(val rawMessage: String) {
-        NonPrivateCallableAdded(
-            "{0}: non-private member must be declared in both the actual class and the expect class. " +
-                    "This error happens because the expect class ''{1}'' is non-final"
-        ),
         ReturnTypeChangedInOverride(
             "{0}: the return type of this member must be the same in the expect class and the actual class. " +
                     "This error happens because the expect class ''{1}'' is non-final"
@@ -45,22 +41,35 @@ data class K1ExpectActualMemberDiff<out M, out C>(val kind: Kind, val actualMemb
             "{0}: the property modifiers (lateinit) of this member must be the same in the expect class and the actual class. " +
                     "This error happens because the expect class ''{1}'' is non-final"
         ),
+        VarargChangedInOverride(
+            "{0}: the parameter modifiers (vararg) of this member must be the same in the expect class and the actual class. " +
+                    "This error happens because the expect class ''{1}'' is non-final"
+        ),
         TypeParameterNamesChangedInOverride(
             "{0}: the type parameter names of this member must be the same in the expect class and the actual class. " +
                     "This error happens because the expect class ''{1}'' is non-final"
         ),
+        Unknown(
+            "{0}: normally, this error should never happen. Please report to https://kotl.in/issue. " +
+                    "This error happens because the expect class ''{1}'' is non-final"
+        )
     }
 }
 
 fun K1ExpectActualCompatibility.Incompatible<*>.toMemberDiffKind(): K1ExpectActualMemberDiff.Kind? = when (this) {
-    K1ExpectActualCompatibility.Incompatible.CallableKind -> K1ExpectActualMemberDiff.Kind.NonPrivateCallableAdded
-    K1ExpectActualCompatibility.Incompatible.ParameterCount -> K1ExpectActualMemberDiff.Kind.NonPrivateCallableAdded
-    K1ExpectActualCompatibility.Incompatible.ParameterShape -> K1ExpectActualMemberDiff.Kind.NonPrivateCallableAdded
-    K1ExpectActualCompatibility.Incompatible.ParameterTypes -> K1ExpectActualMemberDiff.Kind.NonPrivateCallableAdded
+    K1ExpectActualCompatibility.Incompatible.CallableKind,
+    K1ExpectActualCompatibility.Incompatible.ParameterCount,
+    K1ExpectActualCompatibility.Incompatible.ParameterShape,
+    K1ExpectActualCompatibility.Incompatible.ParameterTypes,
+    K1ExpectActualCompatibility.Incompatible.FunctionTypeParameterCount,
+    K1ExpectActualCompatibility.Incompatible.FunctionTypeParameterUpperBounds,
+        // It's an awful API. But we don't care because it's in K1. And K1 won't ever change anymore
+        // I could have created a nice API (replace K1ExpectActualCompatibility.Incompatible extension receiver with WeakIncompatible),
+        // if we didn't have this bug: KT-62752
+    -> error("It's not allowed to call this function with receiver: $this")
+
     K1ExpectActualCompatibility.Incompatible.ReturnType -> K1ExpectActualMemberDiff.Kind.ReturnTypeChangedInOverride
-    K1ExpectActualCompatibility.Incompatible.FunctionTypeParameterCount -> K1ExpectActualMemberDiff.Kind.NonPrivateCallableAdded
     K1ExpectActualCompatibility.Incompatible.ClassTypeParameterCount -> error("Not applicable because K1ExpectActualMemberDiff is about members")
-    K1ExpectActualCompatibility.Incompatible.FunctionTypeParameterUpperBounds -> K1ExpectActualMemberDiff.Kind.NonPrivateCallableAdded
     K1ExpectActualCompatibility.Incompatible.ClassTypeParameterUpperBounds -> error("Not applicable because K1ExpectActualMemberDiff is about members")
     K1ExpectActualCompatibility.Incompatible.ActualFunctionWithDefaultParameters -> null // It's not possible to add default parameters in override
     K1ExpectActualCompatibility.Incompatible.ClassKind -> error("Not applicable because K1ExpectActualMemberDiff is about members")
@@ -82,6 +91,6 @@ fun K1ExpectActualCompatibility.Incompatible<*>.toMemberDiffKind(): K1ExpectActu
     K1ExpectActualCompatibility.Incompatible.TypeParameterVariance -> null // Members are not allowed to have variance
     K1ExpectActualCompatibility.Incompatible.ValueParameterCrossinline -> null // inline fun can't be overridden
     K1ExpectActualCompatibility.Incompatible.ValueParameterNoinline -> null // inline fun can't be overridden
-    K1ExpectActualCompatibility.Incompatible.ValueParameterVararg -> K1ExpectActualMemberDiff.Kind.NonPrivateCallableAdded
+    K1ExpectActualCompatibility.Incompatible.ValueParameterVararg -> K1ExpectActualMemberDiff.Kind.VarargChangedInOverride
     K1ExpectActualCompatibility.Incompatible.Visibility -> K1ExpectActualMemberDiff.Kind.VisibilityChangedInOverride
 }

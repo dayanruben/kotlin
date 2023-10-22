@@ -55,6 +55,24 @@ class Element(override val name: String, kind: Kind) : AbstractElement<Element, 
 
     override var isSealed: Boolean = false
 
+    override val hasAcceptMethod: Boolean
+        get() = true
+
+    override val hasTransformMethod: Boolean
+        get() = true
+
+    override val hasAcceptChildrenMethod: Boolean
+        get() = isRootElement
+
+    override val hasTransformChildrenMethod: Boolean
+        get() = isRootElement
+
+    override val walkableChildren: List<Field>
+        get() = emptyList() // Use Implementation#walkableChildren instead
+
+    override val transformableChildren: List<Field>
+        get() = emptyList() // Use Implementation#transformableChildren instead
+
     var baseTransformerType: Element? = null
     val transformerType: Element get() = baseTransformerType ?: this
 
@@ -86,7 +104,7 @@ class Element(override val name: String, kind: Kind) : AbstractElement<Element, 
                 existingField.needTransformInOtherChildren = existingField.needTransformInOtherChildren || parentField.needTransformInOtherChildren
                 existingField.withReplace = parentField.withReplace || existingField.withReplace
                 existingField.parentHasSeparateTransform = parentField.needsSeparateTransform
-                if (parentField.type != existingField.type && parentField.withReplace) {
+                if (parentField.typeRef.copy(nullable = false) != existingField.typeRef.copy(nullable = false) && parentField.withReplace) {
                     existingField.overridenTypes += parentField.typeRef
                     overridenFields[existingField, parentField] = false
                 } else {
@@ -108,15 +126,9 @@ class Element(override val name: String, kind: Kind) : AbstractElement<Element, 
             val parent = parentRef.element
             val fields = parent.allFields.map { field ->
                 val copy = (field as? SimpleField)?.let { simpleField ->
-                    // FIXME: Replace with parentRef.args[simpleField.typeRef]
-                    parentRef.args[NamedTypeParameterRef(simpleField.type)]?.let {
-                        simpleField.replaceType(it)
-                    }
+                    simpleField.replaceType(simpleField.typeRef.substitute(parentRef.args) as TypeRefWithNullability)
                 } ?: field.copy()
                 copy.apply {
-                    arguments.replaceAll {
-                        parentRef.args[it] ?: it
-                    }
                     fromParent = true
                 }
             }

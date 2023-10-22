@@ -54,13 +54,22 @@ class Element(
 
     var isLeaf = config.isForcedLeaf
     val childrenOrderOverride: List<String>? = config.childrenOrderOverride
-    var walkableChildren: List<Field> = emptyList()
-    val transformableChildren get() = walkableChildren.filter { it.transformable }
+    override var walkableChildren: List<Field> = emptyList()
+    override val transformableChildren get() = walkableChildren.filter { it.transformable }
 
     val visitFunName = "visit" + (config.visitorName ?: name).replaceFirstChar(Char::uppercaseChar)
     val visitorParam = config.visitorParam ?: config.category.defaultVisitorParam
-    var accept = config.accept
-    val transform = config.transform
+
+    override var hasAcceptMethod = config.accept
+
+    override val hasTransformMethod = config.transform
+
+    override val hasAcceptChildrenMethod: Boolean
+        get() = ownsChildren && (isRootElement || walkableChildren.isNotEmpty())
+
+    override val hasTransformChildrenMethod: Boolean
+        get() = ownsChildren && (isRootElement || transformableChildren.isNotEmpty())
+
     val transformByChildren = config.transformByChildren
     val ownsChildren = config.ownsChildren
     val generateIrFactoryMethod = config.generateIrFactoryMethod
@@ -107,7 +116,6 @@ typealias ElementOrRef = GenericElementOrRef<Element, Field>
 sealed class Field(
     config: FieldConfig,
     override val name: String,
-    override val nullable: Boolean,
     override var isMutable: Boolean,
     val isChild: Boolean,
 ) : AbstractField() {
@@ -136,25 +144,17 @@ sealed class Field(
 
     override val isParameter: Boolean
         get() = false
-
-    override val type: String
-        get() = typeRef.type
-    override val packageName: String?
-        get() = typeRef.packageName
-
-    override fun getTypeWithArguments(notNull: Boolean): String = typeRef.getTypeWithArguments(notNull)
 }
 
 class SingleField(
     config: FieldConfig,
     name: String,
-    override var typeRef: TypeRef,
-    nullable: Boolean,
+    override var typeRef: TypeRefWithNullability,
     mutable: Boolean,
     isChild: Boolean,
     override val baseDefaultValue: CodeBlock?,
     override val baseGetter: CodeBlock?,
-) : Field(config, name, nullable, mutable, isChild) {
+) : Field(config, name, mutable, isChild) {
     override val transformable: Boolean
         get() = isMutable
 }
@@ -164,13 +164,12 @@ class ListField(
     name: String,
     var elementType: TypeRef,
     private val listType: ClassRef<PositionTypeParameterRef>,
-    nullable: Boolean,
     mutable: Boolean,
     isChild: Boolean,
     override val transformable: Boolean,
     override val baseDefaultValue: CodeBlock?,
     override val baseGetter: CodeBlock?,
-) : Field(config, name, nullable, mutable, isChild) {
-    override val typeRef: TypeRef
+) : Field(config, name, mutable, isChild) {
+    override val typeRef: TypeRefWithNullability
         get() = listType.withArgs(elementType)
 }
