@@ -157,6 +157,8 @@ class IrBuiltInsOverFir(
     }
 
     private val intrinsicConstAnnotation: IrConstructorCall by lazy {
+        // class for intrinsicConst is created manually and it definitely is not a lazy class
+        @OptIn(IrSymbolInternals::class)
         val constructor = intrinsicConst.constructors.single()
         IrConstructorCallImpl.Companion.fromSymbolOwner(intrinsicConst.defaultType, constructor)
     }
@@ -226,27 +228,27 @@ class IrBuiltInsOverFir(
         return loadClass(ClassId(StandardClassIds.BASE_COLLECTIONS_PACKAGE, Name.identifier("${primitiveType.typeName}Iterator")))
     }
 
-    override val booleanIterator = primitiveIterator(PrimitiveType.BOOLEAN)
-    override val charIterator = primitiveIterator(PrimitiveType.CHAR)
-    override val byteIterator = primitiveIterator(PrimitiveType.BYTE)
-    override val shortIterator = primitiveIterator(PrimitiveType.SHORT)
-    override val intIterator = primitiveIterator(PrimitiveType.INT)
-    override val longIterator = primitiveIterator(PrimitiveType.LONG)
-    override val floatIterator = primitiveIterator(PrimitiveType.FLOAT)
-    override val doubleIterator = primitiveIterator(PrimitiveType.DOUBLE)
+    override val booleanIterator by lazy { primitiveIterator(PrimitiveType.BOOLEAN) }
+    override val charIterator by lazy { primitiveIterator(PrimitiveType.CHAR) }
+    override val byteIterator by lazy { primitiveIterator(PrimitiveType.BYTE) }
+    override val shortIterator by lazy { primitiveIterator(PrimitiveType.SHORT) }
+    override val intIterator by lazy { primitiveIterator(PrimitiveType.INT) }
+    override val longIterator by lazy { primitiveIterator(PrimitiveType.LONG) }
+    override val floatIterator by lazy { primitiveIterator(PrimitiveType.FLOAT) }
+    override val doubleIterator by lazy { primitiveIterator(PrimitiveType.DOUBLE) }
 
     private fun loadPrimitiveArray(primitiveType: PrimitiveType): IrClassSymbol {
         return loadClass(ClassId(StandardClassIds.BASE_KOTLIN_PACKAGE, Name.identifier("${primitiveType.typeName}Array")))
     }
 
-    override val booleanArray: IrClassSymbol = loadPrimitiveArray(PrimitiveType.BOOLEAN)
-    override val charArray: IrClassSymbol = loadPrimitiveArray(PrimitiveType.CHAR)
-    override val byteArray: IrClassSymbol = loadPrimitiveArray(PrimitiveType.BYTE)
-    override val shortArray: IrClassSymbol = loadPrimitiveArray(PrimitiveType.SHORT)
-    override val intArray: IrClassSymbol = loadPrimitiveArray(PrimitiveType.INT)
-    override val longArray: IrClassSymbol = loadPrimitiveArray(PrimitiveType.LONG)
-    override val floatArray: IrClassSymbol = loadPrimitiveArray(PrimitiveType.FLOAT)
-    override val doubleArray: IrClassSymbol = loadPrimitiveArray(PrimitiveType.DOUBLE)
+    override val booleanArray: IrClassSymbol by lazy { loadPrimitiveArray(PrimitiveType.BOOLEAN) }
+    override val charArray: IrClassSymbol by lazy { loadPrimitiveArray(PrimitiveType.CHAR) }
+    override val byteArray: IrClassSymbol by lazy { loadPrimitiveArray(PrimitiveType.BYTE) }
+    override val shortArray: IrClassSymbol by lazy { loadPrimitiveArray(PrimitiveType.SHORT) }
+    override val intArray: IrClassSymbol by lazy { loadPrimitiveArray(PrimitiveType.INT) }
+    override val longArray: IrClassSymbol by lazy { loadPrimitiveArray(PrimitiveType.LONG) }
+    override val floatArray: IrClassSymbol by lazy { loadPrimitiveArray(PrimitiveType.FLOAT) }
+    override val doubleArray: IrClassSymbol by lazy { loadPrimitiveArray(PrimitiveType.DOUBLE) }
 
     override val primitiveArraysToPrimitiveTypes: Map<IrClassSymbol, PrimitiveType> by lazy {
         mapOf(
@@ -305,10 +307,17 @@ class IrBuiltInsOverFir(
                 returnType: IrType,
                 vararg valueParameterTypes: Pair<String, IrType>,
                 isIntrinsicConst: Boolean = false,
-            ) =
-                createFunction(name, returnType, valueParameterTypes, origin = BUILTIN_OPERATOR, isIntrinsicConst = isIntrinsicConst).also {
+            ): IrSimpleFunctionSymbol {
+                return createFunction(
+                    name, returnType, valueParameterTypes,
+                    origin = BUILTIN_OPERATOR,
+                    isIntrinsicConst = isIntrinsicConst
+                ).also {
+                    // `kotlinInternalIrPackageFragment` definitely is not a lazy class
+                    @OptIn(IrSymbolInternals::class)
                     declarations.add(it)
                 }.symbol
+            }
 
             primitiveFloatingPointIrTypes.forEach { fpType ->
                 _ieee754equalsFunByOperandType[fpType.classifierOrFail] = addBuiltinOperatorSymbol(
@@ -369,6 +378,8 @@ class IrBuiltInsOverFir(
                     typeParameters = listOf(typeParameter),
                     origin = BUILTIN_OPERATOR
                 ).also {
+                    // `kotlinInternalIrPackageFragment` definitely is not a lazy class
+                    @OptIn(IrSymbolInternals::class)
                     declarations.add(it)
                 }.symbol
             }
@@ -557,6 +568,8 @@ class IrBuiltInsOverFir(
         return builtInClass.functions.filter { it.owner.name == name }.asIterable()
     }
 
+    // This function should not be called from fir2ir code
+    @IrSymbolInternals
     override fun getBinaryOperator(name: Name, lhsType: IrType, rhsType: IrType): IrSimpleFunctionSymbol {
         val definingClass = lhsType.getMaybeBuiltinClass() ?: error("Defining class not found: $lhsType")
         return definingClass.functions.single { function ->
@@ -564,6 +577,8 @@ class IrBuiltInsOverFir(
         }.symbol
     }
 
+    // This function should not be called from fir2ir code
+    @IrSymbolInternals
     override fun getUnaryOperator(name: Name, receiverType: IrType): IrSimpleFunctionSymbol {
         val definingClass = receiverType.getMaybeBuiltinClass() ?: error("Defining class not found: $receiverType")
         return definingClass.functions.single { function ->

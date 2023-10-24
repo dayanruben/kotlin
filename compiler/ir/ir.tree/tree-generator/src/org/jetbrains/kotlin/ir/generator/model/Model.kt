@@ -76,8 +76,10 @@ class Element(
     val fieldsToSkipInIrFactoryMethod = config.fieldsToSkipInIrFactoryMethod
 
     val generationCallback = config.generationCallback
-    val propertyName = config.propertyName
-    val kDoc = config.kDoc
+    override val propertyName = config.propertyName
+
+    override val kDoc = config.kDoc
+
     val additionalImports: List<Import> = config.additionalImports
 
     override fun toString() = name
@@ -126,7 +128,9 @@ sealed class Field(
     abstract val transformable: Boolean
 
     val useInIrFactoryStrategy = config.useFieldInIrFactoryStrategy
-    val kdoc = config.kdoc
+    init {
+        kDoc = config.kDoc
+    }
 
     val printProperty = config.printProperty
     val generationCallback = config.generationCallback

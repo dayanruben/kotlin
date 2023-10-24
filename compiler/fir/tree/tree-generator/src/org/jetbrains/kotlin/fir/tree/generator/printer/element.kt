@@ -39,6 +39,7 @@ fun SmartPrinter.printElement(element: Element) {
             }
         }
 
+        printKDoc(element.extendedKDoc())
         print("${kind!!.title} $type")
         print(typeParameters())
         val parentRefs = element.parentRefs

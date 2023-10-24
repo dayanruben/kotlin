@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.generators.tree.*
 import org.jetbrains.kotlin.generators.tree.ElementOrRef as GenericElementOrRef
 import org.jetbrains.kotlin.generators.tree.ElementRef as GenericElementRef
 
-class Element(override val name: String, kind: Kind) : AbstractElement<Element, Field>() {
+class Element(override val name: String, override val propertyName: String, kind: Kind) : AbstractElement<Element, Field>() {
     companion object {
         private val allowedKinds = setOf(
             ImplementationKind.Interface,
@@ -29,6 +29,8 @@ class Element(override val name: String, kind: Kind) : AbstractElement<Element, 
 
     override val nullable: Boolean
         get() = false
+
+    override var kDoc: String? = null
 
     override val fields = mutableSetOf<Field>()
     override val type: String = "Fir$name"
