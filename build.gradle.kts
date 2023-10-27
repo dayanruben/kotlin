@@ -124,6 +124,7 @@ val irCompilerModulesForIDE = arrayOf(
     ":compiler:ir.serialization.js", // used in IJ android plugin in `ComposeIrGenerationExtension`
     ":compiler:ir.backend.common",
     ":compiler:ir.interpreter",
+    ":compiler:ir.objcinterop",
 ).also { extra["irCompilerModulesForIDE"] = it }
 
 val commonCompilerModules = arrayOf(
@@ -480,6 +481,9 @@ val projectsWithEnabledContextReceivers by extra {
         ":compiler:fir:raw-fir:raw-fir.common",
         ":compiler:fir:raw-fir:psi2fir",
         ":compiler:fir:raw-fir:light-tree2fir",
+        ":compiler:fir:tree:tree-generator",
+        ":compiler:ir.tree:tree-generator",
+        ":generators:tree-generator-common",
         ":kotlin-lombok-compiler-plugin.k1",
         ":kotlinx-serialization-compiler-plugin.k2",
         ":plugins:parcelize:parcelize-compiler:parcelize.k2",

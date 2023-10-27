@@ -102,17 +102,25 @@ object FirDiagnosticRenderers {
         name.asString()
     }
 
-    val RENDER_CLASS_OR_OBJECT = Renderer { classSymbol: FirClassSymbol<*> ->
+    val RENDER_CLASS_OR_OBJECT_QUOTED = Renderer { classSymbol: FirClassSymbol<*> ->
         val name = classSymbol.classId.relativeClassName.asString()
         val classOrObject = when (classSymbol.classKind) {
             ClassKind.OBJECT -> "Object"
             ClassKind.INTERFACE -> "Interface"
             else -> "Class"
         }
-        "$classOrObject $name"
+        "$classOrObject '$name'"
     }
 
-    val RENDER_CLASS_OR_OBJECT_NAME = Renderer { firClassLike: FirClassLikeSymbol<*> ->
+    val RENDER_ENUM_ENTRY_QUOTED = Renderer { enumEntry: FirEnumEntrySymbol ->
+        var name = enumEntry.callableId.callableName.asString()
+        enumEntry.callableId.classId?.let {
+            name = "${it.shortClassName.asString()}.$name"
+        }
+        "Enum entry '$name'"
+    }
+
+    val RENDER_CLASS_OR_OBJECT_NAME_QUOTED = Renderer { firClassLike: FirClassLikeSymbol<*> ->
         val name = firClassLike.classId.relativeClassName.shortName().asString()
         val prefix = when (firClassLike) {
             is FirTypeAliasSymbol -> "typealias"
