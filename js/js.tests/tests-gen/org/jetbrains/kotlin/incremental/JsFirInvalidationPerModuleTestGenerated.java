@@ -410,6 +410,18 @@ public class JsFirInvalidationPerModuleTestGenerated extends AbstractJsFirInvali
     }
 
     @Test
+    @TestMetadata("multiPlatformClashFileNames")
+    public void testMultiPlatformClashFileNames() throws Exception {
+        runTest("js/js.translator/testData/incremental/invalidation/multiPlatformClashFileNames/");
+    }
+
+    @Test
+    @TestMetadata("multiPlatformSimple")
+    public void testMultiPlatformSimple() throws Exception {
+        runTest("js/js.translator/testData/incremental/invalidation/multiPlatformSimple/");
+    }
+
+    @Test
     @TestMetadata("nestedClass")
     public void testNestedClass() throws Exception {
         runTest("js/js.translator/testData/incremental/invalidation/nestedClass/");
