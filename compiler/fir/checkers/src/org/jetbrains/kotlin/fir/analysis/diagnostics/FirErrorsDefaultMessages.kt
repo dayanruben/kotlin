@@ -218,6 +218,8 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ERROR_FROM_JAVA_R
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ERROR_IN_CONTRACT_DESCRIPTION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ERROR_SUPPRESSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPANDED_TYPE_CANNOT_BE_INHERITED
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPANSIVE_INHERITANCE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPANSIVE_INHERITANCE_IN_JAVA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPECTED_CLASS_CONSTRUCTOR_DELEGATION_CALL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPECTED_CLASS_CONSTRUCTOR_PROPERTY_PARAMETER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPECTED_CONDITION
@@ -494,7 +496,6 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PLUGIN_ANNOTATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.POTENTIALLY_NON_REPORTED_ANNOTATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PRE_RELEASE_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PRIMARY_CONSTRUCTOR_REQUIRED_FOR_DATA_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PRIVATE_CLASS_MEMBER_FROM_INLINE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PRIVATE_FUNCTION_WITH_NO_BODY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PRIVATE_PROPERTY_IN_INTERFACE
@@ -941,7 +942,6 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(PROTECTED_CONSTRUCTOR_NOT_IN_SUPER_CALL, "Protected constructor ''{0}'' from other classes can only be used in super-call.", SYMBOL)
         map.put(SUPERTYPE_INITIALIZED_WITHOUT_PRIMARY_CONSTRUCTOR, "Supertype initialization is impossible without a primary constructor.")
         map.put(DELEGATION_SUPER_CALL_IN_ENUM_CONSTRUCTOR, "Calls to super in enum constructors are prohibited.")
-        map.put(PRIMARY_CONSTRUCTOR_REQUIRED_FOR_DATA_CLASS, "Primary constructor required for data class.")
         map.put(
             EXPLICIT_DELEGATION_CALL_REQUIRED,
             "Explicit 'this' or 'super' call is required. There is no constructor in the superclass that can be called without arguments."
@@ -1445,7 +1445,13 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(CYCLIC_GENERIC_UPPER_BOUND, "Type parameter has cyclic upper bounds.")
 
         map.put(FINITE_BOUNDS_VIOLATION, "This type parameter violates the Finite Bound Restriction.")
-        map.put(FINITE_BOUNDS_VIOLATION_IN_JAVA, "Violation of Finite Bound Restriction for {0}", commaSeparated(DECLARATION_NAME))
+        map.put(FINITE_BOUNDS_VIOLATION_IN_JAVA, "Violation of Finite Bound Restriction for {0}.", commaSeparated(DECLARATION_NAME))
+        map.put(EXPANSIVE_INHERITANCE, "This type parameter violates the Non-Expansive Inheritance Restriction.")
+        map.put(
+            EXPANSIVE_INHERITANCE_IN_JAVA,
+            "Violation of Non-Expansive Inheritance Restriction for {0}.",
+            commaSeparated(DECLARATION_NAME),
+        )
 
         map.put(DEPRECATED_TYPE_PARAMETER_SYNTAX, "Type parameters must be placed before function name.")
 

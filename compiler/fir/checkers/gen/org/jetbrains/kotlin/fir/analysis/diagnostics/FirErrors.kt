@@ -91,7 +91,6 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtReturnExpression
@@ -245,10 +244,9 @@ object FirErrors {
     val SUPERTYPE_NOT_INITIALIZED by error0<KtTypeReference>()
     val SUPERTYPE_INITIALIZED_WITHOUT_PRIMARY_CONSTRUCTOR by error0<PsiElement>()
     val DELEGATION_SUPER_CALL_IN_ENUM_CONSTRUCTOR by error0<PsiElement>()
-    val PRIMARY_CONSTRUCTOR_REQUIRED_FOR_DATA_CLASS by error0<KtNamedDeclaration>(SourceElementPositioningStrategies.DECLARATION_NAME)
     val EXPLICIT_DELEGATION_CALL_REQUIRED by error0<PsiElement>(SourceElementPositioningStrategies.SECONDARY_CONSTRUCTOR_DELEGATION_CALL)
     val SEALED_CLASS_CONSTRUCTOR_CALL by error0<PsiElement>()
-    val DATA_CLASS_WITHOUT_PARAMETERS by error0<KtPrimaryConstructor>()
+    val DATA_CLASS_WITHOUT_PARAMETERS by error0<KtNamedDeclaration>(SourceElementPositioningStrategies.DECLARATION_NAME)
     val DATA_CLASS_VARARG_PARAMETER by error0<KtParameter>()
     val DATA_CLASS_NOT_PROPERTY_PARAMETER by error0<KtParameter>()
 
@@ -467,7 +465,9 @@ object FirErrors {
     val ABBREVIATED_NOTHING_PROPERTY_TYPE by error0<PsiElement>(SourceElementPositioningStrategies.NAME_IDENTIFIER)
     val CYCLIC_GENERIC_UPPER_BOUND by error0<PsiElement>()
     val FINITE_BOUNDS_VIOLATION by error0<PsiElement>()
-    val FINITE_BOUNDS_VIOLATION_IN_JAVA by error1<PsiElement, List<FirBasedSymbol<*>>>()
+    val FINITE_BOUNDS_VIOLATION_IN_JAVA by warning1<PsiElement, List<FirBasedSymbol<*>>>()
+    val EXPANSIVE_INHERITANCE by error0<PsiElement>()
+    val EXPANSIVE_INHERITANCE_IN_JAVA by warning1<PsiElement, List<FirBasedSymbol<*>>>()
     val DEPRECATED_TYPE_PARAMETER_SYNTAX by error0<KtDeclaration>(SourceElementPositioningStrategies.TYPE_PARAMETERS_LIST)
     val MISPLACED_TYPE_PARAMETER_CONSTRAINTS by warning0<KtTypeParameter>()
     val DYNAMIC_SUPERTYPE by error0<KtTypeReference>()
