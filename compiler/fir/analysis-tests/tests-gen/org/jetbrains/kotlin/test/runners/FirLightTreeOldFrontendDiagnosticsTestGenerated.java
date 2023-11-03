@@ -6640,6 +6640,54 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         }
 
         @Nested
+        @TestMetadata("compiler/testData/diagnostics/tests/contracts")
+        @TestDataPath("$PROJECT_ROOT")
+        public class Contracts {
+            @Test
+            public void testAllFilesPresentInContracts() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/contracts"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true, "multiplatform");
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/diagnostics/tests/contracts/neg")
+            @TestDataPath("$PROJECT_ROOT")
+            public class Neg {
+                @Test
+                @TestMetadata("14.kt")
+                public void test14() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/contracts/neg/14.kt");
+                }
+
+                @Test
+                public void testAllFilesPresentInNeg() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/contracts/neg"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true, "multiplatform");
+                }
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/diagnostics/tests/contracts/pos")
+            @TestDataPath("$PROJECT_ROOT")
+            public class Pos {
+                @Test
+                @TestMetadata("1.kt")
+                public void test1() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/contracts/pos/1.kt");
+                }
+
+                @Test
+                @TestMetadata("14UserDefined.kt")
+                public void test14UserDefined() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/contracts/pos/14UserDefined.kt");
+                }
+
+                @Test
+                public void testAllFilesPresentInPos() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/contracts/pos"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true, "multiplatform");
+                }
+            }
+        }
+
+        @Nested
         @TestMetadata("compiler/testData/diagnostics/tests/controlFlowAnalysis")
         @TestDataPath("$PROJECT_ROOT")
         public class ControlFlowAnalysis {
@@ -12679,6 +12727,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                 @TestMetadata("contextKeywordWithElvis.kt")
                 public void testContextKeywordWithElvis() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/contextKeywordWithElvis.kt");
+                }
+
+                @Test
+                @TestMetadata("contextReceiverAmbiguity.kt")
+                public void testContextReceiverAmbiguity() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/contextReceiverAmbiguity.kt");
                 }
 
                 @Test
@@ -34509,6 +34563,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                 @TestMetadata("irrelevantFields.kt")
                 public void testIrrelevantFields() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/testsWithJava17/jvmRecord/irrelevantFields.kt");
+                }
+
+                @Test
+                @TestMetadata("javaRecordWithCanonicalConstructor.kt")
+                public void testJavaRecordWithCanonicalConstructor() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/testsWithJava17/jvmRecord/javaRecordWithCanonicalConstructor.kt");
                 }
 
                 @Test

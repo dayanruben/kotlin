@@ -56,6 +56,8 @@ import org.jetbrains.kotlin.gradle.plugin.sources.KotlinMultiplatformSourceSetSe
 import org.jetbrains.kotlin.gradle.plugin.sources.LanguageSettingsSetupAction
 import org.jetbrains.kotlin.gradle.plugin.statistics.MultiplatformBuildStatsReportSetupAction
 import org.jetbrains.kotlin.gradle.scripting.internal.ScriptingGradleSubpluginSetupAction
+import org.jetbrains.kotlin.gradle.targets.*
+import org.jetbrains.kotlin.gradle.targets.ConfigureBuildSideEffect
 import org.jetbrains.kotlin.gradle.targets.CreateArtifactsSideEffect
 import org.jetbrains.kotlin.gradle.targets.CreateDefaultCompilationsSideEffect
 import org.jetbrains.kotlin.gradle.targets.CreateTargetConfigurationsSideEffect
@@ -64,6 +66,7 @@ import org.jetbrains.kotlin.gradle.targets.NativeForwardImplementationToApiEleme
 import org.jetbrains.kotlin.gradle.targets.js.npm.AddNpmDependencyExtensionProjectSetupAction
 import org.jetbrains.kotlin.gradle.targets.metadata.KotlinMetadataTargetSetupAction
 import org.jetbrains.kotlin.gradle.targets.native.CreateFatFrameworksSetupAction
+import org.jetbrains.kotlin.gradle.targets.native.KotlinNativeConfigureBinariesSideEffect
 import org.jetbrains.kotlin.gradle.targets.native.internal.CInteropCommonizedCInteropApiElementsConfigurationsSetupAction
 import org.jetbrains.kotlin.gradle.targets.native.tasks.artifact.KotlinArtifactsExtensionSetupAction
 import org.jetbrains.kotlin.gradle.tooling.RegisterBuildKotlinToolingMetadataTask
@@ -109,6 +112,9 @@ internal fun Project.registerKotlinPluginExtensions() {
         register(project, CreateTargetConfigurationsSideEffect)
         register(project, NativeForwardImplementationToApiElementsSideEffect)
         register(project, CreateArtifactsSideEffect)
+        register(project, ConfigureBuildSideEffect)
+        register(project, KotlinNativeConfigureBinariesSideEffect)
+        register(project, CreateDefaultTestRunSideEffect)
     }
 
     KotlinCompilationSideEffect.extensionPoint.apply {

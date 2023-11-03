@@ -36,11 +36,9 @@ interface KotlinTargetConfigurator<KotlinTargetType : KotlinTarget> {
     ) {
         target.runKotlinCompilationSideEffects()
         target.runKotlinTargetSideEffects()
-        configureBuild(target)
         configurePlatformSpecificModel(target)
     }
 
-    fun configureBuild(target: KotlinTargetType)
     fun configurePlatformSpecificModel(target: KotlinTargetType) = Unit
 }
 
@@ -49,33 +47,6 @@ abstract class AbstractKotlinTargetConfigurator<KotlinTargetType : KotlinTarget>
 ) : KotlinTargetConfigurator<KotlinTargetType> {
 
     protected open val runtimeIncludesCompilationOutputs = true
-
-    override fun configureBuild(target: KotlinTargetType) {
-        val project = target.project
-
-        val buildNeeded = project.tasks.named(JavaBasePlugin.BUILD_NEEDED_TASK_NAME)
-        val buildDependent = project.tasks.named(JavaBasePlugin.BUILD_DEPENDENTS_TASK_NAME)
-
-        if (createTestCompilation) {
-            val testCompilation = target.compilations.getByName(KotlinCompilation.TEST_COMPILATION_NAME)
-            if (testCompilation is KotlinCompilationToRunnableFiles) {
-                addDependsOnTaskInOtherProjects(project, buildNeeded, true, testCompilation.runtimeDependencyConfigurationName)
-                addDependsOnTaskInOtherProjects(project, buildDependent, false, testCompilation.runtimeDependencyConfigurationName)
-            }
-        }
-    }
-
-    private fun addDependsOnTaskInOtherProjects(
-        project: Project,
-        taskProvider: TaskProvider<*>,
-        useDependedOn: Boolean,
-        configurationName: String,
-    ) {
-        val configuration = project.configurations.getByName(configurationName)
-        taskProvider.configure { task ->
-            task.dependsOn(configuration.getTaskDependencyFromProjectDependency(useDependedOn, taskProvider.name))
-        }
-    }
 
     companion object {
         const val testTaskNameSuffix = "test"
@@ -89,45 +60,6 @@ internal val KotlinTarget.testTaskName: String
 abstract class KotlinOnlyTargetConfigurator<KotlinCompilationType : KotlinCompilation<*>, KotlinTargetType : KotlinOnlyTarget<KotlinCompilationType>>(
     createTestCompilation: Boolean,
 ) : AbstractKotlinTargetConfigurator<KotlinTargetType>(createTestCompilation)
-
-internal interface KotlinTargetWithTestsConfigurator<R : KotlinTargetTestRun<*>, T : KotlinTargetWithTests<*, R>>
-    : KotlinTargetConfigurator<T> {
-
-    override fun configureTarget(target: T) {
-        super.configureTarget(target)
-        configureTest(target)
-    }
-
-    val testRunClass: Class<R>
-
-    fun createTestRun(name: String, target: T): R
-
-    fun configureTest(target: T) {
-        initializeTestRuns(target)
-        target.testRuns.create(KotlinTargetWithTests.DEFAULT_TEST_RUN_NAME)
-    }
-
-    private fun initializeTestRuns(target: T) {
-        val project = target.project
-
-        val testRunsPropertyName = KotlinTargetWithTests<*, *>::testRuns.name
-        val mutableProperty =
-            target::class.memberProperties
-                .find { it.name == testRunsPropertyName } as? KMutableProperty1<*, *>
-                ?: error(
-                    "The ${this::class.qualifiedName} implementation of ${KotlinTargetWithTests::class.qualifiedName} must " +
-                            "override the $testRunsPropertyName property with a var."
-                )
-
-        val testRunsContainer = project.container(testRunClass) { testRunName -> createTestRun(testRunName, target) }
-
-        @Suppress("UNCHECKED_CAST")
-        (mutableProperty as KMutableProperty1<KotlinTargetWithTests<*, R>, NamedDomainObjectContainer<R>>)
-            .set(target, testRunsContainer)
-
-        (target as ExtensionAware).extensions.add(target::testRuns.name, testRunsContainer)
-    }
-}
 
 internal fun Project.usageByName(usageName: String): Usage =
     objects.named(Usage::class.java, usageName)
