@@ -840,3 +840,20 @@ context(Fir2IrComponents)
 internal fun FirClass.declaredScope(): FirContainingNamesAwareScope {
     return symbol.declaredScope()
 }
+
+internal fun implicitCast(original: IrExpression, castType: IrType, typeOperator: IrTypeOperator): IrExpression {
+    if (original.type == castType) {
+        return original
+    }
+    if (original !is IrTypeOperatorCall) {
+        return IrTypeOperatorCallImpl(
+            original.startOffset,
+            original.endOffset,
+            castType,
+            typeOperator,
+            castType,
+            original
+        )
+    }
+    return implicitCast(original.argument, castType, typeOperator)
+}
