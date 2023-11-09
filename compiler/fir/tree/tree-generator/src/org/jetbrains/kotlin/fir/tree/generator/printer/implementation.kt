@@ -5,13 +5,12 @@
 
 package org.jetbrains.kotlin.fir.tree.generator.printer
 
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.tree.generator.*
 import org.jetbrains.kotlin.fir.tree.generator.model.*
 import org.jetbrains.kotlin.generators.tree.*
-import org.jetbrains.kotlin.generators.tree.printer.GeneratedFile
+import org.jetbrains.kotlin.generators.tree.printer.*
 import org.jetbrains.kotlin.generators.tree.printer.braces
-import org.jetbrains.kotlin.generators.tree.printer.printGeneratedType
-import org.jetbrains.kotlin.generators.tree.printer.typeParameters
 import org.jetbrains.kotlin.utils.SmartPrinter
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import org.jetbrains.kotlin.utils.withIndent
@@ -25,10 +24,22 @@ fun Implementation.generateCode(generationPath: File): GeneratedFile =
         this.typeName,
         fileSuppressions = listOf("DuplicatedCode", "unused"),
     ) {
-        println()
         addAllImports(usedTypes)
         printImplementation(this@generateCode)
     }
+
+private class ImplementationFieldPrinter(printer: SmartPrinter) : AbstractFieldPrinter<Field>(printer) {
+
+    private fun Field.isMutableOrEmptyIfList(): Boolean = when (this) {
+        is FieldList -> isMutableOrEmptyList
+        is FieldWithDefault -> origin.isMutableOrEmptyIfList()
+        else -> true
+    }
+
+    override fun forceMutable(field: Field): Boolean = field.isMutable && field.isMutableOrEmptyIfList()
+
+    override fun actualTypeOfField(field: Field) = field.getMutableType()
+}
 
 context(ImportCollector)
 fun SmartPrinter.printImplementation(implementation: Implementation) {
@@ -72,11 +83,7 @@ fun SmartPrinter.printImplementation(implementation: Implementation) {
         val isInterface = kind == ImplementationKind.Interface || kind == ImplementationKind.SealedInterface
         val isAbstract = kind == ImplementationKind.AbstractClass || kind == ImplementationKind.SealedClass
 
-        fun abstract() {
-            if (isAbstract) {
-                print("abstract ")
-            }
-        }
+        val fieldPrinter = ImplementationFieldPrinter(this@printImplementation)
 
         if (!isInterface && !isAbstract && fieldsWithoutDefault.isNotEmpty()) {
             if (isPublic) {
@@ -90,7 +97,7 @@ fun SmartPrinter.printImplementation(implementation: Implementation) {
                         if (field.nullable) print("?")
                         println(",")
                     } else if (!field.isFinal) {
-                        printField(field, isImplementation = true, override = true, inConstructor = true)
+                        fieldPrinter.printField(field, override = true, inConstructor = true)
                     }
                 }
             }
@@ -106,16 +113,11 @@ fun SmartPrinter.printImplementation(implementation: Implementation) {
         withIndent {
             if (isInterface || isAbstract) {
                 allFields.forEach {
-
-                    abstract()
-                    printField(it, isImplementation = true, override = true)
+                    fieldPrinter.printField(it, override = true, modality = Modality.ABSTRACT.takeIf { isAbstract })
                 }
             } else {
                 fieldsWithDefault.forEach {
-                    printFieldWithDefaultInImplementation(it)
-                }
-                if (fieldsWithDefault.isNotEmpty()) {
-                    println()
+                    fieldPrinter.printField(it, override = true)
                 }
             }
 
@@ -132,6 +134,7 @@ fun SmartPrinter.printImplementation(implementation: Implementation) {
 
             val customCalls = fieldsWithoutDefault.filter { it.customInitializationCall != null }
             if (bindingCalls.isNotEmpty() || customCalls.isNotEmpty()) {
+                println()
                 println("init {")
                 withIndent {
                     for (symbolField in bindingCalls) {
@@ -144,12 +147,13 @@ fun SmartPrinter.printImplementation(implementation: Implementation) {
                     }
                 }
                 println("}")
-                println()
             }
 
             fun Field.acceptString(): String = "${name}${call()}accept(visitor, data)"
+
             if (hasAcceptChildrenMethod) {
-                print("override fun <R, D> acceptChildren(visitor: ${firVisitorType.render()}<R, D>, data: D) {")
+                printAcceptChildrenMethod(this, firVisitorType, TypeVariable("R"), override = true)
+                print(" {")
 
                 val walkableFields = walkableChildren
                 if (walkableFields.isNotEmpty()) {
@@ -209,16 +213,15 @@ fun SmartPrinter.printImplementation(implementation: Implementation) {
                     }
                 }
                 println("}")
-                println()
             }
 
             if (hasTransformChildrenMethod) {
-                abstract()
-                print(
-                    "override fun <D> transformChildren(transformer: ",
-                    firTransformerType.render(),
-                    "<D>, data: D): ",
-                    render(),
+                printTransformChildrenMethod(
+                    this,
+                    firTransformerType,
+                    this,
+                    modality = Modality.ABSTRACT.takeIf { isAbstract },
+                    override = true,
                 )
                 if (!isInterface && !isAbstract) {
                     println(" {")
@@ -272,17 +275,15 @@ fun SmartPrinter.printImplementation(implementation: Implementation) {
                         }
                         println("return this")
                     }
-                    println("}")
-                } else {
-                    println()
+                    print("}")
                 }
+                println()
             }
 
             for (field in allFields) {
                 if (!field.needsSeparateTransform) continue
                 println()
-                abstract()
-                print("override ${field.transformFunctionDeclaration(this)}")
+                transformFunctionDeclaration(field, this, override = true, kind!!)
                 if (isInterface || isAbstract) {
                     println()
                     continue
@@ -313,13 +314,7 @@ fun SmartPrinter.printImplementation(implementation: Implementation) {
 
             if (element.needTransformOtherChildren) {
                 println()
-                abstract()
-                print(
-                    "override fun <D> transformOtherChildren(transformer: ",
-                    firTransformerType.render(),
-                    "<D>, data: D): ",
-                    render(),
-                )
+                transformOtherChildrenFunctionDeclaration(this, override = true, kind!!)
                 if (isInterface || isAbstract) {
                     println()
                 } else {
@@ -350,8 +345,7 @@ fun SmartPrinter.printImplementation(implementation: Implementation) {
                 if (field.name == "source") {
                     println("@${firImplementationDetailType.render()}")
                 }
-                abstract()
-                print("override ${field.replaceFunctionDeclaration(overridenType, forceNullable)}")
+                replaceFunctionDeclaration(field, override = true, kind!!, overridenType, forceNullable)
                 if (isInterface || isAbstract) {
                     println()
                     return
@@ -375,7 +369,7 @@ fun SmartPrinter.printImplementation(implementation: Implementation) {
                     when {
                         field.withGetter -> {}
 
-                        field.origin is FieldList && !field.isMutableOrEmpty -> {
+                        field.origin is FieldList && !field.isMutableOrEmptyList -> {
                             println("${field.name}.clear()")
                             println("${field.name}.addAll($newValue)")
                         }
@@ -385,7 +379,7 @@ fun SmartPrinter.printImplementation(implementation: Implementation) {
                                 println("require($newValue != null)")
                             }
                             print("${field.name} = $newValue")
-                            if (field.origin is FieldList && field.isMutableOrEmpty) {
+                            if (field.origin is FieldList && field.isMutableOrEmptyList) {
                                 addImport(toMutableOrEmptyImport)
                                 print(".toMutableOrEmpty()")
                             }

@@ -13,137 +13,84 @@ import org.jetbrains.kotlin.fir.tree.generator.util.get
 import org.jetbrains.kotlin.generators.tree.*
 import org.jetbrains.kotlin.generators.tree.printer.*
 import org.jetbrains.kotlin.utils.SmartPrinter
-import org.jetbrains.kotlin.utils.withIndent
 import java.io.File
 
-fun Element.generateCode(generationPath: File): GeneratedFile =
-    printGeneratedType(generationPath, TREE_GENERATOR_README, packageName, this.typeName) {
-        println()
-        printElement(this@generateCode)
-    }
+private class ElementPrinter(printer: SmartPrinter) : AbstractElementPrinter<Element, Field>(printer) {
 
-context(ImportCollector)
-fun SmartPrinter.printElement(element: Element) {
-    with(element) {
-        val isInterface = kind == ImplementationKind.Interface || kind == ImplementationKind.SealedInterface
-        fun abstract() {
-            if (!isInterface) {
-                print("abstract ")
-            }
-        }
+    override fun makeFieldPrinter(printer: SmartPrinter) = object : AbstractFieldPrinter<Field>(printer) {}
 
-        fun override() {
-            if (!isRootElement) {
-                print("override ")
-            }
-        }
+    context(ImportCollector)
+    override fun SmartPrinter.printAdditionalMethods(element: Element) {
+        val kind = element.kind ?: error("Expected non-null element kind")
+        with(element) {
+            printAcceptMethod(element, firVisitorType, hasImplementation = true, treeName = "FIR")
 
-        printKDoc(element.extendedKDoc())
-        print("${kind!!.title} $typeName")
-        print(params.typeParameters())
-        val parentRefs = element.parentRefs
-        if (parentRefs.isNotEmpty()) {
-            print(
-                parentRefs.sortedBy { it.typeKind }.joinToString(prefix = " : ") { parent ->
-                    parent.render() + parent.inheritanceClauseParenthesis()
-                }
+            printTransformMethod(
+                element = element,
+                transformerClass = firTransformerType,
+                implementation = "transformer.transform${element.name}(this, data)",
+                returnType = TypeVariable("E", listOf(AbstractFirTreeBuilder.baseFirElement)),
+                treeName = "FIR",
             )
-        }
-        print(params.multipleUpperBoundsList())
-        println(" {")
-        withIndent {
-            allFields.forEach { field ->
-                if (field.isFinal && field.fromParent || field.isParameter) return@forEach
-                printField(field, isImplementation = false, override = field.fromParent) {
-                    if (!field.isFinal) {
-                        abstract()
-                    }
-                }
-            }
-
-            if (hasAcceptMethod) {
-                if (allFields.isNotEmpty()) {
-                    println()
-                }
-
-                override()
-                println("fun <R, D> accept(visitor: ${firVisitorType.render()}<R, D>, data: D): R =")
-                withIndent {
-                    println("visitor.visit${element.name}(this, data)")
-                }
-            }
-
-            if (hasTransformMethod) {
-                println()
-                println("@Suppress(\"UNCHECKED_CAST\")")
-                override()
-                println(
-                    "fun <E : ",
-                    AbstractFirTreeBuilder.baseFirElement.render(),
-                    ", D> transform(transformer: ",
-                    firTransformerType.render(),
-                    "<D>, data: D): E ="
-                )
-                withIndent {
-                    println("transformer.transform$name(this, data) as E")
-                }
-            }
 
             fun Field.replaceDeclaration(override: Boolean, overridenType: TypeRefWithNullability? = null, forceNullable: Boolean = false) {
                 println()
                 if (name == "source") {
-                    println("@${firImplementationDetailType.render()}")
+                    println("@", firImplementationDetailType.render())
                 }
-                abstract()
-                if (override) print("override ")
-                println(replaceFunctionDeclaration(overridenType, forceNullable))
+                replaceFunctionDeclaration(this, override, kind, overridenType, forceNullable)
+                println()
             }
 
             allFields.filter { it.withReplace }.forEach {
-                val override = overridenFields[it, it] &&
-                        !(it.name == "source" && element == FirTreeBuilder.qualifiedAccessExpression)
+                val override = overridenFields[it, it] && !(it.name == "source" && element == FirTreeBuilder.qualifiedAccessExpression)
                 it.replaceDeclaration(override, forceNullable = it.useNullableForReplace)
-                for (overridenType in it.overridenTypes) {
-                    it.replaceDeclaration(true, overridenType)
+                for (overriddenType in it.overridenTypes) {
+                    it.replaceDeclaration(true, overriddenType)
                 }
             }
 
             for (field in allFields) {
                 if (!field.needsSeparateTransform) continue
                 println()
-                abstract()
-                if (field.fromParent && field.parentHasSeparateTransform) {
-                    print("override ")
-                }
-                println(field.transformFunctionDeclaration(element))
+                transformFunctionDeclaration(field, element, override = field.fromParent && field.parentHasSeparateTransform, kind)
+                println()
             }
             if (needTransformOtherChildren) {
                 println()
-                abstract()
-                if (element.elementParents.any { it.element.needTransformOtherChildren }) {
-                    print("override ")
-                }
-                println(transformFunctionDeclaration("OtherChildren", element))
+                transformOtherChildrenFunctionDeclaration(
+                    element,
+                    override = element.elementParents.any { it.element.needTransformOtherChildren },
+                    kind,
+                )
+                println()
             }
 
             if (element.isRootElement) {
-                require(isInterface) {
-                    "$element must be an interface"
-                }
                 println()
-                println("fun accept(visitor: ${firVisitorVoidType.render()}) = accept(visitor, null)")
-                if (element.hasAcceptChildrenMethod) {
-                    println()
-                    println("fun <R, D> acceptChildren(visitor: ${firVisitorType.render()}<R, D>, data: D)")
-                }
+                println("fun accept(visitor: ", firVisitorVoidType.render(), ") = accept(visitor, null)")
+
+                printAcceptChildrenMethod(
+                    element = element,
+                    visitorClass = firVisitorType,
+                    visitorResultType = TypeVariable("R"),
+                )
                 println()
-                println("fun acceptChildren(visitor: ${firVisitorVoidType.render()}) = acceptChildren(visitor, null)")
-                if (element.hasTransformChildrenMethod) {
-                    println()
-                    println("fun <D> transformChildren(transformer: ${firTransformerType.render()}<D>, data: D): FirElement")
-                }
+                println()
+                println("fun acceptChildren(visitor: ", firVisitorVoidType.render(), ") = acceptChildren(visitor, null)")
+
+                printTransformChildrenMethod(
+                    element = element,
+                    transformerClass = firTransformerType,
+                    returnType = AbstractFirTreeBuilder.baseFirElement,
+                )
+                println()
             }
         }
-        println("}")
     }
 }
+
+fun Element.generateCode(generationPath: File): GeneratedFile =
+    printGeneratedType(generationPath, TREE_GENERATOR_README, packageName, typeName) {
+        ElementPrinter(this).printElement(element)
+    }

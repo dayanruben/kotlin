@@ -37,7 +37,7 @@ private class TransformerPrinter(
     override val visitorDataType: TypeRef
         get() = dataTypeVariable
 
-    override fun visitMethodReturnType(element: Element) = element.transformerType
+    override fun visitMethodReturnType(element: Element) = element.transformerClass
 
     override val allowTypeParametersInVisitorMethods: Boolean
         get() = true
@@ -48,7 +48,7 @@ private class TransformerPrinter(
             println()
             val elementParameterName = element.safeDecapitalizedName
             if (element.isRootElement) {
-                val elementTP = TypeVariable("E", listOf(element), variance = Variance.INVARIANT)
+                val elementTP = TypeVariable("E", listOf(element))
                 printFunctionDeclaration(
                     name = "transformElement",
                     parameters = listOf(
@@ -106,6 +106,5 @@ fun printTransformer(elements: List<Element>, generationPath: File): GeneratedFi
         firTransformerType.packageName,
         firTransformerType.simpleName,
     ) {
-        println()
         TransformerPrinter(this).printVisitor(elements)
     }

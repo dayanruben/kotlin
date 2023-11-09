@@ -3060,6 +3060,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 }
 
                 @Test
+                @TestMetadata("implicitTypeWithInaccessibleAnnotation.kt")
+                public void testImplicitTypeWithInaccessibleAnnotation() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/typeUse/implicitTypeWithInaccessibleAnnotation.kt");
+                }
+
+                @Test
                 @TestMetadata("kt19455.kt")
                 public void testKt19455() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/annotations/typeUse/kt19455.kt");
@@ -12307,6 +12313,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             }
 
             @Test
+            @TestMetadata("keywordsInsteadOfIdentifiers.kt")
+            public void testKeywordsInsteadOfIdentifiers() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/exceptions/keywordsInsteadOfIdentifiers.kt");
+            }
+
+            @Test
             @TestMetadata("kt24158.kt")
             public void testKt24158() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/exceptions/kt24158.kt");
@@ -15910,6 +15922,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             @TestMetadata("intersectionTypeMultipleBoundsAsReceiver.kt")
             public void testIntersectionTypeMultipleBoundsAsReceiver() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/intersectionTypeMultipleBoundsAsReceiver.kt");
+            }
+
+            @Test
+            @TestMetadata("intersectionTypeOnWhenCall.kt")
+            public void testIntersectionTypeOnWhenCall() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/intersectionTypeOnWhenCall.kt");
             }
 
             @Test
@@ -30268,6 +30286,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             @TestMetadata("topLevelPropertiesWithGetSet.kts")
             public void testTopLevelPropertiesWithGetSet() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/script/topLevelPropertiesWithGetSet.kts");
+            }
+
+            @Test
+            @TestMetadata("topLevelPropertyInitialization.kts")
+            public void testTopLevelPropertyInitialization() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/script/topLevelPropertyInitialization.kts");
             }
 
             @Test

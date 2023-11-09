@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
-import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 
 class Fir2IrClassifiersGenerator(val components: Fir2IrComponents) : Fir2IrComponents by components {
     // ------------------------------------ type parameters ------------------------------------
@@ -36,60 +35,21 @@ class Fir2IrClassifiersGenerator(val components: Fir2IrComponents) : Fir2IrCompo
     fun createIrTypeParameterWithoutBounds(
         typeParameter: FirTypeParameter,
         index: Int,
-        ownerSymbol: IrSymbol,
+        symbol: IrTypeParameterSymbol
     ): IrTypeParameter {
         require(index >= 0)
         val origin = typeParameter.computeIrOrigin()
-        val irTypeParameter = with(typeParameter) {
-            convertWithOffsets { startOffset, endOffset ->
-                signatureComposer.composeTypeParameterSignature(
-                    index, ownerSymbol.signature
-                )?.let { signature ->
-                    if (ownerSymbol is IrClassifierSymbol) {
-                        symbolTable.declareGlobalTypeParameter(
-                            signature,
-                            symbolFactory = { IrTypeParameterPublicSymbolImpl(signature) }
-                        ) { symbol ->
-                            irFactory.createTypeParameter(
-                                startOffset = startOffset,
-                                endOffset = endOffset,
-                                origin = origin,
-                                name = name,
-                                symbol = symbol,
-                                variance = variance,
-                                index = index,
-                                isReified = isReified,
-                            )
-                        }
-                    } else {
-                        symbolTable.declareScopedTypeParameter(
-                            signature,
-                            symbolFactory = { IrTypeParameterPublicSymbolImpl(signature) }
-                        ) { symbol ->
-                            irFactory.createTypeParameter(
-                                startOffset = startOffset,
-                                endOffset = endOffset,
-                                origin = origin,
-                                name = name,
-                                symbol = symbol,
-                                variance = variance,
-                                index = index,
-                                isReified = isReified,
-                            )
-                        }
-
-                    }
-                } ?: irFactory.createTypeParameter(
-                    startOffset = startOffset,
-                    endOffset = endOffset,
-                    origin = origin,
-                    name = name,
-                    symbol = IrTypeParameterSymbolImpl(),
-                    variance = variance,
-                    index = index,
-                    isReified = isReified,
-                )
-            }
+        val irTypeParameter = typeParameter.convertWithOffsets { startOffset, endOffset ->
+            irFactory.createTypeParameter(
+                startOffset = startOffset,
+                endOffset = endOffset,
+                origin = origin,
+                name = typeParameter.name,
+                symbol = symbol,
+                variance = typeParameter.variance,
+                index = index,
+                isReified = typeParameter.isReified,
+            )
         }
         annotationGenerator.generate(irTypeParameter, typeParameter)
         return irTypeParameter
@@ -101,16 +61,10 @@ class Fir2IrClassifiersGenerator(val components: Fir2IrComponents) : Fir2IrCompo
 
     // ------------------------------------ classes ------------------------------------
 
-    fun declareIrClass(signature: IdSignature?, factory: (IrClassSymbol) -> IrClass): IrClass {
-        return if (signature == null)
-            factory(IrClassSymbolImpl())
-        else
-            symbolTable.declareClass(signature, { IrClassPublicSymbolImpl(signature) }, factory)
-    }
-
     fun createIrClass(
         regularClass: FirRegularClass,
         parent: IrDeclarationParent,
+        symbol: IrClassSymbol,
         predefinedOrigin: IrDeclarationOrigin? = null
     ): IrClass {
         val visibility = regularClass.visibility
@@ -119,31 +73,26 @@ class Fir2IrClassifiersGenerator(val components: Fir2IrComponents) : Fir2IrCompo
             ClassKind.ANNOTATION_CLASS -> Modality.OPEN
             else -> regularClass.modality ?: Modality.FINAL
         }
-        val signature = runUnless(regularClass.isLocal || !configuration.linkViaSignatures) {
-            signatureComposer.composeSignature(regularClass)
-        }
         val irClass = regularClass.convertWithOffsets { startOffset, endOffset ->
-            declareIrClass(signature) { symbol ->
-                irFactory.createClass(
-                    startOffset = startOffset,
-                    endOffset = endOffset,
-                    origin = regularClass.computeIrOrigin(predefinedOrigin),
-                    name = regularClass.name,
-                    visibility = components.visibilityConverter.convertToDescriptorVisibility(visibility),
-                    symbol = symbol,
-                    kind = regularClass.classKind,
-                    modality = modality,
-                    isExternal = regularClass.isExternal,
-                    isCompanion = regularClass.isCompanion,
-                    isInner = regularClass.isInner,
-                    isData = regularClass.isData,
-                    isValue = regularClass.isInline,
-                    isExpect = regularClass.isExpect,
-                    isFun = regularClass.isFun,
-                    hasEnumEntries = regularClass.hasEnumEntries,
-                ).apply {
-                    metadata = FirMetadataSource.Class(regularClass)
-                }
+            irFactory.createClass(
+                startOffset = startOffset,
+                endOffset = endOffset,
+                origin = regularClass.computeIrOrigin(predefinedOrigin),
+                name = regularClass.name,
+                visibility = components.visibilityConverter.convertToDescriptorVisibility(visibility),
+                symbol = symbol,
+                kind = regularClass.classKind,
+                modality = modality,
+                isExternal = regularClass.isExternal,
+                isCompanion = regularClass.isCompanion,
+                isInner = regularClass.isInner,
+                isData = regularClass.isData,
+                isValue = regularClass.isInline,
+                isExpect = regularClass.isExpect,
+                isFun = regularClass.isFun,
+                hasEnumEntries = regularClass.hasEnumEntries,
+            ).apply {
+                metadata = FirMetadataSource.Class(regularClass)
             }
         }
         /*
@@ -330,75 +279,62 @@ class Fir2IrClassifiersGenerator(val components: Fir2IrComponents) : Fir2IrCompo
 
     // ------------------------------------ typealiases ------------------------------------
 
-    private fun declareIrTypeAlias(signature: IdSignature?, factory: (IrTypeAliasSymbol) -> IrTypeAlias): IrTypeAlias {
-        return if (signature == null)
-            factory(IrTypeAliasSymbolImpl())
-        else
-            symbolTable.declareTypeAlias(signature, { IrTypeAliasPublicSymbolImpl(signature) }, factory)
-    }
-
     fun createIrTypeAlias(
         typeAlias: FirTypeAlias,
-        parent: IrDeclarationParent
+        parent: IrDeclarationParent,
+        symbol: IrTypeAliasSymbol,
     ): IrTypeAlias = typeAlias.convertWithOffsets { startOffset, endOffset ->
-        val signature = signatureComposer.composeSignature(typeAlias)
-        declareIrTypeAlias(signature) { symbol ->
-            classifierStorage.preCacheTypeParameters(typeAlias, symbol)
-            val irTypeAlias = irFactory.createTypeAlias(
-                startOffset = startOffset,
-                endOffset = endOffset,
-                origin = IrDeclarationOrigin.DEFINED,
-                name = typeAlias.name,
-                visibility = components.visibilityConverter.convertToDescriptorVisibility(typeAlias.visibility),
-                symbol = symbol,
-                isActual = typeAlias.isActual,
-                expandedType = typeAlias.expandedTypeRef.toIrType(),
-            ).apply {
-                this.parent = parent
-                setTypeParameters(this, typeAlias)
-                setParent(parent)
-                addDeclarationToParent(this, parent)
-            }
-            irTypeAlias
+        classifierStorage.preCacheTypeParameters(typeAlias, symbol)
+        irFactory.createTypeAlias(
+            startOffset = startOffset,
+            endOffset = endOffset,
+            origin = IrDeclarationOrigin.DEFINED,
+            name = typeAlias.name,
+            visibility = components.visibilityConverter.convertToDescriptorVisibility(typeAlias.visibility),
+            symbol = symbol,
+            isActual = typeAlias.isActual,
+            expandedType = typeAlias.expandedTypeRef.toIrType(),
+        ).apply {
+            this.parent = parent
+            setTypeParameters(this, typeAlias)
+            setParent(parent)
+            addDeclarationToParent(this, parent)
         }
     }
 
     // ------------------------------------ code fragments ------------------------------------
 
-    fun createCodeFragmentClass(codeFragment: FirCodeFragment, containingFile: IrFile): IrClass {
+    fun createCodeFragmentClass(codeFragment: FirCodeFragment, containingFile: IrFile, symbol: IrClassSymbol): IrClass {
         val conversionData = codeFragment.conversionData
-        val signature = signatureComposer.composeSignature(codeFragment)
 
         val irClass = codeFragment.convertWithOffsets { startOffset, endOffset ->
-            declareIrClass(signature) { symbol ->
-                irFactory.createClass(
-                    startOffset,
-                    endOffset,
-                    IrDeclarationOrigin.DEFINED,
-                    conversionData.classId.shortClassName,
-                    DescriptorVisibilities.PUBLIC,
-                    symbol,
-                    ClassKind.CLASS,
-                    Modality.FINAL,
-                    isExternal = false,
-                    isCompanion = false,
-                    isInner = false,
-                    isData = false,
-                    isValue = false,
-                    isExpect = false,
-                    isFun = false,
-                    hasEnumEntries = false,
-                ).apply {
-                    metadata = FirMetadataSource.CodeFragment(codeFragment)
-                    setParent(containingFile)
-                    addDeclarationToParent(this, containingFile)
-                    typeParameters = emptyList()
-                    thisReceiver = declareThisReceiverParameter(
-                        thisType = IrSimpleTypeImpl(symbol, false, emptyList(), emptyList()),
-                        thisOrigin = IrDeclarationOrigin.INSTANCE_RECEIVER
-                    )
-                    superTypes = listOf(irBuiltIns.anyType)
-                }
+            irFactory.createClass(
+                startOffset,
+                endOffset,
+                IrDeclarationOrigin.DEFINED,
+                conversionData.classId.shortClassName,
+                DescriptorVisibilities.PUBLIC,
+                symbol,
+                ClassKind.CLASS,
+                Modality.FINAL,
+                isExternal = false,
+                isCompanion = false,
+                isInner = false,
+                isData = false,
+                isValue = false,
+                isExpect = false,
+                isFun = false,
+                hasEnumEntries = false,
+            ).apply {
+                metadata = FirMetadataSource.CodeFragment(codeFragment)
+                setParent(containingFile)
+                addDeclarationToParent(this, containingFile)
+                typeParameters = emptyList()
+                thisReceiver = declareThisReceiverParameter(
+                    thisType = IrSimpleTypeImpl(symbol, false, emptyList(), emptyList()),
+                    thisOrigin = IrDeclarationOrigin.INSTANCE_RECEIVER
+                )
+                superTypes = listOf(irBuiltIns.anyType)
             }
         }
         return irClass
@@ -406,43 +342,34 @@ class Fir2IrClassifiersGenerator(val components: Fir2IrComponents) : Fir2IrCompo
 
     // ------------------------------------ enum entries ------------------------------------
 
-    private fun declareIrEnumEntry(signature: IdSignature?, factory: (IrEnumEntrySymbol) -> IrEnumEntry): IrEnumEntry {
-        return if (signature == null)
-            factory(IrEnumEntrySymbolImpl())
-        else
-            symbolTable.declareEnumEntry(signature, { IrEnumEntryPublicSymbolImpl(signature) }, factory)
-    }
-
     fun createIrEnumEntry(
         enumEntry: FirEnumEntry,
         irParent: IrClass,
+        symbol: IrEnumEntrySymbol,
         predefinedOrigin: IrDeclarationOrigin? = null,
     ): IrEnumEntry {
         return enumEntry.convertWithOffsets { startOffset, endOffset ->
-            val signature = signatureComposer.composeSignature(enumEntry)
-            declareIrEnumEntry(signature) { symbol ->
-                val origin = enumEntry.computeIrOrigin(predefinedOrigin)
-                irFactory.createEnumEntry(
-                    startOffset = startOffset,
-                    endOffset = endOffset,
-                    origin = origin,
-                    name = enumEntry.name,
-                    symbol = symbol,
-                ).apply {
-                    declarationStorage.enterScope(this.symbol)
-                    setParent(irParent)
-                    addDeclarationToParent(this, irParent)
-                    if (isEnumEntryWhichRequiresSubclass(enumEntry)) {
-                        // An enum entry with its own members requires an anonymous object generated.
-                        // Otherwise, this is a default-ish enum entry whose initializer would be a delegating constructor call,
-                        // which will be translated via visitor later.
-                        val klass = classifierStorage.getIrAnonymousObjectForEnumEntry(
-                            (enumEntry.initializer as FirAnonymousObjectExpression).anonymousObject, enumEntry.name, irParent
-                        )
-                        this.correspondingClass = klass
-                    }
-                    declarationStorage.leaveScope(this.symbol)
+            val origin = enumEntry.computeIrOrigin(predefinedOrigin)
+            irFactory.createEnumEntry(
+                startOffset = startOffset,
+                endOffset = endOffset,
+                origin = origin,
+                name = enumEntry.name,
+                symbol = symbol,
+            ).apply {
+                declarationStorage.enterScope(this.symbol)
+                setParent(irParent)
+                addDeclarationToParent(this, irParent)
+                if (isEnumEntryWhichRequiresSubclass(enumEntry)) {
+                    // An enum entry with its own members requires an anonymous object generated.
+                    // Otherwise, this is a default-ish enum entry whose initializer would be a delegating constructor call,
+                    // which will be translated via visitor later.
+                    val klass = classifierStorage.getIrAnonymousObjectForEnumEntry(
+                        (enumEntry.initializer as FirAnonymousObjectExpression).anonymousObject, enumEntry.name, irParent
+                    )
+                    this.correspondingClass = klass
                 }
+                declarationStorage.leaveScope(this.symbol)
             }
         }
     }

@@ -22,7 +22,6 @@ private fun printVisitorCommon(
     makePrinter: (SmartPrinter, ClassRef<*>) -> AbstractVisitorPrinter<Element, Field>,
 ): GeneratedFile =
     printGeneratedType(generationPath, TREE_GENERATOR_README, visitorType.packageName, visitorType.simpleName) {
-        println()
         makePrinter(this, visitorType).printVisitor(model.elements)
     }
 
@@ -160,7 +159,7 @@ private class TypeTransformerPrinter(
 
     context(ImportCollector)
     override fun SmartPrinter.printAdditionalMethods() {
-        val typeTP = TypeVariable("Type", listOf(irTypeType.copy(nullable = true)), Variance.INVARIANT)
+        val typeTP = TypeVariable("Type", listOf(irTypeType.copy(nullable = true)))
         printFunctionDeclaration(
             name = "transformType",
             parameters = listOf(

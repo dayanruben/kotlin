@@ -42,7 +42,9 @@ import org.jetbrains.kotlin.ir.objcinterop.IrObjCOverridabilityCondition
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
+import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 import org.jetbrains.kotlin.library.metadata.KlibMetadataFactories
+import org.jetbrains.kotlin.library.uniqueName
 import org.jetbrains.kotlin.name.NativeForwardDeclarationKind
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 
@@ -96,7 +98,7 @@ internal fun PhaseContext.fir2Ir(
     val fir2IrConfiguration = Fir2IrConfiguration(
             languageVersionSettings = configuration.languageVersionSettings,
             diagnosticReporter = diagnosticsReporter,
-            linkViaSignatures = false,
+            linkViaSignatures = true,
             evaluatedConstTracker = configuration
                     .putIfAbsent(CommonConfigurationKeys.EVALUATED_CONST_TRACKER, EvaluatedConstTracker.create()),
             inlineConstTracker = null,
@@ -148,6 +150,11 @@ internal fun PhaseContext.fir2Ir(
         usedPackages.any { !module.packageFragmentProviderForModuleContentWithoutDependencies.isEmpty(it) }
     }.map { it.second }.toSet()
 
+    resolvedLibraries.find { it.library.uniqueName == KONAN_STDLIB_NAME }?.let {
+        require(usedLibraries.contains(it)) {
+            "Internal error: stdlib must be in usedLibraries, if it's in resolvedLibraries"
+        }
+    }
 
     val symbols = createKonanSymbols(components, pluginContext)
 
