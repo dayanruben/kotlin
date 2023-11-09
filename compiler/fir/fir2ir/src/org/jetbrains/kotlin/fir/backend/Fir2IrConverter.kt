@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.backend.common.actualizer.FakeOverrideRebuilder
 import org.jetbrains.kotlin.backend.common.sourceElement
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.*
@@ -233,7 +234,13 @@ class Fir2IrConverter(
         irClass.declarations.addAll(classifierStorage.getFieldsWithContextReceiversForClass(irClass, klass))
 
         val irConstructor = klass.primaryConstructorIfAny(session)?.let {
-            declarationStorage.getOrCreateIrConstructor(it.fir, irClass, isLocal = klass.isLocal)
+            if (klass.classKind == ClassKind.ANNOTATION_CLASS) {
+                // TODO: this branch should be removed after fix of KT-62856
+                @OptIn(GetOrCreateSensitiveAPI::class)
+                declarationStorage.getOrCreateIrConstructor(it.fir, irClass, isLocal = klass.isLocal)
+            } else {
+                declarationStorage.createAndCacheIrConstructor(it.fir, { irClass }, isLocal = klass.isLocal)
+            }
         }
         // At least on enum entry creation we may need a default constructor, so ctors should be converted first
         for (declaration in syntheticPropertiesLast(allDeclarations)) {
@@ -458,6 +465,9 @@ class Fir2IrConverter(
         }
     }
 
+    /**
+     * This function creates IR declarations for callable members without filling their body
+     */
     private fun processMemberDeclaration(
         declaration: FirDeclaration,
         containingClass: FirClass?,
@@ -508,7 +518,7 @@ class Fir2IrConverter(
                 }
             }
             is FirSimpleFunction -> {
-                declarationStorage.getOrCreateIrFunction(declaration, parent, isLocal = isInLocalClass)
+                declarationStorage.createAndCacheIrFunction(declaration, parent, isLocal = isInLocalClass)
             }
             is FirProperty -> {
                 if (
@@ -529,7 +539,14 @@ class Fir2IrConverter(
                 }
             }
             is FirConstructor -> if (!declaration.isPrimary) {
-                declarationStorage.getOrCreateIrConstructor(declaration, parent as IrClass, isLocal = isInLocalClass)
+                // the primary constructor was already created in `processClassMembers` function
+                if (containingClass?.classKind == ClassKind.ANNOTATION_CLASS) {
+                    // TODO: this branch should be removed after fix of KT-62856
+                    @OptIn(GetOrCreateSensitiveAPI::class)
+                    declarationStorage.getOrCreateIrConstructor(declaration, parent as IrClass, isLocal = isInLocalClass)
+                } else {
+                    declarationStorage.createAndCacheIrConstructor(declaration, { parent as IrClass }, isLocal = isInLocalClass)
+                }
             }
             is FirEnumEntry -> {
                 classifierStorage.getOrCreateIrEnumEntry(declaration, parent as IrClass)
@@ -560,7 +577,7 @@ class Fir2IrConverter(
             val firModuleDescriptor = irModuleFragment.descriptor as? FirModuleDescriptor
             val targetPlatform = firModuleDescriptor?.platform
             val languageVersionSettings = firModuleDescriptor?.session?.languageVersionSettings ?: return
-            val intrinsicConstEvaluation = languageVersionSettings.supportsFeature(LanguageFeature.IntrinsicConstEvaluation) == true
+            val intrinsicConstEvaluation = languageVersionSettings.supportsFeature(LanguageFeature.IntrinsicConstEvaluation)
 
             val configuration = IrInterpreterConfiguration(
                 platform = targetPlatform,
@@ -572,7 +589,9 @@ class Fir2IrConverter(
 
             components.session.javaElementFinder?.propertyEvaluator = { it.evaluate(components, interpreter, mode) }
 
-            val ktDiagnosticReporter = KtDiagnosticReporterWithImplicitIrBasedContext(fir2IrConfiguration.diagnosticReporter, languageVersionSettings)
+            val ktDiagnosticReporter = KtDiagnosticReporterWithImplicitIrBasedContext(
+                fir2IrConfiguration.diagnosticReporter, languageVersionSettings
+            )
             irModuleFragment.files.forEach {
                 it.transformConst(
                     it,
@@ -590,7 +609,10 @@ class Fir2IrConverter(
         }
 
         private fun FirProperty.evaluate(components: Fir2IrComponents, interpreter: IrInterpreter, mode: EvaluationMode): String? {
-            val irProperty = components.declarationStorage.getCachedIrProperty(this, fakeOverrideOwnerLookupTag = null) ?: return null
+            @OptIn(UnsafeDuringIrConstructionAPI::class)
+            val irProperty = components.declarationStorage.getCachedIrPropertySymbol(
+                property = this, fakeOverrideOwnerLookupTag = null
+            )?.owner ?: return null
 
             fun IrProperty.tryToGetConst(): IrConst<*>? = (backingField?.initializer?.expression as? IrConst<*>)
             fun IrConst<*>.asString(): String {
@@ -615,7 +637,7 @@ class Fir2IrConverter(
         }
 
         // TODO: drop this function in favor of using [IrModuleDescriptor::shouldSeeInternalsOf] in FakeOverrideBuilder KT-61384
-        fun friendModulesMap(session: FirSession) = mapOf(
+        private fun friendModulesMap(session: FirSession) = mapOf(
             session.moduleData.name.asStringStripSpecialMarkers() to session.moduleData.friendDependencies.map {
                 it.name.asStringStripSpecialMarkers()
             }
@@ -666,7 +688,8 @@ class Fir2IrConverter(
             )
 
             if (fir2IrConfiguration.useIrFakeOverrideBuilder) {
-                FakeOverrideRebuilder(commonMemberStorage.symbolTable, components.fakeOverrideBuilder).rebuildFakeOverrides(irModuleFragment)
+                val rebuilder = FakeOverrideRebuilder(commonMemberStorage.symbolTable, components.fakeOverrideBuilder)
+                rebuilder.rebuildFakeOverrides(irModuleFragment)
             }
 
             return Fir2IrResult(irModuleFragment, components, moduleDescriptor)

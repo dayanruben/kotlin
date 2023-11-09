@@ -12295,6 +12295,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             }
 
             @Test
+            @TestMetadata("incorrectCallOnILT.kt")
+            public void testIncorrectCallOnILT() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/exceptions/incorrectCallOnILT.kt");
+            }
+
+            @Test
             @TestMetadata("kt24158.kt")
             public void testKt24158() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/exceptions/kt24158.kt");
@@ -12344,6 +12350,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             @TestMetadata("isAsOperatorsEnabled.kt")
             public void testIsAsOperatorsEnabled() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/isAsOperatorsEnabled.kt");
+            }
+
+            @Test
+            @TestMetadata("kt59493.kt")
+            public void testKt59493() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/kt59493.kt");
             }
 
             @Test
@@ -28432,6 +28444,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                 }
 
                 @Test
+                @TestMetadata("lowPriority.kt")
+                public void testLowPriority() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/resolve/dslMarker/lowPriority.kt");
+                }
+
+                @Test
                 @TestMetadata("markedReceiverWithCapturedTypeArgument.kt")
                 public void testMarkedReceiverWithCapturedTypeArgument() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/resolve/dslMarker/markedReceiverWithCapturedTypeArgument.kt");
@@ -38778,6 +38796,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             @Test
             public void testAllFilesPresentInContracts() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/testsWithStdLib/contracts"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+            }
+
+            @Test
+            @TestMetadata("complexConditionWithSafeCall.kt")
+            public void testComplexConditionWithSafeCall() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/contracts/complexConditionWithSafeCall.kt");
             }
 
             @Nested

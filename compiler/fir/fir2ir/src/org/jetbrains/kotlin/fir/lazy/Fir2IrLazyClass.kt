@@ -162,6 +162,7 @@ class Fir2IrLazyClass(
         scope.processDeclaredConstructors {
             val constructor = it.fir
             if (shouldBuildStub(constructor)) {
+                @OptIn(GetOrCreateSensitiveAPI::class)
                 result += declarationStorage.getOrCreateIrConstructor(constructor, this, origin)
             }
         }
@@ -195,6 +196,7 @@ class Fir2IrLazyClass(
                         symbol.containingClassLookupTag() != ownerLookupTag -> {}
                         symbol.isAbstractMethodOfAny() -> {}
                         else -> {
+                            @OptIn(GetOrCreateSensitiveAPI::class)
                             result += declarationStorage.getOrCreateIrFunction(symbol.fir, this, origin)
                         }
                     }

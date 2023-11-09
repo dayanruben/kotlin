@@ -49,7 +49,6 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirKClassWithIncorrectTypeArgumentChecker,
             FirImplicitNothingReturnTypeChecker,
             FirDynamicReceiverChecker,
-            FirActualCallableDeclarationChecker,
         )
 
     override val functionCheckers: Set<FirFunctionChecker>
@@ -152,6 +151,7 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
     override val fileCheckers: Set<FirFileChecker>
         get() = setOf(
             FirImportsChecker,
+            FirOptInImportsChecker,
             FirUnresolvedInMiddleOfImportChecker,
             FirTopLevelPropertiesChecker,
         )

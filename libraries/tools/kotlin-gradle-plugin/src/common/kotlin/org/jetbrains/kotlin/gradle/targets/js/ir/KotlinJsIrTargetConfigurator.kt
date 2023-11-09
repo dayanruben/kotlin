@@ -10,13 +10,9 @@ import org.jetbrains.kotlin.gradle.dsl.JsSourceMapEmbedMode
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompilerOptions
 import org.jetbrains.kotlin.gradle.plugin.KotlinOnlyTargetConfigurator
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJsCompilation
 
 open class KotlinJsIrTargetConfigurator :
-    KotlinOnlyTargetConfigurator<KotlinJsCompilation, KotlinJsIrTarget>(true) {
-
-    override val runtimeIncludesCompilationOutputs: Boolean = false
-
+    KotlinOnlyTargetConfigurator<KotlinJsIrCompilation, KotlinJsIrTarget>(true) {
 
     internal companion object {
         internal fun KotlinJsCompilerOptions.configureJsDefaultOptions(

@@ -2597,6 +2597,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.ADAPTED_CALLABLE_REFERENCE_AGAINST_REFLECTION_TYPE) { firDiagnostic ->
+        AdaptedCallableReferenceAgainstReflectionTypeImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.CLASS_LITERAL_LHS_NOT_A_CLASS) { firDiagnostic ->
         ClassLiteralLhsNotAClassImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -3763,8 +3769,8 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
         NoActualClassMemberForExpectedClassImpl(
             firSymbolBuilder.buildSymbol(firDiagnostic.a),
             firDiagnostic.b.map { pair ->
-                firSymbolBuilder.buildSymbol(pair.first) to pair.second.mapKeys { (incompatible, _) ->
-                                    incompatible
+                firSymbolBuilder.buildSymbol(pair.first) to pair.second.mapKeys { (mismatchOrIncompatible, _) ->
+                                    mismatchOrIncompatible
                                 }.mapValues { (_, collection) -> 
                                     collection.map { firBasedSymbol ->
                                                             firSymbolBuilder.buildSymbol(firBasedSymbol)

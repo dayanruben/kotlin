@@ -16215,6 +16215,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
         }
 
         @Test
+        @TestMetadata("computeIfAbsent.kt")
+        public void testComputeIfAbsent() throws Exception {
+            runTest("compiler/testData/codegen/box/delegation/computeIfAbsent.kt");
+        }
+
+        @Test
         @TestMetadata("defaultOverride.kt")
         public void testDefaultOverride() throws Exception {
             runTest("compiler/testData/codegen/box/delegation/defaultOverride.kt");
@@ -18532,6 +18538,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
         @Test
         public void testAllFilesPresentInExtensionProperties() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/extensionProperties"), Pattern.compile("^(.+)\\.kt$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("genericContextOverride.kt")
+        public void testGenericContextOverride() throws Exception {
+            runTest("compiler/testData/codegen/box/extensionProperties/genericContextOverride.kt");
         }
 
         @Test
@@ -51306,6 +51318,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
         @TestMetadata("smartcastOnImplicitDispatchReceiver.kt")
         public void testSmartcastOnImplicitDispatchReceiver() throws Exception {
             runTest("compiler/testData/codegen/box/smartCasts/smartcastOnImplicitDispatchReceiver.kt");
+        }
+
+        @Test
+        @TestMetadata("smartcastToStarType.kt")
+        public void testSmartcastToStarType() throws Exception {
+            runTest("compiler/testData/codegen/box/smartCasts/smartcastToStarType.kt");
         }
 
         @Test

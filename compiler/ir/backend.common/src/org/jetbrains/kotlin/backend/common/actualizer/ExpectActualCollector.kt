@@ -6,11 +6,14 @@
 package org.jetbrains.kotlin.backend.common.actualizer
 
 import org.jetbrains.kotlin.KtDiagnosticReporterWithImplicitIrBasedContext
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.PsiIrFileEntry
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.symbols.*
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.symbols.IrSymbol
+import org.jetbrains.kotlin.ir.symbols.IrTypeAliasSymbol
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContext
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.util.callableId
@@ -20,8 +23,10 @@ import org.jetbrains.kotlin.mpp.DeclarationSymbolMarker
 import org.jetbrains.kotlin.mpp.RegularClassSymbolMarker
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.resolve.calls.mpp.AbstractExpectActualCompatibilityChecker
-import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility
+import org.jetbrains.kotlin.resolve.calls.mpp.AbstractExpectActualChecker
+import org.jetbrains.kotlin.resolve.calls.mpp.AbstractExpectActualMatcher
+import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCheckingCompatibility
+import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualMatchingCompatibility
 import java.io.File
 
 /**
@@ -199,10 +204,10 @@ private class ExpectActualLinkCollector : IrElementVisitor<Unit, ExpectActualLin
     }
 
     private fun matchExpectCallable(declaration: IrDeclarationWithName, callableId: CallableId, context: MatchingContext) {
-        matchExpectDeclaration(
+        matchAndCheckExpectDeclaration(
             declaration.symbol,
             context.classActualizationInfo.actualTopLevels[callableId].orEmpty(),
-            context
+            context,
         )
     }
 
@@ -211,19 +216,27 @@ private class ExpectActualLinkCollector : IrElementVisitor<Unit, ExpectActualLin
         val classId = declaration.classIdOrFail
         val expectClassSymbol = declaration.symbol
         val actualClassLikeSymbol = data.classActualizationInfo.getActualWithoutExpansion(classId)
-        matchExpectDeclaration(expectClassSymbol, listOfNotNull(actualClassLikeSymbol), data)
+        matchAndCheckExpectDeclaration(expectClassSymbol, listOfNotNull(actualClassLikeSymbol), data)
     }
 
-    private fun matchExpectDeclaration(
+    private fun matchAndCheckExpectDeclaration(
         expectSymbol: IrSymbol,
         actualSymbols: List<IrSymbol>,
-        context: MatchingContext
+        context: MatchingContext,
     ) {
-        AbstractExpectActualCompatibilityChecker.matchSingleExpectTopLevelDeclarationAgainstPotentialActuals(
+        val matched = AbstractExpectActualMatcher.matchSingleExpectTopLevelDeclarationAgainstPotentialActuals(
             expectSymbol,
             actualSymbols,
             context,
         )
+        if (matched != null) {
+            AbstractExpectActualChecker.checkSingleExpectTopLevelDeclarationAgainstMatchedActual(
+                expectSymbol,
+                matched,
+                context,
+                context.languageVersionSettings,
+            )
+        }
     }
 
     override fun visitElement(element: IrElement, data: MatchingContext) {
@@ -241,6 +254,8 @@ private class ExpectActualLinkCollector : IrElementVisitor<Unit, ExpectActualLin
 
         private val currentExpectIoFile by lazy(LazyThreadSafetyMode.PUBLICATION) { currentExpectFile?.toIoFile() }
 
+        internal val languageVersionSettings: LanguageVersionSettings get() = diagnosticsReporter.languageVersionSettings
+
         fun withNewCurrentFile(newCurrentFile: IrFile) =
             MatchingContext(
                 typeContext, destination, diagnosticsReporter, expectActualTracker, classActualizationInfo, newCurrentFile
@@ -257,9 +272,24 @@ private class ExpectActualLinkCollector : IrElementVisitor<Unit, ExpectActualLin
             recordActualForExpectDeclaration(expectSymbol, actualSymbol, destination)
         }
 
+        override fun onIncompatibleMembersFromClassScope(
+            expectSymbol: DeclarationSymbolMarker,
+            actualSymbolsByIncompatibility: Map<ExpectActualCheckingCompatibility.Incompatible<*>, List<DeclarationSymbolMarker>>,
+            containingExpectClassSymbol: RegularClassSymbolMarker?,
+            containingActualClassSymbol: RegularClassSymbolMarker?
+        ) {
+            require(expectSymbol is IrSymbol)
+            for ((incompatibility, actualMemberSymbols) in actualSymbolsByIncompatibility) {
+                for (actualSymbol in actualMemberSymbols) {
+                    require(actualSymbol is IrSymbol)
+                    diagnosticsReporter.reportExpectActualIncompatibility(expectSymbol, actualSymbol, incompatibility)
+                }
+            }
+        }
+
         override fun onMismatchedMembersFromClassScope(
             expectSymbol: DeclarationSymbolMarker,
-            actualSymbolsByIncompatibility: Map<ExpectActualCompatibility.Incompatible<*>, List<DeclarationSymbolMarker>>,
+            actualSymbolsByIncompatibility: Map<ExpectActualMatchingCompatibility.Mismatch, List<DeclarationSymbolMarker>>,
             containingExpectClassSymbol: RegularClassSymbolMarker?,
             containingActualClassSymbol: RegularClassSymbolMarker?,
         ) {
@@ -270,7 +300,7 @@ private class ExpectActualLinkCollector : IrElementVisitor<Unit, ExpectActualLin
             for ((incompatibility, actualMemberSymbols) in actualSymbolsByIncompatibility) {
                 for (actualSymbol in actualMemberSymbols) {
                     require(actualSymbol is IrSymbol)
-                    diagnosticsReporter.reportIncompatibleExpectActual(expectSymbol, actualSymbol, incompatibility)
+                    diagnosticsReporter.reportExpectActualMismatch(expectSymbol, actualSymbol, incompatibility)
                 }
             }
         }

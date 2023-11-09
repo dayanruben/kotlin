@@ -90,20 +90,18 @@ class Fir2IrVisitor(
     }
 
     override fun visitElement(element: FirElement, data: Any?): IrElement {
-        TODO("Should not be here: ${element::class} ${element.render()}")
+        error("Should not be here: ${element::class} ${element.render()}")
     }
 
     override fun visitField(field: FirField, data: Any?): IrField = whileAnalysing(session, field) {
-        if (field.isSynthetic) {
-            return declarationStorage.getCachedIrDelegateOrBackingField(field)!!.apply {
-                // If this is a property backing field, then it has no separate initializer,
-                // so we shouldn't convert it
-                if (correspondingPropertySymbol == null) {
-                    memberGenerator.convertFieldContent(this, field)
-                }
+        require(field.isSynthetic) { "Non-synthetic field found during traversal of FIR tree: ${field.render()}" }
+        @OptIn(UnsafeDuringIrConstructionAPI::class)
+        return declarationStorage.getCachedIrDelegateOrBackingFieldSymbol(field)!!.owner.apply {
+            // If this is a property backing field, then it has no separate initializer,
+            // so we shouldn't convert it
+            if (correspondingPropertySymbol == null) {
+                memberGenerator.convertFieldContent(this, field)
             }
-        } else {
-            throw AssertionError("Unexpected field: ${field.render()}")
         }
     }
 
@@ -265,7 +263,7 @@ class Fir2IrVisitor(
                             statement is FirProperty && statement.origin == FirDeclarationOrigin.ScriptCustomization.ResultProperty -> {
                                 // Generating the result property only for expressions with a meaningful result type
                                 // otherwise skip the property and convert the expression into the statement
-                                if (statement.returnTypeRef.let { (it.isUnit || it.isNothing || it.isNullableNothing) } == true) {
+                                if (statement.returnTypeRef.let { (it.isUnit || it.isNothing || it.isNullableNothing) }) {
                                     statement.initializer!!.toIrStatement()
                                 } else {
                                     (statement.accept(this@Fir2IrVisitor, null) as? IrDeclaration)?.also {
@@ -383,7 +381,8 @@ class Fir2IrVisitor(
     // ==================================================================================
 
     override fun visitConstructor(constructor: FirConstructor, data: Any?): IrElement = whileAnalysing(session, constructor) {
-        val irConstructor = declarationStorage.getCachedIrConstructor(constructor)!!
+        @OptIn(UnsafeDuringIrConstructionAPI::class)
+        val irConstructor = declarationStorage.getCachedIrConstructorSymbol(constructor)!!.owner
         return conversionScope.withFunction(irConstructor) {
             memberGenerator.convertFunctionContent(irConstructor, constructor, containingClass = conversionScope.containerFirClass())
         }
@@ -402,11 +401,12 @@ class Fir2IrVisitor(
 
     override fun visitSimpleFunction(simpleFunction: FirSimpleFunction, data: Any?): IrElement = whileAnalysing(session, simpleFunction) {
         val irFunction = if (simpleFunction.visibility == Visibilities.Local) {
-            declarationStorage.getOrCreateIrFunction(
+            declarationStorage.createAndCacheIrFunction(
                 simpleFunction, irParent = conversionScope.parent(), predefinedOrigin = IrDeclarationOrigin.LOCAL_FUNCTION, isLocal = true
             )
         } else {
-            declarationStorage.getCachedIrFunction(simpleFunction)!!
+            @OptIn(UnsafeDuringIrConstructionAPI::class)
+            declarationStorage.getCachedIrFunctionSymbol(simpleFunction)!!.owner
         }
         return conversionScope.withFunction(irFunction) {
             memberGenerator.convertFunctionContent(
@@ -424,7 +424,7 @@ class Fir2IrVisitor(
         data: Any?
     ): IrElement = whileAnalysing(session, anonymousFunction) {
         return anonymousFunction.convertWithOffsets { startOffset, endOffset ->
-            val irFunction = declarationStorage.getOrCreateIrFunction(
+            val irFunction = declarationStorage.createAndCacheIrFunction(
                 anonymousFunction,
                 irParent = conversionScope.parent(),
                 predefinedOrigin = IrDeclarationOrigin.LOCAL_FUNCTION,
@@ -496,7 +496,8 @@ class Fir2IrVisitor(
 
     override fun visitProperty(property: FirProperty, data: Any?): IrElement = whileAnalysing(session, property) {
         if (property.isLocal) return visitLocalVariable(property)
-        val irProperty = declarationStorage.getCachedIrProperty(property, fakeOverrideOwnerLookupTag = null)
+        @OptIn(UnsafeDuringIrConstructionAPI::class)
+        val irProperty = declarationStorage.getCachedIrPropertySymbol(property, fakeOverrideOwnerLookupTag = null)?.owner
             ?: return IrErrorExpressionImpl(
                 UNDEFINED_OFFSET, UNDEFINED_OFFSET,
                 IrErrorTypeImpl(null, emptyList(), Variance.INVARIANT),
@@ -519,15 +520,7 @@ class Fir2IrVisitor(
         return returnExpression.convertWithOffsets { startOffset, endOffset ->
             // For implicit returns, use the expression endOffset to generate the expected line number for debugging.
             val returnStartOffset = if (returnExpression.source?.kind is KtFakeSourceElementKind.ImplicitReturn) endOffset else startOffset
-            IrReturnImpl(
-                returnStartOffset, endOffset, irBuiltIns.nothingType,
-                when (irTarget) {
-                    is IrConstructor -> irTarget.symbol
-                    is IrSimpleFunction -> irTarget.symbol
-                    else -> error("Unknown return target: $irTarget")
-                },
-                convertToIrExpression(result)
-            )
+            IrReturnImpl(returnStartOffset, endOffset, irBuiltIns.nothingType, irTarget, convertToIrExpression(result))
         }.let {
             returnExpression.accept(implicitCastInserter, it)
         }

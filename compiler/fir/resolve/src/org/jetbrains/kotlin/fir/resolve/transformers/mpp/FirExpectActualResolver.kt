@@ -7,19 +7,20 @@ package org.jetbrains.kotlin.fir.resolve.transformers.mpp
 
 import org.jetbrains.kotlin.fir.FirExpectActualMatchingContext
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.resolve.*
+import org.jetbrains.kotlin.fir.declarations.ExpectForActualMatchingData
+import org.jetbrains.kotlin.fir.declarations.fullyExpandedClass
+import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.providers.dependenciesSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
-import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.scopes.impl.FirPackageMemberScope
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.*
-import org.jetbrains.kotlin.fir.types.*
+import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirConstructorSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.mpp.CallableSymbolMarker
-import org.jetbrains.kotlin.resolve.calls.mpp.AbstractExpectActualCompatibilityChecker
-import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility
-import org.jetbrains.kotlin.utils.zipIfSizesAreEqual
+import org.jetbrains.kotlin.resolve.calls.mpp.AbstractExpectActualMatcher
+import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualMatchingCompatibility
 
 object FirExpectActualResolver {
     fun findExpectForActual(
@@ -27,13 +28,12 @@ object FirExpectActualResolver {
         useSiteSession: FirSession,
         scopeSession: ScopeSession,
         context: FirExpectActualMatchingContext,
-    ): ExpectForActualData {
+    ): ExpectForActualMatchingData {
         with(context) {
-            val result = when (actualSymbol) {
+            val result: Map<ExpectActualMatchingCompatibility, List<FirBasedSymbol<*>>> = when (actualSymbol) {
                 is FirCallableSymbol<*> -> {
                     val callableId = actualSymbol.callableId
                     val classId = callableId.classId
-                    var parentSubstitutor: ConeSubstitutor? = null
                     var expectContainingClass: FirRegularClassSymbol? = null
                     var actualContainingClass: FirRegularClassSymbol? = null
                     val candidates = when {
@@ -43,12 +43,6 @@ object FirExpectActualResolver {
                             }
                             actualContainingClass = useSiteSession.symbolProvider.getClassLikeSymbolByClassId(classId)
                                 ?.fullyExpandedClass(useSiteSession)
-
-                            val expectTypeParameters = expectContainingClass?.typeParameterSymbols.orEmpty()
-                            val actualTypeParameters = actualContainingClass?.typeParameterSymbols.orEmpty()
-
-                            parentSubstitutor = (expectTypeParameters zipIfSizesAreEqual actualTypeParameters)
-                                ?.let { createExpectActualTypeParameterSubstitutor(it, useSiteSession) }
 
                             when (actualSymbol) {
                                 is FirConstructorSymbol -> expectContainingClass?.getConstructors(scopeSession)
@@ -67,31 +61,25 @@ object FirExpectActualResolver {
                     candidates.filter { expectSymbol ->
                         actualSymbol != expectSymbol && expectSymbol.isExpect
                     }.groupBy { expectDeclaration ->
-                        AbstractExpectActualCompatibilityChecker.getCallablesCompatibility(
+                        AbstractExpectActualMatcher.getCallablesMatchingCompatibility(
                             expectDeclaration,
                             actualSymbol as CallableSymbolMarker,
-                            parentSubstitutor,
                             expectContainingClass,
                             actualContainingClass,
                             context
                         )
                     }.let {
                         // If there is a compatible entry, return a map only containing it
-                        when (val compatibleSymbols = it[ExpectActualCompatibility.Compatible]) {
+                        when (val compatibleSymbols = it[ExpectActualMatchingCompatibility.MatchedSuccessfully]) {
                             null -> it
-                            else -> mapOf<ExpectActualCompatibility<FirBasedSymbol<*>>, _>(ExpectActualCompatibility.Compatible to compatibleSymbols)
+                            else -> mapOf(ExpectActualMatchingCompatibility.MatchedSuccessfully to compatibleSymbols)
                         }
                     }
                 }
                 is FirClassLikeSymbol<*> -> {
                     val expectClassSymbol = useSiteSession.dependenciesSymbolProvider
                         .getClassLikeSymbolByClassId(actualSymbol.classId) as? FirRegularClassSymbol ?: return emptyMap()
-                    val compatibility = AbstractExpectActualCompatibilityChecker.getClassifiersCompatibility(
-                        expectClassSymbol,
-                        actualSymbol,
-                        checkClassScopesCompatibility = true,
-                        context
-                    )
+                    val compatibility = AbstractExpectActualMatcher.matchClassifiers(expectClassSymbol, actualSymbol, context)
                     mapOf(compatibility to listOf(expectClassSymbol))
                 }
                 else -> emptyMap()

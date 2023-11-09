@@ -12,15 +12,14 @@ import org.jetbrains.kotlin.mpp.*
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility
+import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCheckingCompatibility
+import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualMatchingCompatibility
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.model.KotlinTypeMarker
 import org.jetbrains.kotlin.types.model.TypeSubstitutorMarker
 import org.jetbrains.kotlin.types.model.TypeSystemContext
 
 interface ExpectActualMatchingContext<T : DeclarationSymbolMarker> : TypeSystemContext {
-    val shouldCheckReturnTypesOfCallables: Boolean
-
     /*
      * This flag indicates how are type parameters of inner classes stored in the specific implementation of RegularClassSymbolMarker
      *
@@ -35,9 +34,6 @@ interface ExpectActualMatchingContext<T : DeclarationSymbolMarker> : TypeSystemC
      */
     val innerClassesCapturesOuterTypeParameters: Boolean
         get() = true
-
-    val enumConstructorsAreAlwaysCompatible: Boolean
-        get() = false
 
     // Try to drop it once KT-61105 is fixed
     val shouldCheckAbsenceOfDefaultParamsInActual: Boolean
@@ -146,6 +142,7 @@ interface ExpectActualMatchingContext<T : DeclarationSymbolMarker> : TypeSystemC
         expectType: KotlinTypeMarker?,
         actualType: KotlinTypeMarker?,
         parameterOfAnnotationComparisonMode: Boolean = false,
+        dynamicTypesEqualToAnything: Boolean = true
     ): Boolean
 
     fun actualTypeIsSubtypeOfExpectType(
@@ -172,9 +169,16 @@ interface ExpectActualMatchingContext<T : DeclarationSymbolMarker> : TypeSystemC
         containingActualClassSymbol: RegularClassSymbolMarker?,
     ) {}
 
+    fun onIncompatibleMembersFromClassScope(
+        expectSymbol: DeclarationSymbolMarker,
+        actualSymbolsByIncompatibility: Map<ExpectActualCheckingCompatibility.Incompatible<*>, List<DeclarationSymbolMarker>>,
+        containingExpectClassSymbol: RegularClassSymbolMarker?,
+        containingActualClassSymbol: RegularClassSymbolMarker?,
+    ) {}
+
     fun onMismatchedMembersFromClassScope(
         expectSymbol: DeclarationSymbolMarker,
-        actualSymbolsByIncompatibility: Map<ExpectActualCompatibility.Incompatible<*>, List<DeclarationSymbolMarker>>,
+        actualSymbolsByIncompatibility: Map<ExpectActualMatchingCompatibility.Mismatch, List<DeclarationSymbolMarker>>,
         containingExpectClassSymbol: RegularClassSymbolMarker?,
         containingActualClassSymbol: RegularClassSymbolMarker?,
     ) {}
@@ -216,8 +220,7 @@ interface ExpectActualMatchingContext<T : DeclarationSymbolMarker> : TypeSystemC
         expectClass: RegularClassSymbolMarker,
         actualClass: RegularClassSymbolMarker,
         actualMember: DeclarationSymbolMarker,
-        checkClassScopesCompatibility: Boolean,
-    ): Map<out DeclarationSymbolMarker, ExpectActualCompatibility<*>>
+    ): Map<out DeclarationSymbolMarker, ExpectActualMatchingCompatibility>
 
     fun DeclarationSymbolMarker.getSourceElement(): SourceElementMarker
 

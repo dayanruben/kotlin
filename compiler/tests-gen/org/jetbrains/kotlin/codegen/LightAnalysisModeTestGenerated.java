@@ -13310,6 +13310,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/delegation/byMiddleInterface.kt");
         }
 
+        @TestMetadata("computeIfAbsent.kt")
+        public void testComputeIfAbsent() throws Exception {
+            runTest("compiler/testData/codegen/box/delegation/computeIfAbsent.kt");
+        }
+
         @TestMetadata("defaultOverride.kt")
         public void testDefaultOverride() throws Exception {
             runTest("compiler/testData/codegen/box/delegation/defaultOverride.kt");
@@ -15329,6 +15334,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
 
         public void testAllFilesPresentInExtensionProperties() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/extensionProperties"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        }
+
+        @TestMetadata("genericContextOverride.kt")
+        public void testGenericContextOverride() throws Exception {
+            runTest("compiler/testData/codegen/box/extensionProperties/genericContextOverride.kt");
         }
 
         @TestMetadata("genericValForPrimitiveType.kt")
@@ -40809,6 +40819,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("smartcastOnImplicitDispatchReceiver.kt")
         public void testSmartcastOnImplicitDispatchReceiver() throws Exception {
             runTest("compiler/testData/codegen/box/smartCasts/smartcastOnImplicitDispatchReceiver.kt");
+        }
+
+        @TestMetadata("smartcastToStarType.kt")
+        public void testSmartcastToStarType() throws Exception {
+            runTest("compiler/testData/codegen/box/smartCasts/smartcastToStarType.kt");
         }
 
         @TestMetadata("toStringOnReceiverWIthSmartcast.kt")

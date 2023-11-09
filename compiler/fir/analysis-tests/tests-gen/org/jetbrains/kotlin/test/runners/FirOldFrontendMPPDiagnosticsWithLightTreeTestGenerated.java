@@ -110,6 +110,18 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
     }
 
     @Test
+    @TestMetadata("changeModalityFromOpenToFinalInOverride_finalExpectClass_finalActualClass.kt")
+    public void testChangeModalityFromOpenToFinalInOverride_finalExpectClass_finalActualClass() throws Exception {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/changeModalityFromOpenToFinalInOverride_finalExpectClass_finalActualClass.kt");
+    }
+
+    @Test
+    @TestMetadata("changeModalityFromOpenToFinalInOverride_finalExpectClass_openActualClass.kt")
+    public void testChangeModalityFromOpenToFinalInOverride_finalExpectClass_openActualClass() throws Exception {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/changeModalityFromOpenToFinalInOverride_finalExpectClass_openActualClass.kt");
+    }
+
+    @Test
     @TestMetadata("checkNoActualForExpectInLastModule.kt")
     public void testCheckNoActualForExpectInLastModule() throws Exception {
         runTest("compiler/testData/diagnostics/tests/multiplatform/checkNoActualForExpectInLastModule.kt");
@@ -137,6 +149,12 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
     @TestMetadata("expectActualClassesAreInBetaWarning.kt")
     public void testExpectActualClassesAreInBetaWarning() throws Exception {
         runTest("compiler/testData/diagnostics/tests/multiplatform/expectActualClassesAreInBetaWarning.kt");
+    }
+
+    @Test
+    @TestMetadata("expectActualClassesAreInBeta_suppressWarningWithLv.kt")
+    public void testExpectActualClassesAreInBeta_suppressWarningWithLv() throws Exception {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/expectActualClassesAreInBeta_suppressWarningWithLv.kt");
     }
 
     @Test
@@ -302,6 +320,12 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
     }
 
     @Test
+    @TestMetadata("returnTypeVsGenericsUpperBoundIncompatibility.kt")
+    public void testReturnTypeVsGenericsUpperBoundIncompatibility() throws Exception {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/returnTypeVsGenericsUpperBoundIncompatibility.kt");
+    }
+
+    @Test
     @TestMetadata("sealedClassWithPrivateConstructor.kt")
     public void testSealedClassWithPrivateConstructor() throws Exception {
         runTest("compiler/testData/diagnostics/tests/multiplatform/sealedClassWithPrivateConstructor.kt");
@@ -347,6 +371,36 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
     @TestMetadata("widerVisibilityInActualClassifier.kt")
     public void testWiderVisibilityInActualClassifier() throws Exception {
         runTest("compiler/testData/diagnostics/tests/multiplatform/widerVisibilityInActualClassifier.kt");
+    }
+
+    @Test
+    @TestMetadata("widerVisibility_expectIsEffectivelyFinal.kt")
+    public void testWiderVisibility_expectIsEffectivelyFinal() throws Exception {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/widerVisibility_expectIsEffectivelyFinal.kt");
+    }
+
+    @Test
+    @TestMetadata("widerVisibility_expectIsEffectivelyFinal_fakeOverride.kt")
+    public void testWiderVisibility_expectIsEffectivelyFinal_fakeOverride() throws Exception {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/widerVisibility_expectIsEffectivelyFinal_fakeOverride.kt");
+    }
+
+    @Test
+    @TestMetadata("widerVisibility_expectIsEffectivelyFinal_oldLanguageVersion.kt")
+    public void testWiderVisibility_expectIsEffectivelyFinal_oldLanguageVersion() throws Exception {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/widerVisibility_expectIsEffectivelyFinal_oldLanguageVersion.kt");
+    }
+
+    @Test
+    @TestMetadata("widerVisibility_expectSetterIsEffectivelyFinal.kt")
+    public void testWiderVisibility_expectSetterIsEffectivelyFinal() throws Exception {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/widerVisibility_expectSetterIsEffectivelyFinal.kt");
+    }
+
+    @Test
+    @TestMetadata("widerVisibility_expectSetterIsEffectivelyFinal_fakeOverride.kt")
+    public void testWiderVisibility_expectSetterIsEffectivelyFinal_fakeOverride() throws Exception {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/widerVisibility_expectSetterIsEffectivelyFinal_fakeOverride.kt");
     }
 
     @Nested

@@ -84,7 +84,7 @@ import org.jetbrains.kotlin.resolve.ForbiddenNamedArgumentsTarget
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationInfo
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualAnnotationsIncompatibilityType
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility
-import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility.Incompatible
+import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility.MismatchOrIncompatible
 import org.jetbrains.kotlin.serialization.deserialization.IncompatibleVersionErrorData
 import org.jetbrains.kotlin.types.Variance
 
@@ -1841,6 +1841,10 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = CallableReferenceToAnnotationConstructor::class
     }
 
+    interface AdaptedCallableReferenceAgainstReflectionType : KtFirDiagnostic<KtExpression> {
+        override val diagnosticClass get() = AdaptedCallableReferenceAgainstReflectionType::class
+    }
+
     interface ClassLiteralLhsNotAClass : KtFirDiagnostic<KtExpression> {
         override val diagnosticClass get() = ClassLiteralLhsNotAClass::class
     }
@@ -2630,7 +2634,7 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
     interface NoActualClassMemberForExpectedClass : KtFirDiagnostic<KtNamedDeclaration> {
         override val diagnosticClass get() = NoActualClassMemberForExpectedClass::class
         val declaration: KtSymbol
-        val members: List<Pair<KtSymbol, Map<Incompatible<FirBasedSymbol<*>>, List<KtSymbol>>>>
+        val members: List<Pair<KtSymbol, Map<MismatchOrIncompatible<FirBasedSymbol<*>>, List<KtSymbol>>>>
     }
 
     interface ActualMissing : KtFirDiagnostic<KtNamedDeclaration> {

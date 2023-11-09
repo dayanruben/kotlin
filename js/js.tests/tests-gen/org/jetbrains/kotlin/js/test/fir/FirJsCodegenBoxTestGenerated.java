@@ -13700,6 +13700,12 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
         }
 
         @Test
+        @TestMetadata("genericContextOverride.kt")
+        public void testGenericContextOverride() throws Exception {
+            runTest("compiler/testData/codegen/box/extensionProperties/genericContextOverride.kt");
+        }
+
+        @Test
         @TestMetadata("genericValForPrimitiveType.kt")
         public void testGenericValForPrimitiveType() throws Exception {
             runTest("compiler/testData/codegen/box/extensionProperties/genericValForPrimitiveType.kt");
@@ -35107,6 +35113,12 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
         @TestMetadata("smartcastOnDynamic.kt")
         public void testSmartcastOnDynamic() throws Exception {
             runTest("compiler/testData/codegen/box/smartCasts/smartcastOnDynamic.kt");
+        }
+
+        @Test
+        @TestMetadata("smartcastToStarType.kt")
+        public void testSmartcastToStarType() throws Exception {
+            runTest("compiler/testData/codegen/box/smartCasts/smartcastToStarType.kt");
         }
 
         @Test

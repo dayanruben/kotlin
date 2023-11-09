@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.resolve.calls.mpp.ExpectActualCollectionArgumentsCom
 import org.jetbrains.kotlin.resolve.calls.mpp.ExpectActualMatchingContext
 import org.jetbrains.kotlin.resolve.calls.mpp.ExpectActualMatchingContext.AnnotationCallInfo
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
-import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility
+import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualMatchingCompatibility
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.types.TypeCheckerState
 import org.jetbrains.kotlin.types.Variance
@@ -92,14 +92,8 @@ internal abstract class IrExpectActualMatchingContext(
 
     private inline fun <reified T : IrDeclaration> DeclarationSymbolMarker.safeAsIr(): T? = (this as IrSymbol).owner as? T
 
-    override val shouldCheckReturnTypesOfCallables: Boolean
-        get() = true
-
     override val innerClassesCapturesOuterTypeParameters: Boolean
         get() = false
-
-    override val enumConstructorsAreAlwaysCompatible: Boolean
-        get() = true
 
     override val RegularClassSymbolMarker.classId: ClassId
         get() = asIr().classIdOrFail
@@ -338,6 +332,7 @@ internal abstract class IrExpectActualMatchingContext(
         expectType: KotlinTypeMarker?,
         actualType: KotlinTypeMarker?,
         parameterOfAnnotationComparisonMode: Boolean,
+        dynamicTypesEqualToAnything: Boolean
     ): Boolean {
         if (expectType == null) return actualType == null
         if (actualType == null) return false
@@ -557,8 +552,7 @@ internal abstract class IrExpectActualMatchingContext(
         expectClass: RegularClassSymbolMarker,
         actualClass: RegularClassSymbolMarker,
         actualMember: DeclarationSymbolMarker,
-        checkClassScopesCompatibility: Boolean,
-    ): Map<out DeclarationSymbolMarker, ExpectActualCompatibility<*>> = error("Should not be called")
+    ): Map<out DeclarationSymbolMarker, ExpectActualMatchingCompatibility> = error("Should not be called")
 
     // It's a stub, because not needed anywhere
     private object IrSourceElementStub : SourceElementMarker

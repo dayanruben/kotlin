@@ -242,6 +242,12 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
         configuration.get(BinaryOptions.objcDisposeOnMain) ?: true
     }
 
+    val enableSafepointSignposts: Boolean = configuration.get(BinaryOptions.enableSafepointSignposts)?.also {
+        if (it && !target.supportsSignposts) {
+            configuration.report(CompilerMessageSeverity.STRONG_WARNING, "Signposts are not available on $target. The setting will have no effect.")
+        }
+    } ?: false
+
     init {
         if (!platformManager.isEnabled(target)) {
             error("Target ${target.visibleName} is not available on the ${HostManager.hostName} host")
@@ -357,13 +363,15 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
             when (gc) {
                 GC.STOP_THE_WORLD_MARK_AND_SWEEP -> add("same_thread_ms_gc_custom.bc")
                 GC.NOOP -> add("noop_gc_custom.bc")
-                GC.PARALLEL_MARK_CONCURRENT_SWEEP -> add("concurrent_ms_gc_custom.bc")
+                GC.PARALLEL_MARK_CONCURRENT_SWEEP -> add("pmcs_gc_custom.bc")
+                GC.CONCURRENT_MARK_AND_SWEEP -> add("concurrent_ms_gc_custom.bc")
             }
         } else {
             when (gc) {
                 GC.STOP_THE_WORLD_MARK_AND_SWEEP -> add("same_thread_ms_gc.bc")
                 GC.NOOP -> add("noop_gc.bc")
-                GC.PARALLEL_MARK_CONCURRENT_SWEEP -> add("concurrent_ms_gc.bc")
+                GC.PARALLEL_MARK_CONCURRENT_SWEEP -> add("pmcs_gc.bc")
+                GC.CONCURRENT_MARK_AND_SWEEP -> add("concurrent_ms_gc.bc")
             }
         }
         if (shouldCoverLibraries || shouldCoverSources) add("profileRuntime.bc")
@@ -398,6 +406,9 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
 
     internal val objCNativeLibrary: String =
             File(distribution.defaultNatives(target)).child("objc.bc").absolutePath
+
+    internal val xcTestLauncherNativeLibrary: String =
+            File(distribution.defaultNatives(target)).child("xctest_launcher.bc").absolutePath
 
     internal val exceptionsSupportNativeLibrary: String =
             File(distribution.defaultNatives(target)).child("exceptionsSupport.bc").absolutePath

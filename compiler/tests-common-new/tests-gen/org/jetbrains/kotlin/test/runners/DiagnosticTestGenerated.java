@@ -12301,6 +12301,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("incorrectCallOnILT.kt")
+            public void testIncorrectCallOnILT() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/exceptions/incorrectCallOnILT.kt");
+            }
+
+            @Test
             @TestMetadata("kt24158.kt")
             public void testKt24158() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/exceptions/kt24158.kt");
@@ -12350,6 +12356,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("isAsOperatorsEnabled.kt")
             public void testIsAsOperatorsEnabled() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/isAsOperatorsEnabled.kt");
+            }
+
+            @Test
+            @TestMetadata("kt59493.kt")
+            public void testKt59493() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/kt59493.kt");
             }
 
             @Test
@@ -23477,6 +23489,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("changeModalityFromOpenToFinalInOverride_finalExpectClass_finalActualClass.kt")
+            public void testChangeModalityFromOpenToFinalInOverride_finalExpectClass_finalActualClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/changeModalityFromOpenToFinalInOverride_finalExpectClass_finalActualClass.kt");
+            }
+
+            @Test
+            @TestMetadata("changeModalityFromOpenToFinalInOverride_finalExpectClass_openActualClass.kt")
+            public void testChangeModalityFromOpenToFinalInOverride_finalExpectClass_openActualClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/changeModalityFromOpenToFinalInOverride_finalExpectClass_openActualClass.kt");
+            }
+
+            @Test
             @TestMetadata("checkNoActualForExpectInLastModule.kt")
             public void testCheckNoActualForExpectInLastModule() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/checkNoActualForExpectInLastModule.kt");
@@ -23504,6 +23528,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("expectActualClassesAreInBetaWarning.kt")
             public void testExpectActualClassesAreInBetaWarning() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/expectActualClassesAreInBetaWarning.kt");
+            }
+
+            @Test
+            @TestMetadata("expectActualClassesAreInBeta_suppressWarningWithLv.kt")
+            public void testExpectActualClassesAreInBeta_suppressWarningWithLv() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/expectActualClassesAreInBeta_suppressWarningWithLv.kt");
             }
 
             @Test
@@ -23669,6 +23699,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("returnTypeVsGenericsUpperBoundIncompatibility.kt")
+            public void testReturnTypeVsGenericsUpperBoundIncompatibility() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/returnTypeVsGenericsUpperBoundIncompatibility.kt");
+            }
+
+            @Test
             @TestMetadata("sealedClassWithPrivateConstructor.kt")
             public void testSealedClassWithPrivateConstructor() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/sealedClassWithPrivateConstructor.kt");
@@ -23714,6 +23750,36 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("widerVisibilityInActualClassifier.kt")
             public void testWiderVisibilityInActualClassifier() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/widerVisibilityInActualClassifier.kt");
+            }
+
+            @Test
+            @TestMetadata("widerVisibility_expectIsEffectivelyFinal.kt")
+            public void testWiderVisibility_expectIsEffectivelyFinal() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/widerVisibility_expectIsEffectivelyFinal.kt");
+            }
+
+            @Test
+            @TestMetadata("widerVisibility_expectIsEffectivelyFinal_fakeOverride.kt")
+            public void testWiderVisibility_expectIsEffectivelyFinal_fakeOverride() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/widerVisibility_expectIsEffectivelyFinal_fakeOverride.kt");
+            }
+
+            @Test
+            @TestMetadata("widerVisibility_expectIsEffectivelyFinal_oldLanguageVersion.kt")
+            public void testWiderVisibility_expectIsEffectivelyFinal_oldLanguageVersion() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/widerVisibility_expectIsEffectivelyFinal_oldLanguageVersion.kt");
+            }
+
+            @Test
+            @TestMetadata("widerVisibility_expectSetterIsEffectivelyFinal.kt")
+            public void testWiderVisibility_expectSetterIsEffectivelyFinal() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/widerVisibility_expectSetterIsEffectivelyFinal.kt");
+            }
+
+            @Test
+            @TestMetadata("widerVisibility_expectSetterIsEffectivelyFinal_fakeOverride.kt")
+            public void testWiderVisibility_expectSetterIsEffectivelyFinal_fakeOverride() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/widerVisibility_expectSetterIsEffectivelyFinal_fakeOverride.kt");
             }
 
             @Nested
@@ -30375,6 +30441,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("kt46969.kt")
                 public void testKt46969() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/resolve/dslMarker/kt46969.kt");
+                }
+
+                @Test
+                @TestMetadata("lowPriority.kt")
+                public void testLowPriority() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/resolve/dslMarker/lowPriority.kt");
                 }
 
                 @Test
@@ -40826,6 +40898,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @Test
             public void testAllFilesPresentInContracts() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/testsWithStdLib/contracts"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+            }
+
+            @Test
+            @TestMetadata("complexConditionWithSafeCall.kt")
+            public void testComplexConditionWithSafeCall() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/contracts/complexConditionWithSafeCall.kt");
             }
 
             @Nested

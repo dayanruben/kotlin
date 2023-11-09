@@ -14637,6 +14637,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             }
 
             @Test
+            @TestMetadata("genericContextOverride.kt")
+            public void testGenericContextOverride() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionProperties/genericContextOverride.kt");
+            }
+
+            @Test
             @TestMetadata("genericValForPrimitiveType.kt")
             public void testGenericValForPrimitiveType() throws Exception {
                 runTest("compiler/testData/codegen/box/extensionProperties/genericValForPrimitiveType.kt");
@@ -38289,6 +38295,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             @TestMetadata("smartCastInsideIf.kt")
             public void testSmartCastInsideIf() throws Exception {
                 runTest("compiler/testData/codegen/box/smartCasts/smartCastInsideIf.kt");
+            }
+
+            @Test
+            @TestMetadata("smartcastToStarType.kt")
+            public void testSmartcastToStarType() throws Exception {
+                runTest("compiler/testData/codegen/box/smartCasts/smartcastToStarType.kt");
             }
 
             @Test

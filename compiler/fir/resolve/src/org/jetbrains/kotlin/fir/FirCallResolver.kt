@@ -400,8 +400,9 @@ class FirCallResolver(
                 manager = TowerResolveManager(localCollector),
             )
         }
-        val isSuccess = result.currentApplicability.isSuccess
+
         val (reducedCandidates, newApplicability) = reduceCandidates(result, callableReferenceAccess.explicitReceiver)
+        val nonEmptyAndAllSuccessful = reducedCandidates.isNotEmpty() && reducedCandidates.all { it.isSuccessful }
         val applicability = newApplicability ?: result.currentApplicability
 
         (callableReferenceAccess.explicitReceiver as? FirResolvedQualifier)?.replaceResolvedToCompanionObject(
@@ -411,14 +412,18 @@ class FirCallResolver(
         resolvedCallableReferenceAtom.hasBeenResolvedOnce = true
 
         when {
-            !isSuccess -> {
+            !nonEmptyAndAllSuccessful -> {
                 val errorReference = buildReferenceWithErrorCandidate(
                     info,
-                    if (applicability == CandidateApplicability.K2_UNSUPPORTED) {
-                        val unsupportedResolutionDiagnostic = reducedCandidates.firstOrNull()?.diagnostics?.firstOrNull() as? Unsupported
-                        ConeUnsupported(unsupportedResolutionDiagnostic?.message ?: "", unsupportedResolutionDiagnostic?.source)
-                    } else {
-                        ConeUnresolvedReferenceError(info.name)
+                    when {
+                        applicability == CandidateApplicability.K2_UNSUPPORTED -> {
+                            val unsupportedResolutionDiagnostic =
+                                reducedCandidates.firstOrNull()?.diagnostics?.firstOrNull() as? Unsupported
+                            ConeUnsupported(unsupportedResolutionDiagnostic?.message ?: "", unsupportedResolutionDiagnostic?.source)
+                        }
+                        reducedCandidates.size > 1 -> ConeAmbiguityError(info.name, applicability, reducedCandidates)
+                        reducedCandidates.size == 1 -> createConeDiagnosticForCandidateWithError(applicability, reducedCandidates.single())
+                        else -> ConeUnresolvedReferenceError(info.name)
                     },
                     callableReferenceAccess.source
                 )
@@ -776,18 +781,18 @@ class FirCallResolver(
 
             candidates.size > 1 -> ConeAmbiguityError(name, applicability, candidates)
 
-            !applicability.isSuccess -> {
+            else -> {
                 val candidate = candidates.single()
-                if (needTreatErrorCandidateAsResolved(candidate)) {
-                    @OptIn(CodeFragmentAdjustment::class)
-                    candidate.resetToResolved()
-                    null
-                } else {
-                    createConeDiagnosticForCandidateWithError(applicability, candidate)
+                runIf(!candidate.isSuccessful) {
+                    if (needTreatErrorCandidateAsResolved(candidate)) {
+                        @OptIn(CodeFragmentAdjustment::class)
+                        candidate.resetToResolved()
+                        null
+                    } else {
+                        createConeDiagnosticForCandidateWithError(applicability, candidate)
+                    }
                 }
             }
-
-            else -> null
         }
 
         if (diagnostic != null) {

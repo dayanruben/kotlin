@@ -28,8 +28,8 @@
 namespace kotlin {
 namespace gc {
 
-// Stop-the-world parallel mark + concurrent sweep. The GC runs in a separate thread, finalizers run in another thread of their own.
-// TODO: Also make marking run concurrently with Kotlin threads.
+// TODO concurrent mark + concurrent sweep. The GC runs in a separate thread, finalizers run in another thread of their own.
+// TODO: Make marking run concurrently with Kotlin threads.
 class ConcurrentMarkAndSweep : private Pinned {
 public:
     class ThreadData : private Pinned {
@@ -43,20 +43,22 @@ public:
 
         void onThreadRegistration() noexcept { barriers_.onThreadRegistration(); }
 
-        BarriersThreadData& barriers() noexcept { return barriers_; }
-
         bool tryLockRootSet();
         void publish();
         bool published() const;
         void clearMarkFlags();
 
-        mm::ThreadData& commonThreadData() const;
+        auto& commonThreadData() const noexcept { return threadData_; }
+        auto& barriers() noexcept { return barriers_; }
+        // TODO use in concurrent mark
+        [[maybe_unused]] auto& markQueue() noexcept { return markQueue_; }
 
     private:
         friend ConcurrentMarkAndSweep;
         ConcurrentMarkAndSweep& gc_;
         mm::ThreadData& threadData_;
         BarriersThreadData barriers_;
+        ManuallyScoped<mark::ParallelMark::MutatorQueue> markQueue_;
 
         std::atomic<bool> rootSetLocked_ = false;
         std::atomic<bool> published_ = false;
