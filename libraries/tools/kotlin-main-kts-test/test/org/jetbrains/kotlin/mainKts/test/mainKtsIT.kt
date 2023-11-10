@@ -158,17 +158,24 @@ class MainKtsIT {
         Assert.assertTrue("Expect file '$scriptPath' to start with UTF-8 BOM", File(scriptPath).readText().startsWith(UTF8_BOM))
         runWithKotlincAndMainKts(scriptPath, listOf("Hello world"))
     }
+
+    @Test
+    fun testUseSlf4j() {
+        val scriptPath = "$TEST_DATA_ROOT/use-slf4j.main.kts"
+        runWithKotlincAndMainKts(scriptPath, expectedErrPatterns = listOf(".*test-slf4j"))
+    }
 }
 
 fun runWithKotlincAndMainKts(
     scriptPath: String,
     expectedOutPatterns: List<String> = emptyList(),
+    expectedErrPatterns: List<String> = emptyList(),
     expectedExitCode: Int = 0,
     cacheDir: Path? = null
 ) {
     val paths = PathUtil.kotlinPathsForDistDirectory
     runWithKotlinc(
-        scriptPath, expectedOutPatterns, expectedExitCode,
+        scriptPath, expectedOutPatterns, expectedErrPatterns, expectedExitCode,
         classpath = listOf(
             paths.jar(KotlinPaths.Jar.MainKts).also {
                 Assert.assertTrue("kotlin-main-kts.jar not found, run dist task: ${it.absolutePath}", it.exists())
@@ -181,12 +188,13 @@ fun runWithKotlincAndMainKts(
 fun runWithKotlinRunner(
     scriptPath: String,
     expectedOutPatterns: List<String> = emptyList(),
+    expectedErrPatterns: List<String> = emptyList(),
     expectedExitCode: Int = 0,
     cacheDir: Path? = null,
     expectErrorOnK2: Boolean = false
 ) {
     runWithKotlinLauncherScript(
-        "kotlin", listOf(scriptPath), expectedOutPatterns, expectedExitCode,
+        "kotlin", listOf(scriptPath), expectedOutPatterns, expectedErrPatterns, expectedExitCode,
         additionalEnvVars = listOf(COMPILED_SCRIPTS_CACHE_DIR_ENV_VAR to (cacheDir?.toAbsolutePath()?.toString() ?: "")),
         expectErrorOnK2 = expectErrorOnK2
     )

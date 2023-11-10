@@ -15,11 +15,10 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KtReadActionConfinementLifetim
 import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.StandaloneProjectFactory
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.ClsJavaStubByVirtualFileCache
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory
+import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
-import org.jetbrains.kotlin.analysis.project.structure.KtModuleScopeProvider
-import org.jetbrains.kotlin.analysis.project.structure.KtModuleScopeProviderImpl
 import org.jetbrains.kotlin.analysis.providers.*
 import org.jetbrains.kotlin.analysis.providers.impl.*
 import org.jetbrains.kotlin.analysis.test.framework.project.structure.ktModuleProvider
@@ -74,8 +73,7 @@ object AnalysisApiBaseTestServiceRegistrar: AnalysisApiTestServiceRegistrar()  {
             testServices.environmentManager.getProjectEnvironment()
         ).distinct()
         project.apply {
-            registerService(KtModuleScopeProvider::class.java, KtModuleScopeProviderImpl())
-            registerService(KotlinAnnotationsResolverFactory::class.java, KotlinStaticAnnotationsResolverFactory(allSourceKtFiles))
+            registerService(KotlinAnnotationsResolverFactory::class.java, KotlinStaticAnnotationsResolverFactory(project, allSourceKtFiles))
 
             val filter = BuiltInDefinitionFile.FILTER_OUT_CLASSES_EXISTING_AS_JVM_CLASS_FILES
             val ktFilesForBinaries: List<KtFile>
@@ -107,5 +105,6 @@ object AnalysisApiBaseTestServiceRegistrar: AnalysisApiTestServiceRegistrar()  {
     override fun registerApplicationServices(application: MockApplication, testServices: TestServices) {
         testServices.environmentManager.getApplicationEnvironment().registerFileType(KotlinBuiltInFileType, "kotlin_builtins")
         testServices.environmentManager.getApplicationEnvironment().registerFileType(KotlinBuiltInFileType, "kotlin_metadata")
+        testServices.environmentManager.getApplicationEnvironment().registerFileType(KlibMetaFileType, "knm")
     }
 }

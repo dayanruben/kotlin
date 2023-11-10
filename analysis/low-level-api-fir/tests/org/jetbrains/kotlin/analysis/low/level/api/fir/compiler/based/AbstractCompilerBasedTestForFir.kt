@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir.compiler.based
 
 
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService
+import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirTestSuppressor
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.DiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirFile
 import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostic.compiler.based.facades.LLFirAnalyzerFacadeFactory
@@ -58,7 +59,14 @@ abstract class AbstractCompilerBasedTestForFir : AbstractCompilerBasedTest() {
 
         useMetaTestConfigurators(::LLFirMetaTestConfigurator)
         useAfterAnalysisCheckers(::LLFirIdenticalChecker)
-        useAfterAnalysisCheckers(::LLFirDivergenceCommentChecker)
+
+        // For multiplatform tests it's expected that LL and FIR diverge,
+        // because IR actualizer doesn't run in IDE mode tests.
+        forTestsNotMatching("compiler/testData/diagnostics/tests/multiplatform/*") {
+            useAfterAnalysisCheckers(::LLFirDivergenceCommentChecker)
+        }
+
+        useAfterAnalysisCheckers(::LLFirTestSuppressor)
     }
 
     open fun TestConfigurationBuilder.configureTest() {}

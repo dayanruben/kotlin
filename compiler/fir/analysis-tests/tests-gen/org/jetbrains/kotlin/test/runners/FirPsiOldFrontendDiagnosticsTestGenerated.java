@@ -7261,6 +7261,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             }
 
             @Test
+            @TestMetadata("reassignmentWithLambda.kt")
+            public void testReassignmentWithLambda() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/reassignmentWithLambda.kt");
+            }
+
+            @Test
             @TestMetadata("referenceToPropertyInitializer.kt")
             public void testReferenceToPropertyInitializer() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/referenceToPropertyInitializer.kt");
@@ -7543,6 +7549,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 @TestMetadata("returnInDeadLambda.kt")
                 public void testReturnInDeadLambda() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/deadCode/returnInDeadLambda.kt");
+                }
+
+                @Test
+                @TestMetadata("smartCastAfterDeadCode.kt")
+                public void testSmartCastAfterDeadCode() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/deadCode/smartCastAfterDeadCode.kt");
                 }
             }
 
@@ -23037,12 +23049,6 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             }
 
             @Test
-            @TestMetadata("expectActualAnnotationsWithLazyResolve.kt")
-            public void testExpectActualAnnotationsWithLazyResolve() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/multimodule/expectActualAnnotationsWithLazyResolve.kt");
-            }
-
-            @Test
             @TestMetadata("friendModule.kt")
             public void testFriendModule() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multimodule/friendModule.kt");
@@ -31217,6 +31223,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             }
 
             @Test
+            @TestMetadata("complexSealedContracts.kt")
+            public void testComplexSealedContracts() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/smartCasts/complexSealedContracts.kt");
+            }
+
+            @Test
             @TestMetadata("dataFlowInfoForArguments.kt")
             public void testDataFlowInfoForArguments() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/smartCasts/dataFlowInfoForArguments.kt");
@@ -33218,6 +33230,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 }
 
                 @Test
+                @TestMetadata("capturedInlineModifiedBefore.kt")
+                public void testCapturedInlineModifiedBefore() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/smartCasts/varnotnull/capturedInlineModifiedBefore.kt");
+                }
+
+                @Test
                 @TestMetadata("doWhileWithBreak.kt")
                 public void testDoWhileWithBreak() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/smartCasts/varnotnull/doWhileWithBreak.kt");
@@ -33227,6 +33245,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 @TestMetadata("doWhileWithMiddleBreak.kt")
                 public void testDoWhileWithMiddleBreak() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/smartCasts/varnotnull/doWhileWithMiddleBreak.kt");
+                }
+
+                @Test
+                @TestMetadata("equalityAndIdentity.kt")
+                public void testEqualityAndIdentity() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/smartCasts/varnotnull/equalityAndIdentity.kt");
                 }
 
                 @Test

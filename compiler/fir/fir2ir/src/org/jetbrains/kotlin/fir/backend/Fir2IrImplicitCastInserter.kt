@@ -188,7 +188,7 @@ class Fir2IrImplicitCastInserter(
     }
 
     override fun visitThrowExpression(throwExpression: FirThrowExpression, data: IrElement): IrElement =
-        (data as IrThrow).cast(throwExpression, throwExpression.exception.resolvedType, throwExpression.resolvedType)
+        (data as IrThrow).insertSpecialCast(throwExpression, throwExpression.exception.resolvedType, throwExpression.resolvedType)
 
     override fun visitBlock(block: FirBlock, data: IrElement): IrElement =
         (data as? IrContainerExpression)?.insertImplicitCasts() ?: data
@@ -196,13 +196,23 @@ class Fir2IrImplicitCastInserter(
     override fun visitReturnExpression(returnExpression: FirReturnExpression, data: IrElement): IrElement {
         val irReturn = data as? IrReturn ?: return data
         val expectedType = returnExpression.target.labeledElement.returnTypeRef
-        irReturn.value = irReturn.value.cast(returnExpression.result, returnExpression.result.resolvedType, expectedType.coneType)
+        irReturn.value = irReturn.value.insertSpecialCast(returnExpression.result, returnExpression.result.resolvedType, expectedType.coneType)
         return data
     }
 
     // ==================================================================================
 
-    internal fun IrExpression.cast(expression: FirExpression, valueTypeRef: ConeKotlinType, expectedTypeRef: ConeKotlinType): IrExpression {
+    /**
+     * This functions processes the following casts:
+     * - coercion to Unit
+     * - nullability casts based on nullability annotations
+     * - casts for dynamic types
+     */
+    internal fun IrExpression.insertSpecialCast(
+        expression: FirExpression,
+        valueType: ConeKotlinType,
+        expectedType: ConeKotlinType,
+    ): IrExpression {
         if (this is IrTypeOperatorCall) {
             return this
         }
@@ -211,27 +221,40 @@ class Fir2IrImplicitCastInserter(
             insertImplicitCasts()
         }
 
-        val valueType = valueTypeRef.fullyExpandedType(session)
-        val expectedType = expectedTypeRef.fullyExpandedType(session)
+        val expandedValueType = valueType.fullyExpandedType(session)
+        val expandedExpectedType = expectedType.fullyExpandedType(session)
 
         return when {
-            expectedType.isUnit -> {
+            expandedExpectedType.isUnit -> {
                 coerceToUnitIfNeeded(this, irBuiltIns)
             }
-            valueType is ConeDynamicType -> {
-                if (expectedType !is ConeDynamicType && !expectedType.isNullableAny) {
-                    implicitCast(this, expectedType.toIrType(ConversionTypeOrigin.DEFAULT))
+            expandedValueType is ConeDynamicType -> {
+                if (expandedExpectedType !is ConeDynamicType && !expandedExpectedType.isNullableAny) {
+                    implicitCast(this, expandedExpectedType.toIrType(ConversionTypeOrigin.DEFAULT))
                 } else {
                     this
                 }
             }
-            typeCanBeEnhancedOrFlexibleNullable(valueType) && !expectedType.acceptsNullValues() -> {
+            typeCanBeEnhancedOrFlexibleNullable(expandedValueType) && !expandedExpectedType.acceptsNullValues() -> {
                 insertImplicitNotNullCastIfNeeded(expression)
             }
             // TODO: coerceIntToAnotherIntegerType
             // TODO: even implicitCast call can be here?
             else -> this
         }
+    }
+
+    internal fun IrExpression.insertCastForSmartcastWithIntersection(
+        argumentType: ConeKotlinType,
+        expectedType: ConeKotlinType
+    ): IrExpression {
+        if (argumentType !is ConeIntersectionType) return this
+        val approximatedArgumentType = argumentType.approximateForIrOrNull() ?: argumentType
+        if (approximatedArgumentType.isSubtypeOf(expectedType, session)) return this
+
+        return findComponentOfIntersectionForExpectedType(argumentType, expectedType)?.let {
+            implicitCast(this, it.toIrType())
+        } ?: this
     }
 
     private fun ConeKotlinType.acceptsNullValues(): Boolean {
@@ -276,9 +299,16 @@ class Fir2IrImplicitCastInserter(
     override fun visitSmartCastExpression(smartCastExpression: FirSmartCastExpression, data: IrElement): IrElement {
         // We don't want an implicit cast to Nothing?. This expression just encompasses nullability after null check.
         return if (smartCastExpression.isStable && smartCastExpression.smartcastTypeWithoutNullableNothing == null) {
-            implicitCastOrExpression(data as IrExpression, smartCastExpression.resolvedType)
+            val smartcastedType = smartCastExpression.resolvedType
+            val approximatedType = smartcastedType.approximateForIrOrNull()
+            if (approximatedType != null) {
+                if (smartCastExpression.originalExpression.resolvedType.isSubtypeOf(approximatedType, session)) {
+                    return data
+                }
+            }
+            implicitCastOrExpression(data as IrExpression, approximatedType ?: smartcastedType)
         } else {
-            data as IrExpression
+            data
         }
     }
 
@@ -313,7 +343,7 @@ class Fir2IrImplicitCastInserter(
                 }
                 receiver === extensionReceiver -> {
                     val extensionReceiverType = referencedDeclaration?.receiverParameter?.typeRef?.coneType ?: return null
-                    val substitutor = createSubstitutorFromTypeArguments(selector, referencedDeclaration)
+                    val substitutor = selector.buildSubstitutorByCalledCallable()
                     val substitutedType = substitutor.substituteOrSelf(extensionReceiverType)
                     // Frontend may write captured types as type arguments (by design), so we need to approximate receiver type after substitution
                     val approximatedType = session.typeApproximator.approximateToSuperType(
@@ -326,26 +356,18 @@ class Fir2IrImplicitCastInserter(
             }
         }
 
-        for (componentType in receiverExpressionType.intersectedTypes) {
-            if (AbstractTypeChecker.isSubtypeOf(session.typeContext, componentType, receiverType)) {
-                return implicitCastOrExpression(originalIrReceiver, componentType, typeOrigin)
+        return findComponentOfIntersectionForExpectedType(receiverExpressionType, receiverType)?.let {
+            implicitCastOrExpression(originalIrReceiver, it, typeOrigin)
+        }
+    }
+
+    private fun findComponentOfIntersectionForExpectedType(type: ConeIntersectionType, expectedType: ConeKotlinType): ConeKotlinType? {
+        for (componentType in type.intersectedTypes) {
+            if (AbstractTypeChecker.isSubtypeOf(session.typeContext, componentType, expectedType)) {
+                return componentType
             }
         }
         return null
-    }
-
-    private fun createSubstitutorFromTypeArguments(
-        qualifiedAccessExpression: FirQualifiedAccessExpression,
-        callableDeclaration: FirCallableDeclaration,
-    ): ConeSubstitutor {
-        if (qualifiedAccessExpression.typeArguments.isEmpty() || callableDeclaration.typeParameters.isEmpty()) return ConeSubstitutor.Empty
-        val map = buildMap {
-            for ((parameter, argument) in callableDeclaration.typeParameters.zip(qualifiedAccessExpression.typeArguments)) {
-                val argumentType = argument.toConeTypeProjection().type ?: continue
-                put(parameter.symbol, argumentType)
-            }
-        }
-        return ConeSubstitutorByMap(map, session)
     }
 
     private fun implicitCastOrExpression(

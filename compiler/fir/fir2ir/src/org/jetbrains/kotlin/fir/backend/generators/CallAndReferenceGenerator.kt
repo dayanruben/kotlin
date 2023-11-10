@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.fir.resolve.calls.FirSimpleSyntheticPropertySymbol
 import org.jetbrains.kotlin.fir.resolve.calls.FirSyntheticFunctionSymbol
 import org.jetbrains.kotlin.fir.resolve.calls.getExpectedType
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
-import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutorByMap
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.approximateDeclarationType
 import org.jetbrains.kotlin.fir.scopes.getDeclaredConstructors
 import org.jetbrains.kotlin.fir.scopes.impl.originalConstructorIfTypeAlias
@@ -839,16 +838,6 @@ class CallAndReferenceGenerator(
         }
     }
 
-    private fun FirFunctionCall.buildSubstitutorByCalledFunction(function: FirFunction?): ConeSubstitutor? {
-        if (function == null) return null
-        val map = mutableMapOf<FirTypeParameterSymbol, ConeKotlinType>()
-        for ((index, typeParameter) in function.typeParameters.withIndex()) {
-            val typeProjection = typeArguments.getOrNull(index) as? FirTypeProjectionWithVariance ?: continue
-            map[typeParameter.symbol] = typeProjection.typeRef.coneType
-        }
-        return ConeSubstitutorByMap(map, session)
-    }
-
     private fun extractArgumentsMapping(
         call: FirCall,
     ): Triple<List<FirValueParameter>?, Map<FirExpression, FirValueParameter>?, ConeSubstitutor> {
@@ -861,7 +850,7 @@ class CallAndReferenceGenerator(
         val function = ((calleeReference as? FirResolvedNamedReference)?.resolvedSymbol as? FirFunctionSymbol<*>)?.fir
         val valueParameters = function?.valueParameters
         val argumentMapping = call.resolvedArgumentMapping
-        val substitutor = (call as? FirFunctionCall)?.buildSubstitutorByCalledFunction(function) ?: ConeSubstitutor.Empty
+        val substitutor = (call as? FirFunctionCall)?.buildSubstitutorByCalledCallable() ?: ConeSubstitutor.Empty
         return Triple(valueParameters, argumentMapping, substitutor)
     }
 
@@ -1032,19 +1021,30 @@ class CallAndReferenceGenerator(
         parameter: FirValueParameter?,
         substitutor: ConeSubstitutor,
     ): IrExpression {
-        val parameterConeType = parameter?.returnTypeRef?.coneType
+        val unsubstitutedParameterType = parameter?.returnTypeRef?.coneType?.fullyExpandedType(session)
         // Normally argument type should be correct itself.
         // However, for deserialized annotations it's possible to have imprecise Array<Any> type
         // for empty integer literal arguments.
         // In this case we have to use parameter type itself which is more precise, like Array<String> or IntArray.
         // See KT-62598 and its fix for details.
-        val expectedType = parameterConeType.takeIf { visitor.annotationMode && parameterConeType?.isArrayType == true }
+        val expectedType = unsubstitutedParameterType.takeIf { visitor.annotationMode && unsubstitutedParameterType?.isArrayType == true }
         var irArgument = visitor.convertToIrExpression(argument, expectedType = expectedType)
-        if (parameterConeType != null) {
+        if (unsubstitutedParameterType != null) {
             with(visitor.implicitCastInserter) {
-                irArgument = irArgument.cast(argument, argument.resolvedType, parameterConeType)
+                val argumentType = argument.resolvedType.fullyExpandedType(session)
+                if (argument is FirSmartCastExpression) {
+                    val substitutedParameterType = substitutor.substituteOrSelf(unsubstitutedParameterType)
+                    // here we should use a substituted parameter type to properly choose the component of an intersection type
+                    //  to provide a proper cast to the smartcasted type
+                    irArgument = irArgument.insertCastForSmartcastWithIntersection(argumentType, substitutedParameterType)
+                }
+                // here we should pass unsubstituted parameter type to properly infer if the original type accepts null or not
+                // to properly insert nullability check
+                irArgument = irArgument.insertSpecialCast(argument, argumentType, unsubstitutedParameterType)
             }
         }
+        // TODO: Applying SAM conversion should be extracted to a separate function, which will call
+        //   convertArgument with original functional type as expected type, see KT-62847, KT-63345
         with(adapterGenerator) {
             if (parameter?.returnTypeRef is FirResolvedTypeRef) {
                 // Java type case (from annotations)
@@ -1291,10 +1291,11 @@ class CallAndReferenceGenerator(
                         symbol.fir.receiverParameter?.typeRef?.let { receiverType ->
                             with(visitor.implicitCastInserter) {
                                 val extensionReceiver = qualifiedAccess.extensionReceiver!!
-                                it.cast(
+                                val substitutor = qualifiedAccess.buildSubstitutorByCalledCallable()
+                                it.insertSpecialCast(
                                     extensionReceiver,
                                     extensionReceiver.resolvedType,
-                                    receiverType.coneType,
+                                    substitutor.substituteOrSelf(receiverType.coneType),
                                 )
                             }
                         } ?: it

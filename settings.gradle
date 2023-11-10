@@ -571,11 +571,16 @@ include ":generators:analysis-api-generator",
         ":analysis:decompiled:decompiler-to-psi",
         ":analysis:decompiled:decompiler-to-stubs",
         ":analysis:decompiled:decompiler-to-file-stubs",
-        ":analysis:decompiled:native",
+        ":analysis:decompiled:decompiler-native",
         ":analysis:decompiled:light-classes-for-decompiled",
         ":analysis:decompiled:light-classes-for-decompiled-fe10",
         ":prepare:analysis-api-test-framework",
         ":tools:ide-plugin-dependencies-validator"
+
+if (buildProperties.isKotlinNativeEnabled) {
+    include ":generators:analysis-api-generator:generator-kotlin-native",
+            ":analysis:low-level-api-fir:low-level-api-fir-native"
+}
 
 
 if (buildProperties.inJpsBuildIdeaSync) {

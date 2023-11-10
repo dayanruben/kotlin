@@ -274,6 +274,18 @@ class MainKtsTest {
         assertSucceeded(res)
     }
 
+    @Test
+    fun testUseSlf4j() {
+        val err = captureOutAndErr {
+            val res = evalFile(File("$TEST_DATA_ROOT/use-slf4j.main.kts"))
+            assertSucceeded(res)
+        }.second
+        Assert.assertTrue(
+            "Expect info log line with \"test-slf4j\" text, got:\n$err",
+            err.contains("INFO  - test-slf4j")
+        )
+    }
+
     private fun assertSucceeded(res: ResultWithDiagnostics<EvaluationResult>) {
         Assert.assertTrue(
             "test failed:\n  ${res.reports.joinToString("\n  ") { it.severity.name + ": " + it.message + if (it.exception == null) "" else ": ${it.exception}" }}",
@@ -403,17 +415,24 @@ class CacheDirectoryDetectorTest {
     private val directories = Directories(systemProperties, environment)
 }
 
-internal fun captureOut(body: () -> Unit): String {
+internal fun captureOut(body: () -> Unit): String = captureOutAndErr(body).first
+
+internal fun captureOutAndErr(body: () -> Unit): Pair<String, String> {
     val outStream = ByteArrayOutputStream()
+    val errStream = ByteArrayOutputStream()
     val prevOut = System.out
+    val prevErr = System.err
     System.setOut(PrintStream(outStream))
+    System.setErr(PrintStream(errStream))
     try {
         body()
     } finally {
         System.out.flush()
+        System.err.flush()
         System.setOut(prevOut)
+        System.setErr(prevErr)
     }
-    return outStream.toString().trim()
+    return outStream.toString().trim() to errStream.toString().trim()
 }
 
 internal fun <T> withProperty(name: String, value: String?, body: () -> T): T {
