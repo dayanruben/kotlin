@@ -40,8 +40,7 @@ fun ConeClassifierLookupTag.toSymbol(useSiteSession: FirSession): FirClassifierS
     when (this) {
         is ConeClassLikeLookupTag -> toSymbol(useSiteSession)
         is ConeClassifierLookupTagWithFixedSymbol -> this.symbol
-        // TODO: replace null with error(), see KT-57921
-        else -> null
+        else -> error("missing branch for ${javaClass.name}")
     }
 
 /**
@@ -132,7 +131,7 @@ fun ConeKotlinType.findClassRepresentation(
         is ConeIntegerLiteralType -> possibleTypes.findClassRepresentationThatIsSubtypeOf(dispatchReceiverParameterType, session)
         is ConeIntersectionType -> intersectedTypes.findClassRepresentationThatIsSubtypeOf(dispatchReceiverParameterType, session)
         is ConeTypeParameterType -> lookupTag.findClassRepresentationThatIsSubtypeOf(dispatchReceiverParameterType, session)
-        is ConeTypeVariableType -> (this.lookupTag.originalTypeParameter as? ConeTypeParameterLookupTag)
+        is ConeTypeVariableType -> (this.typeConstructor.originalTypeParameter as? ConeTypeParameterLookupTag)
             ?.findClassRepresentationThatIsSubtypeOf(dispatchReceiverParameterType, session)
         is ConeStubType -> (this.constructor.variable.typeConstructor.originalTypeParameter as? ConeTypeParameterLookupTag)
             ?.findClassRepresentationThatIsSubtypeOf(dispatchReceiverParameterType, session)
