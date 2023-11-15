@@ -207,6 +207,7 @@ private class FirDeclarationsResolveTransformerForAnnotationArguments(
         anonymousInitializer: FirAnonymousInitializer,
         data: ResolutionMode
     ): FirAnonymousInitializer {
+        anonymousInitializer.transformAnnotations(this, ResolutionMode.ContextIndependent)
         return anonymousInitializer
     }
 
@@ -214,10 +215,9 @@ private class FirDeclarationsResolveTransformerForAnnotationArguments(
         simpleFunction: FirSimpleFunction,
         data: ResolutionMode
     ): FirSimpleFunction {
-        doTransformTypeParameters(simpleFunction)
-
         context.withSimpleFunction(simpleFunction, session) {
             simpleFunction
+                .transformTypeParameters(transformer, data)
                 .transformReturnTypeRef(transformer, data)
                 .transformReceiverParameter(transformer, data)
                 .transformValueParameters(transformer, data)
@@ -229,10 +229,9 @@ private class FirDeclarationsResolveTransformerForAnnotationArguments(
 
     override fun transformConstructor(constructor: FirConstructor, data: ResolutionMode): FirConstructor {
         val containingClass = context.containerIfAny as? FirRegularClass
-        doTransformTypeParameters(constructor)
-
         context.withConstructor(constructor) {
             constructor
+                .transformTypeParameters(transformer, data)
                 .transformAnnotations(transformer, data)
                 .transformReceiverParameter(transformer, data)
                 .transformReturnTypeRef(transformer, data)
@@ -262,10 +261,10 @@ private class FirDeclarationsResolveTransformerForAnnotationArguments(
 
     override fun transformProperty(property: FirProperty, data: ResolutionMode): FirProperty {
         property.transformReceiverParameter(transformer, ResolutionMode.ContextIndependent)
-        doTransformTypeParameters(property)
 
         context.withProperty(property) {
             property
+                .transformTypeParameters(transformer, data)
                 .transformAnnotations(transformer, data)
                 .transformReceiverParameter(transformer, data)
                 .transformReturnTypeRef(transformer, data)

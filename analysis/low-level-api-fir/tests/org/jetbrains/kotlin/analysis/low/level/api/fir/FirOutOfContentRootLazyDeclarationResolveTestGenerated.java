@@ -343,6 +343,12 @@ public class FirOutOfContentRootLazyDeclarationResolveTestGenerated extends Abst
     }
 
     @Test
+    @TestMetadata("initWithAnnotation.kt")
+    public void testInitWithAnnotation() throws Exception {
+        runTest("analysis/low-level-api-fir/testData/lazyResolve/initWithAnnotation.kt");
+    }
+
+    @Test
     @TestMetadata("lambdaAsSAMInterface.kt")
     public void testLambdaAsSAMInterface() throws Exception {
         runTest("analysis/low-level-api-fir/testData/lazyResolve/lambdaAsSAMInterface.kt");
@@ -906,6 +912,12 @@ public class FirOutOfContentRootLazyDeclarationResolveTestGenerated extends Abst
         }
 
         @Test
+        @TestMetadata("typeParameterAnnotations.kt")
+        public void testTypeParameterAnnotations() throws Exception {
+            runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/typeParameterAnnotations.kt");
+        }
+
+        @Test
         @TestMetadata("typePropagationFromFunctionWithInaccessibleAnnotationArgument.kt")
         public void testTypePropagationFromFunctionWithInaccessibleAnnotationArgument() throws Exception {
             runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/typePropagationFromFunctionWithInaccessibleAnnotationArgument.kt");
@@ -1079,6 +1091,12 @@ public class FirOutOfContentRootLazyDeclarationResolveTestGenerated extends Abst
         @TestMetadata("simpleLoopInOverride2.kt")
         public void testSimpleLoopInOverride2() throws Exception {
             runTest("analysis/low-level-api-fir/testData/lazyResolve/properties/simpleLoopInOverride2.kt");
+        }
+
+        @Test
+        @TestMetadata("typeParameterAnnotations.kt")
+        public void testTypeParameterAnnotations() throws Exception {
+            runTest("analysis/low-level-api-fir/testData/lazyResolve/properties/typeParameterAnnotations.kt");
         }
 
         @Test

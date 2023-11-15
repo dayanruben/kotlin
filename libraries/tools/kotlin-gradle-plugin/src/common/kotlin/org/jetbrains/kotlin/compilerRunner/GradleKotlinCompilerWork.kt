@@ -42,10 +42,16 @@ internal class ProjectFilesForCompilation(
     val sessionFlagFile: File,
     val buildDir: File
 ) : Serializable {
-    constructor(logger: Logger, projectDir:File, buildDir: File, projectName: String, projectCacheDirProvider: File, sessionDir: File) : this(
+    constructor(
+        logger: Logger,
+        projectDir: File,
+        buildDir: File,
+        projectName: String,
+        sessionDir: File
+    ) : this(
         projectRootFile = projectDir,
         clientIsAliveFlagFile = GradleCompilerRunner.getOrCreateClientFlagFile(logger, projectName),
-        sessionFlagFile = GradleCompilerRunner.getOrCreateSessionFlagFile(logger, sessionDir, projectCacheDirProvider),
+        sessionFlagFile = GradleCompilerRunner.getOrCreateSessionFlagFile(logger, sessionDir),
         buildDir = buildDir
     )
 
@@ -68,7 +74,7 @@ internal class GradleKotlinCompilerWorkArguments(
     val kotlinScriptExtensions: Array<String>,
     val allWarningsAsErrors: Boolean,
     val compilerExecutionSettings: CompilerExecutionSettings,
-    val errorsFile: File?,
+    val errorsFiles: Set<File>?,
     val kotlinPluginVersion: String,
     val kotlinLanguageVersion: KotlinVersion,
 ) : Serializable {
@@ -106,7 +112,7 @@ internal class GradleKotlinCompilerWork @Inject constructor(
     private val metrics = if (reportingSettings.buildReportOutputs.isNotEmpty()) BuildMetricsReporterImpl() else DoNothingBuildMetricsReporter
     private var icLogLines: List<String> = emptyList()
     private val compilerExecutionSettings = config.compilerExecutionSettings
-    private val errorsFile = config.errorsFile
+    private val errorsFiles = config.errorsFiles
     private val kotlinPluginVersion = config.kotlinPluginVersion
     private val kotlinLanguageVersion = config.kotlinLanguageVersion
 
@@ -125,7 +131,9 @@ internal class GradleKotlinCompilerWork @Inject constructor(
             if (incrementalCompilationEnvironment?.disableMultiModuleIC == true) {
                 incrementalCompilationEnvironment.multiModuleICSettings.buildHistoryFile.delete()
             }
-            errorsFile?.also { gradleMessageCollector.flush(it) }
+            errorsFiles?.let {
+                gradleMessageCollector.flush(it)
+            }
 
             throwExceptionIfCompilationFailed(exitCode, executionStrategy)
         } finally {

@@ -5,9 +5,13 @@ import org.gradle.api.logging.configuration.WarningMode
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilerExecutionStrategy
 import org.jetbrains.kotlin.gradle.testbase.*
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
 import java.util.zip.ZipFile
 import kotlin.io.path.*
+import kotlin.test.assertEquals
 
 @JvmGradlePluginTests
 @DisplayName("KGP simple tests")
@@ -286,6 +290,34 @@ class SimpleKotlinGradleIT : KGPBaseTest() {
                                 jar.entries().asSequence().map { it.name }.joinToString()
                     }
                 }
+            }
+        }
+    }
+
+    @Disabled("KT-58223: Currently is not used and we should start using it after working on followup issues")
+    @DisplayName("Possible to override kotlin.user.home location")
+    @GradleTest
+    fun overrideKotlinUserHome(
+        gradleVersion: GradleVersion,
+        @TempDir tempDir: Path,
+    ) {
+        project(
+            projectName = "simpleProject",
+            gradleVersion = gradleVersion,
+            buildOptions = defaultBuildOptions.copy(kotlinUserHome = null)
+        ) {
+            gradleProperties.appendText(
+                """
+                |
+                |kotlin.user.home=${tempDir.resolve("kotlin-cache").absolutePathString().normalizePath()}
+                """.trimMargin()
+            )
+
+            build("compileKotlin") {
+                assertTasksExecuted(":compileKotlin")
+
+                val baseProjectsDir = tempDir.resolve("kotlin-cache")
+                assertDirectoryExists(baseProjectsDir)
             }
         }
     }

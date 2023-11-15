@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 @Retention(AnnotationRetention.SOURCE)
 @Repeatable
 annotation class Ann(val i: Int)
