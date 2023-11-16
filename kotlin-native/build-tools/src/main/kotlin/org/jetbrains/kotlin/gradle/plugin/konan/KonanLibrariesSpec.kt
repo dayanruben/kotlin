@@ -23,26 +23,12 @@ open class KonanLibrariesSpec(
         @Internal val project: Project
 ) {
 
-    @InputFiles @PathSensitive(PathSensitivity.RELATIVE) val files = mutableSetOf<FileCollection>()
-
-    @Input val namedKlibs = mutableSetOf<String>()
+    @InputFiles @PathSensitive(PathSensitivity.RELATIVE) val klibFiles = mutableSetOf<FileCollection>()
 
     @Internal val artifacts = mutableListOf<KonanBuildingTask>()
 
     val artifactFiles: List<File>
         @InputFiles @PathSensitive(PathSensitivity.RELATIVE) get() = artifacts.map { it.artifact }
-
-    @Internal val explicitRepos = mutableSetOf<File>()
-
-    val repos: Set<File>
-        @Input get() = mutableSetOf<File>().apply {
-            addAll(explicitRepos)
-            add(task.destinationDir) // TODO: Check if task is a library - create a Library interface
-            add(task.destinationDir) // TODO: Check if task is a library - create a Library interface
-            add(task.project.konanLibsBaseDir.targetSubdir(target))
-            addAll(artifacts.flatMap { it.libraries.repos })
-            addAll(task.platformConfiguration.files.map { it.parentFile })
-        }
 
     val target: KonanTarget
         @Internal get() = task.konanTarget
@@ -57,14 +43,9 @@ open class KonanLibrariesSpec(
     // DSL Methods
 
     /** Absolute path */
-    fun file(file: Any)                   = files.add(project.files(file))
-    fun files(vararg files: Any)          = this.files.addAll(files.map { project.files(it) })
-    fun files(collection: FileCollection) = this.files.add(collection)
-
-    /** The compiler with search the library in repos */
-    fun klib(lib: String)             = namedKlibs.add(lib)
-    fun klibs(vararg libs: String)    = namedKlibs.addAll(libs)
-    fun klibs(libs: Iterable<String>) = namedKlibs.addAll(libs)
+    fun klibFile(file: Any)                   { klibFiles.add(project.files(file)) }
+    fun klibFiles(vararg files: Any)          { klibFiles.addAll(files.map { project.files(it) }) }
+    fun klibFiles(collection: FileCollection) { klibFiles.add(collection) }
 
     private fun klibInternal(lib: KonanBuildingConfig<*>, friend: Boolean) {
         if (!(lib is KonanLibrary || lib is KonanInteropLibrary)) {
@@ -125,29 +106,7 @@ open class KonanLibrariesSpec(
         it is KonanInteropLibrary
     }
 
-    /** Add repo for library search */
-    fun useRepo(directory: Any) = explicitRepos.add(project.file(directory))
-    /** Add repos for library search */
-    fun useRepos(vararg directories: Any) = directories.forEach { useRepo(it) }
-    /** Add repos for library search */
-    fun useRepos(directories: Iterable<Any>) = directories.forEach { useRepo(it) }
-
     private fun Project.evaluationDependsOn(another: Project) {
         if (this != another) { evaluationDependsOn(another.path) }
-    }
-
-    fun asFiles(): List<File> = asFiles(
-        defaultResolver(
-            repos.map { it.absolutePath },
-            task.konanTarget,
-            Distribution(project.konanHome)
-        )
-    )
-
-    fun asFiles(resolver: SearchPathResolver<*>): List<File> = mutableListOf<File>().apply {
-        files.flatMapTo(this) { it.files }
-        addAll(artifactFiles)
-        addAll(task.platformConfiguration.files)
-        namedKlibs.mapTo(this) { project.file(resolver.resolve(it).libraryFile.absolutePath) }
     }
 }

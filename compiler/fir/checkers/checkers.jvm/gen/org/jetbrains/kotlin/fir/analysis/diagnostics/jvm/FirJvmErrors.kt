@@ -41,12 +41,17 @@ object FirJvmErrors {
     val FUNCTION_DELEGATE_MEMBER_NAME_CLASH by error0<PsiElement>(SourceElementPositioningStrategies.DECLARATION_NAME)
     val VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION by error0<PsiElement>()
     val JVM_INLINE_WITHOUT_VALUE_CLASS by error0<PsiElement>()
+    val WRONG_NULLABILITY_FOR_JAVA_OVERRIDE by warning2<PsiElement, FirCallableSymbol<*>, FirCallableSymbol<*>>(SourceElementPositioningStrategies.OVERRIDE_MODIFIER)
 
     // Types
     val JAVA_TYPE_MISMATCH by error2<KtExpression, ConeKotlinType, ConeKotlinType>()
+    val RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS by warning2<PsiElement, ConeKotlinType, ConeKotlinType>()
+    val NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS by warning2<PsiElement, ConeKotlinType, ConeKotlinType>()
 
     // Type parameters
     val UPPER_BOUND_CANNOT_BE_ARRAY by error0<PsiElement>()
+    val UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS by warning2<PsiElement, ConeKotlinType, ConeKotlinType>()
+    val UPPER_BOUND_VIOLATED_IN_TYPEALIAS_EXPANSION_BASED_ON_JAVA_ANNOTATIONS by warning2<PsiElement, ConeKotlinType, ConeKotlinType>()
 
     // annotations
     val STRICTFP_ON_CLASS by error0<KtAnnotationEntry>()

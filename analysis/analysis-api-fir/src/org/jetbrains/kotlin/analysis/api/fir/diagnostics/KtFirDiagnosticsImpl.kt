@@ -4217,6 +4217,13 @@ internal class JvmInlineWithoutValueClassImpl(
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.JvmInlineWithoutValueClass
 
+internal class WrongNullabilityForJavaOverrideImpl(
+    override val override: KtCallableSymbol,
+    override val base: KtCallableSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.WrongNullabilityForJavaOverride
+
 internal class JavaTypeMismatchImpl(
     override val expectedType: KtType,
     override val actualType: KtType,
@@ -4224,10 +4231,38 @@ internal class JavaTypeMismatchImpl(
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtExpression>(firDiagnostic, token), KtFirDiagnostic.JavaTypeMismatch
 
+internal class ReceiverNullabilityMismatchBasedOnJavaAnnotationsImpl(
+    override val actualType: KtType,
+    override val expectedType: KtType,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.ReceiverNullabilityMismatchBasedOnJavaAnnotations
+
+internal class NullabilityMismatchBasedOnJavaAnnotationsImpl(
+    override val actualType: KtType,
+    override val expectedType: KtType,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.NullabilityMismatchBasedOnJavaAnnotations
+
 internal class UpperBoundCannotBeArrayImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.UpperBoundCannotBeArray
+
+internal class UpperBoundViolatedBasedOnJavaAnnotationsImpl(
+    override val expectedUpperBound: KtType,
+    override val actualUpperBound: KtType,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.UpperBoundViolatedBasedOnJavaAnnotations
+
+internal class UpperBoundViolatedInTypealiasExpansionBasedOnJavaAnnotationsImpl(
+    override val expectedUpperBound: KtType,
+    override val actualUpperBound: KtType,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.UpperBoundViolatedInTypealiasExpansionBasedOnJavaAnnotations
 
 internal class StrictfpOnClassImpl(
     firDiagnostic: KtPsiDiagnostic,

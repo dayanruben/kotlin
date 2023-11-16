@@ -12703,6 +12703,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/delegatedProperty/referenceEnclosingClassFieldInReceiver2.kt");
         }
 
+        @TestMetadata("resolveGetValueWithWholeDelegate.kt")
+        public void testResolveGetValueWithWholeDelegate() throws Exception {
+            runTest("compiler/testData/codegen/box/delegatedProperty/resolveGetValueWithWholeDelegate.kt");
+        }
+
         @TestMetadata("setAsExtensionFun.kt")
         public void testSetAsExtensionFun() throws Exception {
             runTest("compiler/testData/codegen/box/delegatedProperty/setAsExtensionFun.kt");
@@ -14847,6 +14852,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("multiple.kt")
         public void testMultiple() throws Exception {
             runTest("compiler/testData/codegen/box/extensionClasses/multiple.kt");
+        }
+
+        @TestMetadata("noRedeclaration.kt")
+        public void testNoRedeclaration() throws Exception {
+            runTest("compiler/testData/codegen/box/extensionClasses/noRedeclaration.kt");
         }
 
         @TestMetadata("propertyWithContext.kt")
@@ -28876,6 +28886,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/multiplatform/callToJavaSuper.kt");
         }
 
+        @TestMetadata("kt59613.kt")
+        public void ignoreKt59613() throws Exception {
+            runTest("compiler/testData/codegen/box/multiplatform/kt59613.kt");
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
         }
@@ -28907,11 +28922,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("expectProperty.kt")
         public void testExpectProperty() throws Exception {
             runTest("compiler/testData/codegen/box/multiplatform/expectProperty.kt");
-        }
-
-        @TestMetadata("kt59613.kt")
-        public void testKt59613() throws Exception {
-            runTest("compiler/testData/codegen/box/multiplatform/kt59613.kt");
         }
 
         @TestMetadata("kt60854.kt")
@@ -28974,6 +28984,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             @TestMetadata("superCall.kt")
             public void ignoreSuperCall() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/superCall.kt");
+            }
+
+            @TestMetadata("typeAlias2.kt")
+            public void ignoreTypeAlias2() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/typeAlias2.kt");
             }
 
             private void runTest(String testDataFilePath) throws Exception {
@@ -29099,11 +29114,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/typeAlias.kt");
             }
 
-            @TestMetadata("typeAlias2.kt")
-            public void testTypeAlias2() throws Exception {
-                runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/typeAlias2.kt");
-            }
-
             @TestMetadata("withTypeParameter.kt")
             public void testWithTypeParameter() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/withTypeParameter.kt");
@@ -29160,13 +29170,13 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestDataPath("$PROJECT_ROOT")
         @RunWith(JUnit3RunnerWithInners.class)
         public static class K2 extends AbstractLightAnalysisModeTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
+            @TestMetadata("actualInnerClassesFirMemberMapping.kt")
+            public void ignoreActualInnerClassesFirMemberMapping() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/k2/actualInnerClassesFirMemberMapping.kt");
             }
 
-            @TestMetadata("actualInnerClassesFirMemberMapping.kt")
-            public void testActualInnerClassesFirMemberMapping() throws Exception {
-                runTest("compiler/testData/codegen/box/multiplatform/k2/actualInnerClassesFirMemberMapping.kt");
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
             }
 
             public void testAllFilesPresentInK2() throws Exception {
@@ -29250,6 +29260,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             @TestDataPath("$PROJECT_ROOT")
             @RunWith(JUnit3RunnerWithInners.class)
             public static class Basic extends AbstractLightAnalysisModeTest {
+                @TestMetadata("anyMethodInExpect.kt")
+                public void ignoreAnyMethodInExpect() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/anyMethodInExpect.kt");
+                }
+
                 @TestMetadata("expectActualFakeOverrides2.kt")
                 public void ignoreExpectActualFakeOverrides2() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectActualFakeOverrides2.kt");
@@ -29290,9 +29305,39 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectProperty.kt");
                 }
 
+                @TestMetadata("intersectionOverrideInCommonModule.kt")
+                public void ignoreIntersectionOverrideInCommonModule() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/intersectionOverrideInCommonModule.kt");
+                }
+
+                @TestMetadata("intersectionOverrideWithDefaultParameterInCommonModule.kt")
+                public void ignoreIntersectionOverrideWithDefaultParameterInCommonModule() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/intersectionOverrideWithDefaultParameterInCommonModule.kt");
+                }
+
+                @TestMetadata("localIntersectionOverrideInCommonModule.kt")
+                public void ignoreLocalIntersectionOverrideInCommonModule() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/localIntersectionOverrideInCommonModule.kt");
+                }
+
+                @TestMetadata("localIntersectionOverrideWithDefaultParameterInCommonModule.kt")
+                public void ignoreLocalIntersectionOverrideWithDefaultParameterInCommonModule() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/localIntersectionOverrideWithDefaultParameterInCommonModule.kt");
+                }
+
+                @TestMetadata("localSubstitutionOverrideInCommonModule.kt")
+                public void ignoreLocalSubstitutionOverrideInCommonModule() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/localSubstitutionOverrideInCommonModule.kt");
+                }
+
                 @TestMetadata("noArgActualConstructor.kt")
                 public void ignoreNoArgActualConstructor() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/noArgActualConstructor.kt");
+                }
+
+                @TestMetadata("nonExternalEquals.kt")
+                public void ignoreNonExternalEquals() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/nonExternalEquals.kt");
                 }
 
                 @TestMetadata("overridesOfExpectMembers.kt")
@@ -29303,6 +29348,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 @TestMetadata("removeExpectDeclarationsFromMetadata.kt")
                 public void ignoreRemoveExpectDeclarationsFromMetadata() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/removeExpectDeclarationsFromMetadata.kt");
+                }
+
+                @TestMetadata("substitutionOverrideInCommonModule.kt")
+                public void ignoreSubstitutionOverrideInCommonModule() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/substitutionOverrideInCommonModule.kt");
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {
@@ -29321,11 +29371,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
 
                 public void testAllFilesPresentInBasic() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/multiplatform/k2/basic"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
-                }
-
-                @TestMetadata("anyMethodInExpect.kt")
-                public void testAnyMethodInExpect() throws Exception {
-                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/anyMethodInExpect.kt");
                 }
 
                 @TestMetadata("correctParentForTypeParameter.kt")
@@ -29423,16 +29468,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/interfaceMethodFromSuperTypeIsImplementedInOtherExpectSuperClass.kt");
                 }
 
-                @TestMetadata("intersectionOverrideInCommonModule.kt")
-                public void testIntersectionOverrideInCommonModule() throws Exception {
-                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/intersectionOverrideInCommonModule.kt");
-                }
-
-                @TestMetadata("intersectionOverrideWithDefaultParameterInCommonModule.kt")
-                public void testIntersectionOverrideWithDefaultParameterInCommonModule() throws Exception {
-                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/intersectionOverrideWithDefaultParameterInCommonModule.kt");
-                }
-
                 @TestMetadata("kt-51753-1.kt")
                 public void testKt_51753_1() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/kt-51753-1.kt");
@@ -29446,31 +29481,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 @TestMetadata("kt-56329.kt")
                 public void testKt_56329() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/kt-56329.kt");
-                }
-
-                @TestMetadata("localIntersectionOverrideInCommonModule.kt")
-                public void testLocalIntersectionOverrideInCommonModule() throws Exception {
-                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/localIntersectionOverrideInCommonModule.kt");
-                }
-
-                @TestMetadata("localIntersectionOverrideWithDefaultParameterInCommonModule.kt")
-                public void testLocalIntersectionOverrideWithDefaultParameterInCommonModule() throws Exception {
-                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/localIntersectionOverrideWithDefaultParameterInCommonModule.kt");
-                }
-
-                @TestMetadata("localSubstitutionOverrideInCommonModule.kt")
-                public void testLocalSubstitutionOverrideInCommonModule() throws Exception {
-                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/localSubstitutionOverrideInCommonModule.kt");
-                }
-
-                @TestMetadata("nonExternalEquals.kt")
-                public void testNonExternalEquals() throws Exception {
-                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/nonExternalEquals.kt");
-                }
-
-                @TestMetadata("substitutionOverrideInCommonModule.kt")
-                public void testSubstitutionOverrideInCommonModule() throws Exception {
-                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/substitutionOverrideInCommonModule.kt");
                 }
 
                 @TestMetadata("transitiveSuperclassActualization.kt")
@@ -29498,22 +29508,22 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             @TestDataPath("$PROJECT_ROOT")
             @RunWith(JUnit3RunnerWithInners.class)
             public static class ComplexMatchings extends AbstractLightAnalysisModeTest {
+                @TestMetadata("expectCtorlessFinalToActualObject.kt")
+                public void ignoreExpectCtorlessFinalToActualObject() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/complexMatchings/expectCtorlessFinalToActualObject.kt");
+                }
+
+                @TestMetadata("expectCtorlessFinalToActualUnit.kt")
+                public void ignoreExpectCtorlessFinalToActualUnit() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/complexMatchings/expectCtorlessFinalToActualUnit.kt");
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
                 }
 
                 public void testAllFilesPresentInComplexMatchings() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/multiplatform/k2/complexMatchings"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
-                }
-
-                @TestMetadata("expectCtorlessFinalToActualObject.kt")
-                public void testExpectCtorlessFinalToActualObject() throws Exception {
-                    runTest("compiler/testData/codegen/box/multiplatform/k2/complexMatchings/expectCtorlessFinalToActualObject.kt");
-                }
-
-                @TestMetadata("expectCtorlessFinalToActualUnit.kt")
-                public void testExpectCtorlessFinalToActualUnit() throws Exception {
-                    runTest("compiler/testData/codegen/box/multiplatform/k2/complexMatchings/expectCtorlessFinalToActualUnit.kt");
                 }
             }
 
@@ -29669,6 +29679,26 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             @TestDataPath("$PROJECT_ROOT")
             @RunWith(JUnit3RunnerWithInners.class)
             public static class MigratedOldTests extends AbstractLightAnalysisModeTest {
+                @TestMetadata("mpp1.kt")
+                public void ignoreMpp1() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/migratedOldTests/mpp1.kt");
+                }
+
+                @TestMetadata("mpp2.kt")
+                public void ignoreMpp2() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/migratedOldTests/mpp2.kt");
+                }
+
+                @TestMetadata("mpp_default_args.kt")
+                public void ignoreMpp_default_args() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/migratedOldTests/mpp_default_args.kt");
+                }
+
+                @TestMetadata("remap_expect_property_ref.kt")
+                public void ignoreRemap_expect_property_ref() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/migratedOldTests/remap_expect_property_ref.kt");
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
                 }
@@ -29677,29 +29707,9 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/multiplatform/k2/migratedOldTests"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
                 }
 
-                @TestMetadata("mpp1.kt")
-                public void testMpp1() throws Exception {
-                    runTest("compiler/testData/codegen/box/multiplatform/k2/migratedOldTests/mpp1.kt");
-                }
-
-                @TestMetadata("mpp2.kt")
-                public void testMpp2() throws Exception {
-                    runTest("compiler/testData/codegen/box/multiplatform/k2/migratedOldTests/mpp2.kt");
-                }
-
-                @TestMetadata("mpp_default_args.kt")
-                public void testMpp_default_args() throws Exception {
-                    runTest("compiler/testData/codegen/box/multiplatform/k2/migratedOldTests/mpp_default_args.kt");
-                }
-
                 @TestMetadata("mpp_optional_expectation.kt")
                 public void testMpp_optional_expectation() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/migratedOldTests/mpp_optional_expectation.kt");
-                }
-
-                @TestMetadata("remap_expect_property_ref.kt")
-                public void testRemap_expect_property_ref() throws Exception {
-                    runTest("compiler/testData/codegen/box/multiplatform/k2/migratedOldTests/remap_expect_property_ref.kt");
                 }
             }
         }
@@ -40704,6 +40714,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("falseSmartCast.kt")
         public void testFalseSmartCast() throws Exception {
             runTest("compiler/testData/codegen/box/smartCasts/falseSmartCast.kt");
+        }
+
+        @TestMetadata("genericInheritanceWithNonGenericNoAmbiguity.kt")
+        public void testGenericInheritanceWithNonGenericNoAmbiguity() throws Exception {
+            runTest("compiler/testData/codegen/box/smartCasts/genericInheritanceWithNonGenericNoAmbiguity.kt");
         }
 
         @TestMetadata("genericIntersection.kt")

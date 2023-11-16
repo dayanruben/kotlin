@@ -98,10 +98,7 @@ open class KonanInteropTask @Inject constructor(@Internal val workerExecutor: Wo
         addArgs("-compiler-option", includeDirs.allHeadersDirs.map { "-I${it.absolutePath}" })
         addArgs("-headerFilterAdditionalSearchPrefix", includeDirs.headerFilterDirs.map { it.absolutePath })
 
-        addArgs("-repo", libraries.repos.map { it.canonicalPath })
-
-        addFileArgs("-library", libraries.files)
-        addArgs("-library", libraries.namedKlibs)
+        addFileArgs("-library", libraries.klibFiles)
         addArgs("-library", libraries.artifacts.map { it.artifact.canonicalPath })
 
         addKey("-no-default-libs", noDefaultLibs)

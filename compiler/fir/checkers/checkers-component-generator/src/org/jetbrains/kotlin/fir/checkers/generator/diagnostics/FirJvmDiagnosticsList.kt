@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.config.LanguageFeature.*
 import org.jetbrains.kotlin.fir.checkers.generator.diagnostics.model.DiagnosticList
 import org.jetbrains.kotlin.fir.checkers.generator.diagnostics.model.PositioningStrategy
+import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.name.ClassId
@@ -38,6 +39,11 @@ object JVM_DIAGNOSTICS_LIST : DiagnosticList("FirJvmErrors") {
 
         val VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION by error<PsiElement>()
         val JVM_INLINE_WITHOUT_VALUE_CLASS by error<PsiElement>()
+
+        val WRONG_NULLABILITY_FOR_JAVA_OVERRIDE by warning<PsiElement>(PositioningStrategy.OVERRIDE_MODIFIER) {
+            parameter<FirCallableSymbol<*>>("override")
+            parameter<FirCallableSymbol<*>>("base")
+        }
     }
 
     val TYPES by object : DiagnosticGroup("Types") {
@@ -45,10 +51,27 @@ object JVM_DIAGNOSTICS_LIST : DiagnosticList("FirJvmErrors") {
             parameter<ConeKotlinType>("expectedType")
             parameter<ConeKotlinType>("actualType")
         }
+
+        val RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS by warning<PsiElement> {
+            parameter<ConeKotlinType>("actualType")
+            parameter<ConeKotlinType>("expectedType")
+        }
+        val NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS by warning<PsiElement> {
+            parameter<ConeKotlinType>("actualType")
+            parameter<ConeKotlinType>("expectedType")
+        }
     }
 
     val TYPE_PARAMETERS by object : DiagnosticGroup("Type parameters") {
         val UPPER_BOUND_CANNOT_BE_ARRAY by error<PsiElement>()
+        val UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS by warning<PsiElement> {
+            parameter<ConeKotlinType>("expectedUpperBound")
+            parameter<ConeKotlinType>("actualUpperBound")
+        }
+        val UPPER_BOUND_VIOLATED_IN_TYPEALIAS_EXPANSION_BASED_ON_JAVA_ANNOTATIONS by warning<PsiElement> {
+            parameter<ConeKotlinType>("expectedUpperBound")
+            parameter<ConeKotlinType>("actualUpperBound")
+        }
     }
 
     val ANNOTATIONS by object : DiagnosticGroup("annotations") {

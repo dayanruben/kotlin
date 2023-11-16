@@ -3495,14 +3495,44 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = JvmInlineWithoutValueClass::class
     }
 
+    interface WrongNullabilityForJavaOverride : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = WrongNullabilityForJavaOverride::class
+        val override: KtCallableSymbol
+        val base: KtCallableSymbol
+    }
+
     interface JavaTypeMismatch : KtFirDiagnostic<KtExpression> {
         override val diagnosticClass get() = JavaTypeMismatch::class
         val expectedType: KtType
         val actualType: KtType
     }
 
+    interface ReceiverNullabilityMismatchBasedOnJavaAnnotations : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = ReceiverNullabilityMismatchBasedOnJavaAnnotations::class
+        val actualType: KtType
+        val expectedType: KtType
+    }
+
+    interface NullabilityMismatchBasedOnJavaAnnotations : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = NullabilityMismatchBasedOnJavaAnnotations::class
+        val actualType: KtType
+        val expectedType: KtType
+    }
+
     interface UpperBoundCannotBeArray : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = UpperBoundCannotBeArray::class
+    }
+
+    interface UpperBoundViolatedBasedOnJavaAnnotations : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = UpperBoundViolatedBasedOnJavaAnnotations::class
+        val expectedUpperBound: KtType
+        val actualUpperBound: KtType
+    }
+
+    interface UpperBoundViolatedInTypealiasExpansionBasedOnJavaAnnotations : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = UpperBoundViolatedInTypealiasExpansionBasedOnJavaAnnotations::class
+        val expectedUpperBound: KtType
+        val actualUpperBound: KtType
     }
 
     interface StrictfpOnClass : KtFirDiagnostic<KtAnnotationEntry> {

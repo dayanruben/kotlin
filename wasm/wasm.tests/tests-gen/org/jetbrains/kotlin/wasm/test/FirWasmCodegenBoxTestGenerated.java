@@ -11530,6 +11530,12 @@ public class FirWasmCodegenBoxTestGenerated extends AbstractFirWasmCodegenBoxTes
         }
 
         @Test
+        @TestMetadata("resolveGetValueWithWholeDelegate.kt")
+        public void testResolveGetValueWithWholeDelegate() throws Exception {
+            runTest("compiler/testData/codegen/box/delegatedProperty/resolveGetValueWithWholeDelegate.kt");
+        }
+
+        @Test
         @TestMetadata("setAsExtensionFun.kt")
         public void testSetAsExtensionFun() throws Exception {
             runTest("compiler/testData/codegen/box/delegatedProperty/setAsExtensionFun.kt");
@@ -34663,6 +34669,12 @@ public class FirWasmCodegenBoxTestGenerated extends AbstractFirWasmCodegenBoxTes
         @TestMetadata("falseSmartCast.kt")
         public void testFalseSmartCast() throws Exception {
             runTest("compiler/testData/codegen/box/smartCasts/falseSmartCast.kt");
+        }
+
+        @Test
+        @TestMetadata("genericInheritanceWithNonGenericNoAmbiguity.kt")
+        public void testGenericInheritanceWithNonGenericNoAmbiguity() throws Exception {
+            runTest("compiler/testData/codegen/box/smartCasts/genericInheritanceWithNonGenericNoAmbiguity.kt");
         }
 
         @Test
