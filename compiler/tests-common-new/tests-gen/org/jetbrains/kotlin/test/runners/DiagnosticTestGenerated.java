@@ -3746,6 +3746,122 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                                 runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/targetTypes/NullableNothingNullLiteralMaterializeCase.kt");
                             }
                         }
+
+                        @Nested
+                        @TestMetadata("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/typeInfoSinks")
+                        @TestDataPath("$PROJECT_ROOT")
+                        public class TypeInfoSinks {
+                            @Test
+                            public void testAllFilesPresentInTypeInfoSinks() throws Exception {
+                                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/typeInfoSinks"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+                            }
+
+                            @Test
+                            @TestMetadata("ExtensionFunctions.kt")
+                            public void testExtensionFunctions() throws Exception {
+                                runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/typeInfoSinks/ExtensionFunctions.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("ImmutableExtensionProperties.kt")
+                            public void testImmutableExtensionProperties() throws Exception {
+                                runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/typeInfoSinks/ImmutableExtensionProperties.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("ImmutableProperties.kt")
+                            public void testImmutableProperties() throws Exception {
+                                runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/typeInfoSinks/ImmutableProperties.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("MutableExtensionPropertiesMaterializeCase.kt")
+                            public void testMutableExtensionPropertiesMaterializeCase() throws Exception {
+                                runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/typeInfoSinks/MutableExtensionPropertiesMaterializeCase.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("MutableExtensionPropertiesYieldCase.kt")
+                            public void testMutableExtensionPropertiesYieldCase() throws Exception {
+                                runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/typeInfoSinks/MutableExtensionPropertiesYieldCase.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("MutablePropertiesMaterializeCase.kt")
+                            public void testMutablePropertiesMaterializeCase() throws Exception {
+                                runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/typeInfoSinks/MutablePropertiesMaterializeCase.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("MutablePropertiesYieldCase.kt")
+                            public void testMutablePropertiesYieldCase() throws Exception {
+                                runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/typeInfoSinks/MutablePropertiesYieldCase.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("ParametersOfBuilderArguments.kt")
+                            public void testParametersOfBuilderArguments() throws Exception {
+                                runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/typeInfoSinks/ParametersOfBuilderArguments.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("ReceiversOfBuilderArguments.kt")
+                            public void testReceiversOfBuilderArguments() throws Exception {
+                                runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/typeInfoSinks/ReceiversOfBuilderArguments.kt");
+                            }
+                        }
+
+                        @Nested
+                        @TestMetadata("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/typeInfoSources")
+                        @TestDataPath("$PROJECT_ROOT")
+                        public class TypeInfoSources {
+                            @Test
+                            public void testAllFilesPresentInTypeInfoSources() throws Exception {
+                                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/typeInfoSources"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+                            }
+
+                            @Test
+                            @TestMetadata("ExtensionFunctions.kt")
+                            public void testExtensionFunctions() throws Exception {
+                                runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/typeInfoSources/ExtensionFunctions.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("ExtensionProperties.kt")
+                            public void testExtensionProperties() throws Exception {
+                                runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/typeInfoSources/ExtensionProperties.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("ParametersOfBuilderArguments.kt")
+                            public void testParametersOfBuilderArguments() throws Exception {
+                                runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/typeInfoSources/ParametersOfBuilderArguments.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("ReceiversOfBuilderArguments.kt")
+                            public void testReceiversOfBuilderArguments() throws Exception {
+                                runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/typeInfoSources/ReceiversOfBuilderArguments.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("ReturnTypesOfBuilderParameters.kt")
+                            public void testReturnTypesOfBuilderParameters() throws Exception {
+                                runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/typeInfoSources/ReturnTypesOfBuilderParameters.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("UnitReturnTypeOfBuilderParametersExplicitReturnCase.kt")
+                            public void testUnitReturnTypeOfBuilderParametersExplicitReturnCase() throws Exception {
+                                runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/typeInfoSources/UnitReturnTypeOfBuilderParametersExplicitReturnCase.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("UnitReturnTypeOfBuilderParametersLastStatementReturnCase.kt")
+                            public void testUnitReturnTypeOfBuilderParametersLastStatementReturnCase() throws Exception {
+                                runTest("compiler/testData/diagnostics/tests/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/typeInfoSources/UnitReturnTypeOfBuilderParametersLastStatementReturnCase.kt");
+                            }
+                        }
                     }
                 }
             }
@@ -5768,6 +5884,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("DefinitelyNotNullTypes.kt")
+                public void testDefinitelyNotNullTypes() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/cast/neverSucceeds/DefinitelyNotNullTypes.kt");
+                }
+
+                @Test
                 @TestMetadata("MappedDirect.kt")
                 public void testMappedDirect() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/cast/neverSucceeds/MappedDirect.kt");
@@ -5789,6 +5911,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("NoGenericsUnrelated.kt")
                 public void testNoGenericsUnrelated() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/cast/neverSucceeds/NoGenericsUnrelated.kt");
+                }
+
+                @Test
+                @TestMetadata("NullableExprToItsNonNullableGenericBaseClass.kt")
+                public void testNullableExprToItsNonNullableGenericBaseClass() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/cast/neverSucceeds/NullableExprToItsNonNullableGenericBaseClass.kt");
                 }
             }
         }
@@ -11618,6 +11746,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("enumSubjectTypeCheck.kt")
             public void testEnumSubjectTypeCheck() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/enum/enumSubjectTypeCheck.kt");
+            }
+
+            @Test
+            @TestMetadata("EnumWOParenthesesConsistencyNestedScope.kt")
+            public void testEnumWOParenthesesConsistencyNestedScope() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/enum/EnumWOParenthesesConsistencyNestedScope.kt");
+            }
+
+            @Test
+            @TestMetadata("EnumWOParenthesesConsistencyTopLevel.kt")
+            public void testEnumWOParenthesesConsistencyTopLevel() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/enum/EnumWOParenthesesConsistencyTopLevel.kt");
             }
 
             @Test
@@ -26424,6 +26564,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("AssignOperatorAmbiguityExtension.kt")
             public void testAssignOperatorAmbiguityExtension() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/operatorsOverloading/AssignOperatorAmbiguityExtension.kt");
+            }
+
+            @Test
+            @TestMetadata("AssignOperatorWithExtensionForAny.kt")
+            public void testAssignOperatorWithExtensionForAny() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/operatorsOverloading/AssignOperatorWithExtensionForAny.kt");
             }
 
             @Test

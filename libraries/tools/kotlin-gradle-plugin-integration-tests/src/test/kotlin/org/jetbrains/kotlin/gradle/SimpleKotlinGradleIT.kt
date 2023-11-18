@@ -5,13 +5,13 @@ import org.gradle.api.logging.configuration.WarningMode
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilerExecutionStrategy
 import org.jetbrains.kotlin.gradle.testbase.*
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import java.util.zip.ZipFile
 import kotlin.io.path.*
-import kotlin.test.assertEquals
 
 @JvmGradlePluginTests
 @DisplayName("KGP simple tests")
@@ -205,6 +205,7 @@ class SimpleKotlinGradleIT : KGPBaseTest() {
 
     @DisplayName("Proper Gradle plugin variant is used")
     @GradleTestVersions(
+        maxVersion = TestVersions.Gradle.G_8_2,
         additionalVersions = [
             TestVersions.Gradle.G_7_0,
             TestVersions.Gradle.G_7_1,
@@ -213,6 +214,8 @@ class SimpleKotlinGradleIT : KGPBaseTest() {
             TestVersions.Gradle.G_7_5,
             TestVersions.Gradle.G_7_6,
             TestVersions.Gradle.G_8_0,
+            TestVersions.Gradle.G_8_1,
+            TestVersions.Gradle.G_8_2,
         ],
     )
     @GradleTest
@@ -220,7 +223,8 @@ class SimpleKotlinGradleIT : KGPBaseTest() {
         project("kotlinProject", gradleVersion) {
             build("help") {
                 val expectedVariant = when (gradleVersion) {
-                    in GradleVersion.version(TestVersions.Gradle.G_8_1)..GradleVersion.version(TestVersions.Gradle.G_8_2) -> "gradle81"
+                    GradleVersion.version(TestVersions.Gradle.G_8_2) -> "gradle82"
+                    GradleVersion.version(TestVersions.Gradle.G_8_1) -> "gradle81"
                     GradleVersion.version(TestVersions.Gradle.G_8_0) -> "gradle80"
                     GradleVersion.version(TestVersions.Gradle.G_7_6) -> "gradle76"
                     GradleVersion.version(TestVersions.Gradle.G_7_5) -> "gradle75"
@@ -318,6 +322,29 @@ class SimpleKotlinGradleIT : KGPBaseTest() {
 
                 val baseProjectsDir = tempDir.resolve("kotlin-cache")
                 assertDirectoryExists(baseProjectsDir)
+            }
+        }
+    }
+
+    @DisplayName("KT-63499: source sets conventions are not registered since Gradle 8.2")
+    @GradleTestVersions(minVersion = TestVersions.Gradle.G_8_2)
+    @GradleTest
+    fun sourceSetsConventionsAreNotRegistered(gradleVersion: GradleVersion) {
+        project("simpleProject", gradleVersion) {
+            // project's buildscript has to be in Groovy
+            buildGradle.append(
+                //language=Gradle
+                """
+                sourceSets {
+                    main {
+                        customSourceFilesExtensions // try using a property of KotlinSourceSet through the source set convention
+                    }
+                }
+                """.trimIndent()
+            )
+            KotlinSourceSet::customSourceFilesExtensions // ensure the accessed property is available on KotlinSourceSet
+            buildAndFail("help") {
+                assertOutputContains("Could not get unknown property 'customSourceFilesExtensions' for source set 'main' ")
             }
         }
     }
