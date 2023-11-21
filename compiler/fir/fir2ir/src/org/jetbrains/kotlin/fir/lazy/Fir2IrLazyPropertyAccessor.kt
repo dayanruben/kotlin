@@ -12,10 +12,7 @@ import org.jetbrains.kotlin.fir.declarations.FirPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.utils.isInline
-import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
-import org.jetbrains.kotlin.ir.declarations.IrFunction
-import org.jetbrains.kotlin.ir.declarations.IrValueParameter
+import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.lazy.lazyVar
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.symbols.IrPropertySymbol
@@ -37,9 +34,10 @@ class Fir2IrLazyPropertyAccessor(
     private val firParentProperty: FirProperty,
     firParentClass: FirRegularClass?,
     symbol: IrSimpleFunctionSymbol,
+    parent: IrDeclarationParent,
     isFakeOverride: Boolean,
     override var correspondingPropertySymbol: IrPropertySymbol?
-) : AbstractFir2IrLazyFunction<FirCallableDeclaration>(components, startOffset, endOffset, origin, symbol, isFakeOverride) {
+) : AbstractFir2IrLazyFunction<FirCallableDeclaration>(components, startOffset, endOffset, origin, symbol, parent, isFakeOverride) {
     init {
         symbol.bind(this)
     }
@@ -125,8 +123,13 @@ class Fir2IrLazyPropertyAccessor(
 
     override val initialSignatureFunction: IrFunction? by lazy {
         val originalFirFunction = (fir as? FirSyntheticPropertyAccessor)?.delegate ?: return@lazy null
-        @OptIn(GetOrCreateSensitiveAPI::class)
-        declarationStorage.getOrCreateIrFunction(originalFirFunction, parent)
+        // If property accessor is created then corresponding property is definitely created too
+        @OptIn(UnsafeDuringIrConstructionAPI::class)
+        val lookupTag = (correspondingPropertySymbol!!.owner as Fir2IrLazyProperty).containingClass?.symbol?.toLookupTag()
+
+        // `initialSignatureFunction` is not called during fir2ir conversion
+        @OptIn(UnsafeDuringIrConstructionAPI::class)
+        declarationStorage.getIrFunctionSymbol(originalFirFunction.symbol, lookupTag).owner
     }
 
     override val containerSource: DeserializedContainerSource?

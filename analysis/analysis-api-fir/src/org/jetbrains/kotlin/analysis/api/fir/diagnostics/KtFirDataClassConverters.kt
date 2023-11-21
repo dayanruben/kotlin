@@ -2141,6 +2141,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.TYPE_ARGUMENTS_NOT_ALLOWED) { firDiagnostic ->
         TypeArgumentsNotAllowedImpl(
+            firDiagnostic.a,
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -5640,12 +5641,6 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirJsErrors.JSCODE_ARGUMENT_NON_CONST_EXPRESSION) { firDiagnostic ->
-        JscodeArgumentNonConstExpressionImpl(
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
     add(FirSyntaxErrors.SYNTAX) { firDiagnostic ->
         SyntaxImpl(
             firDiagnostic.a,
@@ -5722,6 +5717,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirWebCommonErrors.WRONG_DEFAULT_VALUE_FOR_EXTERNAL_FUN_PARAMETER) { firDiagnostic ->
         WrongDefaultValueForExternalFunParameterImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirWebCommonErrors.JSCODE_ARGUMENT_NON_CONST_EXPRESSION) { firDiagnostic ->
+        JscodeArgumentNonConstExpressionImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

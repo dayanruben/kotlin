@@ -14,13 +14,17 @@ import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.scopes.FirScope
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
-import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrDeclaration
+import org.jetbrains.kotlin.ir.declarations.IrProperty
+import org.jetbrains.kotlin.ir.declarations.IrTypeParametersContainer
 import org.jetbrains.kotlin.ir.linkage.IrProvider
-import org.jetbrains.kotlin.ir.symbols.*
+import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
 
 class FirIrProvider(val components: Fir2IrComponents) : IrProvider {
     private val symbolProvider = components.session.symbolProvider
@@ -114,7 +118,11 @@ class FirIrProvider(val components: Fir2IrComponents) : IrProvider {
                     scope.processFunctionsByName(lastName) { functionSymbol ->
                         val dispatchReceiverClassId = (functionSymbol.fir.dispatchReceiverType as? ConeClassLikeType)?.lookupTag?.classId
                         val function = if (dispatchReceiverClassId != null && dispatchReceiverClassId != classId) {
-                            fakeOverrideGenerator.createFirFunctionFakeOverride(firClass, parentClass, functionSymbol, scope)!!.first
+                            fakeOverrideGenerator.createFirFunctionFakeOverrideIfNeeded(
+                                functionSymbol.fir,
+                                firClass.symbol.toLookupTag(),
+                                parentClass
+                            )!!
                         } else functionSymbol.fir
                         functions.add(function)
                     }
@@ -131,7 +139,11 @@ class FirIrProvider(val components: Fir2IrComponents) : IrProvider {
                         propertySymbol as FirPropertySymbol
                         val dispatchReceiverClassId = (propertySymbol.fir.dispatchReceiverType as? ConeClassLikeType)?.lookupTag?.classId
                         val property = if (dispatchReceiverClassId != null && dispatchReceiverClassId != classId) {
-                            fakeOverrideGenerator.createFirPropertyFakeOverride(firClass, parentClass, propertySymbol, scope)!!.first
+                            fakeOverrideGenerator.createFirPropertyFakeOverrideIfNeeded(
+                                propertySymbol.fir,
+                                firClass.symbol.toLookupTag(),
+                                parentClass
+                            )!!
                         } else propertySymbol.fir
                         properties.add(property)
                     }
@@ -160,7 +172,6 @@ class FirIrProvider(val components: Fir2IrComponents) : IrProvider {
         val firDeclaration = findDeclarationByHash(firCandidates, signature.id) ?: return null
         val parent = parentClass ?: declarationStorage.getIrExternalPackageFragment(packageFqName, firDeclaration.moduleData)
 
-        @OptIn(GetOrCreateSensitiveAPI::class)
         return when (kind) {
             SymbolKind.CLASS_SYMBOL -> {
                 classifierStorage.getOrCreateIrClass((firDeclaration as FirRegularClass).symbol)
@@ -169,16 +180,13 @@ class FirIrProvider(val components: Fir2IrComponents) : IrProvider {
                 firDeclaration as FirEnumEntry, parent as IrClass
             )
             SymbolKind.CONSTRUCTOR_SYMBOL -> {
-                val firConstructor = firDeclaration as FirConstructor
-                declarationStorage.getOrCreateIrConstructor(firConstructor, parent as IrClass)
+                shouldNotBeCalled()
             }
             SymbolKind.FUNCTION_SYMBOL -> {
-                val firSimpleFunction = firDeclaration as FirSimpleFunction
-                declarationStorage.getOrCreateIrFunction(firSimpleFunction, parent)
+                shouldNotBeCalled()
             }
             SymbolKind.PROPERTY_SYMBOL -> {
-                val firProperty = firDeclaration as FirProperty
-                declarationStorage.getOrCreateIrProperty(firProperty, parent)
+                shouldNotBeCalled()
             }
             SymbolKind.FIELD_SYMBOL -> {
                 val firField = firDeclaration as FirField

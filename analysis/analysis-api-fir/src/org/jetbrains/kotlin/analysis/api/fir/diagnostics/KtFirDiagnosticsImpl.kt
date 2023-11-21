@@ -1830,6 +1830,7 @@ internal class UpperBoundViolatedInTypealiasExpansionImpl(
 ) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.UpperBoundViolatedInTypealiasExpansion
 
 internal class TypeArgumentsNotAllowedImpl(
+    override val place: String,
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.TypeArgumentsNotAllowed
@@ -4738,11 +4739,6 @@ internal class WrongOperationWithDynamicImpl(
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.WrongOperationWithDynamic
 
-internal class JscodeArgumentNonConstExpressionImpl(
-    firDiagnostic: KtPsiDiagnostic,
-    token: KtLifetimeToken,
-) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.JscodeArgumentNonConstExpression
-
 internal class SyntaxImpl(
     override val message: String,
     firDiagnostic: KtPsiDiagnostic,
@@ -4809,4 +4805,9 @@ internal class WrongDefaultValueForExternalFunParameterImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.WrongDefaultValueForExternalFunParameter
+
+internal class JscodeArgumentNonConstExpressionImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.JscodeArgumentNonConstExpression
 

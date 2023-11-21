@@ -6,13 +6,14 @@
 package org.jetbrains.kotlin.fir.analysis.diagnostics.wasm
 
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactoryToRendererMap
-import org.jetbrains.kotlin.diagnostics.KtDiagnosticRenderers
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticRenderers.TO_STRING
 import org.jetbrains.kotlin.diagnostics.rendering.BaseDiagnosticRendererFactory
-import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers
 import org.jetbrains.kotlin.fir.analysis.diagnostics.wasm.FirWasmErrors.CALL_TO_DEFINED_EXTERNALLY_FROM_NON_EXTERNAL_DECLARATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.wasm.FirWasmErrors.EXTERNAL_TYPE_EXTENDS_NON_EXTERNAL_TYPE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.wasm.FirWasmErrors.JSCODE_INVALID_PARAMETER_NAME
+import org.jetbrains.kotlin.fir.analysis.diagnostics.wasm.FirWasmErrors.JSCODE_UNSUPPORTED_FUNCTION_KIND
+import org.jetbrains.kotlin.fir.analysis.diagnostics.wasm.FirWasmErrors.JSCODE_WRONG_CONTEXT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.wasm.FirWasmErrors.JS_AND_WASM_EXPORTS_ON_SAME_DECLARATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.wasm.FirWasmErrors.NESTED_WASM_EXPORT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.wasm.FirWasmErrors.NESTED_WASM_IMPORT
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.wasm.FirWasmErrors.WASM_IMP
 import org.jetbrains.kotlin.fir.analysis.diagnostics.wasm.FirWasmErrors.WASM_IMPORT_EXPORT_UNSUPPORTED_RETURN_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.wasm.FirWasmErrors.WASM_IMPORT_EXPORT_VARARG_PARAMETER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.wasm.FirWasmErrors.WASM_IMPORT_ON_NON_EXTERNAL_DECLARATION
+import org.jetbrains.kotlin.fir.analysis.diagnostics.wasm.FirWasmErrors.WRONG_JS_FUN_TARGET
 import org.jetbrains.kotlin.fir.analysis.diagnostics.wasm.FirWasmErrors.WRONG_JS_INTEROP_TYPE
 
 @Suppress("unused")
@@ -43,6 +45,22 @@ object FirWasmErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             WRONG_JS_INTEROP_TYPE,
             "Type ''{0}'' cannot be used in {1}. Only external, primitive, string and function types are supported in Kotlin/Wasm JS interop.",
             TO_STRING, FirDiagnosticRenderers.RENDER_TYPE,
+        )
+
+        map.put(WRONG_JS_FUN_TARGET, "Only top-level external functions can be implemented using '@JsFun'.")
+
+        map.put(
+            JSCODE_WRONG_CONTEXT,
+            "Calls to 'js(code)' should be a single expression inside a top-level function body or a property initializer in Kotlin/Wasm."
+        )
+        map.put(
+            JSCODE_UNSUPPORTED_FUNCTION_KIND,
+            "Calls to ''js(code)'' are not supported in {0} in Kotlin/Wasm.",
+            TO_STRING
+        )
+        map.put(
+            JSCODE_INVALID_PARAMETER_NAME,
+            "Parameters passed to 'js(code)' should have a valid JavaScript name."
         )
 
         map.put(NESTED_WASM_EXPORT, "Only top-level functions can be exported with '@WasmExport'.")

@@ -5,7 +5,20 @@
 
 package kotlin.collections
 
-actual class ArrayList<E> actual constructor(initialCapacity: Int) : MutableList<E>, RandomAccess, AbstractMutableList<E>() {
+public actual class ArrayList<E>
+/**
+ * Creates a new empty [ArrayList] with the specified initial capacity.
+ *
+ * Capacity is the maximum number of elements the list is able to store in current backing storage.
+ * When the list gets full and a new element can't be added, its capacity is expanded,
+ * which usually leads to creation of a bigger backing storage.
+ *
+ * @param initialCapacity the initial capacity of the created list.
+ *   Note that the argument is just a hint for the implementation and can be ignored.
+ *
+ * @throws IllegalArgumentException if [initialCapacity] is negative.
+ */
+public actual constructor(initialCapacity: Int) : MutableList<E>, RandomAccess, AbstractMutableList<E>() {
     private var backing = arrayOfUninitializedElements<E>(initialCapacity)
     private var length = 0
     private var isReadOnly = false
@@ -16,14 +29,14 @@ actual class ArrayList<E> actual constructor(initialCapacity: Int) : MutableList
     /**
      * Creates a new empty [ArrayList].
      */
-    actual constructor() : this(10)
+    public actual constructor() : this(10)
 
     /**
      * Creates a new [ArrayList] filled with the elements of the specified collection.
      *
      * The iteration order of elements in the created list is the same as in the specified collection.
      */
-    actual constructor(elements: Collection<E>) : this(elements.size) {
+    public actual constructor(elements: Collection<E>) : this(elements.size) {
         addAll(elements)
     }
 
@@ -34,17 +47,17 @@ actual class ArrayList<E> actual constructor(initialCapacity: Int) : MutableList
         return if (length > 0) this else Empty
     }
 
-    override actual val size: Int
+    actual override val size: Int
         get() = length
 
-    override actual fun isEmpty() = length == 0
+    actual override fun isEmpty(): Boolean = length == 0
 
-    override actual fun get(index: Int): E {
+    actual override fun get(index: Int): E {
         AbstractList.checkElementIndex(index, length)
         return backing[index]
     }
 
-    override actual operator fun set(index: Int, element: E): E {
+    actual override operator fun set(index: Int, element: E): E {
         checkIsMutable()
         AbstractList.checkElementIndex(index, length)
         val old = backing[index]
@@ -52,7 +65,7 @@ actual class ArrayList<E> actual constructor(initialCapacity: Int) : MutableList
         return old
     }
 
-    override actual fun indexOf(element: E): Int {
+    actual override fun indexOf(element: E): Int {
         var i = 0
         while (i < length) {
             if (backing[i] == element) return i
@@ -61,7 +74,7 @@ actual class ArrayList<E> actual constructor(initialCapacity: Int) : MutableList
         return -1
     }
 
-    override actual fun lastIndexOf(element: E): Int {
+    actual override fun lastIndexOf(element: E): Int {
         var i = length - 1
         while (i >= 0) {
             if (backing[i] == element) return i
@@ -70,34 +83,34 @@ actual class ArrayList<E> actual constructor(initialCapacity: Int) : MutableList
         return -1
     }
 
-    override actual fun iterator(): MutableIterator<E> = listIterator(0)
-    override actual fun listIterator(): MutableListIterator<E> = listIterator(0)
+    actual override fun iterator(): MutableIterator<E> = listIterator(0)
+    actual override fun listIterator(): MutableListIterator<E> = listIterator(0)
 
-    override actual fun listIterator(index: Int): MutableListIterator<E> {
+    actual override fun listIterator(index: Int): MutableListIterator<E> {
         AbstractList.checkPositionIndex(index, length)
         return Itr(this, index)
     }
 
-    override actual fun add(element: E): Boolean {
+    actual override fun add(element: E): Boolean {
         checkIsMutable()
         addAtInternal(length, element)
         return true
     }
 
-    override actual fun add(index: Int, element: E) {
+    actual override fun add(index: Int, element: E) {
         checkIsMutable()
         AbstractList.checkPositionIndex(index, length)
         addAtInternal(index, element)
     }
 
-    override actual fun addAll(elements: Collection<E>): Boolean {
+    actual override fun addAll(elements: Collection<E>): Boolean {
         checkIsMutable()
         val n = elements.size
         addAllInternal(length, elements, n)
         return n > 0
     }
 
-    override actual fun addAll(index: Int, elements: Collection<E>): Boolean {
+    actual override fun addAll(index: Int, elements: Collection<E>): Boolean {
         checkIsMutable()
         AbstractList.checkPositionIndex(index, length)
         val n = elements.size
@@ -105,35 +118,35 @@ actual class ArrayList<E> actual constructor(initialCapacity: Int) : MutableList
         return n > 0
     }
 
-    override actual fun clear() {
+    actual override fun clear() {
         checkIsMutable()
         removeRangeInternal(0, length)
     }
 
-    override actual fun removeAt(index: Int): E {
+    actual override fun removeAt(index: Int): E {
         checkIsMutable()
         AbstractList.checkElementIndex(index, length)
         return removeAtInternal(index)
     }
 
-    override actual fun remove(element: E): Boolean {
+    actual override fun remove(element: E): Boolean {
         checkIsMutable()
         val i = indexOf(element)
         if (i >= 0) removeAt(i)
         return i >= 0
     }
 
-    override actual fun removeAll(elements: Collection<E>): Boolean {
+    actual override fun removeAll(elements: Collection<E>): Boolean {
         checkIsMutable()
         return retainOrRemoveAllInternal(0, length, elements, false) > 0
     }
 
-    override actual fun retainAll(elements: Collection<E>): Boolean {
+    actual override fun retainAll(elements: Collection<E>): Boolean {
         checkIsMutable()
         return retainOrRemoveAllInternal(0, length, elements, true) > 0
     }
 
-    override actual fun subList(fromIndex: Int, toIndex: Int): MutableList<E> {
+    actual override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> {
         AbstractList.checkRangeIndexes(fromIndex, toIndex, length)
         return ArraySubList(backing, fromIndex, toIndex - fromIndex, null, this)
     }
@@ -154,13 +167,13 @@ actual class ArrayList<E> actual constructor(initialCapacity: Int) : MutableList
         return backing.copyOfRange(fromIndex = 0, toIndex = length) as Array<Any?>
     }
 
-    actual fun trimToSize() {
+    public actual fun trimToSize() {
         registerModification()
         if (length < backing.size)
             backing = backing.copyOfUninitializedElements(length)
     }
 
-    final actual fun ensureCapacity(minCapacity: Int) {
+    public actual fun ensureCapacity(minCapacity: Int) {
         if (minCapacity <= backing.size) return
         registerModification()
         ensureCapacityInternal(minCapacity)

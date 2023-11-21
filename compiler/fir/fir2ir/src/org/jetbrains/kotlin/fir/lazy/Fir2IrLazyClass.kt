@@ -40,6 +40,7 @@ class Fir2IrLazyClass(
     override var origin: IrDeclarationOrigin,
     override val fir: FirRegularClass,
     override val symbol: IrClassSymbol,
+    override var parent: IrDeclarationParent,
 ) : IrClass(), AbstractFir2IrLazyDeclaration<FirRegularClass>, Fir2IrTypeParametersContainer,
     IrMaybeDeserializedClass, DeserializableClass, Fir2IrComponents by components {
     init {
@@ -49,7 +50,6 @@ class Fir2IrLazyClass(
 
     override var annotations: List<IrConstructorCall> by createLazyAnnotations()
     override lateinit var typeParameters: List<IrTypeParameter>
-    override lateinit var parent: IrDeclarationParent
 
     override val source: SourceElement
         get() = fir.sourceElement ?: SourceElement.NO_SOURCE
@@ -160,11 +160,13 @@ class Fir2IrLazyClass(
         // NB: it's necessary to take all callables from scope,
         // e.g. to avoid accessing un-enhanced Java declarations with FirJavaTypeRef etc. inside
         val scope = fir.unsubstitutedScope()
+        val lookupTag = fir.symbol.toLookupTag()
         scope.processDeclaredConstructors {
             val constructor = it.fir
             if (shouldBuildStub(constructor)) {
-                @OptIn(GetOrCreateSensitiveAPI::class)
-                result += declarationStorage.getOrCreateIrConstructor(constructor, this, origin)
+                // Lazy declarations are created together with their symbol, so it's safe to take the owner here
+                @OptIn(UnsafeDuringIrConstructionAPI::class)
+                result += declarationStorage.getIrConstructorSymbol(constructor.symbol).owner
             }
         }
 
@@ -197,8 +199,9 @@ class Fir2IrLazyClass(
                         symbol.containingClassLookupTag() != ownerLookupTag -> {}
                         symbol.isAbstractMethodOfAny() -> {}
                         else -> {
-                            @OptIn(GetOrCreateSensitiveAPI::class)
-                            result += declarationStorage.getOrCreateIrFunction(symbol.fir, this, origin)
+                            // Lazy declarations are created together with their symbol, so it's safe to take the owner here
+                            @OptIn(UnsafeDuringIrConstructionAPI::class)
+                            result += declarationStorage.getIrFunctionSymbol(symbol, lookupTag).owner
                         }
                     }
                 }
@@ -212,7 +215,9 @@ class Fir2IrLazyClass(
                         symbol.containingClassLookupTag() != ownerLookupTag -> {}
                         symbol !is FirPropertySymbol -> {}
                         else -> {
-                            result += declarationStorage.getOrCreateIrProperty(symbol.fir, this, origin)
+                            // Lazy declarations are created together with their symbol, so it's safe to take the owner here
+                            @OptIn(UnsafeDuringIrConstructionAPI::class)
+                            result += declarationStorage.getIrPropertySymbol(symbol, lookupTag).owner as IrProperty
                         }
                     }
                 }

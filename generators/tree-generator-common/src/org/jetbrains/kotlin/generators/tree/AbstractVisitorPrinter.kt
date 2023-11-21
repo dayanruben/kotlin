@@ -68,6 +68,7 @@ abstract class AbstractVisitorPrinter<Element : AbstractElement<Element, Field>,
         hasDataParameter: Boolean = true,
         modality: Modality? = null,
         override: Boolean = false,
+        returnType: TypeRef = visitMethodReturnType(element),
     ) {
         val visitorParameterType = ElementRef(
             element,
@@ -80,7 +81,7 @@ abstract class AbstractVisitorPrinter<Element : AbstractElement<Element, Field>,
         printFunctionDeclaration(
             name = element.visitFunctionName,
             parameters = parameters,
-            returnType = visitMethodReturnType(element),
+            returnType = returnType,
             typeParameters = if (allowTypeParametersInVisitorMethods) {
                 element.params
             } else {
@@ -145,8 +146,7 @@ abstract class AbstractVisitorPrinter<Element : AbstractElement<Element, Field>,
                 print(" : ", it.render(), it.inheritanceClauseParenthesis())
             }
             print(visitorTypeParameters.multipleUpperBoundsList())
-            println(" {")
-            withIndent {
+            printBlock {
                 printAdditionalMethods()
                 for (element in elements) {
                     if (element.isRootElement && visitSuperTypeByDefault) continue
@@ -154,7 +154,6 @@ abstract class AbstractVisitorPrinter<Element : AbstractElement<Element, Field>,
                     printMethodsForElement(element)
                 }
             }
-            println("}")
         }
     }
 }

@@ -5,13 +5,12 @@
 
 package org.jetbrains.kotlin.fir.backend.generators
 
-import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.backend.*
-import org.jetbrains.kotlin.fir.backend.convertWithOffsets
-import org.jetbrains.kotlin.fir.backend.isStubPropertyForPureField
+import org.jetbrains.kotlin.fir.containingClassLookupTag
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.isSubstitutionOrIntersectionOverride
 import org.jetbrains.kotlin.fir.lazy.*
-import org.jetbrains.kotlin.fir.resolve.providers.firProvider
+import org.jetbrains.kotlin.fir.unwrapUseSiteSubstitutionOverrides
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
@@ -30,18 +29,12 @@ class Fir2IrLazyDeclarationsGenerator(val components: Fir2IrComponents) : Fir2Ir
             val isFakeOverride = fir.isFakeOverride(firContainingClass)
             Fir2IrLazySimpleFunction(
                 components, startOffset, endOffset, declarationOrigin,
-                fir, firContainingClass, symbol, isFakeOverride
+                fir, firContainingClass, symbol, lazyParent, isFakeOverride
             ).apply {
-                this.parent = lazyParent
                 prepareTypeParameters()
             }
         }
         return irFunction
-    }
-
-    private fun FirCallableDeclaration.isFakeOverride(firContainingClass: FirRegularClass?): Boolean {
-        val declaration = unwrapUseSiteSubstitutionOverrides()
-        return declaration.isSubstitutionOrIntersectionOverride || firContainingClass?.symbol?.toLookupTag() != declaration.containingClassLookupTag()
     }
 
     internal fun createIrLazyProperty(
@@ -59,10 +52,8 @@ class Fir2IrLazyDeclarationsGenerator(val components: Fir2IrComponents) : Fir2Ir
         val originForProperty = if (isPropertyForField) IrDeclarationOrigin.DEFINED else declarationOrigin
         return fir.convertWithOffsets { startOffset, endOffset ->
             Fir2IrLazyProperty(
-                components, startOffset, endOffset, originForProperty, fir, firContainingClass, symbols, isFakeOverride
-            ).apply {
-                this.parent = lazyParent
-            }
+                components, startOffset, endOffset, originForProperty, fir, firContainingClass, symbols, lazyParent, isFakeOverride
+            )
         }
     }
 
@@ -71,10 +62,8 @@ class Fir2IrLazyDeclarationsGenerator(val components: Fir2IrComponents) : Fir2Ir
         symbol: IrConstructorSymbol,
         declarationOrigin: IrDeclarationOrigin,
         lazyParent: IrDeclarationParent,
-    ): IrConstructor = fir.convertWithOffsets { startOffset, endOffset ->
-        Fir2IrLazyConstructor(components, startOffset, endOffset, declarationOrigin, fir, symbol).apply {
-            parent = lazyParent
-        }
+    ): Fir2IrLazyConstructor = fir.convertWithOffsets { startOffset, endOffset ->
+        Fir2IrLazyConstructor(components, startOffset, endOffset, declarationOrigin, fir, symbol, lazyParent)
     }
 
     fun createIrLazyClass(
@@ -82,10 +71,8 @@ class Fir2IrLazyDeclarationsGenerator(val components: Fir2IrComponents) : Fir2Ir
         irParent: IrDeclarationParent,
         symbol: IrClassSymbol
     ): Fir2IrLazyClass = firClass.convertWithOffsets { startOffset, endOffset ->
-        val firClassOrigin = firClass.irOrigin(session.firProvider)
-        Fir2IrLazyClass(components, startOffset, endOffset, firClassOrigin, firClass, symbol).apply {
-            parent = irParent
-        }
+        val firClassOrigin = firClass.irOrigin()
+        Fir2IrLazyClass(components, startOffset, endOffset, firClassOrigin, firClass, symbol, irParent)
     }
 
     fun createIrLazyField(
@@ -100,4 +87,9 @@ class Fir2IrLazyDeclarationsGenerator(val components: Fir2IrComponents) : Fir2Ir
             )
         }
     }
+}
+
+internal fun FirCallableDeclaration.isFakeOverride(firContainingClass: FirRegularClass?): Boolean {
+    val declaration = unwrapUseSiteSubstitutionOverrides()
+    return declaration.isSubstitutionOrIntersectionOverride || firContainingClass?.symbol?.toLookupTag() != declaration.containingClassLookupTag()
 }

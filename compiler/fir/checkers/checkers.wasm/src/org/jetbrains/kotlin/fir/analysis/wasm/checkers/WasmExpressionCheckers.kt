@@ -7,10 +7,18 @@ package org.jetbrains.kotlin.fir.analysis.wasm.checkers
 
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.*
 import org.jetbrains.kotlin.fir.analysis.wasm.checkers.expression.FirWasmDefinedExternallyCallChecker
+import org.jetbrains.kotlin.fir.analysis.wasm.checkers.expression.FirWasmJsCodeCallChecker
+import org.jetbrains.kotlin.fir.analysis.web.common.checkers.expression.FirJsCodeConstantArgumentChecker
 
 object WasmExpressionCheckers : ExpressionCheckers() {
     override val basicExpressionCheckers: Set<FirBasicExpressionChecker>
         get() = setOf(
             FirWasmDefinedExternallyCallChecker,
+        )
+
+    override val functionCallCheckers: Set<FirFunctionCallChecker>
+        get() = setOf(
+            FirJsCodeConstantArgumentChecker,
+            FirWasmJsCodeCallChecker,
         )
 }

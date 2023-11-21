@@ -20060,6 +20060,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                 }
 
                 @Test
+                @TestMetadata("inAnnotation.kt")
+                public void testInAnnotation() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inline/nonPublicMember/inAnnotation.kt");
+                }
+
+                @Test
                 @TestMetadata("inNonPublicClass.kt")
                 public void testInNonPublicClass() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inline/nonPublicMember/inNonPublicClass.kt");
@@ -21044,6 +21050,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             @TestMetadata("javaLangStringCtr.kt")
             public void testJavaLangStringCtr() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/j+k/javaLangStringCtr.kt");
+            }
+
+            @Test
+            @TestMetadata("javaLikeCallOnTypeParameter.kt")
+            public void testJavaLikeCallOnTypeParameter() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/j+k/javaLikeCallOnTypeParameter.kt");
             }
 
             @Test

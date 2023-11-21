@@ -1526,6 +1526,7 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     interface TypeArgumentsNotAllowed : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = TypeArgumentsNotAllowed::class
+        val place: String
     }
 
     interface TypeArgumentsForOuterClassWhenNestedReferenced : KtFirDiagnostic<PsiElement> {
@@ -3923,10 +3924,6 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         val operation: String
     }
 
-    interface JscodeArgumentNonConstExpression : KtFirDiagnostic<KtElement> {
-        override val diagnosticClass get() = JscodeArgumentNonConstExpression::class
-    }
-
     interface Syntax : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = Syntax::class
         val message: String
@@ -3979,6 +3976,10 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     interface WrongDefaultValueForExternalFunParameter : KtFirDiagnostic<KtElement> {
         override val diagnosticClass get() = WrongDefaultValueForExternalFunParameter::class
+    }
+
+    interface JscodeArgumentNonConstExpression : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = JscodeArgumentNonConstExpression::class
     }
 
 }
