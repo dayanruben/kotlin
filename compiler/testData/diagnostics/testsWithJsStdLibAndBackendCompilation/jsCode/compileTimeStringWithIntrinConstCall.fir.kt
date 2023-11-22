@@ -76,36 +76,36 @@ fun testArithmeticOperations() {
 fun testLogicOperations() {
     js("{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>!true<!>}; }")
     js("{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>true or false<!>}; }")
-    js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${true || false}; }"<!>)
+    js("{ var a = ${true || false}; }")
     js("{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>true and false<!>}; }")
-    js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${true && false}; }"<!>)
+    js("{ var a = ${true && false}; }")
 
-    js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${TRUE && false}; }"<!>)
+    js("{ var a = ${TRUE && false}; }")
     js("{ var a = ${TRUE or false}; }")
 }
 
 fun testEq() {
     js("{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>1 == 1<!>}; }")
     js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>1U == 1U<!>}; }"<!>)
-    js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${UONE == 1U}; }"<!>)
+    js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>UONE == 1U<!>}; }"<!>)
     js("{ var a = ${"FOO" == STR}; }")
     js("{ var a = ${TRUE == null}; }")
     js("{ var a = ${STR == null}; }")
 
     js("{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>1 != 1<!>}; }")
     js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>1U != 1U<!>}; }"<!>)
-    js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${UONE != 1U}; }"<!>)
+    js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>UONE != 1U<!>}; }"<!>)
     js("{ var a = ${"FOO" != STR}; }")
     js("{ var a = ${TRUE != null}; }")
     js("{ var a = ${STR != null}; }")
 
     js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>1 === 1<!>}; }"<!>)
-    js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${TRUE === false}; }"<!>)
-    js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${CHAR === 's'}; }"<!>)
+    js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>TRUE === false<!>}; }"<!>)
+    js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>CHAR === 's'<!>}; }"<!>)
 
     js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>1 !== 1<!>}; }"<!>)
-    js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${TRUE !== false}; }"<!>)
-    js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${CHAR !== 's'}; }"<!>)
+    js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>TRUE !== false<!>}; }"<!>)
+    js(<!JSCODE_CAN_NOT_VERIFY_JAVASCRIPT!>"{ var a = ${<!JSCODE_ARGUMENT_NON_CONST_EXPRESSION!>CHAR !== 's'<!>}; }"<!>)
 }
 
 fun testCmp() {

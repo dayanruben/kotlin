@@ -82,6 +82,9 @@ open class FirTypeResolveTransformer(
     @set:PrivateForInline
     var scopesBefore: PersistentList<FirScope>? = null
 
+    @set:PrivateForInline
+    var staticScopesBefore: PersistentList<FirScope>? = null
+
     private var currentDeclaration: FirDeclaration? = null
 
     private inline fun <T> withDeclaration(declaration: FirDeclaration, crossinline action: () -> T): T {
@@ -397,16 +400,21 @@ open class FirTypeResolveTransformer(
 
     inline fun <T> withScopeCleanup(crossinline l: () -> T): T {
         val scopesBeforeSnapshot = scopes
+        val scopesBeforeBeforeSnapshot = scopesBefore
         scopesBefore = scopesBeforeSnapshot
 
-        val staticScopesBefore = staticScopes
+        val staticScopesBeforeSnapshot = staticScopes
+        val staticScopesBeforeBeforeSnapshot = staticScopesBefore
+        staticScopesBefore = staticScopesBeforeSnapshot
 
-        val result = l()
-
-        scopes = scopesBeforeSnapshot
-        staticScopes = staticScopesBefore
-
-        return result
+        return try {
+            l()
+        } finally {
+            scopes = scopesBeforeSnapshot
+            scopesBefore = scopesBeforeBeforeSnapshot
+            staticScopes = staticScopesBeforeSnapshot
+            staticScopesBefore = staticScopesBeforeBeforeSnapshot
+        }
     }
 
     private fun resolveClassContent(
@@ -423,8 +431,17 @@ open class FirTypeResolveTransformer(
                 }
 
                 // ConstructedTypeRef should be resolved only with type parameters, but not with nested classes and classes from supertypes
-                for (constructor in firClass.declarations.filterIsInstance<FirConstructor>()) {
-                    transformDelegatedConstructorCall(constructor)
+                for (declaration in firClass.declarations) {
+                    when (declaration) {
+                        is FirConstructor -> transformDelegatedConstructorCall(declaration)
+                        is FirField -> {
+                            if (declaration.origin == FirDeclarationOrigin.Synthetic.DelegateField) {
+                                transformDelegateField(declaration)
+                            }
+                        }
+
+                        else -> {}
+                    }
                 }
             }
         }
@@ -436,6 +453,10 @@ open class FirTypeResolveTransformer(
 
     fun transformDelegatedConstructorCall(constructor: FirConstructor) {
         constructor.delegatedConstructor?.let(this::resolveConstructedTypeRefForDelegatedConstructorCall)
+    }
+
+    fun transformDelegateField(field: FirField) {
+        field.transformReturnTypeRef(this, null)
     }
 
     fun removeOuterTypeParameterScope(firClass: FirClass): Boolean = !firClass.isInner && !firClass.isLocal

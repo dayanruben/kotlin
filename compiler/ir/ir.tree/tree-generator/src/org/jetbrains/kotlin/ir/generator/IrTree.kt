@@ -14,13 +14,12 @@ import org.jetbrains.kotlin.generators.tree.printer.FunctionParameter
 import org.jetbrains.kotlin.generators.tree.printer.printFunctionDeclaration
 import org.jetbrains.kotlin.generators.tree.printer.printFunctionWithBlockBody
 import org.jetbrains.kotlin.ir.generator.config.AbstractTreeBuilder
-import org.jetbrains.kotlin.ir.generator.config.ElementConfig
-import org.jetbrains.kotlin.ir.generator.config.ElementConfig.Category.*
-import org.jetbrains.kotlin.ir.generator.config.ListFieldConfig.Mutability.*
-import org.jetbrains.kotlin.ir.generator.config.ListFieldConfig.Mutability.Array
-import org.jetbrains.kotlin.ir.generator.config.ListFieldConfig.Mutability.List
-import org.jetbrains.kotlin.ir.generator.config.SimpleFieldConfig
-import org.jetbrains.kotlin.ir.generator.model.Element.Companion.elementName2typeName
+import org.jetbrains.kotlin.ir.generator.model.Element
+import org.jetbrains.kotlin.ir.generator.model.Element.Category.*
+import org.jetbrains.kotlin.ir.generator.model.ListField.Mutability.*
+import org.jetbrains.kotlin.ir.generator.model.ListField.Mutability.Array
+import org.jetbrains.kotlin.ir.generator.model.ListField.Mutability.List
+import org.jetbrains.kotlin.ir.generator.model.SingleField
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
@@ -28,14 +27,14 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.withIndent
 
 // Note the style of the DSL to describe IR elements, which is these things in the following order:
-// 1) config (see properties of ElementConfig)
+// 1) config (see properties of Element)
 // 2) parents
 // 3) fields
 object IrTree : AbstractTreeBuilder() {
-    private fun symbol(type: TypeRefWithNullability, mutable: Boolean = false): SimpleFieldConfig =
+    private fun symbol(type: TypeRefWithNullability, mutable: Boolean = false): SingleField =
         field("symbol", type, mutable = mutable)
 
-    private fun descriptor(typeName: String, nullable: Boolean = false): SimpleFieldConfig =
+    private fun descriptor(typeName: String, nullable: Boolean = false): SingleField =
         field(
             name = "descriptor",
             type = type(Packages.descriptors, typeName),
@@ -46,7 +45,7 @@ object IrTree : AbstractTreeBuilder() {
             skipInIrFactory()
         }
 
-    private fun declarationWithLateBinding(symbol: ClassRef<*>, initializer: ElementConfig.() -> Unit) = element(Declaration) {
+    private fun declarationWithLateBinding(symbol: ClassRef<*>, initializer: Element.() -> Unit) = element(Declaration) {
         initializer()
 
         fieldsToSkipInIrFactoryMethod.add("symbol")
@@ -68,13 +67,13 @@ object IrTree : AbstractTreeBuilder() {
         }
     }
 
-    private val factory: SimpleFieldConfig = field("factory", irFactoryType, mutable = false) {
+    private val factory: SingleField = field("factory", irFactoryType, mutable = false) {
         skipInIrFactory()
     }
 
-    override val rootElement: ElementConfig by element(Other, name = "element") {
-        accept = true
-        transform = true
+    override val rootElement: Element by element(Other, name = "Element") {
+        hasAcceptMethod = true
+        hasTransformMethod = true
         transformByChildren = true
 
         fun offsetField(prefix: String) = field(prefix + "Offset", int, mutable = false) {
@@ -93,9 +92,9 @@ object IrTree : AbstractTreeBuilder() {
 
         kDoc = "The root interface of the IR tree. Each IR node implements this interface."
     }
-    val statement: ElementConfig by element(Other)
+    val statement: Element by element(Other)
 
-    val declaration: ElementConfig by element(Declaration) {
+    val declaration: Element by element(Declaration) {
         parent(statement)
         parent(symbolOwner)
         parent(mutableAnnotationContainerType)
@@ -107,47 +106,47 @@ object IrTree : AbstractTreeBuilder() {
         }
         +factory
     }
-    val declarationBase: ElementConfig by element(Declaration) {
+    val declarationBase: Element by element(Declaration) {
         typeKind = TypeKind.Class
         transformByChildren = true
         transformerReturnType = statement
-        visitorParent = rootElement
-        visitorName = "declaration"
+        parentInVisitor = rootElement
+        nameInVisitorMethod = "Declaration"
 
         parent(declaration)
     }
-    val declarationParent: ElementConfig by element(Declaration)
-    val declarationWithVisibility: ElementConfig by element(Declaration) {
+    val declarationParent: Element by element(Declaration)
+    val declarationWithVisibility: Element by element(Declaration) {
         parent(declaration)
 
         +field("visibility", type(Packages.descriptors, "DescriptorVisibility"))
     }
-    val declarationWithName: ElementConfig by element(Declaration) {
+    val declarationWithName: Element by element(Declaration) {
         parent(declaration)
 
         +field("name", type<Name>())
     }
-    val possiblyExternalDeclaration: ElementConfig by element(Declaration) {
+    val possiblyExternalDeclaration: Element by element(Declaration) {
         parent(declarationWithName)
 
         +field("isExternal", boolean) {
             useFieldInIrFactory(defaultValue = "false")
         }
     }
-    val symbolOwner: ElementConfig by element(Declaration) {
+    val symbolOwner: Element by element(Declaration) {
         +symbol(symbolType)
     }
-    val metadataSourceOwner: ElementConfig by element(Declaration) {
+    val metadataSourceOwner: Element by element(Declaration) {
         val metadataField = +field("metadata", type(Packages.declarations, "MetadataSource"), nullable = true) {
             skipInIrFactory()
             kDoc = """
             The arbitrary metadata associated with this IR node.
             
-            @see ${elementName2typeName(this@element.name)}
+            @see $typeName
             """.trimIndent()
         }
         kDoc = """
-        An [${elementName2typeName(rootElement.name)}] capable of holding something which backends can use to write
+        An [${rootElement.typeName}] capable of holding something which backends can use to write
         as the metadata for the declaration.
         
         Technically, it can even be ± an array of bytes, but right now it's usually the frontend representation of the declaration,
@@ -159,7 +158,7 @@ object IrTree : AbstractTreeBuilder() {
         but this is only for performance purposes (before it was done using simple maps).
         """.trimIndent()
     }
-    val overridableMember: ElementConfig by element(Declaration) {
+    val overridableMember: Element by element(Declaration) {
         parent(declaration)
         parent(declarationWithVisibility)
         parent(declarationWithName)
@@ -167,7 +166,7 @@ object IrTree : AbstractTreeBuilder() {
 
         +field("modality", type<Modality>())
     }
-    val overridableDeclaration: ElementConfig by element(Declaration) {
+    val overridableDeclaration: Element by element(Declaration) {
         val s = +param("S", symbolType)
 
         parent(overridableMember)
@@ -178,14 +177,14 @@ object IrTree : AbstractTreeBuilder() {
             skipInIrFactory()
         }
     }
-    val memberWithContainerSource: ElementConfig by element(Declaration) {
+    val memberWithContainerSource: Element by element(Declaration) {
         parent(declarationWithName)
 
         +field("containerSource", type<DeserializedContainerSource>(), nullable = true, mutable = false) {
             useFieldInIrFactory(defaultValue = "null")
         }
     }
-    val valueDeclaration: ElementConfig by element(Declaration) {
+    val valueDeclaration: Element by element(Declaration) {
         parent(declarationWithName)
         parent(symbolOwner)
 
@@ -194,9 +193,9 @@ object IrTree : AbstractTreeBuilder() {
         +field("type", irTypeType)
         +field("isAssignable", boolean, mutable = false)
     }
-    val valueParameter: ElementConfig by element(Declaration) {
-        transform = true
-        visitorParent = declarationBase
+    val valueParameter: Element by element(Declaration) {
+        hasTransformMethod = true
+        parentInVisitor = declarationBase
 
         parent(declarationBase)
         parent(valueDeclaration)
@@ -226,7 +225,7 @@ object IrTree : AbstractTreeBuilder() {
             fun foo(defined: Int, ${'$'}extra: String) { /* ... */ }
             ```
 
-            If a compiler plugin adds parameters to an [${elementName2typeName(function.name)}],
+            If a compiler plugin adds parameters to an [${function.typeName}],
             the representations of the function in the frontend and in the backend may diverge, potentially causing signature mismatch and
             linkage errors (see [KT-40980](https://youtrack.jetbrains.com/issue/KT-40980)).
             We wouldn't want IR plugins to affect the frontend representation, since in an IDE you'd want to be able to see those
@@ -239,8 +238,8 @@ object IrTree : AbstractTreeBuilder() {
         }
         +field("defaultValue", expressionBody, nullable = true, isChild = true)
     }
-    val `class`: ElementConfig by element(Declaration) {
-        visitorParent = declarationBase
+    val `class`: Element by element(Declaration) {
+        parentInVisitor = declarationBase
 
         parent(declarationBase)
         parent(possiblyExternalDeclaration)
@@ -301,12 +300,12 @@ object IrTree : AbstractTreeBuilder() {
             If this is a sealed class or interface, this list contains symbols of all its immediate subclasses.
             Otherwise, this is an empty list.
             
-            NOTE: If this [${elementName2typeName(this@element.name)}] was deserialized from a klib, this list will always be empty!
+            NOTE: If this [$typeName] was deserialized from a klib, this list will always be empty!
             See [KT-54028](https://youtrack.jetbrains.com/issue/KT-54028).
             """.trimIndent()
         }
     }
-    val attributeContainer: ElementConfig by element(Declaration) {
+    val attributeContainer: Element by element(Declaration) {
         kDoc = """
             Represents an IR element that can be copied, but must remember its original element. It is
             useful, for example, to keep track of generated names for anonymous declarations.
@@ -325,8 +324,8 @@ object IrTree : AbstractTreeBuilder() {
             skipInIrFactory()
         }
     }
-    val anonymousInitializer: ElementConfig by element(Declaration) {
-        visitorParent = declarationBase
+    val anonymousInitializer: Element by element(Declaration) {
+        parentInVisitor = declarationBase
 
         parent(declarationBase)
 
@@ -337,7 +336,7 @@ object IrTree : AbstractTreeBuilder() {
         }
         +field("body", blockBody, isChild = true)
     }
-    val declarationContainer: ElementConfig by element(Declaration) {
+    val declarationContainer: Element by element(Declaration) {
         ownsChildren = false
 
         parent(declarationParent)
@@ -352,7 +351,7 @@ object IrTree : AbstractTreeBuilder() {
             optInAnnotation = unsafeDuringIrConstructionApiAnnotation
         }
     }
-    val typeParametersContainer: ElementConfig by element(Declaration) {
+    val typeParametersContainer: Element by element(Declaration) {
         ownsChildren = false
 
         parent(declaration)
@@ -360,9 +359,9 @@ object IrTree : AbstractTreeBuilder() {
 
         +listField("typeParameters", typeParameter, mutability = Var, isChild = true)
     }
-    val typeParameter: ElementConfig by element(Declaration) {
-        visitorParent = declarationBase
-        transform = true
+    val typeParameter: Element by element(Declaration) {
+        parentInVisitor = declarationBase
+        hasTransformMethod = true
 
         parent(declarationBase)
         parent(declarationWithName)
@@ -376,14 +375,14 @@ object IrTree : AbstractTreeBuilder() {
             skipInIrFactory()
         }
     }
-    val returnTarget: ElementConfig by element(Declaration) {
+    val returnTarget: Element by element(Declaration) {
         parent(symbolOwner)
 
         +descriptor("FunctionDescriptor")
         +symbol(returnTargetSymbolType)
     }
-    val function: ElementConfig by element(Declaration) {
-        visitorParent = declarationBase
+    val function: Element by element(Declaration) {
+        parentInVisitor = declarationBase
 
         parent(declarationBase)
         parent(possiblyExternalDeclaration)
@@ -410,8 +409,8 @@ object IrTree : AbstractTreeBuilder() {
         }
         +field("body", body, nullable = true, isChild = true)
     }
-    val constructor: ElementConfig by element(Declaration) {
-        visitorParent = function
+    val constructor: Element by element(Declaration) {
+        parentInVisitor = function
 
         parent(function)
 
@@ -419,8 +418,8 @@ object IrTree : AbstractTreeBuilder() {
         +symbol(constructorSymbolType)
         +field("isPrimary", boolean)
     }
-    val enumEntry: ElementConfig by element(Declaration) {
-        visitorParent = declarationBase
+    val enumEntry: Element by element(Declaration) {
+        parentInVisitor = declarationBase
 
         parent(declarationBase)
         parent(declarationWithName)
@@ -430,8 +429,8 @@ object IrTree : AbstractTreeBuilder() {
         +field("initializerExpression", expressionBody, nullable = true, isChild = true)
         +field("correspondingClass", `class`, nullable = true, isChild = true)
     }
-    val errorDeclaration: ElementConfig by element(Declaration) {
-        visitorParent = declarationBase
+    val errorDeclaration: Element by element(Declaration) {
+        parentInVisitor = declarationBase
 
         parent(declarationBase)
 
@@ -448,14 +447,14 @@ object IrTree : AbstractTreeBuilder() {
             skipInIrFactory()
         }
     }
-    val functionWithLateBinding: ElementConfig by declarationWithLateBinding(simpleFunctionSymbolType) {
+    val functionWithLateBinding: Element by declarationWithLateBinding(simpleFunctionSymbolType) {
         parent(simpleFunction)
     }
-    val propertyWithLateBinding: ElementConfig by declarationWithLateBinding(propertySymbolType) {
+    val propertyWithLateBinding: Element by declarationWithLateBinding(propertySymbolType) {
         parent(property)
     }
-    val field: ElementConfig by element(Declaration) {
-        visitorParent = declarationBase
+    val field: Element by element(Declaration) {
+        parentInVisitor = declarationBase
 
         parent(declarationBase)
         parent(possiblyExternalDeclaration)
@@ -473,8 +472,8 @@ object IrTree : AbstractTreeBuilder() {
             skipInIrFactory()
         }
     }
-    val localDelegatedProperty: ElementConfig by element(Declaration) {
-        visitorParent = declarationBase
+    val localDelegatedProperty: Element by element(Declaration) {
+        parentInVisitor = declarationBase
 
         parent(declarationBase)
         parent(declarationWithName)
@@ -489,9 +488,9 @@ object IrTree : AbstractTreeBuilder() {
         +field("getter", simpleFunction, isChild = true)
         +field("setter", simpleFunction, nullable = true, isChild = true)
     }
-    val moduleFragment: ElementConfig by element(Declaration) {
-        visitorParent = rootElement
-        transform = true
+    val moduleFragment: Element by element(Declaration) {
+        parentInVisitor = rootElement
+        hasTransformMethod = true
         transformByChildren = true
         generateIrFactoryMethod = false
 
@@ -509,9 +508,9 @@ object IrTree : AbstractTreeBuilder() {
             baseGetter = "UNDEFINED_OFFSET"
         }
     }
-    val property: ElementConfig by element(Declaration) {
-        visitorParent = declarationBase
-        isForcedLeaf = true
+    val property: Element by element(Declaration) {
+        parentInVisitor = declarationBase
+        isLeaf = true
 
         parent(declarationBase)
         parent(possiblyExternalDeclaration)
@@ -541,8 +540,8 @@ object IrTree : AbstractTreeBuilder() {
 
     //TODO: make IrScript as IrPackageFragment, because script is used as a file, not as a class
     //NOTE: declarations and statements stored separately
-    val script: ElementConfig by element(Declaration) {
-        visitorParent = declarationBase
+    val script: Element by element(Declaration) {
+        parentInVisitor = declarationBase
         generateIrFactoryMethod = false
 
         parent(declarationBase)
@@ -567,9 +566,9 @@ object IrTree : AbstractTreeBuilder() {
         +field("targetClass", classSymbolType, nullable = true)
         +field("constructor", constructor, nullable = true) // K1
     }
-    val simpleFunction: ElementConfig by element(Declaration) {
-        visitorParent = function
-        isForcedLeaf = true
+    val simpleFunction: Element by element(Declaration) {
+        parentInVisitor = function
+        isLeaf = true
 
         parent(function)
         parent(overridableDeclaration.withArgs("S" to simpleFunctionSymbolType))
@@ -585,8 +584,8 @@ object IrTree : AbstractTreeBuilder() {
             skipInIrFactory()
         }
     }
-    val typeAlias: ElementConfig by element(Declaration) {
-        visitorParent = declarationBase
+    val typeAlias: Element by element(Declaration) {
+        parentInVisitor = declarationBase
 
         parent(declarationBase)
         parent(declarationWithName)
@@ -598,8 +597,8 @@ object IrTree : AbstractTreeBuilder() {
         +field("isActual", boolean)
         +field("expandedType", irTypeType)
     }
-    val variable: ElementConfig by element(Declaration) {
-        visitorParent = declarationBase
+    val variable: Element by element(Declaration) {
+        parentInVisitor = declarationBase
 
         generateIrFactoryMethod = false
 
@@ -613,8 +612,8 @@ object IrTree : AbstractTreeBuilder() {
         +field("isLateinit", boolean)
         +field("initializer", expression, nullable = true, isChild = true)
     }
-    val packageFragment: ElementConfig by element(Declaration) {
-        visitorParent = rootElement
+    val packageFragment: Element by element(Declaration) {
+        parentInVisitor = rootElement
         ownsChildren = false
 
         parent(declarationContainer)
@@ -643,8 +642,8 @@ object IrTree : AbstractTreeBuilder() {
             )
         }
     }
-    val externalPackageFragment: ElementConfig by element(Declaration) {
-        visitorParent = packageFragment
+    val externalPackageFragment: Element by element(Declaration) {
+        parentInVisitor = packageFragment
         transformByChildren = true
         generateIrFactoryMethod = false
 
@@ -653,10 +652,10 @@ object IrTree : AbstractTreeBuilder() {
         +symbol(externalPackageFragmentSymbolType)
         +field("containerSource", type<DeserializedContainerSource>(), nullable = true, mutable = false)
     }
-    val file: ElementConfig by element(Declaration) {
-        transform = true
+    val file: Element by element(Declaration) {
+        hasTransformMethod = true
         transformByChildren = true
-        visitorParent = packageFragment
+        parentInVisitor = packageFragment
         generateIrFactoryMethod = false
 
         parent(packageFragment)
@@ -668,9 +667,9 @@ object IrTree : AbstractTreeBuilder() {
         +field("fileEntry", type(Packages.tree, "IrFileEntry"))
     }
 
-    val expression: ElementConfig by element(Expression) {
-        visitorParent = rootElement
-        transform = true
+    val expression: Element by element(Expression) {
+        parentInVisitor = rootElement
+        hasTransformMethod = true
         transformByChildren = true
 
         parent(statement)
@@ -687,22 +686,22 @@ object IrTree : AbstractTreeBuilder() {
         }
         +field("type", irTypeType)
     }
-    val statementContainer: ElementConfig by element(Expression) {
+    val statementContainer: Element by element(Expression) {
         ownsChildren = false
 
         +listField("statements", statement, mutability = List, isChild = true)
     }
-    val body: ElementConfig by element(Expression) {
-        transform = true
-        visitorParent = rootElement
-        visitorParam = "body"
+    val body: Element by element(Expression) {
+        hasTransformMethod = true
+        parentInVisitor = rootElement
+        visitorParameterName = "body"
         transformByChildren = true
         typeKind = TypeKind.Class
     }
-    val expressionBody: ElementConfig by element(Expression) {
-        transform = true
-        visitorParent = body
-        visitorParam = "body"
+    val expressionBody: Element by element(Expression) {
+        hasTransformMethod = true
+        parentInVisitor = body
+        visitorParameterName = "body"
         generateIrFactoryMethod = true
 
         parent(body)
@@ -712,9 +711,9 @@ object IrTree : AbstractTreeBuilder() {
             useFieldInIrFactory()
         }
     }
-    val blockBody: ElementConfig by element(Expression) {
-        visitorParent = body
-        visitorParam = "body"
+    val blockBody: Element by element(Expression) {
+        parentInVisitor = body
+        visitorParameterName = "body"
         generateIrFactoryMethod = true
 
         parent(body)
@@ -722,17 +721,17 @@ object IrTree : AbstractTreeBuilder() {
 
         +factory
     }
-    val declarationReference: ElementConfig by element(Expression) {
-        visitorParent = expression
+    val declarationReference: Element by element(Expression) {
+        parentInVisitor = expression
 
         parent(expression)
 
         +symbol(symbolType)
         //diff: no accept
     }
-    val memberAccessExpression: ElementConfig by element(Expression) {
-        visitorParent = declarationReference
-        visitorName = "memberAccess"
+    val memberAccessExpression: Element by element(Expression) {
+        parentInVisitor = declarationReference
+        nameInVisitorMethod = "MemberAccess"
         transformerReturnType = rootElement
         val s = +param("S", symbolType)
 
@@ -812,17 +811,17 @@ object IrTree : AbstractTreeBuilder() {
             )
         }
     }
-    val functionAccessExpression: ElementConfig by element(Expression) {
-        visitorParent = memberAccessExpression
-        visitorName = "functionAccess"
+    val functionAccessExpression: Element by element(Expression) {
+        parentInVisitor = memberAccessExpression
+        nameInVisitorMethod = "FunctionAccess"
         transformerReturnType = rootElement
 
         parent(memberAccessExpression.withArgs("S" to functionSymbolType))
 
         +field("contextReceiversCount", int)
     }
-    val constructorCall: ElementConfig by element(Expression) {
-        visitorParent = functionAccessExpression
+    val constructorCall: Element by element(Expression) {
+        parentInVisitor = functionAccessExpression
         transformerReturnType = rootElement
 
         parent(functionAccessExpression)
@@ -833,21 +832,21 @@ object IrTree : AbstractTreeBuilder() {
         }
         +field("constructorTypeArgumentsCount", int)
     }
-    val getSingletonValue: ElementConfig by element(Expression) {
-        visitorParent = declarationReference
-        visitorName = "SingletonReference"
+    val getSingletonValue: Element by element(Expression) {
+        parentInVisitor = declarationReference
+        nameInVisitorMethod = "SingletonReference"
 
         parent(declarationReference)
     }
-    val getObjectValue: ElementConfig by element(Expression) {
-        visitorParent = getSingletonValue
+    val getObjectValue: Element by element(Expression) {
+        parentInVisitor = getSingletonValue
 
         parent(getSingletonValue)
 
         +symbol(classSymbolType, mutable = true)
     }
-    val getEnumValue: ElementConfig by element(Expression) {
-        visitorParent = getSingletonValue
+    val getEnumValue: Element by element(Expression) {
+        parentInVisitor = getSingletonValue
 
         parent(getSingletonValue)
 
@@ -860,15 +859,15 @@ object IrTree : AbstractTreeBuilder() {
      * On JS platform it represents a plain reference to JavaScript function.
      * On JVM platform it represents a MethodHandle constant.
      */
-    val rawFunctionReference: ElementConfig by element(Expression) {
-        visitorParent = declarationReference
+    val rawFunctionReference: Element by element(Expression) {
+        parentInVisitor = declarationReference
 
         parent(declarationReference)
 
         +symbol(functionSymbolType, mutable = true)
     }
-    val containerExpression: ElementConfig by element(Expression) {
-        visitorParent = expression
+    val containerExpression: Element by element(Expression) {
+        parentInVisitor = expression
 
         parent(expression)
         parent(statementContainer)
@@ -878,41 +877,41 @@ object IrTree : AbstractTreeBuilder() {
             baseDefaultValue = "ArrayList(2)"
         }
     }
-    val block: ElementConfig by element(Expression) {
-        visitorParent = containerExpression
-        accept = true
+    val block: Element by element(Expression) {
+        parentInVisitor = containerExpression
+        hasAcceptMethod = true
 
         parent(containerExpression)
     }
-    val composite: ElementConfig by element(Expression) {
-        visitorParent = containerExpression
+    val composite: Element by element(Expression) {
+        parentInVisitor = containerExpression
 
         parent(containerExpression)
     }
-    val returnableBlock: ElementConfig by element(Expression) {
+    val returnableBlock: Element by element(Expression) {
         parent(block)
         parent(symbolOwner)
         parent(returnTarget)
 
         +symbol(returnableBlockSymbolType)
     }
-    val inlinedFunctionBlock: ElementConfig by element(Expression) {
+    val inlinedFunctionBlock: Element by element(Expression) {
         parent(block)
 
         +field("inlineCall", functionAccessExpression)
         +field("inlinedElement", rootElement)
     }
-    val syntheticBody: ElementConfig by element(Expression) {
-        visitorParent = body
-        visitorParam = "body"
+    val syntheticBody: Element by element(Expression) {
+        parentInVisitor = body
+        visitorParameterName = "body"
 
         parent(body)
 
         +field("kind", type(Packages.exprs, "IrSyntheticBodyKind"))
     }
-    val breakContinue: ElementConfig by element(Expression) {
-        visitorParent = expression
-        visitorParam = "jump"
+    val breakContinue: Element by element(Expression) {
+        parentInVisitor = expression
+        visitorParameterName = "jump"
 
         parent(expression)
 
@@ -922,42 +921,42 @@ object IrTree : AbstractTreeBuilder() {
         }
     }
     val `break` by element(Expression) {
-        visitorParent = breakContinue
-        visitorParam = "jump"
+        parentInVisitor = breakContinue
+        visitorParameterName = "jump"
 
         parent(breakContinue)
     }
     val `continue` by element(Expression) {
-        visitorParent = breakContinue
-        visitorParam = "jump"
+        parentInVisitor = breakContinue
+        visitorParameterName = "jump"
 
         parent(breakContinue)
     }
-    val call: ElementConfig by element(Expression) {
-        visitorParent = functionAccessExpression
+    val call: Element by element(Expression) {
+        parentInVisitor = functionAccessExpression
 
         parent(functionAccessExpression)
 
         +symbol(simpleFunctionSymbolType, mutable = true)
         +field("superQualifierSymbol", classSymbolType, nullable = true)
     }
-    val callableReference: ElementConfig by element(Expression) {
-        visitorParent = memberAccessExpression
+    val callableReference: Element by element(Expression) {
+        parentInVisitor = memberAccessExpression
         val s = +param("S", symbolType)
 
         parent(memberAccessExpression.withArgs("S" to s))
 
         +symbol(s, mutable = true)
     }
-    val functionReference: ElementConfig by element(Expression) {
-        visitorParent = callableReference
+    val functionReference: Element by element(Expression) {
+        parentInVisitor = callableReference
 
         parent(callableReference.withArgs("S" to functionSymbolType))
 
         +field("reflectionTarget", functionSymbolType, nullable = true)
     }
-    val propertyReference: ElementConfig by element(Expression) {
-        visitorParent = callableReference
+    val propertyReference: Element by element(Expression) {
+        parentInVisitor = callableReference
 
         parent(callableReference.withArgs("S" to propertySymbolType))
 
@@ -965,8 +964,8 @@ object IrTree : AbstractTreeBuilder() {
         +field("getter", simpleFunctionSymbolType, nullable = true)
         +field("setter", simpleFunctionSymbolType, nullable = true)
     }
-    val localDelegatedPropertyReference: ElementConfig by element(Expression) {
-        visitorParent = callableReference
+    val localDelegatedPropertyReference: Element by element(Expression) {
+        parentInVisitor = callableReference
 
         parent(callableReference.withArgs("S" to localDelegatedPropertySymbolType))
 
@@ -974,16 +973,16 @@ object IrTree : AbstractTreeBuilder() {
         +field("getter", simpleFunctionSymbolType)
         +field("setter", simpleFunctionSymbolType, nullable = true)
     }
-    val classReference: ElementConfig by element(Expression) {
-        visitorParent = declarationReference
+    val classReference: Element by element(Expression) {
+        parentInVisitor = declarationReference
 
         parent(declarationReference)
 
         +symbol(classifierSymbolType, mutable = true)
         +field("classType", irTypeType)
     }
-    val const: ElementConfig by element(Expression) {
-        visitorParent = expression
+    val const: Element by element(Expression) {
+        parentInVisitor = expression
         val t = +param("T")
 
         parent(expression)
@@ -991,8 +990,8 @@ object IrTree : AbstractTreeBuilder() {
         +field("kind", type(Packages.exprs, "IrConstKind").withArgs(t))
         +field("value", t)
     }
-    val constantValue: ElementConfig by element(Expression) {
-        visitorParent = expression
+    val constantValue: Element by element(Expression) {
+        parentInVisitor = expression
         transformByChildren = true
 
         parent(expression)
@@ -1016,15 +1015,15 @@ object IrTree : AbstractTreeBuilder() {
             println()
         }
     }
-    val constantPrimitive: ElementConfig by element(Expression) {
-        visitorParent = constantValue
+    val constantPrimitive: Element by element(Expression) {
+        parentInVisitor = constantValue
 
         parent(constantValue)
 
         +field("value", const.withArgs("T" to TypeRef.Star), isChild = true)
     }
-    val constantObject: ElementConfig by element(Expression) {
-        visitorParent = constantValue
+    val constantObject: Element by element(Expression) {
+        parentInVisitor = constantValue
 
         parent(constantValue)
 
@@ -1032,27 +1031,27 @@ object IrTree : AbstractTreeBuilder() {
         +listField("valueArguments", constantValue, mutability = List, isChild = true)
         +listField("typeArguments", irTypeType, mutability = List)
     }
-    val constantArray: ElementConfig by element(Expression) {
-        visitorParent = constantValue
+    val constantArray: Element by element(Expression) {
+        parentInVisitor = constantValue
 
         parent(constantValue)
 
         +listField("elements", constantValue, mutability = List, isChild = true)
     }
-    val delegatingConstructorCall: ElementConfig by element(Expression) {
-        visitorParent = functionAccessExpression
+    val delegatingConstructorCall: Element by element(Expression) {
+        parentInVisitor = functionAccessExpression
 
         parent(functionAccessExpression)
 
         +symbol(constructorSymbolType, mutable = true)
     }
-    val dynamicExpression: ElementConfig by element(Expression) {
-        visitorParent = expression
+    val dynamicExpression: Element by element(Expression) {
+        parentInVisitor = expression
 
         parent(expression)
     }
-    val dynamicOperatorExpression: ElementConfig by element(Expression) {
-        visitorParent = dynamicExpression
+    val dynamicOperatorExpression: Element by element(Expression) {
+        parentInVisitor = dynamicExpression
 
         parent(dynamicExpression)
 
@@ -1060,40 +1059,40 @@ object IrTree : AbstractTreeBuilder() {
         +field("receiver", expression, isChild = true)
         +listField("arguments", expression, mutability = List, isChild = true)
     }
-    val dynamicMemberExpression: ElementConfig by element(Expression) {
-        visitorParent = dynamicExpression
+    val dynamicMemberExpression: Element by element(Expression) {
+        parentInVisitor = dynamicExpression
 
         parent(dynamicExpression)
 
         +field("memberName", string)
         +field("receiver", expression, isChild = true)
     }
-    val enumConstructorCall: ElementConfig by element(Expression) {
-        visitorParent = functionAccessExpression
+    val enumConstructorCall: Element by element(Expression) {
+        parentInVisitor = functionAccessExpression
 
         parent(functionAccessExpression)
 
         +symbol(constructorSymbolType, mutable = true)
     }
-    val errorExpression: ElementConfig by element(Expression) {
-        visitorParent = expression
-        accept = true
+    val errorExpression: Element by element(Expression) {
+        parentInVisitor = expression
+        hasAcceptMethod = true
 
         parent(expression)
 
         +field("description", string)
     }
-    val errorCallExpression: ElementConfig by element(Expression) {
-        visitorParent = errorExpression
+    val errorCallExpression: Element by element(Expression) {
+        parentInVisitor = errorExpression
 
         parent(errorExpression)
 
         +field("explicitReceiver", expression, nullable = true, isChild = true)
         +listField("arguments", expression, mutability = List, isChild = true)
     }
-    val fieldAccessExpression: ElementConfig by element(Expression) {
-        visitorParent = declarationReference
-        visitorName = "fieldAccess"
+    val fieldAccessExpression: Element by element(Expression) {
+        parentInVisitor = declarationReference
+        nameInVisitorMethod = "FieldAccess"
         ownsChildren = false
 
         parent(declarationReference)
@@ -1105,20 +1104,20 @@ object IrTree : AbstractTreeBuilder() {
         }
         +field("origin", statementOriginType, nullable = true)
     }
-    val getField: ElementConfig by element(Expression) {
-        visitorParent = fieldAccessExpression
+    val getField: Element by element(Expression) {
+        parentInVisitor = fieldAccessExpression
 
         parent(fieldAccessExpression)
     }
-    val setField: ElementConfig by element(Expression) {
-        visitorParent = fieldAccessExpression
+    val setField: Element by element(Expression) {
+        parentInVisitor = fieldAccessExpression
 
         parent(fieldAccessExpression)
 
         +field("value", expression, isChild = true)
     }
-    val functionExpression: ElementConfig by element(Expression) {
-        visitorParent = expression
+    val functionExpression: Element by element(Expression) {
+        parentInVisitor = expression
         transformerReturnType = rootElement
 
         parent(expression)
@@ -1126,23 +1125,23 @@ object IrTree : AbstractTreeBuilder() {
         +field("origin", statementOriginType)
         +field("function", simpleFunction, isChild = true)
     }
-    val getClass: ElementConfig by element(Expression) {
-        visitorParent = expression
+    val getClass: Element by element(Expression) {
+        parentInVisitor = expression
 
         parent(expression)
 
         +field("argument", expression, isChild = true)
     }
-    val instanceInitializerCall: ElementConfig by element(Expression) {
-        visitorParent = expression
+    val instanceInitializerCall: Element by element(Expression) {
+        parentInVisitor = expression
 
         parent(expression)
 
         +field("classSymbol", classSymbolType)
     }
-    val loop: ElementConfig by element(Expression) {
-        visitorParent = expression
-        visitorParam = "loop"
+    val loop: Element by element(Expression) {
+        parentInVisitor = expression
+        visitorParameterName = "loop"
         ownsChildren = false
 
         parent(expression)
@@ -1156,36 +1155,36 @@ object IrTree : AbstractTreeBuilder() {
             baseDefaultValue = "null"
         }
     }
-    val whileLoop: ElementConfig by element(Expression) {
-        visitorParent = loop
-        visitorParam = "loop"
+    val whileLoop: Element by element(Expression) {
+        parentInVisitor = loop
+        visitorParameterName = "loop"
         childrenOrderOverride = listOf("condition", "body")
 
         parent(loop)
     }
-    val doWhileLoop: ElementConfig by element(Expression) {
-        visitorParent = loop
-        visitorParam = "loop"
+    val doWhileLoop: Element by element(Expression) {
+        parentInVisitor = loop
+        visitorParameterName = "loop"
 
         parent(loop)
     }
-    val `return`: ElementConfig by element(Expression) {
-        visitorParent = expression
+    val `return`: Element by element(Expression) {
+        parentInVisitor = expression
 
         parent(expression)
 
         +field("value", expression, isChild = true)
         +field("returnTargetSymbol", returnTargetSymbolType)
     }
-    val stringConcatenation: ElementConfig by element(Expression) {
-        visitorParent = expression
+    val stringConcatenation: Element by element(Expression) {
+        parentInVisitor = expression
 
         parent(expression)
 
         +listField("arguments", expression, mutability = List, isChild = true)
     }
-    val suspensionPoint: ElementConfig by element(Expression) {
-        visitorParent = expression
+    val suspensionPoint: Element by element(Expression) {
+        parentInVisitor = expression
 
         parent(expression)
 
@@ -1193,24 +1192,24 @@ object IrTree : AbstractTreeBuilder() {
         +field("result", expression, isChild = true)
         +field("resumeResult", expression, isChild = true)
     }
-    val suspendableExpression: ElementConfig by element(Expression) {
-        visitorParent = expression
+    val suspendableExpression: Element by element(Expression) {
+        parentInVisitor = expression
 
         parent(expression)
 
         +field("suspensionPointId", expression, isChild = true)
         +field("result", expression, isChild = true)
     }
-    val `throw`: ElementConfig by element(Expression) {
-        visitorParent = expression
+    val `throw`: Element by element(Expression) {
+        parentInVisitor = expression
 
         parent(expression)
 
         +field("value", expression, isChild = true)
     }
-    val `try`: ElementConfig by element(Expression) {
-        visitorParent = expression
-        visitorParam = "aTry"
+    val `try`: Element by element(Expression) {
+        parentInVisitor = expression
+        visitorParameterName = "aTry"
 
         parent(expression)
 
@@ -1218,18 +1217,18 @@ object IrTree : AbstractTreeBuilder() {
         +listField("catches", catch, mutability = List, isChild = true)
         +field("finallyExpression", expression, nullable = true, isChild = true)
     }
-    val catch: ElementConfig by element(Expression) {
-        visitorParent = rootElement
-        visitorParam = "aCatch"
-        transform = true
+    val catch: Element by element(Expression) {
+        parentInVisitor = rootElement
+        visitorParameterName = "aCatch"
+        hasTransformMethod = true
         transformByChildren = true
 
         +field("catchParameter", variable, isChild = true)
         +field("result", expression, isChild = true)
     }
-    val typeOperatorCall: ElementConfig by element(Expression) {
-        visitorParent = expression
-        visitorName = "typeOperator"
+    val typeOperatorCall: Element by element(Expression) {
+        parentInVisitor = expression
+        nameInVisitorMethod = "TypeOperator"
 
         parent(expression)
 
@@ -1237,68 +1236,68 @@ object IrTree : AbstractTreeBuilder() {
         +field("argument", expression, isChild = true)
         +field("typeOperand", irTypeType)
     }
-    val valueAccessExpression: ElementConfig by element(Expression) {
-        visitorParent = declarationReference
-        visitorName = "valueAccess"
+    val valueAccessExpression: Element by element(Expression) {
+        parentInVisitor = declarationReference
+        nameInVisitorMethod = "ValueAccess"
 
         parent(declarationReference)
 
         +symbol(valueSymbolType, mutable = true)
         +field("origin", statementOriginType, nullable = true)
     }
-    val getValue: ElementConfig by element(Expression) {
-        visitorParent = valueAccessExpression
+    val getValue: Element by element(Expression) {
+        parentInVisitor = valueAccessExpression
 
         parent(valueAccessExpression)
     }
-    val setValue: ElementConfig by element(Expression) {
-        visitorParent = valueAccessExpression
+    val setValue: Element by element(Expression) {
+        parentInVisitor = valueAccessExpression
 
         parent(valueAccessExpression)
 
         +field("value", expression, isChild = true)
     }
-    val varargElement: ElementConfig by element(Expression)
-    val vararg: ElementConfig by element(Expression) {
-        visitorParent = expression
+    val varargElement: Element by element(Expression)
+    val vararg: Element by element(Expression) {
+        parentInVisitor = expression
 
         parent(expression)
 
         +field("varargElementType", irTypeType)
         +listField("elements", varargElement, mutability = List, isChild = true)
     }
-    val spreadElement: ElementConfig by element(Expression) {
-        visitorParent = rootElement
-        visitorParam = "spread"
-        transform = true
+    val spreadElement: Element by element(Expression) {
+        parentInVisitor = rootElement
+        visitorParameterName = "spread"
+        hasTransformMethod = true
         transformByChildren = true
 
         parent(varargElement)
 
         +field("expression", expression, isChild = true)
     }
-    val `when`: ElementConfig by element(Expression) {
-        visitorParent = expression
+    val `when`: Element by element(Expression) {
+        parentInVisitor = expression
 
         parent(expression)
 
         +field("origin", statementOriginType, nullable = true)
         +listField("branches", branch, mutability = List, isChild = true)
     }
-    val branch: ElementConfig by element(Expression) {
-        visitorParent = rootElement
-        visitorParam = "branch"
-        accept = true
-        transform = true
+    val branch: Element by element(Expression) {
+        parentInVisitor = rootElement
+        visitorParameterName = "branch"
+        hasAcceptMethod = true
+        hasTransformMethod = true
         transformByChildren = true
 
         +field("condition", expression, isChild = true)
         +field("result", expression, isChild = true)
     }
-    val elseBranch: ElementConfig by element(Expression) {
-        visitorParent = branch
-        visitorParam = "branch"
-        transform = true
+    val elseBranch: Element by element(Expression) {
+        parentInVisitor = branch
+        visitorParameterName = "branch"
+        hasTransformMethod = true
         transformByChildren = true
 
         parent(branch)

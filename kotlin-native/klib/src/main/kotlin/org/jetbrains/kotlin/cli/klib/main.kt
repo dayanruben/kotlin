@@ -90,8 +90,8 @@ fun printUsage() {
     )
 }
 
-private fun parseArgs(args: Array<String>): Map<String, List<String>> {
-    val commandLine = mutableMapOf<String, MutableList<String>>()
+private fun parseOptions(args: Array<String>): Map<String, List<String>> {
+    val options = mutableMapOf<String, MutableList<String>>()
     for (index in args.indices step 2) {
         val key = args[index]
         if (key[0] != '-') {
@@ -101,13 +101,13 @@ private fun parseArgs(args: Array<String>): Map<String, List<String>> {
             throw IllegalArgumentException("Expected an value after $key")
         }
         val value = listOf(args[index + 1])
-        commandLine[key]?.addAll(value) ?: commandLine.put(key, value.toMutableList())
+        options[key]?.addAll(value) ?: options.put(key, value.toMutableList())
     }
-    return commandLine
+    return options
 }
 
 
-class Command(args: Array<String>) {
+private class Command(args: Array<String>) {
     init {
         if (args.size < 2) {
             printUsage()
@@ -117,11 +117,21 @@ class Command(args: Array<String>) {
 
     val verb = args[0]
     val library = args[1]
-    val options: Map<String, List<String>> = parseArgs(args.drop(2).toTypedArray())
+
+    val knownOptions: Map<KnownOption, List<String>> = parseOptions(args.drop(2).toTypedArray<String>())
+            .entries
+            .mapNotNull { (option, values) ->
+                val knownOption = KnownOption.parseOrNull(option)
+                if (knownOption == null) {
+                    logWarning("Unrecognized command-line option: $option")
+                    return@mapNotNull null
+                }
+                knownOption to values
+            }.toMap()
 }
 
 private fun Command.parseSignatureVersion(): KotlinIrSignatureVersion? {
-    val rawSignatureVersion = options["-signature-version"]?.last() ?: return null
+    val rawSignatureVersion = knownOptions[KnownOption.SIGNATURE_VERSION]?.last() ?: return null
     val signatureVersion = rawSignatureVersion.toIntOrNull()?.let(::KotlinIrSignatureVersion)
             ?: logError("Invalid signature version: $rawSignatureVersion")
 
@@ -172,9 +182,26 @@ open class ModuleDeserializer(val library: ByteArray) {
 
 }
 
+private class KlibRepoDeprecationWarning {
+    private var alreadyLogged = false
+
+    fun logOnceIfNecessary() {
+        if (!alreadyLogged) {
+            alreadyLogged = true
+            logWarning("Local KLIB repositories to be dropped soon. See https://youtrack.jetbrains.com/issue/KT-61098")
+        }
+    }
+}
+
 class Library(val libraryNameOrPath: String, val requestedRepository: String?) {
 
-    val repository = requestedRepository?.File() ?: defaultRepository
+    private val klibRepoDeprecationWarning = KlibRepoDeprecationWarning()
+
+    val repository = requestedRepository?.let {
+        klibRepoDeprecationWarning.logOnceIfNecessary() // Due to use of "-repository" option.
+        File(it)
+    } ?: defaultRepository
+
     fun info() {
         val library = libraryInRepoOrCurrentDir(repository, libraryNameOrPath)
         val headerAbiVersion = library.versions.abiVersion
@@ -187,7 +214,7 @@ class Library(val libraryNameOrPath: String, val requestedRepository: String?) {
         println("Resolved to: ${library.libraryName.File().absolutePath}")
         println("Module name: $moduleName")
         println("ABI version: $headerAbiVersion")
-        println("Compiler version: ${headerCompilerVersion}")
+        println("Compiler version: $headerCompilerVersion")
         println("Library version: $headerLibraryVersion")
         println("Metadata version: $headerMetadataVersion")
 
@@ -198,7 +225,7 @@ class Library(val libraryNameOrPath: String, val requestedRepository: String?) {
     }
 
     fun install() {
-        logWarning("Local KLIB repositories to be dropped soon. See https://youtrack.jetbrains.com/issue/KT-61098")
+        klibRepoDeprecationWarning.logOnceIfNecessary()
 
         if (!repository.exists) {
             logWarning("Repository does not exist: $repository. Creating...")
@@ -216,7 +243,7 @@ class Library(val libraryNameOrPath: String, val requestedRepository: String?) {
     }
 
     fun remove(blind: Boolean = false) {
-        logWarning("Local KLIB repositories to be dropped soon. See https://youtrack.jetbrains.com/issue/KT-61098")
+        klibRepoDeprecationWarning.logOnceIfNecessary()
 
         if (!repository.exists) logError("Repository does not exist: $repository")
 
@@ -388,11 +415,21 @@ fun libraryInCurrentDir(name: String) = resolverByName(emptyList(), logger = Kli
 fun libraryInRepoOrCurrentDir(repository: File, name: String) =
         resolverByName(listOf(repository.absolutePath), logger = KlibToolLogger).resolve(name)
 
+private enum class KnownOption(val option: String) {
+    REPOSITORY("-repository"),
+    PRINT_SIGNATURES("-print-signatures"),
+    SIGNATURE_VERSION("-signature-version");
+
+    companion object {
+        fun parseOrNull(option: String): KnownOption? = values().firstOrNull { it.option == option }
+    }
+}
+
 fun main(args: Array<String>) {
     val command = Command(args)
 
-    val repository = command.options["-repository"]?.last()
-    val printSignatures = command.options["-print-signatures"]?.last()?.toBoolean() == true
+    val repository = command.knownOptions[KnownOption.REPOSITORY]?.last()
+    val printSignatures = command.knownOptions[KnownOption.PRINT_SIGNATURES]?.last()?.toBoolean() == true
 
     val signatureVersion = command.parseSignatureVersion()
 

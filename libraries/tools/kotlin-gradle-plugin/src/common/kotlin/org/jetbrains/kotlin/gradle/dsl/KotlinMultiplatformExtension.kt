@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.gradle.plugin.hierarchy.KotlinHierarchyDslImpl
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.targets.android.internal.InternalKotlinTargetPreset
 import org.jetbrains.kotlin.gradle.targets.android.internal.internal
-import org.jetbrains.kotlin.gradle.utils.configureExperimentalTryK2
+import org.jetbrains.kotlin.gradle.utils.configureExperimentalTryNext
 import org.jetbrains.kotlin.gradle.utils.newInstance
 import javax.inject.Inject
 
@@ -246,18 +246,18 @@ abstract class KotlinMultiplatformExtension
     @ExperimentalKotlinGradlePluginApi
     internal val compilerOptions: KotlinCommonCompilerOptions = project.objects
         .newInstance<KotlinCommonCompilerOptionsDefault>()
-        .configureExperimentalTryK2(project)
+        .configureExperimentalTryNext(project)
         .also {
             syncCommonOptions(it)
         }
 
     @ExperimentalKotlinGradlePluginApi
-    internal fun compilerOptions(configure: KotlinCommonCompilerOptions.() -> Unit) {
+    fun compilerOptions(configure: KotlinCommonCompilerOptions.() -> Unit) {
         configure(compilerOptions)
     }
 
     @ExperimentalKotlinGradlePluginApi
-    internal fun compilerOptions(configure: Action<KotlinCommonCompilerOptions>) {
+    fun compilerOptions(configure: Action<KotlinCommonCompilerOptions>) {
         configure.execute(compilerOptions)
     }
 }

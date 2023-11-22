@@ -702,7 +702,7 @@ internal object CheckCallModifiers : CheckerStage() {
     }
 }
 
-internal object CheckDeprecatedSinceKotlin : ResolutionStage() {
+internal object CheckHiddenDeclaration : ResolutionStage() {
     override suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext) {
         val symbol = candidate.symbol as? FirCallableSymbol<*> ?: return
         val deprecation = symbol.getDeprecation(context.session, callInfo.callSite)
@@ -716,15 +716,15 @@ internal object CheckDeprecatedSinceKotlin : ResolutionStage() {
         callInfo: CallInfo,
         candidate: Candidate,
     ): Boolean {
-        if (callInfo.callSite.isSuperCall()) return false
+        val isSuperCall = callInfo.callSite.isSuperCall()
         if (symbol.fir.dispatchReceiverType == null || symbol !is FirNamedFunctionSymbol) return false
-        if (symbol.fir.isHiddenEverywhereBesideSuperCalls == true) return true
+        if (symbol.isHidden(isSuperCall)) return true
 
         val scope = candidate.originScope as? FirTypeScope ?: return false
 
         var result = false
         scope.processOverriddenFunctions(symbol) {
-            if (it.fir.isHiddenEverywhereBesideSuperCalls == true) {
+            if (it.isHidden(isSuperCall)) {
                 result = true
                 ProcessorAction.STOP
             } else {
@@ -737,6 +737,11 @@ internal object CheckDeprecatedSinceKotlin : ResolutionStage() {
 
     private fun FirElement.isSuperCall(): Boolean =
         this is FirQualifiedAccessExpression && explicitReceiver?.calleeReference is FirSuperReference
+
+    private fun FirCallableSymbol<*>.isHidden(isSuperCall: Boolean): Boolean {
+        val fir = fir
+        return !isSuperCall && fir.isHiddenEverywhereBesideSuperCalls == true || fir.isHiddenToOvercomeSignatureClash == true
+    }
 }
 
 private val DYNAMIC_EXTENSION_ANNOTATION_CLASS_ID: ClassId = ClassId.topLevel(DYNAMIC_EXTENSION_FQ_NAME)

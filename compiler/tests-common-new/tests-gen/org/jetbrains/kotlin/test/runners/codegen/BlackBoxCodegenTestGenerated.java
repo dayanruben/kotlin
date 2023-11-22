@@ -16032,6 +16032,18 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("nestedNameClash.kt")
+        public void testNestedNameClash() throws Exception {
+            runTest("compiler/testData/codegen/box/delegation/nestedNameClash.kt");
+        }
+
+        @Test
+        @TestMetadata("nestedNameClash2.kt")
+        public void testNestedNameClash2() throws Exception {
+            runTest("compiler/testData/codegen/box/delegation/nestedNameClash2.kt");
+        }
+
+        @Test
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("compiler/testData/codegen/box/delegation/simple.kt");
@@ -27976,6 +27988,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("annotationClassWithInner.kt")
+        public void testAnnotationClassWithInner() throws Exception {
+            runTest("compiler/testData/codegen/box/involvesIrInterpreter/annotationClassWithInner.kt");
+        }
+
+        @Test
         @TestMetadata("kt55866.kt")
         public void testKt55866() throws Exception {
             runTest("compiler/testData/codegen/box/involvesIrInterpreter/kt55866.kt");
@@ -28451,6 +28469,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("genericSamSmartcast.kt")
         public void testGenericSamSmartcast() throws Exception {
             runTest("compiler/testData/codegen/box/javaInterop/genericSamSmartcast.kt");
+        }
+
+        @Test
+        @TestMetadata("inheritanceWithWildcard.kt")
+        public void testInheritanceWithWildcard() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/inheritanceWithWildcard.kt");
         }
 
         @Test
@@ -48091,6 +48115,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("valuesInsideEnum.kt")
         public void testValuesInsideEnum() throws Exception {
             runTest("compiler/testData/codegen/box/specialBuiltins/valuesInsideEnum.kt");
+        }
+
+        @Test
+        @TestMetadata("weirdCharBuffers.kt")
+        public void testWeirdCharBuffers() throws Exception {
+            runTest("compiler/testData/codegen/box/specialBuiltins/weirdCharBuffers.kt");
         }
     }
 

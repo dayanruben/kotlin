@@ -157,6 +157,7 @@ val commonCompilerModules = arrayOf(
     ":compiler:frontend.java", // TODO this is fe10 module but some utils used in fir ide now
     ":analysis:decompiled:decompiler-to-stubs",
     ":analysis:decompiled:decompiler-to-file-stubs",
+    ":analysis:decompiled:decompiler-js",
     ":analysis:decompiled:decompiler-native",
     ":analysis:decompiled:decompiler-to-psi",
     ":analysis:decompiled:light-classes-for-decompiled",
@@ -493,6 +494,7 @@ val projectsWithEnabledContextReceivers by extra {
         ":kotlinx-serialization-compiler-plugin.k2",
         ":plugins:parcelize:parcelize-compiler:parcelize.k2",
         ":plugins:fir-plugin-prototype",
+        ":plugins:kapt4",
     )
 }
 

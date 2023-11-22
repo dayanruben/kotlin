@@ -16469,6 +16469,18 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
         }
 
         @Test
+        @TestMetadata("nestedNameClash.kt")
+        public void testNestedNameClash() throws Exception {
+            runTest("compiler/testData/codegen/box/delegation/nestedNameClash.kt");
+        }
+
+        @Test
+        @TestMetadata("nestedNameClash2.kt")
+        public void testNestedNameClash2() throws Exception {
+            runTest("compiler/testData/codegen/box/delegation/nestedNameClash2.kt");
+        }
+
+        @Test
         @TestMetadata("sealedClass.kt")
         public void testSealedClass() throws Exception {
             runTest("compiler/testData/codegen/box/delegation/sealedClass.kt");
@@ -29625,6 +29637,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
         }
 
         @Test
+        @TestMetadata("annotationClassWithInner.kt")
+        public void testAnnotationClassWithInner() throws Exception {
+            runTest("compiler/testData/codegen/box/involvesIrInterpreter/annotationClassWithInner.kt");
+        }
+
+        @Test
         @TestMetadata("booleanOperations.kt")
         public void testBooleanOperations() throws Exception {
             runTest("compiler/testData/codegen/box/involvesIrInterpreter/booleanOperations.kt");
@@ -29640,6 +29658,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
         @TestMetadata("charOperations.kt")
         public void testCharOperations() throws Exception {
             runTest("compiler/testData/codegen/box/involvesIrInterpreter/charOperations.kt");
+        }
+
+        @Test
+        @TestMetadata("complexBooleanConstant.kt")
+        public void testComplexBooleanConstant() throws Exception {
+            runTest("compiler/testData/codegen/box/involvesIrInterpreter/complexBooleanConstant.kt");
         }
 
         @Test
@@ -30538,6 +30562,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
         @TestMetadata("genericSamSmartcast.kt")
         public void testGenericSamSmartcast() throws Exception {
             runTest("compiler/testData/codegen/box/javaInterop/genericSamSmartcast.kt");
+        }
+
+        @Test
+        @TestMetadata("inheritanceWithWildcard.kt")
+        public void testInheritanceWithWildcard() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/inheritanceWithWildcard.kt");
         }
 
         @Test
@@ -51690,6 +51720,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
         @TestMetadata("valuesInsideEnum.kt")
         public void testValuesInsideEnum() throws Exception {
             runTest("compiler/testData/codegen/box/specialBuiltins/valuesInsideEnum.kt");
+        }
+
+        @Test
+        @TestMetadata("weirdCharBuffers.kt")
+        public void testWeirdCharBuffers() throws Exception {
+            runTest("compiler/testData/codegen/box/specialBuiltins/weirdCharBuffers.kt");
         }
     }
 

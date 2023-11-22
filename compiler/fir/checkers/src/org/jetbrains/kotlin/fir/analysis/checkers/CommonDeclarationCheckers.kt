@@ -37,6 +37,7 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirExpectConsistencyChecker,
             FirOptionalExpectationDeclarationChecker,
             FirMissingDependencySupertypeChecker.ForDeclarations,
+            FirContextReceiversDeclarationChecker,
         )
 
     override val classLikeCheckers: Set<FirClassLikeChecker>
@@ -125,6 +126,7 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirOptInAnnotationClassChecker,
             FirCommonConstructorDelegationIssuesChecker,
             FirDelegationSuperCallInEnumConstructorChecker,
+            FirDelegationInExpectClassSyntaxChecker,
             FirDelegationInInterfaceSyntaxChecker,
             FirEnumClassSimpleChecker,
             FirLocalEntityNotAllowedChecker,

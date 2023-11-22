@@ -9,10 +9,12 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.*
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.LLFirLockProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkPhase
 import org.jetbrains.kotlin.fir.FirElementWithResolveState
+import org.jetbrains.kotlin.fir.FirFileAnnotationsContainer
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.FirScript
+import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 
 internal abstract class LLFirTargetResolver(
     protected val resolveTarget: LLFirResolveTarget,
@@ -25,14 +27,21 @@ internal abstract class LLFirTargetResolver(
     val nestedClassesStack: List<FirRegularClass> get() = _nestedClassesStack.toList()
 
     /**
-     * Must be executed without a lock
+     * @see resolveDependencyTarget
      */
-    protected fun resolveFileAnnotationContainerIfNeeded(elementWithResolveState: FirElementWithResolveState) {
-        if (elementWithResolveState !is FirFile) return
-        val annotationContainer = elementWithResolveState.annotationsContainer ?: return
-        withFile(elementWithResolveState) {
-            performResolve(annotationContainer)
-        }
+    open val skipDependencyTargetResolutionStep: Boolean get() = false
+
+    /**
+     * Requests the resolution for dependency targets to avoid race in the case of FIR instance sharing.
+     * Will be executed before resolution without a lock.
+     *
+     * @see skipDependencyTargetResolutionStep
+     */
+    private fun resolveDependencyTarget(target: FirElementWithResolveState) {
+        if (skipDependencyTargetResolutionStep) return
+
+        if (target is FirFileAnnotationsContainer) return
+        resolveTarget.firFile.annotationsContainer?.lazyResolveToPhase(resolverPhase)
     }
 
     override fun withFile(firFile: FirFile, action: () -> Unit) {
@@ -57,10 +66,7 @@ internal abstract class LLFirTargetResolver(
 
     protected open fun checkResolveConsistency() {}
 
-    protected open fun doResolveWithoutLock(target: FirElementWithResolveState): Boolean {
-        resolveFileAnnotationContainerIfNeeded(target)
-        return false
-    }
+    protected open fun doResolveWithoutLock(target: FirElementWithResolveState): Boolean = false
 
     protected abstract fun doLazyResolveUnderLock(target: FirElementWithResolveState)
 
@@ -74,6 +80,8 @@ internal abstract class LLFirTargetResolver(
     }
 
     protected fun performResolve(target: FirElementWithResolveState) {
+        resolveDependencyTarget(target)
+
         if (doResolveWithoutLock(target)) return
         performCustomResolveUnderLock(target) {
             doLazyResolveUnderLock(target)

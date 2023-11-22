@@ -13712,6 +13712,18 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
             }
 
             @Test
+            @TestMetadata("nestedNameClash.kt")
+            public void testNestedNameClash() throws Exception {
+                runTest("compiler/testData/codegen/box/delegation/nestedNameClash.kt");
+            }
+
+            @Test
+            @TestMetadata("nestedNameClash2.kt")
+            public void testNestedNameClash2() throws Exception {
+                runTest("compiler/testData/codegen/box/delegation/nestedNameClash2.kt");
+            }
+
+            @Test
             @TestMetadata("smartCastedDelegation.kt")
             public void testSmartCastedDelegation() throws Exception {
                 runTest("compiler/testData/codegen/box/delegation/smartCastedDelegation.kt");
@@ -25265,6 +25277,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
             }
 
             @Test
+            @TestMetadata("annotationClassWithInner.kt")
+            public void testAnnotationClassWithInner() throws Exception {
+                runTest("compiler/testData/codegen/box/involvesIrInterpreter/annotationClassWithInner.kt");
+            }
+
+            @Test
             @TestMetadata("booleanOperations.kt")
             public void testBooleanOperations() throws Exception {
                 runTest("compiler/testData/codegen/box/involvesIrInterpreter/booleanOperations.kt");
@@ -25280,6 +25298,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
             @TestMetadata("charOperations.kt")
             public void testCharOperations() throws Exception {
                 runTest("compiler/testData/codegen/box/involvesIrInterpreter/charOperations.kt");
+            }
+
+            @Test
+            @TestMetadata("complexBooleanConstant.kt")
+            public void testComplexBooleanConstant() throws Exception {
+                runTest("compiler/testData/codegen/box/involvesIrInterpreter/complexBooleanConstant.kt");
             }
 
             @Test
