@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.psi.KtExpression
  */
 object FirJsErrors {
     // Annotations
-    val WRONG_JS_QUALIFIER by error0<KtElement>()
     val JS_MODULE_PROHIBITED_ON_VAR by error0<KtElement>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
     val JS_MODULE_PROHIBITED_ON_NON_NATIVE by error0<KtElement>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
     val NESTED_JS_MODULE_PROHIBITED by error0<KtElement>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
@@ -68,15 +67,10 @@ object FirJsErrors {
     val INLINE_CLASS_IN_EXTERNAL_DECLARATION by error0<KtElement>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
     val EXTENSION_FUNCTION_IN_EXTERNAL_DECLARATION by error0<KtElement>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
     val NON_EXTERNAL_DECLARATION_IN_INAPPROPRIATE_FILE by error1<KtElement, ConeKotlinType>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
-    val CANNOT_CHECK_FOR_EXTERNAL_INTERFACE by error1<KtElement, ConeKotlinType>()
-    val UNCHECKED_CAST_TO_EXTERNAL_INTERFACE by warning2<KtElement, ConeKotlinType, ConeKotlinType>()
-    val EXTERNAL_INTERFACE_AS_CLASS_LITERAL by error0<KtElement>()
     val JS_EXTERNAL_INHERITORS_ONLY by error2<KtDeclaration, FirClassLikeSymbol<*>, FirClassLikeSymbol<*>>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
     val JS_EXTERNAL_ARGUMENT by error1<KtExpression, ConeKotlinType>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
-    val EXTERNAL_INTERFACE_AS_REIFIED_TYPE_ARGUMENT by error1<KtElement, ConeKotlinType>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
 
     // Export
-    val NESTED_JS_EXPORT by error0<KtElement>()
     val WRONG_EXPORTED_DECLARATION by error1<KtElement, String>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
     val NON_EXPORTABLE_TYPE by warning2<KtElement, String, ConeKotlinType>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
     val NON_CONSUMABLE_EXPORTED_IDENTIFIER by warning1<KtElement, String>()

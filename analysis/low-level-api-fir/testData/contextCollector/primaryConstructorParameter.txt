@@ -2,25 +2,23 @@ Tower Data Context:
     Element 0
         Scope: FirDefaultStarImportingScope
     Element 1
-        Scope: FirDefaultSimpleImportingScope
-    Element 2
         Scope: FirExplicitStarImportingScope
+    Element 2
+        Scope: FirDefaultSimpleImportingScope
     Element 3
         Scope: FirDefaultSimpleImportingScope
     Element 4
-        Scope: FirDefaultSimpleImportingScope
-    Element 5
         Scope: FirPackageMemberScope
-    Element 6
+    Element 5
         Scope: FirExplicitSimpleImportingScope
-    Element 7
+    Element 6
         Implicit receiver:
             FirRegularClassSymbol public final class Foo : R|kotlin/Any|
                 Type: Foo
 
 FILE: [ResolvedTo(IMPORTS)] primaryConstructorParameter.kt
-    public final [ResolvedTo(STATUS)] class Foo : R|kotlin/Any| {
-        public [ResolvedTo(STATUS)] constructor([ResolvedTo(STATUS)] a: R|kotlin/String| = LAZY_EXPRESSION, [ResolvedTo(STATUS)] b: R|kotlin/Int| = LAZY_EXPRESSION, [ResolvedTo(STATUS)] c: R|kotlin/Long| = LAZY_EXPRESSION): R|Foo| {
+    public final [ResolvedTo(ANNOTATION_ARGUMENTS)] class Foo : R|kotlin/Any| {
+        public [ResolvedTo(ANNOTATION_ARGUMENTS)] constructor([ResolvedTo(ANNOTATION_ARGUMENTS)] a: R|kotlin/String| = LAZY_EXPRESSION, [ResolvedTo(ANNOTATION_ARGUMENTS)] b: R|kotlin/Int| = LAZY_EXPRESSION, [ResolvedTo(ANNOTATION_ARGUMENTS)] c: R|kotlin/Long| = LAZY_EXPRESSION): R|Foo| {
             LAZY_super<R|kotlin/Any|>
         }
 

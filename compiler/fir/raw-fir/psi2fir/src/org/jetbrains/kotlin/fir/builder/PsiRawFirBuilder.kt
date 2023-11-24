@@ -85,7 +85,7 @@ open class PsiRawFirBuilder(
     }
 
     override fun PsiElement.toFirSourceElement(kind: KtFakeSourceElementKind?): KtPsiSourceElement {
-        val actualKind = kind ?: this@PsiRawFirBuilder.context.forcedElementSourceKind ?: KtRealSourceElementKind
+        val actualKind = kind ?: KtRealSourceElementKind
         return this.toKtPsiSourceElement(actualKind)
     }
 
@@ -317,7 +317,7 @@ open class PsiRawFirBuilder(
                 else -> buildErrorExpression {
                     nonExpressionElement = fir
                     diagnostic = diagnosticFn()
-                    source = fir?.source?.withForcedKindFrom(this@PsiRawFirBuilder.context) ?: toFirSourceElement()
+                    source = fir?.source?.realElement() ?: toFirSourceElement()
                 }
             }
         }
@@ -702,25 +702,17 @@ open class PsiRawFirBuilder(
             }
 
             val propertySource = toFirSourceElement(KtFakeSourceElementKind.PropertyFromParameter)
-            // We can't just reuse a type from firParameter to avoid annotation leak.
-            val type = (typeReference?.toFirType() ?: createNoTypeForParameterTypeRef(propertySource)).let {
-                if (it is FirErrorTypeRef && firParameter.isVararg) {
-                    it.wrapIntoArray()
-                } else {
-                    it
-                }
-            }
-
             val propertyName = nameAsSafeName
             val parameterAnnotations = mutableListOf<FirAnnotationCall>()
             for (annotationEntry in annotationEntries) {
                 parameterAnnotations += annotationEntry.convert<FirAnnotationCall>()
             }
+
             return buildProperty {
                 source = propertySource
                 moduleData = baseModuleData
                 origin = FirDeclarationOrigin.Source
-                returnTypeRef = type.copyWithNewSourceKind(KtFakeSourceElementKind.PropertyFromParameter)
+                returnTypeRef = firParameter.returnTypeRef.copyWithNewSourceKind(KtFakeSourceElementKind.PropertyFromParameter)
                 name = propertyName
                 initializer = buildPropertyAccessExpression {
                     source = propertySource
@@ -752,7 +744,7 @@ open class PsiRawFirBuilder(
                     defaultAccessorSource,
                     baseModuleData,
                     FirDeclarationOrigin.Source,
-                    type.copyWithNewSourceKind(KtFakeSourceElementKind.DefaultAccessor),
+                    returnTypeRef.copyWithNewSourceKind(KtFakeSourceElementKind.DefaultAccessor),
                     visibility,
                     symbol,
                     isInline = hasModifier(INLINE_KEYWORD),
@@ -764,7 +756,7 @@ open class PsiRawFirBuilder(
                     defaultAccessorSource,
                     baseModuleData,
                     FirDeclarationOrigin.Source,
-                    type.copyWithNewSourceKind(KtFakeSourceElementKind.DefaultAccessor),
+                    returnTypeRef.copyWithNewSourceKind(KtFakeSourceElementKind.DefaultAccessor),
                     visibility,
                     symbol,
                     parameterAnnotations = parameterAnnotations.filterUseSiteTarget(SETTER_PARAMETER),
@@ -1502,25 +1494,7 @@ open class PsiRawFirBuilder(
                                 context.className,
                                 createClassTypeRefWithSourceKind = { firPrimaryConstructor.returnTypeRef.copyWithNewSourceKind(it) },
                                 createParameterTypeRefWithSourceKind = { property, newKind ->
-                                    // just making a shallow copy isn't enough type ref may be a function type ref
-                                    // and contain value parameters inside
-
-                                    val returnTypeRef = property.returnTypeRef
-
-                                    when (returnTypeRef) {
-                                        is FirErrorTypeRef -> {
-                                            buildErrorTypeRefCopy(returnTypeRef) {
-                                                source = returnTypeRef.source?.fakeElement(newKind)
-                                            }
-                                        }
-                                        else -> {
-                                            withDefaultSourceElementKind(newKind) {
-                                                (returnTypeRef.psi as KtTypeReference?).toFirOrImplicitType()
-                                            }
-                                        }
-                                    }
-
-
+                                    property.returnTypeRef.copyWithNewSourceKind(newKind)
                                 },
                                 addValueParameterAnnotations = { addAnnotationsFrom(it as KtParameter, isFromPrimaryConstructor = true) },
                             ).generate()

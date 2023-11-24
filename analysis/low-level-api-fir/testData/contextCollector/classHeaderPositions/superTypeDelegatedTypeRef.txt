@@ -2,16 +2,14 @@ Tower Data Context:
     Element 0
         Scope: FirDefaultStarImportingScope
     Element 1
-        Scope: FirDefaultSimpleImportingScope
-    Element 2
         Scope: FirExplicitStarImportingScope
+    Element 2
+        Scope: FirDefaultSimpleImportingScope
     Element 3
         Scope: FirDefaultSimpleImportingScope
     Element 4
-        Scope: FirDefaultSimpleImportingScope
-    Element 5
         Scope: FirPackageMemberScope
-    Element 6
+    Element 5
         Scope: FirExplicitSimpleImportingScope
 
 FILE: [ResolvedTo(IMPORTS)] superTypeDelegatedTypeRef.kt
@@ -30,7 +28,7 @@ FILE: [ResolvedTo(IMPORTS)] superTypeDelegatedTypeRef.kt
         }
 
     }
-    public final [ResolvedTo(STATUS)] class Child : R|test/Base|, R|test/MyInterface| {
+    public final [ResolvedTo(ANNOTATION_ARGUMENTS)] class Child : R|test/Base|, R|test/MyInterface| {
         private final [ResolvedTo(BODY_RESOLVE)] field $$delegate_0: R|test/MyInterface| = R|test/Base.Nested.Nested|()
 
         public [ResolvedTo(BODY_RESOLVE)] constructor(): R|test/Child| {

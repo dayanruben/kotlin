@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.psi.*
 @OptIn(PrivateForInline::class)
 object JS_DIAGNOSTICS_LIST : DiagnosticList("FirJsErrors") {
     val ANNOTATIONS by object : DiagnosticGroup("Annotations") {
-        val WRONG_JS_QUALIFIER by error<KtElement>()
         val JS_MODULE_PROHIBITED_ON_VAR by error<KtElement>(PositioningStrategy.DECLARATION_SIGNATURE_OR_DEFAULT)
         val JS_MODULE_PROHIBITED_ON_NON_NATIVE by error<KtElement>(PositioningStrategy.DECLARATION_SIGNATURE_OR_DEFAULT)
         val NESTED_JS_MODULE_PROHIBITED by error<KtElement>(PositioningStrategy.DECLARATION_SIGNATURE_OR_DEFAULT)
@@ -94,14 +93,6 @@ object JS_DIAGNOSTICS_LIST : DiagnosticList("FirJsErrors") {
         val NON_EXTERNAL_DECLARATION_IN_INAPPROPRIATE_FILE by error<KtElement>(PositioningStrategy.DECLARATION_SIGNATURE_OR_DEFAULT) {
             parameter<ConeKotlinType>("type")
         }
-        val CANNOT_CHECK_FOR_EXTERNAL_INTERFACE by error<KtElement> {
-            parameter<ConeKotlinType>("targetType")
-        }
-        val UNCHECKED_CAST_TO_EXTERNAL_INTERFACE by warning<KtElement> {
-            parameter<ConeKotlinType>("sourceType")
-            parameter<ConeKotlinType>("targetType")
-        }
-        val EXTERNAL_INTERFACE_AS_CLASS_LITERAL by error<KtElement>()
         val JS_EXTERNAL_INHERITORS_ONLY by error<KtDeclaration>(PositioningStrategy.DECLARATION_SIGNATURE_OR_DEFAULT) {
             parameter<FirClassLikeSymbol<*>>("parent")
             parameter<FirClassLikeSymbol<*>>("kid")
@@ -109,13 +100,9 @@ object JS_DIAGNOSTICS_LIST : DiagnosticList("FirJsErrors") {
         val JS_EXTERNAL_ARGUMENT by error<KtExpression>(PositioningStrategy.DECLARATION_SIGNATURE_OR_DEFAULT) {
             parameter<ConeKotlinType>("argType")
         }
-        val EXTERNAL_INTERFACE_AS_REIFIED_TYPE_ARGUMENT by error<KtElement>(PositioningStrategy.DECLARATION_SIGNATURE_OR_DEFAULT) {
-            parameter<ConeKotlinType>("typeArgument")
-        }
     }
 
     val EXPORT by object : DiagnosticGroup("Export") {
-        val NESTED_JS_EXPORT by error<KtElement>()
         val WRONG_EXPORTED_DECLARATION by error<KtElement>(PositioningStrategy.DECLARATION_SIGNATURE_OR_DEFAULT) {
             parameter<String>("kind")
         }

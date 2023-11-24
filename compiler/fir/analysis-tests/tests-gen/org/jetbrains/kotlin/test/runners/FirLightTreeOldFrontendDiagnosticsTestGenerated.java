@@ -12513,6 +12513,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             }
 
             @Test
+            @TestMetadata("annotationWithWrongArgInDanglingModifierList.kt")
+            public void testAnnotationWithWrongArgInDanglingModifierList() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/exceptions/annotationWithWrongArgInDanglingModifierList.kt");
+            }
+
+            @Test
             @TestMetadata("expectedSomeTypesOnBranchForWhenExpressionOfErroneousType.kt")
             public void testExpectedSomeTypesOnBranchForWhenExpressionOfErroneousType() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/exceptions/expectedSomeTypesOnBranchForWhenExpressionOfErroneousType.kt");
@@ -41106,6 +41112,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             @TestMetadata("importStatement.kt")
             public void testImportStatement() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/importStatement.kt");
+            }
+
+            @Test
+            @TestMetadata("importStatement2.kt")
+            public void testImportStatement2() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/importStatement2.kt");
             }
 
             @Test
