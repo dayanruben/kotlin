@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.ir.generator.config
 import org.jetbrains.kotlin.generators.tree.*
 import org.jetbrains.kotlin.ir.generator.model.*
 import org.jetbrains.kotlin.ir.generator.model.ElementRef
+import org.jetbrains.kotlin.ir.generator.model.ListField
 import org.jetbrains.kotlin.ir.generator.model.Model
 import org.jetbrains.kotlin.types.Variance
 import kotlin.properties.PropertyDelegateProvider
@@ -49,6 +50,22 @@ abstract class AbstractTreeBuilder {
         elementParents.add(ElementRef(type.element, type.args, type.nullable))
     }
 
+    protected fun Element.needAcceptMethod() {
+        customHasAcceptMethod = true
+    }
+
+    protected fun Element.noAcceptMethod() {
+        customHasAcceptMethod = false
+    }
+
+    protected fun Element.needTransformMethod() {
+        hasTransformMethod = true
+    }
+
+    protected fun Element.noMethodInVisitor() {
+        generateVisitorMethod = false
+    }
+
     protected fun param(name: String, vararg bounds: TypeRef, variance: Variance = Variance.INVARIANT): TypeVariable {
         return TypeVariable(name, bounds.toList(), variance)
     }
@@ -81,7 +98,7 @@ abstract class AbstractTreeBuilder {
         }
         return ListField(
             name = name,
-            elementType = elementType ?: InferredOverriddenType,
+            baseType = elementType ?: InferredOverriddenType,
             listType = listType,
             isNullable = nullable,
             mutable = mutability == ListField.Mutability.Var,

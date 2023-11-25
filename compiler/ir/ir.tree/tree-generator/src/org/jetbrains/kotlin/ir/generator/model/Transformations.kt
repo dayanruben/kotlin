@@ -37,9 +37,6 @@ internal fun markLeaves(elements: List<Element>) {
 
     for (el in leaves) {
         el.isLeaf = true
-        if (el.parentInVisitor != null) {
-            el.hasAcceptMethod = true
-        }
     }
 }
 
@@ -61,7 +58,7 @@ internal fun processFieldOverrides(elements: List<Element>) {
                                     transformInferredType(field.typeRef, (overriddenField as SingleField).typeRef) as TypeRefWithNullability
                             }
                             is ListField -> {
-                                field.elementType = transformInferredType(field.elementType, (overriddenField as ListField).elementType)
+                                field.baseType = transformInferredType(field.baseType, (overriddenField as ListField).baseType)
                             }
                         }
 

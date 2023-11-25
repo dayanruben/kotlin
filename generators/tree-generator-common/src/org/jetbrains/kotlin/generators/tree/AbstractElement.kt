@@ -57,9 +57,15 @@ abstract class AbstractElement<Element, Field>(
     abstract val visitorParameterName: String
 
     /**
+     * @see parentInVisitor
+     */
+    var customParentInVisitor: Element? = null
+
+    /**
      * The default element to visit if the method for visiting this element is not overridden.
      */
-    abstract val parentInVisitor: Element?
+    open val parentInVisitor: Element?
+        get() = customParentInVisitor ?: elementParents.singleOrNull()?.element?.takeIf { !it.isRootElement }
 
     override val allParents: List<Element>
         get() = elementParents.map { it.element }
@@ -78,6 +84,25 @@ abstract class AbstractElement<Element, Field>(
     abstract override val walkableChildren: List<Field>
 
     abstract override val transformableChildren: List<Field>
+
+    /**
+     * A custom return type of the corresponding transformer method for this element.
+     */
+    var transformerReturnType: Element? = null
+
+    /**
+     * @see org.jetbrains.kotlin.generators.tree.detectBaseTransformerTypes
+     */
+    internal var baseTransformerType: Element? = null
+
+    /**
+     * The return type of the corresponding transformer method for this element.
+     *
+     * By default, computed using [org.jetbrains.kotlin.generators.tree.detectBaseTransformerTypes], but can be customized via
+     * [transformerReturnType]
+     */
+    val transformerClass: Element
+        get() = transformerReturnType ?: baseTransformerType ?: element
 
     final override fun get(fieldName: String): Field? {
         return allFields.firstOrNull { it.name == fieldName }

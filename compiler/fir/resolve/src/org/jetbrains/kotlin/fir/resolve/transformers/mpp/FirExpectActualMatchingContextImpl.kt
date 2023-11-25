@@ -40,10 +40,10 @@ import org.jetbrains.kotlin.utils.zipIfSizesAreEqual
 
 class FirExpectActualMatchingContextImpl private constructor(
     private val actualSession: FirSession,
-    private val scopeSession: ScopeSession,
+    private val actualScopeSession: ScopeSession,
     private val allowedWritingMemberExpectForActualMapping: Boolean,
 ) : FirExpectActualMatchingContext, TypeSystemContext by actualSession.typeContext {
-    override val shouldCheckAbsenceOfDefaultParamsInActual: Boolean
+    override val shouldCheckDefaultParams: Boolean
         get() = true
 
     override val allowClassActualizationWithWiderVisibility: Boolean
@@ -51,6 +51,11 @@ class FirExpectActualMatchingContextImpl private constructor(
 
     override val allowTransitiveSupertypesActualization: Boolean
         get() = true
+
+    override val expectScopeSession: ScopeSession
+        // todo KT-63773 design a way for managing scope sessions for common scopes during matching.
+        //  Right now we create a new session every time
+        get() = ScopeSession()
 
     private fun DeclarationSymbolMarker.asSymbol(): FirBasedSymbol<*> = this as FirBasedSymbol<*>
     private fun CallableSymbolMarker.asSymbol(): FirCallableSymbol<*> = this as FirCallableSymbol<*>
@@ -170,7 +175,7 @@ class FirExpectActualMatchingContextImpl private constructor(
 
         val scope = symbol.defaultType().scope(
             useSiteSession = session,
-            scopeSession,
+            if (isActualDeclaration) actualScopeSession else expectScopeSession,
             CallableCopyTypeCalculator.DoNothing,
             requiredMembersPhase = FirResolvePhase.STATUS,
         ) ?: return emptyList()
@@ -196,7 +201,7 @@ class FirExpectActualMatchingContextImpl private constructor(
         val symbol = asSymbol()
         val scope = symbol.defaultType().scope(
             useSiteSession = symbol.moduleData.session,
-            scopeSession,
+            expectScopeSession,
             CallableCopyTypeCalculator.DoNothing,
             requiredMembersPhase = FirResolvePhase.STATUS,
         ) ?: return emptyList()
@@ -252,14 +257,14 @@ class FirExpectActualMatchingContextImpl private constructor(
     override val CallableSymbolMarker.typeParameters: List<TypeParameterSymbolMarker>
         get() = asSymbol().typeParameterSymbols
 
-    override fun FunctionSymbolMarker.allOverriddenDeclarationsRecursive(): Sequence<CallableSymbolMarker> {
+    override fun FunctionSymbolMarker.allRecursivelyOverriddenDeclarationsIncludingSelf(): Sequence<CallableSymbolMarker> {
         return when (val symbol = asSymbol()) {
             is FirConstructorSymbol, is FirFunctionWithoutNameSymbol -> sequenceOf(this)
             is FirNamedFunctionSymbol -> {
                 val session = symbol.moduleData.session
                 val containingClass = symbol.containingClassLookupTag()?.toFirRegularClassSymbol(session)
                     ?: return sequenceOf(symbol)
-                (sequenceOf(symbol) + symbol.overriddenFunctions(containingClass, session, scopeSession).asSequence())
+                (sequenceOf(symbol) + symbol.overriddenFunctions(containingClass, session, actualScopeSession).asSequence())
                     // Tests work even if you don't filter out fake-overrides. Filtering fake-overrides is needed because
                     // the returned descriptors are compared by `equals`. And `equals` for fake-overrides is weird.
                     // I didn't manage to invent a test that would check this condition
@@ -278,6 +283,9 @@ class FirExpectActualMatchingContextImpl private constructor(
     override val ValueParameterSymbolMarker.isCrossinline: Boolean
         get() = asSymbol().isCrossinline
     override val ValueParameterSymbolMarker.hasDefaultValue: Boolean
+        get() = asSymbol().hasDefaultValue
+
+    override val ValueParameterSymbolMarker.hasDefaultValueNonRecursive: Boolean
         get() = asSymbol().hasDefaultValue
 
     override fun CallableSymbolMarker.isAnnotationConstructor(): Boolean {
@@ -354,20 +362,24 @@ class FirExpectActualMatchingContextImpl private constructor(
 
     override fun RegularClassSymbolMarker.isNotSamInterface(): Boolean {
         val type = asSymbol().defaultType()
-        val isSam = FirSamResolver(actualSession, scopeSession).isSamType(type)
+        val isSam = FirSamResolver(actualSession, actualScopeSession).isSamType(type)
         return !isSam
     }
 
-    override fun CallableSymbolMarker.shouldSkipMatching(containingExpectClass: RegularClassSymbolMarker): Boolean {
+    override fun CallableSymbolMarker.isFakeOverride(containingExpectClass: RegularClassSymbolMarker?): Boolean {
+        if (containingExpectClass == null) {
+            return false
+        }
         val symbol = asSymbol()
         val classSymbol = containingExpectClass.asSymbol()
         if (symbol !is FirConstructorSymbol && symbol.dispatchReceiverType?.classId != classSymbol.classId) {
-            // Skip fake overrides
             return true
         }
-        return symbol.isSubstitutionOrIntersectionOverride // Skip fake overrides
-                || !symbol.isExpect // Skip non-expect declarations like equals, hashCode, toString and any inherited declarations from non-expect super types
+        return symbol.isSubstitutionOrIntersectionOverride
     }
+
+    override val CallableSymbolMarker.isDelegatedMember: Boolean
+        get() = asSymbol().isDelegated
 
     override val CallableSymbolMarker.hasStableParameterNames: Boolean
         get() = asSymbol().rawStatus.hasStableParameterNames
@@ -613,9 +625,9 @@ class FirExpectActualMatchingContextImpl private constructor(
 
     object Factory : FirExpectActualMatchingContextFactory {
         override fun create(
-            session: FirSession, scopeSession: ScopeSession,
+            actualSession: FirSession, actualScopeSession: ScopeSession,
             allowedWritingMemberExpectForActualMapping: Boolean,
         ): FirExpectActualMatchingContextImpl =
-            FirExpectActualMatchingContextImpl(session, scopeSession, allowedWritingMemberExpectForActualMapping)
+            FirExpectActualMatchingContextImpl(actualSession, actualScopeSession, allowedWritingMemberExpectForActualMapping)
     }
 }

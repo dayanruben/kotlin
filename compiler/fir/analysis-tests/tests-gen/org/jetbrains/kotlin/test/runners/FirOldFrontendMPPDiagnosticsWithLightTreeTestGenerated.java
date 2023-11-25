@@ -69,6 +69,12 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
     }
 
     @Test
+    @TestMetadata("actualTypealiasForNotExpectClass.kt")
+    public void testActualTypealiasForNotExpectClass() throws Exception {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/actualTypealiasForNotExpectClass.kt");
+    }
+
+    @Test
     @TestMetadata("actualTypealiasToSpecialAnnotation.kt")
     public void testActualTypealiasToSpecialAnnotation() throws Exception {
         runTest("compiler/testData/diagnostics/tests/multiplatform/actualTypealiasToSpecialAnnotation.kt");
@@ -1235,6 +1241,12 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
             @TestMetadata("delegation.kt")
             public void testDelegation() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/defaultArguments/methodDefaultArgsViaActualFakeOverride/delegation.kt");
+            }
+
+            @Test
+            @TestMetadata("delegation2.kt")
+            public void testDelegation2() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/defaultArguments/methodDefaultArgsViaActualFakeOverride/delegation2.kt");
             }
 
             @Test

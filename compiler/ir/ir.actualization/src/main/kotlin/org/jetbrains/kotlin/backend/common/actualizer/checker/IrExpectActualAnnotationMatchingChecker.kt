@@ -25,11 +25,8 @@ internal object IrExpectActualAnnotationMatchingChecker : IrExpectActualChecker 
             if (expectSymbol is IrTypeParameterSymbol) {
                 continue
             }
-            if (expectSymbol.isFakeOverride) {
-                continue
-            }
-            val incompatibility =
-                AbstractExpectActualAnnotationMatchChecker.areAnnotationsCompatible(expectSymbol, actualSymbol, matchingContext) ?: continue
+            val incompatibility = AbstractExpectActualAnnotationMatchChecker
+                .areAnnotationsCompatible(expectSymbol, actualSymbol, containingExpectClass = null, matchingContext) ?: continue
 
             val reportOn = getTypealiasSymbolIfActualizedViaTypealias(expectSymbol.owner as IrDeclaration, classActualizationInfo)
                 ?: getContainingActualClassIfFakeOverride(actualSymbol)
