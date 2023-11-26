@@ -107,7 +107,7 @@ public actual class StringBuilder public actual constructor(content: String) : A
      * and then that string was appended to this string builder.
      */
     @SinceKotlin("1.9")
-    public actual fun append(value: Byte): StringBuilder = append(value.toString())
+    public fun append(value: Byte): StringBuilder = append(value.toString())
 
     /**
      * Appends the string representation of the specified short [value] to this string builder and returns this instance.
@@ -116,7 +116,7 @@ public actual class StringBuilder public actual constructor(content: String) : A
      * and then that string was appended to this string builder.
      */
     @SinceKotlin("1.9")
-    public actual fun append(value: Short): StringBuilder = append(value.toString())
+    public fun append(value: Short): StringBuilder = append(value.toString())
 
     /**
      * Appends the string representation of the specified int [value] to this string builder and returns this instance.
@@ -264,7 +264,7 @@ public actual class StringBuilder public actual constructor(content: String) : A
      * @throws IndexOutOfBoundsException if [index] is less than zero or greater than the length of this string builder.
      */
     @SinceKotlin("1.9")
-    public actual fun insert(index: Int, value: Byte): StringBuilder = insert(index, value.toString())
+    public fun insert(index: Int, value: Byte): StringBuilder = insert(index, value.toString())
 
     /**
      * Inserts the string representation of the specified short [value] into this string builder at the specified [index] and returns this instance.
@@ -275,7 +275,7 @@ public actual class StringBuilder public actual constructor(content: String) : A
      * @throws IndexOutOfBoundsException if [index] is less than zero or greater than the length of this string builder.
      */
     @SinceKotlin("1.9")
-    public actual fun insert(index: Int, value: Short): StringBuilder = insert(index, value.toString())
+    public fun insert(index: Int, value: Short): StringBuilder = insert(index, value.toString())
 
     /**
      * Inserts the string representation of the specified int [value] into this string builder at the specified [index] and returns this instance.
@@ -650,6 +650,50 @@ public actual class StringBuilder public actual constructor(content: String) : A
     }
 }
 
+
+/**
+ * Appends the string representation of the specified byte [value] to this string builder and returns this instance.
+ *
+ * The overall effect is exactly as if the [value] were converted to a string by the `value.toString()` method,
+ * and then that string was appended to this string builder.
+ */
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER", "NOTHING_TO_INLINE")
+@SinceKotlin("1.9")
+public actual inline fun StringBuilder.append(value: Byte): StringBuilder = this.append(value)
+
+/**
+ * Appends the string representation of the specified short [value] to this string builder and returns this instance.
+ *
+ * The overall effect is exactly as if the [value] were converted to a string by the `value.toString()` method,
+ * and then that string was appended to this string builder.
+ */
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER", "NOTHING_TO_INLINE")
+@SinceKotlin("1.9")
+public actual inline fun StringBuilder.append(value: Short): StringBuilder = this.append(value)
+
+/**
+ * Inserts the string representation of the specified byte [value] into this string builder at the specified [index] and returns this instance.
+ *
+ * The overall effect is exactly as if the [value] were converted to a string by the `value.toString()` method,
+ * and then that string was inserted into this string builder at the specified [index].
+ *
+ * @throws IndexOutOfBoundsException if [index] is less than zero or greater than the length of this string builder.
+ */
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER", "NOTHING_TO_INLINE")
+@SinceKotlin("1.9")
+public actual inline fun StringBuilder.insert(index: Int, value: Byte): StringBuilder = this.insert(index, value)
+
+/**
+ * Inserts the string representation of the specified short [value] into this string builder at the specified [index] and returns this instance.
+ *
+ * The overall effect is exactly as if the [value] were converted to a string by the `value.toString()` method,
+ * and then that string was inserted into this string builder at the specified [index].
+ *
+ * @throws IndexOutOfBoundsException if [index] is less than zero or greater than the length of this string builder.
+ */
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER", "NOTHING_TO_INLINE")
+@SinceKotlin("1.9")
+public actual inline fun StringBuilder.insert(index: Int, value: Short): StringBuilder = this.insert(index, value)
 
 /**
  * Clears the content of this string builder making it empty and returns this instance.
