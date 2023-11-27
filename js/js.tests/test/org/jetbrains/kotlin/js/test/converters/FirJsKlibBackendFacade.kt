@@ -74,7 +74,7 @@ class FirJsKlibBackendFacade(
                 abiVersion = KotlinAbiVersion.CURRENT, // TODO get from test file data
                 jsOutputName = null
             ) {
-                inputArtifact.serializeSingleFile(it, inputArtifact.irActualizerResult)
+                inputArtifact.serializeSingleFile(it)
             }
         }
 

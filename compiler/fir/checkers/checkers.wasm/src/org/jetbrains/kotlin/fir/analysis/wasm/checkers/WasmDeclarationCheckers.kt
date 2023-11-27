@@ -22,6 +22,8 @@ object WasmDeclarationCheckers : DeclarationCheckers() {
             FirWasmExportAnnotationChecker,
             FirWasmExternalChecker,
             FirWasmJsFunAnnotationChecker,
-            FirJsExportAnnotationChecker
+            FirJsExportAnnotationChecker,
+            FirWasmJsModuleChecker,
+            FirWasmExternalFileChecker,
         )
 }

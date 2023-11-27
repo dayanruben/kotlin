@@ -16,11 +16,7 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSession
 import org.jetbrains.kotlin.analysis.api.impl.base.util.KtCompiledFileForOutputFile
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.DiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.collectDiagnosticsForFile
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getModule
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirFile
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.*
 import org.jetbrains.kotlin.analysis.low.level.api.fir.compile.CodeFragmentCapturedId
 import org.jetbrains.kotlin.analysis.low.level.api.fir.compile.CodeFragmentCapturedValueAnalyzer
 import org.jetbrains.kotlin.analysis.low.level.api.fir.compile.CompilationPeerCollector
@@ -50,8 +46,7 @@ import org.jetbrains.kotlin.fir.declarations.utils.hasBody
 import org.jetbrains.kotlin.fir.diagnostics.ConeSyntaxDiagnostic
 import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.lazy.AbstractFir2IrLazyDeclaration
-import org.jetbrains.kotlin.fir.pipeline.applyIrGenerationExtensions
-import org.jetbrains.kotlin.fir.pipeline.signatureComposerForJvmFir2Ir
+import org.jetbrains.kotlin.fir.pipeline.*
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.references.FirReference
 import org.jetbrains.kotlin.fir.references.FirThisReference
@@ -63,7 +58,6 @@ import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.PsiIrFileEntry
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrMangler
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.descriptors.IrBasedDeclarationDescriptor
 import org.jetbrains.kotlin.ir.descriptors.IrBasedReceiverParameterDescriptor
 import org.jetbrains.kotlin.ir.descriptors.IrBasedValueParameterDescriptor
@@ -73,11 +67,7 @@ import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.types.IrSimpleType
-import org.jetbrains.kotlin.ir.util.DelicateSymbolTableApi
-import org.jetbrains.kotlin.ir.util.IdSignature
-import org.jetbrains.kotlin.ir.util.classId
-import org.jetbrains.kotlin.ir.util.StubGeneratorExtensions
-import org.jetbrains.kotlin.ir.util.SymbolTable
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
@@ -91,7 +81,7 @@ import org.jetbrains.kotlin.resolve.source.PsiSourceFile
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
-import java.util.Collections
+import java.util.*
 
 internal class KtFirCompilerFacility(
     override val analysisSession: KtFirAnalysisSession
@@ -148,6 +138,8 @@ internal class KtFirCompilerFacility(
         val jvmIrDeserializer = JvmIrDeserializerImpl()
         val diagnosticReporter = DiagnosticReporterFactory.createPendingReporter()
 
+        val irGeneratorExtensions = IrGenerationExtension.getInstances(project)
+
         val dependencyFir2IrResults = dependencyFiles
             .map(::getFullyResolvedFirFile)
             .groupBy { it.llFirSession }
@@ -160,7 +152,10 @@ internal class KtFirCompilerFacility(
                     }
 
                 val dependencyFir2IrExtensions = JvmFir2IrExtensions(dependencyConfiguration, jvmIrDeserializer, JvmIrMangler)
-                runFir2Ir(dependencySession, dependencyFiles, dependencyFir2IrExtensions, diagnosticReporter, dependencyConfiguration)
+                runFir2Ir(
+                    dependencySession, dependencyFiles, dependencyFir2IrExtensions,
+                    diagnosticReporter, dependencyConfiguration, irGeneratorExtensions
+                )
             }
 
         val targetConfiguration = configuration
@@ -178,14 +173,19 @@ internal class KtFirCompilerFacility(
 
         val targetSession = mainFirFile.llFirSession
         val targetFirFiles = targetFiles.map(::getFullyResolvedFirFile)
-        val targetFir2IrResult = runFir2Ir(targetSession, targetFirFiles, targetFir2IrExtensions, diagnosticReporter, targetConfiguration)
+        val targetFir2IrResult = runFir2Ir(
+            targetSession, targetFirFiles, targetFir2IrExtensions, diagnosticReporter, targetConfiguration,
+            /**
+             * IR for code fragment is not fully correct until `patchCodeFragmentIr` is over.
+             * Because of that we run IR plugins manually after patching and don't pass any extension to fir2ir conversion in `runFir2Ir` method
+             */
+            irGeneratorExtensions = emptyList()
+        )
 
         patchCodeFragmentIr(targetFir2IrResult)
 
         ProgressManager.checkCanceled()
-
-        val irGeneratorExtensions = IrGenerationExtension.getInstances(project)
-        targetFir2IrResult.components.applyIrGenerationExtensions(targetFir2IrResult.irModuleFragment, irGeneratorExtensions)
+        targetFir2IrResult.pluginContext.applyIrGenerationExtensions(targetFir2IrResult.irModuleFragment, irGeneratorExtensions)
 
         val bindingContext = NoScopeRecordCliBindingTrace().bindingContext
         val codegenFactory = createJvmIrCodegenFactory(targetConfiguration, file is KtCodeFragment, targetFir2IrResult.irModuleFragment)
@@ -259,36 +259,35 @@ internal class KtFirCompilerFacility(
         fir2IrExtensions: Fir2IrExtensions,
         diagnosticReporter: DiagnosticReporter,
         effectiveConfiguration: CompilerConfiguration,
-    ): Fir2IrResult {
+        irGeneratorExtensions: List<IrGenerationExtension>
+    ): Fir2IrActualizedResult {
         val fir2IrConfiguration = Fir2IrConfiguration(
             session.languageVersionSettings,
             diagnosticReporter,
             linkViaSignatures = false,
-            evaluatedConstTracker = effectiveConfiguration[CommonConfigurationKeys.EVALUATED_CONST_TRACKER] ?: EvaluatedConstTracker.create(),
+            evaluatedConstTracker = effectiveConfiguration[CommonConfigurationKeys.EVALUATED_CONST_TRACKER]
+                ?: EvaluatedConstTracker.create(),
             inlineConstTracker = effectiveConfiguration[CommonConfigurationKeys.INLINE_CONST_TRACKER],
             expectActualTracker = effectiveConfiguration[CommonConfigurationKeys.EXPECT_ACTUAL_TRACKER],
             allowNonCachedDeclarations = true,
             useIrFakeOverrideBuilder = effectiveConfiguration.getBoolean(CommonConfigurationKeys.USE_IR_FAKE_OVERRIDE_BUILDER),
         )
+        val firResult = FirResult(listOf(ModuleCompilerAnalyzedOutput(session, session.getScopeSession(), firFiles)))
 
-        return Fir2IrConverter.createIrModuleFragment(
-            session,
-            session.getScopeSession(),
-            firFiles,
+        return firResult.convertToIrAndActualize(
             fir2IrExtensions,
             fir2IrConfiguration,
+            irGeneratorExtensions,
+            signatureComposerForJvmFir2Ir(fir2IrConfiguration.linkViaSignatures),
             JvmIrMangler,
-            IrFactoryImpl,
+            FirJvmKotlinMangler(),
             FirJvmVisibilityConverter,
-            Fir2IrJvmSpecialAnnotationSymbolProvider(),
             DefaultBuiltIns.Instance,
-            Fir2IrCommonMemberStorage(signatureComposerForJvmFir2Ir(false), FirJvmKotlinMangler()),
-            initializedIrBuiltIns = null,
             ::JvmIrTypeSystemContext,
         )
     }
 
-    private fun patchCodeFragmentIr(fir2IrResult: Fir2IrResult) {
+    private fun patchCodeFragmentIr(fir2IrResult: Fir2IrActualizedResult) {
         fun isCodeFragmentFile(irFile: IrFile): Boolean {
             val firFiles = (irFile.metadata as? FirMetadataSource.File)?.files ?: return false
             return firFiles.any { it.psi is KtCodeFragment }
@@ -459,14 +458,13 @@ internal class KtFirCompilerFacility(
 
     private class CompilerFacilityFir2IrExtensions(
         delegate: Fir2IrExtensions,
-        private val dependencyFir2IrResults: List<Fir2IrResult>,
+        private val dependencyFir2IrResults: List<Fir2IrActualizedResult>,
         private val injectedValueProvider: InjectedSymbolProvider?
     ) : Fir2IrExtensions by delegate {
         override fun findInjectedValue(calleeReference: FirReference, conversionScope: Fir2IrConversionScope): InjectedValue? {
             return injectedValueProvider?.invoke(calleeReference, conversionScope)
         }
 
-        @OptIn(DelicateSymbolTableApi::class)
         override fun registerDeclarations(symbolTable: SymbolTable) {
             val visitor = DeclarationRegistrarVisitor(symbolTable)
 
@@ -701,7 +699,6 @@ private class DeclarationRegistrarVisitor(private val consumer: SymbolTable) : I
         super.visitEnumEntry(declaration)
     }
 
-    @OptIn(UnsafeDuringIrConstructionAPI::class)
     private inline fun <reified S : IrSymbol, D : IrDeclaration> register(
         declaration: D,
         registrar: (IdSignature, () -> S, (S) -> D) -> Unit,

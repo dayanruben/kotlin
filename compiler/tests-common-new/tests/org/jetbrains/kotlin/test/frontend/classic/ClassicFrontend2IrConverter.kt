@@ -74,12 +74,10 @@ class ClassicFrontend2IrConverter(
             state,
             codegenFactory,
             conversionResult,
-            dependentIrModuleFragments = emptyList(),
             sourceFiles = emptyList(),
             descriptorMangler = conversionResult.symbolTable.signaturer.mangler,
             irMangler = JvmIrMangler,
             firMangler = null,
-            fir2IrComponents = null,
         )
     }
 
@@ -111,7 +109,6 @@ class ClassicFrontend2IrConverter(
 
         return IrBackendInput.JsIrBackendInput(
             moduleFragment,
-            dependentIrModuleFragments = emptyList(),
             pluginContext,
             sourceFiles.map(::KtPsiSourceFile),
             icData,
@@ -120,8 +117,7 @@ class ClassicFrontend2IrConverter(
             descriptorMangler = (pluginContext.symbolTable as SymbolTable).signaturer.mangler,
             irMangler = JsManglerIr,
             firMangler = null,
-            fir2IrComponents = null,
-        ) { file, _ ->
+        ) { file ->
             metadataSerializer.serializeScope(file, analysisResult.bindingContext, moduleFragment.descriptor)
         }
     }
@@ -155,7 +151,6 @@ class ClassicFrontend2IrConverter(
 
         return IrBackendInput.WasmBackendInput(
             moduleFragment,
-            dependentIrModuleFragments = emptyList(),
             pluginContext,
             sourceFiles.map(::KtPsiSourceFile),
             icData,
@@ -164,8 +159,7 @@ class ClassicFrontend2IrConverter(
             descriptorMangler = (pluginContext.symbolTable as SymbolTable).signaturer.mangler,
             irMangler = JsManglerIr,
             firMangler = null,
-            fir2IrComponents = null,
-        ) { file, _ ->
+        ) { file ->
             metadataSerializer.serializeScope(file, analysisResult.bindingContext, moduleFragment.descriptor)
         }
     }
