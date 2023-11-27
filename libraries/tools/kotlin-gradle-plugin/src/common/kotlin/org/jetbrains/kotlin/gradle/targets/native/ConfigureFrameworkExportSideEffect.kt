@@ -13,28 +13,15 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
 import org.jetbrains.kotlin.gradle.plugin.usesPlatformOf
 import org.jetbrains.kotlin.gradle.targets.KotlinTargetSideEffect
+import org.jetbrains.kotlin.gradle.utils.maybeCreateResolvable
 
 internal val ConfigureFrameworkExportSideEffect = KotlinTargetSideEffect<KotlinNativeTarget> { target ->
     val project = target.project
 
-    target.compilations.all {
-        // Allow resolving api configurations directly to be able to check that
-        // all exported dependency are also added in the corresponding api configurations.
-        // The check is performed during a link task execution.
-        project.configurations.maybeCreate(it.apiConfigurationName).apply {
-            isCanBeResolved = true
-            usesPlatformOf(target)
-            attributes.attribute(Usage.USAGE_ATTRIBUTE, KotlinUsages.consumerApiUsage(target))
-            attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
-        }
-    }
-
     target.binaries.withType(AbstractNativeLibrary::class.java).all { framework ->
-        project.configurations.maybeCreate(framework.exportConfigurationName).apply {
+        project.configurations.maybeCreateResolvable(framework.exportConfigurationName).apply {
             isVisible = false
             isTransitive = false
-            isCanBeConsumed = false
-            isCanBeResolved = true
             usesPlatformOf(target)
             attributes.attribute(Usage.USAGE_ATTRIBUTE, KotlinUsages.consumerApiUsage(target))
             attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
