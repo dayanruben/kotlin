@@ -23726,6 +23726,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
+            @TestMetadata("actualTypealiasWithoutExpect.kt")
+            public void testActualTypealiasWithoutExpect() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/actualTypealiasWithoutExpect.kt");
+            }
+
+            @Test
             @TestMetadata("actualTypealias_defaultParamsIncompatibility.kt")
             public void testActualTypealias_defaultParamsIncompatibility() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/actualTypealias_defaultParamsIncompatibility.kt");
@@ -23875,6 +23881,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
+            @TestMetadata("extraNestedClassOnActualViaActualTypealias.kt")
+            public void testExtraNestedClassOnActualViaActualTypealias() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/extraNestedClassOnActualViaActualTypealias.kt");
+            }
+
+            @Test
             @TestMetadata("headerFunInNonHeaderClass.kt")
             public void testHeaderFunInNonHeaderClass() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/headerFunInNonHeaderClass.kt");
@@ -23971,6 +23983,30 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
+            @TestMetadata("nestedClassViaActualTypealias.kt")
+            public void testNestedClassViaActualTypealias() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/nestedClassViaActualTypealias.kt");
+            }
+
+            @Test
+            @TestMetadata("nestedClassViaActualTypealiasExpandInTypeParam.kt")
+            public void testNestedClassViaActualTypealiasExpandInTypeParam() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/nestedClassViaActualTypealiasExpandInTypeParam.kt");
+            }
+
+            @Test
+            @TestMetadata("nestedClassViaActualTypealiasIncompatibilities.kt")
+            public void testNestedClassViaActualTypealiasIncompatibilities() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/nestedClassViaActualTypealiasIncompatibilities.kt");
+            }
+
+            @Test
+            @TestMetadata("nestedClassViaActualTypealiasWithTypeParam.kt")
+            public void testNestedClassViaActualTypealiasWithTypeParam() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/nestedClassViaActualTypealiasWithTypeParam.kt");
+            }
+
+            @Test
             @TestMetadata("optionalExpectationDiagnostics.kt")
             public void testOptionalExpectationDiagnostics() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/optionalExpectationDiagnostics.kt");
@@ -24022,6 +24058,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             @TestMetadata("supertypeActualizationWithAny.kt")
             public void testSupertypeActualizationWithAny() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/supertypeActualizationWithAny.kt");
+            }
+
+            @Test
+            @TestMetadata("typeResolutionOfNestedClassActualizedViaTypealias.kt")
+            public void testTypeResolutionOfNestedClassActualizedViaTypealias() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/typeResolutionOfNestedClassActualizedViaTypealias.kt");
             }
 
             @Test
@@ -24211,6 +24253,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 @TestMetadata("kotlinAnaloguesForJavaAnnotations.kt")
                 public void testKotlinAnaloguesForJavaAnnotations() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect/kotlinAnaloguesForJavaAnnotations.kt");
+                }
+
+                @Test
+                @TestMetadata("nestedAnnotationClassViaActualTypeAlias.kt")
+                public void testNestedAnnotationClassViaActualTypeAlias() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect/nestedAnnotationClassViaActualTypeAlias.kt");
                 }
 
                 @Test
@@ -24769,6 +24817,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 @TestMetadata("annotationArgumentEquality.kt")
                 public void testAnnotationArgumentEquality() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/defaultArguments/annotationArgumentEquality.kt");
+                }
+
+                @Test
+                @TestMetadata("annotationDefaultArgKclassWithNestedClassViaActualTypeAlias.kt")
+                public void testAnnotationDefaultArgKclassWithNestedClassViaActualTypeAlias() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/defaultArguments/annotationDefaultArgKclassWithNestedClassViaActualTypeAlias.kt");
                 }
 
                 @Test
