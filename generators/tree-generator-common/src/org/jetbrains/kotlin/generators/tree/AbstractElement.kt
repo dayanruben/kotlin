@@ -10,9 +10,9 @@ package org.jetbrains.kotlin.generators.tree
  */
 abstract class AbstractElement<Element, Field>(
     val name: String,
-) : ElementOrRef<Element, Field>, FieldContainer, ImplementationKindOwner
+) : ElementOrRef<Element, Field>, FieldContainer<Field>, ImplementationKindOwner
         where Element : AbstractElement<Element, Field>,
-              Field : AbstractField {
+              Field : AbstractField<Field> {
 
     /**
      * The fully-qualified name of the property in the tree generator that is used to configure this element.
@@ -35,8 +35,7 @@ abstract class AbstractElement<Element, Field>(
     val isRootElement: Boolean
         get() = elementParents.isEmpty()
 
-    open val isSealed: Boolean
-        get() = false
+    var isSealed: Boolean = false
 
     /**
      * The value of this property will be used to name a `visit*` method for this element in visitor classes.
@@ -79,11 +78,52 @@ abstract class AbstractElement<Element, Field>(
         }
     }
 
-    abstract override val allFields: List<Field>
+    override val allFields: List<Field> by lazy {
+        val result = LinkedHashSet<Field>()
+        result.addAll(fields.toList().asReversed())
+        result.forEach { overriddenFieldsHaveSameClass[it, it] = false }
+        for (parentField in parentFields.asReversed()) {
+            val overrides = !result.add(parentField)
+            if (overrides) {
+                val existingField = result.first { it == parentField }
+                existingField.fromParent = true
+                val haveSameClass = parentField.typeRef.copy(nullable = false) == existingField.typeRef.copy(nullable = false)
+                if (!haveSameClass) {
+                    existingField.overriddenTypes += parentField.typeRef
+                }
+                overriddenFieldsHaveSameClass[existingField, parentField] = haveSameClass
+                existingField.updatePropertiesFromOverriddenField(parentField, haveSameClass)
+            } else {
+                overriddenFieldsHaveSameClass[parentField, parentField] = true
+            }
+        }
+        result.toList().asReversed()
+    }
 
-    abstract override val walkableChildren: List<Field>
+    val overriddenFieldsHaveSameClass: MutableMap<Field, MutableMap<Field, Boolean>> = mutableMapOf()
 
-    abstract override val transformableChildren: List<Field>
+    val parentFields: List<Field> by lazy {
+        val result = LinkedHashMap<String, Field>()
+        elementParents.forEach { parentRef ->
+            val parent = parentRef.element
+            val fields = parent.allFields.map { field ->
+                field.replaceType(field.typeRef.substitute(parentRef.args) as TypeRefWithNullability)
+                    .apply {
+                        fromParent = true
+                    }
+            }
+            fields.forEach {
+                result.merge(it.name, it) { previousField, thisField ->
+                    val resultField = previousField.copy()
+                    if (thisField.isMutable) {
+                        resultField.isMutable = true
+                    }
+                    resultField
+                }
+            }
+        }
+        result.values.toList()
+    }
 
     /**
      * A custom return type of the corresponding transformer method for this element.

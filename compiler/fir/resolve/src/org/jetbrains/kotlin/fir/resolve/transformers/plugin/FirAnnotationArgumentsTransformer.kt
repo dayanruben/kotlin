@@ -207,7 +207,11 @@ private class FirDeclarationsResolveTransformerForAnnotationArguments(
         anonymousInitializer: FirAnonymousInitializer,
         data: ResolutionMode
     ): FirAnonymousInitializer {
-        anonymousInitializer.transformAnnotations(this, ResolutionMode.ContextIndependent)
+        @OptIn(PrivateForInline::class)
+        context.withContainer(anonymousInitializer) {
+            anonymousInitializer.transformAnnotations(this, ResolutionMode.ContextIndependent)
+        }
+
         return anonymousInitializer
     }
 
@@ -260,8 +264,6 @@ private class FirDeclarationsResolveTransformerForAnnotationArguments(
     }
 
     override fun transformProperty(property: FirProperty, data: ResolutionMode): FirProperty {
-        property.transformReceiverParameter(transformer, ResolutionMode.ContextIndependent)
-
         context.withProperty(property) {
             property
                 .transformTypeParameters(transformer, data)
@@ -317,14 +319,6 @@ private class FirDeclarationsResolveTransformerForAnnotationArguments(
     override fun transformBackingField(backingField: FirBackingField, data: ResolutionMode): FirBackingField {
         backingField.transformAnnotations(transformer, data)
         return backingField
-    }
-
-    override fun transformTypeAlias(typeAlias: FirTypeAlias, data: ResolutionMode): FirTypeAlias {
-        doTransformTypeParameters(typeAlias)
-        typeAlias.transformAnnotations(transformer, data)
-        transformer.firResolveContextCollector?.addDeclarationContext(typeAlias, context)
-        typeAlias.expandedTypeRef.transformSingle(transformer, data)
-        return typeAlias
     }
 
     override fun transformScript(script: FirScript, data: ResolutionMode): FirScript {

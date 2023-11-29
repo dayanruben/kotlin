@@ -105,7 +105,7 @@ IdeVersionConfigurator.setCurrentIde(project)
 
 if (!project.hasProperty("versions.kotlin-native")) {
     // BEWARE! Bumping this version doesn't take an immediate effect on TeamCity: KTI-1107
-    extra["versions.kotlin-native"] = "2.0.0-dev-7404"
+    extra["versions.kotlin-native"] = "2.0.0-dev-8858"
 }
 
 val irCompilerModules = arrayOf(
@@ -1084,8 +1084,8 @@ val cacheRedirectorEnabled = findProperty("cacheRedirectorEnabled")?.toString()?
 plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin::class) {
     extensions.configure(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension::class.java) {
         // Node.js with canary v8 that supports recent Wasm GC changes
-        nodeVersion = "21.0.0-v8-canary20231019bd785be450"
-        nodeDownloadBaseUrl = if (cacheRedirectorEnabled)
+        version = "21.0.0-v8-canary20231019bd785be450"
+        downloadBaseUrl = if (cacheRedirectorEnabled)
             "https://cache-redirector.jetbrains.com/nodejs.org/download/v8-canary"
         else
             "https://nodejs.org/download/v8-canary"

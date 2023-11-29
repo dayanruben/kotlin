@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.ir.generator.BASE_PACKAGE
 import org.jetbrains.kotlin.ir.generator.IrTree
 import org.jetbrains.kotlin.ir.generator.elementBaseType
 import org.jetbrains.kotlin.utils.SmartPrinter
-import org.jetbrains.kotlin.utils.topologicalSort
 import org.jetbrains.kotlin.generators.tree.ElementOrRef as GenericElementOrRef
 import org.jetbrains.kotlin.generators.tree.ElementRef as GenericElementRef
 
@@ -41,10 +40,6 @@ class Element(
     val additionalIrFactoryMethodParameters = mutableListOf<Field>()
     var generateIrFactoryMethod = category == Category.Declaration
     val fieldsToSkipInIrFactoryMethod = hashSetOf<String>()
-
-
-    override val allFields: List<Field>
-        get() = fields.toList()
 
     override val element: Element
         get() = this
@@ -94,9 +89,7 @@ class Element(
      */
     var isLeaf = false
 
-    var childrenOrderOverride: List<String>? = null
-    override var walkableChildren: List<Field> = emptyList()
-    override val transformableChildren get() = walkableChildren.filter { it.transformable }
+    override var childrenOrderOverride: List<String>? = null
 
     override var visitorParameterName = category.defaultVisitorParam
 
@@ -109,10 +102,19 @@ class Element(
     override var hasTransformMethod = false
 
     override val hasAcceptChildrenMethod: Boolean
-        get() = ownsChildren && (isRootElement || walkableChildren.isNotEmpty())
+        get() = hasAcceptOrTransformChildrenMethod(Element::walkableChildren)
 
     override val hasTransformChildrenMethod: Boolean
-        get() = ownsChildren && (isRootElement || transformableChildren.isNotEmpty())
+        get() = hasAcceptOrTransformChildrenMethod(Element::transformableChildren)
+
+    private fun hasAcceptOrTransformChildrenMethod(walkableOrTransformableChildren: Element.() -> List<Field>): Boolean {
+        if (!ownsChildren) return false
+        if (!isRootElement && walkableOrTransformableChildren().isEmpty()) return false
+        val atLeastOneParentHasAcceptOrTransformChildrenMethod = traverseParentsUntil { parent ->
+            parent != this && parent.hasAcceptOrTransformChildrenMethod(walkableOrTransformableChildren) && !parent.isRootElement
+        }
+        return !atLeastOneParentHasAcceptOrTransformChildrenMethod
+    }
 
     var transformByChildren = false
     var ownsChildren = true // If false, acceptChildren/transformChildren will NOT be generated.
@@ -124,29 +126,6 @@ class Element(
     val usedTypes = mutableListOf<Importable>()
 
     override fun toString() = name
-
-    fun elementParentsRecursively(): List<ElementRef> {
-        val linkedSet = buildSet {
-            fun recurse(element: Element) {
-                addAll(element.elementParents)
-                element.elementParents.forEach { recurse(it.element) }
-            }
-            recurse(this@Element)
-        }
-        return topologicalSort(linkedSet) {
-            element.elementParents
-        }
-    }
-
-    fun allFieldsRecursively(): List<Field> {
-        val parentFields = elementParentsRecursively()
-            .reversed()
-            .flatMap { it.element.fields }
-        return (parentFields + fields)
-            .asReversed()
-            .distinctBy { it.name }
-            .asReversed()
-    }
 
     operator fun TypeVariable.unaryPlus() = apply {
         params.add(this)
@@ -163,12 +142,9 @@ typealias ElementOrRef = GenericElementOrRef<Element, Field>
 sealed class Field(
     override val name: String,
     override var isMutable: Boolean,
-    val isChild: Boolean,
-) : AbstractField() {
+) : AbstractField<Field>() {
     var baseDefaultValue: String? = null
     var baseGetter: String? = null
-
-    abstract val transformable: Boolean
 
     sealed class UseFieldAsParameterInIrFactoryStrategy {
 
@@ -177,8 +153,15 @@ sealed class Field(
         data class Yes(val defaultValue: String?) : UseFieldAsParameterInIrFactoryStrategy()
     }
 
-    var useInIrFactoryStrategy =
-        if (isChild) UseFieldAsParameterInIrFactoryStrategy.No else UseFieldAsParameterInIrFactoryStrategy.Yes(null)
+    var customUseInIrFactoryStrategy: UseFieldAsParameterInIrFactoryStrategy? = null
+
+    val useInIrFactoryStrategy: UseFieldAsParameterInIrFactoryStrategy
+        get() = customUseInIrFactoryStrategy
+            ?: if (needAcceptAndTransform && containsElement) {
+                UseFieldAsParameterInIrFactoryStrategy.No
+            } else {
+                UseFieldAsParameterInIrFactoryStrategy.Yes(null)
+            }
 
     override val withGetter: Boolean
         get() = baseGetter != null
@@ -201,16 +184,30 @@ sealed class Field(
 
     override val isParameter: Boolean
         get() = false
+
+    override fun copy() = internalCopy().also(::updateFieldsInCopy)
+
+    override fun updateFieldsInCopy(copy: Field) {
+        super.updateFieldsInCopy(copy)
+        copy.baseDefaultValue = baseDefaultValue
+        copy.baseGetter = baseGetter
+        copy.customUseInIrFactoryStrategy = customUseInIrFactoryStrategy
+        copy.customSetter = customSetter
+    }
+
+    protected abstract fun internalCopy(): Field
 }
 
 class SingleField(
     name: String,
     override var typeRef: TypeRefWithNullability,
     mutable: Boolean,
-    isChild: Boolean,
-) : Field(name, mutable, isChild) {
-    override val transformable: Boolean
-        get() = isMutable
+) : Field(name, mutable) {
+
+    override fun replaceType(newType: TypeRefWithNullability) =
+        SingleField(name, newType, isMutable).also(::updateFieldsInCopy)
+
+    override fun internalCopy() = SingleField(name, typeRef, isMutable)
 }
 
 class ListField(
@@ -219,17 +216,18 @@ class ListField(
     private val isNullable: Boolean,
     override val listType: ClassRef<PositionTypeParameterRef>,
     mutable: Boolean,
-    isChild: Boolean,
-    override val transformable: Boolean,
-) : Field(name, mutable, isChild), AbstractListField {
+) : Field(name, mutable), AbstractListField {
 
     override val typeRef: ClassRef<PositionTypeParameterRef>
         get() = listType.withArgs(baseType).copy(isNullable)
 
+    override fun replaceType(newType: TypeRefWithNullability) = copy()
+
+    override fun internalCopy() = ListField(name, baseType, isNullable, listType, isMutable)
+
     enum class Mutability {
-        Immutable,
         Var,
-        List,
+        MutableList,
         Array
     }
 }

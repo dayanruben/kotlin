@@ -5,11 +5,12 @@
 
 package org.jetbrains.kotlin.ir.generator
 
+import org.jetbrains.kotlin.generators.tree.InterfaceAndAbstractClassConfigurator
 import org.jetbrains.kotlin.generators.tree.addPureAbstractElement
 import org.jetbrains.kotlin.generators.util.GeneratorsFileUtil
 import org.jetbrains.kotlin.generators.util.GeneratorsFileUtil.collectPreviouslyGeneratedFiles
 import org.jetbrains.kotlin.generators.util.GeneratorsFileUtil.removeExtraFilesFromPreviousGeneration
-import org.jetbrains.kotlin.ir.generator.model.*
+import org.jetbrains.kotlin.ir.generator.model.markLeaves
 import org.jetbrains.kotlin.ir.generator.print.*
 import java.io.File
 
@@ -23,11 +24,9 @@ fun main(args: Array<String>) {
 
     val model = IrTree.build()
 
-    configureInterfacesAndAbstractClasses(model.elements)
+    InterfaceAndAbstractClassConfigurator(model.elements).configureInterfacesAndAbstractClasses()
     addPureAbstractElement(model.elements, elementBaseType)
     markLeaves(model.elements)
-    processFieldOverrides(model.elements)
-    addWalkableChildren(model.elements)
 
     val previouslyGeneratedFiles = collectPreviouslyGeneratedFiles(generationPath)
     val generatedFiles = sequence {

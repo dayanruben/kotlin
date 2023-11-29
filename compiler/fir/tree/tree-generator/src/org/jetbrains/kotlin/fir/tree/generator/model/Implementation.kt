@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.fir.tree.generator.model
 
 import org.jetbrains.kotlin.generators.tree.*
 
-class Implementation(val element: Element, val name: String?) : FieldContainer, ImplementationKindOwner {
+class Implementation(val element: Element, val name: String?) : FieldContainer<FieldWithDefault>, ImplementationKindOwner {
     override val allParents: List<ImplementationKindOwner> get() = listOf(element)
     val isDefault = name == null
     override val typeName = name ?: (element.typeName + "Impl")
@@ -63,12 +63,6 @@ class Implementation(val element: Element, val name: String?) : FieldContainer, 
 
     override val hasTransformChildrenMethod: Boolean
         get() = true
-
-    override val walkableChildren: List<FieldWithDefault>
-        get() = allFields.filter { it.containsElement && !it.withGetter && it.needAcceptAndTransform }
-
-    override val transformableChildren: List<FieldWithDefault>
-        get() = walkableChildren.filter { it.isMutable }
 
     override fun get(fieldName: String): FieldWithDefault? {
         return allFields.firstOrNull { it.name == fieldName }

@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import org.jetbrains.kotlin.utils.SmartPrinter
 import org.jetbrains.kotlin.utils.withIndent
 
-abstract class AbstractFieldPrinter<Field : AbstractField>(
+abstract class AbstractFieldPrinter<Field : AbstractField<Field>>(
     private val printer: SmartPrinter,
 ) {
 
@@ -34,7 +34,9 @@ abstract class AbstractFieldPrinter<Field : AbstractField>(
         modality: Modality? = null,
     ) {
         printer.run {
-            printKDoc(field.kDoc)
+            if (!field.fromParent) {
+                printKDoc(field.kDoc)
+            }
 
             field.deprecation?.let {
                 println("@Deprecated(")

@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.fir.tree.generator.model
 
 import org.jetbrains.kotlin.generators.tree.*
 
-sealed class Field : AbstractField() {
+sealed class Field : AbstractField<Field>() {
     open var withReplace: Boolean = false
 
     open var needsSeparateTransform: Boolean = false
@@ -22,7 +22,6 @@ sealed class Field : AbstractField() {
     open var isMutableInInterface: Boolean = false
     open val fromDelegate: Boolean get() = false
 
-    open val overridenTypes: MutableSet<TypeRefWithNullability> = mutableSetOf()
     open var useNullableForReplace: Boolean = false
     open var notNull: Boolean = false
 
@@ -38,29 +37,34 @@ sealed class Field : AbstractField() {
 
     abstract override var isMutable: Boolean
 
-    fun copy(): Field = internalCopy().also {
+    override fun replaceType(newType: TypeRefWithNullability): Field = copy()
+
+    override fun copy(): Field = internalCopy().also {
         updateFieldsInCopy(it)
     }
 
-    protected fun updateFieldsInCopy(copy: Field) {
+    override fun updateFieldsInCopy(copy: Field) {
+        super.updateFieldsInCopy(copy)
         if (copy !is FieldWithDefault) {
             copy.needsSeparateTransform = needsSeparateTransform
             copy.needTransformInOtherChildren = needTransformInOtherChildren
-            copy.useInBaseTransformerDetection = useInBaseTransformerDetection
-            copy.isMutable = isMutable
-            copy.overridenTypes += overridenTypes
-            copy.arbitraryImportables += arbitraryImportables
             copy.useNullableForReplace = useNullableForReplace
             copy.customInitializationCall = customInitializationCall
-            copy.optInAnnotation = optInAnnotation
         }
-        copy.fromParent = fromParent
         copy.parentHasSeparateTransform = parentHasSeparateTransform
-        copy.kDoc = kDoc
     }
 
     protected abstract fun internalCopy(): Field
 
+    override fun updatePropertiesFromOverriddenField(parentField: Field, haveSameClass: Boolean) {
+        needsSeparateTransform = needsSeparateTransform || parentField.needsSeparateTransform
+        needTransformInOtherChildren = needTransformInOtherChildren || parentField.needTransformInOtherChildren
+        withReplace = withReplace || parentField.withReplace
+        parentHasSeparateTransform = parentField.needsSeparateTransform
+        if (parentField.nullable != nullable && haveSameClass) {
+            useNullableForReplace = true
+        }
+    }
 }
 
 // ----------- Field with default -----------
@@ -112,9 +116,8 @@ class FieldWithDefault(val origin: Field) : Field() {
     override var withGetter: Boolean = false
     override var customSetter: String? = null
     override var fromDelegate: Boolean = false
-    var needAcceptAndTransform: Boolean = true
-    override val overridenTypes: MutableSet<TypeRefWithNullability>
-        get() = origin.overridenTypes
+    override val overriddenTypes: MutableSet<TypeRefWithNullability>
+        get() = origin.overriddenTypes
 
     override val arbitraryImportables: MutableList<Importable>
         get() = origin.arbitraryImportables
@@ -159,7 +162,7 @@ class SimpleField(
         }
     }
 
-    fun replaceType(newType: TypeRefWithNullability) = SimpleField(
+    override fun replaceType(newType: TypeRefWithNullability) = SimpleField(
         name = name,
         typeRef = newType,
         withReplace = withReplace,

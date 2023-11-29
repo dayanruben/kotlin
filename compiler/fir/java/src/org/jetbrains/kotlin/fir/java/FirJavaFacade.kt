@@ -361,11 +361,22 @@ abstract class FirJavaFacade(
                 )
                 generateValueOfFunction(moduleData, classId.packageFqName, classId.relativeClassName)
                 generateEntriesGetter(moduleData, classId.packageFqName, classId.relativeClassName)
+                if (javaClassDeclaredConstructors.isEmpty()) {
+                    declarations += buildSyntheticConstructorForJavaClass(
+                        javaClass,
+                        classKind,
+                        constructorId = constructorId,
+                        ownerClassBuilder = this,
+                        valueParametersForAnnotationConstructor = null,
+                        moduleData = moduleData,
+                    )
+                }
             }
             if (classIsAnnotation) {
                 declarations +=
-                    buildConstructorForAnnotationClass(
+                    buildSyntheticConstructorForJavaClass(
                         javaClass,
+                        classKind,
                         constructorId = constructorId,
                         ownerClassBuilder = this,
                         valueParametersForAnnotationConstructor = valueParametersForAnnotationConstructor,
@@ -469,7 +480,6 @@ abstract class FirJavaFacade(
                     Modality.FINAL,
                     EffectiveVisibility.Public
                 )
-                visibility = Visibilities.Public
                 isPrimary = true
                 returnTypeRef = classType.toFirResolvedTypeRef()
                 dispatchReceiverType = null
@@ -548,6 +558,10 @@ abstract class FirJavaFacade(
                 lazyInitializer = lazy {
                     // NB: null should be converted to null
                     javaField.initializerValue?.createConstantIfAny(session)
+                }
+
+                lazyHasConstantInitializer = lazy {
+                    javaField.hasConstantNotNullInitializer
                 }
 
                 if (!javaField.isStatic) {
@@ -651,7 +665,6 @@ abstract class FirJavaFacade(
                 isInner = isThisInner
                 hasStableParameterNames = false
             }
-            this.visibility = visibility
             // TODO get rid of dependency on PSI KT-63046
             isPrimary = javaConstructor == null || source?.psi.let { it is PsiMethod && JavaPsiRecordUtil.isCanonicalConstructor(it) }
             returnTypeRef = buildResolvedTypeRef {
@@ -674,11 +687,12 @@ abstract class FirJavaFacade(
         }
     }
 
-    private fun buildConstructorForAnnotationClass(
+    private fun buildSyntheticConstructorForJavaClass(
         javaClass: JavaClass,
+        classKind: ClassKind,
         constructorId: CallableId,
         ownerClassBuilder: FirJavaClassBuilder,
-        valueParametersForAnnotationConstructor: ValueParametersForAnnotationConstructor,
+        valueParametersForAnnotationConstructor: ValueParametersForAnnotationConstructor?,
         moduleData: FirModuleData,
     ): FirJavaConstructor {
         return buildJavaConstructor {
@@ -686,12 +700,12 @@ abstract class FirJavaFacade(
             this.moduleData = moduleData
             isFromSource = javaClass.isFromSource
             symbol = FirConstructorSymbol(constructorId)
-            status = FirResolvedDeclarationStatusImpl(Visibilities.Public, Modality.FINAL, EffectiveVisibility.Public)
+            val visibility = if (classKind == ClassKind.ENUM_CLASS) Visibilities.Private else Visibilities.Public
+            status = FirResolvedDeclarationStatusImpl(visibility, Modality.FINAL, EffectiveVisibility.Public)
             returnTypeRef = buildResolvedTypeRef {
                 type = ownerClassBuilder.buildSelfTypeRef()
             }
-            valueParametersForAnnotationConstructor.forEach { _, firValueParameter -> valueParameters += firValueParameter }
-            visibility = Visibilities.Public
+            valueParametersForAnnotationConstructor?.forEach { _, firValueParameter -> valueParameters += firValueParameter }
             isInner = false
             isPrimary = true
             annotationBuilder = { emptyList() }

@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 fun IrElement.render(options: DumpIrTreeOptions = DumpIrTreeOptions()) =
     accept(RenderIrElementVisitor(options), null)
 
-class RenderIrElementVisitor(private val options: DumpIrTreeOptions = DumpIrTreeOptions()) :
+open class RenderIrElementVisitor(private val options: DumpIrTreeOptions = DumpIrTreeOptions()) :
     IrElementVisitor<String, Nothing?> {
 
     private val variableNameData = VariableNameData(options.normalizeNames)
@@ -871,9 +871,7 @@ private fun StringBuilder.renderAsAnnotationArgument(irElement: IrElement?, rend
         null -> append("<null>")
         is IrConstructorCall -> renderAsAnnotation(irElement, renderer, options)
         is IrConst<*> -> {
-            append('\'')
-            append(irElement.value.toString())
-            append('\'')
+            renderIrConstAsAnnotationArgument(irElement)
         }
         is IrVararg -> {
             appendIterableWith(irElement.elements, prefix = "[", postfix = "]", separator = ", ") {
@@ -886,6 +884,17 @@ private fun StringBuilder.renderAsAnnotationArgument(irElement: IrElement?, rend
             append("...")
         }
     }
+}
+
+private fun StringBuilder.renderIrConstAsAnnotationArgument(const: IrConst<*>) {
+    val quotes = when (const.kind) {
+        IrConstKind.String -> "\""
+        IrConstKind.Char -> "'"
+        else -> ""
+    }
+    append(quotes)
+    append(const.value.toString())
+    append(quotes)
 }
 
 private fun renderClassWithRenderer(declaration: IrClass, renderer: RenderIrElementVisitor?, options: DumpIrTreeOptions) =

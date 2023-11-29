@@ -1741,6 +1741,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
+            @TestMetadata("classAnnotationsInLocalClass.kt")
+            public void testClassAnnotationsInLocalClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/classAnnotationsInLocalClass.kt");
+            }
+
+            @Test
             @TestMetadata("constantFromOuterScopeAsAnnotaionParameter.kt")
             public void testConstantFromOuterScopeAsAnnotaionParameter() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/constantFromOuterScopeAsAnnotaionParameter.kt");
@@ -1873,6 +1879,18 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
+            @TestMetadata("danglingAnnotation.kt")
+            public void testDanglingAnnotation() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/danglingAnnotation.kt");
+            }
+
+            @Test
+            @TestMetadata("danglingAnnotationInLocalClass.kt")
+            public void testDanglingAnnotationInLocalClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/danglingAnnotationInLocalClass.kt");
+            }
+
+            @Test
             @TestMetadata("DanglingInScript.kts")
             public void testDanglingInScript() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/DanglingInScript.kts");
@@ -1963,6 +1981,18 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
+            @TestMetadata("initializerWithNestedAnnotation.kt")
+            public void testInitializerWithNestedAnnotation() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/initializerWithNestedAnnotation.kt");
+            }
+
+            @Test
+            @TestMetadata("initializerWithNestedAnnotationInLocalClass.kt")
+            public void testInitializerWithNestedAnnotationInLocalClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/initializerWithNestedAnnotationInLocalClass.kt");
+            }
+
+            @Test
             @TestMetadata("invalidTypesInAnnotationConstructor.kt")
             public void testInvalidTypesInAnnotationConstructor() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/invalidTypesInAnnotationConstructor.kt");
@@ -2032,6 +2062,18 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             @TestMetadata("MutuallyRecursivelyAnnotatedGlobalFunction.kt")
             public void testMutuallyRecursivelyAnnotatedGlobalFunction() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/MutuallyRecursivelyAnnotatedGlobalFunction.kt");
+            }
+
+            @Test
+            @TestMetadata("nestedAliasWithNestedAnnotation.kt")
+            public void testNestedAliasWithNestedAnnotation() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/nestedAliasWithNestedAnnotation.kt");
+            }
+
+            @Test
+            @TestMetadata("nestedAliasWithNestedAnnotationInLocalClass.kt")
+            public void testNestedAliasWithNestedAnnotationInLocalClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/nestedAliasWithNestedAnnotationInLocalClass.kt");
             }
 
             @Test
@@ -2206,6 +2248,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             @TestMetadata("typeParameterAnnotations.kt")
             public void testTypeParameterAnnotations() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/typeParameterAnnotations.kt");
+            }
+
+            @Test
+            @TestMetadata("typeParameterAnnotationsInLocalClass.kt")
+            public void testTypeParameterAnnotationsInLocalClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/typeParameterAnnotationsInLocalClass.kt");
             }
 
             @Test
@@ -9706,6 +9754,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 }
 
                 @Test
+                @TestMetadata("Comparable.kt")
+                public void testComparable() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/declarationChecks/nonExpansiveInheritanceRestriction/Comparable.kt");
+                }
+
+                @Test
                 @TestMetadata("JavaWithKotlin.kt")
                 public void testJavaWithKotlin() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/declarationChecks/nonExpansiveInheritanceRestriction/JavaWithKotlin.kt");
@@ -10207,6 +10261,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 @TestMetadata("provideDelegateReturningOuterTypeVariable.kt")
                 public void testProvideDelegateReturningOuterTypeVariable() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/provideDelegateReturningOuterTypeVariable.kt");
+                }
+
+                @Test
+                @TestMetadata("provideDelegateUsesOuterCS.kt")
+                public void testProvideDelegateUsesOuterCS() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/provideDelegateUsesOuterCS.kt");
                 }
 
                 @Test
@@ -23153,6 +23213,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 @TestMetadata("fromJavaSubclass.kt")
                 public void testFromJavaSubclass() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/modifiers/const/fromJavaSubclass.kt");
+                }
+
+                @Test
+                @TestMetadata("fromJavaWithNonConstInitializer.kt")
+                public void testFromJavaWithNonConstInitializer() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/modifiers/const/fromJavaWithNonConstInitializer.kt");
                 }
 
                 @Test
