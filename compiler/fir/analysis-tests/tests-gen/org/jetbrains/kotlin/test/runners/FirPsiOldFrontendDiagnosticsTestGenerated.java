@@ -25148,6 +25148,18 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 }
 
                 @Test
+                @TestMetadata("ConflictingOverloadsFunsDifferentReturnInClass.kt")
+                public void testConflictingOverloadsFunsDifferentReturnInClass() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/overload/noConflictingOverloadsWithDeprecatedHidden/ConflictingOverloadsFunsDifferentReturnInClass.kt");
+                }
+
+                @Test
+                @TestMetadata("ConflictingOverloadsIdenticalFunsInClass.kt")
+                public void testConflictingOverloadsIdenticalFunsInClass() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/overload/noConflictingOverloadsWithDeprecatedHidden/ConflictingOverloadsIdenticalFunsInClass.kt");
+                }
+
+                @Test
                 @TestMetadata("ConflictingOverloadsIdenticalValsInClass.kt")
                 public void testConflictingOverloadsIdenticalValsInClass() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/overload/noConflictingOverloadsWithDeprecatedHidden/ConflictingOverloadsIdenticalValsInClass.kt");
@@ -25235,6 +25247,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 @TestMetadata("NoHiddenTransitivityFromClassifierToConstructor.kt")
                 public void testNoHiddenTransitivityFromClassifierToConstructor() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/overload/noConflictingOverloadsWithDeprecatedHidden/NoHiddenTransitivityFromClassifierToConstructor.kt");
+                }
+
+                @Test
+                @TestMetadata("OpenFunctionsInMemberScope.kt")
+                public void testOpenFunctionsInMemberScope() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/overload/noConflictingOverloadsWithDeprecatedHidden/OpenFunctionsInMemberScope.kt");
                 }
 
                 @Test
