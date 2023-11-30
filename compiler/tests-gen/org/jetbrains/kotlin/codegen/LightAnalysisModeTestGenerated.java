@@ -2471,9 +2471,24 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
                         }
 
+                        @TestMetadata("ByAssignmentToALocalVariableMaterializeCase.kt")
+                        public void testByAssignmentToALocalVariableMaterializeCase() throws Exception {
+                            runTest("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts/ByAssignmentToALocalVariableMaterializeCase.kt");
+                        }
+
+                        @TestMetadata("ByAssignmentToALocalVariableYieldCase.kt")
+                        public void testByAssignmentToALocalVariableYieldCase() throws Exception {
+                            runTest("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts/ByAssignmentToALocalVariableYieldCase.kt");
+                        }
+
                         @TestMetadata("InsideAnonymousObject.kt")
                         public void testInsideAnonymousObject() throws Exception {
                             runTest("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts/InsideAnonymousObject.kt");
+                        }
+
+                        @TestMetadata("InsideLocalClass.kt")
+                        public void testInsideLocalClass() throws Exception {
+                            runTest("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts/InsideLocalClass.kt");
                         }
 
                         @TestMetadata("InsideNestedLambda.kt")
@@ -2489,6 +2504,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                         @TestMetadata("ThroughDelegatedLocalVariableYieldCase.kt")
                         public void testThroughDelegatedLocalVariableYieldCase() throws Exception {
                             runTest("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts/ThroughDelegatedLocalVariableYieldCase.kt");
+                        }
+
+                        @TestMetadata("ThroughGenericFunctionCall.kt")
+                        public void testThroughGenericFunctionCall() throws Exception {
+                            runTest("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts/ThroughGenericFunctionCall.kt");
                         }
 
                         @TestMetadata("ThroughLocalVariable.kt")
@@ -16049,6 +16069,21 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("flexibleStaticConstantFromJava.kt")
         public void testFlexibleStaticConstantFromJava() throws Exception {
             runTest("compiler/testData/codegen/box/fir/flexibleStaticConstantFromJava.kt");
+        }
+
+        @TestMetadata("functionsDifferInTypeParameterBounds.kt")
+        public void testFunctionsDifferInTypeParameterBounds() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/functionsDifferInTypeParameterBounds.kt");
+        }
+
+        @TestMetadata("functionsDifferInTypeParameterBounds2.kt")
+        public void testFunctionsDifferInTypeParameterBounds2() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/functionsDifferInTypeParameterBounds2.kt");
+        }
+
+        @TestMetadata("functionsDifferInTypeParameterBounds3.kt")
+        public void testFunctionsDifferInTypeParameterBounds3() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/functionsDifferInTypeParameterBounds3.kt");
         }
 
         @TestMetadata("getOnNullableTypeAlias.kt")
@@ -39981,6 +40016,16 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("kt59858.kt")
         public void testKt59858() throws Exception {
             runTest("compiler/testData/codegen/box/sam/kt59858.kt");
+        }
+
+        @TestMetadata("kt63564.kt")
+        public void testKt63564() throws Exception {
+            runTest("compiler/testData/codegen/box/sam/kt63564.kt");
+        }
+
+        @TestMetadata("noConversionFromSamToSam.kt")
+        public void testNoConversionFromSamToSam() throws Exception {
+            runTest("compiler/testData/codegen/box/sam/noConversionFromSamToSam.kt");
         }
 
         @TestMetadata("nonInlinedSamWrapper.kt")

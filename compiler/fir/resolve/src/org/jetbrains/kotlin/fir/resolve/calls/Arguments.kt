@@ -7,12 +7,10 @@ package org.jetbrains.kotlin.fir.resolve.calls
 
 import org.jetbrains.kotlin.builtins.functions.isBasicFunctionOrKFunction
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
 import org.jetbrains.kotlin.fir.expressions.*
-import org.jetbrains.kotlin.fir.languageVersionSettings
-import org.jetbrains.kotlin.fir.lookupTracker
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.resolve.*
@@ -23,7 +21,6 @@ import org.jetbrains.kotlin.fir.resolve.inference.preprocessCallableReference
 import org.jetbrains.kotlin.fir.resolve.inference.preprocessLambdaArgument
 import org.jetbrains.kotlin.fir.resolve.transformers.ReturnTypeCalculator
 import org.jetbrains.kotlin.fir.resolve.transformers.ensureResolvedTypeDeclaration
-import org.jetbrains.kotlin.fir.returnExpressions
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.ConeTypeParameterLookupTag
 import org.jetbrains.kotlin.fir.types.*
@@ -36,10 +33,8 @@ import org.jetbrains.kotlin.resolve.calls.inference.addSubtypeConstraintIfCompat
 import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintPosition
 import org.jetbrains.kotlin.resolve.calls.inference.model.SimpleConstraintSystemConstraintPosition
 import org.jetbrains.kotlin.types.AbstractTypeChecker
-import org.jetbrains.kotlin.types.model.CaptureStatus
 import org.jetbrains.kotlin.types.model.TypeSystemCommonSuperTypesContext
 import org.jetbrains.kotlin.types.model.typeConstructor
-import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 val SAM_LOOKUP_NAME = Name.special("<SAM-CONSTRUCTOR>")
 
@@ -307,28 +302,9 @@ private fun argumentTypeWithCustomConversion(
     }
 }
 
-fun Candidate.prepareCapturedType(argumentType: ConeKotlinType, context: ResolutionContext): ConeKotlinType {
-    return captureTypeFromExpressionOrNull(argumentType, context) ?: argumentType
-}
-
-private fun Candidate.captureTypeFromExpressionOrNull(argumentType: ConeKotlinType, context: ResolutionContext): ConeKotlinType? {
-    val type = argumentType.fullyExpandedType(context.session)
-    if (type is ConeIntersectionType) {
-        val intersectedTypes = type.intersectedTypes.map { captureTypeFromExpressionOrNull(it, context) ?: it }
-        if (intersectedTypes == type.intersectedTypes) return null
-        return ConeIntersectionType(
-            intersectedTypes,
-            type.alternativeType?.let { captureTypeFromExpressionOrNull(it, context) ?: it }
-        )
-    }
-
-    if (type !is ConeClassLikeType && type !is ConeFlexibleType) return null
-
-    if (type.typeArguments.isEmpty()) return null
-
-    return context.session.typeContext.captureFromArgumentsInternal(
-        type, CaptureStatus.FROM_EXPRESSION
-    )
+internal fun prepareCapturedType(argumentType: ConeKotlinType, context: ResolutionContext): ConeKotlinType {
+    if (argumentType.isRaw()) return argumentType
+    return context.typeContext.captureFromExpression(argumentType.fullyExpandedType(context.session)) ?: argumentType
 }
 
 private fun checkApplicabilityForArgumentType(
@@ -486,7 +462,7 @@ private fun Candidate.prepareExpectedType(
                 }
             }
         }
-            ?: getExpectedTypeWithImplicintIntegerCoercion(session, argument, parameter, basicExpectedType)
+            ?: getExpectedTypeWithImplicitIntegerCoercion(session, argument, parameter, basicExpectedType)
             ?: basicExpectedType
     return this.substitutor.substituteOrSelf(expectedType)
 }
@@ -496,19 +472,32 @@ private fun Candidate.getExpectedTypeWithSAMConversion(
     scopeSession: ScopeSession,
     argument: FirExpression,
     candidateExpectedType: ConeKotlinType,
-    context: ResolutionContext
+    context: ResolutionContext,
 ): ConeKotlinType? {
     if (candidateExpectedType.isSomeFunctionType(session)) return null
 
     val expectedFunctionType = context.bodyResolveComponents.samResolver.getFunctionTypeForPossibleSamType(candidateExpectedType)
         ?: return null
-    return runIf(argument.isFunctional(session, scopeSession, expectedFunctionType, context.returnTypeCalculator)) {
-        usesSAM = true
-        expectedFunctionType
+
+    if (!argument.shouldUseSamConversion(
+            session,
+            scopeSession,
+            candidateExpectedType = candidateExpectedType,
+            expectedFunctionType = expectedFunctionType,
+            context.returnTypeCalculator
+        )
+    ) {
+        return null
     }
+
+    val samConversions = functionTypesOfSamConversions
+        ?: hashMapOf<FirExpression, ConeKotlinType>().also { functionTypesOfSamConversions = it }
+
+    samConversions[argument.unwrapArgument()] = expectedFunctionType
+    return expectedFunctionType
 }
 
-private fun getExpectedTypeWithImplicintIntegerCoercion(
+private fun getExpectedTypeWithImplicitIntegerCoercion(
     session: FirSession,
     argument: FirExpression,
     parameter: FirValueParameter,
@@ -531,10 +520,11 @@ private fun getExpectedTypeWithImplicintIntegerCoercion(
     return argumentType?.withNullability(candidateExpectedType.nullability, session.typeContext)
 }
 
-fun FirExpression.isFunctional(
+fun FirExpression.shouldUseSamConversion(
     session: FirSession,
     scopeSession: ScopeSession,
-    expectedFunctionType: ConeKotlinType?,
+    candidateExpectedType: ConeKotlinType,
+    expectedFunctionType: ConeKotlinType,
     returnTypeCalculator: ReturnTypeCalculator,
 ): Boolean {
     when (unwrapArgument()) {
@@ -542,10 +532,15 @@ fun FirExpression.isFunctional(
         else -> {
             // Either a functional type or a subtype of a class that has a contributed `invoke`.
             val coneType = resolvedType
+            // Argument might have an intersection type between FunctionN and the SAM type from a smart cast, in which case we don't want to use
+            // SAM conversion.
+            if (coneType.isSubtypeOf(candidateExpectedType, session)) {
+                return false
+            }
             if (coneType.isSomeFunctionType(session)) {
                 return true
             }
-            val classLikeExpectedFunctionType = expectedFunctionType?.lowerBoundIfFlexible() as? ConeClassLikeType
+            val classLikeExpectedFunctionType = expectedFunctionType.lowerBoundIfFlexible() as? ConeClassLikeType
             if (classLikeExpectedFunctionType == null || coneType is ConeIntegerLiteralType) {
                 return false
             }
@@ -680,7 +675,7 @@ internal fun captureFromTypeParameterUpperBoundIfNeeded(
     val chosenSupertype = typeParameter.symbol.resolvedBounds.map { it.coneType }
         .singleOrNull { it.hasSupertypeWithGivenClassId(expectedTypeClassId, context) } ?: return argumentType
 
-    val capturedType = context.captureFromExpression(chosenSupertype) as ConeKotlinType? ?: return argumentType
+    val capturedType = context.captureFromExpression(chosenSupertype) ?: return argumentType
     return if (argumentType is ConeDefinitelyNotNullType) {
         ConeDefinitelyNotNullType.create(capturedType, session.typeContext) ?: capturedType
     } else {

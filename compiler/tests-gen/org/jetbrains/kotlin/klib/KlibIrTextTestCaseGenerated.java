@@ -122,6 +122,11 @@ public class KlibIrTextTestCaseGenerated extends AbstractKlibIrTextTestCase {
             runTest("compiler/testData/ir/irText/classes/enumClassModality.kt");
         }
 
+        @TestMetadata("enumEntries.kt")
+        public void testEnumEntries() throws Exception {
+            runTest("compiler/testData/ir/irText/classes/enumEntries.kt");
+        }
+
         @TestMetadata("enumWithMultipleCtors.kt")
         public void testEnumWithMultipleCtors() throws Exception {
             runTest("compiler/testData/ir/irText/classes/enumWithMultipleCtors.kt");
@@ -210,6 +215,11 @@ public class KlibIrTextTestCaseGenerated extends AbstractKlibIrTextTestCase {
         @TestMetadata("primaryConstructorWithSuperConstructorCall.kt")
         public void testPrimaryConstructorWithSuperConstructorCall() throws Exception {
             runTest("compiler/testData/ir/irText/classes/primaryConstructorWithSuperConstructorCall.kt");
+        }
+
+        @TestMetadata("privateInterface.kt")
+        public void testPrivateInterface() throws Exception {
+            runTest("compiler/testData/ir/irText/classes/privateInterface.kt");
         }
 
         @TestMetadata("qualifiedSuperCalls.kt")
@@ -1301,6 +1311,11 @@ public class KlibIrTextTestCaseGenerated extends AbstractKlibIrTextTestCase {
         @TestMetadata("incrementDecrement.kt")
         public void testIncrementDecrement() throws Exception {
             runTest("compiler/testData/ir/irText/expressions/incrementDecrement.kt");
+        }
+
+        @TestMetadata("inlinedBreakContinue.kt")
+        public void testInlinedBreakContinue() throws Exception {
+            runTest("compiler/testData/ir/irText/expressions/inlinedBreakContinue.kt");
         }
 
         @TestMetadata("interfaceThisRef.kt")

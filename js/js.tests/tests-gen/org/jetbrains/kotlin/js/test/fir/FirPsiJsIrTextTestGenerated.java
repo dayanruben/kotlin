@@ -131,6 +131,12 @@ public class FirPsiJsIrTextTestGenerated extends AbstractFirPsiJsIrTextTest {
         }
 
         @Test
+        @TestMetadata("enumEntries.kt")
+        public void testEnumEntries() throws Exception {
+            runTest("compiler/testData/ir/irText/classes/enumEntries.kt");
+        }
+
+        @Test
         @TestMetadata("enumWithMultipleCtors.kt")
         public void testEnumWithMultipleCtors() throws Exception {
             runTest("compiler/testData/ir/irText/classes/enumWithMultipleCtors.kt");
@@ -236,6 +242,12 @@ public class FirPsiJsIrTextTestGenerated extends AbstractFirPsiJsIrTextTest {
         @TestMetadata("primaryConstructorWithSuperConstructorCall.kt")
         public void testPrimaryConstructorWithSuperConstructorCall() throws Exception {
             runTest("compiler/testData/ir/irText/classes/primaryConstructorWithSuperConstructorCall.kt");
+        }
+
+        @Test
+        @TestMetadata("privateInterface.kt")
+        public void testPrivateInterface() throws Exception {
+            runTest("compiler/testData/ir/irText/classes/privateInterface.kt");
         }
 
         @Test
@@ -1478,6 +1490,12 @@ public class FirPsiJsIrTextTestGenerated extends AbstractFirPsiJsIrTextTest {
         @TestMetadata("incrementDecrement.kt")
         public void testIncrementDecrement() throws Exception {
             runTest("compiler/testData/ir/irText/expressions/incrementDecrement.kt");
+        }
+
+        @Test
+        @TestMetadata("inlinedBreakContinue.kt")
+        public void testInlinedBreakContinue() throws Exception {
+            runTest("compiler/testData/ir/irText/expressions/inlinedBreakContinue.kt");
         }
 
         @Test

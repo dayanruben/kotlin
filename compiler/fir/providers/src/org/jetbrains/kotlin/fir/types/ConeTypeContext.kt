@@ -383,7 +383,7 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
                 fir.classKind != ClassKind.ANNOTATION_CLASS
     }
 
-    override fun captureFromExpression(type: KotlinTypeMarker): KotlinTypeMarker? {
+    override fun captureFromExpression(type: KotlinTypeMarker): ConeKotlinType? {
         require(type is ConeKotlinType)
         return captureFromExpressionInternal(type)
     }
@@ -410,6 +410,10 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
 
     override fun TypeConstructorMarker.isNothingConstructor(): Boolean {
         return this is ConeClassLikeLookupTag && classId == StandardClassIds.Nothing
+    }
+
+    override fun TypeConstructorMarker.isArrayConstructor(): Boolean {
+        return this is ConeClassLikeLookupTag && classId == StandardClassIds.Array
     }
 
     override fun SimpleTypeMarker.isSingleClassifierType(): Boolean {

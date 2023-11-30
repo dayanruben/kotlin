@@ -2047,9 +2047,27 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
                             }
 
                             @Test
+                            @TestMetadata("ByAssignmentToALocalVariableMaterializeCase.kt")
+                            public void testByAssignmentToALocalVariableMaterializeCase() throws Exception {
+                                runTest("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts/ByAssignmentToALocalVariableMaterializeCase.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("ByAssignmentToALocalVariableYieldCase.kt")
+                            public void testByAssignmentToALocalVariableYieldCase() throws Exception {
+                                runTest("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts/ByAssignmentToALocalVariableYieldCase.kt");
+                            }
+
+                            @Test
                             @TestMetadata("InsideAnonymousObject.kt")
                             public void testInsideAnonymousObject() throws Exception {
                                 runTest("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts/InsideAnonymousObject.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("InsideLocalClass.kt")
+                            public void testInsideLocalClass() throws Exception {
+                                runTest("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts/InsideLocalClass.kt");
                             }
 
                             @Test
@@ -2068,6 +2086,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
                             @TestMetadata("ThroughDelegatedLocalVariableYieldCase.kt")
                             public void testThroughDelegatedLocalVariableYieldCase() throws Exception {
                                 runTest("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts/ThroughDelegatedLocalVariableYieldCase.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("ThroughGenericFunctionCall.kt")
+                            public void testThroughGenericFunctionCall() throws Exception {
+                                runTest("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts/ThroughGenericFunctionCall.kt");
                             }
 
                             @Test
@@ -16049,6 +16073,24 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
             @TestMetadata("falsePositiveBoundSmartcast.kt")
             public void testFalsePositiveBoundSmartcast() throws Exception {
                 runTest("compiler/testData/codegen/box/fir/falsePositiveBoundSmartcast.kt");
+            }
+
+            @Test
+            @TestMetadata("functionsDifferInTypeParameterBounds.kt")
+            public void testFunctionsDifferInTypeParameterBounds() throws Exception {
+                runTest("compiler/testData/codegen/box/fir/functionsDifferInTypeParameterBounds.kt");
+            }
+
+            @Test
+            @TestMetadata("functionsDifferInTypeParameterBounds2.kt")
+            public void testFunctionsDifferInTypeParameterBounds2() throws Exception {
+                runTest("compiler/testData/codegen/box/fir/functionsDifferInTypeParameterBounds2.kt");
+            }
+
+            @Test
+            @TestMetadata("functionsDifferInTypeParameterBounds3.kt")
+            public void testFunctionsDifferInTypeParameterBounds3() throws Exception {
+                runTest("compiler/testData/codegen/box/fir/functionsDifferInTypeParameterBounds3.kt");
             }
 
             @Test
@@ -39368,6 +39410,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
             @TestMetadata("kt59858.kt")
             public void testKt59858() throws Exception {
                 runTest("compiler/testData/codegen/box/sam/kt59858.kt");
+            }
+
+            @Test
+            @TestMetadata("kt63564.kt")
+            public void testKt63564() throws Exception {
+                runTest("compiler/testData/codegen/box/sam/kt63564.kt");
             }
 
             @Nested
