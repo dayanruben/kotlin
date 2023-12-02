@@ -20,10 +20,7 @@ import org.jetbrains.kotlin.fir.references.FirSuperReference
 import org.jetbrains.kotlin.fir.references.FirThisReference
 import org.jetbrains.kotlin.fir.resolve.directExpansionType
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
-import org.jetbrains.kotlin.fir.resolve.inference.ConeTypeParameterBasedTypeVariable
-import org.jetbrains.kotlin.fir.resolve.inference.ResolvedCallableReferenceAtom
-import org.jetbrains.kotlin.fir.resolve.inference.csBuilder
-import org.jetbrains.kotlin.fir.resolve.inference.hasBuilderInferenceAnnotation
+import org.jetbrains.kotlin.fir.resolve.inference.*
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeExplicitTypeParameterConstraintPosition
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.FirTypeScope
@@ -31,6 +28,7 @@ import org.jetbrains.kotlin.fir.scopes.FirUnstableSmartcastTypeScope
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.fir.scopes.impl.typeAliasForConstructor
 import org.jetbrains.kotlin.fir.scopes.processOverriddenFunctions
+import org.jetbrains.kotlin.fir.symbols.ConeTypeParameterLookupTag
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.SyntheticSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
@@ -129,6 +127,21 @@ object CheckExtensionReceiver : ResolutionStage() {
 
         candidate.chosenExtensionReceiver = receiver.expression
 
+        val checkBuilderInferenceRestriction =
+            !context.session.languageVersionSettings
+                .supportsFeature(LanguageFeature.NoBuilderInferenceWithoutAnnotationRestriction)
+        if (checkBuilderInferenceRestriction) {
+            val resolvedType = receiver.expression.resolvedType
+            if (resolvedType is ConeStubTypeForChainInference) {
+                val typeVariable = resolvedType.constructor.variable
+                sink.yieldDiagnostic(
+                    StubBuilderInferenceReceiver(
+                        (typeVariable.typeConstructor.originalTypeParameter as ConeTypeParameterLookupTag).typeParameterSymbol
+                    )
+                )
+            }
+        }
+
         sink.yieldIfNeed()
     }
 
@@ -168,7 +181,15 @@ object CheckDispatchReceiver : ResolutionStage() {
         }
 
         val dispatchReceiverValueType = candidate.dispatchReceiver?.resolvedType ?: return
-        val isReceiverNullable = !AbstractNullabilityChecker.isSubtypeOfAny(context.session.typeContext, dispatchReceiverValueType)
+
+        // TODO (KT-63959): Actually, we should treat stub types as non-nullable for the isReceiverNullable check
+        // Otherwise, we won't able to resolve to member toString/hashCode due to UnsafeCall error
+        // It was possible in K1, due to the fact that K1 doesn't use AbstractNullabilityChecker directly
+        // But, AbstractNullabilityChecker.isSubtypeOfAny doesn't respect stubTypeEqualToAnything
+        val isStubType = dispatchReceiverValueType is ConeStubTypeForChainInference
+        val isReceiverNullable =
+            !AbstractNullabilityChecker.isSubtypeOfAny(context.session.typeContext, dispatchReceiverValueType) && !isStubType
+
 
         val isCandidateFromUnstableSmartcast =
             (candidate.originScope as? FirUnstableSmartcastTypeScope)?.isSymbolFromUnstableSmartcast(candidate.symbol) == true
@@ -662,8 +683,17 @@ internal object PostponedVariablesInitializerResolutionStage : ResolutionStage()
     override suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext) {
         val argumentMapping = candidate.argumentMapping ?: return
         if (candidate.typeArgumentMapping is TypeArgumentMapping.Mapped) return
-        for (parameter in argumentMapping.values) {
+
+        val atomsToMark = mutableSetOf<FirAnonymousFunction>()
+
+        for ((argument, parameter) in argumentMapping) {
             if (!parameter.hasBuilderInferenceAnnotation(context.session)) continue
+            val unwrapped = argument.unwrapArgument()
+            if (unwrapped is FirAnonymousFunctionExpression) {
+                atomsToMark.add(unwrapped.anonymousFunction)
+            }
+
+            // TODO (KT-63958): This is effectively dead-code, since UseBuilderInferenceOnlyIfNeeded is always enabled
             val type = parameter.returnTypeRef.coneType
             val receiverType = type.receiverType(callInfo.session) ?: continue
             val dontUseBuilderInferenceIfPossible =
@@ -679,6 +709,23 @@ internal object PostponedVariablesInitializerResolutionStage : ResolutionStage()
                 }
                 if (typeHasVariable) {
                     candidate.csBuilder.markPostponedVariable(freshVariable)
+                }
+            }
+        }
+
+        candidate.postponedAtoms.forEach { postponedAtomContainer ->
+            when (postponedAtomContainer) {
+                is ResolvedLambdaAtom -> {
+                    if (postponedAtomContainer.atom in atomsToMark) {
+                        postponedAtomContainer.isCorrespondingParameterAnnotatedWithBuilderInference = true
+                    }
+                }
+                is LambdaWithTypeVariableAsExpectedTypeAtom -> {
+                    // Although, one may annotate fun foo(@BuilderInference t: T)
+                    // it makes little sense
+                }
+                is ResolvedCallableReferenceAtom -> {
+                    // Builder inference doesn't apply to such atoms.
                 }
             }
         }

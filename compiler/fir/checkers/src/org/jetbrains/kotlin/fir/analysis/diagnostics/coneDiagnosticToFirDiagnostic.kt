@@ -16,12 +16,15 @@ import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.isLocalMember
 import org.jetbrains.kotlin.fir.analysis.getChild
 import org.jetbrains.kotlin.fir.builder.FirSyntaxErrors
+import org.jetbrains.kotlin.fir.declarations.FirAnonymousFunction
+import org.jetbrains.kotlin.fir.declarations.FirMemberDeclaration
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.diagnostics.*
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
 import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.resolve.calls.*
 import org.jetbrains.kotlin.fir.resolve.diagnostics.*
+import org.jetbrains.kotlin.fir.resolve.inference.AnonymousFunctionBasedMultiLambdaBuilderInferenceRestriction
 import org.jetbrains.kotlin.fir.resolve.inference.ConeTypeParameterBasedTypeVariable
 import org.jetbrains.kotlin.fir.resolve.inference.ConeTypeVariableForLambdaReturnType
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeArgumentConstraintPosition
@@ -29,6 +32,7 @@ import org.jetbrains.kotlin.fir.resolve.inference.model.ConeExpectedTypeConstrai
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeLambdaArgumentConstraintPosition
 import org.jetbrains.kotlin.fir.symbols.ConeTypeParameterLookupTag
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
+import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
@@ -307,6 +311,16 @@ private fun mapInapplicableCandidateError(
                     rootCause.expectedContextReceiverType.removeTypeVariableTypes(typeContext)
                 )
 
+            is StubBuilderInferenceReceiver -> {
+                val typeParameterSymbol = rootCause.typeParameterSymbol
+                @OptIn(SymbolInternals::class)
+                FirErrors.BUILDER_INFERENCE_STUB_RECEIVER.createOn(
+                    qualifiedAccessSource ?: source,
+                    typeParameterSymbol.name,
+                    (typeParameterSymbol.containingDeclarationSymbol.fir as FirMemberDeclaration).nameOrSpecialName
+                )
+            }
+
             is NullForNotNullType -> FirErrors.NULL_FOR_NONNULL_TYPE.createOn(
                 rootCause.argument.source ?: source, rootCause.expectedType.removeTypeVariableTypes(typeContext)
             )
@@ -516,6 +530,18 @@ private fun ConstraintSystemError.toDiagnostic(
                 (typeVariable as ConeTypeParameterBasedTypeVariable).typeParameterSymbol
             )
         }
+
+        is AnonymousFunctionBasedMultiLambdaBuilderInferenceRestriction -> {
+            val typeParameterSymbol = (typeParameter as ConeTypeParameterLookupTag).typeParameterSymbol
+            FirErrors.BUILDER_INFERENCE_MULTI_LAMBDA_RESTRICTION.createOn(
+                anonymous.source ?: source,
+                typeParameterSymbol.name,
+                @OptIn(SymbolInternals::class)
+                (typeParameterSymbol.containingDeclarationSymbol.fir as FirMemberDeclaration).nameOrSpecialName
+            )
+        }
+
+        is MultiLambdaBuilderInferenceRestriction<*> -> shouldNotBeCalled()
 
         else -> null
     }

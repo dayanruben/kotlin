@@ -8,16 +8,19 @@ package org.jetbrains.kotlin.generators.tree
 /**
  * A class representing a FIR or IR tree element.
  */
-abstract class AbstractElement<Element, Field>(
+abstract class AbstractElement<Element, Field, Implementation>(
     val name: String,
-) : ElementOrRef<Element, Field>, FieldContainer<Field>, ImplementationKindOwner
-        where Element : AbstractElement<Element, Field>,
-              Field : AbstractField<Field> {
+) : ElementOrRef<Element>, FieldContainer<Field>, ImplementationKindOwner
+        where Element : AbstractElement<Element, Field, Implementation>,
+              Field : AbstractField<Field>,
+              Implementation : AbstractImplementation<Implementation, Element, *> {
 
     /**
      * The fully-qualified name of the property in the tree generator that is used to configure this element.
      */
     abstract val propertyName: String
+
+    abstract val namePrefix: String
 
     abstract val kDoc: String?
 
@@ -25,7 +28,7 @@ abstract class AbstractElement<Element, Field>(
 
     abstract val params: List<TypeVariable>
 
-    abstract val elementParents: List<ElementRef<Element, Field>>
+    abstract val elementParents: List<ElementRef<Element>>
 
     abstract val otherParents: MutableList<ClassRef<*>>
 
@@ -68,6 +71,9 @@ abstract class AbstractElement<Element, Field>(
 
     override val allParents: List<Element>
         get() = elementParents.map { it.element }
+
+    override val typeName: String
+        get() = namePrefix + name
 
     context(ImportCollector)
     final override fun renderTo(appendable: Appendable) {
@@ -144,6 +150,22 @@ abstract class AbstractElement<Element, Field>(
     val transformerClass: Element
         get() = transformerReturnType ?: baseTransformerType ?: element
 
+    var defaultImplementation: Implementation? = null
+
+    val customImplementations = mutableListOf<Implementation>()
+
+    var doesNotNeedImplementation: Boolean = false
+
+    val allImplementations: List<Implementation> by lazy {
+        if (doesNotNeedImplementation) {
+            emptyList()
+        } else {
+            val implementations = customImplementations.toMutableList()
+            defaultImplementation?.let { implementations += it }
+            implementations
+        }
+    }
+
     final override fun get(fieldName: String): Field? {
         return allFields.firstOrNull { it.name == fieldName }
     }
@@ -159,5 +181,5 @@ abstract class AbstractElement<Element, Field>(
     @Suppress("UNCHECKED_CAST")
     override fun substitute(map: TypeParameterSubstitutionMap): Element = this as Element
 
-    fun withStarArgs(): ElementRef<Element, Field> = copy(params.associateWith { TypeRef.Star })
+    fun withStarArgs(): ElementRef<Element> = copy(params.associateWith { TypeRef.Star })
 }

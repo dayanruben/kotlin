@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.generators.tree
 
-data class Model<Element : AbstractElement<Element, *>>(
+data class Model<Element : AbstractElement<Element, *, *>>(
     val elements: List<Element>,
     val rootElement: Element,
 )

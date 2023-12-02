@@ -3457,6 +3457,18 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         val presentableString: String
     }
 
+    interface BuilderInferenceStubReceiver : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = BuilderInferenceStubReceiver::class
+        val typeParameterName: Name
+        val containingDeclarationName: Name
+    }
+
+    interface BuilderInferenceMultiLambdaRestriction : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = BuilderInferenceMultiLambdaRestriction::class
+        val typeParameterName: Name
+        val containingDeclarationName: Name
+    }
+
     interface OverrideCannotBeStatic : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = OverrideCannotBeStatic::class
     }

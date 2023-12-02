@@ -16734,6 +16734,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 }
 
                 @Test
+                @TestMetadata("builderInferenceAnnotationInLambdaWithTVExpectedType.kt")
+                public void testBuilderInferenceAnnotationInLambdaWithTVExpectedType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/builderInferenceAnnotationInLambdaWithTVExpectedType.kt");
+                }
+
+                @Test
                 @TestMetadata("changingResolveIfDontUseBuilderInference.kt")
                 public void testChangingResolveIfDontUseBuilderInference() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/changingResolveIfDontUseBuilderInference.kt");
@@ -34200,6 +34206,18 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             @TestMetadata("notNullorNotNull.kt")
             public void testNotNullorNotNull() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/smartCasts/notNullorNotNull.kt");
+            }
+
+            @Test
+            @TestMetadata("NullableFunctionTypeAsMemberMutableProperty.kt")
+            public void testNullableFunctionTypeAsMemberMutableProperty() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/smartCasts/NullableFunctionTypeAsMemberMutableProperty.kt");
+            }
+
+            @Test
+            @TestMetadata("NullableFunctionTypeAsMemberMutablePropertyFromConstructor.kt")
+            public void testNullableFunctionTypeAsMemberMutablePropertyFromConstructor() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/smartCasts/NullableFunctionTypeAsMemberMutablePropertyFromConstructor.kt");
             }
 
             @Test
