@@ -5,19 +5,20 @@
 
 package org.jetbrains.kotlin.fir.resolve.inference
 
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirAnonymousFunction
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.hasAnnotation
-import org.jetbrains.kotlin.fir.expressions.FirResolvable
-import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.expressions.*
+import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.resolve.calls.Candidate
 import org.jetbrains.kotlin.fir.resolve.calls.ImplicitExtensionReceiverValue
 import org.jetbrains.kotlin.fir.resolve.calls.ResolutionContext
 import org.jetbrains.kotlin.fir.resolve.calls.candidate
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeBuilderInferenceSubstitutionConstraintPosition
+import org.jetbrains.kotlin.fir.resolve.substitution.AbstractConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.ChainedSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.replaceStubsAndTypeVariablesToErrors
@@ -31,7 +32,6 @@ import org.jetbrains.kotlin.resolve.calls.inference.components.ConstraintSystemC
 import org.jetbrains.kotlin.resolve.calls.inference.model.*
 import org.jetbrains.kotlin.resolve.calls.inference.registerTypeVariableIfNotPresent
 import org.jetbrains.kotlin.resolve.descriptorUtil.BUILDER_INFERENCE_ANNOTATION_FQ_NAME
-import org.jetbrains.kotlin.types.model.KotlinTypeMarker
 import org.jetbrains.kotlin.types.model.TypeConstructorMarker
 import org.jetbrains.kotlin.types.model.TypeSubstitutorMarker
 import org.jetbrains.kotlin.types.model.safeSubstitute
@@ -117,7 +117,8 @@ class FirBuilderInferenceSession(
     override fun inferPostponedVariables(
         lambda: ResolvedLambdaAtom,
         constraintSystemBuilder: ConstraintSystemBuilder,
-        completionMode: ConstraintSystemCompletionMode
+        completionMode: ConstraintSystemCompletionMode,
+        candidate: Candidate
     ): Map<ConeTypeVariableTypeConstructor, ConeKotlinType>? {
         val (commonSystem, effectivelyEmptyConstraintSystem) = buildCommonSystem(constraintSystemBuilder.currentStorage())
         val resultingSubstitutor by lazy { getResultingSubstitutor(commonSystem) }
@@ -142,6 +143,11 @@ class FirBuilderInferenceSession(
             constraintSystemBuilder.substituteFixedVariables(resultingSubstitutor)
         }
 
+        if (!session.languageVersionSettings.supportsFeature(LanguageFeature.NoAdditionalErrorsInK1DiagnosticReporter)) {
+            for (error in commonSystem.errors) {
+                candidate.system.addError(error)
+            }
+        }
         updateCalls(resultingSubstitutor)
 
         @Suppress("UNCHECKED_CAST")
@@ -149,6 +155,9 @@ class FirBuilderInferenceSession(
     }
 
     private fun buildCommonSystem(initialStorage: ConstraintStorage): Pair<NewConstraintSystemImpl, Boolean> {
+        // TODO(KT-64034): Missing handling of parent builder inference sessions
+        //  - See [org.jetbrains.kotlin.resolve.calls.inference.BuilderInferenceSession.initializeCommonSystem]
+
         val commonSystem = components.session.inferenceComponents.createConstraintSystem()
         val nonFixedToVariablesSubstitutor = createNonFixedTypeToVariableSubstitutor()
 
@@ -165,11 +174,6 @@ class FirBuilderInferenceSession(
                 integrateConstraints(commonSystem, candidate.system.asReadOnlyStorage(), nonFixedToVariablesSubstitutor, true)
             if (hasConstraints) effectivelyEmptyCommonSystem = false
         }
-
-        // TODO: add diagnostics holder
-//        for (diagnostic in diagnostics) {
-//            commonSystem.addError(diagnostic)
-//        }
 
         return commonSystem to effectivelyEmptyCommonSystem
     }
@@ -208,7 +212,7 @@ class FirBuilderInferenceSession(
         for (initialConstraint in storage.initialConstraints) {
             if (initialConstraint.position is BuilderInferencePosition) continue
             if (integrateConstraintToSystem(
-                    commonSystem, initialConstraint, callSubstitutor, nonFixedToVariablesSubstitutor, storage.fixedTypeVariables
+                    commonSystem, initialConstraint, callSubstitutor, nonFixedToVariablesSubstitutor
                 )
             ) {
                 introducedConstraint = true
@@ -225,6 +229,23 @@ class FirBuilderInferenceSession(
         }
 
         return introducedConstraint
+    }
+
+    private fun extractCommonCapturedTypes(lower: ConeKotlinType, upper: ConeKotlinType): List<ConeCapturedType> {
+        val extractedCapturedTypes = mutableSetOf<ConeCapturedType>().also { extractCapturedTypesTo(lower, it) }
+        return extractedCapturedTypes.filter { capturedType ->
+            upper.contains { it is ConeCapturedType && it.constructor === capturedType.constructor }
+        }
+    }
+
+    private fun extractCapturedTypesTo(type: ConeKotlinType, to: MutableSet<ConeCapturedType>) {
+        if (type is ConeCapturedType) {
+            to.add(type)
+        }
+        for (typeArgument in type.typeArguments) {
+            if (typeArgument !is ConeKotlinTypeProjection) continue
+            extractCapturedTypesTo(typeArgument.type, to)
+        }
     }
 
     private fun getResultingSubstitutor(commonSystem: NewConstraintSystemImpl): ConeSubstitutor {
@@ -244,11 +265,9 @@ class FirBuilderInferenceSession(
             receiver.updateTypeInBuilderInference(substitutor.substituteOrSelf(receiver.type))
         }
 
-        // TODO: support diagnostics, see [CoroutineInferenceSession#updateCalls]
         val completionResultsWriter = components.callCompleter.createCompletionResultsWriter(substitutor)
         for ((call, _) in partiallyResolvedCalls) {
             call.transformSingle(completionResultsWriter, null)
-            // TODO: support diagnostics, see [CoroutineInferenceSession#updateCalls]
         }
     }
 
@@ -257,69 +276,104 @@ class FirBuilderInferenceSession(
         initialConstraint: InitialConstraint,
         callSubstitutor: ConeSubstitutor,
         nonFixedToVariablesSubstitutor: ConeSubstitutor,
-        fixedTypeVariables: Map<TypeConstructorMarker, KotlinTypeMarker>,
     ): Boolean {
         val substitutedConstraintWith =
-            initialConstraint.substitute(callSubstitutor).substitute(nonFixedToVariablesSubstitutor, fixedTypeVariables)
-        val lower = substitutedConstraintWith.a // TODO: SUB
-        val upper = substitutedConstraintWith.b // TODO: SUB
+            initialConstraint.substitute(callSubstitutor).substituteNonFixedToVariables(nonFixedToVariablesSubstitutor)
 
-        if (commonSystem.isProperType(lower) && (lower == upper || commonSystem.isProperType(upper))) return false
+        val substitutedA = substitutedConstraintWith.a
+        val substitutedB = substitutedConstraintWith.b
+
+        if (commonSystem.isProperType(substitutedA) && (substitutedA == substitutedB || commonSystem.isProperType(substitutedB))) return false
 
         val position = substitutedConstraintWith.position
         when (initialConstraint.constraintKind) {
             ConstraintKind.LOWER -> error("LOWER constraint shouldn't be used, please use UPPER")
 
-            ConstraintKind.UPPER -> commonSystem.addSubtypeConstraint(lower, upper, position)
+            ConstraintKind.UPPER -> commonSystem.addSubtypeConstraint(substitutedA, substitutedB, position)
 
             ConstraintKind.EQUALITY ->
                 with(commonSystem) {
-                    addSubtypeConstraint(lower, upper, position)
-                    addSubtypeConstraint(upper, lower, position)
+                    addSubtypeConstraint(substitutedA, substitutedB, position)
+                    addSubtypeConstraint(substitutedB, substitutedA, position)
                 }
         }
         return true
     }
 
     private fun InitialConstraint.substitute(substitutor: TypeSubstitutorMarker): InitialConstraint {
-        val lowerSubstituted = substitutor.safeSubstitute(resolutionContext.typeContext, this.a)
-        val upperSubstituted = substitutor.safeSubstitute(resolutionContext.typeContext, this.b)
+        val substitutedA = substitutor.safeSubstitute(resolutionContext.typeContext, this.a)
+        val substitutedB = substitutor.safeSubstitute(resolutionContext.typeContext, this.b)
 
-        if (lowerSubstituted == a && upperSubstituted == b) return this
+        if (substitutedA == a && substitutedB == b) return this
+
+        // TODO(KT-64033): Missing check for ForbidInferringPostponedTypeVariableIntoDeclaredUpperBound language feature
 
         return InitialConstraint(
-            lowerSubstituted,
-            upperSubstituted,
+            substitutedA,
+            substitutedB,
             this.constraintKind,
             ConeBuilderInferenceSubstitutionConstraintPosition(this)
         )
     }
 
-    private fun InitialConstraint.substitute(
-        substitutor: TypeSubstitutorMarker,
-        fixedTypeVariables: Map<TypeConstructorMarker, KotlinTypeMarker>
+    /**
+     * This function substitutes stub types in constraint with the corresponding type variable
+     * Please make sure to pass correct {Stub(Tv) => Tv} substitutor
+     *
+     * E.g.:
+     * ```
+     * nonFixedToVariablesSubstitutor = {Stub(Tv) => Tv, Stub(Ov) => Ov}
+     * constraint: A<Stub(Tv)> <: B<Stub(Ov)> -> A<Tv> <: B<Ov>
+     * ```
+     *
+     * The main reason for this function's existence is the custom handling of captured types.
+     * See KT-64027
+     *
+     * @return Constraint, substituted according to the [nonFixedToVariablesSubstitutor]
+     */
+    private fun InitialConstraint.substituteNonFixedToVariables(
+        nonFixedToVariablesSubstitutor: ConeSubstitutor
     ): InitialConstraint {
-        val substituted = substitute(substitutor)
-        val a = a
-        // In situation when some type variable _T is fixed to Stub(_T)?,
-        // we are not allowed just to substitute Stub(_T) with T because nullabilities are different here!
-        // To compensate this, we have to substitute Stub(_T) <: SomeType constraint with T <: SomeType? adding nullability to upper type
-        if (a is ConeStubTypeForChainInference && substituted.a !is ConeStubTypeForChainInference) {
-            val constructor = a.constructor
-            val fixedTypeVariableType = fixedTypeVariables[constructor.variable.typeConstructor]
-            if (fixedTypeVariableType is ConeStubTypeForChainInference &&
-                fixedTypeVariableType.constructor === constructor &&
-                fixedTypeVariableType.isMarkedNullable
-            ) {
-                return InitialConstraint(
-                    substituted.a,
-                    (substituted.b as ConeKotlinType).withNullability(ConeNullability.NULLABLE, resolutionContext.typeContext),
-                    substituted.constraintKind,
-                    substituted.position
-                )
+        require(constraintKind != ConstraintKind.LOWER)
+
+        // TODO(KT-63996, KT-64027): This function assumes types passed in lower, upper order which isn't true for equality constraints
+        val commonCapTypes = extractCommonCapturedTypes(lower = a as ConeKotlinType, upper = b as ConeKotlinType)
+
+        // TODO(KT-64027): This logic tries to work-around the problem with type substitution consistency in captured types
+        //  In order to preserve consistency we collect captured types from both a and b and substitute them collectively
+        //  E.g:
+        //  substitutor = { B => W }
+        //  a = C<CapturedType(out B)_0>, b = D<CapturedType(out B)_0>
+        //  commonCapTypes = [CapturedType(out B)_0]
+        //  capTypesSubstitutor = { CapturedTypeConstructor_0 => CapturedType(out W)_1 }
+        //  substitutedA = C<CapturedType(out W)_1>
+        //  substitutedB = D<CapturedType(out W)_1>
+        val substitutedCommonCapType = commonCapTypes.associate {
+            it.constructor to nonFixedToVariablesSubstitutor.substituteOrSelf(it)
+        }
+
+        val capTypesSubstitutor = object : AbstractConeSubstitutor(resolutionContext.typeContext) {
+            override fun substituteType(type: ConeKotlinType): ConeKotlinType? {
+                if (type !is ConeCapturedType) return null
+                return substitutedCommonCapType[type.constructor]
             }
         }
-        return substituted
+
+        val substitutedA = nonFixedToVariablesSubstitutor.safeSubstitute(
+            resolutionContext.typeContext,
+            capTypesSubstitutor.safeSubstitute(resolutionContext.typeContext, this.a)
+        )
+        val substitutedB = nonFixedToVariablesSubstitutor.safeSubstitute(
+            resolutionContext.typeContext,
+            capTypesSubstitutor.safeSubstitute(resolutionContext.typeContext, this.b)
+        )
+
+        return InitialConstraint(
+            substitutedA,
+            substitutedB,
+            constraintKind,
+            position
+        )
     }
 }
 

@@ -94,10 +94,22 @@ abstract class AbstractConeSubstitutor(protected val typeContext: ConeTypeContex
 
     private fun ConeCapturedType.substituteCapturedType(): ConeCapturedType? {
         val innerType = this.lowerType ?: this.constructor.projection.type
+        // TODO(KT-64024): This early return looks suspicious.
+        //  In fact, if the inner type wasn't substituted we will ignore potential substitution in
+        //  super types
         val substitutedInnerType = substituteOrNull(innerType) ?: return null
         if (substitutedInnerType is ConeCapturedType) return substitutedInnerType
         val substitutedSuperTypes =
             this.constructor.supertypes?.map { substituteOrSelf(it) }
+
+        // TODO(KT-64027): Creation of new captured types creates unexpected behavior by breaking substitution consistency.
+        //  E.g:
+        //  ```
+        //   substitution = { A => B }
+        //   substituteOrSelf(C<CapturedType(out A)_0>) -> C<CapturedType(out B)_1>
+        //   substituteOrSelf(C<CapturedType(out A)_0>) -> C<CapturedType(out B)_2>
+        //   C<CapturedType(out B)_1> <!:> C<CapturedType(out B)_2>
+        //  ```
 
         return ConeCapturedType(
             captureStatus,
@@ -175,8 +187,8 @@ abstract class AbstractConeSubstitutor(protected val typeContext: ConeTypeContex
                 is ConeErrorType -> ConeErrorType(
                     diagnostic,
                     isUninferredParameter,
-                    newArguments as Array<ConeTypeProjection>,
-                    attributes
+                    typeArguments = newArguments as Array<ConeTypeProjection>,
+                    attributes = attributes
                 )
                 else -> errorWithAttachment("Unknown class-like type to substitute, ${this::class}") {
                     withConeTypeEntry("type", this@substituteArguments)

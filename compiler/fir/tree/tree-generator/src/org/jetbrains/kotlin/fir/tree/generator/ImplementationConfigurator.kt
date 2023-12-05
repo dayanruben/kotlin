@@ -68,12 +68,8 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
             }
 
             default("delegate") {
-                needAcceptAndTransform = false
+                isChild = false
             }
-        }
-
-        impl(errorImport) {
-            delegateFields(listOf("aliasName", "importedFqName", "isAllUnder", "source"), "delegate")
         }
 
         fun ImplementationContext.commonAnnotationConfig() {
@@ -92,14 +88,14 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
         impl(annotationCall) {
             commonAnnotationConfig()
             default("argumentMapping") {
-                needAcceptAndTransform = false
+                isChild = false
             }
         }
 
         impl(errorAnnotationCall) {
             commonAnnotationConfig()
             default("argumentMapping") {
-                needAcceptAndTransform = false
+                isChild = false
             }
             default("annotationResolvePhase") {
                 value = "FirAnnotationResolvePhase.Types"
@@ -517,7 +513,7 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
         impl(resolvedTypeRef) {
             publicImplementation()
             default("delegatedTypeRef") {
-                needAcceptAndTransform = false
+                isChild = false
             }
         }
 

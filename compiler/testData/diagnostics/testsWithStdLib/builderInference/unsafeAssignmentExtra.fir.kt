@@ -63,7 +63,7 @@ fun main(arg: Any, condition: Boolean) {
     val value3 = myBuilder {
         accept("")
         a = 45
-        bar(::a)
+        bar(<!ARGUMENT_TYPE_MISMATCH, ARGUMENT_TYPE_MISMATCH!>::a<!>)
     }
 
     fun baz(t: Int) {}
@@ -72,6 +72,6 @@ fun main(arg: Any, condition: Boolean) {
         accept("")
         a = 45
         b[0] = 123
-        baz(a)
+        baz(<!ARGUMENT_TYPE_MISMATCH!>a<!>)
     }
 }
