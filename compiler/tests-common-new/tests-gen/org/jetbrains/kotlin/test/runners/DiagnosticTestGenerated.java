@@ -6902,6 +6902,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("typeAliasToUnsigned.kt")
+                public void testTypeAliasToUnsigned() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/typeAliasToUnsigned.kt");
+                }
+
+                @Test
                 @TestMetadata("unaryMinusIndepWoExpType.kt")
                 public void testUnaryMinusIndepWoExpType() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/unaryMinusIndepWoExpType.kt");
@@ -6911,6 +6917,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("unaryMinusIndependentExpType.kt")
                 public void testUnaryMinusIndependentExpType() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/unaryMinusIndependentExpType.kt");
+                }
+
+                @Test
+                @TestMetadata("unresolvedReference.kt")
+                public void testUnresolvedReference() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/unresolvedReference.kt");
                 }
 
                 @Test
@@ -24129,6 +24141,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("actualFakeOverride_transitiveFakeOverrides_incompatible.kt")
             public void testActualFakeOverride_transitiveFakeOverrides_incompatible() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/actualFakeOverride_transitiveFakeOverrides_incompatible.kt");
+            }
+
+            @Test
+            @TestMetadata("actualMissingConstructor.kt")
+            public void testActualMissingConstructor() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/actualMissingConstructor.kt");
             }
 
             @Test

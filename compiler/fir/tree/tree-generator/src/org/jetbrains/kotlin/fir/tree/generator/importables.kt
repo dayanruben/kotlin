@@ -5,14 +5,12 @@
 
 package org.jetbrains.kotlin.fir.tree.generator
 
-import org.jetbrains.kotlin.fir.tree.generator.printer.VISITOR_PACKAGE
 import org.jetbrains.kotlin.generators.tree.ArbitraryImportable
 
 val phaseAsResolveStateExtentionImport = ArbitraryImportable("org.jetbrains.kotlin.fir.declarations", "asResolveState")
 val resolvePhaseExtensionImport = ArbitraryImportable("org.jetbrains.kotlin.fir.declarations", "resolvePhase")
 val resolvedDeclarationStatusImport = ArbitraryImportable("org.jetbrains.kotlin.fir.declarations.impl", "FirResolvedDeclarationStatusImpl")
 
-val buildResolvedTypeRefImport = ArbitraryImportable("org.jetbrains.kotlin.fir.types.builder", "buildResolvedTypeRef")
 val constructClassTypeImport = ArbitraryImportable("org.jetbrains.kotlin.fir.types", "constructClassType")
 val constructClassLikeTypeImport = ArbitraryImportable("org.jetbrains.kotlin.fir.types", "constructClassLikeType")
 val toLookupTagImport = ArbitraryImportable("org.jetbrains.kotlin.fir.types", "toLookupTag")

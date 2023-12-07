@@ -59,7 +59,10 @@ open class PsiRawFirBuilder(
     val baseScopeProvider: FirScopeProvider,
     bodyBuildingMode: BodyBuildingMode = BodyBuildingMode.NORMAL,
 ) : AbstractRawFirBuilder<PsiElement>(session) {
-    protected open fun bindFunctionTarget(target: FirFunctionTarget, function: FirFunction) = target.bind(function)
+    protected open fun bindFunctionTarget(target: FirFunctionTarget, function: FirFunction) {
+        target.bind(function)
+    }
+
     protected open fun FirFunctionBuilder.additionalFunctionInit() {}
     protected open fun FirPropertyBuilder.additionalPropertyInit() {}
     protected open fun FirPropertyAccessorBuilder.additionalPropertyAccessorInit() {}
@@ -2049,20 +2052,21 @@ open class PsiRawFirBuilder(
                             isExternal = hasModifier(EXTERNAL_KEYWORD)
                         }
 
-                        if (hasDelegate()) {
-                            fun extractDelegateExpression() =
-                                buildOrLazyExpression(this@toFirProperty.delegate?.expression?.toFirSourceElement(KtFakeSourceElementKind.WrappedDelegate)) {
-                                    this@toFirProperty.delegate?.expression?.let { expression ->
-                                        expression.toFirExpression("Should have delegate")
-                                    } ?: buildErrorExpression {
+                        val psiPropertyDelegate = this@toFirProperty.delegate
+                        if (psiPropertyDelegate != null) {
+                            fun extractDelegateExpression(): FirExpression {
+                                return buildOrLazyExpression(psiPropertyDelegate.expression?.toFirSourceElement(KtFakeSourceElementKind.WrappedDelegate)) {
+                                    psiPropertyDelegate.expression?.toFirExpression("Should have delegate") ?: buildErrorExpression {
                                         diagnostic = ConeSimpleDiagnostic("Should have delegate", DiagnosticKind.ExpressionExpected)
                                     }
                                 }
+                            }
 
                             val delegateBuilder = FirWrappedDelegateExpressionBuilder().apply {
                                 val delegateExpression = extractDelegateExpression()
-                                source = delegateExpression.source?.fakeElement(KtFakeSourceElementKind.WrappedDelegate)
-                                    ?: this@toFirProperty.delegate?.toFirSourceElement(KtFakeSourceElementKind.WrappedDelegate)
+                                source = (psiPropertyDelegate.expression ?: psiPropertyDelegate)
+                                    .toFirSourceElement(KtFakeSourceElementKind.WrappedDelegate)
+
                                 expression = delegateExpression
                             }
 
@@ -2079,6 +2083,7 @@ open class PsiRawFirBuilder(
                                 isExtension = receiverTypeReference != null,
                                 lazyDelegateExpression = lazyDelegateExpression,
                                 lazyBodyForGeneratedAccessors = lazyBody,
+                                ::bindFunctionTarget,
                             )
                         }
                     }
