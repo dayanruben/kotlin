@@ -14,7 +14,6 @@ import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.gradle.api.file.SourceDirectorySet
-import org.gradle.api.internal.HasConvention
 import org.gradle.api.internal.file.copy.CopySpecInternal
 import org.gradle.api.internal.file.copy.SingleParentCopySpec
 import org.gradle.api.provider.Property
@@ -25,29 +24,21 @@ import org.gradle.kotlin.dsl.findByType
 import org.gradle.language.jvm.tasks.ProcessResources
 import org.jetbrains.kotlin.pill.model.POrderRoot.*
 import org.jetbrains.kotlin.pill.model.PSourceRoot.*
-import org.jetbrains.kotlin.pill.PillExtensionMirror.*
 import org.jetbrains.kotlin.pill.model.*
 import java.io.File
 import java.util.*
-import kotlin.collections.HashMap
 
 typealias OutputDir = String
 typealias GradleProjectPath = String
 
-class ModelParser(private val variant: Variant, private val modulePrefix: String) {
+class ModelParser(private val modulePrefix: String, private val globalExcludedDirectories: List<File>) {
     fun parse(project: Project): PProject {
         if (project != project.rootProject) {
             error("$project is not a root project")
         }
 
-        fun Project.matchesSelectedVariant(): Boolean {
-            val extension = this.findPillExtensionMirror() ?: return true
-            val projectVariant = extension.variant ?: Variant.BASE
-            return projectVariant in variant.includes
-        }
-
         val (includedProjects, excludedProjects) = project.allprojects
-            .partition { it.plugins.hasPlugin("jps-compatible") && it.matchesSelectedVariant() }
+            .partition { it == project || it.plugins.hasPlugin("jps-compatible") }
 
         val modules = includedProjects.flatMap { parseModules(it, excludedProjects) }
         val artifacts = parseArtifacts(project)
@@ -69,7 +60,15 @@ class ModelParser(private val variant: Variant, private val modulePrefix: String
                     artifacts[output.absolutePath] = listOf(path)
                 }
 
-                val jarTask = project.tasks.findByName(sourceSet.jarTaskName) as? Jar ?: continue
+                val jarTaskNameCandidates = buildList {
+                    add(sourceSet.jarTaskName)
+                    when (sourceSet.name) {
+                        SourceSet.MAIN_SOURCE_SET_NAME -> add("jvmJar")
+                        SourceSet.TEST_SOURCE_SET_NAME -> add("jvmJarForTests")
+                    }
+                }
+
+                val jarTask = jarTaskNameCandidates.firstNotNullOfOrNull { project.tasks.findByName(it) } as? Jar ?: continue
                 val embeddedTask = findEmbeddableTask(project, sourceSet)
 
                 for (task in listOfNotNull(jarTask, embeddedTask)) {
@@ -150,7 +149,7 @@ class ModelParser(private val variant: Variant, private val modulePrefix: String
 
             var orderRoots = parseDependencies(project, sourceSet)
             if (productionModule != null) {
-                val productionModuleDependency = PDependency.Module(productionModule.name)
+                val productionModuleDependency = PDependency.Module(productionModule)
                 orderRoots = listOf(POrderRoot(productionModuleDependency, Scope.COMPILE, true)) + orderRoots
             }
 
@@ -182,7 +181,7 @@ class ModelParser(private val variant: Variant, private val modulePrefix: String
             forTests = false,
             rootDirectory = project.projectDir,
             moduleFile = mainModuleFileRelativePath,
-            contentRoots = listOf(PContentRoot(project.projectDir, listOf(), getExcludedDirs(project, excludedProjects))),
+            contentRoots = listOf(PContentRoot(project.projectDir, listOf(), computeAllExcludedDirectories(project, excludedProjects))),
             orderRoots = emptyList(),
             javaLanguageVersion = null,
             kotlinOptions = null,
@@ -199,14 +198,13 @@ class ModelParser(private val variant: Variant, private val modulePrefix: String
         return javaToolchainService.launcherFor(javaPluginExtension.toolchain).orNull?.metadata?.languageVersion?.asInt()
     }
 
-    private fun getExcludedDirs(project: Project, excludedProjects: List<Project>): List<File> {
-        fun getJavaExcludedDirs() = project.plugins.findPlugin(IdeaPlugin::class.java)
-            ?.model?.module?.excludeDirs?.toList() ?: emptyList()
+    private fun computeAllExcludedDirectories(project: Project, excludedProjects: List<Project>): List<File> {
+        val javaExcludedDirectories = project.plugins.findPlugin(IdeaPlugin::class.java)
+            ?.model?.module?.excludeDirs?.toList().orEmpty()
 
-        fun getPillExcludedDirs() = project.findPillExtensionMirror()?.excludedDirs ?: emptyList()
+        val excludedProjectDirectories = if (project == project.rootProject) excludedProjects.map { it.buildDir } else emptyList()
 
-        return getPillExcludedDirs() + getJavaExcludedDirs() + project.buildDir +
-                (if (project == project.rootProject) excludedProjects.map { it.buildDir } else emptyList())
+        return globalExcludedDirectories + javaExcludedDirectories + project.buildDir + excludedProjectDirectories
     }
 
     private fun parseSourceSets(project: Project): List<PSourceSet> {
@@ -224,15 +222,7 @@ class ModelParser(private val variant: Variant, private val modulePrefix: String
 
         for (sourceSet in gradleSourceSets) {
             val kotlinCompileTask = kotlinTasksBySourceSet[sourceSet.name]
-
-            fun Any.getKotlin(): SourceDirectorySet {
-                val kotlinMethod = javaClass.getMethod("getKotlin")
-                kotlinMethod.isAccessible = true
-                return kotlinMethod(this) as SourceDirectorySet
-            }
-
-            val kotlinSourceDirectories = (sourceSet as HasConvention).convention
-                .plugins["kotlin"]?.getKotlin()?.srcDirs ?: emptySet()
+            val kotlinSourceDirectories = (sourceSet.extensions.findByName("kotlin") as? SourceDirectorySet)?.srcDirs ?: emptySet()
 
             val sourceDirectories = (sourceSet.java.sourceDirectories.files + kotlinSourceDirectories).toList()
 

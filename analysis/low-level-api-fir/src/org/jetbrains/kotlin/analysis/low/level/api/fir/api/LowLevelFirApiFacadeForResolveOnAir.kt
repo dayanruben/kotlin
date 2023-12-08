@@ -249,10 +249,9 @@ object LowLevelFirApiFacadeForResolveOnAir {
         firResolveSession: LLFirResolvableResolveSession,
     ): FirAnnotation {
         val annotationCall = buildFileFirAnnotation(
-            session = firFile.moduleData.session,
-            baseScopeProvider = firFile.moduleData.session.kotlinScopeProvider,
+            firFile = firFile,
             fileAnnotation = annotationEntry,
-            replacement = replacement
+            replacement = replacement,
         )
 
         val fileAnnotationsContainer = buildFileAnnotationsContainer {
@@ -456,14 +455,32 @@ object LowLevelFirApiFacadeForResolveOnAir {
 
     private fun bodyResolveRequired(container: KtDeclaration, elementToReplace: PsiElement): Boolean = when {
         container == elementToReplace -> true
-        container is KtDeclarationWithBody -> container.bodyExpression?.isAncestor(elementToReplace)
-        container is KtProperty -> container.delegateExpressionOrInitializer?.isAncestor(elementToReplace)
-        container is KtParameter -> container.defaultValue?.isAncestor(elementToReplace)
+
+        container is KtDeclarationWithBody -> {
+            val bodyExpression = container.bodyExpression
+            val secondaryConstructorSuperCallArgs = (container as? KtSecondaryConstructor)?.getDelegationCallOrNull()?.valueArgumentList
+
+            bodyExpression.isAncestor(elementToReplace) || secondaryConstructorSuperCallArgs.isAncestor(elementToReplace)
+        }
+
+        container is KtProperty -> container.delegateExpressionOrInitializer.isAncestor(elementToReplace)
+        container is KtParameter -> container.defaultValue.isAncestor(elementToReplace)
+
         container is KtEnumEntry -> {
-            container.initializerList?.isAncestor(elementToReplace) == true || container.body?.isAncestor(elementToReplace) == true
+            container.initializerList.isAncestor(elementToReplace) || container.body.isAncestor(elementToReplace)
+        }
+
+        container is KtClassOrObject -> {
+            container.superTypeListEntries.any { superTypeEntry ->
+                when (superTypeEntry) {
+                    is KtSuperTypeCallEntry -> superTypeEntry.valueArgumentList.isAncestor(elementToReplace)
+                    is KtDelegatedSuperTypeEntry -> superTypeEntry.delegateExpression.isAncestor(elementToReplace)
+                    else -> false
+                }
+            }
         }
 
         container is KtScript || container is KtAnonymousInitializer -> true
         else -> false
-    } == true
+    }
 }

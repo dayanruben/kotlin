@@ -126,6 +126,16 @@ open class FirDeclarationsResolveTransformer(
         return danglingModifierList
     }
 
+    override fun transformFileAnnotationsContainer(
+        fileAnnotationsContainer: FirFileAnnotationsContainer,
+        data: ResolutionMode
+    ): FirFileAnnotationsContainer {
+        if (implicitTypeOnly) return fileAnnotationsContainer
+
+        fileAnnotationsContainer.transformAnnotations(transformer, data)
+        return fileAnnotationsContainer
+    }
+
     override fun transformProperty(property: FirProperty, data: ResolutionMode): FirProperty = whileAnalysing(session, property) {
         require(property !is FirSyntheticProperty) { "Synthetic properties should not be processed by body transformers" }
 
@@ -660,11 +670,11 @@ open class FirDeclarationsResolveTransformer(
         context.withContainingClass(regularClass) {
             val isLocal = regularClass.isLocal
             if (isLocal && regularClass !in context.targetedLocalClasses) {
-                return regularClass.runAllPhasesForLocalClass(transformer, components, data, transformer.firResolveContextCollector)
+                return regularClass.runAllPhasesForLocalClass(components, data, transformer.firResolveContextCollector)
             }
 
             if (isLocal || !implicitTypeOnly) {
-                context.insideClassHeader {
+                context.withClassHeader(regularClass) {
                     regularClass.transformAnnotations(this, ResolutionMode.ContextIndependent)
                     regularClass.transformTypeParameters(this, ResolutionMode.ContextIndependent)
                     regularClass.transformSuperTypeRefs(this, ResolutionMode.ContextIndependent)
@@ -700,7 +710,7 @@ open class FirDeclarationsResolveTransformer(
     override fun transformTypeAlias(typeAlias: FirTypeAlias, data: ResolutionMode): FirTypeAlias = whileAnalysing(session, typeAlias) {
         if (implicitTypeOnly) return typeAlias
         if (typeAlias.isLocal && typeAlias !in context.targetedLocalClasses) {
-            return typeAlias.runAllPhasesForLocalClass(transformer, components, data, transformer.firResolveContextCollector)
+            return typeAlias.runAllPhasesForLocalClass(components, data, transformer.firResolveContextCollector)
         }
 
         @OptIn(PrivateForInline::class)
@@ -772,8 +782,9 @@ open class FirDeclarationsResolveTransformer(
         data: ResolutionMode
     ): FirAnonymousObject = whileAnalysing(session, anonymousObject) {
         if (anonymousObject !in context.targetedLocalClasses) {
-            return anonymousObject.runAllPhasesForLocalClass(transformer, components, data, transformer.firResolveContextCollector)
+            return anonymousObject.runAllPhasesForLocalClass(components, data, transformer.firResolveContextCollector)
         }
+
         require(anonymousObject.controlFlowGraphReference == null)
         val buildGraph = !implicitTypeOnly
         dataFlowAnalyzer.enterClass(anonymousObject, buildGraph)
@@ -805,7 +816,7 @@ open class FirDeclarationsResolveTransformer(
                 doTransformTypeParameters(simpleFunction)
             }
 
-            if (containingDeclaration != null && containingDeclaration !is FirClass && (containingDeclaration !is FirScript || simpleFunction.isLocal)) {
+            if (containingDeclaration != null && containingDeclaration !is FirClass && containingDeclaration !is FirFile && (containingDeclaration !is FirScript || simpleFunction.isLocal)) {
                 // For class members everything should be already prepared
                 prepareSignatureForBodyResolve(simpleFunction)
                 simpleFunction.transformStatus(this, simpleFunction.resolveStatus().mode())

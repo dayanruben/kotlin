@@ -5,10 +5,14 @@
 
 package org.jetbrains.kotlin.gradle.dsl
 
+/**
+ * Common options for all Kotlin platforms' compilations and tools.
+ */
 interface KotlinCommonCompilerToolOptions {
 
     /**
      * Report an error if there are any warnings.
+     *
      * Default value: false
      */
     @get:org.gradle.api.tasks.Input
@@ -16,6 +20,7 @@ interface KotlinCommonCompilerToolOptions {
 
     /**
      * Don't generate any warnings.
+     *
      * Default value: false
      */
     @get:org.gradle.api.tasks.Internal
@@ -23,6 +28,7 @@ interface KotlinCommonCompilerToolOptions {
 
     /**
      * Enable verbose logging output.
+     *
      * Default value: false
      */
     @get:org.gradle.api.tasks.Internal
@@ -30,6 +36,7 @@ interface KotlinCommonCompilerToolOptions {
 
     /**
      * A list of additional compiler arguments
+     *
      * Default value: emptyList<String>()
      */
     @get:org.gradle.api.tasks.Input

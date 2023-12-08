@@ -17,10 +17,8 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
-import org.jetbrains.kotlin.fir.resolve.transformers.ReturnTypeCalculator
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformerDispatcher
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirResolveContextCollector
-import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.ImplicitBodyResolveComputationSession
 import org.jetbrains.kotlin.fir.visitors.FirTransformer
 import org.jetbrains.kotlin.fir.visitors.transformSingle
 
@@ -29,14 +27,14 @@ internal abstract class LLFirAbstractBodyTargetResolver(
     lockProvider: LLFirLockProvider,
     private val scopeSession: ScopeSession,
     resolvePhase: FirResolvePhase,
-    protected val implicitBodyResolveComputationSession: ImplicitBodyResolveComputationSession = ImplicitBodyResolveComputationSession(),
+    protected val llImplicitBodyResolveComputationSession: LLImplicitBodyResolveComputationSession = LLImplicitBodyResolveComputationSession(),
     isJumpingPhase: Boolean = false,
 ) : LLFirTargetResolver(resolveTarget, lockProvider, resolvePhase, isJumpingPhase) {
     protected fun createReturnTypeCalculator(
         firResolveContextCollector: FirResolveContextCollector?,
-    ): ReturnTypeCalculator = LLFirReturnTypeCalculatorWithJump(
+    ): LLFirReturnTypeCalculatorWithJump = LLFirReturnTypeCalculatorWithJump(
         scopeSession,
-        implicitBodyResolveComputationSession,
+        llImplicitBodyResolveComputationSession,
         lockProvider,
         firResolveContextCollector,
     )

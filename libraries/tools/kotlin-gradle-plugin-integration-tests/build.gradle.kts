@@ -1,17 +1,11 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
-import org.jetbrains.kotlin.pill.PillExtension
 import java.nio.file.Paths
 
 plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
-    id("jps-compatible")
-}
-
-pill {
-    variant = PillExtension.Variant.FULL
 }
 
 testsJar()
@@ -132,7 +126,7 @@ val cleanTestKitCacheTask = tasks.register<Delete>("cleanTestKitCache") {
     group = "Build"
     description = "Deletes temporary Gradle TestKit cache"
 
-    delete(project.buildDir.resolve("testKitCache"))
+    delete(layout.buildDirectory.dir("testKitCache"))
 }
 
 tasks.register<Delete>("cleanUserHomeKonanDir") {

@@ -259,7 +259,7 @@ FILE: [ResolvedTo(IMPORTS)] implicitTypeUnavailable.kt
         }
 
     }
-    public final [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] var implicitType: R|@R|lowlevel/Anno|(<strcat>(String(return type ), prop#))  kotlin/collections/List<@R|lowlevel/Anno|(<strcat>(String(nested return type ), prop#))  kotlin/collections/List<@R|lowlevel/Anno|(<strcat>(String(nested nested return type ), prop#))  kotlin/Int>>|
+    public final [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] [PostponedSymbolsForAnnotationResolutionKey=[FirNamedFunctionSymbol lowlevel/Obj.explicitType]] var implicitType: R|@R|lowlevel/Anno|(<strcat>(String(return type ), prop#))  kotlin/collections/List<@R|lowlevel/Anno|(<strcat>(String(nested return type ), prop#))  kotlin/collections/List<@R|lowlevel/Anno|(<strcat>(String(nested nested return type ), prop#))  kotlin/Int>>|
         public [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] get(): R|@R|lowlevel/Anno|(<strcat>(String(return type ), prop#))  kotlin/collections/List<@R|lowlevel/Anno|(<strcat>(String(nested return type ), prop#))  kotlin/collections/List<@R|lowlevel/Anno|(<strcat>(String(nested nested return type ), prop#))  kotlin/Int>>| {
             ^ Q|lowlevel/Obj|.R|lowlevel/Obj.explicitType|()
         }
@@ -282,19 +282,19 @@ FILE: [ResolvedTo(IMPORTS)] implicitTypeUnavailable.kt
             LAZY_super<R|kotlin/Any|>
         }
 
-        private final const [ResolvedTo(STATUS)] val prop: <implicit> = LAZY_EXPRESSION
-            private [ResolvedTo(STATUS)] [ContainingClassKey=Obj] get(): <implicit>
+        private final const [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] val prop: R|kotlin/String| = String(str)
+            private [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] [ContainingClassKey=Obj] get(): R|kotlin/String|
 
-        public final [ResolvedTo(CONTRACTS)] fun explicitType(): R|@R|lowlevel/Anno|(position = <strcat>(String(return type ), <Unresolved name: prop>#))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested return type ), <Unresolved name: prop>#))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested nested return type ), <Unresolved name: prop>#))  kotlin/Int>>| {
+        public final [ResolvedTo(ANNOTATION_ARGUMENTS)] fun explicitType(): R|@R|lowlevel/Anno|(position = <strcat>(String(return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested nested return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/Int>>| {
             ^explicitType IntegerLiteral(0)
         }
 
     }
-    public final [ResolvedTo(ANNOTATION_ARGUMENTS)] var implicitType: R|@R|lowlevel/Anno|(position = <strcat>(String(return type ), <Unresolved name: prop>#))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested return type ), <Unresolved name: prop>#))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested nested return type ), <Unresolved name: prop>#))  kotlin/Int>>|
-        public [ResolvedTo(ANNOTATION_ARGUMENTS)] get(): R|@R|lowlevel/Anno|(position = <strcat>(String(return type ), <Unresolved name: prop>#))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested return type ), <Unresolved name: prop>#))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested nested return type ), <Unresolved name: prop>#))  kotlin/Int>>| {
+    public final [ResolvedTo(ANNOTATION_ARGUMENTS)] var implicitType: R|@R|lowlevel/Anno|(position = <strcat>(String(return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested nested return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/Int>>|
+        public [ResolvedTo(ANNOTATION_ARGUMENTS)] get(): R|@R|lowlevel/Anno|(position = <strcat>(String(return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested nested return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/Int>>| {
             ^ Q|lowlevel/Obj|.R|lowlevel/Obj.explicitType|()
         }
-        public [ResolvedTo(ANNOTATION_ARGUMENTS)] set([ResolvedTo(ANNOTATION_ARGUMENTS)] value: R|@R|lowlevel/Anno|(position = <strcat>(String(return type ), <Unresolved name: prop>#))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested return type ), <Unresolved name: prop>#))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested nested return type ), <Unresolved name: prop>#))  kotlin/Int>>|): R|kotlin/Unit| {
+        public [ResolvedTo(ANNOTATION_ARGUMENTS)] set([ResolvedTo(ANNOTATION_ARGUMENTS)] value: R|@R|lowlevel/Anno|(position = <strcat>(String(return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested nested return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/Int>>|): R|kotlin/Unit| {
         }
 
 BODY_RESOLVE:
@@ -313,19 +313,19 @@ FILE: [ResolvedTo(IMPORTS)] implicitTypeUnavailable.kt
             LAZY_super<R|kotlin/Any|>
         }
 
-        private final const [ResolvedTo(STATUS)] val prop: <implicit> = LAZY_EXPRESSION
-            private [ResolvedTo(STATUS)] [ContainingClassKey=Obj] get(): <implicit>
+        private final const [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] val prop: R|kotlin/String| = String(str)
+            private [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] [ContainingClassKey=Obj] get(): R|kotlin/String|
 
-        public final [ResolvedTo(CONTRACTS)] fun explicitType(): R|@R|lowlevel/Anno|(position = <strcat>(String(return type ), <Unresolved name: prop>#))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested return type ), <Unresolved name: prop>#))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested nested return type ), <Unresolved name: prop>#))  kotlin/Int>>| {
+        public final [ResolvedTo(ANNOTATION_ARGUMENTS)] fun explicitType(): R|@R|lowlevel/Anno|(position = <strcat>(String(return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested nested return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/Int>>| {
             ^explicitType IntegerLiteral(0)
         }
 
     }
-    public final [ResolvedTo(BODY_RESOLVE)] var implicitType: R|@R|lowlevel/Anno|(position = <strcat>(String(return type ), <Unresolved name: prop>#))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested return type ), <Unresolved name: prop>#))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested nested return type ), <Unresolved name: prop>#))  kotlin/Int>>|
-        public [ResolvedTo(BODY_RESOLVE)] get(): R|@R|lowlevel/Anno|(position = <strcat>(String(return type ), <Unresolved name: prop>#))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested return type ), <Unresolved name: prop>#))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested nested return type ), <Unresolved name: prop>#))  kotlin/Int>>| {
+    public final [ResolvedTo(BODY_RESOLVE)] var implicitType: R|@R|lowlevel/Anno|(position = <strcat>(String(return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested nested return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/Int>>|
+        public [ResolvedTo(BODY_RESOLVE)] get(): R|@R|lowlevel/Anno|(position = <strcat>(String(return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested nested return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/Int>>| {
             ^ Q|lowlevel/Obj|.R|lowlevel/Obj.explicitType|()
         }
-        public [ResolvedTo(BODY_RESOLVE)] set([ResolvedTo(BODY_RESOLVE)] value: R|@R|lowlevel/Anno|(position = <strcat>(String(return type ), <Unresolved name: prop>#))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested return type ), <Unresolved name: prop>#))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested nested return type ), <Unresolved name: prop>#))  kotlin/Int>>|): R|kotlin/Unit| {
+        public [ResolvedTo(BODY_RESOLVE)] set([ResolvedTo(BODY_RESOLVE)] value: R|@R|lowlevel/Anno|(position = <strcat>(String(return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/collections/List<@R|lowlevel/Anno|(position = <strcat>(String(nested nested return type ), this@R|lowlevel/Obj|.R|lowlevel/Obj.prop|))  kotlin/Int>>|): R|kotlin/Unit| {
         }
 
 FILE RAW TO BODY:

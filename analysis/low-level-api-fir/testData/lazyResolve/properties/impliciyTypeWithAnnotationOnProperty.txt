@@ -179,7 +179,7 @@ FILE: [ResolvedTo(IMPORTS)] impliciyTypeWithAnnotationOnProperty.kt
     public final [ResolvedTo(CONTRACTS)] fun typeWithAnnotation(): R|@R|Anno|(value#)  kotlin/String| {
         ^typeWithAnnotation String()
     }
-    public final [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] var resolveMe: R|@R|Anno|(value#)  kotlin/String|
+    public final [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] [PostponedSymbolsForAnnotationResolutionKey=[FirNamedFunctionSymbol /typeWithAnnotation]] var resolveMe: R|@R|Anno|(value#)  kotlin/String|
         public [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] get(): R|@R|Anno|(value#)  kotlin/String| {
             ^ R|/typeWithAnnotation|()
         }
@@ -199,7 +199,7 @@ FILE: [ResolvedTo(IMPORTS)] impliciyTypeWithAnnotationOnProperty.kt
     }
     public final const [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] val value: R|kotlin/Int| = Int(0)
         public [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] get(): R|kotlin/Int|
-    public final [ResolvedTo(CONTRACTS)] fun typeWithAnnotation(): R|@R|Anno|(number = R|/value|)  kotlin/String| {
+    public final [ResolvedTo(ANNOTATION_ARGUMENTS)] fun typeWithAnnotation(): R|@R|Anno|(number = R|/value|)  kotlin/String| {
         ^typeWithAnnotation String()
     }
     public final [ResolvedTo(ANNOTATION_ARGUMENTS)] var resolveMe: R|@R|Anno|(number = R|/value|)  kotlin/String|
@@ -222,7 +222,7 @@ FILE: [ResolvedTo(IMPORTS)] impliciyTypeWithAnnotationOnProperty.kt
     }
     public final const [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] val value: R|kotlin/Int| = Int(0)
         public [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] get(): R|kotlin/Int|
-    public final [ResolvedTo(CONTRACTS)] fun typeWithAnnotation(): R|@R|Anno|(number = R|/value|)  kotlin/String| {
+    public final [ResolvedTo(ANNOTATION_ARGUMENTS)] fun typeWithAnnotation(): R|@R|Anno|(number = R|/value|)  kotlin/String| {
         ^typeWithAnnotation String()
     }
     public final [ResolvedTo(BODY_RESOLVE)] var resolveMe: R|@R|Anno|(number = R|/value|)  kotlin/String|

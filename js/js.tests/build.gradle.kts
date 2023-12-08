@@ -1,26 +1,25 @@
 import com.github.gradle.node.npm.task.NpmTask
 import com.github.gradle.node.variant.computeNodeExec
+import org.apache.tools.ant.filters.FixCrLfFilter
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
-import org.jetbrains.kotlin.ideaExt.idea
-import org.apache.tools.ant.filters.FixCrLfFilter
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
-import java.util.Properties
+import org.jetbrains.kotlin.ideaExt.idea
+import java.util.*
 
 plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
     id("jps-compatible")
-    id("com.github.node-gradle.node") version "5.0.0"
+    alias(libs.plugins.gradle.node)
 }
 
-val nodeDir = buildDir.resolve("node")
 val cacheRedirectorEnabled = findProperty("cacheRedirectorEnabled")?.toString()?.toBoolean() == true
 
 node {
     download.set(true)
     version.set(nodejsVersion)
-    nodeProjectDir.set(nodeDir)
+    nodeProjectDir.set(layout.buildDirectory.dir("node"))
     if (cacheRedirectorEnabled) {
         distBaseUrl.set("https://cache-redirector.jetbrains.com/nodejs.org/dist")
     }
@@ -231,7 +230,7 @@ val generateTypeScriptJsExportOnFileTests by parallel(
 fun Test.setupNodeJs() {
     systemProperty("javascript.engine.path.NodeJs", com.github.gradle.node.variant.VariantComputer()
         .let { variantComputer ->
-            computeNodeExec(node, variantComputer.computeNodeBinDir(node.computedNodeDir)).get()
+            computeNodeExec(node, variantComputer.computeNodeBinDir(node.resolvedNodeDir, node.resolvedPlatform)).get()
         }
     )
 }
@@ -361,7 +360,7 @@ fun Test.setUpBoxTests() {
         systemProperty("kotlin.ant.launcher.class", "org.apache.tools.ant.Main")
     }
 
-    systemProperty("kotlin.js.test.root.out.dir", "$nodeDir/")
+    systemProperty("kotlin.js.test.root.out.dir", "${node.nodeProjectDir.get().asFile}/")
     systemProperty(
         "overwrite.output", project.providers.gradleProperty("overwrite.output").orNull ?: "false"
     )
@@ -378,8 +377,8 @@ val test = projectTest(jUnitMode = JUnitMode.JUnit5) {
     inputs.dir(rootDir.resolve("dist"))
     inputs.dir(rootDir.resolve("compiler/testData"))
 
-    outputs.dir("$buildDir/out")
-    outputs.dir("$buildDir/out-min")
+    outputs.dir(layout.buildDirectory.dir("out"))
+    outputs.dir(layout.buildDirectory.dir("out-min"))
 
     configureTestDistribution()
 }
@@ -448,26 +447,25 @@ val packageJsonFile = testDataDir.resolve("package.json")
 
 val prepareNpmTestData by task<Copy> {
     inputs.files(testJsFile, packageJsonFile)
-    outputs.dir(nodeDir)
 
     from(testJsFile)
     from(packageJsonFile)
-    into(nodeDir)
+    into(node.nodeProjectDir)
 }
 
 val npmInstall by tasks.getting(NpmTask::class) {
     val packageLockFile = testDataDir.resolve("package-lock.json")
 
-    inputs.file(nodeDir.resolve("package.json"))
+    inputs.file(node.nodeProjectDir.file("package.json"))
     outputs.file(packageLockFile)
     outputs.upToDateWhen { packageLockFile.exists() }
 
-    workingDir.set(nodeDir)
+    workingDir.fileProvider(node.nodeProjectDir.asFile)
     dependsOn(prepareNpmTestData)
 }
 
 val mochaTest by task<MochaTestTask> {
-    workingDir.set(nodeDir)
+    workingDir.fileProvider(node.nodeProjectDir.asFile)
 
     val target = if (project.hasProperty("teamcity")) "runOnTeamcity" else "test"
     args.set(listOf("run", target))
@@ -493,7 +491,7 @@ val runMocha by tasks.registering {
 projectTest("invalidationTest", jUnitMode = JUnitMode.JUnit5) {
     workingDir = rootDir
 
-    useJsIrBoxTests(version = version, buildDir = "$buildDir/")
+    useJsIrBoxTests(version = version, buildDir = layout.buildDirectory)
     include("org/jetbrains/kotlin/incremental/*")
     dependsOn(":dist")
     forwardProperties()

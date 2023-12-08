@@ -5,11 +5,18 @@
 
 package org.jetbrains.kotlin.gradle.dsl
 
+/**
+ * Options for the Kotlin JavaScript dead code elimination tool.
+ */
 interface KotlinJsDceOptions : org.jetbrains.kotlin.gradle.dsl.KotlinCommonToolOptions {
+    /**
+     * @suppress
+     */
     override val options: org.jetbrains.kotlin.gradle.dsl.KotlinJsDceCompilerToolOptions
 
     /**
      * Development mode: don't strip out any code, just copy dependencies.
+     *
      * Default value: false
      */
     var devMode: kotlin.Boolean
@@ -18,6 +25,7 @@ interface KotlinJsDceOptions : org.jetbrains.kotlin.gradle.dsl.KotlinCommonToolO
 
     /**
      * Output directory.
+     *
      * Default value: null
      */
     @Deprecated(message = "Use task 'destinationDirectory' to configure output directory", level = DeprecationLevel.WARNING)

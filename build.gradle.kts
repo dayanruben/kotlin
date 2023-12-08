@@ -32,7 +32,6 @@ buildscript {
 plugins {
     base
     idea
-    id("jps-compatible")
     id("org.jetbrains.gradle.plugin.idea-ext") version "1.0.1" // this version should be in sync with repo/buildsrc-compat/build.gradle.kts
     id("build-time-report")
     id("java-instrumentation")
@@ -48,15 +47,6 @@ plugins {
     if (kotlinBuildProperties.isKotlinNativeEnabled) {
         id("kotlin.native.build-tools-conventions") apply false
     }
-}
-
-pill {
-    excludedDirs(
-        "out",
-        "buildSrc/build",
-        "buildSrc/prepare-deps/intellij-sdk/build",
-        "intellij"
-    )
 }
 
 val isTeamcityBuild = project.kotlinBuildProperties.isTeamcityBuild
@@ -702,14 +692,17 @@ tasks.register("createIdeaHomeForTests") {
     val intellijSdkVersion = rootProject.extra["versions.intellijSdk"]
     outputs.file(ideaBuildNumberFileForTests)
     doFirst {
-        ideaBuildNumberFileForTests.parentFile.mkdirs()
-        ideaBuildNumberFileForTests.writeText("IC-$intellijSdkVersion")
+        with(ideaBuildNumberFileForTests.get().asFile) {
+            parentFile.mkdirs()
+            writeText("IC-$intellijSdkVersion")
+        }
     }
 }
 
 tasks {
     named<Delete>("clean") {
-        delete += setOf("$buildDir/repo", distDir)
+        delete(distDir)
+        delete(layout.buildDirectory.dir("repo"))
     }
 
     register<Delete>("cleanupArtifacts") {
@@ -1056,7 +1049,7 @@ val zipCompilerWithSignature by secureZipTask(zipCompiler)
 configure<IdeaModel> {
     module {
         excludeDirs = files(
-            project.buildDir,
+            project.layout.buildDirectory,
             commonLocalDataDir,
             ".gradle",
             "dependencies",

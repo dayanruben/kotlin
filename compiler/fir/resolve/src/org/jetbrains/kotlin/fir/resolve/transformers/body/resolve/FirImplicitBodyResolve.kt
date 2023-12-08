@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
+import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.resolve.FirRegularTowerDataContexts
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.fir.resolve.transformers.ReturnTypeCalculatorForFull
 import org.jetbrains.kotlin.fir.resolve.transformers.contracts.runContractResolveForLocalClass
 import org.jetbrains.kotlin.fir.scopes.CallableCopyTypeCalculator
 import org.jetbrains.kotlin.fir.scopes.impl.originalForWrappedIntegerOperator
+import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirSyntheticPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
@@ -88,7 +90,7 @@ fun <F : FirClassLikeDeclaration> F.runContractAndBodiesResolutionForLocalClass(
         components.scopeSession,
         implicitBodyResolveComputationSession,
         designationMap,
-        nonLocalDeclarationResolver = currentReturnTypeCalculator,
+        outerTransformer = components.transformer,
     )
 
     val newContext = components.context.createSnapshotForLocalClasses(returnTypeCalculator, targetedClasses)
@@ -103,8 +105,9 @@ fun <F : FirClassLikeDeclaration> F.runContractAndBodiesResolutionForLocalClass(
         implicitTypeOnly = false,
         returnTypeCalculator,
         outerBodyResolveContext = newContext,
-        firResolveContextCollector = firResolveContextCollector
+        firResolveContextCollector = firResolveContextCollector,
     )
+
     return this.transform(transformer, resolutionMode)
 }
 
@@ -114,7 +117,7 @@ open class FirImplicitAwareBodyResolveTransformer(
     private val implicitBodyResolveComputationSession: ImplicitBodyResolveComputationSession,
     phase: FirResolvePhase,
     implicitTypeOnly: Boolean,
-    returnTypeCalculator: ReturnTypeCalculator,
+    returnTypeCalculator: ReturnTypeCalculatorWithJump,
     outerBodyResolveContext: BodyResolveContext? = null,
     firResolveContextCollector: FirResolveContextCollector? = null,
 ) : FirBodyResolveTransformer(
@@ -126,6 +129,11 @@ open class FirImplicitAwareBodyResolveTransformer(
     outerBodyResolveContext,
     firResolveContextCollector
 ) {
+    override fun transformForeignAnnotationCall(symbol: FirBasedSymbol<*>, annotationCall: FirAnnotationCall): FirAnnotationCall {
+        val outerTransformer = (returnTypeCalculator as ReturnTypeCalculatorWithJump).outerTransformer
+        return outerTransformer?.transformForeignAnnotationCall(symbol, annotationCall) ?: annotationCall
+    }
+
     /**
      * This is required to avoid transformations of class annotations
      */
@@ -175,11 +183,7 @@ open class FirImplicitAwareBodyResolveTransformer(
             "Unexpected status in transformCallableMember ($status) for ${member.render()}"
         }
 
-        implicitBodyResolveComputationSession.startComputing(symbol)
-        val result = transform()
-        implicitBodyResolveComputationSession.storeResult(symbol, result)
-
-        return result
+        return implicitBodyResolveComputationSession.compute(symbol, transform)
     }
 }
 
@@ -187,7 +191,7 @@ open class ReturnTypeCalculatorWithJump(
     protected val scopeSession: ScopeSession,
     val implicitBodyResolveComputationSession: ImplicitBodyResolveComputationSession,
     val designationMapForLocalClasses: Map<FirCallableDeclaration, List<FirClassLikeDeclaration>> = mapOf(),
-    private val nonLocalDeclarationResolver: ReturnTypeCalculatorWithJump? = null,
+    val outerTransformer: FirAbstractBodyResolveTransformerDispatcher? = null,
 ) : ReturnTypeCalculator() {
     override val callableCopyTypeCalculator: CallableCopyTypeCalculator = CallableCopyTypeCalculatorWithJump()
 
@@ -296,7 +300,9 @@ open class ReturnTypeCalculatorWithJump(
         val (designation, outerBodyResolveContext) = if (declaration in designationMapForLocalClasses) {
             designationMapForLocalClasses.getValue(declaration) to outerBodyResolveContext
         } else {
-            nonLocalDeclarationResolver?.let { return it.resolveDeclaration(declaration) }
+            (outerTransformer?.returnTypeCalculator as? ReturnTypeCalculatorWithJump)?.resolveDeclaration(declaration)?.let {
+                return it
+            }
 
             val provider = session.firProvider
             val file = provider.getFirCallableContainerFile(symbol)
@@ -353,7 +359,7 @@ open class FirDesignatedBodyResolveTransformerForReturnTypeCalculator(
     session: FirSession,
     scopeSession: ScopeSession,
     implicitBodyResolveComputationSession: ImplicitBodyResolveComputationSession,
-    returnTypeCalculator: ReturnTypeCalculator,
+    returnTypeCalculator: ReturnTypeCalculatorWithJump,
     outerBodyResolveContext: BodyResolveContext? = null
 ) : FirImplicitAwareBodyResolveTransformer(
     session,
@@ -379,7 +385,7 @@ open class FirDesignatedBodyResolveTransformerForReturnTypeCalculator(
     }
 }
 
-class ImplicitBodyResolveComputationSession {
+open class ImplicitBodyResolveComputationSession {
     private val implicitBodyResolveStatusMap = hashMapOf<FirCallableSymbol<*>, ImplicitBodyResolveComputationStatus>()
 
     internal fun getStatus(symbol: FirCallableSymbol<*>): ImplicitBodyResolveComputationStatus {
@@ -392,7 +398,18 @@ class ImplicitBodyResolveComputationSession {
         return implicitBodyResolveStatusMap[symbol] ?: ImplicitBodyResolveComputationStatus.NotComputed
     }
 
-    fun startComputing(symbol: FirCallableSymbol<*>) {
+    protected open fun <D : FirCallableDeclaration> executeTransformation(symbol: FirCallableSymbol<*>, transformation: () -> D): D {
+        return transformation()
+    }
+
+    internal fun <D : FirCallableDeclaration> compute(symbol: FirCallableSymbol<*>, transformation: () -> D): D {
+        startComputing(symbol)
+        val result = executeTransformation(symbol, transformation)
+        storeResult(symbol, result)
+        return result
+    }
+
+    private fun startComputing(symbol: FirCallableSymbol<*>) {
         require(implicitBodyResolveStatusMap[symbol] == null) {
             "Unexpected static in startComputing for $symbol: ${implicitBodyResolveStatusMap[symbol]}"
         }
@@ -400,7 +417,7 @@ class ImplicitBodyResolveComputationSession {
         implicitBodyResolveStatusMap[symbol] = ImplicitBodyResolveComputationStatus.Computing
     }
 
-    fun storeResult(
+    private fun storeResult(
         symbol: FirCallableSymbol<*>,
         transformedDeclaration: FirCallableDeclaration
     ) {

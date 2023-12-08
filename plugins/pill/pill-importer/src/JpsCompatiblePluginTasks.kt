@@ -16,23 +16,19 @@ import org.jdom2.Verifier
 import org.jdom2.input.SAXBuilder
 import org.jdom2.output.Format
 import org.jdom2.output.XMLOutputter
-import org.jetbrains.kotlin.pill.artifact.ArtifactDependencyMapper
-import org.jetbrains.kotlin.pill.artifact.ArtifactGenerator
 import org.jetbrains.kotlin.pill.model.PDependency
 import org.jetbrains.kotlin.pill.model.PLibrary
 import org.jetbrains.kotlin.pill.model.POrderRoot
 import org.jetbrains.kotlin.pill.model.PProject
 import java.io.File
 import java.util.*
-import kotlin.collections.HashMap
 
 const val EMBEDDED_CONFIGURATION_NAME = "embedded"
 
 class JpsCompatiblePluginTasks(
     private val rootProject: Project,
     private val platformDir: File,
-    private val resourcesDir: File,
-    private val isIdePluginAttached: Boolean
+    private val resourcesDir: File
 ) {
     companion object {
         private val DIST_LIBRARIES = listOf(
@@ -71,8 +67,11 @@ class JpsCompatiblePluginTasks(
 
         private val ALLOWED_ARTIFACT_PATTERNS = listOf(
             Regex("kotlinx_cli_jvm_[\\d_]+_SNAPSHOT\\.xml"),
-            Regex("kotlin_test_wasm_js_[\\d_]+_SNAPSHOT\\.xml")
+            Regex("kotlin_test_wasm_js_[\\d_]+_SNAPSHOT\\.xml"),
+            Regex("kotlin_dom_api_compat_[\\d_]+_SNAPSHOT\\.xml")
         )
+
+        private val EXCLUDED_DIRECTORY_PATHS = listOf("out")
     }
 
     private lateinit var projectDir: File
@@ -92,17 +91,11 @@ class JpsCompatiblePluginTasks(
     fun pill() {
         initEnvironment(rootProject)
 
-        val variantOptionValue = System.getProperty("pill.variant", "base").uppercase(Locale.US)
-        val variant = PillExtensionMirror.Variant.values().firstOrNull { it.name == variantOptionValue }
-            ?: run {
-                rootProject.logger.error("Invalid variant name: $variantOptionValue")
-                return
-            }
-
-        rootProject.logger.lifecycle("Pill: Setting up project for the '${variant.name.lowercase(Locale.US)}' variant...")
+        rootProject.logger.lifecycle("Pill: Setting up project...")
 
         val modulePrefix = System.getProperty("pill.module.prefix", "")
-        val modelParser = ModelParser(variant, modulePrefix)
+        val globalExcludedDirectories = EXCLUDED_DIRECTORY_PATHS.map { File(rootProject.projectDir, it) }
+        val modelParser = ModelParser(modulePrefix, globalExcludedDirectories)
 
         val dependencyPatcher = DependencyPatcher(rootProject)
         val dependencyMappers = listOf(dependencyPatcher, ::attachPlatformSources, ::attachAsmSources)
@@ -116,29 +109,6 @@ class JpsCompatiblePluginTasks(
         removeExistingIdeaLibrariesAndModules()
         removeJpsAndPillRunConfigurations()
         removeArtifactConfigurations()
-
-        if (isIdePluginAttached && variant.includes.contains(PillExtensionMirror.Variant.BASE)) {
-            val artifactDependencyMapper = object : ArtifactDependencyMapper {
-                override fun map(dependency: PDependency): List<PDependency> {
-                    val result = mutableListOf<PDependency>()
-
-                    for (mappedDependency in jpsProject.mapDependency(dependency, dependencyMappers)) {
-                        result += mappedDependency
-
-                        if (mappedDependency is PDependency.Module) {
-                            val module = jpsProject.modules.find { it.name == mappedDependency.name }
-                            if (module != null) {
-                                result += module.embeddedDependencies
-                            }
-                        }
-                    }
-
-                    return result
-                }
-            }
-
-            ArtifactGenerator(artifactDependencyMapper).generateKotlinPluginArtifact(rootProject).write()
-        }
 
         copyRunConfigurations()
         setOptionsForDefaultJunitRunConfiguration(rootProject)
@@ -365,7 +335,8 @@ class JpsCompatiblePluginTasks(
             for (path in paths) {
                 val module = project.modules.find { it.path == path }
                 if (module != null) {
-                    result += PDependency.Module(module.name)
+                    result += PDependency.Module(module)
+                    result += module.embeddedDependencies.flatMap { invoke(project, it) }
                     continue
                 }
 

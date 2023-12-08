@@ -80,15 +80,16 @@ fun Project.configureCommonPublicationSettingsForGradle(
                 .configureEach {
                     configureKotlinPomAttributes(project)
                     if (sbom && project.name !in internalPlugins) {
+                        val buildDirectory = project.layout.buildDirectory
                         if (name == "pluginMaven") {
                             val sbomTask = configureSbom(target = "PluginMaven")
-                            artifact("$buildDir/spdx/PluginMaven/PluginMaven.spdx.json") {
+                            artifact(buildDirectory.file("spdx/PluginMaven/PluginMaven.spdx.json")) {
                                 extension = "spdx.json"
                                 builtBy(sbomTask)
                             }
                         } else if (name == "Main") {
                             val sbomTask = configureSbom()
-                            artifact("$buildDir/spdx/MainPublication/MainPublication.spdx.json") {
+                            artifact(buildDirectory.file("spdx/MainPublication/MainPublication.spdx.json")) {
                                 extension = "spdx.json"
                                 builtBy(sbomTask)
                             }
@@ -495,7 +496,7 @@ fun Project.createGradlePluginVariant(
     }
 
     configurations.configureEach {
-        if (this@configureEach.name.startsWith(variantSourceSet.name)) {
+        if (this@configureEach.name.startsWith(variantSourceSet.name) && (isCanBeResolved || isCanBeConsumed)) {
             attributes {
                 attribute(
                     GradlePluginApiVersion.GRADLE_PLUGIN_API_VERSION_ATTRIBUTE,
@@ -664,6 +665,7 @@ fun Project.addBomCheckTask() {
 fun Project.configureDokkaPublication(
     shouldLinkGradleApi: Boolean = false,
     configurePublishingToKotlinlang: Boolean = false,
+    additionalDokkaTaskConfiguration: DokkaTask.() -> Unit = {}
 ) {
 
     val dokkaVersioningPluginVersion = "1.8.10"
@@ -715,6 +717,8 @@ fun Project.configureDokkaPublication(
                         }
                     }
                 }
+
+                additionalDokkaTaskConfiguration()
             }
 
             tasks.named<Jar>(variantSourceSet.javadocJarTaskName) {
@@ -764,6 +768,8 @@ fun Project.configureDokkaPublication(
                             }
                         }
                     }
+
+                    additionalDokkaTaskConfiguration()
                 }
             }
         }
