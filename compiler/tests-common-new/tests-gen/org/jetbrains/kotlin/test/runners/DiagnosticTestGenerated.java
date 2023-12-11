@@ -1951,6 +1951,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("functionParameterAsImplicitReturnType.kt")
+            public void testFunctionParameterAsImplicitReturnType() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/functionParameterAsImplicitReturnType.kt");
+            }
+
+            @Test
             @TestMetadata("illegalRequireKotlinValue.kt")
             public void testIllegalRequireKotlinValue() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/illegalRequireKotlinValue.kt");
@@ -45294,6 +45300,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("forEachUnsafe.kt")
             public void testForEachUnsafe() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/smartcasts/forEachUnsafe.kt");
+            }
+
+            @Test
+            @TestMetadata("invokeRecieverUnsafe.kt")
+            public void testInvokeRecieverUnsafe() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/smartcasts/invokeRecieverUnsafe.kt");
             }
 
             @Test

@@ -27,8 +27,8 @@ abstract class FirTypeScope : FirContainingNamesAwareScope() {
     // Then, for B::foo from scope for B one may receive override A::foo and scope for A
     //
     // Currently, this function and its property brother both have very weak guarantees
-    // - It may silently do nothing on symbols originated from different scope instance
-    // - It may return the same overridden symbols more then once in case of substitution
+    // - It may return the same overridden symbols more than once in case of substitution or intersection
+    //     (but with different base scope)
     abstract fun processDirectOverriddenFunctionsWithBaseScope(
         functionSymbol: FirNamedFunctionSymbol,
         processor: (FirNamedFunctionSymbol, FirTypeScope) -> ProcessorAction
@@ -64,18 +64,7 @@ abstract class FirTypeScope : FirContainingNamesAwareScope() {
     }
 }
 
-class MemberWithBaseScope<out D : FirCallableSymbol<*>>(val member: D, val baseScope: FirTypeScope) {
-    operator fun component1() = member
-    operator fun component2() = baseScope
-
-    override fun equals(other: Any?): Boolean {
-        return other is MemberWithBaseScope<*> && member == other.member
-    }
-
-    override fun hashCode(): Int {
-        return member.hashCode()
-    }
-}
+data class MemberWithBaseScope<out D : FirCallableSymbol<*>>(val member: D, val baseScope: FirTypeScope)
 
 typealias ProcessOverriddenWithBaseScope<D> = FirTypeScope.(D, (D, FirTypeScope) -> ProcessorAction) -> ProcessorAction
 typealias ProcessAllOverridden<D> = FirTypeScope.(D, (D) -> ProcessorAction) -> ProcessorAction
@@ -262,6 +251,14 @@ fun FirTypeScope.getDirectOverriddenFunctions(
         ProcessorAction.NEXT
     }
 
+    /*
+     * The original symbol may appear in `processOverriddenFunctions`, so it should be removed from the resulting
+     *   list to not confuse the caller with a situation when the function directly overrides itself
+     *
+     * For details see FirTypeScope.processDirectOverriddenFunctionsWithBaseScope
+     */
+    overriddenFunctions -= function
+
     return overriddenFunctions.toList()
 }
 
@@ -275,6 +272,11 @@ fun FirTypeScope.getDirectOverriddenProperties(
         overriddenProperties.addOverridden(it, unwrapIntersectionAndSubstitutionOverride)
         ProcessorAction.NEXT
     }
+
+    /*
+     * See comment in `getDirectOverriddenFunctions` function above
+     */
+    overriddenProperties -= property
 
     return overriddenProperties.toList()
 }
@@ -295,7 +297,7 @@ fun FirTypeScope.retrieveDirectOverriddenOf(memberSymbol: FirCallableSymbol<*>):
     }
 }
 
-private inline fun <reified D : FirCallableSymbol<*>> MutableCollection<D>.addOverridden(
+private inline fun <reified D : FirCallableSymbol<*>> MutableSet<D>.addOverridden(
     symbol: D,
     unwrapIntersectionAndSubstitutionOverride: Boolean
 ) {

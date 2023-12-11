@@ -46,8 +46,8 @@ import org.jetbrains.kotlin.name.Name
  * TODO: generic super interface types and generic delegated members.
  */
 class DelegatedMemberGenerator(private val components: Fir2IrComponents) : Fir2IrComponents by components {
-    private val baseFunctionSymbols: MutableMap<IrFunction, List<FirNamedFunctionSymbol>> = mutableMapOf()
-    private val basePropertySymbols: MutableMap<IrProperty, List<FirPropertySymbol>> = mutableMapOf()
+    private val baseFunctionSymbols: MutableMap<IrFunction, Collection<FirNamedFunctionSymbol>> = mutableMapOf()
+    private val basePropertySymbols: MutableMap<IrProperty, Collection<FirPropertySymbol>> = mutableMapOf()
 
     private data class DeclarationBodyInfo(
         val declaration: IrDeclaration,
@@ -121,7 +121,7 @@ class DelegatedMemberGenerator(private val components: Fir2IrComponents) : Fir2I
                     ?: return@processAllFunctions
 
             val delegateToSymbol = findDelegateToSymbol(
-                unwrapped.unwrapSubstitutionOverrides().symbol,
+                unwrapped.symbol,
                 delegateToScope::processFunctionsByName,
                 delegateToScope::processOverriddenFunctions
             ) ?: return@processAllFunctions
@@ -145,7 +145,7 @@ class DelegatedMemberGenerator(private val components: Fir2IrComponents) : Fir2I
                     ?: return@processAllProperties
 
             val delegateToSymbol = findDelegateToSymbol(
-                unwrapped.unwrapSubstitutionOverrides().symbol,
+                unwrapped.symbol,
                 { name, processor ->
                     delegateToScope.processPropertiesByName(name) {
                         if (it !is FirPropertySymbol) return@processPropertiesByName
@@ -167,29 +167,32 @@ class DelegatedMemberGenerator(private val components: Fir2IrComponents) : Fir2I
     }
 
     private inline fun <reified S : FirCallableSymbol<*>> findDelegateToSymbol(
-        unwrappedSymbol: S,
+        symbol: S,
         processCallables: (name: Name, processor: (S) -> Unit) -> Unit,
         crossinline processOverridden: (base: S, processor: (S) -> ProcessorAction) -> ProcessorAction
     ): S? {
+        val unwrappedSymbol = symbol.unwrapUseSiteSubstitutionOverrides()
         var result: S? = null
         // The purpose of this code is to find member in delegate-to scope
         // which matches or overrides unwrappedSymbol (which is in turn taken from subclass scope).
         processCallables(unwrappedSymbol.name) { candidateSymbol ->
             if (result != null) return@processCallables
-            if (candidateSymbol === unwrappedSymbol) {
-                result = candidateSymbol
+            val unwrappedCandidateSymbol = candidateSymbol.unwrapUseSiteSubstitutionOverrides()
+            if (unwrappedCandidateSymbol === unwrappedSymbol) {
+                result = unwrappedCandidateSymbol
                 return@processCallables
             }
-            processOverridden(candidateSymbol) {
-                if (it === unwrappedSymbol) {
-                    result = candidateSymbol
+            processOverridden(candidateSymbol) { overriddenSymbol ->
+                val unwrappedOverriddenSymbol = overriddenSymbol.unwrapUseSiteSubstitutionOverrides()
+                if (unwrappedOverriddenSymbol === unwrappedSymbol) {
+                    result = unwrappedCandidateSymbol
                     ProcessorAction.STOP
                 } else {
                     ProcessorAction.NEXT
                 }
             }
         }
-        return result?.unwrapSubstitutionOverrides()
+        return result
     }
 
     @OptIn(UnsafeDuringIrConstructionAPI::class)
@@ -228,7 +231,7 @@ class DelegatedMemberGenerator(private val components: Fir2IrComponents) : Fir2I
             delegateOverride, subClass, predefinedOrigin = IrDeclarationOrigin.DELEGATED_MEMBER,
             fakeOverrideOwnerLookupTag = firSubClass.symbol.toLookupTag()
         )
-        val baseSymbols = mutableListOf<FirNamedFunctionSymbol>()
+        val baseSymbols = mutableSetOf<FirNamedFunctionSymbol>()
         // the overridden symbols should be collected only after all fake overrides for all superclases are created and bound to their
         // overridden symbols, otherwise in some cases they will be left in inconsistent state leading to the errors in IR
         delegateOverride.processOverriddenFunctionSymbols(firSubClass) {
@@ -361,7 +364,7 @@ class DelegatedMemberGenerator(private val components: Fir2IrComponents) : Fir2I
         )
         // the overridden symbols should be collected only after all fake overrides for all superclases are created and bound to their
         // overridden symbols, otherwise in some cases they will be left in inconsistent state leading to the errors in IR
-        val baseSymbols = mutableListOf<FirPropertySymbol>()
+        val baseSymbols = mutableSetOf<FirPropertySymbol>()
         firDelegateProperty.processOverriddenPropertySymbols(firSubClass) {
             baseSymbols.add(it)
         }

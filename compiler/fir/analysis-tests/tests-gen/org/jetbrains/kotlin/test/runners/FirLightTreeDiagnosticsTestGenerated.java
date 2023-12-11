@@ -4358,6 +4358,12 @@ public class FirLightTreeDiagnosticsTestGenerated extends AbstractFirLightTreeDi
             }
 
             @Test
+            @TestMetadata("singleIntersectionOverride.kt")
+            public void testSingleIntersectionOverride() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/scopes/singleIntersectionOverride.kt");
+            }
+
+            @Test
             @TestMetadata("specialFunctionInJava_1.kt")
             public void testSpecialFunctionInJava_1() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/scopes/specialFunctionInJava_1.kt");
@@ -5282,6 +5288,12 @@ public class FirLightTreeDiagnosticsTestGenerated extends AbstractFirLightTreeDi
         @TestMetadata("castForFunctionsWithDifferentArities.kt")
         public void testCastForFunctionsWithDifferentArities() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/castForFunctionsWithDifferentArities.kt");
+        }
+
+        @Test
+        @TestMetadata("ClassIdDiagnosticRendering.kt")
+        public void testClassIdDiagnosticRendering() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/ClassIdDiagnosticRendering.kt");
         }
 
         @Test
