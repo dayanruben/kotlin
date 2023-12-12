@@ -400,6 +400,9 @@ open class PsiRawFirBuilder(
                 is KtDestructuringDeclaration -> {
                     buildErrorTopLevelDestructuringDeclaration(toFirSourceElement())
                 }
+                is KtClassInitializer -> {
+                    buildAnonymousInitializer(this, ownerClassBuilder.ownerRegularOrAnonymousObjectSymbol)
+                }
                 else -> convert()
             }
         }
@@ -1276,51 +1279,82 @@ open class PsiRawFirBuilder(
             fileName: String,
             sourceFile: KtSourceFile?,
             setup: FirScriptBuilder.() -> Unit = {},
-        ): FirScript = buildScript {
-            source = script.toFirSourceElement()
-            moduleData = baseModuleData
-            origin = FirDeclarationOrigin.Source
-            name = Name.special("<script-$fileName>")
-            symbol = FirScriptSymbol(context.packageFqName.child(name))
-            withContainerSymbol(symbol) {
-                for (declaration in script.declarations) {
-                    when (declaration) {
-                        is KtScriptInitializer -> {
-                            declaration.body?.let { statements.add(it.toFirStatement()) }
-                        }
-                        is KtDestructuringDeclaration -> {
-                            val destructuringContainerVar = generateTemporaryVariable(
-                                baseModuleData,
-                                declaration.toFirSourceElement(),
-                                "destruct",
-                                declaration.initializer.toFirExpression { ConeSyntaxDiagnostic("Initializer required for destructuring declaration") },
-                                extractAnnotationsTo = { extractAnnotationsTo(it) }
-                            ).apply {
-                                isDestructuringDeclarationContainerVariable = true
+        ): FirScript {
+            val scriptName = Name.special("<script-$fileName>")
+            val scriptSymbol = FirScriptSymbol(context.packageFqName.child(scriptName))
+
+            return buildScript {
+                source = script.toFirSourceElement()
+                moduleData = baseModuleData
+                origin = FirDeclarationOrigin.Source
+                name = scriptName
+                symbol = scriptSymbol
+
+                val scriptDeclarationsIter = script.declarations.listIterator()
+                withContainerSymbol(symbol) {
+                    while (scriptDeclarationsIter.hasNext()) {
+                        val declaration = scriptDeclarationsIter.next()
+                        val isLast = !scriptDeclarationsIter.hasNext()
+                        val declarationSource = declaration.toFirSourceElement()
+                        when (declaration) {
+                            is KtScriptInitializer -> {
+                                val firBlock =
+                                    if (isLast) {
+                                        // the last one need to be analyzed in script configurator to decide on result property
+                                        // therefore no lazy conversion in this case
+                                        withForcedLocalContext { declaration.body.toFirBlock() }
+                                    } else {
+                                        buildOrLazyBlock { withForcedLocalContext { declaration.body.toFirBlock() } }
+                                    }
+                                declarations.add(
+                                    buildAnonymousInitializer {
+                                        moduleData = baseModuleData
+                                        origin = FirDeclarationOrigin.Source
+                                        source = declarationSource
+                                        body = firBlock
+                                        declaration.extractAnnotationsTo(this)
+                                        containingDeclarationSymbol = scriptSymbol
+                                    }
+                                )
                             }
-                            val destructuringBlock = generateDestructuringBlock(
-                                baseModuleData,
-                                declaration,
-                                destructuringContainerVar,
-                                tmpVariable = false,
-                                localEntries = false,
-                            ).apply {
-                                statements.forEach {
+                            is KtDestructuringDeclaration -> {
+                                val destructuringContainerVar = generateTemporaryVariable(
+                                    baseModuleData,
+                                    declarationSource,
+                                    "destruct",
+                                    declaration.initializer.toFirExpression { ConeSyntaxDiagnostic("Initializer required for destructuring declaration") },
+                                    origin = FirDeclarationOrigin.Synthetic.ScriptTopLevelDestructuringDeclarationContainer,
+                                    extractAnnotationsTo = { extractAnnotationsTo(it) }
+                                ).apply {
+                                    isDestructuringDeclarationContainerVariable = true
+                                }
+                                declarations.add(destructuringContainerVar)
+
+                                declarations.addDestructuringVariables(
+                                    moduleData,
+                                    declaration,
+                                    destructuringContainerVar,
+                                    tmpVariable = false,
+                                    localEntries = false,
+                                ) {
                                     (it as FirProperty).destructuringDeclarationContainerVariable = destructuringContainerVar.symbol
                                 }
                             }
-                            statements.add(destructuringContainerVar)
-                            statements.addAll(destructuringBlock.statements)
-                        }
-                        else -> {
-                            statements.add(declaration.toFirStatement())
+                            else -> {
+                                val firStatement = declaration.toFirStatement()
+                                if (firStatement is FirDeclaration) {
+                                    declarations.add(firStatement)
+                                } else {
+                                    error("unexpected declaration type in script")
+                                }
+                            }
                         }
                     }
-                }
-                setup()
-                if (sourceFile != null) {
-                    for (configurator in baseSession.extensionService.scriptConfigurators) {
-                        with(configurator) { configure(sourceFile) }
+                    setup()
+                    if (sourceFile != null) {
+                        for (configurator in baseSession.extensionService.scriptConfigurators) {
+                            with(configurator) { configure(sourceFile) }
+                        }
                     }
                 }
             }
@@ -1834,7 +1868,7 @@ open class PsiRawFirBuilder(
                 isLambda = true
                 hasExplicitParameterList = expression.functionLiteral.arrow != null
 
-                val destructuringStatements = mutableListOf<FirStatement>()
+                val destructuringVariables = mutableListOf<FirStatement>()
                 for (valueParameter in literal.valueParameters) {
                     val multiDeclaration = valueParameter.destructuringDeclaration
                     valueParameters += if (multiDeclaration != null) {
@@ -1851,7 +1885,7 @@ open class PsiRawFirBuilder(
                             isNoinline = false
                             isVararg = false
                         }
-                        destructuringStatements.addDestructuringStatements(
+                        destructuringVariables.addDestructuringVariables(
                             baseModuleData,
                             multiDeclaration,
                             multiParameter,
@@ -1880,7 +1914,7 @@ open class PsiRawFirBuilder(
                         val errorExpression = buildErrorExpression(source, ConeSyntaxDiagnostic("Lambda has no body"))
                         FirSingleExpressionBlock(errorExpression.toReturn())
                     } else {
-                        val kind = runIf(destructuringStatements.isNotEmpty()) {
+                        val kind = runIf(destructuringVariables.isNotEmpty()) {
                             KtFakeSourceElementKind.LambdaDestructuringBlock
                         }
                         val bodyBlock = configureBlockWithoutBuilding(ktBody, kind).apply {
@@ -1904,11 +1938,11 @@ open class PsiRawFirBuilder(
                             }
                         }.build()
 
-                        if (destructuringStatements.isNotEmpty()) {
+                        if (destructuringVariables.isNotEmpty()) {
                             // Destructured variables must be in a separate block so that they can be shadowed.
                             buildBlock {
                                 source = bodyBlock.source?.realElement()
-                                statements.addAll(destructuringStatements)
+                                statements.addAll(destructuringVariables)
                                 statements.add(bodyBlock)
                             }
                         } else {
@@ -2179,7 +2213,11 @@ open class PsiRawFirBuilder(
         }
 
         override fun visitAnonymousInitializer(initializer: KtAnonymousInitializer, data: FirElement?): FirElement {
-            return buildAnonymousInitializer {
+            return buildAnonymousInitializer(initializer, null)
+        }
+
+        private fun buildAnonymousInitializer(initializer: KtAnonymousInitializer, containingDeclarationSymbol: FirBasedSymbol<*>?) =
+            buildAnonymousInitializer {
                 withContainerSymbol(symbol) {
                     source = initializer.toFirSourceElement()
                     moduleData = baseModuleData
@@ -2189,11 +2227,10 @@ open class PsiRawFirBuilder(
                             initializer.body.toFirBlock()
                         }
                     }
-                    dispatchReceiverType = context.dispatchReceiverTypesStack.lastOrNull()
+                    this.containingDeclarationSymbol = containingDeclarationSymbol
                     initializer.extractAnnotationsTo(this)
                 }
             }
-        }
 
         override fun visitProperty(property: KtProperty, data: FirElement?): FirElement {
             return property.toFirProperty(
@@ -2738,7 +2775,7 @@ open class PsiRawFirBuilder(
                             extractedAnnotations = ktParameter.modifierList?.annotationEntries?.map { it.convert<FirAnnotation>() },
                         )
                         if (multiDeclaration != null) {
-                            blockBuilder.statements.addDestructuringStatements(
+                            blockBuilder.statements.addDestructuringVariables(
                                 baseModuleData,
                                 multiDeclaration = multiDeclaration,
                                 container = firLoopParameter,

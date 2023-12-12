@@ -18,9 +18,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.llFirMo
 import org.jetbrains.kotlin.analysis.low.level.api.fir.state.LLFirResolvableResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.*
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkDelegatedConstructorIsResolved
-import org.jetbrains.kotlin.fir.FirElementWithResolveState
-import org.jetbrains.kotlin.fir.FirFileAnnotationsContainer
-import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.getExplicitBackingField
 import org.jetbrains.kotlin.fir.expressions.*
@@ -28,20 +26,17 @@ import org.jetbrains.kotlin.fir.expressions.builder.buildLazyDelegatedConstructo
 import org.jetbrains.kotlin.fir.expressions.builder.buildMultiDelegatedConstructorCall
 import org.jetbrains.kotlin.fir.expressions.impl.FirContractCallBlock
 import org.jetbrains.kotlin.fir.expressions.impl.FirLazyDelegatedConstructorCall
-import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.references.FirSuperReference
 import org.jetbrains.kotlin.fir.references.FirThisReference
 import org.jetbrains.kotlin.fir.references.builder.buildExplicitSuperReference
 import org.jetbrains.kotlin.fir.references.builder.buildExplicitThisReference
-import org.jetbrains.kotlin.fir.resolve.FirCodeFragmentContext
-import org.jetbrains.kotlin.fir.resolve.ScopeSession
-import org.jetbrains.kotlin.fir.resolve.SessionHolderImpl
-import org.jetbrains.kotlin.fir.resolve.codeFragmentContext
+import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.dfa.FirControlFlowGraphReferenceImpl
 import org.jetbrains.kotlin.fir.resolve.dfa.RealVariable
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.isUsedInControlFlowGraphBuilderForClass
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.isUsedInControlFlowGraphBuilderForFile
+import org.jetbrains.kotlin.fir.resolve.dfa.cfg.isUsedInControlFlowGraphBuilderForScript
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirBodyResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirResolveContextCollector
 import org.jetbrains.kotlin.fir.resolve.transformers.contracts.FirContractsDslNames
@@ -50,6 +45,8 @@ import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.isResolved
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
+import org.jetbrains.kotlin.fir.visitors.FirTransformer
+import org.jetbrains.kotlin.fir.visitors.transformSingle
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.exceptions.checkWithAttachment
@@ -105,6 +102,7 @@ private class LLFirBodyTargetResolver(
         firResolveContextCollector = firResolveContextCollector,
     ) {
         override val preserveCFGForClasses: Boolean get() = false
+        override val buildCfgForScripts: Boolean get() = false
         override val buildCfgForFiles: Boolean get() = false
 
         /**
@@ -152,6 +150,12 @@ private class LLFirBodyTargetResolver(
                 }
 
                 return true
+            }
+            is FirScript -> {
+                if (target.resolvePhase >= resolverPhase) return true
+                // resolve properties so they are available for CFG building in resolveScript
+                resolveMembersForControlFlowGraph(target)
+                return false
             }
             is FirCodeFragment -> {
                 resolveCodeFragmentContext(target)
@@ -224,6 +228,35 @@ private class LLFirBodyTargetResolver(
         }
     }
 
+    private fun calculateControlFlowGraph(target: FirScript) {
+        checkWithAttachment(
+            target.controlFlowGraphReference == null,
+            { "'controlFlowGraphReference' should be 'null' if the script phase < $resolverPhase)" },
+        ) {
+            withFirEntry("firScript", target)
+        }
+
+        val dataFlowAnalyzer = transformer.declarationsTransformer.dataFlowAnalyzer
+        dataFlowAnalyzer.enterScript(target, buildGraph = true)
+        val controlFlowGraph = dataFlowAnalyzer.exitScript()
+            ?: errorWithAttachment("CFG should not be 'null' as 'buildGraph' is specified") {
+                withFirEntry("firScript", target)
+            }
+
+        target.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(controlFlowGraph))
+    }
+
+    private fun resolveMembersForControlFlowGraph(target: FirScript) {
+        withScript(target) {
+            for (member in target.declarations) {
+                if (member is FirControlFlowGraphOwner && member.isUsedInControlFlowGraphBuilderForScript && member !is FirAnonymousInitializer) {
+                    member.lazyResolveToPhase(resolverPhase.previous)
+                    performResolve(member)
+                }
+            }
+        }
+    }
+
     private fun resolveCodeFragmentContext(firCodeFragment: FirCodeFragment) {
         val ktCodeFragment = firCodeFragment.psi as? KtCodeFragment
             ?: errorWithAttachment("Code fragment source not found") {
@@ -281,38 +314,55 @@ private class LLFirBodyTargetResolver(
 
     override fun rawResolve(target: FirElementWithResolveState) {
         when (target) {
-            is FirScript -> target.takeUnless(FirScript::isCertainlyResolved)?.let(::resolveScript)
+            is FirScript -> {
+                resolveScript(target)
+                calculateControlFlowGraph(target)
+            }
+
             else -> super.rawResolve(target)
         }
 
         LLFirDeclarationModificationService.bodyResolved(target, resolverPhase)
     }
+
+    protected fun resolveScript(script: FirScript) {
+        transformer.declarationsTransformer.withScript(script) {
+            script.parameters.forEach { it.transformSingle(transformer, ResolutionMode.ContextIndependent) }
+            script.transformDeclarations(
+                transformer = object : FirTransformer<Any?>() {
+                    override fun <E : FirElement> transformElement(element: E, data: Any?): E {
+                        if (element !is FirDeclaration || !element.isElementWhichShouldBeResolvedAsPartOfScript) return element
+
+                        transformer.firResolveContextCollector?.addDeclarationContext(element, transformer.context)
+                        return element.transformSingle(transformer, ResolutionMode.ContextIndependent)
+                    }
+                },
+                data = null,
+            )
+
+            script
+        }
+    }
 }
 
 internal object BodyStateKeepers {
     val SCRIPT: StateKeeper<FirScript, FirDesignationWithFile> = stateKeeper { script, designation ->
-        val oldStatements = script.statements
-        if (oldStatements.none { it.isScriptStatement } || script.isCertainlyResolved) return@stateKeeper
+        val oldDeclarations = script.declarations
+        if (oldDeclarations.none { it.isElementWhichShouldBeResolvedAsPartOfScript }) return@stateKeeper
 
-        add(RESULT_PROPERTY, designation)
-        add(FirScript::statements, FirScript::replaceStatements) {
-            val recreatedStatements = FirLazyBodiesCalculator.createStatementsForScript(script)
-            requireSameSize(oldStatements, recreatedStatements)
-
-            ArrayList<FirStatement>(oldStatements.size).apply {
-                oldStatements.zip(recreatedStatements).mapTo(this) { (old, new) ->
-                    when {
-                        !old.isScriptStatement -> old
-                        old is FirProperty && old.origin == FirDeclarationOrigin.ScriptCustomization.ResultProperty -> {
-                            old.replaceInitializer((new as FirProperty).initializer)
-                            old
-                        }
-
-                        else -> new
-                    }
-                }
-            }
+        val lastProperty = oldDeclarations.lastOrNull()
+        if (lastProperty is FirProperty &&
+            lastProperty.origin == FirDeclarationOrigin.ScriptCustomization.ResultProperty &&
+            lastProperty.bodyResolveState != FirPropertyBodyResolveState.ALL_BODIES_RESOLVED
+        ) {
+            add(RESULT_PROPERTY, designation)
+            val recreatedDeclarations = FirLazyBodiesCalculator.createDeclarationsForScript(script)
+            requireSameSize(oldDeclarations, recreatedDeclarations)
+            lastProperty.replaceInitializer((recreatedDeclarations.last() as FirProperty).initializer)
         }
+
+        entityList(oldDeclarations.mapNotNull { it as? FirAnonymousInitializer }, ANONYMOUS_INITIALIZER, designation)
+        add(FirScript::controlFlowGraphReference, FirScript::replaceControlFlowGraphReference)
     }
 
     private val RESULT_PROPERTY: StateKeeper<FirScript, FirDesignationWithFile> = stateKeeper { script, _ ->
@@ -447,17 +497,9 @@ private fun StateKeeperScope<FirFunction, FirDesignationWithFile>.preserveContra
     }
 }
 
-private fun FirScript.findResultProperty(): FirProperty? = statements.findIsInstanceAnd<FirProperty> {
+private fun FirScript.findResultProperty(): FirProperty? = declarations.findIsInstanceAnd<FirProperty> {
     it.origin == FirDeclarationOrigin.ScriptCustomization.ResultProperty
 }
-
-private val FirScript.isCertainlyResolved: Boolean
-    get() {
-        val dependentProperty = findResultProperty() ?: return false
-
-        // This meant that we already resolve the entire script on implicit body phase
-        return dependentProperty.bodyResolveState == FirPropertyBodyResolveState.ALL_BODIES_RESOLVED
-    }
 
 private val FirFunction.isCertainlyResolved: Boolean
     get() {
@@ -528,10 +570,10 @@ private fun delegatedConstructorCallGuard(fir: FirDelegatedConstructorCall): Fir
     }
 }
 
-private fun requireSameSize(old: List<FirStatement>, new: List<FirStatement>) {
+private fun requireSameSize(old: List<FirDeclaration>, new: List<FirDeclaration>) {
     requireWithAttachment(
         condition = old.size == new.size,
-        message = { "The number of statements are different" }
+        message = { "The number of declarations are different" }
     ) {
         withEntryGroup("originalStatements") {
             old.forEachIndexed { index, statement -> withFirEntry("statement$index", statement) }

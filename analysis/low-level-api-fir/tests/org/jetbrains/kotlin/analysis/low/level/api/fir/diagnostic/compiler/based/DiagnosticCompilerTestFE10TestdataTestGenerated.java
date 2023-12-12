@@ -4834,6 +4834,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 }
 
                 @Test
+                @TestMetadata("ambiguityTopLevelVsTopLevelGeneric.kt")
+                public void testAmbiguityTopLevelVsTopLevelGeneric() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/callableReference/function/ambiguityTopLevelVsTopLevelGeneric.kt");
+                }
+
+                @Test
                 @TestMetadata("annotationClassConstructor.kt")
                 public void testAnnotationClassConstructor() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/callableReference/function/annotationClassConstructor.kt");
@@ -17059,6 +17065,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
+            @TestMetadata("UnitUpperboundLambdaReturnType.kt")
+            public void testUnitUpperboundLambdaReturnType() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/UnitUpperboundLambdaReturnType.kt");
+            }
+
+            @Test
             @TestMetadata("unsoundness1.kt")
             public void testUnsoundness1() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/unsoundness1.kt");
@@ -17458,6 +17470,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 }
 
                 @Test
+                @TestMetadata("conversionLastStatementInLambdaGeneric.kt")
+                public void testConversionLastStatementInLambdaGeneric() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/callableReferences/conversionLastStatementInLambdaGeneric.kt");
+                }
+
+                @Test
                 @TestMetadata("kt55931.kt")
                 public void testKt55931() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/callableReferences/kt55931.kt");
@@ -17817,6 +17835,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 @TestMetadata("coersionWithAnonymousFunctionsAndUnresolved.kt")
                 public void testCoersionWithAnonymousFunctionsAndUnresolved() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/coercionToUnit/coersionWithAnonymousFunctionsAndUnresolved.kt");
+                }
+
+                @Test
+                @TestMetadata("genericInApply.kt")
+                public void testGenericInApply() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/coercionToUnit/genericInApply.kt");
                 }
 
                 @Test
@@ -23679,6 +23703,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 @TestMetadata("kt57802.kt")
                 public void testKt57802() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/modifiers/const/kt57802.kt");
+                }
+
+                @Test
+                @TestMetadata("noConstKt12248.kt")
+                public void testNoConstKt12248() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/modifiers/const/noConstKt12248.kt");
                 }
 
                 @Test

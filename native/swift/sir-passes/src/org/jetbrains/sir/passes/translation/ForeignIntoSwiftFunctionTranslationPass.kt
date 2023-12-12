@@ -8,9 +8,8 @@ package org.jetbrains.sir.passes.translation
 import org.jetbrains.kotlin.sir.*
 import org.jetbrains.kotlin.sir.builder.buildFunction
 import org.jetbrains.kotlin.sir.util.SirSwiftModule
-import org.jetbrains.kotlin.sir.KotlinFunction
 import org.jetbrains.kotlin.sir.constants.*
-import org.jetbrains.kotlin.sir.visitors.SirTransformer
+import org.jetbrains.kotlin.sir.visitors.SirTransformerVoid
 import org.jetbrains.sir.passes.SirPass
 import java.lang.IllegalStateException
 
@@ -22,39 +21,39 @@ import java.lang.IllegalStateException
  * or `element` does not contain origin of type `SirOrigin.KotlinEntity.Function`,
  * returns original element.
  */
-class ForeignIntoSwiftFunctionTranslationPass : SirPass<SirElement, Unit> {
+public class ForeignIntoSwiftFunctionTranslationPass : SirPass<SirElement, Nothing?, SirElement> {
 
-    private class Transformer : SirTransformer<Unit>() {
-        override fun <E : SirElement> transformElement(element: E, data: Unit): E {
-            element.transformChildren(this, data)
+    private class Transformer : SirTransformerVoid() {
+        override fun <E : SirElement> transformElement(element: E): E {
+            element.transformChildren(this)
             return element
         }
 
-        override fun transformForeignFunction(foreignFunction: SirForeignFunction, data: Unit): SirDeclaration {
-            val kotlinOrigin = (foreignFunction.origin as? SirOrigin.ForeignEntity)?.entity as? KotlinFunction
-                ?: return foreignFunction
+        override fun transformForeignFunction(function: SirForeignFunction): SirDeclaration {
+            val kotlinOrigin = function.origin as? SirKotlinOrigin.Function
+                ?: return function
             return buildFunction {
-                origin = foreignFunction.origin
-                visibility = foreignFunction.visibility
+                origin = function.origin
+                visibility = function.visibility
                 name = kotlinOrigin.fqName.last()
                 kotlinOrigin.parameters.mapTo(parameters) { it.toSir() }
 
                 returnType = kotlinOrigin.returnType.toSir()
             }.apply {
-                parent = foreignFunction.parent
+                parent = function.parent
             }
         }
     }
 
-    override fun run(element: SirElement, data: Unit): SirElement = element.accept(Transformer(), Unit)
+    override fun run(element: SirElement, data: Nothing?): SirElement = element.transform(Transformer())
 }
 
-private fun KotlinParameter.toSir(): SirParameter = SirParameter(
+private fun SirKotlinOrigin.Parameter.toSir(): SirParameter = SirParameter(
     argumentName = name,
     type = type.toSir(),
 )
 
-private fun KotlinType.toSir(): SirType = SirNominalType(
+private fun SirKotlinOrigin.Type.toSir(): SirType = SirNominalType(
     type = when (this.name) {
         BYTE -> SirSwiftModule.int8
         SHORT -> SirSwiftModule.int16

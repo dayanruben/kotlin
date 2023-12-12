@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 public class FirPsiNativeIrTextTestGenerated extends AbstractFirPsiNativeIrTextTest {
     @Test
     public void testAllFilesPresentInIrText() throws Exception {
-        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/ir/irText"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/ir/irText"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true, "declarations/multiplatform/k1");
     }
 
     @Nested
@@ -363,7 +363,7 @@ public class FirPsiNativeIrTextTestGenerated extends AbstractFirPsiNativeIrTextT
     public class Declarations {
         @Test
         public void testAllFilesPresentInDeclarations() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/ir/irText/declarations"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/ir/irText/declarations"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true, "multiplatform/k1");
         }
 
         @Test
@@ -938,49 +938,47 @@ public class FirPsiNativeIrTextTestGenerated extends AbstractFirPsiNativeIrTextT
         public class Multiplatform {
             @Test
             public void testAllFilesPresentInMultiplatform() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/ir/irText/declarations/multiplatform"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/ir/irText/declarations/multiplatform"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true, "k1");
             }
 
-            @Test
-            @TestMetadata("expectClassInherited.kt")
-            public void testExpectClassInherited() throws Exception {
-                runTest("compiler/testData/ir/irText/declarations/multiplatform/expectClassInherited.kt");
-            }
+            @Nested
+            @TestMetadata("compiler/testData/ir/irText/declarations/multiplatform/k2")
+            @TestDataPath("$PROJECT_ROOT")
+            public class K2 {
+                @Test
+                public void testAllFilesPresentInK2() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/ir/irText/declarations/multiplatform/k2"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+                }
 
-            @Test
-            @TestMetadata("expectIntersectionOverride.kt")
-            public void testExpectIntersectionOverride() throws Exception {
-                runTest("compiler/testData/ir/irText/declarations/multiplatform/expectIntersectionOverride.kt");
-            }
+                @Test
+                @TestMetadata("expectClassInherited.kt")
+                public void testExpectClassInherited() throws Exception {
+                    runTest("compiler/testData/ir/irText/declarations/multiplatform/k2/expectClassInherited.kt");
+                }
 
-            @Test
-            @TestMetadata("expectMemberInNotExpectClass.kt")
-            public void testExpectMemberInNotExpectClass() throws Exception {
-                runTest("compiler/testData/ir/irText/declarations/multiplatform/expectMemberInNotExpectClass.kt");
-            }
+                @Test
+                @TestMetadata("expectIntersectionOverride.kt")
+                public void testExpectIntersectionOverride() throws Exception {
+                    runTest("compiler/testData/ir/irText/declarations/multiplatform/k2/expectIntersectionOverride.kt");
+                }
 
-            @Test
-            @TestMetadata("expectMemberInNotExpectClassFir.kt")
-            public void testExpectMemberInNotExpectClassFir() throws Exception {
-                runTest("compiler/testData/ir/irText/declarations/multiplatform/expectMemberInNotExpectClassFir.kt");
-            }
+                @Test
+                @TestMetadata("expectMemberInNotExpectClass.kt")
+                public void testExpectMemberInNotExpectClass() throws Exception {
+                    runTest("compiler/testData/ir/irText/declarations/multiplatform/k2/expectMemberInNotExpectClass.kt");
+                }
 
-            @Test
-            @TestMetadata("expectedEnumClass.kt")
-            public void testExpectedEnumClass() throws Exception {
-                runTest("compiler/testData/ir/irText/declarations/multiplatform/expectedEnumClass.kt");
-            }
+                @Test
+                @TestMetadata("expectedEnumClass.kt")
+                public void testExpectedEnumClass() throws Exception {
+                    runTest("compiler/testData/ir/irText/declarations/multiplatform/k2/expectedEnumClass.kt");
+                }
 
-            @Test
-            @TestMetadata("expectedEnumClass2.kt")
-            public void testExpectedEnumClass2() throws Exception {
-                runTest("compiler/testData/ir/irText/declarations/multiplatform/expectedEnumClass2.kt");
-            }
-
-            @Test
-            @TestMetadata("expectedSealedClass.kt")
-            public void testExpectedSealedClass() throws Exception {
-                runTest("compiler/testData/ir/irText/declarations/multiplatform/expectedSealedClass.kt");
+                @Test
+                @TestMetadata("expectedSealedClass.kt")
+                public void testExpectedSealedClass() throws Exception {
+                    runTest("compiler/testData/ir/irText/declarations/multiplatform/k2/expectedSealedClass.kt");
+                }
             }
         }
 

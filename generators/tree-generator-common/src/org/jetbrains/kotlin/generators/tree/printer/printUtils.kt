@@ -199,6 +199,32 @@ inline fun SmartPrinter.printBlock(body: () -> Unit) {
 private val dataTP = TypeVariable("D")
 private val dataParameter = FunctionParameter("data", dataTP)
 
+private fun acceptMethodKDoc(
+    visitorParameter: FunctionParameter,
+    dataParameter: FunctionParameter?,
+    returnType: TypeRef,
+    treeName: String,
+) = buildString {
+    append("Runs the provided [")
+    append(visitorParameter.name)
+    append("] on the ")
+    append(treeName)
+    append(" subtree with the root at this node.\n\n")
+    append("@param ")
+    append(visitorParameter.name)
+    append(" The visitor to accept.")
+    if (dataParameter != null) {
+        append("\n@param ")
+        append(dataParameter.name)
+        append(" An arbitrary context to pass to each invocation of [")
+        append(visitorParameter.name)
+        append("]'s methods.")
+    }
+    if (returnType != StandardTypes.unit) {
+        append("\n@return The value returned by the topmost `visit*` invocation.")
+    }
+}
+
 context(ImportCollector)
 fun SmartPrinter.printAcceptMethod(
     element: AbstractElement<*, *, *>,
@@ -211,15 +237,7 @@ fun SmartPrinter.printAcceptMethod(
     val resultTP = TypeVariable("R")
     val visitorParameter = FunctionParameter("visitor", visitorClass.withArgs(resultTP, dataTP))
     if (element.isRootElement) {
-        printKDoc(
-            """
-            Runs the provided [${visitorParameter.name}] on the $treeName subtree with the root at this node.
-            
-            @param ${visitorParameter.name} The visitor to accept.
-            @param ${dataParameter.name} An arbitrary context to pass to each invocation of [${visitorParameter.name}]'s methods.
-            @return The value returned by the topmost `visit*` invocation.
-            """.trimIndent()
-        )
+        printKDoc(acceptMethodKDoc(visitorParameter, dataParameter, resultTP, treeName))
     }
     printFunctionDeclaration(
         name = "accept",
@@ -237,6 +255,27 @@ fun SmartPrinter.printAcceptMethod(
     println()
 }
 
+private fun transformMethodKDoc(
+    transformerParameter: FunctionParameter,
+    dataParameter: FunctionParameter?,
+    treeName: String,
+) = buildString {
+    append("Runs the provided [")
+    append(transformerParameter.name)
+    append("] on the $treeName subtree with the root at this node.\n\n")
+    append("@param ")
+    append(transformerParameter.name)
+    append(" The transformer to use.")
+    if (dataParameter != null) {
+        append("\n@param ")
+        append(dataParameter.name)
+        append(" An arbitrary context to pass to each invocation of [")
+        append(transformerParameter.name)
+        append("]'s methods.")
+    }
+    append("\n@return The transformed node.")
+}
+
 context(ImportCollector)
 fun SmartPrinter.printTransformMethod(
     element: AbstractElement<*, *, *>,
@@ -249,15 +288,7 @@ fun SmartPrinter.printTransformMethod(
     println()
     val transformerParameter = FunctionParameter("transformer", transformerClass.withArgs(dataTP))
     if (element.isRootElement) {
-        printKDoc(
-            """
-            Runs the provided [${transformerParameter.name}] on the $treeName subtree with the root at this node.
-            
-            @param ${transformerParameter.name} The transformer to use.
-            @param ${dataParameter.name} An arbitrary context to pass to each invocation of [${transformerParameter.name}]'s methods.
-            @return The transformed node.
-            """.trimIndent()
-        )
+        printKDoc(transformMethodKDoc(transformerParameter, dataParameter, treeName))
     }
     if (returnType is TypeParameterRef && implementation != null) {
         println("@Suppress(\"UNCHECKED_CAST\")")
@@ -278,6 +309,32 @@ fun SmartPrinter.printTransformMethod(
     println()
 }
 
+private fun acceptChildrenKDoc(visitorParameter: FunctionParameter, dataParameter: FunctionParameter?) = buildString {
+    append("Runs the provided [")
+    append(visitorParameter.name)
+    append("] on subtrees with roots in this node's children.\n\n")
+    append("Basically, calls `accept(")
+    append(visitorParameter.name)
+    if (dataParameter != null) {
+        append(", ")
+        append(dataParameter.name)
+    }
+    append(")` on each child of this node.\n\n")
+    append("Does **not** run [")
+    append(visitorParameter.name)
+    append("] on this node itself.\n\n")
+    append("@param ")
+    append(visitorParameter.name)
+    append(" The visitor for children to accept.")
+    if (dataParameter != null) {
+        append("\n@param ")
+        append(dataParameter.name)
+        append(" An arbitrary context to pass to each invocation of [")
+        append(visitorParameter.name)
+        append("]'s methods.")
+    }
+}
+
 context(ImportCollector)
 fun SmartPrinter.printAcceptChildrenMethod(
     element: FieldContainer<*>,
@@ -290,18 +347,7 @@ fun SmartPrinter.printAcceptChildrenMethod(
     println()
     val visitorParameter = FunctionParameter("visitor", visitorClass.withArgs(visitorResultType, dataTP))
     if (!override) {
-        printKDoc(
-            """
-            Runs the provided [${visitorParameter.name}] on subtrees with roots in this node's children.
-            
-            Basically, calls `accept(${visitorParameter.name}, ${dataParameter.name})` on each child of this node.
-            
-            Does **not** run [${visitorParameter.name}] on this node itself.
-            
-            @param ${visitorParameter.name} The visitor for children to accept.
-            @param ${dataParameter.name} An arbitrary context to pass to each invocation of [${visitorParameter.name}]'s methods.
-            """.trimIndent()
-        )
+        printKDoc(acceptChildrenKDoc(visitorParameter, dataParameter))
     }
     printFunctionDeclaration(
         name = "acceptChildren",
@@ -312,6 +358,36 @@ fun SmartPrinter.printAcceptChildrenMethod(
         override = override,
     )
 }
+
+private fun transformChildrenMethodKDoc(transformerParameter: FunctionParameter, dataParameter: FunctionParameter?, returnType: TypeRef) =
+    buildString {
+        append("Recursively transforms this node's children *in place* using [")
+        append(transformerParameter.name)
+        append("].\n\n")
+        append("Basically, executes `this.child = this.child.transform(")
+        append(transformerParameter.name)
+        if (dataParameter != null) {
+            append(", ")
+            append(dataParameter.name)
+        }
+        append(")` for each child of this node.\n\n")
+        append("Does **not** run [")
+        append(transformerParameter.name)
+        append("] on this node itself.\n\n")
+        append("@param ")
+        append(transformerParameter.name)
+        append(" The transformer to use for transforming the children.")
+        if (dataParameter != null) {
+            append("\n@param ")
+            append(dataParameter.name)
+            append(" An arbitrary context to pass to each invocation of [")
+            append(transformerParameter.name)
+            append("]'s methods.")
+        }
+        if (returnType != StandardTypes.unit) {
+            append("\n@return `this`")
+        }
+    }
 
 context(ImportCollector)
 fun SmartPrinter.printTransformChildrenMethod(
@@ -325,18 +401,7 @@ fun SmartPrinter.printTransformChildrenMethod(
     println()
     val transformerParameter = FunctionParameter("transformer", transformerClass.withArgs(dataTP))
     if (!override) {
-        printKDoc(
-            """
-            Recursively transforms this node's children *in place* using [${transformerParameter.name}].
-            
-            Basically, executes `this.child = this.child.transform(${transformerParameter.name}, ${dataParameter.name})` for each child of this node.
-            
-            Does **not** run [${transformerParameter.name}] on this node itself.
-            
-            @param ${transformerParameter.name} The transformer to use for transforming the children.
-            @param ${dataParameter.name} An arbitrary context to pass to each invocation of [${transformerParameter.name}]'s methods.
-            """.trimIndent() + (if (returnType == StandardTypes.unit) "" else "\n@return `this`")
-        )
+        printKDoc(transformChildrenMethodKDoc(transformerParameter, dataParameter, returnType))
     }
     printFunctionDeclaration(
         name = "transformChildren",
@@ -346,6 +411,53 @@ fun SmartPrinter.printTransformChildrenMethod(
         modality = modality,
         override = override,
     )
+}
+
+context(ImportCollector)
+fun SmartPrinter.printAcceptVoidMethod(visitorType: ClassRef<*>, treeName: String) {
+    val visitorParameter = FunctionParameter("visitor", visitorType)
+    val returnType = StandardTypes.unit
+    printKDoc(acceptMethodKDoc(visitorParameter, null, returnType, treeName))
+    printFunctionDeclaration("accept", listOf(visitorParameter), returnType)
+    println(" = accept(", visitorParameter.name, ", null)")
+}
+
+context(ImportCollector)
+fun SmartPrinter.printAcceptChildrenVoidMethod(visitorType: ClassRef<*>) {
+    val visitorParameter = FunctionParameter("visitor", visitorType)
+    printKDoc(acceptChildrenKDoc(visitorParameter, null))
+    printFunctionDeclaration("acceptChildren", listOf(visitorParameter), StandardTypes.unit)
+    println(" = acceptChildren(", visitorParameter.name, ", null)")
+}
+
+context(ImportCollector)
+fun SmartPrinter.printTransformVoidMethod(element: AbstractElement<*, *, *>, transformerType: ClassRef<*>, treeName: String) {
+    assert(element.isRootElement) { "Expected root element" }
+    val transformerParameter = FunctionParameter("transformer", transformerType)
+    val elementTP = TypeVariable("E", listOf(element))
+    printKDoc(transformMethodKDoc(transformerParameter, null, treeName))
+    printFunctionDeclaration(
+        name = "transform",
+        parameters = listOf(transformerParameter),
+        returnType = elementTP,
+        typeParameters = listOf(elementTP)
+    )
+    println(" =")
+    withIndent {
+        println("transform(", transformerParameter.name, ", null)")
+    }
+}
+
+context(ImportCollector)
+fun SmartPrinter.printTransformChildrenVoidMethod(element: AbstractElement<*, *, *>, visitorType: ClassRef<*>, returnType: TypeRef) {
+    assert(element.isRootElement) { "Expected root element" }
+    val transformerParameter = FunctionParameter("transformer", visitorType)
+    printKDoc(transformChildrenMethodKDoc(transformerParameter, null, returnType))
+    printFunctionDeclaration("transformChildren", listOf(transformerParameter), returnType)
+    println(" =")
+    withIndent {
+        println("transformChildren(", transformerParameter.name, ", null)")
+    }
 }
 
 fun AbstractField<*>.call(): String = if (nullable) "?." else "."

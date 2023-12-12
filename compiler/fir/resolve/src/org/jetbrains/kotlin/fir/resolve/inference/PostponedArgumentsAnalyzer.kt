@@ -66,7 +66,7 @@ class PostponedArgumentsAnalyzer(
 
     private fun processCallableReference(atom: ResolvedCallableReferenceAtom, candidate: Candidate) {
         if (atom.mightNeedAdditionalResolution) {
-            callResolver.resolveCallableReference(candidate.csBuilder, atom)
+            callResolver.resolveCallableReference(candidate.csBuilder, atom, hasSyntheticOuterCall = false)
         }
 
         val callableReferenceAccess = atom.reference
@@ -201,10 +201,10 @@ class PostponedArgumentsAnalyzer(
             }
         }
 
-        if (!hasExpressionInReturnArguments && !lambdaExpectedTypeIsUnit) {
+        if (!hasExpressionInReturnArguments) {
             builder.addSubtypeConstraint(
                 components.session.builtinTypes.unitType.type,
-                returnTypeRef.type,
+                substitute(lambda.returnType),
                 ConeLambdaArgumentConstraintPosition(lambda.atom)
             )
         }
