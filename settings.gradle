@@ -152,6 +152,11 @@ include ":kotlin-noarg-compiler-plugin",
         ":kotlin-noarg-compiler-plugin.backend",
         ":kotlin-noarg-compiler-plugin.cli"
 
+include ":kotlin-swift-export-compiler-plugin",
+        ":kotlin-swift-export-compiler-plugin.embeddable",
+        ":kotlin-swift-export-compiler-plugin.backend",
+        ":kotlin-swift-export-compiler-plugin.cli"
+
 include ":kotlin-sam-with-receiver-compiler-plugin",
         ":kotlin-sam-with-receiver-compiler-plugin.embeddable",
         ":kotlin-sam-with-receiver-compiler-plugin.common",
@@ -171,12 +176,6 @@ include ":kotlin-imports-dumper-compiler-plugin",
         ":plugins:fir-plugin-prototype",
         ":plugins:fir-plugin-prototype:plugin-annotations",
         ":plugins:fir-plugin-prototype:fir-plugin-ic-test",
-        ":kotlin-test:kotlin-test-common",
-        ":kotlin-test:kotlin-test-annotations-common",
-        ":kotlin-test:kotlin-test-jvm",
-        ":kotlin-test:kotlin-test-junit",
-        ":kotlin-test:kotlin-test-junit5",
-        ":kotlin-test:kotlin-test-testng",
         ":kotlin-test-js-runner",
         ":kotlinx-metadata",
         ":kotlinx-metadata-jvm",
@@ -617,10 +616,7 @@ if (buildProperties.inJpsBuildIdeaSync) {
             ":tools:kotlin-stdlib-gen",
 
             ":kotlin-test",
-            ":kotlin-test:kotlin-test-js-ir",
             ":kotlin-test:kotlin-test-js-ir:kotlin-test-js-ir-it",
-            ":kotlin-test:kotlin-test-wasm-js",
-            ":kotlin-test:kotlin-test-wasm-wasi",
             ":native:native.tests"
 
     project(':kotlin-stdlib-common').projectDir = "$rootDir/libraries/stdlib/common" as File
@@ -638,10 +634,7 @@ if (buildProperties.inJpsBuildIdeaSync) {
     project(':tools:ide-plugin-dependencies-validator').projectDir = "$rootDir/libraries/tools/ide-plugin-dependencies-validator" as File
 
     project(':kotlin-test').projectDir = "$rootDir/libraries/kotlin.test" as File
-    project(':kotlin-test:kotlin-test-js-ir').projectDir = "$rootDir/libraries/kotlin.test/js-ir" as File
     project(':kotlin-test:kotlin-test-js-ir:kotlin-test-js-ir-it').projectDir = "$rootDir/libraries/kotlin.test/js-ir/it" as File
-    project(':kotlin-test:kotlin-test-wasm-js').projectDir = "$rootDir/libraries/kotlin.test/wasm/js" as File
-    project(':kotlin-test:kotlin-test-wasm-wasi').projectDir = "$rootDir/libraries/kotlin.test/wasm/wasi" as File
     project(':native:native.tests').projectDir = "$rootDir/native/native.tests" as File
 }
 include ":compiler:android-tests"
@@ -649,12 +642,6 @@ include ":compiler:android-tests"
 rootProject.name = "kotlin"
 
 project(':kotlin-script-runtime').projectDir = "$rootDir/libraries/tools/script-runtime" as File
-project(':kotlin-test:kotlin-test-common').projectDir = "$rootDir/libraries/kotlin.test/common" as File
-project(':kotlin-test:kotlin-test-annotations-common').projectDir = "$rootDir/libraries/kotlin.test/annotations-common" as File
-project(':kotlin-test:kotlin-test-jvm').projectDir = "$rootDir/libraries/kotlin.test/jvm" as File
-project(':kotlin-test:kotlin-test-junit').projectDir = "$rootDir/libraries/kotlin.test/junit" as File
-project(':kotlin-test:kotlin-test-junit5').projectDir = "$rootDir/libraries/kotlin.test/junit5" as File
-project(':kotlin-test:kotlin-test-testng').projectDir = "$rootDir/libraries/kotlin.test/testng" as File
 project(':kotlin-test-js-runner').projectDir = "$rootDir/libraries/tools/kotlin-test-js-runner" as File
 project(':kotlin-reflect').projectDir = "$rootDir/libraries/reflect" as File
 project(':kotlin-reflect-api').projectDir = "$rootDir/libraries/reflect/api" as File
@@ -730,6 +717,11 @@ project(':kotlin-noarg-compiler-plugin.k1').projectDir = "$rootDir/plugins/noarg
 project(':kotlin-noarg-compiler-plugin.k2').projectDir = "$rootDir/plugins/noarg/noarg.k2" as File
 project(':kotlin-noarg-compiler-plugin.backend').projectDir = "$rootDir/plugins/noarg/noarg.backend" as File
 project(':kotlin-noarg-compiler-plugin.cli').projectDir = "$rootDir/plugins/noarg/noarg.cli" as File
+
+project(':kotlin-swift-export-compiler-plugin').projectDir = "$rootDir/plugins/swift-export" as File
+project(':kotlin-swift-export-compiler-plugin.embeddable').projectDir = "$rootDir/plugins/swift-export/swift-export.embeddable" as File
+project(':kotlin-swift-export-compiler-plugin.backend').projectDir = "$rootDir/plugins/swift-export/swift-export.backend" as File
+project(':kotlin-swift-export-compiler-plugin.cli').projectDir = "$rootDir/plugins/swift-export/swift-export.cli" as File
 
 project(':kotlin-sam-with-receiver-compiler-plugin').projectDir = "$rootDir/plugins/sam-with-receiver" as File
 project(':kotlin-sam-with-receiver-compiler-plugin.embeddable').projectDir = "$rootDir/plugins/sam-with-receiver/sam-with-receiver.embeddable" as File

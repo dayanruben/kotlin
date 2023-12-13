@@ -11217,6 +11217,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
         }
 
         @Test
+        @TestMetadata("deserializedSuspendFunctionProperty.kt")
+        public void testDeserializedSuspendFunctionProperty() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/deserializedSuspendFunctionProperty.kt");
+        }
+
+        @Test
         @TestMetadata("dispatchResume.kt")
         public void testDispatchResume() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/dispatchResume.kt");
@@ -16064,12 +16070,6 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
             runTest("compiler/testData/codegen/box/delegatedProperty/varInInnerClass.kt");
         }
 
-        @Test
-        @TestMetadata("withInvoke.kt")
-        public void testWithInvoke() throws Exception {
-            runTest("compiler/testData/codegen/box/delegatedProperty/withInvoke.kt");
-        }
-
         @Nested
         @TestMetadata("compiler/testData/codegen/box/delegatedProperty/delegateToAnother")
         @TestDataPath("$PROJECT_ROOT")
@@ -20838,6 +20838,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
         @TestMetadata("kt48989.kt")
         public void testKt48989() throws Exception {
             runTest("compiler/testData/codegen/box/functions/kt48989.kt");
+        }
+
+        @Test
+        @TestMetadata("kt58825_arrayOverloads.kt")
+        public void testKt58825_arrayOverloads() throws Exception {
+            runTest("compiler/testData/codegen/box/functions/kt58825_arrayOverloads.kt");
         }
 
         @Test
@@ -55068,6 +55074,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
         @TestMetadata("evaluationOrder.kt")
         public void testEvaluationOrder() throws Exception {
             runTest("compiler/testData/codegen/box/vararg/evaluationOrder.kt");
+        }
+
+        @Test
+        @TestMetadata("inlineClassArraysAsNamedArgumentInVararg.kt")
+        public void testInlineClassArraysAsNamedArgumentInVararg() throws Exception {
+            runTest("compiler/testData/codegen/box/vararg/inlineClassArraysAsNamedArgumentInVararg.kt");
         }
 
         @Test

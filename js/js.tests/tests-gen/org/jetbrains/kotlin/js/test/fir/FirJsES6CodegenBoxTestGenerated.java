@@ -7906,6 +7906,12 @@ public class FirJsES6CodegenBoxTestGenerated extends AbstractFirJsES6CodegenBoxT
         }
 
         @Test
+        @TestMetadata("deserializedSuspendFunctionProperty.kt")
+        public void testDeserializedSuspendFunctionProperty() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/deserializedSuspendFunctionProperty.kt");
+        }
+
+        @Test
         @TestMetadata("dispatchResume.kt")
         public void testDispatchResume() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/dispatchResume.kt");
@@ -15181,6 +15187,12 @@ public class FirJsES6CodegenBoxTestGenerated extends AbstractFirJsES6CodegenBoxT
         @TestMetadata("kt48058.kt")
         public void testKt48058() throws Exception {
             runTest("compiler/testData/codegen/box/functions/kt48058.kt");
+        }
+
+        @Test
+        @TestMetadata("kt58825_arrayOverloads.kt")
+        public void testKt58825_arrayOverloads() throws Exception {
+            runTest("compiler/testData/codegen/box/functions/kt58825_arrayOverloads.kt");
         }
 
         @Test
@@ -37825,6 +37837,12 @@ public class FirJsES6CodegenBoxTestGenerated extends AbstractFirJsES6CodegenBoxT
         @TestMetadata("evaluationOrder.kt")
         public void testEvaluationOrder() throws Exception {
             runTest("compiler/testData/codegen/box/vararg/evaluationOrder.kt");
+        }
+
+        @Test
+        @TestMetadata("inlineClassArraysAsNamedArgumentInVararg.kt")
+        public void testInlineClassArraysAsNamedArgumentInVararg() throws Exception {
+            runTest("compiler/testData/codegen/box/vararg/inlineClassArraysAsNamedArgumentInVararg.kt");
         }
 
         @Test

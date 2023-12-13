@@ -90,7 +90,7 @@ fun main(args: Array<String>) {
                 )
             )
 
-            testClass<AbstractIncrementalFirICLightTreeJvmCompilerRunnerTest>(
+            testClass<AbstractIncrementalK2FirICJvmCompilerRunnerTest>(
                 init = incrementalJvmTestData(
                     TargetBackend.JVM_IR,
                     folderToExcludePatternMap = mapOf(
@@ -99,7 +99,7 @@ fun main(args: Array<String>) {
                     )
                 )
             )
-            testClass<AbstractIncrementalFirLightTreeJvmCompilerRunnerTest>(
+            testClass<AbstractIncrementalK2PsiJvmCompilerRunnerTest>(
                 init = incrementalJvmTestData(
                     TargetBackend.JVM_IR,
                     folderToExcludePatternMap = mapOf(

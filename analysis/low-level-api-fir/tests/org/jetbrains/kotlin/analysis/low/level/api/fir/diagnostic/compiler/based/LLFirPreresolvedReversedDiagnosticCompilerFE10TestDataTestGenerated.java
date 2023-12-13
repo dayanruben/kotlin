@@ -1747,6 +1747,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
             }
 
             @Test
+            @TestMetadata("companionAnnotations.kt")
+            public void testCompanionAnnotations() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/companionAnnotations.kt");
+            }
+
+            @Test
             @TestMetadata("constantFromOuterScopeAsAnnotaionParameter.kt")
             public void testConstantFromOuterScopeAsAnnotaionParameter() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/constantFromOuterScopeAsAnnotaionParameter.kt");
@@ -24479,6 +24485,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
             }
 
             @Test
+            @TestMetadata("kt64166.kt")
+            public void testKt64166() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/kt64166.kt");
+            }
+
+            @Test
             @TestMetadata("manyImplMemberNotImplemented.kt")
             public void testManyImplMemberNotImplemented() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/manyImplMemberNotImplemented.kt");
@@ -27276,6 +27288,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
             @TestMetadata("compareToNullable.kt")
             public void testCompareToNullable() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/operatorsOverloading/compareToNullable.kt");
+            }
+
+            @Test
+            @TestMetadata("destructuringDeclarationWithInvoke.kt")
+            public void testDestructuringDeclarationWithInvoke() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/operatorsOverloading/destructuringDeclarationWithInvoke.kt");
             }
 
             @Test
@@ -43260,6 +43278,18 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
                 }
 
                 @Test
+                @TestMetadata("stubCallOnReceiver.kt")
+                public void testStubCallOnReceiver() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/stubCallOnReceiver.kt");
+                }
+
+                @Test
+                @TestMetadata("stubCallOnVariable.kt")
+                public void testStubCallOnVariable() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/stubCallOnVariable.kt");
+                }
+
+                @Test
                 @TestMetadata("suspendCallsWithErrors.kt")
                 public void testSuspendCallsWithErrors() throws Exception {
                     runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/suspendCallsWithErrors.kt");
@@ -44876,6 +44906,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
             @TestMetadata("customClassMutableList.kt")
             public void testCustomClassMutableList() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/purelyImplementedCollection/customClassMutableList.kt");
+            }
+
+            @Test
+            @TestMetadata("intersectionOfPrimitiveBasedFunctions.kt")
+            public void testIntersectionOfPrimitiveBasedFunctions() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/purelyImplementedCollection/intersectionOfPrimitiveBasedFunctions.kt");
             }
 
             @Test

@@ -461,6 +461,11 @@ open class FirTypeResolveTransformer(
 
     fun removeOuterTypeParameterScope(firClass: FirClass): Boolean = !firClass.isInner && !firClass.isLocal
 
+    /**
+     * Changes to the order of scopes should also be reflected in
+     * [org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.BodyResolveContext.withScopesForClass].
+     * Otherwise, we get different behavior between type resolve and body resolve phases.
+     */
     inline fun <R> withClassScopes(
         firClass: FirClass,
         crossinline actionInsideStaticScope: () -> Unit = {},
@@ -491,16 +496,21 @@ open class FirTypeResolveTransformer(
             }
         }
 
-        session.nestedClassifierScope(firClass)?.let(scopesToAdd::add)
         if (firClass is FirRegularClass) {
-            val companionObject = firClass.companionObjectSymbol?.fir
-            if (companionObject != null) {
-                session.nestedClassifierScope(companionObject)?.let(scopesToAdd::add)
-            }
+            // Companion scope is added before static scope,
+            // i.e., static scope is checked first during resolution (scopes are in reverse order).
+            // This is because we can qualify companion scope using `Companion.` if we want to explicitly refer to a declaration in the
+            // companion.
+            firClass.companionObjectSymbol?.fir
+                ?.let(session::nestedClassifierScope)
+                ?.let(scopesToAdd::add)
+
+            session.nestedClassifierScope(firClass)?.let(scopesToAdd::add)
 
             addScopes(scopesToAdd)
             addTypeParametersScope(firClass)
         } else {
+            session.nestedClassifierScope(firClass)?.let(scopesToAdd::add)
             addScopes(scopesToAdd)
         }
 
@@ -568,20 +578,3 @@ open class FirTypeResolveTransformer(
     private fun annotationShouldBeMovedToField(allowedTargets: Set<AnnotationUseSiteTarget>): Boolean =
         (FIELD in allowedTargets || PROPERTY_DELEGATE_FIELD in allowedTargets) && PROPERTY !in allowedTargets
 }
-
-annotation class NoTarget
-
-@Target(AnnotationTarget.VALUE_PARAMETER)
-annotation class Param
-
-@Target(AnnotationTarget.PROPERTY)
-annotation class Prop
-
-@Target(AnnotationTarget.PROPERTY, AnnotationTarget.VALUE_PARAMETER)
-annotation class Both
-
-data class Foo(
-    @NoTarget @Param @Prop @Both val p1: Int,
-    @param:NoTarget @param:Both val p2: String,
-    @property:NoTarget @property:Both val p3: Boolean,
-)

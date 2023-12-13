@@ -1,8 +1,7 @@
 @file:Suppress("UNUSED_VARIABLE", "NAME_SHADOWING")
-import org.gradle.api.internal.component.SoftwareComponentInternal
-import org.gradle.api.internal.component.UsageContext
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+import org.jetbrains.kotlin.gradle.plugin.mpp.GenerateProjectStructureMetadata
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
 import org.jetbrains.kotlin.gradle.targets.js.d8.D8RootPlugin
 import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl
@@ -13,10 +12,11 @@ import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.UsesKotlinJavaToolchain
 import plugins.configureDefaultPublishing
 import plugins.configureKotlinPomAttributes
+import plugins.publishing.*
 import kotlin.io.path.copyTo
 
 plugins {
-    id("kotlin-multiplatform")
+    kotlin("multiplatform")
     `maven-publish`
     signing
 }
@@ -300,11 +300,7 @@ kotlin {
         }
         commonTest {
             dependencies {
-                // TODO: use project dependency when kotlin-test is migrated
-                compileOnly("org.jetbrains.kotlin:kotlin-test-common:$bootstrapKotlinVersion")
-                compileOnly("org.jetbrains.kotlin:kotlin-test-annotations-common:$bootstrapKotlinVersion")
-//                compileOnly(project(":kotlin-test:kotlin-test-common"))
-//                compileOnly(project(":kotlin-test:kotlin-test-annotations-common"))
+                api(kotlinTest())
             }
             kotlin {
                 srcDir("common/test")
@@ -341,7 +337,7 @@ kotlin {
                 optIn("kotlin.io.path.ExperimentalPathApi")
             }
             dependencies {
-                api(project(":kotlin-test:kotlin-test-junit"))
+                api(kotlinTest("junit"))
             }
             kotlin.srcDir("jvm/test")
             kotlin.srcDir("jdk7/test")
@@ -350,7 +346,7 @@ kotlin {
 
         val jvmLongRunningTest by getting {
             dependencies {
-                api(project(":kotlin-test:kotlin-test-junit"))
+                api(kotlinTest("junit"))
             }
             kotlin.srcDir("jvm/testLongRunning")
         }
@@ -417,9 +413,6 @@ kotlin {
             }
         }
         val jsTest by getting {
-            dependencies {
-                api(project(":kotlin-test:kotlin-test-js-ir"))
-            }
             kotlin.srcDir("${jsDir}/test")
         }
 
@@ -494,9 +487,6 @@ kotlin {
         }
         val wasmJsTest by getting {
             dependsOn(wasmCommonTest)
-            dependencies {
-                api(project(":kotlin-test:kotlin-test-wasm-js"))
-            }
             kotlin {
                 srcDir("wasm/js/test")
             }
@@ -513,9 +503,6 @@ kotlin {
         }
         val wasmWasiTest by getting {
             dependsOn(wasmCommonTest)
-            dependencies {
-                api(project(":kotlin-test:kotlin-test-wasm-wasi"))
-            }
             kotlin {
                 srcDir("wasm/wasi/test")
             }
@@ -725,6 +712,7 @@ tasks {
     }
 
     val jvmLongRunningTest by registering(Test::class) {
+        group = "verification"
         val compilation = kotlin.jvm().compilations["longRunningTest"]
         classpath = compilation.compileDependencyFiles + compilation.runtimeDependencyFiles + compilation.output.allOutputs
         testClassesDirs = compilation.output.classesDirs
@@ -755,8 +743,7 @@ tasks {
     /*
     We are using a custom 'kotlin-project-structure-metadata' to ensure 'nativeApiElements' lists 'commonMain' as source set
     */
-    val generateProjectStructureMetadata by existing {
-        val outputFile = file("build/kotlinProjectStructureMetadata/kotlin-project-structure-metadata.json")
+    val generateProjectStructureMetadata by existing(GenerateProjectStructureMetadata::class) {
         val outputTestFile = file("kotlin-project-structure-metadata.beforePatch.json")
         val patchedFile = file("kotlin-project-structure-metadata.json")
 
@@ -769,16 +756,16 @@ tasks {
             This will fail if the kotlin-project-structure-metadata.json file would change unnoticed (w/o updating our patched file)
              */
             run {
-                val outputFileText = outputFile.readText().trim()
+                val outputFileText = resultFile.readText().trim()
                 val expectedFileContent = outputTestFile.readText().trim()
                 if (outputFileText != expectedFileContent)
                     error(
-                        "${outputFile.path} file content does not match expected content\n\n" +
+                        "${resultFile.path} file content does not match expected content\n\n" +
                                 "expected:\n\n$expectedFileContent\n\nactual:\n\n$outputFileText"
                     )
             }
 
-            patchedFile.copyTo(outputFile, overwrite = true)
+            patchedFile.copyTo(resultFile, overwrite = true)
         }
     }
 
@@ -789,11 +776,6 @@ tasks {
 
 configureDefaultPublishing()
 
-open class ComponentsFactoryAccess
-@javax.inject.Inject
-constructor(val factory: SoftwareComponentFactory)
-
-val componentFactory = objects.newInstance<ComponentsFactoryAccess>().factory
 
 val emptyJavadocJar by tasks.creating(org.gradle.api.tasks.bundling.Jar::class) {
     archiveClassifier.set("javadoc")
@@ -906,173 +888,6 @@ publishing {
     }
 }
 
-fun copyAttributes(from: AttributeContainer, to: AttributeContainer,) {
-    // capture type argument T
-    fun <T : Any> copyOneAttribute(from: AttributeContainer, to: AttributeContainer, key: Attribute<T>) {
-        val value = checkNotNull(from.getAttribute(key))
-        to.attribute(key, value)
-    }
-    for (key in from.keySet()) {
-        copyOneAttribute(from, to, key)
-    }
-}
-
-class MultiModuleMavenPublishingConfiguration() {
-    val modules = mutableMapOf<String, Module>()
-
-    class Module(val name: String) {
-        val variants = mutableMapOf<String, Variant>()
-        val includes = mutableSetOf<Module>()
-
-        class Variant(
-            val configurationName: String
-        ) {
-            var name: String = configurationName
-            val attributesConfigurations = mutableListOf<AttributeContainer.() -> Unit>()
-            fun attributes(code: AttributeContainer.() -> Unit) {
-                attributesConfigurations += code
-            }
-
-            val artifactsWithConfigurations = mutableListOf<Pair<Any, ConfigurablePublishArtifact.() -> Unit>>()
-            fun artifact(file: Any, code: ConfigurablePublishArtifact.() -> Unit = {}) {
-                artifactsWithConfigurations += file to code
-            }
-
-            val configurationConfigurations = mutableListOf<Configuration.() -> Unit>()
-            fun configuration(code: Configuration.() -> Unit) {
-                configurationConfigurations += code
-            }
-
-            val variantDetailsConfigurations = mutableListOf<ConfigurationVariantDetails.() -> Unit>()
-            fun configureVariantDetails(code: ConfigurationVariantDetails.() -> Unit) {
-                variantDetailsConfigurations += code
-            }
-        }
-
-        val mavenPublicationConfigurations = mutableListOf<MavenPublication.() -> Unit>()
-        fun mavenPublication(code: MavenPublication.() -> Unit) {
-            mavenPublicationConfigurations += code
-        }
-
-        fun variant(fromConfigurationName: String, code: Variant.() -> Unit = {}): Variant {
-            val variant = variants.getOrPut(fromConfigurationName) { Variant(fromConfigurationName) }
-            variant.code()
-            return variant
-        }
-
-        fun include(vararg modules: Module) {
-            includes.addAll(modules)
-        }
-    }
-
-    fun module(name: String, code: Module.() -> Unit): Module {
-        val module = modules.getOrPut(name) { Module(name) }
-        module.code()
-        return module
-    }
-}
-
-fun configureMultiModuleMavenPublishing(code: MultiModuleMavenPublishingConfiguration.() -> Unit) {
-    val publishingConfiguration = MultiModuleMavenPublishingConfiguration()
-    publishingConfiguration.code()
-
-    val components = publishingConfiguration
-        .modules
-        .mapValues { (_, module) -> project.createModulePublication(module) }
-
-    val componentsWithExternals = publishingConfiguration
-        .modules
-        .filter { (_, module) -> module.includes.isNotEmpty() }
-        .mapValues { (moduleName, module) ->
-            val mainComponent = components[moduleName] ?: error("Component with name $moduleName wasn't created")
-            val externalComponents = module.includes
-                .map { components[it.name] ?: error("Component with name ${it.name} wasn't created") }
-                .toSet()
-            ComponentWithExternalVariants(mainComponent, externalComponents)
-        }
-
-    // override some components wih items from componentsWithExternals
-    val mergedComponents = components + componentsWithExternals
-
-    val publicationsContainer = publishing.publications
-    for ((componentName, component) in mergedComponents) {
-        publicationsContainer.create<MavenPublication>(componentName) {
-            from(component)
-            val module = publishingConfiguration.modules[componentName]!!
-            module.mavenPublicationConfigurations.forEach { configure -> configure() }
-        }
-    }
-}
-
-
-fun Project.createModulePublication(module: MultiModuleMavenPublishingConfiguration.Module): SoftwareComponent {
-    val component = componentFactory.adhoc(module.name)
-    module.variants.values.forEach { addVariant(component, it) }
-
-    val newNames = module.variants.map { it.key to it.value.name }.filter { it.first != it.second }.toMap()
-    return if (newNames.isNotEmpty()) {
-        ComponentWithRenamedVariants(newNames, component as SoftwareComponentInternal)
-    } else {
-        component
-    }
-}
-
-fun Project.addVariant(component: AdhocComponentWithVariants, variant: MultiModuleMavenPublishingConfiguration.Module.Variant) {
-    val configuration = configurations.getOrCreate(variant.configurationName)
-    configuration.apply {
-        isCanBeResolved = false
-        isCanBeConsumed = true
-
-        variant.attributesConfigurations.forEach { configure -> attributes.configure() }
-    }
-
-    for ((artifactNotation, configure) in variant.artifactsWithConfigurations) {
-        artifacts.add(configuration.name, artifactNotation) {
-            configure()
-        }
-    }
-
-    for (configure in variant.configurationConfigurations) {
-        configuration.apply(configure)
-    }
-
-    component.addVariantsFromConfiguration(configuration) {
-        variant.variantDetailsConfigurations.forEach { configure -> configure() }
-    }
-}
-
-private class RenamedVariant(val newName: String, context: UsageContext) : UsageContext by context {
-    override fun getName(): String = newName
-}
-
-private class ComponentWithRenamedVariants(
-    val newNames: Map<String, String>,
-    private val base: SoftwareComponentInternal
-): SoftwareComponentInternal by base {
-
-    override fun getName(): String = base.name
-    override fun getUsages(): Set<UsageContext> {
-        return base.usages.map {
-            val newName = newNames[it.name]
-            if (newName != null) {
-                RenamedVariant(newName, it)
-            } else {
-                it
-            }
-        }.toSet()
-    }
-}
-
-private class ComponentWithExternalVariants(
-    private val mainComponent: SoftwareComponent,
-    private val externalComponents: Set<SoftwareComponent>
-) : ComponentWithVariants, SoftwareComponentInternal {
-    override fun getName(): String = mainComponent.name
-
-    override fun getUsages(): Set<UsageContext> = (mainComponent as SoftwareComponentInternal).usages
-
-    override fun getVariants(): Set<SoftwareComponent> = externalComponents
-}
 
 // endregion
 

@@ -457,18 +457,13 @@ val coreLibProjects by extra {
         ":kotlin-stdlib-jdk7",
         ":kotlin-stdlib-jdk8",
         ":kotlin-test",
-        ":kotlin-test:kotlin-test-annotations-common",
-        ":kotlin-test:kotlin-test-common",
-        ":kotlin-test:kotlin-test-jvm",
-        ":kotlin-test:kotlin-test-junit",
-        ":kotlin-test:kotlin-test-junit5",
-        ":kotlin-test:kotlin-test-testng",
         ":kotlin-reflect"
     )
 }
 val mppProjects by extra {
     listOf(
         ":kotlin-stdlib",
+        ":kotlin-test",
     )
 }
 
@@ -722,7 +717,6 @@ tasks {
     register("coreLibsTest") {
         (coreLibProjects + listOfNotNull(
             ":kotlin-stdlib:samples",
-            ":kotlin-test:kotlin-test-js-ir".takeIf { !kotlinBuildProperties.isInJpsBuildIdeaSync },
             ":kotlin-test:kotlin-test-js-ir:kotlin-test-js-ir-it".takeIf { !kotlinBuildProperties.isInJpsBuildIdeaSync },
             ":kotlinx-metadata-jvm",
             ":tools:binary-compatibility-validator",
