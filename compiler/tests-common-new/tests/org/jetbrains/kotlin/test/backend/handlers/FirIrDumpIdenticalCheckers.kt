@@ -6,11 +6,14 @@
 package org.jetbrains.kotlin.test.backend.handlers
 
 import org.jetbrains.kotlin.test.WrappedException
+import org.jetbrains.kotlin.test.directives.CodegenTestDirectives.DUMP_IR
 import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives
 import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives.FIR_IDENTICAL
 import org.jetbrains.kotlin.test.directives.model.DirectivesContainer
 import org.jetbrains.kotlin.test.model.AfterAnalysisChecker
+import org.jetbrains.kotlin.test.model.FrontendKinds
 import org.jetbrains.kotlin.test.services.TestServices
+import org.jetbrains.kotlin.test.services.defaultsProvider
 import org.jetbrains.kotlin.test.services.moduleStructure
 import org.jetbrains.kotlin.test.utils.FirIdenticalCheckerHelper
 import org.jetbrains.kotlin.test.utils.withExtension
@@ -43,6 +46,10 @@ class FirIrDumpIdenticalChecker(testServices: TestServices) : AfterAnalysisCheck
     override fun check(failedAssertions: List<WrappedException>) {
         if (failedAssertions.isNotEmpty()) return
         val testDataFile = testServices.moduleStructure.originalTestDataFiles.first()
+        if (testServices.defaultsProvider.defaultFrontend != FrontendKinds.FIR)
+            return
+        if (DUMP_IR !in testServices.moduleStructure.allDirectives)
+            return
         if (FIR_IDENTICAL in testServices.moduleStructure.allDirectives) {
             simpleDumpChecker.deleteFirFile(testDataFile)
             prettyDumpChecker.deleteFirFile(testDataFile)

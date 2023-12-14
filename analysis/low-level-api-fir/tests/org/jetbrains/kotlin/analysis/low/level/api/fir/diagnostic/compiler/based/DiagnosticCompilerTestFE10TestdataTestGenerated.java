@@ -24485,6 +24485,18 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
+            @TestMetadata("kt64045.kt")
+            public void testKt64045() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/kt64045.kt");
+            }
+
+            @Test
+            @TestMetadata("kt64045_2.kt")
+            public void testKt64045_2() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/kt64045_2.kt");
+            }
+
+            @Test
             @TestMetadata("kt64166.kt")
             public void testKt64166() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/kt64166.kt");
@@ -25537,6 +25549,22 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 @TestMetadata("header.kt")
                 public void testHeader() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/deprecated/header.kt");
+                }
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/diagnostics/tests/multiplatform/deprecatedAnnotation")
+            @TestDataPath("$PROJECT_ROOT")
+            public class DeprecatedAnnotation {
+                @Test
+                public void testAllFilesPresentInDeprecatedAnnotation() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform/deprecatedAnnotation"), Pattern.compile("^(.+)\\.(kt|kts)$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("hidden.kt")
+                public void testHidden() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/deprecatedAnnotation/hidden.kt");
                 }
             }
 

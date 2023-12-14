@@ -115,7 +115,10 @@ class Fir2IrConverter(
             }
         }
 
-        if (components.session.languageVersionSettings.supportsFeature(LanguageFeature.MultiPlatformProjects)) {
+        if (
+            !configuration.useIrFakeOverrideBuilder &&
+            components.session.languageVersionSettings.supportsFeature(LanguageFeature.MultiPlatformProjects)
+        ) {
             // See the comment to generateUnboundFakeOverrides function itself
             @OptIn(LeakedDeclarationCaches::class)
             declarationStorage.generateUnboundFakeOverrides()
@@ -277,9 +280,7 @@ class Fir2IrConverter(
             }
             declarationStorage.leaveScope(irConstructor.symbol)
         }
-        with(fakeOverrideGenerator) {
-            irClass.computeFakeOverrides(klass, allDeclarations)
-        }
+        fakeOverrideGenerator.computeFakeOverrides(klass, irClass, allDeclarations)
 
         return irClass
     }
@@ -679,11 +680,21 @@ class Fir2IrConverter(
         }
 
         // TODO: drop this function in favor of using [IrModuleDescriptor::shouldSeeInternalsOf] in FakeOverrideBuilder KT-61384
-        private fun friendModulesMap(session: FirSession) = mapOf(
-            session.moduleData.name.asStringStripSpecialMarkers() to session.moduleData.friendDependencies.map {
-                it.name.asStringStripSpecialMarkers()
+        private fun friendModulesMap(session: FirSession): Map<String, List<String>> {
+            fun FirModuleData.friendsMapName() = name.asStringStripSpecialMarkers()
+            fun FirModuleData.collectDependsOnRecursive(set: MutableSet<FirModuleData>) {
+                if (!set.add(this)) return
+                for (dep in dependsOnDependencies) {
+                    dep.collectDependsOnRecursive(set)
+                }
             }
-        )
+            val moduleData = session.moduleData
+            val dependsOnTransitive = buildSet {
+                moduleData.collectDependsOnRecursive(this)
+            }
+            val friendNames = (moduleData.friendDependencies + dependsOnTransitive).map { it.friendsMapName() }
+            return dependsOnTransitive.associate { it.friendsMapName() to friendNames }
+        }
 
         fun createIrModuleFragment(
             session: FirSession,

@@ -34823,6 +34823,18 @@ public class FirLightTreeBlackBoxCodegenWithIrFakeOverrideGeneratorTestGenerated
             }
 
             @Test
+            @TestMetadata("internalOverride2.kt")
+            public void testInternalOverride2() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/k2/internalOverride2.kt");
+            }
+
+            @Test
+            @TestMetadata("javaClassReferencedActualType.kt")
+            public void testJavaClassReferencedActualType() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/k2/javaClassReferencedActualType.kt");
+            }
+
+            @Test
             @TestMetadata("javaMethodWithTypeParameter.kt")
             public void testJavaMethodWithTypeParameter() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/k2/javaMethodWithTypeParameter.kt");
@@ -54583,6 +54595,12 @@ public class FirLightTreeBlackBoxCodegenWithIrFakeOverrideGeneratorTestGenerated
         @TestMetadata("varargInJava.kt")
         public void testVarargInJava() throws Exception {
             runTest("compiler/testData/codegen/box/vararg/varargInJava.kt");
+        }
+
+        @Test
+        @TestMetadata("varargInTailrec.kt")
+        public void testVarargInTailrec() throws Exception {
+            runTest("compiler/testData/codegen/box/vararg/varargInTailrec.kt");
         }
 
         @Test

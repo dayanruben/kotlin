@@ -108,6 +108,7 @@ fun TestConfigurationBuilder.applyDumpSmapDirective() {
 fun TestConfigurationBuilder.configureDumpHandlersForCodegenTest() {
     configureIrHandlersStep {
         dumpHandlersForConverterStep()
+        useAfterAnalysisCheckers(::FirIrDumpIdenticalChecker)
     }
     configureJvmArtifactsHandlersStep {
         dumpHandlersForBackendStep()
