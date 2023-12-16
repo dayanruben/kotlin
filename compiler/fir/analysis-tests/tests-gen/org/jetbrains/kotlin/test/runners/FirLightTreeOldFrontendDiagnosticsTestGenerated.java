@@ -2095,6 +2095,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             }
 
             @Test
+            @TestMetadata("nestedAnnotationOnOuterClassDeclaration.kt")
+            public void testNestedAnnotationOnOuterClassDeclaration() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/nestedAnnotationOnOuterClassDeclaration.kt");
+            }
+
+            @Test
             @TestMetadata("nestedClassAsAnnotationParameter.kt")
             public void testNestedClassAsAnnotationParameter() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/nestedClassAsAnnotationParameter.kt");
@@ -16915,6 +16921,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             }
 
             @Test
+            @TestMetadata("recursiveGenericExtensionReceiver.kt")
+            public void testRecursiveGenericExtensionReceiver() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/recursiveGenericExtensionReceiver.kt");
+            }
+
+            @Test
             @TestMetadata("reportAboutUnresolvedReferenceAsUnresolved.kt")
             public void testReportAboutUnresolvedReferenceAsUnresolved() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/reportAboutUnresolvedReferenceAsUnresolved.kt");
@@ -23679,6 +23691,18 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                 @TestMetadata("kCallable_before.kt")
                 public void testKCallable_before() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/modifiers/const/kCallable_before.kt");
+                }
+
+                @Test
+                @TestMetadata("kClassInEquals.kt")
+                public void testKClassInEquals() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/modifiers/const/kClassInEquals.kt");
+                }
+
+                @Test
+                @TestMetadata("kClassInStringConcatenation.kt")
+                public void testKClassInStringConcatenation() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/modifiers/const/kClassInStringConcatenation.kt");
                 }
 
                 @Test
@@ -36154,6 +36178,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             @TestMetadata("importMemberFromJavaViaAlias.kt")
             public void testImportMemberFromJavaViaAlias() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/typealias/importMemberFromJavaViaAlias.kt");
+            }
+
+            @Test
+            @TestMetadata("importNestedTypeFromTypeAlias.kt")
+            public void testImportNestedTypeFromTypeAlias() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/typealias/importNestedTypeFromTypeAlias.kt");
             }
 
             @Test

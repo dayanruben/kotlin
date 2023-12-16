@@ -19120,6 +19120,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("complexOverriddensInLazyFunctions.kt")
+        public void testComplexOverriddensInLazyFunctions() throws Exception {
+            runTest("compiler/testData/codegen/box/fakeOverride/complexOverriddensInLazyFunctions.kt");
+        }
+
+        @Test
         @TestMetadata("diamondFunction.kt")
         public void testDiamondFunction() throws Exception {
             runTest("compiler/testData/codegen/box/fakeOverride/diamondFunction.kt");
@@ -19147,6 +19153,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("intersectionInLocal.kt")
         public void testIntersectionInLocal() throws Exception {
             runTest("compiler/testData/codegen/box/fakeOverride/intersectionInLocal.kt");
+        }
+
+        @Test
+        @TestMetadata("intersectionOverrideBetweenValAndVar.kt")
+        public void testIntersectionOverrideBetweenValAndVar() throws Exception {
+            runTest("compiler/testData/codegen/box/fakeOverride/intersectionOverrideBetweenValAndVar.kt");
         }
 
         @Test
