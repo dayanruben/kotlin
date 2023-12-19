@@ -29,6 +29,27 @@ fun main() {
     val k2BoxTestDir = listOf("multiplatform/k2")
 
     generateTestGroupSuiteWithJUnit5 {
+        // Former konan local tests
+        testGroup("native/native.tests/tests-gen", "native/native.tests/testData") {
+            testClass<AbstractNativeCodegenBoxTest>(
+                suiteTestClassName = "NativeCodegenLocalTestGenerated",
+                annotations = listOf(
+                    provider<UseExtTestCaseGroupProvider>(),
+                )
+            ) {
+                model("codegen", targetBackend = TargetBackend.NATIVE)
+            }
+            testClass<AbstractNativeCodegenBoxTest>(
+                suiteTestClassName = "FirNativeCodegenLocalTestGenerated",
+                annotations = listOf(
+                    *frontendFir(),
+                    provider<UseExtTestCaseGroupProvider>()
+                )
+            ) {
+                model("codegen", targetBackend = TargetBackend.NATIVE)
+            }
+        }
+
         // Codegen box tests.
         testGroup("native/native.tests/tests-gen", "compiler/testData") {
             testClass<AbstractNativeCodegenBoxTest>(
@@ -186,20 +207,6 @@ fun main() {
                 suiteTestClassName = "CInteropExperimentalTestGenerated"
             ) {
                 model("CInterop/experimental/cases", pattern = "^([^_](.+))$", recursive = false)
-            }
-
-            testClass<AbstractNativeCInteropExecutableTest>(
-                suiteTestClassName = "ClassicNativeCInteropExecutableTest",
-            ) {
-                model("CInterop/executable", pattern = "^([^_](.+))$", recursive = false)
-            }
-            testClass<AbstractNativeCInteropExecutableTest>(
-                suiteTestClassName = "FirNativeCInteropExecutableTest",
-                annotations = listOf(
-                    *frontendFir()
-                ),
-            ) {
-                model("CInterop/executable", pattern = "^([^_](.+))$", recursive = false)
             }
         }
 

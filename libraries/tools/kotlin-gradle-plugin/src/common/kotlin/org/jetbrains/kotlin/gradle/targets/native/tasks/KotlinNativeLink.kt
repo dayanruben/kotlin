@@ -73,19 +73,6 @@ constructor(
     final override val toolOptions: KotlinCommonCompilerToolOptions = objectFactory
         .newInstance<KotlinCommonCompilerToolOptionsDefault>()
 
-    init {
-        @Suppress("DEPRECATION")
-        this.dependsOn(compilation.compileTaskProvider)
-        // Frameworks actively uses symlinks.
-        // Gradle build cache transforms symlinks into regular files https://guides.gradle.org/using-build-cache/#symbolic_links
-        outputs.cacheIf { outputKind != CompilerOutputKind.FRAMEWORK }
-
-        @Suppress("DEPRECATION")
-        this.setSource(compilation.compileTaskProvider.map { it.outputFile })
-        includes.clear() // we need to include non '.kt' or '.kts' files
-        disallowSourceChanges()
-    }
-
     override val destinationDirectory: DirectoryProperty = binary.outputDirectoryProperty
 
     @get:Classpath
@@ -378,7 +365,9 @@ constructor(
                             add("-Xauto-cache-from=${cacheSettings.gradleUserHomeDir}")
                             add("-Xbackend-threads=${cacheSettings.threads}")
                             if (cacheSettings.icEnabled) {
-                                val icCacheDir = cacheSettings.gradleBuildDir.resolve("kotlin-native-ic-cache")
+                                val icCacheDir = cacheSettings.gradleBuildDir
+                                    .resolve("kotlin-native-ic-cache")
+                                    .resolve(binaryName)
                                 icCacheDir.mkdirs()
                                 add("-Xenable-incremental-compilation")
                                 add("-Xic-cache-dir=$icCacheDir")

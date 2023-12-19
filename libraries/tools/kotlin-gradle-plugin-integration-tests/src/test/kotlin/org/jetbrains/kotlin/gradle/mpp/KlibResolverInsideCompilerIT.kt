@@ -18,23 +18,63 @@ import java.nio.file.Path
 import kotlin.test.assertTrue
 import org.jetbrains.kotlin.konan.file.File as KFile
 
-@NativeGradlePluginTests
+@MppGradlePluginTests
 @DisplayName("Tests for KLIB resolver inside the Kotlin compiler")
 class KlibResolverInsideCompilerIT : KGPBaseTest() {
-    @DisplayName("Test resolver with C-interop KLIBs (KT-62515)")
+    @DisplayName("No concrete dependency versions in manifests of C-interop KLIBs (KT-62515)")
     @GradleTest
-    fun testResolverWithCInteropKlibs(gradleVersion: GradleVersion, @TempDir tempDir: Path) {
-        buildProjects(
-            baseDir = "mpp-klib-resolver-inside-compiler/with-cinterop",
+    fun testNoConcreteDependencyVersionsInManifestsOfCInteropKlibs(gradleVersion: GradleVersion, @TempDir tempDir: Path) {
+        buildProjectsForKT62515(
+            baseDir = "mpp-klib-resolver-inside-compiler/no-concrete-dependency-versions-in-manifests-cinterop",
             tempDir, gradleVersion
         )
     }
 
-    @DisplayName("Test resolver without C-interop KLIBs (KT-62515)")
+    @DisplayName("No concrete dependency versions in manifests of non-C-interop KLIBs (KT-62515)")
     @GradleTest
-    fun testResolverWithoutCInteropKlibs(gradleVersion: GradleVersion, @TempDir tempDir: Path) {
-        buildProjects(
-            baseDir = "mpp-klib-resolver-inside-compiler/without-cinterop",
+    fun testNoConcreteDependencyVersionsInManifestsOfRegularKlibs(gradleVersion: GradleVersion, @TempDir tempDir: Path) {
+        buildProjectsForKT62515(
+            baseDir = "mpp-klib-resolver-inside-compiler/no-concrete-dependency-versions-in-manifests-non-cinterop",
+            tempDir, gradleVersion
+        )
+    }
+
+    @DisplayName("KLIBs with duplicated unique_name not discriminated, library + composite build, LV=1.9 (KT-63573)")
+    @GradleTest
+    fun testKlibsWithDuplicatedUniqueNameNotDiscriminated1(gradleVersion: GradleVersion, @TempDir tempDir: Path) {
+        buildLibraryAndCompositeProjectForKT63573(
+            baseDir = "mpp-klib-resolver-inside-compiler/klibs-with-duplicated-unique_name-library-and-composite-build",
+            languageVersion = EnforcedLanguageVersion.K1,
+            tempDir, gradleVersion
+        )
+    }
+
+    @DisplayName("KLIBs with duplicated unique_name not discriminated, library + composite build, LV=2.0 (KT-63573)")
+    @GradleTest
+    fun testKlibsWithDuplicatedUniqueNameNotDiscriminated2(gradleVersion: GradleVersion, @TempDir tempDir: Path) {
+        buildLibraryAndCompositeProjectForKT63573(
+            baseDir = "mpp-klib-resolver-inside-compiler/klibs-with-duplicated-unique_name-library-and-composite-build",
+            languageVersion = EnforcedLanguageVersion.K2,
+            tempDir, gradleVersion
+        )
+    }
+
+    @DisplayName("KLIBs with duplicated unique_name not discriminated, library x2 + app, LV=1.9 (KT-63573)")
+    @GradleTest
+    fun testKlibsWithDuplicatedUniqueNameNotDiscriminated3(gradleVersion: GradleVersion, @TempDir tempDir: Path) {
+        buildTwoLibrariesAndAppForKT63573(
+            baseDir = "mpp-klib-resolver-inside-compiler/klibs-with-duplicated-unique_name-library-x2-and-app",
+            languageVersion = EnforcedLanguageVersion.K1,
+            tempDir, gradleVersion
+        )
+    }
+
+    @DisplayName("KLIBs with duplicated unique_name not discriminated, library x2 + app, LV=2.0 (KT-63573)")
+    @GradleTest
+    fun testKlibsWithDuplicatedUniqueNameNotDiscriminated4(gradleVersion: GradleVersion, @TempDir tempDir: Path) {
+        buildTwoLibrariesAndAppForKT63573(
+            baseDir = "mpp-klib-resolver-inside-compiler/klibs-with-duplicated-unique_name-library-x2-and-app",
+            languageVersion = EnforcedLanguageVersion.K2,
             tempDir, gradleVersion
         )
     }
@@ -45,25 +85,43 @@ class KlibResolverInsideCompilerIT : KGPBaseTest() {
         return localRepo
     }
 
+    private enum class EnforcedLanguageVersion { K1, K2 }
+
     private fun buildProject(
         baseDir: String,
         projectName: String,
         gradleVersion: GradleVersion,
         localRepoDir: Path,
-        buildTask: String = "publish",
+        languageVersion: EnforcedLanguageVersion? = null,
+        buildTask: String = "build",
     ) {
-        project("$baseDir/$projectName", gradleVersion, localRepoDir = localRepoDir) {
+        val buildOptions = with(defaultBuildOptions) {
+            when (languageVersion) {
+                EnforcedLanguageVersion.K1 -> copyEnsuringK1()
+                EnforcedLanguageVersion.K2 -> copyEnsuringK2()
+                else -> this
+            }
+        }
+
+        project("$baseDir/$projectName", gradleVersion, buildOptions, localRepoDir = localRepoDir) {
             build(buildTask)
         }
     }
 
-    private fun buildProjects(baseDir: String, tempDir: Path, gradleVersion: GradleVersion) {
+    private fun buildAndPublishProject(
+        baseDir: String,
+        projectName: String,
+        gradleVersion: GradleVersion,
+        localRepoDir: Path
+    ) = buildProject(baseDir, projectName, gradleVersion, localRepoDir, buildTask = "publish")
+
+    private fun buildProjectsForKT62515(baseDir: String, tempDir: Path, gradleVersion: GradleVersion) {
         val localRepoDir = createLocalRepo(tempDir)
 
-        buildProject(baseDir, "liba-v1", gradleVersion, localRepoDir)
-        buildProject(baseDir, "liba-v2", gradleVersion, localRepoDir)
-        buildProject(baseDir, "libb", gradleVersion, localRepoDir)
-        buildProject(baseDir, "libc", gradleVersion, localRepoDir)
+        buildAndPublishProject(baseDir, "liba-v1", gradleVersion, localRepoDir)
+        buildAndPublishProject(baseDir, "liba-v2", gradleVersion, localRepoDir)
+        buildAndPublishProject(baseDir, "libb", gradleVersion, localRepoDir)
+        buildAndPublishProject(baseDir, "libc", gradleVersion, localRepoDir)
 
         // Make sure there are no `dependency_version_<name>=` properties with non-`unspecified` values in the manifest file:
         localRepoDir.toFile().walkTopDown().forEach { file ->
@@ -90,6 +148,31 @@ class KlibResolverInsideCompilerIT : KGPBaseTest() {
             }
         }
 
-        buildProject(baseDir, "app", gradleVersion, localRepoDir, buildTask = "assemble")
+        buildProject(baseDir, "app", gradleVersion, localRepoDir)
+    }
+
+    private fun buildLibraryAndCompositeProjectForKT63573(
+        baseDir: String,
+        languageVersion: EnforcedLanguageVersion,
+        tempDir: Path,
+        gradleVersion: GradleVersion,
+    ) {
+        val localRepoDir = createLocalRepo(tempDir)
+
+        buildAndPublishProject(baseDir, "external-library", gradleVersion, localRepoDir)
+        buildProject(baseDir, "composite-project", gradleVersion, localRepoDir, languageVersion, ":app:build")
+    }
+
+    private fun buildTwoLibrariesAndAppForKT63573(
+        baseDir: String,
+        languageVersion: EnforcedLanguageVersion,
+        tempDir: Path,
+        gradleVersion: GradleVersion,
+    ) {
+        val localRepoDir = createLocalRepo(tempDir)
+
+        buildAndPublishProject(baseDir, "external-library1", gradleVersion, localRepoDir)
+        buildAndPublishProject(baseDir, "external-library2", gradleVersion, localRepoDir)
+        buildProject(baseDir, "app", gradleVersion, localRepoDir, languageVersion, "build")
     }
 }
