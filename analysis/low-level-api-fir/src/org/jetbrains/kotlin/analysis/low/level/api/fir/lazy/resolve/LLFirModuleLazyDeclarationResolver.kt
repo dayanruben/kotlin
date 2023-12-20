@@ -116,7 +116,7 @@ internal class LLFirModuleLazyDeclarationResolver(val moduleComponents: LLFirMod
         towerDataContextCollector: FirResolveContextCollector?,
     ) {
         try {
-            resolveFileToImportsWithLock(target.firFile)
+            target.firFile?.let(::resolveFileToImportsWithLock)
             if (toPhase == FirResolvePhase.IMPORTS) return
 
             lazyResolveTargets(
@@ -253,7 +253,7 @@ private fun handleExceptionFromResolve(
     designation: LLFirResolveTarget,
     toPhase: FirResolvePhase,
 ): Nothing {
-    val session = designation.firFile.llFirSession
+    val session = designation.target.llFirSession
     val moduleData = session.llFirModuleData
     val module = moduleData.ktModule
 

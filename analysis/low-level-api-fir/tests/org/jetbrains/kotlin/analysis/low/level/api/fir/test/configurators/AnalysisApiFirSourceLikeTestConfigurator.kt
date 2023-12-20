@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.compiler.based.SealedClas
 import org.jetbrains.kotlin.analysis.low.level.api.fir.test.base.AnalysisApiFirTestServiceRegistrar
 import org.jetbrains.kotlin.analysis.low.level.api.fir.test.base.configureOptionalTestCompilerPlugin
 import org.jetbrains.kotlin.analysis.test.framework.project.structure.TestModuleStructureFactory
+import org.jetbrains.kotlin.analysis.test.framework.services.configuration.AnalysisApiJvmEnvironmentConfigurator
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisApiTestConfigurator
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisApiTestServiceRegistrar
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.FrontendKind
@@ -22,7 +23,6 @@ import org.jetbrains.kotlin.test.preprocessors.ExternalAnnotationsSourcePreproce
 import org.jetbrains.kotlin.test.services.TestModuleStructure
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.configuration.ExternalAnnotationsEnvironmentConfigurator
-import org.jetbrains.kotlin.test.services.configuration.JvmEnvironmentConfigurator
 
 abstract class AnalysisApiFirSourceLikeTestConfigurator(override val analyseInDependentSession: Boolean) : AnalysisApiTestConfigurator() {
     override val frontendKind: FrontendKind get() = FrontendKind.Fir
@@ -32,7 +32,8 @@ abstract class AnalysisApiFirSourceLikeTestConfigurator(override val analyseInDe
             useDirectives(SealedClassesInheritorsCaclulatorPreAnalysisHandler.Directives)
             usePreAnalysisHandlers(::SealedClassesInheritorsCaclulatorPreAnalysisHandler)
             configureOptionalTestCompilerPlugin()
-            useConfigurators(::JvmEnvironmentConfigurator, ::ExternalAnnotationsEnvironmentConfigurator)
+            useConfigurators(::AnalysisApiJvmEnvironmentConfigurator)
+            useConfigurators(::ExternalAnnotationsEnvironmentConfigurator)
             useSourcePreprocessor(::ExternalAnnotationsSourcePreprocessor)
         }
     }

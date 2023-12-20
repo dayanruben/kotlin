@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.backend.konan.lower
 
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
-import org.jetbrains.kotlin.ir.util.inlineFunction
 import org.jetbrains.kotlin.backend.common.lower.*
 import org.jetbrains.kotlin.backend.common.peek
 import org.jetbrains.kotlin.backend.common.pop
@@ -15,7 +14,10 @@ import org.jetbrains.kotlin.backend.konan.*
 import org.jetbrains.kotlin.backend.konan.cgen.*
 import org.jetbrains.kotlin.backend.konan.descriptors.allOverriddenFunctions
 import org.jetbrains.kotlin.backend.konan.descriptors.synthesizedName
-import org.jetbrains.kotlin.backend.konan.ir.*
+import org.jetbrains.kotlin.backend.konan.ir.buildSimpleAnnotation
+import org.jetbrains.kotlin.backend.konan.ir.getSuperClassNotAny
+import org.jetbrains.kotlin.backend.konan.ir.isFromInteropLibrary
+import org.jetbrains.kotlin.backend.konan.ir.konanLibrary
 import org.jetbrains.kotlin.backend.konan.llvm.IntrinsicType
 import org.jetbrains.kotlin.backend.konan.llvm.tryGetIntrinsicType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -27,13 +29,9 @@ import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.declarations.impl.IrFieldImpl
-import org.jetbrains.kotlin.ir.declarations.impl.IrFunctionImpl
-import org.jetbrains.kotlin.ir.declarations.impl.IrValueParameterImpl
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.objcinterop.*
-import org.jetbrains.kotlin.ir.util.toIrConst
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
@@ -169,15 +167,15 @@ private class InteropLoweringPart1(val generationState: NativeGenerationState) :
     }
 
     private fun IrFile.addTopLevelInitializer(expression: IrExpression, context: KonanBackendContext, threadLocal: Boolean, eager: Boolean) {
-        val irField = IrFieldImpl(
-                expression.startOffset, expression.endOffset,
+        val irField = context.irFactory.createField(
+                expression.startOffset,
+                expression.endOffset,
                 IrDeclarationOrigin.DEFINED,
-                IrFieldSymbolImpl(),
                 "topLevelInitializer${topLevelInitializersCounter++}".synthesizedName,
-                expression.type,
                 DescriptorVisibilities.PRIVATE,
+                IrFieldSymbolImpl(),
+                expression.type,
                 isFinal = true,
-                isExternal = false,
                 isStatic = true,
         ).apply {
             expression.setDeclarationsParent(this)
@@ -188,7 +186,7 @@ private class InteropLoweringPart1(val generationState: NativeGenerationState) :
             if (eager)
                 annotations += buildSimpleAnnotation(context.irBuiltIns, startOffset, endOffset, context.ir.symbols.eagerInitialization.owner)
 
-            initializer = IrExpressionBodyImpl(startOffset, endOffset, expression)
+            initializer = context.irFactory.createExpressionBody(startOffset, endOffset, expression)
         }
         addChild(irField)
     }
@@ -271,22 +269,21 @@ private class InteropLoweringPart1(val generationState: NativeGenerationState) :
 
         // Generate `override fun init...(...) = this.initBy(...)`:
 
-        return IrFunctionImpl(
-                constructor.startOffset, constructor.endOffset,
+        return context.irFactory.createSimpleFunction(
+                constructor.startOffset,
+                constructor.endOffset,
                 OVERRIDING_INITIALIZER_BY_CONSTRUCTOR,
-                IrSimpleFunctionSymbolImpl(),
                 initMethod.name,
                 DescriptorVisibilities.PUBLIC,
-                Modality.OPEN,
-                irClass.defaultType,
                 isInline = false,
-                isExternal = false,
+                isExpect = false,
+                irClass.defaultType,
+                Modality.OPEN,
+                IrSimpleFunctionSymbolImpl(),
                 isTailrec = false,
                 isSuspend = false,
-                isExpect = false,
-                isFakeOverride = false,
                 isOperator = false,
-                isInfix = false
+                isInfix = false,
         ).also { result ->
             result.parent = irClass
             result.createDispatchReceiverParameter()
@@ -369,39 +366,39 @@ private class InteropLoweringPart1(val generationState: NativeGenerationState) :
         function.valueParameters.mapTo(parameterTypes) { nativePtrType }
 
         val newFunction =
-            IrFunctionImpl(
-                    function.startOffset, function.endOffset,
+            context.irFactory.createSimpleFunction(
+                    function.startOffset,
+                    function.endOffset,
                     // The generated function is called by ObjC and contains Kotlin code, so
                     // it must switch thread state and potentially initialize runtime on this thread.
                     CBridgeOrigin.C_TO_KOTLIN_BRIDGE,
-                    IrSimpleFunctionSymbolImpl(),
                     ("imp:$selector").synthesizedName,
                     DescriptorVisibilities.PRIVATE,
-                    Modality.FINAL,
-                    function.returnType,
                     isInline = false,
-                    isExternal = false,
+                    isExpect = false,
+                    function.returnType,
+                    Modality.FINAL,
+                    IrSimpleFunctionSymbolImpl(),
                     isTailrec = false,
                     isSuspend = false,
-                    isExpect = false,
-                    isFakeOverride = false,
                     isOperator = false,
-                    isInfix = false
+                    isInfix = false,
             )
 
         newFunction.valueParameters += parameterTypes.mapIndexed { index, type ->
-            IrValueParameterImpl(
-                    function.startOffset, function.endOffset,
-                    IrDeclarationOrigin.DEFINED,
-                    IrValueParameterSymbolImpl(),
-                    Name.identifier("p$index"),
-                    index,
-                    type,
+            context.irFactory.createValueParameter(
+                    startOffset = function.startOffset,
+                    endOffset = function.endOffset,
+                    origin = IrDeclarationOrigin.DEFINED,
+                    name = Name.identifier("p$index"),
+                    type = type,
+                    isAssignable = false,
+                    symbol = IrValueParameterSymbolImpl(),
+                    index = index,
                     varargElementType = null,
                     isCrossinline = false,
                     isNoinline = false,
                     isHidden = false,
-                    isAssignable = false
             ).apply {
                 parent = newFunction
             }
@@ -512,40 +509,40 @@ private class InteropLoweringPart1(val generationState: NativeGenerationState) :
         if (!constructedClass.isExternalObjCClass() &&
             delegatingCallConstructingClass.isExternalObjCClass()) {
 
-            // Calling super constructor from Kotlin Objective-C class.
+            expression.symbol.owner.getObjCInitMethod()?.let { initMethod ->
+                // Calling super constructor from Kotlin Objective-C class.
 
-            require(constructedClass.getSuperClassNotAny() == delegatingCallConstructingClass) { renderCompilerError(expression) }
-            require(expression.symbol.owner.objCConstructorIsDesignated()) { renderCompilerError(expression) }
-            require(expression.dispatchReceiver == null) { renderCompilerError(expression) }
-            require(expression.extensionReceiver == null) { renderCompilerError(expression) }
+                require(constructedClass.getSuperClassNotAny() == delegatingCallConstructingClass) { renderCompilerError(expression) }
+                require(expression.symbol.owner.objCConstructorIsDesignated()) { renderCompilerError(expression) }
+                require(expression.dispatchReceiver == null) { renderCompilerError(expression) }
+                require(expression.extensionReceiver == null) { renderCompilerError(expression) }
 
-            val initMethod = expression.symbol.owner.getObjCInitMethod()!!
+                val initMethodInfo = initMethod.getExternalObjCMethodInfo()!!
 
-            val initMethodInfo = initMethod.getExternalObjCMethodInfo()!!
-
-            val initCall = builder.genLoweredObjCMethodCall(
-                    initMethodInfo,
-                    superQualifier = delegatingCallConstructingClass.symbol,
-                    receiver = builder.irGet(constructedClass.thisReceiver!!),
-                    arguments = initMethod.valueParameters.map { expression.getValueArgument(it.index) },
-                    call = expression,
-                    method = initMethod
-            )
-
-            val superConstructor = delegatingCallConstructingClass
-                    .constructors.single { it.valueParameters.size == 0 }.symbol
-
-            return builder.irBlock(expression) {
-                // Required for the IR to be valid, will be ignored in codegen:
-                +IrDelegatingConstructorCallImpl.fromSymbolDescriptor(
-                        startOffset,
-                        endOffset,
-                        context.irBuiltIns.unitType,
-                        superConstructor
+                val initCall = builder.genLoweredObjCMethodCall(
+                        initMethodInfo,
+                        superQualifier = delegatingCallConstructingClass.symbol,
+                        receiver = builder.irGet(constructedClass.thisReceiver!!),
+                        arguments = initMethod.valueParameters.map { expression.getValueArgument(it.index) },
+                        call = expression,
+                        method = initMethod
                 )
-                +irCall(symbols.interopObjCObjectSuperInitCheck).apply {
-                    extensionReceiver = irGet(constructedClass.thisReceiver!!)
-                    putValueArgument(0, initCall)
+
+                val superConstructor = delegatingCallConstructingClass
+                        .constructors.single { it.valueParameters.size == 0 }.symbol
+
+                return builder.irBlock(expression) {
+                    // Required for the IR to be valid, will be ignored in codegen:
+                    +IrDelegatingConstructorCallImpl.fromSymbolDescriptor(
+                            startOffset,
+                            endOffset,
+                            context.irBuiltIns.unitType,
+                            superConstructor
+                    )
+                    +irCall(symbols.interopObjCObjectSuperInitCheck).apply {
+                        extensionReceiver = irGet(constructedClass.thisReceiver!!)
+                        putValueArgument(0, initCall)
+                    }
                 }
             }
         }

@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.fir.FirFileAnnotationsContainer
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticPropertyAccessor
+import org.jetbrains.kotlin.fir.isCopyCreatedInScope
 
 internal object LLFirResolveMultiDesignationCollector {
     fun getDesignationsToResolve(target: FirElementWithResolveState): List<LLFirResolveTarget> = when (target) {
@@ -36,19 +37,24 @@ internal object LLFirResolveMultiDesignationCollector {
         if (target is FirFile) return listOf(LLFirWholeElementResolveTarget(target))
 
         if (!target.shouldBeResolved()) return emptyList()
+        if (target is FirCallableDeclaration && target.isCopyCreatedInScope) {
+            return listOf(LLFirSingleResolveTarget(target))
+        }
+
         val designation = target.tryCollectDesignationWithFile() ?: return emptyList()
         val resolveTarget = LLFirWholeElementResolveTarget(designation.firFile, designation.path, target)
         return listOf(resolveTarget)
     }
 
-    private fun getMainDesignationToResolve(target: FirElementWithResolveState): LLFirResolveTarget? {
+    private fun getMainDesignationToResolve(target: FirElementWithResolveState): LLFirSingleResolveTarget? {
         require(target !is FirFile)
         if (!target.shouldBeResolved()) return null
-        return when (target) {
-            is FirPropertyAccessor -> getMainDesignationToResolve(target.propertySymbol.fir)
-            is FirBackingField -> getMainDesignationToResolve(target.propertySymbol.fir)
-            is FirTypeParameter -> getMainDesignationToResolve(target.containingDeclarationSymbol.fir)
-            is FirValueParameter -> getMainDesignationToResolve(target.containingFunctionSymbol.fir)
+        return when {
+            target is FirPropertyAccessor -> getMainDesignationToResolve(target.propertySymbol.fir)
+            target is FirBackingField -> getMainDesignationToResolve(target.propertySymbol.fir)
+            target is FirTypeParameter -> getMainDesignationToResolve(target.containingDeclarationSymbol.fir)
+            target is FirValueParameter -> getMainDesignationToResolve(target.containingFunctionSymbol.fir)
+            target is FirCallableDeclaration && target.isCopyCreatedInScope -> LLFirSingleResolveTarget(target)
             else -> target.tryCollectDesignationWithFile()?.asResolveTarget()
         }
     }
@@ -59,37 +65,27 @@ internal object LLFirResolveMultiDesignationCollector {
         else -> throwUnexpectedFirElementError(this)
     }
 
-    private fun FirDeclaration.shouldBeResolved(): Boolean = when (origin) {
-        is FirDeclarationOrigin.Source,
-        is FirDeclarationOrigin.ImportedFromObjectOrStatic,
-        is FirDeclarationOrigin.Delegated,
-        is FirDeclarationOrigin.Synthetic,
-        is FirDeclarationOrigin.SubstitutionOverride,
-        is FirDeclarationOrigin.SamConstructor,
-        is FirDeclarationOrigin.WrappedIntegerOperator,
-        is FirDeclarationOrigin.IntersectionOverride,
-        is FirDeclarationOrigin.ScriptCustomization,
-        -> {
-            when (this) {
-                is FirFile -> true
-                is FirSyntheticProperty, is FirSyntheticPropertyAccessor -> false
-                is FirSimpleFunction,
-                is FirProperty,
-                is FirPropertyAccessor,
-                is FirField,
-                is FirTypeAlias,
-                is FirConstructor,
-                -> true
-                else -> true
-            }
-        }
-        else -> {
+    private fun FirDeclaration.shouldBeResolved(): Boolean {
+        if (!origin.isLazyResolvable) {
             @OptIn(ResolveStateAccess::class)
             check(resolvePhase == FirResolvePhase.BODY_RESOLVE) {
                 "Expected body resolve phase for origin $origin but found $resolveState"
             }
 
-            false
+            return false
+        }
+
+        return when (this) {
+            is FirFile -> true
+            is FirSyntheticProperty, is FirSyntheticPropertyAccessor -> false
+            is FirSimpleFunction,
+            is FirProperty,
+            is FirPropertyAccessor,
+            is FirField,
+            is FirTypeAlias,
+            is FirConstructor,
+            -> true
+            else -> true
         }
     }
 }

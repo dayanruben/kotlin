@@ -5,17 +5,17 @@
 
 package org.jetbrains.kotlin.backend.konan.ir
 
-import org.jetbrains.kotlin.utils.atMostOne
 import org.jetbrains.kotlin.backend.konan.DECLARATION_ORIGIN_INLINE_CLASS_SPECIAL_FUNCTION
 import org.jetbrains.kotlin.backend.konan.descriptors.allOverriddenFunctions
-import org.jetbrains.kotlin.backend.konan.descriptors.isFromInteropLibrary
-import org.jetbrains.kotlin.backend.konan.descriptors.isInteropLibrary
 import org.jetbrains.kotlin.backend.konan.llvm.KonanMetadata
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.expressions.*
+import org.jetbrains.kotlin.ir.expressions.IrCall
+import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
+import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.IrFunctionAccessExpression
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
@@ -25,7 +25,9 @@ import org.jetbrains.kotlin.ir.types.isMarkedNullable
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.metadata.DeserializedKlibModuleOrigin
+import org.jetbrains.kotlin.library.metadata.isInteropLibrary
 import org.jetbrains.kotlin.library.metadata.klibModuleOrigin
+import org.jetbrains.kotlin.utils.atMostOne
 
 private fun IrClass.isClassTypeWithSignature(signature: IdSignature.CommonSignature): Boolean {
     return signature == symbol.signature
@@ -106,10 +108,3 @@ val IrDeclaration.konanLibrary: KotlinLibrary?
 
 fun IrDeclaration.isFromInteropLibrary() = konanLibrary?.isInteropLibrary() == true
 fun IrPackageFragment.isFromInteropLibrary() = konanLibrary?.isInteropLibrary() == true
-
-/**
- * This function should be equivalent to [IrDeclaration.isFromInteropLibrary], but in fact it is not for declarations
- * from Fir modules. This should be fixed in the future.
- */
-@ObsoleteDescriptorBasedAPI
-fun IrDeclaration.isFromInteropLibraryByDescriptor() = descriptor.isFromInteropLibrary()

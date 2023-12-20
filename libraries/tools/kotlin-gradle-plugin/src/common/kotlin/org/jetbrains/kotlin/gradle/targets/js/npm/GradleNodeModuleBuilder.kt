@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.gradle.targets.js.ir.KLIB_TYPE
 import java.io.File
 
 /**
- * Creates fake NodeJS module directory from given gradle [dependency].
+ * Creates fake NodeJS module directory from given Gradle `dependency`.
  */
 internal class GradleNodeModuleBuilder(
     val fs: FileSystemOperations,
@@ -79,8 +79,6 @@ internal class GradleNodeModuleBuilder(
 
         // yarn requires semver
         packageJson.version = fixSemver(packageJson.version)
-
-        val actualFiles = files.filterNot { it.name.endsWith(".$META_JS") }
 
         return makeNodeModule(cacheDir, packageJson) { nodeModule ->
             fs.copy { copy ->

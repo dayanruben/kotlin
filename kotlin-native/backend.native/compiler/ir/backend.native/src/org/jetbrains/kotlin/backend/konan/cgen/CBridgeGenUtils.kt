@@ -12,8 +12,7 @@ import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.builders.declarations.buildVariable
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.declarations.impl.IrFunctionImpl
-import org.jetbrains.kotlin.ir.declarations.impl.IrValueParameterImpl
+import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrMemberAccessExpression
 import org.jetbrains.kotlin.ir.expressions.impl.IrTryImpl
@@ -81,15 +80,19 @@ internal class KotlinBridgeBuilder(
     fun addParameter(type: IrType): IrValueParameter {
         val index = counter++
 
-        return IrValueParameterImpl(
-                bridge.startOffset, bridge.endOffset, bridge.origin,
-                IrValueParameterSymbolImpl(),
-                Name.identifier("p$index"), index, type,
-                null,
+        return irBuilder.context.irFactory.createValueParameter(
+                startOffset = bridge.startOffset,
+                endOffset = bridge.endOffset,
+                origin = bridge.origin,
+                name = Name.identifier("p$index"),
+                type = type,
+                isAssignable = false,
+                symbol = IrValueParameterSymbolImpl(),
+                index = index,
+                varargElementType = null,
                 isCrossinline = false,
                 isNoinline = false,
                 isHidden = false,
-                isAssignable = false
         ).apply {
             parent = bridge
             bridge.valueParameters += this
@@ -112,23 +115,23 @@ private fun createKotlinBridge(
         foreignExceptionMode: ForeignExceptionMode.Mode,
         origin: IrDeclarationOrigin
 ): IrFunction {
-    val bridge = IrFunctionImpl(
+    val bridge = stubs.irBuiltIns.irFactory.createSimpleFunction(
             startOffset,
             endOffset,
             origin,
-            IrSimpleFunctionSymbolImpl(),
             Name.identifier(cBridgeName),
             DescriptorVisibilities.PRIVATE,
-            Modality.FINAL,
-            IrUninitializedType,
             isInline = false,
-            isExternal = isExternal,
+            isExpect = false,
+            IrUninitializedType,
+            Modality.FINAL,
+            IrSimpleFunctionSymbolImpl(),
             isTailrec = false,
             isSuspend = false,
-            isExpect = false,
-            isFakeOverride = false,
             isOperator = false,
-            isInfix = false
+            isInfix = false,
+            isExternal = isExternal,
+            isFakeOverride = false,
     )
     if (isExternal) {
         bridge.annotations += buildSimpleAnnotation(stubs.irBuiltIns, startOffset, endOffset,

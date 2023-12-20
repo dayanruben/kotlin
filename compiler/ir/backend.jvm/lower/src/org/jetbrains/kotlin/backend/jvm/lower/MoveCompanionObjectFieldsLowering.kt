@@ -14,13 +14,9 @@ import org.jetbrains.kotlin.backend.jvm.ir.replaceThisByStaticReference
 import org.jetbrains.kotlin.backend.jvm.propertiesPhase
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.builders.declarations.addField
-import org.jetbrains.kotlin.ir.builders.declarations.addProperty
-import org.jetbrains.kotlin.ir.builders.declarations.buildField
 import org.jetbrains.kotlin.ir.builders.irCall
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.declarations.impl.IrAnonymousInitializerImpl
 import org.jetbrains.kotlin.ir.expressions.*
-import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetFieldImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
 import org.jetbrains.kotlin.ir.symbols.impl.IrAnonymousInitializerSymbolImpl
@@ -100,7 +96,7 @@ private class MoveOrCopyCompanionObjectFieldsLowering(val context: JvmBackendCon
         with(oldInitializer) {
             val oldParent = parentAsClass
             val newSymbol = IrAnonymousInitializerSymbolImpl(newParent.symbol)
-            IrAnonymousInitializerImpl(startOffset, endOffset, origin, newSymbol, isStatic = true).apply {
+            factory.createAnonymousInitializer(startOffset, endOffset, origin, newSymbol, isStatic = true).apply {
                 parent = newParent
                 body = this@with.body.patchDeclarationParents(newParent)
                 replaceThisByStaticReference(context.cachedDeclarations.fieldsForObjectInstances, oldParent, oldParent.thisReceiver!!)
@@ -117,7 +113,7 @@ private class MoveOrCopyCompanionObjectFieldsLowering(val context: JvmBackendCon
             parent = newParent
             correspondingPropertySymbol = oldProperty.symbol
             initializer = oldField.initializer?.run {
-                IrExpressionBodyImpl(startOffset, endOffset, (expression as IrConst<*>).shallowCopy())
+                context.irFactory.createExpressionBody(startOffset, endOffset, (expression as IrConst<*>).shallowCopy())
             }
             annotations += oldField.annotations
             if (oldProperty.parentAsClass.visibility == DescriptorVisibilities.PRIVATE) {
