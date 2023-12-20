@@ -14352,6 +14352,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                 }
 
                 @Test
+                @TestMetadata("LambdaReturnTypeIsUnitIfImplicitReturnExists.kt")
+                public void testLambdaReturnTypeIsUnitIfImplicitReturnExists() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/functionLiterals/return/LambdaReturnTypeIsUnitIfImplicitReturnExists.kt");
+                }
+
+                @Test
                 @TestMetadata("LambdaWithParameter.kt")
                 public void testLambdaWithParameter() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/functionLiterals/return/LambdaWithParameter.kt");
@@ -22878,6 +22884,18 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             @TestMetadata("Lambda.kt")
             public void testLambda() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/javac/Lambda.kt");
+            }
+
+            @Test
+            @TestMetadata("LambdaNonGeneric.kt")
+            public void testLambdaNonGeneric() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/javac/LambdaNonGeneric.kt");
+            }
+
+            @Test
+            @TestMetadata("LambdaNonGenericForbidden.kt")
+            public void testLambdaNonGenericForbidden() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/javac/LambdaNonGenericForbidden.kt");
             }
 
             @Nested
