@@ -6,8 +6,10 @@
 package org.jetbrains.kotlin.backend.konan.optimizations
 
 import org.jetbrains.kotlin.backend.konan.*
-import org.jetbrains.kotlin.backend.konan.descriptors.*
-import org.jetbrains.kotlin.backend.konan.descriptors.implementedInterfaces
+import org.jetbrains.kotlin.backend.konan.ir.implementedInterfaces
+import org.jetbrains.kotlin.backend.konan.ir.isAbstract
+import org.jetbrains.kotlin.backend.konan.ir.isBuiltInOperator
+import org.jetbrains.kotlin.backend.konan.ir.isFrozen
 import org.jetbrains.kotlin.backend.konan.llvm.computeFunctionName
 import org.jetbrains.kotlin.backend.konan.llvm.computeSymbolName
 import org.jetbrains.kotlin.backend.konan.llvm.isExported
@@ -107,7 +109,7 @@ internal object DataFlowIR {
         }
     }
 
-    class Module(val descriptor: ModuleDescriptor) {
+    class Module {
         var numberOfFunctions = 0
         var numberOfClasses = 0
     }
