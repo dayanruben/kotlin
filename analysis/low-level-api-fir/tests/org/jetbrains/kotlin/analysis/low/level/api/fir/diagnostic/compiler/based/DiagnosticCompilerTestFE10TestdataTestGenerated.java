@@ -13921,6 +13921,18 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             public void testSuspendFunInterfaceConversion() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/funInterface/suspendFunInterfaceConversion.kt");
             }
+
+            @Test
+            @TestMetadata("unitInContravariantPosition.kt")
+            public void testUnitInContravariantPosition() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/funInterface/unitInContravariantPosition.kt");
+            }
+
+            @Test
+            @TestMetadata("unitInCovariantPosition.kt")
+            public void testUnitInCovariantPosition() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/funInterface/unitInCovariantPosition.kt");
+            }
         }
 
         @Nested
@@ -21924,6 +21936,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             @TestMetadata("recursiveSelfTypes.kt")
             public void testRecursiveSelfTypes() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/j+k/recursiveSelfTypes.kt");
+            }
+
+            @Test
+            @TestMetadata("runnableOrCallable.kt")
+            public void testRunnableOrCallable() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/j+k/runnableOrCallable.kt");
             }
 
             @Test
@@ -32477,6 +32495,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
+            @TestMetadata("samPriorityVsGenericCompatibilityEnabled.kt")
+            public void testSamPriorityVsGenericCompatibilityEnabled() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/samConversions/samPriorityVsGenericCompatibilityEnabled.kt");
+            }
+
+            @Test
             @TestMetadata("sameCandidatesFromKotlinAndJavaInOneScope.kt")
             public void testSameCandidatesFromKotlinAndJavaInOneScope() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/samConversions/sameCandidatesFromKotlinAndJavaInOneScope.kt");
@@ -41890,9 +41914,33 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 }
 
                 @Test
+                @TestMetadata("InnerAndNestedClasses.kt")
+                public void testInnerAndNestedClasses() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/InnerAndNestedClasses.kt");
+                }
+
+                @Test
+                @TestMetadata("InnerClasses.kt")
+                public void testInnerClasses() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/InnerClasses.kt");
+                }
+
+                @Test
+                @TestMetadata("NestedClasses.kt")
+                public void testNestedClasses() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/NestedClasses.kt");
+                }
+
+                @Test
                 @TestMetadata("NotApiMarkerAsArgument.kt")
                 public void testNotApiMarkerAsArgument() throws Exception {
                     runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/NotApiMarkerAsArgument.kt");
+                }
+
+                @Test
+                @TestMetadata("Typealias.kt")
+                public void testTypealias() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/Typealias.kt");
                 }
 
                 @Test
@@ -43111,12 +43159,6 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
-            @TestMetadata("suspendCovarianJavaOverride.kt")
-            public void testSuspendCovarianJavaOverride() throws Exception {
-                runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/suspendCovarianJavaOverride.kt");
-            }
-
-            @Test
             @TestMetadata("suspendDestructuring.kt")
             public void testSuspendDestructuring() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/suspendDestructuring.kt");
@@ -43156,6 +43198,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             @TestMetadata("suspendLambda.kt")
             public void testSuspendLambda() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/suspendLambda.kt");
+            }
+
+            @Test
+            @TestMetadata("suspendNotImplemented.kt")
+            public void testSuspendNotImplemented() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/suspendNotImplemented.kt");
             }
 
             @Test

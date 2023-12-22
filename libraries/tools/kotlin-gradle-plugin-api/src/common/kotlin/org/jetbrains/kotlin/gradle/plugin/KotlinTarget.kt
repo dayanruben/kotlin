@@ -17,11 +17,12 @@ import org.gradle.api.publish.maven.MavenPublication
 import org.jetbrains.kotlin.gradle.PRESETS_API_IS_DEPRECATED_MESSAGE
 import org.jetbrains.kotlin.gradle.DeprecatedTargetPresetApi
 import org.jetbrains.kotlin.gradle.InternalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptionsDeprecated
+import org.jetbrains.kotlin.gradle.dsl.KotlinGradlePluginDsl
 import org.jetbrains.kotlin.tooling.core.HasMutableExtras
 
+@KotlinGradlePluginDsl
 interface KotlinTarget : Named, HasAttributes, HasProject, HasMutableExtras {
     val targetName: String
     val disambiguationClassifier: String? get() = targetName
@@ -79,6 +80,13 @@ interface KotlinTarget : Named, HasAttributes, HasProject, HasMutableExtras {
     fun compilerOptions(configure: Action<KotlinCommonCompilerOptions>) {
         throw UnsupportedOperationException("Kotlin target level compiler options DSL is not available in this release!")
     }
+
+    @Deprecated(
+        "Accessing 'sourceSets' container on the Kotlin target level DSL is deprecated. " +
+                "Consider configuring 'sourceSets' on the Kotlin extension level.",
+        level = DeprecationLevel.WARNING
+    )
+    val sourceSets: NamedDomainObjectContainer<KotlinSourceSet>
 }
 
 interface KotlinTargetWithTests<E : KotlinExecution.ExecutionSource, T : KotlinTargetTestRun<E>> : KotlinTarget {

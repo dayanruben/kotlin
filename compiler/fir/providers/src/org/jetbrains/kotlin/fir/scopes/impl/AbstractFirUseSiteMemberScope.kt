@@ -10,13 +10,13 @@ import org.jetbrains.kotlin.fir.declarations.utils.isStatic
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.scopes.*
 import org.jetbrains.kotlin.fir.scopes.impl.FirTypeIntersectionScopeContext.ResultOfIntersection
+import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.ConeSimpleKotlinType
-import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 
 abstract class AbstractFirUseSiteMemberScope(
-    val classId: ClassId,
+    val ownerClassLookupTag: ConeClassLikeLookupTag,
     session: FirSession,
     overrideChecker: FirOverrideChecker,
     protected val superTypeScopes: List<FirTypeScope>,
@@ -75,7 +75,7 @@ abstract class AbstractFirUseSiteMemberScope(
             if (!symbol.isVisibleInCurrentClass()) return@processFunctionsByName
             val directOverridden = computeDirectOverriddenForDeclaredFunction(symbol)
             directOverriddenFunctions[symbol] = directOverridden
-            destination += symbol
+            destination += symbol.replaceWithWrapperSymbolIfNeeded()
         }
     }
 
@@ -215,5 +215,12 @@ abstract class AbstractFirUseSiteMemberScope(
 
     override fun getClassifierNames(): Set<Name> {
         return classifierNamesCached
+    }
+
+    /**
+     * This function is currently used only for creating suspend views in Java.
+     */
+    protected open fun FirNamedFunctionSymbol.replaceWithWrapperSymbolIfNeeded(): FirNamedFunctionSymbol {
+        return this
     }
 }

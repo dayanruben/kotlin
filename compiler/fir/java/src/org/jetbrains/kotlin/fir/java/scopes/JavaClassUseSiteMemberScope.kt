@@ -23,11 +23,11 @@ import org.jetbrains.kotlin.fir.java.declarations.FirJavaMethod
 import org.jetbrains.kotlin.fir.java.declarations.buildJavaMethodCopy
 import org.jetbrains.kotlin.fir.java.declarations.buildJavaValueParameterCopy
 import org.jetbrains.kotlin.fir.java.resolveIfJavaType
-import org.jetbrains.kotlin.fir.java.syntheticPropertiesStorage
 import org.jetbrains.kotlin.fir.java.symbols.FirJavaOverriddenSyntheticPropertySymbol
+import org.jetbrains.kotlin.fir.java.syntheticPropertiesStorage
 import org.jetbrains.kotlin.fir.java.toConeKotlinTypeProbablyFlexible
 import org.jetbrains.kotlin.fir.resolve.defaultType
-import org.jetbrains.kotlin.fir.resolve.providers.toSymbol
+import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.*
 import org.jetbrains.kotlin.fir.scopes.impl.AbstractFirUseSiteMemberScope
 import org.jetbrains.kotlin.fir.scopes.impl.FirTypeIntersectionScopeContext.ResultOfIntersection
@@ -55,7 +55,7 @@ class JavaClassUseSiteMemberScope(
     superTypeScopes: List<FirTypeScope>,
     declaredMemberScope: FirContainingNamesAwareScope
 ) : AbstractFirUseSiteMemberScope(
-    klass.classId,
+    klass.symbol.toLookupTag(),
     session,
     JavaOverrideChecker(session, klass.javaTypeParameterStack, superTypeScopes, considerReturnTypeKinds = true),
     superTypeScopes,
@@ -273,8 +273,7 @@ class JavaClassUseSiteMemberScope(
         if (hasCorrespondingProperty) return false
 
         return !doesOverrideRenamedBuiltins() &&
-                !shouldBeVisibleAsOverrideOfBuiltInWithErasedValueParameters() &&
-                !doesOverrideSuspendFunction()
+                !shouldBeVisibleAsOverrideOfBuiltInWithErasedValueParameters()
     }
 
     private fun FirNamedFunctionSymbol.doesOverrideRenamedBuiltins(): Boolean {
@@ -334,33 +333,27 @@ class JavaClassUseSiteMemberScope(
         }
     }
 
-    private fun FirNamedFunctionSymbol.doesOverrideSuspendFunction(): Boolean {
-        val suspendView = createSuspendView() ?: return false
-        return superTypeScopes.any { scope ->
-            scope.getFunctions(name).any { it.isSuspend && overrideChecker.isOverriddenFunction(suspendView, it.fir) }
-        }
-    }
-
-    private fun FirNamedFunctionSymbol.createSuspendView(): FirSimpleFunction? {
-        val continuationParameter = fir.valueParameters.lastOrNull() ?: return null
-        val owner = classId.toSymbol(session)?.fir as? FirJavaClass ?: return null
+    override fun FirNamedFunctionSymbol.replaceWithWrapperSymbolIfNeeded(): FirNamedFunctionSymbol {
+        if (!isJavaOrEnhancement) return this
+        val continuationParameter = fir.valueParameters.lastOrNull() ?: return this
+        val owner = ownerClassLookupTag.toSymbol(session)?.fir as? FirJavaClass ?: return this
         val continuationParameterType = continuationParameter
             .returnTypeRef
             .resolveIfJavaType(session, owner.javaTypeParameterStack)
             .coneTypeSafe<ConeKotlinType>()
             ?.lowerBoundIfFlexible() as? ConeClassLikeType
-            ?: return null
-        if (continuationParameterType.lookupTag.classId.asSingleFqName() != StandardNames.CONTINUATION_INTERFACE_FQ_NAME) return null
+            ?: return this
+        if (continuationParameterType.lookupTag.classId.asSingleFqName() != StandardNames.CONTINUATION_INTERFACE_FQ_NAME) return this
 
         return buildSimpleFunctionCopy(fir) {
             valueParameters.clear()
             valueParameters.addAll(fir.valueParameters.dropLast(1))
             returnTypeRef = buildResolvedTypeRef {
-                type = continuationParameterType.typeArguments[0].type ?: return null
+                type = continuationParameterType.typeArguments[0].type ?: return this@replaceWithWrapperSymbolIfNeeded
             }
             (status as FirDeclarationStatusImpl).isSuspend = true
             symbol = FirNamedFunctionSymbol(callableId)
-        }
+        }.symbol
     }
 
     // ---------------------------------------------------------------------------------------------------------
@@ -824,6 +817,6 @@ class JavaClassUseSiteMemberScope(
     }
 
     override fun toString(): String {
-        return "Java use site scope of $classId"
+        return "Java use site scope of ${ownerClassLookupTag.classId}"
     }
 }

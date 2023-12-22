@@ -9,7 +9,7 @@ object Test1 {
 
         fun test() {
             val result = foo(::bar)
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Int")!>result<!>
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.String")!>result<!>
         }
     }
 }
@@ -36,7 +36,7 @@ object Test3 {
 
         fun test() {
             val result = foo(::bar)
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Int")!>result<!>
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.String")!>result<!>
         }
     }
 }
@@ -52,6 +52,21 @@ object Test4 {
         fun test() {
             val result = foo(::bar)
             <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.String")!>result<!>
+        }
+    }
+}
+
+object Test5 {
+    fun <T> foo(f: () -> T): T = f()
+
+    object Scope {
+        fun bar(): Int = 0
+
+        fun bar(x: Int = 0): String = ""
+
+        fun test() {
+            val result = foo(::bar)
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Int")!>result<!>
         }
     }
 }

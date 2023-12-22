@@ -8,19 +8,26 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir.transformers
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.LLFirResolveTarget
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.LLFirSingleResolveTarget
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.asResolveTarget
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.session
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.tryCollectDesignationWithFile
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.LLFirLockProvider
+import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.llFirSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkDeclarationStatusIsResolved
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.forEachDependentDeclaration
 import org.jetbrains.kotlin.fir.FirElementWithResolveState
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.isActual
 import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.transformers.FirStatusResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.StatusComputationSession
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirResolveContextCollector
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassifierSymbol
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
+import org.jetbrains.kotlin.fir.types.FirTypeRef
+import org.jetbrains.kotlin.fir.types.coneType
+import org.jetbrains.kotlin.fir.types.toSymbol
 import org.jetbrains.kotlin.fir.visitors.transformSingle
 import org.jetbrains.kotlin.name.Name
 
@@ -28,14 +35,12 @@ internal object LLFirStatusLazyResolver : LLFirLazyResolver(FirResolvePhase.STAT
     override fun resolve(
         target: LLFirResolveTarget,
         lockProvider: LLFirLockProvider,
-        session: FirSession,
         scopeSession: ScopeSession,
         towerDataContextCollector: FirResolveContextCollector?,
     ) {
         val resolver = LLFirStatusTargetResolver(
             target = target,
             lockProvider = lockProvider,
-            session = session,
             scopeSession = scopeSession,
             resolveMode = target.resolveMode(),
         )
@@ -82,15 +87,33 @@ private fun LLFirResolveTarget.resolveMode(): StatusResolveMode = when (this) {
     else -> StatusResolveMode.AllCallables
 }
 
+private class LLStatusComputationSession(val useSiteSession: FirSession) : StatusComputationSession() {
+    private var shouldCheckForActualization: Boolean = false
+
+    inline fun withClass(regularClass: FirClass, transformer: (FirClass) -> Unit) {
+        val oldValue = shouldCheckForActualization
+        if (regularClass.isActual) {
+            shouldCheckForActualization = true
+        }
+
+        try {
+            transformer(regularClass)
+        } finally {
+            shouldCheckForActualization = oldValue
+        }
+    }
+
+    val canHaveActualization: Boolean get() = shouldCheckForActualization
+}
+
 private class LLFirStatusTargetResolver(
     target: LLFirResolveTarget,
     lockProvider: LLFirLockProvider,
-    session: FirSession,
     scopeSession: ScopeSession,
-    private val statusComputationSession: StatusComputationSession = StatusComputationSession(),
+    private val statusComputationSession: LLStatusComputationSession = LLStatusComputationSession(target.session),
     private val resolveMode: StatusResolveMode,
 ) : LLFirTargetResolver(target, lockProvider, FirResolvePhase.STATUS, isJumpingPhase = false) {
-    private val transformer = Transformer(session, scopeSession)
+    private val transformer = Transformer(resolveTargetSession, scopeSession)
 
     @Deprecated("Should never be called directly, only for override purposes, please use withRegularClass", level = DeprecationLevel.ERROR)
     override fun withRegularClassImpl(firClass: FirRegularClass, action: () -> Unit) {
@@ -176,7 +199,7 @@ private class LLFirStatusTargetResolver(
         transformer.statusComputationSession.startComputing(firClass)
 
         if (resolveMode.resolveSupertypes) {
-            transformer.forceResolveStatusesOfSupertypes(firClass)
+            statusComputationSession.withClass(firClass, transformer::forceResolveStatusesOfSupertypes)
         }
 
         performCustomResolveUnderLock(firClass) {
@@ -207,6 +230,7 @@ private class LLFirStatusTargetResolver(
         session: FirSession,
         scopeSession: ScopeSession,
     ) : FirStatusResolveTransformer(session, scopeSession, statusComputationSession) {
+        val computationSession: LLStatusComputationSession get() = this@LLFirStatusTargetResolver.statusComputationSession
 
         override fun FirDeclaration.needResolveMembers(): Boolean = false
         override fun FirDeclaration.needResolveNestedClassifiers(): Boolean = false
@@ -215,8 +239,19 @@ private class LLFirStatusTargetResolver(
             return klass
         }
 
+        override fun superTypeToSymbols(typeRef: FirTypeRef): List<FirClassifierSymbol<*>> {
+            val type = typeRef.coneType
+            val originalClassifierSymbol = type.toSymbol(session)
+            val useSiteSymbol = type.toSymbol(computationSession.useSiteSession)
+
+            // Resolve an 'expect' declaration before an 'actual' as it is like 'super' and 'sub' classes
+            return listOfNotNull(originalClassifierSymbol, useSiteSymbol?.takeIf { it != originalClassifierSymbol })
+        }
+
         override fun resolveClassForSuperType(regularClass: FirRegularClass): Boolean {
-            if (regularClass.resolvePhase >= resolverPhase) {
+            // We cannot skip supertype resolution when there is a possibility
+            // that some supertypes might need to be actualized in the current context
+            if (!computationSession.canHaveActualization && regularClass.resolvePhase >= resolverPhase) {
                 // We can avoid resolve in the case of all declarations in super class are already resolved
                 val declarations = regularClass.declarations
                 if (declarations.isNotEmpty() && declarations.all { it.resolvePhase >= resolverPhase }) {
@@ -225,12 +260,12 @@ private class LLFirStatusTargetResolver(
             }
 
             val target = regularClass.tryCollectDesignationWithFile()?.asResolveTarget() ?: return false
+            val targetSession = target.target.llFirSession
             val resolver = LLFirStatusTargetResolver(
                 target,
                 lockProvider,
-                session,
-                scopeSession,
-                statusComputationSession,
+                targetSession.getScopeSession(),
+                computationSession,
                 resolveMode = resolveMode,
             )
 

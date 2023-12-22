@@ -3175,9 +3175,21 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
                 }
 
                 @Test
+                @TestMetadata("unitCoercionOverloads.kt")
+                public void testUnitCoercionOverloads() throws Exception {
+                    runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/unitCoercionOverloads.kt");
+                }
+
+                @Test
                 @TestMetadata("varargFromBaseClass.kt")
                 public void testVarargFromBaseClass() throws Exception {
                     runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/varargFromBaseClass.kt");
+                }
+
+                @Test
+                @TestMetadata("varargOverloads.kt")
+                public void testVarargOverloads() throws Exception {
+                    runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/varargOverloads.kt");
                 }
 
                 @Test
@@ -16613,6 +16625,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
             @TestMetadata("smartCastToInvisibleClassMember.kt")
             public void testSmartCastToInvisibleClassMember() throws Exception {
                 runTest("compiler/testData/codegen/box/fir/smartCastToInvisibleClassMember.kt");
+            }
+
+            @Test
+            @TestMetadata("starProjectionLambdaNullReturn.kt")
+            public void testStarProjectionLambdaNullReturn() throws Exception {
+                runTest("compiler/testData/codegen/box/fir/starProjectionLambdaNullReturn.kt");
             }
 
             @Test

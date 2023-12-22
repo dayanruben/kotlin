@@ -7,14 +7,13 @@ package org.jetbrains.kotlin.fir.resolve.calls
 
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.fir.FirElement
+import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.expressions.*
-import org.jetbrains.kotlin.fir.languageVersionSettings
-import org.jetbrains.kotlin.fir.matchingParameterFunctionType
 import org.jetbrains.kotlin.fir.references.FirSuperReference
 import org.jetbrains.kotlin.fir.references.FirThisReference
+import org.jetbrains.kotlin.fir.resolve.BodyResolveComponents
 import org.jetbrains.kotlin.fir.resolve.directExpansionType
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.inference.*
@@ -32,7 +31,6 @@ import org.jetbrains.kotlin.fir.symbols.SyntheticSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.*
-import org.jetbrains.kotlin.fir.visibilityChecker
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.resolve.calls.inference.isSubtypeConstraintCompatible
 import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintKind
@@ -512,7 +510,7 @@ internal object CheckArguments : CheckerStage() {
             }
 
             // Logic description: only candidates from Kotlin, but using Java SAM types, are discriminated
-            candidate.usesSAM && !candidate.isJavaApplicableCandidate() -> {
+            candidate.shouldHaveLowPriorityDueToSAM(context.bodyResolveComponents) -> {
                 if (argumentMapping.values.any {
                         val coneType = it.returnTypeRef.coneType
                         context.bodyResolveComponents.samResolver.isSamType(coneType) &&
@@ -524,6 +522,16 @@ internal object CheckArguments : CheckerStage() {
                 }
             }
         }
+    }
+}
+
+internal fun Candidate.shouldHaveLowPriorityDueToSAM(bodyResolveComponents: BodyResolveComponents): Boolean {
+    if (!usesSAM || isJavaApplicableCandidate()) return false
+    return argumentMapping!!.values.any {
+        val coneType = it.returnTypeRef.coneType
+        bodyResolveComponents.samResolver.isSamType(coneType) &&
+                // Candidate is not from Java, so no flexible types are possible here
+                coneType.toRegularClassSymbol(bodyResolveComponents.session)?.isJavaOrEnhancement == true
     }
 }
 
@@ -599,6 +607,14 @@ internal object CheckVisibility : CheckerStage() {
             if (!visibilityChecker.isVisible(declaration, candidate)) {
                 sink.yieldDiagnostic(VisibilityError)
                 return
+            }
+
+            if (symbol is FirPropertySymbol && callInfo.callSite is FirVariableAssignment) {
+                val setterFir = symbol.setterSymbol?.fir ?: symbol.originalForSubstitutionOverride?.setterSymbol?.fir
+                if (setterFir != null && !visibilityChecker.isVisible(setterFir, candidate)) {
+                    sink.yieldDiagnostic(SetterVisibilityError)
+                    return
+                }
             }
         }
 

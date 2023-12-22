@@ -47,9 +47,27 @@ public class FirStandaloneNormalAnalysisSourceModuleCollectDiagnosticsTestGenera
     }
 
     @Test
+    @TestMetadata("annotationWithEnumFromDuplicatedLibrary.kt")
+    public void testAnnotationWithEnumFromDuplicatedLibrary() throws Exception {
+        runTest("analysis/analysis-api/testData/components/diagnosticsProvider/diagnostics/annotationWithEnumFromDuplicatedLibrary.kt");
+    }
+
+    @Test
     @TestMetadata("declarationErrors.kt")
     public void testDeclarationErrors() throws Exception {
         runTest("analysis/analysis-api/testData/components/diagnosticsProvider/diagnostics/declarationErrors.kt");
+    }
+
+    @Test
+    @TestMetadata("duplicatedCallableWithImplicitType.kt")
+    public void testDuplicatedCallableWithImplicitType() throws Exception {
+        runTest("analysis/analysis-api/testData/components/diagnosticsProvider/diagnostics/duplicatedCallableWithImplicitType.kt");
+    }
+
+    @Test
+    @TestMetadata("errorsInFunctionalInterfacesInstances.kt")
+    public void testErrorsInFunctionalInterfacesInstances() throws Exception {
+        runTest("analysis/analysis-api/testData/components/diagnosticsProvider/diagnostics/errorsInFunctionalInterfacesInstances.kt");
     }
 
     @Test
@@ -62,6 +80,12 @@ public class FirStandaloneNormalAnalysisSourceModuleCollectDiagnosticsTestGenera
     @TestMetadata("incompleteFor.kt")
     public void testIncompleteFor() throws Exception {
         runTest("analysis/analysis-api/testData/components/diagnosticsProvider/diagnostics/incompleteFor.kt");
+    }
+
+    @Test
+    @TestMetadata("overrideProtectedClassReturnFromLibrary.kt")
+    public void testOverrideProtectedClassReturnFromLibrary() throws Exception {
+        runTest("analysis/analysis-api/testData/components/diagnosticsProvider/diagnostics/overrideProtectedClassReturnFromLibrary.kt");
     }
 
     @Test
