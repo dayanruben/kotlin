@@ -207,7 +207,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATION_ERROR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DESERIALIZATION_ERROR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DIVISION_BY_ZERO
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DSL_SCOPE_VIOLATION
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DUPLICATE_LABEL_IN_WHEN
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DUPLICATE_BRANCH_CONDITION_IN_WHEN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DUPLICATE_PARAMETER_NAME_IN_FUNCTION_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DYNAMIC_NOT_ALLOWED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DYNAMIC_RECEIVER_EXPECTED_BUT_WAS_NON_DYNAMIC
@@ -764,8 +764,8 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(VAL_OR_VAR_ON_FUN_PARAMETER, "''{0}'' on function parameter is prohibited.", TO_STRING)
         map.put(VAL_OR_VAR_ON_CATCH_PARAMETER, "''{0}'' on catch parameter is prohibited.", TO_STRING)
         map.put(VAL_OR_VAR_ON_SECONDARY_CONSTRUCTOR_PARAMETER, "''{0}'' on secondary constructor parameter is prohibited.", TO_STRING)
-        map.put(DEPRECATION, "''{0}'' is deprecated. {1}.", SYMBOL, STRING)
-        map.put(DEPRECATION_ERROR, "''{0}'' is deprecated. {1}.", SYMBOL, STRING)
+        map.put(DEPRECATION, "''{0}'' is deprecated.{1}", SYMBOL, OPTIONAL_SENTENCE)
+        map.put(DEPRECATION_ERROR, "''{0}'' is deprecated.{1}", SYMBOL, OPTIONAL_SENTENCE)
         map.put(VERSION_REQUIREMENT_DEPRECATION, "''{0}''{1} should not be used in Kotlin {2}.{3}", SYMBOL, REQUIRE_KOTLIN_VERSION, STRING, OPTIONAL_SENTENCE)
         map.put(VERSION_REQUIREMENT_DEPRECATION_ERROR, "''{0}''{1} cannot be used in Kotlin {2}.{3}", SYMBOL, REQUIRE_KOTLIN_VERSION, STRING, OPTIONAL_SENTENCE)
         map.put(TYPEALIAS_EXPANSION_DEPRECATION, "''{0}'' uses ''{1}'', which is deprecated. {2}.", SYMBOL, SYMBOL, STRING)
@@ -904,7 +904,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(SUPERTYPE_APPEARS_TWICE, "A supertype appears twice.")
         map.put(CLASS_IN_SUPERTYPE_FOR_ENUM, "Enum classes cannot extend classes.")
         map.put(SEALED_SUPERTYPE, "This type is sealed. It can only be extended by classes or objects in the same package.")
-        map.put(SEALED_SUPERTYPE_IN_LOCAL_CLASS, "''{0}'' cannot extend a sealed {1}.", STRING, CLASS_KIND)
+        map.put(SEALED_SUPERTYPE_IN_LOCAL_CLASS, "{0} cannot extend a sealed {1}.", STRING, CLASS_KIND)
         map.put(
             SEALED_INHERITOR_IN_DIFFERENT_PACKAGE,
             "A class can only extend a sealed class or interface declared in the same package."
@@ -1153,7 +1153,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         // Modifiers
         map.put(INAPPLICABLE_INFIX_MODIFIER, "'infix' modifier is inapplicable to this function.")
         map.put(REPEATED_MODIFIER, "Repeated ''{0}''.", TO_STRING)
-        map.put(REDUNDANT_MODIFIER, "Modifier ''{0}'' is redundant because ''{1}'' is present.", TO_STRING, TO_STRING)
+        map.put(REDUNDANT_MODIFIER, "Modifier ''{0}'' is redundant in presence of ''{1}''.", TO_STRING, TO_STRING)
         map.put(DEPRECATED_MODIFIER, "Modifier ''{0}'' is deprecated; use ''{1}'' instead.", TO_STRING, TO_STRING)
         map.put(DEPRECATED_MODIFIER_PAIR, "Modifier ''{0}'' is deprecated in presence of ''{1}''.", TO_STRING, TO_STRING)
         map.put(DEPRECATED_MODIFIER_FOR_TARGET, "Modifier ''{0}'' is deprecated for ''{1}''.", TO_STRING, STRING)
@@ -1172,7 +1172,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(INFIX_MODIFIER_REQUIRED, "''infix'' modifier is required on ''{0}''.", TO_STRING)
         map.put(WRONG_MODIFIER_CONTAINING_DECLARATION, "Modifier ''{0}'' is not applicable inside ''{1}''.", TO_STRING, STRING)
         map.put(DEPRECATED_MODIFIER_CONTAINING_DECLARATION, "Modifier ''{0}'' is deprecated inside ''{1}''.", TO_STRING, STRING)
-        map.put(INAPPLICABLE_OPERATOR_MODIFIER, "''operator'' modifier is not applicable to function ''{0}''.", STRING)
+        map.put(INAPPLICABLE_OPERATOR_MODIFIER, "''operator'' modifier is not applicable to function: {0}.", STRING)
 
         // Classes and interfaces
         map.put(SUPERTYPE_NOT_INITIALIZED, "This type has a constructor, so it must be initialized here.")
@@ -1558,7 +1558,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(VALUE_CLASS_CANNOT_HAVE_CONTEXT_RECEIVERS, "Value classes cannot have context receivers.")
         map.put(
             ANNOTATION_ON_ILLEGAL_MULTI_FIELD_VALUE_CLASS_TYPED_TARGET,
-            "Annotations on ''{0}'' of multi-field value class type are not supported.",
+            "Annotations on {0} of multi-field value class type are not supported.",
             STRING
         )
 
@@ -1808,7 +1808,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         ) // +
         map.put(
             LOCAL_INTERFACE_NOT_ALLOWED,
-            "''{0}'' is an interface, so it cannot be local. Try to use an anonymous object or abstract class instead.",
+            "Interface ''{0}'' cannot be local. Try to use an anonymous object or abstract class instead.",
             TO_STRING
         )
 
@@ -2228,11 +2228,11 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
 
         // When expressions
         map.put(EXPECTED_CONDITION, "Condition of type 'Boolean' expected.")
-        map.put(NO_ELSE_IN_WHEN, "''when'' expression must be exhaustive. Add the necessary {0}{1}", WHEN_MISSING_CASES, STRING)
+        map.put(NO_ELSE_IN_WHEN, "''when'' expression must be exhaustive. Add {0}{1}.", WHEN_MISSING_CASES, STRING)
         map.put(INVALID_IF_AS_EXPRESSION, "'if' must have both main and 'else' branches when used as an expression.")
         map.put(
             NON_EXHAUSTIVE_WHEN_STATEMENT,
-            "Non-exhaustive ''when'' statements on ''{0}'' will be prohibited in 1.7. Add ''{1}''.",
+            "Non-exhaustive ''when'' statements on ''{0}'' will be prohibited in 1.7. Add {1}.",
             TO_STRING,
             WHEN_MISSING_CASES
         )
@@ -2241,7 +2241,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT,
             "Use '||' instead of commas in conditions of 'when' without a subject."
         )
-        map.put(DUPLICATE_LABEL_IN_WHEN, "Duplicate label in 'when'.")
+        map.put(DUPLICATE_BRANCH_CONDITION_IN_WHEN, "Duplicate branch condition in 'when'.")
         map.put(
             ILLEGAL_DECLARATION_IN_WHEN_SUBJECT,
             "Illegal variable declaration in ''when'' subject: {0}. Should be a simple ''val'' with an initializer.",
@@ -2267,7 +2267,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(EXPRESSION_EXPECTED_PACKAGE_FOUND, "Expression expected, but package name found.")
 
         // Function contracts
-        map.put(ERROR_IN_CONTRACT_DESCRIPTION, "Error in contract description.", TO_STRING)
+        map.put(ERROR_IN_CONTRACT_DESCRIPTION, "Error in contract description: {0}", TO_STRING)
         map.put(CONTRACT_NOT_ALLOWED, "{0}", TO_STRING)
 
         // Conventions
@@ -2374,7 +2374,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(INC_DEC_SHOULD_NOT_RETURN_UNIT, "Functions 'inc()', 'dec()' shouldn't return 'Unit' to be used by operators ++, --.")
         map.put(
             ASSIGNMENT_OPERATOR_SHOULD_RETURN_UNIT,
-            "Function ''{0}'' should return ''Unit'' to be used by corresponding operator ''{1}''.",
+            "Function ''{0}'' must return ''Unit'' to be used by corresponding operator ''{1}''.",
             SYMBOL,
             TO_STRING
         )
@@ -2385,7 +2385,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
         map.put(
             DSL_SCOPE_VIOLATION,
-            "''{0}'' cannot be called in this context by implicit receiver. Use the explicit one if necessary.",
+            "''{0}'' cannot be called in this context with an implicit receiver. Use an explicit receiver if necessary.",
             SYMBOL
         )
 
@@ -2594,13 +2594,13 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
 
         map.put(
             BUILDER_INFERENCE_STUB_RECEIVER,
-            "The type of a receiver hasn''t been inferred yet. Please specify type argument for generic parameter `{0}` of `{1}` explicitly",
+            "The type of a receiver hasn''t been inferred yet. Please specify type argument for generic parameter ''{0}'' of ''{1}'' explicitly",
             TO_STRING,
             TO_STRING
         )
         map.put(
             BUILDER_INFERENCE_MULTI_LAMBDA_RESTRICTION,
-            "Unstable inference behaviour with multiple lambdas. Please either specify the type argument for generic parameter `{0}` of `{1}` explicitly",
+            "Unstable inference behaviour with multiple lambdas. Please specify the type argument for generic parameter ''{0}'' of ''{1}'' explicitly",
             TO_STRING,
             TO_STRING
         )

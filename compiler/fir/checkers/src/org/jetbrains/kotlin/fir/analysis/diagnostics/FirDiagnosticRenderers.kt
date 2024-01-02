@@ -37,7 +37,7 @@ object FirDiagnosticRenderers {
             is FirClassLikeSymbol<*>,
             is FirCallableSymbol<*>,
             -> FirRenderer(
-                typeRenderer = ConeTypeRenderer(),
+                typeRenderer = ConeTypeRendererForReadability { ConeIdShortRenderer() },
                 idRenderer = ConeIdShortRenderer(),
                 classMemberRenderer = FirNoClassMemberRenderer(),
                 bodyRenderer = null,
@@ -46,7 +46,9 @@ object FirDiagnosticRenderers {
                 modifierRenderer = FirPartialModifierRenderer(),
                 valueParameterRenderer = FirValueParameterRendererNoDefaultValue(),
                 declarationRenderer = FirDeclarationRenderer("local "),
+                annotationRenderer = FirAnnotationRendererForReadability(),
                 lineBreakAfterContextReceivers = false,
+                renderFieldAnnotationSeparately = false,
             ).renderElementAsString(symbol.fir, trim = true)
             is FirTypeParameterSymbol -> symbol.name.asString()
             else -> "???"
@@ -169,11 +171,11 @@ object FirDiagnosticRenderers {
 
     val WHEN_MISSING_CASES = Renderer { missingCases: List<WhenMissingCase> ->
         if (missingCases.singleOrNull() == WhenMissingCase.Unknown) {
-            "'else' branch"
+            "an 'else' branch"
         } else {
             val list = missingCases.joinToString(", ", limit = WHEN_MISSING_LIMIT) { "'$it'" }
             val branches = if (missingCases.size > 1) "branches" else "branch"
-            "$list $branches or 'else' branch instead"
+            "the $list $branches or an 'else' branch"
         }
     }
 
