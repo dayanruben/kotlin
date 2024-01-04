@@ -14,27 +14,11 @@
  */
 @kotlin.Metadata()
 public abstract interface Intf {
+    public static final int WHITE = 2;
     @org.jetbrains.annotations.NotNull()
     public static final Intf.Companion Companion = null;
-    public static final int WHITE = 2;
 
     public abstract int getColor();
-
-    /**
-     * synthetic class
-     */
-    @kotlin.Metadata()
-    public static final class DefaultImpls {
-
-        public DefaultImpls() {
-            super();
-        }
-
-        public static int getColor(@org.jetbrains.annotations.NotNull()
-        Intf $this) {
-            return 0;
-        }
-    }
 
     /**
      * public final companion object Intf.Companion : kotlin/Any {
@@ -64,6 +48,22 @@ public abstract interface Intf {
         }
 
         public final int getBLACK() {
+            return 0;
+        }
+    }
+
+    /**
+     * synthetic class
+     */
+    @kotlin.Metadata()
+    public static final class DefaultImpls {
+
+        public DefaultImpls() {
+            super();
+        }
+
+        public static int getColor(@org.jetbrains.annotations.NotNull()
+        Intf $this) {
             return 0;
         }
     }

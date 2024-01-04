@@ -27,7 +27,7 @@ package test;
  *   public final (* delegated *) val x: kotlin/Unit
  *     public final (* non-default *) get
  *
- *   // field: y$delegate:Ltest/A$y$2;
+ *   // field: y$delegate:Ltest/C;
  *   // getter: getY()Ljava/lang/String;
  *   public final (* delegated *) val y: kotlin/String
  *     public final (* non-default *) get

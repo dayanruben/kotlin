@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.cliArgument
+import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.test.directives.JvmEnvironmentConfigurationDirective
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives
 import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.TestServices
+import org.jetbrains.kotlin.test.services.compilerConfigurationProvider
 import org.jetbrains.kotlin.test.services.sourceFileProvider
 import org.jetbrains.kotlin.test.services.standardLibrariesPathProvider
 import org.jetbrains.kotlin.test.util.KtTestUtil
@@ -37,12 +39,14 @@ abstract class CliTestModuleCompiler : TestModuleCompiler() {
         compilerKind,
         tmpDir,
         buildCompilerOptions(module, testServices),
-        compilationErrorExpected = Directives.COMPILATION_ERRORS in module.directives
+        compilationErrorExpected = Directives.COMPILATION_ERRORS in module.directives,
+        libraryName = module.name,
+        extraClasspath = buildExtraClasspath(module, testServices),
     )
 
     override fun compileTestModuleToLibrarySources(module: TestModule, testServices: TestServices): Path {
         val tmpDir = KtTestUtil.tmpDir("testSourcesToCompile").toPath()
-        val librarySourcesPath = tmpDir / "library-sources.jar"
+        val librarySourcesPath = tmpDir / "${module.name}-sources.jar"
         val manifest = Manifest().apply { mainAttributes[Attributes.Name.MANIFEST_VERSION] = "1.0" }
         JarOutputStream(librarySourcesPath.outputStream(), manifest).use { jarOutputStream ->
             for (testFile in module.files) {
@@ -50,8 +54,15 @@ abstract class CliTestModuleCompiler : TestModuleCompiler() {
                 addFileToJar(testFile.relativePath, text, jarOutputStream)
             }
         }
+
         return librarySourcesPath
     }
+
+    private fun buildExtraClasspath(module: TestModule, testServices: TestServices): List<String> = buildList {
+        addAll(buildPlatformExtraClasspath(module, testServices))
+    }
+
+    protected open fun buildPlatformExtraClasspath(module: TestModule, testServices: TestServices): List<String> = emptyList()
 
     private fun buildCompilerOptions(module: TestModule, testServices: TestServices): List<String> = buildList {
         addAll(buildCommonCompilerOptions(module))
@@ -97,6 +108,13 @@ class JvmJarTestModuleCompiler : CliTestModuleCompiler() {
             }
 
             addAll(listOf(K2JVMCompilerArguments::jdkHome.cliArgument, jdkHome.toString()))
+        }
+    }
+
+    override fun buildPlatformExtraClasspath(module: TestModule, testServices: TestServices): List<String> = buildList {
+        val compilerConfiguration = testServices.compilerConfigurationProvider.getCompilerConfiguration(module)
+        for (file in compilerConfiguration.jvmClasspathRoots) {
+            add(file.absolutePath)
         }
     }
 }

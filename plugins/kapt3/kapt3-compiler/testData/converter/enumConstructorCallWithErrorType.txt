@@ -36,6 +36,11 @@ public enum E {
     public final I getI() {
         return null;
     }
+
+    @org.jetbrains.annotations.NotNull()
+    public static kotlin.enums.EnumEntries<E> getEntries() {
+        return null;
+    }
 }
 
 ////////////////////

@@ -35180,6 +35180,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 }
 
                 @Test
+                @TestMetadata("kt64645.kt")
+                public void testKt64645() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/smartCasts/castchecks/kt64645.kt");
+                }
+
+                @Test
                 @TestMetadata("smartCastOfNullableExpressionWithExpectedType.kt")
                 public void testSmartCastOfNullableExpressionWithExpectedType() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/smartCasts/castchecks/smartCastOfNullableExpressionWithExpectedType.kt");
@@ -39264,6 +39270,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             @TestMetadata("lateinitUnsignedType.kt")
             public void testLateinitUnsignedType() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/unsignedTypes/lateinitUnsignedType.kt");
+            }
+
+            @Test
+            @TestMetadata("numberReceiverNotValid.kt")
+            public void testNumberReceiverNotValid() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/unsignedTypes/numberReceiverNotValid.kt");
             }
 
             @Test

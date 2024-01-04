@@ -99,8 +99,6 @@ public final class NonExistentClassWIthoutCorrectionKt {
  */
 @kotlin.Metadata()
 public final class NonExistentType {
-    @org.jetbrains.annotations.NotNull()
-    public static final NonExistentType INSTANCE = null;
     @org.jetbrains.annotations.Nullable()
     private static final error.NonExistentClass a = null;
     @org.jetbrains.annotations.Nullable()
@@ -115,6 +113,8 @@ public final class NonExistentType {
     public static error.NonExistentClass coocoo21;
     public static error.NonExistentClass coocoo3;
     public static error.NonExistentClass coocoo31;
+    @org.jetbrains.annotations.NotNull()
+    public static final NonExistentType INSTANCE = null;
 
     private NonExistentType() {
         super();

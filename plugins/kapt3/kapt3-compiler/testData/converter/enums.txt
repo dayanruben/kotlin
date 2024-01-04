@@ -43,6 +43,11 @@ public enum Enum1 {
 
     Enum1() {
     }
+
+    @org.jetbrains.annotations.NotNull()
+    public static kotlin.enums.EnumEntries<Enum1> getEntries() {
+        return null;
+    }
 }
 
 ////////////////////
@@ -114,6 +119,11 @@ public enum Enum2 {
 
     public final void publicEnumFun() {
     }
+
+    @org.jetbrains.annotations.NotNull()
+    public static kotlin.enums.EnumEntries<Enum2> getEntries() {
+        return null;
+    }
 }
 
 ////////////////////
@@ -149,6 +159,11 @@ public abstract interface I {
 
         Nested() {
         }
+
+        @org.jetbrains.annotations.NotNull()
+        public static kotlin.enums.EnumEntries<I.Nested> getEntries() {
+            return null;
+        }
     }
 }
 
@@ -173,5 +188,10 @@ public enum Nested1 {
     /*public static final*/ WHITE /* = new Nested1() */;
 
     Nested1() {
+    }
+
+    @org.jetbrains.annotations.NotNull()
+    public static kotlin.enums.EnumEntries<Nested1> getEntries() {
+        return null;
     }
 }

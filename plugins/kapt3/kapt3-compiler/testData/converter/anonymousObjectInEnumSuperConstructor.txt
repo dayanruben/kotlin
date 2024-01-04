@@ -48,4 +48,9 @@ public enum Foo {
     public final Callback getCallback() {
         return null;
     }
+
+    @org.jetbrains.annotations.NotNull()
+    public static kotlin.enums.EnumEntries<Foo> getEntries() {
+        return null;
+    }
 }

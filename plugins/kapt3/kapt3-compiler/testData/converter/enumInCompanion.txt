@@ -17,6 +17,7 @@
  */
 @kotlin.Metadata()
 public final class Test {
+    @org.jetbrains.annotations.NotNull()
     private final Test.Companion.Example foo;
     @org.jetbrains.annotations.NotNull()
     public static final Test.Companion Companion = null;
@@ -62,6 +63,11 @@ public final class Test {
 
             Example() {
             }
+
+            @org.jetbrains.annotations.NotNull()
+            public static kotlin.enums.EnumEntries<Test.Companion.Example> getEntries() {
+                return null;
+            }
         }
     }
 }
@@ -88,6 +94,7 @@ public final class Test {
  */
 @kotlin.Metadata()
 public final class Test2 {
+    @org.jetbrains.annotations.NotNull()
     private final Test2.Amigo.Example foo;
     @org.jetbrains.annotations.NotNull()
     public static final Test2.Amigo Amigo = null;
@@ -133,6 +140,11 @@ public final class Test2 {
 
             Example() {
             }
+
+            @org.jetbrains.annotations.NotNull()
+            public static kotlin.enums.EnumEntries<Test2.Amigo.Example> getEntries() {
+                return null;
+            }
         }
     }
 }
@@ -157,6 +169,7 @@ public final class Test2 {
  */
 @kotlin.Metadata()
 public final class Test3 {
+    @org.jetbrains.annotations.NotNull()
     private final Test3.Amigo.Example foo = Test3.Amigo.Example.FOO;
 
     public Test3() {
@@ -201,6 +214,11 @@ public final class Test3 {
             /*public static final*/ FOO /* = new Example() */;
 
             Example() {
+            }
+
+            @org.jetbrains.annotations.NotNull()
+            public static kotlin.enums.EnumEntries<Test3.Amigo.Example> getEntries() {
+                return null;
             }
         }
     }
@@ -269,9 +287,9 @@ public final class Test4 {
          */
         @kotlin.Metadata()
         public static final class Foo {
+            public static final int constProperty = 1;
             @org.jetbrains.annotations.NotNull()
             public static final Test4.Companion.Foo INSTANCE = null;
-            public static final int constProperty = 1;
 
             private Foo() {
                 super();
@@ -300,6 +318,7 @@ public final class Test4 {
  */
 @kotlin.Metadata()
 public final class Test5 {
+    @org.jetbrains.annotations.NotNull()
     private final Test5.Amigos.Companion.Goo.Example foo;
 
     public Test5() {
@@ -382,6 +401,11 @@ public final class Test5 {
                     /*public static final*/ FOO /* = new Example() */;
 
                     Example() {
+                    }
+
+                    @org.jetbrains.annotations.NotNull()
+                    public static kotlin.enums.EnumEntries<Test5.Amigos.Companion.Goo.Example> getEntries() {
+                        return null;
                     }
                 }
             }

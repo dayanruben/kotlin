@@ -47,6 +47,7 @@
  */
 @kotlin.Metadata()
 public final class MyList<T extends java.lang.Object> implements java.util.List<T>, kotlin.jvm.internal.markers.KMappedMarker {
+    @org.jetbrains.annotations.NotNull()
     private final java.util.List<T> wrappedList = null;
 
     public MyList(@org.jetbrains.annotations.NotNull()
@@ -55,7 +56,30 @@ public final class MyList<T extends java.lang.Object> implements java.util.List<
     }
 
     @java.lang.Override()
-    public boolean contains(@org.jetbrains.annotations.NotNull()
+    public void add(int index, T element) {
+    }
+
+    @java.lang.Override()
+    public boolean add(T element) {
+        return false;
+    }
+
+    @java.lang.Override()
+    public boolean addAll(int index, java.util.Collection<? extends T> elements) {
+        return false;
+    }
+
+    @java.lang.Override()
+    public boolean addAll(java.util.Collection<? extends T> elements) {
+        return false;
+    }
+
+    @java.lang.Override()
+    public void clear() {
+    }
+
+    @java.lang.Override()
+    public boolean contains(@org.jetbrains.annotations.Nullable()
     java.lang.Object element) {
         return false;
     }
@@ -78,7 +102,7 @@ public final class MyList<T extends java.lang.Object> implements java.util.List<
     }
 
     @java.lang.Override()
-    public int indexOf(@org.jetbrains.annotations.NotNull()
+    public int indexOf(@org.jetbrains.annotations.Nullable()
     java.lang.Object element) {
         return 0;
     }
@@ -95,7 +119,7 @@ public final class MyList<T extends java.lang.Object> implements java.util.List<
     }
 
     @java.lang.Override()
-    public int lastIndexOf(@org.jetbrains.annotations.NotNull()
+    public int lastIndexOf(@org.jetbrains.annotations.Nullable()
     java.lang.Object element) {
         return 0;
     }
@@ -112,6 +136,30 @@ public final class MyList<T extends java.lang.Object> implements java.util.List<
         return null;
     }
 
+    public T remove(int index) {
+        return null;
+    }
+
+    @java.lang.Override()
+    public boolean remove(java.lang.Object element) {
+        return false;
+    }
+
+    @java.lang.Override()
+    public boolean removeAll(java.util.Collection<? extends java.lang.Object> elements) {
+        return false;
+    }
+
+    @java.lang.Override()
+    public boolean retainAll(java.util.Collection<? extends java.lang.Object> elements) {
+        return false;
+    }
+
+    @java.lang.Override()
+    public T set(int index, T element) {
+        return null;
+    }
+
     @java.lang.Override()
     public final int size() {
         return 0;
@@ -120,6 +168,14 @@ public final class MyList<T extends java.lang.Object> implements java.util.List<
     @java.lang.Override()
     @org.jetbrains.annotations.NotNull()
     public java.util.List<T> subList(int fromIndex, int toIndex) {
+        return null;
+    }
+
+    public java.lang.Object[] toArray() {
+        return null;
+    }
+
+    public <T extends java.lang.Object>T[] toArray(T[] array) {
         return null;
     }
 }

@@ -133,31 +133,55 @@ public final class B {
         super();
     }
 
+    /**
+     * Nested
+     * member
+     * comment.
+     */
     @org.jetbrains.annotations.NotNull()
     public final java.lang.String getA() {
         return null;
     }
 
+    /**
+     * Mixed
+     * tabs/spaces
+     */
     @org.jetbrains.annotations.NotNull()
     public final java.lang.String getB() {
         return null;
     }
 
+    /**
+     * List:
+     * * first item
+     * * second item
+     */
     @org.jetbrains.annotations.NotNull()
     public final java.lang.String getC() {
         return null;
     }
 
+    /**
+     * Without
+     * stars
+     */
     @org.jetbrains.annotations.NotNull()
     public final java.lang.String getD() {
         return null;
     }
 
+    /**
+     * A mutable property
+     */
     @org.jetbrains.annotations.NotNull()
     public final java.lang.String getE() {
         return null;
     }
 
+    /**
+     * A mutable property
+     */
     public final void setE(@org.jetbrains.annotations.NotNull()
     java.lang.String p0) {
     }
@@ -171,6 +195,9 @@ public final class B {
     java.lang.String value) {
     }
 
+    /**
+     * A property with a backing field and an explicit setter
+     */
     @org.jetbrains.annotations.NotNull()
     public final java.lang.String getG() {
         return null;

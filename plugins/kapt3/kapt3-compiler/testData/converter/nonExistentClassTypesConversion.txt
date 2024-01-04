@@ -298,7 +298,7 @@ public final class Test<G extends java.lang.Object> {
     private final java.lang.Object m = null;
     @org.jetbrains.annotations.NotNull()
     private final java.lang.String n = "";
-    public java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends error.NonExistentClass>>>>>>>>>> o11;
+    public java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<error.NonExistentClass>>>>>>>>>> o11;
     public java.util.List<java.util.List<java.util.List<java.util.List<java.util.List<java.util.List<java.util.List<java.util.List<java.util.List<ABC>>>>>>>>> o10;
     public java.util.Calendar.Builder p;
 
@@ -472,7 +472,7 @@ public final class Test<G extends java.lang.Object> {
     }
 
     public final void setO11(@org.jetbrains.annotations.NotNull()
-    java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends error.NonExistentClass>>>>>>>>>> p0) {
+    java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<? extends java.util.List<error.NonExistentClass>>>>>>>>>> p0) {
     }
 
     @org.jetbrains.annotations.NotNull()

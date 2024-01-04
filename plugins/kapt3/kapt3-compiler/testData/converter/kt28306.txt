@@ -53,7 +53,6 @@ public abstract interface SubInterface<T extends java.lang.Object> extends foo.I
             super();
         }
 
-        @java.lang.Override()
         public static <T extends java.lang.Object>void foo(@org.jetbrains.annotations.NotNull()
         foo.SubInterface<T> $this) {
         }

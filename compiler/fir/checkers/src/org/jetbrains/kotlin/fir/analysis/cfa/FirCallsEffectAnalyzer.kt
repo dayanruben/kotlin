@@ -87,12 +87,8 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
             graph.exitNode.previousCfgNodes.forEach { node ->
                 val requiredRange = effectDeclaration.kind
                 val pathAwareInfo = invocationData.getValue(node)
-                for (info in pathAwareInfo.values) {
-                    if (investigate(info, symbol, requiredRange, function, reporter, context)) {
-                        // To avoid duplicate reports, stop investigating remaining paths once reported.
-                        break
-                    }
-                }
+                val info = pathAwareInfo[NormalPath] ?: return@forEach
+                investigate(info, symbol, requiredRange, function, reporter, context)
             }
         }
     }
@@ -104,7 +100,7 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
         function: FirContractDescriptionOwner,
         reporter: DiagnosticReporter,
         context: CheckerContext
-    ): Boolean {
+    ) {
         val foundRange = info[symbol] ?: EventOccurrencesRange.ZERO
         if (foundRange !in requiredRange) {
             reporter.reportOn(
@@ -115,9 +111,7 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
                 foundRange,
                 context
             )
-            return true
         }
-        return false
     }
 
     private class IllegalScopeContext(
@@ -200,7 +194,8 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
             }
 
             for (arg in node.fir.argumentList.arguments) {
-                data.checkExpressionForLeakedSymbols(arg) {
+                val unwrappedArg = arg.unwrapArgument()
+                data.checkExpressionForLeakedSymbols(unwrappedArg) {
                     node.fir.getArgumentCallsEffect(arg) == null
                 }
             }
@@ -307,7 +302,9 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
         return this is FirAnonymousFunction && this.isLambda && this.invocationKind != null
     }
 
-    private fun FirExpression?.toQualifiedReference(): FirReference? = (this as? FirQualifiedAccessExpression)?.calleeReference
+    private fun FirExpression?.toQualifiedReference(): FirReference? {
+        return (this?.unwrapArgument() as? FirQualifiedAccessExpression)?.calleeReference
+    }
 
     private fun referenceToSymbol(reference: FirReference?): FirBasedSymbol<*>? = when (reference) {
         is FirResolvedNamedReference -> reference.resolvedSymbol

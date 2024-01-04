@@ -37,13 +37,15 @@ public final class ClassWithParent implements java.lang.CharSequence {
     }
 
     @java.lang.Override()
+    public abstract char get(int index);
+
+    @java.lang.Override()
+    public abstract int getLength();
+
+    @java.lang.Override()
     public final char charAt(int index) {
         return '\u0000';
     }
-
-    public abstract char get(int index);
-
-    public abstract int getLength();
 
     @java.lang.Override()
     public final int length() {

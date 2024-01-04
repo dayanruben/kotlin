@@ -20,6 +20,11 @@ public enum Em {
 
     Em() {
     }
+
+    @org.jetbrains.annotations.NotNull()
+    public static kotlin.enums.EnumEntries<Em> getEntries() {
+        return null;
+    }
 }
 
 ////////////////////
@@ -157,10 +162,6 @@ public final class Foo {
     @org.jetbrains.annotations.NotNull()
     private final Em[] emarr = null;
 
-    public Foo() {
-        super();
-    }
-
     public Foo(boolean z, byte b, char c, char c2, short sh, int i, long l, float f, double d, @org.jetbrains.annotations.NotNull()
     java.lang.String s, @org.jetbrains.annotations.NotNull()
     int[] iarr, @org.jetbrains.annotations.NotNull()
@@ -256,5 +257,9 @@ public final class Foo {
     }
 
     public final void foo(int a) {
+    }
+
+    public Foo() {
+        super();
     }
 }

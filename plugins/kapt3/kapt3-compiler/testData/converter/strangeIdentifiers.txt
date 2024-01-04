@@ -68,6 +68,11 @@ public enum StrangeEnum {
     public final java.lang.String getSize() {
         return null;
     }
+
+    @org.jetbrains.annotations.NotNull()
+    public static kotlin.enums.EnumEntries<StrangeEnum> getEntries() {
+        return null;
+    }
 }
 
 ////////////////////
@@ -108,7 +113,7 @@ public enum StrangeEnum {
  */
 @kotlin.Metadata()
 public final class Test {
-    public java.lang.String simpleName;
+    public final java.lang.String simpleName = null;
 
     public Test() {
         super();
@@ -122,7 +127,7 @@ public final class Test {
     public final void simpleFun() {
     }
 
-    @Anno(name = "Woofwoof", size = StrangeEnum.InvalidFieldName)
+    @Anno(size = StrangeEnum.InvalidFieldName, name = "Woofwoof")
     public final void simpleFun2(@org.jetbrains.annotations.NotNull()
     java.lang.String a, @org.jetbrains.annotations.NotNull()
     java.lang.String b) {

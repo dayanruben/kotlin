@@ -52,7 +52,7 @@ public final class SuspendFunctionWithBigArityKt {
     Flow<T21> flow21, @org.jetbrains.annotations.NotNull()
     Flow<T22> flow22, @org.jetbrains.annotations.NotNull()
     Flow<T23> flow23, @org.jetbrains.annotations.NotNull()
-    kotlin.jvm.functions.FunctionN<? extends java.lang.Object> transform) {
+    kotlin.jvm.functions.FunctionN<? extends R> transform) {
         return null;
     }
 }

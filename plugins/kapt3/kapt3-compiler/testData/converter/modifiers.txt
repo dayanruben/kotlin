@@ -216,16 +216,6 @@ public class PublicClassProtectedConstructor {
     }
 
     /**
-     * protected abstract interface modifiers/PublicClassProtectedConstructor.ProtectedInterface : kotlin/Any {
-     *
-     *   // module name: main
-     * }
-     */
-    @kotlin.Metadata()
-    public static abstract interface ProtectedInterface {
-    }
-
-    /**
      * private abstract interface modifiers/PublicClassProtectedConstructor.PrivateInterface : kotlin/Any {
      *
      *   // module name: main
@@ -233,6 +223,16 @@ public class PublicClassProtectedConstructor {
      */
     @kotlin.Metadata()
     static abstract interface PrivateInterface {
+    }
+
+    /**
+     * protected abstract interface modifiers/PublicClassProtectedConstructor.ProtectedInterface : kotlin/Any {
+     *
+     *   // module name: main
+     * }
+     */
+    @kotlin.Metadata()
+    public static abstract interface ProtectedInterface {
     }
 }
 
@@ -283,6 +283,23 @@ public abstract class SealedClass {
     }
 
     /**
+     * public final class modifiers/SealedClass.Four : modifiers/SealedClass.Three {
+     *
+     *   // signature: <init>()V
+     *   public constructor()
+     *
+     *   // module name: main
+     * }
+     */
+    @kotlin.Metadata()
+    public static final class Four extends modifiers.SealedClass.Three {
+
+        public Four() {
+            super();
+        }
+    }
+
+    /**
      * public final class modifiers/SealedClass.One : modifiers/SealedClass {
      *
      *   // signature: <init>()V
@@ -295,24 +312,6 @@ public abstract class SealedClass {
     public static final class One extends modifiers.SealedClass {
 
         public One() {
-            super();
-        }
-    }
-
-    /**
-     * public open class modifiers/SealedClass.Two : modifiers/SealedClass {
-     *
-     *   // signature: <init>()V
-     *   public constructor()
-     *
-     *   // module name: main
-     * }
-     */
-    @kotlin.Metadata()
-    public static class Two extends modifiers.SealedClass {
-
-        public Two() {
-            super();
         }
     }
 
@@ -334,7 +333,7 @@ public abstract class SealedClass {
     }
 
     /**
-     * public final class modifiers/SealedClass.Four : modifiers/SealedClass.Three {
+     * public open class modifiers/SealedClass.Two : modifiers/SealedClass {
      *
      *   // signature: <init>()V
      *   public constructor()
@@ -343,10 +342,9 @@ public abstract class SealedClass {
      * }
      */
     @kotlin.Metadata()
-    public static final class Four extends modifiers.SealedClass.Three {
+    public static class Two extends modifiers.SealedClass {
 
-        public Four() {
-            super();
+        public Two() {
         }
     }
 }

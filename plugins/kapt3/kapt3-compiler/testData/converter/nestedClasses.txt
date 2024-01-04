@@ -270,6 +270,23 @@ public final class Test {
     }
 
     /**
+     * public final inner class Test.Inner : kotlin/Any {
+     *
+     *   // signature: <init>(LTest;)V
+     *   public constructor()
+     *
+     *   // module name: main
+     * }
+     */
+    @kotlin.Metadata()
+    public final class Inner {
+
+        public Inner() {
+            super();
+        }
+    }
+
+    /**
      * public final class Test.Nested : kotlin/Any {
      *
      *   // signature: <init>()V
@@ -306,52 +323,6 @@ public final class Test {
     }
 
     /**
-     * public final inner class Test.Inner : kotlin/Any {
-     *
-     *   // signature: <init>(LTest;)V
-     *   public constructor()
-     *
-     *   // module name: main
-     * }
-     */
-    @kotlin.Metadata()
-    public final class Inner {
-
-        public Inner() {
-            super();
-        }
-    }
-
-    /**
-     * public final object Test.NestedObject : kotlin/Any {
-     *
-     *   // signature: <init>()V
-     *   private constructor()
-     *
-     *   // module name: main
-     * }
-     */
-    @kotlin.Metadata()
-    public static final class NestedObject {
-        @org.jetbrains.annotations.NotNull()
-        public static final Test.NestedObject INSTANCE = null;
-
-        private NestedObject() {
-            super();
-        }
-    }
-
-    /**
-     * public abstract interface Test.NestedInterface : kotlin/Any {
-     *
-     *   // module name: main
-     * }
-     */
-    @kotlin.Metadata()
-    public static abstract interface NestedInterface {
-    }
-
-    /**
      * public final enum class Test.NestedEnum : kotlin/Enum<Test.NestedEnum> {
      *
      *   // signature: <init>(Ljava/lang/String;I)V
@@ -372,6 +343,40 @@ public final class Test {
         /*public static final*/ WHITE /* = new NestedEnum() */;
 
         NestedEnum() {
+        }
+
+        @org.jetbrains.annotations.NotNull()
+        public static kotlin.enums.EnumEntries<Test.NestedEnum> getEntries() {
+            return null;
+        }
+    }
+
+    /**
+     * public abstract interface Test.NestedInterface : kotlin/Any {
+     *
+     *   // module name: main
+     * }
+     */
+    @kotlin.Metadata()
+    public static abstract interface NestedInterface {
+    }
+
+    /**
+     * public final object Test.NestedObject : kotlin/Any {
+     *
+     *   // signature: <init>()V
+     *   private constructor()
+     *
+     *   // module name: main
+     * }
+     */
+    @kotlin.Metadata()
+    public static final class NestedObject {
+        @org.jetbrains.annotations.NotNull()
+        public static final Test.NestedObject INSTANCE = null;
+
+        private NestedObject() {
+            super();
         }
     }
 }

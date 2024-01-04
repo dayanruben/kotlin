@@ -3,7 +3,7 @@ import kotlin.reflect.KProperty;
 /**
  * package {
  *
- *   // field: delegate$delegate:LAnonymousDelegateKt$delegate$2;
+ *   // field: delegate$delegate:Ljava/lang/Object;
  *   // getter: getDelegate()Ljava/lang/Object;
  *   // setter: setDelegate(Ljava/lang/Object;)V
  *   public final (* delegated *) var delegate: kotlin/Any
@@ -74,7 +74,7 @@ import kotlin.reflect.KProperty;
  *   // signature: <init>()V
  *   public constructor()
  *
- *   // field: broken$delegate:LTest$broken$2;
+ *   // field: broken$delegate:Ljava/lang/Object;
  *   // getter: getBroken()Ljava/lang/Object;
  *   // setter: setBroken(Ljava/lang/Object;)V
  *   public final (* delegated *) var broken: kotlin/Any
@@ -91,7 +91,7 @@ import kotlin.reflect.KProperty;
  *   private final (* delegated *) val lazyProp: java/lang/Runnable
  *     private final (* non-default *) get
  *
- *   // field: overridden$delegate:LTest$overridden$2;
+ *   // field: overridden$delegate:Ljava/io/Serializable;
  *   // getter: getOverridden()Ljava/lang/Object;
  *   // setter: setOverridden(Ljava/lang/Object;)V
  *   public final (* delegated *) var overridden: kotlin/Any
@@ -107,6 +107,7 @@ public final class Test {
     private final java.lang.Object broken$delegate = null;
     @org.jetbrains.annotations.NotNull()
     private final java.io.Serializable overridden$delegate = null;
+    @org.jetbrains.annotations.NotNull()
     private final kotlin.Lazy lazyProp$delegate = null;
     @org.jetbrains.annotations.NotNull()
     private final ConcreteDelegate concreteDelegate$delegate = null;

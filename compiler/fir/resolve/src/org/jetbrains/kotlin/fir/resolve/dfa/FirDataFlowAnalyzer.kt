@@ -165,7 +165,7 @@ abstract class FirDataFlowAnalyzer(
         }
         localFunctionNode?.mergeIncomingFlow()
         functionEnterNode.mergeIncomingFlow { _, flow ->
-            if (function is FirAnonymousFunction && function.invocationKind?.canBeRevisited() == true) {
+            if (function is FirAnonymousFunction && function.invocationKind?.canBeRevisited() != false) {
                 enterRepeatableStatement(flow, function)
             }
         }
@@ -176,7 +176,7 @@ abstract class FirDataFlowAnalyzer(
         if (function is FirDefaultPropertyAccessor) return null
 
         context.variableAssignmentAnalyzer.exitFunction()
-        if (function is FirAnonymousFunction && function.invocationKind?.canBeRevisited() == true) {
+        if (function is FirAnonymousFunction && function.invocationKind?.canBeRevisited() != false) {
             exitRepeatableStatement(function)
         }
 
@@ -368,7 +368,7 @@ abstract class FirDataFlowAnalyzer(
                         if (operandVariable.isReal()) {
                             flow.addImplication((expressionVariable eq isType) implies (operandVariable typeEq type))
                         }
-                        if (!type.canBeNull) {
+                        if (!type.canBeNull(components.session)) {
                             // x is (T & Any) => x != null
                             flow.addImplication((expressionVariable eq isType) implies (operandVariable notEq null))
                         } else if (type.isMarkedNullable) {
@@ -383,7 +383,7 @@ abstract class FirDataFlowAnalyzer(
                 if (operandVariable.isReal()) {
                     flow.addTypeStatement(operandVariable typeEq type)
                 }
-                if (!type.canBeNull) {
+                if (!type.canBeNull(components.session)) {
                     flow.commitOperationStatement(operandVariable notEq null)
                 } else {
                     val expressionVariable = variableStorage.createSynthetic(typeOperatorCall)
@@ -998,9 +998,10 @@ abstract class FirDataFlowAnalyzer(
         for (conditionalEffect in conditionalEffects) {
             val effect = conditionalEffect.effect as? ConeReturnsEffectDeclaration ?: continue
             val operation = effect.value.toOperation()
-            val statements = logicSystem.approveContractStatement(conditionalEffect.condition, argumentVariables, substitutor) {
-                logicSystem.approveOperationStatement(flow, it, removeApprovedOrImpossible = operation == null)
-            } ?: continue // TODO: do what if the result is known to be false?
+            val statements =
+                logicSystem.approveContractStatement(conditionalEffect.condition, argumentVariables, substitutor) {
+                    logicSystem.approveOperationStatement(flow, it, removeApprovedOrImpossible = operation == null)
+                } ?: continue // TODO: do what if the result is known to be false?
             if (operation == null) {
                 flow.addAllStatements(statements)
             } else {

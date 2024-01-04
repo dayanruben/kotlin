@@ -98,6 +98,40 @@ public final class A$B {
     }
 
     /**
+     * public final class test/A$B.D$$$E : kotlin/Any {
+     *
+     *   // signature: <init>()V
+     *   public constructor()
+     *
+     *   // module name: main
+     * }
+     */
+    @kotlin.Metadata()
+    public static final class D$$$E {
+
+        public D$$$E() {
+            super();
+        }
+    }
+
+    /**
+     * public final class test/A$B.D$$E : kotlin/Any {
+     *
+     *   // signature: <init>()V
+     *   public constructor()
+     *
+     *   // module name: main
+     * }
+     */
+    @kotlin.Metadata()
+    public static final class D$$E {
+
+        public D$$E() {
+            super();
+        }
+    }
+
+    /**
      * public final class test/A$B.D$E : kotlin/Any {
      *
      *   // signature: <init>()V
@@ -179,40 +213,6 @@ public final class A$B {
             }
         }
     }
-
-    /**
-     * public final class test/A$B.D$$E : kotlin/Any {
-     *
-     *   // signature: <init>()V
-     *   public constructor()
-     *
-     *   // module name: main
-     * }
-     */
-    @kotlin.Metadata()
-    public static final class D$$E {
-
-        public D$$E() {
-            super();
-        }
-    }
-
-    /**
-     * public final class test/A$B.D$$$E : kotlin/Any {
-     *
-     *   // signature: <init>()V
-     *   public constructor()
-     *
-     *   // module name: main
-     * }
-     */
-    @kotlin.Metadata()
-    public static final class D$$$E {
-
-        public D$$$E() {
-            super();
-        }
-    }
 }
 
 ////////////////////
@@ -237,20 +237,6 @@ public final class Experiment {
 
     public Experiment() {
         super();
-    }
-
-    @java.lang.annotation.Retention(value = java.lang.annotation.RetentionPolicy.RUNTIME)
-    /**
-     * public final annotation class test/Experiment.Type : kotlin/Annotation {
-     *
-     *   // signature: <init>()V
-     *   public constructor()
-     *
-     *   // module name: main
-     * }
-     */
-    @kotlin.Metadata()
-    public static abstract @interface Type {
     }
 
     @test.Experiment.Type()
@@ -288,6 +274,21 @@ public final class Experiment {
         @org.jetbrains.annotations.NotNull()
         private final java.lang.String s = null;
 
+        public Group(@org.jetbrains.annotations.NotNull()
+        java.lang.String s) {
+            super();
+        }
+
+        @org.jetbrains.annotations.NotNull()
+        public final java.lang.String getS() {
+            return null;
+        }
+
+        @org.jetbrains.annotations.NotNull()
+        public final java.lang.String component1() {
+            return null;
+        }
+
         @org.jetbrains.annotations.NotNull()
         public final test.Experiment.Group copy(@org.jetbrains.annotations.NotNull()
         java.lang.String s) {
@@ -310,21 +311,20 @@ public final class Experiment {
         public java.lang.String toString() {
             return null;
         }
+    }
 
-        public Group(@org.jetbrains.annotations.NotNull()
-        java.lang.String s) {
-            super();
-        }
-
-        @org.jetbrains.annotations.NotNull()
-        public final java.lang.String component1() {
-            return null;
-        }
-
-        @org.jetbrains.annotations.NotNull()
-        public final java.lang.String getS() {
-            return null;
-        }
+    @java.lang.annotation.Retention(value = java.lang.annotation.RetentionPolicy.RUNTIME)
+    /**
+     * public final annotation class test/Experiment.Type : kotlin/Annotation {
+     *
+     *   // signature: <init>()V
+     *   public constructor()
+     *
+     *   // module name: main
+     * }
+     */
+    @kotlin.Metadata()
+    public static abstract @interface Type {
     }
 }
 

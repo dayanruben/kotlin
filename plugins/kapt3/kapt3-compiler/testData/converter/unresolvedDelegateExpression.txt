@@ -17,7 +17,7 @@
 @kotlin.Suppress(names = {"UNRESOLVED_REFERENCE"})
 public final class B implements NonExisting {
     @org.jetbrains.annotations.NotNull()
-    private final java.lang.Object a$delegate = null;
+    private final java.lang.String a$delegate = null;
 
     public B() {
         super();
