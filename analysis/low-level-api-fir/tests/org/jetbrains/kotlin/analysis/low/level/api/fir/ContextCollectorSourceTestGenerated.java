@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -97,9 +97,33 @@ public class ContextCollectorSourceTestGenerated extends AbstractContextCollecto
     }
 
     @Test
+    @TestMetadata("parameter.kt")
+    public void testParameter() throws Exception {
+        runTest("analysis/low-level-api-fir/testData/contextCollector/parameter.kt");
+    }
+
+    @Test
+    @TestMetadata("primaryConstructor.kt")
+    public void testPrimaryConstructor() throws Exception {
+        runTest("analysis/low-level-api-fir/testData/contextCollector/primaryConstructor.kt");
+    }
+
+    @Test
     @TestMetadata("primaryConstructorParameter.kt")
     public void testPrimaryConstructorParameter() throws Exception {
         runTest("analysis/low-level-api-fir/testData/contextCollector/primaryConstructorParameter.kt");
+    }
+
+    @Test
+    @TestMetadata("primaryConstructorProperty.kt")
+    public void testPrimaryConstructorProperty() throws Exception {
+        runTest("analysis/low-level-api-fir/testData/contextCollector/primaryConstructorProperty.kt");
+    }
+
+    @Test
+    @TestMetadata("propertyAccessor.kt")
+    public void testPropertyAccessor() throws Exception {
+        runTest("analysis/low-level-api-fir/testData/contextCollector/propertyAccessor.kt");
     }
 
     @Test
@@ -112,6 +136,12 @@ public class ContextCollectorSourceTestGenerated extends AbstractContextCollecto
     @TestMetadata("simple.kt")
     public void testSimple() throws Exception {
         runTest("analysis/low-level-api-fir/testData/contextCollector/simple.kt");
+    }
+
+    @Test
+    @TestMetadata("typeParameter.kt")
+    public void testTypeParameter() throws Exception {
+        runTest("analysis/low-level-api-fir/testData/contextCollector/typeParameter.kt");
     }
 
     @Test

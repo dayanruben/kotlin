@@ -216,13 +216,14 @@ class JvmMappedScope(
         val newSymbol = FirNamedFunctionSymbol(CallableId(firKotlinClass.classId, symbol.callableId.callableName))
         FirFakeOverrideGenerator.createCopyForFirFunction(
             newSymbol,
-            baseFunction = symbol.fir,
+            baseFunction = oldFunction,
             derivedClassLookupTag = firKotlinClass.symbol.toLookupTag(),
             session,
-            symbol.fir.origin,
+            oldFunction.origin,
             newDispatchReceiverType = kotlinDispatchReceiverType,
             newParameterTypes = oldFunction.valueParameters.map { substitutor.substituteOrSelf(it.returnTypeRef.coneType) },
             newReturnType = substitutor.substituteOrSelf(oldFunction.returnTypeRef.coneType),
+            newSource = oldFunction.source,
         ).apply {
             if (jdkMemberStatus == JDKMemberStatus.HIDDEN) {
                 isHiddenEverywhereBesideSuperCalls = true
@@ -288,14 +289,15 @@ class JvmMappedScope(
             session,
             oldConstructor,
             derivedClassLookupTag = firKotlinClass.symbol.toLookupTag(),
-            symbol.fir.origin,
+            oldConstructor.origin,
             newDispatchReceiverType = null,
             newReturnType = substitutor.substituteOrSelf(oldConstructor.returnTypeRef.coneType),
             newParameterTypes = oldConstructor.valueParameters.map { substitutor.substituteOrSelf(it.returnTypeRef.coneType) },
             newTypeParameters = null,
             newContextReceiverTypes = emptyList(),
             isExpect = false,
-            callableCopySubstitutionForTypeUpdater = null
+            callableCopySubstitutionForTypeUpdater = null,
+            newSource = oldConstructor.source,
         )
         return newSymbol
     }

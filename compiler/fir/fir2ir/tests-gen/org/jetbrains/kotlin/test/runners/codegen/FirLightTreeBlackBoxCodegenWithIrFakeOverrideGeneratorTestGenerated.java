@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -30673,6 +30673,36 @@ public class FirLightTreeBlackBoxCodegenWithIrFakeOverrideGeneratorTestGenerated
         @TestMetadata("notFoundClasses.kt")
         public void testNotFoundClasses() throws Exception {
             runTest("compiler/testData/codegen/box/javaInterop/notFoundClasses.kt");
+        }
+
+        @Test
+        @TestMetadata("overrideWithArrayParameterType.kt")
+        public void testOverrideWithArrayParameterType() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/overrideWithArrayParameterType.kt");
+        }
+
+        @Test
+        @TestMetadata("overrideWithArrayParameterType2.kt")
+        public void testOverrideWithArrayParameterType2() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/overrideWithArrayParameterType2.kt");
+        }
+
+        @Test
+        @TestMetadata("overrideWithArrayParameterTypeNotNull.kt")
+        public void testOverrideWithArrayParameterTypeNotNull() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/overrideWithArrayParameterTypeNotNull.kt");
+        }
+
+        @Test
+        @TestMetadata("overrideWithGenericArrayParameterType.kt")
+        public void testOverrideWithGenericArrayParameterType() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/overrideWithGenericArrayParameterType.kt");
+        }
+
+        @Test
+        @TestMetadata("overrideWithVarargParameterType.kt")
+        public void testOverrideWithVarargParameterType() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/overrideWithVarargParameterType.kt");
         }
 
         @Test

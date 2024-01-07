@@ -15,6 +15,8 @@ import kotlin.properties.ReadOnlyProperty
 object BinaryOptions : BinaryOptionRegistry() {
     val runtimeAssertionsMode by option<RuntimeAssertsMode>()
 
+    val checkStateAtExternalCalls by booleanOption()
+
     val memoryModel by option<MemoryModel>()
 
     val freezing by option<Freezing>()
@@ -64,6 +66,8 @@ object BinaryOptions : BinaryOptionRegistry() {
     val compileBitcodeWithXcodeLlvm by booleanOption()
 
     val objcDisposeOnMain by booleanOption()
+
+    val objcDisposeWithRunLoop by booleanOption()
 
     val disableMmap by booleanOption()
 

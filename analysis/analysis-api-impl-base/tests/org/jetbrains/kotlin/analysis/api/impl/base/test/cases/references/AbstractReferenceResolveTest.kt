@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.test.framework.project.structure.ktModulePr
 import org.jetbrains.kotlin.analysis.test.framework.services.expressionMarkerProvider
 import org.jetbrains.kotlin.analysis.test.framework.utils.unwrapMultiReferences
 import org.jetbrains.kotlin.idea.references.KtReference
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.directives.ConfigurationDirectives
@@ -46,28 +47,39 @@ abstract class AbstractReferenceResolveTest : AbstractAnalysisApiBasedTest() {
         }
     }
 
-    final override fun doTestByModuleStructure(moduleStructure: TestModuleStructure, testServices: TestServices) {
-        val mainModule = moduleStructure.modules.singleOrNull() ?: findMainModule(moduleStructure)
+    override fun doTestByModuleStructure(moduleStructure: TestModuleStructure, testServices: TestServices) {
+        val mainModule = findMainModule(moduleStructure)
         val ktFiles = testServices.ktModuleProvider.getModuleFiles(mainModule).filterIsInstance<KtFile>()
-        doTestByFileStructure(ktFiles, mainModule, testServices)
+        val mainKtFile = findMainFile(ktFiles)
+        val caretPosition = testServices.expressionMarkerProvider.getCaretPosition(mainKtFile)
+        doTestByFileStructure(mainKtFile, caretPosition, mainModule, testServices)
     }
 
-    private fun findMainModule(moduleStructure: TestModuleStructure): TestModule =
-        moduleStructure.modules.find { it.name == "main" } ?: error("There should be a module named 'main' in the multi-module test.")
+    protected fun findMainModule(moduleStructure: TestModuleStructure): TestModule {
+        val modules = moduleStructure.modules
 
-    fun doTestByFileStructure(ktFiles: List<KtFile>, mainModule: TestModule, testServices: TestServices) {
-        val mainKtFile = ktFiles.singleOrNull() ?: ktFiles.firstOrNull { it.name == "main.kt" } ?: ktFiles.first()
-        val caretPosition = testServices.expressionMarkerProvider.getCaretPosition(mainKtFile)
-        val ktReferences = findReferencesAtCaret(mainKtFile, caretPosition)
+        return modules.singleOrNull()
+            ?: modules.find { it.name == "main" }
+            ?: error("There should be a module named 'main' in the multi-module test.")
+    }
+
+    protected fun findMainFile(ktFiles: List<KtFile>): KtFile {
+        return ktFiles.singleOrNull()
+            ?: ktFiles.firstOrNull { it.name == "main.kt" }
+            ?: ktFiles.first()
+    }
+
+    protected fun doTestByFileStructure(ktFile: KtFile, caretPosition: Int, mainModule: TestModule, testServices: TestServices) {
+        val ktReferences = findReferencesAtCaret(ktFile, caretPosition)
         if (ktReferences.isEmpty()) {
             testServices.assertions.fail { "No references at caret found" }
         }
 
-        val resolvedTo =
-            analyseForTest(ktReferences.first().element) {
-                val symbols = ktReferences.flatMap { it.resolveToSymbols() }
-                checkReferenceResultForValidity(ktReferences, mainModule, testServices, symbols)
-                renderResolvedTo(symbols, renderingOptions) { getAdditionalSymbolInfo(it) }
+        val resolvedTo = analyzeReferenceElement(ktReferences.first().element, mainModule) {
+            val symbols = ktReferences.flatMap { it.resolveToSymbols() }
+            checkReferenceResultForValidity(ktReferences, mainModule, testServices, symbols)
+            val renderPsiClassName = Directives.RENDER_PSI_CLASS_NAME in mainModule.directives
+                renderResolvedTo(symbols, renderPsiClassName, renderingOptions) { getAdditionalSymbolInfo(it) }
             }
 
         if (Directives.UNRESOLVED_REFERENCE in mainModule.directives) {
@@ -76,6 +88,10 @@ abstract class AbstractReferenceResolveTest : AbstractAnalysisApiBasedTest() {
 
         val actual = "Resolved to:\n$resolvedTo"
         testServices.assertions.assertEqualsToTestDataFileSibling(actual)
+    }
+
+    protected open fun <R> analyzeReferenceElement(element: KtElement, mainModule: TestModule, action: KtAnalysisSession.() -> R): R {
+        return analyseForTest(element) { action() }
     }
 
     open fun KtAnalysisSession.getAdditionalSymbolInfo(symbol: KtSymbol): String? = null
@@ -103,6 +119,10 @@ abstract class AbstractReferenceResolveTest : AbstractAnalysisApiBasedTest() {
     private object Directives : SimpleDirectivesContainer() {
         val UNRESOLVED_REFERENCE by directive(
             "Reference should be unresolved",
+        )
+
+        val RENDER_PSI_CLASS_NAME by directive(
+            "Render also PSI class name for resolved reference"
         )
     }
 

@@ -7,12 +7,13 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir.util
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
-import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.canBePartOfParentDeclaration
 import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.containingDeclaration
 import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.getNonLocalContainingOrThisDeclaration
+import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.isAutonomousDeclaration
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.LLFirFileBuilder
 import org.jetbrains.kotlin.analysis.low.level.api.fir.providers.LLFirProvider
 import org.jetbrains.kotlin.fir.declarations.*
@@ -90,11 +91,11 @@ internal fun KtDeclaration.findSourceNonLocalFirDeclaration(firFile: FirFile, pr
 }
 
 @KtAnalysisApiInternals
-fun PsiElement.collectContainingDeclarationsIfNonLocal(session: LLFirResolveSession): List<FirDeclaration>? {
-    val ktFile = containingFile as? KtFile ?: return null
-    val ktDeclaration = getNonLocalContainingOrThisDeclaration { !it.canBePartOfParentDeclaration } ?: return null
-    val firFile = session.getOrBuildFirFile(ktFile)
-    return FirElementFinder.findPathToDeclarationWithTarget(firFile, ktDeclaration)
+fun collectUseSiteContainers(element: PsiElement, resolveSession: LLFirResolveSession): List<FirDeclaration>? {
+    val containingDeclaration = element.getNonLocalContainingOrThisDeclaration { it.isAutonomousDeclaration } ?: return null
+    val containingFile = containingDeclaration.containingKtFile
+    val firFile = resolveSession.getOrBuildFirFile(containingFile)
+    return FirElementFinder.findPathToDeclarationWithTarget(firFile, containingDeclaration)
 }
 
 internal fun KtElement.findSourceByTraversingWholeTree(
@@ -250,3 +251,16 @@ val PsiElement.parentsWithSelfCodeFragmentAware: Sequence<PsiElement>
 
 val PsiElement.parentsCodeFragmentAware: Sequence<PsiElement>
     get() = parentsWithSelfCodeFragmentAware.drop(1)
+
+internal fun <T : PsiElement> T.unwrapCopy(containingFile: PsiFile = this.containingFile): T? {
+    val originalFile = containingFile.originalFile.takeIf { it !== containingFile }
+        ?: (containingFile as? KtFile)?.analysisContext?.containingFile
+        ?: return null
+
+    return try {
+        PsiTreeUtil.findSameElementInCopy(this, originalFile)
+    } catch (_: IllegalStateException) {
+        // File copy has a different file structure
+        null
+    }
+}

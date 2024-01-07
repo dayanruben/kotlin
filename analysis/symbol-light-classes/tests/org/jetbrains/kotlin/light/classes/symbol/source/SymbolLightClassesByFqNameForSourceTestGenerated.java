@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -313,6 +313,12 @@ public class SymbolLightClassesByFqNameForSourceTestGenerated extends AbstractSy
     }
 
     @Test
+    @TestMetadata("ValueClassInParametersWithJvmName.kt")
+    public void testValueClassInParametersWithJvmName() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/ValueClassInParametersWithJvmName.kt");
+    }
+
+    @Test
     @TestMetadata("VarArgs.kt")
     public void testVarArgs() throws Exception {
         runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/VarArgs.kt");
@@ -421,6 +427,24 @@ public class SymbolLightClassesByFqNameForSourceTestGenerated extends AbstractSy
         @TestMetadata("LocalInAnnotation.kt")
         public void testLocalInAnnotation() throws Exception {
             runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/LocalInAnnotation.kt");
+        }
+
+        @Test
+        @TestMetadata("MultiplatformCommonFacade.kt")
+        public void testMultiplatformCommonFacade() throws Exception {
+            runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/MultiplatformCommonFacade.kt");
+        }
+
+        @Test
+        @TestMetadata("MultiplatformIntermediateFacade.kt")
+        public void testMultiplatformIntermediateFacade() throws Exception {
+            runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/MultiplatformIntermediateFacade.kt");
+        }
+
+        @Test
+        @TestMetadata("MultiplatformJvmFacade.kt")
+        public void testMultiplatformJvmFacade() throws Exception {
+            runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/MultiplatformJvmFacade.kt");
         }
 
         @Test
@@ -555,6 +579,12 @@ public class SymbolLightClassesByFqNameForSourceTestGenerated extends AbstractSy
         @TestMetadata("SingleJvmClassName.kt")
         public void testSingleJvmClassName() throws Exception {
             runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/SingleJvmClassName.kt");
+        }
+
+        @Test
+        @TestMetadata("ValueClassInParametersWithJvmName.kt")
+        public void testValueClassInParametersWithJvmName() throws Exception {
+            runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/ValueClassInParametersWithJvmName.kt");
         }
     }
 

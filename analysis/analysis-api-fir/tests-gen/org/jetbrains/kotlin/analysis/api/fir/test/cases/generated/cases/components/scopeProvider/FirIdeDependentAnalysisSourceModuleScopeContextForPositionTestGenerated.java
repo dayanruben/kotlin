@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -50,6 +50,18 @@ public class FirIdeDependentAnalysisSourceModuleScopeContextForPositionTestGener
     @TestMetadata("annotationWithoutDeclaration.kt")
     public void testAnnotationWithoutDeclaration() throws Exception {
         runTest("analysis/analysis-api/testData/components/scopeProvider/scopeContextForPosition/annotationWithoutDeclaration.kt");
+    }
+
+    @Test
+    @TestMetadata("classPropertyDelegate.kt")
+    public void testClassPropertyDelegate() throws Exception {
+        runTest("analysis/analysis-api/testData/components/scopeProvider/scopeContextForPosition/classPropertyDelegate.kt");
+    }
+
+    @Test
+    @TestMetadata("classPropertyInitializer.kt")
+    public void testClassPropertyInitializer() throws Exception {
+        runTest("analysis/analysis-api/testData/components/scopeProvider/scopeContextForPosition/classPropertyInitializer.kt");
     }
 
     @Test
@@ -146,6 +158,36 @@ public class FirIdeDependentAnalysisSourceModuleScopeContextForPositionTestGener
     @TestMetadata("smartCastInWhenEntryCondition.kt")
     public void testSmartCastInWhenEntryCondition() throws Exception {
         runTest("analysis/analysis-api/testData/components/scopeProvider/scopeContextForPosition/smartCastInWhenEntryCondition.kt");
+    }
+
+    @Test
+    @TestMetadata("superTypeConstructor.kt")
+    public void testSuperTypeConstructor() throws Exception {
+        runTest("analysis/analysis-api/testData/components/scopeProvider/scopeContextForPosition/superTypeConstructor.kt");
+    }
+
+    @Test
+    @TestMetadata("superTypeConstructor_lambda.kt")
+    public void testSuperTypeConstructor_lambda() throws Exception {
+        runTest("analysis/analysis-api/testData/components/scopeProvider/scopeContextForPosition/superTypeConstructor_lambda.kt");
+    }
+
+    @Test
+    @TestMetadata("superTypeConstructor_nestedClasses.kt")
+    public void testSuperTypeConstructor_nestedClasses() throws Exception {
+        runTest("analysis/analysis-api/testData/components/scopeProvider/scopeContextForPosition/superTypeConstructor_nestedClasses.kt");
+    }
+
+    @Test
+    @TestMetadata("superTypeConstructor_nestedClasses_typeArgument.kt")
+    public void testSuperTypeConstructor_nestedClasses_typeArgument() throws Exception {
+        runTest("analysis/analysis-api/testData/components/scopeProvider/scopeContextForPosition/superTypeConstructor_nestedClasses_typeArgument.kt");
+    }
+
+    @Test
+    @TestMetadata("superTypeDelegate.kt")
+    public void testSuperTypeDelegate() throws Exception {
+        runTest("analysis/analysis-api/testData/components/scopeProvider/scopeContextForPosition/superTypeDelegate.kt");
     }
 
     @Test

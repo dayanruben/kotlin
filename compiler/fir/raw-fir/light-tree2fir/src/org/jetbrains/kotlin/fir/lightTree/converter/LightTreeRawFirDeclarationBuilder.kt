@@ -488,7 +488,7 @@ class LightTreeRawFirDeclarationBuilder(
 
                 val isLocal = context.inLocalContext
                 val status = FirDeclarationStatusImpl(
-                    if (isLocal) Visibilities.Local else modifiers.getVisibility(),
+                    if (isLocal) Visibilities.Local else modifiers.getVisibility(publicByDefault = true),
                     modifiers.getModality(isClassOrObject = true)
                 ).apply {
                     isExpect = classIsExpect
@@ -1250,7 +1250,7 @@ class LightTreeRawFirDeclarationBuilder(
                     name = typeAliasName
                     val isLocal = context.inLocalContext
                     status = FirDeclarationStatusImpl(
-                        if (isLocal) Visibilities.Local else modifiers.getVisibility(),
+                        if (isLocal) Visibilities.Local else modifiers.getVisibility(publicByDefault = true),
                         Modality.FINAL,
                     ).apply {
                         isExpect = typeAliasIsExpect
@@ -1446,9 +1446,9 @@ class LightTreeRawFirDeclarationBuilder(
                         )
                     }
                 }
-                annotations += if (isLocal) propertyAnnotations else propertyAnnotations.filter {
-                    it.useSiteTarget != FIELD && it.useSiteTarget != PROPERTY_DELEGATE_FIELD && it.useSiteTarget != PROPERTY_GETTER &&
-                            (!isVar || it.useSiteTarget != SETTER_PARAMETER && it.useSiteTarget != PROPERTY_SETTER)
+                annotations += when {
+                    isLocal -> propertyAnnotations
+                    else -> propertyAnnotations.filterStandalonePropertyRelevantAnnotations(isVar)
                 }
 
                 contextReceivers.addAll(convertContextReceivers(property))

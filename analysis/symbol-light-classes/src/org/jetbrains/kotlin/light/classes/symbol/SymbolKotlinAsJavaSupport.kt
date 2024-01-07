@@ -141,10 +141,22 @@ class SymbolKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<KtMo
 
     override fun createInstanceOfLightFacade(facadeFqName: FqName, files: List<KtFile>): KtLightClassForFacade? {
         val module = files.first().getModuleIfSupportEnabled() ?: return null
+        return createInstanceOfLightFacade(facadeFqName, module, files)
+    }
+
+    override fun createInstanceOfLightFacade(facadeFqName: FqName, module: KtModule, files: List<KtFile>): KtLightClassForFacade? {
         return SymbolLightClassForFacade(facadeFqName, files, module)
     }
 
-    override val KtModule.contentSearchScope: GlobalSearchScope get() = this.contentScope
+    override val KtModule.contentSearchScope: GlobalSearchScope
+        get() = GlobalSearchScope.union(
+            buildList {
+                add(contentScope)
+                for (dependency in transitiveDependsOnDependencies) {
+                    add(dependency.contentScope)
+                }
+            }
+        )
 
     override fun facadeIsApplicable(module: KtModule, file: KtFile): Boolean =
         module.isFromSourceOrLibraryBinary() && module.isLightClassesEnabled()
@@ -182,10 +194,13 @@ class SymbolKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<KtMo
 
     private fun KtElement.isFromSourceOrLibraryBinary(): Boolean = getModuleIfSupportEnabled()?.isFromSourceOrLibraryBinary() == true
 
-    private fun KtModule.isFromSourceOrLibraryBinary() = when (this) {
-        is KtSourceModule -> true
-        is KtLibraryModule -> true
-        else -> false
+    private fun KtModule.isFromSourceOrLibraryBinary(): Boolean {
+        return when (this) {
+            is KtSourceModule -> true
+            is KtLibraryModule -> true
+            is KtDanglingFileModule -> contextModule.isFromSourceOrLibraryBinary()
+            else -> false
+        }
     }
 }
 

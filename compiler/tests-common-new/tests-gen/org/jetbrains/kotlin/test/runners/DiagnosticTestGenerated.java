@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -211,6 +211,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("comparisonOfGenericInterfaceWithGenericClass.kt")
         public void testComparisonOfGenericInterfaceWithGenericClass() throws Exception {
             runTest("compiler/testData/diagnostics/tests/comparisonOfGenericInterfaceWithGenericClass.kt");
+        }
+
+        @Test
+        @TestMetadata("compilerCrashInTypeParameterBoundsChecker.kt")
+        public void testCompilerCrashInTypeParameterBoundsChecker() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/compilerCrashInTypeParameterBoundsChecker.kt");
         }
 
         @Test
@@ -484,6 +490,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("inapplicableTargetPropertyImmutableInPrimaryConstructor.kt")
+        public void testInapplicableTargetPropertyImmutableInPrimaryConstructor() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/inapplicableTargetPropertyImmutableInPrimaryConstructor.kt");
+        }
+
+        @Test
         @TestMetadata("IncDec.kt")
         public void testIncDec() throws Exception {
             runTest("compiler/testData/diagnostics/tests/IncDec.kt");
@@ -577,6 +589,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("IsExpressions.kt")
         public void testIsExpressions() throws Exception {
             runTest("compiler/testData/diagnostics/tests/IsExpressions.kt");
+        }
+
+        @Test
+        @TestMetadata("k2IrParentIssue.kt")
+        public void testK2IrParentIssue() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/k2IrParentIssue.kt");
         }
 
         @Test
@@ -13013,6 +13031,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             public void testKt24158() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/exceptions/kt24158.kt");
             }
+
+            @Test
+            @TestMetadata("stackOverflowOnDoUnify.kt")
+            public void testStackOverflowOnDoUnify() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/exceptions/stackOverflowOnDoUnify.kt");
+            }
         }
 
         @Nested
@@ -17802,6 +17826,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 public void testTopLevelCapturingInsideReturnType() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/topLevelCapturingInsideReturnType.kt");
                 }
+
+                @Test
+                @TestMetadata("upperBoundOfCapturedInProjectionInOutPosition.kt")
+                public void testUpperBoundOfCapturedInProjectionInOutPosition() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/upperBoundOfCapturedInProjectionInOutPosition.kt");
+                }
             }
 
             @Nested
@@ -21660,6 +21690,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("javaStaticImport.kt")
             public void testJavaStaticImport() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/j+k/javaStaticImport.kt");
+            }
+
+            @Test
+            @TestMetadata("javaSupertypeNameDisambiguation.kt")
+            public void testJavaSupertypeNameDisambiguation() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/j+k/javaSupertypeNameDisambiguation.kt");
             }
 
             @Test

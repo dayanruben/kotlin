@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -44,6 +44,18 @@ public class FirIdeNormalAnalysisSourceModuleCodeFragmentCollectDiagnosticsTestG
     @Test
     public void testAllFilesPresentInCodeFragmentDiagnostics() throws Exception {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/components/diagnosticsProvider/codeFragmentDiagnostics"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
+    }
+
+    @Test
+    @TestMetadata("evalJvm.kt")
+    public void testEvalJvm() throws Exception {
+        runTest("analysis/analysis-api/testData/components/diagnosticsProvider/codeFragmentDiagnostics/evalJvm.kt");
+    }
+
+    @Test
+    @TestMetadata("evalJvmJs.kt")
+    public void testEvalJvmJs() throws Exception {
+        runTest("analysis/analysis-api/testData/components/diagnosticsProvider/codeFragmentDiagnostics/evalJvmJs.kt");
     }
 
     @Test

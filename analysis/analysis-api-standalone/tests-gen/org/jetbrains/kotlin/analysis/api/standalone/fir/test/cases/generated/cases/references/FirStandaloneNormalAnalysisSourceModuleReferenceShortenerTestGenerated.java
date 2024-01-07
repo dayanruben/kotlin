@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -467,6 +467,18 @@ public class FirStandaloneNormalAnalysisSourceModuleReferenceShortenerTestGenera
     }
 
     @Test
+    @TestMetadata("samInterface_constructorCall.kt")
+    public void testSamInterface_constructorCall() throws Exception {
+        runTest("analysis/analysis-api/testData/components/referenceShortener/shortenRange/samInterface_constructorCall.kt");
+    }
+
+    @Test
+    @TestMetadata("samInterface_constructorCall_java.kt")
+    public void testSamInterface_constructorCall_java() throws Exception {
+        runTest("analysis/analysis-api/testData/components/referenceShortener/shortenRange/samInterface_constructorCall_java.kt");
+    }
+
+    @Test
     @TestMetadata("sameNameDifferentParams.kt")
     public void testSameNameDifferentParams() throws Exception {
         runTest("analysis/analysis-api/testData/components/referenceShortener/shortenRange/sameNameDifferentParams.kt");
@@ -725,6 +737,12 @@ public class FirStandaloneNormalAnalysisSourceModuleReferenceShortenerTestGenera
         @TestMetadata("nestedClassFromSupertypes6_java.kt")
         public void testNestedClassFromSupertypes6_java() throws Exception {
             runTest("analysis/analysis-api/testData/components/referenceShortener/shortenRange/nestedClasses/nestedClassFromSupertypes6_java.kt");
+        }
+
+        @Test
+        @TestMetadata("nestedSamInterface_constructorCall.kt")
+        public void testNestedSamInterface_constructorCall() throws Exception {
+            runTest("analysis/analysis-api/testData/components/referenceShortener/shortenRange/nestedClasses/nestedSamInterface_constructorCall.kt");
         }
 
         @Test

@@ -20,6 +20,10 @@ import org.jetbrains.kotlin.analysis.providers.topics.*
  * sessions in [LLFirSessionCache] and the cache has to be kept consistent.
  */
 class LLFirSessionInvalidationService(private val project: Project) : Disposable {
+    private val sessionCache: LLFirSessionCache by lazy {
+        LLFirSessionCache.getInstance(project)
+    }
+
     /**
      * Subscribes to all [modification events][KotlinTopics] via the [analysisMessageBus].
      *
@@ -53,8 +57,12 @@ class LLFirSessionInvalidationService(private val project: Project) : Disposable
             KotlinGlobalSourceOutOfBlockModificationListener { invalidateAll(includeLibraryModules = false) },
         )
         busConnection.subscribe(
+            KotlinTopics.CODE_FRAGMENT_CONTEXT_MODIFICATION,
+            KotlinCodeFragmentContextModificationListener { module -> invalidateContextualDanglingFileSessions(module) }
+        )
+        busConnection.subscribe(
             PsiModificationTracker.TOPIC,
-            PsiModificationTracker.Listener { invalidateAllCodeFragments() }
+            PsiModificationTracker.Listener { invalidateUnstableDanglingFileSessions() }
         )
     }
 
@@ -66,7 +74,6 @@ class LLFirSessionInvalidationService(private val project: Project) : Disposable
     fun invalidate(module: KtModule) {
         ApplicationManager.getApplication().assertWriteAccessAllowed()
 
-        val sessionCache = LLFirSessionCache.getInstance(project)
         val didSessionExist = sessionCache.removeSession(module)
 
         // We don't have to invalidate dependent sessions if the root session does not exist in the cache. It is true that sessions can be
@@ -85,7 +92,11 @@ class LLFirSessionInvalidationService(private val project: Project) : Disposable
             sessionCache.removeAllScriptSessions()
         }
 
-        sessionCache.removeAllCodeFragmentSessions()
+        if (module is KtDanglingFileModule) {
+            sessionCache.removeContextualDanglingFileSessions(module)
+        } else {
+            sessionCache.removeAllDanglingFileSessions()
+        }
     }
 
     private fun invalidateAll(includeLibraryModules: Boolean) {
@@ -102,11 +113,15 @@ class LLFirSessionInvalidationService(private val project: Project) : Disposable
             anchorModules?.forEach(::invalidate)
         }
 
-        LLFirSessionCache.getInstance(project).removeAllSessions(includeLibraryModules)
+        sessionCache.removeAllSessions(includeLibraryModules)
     }
 
-    private fun invalidateAllCodeFragments() {
-        LLFirSessionCache.getInstance(project).removeAllCodeFragmentSessions()
+    private fun invalidateContextualDanglingFileSessions(contextModule: KtModule) {
+        sessionCache.removeContextualDanglingFileSessions(contextModule)
+    }
+
+    private fun invalidateUnstableDanglingFileSessions() {
+        sessionCache.removeUnstableDanglingFileSessions()
     }
 
     override fun dispose() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -765,6 +765,16 @@ public class BlackBoxModernJdkCodegenTestGenerated extends AbstractBlackBoxCodeg
             public void testSealedJavaInterfaceViaKotlinReflection() throws Exception {
                 runTest("compiler/testData/codegen/boxModernJdk/testsWithJava17/sealed/sealedJavaInterfaceViaKotlinReflection.kt");
             }
+        }
+    }
+
+    @Nested
+    @TestMetadata("compiler/testData/codegen/boxModernJdk/testsWithJava21")
+    @TestDataPath("$PROJECT_ROOT")
+    public class TestsWithJava21 {
+        @Test
+        public void testAllFilesPresentInTestsWithJava21() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/boxModernJdk/testsWithJava21"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
         }
     }
 }

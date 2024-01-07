@@ -93,8 +93,6 @@ object StandardClassIds {
 
     val constantAllowedTypes = primitiveTypes + unsignedTypes + String
 
-    val associatedObjectAnnotations = hashSetOf(Annotations.AssociatedObjectKey, Annotations.ExperimentalAssociatedObjects)
-
     val Continuation = "Continuation".coroutinesId()
 
     @Suppress("FunctionName")
@@ -175,6 +173,7 @@ object StandardClassIds {
         val RawTypeAnnotation = "RawType".internalIrId()
         val FlexibleNullability = "FlexibleNullability".internalIrId()
         val FlexibleMutability = "FlexibleMutability".internalIrId()
+        val FlexibleArrayElementVariance = "FlexibleArrayElementVariance".internalIrId()
         val EnhancedNullability = "EnhancedNullability".jvmInternalId()
 
         val FunctionN = "FunctionN".jvmFunctionsId()
@@ -194,6 +193,8 @@ object StandardClassIds {
 
         val AssociatedObjectKey = "AssociatedObjectKey".reflectId()
         val ExperimentalAssociatedObjects = "ExperimentalAssociatedObjects".reflectId()
+
+        val associatedObjectAnnotations = hashSetOf(AssociatedObjectKey, ExperimentalAssociatedObjects)
 
         object ParameterNames {
             val value = Name.identifier("value")

@@ -45,7 +45,7 @@ internal class LLFirResolvableResolveSession(
 ) {
     override fun getOrBuildFirFor(element: KtElement): FirElement? {
         val moduleComponents = getModuleComponentsForElement(element)
-        return moduleComponents.elementsBuilder.getOrBuildFirFor(element, this)
+        return moduleComponents.elementsBuilder.getOrBuildFirFor(element)
     }
 
     override fun getOrBuildFirFile(ktFile: KtFile): FirFile {
@@ -63,9 +63,10 @@ internal class LLFirResolvableResolveSession(
         phase: FirResolvePhase,
     ): FirBasedSymbol<*> {
         val containingKtFile = ktDeclaration.containingKtFile
-        val module = getModule(containingKtFile.originalKtFile ?: containingKtFile)
+        val module = getModule(containingKtFile)
+
         return when (getModuleResolutionStrategy(module)) {
-            LLModuleResolutionStrategy.LAZY -> findSourceFirSymbol(ktDeclaration, module).also { resolveFirToPhase(it.fir, phase) }
+            LLModuleResolutionStrategy.LAZY -> findSourceFirSymbol(ktDeclaration).also { resolveFirToPhase(it.fir, phase) }
             LLModuleResolutionStrategy.STATIC -> findFirCompiledSymbol(ktDeclaration, module)
         }
     }
@@ -81,8 +82,10 @@ internal class LLFirResolvableResolveSession(
         return firDeclaration.symbol
     }
 
-    private fun findSourceFirSymbol(ktDeclaration: KtDeclaration, module: KtModule): FirBasedSymbol<*> {
-        return findSourceFirDeclarationByDeclaration(ktDeclaration.originalDeclaration ?: ktDeclaration, module)
+    private fun findSourceFirSymbol(ktDeclaration: KtDeclaration): FirBasedSymbol<*> {
+        val targetDeclaration = ktDeclaration.originalDeclaration ?: ktDeclaration
+        val targetModule = getModule(targetDeclaration)
+        return findSourceFirDeclarationByDeclaration(targetDeclaration, targetModule)
     }
 
     private fun findSourceFirDeclarationByDeclaration(ktDeclaration: KtDeclaration, module: KtModule): FirBasedSymbol<*> {

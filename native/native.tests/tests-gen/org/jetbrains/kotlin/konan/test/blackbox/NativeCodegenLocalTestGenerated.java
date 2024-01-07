@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -248,6 +248,12 @@ public class NativeCodegenLocalTestGenerated extends AbstractNativeCodegenBoxTes
         @TestMetadata("spread_operator_0.kt")
         public void testSpread_operator_0() throws Exception {
             runTest("native/native.tests/testData/codegen/basics/spread_operator_0.kt");
+        }
+
+        @Test
+        @TestMetadata("statements0.kt")
+        public void testStatements0() throws Exception {
+            runTest("native/native.tests/testData/codegen/basics/statements0.kt");
         }
 
         @Test
@@ -1414,6 +1420,12 @@ public class NativeCodegenLocalTestGenerated extends AbstractNativeCodegenBoxTes
         }
 
         @Test
+        @TestMetadata("enum_equals.kt")
+        public void testEnum_equals() throws Exception {
+            runTest("native/native.tests/testData/codegen/enum/enum_equals.kt");
+        }
+
+        @Test
         @TestMetadata("interfaceCallNoEntryClass.kt")
         public void testInterfaceCallNoEntryClass() throws Exception {
             runTest("native/native.tests/testData/codegen/enum/interfaceCallNoEntryClass.kt");
@@ -1656,6 +1668,59 @@ public class NativeCodegenLocalTestGenerated extends AbstractNativeCodegenBoxTes
         @TestMetadata("zeroOutObjectOnAlloc.kt")
         public void testZeroOutObjectOnAlloc() throws Exception {
             runTest("native/native.tests/testData/codegen/escapeAnalysis/zeroOutObjectOnAlloc.kt");
+        }
+    }
+
+    @Nested
+    @TestMetadata("native/native.tests/testData/codegen/exceptions")
+    @TestDataPath("$PROJECT_ROOT")
+    @UseExtTestCaseGroupProvider()
+    public class Exceptions {
+        @Test
+        public void testAllFilesPresentInExceptions() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("native/native.tests/testData/codegen/exceptions"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+        }
+
+        @Test
+        @TestMetadata("catch1.kt")
+        public void testCatch1() throws Exception {
+            runTest("native/native.tests/testData/codegen/exceptions/catch1.kt");
+        }
+
+        @Test
+        @TestMetadata("catch2.kt")
+        public void testCatch2() throws Exception {
+            runTest("native/native.tests/testData/codegen/exceptions/catch2.kt");
+        }
+
+        @Test
+        @TestMetadata("catch7.kt")
+        public void testCatch7() throws Exception {
+            runTest("native/native.tests/testData/codegen/exceptions/catch7.kt");
+        }
+
+        @Test
+        @TestMetadata("extend0.kt")
+        public void testExtend0() throws Exception {
+            runTest("native/native.tests/testData/codegen/exceptions/extend0.kt");
+        }
+
+        @Test
+        @TestMetadata("rethrow.kt")
+        public void testRethrow() throws Exception {
+            runTest("native/native.tests/testData/codegen/exceptions/rethrow.kt");
+        }
+
+        @Test
+        @TestMetadata("throw0.kt")
+        public void testThrow0() throws Exception {
+            runTest("native/native.tests/testData/codegen/exceptions/throw0.kt");
+        }
+
+        @Test
+        @TestMetadata("throw_from_catch.kt")
+        public void testThrow_from_catch() throws Exception {
+            runTest("native/native.tests/testData/codegen/exceptions/throw_from_catch.kt");
         }
     }
 
@@ -1947,6 +2012,54 @@ public class NativeCodegenLocalTestGenerated extends AbstractNativeCodegenBoxTes
         @TestMetadata("correctOrder2.kt")
         public void testCorrectOrder2() throws Exception {
             runTest("native/native.tests/testData/codegen/initializers/correctOrder2.kt");
+        }
+
+        @Test
+        @TestMetadata("initializers0.kt")
+        public void testInitializers0() throws Exception {
+            runTest("native/native.tests/testData/codegen/initializers/initializers0.kt");
+        }
+
+        @Test
+        @TestMetadata("initializers1.kt")
+        public void testInitializers1() throws Exception {
+            runTest("native/native.tests/testData/codegen/initializers/initializers1.kt");
+        }
+
+        @Test
+        @TestMetadata("initializers2.kt")
+        public void testInitializers2() throws Exception {
+            runTest("native/native.tests/testData/codegen/initializers/initializers2.kt");
+        }
+
+        @Test
+        @TestMetadata("initializers3.kt")
+        public void testInitializers3() throws Exception {
+            runTest("native/native.tests/testData/codegen/initializers/initializers3.kt");
+        }
+
+        @Test
+        @TestMetadata("initializers4.kt")
+        public void testInitializers4() throws Exception {
+            runTest("native/native.tests/testData/codegen/initializers/initializers4.kt");
+        }
+
+        @Test
+        @TestMetadata("initializers5.kt")
+        public void testInitializers5() throws Exception {
+            runTest("native/native.tests/testData/codegen/initializers/initializers5.kt");
+        }
+
+        @Test
+        @TestMetadata("initializers7.kt")
+        public void testInitializers7() throws Exception {
+            runTest("native/native.tests/testData/codegen/initializers/initializers7.kt");
+        }
+
+        @Test
+        @TestMetadata("initializers8.kt")
+        public void testInitializers8() throws Exception {
+            runTest("native/native.tests/testData/codegen/initializers/initializers8.kt");
         }
 
         @Test
@@ -2679,6 +2792,12 @@ public class NativeCodegenLocalTestGenerated extends AbstractNativeCodegenBoxTes
         public void testFunctionNameClash() throws Exception {
             runTest("native/native.tests/testData/codegen/interfaceCallsNCasts/functionNameClash.kt");
         }
+
+        @Test
+        @TestMetadata("interface0.kt")
+        public void testInterface0() throws Exception {
+            runTest("native/native.tests/testData/codegen/interfaceCallsNCasts/interface0.kt");
+        }
     }
 
     @Nested
@@ -3048,6 +3167,35 @@ public class NativeCodegenLocalTestGenerated extends AbstractNativeCodegenBoxTes
     }
 
     @Nested
+    @TestMetadata("native/native.tests/testData/codegen/literals")
+    @TestDataPath("$PROJECT_ROOT")
+    @UseExtTestCaseGroupProvider()
+    public class Literals {
+        @Test
+        public void testAllFilesPresentInLiterals() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("native/native.tests/testData/codegen/literals"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+        }
+
+        @Test
+        @TestMetadata("listof1.kt")
+        public void testListof1() throws Exception {
+            runTest("native/native.tests/testData/codegen/literals/listof1.kt");
+        }
+
+        @Test
+        @TestMetadata("strdedup1.kt")
+        public void testStrdedup1() throws Exception {
+            runTest("native/native.tests/testData/codegen/literals/strdedup1.kt");
+        }
+
+        @Test
+        @TestMetadata("strdedup2.kt")
+        public void testStrdedup2() throws Exception {
+            runTest("native/native.tests/testData/codegen/literals/strdedup2.kt");
+        }
+    }
+
+    @Nested
     @TestMetadata("native/native.tests/testData/codegen/localClass")
     @TestDataPath("$PROJECT_ROOT")
     @UseExtTestCaseGroupProvider()
@@ -3384,6 +3532,70 @@ public class NativeCodegenLocalTestGenerated extends AbstractNativeCodegenBoxTes
         @TestMetadata("varModule.kt")
         public void testVarModule() throws Exception {
             runTest("native/native.tests/testData/codegen/propertyCallableReference/varModule.kt");
+        }
+    }
+
+    @Nested
+    @TestMetadata("native/native.tests/testData/codegen/reflection")
+    @TestDataPath("$PROJECT_ROOT")
+    @UseExtTestCaseGroupProvider()
+    public class Reflection {
+        @Test
+        public void testAllFilesPresentInReflection() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("native/native.tests/testData/codegen/reflection"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+        }
+
+        @Nested
+        @TestMetadata("native/native.tests/testData/codegen/reflection/collectReferenceFieldValues")
+        @TestDataPath("$PROJECT_ROOT")
+        @UseExtTestCaseGroupProvider()
+        public class CollectReferenceFieldValues {
+            @Test
+            public void testAllFilesPresentInCollectReferenceFieldValues() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("native/native.tests/testData/codegen/reflection/collectReferenceFieldValues"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+            }
+
+            @Test
+            @TestMetadata("bigClassWithMixedValues.kt")
+            public void testBigClassWithMixedValues() throws Exception {
+                runTest("native/native.tests/testData/codegen/reflection/collectReferenceFieldValues/bigClassWithMixedValues.kt");
+            }
+
+            @Test
+            @TestMetadata("callOnArray.kt")
+            public void testCallOnArray() throws Exception {
+                runTest("native/native.tests/testData/codegen/reflection/collectReferenceFieldValues/callOnArray.kt");
+            }
+
+            @Test
+            @TestMetadata("callOnPrimitive.kt")
+            public void testCallOnPrimitive() throws Exception {
+                runTest("native/native.tests/testData/codegen/reflection/collectReferenceFieldValues/callOnPrimitive.kt");
+            }
+
+            @Test
+            @TestMetadata("callOnPrimitiveArray.kt")
+            public void testCallOnPrimitiveArray() throws Exception {
+                runTest("native/native.tests/testData/codegen/reflection/collectReferenceFieldValues/callOnPrimitiveArray.kt");
+            }
+
+            @Test
+            @TestMetadata("callOnString.kt")
+            public void testCallOnString() throws Exception {
+                runTest("native/native.tests/testData/codegen/reflection/collectReferenceFieldValues/callOnString.kt");
+            }
+
+            @Test
+            @TestMetadata("callOnValueClass.kt")
+            public void testCallOnValueClass() throws Exception {
+                runTest("native/native.tests/testData/codegen/reflection/collectReferenceFieldValues/callOnValueClass.kt");
+            }
+
+            @Test
+            @TestMetadata("callOnValueOverPrimitiveClass.kt")
+            public void testCallOnValueOverPrimitiveClass() throws Exception {
+                runTest("native/native.tests/testData/codegen/reflection/collectReferenceFieldValues/callOnValueOverPrimitiveClass.kt");
+            }
         }
     }
 

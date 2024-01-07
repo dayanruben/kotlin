@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -83,6 +83,12 @@ public class FirIdeNormalAnalysisSourceModuleCompilerFacilityTestGenerated exten
         @TestMetadata("annotationUsage.kt")
         public void testAnnotationUsage() throws Exception {
             runTest("analysis/analysis-api/testData/components/compilerFacility/compilation/codeFragments/annotationUsage.kt");
+        }
+
+        @Test
+        @TestMetadata("commonContext.kt")
+        public void testCommonContext() throws Exception {
+            runTest("analysis/analysis-api/testData/components/compilerFacility/compilation/codeFragments/commonContext.kt");
         }
 
         @Test

@@ -95,6 +95,7 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     private val defaultGC get() = GC.PARALLEL_MARK_CONCURRENT_SWEEP
     val gc: GC get() = configuration.get(BinaryOptions.gc) ?: defaultGC
     val runtimeAssertsMode: RuntimeAssertsMode get() = configuration.get(BinaryOptions.runtimeAssertionsMode) ?: RuntimeAssertsMode.IGNORE
+    val checkStateAtExternalCalls: Boolean get() = configuration.get(BinaryOptions.checkStateAtExternalCalls) ?: false
     private val defaultDisableMmap get() = target.family == Family.MINGW
     val disableMmap: Boolean by lazy {
         when (configuration.get(BinaryOptions.disableMmap)) {
@@ -243,6 +244,10 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
 
     val objcDisposeOnMain: Boolean by lazy {
         configuration.get(BinaryOptions.objcDisposeOnMain) ?: true
+    }
+
+    val objcDisposeWithRunLoop: Boolean by lazy {
+        configuration.get(BinaryOptions.objcDisposeWithRunLoop) ?: true
     }
 
     val enableSafepointSignposts: Boolean = configuration.get(BinaryOptions.enableSafepointSignposts)?.also {
@@ -396,6 +401,10 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
                 add("custom_alloc.bc")
             }
         }
+        when (checkStateAtExternalCalls) {
+            true -> add("impl_externalCallsChecker.bc")
+            false -> add("noop_externalCallsChecker.bc")
+        }
     }.map {
         File(distribution.defaultNatives(target)).child(it).absolutePath
     }
@@ -519,6 +528,7 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
         optimizationsEnabled -> "for optimized compilation"
         sanitizer != null -> "with sanitizers enabled"
         runtimeLogsEnabled -> "with runtime logs"
+        checkStateAtExternalCalls -> "with external calls state checker"
         else -> null
     }
 
