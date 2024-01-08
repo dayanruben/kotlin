@@ -24318,6 +24318,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestDataPath("$PROJECT_ROOT")
         public class Multiplatform {
             @Test
+            @TestMetadata("actualClassDelegationWithImplicitType.kt")
+            public void testActualClassDelegationWithImplicitType() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/actualClassDelegationWithImplicitType.kt");
+            }
+
+            @Test
             @TestMetadata("actualFakeOverride.kt")
             public void testActualFakeOverride() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/actualFakeOverride.kt");
@@ -32468,6 +32474,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("kt60983.kt")
             public void testKt60983() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/samConversions/kt60983.kt");
+            }
+
+            @Test
+            @TestMetadata("multipleSamConversionConflictResolution.kt")
+            public void testMultipleSamConversionConflictResolution() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/samConversions/multipleSamConversionConflictResolution.kt");
             }
 
             @Test

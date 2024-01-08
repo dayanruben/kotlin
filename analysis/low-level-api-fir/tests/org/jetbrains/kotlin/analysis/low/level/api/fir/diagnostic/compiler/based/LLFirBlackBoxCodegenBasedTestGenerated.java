@@ -19481,6 +19481,12 @@ public class LLFirBlackBoxCodegenBasedTestGenerated extends AbstractLLFirBlackBo
         }
 
         @Test
+        @TestMetadata("redundant_safepoints.kt")
+        public void testRedundant_safepoints() throws Exception {
+            runTest("compiler/testData/codegen/box/fileCheck/redundant_safepoints.kt");
+        }
+
+        @Test
         @TestMetadata("replace_invoke_with_call.kt")
         public void testReplace_invoke_with_call() throws Exception {
             runTest("compiler/testData/codegen/box/fileCheck/replace_invoke_with_call.kt");
@@ -31037,6 +31043,18 @@ public class LLFirBlackBoxCodegenBasedTestGenerated extends AbstractLLFirBlackBo
         }
 
         @Test
+        @TestMetadata("javaTypeFromAnotherModuleWithRawTypedWildcardBound.kt")
+        public void testJavaTypeFromAnotherModuleWithRawTypedWildcardBound() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/javaTypeFromAnotherModuleWithRawTypedWildcardBound.kt");
+        }
+
+        @Test
+        @TestMetadata("javaTypeFromSameModuleWithRawTypedWildcardBound.kt")
+        public void testJavaTypeFromSameModuleWithRawTypedWildcardBound() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/javaTypeFromSameModuleWithRawTypedWildcardBound.kt");
+        }
+
+        @Test
         @TestMetadata("kt43217.kt")
         public void testKt43217() throws Exception {
             runTest("compiler/testData/codegen/box/javaInterop/kt43217.kt");
@@ -35276,6 +35294,12 @@ public class LLFirBlackBoxCodegenBasedTestGenerated extends AbstractLLFirBlackBo
             @TestMetadata("actualInnerClassesFirMemberMapping.kt")
             public void testActualInnerClassesFirMemberMapping() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/k2/actualInnerClassesFirMemberMapping.kt");
+            }
+
+            @Test
+            @TestMetadata("aliasSuperTypeInLazy.kt")
+            public void testAliasSuperTypeInLazy() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/k2/aliasSuperTypeInLazy.kt");
             }
 
             @Test

@@ -15828,6 +15828,12 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
             }
 
             @Test
+            @TestMetadata("redundant_safepoints.kt")
+            public void testRedundant_safepoints() throws Exception {
+                runTest("compiler/testData/codegen/box/fileCheck/redundant_safepoints.kt");
+            }
+
+            @Test
             @TestMetadata("replace_invoke_with_call.kt")
             public void testReplace_invoke_with_call() throws Exception {
                 runTest("compiler/testData/codegen/box/fileCheck/replace_invoke_with_call.kt");
@@ -27804,6 +27810,12 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
                 @TestMetadata("actualInnerClassesFirMemberMapping.kt")
                 public void testActualInnerClassesFirMemberMapping() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/actualInnerClassesFirMemberMapping.kt");
+                }
+
+                @Test
+                @TestMetadata("aliasSuperTypeInLazy.kt")
+                public void testAliasSuperTypeInLazy() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/aliasSuperTypeInLazy.kt");
                 }
 
                 @Test

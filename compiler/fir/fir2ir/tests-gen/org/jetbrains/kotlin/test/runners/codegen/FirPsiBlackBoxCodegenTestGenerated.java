@@ -30652,6 +30652,18 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
         }
 
         @Test
+        @TestMetadata("javaTypeFromAnotherModuleWithRawTypedWildcardBound.kt")
+        public void testJavaTypeFromAnotherModuleWithRawTypedWildcardBound() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/javaTypeFromAnotherModuleWithRawTypedWildcardBound.kt");
+        }
+
+        @Test
+        @TestMetadata("javaTypeFromSameModuleWithRawTypedWildcardBound.kt")
+        public void testJavaTypeFromSameModuleWithRawTypedWildcardBound() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/javaTypeFromSameModuleWithRawTypedWildcardBound.kt");
+        }
+
+        @Test
         @TestMetadata("kt43217.kt")
         public void testKt43217() throws Exception {
             runTest("compiler/testData/codegen/box/javaInterop/kt43217.kt");
@@ -34867,6 +34879,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
             @TestMetadata("actualInnerClassesFirMemberMapping.kt")
             public void testActualInnerClassesFirMemberMapping() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/k2/actualInnerClassesFirMemberMapping.kt");
+            }
+
+            @Test
+            @TestMetadata("aliasSuperTypeInLazy.kt")
+            public void testAliasSuperTypeInLazy() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/k2/aliasSuperTypeInLazy.kt");
             }
 
             @Test
