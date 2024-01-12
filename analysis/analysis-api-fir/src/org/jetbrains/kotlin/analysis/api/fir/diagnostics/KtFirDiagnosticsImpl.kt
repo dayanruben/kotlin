@@ -2266,6 +2266,11 @@ internal class UnsupportedClassLiteralsWithEmptyLhsImpl(
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.UnsupportedClassLiteralsWithEmptyLhs
 
+internal class MutablePropertyWithCapturedTypeImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.MutablePropertyWithCapturedType
+
 internal class NothingToOverrideImpl(
     override val declaration: KtCallableSymbol,
     firDiagnostic: KtPsiDiagnostic,
@@ -3182,13 +3187,6 @@ internal class ActualWithoutExpectImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtNamedDeclaration>(firDiagnostic, token), KtFirDiagnostic.ActualWithoutExpect
-
-internal class AmbiguousActualsImpl(
-    override val declaration: KtSymbol,
-    override val candidates: List<KtSymbol>,
-    firDiagnostic: KtPsiDiagnostic,
-    token: KtLifetimeToken,
-) : KtAbstractFirDiagnostic<KtNamedDeclaration>(firDiagnostic, token), KtFirDiagnostic.AmbiguousActuals
 
 internal class AmbiguousExpectsImpl(
     override val declaration: KtSymbol,

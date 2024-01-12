@@ -1861,6 +1861,18 @@ public class IrJsES6CodegenBoxTestGenerated extends AbstractIrJsES6CodegenBoxTes
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/builderInference"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR_ES6, true);
         }
 
+        @Test
+        @TestMetadata("lambdaParameterHasTVType.kt")
+        public void testLambdaParameterHasTVType() throws Exception {
+            runTest("compiler/testData/codegen/box/builderInference/lambdaParameterHasTVType.kt");
+        }
+
+        @Test
+        @TestMetadata("receiverUsesOuterTVButReturnTypeIsProper.kt")
+        public void testReceiverUsesOuterTVButReturnTypeIsProper() throws Exception {
+            runTest("compiler/testData/codegen/box/builderInference/receiverUsesOuterTVButReturnTypeIsProper.kt");
+        }
+
         @Nested
         @TestMetadata("compiler/testData/codegen/box/builderInference/issues")
         @TestDataPath("$PROJECT_ROOT")
@@ -2072,12 +2084,6 @@ public class IrJsES6CodegenBoxTestGenerated extends AbstractIrJsES6CodegenBoxTes
             @TestMetadata("kt57707.kt")
             public void testKt57707() throws Exception {
                 runTest("compiler/testData/codegen/box/builderInference/issues/kt57707.kt");
-            }
-
-            @Test
-            @TestMetadata("kt57709.kt")
-            public void testKt57709() throws Exception {
-                runTest("compiler/testData/codegen/box/builderInference/issues/kt57709.kt");
             }
 
             @Test
@@ -4603,6 +4609,36 @@ public class IrJsES6CodegenBoxTestGenerated extends AbstractIrJsES6CodegenBoxTes
         @Test
         public void testAllFilesPresentInCinterop() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/cinterop"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR_ES6, true);
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/codegen/box/cinterop/basics")
+        @TestDataPath("$PROJECT_ROOT")
+        public class Basics {
+            @Test
+            public void testAllFilesPresentInBasics() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/cinterop/basics"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR_ES6, true);
+            }
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/codegen/box/cinterop/exceptions")
+        @TestDataPath("$PROJECT_ROOT")
+        public class Exceptions {
+            @Test
+            public void testAllFilesPresentInExceptions() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/cinterop/exceptions"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR_ES6, true);
+            }
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/codegen/box/cinterop/packages")
+        @TestDataPath("$PROJECT_ROOT")
+        public class Packages {
+            @Test
+            public void testAllFilesPresentInPackages() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/cinterop/packages"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR_ES6, true);
+            }
         }
     }
 
@@ -34663,6 +34699,12 @@ public class IrJsES6CodegenBoxTestGenerated extends AbstractIrJsES6CodegenBoxTes
         @TestMetadata("kt63564.kt")
         public void testKt63564() throws Exception {
             runTest("compiler/testData/codegen/box/sam/kt63564.kt");
+        }
+
+        @Test
+        @TestMetadata("kt64116.kt")
+        public void testKt64116() throws Exception {
+            runTest("compiler/testData/codegen/box/sam/kt64116.kt");
         }
 
         @Nested

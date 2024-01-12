@@ -10,25 +10,20 @@ import org.jetbrains.kotlin.fir.containingClassLookupTag
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirConstExpression
-import org.jetbrains.kotlin.fir.resolve.ScopeSession
-import org.jetbrains.kotlin.fir.resolve.getContainingClass
-import org.jetbrains.kotlin.fir.resolve.getContainingDeclaration
-import org.jetbrains.kotlin.fir.resolve.providers.toSymbol
+import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
-import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.getDirectOverriddenFunctions
 import org.jetbrains.kotlin.fir.scopes.processAllFunctions
 import org.jetbrains.kotlin.fir.scopes.scopeForClass
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
+import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
-import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
-import org.jetbrains.kotlin.fir.types.classId
+import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.NativeStandardInteropNames
 import org.jetbrains.kotlin.native.interop.ObjCMethodInfo
-import org.jetbrains.kotlin.utils.DFS
 
 
 @OptIn(SymbolInternals::class)
@@ -58,7 +53,7 @@ internal fun FirFunction.getObjCMethodInfoFromOverriddenFunctions(session: FirSe
  * mimics ConstructorDescriptor.getObjCInitMethod()
  */
 @OptIn(SymbolInternals::class)
-private fun FirConstructor.getObjCInitMethod(session: FirSession, scopeSession: ScopeSession): FirFunction? {
+fun FirConstructor.getObjCInitMethod(session: FirSession, scopeSession: ScopeSession): FirFunction? {
     this.annotations.getAnnotationByClassId(NativeStandardInteropNames.objCConstructorClassId, session)?.let { annotation ->
         val initSelector: String = annotation.constStringArgument("initSelector")
         val classSymbol = containingClassLookupTag()?.toSymbol(session) as FirClassSymbol<*>
@@ -121,19 +116,10 @@ private fun FirClassSymbol<*>.isObjCClass(session: FirSession) = classId.package
             it.classId == NativeStandardInteropNames.objCObjectClassId
         }
 
-/**
- * almost mimics `IrClass.selfOrAnySuperClass()` apart from using of classsymbol instead of class itself, to use `classId.toSymbol()`
- */
-private fun FirClassSymbol<*>.selfOrAnySuperClass(session: FirSession, pred: (FirClassSymbol<*>) -> Boolean): Boolean =
-        DFS.ifAny(
-                listOf(this),
-                { current ->
-                    current.resolvedSuperTypes.mapNotNull {
-                        (it.classId?.toSymbol(session) as? FirClassLikeSymbol)?.fullyExpandedClass(session)
-                    }
-                },
-                pred
-        )
+private fun FirClassSymbol<*>.selfOrAnySuperClass(session: FirSession, predicate: (ConeClassLikeLookupTag) -> Boolean): Boolean =
+    predicate(toLookupTag()) ||
+            lookupSuperTypes(listOf(this), lookupInterfaces = true, deep = true, session, substituteTypes = false)
+                .any { predicate(it.lookupTag) }
 
 internal fun FirFunction.getInitMethodIfObjCConstructor(session: FirSession, scopeSession: ScopeSession): FirFunction? =
         if (this is FirConstructor && isObjCConstructor(session))
@@ -153,4 +139,11 @@ internal fun FirClassSymbol<*>.isExternalObjCClass(session: FirSession): Boolean
 @OptIn(SymbolInternals::class)
 fun FirClassSymbol<*>.parentsWithSelf(session: FirSession): Sequence<FirClassLikeDeclaration> {
     return generateSequence<FirClassLikeDeclaration>(fir) { it.getContainingDeclaration(session) }
+}
+
+fun FirClassSymbol<*>.isKotlinObjCClass(session: FirSession): Boolean = isObjCClass(session) && !isExternalObjCClass(session)
+
+fun FirTypeRef.isObjCObjectType(session: FirSession): Boolean {
+    val symbol = firClassLike(session)?.symbol
+    return symbol is FirClassSymbol && symbol.isObjCClass(session)
 }

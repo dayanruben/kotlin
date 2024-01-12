@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // !LANGUAGE: +NoAdditionalErrorsInK1DiagnosticReporter
 // ISSUE: KT-55055
 fun <T : Number> printGenericNumber(t: T) = println("Number is $t")

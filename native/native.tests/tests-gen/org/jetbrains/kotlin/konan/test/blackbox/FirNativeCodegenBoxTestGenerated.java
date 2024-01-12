@@ -1920,6 +1920,18 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/builderInference"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
             }
 
+            @Test
+            @TestMetadata("lambdaParameterHasTVType.kt")
+            public void testLambdaParameterHasTVType() throws Exception {
+                runTest("compiler/testData/codegen/box/builderInference/lambdaParameterHasTVType.kt");
+            }
+
+            @Test
+            @TestMetadata("receiverUsesOuterTVButReturnTypeIsProper.kt")
+            public void testReceiverUsesOuterTVButReturnTypeIsProper() throws Exception {
+                runTest("compiler/testData/codegen/box/builderInference/receiverUsesOuterTVButReturnTypeIsProper.kt");
+            }
+
             @Nested
             @TestMetadata("compiler/testData/codegen/box/builderInference/issues")
             @TestDataPath("$PROJECT_ROOT")
@@ -2134,12 +2146,6 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
                 @TestMetadata("kt57707.kt")
                 public void testKt57707() throws Exception {
                     runTest("compiler/testData/codegen/box/builderInference/issues/kt57707.kt");
-                }
-
-                @Test
-                @TestMetadata("kt57709.kt")
-                public void testKt57709() throws Exception {
-                    runTest("compiler/testData/codegen/box/builderInference/issues/kt57709.kt");
                 }
 
                 @Test
@@ -4860,6 +4866,219 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
             @TestMetadata("toKString.kt")
             public void testToKString() throws Exception {
                 runTest("compiler/testData/codegen/box/cinterop/toKString.kt");
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/codegen/box/cinterop/basics")
+            @TestDataPath("$PROJECT_ROOT")
+            @Tag("frontend-fir")
+            @FirPipeline()
+            @UseExtTestCaseGroupProvider()
+            public class Basics {
+                @Test
+                @TestMetadata("1.kt")
+                public void test1() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/1.kt");
+                }
+
+                @Test
+                @TestMetadata("3.kt")
+                public void test3() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/3.kt");
+                }
+
+                @Test
+                public void testAllFilesPresentInBasics() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/cinterop/basics"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+                }
+
+                @Test
+                @TestMetadata("available_processors.kt")
+                public void testAvailable_processors() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/available_processors.kt");
+                }
+
+                @Test
+                @TestMetadata("macros.kt")
+                public void testMacros() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/macros.kt");
+                }
+
+                @Test
+                @TestMetadata("mangling.kt")
+                public void testMangling() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/mangling.kt");
+                }
+
+                @Test
+                @TestMetadata("mangling2.kt")
+                public void testMangling2() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/mangling2.kt");
+                }
+
+                @Test
+                @TestMetadata("mangling_keywords.kt")
+                public void testMangling_keywords() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/mangling_keywords.kt");
+                }
+
+                @Test
+                @TestMetadata("mangling_keywords2.kt")
+                public void testMangling_keywords2() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/mangling_keywords2.kt");
+                }
+
+                @Test
+                @TestMetadata("structAnonRecordMember_ExplicitAlignment.kt")
+                public void testStructAnonRecordMember_ExplicitAlignment() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/structAnonRecordMember_ExplicitAlignment.kt");
+                }
+
+                @Test
+                @TestMetadata("structAnonRecordMember_ImplicitAlignment.kt")
+                public void testStructAnonRecordMember_ImplicitAlignment() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/structAnonRecordMember_ImplicitAlignment.kt");
+                }
+
+                @Test
+                @TestMetadata("structAnonRecordMember_Nested.kt")
+                public void testStructAnonRecordMember_Nested() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/structAnonRecordMember_Nested.kt");
+                }
+
+                @Test
+                @TestMetadata("structAnonym_Complicate.kt")
+                public void testStructAnonym_Complicate() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/structAnonym_Complicate.kt");
+                }
+
+                @Test
+                @TestMetadata("structAnonym_GLKVector3.kt")
+                public void testStructAnonym_GLKVector3() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/structAnonym_GLKVector3.kt");
+                }
+
+                @Test
+                @TestMetadata("structAnonym_Packed.kt")
+                public void testStructAnonym_Packed() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/structAnonym_Packed.kt");
+                }
+
+                @Test
+                @TestMetadata("structAnonym_Packed2.kt")
+                public void testStructAnonym_Packed2() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/structAnonym_Packed2.kt");
+                }
+
+                @Test
+                @TestMetadata("structAnonym_PragmaPacked.kt")
+                public void testStructAnonym_PragmaPacked() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/structAnonym_PragmaPacked.kt");
+                }
+
+                @Test
+                @TestMetadata("structs.kt")
+                public void testStructs() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/structs.kt");
+                }
+
+                @Test
+                @TestMetadata("types.kt")
+                public void testTypes() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/types.kt");
+                }
+
+                @Test
+                @TestMetadata("union.kt")
+                public void testUnion() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/union.kt");
+                }
+
+                @Test
+                @TestMetadata("unsupported.kt")
+                public void testUnsupported() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/unsupported.kt");
+                }
+
+                @Test
+                @TestMetadata("values.kt")
+                public void testValues() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/values.kt");
+                }
+
+                @Test
+                @TestMetadata("vectors.kt")
+                public void testVectors() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/vectors.kt");
+                }
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/codegen/box/cinterop/exceptions")
+            @TestDataPath("$PROJECT_ROOT")
+            @Tag("frontend-fir")
+            @FirPipeline()
+            @UseExtTestCaseGroupProvider()
+            public class Exceptions {
+                @Test
+                public void testAllFilesPresentInExceptions() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/cinterop/exceptions"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+                }
+
+                @Test
+                @TestMetadata("cCallback.kt")
+                public void testCCallback() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/exceptions/cCallback.kt");
+                }
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/codegen/box/cinterop/packages")
+            @TestDataPath("$PROJECT_ROOT")
+            @Tag("frontend-fir")
+            @FirPipeline()
+            @UseExtTestCaseGroupProvider()
+            public class Packages {
+                @Test
+                public void testAllFilesPresentInPackages() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/cinterop/packages"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+                }
+
+                @Test
+                @TestMetadata("dotFnameNested1.kt")
+                public void testDotFnameNested1() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/packages/dotFnameNested1.kt");
+                }
+
+                @Test
+                @TestMetadata("dotFnameNested2.kt")
+                public void testDotFnameNested2() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/packages/dotFnameNested2.kt");
+                }
+
+                @Test
+                @TestMetadata("dotFnameRoot.kt")
+                public void testDotFnameRoot() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/packages/dotFnameRoot.kt");
+                }
+
+                @Test
+                @TestMetadata("nested1.kt")
+                public void testNested1() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/packages/nested1.kt");
+                }
+
+                @Test
+                @TestMetadata("nested2.kt")
+                public void testNested2() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/packages/nested2.kt");
+                }
+
+                @Test
+                @TestMetadata("root.kt")
+                public void testRoot() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/packages/root.kt");
+                }
             }
         }
 
@@ -27830,6 +28049,12 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
                 }
 
                 @Test
+                @TestMetadata("covariantOverrideInActual.kt")
+                public void testCovariantOverrideInActual() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/covariantOverrideInActual.kt");
+                }
+
+                @Test
                 @TestMetadata("dataClassInCommonAndPlatform.kt")
                 public void testDataClassInCommonAndPlatform() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/dataClassInCommonAndPlatform.kt");
@@ -38964,6 +39189,12 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
             @TestMetadata("kt63564.kt")
             public void testKt63564() throws Exception {
                 runTest("compiler/testData/codegen/box/sam/kt63564.kt");
+            }
+
+            @Test
+            @TestMetadata("kt64116.kt")
+            public void testKt64116() throws Exception {
+                runTest("compiler/testData/codegen/box/sam/kt64116.kt");
             }
 
             @Nested

@@ -498,6 +498,9 @@ internal class PropertiesProvider private constructor(private val project: Proje
     val konanDataDir: String?
         get() = property(PropertyNames.KONAN_DATA_DIR).orNull
 
+    val appleCopyFrameworkToBuiltProductsDir: Boolean
+        get() = booleanProperty(PropertyNames.KOTLIN_APPLE_COPY_FRAMEWORK_TO_BUILT_PRODUCTS_DIR) ?: true
+
     /**
      * Allows suppressing the diagnostic [KotlinToolingDiagnostics.BuildToolsApiVersionInconsistency].
      * Required only for Kotlin repo bootstrapping.
@@ -539,6 +542,13 @@ internal class PropertiesProvider private constructor(private val project: Proje
         get() = getProvider(PropertyNames.KOTLIN_COMPILER_ARGUMENTS_LOG_LEVEL)
             .map { KotlinCompilerArgumentsLogLevel.fromPropertyValue(it) }
             .orElse(KotlinCompilerArgumentsLogLevel.DEFAULT)
+
+    /**
+     * Without unsafe optimization: in k2, if common source is dirty, module will be rebuilt.
+     * With unsafe optimization: regular IC logic is used. Common sources might see declarations from platform sources. See KT-62686
+     */
+    val enableUnsafeOptimizationsForMultiplatform: Boolean
+        get() = booleanProperty(PropertyNames.KOTLIN_UNSAFE_MULTIPLATFORM_INCREMENTAL_COMPILATION) ?: false
 
     /**
      * Retrieves a comma-separated list of browsers to use when running karma tests for [target]
@@ -633,6 +643,7 @@ internal class PropertiesProvider private constructor(private val project: Proje
         val KOTLIN_USER_HOME_DIR = property("kotlin.user.home")
         val KOTLIN_PROJECT_PERSISTENT_DIR = property("kotlin.project.persistent.dir")
         val KOTLIN_PROJECT_PERSISTENT_DIR_GRADLE_DISABLE_WRITE = property("kotlin.project.persistent.dir.gradle.disableWrite")
+        val KOTLIN_APPLE_COPY_FRAMEWORK_TO_BUILT_PRODUCTS_DIR = property("kotlin.apple.copyFrameworkToBuiltProductsDir")
 
         /**
          * Internal properties: builds get big non-suppressible warning when such properties are used
@@ -648,6 +659,7 @@ internal class PropertiesProvider private constructor(private val project: Proje
         val KOTLIN_CREATE_ARCHIVE_TASKS_FOR_CUSTOM_COMPILATIONS =
             property("$KOTLIN_INTERNAL_NAMESPACE.mpp.createArchiveTasksForCustomCompilations")
         val KOTLIN_COMPILER_ARGUMENTS_LOG_LEVEL = property("$KOTLIN_INTERNAL_NAMESPACE.compiler.arguments.log.level")
+        val KOTLIN_UNSAFE_MULTIPLATFORM_INCREMENTAL_COMPILATION = property("$KOTLIN_INTERNAL_NAMESPACE.incremental.enableUnsafeOptimizationsForMultiplatform")
     }
 
     companion object {

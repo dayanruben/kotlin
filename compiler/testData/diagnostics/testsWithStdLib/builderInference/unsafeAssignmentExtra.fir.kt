@@ -46,16 +46,16 @@ fun main(arg: Any, condition: Boolean) {
 
     val value2 = myBuilder {
         accept("")
-        a = <!ASSIGNMENT_TYPE_MISMATCH!>45<!>
+        a = 45
         when (condition) {
-            true -> a = <!ASSIGNMENT_TYPE_MISMATCH!>87<!>
-            false -> a = <!ASSIGNMENT_TYPE_MISMATCH!>65<!>
+            true -> a = 87
+            false -> a = 65
         }
         change {
-            a = <!ASSIGNMENT_TYPE_MISMATCH!>99<!>
+            a = 99
         }
         if (a is Int) {
-            a = <!ASSIGNMENT_TYPE_MISMATCH!>67<!>
+            a = 67
         }
     }
 
@@ -63,7 +63,7 @@ fun main(arg: Any, condition: Boolean) {
     val value3 = myBuilder {
         accept("")
         a = 45
-        bar(<!ARGUMENT_TYPE_MISMATCH, ARGUMENT_TYPE_MISMATCH!>::a<!>)
+        bar(::<!INAPPLICABLE_CANDIDATE!>a<!>)
     }
 
     fun baz(t: Int) {}

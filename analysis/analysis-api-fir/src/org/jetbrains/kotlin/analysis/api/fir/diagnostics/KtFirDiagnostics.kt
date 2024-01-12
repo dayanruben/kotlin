@@ -1885,6 +1885,10 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = UnsupportedClassLiteralsWithEmptyLhs::class
     }
 
+    interface MutablePropertyWithCapturedType : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = MutablePropertyWithCapturedType::class
+    }
+
     interface NothingToOverride : KtFirDiagnostic<KtModifierListOwner> {
         override val diagnosticClass get() = NothingToOverride::class
         val declaration: KtCallableSymbol
@@ -2640,12 +2644,6 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = ActualWithoutExpect::class
         val declaration: KtSymbol
         val compatibility: Map<ExpectActualCompatibility<FirBasedSymbol<*>>, List<KtSymbol>>
-    }
-
-    interface AmbiguousActuals : KtFirDiagnostic<KtNamedDeclaration> {
-        override val diagnosticClass get() = AmbiguousActuals::class
-        val declaration: KtSymbol
-        val candidates: List<KtSymbol>
     }
 
     interface AmbiguousExpects : KtFirDiagnostic<KtNamedDeclaration> {

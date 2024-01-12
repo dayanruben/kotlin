@@ -8,11 +8,13 @@ package org.jetbrains.kotlin.fir.analysis.diagnostics.native
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactoryToRendererMap
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticRenderers.TO_STRING
 import org.jetbrains.kotlin.diagnostics.rendering.BaseDiagnosticRendererFactory
-import org.jetbrains.kotlin.diagnostics.rendering.Renderers
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.SYMBOL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.SYMBOLS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.CANNOT_CHECK_FOR_FORWARD_DECLARATION
+import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.CONSTRUCTOR_DOES_NOT_OVERRIDE_ANY_SUPER_CONSTRUCTOR
+import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.CONSTRUCTOR_MATCHES_SEVERAL_SUPER_CONSTRUCTORS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.CONSTRUCTOR_OVERRIDES_ALREADY_OVERRIDDEN_OBJC_INITIALIZER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.EMPTY_OBJC_NAME
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.FORWARD_DECLARATION_AS_CLASS_LITERAL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.FORWARD_DECLARATION_AS_REIFIED_TYPE_ARGUMENT
@@ -34,10 +36,15 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.INVA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.INVALID_REFINES_IN_SWIFT_TARGETS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.MISSING_EXACT_OBJC_NAME
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.MISSING_EXCEPTION_IN_THROWS_ON_SUSPEND
-import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.REDUNDANT_SWIFT_REFINEMENT
+import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.MUST_BE_OBJC_OBJECT_TYPE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.MUST_BE_UNIT_TYPE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.MUST_NOT_HAVE_EXTENSION_RECEIVER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.NON_LITERAL_OBJC_NAME_ARG
+import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.PROPERTY_MUST_BE_VAR
+import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.REDUNDANT_SWIFT_REFINEMENT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.SUBTYPE_OF_HIDDEN_FROM_OBJC
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.THROWS_LIST_EMPTY
+import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.TWO_OR_LESS_PARAMETERS_ARE_SUPPORTED_HERE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.UNCHECKED_CAST_TO_FORWARD_DECLARATION
 
 object FirNativeErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
@@ -107,6 +114,36 @@ object FirNativeErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             FORWARD_DECLARATION_AS_CLASS_LITERAL,
             "Cannot refer to forward declaration ''{0}'' from class literal.",
             FirDiagnosticRenderers.RENDER_TYPE
+        )
+        map.put(TWO_OR_LESS_PARAMETERS_ARE_SUPPORTED_HERE, "Only 0, 1 or 2 parameters are supported here.")
+        map.put(PROPERTY_MUST_BE_VAR, "''@{0}'' property must be var.", TO_STRING)
+        map.put(MUST_NOT_HAVE_EXTENSION_RECEIVER, "''{0}'' must not have extension receiver.", TO_STRING)
+        map.put(
+            MUST_BE_OBJC_OBJECT_TYPE,
+            "Unexpected {0}: ''{1}''\nOnly Objective-C object types are supported here.",
+            TO_STRING,
+            FirDiagnosticRenderers.RENDER_TYPE
+        )
+        map.put(
+            MUST_BE_UNIT_TYPE,
+            "Unexpected {0}: ''{1}''\nOnly ''Unit'' is supported here.",
+            TO_STRING,
+            FirDiagnosticRenderers.RENDER_TYPE
+        )
+        map.put(
+            CONSTRUCTOR_OVERRIDES_ALREADY_OVERRIDDEN_OBJC_INITIALIZER,
+            "Constructor with ''@{0}'' overrides initializer that is already overridden explicitly.",
+            TO_STRING
+        )
+        map.put(
+            CONSTRUCTOR_DOES_NOT_OVERRIDE_ANY_SUPER_CONSTRUCTOR,
+            "Constructor with ''@{0}'' doesn''t override any super class constructor.\nIt must completely match by parameter names and types.",
+            TO_STRING
+        )
+        map.put(
+            CONSTRUCTOR_MATCHES_SEVERAL_SUPER_CONSTRUCTORS,
+            "Constructor with ''@{0}'' matches more than one of super constructors.",
+            TO_STRING
         )
     }
 }

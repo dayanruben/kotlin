@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.generators.generateTestGroupSuiteWithJUnit5
 import org.jetbrains.kotlin.generators.impl.generateTestGroupSuite
 import org.jetbrains.kotlin.generators.util.TestGeneratorUtil
 import org.jetbrains.kotlin.incremental.*
-import org.jetbrains.kotlin.js.test.*
 import org.jetbrains.kotlin.js.test.fir.*
 import org.jetbrains.kotlin.js.test.ir.*
 import org.jetbrains.kotlin.js.testOld.AbstractDceTest
@@ -152,7 +151,11 @@ fun main(args: Array<String>) {
                 model("lineNumbers/")
             }
 
-            testClass<AbstractFirJsBoxTest> {
+            testClass<AbstractFirPsiJsBoxTest> {
+                model("box/", pattern = "^([^_](.+))\\.kt$", excludeDirs = listOf("es6classes"))
+            }
+
+            testClass<AbstractFirLightTreeJsBoxTest> {
                 model("box/", pattern = "^([^_](.+))\\.kt$", excludeDirs = listOf("es6classes"))
             }
 
@@ -165,10 +168,9 @@ fun main(args: Array<String>) {
 //                model("typescript-export/", pattern = "^([^_](.+))\\.kt$")
 //            }
 
-            // see todo on defining class
-//            testClass<AbstractJsFirLineNumberTest> {
-//                model("lineNumbers/")
-//            }
+            testClass<AbstractFirJsLineNumberTest> {
+                model("lineNumbers/")
+            }
         }
 
         testGroup("js/js.tests/tests-gen", "compiler/testData", testRunnerMethodName = "runTest0") {
@@ -218,7 +220,25 @@ fun main(args: Array<String>) {
                 )
             }
 
+            testClass<AbstractFirLightTreeJsDiagnosticTest>(suiteTestClassName = "FirLightTreeJsOldFrontendDiagnosticsTestGenerated") {
+                model(
+                    relativeRootPath = "diagnostics/testsWithJsStdLib",
+                    pattern = "^([^_](.+))\\.kt$",
+                    excludedPattern = excludedFirTestdataPattern,
+                    targetBackend = TargetBackend.JS_IR
+                )
+            }
+
             testClass<AbstractFirPsiJsDiagnosticWithBackendTest>(suiteTestClassName = "FirPsiJsOldFrontendDiagnosticsWithBackendTestGenerated") {
+                model(
+                    relativeRootPath = "diagnostics/testsWithJsStdLibAndBackendCompilation",
+                    pattern = "^([^_](.+))\\.kt$",
+                    excludedPattern = excludedFirTestdataPattern,
+                    targetBackend = TargetBackend.JS_IR
+                )
+            }
+
+            testClass<AbstractFirLightTreeJsDiagnosticWithBackendTest>(suiteTestClassName = "FirLightTreeJsOldFrontendDiagnosticsWithBackendTestGenerated") {
                 model(
                     relativeRootPath = "diagnostics/testsWithJsStdLibAndBackendCompilation",
                     pattern = "^([^_](.+))\\.kt$",

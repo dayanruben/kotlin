@@ -19,13 +19,17 @@ object NativeDeclarationCheckers : DeclarationCheckers() {
 
     override val callableDeclarationCheckers: Set<FirCallableDeclarationChecker>
         get() = setOf(
-            FirNativeObjCRefinementChecker
+            FirNativeObjCRefinementChecker,
+            FirNativeObjCNameCallableChecker,
         )
 
     override val classCheckers: Set<FirClassChecker>
         get() = setOf(
             FirNativeObjCRefinementOverridesChecker,
-            FirNativeObjCNameOverridesChecker
+            FirNativeObjCNameOverridesChecker,
+            FirNativeObjCOutletChecker,
+            FirNativeObjCActionChecker,
+            FirNativeObjCOverrideInitChecker,
         )
 
     override val regularClassCheckers: Set<FirRegularClassChecker>

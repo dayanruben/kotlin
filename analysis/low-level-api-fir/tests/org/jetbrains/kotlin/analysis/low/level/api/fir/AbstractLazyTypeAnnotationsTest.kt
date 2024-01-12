@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir
 import org.jetbrains.kotlin.analysis.low.level.api.fir.test.configurators.AnalysisApiFirOutOfContentRootTestConfigurator
 import org.jetbrains.kotlin.analysis.low.level.api.fir.test.configurators.AnalysisApiFirScriptTestConfigurator
 import org.jetbrains.kotlin.analysis.low.level.api.fir.test.configurators.AnalysisApiFirSourceTestConfigurator
+import org.jetbrains.kotlin.analysis.test.framework.project.structure.allKtFiles
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirElementWithResolveState
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
@@ -44,14 +45,14 @@ import org.jetbrains.kotlin.test.services.moduleStructure
  * It collects all type annotations from the selected declaration and resolves them
  */
 abstract class AbstractLazyTypeAnnotationsTest : AbstractFirLazyDeclarationResolveTestCase() {
-    override fun doTestByFileStructure(ktFile: KtFile, testModule: TestModule, testServices: TestServices) {
+    override fun doTestByMainFile(mainFile: KtFile, mainModule: TestModule, testServices: TestServices) {
         val builderBeforeAnnotationResolve = StringBuilder()
         val builderAfterAnnotationResolve = StringBuilder()
 
         val allKtFiles = testServices.allKtFiles()
-        resolveWithClearCaches(ktFile) { session ->
+        resolveWithClearCaches(mainFile) { session ->
             val moduleStructure = testServices.moduleStructure
-            val (declaration, resolver) = findFirDeclarationToResolve(ktFile, moduleStructure, testServices, session)
+            val (declaration, resolver) = findFirDeclarationToResolve(mainFile, moduleStructure, testServices, session)
             resolver.invoke(FirResolvePhase.TYPES)
 
             if (declaration is FirCallableDeclaration) {

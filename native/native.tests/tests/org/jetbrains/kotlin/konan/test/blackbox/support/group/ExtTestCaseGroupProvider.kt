@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.konan.test.blackbox.support.*
 import org.jetbrains.kotlin.konan.test.blackbox.support.TestCase.WithTestRunnerExtras
+import org.jetbrains.kotlin.konan.test.blackbox.support.TestDirectives.ASSERTIONS_MODE
 import org.jetbrains.kotlin.konan.test.blackbox.support.TestDirectives.DISABLE_NATIVE
 import org.jetbrains.kotlin.konan.test.blackbox.support.TestDirectives.DISABLE_NATIVE_K1
 import org.jetbrains.kotlin.konan.test.blackbox.support.TestDirectives.DISABLE_NATIVE_K2
@@ -147,7 +148,8 @@ private class ExtTestDataFile(
             nominalPackageName = computePackageName(
                 testDataBaseDir = testRoots.baseDir,
                 testDataFile = testDataFile
-            )
+            ),
+            assertionsMode = AssertionsMode.fromString(structure.directives[ASSERTIONS_MODE.name])
         )
     }
 
@@ -172,8 +174,8 @@ private class ExtTestDataFile(
         args += "-opt-in=kotlin.native.internal.InternalForKotlinNative" // for `Any.isPermanent()` and `Any.isLocal()`
         args += "-opt-in=kotlin.native.internal.InternalForKotlinNativeTests" // for ReflectionPackageName
         val freeCInteropArgs = structure.directives.listValues(FREE_CINTEROP_ARGS.name)
-            ?.flatMap { it.split(" ") }
-        return TestCompilerArgs(args, freeCInteropArgs ?: emptyList())
+            .orEmpty().flatMap { it.split(" ") }
+        return TestCompilerArgs(args, freeCInteropArgs, testDataFileSettings.assertionsMode)
     }
 
     fun createTestCase(settings: Settings, sharedModules: ThreadSafeCache<String, TestModule.Shared?>): TestCase {
@@ -197,6 +199,7 @@ private class ExtTestDataFile(
     private fun determineIfStandaloneTest(): Boolean = with(structure) {
         if (directives.contains(NATIVE_STANDALONE_DIRECTIVE)) return true
         if (directives.contains(FILECHECK_STAGE.name)) return true
+        if (directives.contains(ASSERTIONS_MODE.name)) return true
         if (isExpectedFailure) return true
         // To make the debug of possible failed testruns easier, it makes sense to run dodgy tests alone
         if (directives.contains(IGNORE_NATIVE.name) ||
@@ -255,8 +258,6 @@ private class ExtTestDataFile(
             basePackageName.child(oldPackageName)
         }
 
-        val packagesOfDefFiles = defFiles.map { Name.identifier(it.name.removeSuffix(".def")) }
-
         filesToTransform.forEach { handler ->
             handler.accept(object : KtVisitor<Unit, Set<Name>>() {
                 override fun visitKtElement(element: KtElement, parentAccessibleDeclarationNames: Set<Name>) {
@@ -270,24 +271,26 @@ private class ExtTestDataFile(
                     val oldPackageDirective = file.packageDirective
                     val oldPackageName = oldPackageDirective?.fqName ?: FqName.ROOT
 
-                    val newPackageName = oldToNewPackageNameMapping.getValue(oldPackageName)
+                    val newPackageName = oldToNewPackageNameMapping.getValue(file.packageFqNameForKLib)
                     val newPackageDirective = handler.psiFactory.createPackageDirective(newPackageName)
 
                     if (oldPackageDirective != null) {
                         // Replace old package directive by the new one.
-                        oldPackageDirective.replace(newPackageDirective).ensureSurroundedByWhiteSpace()
+                        oldPackageDirective.replace(newPackageDirective).ensureSurroundedByNewLines()
                     } else {
                         // Insert the package directive immediately after file-level annotations.
-                        file.addAfter(newPackageDirective, file.fileAnnotationList).ensureSurroundedByWhiteSpace()
+                        file.addAfter(newPackageDirective, file.fileAnnotationList).ensureSurroundedByNewLines()
                     }
 
-                    // Add @ReflectionPackageName annotation to make the compiler use original package name in the reflective information.
-                    val annotationText =
-                        "kotlin.native.internal.ReflectionPackageName(${oldPackageName.asString().quoteAsKotlinStringLiteral()})"
-                    val fileAnnotationList = handler.psiFactory.createFileAnnotationListWithAnnotation(annotationText)
-                    file.addAnnotations(fileAnnotationList)
+                    if (!file.name.endsWith(".def")) { // don't process .def file contents after package directive
+                        // Add @ReflectionPackageName annotation to make the compiler use original package name in the reflective information.
+                        val annotationText =
+                            "kotlin.native.internal.ReflectionPackageName(${oldPackageName.asString().quoteAsKotlinStringLiteral()})"
+                        val fileAnnotationList = handler.psiFactory.createFileAnnotationListWithAnnotation(annotationText)
+                        file.addAnnotations(fileAnnotationList)
 
-                    visitKtElement(file, file.collectAccessibleDeclarationNames())
+                        visitKtElement(file, file.collectAccessibleDeclarationNames())
+                    }
                 }
 
                 override fun visitPackageDirective(directive: KtPackageDirective, unused: Set<Name>) = Unit
@@ -300,7 +303,7 @@ private class ExtTestDataFile(
                         || importedFqName.startsWith(KOTLINX_PACKAGE_NAME)
                         || importedFqName.startsWith(HELPERS_PACKAGE_NAME)
                         || importedFqName.startsWith(CNAMES_PACKAGE_NAME)
-                        || packagesOfDefFiles.any { importedFqName.startsWith(it) }
+                        || importedFqName.startsWith(PLATFORM_PACKAGE_NAME)
                     ) {
                         return
                     }
@@ -454,11 +457,11 @@ private class ExtTestDataFile(
         if (oldFileAnnotationList != null) {
             // Add new annotations to the old ones.
             fileAnnotationList.annotationEntries.forEach {
-                oldFileAnnotationList.add(it).ensureSurroundedByWhiteSpace()
+                oldFileAnnotationList.add(it).ensureSurroundedByNewLines()
             }
         } else {
             // Insert the annotations list immediately before package directive.
-            this.addBefore(fileAnnotationList, packageDirective).ensureSurroundedByWhiteSpace()
+            this.addBefore(fileAnnotationList, packageDirective).ensureSurroundedByNewLines()
         }
     }
 
@@ -594,6 +597,7 @@ private class ExtTestDataFile(
         private val HELPERS_PACKAGE_NAME = Name.identifier("helpers")
         private val KOTLINX_PACKAGE_NAME = Name.identifier("kotlinx")
         private val CNAMES_PACKAGE_NAME = Name.identifier("cnames")
+        private val PLATFORM_PACKAGE_NAME = Name.identifier("platform")
 
         private val MANDATORY_SOURCE_TRANSFORMERS: ExternalSourceTransformers = listOf(DiagnosticsRemovingSourceTransformer)
     }
@@ -604,7 +608,8 @@ private class ExtTestDataFileSettings(
     val optInsForSourceCode: Set<String>,
     val optInsForCompiler: Set<String>,
     val generatedSourcesDir: File,
-    val nominalPackageName: PackageName
+    val nominalPackageName: PackageName,
+    val assertionsMode: AssertionsMode,
 )
 
 private typealias SharedModuleGenerator = (sharedModulesDir: File) -> TestModule.Shared?
@@ -622,12 +627,11 @@ private class ExtTestDataFileStructureFactory(parentDisposable: Disposable) : Te
 
         val directives: Directives get() = filesAndModules.directives
 
-        val defFiles: List<KtFile> = filesAndModules.parsedFiles.filter { it.key.name.endsWith(".def") }.map { it.value }
         val filesToTransform: Iterable<CurrentFileHandler>
-            get() = filesAndModules.parsedFiles.filter { it.key.name.endsWith(".kt") }
+            get() = filesAndModules.parsedFiles.filter { it.key.name.endsWith(".kt") || it.key.name.endsWith(".def") }
                 .map { (extTestFile, psiFile) ->
                     object : CurrentFileHandler {
-                        override val packageFqName get() = psiFile.packageFqName
+                        override val packageFqName get() = psiFile.packageFqNameForKLib
                         override val module = object : CurrentFileHandler.ModuleHandler {
                             override fun markAsMain() {
                                 extTestFile.module.isMain = true
@@ -970,3 +974,15 @@ private fun Settings.isIgnoredWithIGNORE_NATIVE(
     }
     return false
 }
+
+private val KtFile.packageFqNameForKLib: FqName
+    get() = when (name.substringAfterLast(".")) {
+        "kt" -> packageFqName
+        "def" -> {
+            // Without package directive, CInterop tool puts declarations to a package with kinda odd name, as such:
+            // name of .def file without extension, splitted by dot-separated parts, and reversed.
+            if (packageFqName != FqName.ROOT) packageFqName
+            else FqName.fromSegments(name.removeSuffix(".def").split(".").reversed())
+        }
+        else -> TODO("File extension is not yet supported: $name")
+    }

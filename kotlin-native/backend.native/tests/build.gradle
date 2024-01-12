@@ -229,40 +229,6 @@ Task standaloneTest(String name, Closure configureClosure) {
 }
 
 /**
- * Creates a task for a linking test. Configures runner and adds library and test build tasks.
- */
-Task linkTest(String name, Closure<KonanLinkTest> configureClosure) {
-    return KotlinNativeTestKt.createTest(project, name, KonanLinkTest) { task ->
-        task.configure(configureClosure)
-        if (task.enabled) {
-            konanArtifacts {
-                def lib = "lib$name"
-                def targetName = target.name
-                // build a library from KonanLinkTest::lib property
-                library(lib, targets: [targetName]) {
-                    srcFiles task.lib
-                    baseDir  "$testOutputLocal/$name"
-                    extraOpts task.flags
-                    extraOpts project.globalTestArgs.findAll { !it.contains("-Xpartial-linkage") }
-                }
-                UtilsKt.dependsOnKonanBuildingTask(task, lib, target)
-
-                // Build an executable with library
-                program(name, targets: [targetName]) {
-                    libraries {
-                        klibFile file("$testOutputLocal/$name/$targetName/${lib}.klib")
-                    }
-                    baseDir  "$testOutputLocal/$name"
-                    srcFiles  task.getSources()
-                    extraOpts task.flags
-                    extraOpts project.globalTestArgs
-                }
-            }
-        }
-    }
-}
-
-/**
  * Creates a task for a dynamic test. Configures runner and adds library and test build tasks.
  */
 Task dynamicTest(String name, Closure<KonanDynamicTest> configureClosure) {
@@ -572,13 +538,6 @@ tasks.register("empty_string", KonanLocalTest) {
 standaloneTest("link_default_libs") {
     useGoldenData = true
     source = "link/default/default.kt"
-    UtilsKt.dependsOnPlatformLibs(it)
-}
-
-linkTest("no_purge_for_dependencies") {
-    useGoldenData = true
-    source = "link/purge1/prog.kt"
-    lib = "link/purge1/lib.kt"
     UtilsKt.dependsOnPlatformLibs(it)
 }
 
@@ -1069,64 +1028,12 @@ createInterop("sysstat") {
     it.defFile f
 }
 
-createInterop("cstdlib") {
-    it.defFile 'interop/basics/cstdlib.def'
-}
-
 createInterop("cstdio") {
     it.defFile 'interop/basics/cstdio.def'
 }
 
 createInterop("sockets") {
     it.defFile 'interop/basics/sockets.def'
-}
-
-createInterop("cmacros") {
-    it.defFile 'interop/basics/cmacros.def'
-}
-
-createInterop("cunsupported") {
-    it.defFile 'interop/basics/cunsupported.def'
-}
-
-createInterop("ctypes") {
-    it.defFile 'interop/basics/ctypes.def'
-}
-
-createInterop("structAnonym") {
-    it.defFile 'interop/basics/structAnonym.def'
-}
-
-createInterop("cvalues") {
-    it.defFile 'interop/basics/cvalues.def'
-}
-
-createInterop("cvectors") {
-    it.defFile 'interop/basics/cvectors.def'
-}
-
-createInterop("cstructs") {
-    it.defFile 'interop/basics/cstructs.def'
-}
-
-createInterop("cmangling") {
-    it.defFile 'interop/basics/mangling.def'
-}
-
-createInterop("cmangling2") {
-    it.defFile 'interop/basics/mangling2.def'
-}
-
-createInterop("cmangling_keywords") {
-    it.defFile 'interop/basics/mangling_keywords.def'
-}
-
-createInterop("cmangling_keywords2") {
-    it.defFile 'interop/basics/mangling_keywords2.def'
-}
-
-createInterop("cunion") {
-    it.defFile 'interop/basics/cunion.def'
 }
 
 createInterop("concurrentTerminate") {
@@ -1368,11 +1275,6 @@ createInterop("exceptions_throwThroughBridge") {
     it.extraOpts "-Xcompile-source", "$projectDir/interop/exceptions/throwThroughBridgeInterop.cpp"
 }
 
-createInterop("exceptions_cCallback") {
-    it.defFile "interop/exceptions/cCallback.def"
-    it.extraOpts "-Xcompile-source", "$projectDir/interop/exceptions/cCallback.cpp"
-}
-
 /**
  * Creates a task for the interop test. Configures runner and adds library and test build tasks.
  */
@@ -1390,7 +1292,7 @@ Task interopTestBase(String name, boolean multiFile, boolean interop2ForMainOnly
                 def lib = "lib$name"
                 def hasIntermediateLib = task.lib != null
                 if (hasIntermediateLib) {
-                    // build a library from KonanLinkTest::lib property
+                    // build a library from KonanInteropTest::lib property
                     library(lib, targets: [targetName]) {
                         libraries {
                             artifact interopLib
@@ -1439,12 +1341,6 @@ standaloneTest("interop_objc_allocException") {
     UtilsKt.dependsOnPlatformLibs(it)
 }
 
-interopTest("interop_available_processors") {
-    source = 'interop/basics/available_processors.kt'
-    arguments = [Runtime.getRuntime().availableProcessors().toString()]
-    interop = 'cstdlib'
-}
-
 interopTest("interop0") {
     disabled = (project.testTarget == 'linux_arm64')
     useGoldenData = true
@@ -1452,22 +1348,10 @@ interopTest("interop0") {
     interop = 'sysstat'
 }
 
-interopTest("interop1") {
-    useGoldenData = true
-    source = "interop/basics/1.kt"
-    interop = 'cstdlib'
-}
-
 interopTest("interop2") {
     useGoldenData = true
     source = "interop/basics/2.kt"
     interop = 'cstdio'
-}
-
-interopTest("interop3") {
-    useGoldenData = true
-    source = "interop/basics/3.kt"
-    interop = 'cstdlib'
 }
 
 interopTest("interop4") {
@@ -1482,51 +1366,6 @@ standaloneTest("interop5") {
     UtilsKt.dependsOnPlatformLibs(it)
 }
 
-interopTest("interop_macros") {
-    source = "interop/basics/macros.kt"
-    interop = 'cmacros'
-}
-
-interopTest("interop_unsupported") {
-    source = "interop/basics/unsupported.kt"
-    interop = 'cunsupported'
-}
-
-interopTest("interop_types") {
-    source = "interop/basics/types.kt"
-    interop = 'ctypes'
-}
-
-interopTest("interop_structAnonym") {
-    source = "interop/basics/structAnonym.kt"
-    interop = 'structAnonym'
-}
-
-interopTest("interop_vectors") {
-    source = "interop/basics/vectors.kt"
-    interop = 'cvectors'
-}
-
-interopTest("interop_mangling") {
-    source = "interop/basics/mangling.kt"
-    interop = 'cmangling'
-}
-
-interopTest("interop_mangling2") {
-    source = "interop/basics/mangling2.kt"
-    interop = 'cmangling2'
-}
-
-interopTest("interop_mangling_keywords") {
-    source = "interop/basics/mangling_keywords.kt"
-    interop = 'cmangling_keywords'
-}
-
-interopTest("interop_mangling_keywords2") {
-    source = "interop/basics/mangling_keywords2.kt"
-    interop = 'cmangling_keywords2'
-}
-
 interopTest("interop_concurrentTerminate") {
     source = "interop/concurrentTerminate/main.kt"
     interop = 'concurrentTerminate'
@@ -1537,16 +1376,6 @@ interopTest("interop_concurrentTerminate") {
 interopTest("interop_embedStaticLibraries") {
     source = "interop/embedStaticLibraries/main.kt"
     interop = 'embedStaticLibraries'
-}
-
-interopTest("interop_values") {
-    source = "interop/basics/values.kt"
-    interop = 'cvalues'
-}
-
-interopTest("interop_structs") {
-    source = "interop/basics/structs.kt"
-    interop = 'cstructs'
 }
 
 interopTest("interop_threadStates") {
@@ -1584,11 +1413,6 @@ interopTest("interop_withSpaces") {
     doLast {
         assert project.layout.buildDirectory.file("cutom map.map").get().asFile.exists()
     }
-}
-
-interopTest("interop_union") {
-    interop = 'cunion'
-    source = "interop/basics/union.kt"
 }
 
 // TODO: This test should be run with caches on.
@@ -2310,12 +2134,6 @@ dynamicTest("interop_kotlin_exception_hook") {
     outputChecker = { s -> s.contains("OK. Kotlin unhandled exception hook") }
 }
 
-interopTest("interop_exceptions_cCallback") {
-    source = "interop/exceptions/cCallback.kt"
-    outputChecker = { s -> s.contains("CATCH IN C++") }
-    interop = "exceptions_cCallback"
-}
-
 standaloneTest("library_ir_provider_mismatch") {
     enabled = !isAggressiveGC // No need to test with different GC schedulers
 
@@ -2834,9 +2652,6 @@ task buildKonanTests { t ->
             .withType(KonanStandaloneTest.class)
             .each {
                 // add library and source files
-                if (it instanceof KonanLinkTest) {
-                    excludeList += it.lib
-                }
                 if (it.source != null) {
                     excludeList += it.source
                 }

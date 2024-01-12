@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.fir.references.FirNamedReference
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.references.FirThisReference
 import org.jetbrains.kotlin.fir.references.builder.buildSimpleNamedReference
+import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.FirSamResolver
 import org.jetbrains.kotlin.fir.resolve.SessionHolderImpl
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeAmbiguityError
@@ -50,12 +51,8 @@ import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeUnmatchedTypeArgumentsEr
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.transformers.PackageResolutionResult
 import org.jetbrains.kotlin.fir.resolve.transformers.resolveToPackageOrClass
-import org.jetbrains.kotlin.fir.scopes.FirScope
-import org.jetbrains.kotlin.fir.scopes.FirTypeParameterScope
-import org.jetbrains.kotlin.fir.scopes.getFunctions
-import org.jetbrains.kotlin.fir.scopes.getProperties
+import org.jetbrains.kotlin.fir.scopes.*
 import org.jetbrains.kotlin.fir.scopes.impl.*
-import org.jetbrains.kotlin.fir.scopes.processClassifiersByName
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
@@ -524,8 +521,6 @@ private class ElementsToShortenCollector(
         val typeElement = resolvedTypeRef.correspondingTypePsi ?: return
         if (typeElement.qualifier == null) return
 
-        if (!typeElement.inSelection) return
-
         val classifierId = resolvedTypeRef.type.lowerBoundIfFlexible().candidateClassId ?: return
 
         findTypeQualifierToShorten(classifierId, typeElement)?.let(::addElementToShorten)
@@ -597,8 +592,6 @@ private class ElementsToShortenCollector(
             else -> return
         }
 
-        if (!wholeQualifierElement.inSelection) return
-
         findTypeQualifierToShorten(wholeClassQualifier, wholeQualifierElement)?.let(::addElementToShorten)
     }
 
@@ -613,12 +606,10 @@ private class ElementsToShortenCollector(
             withImplicitReceivers = false,
         ) ?: return null
 
-        val allClassIds = wholeClassQualifier.outerClassesWithSelf
-        val allQualifiers = wholeQualifierElement.qualifiedElementsWithSelf
-        return findClassifierElementsToShorten(
+        return findClassifierQualifierToShorten(
             positionScopes,
-            allClassIds,
-            allQualifiers,
+            wholeClassQualifier,
+            wholeQualifierElement,
         )
     }
 
@@ -828,12 +819,25 @@ private class ElementsToShortenCollector(
         return createElementToShorten(referenceExpression, shortenedRef = aliasedName)
     }
 
-    private fun findClassifierElementsToShorten(
+    /**
+     * Finds the longest qualifier in [wholeQualifierElement] which can be safely shortened in the [positionScopes].
+     * [wholeQualifierClassId] is supposed to reflect the class which is referenced by the [wholeQualifierElement].
+     *
+     * N.B. Even if the [wholeQualifierElement] is not strictly in the [selection],
+     * some outer part of it might be, and we want to shorten that.
+     * So we have to check all the outer qualifiers.
+     */
+    private fun findClassifierQualifierToShorten(
         positionScopes: List<FirScope>,
-        allClassIds: Sequence<ClassId>,
-        allQualifiedElements: Sequence<KtElement>,
+        wholeQualifierClassId: ClassId,
+        wholeQualifierElement: KtElement,
     ): ElementToShorten? {
+        val allClassIds = wholeQualifierClassId.outerClassesWithSelf
+        val allQualifiedElements = wholeQualifierElement.qualifiedElementsWithSelf
+
         for ((classId, element) in allClassIds.zip(allQualifiedElements)) {
+            if (!element.inSelection) continue
+
             val classSymbol = shorteningContext.toClassSymbol(classId) ?: return null
             val option = classShortenStrategy(classSymbol)
             if (option == ShortenStrategy.DO_NOT_SHORTEN) continue
@@ -880,7 +884,11 @@ private class ElementsToShortenCollector(
                 }
             }
         }
-        return findFakePackageToShorten(allQualifiedElements.last())
+
+        val lastQualifier = allQualifiedElements.last()
+        if (!lastQualifier.inSelection) return null
+
+        return findFakePackageToShorten(lastQualifier)
     }
 
     private fun createElementToShorten(
@@ -994,7 +1002,7 @@ private class ElementsToShortenCollector(
             }
         }
         val candidates = AllCandidatesResolver(shorteningContext.analysisSession.useSiteSession).getAllCandidates(
-            firResolveSession, fakeFirQualifiedAccess, name, expressionInScope
+            firResolveSession, fakeFirQualifiedAccess, name, expressionInScope, ResolutionMode.ContextIndependent,
         )
         return candidates.filter { overloadCandidate ->
             when (overloadCandidate.candidate.currentApplicability) {
@@ -1018,7 +1026,7 @@ private class ElementsToShortenCollector(
             calleeReference = fakeCalleeReference
         }
         val candidates = AllCandidatesResolver(shorteningContext.analysisSession.useSiteSession).getAllCandidates(
-            firResolveSession, fakeFirQualifiedAccess, name, elementInScope
+            firResolveSession, fakeFirQualifiedAccess, name, elementInScope, ResolutionMode.ContextIndependent,
         )
         return candidates.filter { overloadCandidate ->
             overloadCandidate.candidate.currentApplicability == CandidateApplicability.RESOLVED
@@ -1355,6 +1363,15 @@ private class ElementsToShortenCollector(
             }
         }
     }
+
+    private val KtElement.inSelection: Boolean
+        get() = when (this) {
+            is KtUserType -> inSelection
+            is KtDotQualifiedExpression -> inSelection
+            is KtThisExpression -> inSelection
+
+            else -> error("Unexpected ${this::class}")
+        }
 
     /**
      * Checks whether type reference of [this] type is considered to be in the [selection] text range.

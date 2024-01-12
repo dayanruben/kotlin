@@ -25,6 +25,12 @@ import org.jetbrains.kotlin.test.services.JUnit5Assertions.assertTrue
 import org.jetbrains.kotlin.test.services.JUnit5Assertions.fail
 import java.io.File
 
+private fun AssertionsMode.assertionsEnabledWith(optimizationMode: OptimizationMode) = when (this) {
+    AssertionsMode.ALWAYS_ENABLE -> true
+    AssertionsMode.ALWAYS_DISABLE -> false
+    else -> optimizationMode != OptimizationMode.OPT
+}
+
 internal abstract class TestCompilation<A : TestCompilationArtifact> {
     abstract val result: TestCompilationResult<out A>
 }
@@ -55,8 +61,9 @@ internal abstract class BasicCompilation<A : TestCompilationArtifact>(
     private fun ArgsBuilder.applyCommonArgs() {
         add("-target", targets.testTarget.name)
         optimizationMode.compilerFlag?.let { compilerFlag -> add(compilerFlag) }
+        if (freeCompilerArgs.assertionsMode.assertionsEnabledWith(optimizationMode))
+            add("-enable-assertions")
         add(
-            "-enable-assertions",
             "-Xverify-ir=error"
         )
         addFlattened(binaryOptions.entries) { (name, value) -> listOf("-Xbinary=$name=$value") }
@@ -141,7 +148,7 @@ internal abstract class SourceBasedCompilation<A : TestCompilationArtifact>(
     targets: KotlinNativeTargets,
     home: KotlinNativeHome,
     classLoader: KotlinNativeClassLoader,
-    optimizationMode: OptimizationMode,
+    protected val optimizationMode: OptimizationMode,
     compilerOutputInterceptor: CompilerOutputInterceptor,
     private val threadStateChecker: ThreadStateChecker,
     private val sanitizer: Sanitizer,
@@ -218,7 +225,7 @@ internal class LibraryCompilation(
     dependencies = CategorizedDependencies(dependencies),
     expectedArtifact = expectedArtifact
 ) {
-    override val binaryOptions get() = BinaryOptions.RuntimeAssertionsMode.defaultForTesting
+    override val binaryOptions get() = BinaryOptions.RuntimeAssertionsMode.defaultForTesting(optimizationMode, freeCompilerArgs.assertionsMode)
 
     override fun applySpecificArgs(argsBuilder: ArgsBuilder) = with(argsBuilder) {
         add(
@@ -253,7 +260,7 @@ internal class ObjCFrameworkCompilation(
     dependencies = CategorizedDependencies(dependencies),
     expectedArtifact = expectedArtifact
 ) {
-    override val binaryOptions get() = BinaryOptions.RuntimeAssertionsMode.defaultForTesting
+    override val binaryOptions get() = BinaryOptions.RuntimeAssertionsMode.defaultForTesting(optimizationMode, freeCompilerArgs.assertionsMode)
 
     override fun applySpecificArgs(argsBuilder: ArgsBuilder) = with(argsBuilder) {
         add(
@@ -356,7 +363,7 @@ internal class ExecutableCompilation(
     expectedArtifact = expectedArtifact
 ) {
     private val cacheMode: CacheMode = settings.get()
-    override val binaryOptions = BinaryOptions.RuntimeAssertionsMode.chooseFor(cacheMode)
+    override val binaryOptions = BinaryOptions.RuntimeAssertionsMode.chooseFor(cacheMode, optimizationMode, freeCompilerArgs.assertionsMode)
 
     private val partialLinkageConfig: UsedPartialLinkageConfig = settings.get()
 
@@ -552,10 +559,13 @@ internal class CategorizedDependencies(uncategorizedDependencies: Iterable<TestC
 private object BinaryOptions {
     object RuntimeAssertionsMode {
         // Here the 'default' is in the sense the default for testing, not the default for the compiler.
-        val defaultForTesting: Map<String, String> = mapOf("runtimeAssertionsMode" to "panic")
+        fun defaultForTesting(optimizationMode: OptimizationMode, assertionsMode: AssertionsMode) =
+            if (assertionsMode.assertionsEnabledWith(optimizationMode)) mapOf("runtimeAssertionsMode" to "panic") else mapOf()
+
         val forUseWithCache: Map<String, String> = mapOf("runtimeAssertionsMode" to "ignore")
 
-        fun chooseFor(cacheMode: CacheMode) = if (cacheMode.useStaticCacheForDistributionLibraries) forUseWithCache else defaultForTesting
+        fun chooseFor(cacheMode: CacheMode, optimizationMode: OptimizationMode, assertionsMode: AssertionsMode) =
+            if (cacheMode.useStaticCacheForDistributionLibraries) forUseWithCache else defaultForTesting(optimizationMode, assertionsMode)
     }
 }
 

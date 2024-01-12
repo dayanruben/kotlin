@@ -138,7 +138,17 @@ open class AbstractJsIrLineNumberTest : AbstractJsIrTest(
 ) {
     override fun configure(builder: TestConfigurationBuilder) {
         super.configure(builder)
-        configureJsIrLineNumberTest(builder)
+        with(builder) {
+            defaultDirectives {
+                +JsEnvironmentConfigurationDirectives.KJS_WITH_FULL_RUNTIME
+                +JsEnvironmentConfigurationDirectives.NO_COMMON_FILES
+                -JsEnvironmentConfigurationDirectives.GENERATE_NODE_JS_RUNNER
+                JsEnvironmentConfigurationDirectives.DONT_RUN_GENERATED_CODE.with(listOf("JS", "JS_IR", "JS_IR_ES6"))
+            }
+            configureJsArtifactsHandlersStep {
+                useHandlers(::createIrJsLineNumberHandler)
+            }
+        }
     }
 }
 
@@ -193,23 +203,9 @@ open class AbstractWebDemoExamplesTest : AbstractJsIrTest(
     }
 }
 
-private fun configureJsIrLineNumberTest(builder: TestConfigurationBuilder) {
-    with(builder) {
-        defaultDirectives {
-            +JsEnvironmentConfigurationDirectives.KJS_WITH_FULL_RUNTIME
-            +JsEnvironmentConfigurationDirectives.NO_COMMON_FILES
-            -JsEnvironmentConfigurationDirectives.GENERATE_NODE_JS_RUNNER
-            JsEnvironmentConfigurationDirectives.DONT_RUN_GENERATED_CODE.with(listOf("JS", "JS_IR", "JS_IR_ES6"))
-        }
-        configureJsArtifactsHandlersStep {
-            useHandlers(::JsLineNumberHandler)
-        }
-    }
-}
-
 open class AbstractIrJsSteppingTest : AbstractJsIrTest(
     pathToTestDir = "compiler/testData/debug/stepping/",
-    testGroupOutputDirPrefix = "debug/stepping/"
+    testGroupOutputDirPrefix = "debug/irStepping/"
 ) {
     override fun TestConfigurationBuilder.configuration() {
         commonConfigurationForJsBlackBoxCodegenTest()
@@ -244,6 +240,6 @@ open class AbstractIrJsLocalVariableTest : AbstractJsIrTest(
 }
 
 open class AbstractIrCodegenWasmJsInteropJsTest : AbstractJsIrTest(
-    pathToTestDir = "compiler/testData/codegen/wasmJsInterop",
-    testGroupOutputDirPrefix = "codegen/wasmJsInteropJs"
+    pathToTestDir = "compiler/testData/codegen/wasmJsInterop/",
+    testGroupOutputDirPrefix = "codegen/irWasmJsInteropJs/"
 )

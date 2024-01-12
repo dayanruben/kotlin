@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.backend.konan.objcexport
 
+import org.jetbrains.kotlin.backend.konan.InternalKotlinNativeApi
+
 sealed interface ObjCExportName {
     val swiftName: String
     val objCName: String
@@ -15,6 +17,10 @@ interface ObjCExportClassOrProtocolName : ObjCExportName {
 }
 
 interface ObjCExportPropertyName : ObjCExportName
+
+interface ObjCExportFunctionName : ObjCExportName
+
+interface ObjCExportFileName : ObjCExportName
 
 fun ObjCExportClassOrProtocolName(
     swiftName: String,
@@ -40,10 +46,36 @@ fun ObjCExportPropertyName(
     objCName = objCName
 )
 
+fun ObjCExportFunctionName(
+    swiftName: String,
+    objCName: String,
+): ObjCExportFunctionName = ObjCExportFunctionNameImpl(
+    swiftName = swiftName,
+    objCName = objCName
+)
+
+fun ObjCExportFileName(
+    swiftName: String,
+    objCName: String,
+): ObjCExportFileName = ObjCExportFileNameImpl(
+    swiftName = swiftName,
+    objCName = objCName
+)
+
 private data class ObjCExportPropertyNameImpl(
     override val swiftName: String,
     override val objCName: String,
 ) : ObjCExportPropertyName
+
+private data class ObjCExportFunctionNameImpl(
+    override val swiftName: String,
+    override val objCName: String,
+) : ObjCExportFunctionName
+
+private data class ObjCExportFileNameImpl(
+    override val swiftName: String,
+    override val objCName: String,
+) : ObjCExportFileName
 
 
 fun ObjCExportClassOrProtocolName.toNameAttributes(): List<String> = listOfNotNull(
@@ -51,5 +83,21 @@ fun ObjCExportClassOrProtocolName.toNameAttributes(): List<String> = listOfNotNu
     swiftName.takeIf { it != objCName }?.let { swiftNameAttribute(it) }
 )
 
-private fun swiftNameAttribute(swiftName: String) = "swift_name(\"$swiftName\")"
-private fun objcRuntimeNameAttribute(name: String) = "objc_runtime_name(\"$name\")"
+@InternalKotlinNativeApi
+fun swiftNameAttribute(swiftName: String) = "swift_name(\"$swiftName\")"
+
+@InternalKotlinNativeApi
+fun objcRuntimeNameAttribute(name: String) = "objc_runtime_name(\"$name\")"
+
+fun ObjCExportName.name(forSwift: Boolean) = swiftName.takeIf { forSwift } ?: objCName
+
+@InternalKotlinNativeApi
+fun String.toIdentifier(): String = this.toValidObjCSwiftIdentifier()
+
+internal fun String.toValidObjCSwiftIdentifier(): String {
+    if (this.isEmpty()) return "__"
+
+    return this.replace('$', '_') // TODO: handle more special characters.
+        .let { if (it.first().isDigit()) "_$it" else it }
+        .let { if (it == "_") "__" else it }
+}

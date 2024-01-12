@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.js.test.converters.JsIrBackendFacade
 import org.jetbrains.kotlin.js.test.converters.incremental.RecompileModuleJsIrBackendFacade
 import org.jetbrains.kotlin.js.test.handlers.JsDebugRunner
 import org.jetbrains.kotlin.js.test.handlers.JsIrRecompiledArtifactsIdentityHandler
+import org.jetbrains.kotlin.js.test.handlers.createFirJsLineNumberHandler
 import org.jetbrains.kotlin.parsing.parseBoolean
 import org.jetbrains.kotlin.test.Constructor
 import org.jetbrains.kotlin.test.FirParser
@@ -32,7 +33,8 @@ import java.lang.Boolean.getBoolean
 open class AbstractFirJsTest(
     pathToTestDir: String = "${JsEnvironmentConfigurator.TEST_DATA_DIR_PATH}/box/",
     testGroupOutputDirPrefix: String,
-    targetBackend: TargetBackend = TargetBackend.JS_IR
+    targetBackend: TargetBackend = TargetBackend.JS_IR,
+    val parser: FirParser = FirParser.Psi,
 ) : AbstractJsBlackBoxCodegenTestBase<FirOutputArtifact, IrBackendInput, BinaryArtifacts.KLib>(
     FrontendKinds.FIR, targetBackend, pathToTestDir, testGroupOutputDirPrefix, skipMinification = true
 ) {
@@ -65,7 +67,7 @@ open class AbstractFirJsTest(
                 +LanguageSettingsDirectives.ALLOW_KOTLIN_PACKAGE
                 -JsEnvironmentConfigurationDirectives.GENERATE_NODE_JS_RUNNER
                 DiagnosticsDirectives.DIAGNOSTICS with listOf("-infos")
-                FirDiagnosticsDirectives.FIR_PARSER with FirParser.Psi
+                FirDiagnosticsDirectives.FIR_PARSER with parser
             }
 
             firHandlersStep {
@@ -92,9 +94,16 @@ open class AbstractFirJsTest(
     }
 }
 
-open class AbstractFirJsBoxTest : AbstractFirJsTest(
+open class AbstractFirPsiJsBoxTest : AbstractFirJsTest(
     pathToTestDir = "${JsEnvironmentConfigurator.TEST_DATA_DIR_PATH}/box/",
-    testGroupOutputDirPrefix = "firBox/"
+    testGroupOutputDirPrefix = "firBox/",
+    parser = FirParser.Psi,
+)
+
+open class AbstractFirLightTreeJsBoxTest : AbstractFirJsTest(
+    pathToTestDir = "${JsEnvironmentConfigurator.TEST_DATA_DIR_PATH}/box/",
+    testGroupOutputDirPrefix = "firBox/",
+    parser = FirParser.LightTree,
 )
 
 open class AbstractFirJsCodegenBoxTest : AbstractFirJsTest(
@@ -134,20 +143,29 @@ open class AbstractFirJsCodegenInlineTest : AbstractFirJsTest(
 //    }
 //}
 
-// TODO: implement separate expectations for FIR/JS to reuse testdata, disabled for now
-//open class AbstractJsFirLineNumberTest : AbstractFirJsTest(
-//    pathToTestDir = "${JsEnvironmentConfigurator.TEST_DATA_DIR_PATH}/lineNumbers/",
-//    testGroupOutputDirPrefix = "irLineNumbers/"
-//) {
-//    override fun configure(builder: TestConfigurationBuilder) {
-//        super.configure(builder)
-//        configureJsIrLineNumberTest(builder)
-//    }
-//}
+open class AbstractFirJsLineNumberTest : AbstractFirJsTest(
+    pathToTestDir = "${JsEnvironmentConfigurator.TEST_DATA_DIR_PATH}/lineNumbers/",
+    testGroupOutputDirPrefix = "firLineNumbers/"
+) {
+    override fun configure(builder: TestConfigurationBuilder) {
+        super.configure(builder)
+        with(builder) {
+            defaultDirectives {
+                +JsEnvironmentConfigurationDirectives.KJS_WITH_FULL_RUNTIME
+                +JsEnvironmentConfigurationDirectives.NO_COMMON_FILES
+                -JsEnvironmentConfigurationDirectives.GENERATE_NODE_JS_RUNNER
+                JsEnvironmentConfigurationDirectives.DONT_RUN_GENERATED_CODE.with(listOf("JS", "JS_IR", "JS_IR_ES6"))
+            }
+            configureJsArtifactsHandlersStep {
+                useHandlers(::createFirJsLineNumberHandler)
+            }
+        }
+    }
+}
 
 open class AbstractFirJsSteppingTest : AbstractFirJsTest(
     pathToTestDir = "compiler/testData/debug/stepping/",
-    testGroupOutputDirPrefix = "debug/stepping/"
+    testGroupOutputDirPrefix = "debug/firStepping/"
 ) {
     override fun TestConfigurationBuilder.configuration() {
         commonConfigurationForJsBlackBoxCodegenTest()
@@ -164,6 +182,6 @@ open class AbstractFirJsSteppingTest : AbstractFirJsTest(
 }
 
 open class AbstractFirJsCodegenWasmJsInteropTest : AbstractFirJsTest(
-    pathToTestDir = "compiler/testData/codegen/wasmJsInterop",
-    testGroupOutputDirPrefix = "codegen/wasmJsInteropJs"
+    pathToTestDir = "compiler/testData/codegen/wasmJsInterop/",
+    testGroupOutputDirPrefix = "codegen/firWasmJsInteropJs/"
 )

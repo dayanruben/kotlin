@@ -226,6 +226,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("conflictingOverloadsPrivateFunctions.kt")
+        public void testConflictingOverloadsPrivateFunctions() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/conflictingOverloadsPrivateFunctions.kt");
+        }
+
+        @Test
         @TestMetadata("Constants.kt")
         public void testConstants() throws Exception {
             runTest("compiler/testData/diagnostics/tests/Constants.kt");
@@ -4079,6 +4085,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
                 @TestMetadata("kt63841.kt")
                 public void testKt63841() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/builderInference/issues/kt63841.kt");
+                }
+
+                @Test
+                @TestMetadata("kt64222.kt")
+                public void testKt64222() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/builderInference/issues/kt64222.kt");
                 }
             }
 
@@ -16921,6 +16933,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
             }
 
             @Test
+            @TestMetadata("notFixedTopLevelLambdaParameter.kt")
+            public void testNotFixedTopLevelLambdaParameter() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/notFixedTopLevelLambdaParameter.kt");
+            }
+
+            @Test
             @TestMetadata("nothingVsParameterBound.kt")
             public void testNothingVsParameterBound() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/nothingVsParameterBound.kt");
@@ -17176,15 +17194,63 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
                 }
 
                 @Test
+                @TestMetadata("assignmentUsingIncompletePCLACall.kt")
+                public void testAssignmentUsingIncompletePCLACall() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/assignmentUsingIncompletePCLACall.kt");
+                }
+
+                @Test
+                @TestMetadata("bothOuterAndProperConstraints.kt")
+                public void testBothOuterAndProperConstraints() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/bothOuterAndProperConstraints.kt");
+                }
+
+                @Test
+                @TestMetadata("bothReceiverAndValueParameterNotFixed.kt")
+                public void testBothReceiverAndValueParameterNotFixed() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/bothReceiverAndValueParameterNotFixed.kt");
+                }
+
+                @Test
                 @TestMetadata("builderInferenceAnnotationInLambdaWithTVExpectedType.kt")
                 public void testBuilderInferenceAnnotationInLambdaWithTVExpectedType() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/builderInferenceAnnotationInLambdaWithTVExpectedType.kt");
                 }
 
                 @Test
+                @TestMetadata("builderPassedAsNamedArgument.kt")
+                public void testBuilderPassedAsNamedArgument() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/builderPassedAsNamedArgument.kt");
+                }
+
+                @Test
+                @TestMetadata("callableReferenceAsArgumentForTransaction.kt")
+                public void testCallableReferenceAsArgumentForTransaction() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/callableReferenceAsArgumentForTransaction.kt");
+                }
+
+                @Test
+                @TestMetadata("callableReferenceInsideInvokeCall.kt")
+                public void testCallableReferenceInsideInvokeCall() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/callableReferenceInsideInvokeCall.kt");
+                }
+
+                @Test
                 @TestMetadata("changingResolveIfDontUseBuilderInference.kt")
                 public void testChangingResolveIfDontUseBuilderInference() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/changingResolveIfDontUseBuilderInference.kt");
+                }
+
+                @Test
+                @TestMetadata("considerContractsOfIncompleteCalls.kt")
+                public void testConsiderContractsOfIncompleteCalls() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/considerContractsOfIncompleteCalls.kt");
+                }
+
+                @Test
+                @TestMetadata("elvisWithReturnInLastStatementOfLastLambda.kt")
+                public void testElvisWithReturnInLastStatementOfLastLambda() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/elvisWithReturnInLastStatementOfLastLambda.kt");
                 }
 
                 @Test
@@ -17206,15 +17272,63 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
                 }
 
                 @Test
+                @TestMetadata("fixingDependentVariablesForReceivers.kt")
+                public void testFixingDependentVariablesForReceivers() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/fixingDependentVariablesForReceivers.kt");
+                }
+
+                @Test
+                @TestMetadata("fixingDependentVariablesForReceiversInitial.kt")
+                public void testFixingDependentVariablesForReceiversInitial() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/fixingDependentVariablesForReceiversInitial.kt");
+                }
+
+                @Test
+                @TestMetadata("fixingTVForLambadaWithShallowDependencyToOuter.kt")
+                public void testFixingTVForLambadaWithShallowDependencyToOuter() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/fixingTVForLambadaWithShallowDependencyToOuter.kt");
+                }
+
+                @Test
+                @TestMetadata("fixingTVForLambadaWithShallowDependencyToOuter2.kt")
+                public void testFixingTVForLambadaWithShallowDependencyToOuter2() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/fixingTVForLambadaWithShallowDependencyToOuter2.kt");
+                }
+
+                @Test
+                @TestMetadata("fixingTVForLambadaWithShallowDependencyToOuter3.kt")
+                public void testFixingTVForLambadaWithShallowDependencyToOuter3() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/fixingTVForLambadaWithShallowDependencyToOuter3.kt");
+                }
+
+                @Test
                 @TestMetadata("incompleteCallInReturnArgumentsWithProperExpectType.kt")
                 public void testIncompleteCallInReturnArgumentsWithProperExpectType() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/incompleteCallInReturnArgumentsWithProperExpectType.kt");
                 }
 
                 @Test
+                @TestMetadata("innerTvFixationFromLowerConstraints.kt")
+                public void testInnerTvFixationFromLowerConstraints() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/innerTvFixationFromLowerConstraints.kt");
+                }
+
+                @Test
                 @TestMetadata("invalidateKeys.kt")
                 public void testInvalidateKeys() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/invalidateKeys.kt");
+                }
+
+                @Test
+                @TestMetadata("invokeExtensionReceiverWithNotFixedVariables.kt")
+                public void testInvokeExtensionReceiverWithNotFixedVariables() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/invokeExtensionReceiverWithNotFixedVariables.kt");
+                }
+
+                @Test
+                @TestMetadata("invokeExtensionReceiverWithNotFixedVariablesInitial.kt")
+                public void testInvokeExtensionReceiverWithNotFixedVariablesInitial() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/invokeExtensionReceiverWithNotFixedVariablesInitial.kt");
                 }
 
                 @Test
@@ -17326,6 +17440,36 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
                 }
 
                 @Test
+                @TestMetadata("lambdaParameterForBareType.kt")
+                public void testLambdaParameterForBareType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/lambdaParameterForBareType.kt");
+                }
+
+                @Test
+                @TestMetadata("lambdaParameterTypeFixation.kt")
+                public void testLambdaParameterTypeFixation() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/lambdaParameterTypeFixation.kt");
+                }
+
+                @Test
+                @TestMetadata("lastLambdaStatementWithFixedVariables.kt")
+                public void testLastLambdaStatementWithFixedVariables() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/lastLambdaStatementWithFixedVariables.kt");
+                }
+
+                @Test
+                @TestMetadata("manyArgsDifferentYields.kt")
+                public void testManyArgsDifferentYields() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/manyArgsDifferentYields.kt");
+                }
+
+                @Test
+                @TestMetadata("memberScopeOfCapturedTypeForPostponedCall.kt")
+                public void testMemberScopeOfCapturedTypeForPostponedCall() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/memberScopeOfCapturedTypeForPostponedCall.kt");
+                }
+
+                @Test
                 @TestMetadata("multiLambdaRestriction.kt")
                 public void testMultiLambdaRestriction() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/multiLambdaRestriction.kt");
@@ -17338,9 +17482,39 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
                 }
 
                 @Test
+                @TestMetadata("nestedLambdaWithLastLambdaContainingCall.kt")
+                public void testNestedLambdaWithLastLambdaContainingCall() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/nestedLambdaWithLastLambdaContainingCall.kt");
+                }
+
+                @Test
+                @TestMetadata("nestedLambdaWithNonLastYieldStatement.kt")
+                public void testNestedLambdaWithNonLastYieldStatement() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/nestedLambdaWithNonLastYieldStatement.kt");
+                }
+
+                @Test
+                @TestMetadata("nestedLambdasWithOverloadResolutionByReturnType.kt")
+                public void testNestedLambdasWithOverloadResolutionByReturnType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/nestedLambdasWithOverloadResolutionByReturnType.kt");
+                }
+
+                @Test
+                @TestMetadata("newTvFromLamdaAreNotCountedAsProper.kt")
+                public void testNewTvFromLamdaAreNotCountedAsProper() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/newTvFromLamdaAreNotCountedAsProper.kt");
+                }
+
+                @Test
                 @TestMetadata("noBuilderInferenceRestrictionReceiverInconsistency.kt")
                 public void testNoBuilderInferenceRestrictionReceiverInconsistency() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/noBuilderInferenceRestrictionReceiverInconsistency.kt");
+                }
+
+                @Test
+                @TestMetadata("overloadResolutionByLambdaReturnTypeInsideBI.kt")
+                public void testOverloadResolutionByLambdaReturnTypeInsideBI() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/overloadResolutionByLambdaReturnTypeInsideBI.kt");
                 }
 
                 @Test
@@ -17356,9 +17530,21 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
                 }
 
                 @Test
+                @TestMetadata("singleBranchConditionLastStatementInLambda.kt")
+                public void testSingleBranchConditionLastStatementInLambda() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/singleBranchConditionLastStatementInLambda.kt");
+                }
+
+                @Test
                 @TestMetadata("skipedUnresolvedInBuilderInferenceWithStubReceiverType.kt")
                 public void testSkipedUnresolvedInBuilderInferenceWithStubReceiverType() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/skipedUnresolvedInBuilderInferenceWithStubReceiverType.kt");
+                }
+
+                @Test
+                @TestMetadata("smartCastOnBuilderController.kt")
+                public void testSmartCastOnBuilderController() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/smartCastOnBuilderController.kt");
                 }
 
                 @Test
@@ -17407,6 +17593,24 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
                 @TestMetadata("specialCallsWithLambdas.kt")
                 public void testSpecialCallsWithLambdas() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/specialCallsWithLambdas.kt");
+                }
+
+                @Test
+                @TestMetadata("substitutedSyntheticPropertyUsage.kt")
+                public void testSubstitutedSyntheticPropertyUsage() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/substitutedSyntheticPropertyUsage.kt");
+                }
+
+                @Test
+                @TestMetadata("theSimplestBuilder.kt")
+                public void testTheSimplestBuilder() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/theSimplestBuilder.kt");
+                }
+
+                @Test
+                @TestMetadata("whenWithPropertyHavingSomePCLACallsWithinInitializer.kt")
+                public void testWhenWithPropertyHavingSomePCLACallsWithinInitializer() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/whenWithPropertyHavingSomePCLACallsWithinInitializer.kt");
                 }
 
                 @Test
@@ -17504,6 +17708,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
                     @TestMetadata("renderingStubTypes.kt")
                     public void testRenderingStubTypes() throws Exception {
                         runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/renderingStubTypes.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("simpleIntersection.kt")
+                    public void testSimpleIntersection() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/simpleIntersection.kt");
                     }
 
                     @Test
@@ -26095,6 +26305,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
                 @Test
                 public void testAllFilesPresentInHmpp() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform/hmpp"), Pattern.compile("^(.+)\\.(kt|kts)$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("ambiguousActuals.kt")
+                public void testAmbiguousActuals() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/ambiguousActuals.kt");
                 }
 
                 @Test
@@ -35015,6 +35231,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
             }
 
             @Test
+            @TestMetadata("smartCastWithOrFalse.kt")
+            public void testSmartCastWithOrFalse() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/smartCasts/smartCastWithOrFalse.kt");
+            }
+
+            @Test
             @TestMetadata("smartcastInFriendModule.kt")
             public void testSmartcastInFriendModule() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/smartCasts/smartcastInFriendModule.kt");
@@ -38082,6 +38304,46 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
                 public void testKotlinInheritsJavaInterface() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/testsWithJava17/sealedClasses/kotlinInheritsJavaInterface.kt");
                 }
+            }
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/diagnostics/tests/testsWithJava21")
+        @TestDataPath("$PROJECT_ROOT")
+        public class TestsWithJava21 {
+            @Test
+            public void testAllFilesPresentInTestsWithJava21() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/testsWithJava21"), Pattern.compile("^(.+)\\.(kt|kts)$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+            }
+
+            @Test
+            @TestMetadata("implementationsForSequencedCollection.kt")
+            public void testImplementationsForSequencedCollection() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/testsWithJava21/implementationsForSequencedCollection.kt");
+            }
+
+            @Test
+            @TestMetadata("newLinkedHashMapMethods.kt")
+            public void testNewLinkedHashMapMethods() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/testsWithJava21/newLinkedHashMapMethods.kt");
+            }
+
+            @Test
+            @TestMetadata("newListMethods.kt")
+            public void testNewListMethods() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethods.kt");
+            }
+
+            @Test
+            @TestMetadata("newListMethodsImmutable.kt")
+            public void testNewListMethodsImmutable() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsImmutable.kt");
+            }
+
+            @Test
+            @TestMetadata("noFalsePositiveAbstractToArray.kt")
+            public void testNoFalsePositiveAbstractToArray() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/testsWithJava21/noFalsePositiveAbstractToArray.kt");
             }
         }
 
@@ -43535,6 +43797,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
                 @TestMetadata("kt38667.kt")
                 public void testKt38667() throws Exception {
                     runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/kt38667.kt");
+                }
+
+                @Test
+                @TestMetadata("kt38667Simplified.kt")
+                public void testKt38667Simplified() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/kt38667Simplified.kt");
                 }
 
                 @Test
