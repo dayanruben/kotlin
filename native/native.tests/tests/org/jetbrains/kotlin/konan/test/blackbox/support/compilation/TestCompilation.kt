@@ -66,6 +66,9 @@ internal abstract class BasicCompilation<A : TestCompilationArtifact>(
         add(
             "-Xverify-ir=error"
         )
+        // We use dev distribution for tests as it provides a full set of testing utilities,
+        // which might not be available in user distribution.
+        add("-Xllvm-variant=dev")
         addFlattened(binaryOptions.entries) { (name, value) -> listOf("-Xbinary=$name=$value") }
     }
 
@@ -271,6 +274,45 @@ internal class ObjCFrameworkCompilation(
     }
 }
 
+internal class BinaryLibraryCompilation(
+    settings: Settings,
+    freeCompilerArgs: TestCompilerArgs,
+    sourceModules: Collection<TestModule>,
+    dependencies: Iterable<TestCompilationDependency<*>>,
+    expectedArtifact: BinaryLibrary
+) : SourceBasedCompilation<BinaryLibrary>(
+    targets = settings.get(),
+    home = settings.get(),
+    classLoader = settings.get(),
+    optimizationMode = settings.get(),
+    compilerOutputInterceptor = settings.get(),
+    threadStateChecker = settings.get(),
+    sanitizer = settings.get(),
+    gcType = settings.get(),
+    gcScheduler = settings.get(),
+    allocator = settings.get(),
+    pipelineType = settings.getStageDependentPipelineType(),
+    freeCompilerArgs = freeCompilerArgs,
+    compilerPlugins = settings.get(),
+    sourceModules = sourceModules,
+    dependencies = CategorizedDependencies(dependencies),
+    expectedArtifact = expectedArtifact
+) {
+    override val binaryOptions get() = BinaryOptions.RuntimeAssertionsMode.defaultForTesting(optimizationMode, freeCompilerArgs.assertionsMode)
+
+    override fun applySpecificArgs(argsBuilder: ArgsBuilder) = with(argsBuilder) {
+        val libraryKind = when (expectedArtifact.kind) {
+            BinaryLibrary.Kind.STATIC -> "static"
+            BinaryLibrary.Kind.DYNAMIC -> "dynamic"
+        }
+        add(
+            "-produce", libraryKind,
+            "-output", expectedArtifact.libraryFile.absolutePath
+        )
+        super.applySpecificArgs(argsBuilder)
+    }
+}
+
 internal class GivenLibraryCompilation(givenArtifact: KLIB) : TestCompilation<KLIB>() {
     override val result = TestCompilationResult.Success(givenArtifact, LoggedData.NoopCompilerCall(givenArtifact.klibFile))
 }
@@ -437,7 +479,6 @@ internal class ExecutableCompilation(
 
         internal fun ArgsBuilder.applyFileCheckArgs(fileCheckStage: String?, fileCheckDump: File?) =
             fileCheckStage?.let {
-                add("-Xllvm-variant=dev")  // FileCheck utility is provided in `LLVM dev`, not `LLVM user`
                 add("-Xsave-llvm-ir-after=$it")
                 add("-Xsave-llvm-ir-directory=${fileCheckDump!!.parent}")
             }

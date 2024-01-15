@@ -18,8 +18,9 @@ import org.jetbrains.kotlin.konan.test.blackbox.support.runner.TestRunChecks
 import org.jetbrains.kotlin.konan.test.blackbox.support.settings.LLDB
 import org.jetbrains.kotlin.konan.test.blackbox.support.settings.PipelineType
 import org.jetbrains.kotlin.konan.test.blackbox.support.settings.Timeouts
-import org.jetbrains.kotlin.konan.test.blackbox.support.settings.configurables
+import org.jetbrains.kotlin.konan.test.blackbox.support.util.ClangDistribution
 import org.jetbrains.kotlin.konan.test.blackbox.support.util.LLDBSessionSpec
+import org.jetbrains.kotlin.konan.test.blackbox.support.util.compileWithClang
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -222,27 +223,19 @@ class ObjCToKotlinSteppingInLLDBTest : AbstractNativeSimpleTest() {
         val clangExecutableName = "clangMain"
         val executableFile = File(buildDir, clangExecutableName)
 
-        // FIXME: absoluteTargetToolchain might not work correctly with KONAN_USE_INTERNAL_SERVER because
-        // :kotlin-native:dependencies:update is not a dependency of :native:native.tests:test where this test runs
-        val process = ProcessBuilder(
-            "${testRunSettings.configurables.absoluteTargetToolchain}/bin/clang",
-            clangFile.absolutePath,
-            "-isysroot", testRunSettings.configurables.absoluteTargetSysRoot,
-            "-target", testRunSettings.configurables.targetTriple.toString(),
-            "-g", "-fmodules",
-            "-F", buildDir.absolutePath,
-            "-o", executableFile.absolutePath
-        ).redirectErrorStream(true).start()
-        val clangOutput = process.inputStream.readBytes()
-
-        check(
-            process.waitFor() == 0
-        ) { clangOutput.decodeToString() }
+        val clangResult = compileWithClang(
+            // This code was initially written against clang from toolchain.
+            // Changing it to another one probably won't hurt, but it was not tested.
+            clangDistribution = ClangDistribution.Toolchain,
+            sourceFiles = listOf(clangFile),
+            outputFile = executableFile,
+            frameworkDirectories = listOf(buildDir),
+        ).assertSuccess()
 
         // 4. Generate the test case
         val testExecutable = TestExecutable(
-            TestCompilationArtifact.Executable(executableFile),
-            loggedCompilationToolCall = LoggedData.NoopCompilerCall(buildDir),
+            clangResult.resultingArtifact,
+            loggedCompilationToolCall = clangResult.loggedData,
             testNames = listOf(TestName(testName)),
         )
         val spec = LLDBSessionSpec.parse(lldbSpec)

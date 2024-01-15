@@ -39944,6 +39944,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                 }
 
                 @Test
+                @TestMetadata("Experimentality.kt")
+                public void testExperimentality() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/Experimentality.kt");
+                }
+
+                @Test
                 @TestMetadata("IncorrectApplicability.kt")
                 public void testIncorrectApplicability() throws Exception {
                     runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/IncorrectApplicability.kt");
@@ -39971,6 +39977,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                 @TestMetadata("InnerClasses.kt")
                 public void testInnerClasses() throws Exception {
                     runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/InnerClasses.kt");
+                }
+
+                @Test
+                @TestMetadata("JavaKotlinInterop.kt")
+                public void testJavaKotlinInterop() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/JavaKotlinInterop.kt");
                 }
 
                 @Test

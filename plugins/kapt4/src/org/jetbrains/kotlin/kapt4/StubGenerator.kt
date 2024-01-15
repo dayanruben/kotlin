@@ -392,7 +392,7 @@ private class StubGenerator(
                 print(method.name, "(")
                 method.parameterList.parameters.forEachIndexed{ index, parameter ->
                     if (index > 0) print(", ")
-                    printTypeSignature(parameter.type)
+                    printTypeSignature(parameter.type, false)
                 }
                 print(")")
             }
@@ -424,20 +424,17 @@ private class StubGenerator(
             private fun elementMapping(lightClass: PsiClass): Multimap<KtElement, PsiElement> =
                 HashMultimap.create<KtElement, PsiElement>().apply {
                     (lightClass.methods.asSequence() + lightClass.fields.asSequence() + lightClass.constructors.asSequence()).forEach {
-                        put((it as KtLightElement<*, *>).kotlinOrigin, it)
+                        (it as KtLightElement<*, *>).kotlinOrigin?.let { origin -> put(origin, it) }
                     }
                 }
 
             private fun Printer.printType(type: PsiType) {
                 recordErrorTypes(type)
-                type.annotations.forEach {
-                    printAnnotation(it, false)
-                }
-                printTypeSignature(type)
+                printTypeSignature(type, true)
             }
 
-            private fun Printer.printTypeSignature(type: PsiType) {
-                printWithNoIndent((if (type is PsiClassType && isErroneous(type)) type.rawType() else type).canonicalText.replace('$', '.'))
+            private fun Printer.printTypeSignature(type: PsiType, annotated: Boolean) {
+                printWithNoIndent((if (type is PsiClassType && isErroneous(type)) type.rawType() else type).getCanonicalText(annotated).replace('$', '.'))
             }
 
             private fun Printer.printTypeParams(typeParameters: Array<PsiTypeParameter>) {

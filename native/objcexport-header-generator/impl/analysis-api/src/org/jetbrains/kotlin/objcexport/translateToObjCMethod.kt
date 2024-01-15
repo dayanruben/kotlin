@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.backend.konan.objcexport.*
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.objcexport.Predefined.anyMethodSelectors
-import org.jetbrains.kotlin.objcexport.analysisApiUtils.getMethodBridge
+import org.jetbrains.kotlin.objcexport.analysisApiUtils.getFunctionMethodBridge
 import org.jetbrains.kotlin.objcexport.analysisApiUtils.isVisibleInObjC
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -47,8 +47,7 @@ context(KtAnalysisSession, KtObjCExportSession)
 internal fun KtFunctionLikeSymbol.buildObjCMethod(
     unavailable: Boolean = false,
 ): ObjCMethod {
-    val bridge = getMethodBridge()
-    val origin: ObjCExportStubOrigin? = null
+    val bridge = getFunctionMethodBridge()
     val returnType: ObjCType = mapReturnType(bridge.returnBridge)
     val parameters = translateToObjCParameters(bridge)
     val selector = getSelector(bridge)
@@ -82,7 +81,7 @@ internal fun KtFunctionLikeSymbol.buildObjCMethod(
 
     return ObjCMethod(
         comment = comment,
-        origin = origin,
+        origin = getObjCExportStubOrigin(),
         isInstanceMethod = bridge.isInstance || isConstructor,
         returnType = returnType,
         selectors = selectors,
