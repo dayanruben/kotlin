@@ -11395,6 +11395,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
             }
 
             @Test
+            @TestMetadata("javaDeprecatedOnStaticMethod.kt")
+            public void testJavaDeprecatedOnStaticMethod() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/deprecated/javaDeprecatedOnStaticMethod.kt");
+            }
+
+            @Test
             @TestMetadata("javaDocDeprecated.kt")
             public void testJavaDocDeprecated() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/deprecated/javaDocDeprecated.kt");
@@ -23949,6 +23955,30 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
                 @TestMetadata("arrayInAnnotationArgumentType.kt")
                 public void testArrayInAnnotationArgumentType() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/modifiers/const/arrayInAnnotationArgumentType.kt");
+                }
+
+                @Test
+                @TestMetadata("binaryLogic.kt")
+                public void testBinaryLogic() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/modifiers/const/binaryLogic.kt");
+                }
+
+                @Test
+                @TestMetadata("compare.kt")
+                public void testCompare() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/modifiers/const/compare.kt");
+                }
+
+                @Test
+                @TestMetadata("complexBooleanInStringConcat_after.kt")
+                public void testComplexBooleanInStringConcat_after() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/modifiers/const/complexBooleanInStringConcat_after.kt");
+                }
+
+                @Test
+                @TestMetadata("complexBooleanInStringConcat_before.kt")
+                public void testComplexBooleanInStringConcat_before() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/modifiers/const/complexBooleanInStringConcat_before.kt");
                 }
 
                 @Test
@@ -42269,6 +42299,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
                 @TestMetadata("JavaKotlinInterop.kt")
                 public void testJavaKotlinInterop() throws Exception {
                     runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/JavaKotlinInterop.kt");
+                }
+
+                @Test
+                @TestMetadata("Module.kt")
+                public void testModule() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/Module.kt");
                 }
 
                 @Test

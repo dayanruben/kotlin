@@ -6302,6 +6302,16 @@ public class FirLightTreeBlackBoxCodegenWithIrFakeOverrideGeneratorTestGenerated
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/cinterop/packages"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
             }
         }
+
+        @Nested
+        @TestMetadata("compiler/testData/codegen/box/cinterop/threadStates")
+        @TestDataPath("$PROJECT_ROOT")
+        public class ThreadStates {
+            @Test
+            public void testAllFilesPresentInThreadStates() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/cinterop/threadStates"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            }
+        }
     }
 
     @Nested
@@ -35001,6 +35011,12 @@ public class FirLightTreeBlackBoxCodegenWithIrFakeOverrideGeneratorTestGenerated
             }
 
             @Test
+            @TestMetadata("hashSetSize.kt")
+            public void testHashSetSize() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/k2/hashSetSize.kt");
+            }
+
+            @Test
             @TestMetadata("internalOverride.kt")
             public void testInternalOverride() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/k2/internalOverride.kt");
@@ -35034,6 +35050,12 @@ public class FirLightTreeBlackBoxCodegenWithIrFakeOverrideGeneratorTestGenerated
             @TestMetadata("staticjavaFieldInCommonCode.kt")
             public void testStaticjavaFieldInCommonCode() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/k2/staticjavaFieldInCommonCode.kt");
+            }
+
+            @Test
+            @TestMetadata("synteticProperty.kt")
+            public void testSynteticProperty() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/k2/synteticProperty.kt");
             }
 
             @Nested

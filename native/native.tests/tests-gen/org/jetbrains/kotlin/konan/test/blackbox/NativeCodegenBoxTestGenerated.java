@@ -4735,6 +4735,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             }
 
             @Test
+            @TestMetadata("kt57640.kt")
+            public void testKt57640() throws Exception {
+                runTest("compiler/testData/codegen/box/cinterop/kt57640.kt");
+            }
+
+            @Test
             @TestMetadata("kt63048.kt")
             public void testKt63048() throws Exception {
                 runTest("compiler/testData/codegen/box/cinterop/kt63048.kt");
@@ -4814,6 +4820,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 @TestMetadata("mangling_keywords2.kt")
                 public void testMangling_keywords2() throws Exception {
                     runTest("compiler/testData/codegen/box/cinterop/basics/mangling_keywords2.kt");
+                }
+
+                @Test
+                @TestMetadata("statbuf.kt")
+                public void testStatbuf() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/basics/statbuf.kt");
                 }
 
                 @Test
@@ -4962,6 +4974,77 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 @TestMetadata("root.kt")
                 public void testRoot() throws Exception {
                     runTest("compiler/testData/codegen/box/cinterop/packages/root.kt");
+                }
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/codegen/box/cinterop/threadStates")
+            @TestDataPath("$PROJECT_ROOT")
+            @UseExtTestCaseGroupProvider()
+            public class ThreadStates {
+                @Test
+                public void testAllFilesPresentInThreadStates() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/cinterop/threadStates"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+                }
+
+                @Test
+                @TestMetadata("callback.kt")
+                public void testCallback() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/threadStates/callback.kt");
+                }
+
+                @Test
+                @TestMetadata("callbackOnSeparateThread.kt")
+                public void testCallbackOnSeparateThread() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/threadStates/callbackOnSeparateThread.kt");
+                }
+
+                @Test
+                @TestMetadata("callbackWithException.kt")
+                public void testCallbackWithException() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/threadStates/callbackWithException.kt");
+                }
+
+                @Test
+                @TestMetadata("callbackWithFinally.kt")
+                public void testCallbackWithFinally() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/threadStates/callbackWithFinally.kt");
+                }
+
+                @Test
+                @TestMetadata("callbackWithFinallyNoCatch.kt")
+                public void testCallbackWithFinallyNoCatch() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/threadStates/callbackWithFinallyNoCatch.kt");
+                }
+
+                @Test
+                @TestMetadata("directStaticCFunctionCall.kt")
+                public void testDirectStaticCFunctionCall() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/threadStates/directStaticCFunctionCall.kt");
+                }
+
+                @Test
+                @TestMetadata("nativeCall.kt")
+                public void testNativeCall() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/threadStates/nativeCall.kt");
+                }
+
+                @Test
+                @TestMetadata("nestedCallbackWithException.kt")
+                public void testNestedCallbackWithException() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/threadStates/nestedCallbackWithException.kt");
+                }
+
+                @Test
+                @TestMetadata("nestedCallbackWithFinally.kt")
+                public void testNestedCallbackWithFinally() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/threadStates/nestedCallbackWithFinally.kt");
+                }
+
+                @Test
+                @TestMetadata("nestedCalls.kt")
+                public void testNestedCalls() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/threadStates/nestedCalls.kt");
                 }
             }
         }

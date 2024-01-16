@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.fir.references.FirSuperReference
 import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.providers.firProvider
-import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.scopes.*
 import org.jetbrains.kotlin.fir.scopes.impl.declaredMemberScope
 import org.jetbrains.kotlin.fir.scopes.impl.multipleDelegatesWithTheSameSignature
@@ -173,22 +172,7 @@ fun FirDeclaration.getContainingClassSymbol(session: FirSession) = symbol.getCon
 
 fun FirClassLikeSymbol<*>.outerClassSymbol(context: CheckerContext): FirClassLikeSymbol<*>? {
     if (this !is FirClassSymbol<*>) return null
-    return getContainingDeclarationSymbol(context.session)
-}
-
-@OptIn(SymbolInternals::class)
-fun FirClassSymbol<*>.getContainingDeclarationSymbol(session: FirSession): FirClassLikeSymbol<*>? {
-    if (isLocal) {
-        return (this as FirRegularClassSymbol).fir.containingClassForLocalAttr?.toFirRegularClassSymbol(session)
-    } else {
-        val parentId = classId.relativeClassName.parent()
-        if (!parentId.isRoot) {
-            val containingDeclarationId = ClassId(classId.packageFqName, parentId, isLocal = false)
-            return session.symbolProvider.getClassLikeSymbolByClassId(containingDeclarationId)
-        }
-    }
-
-    return null
+    return getContainingDeclaration(context.session)
 }
 
 /**
@@ -361,13 +345,11 @@ fun FirCallableSymbol<*>.getImplementationStatus(
         var hasImplementationVar = false
 
         for (intersection in symbol.intersections) {
-            @OptIn(SymbolInternals::class)
-            val fir = intersection.fir
-            val unwrappedFir = fir.unwrapFakeOverrides()
-            val isVar = unwrappedFir is FirProperty && unwrappedFir.isVar
-            val isFromClass = unwrappedFir.getContainingClassSymbol(sessionHolder.session)?.classKind == ClassKind.CLASS
+            val unwrapped = intersection.unwrapFakeOverrides()
+            val isVar = unwrapped is FirPropertySymbol && unwrapped.isVar
+            val isFromClass = unwrapped.getContainingClassSymbol(sessionHolder.session)?.classKind == ClassKind.CLASS
 
-            if (fir.isAbstract) {
+            if (intersection.isAbstract) {
                 if (isFromClass) {
                     hasAbstractFromClass = true
                 }
@@ -375,7 +357,7 @@ fun FirCallableSymbol<*>.getImplementationStatus(
                     hasAbstractVar = true
                 }
             } else {
-                if (fir.origin == FirDeclarationOrigin.Delegated) {
+                if (intersection.origin == FirDeclarationOrigin.Delegated) {
                     hasInterfaceDelegation = true
                 }
                 if (isFromClass) {
@@ -734,7 +716,7 @@ fun ConeKotlinType.getInlineClassUnderlyingType(session: FirSession): ConeKotlin
     return toRegularClassSymbol(session)!!.primaryConstructorSymbol(session)!!.valueParameterSymbols[0].resolvedReturnTypeRef.coneType
 }
 
-fun FirCallableDeclaration.getOverriddenSymbols(context: CheckerContext): List<FirCallableSymbol<out FirCallableDeclaration>> {
+fun FirCallableDeclaration.getDirectOverriddenSymbols(context: CheckerContext): List<FirCallableSymbol<out FirCallableDeclaration>> {
     if (!this.isOverride) return emptyList()
     val classSymbol = this.containingClassLookupTag()?.toSymbol(context.session) as? FirClassSymbol<*> ?: return emptyList()
     val scope = classSymbol.unsubstitutedScope(context)

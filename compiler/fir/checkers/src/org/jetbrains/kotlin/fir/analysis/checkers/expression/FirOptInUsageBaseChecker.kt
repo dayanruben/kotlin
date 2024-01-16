@@ -150,9 +150,8 @@ object FirOptInUsageBaseChecker {
         fromSetter = false, dispatchReceiverType = null, fromSupertype = true
     )
 
-    @OptIn(SymbolInternals::class)
     fun FirClassLikeSymbol<*>.isExperimentalMarker(session: FirSession) =
-        this is FirRegularClassSymbol && fir.getAnnotationByClassId(OptInNames.REQUIRES_OPT_IN_CLASS_ID, session) != null
+        this is FirRegularClassSymbol && getAnnotationByClassId(OptInNames.REQUIRES_OPT_IN_CLASS_ID, session) != null
 
     @OptIn(SymbolInternals::class)
     private fun FirBasedSymbol<*>.loadExperimentalities(
@@ -176,6 +175,7 @@ object FirOptInUsageBaseChecker {
             is FirAnonymousInitializer, is FirDanglingModifierList, is FirFile, is FirTypeParameter, is FirScript, is FirCodeFragment -> {}
         }
 
+        lazyResolveToPhase(FirResolvePhase.ANNOTATION_ARGUMENTS)
         fir.loadExperimentalitiesFromAnnotationTo(session, result, fromSupertype)
 
         if (fir.getAnnotationByClassId(OptInNames.WAS_EXPERIMENTAL_CLASS_ID, session) != null) {
@@ -284,7 +284,7 @@ object FirOptInUsageBaseChecker {
             else -> null
         }
 
-        val severity = Experimentality.Severity.values().firstOrNull { it.name == levelName } ?: Experimentality.DEFAULT_SEVERITY
+        val severity = Experimentality.Severity.entries.firstOrNull { it.name == levelName } ?: Experimentality.DEFAULT_SEVERITY
         val message = (experimental.findArgumentByName(MESSAGE) as? FirConstExpression<*>)?.value as? String
         return Experimentality(symbol.classId, severity, message, annotatedOwnerClassName)
     }

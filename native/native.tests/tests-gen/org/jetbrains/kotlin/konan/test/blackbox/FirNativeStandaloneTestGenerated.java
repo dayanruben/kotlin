@@ -49,9 +49,27 @@ public class FirNativeStandaloneTestGenerated extends AbstractNativeBlackBoxTest
         }
 
         @Test
+        @TestMetadata("fprintf.kt")
+        public void testFprintf() throws Exception {
+            runTest("native/native.tests/testData/standalone/console/fprintf.kt");
+        }
+
+        @Test
+        @TestMetadata("printf.kt")
+        public void testPrintf() throws Exception {
+            runTest("native/native.tests/testData/standalone/console/printf.kt");
+        }
+
+        @Test
         @TestMetadata("println.kt")
         public void testPrintln() throws Exception {
             runTest("native/native.tests/testData/standalone/console/println.kt");
+        }
+
+        @Test
+        @TestMetadata("puts.kt")
+        public void testPuts() throws Exception {
+            runTest("native/native.tests/testData/standalone/console/puts.kt");
         }
 
         @Test
@@ -187,6 +205,12 @@ public class FirNativeStandaloneTestGenerated extends AbstractNativeBlackBoxTest
         }
 
         @Test
+        @TestMetadata("unhandledException.kt")
+        public void testUnhandledException() throws Exception {
+            runTest("native/native.tests/testData/standalone/termination/unhandledException.kt");
+        }
+
+        @Test
         @TestMetadata("unhandledExceptionHookClosure.kt")
         public void testUnhandledExceptionHookClosure() throws Exception {
             runTest("native/native.tests/testData/standalone/termination/unhandledExceptionHookClosure.kt");
@@ -226,6 +250,12 @@ public class FirNativeStandaloneTestGenerated extends AbstractNativeBlackBoxTest
         @TestMetadata("unhandledExceptionHookWithProcess.kt")
         public void testUnhandledExceptionHookWithProcess() throws Exception {
             runTest("native/native.tests/testData/standalone/termination/unhandledExceptionHookWithProcess.kt");
+        }
+
+        @Test
+        @TestMetadata("unhandledExceptionInForeignThread.kt")
+        public void testUnhandledExceptionInForeignThread() throws Exception {
+            runTest("native/native.tests/testData/standalone/termination/unhandledExceptionInForeignThread.kt");
         }
     }
 }
