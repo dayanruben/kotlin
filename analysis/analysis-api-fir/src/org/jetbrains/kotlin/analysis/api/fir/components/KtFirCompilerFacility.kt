@@ -267,7 +267,6 @@ internal class KtFirCompilerFacility(
             fir2IrExtensions,
             fir2IrConfiguration,
             irGeneratorExtensions,
-            signatureComposerForJvmFir2Ir(fir2IrConfiguration.linkViaSignatures),
             JvmIrMangler,
             FirJvmKotlinMangler(),
             FirJvmVisibilityConverter,

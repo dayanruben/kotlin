@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.fir.declarations.utils.modality
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.diagnostics.ConeRecursiveTypeParameterDuringErasureError
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
+import org.jetbrains.kotlin.fir.resolve.substitution.substitute
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.resolvedTypeFromPrototype
@@ -424,13 +425,39 @@ fun ConeTypeContext.captureArguments(type: ConeKotlinType, status: CaptureStatus
         }
 
         require(newArgument is ConeCapturedType)
-        @Suppress("UNCHECKED_CAST")
-        newArgument.constructor.supertypes = upperBounds as List<ConeKotlinType>
+
+        newArgument.constructor.supertypes = if (status == CaptureStatus.FROM_EXPRESSION) {
+            // By intersecting the bounds and the projection type, we eliminate "redundant" super types.
+            // Redundant is defined by the implementation of the type intersector,
+            // e.g., at the moment of writing the intersection of Foo<String!> and Foo<String> was Foo<String>.
+            // Note, it's not just an optimization, but actually influences behavior because the nullability can change like in the
+            // example above.
+            // We only run it for status == CaptureStatus.FROM_EXPRESSION to prevent infinite loops with recursive types because
+            // during intersection AbstractTypeChecker is called which in turn can capture super types with status
+            // CaptureStatus.FOR_SUBTYPING.
+            val intersectedUpperBounds = intersectTypes(upperBounds)
+            if (intersectedUpperBounds is ConeIntersectionType) {
+                intersectedUpperBounds.intersectedTypes.toList()
+            } else {
+                listOf(intersectedUpperBounds)
+            }
+        } else {
+            @Suppress("UNCHECKED_CAST")
+            upperBounds as List<ConeKotlinType>
+        }
     }
     return newArguments
 }
 
 internal fun ConeTypeContext.captureFromExpressionInternal(type: ConeKotlinType): ConeKotlinType? {
+    if (type is ConeCapturedType) {
+        return type.substitute { captureFromExpressionInternal(it) }
+    }
+
+    if (type is ConeDefinitelyNotNullType) {
+        return captureFromExpressionInternal(type.original)?.makeConeTypeDefinitelyNotNullOrNotNull(this)
+    }
+
     if (type !is ConeIntersectionType && type !is ConeFlexibleType) {
         return captureFromArgumentsInternal(type, CaptureStatus.FROM_EXPRESSION)
     }
@@ -794,6 +821,7 @@ fun ConeKotlinType.canBeNull(session: FirSession): Boolean {
             it.coneType.fullyExpandedType(session).canBeNull(session)
         }
         is ConeIntersectionType -> intersectedTypes.all { it.canBeNull(session) }
+        is ConeCapturedType -> constructor.supertypes?.all { it.canBeNull(session) } == true
         else -> fullyExpandedType(session).isNullable
     }
 }

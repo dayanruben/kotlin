@@ -166,6 +166,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("capturedTypesSubtyping.kt")
+        public void testCapturedTypesSubtyping() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/capturedTypesSubtyping.kt");
+        }
+
+        @Test
         @TestMetadata("Casts.kt")
         public void testCasts() throws Exception {
             runTest("compiler/testData/diagnostics/tests/Casts.kt");
@@ -1393,6 +1399,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("tailRecursionComplex.kt")
         public void testTailRecursionComplex() throws Exception {
             runTest("compiler/testData/diagnostics/tests/tailRecursionComplex.kt");
+        }
+
+        @Test
+        @TestMetadata("tailrec.kt")
+        public void testTailrec() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/tailrec.kt");
         }
 
         @Test
@@ -3564,6 +3576,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("MustBeInitializedEffectivelyFinalOn.kt")
             public void testMustBeInitializedEffectivelyFinalOn() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/backingField/MustBeInitializedEffectivelyFinalOn.kt");
+            }
+
+            @Test
+            @TestMetadata("OpenPrivateValDeferredInit.kt")
+            public void testOpenPrivateValDeferredInit() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/backingField/OpenPrivateValDeferredInit.kt");
             }
 
             @Test
@@ -13552,6 +13570,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("lambdaReceiverFromContextWithSameFunctions.kt")
+                public void testLambdaReceiverFromContextWithSameFunctions() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/lambdaReceiverFromContextWithSameFunctions.kt");
+                }
+
+                @Test
                 @TestMetadata("lazy.kt")
                 public void testLazy() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/lazy.kt");
@@ -16127,6 +16151,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("incompleteConstructorCall.kt")
+            public void testIncompleteConstructorCall() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/incompleteCode/incompleteConstructorCall.kt");
+            }
+
+            @Test
             @TestMetadata("incompleteEquals.kt")
             public void testIncompleteEquals() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/incompleteCode/incompleteEquals.kt");
@@ -17870,6 +17900,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("capturedForIncorporationEscapes.kt")
+                public void testCapturedForIncorporationEscapes() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/capturedForIncorporationEscapes.kt");
+                }
+
+                @Test
+                @TestMetadata("capturedInTypeInference.kt")
+                public void testCapturedInTypeInference() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/capturedInTypeInference.kt");
+                }
+
+                @Test
                 @TestMetadata("capturedType.kt")
                 public void testCapturedType() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/capturedType.kt");
@@ -17909,6 +17951,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("capturingFromArgumentOfFlexibleType.kt")
                 public void testCapturingFromArgumentOfFlexibleType() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/capturingFromArgumentOfFlexibleType.kt");
+                }
+
+                @Test
+                @TestMetadata("capturingOfDnn.kt")
+                public void testCapturingOfDnn() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/capturingOfDnn.kt");
                 }
 
                 @Test
@@ -18023,6 +18071,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("propagateNullailityOnSupertypesWhenCaptureTypes.kt")
                 public void testPropagateNullailityOnSupertypesWhenCaptureTypes() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/propagateNullailityOnSupertypesWhenCaptureTypes.kt");
+                }
+
+                @Test
+                @TestMetadata("selfTypeTypeHole.kt")
+                public void testSelfTypeTypeHole() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/selfTypeTypeHole.kt");
                 }
 
                 @Test
@@ -26516,6 +26570,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("propertyAgainstFakeOverrideOfJavaField.kt")
+                public void testPropertyAgainstFakeOverrideOfJavaField() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/java/propertyAgainstFakeOverrideOfJavaField.kt");
+                }
+
+                @Test
                 @TestMetadata("propertyAgainstJavaMethod.kt")
                 public void testPropertyAgainstJavaMethod() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/java/propertyAgainstJavaMethod.kt");
@@ -33625,6 +33685,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("functionContractScript.kts")
+            public void testFunctionContractScript() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/script/functionContractScript.kts");
+            }
+
+            @Test
             @TestMetadata("imports.kts")
             public void testImports() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/script/imports.kts");
@@ -33734,6 +33800,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("DoubleInner.kt")
             public void testDoubleInner() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/sealed/DoubleInner.kt");
+            }
+
+            @Test
+            @TestMetadata("ExhaustiveOnCaptured.kt")
+            public void testExhaustiveOnCaptured() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/sealed/ExhaustiveOnCaptured.kt");
             }
 
             @Test

@@ -32,6 +32,13 @@ abstract class ConeAttribute<out T : ConeAttribute<T>> : AnnotationMarker {
     abstract override fun toString(): String
     open fun renderForReadability(): String? = null
 
+    /**
+     * Signals that this attribute properly implements the [equals] and [hashCode] protocol.
+     *
+     * If it returns `true`, attributes will be compared using structural equality in [ConeAttributes.definitelyDifferFrom].
+     */
+    open val implementsEquality: Boolean get() = false
+
     abstract val key: KClass<out T>
 
     /**
@@ -56,7 +63,11 @@ inline fun <T : ConeAttributeWithConeType<T>> ConeAttributeWithConeType<T>.trans
 ): ConeAttributeWithConeType<T>? {
     val transformedType = transform(coneType) ?: return null
     if (transformedType == coneType) return this
-    return copyWith(transformedType)
+
+    // If the type contains the attribute itself, use the nested type from the attribute to prevent exponential growth.
+    // As an example, consider a substitution {T -> Attr(Foo) Bar} applied to a type `Attr(T) T`.
+    // If we don't flatten the attribute chain, we would get `Attr(Attr(Foo) Bar) Bar`.
+    return copyWith(transformedType.attributes[key]?.coneType ?: transformedType)
 }
 
 typealias ConeAttributeKey = KClass<out ConeAttribute<*>>
@@ -113,8 +124,13 @@ class ConeAttributes private constructor(attributes: List<ConeAttribute<*>>) : A
     }
 
     operator fun contains(attributeKey: KClass<out ConeAttribute<*>>): Boolean {
+        return get(attributeKey) != null
+    }
+
+    operator fun <T : ConeAttribute<*>> get(attributeKey: KClass<T>) : T? {
         val index = getId(attributeKey)
-        return arrayMap[index] != null
+        @Suppress("UNCHECKED_CAST")
+        return arrayMap[index] as T?
     }
 
     operator fun plus(attribute: ConeAttribute<*>): ConeAttributes {
@@ -150,6 +166,32 @@ class ConeAttributes private constructor(attributes: List<ConeAttribute<*>>) : A
             attributes.addIfNotNull(res)
         }
         return create(attributes)
+    }
+
+    /**
+     * Returns `true` if this instance is definitely not equal to the [other] instance.
+     * This is `true` when one instance contains an attribute **type** that the other doesn't contain or both instances contain
+     * an attribute of a type where [ConeAttribute.implementsEquality]` == true` and the attribute's [equals] method returns `false`.
+     *
+     * A return value of `false` doesn't guarantee that the instances are equal because [ConeAttribute.implementsEquality] is optional,
+     * i.e., not all attributes can be compared structurally.
+     *
+     * @see org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl.equals
+     */
+    infix fun definitelyDifferFrom(other: ConeAttributes): Boolean {
+        if (this === other) return false
+        if (this.isEmpty() && other.isEmpty()) return false
+
+        for (index in indices) {
+            val a = arrayMap[index]
+            val b = other.arrayMap[index]
+
+            if (a == null && b == null) continue
+            if ((a == null) != (b == null)) return true
+            if (a!!.implementsEquality && a != b) return true
+        }
+
+        return false
     }
 
     /**

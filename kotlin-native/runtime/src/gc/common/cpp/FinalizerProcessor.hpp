@@ -17,10 +17,10 @@
 #include "ScopedThread.hpp"
 #include "Utils.hpp"
 #include "Logging.hpp"
+#include "objc_support/AutoreleasePool.hpp"
+#include "objc_support/RunLoopSource.hpp"
 
 #if KONAN_OBJC_INTEROP
-#include "ObjCMMAPI.h"
-#include <CoreFoundation/CoreFoundation.h>
 #include <CoreFoundation/CFRunLoop.h>
 #endif
 
@@ -100,9 +100,7 @@ private:
 
     void processSingle(FinalizerQueue&& queue, int64_t currentEpoch) noexcept {
         if (!FinalizerQueueTraits::isEmpty(queue)) {
-#if KONAN_OBJC_INTEROP
-            konan::AutoreleasePool autoreleasePool;
-#endif
+            objc_support::AutoreleasePool autoreleasePool;
             ThreadStateGuard guard(ThreadState::kRunnable);
             FinalizerQueueTraits::process(std::move(queue));
         }
@@ -121,19 +119,7 @@ private:
 #if KONAN_OBJC_INTEROP
     class ProcessingLoopWithCFImpl final : public ProcessingLoop {
     public:
-        explicit ProcessingLoopWithCFImpl(FinalizerProcessor& owner) :
-                owner_(owner),
-                sourceContext_{
-                        0, this, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-                        [](void* info) {
-                            auto& self = *static_cast<ProcessingLoopWithCFImpl*>(info);
-                            self.handleNewFinalizers();
-                        }},
-                runLoopSource_(CFRunLoopSourceCreate(nullptr, 0, &sourceContext_)) {}
-
-        ~ProcessingLoopWithCFImpl() override {
-            CFRelease(runLoopSource_);
-        }
+        explicit ProcessingLoopWithCFImpl(FinalizerProcessor& owner) : owner_(owner), runLoopSource_([this]() noexcept { handleNewFinalizers(); }) {}
 
         void notify() override {
             // wait until runLoop_ ptr is published
@@ -141,7 +127,7 @@ private:
                 std::this_thread::yield();
             }
             // notify
-            CFRunLoopSourceSignal(runLoopSource_);
+            runLoopSource_.signal();
             CFRunLoopWakeUp(runLoop_);
         }
 
@@ -150,13 +136,11 @@ private:
         }
 
         void body() override {
-            konan::AutoreleasePool autoreleasePool;
-            auto mode = kCFRunLoopDefaultMode;
-            CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource_, mode);
-
-            CFRunLoopRun();
-
-            CFRunLoopRemoveSource(CFRunLoopGetCurrent(), runLoopSource_, mode);
+            objc_support::AutoreleasePool autoreleasePool;
+            {
+                auto subscription = runLoopSource_.attachToCurrentRunLoop();
+                CFRunLoopRun();
+            }
             runLoop_.store(nullptr, std::memory_order_release);
         }
 
@@ -178,9 +162,8 @@ private:
 
         FinalizerProcessor& owner_;
         int64_t finishedEpoch_ = 0;
-        CFRunLoopSourceContext sourceContext_;
+        objc_support::RunLoopSource runLoopSource_;
         std::atomic<CFRunLoopRef> runLoop_ = nullptr;
-        CFRunLoopSourceRef runLoopSource_;
     };
 #endif
 

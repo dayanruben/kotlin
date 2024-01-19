@@ -874,7 +874,7 @@ tasks {
         dependsOn(":plugins:fir-plugin-prototype:fir-plugin-ic-test:test")
         dependsOn(":kotlin-imports-dumper-compiler-plugin:test")
         dependsOn(":plugins:jvm-abi-gen:test")
-        dependsOn(":plugins:jso:compiler-plugin:test")
+        dependsOn(":plugins:js-plain-objects:compiler-plugin:test")
         dependsOn(":kotlinx-serialization-compiler-plugin:test")
         dependsOn(":kotlin-lombok-compiler-plugin:test")
         dependsOn(":kotlin-noarg-compiler-plugin:test")
@@ -1101,16 +1101,6 @@ plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin:
             // TODO remove as soon as we switch to release build of Node.js.
             args += listOf("--ignore-engines")
         }
-    }
-}
-
-dependencies {
-    // Drop when KT-61766 fixed
-    add(
-        configurations.implicitDependencies.name,
-        "org.jetbrains.kotlinx:kotlinx-collections-immutable-metadata:${rootProject.extra["versions.kotlinx-collections-immutable"]}"
-    ) {
-        isTransitive = false
     }
 }
 

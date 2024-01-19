@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistencyTest {
     @Test
     public void testAllFilesPresentInBox() throws Exception {
-        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true, "multiplatform/k2");
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true, "multiplatform/k2", "script");
     }
 
     @Nested
@@ -19788,6 +19788,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
         }
 
         @Test
+        @TestMetadata("kotlinJavaKotlin.kt")
+        public void testKotlinJavaKotlin() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/kotlinJavaKotlin.kt");
+        }
+
+        @Test
         @TestMetadata("kt61856.kt")
         public void testKt61856() throws Exception {
             runTest("compiler/testData/codegen/box/fir/kt61856.kt");
@@ -30704,6 +30710,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
         }
 
         @Test
+        @TestMetadata("javaForKotlinOverrideProperty.kt")
+        public void testJavaForKotlinOverrideProperty() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/javaForKotlinOverrideProperty.kt");
+        }
+
+        @Test
         @TestMetadata("javaInterfaceFieldDirectAccess.kt")
         public void testJavaInterfaceFieldDirectAccess() throws Exception {
             runTest("compiler/testData/codegen/box/javaInterop/javaInterfaceFieldDirectAccess.kt");
@@ -31296,6 +31308,52 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
             @TestMetadata("cloneableClassWithoutClone.kt")
             public void testCloneableClassWithoutClone() throws Exception {
                 runTest("compiler/testData/codegen/box/javaInterop/objectMethods/cloneableClassWithoutClone.kt");
+            }
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/codegen/box/javaInterop/primitiveVsWrapperTypeInInheritance")
+        @TestDataPath("$PROJECT_ROOT")
+        public class PrimitiveVsWrapperTypeInInheritance {
+            @Test
+            public void testAllFilesPresentInPrimitiveVsWrapperTypeInInheritance() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/javaInterop/primitiveVsWrapperTypeInInheritance"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            }
+
+            @Test
+            @TestMetadata("anotherKotlinClassInTheMiddle.kt")
+            public void testAnotherKotlinClassInTheMiddle() throws Exception {
+                runTest("compiler/testData/codegen/box/javaInterop/primitiveVsWrapperTypeInInheritance/anotherKotlinClassInTheMiddle.kt");
+            }
+
+            @Test
+            @TestMetadata("diamond.kt")
+            public void testDiamond() throws Exception {
+                runTest("compiler/testData/codegen/box/javaInterop/primitiveVsWrapperTypeInInheritance/diamond.kt");
+            }
+
+            @Test
+            @TestMetadata("double.kt")
+            public void testDouble() throws Exception {
+                runTest("compiler/testData/codegen/box/javaInterop/primitiveVsWrapperTypeInInheritance/double.kt");
+            }
+
+            @Test
+            @TestMetadata("generic.kt")
+            public void testGeneric() throws Exception {
+                runTest("compiler/testData/codegen/box/javaInterop/primitiveVsWrapperTypeInInheritance/generic.kt");
+            }
+
+            @Test
+            @TestMetadata("int.kt")
+            public void testInt() throws Exception {
+                runTest("compiler/testData/codegen/box/javaInterop/primitiveVsWrapperTypeInInheritance/int.kt");
+            }
+
+            @Test
+            @TestMetadata("nullableInt.kt")
+            public void testNullableInt() throws Exception {
+                runTest("compiler/testData/codegen/box/javaInterop/primitiveVsWrapperTypeInInheritance/nullableInt.kt");
             }
         }
     }
@@ -50367,40 +50425,6 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
         @TestMetadata("propertyDeclaration.kt")
         public void testPropertyDeclaration() throws Exception {
             runTest("compiler/testData/codegen/box/sameFileInSourceAndDependencies/propertyDeclaration.kt");
-        }
-    }
-
-    @Nested
-    @TestMetadata("compiler/testData/codegen/box/script")
-    @TestDataPath("$PROJECT_ROOT")
-    public class Script {
-        @Test
-        public void testAllFilesPresentInScript() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/script"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
-        }
-
-        @Test
-        @TestMetadata("classReference.kt")
-        public void testClassReference() throws Exception {
-            runTest("compiler/testData/codegen/box/script/classReference.kt");
-        }
-
-        @Test
-        @TestMetadata("localCaptureTests.kt")
-        public void testLocalCaptureTests() throws Exception {
-            runTest("compiler/testData/codegen/box/script/localCaptureTests.kt");
-        }
-
-        @Test
-        @TestMetadata("scripInstance.kt")
-        public void testScripInstance() throws Exception {
-            runTest("compiler/testData/codegen/box/script/scripInstance.kt");
-        }
-
-        @Test
-        @TestMetadata("scriptNestedClassInstance.kt")
-        public void testScriptNestedClassInstance() throws Exception {
-            runTest("compiler/testData/codegen/box/script/scriptNestedClassInstance.kt");
         }
     }
 

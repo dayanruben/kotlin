@@ -49,7 +49,7 @@ interface IncrementalCacheCommon {
  */
 abstract class AbstractIncrementalCache<ClassName>(
     workingDir: File,
-    icContext: IncrementalCompilationContext,
+    protected val icContext: IncrementalCompilationContext,
 ) : BasicMapsOwner(workingDir), IncrementalCacheCommon {
     companion object {
         private const val CLASS_ATTRIBUTES = "class-attributes"

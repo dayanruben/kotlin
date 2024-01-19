@@ -71,8 +71,10 @@ open class IncrementalJvmCache(
     private val multifileFacadeToParts = registerMap(MultifileClassFacadeMap(MULTIFILE_CLASS_FACADES.storageFile, icContext))
     private val partToMultifileFacade = registerMap(MultifileClassPartMap(MULTIFILE_CLASS_PARTS.storageFile, icContext))
     private val inlineFunctionsMap = registerMap(InlineFunctionsMap(INLINE_FUNCTIONS.storageFile, icContext))
+
     // todo: try to use internal names only?
     private val internalNameToSource = registerMap(InternalNameToSourcesMap(INTERNAL_NAME_TO_SOURCE.storageFile, icContext))
+
     // gradle only
     private val javaSourcesProtoMap = registerMap(JavaSourcesProtoMap(JAVA_SOURCES_PROTO_MAP.storageFile, icContext))
 
@@ -99,6 +101,11 @@ open class IncrementalJvmCache(
 
     override fun getClassFilePath(internalClassName: String): String {
         return toSystemIndependentName(File(outputDir, "$internalClassName.class").normalize().absolutePath)
+    }
+
+    override fun updateComplementaryFiles(dirtyFiles: Collection<File>, expectActualTracker: ExpectActualTrackerImpl) {
+        if (icContext.useCompilerMapsOnly) return
+        super.updateComplementaryFiles(dirtyFiles, expectActualTracker)
     }
 
     fun saveModuleMappingToCache(sourceFiles: Collection<File>, file: File) {
@@ -129,7 +136,7 @@ open class IncrementalJvmCache(
             sourceFiles.forEach {
                 sourceToClassesMap.append(it, className)
             }
-            internalNameToSource[className.internalName] = sourceFiles
+            if (!icContext.useCompilerMapsOnly) internalNameToSource[className.internalName] = sourceFiles
         }
 
         if (kotlinClassInfo.classId.isLocal) return
@@ -142,8 +149,10 @@ open class IncrementalJvmCache(
                 packagePartMap.addPackagePart(className)
 
                 protoMap.process(kotlinClassInfo, changesCollector)
-                constantsMap.process(kotlinClassInfo, changesCollector)
-                inlineFunctionsMap.process(kotlinClassInfo, changesCollector)
+                if (!icContext.useCompilerMapsOnly) {
+                    constantsMap.process(kotlinClassInfo, changesCollector)
+                    inlineFunctionsMap.process(kotlinClassInfo, changesCollector)
+                }
             }
             KotlinClassHeader.Kind.MULTIFILE_CLASS -> {
                 val partNames = kotlinClassInfo.classHeaderData.toList()
@@ -158,12 +167,15 @@ open class IncrementalJvmCache(
                 }
                 protoMap.remove(className, changesCollector)
                 classFqNameToSourceMap.remove(className.fqNameForClassNameWithoutDollars)
-                classAttributesMap.remove(className.fqNameForClassNameWithoutDollars)
-                internalNameToSource.remove(className.internalName)
+                if (!icContext.useCompilerMapsOnly) {
 
-                // TODO NO_CHANGES? (delegates only)
-                constantsMap.process(kotlinClassInfo, changesCollector)
-                inlineFunctionsMap.process(kotlinClassInfo, changesCollector)
+                    classAttributesMap.remove(className.fqNameForClassNameWithoutDollars)
+                    internalNameToSource.remove(className.internalName)
+
+                    // TODO NO_CHANGES? (delegates only)
+                    constantsMap.process(kotlinClassInfo, changesCollector)
+                    inlineFunctionsMap.process(kotlinClassInfo, changesCollector)
+                }
             }
             KotlinClassHeader.Kind.MULTIFILE_CLASS_PART -> {
                 if (sourceFiles != null) {
@@ -171,17 +183,23 @@ open class IncrementalJvmCache(
                 }
                 packagePartMap.addPackagePart(className)
                 partToMultifileFacade[className] = kotlinClassInfo.multifileClassName!!
-
                 protoMap.process(kotlinClassInfo, changesCollector)
-                constantsMap.process(kotlinClassInfo, changesCollector)
-                inlineFunctionsMap.process(kotlinClassInfo, changesCollector)
+                if (!icContext.useCompilerMapsOnly) {
+                    constantsMap.process(kotlinClassInfo, changesCollector)
+                    inlineFunctionsMap.process(kotlinClassInfo, changesCollector)
+                }
             }
             KotlinClassHeader.Kind.CLASS -> {
-                addToClassStorage(kotlinClassInfo.protoData as ClassProtoData, sourceFiles?.let { sourceFiles.single() })
+                if (!icContext.useCompilerMapsOnly) {
+                    addToClassStorage(kotlinClassInfo.protoData as ClassProtoData, sourceFiles?.let { sourceFiles.single() })
+                }
 
                 protoMap.process(kotlinClassInfo, changesCollector)
-                constantsMap.process(kotlinClassInfo, changesCollector)
-                inlineFunctionsMap.process(kotlinClassInfo, changesCollector)
+
+                if (!icContext.useCompilerMapsOnly) {
+                    constantsMap.process(kotlinClassInfo, changesCollector)
+                    inlineFunctionsMap.process(kotlinClassInfo, changesCollector)
+                }
             }
             KotlinClassHeader.Kind.UNKNOWN, KotlinClassHeader.Kind.SYNTHETIC_CLASS -> {
             }
@@ -193,7 +211,7 @@ open class IncrementalJvmCache(
         classProto: ProtoBuf.Class,
         stringTable: JvmStringTable,
         sourceFiles: List<File>?,
-        changesCollector: ChangesCollector
+        changesCollector: ChangesCollector,
     ) {
 
         val className = JvmClassName.byClassId(classId)
@@ -220,7 +238,7 @@ open class IncrementalJvmCache(
     }
 
     fun collectClassChangesByFeMetadata(
-        className: JvmClassName, classProto: ProtoBuf.Class, stringTable: JvmStringTable, changesCollector: ChangesCollector
+        className: JvmClassName, classProto: ProtoBuf.Class, stringTable: JvmStringTable, changesCollector: ChangesCollector,
     ) {
         //class
         feProtoMap.check(className, classProto, stringTable, changesCollector)
@@ -228,10 +246,15 @@ open class IncrementalJvmCache(
 
     fun saveJavaClassProto(source: File?, serializedJavaClass: SerializedJavaClass, collector: ChangesCollector) {
         val jvmClassName = JvmClassName.byClassId(serializedJavaClass.classId)
-        javaSourcesProtoMap.process(jvmClassName, serializedJavaClass, collector)
+
+        if (!icContext.useCompilerMapsOnly) {
+            javaSourcesProtoMap.process(jvmClassName, serializedJavaClass, collector)
+        }
         source?.let { sourceToClassesMap.append(source, jvmClassName) }
-        addToClassStorage(serializedJavaClass.toProtoData(), source)
+        if (!icContext.useCompilerMapsOnly) {
+            addToClassStorage(serializedJavaClass.toProtoData(), source)
 //        collector.addJavaProto(ClassProtoData(proto, nameResolver))
+        }
         dirtyOutputClassesMap.notDirty(jvmClassName)
     }
 
@@ -280,13 +303,17 @@ open class IncrementalJvmCache(
             packagePartMap.remove(it)
             multifileFacadeToParts.remove(it)
             partToMultifileFacade.remove(it)
-            constantsMap.remove(it)
-            inlineFunctionsMap.remove(it)
-            internalNameToSource.remove(it.internalName)
-            javaSourcesProtoMap.remove(it, changesCollector)
+            if (!icContext.useCompilerMapsOnly) {
+                constantsMap.remove(it)
+                inlineFunctionsMap.remove(it)
+                internalNameToSource.remove(it.internalName)
+                javaSourcesProtoMap.remove(it, changesCollector)
+            }
         }
 
-        removeAllFromClassStorage(dirtyClasses.map { it.fqNameForClassNameWithoutDollars }, changesCollector)
+        if (!icContext.useCompilerMapsOnly) {
+            removeAllFromClassStorage(dirtyClasses.map { it.fqNameForClassNameWithoutDollars }, changesCollector)
+        }
         dirtyOutputClassesMap.clear()
     }
 
@@ -354,7 +381,7 @@ open class IncrementalJvmCache(
             className: JvmClassName,
             newMapValue: ProtoMapValue,
             newProtoData: ProtoData,
-            changesCollector: ChangesCollector
+            changesCollector: ChangesCollector,
         ) {
             val key = className.internalName
             val oldMapValue = storage[key]
@@ -364,7 +391,7 @@ open class IncrementalJvmCache(
         }
 
         fun check(
-            className: JvmClassName, classProto: ProtoBuf.Class, stringTable: JvmStringTable, changesCollector: ChangesCollector
+            className: JvmClassName, classProto: ProtoBuf.Class, stringTable: JvmStringTable, changesCollector: ChangesCollector,
         ) {
             val key = className.internalName
             val oldProtoData = storage[key]?.toProtoData(className.packageFqName)

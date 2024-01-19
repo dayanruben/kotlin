@@ -20,7 +20,8 @@ import org.jetbrains.kotlin.konan.target.KonanTarget.*
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.walk
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
@@ -124,8 +125,10 @@ open class CommonizerIT : KGPBaseTest() {
             }
             build(":commonize") {
                 assertNativeDistributionCommonizationCacheHit()
-                assertTasksNotExecuted(":cinteropCurlTargetA")
-                assertTasksNotExecuted(":cinteropCurlTargetB")
+                assertTasksAreNotInTaskGraph(
+                    ":cinteropCurlTargetA",
+                    ":cinteropCurlTargetB",
+                )
             }
         }
     }
@@ -144,9 +147,11 @@ open class CommonizerIT : KGPBaseTest() {
 
             build(":commonize") {
                 assertTasksExecuted(":commonizeNativeDistribution")
-                assertTasksNotExecuted(":cinteropCurlTargetA")
-                assertTasksNotExecuted(":cinteropCurlTargetB")
-                assertTasksNotExecuted(":commonizeCInterop")
+                assertTasksAreNotInTaskGraph(
+                    ":cinteropCurlTargetA",
+                    ":cinteropCurlTargetB",
+                    ":commonizeCInterop",
+                )
             }
 
             build(":commonize", "-Pkotlin.mpp.enableCInteropCommonization=true") {
@@ -158,13 +163,14 @@ open class CommonizerIT : KGPBaseTest() {
 
             build(":commonize", "-Pkotlin.mpp.enableCInteropCommonization=false") {
                 assertNativeDistributionCommonizationCacheHit()
-                assertTasksNotExecuted(":cinteropCurlTargetA")
-                assertTasksNotExecuted(":cinteropCurlTargetB")
-                assertTasksNotExecuted(":commonizeCInterop")
+                assertTasksAreNotInTaskGraph(
+                    ":cinteropCurlTargetA",
+                    ":cinteropCurlTargetB",
+                    ":commonizeCInterop",
+                )
             }
         }
     }
-
 
     @DisplayName("Commonize Curl Interop copy CommonizeCInterop for Ide")
     @GradleTest
@@ -514,10 +520,14 @@ open class CommonizerIT : KGPBaseTest() {
     fun testCommonizationWithTwoCInteropCommonizerGroups(gradleVersion: GradleVersion) {
         nativeProject("commonize-kt-57796-twoCInteropCommonizerGroups", gradleVersion) {
             build(":app:commonizeCInterop") {
-                assertTasksNotExecuted(":lib:transformCommonMainCInteropDependenciesMetadata")
-                assertTasksExecuted(":lib:commonizeCInterop")
-                assertTasksNotExecuted(":app:transformCommonMainCInteropDependenciesMetadata")
-                assertTasksExecuted(":app:commonizeCInterop")
+                assertTasksExecuted(
+                    ":lib:commonizeCInterop",
+                    ":app:commonizeCInterop",
+                )
+                assertTasksAreNotInTaskGraph(
+                    ":lib:transformCommonMainCInteropDependenciesMetadata",
+                    ":app:transformCommonMainCInteropDependenciesMetadata",
+                )
             }
         }
     }

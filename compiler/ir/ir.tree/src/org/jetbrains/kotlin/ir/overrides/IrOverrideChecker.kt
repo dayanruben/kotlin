@@ -17,35 +17,36 @@ import org.jetbrains.kotlin.resolve.OverridingUtil.OverrideCompatibilityInfo.*
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.types.TypeCheckerState
 
+/**
+ * @param member declaration that should be checked for overridability.
+ * @param original the original, unsubstituted version of the declaration if the declaration is a fake override.
+ */
+class MemberWithOriginal(val member: IrOverridableMember, original: IrOverridableMember? = null) {
+    internal constructor(fakeOverride: IrFakeOverrideBuilder.FakeOverride) : this(fakeOverride.override, fakeOverride.original)
+
+    val original: IrOverridableMember = original ?: member
+}
+
 class IrOverrideChecker(
     private val typeSystem: IrTypeSystemContext,
     private val externalOverridabilityConditions: List<IrExternalOverridabilityCondition>,
 ) {
     fun getBothWaysOverridability(
-        overriderDescriptor: IrOverridableMember,
-        candidateDescriptor: IrOverridableMember,
+        overrider: MemberWithOriginal,
+        candidate: MemberWithOriginal,
     ): Result {
-        val result1 = isOverridableBy(
-            candidateDescriptor,
-            overriderDescriptor,
-            checkIsInlineFlag = false,
-        ).result
-
-        val result2 = isOverridableBy(
-            overriderDescriptor,
-            candidateDescriptor,
-            checkIsInlineFlag = false,
-        ).result
+        val result1 = isOverridableBy(candidate, overrider, checkIsInlineFlag = false).result
+        val result2 = isOverridableBy(overrider, candidate, checkIsInlineFlag = false).result
 
         return if (result1 == result2) result1 else Result.INCOMPATIBLE
     }
 
     fun isOverridableBy(
-        superMember: IrOverridableMember,
-        subMember: IrOverridableMember,
+        superMember: MemberWithOriginal,
+        subMember: MemberWithOriginal,
         checkIsInlineFlag: Boolean,
     ): OverrideCompatibilityInfo {
-        val basicResult = isOverridableByWithoutExternalConditions(superMember, subMember, checkIsInlineFlag)
+        val basicResult = isOverridableByWithoutExternalConditions(superMember.member, subMember.member, checkIsInlineFlag)
 
         return runExternalOverridabilityConditions(superMember, subMember, basicResult)
     }
@@ -65,6 +66,7 @@ class IrOverrideChecker(
             is IrSimpleFunction -> when {
                 subMember !is IrSimpleFunction -> return incompatible("Member kind mismatch")
                 superMember.hasExtensionReceiver != subMember.hasExtensionReceiver -> return incompatible("Receiver presence mismatch")
+                superMember.hasDispatchReceiver != subMember.hasDispatchReceiver -> return incompatible("Incompatible staticness")
                 superMember.isSuspend != subMember.isSuspend -> return incompatible("Incompatible suspendability")
                 checkIsInlineFlag && superMember.isInline -> return incompatible("Inline function can't be overridden")
 
@@ -78,6 +80,7 @@ class IrOverrideChecker(
             is IrProperty -> when {
                 subMember !is IrProperty -> return incompatible("Member kind mismatch")
                 superMember.getter.hasExtensionReceiver != subMember.getter.hasExtensionReceiver -> return incompatible("Receiver presence mismatch")
+                superMember.getter.hasDispatchReceiver != subMember.getter.hasDispatchReceiver -> return incompatible("Incompatible staticness")
                 checkIsInlineFlag && superMember.isInline -> return incompatible("Inline property can't be overridden")
 
                 else -> {
@@ -144,8 +147,8 @@ class IrOverrideChecker(
 
 
     private fun runExternalOverridabilityConditions(
-        superMember: IrOverridableMember,
-        subMember: IrOverridableMember,
+        superMember: MemberWithOriginal,
+        subMember: MemberWithOriginal,
         basicResult: OverrideCompatibilityInfo,
     ): OverrideCompatibilityInfo {
         var wasSuccess = basicResult.result == OverrideCompatibilityInfo.Result.OVERRIDABLE

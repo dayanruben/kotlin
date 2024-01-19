@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // ISSUE: KT-57958
 
 fun ListVM<*>.foo() {

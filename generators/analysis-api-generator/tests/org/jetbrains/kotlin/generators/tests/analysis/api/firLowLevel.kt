@@ -45,10 +45,6 @@ internal fun TestGroupSuite.generateFirLowLevelApiTests() {
     }
 
     testGroup("analysis/low-level-api-fir/tests", "analysis/low-level-api-fir/testData") {
-        testClass<AbstractFirOnAirResolveTest> {
-            model("onAirResolve")
-        }
-
         testClass<AbstractFirSourceLazyDeclarationResolveTest> {
             model("lazyResolve", pattern = TestGeneratorUtil.KT)
         }
@@ -281,22 +277,6 @@ internal fun TestGroupSuite.generateFirLowLevelApiTests() {
         testClass<AbstractContextCollectorScriptTest> {
             model("contextCollector", pattern = TestGeneratorUtil.KTS)
         }
-
-        testClass<AbstractSourceDependentCopyContextTest> {
-            model("dependentCopy", pattern = TestGeneratorUtil.KT)
-        }
-
-        testClass<AbstractScriptDependentCopyContextTest> {
-            model("dependentCopy", pattern = TestGeneratorUtil.KTS)
-        }
-
-        testClass<AbstractSourceDependentCopyFirTest> {
-            model("dependentCopy", pattern = TestGeneratorUtil.KT)
-        }
-
-        testClass<AbstractScriptDependentCopyFirTest> {
-            model("dependentCopy", pattern = TestGeneratorUtil.KTS)
-        }
     }
 
     testGroup("analysis/low-level-api-fir/tests", "analysis/analysis-api/testData") {
@@ -352,14 +332,16 @@ internal fun TestGroupSuite.generateFirLowLevelApiTests() {
         testClass<AbstractLLFirBlackBoxCodegenBasedTest> {
             model(
                 "codegen/box",
-                excludeDirs = listOf("cinterop")  // CInterop tests contain .DEF .H .CPP .M files, which are invalid for Compiler Core new test system
+                excludeDirs = listOf("cinterop", "script")  // CInterop tests contain .DEF .H .CPP .M files, which are invalid for Compiler Core new test system
+                // script is excluded until KT-60127 is implemented
             )
         }
 
         testClass<AbstractLLFirReversedBlackBoxCodegenBasedTest> {
             model(
                 "codegen/box",
-                excludeDirs = listOf("cinterop")  // CInterop tests contain .DEF .H .CPP .M files, which are invalid for Compiler Core new test system
+                excludeDirs = listOf("cinterop", "script")  // CInterop tests contain .DEF .H .CPP .M files, which are invalid for Compiler Core new test system
+                // script is excluded until KT-60127 is implemented
             )
         }
 

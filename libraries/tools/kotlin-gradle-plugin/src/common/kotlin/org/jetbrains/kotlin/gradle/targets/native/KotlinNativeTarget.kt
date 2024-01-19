@@ -6,7 +6,6 @@
 @file:Suppress("PackageDirectoryMismatch") // Old package for compatibility
 package org.jetbrains.kotlin.gradle.plugin.mpp
 
-import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.attributes.Attribute
@@ -25,6 +24,7 @@ import org.jetbrains.kotlin.gradle.targets.native.KotlinNativeSimulatorTestRunFa
 import org.jetbrains.kotlin.gradle.utils.dashSeparatedName
 import org.jetbrains.kotlin.gradle.utils.klibModuleName
 import org.jetbrains.kotlin.gradle.utils.newInstance
+import org.jetbrains.kotlin.gradle.utils.setAttribute
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
@@ -34,13 +34,14 @@ import javax.inject.Inject
 abstract class KotlinNativeTarget @Inject constructor(
     project: Project,
     val konanTarget: KonanTarget,
-) : KotlinTargetWithBinaries<KotlinNativeCompilation, KotlinNativeBinaryContainer>(
+) : HasConfigurableCompilerOptions<KotlinNativeCompilerOptions>,
+    KotlinTargetWithBinaries<KotlinNativeCompilation, KotlinNativeBinaryContainer>(
     project,
     KotlinPlatformType.native
 ) {
 
     init {
-        attributes.attribute(konanTargetAttribute, konanTarget.name)
+        attributes.setAttribute(konanTargetAttribute, konanTarget.name)
     }
 
     private val hostSpecificMetadataJarTaskName get() = disambiguateName("MetadataJar")
@@ -100,7 +101,7 @@ abstract class KotlinNativeTarget @Inject constructor(
         get() = konanTarget.enabledOnCurrentHost
 
     @ExperimentalKotlinGradlePluginApi
-    internal override val compilerOptions: KotlinNativeCompilerOptions = project.objects
+    override val compilerOptions: KotlinNativeCompilerOptions = project.objects
         .newInstance<KotlinNativeCompilerOptionsDefault>()
         .apply {
             moduleName.convention(
@@ -109,16 +110,6 @@ abstract class KotlinNativeTarget @Inject constructor(
                 )
             )
         }
-
-    @ExperimentalKotlinGradlePluginApi
-    internal fun compilerOptions(configure: KotlinNativeCompilerOptions.() -> Unit) {
-        configure(compilerOptions)
-    }
-
-    @ExperimentalKotlinGradlePluginApi
-    internal fun compilerOptions(configure: Action<KotlinNativeCompilerOptions>) {
-        configure.execute(compilerOptions)
-    }
 
     // User-visible constants
     val DEBUG = NativeBuildType.DEBUG

@@ -18,10 +18,7 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.deserialization.toQualifiedPropertyAccessExpression
 import org.jetbrains.kotlin.fir.expressions.*
-import org.jetbrains.kotlin.fir.expressions.impl.FirContractCallBlock
-import org.jetbrains.kotlin.fir.expressions.impl.FirElseIfTrueCondition
-import org.jetbrains.kotlin.fir.expressions.impl.FirEmptyExpressionBlock
-import org.jetbrains.kotlin.fir.expressions.impl.FirUnitExpression
+import org.jetbrains.kotlin.fir.expressions.impl.*
 import org.jetbrains.kotlin.fir.extensions.extensionService
 import org.jetbrains.kotlin.fir.references.*
 import org.jetbrains.kotlin.fir.resolve.defaultType
@@ -543,7 +540,8 @@ class Fir2IrVisitor(
                 startOffset,
                 endOffset,
                 varargArgumentsExpression.resolvedType.toIrType(),
-                varargArgumentsExpression.varargElementType.toIrType(),
+                varargArgumentsExpression.coneElementTypeOrNull?.toIrType()
+                    ?: error("Vararg expression has incorrect type"),
                 varargArgumentsExpression.arguments.map { it.convertToIrVarargElement() }
             )
         }
@@ -862,7 +860,7 @@ class Fir2IrVisitor(
     override fun visitVariableAssignment(
         variableAssignment: FirVariableAssignment,
         data: Any?
-    ): IrElement = whileAnalysing(session, variableAssignment) {
+    ): IrExpression = whileAnalysing(session, variableAssignment) {
         val explicitReceiverExpression = variableAssignment.explicitReceiver?.let { receiverExpression ->
             convertToIrReceiverExpression(
                 receiverExpression, variableAssignment.unwrapLValue()!!
@@ -1098,6 +1096,12 @@ class Fir2IrVisitor(
                 return it
             }
         }
+        if (this is FirSingleExpressionBlock) {
+            when (val stmt = statement) {
+                is FirExpression -> return convertToIrExpression(stmt)
+                !is FirDeclaration -> return stmt.accept(this@Fir2IrVisitor, null) as IrExpression
+            }
+        }
         if (source?.kind is KtRealSourceElementKind) {
             val lastStatementHasNothingType = (statements.lastOrNull() as? FirExpression)?.resolvedType?.isNothing == true
             return statements.convertToIrBlock(source, origin, forceUnitType = origin?.isLoop == true || lastStatementHasNothingType)
@@ -1291,13 +1295,13 @@ class Fir2IrVisitor(
     }
 
     private fun FirWhenBranch.toIrWhenBranch(whenExpressionType: ConeKotlinType): IrBranch {
-        return convertWithOffsets { startOffset, endOffset ->
+        return convertWithOffsets { startOffset, _ ->
             val condition = condition
             val irResult = convertToIrExpression(result).insertImplicitCast(result, result.resolvedType, whenExpressionType)
             if (condition is FirElseIfTrueCondition) {
                 IrElseBranchImpl(IrConstImpl.boolean(irResult.startOffset, irResult.endOffset, irBuiltIns.booleanType, true), irResult)
             } else {
-                IrBranchImpl(startOffset, endOffset, convertToIrExpression(condition), irResult)
+                IrBranchImpl(startOffset, irResult.endOffset, convertToIrExpression(condition), irResult)
             }
         }
     }

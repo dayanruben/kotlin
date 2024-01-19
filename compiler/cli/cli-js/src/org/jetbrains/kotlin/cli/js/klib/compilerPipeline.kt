@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.languageVersionSettings
-import org.jetbrains.kotlin.constant.EvaluatedConstTracker
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
 import org.jetbrains.kotlin.diagnostics.impl.PendingDiagnosticsCollectorWithSuppress
@@ -34,7 +33,6 @@ import org.jetbrains.kotlin.fir.session.KlibIcData
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.incremental.js.IncrementalDataProvider
 import org.jetbrains.kotlin.ir.backend.js.*
-import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsManglerDesc
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsManglerIr
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
 import org.jetbrains.kotlin.ir.util.IrMessageLogger
@@ -244,7 +242,6 @@ fun transformFirToIr(
         fir2IrExtensions,
         Fir2IrConfiguration.forKlibCompilation(moduleStructure.compilerConfiguration, diagnosticsReporter),
         IrGenerationExtension.getInstances(moduleStructure.project),
-        signatureComposer = DescriptorSignatureComposerStub(JsManglerDesc),
         irMangler = JsManglerIr,
         firMangler = FirJsKotlinMangler(),
         visibilityConverter = Fir2IrVisibilityConverter.Default,
@@ -263,7 +260,7 @@ private class Fir2KlibSerializer(
     private val firFilesAndSessionsBySourceFile = buildMap {
         for (output in firOutputs) {
             output.fir.forEach {
-                put(it.sourceFile!!, Triple(it, output.session, output.scopeSession))
+                put(it.sourceFile!!, it)
             }
         }
     }
@@ -279,19 +276,20 @@ private class Fir2KlibSerializer(
     val sourceFiles: List<KtSourceFile> = firFilesAndSessionsBySourceFile.keys.toList()
 
     fun serializeSingleFirFile(file: KtSourceFile): ProtoBuf.PackageFragment {
-        val (firFile, session, scopeSession) = firFilesAndSessionsBySourceFile[file]
+        val firFile = firFilesAndSessionsBySourceFile[file]
             ?: error("cannot find FIR file by source file ${file.name} (${file.path})")
 
+        val components = fir2IrActualizedResult.components
         return serializeSingleFirFile(
             firFile,
-            session,
-            scopeSession,
+            components.session,
+            components.scopeSession,
             actualizedExpectDeclarations,
             FirKLibSerializerExtension(
-                session, metadataVersion,
-                ConstValueProviderImpl(fir2IrActualizedResult.components),
+                components.session, components.firProvider, metadataVersion,
+                ConstValueProviderImpl(components),
                 allowErrorTypes = false, exportKDoc = false,
-                fir2IrActualizedResult.components.annotationsFromPluginRegistrar.createAdditionalMetadataProvider()
+                components.annotationsFromPluginRegistrar.createAdditionalMetadataProvider()
             ),
             languageVersionSettings,
         )
