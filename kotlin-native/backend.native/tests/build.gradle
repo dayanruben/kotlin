@@ -1137,13 +1137,6 @@ if (PlatformInfo.isAppleTarget(project)) {
         it.headers "$projectDir/interop/objc/msg_send/messaging.h"
     }
 
-    createInterop("objcDirect") {
-        it.defFile 'interop/objc/direct/direct.def'
-        it.headers "$projectDir/interop/objc/direct/direct.h"
-        it.extraOpts "-Xcompile-source", "$projectDir/interop/objc/direct/direct.m", "-Xsource-compiler-option", "-DNS_FORMAT_ARGUMENT(A)="
-        it.compilerOpts '-DNS_FORMAT_ARGUMENT(A)='
-    }
-
     createInterop("foreignException") {
         it.defFile 'interop/objc/foreignException/objc_wrap.def'
         it.headers "$projectDir/interop/objc/foreignException/objc_wrap.h"
@@ -1160,20 +1153,10 @@ if (PlatformInfo.isAppleTarget(project)) {
         it.extraOpts '-Xforeign-exception-mode', "objc-wrap"
     }
 
-    createInterop("objcKt34467") {
-        it.defFile 'interop/objc/kt34467/module_library.def'
-        def moduleMap = file("interop/objc/kt34467/module_library.modulemap").absolutePath
-        def includePath = file("interop/objc/kt34467").absolutePath
-        it.compilerOpts "-fmodule-map-file=$moduleMap", "-I$includePath"
-    }
     createInterop("objcGh3343") {
         it.defFile 'framework/gh3343/objclib.def'
         it.headers "$projectDir/framework/gh3343/objclib.h"
         it.linkerOpts "-lobjcgh3343"
-    }
-    createInterop("objc_illegal_sharing_with_weak") {
-      it.defFile 'interop/objc/illegal_sharing_with_weak/objclib.def'
-      it.headers "$projectDir/interop/objc/illegal_sharing_with_weak/objclib.h"
     }
     createInterop("objcKt43517") {
         it.defFile 'framework/kt43517/kt43517.def'
@@ -1181,17 +1164,6 @@ if (PlatformInfo.isAppleTarget(project)) {
     createInterop("objc_kt42172") {
         it.defFile 'interop/objc/kt42172/objclib.def'
         it.headers "$projectDir/interop/objc/kt42172/objclib.h"
-    }
-    createInterop("objc_kt48816") {
-        it.defFile 'interop/objc/kt48816/objclib.def'
-        it.headers "$projectDir/interop/objc/kt48816/objclib.h"
-    }
-    createInterop("objc_kt50648") {
-        it.defFile 'interop/objc/kt50648/objclib.def'
-    }
-    createInterop("objc_kt53151") {
-        it.defFile 'interop/objc/kt53151/objclib.def'
-        it.compilerOpts "-F$projectDir/interop/objc/kt53151/testFramework"
     }
     createInterop("objc_kt55938") {
         it.defFile 'interop/objc/kt55938/objclib.def'
@@ -1230,14 +1202,6 @@ if (PlatformInfo.isAppleTarget(project)) {
     createInterop("objCAction") {
         it.defFile 'interop/objc/objCAction/objclib.def'
         it.headers "$projectDir/interop/objc/objCAction/objclib.h"
-    }
-    createInterop("kt59167") {
-        it.defFile 'interop/kt59167/kt59167.def'
-    }
-    createInterop("overridabilityCondition") {
-        it.defFile 'interop/objc/overridabilityCondition/lib.def'
-        it.headers "$projectDir/interop/objc/overridabilityCondition/lib.h"
-        it.extraOpts "-Xcompile-source", "$projectDir/interop/objc/overridabilityCondition/lib.m"
     }
     createInterop("kt63423_dispose_on_main_stress") {
         it.defFile 'interop/objc/kt63423_dispose_on_main_stress/objclib.def'
@@ -1568,17 +1532,6 @@ if (PlatformInfo.isAppleTarget(project)) {
         }
     }
 
-    interopTest("interop_objc_direct") {
-        source = "interop/objc/direct/main.kt"
-        interop = "objcDirect"
-    }
-
-    interopTest("interop_objc_overridabilityCondition") {
-        interop = "overridabilityCondition"
-        source = "interop/objc/overridabilityCondition/main.kt"
-        flags = [ "-Xuse-ir-fake-override-builder" ]
-    }
-
     interopTest("interop_objc_foreignException") {
         source = "interop/objc/foreignException/objc_wrap.kt"
         interop = 'foreignException'
@@ -1638,19 +1591,6 @@ if (PlatformInfo.isAppleTarget(project)) {
         }
     }
 
-    interopTest("interop_objc_kt34467") {
-        source = "interop/objc/kt34467/foo.kt"
-        interop = 'objcKt34467'
-        useGoldenData = true
-    }
-
-    interopTest("interop_objc_illegal_sharing_with_weak") {
-        source = "interop/objc/illegal_sharing_with_weak/main.kt"
-        interop = 'objc_illegal_sharing_with_weak'
-        // Experimental MM supports arbitrary object sharing.
-        outputChecker = { it == "Before\nAfter true\n" }
-    }
-
     interopTest("interop_objc_kt42172") {
         enabled = !isNoopGC
         source = "interop/objc/kt42172/main.kt"
@@ -1670,36 +1610,6 @@ if (PlatformInfo.isAppleTarget(project)) {
                 UtilsKt.codesign(project, dylibFile.toString())
             }
         }
-
-    }
-
-    interopTest("interop_objc_kt48816_without_lazy_ir_for_caches") {
-        // Without a fix, fails in two-stage mode.
-        source = "interop/objc/kt48816/main.kt"
-        interop = "objc_kt48816"
-        // The bug was accidentally fixed with lazy IR for caches, so testing it with this feature disabled:
-        flags = ["-Xlazy-ir-for-caches=disable"]
-    }
-
-    interopTest("interop_objc_kt48816_with_lazy_ir_for_caches") {
-        source = "interop/objc/kt48816/main.kt"
-        interop = "objc_kt48816"
-        flags = ["-Xlazy-ir-for-caches=enable"]
-    }
-
-    interopTest("interop_objc_kt50648") {
-        source = 'interop/objc/kt50648/main.kt'
-        interop = "objc_kt50648"
-        expectedExitStatusChecker = { it != 0 }
-        outputChecker = {
-            it.contains("Converting Obj-C blocks with non-reference-typed return value to kotlin.Any is not supported (v)") &&
-                    (it.contains("kfun:#main(){}") || project.globalTestArgs.contains('-opt')) // Stacktrace.
-        }
-    }
-
-    interopTest("interop_objc_kt53151") {
-        source = "interop/objc/kt53151/main.kt"
-        interop = "objc_kt53151"
     }
 
     interopTest("interop_objc_kt55938") {
@@ -1848,13 +1758,6 @@ if (PlatformInfo.isAppleTarget(project)) {
             }
         }
         UtilsKt.dependsOnPlatformLibs(it)
-    }
-
-    interopTest("interop_kt59167") {
-        // There is no GameController on watchOS.
-        enabled = target.family != Family.WATCHOS
-        source = 'interop/kt59167/main.kt'
-        interop = 'kt59167'
     }
 
     interopTest("interop_objc_kt63423_dispose_on_main_stress") {
@@ -2727,14 +2630,6 @@ fileCheckTest("filecheck_signext_zeroext_objc_export") {
     generateFramework = true
     enabled = target.family.appleFamily
 }
-
-fileCheckTest("filecheck_objc_direct") {
-    enabled = enabled && cacheTesting == null
-    annotatedSource = project.file('filecheck/objc_direct.kt')
-    interop = "objcDirect"
-    enabled = target.family.appleFamily
-}
-
 
 dependencies {
     nopPluginApi kotlinCompilerModule

@@ -6060,6 +6060,16 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Nested
+        @TestMetadata("compiler/testData/codegen/box/cinterop/objc")
+        @TestDataPath("$PROJECT_ROOT")
+        public class Objc {
+            @Test
+            public void testAllFilesPresentInObjc() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/cinterop/objc"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+            }
+        }
+
+        @Nested
         @TestMetadata("compiler/testData/codegen/box/cinterop/packages")
         @TestDataPath("$PROJECT_ROOT")
         public class Packages {
@@ -18509,6 +18519,16 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @Test
         public void testAllFilesPresentInFileCheck() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/fileCheck"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/codegen/box/fileCheck/cinterop")
+        @TestDataPath("$PROJECT_ROOT")
+        public class Cinterop {
+            @Test
+            public void testAllFilesPresentInCinterop() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/fileCheck/cinterop"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+            }
         }
 
         @Nested

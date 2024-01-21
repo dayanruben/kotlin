@@ -4747,6 +4747,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             }
 
             @Test
+            @TestMetadata("kt59167.kt")
+            public void testKt59167() throws Exception {
+                runTest("compiler/testData/codegen/box/cinterop/kt59167.kt");
+            }
+
+            @Test
             @TestMetadata("kt63048.kt")
             public void testKt63048() throws Exception {
                 runTest("compiler/testData/codegen/box/cinterop/kt63048.kt");
@@ -4933,6 +4939,59 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 @TestMetadata("cCallback.kt")
                 public void testCCallback() throws Exception {
                     runTest("compiler/testData/codegen/box/cinterop/exceptions/cCallback.kt");
+                }
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/codegen/box/cinterop/objc")
+            @TestDataPath("$PROJECT_ROOT")
+            @UseExtTestCaseGroupProvider()
+            public class Objc {
+                @Test
+                public void testAllFilesPresentInObjc() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/cinterop/objc"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+                }
+
+                @Test
+                @TestMetadata("direct.kt")
+                public void testDirect() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/objc/direct.kt");
+                }
+
+                @Test
+                @TestMetadata("kt34467.kt")
+                public void testKt34467() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/objc/kt34467.kt");
+                }
+
+                @Test
+                @TestMetadata("kt48816_lazy_ir_disable.kt")
+                public void testKt48816_lazy_ir_disable() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/objc/kt48816_lazy_ir_disable.kt");
+                }
+
+                @Test
+                @TestMetadata("kt48816_lazy_ir_enable.kt")
+                public void testKt48816_lazy_ir_enable() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/objc/kt48816_lazy_ir_enable.kt");
+                }
+
+                @Test
+                @TestMetadata("kt53151.kt")
+                public void testKt53151() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/objc/kt53151.kt");
+                }
+
+                @Test
+                @TestMetadata("overridabilityCondition.kt")
+                public void testOverridabilityCondition() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/objc/overridabilityCondition.kt");
+                }
+
+                @Test
+                @TestMetadata("sharing_with_weak.kt")
+                public void testSharing_with_weak() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/objc/sharing_with_weak.kt");
                 }
             }
 
@@ -15813,6 +15872,23 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             @TestMetadata("when.kt")
             public void testWhen() throws Exception {
                 runTest("compiler/testData/codegen/box/fileCheck/when.kt");
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/codegen/box/fileCheck/cinterop")
+            @TestDataPath("$PROJECT_ROOT")
+            @UseExtTestCaseGroupProvider()
+            public class Cinterop {
+                @Test
+                public void testAllFilesPresentInCinterop() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/fileCheck/cinterop"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+                }
+
+                @Test
+                @TestMetadata("direct.kt")
+                public void testDirect() throws Exception {
+                    runTest("compiler/testData/codegen/box/fileCheck/cinterop/direct.kt");
+                }
             }
 
             @Nested
