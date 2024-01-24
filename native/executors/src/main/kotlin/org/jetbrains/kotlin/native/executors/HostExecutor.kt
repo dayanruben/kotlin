@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.logging.Logger
 import kotlin.time.*
+import kotlin.time.Duration.Companion.seconds
 
 fun Logger.debugKt65113(msg: String) {
     if (!HostManager.hostIsMingw)
@@ -26,6 +27,7 @@ fun Logger.debugKt65113(msg: String) {
 }
 
 class ProcessStreams(
+    private val logger: Logger,
     process: Process,
     stdin: InputStream,
     stdout: OutputStream,
@@ -42,17 +44,25 @@ class ProcessStreams(
     }
     private val stdout = jobLauncher {
         stdout.apply {
+            logger.debugKt65113("Will copy from process.inputStream to stdout")
             copyStreams(process.inputStream, this)
+            logger.debugKt65113("Will close stdout")
             close()
         }
+        logger.debugKt65113("Will close process.inputStream")
         process.inputStream.close()
+        logger.debugKt65113("Finished stdout job")
     }
     private val stderr = jobLauncher {
         stderr.apply {
+            logger.debugKt65113("Will copy from process.errorStream to stderr")
             copyStreams(process.errorStream, this)
+            logger.debugKt65113("Will close stderr")
             close()
         }
+        logger.debugKt65113("Will close process.errorStream")
         process.errorStream.close()
+        logger.debugKt65113("Finished stderr job")
     }
 
     private fun copyStreams(from: InputStream, to: OutputStream) {
@@ -65,7 +75,7 @@ class ProcessStreams(
         }
     }
 
-    suspend fun drain(logger: Logger) {
+    suspend fun drain() {
         // First finish passing input into the process.
         logger.debugKt65113("Will join stdin")
         stdin.join()
@@ -86,11 +96,13 @@ class ProcessStreams(
 }
 
 fun CoroutineScope.pumpStreams(
+    logger: Logger,
     process: Process,
     stdin: InputStream,
     stdout: OutputStream,
     stderr: OutputStream,
 ) = ProcessStreams(
+    logger,
     process,
     stdin,
     stdout,
@@ -167,7 +179,7 @@ class HostExecutor : Executor {
             directory(workingDirectory)
             environment().putAll(request.environment)
         }.scoped(logger) { process ->
-            val streams = pumpStreams(process, request.stdin, request.stdout, request.stderr)
+            val streams = pumpStreams(logger, process, request.stdin, request.stdout, request.stderr)
             val (isTimeout, duration) = measureTimedValue {
                 !process.waitFor(request.timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
             }
@@ -175,12 +187,26 @@ class HostExecutor : Executor {
                 logger.warning("Timeout running $commandLine in $duration")
                 streams.cancel()
                 process.destroyForcibly()
-                streams.drain(logger)
+                streams.drain()
                 ExecuteResponse(null, duration)
             } else {
-                logger.info("Finished executing $commandLine in $duration exit code ${process.exitValue()}")
-                streams.drain(logger)
-                ExecuteResponse(process.exitValue(), duration)
+                var exitCode: Int? = process.exitValue()
+                logger.info("Finished executing $commandLine in $duration exit code $exitCode")
+                // Workaround for KT-65113
+                val waitStreamsDuration = if (HostManager.hostIsMingw) 10.seconds else Duration.INFINITE
+                try {
+                    withTimeout(waitStreamsDuration) {
+                        streams.drain()
+                    }
+                } catch (e: TimeoutCancellationException) {
+                    logger.warning("Failed to join the streams in $waitStreamsDuration.")
+                    // TODO(KT-65113): This is here to keep tests failing in the scenario for now.
+                    exitCode = null
+                    streams.cancel()
+                    process.destroyForcibly()
+                    streams.drain()
+                }
+                ExecuteResponse(exitCode, duration)
             }
         }
     }

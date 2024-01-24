@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.backend.konan.tests
 
+import org.jetbrains.kotlin.backend.konan.testUtils.HeaderGenerator
+import org.jetbrains.kotlin.backend.konan.testUtils.HeaderGenerator.Configuration
 import org.jetbrains.kotlin.backend.konan.testUtils.headersTestDataDir
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.junit.jupiter.api.Test
@@ -66,6 +68,11 @@ class ObjCExportHeaderGeneratorTest(val generator: HeaderGenerator) {
     }
 
     @Test
+    fun `test - nestedClass`() {
+        doTest(headersTestDataDir.resolve("nestedClass"))
+    }
+
+    @Test
     fun `test - samePropertyAndFunctionName`() {
         doTest(headersTestDataDir.resolve("samePropertyAndFunctionName"))
     }
@@ -111,6 +118,11 @@ class ObjCExportHeaderGeneratorTest(val generator: HeaderGenerator) {
     }
 
     @Test
+    fun `test - functionWithErrorTypeAndFrameworkName`() {
+        doTest(headersTestDataDir.resolve("functionWithErrorTypeAndFrameworkName"), Configuration(frameworkName = "shared"))
+    }
+
+    @Test
     fun `test - kdocWithBlockTags`() {
         doTest(headersTestDataDir.resolve("kdocWithBlockTags"))
     }
@@ -145,13 +157,19 @@ class ObjCExportHeaderGeneratorTest(val generator: HeaderGenerator) {
         doTest(headersTestDataDir.resolve("dispatchAndExtensionReceiverWithMustBeDocumentedAnnotation"))
     }
 
-    fun interface HeaderGenerator {
-        fun generateHeaders(root: File): String
+    @Test
+    fun `test - classWithUnresolvedSuperType`() {
+        doTest(headersTestDataDir.resolve("classWithUnresolvedSuperType"))
     }
 
-    private fun doTest(root: File) {
+    @Test
+    fun `test - classWithUnresolvedSuperTypeGenerics`() {
+        doTest(headersTestDataDir.resolve("classWithUnresolvedSuperTypeGenerics"))
+    }
+
+    private fun doTest(root: File, configuration: Configuration = Configuration()) {
         if (!root.isDirectory) fail("Expected ${root.absolutePath} to be directory")
-        val generatedHeaders = generator.generateHeaders(root)
+        val generatedHeaders = generator.generateHeaders(root, configuration).toString()
         KotlinTestUtils.assertEqualsToFile(root.resolve("!${root.nameWithoutExtension}.h"), generatedHeaders)
     }
 }

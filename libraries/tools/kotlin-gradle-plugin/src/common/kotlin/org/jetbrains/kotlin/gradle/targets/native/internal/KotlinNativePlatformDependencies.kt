@@ -16,103 +16,16 @@ import org.jetbrains.kotlin.gradle.internal.KOTLIN_MODULE_GROUP
 import org.jetbrains.kotlin.gradle.internal.PLATFORM_INTEGERS_SUPPORT_LIBRARY
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.ide.ideaImportDependsOn
-import org.jetbrains.kotlin.gradle.plugin.sources.DefaultKotlinSourceSet
-import org.jetbrains.kotlin.gradle.plugin.sources.getVisibleSourceSetsFromAssociateCompilations
+import org.jetbrains.kotlin.gradle.plugin.mpp.AbstractKotlinNativeCompilation
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCompilation
+import org.jetbrains.kotlin.gradle.plugin.mpp.compilationImpl.KotlinCompilationSideEffectCoroutine
+import org.jetbrains.kotlin.gradle.plugin.sources.*
 import org.jetbrains.kotlin.gradle.plugin.sources.internal
 import org.jetbrains.kotlin.gradle.targets.metadata.findMetadataCompilation
 import org.jetbrains.kotlin.gradle.targets.metadata.isKotlinGranularMetadataEnabled
 import org.jetbrains.kotlin.gradle.utils.filesProvider
+import org.jetbrains.kotlin.gradle.utils.konanDistribution
 import java.io.File
-
-internal fun Project.setupKotlinNativePlatformDependencies() {
-    val kotlin = multiplatformExtensionOrNull ?: return
-
-    if (isAllowCommonizer()) {
-        checkNotNull(commonizeNativeDistributionTask) { "Missing commonizeNativeDistributionTask" }
-    }
-
-    kotlin.sourceSets.all { sourceSet ->
-        launch {
-            val target = sourceSet.internal.commonizerTarget.await() ?: return@launch
-            addDependencies(sourceSet, getNativeDistributionDependencies(target))
-            addDependencies(
-                sourceSet, project.filesProvider { setOf(konanDistribution.stdlib) },
-                /*
-            Shared Native compilations already implicitly add this dependency.
-            Adding it again will result in a warning
-            */
-                isCompilationDependency = false
-            )
-        }
-    }
-
-    launch {
-        if (isPlatformIntegerCommonizationEnabled) {
-            kotlin.nativeRootSourceSets().forEach { sourceSet ->
-                dependencies.add(
-                    sourceSet.implementationConfigurationName,
-                    "$KOTLIN_MODULE_GROUP:$PLATFORM_INTEGERS_SUPPORT_LIBRARY:${getKotlinPluginVersion()}"
-                )
-            }
-        }
-    }
-}
-
-internal fun Project.getNativeDistributionDependencies(target: CommonizerTarget): FileCollection {
-    return when (target) {
-        is LeafCommonizerTarget -> getOriginalPlatformLibrariesFor(target)
-        is SharedCommonizerTarget -> {
-            val commonizerTaskProvider = commonizeNativeDistributionTask ?: return project.files()
-            val commonizedLibrariesProvider = commonizerTaskProvider.flatMap { task ->
-                task.rootOutputDirectoryProperty.map { getCommonizedPlatformLibrariesFor(it.asFile, target) }
-            }
-            project.files(commonizedLibrariesProvider)
-        }
-    }
-}
-
-internal suspend fun KotlinMultiplatformExtension.nativeRootSourceSets(): Collection<KotlinSourceSet> {
-    val nativeSourceSets = sourceSets.filter { sourceSet -> sourceSet.internal.commonizerTarget.await() != null }
-    return nativeSourceSets.filter { sourceSet ->
-        val allVisibleSourceSets = sourceSet.dependsOn + getVisibleSourceSetsFromAssociateCompilations(sourceSet)
-        allVisibleSourceSets.none { dependency ->
-            dependency in nativeSourceSets
-        }
-    }
-}
-
-private fun Project.getOriginalPlatformLibrariesFor(target: LeafCommonizerTarget): FileCollection = project.filesProvider {
-    konanDistribution.platformLibsDir.resolve(target.konanTarget.name).listLibraryFiles().toSet()
-}
-
-private fun getCommonizedPlatformLibrariesFor(rootOutputDirectory: File, target: SharedCommonizerTarget): List<File> {
-    val targetOutputDirectory = CommonizerOutputFileLayout.resolveCommonizedDirectory(rootOutputDirectory, target)
-    return targetOutputDirectory.listLibraryFiles()
-}
-
-private suspend fun Project.addDependencies(
-    sourceSet: KotlinSourceSet, libraries: FileCollection, isCompilationDependency: Boolean = true, isIdeDependency: Boolean = true
-) {
-    if (isCompilationDependency) {
-        findMetadataCompilation(sourceSet)?.let { compilation ->
-            compilation.compileDependencyFiles += libraries
-        }
-    }
-
-    if (isIdeDependency && sourceSet is DefaultKotlinSourceSet) {
-        val metadataConfigurationName =
-            if (project.isIntransitiveMetadataConfigurationEnabled) sourceSet.intransitiveMetadataConfigurationName
-            else sourceSet.implementationMetadataConfigurationName
-        dependencies.add(metadataConfigurationName, libraries)
-    }
-}
-
-internal val Project.konanDistribution: KonanDistribution
-    get() = KonanDistribution(project.file(konanHome))
-
-private fun File.listLibraryFiles(): List<File> = listFiles().orEmpty()
-    .filter { it.isDirectory || it.extension == "klib" }
-
 
 /**
  * Function signature needs to be kept stable since this is used during import

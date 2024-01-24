@@ -42,10 +42,13 @@ fun IrExpression.isAdaptedFunctionReference() =
     this is IrBlock && this.origin == IrStatementOrigin.ADAPTED_FUNCTION_REFERENCE
 
 interface InlineFunctionResolver {
-    fun getFunctionDeclaration(symbol: IrFunctionSymbol): IrFunction
-    fun getFunctionSymbol(irFunction: IrFunction): IrFunctionSymbol
+    fun getFunctionDeclaration(symbol: IrFunctionSymbol): IrFunction = symbol.owner
     fun shouldExcludeFunctionFromInlining(symbol: IrFunctionSymbol): Boolean {
         return Symbols.isLateinitIsInitializedPropertyGetter(symbol) || Symbols.isTypeOfIntrinsic(symbol)
+    }
+
+    companion object {
+        val TRIVIAL = object : InlineFunctionResolver {}
     }
 }
 
@@ -63,7 +66,7 @@ fun IrFunction.isBuiltInSuspendCoroutineUninterceptedOrReturn(): Boolean =
         StandardNames.COROUTINES_INTRINSICS_PACKAGE_FQ_NAME.asString()
     )
 
-open class DefaultInlineFunctionResolver(open val context: CommonBackendContext) : InlineFunctionResolver {
+open class InlineFunctionResolverReplacingCoroutineIntrinsics(open val context: CommonBackendContext) : InlineFunctionResolver {
     override fun getFunctionDeclaration(symbol: IrFunctionSymbol): IrFunction {
         val function = symbol.owner
         // TODO: Remove these hacks when coroutine intrinsics are fixed.
@@ -74,18 +77,14 @@ open class DefaultInlineFunctionResolver(open val context: CommonBackendContext)
             symbol == context.ir.symbols.coroutineContextGetter ->
                 context.ir.symbols.coroutineGetContext.owner
 
-            else -> (symbol.owner as? IrSimpleFunction)?.resolveFakeOverride() ?: symbol.owner
+            else -> function
         }
-    }
-
-    override fun getFunctionSymbol(irFunction: IrFunction): IrFunctionSymbol {
-        return irFunction.symbol
     }
 }
 
 class FunctionInlining(
     val context: CommonBackendContext,
-    private val inlineFunctionResolver: InlineFunctionResolver = DefaultInlineFunctionResolver(context),
+    private val inlineFunctionResolver: InlineFunctionResolver = InlineFunctionResolver.TRIVIAL,
     private val innerClassesSupport: InnerClassesSupport? = null,
     private val insertAdditionalImplicitCasts: Boolean = false,
     private val alwaysCreateTemporaryVariablesForArguments: Boolean = false,
@@ -117,7 +116,8 @@ class FunctionInlining(
         if (!callee.needsInlining || inlineFunctionResolver.shouldExcludeFunctionFromInlining(callee.symbol))
             return expression
 
-        val actualCallee = inlineFunctionResolver.getFunctionDeclaration(callee.symbol)
+        val target = (callee as? IrSimpleFunction)?.resolveFakeOverride() ?: callee
+        val actualCallee = inlineFunctionResolver.getFunctionDeclaration(target.symbol)
         if (actualCallee.body == null) {
             return expression
         }
@@ -131,7 +131,7 @@ class FunctionInlining(
             ?: containerScope?.irElement as? IrDeclarationParent
             ?: (containerScope?.irElement as? IrDeclaration)?.parent
 
-        val inliner = Inliner(expression, actualCallee, currentScope ?: containerScope!!, parent, context)
+        val inliner = Inliner(expression, actualCallee, target, currentScope ?: containerScope!!, parent, context)
         return inliner.inline().markAsRegenerated()
     }
 
@@ -157,6 +157,7 @@ class FunctionInlining(
     private inner class Inliner(
         val callSite: IrFunctionAccessExpression,
         val callee: IrFunction,
+        val originalCallee: IrFunction,
         val currentScope: ScopeWithIr,
         val parent: IrDeclarationParent?,
         val context: CommonBackendContext
@@ -176,7 +177,7 @@ class FunctionInlining(
 
         val substituteMap = mutableMapOf<IrValueParameter, IrExpression>()
 
-        fun inline() = inlineFunction(callSite, callee, inlineFunctionResolver.getFunctionSymbol(callee).owner, true)
+        fun inline() = inlineFunction(callSite, callee, originalCallee, true)
 
         private fun <E : IrElement> E.copy(): E {
             @Suppress("UNCHECKED_CAST")

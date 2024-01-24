@@ -383,56 +383,29 @@ tasks.register("worker10", KonanLocalTest) {
 }
 
 standaloneTest("worker_exceptions") {
-    flags = ["-tr", "-Xworker-exception-handling=use-hook"]
+    flags = ["-tr"]
     outputChecker = {
         !it.contains("testExecuteAfterStartQuiet error") && it.contains("testExecuteStart error") && !it.contains("testExecuteStartQuiet error")
     }
     source = "runtime/workers/worker_exceptions.kt"
 }
 
-standaloneTest("worker_exceptions_legacy") {
-    flags = ["-tr", "-Xworker-exception-handling=legacy"]
-    outputChecker = {
-        it.contains("testExecuteAfterStartLegacy error") && it.contains("testExecuteStartLegacy error")
-    }
-    source = "runtime/workers/worker_exceptions_legacy.kt"
-}
-
 standaloneTest("worker_exceptions_terminate") {
-    flags = ["-Xworker-exception-handling=use-hook"]
     expectedExitStatusChecker = { it != 0 }
     outputChecker = {
         it.contains("some error") && !it.contains("Will not happen")
-    }
-    source = "runtime/workers/worker_exceptions_terminate.kt"
-}
-
-standaloneTest("worker_exceptions_terminate_legacy") {
-    flags = ["-Xworker-exception-handling=legacy"]
-    outputChecker = {
-        it.contains("some error") && it.contains("Will not happen")
     }
     source = "runtime/workers/worker_exceptions_terminate.kt"
 }
 
 standaloneTest("worker_exceptions_terminate_hook") {
-    flags = ["-Xworker-exception-handling=use-hook"]
     outputChecker = {
         it.contains("hook called") && !it.contains("some error") && it.contains("Will happen")
     }
     source = "runtime/workers/worker_exceptions_terminate_hook.kt"
 }
 
-standaloneTest("worker_exceptions_terminate_hook_legacy") {
-    flags = ["-Xworker-exception-handling=legacy"]
-    outputChecker = {
-        !it.contains("hook called") && it.contains("some error") && it.contains("Will happen")
-    }
-    source = "runtime/workers/worker_exceptions_terminate_hook.kt"
-}
-
 standaloneTest("worker_exceptions_terminate_current") {
-    flags = ["-Xworker-exception-handling=use-hook"]
     expectedExitStatusChecker = { it != 0 }
     outputChecker = {
         it.contains("some error") && !it.contains("Will not happen")
@@ -440,26 +413,9 @@ standaloneTest("worker_exceptions_terminate_current") {
     source = "runtime/workers/worker_exceptions_terminate_current.kt"
 }
 
-standaloneTest("worker_exceptions_terminate_current_legacy") {
-    flags = ["-Xworker-exception-handling=legacy"]
-    outputChecker = {
-        it.contains("some error") && it.contains("Will not happen")
-    }
-    source = "runtime/workers/worker_exceptions_terminate_current.kt"
-}
-
 standaloneTest("worker_exceptions_terminate_hook_current") {
-    flags = ["-Xworker-exception-handling=use-hook"]
     outputChecker = {
         it.contains("hook called") && !it.contains("some error") && it.contains("Will happen")
-    }
-    source = "runtime/workers/worker_exceptions_terminate_hook_current.kt"
-}
-
-standaloneTest("worker_exceptions_terminate_hook_current_legacy") {
-    flags = ["-Xworker-exception-handling=legacy"]
-    outputChecker = {
-        !it.contains("hook called") && it.contains("some error") && it.contains("Will happen")
     }
     source = "runtime/workers/worker_exceptions_terminate_hook_current.kt"
 }
@@ -1087,36 +1043,13 @@ createInterop("cppSkiaSignature") {
     it.defFile 'interop/cpp/skiaSignature.def'
 }
 
-createInterop("threadStates") {
-    it.defFile "interop/threadStates/threadStates.def"
-    it.extraOpts "-Xcompile-source", "$projectDir/interop/threadStates/threadStates.cpp"
-}
-
 createInterop("workerSignals") {
     it.defFile "interop/workerSignals/workerSignals.def"
     it.headers "$projectDir/interop/workerSignals/workerSignals.h"
     it.extraOpts "-Xcompile-source", "$projectDir/interop/workerSignals/workerSignals.cpp"
 }
 
-createInterop("cForwardDeclarationsTwoLibs1") {
-    it.defFile "interop/forwardDeclarationsTwoLibs/cForwardDeclarationsTwoLibs1.def"
-}
-
-createInterop("cForwardDeclarationsTwoLibs2") {
-    it.defFile "interop/forwardDeclarationsTwoLibs/cForwardDeclarationsTwoLibs2.def"
-}
-
 if (PlatformInfo.isAppleTarget(project)) {
-    createInterop("forwardDeclarationsCastA") {
-        it.defFile "interop/forwardDeclarationsCast/a.def"
-    }
-
-    createInterop("forwardDeclarationsCastB") {
-        it.defFile "interop/forwardDeclarationsCast/b.def"
-        it.headers "$projectDir/interop/forwardDeclarationsCast/b.h"
-        it.extraOpts "-Xcompile-source", "$projectDir/interop/forwardDeclarationsCast/b.m"
-    }
-
     createInterop("objcSmoke") {
         it.defFile 'interop/objc/objcSmoke.def'
         it.headers "$projectDir/interop/objc/smoke.h"
@@ -1170,20 +1103,6 @@ if (PlatformInfo.isAppleTarget(project)) {
         it.headers "$projectDir/interop/objc/kt55938/objclib.h"
     }
 
-    createInterop("kt49034_struct") {
-        it.defFile 'interop/objc/kt49034/struct/kt49034.def'
-        it.headers "$projectDir/interop/objc/kt49034/struct/kt49034.h"
-        it.extraOpts "-Xcompile-source", "$projectDir/interop/objc/kt49034/struct/impl.c"
-    }
-
-    createInterop("kt49034_objcclass") {
-        it.defFile 'interop/objc/kt49034/objcclass/kt49034.def'
-        it.headers "$projectDir/interop/objc/kt49034/objcclass/kt49034.h"
-    }
-    createInterop("kt49034_objcprotocol") {
-        it.defFile 'interop/objc/kt49034/objcprotocol/kt49034.def'
-        it.headers "$projectDir/interop/objc/kt49034/objcprotocol/kt49034.h"
-    }
     createInterop("objc_include_categories") {
         it.defFile 'interop/objc/include_categories/objc_include_categories.def'
         it.headers "$projectDir/interop/objc/include_categories/objc_include_categories.h"
@@ -1302,14 +1221,6 @@ interopTest("interop_withSpaces") {
     }
 }
 
-interopTestBase("interop_forwardDeclarationsCast", false, true) {
-    enabled = PlatformInfo.isAppleTarget(project)
-    interop = 'forwardDeclarationsCastA'
-    interop2 = 'forwardDeclarationsCastB'
-    lib = 'interop/forwardDeclarationsCast/lib.kt'
-    source = 'interop/forwardDeclarationsCast/main.kt'
-}
-
 dynamicTest("interop_kt43502") {
     interop = "kt43502"
     source = "interop/kt43502/main.kt"
@@ -1356,12 +1267,6 @@ interopTest("interop_workerSignals") {
     disabled = project.testTarget == 'mingw_x64' // cross-thread signalling does not work on Windows
     source = "interop/workerSignals/workerSignals.kt"
     interop = "workerSignals"
-}
-
-interopTest("interop_forwardDeclarationsTwoLibs") {
-    source = "interop/forwardDeclarationsTwoLibs/forwardDeclarationsTwoLibs.kt"
-    interop = "cForwardDeclarationsTwoLibs1"
-    interop2 = "cForwardDeclarationsTwoLibs2"
 }
 
 /*
@@ -1469,24 +1374,6 @@ if (PlatformInfo.isAppleTarget(project)) {
                 UtilsKt.codesign(project, dylibFile.toString())
             }
         }
-    }
-
-    // KT-49034 tests don't need whole compilation pipeline (only frontend) or platform libraries. Consider simplifying them when porting
-    // to the new test infra.
-    interopTest("interop_kt49034_struct") {
-        interop = 'kt49034_struct'
-        source = 'interop/objc/kt49034/struct/main.kt'
-
-        // The test depends on collision between kt49034.JSContext and platform.JavaScriptCore.JSContext
-        UtilsKt.dependsOnPlatformLibs(it)
-    }
-
-    interopTest("interop_kt49034_objcclass") {
-        interop = 'kt49034_objcclass'
-        source = 'interop/objc/kt49034/objcclass/main.kt'
-
-        // The test depends on collision between kt49034.__darwin_fp_control and platform.darwin.__darwin_fp_control
-        UtilsKt.dependsOnPlatformLibs(it)
     }
 
     standaloneTest("interop_objc_kt61441") {

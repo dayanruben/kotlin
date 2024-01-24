@@ -4913,9 +4913,9 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
             }
 
             @Test
-            @TestMetadata("funptr.kt")
-            public void testFunptr() throws Exception {
-                runTest("compiler/testData/codegen/box/cinterop/funptr.kt");
+            @TestMetadata("forwardDeclarationsTwoLibs.kt")
+            public void testForwardDeclarationsTwoLibs() throws Exception {
+                runTest("compiler/testData/codegen/box/cinterop/forwardDeclarationsTwoLibs.kt");
             }
 
             @Test
@@ -5191,6 +5191,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
                 }
 
                 @Test
+                @TestMetadata("forwardDeclarationsCast.kt")
+                public void testForwardDeclarationsCast() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/objc/forwardDeclarationsCast.kt");
+                }
+
+                @Test
                 @TestMetadata("kt34467.kt")
                 public void testKt34467() throws Exception {
                     runTest("compiler/testData/codegen/box/cinterop/objc/kt34467.kt");
@@ -5206,6 +5212,18 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
                 @TestMetadata("kt48816_lazy_ir_enable.kt")
                 public void testKt48816_lazy_ir_enable() throws Exception {
                     runTest("compiler/testData/codegen/box/cinterop/objc/kt48816_lazy_ir_enable.kt");
+                }
+
+                @Test
+                @TestMetadata("kt49034_objcclass.kt")
+                public void testKt49034_objcclass() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/objc/kt49034_objcclass.kt");
+                }
+
+                @Test
+                @TestMetadata("kt49034_struct.kt")
+                public void testKt49034_struct() throws Exception {
+                    runTest("compiler/testData/codegen/box/cinterop/objc/kt49034_struct.kt");
                 }
 
                 @Test
