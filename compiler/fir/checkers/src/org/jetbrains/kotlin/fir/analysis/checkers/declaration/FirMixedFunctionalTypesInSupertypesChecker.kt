@@ -9,13 +9,29 @@ import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind.Function
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind.SuspendFunction
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.declarations.FirClass
+import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.resolve.lookupSuperTypes
 import org.jetbrains.kotlin.fir.types.functionTypeKind
 
-object FirMixedFunctionalTypesInSupertypesChecker : FirClassChecker() {
+sealed class FirMixedFunctionalTypesInSupertypesChecker(mppKind: MppCheckerKind) : FirClassChecker(mppKind) {
+    object Regular : FirMixedFunctionalTypesInSupertypesChecker(MppCheckerKind.Platform) {
+        override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+            if (declaration.isExpect) return
+            super.check(declaration, context, reporter)
+        }
+    }
+
+    object ForExpectClass : FirMixedFunctionalTypesInSupertypesChecker(MppCheckerKind.Common) {
+        override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+            if (!declaration.isExpect) return
+            super.check(declaration, context, reporter)
+        }
+    }
+
     override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
         val superKinds = lookupSuperTypes(declaration.symbol, lookupInterfaces = true, deep = true, context.session)
             .mapNotNullTo(mutableSetOf()) { it.functionTypeKind(context.session)?.nonReflectKind() }

@@ -10,13 +10,20 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.collectDiagnosticsForFile
 import org.jetbrains.kotlin.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.fir.AbstractFirAnalyzerFacade
+import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.pipeline.FirResult
 import org.jetbrains.kotlin.fir.pipeline.ModuleCompilerAnalyzedOutput
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
+import org.jetbrains.kotlin.fir.util.listMultimapOf
+import org.jetbrains.kotlin.fir.util.plusAssign
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.test.frontend.fir.FirOutputArtifact
+import org.jetbrains.kotlin.test.frontend.fir.handlers.DiagnosticsMap
+import org.jetbrains.kotlin.test.frontend.fir.handlers.FirDiagnosticCollectorService
 import org.jetbrains.kotlin.test.model.TestFile
+import org.jetbrains.kotlin.test.services.TestServices
 
 open class LowLevelFirAnalyzerFacade(
     val firResolveSession: LLFirResolveSession,
@@ -34,7 +41,7 @@ open class LowLevelFirAnalyzerFacade(
 
     private var resolved: Boolean = false
 
-    override fun runCheckers(): Map<FirFile, List<KtDiagnostic>> {
+    fun runCheckers(): Map<FirFile, List<KtDiagnostic>> {
         if (!resolved) {
             runResolution()
             resolved = true
@@ -49,4 +56,16 @@ open class LowLevelFirAnalyzerFacade(
     }
 
     override fun runResolution(): List<FirFile> = allFirFiles.values.toList()
+}
+
+class AnalysisApiFirDiagnosticCollectorService(testServices: TestServices) : FirDiagnosticCollectorService(testServices) {
+    override fun getFrontendDiagnosticsForModule(info: FirOutputArtifact): DiagnosticsMap {
+        val result = listMultimapOf<FirFile, KtDiagnostic>()
+        for (part in info.partsForDependsOnModules) {
+            val facade = part.firAnalyzerFacade
+            require(facade is LowLevelFirAnalyzerFacade)
+            result += facade.runCheckers()
+        }
+        return result
+    }
 }

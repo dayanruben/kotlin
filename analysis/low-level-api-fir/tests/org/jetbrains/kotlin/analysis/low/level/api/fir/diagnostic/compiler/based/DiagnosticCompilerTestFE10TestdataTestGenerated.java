@@ -376,6 +376,24 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         }
 
         @Test
+        @TestMetadata("expressionsInQaSelectorsCornerCases.kt")
+        public void testExpressionsInQaSelectorsCornerCases() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/expressionsInQaSelectorsCornerCases.kt");
+        }
+
+        @Test
+        @TestMetadata("expressionsInQaSelectorsReceiverConversion.kt")
+        public void testExpressionsInQaSelectorsReceiverConversion() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/expressionsInQaSelectorsReceiverConversion.kt");
+        }
+
+        @Test
+        @TestMetadata("expressionsInQaSelectorsWithElvis.kt")
+        public void testExpressionsInQaSelectorsWithElvis() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/expressionsInQaSelectorsWithElvis.kt");
+        }
+
+        @Test
         @TestMetadata("ExtensionCallInvoke.kt")
         public void testExtensionCallInvoke() throws Exception {
             runTest("compiler/testData/diagnostics/tests/ExtensionCallInvoke.kt");
@@ -427,6 +445,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         @TestMetadata("finalSupertype.kt")
         public void testFinalSupertype() throws Exception {
             runTest("compiler/testData/diagnostics/tests/finalSupertype.kt");
+        }
+
+        @Test
+        @TestMetadata("fixExpressionsInQaSelectors.kt")
+        public void testFixExpressionsInQaSelectors() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/fixExpressionsInQaSelectors.kt");
         }
 
         @Test
@@ -21357,6 +21381,18 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
+            @TestMetadata("callingOuterGenericClassConstructorWithSelfTypes.kt")
+            public void testCallingOuterGenericClassConstructorWithSelfTypes() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inner/callingOuterGenericClassConstructorWithSelfTypes.kt");
+            }
+
+            @Test
+            @TestMetadata("callingOuterGenericClassConstructorWithSelfTypesInitial.kt")
+            public void testCallingOuterGenericClassConstructorWithSelfTypesInitial() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inner/callingOuterGenericClassConstructorWithSelfTypesInitial.kt");
+            }
+
+            @Test
             @TestMetadata("classesInClassObjectHeader.kt")
             public void testClassesInClassObjectHeader() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inner/classesInClassObjectHeader.kt");
@@ -21942,6 +21978,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             @TestMetadata("integerNotNullable.kt")
             public void testIntegerNotNullable() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/j+k/integerNotNullable.kt");
+            }
+
+            @Test
+            @TestMetadata("intersectionWithJavaVoidNothing.kt")
+            public void testIntersectionWithJavaVoidNothing() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/j+k/intersectionWithJavaVoidNothing.kt");
             }
 
             @Test
@@ -22697,6 +22739,54 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 @TestMetadata("specializedMap.kt")
                 public void testSpecializedMap() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/j+k/primitiveOverrides/specializedMap.kt");
+                }
+
+                @Test
+                @TestMetadata("triangleWithFlexibleType.kt")
+                public void testTriangleWithFlexibleType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/primitiveOverrides/triangleWithFlexibleType.kt");
+                }
+
+                @Test
+                @TestMetadata("triangleWithFlexibleTypeAndSubstitution.kt")
+                public void testTriangleWithFlexibleTypeAndSubstitution() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/primitiveOverrides/triangleWithFlexibleTypeAndSubstitution.kt");
+                }
+
+                @Test
+                @TestMetadata("triangleWithFlexibleTypeAndSubstitution2.kt")
+                public void testTriangleWithFlexibleTypeAndSubstitution2() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/primitiveOverrides/triangleWithFlexibleTypeAndSubstitution2.kt");
+                }
+
+                @Test
+                @TestMetadata("triangleWithFlexibleTypeAndSubstitution3.kt")
+                public void testTriangleWithFlexibleTypeAndSubstitution3() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/primitiveOverrides/triangleWithFlexibleTypeAndSubstitution3.kt");
+                }
+
+                @Test
+                @TestMetadata("triangleWithFlexibleTypeAndSubstitution4.kt")
+                public void testTriangleWithFlexibleTypeAndSubstitution4() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/primitiveOverrides/triangleWithFlexibleTypeAndSubstitution4.kt");
+                }
+
+                @Test
+                @TestMetadata("triangleWithFlexibleTypeAndSubstitution5.kt")
+                public void testTriangleWithFlexibleTypeAndSubstitution5() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/primitiveOverrides/triangleWithFlexibleTypeAndSubstitution5.kt");
+                }
+
+                @Test
+                @TestMetadata("triangleWithNotNullType.kt")
+                public void testTriangleWithNotNullType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/primitiveOverrides/triangleWithNotNullType.kt");
+                }
+
+                @Test
+                @TestMetadata("triangleWithNullableType.kt")
+                public void testTriangleWithNullableType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/primitiveOverrides/triangleWithNullableType.kt");
                 }
             }
 
@@ -24624,54 +24714,6 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
-            @TestMetadata("actualFakeOverride.kt")
-            public void testActualFakeOverride() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/multiplatform/actualFakeOverride.kt");
-            }
-
-            @Test
-            @TestMetadata("actualFakeOverrideVirtual.kt")
-            public void testActualFakeOverrideVirtual() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/multiplatform/actualFakeOverrideVirtual.kt");
-            }
-
-            @Test
-            @TestMetadata("actualFakeOverride_defaultParamsIncompatibility.kt")
-            public void testActualFakeOverride_defaultParamsIncompatibility() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/multiplatform/actualFakeOverride_defaultParamsIncompatibility.kt");
-            }
-
-            @Test
-            @TestMetadata("actualFakeOverride_paramsAreCompatibleViaSharedMethodWithDefaultParams.kt")
-            public void testActualFakeOverride_paramsAreCompatibleViaSharedMethodWithDefaultParams() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/multiplatform/actualFakeOverride_paramsAreCompatibleViaSharedMethodWithDefaultParams.kt");
-            }
-
-            @Test
-            @TestMetadata("actualFakeOverride_paramsAreCompatibleViaTransitiveSharedMethodWithDefaultParams.kt")
-            public void testActualFakeOverride_paramsAreCompatibleViaTransitiveSharedMethodWithDefaultParams() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/multiplatform/actualFakeOverride_paramsAreCompatibleViaTransitiveSharedMethodWithDefaultParams.kt");
-            }
-
-            @Test
-            @TestMetadata("actualFakeOverride_substitutionFakeOverride.kt")
-            public void testActualFakeOverride_substitutionFakeOverride() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/multiplatform/actualFakeOverride_substitutionFakeOverride.kt");
-            }
-
-            @Test
-            @TestMetadata("actualFakeOverride_transitiveFakeOverrides_compatible.kt")
-            public void testActualFakeOverride_transitiveFakeOverrides_compatible() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/multiplatform/actualFakeOverride_transitiveFakeOverrides_compatible.kt");
-            }
-
-            @Test
-            @TestMetadata("actualFakeOverride_transitiveFakeOverrides_incompatible.kt")
-            public void testActualFakeOverride_transitiveFakeOverrides_incompatible() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/multiplatform/actualFakeOverride_transitiveFakeOverrides_incompatible.kt");
-            }
-
-            @Test
             @TestMetadata("actualMissingConstructor.kt")
             public void testActualMissingConstructor() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/actualMissingConstructor.kt");
@@ -24764,18 +24806,6 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             @TestMetadata("checkNoActualForExpectInLastModule.kt")
             public void testCheckNoActualForExpectInLastModule() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/checkNoActualForExpectInLastModule.kt");
-            }
-
-            @Test
-            @TestMetadata("defaultParams_inheritanceByDelegation_negative.kt")
-            public void testDefaultParams_inheritanceByDelegation_negative() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/multiplatform/defaultParams_inheritanceByDelegation_negative.kt");
-            }
-
-            @Test
-            @TestMetadata("defaultParams_inheritanceByDelegation_positive.kt")
-            public void testDefaultParams_inheritanceByDelegation_positive() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/multiplatform/defaultParams_inheritanceByDelegation_positive.kt");
             }
 
             @Test
@@ -24881,18 +24911,6 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
-            @TestMetadata("implicitActualFakeOverride_AbstractMap.kt")
-            public void testImplicitActualFakeOverride_AbstractMap() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/multiplatform/implicitActualFakeOverride_AbstractMap.kt");
-            }
-
-            @Test
-            @TestMetadata("implicitActualFakeOverride_simple.kt")
-            public void testImplicitActualFakeOverride_simple() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/multiplatform/implicitActualFakeOverride_simple.kt");
-            }
-
-            @Test
             @TestMetadata("incDecOperatorsInExpectClass.kt")
             public void testIncDecOperatorsInExpectClass() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/incDecOperatorsInExpectClass.kt");
@@ -24953,27 +24971,9 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
-            @TestMetadata("manyImplMemberNotImplemented.kt")
-            public void testManyImplMemberNotImplemented() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/multiplatform/manyImplMemberNotImplemented.kt");
-            }
-
-            @Test
-            @TestMetadata("manyInterfacesMemberNotImplemented.kt")
-            public void testManyInterfacesMemberNotImplemented() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/multiplatform/manyInterfacesMemberNotImplemented.kt");
-            }
-
-            @Test
             @TestMetadata("modifierApplicability.kt")
             public void testModifierApplicability() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/modifierApplicability.kt");
-            }
-
-            @Test
-            @TestMetadata("multipleExpectInterfacesImplementation.kt")
-            public void testMultipleExpectInterfacesImplementation() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/multiplatform/multipleExpectInterfacesImplementation.kt");
             }
 
             @Test
@@ -26615,6 +26615,130 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 @TestMetadata("varPropertyAgainstJavaGetterAndNonFinalField.kt")
                 public void testVarPropertyAgainstJavaGetterAndNonFinalField() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/java/varPropertyAgainstJavaGetterAndNonFinalField.kt");
+                }
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/diagnostics/tests/multiplatform/scopes")
+            @TestDataPath("$PROJECT_ROOT")
+            public class Scopes {
+                @Test
+                @TestMetadata("actualAbstractClassWithAdditionalMembers.kt")
+                public void testActualAbstractClassWithAdditionalMembers() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/scopes/actualAbstractClassWithAdditionalMembers.kt");
+                }
+
+                @Test
+                @TestMetadata("actualFakeOverride.kt")
+                public void testActualFakeOverride() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/scopes/actualFakeOverride.kt");
+                }
+
+                @Test
+                @TestMetadata("actualFakeOverrideVirtual.kt")
+                public void testActualFakeOverrideVirtual() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/scopes/actualFakeOverrideVirtual.kt");
+                }
+
+                @Test
+                @TestMetadata("actualFakeOverride_defaultParamsIncompatibility.kt")
+                public void testActualFakeOverride_defaultParamsIncompatibility() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/scopes/actualFakeOverride_defaultParamsIncompatibility.kt");
+                }
+
+                @Test
+                @TestMetadata("actualFakeOverride_paramsAreCompatibleViaSharedMethodWithDefaultParams.kt")
+                public void testActualFakeOverride_paramsAreCompatibleViaSharedMethodWithDefaultParams() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/scopes/actualFakeOverride_paramsAreCompatibleViaSharedMethodWithDefaultParams.kt");
+                }
+
+                @Test
+                @TestMetadata("actualFakeOverride_paramsAreCompatibleViaTransitiveSharedMethodWithDefaultParams.kt")
+                public void testActualFakeOverride_paramsAreCompatibleViaTransitiveSharedMethodWithDefaultParams() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/scopes/actualFakeOverride_paramsAreCompatibleViaTransitiveSharedMethodWithDefaultParams.kt");
+                }
+
+                @Test
+                @TestMetadata("actualFakeOverride_substitutionFakeOverride.kt")
+                public void testActualFakeOverride_substitutionFakeOverride() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/scopes/actualFakeOverride_substitutionFakeOverride.kt");
+                }
+
+                @Test
+                @TestMetadata("actualFakeOverride_transitiveFakeOverrides_compatible.kt")
+                public void testActualFakeOverride_transitiveFakeOverrides_compatible() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/scopes/actualFakeOverride_transitiveFakeOverrides_compatible.kt");
+                }
+
+                @Test
+                @TestMetadata("actualFakeOverride_transitiveFakeOverrides_incompatible.kt")
+                public void testActualFakeOverride_transitiveFakeOverrides_incompatible() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/scopes/actualFakeOverride_transitiveFakeOverrides_incompatible.kt");
+                }
+
+                @Test
+                public void testAllFilesPresentInScopes() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform/scopes"), Pattern.compile("^(.+)\\.(kt|kts)$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("defaultParams_inheritanceByDelegation_negative.kt")
+                public void testDefaultParams_inheritanceByDelegation_negative() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/scopes/defaultParams_inheritanceByDelegation_negative.kt");
+                }
+
+                @Test
+                @TestMetadata("defaultParams_inheritanceByDelegation_positive.kt")
+                public void testDefaultParams_inheritanceByDelegation_positive() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/scopes/defaultParams_inheritanceByDelegation_positive.kt");
+                }
+
+                @Test
+                @TestMetadata("implicitActualFakeOverride_AbstractMap.kt")
+                public void testImplicitActualFakeOverride_AbstractMap() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/scopes/implicitActualFakeOverride_AbstractMap.kt");
+                }
+
+                @Test
+                @TestMetadata("implicitActualFakeOverride_simple.kt")
+                public void testImplicitActualFakeOverride_simple() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/scopes/implicitActualFakeOverride_simple.kt");
+                }
+
+                @Test
+                @TestMetadata("manyImplMemberNotImplemented.kt")
+                public void testManyImplMemberNotImplemented() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/scopes/manyImplMemberNotImplemented.kt");
+                }
+
+                @Test
+                @TestMetadata("manyInterfacesMemberNotImplemented.kt")
+                public void testManyInterfacesMemberNotImplemented() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/scopes/manyInterfacesMemberNotImplemented.kt");
+                }
+
+                @Test
+                @TestMetadata("mixedFunctionalTypesInSupertypes.kt")
+                public void testMixedFunctionalTypesInSupertypes() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/scopes/mixedFunctionalTypesInSupertypes.kt");
+                }
+
+                @Test
+                @TestMetadata("multipleDefaultsInhereted.kt")
+                public void testMultipleDefaultsInhereted() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/scopes/multipleDefaultsInhereted.kt");
+                }
+
+                @Test
+                @TestMetadata("multipleExpectInterfacesImplementation.kt")
+                public void testMultipleExpectInterfacesImplementation() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/scopes/multipleExpectInterfacesImplementation.kt");
+                }
+
+                @Test
+                @TestMetadata("scopeOfFunInterface.kt")
+                public void testScopeOfFunInterface() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/scopes/scopeOfFunInterface.kt");
                 }
             }
 

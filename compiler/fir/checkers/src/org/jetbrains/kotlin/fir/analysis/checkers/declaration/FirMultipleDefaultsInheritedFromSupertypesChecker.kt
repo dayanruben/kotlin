@@ -8,13 +8,18 @@ package org.jetbrains.kotlin.fir.analysis.checkers.declaration
 import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.collectOverriddenFunctionsWhere
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
+import org.jetbrains.kotlin.fir.analysis.checkers.processOverriddenFunctions
 import org.jetbrains.kotlin.fir.analysis.checkers.unsubstitutedScope
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.containingClassLookupTag
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
+import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
+import org.jetbrains.kotlin.fir.declarations.getSingleMatchedExpectForActualOrNull
+import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.declarations.utils.superConeTypes
 import org.jetbrains.kotlin.fir.isSubstitutionOverride
 import org.jetbrains.kotlin.fir.scopes.processAllFunctions
@@ -23,7 +28,21 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
 import org.jetbrains.kotlin.fir.unwrapSubstitutionOverrides
 import org.jetbrains.kotlin.name.Name
 
-object FirMultipleDefaultsInheritedFromSupertypesChecker : FirRegularClassChecker() {
+sealed class FirMultipleDefaultsInheritedFromSupertypesChecker(mppKind: MppCheckerKind) : FirRegularClassChecker(mppKind) {
+    object Regular : FirMultipleDefaultsInheritedFromSupertypesChecker(MppCheckerKind.Platform) {
+        override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+            if (declaration.isExpect) return
+            super.check(declaration, context, reporter)
+        }
+    }
+
+    object ForExpectClass : FirMultipleDefaultsInheritedFromSupertypesChecker(MppCheckerKind.Common) {
+        override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+            if (!declaration.isExpect) return
+            super.check(declaration, context, reporter)
+        }
+    }
+
     override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
         declaration.unsubstitutedScope(context).processAllFunctions {
             val originalIfSubstitutionOverride = it.unwrapSubstitutionOverrides()
@@ -42,9 +61,14 @@ object FirMultipleDefaultsInheritedFromSupertypesChecker : FirRegularClassChecke
         context: CheckerContext,
         reporter: DiagnosticReporter,
     ) {
-        val overriddenFunctions = function.collectOverriddenFunctionsWhere(mutableSetOf(), context) { overridden ->
+        val overriddenFunctions = mutableSetOf<FirNamedFunctionSymbol>()
+        function.processOverriddenFunctions(context) { overridden ->
+            // default values of actual functions are located in corresponding expect functions
+            val overriddenWithDefaults = overridden.getSingleMatchedExpectForActualOrNull() as? FirNamedFunctionSymbol ?: overridden
             // Substitution overrides copy default values from originals
-            !overridden.isSubstitutionOverride && overridden.valueParameterSymbols.any { it.hasDefaultValue }
+            if (!overriddenWithDefaults.isSubstitutionOverride && overriddenWithDefaults.valueParameterSymbols.any { it.hasDefaultValue }) {
+                overriddenFunctions += overriddenWithDefaults
+            }
         }
         val isExplicitOverride = function.origin == FirDeclarationOrigin.Source
 

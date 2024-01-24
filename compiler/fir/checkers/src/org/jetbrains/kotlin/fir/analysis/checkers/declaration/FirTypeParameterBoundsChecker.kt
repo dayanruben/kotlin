@@ -13,13 +13,29 @@ import org.jetbrains.kotlin.fir.analysis.checkers.*
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.declarations.utils.isOverride
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.types.model.KotlinTypeMarker
 import org.jetbrains.kotlin.types.model.TypeCheckerProviderContext
 
-object FirTypeParameterBoundsChecker : FirTypeParameterChecker() {
+sealed class FirTypeParameterBoundsChecker(mppKind: MppCheckerKind) : FirTypeParameterChecker(mppKind) {
+    object Regular : FirTypeParameterBoundsChecker(MppCheckerKind.Platform) {
+        override fun check(declaration: FirTypeParameter, context: CheckerContext, reporter: DiagnosticReporter) {
+            val containingDeclaration = context.containingDeclarations.lastOrNull() ?: return
+            if ((containingDeclaration as? FirMemberDeclaration)?.isExpect == true) return
+            check(declaration, containingDeclaration, context, reporter)
+        }
+    }
+
+    object ForExpectClass : FirTypeParameterBoundsChecker(MppCheckerKind.Common) {
+        override fun check(declaration: FirTypeParameter, context: CheckerContext, reporter: DiagnosticReporter) {
+            val containingDeclaration = context.containingDeclarations.lastOrNull() ?: return
+            if ((containingDeclaration as? FirMemberDeclaration)?.isExpect != true) return
+            check(declaration, containingDeclaration, context, reporter)
+        }
+    }
 
     private val classKinds = setOf(
         ClassKind.CLASS,
@@ -27,8 +43,12 @@ object FirTypeParameterBoundsChecker : FirTypeParameterChecker() {
         ClassKind.OBJECT
     )
 
-    override fun check(declaration: FirTypeParameter, context: CheckerContext, reporter: DiagnosticReporter) {
-        val containingDeclaration = context.containingDeclarations.lastOrNull() ?: return
+    protected fun check(
+        declaration: FirTypeParameter,
+        containingDeclaration: FirDeclaration,
+        context: CheckerContext,
+        reporter: DiagnosticReporter,
+    ) {
         if (containingDeclaration is FirConstructor) return
 
         checkFinalUpperBounds(declaration, containingDeclaration, context, reporter)

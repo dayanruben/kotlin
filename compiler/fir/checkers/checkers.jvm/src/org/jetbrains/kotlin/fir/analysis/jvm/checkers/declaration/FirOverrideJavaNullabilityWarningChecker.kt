@@ -7,11 +7,13 @@ package org.jetbrains.kotlin.fir.analysis.jvm.checkers.declaration
 
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirAbstractOverrideChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.unsubstitutedScope
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.java.enhancement.EnhancedForWarningConeSubstitutor
 import org.jetbrains.kotlin.fir.scopes.*
 import org.jetbrains.kotlin.fir.scopes.impl.FirFakeOverrideGenerator
@@ -23,7 +25,21 @@ import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.fir.types.typeContext
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
-object FirOverrideJavaNullabilityWarningChecker : FirAbstractOverrideChecker() {
+sealed class FirOverrideJavaNullabilityWarningChecker(mppKind: MppCheckerKind) : FirAbstractOverrideChecker(mppKind) {
+    object Regular : FirOverrideJavaNullabilityWarningChecker(MppCheckerKind.Platform) {
+        override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+            if (declaration.isExpect) return
+            super.check(declaration, context, reporter)
+        }
+    }
+
+    object ForExpectClass : FirOverrideJavaNullabilityWarningChecker(MppCheckerKind.Common) {
+        override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+            if (!declaration.isExpect) return
+            super.check(declaration, context, reporter)
+        }
+    }
+
     override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
         val substitutor = EnhancedForWarningConeSubstitutor(context.session.typeContext)
         val scope = declaration.unsubstitutedScope(context)

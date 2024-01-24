@@ -376,6 +376,24 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         }
 
         @Test
+        @TestMetadata("expressionsInQaSelectorsCornerCases.kt")
+        public void testExpressionsInQaSelectorsCornerCases() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/expressionsInQaSelectorsCornerCases.kt");
+        }
+
+        @Test
+        @TestMetadata("expressionsInQaSelectorsReceiverConversion.kt")
+        public void testExpressionsInQaSelectorsReceiverConversion() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/expressionsInQaSelectorsReceiverConversion.kt");
+        }
+
+        @Test
+        @TestMetadata("expressionsInQaSelectorsWithElvis.kt")
+        public void testExpressionsInQaSelectorsWithElvis() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/expressionsInQaSelectorsWithElvis.kt");
+        }
+
+        @Test
         @TestMetadata("ExtensionCallInvoke.kt")
         public void testExtensionCallInvoke() throws Exception {
             runTest("compiler/testData/diagnostics/tests/ExtensionCallInvoke.kt");
@@ -427,6 +445,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         @TestMetadata("finalSupertype.kt")
         public void testFinalSupertype() throws Exception {
             runTest("compiler/testData/diagnostics/tests/finalSupertype.kt");
+        }
+
+        @Test
+        @TestMetadata("fixExpressionsInQaSelectors.kt")
+        public void testFixExpressionsInQaSelectors() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/fixExpressionsInQaSelectors.kt");
         }
 
         @Test
@@ -21351,6 +21375,18 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             }
 
             @Test
+            @TestMetadata("callingOuterGenericClassConstructorWithSelfTypes.kt")
+            public void testCallingOuterGenericClassConstructorWithSelfTypes() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inner/callingOuterGenericClassConstructorWithSelfTypes.kt");
+            }
+
+            @Test
+            @TestMetadata("callingOuterGenericClassConstructorWithSelfTypesInitial.kt")
+            public void testCallingOuterGenericClassConstructorWithSelfTypesInitial() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inner/callingOuterGenericClassConstructorWithSelfTypesInitial.kt");
+            }
+
+            @Test
             @TestMetadata("classesInClassObjectHeader.kt")
             public void testClassesInClassObjectHeader() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inner/classesInClassObjectHeader.kt");
@@ -21936,6 +21972,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             @TestMetadata("integerNotNullable.kt")
             public void testIntegerNotNullable() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/j+k/integerNotNullable.kt");
+            }
+
+            @Test
+            @TestMetadata("intersectionWithJavaVoidNothing.kt")
+            public void testIntersectionWithJavaVoidNothing() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/j+k/intersectionWithJavaVoidNothing.kt");
             }
 
             @Test
@@ -22691,6 +22733,54 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                 @TestMetadata("specializedMap.kt")
                 public void testSpecializedMap() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/j+k/primitiveOverrides/specializedMap.kt");
+                }
+
+                @Test
+                @TestMetadata("triangleWithFlexibleType.kt")
+                public void testTriangleWithFlexibleType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/primitiveOverrides/triangleWithFlexibleType.kt");
+                }
+
+                @Test
+                @TestMetadata("triangleWithFlexibleTypeAndSubstitution.kt")
+                public void testTriangleWithFlexibleTypeAndSubstitution() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/primitiveOverrides/triangleWithFlexibleTypeAndSubstitution.kt");
+                }
+
+                @Test
+                @TestMetadata("triangleWithFlexibleTypeAndSubstitution2.kt")
+                public void testTriangleWithFlexibleTypeAndSubstitution2() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/primitiveOverrides/triangleWithFlexibleTypeAndSubstitution2.kt");
+                }
+
+                @Test
+                @TestMetadata("triangleWithFlexibleTypeAndSubstitution3.kt")
+                public void testTriangleWithFlexibleTypeAndSubstitution3() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/primitiveOverrides/triangleWithFlexibleTypeAndSubstitution3.kt");
+                }
+
+                @Test
+                @TestMetadata("triangleWithFlexibleTypeAndSubstitution4.kt")
+                public void testTriangleWithFlexibleTypeAndSubstitution4() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/primitiveOverrides/triangleWithFlexibleTypeAndSubstitution4.kt");
+                }
+
+                @Test
+                @TestMetadata("triangleWithFlexibleTypeAndSubstitution5.kt")
+                public void testTriangleWithFlexibleTypeAndSubstitution5() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/primitiveOverrides/triangleWithFlexibleTypeAndSubstitution5.kt");
+                }
+
+                @Test
+                @TestMetadata("triangleWithNotNullType.kt")
+                public void testTriangleWithNotNullType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/primitiveOverrides/triangleWithNotNullType.kt");
+                }
+
+                @Test
+                @TestMetadata("triangleWithNullableType.kt")
+                public void testTriangleWithNullableType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/primitiveOverrides/triangleWithNullableType.kt");
                 }
             }
 

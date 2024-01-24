@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirOptInUsageBaseChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirOptInUsageBaseChecker.Experimentality
@@ -22,10 +23,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.analysis.overridesBackwardCompatibilityHelper
 import org.jetbrains.kotlin.fir.containingClassLookupTag
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.declarations.utils.isFinal
-import org.jetbrains.kotlin.fir.declarations.utils.isOverride
-import org.jetbrains.kotlin.fir.declarations.utils.modality
-import org.jetbrains.kotlin.fir.declarations.utils.visibility
+import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.originalOrSelf
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
@@ -34,15 +32,18 @@ import org.jetbrains.kotlin.fir.scopes.FirTypeScope
 import org.jetbrains.kotlin.fir.scopes.impl.toConeType
 import org.jetbrains.kotlin.fir.scopes.retrieveDirectOverriddenOf
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
-import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.symbols.impl.*
-import org.jetbrains.kotlin.fir.types.*
+import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
+import org.jetbrains.kotlin.fir.types.ConeErrorType
+import org.jetbrains.kotlin.fir.types.ConeKotlinType
+import org.jetbrains.kotlin.fir.types.coneType
+import org.jetbrains.kotlin.fir.types.typeContext
 import org.jetbrains.kotlin.fir.visibilityChecker
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.types.TypeCheckerState
 
-abstract class FirAbstractOverrideChecker : FirClassChecker() {
+abstract class FirAbstractOverrideChecker(mppKind: MppCheckerKind) : FirClassChecker(mppKind) {
     private fun ConeKotlinType.substituteAllTypeParameters(
         overrideDeclaration: FirCallableSymbol<*>,
         baseDeclaration: FirCallableSymbol<*>,
@@ -103,7 +104,21 @@ abstract class FirAbstractOverrideChecker : FirClassChecker() {
     }
 }
 
-object FirOverrideChecker : FirAbstractOverrideChecker() {
+sealed class FirOverrideChecker(mppKind: MppCheckerKind) : FirAbstractOverrideChecker(mppKind) {
+    object Regular : FirOverrideChecker(MppCheckerKind.Platform) {
+        override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+            if (declaration.isExpect) return
+            super.check(declaration, context, reporter)
+        }
+    }
+
+    object ForExpectClass : FirOverrideChecker(MppCheckerKind.Common) {
+        override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+            if (!declaration.isExpect) return
+            super.check(declaration, context, reporter)
+        }
+    }
+
     override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
         val typeCheckerState = context.session.typeContext.newTypeCheckerState(
             errorTypesEqualToAnything = false,

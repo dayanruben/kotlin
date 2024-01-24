@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.hasModifier
 import org.jetbrains.kotlin.fir.analysis.checkers.isRecursiveValueClassType
@@ -32,12 +33,27 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 
-object FirValueClassDeclarationChecker : FirRegularClassChecker() {
+sealed class FirValueClassDeclarationChecker(mppKind: MppCheckerKind) : FirRegularClassChecker(mppKind) {
+    object Regular : FirValueClassDeclarationChecker(MppCheckerKind.Platform) {
+        override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+            if (declaration.isExpect) return
+            super.check(declaration, context, reporter)
+        }
+    }
 
-    private val boxAndUnboxNames = setOf("box", "unbox")
-    private val equalsAndHashCodeNames = setOf("equals", "hashCode")
-    private val javaLangFqName = FqName("java.lang")
-    private val cloneableFqName = FqName("Cloneable")
+    object ForExpectClass : FirValueClassDeclarationChecker(MppCheckerKind.Common) {
+        override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+            if (!declaration.isExpect) return
+            super.check(declaration, context, reporter)
+        }
+    }
+
+    companion object {
+        private val boxAndUnboxNames = setOf("box", "unbox")
+        private val equalsAndHashCodeNames = setOf("equals", "hashCode")
+        private val javaLangFqName = FqName("java.lang")
+        private val cloneableFqName = FqName("Cloneable")
+    }
 
     override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
         if (!declaration.symbol.isInlineOrValueClass()) {
