@@ -2408,6 +2408,26 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/builderInference/lambdaParameterHasTVType.kt");
         }
 
+        @TestMetadata("pcaRootIsDelegatedConstructorCall.kt")
+        public void testPcaRootIsDelegatedConstructorCall() throws Exception {
+            runTest("compiler/testData/codegen/box/builderInference/pcaRootIsDelegatedConstructorCall.kt");
+        }
+
+        @TestMetadata("pclaRootIsElvisSynthetic.kt")
+        public void testPclaRootIsElvisSynthetic() throws Exception {
+            runTest("compiler/testData/codegen/box/builderInference/pclaRootIsElvisSynthetic.kt");
+        }
+
+        @TestMetadata("pclaRootIsIfWhenSyntheticCall.kt")
+        public void testPclaRootIsIfWhenSyntheticCall() throws Exception {
+            runTest("compiler/testData/codegen/box/builderInference/pclaRootIsIfWhenSyntheticCall.kt");
+        }
+
+        @TestMetadata("pclaRootIsTrySyntheticCall.kt")
+        public void testPclaRootIsTrySyntheticCall() throws Exception {
+            runTest("compiler/testData/codegen/box/builderInference/pclaRootIsTrySyntheticCall.kt");
+        }
+
         @TestMetadata("receiverUsesOuterTVButReturnTypeIsProper.kt")
         public void testReceiverUsesOuterTVButReturnTypeIsProper() throws Exception {
             runTest("compiler/testData/codegen/box/builderInference/receiverUsesOuterTVButReturnTypeIsProper.kt");
@@ -16052,6 +16072,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("kt49371.kt")
         public void testKt49371() throws Exception {
             runTest("compiler/testData/codegen/box/fakeOverride/kt49371.kt");
+        }
+
+        @TestMetadata("kt65116.kt")
+        public void testKt65116() throws Exception {
+            runTest("compiler/testData/codegen/box/fakeOverride/kt65116.kt");
         }
 
         @TestMetadata("methodOfAnyFromInterface.kt")

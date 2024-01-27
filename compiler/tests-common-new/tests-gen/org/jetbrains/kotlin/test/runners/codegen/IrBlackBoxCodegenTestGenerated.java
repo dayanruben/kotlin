@@ -2762,6 +2762,30 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("pcaRootIsDelegatedConstructorCall.kt")
+        public void testPcaRootIsDelegatedConstructorCall() throws Exception {
+            runTest("compiler/testData/codegen/box/builderInference/pcaRootIsDelegatedConstructorCall.kt");
+        }
+
+        @Test
+        @TestMetadata("pclaRootIsElvisSynthetic.kt")
+        public void testPclaRootIsElvisSynthetic() throws Exception {
+            runTest("compiler/testData/codegen/box/builderInference/pclaRootIsElvisSynthetic.kt");
+        }
+
+        @Test
+        @TestMetadata("pclaRootIsIfWhenSyntheticCall.kt")
+        public void testPclaRootIsIfWhenSyntheticCall() throws Exception {
+            runTest("compiler/testData/codegen/box/builderInference/pclaRootIsIfWhenSyntheticCall.kt");
+        }
+
+        @Test
+        @TestMetadata("pclaRootIsTrySyntheticCall.kt")
+        public void testPclaRootIsTrySyntheticCall() throws Exception {
+            runTest("compiler/testData/codegen/box/builderInference/pclaRootIsTrySyntheticCall.kt");
+        }
+
+        @Test
         @TestMetadata("receiverUsesOuterTVButReturnTypeIsProper.kt")
         public void testReceiverUsesOuterTVButReturnTypeIsProper() throws Exception {
             runTest("compiler/testData/codegen/box/builderInference/receiverUsesOuterTVButReturnTypeIsProper.kt");
@@ -19267,6 +19291,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("kt49371.kt")
         public void testKt49371() throws Exception {
             runTest("compiler/testData/codegen/box/fakeOverride/kt49371.kt");
+        }
+
+        @Test
+        @TestMetadata("kt65116.kt")
+        public void testKt65116() throws Exception {
+            runTest("compiler/testData/codegen/box/fakeOverride/kt65116.kt");
         }
 
         @Test

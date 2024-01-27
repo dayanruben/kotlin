@@ -10682,6 +10682,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                 }
 
                 @Test
+                @TestMetadata("lambdaDelegate.kt")
+                public void testLambdaDelegate() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/lambdaDelegate.kt");
+                }
+
+                @Test
                 @TestMetadata("lambdaWithMultipleReturns.kt")
                 public void testLambdaWithMultipleReturns() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/lambdaWithMultipleReturns.kt");
@@ -16924,6 +16930,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             @TestMetadata("kt62609.kt")
             public void testKt62609() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/kt62609.kt");
+            }
+
+            @Test
+            @TestMetadata("kt63577.kt")
+            public void testKt63577() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/kt63577.kt");
             }
 
             @Test
@@ -38212,6 +38224,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             @TestMetadata("kt56283.kt")
             public void testKt56283() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/visibility/kt56283.kt");
+            }
+
+            @Test
+            @TestMetadata("kt63434.kt")
+            public void testKt63434() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/visibility/kt63434.kt");
             }
 
             @Test

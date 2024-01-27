@@ -37,7 +37,7 @@ class ProcessStreams(
     private val ignoreIOErrors = AtomicBoolean(false)
     private val stdin = jobLauncher {
         stdin.apply {
-            copyStreams(this, process.outputStream)
+            copyStreams(null, this, process.outputStream)
             close()
         }
         process.outputStream.close()
@@ -45,7 +45,7 @@ class ProcessStreams(
     private val stdout = jobLauncher {
         stdout.apply {
             logger.debugKt65113("Will copy from process.inputStream to stdout")
-            copyStreams(process.inputStream, this)
+            copyStreams(logger, process.inputStream, this)
             logger.debugKt65113("Will close stdout")
             close()
         }
@@ -55,19 +55,30 @@ class ProcessStreams(
     }
     private val stderr = jobLauncher {
         stderr.apply {
-            logger.debugKt65113("Will copy from process.errorStream to stderr")
-            copyStreams(process.errorStream, this)
-            logger.debugKt65113("Will close stderr")
+            copyStreams(null, process.errorStream, this)
             close()
         }
-        logger.debugKt65113("Will close process.errorStream")
         process.errorStream.close()
-        logger.debugKt65113("Finished stderr job")
     }
 
-    private fun copyStreams(from: InputStream, to: OutputStream) {
+    private fun copyStreams(logger: Logger?, from: InputStream, to: OutputStream) {
         try {
-            from.copyTo(to)
+            if (logger == null || !HostManager.hostIsMingw) {
+                from.copyTo(to)
+                return
+            }
+            // TODO(KT-65113): Debug where does the hang happen: infinite loop in copyTo, or inside read()
+            val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+            logger.debugKt65113("Will do initial read()")
+            var bytes = from.read(buffer)
+            logger.debugKt65113("Read $bytes of ${buffer.size} during initial read()")
+            while (bytes >= 0) {
+                logger.debugKt65113("Will write to output stream")
+                to.write(buffer, 0, bytes)
+                logger.debugKt65113("Will do next read()")
+                bytes = from.read(buffer)
+                logger.debugKt65113("Read $bytes")
+            }
         } catch(e: IOException) {
             if (ignoreIOErrors.get())
                 return
@@ -77,14 +88,12 @@ class ProcessStreams(
 
     suspend fun drain() {
         // First finish passing input into the process.
-        logger.debugKt65113("Will join stdin")
         stdin.join()
         // Now receive all the output in whatever order.
         logger.debugKt65113("Will join stdout")
         stdout.join()
-        logger.debugKt65113("Will join stderr")
+        logger.debugKt65113("Did join stdout")
         stderr.join()
-        logger.debugKt65113("Drained the streams")
     }
 
     fun cancel() {
@@ -142,18 +151,47 @@ private fun <T> ProcessBuilder.scoped(logger: Logger, block: suspend CoroutineSc
         val result = runBlocking(Dispatchers.IO) {
             block(process)
         }
-        logger.debugKt65113("Successfully finished executing the process")
         result
     } finally {
-        logger.debugKt65113("Will destroy the process")
         // Make sure the process is killed even if the current thread was interrupted.
         // e.g. gradle task execution was cancelled by the user pressing ^C
         process.destroyForcibly()
-        logger.debugKt65113("Will deregister the process")
         // The process is dead, no need to ensure its destruction during the shutdown.
         ProcessKiller.deregister(process)
-        logger.debugKt65113("Finished executing altogether")
     }
+}
+
+private class SleeperWithBackoff {
+    // Start with exponential backoff, then try 150ms for a while, and finally settle on a second.
+    private val backoffMilliseconds = longArrayOf(10, 20, 40, 80, 150, 150, 150, 150, 150)
+    private val maxBackoffMilliseconds = 1000L
+    private var nextIndex = 0
+
+    private val nextBackoffMilliseconds: Long
+        get() = backoffMilliseconds.getOrNull(nextIndex++) ?: maxBackoffMilliseconds
+
+    fun sleep() {
+        Thread.sleep(nextBackoffMilliseconds)
+    }
+}
+
+private fun Process.waitFor(timeout: Duration): Boolean {
+    if (!HostManager.hostIsMingw)
+        return waitFor(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+    // KT-65113: Looks like there's a race in waitFor implementation for Windows. It can wait for the entire `timeout` but the process'
+    // exitValue would be 0.
+    if (!isAlive)
+        return true
+    if (!timeout.isPositive())
+        return false
+    val deadline = TimeSource.Monotonic.markNow() + timeout
+    val sleeper = SleeperWithBackoff()
+    do {
+        sleeper.sleep()
+        if (!isAlive)
+            break
+    } while (deadline.hasNotPassedNow())
+    return !isAlive
 }
 
 /**
@@ -181,7 +219,7 @@ class HostExecutor : Executor {
         }.scoped(logger) { process ->
             val streams = pumpStreams(logger, process, request.stdin, request.stdout, request.stderr)
             val (isTimeout, duration) = measureTimedValue {
-                !process.waitFor(request.timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+                !process.waitFor(request.timeout)
             }
             if (isTimeout) {
                 logger.warning("Timeout running $commandLine in $duration")

@@ -278,6 +278,26 @@ public class FirIdeDependentAnalysisScriptSourceModuleReferenceResolveTestGenera
         }
 
         @Nested
+        @TestMetadata("analysis/analysis-api/testData/referenceResolve/kDoc/extensions")
+        @TestDataPath("$PROJECT_ROOT")
+        public class Extensions {
+            @Test
+            public void testAllFilesPresentInExtensions() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/referenceResolve/kDoc/extensions"), Pattern.compile("^(.+)\\.kts$"), null, true);
+            }
+
+            @Nested
+            @TestMetadata("analysis/analysis-api/testData/referenceResolve/kDoc/extensions/generics")
+            @TestDataPath("$PROJECT_ROOT")
+            public class Generics {
+                @Test
+                public void testAllFilesPresentInGenerics() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/referenceResolve/kDoc/extensions/generics"), Pattern.compile("^(.+)\\.kts$"), null, true);
+                }
+            }
+        }
+
+        @Nested
         @TestMetadata("analysis/analysis-api/testData/referenceResolve/kDoc/imports")
         @TestDataPath("$PROJECT_ROOT")
         public class Imports {
@@ -304,6 +324,16 @@ public class FirIdeDependentAnalysisScriptSourceModuleReferenceResolveTestGenera
             @Test
             public void testAllFilesPresentInLocalContext() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/referenceResolve/kDoc/localContext"), Pattern.compile("^(.+)\\.kts$"), null, true);
+            }
+        }
+
+        @Nested
+        @TestMetadata("analysis/analysis-api/testData/referenceResolve/kDoc/packages")
+        @TestDataPath("$PROJECT_ROOT")
+        public class Packages {
+            @Test
+            public void testAllFilesPresentInPackages() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/referenceResolve/kDoc/packages"), Pattern.compile("^(.+)\\.kts$"), null, true);
             }
         }
 
