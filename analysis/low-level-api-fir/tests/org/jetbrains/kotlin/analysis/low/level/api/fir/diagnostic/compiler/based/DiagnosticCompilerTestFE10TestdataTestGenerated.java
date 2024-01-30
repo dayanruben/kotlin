@@ -11610,6 +11610,22 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         }
 
         @Nested
+        @TestMetadata("compiler/testData/diagnostics/tests/destructuring")
+        @TestDataPath("$PROJECT_ROOT")
+        public class Destructuring {
+            @Test
+            public void testAllFilesPresentInDestructuring() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/destructuring"), Pattern.compile("^(.+)\\.(kt|kts)$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+            }
+
+            @Test
+            @TestMetadata("delegationInDestructuring.kt")
+            public void testDelegationInDestructuring() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/destructuring/delegationInDestructuring.kt");
+            }
+        }
+
+        @Nested
         @TestMetadata("compiler/testData/diagnostics/tests/duplicateJvmSignature")
         @TestDataPath("$PROJECT_ROOT")
         public class DuplicateJvmSignature {
@@ -24762,6 +24778,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
+            @TestMetadata("actualWithoutExpectWhenExpectIsFakeOverride.kt")
+            public void testActualWithoutExpectWhenExpectIsFakeOverride() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/actualWithoutExpectWhenExpectIsFakeOverride.kt");
+            }
+
+            @Test
             public void testAllFilesPresentInMultiplatform() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform"), Pattern.compile("^(.+)\\.(kt|kts)$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
             }
@@ -24836,6 +24858,24 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             @TestMetadata("expectActualClassesAreInBeta_suppressWarningWithLv.kt")
             public void testExpectActualClassesAreInBeta_suppressWarningWithLv() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/expectActualClassesAreInBeta_suppressWarningWithLv.kt");
+            }
+
+            @Test
+            @TestMetadata("expectActualInTheSameModule.kt")
+            public void testExpectActualInTheSameModule() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/expectActualInTheSameModule.kt");
+            }
+
+            @Test
+            @TestMetadata("expectActualInTheSameModuleDifferentFiles.kt")
+            public void testExpectActualInTheSameModuleDifferentFiles() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/expectActualInTheSameModuleDifferentFiles.kt");
+            }
+
+            @Test
+            @TestMetadata("expectActualMainInTheSameModuleDifferentFiles.kt")
+            public void testExpectActualMainInTheSameModuleDifferentFiles() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/expectActualMainInTheSameModuleDifferentFiles.kt");
             }
 
             @Test

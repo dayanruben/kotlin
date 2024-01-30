@@ -6032,6 +6032,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             }
 
             @Test
+            @TestMetadata("closuresAsSingleton.kt")
+            public void testClosuresAsSingleton() throws Exception {
+                runTest("compiler/testData/codegen/box/closures/closuresAsSingleton.kt");
+            }
+
+            @Test
             @TestMetadata("crossinlineLocalDeclaration.kt")
             public void testCrossinlineLocalDeclaration() throws Exception {
                 runTest("compiler/testData/codegen/box/closures/crossinlineLocalDeclaration.kt");
@@ -16078,6 +16084,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             @TestMetadata("continueAndOuterFinally.kt")
             public void testContinueAndOuterFinally() throws Exception {
                 runTest("compiler/testData/codegen/box/finally/continueAndOuterFinally.kt");
+            }
+
+            @Test
+            @TestMetadata("decrementInFinally.kt")
+            public void testDecrementInFinally() throws Exception {
+                runTest("compiler/testData/codegen/box/finally/decrementInFinally.kt");
             }
 
             @Test
