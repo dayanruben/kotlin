@@ -4161,6 +4161,11 @@ internal class RedundantLabelWarningImpl(
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtLabelReferenceExpression>(firDiagnostic, token), KtFirDiagnostic.RedundantLabelWarning
 
+internal class MultipleLabelsAreForbiddenImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtLabelReferenceExpression>(firDiagnostic, token), KtFirDiagnostic.MultipleLabelsAreForbidden
+
 internal class DeprecatedAccessToEnumEntryCompanionPropertyImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
@@ -4275,6 +4280,14 @@ internal class WrongNullabilityForJavaOverrideImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.WrongNullabilityForJavaOverride
+
+internal class AccidentalOverrideClashByJvmSignatureImpl(
+    override val hidden: KtFunctionLikeSymbol,
+    override val overrideDescription: String,
+    override val regular: KtFunctionLikeSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtNamedFunction>(firDiagnostic, token), KtFirDiagnostic.AccidentalOverrideClashByJvmSignature
 
 internal class JavaTypeMismatchImpl(
     override val expectedType: KtType,

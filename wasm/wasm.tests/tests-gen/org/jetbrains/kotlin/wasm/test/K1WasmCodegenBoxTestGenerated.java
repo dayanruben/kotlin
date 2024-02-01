@@ -11866,6 +11866,12 @@ public class K1WasmCodegenBoxTestGenerated extends AbstractK1WasmCodegenBoxTest 
         }
 
         @Test
+        @TestMetadata("callableReferenceAsSecondArgumentOfDelegate.kt")
+        public void testCallableReferenceAsSecondArgumentOfDelegate() throws Exception {
+            runTest("compiler/testData/codegen/box/delegatedProperty/callableReferenceAsSecondArgumentOfDelegate.kt");
+        }
+
+        @Test
         @TestMetadata("capturePropertyInClosure.kt")
         public void testCapturePropertyInClosure() throws Exception {
             runTest("compiler/testData/codegen/box/delegatedProperty/capturePropertyInClosure.kt");
@@ -26245,6 +26251,12 @@ public class K1WasmCodegenBoxTestGenerated extends AbstractK1WasmCodegenBoxTest 
         @TestMetadata("rangeTo.kt")
         public void testRangeTo() throws Exception {
             runTest("compiler/testData/codegen/box/primitiveTypes/rangeTo.kt");
+        }
+
+        @Test
+        @TestMetadata("reassignDestructured.kt")
+        public void testReassignDestructured() throws Exception {
+            runTest("compiler/testData/codegen/box/primitiveTypes/reassignDestructured.kt");
         }
 
         @Test

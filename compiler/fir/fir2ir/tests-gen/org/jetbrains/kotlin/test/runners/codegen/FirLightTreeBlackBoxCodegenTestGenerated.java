@@ -15790,6 +15790,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
         }
 
         @Test
+        @TestMetadata("callableReferenceAsSecondArgumentOfDelegate.kt")
+        public void testCallableReferenceAsSecondArgumentOfDelegate() throws Exception {
+            runTest("compiler/testData/codegen/box/delegatedProperty/callableReferenceAsSecondArgumentOfDelegate.kt");
+        }
+
+        @Test
         @TestMetadata("capturePropertyInClosure.kt")
         public void testCapturePropertyInClosure() throws Exception {
             runTest("compiler/testData/codegen/box/delegatedProperty/capturePropertyInClosure.kt");
@@ -16099,6 +16105,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
         @TestMetadata("twoPropByOneDelegete.kt")
         public void testTwoPropByOneDelegete() throws Exception {
             runTest("compiler/testData/codegen/box/delegatedProperty/twoPropByOneDelegete.kt");
+        }
+
+        @Test
+        @TestMetadata("typeParameterInDelegatedProperty.kt")
+        public void testTypeParameterInDelegatedProperty() throws Exception {
+            runTest("compiler/testData/codegen/box/delegatedProperty/typeParameterInDelegatedProperty.kt");
         }
 
         @Test
@@ -19285,6 +19297,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
         @TestMetadata("intersectionOverrideBetweenValAndVar.kt")
         public void testIntersectionOverrideBetweenValAndVar() throws Exception {
             runTest("compiler/testData/codegen/box/fakeOverride/intersectionOverrideBetweenValAndVar.kt");
+        }
+
+        @Test
+        @TestMetadata("javaInheritsKotlinIntersectionOverride.kt")
+        public void testJavaInheritsKotlinIntersectionOverride() throws Exception {
+            runTest("compiler/testData/codegen/box/fakeOverride/javaInheritsKotlinIntersectionOverride.kt");
         }
 
         @Test
@@ -37993,6 +38011,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
         @TestMetadata("rangeTo.kt")
         public void testRangeTo() throws Exception {
             runTest("compiler/testData/codegen/box/primitiveTypes/rangeTo.kt");
+        }
+
+        @Test
+        @TestMetadata("reassignDestructured.kt")
+        public void testReassignDestructured() throws Exception {
+            runTest("compiler/testData/codegen/box/primitiveTypes/reassignDestructured.kt");
         }
 
         @Test

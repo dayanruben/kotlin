@@ -13005,6 +13005,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/delegatedProperty/beforeDeclarationContainerOptimization.kt");
         }
 
+        @TestMetadata("callableReferenceAsSecondArgumentOfDelegate.kt")
+        public void testCallableReferenceAsSecondArgumentOfDelegate() throws Exception {
+            runTest("compiler/testData/codegen/box/delegatedProperty/callableReferenceAsSecondArgumentOfDelegate.kt");
+        }
+
         @TestMetadata("capturePropertyInClosure.kt")
         public void testCapturePropertyInClosure() throws Exception {
             runTest("compiler/testData/codegen/box/delegatedProperty/capturePropertyInClosure.kt");
@@ -13258,6 +13263,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("twoPropByOneDelegete.kt")
         public void testTwoPropByOneDelegete() throws Exception {
             runTest("compiler/testData/codegen/box/delegatedProperty/twoPropByOneDelegete.kt");
+        }
+
+        @TestMetadata("typeParameterInDelegatedProperty.kt")
+        public void testTypeParameterInDelegatedProperty() throws Exception {
+            runTest("compiler/testData/codegen/box/delegatedProperty/typeParameterInDelegatedProperty.kt");
         }
 
         @TestMetadata("useKPropertyLater.kt")
@@ -16067,6 +16077,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("intersectionOverrideBetweenValAndVar.kt")
         public void testIntersectionOverrideBetweenValAndVar() throws Exception {
             runTest("compiler/testData/codegen/box/fakeOverride/intersectionOverrideBetweenValAndVar.kt");
+        }
+
+        @TestMetadata("javaInheritsKotlinIntersectionOverride.kt")
+        public void testJavaInheritsKotlinIntersectionOverride() throws Exception {
+            runTest("compiler/testData/codegen/box/fakeOverride/javaInheritsKotlinIntersectionOverride.kt");
         }
 
         @TestMetadata("kjkWithPackagePrivate.kt")
@@ -31895,6 +31910,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("rangeTo.kt")
         public void testRangeTo() throws Exception {
             runTest("compiler/testData/codegen/box/primitiveTypes/rangeTo.kt");
+        }
+
+        @TestMetadata("reassignDestructured.kt")
+        public void testReassignDestructured() throws Exception {
+            runTest("compiler/testData/codegen/box/primitiveTypes/reassignDestructured.kt");
         }
 
         @TestMetadata("stringEqualsHashCodeToString.kt")

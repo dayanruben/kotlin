@@ -3450,6 +3450,10 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = RedundantLabelWarning::class
     }
 
+    interface MultipleLabelsAreForbidden : KtFirDiagnostic<KtLabelReferenceExpression> {
+        override val diagnosticClass get() = MultipleLabelsAreForbidden::class
+    }
+
     interface DeprecatedAccessToEnumEntryCompanionProperty : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = DeprecatedAccessToEnumEntryCompanionProperty::class
     }
@@ -3542,6 +3546,13 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = WrongNullabilityForJavaOverride::class
         val override: KtCallableSymbol
         val base: KtCallableSymbol
+    }
+
+    interface AccidentalOverrideClashByJvmSignature : KtFirDiagnostic<KtNamedFunction> {
+        override val diagnosticClass get() = AccidentalOverrideClashByJvmSignature::class
+        val hidden: KtFunctionLikeSymbol
+        val overrideDescription: String
+        val regular: KtFunctionLikeSymbol
     }
 
     interface JavaTypeMismatch : KtFirDiagnostic<KtExpression> {
