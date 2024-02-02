@@ -2576,6 +2576,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("kt65341.kt")
+        public void testKt65341() throws Exception {
+            runTest("compiler/testData/codegen/box/builderInference/kt65341.kt");
+        }
+
+        @Test
         @TestMetadata("lambdaParameterHasTVType.kt")
         public void testLambdaParameterHasTVType() throws Exception {
             runTest("compiler/testData/codegen/box/builderInference/lambdaParameterHasTVType.kt");
@@ -2603,6 +2609,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("pclaRootIsTrySyntheticCall.kt")
         public void testPclaRootIsTrySyntheticCall() throws Exception {
             runTest("compiler/testData/codegen/box/builderInference/pclaRootIsTrySyntheticCall.kt");
+        }
+
+        @Test
+        @TestMetadata("posptonedPCLACallInsideStringInterpolation.kt")
+        public void testPosptonedPCLACallInsideStringInterpolation() throws Exception {
+            runTest("compiler/testData/codegen/box/builderInference/posptonedPCLACallInsideStringInterpolation.kt");
         }
 
         @Test
@@ -18436,6 +18448,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("fakeOverrideOfPrivateSetter.kt")
+        public void testFakeOverrideOfPrivateSetter() throws Exception {
+            runTest("compiler/testData/codegen/box/fakeOverride/fakeOverrideOfPrivateSetter.kt");
+        }
+
+        @Test
         @TestMetadata("function.kt")
         public void testFunction() throws Exception {
             runTest("compiler/testData/codegen/box/fakeOverride/function.kt");
@@ -29698,6 +29716,28 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             @TestMetadata("nullableInt.kt")
             public void testNullableInt() throws Exception {
                 runTest("compiler/testData/codegen/box/javaInterop/primitiveVsWrapperTypeInInheritance/nullableInt.kt");
+            }
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/codegen/box/javaInterop/statics")
+        @TestDataPath("$PROJECT_ROOT")
+        public class Statics {
+            @Test
+            public void testAllFilesPresentInStatics() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/javaInterop/statics"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+            }
+
+            @Test
+            @TestMetadata("inheritTwoStaticMethods.kt")
+            public void testInheritTwoStaticMethods() throws Exception {
+                runTest("compiler/testData/codegen/box/javaInterop/statics/inheritTwoStaticMethods.kt");
+            }
+
+            @Test
+            @TestMetadata("overrideInstanceMethodWithIrrelevantStatic.kt")
+            public void testOverrideInstanceMethodWithIrrelevantStatic() throws Exception {
+                runTest("compiler/testData/codegen/box/javaInterop/statics/overrideInstanceMethodWithIrrelevantStatic.kt");
             }
         }
     }
@@ -46767,6 +46807,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("differentFqNames.kt")
         public void testDifferentFqNames() throws Exception {
             runTest("compiler/testData/codegen/box/sam/differentFqNames.kt");
+        }
+
+        @Test
+        @TestMetadata("fieldInJavaSamInterface.kt")
+        public void testFieldInJavaSamInterface() throws Exception {
+            runTest("compiler/testData/codegen/box/sam/fieldInJavaSamInterface.kt");
         }
 
         @Test

@@ -22075,6 +22075,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
+            @TestMetadata("kjkPropertyAndExtensionProperty.kt")
+            public void testKjkPropertyAndExtensionProperty() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/j+k/kjkPropertyAndExtensionProperty.kt");
+            }
+
+            @Test
             @TestMetadata("kt1402.kt")
             public void testKt1402() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/j+k/kt1402.kt");
@@ -40794,6 +40800,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             @TestMetadata("privateToThis.kt")
             public void testPrivateToThis() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/visibility/privateToThis.kt");
+            }
+
+            @Test
+            @TestMetadata("privateToThisExotic.kt")
+            public void testPrivateToThisExotic() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/visibility/privateToThisExotic.kt");
             }
 
             @Test

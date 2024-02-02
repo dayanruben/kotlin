@@ -1997,6 +1997,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
             }
 
             @Test
+            @TestMetadata("posptonedPCLACallInsideStringInterpolation.kt")
+            public void testPosptonedPCLACallInsideStringInterpolation() throws Exception {
+                runTest("compiler/testData/codegen/box/builderInference/posptonedPCLACallInsideStringInterpolation.kt");
+            }
+
+            @Test
             @TestMetadata("receiverUsesOuterTVButReturnTypeIsProper.kt")
             public void testReceiverUsesOuterTVButReturnTypeIsProper() throws Exception {
                 runTest("compiler/testData/codegen/box/builderInference/receiverUsesOuterTVButReturnTypeIsProper.kt");
@@ -16391,6 +16397,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
             }
 
             @Test
+            @TestMetadata("fakeOverrideOfPrivateSetter.kt")
+            public void testFakeOverrideOfPrivateSetter() throws Exception {
+                runTest("compiler/testData/codegen/box/fakeOverride/fakeOverrideOfPrivateSetter.kt");
+            }
+
+            @Test
             @TestMetadata("function.kt")
             public void testFunction() throws Exception {
                 runTest("compiler/testData/codegen/box/fakeOverride/function.kt");
@@ -27121,6 +27133,21 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
                 @Test
                 public void testAllFilesPresentInPrimitiveVsWrapperTypeInInheritance() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/javaInterop/primitiveVsWrapperTypeInInheritance"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+                }
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/codegen/box/javaInterop/statics")
+            @TestDataPath("$PROJECT_ROOT")
+            @Tag("frontend-fir")
+            @FirPipeline()
+            @UseExtTestCaseGroupProvider()
+            @UsePartialLinkage(mode = Mode.DISABLED)
+            @Tag("no-partial-linkage-may-be-skipped")
+            public class Statics {
+                @Test
+                public void testAllFilesPresentInStatics() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/javaInterop/statics"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
                 }
             }
         }
