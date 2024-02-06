@@ -19766,9 +19766,27 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                         }
 
                         @Test
+                        @TestMetadata("enumExtensionFunction.kt")
+                        public void testEnumExtensionFunction() throws Exception {
+                            runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes/enabledInferenceOnSelfTypes/enumExtensionFunction.kt");
+                        }
+
+                        @Test
+                        @TestMetadata("overridingJKCases.kt")
+                        public void testOverridingJKCases() throws Exception {
+                            runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes/enabledInferenceOnSelfTypes/overridingJKCases.kt");
+                        }
+
+                        @Test
                         @TestMetadata("recursiveTypeWithTwoTypeParams.kt")
                         public void testRecursiveTypeWithTwoTypeParams() throws Exception {
                             runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes/enabledInferenceOnSelfTypes/recursiveTypeWithTwoTypeParams.kt");
+                        }
+
+                        @Test
+                        @TestMetadata("whereAndWithCases.kt")
+                        public void testWhereAndWithCases() throws Exception {
+                            runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes/enabledInferenceOnSelfTypes/whereAndWithCases.kt");
                         }
 
                         @Test
@@ -20708,6 +20726,18 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             @TestMetadata("privateClass.kt")
             public void testPrivateClass() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inline/privateClass.kt");
+            }
+
+            @Test
+            @TestMetadata("privateOperatorsInInlineAfter.kt")
+            public void testPrivateOperatorsInInlineAfter() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inline/privateOperatorsInInlineAfter.kt");
+            }
+
+            @Test
+            @TestMetadata("privateOperatorsInInlineBefore.kt")
+            public void testPrivateOperatorsInInlineBefore() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inline/privateOperatorsInInlineBefore.kt");
             }
 
             @Test

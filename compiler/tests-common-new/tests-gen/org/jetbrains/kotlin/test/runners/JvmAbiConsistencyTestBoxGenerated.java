@@ -19342,6 +19342,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
         }
 
         @Test
+        @TestMetadata("kt65274.kt")
+        public void testKt65274() throws Exception {
+            runTest("compiler/testData/codegen/box/fakeOverride/kt65274.kt");
+        }
+
+        @Test
         @TestMetadata("methodOfAnyFromInterface.kt")
         public void testMethodOfAnyFromInterface() throws Exception {
             runTest("compiler/testData/codegen/box/fakeOverride/methodOfAnyFromInterface.kt");
@@ -30923,6 +30929,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
         @TestMetadata("kt48590.kt")
         public void testKt48590() throws Exception {
             runTest("compiler/testData/codegen/box/javaInterop/kt48590.kt");
+        }
+
+        @Test
+        @TestMetadata("kt65482.kt")
+        public void testKt65482() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/kt65482.kt");
         }
 
         @Test
@@ -51335,6 +51347,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
         @TestMetadata("explicitSuperCall.kt")
         public void testExplicitSuperCall() throws Exception {
             runTest("compiler/testData/codegen/box/specialBuiltins/explicitSuperCall.kt");
+        }
+
+        @Test
+        @TestMetadata("irrelevantRemoveAndJavaList.kt")
+        public void testIrrelevantRemoveAndJavaList() throws Exception {
+            runTest("compiler/testData/codegen/box/specialBuiltins/irrelevantRemoveAndJavaList.kt");
         }
 
         @Test
