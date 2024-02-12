@@ -25,7 +25,9 @@ import org.jetbrains.kotlin.resolve.calls.inference.model.NewConstraintSystemImp
 import org.jetbrains.kotlin.types.model.TypeConstructorMarker
 import org.jetbrains.kotlin.types.model.defaultType
 
-
+/**
+ * @see [docs/fir/pcla.md]
+ */
 class FirPCLAInferenceSession(
     private val outerCandidate: Candidate,
     private val inferenceComponents: InferenceComponents,
@@ -123,7 +125,7 @@ class FirPCLAInferenceSession(
     ) {
         outerCandidate.postponedPCLACalls += childCalls
         currentCommonSystem.addOtherSystem(childStorage)
-        outerCandidate.onCompletionResultsWritingCallbacks += onCompletionResultsWriting
+        outerCandidate.onPCLACompletionResultsWritingCallbacks += onCompletionResultsWriting
     }
 
     private fun FirExpression.updateReturnTypeWithCurrentSubstitutor(
@@ -282,10 +284,11 @@ class FirPCLAInferenceSession(
         }
 
     private fun FirExpression.isReceiverPostponed(): Boolean {
-        if (resolvedType.containsNotFixedTypeVariables()) return true
-        if ((this as? FirResolvable)?.candidate()?.usedOuterCs == true) return true
-
-        return false
+        return when {
+            resolvedType.containsNotFixedTypeVariables() -> true
+            (this as? FirResolvable)?.candidate()?.usedOuterCs == true -> true
+            else -> false
+        }
     }
 
     private fun ConeKotlinType.containsNotFixedTypeVariables(): Boolean =

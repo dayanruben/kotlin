@@ -71,9 +71,23 @@ class ObjCExportHeaderGeneratorTest(private val generator: HeaderGenerator) {
     }
 
     @Test
-    @TodoAnalysisApi
     fun `test - nestedClass`() {
         doTest(headersTestDataDir.resolve("nestedClass"))
+    }
+
+    @Test
+    fun `test - nestedClassWithFrameworkName`() {
+        doTest(headersTestDataDir.resolve("nestedClassWithFrameworkName"), Configuration(frameworkName = "Shared"))
+    }
+
+    @Test
+    fun `test - nestedGenericClass`() {
+        doTest(headersTestDataDir.resolve("nestedGenericClass"))
+    }
+
+    @Test
+    fun `test - nestedInterface`() {
+        doTest(headersTestDataDir.resolve("nestedInterface"))
     }
 
     @Test
@@ -88,12 +102,17 @@ class ObjCExportHeaderGeneratorTest(private val generator: HeaderGenerator) {
     }
 
     @Test
+    fun `test - classExtendsAbstractClass`() {
+        doTest(headersTestDataDir.resolve("classExtendsAbstractClass"))
+    }
+
+    @Test
+    @TodoAnalysisApi
     fun `test - interfaceImplementingInterface`() {
         doTest(headersTestDataDir.resolve("interfaceImplementingInterface"))
     }
 
     @Test
-    @TodoAnalysisApi
     fun `test - classWithObjCNameAnnotation`() {
         doTest(headersTestDataDir.resolve("classWithObjCNameAnnotation"))
     }
@@ -181,9 +200,81 @@ class ObjCExportHeaderGeneratorTest(private val generator: HeaderGenerator) {
     }
 
     @Test
-    @TodoAnalysisApi
     fun `test - topLevelFunctionWithNumberReturn`() {
         doTest(headersTestDataDir.resolve("topLevelFunctionWithNumberReturn"))
+    }
+
+    @Test
+    fun `test - classWithManyMembers`() {
+        doTest(headersTestDataDir.resolve("classWithManyMembers"))
+    }
+
+    @Test
+    fun `test - manyClassesAndInterfaces`() {
+        doTest(headersTestDataDir.resolve("manyClassesAndInterfaces"))
+    }
+
+    @Test
+    fun `test - classReferencingOtherClassAsReturnType`() {
+        doTest(headersTestDataDir.resolve("classReferencingOtherClassAsReturnType"))
+    }
+
+    /**
+     * - IntIterator has unwanted 'hasNext' exposed
+     * - IntIterator's next method returns int32_t instead of expected Int *
+     */
+    @Test
+    @TodoAnalysisApi
+    fun `test - classReferencingDependencyClassAsReturnType`() {
+        doTest(headersTestDataDir.resolve("classReferencingDependencyClassAsReturnType"))
+    }
+
+    @Test
+    fun `test - interfaceReferencingOtherInterfaceAsReturnType`() {
+        doTest(headersTestDataDir.resolve("interfaceReferencingOtherInterfaceAsReturnType"))
+    }
+
+    @Test
+    fun `test - interfaceImplementingInterfaceOrder`() {
+        doTest(headersTestDataDir.resolve("interfaceImplementingInterfaceOrder"))
+    }
+
+    /**
+     * Extension functions aren't supported KT-65630
+     */
+    @Test
+    @TodoAnalysisApi
+    fun `test - extensionFunctions`() {
+        doTest(headersTestDataDir.resolve("extensionFunctions"))
+    }
+
+    @Test
+    fun `test - classWithGenerics`() {
+        doTest(headersTestDataDir.resolve("classWithGenerics"))
+    }
+
+    /**
+     * - init method missing
+     * - 'new constructor' missing
+     */
+    @Test
+    @TodoAnalysisApi
+    fun `test - objectWithGenericSuperclass`() {
+        doTest(headersTestDataDir.resolve("objectWithGenericSuperclass"))
+    }
+
+    @Test
+    fun `test - since version annotation`() {
+        doTest(headersTestDataDir.resolve("sinceVersionAnnotation"))
+    }
+
+    /**
+     * - requires mangling
+     */
+    @TodoAnalysisApi
+    @Test
+    fun `test - constructors`() {
+        doTest(headersTestDataDir.resolve("constructors"))
     }
 
     private fun doTest(root: File, configuration: Configuration = Configuration()) {

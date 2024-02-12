@@ -2792,6 +2792,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         }
 
         @Test
+        @TestMetadata("pclaRootIsTrySyntheticCallWithDelegate.kt")
+        public void testPclaRootIsTrySyntheticCallWithDelegate() throws Exception {
+            runTest("compiler/testData/codegen/box/builderInference/pclaRootIsTrySyntheticCallWithDelegate.kt");
+        }
+
+        @Test
         @TestMetadata("posptonedPCLACallInsideStringInterpolation.kt")
         public void testPosptonedPCLACallInsideStringInterpolation() throws Exception {
             runTest("compiler/testData/codegen/box/builderInference/posptonedPCLACallInsideStringInterpolation.kt");
@@ -2864,6 +2870,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
             @TestMetadata("kt49263.kt")
             public void testKt49263() throws Exception {
                 runTest("compiler/testData/codegen/box/builderInference/issues/kt49263.kt");
+            }
+
+            @Test
+            @TestMetadata("kt49283.kt")
+            public void testKt49283() throws Exception {
+                runTest("compiler/testData/codegen/box/builderInference/issues/kt49283.kt");
             }
 
             @Test
@@ -5898,6 +5910,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         }
 
         @Test
+        @TestMetadata("kt65197.kt")
+        public void testKt65197() throws Exception {
+            runTest("compiler/testData/codegen/box/casts/kt65197.kt");
+        }
+
+        @Test
         @TestMetadata("lambdaToUnitCast.kt")
         public void testLambdaToUnitCast() throws Exception {
             runTest("compiler/testData/codegen/box/casts/lambdaToUnitCast.kt");
@@ -8223,6 +8241,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         @TestMetadata("removeAtBridgeClashWithJava.kt")
         public void testRemoveAtBridgeClashWithJava() throws Exception {
             runTest("compiler/testData/codegen/box/collections/removeAtBridgeClashWithJava.kt");
+        }
+
+        @Test
+        @TestMetadata("removeAtInJava.kt")
+        public void testRemoveAtInJava() throws Exception {
+            runTest("compiler/testData/codegen/box/collections/removeAtInJava.kt");
         }
 
         @Test
@@ -19345,6 +19369,18 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         @TestMetadata("kt65274.kt")
         public void testKt65274() throws Exception {
             runTest("compiler/testData/codegen/box/fakeOverride/kt65274.kt");
+        }
+
+        @Test
+        @TestMetadata("kt65695.kt")
+        public void testKt65695() throws Exception {
+            runTest("compiler/testData/codegen/box/fakeOverride/kt65695.kt");
+        }
+
+        @Test
+        @TestMetadata("kt65707.kt")
+        public void testKt65707() throws Exception {
+            runTest("compiler/testData/codegen/box/fakeOverride/kt65707.kt");
         }
 
         @Test
@@ -44787,6 +44823,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
             runTest("compiler/testData/codegen/box/reflection/jvmKTypeCaching.kt");
         }
 
+        @Test
+        @TestMetadata("kt63988.kt")
+        public void testKt63988() throws Exception {
+            runTest("compiler/testData/codegen/box/reflection/kt63988.kt");
+        }
+
         @Nested
         @TestMetadata("compiler/testData/codegen/box/reflection/annotations")
         @TestDataPath("$PROJECT_ROOT")
@@ -46760,6 +46802,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
             @TestMetadata("localClassesAndAnonymousObjects.kt")
             public void testLocalClassesAndAnonymousObjects() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/localClasses/localClassesAndAnonymousObjects.kt");
+            }
+
+            @Test
+            @TestMetadata("localNestedClasses.kt")
+            public void testLocalNestedClasses() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/localClasses/localNestedClasses.kt");
             }
         }
 

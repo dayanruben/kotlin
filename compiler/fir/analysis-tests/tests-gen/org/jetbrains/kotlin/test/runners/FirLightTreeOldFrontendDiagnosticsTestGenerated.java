@@ -358,6 +358,18 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         }
 
         @Test
+        @TestMetadata("duplicateParameterName.kt")
+        public void testDuplicateParameterName() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/duplicateParameterName.kt");
+        }
+
+        @Test
+        @TestMetadata("duplicateParameterNameSimplified.kt")
+        public void testDuplicateParameterNameSimplified() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/duplicateParameterNameSimplified.kt");
+        }
+
+        @Test
         @TestMetadata("emptyLhsClassLiterals.kt")
         public void testEmptyLhsClassLiterals() throws Exception {
             runTest("compiler/testData/diagnostics/tests/emptyLhsClassLiterals.kt");
@@ -3832,6 +3844,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/builderInference"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true, "multiplatform");
             }
 
+            @Test
+            @TestMetadata("overloadResolutionByLambdaReturnType.kt")
+            public void testOverloadResolutionByLambdaReturnType() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/builderInference/overloadResolutionByLambdaReturnType.kt");
+            }
+
             @Nested
             @TestMetadata("compiler/testData/diagnostics/tests/builderInference/issues")
             @TestDataPath("$PROJECT_ROOT")
@@ -4133,6 +4151,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                 @TestMetadata("kt63841.kt")
                 public void testKt63841() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/builderInference/issues/kt63841.kt");
+                }
+
+                @Test
+                @TestMetadata("kt64077.kt")
+                public void testKt64077() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/builderInference/issues/kt64077.kt");
                 }
 
                 @Test
@@ -10562,6 +10586,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             @TestMetadata("useTypeParameterOfExtensionProperty2.kt")
             public void testUseTypeParameterOfExtensionProperty2() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/delegatedProperty/useTypeParameterOfExtensionProperty2.kt");
+            }
+
+            @Test
+            @TestMetadata("useTypeParameterOfExtensionProperty3.kt")
+            public void testUseTypeParameterOfExtensionProperty3() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/delegatedProperty/useTypeParameterOfExtensionProperty3.kt");
             }
 
             @Test
@@ -18012,6 +18042,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                 }
 
                 @Test
+                @TestMetadata("capturedUpperBound.kt")
+                public void testCapturedUpperBound() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/capturedUpperBound.kt");
+                }
+
+                @Test
                 @TestMetadata("capturingFromArgumentOfFlexibleType.kt")
                 public void testCapturingFromArgumentOfFlexibleType() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/capturingFromArgumentOfFlexibleType.kt");
@@ -18033,6 +18069,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                 @TestMetadata("dontCheckNewCapturedTypeSpecificChecksForOldOnes.kt")
                 public void testDontCheckNewCapturedTypeSpecificChecksForOldOnes() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/dontCheckNewCapturedTypeSpecificChecksForOldOnes.kt");
+                }
+
+                @Test
+                @TestMetadata("expectedTypeHasCapturedStarArgument.kt")
+                public void testExpectedTypeHasCapturedStarArgument() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/expectedTypeHasCapturedStarArgument.kt");
                 }
 
                 @Test
@@ -19627,6 +19669,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                 @Test
                 public void testAllFilesPresentInRecursiveTypes() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/inference/recursiveTypes"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true, "multiplatform");
+                }
+
+                @Test
+                @TestMetadata("complexTypeUnwrapping.kt")
+                public void testComplexTypeUnwrapping() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/complexTypeUnwrapping.kt");
                 }
 
                 @Test
@@ -22827,6 +22875,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                 @TestMetadata("notNullAnnotated.kt")
                 public void testNotNullAnnotated() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/j+k/primitiveOverrides/notNullAnnotated.kt");
+                }
+
+                @Test
+                @TestMetadata("removeAt.kt")
+                public void testRemoveAt() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/primitiveOverrides/removeAt.kt");
                 }
 
                 @Test
@@ -32718,6 +32772,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             @TestMetadata("enumEntryMembers_before.kt")
             public void testEnumEntryMembers_before() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/smartCasts/enumEntryMembers_before.kt");
+            }
+
+            @Test
+            @TestMetadata("equalitySmartcast.kt")
+            public void testEqualitySmartcast() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/smartCasts/equalitySmartcast.kt");
             }
 
             @Test

@@ -4,13 +4,15 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
+import org.jetbrains.kotlin.backend.konan.KonanPrimitiveType
 import org.jetbrains.kotlin.backend.konan.objcexport.*
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -58,7 +60,7 @@ internal fun KtType.translateToObjCReferenceType(): ObjCReferenceType {
  * [org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportTranslatorImpl.mapReferenceTypeIgnoringNullability]
  */
 context(KtAnalysisSession, KtObjCExportSession)
-private fun KtType.mapToReferenceTypeIgnoringNullability(): ObjCNonNullReferenceType {
+internal fun KtType.mapToReferenceTypeIgnoringNullability(): ObjCNonNullReferenceType {
     val fullyExpandedType = fullyExpandedType
     val classId = (fullyExpandedType as? KtNonErrorClassType)?.classId
 
@@ -74,14 +76,24 @@ private fun KtType.mapToReferenceTypeIgnoringNullability(): ObjCNonNullReference
         return ObjCIdType
     }
 
+    /* Priority: Check if this type is mapped into a known ObjCType (e.g. String -> NSString */
+    translateToMappedObjCTypeOrNull()?.let { mappedObjCType ->
+        return mappedObjCType
+    }
+
+    /* Kotlin Native Primitive Type cannot be mapped to a reference type here */
+    if (classId in kotlinNativePrimitiveClassIds) {
+        return ObjCIdType
+    }
+
     if (isObjCObjectType()) {
         return ObjCIdType
     }
 
     /* Check if inline type represents 'regular' inline class */
+    val classSymbol: KtClassOrObjectSymbol? = if (classId != null) getClassOrObjectSymbolByClassId(classId) else null
     run check@{
         if (classId == null) return@check
-        val classSymbol = getClassOrObjectSymbolByClassId(classId) ?: return@check
         if (classSymbol !is KtNamedClassOrObjectSymbol) return@check
         if (classSymbol.isInline) return ObjCIdType
     }
@@ -91,36 +103,26 @@ private fun KtType.mapToReferenceTypeIgnoringNullability(): ObjCNonNullReference
         return inlineTargetType.mapToReferenceTypeIgnoringNullability()
     }
 
-    /**
-     * Simplified version of [org.jetbrains.kotlin.backend.konan.objcexport.CustomTypeMapper]
-     */
-    val typesMap = mutableMapOf<ClassId, String>().apply {
-        this[ClassId.topLevel(StandardNames.FqNames.list)] = "NSArray"
-        this[ClassId.topLevel(StandardNames.FqNames.mutableList)] = "NSMutableArray"
-        this[ClassId.topLevel(StandardNames.FqNames.set)] = "NSSet"
-        this[ClassId.topLevel(StandardNames.FqNames.mutableSet)] = "MutableSet".getObjCKotlinStdlibClassOrProtocolName().objCName
-        this[ClassId.topLevel(StandardNames.FqNames.map)] = "NSDictionary"
-        this[ClassId.topLevel(StandardNames.FqNames.mutableMap)] = "MutableDictionary".getObjCKotlinStdlibClassOrProtocolName().objCName
-        this[ClassId.topLevel(StandardNames.FqNames.string.toSafe())] = "NSString"
-    }
-
-    NSNumberKind.entries.forEach { number ->
-        val numberClassId = number.mappedKotlinClassId
-        if (numberClassId != null) {
-            typesMap[numberClassId] = numberClassId.shortClassName.asString().getObjCKotlinStdlibClassOrProtocolName().objCName
-        }
-    }
-
     if (fullyExpandedType is KtNonErrorClassType) {
-        val typeName = typesMap[classId]
-            ?: fullyExpandedType.classId.shortClassName.asString().getObjCKotlinStdlibClassOrProtocolName().objCName
+        val typeName = fullyExpandedType.classId.shortClassName.asString().getObjCKotlinStdlibClassOrProtocolName().objCName
+        val typeArguments = translateTypeArgumentsToObjC()
 
-        val typeArguments = translateToObjCTypeArguments()
-        return ObjCClassType(typeName, typeArguments)
+        // TODO NOW: create type translation test
+        if (classSymbol?.classKind == KtClassKind.INTERFACE) {
+            return ObjCProtocolType(typeName, classId)
+        }
+
+        return ObjCClassType(typeName, typeArguments, classId)
     }
 
     if (fullyExpandedType is KtTypeParameterType) {
-        if (fullyExpandedType.symbol.getContainingSymbol() is KtCallableSymbol) {
+        val definingSymbol = fullyExpandedType.symbol.getContainingSymbol()
+
+        if (definingSymbol is KtCallableSymbol) {
+            return ObjCIdType
+        }
+
+        if (definingSymbol is KtClassOrObjectSymbol && definingSymbol.classKind == KtClassKind.INTERFACE) {
             return ObjCIdType
         }
         /*
@@ -135,7 +137,7 @@ private fun KtType.mapToReferenceTypeIgnoringNullability(): ObjCNonNullReference
 
 
 context(KtAnalysisSession, KtObjCExportSession)
-private fun KtType.translateToObjCTypeArguments(): List<ObjCNonNullReferenceType> {
+internal fun KtType.translateTypeArgumentsToObjC(): List<ObjCNonNullReferenceType> {
     if (this !is KtNonErrorClassType) return emptyList()
 
     /* See special casing below */
@@ -180,10 +182,10 @@ private fun KtType.isBinaryRepresentationNullable(): Boolean {
 
 
 /**
- * Types to be "hidden" during mapping, i.e. represented as `id`.
+ * Types to be "hidden" during mapping, i.e., represented as `id`.
  *
- * Currently contains super types of classes handled by custom type mappers.
- * Note: can be generated programmatically, but requires stdlib in this case.
+ * Currently, it contains super types of classes handled by custom type mappers.
+ * Note: It can be generated programmatically, but requires stdlib in this case.
  */
 private val hiddenClassIds: Set<ClassId> = listOf(
     "kotlin.Any",
@@ -196,6 +198,10 @@ private val hiddenClassIds: Set<ClassId> = listOf(
     "kotlin.collections.MutableCollection",
     "kotlin.collections.MutableIterable"
 ).map { ClassId.topLevel(FqName(it)) }.toSet()
+
+
+private val kotlinNativePrimitiveClassIds: Set<ClassId> =
+    KonanPrimitiveType.entries.map { it.classId }.toSet()
 
 private val collectionClassIds = setOf(
     StandardClassIds.List, StandardClassIds.MutableList,

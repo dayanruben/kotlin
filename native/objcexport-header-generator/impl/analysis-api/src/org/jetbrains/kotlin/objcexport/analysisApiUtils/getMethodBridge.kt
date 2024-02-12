@@ -43,10 +43,11 @@ internal fun KtPropertySymbol.getPropertyMethodBridge(): MethodBridge {
     )
 }
 
+context(KtAnalysisSession)
 private val KtCallableSymbol.receiverType: MethodBridgeReceiver
-    get() = if (isConstructor && isArray) {
+    get() = if (isArrayConstructor) {
         MethodBridgeReceiver.Factory
-    } else if (isTopLevel) {
+    } else if (!isConstructor && isTopLevel) {
         MethodBridgeReceiver.Static
     } else {
         MethodBridgeReceiver.Instance
@@ -129,7 +130,7 @@ private fun KtCallableSymbol.bridgeReturnType(): MethodBridge.ReturnValue {
 
     val convertExceptionsToErrors = false // TODO: Add exception handling and return MethodBridge.ReturnValue.WithError.ZeroForError
 
-    if (isArray) {
+    if (isArrayConstructor) {
         return MethodBridge.ReturnValue.Instance.FactoryResult
     } else if (isConstructor) {
         val result = MethodBridge.ReturnValue.Instance.InitResult

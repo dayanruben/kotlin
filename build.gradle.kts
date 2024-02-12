@@ -521,6 +521,7 @@ val gradlePluginProjects = listOf(
     ":kotlin-gradle-plugin-tcs-android",
     ":kotlin-allopen",
     ":kotlin-noarg",
+    ":kotlin-power-assert",
     ":kotlin-sam-with-receiver",
     ":kotlin-parcelize-compiler",
     ":kotlin-lombok",
@@ -790,8 +791,25 @@ tasks {
         dependsOn(":wasm:wasm.tests:testFir")
     }
 
+    // These tests run Native compiler and will be run in many different compilation modes that the compiler supports:
+    // - different optimization modes
+    // - different cache policies
+    // - different GCs
+    // ...
     register("nativeCompilerTest") {
-        dependsOn(":native:kotlin-native-utils:test")
+        dependsOn(":native:native.tests:test")
+        dependsOn(":native:objcexport-header-generator:check")
+        dependsOn(":kotlin-atomicfu-compiler-plugin:nativeTest")
+    }
+
+    // These are unit tests of Native compiler
+    register("nativeCompilerUnitTest") {
+        dependsOn(":native:kotlin-native-utils:check")
+        if (kotlinBuildProperties.isKotlinNativeEnabled) {
+            dependsOn(":kotlin-native:Interop:Indexer:check")
+            dependsOn(":kotlin-native:Interop:StubGenerator:check")
+            dependsOn(":kotlin-native:backend.native:check")
+        }
     }
 
     register("firCompilerTest") {
@@ -846,7 +864,6 @@ tasks {
         dependsOn("gradlePluginTest")
         dependsOn("toolsTest")
         dependsOn("examplesTest")
-        dependsOn("nativeCompilerTest")
         dependsOn("incrementalCompilationTest")
         dependsOn("scriptingTest")
         dependsOn("jvmCompilerIntegrationTest")
@@ -880,6 +897,7 @@ tasks {
         dependsOn(":kotlin-lombok-compiler-plugin:test")
         dependsOn(":kotlin-noarg-compiler-plugin:test")
         dependsOn(":kotlin-sam-with-receiver-compiler-plugin:test")
+        dependsOn(":kotlin-power-assert-compiler-plugin:test")
     }
 
     register("toolsTest") {

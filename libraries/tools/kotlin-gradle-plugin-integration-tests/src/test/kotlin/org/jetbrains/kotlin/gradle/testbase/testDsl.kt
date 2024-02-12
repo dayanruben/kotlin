@@ -46,6 +46,7 @@ fun KGPBaseTest.project(
     enableBuildScan: Boolean = false,
     addHeapDumpOptions: Boolean = true,
     enableGradleDebug: Boolean = false,
+    enableGradleDaemonMemoryLimitInMb: Int? = 1024,
     enableKotlinDaemonMemoryLimitInMb: Int? = 1024,
     projectPathAdditionalSuffix: String = "",
     buildJdk: File? = null,
@@ -82,6 +83,7 @@ fun KGPBaseTest.project(
         forceOutput = forceOutput,
         enableBuildScan = enableBuildScan,
         enableGradleDebug = enableGradleDebug,
+        enableGradleDaemonMemoryLimitInMb = enableGradleDaemonMemoryLimitInMb,
         enableKotlinDaemonMemoryLimitInMb = enableKotlinDaemonMemoryLimitInMb,
         environmentVariables = environmentVariables
     )
@@ -117,6 +119,7 @@ fun KGPBaseTest.nativeProject(
     enableBuildScan: Boolean = false,
     addHeapDumpOptions: Boolean = true,
     enableGradleDebug: Boolean = false,
+    enableGradleDaemonMemoryLimitInMb: Int? = 1024,
     enableKotlinDaemonMemoryLimitInMb: Int? = 1024,
     projectPathAdditionalSuffix: String = "",
     buildJdk: File? = null,
@@ -135,6 +138,7 @@ fun KGPBaseTest.nativeProject(
         dependencyManagement = dependencyManagement,
         addHeapDumpOptions = addHeapDumpOptions,
         enableGradleDebug = enableGradleDebug,
+        enableGradleDaemonMemoryLimitInMb = enableGradleDaemonMemoryLimitInMb,
         enableKotlinDaemonMemoryLimitInMb = enableKotlinDaemonMemoryLimitInMb,
         projectPathAdditionalSuffix = projectPathAdditionalSuffix,
         buildJdk = buildJdk,
@@ -156,6 +160,7 @@ fun TestProject.build(
     kotlinDaemonDebugPort: Int? = this.kotlinDaemonDebugPort,
     enableBuildCacheDebug: Boolean = false,
     enableBuildScan: Boolean = this.enableBuildScan,
+    enableGradleDaemonMemoryLimitInMb: Int? = this.enableGradleDaemonMemoryLimitInMb,
     enableKotlinDaemonMemoryLimitInMb: Int? = this.enableKotlinDaemonMemoryLimitInMb,
     buildOptions: BuildOptions = this.buildOptions,
     environmentVariables: EnvironmentalVariables = this.environmentVariables,
@@ -169,6 +174,7 @@ fun TestProject.build(
         buildOptions,
         enableBuildCacheDebug,
         enableBuildScan,
+        enableGradleDaemonMemoryLimitInMb,
         enableKotlinDaemonMemoryLimitInMb,
         gradleVersion,
         kotlinDaemonDebugPort
@@ -197,6 +203,7 @@ fun TestProject.buildAndFail(
     enableBuildCacheDebug: Boolean = false,
     enableBuildScan: Boolean = this.enableBuildScan,
     buildOptions: BuildOptions = this.buildOptions,
+    enableGradleDaemonMemoryLimitInMb: Int? = this.enableGradleDaemonMemoryLimitInMb,
     enableKotlinDaemonMemoryLimitInMb: Int? = this.enableKotlinDaemonMemoryLimitInMb,
     environmentVariables: EnvironmentalVariables = this.environmentVariables,
     assertions: BuildResult.() -> Unit = {},
@@ -209,6 +216,7 @@ fun TestProject.buildAndFail(
         buildOptions,
         enableBuildCacheDebug,
         enableBuildScan,
+        enableGradleDaemonMemoryLimitInMb,
         enableKotlinDaemonMemoryLimitInMb,
         gradleVersion,
         kotlinDaemonDebugPort
@@ -254,6 +262,7 @@ internal inline fun <reified T> TestProject.getModels(
         buildOptions,
         false,
         enableBuildScan,
+        enableGradleDaemonMemoryLimitInMb,
         enableKotlinDaemonMemoryLimitInMb,
         gradleVersion
     )
@@ -373,6 +382,7 @@ class TestProject(
     val gradleVersion: GradleVersion,
     val forceOutput: Boolean,
     val enableBuildScan: Boolean,
+    val enableGradleDaemonMemoryLimitInMb: Int?,
     val enableKotlinDaemonMemoryLimitInMb: Int?,
     /**
      * Whether the test and the Gradle build launched by the test should be executed in the same process so that we can use the same
@@ -397,11 +407,16 @@ class TestProject(
      */
     fun includeOtherProjectAsSubmodule(
         otherProjectName: String,
-        pathPrefix: String,
+        pathPrefix: String = "",
         newSubmoduleName: String = otherProjectName,
         isKts: Boolean = false,
+        localRepoDir: Path? = null,
     ) {
-        val otherProjectPath = "$pathPrefix/$otherProjectName".testProjectPath
+        val otherProjectPath = if (pathPrefix.isEmpty()) {
+            otherProjectName.testProjectPath
+        } else {
+            "$pathPrefix/$otherProjectName".testProjectPath
+        }
         otherProjectPath.copyRecursively(projectPath.resolve(newSubmoduleName))
 
         val gradleSettingToUpdate = if (isKts) settingsGradleKts else settingsGradle
@@ -412,6 +427,8 @@ class TestProject(
             include(":$newSubmoduleName")
             """.trimIndent()
         )
+
+        localRepoDir?.let { subProject(newSubmoduleName).configureLocalRepository(localRepoDir) }
     }
 
     fun includeOtherProjectAsIncludedBuild(
@@ -437,6 +454,7 @@ private fun commonBuildSetup(
     buildOptions: BuildOptions,
     enableBuildCacheDebug: Boolean,
     enableBuildScan: Boolean,
+    enableGradleDaemonMemoryLimitInMb: Int?,
     enableKotlinDaemonMemoryLimitInMb: Int?,
     gradleVersion: GradleVersion,
     kotlinDaemonDebugPort: Int? = null,
@@ -454,6 +472,10 @@ private fun commonBuildSetup(
         // Decreasing Gradle daemon idle timeout to 1 min from default 3 hours.
         // This should help with OOM on CI when agents do not have enough free memory available.
         "-Dorg.gradle.daemon.idletimeout=60000",
+        if (enableGradleDaemonMemoryLimitInMb != null) {
+            // Limiting Gradle daemon heap size to reduce memory pressure on CI agents
+            "-Dorg.gradle.jvmargs=-Xmx${enableGradleDaemonMemoryLimitInMb}m"
+        } else null,
         if (enableKotlinDaemonMemoryLimitInMb != null) {
             // Limiting Kotlin daemon heap size to reduce memory pressure on CI agents
             "-Pkotlin.daemon.jvmargs=-Xmx${enableKotlinDaemonMemoryLimitInMb}m"
@@ -814,7 +836,7 @@ private fun TestProject.configureSingleNativeTargetInSubFolders(preset: String =
         }
 }
 
-private fun TestProject.configureLocalRepository(localRepoDir: Path) {
+private fun GradleProject.configureLocalRepository(localRepoDir: Path) {
     projectPath.toFile().walkTopDown()
         .filter { it.isFile && it.name in buildFileNames }
         .forEach { file ->

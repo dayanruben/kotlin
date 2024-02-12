@@ -143,6 +143,7 @@ where advanced options include:
                              See KT-45671 for more details.
   -Xuse-fast-jar-file-system Use the fast implementation of Jar FS. This may speed up compilation time, but it is experimental.
   -Xuse-javac                Use javac for Java source and class file analysis.
+  -Xuse-kapt4                Enable the experimental KAPT 4.
   -Xuse-old-backend          Use the old JVM backend.
   -Xuse-old-class-files-reading Use the old implementation for reading class files. This may slow down the compilation and cause problems with Groovy interop.
                              This can be used in the event of problems with the new implementation.
@@ -219,6 +220,9 @@ where advanced options include:
   -Xself-upper-bound-inference Support inferring type arguments from the self-type upper bounds of the corresponding type parameters.
   -Xskip-metadata-version-check Allow loading classes with bad metadata versions and pre-release classes.
   -Xskip-prerelease-check    Allow loading pre-release classes.
+  -Xsuppress-api-version-greater-than-language-version-error
+                             Suppress error about API version greater than language version.
+                             Warning: This is temporary solution (see KT-63712) intended to be used only for stdlib build.
   -Xsuppress-version-warnings Suppress warnings about outdated, inconsistent, or experimental language or API versions.
   -Xunrestricted-builder-inference
                              Eliminate builder inference restrictions, for example by allowing type variables to be returned from builder inference calls.

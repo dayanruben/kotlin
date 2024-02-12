@@ -10,6 +10,7 @@ package org.jetbrains.kotlin.kapt4
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.intellij.lang.ASTNode
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.KtNodeTypes
@@ -25,6 +26,8 @@ import org.jetbrains.kotlin.asJava.elements.*
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.config.JvmAnalysisFlags
+import org.jetbrains.kotlin.config.JvmDefaultMode
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.diagnostics.PsiDiagnosticUtils.offsetToLineAndColumn
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
@@ -46,6 +49,7 @@ import org.jetbrains.kotlin.utils.toMetadataVersion
 import org.jetbrains.kotlin.kapt3.base.KaptOptions
 import org.jetbrains.kotlin.kapt3.base.util.KaptLogger
 import org.jetbrains.kotlin.kapt3.stubs.MembersPositionComparator
+import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.psiUtil.children
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.utils.Printer
@@ -66,8 +70,10 @@ internal fun generateStubs(
             return emptyMap()
         }
     }
+    val jvmDefaultMode = module.languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode)
     return analyze(module) {
-        StubGenerator(files.filterIsInstance<KtFile>(), options, logger, metadataRenderer, overriddenMetadataVersion).generateStubs()
+        StubGenerator(files.filterIsInstance<KtFile>(), options, logger, metadataRenderer, overriddenMetadataVersion, jvmDefaultMode)
+            .generateStubs()
     }
 }
 
@@ -85,6 +91,7 @@ private class StubGenerator(
     private val logger: KaptLogger,
     private val metadataRenderer: (Printer.(Metadata) -> Unit)? = null,
     private val overriddenMetadataVersion: BinaryVersion? = null,
+    private val jvmDefaultMode: JvmDefaultMode,
 ) {
     private val strictMode = options[KaptFlag.STRICT]
     private val stripMetadata = options[KaptFlag.STRIP_METADATA]
@@ -158,6 +165,7 @@ private class StubGenerator(
         }
 
         private fun Printer.printImports(file: KtFile) {
+            var hasImports = false
             if (unresolvedSimpleNames.isEmpty()) return
 
             val importedShortNames = mutableSetOf<String>()
@@ -175,7 +183,6 @@ private class StubGenerator(
                 }
 
                 if (!acceptableByName) continue
-
 
                 val importedReference = importDirective.importedReference
                     ?.getCalleeExpressionIfAny()
@@ -197,7 +204,9 @@ private class StubGenerator(
                     importedShortNames.add(importedFqName.shortName().asString()) -> printWithNoIndent(importedFqName)
                 }
                 printlnWithNoIndent(";")
+                hasImports = true
             }
+            if (hasImports) printlnWithNoIndent()
         }
 
         private inner class ClassGenerator(private val psiClass: PsiClass) {
@@ -216,7 +225,6 @@ private class StubGenerator(
                     else -> "class"
                 }
                 calculateMetadata(psiClass)?.let { printMetadata(it) }
-                printIndent()
                 printModifiers(psiClass)
                 printWithNoIndent(classWord, " ", simpleName)
                 printTypeParams(psiClass.typeParameters)
@@ -245,7 +253,7 @@ private class StubGenerator(
                             printType(type)
                         }
                     }
-                printlnWithNoIndent("{")
+                printlnWithNoIndent(" {")
                 pushIndent()
 
                 if (psiClass.isEnum) {
@@ -270,8 +278,9 @@ private class StubGenerator(
                     .onEach { lineMappings.registerField(psiClass, it) }
                     .associateWith { MemberData(it.name, it.signature, lineMappings.getPosition(psiClass, it)) }
 
-                fieldsPositions.keys.sortedWith(MembersPositionComparator(classPosition, fieldsPositions)).forEach {
-                    printField(it)
+                fieldsPositions.keys.sortedWith(MembersPositionComparator(classPosition, fieldsPositions)).forEachIndexed { index, field ->
+                    if (index > 0) printlnWithNoIndent()
+                    printField(field)
                 }
 
                 val methodsPositions = psiClass.methods
@@ -283,16 +292,18 @@ private class StubGenerator(
                     .onEach { lineMappings.registerMethod(psiClass, it) }
                     .associateWith { MemberData(it.name, it.signature, lineMappings.getPosition(psiClass, it)) }
 
-                if (fieldsPositions.isNotEmpty() && methodsPositions.isNotEmpty()) printlnWithNoIndent()
+                if (methodsPositions.isNotEmpty()) printlnWithNoIndent()
                 methodsPositions.keys.sortedWith(MembersPositionComparator(classPosition, methodsPositions))
-                    .forEach {
-                        lineMappings.registerSignature(javacSignature(it), it)
-                        printMethod(it)
+                    .forEachIndexed { index, method ->
+                        lineMappings.registerSignature(javacSignature(method), method)
+                        if (index > 0) printlnWithNoIndent()
+                        printMethod(method)
                     }
 
                 if (psiClass.innerClasses.isNotEmpty() && (fieldsPositions.isNotEmpty() || methodsPositions.isNotEmpty())) println()
-                psiClass.innerClasses.forEach {
-                    with(ClassGenerator(it)) { printClass() }
+                psiClass.innerClasses.forEachIndexed { i, innerClass ->
+                    if (i > 0) printWithNoIndent()
+                    with(ClassGenerator(innerClass)) { printClass() }
                 }
                 popIndent()
                 println("}")
@@ -305,7 +316,7 @@ private class StubGenerator(
                     comment.split("\n").forEach {
                         println(" * ", it)
                     }
-                    println("*/")
+                    println(" */")
                 }
             }
 
@@ -322,7 +333,6 @@ private class StubGenerator(
                     printWithNoIndent(" = ", defaultValue(field.type))
                 }
                 printlnWithNoIndent(";")
-                printlnWithNoIndent()
             }
 
             private fun Printer.printMethod(method: PsiMethod) {
@@ -384,8 +394,6 @@ private class StubGenerator(
                     popIndent()
                     println("}")
                 }
-
-                printlnWithNoIndent()
             }
 
             private fun javacSignature(method: PsiMethod) = printToString {
@@ -430,11 +438,18 @@ private class StubGenerator(
 
             private fun Printer.printType(type: PsiType) {
                 recordErrorTypes(type)
-                printTypeSignature(type, true)
+                printTypeSignature(type, false) // TODO: Set to true when KT-65608 is fixed
             }
 
             private fun Printer.printTypeSignature(type: PsiType, annotated: Boolean) {
-                printWithNoIndent((if (type is PsiClassType && isErroneous(type)) type.rawType() else type).getCanonicalText(annotated).replace('$', '.'))
+                var typeToPrint = if (type is PsiEllipsisType) type.componentType else type
+                if (typeToPrint is PsiClassType && isErroneous(typeToPrint)) typeToPrint = typeToPrint.rawType()
+                val repr = typeToPrint.getCanonicalText(annotated)
+                    .replace('$', '.') // Some mapped and marker types contain $ for some reason
+                    .replace("..", ".$") // Fixes KT-65399 and similar issues with synthetic classes with names starting with $
+                    .replace(",", ", ") // Type parameters
+                printWithNoIndent(repr)
+                if (type is PsiEllipsisType) printWithNoIndent("...")
             }
 
             private fun Printer.printTypeParams(typeParameters: Array<PsiTypeParameter>) {
@@ -505,6 +520,11 @@ private class StubGenerator(
                 if (!(modifierListOwner is PsiMethod && modifierListOwner.isConstructor && modifierListOwner.containingClass?.isEnum == true) && (modifierListOwner !is PsiEnumConstant)) {
                     for (modifier in PsiModifier.MODIFIERS.filter(modifierListOwner::hasModifierProperty)) {
                         if (modifier == PsiModifier.PRIVATE && (modifierListOwner as? PsiMember)?.containingClass?.isInterface == true) continue
+
+                        if (!jvmDefaultMode.isEnabled && modifier == PsiModifier.DEFAULT) {
+                            onError("Support for interface methods with bodies in Kapt requires -Xjvm-default=all or -Xjvm-default=all-compatibility compiler option")
+                        }
+
                         if ((modifier != PsiModifier.FINAL && modifier != PsiModifier.ABSTRACT) || !(modifierListOwner is PsiClass && modifierListOwner.isEnum)) {
                             printWithNoIndent(modifier, " ")
                         }
@@ -571,7 +591,7 @@ private class StubGenerator(
                                 }
                                 printWithNoIndent("}")
                             }
-                        is PsiAnnotation -> printToString { printAnnotation(v, false) }
+                        is PsiAnnotation -> printToString { printAnnotation(v, false) }.trim()
                         else -> v.text
                     }
                 } ?: return

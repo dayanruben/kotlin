@@ -1,4 +1,5 @@
 // LANGUAGE: +MultiPlatformProjects
+// DIAGNOSTICS: -ERROR_SUPPRESSION
 // FIR_IDENTICAL
 // RENDER_ALL_DIAGNOSTICS_FULL_TEXT
 
@@ -9,6 +10,9 @@
 expect class A
 <!CONFLICTING_KLIB_SIGNATURES_ERROR!>fun bar(x: A): Int = 2<!>
 
+<!CONFLICTING_KLIB_SIGNATURES_ERROR, CONFLICTING_KLIB_SIGNATURES_ERROR!>@Suppress("REDECLARATION")
+val param = 0<!>
+
 // MODULE: platform()()(common)
 // FILE: platform.kt
 <!CONFLICTING_KLIB_SIGNATURES_ERROR!>fun foo(): Int = 0<!>
@@ -16,3 +20,6 @@ expect class A
 class B
 actual typealias A = B
 <!CONFLICTING_KLIB_SIGNATURES_ERROR!>fun bar(x: B): Int = 3<!>
+
+<!CONFLICTING_KLIB_SIGNATURES_ERROR, CONFLICTING_KLIB_SIGNATURES_ERROR!>@Suppress("REDECLARATION")
+val param = 0<!>

@@ -2433,6 +2433,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/builderInference/pclaRootIsTrySyntheticCall.kt");
         }
 
+        @TestMetadata("pclaRootIsTrySyntheticCallWithDelegate.kt")
+        public void testPclaRootIsTrySyntheticCallWithDelegate() throws Exception {
+            runTest("compiler/testData/codegen/box/builderInference/pclaRootIsTrySyntheticCallWithDelegate.kt");
+        }
+
         @TestMetadata("posptonedPCLACallInsideStringInterpolation.kt")
         public void testPosptonedPCLACallInsideStringInterpolation() throws Exception {
             runTest("compiler/testData/codegen/box/builderInference/posptonedPCLACallInsideStringInterpolation.kt");
@@ -2498,6 +2503,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             @TestMetadata("kt49263.kt")
             public void testKt49263() throws Exception {
                 runTest("compiler/testData/codegen/box/builderInference/issues/kt49263.kt");
+            }
+
+            @TestMetadata("kt49283.kt")
+            public void testKt49283() throws Exception {
+                runTest("compiler/testData/codegen/box/builderInference/issues/kt49283.kt");
             }
 
             @TestMetadata("kt50453.kt")
@@ -5138,6 +5148,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/casts/kt59022.kt");
         }
 
+        @TestMetadata("kt65197.kt")
+        public void testKt65197() throws Exception {
+            runTest("compiler/testData/codegen/box/casts/kt65197.kt");
+        }
+
         @TestMetadata("lambdaToUnitCast.kt")
         public void testLambdaToUnitCast() throws Exception {
             runTest("compiler/testData/codegen/box/casts/lambdaToUnitCast.kt");
@@ -7188,6 +7203,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("removeAtBridgeClashWithJava.kt")
         public void testRemoveAtBridgeClashWithJava() throws Exception {
             runTest("compiler/testData/codegen/box/collections/removeAtBridgeClashWithJava.kt");
+        }
+
+        @TestMetadata("removeAtInJava.kt")
+        public void testRemoveAtInJava() throws Exception {
+            runTest("compiler/testData/codegen/box/collections/removeAtInJava.kt");
         }
 
         @TestMetadata("removeAtInt.kt")
@@ -16117,6 +16137,16 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("kt65274.kt")
         public void testKt65274() throws Exception {
             runTest("compiler/testData/codegen/box/fakeOverride/kt65274.kt");
+        }
+
+        @TestMetadata("kt65695.kt")
+        public void testKt65695() throws Exception {
+            runTest("compiler/testData/codegen/box/fakeOverride/kt65695.kt");
+        }
+
+        @TestMetadata("kt65707.kt")
+        public void testKt65707() throws Exception {
+            runTest("compiler/testData/codegen/box/fakeOverride/kt65707.kt");
         }
 
         @TestMetadata("methodOfAnyFromInterface.kt")
@@ -35559,6 +35589,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/reflection/jvmKTypeCaching.kt");
         }
 
+        @TestMetadata("kt63988.kt")
+        public void testKt63988() throws Exception {
+            runTest("compiler/testData/codegen/box/reflection/kt63988.kt");
+        }
+
         @TestMetadata("compiler/testData/codegen/box/reflection/annotations")
         @TestDataPath("$PROJECT_ROOT")
         @RunWith(JUnit3RunnerWithInners.class)
@@ -37318,6 +37353,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             @TestMetadata("localClassesAndAnonymousObjects.kt")
             public void testLocalClassesAndAnonymousObjects() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/localClasses/localClassesAndAnonymousObjects.kt");
+            }
+
+            @TestMetadata("localNestedClasses.kt")
+            public void testLocalNestedClasses() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/localClasses/localNestedClasses.kt");
             }
         }
 

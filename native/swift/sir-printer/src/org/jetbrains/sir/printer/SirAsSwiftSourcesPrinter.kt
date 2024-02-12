@@ -20,12 +20,25 @@ public class SirAsSwiftSourcesPrinter(private val printer: SmartPrinter) : SirVi
     }
 
     override fun visitModule(module: SirModule): Unit = with(printer) {
-        module.declarations.forEach {
+        // We have to write imports before other declarations.
+        val (imports, declarations) = module.declarations.partition { it is SirImport }
+
+        imports.forEach {
+            it.accept(this@SirAsSwiftSourcesPrinter)
+        }
+        if (imports.isNotEmpty()) {
+            println()
+        }
+        declarations.forEach {
             it.accept(this@SirAsSwiftSourcesPrinter)
             if (module.declarations.last() != it) {
                 println()
             }
         }
+    }
+
+    override fun visitImport(import: SirImport): Unit = with(printer) {
+        println("import ${import.moduleName}")
     }
 
     override fun visitVariable(variable: SirVariable): Unit = with(printer) {
@@ -108,18 +121,17 @@ public class SirAsSwiftSourcesPrinter(private val printer: SmartPrinter) : SirVi
     }
 
     override fun visitEnum(enum: SirEnum): Unit = with(printer) {
-        println("enum ${enum.name.swiftIdentifier} {")
+        println(
+            enum.visibility.takeIf { it != SirVisibility.INTERNAL }?.let { "${it.swift} " } ?: "",
+            "enum ",
+            enum.name.swiftIdentifier,
+            " {"
+        )
         withIndent {
             enum.acceptChildren(this@SirAsSwiftSourcesPrinter)
         }
         println("}")
     }
-
-    // we do not write foreign nodes
-
-    override fun visitForeignFunction(function: SirForeignFunction) {}
-
-    override fun visitForeignVariable(variable: SirForeignVariable) {}
 
     override fun visitElement(element: SirElement): Unit = with(printer) {
         println("/* ERROR: unsupported element type: " + element.javaClass.simpleName + " */")

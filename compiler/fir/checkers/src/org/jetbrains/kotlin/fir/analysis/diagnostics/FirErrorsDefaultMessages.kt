@@ -1319,7 +1319,13 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(INFERENCE_ERROR, "Inference error.")
         map.put(ILLEGAL_PROJECTION_USAGE, "Illegal projection usage.")
         map.put(PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT, "Projections on type arguments of functions and properties are prohibited.")
-        map.put(UPPER_BOUND_VIOLATED, "Type argument is not within its bounds: should be subtype of ''{0}''.", RENDER_TYPE, RENDER_TYPE)
+        map.put(
+            UPPER_BOUND_VIOLATED,
+            "Type argument is not within its bounds: should be subtype of ''{0}''.{2}",
+            RENDER_TYPE,
+            RENDER_TYPE,
+            OPTIONAL_SENTENCE
+        )
         map.put(
             UPPER_BOUND_VIOLATED_IN_TYPEALIAS_EXPANSION,
             "Type argument is not within its bounds: should be subtype of ''{0}''.",
@@ -1919,7 +1925,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
         map.put(
             DELEGATE_USES_EXTENSION_PROPERTY_TYPE_PARAMETER,
-            "Extension property type parameter ''{0}'' cannot be used in delegates. See https://youtrack.jetbrains.com/issue/KT-24643.",
+            "Extension property type parameter ''{0}'' cannot be used in delegates. See https://youtrack.jetbrains.com/issue/KT-24643",
             SYMBOL
         )
         map.put(INITIALIZER_TYPE_MISMATCH, "Initializer type mismatch: expected ''{0}'', actual ''{1}''.", RENDER_TYPE, RENDER_TYPE, NOT_RENDERED)

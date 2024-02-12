@@ -2612,6 +2612,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("pclaRootIsTrySyntheticCallWithDelegate.kt")
+        public void testPclaRootIsTrySyntheticCallWithDelegate() throws Exception {
+            runTest("compiler/testData/codegen/box/builderInference/pclaRootIsTrySyntheticCallWithDelegate.kt");
+        }
+
+        @Test
         @TestMetadata("posptonedPCLACallInsideStringInterpolation.kt")
         public void testPosptonedPCLACallInsideStringInterpolation() throws Exception {
             runTest("compiler/testData/codegen/box/builderInference/posptonedPCLACallInsideStringInterpolation.kt");
@@ -5661,6 +5667,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("kt59022.kt")
         public void testKt59022() throws Exception {
             runTest("compiler/testData/codegen/box/casts/kt59022.kt");
+        }
+
+        @Test
+        @TestMetadata("kt65197.kt")
+        public void testKt65197() throws Exception {
+            runTest("compiler/testData/codegen/box/casts/kt65197.kt");
         }
 
         @Test
@@ -18493,6 +18505,18 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("kt65274.kt")
         public void testKt65274() throws Exception {
             runTest("compiler/testData/codegen/box/fakeOverride/kt65274.kt");
+        }
+
+        @Test
+        @TestMetadata("kt65695.kt")
+        public void testKt65695() throws Exception {
+            runTest("compiler/testData/codegen/box/fakeOverride/kt65695.kt");
+        }
+
+        @Test
+        @TestMetadata("kt65707.kt")
+        public void testKt65707() throws Exception {
+            runTest("compiler/testData/codegen/box/fakeOverride/kt65707.kt");
         }
 
         @Test

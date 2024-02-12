@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.types
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.resolve.calls.NewCommonSuperTypeCalculator.commonSuperType
-import org.jetbrains.kotlin.resolve.calls.inference.hasRecursiveTypeParametersWithGivenSelfType
 import org.jetbrains.kotlin.types.model.*
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import java.util.concurrent.ConcurrentHashMap
@@ -284,15 +283,50 @@ abstract class AbstractTypeApproximator(
     }
 
     private fun approximateCapturedType(
-        type: CapturedTypeMarker,
+        capturedType: CapturedTypeMarker,
         conf: TypeApproximatorConfiguration,
         toSuper: Boolean,
         depth: Int
     ): KotlinTypeMarker? {
-        val supertypes = type.typeConstructor().supertypes()
+        fun KotlinTypeMarker.replaceRecursionWithStarProjection(capturedType: CapturedTypeMarker): KotlinTypeMarker {
+            // This replacement is important for resolving the code like below in K2.
+            //     fun bar(y: FieldOrRef<*>) = y.field
+            //     interface FieldOrRef<FF : AbstractField<FF>> { val field: FF }
+            //     abstract class AbstractField<out F : AbstractField<F>>
+            // During resolving the value parameter y type, K1 also builds a type for a star projection *.
+            // See fun TypeParameterDescriptor.starProjectionType(): KotlinType and fun buildStarProjectionTypeByTypeParameters.
+            // Thanks to it, K1 builds the star projection type as AbstractField<*> and no other approximation is needed.
+            //
+            // In turn, K2 never makes such a thing (K2 star projection has no associated type).
+            // Instead, it resolves y.field as CapturedType(*) C (see usage one line below),
+            // and the constructor of this captured type has a star projection and a supertype of `AbstractField<C>`.
+            //
+            // Without this replacement, the type approximator currently cannot handle such a situation properly
+            // and builds AbstractField<AbstractField<AbstractField<Any?>>>.
+            // The check it == type here is intended to find a recursion inside a captured type.
+            // A similar replacement for baseSubType looks unnecessary, no hits in the tests.
+
+            fun TypeArgumentMarker.unwrapForComparison(): KotlinTypeMarker? {
+                if (this.isStarProjection()) return null
+                return getType().lowerBoundIfFlexible().originalIfDefinitelyNotNullable()
+            }
+
+            return if (isK2 && getArguments().any { it.unwrapForComparison() == capturedType }) {
+                replaceArguments {
+                    when {
+                        it.unwrapForComparison() != capturedType -> it
+                        // It's possible to use the stub here, because K2 star projection is an object and
+                        // in fact this parameter is never used
+                        else -> createStarProjection(TypeParameterMarkerStubForK2StarProjection)
+                    }
+                }
+            } else this
+        }
+
+        val supertypes = capturedType.typeConstructor().supertypes()
         val baseSuperType = when (supertypes.size) {
             0 -> nullableAnyType() // Let C = in Int, then superType for C and C? is Any?
-            1 -> supertypes.single()
+            1 -> supertypes.single().replaceRecursionWithStarProjection(capturedType)
 
             // Consider the following example:
             // A.getA()::class.java, where `getA()` returns some class from Java
@@ -312,17 +346,19 @@ abstract class AbstractTypeApproximator(
             // Once NI will be more stabilized, we'll use more specific type
 
             else -> {
-                val projection = type.typeConstructorProjection()
-                if (projection.isStarProjection()) intersectTypes(supertypes.toList())
+                val projection = capturedType.typeConstructorProjection()
+                if (projection.isStarProjection()) intersectTypes(supertypes.map { it.replaceRecursionWithStarProjection(capturedType) })
                 else projection.getType()
             }
         }
-        val baseSubType = type.lowerType() ?: nothingType()
+        val baseSubType = capturedType.lowerType() ?: nothingType()
 
-        val approximatedSuperType by lazy(LazyThreadSafetyMode.NONE) { approximateToSuperType(baseSuperType, conf, depth) }
+        val approximatedSuperType by lazy(LazyThreadSafetyMode.NONE) {
+            approximateToSuperType(baseSuperType, conf, depth)
+        }
         val approximatedSubType by lazy(LazyThreadSafetyMode.NONE) { approximateToSubType(baseSubType, conf, depth) }
 
-        if (!conf.capturedType(ctx, type)) {
+        if (!conf.capturedType(ctx, capturedType)) {
             /**
              * Here everything is ok if bounds for this captured type should not be approximated.
              * But. If such bounds contains some unauthorized types, then we cannot leave this captured type "as is".
@@ -341,8 +377,8 @@ abstract class AbstractTypeApproximator(
         // C = in Int, Int <: C => Int? <: C?
         // C = out Number, C <: Number => C? <: Number?
         return when {
-            type.isMarkedNullable() -> baseResult.withNullability(true)
-            type.isProjectionNotNull() -> baseResult.withNullability(false)
+            capturedType.isMarkedNullable() -> baseResult.withNullability(true)
+            capturedType.isProjectionNotNull() -> baseResult.withNullability(false)
             else -> baseResult
         }.let {
             when {
@@ -358,6 +394,8 @@ abstract class AbstractTypeApproximator(
             }
         }
     }
+
+    private object TypeParameterMarkerStubForK2StarProjection : TypeParameterMarker
 
     private fun approximateSimpleToSuperType(type: SimpleTypeMarker, conf: TypeApproximatorConfiguration, depth: Int) =
         approximateTo(type, conf, toSuper = true, depth = depth)
@@ -478,26 +516,14 @@ abstract class AbstractTypeApproximator(
 
             val capturedType = argumentType.lowerBoundIfFlexible().originalIfDefinitelyNotNullable().asCapturedType()
 
-            // When capturing recursive types with self upper bounds, their super types can contain captured types.
-            // In approximateCapturedType, we check if the super/subtypes of captured types need approximation even if captured types
-            // themselves don't need approximation, and will land here.
-            // To support this case, we also don't want to approximate captured types here if the configuration says so.
-            // TODO rework captured types approximation KT-65228
-            if (capturedType != null &&
-                isK2 &&
-                !conf.capturedType(ctx, capturedType) &&
-                ctx.hasRecursiveTypeParametersWithGivenSelfType(capturedType.typeConstructor())
-            ) {
-                continue@loop
-            }
-
             val capturedStarProjectionOrNull =
                 capturedType?.typeConstructorProjection()?.takeIf { it.isStarProjection() }
 
             if (capturedStarProjectionOrNull != null &&
                 (effectiveVariance == TypeVariance.OUT || effectiveVariance == TypeVariance.INV) &&
                 toSuper &&
-                capturedType.typeParameter() == parameter
+                capturedType.typeParameter() == parameter &&
+                (!isK2 || conf.capturedType(ctx, capturedType))
             ) {
                 newArguments[index] = capturedStarProjectionOrNull
                 continue@loop

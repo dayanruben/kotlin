@@ -12,25 +12,21 @@ import org.jetbrains.kotlin.backend.konan.objcexport.*
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.objcexport.Predefined.anyMethodSelectors
-import org.jetbrains.kotlin.objcexport.analysisApiUtils.getFunctionMethodBridge
-import org.jetbrains.kotlin.objcexport.analysisApiUtils.isVisibleInObjC
+import org.jetbrains.kotlin.objcexport.analysisApiUtils.*
 import org.jetbrains.kotlin.psi.KtFile
 
 internal val KtCallableSymbol.isConstructor: Boolean
     get() = this is KtConstructorSymbol
-
-internal val KtCallableSymbol.isArray: Boolean
-    get() = false //TODO: temp k2 workaround
 
 context(KtAnalysisSession, KtObjCExportSession)
 fun KtFunctionSymbol.translateToObjCMethod(
 ): ObjCMethod? {
     if (!isVisibleInObjC()) return null
     if (anyMethodSelectors.containsKey(this.name)) return null //temp, find replacement for org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.isReal
+    if (isClone) return null
 
     return buildObjCMethod()
 }
-
 
 context(KtAnalysisSession, KtObjCExportSession)
 fun KtFileSymbol.getObjCFileClassOrProtocolName(): ObjCExportFileName? {
@@ -65,7 +61,7 @@ internal fun KtFunctionLikeSymbol.buildObjCMethod(
         attributes += "swift_error(nonnull_error)" // Means "failure <=> (error != nil)".
     }
 
-    if (this.isConstructor && !isArray) { // TODO: check methodBridge instead.
+    if (this.isConstructor && !isArrayConstructor) { // TODO: check methodBridge instead.
         attributes += "objc_designated_initializer"
     }
 
@@ -81,7 +77,7 @@ internal fun KtFunctionLikeSymbol.buildObjCMethod(
     return ObjCMethod(
         comment = comment,
         origin = getObjCExportStubOrigin(),
-        isInstanceMethod = bridge.isInstance || isConstructor,
+        isInstanceMethod = bridge.isInstance,
         returnType = returnType,
         selectors = selectors,
         parameters = parameters,
@@ -239,7 +235,7 @@ context(KtAnalysisSession, KtObjCExportSession)
 private fun KtFunctionLikeSymbol.getMangledName(forSwift: Boolean): String {
 
     if (this.isConstructor) {
-        return if (isArray && !forSwift) "array" else "init"
+        return if (isArrayConstructor && !forSwift) "array" else "init"
     }
 
     val candidate = when (this) {
@@ -283,7 +279,7 @@ private fun String.mangleIfSpecialFamily(prefix: String): String {
  * [org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportNamerImpl.startsWithWords]
  */
 private fun String.startsWithWords(words: String) = this.startsWith(words) &&
-    (this.length == words.length || !this[words.length].isLowerCase())
+        (this.length == words.length || !this[words.length].isLowerCase())
 
 /**
  * [org.jetbrains.kotlin.backend.konan.objcexport.MethodBrideExtensionsKt.valueParametersAssociated]
@@ -292,20 +288,8 @@ private fun String.startsWithWords(words: String) = this.startsWith(words) &&
 fun MethodBridge.valueParametersAssociated(
     function: KtFunctionLikeSymbol,
 ): List<Pair<MethodBridgeValueParameter, KtValueParameterSymbol?>> {
-
-    val skipFirstKotlinParameter = when (this.receiver) {
-        MethodBridgeReceiver.Static -> false
-        MethodBridgeReceiver.Instance -> false
-        MethodBridgeReceiver.Factory -> true
-    }
-
-    val allParameters = function.valueParameters.let { valueParameters ->
-        if (skipFirstKotlinParameter) valueParameters.drop(1)
-        else valueParameters
-    }
-
+    val allParameters = function.valueParameters
     if (allParameters.isEmpty()) return emptyList()
-
 
     return this.valueParameters.mapIndexed { index, valueParameterBridge ->
         when (valueParameterBridge) {
@@ -337,7 +321,7 @@ fun KtFunctionLikeSymbol.mapReturnType(returnBridge: MethodBridge.ReturnValue): 
             if (!returnBridge.successMayBeZero) {
                 check(
                     successReturnType is ObjCNonNullReferenceType
-                        || (successReturnType is ObjCPointerType && !successReturnType.nullable)
+                            || (successReturnType is ObjCPointerType && !successReturnType.nullable)
                 ) {
                     "Unexpected return type: $successReturnType in $this"
                 }
