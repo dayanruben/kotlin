@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.TestServices
@@ -71,12 +72,15 @@ abstract class AbstractFileStructureTest : AbstractAnalysisApiBasedTest() {
                 is KtScript -> {
                     elementToComment[mainFile.importList!!] = comment
                 }
+                is KtScriptInitializer -> {
+                    elementToComment[ktDeclaration.body!!]
+                }
                 else -> error("Unsupported declaration $ktDeclaration")
             }
         }
 
         PsiTreeUtil.getChildrenOfTypeAsList(mainFile, KtModifierList::class.java).forEach {
-            if (it.nextSibling is PsiErrorElement) {
+            if (it.getNextSiblingIgnoringWhitespaceAndComments() is PsiErrorElement) {
                 val structureElement = declarationToStructureElement[it] ?: return@forEach
                 val comment = structureElement.createComment()
                 elementToComment[it] = comment

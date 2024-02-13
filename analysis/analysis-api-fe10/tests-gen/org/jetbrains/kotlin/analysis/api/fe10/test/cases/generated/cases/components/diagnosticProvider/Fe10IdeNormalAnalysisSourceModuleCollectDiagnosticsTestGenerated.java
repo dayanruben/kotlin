@@ -53,6 +53,18 @@ public class Fe10IdeNormalAnalysisSourceModuleCollectDiagnosticsTestGenerated ex
     }
 
     @Test
+    @TestMetadata("danglingAnnotationInMiddle.kt")
+    public void testDanglingAnnotationInMiddle() throws Exception {
+        runTest("analysis/analysis-api/testData/components/diagnosticsProvider/diagnostics/danglingAnnotationInMiddle.kt");
+    }
+
+    @Test
+    @TestMetadata("danglingAnnotationInMiddleWithComment.kt")
+    public void testDanglingAnnotationInMiddleWithComment() throws Exception {
+        runTest("analysis/analysis-api/testData/components/diagnosticsProvider/diagnostics/danglingAnnotationInMiddleWithComment.kt");
+    }
+
+    @Test
     @TestMetadata("declarationErrors.kt")
     public void testDeclarationErrors() throws Exception {
         runTest("analysis/analysis-api/testData/components/diagnosticsProvider/diagnostics/declarationErrors.kt");
@@ -134,6 +146,18 @@ public class Fe10IdeNormalAnalysisSourceModuleCollectDiagnosticsTestGenerated ex
     @TestMetadata("javaNestedClassFromLibrary.kt")
     public void testJavaNestedClassFromLibrary() throws Exception {
         runTest("analysis/analysis-api/testData/components/diagnosticsProvider/diagnostics/javaNestedClassFromLibrary.kt");
+    }
+
+    @Test
+    @TestMetadata("libraryDataClassCopy.kt")
+    public void testLibraryDataClassCopy() throws Exception {
+        runTest("analysis/analysis-api/testData/components/diagnosticsProvider/diagnostics/libraryDataClassCopy.kt");
+    }
+
+    @Test
+    @TestMetadata("libraryDataClassCopyReversedOrder.kt")
+    public void testLibraryDataClassCopyReversedOrder() throws Exception {
+        runTest("analysis/analysis-api/testData/components/diagnosticsProvider/diagnostics/libraryDataClassCopyReversedOrder.kt");
     }
 
     @Test
