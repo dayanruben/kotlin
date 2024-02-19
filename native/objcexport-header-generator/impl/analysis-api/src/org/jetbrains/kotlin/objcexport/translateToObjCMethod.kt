@@ -6,12 +6,14 @@ import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.annotations.annotationInfos
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.backend.konan.InternalKotlinNativeApi
 import org.jetbrains.kotlin.backend.konan.KonanFqNames
 import org.jetbrains.kotlin.backend.konan.objcexport.*
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.objcexport.Predefined.anyMethodSelectors
+import org.jetbrains.kotlin.objcexport.Predefined.anyMethodSwiftNames
 import org.jetbrains.kotlin.objcexport.analysisApiUtils.*
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -19,12 +21,10 @@ internal val KtCallableSymbol.isConstructor: Boolean
     get() = this is KtConstructorSymbol
 
 context(KtAnalysisSession, KtObjCExportSession)
-fun KtFunctionSymbol.translateToObjCMethod(
-): ObjCMethod? {
+fun KtFunctionSymbol.translateToObjCMethod(): ObjCMethod? {
     if (!isVisibleInObjC()) return null
-    if (anyMethodSelectors.containsKey(this.name)) return null //temp, find replacement for org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.isReal
+    if (isFakeOverride) return null
     if (isClone) return null
-
     return buildObjCMethod()
 }
 
@@ -110,9 +110,10 @@ internal fun KtCallableSymbol.isRefinedInSwift(): Boolean = when {
 
 context(KtAnalysisSession, KtObjCExportSession)
 internal fun KtFunctionLikeSymbol.getSwiftName(methodBridge: MethodBridge): String {
-
     //assert(mapper.isBaseMethod(method)) //TODO: implement isBaseMethod
-    getPredefined(this, Predefined.anyMethodSwiftNames)?.let { return it }
+    if (this is KtNamedSymbol) {
+        anyMethodSwiftNames[name]?.let { return it }
+    }
 
     val parameters = methodBridge.valueParametersAssociated(this)
     val method = this
@@ -172,12 +173,6 @@ private fun splitSelector(selector: String): List<String> {
     }
 }
 
-/**
- * Not implemented [org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportNamerImpl.getPredefined]
- */
-private fun <T : Any> getPredefined(method: KtFunctionLikeSymbol, predefinedForAny: Map<Name, T>): T? {
-    return null
-}
 
 /**
  * [org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportNamerImpl.getSelector]
@@ -185,7 +180,9 @@ private fun <T : Any> getPredefined(method: KtFunctionLikeSymbol, predefinedForA
 context(KtAnalysisSession, KtObjCExportSession)
 fun KtFunctionLikeSymbol.getSelector(methodBridge: MethodBridge): String {
 
-    getPredefined(this, Predefined.anyMethodSelectors)?.let { return it }
+    if (this is KtNamedSymbol) {
+        anyMethodSelectors[this.name]?.let { return it }
+    }
 
     val parameters = methodBridge.valueParametersAssociated(this)
 
@@ -231,55 +228,27 @@ fun KtFunctionLikeSymbol.getSelector(methodBridge: MethodBridge): String {
     return sb.toString()
 }
 
+/**
+ * [org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportNamerImpl.getMangledName]
+ */
 context(KtAnalysisSession, KtObjCExportSession)
 private fun KtFunctionLikeSymbol.getMangledName(forSwift: Boolean): String {
-
-    if (this.isConstructor) {
-        return if (isArrayConstructor && !forSwift) "array" else "init"
+    return if (this.isConstructor) {
+        if (isArrayConstructor && !forSwift) "array" else "init"
+    } else {
+        getObjCFunctionName().name(forSwift).handleSpecialNames("do")
     }
-
-    val candidate = when (this) {
-        is KtPropertyGetterSymbol -> {
-            this.getObjCFunctionName().name(forSwift)
-        }
-        is KtPropertySetterSymbol -> {
-            this.getObjCFunctionName().name(forSwift)
-            //TODO: find replacement for [this.correspondingProperty]
-//            "set${
-//                this.correspondingProperty.getObjCName().asString(forSwift).replaceFirstChar(kotlin.Char::uppercaseChar)
-//            }".toIdentifier()
-        }
-        else -> {
-            this.getObjCFunctionName().name(forSwift)
-        }
-    }
-    return candidate.mangleIfSpecialFamily("do")
 }
 
-
-/**
- * [org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportNamerImpl.mangleIfSpecialFamily]
- */
-private fun String.mangleIfSpecialFamily(prefix: String): String {
+private fun String.handleSpecialNames(prefix: String): String {
     val trimmed = this.dropWhile { it == '_' }
     for (family in listOf("alloc", "copy", "mutableCopy", "new", "init")) {
         if (trimmed.startsWithWords(family)) {
-            // Then method can be detected as having special family by Objective-C compiler.
-            // mangle the name:
             return prefix + this.replaceFirstChar(Char::uppercaseChar)
         }
     }
-
-    // TODO: handle clashes with NSObject methods etc.
-
     return this
 }
-
-/**
- * [org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportNamerImpl.startsWithWords]
- */
-private fun String.startsWithWords(words: String) = this.startsWith(words) &&
-        (this.length == words.length || !this[words.length].isLowerCase())
 
 /**
  * [org.jetbrains.kotlin.backend.konan.objcexport.MethodBrideExtensionsKt.valueParametersAssociated]
@@ -302,6 +271,8 @@ fun MethodBridge.valueParametersAssociated(
     }
 }
 
+private fun String.startsWithWords(words: String) = this.startsWith(words) &&
+    (this.length == words.length || !this[words.length].isLowerCase())
 
 /**
  * [org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportTranslatorImpl.mapReturnType]
@@ -321,7 +292,7 @@ fun KtFunctionLikeSymbol.mapReturnType(returnBridge: MethodBridge.ReturnValue): 
             if (!returnBridge.successMayBeZero) {
                 check(
                     successReturnType is ObjCNonNullReferenceType
-                            || (successReturnType is ObjCPointerType && !successReturnType.nullable)
+                        || (successReturnType is ObjCPointerType && !successReturnType.nullable)
                 ) {
                     "Unexpected return type: $successReturnType in $this"
                 }

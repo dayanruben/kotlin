@@ -6,31 +6,31 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.backend.konan.objcexport.*
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.objcexport.analysisApiUtils.isCompanion
 import org.jetbrains.kotlin.objcexport.analysisApiUtils.isVisibleInObjC
 
 context(KtAnalysisSession, KtObjCExportSession)
 fun KtClassOrObjectSymbol.translateToObjCObject(): ObjCClass? {
-    require(classKind == KtClassKind.OBJECT)
+    require(classKind == KtClassKind.OBJECT || classKind == KtClassKind.COMPANION_OBJECT)
     if (!isVisibleInObjC()) return null
 
     val enumKind = this.classKind == KtClassKind.ENUM_CLASS
     val final = if (this is KtSymbolWithModality) this.modality == Modality.FINAL else false
-    val attributes = if (enumKind || final) listOf(OBJC_SUBCLASSING_RESTRICTED) else emptyList()
-
     val name = getObjCClassOrProtocolName()
+    val attributes = (if (enumKind || final) listOf(OBJC_SUBCLASSING_RESTRICTED) else emptyList()) + name.toNameAttributes()
     val comment: ObjCComment? = annotationsList.translateToObjCComment()
     val origin: ObjCExportStubOrigin = getObjCExportStubOrigin()
     val superProtocols: List<String> = superProtocols()
     val categoryName: String? = null
     val generics: List<ObjCGenericTypeDeclaration> = emptyList()
-    val objectMembers = getDefaultMembers()
-
     val superClass = translateSuperClass()
 
-    getMemberScope().getCallableSymbols()
+    val objectMembers = mutableListOf<ObjCExportStub>()
+    objectMembers += translateToObjCConstructors()
+    objectMembers += getDefaultMembers()
+    objectMembers += getDeclaredMemberScope().getCallableSymbols()
         .sortedWith(StableCallableOrder)
-        .flatMap { it.translateToObjCExportStubs() }
-        .forEach { objectMembers.add(it) }
+        .mapNotNull { it.translateToObjCExportStub() }
 
     return ObjCInterfaceImpl(
         name = name.objCName,
@@ -47,18 +47,9 @@ fun KtClassOrObjectSymbol.translateToObjCObject(): ObjCClass? {
 }
 
 context(KtAnalysisSession, KtObjCExportSession)
-private fun KtClassOrObjectSymbol.getDefaultMembers(): MutableList<ObjCExportStub> {
+private fun KtClassOrObjectSymbol.getDefaultMembers(): List<ObjCExportStub> {
 
     val result = mutableListOf<ObjCExportStub>()
-    val allocWithZoneParameter = ObjCParameter("zone", null, ObjCRawType("struct _NSZone *"), null)
-
-    result.add(
-        ObjCMethod(null, null, false, ObjCInstanceType, listOf("alloc"), emptyList(), listOf("unavailable"))
-    )
-
-    result.add(
-        ObjCMethod(null, null, false, ObjCInstanceType, listOf("allocWithZone:"), listOf(allocWithZoneParameter), listOf("unavailable"))
-    )
 
     result.add(
         ObjCMethod(
@@ -91,8 +82,9 @@ private fun KtClassOrObjectSymbol.getDefaultMembers(): MutableList<ObjCExportStu
  * Use translateToObjCReferenceType() to make type
  * See also: [org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportTranslatorImpl.mapReferenceType]
  */
+context(KtAnalysisSession, KtObjCExportSession)
 private fun KtClassOrObjectSymbol.toPropertyType() = ObjCClassType(
-    this.classIdIfNonLocal!!.shortClassName.asString(),
+    getObjCClassOrProtocolName().objCName,
     emptyList(),
     classIdIfNonLocal!!
 )
@@ -102,7 +94,8 @@ private fun KtClassOrObjectSymbol.toPropertyType() = ObjCClassType(
  */
 context(KtAnalysisSession, KtObjCExportSession)
 private fun getObjectInstanceSelector(objectSymbol: KtClassOrObjectSymbol): String {
-    return objectSymbol.getObjCClassOrProtocolName().objCName.lowercase()
+    return if (objectSymbol.isCompanion) ObjCPropertyNames.companionObjectPropertyName
+    else objectSymbol.getObjCClassOrProtocolName().objCName.lowercase()
 }
 
 /**
@@ -113,4 +106,3 @@ private fun getObjectPropertySelector(descriptor: KtClassOrObjectSymbol): String
     val collides = ObjCPropertyNames.objectPropertyName == getObjectInstanceSelector(descriptor)
     return ObjCPropertyNames.objectPropertyName + (if (collides) "_" else "")
 }
-

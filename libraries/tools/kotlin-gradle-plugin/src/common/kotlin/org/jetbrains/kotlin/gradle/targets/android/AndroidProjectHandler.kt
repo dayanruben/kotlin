@@ -188,7 +188,7 @@ internal class AndroidProjectHandler(
             task.destinationDirectory.set(project.layout.buildDirectory.dir("tmp/kotlin-classes/$variantDataName"))
             task.description = "Compiles the $variantDataName kotlin."
         }
-        val kotlinTask = tasksProvider.registerKotlinJVMTask(
+        @Suppress("DEPRECATION") val kotlinTask = tasksProvider.registerKotlinJVMTask(
             project,
             compilation.compileKotlinTaskName,
             compilation.compilerOptions.options,
@@ -230,10 +230,10 @@ internal class AndroidProjectHandler(
 
         val javaTask = variantData.javaCompileProvider
         @Suppress("UNCHECKED_CAST") val kotlinTask = compilation.compileTaskProvider as TaskProvider<KotlinCompile>
-        compilation.androidVariant.forEachJavaSourceDir { sources ->
-            kotlinTask.configure {
-                it.setSource(sources.dir)
-                it.dependsOn(sources)
+        kotlinTask.configure { task ->
+            variantData.forEachJavaSourceDir { sources ->
+                task.source(sources.dir)
+                task.dependsOn(sources)
             }
         }
         wireKotlinTasks(project, compilation, androidPlugin, androidExt, variantData, javaTask, kotlinTask)

@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.analysis.low.level.api.fir.transformers
 
+import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirGlobalResolveComponents
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.*
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.LLFirLockProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
@@ -24,10 +25,12 @@ import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.FirScript
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
+import org.jetbrains.kotlin.fir.declarations.destructuringDeclarationContainerVariable
 import org.jetbrains.kotlin.fir.declarations.utils.componentFunctionSymbol
 import org.jetbrains.kotlin.fir.declarations.utils.correspondingValueParameterFromPrimaryConstructor
 import org.jetbrains.kotlin.fir.declarations.utils.fromPrimaryConstructor
 import org.jetbrains.kotlin.fir.originalIfFakeOverrideOrDelegated
+import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
 import org.jetbrains.kotlin.resolve.DataClassResolver
@@ -37,11 +40,12 @@ import org.jetbrains.kotlin.utils.exceptions.requireWithAttachment
 
 internal abstract class LLFirTargetResolver(
     protected val resolveTarget: LLFirResolveTarget,
-    protected val lockProvider: LLFirLockProvider,
-    protected val resolverPhase: FirResolvePhase,
+    val resolverPhase: FirResolvePhase,
     private val isJumpingPhase: Boolean = false,
 ) : LLFirResolveTargetVisitor {
     val resolveTargetSession: LLFirSession get() = resolveTarget.session
+    val resolveTargetScopeSession: ScopeSession get() = resolveTargetSession.getScopeSession()
+    private val lockProvider: LLFirLockProvider get() = LLFirGlobalResolveComponents.getInstance(resolveTargetSession).lockProvider
 
     private val _containingDeclarations = mutableListOf<FirDeclaration>()
 
@@ -98,8 +102,14 @@ internal abstract class LLFirTargetResolver(
             // Fake or delegate declaration shared types and annotations from the original one
             originalDeclaration != null -> originalDeclaration.lazyResolveToPhase(resolverPhase)
 
-            // We share type references and annotations with the original parameter
-            target is FirProperty -> target.correspondingValueParameterFromPrimaryConstructor?.lazyResolveToPhase(resolverPhase)
+            target is FirProperty -> {
+                // We share type references and annotations with the original parameter
+                target.correspondingValueParameterFromPrimaryConstructor?.lazyResolveToPhase(resolverPhase)
+
+                // Destructuring declaration entries depends on the container property
+                target.destructuringDeclarationContainerVariable?.lazyResolveToPhase(resolverPhase)
+            }
+
             target is FirSimpleFunction && target.origin == FirDeclarationOrigin.Synthetic.DataClassMember -> {
                 resolveDataClassMemberDependencies(target)
             }
