@@ -8148,6 +8148,12 @@ public class FirLightTreeBlackBoxCodegenWithIrFakeOverrideGeneratorTestGenerated
     }
 
     @Test
+    @TestMetadata("kt65555.kt")
+    public void testKt65555() {
+      runTest("compiler/testData/codegen/box/collections/kt65555.kt");
+    }
+
+    @Test
     @TestMetadata("mutableList.kt")
     public void testMutableList() {
       runTest("compiler/testData/codegen/box/collections/mutableList.kt");
@@ -16801,6 +16807,12 @@ public class FirLightTreeBlackBoxCodegenWithIrFakeOverrideGeneratorTestGenerated
     @TestMetadata("delegationToVal.kt")
     public void testDelegationToVal() {
       runTest("compiler/testData/codegen/box/delegation/delegationToVal.kt");
+    }
+
+    @Test
+    @TestMetadata("delegationToVar.kt")
+    public void testDelegationToVar() {
+      runTest("compiler/testData/codegen/box/delegation/delegationToVar.kt");
     }
 
     @Test
@@ -30817,6 +30829,12 @@ public class FirLightTreeBlackBoxCodegenWithIrFakeOverrideGeneratorTestGenerated
     @TestMetadata("genericSamSmartcast.kt")
     public void testGenericSamSmartcast() {
       runTest("compiler/testData/codegen/box/javaInterop/genericSamSmartcast.kt");
+    }
+
+    @Test
+    @TestMetadata("immutableName.kt")
+    public void testImmutableName() {
+      runTest("compiler/testData/codegen/box/javaInterop/immutableName.kt");
     }
 
     @Test
@@ -51189,6 +51207,12 @@ public class FirLightTreeBlackBoxCodegenWithIrFakeOverrideGeneratorTestGenerated
       }
 
       @Test
+      @TestMetadata("suspendSamConstructorAdaptation.kt")
+      public void testSuspendSamConstructorAdaptation() {
+        runTest("compiler/testData/codegen/box/sam/constructors/suspendSamConstructorAdaptation.kt");
+      }
+
+      @Test
       @TestMetadata("syntheticVsReal.kt")
       public void testSyntheticVsReal() {
         runTest("compiler/testData/codegen/box/sam/constructors/syntheticVsReal.kt");
@@ -51997,6 +52021,12 @@ public class FirLightTreeBlackBoxCodegenWithIrFakeOverrideGeneratorTestGenerated
     @TestMetadata("explicitSuperCall.kt")
     public void testExplicitSuperCall() {
       runTest("compiler/testData/codegen/box/specialBuiltins/explicitSuperCall.kt");
+    }
+
+    @Test
+    @TestMetadata("intersectionWithMappedSignature.kt")
+    public void testIntersectionWithMappedSignature() {
+      runTest("compiler/testData/codegen/box/specialBuiltins/intersectionWithMappedSignature.kt");
     }
 
     @Test

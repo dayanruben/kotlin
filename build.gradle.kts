@@ -109,6 +109,7 @@ val irCompilerModules = arrayOf(
     ":compiler:ir.backend.common",
     ":compiler:ir.actualization",
     ":compiler:ir.interpreter",
+    ":compiler:ir.inline",
     ":wasm:wasm.ir"
 ).also { extra["irCompilerModules"] = it }
 
@@ -117,10 +118,11 @@ val irCompilerModulesForIDE = arrayOf(
     ":compiler:ir.serialization.common",
     ":compiler:ir.serialization.jvm",
     ":compiler:ir.serialization.js", // used in IJ android plugin in `ComposeIrGenerationExtension`
+    ":compiler:ir.objcinterop",
     ":compiler:ir.backend.common",
     ":compiler:ir.actualization",
     ":compiler:ir.interpreter",
-    ":compiler:ir.objcinterop",
+    ":compiler:ir.inline",
 ).also { extra["irCompilerModulesForIDE"] = it }
 
 val commonCompilerModules = arrayOf(
@@ -830,6 +832,7 @@ tasks {
         dependsOn(":kotlin-scripting-common:test")
         dependsOn(":kotlin-scripting-jvm:test")
         dependsOn(":kotlin-scripting-jvm-host-test:test")
+        dependsOn(":plugins:scripting:scripting-tests:test")
         dependsOn(":kotlin-scripting-dependencies:test")
         dependsOn(":kotlin-scripting-dependencies-maven:test")
         dependsOn(":kotlin-scripting-dependencies-maven-all:test")

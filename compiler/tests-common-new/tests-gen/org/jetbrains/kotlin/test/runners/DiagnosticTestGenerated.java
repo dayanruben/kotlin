@@ -13185,6 +13185,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("assignmentWithIncorrectLValue.kt")
+      public void testAssignmentWithIncorrectLValue() {
+        runTest("compiler/testData/diagnostics/tests/exceptions/assignmentWithIncorrectLValue.kt");
+      }
+
+      @Test
       @TestMetadata("expectedSomeTypesOnBranchForWhenExpressionOfErroneousType.kt")
       public void testExpectedSomeTypesOnBranchForWhenExpressionOfErroneousType() {
         runTest("compiler/testData/diagnostics/tests/exceptions/expectedSomeTypesOnBranchForWhenExpressionOfErroneousType.kt");
@@ -22722,6 +22728,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("intersectionWithMappedSignature.kt")
+        public void testIntersectionWithMappedSignature() {
+          runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/intersectionWithMappedSignature.kt");
+        }
+
+        @Test
         @TestMetadata("irrelevantCharAtAbstract.kt")
         public void testIrrelevantCharAtAbstract() {
           runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/irrelevantCharAtAbstract.kt");
@@ -29204,12 +29216,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
-        @TestMetadata("kt65555.kt")
-        public void testKt65555() {
-          runTest("compiler/testData/diagnostics/tests/override/clashesOnInheritance/kt65555.kt");
-        }
-
-        @Test
         @TestMetadata("kt9550.kt")
         public void testKt9550() {
           runTest("compiler/testData/diagnostics/tests/override/clashesOnInheritance/kt9550.kt");
@@ -34168,6 +34174,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("resolveInitializerOfDestructuringDeclarationOnce.kts")
       public void testResolveInitializerOfDestructuringDeclarationOnce() {
         runTest("compiler/testData/diagnostics/tests/script/resolveInitializerOfDestructuringDeclarationOnce.kts");
+      }
+
+      @Test
+      @TestMetadata("scriptDeclsShouldVisibleLocally.kts")
+      public void testScriptDeclsShouldVisibleLocally() {
+        runTest("compiler/testData/diagnostics/tests/script/scriptDeclsShouldVisibleLocally.kts");
       }
 
       @Test

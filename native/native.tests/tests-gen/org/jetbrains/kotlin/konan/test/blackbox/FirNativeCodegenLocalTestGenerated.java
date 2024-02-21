@@ -31,6 +31,12 @@ public class FirNativeCodegenLocalTestGenerated extends AbstractNativeCodegenBox
     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("native/native.tests/testData/codegen"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
   }
 
+  @Test
+  @TestMetadata("kt62262.kt")
+  public void testKt62262() {
+    runTest("native/native.tests/testData/codegen/kt62262.kt");
+  }
+
   @Nested
   @TestMetadata("native/native.tests/testData/codegen/annotations")
   @TestDataPath("$PROJECT_ROOT")
@@ -898,6 +904,12 @@ public class FirNativeCodegenLocalTestGenerated extends AbstractNativeCodegenBox
     }
 
     @Test
+    @TestMetadata("kt40426.kt")
+    public void testKt40426() {
+      runTest("native/native.tests/testData/codegen/cinterop/kt40426.kt");
+    }
+
+    @Test
     @TestMetadata("kt43265.kt")
     public void testKt43265() {
       runTest("native/native.tests/testData/codegen/cinterop/kt43265.kt");
@@ -925,6 +937,12 @@ public class FirNativeCodegenLocalTestGenerated extends AbstractNativeCodegenBox
     @TestMetadata("kt54284_fmodules.kt")
     public void testKt54284_fmodules() {
       runTest("native/native.tests/testData/codegen/cinterop/kt54284_fmodules.kt");
+    }
+
+    @Test
+    @TestMetadata("kt55938.kt")
+    public void testKt55938() {
+      runTest("native/native.tests/testData/codegen/cinterop/kt55938.kt");
     }
 
     @Test

@@ -2693,6 +2693,12 @@ public class FirPsiJvmIrTextTestGenerated extends AbstractFirPsiJvmIrTextTest {
     }
 
     @Test
+    @TestMetadata("annotatedTypeParameter.kt")
+    public void testAnnotatedTypeParameter() {
+      runTest("compiler/testData/ir/irText/fakeOverrides/annotatedTypeParameter.kt");
+    }
+
+    @Test
     @TestMetadata("fakeOverrideOfRaw.kt")
     public void testFakeOverrideOfRaw() {
       runTest("compiler/testData/ir/irText/fakeOverrides/fakeOverrideOfRaw.kt");
@@ -2702,6 +2708,18 @@ public class FirPsiJvmIrTextTestGenerated extends AbstractFirPsiJvmIrTextTest {
     @TestMetadata("fakeOverrideOfRawJavaCollection.kt")
     public void testFakeOverrideOfRawJavaCollection() {
       runTest("compiler/testData/ir/irText/fakeOverrides/fakeOverrideOfRawJavaCollection.kt");
+    }
+
+    @Test
+    @TestMetadata("intersectionWithJava.kt")
+    public void testIntersectionWithJava() {
+      runTest("compiler/testData/ir/irText/fakeOverrides/intersectionWithJava.kt");
+    }
+
+    @Test
+    @TestMetadata("intersectionWithMappedSignature.kt")
+    public void testIntersectionWithMappedSignature() {
+      runTest("compiler/testData/ir/irText/fakeOverrides/intersectionWithMappedSignature.kt");
     }
   }
 

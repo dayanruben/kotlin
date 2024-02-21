@@ -13185,6 +13185,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("assignmentWithIncorrectLValue.kt")
+      public void testAssignmentWithIncorrectLValue() {
+        runTest("compiler/testData/diagnostics/tests/exceptions/assignmentWithIncorrectLValue.kt");
+      }
+
+      @Test
       @TestMetadata("expectedSomeTypesOnBranchForWhenExpressionOfErroneousType.kt")
       public void testExpectedSomeTypesOnBranchForWhenExpressionOfErroneousType() {
         runTest("compiler/testData/diagnostics/tests/exceptions/expectedSomeTypesOnBranchForWhenExpressionOfErroneousType.kt");
@@ -22722,6 +22728,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         }
 
         @Test
+        @TestMetadata("intersectionWithMappedSignature.kt")
+        public void testIntersectionWithMappedSignature() {
+          runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/intersectionWithMappedSignature.kt");
+        }
+
+        @Test
         @TestMetadata("irrelevantCharAtAbstract.kt")
         public void testIrrelevantCharAtAbstract() {
           runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/irrelevantCharAtAbstract.kt");
@@ -26953,12 +26965,6 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         @TestMetadata("kt13355viaJava.kt")
         public void testKt13355viaJava() {
           runTest("compiler/testData/diagnostics/tests/override/clashesOnInheritance/kt13355viaJava.kt");
-        }
-
-        @Test
-        @TestMetadata("kt65555.kt")
-        public void testKt65555() {
-          runTest("compiler/testData/diagnostics/tests/override/clashesOnInheritance/kt65555.kt");
         }
 
         @Test
@@ -31920,6 +31926,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("resolveInitializerOfDestructuringDeclarationOnce.kts")
       public void testResolveInitializerOfDestructuringDeclarationOnce() {
         runTest("compiler/testData/diagnostics/tests/script/resolveInitializerOfDestructuringDeclarationOnce.kts");
+      }
+
+      @Test
+      @TestMetadata("scriptDeclsShouldVisibleLocally.kts")
+      public void testScriptDeclsShouldVisibleLocally() {
+        runTest("compiler/testData/diagnostics/tests/script/scriptDeclsShouldVisibleLocally.kts");
       }
 
       @Test

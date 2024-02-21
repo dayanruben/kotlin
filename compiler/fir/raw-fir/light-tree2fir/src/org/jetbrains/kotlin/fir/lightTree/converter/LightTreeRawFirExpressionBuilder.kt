@@ -625,7 +625,7 @@ class LightTreeRawFirExpressionBuilder(
         }
 
         return result ?: buildErrorExpression {
-            source = null
+            source = dotQualifiedExpression.toFirSourceElement()
             diagnostic = ConeSyntaxDiagnostic("Qualified expression without selector")
 
             // if there is no selector, we still want to resolve the receiver
@@ -1172,6 +1172,7 @@ class LightTreeRawFirExpressionBuilder(
                         name = OperatorNameConventions.ITERATOR
                     }
                     explicitReceiver = calculatedRangeExpression
+                    origin = FirFunctionCallOrigin.Operator
                 }
             )
             statements += iteratorVal
@@ -1184,6 +1185,7 @@ class LightTreeRawFirExpressionBuilder(
                         name = OperatorNameConventions.HAS_NEXT
                     }
                     explicitReceiver = generateResolvedAccessExpression(rangeSource, iteratorVal)
+                    origin = FirFunctionCallOrigin.Operator
                 }
                 // break/continue in the for loop condition will refer to an outer loop if any.
                 // So, prepare the loop target after building the condition.
@@ -1204,6 +1206,7 @@ class LightTreeRawFirExpressionBuilder(
                                 name = OperatorNameConventions.NEXT
                             }
                             explicitReceiver = generateResolvedAccessExpression(rangeSource, iteratorVal)
+                            origin = FirFunctionCallOrigin.Operator
                         },
                         valueParameter.returnTypeRef,
                         extractedAnnotations = valueParameter.annotations

@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.konan.test.blackbox.support.compilation
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.konan.properties.resolvablePropertyList
 import org.jetbrains.kotlin.konan.target.AppleConfigurables
-import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.withOSVersion
 import org.jetbrains.kotlin.konan.test.blackbox.support.*
 import org.jetbrains.kotlin.konan.test.blackbox.support.TestCase.*
@@ -74,12 +73,7 @@ internal abstract class BasicCompilation<A : TestCompilationArtifact>(
         // We use dev distribution for tests as it provides a full set of testing utilities,
         // which might not be available in user distribution.
         add("-Xllvm-variant=dev")
-        addFlattened(binaryOptions.entries) { (name, value) ->
-            if (HostManager.hostIsMingw)
-                listOf("-Xbinary=\"$name=$value\"")
-            else
-                listOf("-Xbinary=$name=$value")
-        }
+        addFlattened(binaryOptions.entries) { (name, value) -> listOf("-Xbinary=$name=$value") }
     }
 
     protected abstract fun applySpecificArgs(argsBuilder: ArgsBuilder)
@@ -336,7 +330,8 @@ internal class BinaryLibraryCompilation(
     freeCompilerArgs: TestCompilerArgs,
     sourceModules: Collection<TestModule>,
     dependencies: Iterable<TestCompilationDependency<*>>,
-    expectedArtifact: BinaryLibrary
+    expectedArtifact: BinaryLibrary,
+    private val kind: BinaryLibraryKind,
 ) : SourceBasedCompilation<BinaryLibrary>(
     targets = settings.get(),
     home = settings.get(),
@@ -356,16 +351,18 @@ internal class BinaryLibraryCompilation(
     dependencies = CategorizedDependencies(dependencies),
     expectedArtifact = expectedArtifact
 ) {
+    private val cinterfaceMode = settings.get<CInterfaceMode>().compilerFlag
     override val binaryOptions get() = BinaryOptions.RuntimeAssertionsMode.defaultForTesting(optimizationMode, freeCompilerArgs.assertionsMode)
 
     override fun applySpecificArgs(argsBuilder: ArgsBuilder) = with(argsBuilder) {
-        val libraryKind = when (expectedArtifact.kind) {
-            BinaryLibrary.Kind.STATIC -> "static"
-            BinaryLibrary.Kind.DYNAMIC -> "dynamic"
+        val libraryKind = when (kind) {
+            BinaryLibraryKind.STATIC -> "static"
+            BinaryLibraryKind.DYNAMIC -> "dynamic"
         }
         add(
             "-produce", libraryKind,
-            "-output", expectedArtifact.libraryFile.absolutePath
+            "-output", expectedArtifact.libraryFile.absolutePath,
+            cinterfaceMode
         )
         super.applySpecificArgs(argsBuilder)
     }
