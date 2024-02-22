@@ -1023,6 +1023,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
     }
 
     @Test
+    @TestMetadata("emptyArrayDesugaring.kt")
+    public void testEmptyArrayDesugaring() {
+      runTest("compiler/testData/codegen/box/arrays/emptyArrayDesugaring.kt");
+    }
+
+    @Test
     @TestMetadata("forEachBooleanArray.kt")
     public void testForEachBooleanArray() {
       runTest("compiler/testData/codegen/box/arrays/forEachBooleanArray.kt");
@@ -31619,6 +31625,24 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
       @TestMetadata("int.kt")
       public void testInt() {
         runTest("compiler/testData/codegen/box/javaInterop/primitiveVsWrapperTypeInInheritance/int.kt");
+      }
+
+      @Test
+      @TestMetadata("intersectionWithMultipleDefaultsInJava.kt")
+      public void testIntersectionWithMultipleDefaultsInJava() {
+        runTest("compiler/testData/codegen/box/javaInterop/primitiveVsWrapperTypeInInheritance/intersectionWithMultipleDefaultsInJava.kt");
+      }
+
+      @Test
+      @TestMetadata("intersectionWithMultipleDefaultsInJavaOverriddenByIntersectionInKotlin.kt")
+      public void testIntersectionWithMultipleDefaultsInJavaOverriddenByIntersectionInKotlin() {
+        runTest("compiler/testData/codegen/box/javaInterop/primitiveVsWrapperTypeInInheritance/intersectionWithMultipleDefaultsInJavaOverriddenByIntersectionInKotlin.kt");
+      }
+
+      @Test
+      @TestMetadata("intersectionWithMultipleDefaultsInJavaWithAdditionalSymbolsAfterNonSubsumed.kt")
+      public void testIntersectionWithMultipleDefaultsInJavaWithAdditionalSymbolsAfterNonSubsumed() {
+        runTest("compiler/testData/codegen/box/javaInterop/primitiveVsWrapperTypeInInheritance/intersectionWithMultipleDefaultsInJavaWithAdditionalSymbolsAfterNonSubsumed.kt");
       }
 
       @Test

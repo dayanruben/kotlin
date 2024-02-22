@@ -894,6 +894,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/arrays/constantArrayOfAny.kt");
     }
 
+    @TestMetadata("emptyArrayDesugaring.kt")
+    public void testEmptyArrayDesugaring() {
+      runTest("compiler/testData/codegen/box/arrays/emptyArrayDesugaring.kt");
+    }
+
     @TestMetadata("forEachBooleanArray.kt")
     public void testForEachBooleanArray() {
       runTest("compiler/testData/codegen/box/arrays/forEachBooleanArray.kt");
@@ -26666,6 +26671,21 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       @TestMetadata("int.kt")
       public void testInt() {
         runTest("compiler/testData/codegen/box/javaInterop/primitiveVsWrapperTypeInInheritance/int.kt");
+      }
+
+      @TestMetadata("intersectionWithMultipleDefaultsInJava.kt")
+      public void testIntersectionWithMultipleDefaultsInJava() {
+        runTest("compiler/testData/codegen/box/javaInterop/primitiveVsWrapperTypeInInheritance/intersectionWithMultipleDefaultsInJava.kt");
+      }
+
+      @TestMetadata("intersectionWithMultipleDefaultsInJavaOverriddenByIntersectionInKotlin.kt")
+      public void testIntersectionWithMultipleDefaultsInJavaOverriddenByIntersectionInKotlin() {
+        runTest("compiler/testData/codegen/box/javaInterop/primitiveVsWrapperTypeInInheritance/intersectionWithMultipleDefaultsInJavaOverriddenByIntersectionInKotlin.kt");
+      }
+
+      @TestMetadata("intersectionWithMultipleDefaultsInJavaWithAdditionalSymbolsAfterNonSubsumed.kt")
+      public void testIntersectionWithMultipleDefaultsInJavaWithAdditionalSymbolsAfterNonSubsumed() {
+        runTest("compiler/testData/codegen/box/javaInterop/primitiveVsWrapperTypeInInheritance/intersectionWithMultipleDefaultsInJavaWithAdditionalSymbolsAfterNonSubsumed.kt");
       }
 
       @TestMetadata("nullableInt.kt")

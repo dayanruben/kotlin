@@ -628,6 +628,24 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
     }
 
     @Test
+    @TestMetadata("intersectionWithMultipleDefaultsInJava.kt")
+    public void testIntersectionWithMultipleDefaultsInJava() {
+      runTest("compiler/testData/diagnostics/tests/intersectionWithMultipleDefaultsInJava.kt");
+    }
+
+    @Test
+    @TestMetadata("intersectionWithMultipleDefaultsInJavaOverriddenByIntersectionInKotlin.kt")
+    public void testIntersectionWithMultipleDefaultsInJavaOverriddenByIntersectionInKotlin() {
+      runTest("compiler/testData/diagnostics/tests/intersectionWithMultipleDefaultsInJavaOverriddenByIntersectionInKotlin.kt");
+    }
+
+    @Test
+    @TestMetadata("intersectionWithMultipleDefaultsInJavaWithAdditionalSymbolsAfterNonSubsumed.kt")
+    public void testIntersectionWithMultipleDefaultsInJavaWithAdditionalSymbolsAfterNonSubsumed() {
+      runTest("compiler/testData/diagnostics/tests/intersectionWithMultipleDefaultsInJavaWithAdditionalSymbolsAfterNonSubsumed.kt");
+    }
+
+    @Test
     @TestMetadata("invalidTargetCrashesCompiler.kt")
     public void testInvalidTargetCrashesCompiler() {
       runTest("compiler/testData/diagnostics/tests/invalidTargetCrashesCompiler.kt");
@@ -8060,6 +8078,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("throwInLambda.kt")
       public void testThrowInLambda() {
         runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/throwInLambda.kt");
+      }
+
+      @Test
+      @TestMetadata("tryCatchFinallyIfs.kt")
+      public void testTryCatchFinallyIfs() {
+        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/tryCatchFinallyIfs.kt");
       }
 
       @Test
