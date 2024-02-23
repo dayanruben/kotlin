@@ -2721,6 +2721,24 @@ public class FirPsiJvmIrTextTestGenerated extends AbstractFirPsiJvmIrTextTest {
     public void testIntersectionWithMappedSignature() {
       runTest("compiler/testData/ir/irText/fakeOverrides/intersectionWithMappedSignature.kt");
     }
+
+    @Test
+    @TestMetadata("intersectionWithRawType.kt")
+    public void testIntersectionWithRawType() {
+      runTest("compiler/testData/ir/irText/fakeOverrides/intersectionWithRawType.kt");
+    }
+
+    @Test
+    @TestMetadata("setterVisibliity.kt")
+    public void testSetterVisibliity() {
+      runTest("compiler/testData/ir/irText/fakeOverrides/setterVisibliity.kt");
+    }
+
+    @Test
+    @TestMetadata("setterVisibliityWithJava.kt")
+    public void testSetterVisibliityWithJava() {
+      runTest("compiler/testData/ir/irText/fakeOverrides/setterVisibliityWithJava.kt");
+    }
   }
 
   @Nested
@@ -2859,6 +2877,12 @@ public class FirPsiJvmIrTextTestGenerated extends AbstractFirPsiJvmIrTextTest {
     }
 
     @Test
+    @TestMetadata("FieldsFromJavaClass.kt")
+    public void testFieldsFromJavaClass() {
+      runTest("compiler/testData/ir/irText/firProblems/FieldsFromJavaClass.kt");
+    }
+
+    @Test
     @TestMetadata("Fir2IrClassifierStorage.kt")
     public void testFir2IrClassifierStorage() {
       runTest("compiler/testData/ir/irText/firProblems/Fir2IrClassifierStorage.kt");
@@ -2970,12 +2994,6 @@ public class FirPsiJvmIrTextTestGenerated extends AbstractFirPsiJvmIrTextTest {
     @TestMetadata("LocalSuspendFun.kt")
     public void testLocalSuspendFun() {
       runTest("compiler/testData/ir/irText/firProblems/LocalSuspendFun.kt");
-    }
-
-    @Test
-    @TestMetadata("MissingFieldInJavaClass.kt")
-    public void testMissingFieldInJavaClass() {
-      runTest("compiler/testData/ir/irText/firProblems/MissingFieldInJavaClass.kt");
     }
 
     @Test
