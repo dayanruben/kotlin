@@ -68,19 +68,26 @@ object SwiftIrTree : AbstractSwiftIrTreeBuilder() {
         parent(declarationContainer)
     }
 
+    val `class`: Element by element {
+        customParentInVisitor = namedDeclaration
+        parent(namedDeclaration)
+        parent(declarationContainer)
+    }
+
     val callable by sealedElement {
         parent(declaration)
+
+        +field("kind", callableKind)
+        +field("body", functionBodyType, nullable = true, mutable = true)
     }
 
     val function by element {
         customParentInVisitor = callable
         parent(callable)
 
-        +field("isStatic", boolean) // todo: KT-65046 Method|function distinction in SIR
         +field("name", string)
         +listField("parameters", parameterType)
         +field("returnType", typeType)
-        +field("body", functionBodyType, nullable = true, mutable = true)
 
         +field(name = "documentation", string, nullable = true, mutable = true)
     }
@@ -88,8 +95,6 @@ object SwiftIrTree : AbstractSwiftIrTreeBuilder() {
     val accessor by sealedElement {
         customParentInVisitor = callable
         parent(callable)
-
-        +field("body", functionBodyType, nullable = true, mutable = true)
     }
 
     val getter by element {
@@ -112,8 +117,6 @@ object SwiftIrTree : AbstractSwiftIrTreeBuilder() {
 
         +field("getter", getter)
         +field("setter", setter, nullable = true)
-
-        +field("isStatic", boolean) // todo: KT-65046 Method|function distinction in SIR
     }
 
     val import by element {

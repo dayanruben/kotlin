@@ -5,6 +5,8 @@ declare namespace JS_TESTS {
             readonly required: number;
             readonly notRequired?: Nullable<number>;
         }
+        interface ExportedParentInterface {
+        }
     }
     namespace foo {
         interface TestInterface {
@@ -30,11 +32,39 @@ declare namespace JS_TESTS {
             readonly __doNotUseOrImplementIt: foo.TestInterfaceImpl["__doNotUseOrImplementIt"] & foo.AnotherExportedInterface["__doNotUseOrImplementIt"];
         }
         function processInterface(test: foo.TestInterface): string;
+        interface WithTheCompanion {
+            readonly interfaceField: string;
+            readonly __doNotUseOrImplementIt: {
+                readonly "foo.WithTheCompanion": unique symbol;
+            };
+        }
+        const WithTheCompanion: {
+            companionFunction(): string;
+        };
         function processOptionalInterface(a: foo.OptionalFieldsInterface): string;
         interface InterfaceWithCompanion {
             readonly __doNotUseOrImplementIt: {
                 readonly "foo.InterfaceWithCompanion": unique symbol;
             };
+        }
+        interface ExportedChildInterface extends foo.ExportedParentInterface {
+            bar(): void;
+            readonly __doNotUseOrImplementIt: {
+                readonly "foo.ExportedChildInterface": unique symbol;
+            };
+        }
+        interface InterfaceWithDefaultArguments {
+            foo(x?: number): number;
+            bar(x?: number): number;
+            readonly __doNotUseOrImplementIt: {
+                readonly "foo.InterfaceWithDefaultArguments": unique symbol;
+            };
+        }
+        class ImplementorOfInterfaceWithDefaultArguments implements foo.InterfaceWithDefaultArguments {
+            constructor();
+            bar(x?: number): number;
+            foo(x?: number): number;
+            readonly __doNotUseOrImplementIt: foo.InterfaceWithDefaultArguments["__doNotUseOrImplementIt"];
         }
     }
 }

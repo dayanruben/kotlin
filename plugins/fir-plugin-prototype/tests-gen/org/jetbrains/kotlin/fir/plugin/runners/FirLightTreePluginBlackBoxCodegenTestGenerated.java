@@ -9,7 +9,6 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TargetBackend;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -143,5 +142,11 @@ public class FirLightTreePluginBlackBoxCodegenTestGenerated extends AbstractFirL
   @TestMetadata("topLevelCallables.kt")
   public void testTopLevelCallables() {
     runTest("plugins/fir-plugin-prototype/testData/box/topLevelCallables.kt");
+  }
+
+  @Test
+  @TestMetadata("topLevelPrivateSuspendFun.kt")
+  public void testTopLevelPrivateSuspendFun() {
+    runTest("plugins/fir-plugin-prototype/testData/box/topLevelPrivateSuspendFun.kt");
   }
 }

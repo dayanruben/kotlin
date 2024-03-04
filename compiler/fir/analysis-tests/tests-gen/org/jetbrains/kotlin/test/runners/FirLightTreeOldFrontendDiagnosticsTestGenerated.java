@@ -208,6 +208,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
     }
 
     @Test
+    @TestMetadata("compareWithReified.kt")
+    public void testCompareWithReified() {
+      runTest("compiler/testData/diagnostics/tests/compareWithReified.kt");
+    }
+
+    @Test
     @TestMetadata("comparingArbitraryClasses.kt")
     public void testComparingArbitraryClasses() {
       runTest("compiler/testData/diagnostics/tests/comparingArbitraryClasses.kt");
@@ -4038,6 +4044,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         }
 
         @Test
+        @TestMetadata("kt53478.kt")
+        public void testKt53478() {
+          runTest("compiler/testData/diagnostics/tests/builderInference/issues/kt53478.kt");
+        }
+
+        @Test
         @TestMetadata("kt53553.kt")
         public void testKt53553() {
           runTest("compiler/testData/diagnostics/tests/builderInference/issues/kt53553.kt");
@@ -4221,6 +4233,18 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         @TestMetadata("kt63841.kt")
         public void testKt63841() {
           runTest("compiler/testData/diagnostics/tests/builderInference/issues/kt63841.kt");
+        }
+
+        @Test
+        @TestMetadata("kt64066.kt")
+        public void testKt64066() {
+          runTest("compiler/testData/diagnostics/tests/builderInference/issues/kt64066.kt");
+        }
+
+        @Test
+        @TestMetadata("kt64066disabled.kt")
+        public void testKt64066disabled() {
+          runTest("compiler/testData/diagnostics/tests/builderInference/issues/kt64066disabled.kt");
         }
 
         @Test
@@ -12793,6 +12817,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         @TestMetadata("entriesPropertyAsExtensionClashPrioritized.kt")
         public void testEntriesPropertyAsExtensionClashPrioritized() {
           runTest("compiler/testData/diagnostics/tests/enum/entries/entriesPropertyAsExtensionClashPrioritized.kt");
+        }
+
+        @Test
+        @TestMetadata("entriesPropertyImport.kt")
+        public void testEntriesPropertyImport() {
+          runTest("compiler/testData/diagnostics/tests/enum/entries/entriesPropertyImport.kt");
         }
 
         @Test
@@ -21647,6 +21677,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       }
 
       @Test
+      @TestMetadata("inheritedInnerAndNested.kt")
+      public void testInheritedInnerAndNested() {
+        runTest("compiler/testData/diagnostics/tests/inner/inheritedInnerAndNested.kt");
+      }
+
+      @Test
       @TestMetadata("innerClassInEnumEntryClassMemberResolve.kt")
       public void testInnerClassInEnumEntryClassMemberResolve() {
         runTest("compiler/testData/diagnostics/tests/inner/innerClassInEnumEntryClassMemberResolve.kt");
@@ -22187,6 +22223,18 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       }
 
       @Test
+      @TestMetadata("internalClash.kt")
+      public void testInternalClash() {
+        runTest("compiler/testData/diagnostics/tests/j+k/internalClash.kt");
+      }
+
+      @Test
+      @TestMetadata("internalClash2.kt")
+      public void testInternalClash2() {
+        runTest("compiler/testData/diagnostics/tests/j+k/internalClash2.kt");
+      }
+
+      @Test
       @TestMetadata("intersectionWithJavaVoidNothing.kt")
       public void testIntersectionWithJavaVoidNothing() {
         runTest("compiler/testData/diagnostics/tests/j+k/intersectionWithJavaVoidNothing.kt");
@@ -22238,6 +22286,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       @TestMetadata("kjkPropertyAndExtensionProperty.kt")
       public void testKjkPropertyAndExtensionProperty() {
         runTest("compiler/testData/diagnostics/tests/j+k/kjkPropertyAndExtensionProperty.kt");
+      }
+
+      @Test
+      @TestMetadata("kjkRawTypeWithKotlinUpperBound.kt")
+      public void testKjkRawTypeWithKotlinUpperBound() {
+        runTest("compiler/testData/diagnostics/tests/j+k/kjkRawTypeWithKotlinUpperBound.kt");
       }
 
       @Test
@@ -26004,6 +26058,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       @TestMetadata("EqualsOperatorOverrideHierarchies.kt")
       public void testEqualsOperatorOverrideHierarchies() {
         runTest("compiler/testData/diagnostics/tests/operatorsOverloading/EqualsOperatorOverrideHierarchies.kt");
+      }
+
+      @Test
+      @TestMetadata("implicitInvokeOnPropertyInItsInitializer.kt")
+      public void testImplicitInvokeOnPropertyInItsInitializer() {
+        runTest("compiler/testData/diagnostics/tests/operatorsOverloading/implicitInvokeOnPropertyInItsInitializer.kt");
       }
 
       @Test

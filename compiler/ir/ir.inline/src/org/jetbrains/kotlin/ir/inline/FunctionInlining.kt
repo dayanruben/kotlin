@@ -162,7 +162,7 @@ class FunctionInlining(
 
         val substituteMap = mutableMapOf<IrValueParameter, IrExpression>()
 
-        fun inline() = inlineFunction(callSite, callee, callee, true)
+        fun inline() = inlineFunction(callSite, callee, callee.originalFunction, true)
 
         private fun <E : IrElement> E.copy(): E {
             @Suppress("UNCHECKED_CAST")
@@ -854,6 +854,9 @@ class FunctionInlining(
             set(value) {
                 symbol.owner.type = value
             }
+
+        override var attributeOwnerId: IrAttributeContainer = this
+        override var originalBeforeInline: IrAttributeContainer? = null
 
         override fun <R, D> accept(visitor: IrElementVisitor<R, D>, data: D) =
             visitor.visitGetValue(this, data)

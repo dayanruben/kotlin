@@ -1,7 +1,7 @@
 // MODULE: m1-common
 // FILE: common.kt
 
-expect class A
+<!NO_ACTUAL_FOR_EXPECT{JVM}!>expect class A<!>
 
 // FILE: common2.kt
 actual class <!ACTUAL_WITHOUT_EXPECT, EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE!>A<!>

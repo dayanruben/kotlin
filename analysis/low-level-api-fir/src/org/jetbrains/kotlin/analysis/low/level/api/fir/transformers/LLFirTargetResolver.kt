@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkPhase
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.errorWithFirSpecificEntries
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirElementWithResolveState
-import org.jetbrains.kotlin.fir.FirFileAnnotationsContainer
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
@@ -135,8 +134,7 @@ internal abstract class LLFirTargetResolver(
      * @see skipDependencyTargetResolutionStep
      */
     private fun resolveDependencies(target: FirElementWithResolveState) {
-        if (skipDependencyTargetResolutionStep || target is FirFileAnnotationsContainer) return
-        resolveTarget.firFile?.annotationsContainer?.lazyResolveToPhase(resolverPhase)
+        if (skipDependencyTargetResolutionStep) return
 
         val originalDeclaration = (target as? FirCallableDeclaration)?.originalIfFakeOverrideOrDelegated()
         when {
@@ -280,6 +278,7 @@ internal abstract class LLFirTargetResolver(
         if (doResolveWithoutLock(target)) return
 
         if (isJumpingPhase) {
+            checkThatResolvedAtLeastToPreviousPhase(target)
             lockProvider.withJumpingLock(
                 target,
                 resolverPhase,

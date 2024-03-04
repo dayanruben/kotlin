@@ -4,7 +4,7 @@
 expect fun parameterCount()
 fun parameterCount(p: String) {}
 
-expect fun parameterCount2()
+<!NO_ACTUAL_FOR_EXPECT{JVM}!>expect fun parameterCount2()<!>
 actual fun <!ACTUAL_WITHOUT_EXPECT!>parameterCount2<!>(p: String) {}
 
 expect fun callableKind(): Int
@@ -13,9 +13,9 @@ val callableKind: Int = 1
 expect fun <T> typeParameterCount()
 fun typeParameterCount() {}
 
-expect enum class <!EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE!>EnumEntries<!> {
+<!NO_ACTUAL_FOR_EXPECT{JVM}!>expect enum class <!EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE!>EnumEntries<!> {
     ONE, TWO;
-}
+}<!>
 actual enum class <!ACTUAL_WITHOUT_EXPECT, EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE!>EnumEntries<!> {
     ONE;
 }

@@ -17,9 +17,6 @@ abstract class AbstractImplementation<Implementation, Element, Field>(
               Element : AbstractElement<Element, *, Implementation>,
               Field : AbstractField<*> {
 
-    private val isDefault: Boolean
-        get() = name == null
-
     override val allParents: List<ImplementationKindOwner>
         get() = listOf(element)
 
@@ -53,11 +50,7 @@ abstract class AbstractImplementation<Implementation, Element, Field>(
 
     init {
         @Suppress("UNCHECKED_CAST")
-        if (isDefault) {
-            element.defaultImplementation = this as Implementation
-        } else {
-            element.customImplementations += this as Implementation
-        }
+        element.implementations += this as Implementation
     }
 
     override val hasAcceptChildrenMethod: Boolean
@@ -71,15 +64,20 @@ abstract class AbstractImplementation<Implementation, Element, Field>(
         get() = true
     var isPublic = false
 
+    var putImplementationOptInInConstructor = true
+
+    var constructorParameterOrderOverride: List<String>? = null
+
     override fun get(fieldName: String): Field? {
         return allFields.firstOrNull { it.name == fieldName }
     }
 
-    private fun withDefault(field: Field) = !field.isFinal && (field.defaultValueInImplementation != null || field.isLateinit)
+    private fun withDefault(field: Field) =
+        !field.isFinal && (field.defaultValueInImplementation != null || field.defaultValueInBase != null || field.isLateinit)
 
-    val fieldsWithoutDefault by lazy { allFields.filterNot(::withDefault) }
+    val fieldsInConstructor by lazy { allFields.filterNot(::withDefault) }
 
-    val fieldsWithDefault by lazy { allFields.filter(::withDefault) }
+    val fieldsInBody by lazy { allFields.filter(::withDefault).filter { it.defaultValueInBase == null } }
 
     var requiresOptIn = false
 
@@ -98,4 +96,7 @@ abstract class AbstractImplementation<Implementation, Element, Field>(
         }
 
     var builder: LeafBuilder<Field, Element, Implementation>? = null
+
+    open val doPrint: Boolean
+        get() = true
 }

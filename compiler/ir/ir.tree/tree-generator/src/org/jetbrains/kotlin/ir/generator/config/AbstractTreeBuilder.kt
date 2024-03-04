@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.ir.generator.model.*
 import org.jetbrains.kotlin.ir.generator.model.ElementOrRef
 import org.jetbrains.kotlin.ir.generator.model.ElementRef
 import org.jetbrains.kotlin.ir.generator.model.ListField
-import org.jetbrains.kotlin.ir.generator.model.Model
+import org.jetbrains.kotlin.ir.generator.Model
 import org.jetbrains.kotlin.types.Variance
 import kotlin.properties.PropertyDelegateProvider
 import kotlin.properties.ReadOnlyProperty
@@ -78,8 +78,7 @@ abstract class AbstractTreeBuilder {
         isChild: Boolean = true,
         initializer: SingleField.() -> Unit = {}
     ): SingleField {
-        return SingleField(name, type.copy(nullable), mutable).apply {
-            this.isChild = isChild
+        return SingleField(name, type.copy(nullable), mutable, isChild).apply {
             initializer()
         }
     }
@@ -103,8 +102,8 @@ abstract class AbstractTreeBuilder {
             listType = listType,
             isNullable = nullable,
             mutable = mutability == ListField.Mutability.Var,
+            isChild = isChild,
         ).apply(initializer).apply {
-            this.isChild = isChild
             initializer()
         }
     }

@@ -148,7 +148,6 @@ class ObjCExportHeaderGeneratorTest(private val generator: HeaderGenerator) {
     }
 
     @Test
-    @TodoAnalysisApi
     fun `test - functionWithErrorTypeAndFrameworkName`() {
         doTest(headersTestDataDir.resolve("functionWithErrorTypeAndFrameworkName"), Configuration(frameworkName = "shared"))
     }
@@ -222,12 +221,7 @@ class ObjCExportHeaderGeneratorTest(private val generator: HeaderGenerator) {
         doTest(headersTestDataDir.resolve("classReferencingOtherClassAsReturnType"))
     }
 
-    /**
-     * - IntIterator has unwanted 'hasNext' exposed
-     * - IntIterator's next method returns int32_t instead of expected Int *
-     */
     @Test
-    @TodoAnalysisApi
     fun `test - classReferencingDependencyClassAsReturnType`() {
         doTest(headersTestDataDir.resolve("classReferencingDependencyClassAsReturnType"))
     }
@@ -297,11 +291,7 @@ class ObjCExportHeaderGeneratorTest(private val generator: HeaderGenerator) {
         doTest(headersTestDataDir.resolve("samInterface"))
     }
 
-    /**
-     * Requires some fixes: KT-65800
-     */
     @Test
-    @TodoAnalysisApi
     fun `test - simple data class`() {
         doTest(headersTestDataDir.resolve("simpleDataClass"))
     }
@@ -309,6 +299,45 @@ class ObjCExportHeaderGeneratorTest(private val generator: HeaderGenerator) {
     @Test
     fun `test - special function names`() {
         doTest(headersTestDataDir.resolve("specialFunctionNames"))
+    }
+
+    @Test
+    fun `test - vararg`() {
+        doTest(headersTestDataDir.resolve("vararg"))
+    }
+
+    /**
+     * KT-66066
+     */
+    @Test
+    @TodoAnalysisApi
+    fun `test - member function signature order`() {
+        doTest(headersTestDataDir.resolve("memberFunctionSignatureOrder"))
+    }
+
+    @Test
+    fun `test - multiple inheritance`() {
+        doTest(headersTestDataDir.resolve("multipleInheritance"))
+    }
+
+    @Test
+    fun `test - private super interface`() {
+        doTest(headersTestDataDir.resolve("privateSuperInterface"))
+    }
+
+    @Test
+    fun `test- privateSuperInterfaceWithCovariantOverride`() {
+        doTest(headersTestDataDir.resolve("privateSuperInterfaceWithCovariantOverride"))
+    }
+
+    @Test
+    fun `test - superClassWithCovariantOverride`() {
+        doTest(headersTestDataDir.resolve("superClassWithCovariantOverride"))
+    }
+
+    @Test
+    fun `test - privateGenericSuperInterface`() {
+        doTest(headersTestDataDir.resolve("privateGenericSuperInterface"))
     }
 
     private fun doTest(root: File, configuration: Configuration = Configuration()) {

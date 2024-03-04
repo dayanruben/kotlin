@@ -350,6 +350,12 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
   }
 
   @Test
+  @TestMetadata("platformRedeclarationOfExpect.kt")
+  public void testPlatformRedeclarationOfExpect() {
+    runTest("compiler/testData/diagnostics/tests/multiplatform/platformRedeclarationOfExpect.kt");
+  }
+
+  @Test
   @TestMetadata("privateTopLevelDeclarations.kt")
   public void testPrivateTopLevelDeclarations() {
     runTest("compiler/testData/diagnostics/tests/multiplatform/privateTopLevelDeclarations.kt");
@@ -1730,6 +1736,18 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
   @TestDataPath("$PROJECT_ROOT")
   public class Hmpp {
     @Test
+    @TestMetadata("actualizeSubtypeBeforeSupertype.kt")
+    public void testActualizeSubtypeBeforeSupertype() {
+      runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/actualizeSubtypeBeforeSupertype.kt");
+    }
+
+    @Test
+    @TestMetadata("actualizedInPlatformSession.kt")
+    public void testActualizedInPlatformSession() {
+      runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/actualizedInPlatformSession.kt");
+    }
+
+    @Test
     public void testAllFilesPresentInHmpp() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform/hmpp"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), TargetBackend.JVM_IR, true);
     }
@@ -1738,6 +1756,12 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
     @TestMetadata("ambiguousActuals.kt")
     public void testAmbiguousActuals() {
       runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/ambiguousActuals.kt");
+    }
+
+    @Test
+    @TestMetadata("hmppModalityClash.kt")
+    public void testHmppModalityClash() {
+      runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/hmppModalityClash.kt");
     }
 
     @Test
@@ -1750,6 +1774,12 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
     @TestMetadata("hmppRedeclarationWithExpectActualPair.kt")
     public void testHmppRedeclarationWithExpectActualPair() {
       runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/hmppRedeclarationWithExpectActualPair.kt");
+    }
+
+    @Test
+    @TestMetadata("hmppSignatureClash.kt")
+    public void testHmppSignatureClash() {
+      runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/hmppSignatureClash.kt");
     }
 
     @Test

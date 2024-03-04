@@ -49,6 +49,7 @@ abstract class AbstractField<Field : AbstractField<Field>> {
     open val containsElement: Boolean
         get() = typeRef is ElementOrRef<*> || this is ListField && baseType is ElementOrRef<*>
 
+    open val defaultValueInBase: String? get() = null
     open val defaultValueInImplementation: String? get() = null
 
     /**
@@ -64,7 +65,7 @@ abstract class AbstractField<Field : AbstractField<Field>> {
      *
      * Only has effect if [containsElement] is `true`.
      */
-    var isChild: Boolean = true
+    abstract val isChild: Boolean
 
     open val overriddenTypes: MutableSet<TypeRefWithNullability> = mutableSetOf()
 
@@ -106,7 +107,6 @@ abstract class AbstractField<Field : AbstractField<Field>> {
         copy.visibility = visibility
         copy.fromParent = fromParent
         copy.useInBaseTransformerDetection = useInBaseTransformerDetection
-        copy.isChild = isChild
         copy.overriddenTypes += overriddenTypes
     }
 }

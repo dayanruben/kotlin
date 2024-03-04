@@ -14,7 +14,7 @@ import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.gradle.InternalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.PRESETS_API_IS_DEPRECATED_MESSAGE
-import org.jetbrains.kotlin.gradle.dsl.HasConfigurableCompilerOptions
+import org.jetbrains.kotlin.gradle.dsl.HasConfigurableKotlinCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.multiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
@@ -36,10 +36,11 @@ internal class ExternalKotlinTargetImpl internal constructor(
     val apiElementsPublishedConfiguration: Configuration,
     val runtimeElementsPublishedConfiguration: Configuration,
     val sourcesElementsPublishedConfiguration: Configuration,
+    val resourcesElementsPublishedConfiguration: Configuration,
     val kotlinTargetComponent: ExternalKotlinTargetComponent,
     private val artifactsTaskLocator: ArtifactsTaskLocator,
 ) : InternalKotlinTarget,
-    HasConfigurableCompilerOptions<KotlinCommonCompilerOptions> {
+    HasConfigurableKotlinCompilerOptions<KotlinCommonCompilerOptions> {
 
 
     fun interface ArtifactsTaskLocator {
@@ -85,6 +86,9 @@ internal class ExternalKotlinTargetImpl internal constructor(
 
     override val sourcesElementsConfigurationName: String
         get() = sourcesElementsConfiguration.name
+
+    override val resourcesElementsConfigurationName: String
+        get() = resourcesElementsPublishedConfiguration.name
 
     @InternalKotlinGradlePluginApi
     override val kotlinComponents: Set<KotlinTargetComponent> = setOf(kotlinTargetComponent)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -90,10 +90,6 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
 
             +field("moduleData", firModuleDataType)
             shouldBeAbstractClass()
-        }
-
-        fileAnnotationsContainer.configure {
-            +field("containingFileSymbol", type("fir.symbols.impl", "FirFileSymbol"))
         }
 
         declaration.configure {
@@ -491,7 +487,6 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
         }
 
         file.configure {
-            +field("annotationsContainer", fileAnnotationsContainer, nullable = true).withTransform()
             +field("packageDirective", packageDirective)
             +fieldList(import).withTransform()
             +declarations.withTransform()
@@ -528,7 +523,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
         }
 
         resolvedImport.configure {
-            +field("delegate", import)
+            +field("delegate", import, isChild = false)
             +field("packageFqName", fqNameType)
             +field("relativeParentClassName", fqNameType, nullable = true)
             +field("resolvedParentClassId", classIdType, nullable = true)
@@ -547,7 +542,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
         }
 
         annotationCall.configure {
-            +field("argumentMapping", annotationArgumentMapping, withReplace = true)
+            +field("argumentMapping", annotationArgumentMapping, withReplace = true, isChild = false)
             +field("annotationResolvePhase", annotationResolvePhaseType, withReplace = true)
             +field("containingDeclarationSymbol", firBasedSymbolType.withArgs(TypeRef.Star)).apply {
                 withBindThis = false
@@ -555,7 +550,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
         }
 
         errorAnnotationCall.configure {
-            +field("argumentMapping", annotationArgumentMapping, withReplace = true)
+            +field("argumentMapping", annotationArgumentMapping, withReplace = true, isChild = false)
         }
 
         annotationArgumentMapping.configure {
@@ -721,7 +716,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
 
         resolvedTypeRef.configure {
             +field("type", coneKotlinTypeType)
-            +field("delegatedTypeRef", typeRef, nullable = true)
+            +field("delegatedTypeRef", typeRef, nullable = true, isChild = false)
             element.otherParents.add(typeRefMarkerType)
         }
 

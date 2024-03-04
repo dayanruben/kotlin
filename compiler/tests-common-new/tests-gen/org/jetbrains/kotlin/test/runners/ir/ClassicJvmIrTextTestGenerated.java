@@ -2729,6 +2729,12 @@ public class ClassicJvmIrTextTestGenerated extends AbstractClassicJvmIrTextTest 
     }
 
     @Test
+    @TestMetadata("kjkWithRawTypes.kt")
+    public void testKjkWithRawTypes() {
+      runTest("compiler/testData/ir/irText/fakeOverrides/kjkWithRawTypes.kt");
+    }
+
+    @Test
     @TestMetadata("setterVisibliity.kt")
     public void testSetterVisibliity() {
       runTest("compiler/testData/ir/irText/fakeOverrides/setterVisibliity.kt");
@@ -2877,12 +2883,6 @@ public class ClassicJvmIrTextTestGenerated extends AbstractClassicJvmIrTextTest 
     }
 
     @Test
-    @TestMetadata("FieldsFromJavaClass.kt")
-    public void testFieldsFromJavaClass() {
-      runTest("compiler/testData/ir/irText/firProblems/FieldsFromJavaClass.kt");
-    }
-
-    @Test
     @TestMetadata("Fir2IrClassifierStorage.kt")
     public void testFir2IrClassifierStorage() {
       runTest("compiler/testData/ir/irText/firProblems/Fir2IrClassifierStorage.kt");
@@ -2994,6 +2994,12 @@ public class ClassicJvmIrTextTestGenerated extends AbstractClassicJvmIrTextTest 
     @TestMetadata("LocalSuspendFun.kt")
     public void testLocalSuspendFun() {
       runTest("compiler/testData/ir/irText/firProblems/LocalSuspendFun.kt");
+    }
+
+    @Test
+    @TestMetadata("MissingFieldInJavaClass.kt")
+    public void testMissingFieldInJavaClass() {
+      runTest("compiler/testData/ir/irText/firProblems/MissingFieldInJavaClass.kt");
     }
 
     @Test

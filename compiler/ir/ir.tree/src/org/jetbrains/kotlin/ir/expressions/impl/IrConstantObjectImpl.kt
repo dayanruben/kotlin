@@ -5,34 +5,12 @@
 
 package org.jetbrains.kotlin.ir.expressions.impl
 
+import org.jetbrains.kotlin.ir.declarations.IrAttributeContainer
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.constructedClassType
 import org.jetbrains.kotlin.utils.SmartList
-
-class IrConstantPrimitiveImpl(
-    override val startOffset: Int,
-    override val endOffset: Int,
-    override var value: IrConst<*>,
-) : IrConstantPrimitive() {
-    override fun contentEquals(other: IrConstantValue) =
-        other is IrConstantPrimitive &&
-                type == other.type &&
-                value.type == other.value.type &&
-                value.kind == other.value.kind &&
-                value.value == other.value.value
-
-    override fun contentHashCode(): Int {
-        var result = type.hashCode()
-        result = result * 31 + value.type.hashCode()
-        result = result * 31 + value.kind.hashCode()
-        result = result * 31 + value.value.hashCode()
-        return result
-    }
-
-    override var type = value.type
-}
 
 class IrConstantObjectImpl constructor(
     override val startOffset: Int,
@@ -44,6 +22,9 @@ class IrConstantObjectImpl constructor(
 ) : IrConstantObject() {
     override val valueArguments = SmartList(initValueArguments)
     override val typeArguments = SmartList(initTypeArguments)
+
+    override var attributeOwnerId: IrAttributeContainer = this
+    override var originalBeforeInline: IrAttributeContainer? = null
 
     override fun contentEquals(other: IrConstantValue): Boolean =
         other is IrConstantObject &&
@@ -62,29 +43,6 @@ class IrConstantObjectImpl constructor(
         }
         for (value in typeArguments) {
             res = res * 31 + value.hashCode()
-        }
-        return res
-    }
-}
-
-class IrConstantArrayImpl(
-    override val startOffset: Int,
-    override val endOffset: Int,
-    override var type: IrType,
-    initElements: List<IrConstantValue>,
-) : IrConstantArray() {
-    override val elements = SmartList(initElements)
-
-    override fun contentEquals(other: IrConstantValue): Boolean =
-        other is IrConstantArray &&
-                other.type == type &&
-                elements.size == other.elements.size &&
-                elements.indices.all { elements[it].contentEquals(other.elements[it]) }
-
-    override fun contentHashCode(): Int {
-        var res = type.hashCode()
-        for (value in elements) {
-            res = res * 31 + value.contentHashCode()
         }
         return res
     }

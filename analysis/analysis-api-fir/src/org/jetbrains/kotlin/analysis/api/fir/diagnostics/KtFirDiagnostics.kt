@@ -396,6 +396,11 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         val classSymbol: KtClassLikeSymbol
     }
 
+    interface PluginAmbiguousInterceptedSymbol : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = PluginAmbiguousInterceptedSymbol::class
+        val names: List<String>
+    }
+
     interface ResolutionToClassifier : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = ResolutionToClassifier::class
         val classSymbol: KtClassLikeSymbol
@@ -3494,8 +3499,16 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = DeprecatedAccessToEntryPropertyFromEnum::class
     }
 
+    interface DeprecatedAccessToEntriesProperty : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = DeprecatedAccessToEntriesProperty::class
+    }
+
     interface DeprecatedAccessToEnumEntryPropertyAsReference : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = DeprecatedAccessToEnumEntryPropertyAsReference::class
+    }
+
+    interface DeprecatedAccessToEntriesAsQualifier : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = DeprecatedAccessToEntriesAsQualifier::class
     }
 
     interface DeprecatedDeclarationOfEnumEntry : KtFirDiagnostic<KtEnumEntry> {
@@ -3991,6 +4004,10 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         val name: String
     }
 
+    interface NamedCompanionInExportedInterface : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = NamedCompanionInExportedInterface::class
+    }
+
     interface NestedJsExport : KtFirDiagnostic<KtElement> {
         override val diagnosticClass get() = NestedJsExport::class
     }
@@ -4084,6 +4101,10 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
     interface ExternalInterfaceAsReifiedTypeArgument : KtFirDiagnostic<KtElement> {
         override val diagnosticClass get() = ExternalInterfaceAsReifiedTypeArgument::class
         val typeArgument: KtType
+    }
+
+    interface NamedCompanionInExternalInterface : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = NamedCompanionInExternalInterface::class
     }
 
     interface JscodeArgumentNonConstExpression : KtFirDiagnostic<KtElement> {

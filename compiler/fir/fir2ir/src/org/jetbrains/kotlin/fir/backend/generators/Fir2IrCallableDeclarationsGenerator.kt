@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.*
-import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.declarations.UNDEFINED_PARAMETER_INDEX
 import org.jetbrains.kotlin.ir.declarations.*
@@ -46,7 +45,6 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.types.AbstractTypeChecker
-import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
@@ -317,28 +315,26 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
                     if (irParent != null) {
                         backingField?.parent = irParent
                     }
-                    this.getter = symbols.getterSymbol?.let { getterSymbol ->
-                        getter.convertWithOffsets(startOffset, endOffset) { startOffset, endOffset ->
-                            createIrPropertyAccessor(
-                                getter, property, this, getterSymbol, type, irParent, false,
-                                when {
-                                    origin == IrDeclarationOrigin.IR_EXTERNAL_DECLARATION_STUB -> origin
-                                    origin == IrDeclarationOrigin.ENUM_CLASS_SPECIAL_MEMBER -> origin
-                                    delegate != null -> IrDeclarationOrigin.DELEGATED_PROPERTY_ACCESSOR
-                                    origin == IrDeclarationOrigin.FAKE_OVERRIDE -> origin
-                                    origin == IrDeclarationOrigin.DELEGATED_MEMBER -> origin
-                                    getter == null || getter is FirDefaultPropertyGetter -> IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
-                                    else -> origin
-                                },
-                                startOffset, endOffset,
-                                property.unwrapFakeOverrides().getter,
-                            )
-                        }
+                    this.getter = getter.convertWithOffsets(startOffset, endOffset) { startOffset, endOffset ->
+                        createIrPropertyAccessor(
+                            getter, property, this, symbols.getterSymbol, type, irParent, false,
+                            when {
+                                origin == IrDeclarationOrigin.IR_EXTERNAL_DECLARATION_STUB -> origin
+                                origin == IrDeclarationOrigin.ENUM_CLASS_SPECIAL_MEMBER -> origin
+                                delegate != null -> IrDeclarationOrigin.DELEGATED_PROPERTY_ACCESSOR
+                                origin == IrDeclarationOrigin.FAKE_OVERRIDE -> origin
+                                origin == IrDeclarationOrigin.DELEGATED_MEMBER -> origin
+                                getter == null || getter is FirDefaultPropertyGetter -> IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
+                                else -> origin
+                            },
+                            startOffset, endOffset,
+                            property.unwrapFakeOverrides().getter,
+                        )
                     }
-                    if (property.isVar && symbols.setterSymbol != null) {
+                    if (property.isVar) {
                         this.setter = setter.convertWithOffsets(startOffset, endOffset) { startOffset, endOffset ->
                             createIrPropertyAccessor(
-                                setter, property, this, symbols.setterSymbol, type, irParent, true,
+                                setter, property, this, symbols.setterSymbol!!, type, irParent, true,
                                 when {
                                     delegate != null -> IrDeclarationOrigin.DELEGATED_PROPERTY_ACCESSOR
                                     origin == IrDeclarationOrigin.FAKE_OVERRIDE -> origin
@@ -969,18 +965,6 @@ class Fir2IrCallableDeclarationsGenerator(val components: Fir2IrComponents) : Fi
             || origin == IrDeclarationOrigin.FAKE_OVERRIDE
         ) {
             annotationGenerator.generate(this, firAnnotationContainer)
-        }
-    }
-
-    private inline fun <R> convertCatching(element: FirElement, block: () -> R): R {
-        try {
-            return block()
-        } catch (e: ProcessCanceledException) {
-            throw e
-        } catch (e: Exception) {
-            errorWithAttachment("Exception was thrown during transformation of ${element::class.java}", cause = e) {
-                withFirEntry("element", element)
-            }
         }
     }
 }

@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.build.report.metrics.GradleBuildTime
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_BUILD_REPORT_SINGLE_FILE
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_BUILD_REPORT_HTTP_URL
+import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_BUILD_REPORT_JSON_DIR
 import org.jetbrains.kotlin.gradle.plugin.internal.isProjectIsolationEnabled
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toUpperCaseAsciiOnly
 
@@ -78,9 +79,10 @@ internal fun reportingSettings(project: Project): ReportingSettings {
             ?: throw IllegalStateException("Can't configure single file report: '$KOTLIN_BUILD_REPORT_SINGLE_FILE' property is mandatory")
     } else null
 
-    //temporary solution. support old property
-    @Suppress("DEPRECATION")
-    val oldSingleBuildMetric = properties.singleBuildMetricsFile?.also { buildReportOutputTypes.add(BuildReportType.SINGLE_FILE) }
+    val jsonReportDir = if (buildReportOutputTypes.contains(BuildReportType.JSON)) {
+        properties.buildReportJsonDir
+            ?: throw IllegalStateException("Can't configure json report: '$KOTLIN_BUILD_REPORT_JSON_DIR' property is mandatory")
+    } else null
 
     return ReportingSettings(
         buildReportMode = buildReportMode,
@@ -89,7 +91,8 @@ internal fun reportingSettings(project: Project): ReportingSettings {
         httpReportSettings = httpReportSettings,
         buildScanReportSettings = buildScanSettings,
         buildReportOutputs = buildReportOutputTypes,
-        singleOutputFile = singleOutputFile ?: oldSingleBuildMetric,
+        singleOutputFile = singleOutputFile,
+        jsonOutputDir = jsonReportDir,
         includeCompilerArguments = properties.buildReportIncludeCompilerArguments,
         experimentalTryNextConsoleOutput = experimentalTryNextEnabled
     )
