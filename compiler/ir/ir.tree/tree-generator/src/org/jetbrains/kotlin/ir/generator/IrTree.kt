@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -704,7 +704,6 @@ object IrTree : AbstractTreeBuilder() {
 
         parent(body)
 
-        +factory
         +field("expression", expression) {
             useFieldInIrFactory()
         }
@@ -715,8 +714,6 @@ object IrTree : AbstractTreeBuilder() {
 
         parent(body)
         parent(statementContainer)
-
-        +factory
     }
     val declarationReference: Element by element(Expression) {
         parent(expression)
@@ -954,27 +951,9 @@ object IrTree : AbstractTreeBuilder() {
     }
     val constantValue: Element by element(Expression) {
         transformByChildren = true
+        kind = ImplementationKind.SealedClass
 
         parent(expression)
-
-        generationCallback = {
-            println()
-            printFunctionDeclaration(
-                name = "contentEquals",
-                parameters = listOf(FunctionParameter("other", constantValue)),
-                returnType = StandardTypes.boolean,
-                modality = Modality.ABSTRACT,
-            )
-            println()
-            println()
-            printFunctionDeclaration(
-                name = "contentHashCode",
-                parameters = emptyList(),
-                returnType = StandardTypes.int,
-                modality = Modality.ABSTRACT,
-            )
-            println()
-        }
     }
     val constantPrimitive: Element by element(Expression) {
         parent(constantValue)

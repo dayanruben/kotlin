@@ -1090,6 +1090,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
     }
 
     @Test
+    @TestMetadata("postfixIncSmartCast.kt")
+    public void testPostfixIncSmartCast() {
+      runTest("compiler/testData/diagnostics/tests/postfixIncSmartCast.kt");
+    }
+
+    @Test
     @TestMetadata("prefixIncReturnType.kt")
     public void testPrefixIncReturnType() {
       runTest("compiler/testData/diagnostics/tests/prefixIncReturnType.kt");
@@ -22427,6 +22433,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("nullableRawTypeWithFlexibleArguments.kt")
+      public void testNullableRawTypeWithFlexibleArguments() {
+        runTest("compiler/testData/diagnostics/tests/j+k/nullableRawTypeWithFlexibleArguments.kt");
+      }
+
+      @Test
       @TestMetadata("orderOfSupertypesAndFakeOverrides_1.kt")
       public void testOrderOfSupertypesAndFakeOverrides_1() {
         runTest("compiler/testData/diagnostics/tests/j+k/orderOfSupertypesAndFakeOverrides_1.kt");
@@ -24350,6 +24362,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("openInInterface.kt")
       public void testOpenInInterface() {
         runTest("compiler/testData/diagnostics/tests/modifiers/openInInterface.kt");
+      }
+
+      @Test
+      @TestMetadata("OpenInterface.kt")
+      public void testOpenInterface() {
+        runTest("compiler/testData/diagnostics/tests/modifiers/OpenInterface.kt");
       }
 
       @Test
@@ -35513,6 +35531,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("incrementAfterAssignment.kt")
+      public void testIncrementAfterAssignment() {
+        runTest("compiler/testData/diagnostics/tests/smartCasts/incrementAfterAssignment.kt");
+      }
+
+      @Test
       @TestMetadata("kt10232.kt")
       public void testKt10232() {
         runTest("compiler/testData/diagnostics/tests/smartCasts/kt10232.kt");
@@ -38219,6 +38243,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         @TestMetadata("onTypeParameter.kt")
         public void testOnTypeParameter() {
           runTest("compiler/testData/diagnostics/tests/suppress/oneWarning/onTypeParameter.kt");
+        }
+
+        @Test
+        @TestMetadata("optInDiagnosticOnPropertyGetter.kt")
+        public void testOptInDiagnosticOnPropertyGetter() {
+          runTest("compiler/testData/diagnostics/tests/suppress/oneWarning/optInDiagnosticOnPropertyGetter.kt");
         }
 
         @Test

@@ -21526,6 +21526,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
     }
 
     @Test
+    @TestMetadata("overriddenPropertyInComplexHierarchy.kt")
+    public void testOverriddenPropertyInComplexHierarchy() {
+      runTest("compiler/testData/codegen/box/fir/overriddenPropertyInComplexHierarchy.kt");
+    }
+
+    @Test
     @TestMetadata("publicMethodCallViaPackagePrivateCommon.kt")
     public void testPublicMethodCallViaPackagePrivateCommon() {
       runTest("compiler/testData/codegen/box/fir/publicMethodCallViaPackagePrivateCommon.kt");
@@ -38144,6 +38150,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
       @TestMetadata("jvmDeclarationsUpdatedMembersInCommonModule.kt")
       public void testJvmDeclarationsUpdatedMembersInCommonModule() {
         runTest("compiler/testData/codegen/box/multiplatform/k2/jvmDeclarationsUpdatedMembersInCommonModule.kt");
+      }
+
+      @Test
+      @TestMetadata("kt-65249.kt")
+      public void testKt_65249() {
+        runTest("compiler/testData/codegen/box/multiplatform/k2/kt-65249.kt");
       }
 
       @Test
