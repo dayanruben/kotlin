@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.backend.konan.objcexport.*
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.objcexport.analysisApiUtils.isThrowable
 import org.jetbrains.kotlin.objcexport.analysisApiUtils.isVisibleInObjC
 
 context(KtAnalysisSession, KtObjCExportSession)
@@ -20,7 +21,7 @@ fun KtClassOrObjectSymbol.translateToObjCClass(): ObjCClass? {
     val attributes = (if (enumKind || final) listOf(OBJC_SUBCLASSING_RESTRICTED) else emptyList()) + name.toNameAttributes()
 
     val comment: ObjCComment? = annotationsList.translateToObjCComment()
-    val origin: ObjCExportStubOrigin = getObjCExportStubOrigin()
+    val origin = getObjCExportStubOrigin()
 
     val superClass = translateSuperClass()
     val superProtocols: List<String> = superProtocols()
@@ -39,6 +40,10 @@ fun KtClassOrObjectSymbol.translateToObjCClass(): ObjCClass? {
 
         if (classKind == KtClassKind.ENUM_CLASS) {
             this += translateEnumMembers()
+        }
+
+        if (isThrowable) {
+            this += buildThrowableAsErrorMethod()
         }
     }
 

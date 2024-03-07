@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.fir.backend.jvm.Fir2IrJvmSpecialAnnotationSymbolProv
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
+import org.jetbrains.kotlin.fir.signaturer.FirBasedSignatureComposer
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.KtDiagnosticReporterWithImplicitIrBasedContext
@@ -35,6 +36,7 @@ import org.jetbrains.kotlin.ir.util.KotlinMangler
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 data class FirResult(val outputs: List<ModuleCompilerAnalyzedOutput>)
 
@@ -71,7 +73,7 @@ fun FirResult.convertToIrAndActualize(
     actualizerTypeContextProvider: (IrBuiltIns) -> IrTypeSystemContext,
     fir2IrResultPostCompute: (ModuleCompilerAnalyzedOutput, Fir2IrResult) -> Unit = { _, _ -> },
 ): Fir2IrActualizedResult {
-    val commonMemberStorage = Fir2IrCommonMemberStorage(firMangler)
+    val commonMemberStorage = Fir2IrCommonMemberStorage(FirBasedSignatureComposer.create(firMangler, fir2IrConfiguration))
 
     require(outputs.isNotEmpty()) { "No modules found" }
 
@@ -122,14 +124,18 @@ fun FirResult.convertToIrAndActualize(
         components.fakeOverrideBuilder.buildForAll(allIrModules, temporaryResolver)
     }
     val expectActualMap = irActualizer?.actualizeCallablesAndMergeModules() ?: emptyMap()
-    if (!components.configuration.useFirBasedFakeOverrideGenerator) {
+    val fakeOverrideResolver = runIf(!components.configuration.useFirBasedFakeOverrideGenerator) {
         val fakeOverrideResolver = SpecialFakeOverrideSymbolsResolver(expectActualMap)
         irModuleFragment.acceptVoid(SpecialFakeOverrideSymbolsResolverVisitor(fakeOverrideResolver))
         @OptIn(Fir2IrSymbolsMappingForLazyClasses.SymbolRemapperInternals::class)
         components.symbolsMappingForLazyClasses.initializeSymbolMap(fakeOverrideResolver)
+        fakeOverrideResolver
     }
     Fir2IrConverter.evaluateConstants(irModuleFragment, components)
     val actualizationResult = irActualizer?.runChecksAndFinalize(expectActualMap)
+
+    fakeOverrideResolver?.cacheFakeOverridesOfAllClasses(irModuleFragment)
+
     pluginContext.applyIrGenerationExtensions(irModuleFragment, irGeneratorExtensions)
     return Fir2IrActualizedResult(irModuleFragment, components, pluginContext, actualizationResult)
 }

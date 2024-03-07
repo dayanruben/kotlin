@@ -2632,6 +2632,12 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
     }
 
     @Test
+    @TestMetadata("propertyInvokeInsidePCLALambda.kt")
+    public void testPropertyInvokeInsidePCLALambda() {
+      runTest("compiler/testData/codegen/box/builderInference/propertyInvokeInsidePCLALambda.kt");
+    }
+
+    @Test
     @TestMetadata("receiverUsesOuterTVButReturnTypeIsProper.kt")
     public void testReceiverUsesOuterTVButReturnTypeIsProper() {
       runTest("compiler/testData/codegen/box/builderInference/receiverUsesOuterTVButReturnTypeIsProper.kt");
@@ -2938,6 +2944,24 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
       @TestMetadata("kt64066.kt")
       public void testKt64066() {
         runTest("compiler/testData/codegen/box/builderInference/issues/kt64066.kt");
+      }
+
+      @Test
+      @TestMetadata("kt66229.kt")
+      public void testKt66229() {
+        runTest("compiler/testData/codegen/box/builderInference/issues/kt66229.kt");
+      }
+
+      @Test
+      @TestMetadata("kt66243.kt")
+      public void testKt66243() {
+        runTest("compiler/testData/codegen/box/builderInference/issues/kt66243.kt");
+      }
+
+      @Test
+      @TestMetadata("kt66272.kt")
+      public void testKt66272() {
+        runTest("compiler/testData/codegen/box/builderInference/issues/kt66272.kt");
       }
     }
 
@@ -3549,6 +3573,12 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
     @TestMetadata("callableReferenceOfObjectMethod.kt")
     public void testCallableReferenceOfObjectMethod() {
       runTest("compiler/testData/codegen/box/callableReference/callableReferenceOfObjectMethod.kt");
+    }
+
+    @Test
+    @TestMetadata("callableReferencetoInnerAndLocal.kt")
+    public void testCallableReferencetoInnerAndLocal() {
+      runTest("compiler/testData/codegen/box/callableReference/callableReferencetoInnerAndLocal.kt");
     }
 
     @Test
@@ -14056,6 +14086,12 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
     }
 
     @Test
+    @TestMetadata("kt44199.kt")
+    public void testKt44199() {
+      runTest("compiler/testData/codegen/box/delegation/kt44199.kt");
+    }
+
+    @Test
     @TestMetadata("kt8154.kt")
     public void testKt8154() {
       runTest("compiler/testData/codegen/box/delegation/kt8154.kt");
@@ -18076,6 +18112,12 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
     }
 
     @Test
+    @TestMetadata("kt65882.kt")
+    public void testKt65882() {
+      runTest("compiler/testData/codegen/box/inference/kt65882.kt");
+    }
+
+    @Test
     @TestMetadata("lambdaWithStarReturn.kt")
     public void testLambdaWithStarReturn() {
       runTest("compiler/testData/codegen/box/inference/lambdaWithStarReturn.kt");
@@ -18145,6 +18187,12 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
     @TestMetadata("referenceToCatchParameterFromLambdaExpression.kt")
     public void testReferenceToCatchParameterFromLambdaExpression() {
       runTest("compiler/testData/codegen/box/inference/referenceToCatchParameterFromLambdaExpression.kt");
+    }
+
+    @Test
+    @TestMetadata("safeCastWithElvis.kt")
+    public void testSafeCastWithElvis() {
+      runTest("compiler/testData/codegen/box/inference/safeCastWithElvis.kt");
     }
 
     @Test
@@ -25693,6 +25741,22 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
   }
 
   @Nested
+  @TestMetadata("compiler/testData/codegen/box/klib")
+  @TestDataPath("$PROJECT_ROOT")
+  public class Klib {
+    @Test
+    public void testAllFilesPresentInKlib() {
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/klib"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR, true);
+    }
+
+    @Test
+    @TestMetadata("kt33411.kt")
+    public void testKt33411() {
+      runTest("compiler/testData/codegen/box/klib/kt33411.kt");
+    }
+  }
+
+  @Nested
   @TestMetadata("compiler/testData/codegen/box/ktype")
   @TestDataPath("$PROJECT_ROOT")
   public class Ktype {
@@ -25809,6 +25873,12 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
     @Test
     public void testAllFilesPresentInLambda() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/lambda"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR, true);
+    }
+
+    @Test
+    @TestMetadata("ifWithReferenceAndLambda.kt")
+    public void testIfWithReferenceAndLambda() {
+      runTest("compiler/testData/codegen/box/lambda/ifWithReferenceAndLambda.kt");
     }
 
     @Test
@@ -38259,6 +38329,12 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
     @Test
     public void testAllFilesPresentInSam() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/sam"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR, true);
+    }
+
+    @Test
+    @TestMetadata("inProjectedSam.kt")
+    public void testInProjectedSam() {
+      runTest("compiler/testData/codegen/box/sam/inProjectedSam.kt");
     }
 
     @Test

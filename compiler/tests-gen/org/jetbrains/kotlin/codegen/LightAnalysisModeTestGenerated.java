@@ -3078,6 +3078,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/builderInference/posptonedPCLACallInsideStringInterpolation.kt");
     }
 
+    @TestMetadata("propertyInvokeInsidePCLALambda.kt")
+    public void testPropertyInvokeInsidePCLALambda() {
+      runTest("compiler/testData/codegen/box/builderInference/propertyInvokeInsidePCLALambda.kt");
+    }
+
     @TestMetadata("receiverUsesOuterTVButReturnTypeIsProper.kt")
     public void testReceiverUsesOuterTVButReturnTypeIsProper() {
       runTest("compiler/testData/codegen/box/builderInference/receiverUsesOuterTVButReturnTypeIsProper.kt");
@@ -3087,6 +3092,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
     public static class Issues extends AbstractLightAnalysisModeTest {
+      @TestMetadata("kt66272.kt")
+      public void ignoreKt66272() {
+        runTest("compiler/testData/codegen/box/builderInference/issues/kt66272.kt");
+      }
+
       private void runTest(String testDataFilePath) {
         KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
       }
@@ -3348,6 +3358,16 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       @TestMetadata("kt64066.kt")
       public void testKt64066() {
         runTest("compiler/testData/codegen/box/builderInference/issues/kt64066.kt");
+      }
+
+      @TestMetadata("kt66229.kt")
+      public void testKt66229() {
+        runTest("compiler/testData/codegen/box/builderInference/issues/kt66229.kt");
+      }
+
+      @TestMetadata("kt66243.kt")
+      public void testKt66243() {
+        runTest("compiler/testData/codegen/box/builderInference/issues/kt66243.kt");
       }
     }
 
@@ -4193,6 +4213,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestMetadata("callableReferenceOfStaticMethod.kt")
     public void testCallableReferenceOfStaticMethod() {
       runTest("compiler/testData/codegen/box/callableReference/callableReferenceOfStaticMethod.kt");
+    }
+
+    @TestMetadata("callableReferencetoInnerAndLocal.kt")
+    public void testCallableReferencetoInnerAndLocal() {
+      runTest("compiler/testData/codegen/box/callableReference/callableReferencetoInnerAndLocal.kt");
     }
 
     @TestMetadata("charArrayOf.kt")
@@ -15021,6 +15046,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/delegation/kt30102_comparable.kt");
     }
 
+    @TestMetadata("kt44199.kt")
+    public void testKt44199() {
+      runTest("compiler/testData/codegen/box/delegation/kt44199.kt");
+    }
+
     @TestMetadata("kt54654.kt")
     public void testKt54654() {
       runTest("compiler/testData/codegen/box/delegation/kt54654.kt");
@@ -17422,6 +17452,21 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/fakeOverride/kjkWithPackagePrivate.kt");
     }
 
+    @TestMetadata("kt40180.kt")
+    public void testKt40180() {
+      runTest("compiler/testData/codegen/box/fakeOverride/kt40180.kt");
+    }
+
+    @TestMetadata("kt40180_2.kt")
+    public void testKt40180_2() {
+      runTest("compiler/testData/codegen/box/fakeOverride/kt40180_2.kt");
+    }
+
+    @TestMetadata("kt40180_3.kt")
+    public void testKt40180_3() {
+      runTest("compiler/testData/codegen/box/fakeOverride/kt40180_3.kt");
+    }
+
     @TestMetadata("kt49371.kt")
     public void testKt49371() {
       runTest("compiler/testData/codegen/box/fakeOverride/kt49371.kt");
@@ -18900,6 +18945,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/functions/kt873.kt");
     }
 
+    @TestMetadata("lambdaWithTwoContextReceivers.kt")
+    public void testLambdaWithTwoContextReceivers() {
+      runTest("compiler/testData/codegen/box/functions/lambdaWithTwoContextReceivers.kt");
+    }
+
     @TestMetadata("localFunction.kt")
     public void testLocalFunction() {
       runTest("compiler/testData/codegen/box/functions/localFunction.kt");
@@ -19941,6 +19991,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/inference/kt51040.kt");
     }
 
+    @TestMetadata("kt65882.kt")
+    public void testKt65882() {
+      runTest("compiler/testData/codegen/box/inference/kt65882.kt");
+    }
+
     @TestMetadata("lambdaWithStarReturn.kt")
     public void testLambdaWithStarReturn() {
       runTest("compiler/testData/codegen/box/inference/lambdaWithStarReturn.kt");
@@ -20009,6 +20064,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestMetadata("referenceToCatchParameterFromLambdaExpression.kt")
     public void testReferenceToCatchParameterFromLambdaExpression() {
       runTest("compiler/testData/codegen/box/inference/referenceToCatchParameterFromLambdaExpression.kt");
+    }
+
+    @TestMetadata("safeCastWithElvis.kt")
+    public void testSafeCastWithElvis() {
+      runTest("compiler/testData/codegen/box/inference/safeCastWithElvis.kt");
     }
 
     @TestMetadata("specialCallsWithCallableReferences.kt")
@@ -28156,6 +28216,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
   @TestDataPath("$PROJECT_ROOT")
   @RunWith(JUnit3RunnerWithInners.class)
   public static class JavaInterop extends AbstractLightAnalysisModeTest {
+    @TestMetadata("invisibleFake2.kt")
+    public void ignoreInvisibleFake2() {
+      runTest("compiler/testData/codegen/box/javaInterop/invisibleFake2.kt");
+    }
+
     private void runTest(String testDataFilePath) {
       KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
     }
@@ -28207,6 +28272,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestMetadata("inheritanceWithWildcard.kt")
     public void testInheritanceWithWildcard() {
       runTest("compiler/testData/codegen/box/javaInterop/inheritanceWithWildcard.kt");
+    }
+
+    @TestMetadata("invisibleFake.kt")
+    public void testInvisibleFake() {
+      runTest("compiler/testData/codegen/box/javaInterop/invisibleFake.kt");
     }
 
     @TestMetadata("javaForKotlinOverrideProperty.kt")
@@ -30771,6 +30841,24 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     }
   }
 
+  @TestMetadata("compiler/testData/codegen/box/klib")
+  @TestDataPath("$PROJECT_ROOT")
+  @RunWith(JUnit3RunnerWithInners.class)
+  public static class Klib extends AbstractLightAnalysisModeTest {
+    private void runTest(String testDataFilePath) {
+      KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
+    }
+
+    public void testAllFilesPresentInKlib() {
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/klib"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+    }
+
+    @TestMetadata("kt33411.kt")
+    public void testKt33411() {
+      runTest("compiler/testData/codegen/box/klib/kt33411.kt");
+    }
+  }
+
   @TestMetadata("compiler/testData/codegen/box/ktype")
   @TestDataPath("$PROJECT_ROOT")
   @RunWith(JUnit3RunnerWithInners.class)
@@ -30882,6 +30970,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
 
     public void testAllFilesPresentInLambda() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/lambda"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+    }
+
+    @TestMetadata("ifWithReferenceAndLambda.kt")
+    public void testIfWithReferenceAndLambda() {
+      runTest("compiler/testData/codegen/box/lambda/ifWithReferenceAndLambda.kt");
     }
 
     @TestMetadata("lambda1.kt")
@@ -42666,6 +42759,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestMetadata("fieldInJavaSamInterface.kt")
     public void testFieldInJavaSamInterface() {
       runTest("compiler/testData/codegen/box/sam/fieldInJavaSamInterface.kt");
+    }
+
+    @TestMetadata("inProjectedSam.kt")
+    public void testInProjectedSam() {
+      runTest("compiler/testData/codegen/box/sam/inProjectedSam.kt");
     }
 
     @TestMetadata("inlinedSamWrapper.kt")

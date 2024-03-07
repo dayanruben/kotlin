@@ -1606,6 +1606,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
     }
 
     @Test
+    @TestMetadata("unresolvedNameInBackticksInReceiver.kt")
+    public void testUnresolvedNameInBackticksInReceiver() {
+      runTest("compiler/testData/diagnostics/tests/unresolvedNameInBackticksInReceiver.kt");
+    }
+
+    @Test
     @TestMetadata("UnusedInDestructuring.kt")
     public void testUnusedInDestructuring() {
       runTest("compiler/testData/diagnostics/tests/UnusedInDestructuring.kt");
@@ -2317,6 +2323,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("OptInWithArrayArgument.kt")
+      public void testOptInWithArrayArgument() {
+        runTest("compiler/testData/diagnostics/tests/annotations/OptInWithArrayArgument.kt");
+      }
+
+      @Test
       @TestMetadata("propagationAnnotationToLocalMemberFunction.kt")
       public void testPropagationAnnotationToLocalMemberFunction() {
         runTest("compiler/testData/diagnostics/tests/annotations/propagationAnnotationToLocalMemberFunction.kt");
@@ -2404,6 +2416,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("RecursivelyIncorrectlyAnnotatedParameter.kt")
       public void testRecursivelyIncorrectlyAnnotatedParameter() {
         runTest("compiler/testData/diagnostics/tests/annotations/RecursivelyIncorrectlyAnnotatedParameter.kt");
+      }
+
+      @Test
+      @TestMetadata("referenceOfAnnotatedFunctionInAnnotation.kt")
+      public void testReferenceOfAnnotatedFunctionInAnnotation() {
+        runTest("compiler/testData/diagnostics/tests/annotations/referenceOfAnnotatedFunctionInAnnotation.kt");
       }
 
       @Test
@@ -4269,6 +4287,24 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         @TestMetadata("kt64222.kt")
         public void testKt64222() {
           runTest("compiler/testData/diagnostics/tests/builderInference/issues/kt64222.kt");
+        }
+
+        @Test
+        @TestMetadata("kt66229.kt")
+        public void testKt66229() {
+          runTest("compiler/testData/diagnostics/tests/builderInference/issues/kt66229.kt");
+        }
+
+        @Test
+        @TestMetadata("kt66243.kt")
+        public void testKt66243() {
+          runTest("compiler/testData/diagnostics/tests/builderInference/issues/kt66243.kt");
+        }
+
+        @Test
+        @TestMetadata("kt66272.kt")
+        public void testKt66272() {
+          runTest("compiler/testData/diagnostics/tests/builderInference/issues/kt66272.kt");
         }
       }
 
@@ -6353,6 +6389,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("nonUselessCastInLambda.kt")
+      public void testNonUselessCastInLambda() {
+        runTest("compiler/testData/diagnostics/tests/cast/nonUselessCastInLambda.kt");
+      }
+
+      @Test
       @TestMetadata("nothingAs.kt")
       public void testNothingAs() {
         runTest("compiler/testData/diagnostics/tests/cast/nothingAs.kt");
@@ -6368,6 +6410,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("StableTypeForUselessCast.kt")
       public void testStableTypeForUselessCast() {
         runTest("compiler/testData/diagnostics/tests/cast/StableTypeForUselessCast.kt");
+      }
+
+      @Test
+      @TestMetadata("usefulCastInGetOperator.kt")
+      public void testUsefulCastInGetOperator() {
+        runTest("compiler/testData/diagnostics/tests/cast/usefulCastInGetOperator.kt");
       }
 
       @Test
@@ -9276,6 +9324,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("conflictingOverloads.kt")
       public void testConflictingOverloads() {
         runTest("compiler/testData/diagnostics/tests/dataClasses/conflictingOverloads.kt");
+      }
+
+      @Test
+      @TestMetadata("copyInDataObject.kt")
+      public void testCopyInDataObject() {
+        runTest("compiler/testData/diagnostics/tests/dataClasses/copyInDataObject.kt");
       }
 
       @Test
@@ -13315,6 +13369,18 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("dnnTypeProjectionInParameter.kt")
+      public void testDnnTypeProjectionInParameter() {
+        runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/dnnTypeProjectionInParameter.kt");
+      }
+
+      @Test
+      @TestMetadata("dnnTypeProjectionInReceiver.kt")
+      public void testDnnTypeProjectionInReceiver() {
+        runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/dnnTypeProjectionInReceiver.kt");
+      }
+
+      @Test
       @TestMetadata("inference.kt")
       public void testInference() {
         runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/inference.kt");
@@ -13372,6 +13438,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("simple.kt")
       public void testSimple() {
         runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/simple.kt");
+      }
+
+      @Test
+      @TestMetadata("starProjection.kt")
+      public void testStarProjection() {
+        runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/starProjection.kt");
       }
     }
 
@@ -15910,6 +15982,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
     @TestDataPath("$PROJECT_ROOT")
     public class Imports {
       @Test
+      @TestMetadata("aliasedImportOfEnumConstructor.kt")
+      public void testAliasedImportOfEnumConstructor() {
+        runTest("compiler/testData/diagnostics/tests/imports/aliasedImportOfEnumConstructor.kt");
+      }
+
+      @Test
       public void testAllFilesPresentInImports() {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/imports"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true, "multiplatform");
       }
@@ -16653,6 +16731,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("checkNotNullWithNullableExpectedType.kt")
+      public void testCheckNotNullWithNullableExpectedType() {
+        runTest("compiler/testData/diagnostics/tests/inference/checkNotNullWithNullableExpectedType.kt");
+      }
+
+      @Test
       @TestMetadata("coerceFunctionLiteralToSuspend.kt")
       public void testCoerceFunctionLiteralToSuspend() {
         runTest("compiler/testData/diagnostics/tests/inference/coerceFunctionLiteralToSuspend.kt");
@@ -16680,6 +16764,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("completionOfMultipleLambdas.kt")
       public void testCompletionOfMultipleLambdas() {
         runTest("compiler/testData/diagnostics/tests/inference/completionOfMultipleLambdas.kt");
+      }
+
+      @Test
+      @TestMetadata("complexInferenceOnParentizedExpression.kt")
+      public void testComplexInferenceOnParentizedExpression() {
+        runTest("compiler/testData/diagnostics/tests/inference/complexInferenceOnParentizedExpression.kt");
       }
 
       @Test
@@ -17172,6 +17262,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("mostSpecificAfterInference.kt")
       public void testMostSpecificAfterInference() {
         runTest("compiler/testData/diagnostics/tests/inference/mostSpecificAfterInference.kt");
+      }
+
+      @Test
+      @TestMetadata("nestedIfWithExpectedType.kt")
+      public void testNestedIfWithExpectedType() {
+        runTest("compiler/testData/diagnostics/tests/inference/nestedIfWithExpectedType.kt");
       }
 
       @Test
@@ -17775,6 +17871,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         @TestMetadata("overloadResolutionByLambdaReturnTypeInsideBI.kt")
         public void testOverloadResolutionByLambdaReturnTypeInsideBI() {
           runTest("compiler/testData/diagnostics/tests/inference/builderInference/overloadResolutionByLambdaReturnTypeInsideBI.kt");
+        }
+
+        @Test
+        @TestMetadata("propertyInvokeInsidePCLALambda.kt")
+        public void testPropertyInvokeInsidePCLALambda() {
+          runTest("compiler/testData/diagnostics/tests/inference/builderInference/propertyInvokeInsidePCLALambda.kt");
         }
 
         @Test
@@ -18982,6 +19084,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         public void testWrongApproximationWithDefNotNullTypesAndDelegates() {
           runTest("compiler/testData/diagnostics/tests/inference/constraints/wrongApproximationWithDefNotNullTypesAndDelegates.kt");
         }
+
+        @Test
+        @TestMetadata("wrongExpectedTypeForWhen.kt")
+        public void testWrongExpectedTypeForWhen() {
+          runTest("compiler/testData/diagnostics/tests/inference/constraints/wrongExpectedTypeForWhen.kt");
+        }
       }
 
       @Nested
@@ -19808,6 +19916,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         }
 
         @Test
+        @TestMetadata("complexTypeUnwrapping2.kt")
+        public void testComplexTypeUnwrapping2() {
+          runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/complexTypeUnwrapping2.kt");
+        }
+
+        @Test
         @TestMetadata("kt61717.kt")
         public void testKt61717() {
           runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/kt61717.kt");
@@ -20461,6 +20575,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         @TestMetadata("kt42620.kt")
         public void testKt42620() {
           runTest("compiler/testData/diagnostics/tests/inference/reportingImprovements/kt42620.kt");
+        }
+
+        @Test
+        @TestMetadata("multipleDiagnosticsInOneCallChain.kt")
+        public void testMultipleDiagnosticsInOneCallChain() {
+          runTest("compiler/testData/diagnostics/tests/inference/reportingImprovements/multipleDiagnosticsInOneCallChain.kt");
         }
 
         @Test
@@ -21887,6 +22007,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("starProjectedInnerType.kt")
+      public void testStarProjectedInnerType() {
+        runTest("compiler/testData/diagnostics/tests/inner/starProjectedInnerType.kt");
+      }
+
+      @Test
       @TestMetadata("traits.kt")
       public void testTraits() {
         runTest("compiler/testData/diagnostics/tests/inner/traits.kt");
@@ -22250,6 +22376,18 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("intersectionWithJavaVoidNothing.kt")
       public void testIntersectionWithJavaVoidNothing() {
         runTest("compiler/testData/diagnostics/tests/j+k/intersectionWithJavaVoidNothing.kt");
+      }
+
+      @Test
+      @TestMetadata("invisibleFake.kt")
+      public void testInvisibleFake() {
+        runTest("compiler/testData/diagnostics/tests/j+k/invisibleFake.kt");
+      }
+
+      @Test
+      @TestMetadata("invisibleFake2.kt")
+      public void testInvisibleFake2() {
+        runTest("compiler/testData/diagnostics/tests/j+k/invisibleFake2.kt");
       }
 
       @Test
@@ -24192,6 +24330,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("multipleLabels.kt")
       public void testMultipleLabels() {
         runTest("compiler/testData/diagnostics/tests/labels/multipleLabels.kt");
+      }
+
+      @Test
+      @TestMetadata("qualifiedThisInExtensionProperty.kt")
+      public void testQualifiedThisInExtensionProperty() {
+        runTest("compiler/testData/diagnostics/tests/labels/qualifiedThisInExtensionProperty.kt");
       }
     }
 
@@ -26300,6 +26444,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("disambiguateByFailedAbstractClassCheck.kt")
       public void testDisambiguateByFailedAbstractClassCheck() {
         runTest("compiler/testData/diagnostics/tests/overload/disambiguateByFailedAbstractClassCheck.kt");
+      }
+
+      @Test
+      @TestMetadata("disambiguateByNumberOfLambdaArgument.kt")
+      public void testDisambiguateByNumberOfLambdaArgument() {
+        runTest("compiler/testData/diagnostics/tests/overload/disambiguateByNumberOfLambdaArgument.kt");
       }
 
       @Test
@@ -29925,6 +30075,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("callToProtectedOnSmartcast.kt")
+      public void testCallToProtectedOnSmartcast() {
+        runTest("compiler/testData/diagnostics/tests/resolve/callToProtectedOnSmartcast.kt");
+      }
+
+      @Test
       @TestMetadata("callableReferenceInCST.kt")
       public void testCallableReferenceInCST() {
         runTest("compiler/testData/diagnostics/tests/resolve/callableReferenceInCST.kt");
@@ -29934,6 +30090,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("capturedTypesInLambdaParameter.kt")
       public void testCapturedTypesInLambdaParameter() {
         runTest("compiler/testData/diagnostics/tests/resolve/capturedTypesInLambdaParameter.kt");
+      }
+
+      @Test
+      @TestMetadata("complexOrderAndImplicitTypes.kt")
+      public void testComplexOrderAndImplicitTypes() {
+        runTest("compiler/testData/diagnostics/tests/resolve/complexOrderAndImplicitTypes.kt");
       }
 
       @Test
@@ -33679,6 +33841,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("smartcastBetweenClassAndTypeParameter.kt")
+      public void testSmartcastBetweenClassAndTypeParameter() {
+        runTest("compiler/testData/diagnostics/tests/smartCasts/smartcastBetweenClassAndTypeParameter.kt");
+      }
+
+      @Test
       @TestMetadata("smartcastInFriendModule.kt")
       public void testSmartcastInFriendModule() {
         runTest("compiler/testData/diagnostics/tests/smartCasts/smartcastInFriendModule.kt");
@@ -33712,6 +33880,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("smartcastToStarProjection.kt")
       public void testSmartcastToStarProjection() {
         runTest("compiler/testData/diagnostics/tests/smartCasts/smartcastToStarProjection.kt");
+      }
+
+      @Test
+      @TestMetadata("syntheticAccessorOnSmartcastedReceiver.kt")
+      public void testSyntheticAccessorOnSmartcastedReceiver() {
+        runTest("compiler/testData/diagnostics/tests/smartCasts/syntheticAccessorOnSmartcastedReceiver.kt");
       }
 
       @Test
@@ -35038,6 +35212,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         }
 
         @Test
+        @TestMetadata("propertyOfLocalClass.kt")
+        public void testPropertyOfLocalClass() {
+          runTest("compiler/testData/diagnostics/tests/smartCasts/variables/propertyOfLocalClass.kt");
+        }
+
+        @Test
         @TestMetadata("propertySubtype.kt")
         public void testPropertySubtype() {
           runTest("compiler/testData/diagnostics/tests/smartCasts/variables/propertySubtype.kt");
@@ -36000,6 +36180,24 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("chainedFunSuspendConversionForSimpleExpression.kt")
       public void testChainedFunSuspendConversionForSimpleExpression() {
         runTest("compiler/testData/diagnostics/tests/suspendConversion/chainedFunSuspendConversionForSimpleExpression.kt");
+      }
+
+      @Test
+      @TestMetadata("implicitInvoke.kt")
+      public void testImplicitInvoke() {
+        runTest("compiler/testData/diagnostics/tests/suspendConversion/implicitInvoke.kt");
+      }
+
+      @Test
+      @TestMetadata("implicitInvokeFromChildClass.kt")
+      public void testImplicitInvokeFromChildClass() {
+        runTest("compiler/testData/diagnostics/tests/suspendConversion/implicitInvokeFromChildClass.kt");
+      }
+
+      @Test
+      @TestMetadata("implicitInvokeWithSpecificType.kt")
+      public void testImplicitInvokeWithSpecificType() {
+        runTest("compiler/testData/diagnostics/tests/suspendConversion/implicitInvokeWithSpecificType.kt");
       }
 
       @Test
@@ -39582,6 +39780,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         }
 
         @Test
+        @TestMetadata("unnamedSubject.kt")
+        public void testUnnamedSubject() {
+          runTest("compiler/testData/diagnostics/tests/when/withSubjectVariable/unnamedSubject.kt");
+        }
+
+        @Test
         @TestMetadata("unsupportedFeature.kt")
         public void testUnsupportedFeature() {
           runTest("compiler/testData/diagnostics/tests/when/withSubjectVariable/unsupportedFeature.kt");
@@ -41642,6 +41846,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         }
 
         @Test
+        @TestMetadata("smartcastOnReceiverInComplexCondition.kt")
+        public void testSmartcastOnReceiverInComplexCondition() {
+          runTest("compiler/testData/diagnostics/testsWithStdLib/contracts/smartcasts/smartcastOnReceiverInComplexCondition.kt");
+        }
+
+        @Test
         @TestMetadata("throwsEffect.kt")
         public void testThrowsEffect() {
           runTest("compiler/testData/diagnostics/testsWithStdLib/contracts/smartcasts/throwsEffect.kt");
@@ -42581,6 +42791,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         @TestMetadata("allMembersAllowed.kt")
         public void testAllMembersAllowed() {
           runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/restrictSuspension/allMembersAllowed.kt");
+        }
+
+        @Test
+        @TestMetadata("callableReference.kt")
+        public void testCallableReference() {
+          runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/restrictSuspension/callableReference.kt");
         }
 
         @Test
