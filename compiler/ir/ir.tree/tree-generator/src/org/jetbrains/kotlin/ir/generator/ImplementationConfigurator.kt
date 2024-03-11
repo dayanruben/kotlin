@@ -1,25 +1,19 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.ir.generator
 
-import org.jetbrains.kotlin.generators.tree.ArbitraryImportable
-import org.jetbrains.kotlin.generators.tree.ImplementationKind
-import org.jetbrains.kotlin.generators.tree.ClassRef
-import org.jetbrains.kotlin.generators.tree.ImportCollector
-import org.jetbrains.kotlin.generators.tree.StandardTypes
-import org.jetbrains.kotlin.generators.tree.Visibility
+import org.jetbrains.kotlin.generators.tree.*
 import org.jetbrains.kotlin.generators.tree.printer.FunctionParameter
 import org.jetbrains.kotlin.generators.tree.printer.VariableKind
 import org.jetbrains.kotlin.generators.tree.printer.printFunctionWithBlockBody
 import org.jetbrains.kotlin.generators.tree.printer.printPropertyDeclaration
 import org.jetbrains.kotlin.ir.generator.config.AbstractIrTreeImplementationConfigurator
 import org.jetbrains.kotlin.ir.generator.model.Element
-import org.jetbrains.kotlin.ir.generator.model.Implementation
 import org.jetbrains.kotlin.ir.generator.model.ListField
-import org.jetbrains.kotlin.utils.SmartPrinter
+import org.jetbrains.kotlin.utils.withIndent
 
 object ImplementationConfigurator : AbstractIrTreeImplementationConfigurator() {
     override fun configure(model: Model): Unit = with(IrTree) {
@@ -110,26 +104,66 @@ object ImplementationConfigurator : AbstractIrTreeImplementationConfigurator() {
 
         impl(moduleFragment) {
             implementation.putImplementationOptInInConstructor = false
-            additionalImports(ArbitraryImportable(Packages.tree, "UNDEFINED_OFFSET"))
-            default("startOffset", "UNDEFINED_OFFSET", withGetter = true)
-            default("endOffset", "UNDEFINED_OFFSET", withGetter = true)
+            default("startOffset", undefinedOffset(), withGetter = true)
+            default("endOffset", undefinedOffset(), withGetter = true)
             default("name", "descriptor.name", withGetter = true)
         }
 
         impl(errorDeclaration) {
-            implementation.doPrint = false
+            implementation.bindOwnedSymbol = false
+            default("symbol") {
+                value = "error(\"Should never be called\")"
+                withGetter = true
+            }
+            isMutable("descriptor")
+            isLateinit("descriptor")
         }
 
         impl(externalPackageFragment) {
-            implementation.doPrint = false
+            implementation.putImplementationOptInInConstructor = false
+            implementation.constructorParameterOrderOverride = listOf("symbol", "packageFqName")
+            additionalImports(
+                ArbitraryImportable(Packages.descriptors, "ModuleDescriptor"),
+            )
+            default("startOffset", undefinedOffset(), withGetter = true)
+            default("endOffset", undefinedOffset(), withGetter = true)
+            implementation.generationCallback = {
+                println()
+                print()
+                println(
+                    """
+                    companion object {
+                        @Deprecated(
+                            message = "Use org.jetbrains.kotlin.ir.declarations.createEmptyExternalPackageFragment instead",
+                            replaceWith = ReplaceWith("createEmptyExternalPackageFragment", "org.jetbrains.kotlin.ir.declarations.createEmptyExternalPackageFragment")
+                        )
+                        fun createEmptyExternalPackageFragment(module: ModuleDescriptor, fqName: FqName): IrExternalPackageFragment =
+                            org.jetbrains.kotlin.ir.declarations.createEmptyExternalPackageFragment(module, fqName)
+                    }
+                    """.replaceIndent(currentIndent)
+                )
+            }
         }
 
         impl(file) {
-            implementation.doPrint = false
+            implementation.putImplementationOptInInConstructor = false
+            implementation.constructorParameterOrderOverride = listOf("fileEntry", "symbol", "packageFqName")
+            default("startOffset", "0", withGetter = true)
+            default("endOffset", "fileEntry.maxOffset", withGetter = true)
+            isMutable("module")
+            isLateinit("module")
+            implementation.generationCallback = {
+                println()
+                println("internal val isInsideModule: Boolean")
+                withIndent {
+                    println("get() = ::module.isInitialized")
+                }
+            }
         }
     }
 
     private fun ImplementationContext.configureDeclarationWithLateBindinig(symbolType: ClassRef<*>) {
+        implementation.bindOwnedSymbol = false
         default("isBound") {
             value = "_symbol != null"
             withGetter = true
@@ -201,7 +235,10 @@ object ImplementationConfigurator : AbstractIrTreeImplementationConfigurator() {
             default(it, "ArrayList(2)")
         }
 
-        configureFieldInAllImplementations("descriptor", { impl -> impl.allFields.any { it.name == "symbol" } }) {
+        configureFieldInAllImplementations(
+            "descriptor",
+            { impl -> impl.allFields.any { it.name == "symbol" } && impl.element != IrTree.errorDeclaration }
+        ) {
             default(it, "symbol.descriptor", withGetter = true)
         }
 

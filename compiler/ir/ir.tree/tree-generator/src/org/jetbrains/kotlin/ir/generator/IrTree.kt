@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.types.model.AnnotationMarker
 import org.jetbrains.kotlin.utils.withIndent
 
 // Note the style of the DSL to describe IR elements, which is these things in the following order:
@@ -405,7 +406,9 @@ object IrTree : AbstractTreeBuilder() {
         // NB: there's an inline constructor for Array and each primitive array class.
         +field("isInline", boolean)
         +field("isExpect", boolean)
-        +field("returnType", irTypeType)
+        +field("returnType", irTypeType) {
+            useFieldInIrFactory(customType = irTypeType.copy(nullable = true))
+        }
         +field("dispatchReceiverParameter", valueParameter, nullable = true)
         +field("extensionReceiverParameter", valueParameter, nullable = true)
         +listField("valueParameters", valueParameter, mutability = Var)
@@ -612,17 +615,6 @@ object IrTree : AbstractTreeBuilder() {
         parent(symbolOwner)
 
         +symbol(packageFragmentSymbolType)
-        +field("packageFragmentDescriptor", type(Packages.descriptors, "PackageFragmentDescriptor"), mutable = false) {
-            optInAnnotation = obsoleteDescriptorBasedApiAnnotation
-        }
-        +field("moduleDescriptor", type(Packages.descriptors, "ModuleDescriptor"), mutable = false) {
-            kDoc = """
-            This should be a link to [IrModuleFragment] instead. 
-               
-            Unfortunately, some package fragments (e.g. some synthetic ones and [IrExternalPackageFragment])
-            are not located in any IR module, but still have a module descriptor. 
-            """.trimIndent()
-        }
         +field("packageFqName", type<FqName>())
         +field("fqName", type<FqName>()) {
             defaultValueInBase = "packageFqName"
@@ -660,7 +652,6 @@ object IrTree : AbstractTreeBuilder() {
         parent(packageFragment)
 
         +symbol(externalPackageFragmentSymbolType)
-        +field("containerSource", type<DeserializedContainerSource>(), nullable = true, mutable = false)
     }
     val file: Element by element(Declaration) {
         needTransformMethod()
@@ -668,7 +659,7 @@ object IrTree : AbstractTreeBuilder() {
         generateIrFactoryMethod = false
 
         parent(packageFragment)
-        parent(mutableAnnotationContainerType)
+        parent(mutableAnnotationContainer)
         parent(metadataSourceOwner)
 
         +symbol(fileSymbolType)
@@ -810,6 +801,7 @@ object IrTree : AbstractTreeBuilder() {
         transformerReturnType = rootElement
 
         parent(functionAccessExpression)
+        parent(type<AnnotationMarker>())
 
         +symbol(constructorSymbolType, mutable = true)
         +field("source", type<SourceElement>()) {

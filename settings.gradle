@@ -422,7 +422,8 @@ if (!buildProperties.inJpsBuildIdeaSync) {
 }
 
 include ":compiler:build-tools:kotlin-build-tools-api",
-        ":compiler:build-tools:kotlin-build-tools-impl"
+        ":compiler:build-tools:kotlin-build-tools-impl",
+        ":compiler:build-tools:kotlin-build-tools-api-tests"
 
 // Experimental modules, should be placed into plugins/compose-compiler-plugin folder
 include ":plugins:compose-compiler-plugin:compiler",
@@ -650,7 +651,8 @@ if (buildProperties.inJpsBuildIdeaSync) {
 
             ":kotlin-test",
             ":kotlin-test:kotlin-test-js-it",
-            ":native:native.tests"
+            ":native:native.tests",
+            ":native:native.tests:stress"
 
     project(':kotlin-stdlib-common').projectDir = "$rootDir/libraries/stdlib/common" as File
     project(':kotlin-stdlib').projectDir = "$rootDir/libraries/stdlib" as File
@@ -668,7 +670,6 @@ if (buildProperties.inJpsBuildIdeaSync) {
 
     project(':kotlin-test').projectDir = "$rootDir/libraries/kotlin.test" as File
     project(':kotlin-test:kotlin-test-js-it').projectDir = "$rootDir/libraries/kotlin.test/js/it" as File
-    project(':native:native.tests').projectDir = "$rootDir/native/native.tests" as File
 }
 include ":compiler:android-tests"
 

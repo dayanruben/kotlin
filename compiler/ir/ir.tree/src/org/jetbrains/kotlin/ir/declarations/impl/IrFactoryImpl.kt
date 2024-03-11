@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -7,7 +7,9 @@ package org.jetbrains.kotlin.ir.declarations.impl
 
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.ir.IrImplementationDetail
+import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.descriptors.toIrBasedDescriptor
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
@@ -15,7 +17,6 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrBlockBodyImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.types.impl.IrUninitializedType
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 import org.jetbrains.kotlin.types.Variance
@@ -92,7 +93,7 @@ abstract class AbstractIrFactoryImpl : IrFactory {
         visibility: DescriptorVisibility,
         isInline: Boolean,
         isExpect: Boolean,
-        returnType: IrType,
+        returnType: IrType?,
         symbol: IrConstructorSymbol,
         isPrimary: Boolean,
         isExternal: Boolean,
@@ -112,7 +113,7 @@ abstract class AbstractIrFactoryImpl : IrFactory {
             containerSource = containerSource,
             factory = this
         ).apply {
-            if (returnType != IrUninitializedType) {
+            if (returnType != null) {
                 this.returnType = returnType
             }
         }
@@ -133,6 +134,7 @@ abstract class AbstractIrFactoryImpl : IrFactory {
             factory = this
         )
 
+    @OptIn(ObsoleteDescriptorBasedAPI::class)
     override fun createErrorDeclaration(
         startOffset: Int,
         endOffset: Int,
@@ -141,9 +143,11 @@ abstract class AbstractIrFactoryImpl : IrFactory {
         IrErrorDeclarationImpl(
             startOffset = startOffset,
             endOffset = endOffset,
-            _descriptor = descriptor,
-            factory = this
-        )
+            factory = this,
+            origin = IrDeclarationOrigin.DEFINED,
+        ).apply {
+            this.descriptor = descriptor ?: this.toIrBasedDescriptor()
+        }
 
     override fun createField(
         startOffset: Int,
@@ -179,7 +183,7 @@ abstract class AbstractIrFactoryImpl : IrFactory {
         visibility: DescriptorVisibility,
         isInline: Boolean,
         isExpect: Boolean,
-        returnType: IrType,
+        returnType: IrType?,
         modality: Modality,
         symbol: IrSimpleFunctionSymbol,
         isTailrec: Boolean,
@@ -209,7 +213,7 @@ abstract class AbstractIrFactoryImpl : IrFactory {
             containerSource = containerSource,
             factory = this
         ).apply {
-            if (returnType != IrUninitializedType) {
+            if (returnType != null) {
                 this.returnType = returnType
             }
         }
@@ -222,7 +226,7 @@ abstract class AbstractIrFactoryImpl : IrFactory {
         visibility: DescriptorVisibility,
         isInline: Boolean,
         isExpect: Boolean,
-        returnType: IrType,
+        returnType: IrType?,
         modality: Modality,
         isTailrec: Boolean,
         isSuspend: Boolean,
@@ -248,7 +252,7 @@ abstract class AbstractIrFactoryImpl : IrFactory {
             isFakeOverride = isFakeOverride,
             factory = this
         ).apply {
-            if (returnType != IrUninitializedType) {
+            if (returnType != null) {
                 this.returnType = returnType
             }
         }

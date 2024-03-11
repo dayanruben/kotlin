@@ -496,6 +496,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
     }
 
     @Test
+    @TestMetadata("fpRedundantProtected.kt")
+    public void testFpRedundantProtected() {
+      runTest("compiler/testData/diagnostics/tests/fpRedundantProtected.kt");
+    }
+
+    @Test
     @TestMetadata("FreeFunctionCalledAsExtension.kt")
     public void testFreeFunctionCalledAsExtension() {
       runTest("compiler/testData/diagnostics/tests/FreeFunctionCalledAsExtension.kt");
@@ -1015,6 +1021,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
     @TestMetadata("OperatorChecks.kt")
     public void testOperatorChecks() {
       runTest("compiler/testData/diagnostics/tests/OperatorChecks.kt");
+    }
+
+    @Test
+    @TestMetadata("OperatorConventions.kt")
+    public void testOperatorConventions() {
+      runTest("compiler/testData/diagnostics/tests/OperatorConventions.kt");
     }
 
     @Test
@@ -17745,6 +17757,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         @TestMetadata("kt49829.kt")
         public void testKt49829() {
           runTest("compiler/testData/diagnostics/tests/inference/builderInference/kt49829.kt");
+        }
+
+        @Test
+        @TestMetadata("kt49829_noCast.kt")
+        public void testKt49829_noCast() {
+          runTest("compiler/testData/diagnostics/tests/inference/builderInference/kt49829_noCast.kt");
         }
 
         @Test

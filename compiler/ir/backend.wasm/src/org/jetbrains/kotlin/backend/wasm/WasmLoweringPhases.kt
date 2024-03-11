@@ -470,8 +470,8 @@ private val staticMembersLoweringPhase = makeIrModulePhase(
 )
 
 private val classReferenceLoweringPhase = makeIrModulePhase(
-    ::ClassReferenceLowering,
-    name = "ClassReferenceLowering",
+    ::WasmClassReferenceLowering,
+    name = "WasmClassReferenceLowering",
     description = "Handle class references"
 )
 
@@ -678,6 +678,8 @@ val loweringList = listOf(
 
     wasmStringSwitchOptimizerLowering,
 
+    associatedObjectsLowering,
+
     complexExternalDeclarationsToTopLevelFunctionsLowering,
     complexExternalDeclarationsUsagesLowering,
 
@@ -723,8 +725,6 @@ val loweringList = listOf(
     expressionBodyTransformer,
     eraseVirtualDispatchReceiverParametersTypes,
     bridgesConstructionPhase,
-
-    associatedObjectsLowering,
 
     objectDeclarationLoweringPhase,
     genericReturnTypeLowering,

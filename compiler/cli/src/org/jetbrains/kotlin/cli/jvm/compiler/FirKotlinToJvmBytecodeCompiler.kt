@@ -95,8 +95,6 @@ object FirKotlinToJvmBytecodeCompiler {
         buildFile: File?,
         module: Module,
     ): Boolean {
-        val performanceManager = compilerConfiguration.get(CLIConfigurationKeys.PERF_MANAGER)
-
         val targetIds = compilerConfiguration.get(JVMConfigurationKeys.MODULES)?.map(::TargetId)
         val incrementalComponents = compilerConfiguration.get(JVMConfigurationKeys.INCREMENTAL_COMPILATION_COMPONENTS)
 
@@ -111,7 +109,6 @@ object FirKotlinToJvmBytecodeCompiler {
             messageCollector,
             moduleConfiguration.getBoolean(CLIConfigurationKeys.RENDER_DIAGNOSTIC_INTERNAL_NAME),
             moduleConfiguration,
-            performanceManager,
             targetIds,
             incrementalComponents,
             extensionRegistrars = FirExtensionRegistrar.getInstances(project),
@@ -141,7 +138,6 @@ object FirKotlinToJvmBytecodeCompiler {
     }
 
     private fun CompilationContext.compileModule(): Pair<FirResult, GenerationState>? {
-        performanceManager?.notifyAnalysisStarted()
         ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
 
         if (!checkKotlinPackageUsageForPsi(configuration, allSources)) return null
@@ -149,22 +145,15 @@ object FirKotlinToJvmBytecodeCompiler {
         val renderDiagnosticNames = configuration.getBoolean(CLIConfigurationKeys.RENDER_DIAGNOSTIC_INTERNAL_NAME)
         val diagnosticsReporter = createPendingReporter(messageCollector)
 
-        val firResult = runFrontend(allSources, diagnosticsReporter, module.getModuleName(), module.getFriendPaths()).also {
-            performanceManager?.notifyAnalysisFinished()
-        }
+        val firResult = runFrontend(allSources, diagnosticsReporter, module.getModuleName(), module.getFriendPaths())
         if (firResult == null) {
             FirDiagnosticsCompilerResultsReporter.reportToMessageCollector(diagnosticsReporter, messageCollector, renderDiagnosticNames)
             return null
         }
 
-        performanceManager?.notifyGenerationStarted()
-        performanceManager?.notifyIRTranslationStarted()
-
         val fir2IrExtensions = JvmFir2IrExtensions(configuration, JvmIrDeserializerImpl(), JvmIrMangler)
         val fir2IrAndIrActualizerResult =
             firResult.convertToIrAndActualizeForJvm(fir2IrExtensions, configuration, diagnosticsReporter, irGenerationExtensions)
-
-        performanceManager?.notifyIRTranslationFinished()
 
         val generationState = runBackend(
             fir2IrExtensions,
@@ -174,8 +163,6 @@ object FirKotlinToJvmBytecodeCompiler {
 
         FirDiagnosticsCompilerResultsReporter.reportToMessageCollector(diagnosticsReporter, messageCollector, renderDiagnosticNames)
 
-        performanceManager?.notifyIRGenerationFinished()
-        performanceManager?.notifyGenerationFinished()
         ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
 
         return firResult to generationState
@@ -192,6 +179,9 @@ object FirKotlinToJvmBytecodeCompiler {
         rootModuleName: String,
         friendPaths: List<String>,
     ): FirResult? {
+        val performanceManager = configuration.get(CLIConfigurationKeys.PERF_MANAGER)
+        performanceManager?.notifyAnalysisStarted()
+
         val syntaxErrors = ktFiles.fold(false) { errorsFound, ktFile ->
             AnalyzerWithCompilerReport.reportSyntaxErrors(ktFile, messageCollector).isHasErrors or errorsFound
         }
@@ -228,6 +218,7 @@ object FirKotlinToJvmBytecodeCompiler {
         }
         outputs.runPlatformCheckers(diagnosticsReporter)
 
+        performanceManager?.notifyAnalysisFinished()
         return runUnless(syntaxErrors || scriptsInCommonSourcesErrors || diagnosticsReporter.hasErrors) { FirResult(outputs) }
     }
 
@@ -265,7 +256,7 @@ object FirKotlinToJvmBytecodeCompiler {
         ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
 
         val generationState = generateCodeFromIr(
-            irInput, ModuleCompilerEnvironment(projectEnvironment, diagnosticsReporter), performanceManager
+            irInput, ModuleCompilerEnvironment(projectEnvironment, diagnosticsReporter)
         ).generationState
 
         ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
@@ -290,7 +281,6 @@ object FirKotlinToJvmBytecodeCompiler {
         override val messageCollector: MessageCollector,
         val renderDiagnosticName: Boolean,
         override val configuration: CompilerConfiguration,
-        val performanceManager: CommonCompilerPerformanceManager?,
         override val targetIds: List<TargetId>?,
         override val incrementalComponents: IncrementalCompilationComponents?,
         override val extensionRegistrars: List<FirExtensionRegistrar>,
