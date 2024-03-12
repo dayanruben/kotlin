@@ -352,6 +352,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
     }
 
     @Test
+    @TestMetadata("dnnAsSuperTypeTypeArgument.kt")
+    public void testDnnAsSuperTypeTypeArgument() {
+      runTest("compiler/testData/diagnostics/tests/dnnAsSuperTypeTypeArgument.kt");
+    }
+
+    @Test
     @TestMetadata("Dollar.kt")
     public void testDollar() {
       runTest("compiler/testData/diagnostics/tests/Dollar.kt");
@@ -17820,6 +17826,30 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("lambdaParameterForBareTypeAs.kt")
+        public void testLambdaParameterForBareTypeAs() {
+          runTest("compiler/testData/diagnostics/tests/inference/builderInference/lambdaParameterForBareTypeAs.kt");
+        }
+
+        @Test
+        @TestMetadata("lambdaParameterForBareTypeEarlyFixationAffectsBehavior.kt")
+        public void testLambdaParameterForBareTypeEarlyFixationAffectsBehavior() {
+          runTest("compiler/testData/diagnostics/tests/inference/builderInference/lambdaParameterForBareTypeEarlyFixationAffectsBehavior.kt");
+        }
+
+        @Test
+        @TestMetadata("lambdaParameterForBareTypeOnOuterTypeVariable.kt")
+        public void testLambdaParameterForBareTypeOnOuterTypeVariable() {
+          runTest("compiler/testData/diagnostics/tests/inference/builderInference/lambdaParameterForBareTypeOnOuterTypeVariable.kt");
+        }
+
+        @Test
+        @TestMetadata("lambdaParameterForNonBareType.kt")
+        public void testLambdaParameterForNonBareType() {
+          runTest("compiler/testData/diagnostics/tests/inference/builderInference/lambdaParameterForNonBareType.kt");
+        }
+
+        @Test
         @TestMetadata("lambdaParameterTypeFixation.kt")
         public void testLambdaParameterTypeFixation() {
           runTest("compiler/testData/diagnostics/tests/inference/builderInference/lambdaParameterTypeFixation.kt");
@@ -21159,6 +21189,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("valueOfKFunctionTypeAsArgumentOfInlineFunction.kt")
+      public void testValueOfKFunctionTypeAsArgumentOfInlineFunction() {
+        runTest("compiler/testData/diagnostics/tests/inline/valueOfKFunctionTypeAsArgumentOfInlineFunction.kt");
+      }
+
+      @Test
       @TestMetadata("vararg.kt")
       public void testVararg() {
         runTest("compiler/testData/diagnostics/tests/inline/vararg.kt");
@@ -22325,6 +22361,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("futureGet.kt")
+      public void testFutureGet() {
+        runTest("compiler/testData/diagnostics/tests/j+k/futureGet.kt");
+      }
+
+      @Test
       @TestMetadata("genericConstructorWithMultipleBounds.kt")
       public void testGenericConstructorWithMultipleBounds() {
         runTest("compiler/testData/diagnostics/tests/j+k/genericConstructorWithMultipleBounds.kt");
@@ -22451,6 +22493,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("kjkImplicitReturnType.kt")
+      public void testKjkImplicitReturnType() {
+        runTest("compiler/testData/diagnostics/tests/j+k/kjkImplicitReturnType.kt");
+      }
+
+      @Test
       @TestMetadata("kjkPropertyAndExtensionProperty.kt")
       public void testKjkPropertyAndExtensionProperty() {
         runTest("compiler/testData/diagnostics/tests/j+k/kjkPropertyAndExtensionProperty.kt");
@@ -22541,6 +22589,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("kt62118.kt")
+      public void testKt62118() {
+        runTest("compiler/testData/diagnostics/tests/j+k/kt62118.kt");
+      }
+
+      @Test
       @TestMetadata("kt62197.kt")
       public void testKt62197() {
         runTest("compiler/testData/diagnostics/tests/j+k/kt62197.kt");
@@ -22586,6 +22640,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("nullForOptionalOrElse.kt")
       public void testNullForOptionalOrElse() {
         runTest("compiler/testData/diagnostics/tests/j+k/nullForOptionalOrElse.kt");
+      }
+
+      @Test
+      @TestMetadata("nullableLinkedListToQueue.kt")
+      public void testNullableLinkedListToQueue() {
+        runTest("compiler/testData/diagnostics/tests/j+k/nullableLinkedListToQueue.kt");
       }
 
       @Test
@@ -22706,6 +22766,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("rawUpperBounds.kt")
       public void testRawUpperBounds() {
         runTest("compiler/testData/diagnostics/tests/j+k/rawUpperBounds.kt");
+      }
+
+      @Test
+      @TestMetadata("receiverEnhancement.kt")
+      public void testReceiverEnhancement() {
+        runTest("compiler/testData/diagnostics/tests/j+k/receiverEnhancement.kt");
       }
 
       @Test
@@ -22880,6 +22946,30 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("UnboxingNulls.kt")
       public void testUnboxingNulls() {
         runTest("compiler/testData/diagnostics/tests/j+k/UnboxingNulls.kt");
+      }
+
+      @Test
+      @TestMetadata("withTestConnection.kt")
+      public void testWithTestConnection() {
+        runTest("compiler/testData/diagnostics/tests/j+k/withTestConnection.kt");
+      }
+
+      @Test
+      @TestMetadata("withTestConnection2.kt")
+      public void testWithTestConnection2() {
+        runTest("compiler/testData/diagnostics/tests/j+k/withTestConnection2.kt");
+      }
+
+      @Test
+      @TestMetadata("withTestConnection3.kt")
+      public void testWithTestConnection3() {
+        runTest("compiler/testData/diagnostics/tests/j+k/withTestConnection3.kt");
+      }
+
+      @Test
+      @TestMetadata("withTestConnection4.kt")
+      public void testWithTestConnection4() {
+        runTest("compiler/testData/diagnostics/tests/j+k/withTestConnection4.kt");
       }
 
       @Test
@@ -29753,6 +29843,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("comparingWithWrongNullability.kt")
+      public void testComparingWithWrongNullability() {
+        runTest("compiler/testData/diagnostics/tests/platformTypes/comparingWithWrongNullability.kt");
+      }
+
+      @Test
       @TestMetadata("delegateByComplexInheritance.kt")
       public void testDelegateByComplexInheritance() {
         runTest("compiler/testData/diagnostics/tests/platformTypes/delegateByComplexInheritance.kt");
@@ -33596,6 +33692,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("samConversionToGeneric.kt")
       public void testSamConversionToGeneric() {
         runTest("compiler/testData/diagnostics/tests/samConversions/samConversionToGeneric.kt");
+      }
+
+      @Test
+      @TestMetadata("samConversionToGenericWrongNullability.kt")
+      public void testSamConversionToGenericWrongNullability() {
+        runTest("compiler/testData/diagnostics/tests/samConversions/samConversionToGenericWrongNullability.kt");
       }
 
       @Test
@@ -42429,12 +42531,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       runTest("compiler/testData/diagnostics/testsWithStdLib/shadowingInDestructuring.kt");
     }
 
-    @Test
-    @TestMetadata("streams.kt")
-    public void testStreams() {
-      runTest("compiler/testData/diagnostics/testsWithStdLib/streams.kt");
-    }
-
     @Nested
     @TestMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations")
     @TestDataPath("$PROJECT_ROOT")
@@ -47106,6 +47202,28 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("withChangesToNull.kt")
       public void testWithChangesToNull() {
         runTest("compiler/testData/diagnostics/testsWithStdLib/smartcasts/withChangesToNull.kt");
+      }
+    }
+
+    @Nested
+    @TestMetadata("compiler/testData/diagnostics/testsWithStdLib/streams")
+    @TestDataPath("$PROJECT_ROOT")
+    public class Streams {
+      @Test
+      public void testAllFilesPresentInStreams() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/testsWithStdLib/streams"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+      }
+
+      @Test
+      @TestMetadata("basic.kt")
+      public void testBasic() {
+        runTest("compiler/testData/diagnostics/testsWithStdLib/streams/basic.kt");
+      }
+
+      @Test
+      @TestMetadata("wrongNullability.kt")
+      public void testWrongNullability() {
+        runTest("compiler/testData/diagnostics/testsWithStdLib/streams/wrongNullability.kt");
       }
     }
 

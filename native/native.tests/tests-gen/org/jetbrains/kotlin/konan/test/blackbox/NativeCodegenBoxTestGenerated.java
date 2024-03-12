@@ -59,6 +59,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
       }
 
       @Test
+      @TestMetadata("intrinsicConstEvaluationInSources.kt")
+      public void testIntrinsicConstEvaluationInSources() {
+        runTest("compiler/testData/codegen/box/annotations/intrinsicConstEvaluationInSources.kt");
+      }
+
+      @Test
       @TestMetadata("nestedAnnotation.kt")
       public void testNestedAnnotation() {
         runTest("compiler/testData/codegen/box/annotations/nestedAnnotation.kt");
@@ -19665,9 +19671,27 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
       }
 
       @Test
+      @TestMetadata("inlinedLambdaWithErasedParamType.kt")
+      public void testInlinedLambdaWithErasedParamType() {
+        runTest("compiler/testData/codegen/box/inline/inlinedLambdaWithErasedParamType.kt");
+      }
+
+      @Test
       @TestMetadata("innerInlineFunCapturesOuter.kt")
       public void testInnerInlineFunCapturesOuter() {
         runTest("compiler/testData/codegen/box/inline/innerInlineFunCapturesOuter.kt");
+      }
+
+      @Test
+      @TestMetadata("kt66017.kt")
+      public void testKt66017() {
+        runTest("compiler/testData/codegen/box/inline/kt66017.kt");
+      }
+
+      @Test
+      @TestMetadata("kt66017_inlineFromTheSameModule.kt")
+      public void testKt66017_inlineFromTheSameModule() {
+        runTest("compiler/testData/codegen/box/inline/kt66017_inlineFromTheSameModule.kt");
       }
 
       @Test

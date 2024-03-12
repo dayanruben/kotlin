@@ -110,8 +110,6 @@ class WasmSymbols(
     override val returnIfSuspended =
         getInternalFunction("returnIfSuspended")
 
-    val throwLinkageError = getInternalFunction("throwLinkageError")
-
     val enumEntries = getIrClass(FqName.fromSegments(listOf("kotlin", "enums", "EnumEntries")))
     val createEnumEntries = findFunctions(enumsInternalPackage.memberScope, Name.identifier("enumEntries"))
         .find { it.valueParameters.firstOrNull()?.type?.isFunctionType == false }
@@ -410,6 +408,9 @@ class WasmSymbols(
             getInternalFunction("throwAsJsException")
 
         val kExternalClassImpl: IrClassSymbol = getInternalClass("KExternalClassImpl")
+
+        val jsException = getIrClass(FqName("kotlin.js.JsException"))
+        val throwJsException = getInternalFunction("throwJsException")
     }
 
     private val wasmExportClass = getIrClass(FqName("kotlin.wasm.WasmExport"))

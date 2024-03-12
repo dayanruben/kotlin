@@ -162,6 +162,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
     }
 
     @Test
+    @TestMetadata("intrinsicConstEvaluationInSources.kt")
+    public void testIntrinsicConstEvaluationInSources() {
+      runTest("compiler/testData/codegen/box/annotations/intrinsicConstEvaluationInSources.kt");
+    }
+
+    @Test
     @TestMetadata("javaAnnotationArrayValueDefault.kt")
     public void testJavaAnnotationArrayValueDefault() {
       runTest("compiler/testData/codegen/box/annotations/javaAnnotationArrayValueDefault.kt");
@@ -23423,6 +23429,24 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
     @TestMetadata("inlineCtor.kt")
     public void testInlineCtor() {
       runTest("compiler/testData/codegen/box/inline/inlineCtor.kt");
+    }
+
+    @Test
+    @TestMetadata("inlinedLambdaWithErasedParamType.kt")
+    public void testInlinedLambdaWithErasedParamType() {
+      runTest("compiler/testData/codegen/box/inline/inlinedLambdaWithErasedParamType.kt");
+    }
+
+    @Test
+    @TestMetadata("kt66017.kt")
+    public void testKt66017() {
+      runTest("compiler/testData/codegen/box/inline/kt66017.kt");
+    }
+
+    @Test
+    @TestMetadata("kt66017_inlineFromTheSameModule.kt")
+    public void testKt66017_inlineFromTheSameModule() {
+      runTest("compiler/testData/codegen/box/inline/kt66017_inlineFromTheSameModule.kt");
     }
 
     @Test
