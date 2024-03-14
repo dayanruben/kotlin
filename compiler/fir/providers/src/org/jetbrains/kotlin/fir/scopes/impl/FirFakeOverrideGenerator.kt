@@ -399,10 +399,11 @@ object FirFakeOverrideGenerator {
         newReturnType: ConeKotlinType? = null,
         newModality: Modality? = null,
         newVisibility: Visibility? = null,
+        newSetterVisibility: Visibility? = null,
         deferredReturnTypeCalculation: DeferredCallableCopyReturnType? = null,
-        newSource: KtSourceElement? = derivedClassLookupTag?.toSymbol(session)?.source ?: baseProperty.source,
+        newSource: KtSourceElement? = derivedClassLookupTag?.toSymbol(session)?.source,
     ): FirProperty = buildProperty {
-        source = newSource
+        source = newSource ?: baseProperty.source
         moduleData = session.nullableModuleData ?: baseProperty.moduleData
         this.origin = origin
         name = baseProperty.name
@@ -433,17 +434,22 @@ object FirFakeOverrideGenerator {
             dispatchReceiverType = dispatchReceiverType,
             derivedClassLookupTag = derivedClassLookupTag,
             baseProperty = baseProperty,
+            newSource = newSource ?: baseProperty.getter?.source,
         )
 
-        setter = baseProperty.setter?.buildCopyIfNeeded(
-            moduleData = session.nullableModuleData ?: baseProperty.moduleData,
-            origin = origin,
-            propertyReturnTypeRef = this@buildProperty.returnTypeRef,
-            propertySymbol = newSymbol,
-            dispatchReceiverType = dispatchReceiverType,
-            derivedClassLookupTag = derivedClassLookupTag,
-            baseProperty = baseProperty,
-        )
+        setter = baseProperty.setter?.let { setter ->
+            setter.buildCopyIfNeeded(
+                moduleData = session.nullableModuleData ?: baseProperty.moduleData,
+                origin = origin,
+                propertyReturnTypeRef = this@buildProperty.returnTypeRef,
+                propertySymbol = newSymbol,
+                dispatchReceiverType = dispatchReceiverType,
+                derivedClassLookupTag = derivedClassLookupTag,
+                baseProperty = baseProperty,
+                newSource = newSource ?: baseProperty.setter?.source,
+                newSetterVisibility ?: setter.visibility,
+            )
+        }
     }.apply {
         containingClassForStaticMemberAttr = derivedClassLookupTag.takeIf { shouldOverrideSetContainingClass(baseProperty) }
     }
@@ -456,8 +462,10 @@ object FirFakeOverrideGenerator {
         dispatchReceiverType: ConeSimpleKotlinType?,
         derivedClassLookupTag: ConeClassLikeLookupTag?,
         baseProperty: FirProperty,
+        newSource: KtSourceElement? = source,
+        newVisibility: Visibility = visibility,
     ) = when {
-        annotations.isNotEmpty() || visibility != baseProperty.visibility -> buildCopy(
+        annotations.isNotEmpty() || newVisibility != baseProperty.visibility -> buildCopy(
             moduleData,
             origin,
             propertyReturnTypeRef,
@@ -465,6 +473,8 @@ object FirFakeOverrideGenerator {
             dispatchReceiverType,
             derivedClassLookupTag,
             baseProperty,
+            newSource,
+            newVisibility,
         )
         else -> null
     }
@@ -477,13 +487,15 @@ object FirFakeOverrideGenerator {
         dispatchReceiverType: ConeSimpleKotlinType?,
         derivedClassLookupTag: ConeClassLikeLookupTag?,
         baseProperty: FirProperty,
+        newSource: KtSourceElement? = source,
+        newVisibility: Visibility = visibility,
     ) = when (this) {
         is FirDefaultPropertyGetter -> FirDefaultPropertyGetter(
-            source = source,
+            source = newSource,
             moduleData = moduleData,
             origin = origin,
             propertyTypeRef = propertyReturnTypeRef,
-            visibility = visibility,
+            visibility = newVisibility,
             propertySymbol = propertySymbol,
             modality = modality ?: Modality.FINAL,
             effectiveVisibility = effectiveVisibility,
@@ -492,11 +504,11 @@ object FirFakeOverrideGenerator {
             replaceAnnotations(this@buildCopy.annotations)
         }
         is FirDefaultPropertySetter -> FirDefaultPropertySetter(
-            source = source,
+            source = newSource,
             moduleData = moduleData,
             origin = origin,
             propertyTypeRef = propertyReturnTypeRef,
-            visibility = visibility,
+            visibility = newVisibility,
             propertySymbol = propertySymbol,
             modality = modality ?: Modality.FINAL,
             effectiveVisibility = effectiveVisibility,
@@ -505,6 +517,7 @@ object FirFakeOverrideGenerator {
             replaceAnnotations(this@buildCopy.annotations)
         }
         else -> buildPropertyAccessorCopy(this) {
+            this.source = newSource
             this.symbol = FirPropertyAccessorSymbol()
             this.moduleData = moduleData
             this.origin = origin
@@ -512,6 +525,7 @@ object FirFakeOverrideGenerator {
             this.dispatchReceiverType = dispatchReceiverType
             this.body = null
             resolvePhase = origin.resolvePhaseForCopy
+            this.status = status.copy(visibility = newVisibility)
         }.also {
             if (it.isSetter) {
                 val originalParameter = it.valueParameters.first()

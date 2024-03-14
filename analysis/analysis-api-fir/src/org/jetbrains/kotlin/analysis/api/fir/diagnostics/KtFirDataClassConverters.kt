@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -2718,6 +2719,15 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.CANNOT_WEAKEN_ACCESS_PRIVILEGE_WARNING) { firDiagnostic ->
+        CannotWeakenAccessPrivilegeWarningImpl(
+            firDiagnostic.a,
+            firSymbolBuilder.callableBuilder.buildCallableSymbol(firDiagnostic.b),
+            firDiagnostic.c,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.CANNOT_CHANGE_ACCESS_PRIVILEGE) { firDiagnostic ->
         CannotChangeAccessPrivilegeImpl(
             firDiagnostic.a,
@@ -2727,8 +2737,24 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.CANNOT_CHANGE_ACCESS_PRIVILEGE_WARNING) { firDiagnostic ->
+        CannotChangeAccessPrivilegeWarningImpl(
+            firDiagnostic.a,
+            firSymbolBuilder.callableBuilder.buildCallableSymbol(firDiagnostic.b),
+            firDiagnostic.c,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.CANNOT_INFER_VISIBILITY) { firDiagnostic ->
         CannotInferVisibilityImpl(
+            firSymbolBuilder.callableBuilder.buildCallableSymbol(firDiagnostic.a),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.CANNOT_INFER_VISIBILITY_WARNING) { firDiagnostic ->
+        CannotInferVisibilityWarningImpl(
             firSymbolBuilder.callableBuilder.buildCallableSymbol(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,

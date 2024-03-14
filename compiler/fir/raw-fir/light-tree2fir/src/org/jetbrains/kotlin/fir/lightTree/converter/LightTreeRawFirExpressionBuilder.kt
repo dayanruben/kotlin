@@ -1513,9 +1513,11 @@ class LightTreeRawFirExpressionBuilder(
                 VALUE_ARGUMENT -> container += convertValueArgument(node)
                 LAMBDA_EXPRESSION,
                 LABELED_EXPRESSION,
-                ANNOTATED_EXPRESSION -> container += buildLambdaArgumentExpression {
-                    source = valueArguments.toFirSourceElement()
-                    expression = getAsFirExpression(node)
+                ANNOTATED_EXPRESSION,
+                -> container += getAsFirExpression<FirAnonymousFunctionExpression>(node).apply {
+                    // TODO(KT-66553) remove and set in builder
+                    @OptIn(RawFirApi::class)
+                    replaceIsTrailingLambda(newIsTrailingLambda = true)
                 }
             }
         }

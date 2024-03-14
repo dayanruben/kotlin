@@ -630,7 +630,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<ConeKotlinType>("actualType")
         }
 
-        val MANY_LAMBDA_EXPRESSION_ARGUMENTS by error<KtValueArgument>()
+        val MANY_LAMBDA_EXPRESSION_ARGUMENTS by error<KtLambdaExpression>()
 
         val NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER by error<KtElement> {
             parameter<String>("name")
@@ -924,12 +924,25 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<FirCallableSymbol<*>>("overridden")
             parameter<Name>("containingClassName")
         }
+        val CANNOT_WEAKEN_ACCESS_PRIVILEGE_WARNING by warning<KtModifierListOwner>(PositioningStrategy.VISIBILITY_MODIFIER) {
+            parameter<Visibility>("overridingVisibility")
+            parameter<FirCallableSymbol<*>>("overridden")
+            parameter<Name>("containingClassName")
+        }
         val CANNOT_CHANGE_ACCESS_PRIVILEGE by error<KtModifierListOwner>(PositioningStrategy.VISIBILITY_MODIFIER) {
             parameter<Visibility>("overridingVisibility")
             parameter<FirCallableSymbol<*>>("overridden")
             parameter<Name>("containingClassName")
         }
+        val CANNOT_CHANGE_ACCESS_PRIVILEGE_WARNING by warning<KtModifierListOwner>(PositioningStrategy.VISIBILITY_MODIFIER) {
+            parameter<Visibility>("overridingVisibility")
+            parameter<FirCallableSymbol<*>>("overridden")
+            parameter<Name>("containingClassName")
+        }
         val CANNOT_INFER_VISIBILITY by error<KtDeclaration>(PositioningStrategy.DECLARATION_NAME) {
+            parameter<FirCallableSymbol<*>>("callable")
+        }
+        val CANNOT_INFER_VISIBILITY_WARNING by warning<KtDeclaration>(PositioningStrategy.DECLARATION_NAME) {
             parameter<FirCallableSymbol<*>>("callable")
         }
 
@@ -1792,7 +1805,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<String>("presentableString")
             parameter<IncompatibleVersionErrorData<*>>("incompatibility")
         }
-        val PRE_RELEASE_CLASS by error<PsiElement> {
+        val PRE_RELEASE_CLASS by warning<PsiElement> {
             parameter<String>("presentableString")
         }
         val IR_WITH_UNSTABLE_ABI_COMPILED_CLASS by error<PsiElement> {

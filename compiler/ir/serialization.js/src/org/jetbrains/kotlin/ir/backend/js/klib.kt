@@ -695,8 +695,9 @@ fun serializeModuleIntoKlib(
         if (jsOutputName != null) {
             p.setProperty(KLIB_PROPERTY_JS_OUTPUT_NAME, jsOutputName)
         }
-        wasmTarget?.let {
-            p.setProperty(KLIB_PROPERTY_WASM_TARGET, it.name.toLowerCaseAsciiOnly())
+        val wasmTargets = listOfNotNull(/* in the future there might be multiple WASM targets */ wasmTarget)
+        if (wasmTargets.isNotEmpty()) {
+            p.setProperty(KLIB_PROPERTY_WASM_TARGETS, wasmTargets.joinToString(" ") { it.alias })
         }
         if (containsErrorCode) {
             p.setProperty(KLIB_PROPERTY_CONTAINS_ERROR_CODE, "true")
@@ -725,7 +726,6 @@ fun serializeModuleIntoKlib(
 const val KLIB_PROPERTY_JS_OUTPUT_NAME = "jsOutputName"
 const val KLIB_PROPERTY_SERIALIZED_IR_FILE_FINGERPRINTS = "serializedIrFileFingerprints"
 const val KLIB_PROPERTY_SERIALIZED_KLIB_FINGERPRINT = "serializedKlibFingerprint"
-const val KLIB_PROPERTY_WASM_TARGET = "wasm_target"
 
 fun <SourceFile> shouldGoToNextIcRound(
     compilerConfiguration: CompilerConfiguration,

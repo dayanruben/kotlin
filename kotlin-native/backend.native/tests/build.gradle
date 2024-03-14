@@ -20,6 +20,44 @@ buildscript {
     }
 }
 
+void loadLocalProperties() {
+    if (new File("$project.rootDir/local.properties").exists()) {
+        Properties props = new Properties()
+        props.load(new FileInputStream("$project.rootDir/local.properties"))
+        props.each { prop -> project.ext.set(prop.key, prop.value) }
+    }
+}
+
+void loadCommandLineProperties() {
+    if (project.hasProperty("konanc_flags")) {
+        throw new Error("Specify either -Ptest_flags or -Pbuild_flags.")
+    }
+
+    ext.globalBuildArgs = new ArrayList<String>()
+    if (project.hasProperty("build_flags")) {
+        for (String flag : ext.build_flags.toString().split("\\s")) {
+            flag = flag.trim()
+            if (!flag.isEmpty()) ext.globalBuildArgs.add(flag)
+        }
+    }
+
+    ext.globalTestArgs = new ArrayList<String>()
+    ext.globalTestArgs.add("-Xpartial-linkage=enable")
+    ext.globalTestArgs.add("-Xpartial-linkage-loglevel=error")
+    if (project.hasProperty("test_flags")) {
+        for (String flag : ext.test_flags.toString().split("\\s")) {
+            flag = flag.trim()
+            if (!flag.isEmpty()) ext.globalTestArgs.add(flag)
+        }
+    }
+
+    ext.testTarget = project.hasProperty("test_target") ? ext.test_target : PlatformInfo.hostName
+}
+
+loadCommandLineProperties()
+loadLocalProperties()
+
+apply plugin: 'platform-manager'
 apply plugin: 'konan'
 apply plugin: 'kotlin'
 apply plugin: 'kotlin.native.build-tools-conventions'
@@ -34,7 +72,7 @@ configurations {
 
 ext.testOutputRoot = rootProject.file("test.output").absolutePath
 
-ext.platformManager = project.project(":kotlin-native").platformManager
+ext.platformManager = project.extensions.platformManager
 ext.target = platformManager.targetManager(project.testTarget).target
 
 ext.buildNumber = rootProject.property("kotlinVersion")
@@ -489,7 +527,7 @@ standaloneTest("stack_trace_inline") {
 }
 
 standaloneTest("kt-49240-stack-trace-completeness") {
-    disabled = !PlatformInfo.supportsExceptions(project) || project.globalTestArgs.contains('-opt')
+    disabled = project.globalTestArgs.contains('-opt')
     source = "runtime/exceptions/kt-49240-stack-trace-completeness.kt"
 }
 
@@ -899,21 +937,6 @@ standaloneTest("testing_stacktrace") {
     }
 }
 
-// Just check that the driver is able to produce runnable binaries.
-tasks.register("driver0", KonanDriverTest) {
-    disabled = isAggressiveGC // No need to test with different GC schedulers
-    useGoldenData = true
-    source = "runtime/basic/driver0.kt"
-}
-
-tasks.register("driver_opt", KonanDriverTest) {
-    disabled = (cacheTesting != null) // Cache is not compatible with -opt.
-        || isAggressiveGC // No need to test with different GC schedulers
-    useGoldenData = true
-    source = "runtime/basic/driver_opt.kt"
-    flags = ["-opt"]
-}
-
 // A helper method to create interop artifacts
 void createInterop(String name, Closure conf) {
     konanArtifacts {
@@ -950,80 +973,9 @@ createInterop("kt43502") {
     }
 }
 
-createInterop("leakMemoryWithRunningThread") {
-    it.defFile 'interop/leakMemoryWithRunningThread/leakMemory.def'
-    it.headers "$projectDir/interop/leakMemoryWithRunningThread/leakMemory.h"
-    it.extraOpts "-Xcompile-source", "$projectDir/interop/leakMemoryWithRunningThread/leakMemory.cpp"
-}
-
-createInterop("workerSignals") {
-    it.defFile "interop/workerSignals/workerSignals.def"
-    it.headers "$projectDir/interop/workerSignals/workerSignals.h"
-    it.extraOpts "-Xcompile-source", "$projectDir/interop/workerSignals/workerSignals.cpp"
-}
-
 createInterop("exceptions_throwThroughBridge") {
     it.defFile "interop/exceptions/throwThroughBridge.def"
     it.extraOpts "-Xcompile-source", "$projectDir/interop/exceptions/throwThroughBridgeInterop.cpp"
-}
-
-/**
- * Creates a task for the interop test. Configures runner and adds library and test build tasks.
- */
-Task interopTestBase(String name, boolean multiFile, boolean interop2ForMainOnly, Closure<KonanInteropTest> configureClosure) {
-    return KotlinNativeTestKt.createTest(project, name, KonanInteropTest) { KonanInteropTest task ->
-        task.configure(configureClosure)
-        if (task.enabled) {
-            konanArtifacts {
-                def targetName = target.name
-                def interopLib = task.interop
-                def interopLib2 = task.interop2
-                UtilsKt.dependsOnKonanBuildingTask(task, interopLib, target)
-                if (interopLib2 != null) UtilsKt.dependsOnKonanBuildingTask(task, interopLib2, target)
-
-                def lib = "lib$name"
-                def hasIntermediateLib = task.lib != null
-                if (hasIntermediateLib) {
-                    // build a library from KonanInteropTest::lib property
-                    library(lib, targets: [targetName]) {
-                        libraries {
-                            artifact interopLib
-                            if (interopLib2 != null && !interop2ForMainOnly) artifact interopLib2
-                        }
-                        srcFiles task.lib
-                        baseDir  "$testOutputLocal/$name"
-                        extraOpts task.flags
-                        extraOpts project.globalTestArgs.findAll { !it.contains("-Xpartial-linkage") }
-                    }
-                    UtilsKt.dependsOnKonanBuildingTask(task, lib, target)
-                }
-
-                program(name, targets: [targetName]) {
-                    libraries {
-                        artifact interopLib
-                        if (interopLib2 != null) artifact interopLib2
-                        if (hasIntermediateLib)
-                            klibFile file("$testOutputLocal/$name/$targetName/${lib}.klib")
-                    }
-                    srcFiles multiFile ? fileTree(task.source) { include '**/*.kt' } : task.getSources()
-                    baseDir "$testOutputLocal/$name"
-                    linkerOpts "-L${project.layout.buildDirectory.get().asFile}"
-                    extraOpts task.flags
-                    extraOpts project.globalTestArgs
-                }
-            }
-            task.dependsOn(nativeDependencies.llvmDependency)
-            task.dependsOn(nativeDependencies.targetDependency(target))
-        }
-    }
-}
-
-Task interopTest(String name, Closure<KonanInteropTest> configureClosure) {
-    return interopTestBase(name, false, false, configureClosure)
-}
-
-Task interopTestMultifile(String name, Closure<KonanInteropTest> configureClosure) {
-    return interopTestBase(name, true, false, configureClosure)
 }
 
 standaloneTest("interop_objc_allocException") {
@@ -1039,39 +991,6 @@ dynamicTest("interop_kt43502") {
     cSource = "$projectDir/interop/kt43502/main.c"
     useGoldenData = true
 }
-
-interopTest("interop_leakMemoryWithRunningThreadChecked") {
-    interop = 'leakMemoryWithRunningThread'
-    source = "interop/leakMemoryWithRunningThread/checked.kt"
-    expectedExitStatusChecker = { it != 0 }
-    outputChecker = { s -> s.contains("Cannot run checkers when there are 1 alive runtimes at the shutdown") }
-}
-
-interopTest("interop_workerSignals") {
-    disabled = project.testTarget == 'mingw_x64' // cross-thread signalling does not work on Windows
-    source = "interop/workerSignals/workerSignals.kt"
-    interop = "workerSignals"
-}
-
-/*
-TODO: This test isn't run automatically
-tasks.register("interop_echo_server", RunInteropKonanTest) {
-    disabled = PlatformInfo.isWasmTarget(project) || PlatformInfo.isWindowsTarget(project)
-    run = false
-    source = "interop/basics/echo_server.kt"
-    interop = 'sockets'
-}
-*/
-
-/*
-TODO: This test isn't run automatically
-standaloneTest("interop_opengl_teapot") {
-    enabled = PlatformInfo.isAppleTarget(project) && project.testTarget != 'ios_x64'  // No GLUT in iOS
-    dependsOnPlatformLibs(it as Task)
-    run = false
-    source = "interop/basics/opengl_teapot.kt"
-}
-*/
 
 if (PlatformInfo.isAppleTarget(project)) {
     standaloneTest("interop_objc_kt61441") {
@@ -1270,7 +1189,7 @@ dynamicTest("interop_kotlin_exception_hook") {
 }
 
 standaloneTest("kt51302") {
-    enabled = project.target.name == project.hostName
+    enabled = project.target.name == PlatformInfo.hostName
     source = "serialization/KT-51302/main.kt"
     flags = ["-l", "$projectDir/serialization/KT-51302/kt51302_dependency"]
 }
@@ -1305,42 +1224,6 @@ standaloneTest("split_compilation_pipeline") {
     }
     flags = ["-Xread-dependencies-from=${dir}/split_compilation_pipeline.deps", "-Xcompile-from-bitcode=${dir}/tmp/split/out.bc"]
     useGoldenData = true
-}
-
-tasks.register("override_konan_properties0", KonanDriverTest) {
-    disabled = isAggressiveGC // No need to test with different GC schedulers
-    def overrides = PlatformInfo.isWindows()
-            ? '-Xoverride-konan-properties="llvmInlineThreshold=76"'
-            : '-Xoverride-konan-properties=llvmInlineThreshold=76'
-    flags = [
-            "-opt",
-            "-Xverbose-phases=MandatoryBitcodeLLVMPostprocessingPhase",
-            overrides
-    ]
-    compilerMessages = true
-    source = "link/ir_providers/hello.kt"
-    def messages = "inline_threshold: 76\nhello\n"
-    outputChecker = { out ->
-        messages.split("\n")
-                .collect { line -> out.contains(line) }
-                .every { it == true }
-    }
-}
-
-tasks.register("llvm_variant_dev", KonanDriverTest) {
-    // We use clang from Xcode on macOS for apple targets,
-    // so it is hard to reliably detect LLVM variant for these targets.
-    disabled = PlatformInfo.isAppleTarget(project)
-        || isAggressiveGC // No need to test with different GC schedulers
-    flags = [
-            "-Xllvm-variant=dev",
-            "-Xverbose-phases=ObjectFiles"
-    ]
-    compilerMessages = true
-    source = "link/ir_providers/hello.kt"
-    // User LLVM variant has "essentials" suffix.
-    def message = "-essentials"
-    outputChecker = { out -> !out.contains(message) }
 }
 
 /**

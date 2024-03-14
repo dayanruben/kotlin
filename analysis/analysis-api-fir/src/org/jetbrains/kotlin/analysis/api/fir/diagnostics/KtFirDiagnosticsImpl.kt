@@ -60,6 +60,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -1702,7 +1703,7 @@ internal class ResultTypeMismatchImpl(
 internal class ManyLambdaExpressionArgumentsImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
-) : KtAbstractFirDiagnostic<KtValueArgument>(firDiagnostic, token), KtFirDiagnostic.ManyLambdaExpressionArguments
+) : KtAbstractFirDiagnostic<KtLambdaExpression>(firDiagnostic, token), KtFirDiagnostic.ManyLambdaExpressionArguments
 
 internal class NewInferenceNoInformationForParameterImpl(
     override val name: String,
@@ -2313,6 +2314,14 @@ internal class CannotWeakenAccessPrivilegeImpl(
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtModifierListOwner>(firDiagnostic, token), KtFirDiagnostic.CannotWeakenAccessPrivilege
 
+internal class CannotWeakenAccessPrivilegeWarningImpl(
+    override val overridingVisibility: Visibility,
+    override val overridden: KtCallableSymbol,
+    override val containingClassName: Name,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtModifierListOwner>(firDiagnostic, token), KtFirDiagnostic.CannotWeakenAccessPrivilegeWarning
+
 internal class CannotChangeAccessPrivilegeImpl(
     override val overridingVisibility: Visibility,
     override val overridden: KtCallableSymbol,
@@ -2321,11 +2330,25 @@ internal class CannotChangeAccessPrivilegeImpl(
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtModifierListOwner>(firDiagnostic, token), KtFirDiagnostic.CannotChangeAccessPrivilege
 
+internal class CannotChangeAccessPrivilegeWarningImpl(
+    override val overridingVisibility: Visibility,
+    override val overridden: KtCallableSymbol,
+    override val containingClassName: Name,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtModifierListOwner>(firDiagnostic, token), KtFirDiagnostic.CannotChangeAccessPrivilegeWarning
+
 internal class CannotInferVisibilityImpl(
     override val callable: KtCallableSymbol,
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtDeclaration>(firDiagnostic, token), KtFirDiagnostic.CannotInferVisibility
+
+internal class CannotInferVisibilityWarningImpl(
+    override val callable: KtCallableSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtDeclaration>(firDiagnostic, token), KtFirDiagnostic.CannotInferVisibilityWarning
 
 internal class MultipleDefaultsInheritedFromSupertypesImpl(
     override val name: Name,

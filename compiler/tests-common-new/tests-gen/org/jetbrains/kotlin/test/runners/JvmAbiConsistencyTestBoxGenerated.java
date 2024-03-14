@@ -33422,6 +33422,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
     }
 
     @Test
+    @TestMetadata("kjkPropertyAndExtensionProperty.kt")
+    public void testKjkPropertyAndExtensionProperty() {
+      runTest("compiler/testData/codegen/box/javaInterop/kjkPropertyAndExtensionProperty.kt");
+    }
+
+    @Test
     @TestMetadata("kjkWithRawTypes.kt")
     public void testKjkWithRawTypes() {
       runTest("compiler/testData/codegen/box/javaInterop/kjkWithRawTypes.kt");
@@ -33521,6 +33527,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
     @TestMetadata("syntheticPropOverriddenGetter.kt")
     public void testSyntheticPropOverriddenGetter() {
       runTest("compiler/testData/codegen/box/javaInterop/syntheticPropOverriddenGetter.kt");
+    }
+
+    @Test
+    @TestMetadata("triangleWithFlexibleTypeAndSubstitution4.kt")
+    public void testTriangleWithFlexibleTypeAndSubstitution4() {
+      runTest("compiler/testData/codegen/box/javaInterop/triangleWithFlexibleTypeAndSubstitution4.kt");
     }
 
     @Test
@@ -37901,6 +37913,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
     @TestMetadata("expectProperty.kt")
     public void testExpectProperty() {
       runTest("compiler/testData/codegen/box/multiplatform/expectProperty.kt");
+    }
+
+    @Test
+    @TestMetadata("kt57391.kt")
+    public void testKt57391() {
+      runTest("compiler/testData/codegen/box/multiplatform/kt57391.kt");
     }
 
     @Test

@@ -43,8 +43,6 @@ import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.dump
-import org.jetbrains.kotlin.ir.util.isPrimitiveArray
-import org.jetbrains.kotlin.ir.util.isUnsignedArray
 import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.calls.NewCommonSuperTypeCalculator.commonSuperType
@@ -821,7 +819,7 @@ class CallAndReferenceGenerator(
                 val argument = this@toAnnotationCall.argumentMapping.mapping[parameter.name] ?: return@mapNotNull null
                 argument to parameter
             }.toMap(LinkedHashMap())
-            argumentList = buildResolvedArgumentList(argumentToParameterToMapping)
+            argumentList = buildResolvedArgumentList(original = null, argumentToParameterToMapping)
             calleeReference = buildResolvedNamedReference {
                 name = symbol.classId.shortClassName
                 resolvedSymbol = constructorSymbol
@@ -892,26 +890,12 @@ class CallAndReferenceGenerator(
                 if (argumentsCount <= valueArgumentsCount) {
                     apply {
                         val (valueParameters, argumentMapping, substitutor) = extractArgumentsMapping(call)
-                        if (argumentMapping != null && (visitor.annotationMode || argumentMapping.isNotEmpty())) {
-                            if (valueParameters != null) {
-                                return applyArgumentsWithReorderingIfNeeded(
-                                    argumentMapping, valueParameters, substitutor, contextReceiverCount, call,
-                                )
-                            }
-                        }
-                        // Case without argument mapping (deserialized annotation)
-                        // TODO: support argument mapping in deserialized annotations and remove me
-                        for ((index, argument) in call.arguments.withIndex()) {
-                            val valueParameter = when (argument) {
-                                is FirNamedArgumentExpression -> valueParameters?.find { it.name == argument.name }
-                                else -> null
-                            } ?: valueParameters?.get(index)
-                            val argumentExpression = convertArgument(argument, valueParameter, substitutor)
-                            putValueArgument(
-                                (valueParameters?.indexOf(valueParameter)?.takeIf { it >= 0 } ?: index) + contextReceiverCount,
-                                argumentExpression
+                        if (argumentMapping != null && (visitor.annotationMode || argumentMapping.isNotEmpty()) && valueParameters != null) {
+                            return applyArgumentsWithReorderingIfNeeded(
+                                argumentMapping, valueParameters, substitutor, contextReceiverCount, call,
                             )
                         }
+                        check(argumentsCount == 0) { "Non-empty unresolved argument list." }
                     }
                 } else {
                     val calleeSymbol = (this as? IrCallImpl)?.symbol
@@ -1059,12 +1043,11 @@ class CallAndReferenceGenerator(
         // In this case we have to use parameter type itself which is more precise, like Array<String> or IntArray.
         // See KT-62598 and its fix for details.
         val expectedType = unsubstitutedParameterType.takeIf { visitor.annotationMode && unsubstitutedParameterType?.isArrayType == true }
-        val unwrappedArgument = argument.unwrapArgument()
-        var irArgument = visitor.convertToIrExpression(unwrappedArgument, expectedType = expectedType)
+        var irArgument = visitor.convertToIrExpression(argument, expectedType = expectedType)
         if (unsubstitutedParameterType != null) {
             with(visitor.implicitCastInserter) {
-                val argumentType = unwrappedArgument.resolvedType.fullyExpandedType(session)
-                if (unwrappedArgument is FirSmartCastExpression) {
+                val argumentType = argument.resolvedType.fullyExpandedType(session)
+                if (argument is FirSmartCastExpression) {
                     val substitutedParameterType = substitutor.substituteOrSelf(unsubstitutedParameterType)
                     // here we should use a substituted parameter type to properly choose the component of an intersection type
                     //  to provide a proper cast to the smartcasted type
@@ -1072,7 +1055,7 @@ class CallAndReferenceGenerator(
                 }
                 // here we should pass unsubstituted parameter type to properly infer if the original type accepts null or not
                 // to properly insert nullability check
-                irArgument = irArgument.insertSpecialCast(unwrappedArgument, argumentType, unsubstitutedParameterType)
+                irArgument = irArgument.insertSpecialCast(argument, argumentType, unsubstitutedParameterType)
             }
         }
         with(adapterGenerator) {
@@ -1081,30 +1064,12 @@ class CallAndReferenceGenerator(
                 val parameterType = parameter.returnTypeRef.coneType
                 val unwrappedParameterType = if (parameter.isVararg) parameterType.arrayElementType()!! else parameterType
                 val samFunctionType = getFunctionTypeForPossibleSamType(unwrappedParameterType)
-                irArgument = irArgument.applySuspendConversionIfNeeded(unwrappedArgument, samFunctionType ?: unwrappedParameterType)
-                irArgument = irArgument.applySamConversionIfNeeded(unwrappedArgument, parameter)
+                irArgument = irArgument.applySuspendConversionIfNeeded(argument, samFunctionType ?: unwrappedParameterType)
+                irArgument = irArgument.applySamConversionIfNeeded(argument, parameter)
             }
         }
         return irArgument
-            .applyAssigningArrayElementsToVarargInNamedForm(unwrappedArgument, parameter)
-            .applyImplicitIntegerCoercionIfNeeded(unwrappedArgument, parameter)
-    }
-
-    private fun IrExpression.applyAssigningArrayElementsToVarargInNamedForm(
-        argument: FirExpression,
-        parameter: FirValueParameter?,
-    ): IrExpression {
-        if (this is IrVararg && parameter?.isVararg == true && argument is FirVarargArgumentsExpression && elements.size == 1) {
-            val irVarargElement = elements[0]
-            if (argument.arguments[0] is FirNamedArgumentExpression &&
-                // IrVarargElement can be either IrSpreadElement (then nothing to do) or IrExpression
-                irVarargElement is IrExpression &&
-                (irVarargElement.type.isArray() || irVarargElement.type.isPrimitiveArray() || irVarargElement.type.isUnsignedArray())
-            ) {
-                elements[0] = IrSpreadElementImpl(irVarargElement.startOffset, irVarargElement.endOffset, irVarargElement)
-            }
-        }
-        return this
+            .applyImplicitIntegerCoercionIfNeeded(argument, parameter)
     }
 
     private fun IrExpression.applyImplicitIntegerCoercionIfNeeded(

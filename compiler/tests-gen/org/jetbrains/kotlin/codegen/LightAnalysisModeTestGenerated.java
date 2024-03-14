@@ -28241,6 +28241,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/javaInterop/invisibleFake2.kt");
     }
 
+    @TestMetadata("kjkPropertyAndExtensionProperty.kt")
+    public void ignoreKjkPropertyAndExtensionProperty() {
+      runTest("compiler/testData/codegen/box/javaInterop/kjkPropertyAndExtensionProperty.kt");
+    }
+
     private void runTest(String testDataFilePath) {
       KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
     }
@@ -28407,6 +28412,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestMetadata("syntheticPropOverriddenGetter.kt")
     public void testSyntheticPropOverriddenGetter() {
       runTest("compiler/testData/codegen/box/javaInterop/syntheticPropOverriddenGetter.kt");
+    }
+
+    @TestMetadata("triangleWithFlexibleTypeAndSubstitution4.kt")
+    public void testTriangleWithFlexibleTypeAndSubstitution4() {
+      runTest("compiler/testData/codegen/box/javaInterop/triangleWithFlexibleTypeAndSubstitution4.kt");
     }
 
     @TestMetadata("unresolvedJavaClassInDifferentFile.kt")
@@ -30865,17 +30875,17 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
   @TestDataPath("$PROJECT_ROOT")
   @RunWith(JUnit3RunnerWithInners.class)
   public static class Klib extends AbstractLightAnalysisModeTest {
+    @TestMetadata("kt33411.kt")
+    public void ignoreKt33411() {
+      runTest("compiler/testData/codegen/box/klib/kt33411.kt");
+    }
+
     private void runTest(String testDataFilePath) {
       KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
     }
 
     public void testAllFilesPresentInKlib() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/klib"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
-    }
-
-    @TestMetadata("kt33411.kt")
-    public void testKt33411() {
-      runTest("compiler/testData/codegen/box/klib/kt33411.kt");
     }
   }
 
@@ -32370,6 +32380,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestMetadata("expectProperty.kt")
     public void testExpectProperty() {
       runTest("compiler/testData/codegen/box/multiplatform/expectProperty.kt");
+    }
+
+    @TestMetadata("kt57391.kt")
+    public void testKt57391() {
+      runTest("compiler/testData/codegen/box/multiplatform/kt57391.kt");
     }
 
     @TestMetadata("kt60854.kt")

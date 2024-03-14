@@ -243,7 +243,7 @@ class FirCallResolver(
         isUsedAsGetClassReceiver: Boolean,
         callSite: FirElement,
         resolutionMode: ResolutionMode,
-    ): FirStatement {
+    ): FirExpression {
         return resolveVariableAccessAndSelectCandidateImpl(
             qualifiedAccess,
             isUsedAsReceiver,
@@ -260,11 +260,11 @@ class FirCallResolver(
         isUsedAsGetClassReceiver: Boolean,
         callSite: FirElement = qualifiedAccess,
         acceptCandidates: (Collection<Candidate>) -> Boolean,
-    ): FirStatement {
+    ): FirExpression {
         val callee = qualifiedAccess.calleeReference as? FirSimpleNamedReference ?: return qualifiedAccess
 
         @Suppress("NAME_SHADOWING")
-        val qualifiedAccess = qualifiedAccess.let(transformer::transformExplicitReceiver)
+        val qualifiedAccess = qualifiedAccess.let(transformer::transformExplicitReceiverOf)
         val nonFatalDiagnosticFromExpression = (qualifiedAccess as? FirPropertyAccessExpression)?.nonFatalDiagnostics
 
         val basicResult by lazy(LazyThreadSafetyMode.NONE) {

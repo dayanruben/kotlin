@@ -59,6 +59,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -1417,7 +1418,7 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         val actualType: KtType
     }
 
-    interface ManyLambdaExpressionArguments : KtFirDiagnostic<KtValueArgument> {
+    interface ManyLambdaExpressionArguments : KtFirDiagnostic<KtLambdaExpression> {
         override val diagnosticClass get() = ManyLambdaExpressionArguments::class
     }
 
@@ -1925,6 +1926,13 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         val containingClassName: Name
     }
 
+    interface CannotWeakenAccessPrivilegeWarning : KtFirDiagnostic<KtModifierListOwner> {
+        override val diagnosticClass get() = CannotWeakenAccessPrivilegeWarning::class
+        val overridingVisibility: Visibility
+        val overridden: KtCallableSymbol
+        val containingClassName: Name
+    }
+
     interface CannotChangeAccessPrivilege : KtFirDiagnostic<KtModifierListOwner> {
         override val diagnosticClass get() = CannotChangeAccessPrivilege::class
         val overridingVisibility: Visibility
@@ -1932,8 +1940,20 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         val containingClassName: Name
     }
 
+    interface CannotChangeAccessPrivilegeWarning : KtFirDiagnostic<KtModifierListOwner> {
+        override val diagnosticClass get() = CannotChangeAccessPrivilegeWarning::class
+        val overridingVisibility: Visibility
+        val overridden: KtCallableSymbol
+        val containingClassName: Name
+    }
+
     interface CannotInferVisibility : KtFirDiagnostic<KtDeclaration> {
         override val diagnosticClass get() = CannotInferVisibility::class
+        val callable: KtCallableSymbol
+    }
+
+    interface CannotInferVisibilityWarning : KtFirDiagnostic<KtDeclaration> {
+        override val diagnosticClass get() = CannotInferVisibilityWarning::class
         val callable: KtCallableSymbol
     }
 

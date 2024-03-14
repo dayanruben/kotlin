@@ -26,13 +26,6 @@ plugins {
 }
 
 def buildProperties = BuildPropertiesKt.getKotlinBuildPropertiesForSettings(settings)
-if (buildProperties.isKotlinNativeEnabled && startParameter.isConfigurationCacheRequested()) {
-    throw new Exception(
-            """
-            Kotlin Native is not compatible with Gradle configuration-cache.
-            Please, disable Configuration-cache before you enable native.
-            """.stripIndent())
-}
 
 // modules
 include ":benchmarks",
@@ -652,6 +645,7 @@ if (buildProperties.inJpsBuildIdeaSync) {
             ":kotlin-test",
             ":kotlin-test:kotlin-test-js-it",
             ":native:native.tests",
+            ":native:native.tests:driver",
             ":native:native.tests:stress"
 
     project(':kotlin-stdlib-common').projectDir = "$rootDir/libraries/stdlib/common" as File

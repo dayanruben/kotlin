@@ -646,6 +646,24 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
     }
 
     @Test
+    @TestMetadata("intersectedVisibilitiesForAbstractPropertyAccessors.kt")
+    public void testIntersectedVisibilitiesForAbstractPropertyAccessors() {
+      runTest("compiler/testData/diagnostics/tests/intersectedVisibilitiesForAbstractPropertyAccessors.kt");
+    }
+
+    @Test
+    @TestMetadata("intersectedVisibilitiesForNonAbstractPropertyAccessors.kt")
+    public void testIntersectedVisibilitiesForNonAbstractPropertyAccessors() {
+      runTest("compiler/testData/diagnostics/tests/intersectedVisibilitiesForNonAbstractPropertyAccessors.kt");
+    }
+
+    @Test
+    @TestMetadata("intersectedVisibilitiesPropertyAccessorsAdditionalWarnigns.kt")
+    public void testIntersectedVisibilitiesPropertyAccessorsAdditionalWarnigns() {
+      runTest("compiler/testData/diagnostics/tests/intersectedVisibilitiesPropertyAccessorsAdditionalWarnigns.kt");
+    }
+
+    @Test
     @TestMetadata("intersectionWithMultipleDefaultsInJava.kt")
     public void testIntersectionWithMultipleDefaultsInJava() {
       runTest("compiler/testData/diagnostics/tests/intersectionWithMultipleDefaultsInJava.kt");
@@ -1381,6 +1399,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
     @TestMetadata("StringTemplates.kt")
     public void testStringTemplates() {
       runTest("compiler/testData/diagnostics/tests/StringTemplates.kt");
+    }
+
+    @Test
+    @TestMetadata("superQualifierTypeArgsInDelegatedConstructorCall.kt")
+    public void testSuperQualifierTypeArgsInDelegatedConstructorCall() {
+      runTest("compiler/testData/diagnostics/tests/superQualifierTypeArgsInDelegatedConstructorCall.kt");
     }
 
     @Test
@@ -11846,580 +11870,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
     }
 
     @Nested
-    @TestMetadata("compiler/testData/diagnostics/tests/duplicateJvmSignature")
-    @TestDataPath("$PROJECT_ROOT")
-    public class DuplicateJvmSignature {
-      @Test
-      public void testAllFilesPresentInDuplicateJvmSignature() {
-        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/duplicateJvmSignature"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
-      }
-
-      @Test
-      @TestMetadata("caseInProperties.kt")
-      public void testCaseInProperties() {
-        runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/caseInProperties.kt");
-      }
-
-      @Test
-      @TestMetadata("missingNames.kt")
-      public void testMissingNames() {
-        runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/missingNames.kt");
-      }
-
-      @Test
-      @TestMetadata("vararg.kt")
-      public void testVararg() {
-        runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/vararg.kt");
-      }
-
-      @Nested
-      @TestMetadata("compiler/testData/diagnostics/tests/duplicateJvmSignature/accidentalOverrides")
-      @TestDataPath("$PROJECT_ROOT")
-      public class AccidentalOverrides {
-        @Test
-        @TestMetadata("accidentalOverrideFromGrandparent.kt")
-        public void testAccidentalOverrideFromGrandparent() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/accidentalOverrides/accidentalOverrideFromGrandparent.kt");
-        }
-
-        @Test
-        public void testAllFilesPresentInAccidentalOverrides() {
-          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/duplicateJvmSignature/accidentalOverrides"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
-        }
-
-        @Test
-        @TestMetadata("classFunctionOverriddenByProperty.kt")
-        public void testClassFunctionOverriddenByProperty() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/accidentalOverrides/classFunctionOverriddenByProperty.kt");
-        }
-
-        @Test
-        @TestMetadata("classFunctionOverriddenByPropertyInConstructor.kt")
-        public void testClassFunctionOverriddenByPropertyInConstructor() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/accidentalOverrides/classFunctionOverriddenByPropertyInConstructor.kt");
-        }
-
-        @Test
-        @TestMetadata("classFunctionOverriddenByPropertyNoGetter.kt")
-        public void testClassFunctionOverriddenByPropertyNoGetter() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/accidentalOverrides/classFunctionOverriddenByPropertyNoGetter.kt");
-        }
-
-        @Test
-        @TestMetadata("classPropertyOverriddenByFunction.kt")
-        public void testClassPropertyOverriddenByFunction() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/accidentalOverrides/classPropertyOverriddenByFunction.kt");
-        }
-
-        @Test
-        @TestMetadata("defaultFunction.kt")
-        public void testDefaultFunction() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/accidentalOverrides/defaultFunction.kt");
-        }
-
-        @Test
-        @TestMetadata("delegatedFunctionOverriddenByProperty.kt")
-        public void testDelegatedFunctionOverriddenByProperty() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/accidentalOverrides/delegatedFunctionOverriddenByProperty.kt");
-        }
-
-        @Test
-        @TestMetadata("genericClassFunction.kt")
-        public void testGenericClassFunction() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/accidentalOverrides/genericClassFunction.kt");
-        }
-
-        @Test
-        @TestMetadata("overridesNothing.kt")
-        public void testOverridesNothing() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/accidentalOverrides/overridesNothing.kt");
-        }
-
-        @Test
-        @TestMetadata("privateClassFunctionOverriddenByProperty.kt")
-        public void testPrivateClassFunctionOverriddenByProperty() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/accidentalOverrides/privateClassFunctionOverriddenByProperty.kt");
-        }
-
-        @Test
-        @TestMetadata("require.kt")
-        public void testRequire() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/accidentalOverrides/require.kt");
-        }
-
-        @Test
-        @TestMetadata("traitFunctionOverriddenByProperty.kt")
-        public void testTraitFunctionOverriddenByProperty() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/accidentalOverrides/traitFunctionOverriddenByProperty.kt");
-        }
-
-        @Test
-        @TestMetadata("traitFunctionOverriddenByPropertyNoImpl.kt")
-        public void testTraitFunctionOverriddenByPropertyNoImpl() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/accidentalOverrides/traitFunctionOverriddenByPropertyNoImpl.kt");
-        }
-
-        @Test
-        @TestMetadata("traitPropertyOverriddenByFunction.kt")
-        public void testTraitPropertyOverriddenByFunction() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/accidentalOverrides/traitPropertyOverriddenByFunction.kt");
-        }
-
-        @Test
-        @TestMetadata("traitPropertyOverriddenByFunctionNoImpl.kt")
-        public void testTraitPropertyOverriddenByFunctionNoImpl() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/accidentalOverrides/traitPropertyOverriddenByFunctionNoImpl.kt");
-        }
-      }
-
-      @Nested
-      @TestMetadata("compiler/testData/diagnostics/tests/duplicateJvmSignature/bridges")
-      @TestDataPath("$PROJECT_ROOT")
-      public class Bridges {
-        @Test
-        public void testAllFilesPresentInBridges() {
-          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/duplicateJvmSignature/bridges"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
-        }
-
-        @Test
-        @TestMetadata("class.kt")
-        public void testClass() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/bridges/class.kt");
-        }
-
-        @Test
-        @TestMetadata("fakeOverrideTrait.kt")
-        public void testFakeOverrideTrait() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/bridges/fakeOverrideTrait.kt");
-        }
-
-        @Test
-        @TestMetadata("trait.kt")
-        public void testTrait() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/bridges/trait.kt");
-        }
-      }
-
-      @Nested
-      @TestMetadata("compiler/testData/diagnostics/tests/duplicateJvmSignature/erasure")
-      @TestDataPath("$PROJECT_ROOT")
-      public class Erasure {
-        @Test
-        public void testAllFilesPresentInErasure() {
-          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/duplicateJvmSignature/erasure"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
-        }
-
-        @Test
-        @TestMetadata("clashFromInterfaceAndSuperClass.kt")
-        public void testClashFromInterfaceAndSuperClass() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/erasure/clashFromInterfaceAndSuperClass.kt");
-        }
-
-        @Test
-        @TestMetadata("collections.kt")
-        public void testCollections() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/erasure/collections.kt");
-        }
-
-        @Test
-        @TestMetadata("delegateToTwoTraits.kt")
-        public void testDelegateToTwoTraits() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/erasure/delegateToTwoTraits.kt");
-        }
-
-        @Test
-        @TestMetadata("delegationAndOwnMethod.kt")
-        public void testDelegationAndOwnMethod() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/erasure/delegationAndOwnMethod.kt");
-        }
-
-        @Test
-        @TestMetadata("delegationToTraitImplAndOwnMethod.kt")
-        public void testDelegationToTraitImplAndOwnMethod() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/erasure/delegationToTraitImplAndOwnMethod.kt");
-        }
-
-        @Test
-        @TestMetadata("extensionProperties.kt")
-        public void testExtensionProperties() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/erasure/extensionProperties.kt");
-        }
-
-        @Test
-        @TestMetadata("genericType.kt")
-        public void testGenericType() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/erasure/genericType.kt");
-        }
-
-        @Test
-        @TestMetadata("inheritFromTwoTraits.kt")
-        public void testInheritFromTwoTraits() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/erasure/inheritFromTwoTraits.kt");
-        }
-
-        @Test
-        @TestMetadata("kotlinAndJavaCollections.kt")
-        public void testKotlinAndJavaCollections() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/erasure/kotlinAndJavaCollections.kt");
-        }
-
-        @Test
-        @TestMetadata("nullableType.kt")
-        public void testNullableType() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/erasure/nullableType.kt");
-        }
-
-        @Test
-        @TestMetadata("superTraitAndDelegationToTraitImpl.kt")
-        public void testSuperTraitAndDelegationToTraitImpl() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/erasure/superTraitAndDelegationToTraitImpl.kt");
-        }
-
-        @Test
-        @TestMetadata("twoTraitsAndOwnFunction.kt")
-        public void testTwoTraitsAndOwnFunction() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/erasure/twoTraitsAndOwnFunction.kt");
-        }
-
-        @Test
-        @TestMetadata("typeMappedToJava.kt")
-        public void testTypeMappedToJava() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/erasure/typeMappedToJava.kt");
-        }
-
-        @Test
-        @TestMetadata("typeParameter.kt")
-        public void testTypeParameter() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/erasure/typeParameter.kt");
-        }
-
-        @Test
-        @TestMetadata("typeParameterWithBound.kt")
-        public void testTypeParameterWithBound() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/erasure/typeParameterWithBound.kt");
-        }
-
-        @Test
-        @TestMetadata("typeParameterWithTwoBounds.kt")
-        public void testTypeParameterWithTwoBounds() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/erasure/typeParameterWithTwoBounds.kt");
-        }
-
-        @Test
-        @TestMetadata("typeParameterWithTwoBoundsInWhere.kt")
-        public void testTypeParameterWithTwoBoundsInWhere() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/erasure/typeParameterWithTwoBoundsInWhere.kt");
-        }
-      }
-
-      @Nested
-      @TestMetadata("compiler/testData/diagnostics/tests/duplicateJvmSignature/finalMembersFromBuiltIns")
-      @TestDataPath("$PROJECT_ROOT")
-      public class FinalMembersFromBuiltIns {
-        @Test
-        public void testAllFilesPresentInFinalMembersFromBuiltIns() {
-          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/duplicateJvmSignature/finalMembersFromBuiltIns"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
-        }
-
-        @Test
-        @TestMetadata("enumMembers.kt")
-        public void testEnumMembers() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/finalMembersFromBuiltIns/enumMembers.kt");
-        }
-
-        @Test
-        @TestMetadata("waitNotifyGetClass.kt")
-        public void testWaitNotifyGetClass() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/finalMembersFromBuiltIns/waitNotifyGetClass.kt");
-        }
-      }
-
-      @Nested
-      @TestMetadata("compiler/testData/diagnostics/tests/duplicateJvmSignature/functionAndProperty")
-      @TestDataPath("$PROJECT_ROOT")
-      public class FunctionAndProperty {
-        @Test
-        public void testAllFilesPresentInFunctionAndProperty() {
-          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/duplicateJvmSignature/functionAndProperty"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
-        }
-
-        @Test
-        @TestMetadata("class.kt")
-        public void testClass() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/functionAndProperty/class.kt");
-        }
-
-        @Test
-        @TestMetadata("classObject.kt")
-        public void testClassObject() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/functionAndProperty/classObject.kt");
-        }
-
-        @Test
-        @TestMetadata("classPropertyInConstructor.kt")
-        public void testClassPropertyInConstructor() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/functionAndProperty/classPropertyInConstructor.kt");
-        }
-
-        @Test
-        @TestMetadata("extensionFunctionAndNormalFunction.kt")
-        public void testExtensionFunctionAndNormalFunction() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/functionAndProperty/extensionFunctionAndNormalFunction.kt");
-        }
-
-        @Test
-        @TestMetadata("extensionPropertyAndFunction.kt")
-        public void testExtensionPropertyAndFunction() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/functionAndProperty/extensionPropertyAndFunction.kt");
-        }
-
-        @Test
-        @TestMetadata("functionAndSetter.kt")
-        public void testFunctionAndSetter() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/functionAndProperty/functionAndSetter.kt");
-        }
-
-        @Test
-        @TestMetadata("functionAndVar.kt")
-        public void testFunctionAndVar() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/functionAndProperty/functionAndVar.kt");
-        }
-
-        @Test
-        @TestMetadata("localClass.kt")
-        public void testLocalClass() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/functionAndProperty/localClass.kt");
-        }
-
-        @Test
-        @TestMetadata("localClassInClass.kt")
-        public void testLocalClassInClass() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/functionAndProperty/localClassInClass.kt");
-        }
-
-        @Test
-        @TestMetadata("nestedClass.kt")
-        public void testNestedClass() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/functionAndProperty/nestedClass.kt");
-        }
-
-        @Test
-        @TestMetadata("object.kt")
-        public void testObject() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/functionAndProperty/object.kt");
-        }
-
-        @Test
-        @TestMetadata("objectExpression.kt")
-        public void testObjectExpression() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/functionAndProperty/objectExpression.kt");
-        }
-
-        @Test
-        @TestMetadata("objectExpressionInConstructor.kt")
-        public void testObjectExpressionInConstructor() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/functionAndProperty/objectExpressionInConstructor.kt");
-        }
-
-        @Test
-        @TestMetadata("privateClassPropertyNoClash.kt")
-        public void testPrivateClassPropertyNoClash() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/functionAndProperty/privateClassPropertyNoClash.kt");
-        }
-
-        @Test
-        @TestMetadata("topLevel.kt")
-        public void testTopLevel() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/functionAndProperty/topLevel.kt");
-        }
-
-        @Test
-        @TestMetadata("topLevelDifferentFiles.kt")
-        public void testTopLevelDifferentFiles() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/functionAndProperty/topLevelDifferentFiles.kt");
-        }
-
-        @Test
-        @TestMetadata("topLevelGetter.kt")
-        public void testTopLevelGetter() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/functionAndProperty/topLevelGetter.kt");
-        }
-
-        @Test
-        @TestMetadata("trait.kt")
-        public void testTrait() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/functionAndProperty/trait.kt");
-        }
-
-        @Test
-        @TestMetadata("withErrorTypes.kt")
-        public void testWithErrorTypes() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/functionAndProperty/withErrorTypes.kt");
-        }
-      }
-
-      @Nested
-      @TestMetadata("compiler/testData/diagnostics/tests/duplicateJvmSignature/specialNames")
-      @TestDataPath("$PROJECT_ROOT")
-      public class SpecialNames {
-        @Test
-        public void testAllFilesPresentInSpecialNames() {
-          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/duplicateJvmSignature/specialNames"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
-        }
-
-        @Test
-        @TestMetadata("classObject.kt")
-        public void testClassObject() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/specialNames/classObject.kt");
-        }
-
-        @Test
-        @TestMetadata("classObjectCopiedField.kt")
-        public void testClassObjectCopiedField() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/specialNames/classObjectCopiedField.kt");
-        }
-
-        @Test
-        @TestMetadata("classObjectCopiedFieldObject.kt")
-        public void testClassObjectCopiedFieldObject() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/specialNames/classObjectCopiedFieldObject.kt");
-        }
-
-        @Test
-        @TestMetadata("dataClassCopy.kt")
-        public void testDataClassCopy() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/specialNames/dataClassCopy.kt");
-        }
-
-        @Test
-        @TestMetadata("delegationBy.kt")
-        public void testDelegationBy() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/specialNames/delegationBy.kt");
-        }
-
-        @Test
-        @TestMetadata("enum.kt")
-        public void testEnum() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/specialNames/enum.kt");
-        }
-
-        @Test
-        @TestMetadata("innerClassField.kt")
-        public void testInnerClassField() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/specialNames/innerClassField.kt");
-        }
-
-        @Test
-        @TestMetadata("instance.kt")
-        public void testInstance() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/specialNames/instance.kt");
-        }
-
-        @Test
-        @TestMetadata("propertyMetadataCache.kt")
-        public void testPropertyMetadataCache() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/specialNames/propertyMetadataCache.kt");
-        }
-      }
-
-      @Nested
-      @TestMetadata("compiler/testData/diagnostics/tests/duplicateJvmSignature/statics")
-      @TestDataPath("$PROJECT_ROOT")
-      public class Statics {
-        @Test
-        public void testAllFilesPresentInStatics() {
-          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/duplicateJvmSignature/statics"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
-        }
-
-        @Test
-        @TestMetadata("jkjk.kt")
-        public void testJkjk() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/statics/jkjk.kt");
-        }
-
-        @Test
-        @TestMetadata("kotlinClassExtendsJavaClass.kt")
-        public void testKotlinClassExtendsJavaClass() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/statics/kotlinClassExtendsJavaClass.kt");
-        }
-
-        @Test
-        @TestMetadata("kotlinClassExtendsJavaClassExtendsJavaClass.kt")
-        public void testKotlinClassExtendsJavaClassExtendsJavaClass() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/statics/kotlinClassExtendsJavaClassExtendsJavaClass.kt");
-        }
-
-        @Test
-        @TestMetadata("kotlinClassImplementsJavaInterface.kt")
-        public void testKotlinClassImplementsJavaInterface() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/statics/kotlinClassImplementsJavaInterface.kt");
-        }
-
-        @Test
-        @TestMetadata("kotlinClassImplementsJavaInterfaceExtendsJavaInteface.kt")
-        public void testKotlinClassImplementsJavaInterfaceExtendsJavaInteface() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/statics/kotlinClassImplementsJavaInterfaceExtendsJavaInteface.kt");
-        }
-
-        @Test
-        @TestMetadata("kotlinMembersVsJavaNonVisibleStatics.kt")
-        public void testKotlinMembersVsJavaNonVisibleStatics() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/statics/kotlinMembersVsJavaNonVisibleStatics.kt");
-        }
-      }
-
-      @Nested
-      @TestMetadata("compiler/testData/diagnostics/tests/duplicateJvmSignature/synthesized")
-      @TestDataPath("$PROJECT_ROOT")
-      public class Synthesized {
-        @Test
-        public void testAllFilesPresentInSynthesized() {
-          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/duplicateJvmSignature/synthesized"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
-        }
-
-        @Test
-        @TestMetadata("enumValuesValueOf.kt")
-        public void testEnumValuesValueOf() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/synthesized/enumValuesValueOf.kt");
-        }
-      }
-
-      @Nested
-      @TestMetadata("compiler/testData/diagnostics/tests/duplicateJvmSignature/traitImpl")
-      @TestDataPath("$PROJECT_ROOT")
-      public class TraitImpl {
-        @Test
-        public void testAllFilesPresentInTraitImpl() {
-          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/duplicateJvmSignature/traitImpl"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
-        }
-
-        @Test
-        @TestMetadata("oneTrait.kt")
-        public void testOneTrait() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/traitImpl/oneTrait.kt");
-        }
-
-        @Test
-        @TestMetadata("traitFunctionOverriddenByPropertyInTrait.kt")
-        public void testTraitFunctionOverriddenByPropertyInTrait() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/traitImpl/traitFunctionOverriddenByPropertyInTrait.kt");
-        }
-
-        @Test
-        @TestMetadata("traitPropertyOverriddenByFunctionInTrait.kt")
-        public void testTraitPropertyOverriddenByFunctionInTrait() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/traitImpl/traitPropertyOverriddenByFunctionInTrait.kt");
-        }
-
-        @Test
-        @TestMetadata("twoTraits.kt")
-        public void testTwoTraits() {
-          runTest("compiler/testData/diagnostics/tests/duplicateJvmSignature/traitImpl/twoTraits.kt");
-        }
-      }
-    }
-
-    @Nested
     @TestMetadata("compiler/testData/diagnostics/tests/dynamicTypes")
     @TestDataPath("$PROJECT_ROOT")
     public class DynamicTypes {
@@ -16507,6 +15957,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("missingNames.kt")
+      public void testMissingNames() {
+        runTest("compiler/testData/diagnostics/tests/incompleteCode/missingNames.kt");
+      }
+
+      @Test
       @TestMetadata("NoSenselessComparisonForErrorType.kt")
       public void testNoSenselessComparisonForErrorType() {
         runTest("compiler/testData/diagnostics/tests/incompleteCode/NoSenselessComparisonForErrorType.kt");
@@ -19514,6 +18970,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("forkInWhen.kt")
+        public void testForkInWhen() {
+          runTest("compiler/testData/diagnostics/tests/inference/forks/forkInWhen.kt");
+        }
+
+        @Test
         @TestMetadata("nestedCallVariableFixation.kt")
         public void testNestedCallVariableFixation() {
           runTest("compiler/testData/diagnostics/tests/inference/forks/nestedCallVariableFixation.kt");
@@ -21583,27 +21045,9 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
-      @TestMetadata("changingNullabilityOfOrdinaryClassIsBinaryCompatibleChange.kt")
-      public void testChangingNullabilityOfOrdinaryClassIsBinaryCompatibleChange() {
-        runTest("compiler/testData/diagnostics/tests/inlineClasses/changingNullabilityOfOrdinaryClassIsBinaryCompatibleChange.kt");
-      }
-
-      @Test
-      @TestMetadata("constructorsJvmSignaturesClash.kt")
-      public void testConstructorsJvmSignaturesClash() {
-        runTest("compiler/testData/diagnostics/tests/inlineClasses/constructorsJvmSignaturesClash.kt");
-      }
-
-      @Test
       @TestMetadata("delegatedPropertyInInlineClass.kt")
       public void testDelegatedPropertyInInlineClass() {
         runTest("compiler/testData/diagnostics/tests/inlineClasses/delegatedPropertyInInlineClass.kt");
-      }
-
-      @Test
-      @TestMetadata("functionsJvmSignaturesClash.kt")
-      public void testFunctionsJvmSignaturesClash() {
-        runTest("compiler/testData/diagnostics/tests/inlineClasses/functionsJvmSignaturesClash.kt");
       }
 
       @Test
@@ -22499,12 +21943,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
-      @TestMetadata("kjkPropertyAndExtensionProperty.kt")
-      public void testKjkPropertyAndExtensionProperty() {
-        runTest("compiler/testData/diagnostics/tests/j+k/kjkPropertyAndExtensionProperty.kt");
-      }
-
-      @Test
       @TestMetadata("kjkRawTypeWithKotlinUpperBound.kt")
       public void testKjkRawTypeWithKotlinUpperBound() {
         runTest("compiler/testData/diagnostics/tests/j+k/kjkRawTypeWithKotlinUpperBound.kt");
@@ -22742,6 +22180,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("rawOverride.kt")
       public void testRawOverride() {
         runTest("compiler/testData/diagnostics/tests/j+k/rawOverride.kt");
+      }
+
+      @Test
+      @TestMetadata("rawTypeCrash.kt")
+      public void testRawTypeCrash() {
+        runTest("compiler/testData/diagnostics/tests/j+k/rawTypeCrash.kt");
       }
 
       @Test
@@ -23010,12 +22454,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
-        @TestMetadata("charAtAndOverload.kt")
-        public void testCharAtAndOverload() {
-          runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/charAtAndOverload.kt");
-        }
-
-        @Test
         @TestMetadata("charAtAndOverloadWithoutExplicitOverride.kt")
         public void testCharAtAndOverloadWithoutExplicitOverride() {
           runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/charAtAndOverloadWithoutExplicitOverride.kt");
@@ -23121,12 +22559,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("nonDirectHiddenOverride.kt")
         public void testNonDirectHiddenOverride() {
           runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/nonDirectHiddenOverride.kt");
-        }
-
-        @Test
-        @TestMetadata("overridesBuiltinNoMagic.kt")
-        public void testOverridesBuiltinNoMagic() {
-          runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/overridesBuiltinNoMagic.kt");
         }
 
         @Test
@@ -25301,6 +24733,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("actualMissingConstructor.kt")
       public void testActualMissingConstructor() {
         runTest("compiler/testData/diagnostics/tests/multiplatform/actualMissingConstructor.kt");
+      }
+
+      @Test
+      @TestMetadata("actualTypealiasCycle.kt")
+      public void testActualTypealiasCycle() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/actualTypealiasCycle.kt");
       }
 
       @Test
@@ -28809,12 +28247,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
-      @TestMetadata("ConflictingOverloadsIdenticalFunsTPInClass.kt")
-      public void testConflictingOverloadsIdenticalFunsTPInClass() {
-        runTest("compiler/testData/diagnostics/tests/overload/ConflictingOverloadsIdenticalFunsTPInClass.kt");
-      }
-
-      @Test
       @TestMetadata("ConflictingOverloadsIdenticalValsInClass.kt")
       public void testConflictingOverloadsIdenticalValsInClass() {
         runTest("compiler/testData/diagnostics/tests/overload/ConflictingOverloadsIdenticalValsInClass.kt");
@@ -31346,12 +30778,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         runTest("compiler/testData/diagnostics/tests/redeclarations/TypeAliasVsProperty.kt");
       }
 
-      @Test
-      @TestMetadata("typeParameterWithTwoBounds.kt")
-      public void testTypeParameterWithTwoBounds() {
-        runTest("compiler/testData/diagnostics/tests/redeclarations/typeParameterWithTwoBounds.kt");
-      }
-
       @Nested
       @TestMetadata("compiler/testData/diagnostics/tests/redeclarations/shadowedExtension")
       @TestDataPath("$PROJECT_ROOT")
@@ -32596,6 +32022,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("objectLiteralAsArgument.kt")
       public void testObjectLiteralAsArgument() {
         runTest("compiler/testData/diagnostics/tests/resolve/objectLiteralAsArgument.kt");
+      }
+
+      @Test
+      @TestMetadata("operatorAndInfixResolve.kt")
+      public void testOperatorAndInfixResolve() {
+        runTest("compiler/testData/diagnostics/tests/resolve/operatorAndInfixResolve.kt");
       }
 
       @Test
@@ -39425,6 +38857,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       public void testNoFalsePositiveAbstractToArray() {
         runTest("compiler/testData/diagnostics/tests/testsWithJava21/noFalsePositiveAbstractToArray.kt");
       }
+
+      @Test
+      @TestMetadata("otherHiddenInDeclaring.kt")
+      public void testOtherHiddenInDeclaring() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/otherHiddenInDeclaring.kt");
+      }
     }
 
     @Nested
@@ -40785,12 +40223,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
-      @TestMetadata("constructorsJvmSignaturesClash.kt")
-      public void testConstructorsJvmSignaturesClash() {
-        runTest("compiler/testData/diagnostics/tests/valueClasses/constructorsJvmSignaturesClash.kt");
-      }
-
-      @Test
       @TestMetadata("defaultParameters.kt")
       public void testDefaultParameters() {
         runTest("compiler/testData/diagnostics/tests/valueClasses/defaultParameters.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithUniversal());
@@ -40800,12 +40232,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("delegatedPropertyInValueClass.kt")
       public void testDelegatedPropertyInValueClass() {
         runTest("compiler/testData/diagnostics/tests/valueClasses/delegatedPropertyInValueClass.kt");
-      }
-
-      @Test
-      @TestMetadata("functionsJvmSignaturesClash.kt")
-      public void testFunctionsJvmSignaturesClash() {
-        runTest("compiler/testData/diagnostics/tests/valueClasses/functionsJvmSignaturesClash.kt");
       }
 
       @Test
@@ -42412,12 +41838,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
     }
 
     @Test
-    @TestMetadata("jvmFieldAndJavaGetter.kt")
-    public void testJvmFieldAndJavaGetter() {
-      runTest("compiler/testData/diagnostics/testsWithStdLib/jvmFieldAndJavaGetter.kt");
-    }
-
-    @Test
     @TestMetadata("kt54410.kt")
     public void testKt54410() {
       runTest("compiler/testData/diagnostics/testsWithStdLib/kt54410.kt");
@@ -42511,12 +41931,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
     @TestMetadata("pureReifiableArrayOperations.kt")
     public void testPureReifiableArrayOperations() {
       runTest("compiler/testData/diagnostics/testsWithStdLib/pureReifiableArrayOperations.kt");
-    }
-
-    @Test
-    @TestMetadata("RedeclarationMainInMultiFileClass.kt")
-    public void testRedeclarationMainInMultiFileClass() {
-      runTest("compiler/testData/diagnostics/testsWithStdLib/RedeclarationMainInMultiFileClass.kt");
     }
 
     @Test
@@ -42997,12 +42411,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @Test
         public void testAllFilesPresentInJvmField() {
           KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/testsWithStdLib/annotations/jvmField"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
-        }
-
-        @Test
-        @TestMetadata("clashWithCompanionObjectField.kt")
-        public void testClashWithCompanionObjectField() {
-          runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/jvmField/clashWithCompanionObjectField.kt");
         }
 
         @Test
@@ -45458,30 +44866,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         runTest("compiler/testData/diagnostics/testsWithStdLib/duplicateJvmSignature/jvmNames.kt");
       }
 
-      @Test
-      @TestMetadata("jvmNamesDuplicate.kt")
-      public void testJvmNamesDuplicate() {
-        runTest("compiler/testData/diagnostics/testsWithStdLib/duplicateJvmSignature/jvmNamesDuplicate.kt");
-      }
-
-      @Test
-      @TestMetadata("jvmOverloads.kt")
-      public void testJvmOverloads() {
-        runTest("compiler/testData/diagnostics/testsWithStdLib/duplicateJvmSignature/jvmOverloads.kt");
-      }
-
-      @Test
-      @TestMetadata("jvmStaticInClassObject.kt")
-      public void testJvmStaticInClassObject() {
-        runTest("compiler/testData/diagnostics/testsWithStdLib/duplicateJvmSignature/jvmStaticInClassObject.kt");
-      }
-
-      @Test
-      @TestMetadata("jvmStaticInObject.kt")
-      public void testJvmStaticInObject() {
-        runTest("compiler/testData/diagnostics/testsWithStdLib/duplicateJvmSignature/jvmStaticInObject.kt");
-      }
-
       @Nested
       @TestMetadata("compiler/testData/diagnostics/testsWithStdLib/duplicateJvmSignature/statics")
       @TestDataPath("$PROJECT_ROOT")
@@ -45489,24 +44873,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @Test
         public void testAllFilesPresentInStatics() {
           KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/testsWithStdLib/duplicateJvmSignature/statics"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
-        }
-
-        @Test
-        @TestMetadata("jjk.kt")
-        public void testJjk() {
-          runTest("compiler/testData/diagnostics/testsWithStdLib/duplicateJvmSignature/statics/jjk.kt");
-        }
-
-        @Test
-        @TestMetadata("jk.kt")
-        public void testJk() {
-          runTest("compiler/testData/diagnostics/testsWithStdLib/duplicateJvmSignature/statics/jk.kt");
-        }
-
-        @Test
-        @TestMetadata("jkjk.kt")
-        public void testJkjk() {
-          runTest("compiler/testData/diagnostics/testsWithStdLib/duplicateJvmSignature/statics/jkjk.kt");
         }
 
         @Test
@@ -47044,6 +46410,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("companionVsStaticScope.kt")
+        public void testCompanionVsStaticScope() {
+          runTest("compiler/testData/diagnostics/testsWithStdLib/resolve/ambiguousTypeReferences/companionVsStaticScope.kt");
+        }
+
+        @Test
         @TestMetadata("constructorCase.kt")
         public void testConstructorCase() {
           runTest("compiler/testData/diagnostics/testsWithStdLib/resolve/ambiguousTypeReferences/constructorCase.kt");
@@ -47053,6 +46425,30 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("constructorCaseSpace.kt")
         public void testConstructorCaseSpace() {
           runTest("compiler/testData/diagnostics/testsWithStdLib/resolve/ambiguousTypeReferences/constructorCaseSpace.kt");
+        }
+
+        @Test
+        @TestMetadata("constructorVsCompanionMember.kt")
+        public void testConstructorVsCompanionMember() {
+          runTest("compiler/testData/diagnostics/testsWithStdLib/resolve/ambiguousTypeReferences/constructorVsCompanionMember.kt");
+        }
+
+        @Test
+        @TestMetadata("constructorVsSyntheticValues.kt")
+        public void testConstructorVsSyntheticValues() {
+          runTest("compiler/testData/diagnostics/testsWithStdLib/resolve/ambiguousTypeReferences/constructorVsSyntheticValues.kt");
+        }
+
+        @Test
+        @TestMetadata("constructorVsSyntheticValuesPrioritized.kt")
+        public void testConstructorVsSyntheticValuesPrioritized() {
+          runTest("compiler/testData/diagnostics/testsWithStdLib/resolve/ambiguousTypeReferences/constructorVsSyntheticValuesPrioritized.kt");
+        }
+
+        @Test
+        @TestMetadata("constructorVsTopLevel.kt")
+        public void testConstructorVsTopLevel() {
+          runTest("compiler/testData/diagnostics/testsWithStdLib/resolve/ambiguousTypeReferences/constructorVsTopLevel.kt");
         }
 
         @Test
@@ -47196,6 +46592,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("unsoundSmartcast.kt")
       public void testUnsoundSmartcast() {
         runTest("compiler/testData/diagnostics/testsWithStdLib/smartcasts/unsoundSmartcast.kt");
+      }
+
+      @Test
+      @TestMetadata("whileLoopNotNull.kt")
+      public void testWhileLoopNotNull() {
+        runTest("compiler/testData/diagnostics/testsWithStdLib/smartcasts/whileLoopNotNull.kt");
       }
 
       @Test

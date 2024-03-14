@@ -15,8 +15,7 @@ import org.jetbrains.kotlin.konan.file.File as KFile
 import org.jetbrains.kotlin.konan.target.Architecture as TargetArchitecture
 
 // These properties are used by the 'konan' plugin, thus we set them before applying it.
-val distDir: File by project
-val konanHome: String by extra(distDir.absolutePath)
+val konanHome: String by extra(kotlinNativeDist.absolutePath)
 extra["org.jetbrains.kotlin.native.home"] = konanHome
 
 val kotlinVersion: String by rootProject.extra
@@ -36,8 +35,7 @@ googletest {
     refresh = project.hasProperty("refresh-gtest")
 }
 
-val hostName: String by project
-val targetList: List<String> by project
+val targetList = enabledTargets(extensions.getByType<PlatformManager>())
 
 bitcode {
     allTargets {
@@ -96,9 +94,8 @@ bitcode {
         module("libbacktrace") {
             val elfSize = when (target.architecture) {
                 TargetArchitecture.X64, TargetArchitecture.ARM64 -> 64
-                TargetArchitecture.X86, TargetArchitecture.ARM32,
-                TargetArchitecture.MIPS32, TargetArchitecture.MIPSEL32,
-                TargetArchitecture.WASM32 -> 32
+                TargetArchitecture.X86, TargetArchitecture.ARM32 -> 32
+                else -> 32 // TODO(KT-66500): remove after the bootstrap
             }
             val useMachO = target.family.isAppleFamily
             val useElf = target.family in listOf(Family.LINUX, Family.ANDROID)
@@ -520,15 +517,15 @@ dependencies {
     runtimeBitcode(project(":kotlin-native:runtime"))
 }
 
-targetList.forEach { targetName ->
+targetList.forEach { target ->
     // TODO: replace with a more convenient user-facing task that can build for a specific target.
     //       like compileToBitcode with optional argument --target.
-    tasks.register("${targetName}Runtime") {
-        description = "Build all main runtime modules for $targetName"
+    tasks.register("${target}Runtime") {
+        description = "Build all main runtime modules for $target"
         group = CompileToBitcodeExtension.BUILD_TASK_GROUP
         val dependencies = runtimeBitcode.incoming.artifactView {
             attributes {
-                attribute(TargetWithSanitizer.TARGET_ATTRIBUTE, project.platformManager.targetByName(targetName).withSanitizer())
+                attribute(TargetWithSanitizer.TARGET_ATTRIBUTE, target.withSanitizer())
             }
         }.files
         dependsOn(dependencies)
@@ -538,13 +535,13 @@ targetList.forEach { targetName ->
 val hostRuntime by tasks.registering {
     description = "Build all main runtime modules for host"
     group = CompileToBitcodeExtension.BUILD_TASK_GROUP
-    dependsOn("${hostName}Runtime")
+    dependsOn("${PlatformInfo.hostName}Runtime")
 }
 
 val hostRuntimeTests by tasks.registering {
     description = "Runs all runtime tests for host"
     group = CompileToBitcodeExtension.VERIFICATION_TASK_GROUP
-    dependsOn("${hostName}RuntimeTests")
+    dependsOn("${PlatformInfo.hostName}RuntimeTests")
 }
 
 tasks.named("assemble") {
@@ -552,7 +549,7 @@ tasks.named("assemble") {
 }
 
 val hostAssemble by tasks.registering {
-    dependsOn("${hostName}Runtime")
+    dependsOn("${PlatformInfo.hostName}Runtime")
 }
 
 tasks.named("clean") {
@@ -597,7 +594,6 @@ konanArtifacts {
         noDefaultLibs(true)
         noEndorsedLibs(true)
 
-        extraOpts(project.globalBuildArgs)
         extraOpts(
                 "-Werror",
                 "-Xexplicit-api=strict",
@@ -658,7 +654,7 @@ val stdlibTask = tasks.register<Copy>("nativeStdlib") {
     }
 }
 
-val cacheableTargetNames: List<String> by project
+val cacheableTargetNames = platformManager.hostPlatform.cacheableTargets
 
 cacheableTargetNames.forEach { targetName ->
     tasks.register("${targetName}StdlibCache", KonanCacheTask::class.java) {
@@ -670,7 +666,7 @@ cacheableTargetNames.forEach { targetName ->
 
         dependsOn(":kotlin-native:${targetName}CrossDistRuntime")
         // stdlib cache links in runtime modules from the K/N distribution.
-        inputs.dir("$distDir/konan/targets/$targetName/native")
+        inputs.dir("$kotlinNativeDist/konan/targets/$targetName/native")
     }
 }
 

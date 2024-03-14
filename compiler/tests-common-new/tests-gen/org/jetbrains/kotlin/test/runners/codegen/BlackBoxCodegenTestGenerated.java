@@ -31544,6 +31544,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
     }
 
     @Test
+    @TestMetadata("kjkPropertyAndExtensionProperty.kt")
+    public void testKjkPropertyAndExtensionProperty() {
+      runTest("compiler/testData/codegen/box/javaInterop/kjkPropertyAndExtensionProperty.kt");
+    }
+
+    @Test
     @TestMetadata("kt43217.kt")
     public void testKt43217() {
       runTest("compiler/testData/codegen/box/javaInterop/kt43217.kt");
@@ -35951,6 +35957,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
     @TestMetadata("expectProperty.kt")
     public void testExpectProperty() {
       runTest("compiler/testData/codegen/box/multiplatform/expectProperty.kt");
+    }
+
+    @Test
+    @TestMetadata("kt57391.kt")
+    public void testKt57391() {
+      runTest("compiler/testData/codegen/box/multiplatform/kt57391.kt");
     }
 
     @Test

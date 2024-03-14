@@ -21,13 +21,16 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.jetbrains.kotlin.ExecClang
+import org.jetbrains.kotlin.PlatformManagerPlugin
 import org.jetbrains.kotlin.cpp.*
 import org.jetbrains.kotlin.dependencies.NativeDependenciesExtension
 import org.jetbrains.kotlin.dependencies.NativeDependenciesPlugin
 import org.jetbrains.kotlin.konan.target.KonanTarget
+import org.jetbrains.kotlin.konan.target.PlatformManager
 import org.jetbrains.kotlin.konan.target.SanitizerKind
 import org.jetbrains.kotlin.konan.target.TargetDomainObjectContainer
 import org.jetbrains.kotlin.konan.target.TargetWithSanitizer
+import org.jetbrains.kotlin.konan.target.enabledTargets
 import org.jetbrains.kotlin.testing.native.GoogleTestExtension
 import org.jetbrains.kotlin.utils.capitalized
 import java.time.Duration
@@ -138,13 +141,10 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) :
             "-Wno-unused-parameter",  // False positives with polymorphic functions.
     )
 
-    private val targetList = with(project) {
-        provider { (rootProject.project(":kotlin-native").property("targetList") as? List<*>)?.filterIsInstance<String>() ?: emptyList() } // TODO: Can we make it better?
-    }
-
     private val allTestsTasks by lazy {
         val name = project.name.capitalized
-        targetList.get().associateBy(keySelector = { it }, valueTransform = {
+        val platformManager = project.extensions.getByType<PlatformManager>()
+        enabledTargets(platformManager).associateBy(keySelector = { it.visibleName }, valueTransform = {
             project.tasks.register("${it}${name}Tests") {
                 description = "Runs all $name tests for $it"
                 group = VERIFICATION_TASK_GROUP
@@ -205,7 +205,8 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) :
         }
 
         private val compilationDatabase = project.extensions.getByType<CompilationDatabaseExtension>()
-        private val execClang = project.extensions.getByType<ExecClang>()
+        private val platformManager = project.extensions.getByType<PlatformManager>()
+        private val execClang = ExecClang.create(project.objects, platformManager)
         private val nativeDependencies = project.extensions.getByType<NativeDependenciesExtension>()
 
         /**
@@ -239,13 +240,12 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) :
             }
             compilationDatabase.target(_target) {
                 entry {
-                    val compileTask = this@apply.get()
-                    val args = listOf(execClang.resolveExecutable(compileTask.compiler.get())) + compileTask.compilerFlags.get() + execClang.clangArgsForCppRuntime(target.name)
-                    directory.set(compileTask.workingDirectory)
-                    files.setFrom(compileTask.inputFiles)
-                    arguments.set(args)
+                    val compileTask: TaskProvider<ClangFrontend> = this@apply
+                    directory.set(compileTask.flatMap { it.workingDirectory })
+                    files.setFrom(compileTask.map { it.inputFiles })
+                    arguments.set(compileTask.map { listOf(execClang.resolveExecutable(it.compiler.get())) + it.compilerFlags.get() + execClang.clangArgsForCppRuntime(target.name) })
                     // Only the location of output file matters, compdb does not depend on the compilation result.
-                    output.set(compileTask.outputDirectory.locationOnly.map { it.asFile.absolutePath })
+                    output.set(compileTask.flatMap { it.outputDirectory.locationOnly.map { it.asFile.absolutePath }})
                 }
                 task.configure {
                     // Compile task depends on the toolchain (including headers) and on the source code (e.g. googletest).
@@ -263,6 +263,7 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) :
          */
         val task = project.tasks.register<LlvmLink>("llvmLink${module.name.capitalized}${name.capitalized}${_target.toString().capitalized}").apply {
             configure {
+                notCompatibleWithConfigurationCache("When GoogleTest are not downloaded llvm-link is missing arguments")
                 this.description = "Link '${module.name}' bitcode files (${this@SourceSet.name} sources) into a single bitcode file for $_target"
                 this.inputFiles.from(compileTask)
                 this.outputFile.set(this@SourceSet.outputFile)
@@ -668,6 +669,7 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) :
  */
 open class CompileToBitcodePlugin : Plugin<Project> {
     override fun apply(project: Project) {
+        project.apply<PlatformManagerPlugin>()
         project.apply<CppConsumerPlugin>()
         project.apply<CompilationDatabasePlugin>()
         project.apply<GitClangFormatPlugin>()

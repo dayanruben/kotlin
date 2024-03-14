@@ -96,6 +96,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -406,7 +407,7 @@ object FirErrors {
     val NAME_FOR_AMBIGUOUS_PARAMETER: KtDiagnosticFactory0 by error0<KtValueArgument>(SourceElementPositioningStrategies.NAME_OF_NAMED_ARGUMENT)
     val ASSIGNMENT_TYPE_MISMATCH: KtDiagnosticFactory3<ConeKotlinType, ConeKotlinType, Boolean> by error3<KtExpression, ConeKotlinType, ConeKotlinType, Boolean>()
     val RESULT_TYPE_MISMATCH: KtDiagnosticFactory2<ConeKotlinType, ConeKotlinType> by error2<KtExpression, ConeKotlinType, ConeKotlinType>()
-    val MANY_LAMBDA_EXPRESSION_ARGUMENTS: KtDiagnosticFactory0 by error0<KtValueArgument>()
+    val MANY_LAMBDA_EXPRESSION_ARGUMENTS: KtDiagnosticFactory0 by error0<KtLambdaExpression>()
     val NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER: KtDiagnosticFactory1<String> by error1<KtElement, String>()
     val SPREAD_OF_NULLABLE: KtDiagnosticFactory0 by error0<PsiElement>(SourceElementPositioningStrategies.SPREAD_OPERATOR)
     val ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION: KtDiagnosticFactoryForDeprecation1<ConeKotlinType> by deprecationError1<KtExpression, ConeKotlinType>(ProhibitAssigningSingleElementsToVarargsInNamedForm)
@@ -518,8 +519,11 @@ object FirErrors {
     val DATA_CLASS_OVERRIDE_CONFLICT: KtDiagnosticFactory2<FirCallableSymbol<*>, FirCallableSymbol<*>> by error2<KtClassOrObject, FirCallableSymbol<*>, FirCallableSymbol<*>>(SourceElementPositioningStrategies.DATA_MODIFIER)
     val DATA_CLASS_OVERRIDE_DEFAULT_VALUES: KtDiagnosticFactory2<FirCallableSymbol<*>, FirClassSymbol<*>> by error2<KtElement, FirCallableSymbol<*>, FirClassSymbol<*>>(SourceElementPositioningStrategies.DATA_MODIFIER)
     val CANNOT_WEAKEN_ACCESS_PRIVILEGE: KtDiagnosticFactory3<Visibility, FirCallableSymbol<*>, Name> by error3<KtModifierListOwner, Visibility, FirCallableSymbol<*>, Name>(SourceElementPositioningStrategies.VISIBILITY_MODIFIER)
+    val CANNOT_WEAKEN_ACCESS_PRIVILEGE_WARNING: KtDiagnosticFactory3<Visibility, FirCallableSymbol<*>, Name> by warning3<KtModifierListOwner, Visibility, FirCallableSymbol<*>, Name>(SourceElementPositioningStrategies.VISIBILITY_MODIFIER)
     val CANNOT_CHANGE_ACCESS_PRIVILEGE: KtDiagnosticFactory3<Visibility, FirCallableSymbol<*>, Name> by error3<KtModifierListOwner, Visibility, FirCallableSymbol<*>, Name>(SourceElementPositioningStrategies.VISIBILITY_MODIFIER)
+    val CANNOT_CHANGE_ACCESS_PRIVILEGE_WARNING: KtDiagnosticFactory3<Visibility, FirCallableSymbol<*>, Name> by warning3<KtModifierListOwner, Visibility, FirCallableSymbol<*>, Name>(SourceElementPositioningStrategies.VISIBILITY_MODIFIER)
     val CANNOT_INFER_VISIBILITY: KtDiagnosticFactory1<FirCallableSymbol<*>> by error1<KtDeclaration, FirCallableSymbol<*>>(SourceElementPositioningStrategies.DECLARATION_NAME)
+    val CANNOT_INFER_VISIBILITY_WARNING: KtDiagnosticFactory1<FirCallableSymbol<*>> by warning1<KtDeclaration, FirCallableSymbol<*>>(SourceElementPositioningStrategies.DECLARATION_NAME)
     val MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES: KtDiagnosticFactory3<Name, FirValueParameterSymbol, List<FirCallableSymbol<*>>> by error3<KtElement, Name, FirValueParameterSymbol, List<FirCallableSymbol<*>>>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
     val MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_WHEN_NO_EXPLICIT_OVERRIDE: KtDiagnosticFactory3<Name, FirValueParameterSymbol, List<FirCallableSymbol<*>>> by error3<KtElement, Name, FirValueParameterSymbol, List<FirCallableSymbol<*>>>(SourceElementPositioningStrategies.DECLARATION_NAME)
     val MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION: KtDiagnosticFactoryForDeprecation3<Name, FirValueParameterSymbol, List<FirCallableSymbol<*>>> by deprecationError3<KtElement, Name, FirValueParameterSymbol, List<FirCallableSymbol<*>>>(ProhibitAllMultipleDefaultsInheritedFromSupertypes, SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
@@ -891,7 +895,7 @@ object FirErrors {
 
     // Compatibility issues
     val INCOMPATIBLE_CLASS: KtDiagnosticFactory2<String, IncompatibleVersionErrorData<*>> by error2<PsiElement, String, IncompatibleVersionErrorData<*>>()
-    val PRE_RELEASE_CLASS: KtDiagnosticFactory1<String> by error1<PsiElement, String>()
+    val PRE_RELEASE_CLASS: KtDiagnosticFactory1<String> by warning1<PsiElement, String>()
     val IR_WITH_UNSTABLE_ABI_COMPILED_CLASS: KtDiagnosticFactory1<String> by error1<PsiElement, String>()
 
     // Builder inference

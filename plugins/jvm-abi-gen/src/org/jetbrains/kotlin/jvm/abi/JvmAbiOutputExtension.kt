@@ -13,6 +13,8 @@ import org.jetbrains.kotlin.cli.common.output.writeAllTo
 import org.jetbrains.kotlin.cli.jvm.compiler.CompileEnvironmentUtil
 import org.jetbrains.kotlin.codegen.ClassFileFactory
 import org.jetbrains.kotlin.codegen.extensions.ClassFileFactoryFinalizerExtension
+import org.jetbrains.kotlin.codegen.inline.*
+import org.jetbrains.kotlin.codegen.visitWithSplitting
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.org.objectweb.asm.*
 import org.jetbrains.org.objectweb.asm.commons.ClassRemapper
@@ -94,16 +96,27 @@ class JvmAbiOutputExtension(
                         val prune = abiInfo.prune
                         val memberInfo = abiInfo.memberInfo
                         val innerClassesToKeep = mutableSetOf<String>()
-                        val noMethodsKept = memberInfo.none { it.value == AbiMethodInfo.KEEP && it.key is JvmMethodSignature }
+
+                        var sourceFile: String? = null
+                        var sourceMap: SourceMapCopier? = null
+                        var sourceMapAnnotationPresent = false
+
                         val writer = ClassWriter(0)
                         val remapper = ClassRemapper(writer, object : Remapper() {
                             override fun map(internalName: String): String =
                                 internalName.also { innerClassesToKeep.add(it) }
                         })
+                        val parsingOptions = if (removeDebugInfo) ClassReader.SKIP_DEBUG else 0
                         ClassReader(outputFile.asByteArray()).accept(object : ClassVisitor(Opcodes.API_VERSION, remapper) {
                             private val keptFields = mutableListOf<FieldNode>()
                             private val keptMethods = mutableListOf<MethodNode>()
                             private val innerClassInfos = mutableMapOf<String, InnerClassInfo>()
+
+                            override fun visitSource(source: String?, debug: String?) {
+                                sourceFile = source
+                                sourceMap = debug.takeIf { !prune }?.let(SMAPParser::parseOrNull)
+                                    ?.let { SourceMapCopier(SourceMapper(sourceFile, it), it) }
+                            }
 
                             // Strip private fields.
                             override fun visitField(
@@ -134,22 +147,10 @@ class JvmAbiOutputExtension(
                                     keptMethods += it
                                 }
 
-                                if (info == AbiMethodInfo.KEEP || access and (Opcodes.ACC_NATIVE or Opcodes.ACC_ABSTRACT) != 0) {
-                                    return if (removeDebugInfo) DebugInfoRemovingMethodVisitor(node) else node
-                                }
-
-                                return BodyStrippingMethodVisitor(node)
-                            }
-
-                            override fun visitSource(source: String?, debug: String?) {
-                                when {
-                                    removeDebugInfo -> super.visitSource(null, null)
-                                    prune || noMethodsKept -> {
-                                        // Strip SourceDebugExtension attribute if there are no inline functions.
-                                        super.visitSource(source, null)
-                                    }
-                                    else -> super.visitSource(source, debug)
-                                }
+                                return if (info != AbiMethodInfo.KEEP && access and (Opcodes.ACC_NATIVE or Opcodes.ACC_ABSTRACT) == 0)
+                                    BodyStrippingMethodVisitor(node)
+                                else
+                                    node
                             }
 
                             // Remove inner classes which are not present in the abi jar.
@@ -160,9 +161,9 @@ class JvmAbiOutputExtension(
                             }
 
                             override fun visitAnnotation(descriptor: String?, visible: Boolean): AnnotationVisitor? {
-                                // Strip @SourceDebugExtension annotation if we're removing debug info.
                                 if (descriptor == JvmAnnotationNames.SOURCE_DEBUG_EXTENSION_DESC) {
-                                    if (removeDebugInfo || noMethodsKept || prune) return null
+                                    sourceMapAnnotationPresent = true
+                                    return null
                                 }
 
                                 val delegate = super.visitAnnotation(descriptor, visible)
@@ -180,26 +181,43 @@ class JvmAbiOutputExtension(
                             }
 
                             override fun visitEnd() {
-                                // Output class members in sorted order so that changes in original ordering don't affect the ABI JAR.
+                                if (!preserveDeclarationOrder) {
+                                    // Output class members in sorted order so that changes in original ordering don't affect the ABI JAR.
+                                    keptFields.sortWith(compareBy(FieldNode::name, FieldNode::desc))
+                                    keptMethods.sortWith(compareBy(MethodNode::name, MethodNode::desc))
+                                }
 
-                                keptFields
-                                    .apply { if (!preserveDeclarationOrder) sortWith(compareBy(FieldNode::name, FieldNode::desc)) }
-                                    .forEach { it.accept(cv) }
+                                for (field in keptFields) {
+                                    field.accept(cv)
+                                }
 
-                                keptMethods
-                                    .apply { if (!preserveDeclarationOrder) sortWith(compareBy(MethodNode::name, MethodNode::desc)) }
-                                    .forEach { it.accept(cv) }
+                                for (method in keptMethods) {
+                                    val mv = with(method) { cv.visitMethod(access, name, desc, signature, exceptions?.toTypedArray()) }
+                                    // Mapping the line numbers should only be done *after* sorting methods, as otherwise the order
+                                    // of inline methods may be visible in their synthetic line numbers.
+                                    method.accept(sourceMap?.let { SourceMapCopyingMethodVisitor(it, mv) } ?: mv)
+                                }
+
+                                val sourceMapText = sourceMap?.parent?.takeIf { !it.isTrivial }
+                                    ?.let { SMAPBuilder.build(it.resultMappings, backwardsCompatibleSyntax = false) }
+                                // This is technically not the right way to use `ClassVisitor` (`visitSource` should be called before
+                                // `visitMethod` and such), but `ClassWriter` doesn't care, and we're a bit constrained here (see above).
+                                cv.visitSource(sourceFile, sourceMapText)
+                                if (sourceMapAnnotationPresent && sourceMapText != null) {
+                                    val av = cv.visitAnnotation(JvmAnnotationNames.SOURCE_DEBUG_EXTENSION_DESC, false)
+                                    av.visitWithSplitting("value", sourceMapText)
+                                    av.visitEnd()
+                                }
 
                                 innerClassesToKeep.addInnerClasses(innerClassInfos, internalName)
                                 innerClassesToKeep.addOuterClasses(innerClassInfos)
-
                                 for (name in innerClassesToKeep.sorted()) {
                                     innerClassInfos[name]?.let { cv.visitInnerClass(it.name, it.outerName, it.innerName, it.access) }
                                 }
 
                                 super.visitEnd()
                             }
-                        }, 0)
+                        }, parsingOptions)
 
                         SimpleOutputBinaryFile(outputFile.sourceFiles, outputFile.relativePath, writer.toByteArray())
                     }
@@ -245,13 +263,7 @@ private class BodyStrippingMethodVisitor(visitor: MethodVisitor) : MethodVisitor
             visitMaxs(0, 0)
             visitEnd()
         }
-        // Only instructions and locals follow after `visitCode`.
+        // Only instructions, frames, try-catch, and locals follow after `visitCode`.
         mv = null
     }
-}
-
-private class DebugInfoRemovingMethodVisitor(visitor: MethodVisitor) : MethodVisitor(Opcodes.API_VERSION, visitor) {
-    override fun visitLineNumber(line: Int, start: Label?) {}
-
-    override fun visitLocalVariable(name: String?, descriptor: String?, signature: String?, start: Label?, end: Label?, index: Int) {}
 }

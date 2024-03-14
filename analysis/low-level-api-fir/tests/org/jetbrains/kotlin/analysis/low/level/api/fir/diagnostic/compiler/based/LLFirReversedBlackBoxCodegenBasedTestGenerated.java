@@ -33553,6 +33553,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
     }
 
     @Test
+    @TestMetadata("kjkPropertyAndExtensionProperty.kt")
+    public void testKjkPropertyAndExtensionProperty() {
+      runTest("compiler/testData/codegen/box/javaInterop/kjkPropertyAndExtensionProperty.kt");
+    }
+
+    @Test
     @TestMetadata("kjkWithRawTypes.kt")
     public void testKjkWithRawTypes() {
       runTest("compiler/testData/codegen/box/javaInterop/kjkWithRawTypes.kt");
@@ -33652,6 +33658,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
     @TestMetadata("syntheticPropOverriddenGetter.kt")
     public void testSyntheticPropOverriddenGetter() {
       runTest("compiler/testData/codegen/box/javaInterop/syntheticPropOverriddenGetter.kt");
+    }
+
+    @Test
+    @TestMetadata("triangleWithFlexibleTypeAndSubstitution4.kt")
+    public void testTriangleWithFlexibleTypeAndSubstitution4() {
+      runTest("compiler/testData/codegen/box/javaInterop/triangleWithFlexibleTypeAndSubstitution4.kt");
     }
 
     @Test
@@ -38050,6 +38062,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
     @TestMetadata("expectProperty.kt")
     public void testExpectProperty() {
       runTest("compiler/testData/codegen/box/multiplatform/expectProperty.kt");
+    }
+
+    @Test
+    @TestMetadata("kt57391.kt")
+    public void testKt57391() {
+      runTest("compiler/testData/codegen/box/multiplatform/kt57391.kt");
     }
 
     @Test
