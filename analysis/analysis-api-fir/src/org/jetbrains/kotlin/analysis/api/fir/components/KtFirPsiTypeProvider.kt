@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -58,8 +58,10 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.psi
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.types.model.SimpleTypeMarker
 import org.jetbrains.kotlin.types.updateArgumentModeFromAnnotations
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.text.StringCharacterIterator
 
 internal class KtFirPsiTypeProvider(
@@ -136,7 +138,7 @@ internal class KtFirPsiTypeProvider(
         val javaType = JavaTypeImpl.create(psiType, javaElementSourceFactory.createTypeSource(psiType))
 
         val javaTypeRef = buildJavaTypeRef {
-            //TODO KT-62351
+            // Annotations are unused during `resolveIfJavaType`, so there is no need to provide something
             annotationBuilder = { emptyList() }
             type = javaType
         }
@@ -144,7 +146,7 @@ internal class KtFirPsiTypeProvider(
         val javaTypeParameterStack = MutableJavaTypeParameterStack()
 
         var psiClass = PsiTreeUtil.getContextOfType(useSitePosition, PsiClass::class.java, false)
-        while (psiClass != null && psiClass.name == null) {
+        while (psiClass != null && psiClass.name == null || psiClass is PsiTypeParameter) {
             psiClass = PsiTreeUtil.getContextOfType(psiClass, PsiClass::class.java, true)
         }
         if (psiClass != null) {
@@ -161,9 +163,13 @@ internal class KtFirPsiTypeProvider(
                     ),
                     javaClass
                 )
+
                 if (containingClassSymbol != null) {
-                    val member =
-                        PsiTreeUtil.getContextOfType(useSitePosition, PsiTypeParameterListOwner::class.java, false, PsiClass::class.java)
+                    val member = useSitePosition.parentsWithSelf
+                        .filterNot { it is PsiTypeParameter }
+                        .takeWhile { it !is PsiClass }
+                        .firstIsInstanceOrNull<PsiTypeParameterListOwner>()
+
                     if (member != null) {
                         val memberSymbol = containingClassSymbol.declarationSymbols.find { it.findPsi() == member } as? FirCallableSymbol<*>
                         if (memberSymbol != null) {

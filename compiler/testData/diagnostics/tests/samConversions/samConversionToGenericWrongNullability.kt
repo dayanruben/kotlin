@@ -1,4 +1,5 @@
 // FIR_IDENTICAL
+// LANGUAGE: -JavaTypeParameterDefaultRepresentationWithDNN
 // ISSUE: KT-57014
 // FULL_JDK
 // JVM_TARGET: 1.8

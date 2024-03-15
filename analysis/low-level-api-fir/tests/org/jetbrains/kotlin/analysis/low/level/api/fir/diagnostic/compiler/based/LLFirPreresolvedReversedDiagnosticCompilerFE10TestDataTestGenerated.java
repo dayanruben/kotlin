@@ -14200,6 +14200,30 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("kt66277.kt")
+        public void testKt66277() {
+          runTest("compiler/testData/diagnostics/tests/functionLiterals/return/kt66277.kt");
+        }
+
+        @Test
+        @TestMetadata("kt66279.kt")
+        public void testKt66279() {
+          runTest("compiler/testData/diagnostics/tests/functionLiterals/return/kt66279.kt");
+        }
+
+        @Test
+        @TestMetadata("kt66512.kt")
+        public void testKt66512() {
+          runTest("compiler/testData/diagnostics/tests/functionLiterals/return/kt66512.kt");
+        }
+
+        @Test
+        @TestMetadata("kt66534.kt")
+        public void testKt66534() {
+          runTest("compiler/testData/diagnostics/tests/functionLiterals/return/kt66534.kt");
+        }
+
+        @Test
         @TestMetadata("LambdaReturnTypeIsUnitIfImplicitReturnExists.kt")
         public void testLambdaReturnTypeIsUnitIfImplicitReturnExists() {
           runTest("compiler/testData/diagnostics/tests/functionLiterals/return/LambdaReturnTypeIsUnitIfImplicitReturnExists.kt");
@@ -21805,9 +21829,21 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("flexibleTypeVariablePositionDnnRepresentation.kt")
+      public void testFlexibleTypeVariablePositionDnnRepresentation() {
+        runTest("compiler/testData/diagnostics/tests/j+k/flexibleTypeVariablePositionDnnRepresentation.kt");
+      }
+
+      @Test
       @TestMetadata("futureGet.kt")
       public void testFutureGet() {
         runTest("compiler/testData/diagnostics/tests/j+k/futureGet.kt");
+      }
+
+      @Test
+      @TestMetadata("futureGetDnnRepresentation.kt")
+      public void testFutureGetDnnRepresentation() {
+        runTest("compiler/testData/diagnostics/tests/j+k/futureGetDnnRepresentation.kt");
       }
 
       @Test
@@ -21949,6 +21985,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("kjkimplicitTypesCrash.kt")
+      public void testKjkimplicitTypesCrash() {
+        runTest("compiler/testData/diagnostics/tests/j+k/kjkimplicitTypesCrash.kt");
+      }
+
+      @Test
       @TestMetadata("kt1402.kt")
       public void testKt1402() {
         runTest("compiler/testData/diagnostics/tests/j+k/kt1402.kt");
@@ -22084,6 +22126,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("nullableLinkedListToQueue.kt")
       public void testNullableLinkedListToQueue() {
         runTest("compiler/testData/diagnostics/tests/j+k/nullableLinkedListToQueue.kt");
+      }
+
+      @Test
+      @TestMetadata("nullableLinkedListToQueueDnnRepresentation.kt")
+      public void testNullableLinkedListToQueueDnnRepresentation() {
+        runTest("compiler/testData/diagnostics/tests/j+k/nullableLinkedListToQueueDnnRepresentation.kt");
       }
 
       @Test
@@ -23137,6 +23185,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         @TestMetadata("notNullTypeParameterWithKotlinNullable.kt")
         public void testNotNullTypeParameterWithKotlinNullable() {
           runTest("compiler/testData/diagnostics/tests/j+k/types/notNullTypeParameterWithKotlinNullable.kt");
+        }
+
+        @Test
+        @TestMetadata("notNullTypeParameterWithKotlinNullableDnnRepresentation.kt")
+        public void testNotNullTypeParameterWithKotlinNullableDnnRepresentation() {
+          runTest("compiler/testData/diagnostics/tests/j+k/types/notNullTypeParameterWithKotlinNullableDnnRepresentation.kt");
         }
 
         @Test
@@ -24966,6 +25020,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("incompatibles.kt")
       public void testIncompatibles() {
         runTest("compiler/testData/diagnostics/tests/multiplatform/incompatibles.kt");
+      }
+
+      @Test
+      @TestMetadata("JsExternalTypeExtendsActualExternalType.kt")
+      public void testJsExternalTypeExtendsActualExternalType() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/JsExternalTypeExtendsActualExternalType.kt");
       }
 
       @Test
@@ -28669,6 +28729,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("dnnOverridesFlexibleDnnRepresentation.kt")
+      public void testDnnOverridesFlexibleDnnRepresentation() {
+        runTest("compiler/testData/diagnostics/tests/override/dnnOverridesFlexibleDnnRepresentation.kt");
+      }
+
+      @Test
       @TestMetadata("DuplicateMethod.kt")
       public void testDuplicateMethod() {
         runTest("compiler/testData/diagnostics/tests/override/DuplicateMethod.kt");
@@ -29281,6 +29347,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("comparingWithWrongNullabilityDnnRepresentation.kt")
+      public void testComparingWithWrongNullabilityDnnRepresentation() {
+        runTest("compiler/testData/diagnostics/tests/platformTypes/comparingWithWrongNullabilityDnnRepresentation.kt");
+      }
+
+      @Test
       @TestMetadata("delegateByComplexInheritance.kt")
       public void testDelegateByComplexInheritance() {
         runTest("compiler/testData/diagnostics/tests/platformTypes/delegateByComplexInheritance.kt");
@@ -29667,6 +29739,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         @TestMetadata("singleton.kt")
         public void testSingleton() {
           runTest("compiler/testData/diagnostics/tests/platformTypes/methodCall/singleton.kt");
+        }
+
+        @Test
+        @TestMetadata("singletonDnnRepresentation.kt")
+        public void testSingletonDnnRepresentation() {
+          runTest("compiler/testData/diagnostics/tests/platformTypes/methodCall/singletonDnnRepresentation.kt");
         }
 
         @Test
@@ -33178,6 +33256,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("sameCandidatesFromKotlinAndJavaInOneScope.kt")
       public void testSameCandidatesFromKotlinAndJavaInOneScope() {
         runTest("compiler/testData/diagnostics/tests/samConversions/sameCandidatesFromKotlinAndJavaInOneScope.kt");
+      }
+
+      @Test
+      @TestMetadata("sameConversionToGenericWrongNullabilityDnnRepresentation.kt")
+      public void testSameConversionToGenericWrongNullabilityDnnRepresentation() {
+        runTest("compiler/testData/diagnostics/tests/samConversions/sameConversionToGenericWrongNullabilityDnnRepresentation.kt");
       }
 
       @Test
@@ -39449,9 +39533,39 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("importFromTypeAliasExtendedInvokableObject.kt")
+      public void testImportFromTypeAliasExtendedInvokableObject() {
+        runTest("compiler/testData/diagnostics/tests/typealias/importFromTypeAliasExtendedInvokableObject.kt");
+      }
+
+      @Test
+      @TestMetadata("importFromTypeAliasFunctionReference.kt")
+      public void testImportFromTypeAliasFunctionReference() {
+        runTest("compiler/testData/diagnostics/tests/typealias/importFromTypeAliasFunctionReference.kt");
+      }
+
+      @Test
+      @TestMetadata("importFromTypeAliasInvokableObject.kt")
+      public void testImportFromTypeAliasInvokableObject() {
+        runTest("compiler/testData/diagnostics/tests/typealias/importFromTypeAliasInvokableObject.kt");
+      }
+
+      @Test
+      @TestMetadata("importFromTypeAliasNestedObjectFunMember.kt")
+      public void testImportFromTypeAliasNestedObjectFunMember() {
+        runTest("compiler/testData/diagnostics/tests/typealias/importFromTypeAliasNestedObjectFunMember.kt");
+      }
+
+      @Test
       @TestMetadata("importFromTypeAliasObject.kt")
       public void testImportFromTypeAliasObject() {
         runTest("compiler/testData/diagnostics/tests/typealias/importFromTypeAliasObject.kt");
+      }
+
+      @Test
+      @TestMetadata("importFromTypeAliasObjectProperties.kt")
+      public void testImportFromTypeAliasObjectProperties() {
+        runTest("compiler/testData/diagnostics/tests/typealias/importFromTypeAliasObjectProperties.kt");
       }
 
       @Test

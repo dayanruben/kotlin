@@ -80,9 +80,7 @@ class FunctionInlining(
     private val inlineFunctionResolver: InlineFunctionResolver = InlineFunctionResolver.TRIVIAL,
     private val innerClassesSupport: InnerClassesSupport? = null,
     private val insertAdditionalImplicitCasts: Boolean = false,
-    private val alwaysCreateTemporaryVariablesForArguments: Boolean = false,
     private val regenerateInlinedAnonymousObjects: Boolean = false,
-    private val inlineArgumentsWithOriginalOffset: Boolean = false,
 ) : IrElementTransformerVoidWithContext(), BodyLoweringPass {
     private var containerScope: ScopeWithIr? = null
     private val elementsWithLocationToPatch = hashSetOf<IrGetValue>()
@@ -413,8 +411,8 @@ class FunctionInlining(
                     is IrConstructor -> {
                         val classTypeParametersCount = inlinedFunction.parentAsClass.typeParameters.size
                         IrConstructorCallImpl.fromSymbolOwner(
-                            if (inlineArgumentsWithOriginalOffset) irFunctionReference.startOffset else irCall.startOffset,
-                            if (inlineArgumentsWithOriginalOffset) irFunctionReference.endOffset else irCall.endOffset,
+                            irFunctionReference.startOffset,
+                            irFunctionReference.endOffset,
                             functionReferenceReturnType,
                             inlinedFunction.symbol,
                             classTypeParametersCount,
@@ -423,8 +421,8 @@ class FunctionInlining(
                     }
                     is IrSimpleFunction ->
                         IrCallImpl(
-                            if (inlineArgumentsWithOriginalOffset) irFunctionReference.startOffset else irCall.startOffset,
-                            if (inlineArgumentsWithOriginalOffset) irFunctionReference.endOffset else irCall.endOffset,
+                            irFunctionReference.startOffset,
+                            irFunctionReference.endOffset,
                             functionReferenceReturnType,
                             inlinedFunction.symbol,
                             inlinedFunction.typeParameters.size,
@@ -769,9 +767,7 @@ class FunctionInlining(
 
                 // Arguments may reference the previous ones - substitute them.
                 val variableInitializer = argument.argumentExpression.transform(substitutor, data = null)
-                val shouldCreateTemporaryVariable =
-                    (alwaysCreateTemporaryVariablesForArguments && !parameter.isInlineParameter()) ||
-                            argument.shouldBeSubstitutedViaTemporaryVariable()
+                val shouldCreateTemporaryVariable = !parameter.isInlineParameter() || argument.shouldBeSubstitutedViaTemporaryVariable()
 
                 if (shouldCreateTemporaryVariable) {
                     val newVariable = createTemporaryVariable(parameter, variableInitializer, argument.isDefaultArg, callee)
@@ -835,9 +831,7 @@ class FunctionInlining(
                 }
             )
 
-            if (alwaysCreateTemporaryVariablesForArguments) {
-                variable.name = Name.identifier(parameter.name.asStringStripSpecialMarkers())
-            }
+            variable.name = Name.identifier(parameter.name.asStringStripSpecialMarkers())
 
             return variable
         }
