@@ -330,6 +330,7 @@ internal class ObjCFrameworkCompilation(
     }
 
     override fun applyDependencies(argsBuilder: ArgsBuilder) = with(argsBuilder) {
+        addFlattened(dependencies.libraries) { library -> listOf("-l", library.path) }
         exportedLibraries.forEach {
             assertTrue(it in dependencies.libraries)
             add("-Xexport-library=${it.path}")
@@ -378,6 +379,11 @@ internal class BinaryLibraryCompilation(
             cinterfaceMode
         )
         super.applySpecificArgs(argsBuilder)
+    }
+
+    override fun applyDependencies(argsBuilder: ArgsBuilder): Unit = with(argsBuilder) {
+        super.applyDependencies(argsBuilder)
+        addFlattened(dependencies.libraries) { library -> listOf("-l", library.path) }
     }
 }
 

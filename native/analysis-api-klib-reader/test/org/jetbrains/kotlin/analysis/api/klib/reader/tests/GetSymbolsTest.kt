@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.analysis.api.klib.reader.tests
 import org.jetbrains.kotlin.analysis.api.KtAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.klib.reader.*
 import org.jetbrains.kotlin.analysis.api.klib.reader.testUtils.providedTestProjectKlib
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeTokenProvider
 import org.jetbrains.kotlin.analysis.api.standalone.KtAlwaysAccessibleLifetimeTokenProvider
@@ -21,6 +20,7 @@ import org.jetbrains.kotlin.analysis.project.structure.builder.buildKtLibraryMod
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.native.analysis.api.*
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import kotlin.io.path.nameWithoutExtension
 import kotlin.test.Test
@@ -127,6 +127,66 @@ class GetSymbolsTest {
             val typeAliasASymbol = assertNotNull(typeAliasAAddress.getTypeAliasSymbol())
             assertEquals(Name.identifier("TypeAliasA"), typeAliasASymbol.name)
             assertEquals(Name.identifier("AClass"), typeAliasASymbol.expandedType.expandedClassSymbol?.name)
+        }
+    }
+
+    @Test
+    fun `test - filePrivateSymbolsClash - function`() {
+        withTestProjectLibraryAnalysisSession {
+            val addresses = (useSiteModule as KtLibraryModule).readKlibDeclarationAddresses() ?: fail("Failed reading addresses")
+            val clashingAddresses = addresses.filterIsInstance<KlibFunctionAddress>()
+                .filter { it.callableName == Name.identifier("foo") }
+
+            val fooInAKt = clashingAddresses.find { it.sourceFileName == "A.kt" } ?: fail("Missing `fun foo()` in A.kt")
+            val fooInBKt = clashingAddresses.find { it.sourceFileName == "B.kt" } ?: fail("Missing `fun foo()` in B.kt")
+
+            val fooInASymbols = fooInAKt.getFunctionSymbols().toList()
+            if (fooInASymbols.size != 1) fail(
+                "Expected exactly one 'foo' symbol in A.kt. Found ${fooInASymbols.joinToString { it.render() }}"
+            )
+
+            val fooInBSymbols = fooInBKt.getFunctionSymbols().toList()
+            if (fooInASymbols.size != 1) fail(
+                "Expected exactly one 'foo' symbol in B.kt. Found ${fooInBSymbols.joinToString { it.render() }}"
+            )
+
+            val fooInASymbol = fooInASymbols.first()
+            if (!fooInASymbol.annotationsList.hasAnnotation(ClassId.fromString("org/jetbrains/sample/filePrivateSymbolsClash/A")))
+                fail("Missing annotation 'A' on 'fun foo()' in A.kt")
+
+            val fooInBSymbol = fooInBSymbols.first()
+            if (!fooInBSymbol.annotationsList.hasAnnotation(ClassId.fromString("org/jetbrains/sample/filePrivateSymbolsClash/B")))
+                fail("Missing annotation 'B' on 'fun foo()' in B.kt")
+        }
+    }
+
+    @Test
+    fun `test - filePrivateSymbolsClash - property`() {
+        withTestProjectLibraryAnalysisSession {
+            val addresses = (useSiteModule as KtLibraryModule).readKlibDeclarationAddresses() ?: fail("Failed reading addresses")
+            val clashingAddresses = addresses.filterIsInstance<KlibPropertyAddress>()
+                .filter { it.callableName == Name.identifier("fooProperty") }
+
+            val fooInAKt = clashingAddresses.find { it.sourceFileName == "A.kt" } ?: fail("Missing `val fooProperty` in A.kt")
+            val fooInBKt = clashingAddresses.find { it.sourceFileName == "B.kt" } ?: fail("Missing `val fooProperty` in B.kt")
+
+            val fooInASymbols = fooInAKt.getPropertySymbols().toList()
+            if (fooInASymbols.size != 1) fail(
+                "Expected exactly one 'fooProperty' symbol in A.kt. Found ${fooInASymbols.joinToString { it.render() }}"
+            )
+
+            val fooInBSymbols = fooInBKt.getPropertySymbols().toList()
+            if (fooInASymbols.size != 1) fail(
+                "Expected exactly one 'fooProperty' symbol in B.kt. Found ${fooInBSymbols.joinToString { it.render() }}"
+            )
+
+            val fooInASymbol = fooInASymbols.first()
+            if (!fooInASymbol.annotationsList.hasAnnotation(ClassId.fromString("org/jetbrains/sample/filePrivateSymbolsClash/A")))
+                fail("Missing annotation 'A' on 'val fooProperty' in A.kt")
+
+            val fooInBSymbol = fooInBSymbols.first()
+            if (!fooInBSymbol.annotationsList.hasAnnotation(ClassId.fromString("org/jetbrains/sample/filePrivateSymbolsClash/B")))
+                fail("Missing annotation 'B' on 'val fooProperty' in B.kt")
         }
     }
 

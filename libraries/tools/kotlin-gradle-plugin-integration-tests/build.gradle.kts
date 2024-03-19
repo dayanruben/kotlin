@@ -1,7 +1,5 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
-import org.jetbrains.kotlin.konan.target.HostManager
-import org.jetbrains.kotlin.konan.target.KonanTarget
 import java.nio.file.Paths
 
 plugins {
@@ -145,43 +143,41 @@ tasks.register<Delete>("cleanUserHomeKonanDir") {
         logger.info("Default .konan directory user's home has been deleted: $userHomeKonanDir")
     }
 }
+tasks.register<Task>("prepareNativeBundleForGradleIT") {
 
-tasks.register<Copy>("prepareNativeBundleForGradleIT") {
-
-    description = "This task adds dependency on :kotlin-native:bundle and then copying built bundle into the tests' konan dir"
+    description = "This task adds dependency on :kotlin-native:bundle"
 
     if (project.kotlinBuildProperties.isKotlinNativeEnabled) {
-        // 1. Build full Kotlin Native bundle
+        // Build full Kotlin Native bundle
         dependsOn(":kotlin-native:bundle")
-
-        // 2. Coping and extracting k/n artifacts from the 1st step to tests' konan data directory
-        val (extension, unzipFunction) = when (HostManager.host) {
-            KonanTarget.MINGW_X64 -> Pair("zip", ::zipTree)
-            else -> Pair("tar.gz", ::tarTree)
-        }
-
-        val kotlinNativeRootDir = rootProject.findProject(":kotlin-native")?.projectDir
-            ?: throw IllegalStateException("The path to kotlin-native module is undefined.")
-
-        from(
-            unzipFunction(
-                kotlinNativeRootDir.resolve("kotlin-native-${HostManager.platformName()}-${project.kotlinBuildProperties.defaultSnapshotVersion}.$extension")
-            )
-        )
-        from(
-            unzipFunction(
-                kotlinNativeRootDir.resolve("kotlin-native-prebuilt-${HostManager.platformName()}-${project.kotlinBuildProperties.defaultSnapshotVersion}.$extension")
-            )
-        )
-
-        into(
-            konanDataDir
-        )
-
-        doFirst {
-            delete(konanDataDir)
-        }
     }
+}
+
+tasks.register<Task>("createProvisionedOkFiles") {
+
+    description = "This task creates `provisioned.ok` file for each preconfigured k/n native bundle." +
+            "Kotlin/Native bundle can be prepared in two ways:" +
+            "`prepareNativeBundleForGradleIT` task for local environment and `Compiler Dist: full bundle` build for CI environment."
+
+    val prepareNativeBundleTaskName = ":kotlin-gradle-plugin-integration-tests:prepareNativeBundleForGradleIT"
+    val taskExists = project.tasks.findByPath(prepareNativeBundleTaskName) != null
+    if (taskExists) {
+        mustRunAfter(prepareNativeBundleTaskName)
+    }
+
+    val konanDistributions = File(konanDataDir)
+
+    doLast {
+        konanDistributions
+            .walkTopDown().maxDepth(1)
+            .filter { file -> file != konanDistributions }
+            .filter { file -> file.isDirectory }
+            .toSet()
+            .forEach {
+                File(it, "provisioned.ok").createNewFile()
+            }
+    }
+
 }
 
 fun Test.includeMppAndAndroid(include: Boolean) = includeTestsWithPattern(include) {
@@ -193,7 +189,10 @@ fun Test.includeNative(include: Boolean) = includeTestsWithPattern(include) {
 }
 
 fun Test.applyKotlinNativeFromCurrentBranchIfNeeded() {
-    val kotlinNativeFromMasterEnabled = project.kotlinBuildProperties.isKotlinNativeEnabled && project.kotlinBuildProperties.useKotlinNativeLocalDistributionForTests
+    val kotlinNativeFromMasterEnabled =
+        project.kotlinBuildProperties.isKotlinNativeEnabled && project.kotlinBuildProperties.useKotlinNativeLocalDistributionForTests
+
+    //add native bundle dependencies for local test run
     if (kotlinNativeFromMasterEnabled && !project.kotlinBuildProperties.isTeamcityBuild) {
         dependsOn(":kotlin-gradle-plugin-integration-tests:prepareNativeBundleForGradleIT")
     }
@@ -212,6 +211,7 @@ fun Test.applyKotlinNativeFromCurrentBranchIfNeeded() {
         }
         systemProperty("konanDataDirForIntegrationTests", konanDataDir)
     }
+    dependsOn(":kotlin-gradle-plugin-integration-tests:createProvisionedOkFiles")
 }
 
 fun Test.includeTestsWithPattern(include: Boolean, patterns: (MutableSet<String>).() -> Unit) {

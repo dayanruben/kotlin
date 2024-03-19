@@ -19,6 +19,7 @@ import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
 import org.gradle.api.tasks.Internal
 import org.jetbrains.kotlin.gradle.plugin.mpp.enabledOnCurrentHost
+import org.jetbrains.kotlin.compilerRunner.konanVersion
 import org.jetbrains.kotlin.gradle.targets.native.internal.NativeDistributionCommonizerLock
 import org.jetbrains.kotlin.gradle.targets.native.internal.NativeDistributionTypeProvider
 import org.jetbrains.kotlin.gradle.targets.native.internal.PlatformLibrariesGenerator
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.target.loadConfigurables
 import org.jetbrains.kotlin.konan.util.ArchiveExtractor
 import org.jetbrains.kotlin.konan.util.ArchiveType
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import java.io.BufferedInputStream
 import java.io.File
 import java.nio.file.Files
@@ -38,7 +40,7 @@ import java.nio.file.attribute.PosixFilePermission
 import java.util.zip.GZIPInputStream
 import javax.inject.Inject
 
-private const val KONAN_DIRECTORY_NAME_TO_CHECK_EXISTENCE = "konan"
+private const val MARKER_FILE = "provisioned.ok"
 
 internal interface UsesKotlinNativeBundleBuildService : Task {
     @get:Internal
@@ -97,10 +99,14 @@ internal abstract class KotlinNativeBundleBuildService : BuildService<BuildServi
             NativeDistributionCommonizerLock(bundleDir) { message -> project.logger.info("Kotlin Native Bundle: $message") }
 
         lock.withLock {
+            val needToReinstall = KotlinToolingVersion(project.konanVersion).maturity == KotlinToolingVersion.Maturity.SNAPSHOT
+            if (needToReinstall) {
+                project.logger.debug("Snapshot version could be changed, to be sure that up-to-date version is used, Kotlin/Native should be reinstalled")
+            }
 
-            removeBundleIfNeeded(reinstallFlag, bundleDir)
+            removeBundleIfNeeded(reinstallFlag || needToReinstall, bundleDir)
 
-            if (!bundleDir.resolve(KONAN_DIRECTORY_NAME_TO_CHECK_EXISTENCE).exists()) {
+            if (!bundleDir.resolve(MARKER_FILE).exists()) {
                 val gradleCachesKotlinNativeDir =
                     resolveKotlinNativeConfiguration(kotlinNativeVersion, kotlinNativeBundleConfiguration)
 
@@ -109,6 +115,7 @@ internal abstract class KotlinNativeBundleBuildService : BuildService<BuildServi
                     it.from(gradleCachesKotlinNativeDir)
                     it.into(bundleDir)
                 }
+                createSuccessfulInstallationFile(bundleDir)
                 project.logger.info("Moved Kotlin/Native bundle from $gradleCachesKotlinNativeDir to ${bundleDir.absolutePath}")
             }
         }
@@ -243,5 +250,9 @@ internal abstract class KotlinNativeBundleBuildService : BuildService<BuildServi
                 add(permission)
             }
         }
+    }
+
+    private fun createSuccessfulInstallationFile(bundleDir: File) {
+        bundleDir.resolve(MARKER_FILE).createNewFile()
     }
 }
