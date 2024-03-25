@@ -407,6 +407,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
     }
 
     @Test
+    @TestMetadata("spreadOperatorInAnnotationArguments.kt")
+    public void testSpreadOperatorInAnnotationArguments() {
+      runTest("compiler/testData/codegen/box/annotations/spreadOperatorInAnnotationArguments.kt");
+    }
+
+    @Test
     @TestMetadata("suppressInvisibleMember.kt")
     public void testSuppressInvisibleMember() {
       runTest("compiler/testData/codegen/box/annotations/suppressInvisibleMember.kt");
@@ -4994,6 +5000,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
     @TestMetadata("kt55138.kt")
     public void testKt55138() {
       runTest("compiler/testData/codegen/box/callableReference/kt55138.kt");
+    }
+
+    @Test
+    @TestMetadata("kt62550.kt")
+    public void testKt62550() {
+      runTest("compiler/testData/codegen/box/callableReference/kt62550.kt");
     }
 
     @Test
@@ -24440,6 +24452,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
     @TestMetadata("initializers8.kt")
     public void testInitializers8() {
       runTest("compiler/testData/codegen/box/initializers/initializers8.kt");
+    }
+
+    @Test
+    @TestMetadata("initializers9.kt")
+    public void testInitializers9() {
+      runTest("compiler/testData/codegen/box/initializers/initializers9.kt");
     }
 
     @Test

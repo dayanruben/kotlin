@@ -33,14 +33,24 @@ class A<T> : ArrayList<T>() {
     }
 }
 
+abstract class B<T>: List<T> {
+    override fun <!OVERRIDE_DEPRECATION!>getFirst<!>(): T {
+        return super.<!UNRESOLVED_REFERENCE!>getFirst<!>()
+    }
+
+    override fun <!OVERRIDE_DEPRECATION!>getLast<!>(): T{
+        return super.<!UNRESOLVED_REFERENCE!>getLast<!>()
+    }
+}
+
 fun foo(x: MutableList<String>, y: ArrayList<String>, z: A<String>) {
     x.addFirst("")
     x.addLast("")
     x.<!UNRESOLVED_REFERENCE!>getFirst<!>()
-    x.<!DEPRECATION_ERROR!>first<!> // synthetic property for getFirst()
+    x.<!FUNCTION_CALL_EXPECTED!>first<!> // synthetic property for getFirst()
     x.first() // stdlib extension on List
     x.<!UNRESOLVED_REFERENCE!>getLast<!>()
-    x.<!DEPRECATION_ERROR!>last<!>
+    x.<!FUNCTION_CALL_EXPECTED!>last<!>
     x.last()
     x.<!DEBUG_INFO_CALL("fqName: kotlin.collections.MutableList.removeFirst; typeCall: function")!>removeFirst()<!>
     x.<!DEBUG_INFO_CALL("fqName: kotlin.collections.MutableList.removeLast; typeCall: function")!>removeLast()<!>

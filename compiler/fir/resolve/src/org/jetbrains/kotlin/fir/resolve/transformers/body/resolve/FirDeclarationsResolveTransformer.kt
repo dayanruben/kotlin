@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fakeElement
 import org.jetbrains.kotlin.fir.*
-import org.jetbrains.kotlin.fir.contracts.impl.FirEmptyContractDescription
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.buildAnonymousFunctionCopy
 import org.jetbrains.kotlin.fir.declarations.builder.buildContextReceiver
@@ -19,10 +18,7 @@ import org.jetbrains.kotlin.fir.declarations.builder.buildValueParameter
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyBackingField
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
-import org.jetbrains.kotlin.fir.declarations.utils.hasExplicitBackingField
-import org.jetbrains.kotlin.fir.declarations.utils.isConst
-import org.jetbrains.kotlin.fir.declarations.utils.isInline
-import org.jetbrains.kotlin.fir.declarations.utils.isLocal
+import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.expressions.*
@@ -39,6 +35,7 @@ import org.jetbrains.kotlin.fir.resolve.inference.ResolvedLambdaAtom
 import org.jetbrains.kotlin.fir.resolve.inference.extractLambdaInfoFromFunctionType
 import org.jetbrains.kotlin.fir.resolve.substitution.ChainedSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
+import org.jetbrains.kotlin.fir.resolve.transformers.FirExpressionEvaluator
 import org.jetbrains.kotlin.fir.resolve.transformers.FirStatusResolver
 import org.jetbrains.kotlin.fir.resolve.transformers.contracts.runContractResolveForFunction
 import org.jetbrains.kotlin.fir.resolve.transformers.transformVarargTypeToArrayType
@@ -827,7 +824,7 @@ open class FirDeclarationsResolveTransformer(
                 prepareSignatureForBodyResolve(simpleFunction)
                 simpleFunction.transformStatus(this, simpleFunction.resolveStatus().mode())
 
-                if (simpleFunction.contractDescription != FirEmptyContractDescription) {
+                if (simpleFunction.contractDescription != null) {
                     simpleFunction.runContractResolveForFunction(session, scopeSession, context)
                 }
             }
@@ -984,6 +981,8 @@ open class FirDeclarationsResolveTransformer(
             ) as FirValueParameter
         }
 
+        valueParameter.evaluatedDefaultValue = FirExpressionEvaluator.evaluateDefault(valueParameter, session)
+
         dataFlowAnalyzer.exitValueParameter(result)?.let { graph ->
             result.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(graph))
         }
@@ -1003,7 +1002,7 @@ open class FirDeclarationsResolveTransformer(
             anonymousFunction.valueParameters.forEach { it.transformReturnTypeRef(transformer, ResolutionMode.ContextIndependent) }
         }
 
-        if (anonymousFunction.contractDescription != FirEmptyContractDescription) {
+        if (anonymousFunction.contractDescription != null) {
             anonymousFunction.runContractResolveForFunction(session, scopeSession, context)
         }
 
@@ -1108,18 +1107,14 @@ open class FirDeclarationsResolveTransformer(
     }
 
     private fun FirAnonymousFunction.computeReturnTypeRef(expected: FirResolvedTypeRef?): FirResolvedTypeRef {
-        val returnExpressions = dataFlowAnalyzer.returnExpressionsOfAnonymousFunction(this)
-        // Any lambda expression assigned to `(...) -> Unit` returns Unit if all return expressions are implicit
-        // `lambda@ { return@lambda }` always returns Unit
-        if (isLambda && expected?.type?.isUnit == true && returnExpressions.all { !it.isExplicit }) return expected
-        if (shouldReturnUnit(returnExpressions.map { it.expression })) return session.builtinTypes.unitType
-        // Here is a questionable moment where we could prefer the expected type over an inferred one.
-        // In correct code this doesn't matter, as all return expression types should be subtypes of the expected type.
-        // In incorrect code, this would change diagnostics: we can get errors either on the entire lambda, or only on its
-        // return statements. The former kind of makes more sense, but the latter is more readable.
-        val inferredFromReturnExpressions = session.typeContext.commonSuperTypeOrNull(returnExpressions.map { it.expression.resolvedType })
-        return inferredFromReturnExpressions?.let { returnTypeRef.resolvedTypeFromPrototype(it) }
-            ?: session.builtinTypes.unitType // Empty lambda returns Unit
+        return returnTypeRef.resolvedTypeFromPrototype(
+            computeReturnType(
+                session,
+                expected?.type,
+                isPassedAsFunctionArgument = false,
+                dataFlowAnalyzer.returnExpressionsOfAnonymousFunction(this),
+            )
+        )
     }
 
     private fun obtainValueParametersFromResolvedLambdaAtom(

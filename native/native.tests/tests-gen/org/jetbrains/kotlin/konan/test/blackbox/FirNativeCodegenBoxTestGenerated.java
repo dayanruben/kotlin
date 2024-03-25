@@ -100,6 +100,12 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
         runTest("compiler/testData/codegen/box/annotations/selfReferentialAnnotation.kt");
       }
 
+      @Test
+      @TestMetadata("spreadOperatorInAnnotationArguments.kt")
+      public void testSpreadOperatorInAnnotationArguments() {
+        runTest("compiler/testData/codegen/box/annotations/spreadOperatorInAnnotationArguments.kt");
+      }
+
       @Nested
       @TestMetadata("compiler/testData/codegen/box/annotations/annotatedLambda")
       @TestDataPath("$PROJECT_ROOT")
@@ -19790,6 +19796,12 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
       @TestMetadata("initializers8.kt")
       public void testInitializers8() {
         runTest("compiler/testData/codegen/box/initializers/initializers8.kt");
+      }
+
+      @Test
+      @TestMetadata("initializers9.kt")
+      public void testInitializers9() {
+        runTest("compiler/testData/codegen/box/initializers/initializers9.kt");
       }
 
       @Test
@@ -50522,6 +50534,12 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
       @TestMetadata("inlinePassthrough.kt")
       public void testInlinePassthrough() {
         runTest("compiler/testData/codegen/boxInline/suspend/inlinePassthrough.kt");
+      }
+
+      @Test
+      @TestMetadata("inlinePassthroughWithSuspendConversion.kt")
+      public void testInlinePassthroughWithSuspendConversion() {
+        runTest("compiler/testData/codegen/boxInline/suspend/inlinePassthroughWithSuspendConversion.kt");
       }
 
       @Test

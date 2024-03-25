@@ -7236,6 +7236,18 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("nonConstAnnotationConstructorParam.kt")
+        public void testNonConstAnnotationConstructorParam() {
+          runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/nonConstAnnotationConstructorParam.kt");
+        }
+
+        @Test
+        @TestMetadata("nonConstValuesInConstContext.kt")
+        public void testNonConstValuesInConstContext() {
+          runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/nonConstValuesInConstContext.kt");
+        }
+
+        @Test
         @TestMetadata("nonFinalProperty.kt")
         public void testNonFinalProperty() {
           runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/nonFinalProperty.kt");
@@ -8144,6 +8156,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("reassignmentInCatch.kt")
       public void testReassignmentInCatch() {
         runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/reassignmentInCatch.kt");
+      }
+
+      @Test
+      @TestMetadata("reassignmentInConcurrentLambdas.kt")
+      public void testReassignmentInConcurrentLambdas() {
+        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/reassignmentInConcurrentLambdas.kt");
       }
 
       @Test
@@ -11693,6 +11711,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("javaDeprecatedHidden.kt")
+      public void testJavaDeprecatedHidden() {
+        runTest("compiler/testData/diagnostics/tests/deprecated/javaDeprecatedHidden.kt");
+      }
+
+      @Test
       @TestMetadata("javaDeprecatedInheritance.kt")
       public void testJavaDeprecatedInheritance() {
         runTest("compiler/testData/diagnostics/tests/deprecated/javaDeprecatedInheritance.kt");
@@ -11872,6 +11896,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("delegationInDestructuring.kt")
       public void testDelegationInDestructuring() {
         runTest("compiler/testData/diagnostics/tests/destructuring/delegationInDestructuring.kt");
+      }
+
+      @Test
+      @TestMetadata("destructuringInInitializer.kt")
+      public void testDestructuringInInitializer() {
+        runTest("compiler/testData/diagnostics/tests/destructuring/destructuringInInitializer.kt");
       }
     }
 
@@ -24202,6 +24232,18 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("compareArrayLiteralInAnnotation.kt")
+        public void testCompareArrayLiteralInAnnotation() {
+          runTest("compiler/testData/diagnostics/tests/modifiers/const/compareArrayLiteralInAnnotation.kt");
+        }
+
+        @Test
+        @TestMetadata("compareEnums.kt")
+        public void testCompareEnums() {
+          runTest("compiler/testData/diagnostics/tests/modifiers/const/compareEnums.kt");
+        }
+
+        @Test
         @TestMetadata("complexBooleanInStringConcat_after.kt")
         public void testComplexBooleanInStringConcat_after() {
           runTest("compiler/testData/diagnostics/tests/modifiers/const/complexBooleanInStringConcat_after.kt");
@@ -24217,6 +24259,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         @TestMetadata("constInteraction.kt")
         public void testConstInteraction() {
           runTest("compiler/testData/diagnostics/tests/modifiers/const/constInteraction.kt");
+        }
+
+        @Test
+        @TestMetadata("constValGetWrongConstVal.kt")
+        public void testConstValGetWrongConstVal() {
+          runTest("compiler/testData/diagnostics/tests/modifiers/const/constValGetWrongConstVal.kt");
         }
 
         @Test
@@ -24352,6 +24400,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("typeOperator.kt")
+        public void testTypeOperator() {
+          runTest("compiler/testData/diagnostics/tests/modifiers/const/typeOperator.kt");
+        }
+
+        @Test
         @TestMetadata("types.kt")
         public void testTypes() {
           runTest("compiler/testData/diagnostics/tests/modifiers/const/types.kt");
@@ -24361,6 +24415,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         @TestMetadata("unsigned.kt")
         public void testUnsigned() {
           runTest("compiler/testData/diagnostics/tests/modifiers/const/unsigned.kt");
+        }
+
+        @Test
+        @TestMetadata("wrongTypeInStringConcatenation.kt")
+        public void testWrongTypeInStringConcatenation() {
+          runTest("compiler/testData/diagnostics/tests/modifiers/const/wrongTypeInStringConcatenation.kt");
         }
       }
 
@@ -24421,6 +24481,18 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("FalsePositiveInaccessibleGenericType.kt")
+      public void testFalsePositiveInaccessibleGenericType() {
+        runTest("compiler/testData/diagnostics/tests/multimodule/FalsePositiveInaccessibleGenericType.kt");
+      }
+
+      @Test
+      @TestMetadata("FalsePositiveInaccessibleGenericTypeWithError.kt")
+      public void testFalsePositiveInaccessibleGenericTypeWithError() {
+        runTest("compiler/testData/diagnostics/tests/multimodule/FalsePositiveInaccessibleGenericTypeWithError.kt");
+      }
+
+      @Test
       @TestMetadata("friendModule.kt")
       public void testFriendModule() {
         runTest("compiler/testData/diagnostics/tests/multimodule/friendModule.kt");
@@ -24430,6 +24502,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("friendModulePrivate.kt")
       public void testFriendModulePrivate() {
         runTest("compiler/testData/diagnostics/tests/multimodule/friendModulePrivate.kt");
+      }
+
+      @Test
+      @TestMetadata("InaccessibleGenericTypeVariousCases.kt")
+      public void testInaccessibleGenericTypeVariousCases() {
+        runTest("compiler/testData/diagnostics/tests/multimodule/InaccessibleGenericTypeVariousCases.kt");
       }
 
       @Test
@@ -33241,6 +33319,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("samConversionToGenericWrongNullabilityAfter.kt")
+      public void testSamConversionToGenericWrongNullabilityAfter() {
+        runTest("compiler/testData/diagnostics/tests/samConversions/samConversionToGenericWrongNullabilityAfter.kt");
+      }
+
+      @Test
       @TestMetadata("samConversionWithCondition.kt")
       public void testSamConversionWithCondition() {
         runTest("compiler/testData/diagnostics/tests/samConversions/samConversionWithCondition.kt");
@@ -34110,6 +34194,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("functionContractScript.kts")
       public void testFunctionContractScript() {
         runTest("compiler/testData/diagnostics/tests/script/functionContractScript.kts");
+      }
+
+      @Test
+      @TestMetadata("implicitResolveWithJump.kts")
+      public void testImplicitResolveWithJump() {
+        runTest("compiler/testData/diagnostics/tests/script/implicitResolveWithJump.kts");
       }
 
       @Test
@@ -38701,6 +38791,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("notConsideredGetter.kt")
+      public void testNotConsideredGetter() {
+        runTest("compiler/testData/diagnostics/tests/testWithModifiedMockJdk/notConsideredGetter.kt");
+      }
+
+      @Test
       @TestMetadata("notConsideredMethod.kt")
       public void testNotConsideredMethod() {
         runTest("compiler/testData/diagnostics/tests/testWithModifiedMockJdk/notConsideredMethod.kt");
@@ -38949,9 +39045,33 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("changeInFirstOverloadResolution.kt")
+      public void testChangeInFirstOverloadResolution() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/changeInFirstOverloadResolution.kt");
+      }
+
+      @Test
+      @TestMetadata("globalExtensionForHiddenInDeclaringMethod.kt")
+      public void testGlobalExtensionForHiddenInDeclaringMethod() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/globalExtensionForHiddenInDeclaringMethod.kt");
+      }
+
+      @Test
+      @TestMetadata("hiddenInDeclaringMethods.kt")
+      public void testHiddenInDeclaringMethods() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/hiddenInDeclaringMethods.kt");
+      }
+
+      @Test
       @TestMetadata("implementationsForSequencedCollection.kt")
       public void testImplementationsForSequencedCollection() {
         runTest("compiler/testData/diagnostics/tests/testsWithJava21/implementationsForSequencedCollection.kt");
+      }
+
+      @Test
+      @TestMetadata("memberExtensionForHiddenInDeclaringMethod.kt")
+      public void testMemberExtensionForHiddenInDeclaringMethod() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/memberExtensionForHiddenInDeclaringMethod.kt");
       }
 
       @Test
@@ -38989,6 +39109,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
     @TestMetadata("compiler/testData/diagnostics/tests/thisAndSuper")
     @TestDataPath("$PROJECT_ROOT")
     public class ThisAndSuper {
+      @Test
+      @TestMetadata("aliasedSupertype.kt")
+      public void testAliasedSupertype() {
+        runTest("compiler/testData/diagnostics/tests/thisAndSuper/aliasedSupertype.kt");
+      }
+
       @Test
       public void testAllFilesPresentInThisAndSuper() {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/thisAndSuper"), Pattern.compile("^(.+)\\.(kt|kts)$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);

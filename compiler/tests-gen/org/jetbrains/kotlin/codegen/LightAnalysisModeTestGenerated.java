@@ -353,6 +353,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/annotations/singleAssignmentToVarargInAnnotation.kt");
     }
 
+    @TestMetadata("spreadOperatorInAnnotationArguments.kt")
+    public void testSpreadOperatorInAnnotationArguments() {
+      runTest("compiler/testData/codegen/box/annotations/spreadOperatorInAnnotationArguments.kt");
+    }
+
     @TestMetadata("suppressInvisibleMember.kt")
     public void testSuppressInvisibleMember() {
       runTest("compiler/testData/codegen/box/annotations/suppressInvisibleMember.kt");
@@ -4343,6 +4348,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestMetadata("kt52270.kt")
     public void testKt52270() {
       runTest("compiler/testData/codegen/box/callableReference/kt52270.kt");
+    }
+
+    @TestMetadata("kt62550.kt")
+    public void testKt62550() {
+      runTest("compiler/testData/codegen/box/callableReference/kt62550.kt");
     }
 
     @TestMetadata("nested.kt")
@@ -20364,6 +20374,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
   @TestDataPath("$PROJECT_ROOT")
   @RunWith(JUnit3RunnerWithInners.class)
   public static class Initializers extends AbstractLightAnalysisModeTest {
+    @TestMetadata("initializers9.kt")
+    public void ignoreInitializers9() {
+      runTest("compiler/testData/codegen/box/initializers/initializers9.kt");
+    }
+
     private void runTest(String testDataFilePath) {
       KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
     }

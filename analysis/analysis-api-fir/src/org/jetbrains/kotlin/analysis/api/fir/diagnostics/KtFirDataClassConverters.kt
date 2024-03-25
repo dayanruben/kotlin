@@ -424,6 +424,13 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.MISSING_DEPENDENCY_CLASS_IN_EXPRESSION_TYPE) { firDiagnostic ->
+        MissingDependencyClassInExpressionTypeImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.MISSING_DEPENDENCY_SUPERCLASS) { firDiagnostic ->
         MissingDependencySuperclassImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
@@ -4030,6 +4037,13 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.NON_INLINE_MEMBER_VAL_INITIALIZATION) { firDiagnostic ->
+        NonInlineMemberValInitializationImpl(
+            firSymbolBuilder.variableLikeBuilder.buildVariableSymbol(firDiagnostic.a),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.SETTER_PROJECTED_OUT) { firDiagnostic ->
         SetterProjectedOutImpl(
             firSymbolBuilder.variableLikeBuilder.buildVariableSymbol(firDiagnostic.a),
@@ -5230,6 +5244,14 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
             firDiagnostic.c,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.TYPE_MISMATCH_WHEN_FLEXIBILITY_CHANGES) { firDiagnostic ->
+        TypeMismatchWhenFlexibilityChangesImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
