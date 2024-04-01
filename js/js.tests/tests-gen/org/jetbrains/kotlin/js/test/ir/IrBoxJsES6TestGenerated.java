@@ -1745,6 +1745,12 @@ public class IrBoxJsES6TestGenerated extends AbstractIrBoxJsES6Test {
     }
 
     @Test
+    @TestMetadata("dynamicArrayInc.kt")
+    public void testDynamicArrayInc() {
+      runTest("js/js.translator/testData/box/dynamic/dynamicArrayInc.kt");
+    }
+
+    @Test
     @TestMetadata("dynamicArraySetWithLambda.kt")
     public void testDynamicArraySetWithLambda() {
       runTest("js/js.translator/testData/box/dynamic/dynamicArraySetWithLambda.kt");
@@ -3194,6 +3200,12 @@ public class IrBoxJsES6TestGenerated extends AbstractIrBoxJsES6Test {
     @TestMetadata("exportProtectedMembers.kt")
     public void testExportProtectedMembers() {
       runTest("js/js.translator/testData/box/export/exportProtectedMembers.kt");
+    }
+
+    @Test
+    @TestMetadata("exportWithJsStatic.kt")
+    public void testExportWithJsStatic() {
+      runTest("js/js.translator/testData/box/export/exportWithJsStatic.kt");
     }
 
     @Test

@@ -1678,6 +1678,12 @@ public class FirPsiDiagnosticTestGenerated extends AbstractFirPsiDiagnosticTest 
       }
 
       @Test
+      @TestMetadata("exctlyOnceCallBetweenUnrelatedLambdas.kt")
+      public void testExctlyOnceCallBetweenUnrelatedLambdas() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/contracts/exctlyOnceCallBetweenUnrelatedLambdas.kt");
+      }
+
+      @Test
       @TestMetadata("genericContract.kt")
       public void testGenericContract() {
         runTest("compiler/fir/analysis-tests/testData/resolve/contracts/genericContract.kt");
@@ -6032,6 +6038,12 @@ public class FirPsiDiagnosticTestGenerated extends AbstractFirPsiDiagnosticTest 
         @TestMetadata("notIsNullOrEmpty.kt")
         public void testNotIsNullOrEmpty() {
           runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/contracts/fromLibrary/notIsNullOrEmpty.kt");
+        }
+
+        @Test
+        @TestMetadata("suspendCallsInPlace.kt")
+        public void testSuspendCallsInPlace() {
+          runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/contracts/fromLibrary/suspendCallsInPlace.kt");
         }
       }
 

@@ -184,8 +184,8 @@ sealed class FirOverrideChecker(mppKind: MppCheckerKind) : FirAbstractOverrideCh
         else -> FirErrors.CANNOT_WEAKEN_ACCESS_PRIVILEGE_WARNING
     }
 
-    private val FirCallableSymbol<*>.wouldMissDiagnosticInK1 get() =
-        this is FirPropertyAccessorSymbol && propertySymbol.isIntersectionOverride
+    private val FirCallableSymbol<*>.wouldMissDiagnosticInK1: Boolean
+        get() = this is FirPropertyAccessorSymbol && propertySymbol.isIntersectionOverride && visibility != propertySymbol.visibility
 
     private fun checkModality(
         overriddenSymbols: List<FirCallableSymbol<*>>,
@@ -223,7 +223,7 @@ sealed class FirOverrideChecker(mppKind: MppCheckerKind) : FirAbstractOverrideCh
             Visibilities.compare(visibility, pair.second) ?: Int.MIN_VALUE
         }
 
-        if (this is FirPropertySymbol) {
+        if (this is FirPropertySymbol && canDelegateVisibilityConsistencyChecksToAccessors) {
             getterSymbol?.checkVisibility(
                 containingClass,
                 reporter,
@@ -273,6 +273,16 @@ sealed class FirOverrideChecker(mppKind: MppCheckerKind) : FirAbstractOverrideCh
             reporter.reportOn(source, FirErrors.CANNOT_OVERRIDE_INVISIBLE_MEMBER, this, overriddenSymbols.first(), context)
         }
     }
+
+    /**
+     * Properties that are intersection overrides are created lightweight:
+     * they only contain accessors if they have visibilities that are different
+     * from the property visibility
+     *
+     * @see org.jetbrains.kotlin.fir.scopes.impl.FirFakeOverrideGenerator.buildCopyIfNeeded
+     */
+    private val FirPropertySymbol.canDelegateVisibilityConsistencyChecksToAccessors: Boolean
+        get() = getterSymbol != null || setterSymbol != null
 
     private fun FirCallableSymbol<*>.checkDeprecation(
         reporter: DiagnosticReporter,

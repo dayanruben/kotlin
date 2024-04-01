@@ -4440,6 +4440,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/callableReference/referenceToTypealiasConstructorInLet.kt");
     }
 
+    @TestMetadata("returnNullFromFlexibleUnitLambda.kt")
+    public void testReturnNullFromFlexibleUnitLambda() {
+      runTest("compiler/testData/codegen/box/callableReference/returnNullFromFlexibleUnitLambda.kt");
+    }
+
     @TestMetadata("staticMethod.kt")
     public void testStaticMethod() {
       runTest("compiler/testData/codegen/box/callableReference/staticMethod.kt");
@@ -7770,6 +7775,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/collections/charSequence.kt");
     }
 
+    @TestMetadata("clashWithInternalMapMethod.kt")
+    public void testClashWithInternalMapMethod() {
+      runTest("compiler/testData/codegen/box/collections/clashWithInternalMapMethod.kt");
+    }
+
     @TestMetadata("implementCollectionThroughKotlin.kt")
     public void testImplementCollectionThroughKotlin() {
       runTest("compiler/testData/codegen/box/collections/implementCollectionThroughKotlin.kt");
@@ -7808,6 +7818,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestMetadata("irrelevantImplCharSequenceKotlin.kt")
     public void testIrrelevantImplCharSequenceKotlin() {
       runTest("compiler/testData/codegen/box/collections/irrelevantImplCharSequenceKotlin.kt");
+    }
+
+    @TestMetadata("irrelevantImplCharSequenceWithExtraSupertype.kt")
+    public void testIrrelevantImplCharSequenceWithExtraSupertype() {
+      runTest("compiler/testData/codegen/box/collections/irrelevantImplCharSequenceWithExtraSupertype.kt");
     }
 
     @TestMetadata("irrelevantImplMutableList.kt")

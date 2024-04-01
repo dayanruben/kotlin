@@ -10,11 +10,11 @@ import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.test.framework.base.AbstractAnalysisApiBasedTest
 import org.jetbrains.kotlin.analysis.test.framework.directives.ModificationEventKind
 import org.jetbrains.kotlin.analysis.test.framework.directives.publishWildcardModificationEventsByDirective
-import org.jetbrains.kotlin.analysis.test.framework.project.structure.ktModuleProvider
+import org.jetbrains.kotlin.analysis.test.framework.project.structure.ktTestModuleStructure
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisApiTestConfigurator
-import org.jetbrains.kotlin.test.services.TestModuleStructure
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.assertions
+import org.jetbrains.kotlin.test.services.moduleStructure
 
 /**
  * Checks that sessions are invalidated after publishing modification events. The type of published modification event depends on the value
@@ -27,11 +27,11 @@ import org.jetbrains.kotlin.test.services.assertions
 abstract class AbstractSessionInvalidationTest : AbstractAnalysisApiBasedTest() {
     protected abstract val modificationEventKind: ModificationEventKind
 
-    override fun doTestByModuleStructure(moduleStructure: TestModuleStructure, testServices: TestServices) {
-        val allKtModules = testServices.ktModuleProvider.getModuleStructure().allKtModules()
+    override fun doTest(testServices: TestServices) {
+        val allKtModules = testServices.ktTestModuleStructure.mainModules.map { it.ktModule }
 
         val sessionsBeforeModification = getSessionsFor(allKtModules)
-        moduleStructure.publishWildcardModificationEventsByDirective(modificationEventKind, testServices)
+        testServices.ktTestModuleStructure.publishWildcardModificationEventsByDirective(modificationEventKind)
         val sessionsAfterModification = getSessionsFor(allKtModules)
 
         val invalidatedSessions = buildSet {
@@ -39,7 +39,7 @@ abstract class AbstractSessionInvalidationTest : AbstractAnalysisApiBasedTest() 
             removeAll(sessionsAfterModification)
         }
 
-        checkInvalidatedModules(moduleStructure, invalidatedSessions, testServices)
+        checkInvalidatedModules(invalidatedSessions, testServices)
         checkSessionsMarkedInvalid(invalidatedSessions, testServices)
     }
 
@@ -50,11 +50,10 @@ abstract class AbstractSessionInvalidationTest : AbstractAnalysisApiBasedTest() 
     }
 
     private fun checkInvalidatedModules(
-        testModuleStructure: TestModuleStructure,
         invalidatedSessions: Set<LLFirSession>,
         testServices: TestServices,
     ) {
-        val testModuleNames = testModuleStructure.modules.map { it.name }
+        val testModuleNames = testServices.moduleStructure.modules.map { it.name }
 
         val invalidatedModuleDescriptions = invalidatedSessions
             .map { it.ktModule.toString() }

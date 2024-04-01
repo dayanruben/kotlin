@@ -5,6 +5,7 @@
 package org.jetbrains.kotlin.gradle
 
 import org.gradle.api.logging.LogLevel
+import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.cli.common.arguments.K2NativeCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.gradle.plugin.ProjectLocalConfigurations
@@ -499,7 +500,12 @@ open class NewMultiplatformIT : BaseGradleIT() {
                 )
             }
 
-            build("clean", "build", "run", "shadowJar") {
+            build(
+                "clean", "build", "run", "shadowJar",
+                options = defaultBuildOptions().suppressDeprecationWarningsOn("KT-66542: withJava() produces deprecation warning") {
+                    GradleVersion.version(chooseWrapperVersionOrFinishTest()) >= GradleVersion.version(TestVersions.Gradle.G_8_7)
+                }
+            ) {
                 assertSuccessful()
                 val expectedMainClasses =
                     classesWithoutJava + setOf(
@@ -1094,7 +1100,7 @@ open class NewMultiplatformIT : BaseGradleIT() {
             appProject.setupWorkingDir(false)
             appProject.projectDir.copyRecursively(projectDir.resolve("sample-app"))
 
-            gradleSettingsScript().writeText("include 'sample-app'") // disables feature preview 'GRADLE_METADATA', resets rootProject name
+            gradleSettingsScript().writeText("include 'sample-app'")
             gradleBuildScript("sample-app").modify {
                 it.replace("'com.example:sample-lib:1.0'", "project(':')") + "\n" + """
                 apply plugin: 'maven-publish'
@@ -1108,7 +1114,6 @@ open class NewMultiplatformIT : BaseGradleIT() {
                 """.trimIndent()
             }
 
-            gradleSettingsScript().appendText("\nenableFeaturePreview(\"GRADLE_METADATA\")")
             // Add a dependency that is resolved with metadata:
             gradleBuildScript("sample-app").appendText(
                 "\n" + """

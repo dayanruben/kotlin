@@ -646,6 +646,30 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
     }
 
     @Test
+    @TestMetadata("intersectedVisibilitiesAccessorDifferences_Huge.kt")
+    public void testIntersectedVisibilitiesAccessorDifferences_Huge() {
+      runTest("compiler/testData/diagnostics/tests/intersectedVisibilitiesAccessorDifferences_Huge.kt");
+    }
+
+    @Test
+    @TestMetadata("intersectedVisibilitiesAccessorDifferences_Small.kt")
+    public void testIntersectedVisibilitiesAccessorDifferences_Small() {
+      runTest("compiler/testData/diagnostics/tests/intersectedVisibilitiesAccessorDifferences_Small.kt");
+    }
+
+    @Test
+    @TestMetadata("intersectedVisibilitiesAccessorDifferences_Useful1.kt")
+    public void testIntersectedVisibilitiesAccessorDifferences_Useful1() {
+      runTest("compiler/testData/diagnostics/tests/intersectedVisibilitiesAccessorDifferences_Useful1.kt");
+    }
+
+    @Test
+    @TestMetadata("intersectedVisibilitiesAccessorDifferences_Useful2.kt")
+    public void testIntersectedVisibilitiesAccessorDifferences_Useful2() {
+      runTest("compiler/testData/diagnostics/tests/intersectedVisibilitiesAccessorDifferences_Useful2.kt");
+    }
+
+    @Test
     @TestMetadata("intersectedVisibilitiesForAbstractPropertyAccessors.kt")
     public void testIntersectedVisibilitiesForAbstractPropertyAccessors() {
       runTest("compiler/testData/diagnostics/tests/intersectedVisibilitiesForAbstractPropertyAccessors.kt");
@@ -1687,6 +1711,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
     @TestMetadata("ValAndFunOverrideCompatibilityClash.kt")
     public void testValAndFunOverrideCompatibilityClash() {
       runTest("compiler/testData/diagnostics/tests/ValAndFunOverrideCompatibilityClash.kt");
+    }
+
+    @Test
+    @TestMetadata("varOverriddenByValThroughIntersection.kt")
+    public void testVarOverriddenByValThroughIntersection() {
+      runTest("compiler/testData/diagnostics/tests/varOverriddenByValThroughIntersection.kt");
     }
 
     @Test
@@ -9420,6 +9450,100 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
     }
 
     @Nested
+    @TestMetadata("compiler/testData/diagnostics/tests/dataClassNonPublicConstructor")
+    @TestDataPath("$PROJECT_ROOT")
+    public class DataClassNonPublicConstructor {
+      @Test
+      public void testAllFilesPresentInDataClassNonPublicConstructor() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/dataClassNonPublicConstructor"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true, "multiplatform");
+      }
+
+      @Test
+      @TestMetadata("deprecationPhase1_incompatibleAnnotations.kt")
+      public void testDeprecationPhase1_incompatibleAnnotations() {
+        runTest("compiler/testData/diagnostics/tests/dataClassNonPublicConstructor/deprecationPhase1_incompatibleAnnotations.kt");
+      }
+
+      @Test
+      @TestMetadata("deprecationPhase1_optIn.kt")
+      public void testDeprecationPhase1_optIn() {
+        runTest("compiler/testData/diagnostics/tests/dataClassNonPublicConstructor/deprecationPhase1_optIn.kt");
+      }
+
+      @Test
+      @TestMetadata("deprecationPhase1_optOut.kt")
+      public void testDeprecationPhase1_optOut() {
+        runTest("compiler/testData/diagnostics/tests/dataClassNonPublicConstructor/deprecationPhase1_optOut.kt");
+      }
+
+      @Test
+      @TestMetadata("deprecationPhase1_warning.kt")
+      public void testDeprecationPhase1_warning() {
+        runTest("compiler/testData/diagnostics/tests/dataClassNonPublicConstructor/deprecationPhase1_warning.kt");
+      }
+
+      @Test
+      @TestMetadata("deprecationPhase1_wrongAnnotationTarget.kt")
+      public void testDeprecationPhase1_wrongAnnotationTarget() {
+        runTest("compiler/testData/diagnostics/tests/dataClassNonPublicConstructor/deprecationPhase1_wrongAnnotationTarget.kt");
+      }
+
+      @Test
+      @TestMetadata("deprecationPhase2_customCopy.kt")
+      public void testDeprecationPhase2_customCopy() {
+        runTest("compiler/testData/diagnostics/tests/dataClassNonPublicConstructor/deprecationPhase2_customCopy.kt");
+      }
+
+      @Test
+      @TestMetadata("deprecationPhase2_internalConstructor.kt")
+      public void testDeprecationPhase2_internalConstructor() {
+        runTest("compiler/testData/diagnostics/tests/dataClassNonPublicConstructor/deprecationPhase2_internalConstructor.kt");
+      }
+
+      @Test
+      @TestMetadata("deprecationPhase2_optIn.kt")
+      public void testDeprecationPhase2_optIn() {
+        runTest("compiler/testData/diagnostics/tests/dataClassNonPublicConstructor/deprecationPhase2_optIn.kt");
+      }
+
+      @Test
+      @TestMetadata("deprecationPhase2_optOut.kt")
+      public void testDeprecationPhase2_optOut() {
+        runTest("compiler/testData/diagnostics/tests/dataClassNonPublicConstructor/deprecationPhase2_optOut.kt");
+      }
+
+      @Test
+      @TestMetadata("deprecationPhase2_privateConstructor.kt")
+      public void testDeprecationPhase2_privateConstructor() {
+        runTest("compiler/testData/diagnostics/tests/dataClassNonPublicConstructor/deprecationPhase2_privateConstructor.kt");
+      }
+
+      @Test
+      @TestMetadata("deprecationPhase2_protectedConstructor.kt")
+      public void testDeprecationPhase2_protectedConstructor() {
+        runTest("compiler/testData/diagnostics/tests/dataClassNonPublicConstructor/deprecationPhase2_protectedConstructor.kt");
+      }
+
+      @Test
+      @TestMetadata("deprecationPhase3_invisibleReference.kt")
+      public void testDeprecationPhase3_invisibleReference() {
+        runTest("compiler/testData/diagnostics/tests/dataClassNonPublicConstructor/deprecationPhase3_invisibleReference.kt");
+      }
+
+      @Test
+      @TestMetadata("deprecationPhase3_optIn.kt")
+      public void testDeprecationPhase3_optIn() {
+        runTest("compiler/testData/diagnostics/tests/dataClassNonPublicConstructor/deprecationPhase3_optIn.kt");
+      }
+
+      @Test
+      @TestMetadata("deprecationPhase3_optOut.kt")
+      public void testDeprecationPhase3_optOut() {
+        runTest("compiler/testData/diagnostics/tests/dataClassNonPublicConstructor/deprecationPhase3_optOut.kt");
+      }
+    }
+
+    @Nested
     @TestMetadata("compiler/testData/diagnostics/tests/dataClasses")
     @TestDataPath("$PROJECT_ROOT")
     public class DataClasses {
@@ -16421,6 +16545,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("elvisWithNothingInRhs.kt")
+      public void testElvisWithNothingInRhs() {
+        runTest("compiler/testData/diagnostics/tests/inference/elvisWithNothingInRhs.kt");
+      }
+
+      @Test
       @TestMetadata("equalitySubstitutionInsideNonInvariantType.kt")
       public void testEqualitySubstitutionInsideNonInvariantType() {
         runTest("compiler/testData/diagnostics/tests/inference/equalitySubstitutionInsideNonInvariantType.kt");
@@ -17943,6 +18073,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         @TestMetadata("expectedTypeMismatchWithInVariance.kt")
         public void testExpectedTypeMismatchWithInVariance() {
           runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/expectedTypeMismatchWithInVariance.kt");
+        }
+
+        @Test
+        @TestMetadata("genericWildcardUpperBound.kt")
+        public void testGenericWildcardUpperBound() {
+          runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/genericWildcardUpperBound.kt");
         }
 
         @Test
@@ -21655,6 +21791,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("uninitializedSuperType.kt")
+      public void testUninitializedSuperType() {
+        runTest("compiler/testData/diagnostics/tests/inner/uninitializedSuperType.kt");
+      }
+
+      @Test
       @TestMetadata("visibility.kt")
       public void testVisibility() {
         runTest("compiler/testData/diagnostics/tests/inner/visibility.kt");
@@ -25080,6 +25222,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         }
 
         @Test
+        @TestMetadata("javaOverrideOfKotlinNamed.kt")
+        public void testJavaOverrideOfKotlinNamed() {
+          runTest("compiler/testData/diagnostics/tests/namedArguments/mixedNamedPosition/javaOverrideOfKotlinNamed.kt");
+        }
+
+        @Test
         @TestMetadata("oldInference.kt")
         public void testOldInference() {
           runTest("compiler/testData/diagnostics/tests/namedArguments/mixedNamedPosition/oldInference.kt");
@@ -25095,6 +25243,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         @TestMetadata("simple.kt")
         public void testSimple() {
           runTest("compiler/testData/diagnostics/tests/namedArguments/mixedNamedPosition/simple.kt");
+        }
+
+        @Test
+        @TestMetadata("throwableNamedArguments.kt")
+        public void testThrowableNamedArguments() {
+          runTest("compiler/testData/diagnostics/tests/namedArguments/mixedNamedPosition/throwableNamedArguments.kt");
         }
 
         @Test
@@ -31107,6 +31261,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("samConversionToGenericWrongNullabilityAfter.kt")
+      public void testSamConversionToGenericWrongNullabilityAfter() {
+        runTest("compiler/testData/diagnostics/tests/samConversions/samConversionToGenericWrongNullabilityAfter.kt");
+      }
+
+      @Test
       @TestMetadata("samConversionWithCondition.kt")
       public void testSamConversionWithCondition() {
         runTest("compiler/testData/diagnostics/tests/samConversions/samConversionWithCondition.kt");
@@ -34672,6 +34832,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         }
 
         @Test
+        @TestMetadata("otherModuleOpenVal.kt")
+        public void testOtherModuleOpenVal() {
+          runTest("compiler/testData/diagnostics/tests/smartCasts/publicVals/otherModuleOpenVal.kt");
+        }
+
+        @Test
         @TestMetadata("protected.kt")
         public void testProtected() {
           runTest("compiler/testData/diagnostics/tests/smartCasts/publicVals/protected.kt");
@@ -35097,6 +35263,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         @TestMetadata("staticJavaFieldFromSameModule.kt")
         public void testStaticJavaFieldFromSameModule() {
           runTest("compiler/testData/diagnostics/tests/smartCasts/variables/staticJavaFieldFromSameModule.kt");
+        }
+
+        @Test
+        @TestMetadata("unstableAliasing.kt")
+        public void testUnstableAliasing() {
+          runTest("compiler/testData/diagnostics/tests/smartCasts/variables/unstableAliasing.kt");
         }
 
         @Test

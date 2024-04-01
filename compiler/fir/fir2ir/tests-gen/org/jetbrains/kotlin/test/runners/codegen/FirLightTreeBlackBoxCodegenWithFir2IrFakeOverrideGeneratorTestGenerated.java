@@ -5094,6 +5094,12 @@ public class FirLightTreeBlackBoxCodegenWithFir2IrFakeOverrideGeneratorTestGener
     }
 
     @Test
+    @TestMetadata("returnNullFromFlexibleUnitLambda.kt")
+    public void testReturnNullFromFlexibleUnitLambda() {
+      runTest("compiler/testData/codegen/box/callableReference/returnNullFromFlexibleUnitLambda.kt");
+    }
+
+    @Test
     @TestMetadata("staticMethod.kt")
     public void testStaticMethod() {
       runTest("compiler/testData/codegen/box/callableReference/staticMethod.kt");
@@ -8922,6 +8928,12 @@ public class FirLightTreeBlackBoxCodegenWithFir2IrFakeOverrideGeneratorTestGener
     }
 
     @Test
+    @TestMetadata("clashWithInternalMapMethod.kt")
+    public void testClashWithInternalMapMethod() {
+      runTest("compiler/testData/codegen/box/collections/clashWithInternalMapMethod.kt");
+    }
+
+    @Test
     @TestMetadata("implementCollectionThroughKotlin.kt")
     public void testImplementCollectionThroughKotlin() {
       runTest("compiler/testData/codegen/box/collections/implementCollectionThroughKotlin.kt");
@@ -8967,6 +8979,12 @@ public class FirLightTreeBlackBoxCodegenWithFir2IrFakeOverrideGeneratorTestGener
     @TestMetadata("irrelevantImplCharSequenceKotlin.kt")
     public void testIrrelevantImplCharSequenceKotlin() {
       runTest("compiler/testData/codegen/box/collections/irrelevantImplCharSequenceKotlin.kt");
+    }
+
+    @Test
+    @TestMetadata("irrelevantImplCharSequenceWithExtraSupertype.kt")
+    public void testIrrelevantImplCharSequenceWithExtraSupertype() {
+      runTest("compiler/testData/codegen/box/collections/irrelevantImplCharSequenceWithExtraSupertype.kt");
     }
 
     @Test

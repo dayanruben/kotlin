@@ -1140,6 +1140,11 @@ public class CliTestGenerated extends AbstractCliTest {
       runTest("compiler/testData/cli/jvm/recordAsSingleFileRoot.args");
     }
 
+    @TestMetadata("reportAllWarnings.args")
+    public void testReportAllWarnings() {
+      runTest("compiler/testData/cli/jvm/reportAllWarnings.args");
+    }
+
     @TestMetadata("reportInternalDiagnosticNames.args")
     public void testReportInternalDiagnosticNames() {
       runTest("compiler/testData/cli/jvm/reportInternalDiagnosticNames.args");
@@ -1255,6 +1260,11 @@ public class CliTestGenerated extends AbstractCliTest {
       runTest("compiler/testData/cli/jvm/useDeclarationThatWasExperimentalWithoutMarker.args");
     }
 
+    @TestMetadata("version.args")
+    public void testVersion() {
+      runTest("compiler/testData/cli/jvm/version.args");
+    }
+
     @TestMetadata("warningJdkWithNoJdk.args")
     public void testWarningJdkWithNoJdk() {
       runTest("compiler/testData/cli/jvm/warningJdkWithNoJdk.args");
@@ -1341,6 +1351,11 @@ public class CliTestGenerated extends AbstractCliTest {
 
     public void testAllFilesPresentInJs() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/cli/js"), Pattern.compile("^(.+)\\.args$"), null, false);
+    }
+
+    @TestMetadata("compilationErrorConstDivByZero.args")
+    public void testCompilationErrorConstDivByZero() {
+      runTest("compiler/testData/cli/js/compilationErrorConstDivByZero.args");
     }
 
     @TestMetadata("compilationErrorK2.args")
