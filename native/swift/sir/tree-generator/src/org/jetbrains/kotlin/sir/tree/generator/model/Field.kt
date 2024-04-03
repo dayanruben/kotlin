@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -10,17 +10,13 @@ import org.jetbrains.kotlin.generators.tree.ListField
 
 abstract class Field(
     override val name: String,
-    override var isMutable: Boolean
-) : AbstractField<Field>(), AbstractFieldWithDefaultValue<Field> {
+    override var isMutable: Boolean,
+) : AbstractField<Field>() {
 
     override val origin: Field
         get() = this
 
-    override var withGetter: Boolean = false
-
     override var customSetter: String? = null
-
-    override var defaultValueInImplementation: String? = null
 
     override var defaultValueInBuilder: String? = null
 
@@ -38,9 +34,7 @@ abstract class Field(
 
     override fun updateFieldsInCopy(copy: Field) {
         super.updateFieldsInCopy(copy)
-        copy.withGetter = withGetter
         copy.customSetter = customSetter
-        copy.defaultValueInImplementation = defaultValueInImplementation
         copy.isFinal = isFinal
     }
 }

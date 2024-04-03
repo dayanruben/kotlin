@@ -311,6 +311,12 @@ private fun List<FirAnnotation>.extractDeprecationAnnotationInfoPerUseSite(
     }
 }
 
+private fun FirAnnotation.getStringArgument(name: Name): String? {
+    return findArgumentByName(name)?.let { expression ->
+        (expression as? FirLiteralExpression<*>)?.value as? String
+    }
+}
+
 private fun FirAnnotation.getFirstArgumentStringIfNotNamed(): String? {
     if (this !is FirAnnotationCall) return null
     val firstArgument = argumentList.arguments.firstOrNull() ?: return null
@@ -321,6 +327,7 @@ private fun FirAnnotation.getFirstArgumentStringIfNotNamed(): String? {
 fun FirBasedSymbol<*>.isDeprecationLevelHidden(languageVersionSettings: LanguageVersionSettings): Boolean =
     when (this) {
         is FirCallableSymbol<*> -> getDeprecation(languageVersionSettings)?.all?.deprecationLevel == DeprecationLevelValue.HIDDEN
+        is FirClassLikeSymbol<*> -> getOwnDeprecation(languageVersionSettings)?.all?.deprecationLevel == DeprecationLevelValue.HIDDEN
         else -> false
     }
 

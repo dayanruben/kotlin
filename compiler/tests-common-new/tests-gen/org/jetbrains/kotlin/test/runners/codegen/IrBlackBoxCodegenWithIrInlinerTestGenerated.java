@@ -40228,6 +40228,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
     }
 
     @Test
+    @TestMetadata("charToByte.kt")
+    public void testCharToByte() {
+      runTest("compiler/testData/codegen/box/primitiveTypes/charToByte.kt");
+    }
+
+    @Test
     @TestMetadata("comparisonWithNaN.kt")
     public void testComparisonWithNaN() {
       runTest("compiler/testData/codegen/box/primitiveTypes/comparisonWithNaN.kt");
@@ -51352,6 +51358,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         }
 
         @Test
+        @TestMetadata("unusedGenericType.kt")
+        public void testUnusedGenericType() {
+          runTest("compiler/testData/codegen/box/reflection/properties/localDelegated/unusedGenericType.kt");
+        }
+
+        @Test
         @TestMetadata("variableOfGenericType.kt")
         public void testVariableOfGenericType() {
           runTest("compiler/testData/codegen/box/reflection/properties/localDelegated/variableOfGenericType.kt");
@@ -53407,6 +53419,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
     @TestMetadata("samInterfaceTypeParameterErasure.kt")
     public void testSamInterfaceTypeParameterErasure() {
       runTest("compiler/testData/codegen/box/sam/samInterfaceTypeParameterErasure.kt");
+    }
+
+    @Test
+    @TestMetadata("samWithInferenceToDefaultBounds.kt")
+    public void testSamWithInferenceToDefaultBounds() {
+      runTest("compiler/testData/codegen/box/sam/samWithInferenceToDefaultBounds.kt");
     }
 
     @Test

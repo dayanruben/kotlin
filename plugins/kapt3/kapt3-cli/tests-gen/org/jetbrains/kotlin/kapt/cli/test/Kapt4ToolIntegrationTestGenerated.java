@@ -24,6 +24,12 @@ public class Kapt4ToolIntegrationTestGenerated extends AbstractKapt4ToolIntegrat
   }
 
   @Test
+  @TestMetadata("aptError")
+  public void testAptError() {
+    runTest("plugins/kapt3/kapt3-cli/testData/integration-kapt4/aptError/");
+  }
+
+  @Test
   @TestMetadata("argfile")
   public void testArgfile() {
     runTest("plugins/kapt3/kapt3-cli/testData/integration-kapt4/argfile/");
@@ -42,6 +48,12 @@ public class Kapt4ToolIntegrationTestGenerated extends AbstractKapt4ToolIntegrat
   }
 
   @Test
+  @TestMetadata("defaultMethods")
+  public void testDefaultMethods() {
+    runTest("plugins/kapt3/kapt3-cli/testData/integration-kapt4/defaultMethods/");
+  }
+
+  @Test
   @TestMetadata("defaultMethodsAllCompatibilityNoWarning")
   public void testDefaultMethodsAllCompatibilityNoWarning() {
     runTest("plugins/kapt3/kapt3-cli/testData/integration-kapt4/defaultMethodsAllCompatibilityNoWarning/");
@@ -51,12 +63,6 @@ public class Kapt4ToolIntegrationTestGenerated extends AbstractKapt4ToolIntegrat
   @TestMetadata("defaultMethodsAllNoWarning")
   public void testDefaultMethodsAllNoWarning() {
     runTest("plugins/kapt3/kapt3-cli/testData/integration-kapt4/defaultMethodsAllNoWarning/");
-  }
-
-  @Test
-  @TestMetadata("defaultMethodsWarning")
-  public void testDefaultMethodsWarning() {
-    runTest("plugins/kapt3/kapt3-cli/testData/integration-kapt4/defaultMethodsWarning/");
   }
 
   @Test

@@ -23360,6 +23360,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         }
 
         @Test
+        @TestMetadata("javaSamTypeWithRecursionInBounds.kt")
+        public void testJavaSamTypeWithRecursionInBounds() {
+          runTest("compiler/testData/diagnostics/tests/j+k/samByProjectedType/javaSamTypeWithRecursionInBounds.kt");
+        }
+
+        @Test
         @TestMetadata("noAdapterBecuaseOfRecursiveUpperBound.kt")
         public void testNoAdapterBecuaseOfRecursiveUpperBound() {
           runTest("compiler/testData/diagnostics/tests/j+k/samByProjectedType/noAdapterBecuaseOfRecursiveUpperBound.kt");
@@ -39294,6 +39300,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       @TestMetadata("ExhaustiveReturnThrow.kt")
       public void testExhaustiveReturnThrow() {
         runTest("compiler/testData/diagnostics/tests/when/ExhaustiveReturnThrow.kt");
+      }
+
+      @Test
+      @TestMetadata("ExhaustiveSmartcastBoolean.kt")
+      public void testExhaustiveSmartcastBoolean() {
+        runTest("compiler/testData/diagnostics/tests/when/ExhaustiveSmartcastBoolean.kt");
       }
 
       @Test

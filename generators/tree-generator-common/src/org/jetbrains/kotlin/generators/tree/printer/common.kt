@@ -83,7 +83,7 @@ fun <Element, Implementation, ElementField, ImplementationField> generateTree(
     pureAbstractElement: ClassRef<*>,
     createElementPrinter: (SmartPrinter) -> AbstractElementPrinter<Element, ElementField>,
     createVisitorPrinters: List<Pair<ClassRef<*>, (SmartPrinter, ClassRef<*>) -> AbstractVisitorPrinter<Element, ElementField>>>,
-    implementationConfigurator: AbstractImplementationConfigurator<Implementation, Element, ImplementationField>,
+    implementationConfigurator: AbstractImplementationConfigurator<Implementation, Element, ElementField, ImplementationField>,
     builderConfigurator: AbstractBuilderConfigurator<Element, Implementation, ImplementationField, ElementField>? = null,
     createImplementationPrinter: (SmartPrinter) -> AbstractImplementationPrinter<Implementation, Element, ImplementationField>,
     createBuilderPrinter: ((SmartPrinter) -> AbstractBuilderPrinter<Element, Implementation, ImplementationField, ElementField>)? = null,
@@ -92,8 +92,7 @@ fun <Element, Implementation, ElementField, ImplementationField> generateTree(
 ) where Element : AbstractElement<Element, ElementField, Implementation>,
         Implementation : AbstractImplementation<Implementation, Element, ImplementationField>,
         ElementField : AbstractField<ElementField>,
-        ImplementationField : AbstractField<*>,
-        ImplementationField : AbstractFieldWithDefaultValue<ElementField> {
+        ImplementationField : AbstractField<ElementField> {
     if (enableBaseTransformerTypeDetection) {
         detectBaseTransformerTypes(model)
     }

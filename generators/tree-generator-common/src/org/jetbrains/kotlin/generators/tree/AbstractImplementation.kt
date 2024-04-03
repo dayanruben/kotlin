@@ -70,12 +70,8 @@ abstract class AbstractImplementation<Implementation, Element, Field>(
 
     var constructorParameterOrderOverride: List<String>? = null
 
-    override fun get(fieldName: String): Field? {
-        return allFields.firstOrNull { it.name == fieldName }
-    }
-
     private fun withDefault(field: Field) =
-        !field.isFinal && (field.defaultValueInImplementation != null || field.isLateinit)
+        !field.isFinal && field.implementationDefaultStrategy !is AbstractField.ImplementationDefaultStrategy.Required
 
     val fieldsInConstructor by lazy { allFields.filterNot(::withDefault) }
 

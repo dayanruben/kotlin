@@ -479,24 +479,10 @@ val mppProjects by extra {
 
 val projectsWithEnabledContextReceivers by extra {
     listOf(
-        ":core:descriptors.jvm",
-        ":compiler:resolution.common",
-        ":compiler:frontend.common",
-        ":compiler:fir:resolve",
-        ":compiler:fir:plugin-utils",
-        ":compiler:fir:fir2ir",
-        ":compiler:fir:raw-fir:raw-fir.common",
-        ":compiler:fir:raw-fir:psi2fir",
-        ":compiler:fir:raw-fir:light-tree2fir",
         ":compiler:fir:tree:tree-generator",
         ":compiler:ir.tree:tree-generator",
         ":native:swift:sir:tree-generator",
         ":generators:tree-generator-common",
-        ":kotlin-lombok-compiler-plugin.k1",
-        ":kotlinx-serialization-compiler-plugin.k2",
-        ":plugins:parcelize:parcelize-compiler:parcelize.k2",
-        ":plugins:fir-plugin-prototype",
-        ":plugins:kapt4",
     )
 }
 
