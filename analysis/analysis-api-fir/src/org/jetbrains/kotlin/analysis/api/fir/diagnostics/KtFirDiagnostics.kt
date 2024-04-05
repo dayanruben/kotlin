@@ -430,6 +430,10 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         val suggestedFunction: String
     }
 
+    interface SelfCallInNestedObjectConstructorError : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = SelfCallInNestedObjectConstructorError::class
+    }
+
     interface SuperIsNotAnExpression : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = SuperIsNotAnExpression::class
     }
@@ -1090,6 +1094,11 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
     interface SubclassOptInInapplicable : KtFirDiagnostic<KtAnnotationEntry> {
         override val diagnosticClass get() = SubclassOptInInapplicable::class
         val target: String
+    }
+
+    interface SubclassOptArgumentIsNotMarker : KtFirDiagnostic<KtAnnotationEntry> {
+        override val diagnosticClass get() = SubclassOptArgumentIsNotMarker::class
+        val notMarkerClassId: ClassId
     }
 
     interface ExposedTypealiasExpandedType : KtFirDiagnostic<KtNamedDeclaration> {

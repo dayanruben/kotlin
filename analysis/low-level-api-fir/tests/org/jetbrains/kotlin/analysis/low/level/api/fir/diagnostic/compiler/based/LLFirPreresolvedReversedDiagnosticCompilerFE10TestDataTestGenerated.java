@@ -11847,6 +11847,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("deprecationWithComplexMessage.kt")
+      public void testDeprecationWithComplexMessage() {
+        runTest("compiler/testData/diagnostics/tests/deprecated/deprecationWithComplexMessage.kt");
+      }
+
+      @Test
       @TestMetadata("duplicatedOverrideDeprecationOnProperty.kt")
       public void testDuplicatedOverrideDeprecationOnProperty() {
         runTest("compiler/testData/diagnostics/tests/deprecated/duplicatedOverrideDeprecationOnProperty.kt");
@@ -24566,6 +24572,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("incAndDecOperations.kt")
+        public void testIncAndDecOperations() {
+          runTest("compiler/testData/diagnostics/tests/modifiers/const/incAndDecOperations.kt");
+        }
+
+        @Test
         @TestMetadata("kCallable_after.kt")
         public void testKCallable_after() {
           runTest("compiler/testData/diagnostics/tests/modifiers/const/kCallable_after.kt");
@@ -24617,6 +24629,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         @TestMetadata("noConstKt12248.kt")
         public void testNoConstKt12248() {
           runTest("compiler/testData/diagnostics/tests/modifiers/const/noConstKt12248.kt");
+        }
+
+        @Test
+        @TestMetadata("rangeToAndUntil.kt")
+        public void testRangeToAndUntil() {
+          runTest("compiler/testData/diagnostics/tests/modifiers/const/rangeToAndUntil.kt");
         }
 
         @Test
@@ -41824,6 +41842,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("ExhaustiveReturnThrow.kt")
       public void testExhaustiveReturnThrow() {
         runTest("compiler/testData/diagnostics/tests/when/ExhaustiveReturnThrow.kt");
+      }
+
+      @Test
+      @TestMetadata("ExhaustiveSealedIntersection.kt")
+      public void testExhaustiveSealedIntersection() {
+        runTest("compiler/testData/diagnostics/tests/when/ExhaustiveSealedIntersection.kt");
       }
 
       @Test

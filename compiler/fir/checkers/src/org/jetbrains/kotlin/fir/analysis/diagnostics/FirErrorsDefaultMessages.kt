@@ -595,6 +595,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SEALED_INHERITOR_
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SEALED_SUPERTYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SEALED_SUPERTYPE_IN_LOCAL_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SECONDARY_CONSTRUCTOR_WITH_BODY_INSIDE_VALUE_CLASS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SELF_CALL_IN_NESTED_OBJECT_CONSTRUCTOR_ERROR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SENSELESS_COMPARISON
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SENSELESS_NULL_IN_WHEN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SETTER_PROJECTED_OUT
@@ -603,6 +604,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SINGLETON_IN_SUPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SINGLE_ANONYMOUS_FUNCTION_WITH_NAME
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SMARTCAST_IMPOSSIBLE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SPREAD_OF_NULLABLE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SUBCLASS_OPT_ARGUMENT_IS_NOT_MARKER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SUBCLASS_OPT_IN_INAPPLICABLE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SUBTYPING_BETWEEN_CONTEXT_RECEIVERS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SUPERCLASS_NOT_ACCESSIBLE_FROM_INTERFACE
@@ -1131,12 +1133,12 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION, "This class can only be used as an annotation.")
         map.put(
             OPT_IN_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_OPT_IN,
-            "This class can only be used as an annotation or as an argument to @OptIn."
+            "This class can only be used as an annotation or as an argument to '@OptIn'."
         )
-        map.put(OPT_IN_WITHOUT_ARGUMENTS, "@OptIn without any arguments has no effect.")
+        map.put(OPT_IN_WITHOUT_ARGUMENTS, "'@OptIn' without any arguments has no effect.")
         map.put(
             OPT_IN_ARGUMENT_IS_NOT_MARKER,
-            "Annotation ''{0}'' is not an opt-in requirement marker; therefore, its usage in @OptIn is ignored.",
+            "Annotation ''{0}'' is not annotated with ''@RequiresOptIn''. ''@OptIn'' has no effect.",
             CLASS_ID
         )
         map.put(
@@ -1157,7 +1159,12 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             OPT_IN_MARKER_ON_OVERRIDE_WARNING,
             "Opt-in requirement marker annotation on override. It's recommended to add the same annotation to the base declaration."
         )
-        map.put(SUBCLASS_OPT_IN_INAPPLICABLE, "@SubclassOptInRequired is not applicable to ''{0}''.", STRING)
+        map.put(SUBCLASS_OPT_IN_INAPPLICABLE, "''@SubclassOptInRequired'' is not applicable to ''{0}''.", STRING)
+        map.put(
+            SUBCLASS_OPT_ARGUMENT_IS_NOT_MARKER,
+            "Annotation ''{0}'' is not annotated with ''@RequiresOptIn''.",
+            CLASS_ID
+        )
 
         map.put(NOT_A_CLASS, "Not a class.")
         map.put(
@@ -1358,7 +1365,10 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             CONTEXT_RECEIVERS_WITH_BACKING_FIELD,
             "Property with context receivers cannot be initialized because it has no backing field."
         )
-
+        map.put(
+            SELF_CALL_IN_NESTED_OBJECT_CONSTRUCTOR_ERROR,
+            "Self references to members of containing class are prohibited in constructor of nested object."
+        )
         // Ambiguity
         map.put(OVERLOAD_RESOLUTION_AMBIGUITY, "Overload resolution ambiguity between candidates:{0}", SYMBOLS_ON_NEXT_LINES)
         map.put(ASSIGN_OPERATOR_AMBIGUITY, "Ambiguity between assign operator candidates:{0}", SYMBOLS_ON_NEXT_LINES)

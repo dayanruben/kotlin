@@ -231,6 +231,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<FirBasedSymbol<*>>("forbiddenFunction")
             parameter<String>("suggestedFunction")
         }
+        val SELF_CALL_IN_NESTED_OBJECT_CONSTRUCTOR_ERROR by error<PsiElement>()
     }
 
     val SUPER by object : DiagnosticGroup("Super") {
@@ -464,6 +465,9 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
 
         val SUBCLASS_OPT_IN_INAPPLICABLE by error<KtAnnotationEntry> {
             parameter<String>("target")
+        }
+        val SUBCLASS_OPT_ARGUMENT_IS_NOT_MARKER by error<KtAnnotationEntry> {
+            parameter<ClassId>("notMarkerClassId")
         }
     }
 
