@@ -11,8 +11,6 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.FirEvaluatorResult.*
 import org.jetbrains.kotlin.fir.declarations.FirProperty
-import org.jetbrains.kotlin.fir.declarations.FirValueParameter
-import org.jetbrains.kotlin.fir.declarations.isAnnotationConstructor
 import org.jetbrains.kotlin.fir.declarations.utils.evaluatedInitializer
 import org.jetbrains.kotlin.fir.declarations.utils.isConst
 import org.jetbrains.kotlin.fir.expressions.builder.*
@@ -34,6 +32,11 @@ import org.jetbrains.kotlin.resolve.constants.evaluate.evalUnaryOp
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
+@RequiresOptIn(
+    "Internal FirExpressionEvaluator API. Should be avoided because it can be changed or dropped anytime. " +
+            "Consider using `evaluatePropertyInitializer` or `evaluateAnnotationArguments` instead."
+)
+annotation class PrivateConstantEvaluatorAPI
 
 object FirExpressionEvaluator {
     fun evaluatePropertyInitializer(property: FirProperty, session: FirSession): FirEvaluatorResult? {
@@ -54,17 +57,6 @@ object FirExpressionEvaluator {
         return initializer.evaluate(session)
     }
 
-    fun evaluateDefault(valueParameter: FirValueParameter, session: FirSession): FirEvaluatorResult? {
-        // We should evaluate default arguments for the primary constructor of an annotation
-        if (!valueParameter.containingFunctionSymbol.isAnnotationConstructor(session)) return null
-
-        val defaultValueToEvaluate = valueParameter.defaultValue ?: return null
-        if (!defaultValueToEvaluate.canBeEvaluated(session)) {
-            return null
-        }
-        return defaultValueToEvaluate.evaluate(session)
-    }
-
     fun evaluateAnnotationArguments(annotation: FirAnnotation, session: FirSession): Map<Name, FirEvaluatorResult>? {
         val argumentMapping = annotation.argumentMapping.mapping
 
@@ -75,6 +67,7 @@ object FirExpressionEvaluator {
         return argumentMapping.mapValues { (_, expression) -> expression.evaluate(session) }
     }
 
+    @PrivateConstantEvaluatorAPI
     fun evaluateExpression(expression: FirExpression, session: FirSession): FirEvaluatorResult? {
         if (!expression.canBeEvaluated(session)) return null
         return expression.evaluate(session)

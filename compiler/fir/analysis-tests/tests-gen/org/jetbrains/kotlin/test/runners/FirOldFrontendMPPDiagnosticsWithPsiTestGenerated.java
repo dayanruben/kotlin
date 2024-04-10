@@ -212,6 +212,12 @@ public class FirOldFrontendMPPDiagnosticsWithPsiTestGenerated extends AbstractFi
   }
 
   @Test
+  @TestMetadata("expectShouldBeJSExportable.kt")
+  public void testExpectShouldBeJSExportable() {
+    runTest("compiler/testData/diagnostics/tests/multiplatform/expectShouldBeJSExportable.kt");
+  }
+
+  @Test
   @TestMetadata("expectTailrec.kt")
   public void testExpectTailrec() {
     runTest("compiler/testData/diagnostics/tests/multiplatform/expectTailrec.kt");
@@ -1450,6 +1456,18 @@ public class FirOldFrontendMPPDiagnosticsWithPsiTestGenerated extends AbstractFi
     @TestMetadata("expectSealedClassWithActualTypealias.kt")
     public void testExpectSealedClassWithActualTypealias() {
       runTest("compiler/testData/diagnostics/tests/multiplatform/exhaustiveness/expectSealedClassWithActualTypealias.kt");
+    }
+
+    @Test
+    @TestMetadata("expectSealedClassWithInheritorsInSeveralModules.kt")
+    public void testExpectSealedClassWithInheritorsInSeveralModules() {
+      runTest("compiler/testData/diagnostics/tests/multiplatform/exhaustiveness/expectSealedClassWithInheritorsInSeveralModules.kt");
+    }
+
+    @Test
+    @TestMetadata("expectSealedClassWithInheritorsInSeveralModules_typealiasActualization.kt")
+    public void testExpectSealedClassWithInheritorsInSeveralModules_typealiasActualization() {
+      runTest("compiler/testData/diagnostics/tests/multiplatform/exhaustiveness/expectSealedClassWithInheritorsInSeveralModules_typealiasActualization.kt");
     }
 
     @Test

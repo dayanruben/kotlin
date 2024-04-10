@@ -13943,6 +13943,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("funInterfaceWithAnyOverrides.kt")
+      public void testFunInterfaceWithAnyOverrides() {
+        runTest("compiler/testData/diagnostics/tests/funInterface/funInterfaceWithAnyOverrides.kt");
+      }
+
+      @Test
       @TestMetadata("funIsNotInheritedFromBaseInterface.kt")
       public void testFunIsNotInheritedFromBaseInterface() {
         runTest("compiler/testData/diagnostics/tests/funInterface/funIsNotInheritedFromBaseInterface.kt");
@@ -17995,6 +18001,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         @TestMetadata("capturedForIncorporationEscapes.kt")
         public void testCapturedForIncorporationEscapes() {
           runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/capturedForIncorporationEscapes.kt");
+        }
+
+        @Test
+        @TestMetadata("capturedFunctionalType.kt")
+        public void testCapturedFunctionalType() {
+          runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/capturedFunctionalType.kt");
         }
 
         @Test
@@ -23199,6 +23211,42 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         @TestMetadata("syntheticPropertyFromKotlinGetter_mixedOrigin_2.kt")
         public void testSyntheticPropertyFromKotlinGetter_mixedOrigin_2() {
           runTest("compiler/testData/diagnostics/tests/j+k/properties/syntheticPropertyFromKotlinGetter_mixedOrigin_2.kt");
+        }
+
+        @Test
+        @TestMetadata("syntheticPropertyFromKotlinSubclassGetterOverrides.kt")
+        public void testSyntheticPropertyFromKotlinSubclassGetterOverrides() {
+          runTest("compiler/testData/diagnostics/tests/j+k/properties/syntheticPropertyFromKotlinSubclassGetterOverrides.kt");
+        }
+
+        @Test
+        @TestMetadata("syntheticPropertyFromKotlinSubclassOfInterfaceGetter.kt")
+        public void testSyntheticPropertyFromKotlinSubclassOfInterfaceGetter() {
+          runTest("compiler/testData/diagnostics/tests/j+k/properties/syntheticPropertyFromKotlinSubclassOfInterfaceGetter.kt");
+        }
+
+        @Test
+        @TestMetadata("syntheticPropertyFromKotlinSubclassOfJava.kt")
+        public void testSyntheticPropertyFromKotlinSubclassOfJava() {
+          runTest("compiler/testData/diagnostics/tests/j+k/properties/syntheticPropertyFromKotlinSubclassOfJava.kt");
+        }
+
+        @Test
+        @TestMetadata("syntheticPropertyFromKotlinSubclassOfJavaGetterSubclass.kt")
+        public void testSyntheticPropertyFromKotlinSubclassOfJavaGetterSubclass() {
+          runTest("compiler/testData/diagnostics/tests/j+k/properties/syntheticPropertyFromKotlinSubclassOfJavaGetterSubclass.kt");
+        }
+
+        @Test
+        @TestMetadata("syntheticPropertyFromKotlinSubclassOfJavaQualifiers.kt")
+        public void testSyntheticPropertyFromKotlinSubclassOfJavaQualifiers() {
+          runTest("compiler/testData/diagnostics/tests/j+k/properties/syntheticPropertyFromKotlinSubclassOfJavaQualifiers.kt");
+        }
+
+        @Test
+        @TestMetadata("syntheticPropertyFromKotlinSubclassOfJavaSubclass.kt")
+        public void testSyntheticPropertyFromKotlinSubclassOfJavaSubclass() {
+          runTest("compiler/testData/diagnostics/tests/j+k/properties/syntheticPropertyFromKotlinSubclassOfJavaSubclass.kt");
         }
 
         @Test
@@ -34376,6 +34424,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         }
 
         @Test
+        @TestMetadata("lambdaWithCallInPlaceAndCycles.kt")
+        public void testLambdaWithCallInPlaceAndCycles() {
+          runTest("compiler/testData/diagnostics/tests/smartCasts/lambdasWithContracts/lambdaWithCallInPlaceAndCycles.kt");
+        }
+
+        @Test
         @TestMetadata("lambdaWithCallInPlaceAndDelegate.kt")
         public void testLambdaWithCallInPlaceAndDelegate() {
           runTest("compiler/testData/diagnostics/tests/smartCasts/lambdasWithContracts/lambdaWithCallInPlaceAndDelegate.kt");
@@ -39471,6 +39525,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("ExhaustiveSelftype.kt")
+      public void testExhaustiveSelftype() {
+        runTest("compiler/testData/diagnostics/tests/when/ExhaustiveSelftype.kt");
+      }
+
+      @Test
       @TestMetadata("ExhaustiveSmartcastBoolean.kt")
       public void testExhaustiveSmartcastBoolean() {
         runTest("compiler/testData/diagnostics/tests/when/ExhaustiveSmartcastBoolean.kt");
@@ -39642,6 +39702,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("NoElseWhenStatement.kt")
       public void testNoElseWhenStatement() {
         runTest("compiler/testData/diagnostics/tests/when/NoElseWhenStatement.kt");
+      }
+
+      @Test
+      @TestMetadata("NonExhaustiveAfterSmartcast.kt")
+      public void testNonExhaustiveAfterSmartcast() {
+        runTest("compiler/testData/diagnostics/tests/when/NonExhaustiveAfterSmartcast.kt");
       }
 
       @Test

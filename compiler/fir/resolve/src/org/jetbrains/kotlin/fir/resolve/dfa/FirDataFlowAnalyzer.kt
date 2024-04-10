@@ -164,7 +164,7 @@ abstract class FirDataFlowAnalyzer(
      */
     open fun getTypeUsingSmartcastInfo(expression: FirExpression): Pair<PropertyStability, MutableList<ConeKotlinType>>? {
         val flow = currentSmartCastPosition ?: return null
-        val variable = variableStorage.getRealVariableWithoutUnwrappingAlias(flow, expression) ?: return null
+        val variable = getRealVariableWithoutUnwrappingAlias(flow, expression) ?: return null
         val types = flow.getTypeStatement(variable)?.exactType?.ifEmpty { null } ?: return null
         return variable.stability to types.toMutableList()
     }
@@ -1082,7 +1082,7 @@ abstract class FirDataFlowAnalyzer(
             if (property.isLocal || property.isVal) {
                 exitVariableInitialization(flow, assignment.rValue, property, assignment.lValue, hasExplicitType = false)
             } else {
-                val variable = variableStorage.getRealVariableWithoutUnwrappingAlias(flow, assignment)
+                val variable = getRealVariableWithoutUnwrappingAlias(flow, assignment)
                 if (variable != null) {
                     logicSystem.recordNewAssignment(flow, variable, context.newAssignmentIndex())
                 }
@@ -1098,39 +1098,38 @@ abstract class FirDataFlowAnalyzer(
         assignmentLhs: FirExpression?,
         hasExplicitType: Boolean,
     ) {
-        val propertyVariable = variableStorage.getOrCreateRealVariableWithoutUnwrappingAliasForPropertyInitialization(
+        val propertyVariable = getOrCreateRealVariableWithoutUnwrappingAliasForPropertyInitialization(
             flow, property.symbol, assignmentLhs ?: property
-        )
+        ) ?: return
         val isAssignment = assignmentLhs != null
         if (isAssignment) {
             logicSystem.recordNewAssignment(flow, propertyVariable, context.newAssignmentIndex())
         }
 
-        val initializerVariable = variableStorage.getOrCreateIfReal(flow, initializer, unwrapAlias = false)
-        if (initializerVariable is RealVariable) {
-            val unwrappedVariable = flow.unwrapVariable(initializerVariable)
-            val isInitializerStable = initializerVariable.isStableOrLocalStableAccess(initializer)
-            if (!hasExplicitType && isInitializerStable && (propertyVariable.hasLocalStability || propertyVariable.isStable)) {
+        if (propertyVariable.isStable || propertyVariable.hasLocalStability) {
+            val initializerVariable = getOrCreateIfRealWithoutUnwrappingAlias(flow, initializer)
+            if (!hasExplicitType && initializerVariable is RealVariable && initializerVariable.isStableOrLocalStableAccess(initializer)) {
                 // val a = ...
                 // val b = a
                 // if (b != null) { /* a != null */ }
-                logicSystem.addLocalVariableAlias(flow, propertyVariable, unwrappedVariable)
-            } else {
-                // val a = ...
-                // val b = a?.x
-                // if (b != null) { /* a != null, but a.x could have changed */ }
-                logicSystem.translateVariableFromConditionInStatements(flow, unwrappedVariable, propertyVariable)
+                logicSystem.addLocalVariableAlias(flow, propertyVariable, flow.unwrapVariable(initializerVariable))
+            } else if (initializerVariable != null && !(property.isLocal && property.isVar)) {
+                // Case 1:
+                //   val b = x is String // initializer is synthetic, condition is boolean
+                //   if (b) { /* x is String */ }
+                // Case 2:
+                //   val b = x?.foo() // initializer is synthetic, condition is on nullability
+                //   if (b != null) { /* x != null */ }
+                // Case 3:
+                //   val b = x?.foo // if `foo` is mutable, then initializer is real, but unstable
+                //   if (b != null) { /* x != null, but re-reading x.foo could produce null */ }
+                val unwrappedVariable =
+                    if (initializerVariable is RealVariable) flow.unwrapVariable(initializerVariable) else initializerVariable
+                val translateAll = components.session.languageVersionSettings.supportsFeature(LanguageFeature.DfaBooleanVariables)
+                logicSystem.translateVariableFromConditionInStatements(flow, unwrappedVariable, propertyVariable) {
+                    it.takeIf { translateAll || it.condition.operation == Operation.EqNull || it.condition.operation == Operation.NotEqNull }
+                }
             }
-        } else if (initializerVariable != null && propertyVariable.isStable &&
-            (components.session.languageVersionSettings.supportsFeature(LanguageFeature.DfaBooleanVariables) ||
-                    !initializer.resolvedType.isBoolean)
-        ) {
-            // val b = x is String
-            // if (b) { /* x is String */ }
-
-            // val b = x?.foo() // `x?.foo()` is synthetic
-            // if (b != null) { /* x != null */ }
-            logicSystem.translateVariableFromConditionInStatements(flow, initializerVariable, propertyVariable)
         }
 
         if (isAssignment) {
@@ -1518,7 +1517,7 @@ abstract class FirDataFlowAnalyzer(
     }
 
     private fun isSameValueIn(other: PersistentFlow, fir: FirElement, original: MutableFlow): Boolean {
-        val variable = variableStorage.getRealVariableWithoutUnwrappingAlias(other, fir)
+        val variable = getRealVariableWithoutUnwrappingAlias(other, fir)
         return variable == null || logicSystem.isSameValueIn(other, original, variable)
     }
 
@@ -1553,26 +1552,44 @@ abstract class FirDataFlowAnalyzer(
     }
 
     private fun getVariableIfStable(flow: Flow, fir: FirElement): DataFlowVariable? {
-        val variable = variableStorage.get(flow, fir, unwrapAlias = false)
-        return variable?.unwrapIfStable(flow, fir)
+        return variableStorage.get(fir, unwrapAlias = { variable, element -> variable.unwrapIfStable(flow, element) })
     }
 
     private fun getOrCreateVariableIfRealAndStable(flow: Flow, fir: FirElement): DataFlowVariable? {
-        val variable = variableStorage.getOrCreateIfReal(flow, fir, unwrapAlias = false)
-        return variable?.unwrapIfStable(flow, fir)
+        return variableStorage.getOrCreateIfReal(fir, unwrapAlias = { variable, element -> variable.unwrapIfStable(flow, element) })
     }
 
     private fun getOrCreateVariableIfStable(flow: Flow, fir: FirElement): DataFlowVariable? {
-        val variable = variableStorage.getOrCreate(flow, fir, unwrapAlias = false)
-        return variable.unwrapIfStable(flow, fir)
+        return variableStorage.getOrCreate(fir, unwrapAlias = { variable, element -> variable.unwrapIfStable(flow, element) })
     }
 
-    private fun DataFlowVariable.unwrapIfStable(flow: Flow, fir: FirElement): DataFlowVariable? {
-        if (this !is RealVariable) return this
+    private fun getRealVariableWithoutUnwrappingAlias(flow: Flow, fir: FirElement): RealVariable? {
+        return variableStorage.getRealVariableWithoutUnwrappingAlias(
+            fir, unwrapAlias = { variable, element -> variable.unwrapIfStable(flow, element) }
+        )
+    }
 
+    private fun getOrCreateIfRealWithoutUnwrappingAlias(flow: Flow, fir: FirElement): DataFlowVariable? {
+        val realFir = fir.unwrapElement()
+        return variableStorage.getOrCreateIfReal(realFir, unwrapAlias = { variable, element ->
+            // Do not unwrap the variable representing 'fir', but unwrap everything else.
+            if (element !== realFir) variable.unwrapIfStable(flow, element) else variable
+        })
+    }
+
+    private fun getOrCreateRealVariableWithoutUnwrappingAliasForPropertyInitialization(
+        flow: Flow,
+        symbol: FirBasedSymbol<*>,
+        fir: FirElement,
+    ): RealVariable? {
+        return variableStorage.getOrCreateRealVariableWithoutUnwrappingAliasForPropertyInitialization(
+            symbol, fir, unwrap = { variable, element -> variable.unwrapIfStable(flow, element) }
+        )
+    }
+
+    private fun RealVariable.unwrapIfStable(flow: Flow, fir: FirElement): RealVariable? {
         val unwrapped = flow.unwrapVariable(this)
         if (unwrapped != this && !isStableOrLocalStableAccess(fir)) return null
-
         return unwrapped
     }
 }

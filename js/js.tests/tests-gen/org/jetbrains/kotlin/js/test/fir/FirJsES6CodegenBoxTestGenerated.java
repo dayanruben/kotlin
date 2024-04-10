@@ -48,6 +48,12 @@ public class FirJsES6CodegenBoxTestGenerated extends AbstractFirJsES6CodegenBoxT
     }
 
     @Test
+    @TestMetadata("deserializedLocalClassArgument.kt")
+    public void testDeserializedLocalClassArgument() {
+      runTest("compiler/testData/codegen/box/annotations/deserializedLocalClassArgument.kt");
+    }
+
+    @Test
     @TestMetadata("genericAnnotations.kt")
     public void testGenericAnnotations() {
       runTest("compiler/testData/codegen/box/annotations/genericAnnotations.kt");
@@ -14256,6 +14262,12 @@ public class FirJsES6CodegenBoxTestGenerated extends AbstractFirJsES6CodegenBoxT
     }
 
     @Test
+    @TestMetadata("lambdaInLambda.kt")
+    public void testLambdaInLambda() {
+      runTest("compiler/testData/codegen/box/destructuringDeclInLambdaParam/lambdaInLambda.kt");
+    }
+
+    @Test
     @TestMetadata("otherParameters.kt")
     public void testOtherParameters() {
       runTest("compiler/testData/codegen/box/destructuringDeclInLambdaParam/otherParameters.kt");
@@ -24206,6 +24218,12 @@ public class FirJsES6CodegenBoxTestGenerated extends AbstractFirJsES6CodegenBoxT
     }
 
     @Test
+    @TestMetadata("innerWithThisInDefaultArguments.kt")
+    public void testInnerWithThisInDefaultArguments() {
+      runTest("compiler/testData/codegen/box/innerNested/innerWithThisInDefaultArguments.kt");
+    }
+
+    @Test
     @TestMetadata("kt3132.kt")
     public void testKt3132() {
       runTest("compiler/testData/codegen/box/innerNested/kt3132.kt");
@@ -24793,6 +24811,12 @@ public class FirJsES6CodegenBoxTestGenerated extends AbstractFirJsES6CodegenBoxT
     @TestMetadata("complexBooleanConstant.kt")
     public void testComplexBooleanConstant() {
       runTest("compiler/testData/codegen/box/involvesIrInterpreter/complexBooleanConstant.kt");
+    }
+
+    @Test
+    @TestMetadata("cornerCaseInFloat.kt")
+    public void testCornerCaseInFloat() {
+      runTest("compiler/testData/codegen/box/involvesIrInterpreter/cornerCaseInFloat.kt");
     }
 
     @Test
@@ -38491,6 +38515,12 @@ public class FirJsES6CodegenBoxTestGenerated extends AbstractFirJsES6CodegenBoxT
     @TestMetadata("kt64116.kt")
     public void testKt64116() {
       runTest("compiler/testData/codegen/box/sam/kt64116.kt");
+    }
+
+    @Test
+    @TestMetadata("samWithAbstractToString.kt")
+    public void testSamWithAbstractToString() {
+      runTest("compiler/testData/codegen/box/sam/samWithAbstractToString.kt");
     }
 
     @Nested

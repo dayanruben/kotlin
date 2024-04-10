@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -110,8 +110,6 @@ public class StandaloneAnalysisAPISessionBuilder(
     ) {
         val project = kotlinCoreProjectEnvironment.project
         project.apply {
-            registerService(KotlinMessageBusProvider::class.java, KotlinProjectMessageBusProvider::class.java)
-
             FirStandaloneServiceRegistrar.registerProjectServices(project)
             FirStandaloneServiceRegistrar.registerProjectExtensionPoints(project)
             FirStandaloneServiceRegistrar.registerProjectModelServices(project, kotlinCoreProjectEnvironment.parentDisposable)
@@ -174,7 +172,6 @@ public class StandaloneAnalysisAPISessionBuilder(
             kotlinCoreProjectEnvironment,
             projectStructureProvider,
         )
-        val project = kotlinCoreProjectEnvironment.project
         val sourceKtFiles = projectStructureProvider.allSourceFiles.filterIsInstance<KtFile>()
         val libraryRoots = StandaloneProjectFactory.getAllBinaryRoots(
             projectStructureProvider.allKtModules,
@@ -182,7 +179,6 @@ public class StandaloneAnalysisAPISessionBuilder(
         )
         val createPackagePartProvider =
             StandaloneProjectFactory.createPackagePartsProvider(
-                project,
                 libraryRoots,
             )
         registerProjectServices(

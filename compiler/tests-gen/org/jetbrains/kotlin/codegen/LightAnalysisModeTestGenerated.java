@@ -163,6 +163,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/annotations/deserializationOfNestedAnnotationOnType_2.kt");
     }
 
+    @TestMetadata("deserializedLocalClassArgument.kt")
+    public void testDeserializedLocalClassArgument() {
+      runTest("compiler/testData/codegen/box/annotations/deserializedLocalClassArgument.kt");
+    }
+
     @TestMetadata("divisionByZeroInJava.kt")
     public void testDivisionByZeroInJava() {
       runTest("compiler/testData/codegen/box/annotations/divisionByZeroInJava.kt");
@@ -15242,6 +15247,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/destructuringDeclInLambdaParam/inline.kt");
     }
 
+    @TestMetadata("lambdaInLambda.kt")
+    public void testLambdaInLambda() {
+      runTest("compiler/testData/codegen/box/destructuringDeclInLambdaParam/lambdaInLambda.kt");
+    }
+
     @TestMetadata("otherParameters.kt")
     public void testOtherParameters() {
       runTest("compiler/testData/codegen/box/destructuringDeclInLambdaParam/otherParameters.kt");
@@ -26043,6 +26053,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/innerNested/innerWithDefaultInner.kt");
     }
 
+    @TestMetadata("innerWithThisInDefaultArguments.kt")
+    public void testInnerWithThisInDefaultArguments() {
+      runTest("compiler/testData/codegen/box/innerNested/innerWithThisInDefaultArguments.kt");
+    }
+
     @TestMetadata("kt3132.kt")
     public void testKt3132() {
       runTest("compiler/testData/codegen/box/innerNested/kt3132.kt");
@@ -28487,6 +28502,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestMetadata("protectedField.kt")
     public void testProtectedField() {
       runTest("compiler/testData/codegen/box/javaInterop/protectedField.kt");
+    }
+
+    @TestMetadata("rawTypeArgumentInJavaSuperType.kt")
+    public void testRawTypeArgumentInJavaSuperType() {
+      runTest("compiler/testData/codegen/box/javaInterop/rawTypeArgumentInJavaSuperType.kt");
     }
 
     @TestMetadata("samTypeParameter.kt")
@@ -42863,6 +42883,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
   @TestDataPath("$PROJECT_ROOT")
   @RunWith(JUnit3RunnerWithInners.class)
   public static class Sam extends AbstractLightAnalysisModeTest {
+    @TestMetadata("extensionLambdaWithJavaSamParameter.kt")
+    public void ignoreExtensionLambdaWithJavaSamParameter() {
+      runTest("compiler/testData/codegen/box/sam/extensionLambdaWithJavaSamParameter.kt");
+    }
+
     @TestMetadata("samAsIndexInArrayAssignment.kt")
     public void ignoreSamAsIndexInArrayAssignment() {
       runTest("compiler/testData/codegen/box/sam/samAsIndexInArrayAssignment.kt");
@@ -43129,6 +43154,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestMetadata("samInterfaceTypeParameterErasure.kt")
     public void testSamInterfaceTypeParameterErasure() {
       runTest("compiler/testData/codegen/box/sam/samInterfaceTypeParameterErasure.kt");
+    }
+
+    @TestMetadata("samWithAbstractToString.kt")
+    public void testSamWithAbstractToString() {
+      runTest("compiler/testData/codegen/box/sam/samWithAbstractToString.kt");
     }
 
     @TestMetadata("samWithInferenceToDefaultBounds.kt")

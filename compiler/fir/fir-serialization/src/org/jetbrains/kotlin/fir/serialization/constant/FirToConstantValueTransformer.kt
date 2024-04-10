@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.scope
 import org.jetbrains.kotlin.fir.resolve.toFirRegularClassSymbol
 import org.jetbrains.kotlin.fir.expressions.FirExpressionEvaluator
+import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirArrayOfCallTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirArrayOfCallTransformer.Companion.isArrayOfCall
 import org.jetbrains.kotlin.fir.scopes.CallableCopyTypeCalculator
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
 import org.jetbrains.kotlin.fir.visitors.FirDefaultVisitor
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.types.ConstantValueKind
+import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.PrivateForInline
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 
@@ -66,7 +68,7 @@ internal data class FirToConstantValueTransformerData(
     val constValueProvider: ConstValueProvider?,
 )
 
-private val constantIntrinsicCalls = setOf("toByte", "toLong", "toShort", "toFloat", "toDouble", "toChar", "unaryMinus")
+private val constantIntrinsicCalls = OperatorNameConventions.NUMBER_CONVERSIONS + OperatorNameConventions.UNARY_MINUS
 
 @PrivateForInline
 internal object FirToConstantValueTransformer : FirDefaultVisitor<ConstantValue<*>?, FirToConstantValueTransformerData>() {
@@ -117,7 +119,12 @@ internal object FirToConstantValueTransformer : FirDefaultVisitor<ConstantValue<
         data: FirToConstantValueTransformerData,
     ): ConstantValue<*> {
         val mapping = annotation.convertMapping(data)
-        return AnnotationValue.create(annotation.annotationTypeRef.coneType, mapping)
+        val coneClassType = annotation.annotationTypeRef.coneTypeSafe<ConeClassLikeType>()?.fullyExpandedType(data.session)
+        val classId = coneClassType?.lookupTag?.classId
+            ?: errorWithAttachment("Annotation without proper lookup tag }") {
+                withFirEntry("annotation", annotation)
+            }
+        return AnnotationValue.create(classId, mapping)
     }
 
     override fun visitAnnotationCall(annotationCall: FirAnnotationCall, data: FirToConstantValueTransformerData): ConstantValue<*> {
@@ -315,7 +322,7 @@ private object FirToConstantValueChecker : FirDefaultVisitor<Boolean, FirSession
 
             symbol.callableId.packageName.asString() == "kotlin" -> {
                 val dispatchReceiver = qualifiedAccessExpression.dispatchReceiver
-                when (symbol.callableId.callableName.asString()) {
+                when (symbol.callableId.callableName) {
                     !in constantIntrinsicCalls -> false
                     else -> dispatchReceiver?.accept(this, data) ?: false
                 }

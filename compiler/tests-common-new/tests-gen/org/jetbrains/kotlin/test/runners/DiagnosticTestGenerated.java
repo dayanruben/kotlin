@@ -13943,6 +13943,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("funInterfaceWithAnyOverrides.kt")
+      public void testFunInterfaceWithAnyOverrides() {
+        runTest("compiler/testData/diagnostics/tests/funInterface/funInterfaceWithAnyOverrides.kt");
+      }
+
+      @Test
       @TestMetadata("funIsNotInheritedFromBaseInterface.kt")
       public void testFunIsNotInheritedFromBaseInterface() {
         runTest("compiler/testData/diagnostics/tests/funInterface/funIsNotInheritedFromBaseInterface.kt");
@@ -17995,6 +18001,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("capturedForIncorporationEscapes.kt")
         public void testCapturedForIncorporationEscapes() {
           runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/capturedForIncorporationEscapes.kt");
+        }
+
+        @Test
+        @TestMetadata("capturedFunctionalType.kt")
+        public void testCapturedFunctionalType() {
+          runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/capturedFunctionalType.kt");
         }
 
         @Test
@@ -23202,6 +23214,42 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("syntheticPropertyFromKotlinSubclassGetterOverrides.kt")
+        public void testSyntheticPropertyFromKotlinSubclassGetterOverrides() {
+          runTest("compiler/testData/diagnostics/tests/j+k/properties/syntheticPropertyFromKotlinSubclassGetterOverrides.kt");
+        }
+
+        @Test
+        @TestMetadata("syntheticPropertyFromKotlinSubclassOfInterfaceGetter.kt")
+        public void testSyntheticPropertyFromKotlinSubclassOfInterfaceGetter() {
+          runTest("compiler/testData/diagnostics/tests/j+k/properties/syntheticPropertyFromKotlinSubclassOfInterfaceGetter.kt");
+        }
+
+        @Test
+        @TestMetadata("syntheticPropertyFromKotlinSubclassOfJava.kt")
+        public void testSyntheticPropertyFromKotlinSubclassOfJava() {
+          runTest("compiler/testData/diagnostics/tests/j+k/properties/syntheticPropertyFromKotlinSubclassOfJava.kt");
+        }
+
+        @Test
+        @TestMetadata("syntheticPropertyFromKotlinSubclassOfJavaGetterSubclass.kt")
+        public void testSyntheticPropertyFromKotlinSubclassOfJavaGetterSubclass() {
+          runTest("compiler/testData/diagnostics/tests/j+k/properties/syntheticPropertyFromKotlinSubclassOfJavaGetterSubclass.kt");
+        }
+
+        @Test
+        @TestMetadata("syntheticPropertyFromKotlinSubclassOfJavaQualifiers.kt")
+        public void testSyntheticPropertyFromKotlinSubclassOfJavaQualifiers() {
+          runTest("compiler/testData/diagnostics/tests/j+k/properties/syntheticPropertyFromKotlinSubclassOfJavaQualifiers.kt");
+        }
+
+        @Test
+        @TestMetadata("syntheticPropertyFromKotlinSubclassOfJavaSubclass.kt")
+        public void testSyntheticPropertyFromKotlinSubclassOfJavaSubclass() {
+          runTest("compiler/testData/diagnostics/tests/j+k/properties/syntheticPropertyFromKotlinSubclassOfJavaSubclass.kt");
+        }
+
+        @Test
         @TestMetadata("syntheticPropertyFromKotlin_k1Like.kt")
         public void testSyntheticPropertyFromKotlin_k1Like() {
           runTest("compiler/testData/diagnostics/tests/j+k/properties/syntheticPropertyFromKotlin_k1Like.kt");
@@ -25321,6 +25369,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("expectShouldBeJSExportable.kt")
+      public void testExpectShouldBeJSExportable() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/expectShouldBeJSExportable.kt");
+      }
+
+      @Test
       @TestMetadata("expectTailrec.kt")
       public void testExpectTailrec() {
         runTest("compiler/testData/diagnostics/tests/multiplatform/expectTailrec.kt");
@@ -26559,6 +26613,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("expectSealedClassWithActualTypealias.kt")
         public void testExpectSealedClassWithActualTypealias() {
           runTest("compiler/testData/diagnostics/tests/multiplatform/exhaustiveness/expectSealedClassWithActualTypealias.kt");
+        }
+
+        @Test
+        @TestMetadata("expectSealedClassWithInheritorsInSeveralModules.kt")
+        public void testExpectSealedClassWithInheritorsInSeveralModules() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/exhaustiveness/expectSealedClassWithInheritorsInSeveralModules.kt");
+        }
+
+        @Test
+        @TestMetadata("expectSealedClassWithInheritorsInSeveralModules_typealiasActualization.kt")
+        public void testExpectSealedClassWithInheritorsInSeveralModules_typealiasActualization() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/exhaustiveness/expectSealedClassWithInheritorsInSeveralModules_typealiasActualization.kt");
         }
 
         @Test
@@ -36756,6 +36822,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("lambdaWithCallInPlaceAndCycles.kt")
+        public void testLambdaWithCallInPlaceAndCycles() {
+          runTest("compiler/testData/diagnostics/tests/smartCasts/lambdasWithContracts/lambdaWithCallInPlaceAndCycles.kt");
+        }
+
+        @Test
         @TestMetadata("lambdaWithCallInPlaceAndDelegate.kt")
         public void testLambdaWithCallInPlaceAndDelegate() {
           runTest("compiler/testData/diagnostics/tests/smartCasts/lambdasWithContracts/lambdaWithCallInPlaceAndDelegate.kt");
@@ -41851,6 +41923,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("ExhaustiveSelftype.kt")
+      public void testExhaustiveSelftype() {
+        runTest("compiler/testData/diagnostics/tests/when/ExhaustiveSelftype.kt");
+      }
+
+      @Test
       @TestMetadata("ExhaustiveSmartcastBoolean.kt")
       public void testExhaustiveSmartcastBoolean() {
         runTest("compiler/testData/diagnostics/tests/when/ExhaustiveSmartcastBoolean.kt");
@@ -42022,6 +42100,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("NoElseWhenStatement.kt")
       public void testNoElseWhenStatement() {
         runTest("compiler/testData/diagnostics/tests/when/NoElseWhenStatement.kt");
+      }
+
+      @Test
+      @TestMetadata("NonExhaustiveAfterSmartcast.kt")
+      public void testNonExhaustiveAfterSmartcast() {
+        runTest("compiler/testData/diagnostics/tests/when/NonExhaustiveAfterSmartcast.kt");
       }
 
       @Test

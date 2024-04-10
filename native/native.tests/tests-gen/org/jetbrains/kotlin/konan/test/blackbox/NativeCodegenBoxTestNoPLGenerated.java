@@ -60,6 +60,12 @@ public class NativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenBoxT
       }
 
       @Test
+      @TestMetadata("deserializedLocalClassArgument.kt")
+      public void testDeserializedLocalClassArgument() {
+        runTest("compiler/testData/codegen/box/annotations/deserializedLocalClassArgument.kt");
+      }
+
+      @Test
       @TestMetadata("genericAnnotations.kt")
       public void testGenericAnnotations() {
         runTest("compiler/testData/codegen/box/annotations/genericAnnotations.kt");
@@ -15345,6 +15351,12 @@ public class NativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenBoxT
       }
 
       @Test
+      @TestMetadata("lambdaInLambda.kt")
+      public void testLambdaInLambda() {
+        runTest("compiler/testData/codegen/box/destructuringDeclInLambdaParam/lambdaInLambda.kt");
+      }
+
+      @Test
       @TestMetadata("otherParameters.kt")
       public void testOtherParameters() {
         runTest("compiler/testData/codegen/box/destructuringDeclInLambdaParam/otherParameters.kt");
@@ -27050,6 +27062,12 @@ public class NativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenBoxT
       @TestMetadata("innerWithDefaultInner.kt")
       public void testInnerWithDefaultInner() {
         runTest("compiler/testData/codegen/box/innerNested/innerWithDefaultInner.kt");
+      }
+
+      @Test
+      @TestMetadata("innerWithThisInDefaultArguments.kt")
+      public void testInnerWithThisInDefaultArguments() {
+        runTest("compiler/testData/codegen/box/innerNested/innerWithThisInDefaultArguments.kt");
       }
 
       @Test
@@ -41355,6 +41373,12 @@ public class NativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenBoxT
         runTest("compiler/testData/codegen/box/sam/kt64116.kt");
       }
 
+      @Test
+      @TestMetadata("samWithAbstractToString.kt")
+      public void testSamWithAbstractToString() {
+        runTest("compiler/testData/codegen/box/sam/samWithAbstractToString.kt");
+      }
+
       @Nested
       @TestMetadata("compiler/testData/codegen/box/sam/adapters")
       @TestDataPath("$PROJECT_ROOT")
@@ -45340,6 +45364,12 @@ public class NativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenBoxT
       }
 
       @Test
+      @TestMetadata("capturedLocalFunTwice.kt")
+      public void testCapturedLocalFunTwice() {
+        runTest("compiler/testData/codegen/boxInline/anonymousObject/capturedLocalFunTwice.kt");
+      }
+
+      @Test
       @TestMetadata("changingReturnType.kt")
       public void testChangingReturnType() {
         runTest("compiler/testData/codegen/boxInline/anonymousObject/changingReturnType.kt");
@@ -45643,6 +45673,12 @@ public class NativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenBoxT
       @TestMetadata("superConstructorWithObjectParameter.kt")
       public void testSuperConstructorWithObjectParameter() {
         runTest("compiler/testData/codegen/boxInline/anonymousObject/superConstructorWithObjectParameter.kt");
+      }
+
+      @Test
+      @TestMetadata("twoAnonymousObjects.kt")
+      public void testTwoAnonymousObjects() {
+        runTest("compiler/testData/codegen/boxInline/anonymousObject/twoAnonymousObjects.kt");
       }
 
       @Test

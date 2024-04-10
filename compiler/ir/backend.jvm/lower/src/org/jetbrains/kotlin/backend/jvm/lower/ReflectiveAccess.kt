@@ -26,8 +26,6 @@ import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.load.java.JvmAbi
 
-// Used from CodeFragmentCompiler for IDE Debugger Plug-In
-@Suppress("unused")
 val reflectiveAccessLowering = makeIrFilePhase(
     ::ReflectiveAccessLowering,
     name = "ReflectiveCalls",
@@ -63,9 +61,10 @@ internal class ReflectiveAccessLowering(
     val context: JvmBackendContext
 ) : IrElementTransformerVoidWithContext(), FileLoweringPass {
 
-    lateinit var inlineScopeResolver: IrInlineScopeResolver
+    private lateinit var inlineScopeResolver: IrInlineScopeResolver
 
     override fun lower(irFile: IrFile) {
+        if (context.evaluatorData == null) return
         inlineScopeResolver = irFile.findInlineCallSites(context)
         irFile.transformChildrenVoid(this)
     }
@@ -434,6 +433,7 @@ internal class ReflectiveAccessLowering(
 
     private fun shouldUseAccessor(accessor: IrSimpleFunction): Boolean {
         return (context.generatorExtensions as StubGeneratorExtensions).isAccessorWithExplicitImplementation(accessor)
+                || accessor.origin == IrDeclarationOrigin.DELEGATED_PROPERTY_ACCESSOR
     }
 
     // Returns a pair of the _type_ containing the field and the _instance_ on
