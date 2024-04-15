@@ -821,6 +821,12 @@ public class ForeignAnnotationsCompiledJavaWithPsiClassReadingTestGenerated exte
         }
 
         @Test
+        @TestMetadata("NullableProjectionOfWildcardWithNonNullBoundsInOutPosition.kt")
+        public void testNullableProjectionOfWildcardWithNonNullBoundsInOutPosition() {
+          runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode/NullableProjectionOfWildcardWithNonNullBoundsInOutPosition.kt");
+        }
+
+        @Test
         @TestMetadata("NullnessUnspecifiedTypeParameter.kt")
         public void testNullnessUnspecifiedTypeParameter() {
           runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode/NullnessUnspecifiedTypeParameter.kt");
@@ -854,6 +860,18 @@ public class ForeignAnnotationsCompiledJavaWithPsiClassReadingTestGenerated exte
         @TestMetadata("UnannotatedWildcard.kt")
         public void testUnannotatedWildcard() {
           runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode/UnannotatedWildcard.kt");
+        }
+
+        @Test
+        @TestMetadata("WildcardWithNullableUpperBoundInOutPosition.kt")
+        public void testWildcardWithNullableUpperBoundInOutPosition() {
+          runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode/WildcardWithNullableUpperBoundInOutPosition.kt");
+        }
+
+        @Test
+        @TestMetadata("WildcardWithSameTypeButDifferentNullabilitiesAsBounds.kt")
+        public void testWildcardWithSameTypeButDifferentNullabilitiesAsBounds() {
+          runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode/WildcardWithSameTypeButDifferentNullabilitiesAsBounds.kt");
         }
 
         @Test
@@ -927,6 +945,12 @@ public class ForeignAnnotationsCompiledJavaWithPsiClassReadingTestGenerated exte
         }
 
         @Test
+        @TestMetadata("NullableProjectionOfWildcardWithNonNullBoundsInOutPosition.kt")
+        public void testNullableProjectionOfWildcardWithNonNullBoundsInOutPosition() {
+          runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/warnMode/NullableProjectionOfWildcardWithNonNullBoundsInOutPosition.kt");
+        }
+
+        @Test
         @TestMetadata("NullnessUnspecifiedTypeParameter.kt")
         public void testNullnessUnspecifiedTypeParameter() {
           runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/warnMode/NullnessUnspecifiedTypeParameter.kt");
@@ -966,6 +990,18 @@ public class ForeignAnnotationsCompiledJavaWithPsiClassReadingTestGenerated exte
         @TestMetadata("UnannotatedWildcard.kt")
         public void testUnannotatedWildcard() {
           runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/warnMode/UnannotatedWildcard.kt");
+        }
+
+        @Test
+        @TestMetadata("WildcardWithNullableUpperBoundInOutPosition.kt")
+        public void testWildcardWithNullableUpperBoundInOutPosition() {
+          runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/warnMode/WildcardWithNullableUpperBoundInOutPosition.kt");
+        }
+
+        @Test
+        @TestMetadata("WildcardWithSameTypeButDifferentNullabilitiesAsBounds.kt")
+        public void testWildcardWithSameTypeButDifferentNullabilitiesAsBounds() {
+          runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/warnMode/WildcardWithSameTypeButDifferentNullabilitiesAsBounds.kt");
         }
 
         @Test
