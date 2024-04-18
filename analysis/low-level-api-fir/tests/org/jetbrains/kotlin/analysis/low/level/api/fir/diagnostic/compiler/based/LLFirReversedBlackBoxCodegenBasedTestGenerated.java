@@ -323,6 +323,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
     }
 
     @Test
+    @TestMetadata("nativeThrows.kt")
+    public void testNativeThrows() {
+      runTest("compiler/testData/codegen/box/annotations/nativeThrows.kt");
+    }
+
+    @Test
     @TestMetadata("nestedAnnotation.kt")
     public void testNestedAnnotation() {
       runTest("compiler/testData/codegen/box/annotations/nestedAnnotation.kt");
@@ -21618,6 +21624,18 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
     @TestMetadata("implicitNothingInDelegate.kt")
     public void testImplicitNothingInDelegate() {
       runTest("compiler/testData/codegen/box/fir/implicitNothingInDelegate.kt");
+    }
+
+    @Test
+    @TestMetadata("inaccessibleLambdaParameter.kt")
+    public void testInaccessibleLambdaParameter() {
+      runTest("compiler/testData/codegen/box/fir/inaccessibleLambdaParameter.kt");
+    }
+
+    @Test
+    @TestMetadata("inaccessibleLambdaReceiver.kt")
+    public void testInaccessibleLambdaReceiver() {
+      runTest("compiler/testData/codegen/box/fir/inaccessibleLambdaReceiver.kt");
     }
 
     @Test

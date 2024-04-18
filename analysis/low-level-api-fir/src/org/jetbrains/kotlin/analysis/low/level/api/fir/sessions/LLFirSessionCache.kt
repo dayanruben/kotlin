@@ -34,10 +34,10 @@ class LLFirSessionCache(private val project: Project) : Disposable {
 
     // Removal from the session storage invokes the `LLFirSession`'s cleaner, which marks the session as invalid and disposes any
     // disposables registered with the `LLFirSession`'s disposable.
-    private val sourceCache: SessionStorage = CleanableSoftValueCache(LLFirSession::createCleaner)
-    private val binaryCache: SessionStorage = CleanableSoftValueCache(LLFirSession::createCleaner)
-    private val danglingFileSessionCache: SessionStorage = CleanableSoftValueCache(LLFirSession::createCleaner)
-    private val unstableDanglingFileSessionCache: SessionStorage = CleanableSoftValueCache(LLFirSession::createCleaner)
+    private val sourceCache: SessionStorage = CleanableSoftValueCache(LLFirSession::createSessionCleaner)
+    private val binaryCache: SessionStorage = CleanableSoftValueCache(LLFirSession::createSessionCleaner)
+    private val danglingFileSessionCache: SessionStorage = CleanableSoftValueCache(LLFirSession::createSessionCleaner)
+    private val unstableDanglingFileSessionCache: SessionStorage = CleanableSoftValueCache(LLFirSession::createSessionCleaner)
 
     /**
      * Returns the existing session if found, or creates a new session and caches it.
@@ -97,8 +97,8 @@ class LLFirSessionCache(private val project: Project) : Disposable {
             // Non-isolated session creation may need to access other sessions, so we should create the session outside `computeIfAbsent` to
             // avoid recursive update exceptions.
             storage[module] ?: run {
-                val danglingSession = factory(module)
-                storage.computeIfAbsent(module) { danglingSession }
+                val newSession = factory(module)
+                storage.computeIfAbsent(module) { newSession }
             }
         }
 
@@ -203,7 +203,7 @@ class LLFirSessionCache(private val project: Project) : Disposable {
     }
 
     /**
-     * Whether the session for [module] can be created without getting other sessions from the cache. Should be kept in sync with
+     * Whether the session for this [KtModule] can be created without getting other sessions from the cache. Should be kept in sync with
      * [createSession].
      */
     private val KtModule.supportsIsolatedSessionCreation: Boolean
@@ -239,6 +239,8 @@ class LLFirSessionCache(private val project: Project) : Disposable {
     override fun dispose() {
     }
 }
+
+private fun LLFirSession.createSessionCleaner(): LLFirSessionCleaner = LLFirSessionCleaner(requestedDisposableOrNull)
 
 internal fun LLFirSessionConfigurator.Companion.configure(session: LLFirSession) {
     val project = session.project

@@ -443,6 +443,14 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     add(FirErrors.MISSING_DEPENDENCY_CLASS_IN_LAMBDA_PARAMETER) { firDiagnostic ->
         MissingDependencyClassInLambdaParameterImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic.b,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.MISSING_DEPENDENCY_CLASS_IN_LAMBDA_RECEIVER) { firDiagnostic ->
+        MissingDependencyClassInLambdaReceiverImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -2612,6 +2620,16 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.SMARTCAST_IMPOSSIBLE) { firDiagnostic ->
         SmartcastImpossibleImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic.b.source!!.psi as KtExpression,
+            firDiagnostic.c,
+            firDiagnostic.d,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.SMARTCAST_IMPOSSIBLE_ON_IMPLICIT_INVOKE_RECEIVER) { firDiagnostic ->
+        SmartcastImpossibleOnImplicitInvokeReceiverImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firDiagnostic.b.source!!.psi as KtExpression,
             firDiagnostic.c,

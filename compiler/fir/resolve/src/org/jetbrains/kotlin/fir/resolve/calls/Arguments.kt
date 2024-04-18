@@ -417,7 +417,8 @@ private fun checkApplicabilityForArgumentType(
                         context.session.typeContext.isTypeMismatchDueToNullability(
                             argumentType,
                             expectedType
-                        )
+                        ),
+                        isImplicitInvokeReceiver = false,
                     )
                 )
                 return
@@ -555,7 +556,7 @@ fun FirExpression.shouldUseSamConversion(
     expectedFunctionType: ConeKotlinType,
     returnTypeCalculator: ReturnTypeCalculator,
 ): Boolean {
-    when (unwrapArgument()) {
+    when (val unwrapped = unwrapArgument()) {
         is FirAnonymousFunctionExpression, is FirCallableReferenceAccess -> return true
         else -> {
             // Either a functional type or a subtype of a class that has a contributed `invoke`.
@@ -573,7 +574,7 @@ fun FirExpression.shouldUseSamConversion(
                 return false
             }
 
-            val namedReferenceWithCandidate = namedReferenceWithCandidate()
+            val namedReferenceWithCandidate = unwrapped.namedReferenceWithCandidate()
             if (namedReferenceWithCandidate?.candidate?.postponedAtoms?.any {
                     it is LambdaWithTypeVariableAsExpectedTypeAtom &&
                             it.expectedType.typeConstructor(session.typeContext) == coneType.typeConstructor(session.typeContext)

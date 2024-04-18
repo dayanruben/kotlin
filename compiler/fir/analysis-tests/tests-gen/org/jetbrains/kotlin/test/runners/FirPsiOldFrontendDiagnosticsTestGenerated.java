@@ -14097,6 +14097,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("parameterAsReceiverInference.kt")
+      public void testParameterAsReceiverInference() {
+        runTest("compiler/testData/diagnostics/tests/functionAsExpression/parameterAsReceiverInference.kt");
+      }
+
+      @Test
       @TestMetadata("Parameters.kt")
       public void testParameters() {
         runTest("compiler/testData/diagnostics/tests/functionAsExpression/Parameters.kt");
@@ -18087,6 +18093,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         @TestMetadata("captureTypeOnlyOnTopLevel.kt")
         public void testCaptureTypeOnlyOnTopLevel() {
           runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/captureTypeOnlyOnTopLevel.kt");
+        }
+
+        @Test
+        @TestMetadata("capturedAssignment.kt")
+        public void testCapturedAssignment() {
+          runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/capturedAssignment.kt");
         }
 
         @Test
@@ -23650,6 +23662,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         }
 
         @Test
+        @TestMetadata("rawTypesFromSelfTypeWithRawBound.kt")
+        public void testRawTypesFromSelfTypeWithRawBound() {
+          runTest("compiler/testData/diagnostics/tests/j+k/types/rawTypesFromSelfTypeWithRawBound.kt");
+        }
+
+        @Test
         @TestMetadata("returnCollection.kt")
         public void testReturnCollection() {
           runTest("compiler/testData/diagnostics/tests/j+k/types/returnCollection.kt");
@@ -24871,6 +24889,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("AnonymousFunctionParametersOfInaccessibleTypes.kt")
+      public void testAnonymousFunctionParametersOfInaccessibleTypes() {
+        runTest("compiler/testData/diagnostics/tests/multimodule/AnonymousFunctionParametersOfInaccessibleTypes.kt");
+      }
+
+      @Test
       @TestMetadata("BoxedInaccessibleGenericTypeUsedByDependencies.kt")
       public void testBoxedInaccessibleGenericTypeUsedByDependencies() {
         runTest("compiler/testData/diagnostics/tests/multimodule/BoxedInaccessibleGenericTypeUsedByDependencies.kt");
@@ -24928,6 +24952,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("kt14249.kt")
       public void testKt14249() {
         runTest("compiler/testData/diagnostics/tests/multimodule/kt14249.kt");
+      }
+
+      @Test
+      @TestMetadata("LambdaReceiversOfInaccessibleTypes.kt")
+      public void testLambdaReceiversOfInaccessibleTypes() {
+        runTest("compiler/testData/diagnostics/tests/multimodule/LambdaReceiversOfInaccessibleTypes.kt");
       }
 
       @Test
@@ -27192,6 +27222,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("MultipleDefaultsInSupertypesNoExplicitOverride.kt")
       public void testMultipleDefaultsInSupertypesNoExplicitOverride() {
         runTest("compiler/testData/diagnostics/tests/override/MultipleDefaultsInSupertypesNoExplicitOverride.kt");
+      }
+
+      @Test
+      @TestMetadata("NoInapplicableOperatorModifierOnAnyEquals.kt")
+      public void testNoInapplicableOperatorModifierOnAnyEquals() {
+        runTest("compiler/testData/diagnostics/tests/override/NoInapplicableOperatorModifierOnAnyEquals.kt");
       }
 
       @Test
@@ -31214,6 +31250,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         }
 
         @Test
+        @TestMetadata("samConstructorVsFunction.kt")
+        public void testSamConstructorVsFunction() {
+          runTest("compiler/testData/diagnostics/tests/resolve/priority/samConstructorVsFunction.kt");
+        }
+
+        @Test
         @TestMetadata("staticVsImplicitReceiverMember.kt")
         public void testStaticVsImplicitReceiverMember() {
           runTest("compiler/testData/diagnostics/tests/resolve/priority/staticVsImplicitReceiverMember.kt");
@@ -31452,6 +31494,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("samConversionWithConditionJava.kt")
       public void testSamConversionWithConditionJava() {
         runTest("compiler/testData/diagnostics/tests/samConversions/samConversionWithConditionJava.kt");
+      }
+
+      @Test
+      @TestMetadata("samConversionWithNamedArgumentAndIf.kt")
+      public void testSamConversionWithNamedArgumentAndIf() {
+        runTest("compiler/testData/diagnostics/tests/samConversions/samConversionWithNamedArgumentAndIf.kt");
       }
 
       @Test
@@ -33993,6 +34041,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("smartCastOnObject.kt")
+      public void testSmartCastOnObject() {
+        runTest("compiler/testData/diagnostics/tests/smartCasts/smartCastOnObject.kt");
+      }
+
+      @Test
       @TestMetadata("smartCastOnWhen.kt")
       public void testSmartCastOnWhen() {
         runTest("compiler/testData/diagnostics/tests/smartCasts/smartCastOnWhen.kt");
@@ -34110,6 +34164,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("typeParameterWithBounds.kt")
       public void testTypeParameterWithBounds() {
         runTest("compiler/testData/diagnostics/tests/smartCasts/typeParameterWithBounds.kt");
+      }
+
+      @Test
+      @TestMetadata("unstableSmartCastOnInvokeReceiver.kt")
+      public void testUnstableSmartCastOnInvokeReceiver() {
+        runTest("compiler/testData/diagnostics/tests/smartCasts/unstableSmartCastOnInvokeReceiver.kt");
       }
 
       @Test
@@ -36464,6 +36524,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("suspendConversionDisabled.kt")
       public void testSuspendConversionDisabled() {
         runTest("compiler/testData/diagnostics/tests/suspendConversion/suspendConversionDisabled.kt");
+      }
+
+      @Test
+      @TestMetadata("suspendConversionForLambdaList.kt")
+      public void testSuspendConversionForLambdaList() {
+        runTest("compiler/testData/diagnostics/tests/suspendConversion/suspendConversionForLambdaList.kt");
       }
 
       @Test

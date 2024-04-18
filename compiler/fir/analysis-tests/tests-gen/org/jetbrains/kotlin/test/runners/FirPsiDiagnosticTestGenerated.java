@@ -1522,6 +1522,12 @@ public class FirPsiDiagnosticTestGenerated extends AbstractFirPsiDiagnosticTest 
       }
 
       @Test
+      @TestMetadata("dnnTypeWithAdditionalNullableBound.kt")
+      public void testDnnTypeWithAdditionalNullableBound() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/checkers/dnnTypeWithAdditionalNullableBound.kt");
+      }
+
+      @Test
       @TestMetadata("importAnnotationWithRequiresOptIn.kt")
       public void testImportAnnotationWithRequiresOptIn() {
         runTest("compiler/fir/analysis-tests/testData/resolve/checkers/importAnnotationWithRequiresOptIn.kt");
@@ -1585,6 +1591,58 @@ public class FirPsiDiagnosticTestGenerated extends AbstractFirPsiDiagnosticTest 
       @TestMetadata("uselessCastLeadsToRecursiveProblem.kt")
       public void testUselessCastLeadsToRecursiveProblem() {
         runTest("compiler/fir/analysis-tests/testData/resolve/checkers/uselessCastLeadsToRecursiveProblem.kt");
+      }
+    }
+
+    @Nested
+    @TestMetadata("compiler/fir/analysis-tests/testData/resolve/classpathSubstitution")
+    @TestDataPath("$PROJECT_ROOT")
+    public class ClasspathSubstitution {
+      @Test
+      public void testAllFilesPresentInClasspathSubstitution() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/classpathSubstitution"), Pattern.compile("^([^.]+)\\.(kt|kts)$"), null, true);
+      }
+
+      @Test
+      @TestMetadata("cyclicSupertype.kt")
+      public void testCyclicSupertype() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/classpathSubstitution/cyclicSupertype.kt");
+      }
+
+      @Test
+      @TestMetadata("cyclicSupertype2.kt")
+      public void testCyclicSupertype2() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/classpathSubstitution/cyclicSupertype2.kt");
+      }
+
+      @Test
+      @TestMetadata("cyclicSupertype3.kt")
+      public void testCyclicSupertype3() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/classpathSubstitution/cyclicSupertype3.kt");
+      }
+
+      @Test
+      @TestMetadata("cyclicSupertype4.kt")
+      public void testCyclicSupertype4() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/classpathSubstitution/cyclicSupertype4.kt");
+      }
+
+      @Test
+      @TestMetadata("cyclicSupertypeBetweenModules.kt")
+      public void testCyclicSupertypeBetweenModules() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/classpathSubstitution/cyclicSupertypeBetweenModules.kt");
+      }
+
+      @Test
+      @TestMetadata("cyclicSupertypeWithAlias.kt")
+      public void testCyclicSupertypeWithAlias() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/classpathSubstitution/cyclicSupertypeWithAlias.kt");
+      }
+
+      @Test
+      @TestMetadata("cyclicSupertypeWithAlias2.kt")
+      public void testCyclicSupertypeWithAlias2() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/classpathSubstitution/cyclicSupertypeWithAlias2.kt");
       }
     }
 
@@ -5255,6 +5313,32 @@ public class FirPsiDiagnosticTestGenerated extends AbstractFirPsiDiagnosticTest 
       @TestMetadata("unqualifiedEnum.kt")
       public void testUnqualifiedEnum() {
         runTest("compiler/fir/analysis-tests/testData/resolve/unqualifiedEnum/unqualifiedEnum.kt");
+      }
+    }
+
+    @Nested
+    @TestMetadata("compiler/fir/analysis-tests/testData/resolve/vfir")
+    @TestDataPath("$PROJECT_ROOT")
+    public class Vfir {
+      @Test
+      public void testAllFilesPresentInVfir() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/vfir"), Pattern.compile("^([^.]+)\\.(kt|kts)$"), null, true);
+      }
+
+      @Nested
+      @TestMetadata("compiler/fir/analysis-tests/testData/resolve/vfir/expressions")
+      @TestDataPath("$PROJECT_ROOT")
+      public class Expressions {
+        @Test
+        public void testAllFilesPresentInExpressions() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/vfir/expressions"), Pattern.compile("^([^.]+)\\.(kt|kts)$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("for.kt")
+        public void testFor() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/vfir/expressions/for.kt");
+        }
       }
     }
 

@@ -83,6 +83,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
       }
 
       @Test
+      @TestMetadata("nativeThrows.kt")
+      public void testNativeThrows() {
+        runTest("compiler/testData/codegen/box/annotations/nativeThrows.kt");
+      }
+
+      @Test
       @TestMetadata("nestedAnnotation.kt")
       public void testNestedAnnotation() {
         runTest("compiler/testData/codegen/box/annotations/nestedAnnotation.kt");
@@ -47369,6 +47375,18 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
       @TestMetadata("kt6007.kt")
       public void testKt6007() {
         runTest("compiler/testData/codegen/boxInline/anonymousObject/kt6007.kt");
+      }
+
+      @Test
+      @TestMetadata("kt65503.kt")
+      public void testKt65503() {
+        runTest("compiler/testData/codegen/boxInline/anonymousObject/kt65503.kt");
+      }
+
+      @Test
+      @TestMetadata("kt65503_2.kt")
+      public void testKt65503_2() {
+        runTest("compiler/testData/codegen/boxInline/anonymousObject/kt65503_2.kt");
       }
 
       @Test

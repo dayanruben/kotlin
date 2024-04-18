@@ -235,10 +235,11 @@ fun transformFirToIr(
         Fir2IrConfiguration.forKlibCompilation(moduleStructure.compilerConfiguration, diagnosticsReporter),
         IrGenerationExtension.getInstances(moduleStructure.project),
         irMangler = JsManglerIr,
-        firMangler = FirJsKotlinMangler(),
+        firMangler = FirJsKotlinMangler,
         visibilityConverter = Fir2IrVisibilityConverter.Default,
         kotlinBuiltIns = builtInsModule ?: DefaultBuiltIns.Instance,
-        actualizerTypeContextProvider = ::IrTypeSystemContextImpl
+        actualizerTypeContextProvider = ::IrTypeSystemContextImpl,
+        specialAnnotationsProvider = null,
     ) { irModuleFragment ->
         (irModuleFragment.descriptor as? FirModuleDescriptor)?.let { it.allDependencyModules = librariesDescriptors }
     }.also {

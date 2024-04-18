@@ -21,31 +21,6 @@ public class Class_without_package {
         fatalError()
     }
 }
-public class Object_without_package {
-    public class INNER_CLASS {
-        public init() {
-            fatalError()
-        }
-    }
-    public class INNER_OBJECT {
-        public static var shared: Swift.Int32 {
-            get {
-                fatalError()
-            }
-        }
-        private init() {
-            fatalError()
-        }
-    }
-    public static var shared: Swift.Int32 {
-        get {
-            fatalError()
-        }
-    }
-    private init() {
-        fatalError()
-    }
-}
 public class Demo {
     public class INNER_CLASS {
         public init() {
@@ -82,6 +57,14 @@ public class Demo {
             fatalError()
         }
     }
+    public init(
+        arg1: main.Class_without_package,
+        arg2: main.namespace.deeper.Class_with_package,
+        arg3: main.Object_without_package,
+        arg4: main.namespace.deeper.Object_with_package
+    ) {
+        fatalError()
+    }
     public func combine(
         arg1: main.Class_without_package,
         arg2: main.namespace.deeper.Class_with_package,
@@ -106,21 +89,55 @@ public class Demo {
     ) -> main.Demo.INNER_OBJECT {
         fatalError()
     }
-    public init(
-        arg1: main.Class_without_package,
-        arg2: main.namespace.deeper.Class_with_package,
-        arg3: main.Object_without_package,
-        arg4: main.namespace.deeper.Object_with_package
-    ) {
+}
+public class Object_without_package {
+    public class INNER_CLASS {
+        public init() {
+            fatalError()
+        }
+    }
+    public class INNER_OBJECT {
+        public static var shared: Swift.Int32 {
+            get {
+                fatalError()
+            }
+        }
+        private init() {
+            fatalError()
+        }
+    }
+    public static var shared: Swift.Int32 {
+        get {
+            fatalError()
+        }
+    }
+    private init() {
         fatalError()
     }
 }
-public func recieve_class(
-    arg: main.Class_without_package
+public func combine(
+    arg1: main.Class_without_package,
+    arg2: main.namespace.deeper.Class_with_package,
+    arg3: main.Object_without_package,
+    arg4: main.namespace.deeper.Object_with_package
 ) -> Swift.Void {
     fatalError()
 }
 public func produce_class() -> main.Class_without_package {
+    fatalError()
+}
+public func produce_class_wp() -> main.namespace.deeper.Class_with_package {
+    fatalError()
+}
+public func produce_object() -> main.Object_without_package {
+    fatalError()
+}
+public func produce_object_wp() -> main.namespace.deeper.Object_with_package {
+    fatalError()
+}
+public func recieve_class(
+    arg: main.Class_without_package
+) -> Swift.Void {
     fatalError()
 }
 public func recieve_class_wp(
@@ -128,30 +145,13 @@ public func recieve_class_wp(
 ) -> Swift.Void {
     fatalError()
 }
-public func produce_class_wp() -> main.namespace.deeper.Class_with_package {
-    fatalError()
-}
 public func recieve_object(
     arg: main.Object_without_package
 ) -> Swift.Void {
     fatalError()
 }
-public func produce_object() -> main.Object_without_package {
-    fatalError()
-}
 public func recieve_object_wp(
     arg: main.namespace.deeper.Object_with_package
-) -> Swift.Void {
-    fatalError()
-}
-public func produce_object_wp() -> main.namespace.deeper.Object_with_package {
-    fatalError()
-}
-public func combine(
-    arg1: main.Class_without_package,
-    arg2: main.namespace.deeper.Class_with_package,
-    arg3: main.Object_without_package,
-    arg4: main.namespace.deeper.Object_with_package
 ) -> Swift.Void {
     fatalError()
 }

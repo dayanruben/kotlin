@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.fir.scopes.processOverriddenFunctions
 import org.jetbrains.kotlin.fir.symbols.ConeTypeParameterLookupTag
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.SyntheticCallableId.ACCEPT_SPECIFIC_TYPE
-import org.jetbrains.kotlin.fir.symbols.SyntheticSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.*
@@ -203,10 +202,11 @@ object CheckDispatchReceiver : ResolutionStage() {
                 UnstableSmartCast(
                     smartcastedReceiver,
                     targetType,
-                    context.session.typeContext.isTypeMismatchDueToNullability(
+                    isCastToNotNull = context.session.typeContext.isTypeMismatchDueToNullability(
                         smartcastedReceiver.originalExpression.resolvedType,
                         targetType
-                    )
+                    ),
+                    isImplicitInvokeReceiver = callInfo.isImplicitInvoke,
                 )
             )
         } else if (isReceiverNullable) {
@@ -553,7 +553,7 @@ private val Candidate.isInvokeFromExtensionFunctionType: Boolean
             && (symbol as? FirNamedFunctionSymbol)?.name == OperatorNameConventions.INVOKE
 
 internal fun Candidate.shouldHaveLowPriorityDueToSAM(bodyResolveComponents: BodyResolveComponents): Boolean {
-    if (!usesSAM || isJavaApplicableCandidate()) return false
+    if (!usesSamConversion || isJavaApplicableCandidate()) return false
     return argumentMapping!!.values.any {
         val coneType = it.returnTypeRef.coneType
         bodyResolveComponents.samResolver.isSamType(coneType) &&
@@ -617,9 +617,9 @@ internal object EagerResolveOfCallableReferences : CheckerStage() {
     }
 }
 
-internal object DiscriminateSynthetics : CheckerStage() {
+internal object DiscriminateSyntheticProperties : CheckerStage() {
     override suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext) {
-        if (candidate.symbol is SyntheticSymbol) {
+        if (candidate.symbol is FirSimpleSyntheticPropertySymbol) {
             sink.reportDiagnostic(ResolvedWithSynthetic)
         }
     }

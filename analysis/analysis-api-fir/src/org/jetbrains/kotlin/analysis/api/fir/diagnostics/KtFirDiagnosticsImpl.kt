@@ -411,9 +411,16 @@ internal class MissingDependencySuperclassImpl(
 
 internal class MissingDependencyClassInLambdaParameterImpl(
     override val type: KtType,
+    override val parameterName: Name,
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.MissingDependencyClassInLambdaParameter
+
+internal class MissingDependencyClassInLambdaReceiverImpl(
+    override val type: KtType,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.MissingDependencyClassInLambdaReceiver
 
 internal class CreatingAnInstanceOfAbstractClassImpl(
     firDiagnostic: KtPsiDiagnostic,
@@ -2232,6 +2239,15 @@ internal class SmartcastImpossibleImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtExpression>(firDiagnostic, token), KtFirDiagnostic.SmartcastImpossible
+
+internal class SmartcastImpossibleOnImplicitInvokeReceiverImpl(
+    override val desiredType: KtType,
+    override val subject: KtExpression,
+    override val description: String,
+    override val isCastToNotNull: Boolean,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtExpression>(firDiagnostic, token), KtFirDiagnostic.SmartcastImpossibleOnImplicitInvokeReceiver
 
 internal class RedundantNullableImpl(
     firDiagnostic: KtPsiDiagnostic,

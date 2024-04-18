@@ -192,7 +192,8 @@ object FirErrors {
     val MISSING_DEPENDENCY_CLASS: KtDiagnosticFactory1<ConeKotlinType> by error1<PsiElement, ConeKotlinType>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
     val MISSING_DEPENDENCY_CLASS_IN_EXPRESSION_TYPE: KtDiagnosticFactory1<ConeKotlinType> by warning1<PsiElement, ConeKotlinType>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
     val MISSING_DEPENDENCY_SUPERCLASS: KtDiagnosticFactory2<ConeKotlinType, ConeKotlinType> by error2<PsiElement, ConeKotlinType, ConeKotlinType>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
-    val MISSING_DEPENDENCY_CLASS_IN_LAMBDA_PARAMETER: KtDiagnosticFactory1<ConeKotlinType> by warning1<PsiElement, ConeKotlinType>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
+    val MISSING_DEPENDENCY_CLASS_IN_LAMBDA_PARAMETER: KtDiagnosticFactory2<ConeKotlinType, Name> by warning2<PsiElement, ConeKotlinType, Name>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
+    val MISSING_DEPENDENCY_CLASS_IN_LAMBDA_RECEIVER: KtDiagnosticFactory1<ConeKotlinType> by warning1<PsiElement, ConeKotlinType>()
 
     // Call resolution
     val CREATING_AN_INSTANCE_OF_ABSTRACT_CLASS: KtDiagnosticFactory0 by error0<KtExpression>()
@@ -451,7 +452,7 @@ object FirErrors {
     val UPPER_BOUND_VIOLATED_IN_TYPEALIAS_EXPANSION: KtDiagnosticFactory2<ConeKotlinType, ConeKotlinType> by error2<PsiElement, ConeKotlinType, ConeKotlinType>()
     val TYPE_ARGUMENTS_NOT_ALLOWED: KtDiagnosticFactory1<String> by error1<PsiElement, String>()
     val TYPE_ARGUMENTS_FOR_OUTER_CLASS_WHEN_NESTED_REFERENCED: KtDiagnosticFactory0 by error0<PsiElement>()
-    val WRONG_NUMBER_OF_TYPE_ARGUMENTS: KtDiagnosticFactory2<Int, FirClassLikeSymbol<*>> by error2<PsiElement, Int, FirClassLikeSymbol<*>>()
+    val WRONG_NUMBER_OF_TYPE_ARGUMENTS: KtDiagnosticFactory2<Int, FirClassLikeSymbol<*>> by error2<PsiElement, Int, FirClassLikeSymbol<*>>(SourceElementPositioningStrategies.TYPE_ARGUMENT_LIST_OR_SELF)
     val NO_TYPE_ARGUMENTS_ON_RHS: KtDiagnosticFactory2<Int, FirClassLikeSymbol<*>> by error2<PsiElement, Int, FirClassLikeSymbol<*>>()
     val OUTER_CLASS_ARGUMENTS_REQUIRED: KtDiagnosticFactory1<FirClassLikeSymbol<*>> by error1<PsiElement, FirClassLikeSymbol<*>>()
     val TYPE_PARAMETERS_IN_OBJECT: KtDiagnosticFactory0 by error0<PsiElement>(SourceElementPositioningStrategies.TYPE_PARAMETERS_LIST)
@@ -504,6 +505,7 @@ object FirErrors {
     val TYPE_VARIANCE_CONFLICT_ERROR: KtDiagnosticFactory4<FirTypeParameterSymbol, Variance, Variance, ConeKotlinType> by error4<PsiElement, FirTypeParameterSymbol, Variance, Variance, ConeKotlinType>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
     val TYPE_VARIANCE_CONFLICT_IN_EXPANDED_TYPE: KtDiagnosticFactory4<FirTypeParameterSymbol, Variance, Variance, ConeKotlinType> by error4<PsiElement, FirTypeParameterSymbol, Variance, Variance, ConeKotlinType>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
     val SMARTCAST_IMPOSSIBLE: KtDiagnosticFactory4<ConeKotlinType, FirExpression, String, Boolean> by error4<KtExpression, ConeKotlinType, FirExpression, String, Boolean>()
+    val SMARTCAST_IMPOSSIBLE_ON_IMPLICIT_INVOKE_RECEIVER: KtDiagnosticFactory4<ConeKotlinType, FirExpression, String, Boolean> by error4<KtExpression, ConeKotlinType, FirExpression, String, Boolean>()
     val REDUNDANT_NULLABLE: KtDiagnosticFactory0 by warning0<KtTypeReference>(SourceElementPositioningStrategies.REDUNDANT_NULLABLE)
     val PLATFORM_CLASS_MAPPED_TO_KOTLIN: KtDiagnosticFactory1<ClassId> by warning1<PsiElement, ClassId>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
     val INFERRED_TYPE_VARIABLE_INTO_EMPTY_INTERSECTION: KtDiagnosticFactoryForDeprecation4<String, Collection<ConeKotlinType>, String, String> by deprecationError4<PsiElement, String, Collection<ConeKotlinType>, String, String>(ForbidInferringTypeVariablesIntoEmptyIntersection)

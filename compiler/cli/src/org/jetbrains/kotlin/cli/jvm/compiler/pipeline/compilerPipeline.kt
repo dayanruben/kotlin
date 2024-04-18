@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.KtSourceFile
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory
 import org.jetbrains.kotlin.backend.jvm.JvmIrDeserializerImpl
+import org.jetbrains.kotlin.backend.jvm.JvmIrSpecialAnnotationSymbolProvider
 import org.jetbrains.kotlin.backend.jvm.JvmIrTypeSystemContext
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.cli.common.*
@@ -194,10 +195,11 @@ fun FirResult.convertToIrAndActualizeForJvm(
         fir2IrConfiguration,
         irGeneratorExtensions,
         JvmIrMangler,
-        FirJvmKotlinMangler(),
+        FirJvmKotlinMangler,
         FirJvmVisibilityConverter,
         DefaultBuiltIns.Instance,
         ::JvmIrTypeSystemContext,
+        JvmIrSpecialAnnotationSymbolProvider,
     ).also { performanceManager?.notifyIRTranslationFinished() }
 }
 

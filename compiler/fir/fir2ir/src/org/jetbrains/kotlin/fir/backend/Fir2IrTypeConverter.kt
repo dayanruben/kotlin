@@ -114,35 +114,26 @@ class Fir2IrTypeConverter(
                         ?: (lookupTag as? ConeClassLikeLookupTag)?.let(classifiersGenerator::createIrClassForNotFoundClass)?.symbol
                         ?: return createErrorType()
 
-                if (hasEnhancedNullability) {
-                    builtIns.enhancedNullabilityAnnotationConstructorCall()?.let {
-                        typeAnnotations += it
+                if (specialAnnotationsProvider != null) {
+                    if (hasEnhancedNullability) {
+                        typeAnnotations += specialAnnotationsProvider.generateEnhancedNullabilityAnnotationCall()
                     }
-                }
-                if (hasFlexibleNullability) {
-                    builtIns.flexibleNullabilityAnnotationConstructorCall()?.let {
-                        typeAnnotations += it
+                    if (hasFlexibleNullability) {
+                        typeAnnotations += specialAnnotationsProvider.generateFlexibleNullabilityAnnotationCall()
                     }
-                }
-                if (hasFlexibleMutability) {
-                    builtIns.flexibleMutabilityAnnotationConstructorCall()?.let {
-                        typeAnnotations += it
+                    if (hasFlexibleMutability) {
+                        typeAnnotations += specialAnnotationsProvider.generateFlexibleMutabilityAnnotationCall()
                     }
-                }
-                if (hasFlexibleArrayElementVariance) {
-                    builtIns.flexibleArrayElementVarianceAnnotationConstructorCall()?.let {
-                        typeAnnotations += it
+                    if (hasFlexibleArrayElementVariance) {
+                        typeAnnotations += specialAnnotationsProvider.generateFlexibleArrayElementVarianceAnnotationCall()
+                    }
+                    if (addRawTypeAnnotation) {
+                        typeAnnotations += specialAnnotationsProvider.generateRawTypeAnnotationCall()
                     }
                 }
 
                 if (isExtensionFunctionType && annotations.getAnnotationsByClassId(ExtensionFunctionType, session).isEmpty()) {
-                    builtIns.extensionFunctionTypeAnnotationConstructorCall()?.let {
-                        typeAnnotations += it
-                    }
-                }
-
-                if (addRawTypeAnnotation) {
-                    builtIns.rawTypeAnnotationConstructorCall()?.let {
+                    irBuiltIns.extensionFunctionTypeAnnotationCall?.let {
                         typeAnnotations += it
                     }
                 }

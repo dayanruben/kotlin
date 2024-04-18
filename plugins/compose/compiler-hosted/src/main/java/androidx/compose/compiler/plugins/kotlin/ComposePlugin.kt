@@ -22,10 +22,12 @@ import androidx.compose.compiler.plugins.kotlin.analysis.StabilityInferencer
 import androidx.compose.compiler.plugins.kotlin.k1.ComposableCallChecker
 import androidx.compose.compiler.plugins.kotlin.k1.ComposableDeclarationChecker
 import androidx.compose.compiler.plugins.kotlin.k1.ComposableTargetChecker
+import androidx.compose.compiler.plugins.kotlin.k1.ComposeDescriptorSerializerContext
 import androidx.compose.compiler.plugins.kotlin.k1.ComposeDiagnosticSuppressor
 import androidx.compose.compiler.plugins.kotlin.k1.ComposeTypeResolutionInterceptorExtension
 import androidx.compose.compiler.plugins.kotlin.k2.ComposeFirExtensionRegistrar
 import androidx.compose.compiler.plugins.kotlin.lower.ClassStabilityFieldSerializationPlugin
+import androidx.compose.compiler.plugins.kotlin.lower.hiddenfromobjc.AddHiddenFromObjCSerializationPlugin
 import com.intellij.mock.MockProject
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
@@ -71,7 +73,7 @@ object ComposeConfiguration {
             "Enabled optimization to remove groups around non-skipping functions"
         )
     val SUPPRESS_KOTLIN_VERSION_COMPATIBILITY_CHECK = CompilerConfigurationKey<String?>(
-        "Version of Kotlin for which version compatibility check should be suppressed"
+        "Deprecated. Version of Kotlin for which version compatibility check should be suppressed"
     )
     val DECOYS_ENABLED_KEY =
         CompilerConfigurationKey<Boolean>("Generate decoy methods in IR transform")
@@ -152,8 +154,8 @@ class ComposeCommandLineProcessor : CommandLineProcessor {
         )
         val SUPPRESS_KOTLIN_VERSION_CHECK_ENABLED_OPTION = CliOption(
             "suppressKotlinVersionCompatibilityCheck",
-            "<true|false>",
-            "Suppress Kotlin version compatibility check",
+            "<kotlin_version>",
+            "Deprecated. Suppress Kotlin version compatibility check",
             required = false,
             allowMultipleOccurrences = false
         )
@@ -165,9 +167,16 @@ class ComposeCommandLineProcessor : CommandLineProcessor {
             allowMultipleOccurrences = false
         )
         val STRONG_SKIPPING_OPTION = CliOption(
+            "strongSkipping",
+            "<true|false>",
+            "Enable strong skipping mode",
+            required = false,
+            allowMultipleOccurrences = false
+        )
+        val EXPERIMENTAL_STRONG_SKIPPING_OPTION = CliOption(
             "experimentalStrongSkipping",
             "<true|false>",
-            "Enable experimental strong skipping mode",
+            "Deprecated - Use strongSkipping instead",
             required = false,
             allowMultipleOccurrences = false
         )
@@ -199,9 +208,10 @@ class ComposeCommandLineProcessor : CommandLineProcessor {
         NON_SKIPPING_GROUP_OPTIMIZATION_ENABLED_OPTION,
         SUPPRESS_KOTLIN_VERSION_CHECK_ENABLED_OPTION,
         DECOYS_ENABLED_OPTION,
+        EXPERIMENTAL_STRONG_SKIPPING_OPTION,
         STRONG_SKIPPING_OPTION,
         STABLE_CONFIG_PATH_OPTION,
-        TRACE_MARKERS_OPTION
+        TRACE_MARKERS_OPTION,
     )
 
     override fun processOption(
@@ -249,6 +259,18 @@ class ComposeCommandLineProcessor : CommandLineProcessor {
             ComposeConfiguration.DECOYS_ENABLED_KEY,
             value == "true"
         )
+        EXPERIMENTAL_STRONG_SKIPPING_OPTION -> {
+            val msgCollector = configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY)
+            msgCollector?.report(
+                CompilerMessageSeverity.WARNING,
+                "${EXPERIMENTAL_STRONG_SKIPPING_OPTION.optionName} is deprecated." +
+                    " Use ${STRONG_SKIPPING_OPTION.optionName} instead."
+            )
+            configuration.put(
+                ComposeConfiguration.STRONG_SKIPPING_ENABLED_KEY,
+                value == "true"
+            )
+        }
         STRONG_SKIPPING_OPTION -> configuration.put(
             ComposeConfiguration.STRONG_SKIPPING_ENABLED_KEY,
             value == "true"
@@ -277,93 +299,54 @@ class ComposePluginRegistrar : org.jetbrains.kotlin.compiler.plugin.ComponentReg
         configuration: CompilerConfiguration
     ) {
         if (checkCompilerVersion(configuration)) {
-            registerCommonExtensions(project)
+            val usesK2 = configuration.languageVersionSettings.languageVersion.usesK2
+            val descriptorSerializerContext =
+                if (usesK2) null
+                else ComposeDescriptorSerializerContext()
+
+            registerCommonExtensions(project, descriptorSerializerContext)
+
             IrGenerationExtension.registerExtension(
                 project,
-                createComposeIrExtension(configuration)
+                createComposeIrExtension(
+                    configuration,
+                    descriptorSerializerContext
+                )
             )
+
+            if (!usesK2) {
+                registerNativeExtensions(project, descriptorSerializerContext!!)
+            }
         }
     }
 
     companion object {
         fun checkCompilerVersion(configuration: CompilerConfiguration): Boolean {
-            try {
-                val KOTLIN_VERSION_EXPECTATION = "2.0.0-Beta4"
-                KotlinCompilerVersion.getVersion()?.let { version ->
-                    val msgCollector = configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY)
-                    val suppressKotlinVersionCheck = configuration.get(
-                        ComposeConfiguration.SUPPRESS_KOTLIN_VERSION_COMPATIBILITY_CHECK
-                    )
-                    if (
-                        suppressKotlinVersionCheck != null &&
-                        suppressKotlinVersionCheck != version
-                    ) {
-                        if (suppressKotlinVersionCheck == "true") {
-                            msgCollector?.report(
-                                CompilerMessageSeverity.STRONG_WARNING,
-                                " `suppressKotlinVersionCompatibilityCheck` should" +
-                                    " specify the version of Kotlin for which you want the" +
-                                    " compatibility check to be disabled. For example," +
-                                    " `suppressKotlinVersionCompatibilityCheck=$version`"
-                            )
-                        } else {
-                            msgCollector?.report(
-                                CompilerMessageSeverity.STRONG_WARNING,
-                                " `suppressKotlinVersionCompatibilityCheck` is set to a" +
-                                    " version of Kotlin ($suppressKotlinVersionCheck) that you" +
-                                    " are not using and should be set properly. (you are using" +
-                                    " Kotlin $version)"
-                            )
-                        }
-                    }
-                    if (suppressKotlinVersionCheck == KOTLIN_VERSION_EXPECTATION) {
-                        msgCollector?.report(
-                            CompilerMessageSeverity.STRONG_WARNING,
-                            " `suppressKotlinVersionCompatibilityCheck` is set to the" +
-                                " same version of Kotlin that the Compose Compiler was already" +
-                                " expecting (Kotlin $suppressKotlinVersionCheck), and thus has" +
-                                " no effect and should be removed."
-                        )
-                    }
-                    if (suppressKotlinVersionCheck != "true" &&
-                        version != KOTLIN_VERSION_EXPECTATION &&
-                        version != suppressKotlinVersionCheck
-                    ) {
-                        msgCollector?.report(
-                            CompilerMessageSeverity.ERROR,
-                            "This version (${VersionChecker.compilerVersion}) of the" +
-                                " Compose Compiler requires Kotlin version" +
-                                " $KOTLIN_VERSION_EXPECTATION but you appear to be using Kotlin" +
-                                " version $version which is not known to be compatible.  Please" +
-                                " consult the Compose-Kotlin compatibility map located at" +
-                                " https://developer.android.com" +
-                                "/jetpack/androidx/releases/compose-kotlin" +
-                                " to choose a compatible version pair (or" +
-                                " `suppressKotlinVersionCompatibilityCheck` but don't say I" +
-                                " didn't warn you!)."
-                        )
-
-                        // Return without registering the Compose plugin because the registration
-                        // APIs may have changed and thus throw an exception during registration,
-                        // preventing the diagnostic from being emitted.
-                        return false
-                    }
-                }
-                return true
-            } catch (t: Throwable) {
-                throw Error(
-                    "Something went wrong while checking for version compatibility" +
-                        " between the Compose Compiler and the Kotlin Compiler.  It is possible" +
-                        " that the versions are incompatible.  Please verify your kotlin version " +
-                        " and consult the Compose-Kotlin compatibility map located at" +
-                        " https://developer.android.com" +
-                        "/jetpack/androidx/releases/compose-kotlin",
-                    t
+            val msgCollector = configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY)
+            val suppressKotlinVersionCheck = configuration.get(ComposeConfiguration.SUPPRESS_KOTLIN_VERSION_COMPATIBILITY_CHECK)
+            if (suppressKotlinVersionCheck != null) {
+                msgCollector?.report(
+                    CompilerMessageSeverity.WARNING,
+                    "suppressKotlinVersionCompatibilityCheck flag is deprecated for Compose compiler bundled with Kotlin releases."
                 )
             }
+
+            val decoysEnabled =
+                configuration.get(ComposeConfiguration.DECOYS_ENABLED_KEY, false)
+            if (decoysEnabled) {
+                msgCollector?.report(
+                    CompilerMessageSeverity.ERROR,
+                    "Decoys generation should be disabled for Compose Multiplatform projects"
+                )
+                return false
+            }
+            return true
         }
 
-        fun registerCommonExtensions(project: Project) {
+        fun registerCommonExtensions(
+            project: Project,
+            composeDescriptorSerializerContext: ComposeDescriptorSerializerContext? = null
+        ) {
             StorageComponentContainerContributor.registerExtension(
                 project,
                 ComposableCallChecker()
@@ -384,13 +367,28 @@ class ComposePluginRegistrar : org.jetbrains.kotlin.compiler.plugin.ComponentReg
             )
             DescriptorSerializerPlugin.registerExtension(
                 project,
-                ClassStabilityFieldSerializationPlugin()
+                ClassStabilityFieldSerializationPlugin(
+                    composeDescriptorSerializerContext?.classStabilityInferredCollection
+                )
             )
             FirExtensionRegistrarAdapter.registerExtension(project, ComposeFirExtensionRegistrar())
         }
 
+        fun registerNativeExtensions(
+            project: Project,
+            composeDescriptorSerializerContext: ComposeDescriptorSerializerContext
+        ) {
+            DescriptorSerializerPlugin.registerExtension(
+                project,
+                AddHiddenFromObjCSerializationPlugin(
+                    composeDescriptorSerializerContext.hideFromObjCDeclarationsSet
+                )
+            )
+        }
+
         fun createComposeIrExtension(
             configuration: CompilerConfiguration,
+            descriptorSerializerContext: ComposeDescriptorSerializerContext? = null,
             moduleMetricsFactory: ((StabilityInferencer) -> ModuleMetrics)? = null
         ): ComposeIrGenerationExtension {
             val liveLiteralsEnabled = configuration.getBoolean(
@@ -429,6 +427,7 @@ class ComposePluginRegistrar : org.jetbrains.kotlin.compiler.plugin.ComponentReg
             )
 
             val useK2 = configuration.languageVersionSettings.languageVersion.usesK2
+
             val strongSkippingEnabled = configuration.get(
                 ComposeConfiguration.STRONG_SKIPPING_ENABLED_KEY,
                 false
@@ -478,7 +477,8 @@ class ComposePluginRegistrar : org.jetbrains.kotlin.compiler.plugin.ComponentReg
                 useK2 = useK2,
                 strongSkippingEnabled = strongSkippingEnabled,
                 stableTypeMatchers = stableTypeMatchers,
-                moduleMetricsFactory = moduleMetricsFactory
+                moduleMetricsFactory = moduleMetricsFactory,
+                descriptorSerializerContext = descriptorSerializerContext,
             )
         }
     }

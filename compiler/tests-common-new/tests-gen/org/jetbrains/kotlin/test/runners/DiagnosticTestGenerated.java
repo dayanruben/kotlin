@@ -14097,6 +14097,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("parameterAsReceiverInference.kt")
+      public void testParameterAsReceiverInference() {
+        runTest("compiler/testData/diagnostics/tests/functionAsExpression/parameterAsReceiverInference.kt");
+      }
+
+      @Test
       @TestMetadata("Parameters.kt")
       public void testParameters() {
         runTest("compiler/testData/diagnostics/tests/functionAsExpression/Parameters.kt");
@@ -18087,6 +18093,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("captureTypeOnlyOnTopLevel.kt")
         public void testCaptureTypeOnlyOnTopLevel() {
           runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/captureTypeOnlyOnTopLevel.kt");
+        }
+
+        @Test
+        @TestMetadata("capturedAssignment.kt")
+        public void testCapturedAssignment() {
+          runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/capturedAssignment.kt");
         }
 
         @Test
@@ -23650,6 +23662,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("rawTypesFromSelfTypeWithRawBound.kt")
+        public void testRawTypesFromSelfTypeWithRawBound() {
+          runTest("compiler/testData/diagnostics/tests/j+k/types/rawTypesFromSelfTypeWithRawBound.kt");
+        }
+
+        @Test
         @TestMetadata("returnCollection.kt")
         public void testReturnCollection() {
           runTest("compiler/testData/diagnostics/tests/j+k/types/returnCollection.kt");
@@ -24871,6 +24889,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("AnonymousFunctionParametersOfInaccessibleTypes.kt")
+      public void testAnonymousFunctionParametersOfInaccessibleTypes() {
+        runTest("compiler/testData/diagnostics/tests/multimodule/AnonymousFunctionParametersOfInaccessibleTypes.kt");
+      }
+
+      @Test
       @TestMetadata("BoxedInaccessibleGenericTypeUsedByDependencies.kt")
       public void testBoxedInaccessibleGenericTypeUsedByDependencies() {
         runTest("compiler/testData/diagnostics/tests/multimodule/BoxedInaccessibleGenericTypeUsedByDependencies.kt");
@@ -24928,6 +24952,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("kt14249.kt")
       public void testKt14249() {
         runTest("compiler/testData/diagnostics/tests/multimodule/kt14249.kt");
+      }
+
+      @Test
+      @TestMetadata("LambdaReceiversOfInaccessibleTypes.kt")
+      public void testLambdaReceiversOfInaccessibleTypes() {
+        runTest("compiler/testData/diagnostics/tests/multimodule/LambdaReceiversOfInaccessibleTypes.kt");
       }
 
       @Test
@@ -25338,6 +25368,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @Test
       public void testAllFilesPresentInMultiplatform() {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+      }
+
+      @Test
+      @TestMetadata("ambiguousActualsJavaPrimitiveIntTypeVsIntegerObject.kt")
+      public void testAmbiguousActualsJavaPrimitiveIntTypeVsIntegerObject() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/ambiguousActualsJavaPrimitiveIntTypeVsIntegerObject.kt");
       }
 
       @Test
@@ -29593,6 +29629,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("NoInapplicableOperatorModifierOnAnyEquals.kt")
+      public void testNoInapplicableOperatorModifierOnAnyEquals() {
+        runTest("compiler/testData/diagnostics/tests/override/NoInapplicableOperatorModifierOnAnyEquals.kt");
+      }
+
+      @Test
       @TestMetadata("NoOverrideAndWeakenedVisibilityOnOneLine.kt")
       public void testNoOverrideAndWeakenedVisibilityOnOneLine() {
         runTest("compiler/testData/diagnostics/tests/override/NoOverrideAndWeakenedVisibilityOnOneLine.kt");
@@ -33612,6 +33654,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("samConstructorVsFunction.kt")
+        public void testSamConstructorVsFunction() {
+          runTest("compiler/testData/diagnostics/tests/resolve/priority/samConstructorVsFunction.kt");
+        }
+
+        @Test
         @TestMetadata("staticVsImplicitReceiverMember.kt")
         public void testStaticVsImplicitReceiverMember() {
           runTest("compiler/testData/diagnostics/tests/resolve/priority/staticVsImplicitReceiverMember.kt");
@@ -33850,6 +33898,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("samConversionWithConditionJava.kt")
       public void testSamConversionWithConditionJava() {
         runTest("compiler/testData/diagnostics/tests/samConversions/samConversionWithConditionJava.kt");
+      }
+
+      @Test
+      @TestMetadata("samConversionWithNamedArgumentAndIf.kt")
+      public void testSamConversionWithNamedArgumentAndIf() {
+        runTest("compiler/testData/diagnostics/tests/samConversions/samConversionWithNamedArgumentAndIf.kt");
       }
 
       @Test
@@ -36391,6 +36445,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("smartCastOnObject.kt")
+      public void testSmartCastOnObject() {
+        runTest("compiler/testData/diagnostics/tests/smartCasts/smartCastOnObject.kt");
+      }
+
+      @Test
       @TestMetadata("smartCastOnWhen.kt")
       public void testSmartCastOnWhen() {
         runTest("compiler/testData/diagnostics/tests/smartCasts/smartCastOnWhen.kt");
@@ -36508,6 +36568,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("typeParameterWithBounds.kt")
       public void testTypeParameterWithBounds() {
         runTest("compiler/testData/diagnostics/tests/smartCasts/typeParameterWithBounds.kt");
+      }
+
+      @Test
+      @TestMetadata("unstableSmartCastOnInvokeReceiver.kt")
+      public void testUnstableSmartCastOnInvokeReceiver() {
+        runTest("compiler/testData/diagnostics/tests/smartCasts/unstableSmartCastOnInvokeReceiver.kt");
       }
 
       @Test
@@ -38862,6 +38928,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("suspendConversionDisabled.kt")
       public void testSuspendConversionDisabled() {
         runTest("compiler/testData/diagnostics/tests/suspendConversion/suspendConversionDisabled.kt");
+      }
+
+      @Test
+      @TestMetadata("suspendConversionForLambdaList.kt")
+      public void testSuspendConversionForLambdaList() {
+        runTest("compiler/testData/diagnostics/tests/suspendConversion/suspendConversionForLambdaList.kt");
       }
 
       @Test

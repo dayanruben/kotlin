@@ -7,8 +7,9 @@ package org.jetbrains.kotlin.swiftexport.standalone
 
 import org.jetbrains.kotlin.konan.target.Distribution
 import org.jetbrains.kotlin.swiftexport.standalone.SwiftExportConfig.Companion.BRIDGE_MODULE_NAME
-import org.jetbrains.kotlin.swiftexport.standalone.SwiftExportConfig.Companion.DEBUG_MODE_ENABLED
 import org.jetbrains.kotlin.swiftexport.standalone.SwiftExportConfig.Companion.DEFAULT_BRIDGE_MODULE_NAME
+import org.jetbrains.kotlin.swiftexport.standalone.SwiftExportConfig.Companion.RENDER_DOC_COMMENTS
+import org.jetbrains.kotlin.swiftexport.standalone.SwiftExportConfig.Companion.STABLE_DECLARATIONS_ORDER
 import org.jetbrains.kotlin.swiftexport.standalone.builders.buildFunctionBridges
 import org.jetbrains.kotlin.swiftexport.standalone.builders.buildSwiftModule
 import org.jetbrains.kotlin.swiftexport.standalone.writer.dumpResultToFiles
@@ -21,8 +22,6 @@ public data class SwiftExportConfig(
     val distribution: Distribution = Distribution(KotlinNativePaths.homePath.absolutePath)
 ) {
     public companion object {
-        public const val DEBUG_MODE_ENABLED: String = "DEBUG_MODE_ENABLED"
-
         /**
          * How should the generated stubs refer to C bridging module?
          * ```swift
@@ -33,6 +32,10 @@ public data class SwiftExportConfig(
         public const val BRIDGE_MODULE_NAME: String = "BRIDGE_MODULE_NAME"
 
         public const val DEFAULT_BRIDGE_MODULE_NAME: String = "KotlinBridges"
+
+        public const val STABLE_DECLARATIONS_ORDER: String = "STABLE_DECLARATIONS_ORDER"
+
+        public const val RENDER_DOC_COMMENTS: String = "RENDER_DOC_COMMENTS"
     }
 }
 
@@ -79,7 +82,8 @@ public fun runSwiftExport(
     config: SwiftExportConfig = SwiftExportConfig(),
     output: SwiftExportOutput,
 ) {
-    val isDebugModeEnabled = config.settings.containsKey(DEBUG_MODE_ENABLED)
+    val stableDeclarationsOrder = config.settings.containsKey(STABLE_DECLARATIONS_ORDER)
+    val renderDocComments = config.settings[RENDER_DOC_COMMENTS] != "false"
     val bridgeModuleName = config.settings.getOrElse(BRIDGE_MODULE_NAME) {
         config.logger.report(
             SwiftExportLogger.Severity.Warning,
@@ -88,13 +92,15 @@ public fun runSwiftExport(
         DEFAULT_BRIDGE_MODULE_NAME
     }
 
-
     val module = buildSwiftModule(
         input,
         config.distribution,
-        isDebugModeEnabled,
-        bridgeModuleName
+        bridgeModuleName = bridgeModuleName
     )
     val bridgeRequests = module.buildFunctionBridges()
-    module.dumpResultToFiles(bridgeRequests, output)
+    module.dumpResultToFiles(
+        bridgeRequests, output,
+        stableDeclarationsOrder = stableDeclarationsOrder,
+        renderDocComments = renderDocComments
+    )
 }

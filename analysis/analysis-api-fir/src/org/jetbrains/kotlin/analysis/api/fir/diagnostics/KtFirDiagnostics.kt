@@ -358,6 +358,12 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
     interface MissingDependencyClassInLambdaParameter : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = MissingDependencyClassInLambdaParameter::class
         val type: KtType
+        val parameterName: Name
+    }
+
+    interface MissingDependencyClassInLambdaReceiver : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = MissingDependencyClassInLambdaReceiver::class
+        val type: KtType
     }
 
     interface CreatingAnInstanceOfAbstractClass : KtFirDiagnostic<KtExpression> {
@@ -1851,6 +1857,14 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     interface SmartcastImpossible : KtFirDiagnostic<KtExpression> {
         override val diagnosticClass get() = SmartcastImpossible::class
+        val desiredType: KtType
+        val subject: KtExpression
+        val description: String
+        val isCastToNotNull: Boolean
+    }
+
+    interface SmartcastImpossibleOnImplicitInvokeReceiver : KtFirDiagnostic<KtExpression> {
+        override val diagnosticClass get() = SmartcastImpossibleOnImplicitInvokeReceiver::class
         val desiredType: KtType
         val subject: KtExpression
         val description: String

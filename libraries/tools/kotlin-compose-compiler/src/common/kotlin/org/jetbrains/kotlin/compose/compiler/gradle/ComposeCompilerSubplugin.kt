@@ -67,11 +67,11 @@ class ComposeCompilerGradleSubplugin
                         SubpluginOption("sourceInformation", it.toString())
                     })
                 }
-                add(composeCompilerExtension.metricsDestination.map {
-                    SubpluginOption("metricsDestination", it.asFile.path)
+                add(composeCompilerExtension.metricsDestination.map<SubpluginOption> {
+                    FilesSubpluginOption("metricsDestination", listOf(it.asFile))
                 }.orElse(EMPTY_OPTION))
-                add(composeCompilerExtension.reportsDestination.map {
-                    SubpluginOption("reportsDestination", it.asFile.path)
+                add(composeCompilerExtension.reportsDestination.map<SubpluginOption> {
+                    FilesSubpluginOption("reportsDestination", listOf(it.asFile))
                 }.orElse(EMPTY_OPTION))
                 add(composeCompilerExtension.enableIntrinsicRemember.map {
                     SubpluginOption("intrinsicRemember", it.toString())
@@ -79,14 +79,12 @@ class ComposeCompilerGradleSubplugin
                 add(composeCompilerExtension.enableNonSkippingGroupOptimization.map {
                     SubpluginOption("nonSkippingGroupOptimization", it.toString())
                 })
-                add(composeCompilerExtension.suppressKotlinVersionCompatibilityCheck.map {
-                    SubpluginOption("suppressKotlinVersionCompatibilityCheck", it)
-                }.orElse(EMPTY_OPTION))
-                add(composeCompilerExtension.enableExperimentalStrongSkippingMode.map {
+                add(composeCompilerExtension.enableStrongSkippingMode.map {
+                    // Rename once the option in Compose compiler is also renamed
                     SubpluginOption("experimentalStrongSkipping", it.toString())
                 })
-                add(composeCompilerExtension.stabilityConfigurationFile.map {
-                    SubpluginOption("stabilityConfigurationPath", it.asFile.path)
+                add(composeCompilerExtension.stabilityConfigurationFile.map<SubpluginOption> {
+                    FilesSubpluginOption("stabilityConfigurationPath", listOf(it.asFile))
                 }.orElse(EMPTY_OPTION))
                 add(composeCompilerExtension.includeTraceMarkers.map {
                     SubpluginOption("traceMarkersEnabled", it.toString())

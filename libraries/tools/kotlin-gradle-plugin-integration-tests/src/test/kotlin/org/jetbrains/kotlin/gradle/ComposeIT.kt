@@ -9,7 +9,10 @@ import org.gradle.api.logging.LogLevel
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.testbase.*
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
 import kotlin.io.path.appendText
+import kotlin.io.path.writeText
 
 @DisplayName("Compose compiler Gradle plugin")
 class ComposeIT : KGPBaseTest() {
@@ -34,10 +37,6 @@ class ComposeIT : KGPBaseTest() {
                 |    id "org.jetbrains.kotlin.plugin.compose"
                 |${originalBuildScript.substringAfter("plugins {")}
                 |
-                |composeCompiler {
-                |    suppressKotlinVersionCompatibilityCheck.set("${buildOptions.kotlinVersion}")
-                |}
-                |
                 |dependencies {
                 |    implementation "androidx.compose.runtime:runtime:1.6.4"
                 |}
@@ -58,7 +57,6 @@ class ComposeIT : KGPBaseTest() {
                             "plugin:androidx.compose.compiler.plugins.kotlin:sourceInformation=false," +
                             "plugin:androidx.compose.compiler.plugins.kotlin:intrinsicRemember=false," +
                             "plugin:androidx.compose.compiler.plugins.kotlin:nonSkippingGroupOptimization=false," +
-                            "plugin:androidx.compose.compiler.plugins.kotlin:suppressKotlinVersionCompatibilityCheck=${buildOptions.kotlinVersion}," +
                             "plugin:androidx.compose.compiler.plugins.kotlin:experimentalStrongSkipping=false," +
                             "plugin:androidx.compose.compiler.plugins.kotlin:traceMarkersEnabled=false",
                     LogLevel.INFO
@@ -81,18 +79,79 @@ class ComposeIT : KGPBaseTest() {
             buildJdk = providedJdk.location,
             buildOptions = defaultBuildOptions.copy(androidVersion = agpVersion)
         ) {
+            build("assembleDebug") {
+                assertOutputContains("Detected Android Gradle Plugin compose compiler configuration")
+            }
+        }
+    }
+
+    @DisplayName("Should not break build cache relocation")
+    @AndroidGradlePluginTests
+    @GradleAndroidTest
+    fun testAndroidBuildCacheRelocation(
+        gradleVersion: GradleVersion,
+        agpVersion: String,
+        providedJdk: JdkVersions.ProvidedJdk,
+        @TempDir localCacheDir: Path,
+    ) {
+        val project1 = androidComposeAppProjectWithLocalCacheEnabled(
+            gradleVersion,
+            agpVersion,
+            providedJdk,
+            localCacheDir
+        )
+
+        val project2 = androidComposeAppProjectWithLocalCacheEnabled(
+            gradleVersion,
+            agpVersion,
+            providedJdk,
+            localCacheDir
+        )
+
+        project1.build("assembleDebug") {
+            assertTasksExecuted(":compileDebugKotlin")
+        }
+
+        project2.build("assembleDebug") {
+            assertTasksFromCache(":compileDebugKotlin")
+        }
+    }
+
+    private fun androidComposeAppProjectWithLocalCacheEnabled(
+        gradleVersion: GradleVersion,
+        agpVersion: String,
+        providedJdk: JdkVersions.ProvidedJdk,
+        localCacheDir: Path,
+    ): TestProject {
+        return project(
+            projectName = "AndroidSimpleComposeApp",
+            gradleVersion = gradleVersion,
+            buildJdk = providedJdk.location,
+            buildOptions = defaultBuildOptions.copy(
+                androidVersion = agpVersion,
+                buildCacheEnabled = true,
+            )
+        ) {
+            projectPath.resolve("stability-configuration.conf").writeText(
+                """
+                |// Consider LocalDateTime stable
+                |java.time.LocalDateTime
+                |// Consider kotlin collections stable
+                |kotlin.collections.*
+                """.trimMargin()
+            )
             buildGradleKts.appendText(
                 """
                 |
                 |composeCompiler {
-                |    suppressKotlinVersionCompatibilityCheck.set("${buildOptions.kotlinVersion}")
+                |    metricsDestination.set(project.layout.buildDirectory.dir("metrics"))
+                |    reportsDestination.set(project.layout.buildDirectory.dir("reports"))
+                |    stabilityConfigurationFile.set(project.layout.projectDirectory.file("stability-configuration.conf"))
                 |}
                 """.trimMargin()
             )
 
-            build("assembleDebug") {
-                assertOutputContains("Detected Android Gradle Plugin compose compiler configuration")
-            }
+            enableLocalBuildCache(localCacheDir)
         }
     }
 }

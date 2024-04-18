@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.pipeline
 
 import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.kotlin.backend.common.CodegenUtil
+import org.jetbrains.kotlin.backend.common.IrSpecialAnnotationsProvider
 import org.jetbrains.kotlin.backend.common.actualizer.IrActualizedResult
 import org.jetbrains.kotlin.backend.common.actualizer.IrActualizer
 import org.jetbrains.kotlin.backend.common.actualizer.SpecialFakeOverrideSymbolsResolver
@@ -19,7 +20,6 @@ import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.backend.*
-import org.jetbrains.kotlin.fir.backend.jvm.Fir2IrJvmSpecialAnnotationSymbolProvider
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
 import org.jetbrains.kotlin.fir.moduleData
@@ -39,7 +39,6 @@ import org.jetbrains.kotlin.ir.util.KotlinMangler
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
-import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 data class FirResult(val outputs: List<ModuleCompilerAnalyzedOutput>)
@@ -75,6 +74,7 @@ fun FirResult.convertToIrAndActualize(
     visibilityConverter: Fir2IrVisibilityConverter,
     kotlinBuiltIns: KotlinBuiltIns,
     actualizerTypeContextProvider: (IrBuiltIns) -> IrTypeSystemContext,
+    specialAnnotationsProvider: IrSpecialAnnotationsProvider?,
     irModuleFragmentPostCompute: (IrModuleFragment) -> Unit = { _ -> },
 ): Fir2IrActualizedResult {
     require(outputs.isNotEmpty()) { "No modules found" }
@@ -90,13 +90,8 @@ fun FirResult.convertToIrAndActualize(
 
     val platformFirOutput = outputs.last()
 
-    val specialAnnotationSymbolProvider = runIf(platformFirOutput.session.moduleData.platform.isJvm()) {
-        Fir2IrJvmSpecialAnnotationSymbolProvider(IrFactoryImpl)
-    }
-
     fun ModuleCompilerAnalyzedOutput.createFir2IrComponentsStorage(
         irBuiltIns: IrBuiltInsOverFir? = null,
-        fir2IrBuiltIns: Fir2IrBuiltIns? = null,
         irTypeSystemContext: IrTypeSystemContext? = null,
     ): Fir2IrComponentsStorage {
         return Fir2IrComponentsStorage(
@@ -110,10 +105,9 @@ fun FirResult.convertToIrAndActualize(
             actualizerTypeContextProvider,
             commonMemberStorage,
             irMangler,
-            specialAnnotationSymbolProvider,
             kotlinBuiltIns,
             irBuiltIns,
-            fir2IrBuiltIns,
+            specialAnnotationsProvider,
             irTypeSystemContext,
             firProvidersWithGeneratedFiles.getValue(session.moduleData),
         )
@@ -131,9 +125,7 @@ fun FirResult.convertToIrAndActualize(
         val componentsStorage = if (isMainOutput) {
             platformComponentsStorage
         } else {
-            firOutput.createFir2IrComponentsStorage(
-                platformComponentsStorage.irBuiltIns, platformComponentsStorage.builtIns, platformComponentsStorage.irTypeSystemContext
-            )
+            firOutput.createFir2IrComponentsStorage(platformComponentsStorage.irBuiltIns, platformComponentsStorage.irTypeSystemContext)
         }
 
         val irModuleFragment = Fir2IrConverter.generateIrModuleFragment(componentsStorage, firOutput.fir).also {

@@ -734,6 +734,35 @@ class SirAsSwiftSourcesPrinterTests {
     }
 
     @Test
+    fun `should print typealias`() {
+        val sampleType = buildStruct {
+            origin = SirOrigin.ExternallyDefined(name = "Baz.Bar")
+            visibility = SirVisibility.PUBLIC
+            name = "Bar"
+        }
+
+        val `typealias` = buildTypealias {
+            origin = SirOrigin.Unknown
+            name = "Foo"
+            type = SirNominalType(sampleType)
+        }
+
+        val module = buildModule {
+            name = "Test"
+            declarations.add(`typealias`)
+            declarations.add(sampleType)
+        }.apply {
+            `typealias`.parent = this
+            sampleType.parent = this
+        }
+
+        runTest(
+            module,
+            "testData/typealias"
+        )
+    }
+
+    @Test
     fun `should print extensions`() {
 
         val externalDefinedEnum: SirEnum
@@ -860,7 +889,7 @@ class SirAsSwiftSourcesPrinterTests {
 
     private fun runTest(module: SirModule, goldenDataFile: String) {
         val expectedSwiftSrc = File(KtTestUtil.getHomeDirectory()).resolve("$goldenDataFile.golden.swift")
-        val actualSwiftSrc = SirAsSwiftSourcesPrinter.print(module)
+        val actualSwiftSrc = SirAsSwiftSourcesPrinter.print(module, stableDeclarationsOrder = false, renderDocComments = true)
         JUnit5Assertions.assertEqualsToFile(expectedSwiftSrc, actualSwiftSrc)
     }
 }

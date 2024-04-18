@@ -189,6 +189,10 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         }
         val MISSING_DEPENDENCY_CLASS_IN_LAMBDA_PARAMETER by warning<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED) {
             parameter<ConeKotlinType>("type")
+            parameter<Name>("parameterName")
+        }
+        val MISSING_DEPENDENCY_CLASS_IN_LAMBDA_RECEIVER by warning<PsiElement> {
+            parameter<ConeKotlinType>("type")
         }
     }
 
@@ -730,7 +734,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<String>("place")
         }
         val TYPE_ARGUMENTS_FOR_OUTER_CLASS_WHEN_NESTED_REFERENCED by error<PsiElement>()
-        val WRONG_NUMBER_OF_TYPE_ARGUMENTS by error<PsiElement> {
+        val WRONG_NUMBER_OF_TYPE_ARGUMENTS by error<PsiElement>(PositioningStrategy.TYPE_ARGUMENT_LIST_OR_SELF) {
             parameter<Int>("expectedCount")
             parameter<FirClassLikeSymbol<*>>("classifier")
         }
@@ -875,6 +879,13 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         }
 
         val SMARTCAST_IMPOSSIBLE by error<KtExpression> {
+            parameter<ConeKotlinType>("desiredType")
+            parameter<FirExpression>("subject")
+            parameter<String>("description")
+            parameter<Boolean>("isCastToNotNull")
+        }
+
+        val SMARTCAST_IMPOSSIBLE_ON_IMPLICIT_INVOKE_RECEIVER by error<KtExpression> {
             parameter<ConeKotlinType>("desiredType")
             parameter<FirExpression>("subject")
             parameter<String>("description")
