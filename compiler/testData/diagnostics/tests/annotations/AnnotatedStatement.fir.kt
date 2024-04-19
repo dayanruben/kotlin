@@ -23,6 +23,9 @@ fun foo(list: MutableList<Int>, arr: Array<String>) {
     while (true) { break }
 
     @JavaAnnWithTarget @JavaAnn <!WRONG_ANNOTATION_TARGET!>@KotlinAnn<!>
+    for (i in list) {}
+
+    @JavaAnnWithTarget @JavaAnn <!WRONG_ANNOTATION_TARGET!>@KotlinAnn<!>
     if (true) {}
 
     var x = 1
