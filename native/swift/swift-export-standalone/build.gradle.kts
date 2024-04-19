@@ -22,6 +22,8 @@ dependencies {
     implementation(project(":analysis:analysis-api"))
     implementation(project(":analysis:analysis-api-standalone"))
 
+    implementation(project(":native:analysis-api-klib-reader"))
+
     testApi(platform(libs.junit.bom))
     testRuntimeOnly(libs.junit.jupiter.engine)
     testImplementation(libs.junit.jupiter.api)
@@ -32,6 +34,7 @@ dependencies {
     testImplementation(projectTests(":analysis:analysis-test-framework"))
     testImplementation(projectTests(":compiler:tests-common"))
     testImplementation(projectTests(":compiler:tests-common-new"))
+    testApi(projectTests(":native:native.tests"))
 }
 
 sourceSets {
