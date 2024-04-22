@@ -6575,6 +6575,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       }
 
       @Test
+      @TestMetadata("usefulCastInMap.kt")
+      public void testUsefulCastInMap() {
+        runTest("compiler/testData/diagnostics/tests/cast/usefulCastInMap.kt");
+      }
+
+      @Test
       @TestMetadata("UselessSafeCast.kt")
       public void testUselessSafeCast() {
         runTest("compiler/testData/diagnostics/tests/cast/UselessSafeCast.kt");
@@ -10747,6 +10753,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       public void testSuperCall() {
         runTest("compiler/testData/diagnostics/tests/defaultArguments/superCall.kt");
       }
+
+      @Test
+      @TestMetadata("superCallWithDelegation.kt")
+      public void testSuperCallWithDelegation() {
+        runTest("compiler/testData/diagnostics/tests/defaultArguments/superCallWithDelegation.kt");
+      }
     }
 
     @Nested
@@ -11901,6 +11913,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       }
 
       @Test
+      @TestMetadata("hiddenPropertyAccessors2.kt")
+      public void testHiddenPropertyAccessors2() {
+        runTest("compiler/testData/diagnostics/tests/deprecated/hiddenPropertyAccessors2.kt");
+      }
+
+      @Test
       @TestMetadata("importJavaSamInterface.kt")
       public void testImportJavaSamInterface() {
         runTest("compiler/testData/diagnostics/tests/deprecated/importJavaSamInterface.kt");
@@ -12739,6 +12757,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         @TestMetadata("redeclarationOfEnumEntriesNameWithIntrinsicOn.kt")
         public void testRedeclarationOfEnumEntriesNameWithIntrinsicOn() {
           runTest("compiler/testData/diagnostics/tests/enum/entries/redeclarationOfEnumEntriesNameWithIntrinsicOn.kt");
+        }
+
+        @Test
+        @TestMetadata("referenceFalsePositiveWarnings.kt")
+        public void testReferenceFalsePositiveWarnings() {
+          runTest("compiler/testData/diagnostics/tests/enum/entries/referenceFalsePositiveWarnings.kt");
         }
 
         @Test
@@ -17052,6 +17076,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       @TestMetadata("noInformationForParameter.kt")
       public void testNoInformationForParameter() {
         runTest("compiler/testData/diagnostics/tests/inference/noInformationForParameter.kt");
+      }
+
+      @Test
+      @TestMetadata("noInformationForStarProjectionCase.kt")
+      public void testNoInformationForStarProjectionCase() {
+        runTest("compiler/testData/diagnostics/tests/inference/noInformationForStarProjectionCase.kt");
       }
 
       @Test
@@ -28572,6 +28602,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       @TestMetadata("extensionPropertyMustHaveAccessorsOrBeAbstract.kt")
       public void testExtensionPropertyMustHaveAccessorsOrBeAbstract() {
         runTest("compiler/testData/diagnostics/tests/properties/extensionPropertyMustHaveAccessorsOrBeAbstract.kt");
+      }
+
+      @Test
+      @TestMetadata("extensionPropertyMustHaveAccessorsOrBeAbstract2.kt")
+      public void testExtensionPropertyMustHaveAccessorsOrBeAbstract2() {
+        runTest("compiler/testData/diagnostics/tests/properties/extensionPropertyMustHaveAccessorsOrBeAbstract2.kt");
       }
 
       @Test

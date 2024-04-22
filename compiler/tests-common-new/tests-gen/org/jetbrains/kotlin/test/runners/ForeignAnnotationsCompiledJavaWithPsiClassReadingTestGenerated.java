@@ -821,6 +821,12 @@ public class ForeignAnnotationsCompiledJavaWithPsiClassReadingTestGenerated exte
         }
 
         @Test
+        @TestMetadata("notNullTypeAgainstNullableWildcard.kt")
+        public void testNotNullTypeAgainstNullableWildcard() {
+          runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode/notNullTypeAgainstNullableWildcard.kt");
+        }
+
+        @Test
         @TestMetadata("NullMarkedVsPackageNullUnmarked.kt")
         public void testNullMarkedVsPackageNullUnmarked() {
           runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode/NullMarkedVsPackageNullUnmarked.kt");
@@ -932,6 +938,12 @@ public class ForeignAnnotationsCompiledJavaWithPsiClassReadingTestGenerated exte
         @TestMetadata("NullUnmarkedVsTypeNullMarked.kt")
         public void testNullUnmarkedVsTypeNullMarked() {
           runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode/NullUnmarkedVsTypeNullMarked.kt");
+        }
+
+        @Test
+        @TestMetadata("nullableArray.kt")
+        public void testNullableArray() {
+          runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode/nullableArray.kt");
         }
 
         @Test
@@ -1059,6 +1071,12 @@ public class ForeignAnnotationsCompiledJavaWithPsiClassReadingTestGenerated exte
         }
 
         @Test
+        @TestMetadata("notNullTypeAgainstNullableWildcard.kt")
+        public void testNotNullTypeAgainstNullableWildcard() {
+          runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/warnMode/notNullTypeAgainstNullableWildcard.kt");
+        }
+
+        @Test
         @TestMetadata("NullMarkedVsPackageNullUnmarked.kt")
         public void testNullMarkedVsPackageNullUnmarked() {
           runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/warnMode/NullMarkedVsPackageNullUnmarked.kt");
@@ -1170,6 +1188,12 @@ public class ForeignAnnotationsCompiledJavaWithPsiClassReadingTestGenerated exte
         @TestMetadata("NullUnmarkedVsTypeNullMarked.kt")
         public void testNullUnmarkedVsTypeNullMarked() {
           runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/warnMode/NullUnmarkedVsTypeNullMarked.kt");
+        }
+
+        @Test
+        @TestMetadata("nullableArray.kt")
+        public void testNullableArray() {
+          runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/warnMode/nullableArray.kt");
         }
 
         @Test

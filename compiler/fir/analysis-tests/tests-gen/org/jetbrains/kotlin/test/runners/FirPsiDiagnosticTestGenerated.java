@@ -5655,6 +5655,30 @@ public class FirPsiDiagnosticTestGenerated extends AbstractFirPsiDiagnosticTest 
     }
 
     @Test
+    @TestMetadata("incorrectDeprecation.kt")
+    public void testIncorrectDeprecation() {
+      runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/incorrectDeprecation.kt");
+    }
+
+    @Test
+    @TestMetadata("incorrectExtensionFunctionType.kt")
+    public void testIncorrectExtensionFunctionType() {
+      runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/incorrectExtensionFunctionType.kt");
+    }
+
+    @Test
+    @TestMetadata("incorrectLabelReference.kt")
+    public void testIncorrectLabelReference() {
+      runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/incorrectLabelReference.kt");
+    }
+
+    @Test
+    @TestMetadata("incorrectReturnFromNothingLambda.kt")
+    public void testIncorrectReturnFromNothingLambda() {
+      runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/incorrectReturnFromNothingLambda.kt");
+    }
+
+    @Test
     @TestMetadata("intersectDynamicAndString.kt")
     public void testIntersectDynamicAndString() {
       runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/intersectDynamicAndString.kt");

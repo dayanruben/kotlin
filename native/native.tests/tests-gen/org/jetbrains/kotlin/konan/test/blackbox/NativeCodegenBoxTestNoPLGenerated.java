@@ -17575,6 +17575,12 @@ public class NativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenBoxT
       }
 
       @Test
+      @TestMetadata("copyOnObject.kt")
+      public void testCopyOnObject() {
+        runTest("compiler/testData/codegen/box/fir/copyOnObject.kt");
+      }
+
+      @Test
       @TestMetadata("deserializedOptInDeprecated.kt")
       public void testDeserializedOptInDeprecated() {
         runTest("compiler/testData/codegen/box/fir/deserializedOptInDeprecated.kt");
@@ -17635,9 +17641,21 @@ public class NativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenBoxT
       }
 
       @Test
+      @TestMetadata("multipleDefaultsFalsePositiveDelegation.kt")
+      public void testMultipleDefaultsFalsePositiveDelegation() {
+        runTest("compiler/testData/codegen/box/fir/multipleDefaultsFalsePositiveDelegation.kt");
+      }
+
+      @Test
       @TestMetadata("nestedClassTypeParameterDeserialization.kt")
       public void testNestedClassTypeParameterDeserialization() {
         runTest("compiler/testData/codegen/box/fir/nestedClassTypeParameterDeserialization.kt");
+      }
+
+      @Test
+      @TestMetadata("noRecursiveProblemWithProjection.kt")
+      public void testNoRecursiveProblemWithProjection() {
+        runTest("compiler/testData/codegen/box/fir/noRecursiveProblemWithProjection.kt");
       }
 
       @Test
@@ -41937,6 +41955,12 @@ public class NativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenBoxT
       @TestMetadata("genericSet.kt")
       public void testGenericSet() {
         runTest("compiler/testData/codegen/box/smartCasts/genericSet.kt");
+      }
+
+      @Test
+      @TestMetadata("implicitCastOnAssignment.kt")
+      public void testImplicitCastOnAssignment() {
+        runTest("compiler/testData/codegen/box/smartCasts/implicitCastOnAssignment.kt");
       }
 
       @Test

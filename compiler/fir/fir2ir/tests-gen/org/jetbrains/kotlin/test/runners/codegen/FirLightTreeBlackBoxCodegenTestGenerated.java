@@ -9432,6 +9432,18 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
     }
 
     @Test
+    @TestMetadata("internalOpenLateinit_defaultModule.kt")
+    public void testInternalOpenLateinit_defaultModule() {
+      runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/internalOpenLateinit_defaultModule.kt");
+    }
+
+    @Test
+    @TestMetadata("internalOpenLateinit_nonDefaultModule.kt")
+    public void testInternalOpenLateinit_nonDefaultModule() {
+      runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/internalOpenLateinit_nonDefaultModule.kt");
+    }
+
+    @Test
     @TestMetadata("internalSetterOverridden.kt")
     public void testInternalSetterOverridden() {
       runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/internalSetterOverridden.kt");
@@ -21436,6 +21448,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
     }
 
     @Test
+    @TestMetadata("copyOnObject.kt")
+    public void testCopyOnObject() {
+      runTest("compiler/testData/codegen/box/fir/copyOnObject.kt");
+    }
+
+    @Test
     @TestMetadata("CustomHashSetSize.kt")
     public void testCustomHashSetSize() {
       runTest("compiler/testData/codegen/box/fir/CustomHashSetSize.kt");
@@ -21694,6 +21712,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
     }
 
     @Test
+    @TestMetadata("multipleDefaultsFalsePositiveDelegation.kt")
+    public void testMultipleDefaultsFalsePositiveDelegation() {
+      runTest("compiler/testData/codegen/box/fir/multipleDefaultsFalsePositiveDelegation.kt");
+    }
+
+    @Test
     @TestMetadata("NameHighlighter.kt")
     public void testNameHighlighter() {
       runTest("compiler/testData/codegen/box/fir/NameHighlighter.kt");
@@ -21715,6 +21739,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
     @TestMetadata("noInfer.kt")
     public void testNoInfer() {
       runTest("compiler/testData/codegen/box/fir/noInfer.kt");
+    }
+
+    @Test
+    @TestMetadata("noRecursiveProblemWithProjection.kt")
+    public void testNoRecursiveProblemWithProjection() {
+      runTest("compiler/testData/codegen/box/fir/noRecursiveProblemWithProjection.kt");
     }
 
     @Test
@@ -55163,6 +55193,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
     @TestMetadata("genericSet.kt")
     public void testGenericSet() {
       runTest("compiler/testData/codegen/box/smartCasts/genericSet.kt");
+    }
+
+    @Test
+    @TestMetadata("implicitCastOnAssignment.kt")
+    public void testImplicitCastOnAssignment() {
+      runTest("compiler/testData/codegen/box/smartCasts/implicitCastOnAssignment.kt");
     }
 
     @Test
