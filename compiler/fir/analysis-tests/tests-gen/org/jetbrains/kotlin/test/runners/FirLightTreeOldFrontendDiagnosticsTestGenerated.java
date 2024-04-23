@@ -1084,6 +1084,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
     }
 
     @Test
+    @TestMetadata("obsoleteInsufficientDescription.kt")
+    public void testObsoleteInsufficientDescription() {
+      runTest("compiler/testData/diagnostics/tests/obsoleteInsufficientDescription.kt");
+    }
+
+    @Test
     @TestMetadata("OperatorChecks.kt")
     public void testOperatorChecks() {
       runTest("compiler/testData/diagnostics/tests/OperatorChecks.kt");
@@ -7892,6 +7898,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       @TestMetadata("delegatedConstructorArguments.kt")
       public void testDelegatedConstructorArguments() {
         runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/delegatedConstructorArguments.kt");
+      }
+
+      @Test
+      @TestMetadata("delegatedConstructorOrder.kt")
+      public void testDelegatedConstructorOrder() {
+        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/delegatedConstructorOrder.kt");
       }
 
       @Test
@@ -37987,6 +37999,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       }
 
       @Test
+      @TestMetadata("kt67628.kt")
+      public void testKt67628() {
+        runTest("compiler/testData/diagnostics/tests/typealias/kt67628.kt");
+      }
+
+      @Test
       @TestMetadata("localTypeAlias.kt")
       public void testLocalTypeAlias() {
         runTest("compiler/testData/diagnostics/tests/typealias/localTypeAlias.kt");
@@ -38918,6 +38936,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       @TestMetadata("MostSepcificVarargsWithJava.kt")
       public void testMostSepcificVarargsWithJava() {
         runTest("compiler/testData/diagnostics/tests/varargs/MostSepcificVarargsWithJava.kt");
+      }
+
+      @Test
+      @TestMetadata("namedVarargWithTypeAliasArgument.kt")
+      public void testNamedVarargWithTypeAliasArgument() {
+        runTest("compiler/testData/diagnostics/tests/varargs/namedVarargWithTypeAliasArgument.kt");
       }
 
       @Test

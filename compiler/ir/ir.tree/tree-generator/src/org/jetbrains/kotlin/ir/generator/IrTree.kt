@@ -11,8 +11,10 @@ import org.jetbrains.kotlin.descriptors.SourceElement
 import org.jetbrains.kotlin.descriptors.ValueClassRepresentation
 import org.jetbrains.kotlin.generators.tree.*
 import org.jetbrains.kotlin.generators.tree.printer.FunctionParameter
+import org.jetbrains.kotlin.generators.tree.printer.VariableKind
 import org.jetbrains.kotlin.generators.tree.printer.printFunctionDeclaration
 import org.jetbrains.kotlin.generators.tree.printer.printFunctionWithBlockBody
+import org.jetbrains.kotlin.generators.tree.printer.printPropertyDeclaration
 import org.jetbrains.kotlin.ir.generator.config.AbstractTreeBuilder
 import org.jetbrains.kotlin.ir.generator.model.Element
 import org.jetbrains.kotlin.ir.generator.model.Element.Category.*
@@ -105,12 +107,18 @@ object IrTree : AbstractTreeBuilder() {
 
         +descriptor("DeclarationDescriptor")
         +field("origin", type(Packages.declarations, "IrDeclarationOrigin"))
-        +field("parent", declarationParent, isChild = false) {
-            skipInIrFactory()
-        }
         +factory
+
+        generationCallback = {
+            println()
+            printPropertyDeclaration("parent", declarationParent, VariableKind.VAR)
+            println()
+        }
     }
     val declarationBase: Element by element(Declaration) {
+        // This class is defined manually, but the entry here needs to be kept actual as well,
+        // to correctly generate related code.
+        doPrint = false
         typeKind = TypeKind.Class
         transformByChildren = true
         transformerReturnType = statement

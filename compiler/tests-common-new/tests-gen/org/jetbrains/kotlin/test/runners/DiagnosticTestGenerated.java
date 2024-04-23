@@ -1084,6 +1084,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
     }
 
     @Test
+    @TestMetadata("obsoleteInsufficientDescription.kt")
+    public void testObsoleteInsufficientDescription() {
+      runTest("compiler/testData/diagnostics/tests/obsoleteInsufficientDescription.kt");
+    }
+
+    @Test
     @TestMetadata("OperatorChecks.kt")
     public void testOperatorChecks() {
       runTest("compiler/testData/diagnostics/tests/OperatorChecks.kt");
@@ -7898,6 +7904,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("delegatedConstructorArguments.kt")
       public void testDelegatedConstructorArguments() {
         runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/delegatedConstructorArguments.kt");
+      }
+
+      @Test
+      @TestMetadata("delegatedConstructorOrder.kt")
+      public void testDelegatedConstructorOrder() {
+        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/delegatedConstructorOrder.kt");
       }
 
       @Test
@@ -27289,6 +27301,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestDataPath("$PROJECT_ROOT")
       public class Java {
         @Test
+        @TestMetadata("actualJavaSealedClass.kt")
+        public void testActualJavaSealedClass() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/java/actualJavaSealedClass.kt");
+        }
+
+        @Test
         public void testAllFilesPresentInJava() {
           KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform/java"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
         }
@@ -40535,6 +40553,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("kt67628.kt")
+      public void testKt67628() {
+        runTest("compiler/testData/diagnostics/tests/typealias/kt67628.kt");
+      }
+
+      @Test
       @TestMetadata("localTypeAlias.kt")
       public void testLocalTypeAlias() {
         runTest("compiler/testData/diagnostics/tests/typealias/localTypeAlias.kt");
@@ -41466,6 +41490,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("MostSepcificVarargsWithJava.kt")
       public void testMostSepcificVarargsWithJava() {
         runTest("compiler/testData/diagnostics/tests/varargs/MostSepcificVarargsWithJava.kt");
+      }
+
+      @Test
+      @TestMetadata("namedVarargWithTypeAliasArgument.kt")
+      public void testNamedVarargWithTypeAliasArgument() {
+        runTest("compiler/testData/diagnostics/tests/varargs/namedVarargWithTypeAliasArgument.kt");
       }
 
       @Test

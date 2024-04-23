@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
-import org.jetbrains.kotlin.fir.backend.generators.DataClassMembersGenerator
 import org.jetbrains.kotlin.fir.backend.generators.FirBasedFakeOverrideGenerator
 import org.jetbrains.kotlin.fir.backend.generators.addDeclarationToParent
 import org.jetbrains.kotlin.fir.backend.generators.setParent
@@ -56,6 +55,7 @@ import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.fileOrNull
 import org.jetbrains.kotlin.ir.util.sourceElement
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.KtFile
 
 class Fir2IrConverter(
@@ -272,7 +272,6 @@ class Fir2IrConverter(
         // Otherwise, redundant members, e.g., synthetic toString _and_ fake override toString, will be added.
         if (klass is FirRegularClass && irConstructor != null && (irClass.isValue || irClass.isData)) {
             declarationStorage.enterScope(irConstructor.symbol)
-            val dataClassMembersGenerator = DataClassMembersGenerator(c)
             if (irClass.isSingleFieldValueClass) {
                 allDeclarations += dataClassMembersGenerator.generateSingleFieldValueClassMembers(klass, irClass)
             }
@@ -539,7 +538,16 @@ class Fir2IrConverter(
                         }
                     }
                     for (scriptDeclaration in declaration.declarations) {
-                        if (scriptDeclaration !is FirAnonymousInitializer) {
+                        val needProcessMember = when (scriptDeclaration) {
+                            is FirAnonymousInitializer -> false // processed later
+                            is FirProperty -> {
+                                // '_' DD element
+                                scriptDeclaration.name != SpecialNames.UNDERSCORE_FOR_UNUSED_VAR ||
+                                        scriptDeclaration.destructuringDeclarationContainerVariable == null
+                            }
+                            else -> true
+                        }
+                        if (needProcessMember) {
                             processMemberDeclaration(scriptDeclaration, containingClass = null, irScript, delegateFieldToPropertyMap = null)
                         }
                     }

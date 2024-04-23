@@ -6,70 +6,42 @@
 package org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.scopeProvider
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.impl.base.test.SymbolByFqName
-import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.symbols.AbstractSymbolByFqNameTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.symbols.SymbolsData
+import org.jetbrains.kotlin.analysis.api.impl.base.test.getSingleTestTargetSymbolOfType
+import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.services.TestServices
 
-abstract class AbstractMemberScopeTestBase : AbstractSymbolByFqNameTest() {
-    protected abstract fun getSymbolsFromScope(analysisSession: KtAnalysisSession, symbol: KtSymbolWithMembers): Sequence<KtDeclarationSymbol>
+abstract class AbstractMemberScopeTestBase : AbstractScopeTestBase() {
+    abstract fun KtAnalysisSession.getScope(symbol: KtSymbolWithMembers): KtScope
 
-    override fun KtAnalysisSession.collectSymbols(ktFile: KtFile, testServices: TestServices): SymbolsData {
-        val symbolData = SymbolByFqName.getSymbolDataFromFile(testDataPath)
-        val symbols = with(symbolData) { toSymbols(ktFile) }
-        val symbolWithMembers = symbols.singleOrNull() as? KtSymbolWithMembers
-            ?: error("Should be a single `${KtSymbolWithMembers::class.simpleName}`, but $symbols found.")
-        return SymbolsData(getSymbolsFromScope(analysisSession, symbolWithMembers).toList())
-    }
+    final override fun KtAnalysisSession.getScope(mainFile: KtFile, testServices: TestServices): KtScope =
+        getScope(getSingleTestTargetSymbolOfType<KtSymbolWithMembers>(mainFile, testDataPath))
 }
 
 abstract class AbstractMemberScopeTest : AbstractMemberScopeTestBase() {
-    override fun getSymbolsFromScope(analysisSession: KtAnalysisSession, symbol: KtSymbolWithMembers): Sequence<KtDeclarationSymbol> {
-        with(analysisSession) {
-            return symbol.getMemberScope().getAllSymbols()
-        }
-    }
+    override fun KtAnalysisSession.getScope(symbol: KtSymbolWithMembers): KtScope = symbol.getMemberScope()
 }
 
 abstract class AbstractStaticMemberScopeTest : AbstractMemberScopeTestBase() {
-    override fun getSymbolsFromScope(analysisSession: KtAnalysisSession, symbol: KtSymbolWithMembers): Sequence<KtDeclarationSymbol> {
-        with(analysisSession) {
-            return symbol.getStaticMemberScope().getAllSymbols()
-        }
-    }
+    override fun KtAnalysisSession.getScope(symbol: KtSymbolWithMembers): KtScope = symbol.getStaticMemberScope()
 }
 
 abstract class AbstractDeclaredMemberScopeTest : AbstractMemberScopeTestBase() {
-    override fun getSymbolsFromScope(analysisSession: KtAnalysisSession, symbol: KtSymbolWithMembers): Sequence<KtDeclarationSymbol> {
-        with(analysisSession) {
-            return symbol.getDeclaredMemberScope().getAllSymbols()
-        }
-    }
+    override fun KtAnalysisSession.getScope(symbol: KtSymbolWithMembers): KtScope = symbol.getDeclaredMemberScope()
 }
 
 abstract class AbstractStaticDeclaredMemberScopeTest : AbstractMemberScopeTestBase() {
-    override fun getSymbolsFromScope(analysisSession: KtAnalysisSession, symbol: KtSymbolWithMembers): Sequence<KtDeclarationSymbol> {
-        with(analysisSession) {
-            return symbol.getStaticDeclaredMemberScope().getAllSymbols()
-        }
-    }
+    override fun KtAnalysisSession.getScope(symbol: KtSymbolWithMembers): KtScope = symbol.getStaticDeclaredMemberScope()
 }
 
 abstract class AbstractCombinedDeclaredMemberScopeTest : AbstractMemberScopeTestBase() {
-    override fun getSymbolsFromScope(analysisSession: KtAnalysisSession, symbol: KtSymbolWithMembers): Sequence<KtDeclarationSymbol> {
-        with(analysisSession) {
-            return symbol.getCombinedDeclaredMemberScope().getAllSymbols()
-        }
-    }
+    override fun KtAnalysisSession.getScope(symbol: KtSymbolWithMembers): KtScope = symbol.getCombinedDeclaredMemberScope()
 }
 
 abstract class AbstractDelegateMemberScopeTest : AbstractMemberScopeTestBase() {
-    override fun getSymbolsFromScope(analysisSession: KtAnalysisSession, symbol: KtSymbolWithMembers): Sequence<KtDeclarationSymbol> {
-        with(analysisSession) {
-            return symbol.getDelegatedMemberScope().getCallableSymbols()
-        }
-    }
+    override fun KtAnalysisSession.getScope(symbol: KtSymbolWithMembers): KtScope = symbol.getDelegatedMemberScope()
+
+    override fun KtAnalysisSession.getSymbolsFromScope(scope: KtScope): Sequence<KtDeclarationSymbol> = scope.getCallableSymbols()
 }
