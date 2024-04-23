@@ -7847,6 +7847,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("breakContinueWithElvisInLambda.kt")
+      public void testBreakContinueWithElvisInLambda() {
+        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/breakContinueWithElvisInLambda.kt");
+      }
+
+      @Test
       @TestMetadata("breakInLambdaPassedToDirectInvoke.kt")
       public void testBreakInLambdaPassedToDirectInvoke() {
         runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/breakInLambdaPassedToDirectInvoke.kt");
@@ -7988,6 +7994,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("initializationInLocalFun.kt")
       public void testInitializationInLocalFun() {
         runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/initializationInLocalFun.kt");
+      }
+
+      @Test
+      @TestMetadata("initializationInLocalInnerClassWithSecondaryConstructor.kt")
+      public void testInitializationInLocalInnerClassWithSecondaryConstructor() {
+        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/initializationInLocalInnerClassWithSecondaryConstructor.kt");
       }
 
       @Test
@@ -20939,6 +20951,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("notInlinableWithLabel.kt")
+      public void testNotInlinableWithLabel() {
+        runTest("compiler/testData/diagnostics/tests/inline/notInlinableWithLabel.kt");
+      }
+
+      @Test
       @TestMetadata("nothingToInline.kt")
       public void testNothingToInline() {
         runTest("compiler/testData/diagnostics/tests/inline/nothingToInline.kt");
@@ -29845,6 +29863,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("returnTypeMismatch.kt")
         public void testReturnTypeMismatch() {
           runTest("compiler/testData/diagnostics/tests/override/clashesOnInheritance/returnTypeMismatch.kt");
+        }
+
+        @Test
+        @TestMetadata("supertypeOrder.kt")
+        public void testSupertypeOrder() {
+          runTest("compiler/testData/diagnostics/tests/override/clashesOnInheritance/supertypeOrder.kt");
         }
 
         @Test
@@ -39395,6 +39419,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("optionalGetOrNullOnProjections.kt")
+      public void testOptionalGetOrNullOnProjections() {
+        runTest("compiler/testData/diagnostics/tests/targetedBuiltIns/optionalGetOrNullOnProjections.kt");
+      }
+
+      @Test
+      @TestMetadata("optionalGetOrNullOnStarProjection.kt")
+      public void testOptionalGetOrNullOnStarProjection() {
+        runTest("compiler/testData/diagnostics/tests/targetedBuiltIns/optionalGetOrNullOnStarProjection.kt");
+      }
+
+      @Test
       @TestMetadata("removeIf.kt")
       public void testRemoveIf() {
         runTest("compiler/testData/diagnostics/tests/targetedBuiltIns/removeIf.kt");
@@ -43089,6 +43125,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("jvmName.kt")
         public void testJvmName() {
           runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationApplicability/jvmName.kt");
+        }
+
+        @Test
+        @TestMetadata("jvmNameOnFile.kt")
+        public void testJvmNameOnFile() {
+          runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationApplicability/jvmNameOnFile.kt");
         }
 
         @Test
