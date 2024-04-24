@@ -16,9 +16,11 @@ import org.jetbrains.kotlin.utils.memoryOptimizedMap
 internal class ActualizerSymbolRemapper(private val expectActualMap: Map<IrSymbol, IrSymbol>) : SymbolRemapper {
     override fun getDeclaredClass(symbol: IrClassSymbol) = symbol
 
+    override fun getDeclaredAnonymousInitializer(symbol: IrAnonymousInitializerSymbol) = symbol
+
     override fun getDeclaredScript(symbol: IrScriptSymbol) = symbol
 
-    override fun getDeclaredFunction(symbol: IrSimpleFunctionSymbol) = symbol
+    override fun getDeclaredSimpleFunction(symbol: IrSimpleFunctionSymbol) = symbol
 
     override fun getDeclaredProperty(symbol: IrPropertySymbol) = symbol
 
@@ -42,11 +44,11 @@ internal class ActualizerSymbolRemapper(private val expectActualMap: Map<IrSymbo
 
     override fun getDeclaredTypeAlias(symbol: IrTypeAliasSymbol) = symbol
 
+    override fun getDeclaredReturnableBlock(symbol: IrReturnableBlockSymbol): IrReturnableBlockSymbol = symbol
+
     override fun getReferencedClass(symbol: IrClassSymbol) = symbol.actualizeSymbol()
 
     override fun getReferencedScript(symbol: IrScriptSymbol) = symbol.actualizeSymbol()
-
-    override fun getReferencedClassOrNull(symbol: IrClassSymbol?) = symbol?.actualizeSymbol()
 
     override fun getReferencedEnumEntry(symbol: IrEnumEntrySymbol) = symbol.actualizeSymbol()
 
@@ -66,9 +68,9 @@ internal class ActualizerSymbolRemapper(private val expectActualMap: Map<IrSymbo
 
     override fun getReferencedSimpleFunction(symbol: IrSimpleFunctionSymbol) = symbol.actualizeSymbol()
 
-    override fun getReferencedReturnableBlock(symbol: IrReturnableBlockSymbol) = symbol.actualizeSymbol()
-
     override fun getReferencedClassifier(symbol: IrClassifierSymbol) = symbol.actualizeSymbol()
+
+    override fun getReferencedReturnTarget(symbol: IrReturnTargetSymbol) = symbol.actualizeSymbol()
 
     override fun getReferencedTypeAlias(symbol: IrTypeAliasSymbol) = symbol.actualizeSymbol()
 
