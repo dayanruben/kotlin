@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.sir.builder.buildInit
 import org.jetbrains.kotlin.sir.builder.buildVariable
 import org.jetbrains.kotlin.sir.providers.SirSession
 import org.jetbrains.kotlin.sir.providers.source.KotlinSource
+import org.jetbrains.kotlin.sir.providers.utils.KotlinRuntimeModule
+import org.jetbrains.kotlin.sir.providers.utils.computeIsOverrideForDesignatedInit
 import org.jetbrains.kotlin.sir.providers.utils.withSirAnalyse
 import org.jetbrains.kotlin.sir.util.SirSwiftModule
 import org.jetbrains.sir.lightclasses.SirFromKtSymbol
@@ -49,6 +51,12 @@ internal class SirClassFromKtSymbol(
         childDeclarations() + syntheticDeclarations()
     }
 
+    override val superClass: SirType? by lazy {
+        // For now, we support only `class C : Kotlin.Any()` class declarations, and
+        // translate Kotlin.Any to KotlinRuntime.KotlinBase.
+        SirNominalType(KotlinRuntimeModule.kotlinBase)
+    }
+
     context(SirSession, KtAnalysisSession)
     private fun childDeclarations(): List<SirDeclaration> =
         ktSymbol.getCombinedDeclaredMemberScope()
@@ -60,9 +68,10 @@ internal class SirClassFromKtSymbol(
             buildInit {
                 origin = SirOrigin.PrivateObjectInit(`for` = KotlinSource(ktSymbol))
                 visibility = SirVisibility.PRIVATE
-                kind = SirCallableKind.INSTANCE_METHOD
+                kind = SirCallableKind.CLASS_METHOD
                 isFailable = false
                 initKind = SirInitializerKind.ORDINARY
+                isOverride = computeIsOverrideForDesignatedInit(this@SirClassFromKtSymbol, emptyList())
             },
             buildVariable {
                 origin = SirOrigin.ObjectAccessor(`for` = KotlinSource(ktSymbol))

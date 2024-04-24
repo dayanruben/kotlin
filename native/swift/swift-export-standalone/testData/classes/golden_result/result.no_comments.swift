@@ -1,23 +1,23 @@
 import KotlinBridges
 import KotlinRuntime
 
-public class CLASS_WITH_SAME_NAME {
-    public init() {
+public class CLASS_WITH_SAME_NAME : KotlinRuntime.KotlinBase {
+    public override init() {
         fatalError()
     }
     public func foo() -> Swift.Int32 {
         fatalError()
     }
 }
-public class ClassWithNonPublicConstructor {
+public class ClassWithNonPublicConstructor : KotlinRuntime.KotlinBase {
     public var a: Swift.Int32 {
         get {
             fatalError()
         }
     }
 }
-public class Foo {
-    public class INSIDE_CLASS {
+public class Foo : KotlinRuntime.KotlinBase {
+    public class INSIDE_CLASS : KotlinRuntime.KotlinBase {
         public var my_value_inner: Swift.UInt32 {
             get {
                 fatalError()
@@ -31,7 +31,7 @@ public class Foo {
                 fatalError()
             }
         }
-        public init() {
+        public override init() {
             fatalError()
         }
         public func my_func() -> Swift.Bool {
@@ -65,10 +65,10 @@ public class Foo {
         fatalError()
     }
 }
-public class OBJECT_NO_PACKAGE {
-    public class Bar {
-        public class CLASS_INSIDE_CLASS_INSIDE_OBJECT {
-            public init() {
+public class OBJECT_NO_PACKAGE : KotlinRuntime.KotlinBase {
+    public class Bar : KotlinRuntime.KotlinBase {
+        public class CLASS_INSIDE_CLASS_INSIDE_OBJECT : KotlinRuntime.KotlinBase {
+            public override init() {
                 fatalError()
             }
         }
@@ -86,18 +86,18 @@ public class OBJECT_NO_PACKAGE {
             fatalError()
         }
     }
-    public class Foo {
-        public init() {
+    public class Foo : KotlinRuntime.KotlinBase {
+        public override init() {
             fatalError()
         }
     }
-    public class OBJECT_INSIDE_OBJECT {
+    public class OBJECT_INSIDE_OBJECT : KotlinRuntime.KotlinBase {
         public static var shared: Swift.Int32 {
             get {
                 fatalError()
             }
         }
-        private init() {
+        private override init() {
             fatalError()
         }
     }
@@ -119,7 +119,7 @@ public class OBJECT_NO_PACKAGE {
             fatalError()
         }
     }
-    private init() {
+    private override init() {
         fatalError()
     }
     public func foo() -> Swift.Int32 {
@@ -127,9 +127,9 @@ public class OBJECT_NO_PACKAGE {
     }
 }
 public extension main.namespace.deeper {
-    public class Foo {
-        public class INSIDE_CLASS {
-            public class DEEPER_INSIDE_CLASS {
+    public class Foo : KotlinRuntime.KotlinBase {
+        public class INSIDE_CLASS : KotlinRuntime.KotlinBase {
+            public class DEEPER_INSIDE_CLASS : KotlinRuntime.KotlinBase {
                 public var my_value: Swift.UInt32 {
                     get {
                         fatalError()
@@ -143,7 +143,7 @@ public extension main.namespace.deeper {
                         fatalError()
                     }
                 }
-                public init() {
+                public override init() {
                     fatalError()
                 }
                 public func foo() -> Swift.Bool {
@@ -163,7 +163,7 @@ public extension main.namespace.deeper {
                     fatalError()
                 }
             }
-            public init() {
+            public override init() {
                 fatalError()
             }
             public func foo() -> Swift.Bool {
@@ -183,27 +183,27 @@ public extension main.namespace.deeper {
                 fatalError()
             }
         }
-        public init() {
+        public override init() {
             fatalError()
         }
         public func foo() -> Swift.Bool {
             fatalError()
         }
     }
-    public class NAMESPACED_CLASS {
-        public init() {
+    public class NAMESPACED_CLASS : KotlinRuntime.KotlinBase {
+        public override init() {
             fatalError()
         }
     }
-    public class OBJECT_WITH_PACKAGE {
-        public class Bar {
-            public class OBJECT_INSIDE_CLASS {
+    public class OBJECT_WITH_PACKAGE : KotlinRuntime.KotlinBase {
+        public class Bar : KotlinRuntime.KotlinBase {
+            public class OBJECT_INSIDE_CLASS : KotlinRuntime.KotlinBase {
                 public static var shared: Swift.Int32 {
                     get {
                         fatalError()
                     }
                 }
-                private init() {
+                private override init() {
                     fatalError()
                 }
             }
@@ -221,18 +221,18 @@ public extension main.namespace.deeper {
                 fatalError()
             }
         }
-        public class Foo {
-            public init() {
+        public class Foo : KotlinRuntime.KotlinBase {
+            public override init() {
                 fatalError()
             }
         }
-        public class OBJECT_INSIDE_OBJECT {
+        public class OBJECT_INSIDE_OBJECT : KotlinRuntime.KotlinBase {
             public static var shared: Swift.Int32 {
                 get {
                     fatalError()
                 }
             }
-            private init() {
+            private override init() {
                 fatalError()
             }
         }
@@ -254,7 +254,7 @@ public extension main.namespace.deeper {
                 fatalError()
             }
         }
-        private init() {
+        private override init() {
             fatalError()
         }
         public func foo() -> Swift.Int32 {
@@ -263,9 +263,9 @@ public extension main.namespace.deeper {
     }
 }
 public extension main.namespace {
-    public class Foo {
-        public class INSIDE_CLASS {
-            public init() {
+    public class Foo : KotlinRuntime.KotlinBase {
+        public class INSIDE_CLASS : KotlinRuntime.KotlinBase {
+            public override init() {
                 fatalError()
             }
         }
@@ -282,22 +282,22 @@ public extension main.namespace {
                 fatalError()
             }
         }
-        public init() {
+        public override init() {
             fatalError()
         }
         public func foo() -> Swift.Bool {
             fatalError()
         }
     }
-    public class NAMESPACED_CLASS {
-        public init() {
+    public class NAMESPACED_CLASS : KotlinRuntime.KotlinBase {
+        public override init() {
             fatalError()
         }
     }
 }
 public extension main.why_we_need_module_names {
-    public class CLASS_WITH_SAME_NAME {
-        public init() {
+    public class CLASS_WITH_SAME_NAME : KotlinRuntime.KotlinBase {
+        public override init() {
             fatalError()
         }
         public func foo() -> Swift.Void {

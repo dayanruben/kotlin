@@ -1,39 +1,39 @@
 import KotlinBridges
 import KotlinRuntime
 
-public class Class_without_package {
-    public class INNER_CLASS {
-        public init() {
+public class Class_without_package : KotlinRuntime.KotlinBase {
+    public class INNER_CLASS : KotlinRuntime.KotlinBase {
+        public override init() {
             fatalError()
         }
     }
-    public class INNER_OBJECT {
+    public class INNER_OBJECT : KotlinRuntime.KotlinBase {
         public static var shared: Swift.Int32 {
             get {
                 fatalError()
             }
         }
-        private init() {
+        private override init() {
             fatalError()
         }
     }
-    public init() {
+    public override init() {
         fatalError()
     }
 }
-public class Demo {
-    public class INNER_CLASS {
-        public init() {
+public class Demo : KotlinRuntime.KotlinBase {
+    public class INNER_CLASS : KotlinRuntime.KotlinBase {
+        public override init() {
             fatalError()
         }
     }
-    public class INNER_OBJECT {
+    public class INNER_OBJECT : KotlinRuntime.KotlinBase {
         public static var shared: Swift.Int32 {
             get {
                 fatalError()
             }
         }
-        private init() {
+        private override init() {
             fatalError()
         }
     }
@@ -90,19 +90,19 @@ public class Demo {
         fatalError()
     }
 }
-public class Object_without_package {
-    public class INNER_CLASS {
-        public init() {
+public class Object_without_package : KotlinRuntime.KotlinBase {
+    public class INNER_CLASS : KotlinRuntime.KotlinBase {
+        public override init() {
             fatalError()
         }
     }
-    public class INNER_OBJECT {
+    public class INNER_OBJECT : KotlinRuntime.KotlinBase {
         public static var shared: Swift.Int32 {
             get {
                 fatalError()
             }
         }
-        private init() {
+        private override init() {
             fatalError()
         }
     }
@@ -111,7 +111,7 @@ public class Object_without_package {
             fatalError()
         }
     }
-    private init() {
+    private override init() {
         fatalError()
     }
 }
@@ -156,39 +156,39 @@ public func recieve_object_wp(
     fatalError()
 }
 public extension main.namespace.deeper {
-    public class Class_with_package {
-        public class INNER_CLASS {
-            public init() {
+    public class Class_with_package : KotlinRuntime.KotlinBase {
+        public class INNER_CLASS : KotlinRuntime.KotlinBase {
+            public override init() {
                 fatalError()
             }
         }
-        public class INNER_OBJECT {
+        public class INNER_OBJECT : KotlinRuntime.KotlinBase {
             public static var shared: Swift.Int32 {
                 get {
                     fatalError()
                 }
             }
-            private init() {
+            private override init() {
                 fatalError()
             }
         }
-        public init() {
+        public override init() {
             fatalError()
         }
     }
-    public class Object_with_package {
-        public class INNER_CLASS {
-            public init() {
+    public class Object_with_package : KotlinRuntime.KotlinBase {
+        public class INNER_CLASS : KotlinRuntime.KotlinBase {
+            public override init() {
                 fatalError()
             }
         }
-        public class INNER_OBJECT {
+        public class INNER_OBJECT : KotlinRuntime.KotlinBase {
             public static var shared: Swift.Int32 {
                 get {
                     fatalError()
                 }
             }
-            private init() {
+            private override init() {
                 fatalError()
             }
         }
@@ -197,7 +197,7 @@ public extension main.namespace.deeper {
                 fatalError()
             }
         }
-        private init() {
+        private override init() {
             fatalError()
         }
     }

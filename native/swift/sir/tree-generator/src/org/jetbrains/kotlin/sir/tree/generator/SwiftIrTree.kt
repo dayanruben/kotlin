@@ -89,6 +89,8 @@ object SwiftIrTree : AbstractSwiftIrTreeBuilder() {
         customParentInVisitor = namedDeclaration
         parent(namedDeclaration)
         parent(declarationContainer)
+
+        +field("superClass", typeType, nullable = true)
     }
 
     val `typealias`: Element by element {
@@ -113,6 +115,8 @@ object SwiftIrTree : AbstractSwiftIrTreeBuilder() {
         +listField("parameters", parameterType)
 
         +field("initKind", initKind)
+
+        +field("isOverride", boolean)
     }
 
     val function by element {

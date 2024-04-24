@@ -64,6 +64,9 @@ public class SirAsSwiftSourcesPrinter(
         print(" ")
         printName()
         print(" ")
+        if (this is SirClass) {
+            printSuperClass()
+        }
         println("{")
         withIndent {
             printChildren()
@@ -121,6 +124,7 @@ public class SirAsSwiftSourcesPrinter(
     private fun SirCallable.print() {
         printDocumentation()
         printVisibility()
+        printOverride()
         printPreNameKeywords()
         printName()
         printPostNameKeywords()
@@ -133,6 +137,12 @@ public class SirAsSwiftSourcesPrinter(
             body.print()
         }
         println("}")
+    }
+
+    private fun SirCallable.printOverride() {
+        if (this is SirInit && this.isOverride) {
+            print("override ")
+        }
     }
 
     private fun SirDeclaration.printDocumentation() {
@@ -150,6 +160,10 @@ public class SirAsSwiftSourcesPrinter(
             is SirStruct -> "struct"
             is SirModule -> error("there is no keyword for module. Do not print module as declaration container.")
         }
+    )
+
+    private fun SirClass.printSuperClass() = print(
+        superClass?.let { ": ${it.swift} " } ?: ""
     )
 
     private fun SirElement.printName() =print(
