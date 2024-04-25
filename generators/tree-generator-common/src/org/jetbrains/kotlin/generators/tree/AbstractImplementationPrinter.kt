@@ -35,7 +35,6 @@ abstract class AbstractImplementationPrinter<Implementation, Element, Implementa
 
     fun printImplementation(implementation: Implementation) {
         printer.run {
-            addAllImports(implementation.additionalImports)
             printKDoc(implementation.kDoc)
             buildSet {
                 if (implementation.requiresOptIn) {
@@ -100,7 +99,11 @@ abstract class AbstractImplementationPrinter<Implementation, Element, Implementa
             if (implementation.needPureAbstractElement) {
                 print(pureAbstractElementType.render(), "(), ")
             }
-            print(implementation.allParents.joinToString { "${it.render()}${it.kind.braces()}" })
+            print(
+                implementation.allParents.joinToString { parent ->
+                    "${parent.withSelfArgs().render()}${parent.kind.braces()}"
+                }
+            )
             printBlock {
                 val fields = if (isInterface || isAbstract) implementation.allFields
                 else implementation.fieldsInBody
@@ -118,6 +121,7 @@ abstract class AbstractImplementationPrinter<Implementation, Element, Implementa
 
                 printAdditionalMethods(implementation)
             }
+            addAllImports(implementation.additionalImports)
         }
     }
 }

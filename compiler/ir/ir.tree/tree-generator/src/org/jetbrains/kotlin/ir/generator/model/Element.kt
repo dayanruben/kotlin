@@ -29,25 +29,9 @@ class Element(
 
     override val packageName: String = category.packageName
 
-    override val elementParents = mutableListOf<ElementRef>()
-    override var otherParents: MutableList<ClassRef<*>> = mutableListOf()
-
-    override val params = mutableListOf<TypeVariable>()
-
-    override val fields = mutableSetOf<Field>()
-
     val additionalIrFactoryMethodParameters = mutableListOf<Field>()
     var generateIrFactoryMethod = category == Category.Declaration
     val fieldsToSkipInIrFactoryMethod = hashSetOf<String>()
-
-    override val element: Element
-        get() = this
-
-    override val nullable: Boolean
-        get() = false
-
-    override val args: Map<NamedTypeParameterRef, TypeRef>
-        get() = emptyMap()
 
     /**
      * Allows to forcibly skip generation of the method for this element in visitors.
@@ -72,8 +56,6 @@ class Element(
             }
             field = value
         }
-
-    override var kind: ImplementationKind? = null
 
     override val namePrefix: String
         get() = "Ir"
@@ -110,18 +92,5 @@ class Element(
 
     var generationCallback: (ImportCollectingPrinter.() -> Unit)? = null
 
-    override var kDoc: String? = null
-
     override fun toString() = name
-
-    operator fun TypeVariable.unaryPlus() = apply {
-        params.add(this)
-    }
-
-    operator fun Field.unaryPlus() = apply {
-        fields.add(this)
-    }
 }
-
-typealias ElementRef = GenericElementRef<Element>
-typealias ElementOrRef = GenericElementOrRef<Element>
