@@ -10,11 +10,8 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.SourceElement
 import org.jetbrains.kotlin.descriptors.ValueClassRepresentation
 import org.jetbrains.kotlin.generators.tree.*
-import org.jetbrains.kotlin.generators.tree.printer.FunctionParameter
-import org.jetbrains.kotlin.generators.tree.printer.VariableKind
-import org.jetbrains.kotlin.generators.tree.printer.printFunctionDeclaration
-import org.jetbrains.kotlin.generators.tree.printer.printFunctionWithBlockBody
-import org.jetbrains.kotlin.generators.tree.printer.printPropertyDeclaration
+import org.jetbrains.kotlin.generators.tree.imports.ArbitraryImportable
+import org.jetbrains.kotlin.generators.tree.printer.*
 import org.jetbrains.kotlin.ir.generator.config.AbstractTreeBuilder
 import org.jetbrains.kotlin.ir.generator.model.Element
 import org.jetbrains.kotlin.ir.generator.model.Element.Category.*

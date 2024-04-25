@@ -1,9 +1,9 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.generators.tree
+package org.jetbrains.kotlin.generators.tree.imports
 
 import java.util.SortedMap
 import java.util.SortedSet
@@ -11,7 +11,7 @@ import java.util.SortedSet
 /**
  * Used to collect [TypeRef]s for printing a list of imports for those [TypeRef]s.
  */
-class ImportCollector(currentPackage: String) {
+internal class ImportCollector(currentPackage: String) : ImportCollecting {
 
     companion object {
         private val STAR = sortedSetOf("*")
@@ -60,11 +60,11 @@ class ImportCollector(currentPackage: String) {
         }
     }
 
-    fun addImport(importable: Importable) {
+    override fun addImport(importable: Importable) {
         addImport(importable.packageName, importable.typeName)
     }
 
-    fun addStarImport(packageName: String) {
+    override fun addStarImport(packageName: String) {
         addImport(packageName, "*")
     }
 
@@ -82,9 +82,5 @@ class ImportCollector(currentPackage: String) {
             }
         }
         return atLeastOneImport
-    }
-
-    fun addAllImports(importables: Collection<Importable>) {
-        importables.forEach(this::addImport)
     }
 }

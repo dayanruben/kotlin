@@ -4025,6 +4025,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       }
 
       @Test
+      @TestMetadata("contextReceivers.kt")
+      public void testContextReceivers() {
+        runTest("compiler/testData/diagnostics/tests/builderInference/contextReceivers.kt");
+      }
+
+      @Test
       @TestMetadata("overloadResolutionByLambdaReturnType.kt")
       public void testOverloadResolutionByLambdaReturnType() {
         runTest("compiler/testData/diagnostics/tests/builderInference/overloadResolutionByLambdaReturnType.kt");
@@ -12388,6 +12394,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       @TestMetadata("extensionNamedAsEnumEntry.kt")
       public void testExtensionNamedAsEnumEntry() {
         runTest("compiler/testData/diagnostics/tests/enum/extensionNamedAsEnumEntry.kt");
+      }
+
+      @Test
+      @TestMetadata("genericWithEnumBound.kt")
+      public void testGenericWithEnumBound() {
+        runTest("compiler/testData/diagnostics/tests/enum/genericWithEnumBound.kt");
       }
 
       @Test

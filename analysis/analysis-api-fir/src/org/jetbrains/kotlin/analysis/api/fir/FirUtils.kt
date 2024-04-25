@@ -6,11 +6,13 @@
 package org.jetbrains.kotlin.analysis.api.fir
 
 import org.jetbrains.kotlin.KtFakeSourceElementKind
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplicationInfo
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplicationWithArgumentsInfo
 import org.jetbrains.kotlin.analysis.api.annotations.KtNamedAnnotationValue
 import org.jetbrains.kotlin.analysis.api.fir.annotations.mapAnnotationParameters
 import org.jetbrains.kotlin.analysis.api.fir.evaluate.FirAnnotationValueConverter
+import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
@@ -77,6 +79,7 @@ internal fun FirAnnotation.toKtAnnotationApplication(
     builder: KtSymbolByFirBuilder,
     index: Int,
     arguments: List<KtNamedAnnotationValue> = FirAnnotationValueConverter.toNamedConstantValue(
+        builder.analysisSession,
         mapAnnotationParameters(this),
         builder,
     )
@@ -92,18 +95,21 @@ internal fun FirAnnotation.toKtAnnotationApplication(
         arguments = arguments,
         index = index,
         constructorSymbolPointer = with(builder.analysisSession) { constructorSymbol?.createPointer() },
+        token = builder.token,
     )
 }
 
 internal fun FirAnnotation.toKtAnnotationInfo(
     useSiteSession: FirSession,
     index: Int,
+    token: KtLifetimeToken
 ): KtAnnotationApplicationInfo = KtAnnotationApplicationInfo(
     classId = toAnnotationClassId(useSiteSession),
     psi = psi as? KtCallElement,
     useSiteTarget = useSiteTarget,
     isCallWithArguments = this is FirAnnotationCall && arguments.isNotEmpty(),
     index = index,
+    token = token
 )
 
 /**

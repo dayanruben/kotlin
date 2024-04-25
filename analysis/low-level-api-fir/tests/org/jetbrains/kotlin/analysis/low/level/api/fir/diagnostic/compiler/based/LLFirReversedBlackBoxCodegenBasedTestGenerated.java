@@ -3531,6 +3531,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
     }
 
     @Test
+    @TestMetadata("contextReceivers.kt")
+    public void testContextReceivers() {
+      runTest("compiler/testData/codegen/box/builderInference/contextReceivers.kt");
+    }
+
+    @Test
     @TestMetadata("kt65341.kt")
     public void testKt65341() {
       runTest("compiler/testData/codegen/box/builderInference/kt65341.kt");
@@ -38480,6 +38486,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
       }
 
       @Test
+      @TestMetadata("kt67488.kt")
+      public void testKt67488() {
+        runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/kt67488.kt");
+      }
+
+      @Test
       @TestMetadata("nestedEnumEntryValue.kt")
       public void testNestedEnumEntryValue() {
         runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/nestedEnumEntryValue.kt");
@@ -39200,6 +39212,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
         @TestMetadata("kt23739.kt")
         public void testKt23739() {
           runTest("compiler/testData/codegen/box/multiplatform/k2/defaultArguments/kt23739.kt");
+        }
+
+        @Test
+        @TestMetadata("kt67488.kt")
+        public void testKt67488() {
+          runTest("compiler/testData/codegen/box/multiplatform/k2/defaultArguments/kt67488.kt");
         }
 
         @Test
