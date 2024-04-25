@@ -10556,6 +10556,12 @@ public class JvmAbiConsistencyTestRestGenerated extends AbstractJvmAbiConsistenc
       }
 
       @Test
+      @TestMetadata("syntheticPropertyReference.kt")
+      public void testSyntheticPropertyReference() {
+        runTest("compiler/testData/codegen/bytecodeText/inline/syntheticPropertyReference.kt");
+      }
+
+      @Test
       @TestMetadata("whenMappingOnCallSite.kt")
       public void testWhenMappingOnCallSite() {
         runTest("compiler/testData/codegen/bytecodeText/inline/whenMappingOnCallSite.kt");
@@ -12892,6 +12898,12 @@ public class JvmAbiConsistencyTestRestGenerated extends AbstractJvmAbiConsistenc
       }
 
       @Test
+      @TestMetadata("innerWhenEnumTableSwitch.kt")
+      public void testInnerWhenEnumTableSwitch() {
+        runTest("compiler/testData/codegen/bytecodeText/when/innerWhenEnumTableSwitch.kt");
+      }
+
+      @Test
       @TestMetadata("integralWhenWithNoInlinedConstants.kt")
       public void testIntegralWhenWithNoInlinedConstants() {
         runTest("compiler/testData/codegen/bytecodeText/when/integralWhenWithNoInlinedConstants.kt");
@@ -13400,6 +13412,12 @@ public class JvmAbiConsistencyTestRestGenerated extends AbstractJvmAbiConsistenc
     @TestMetadata("noRemoveAtInReadOnly.kt")
     public void testNoRemoveAtInReadOnly() {
       runTest("compiler/testData/codegen/bytecodeListing/noRemoveAtInReadOnly.kt");
+    }
+
+    @Test
+    @TestMetadata("nullabilityAnnotationInInnerClasses.kt")
+    public void testNullabilityAnnotationInInnerClasses() {
+      runTest("compiler/testData/codegen/bytecodeListing/nullabilityAnnotationInInnerClasses.kt");
     }
 
     @Test
