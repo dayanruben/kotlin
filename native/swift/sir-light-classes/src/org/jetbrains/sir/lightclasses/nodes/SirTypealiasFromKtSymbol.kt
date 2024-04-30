@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.sir.*
 import org.jetbrains.kotlin.sir.providers.SirSession
 import org.jetbrains.kotlin.sir.providers.source.KotlinSource
+import org.jetbrains.kotlin.sir.providers.utils.updateImports
 import org.jetbrains.sir.lightclasses.SirFromKtSymbol
 import org.jetbrains.sir.lightclasses.extensions.documentation
 import org.jetbrains.sir.lightclasses.extensions.lazyWithSessions
@@ -19,7 +20,7 @@ internal class SirTypealiasFromKtSymbol(
     override val ktSymbol: KtTypeAliasSymbol,
     override val ktModule: KtModule,
     override val sirSession: SirSession,
-) : SirTypealias(), SirFromKtSymbol {
+) : SirTypealias(), SirFromKtSymbol<KtTypeAliasSymbol> {
 
     override val origin: SirOrigin = KotlinSource(ktSymbol)
     override val visibility: SirVisibility = SirVisibility.PUBLIC
@@ -30,7 +31,12 @@ internal class SirTypealiasFromKtSymbol(
         ktSymbol.name.asString()
     }
     override val type: SirType by lazyWithSessions {
-        ktSymbol.expandedType.translateType(analysisSession)
+        ktSymbol.expandedType.translateType(
+            analysisSession,
+            reportErrorType = { error("Can't translate ${ktSymbol.render()} type: $it") },
+            reportUnsupportedType = { error("Can't translate ${ktSymbol.render()} type: it is not supported") },
+            processTypeImports = ktSymbol.getContainingModule().sirModule()::updateImports
+        )
     }
 
     override var parent: SirDeclarationParent

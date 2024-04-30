@@ -17,12 +17,13 @@ import org.jetbrains.sir.lightclasses.extensions.documentation
 import org.jetbrains.sir.lightclasses.extensions.lazyWithSessions
 import org.jetbrains.sir.lightclasses.extensions.sirCallableKind
 import org.jetbrains.sir.lightclasses.extensions.withSessions
+import org.jetbrains.sir.lightclasses.utils.translateReturnType
 
 internal class SirVariableFromKtSymbol(
     override val ktSymbol: KtVariableSymbol,
     override val ktModule: KtModule,
     override val sirSession: SirSession,
-) : SirVariable(), SirFromKtSymbol {
+) : SirVariable(), SirFromKtSymbol<KtVariableSymbol> {
 
     override val visibility: SirVisibility = SirVisibility.PUBLIC
 
@@ -32,8 +33,8 @@ internal class SirVariableFromKtSymbol(
     override val name: String by lazyWithSessions {
         ktSymbol.sirDeclarationName()
     }
-    override val type: SirType by lazyWithSessions {
-        ktSymbol.returnType.translateType(analysisSession)
+    override val type: SirType by lazy {
+        translateReturnType()
     }
     override val getter: SirGetter by lazy {
         buildGetter {

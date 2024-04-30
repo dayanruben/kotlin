@@ -16,6 +16,7 @@
 
 package androidx.compose.compiler.plugins.kotlin
 
+import org.junit.Ignore
 import org.junit.Test
 
 @Suppress("SpellCheckingInspection") // Expected strings can have partial words
@@ -225,11 +226,8 @@ class TargetAnnotationsTransformTests(useFir: Boolean) : AbstractIrTransformTest
     fun testReceiverScope() = verifyGoldenComposeIrTransform(
         """
         import androidx.compose.runtime.*
-        import androidx.compose.ui.layout.*
-        import androidx.compose.foundation.text.*
-        import androidx.compose.ui.text.*
-        import androidx.compose.ui.text.style.*
         import androidx.compose.ui.*
+        import androidx.compose.ui.layout.*
 
         @Immutable
         interface LocalBoxScope {
@@ -267,9 +265,8 @@ class TargetAnnotationsTransformTests(useFir: Boolean) : AbstractIrTransformTest
         """
         import androidx.compose.runtime.*
         import androidx.compose.ui.layout.*
-        import androidx.compose.foundation.text.*
         import androidx.compose.ui.text.*
-        import androidx.compose.ui.text.style.*
+        import androidx.compose.foundation.text.*
 
         @Composable
         fun Test1() {

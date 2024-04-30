@@ -7,35 +7,19 @@ package org.jetbrains.kotlin.sir.providers.impl
 
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.sir.SirModule
-import org.jetbrains.kotlin.sir.builder.buildImport
 import org.jetbrains.kotlin.sir.builder.buildModule
 import org.jetbrains.kotlin.sir.providers.SirModuleProvider
-import org.jetbrains.kotlin.sir.util.addChild
 
 /**
  * An implementation of [SirModuleProvider] that stores all declarations under a single module
  */
 public class SirSingleModuleProvider(
     private val swiftModuleName: String,
-    private val bridgeModuleName: String,
 ) : SirModuleProvider {
 
     private val theModule by lazy {
         buildModule {
             name = swiftModuleName
-        }.also {
-            // imports should be reworked - KT-66727
-            it.addChild {
-                buildImport {
-                    moduleName = bridgeModuleName
-                }
-            }
-
-            it.addChild {
-                buildImport {
-                    moduleName = "KotlinRuntime"
-                }
-            }
         }
     }
 

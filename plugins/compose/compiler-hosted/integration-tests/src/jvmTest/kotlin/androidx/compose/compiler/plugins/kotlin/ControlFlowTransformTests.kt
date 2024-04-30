@@ -17,6 +17,7 @@
 package androidx.compose.compiler.plugins.kotlin
 
 import org.intellij.lang.annotations.Language
+import org.junit.Ignore
 import org.junit.Test
 
 class ControlFlowTransformTests(useFir: Boolean) : AbstractControlFlowTransformTests(useFir) {
@@ -2111,10 +2112,8 @@ class ControlFlowTransformTests(useFir: Boolean) : AbstractControlFlowTransformT
     @Test
     fun testComposeIrSkippingWithDefaultsRelease() = verifyGoldenComposeIrTransform(
         """
-            import androidx.compose.ui.text.input.TextFieldValue
             import androidx.compose.runtime.*
             import androidx.compose.foundation.layout.*
-            import androidx.compose.foundation.text.KeyboardActions
 
             object Ui {}
 
@@ -2130,7 +2129,7 @@ class ControlFlowTransformTests(useFir: Boolean) : AbstractControlFlowTransformT
                     Text("${'$'}keyboardActions2")
                 }
             }
-        """.trimIndent(),
+        """,
         extra = """
             import androidx.compose.runtime.Composable
 
@@ -2141,7 +2140,7 @@ class ControlFlowTransformTests(useFir: Boolean) : AbstractControlFlowTransformT
                 maxLines: Int = Int.MAX_VALUE,
                 minLines: Int = 1,
             ) {}
-        """.trimIndent()
+        """
     )
 
     @Test

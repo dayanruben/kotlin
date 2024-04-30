@@ -18,12 +18,12 @@ package androidx.compose.compiler.plugins.kotlin
 
 import java.io.File
 import java.io.FileNotFoundException
-import org.jetbrains.kotlin.incremental.createDirectory
 import org.junit.Assert
 import org.junit.rules.TestRule
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
+import java.nio.file.Files
 
 private const val ENV_GENERATE_GOLDEN = "GENERATE_GOLDEN"
 private const val GOLDEN_FILE_TYPE = "txt"
@@ -44,7 +44,7 @@ private fun envList(name: String): List<String> = (System.getenv(name) ?: "").qu
  * @param generateMissingGoldens: When true, will generate a golden file for any that are not found.
  **/
 class GoldenTransformRule(
-    private val pathToGoldens: String,
+    private val pathToGoldens: String = "$TEST_RESOURCES_ROOT/golden",
     private val generateGoldens: Boolean = env(ENV_GENERATE_GOLDEN),
     private val generateGoldenFiles: Set<String> = envList(ENV_GENERATE_GOLDEN).toSet(),
     private val generateMissingGoldens: Boolean = true
@@ -110,7 +110,7 @@ class GoldenTransformRule(
     private fun saveGolden(testInfo: GoldenTransformTestInfo) {
         val directory = goldenFile.parentFile!!
         if (!directory.exists()) {
-            directory.createDirectory()
+            Files.createDirectories(directory.toPath())
         }
         goldenFile.writeText(testInfo.encodeToString())
     }

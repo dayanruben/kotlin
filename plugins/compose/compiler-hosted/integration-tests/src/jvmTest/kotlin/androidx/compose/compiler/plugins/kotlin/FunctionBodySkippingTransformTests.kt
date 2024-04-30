@@ -18,6 +18,7 @@ package androidx.compose.compiler.plugins.kotlin
 
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.junit.Ignore
 import org.junit.Test
 
 abstract class FunctionBodySkippingTransformTestsBase(
