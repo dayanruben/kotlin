@@ -1151,7 +1151,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
     ): FirStatement = whileAnalysing(session, getClassCall) {
         getClassCall.transformAnnotations(transformer, ResolutionMode.ContextIndependent)
         val arg = getClassCall.argument
-        val dataForLhs = if (arg is FirLiteralExpression<*>) {
+        val dataForLhs = if (arg is FirLiteralExpression) {
             withExpectedType(arg.kind.expectedConeType(session).toFirResolvedTypeRef())
         } else {
             ResolutionMode.ContextIndependent
@@ -1219,8 +1219,8 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
         return true
     }
 
-    override fun <T> transformLiteralExpression(
-        literalExpression: FirLiteralExpression<T>,
+    override fun transformLiteralExpression(
+        literalExpression: FirLiteralExpression,
         data: ResolutionMode,
     ): FirStatement {
         literalExpression.transformAnnotations(transformer, ResolutionMode.ContextIndependent)
@@ -1233,13 +1233,12 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
                     isUnsigned = kind == ConstantValueKind.UnsignedIntegerLiteral
                 )
                 val expectedTypeRef = data.expectedType
-                @Suppress("UNCHECKED_CAST")
                 when {
                     expressionType is ConeErrorType -> {
                         expressionType
                     }
                     expressionType is ConeClassLikeType -> {
-                        literalExpression.replaceKind(expressionType.toConstKind() as ConstantValueKind<T>)
+                        literalExpression.replaceKind(expressionType.toConstKind() as ConstantValueKind)
                         expressionType
                     }
                     data is ResolutionMode.ReceiverResolution && !data.forCallableReference -> {
@@ -1250,7 +1249,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
                         require(expressionType is ConeIntegerLiteralConstantTypeImpl)
                         val coneType = expectedTypeRef.coneTypeSafe<ConeKotlinType>()?.fullyExpandedType(session)
                         val approximatedType = expressionType.getApproximatedType(coneType)
-                        literalExpression.replaceKind(approximatedType.toConstKind() as ConstantValueKind<T>)
+                        literalExpression.replaceKind(approximatedType.toConstKind() as ConstantValueKind)
                         approximatedType
                     }
                     else -> {
@@ -1261,7 +1260,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
             else -> kind.expectedConeType(session)
         }
 
-        dataFlowAnalyzer.exitLiteralExpression(literalExpression as FirLiteralExpression<*>)
+        dataFlowAnalyzer.exitLiteralExpression(literalExpression)
         literalExpression.resultType = type
 
         return when (val resolvedType = literalExpression.resolvedType) {

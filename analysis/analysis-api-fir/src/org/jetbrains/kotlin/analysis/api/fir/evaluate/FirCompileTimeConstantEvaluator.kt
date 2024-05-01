@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.errorWithFirSpecificEntries
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
-import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.declarations.utils.isConst
 import org.jetbrains.kotlin.fir.declarations.utils.isFinal
@@ -26,7 +25,6 @@ import org.jetbrains.kotlin.fir.references.toResolvedVariableSymbol
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirFieldSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
-import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -45,7 +43,7 @@ internal object FirCompileTimeConstantEvaluator {
     fun evaluate(
         fir: FirElement?,
         mode: KtConstantEvaluationMode,
-    ): FirLiteralExpression<*>? =
+    ): FirLiteralExpression? =
         when (fir) {
             is FirPropertyAccessExpression -> {
                 when (val referredVariable = fir.calleeReference.toResolvedVariableSymbol()) {
@@ -60,7 +58,7 @@ internal object FirCompileTimeConstantEvaluator {
                     else -> null
                 }
             }
-            is FirLiteralExpression<*> -> {
+            is FirLiteralExpression -> {
                 fir.adaptToConstKind()
             }
             is FirFunctionCall -> {
@@ -80,7 +78,7 @@ internal object FirCompileTimeConstantEvaluator {
 
     private fun FirPropertySymbol.toLiteralExpression(
         mode: KtConstantEvaluationMode,
-    ): FirLiteralExpression<*>? {
+    ): FirLiteralExpression? {
         return when {
             mode == KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION && !isConst -> null
             isVal && hasInitializer -> {
@@ -92,7 +90,7 @@ internal object FirCompileTimeConstantEvaluator {
 
     private fun FirFieldSymbol.toLiteralExpression(
         mode: KtConstantEvaluationMode,
-    ): FirLiteralExpression<*>? {
+    ): FirLiteralExpression? {
         return when {
             mode == KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION && !(isStatic && isFinal) -> null
             isVal && hasInitializer -> {
@@ -146,7 +144,7 @@ internal object FirCompileTimeConstantEvaluator {
         }
     }
 
-    private fun FirLiteralExpression<*>.adaptToConstKind(): FirLiteralExpression<*> {
+    private fun FirLiteralExpression.adaptToConstKind(): FirLiteralExpression {
         return kind.toLiteralExpression(
             source,
             kind.convertToNumber(value) ?: value
@@ -156,7 +154,7 @@ internal object FirCompileTimeConstantEvaluator {
     private fun evaluateStringConcatenationCall(
         stringConcatenationCall: FirStringConcatenationCall,
         mode: KtConstantEvaluationMode,
-    ): FirLiteralExpression<String>? {
+    ): FirLiteralExpression? {
         val concatenated = buildString {
             for (arg in stringConcatenationCall.arguments) {
                 val evaluated = evaluate(arg, mode) ?: return null
@@ -170,7 +168,7 @@ internal object FirCompileTimeConstantEvaluator {
     private fun evaluateFunctionCall(
         functionCall: FirFunctionCall,
         mode: KtConstantEvaluationMode,
-    ): FirLiteralExpression<*>? {
+    ): FirLiteralExpression? {
         val function = functionCall.getOriginalFunction() as? FirSimpleFunction ?: return null
 
         val opr1 = evaluate(functionCall.explicitReceiver, mode) ?: return null
@@ -186,7 +184,7 @@ internal object FirCompileTimeConstantEvaluator {
         return null
     }
 
-    private fun FirLiteralExpression<*>.adjustType(expectedType: ConeKotlinType): FirLiteralExpression<*> {
+    private fun FirLiteralExpression.adjustType(expectedType: ConeKotlinType): FirLiteralExpression {
         val expectedKind = expectedType.toConstantValueKind()
         // Note that the resolved type for the const expression is not always matched with the const kind. For example,
         //   fun foo(x: Int) {
@@ -208,7 +206,7 @@ internal object FirCompileTimeConstantEvaluator {
         }
     }
 
-    private fun <T> ConstantValueKind<T>.toCompileTimeType(): CompileTimeType {
+    private fun ConstantValueKind.toCompileTimeType(): CompileTimeType {
         return when (this) {
             ConstantValueKind.Byte -> CompileTimeType.BYTE
             ConstantValueKind.Short -> CompileTimeType.SHORT
@@ -225,7 +223,7 @@ internal object FirCompileTimeConstantEvaluator {
     }
 
     // Unary operators
-    private fun FirLiteralExpression<*>.evaluate(function: FirSimpleFunction): FirLiteralExpression<*>? {
+    private fun FirLiteralExpression.evaluate(function: FirSimpleFunction): FirLiteralExpression? {
         if (value == null) return null
         (value as? String)?.let { opr ->
             evalUnaryOp(
@@ -247,17 +245,17 @@ internal object FirCompileTimeConstantEvaluator {
         }
     }
 
-    private fun FirLiteralExpression<*>.evaluateStringLength(): FirLiteralExpression<*>? {
+    private fun FirLiteralExpression.evaluateStringLength(): FirLiteralExpression? {
         return (value as? String)?.length?.let {
             it.toConstantValueKind().toLiteralExpression(source, it)
         }
     }
 
     // Binary operators
-    private fun FirLiteralExpression<*>.evaluate(
+    private fun FirLiteralExpression.evaluate(
         function: FirSimpleFunction,
-        other: FirLiteralExpression<*>
-    ): FirLiteralExpression<*>? {
+        other: FirLiteralExpression
+    ): FirLiteralExpression? {
         if (value == null || other.value == null) return null
         // NB: some utils accept very general types, and due to the way operation map works, we should up-cast rhs type.
         val rightType = when {
@@ -301,7 +299,7 @@ internal object FirCompileTimeConstantEvaluator {
 
     ////// KINDS
 
-    private fun ConeKotlinType.toConstantValueKind(): ConstantValueKind<*>? =
+    private fun ConeKotlinType.toConstantValueKind(): ConstantValueKind? =
         when (this) {
             is ConeErrorType -> null
             is ConeLookupTagBasedType -> lookupTag.name.asString().toConstantValueKind()
@@ -312,7 +310,7 @@ internal object FirCompileTimeConstantEvaluator {
             is ConeStubType, is ConeIntegerLiteralType, is ConeTypeVariableType -> null
         }
 
-    private fun String.toConstantValueKind(): ConstantValueKind<*>? =
+    private fun String.toConstantValueKind(): ConstantValueKind? =
         when (this) {
             "Byte" -> ConstantValueKind.Byte
             "Double" -> ConstantValueKind.Double
@@ -328,7 +326,7 @@ internal object FirCompileTimeConstantEvaluator {
             else -> null
         }
 
-    private fun <T> T.toConstantValueKind(): ConstantValueKind<*> =
+    private fun <T> T.toConstantValueKind(): ConstantValueKind =
         when (this) {
             is Byte -> ConstantValueKind.Byte
             is Double -> ConstantValueKind.Double
@@ -345,7 +343,7 @@ internal object FirCompileTimeConstantEvaluator {
             else -> error("Unknown constant value")
         }
 
-    private fun ConstantValueKind<*>.convertToNumber(value: Any?): Any? {
+    private fun ConstantValueKind.convertToNumber(value: Any?): Any? {
         if (value == null) {
             return null
         }
@@ -368,9 +366,8 @@ internal object FirCompileTimeConstantEvaluator {
         }
     }
 
-    private fun <T> ConstantValueKind<T>.toLiteralExpression(source: KtSourceElement?, value: Any?): FirLiteralExpression<T> =
-        @Suppress("UNCHECKED_CAST")
-        buildLiteralExpression(source, this, value as T, setType = false)
+    private fun ConstantValueKind.toLiteralExpression(source: KtSourceElement?, value: Any?): FirLiteralExpression =
+        buildLiteralExpression(source, this, value, setType = false)
 
     private fun FirFunctionCall.getOriginalFunction(): FirCallableDeclaration? {
         val symbol: FirBasedSymbol<*>? = when (val reference = calleeReference) {
