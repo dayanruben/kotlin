@@ -66,6 +66,7 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtPackageDirective
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtProperty
@@ -2241,9 +2242,14 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         val conflictingDeclarations: List<KtSymbol>
     }
 
-    interface PackageOrClassifierRedeclaration : KtFirDiagnostic<KtNamedDeclaration> {
-        override val diagnosticClass get() = PackageOrClassifierRedeclaration::class
+    interface ClassifierRedeclaration : KtFirDiagnostic<KtNamedDeclaration> {
+        override val diagnosticClass get() = ClassifierRedeclaration::class
         val conflictingDeclarations: List<KtSymbol>
+    }
+
+    interface PackageConflictsWithClassifier : KtFirDiagnostic<KtPackageDirective> {
+        override val diagnosticClass get() = PackageConflictsWithClassifier::class
+        val conflictingClassId: ClassId
     }
 
     interface ExpectAndActualInTheSameModule : KtFirDiagnostic<KtNamedDeclaration> {
@@ -3071,6 +3077,14 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = ConfusingBranchConditionWarning::class
     }
 
+    interface CommaInWhenConditionWithWhenGuard : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = CommaInWhenConditionWithWhenGuard::class
+    }
+
+    interface WhenGuardWithoutSubject : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = WhenGuardWithoutSubject::class
+    }
+
     interface TypeParameterIsNotAnExpression : KtFirDiagnostic<KtSimpleNameExpression> {
         override val diagnosticClass get() = TypeParameterIsNotAnExpression::class
         val typeParameter: KtTypeParameterSymbol
@@ -3482,6 +3496,10 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
     interface InefficientEqualsOverridingInValueClass : KtFirDiagnostic<KtNamedFunction> {
         override val diagnosticClass get() = InefficientEqualsOverridingInValueClass::class
         val type: KtType
+    }
+
+    interface InlineClassDeprecated : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = InlineClassDeprecated::class
     }
 
     interface InlineFromHigherPlatform : KtFirDiagnostic<PsiElement> {

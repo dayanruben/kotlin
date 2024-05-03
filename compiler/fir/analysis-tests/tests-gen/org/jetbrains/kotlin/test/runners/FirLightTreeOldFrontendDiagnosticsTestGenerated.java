@@ -4042,6 +4042,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         runTest("compiler/testData/diagnostics/tests/builderInference/overloadResolutionByLambdaReturnType.kt");
       }
 
+      @Test
+      @TestMetadata("overloadResolutionWithTypeVariables.kt")
+      public void testOverloadResolutionWithTypeVariables() {
+        runTest("compiler/testData/diagnostics/tests/builderInference/overloadResolutionWithTypeVariables.kt");
+      }
+
       @Nested
       @TestMetadata("compiler/testData/diagnostics/tests/builderInference/additional")
       @TestDataPath("$PROJECT_ROOT")
@@ -4479,6 +4485,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         @TestMetadata("kt66272.kt")
         public void testKt66272() {
           runTest("compiler/testData/diagnostics/tests/builderInference/issues/kt66272.kt");
+        }
+
+        @Test
+        @TestMetadata("kt67875.kt")
+        public void testKt67875() {
+          runTest("compiler/testData/diagnostics/tests/builderInference/issues/kt67875.kt");
         }
       }
 
@@ -17061,6 +17073,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       }
 
       @Test
+      @TestMetadata("lambdaAgainstSimpleTypeMismatch.kt")
+      public void testLambdaAgainstSimpleTypeMismatch() {
+        runTest("compiler/testData/diagnostics/tests/inference/lambdaAgainstSimpleTypeMismatch.kt");
+      }
+
+      @Test
       @TestMetadata("lambdaArgumentWithLabel.kt")
       public void testLambdaArgumentWithLabel() {
         runTest("compiler/testData/diagnostics/tests/inference/lambdaArgumentWithLabel.kt");
@@ -29171,6 +29189,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       }
 
       @Test
+      @TestMetadata("ClassifierRedeclaresLibPackage.kt")
+      public void testClassifierRedeclaresLibPackage() {
+        runTest("compiler/testData/diagnostics/tests/redeclarations/ClassifierRedeclaresLibPackage.kt");
+      }
+
+      @Test
       @TestMetadata("ConflictingExtensionProperties.kt")
       public void testConflictingExtensionProperties() {
         runTest("compiler/testData/diagnostics/tests/redeclarations/ConflictingExtensionProperties.kt");
@@ -29234,6 +29258,48 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       @TestMetadata("NoRedeclarationForEnumEntriesAndDefaultObjectMembers.kt")
       public void testNoRedeclarationForEnumEntriesAndDefaultObjectMembers() {
         runTest("compiler/testData/diagnostics/tests/redeclarations/NoRedeclarationForEnumEntriesAndDefaultObjectMembers.kt");
+      }
+
+      @Test
+      @TestMetadata("PackageRedeclaredByCallable.kt")
+      public void testPackageRedeclaredByCallable() {
+        runTest("compiler/testData/diagnostics/tests/redeclarations/PackageRedeclaredByCallable.kt");
+      }
+
+      @Test
+      @TestMetadata("PackageRedeclaredByClassInAnotherModule.kt")
+      public void testPackageRedeclaredByClassInAnotherModule() {
+        runTest("compiler/testData/diagnostics/tests/redeclarations/PackageRedeclaredByClassInAnotherModule.kt");
+      }
+
+      @Test
+      @TestMetadata("PackageRedeclaredByClassInFriendModule.kt")
+      public void testPackageRedeclaredByClassInFriendModule() {
+        runTest("compiler/testData/diagnostics/tests/redeclarations/PackageRedeclaredByClassInFriendModule.kt");
+      }
+
+      @Test
+      @TestMetadata("PackageRedeclaredByJavaClass.kt")
+      public void testPackageRedeclaredByJavaClass() {
+        runTest("compiler/testData/diagnostics/tests/redeclarations/PackageRedeclaredByJavaClass.kt");
+      }
+
+      @Test
+      @TestMetadata("PackageRedeclaredByNestedClass.kt")
+      public void testPackageRedeclaredByNestedClass() {
+        runTest("compiler/testData/diagnostics/tests/redeclarations/PackageRedeclaredByNestedClass.kt");
+      }
+
+      @Test
+      @TestMetadata("PackageRedeclaresLibClass.kt")
+      public void testPackageRedeclaresLibClass() {
+        runTest("compiler/testData/diagnostics/tests/redeclarations/PackageRedeclaresLibClass.kt");
+      }
+
+      @Test
+      @TestMetadata("ParentPackageRedeclaredByClass.kt")
+      public void testParentPackageRedeclaredByClass() {
+        runTest("compiler/testData/diagnostics/tests/redeclarations/ParentPackageRedeclaredByClass.kt");
       }
 
       @Test
@@ -40282,6 +40348,34 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       @TestMetadata("whenWithNothingAndLambdas.kt")
       public void testWhenWithNothingAndLambdas() {
         runTest("compiler/testData/diagnostics/tests/when/whenWithNothingAndLambdas.kt");
+      }
+
+      @Nested
+      @TestMetadata("compiler/testData/diagnostics/tests/when/guard")
+      @TestDataPath("$PROJECT_ROOT")
+      public class Guard {
+        @Test
+        public void testAllFilesPresentInGuard() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/when/guard"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true, "multiplatform");
+        }
+
+        @Test
+        @TestMetadata("whenWithGuardDisabled.kt")
+        public void testWhenWithGuardDisabled() {
+          runTest("compiler/testData/diagnostics/tests/when/guard/whenWithGuardDisabled.kt");
+        }
+
+        @Test
+        @TestMetadata("whenWithGuardEnabled.kt")
+        public void testWhenWithGuardEnabled() {
+          runTest("compiler/testData/diagnostics/tests/when/guard/whenWithGuardEnabled.kt");
+        }
+
+        @Test
+        @TestMetadata("whenWithGuardSyntax.kt")
+        public void testWhenWithGuardSyntax() {
+          runTest("compiler/testData/diagnostics/tests/when/guard/whenWithGuardSyntax.kt");
+        }
       }
 
       @Nested

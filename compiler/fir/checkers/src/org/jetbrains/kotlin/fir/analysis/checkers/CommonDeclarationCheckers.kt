@@ -149,6 +149,7 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirFiniteBoundRestrictionChecker,
             FirNonExpansiveInheritanceRestrictionChecker,
             FirObjectConstructorChecker,
+            FirInlineClassDeclarationChecker,
         )
 
     override val constructorCheckers: Set<FirConstructorChecker>
@@ -162,6 +163,7 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirOptInImportsChecker,
             FirUnresolvedInMiddleOfImportChecker,
             FirTopLevelPropertiesChecker,
+            FirPackageConflictsWithClassifierChecker,
         )
 
     override val scriptCheckers: Set<FirScriptChecker>

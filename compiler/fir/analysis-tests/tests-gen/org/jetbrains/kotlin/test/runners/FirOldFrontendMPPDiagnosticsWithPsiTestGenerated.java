@@ -374,6 +374,12 @@ public class FirOldFrontendMPPDiagnosticsWithPsiTestGenerated extends AbstractFi
   }
 
   @Test
+  @TestMetadata("packageConflictsWithClassifierInMultiplatform.kt")
+  public void testPackageConflictsWithClassifierInMultiplatform() {
+    runTest("compiler/testData/diagnostics/tests/multiplatform/packageConflictsWithClassifierInMultiplatform.kt");
+  }
+
+  @Test
   @TestMetadata("platformRedeclarationOfExpect.kt")
   public void testPlatformRedeclarationOfExpect() {
     runTest("compiler/testData/diagnostics/tests/multiplatform/platformRedeclarationOfExpect.kt");
@@ -413,6 +419,12 @@ public class FirOldFrontendMPPDiagnosticsWithPsiTestGenerated extends AbstractFi
   @TestMetadata("smartcastOnMemberPropertyFromCommonClass.kt")
   public void testSmartcastOnMemberPropertyFromCommonClass() {
     runTest("compiler/testData/diagnostics/tests/multiplatform/smartcastOnMemberPropertyFromCommonClass.kt");
+  }
+
+  @Test
+  @TestMetadata("stdlibWithActualizationErrors.kt")
+  public void testStdlibWithActualizationErrors() {
+    runTest("compiler/testData/diagnostics/tests/multiplatform/stdlibWithActualizationErrors.kt");
   }
 
   @Test

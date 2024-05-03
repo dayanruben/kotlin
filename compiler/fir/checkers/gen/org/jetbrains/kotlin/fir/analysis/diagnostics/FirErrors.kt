@@ -104,6 +104,7 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtPackageDirective
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtProperty
@@ -572,7 +573,8 @@ object FirErrors {
     val MANY_COMPANION_OBJECTS: KtDiagnosticFactory0 by error0<KtObjectDeclaration>(SourceElementPositioningStrategies.COMPANION_OBJECT)
     val CONFLICTING_OVERLOADS: KtDiagnosticFactory1<Collection<FirBasedSymbol<*>>> by error1<PsiElement, Collection<FirBasedSymbol<*>>>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
     val REDECLARATION: KtDiagnosticFactory1<Collection<FirBasedSymbol<*>>> by error1<KtNamedDeclaration, Collection<FirBasedSymbol<*>>>(SourceElementPositioningStrategies.NAME_IDENTIFIER)
-    val PACKAGE_OR_CLASSIFIER_REDECLARATION: KtDiagnosticFactory1<Collection<FirBasedSymbol<*>>> by error1<KtNamedDeclaration, Collection<FirBasedSymbol<*>>>(SourceElementPositioningStrategies.ACTUAL_DECLARATION_NAME)
+    val CLASSIFIER_REDECLARATION: KtDiagnosticFactory1<Collection<FirBasedSymbol<*>>> by error1<KtNamedDeclaration, Collection<FirBasedSymbol<*>>>(SourceElementPositioningStrategies.ACTUAL_DECLARATION_NAME)
+    val PACKAGE_CONFLICTS_WITH_CLASSIFIER: KtDiagnosticFactory1<ClassId> by error1<KtPackageDirective, ClassId>(SourceElementPositioningStrategies.PACKAGE_DIRECTIVE_NAME_EXPRESSION)
     val EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE: KtDiagnosticFactory1<FirBasedSymbol<*>> by error1<KtNamedDeclaration, FirBasedSymbol<*>>(SourceElementPositioningStrategies.ACTUAL_DECLARATION_NAME)
     val METHOD_OF_ANY_IMPLEMENTED_IN_INTERFACE: KtDiagnosticFactory0 by error0<PsiElement>()
 
@@ -775,6 +777,8 @@ object FirErrors {
     val COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT: KtDiagnosticFactory0 by error0<PsiElement>(SourceElementPositioningStrategies.COMMAS)
     val DUPLICATE_BRANCH_CONDITION_IN_WHEN: KtDiagnosticFactory0 by warning0<KtElement>()
     val CONFUSING_BRANCH_CONDITION: KtDiagnosticFactoryForDeprecation0 by deprecationError0<PsiElement>(ProhibitConfusingSyntaxInWhenBranches)
+    val COMMA_IN_WHEN_CONDITION_WITH_WHEN_GUARD: KtDiagnosticFactory0 by error0<PsiElement>(SourceElementPositioningStrategies.WHEN_GUARD)
+    val WHEN_GUARD_WITHOUT_SUBJECT: KtDiagnosticFactory0 by error0<PsiElement>(SourceElementPositioningStrategies.WHEN_GUARD)
 
     // Context tracking
     val TYPE_PARAMETER_IS_NOT_AN_EXPRESSION: KtDiagnosticFactory1<FirTypeParameterSymbol> by error1<KtSimpleNameExpression, FirTypeParameterSymbol>()
@@ -873,6 +877,7 @@ object FirErrors {
     val ILLEGAL_INLINE_PARAMETER_MODIFIER: KtDiagnosticFactory0 by error0<KtElement>(SourceElementPositioningStrategies.INLINE_PARAMETER_MODIFIER)
     val INLINE_SUSPEND_FUNCTION_TYPE_UNSUPPORTED: KtDiagnosticFactory0 by error0<KtParameter>()
     val INEFFICIENT_EQUALS_OVERRIDING_IN_VALUE_CLASS: KtDiagnosticFactory1<ConeKotlinType> by warning1<KtNamedFunction, ConeKotlinType>(SourceElementPositioningStrategies.DECLARATION_NAME)
+    val INLINE_CLASS_DEPRECATED: KtDiagnosticFactory0 by warning0<KtElement>(SourceElementPositioningStrategies.INLINE_OR_VALUE_MODIFIER)
 
     // Imports
     val CANNOT_ALL_UNDER_IMPORT_FROM_SINGLETON: KtDiagnosticFactory1<Name> by error1<KtImportDirective, Name>(SourceElementPositioningStrategies.IMPORT_LAST_NAME)

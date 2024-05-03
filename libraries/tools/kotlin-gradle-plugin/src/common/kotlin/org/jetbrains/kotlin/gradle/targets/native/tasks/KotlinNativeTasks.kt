@@ -14,12 +14,12 @@ import org.gradle.api.artifacts.component.ModuleComponentSelector
 import org.gradle.api.artifacts.result.DependencyResult
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.api.file.*
+import org.gradle.api.logging.Logging
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.*
-import org.gradle.process.ExecOperations
 import org.gradle.work.DisableCachingByDefault
 import org.gradle.work.NormalizeLineEndings
 import org.jetbrains.kotlin.build.report.metrics.*
@@ -279,7 +279,6 @@ internal constructor(
     override val compilerOptions: KotlinNativeCompilerOptions,
     private val objectFactory: ObjectFactory,
     providerFactory: ProviderFactory,
-    private val execOperations: ExecOperations,
 ) : AbstractKotlinNativeCompile<KotlinCommonOptions, K2NativeCompilerArguments>(objectFactory),
     KotlinNativeCompileTask,
     K2MultiplatformCompilationTask,
@@ -535,9 +534,8 @@ internal constructor(
                 ArgumentUtils.convertArgumentsToStringList(arguments)
             }
 
-            KotlinNativeCompilerRunner(
+            objectFactory.KotlinNativeCompilerRunner(
                 settings = runnerSettings,
-                executionContext = KotlinToolRunner.GradleExecutionContext.fromTaskContext(objectFactory, execOperations, logger),
                 metricsReporter = buildMetrics
             ).run(buildArguments)
         }
@@ -563,9 +561,6 @@ internal class ExternalDependenciesBuilder(
 
     private val sourceCodeModuleId: KResolvedDependencyId =
         intermediateLibraryName?.let { KResolvedDependencyId(it) } ?: KResolvedDependencyId.DEFAULT_SOURCE_CODE_MODULE_ID
-
-    private val konanPropertiesService: KonanPropertiesBuildService
-        get() = KonanPropertiesBuildService.registerIfAbsent(project).get()
 
     fun buildCompilerArgs(): List<String> {
         val dependenciesFile = writeDependenciesFile(buildDependencies(), deleteOnExit = true)
@@ -723,7 +718,7 @@ internal class ExternalDependenciesBuilder(
 }
 
 internal class CacheBuilder(
-    private val executionContext: KotlinToolRunner.GradleExecutionContext,
+    private val objectFactory: ObjectFactory,
     private val settings: Settings,
     private val konanPropertiesService: KonanPropertiesBuildService,
     private val metricsReporter: BuildMetricsReporter<GradleBuildTime, GradleBuildPerformanceMetric>,
@@ -773,6 +768,7 @@ internal class CacheBuilder(
         }
     }
 
+    private val logger = Logging.getLogger(this::class.java)
 
     private val nativeSingleFileResolveStrategy: SingleFileKlibResolveStrategy
         get() = CompilerSingleFileKlibResolveAllowingIrProvidersStrategy(
@@ -853,7 +849,7 @@ internal class CacheBuilder(
             .map {
                 resolveSingleFileKlib(
                     KFile(it.file.absolutePath),
-                    logger = GradleLoggerAdapter(executionContext.logger),
+                    logger = GradleLoggerAdapter(logger),
                     strategy = nativeSingleFileResolveStrategy
                 )
             }
@@ -881,7 +877,7 @@ internal class CacheBuilder(
         for (library in sortedLibraries) {
             if (File(cacheDirectory, library.uniqueName.cachedName).listFilesOrEmpty().isNotEmpty())
                 continue
-            executionContext.logger.info("Compiling ${library.uniqueName} to cache")
+            logger.info("Compiling ${library.uniqueName} to cache")
             val args = mutableListOf(
                 "-p", konanCacheKind.produce!!,
                 "-target", target
@@ -911,7 +907,7 @@ internal class CacheBuilder(
                     args += "-l"
                     args += it.libraryFile.absolutePath
                 }
-            KotlinNativeCompilerRunner(settings.runnerSettings, executionContext, GradleBuildMetricsReporter()).run(args)
+            objectFactory.KotlinNativeCompilerRunner(settings.runnerSettings, GradleBuildMetricsReporter()).run(args)
         }
     }
 
@@ -931,12 +927,12 @@ internal class CacheBuilder(
             return
         val unresolvedDependencies = resolveSingleFileKlib(
             KFile(platformLib.absolutePath),
-            logger = GradleLoggerAdapter(executionContext.logger),
+            logger = GradleLoggerAdapter(logger),
             strategy = nativeSingleFileResolveStrategy
         ).unresolvedDependencies
         for (dependency in unresolvedDependencies)
             ensureCompilerProvidedLibPrecached(dependency.path, platformLibs, visitedLibs)
-        executionContext.logger.info("Compiling $platformLibName (${visitedLibs.size}/${platformLibs.size}) to cache")
+        logger.info("Compiling $platformLibName (${visitedLibs.size}/${platformLibs.size}) to cache")
         val args = mutableListOf(
             "-p", konanCacheKind.produce!!,
             "-target", target
@@ -952,7 +948,7 @@ internal class CacheBuilder(
         }
         args += "-Xadd-cache=${platformLib.absolutePath}"
         args += "-Xcache-directory=${rootCacheDirectory.absolutePath}"
-        KotlinNativeCompilerRunner(settings.runnerSettings, executionContext, metricsReporter).run(args)
+        objectFactory.KotlinNativeCompilerRunner(settings.runnerSettings, metricsReporter).run(args)
     }
 
     private fun ensureCompilerProvidedLibsPrecached() {
@@ -1017,13 +1013,10 @@ abstract class CInteropProcess @Inject internal constructor(params: Params) :
     ) {
         internal open class Services @Inject constructor(
             val objectFactory: ObjectFactory,
-            val execOperations: ExecOperations,
         )
     }
 
     private val objectFactory: ObjectFactory = params.services.objectFactory
-
-    private val execOperations: ExecOperations = params.services.execOperations
 
     @get:Internal
     internal val targetName: String = params.targetName
@@ -1212,9 +1205,8 @@ abstract class CInteropProcess @Inject internal constructor(params: Params) :
                 task = this,
                 isInIdeaSync = isInIdeaSync,
                 runnerSettings = runnerSettings,
-                gradleExecutionContext = KotlinToolRunner.GradleExecutionContext.fromTaskContext(objectFactory, execOperations, logger),
                 metricsReporter = buildMetrics
-            ).run(args)
+            ).run(objectFactory, args)
         }
     }
 

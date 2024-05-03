@@ -1136,8 +1136,11 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val REDECLARATION by error<KtNamedDeclaration>(PositioningStrategy.NAME_IDENTIFIER) {
             parameter<Collection<Symbol>>("conflictingDeclarations")
         }
-        val PACKAGE_OR_CLASSIFIER_REDECLARATION by error<KtNamedDeclaration>(PositioningStrategy.ACTUAL_DECLARATION_NAME) {
+        val CLASSIFIER_REDECLARATION by error<KtNamedDeclaration>(PositioningStrategy.ACTUAL_DECLARATION_NAME) {
             parameter<Collection<Symbol>>("conflictingDeclarations")
+        }
+        val PACKAGE_CONFLICTS_WITH_CLASSIFIER by error<KtPackageDirective>(PositioningStrategy.PACKAGE_DIRECTIVE_NAME_EXPRESSION) {
+            parameter<ClassId>("conflictingClassId")
         }
         val EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE by error<KtNamedDeclaration>(PositioningStrategy.ACTUAL_DECLARATION_NAME) {
             parameter<Symbol>("declaration")
@@ -1531,6 +1534,9 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT by error<PsiElement>(PositioningStrategy.COMMAS)
         val DUPLICATE_BRANCH_CONDITION_IN_WHEN by warning<KtElement>()
         val CONFUSING_BRANCH_CONDITION by deprecationError<PsiElement>(LanguageFeature.ProhibitConfusingSyntaxInWhenBranches)
+
+        val COMMA_IN_WHEN_CONDITION_WITH_WHEN_GUARD by error<PsiElement>(PositioningStrategy.WHEN_GUARD)
+        val WHEN_GUARD_WITHOUT_SUBJECT by error<PsiElement>(PositioningStrategy.WHEN_GUARD)
     }
 
     val CONTEXT_TRACKING by object : DiagnosticGroup("Context tracking") {
@@ -1774,6 +1780,8 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val INEFFICIENT_EQUALS_OVERRIDING_IN_VALUE_CLASS by warning<KtNamedFunction>(PositioningStrategy.DECLARATION_NAME) {
             parameter<ConeKotlinType>("type")
         }
+
+        val INLINE_CLASS_DEPRECATED by warning<KtElement>(PositioningStrategy.INLINE_OR_VALUE_MODIFIER)
     }
 
     val IMPORTS by object : DiagnosticGroup("Imports") {
