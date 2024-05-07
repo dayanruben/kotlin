@@ -16791,6 +16791,18 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       }
 
       @Test
+      @TestMetadata("genericWithUnmatchedNullabilityDelegate.kt")
+      public void testGenericWithUnmatchedNullabilityDelegate() {
+        runTest("compiler/testData/diagnostics/tests/inference/genericWithUnmatchedNullabilityDelegate.kt");
+      }
+
+      @Test
+      @TestMetadata("genericsWithUnmatchedNullabilityNested.kt")
+      public void testGenericsWithUnmatchedNullabilityNested() {
+        runTest("compiler/testData/diagnostics/tests/inference/genericsWithUnmatchedNullabilityNested.kt");
+      }
+
+      @Test
       @TestMetadata("hasErrorInConstrainingTypes.kt")
       public void testHasErrorInConstrainingTypes() {
         runTest("compiler/testData/diagnostics/tests/inference/hasErrorInConstrainingTypes.kt");
@@ -24751,6 +24763,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       }
 
       @Test
+      @TestMetadata("protectedEnum.kt")
+      public void testProtectedEnum() {
+        runTest("compiler/testData/diagnostics/tests/modifiers/protectedEnum.kt");
+      }
+
+      @Test
       @TestMetadata("protectedInExpectActual.kt")
       public void testProtectedInExpectActual() {
         runTest("compiler/testData/diagnostics/tests/modifiers/protectedInExpectActual.kt");
@@ -25686,6 +25704,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       @TestMetadata("expectTailrec_oldLanguageVersion.kt")
       public void testExpectTailrec_oldLanguageVersion() {
         runTest("compiler/testData/diagnostics/tests/multiplatform/expectTailrec_oldLanguageVersion.kt");
+      }
+
+      @Test
+      @TestMetadata("expectsWithJsExport.kt")
+      public void testExpectsWithJsExport() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/expectsWithJsExport.kt");
       }
 
       @Test

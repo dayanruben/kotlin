@@ -759,7 +759,6 @@ tasks {
     }
 
     register("testsForBootstrapBuildTest") {
-        dependsOn("dist")
         dependsOn(":compiler:tests-common-new:test")
     }
 
@@ -872,16 +871,20 @@ tasks {
     }
 
     register("miscCompilerTest") {
-        dependsOn("coreLibsTest")
-        dependsOn("gradlePluginTest")
-        dependsOn("toolsTest")
-        dependsOn("examplesTest")
         dependsOn("incrementalCompilationTest")
         dependsOn("scriptingTest")
         dependsOn("jvmCompilerIntegrationTest")
         dependsOn("compilerPluginTest")
-
         dependsOn(":kotlin-daemon-tests:test")
+
+        dependsOn("miscTest")
+    }
+
+    register("miscTest") {
+        dependsOn("coreLibsTest")
+        dependsOn("gradlePluginTest")
+        dependsOn("toolsTest")
+        dependsOn("examplesTest")
         dependsOn(":kotlin-build-common:test")
         dependsOn(":kotlin-build-common:testJUnit5")
         dependsOn(":core:descriptors.runtime:test")

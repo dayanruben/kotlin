@@ -182,7 +182,9 @@ fun <T : ConeKotlinType> T.withNullability(
         withoutEnhanced.transformTypesWith { t -> t.withNullability(nullability, typeContext) } ?: withoutEnhanced
     }
 
-    if (this.nullability == nullability && this.attributes == theAttributes) {
+    if (this.nullability == nullability && this.attributes == theAttributes && this !is ConeIntersectionType) {
+        // Note: this is an optimization, but it's not applicable for ConeIntersectionType,
+        // because ConeIntersectionType.nullability is always NOT_NULL, independent on real component nullabilities
         return this
     }
 
@@ -213,7 +215,9 @@ fun <T : ConeKotlinType> T.withNullability(
             }
 
             ConeNullability.UNKNOWN -> this // TODO: is that correct?
-            ConeNullability.NOT_NULL -> this
+            ConeNullability.NOT_NULL -> if (effectiveNullability == ConeNullability.NOT_NULL) this else this.mapTypes {
+                it.withNullability(nullability, typeContext, preserveEnhancedNullability = preserveEnhancedNullability)
+            }
         }
 
         is ConeStubTypeForTypeVariableInSubtyping -> ConeStubTypeForTypeVariableInSubtyping(constructor, nullability)
@@ -500,10 +504,10 @@ internal fun ConeTypeContext.captureFromExpressionInternal(type: ConeKotlinType)
 
             val lowerIntersectedType =
                 intersectTypes(replaceArgumentsWithCapturedArgumentsByIntersectionComponents(type.lowerBound) ?: return null)
-                    .withNullability(ConeNullability.create(type.lowerBound.isMarkedNullable), this)
+                    .withNullability(ConeNullability.create(type.lowerBound.isNullableType()), this)
             val upperIntersectedType =
                 intersectTypes(replaceArgumentsWithCapturedArgumentsByIntersectionComponents(type.upperBound) ?: return null)
-                    .withNullability(ConeNullability.create(type.upperBound.isMarkedNullable), this)
+                    .withNullability(ConeNullability.create(type.upperBound.isNullableType()), this)
 
             ConeFlexibleType(lowerIntersectedType.coneLowerBoundIfFlexible(), upperIntersectedType.coneUpperBoundIfFlexible())
         }
@@ -511,7 +515,7 @@ internal fun ConeTypeContext.captureFromExpressionInternal(type: ConeKotlinType)
         is ConeSimpleKotlinType -> {
             intersectTypes(
                 replaceArgumentsWithCapturedArgumentsByIntersectionComponents(type) ?: return null
-            ).withNullability(type.isMarkedNullable) as ConeKotlinType
+            ).withNullability(type.isNullableType()) as ConeKotlinType
         }
     }
 }
