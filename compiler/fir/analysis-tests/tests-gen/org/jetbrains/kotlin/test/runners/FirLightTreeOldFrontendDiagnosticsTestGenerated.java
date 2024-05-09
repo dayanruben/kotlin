@@ -1318,6 +1318,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
     }
 
     @Test
+    @TestMetadata("renderingOfTypesWithSameName.kt")
+    public void testRenderingOfTypesWithSameName() {
+      runTest("compiler/testData/diagnostics/tests/renderingOfTypesWithSameName.kt");
+    }
+
+    @Test
     @TestMetadata("ReserveYield.kt")
     public void testReserveYield() {
       runTest("compiler/testData/diagnostics/tests/ReserveYield.kt");
@@ -4491,6 +4497,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         @TestMetadata("kt67875.kt")
         public void testKt67875() {
           runTest("compiler/testData/diagnostics/tests/builderInference/issues/kt67875.kt");
+        }
+
+        @Test
+        @TestMetadata("kt67993.kt")
+        public void testKt67993() {
+          runTest("compiler/testData/diagnostics/tests/builderInference/issues/kt67993.kt");
         }
       }
 
@@ -28922,6 +28934,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         }
 
         @Test
+        @TestMetadata("javaFieldAndCompanionProperty.kt")
+        public void testJavaFieldAndCompanionProperty() {
+          runTest("compiler/testData/diagnostics/tests/properties/javaFieldAndKotlinProperty/javaFieldAndCompanionProperty.kt");
+        }
+
+        @Test
         @TestMetadata("javaFieldAndKotlinInvisibleProperty.kt")
         public void testJavaFieldAndKotlinInvisibleProperty() {
           runTest("compiler/testData/diagnostics/tests/properties/javaFieldAndKotlinProperty/javaFieldAndKotlinInvisibleProperty.kt");
@@ -41601,6 +41619,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         @TestMetadata("CorrectApplicability.kt")
         public void testCorrectApplicability() {
           runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/CorrectApplicability.kt");
+        }
+
+        @Test
+        @TestMetadata("DiagnosticDefaultMessage.kt")
+        public void testDiagnosticDefaultMessage() {
+          runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/DiagnosticDefaultMessage.kt");
         }
 
         @Test

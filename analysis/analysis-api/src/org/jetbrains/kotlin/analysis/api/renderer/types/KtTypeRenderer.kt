@@ -11,10 +11,13 @@ import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtAnnotationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtRendererTypeApproximator
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.*
+import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 
 public class KtTypeRenderer private constructor(
+    public val expandedTypeRenderingMode: KtExpandedTypeRenderingMode,
+
     public val capturedTypeRenderer: KtCapturedTypeRenderer,
     public val definitelyNotNullTypeRenderer: KtDefinitelyNotNullTypeRenderer,
     public val dynamicTypeRenderer: KtDynamicTypeRenderer,
@@ -36,24 +39,82 @@ public class KtTypeRenderer private constructor(
     public val keywordsRenderer: KtKeywordsRenderer,
 ) {
     public fun renderType(analysisSession: KtAnalysisSession, type: KtType, printer: PrettyPrinter) {
+        with(analysisSession) {
+            when (expandedTypeRenderingMode) {
+                KtExpandedTypeRenderingMode.RENDER_ABBREVIATED_TYPE -> {
+                    renderAbbreviatedType(type, printer)
+                }
+
+                KtExpandedTypeRenderingMode.RENDER_ABBREVIATED_TYPE_WITH_EXPANDED_TYPE_COMMENT -> {
+                    renderAbbreviatedType(type, printer)
+                    renderExpandedTypeComment(type, printer)
+                }
+
+                KtExpandedTypeRenderingMode.RENDER_EXPANDED_TYPE -> {
+                    renderExpandedType(type, printer)
+                }
+
+                KtExpandedTypeRenderingMode.RENDER_EXPANDED_TYPE_WITH_ABBREVIATED_TYPE_COMMENT -> {
+                    renderExpandedType(type, printer)
+                    renderAbbreviatedTypeComment(type, printer)
+                }
+            }
+        }
+    }
+
+    private fun KtAnalysisSession.renderAbbreviatedType(type: KtType, printer: PrettyPrinter) {
+        renderTypeAsIs(type.abbreviatedType ?: type, printer)
+    }
+
+    private fun KtAnalysisSession.renderExpandedTypeComment(type: KtType, printer: PrettyPrinter) {
+        val expandedType = when {
+            type.abbreviatedType != null -> type
+            type.classSymbol is KtTypeAliasSymbol -> type.fullyExpandedType
+            else -> return
+        }
+
+        printer.append(" /* = ")
+        renderTypeAsIs(expandedType, printer)
+        printer.append(" */")
+    }
+
+    private fun KtAnalysisSession.renderExpandedType(type: KtType, printer: PrettyPrinter) {
+        renderTypeAsIs(type.fullyExpandedType, printer)
+    }
+
+    private fun KtAnalysisSession.renderAbbreviatedTypeComment(type: KtType, printer: PrettyPrinter) {
+        val abbreviatedType = type.abbreviatedType
+            ?: type.takeIf { it.classSymbol is KtTypeAliasSymbol }
+            ?: return
+
+        printer.append(" /* from: ")
+        renderTypeAsIs(abbreviatedType, printer)
+        printer.append(" */")
+    }
+
+    /**
+     * Renders [type] directly without considering its abbreviation or expansion.
+     */
+    private fun KtAnalysisSession.renderTypeAsIs(type: KtType, printer: PrettyPrinter) {
         when (type) {
-            is KtCapturedType -> capturedTypeRenderer.renderType(analysisSession, type, this, printer)
-            is KtFunctionalType -> functionalTypeRenderer.renderType(analysisSession, type, this, printer)
-            is KtUsualClassType -> usualClassTypeRenderer.renderType(analysisSession, type, this, printer)
-            is KtDefinitelyNotNullType -> definitelyNotNullTypeRenderer.renderType(analysisSession, type, this, printer)
-            is KtDynamicType -> dynamicTypeRenderer.renderType(analysisSession, type, this, printer)
-            is KtFlexibleType -> flexibleTypeRenderer.renderType(analysisSession, type, this, printer)
-            is KtIntegerLiteralType -> integerLiteralTypeRenderer.renderType(analysisSession, type, this, printer)
-            is KtIntersectionType -> intersectionTypeRenderer.renderType(analysisSession, type, this, printer)
-            is KtTypeParameterType -> typeParameterTypeRenderer.renderType(analysisSession, type, this, printer)
-            is KtClassErrorType -> unresolvedClassErrorTypeRenderer.renderType(analysisSession, type, this, printer)
-            is KtTypeErrorType -> typeErrorTypeRenderer.renderType(analysisSession, type, this, printer)
+            is KtCapturedType -> capturedTypeRenderer.renderType(this, type, this@KtTypeRenderer, printer)
+            is KtFunctionalType -> functionalTypeRenderer.renderType(this, type, this@KtTypeRenderer, printer)
+            is KtUsualClassType -> usualClassTypeRenderer.renderType(this, type, this@KtTypeRenderer, printer)
+            is KtDefinitelyNotNullType -> definitelyNotNullTypeRenderer.renderType(this, type, this@KtTypeRenderer, printer)
+            is KtDynamicType -> dynamicTypeRenderer.renderType(this, type, this@KtTypeRenderer, printer)
+            is KtFlexibleType -> flexibleTypeRenderer.renderType(this, type, this@KtTypeRenderer, printer)
+            is KtIntegerLiteralType -> integerLiteralTypeRenderer.renderType(this, type, this@KtTypeRenderer, printer)
+            is KtIntersectionType -> intersectionTypeRenderer.renderType(this, type, this@KtTypeRenderer, printer)
+            is KtTypeParameterType -> typeParameterTypeRenderer.renderType(this, type, this@KtTypeRenderer, printer)
+            is KtClassErrorType -> unresolvedClassErrorTypeRenderer.renderType(this, type, this@KtTypeRenderer, printer)
+            is KtTypeErrorType -> typeErrorTypeRenderer.renderType(this, type, this@KtTypeRenderer, printer)
         }
     }
 
     public fun with(action: Builder.() -> Unit): KtTypeRenderer {
         val renderer = this
         return KtTypeRenderer {
+            this.expandedTypeRenderingMode = renderer.expandedTypeRenderingMode
             this.capturedTypeRenderer = renderer.capturedTypeRenderer
             this.definitelyNotNullTypeRenderer = renderer.definitelyNotNullTypeRenderer
             this.dynamicTypeRenderer = renderer.dynamicTypeRenderer
@@ -82,6 +143,7 @@ public class KtTypeRenderer private constructor(
     }
 
     public class Builder {
+        public lateinit var expandedTypeRenderingMode: KtExpandedTypeRenderingMode
         public lateinit var capturedTypeRenderer: KtCapturedTypeRenderer
         public lateinit var definitelyNotNullTypeRenderer: KtDefinitelyNotNullTypeRenderer
         public lateinit var dynamicTypeRenderer: KtDynamicTypeRenderer
@@ -102,6 +164,7 @@ public class KtTypeRenderer private constructor(
         public lateinit var keywordsRenderer: KtKeywordsRenderer
 
         public fun build(): KtTypeRenderer = KtTypeRenderer(
+            expandedTypeRenderingMode,
             capturedTypeRenderer,
             definitelyNotNullTypeRenderer,
             dynamicTypeRenderer,

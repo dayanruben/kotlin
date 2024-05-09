@@ -78,7 +78,7 @@ class CallAndReferenceGenerator(
     ): IrExpression {
         val type = approximateFunctionReferenceType(callableReferenceAccess.resolvedType).toIrType()
 
-        val firSymbol = callableReferenceAccess.calleeReference.extractSymbolForCall(c)
+        val firSymbol = callableReferenceAccess.calleeReference.extractDeclarationSiteSymbol(c)
         if (firSymbol?.origin == FirDeclarationOrigin.SamConstructor) {
             assert(explicitReceiverExpression == null) {
                 "Fun interface constructor reference should be unbound: ${explicitReceiverExpression?.dump()}"
@@ -99,12 +99,11 @@ class CallAndReferenceGenerator(
         return callableReferenceAccess.convertWithOffsets { startOffset, endOffset ->
 
             fun FirCallableSymbol<*>.toSymbolForCall(): IrSymbol? {
-                return toSymbolForCall(
+                return toIrSymbolForCallableReference(
                     c,
                     callableReferenceAccess.dispatchReceiver,
-                    explicitReceiver = callableReferenceAccess.explicitReceiver,
-                    isDelegate = isDelegate,
-                    isReference = true
+                    lhs = callableReferenceAccess.explicitReceiver,
+                    isDelegate = isDelegate
                 )
             }
 
@@ -499,7 +498,7 @@ class CallAndReferenceGenerator(
         val dispatchReceiver = qualifiedAccess.dispatchReceiver
         val calleeReference = qualifiedAccess.calleeReference
 
-        val firSymbol = calleeReference.toResolvedBaseSymbol()
+        val firSymbol = calleeReference.extractDeclarationSiteSymbol(c)
         val isDynamicAccess = firSymbol?.origin == FirDeclarationOrigin.DynamicScope
 
         if (isDynamicAccess) {
@@ -519,7 +518,9 @@ class CallAndReferenceGenerator(
         // resolve into members of `Any`.
         val convertedExplicitReceiver = if (explicitReceiverExpression?.type is IrDynamicType) {
             qualifiedAccess.convertWithOffsets { startOffset, endOffset ->
-                val callableDeclaration = firSymbol?.fir as? FirCallableDeclaration
+                // we should use a dispatch receiver type from the raw resolved symbol, without unwrapping fake-overrides
+                // to get proper use-site dispatch receiver
+                val callableDeclaration = calleeReference.toResolvedCallableSymbol()?.fir
                 val targetType = callableDeclaration?.dispatchReceiverType?.toIrType()
                     ?: callableDeclaration?.receiverParameter?.typeRef?.toIrType()
                     ?: error("Couldn't get the proper receiver")
@@ -539,12 +540,12 @@ class CallAndReferenceGenerator(
                     return@convertWithOffsets visitor.convertToIrExpression(dispatchReceiver)
                 }
             }
-            val symbol = calleeReference.toSymbolForCall(
+            val irSymbol = firSymbol?.toIrSymbolForCall(
                 c,
                 dispatchReceiver,
                 explicitReceiver = qualifiedAccess.explicitReceiver
             )
-            when (symbol) {
+            when (irSymbol) {
                 is IrConstructorSymbol -> {
                     require(firSymbol is FirConstructorSymbol)
                     val constructor = firSymbol.unwrapCallRepresentative(c).fir as FirConstructor
@@ -554,14 +555,13 @@ class CallAndReferenceGenerator(
                         startOffset,
                         endOffset,
                         irType,
-                        symbol,
+                        irSymbol,
                         typeArgumentsCount = totalTypeParametersCount,
                         valueArgumentsCount = firSymbol.valueParametersSize(),
                         constructorTypeArgumentsCount = constructorTypeParametersCount,
                     )
                 }
                 is IrSimpleFunctionSymbol -> {
-                    require(firSymbol is FirCallableSymbol<*>) { "Illegal symbol: ${firSymbol!!::class}" }
                     val callOrigin = calleeReference.statementOrigin()
                     /*
                      * For `x += y` -> `x = x.plus(y)` receiver of call `plus` should also have an augmented assignment origin.
@@ -577,7 +577,7 @@ class CallAndReferenceGenerator(
                         explicitReceiverExpression.updateStatementOrigin(callOrigin)
                     }
                     IrCallImpl(
-                        startOffset, endOffset, irType, symbol,
+                        startOffset, endOffset, irType, irSymbol,
                         typeArgumentsCount = firSymbol.typeParameterSymbols.size,
                         valueArgumentsCount = firSymbol.valueParametersSize(),
                         origin = callOrigin,
@@ -588,7 +588,7 @@ class CallAndReferenceGenerator(
                 is IrLocalDelegatedPropertySymbol -> {
                     IrCallImpl(
                         startOffset, endOffset, irType,
-                        declarationStorage.findGetterOfProperty(symbol),
+                        declarationStorage.findGetterOfProperty(irSymbol),
                         typeArgumentsCount = calleeReference.toResolvedCallableSymbol()!!.fir.typeParameters.size,
                         valueArgumentsCount = 0,
                         origin = IrStatementOrigin.GET_LOCAL_PROPERTY,
@@ -598,8 +598,8 @@ class CallAndReferenceGenerator(
 
                 is IrPropertySymbol -> {
                     val property = calleeReference.toResolvedPropertySymbol()!!.fir
-                    val getterSymbol = declarationStorage.findGetterOfProperty(symbol)
-                    val backingFieldSymbol = declarationStorage.findBackingFieldOfProperty(symbol)
+                    val getterSymbol = declarationStorage.findGetterOfProperty(irSymbol)
+                    val backingFieldSymbol = declarationStorage.findBackingFieldOfProperty(irSymbol)
                     when {
                         getterSymbol != null -> {
                             IrCallImpl(
@@ -627,7 +627,7 @@ class CallAndReferenceGenerator(
                 }
 
                 is IrFieldSymbol -> IrGetFieldImpl(
-                    startOffset, endOffset, symbol, irType,
+                    startOffset, endOffset, irSymbol, irType,
                     superQualifierSymbol = dispatchReceiver?.superQualifierSymbolForFieldAccess(firSymbol)
                 )
 
@@ -637,13 +637,13 @@ class CallAndReferenceGenerator(
                         startOffset, endOffset,
                         // Note: there is a case with componentN function when IR type of variable differs from FIR type
                         variable.irTypeForPotentiallyComponentCall(c, predefinedType = irType),
-                        symbol,
+                        irSymbol,
                         origin = if (variableAsFunctionMode) IrStatementOrigin.VARIABLE_AS_FUNCTION
                         else incOrDeclSourceKindToIrStatementOrigin[qualifiedAccess.source?.kind] ?: calleeReference.statementOrigin()
                     )
                 }
 
-                is IrEnumEntrySymbol -> IrGetEnumValueImpl(startOffset, endOffset, irType, symbol)
+                is IrEnumEntrySymbol -> IrGetEnumValueImpl(startOffset, endOffset, irType, irSymbol)
                 else -> generateErrorCallExpression(startOffset, endOffset, calleeReference, irType)
             }
         }.applyTypeArguments(qualifiedAccess).applyReceivers(qualifiedAccess, convertedExplicitReceiver)
@@ -725,7 +725,7 @@ class CallAndReferenceGenerator(
 
         injectSetValueCall(variableAssignment, calleeReference, assignedValue)?.let { return it }
 
-        val firSymbol = calleeReference.toResolvedBaseSymbol()
+        val firSymbol = calleeReference.extractDeclarationSiteSymbol(c)
         val isDynamicAccess = firSymbol?.origin == FirDeclarationOrigin.DynamicScope
 
         if (isDynamicAccess) {
@@ -739,11 +739,10 @@ class CallAndReferenceGenerator(
             )
         }
 
-        val symbol = calleeReference.toSymbolForCall(
+        val symbol = firSymbol?.toIrSymbolForSetCall(
             c,
-            extractDispatchReceiverOfAssignment(variableAssignment),
+            dispatchReceiver = extractDispatchReceiverOfAssignment(variableAssignment),
             explicitReceiver = variableAssignment.explicitReceiver,
-            preferGetter = false,
         )
         val origin = variableAssignment.getIrAssignmentOrigin()
 
@@ -960,7 +959,7 @@ class CallAndReferenceGenerator(
             if (classSymbol != null) {
                 IrGetObjectValueImpl(
                     startOffset, endOffset, irType,
-                    classSymbol.toSymbol(c) as IrClassSymbol
+                    classSymbol.toIrSymbol(c) as IrClassSymbol
                 )
             } else {
                 IrErrorCallExpressionImpl(

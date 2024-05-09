@@ -1,3 +1,79 @@
+## 1.9.24
+
+### Backend. Wasm
+
+- [`KT-64890`](https://youtrack.jetbrains.com/issue/KT-64890) K/Wasm compiler crash with external class and Kodein
+
+### Compiler
+
+- [`KT-65235`](https://youtrack.jetbrains.com/issue/KT-65235) JDK 21 might lead to change in overloads resolution
+- [`KT-66768`](https://youtrack.jetbrains.com/issue/KT-66768) K1: False positive UNRESOLVED_REFERENCE in super.getFirst/getLast call
+
+### Native
+
+- [`KT-67218`](https://youtrack.jetbrains.com/issue/KT-67218) Native: nested classes in kx.serialization ProtoBuf produce empty array for release binary
+
+### Tools. Gradle
+
+- [`KT-67139`](https://youtrack.jetbrains.com/issue/KT-67139) Build reports can be overridden
+- [`KT-67138`](https://youtrack.jetbrains.com/issue/KT-67138) Json report is empty for incremental compilation
+
+### Tools. Gradle. Multiplatform
+
+- [`KT-67127`](https://youtrack.jetbrains.com/issue/KT-67127) KMP: IDE Dependency Resolver for CInterops reports errors on linux and windows machines
+- [`KT-66514`](https://youtrack.jetbrains.com/issue/KT-66514) Don't get output file from Cinterop task for IDE Import if host os doesn't support it
+
+### Tools. JPS
+
+- [`KT-65043`](https://youtrack.jetbrains.com/issue/KT-65043) JPS dumb mode should respect maps needed for the compiler
+
+### Tools. Wasm
+
+- [`KT-67785`](https://youtrack.jetbrains.com/issue/KT-67785) Kotlin/Wasm: Node.JS 22 does not need experimental-wasm-gc flag anymore
+- [`KT-65864`](https://youtrack.jetbrains.com/issue/KT-65864) K/Wasm: update Node.js to 22.x
+
+
+## 1.9.23
+
+### Apple Ecosystem
+
+- [`KT-65542`](https://youtrack.jetbrains.com/issue/KT-65542) Cinterop tasks fails if Xcode 15.3 is used
+
+### Backend. Wasm
+
+- [`KT-58088`](https://youtrack.jetbrains.com/issue/KT-58088) [PL] Support & enable partial linkage for Wasm
+- [`KT-64486`](https://youtrack.jetbrains.com/issue/KT-64486) Kotlin/Wasm/WASI exported function callback for coroutines support
+
+### Compiler
+
+- [`KT-53478`](https://youtrack.jetbrains.com/issue/KT-53478) Could not load module <Error module>
+- [`KT-66044`](https://youtrack.jetbrains.com/issue/KT-66044) JDK's new API is used over Kotlin's SDK functions
+- [`KT-64640`](https://youtrack.jetbrains.com/issue/KT-64640) Prevent mutating SequenceCollection methods from JDK 21 be available on read-only collections
+- [`KT-65441`](https://youtrack.jetbrains.com/issue/KT-65441) K1: Remove JDK 21 getFirst()/getLast() in (Mutable)List interfaces
+- [`KT-65634`](https://youtrack.jetbrains.com/issue/KT-65634) K/N: data race during monolithic cache creation
+- [`KT-53109`](https://youtrack.jetbrains.com/issue/KT-53109) CompilationErrorException generateUnboundSymbolsAsDependencies with builder inference and lambdas
+- [`KT-52757`](https://youtrack.jetbrains.com/issue/KT-52757) Type inference for builders fails if inferred from a function
+
+### Tools. Gradle
+
+- [`KT-65792`](https://youtrack.jetbrains.com/issue/KT-65792) Add JSON build report
+- [`KT-65091`](https://youtrack.jetbrains.com/issue/KT-65091) Update compiler metrics in build reports
+- [`KT-62490`](https://youtrack.jetbrains.com/issue/KT-62490) KGP dropping resource directories
+
+### Tools. Gradle. JS
+
+- [`KT-64119`](https://youtrack.jetbrains.com/issue/KT-64119) K/JS: Migrate package manager from Yarn onto NPM
+- [`KT-64561`](https://youtrack.jetbrains.com/issue/KT-64561) K/JS tests are not executed after upgrade to 1.9.22
+
+### Tools. Gradle. Multiplatform
+
+- [`KT-65954`](https://youtrack.jetbrains.com/issue/KT-65954) commonTest dependencies affect commoMainMetadata compilation
+
+### Tools. Gradle. Native
+
+- [`KT-64573`](https://youtrack.jetbrains.com/issue/KT-64573) Default value for `produceUnpackedKlib` was not provided
+
+
 ## 1.9.22
 
 ### JavaScript
