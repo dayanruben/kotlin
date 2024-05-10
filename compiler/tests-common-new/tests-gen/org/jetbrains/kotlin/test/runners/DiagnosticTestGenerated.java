@@ -9905,6 +9905,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("MultipleBranchesInWhileLoopInInlinedLambda.kt")
+      public void testMultipleBranchesInWhileLoopInInlinedLambda() {
+        runTest("compiler/testData/diagnostics/tests/dataFlow/MultipleBranchesInWhileLoopInInlinedLambda.kt");
+      }
+
+      @Test
       @TestMetadata("smartCastWithLambdaAndCallableReference.kt")
       public void testSmartCastWithLambdaAndCallableReference() {
         runTest("compiler/testData/diagnostics/tests/dataFlow/smartCastWithLambdaAndCallableReference.kt");
@@ -14184,6 +14190,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("NoOverloadError.kt")
       public void testNoOverloadError() {
         runTest("compiler/testData/diagnostics/tests/functionAsExpression/NoOverloadError.kt");
+      }
+
+      @Test
+      @TestMetadata("NonSuspendAnonFuncAsInitializerOfSuspendFunctionType.kt")
+      public void testNonSuspendAnonFuncAsInitializerOfSuspendFunctionType() {
+        runTest("compiler/testData/diagnostics/tests/functionAsExpression/NonSuspendAnonFuncAsInitializerOfSuspendFunctionType.kt");
+      }
+
+      @Test
+      @TestMetadata("NonSuspendAnonFuncAsReturnValueOfSuspendFunctionTypeInConcreteFunction.kt")
+      public void testNonSuspendAnonFuncAsReturnValueOfSuspendFunctionTypeInConcreteFunction() {
+        runTest("compiler/testData/diagnostics/tests/functionAsExpression/NonSuspendAnonFuncAsReturnValueOfSuspendFunctionTypeInConcreteFunction.kt");
       }
 
       @Test
@@ -36302,6 +36320,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("explicitDefaultGetter.kt")
       public void testExplicitDefaultGetter() {
         runTest("compiler/testData/diagnostics/tests/smartCasts/explicitDefaultGetter.kt");
+      }
+
+      @Test
+      @TestMetadata("explicitTypeArguments.kt")
+      public void testExplicitTypeArguments() {
+        runTest("compiler/testData/diagnostics/tests/smartCasts/explicitTypeArguments.kt");
       }
 
       @Test
