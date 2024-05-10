@@ -14287,6 +14287,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("emptyLambdaTypeMismatchDiagnostic.kt")
+      public void testEmptyLambdaTypeMismatchDiagnostic() {
+        runTest("compiler/testData/diagnostics/tests/functionLiterals/emptyLambdaTypeMismatchDiagnostic.kt");
+      }
+
+      @Test
       @TestMetadata("ExpectedParameterTypeMismatchVariance.kt")
       public void testExpectedParameterTypeMismatchVariance() {
         runTest("compiler/testData/diagnostics/tests/functionLiterals/ExpectedParameterTypeMismatchVariance.kt");
@@ -17418,6 +17424,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("UnitUpperboundLambdaReturnType.kt")
       public void testUnitUpperboundLambdaReturnType() {
         runTest("compiler/testData/diagnostics/tests/inference/UnitUpperboundLambdaReturnType.kt");
+      }
+
+      @Test
+      @TestMetadata("UnitUpperboundLambdaReturnTypeWithExplicitReturn.kt")
+      public void testUnitUpperboundLambdaReturnTypeWithExplicitReturn() {
+        runTest("compiler/testData/diagnostics/tests/inference/UnitUpperboundLambdaReturnTypeWithExplicitReturn.kt");
       }
 
       @Test
@@ -33843,6 +33855,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("allLambdas.kt")
         public void testAllLambdas() {
           runTest("compiler/testData/diagnostics/tests/resolve/overloadConflicts/allLambdas.kt");
+        }
+
+        @Test
+        @TestMetadata("emptyLambdaUnitNoDiscrimination.kt")
+        public void testEmptyLambdaUnitNoDiscrimination() {
+          runTest("compiler/testData/diagnostics/tests/resolve/overloadConflicts/emptyLambdaUnitNoDiscrimination.kt");
         }
 
         @Test

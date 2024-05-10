@@ -100,18 +100,25 @@ internal fun FirAnonymousFunction.computeReturnType(
             return unitType
         }
 
-        if (returnExpressions.any { it.isExplicit && it.expression is FirUnitExpression }) {
+        if (returnExpressions.any { it.isExplicitEmptyReturn() }) {
             // If the expected type is not Unit, and we have an explicit expressionless return, don't infer the return type to Unit.
             // For this situation, RETURN_TYPE_MISMATCH will be reported later in FirFunctionReturnTypeMismatchChecker.
             //
             // For example:
-            // val f: () -> Any = l@ {
+            // val f: () -> Int = l@ {
             //    if ("".hashCode() == 42) return@l // RETURN_TYPE_MISMATCH reported here
             //    return@l Unit
             // }
             //
             // Without this check, INITIALIZER_TYPE_MISMATCH would be reported on the whole lambda expression,
             // because the return type of the lambda would be inferred to Unit.
+            //
+            // At the same time, there's no strong reason to report anything in the case like
+            // TODO: Try to get rid of those vague condition once KT-67867 is resolved in some way
+            // val f: () -> Any = l@ {
+            //     if ("".hashCode() == 42) return@l // RETURN_TYPE_MISMATCH reported here
+            //     return@l Unit
+            // }
             return if (expandedExpectedReturnType != null) {
                 expectedReturnType
             } else {
@@ -124,6 +131,7 @@ internal fun FirAnonymousFunction.computeReturnType(
     // In correct code this doesn't matter, as all return expression types should be subtypes of the expected type.
     // In incorrect code, this would change diagnostics: we can get errors either on the entire lambda, or only on its
     // return statements. The former kind of makes more sense, but the latter is more readable.
+    // TODO: Consider simplifying the code once we've got some resolution on KT-67869
     val commonSuperType = session.typeContext.commonSuperTypeOrNull(returnExpressions.map { it.expression.resolvedType })
         ?: unitType
     return if (isPassedAsFunctionArgument && !commonSuperType.fullyExpandedType(session).isUnit) {
@@ -163,6 +171,27 @@ fun FirAnonymousFunction.addReturnToLastStatementIfNeeded(session: FirSession) {
         }, null
     )
 }
+
+/**
+ * This function returns true only for the case of explicitly written empty `return` or `return@label`.
+ * Not explicit Unit as last statement, not an implicit return for Unit-coercion or a synthetic expression for empty lambda
+ */
+private fun FirAnonymousFunctionReturnExpressionInfo.isExplicitEmptyReturn(): Boolean {
+    // It's just a last statement (not explicit return)
+    if (!isExplicit) return false
+
+    // Currently, if the content of return is FirUnitExpression, it means that initially it was expressionless return
+    // or a synthetic statement for empty lambda
+    if (expression !is FirUnitExpression) return false
+
+    // For case of empty lambdas, they are not counted as explicit returns, too
+    if (expression.isImplicitUnitForEmptyLambda()) return false
+
+    return true
+}
+
+fun FirExpression.isImplicitUnitForEmptyLambda(): Boolean =
+    source?.kind == KtFakeSourceElementKind.ImplicitUnit.ForEmptyLambda
 
 /**
  * [kind] == null means that [FunctionTypeKind.Function] will be used
