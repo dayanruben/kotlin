@@ -780,6 +780,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
       }
 
       @Test
+      @TestMetadata("annotationOnSecondParameter.kt")
+      public void testAnnotationOnSecondParameter() {
+        runTest("compiler/testData/codegen/box/annotations/typeAnnotations/annotationOnSecondParameter.kt");
+      }
+
+      @Test
       @TestMetadata("annotationWithTypeParameterOnReturnType.kt")
       public void testAnnotationWithTypeParameterOnReturnType() {
         runTest("compiler/testData/codegen/box/annotations/typeAnnotations/annotationWithTypeParameterOnReturnType.kt");
@@ -837,6 +843,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
       @TestMetadata("methodTypeParameters.kt")
       public void testMethodTypeParameters() {
         runTest("compiler/testData/codegen/box/annotations/typeAnnotations/methodTypeParameters.kt");
+      }
+
+      @Test
+      @TestMetadata("supertype.kt")
+      public void testSupertype() {
+        runTest("compiler/testData/codegen/box/annotations/typeAnnotations/supertype.kt");
       }
 
       @Test
@@ -3909,6 +3921,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
       @TestMetadata("kt64066.kt")
       public void testKt64066() {
         runTest("compiler/testData/codegen/box/builderInference/issues/kt64066.kt");
+      }
+
+      @Test
+      @TestMetadata("kt64069.kt")
+      public void testKt64069() {
+        runTest("compiler/testData/codegen/box/builderInference/issues/kt64069.kt");
       }
 
       @Test

@@ -13189,6 +13189,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("dnnAgainstSam.kt")
+      public void testDnnAgainstSam() {
+        runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/dnnAgainstSam.kt");
+      }
+
+      @Test
       @TestMetadata("dnnTypeProjectionInParameter.kt")
       public void testDnnTypeProjectionInParameter() {
         runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/dnnTypeProjectionInParameter.kt");
@@ -26612,6 +26618,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("InconsistentGetSet.kt")
       public void testInconsistentGetSet() {
         runTest("compiler/testData/diagnostics/tests/operatorsOverloading/InconsistentGetSet.kt");
+      }
+
+      @Test
+      @TestMetadata("incorrectComponentExtension.kt")
+      public void testIncorrectComponentExtension() {
+        runTest("compiler/testData/diagnostics/tests/operatorsOverloading/incorrectComponentExtension.kt");
       }
 
       @Test

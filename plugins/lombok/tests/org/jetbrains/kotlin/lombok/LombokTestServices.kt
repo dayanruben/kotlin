@@ -49,13 +49,13 @@ class LombokEnvironmentConfigurator(testServices: TestServices) : EnvironmentCon
         }
 
         val lombokConfig = findLombokConfig(module) ?: return
-        lombokConfig.copyTo(testServices.sourceFileProvider.javaSourceDirectory.resolve(lombokConfig.name))
+        lombokConfig.copyTo(testServices.sourceFileProvider.getJavaSourceDirectoryForModule(module).resolve(lombokConfig.name))
         configuration.put(LombokConfigurationKeys.CONFIG_FILE, lombokConfig)
     }
 
     private fun findLombokConfig(module: TestModule): File? {
         return module.files.singleOrNull { it.name == LOMBOK_CONFIG_NAME }?.let {
-            testServices.sourceFileProvider.getRealFileForSourceFile(it)
+            testServices.sourceFileProvider.getOrCreateRealFileForSourceFile(it)
         }
     }
 

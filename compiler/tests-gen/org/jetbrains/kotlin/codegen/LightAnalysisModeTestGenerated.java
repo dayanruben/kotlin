@@ -687,6 +687,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/annotations/typeAnnotations"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
       }
 
+      @TestMetadata("annotationOnSecondParameter.kt")
+      public void testAnnotationOnSecondParameter() {
+        runTest("compiler/testData/codegen/box/annotations/typeAnnotations/annotationOnSecondParameter.kt");
+      }
+
       @TestMetadata("checkingNotincorporatedInputTypes.kt")
       public void testCheckingNotincorporatedInputTypes() {
         runTest("compiler/testData/codegen/box/annotations/typeAnnotations/checkingNotincorporatedInputTypes.kt");
@@ -730,6 +735,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       @TestMetadata("methodTypeParameters.kt")
       public void testMethodTypeParameters() {
         runTest("compiler/testData/codegen/box/annotations/typeAnnotations/methodTypeParameters.kt");
+      }
+
+      @TestMetadata("supertype.kt")
+      public void testSupertype() {
+        runTest("compiler/testData/codegen/box/annotations/typeAnnotations/supertype.kt");
       }
 
       @TestMetadata("typeAnnotationTarget6.kt")
@@ -3112,6 +3122,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
     public static class Issues extends AbstractLightAnalysisModeTest {
+      @TestMetadata("kt64069.kt")
+      public void ignoreKt64069() {
+        runTest("compiler/testData/codegen/box/builderInference/issues/kt64069.kt");
+      }
+
       @TestMetadata("kt66272.kt")
       public void ignoreKt66272() {
         runTest("compiler/testData/codegen/box/builderInference/issues/kt66272.kt");

@@ -18,15 +18,15 @@ import org.jetbrains.kotlin.backend.jvm.mapping.mapClass
 import org.jetbrains.kotlin.backend.jvm.mapping.mapType
 import org.jetbrains.kotlin.backend.jvm.metadata.MetadataSerializer
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap.mapKotlinToJava
-import org.jetbrains.kotlin.codegen.DescriptorAsmUtil
-import org.jetbrains.kotlin.codegen.VersionIndependentOpcodes
-import org.jetbrains.kotlin.codegen.addRecordComponent
+import org.jetbrains.kotlin.codegen.*
 import org.jetbrains.kotlin.codegen.inline.*
 import org.jetbrains.kotlin.codegen.signature.JvmSignatureWriter
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.codegen.state.JvmBackendConfig
-import org.jetbrains.kotlin.codegen.writeKotlinMetadata
-import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.config.JvmAnalysisFlags
+import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.descriptors.Modality
@@ -183,23 +183,7 @@ class ClassCodegen private constructor(
             }
         }
 
-        object : AnnotationCodegen(this@ClassCodegen) {
-            override fun visitAnnotation(descr: String, visible: Boolean): AnnotationVisitor {
-                return visitor.visitor.visitAnnotation(descr, visible)
-            }
-        }.genAnnotations(irClass, null, null)
-
-        AnnotationCodegen.genAnnotationsOnTypeParametersAndBounds(
-            context,
-            irClass,
-            this,
-            TypeReference.CLASS_TYPE_PARAMETER,
-            TypeReference.CLASS_TYPE_PARAMETER_BOUND
-        ) { typeRef: Int, typePath: TypePath?, descriptor: String, visible: Boolean ->
-            visitor.visitor.visitTypeAnnotation(typeRef, typePath, descriptor, visible)
-        }
-
-        generateKotlinMetadataAnnotation()
+        generateAnnotations()
 
         visitor.visitSMAP(smap, !config.languageVersionSettings.supportsFeature(LanguageFeature.CorrectSourceMappingSyntax))
 
@@ -253,6 +237,39 @@ class ClassCodegen private constructor(
         // Should be initialized first in case some inline function call in `<clinit>` also uses assertions.
         (classInitializer.body as IrBlockBody).statements.add(0, init)
         return null
+    }
+
+    private fun generateAnnotations() {
+        class Codegen(private val superInterfaceIndex: Int) : AnnotationCodegen(this@ClassCodegen) {
+            override fun visitAnnotation(descr: String, visible: Boolean): AnnotationVisitor {
+                return visitor.visitor.visitAnnotation(descr, visible)
+            }
+
+            override fun visitTypeAnnotation(descr: String, path: TypePath?, visible: Boolean): AnnotationVisitor {
+                val typeReference = TypeReference.newSuperTypeReference(superInterfaceIndex)
+                return visitor.visitor.visitTypeAnnotation(typeReference.value, path, descr, visible)
+            }
+        }
+
+        Codegen(-1).genAnnotations(irClass)
+
+        var superInterfaceIndex = 0
+        for (supertype in irClass.superTypes) {
+            val codegen = Codegen(if (supertype.isInterface()) superInterfaceIndex++ else -1)
+            codegen.generateTypeAnnotations(supertype, TypeAnnotationPosition.Supertype)
+        }
+
+        AnnotationCodegen.genAnnotationsOnTypeParametersAndBounds(
+            context,
+            irClass,
+            this,
+            TypeReference.CLASS_TYPE_PARAMETER,
+            TypeReference.CLASS_TYPE_PARAMETER_BOUND
+        ) { typeRef: Int, typePath: TypePath?, descriptor: String, visible: Boolean ->
+            visitor.visitor.visitTypeAnnotation(typeRef, typePath, descriptor, visible)
+        }
+
+        generateKotlinMetadataAnnotation()
     }
 
     private fun generateKotlinMetadataAnnotation() {
@@ -349,10 +366,7 @@ class ClassCodegen private constructor(
         jvmFieldSignatureClashDetector.trackDeclaration(field, RawSignature(fieldName, fieldType.descriptor, MemberKind.FIELD))
 
         if (field.origin != JvmLoweredDeclarationOrigin.CONTINUATION_CLASS_RESULT_FIELD) {
-            val skipNullabilityAnnotations =
-                flags and (Opcodes.ACC_SYNTHETIC or Opcodes.ACC_ENUM) != 0 ||
-                        (field.origin == IrDeclarationOrigin.FIELD_FOR_OBJECT_INSTANCE && irClass.isSyntheticSingleton)
-            object : AnnotationCodegen(this@ClassCodegen, skipNullabilityAnnotations) {
+            val annotationCodegen = object : AnnotationCodegen(this@ClassCodegen) {
                 override fun visitAnnotation(descr: String, visible: Boolean): AnnotationVisitor {
                     return fv.visitAnnotation(descr, visible)
                 }
@@ -360,7 +374,15 @@ class ClassCodegen private constructor(
                 override fun visitTypeAnnotation(descr: String, path: TypePath?, visible: Boolean): AnnotationVisitor {
                     return fv.visitTypeAnnotation(TypeReference.newTypeReference(TypeReference.FIELD).value, path, descr, visible)
                 }
-            }.genAnnotations(field, fieldType, field.type)
+            }
+            annotationCodegen.genAnnotations(field)
+            if (!AsmUtil.isPrimitive(fieldType) &&
+                flags and (Opcodes.ACC_SYNTHETIC or Opcodes.ACC_ENUM) == 0 &&
+                (field.origin != IrDeclarationOrigin.FIELD_FOR_OBJECT_INSTANCE || !irClass.isSyntheticSingleton)
+            ) {
+                annotationCodegen.generateNullabilityAnnotation(field)
+            }
+            annotationCodegen.generateTypeAnnotations(field.type, TypeAnnotationPosition.FieldType(field))
         }
 
         (field.metadata as? MetadataSource.Property)?.let {
