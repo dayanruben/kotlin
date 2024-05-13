@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DelegatingBindingTrace
 import org.jetbrains.kotlin.resolve.DescriptorEquivalenceForOverrides
+import org.jetbrains.kotlin.resolve.ImportedFromObjectCallableDescriptor
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
 import org.jetbrains.kotlin.resolve.calls.CallTransformer
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
@@ -63,7 +64,7 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class KtFe10CallResolver(
-    override val analysisSession: KtFe10AnalysisSession
+    override val analysisSession: KtFe10AnalysisSession,
 ) : AbstractKtCallResolver(), Fe10KtAnalysisSessionComponent {
     private companion object {
         private val operatorWithAssignmentVariant = setOf(
@@ -360,7 +361,7 @@ internal class KtFe10CallResolver(
         context: BindingContext,
         arrayAccessExpression: KtArrayAccessExpression,
         compoundAccess: KtCompoundAccess,
-        resolvedCalls: MutableList<ResolvedCall<*>>
+        resolvedCalls: MutableList<ResolvedCall<*>>,
     ): KtCompoundArrayAccessCall? {
         val resolvedGetCall = context[BindingContext.INDEXED_LVALUE_GET, arrayAccessExpression] ?: return null
         resolvedCalls += resolvedGetCall
@@ -384,7 +385,7 @@ internal class KtFe10CallResolver(
         context: BindingContext,
         element: KtElement,
         resolvedCall: ResolvedCall<*>,
-        diagnostics: Diagnostics = context.diagnostics
+        diagnostics: Diagnostics = context.diagnostics,
     ): KtCallInfo? {
         return if (resolvedCall is VariableAsFunctionResolvedCall) {
             if (element is KtCallExpression || element is KtQualifiedExpression) {
@@ -425,12 +426,14 @@ internal class KtFe10CallResolver(
                 is KtConstructorDelegationCall -> return KtDelegatedConstructorCall(
                     partiallyAppliedConstructorSymbol,
                     if (callElement.isCallToThis) KtDelegatedConstructorCall.Kind.THIS_CALL else KtDelegatedConstructorCall.Kind.SUPER_CALL,
-                    argumentMapping
+                    argumentMapping,
+                    toTypeArgumentsMapping(partiallyAppliedSymbol)
                 )
                 is KtSuperTypeCallEntry -> return KtDelegatedConstructorCall(
                     partiallyAppliedConstructorSymbol,
                     KtDelegatedConstructorCall.Kind.SUPER_CALL,
-                    argumentMapping
+                    argumentMapping,
+                    toTypeArgumentsMapping(partiallyAppliedSymbol)
                 )
             }
         }
@@ -474,16 +477,28 @@ internal class KtFe10CallResolver(
         } else {
             return KtPartiallyAppliedSymbol(
                 signature,
-                dispatchReceiver?.toKtReceiverValue(context, this, smartCastDispatchReceiverType),
+                dispatchReceiver?.toKtReceiverValue(context, this, smartCastDispatchReceiverType)
+                    ?: targetDescriptor.dispatchReceiverForImportedCallables(this),
                 extensionReceiver?.toKtReceiverValue(context, this),
             )
         }
     }
 
+    private fun CallableDescriptor.dispatchReceiverForImportedCallables(resolvedCall: ResolvedCall<*>): KtReceiverValue? {
+        if (this !is ImportedFromObjectCallableDescriptor<*>) return null
+        val expression = resolvedCall.call.callElement as? KtExpression ?: return null
+        return KtExplicitReceiverValue(
+            expression,
+            containingObject.defaultType.toKtType(analysisContext),
+            isSafeNavigation = false,
+            token,
+        )
+    }
+
     private fun ReceiverValue.toKtReceiverValue(
         context: BindingContext,
         resolvedCall: ResolvedCall<*>,
-        smartCastType: KotlinType? = null
+        smartCastType: KotlinType? = null,
     ): KtReceiverValue? {
         val ktType = type.toKtType(analysisContext)
         val result = when (this) {
@@ -573,7 +588,7 @@ internal class KtFe10CallResolver(
         psi: KtElement,
         ktCall: KtCall,
         resolvedCalls: List<ResolvedCall<*>>,
-        diagnostics: Diagnostics = context.diagnostics
+        diagnostics: Diagnostics = context.diagnostics,
     ): KtCallInfo {
         val failedResolveCall = resolvedCalls.firstOrNull { !it.status.isSuccess } ?: return KtSuccessCallInfo(ktCall)
 
@@ -611,7 +626,7 @@ internal class KtFe10CallResolver(
         context: BindingContext,
         psi: KtElement,
         ktCall: KtCall?,
-        diagnostics: Diagnostics = context.diagnostics
+        diagnostics: Diagnostics = context.diagnostics,
     ) = diagnostics.firstOrNull { diagnostic ->
         if (diagnostic.severity != Severity.ERROR) return@firstOrNull false
         if (diagnostic.factory in syntaxErrors) return@firstOrNull true
@@ -652,9 +667,7 @@ internal class KtFe10CallResolver(
         }
     }
 
-    private fun ResolvedCall<*>.toTypeArgumentsMapping(
-        partiallyAppliedSymbol: KtPartiallyAppliedSymbol<*, *>
-    ): Map<KtTypeParameterSymbol, KtType> {
+    private fun ResolvedCall<*>.toTypeArgumentsMapping(partiallyAppliedSymbol: KtPartiallyAppliedSymbol<*, *>): Map<KtTypeParameterSymbol, KtType> {
         if (typeArguments.isEmpty()) return emptyMap()
 
         val typeParameters = partiallyAppliedSymbol.symbol.typeParameters
