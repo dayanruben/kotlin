@@ -186,9 +186,21 @@ public class NativeCodegenLocalTestGenerated extends AbstractNativeCodegenBoxTes
     }
 
     @Test
-    @TestMetadata("kt57640.kt")
-    public void testKt57640() {
-      runTest("native/native.tests/testData/codegen/cinterop/kt57640.kt");
+    @TestMetadata("kt57640_common.kt")
+    public void testKt57640_common() {
+      runTest("native/native.tests/testData/codegen/cinterop/kt57640_common.kt");
+    }
+
+    @Test
+    @TestMetadata("kt57640_with_safe_casts.kt")
+    public void testKt57640_with_safe_casts() {
+      runTest("native/native.tests/testData/codegen/cinterop/kt57640_with_safe_casts.kt");
+    }
+
+    @Test
+    @TestMetadata("kt57640_without_safe_casts.kt")
+    public void testKt57640_without_safe_casts() {
+      runTest("native/native.tests/testData/codegen/cinterop/kt57640_without_safe_casts.kt");
     }
 
     @Test
@@ -785,6 +797,12 @@ public class NativeCodegenLocalTestGenerated extends AbstractNativeCodegenBoxTes
     }
 
     @Test
+    @TestMetadata("bridges.kt")
+    public void testBridges() {
+      runTest("native/native.tests/testData/codegen/fileCheck/bridges.kt");
+    }
+
+    @Test
     @TestMetadata("constants_merge.kt")
     public void testConstants_merge() {
       runTest("native/native.tests/testData/codegen/fileCheck/constants_merge.kt");
@@ -830,6 +848,12 @@ public class NativeCodegenLocalTestGenerated extends AbstractNativeCodegenBoxTes
     @TestMetadata("generic_function_references.kt")
     public void testGeneric_function_references() {
       runTest("native/native.tests/testData/codegen/fileCheck/generic_function_references.kt");
+    }
+
+    @Test
+    @TestMetadata("generic_safe_casts.kt")
+    public void testGeneric_safe_casts() {
+      runTest("native/native.tests/testData/codegen/fileCheck/generic_safe_casts.kt");
     }
 
     @Test
