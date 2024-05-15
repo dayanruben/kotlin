@@ -103,7 +103,7 @@ fun ConeDefinitelyNotNullType.Companion.create(
 fun ConeDynamicType.Companion.create(
     session: FirSession,
     attributes: ConeAttributes = ConeAttributes.Empty,
-) = ConeDynamicType(
+): ConeDynamicType = ConeDynamicType(
     session.builtinTypes.nothingType.type.withAttributes(attributes),
     session.builtinTypes.nullableAnyType.type.withAttributes(attributes),
 )
@@ -111,6 +111,7 @@ fun ConeDynamicType.Companion.create(
 fun ConeKotlinType.makeConeTypeDefinitelyNotNullOrNotNull(
     typeContext: ConeTypeContext,
     avoidComprehensiveCheck: Boolean = false,
+    preserveAttributes: Boolean = false,
 ): ConeKotlinType {
     if (this is ConeIntersectionType) {
         return ConeIntersectionType(intersectedTypes.map {
@@ -118,7 +119,7 @@ fun ConeKotlinType.makeConeTypeDefinitelyNotNullOrNotNull(
         })
     }
     return ConeDefinitelyNotNullType.create(this, typeContext, avoidComprehensiveCheck)
-        ?: this.withNullability(ConeNullability.NOT_NULL, typeContext)
+        ?: this.withNullability(ConeNullability.NOT_NULL, typeContext, preserveAttributes = preserveAttributes)
 }
 
 fun <T : ConeKotlinType> T.withArguments(arguments: Array<out ConeTypeProjection>): T {
@@ -137,7 +138,7 @@ fun <T : ConeKotlinType> T.withArguments(arguments: Array<out ConeTypeProjection
     }
 }
 
-fun <T : ConeKotlinType> T.withArguments(replacement: (ConeTypeProjection) -> ConeTypeProjection) =
+fun <T : ConeKotlinType> T.withArguments(replacement: (ConeTypeProjection) -> ConeTypeProjection): T =
     withArguments(typeArguments.map(replacement).toTypedArray())
 
 @OptIn(DynamicTypeConstructor::class)
@@ -156,9 +157,7 @@ fun <T : ConeKotlinType> T.withAttributes(attributes: ConeAttributes): T {
         is ConeDynamicType -> ConeDynamicType(lowerBound.withAttributes(attributes), upperBound.withAttributes(attributes))
         is ConeFlexibleType -> ConeFlexibleType(lowerBound.withAttributes(attributes), upperBound.withAttributes(attributes))
         is ConeTypeVariableType -> ConeTypeVariableType(nullability, typeConstructor, attributes)
-        is ConeCapturedType -> ConeCapturedType(
-            captureStatus, lowerType, nullability, constructor, attributes, isProjectionNotNull,
-        )
+        is ConeCapturedType -> copy(attributes = attributes)
         // TODO: Consider correct application of attributes to ConeIntersectionType
         // Currently, ConeAttributes.union works a bit strange, because it lefts only `other` parts
         is ConeIntersectionType -> this
@@ -175,9 +174,9 @@ fun <T : ConeKotlinType> T.withNullability(
     nullability: ConeNullability,
     typeContext: ConeTypeContext,
     attributes: ConeAttributes = this.attributes,
-    preserveEnhancedNullability: Boolean = false,
+    preserveAttributes: Boolean = false,
 ): T {
-    val theAttributes = attributes.butIf(!preserveEnhancedNullability) {
+    val theAttributes = attributes.butIf(!preserveAttributes) {
         val withoutEnhanced = it.remove(CompilerConeAttributes.EnhancedNullability)
         withoutEnhanced.transformTypesWith { t -> t.withNullability(nullability, typeContext) } ?: withoutEnhanced
     }
@@ -202,21 +201,21 @@ fun <T : ConeKotlinType> T.withNullability(
             }
             coneFlexibleOrSimpleType(
                 typeContext,
-                lowerBound.withNullability(nullability, typeContext, preserveEnhancedNullability = preserveEnhancedNullability),
-                upperBound.withNullability(nullability, typeContext, preserveEnhancedNullability = preserveEnhancedNullability)
+                lowerBound.withNullability(nullability, typeContext, preserveAttributes = preserveAttributes),
+                upperBound.withNullability(nullability, typeContext, preserveAttributes = preserveAttributes)
             )
         }
 
         is ConeTypeVariableType -> ConeTypeVariableType(nullability, typeConstructor, theAttributes)
-        is ConeCapturedType -> ConeCapturedType(captureStatus, lowerType, nullability, constructor, theAttributes)
+        is ConeCapturedType -> copy(nullability = nullability, attributes = theAttributes)
         is ConeIntersectionType -> when (nullability) {
             ConeNullability.NULLABLE -> this.mapTypes {
-                it.withNullability(nullability, typeContext, preserveEnhancedNullability = preserveEnhancedNullability)
+                it.withNullability(nullability, typeContext, preserveAttributes = preserveAttributes)
             }
 
             ConeNullability.UNKNOWN -> this // TODO: is that correct?
             ConeNullability.NOT_NULL -> if (effectiveNullability == ConeNullability.NOT_NULL) this else this.mapTypes {
-                it.withNullability(nullability, typeContext, preserveEnhancedNullability = preserveEnhancedNullability)
+                it.withNullability(nullability, typeContext, preserveAttributes = preserveAttributes)
             }
         }
 
@@ -224,10 +223,10 @@ fun <T : ConeKotlinType> T.withNullability(
         is ConeDefinitelyNotNullType -> when (nullability) {
             ConeNullability.NOT_NULL -> this
             ConeNullability.NULLABLE -> original.withNullability(
-                nullability, typeContext, preserveEnhancedNullability = preserveEnhancedNullability,
+                nullability, typeContext, preserveAttributes = preserveAttributes,
             )
             ConeNullability.UNKNOWN -> original.withNullability(
-                nullability, typeContext, preserveEnhancedNullability = preserveEnhancedNullability,
+                nullability, typeContext, preserveAttributes = preserveAttributes,
             )
         }
 
@@ -828,13 +827,26 @@ fun ConeKotlinType.canBeNull(session: FirSession): Boolean {
             // Upper bounds can resolve to typealiases that can expand to nullable types.
             it.coneType.fullyExpandedType(session).canBeNull(session)
         }
+        is ConeStubType -> {
+            val symbol = (constructor.variable.defaultType.typeConstructor.originalTypeParameter as? ConeTypeParameterLookupTag)?.symbol
+            symbol == null || symbol.allBoundsAreNullableOrUnresolved(session)
+        }
         is ConeIntersectionType -> intersectedTypes.all { it.canBeNull(session) }
         is ConeCapturedType -> constructor.supertypes?.all { it.canBeNull(session) } == true
         else -> fullyExpandedType(session).isNullable
     }
 }
 
-fun FirIntersectionTypeRef.isLeftValidForDefinitelyNotNullable(session: FirSession) =
+private fun FirTypeParameterSymbol.allBoundsAreNullableOrUnresolved(session: FirSession): Boolean {
+    for (bound in fir.bounds) {
+        if (bound !is FirResolvedTypeRef) return true
+        if (!bound.type.canBeNull(session)) return false
+    }
+
+    return true
+}
+
+fun FirIntersectionTypeRef.isLeftValidForDefinitelyNotNullable(session: FirSession): Boolean =
     leftType.coneType.let { it is ConeTypeParameterType && it.canBeNull(session) && !it.isMarkedNullable }
 
-val FirIntersectionTypeRef.isRightValidForDefinitelyNotNullable get() = rightType.coneType.isAny
+val FirIntersectionTypeRef.isRightValidForDefinitelyNotNullable: Boolean get() = rightType.coneType.isAny

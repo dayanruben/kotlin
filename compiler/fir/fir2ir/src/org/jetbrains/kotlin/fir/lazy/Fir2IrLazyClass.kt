@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.scopes.FirContainingNamesAwareScope
 import org.jetbrains.kotlin.fir.scopes.processClassifiersByName
+import org.jetbrains.kotlin.fir.scopes.staticScopeForBackend
 import org.jetbrains.kotlin.fir.symbols.impl.FirFieldSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
@@ -27,11 +28,15 @@ import org.jetbrains.kotlin.ir.declarations.lazy.lazyVar
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
+import org.jetbrains.kotlin.ir.symbols.impl.IrPropertySymbolImpl
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
+import org.jetbrains.kotlin.ir.types.isClassWithFqName
 import org.jetbrains.kotlin.ir.util.DeserializableClass
+import org.jetbrains.kotlin.ir.util.getAllSuperclasses
 import org.jetbrains.kotlin.ir.util.isEnumClass
+import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.util.isObject
 import org.jetbrains.kotlin.name.Name
 
@@ -192,12 +197,10 @@ class Fir2IrLazyClass(
             }
         }
 
-        val ownerLookupTag = fir.symbol.toLookupTag()
-
         fun addDeclarationsFromScope(scope: FirContainingNamesAwareScope?) {
             if (scope == null) return
             for (name in scope.getCallableNames()) {
-                scope.processFunctionsByName(name) l@{ symbol ->
+                scope.processFunctionsByName(name) { symbol ->
                     when {
                         !shouldBuildStub(symbol.fir) -> {}
                         else -> {
@@ -207,25 +210,39 @@ class Fir2IrLazyClass(
                         }
                     }
                 }
-                scope.processPropertiesByName(name) l@{ symbol ->
+                scope.processPropertiesByName(name) { symbol ->
                     when {
-                        symbol is FirFieldSymbol && (symbol.isStatic || symbol.containingClassLookupTag() == ownerLookupTag) -> {
-                            result += declarationStorage.getOrCreateIrField(symbol.fir, this)
-                        }
                         !shouldBuildStub(symbol.fir) -> {}
-                        symbol !is FirPropertySymbol -> {}
-                        else -> {
+                        symbol is FirFieldSymbol -> {
+                            if (configuration.useFirBasedFakeOverrideGenerator) {
+                                if (!isStaticFromSuperInterface(symbol.fir)) {
+                                    val field = declarationStorage.getOrCreateIrField(symbol.fir, this)
+                                    result += createFieldOnlyProperty(field)
+                                }
+                            } else {
+                                if (!symbol.isStatic) {
+                                    // Lazy declarations are created together with their symbol, so it's safe to take the owner here
+                                    @OptIn(UnsafeDuringIrConstructionAPI::class)
+                                    result += declarationStorage.getIrSymbolForField(
+                                        symbol,
+                                        fakeOverrideOwnerLookupTag = lookupTag
+                                    ).owner as IrProperty
+                                }
+                            }
+                        }
+                        symbol is FirPropertySymbol -> {
                             // Lazy declarations are created together with their symbol, so it's safe to take the owner here
                             @OptIn(UnsafeDuringIrConstructionAPI::class)
                             result += declarationStorage.getIrPropertySymbol(symbol, lookupTag).owner as IrProperty
                         }
+                        else -> {}
                     }
                 }
             }
         }
 
         addDeclarationsFromScope(scope)
-        addDeclarationsFromScope(fir.staticScope(session, scopeSession))
+        addDeclarationsFromScope(fir.staticScopeForBackend(session, scopeSession))
 
         with(classifierStorage) {
             result.addAll(getFieldsWithContextReceiversForClass(this@Fir2IrLazyClass, fir))
@@ -233,6 +250,30 @@ class Fir2IrLazyClass(
 
         result
     }
+
+    private fun isStaticFromSuperInterface(field: FirField): Boolean {
+        if (!field.isStatic) return false
+        val containingClassFqName = field.containingClassLookupTag()?.classId?.asSingleFqName() ?: return false
+        return getAllSuperclasses().any { it.isInterface && it.isClassWithFqName(containingClassFqName) }
+    }
+
+    private fun createFieldOnlyProperty(field: IrField): IrProperty =
+        factory.createProperty(
+            field.startOffset,
+            field.endOffset,
+            field.origin,
+            field.name,
+            field.visibility,
+            Modality.FINAL,
+            IrPropertySymbolImpl(),
+            !field.isFinal,
+            field.isStatic && field.isFinal,
+            isLateinit = false,
+            isDelegated = false,
+        ).apply {
+            parent = field.parent
+            backingField = field
+        }
 
     private fun shouldBuildStub(fir: FirDeclaration): Boolean {
         if (fir is FirCallableDeclaration) {
