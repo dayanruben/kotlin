@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.fir.backend.Fir2IrComponents
-import org.jetbrains.kotlin.fir.backend.generators.FirBasedFakeOverrideGenerator
 import org.jetbrains.kotlin.fir.backend.lazyMappedPropertyListVar
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.declarations.*
@@ -19,7 +18,6 @@ import org.jetbrains.kotlin.ir.util.isFakeOverride
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 
-@OptIn(FirBasedFakeOverrideGenerator::class)
 class Fir2IrLazyPropertyForPureField(
     private val c: Fir2IrComponents,
     private val field: Fir2IrLazyField,
@@ -31,18 +29,12 @@ class Fir2IrLazyPropertyForPureField(
         symbol.bind(this)
     }
 
-    override var overriddenSymbols: List<IrPropertySymbol> by symbolsMappingForLazyClasses.lazyMappedPropertyListVar(lock) {
-        when (configuration.useFirBasedFakeOverrideGenerator) {
-            true -> error("Fir2IrLazyPropertyForPureField shouldn't be created when FirBasedFakeOverrideGenerator is enabled")
-            false -> computeOverriddenSymbolsForIrFakeOverrideGenerator()
-        }
-    }
+    override var overriddenSymbols: List<IrPropertySymbol> by symbolsMappingForLazyClasses.lazyMappedPropertyListVar(lock) lazy@{
+        val containingClass = field.containingClass ?: return@lazy emptyList()
 
-    private fun computeOverriddenSymbolsForIrFakeOverrideGenerator(): List<IrPropertySymbol> {
-        val containingClass = field.containingClass ?: return emptyList()
         val baseFieldsWithDispatchReceiverTag =
-            fakeOverrideGenerator.computeBaseSymbolsWithContainingClass(containingClass, field.fir.symbol)
-        return baseFieldsWithDispatchReceiverTag.map { (symbol, dispatchReceiverLookupTag) ->
+            lazyFakeOverrideGenerator.computeFakeOverrideKeys(containingClass, field.fir.symbol)
+        baseFieldsWithDispatchReceiverTag.map { (symbol, dispatchReceiverLookupTag) ->
             declarationStorage.getIrSymbolForField(symbol, dispatchReceiverLookupTag) as IrPropertySymbol
         }
     }

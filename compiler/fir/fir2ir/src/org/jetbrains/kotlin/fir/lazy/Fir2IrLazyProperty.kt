@@ -10,8 +10,6 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.isAnnotationClass
 import org.jetbrains.kotlin.fir.backend.*
-import org.jetbrains.kotlin.fir.backend.generators.FirBasedFakeOverrideGenerator
-import org.jetbrains.kotlin.fir.backend.generators.generateOverriddenPropertySymbols
 import org.jetbrains.kotlin.fir.backend.utils.ConversionTypeOrigin
 import org.jetbrains.kotlin.fir.backend.utils.asCompileTimeIrInitializer
 import org.jetbrains.kotlin.fir.backend.utils.toIrConst
@@ -38,7 +36,6 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 
-@OptIn(FirBasedFakeOverrideGenerator::class)
 class Fir2IrLazyProperty(
     private val c: Fir2IrComponents,
     override val startOffset: Int,
@@ -236,33 +233,12 @@ class Fir2IrLazyProperty(
         }
     }
 
-    override var overriddenSymbols: List<IrPropertySymbol> by symbolsMappingForLazyClasses.lazyMappedPropertyListVar(lock) {
-        when (configuration.useFirBasedFakeOverrideGenerator) {
-            true -> computeOverriddenUsingFir2IrFakeOverrideGenerator()
-            false -> computeOverriddenSymbolsForIrFakeOverrideGenerator()
-        }
-    }
+    override var overriddenSymbols: List<IrPropertySymbol> by symbolsMappingForLazyClasses.lazyMappedPropertyListVar(lock) lazy@{
+        if (containingClass == null || parent !is Fir2IrLazyClass) return@lazy emptyList()
 
-    // TODO: drop this function after migration to IR f/o generator will be complete (KT-64202)
-    private fun computeOverriddenUsingFir2IrFakeOverrideGenerator(): List<IrPropertySymbol> {
-        if (containingClass == null) return emptyList()
-        if (isFakeOverride && parent is Fir2IrLazyClass) {
-            fakeOverrideGenerator.calcBaseSymbolsForFakeOverrideProperty(
-                containingClass, this, fir.symbol
-            )
-            fakeOverrideGenerator.getOverriddenSymbolsForFakeOverride(this)?.let {
-                assert(!it.contains(symbol)) { "Cannot add function $symbol to its own overriddenSymbols" }
-                return it
-            }
-        }
-        return fir.generateOverriddenPropertySymbols(containingClass, c)
-    }
-
-    private fun computeOverriddenSymbolsForIrFakeOverrideGenerator(): List<IrPropertySymbol> {
-        if (containingClass == null || parent !is Fir2IrLazyClass) return emptyList()
         val baseFunctionWithDispatchReceiverTag =
-            fakeOverrideGenerator.computeBaseSymbolsWithContainingClass(containingClass, fir.symbol)
-        return baseFunctionWithDispatchReceiverTag.map { (symbol, dispatchReceiverLookupTag) ->
+            lazyFakeOverrideGenerator.computeFakeOverrideKeys(containingClass, fir.symbol)
+        baseFunctionWithDispatchReceiverTag.map { (symbol, dispatchReceiverLookupTag) ->
             declarationStorage.getIrPropertySymbol(symbol, dispatchReceiverLookupTag) as IrPropertySymbol
         }
     }

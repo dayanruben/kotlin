@@ -137,6 +137,7 @@ val commonCompilerModules = arrayOf(
     ":compiler:util",
     ":compiler:config",
     ":compiler:config.jvm",
+    ":compiler:compiler.version",
     ":compiler:cli-common",
     ":compiler:resolution.common",
     ":compiler:resolution.common.jvm",
@@ -163,8 +164,14 @@ val commonCompilerModules = arrayOf(
     ":analysis:project-structure",
     ":analysis:kt-references",
     ":kotlin-build-common",
+    ":kotlin-util-io",
+    ":kotlin-util-klib",
+    ":kotlin-util-klib-abi",
+    ":native:kotlin-native-utils",
     ":compiler:build-tools:kotlin-build-statistics",
     ":compiler:build-tools:kotlin-build-tools-api",
+    ":js:js.config",
+    ":wasm:wasm.config",
 ).also { extra["commonCompilerModules"] = it }
 
 val firCompilerCoreModules = arrayOf(
@@ -218,32 +225,24 @@ val fe10CompilerModules = arrayOf(
     ":compiler:backend.jvm.entrypoint",
     ":compiler:backend.js",
     ":compiler:backend.wasm",
-    ":kotlin-util-io",
-    ":kotlin-util-klib",
     ":kotlin-util-klib-metadata",
-    ":kotlin-util-klib-abi",
     ":compiler:backend-common",
     ":compiler:backend",
     ":compiler:plugin-api",
     ":compiler:javac-wrapper",
-    ":compiler:cli-common",
     ":compiler:cli-base",
     ":compiler:cli",
     ":compiler:cli-js",
     ":compiler:incremental-compilation-impl",
-    ":compiler:compiler.version",
     ":js:js.ast",
     ":js:js.sourcemap",
     ":js:js.serializer",
     ":js:js.parser",
-    ":js:js.config",
     ":js:js.frontend",
     ":js:js.translator",
     ":js:js.dce",
     ":native:frontend.native",
-    ":native:kotlin-native-utils",
     ":wasm:wasm.frontend",
-    ":wasm:wasm.config",
     ":compiler:backend.common.jvm",
     ":analysis:decompiled:light-classes-for-decompiled-fe10",
 ).also { extra["fe10CompilerModules"] = it }
@@ -911,6 +910,7 @@ tasks {
         dependsOn(":kotlin-noarg-compiler-plugin:test")
         dependsOn(":kotlin-sam-with-receiver-compiler-plugin:test")
         dependsOn(":kotlin-power-assert-compiler-plugin:test")
+        dependsOn(":plugins:plugins-interactions-testing:test")
     }
 
     register("toolsTest") {
@@ -1128,18 +1128,12 @@ val cacheRedirectorEnabled = findProperty("cacheRedirectorEnabled")?.toString()?
 
 plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin::class) {
     extensions.configure(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension::class.java) {
-        // Node.js with canary v8 that supports recent Wasm GC changes
-        version = "21.0.0-v8-canary20231019bd785be450"
-        downloadBaseUrl = if (cacheRedirectorEnabled)
-            "https://cache-redirector.jetbrains.com/nodejs.org/download/v8-canary"
-        else
-            "https://nodejs.org/download/v8-canary"
+        if (cacheRedirectorEnabled) {
+            downloadBaseUrl = "https://cache-redirector.jetbrains.com/nodejs.org/dist"
+        }
 
         npmInstallTaskProvider.configure {
             args += listOf("--network-concurrency", "1", "--mutex", "network")
-            // It's required to pass compatibility checks in some NPM packages while using Node.js with Canary v8.
-            // TODO remove as soon as we switch to release build of Node.js.
-            args += listOf("--ignore-engines")
         }
     }
 }

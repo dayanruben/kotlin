@@ -134,11 +134,12 @@ class Fir2IrClassifiersGenerator(private val c: Fir2IrComponents) : Fir2IrCompon
     private fun IrClass.setThisReceiver(typeParameters: List<FirTypeParameterRef>) {
         symbolTable.enterScope(this)
         val typeArguments = typeParameters.map {
-            IrSimpleTypeImpl(classifierStorage.getIrTypeParameterSymbol(it.symbol, ConversionTypeOrigin.DEFAULT), false, emptyList(), emptyList())
+            val typeParameter = classifierStorage.getIrTypeParameterSymbol(it.symbol, ConversionTypeOrigin.DEFAULT)
+            IrSimpleTypeImpl(typeParameter, hasQuestionMark = false, emptyList(), emptyList())
         }
         thisReceiver = declareThisReceiverParameter(
             c,
-            thisType = IrSimpleTypeImpl(symbol, false, typeArguments, emptyList()),
+            thisType = IrSimpleTypeImpl(symbol, hasQuestionMark = false, typeArguments, emptyList()),
             thisOrigin = IrDeclarationOrigin.INSTANCE_RECEIVER
         )
         symbolTable.leaveScope(this)
@@ -219,7 +220,6 @@ class Fir2IrClassifiersGenerator(private val c: Fir2IrComponents) : Fir2IrCompon
         // The last variant is possible for local variables like 'val a = object : Any() { ... }'
         if (processMembersOfClassesOnTheFlyImmediately) {
             converter.processClassMembers(classOrLocalParent, result)
-            converter.bindFakeOverridesInClass(result)
         }
         val irClass = if (classOrLocalParent === klass) {
             result

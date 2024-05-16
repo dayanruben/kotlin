@@ -1,32 +1,24 @@
 // ISSUE: KT-67993
-// IGNORE_REVERSED_RESOLVE
-// IGNORE_NON_REVERSED_RESOLVE
-// Reason: see KT-68031
 
-class Builder<T> {
-    var res: T? = null
-
-    fun add(x: T) {
-        res = x
-    }
+fun box(): String {
+    return Klass().buildee.produce()
 }
 
-fun <T> foo(build: Builder<T>.() -> Unit): T {
-    return Builder<T>().apply(build).res!!
-}
-
-class C {
-    val a = foo {
+class Klass {
+    val buildee = build {
         object {
-            fun bar() {
-                add(foo())
-            }
-
+            fun bar() { consume(foo()) }
             private fun foo() = "OK"
         }.bar()
     }
 }
 
-fun box(): String {
-    return C().a
+class Buildee<T : Any> {
+    private lateinit var variable: T
+    fun consume(arg: T) { variable = arg }
+    fun produce(): T = variable
+}
+
+fun <T : Any> build(instructions: Buildee<T>.() -> Unit): Buildee<T> {
+    return Buildee<T>().apply(instructions)
 }

@@ -166,21 +166,8 @@ class CallAndReferenceGenerator(
 
             fun convertReferenceToField(fieldSymbol: FirFieldSymbol): IrExpression? {
                 val field = fieldSymbol.fir
-                val irFieldSymbol: IrFieldSymbol
-                val irPropertySymbol: IrPropertySymbol
-                if (configuration.useFirBasedFakeOverrideGenerator) {
-                    irFieldSymbol = fieldSymbol.toSymbolForCall() as? IrFieldSymbol ?: return null
-                    irPropertySymbol = declarationStorage.findPropertyForBackingField(irFieldSymbol)
-                        ?: run {
-                            // In case of [IrField] without the corresponding property, we've created it directly from [FirField].
-                            // Since it's used as a field reference, we need a bogus property as a placeholder.
-                            @OptIn(UnsafeDuringIrConstructionAPI::class, FirBasedFakeOverrideGenerator::class)
-                            declarationStorage.getOrCreateIrPropertyByPureField(fieldSymbol.fir, irFieldSymbol.owner.parent).symbol
-                        }
-                } else {
-                    irPropertySymbol = fieldSymbol.toSymbolForCall() as IrPropertySymbol
-                    irFieldSymbol = declarationStorage.findBackingFieldOfProperty(irPropertySymbol)!!
-                }
+                val irPropertySymbol = fieldSymbol.toSymbolForCall() as IrPropertySymbol
+                val irFieldSymbol = declarationStorage.findBackingFieldOfProperty(irPropertySymbol)!!
                 return IrPropertyReferenceImpl(
                     startOffset, endOffset, type,
                     irPropertySymbol,
@@ -635,7 +622,7 @@ class CallAndReferenceGenerator(
                                 getterSymbol,
                                 typeArgumentsCount = property.typeParameters.size,
                                 valueArgumentsCount = property.contextReceivers.size,
-                                origin = incOrDeclSourceKindToIrStatementOrigin[qualifiedAccess.source?.kind]
+                                origin = incOrDecSourceKindToIrStatementOrigin[qualifiedAccess.source?.kind]
                                     ?: augmentedAssignSourceKindToIrStatementOrigin[qualifiedAccess.source?.kind]
                                     ?: IrStatementOrigin.GET_PROPERTY,
                                 superQualifierSymbol = dispatchReceiver?.superQualifierSymbolForFunctionAndPropertyAccess()
@@ -667,7 +654,7 @@ class CallAndReferenceGenerator(
                         variable.irTypeForPotentiallyComponentCall(c, predefinedType = irType),
                         irSymbol,
                         origin = if (variableAsFunctionMode) IrStatementOrigin.VARIABLE_AS_FUNCTION
-                        else incOrDeclSourceKindToIrStatementOrigin[qualifiedAccess.source?.kind] ?: calleeReference.statementOrigin()
+                        else incOrDecSourceKindToIrStatementOrigin[qualifiedAccess.source?.kind] ?: calleeReference.statementOrigin()
                     )
                 }
 

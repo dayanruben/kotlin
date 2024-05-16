@@ -192,14 +192,17 @@ internal class ClassMemberGenerator(
                     }
                     irFunction.parent is IrClass && irFunction.parentAsClass.isData -> {
                         when {
-                            DataClassResolver.isComponentLike(irFunction.name) ->
-                                firFunction?.body?.let { irFunction.body = visitor.convertToIrBlockBody(it) }
-                                    ?: dataClassMembersGenerator.generateDataClassComponentBody(irFunction, containingClass as FirRegularClass)
-                            DataClassResolver.isCopy(irFunction.name) ->
-                                firFunction?.body?.let { irFunction.body = visitor.convertToIrBlockBody(it) }
-                                    ?: dataClassMembersGenerator.generateDataClassCopyBody(irFunction, containingClass as FirRegularClass)
-                            else ->
-                                irFunction.body = firFunction?.body?.let { visitor.convertToIrBlockBody(it) }
+                            DataClassResolver.isComponentLike(irFunction.name) -> when (val firBody = firFunction?.body) {
+                                null -> dataClassMembersGenerator.generateDataClassComponentBody(
+                                    irFunction, containingClass as FirRegularClass
+                                )
+                                else -> irFunction.body = visitor.convertToIrBlockBody(firBody)
+                            }
+                            DataClassResolver.isCopy(irFunction.name) -> when (val firBody = firFunction?.body) {
+                                null -> dataClassMembersGenerator.generateDataClassCopyBody(irFunction, containingClass as FirRegularClass)
+                                else -> irFunction.body = visitor.convertToIrBlockBody(firBody)
+                            }
+                            else -> irFunction.body = firFunction?.body?.let { visitor.convertToIrBlockBody(it) }
                         }
                     }
                     else -> {
@@ -211,44 +214,20 @@ internal class ClassMemberGenerator(
                 // Scope for primary constructor should be left after class declaration
                 declarationStorage.leaveScope(irFunction.symbol)
             }
-            if (irFunction is IrSimpleFunction && firFunction is FirSimpleFunction && containingClass != null) {
-                /**
-                 * In useIrFakeOverrideBuilder it would be dropped anyway, as [org.jetbrains.kotlin.ir.overrides.IrFakeOverrideBuilder.buildFakeOverridesForClass]
-                 * recalculates this value from scratch. Also, it's quite meaningless in non-platform modules anyway.
-                 */
-                if (configuration.useFirBasedFakeOverrideGenerator) {
-                    @OptIn(FirBasedFakeOverrideGenerator::class)
-                    irFunction.overriddenSymbols = firFunction.generateOverriddenFunctionSymbols(containingClass, c)
-                }
-            }
         }
         return irFunction
     }
 
-    fun convertPropertyContent(irProperty: IrProperty, property: FirProperty, containingClass: FirClass?): IrProperty {
+    fun convertPropertyContent(irProperty: IrProperty, property: FirProperty): IrProperty {
         val initializer = property.backingField?.initializer ?: property.initializer
         val delegate = property.delegate
         val propertyType = property.returnTypeRef.toIrType(c)
         irProperty.initializeBackingField(property, initializerExpression = initializer ?: delegate)
-        if (containingClass != null) {
-            /**
-             * In useIrFakeOverrideBuilder it would be dropped anyway, as [org.jetbrains.kotlin.ir.overrides.IrFakeOverrideBuilder.buildFakeOverridesForClass]
-             * recalculates this value from scratch. Also, it's quite meaningless in non-platform modules anyway.
-             */
-            if (configuration.useFirBasedFakeOverrideGenerator) {
-                @OptIn(FirBasedFakeOverrideGenerator::class) // checked for useIrFakeOverrideBuilder
-                irProperty.overriddenSymbols = property.generateOverriddenPropertySymbols(containingClass, c)
-            }
-        }
-        val needGenerateDefaultGetter =
-            property.getter is FirDefaultPropertyGetter ||
-                    (property.getter == null && irProperty.parent is IrScript && property.destructuringDeclarationContainerVariable != null)
+        val needGenerateDefaultGetter = property.getter is FirDefaultPropertyGetter ||
+                (property.getter == null && irProperty.parent is IrScript && property.destructuringDeclarationContainerVariable != null)
 
         irProperty.getter?.setPropertyAccessorContent(
-            property, property.getter, irProperty, propertyType,
-            isDefault = needGenerateDefaultGetter,
-            isGetter = true,
-            containingClass = containingClass
+            property.getter, irProperty, propertyType, isDefault = needGenerateDefaultGetter
         )
         // Create fake body for Enum.entries
         if (irProperty.origin == IrDeclarationOrigin.ENUM_CLASS_SPECIAL_MEMBER) {
@@ -258,10 +237,7 @@ internal class ClassMemberGenerator(
 
         if (property.isVar) {
             irProperty.setter?.setPropertyAccessorContent(
-                property, property.setter, irProperty, propertyType,
-                property.setter is FirDefaultPropertySetter,
-                isGetter = false,
-                containingClass = containingClass
+                property.setter, irProperty, propertyType, property.setter is FirDefaultPropertySetter
             )
         }
         annotationGenerator.generate(irProperty, property)
@@ -312,13 +288,10 @@ internal class ClassMemberGenerator(
     }
 
     private fun IrSimpleFunction.setPropertyAccessorContent(
-        property: FirProperty,
         propertyAccessor: FirPropertyAccessor?,
         correspondingProperty: IrProperty,
         propertyType: IrType,
-        isDefault: Boolean,
-        isGetter: Boolean,
-        containingClass: FirClass?
+        isDefault: Boolean
     ) {
         conversionScope.withFunction(this) {
             applyParentFromStackTo(this)
@@ -350,11 +323,6 @@ internal class ClassMemberGenerator(
                     declarationStorage.leaveScope(this.symbol)
                 }
             }
-            if (containingClass != null && c.configuration.useFirBasedFakeOverrideGenerator) {
-                @OptIn(FirBasedFakeOverrideGenerator::class)
-                this.overriddenSymbols = property.generateOverriddenAccessorSymbols(containingClass, isGetter, c)
-            }
-
         }
     }
 
@@ -377,7 +345,7 @@ internal class ClassMemberGenerator(
                 )
             }
 
-        // Unwrap substitution overrides from both derived class and a super class
+        // Unwrap substitution overrides from both derived class and a superclass
         val constructorSymbol = referencedSymbol
             .unwrapCallRepresentative(c, referencedSymbol.containingClassLookupTag())
             .unwrapCallRepresentative(c, (referencedSymbol.resolvedReturnType as? ConeClassLikeType)?.lookupTag)
@@ -390,7 +358,7 @@ internal class ClassMemberGenerator(
             val typeArguments = constructedTypeRef.coneType.fullyExpandedType(session).typeArguments
             val constructor = constructorSymbol.fir
             /*
-             * We should generate enum constructor call only if it is used to create new enum entry (so it's super constructor call)
+             * We should generate enum constructor call only if it is used to create new enum entry (so it's a super constructor call)
              * If it is this constructor call that we are facing secondary constructor of enum, and should generate
              *   regular delegating constructor call
              *

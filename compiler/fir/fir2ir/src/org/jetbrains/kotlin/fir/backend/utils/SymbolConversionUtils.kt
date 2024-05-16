@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.fir.backend.utils
 
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.backend.Fir2IrComponents
-import org.jetbrains.kotlin.fir.backend.generators.FirBasedFakeOverrideGenerator
 import org.jetbrains.kotlin.fir.backend.utils.UseSiteKind.*
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
@@ -79,6 +78,7 @@ fun FirReference.extractDeclarationSiteSymbol(c: Fir2IrComponents): FirCallableS
     symbol = symbol.unwrapCallRepresentative(c)
     return symbol
 }
+
 private enum class UseSiteKind {
     GetCall,
     SetCall,
@@ -181,10 +181,7 @@ private fun Fir2IrComponents.toIrSymbol(
         is FirConstructorSymbol -> declarationStorage.getIrConstructorSymbol(symbol.fir.originalConstructorIfTypeAlias?.symbol ?: symbol)
         is FirFunctionSymbol<*> -> declarationStorage.getIrFunctionSymbol(symbol, fakeOverrideOwnerLookupTag)
         is FirPropertySymbol -> declarationStorage.getIrPropertySymbol(symbol, fakeOverrideOwnerLookupTag)
-        is FirFieldSymbol -> if (configuration.useFirBasedFakeOverrideGenerator) {
-            @OptIn(FirBasedFakeOverrideGenerator::class)
-            declarationStorage.getOrCreateIrField(symbol, fakeOverrideOwnerLookupTag).symbol
-        } else {
+        is FirFieldSymbol -> {
             when (useSite) {
                 Reference -> declarationStorage.getIrSymbolForField(symbol, fakeOverrideOwnerLookupTag)
                 else -> {
