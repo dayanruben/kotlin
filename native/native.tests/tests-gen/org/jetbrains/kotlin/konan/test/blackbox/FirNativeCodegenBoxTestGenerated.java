@@ -7441,6 +7441,12 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
       public void testInlineFunctionCompanionPropertyAccess() {
         runTest("compiler/testData/codegen/box/companion/inlineFunctionCompanionPropertyAccess.kt");
       }
+
+      @Test
+      @TestMetadata("protectedConstValFromSuperCompanion.kt")
+      public void testProtectedConstValFromSuperCompanion() {
+        runTest("compiler/testData/codegen/box/companion/protectedConstValFromSuperCompanion.kt");
+      }
     }
 
     @Nested
@@ -7508,18 +7514,6 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
       @TestMetadata("constructorVararg.kt")
       public void testConstructorVararg() {
         runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/constructorVararg.kt");
-      }
-
-      @Test
-      @TestMetadata("copySamOnInline.kt")
-      public void testCopySamOnInline() {
-        runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/copySamOnInline.kt");
-      }
-
-      @Test
-      @TestMetadata("copySamOnInline2.kt")
-      public void testCopySamOnInline2() {
-        runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/copySamOnInline2.kt");
       }
 
       @Test
@@ -7850,12 +7844,6 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
           }
 
           @Test
-          @TestMetadata("callStackTrace.kt")
-          public void testCallStackTrace() {
-            runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/jvm8/defaults/callStackTrace.kt");
-          }
-
-          @Test
           @TestMetadata("superCall.kt")
           public void testSuperCall() {
             runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/jvm8/defaults/superCall.kt");
@@ -7889,12 +7877,6 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
             @Test
             public void testAllFilesPresentInAllCompatibility() {
               KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/compileKotlinAgainstKotlin/jvm8/defaults/allCompatibility"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
-            }
-
-            @Test
-            @TestMetadata("callStackTrace.kt")
-            public void testCallStackTrace() {
-              runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/jvm8/defaults/allCompatibility/callStackTrace.kt");
             }
 
             @Test
@@ -7984,12 +7966,6 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
             }
 
             @Test
-            @TestMetadata("newAndOldSchemes.kt")
-            public void testNewAndOldSchemes() {
-              runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/jvm8/defaults/interop/newAndOldSchemes.kt");
-            }
-
-            @Test
             @TestMetadata("newAndOldSchemes2.kt")
             public void testNewAndOldSchemes2() {
               runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/jvm8/defaults/interop/newAndOldSchemes2.kt");
@@ -7999,12 +7975,6 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
             @TestMetadata("newAndOldSchemes2Compatibility.kt")
             public void testNewAndOldSchemes2Compatibility() {
               runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/jvm8/defaults/interop/newAndOldSchemes2Compatibility.kt");
-            }
-
-            @Test
-            @TestMetadata("newAndOldSchemes3.kt")
-            public void testNewAndOldSchemes3() {
-              runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/jvm8/defaults/interop/newAndOldSchemes3.kt");
             }
           }
         }
@@ -8019,12 +7989,6 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
           @Test
           public void testAllFilesPresentInJvm8against6() {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/compileKotlinAgainstKotlin/jvm8/jvm8against6"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
-          }
-
-          @Test
-          @TestMetadata("jdk8Against6.kt")
-          public void testJdk8Against6() {
-            runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/jvm8/jvm8against6/jdk8Against6.kt");
           }
 
           @Test
@@ -12854,6 +12818,12 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
         @TestMetadata("subtypeOfFunctionalTypeToSuspendConversion.kt")
         public void testSubtypeOfFunctionalTypeToSuspendConversion() {
           runTest("compiler/testData/codegen/box/coroutines/suspendConversion/subtypeOfFunctionalTypeToSuspendConversion.kt");
+        }
+
+        @Test
+        @TestMetadata("suspendConversionBetweenFunInterfaces.kt")
+        public void testSuspendConversionBetweenFunInterfaces() {
+          runTest("compiler/testData/codegen/box/coroutines/suspendConversion/suspendConversionBetweenFunInterfaces.kt");
         }
       }
 
@@ -25375,8 +25345,6 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
           register("compiler/testData/codegen/box/inlineClasses/functionNameMangling/mangledFunctionsCanBeOverriddenGeneric.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
           register("compiler/testData/codegen/box/inlineClasses/functionNameMangling/mangledFunctionsDoNotClash.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
           register("compiler/testData/codegen/box/inlineClasses/functionNameMangling/mangledFunctionsDoNotClashGeneric.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
-          register("compiler/testData/codegen/box/inlineClasses/functionNameMangling/mangledFunctionsPresentInStackTrace.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
-          register("compiler/testData/codegen/box/inlineClasses/functionNameMangling/mangledFunctionsPresentInStackTraceGeneric.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
           register("compiler/testData/codegen/box/inlineClasses/functionNameMangling/mixedSignatureFunctionsDoNotClash.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
           register("compiler/testData/codegen/box/inlineClasses/functionNameMangling/mixedSignatureFunctionsDoNotClashGeneric.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
           register("compiler/testData/codegen/box/inlineClasses/functionNameMangling/overridingMethodInGenericClass.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
@@ -25496,20 +25464,6 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
         public void testMangledFunctionsDoNotClashGeneric() {
           // There is a registered source transformer for the testcase: TransformersFunctions.getRemoveOptionalJvmInlineAnnotation()
           runTest("compiler/testData/codegen/box/inlineClasses/functionNameMangling/mangledFunctionsDoNotClashGeneric.kt");
-        }
-
-        @Test
-        @TestMetadata("mangledFunctionsPresentInStackTrace.kt")
-        public void testMangledFunctionsPresentInStackTrace() {
-          // There is a registered source transformer for the testcase: TransformersFunctions.getRemoveOptionalJvmInlineAnnotation()
-          runTest("compiler/testData/codegen/box/inlineClasses/functionNameMangling/mangledFunctionsPresentInStackTrace.kt");
-        }
-
-        @Test
-        @TestMetadata("mangledFunctionsPresentInStackTraceGeneric.kt")
-        public void testMangledFunctionsPresentInStackTraceGeneric() {
-          // There is a registered source transformer for the testcase: TransformersFunctions.getRemoveOptionalJvmInlineAnnotation()
-          runTest("compiler/testData/codegen/box/inlineClasses/functionNameMangling/mangledFunctionsPresentInStackTraceGeneric.kt");
         }
 
         @Test
@@ -42913,12 +42867,6 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
       }
 
       @Test
-      @TestMetadata("kt42517.kt")
-      public void testKt42517() {
-        runTest("compiler/testData/codegen/box/smartCasts/kt42517.kt");
-      }
-
-      @Test
       @TestMetadata("kt44804.kt")
       public void testKt44804() {
         runTest("compiler/testData/codegen/box/smartCasts/kt44804.kt");
@@ -43000,6 +42948,12 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
       @TestMetadata("smartCastInsideIf.kt")
       public void testSmartCastInsideIf() {
         runTest("compiler/testData/codegen/box/smartCasts/smartCastInsideIf.kt");
+      }
+
+      @Test
+      @TestMetadata("smartCastedGenericWhenSubjectInRangeCheck.kt")
+      public void testSmartCastedGenericWhenSubjectInRangeCheck() {
+        runTest("compiler/testData/codegen/box/smartCasts/smartCastedGenericWhenSubjectInRangeCheck.kt");
       }
 
       @Test

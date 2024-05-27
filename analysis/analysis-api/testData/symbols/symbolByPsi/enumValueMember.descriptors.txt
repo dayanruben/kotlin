@@ -1,7 +1,7 @@
 KtConstructorSymbol:
   annotationsList: []
-  callableIdIfNonLocal: null
-  containingClassIdIfNonLocal: Style
+  callableId: null
+  containingClassId: Style
   contextReceivers: []
   hasStableParameterNames: true
   isActual: false
@@ -19,13 +19,13 @@ KtConstructorSymbol:
   valueParameters: [
     KtValueParameterSymbol:
       annotationsList: []
-      callableIdIfNonLocal: null
+      callableId: null
       contextReceivers: []
       generatedPrimaryConstructorProperty: KtKotlinPropertySymbol:
         annotationsList: []
         backingFieldSymbol: KtBackingFieldSymbol:
           annotationsList: []
-          callableIdIfNonLocal: null
+          callableId: null
           contextReceivers: []
           isExtension: false
           name: field
@@ -42,11 +42,11 @@ KtConstructorSymbol:
           getContainingJvmClassName: Style
           getContainingModule: KtSourceModule "Sources of main"
           deprecationStatus: null
-        callableIdIfNonLocal: /Style.value
+        callableId: /Style.value
         contextReceivers: []
         getter: KtPropertyGetterSymbol:
           annotationsList: []
-          callableIdIfNonLocal: null
+          callableId: null
           contextReceivers: []
           hasBody: false
           hasStableParameterNames: true
@@ -141,7 +141,7 @@ KtKotlinPropertySymbol:
   annotationsList: []
   backingFieldSymbol: KtBackingFieldSymbol:
     annotationsList: []
-    callableIdIfNonLocal: null
+    callableId: null
     contextReceivers: []
     isExtension: false
     name: field
@@ -158,11 +158,11 @@ KtKotlinPropertySymbol:
     getContainingJvmClassName: null
     getContainingModule: KtSourceModule "Sources of main"
     deprecationStatus: null
-  callableIdIfNonLocal: null
+  callableId: null
   contextReceivers: []
   getter: KtPropertyGetterSymbol:
     annotationsList: []
-    callableIdIfNonLocal: null
+    callableId: null
     contextReceivers: []
     hasBody: true
     hasStableParameterNames: true
@@ -230,8 +230,7 @@ KtKotlinPropertySymbol:
 
 KtEnumEntrySymbol:
   annotationsList: []
-  callableIdIfNonLocal: /Style.SHEET
-  containingEnumClassIdIfNonLocal: Style
+  callableId: /Style.SHEET
   contextReceivers: []
   enumEntryInitializer: KtEnumEntrySymbol(/Style.SHEET)
   isExtension: false
@@ -253,7 +252,7 @@ KtKotlinPropertySymbol:
   annotationsList: []
   backingFieldSymbol: KtBackingFieldSymbol:
     annotationsList: []
-    callableIdIfNonLocal: null
+    callableId: null
     contextReceivers: []
     isExtension: false
     name: field
@@ -270,11 +269,11 @@ KtKotlinPropertySymbol:
     getContainingJvmClassName: Style
     getContainingModule: KtSourceModule "Sources of main"
     deprecationStatus: null
-  callableIdIfNonLocal: /Style.exitAnimation
+  callableId: /Style.exitAnimation
   contextReceivers: []
   getter: KtPropertyGetterSymbol:
     annotationsList: []
-    callableIdIfNonLocal: null
+    callableId: null
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
@@ -342,7 +341,7 @@ KtKotlinPropertySymbol:
 
 KtNamedClassOrObjectSymbol:
   annotationsList: []
-  classIdIfNonLocal: Style
+  classId: Style
   classKind: ENUM_CLASS
   companionObject: null
   contextReceivers: []

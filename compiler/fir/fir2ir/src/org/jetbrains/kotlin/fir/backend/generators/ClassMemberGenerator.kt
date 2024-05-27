@@ -94,18 +94,6 @@ internal class ClassMemberGenerator(
                 }
             }
 
-            if (klass is FirRegularClass && (irClass.isValue || irClass.isData)) {
-                if (irClass.isSingleFieldValueClass) {
-                    dataClassMembersGenerator.generateBodiesForSingleFieldValueClassMembers(klass, irClass)
-                }
-                if (irClass.isMultiFieldValueClass) {
-                    dataClassMembersGenerator.generateBodiesForMultiFieldValueClassMembers(klass, irClass)
-                }
-                if (irClass.isData) {
-                    dataClassMembersGenerator.generateBodiesForDataClassMembers(klass, irClass)
-                }
-            }
-
             annotationGenerator.generate(irClass, klass)
             if (irPrimaryConstructor != null) {
                 declarationStorage.leaveScope(irPrimaryConstructor.symbol)
@@ -163,7 +151,7 @@ internal class ClassMemberGenerator(
                                 contextReceiverFields[index].symbol,
                                 IrGetValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, thisParameter.type, thisParameter.symbol),
                                 IrGetValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, irValueParameter.type, irValueParameter.symbol),
-                                c.irBuiltIns.unitType,
+                                c.builtins.unitType,
                             )
                         )
                     }
@@ -191,15 +179,14 @@ internal class ClassMemberGenerator(
                         irFunction.body = IrSyntheticBodyImpl(startOffset, endOffset, kind)
                     }
                     irFunction.parent is IrClass && irFunction.parentAsClass.isData -> {
+                        require(irFunction is IrSimpleFunction)
                         when {
                             DataClassResolver.isComponentLike(irFunction.name) -> when (val firBody = firFunction?.body) {
-                                null -> dataClassMembersGenerator.generateDataClassComponentBody(
-                                    irFunction, containingClass as FirRegularClass
-                                )
+                                null -> dataClassMembersGenerator.registerCopyOrComponentFunction(irFunction)
                                 else -> irFunction.body = visitor.convertToIrBlockBody(firBody)
                             }
                             DataClassResolver.isCopy(irFunction.name) -> when (val firBody = firFunction?.body) {
-                                null -> dataClassMembersGenerator.generateDataClassCopyBody(irFunction, containingClass as FirRegularClass)
+                                null -> dataClassMembersGenerator.registerCopyOrComponentFunction(irFunction)
                                 else -> irFunction.body = visitor.convertToIrBlockBody(firBody)
                             }
                             else -> irFunction.body = firFunction?.body?.let { visitor.convertToIrBlockBody(it) }
@@ -307,13 +294,13 @@ internal class ClassMemberGenerator(
                             startOffset, endOffset,
                             listOf(
                                 if (isSetter) {
-                                    IrSetFieldImpl(startOffset, endOffset, fieldSymbol, irBuiltIns.unitType).apply {
+                                    IrSetFieldImpl(startOffset, endOffset, fieldSymbol, builtins.unitType).apply {
                                         setReceiver(declaration)
                                         value = IrGetValueImpl(startOffset, endOffset, propertyType, valueParameters.first().symbol)
                                     }
                                 } else {
                                     IrReturnImpl(
-                                        startOffset, endOffset, irBuiltIns.nothingType, symbol,
+                                        startOffset, endOffset, builtins.nothingType, symbol,
                                         IrGetFieldImpl(startOffset, endOffset, fieldSymbol, propertyType).setReceiver(declaration)
                                     )
                                 }
@@ -380,7 +367,7 @@ internal class ClassMemberGenerator(
             } else {
                 IrDelegatingConstructorCallImpl(
                     startOffset, endOffset,
-                    irBuiltIns.unitType,
+                    builtins.unitType,
                     irConstructorSymbol,
                     typeArgumentsCount = constructor.typeParameters.size,
                     valueArgumentsCount = constructor.valueParameters.size + constructor.contextReceivers.size

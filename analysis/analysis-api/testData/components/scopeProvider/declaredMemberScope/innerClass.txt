@@ -1,6 +1,6 @@
 KtNamedClassOrObjectSymbol:
   annotationsList: []
-  classIdIfNonLocal: test/B.InnerClassInB
+  classId: test/B.InnerClassInB
   classKind: CLASS
   companionObject: null
   contextReceivers: []
@@ -30,8 +30,8 @@ KtNamedClassOrObjectSymbol:
 
 KtConstructorSymbol:
   annotationsList: []
-  callableIdIfNonLocal: null
-  containingClassIdIfNonLocal: test/B
+  callableId: null
+  containingClassId: test/B
   contextReceivers: []
   hasStableParameterNames: true
   isActual: false

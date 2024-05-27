@@ -42,6 +42,12 @@ public class SourceBasedSwiftExportRunnerTest extends AbstractSourceBasedSwiftRu
   }
 
   @Test
+  @TestMetadata("inner_classes")
+  public void testInner_classes() {
+    runTest("native/swift/swift-export-standalone/testData/inner_classes/");
+  }
+
+  @Test
   @TestMetadata("no_package")
   public void testNo_package() {
     runTest("native/swift/swift-export-standalone/testData/no_package/");
@@ -54,12 +60,6 @@ public class SourceBasedSwiftExportRunnerTest extends AbstractSourceBasedSwiftRu
   }
 
   @Test
-  @TestMetadata("source_based_only")
-  public void testSource_based_only() {
-    runTest("native/swift/swift-export-standalone/testData/source_based_only/");
-  }
-
-  @Test
   @TestMetadata("type_reference")
   public void testType_reference() {
     runTest("native/swift/swift-export-standalone/testData/type_reference/");
@@ -69,6 +69,12 @@ public class SourceBasedSwiftExportRunnerTest extends AbstractSourceBasedSwiftRu
   @TestMetadata("typealiases")
   public void testTypealiases() {
     runTest("native/swift/swift-export-standalone/testData/typealiases/");
+  }
+
+  @Test
+  @TestMetadata("unsupportedDeclarationsReporting")
+  public void testUnsupportedDeclarationsReporting() {
+    runTest("native/swift/swift-export-standalone/testData/unsupportedDeclarationsReporting/");
   }
 
   @Test

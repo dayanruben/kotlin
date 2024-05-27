@@ -1,4 +1,12 @@
-class Foo(val x: Int)
+class Foo(var x: Int) {
+    constructor(f: Float) : this(f.toInt())
+
+    fun getAndSetX(newX: Int): Int {
+        val oldX = x
+        x = newX
+        return oldX
+    }
+}
 
 fun getX(foo: Foo) = foo.x
 
@@ -12,3 +20,5 @@ val readGlobalFoo
     get() = globalFoo
 
 fun getGlobalFoo() = globalFoo
+
+typealias FooAsTypealias = Foo

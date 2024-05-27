@@ -80,41 +80,51 @@ import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.types.AbstractBuil
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.types.AbstractTypeByDeclarationReturnTypeTest
 import org.jetbrains.kotlin.analysis.api.standalone.fir.test.cases.components.psiDeclarationProvider.AbstractPsiDeclarationProviderTest
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisApiMode
+import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisApiTestConfiguratorFactoryData
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisSessionMode
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.FrontendKind
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.TestModuleKind
+import org.jetbrains.kotlin.generators.TestGroup
 import org.jetbrains.kotlin.generators.tests.analysis.api.dsl.*
 import org.jetbrains.kotlin.generators.util.TestGeneratorUtil
 
 internal fun AnalysisApiTestGroup.generateAnalysisApiTests() {
-    test<AbstractReferenceResolveTest>(
+    component(
+        directory = "resolver",
         filter = testModuleKindIs(TestModuleKind.Source, TestModuleKind.ScriptSource, TestModuleKind.LibrarySource) and
-                analysisApiModeIs(AnalysisApiMode.Ide, AnalysisApiMode.Standalone),
-    ) { data ->
-        when (data.moduleKind) {
-            TestModuleKind.LibrarySource -> {
-                model(
-                    "referenceResolve",
-                    pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME,
-                    excludeDirsRecursively = listOf(
+                analysisSessionModeIs(AnalysisSessionMode.Normal),
+    ) {
+        val init: TestGroup.TestClass.(data: AnalysisApiTestConfiguratorFactoryData) -> Unit = { data ->
+            val excludeDirs = buildList {
+                if (data.analysisApiMode == AnalysisApiMode.Standalone ||
+                    data.frontend == FrontendKind.Fe10 ||
+                    data.moduleKind == TestModuleKind.LibrarySource
+                ) {
+                    add("withTestCompilerPluginEnabled")
+                }
+
+                when (data.moduleKind) {
+                    TestModuleKind.LibrarySource -> {
                         // Sources with errors cannot be compiled to a library.
-                        "withErrors",
+                        add("withErrors")
 
                         // Tests which rely on missing dependencies (e.g. the main module missing a dependency to a library module) will not
                         // work as expected with library source modules, because they use "rest symbol providers" which provide symbols from
                         // all other libraries (as dependencies between libraries are not usually known). So the "missing" dependencies
                         // would effectively not be missing.
-                        "missingDependency",
-                    )
-                )
+                        add("missingDependency")
+                    }
+
+                    else -> {}
+                }
             }
 
-            TestModuleKind.ScriptSource -> model(data, "referenceResolve")
-
-            else -> {
-                model("referenceResolve", pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME)
-            }
+            model(data, "singleByPsi", excludeDirsRecursively = excludeDirs)
         }
+
+        test<AbstractResolveCallTest>(init = init)
+        test<AbstractResolveCandidatesTest>(init = init)
+        test<AbstractReferenceResolveTest>(init = init)
     }
 
     test<AbstractDanglingFileReferenceResolveTest>(
@@ -332,21 +342,6 @@ private fun AnalysisApiTestGroup.generateAnalysisApiStandaloneTests() {
 }
 
 private fun AnalysisApiTestGroup.generateAnalysisApiComponentsTests() {
-    component("callResolver", filter = analysisSessionModeIs(AnalysisSessionMode.Normal)) {
-        test<AbstractResolveCallTest> {
-            when (it.analysisApiMode) {
-                AnalysisApiMode.Ide ->
-                    model(it, "resolveCall")
-                AnalysisApiMode.Standalone ->
-                    model(it, "resolveCall", excludeDirsRecursively = listOf("withTestCompilerPluginEnabled"))
-            }
-        }
-
-        test<AbstractResolveCandidatesTest> {
-            model(it, "resolveCandidates")
-        }
-    }
-
     component("compileTimeConstantProvider") {
         test<AbstractCompileTimeConstantEvaluatorTest> {
             model(it, "evaluate")

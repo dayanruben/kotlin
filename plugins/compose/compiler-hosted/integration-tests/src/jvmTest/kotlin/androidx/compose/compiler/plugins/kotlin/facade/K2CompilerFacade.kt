@@ -205,7 +205,6 @@ class K2CompilerFacade(environment: KotlinCoreEnvironment) : KotlinCompilerFacad
         val fir2IrExtensions = JvmFir2IrExtensions(
             configuration,
             JvmIrDeserializerImpl(),
-            JvmIrMangler
         )
 
         val fir2IrResult = analysisResult.firResult.convertToIrAndActualizeForJvm(
@@ -247,7 +246,10 @@ class K2CompilerFacade(environment: KotlinCoreEnvironment) : KotlinCompilerFacad
             configuration.get(CLIConfigurationKeys.PHASE_CONFIG)
         )
         codegenFactory.generateModuleInFrontendIRMode(
-            generationState, irModuleFragment, components.symbolTable, components.irProviders,
+            generationState,
+            irModuleFragment,
+            frontendResult.firResult.symbolTable,
+            components.irProviders,
             frontendResult.generatorExtensions,
             FirJvmBackendExtension(
                 components,

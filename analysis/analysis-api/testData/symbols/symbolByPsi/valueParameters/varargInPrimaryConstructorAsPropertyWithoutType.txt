@@ -1,7 +1,7 @@
 KtConstructorSymbol:
   annotationsList: []
-  callableIdIfNonLocal: null
-  containingClassIdIfNonLocal: Foo
+  callableId: null
+  containingClassId: Foo
   contextReceivers: []
   hasStableParameterNames: true
   isActual: false
@@ -19,13 +19,13 @@ KtConstructorSymbol:
   valueParameters: [
     KtValueParameterSymbol:
       annotationsList: []
-      callableIdIfNonLocal: null
+      callableId: null
       contextReceivers: []
       generatedPrimaryConstructorProperty: KtKotlinPropertySymbol:
         annotationsList: []
         backingFieldSymbol: KtBackingFieldSymbol:
           annotationsList: []
-          callableIdIfNonLocal: null
+          callableId: null
           contextReceivers: []
           isExtension: false
           name: field
@@ -46,11 +46,11 @@ KtConstructorSymbol:
           getContainingJvmClassName: Foo
           getContainingModule: KtSourceModule "Sources of main"
           deprecationStatus: null
-        callableIdIfNonLocal: /Foo.ints
+        callableId: /Foo.ints
         contextReceivers: []
         getter: KtPropertyGetterSymbol:
           annotationsList: []
-          callableIdIfNonLocal: null
+          callableId: null
           contextReceivers: []
           hasBody: false
           hasStableParameterNames: true
@@ -150,7 +150,7 @@ KtConstructorSymbol:
 
 KtNamedClassOrObjectSymbol:
   annotationsList: []
-  classIdIfNonLocal: Foo
+  classId: Foo
   classKind: CLASS
   companionObject: null
   contextReceivers: []

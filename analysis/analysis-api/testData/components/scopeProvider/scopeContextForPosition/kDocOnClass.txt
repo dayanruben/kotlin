@@ -19,7 +19,7 @@ scopes:
         annotationsList: []
         backingFieldSymbol: KtBackingFieldSymbol:
           annotationsList: []
-          callableIdIfNonLocal: null
+          callableId: null
           contextReceivers: []
           isExtension: false
           name: field
@@ -32,11 +32,11 @@ scopes:
             type: kotlin/Int
           symbolKind: LOCAL
           typeParameters: []
-        callableIdIfNonLocal: test/MyClass.property
+        callableId: test/MyClass.property
         contextReceivers: []
         getter: KtPropertyGetterSymbol:
           annotationsList: []
-          callableIdIfNonLocal: null
+          callableId: null
           contextReceivers: []
           hasBody: false
           hasStableParameterNames: true
@@ -83,7 +83,7 @@ scopes:
         visibility: Public
       KtFunctionSymbol:
         annotationsList: []
-        callableIdIfNonLocal: test/MyClass.member
+        callableId: test/MyClass.member
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -113,7 +113,7 @@ scopes:
         visibility: Public
       KtFunctionSymbol:
         annotationsList: []
-        callableIdIfNonLocal: kotlin/Any.equals
+        callableId: kotlin/Any.equals
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -142,7 +142,7 @@ scopes:
         valueParameters: [
           KtValueParameterSymbol:
             annotationsList: []
-            callableIdIfNonLocal: null
+            callableId: null
             contextReceivers: []
             generatedPrimaryConstructorProperty: null
             hasDefaultValue: false
@@ -164,7 +164,7 @@ scopes:
         visibility: Public
       KtFunctionSymbol:
         annotationsList: []
-        callableIdIfNonLocal: kotlin/Any.hashCode
+        callableId: kotlin/Any.hashCode
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -194,7 +194,7 @@ scopes:
         visibility: Public
       KtFunctionSymbol:
         annotationsList: []
-        callableIdIfNonLocal: kotlin/Any.toString
+        callableId: kotlin/Any.toString
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -225,8 +225,8 @@ scopes:
     constructors: 1
       KtConstructorSymbol:
         annotationsList: []
-        callableIdIfNonLocal: null
-        containingClassIdIfNonLocal: test/MyClass
+        callableId: null
+        containingClassId: test/MyClass
         contextReceivers: []
         hasStableParameterNames: true
         isActual: false
@@ -250,7 +250,7 @@ scopes:
         valueParameters: [
           KtValueParameterSymbol:
             annotationsList: []
-            callableIdIfNonLocal: null
+            callableId: null
             contextReceivers: []
             generatedPrimaryConstructorProperty: null
             hasDefaultValue: false
@@ -270,7 +270,7 @@ scopes:
             typeParameters: []
           KtValueParameterSymbol:
             annotationsList: []
-            callableIdIfNonLocal: null
+            callableId: null
             contextReceivers: []
             generatedPrimaryConstructorProperty: null
             hasDefaultValue: false
@@ -316,7 +316,7 @@ scopes:
     classifiers: 3
       KtNamedClassOrObjectSymbol:
         annotationsList: []
-        classIdIfNonLocal: test/Param1
+        classId: test/Param1
         classKind: CLASS
         companionObject: null
         contextReceivers: []
@@ -341,7 +341,7 @@ scopes:
         visibility: Public
       KtNamedClassOrObjectSymbol:
         annotationsList: []
-        classIdIfNonLocal: test/Param2
+        classId: test/Param2
         classKind: CLASS
         companionObject: null
         contextReceivers: []
@@ -366,7 +366,7 @@ scopes:
         visibility: Public
       KtNamedClassOrObjectSymbol:
         annotationsList: []
-        classIdIfNonLocal: test/MyClass
+        classId: test/MyClass
         classKind: CLASS
         companionObject: null
         contextReceivers: []

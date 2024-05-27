@@ -310,6 +310,7 @@ enum class LanguageFeature(
     DfaBooleanVariables(KOTLIN_2_0), // KT-25747
     LightweightLambdas(KOTLIN_2_0, kind = OTHER), // KT-45375
     ObjCSignatureOverrideAnnotation(KOTLIN_2_0, sinceApiVersion = ApiVersion.KOTLIN_2_0, kind = OTHER), // KT-61323
+
     // 2.1
 
     ReferencesToSyntheticJavaProperties(KOTLIN_2_1), // KT-8575
@@ -326,6 +327,7 @@ enum class LanguageFeature(
     JsExternalPropertyParameters(KOTLIN_2_1), // KT-65965
     ErrorAboutDataClassCopyVisibilityChange(KOTLIN_2_1, kind = BUG_FIX), // KT-11914 Deprecation phase 2
     CorrectSpecificityCheckForSignedAndUnsigned(KOTLIN_2_1, kind = OTHER), // KT-35305
+    AllowAccessToProtectedFieldFromSuperCompanion(KOTLIN_2_1), // KT-39868
 
     // End of 2.* language features --------------------------------------------------
 
@@ -392,6 +394,7 @@ enum class LanguageFeature(
     ForbidUsingExpressionTypesWithInaccessibleContent(sinceVersion = null, kind = BUG_FIX), // KT-66691
     ProperFieldAccessGenerationForFieldAccessShadowedByKotlinProperty(sinceVersion = null, kind = OTHER), // KT-56386
     WhenGuards(sinceVersion = null, kind = OTHER), // KT-13626
+    MultiDollarInterpolation(sinceVersion = null, kind = OTHER), // KT-2425
     ;
 
     init {
@@ -495,6 +498,7 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware, L
 
     KOTLIN_2_0(2, 0),
     KOTLIN_2_1(2, 1),
+    KOTLIN_2_2(2, 2),
     ;
 
     override val isStable: Boolean
@@ -522,7 +526,7 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware, L
             str.split(".", "-").let { if (it.size >= 2) fromVersionString("${it[0]}.${it[1]}") else null }
 
         // Version status
-        //            1.0..1.3        1.4..1.6           1.7..2.0    2.1
+        //            1.0..1.3        1.4..1.6           1.7..2.0    2.1..2.2
         // Language:  UNSUPPORTED --> DEPRECATED ------> STABLE ---> EXPERIMENTAL
         // API:       UNSUPPORTED --> DEPRECATED ------> STABLE ---> EXPERIMENTAL
 

@@ -9056,6 +9056,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
     public void testInlineFunctionCompanionPropertyAccess() {
       runTest("compiler/testData/codegen/box/companion/inlineFunctionCompanionPropertyAccess.kt");
     }
+
+    @Test
+    @TestMetadata("protectedConstValFromSuperCompanion.kt")
+    public void testProtectedConstValFromSuperCompanion() {
+      runTest("compiler/testData/codegen/box/companion/protectedConstValFromSuperCompanion.kt");
+    }
   }
 
   @Nested
@@ -15132,6 +15138,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
       @TestMetadata("subtypeOfFunctionalTypeToSuspendConversion.kt")
       public void testSubtypeOfFunctionalTypeToSuspendConversion() {
         runTest("compiler/testData/codegen/box/coroutines/suspendConversion/subtypeOfFunctionalTypeToSuspendConversion.kt");
+      }
+
+      @Test
+      @TestMetadata("suspendConversionBetweenFunInterfaces.kt")
+      public void testSuspendConversionBetweenFunInterfaces() {
+        runTest("compiler/testData/codegen/box/coroutines/suspendConversion/suspendConversionBetweenFunInterfaces.kt");
       }
     }
 
@@ -36587,6 +36599,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
       public void testExpectInterfaceInheritance() {
         runTest("compiler/testData/codegen/box/multiplatform/multiModule/expectInterfaceInheritance.kt");
       }
+
+      @Test
+      @TestMetadata("stdlibClassRedefine.kt")
+      public void testStdlibClassRedefine() {
+        runTest("compiler/testData/codegen/box/multiplatform/multiModule/stdlibClassRedefine.kt");
+      }
     }
   }
 
@@ -51745,6 +51763,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
     @TestMetadata("smartCastInsideIf.kt")
     public void testSmartCastInsideIf() {
       runTest("compiler/testData/codegen/box/smartCasts/smartCastInsideIf.kt");
+    }
+
+    @Test
+    @TestMetadata("smartCastedGenericWhenSubjectInRangeCheck.kt")
+    public void testSmartCastedGenericWhenSubjectInRangeCheck() {
+      runTest("compiler/testData/codegen/box/smartCasts/smartCastedGenericWhenSubjectInRangeCheck.kt");
     }
 
     @Test

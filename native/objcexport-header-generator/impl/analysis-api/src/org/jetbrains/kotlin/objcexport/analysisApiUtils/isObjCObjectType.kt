@@ -6,9 +6,9 @@
 package org.jetbrains.kotlin.objcexport.analysisApiUtils
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtClassType
-import org.jetbrains.kotlin.analysis.api.types.KtClassTypeQualifier.KtResolvedClassTypeQualifier
+import org.jetbrains.kotlin.analysis.api.types.KaClassTypeQualifier.KaResolvedClassTypeQualifier
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.name.NativeStandardInteropNames
 import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
@@ -17,11 +17,11 @@ context(KtAnalysisSession)
 internal fun KtType.isObjCObjectType(): Boolean {
     /* Check if this type represents 'ObjCObject' */
     (this as? KtClassType)?.qualifiers.orEmpty()
-        .filterIsInstance<KtResolvedClassTypeQualifier>()
+        .filterIsInstance<KaResolvedClassTypeQualifier>()
         .asSequence()
         .map { qualifier -> qualifier.symbol }
-        .filterIsInstance<KtNamedClassOrObjectSymbol>()
-        .any { symbol -> symbol.classIdIfNonLocal == NativeStandardInteropNames.objCObjectClassId }
+        .filterIsInstance<KaNamedClassOrObjectSymbol>()
+        .any { symbol -> symbol.classId == NativeStandardInteropNames.objCObjectClassId }
         .ifTrue { return true }
 
 

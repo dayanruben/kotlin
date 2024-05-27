@@ -2,7 +2,7 @@
 
 KtNamedClassOrObjectSymbol:
   annotationsList: []
-  classIdIfNonLocal: sample/A
+  classId: sample/A
   classKind: OBJECT
   companionObject: null
   contextReceivers: []
@@ -28,7 +28,7 @@ KtNamedClassOrObjectSymbol:
 
 KtNamedClassOrObjectSymbol:
   annotationsList: []
-  classIdIfNonLocal: sample/B
+  classId: sample/B
   classKind: CLASS
   companionObject: null
   contextReceivers: []
@@ -54,8 +54,8 @@ KtNamedClassOrObjectSymbol:
 
 KtConstructorSymbol:
   annotationsList: []
-  callableIdIfNonLocal: null
-  containingClassIdIfNonLocal: sample/B
+  callableId: null
+  containingClassId: sample/B
   contextReceivers: []
   hasStableParameterNames: true
   isActual: false
@@ -73,7 +73,7 @@ KtConstructorSymbol:
   valueParameters: [
     KtValueParameterSymbol:
       annotationsList: []
-      callableIdIfNonLocal: null
+      callableId: null
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
@@ -96,8 +96,8 @@ KtConstructorSymbol:
 
 KtConstructorSymbol:
   annotationsList: []
-  callableIdIfNonLocal: null
-  containingClassIdIfNonLocal: sample/B
+  callableId: null
+  containingClassId: sample/B
   contextReceivers: []
   hasStableParameterNames: true
   isActual: false
@@ -115,7 +115,7 @@ KtConstructorSymbol:
   valueParameters: [
     KtValueParameterSymbol:
       annotationsList: []
-      callableIdIfNonLocal: null
+      callableId: null
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
@@ -138,7 +138,7 @@ KtConstructorSymbol:
 
 KtNamedClassOrObjectSymbol:
   annotationsList: []
-  classIdIfNonLocal: sample/B.Nested
+  classId: sample/B.Nested
   classKind: CLASS
   companionObject: null
   contextReceivers: []
@@ -164,7 +164,7 @@ KtNamedClassOrObjectSymbol:
 
 KtFunctionSymbol:
   annotationsList: []
-  callableIdIfNonLocal: sample/B.bar
+  callableId: sample/B.bar
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -197,7 +197,7 @@ KtKotlinPropertySymbol:
   annotationsList: []
   backingFieldSymbol: KtBackingFieldSymbol:
     annotationsList: []
-    callableIdIfNonLocal: null
+    callableId: null
     contextReceivers: []
     isExtension: false
     name: field
@@ -210,11 +210,11 @@ KtKotlinPropertySymbol:
       type: kotlin/Int
     symbolKind: LOCAL
     typeParameters: []
-  callableIdIfNonLocal: sample/B.n
+  callableId: sample/B.n
   contextReceivers: []
   getter: KtPropertyGetterSymbol:
     annotationsList: []
-    callableIdIfNonLocal: null
+    callableId: null
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
@@ -262,7 +262,7 @@ KtKotlinPropertySymbol:
 
 KtNamedClassOrObjectSymbol:
   annotationsList: []
-  classIdIfNonLocal: sample/C
+  classId: sample/C
   classKind: CLASS
   companionObject: null
   contextReceivers: []
@@ -288,7 +288,7 @@ KtNamedClassOrObjectSymbol:
 
 KtNamedClassOrObjectSymbol:
   annotationsList: []
-  classIdIfNonLocal: sample/C.Nested
+  classId: sample/C.Nested
   classKind: CLASS
   companionObject: null
   contextReceivers: []
@@ -314,7 +314,7 @@ KtNamedClassOrObjectSymbol:
 
 KtFunctionSymbol:
   annotationsList: []
-  callableIdIfNonLocal: sample/baz
+  callableId: sample/baz
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -347,7 +347,7 @@ KtKotlinPropertySymbol:
   annotationsList: []
   backingFieldSymbol: KtBackingFieldSymbol:
     annotationsList: []
-    callableIdIfNonLocal: null
+    callableId: null
     contextReceivers: []
     isExtension: false
     name: field
@@ -360,11 +360,11 @@ KtKotlinPropertySymbol:
       type: kotlin/Int
     symbolKind: LOCAL
     typeParameters: []
-  callableIdIfNonLocal: sample/m
+  callableId: sample/m
   contextReceivers: []
   getter: KtPropertyGetterSymbol:
     annotationsList: []
-    callableIdIfNonLocal: null
+    callableId: null
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
@@ -407,7 +407,7 @@ KtKotlinPropertySymbol:
     type: kotlin/Int
   setter: KtPropertySetterSymbol:
     annotationsList: []
-    callableIdIfNonLocal: null
+    callableId: null
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
@@ -419,7 +419,7 @@ KtKotlinPropertySymbol:
     origin: SOURCE
     parameter: KtValueParameterSymbol:
       annotationsList: []
-      callableIdIfNonLocal: null
+      callableId: null
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
@@ -447,7 +447,7 @@ KtKotlinPropertySymbol:
     valueParameters: [
       KtValueParameterSymbol:
         annotationsList: []
-        callableIdIfNonLocal: null
+        callableId: null
         contextReceivers: []
         generatedPrimaryConstructorProperty: null
         hasDefaultValue: false
@@ -475,7 +475,7 @@ KtKotlinPropertySymbol:
 
 KtNamedClassOrObjectSymbol:
   annotationsList: []
-  classIdIfNonLocal: sample/A
+  classId: sample/A
   classKind: OBJECT
   companionObject: null
   contextReceivers: []
@@ -501,7 +501,7 @@ KtNamedClassOrObjectSymbol:
 
 KtNamedClassOrObjectSymbol:
   annotationsList: []
-  classIdIfNonLocal: sample/B
+  classId: sample/B
   classKind: CLASS
   companionObject: null
   contextReceivers: []
@@ -527,8 +527,8 @@ KtNamedClassOrObjectSymbol:
 
 KtConstructorSymbol:
   annotationsList: []
-  callableIdIfNonLocal: null
-  containingClassIdIfNonLocal: sample/B
+  callableId: null
+  containingClassId: sample/B
   contextReceivers: []
   hasStableParameterNames: true
   isActual: true
@@ -546,7 +546,7 @@ KtConstructorSymbol:
   valueParameters: [
     KtValueParameterSymbol:
       annotationsList: []
-      callableIdIfNonLocal: null
+      callableId: null
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
@@ -569,8 +569,8 @@ KtConstructorSymbol:
 
 KtConstructorSymbol:
   annotationsList: []
-  callableIdIfNonLocal: null
-  containingClassIdIfNonLocal: sample/B
+  callableId: null
+  containingClassId: sample/B
   contextReceivers: []
   hasStableParameterNames: true
   isActual: true
@@ -588,7 +588,7 @@ KtConstructorSymbol:
   valueParameters: [
     KtValueParameterSymbol:
       annotationsList: []
-      callableIdIfNonLocal: null
+      callableId: null
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
@@ -611,7 +611,7 @@ KtConstructorSymbol:
 
 KtNamedClassOrObjectSymbol:
   annotationsList: []
-  classIdIfNonLocal: sample/B.Nested
+  classId: sample/B.Nested
   classKind: CLASS
   companionObject: null
   contextReceivers: []
@@ -637,7 +637,7 @@ KtNamedClassOrObjectSymbol:
 
 KtFunctionSymbol:
   annotationsList: []
-  callableIdIfNonLocal: sample/B.bar
+  callableId: sample/B.bar
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -670,7 +670,7 @@ KtKotlinPropertySymbol:
   annotationsList: []
   backingFieldSymbol: KtBackingFieldSymbol:
     annotationsList: []
-    callableIdIfNonLocal: null
+    callableId: null
     contextReceivers: []
     isExtension: false
     name: field
@@ -683,11 +683,11 @@ KtKotlinPropertySymbol:
       type: kotlin/Int
     symbolKind: LOCAL
     typeParameters: []
-  callableIdIfNonLocal: sample/B.n
+  callableId: sample/B.n
   contextReceivers: []
   getter: KtPropertyGetterSymbol:
     annotationsList: []
-    callableIdIfNonLocal: null
+    callableId: null
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
@@ -735,7 +735,7 @@ KtKotlinPropertySymbol:
 
 KtTypeAliasSymbol:
   annotationsList: []
-  classIdIfNonLocal: sample/C
+  classId: sample/C
   expandedType: KtUsualClassType:
     annotationsList: []
     ownTypeArguments: []
@@ -750,7 +750,7 @@ KtTypeAliasSymbol:
 
 KtNamedClassOrObjectSymbol:
   annotationsList: []
-  classIdIfNonLocal: sample/D
+  classId: sample/D
   classKind: CLASS
   companionObject: null
   contextReceivers: []
@@ -776,7 +776,7 @@ KtNamedClassOrObjectSymbol:
 
 KtNamedClassOrObjectSymbol:
   annotationsList: []
-  classIdIfNonLocal: sample/D.Nested
+  classId: sample/D.Nested
   classKind: CLASS
   companionObject: null
   contextReceivers: []
@@ -802,7 +802,7 @@ KtNamedClassOrObjectSymbol:
 
 KtFunctionSymbol:
   annotationsList: []
-  callableIdIfNonLocal: sample/baz
+  callableId: sample/baz
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -835,7 +835,7 @@ KtKotlinPropertySymbol:
   annotationsList: []
   backingFieldSymbol: KtBackingFieldSymbol:
     annotationsList: []
-    callableIdIfNonLocal: null
+    callableId: null
     contextReceivers: []
     isExtension: false
     name: field
@@ -848,11 +848,11 @@ KtKotlinPropertySymbol:
       type: kotlin/Int
     symbolKind: LOCAL
     typeParameters: []
-  callableIdIfNonLocal: sample/m
+  callableId: sample/m
   contextReceivers: []
   getter: KtPropertyGetterSymbol:
     annotationsList: []
-    callableIdIfNonLocal: null
+    callableId: null
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
@@ -895,7 +895,7 @@ KtKotlinPropertySymbol:
     type: kotlin/Int
   setter: KtPropertySetterSymbol:
     annotationsList: []
-    callableIdIfNonLocal: null
+    callableId: null
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
@@ -907,7 +907,7 @@ KtKotlinPropertySymbol:
     origin: SOURCE
     parameter: KtValueParameterSymbol:
       annotationsList: []
-      callableIdIfNonLocal: null
+      callableId: null
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
@@ -935,7 +935,7 @@ KtKotlinPropertySymbol:
     valueParameters: [
       KtValueParameterSymbol:
         annotationsList: []
-        callableIdIfNonLocal: null
+        callableId: null
         contextReceivers: []
         generatedPrimaryConstructorProperty: null
         hasDefaultValue: false

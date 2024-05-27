@@ -585,6 +585,7 @@ public final class org/jetbrains/kotlin/gradle/dsl/KotlinVersion : java/lang/Enu
 	public static final field KOTLIN_1_9 Lorg/jetbrains/kotlin/gradle/dsl/KotlinVersion;
 	public static final field KOTLIN_2_0 Lorg/jetbrains/kotlin/gradle/dsl/KotlinVersion;
 	public static final field KOTLIN_2_1 Lorg/jetbrains/kotlin/gradle/dsl/KotlinVersion;
+	public static final field KOTLIN_2_2 Lorg/jetbrains/kotlin/gradle/dsl/KotlinVersion;
 	public static final fun fromVersion (Ljava/lang/String;)Lorg/jetbrains/kotlin/gradle/dsl/KotlinVersion;
 	public static final fun getDEFAULT ()Lorg/jetbrains/kotlin/gradle/dsl/KotlinVersion;
 	public final fun getVersion ()Ljava/lang/String;
@@ -1356,7 +1357,9 @@ public abstract interface class org/jetbrains/kotlin/gradle/tasks/CompileUsingKo
 public abstract interface class org/jetbrains/kotlin/gradle/tasks/IncrementalSyncTask : org/gradle/api/Task {
 	public abstract fun getDestinationDir ()Ljava/io/File;
 	public abstract fun getDestinationDirectory ()Lorg/gradle/api/provider/Property;
+	public abstract fun getDuplicatesStrategy ()Lorg/gradle/api/file/DuplicatesStrategy;
 	public abstract fun getFrom ()Lorg/gradle/api/file/ConfigurableFileCollection;
+	public abstract fun setDuplicatesStrategy (Lorg/gradle/api/file/DuplicatesStrategy;)V
 }
 
 public final class org/jetbrains/kotlin/gradle/tasks/IncrementalSyncTask$DefaultImpls {

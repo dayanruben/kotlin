@@ -50,7 +50,8 @@ dependencies {
 
     testImplementation(libs.opentest4j)
     testImplementation(project(":analysis:analysis-api-standalone:analysis-api-fir-standalone-base"))
-    testImplementation(toolsJar())
+    testCompileOnly(toolsJarApi())
+    testRuntimeOnly(toolsJar())
     testImplementation(projectTests(":compiler:tests-common"))
     testImplementation(projectTests(":compiler:fir:analysis-tests:legacy-fir-tests"))
     testImplementation(projectTests(":analysis:analysis-api-impl-barebone"))
@@ -102,7 +103,7 @@ allprojects {
             listOf(
                 "org.jetbrains.kotlin.fir.symbols.SymbolInternals",
                 "org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals",
-                "org.jetbrains.kotlin.analysis.api.KtAnalysisApiInternals",
+                "org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals",
             )
         )
     }

@@ -8125,6 +8125,16 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
   @TestDataPath("$PROJECT_ROOT")
   @RunWith(JUnit3RunnerWithInners.class)
   public static class Companion extends AbstractLightAnalysisModeTest {
+    @TestMetadata("protectedConstValFromSuperCompanion.kt")
+    public void ignoreProtectedConstValFromSuperCompanion() {
+      runTest("compiler/testData/codegen/box/companion/protectedConstValFromSuperCompanion.kt");
+    }
+
+    @TestMetadata("protectedJvmFieldValFromSuperCompanion.kt")
+    public void ignoreProtectedJvmFieldValFromSuperCompanion() {
+      runTest("compiler/testData/codegen/box/companion/protectedJvmFieldValFromSuperCompanion.kt");
+    }
+
     private void runTest(String testDataFilePath) {
       KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
     }
@@ -12630,6 +12640,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       @TestMetadata("subtypeOfFunctionalTypeToSuspendConversion.kt")
       public void testSubtypeOfFunctionalTypeToSuspendConversion() {
         runTest("compiler/testData/codegen/box/coroutines/suspendConversion/subtypeOfFunctionalTypeToSuspendConversion.kt");
+      }
+
+      @TestMetadata("suspendConversionBetweenFunInterfaces.kt")
+      public void testSuspendConversionBetweenFunInterfaces() {
+        runTest("compiler/testData/codegen/box/coroutines/suspendConversion/suspendConversionBetweenFunInterfaces.kt");
       }
     }
 
@@ -32747,6 +32762,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/multiplatform/starImportOfExpectEnumWithActualTypeAlias.kt");
     }
 
+    @TestMetadata("unsignedArrayForLoop.kt")
+    public void testUnsignedArrayForLoop() {
+      runTest("compiler/testData/codegen/box/multiplatform/unsignedArrayForLoop.kt");
+    }
+
     @TestMetadata("compiler/testData/codegen/box/multiplatform/complexMatchings")
     @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
@@ -33017,6 +33037,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       @TestMetadata("hmppSimple.kt")
       public void testHmppSimple() {
         runTest("compiler/testData/codegen/box/multiplatform/multiModule/hmppSimple.kt");
+      }
+
+      @TestMetadata("stdlibClassRedefine.kt")
+      public void testStdlibClassRedefine() {
+        runTest("compiler/testData/codegen/box/multiplatform/multiModule/stdlibClassRedefine.kt");
       }
     }
   }
@@ -44567,6 +44592,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestMetadata("smartCastInsideIf.kt")
     public void testSmartCastInsideIf() {
       runTest("compiler/testData/codegen/box/smartCasts/smartCastInsideIf.kt");
+    }
+
+    @TestMetadata("smartCastedGenericWhenSubjectInRangeCheck.kt")
+    public void testSmartCastedGenericWhenSubjectInRangeCheck() {
+      runTest("compiler/testData/codegen/box/smartCasts/smartCastedGenericWhenSubjectInRangeCheck.kt");
     }
 
     @TestMetadata("smartcastFromGenericToString.kt")

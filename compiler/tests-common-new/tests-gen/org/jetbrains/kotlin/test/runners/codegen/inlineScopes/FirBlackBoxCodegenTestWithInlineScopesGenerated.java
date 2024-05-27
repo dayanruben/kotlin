@@ -9374,6 +9374,18 @@ public class FirBlackBoxCodegenTestWithInlineScopesGenerated extends AbstractFir
     public void testKt54645() {
       runTest("compiler/testData/codegen/box/companion/kt54645.kt");
     }
+
+    @Test
+    @TestMetadata("protectedConstValFromSuperCompanion.kt")
+    public void testProtectedConstValFromSuperCompanion() {
+      runTest("compiler/testData/codegen/box/companion/protectedConstValFromSuperCompanion.kt");
+    }
+
+    @Test
+    @TestMetadata("protectedJvmFieldValFromSuperCompanion.kt")
+    public void testProtectedJvmFieldValFromSuperCompanion() {
+      runTest("compiler/testData/codegen/box/companion/protectedJvmFieldValFromSuperCompanion.kt");
+    }
   }
 
   @Nested
@@ -15492,6 +15504,12 @@ public class FirBlackBoxCodegenTestWithInlineScopesGenerated extends AbstractFir
       @TestMetadata("subtypeOfFunctionalTypeToSuspendConversion.kt")
       public void testSubtypeOfFunctionalTypeToSuspendConversion() {
         runTest("compiler/testData/codegen/box/coroutines/suspendConversion/subtypeOfFunctionalTypeToSuspendConversion.kt");
+      }
+
+      @Test
+      @TestMetadata("suspendConversionBetweenFunInterfaces.kt")
+      public void testSuspendConversionBetweenFunInterfaces() {
+        runTest("compiler/testData/codegen/box/coroutines/suspendConversion/suspendConversionBetweenFunInterfaces.kt");
       }
     }
 
@@ -38371,6 +38389,12 @@ public class FirBlackBoxCodegenTestWithInlineScopesGenerated extends AbstractFir
       runTest("compiler/testData/codegen/box/multiplatform/starImportOfExpectEnumWithActualTypeAlias.kt");
     }
 
+    @Test
+    @TestMetadata("unsignedArrayForLoop.kt")
+    public void testUnsignedArrayForLoop() {
+      runTest("compiler/testData/codegen/box/multiplatform/unsignedArrayForLoop.kt");
+    }
+
     @Nested
     @TestMetadata("compiler/testData/codegen/box/multiplatform/complexMatchings")
     @TestDataPath("$PROJECT_ROOT")
@@ -38662,6 +38686,12 @@ public class FirBlackBoxCodegenTestWithInlineScopesGenerated extends AbstractFir
       @TestMetadata("hmppSimple.kt")
       public void testHmppSimple() {
         runTest("compiler/testData/codegen/box/multiplatform/multiModule/hmppSimple.kt");
+      }
+
+      @Test
+      @TestMetadata("stdlibClassRedefine.kt")
+      public void testStdlibClassRedefine() {
+        runTest("compiler/testData/codegen/box/multiplatform/multiModule/stdlibClassRedefine.kt");
       }
     }
   }
@@ -54981,6 +55011,12 @@ public class FirBlackBoxCodegenTestWithInlineScopesGenerated extends AbstractFir
     @TestMetadata("smartCastInsideIf.kt")
     public void testSmartCastInsideIf() {
       runTest("compiler/testData/codegen/box/smartCasts/smartCastInsideIf.kt");
+    }
+
+    @Test
+    @TestMetadata("smartCastedGenericWhenSubjectInRangeCheck.kt")
+    public void testSmartCastedGenericWhenSubjectInRangeCheck() {
+      runTest("compiler/testData/codegen/box/smartCasts/smartCastedGenericWhenSubjectInRangeCheck.kt");
     }
 
     @Test

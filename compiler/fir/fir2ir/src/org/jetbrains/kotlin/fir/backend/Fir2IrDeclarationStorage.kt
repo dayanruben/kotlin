@@ -350,11 +350,8 @@ class Fir2IrDeclarationStorage(
         )
     }
 
-    internal fun createFunctionSymbol(signature: IdSignature?): IrSimpleFunctionSymbol {
-        return when {
-            signature != null -> symbolTable.referenceSimpleFunction(signature)
-            else -> IrSimpleFunctionSymbolImpl()
-        }
+    internal fun createFunctionSymbol(): IrSimpleFunctionSymbol {
+        return IrSimpleFunctionSymbolImpl()
     }
 
     private fun createMemberFunctionSymbol(
@@ -367,7 +364,7 @@ class Fir2IrDeclarationStorage(
             function !is FirSimpleFunction ||
             !function.isFakeOverride(fakeOverrideOwnerLookupTag)
         ) {
-            return createFunctionSymbol(signature = null)
+            return createFunctionSymbol()
         }
         val containingClassSymbol = findContainingIrClassSymbol(function, fakeOverrideOwnerLookupTag)
         val originalFirFunction = function.unwrapFakeOverrides()
@@ -484,9 +481,7 @@ class Fir2IrDeclarationStorage(
         val symbol = IrConstructorSymbolImpl()
         if (potentiallyExternal) {
             val irParent = findIrParent(constructor, fakeOverrideOwnerLookupTag = null)
-            val isIntrinsicConstEvaluation =
-                constructor.returnTypeRef.coneType.classId == StandardClassIds.Annotations.IntrinsicConstEvaluation
-            if (irParent.isExternalParent() || isIntrinsicConstEvaluation) {
+            if (irParent.isExternalParent()) {
                 callablesGenerator.createIrConstructor(
                     constructor,
                     irParent as IrClass,
@@ -494,7 +489,7 @@ class Fir2IrDeclarationStorage(
                     constructor.computeExternalOrigin(),
                     allowLazyDeclarationsCreation = true
                 ).also {
-                    check(it is Fir2IrLazyConstructor || isIntrinsicConstEvaluation)
+                    check(it is Fir2IrLazyConstructor)
                 }
             }
         }
@@ -570,8 +565,8 @@ class Fir2IrDeclarationStorage(
 
         val isJavaOrigin = property.origin is FirDeclarationOrigin.Java
         val propertySymbol = IrPropertySymbolImpl()
-        val getterSymbol = runIf(!isJavaOrigin) { createFunctionSymbol(signature = null) }
-        val setterSymbol = runIf(!isJavaOrigin && property.isVar) { createFunctionSymbol(signature = null) }
+        val getterSymbol = runIf(!isJavaOrigin) { createFunctionSymbol() }
+        val setterSymbol = runIf(!isJavaOrigin && property.isVar) { createFunctionSymbol() }
 
         val backingFieldSymbol = runIf(property.delegate != null || extensions.hasBackingField(property, session)) {
             createFieldSymbol()
@@ -1014,9 +1009,9 @@ class Fir2IrDeclarationStorage(
 
     private fun createLocalDelegatedPropertySymbols(property: FirProperty): LocalDelegatedPropertySymbols {
         val propertySymbol = IrLocalDelegatedPropertySymbolImpl()
-        val getterSymbol = createFunctionSymbol(signature = null)
+        val getterSymbol = createFunctionSymbol()
         val setterSymbol = runIf(property.isVar) {
-            createFunctionSymbol(signature = null)
+            createFunctionSymbol()
         }
         return LocalDelegatedPropertySymbols(propertySymbol, getterSymbol, setterSymbol)
     }
@@ -1253,7 +1248,6 @@ class Fir2IrDeclarationStorage(
     // ------------------------------------ scoping ------------------------------------
 
     fun enterScope(symbol: IrSymbol) {
-        symbolTable.enterScope(symbol)
         if (symbol is IrSimpleFunctionSymbol ||
             symbol is IrConstructorSymbol ||
             symbol is IrAnonymousInitializerSymbol ||
@@ -1280,7 +1274,6 @@ class Fir2IrDeclarationStorage(
             }
             localStorage.leaveCallable()
         }
-        symbolTable.leaveScope(symbol)
     }
 
     inline fun withScope(symbol: IrSymbol, crossinline block: () -> Unit) {

@@ -5,19 +5,20 @@
 
 package org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.callResolver
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.KtCallCandidateInfo
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.calls.KaCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.assertStableSymbolResult
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.compareCalls
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.stringRepresentation
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.test.services.TestServices
-import org.jetbrains.kotlin.test.services.assertions
 import org.jetbrains.kotlin.test.services.moduleStructure
 
 abstract class AbstractResolveCandidatesTest : AbstractResolveTest() {
-    override fun doResolutionTest(mainElement: KtElement, testServices: TestServices) {
-        val actual = analyseForTest(mainElement) {
+    override val resolveKind: String get() = "candidates"
+
+    override fun generateResolveOutput(mainElement: KtElement, testServices: TestServices): String {
+        return analyseForTest(mainElement) {
             val candidates = collectCallCandidates(mainElement)
             ignoreStabilityIfNeeded(testServices.moduleStructure.allDirectives) {
                 val candidatesAgain = collectCallCandidates(mainElement)
@@ -30,11 +31,9 @@ abstract class AbstractResolveCandidatesTest : AbstractResolveTest() {
                 candidates.joinToString("\n\n") { stringRepresentation(it) }
             }
         }
-
-        testServices.assertions.assertEqualsToTestDataFileSibling(actual)
     }
 
-    private fun KtAnalysisSession.collectCallCandidates(element: KtElement): List<KtCallCandidateInfo> {
+    private fun KaSession.collectCallCandidates(element: KtElement): List<KaCallCandidateInfo> {
         val candidates = element.collectCallCandidates()
         return candidates.sortedWith { candidate1, candidate2 ->
             compareCalls(candidate1.candidate, candidate2.candidate)

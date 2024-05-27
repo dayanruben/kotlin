@@ -72,7 +72,7 @@ internal class NativeCodeGeneratorException(val declarations: List<IrElement>, c
 
 internal enum class FieldStorageKind {
     GLOBAL, // In the old memory model these are only accessible from the "main" thread.
-    SHARED_FROZEN,
+    SHARED_FROZEN, // Shouldn't be used anymore, since legacy MM and freezing are no longer supported.
     THREAD_LOCAL
 }
 
@@ -107,9 +107,6 @@ internal fun IrField.isGlobalNonPrimitive(context: Context) = when  {
         else -> storageKind(context) == FieldStorageKind.GLOBAL
     }
 
-
-internal fun IrField.shouldBeFrozen(context: Context): Boolean =
-        this.storageKind(context) == FieldStorageKind.SHARED_FROZEN
 
 internal fun IrFunction.shouldGenerateBody(): Boolean = when {
     this is IrConstructor && constructedClass.isInlined() -> false
@@ -394,16 +391,13 @@ internal class CodeGeneratorVisitor(
     private fun FunctionGenerationContext.initThreadLocalField(irField: IrField) {
         val initializer = irField.initializer ?: return
         val address = staticFieldPtr(irField, this)
-        storeAny(evaluateExpression(initializer.expression), address, false)
+        storeAny(evaluateExpression(initializer.expression), address, irField.type.binaryTypeIsReference(), false)
     }
 
     private fun FunctionGenerationContext.initGlobalField(irField: IrField) {
         val address = staticFieldPtr(irField, this)
         val initialValue = if (irField.hasNonConstInitializer) {
-            val initialization = evaluateExpression(irField.initializer!!.expression)
-            if (irField.shouldBeFrozen(context))
-                freeze(initialization, currentCodeContext.exceptionHandler)
-            initialization
+            evaluateExpression(irField.initializer!!.expression)
         } else {
             null
         }
@@ -411,7 +405,7 @@ internal class CodeGeneratorVisitor(
             call(llvm.initAndRegisterGlobalFunction, listOf(address, initialValue
                     ?: kNullObjHeaderPtr))
         } else if (initialValue != null) {
-            storeAny(initialValue, address, false)
+            storeAny(initialValue, address, irField.type.binaryTypeIsReference(), false)
         }
     }
 
@@ -495,8 +489,8 @@ internal class CodeGeneratorVisitor(
     //-------------------------------------------------------------------------//
 
     val ctorFunctionSignature = LlvmFunctionSignature(LlvmRetType(llvm.voidType))
-    val kNodeInitType = LLVMGetTypeByName(llvm.module, "struct.InitNode")!!
-    val kMemoryStateType = LLVMGetTypeByName(llvm.module, "struct.MemoryState")!!
+    val kNodeInitType = llvm.runtime.initNodeType
+    val kMemoryStateType = llvm.runtime.memoryStateType
     val kInitFuncType = LlvmFunctionSignature(LlvmRetType(llvm.voidType), listOf(LlvmParamType(llvm.int32Type), LlvmParamType(pointerType(kMemoryStateType))))
 
     //-------------------------------------------------------------------------//
@@ -816,7 +810,7 @@ internal class CodeGeneratorVisitor(
     private fun getThreadLocalInitStateFor(container: IrDeclarationContainer): AddressAccess =
             llvm.initializersGenerationState.fileThreadLocalInitStates.getOrPut(container) {
                 codegen.addKotlinThreadLocal("state_thread_local$${container.initVariableSuffix}", llvm.int32Type,
-                        LLVMPreferredAlignmentOfType(llvm.runtime.targetData, llvm.int32Type)).also {
+                        LLVMPreferredAlignmentOfType(llvm.runtime.targetData, llvm.int32Type), false).also {
                     LLVMSetInitializer((it as GlobalAddressAccess).getAddress(null), llvm.int32(FILE_NOT_INITIALIZED))
                 }
             }
@@ -1689,7 +1683,9 @@ internal class CodeGeneratorVisitor(
                 null
         )
 
-        return if (dstClass.isObjCClass()) {
+        return if (dstClass.isCompanion) {
+            functionGenerationContext.icmpEq(objCObject, genGetObjCClass(dstClass.parentAsClass))
+        } else if (dstClass.isObjCClass()) {
             if (dstClass.isInterface) {
                 val isMeta = if (dstClass.isObjCMetaClass()) kTrue else kFalse
                 call(
@@ -1773,6 +1769,7 @@ internal class CodeGeneratorVisitor(
         }
         return functionGenerationContext.loadSlot(
                 value.type.toLLVMType(llvm),
+                value.type.binaryTypeIsReference(),
                 fieldAddress,
                 !value.symbol.owner.isFinal,
                 resultSlot,
@@ -1789,9 +1786,7 @@ internal class CodeGeneratorVisitor(
     }
 
     private fun needLifetimeConstraintsCheck(valueToAssign: LLVMValueRef, irClass: IrClass): Boolean {
-        // TODO: Likely, we don't need isFrozen check here at all.
-        return context.config.memoryModel != MemoryModel.EXPERIMENTAL
-                && functionGenerationContext.isObjectType(valueToAssign.type) && !irClass.isFrozen(context)
+        return false // Never true for MemoryModel.EXPERIMENTAL
     }
 
     private fun isZeroConstValue(value: IrExpression): Boolean {
@@ -1845,13 +1840,11 @@ internal class CodeGeneratorVisitor(
             require(value.symbol.owner.isStatic) { "A receiver expected for a non-static field: ${value.render()}" }
             if (value.symbol.owner.storageKind(context) == FieldStorageKind.GLOBAL)
                 functionGenerationContext.checkGlobalsAccessible(currentCodeContext.exceptionHandler)
-            if (value.symbol.owner.shouldBeFrozen(context) && value.origin != ObjectClassLowering.IrStatementOriginFieldPreInit)
-                functionGenerationContext.freeze(valueToAssign, currentCodeContext.exceptionHandler)
             address = staticFieldPtr(value.symbol.owner, functionGenerationContext)
             alignment = generationState.llvmDeclarations.forStaticField(value.symbol.owner).alignment
         }
         functionGenerationContext.storeAny(
-                valueToAssign, address, false,
+                valueToAssign, address, value.symbol.owner.type.binaryTypeIsReference(), false,
                 isVolatile = value.symbol.owner.hasAnnotation(KonanFqNames.volatile),
                 alignment = alignment,
         )

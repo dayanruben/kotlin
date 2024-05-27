@@ -71,7 +71,7 @@ import org.jetbrains.kotlin.psi.KtWhenExpression
  * DO NOT MODIFY IT MANUALLY
  */
 
-internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConverter {
+internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConverter {
     add(FirErrors.UNSUPPORTED) { firDiagnostic ->
         UnsupportedImpl(
             firDiagnostic.a,
@@ -284,6 +284,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.MISSING_CONSTRUCTOR_KEYWORD) { firDiagnostic ->
         MissingConstructorKeywordImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.SINGLE_DOLLAR_INTERPOLATION_PREFIX) { firDiagnostic ->
+        SingleDollarInterpolationPrefixImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

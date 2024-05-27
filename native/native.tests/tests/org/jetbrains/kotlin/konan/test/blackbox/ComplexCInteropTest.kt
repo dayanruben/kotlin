@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.konan.test.blackbox
 
 import com.intellij.testFramework.TestDataPath
+import org.jetbrains.kotlin.konan.target.Architecture
 import org.jetbrains.kotlin.konan.target.ClangArgs
 import org.jetbrains.kotlin.konan.target.Family
 import org.jetbrains.kotlin.konan.target.isSimulator
@@ -461,5 +462,31 @@ abstract class ComplexCInteropTestBase : AbstractNativeSimpleTest() {
             fmodules = false, // with `-fmodules`, ld cannot find symbol `_assert`
         ).assertSuccess()
         return clangResult
+    }
+
+    @Test
+    @TestMetadata("arc_contract")
+    fun arcContract() {
+        Assumptions.assumeTrue(targets.testTarget.family.isAppleFamily)
+        Assumptions.assumeTrue(targets.testTarget.architecture == Architecture.ARM64)
+        val root = interopObjCDir.resolve("arc_contract")
+        val bcFile = buildDir.resolve("arc_contract.bc")
+        runProcess(
+            "${testRunSettings.configurables.absoluteLlvmHome}/bin/llvm-as",
+            root.resolve("main.ll").absolutePath,
+            "-o",
+            bcFile.absolutePath
+        )
+        val testCase = generateTestCaseWithSingleFile(
+            root.resolve("main.kt"),
+            testKind = TestKind.STANDALONE_NO_TR,
+            extras = TestCase.NoTestRunnerExtras(),
+            freeCompilerArgs = TestCompilerArgs("-native-library", bcFile.absolutePath),
+            checks = TestRunChecks.Default(testRunSettings.get<Timeouts>().executionTimeout).copy(
+                outputDataFile = TestRunCheck.OutputDataFile(file = root.resolve("main.out"))
+            )
+        )
+        val compilationResult = compileToExecutableInOneStage(testCase).assertSuccess()
+        runExecutableAndVerify(testCase, TestExecutable.fromCompilationResult(testCase, compilationResult))
     }
 }

@@ -1468,6 +1468,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
     }
 
     @Test
+    @TestMetadata("StringTemplatesMultiDollarInterpolation.kt")
+    public void testStringTemplatesMultiDollarInterpolation() {
+      runTest("compiler/testData/diagnostics/tests/StringTemplatesMultiDollarInterpolation.kt");
+    }
+
+    @Test
     @TestMetadata("superQualifierTypeArgsInDelegatedConstructorCall.kt")
     public void testSuperQualifierTypeArgsInDelegatedConstructorCall() {
       runTest("compiler/testData/diagnostics/tests/superQualifierTypeArgsInDelegatedConstructorCall.kt");
@@ -5694,6 +5700,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         }
 
         @Test
+        @TestMetadata("localClassWithCapturedTypeParameters.kt")
+        public void testLocalClassWithCapturedTypeParameters() {
+          runTest("compiler/testData/diagnostics/tests/callableReference/generic/localClassWithCapturedTypeParameters.kt");
+        }
+
+        @Test
         @TestMetadata("nestedCallWithOverload.kt")
         public void testNestedCallWithOverload() {
           runTest("compiler/testData/diagnostics/tests/callableReference/generic/nestedCallWithOverload.kt");
@@ -7162,6 +7174,18 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       @TestMetadata("nestedClassInPrivateClassObject.kt")
       public void testNestedClassInPrivateClassObject() {
         runTest("compiler/testData/diagnostics/tests/classObjects/nestedClassInPrivateClassObject.kt");
+      }
+
+      @Test
+      @TestMetadata("protectedFieldFromSuperCompanion_after.kt")
+      public void testProtectedFieldFromSuperCompanion_after() {
+        runTest("compiler/testData/diagnostics/tests/classObjects/protectedFieldFromSuperCompanion_after.kt");
+      }
+
+      @Test
+      @TestMetadata("protectedFieldFromSuperCompanion_before.kt")
+      public void testProtectedFieldFromSuperCompanion_before() {
+        runTest("compiler/testData/diagnostics/tests/classObjects/protectedFieldFromSuperCompanion_before.kt");
       }
 
       @Test
@@ -13159,6 +13183,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       public void testStackOverflowOnDoUnify() {
         runTest("compiler/testData/diagnostics/tests/exceptions/stackOverflowOnDoUnify.kt");
       }
+
+      @Test
+      @TestMetadata("transformErrorTypeChildrenWhileTransformingPartiallyResolvedType.kt")
+      public void testTransformErrorTypeChildrenWhileTransformingPartiallyResolvedType() {
+        runTest("compiler/testData/diagnostics/tests/exceptions/transformErrorTypeChildrenWhileTransformingPartiallyResolvedType.kt");
+      }
     }
 
     @Nested
@@ -13845,6 +13875,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         @TestMetadata("unsupported.kt")
         public void testUnsupported() {
           runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/unsupported.kt");
+        }
+
+        @Test
+        @TestMetadata("withAnnotations.kt")
+        public void testWithAnnotations() {
+          runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/withAnnotations.kt");
         }
 
         @Test
@@ -19876,6 +19912,24 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         }
 
         @Test
+        @TestMetadata("localTypeNullability.kt")
+        public void testLocalTypeNullability() {
+          runTest("compiler/testData/diagnostics/tests/inference/publicApproximation/localTypeNullability.kt");
+        }
+
+        @Test
+        @TestMetadata("localTypeNullability_after.kt")
+        public void testLocalTypeNullability_after() {
+          runTest("compiler/testData/diagnostics/tests/inference/publicApproximation/localTypeNullability_after.kt");
+        }
+
+        @Test
+        @TestMetadata("localTypeNullability_before.kt")
+        public void testLocalTypeNullability_before() {
+          runTest("compiler/testData/diagnostics/tests/inference/publicApproximation/localTypeNullability_before.kt");
+        }
+
+        @Test
         @TestMetadata("nonTrivialVariance.kt")
         public void testNonTrivialVariance() {
           runTest("compiler/testData/diagnostics/tests/inference/publicApproximation/nonTrivialVariance.kt");
@@ -23234,6 +23288,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         }
 
         @Test
+        @TestMetadata("mapMethodsImplementedInJava.kt")
+        public void testMapMethodsImplementedInJava() {
+          runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/mapMethodsImplementedInJava.kt");
+        }
+
+        @Test
         @TestMetadata("nonDirectHiddenOverride.kt")
         public void testNonDirectHiddenOverride() {
           runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/nonDirectHiddenOverride.kt");
@@ -23851,6 +23911,42 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         @TestMetadata("constantStaticStringField.kt")
         public void testConstantStaticStringField() {
           runTest("compiler/testData/diagnostics/tests/j+k/types/constantStaticStringField.kt");
+        }
+
+        @Test
+        @TestMetadata("newListMethodsNullabilityLinkedList20.kt")
+        public void testNewListMethodsNullabilityLinkedList20() {
+          runTest("compiler/testData/diagnostics/tests/j+k/types/newListMethodsNullabilityLinkedList20.kt");
+        }
+
+        @Test
+        @TestMetadata("newListMethodsNullabilityLinkedList21.kt")
+        public void testNewListMethodsNullabilityLinkedList21() {
+          runTest("compiler/testData/diagnostics/tests/j+k/types/newListMethodsNullabilityLinkedList21.kt");
+        }
+
+        @Test
+        @TestMetadata("newListMethodsNullabilityLinkedListLatest.kt")
+        public void testNewListMethodsNullabilityLinkedListLatest() {
+          runTest("compiler/testData/diagnostics/tests/j+k/types/newListMethodsNullabilityLinkedListLatest.kt");
+        }
+
+        @Test
+        @TestMetadata("newListMethodsNullabilityOverridesLinkedList20.kt")
+        public void testNewListMethodsNullabilityOverridesLinkedList20() {
+          runTest("compiler/testData/diagnostics/tests/j+k/types/newListMethodsNullabilityOverridesLinkedList20.kt");
+        }
+
+        @Test
+        @TestMetadata("newListMethodsNullabilityOverridesLinkedList21.kt")
+        public void testNewListMethodsNullabilityOverridesLinkedList21() {
+          runTest("compiler/testData/diagnostics/tests/j+k/types/newListMethodsNullabilityOverridesLinkedList21.kt");
+        }
+
+        @Test
+        @TestMetadata("newListMethodsNullabilityOverridesLinkedListLatest.kt")
+        public void testNewListMethodsNullabilityOverridesLinkedListLatest() {
+          runTest("compiler/testData/diagnostics/tests/j+k/types/newListMethodsNullabilityOverridesLinkedListLatest.kt");
         }
 
         @Test
@@ -28489,6 +28585,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       }
 
       @Test
+      @TestMetadata("unsafeAssignmentOfNullToJavaNotNullable.kt")
+      public void testUnsafeAssignmentOfNullToJavaNotNullable() {
+        runTest("compiler/testData/diagnostics/tests/nullableTypes/unsafeAssignmentOfNullToJavaNotNullable.kt");
+      }
+
+      @Test
       @TestMetadata("unsafeCallOnOperatorRedCode.kt")
       public void testUnsafeCallOnOperatorRedCode() {
         runTest("compiler/testData/diagnostics/tests/nullableTypes/unsafeCallOnOperatorRedCode.kt");
@@ -31581,6 +31683,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       }
 
       @Test
+      @TestMetadata("overrideRawTypedJavaMethodWithGenericTyped.kt")
+      public void testOverrideRawTypedJavaMethodWithGenericTyped() {
+        runTest("compiler/testData/diagnostics/tests/rawTypes/overrideRawTypedJavaMethodWithGenericTyped.kt");
+      }
+
+      @Test
       @TestMetadata("rawTypeOverrides.kt")
       public void testRawTypeOverrides() {
         runTest("compiler/testData/diagnostics/tests/rawTypes/rawTypeOverrides.kt");
@@ -33202,6 +33310,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       @TestMetadata("propertyInCompanionOfEnum.kt")
       public void testPropertyInCompanionOfEnum() {
         runTest("compiler/testData/diagnostics/tests/resolve/propertyInCompanionOfEnum.kt");
+      }
+
+      @Test
+      @TestMetadata("redCodeInOverloadByLambdaReturnTypeLambda.kt")
+      public void testRedCodeInOverloadByLambdaReturnTypeLambda() {
+        runTest("compiler/testData/diagnostics/tests/resolve/redCodeInOverloadByLambdaReturnTypeLambda.kt");
       }
 
       @Test
@@ -35183,6 +35297,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         @TestMetadata("interdependentStarProjections.kt")
         public void testInterdependentStarProjections() {
           runTest("compiler/testData/diagnostics/tests/scopes/variantProjections/interdependentStarProjections.kt");
+        }
+
+        @Test
+        @TestMetadata("irrelevantUnsafeVariance.kt")
+        public void testIrrelevantUnsafeVariance() {
+          runTest("compiler/testData/diagnostics/tests/scopes/variantProjections/irrelevantUnsafeVariance.kt");
         }
 
         @Test
@@ -40265,6 +40385,78 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       }
 
       @Test
+      @TestMetadata("newListMethodsNullability20.kt")
+      public void testNewListMethodsNullability20() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullability20.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullability21.kt")
+      public void testNewListMethodsNullability21() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullability21.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullabilityLatest.kt")
+      public void testNewListMethodsNullabilityLatest() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullabilityLatest.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullabilityLinkedList20.kt")
+      public void testNewListMethodsNullabilityLinkedList20() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullabilityLinkedList20.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullabilityLinkedList21.kt")
+      public void testNewListMethodsNullabilityLinkedList21() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullabilityLinkedList21.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullabilityLinkedListLatest.kt")
+      public void testNewListMethodsNullabilityLinkedListLatest() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullabilityLinkedListLatest.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullabilityOverrides20.kt")
+      public void testNewListMethodsNullabilityOverrides20() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullabilityOverrides20.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullabilityOverrides21.kt")
+      public void testNewListMethodsNullabilityOverrides21() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullabilityOverrides21.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullabilityOverridesLatest.kt")
+      public void testNewListMethodsNullabilityOverridesLatest() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullabilityOverridesLatest.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullabilityOverridesLinkedList20.kt")
+      public void testNewListMethodsNullabilityOverridesLinkedList20() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullabilityOverridesLinkedList20.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullabilityOverridesLinkedList21.kt")
+      public void testNewListMethodsNullabilityOverridesLinkedList21() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullabilityOverridesLinkedList21.kt");
+      }
+
+      @Test
+      @TestMetadata("newListMethodsNullabilityOverridesLinkedListLatest.kt")
+      public void testNewListMethodsNullabilityOverridesLinkedListLatest() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava21/newListMethodsNullabilityOverridesLinkedListLatest.kt");
+      }
+
+      @Test
       @TestMetadata("noFalsePositiveAbstractToArray.kt")
       public void testNoFalsePositiveAbstractToArray() {
         runTest("compiler/testData/diagnostics/tests/testsWithJava21/noFalsePositiveAbstractToArray.kt");
@@ -40816,6 +41008,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       @TestMetadata("enumEntryQualifier.kt")
       public void testEnumEntryQualifier() {
         runTest("compiler/testData/diagnostics/tests/typealias/enumEntryQualifier.kt");
+      }
+
+      @Test
+      @TestMetadata("expansionDnnTypeArgument.kt")
+      public void testExpansionDnnTypeArgument() {
+        runTest("compiler/testData/diagnostics/tests/typealias/expansionDnnTypeArgument.kt");
       }
 
       @Test
@@ -41470,6 +41668,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       @TestMetadata("chainedUnitSuspendConversion.kt")
       public void testChainedUnitSuspendConversion() {
         runTest("compiler/testData/diagnostics/tests/unitConversion/chainedUnitSuspendConversion.kt");
+      }
+
+      @Test
+      @TestMetadata("expressionsOnVariablesAndInvokeResolution.kt")
+      public void testExpressionsOnVariablesAndInvokeResolution() {
+        runTest("compiler/testData/diagnostics/tests/unitConversion/expressionsOnVariablesAndInvokeResolution.kt");
       }
 
       @Test
@@ -42428,6 +42632,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       @TestMetadata("smartCastAndSuppressedVisibility.kt")
       public void testSmartCastAndSuppressedVisibility() {
         runTest("compiler/testData/diagnostics/tests/visibility/smartCastAndSuppressedVisibility.kt");
+      }
+
+      @Test
+      @TestMetadata("visibleDeclarationThroughInvisibleTypeAlias.kt")
+      public void testVisibleDeclarationThroughInvisibleTypeAlias() {
+        runTest("compiler/testData/diagnostics/tests/visibility/visibleDeclarationThroughInvisibleTypeAlias.kt");
       }
     }
 
@@ -45989,6 +46199,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         @TestMetadata("suspendCallsWrongUpperBound.kt")
         public void testSuspendCallsWrongUpperBound() {
           runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/suspendCallsWrongUpperBound.kt");
+        }
+
+        @Test
+        @TestMetadata("suspendConversionBetweenFunInterfaces.kt")
+        public void testSuspendConversionBetweenFunInterfaces() {
+          runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/suspendConversionBetweenFunInterfaces.kt");
         }
 
         @Test

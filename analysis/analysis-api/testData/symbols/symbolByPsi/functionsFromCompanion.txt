@@ -1,6 +1,6 @@
 KtFunctionSymbol:
   annotationsList: []
-  callableIdIfNonLocal: /MyClass.Companion.functionFromCompanion
+  callableId: /MyClass.Companion.functionFromCompanion
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -29,7 +29,7 @@ KtFunctionSymbol:
   valueParameters: [
     KtValueParameterSymbol:
       annotationsList: []
-      callableIdIfNonLocal: null
+      callableId: null
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
@@ -67,7 +67,7 @@ KtFunctionSymbol:
     kotlin/jvm/JvmStatic()
       psi: KtAnnotationEntry
   ]
-  callableIdIfNonLocal: /MyClass.Companion.staticFunctionFromCompanion
+  callableId: /MyClass.Companion.staticFunctionFromCompanion
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -106,7 +106,7 @@ KtFunctionSymbol:
 
 KtNamedClassOrObjectSymbol:
   annotationsList: []
-  classIdIfNonLocal: MyClass.Companion
+  classId: MyClass.Companion
   classKind: COMPANION_OBJECT
   companionObject: null
   contextReceivers: []
@@ -136,7 +136,7 @@ KtNamedClassOrObjectSymbol:
 
 KtNamedClassOrObjectSymbol:
   annotationsList: []
-  classIdIfNonLocal: MyClass
+  classId: MyClass
   classKind: CLASS
   companionObject: KtNamedClassOrObjectSymbol(MyClass.Companion)
   contextReceivers: []

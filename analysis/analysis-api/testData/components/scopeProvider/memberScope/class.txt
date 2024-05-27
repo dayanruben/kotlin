@@ -1,6 +1,6 @@
 KtFunctionSymbol:
   annotationsList: []
-  callableIdIfNonLocal: test/C.foo
+  callableId: test/C.foo
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -41,7 +41,7 @@ KtKotlinPropertySymbol:
   annotationsList: []
   backingFieldSymbol: KtBackingFieldSymbol:
     annotationsList: []
-    callableIdIfNonLocal: null
+    callableId: null
     contextReceivers: []
     isExtension: false
     name: field
@@ -58,11 +58,11 @@ KtKotlinPropertySymbol:
     getContainingJvmClassName: test.C
     getContainingModule: KtSourceModule "Sources of main"
     deprecationStatus: null
-  callableIdIfNonLocal: test/C.bar
+  callableId: test/C.bar
   contextReceivers: []
   getter: KtPropertyGetterSymbol:
     annotationsList: []
-    callableIdIfNonLocal: null
+    callableId: null
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
@@ -130,7 +130,7 @@ KtKotlinPropertySymbol:
 
 KtFunctionSymbol:
   annotationsList: []
-  callableIdIfNonLocal: test/A.perform
+  callableId: test/A.perform
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -171,7 +171,7 @@ KtKotlinPropertySymbol:
   annotationsList: []
   backingFieldSymbol: KtBackingFieldSymbol:
     annotationsList: []
-    callableIdIfNonLocal: null
+    callableId: null
     contextReceivers: []
     isExtension: false
     name: field
@@ -188,11 +188,11 @@ KtKotlinPropertySymbol:
     getContainingJvmClassName: test.A
     getContainingModule: KtSourceModule "Sources of main"
     deprecationStatus: null
-  callableIdIfNonLocal: test/A.x
+  callableId: test/A.x
   contextReceivers: []
   getter: KtPropertyGetterSymbol:
     annotationsList: []
-    callableIdIfNonLocal: null
+    callableId: null
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
@@ -260,7 +260,7 @@ KtKotlinPropertySymbol:
 
 KtFunctionSymbol:
   annotationsList: []
-  callableIdIfNonLocal: kotlin/Any.equals
+  callableId: kotlin/Any.equals
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -289,7 +289,7 @@ KtFunctionSymbol:
   valueParameters: [
     KtValueParameterSymbol:
       annotationsList: []
-      callableIdIfNonLocal: null
+      callableId: null
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
@@ -324,7 +324,7 @@ KtFunctionSymbol:
 
 KtFunctionSymbol:
   annotationsList: []
-  callableIdIfNonLocal: kotlin/Any.hashCode
+  callableId: kotlin/Any.hashCode
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -363,7 +363,7 @@ KtFunctionSymbol:
 
 KtFunctionSymbol:
   annotationsList: []
-  callableIdIfNonLocal: kotlin/Any.toString
+  callableId: kotlin/Any.toString
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -402,7 +402,7 @@ KtFunctionSymbol:
 
 KtNamedClassOrObjectSymbol:
   annotationsList: []
-  classIdIfNonLocal: test/C.C2
+  classId: test/C.C2
   classKind: CLASS
   companionObject: null
   contextReceivers: []
@@ -432,7 +432,7 @@ KtNamedClassOrObjectSymbol:
 
 KtNamedClassOrObjectSymbol:
   annotationsList: []
-  classIdIfNonLocal: test/C.O2
+  classId: test/C.O2
   classKind: OBJECT
   companionObject: null
   contextReceivers: []
@@ -462,7 +462,7 @@ KtNamedClassOrObjectSymbol:
 
 KtNamedClassOrObjectSymbol:
   annotationsList: []
-  classIdIfNonLocal: test/C.Companion
+  classId: test/C.Companion
   classKind: COMPANION_OBJECT
   companionObject: null
   contextReceivers: []
@@ -492,7 +492,7 @@ KtNamedClassOrObjectSymbol:
 
 KtNamedClassOrObjectSymbol:
   annotationsList: []
-  classIdIfNonLocal: test/A.C1
+  classId: test/A.C1
   classKind: CLASS
   companionObject: null
   contextReceivers: []
@@ -522,7 +522,7 @@ KtNamedClassOrObjectSymbol:
 
 KtNamedClassOrObjectSymbol:
   annotationsList: []
-  classIdIfNonLocal: test/A.O1
+  classId: test/A.O1
   classKind: OBJECT
   companionObject: null
   contextReceivers: []
@@ -552,8 +552,8 @@ KtNamedClassOrObjectSymbol:
 
 KtConstructorSymbol:
   annotationsList: []
-  callableIdIfNonLocal: null
-  containingClassIdIfNonLocal: test/C
+  callableId: null
+  containingClassId: test/C
   contextReceivers: []
   hasStableParameterNames: true
   isActual: false

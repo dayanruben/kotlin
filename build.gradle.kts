@@ -48,6 +48,7 @@ plugins {
         id("kotlin.native.build-tools-conventions") apply false
     }
     `jvm-toolchains`
+    alias(libs.plugins.gradle.node) apply false
 }
 
 val isTeamcityBuild = project.kotlinBuildProperties.isTeamcityBuild
@@ -160,7 +161,6 @@ val commonCompilerModules = arrayOf(
     ":analysis:decompiled:decompiler-native",
     ":analysis:decompiled:decompiler-to-psi",
     ":analysis:decompiled:light-classes-for-decompiled",
-    ":analysis:analysis-api-providers",
     ":analysis:project-structure",
     ":analysis:kt-references",
     ":kotlin-build-common",
@@ -430,6 +430,13 @@ extra["compilerArtifactsForIde"] = listOfNotNull(
     ":prepare:ide-plugin-dependencies:high-level-api-fir-tests-for-ide",
     ":prepare:ide-plugin-dependencies:high-level-api-fe10-for-ide",
     ":prepare:ide-plugin-dependencies:high-level-api-fe10-tests-for-ide",
+    ":prepare:ide-plugin-dependencies:analysis-api-for-ide",
+    ":prepare:ide-plugin-dependencies:analysis-api-impl-base-for-ide",
+    ":prepare:ide-plugin-dependencies:analysis-api-impl-base-tests-for-ide",
+    ":prepare:ide-plugin-dependencies:analysis-api-k2-for-ide",
+    ":prepare:ide-plugin-dependencies:analysis-api-k2-tests-for-ide",
+    ":prepare:ide-plugin-dependencies:analysis-api-fe10-for-ide",
+    ":prepare:ide-plugin-dependencies:analysis-api-fe10-tests-for-ide",
     ":prepare:ide-plugin-dependencies:kt-references-fe10-for-ide",
     ":prepare:ide-plugin-dependencies:analysis-api-providers-for-ide",
     ":prepare:ide-plugin-dependencies:analysis-project-structure-for-ide",
@@ -806,6 +813,7 @@ tasks {
         dependsOn(":native:native.tests:test")
         dependsOn(":native:native.tests:driver:check")
         dependsOn(":native:native.tests:stress:check")
+        dependsOn(":native:native.tests:klib-compatibility:check")
         dependsOn(":native:objcexport-header-generator:check")
         dependsOn(":native:swift:swift-export-standalone:test")
     }
@@ -888,6 +896,7 @@ tasks {
         dependsOn(":kotlin-util-io:test")
         dependsOn(":kotlin-util-klib:test")
         dependsOn(":kotlin-util-klib-abi:test")
+        dependsOn(":kotlinx-metadata-klib:test")
         dependsOn(":generators:test")
     }
 
@@ -1124,11 +1133,9 @@ if (disableVerificationTasks) {
 
 gradle.taskGraph.whenReady(checkYarnAndNPMSuppressed)
 
-val cacheRedirectorEnabled = findProperty("cacheRedirectorEnabled")?.toString()?.toBoolean() == true
-
 plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin::class) {
     extensions.configure(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension::class.java) {
-        if (cacheRedirectorEnabled) {
+        if (kotlinBuildProperties.isCacheRedirectorEnabled) {
             downloadBaseUrl = "https://cache-redirector.jetbrains.com/nodejs.org/dist"
         }
 
@@ -1138,8 +1145,16 @@ plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin:
     }
 }
 
+plugins.withType(com.github.gradle.node.NodePlugin::class) {
+    extensions.configure(com.github.gradle.node.NodeExtension::class) {
+        if (kotlinBuildProperties.isCacheRedirectorEnabled) {
+            distBaseUrl = "https://cache-redirector.jetbrains.com/nodejs.org/dist"
+        }
+    }
+}
+
 afterEvaluate {
-    if (cacheRedirectorEnabled) {
+    if (kotlinBuildProperties.isCacheRedirectorEnabled) {
         rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin::class.java) {
             rootProject.the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension>().downloadBaseUrl =
                 "https://cache-redirector.jetbrains.com/github.com/yarnpkg/yarn/releases/download"
@@ -1151,4 +1166,9 @@ afterEvaluate {
 
 afterEvaluate {
     checkExpectedGradlePropertyValues()
+}
+
+// workaround for KT-68482
+tasks.withType<org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask>().configureEach {
+    notCompatibleWithConfigurationCache("KotlinNpmInstallTask is not compatible with Configuration Cache")
 }

@@ -1,6 +1,6 @@
 KtFunctionSymbol:
   annotationsList: []
-  callableIdIfNonLocal: null
+  callableId: null
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -39,8 +39,7 @@ KtFunctionSymbol:
 
 KtEnumEntrySymbol:
   annotationsList: []
-  callableIdIfNonLocal: /MyEnumClass.FirstEntry
-  containingEnumClassIdIfNonLocal: MyEnumClass
+  callableId: /MyEnumClass.FirstEntry
   contextReceivers: []
   enumEntryInitializer: KtAnonymousObjectSymbol(<local>/<no name provided>)
   isExtension: false
@@ -60,8 +59,7 @@ KtEnumEntrySymbol:
 
 KtEnumEntrySymbol:
   annotationsList: []
-  callableIdIfNonLocal: /MyEnumClass.SecondEntry
-  containingEnumClassIdIfNonLocal: MyEnumClass
+  callableId: /MyEnumClass.SecondEntry
   contextReceivers: []
   enumEntryInitializer: null
   isExtension: false
@@ -81,7 +79,7 @@ KtEnumEntrySymbol:
 
 KtFunctionSymbol:
   annotationsList: []
-  callableIdIfNonLocal: null
+  callableId: null
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -120,7 +118,7 @@ KtFunctionSymbol:
 
 KtFunctionSymbol:
   annotationsList: []
-  callableIdIfNonLocal: null
+  callableId: null
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -149,7 +147,7 @@ KtFunctionSymbol:
   valueParameters: [
     KtValueParameterSymbol:
       annotationsList: []
-      callableIdIfNonLocal: null
+      callableId: null
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
@@ -184,8 +182,7 @@ KtFunctionSymbol:
 
 KtEnumEntrySymbol:
   annotationsList: []
-  callableIdIfNonLocal: /MyEnumClass.ThirdEntry
-  containingEnumClassIdIfNonLocal: MyEnumClass
+  callableId: /MyEnumClass.ThirdEntry
   contextReceivers: []
   enumEntryInitializer: KtAnonymousObjectSymbol(<local>/<no name provided>)
   isExtension: false
@@ -205,7 +202,7 @@ KtEnumEntrySymbol:
 
 KtNamedClassOrObjectSymbol:
   annotationsList: []
-  classIdIfNonLocal: MyEnumClass
+  classId: MyEnumClass
   classKind: ENUM_CLASS
   companionObject: null
   contextReceivers: []

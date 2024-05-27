@@ -57,6 +57,9 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     internal val target = targetManager.target
     internal val flexiblePhaseConfig = configuration.get(CLIConfigurationKeys.FLEXIBLE_PHASE_CONFIG)!!
 
+    // See https://youtrack.jetbrains.com/issue/KT-67692.
+    val useLlvmOpaquePointers = false
+
     // TODO: debug info generation mode and debug/release variant selection probably requires some refactoring.
     val debug: Boolean get() = configuration.getBoolean(KonanConfigKeys.DEBUG)
     val lightDebug: Boolean = configuration.get(KonanConfigKeys.LIGHT_DEBUG)
@@ -161,7 +164,11 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     }
 
 
-    val suspendFunctionsFromAnyThreadFromObjC: Boolean by lazy { configuration.get(BinaryOptions.objcExportSuspendFunctionLaunchThreadRestriction) == ObjCExportSuspendFunctionLaunchThreadRestriction.NONE }
+    val suspendFunctionsFromAnyThreadFromObjC: Boolean by lazy {
+        configuration.get(BinaryOptions.objcExportSuspendFunctionLaunchThreadRestriction) !=
+                ObjCExportSuspendFunctionLaunchThreadRestriction.MAIN
+    }
+
     val freezing: Freezing
         get() = configuration.get(BinaryOptions.freezing)?.also {
             if (it != Freezing.Disabled) {

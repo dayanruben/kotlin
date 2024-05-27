@@ -26,7 +26,7 @@ internal val KtClassOrObjectSymbol.implementsCloneable: Boolean
 
 internal val KtClassOrObjectSymbol.isCloneable: Boolean
     get() {
-        return classIdIfNonLocal?.isCloneable ?: false
+        return classId?.isCloneable ?: false
     }
 
 internal val ClassId.isCloneable: Boolean
@@ -38,7 +38,7 @@ context(KtAnalysisSession)
 internal val KtFunctionSymbol.isClone: Boolean
     get() {
         val cloneCallableId = CallableId(StandardClassIds.Cloneable, Name.identifier("clone"))
-        if (this.callableIdIfNonLocal == cloneCallableId) return true
+        if (this.callableId == cloneCallableId) return true
 
-        return this.getAllOverriddenSymbols().any { it.callableIdIfNonLocal == cloneCallableId }
+        return this.getAllOverriddenSymbols().any { it.callableId == cloneCallableId }
     }

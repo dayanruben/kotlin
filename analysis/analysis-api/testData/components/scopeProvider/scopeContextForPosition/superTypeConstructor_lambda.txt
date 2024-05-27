@@ -19,7 +19,7 @@ scopes:
     callables: 4
       KtFunctionSymbol:
         annotationsList: []
-        callableIdIfNonLocal: test/Receiver.fromReceiver
+        callableId: test/Receiver.fromReceiver
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -49,7 +49,7 @@ scopes:
         visibility: Public
       KtFunctionSymbol:
         annotationsList: []
-        callableIdIfNonLocal: kotlin/Any.equals
+        callableId: kotlin/Any.equals
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -78,7 +78,7 @@ scopes:
         valueParameters: [
           KtValueParameterSymbol:
             annotationsList: []
-            callableIdIfNonLocal: null
+            callableId: null
             contextReceivers: []
             generatedPrimaryConstructorProperty: null
             hasDefaultValue: false
@@ -100,7 +100,7 @@ scopes:
         visibility: Public
       KtFunctionSymbol:
         annotationsList: []
-        callableIdIfNonLocal: kotlin/Any.hashCode
+        callableId: kotlin/Any.hashCode
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -130,7 +130,7 @@ scopes:
         visibility: Public
       KtFunctionSymbol:
         annotationsList: []
-        callableIdIfNonLocal: kotlin/Any.toString
+        callableId: kotlin/Any.toString
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -161,8 +161,8 @@ scopes:
     constructors: 1
       KtConstructorSymbol:
         annotationsList: []
-        callableIdIfNonLocal: null
-        containingClassIdIfNonLocal: test/Receiver
+        callableId: null
+        containingClassId: test/Receiver
         contextReceivers: []
         hasStableParameterNames: true
         isActual: false
@@ -203,7 +203,7 @@ scopes:
     classifiers: 3
       KtNamedClassOrObjectSymbol:
         annotationsList: []
-        classIdIfNonLocal: test/Receiver
+        classId: test/Receiver
         classKind: CLASS
         companionObject: null
         contextReceivers: []
@@ -228,7 +228,7 @@ scopes:
         visibility: Public
       KtNamedClassOrObjectSymbol:
         annotationsList: []
-        classIdIfNonLocal: test/Base
+        classId: test/Base
         classKind: CLASS
         companionObject: null
         contextReceivers: []
@@ -253,7 +253,7 @@ scopes:
         visibility: Public
       KtNamedClassOrObjectSymbol:
         annotationsList: []
-        classIdIfNonLocal: test/Child
+        classId: test/Child
         classKind: CLASS
         companionObject: null
         contextReceivers: []
