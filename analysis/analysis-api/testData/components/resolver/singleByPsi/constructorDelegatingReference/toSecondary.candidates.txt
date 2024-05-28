@@ -1,1 +1,70 @@
-NO_CANDIDATES
+KtInapplicableCallCandidateInfo:
+  diagnostic = ERROR<TOO_MANY_ARGUMENTS: Too many arguments for 'public constructor(): A'.>
+  candidate = KtDelegatedConstructorCall:
+    kind = THIS_CALL
+    partiallyAppliedSymbol = KtPartiallyAppliedSymbol:
+      dispatchReceiver = null
+      extensionReceiver = null
+      signature = KtFunctionLikeSignature:
+        receiverType = null
+        returnType = A
+        symbol = <constructor>(): A
+        valueParameters = []
+        callableId = null
+    typeArgumentsMapping = {}
+    argumentMapping = {}
+  isInBestCandidates = false
+
+KtInapplicableCallCandidateInfo:
+  diagnostic = ERROR<ARGUMENT_TYPE_MISMATCH: Argument type mismatch: actual type is 'kotlin.String', but 'kotlin.Int' was expected.>
+  candidate = KtDelegatedConstructorCall:
+    kind = THIS_CALL
+    partiallyAppliedSymbol = KtPartiallyAppliedSymbol:
+      dispatchReceiver = null
+      extensionReceiver = null
+      signature = KtFunctionLikeSignature:
+        receiverType = null
+        returnType = A
+        symbol = <constructor>(a: kotlin.Int): A
+        valueParameters = [
+          KtVariableLikeSignature:
+            name = a
+            receiverType = null
+            returnType = kotlin.Int
+            symbol = a: kotlin.Int
+            callableId = null
+        ]
+        callableId = null
+    typeArgumentsMapping = {}
+    argumentMapping = {}
+  isInBestCandidates = false
+
+KtApplicableCallCandidateInfo:
+  candidate = KtDelegatedConstructorCall:
+    kind = THIS_CALL
+    partiallyAppliedSymbol = KtPartiallyAppliedSymbol:
+      dispatchReceiver = null
+      extensionReceiver = null
+      signature = KtFunctionLikeSignature:
+        receiverType = null
+        returnType = A
+        symbol = <constructor>(b: kotlin.String): A
+        valueParameters = [
+          KtVariableLikeSignature:
+            name = b
+            receiverType = null
+            returnType = kotlin.String
+            symbol = b: kotlin.String
+            callableId = null
+        ]
+        callableId = null
+    typeArgumentsMapping = {}
+    argumentMapping = {
+      "2" -> (KtVariableLikeSignature:
+        name = b
+        receiverType = null
+        returnType = kotlin.String
+        symbol = b: kotlin.String
+        callableId = null)
+    }
+  isInBestCandidates = true

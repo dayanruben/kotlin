@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.analysis.api.descriptors.components
 
 import org.jetbrains.kotlin.analysis.api.calls.*
-import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisFacade
 import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisFacade.AnalysisMode
 import org.jetbrains.kotlin.analysis.api.descriptors.KaFe10Session
 import org.jetbrains.kotlin.analysis.api.descriptors.components.base.KaFe10SessionComponent
@@ -110,6 +109,7 @@ internal class KaFe10Resolver(
         when (psi) {
             is KtCallableReferenceExpression -> return resolveCall(psi.callableReference)
             is KtWhenConditionInRange -> return psi.operationReference.let(::resolveCall)
+            is KtConstructorDelegationReferenceExpression -> return (psi.parent as? KtElement)?.let(::resolveCall)
         }
 
         when (unwrappedPsi) {
@@ -132,7 +132,7 @@ internal class KaFe10Resolver(
 
             val resolvedKtCallInfo = resolveCall(psi)
             val bestCandidateDescriptors =
-                resolvedKtCallInfo?.calls?.filterIsInstance<KaFunctionCall<*>>()
+                resolvedKtCallInfo?.calls?.filterIsInstance<KaCallableMemberCall<*, *>>()
                     ?.mapNotNullTo(mutableSetOf()) { it.descriptor as? CallableDescriptor }
                     ?: emptySet()
 
@@ -150,9 +150,11 @@ internal class KaFe10Resolver(
 
             // The regular mechanism doesn't work, so at least the resolved call should be returned
             when (psi) {
-                is KtWhenConditionInRange -> {
-                    return resolvedKtCallInfo?.toKtCallCandidateInfos().orEmpty()
-                }
+                is KtWhenConditionInRange,
+                is KtCollectionLiteralExpression,
+                is KtOperationReferenceExpression,
+                is KtCallableReferenceExpression,
+                    -> return resolvedKtCallInfo?.toKtCallCandidateInfos().orEmpty()
             }
 
             val resolutionScope = unwrappedPsi.getResolutionScope(this) ?: return emptyList()
@@ -194,10 +196,12 @@ internal class KaFe10Resolver(
                     candidateTrace.bindingContext.diagnostics
                 )
                 candidateKtCallInfo.toKtCallCandidateInfos(bestCandidateDescriptors)
+            }.ifEmpty {
+                resolvedKtCallInfo?.toKtCallCandidateInfos().orEmpty()
             }
         }
 
-    private val KaFunctionCall<*>.descriptor: DeclarationDescriptor?
+    private val KaCallableMemberCall<*, *>.descriptor: DeclarationDescriptor?
         get() = when (val symbol = symbol) {
             is KaFe10PsiSymbol<*, *> -> symbol.descriptor
             is KaFe10DescSymbol<*> -> symbol.descriptor
@@ -215,7 +219,7 @@ internal class KaFe10Resolver(
     private fun KaCallInfo?.toKtCallCandidateInfos(bestCandidateDescriptors: Set<CallableDescriptor>): List<KaCallCandidateInfo> {
         // TODO: We should prefer to compare symbols instead of descriptors, but we can't do so while symbols are not cached.
         fun KaCall.isInBestCandidates(): Boolean {
-            val descriptor = this.safeAs<KaFunctionCall<*>>()?.descriptor as? CallableDescriptor
+            val descriptor = this.safeAs<KaCallableMemberCall<*, *>>()?.descriptor as? CallableDescriptor
             return descriptor != null && bestCandidateDescriptors.any { it ->
                 DescriptorEquivalenceForOverrides.areCallableDescriptorsEquivalent(
                     it,

@@ -17677,6 +17677,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/fakeOverride/fakeOverrideOfPrivateSetter.kt");
     }
 
+    @TestMetadata("fakeOverrideWithMissingClassInSignature.kt")
+    public void testFakeOverrideWithMissingClassInSignature() {
+      runTest("compiler/testData/codegen/box/fakeOverride/fakeOverrideWithMissingClassInSignature.kt");
+    }
+
     @TestMetadata("fieldInJKJKHierarchy.kt")
     public void testFieldInJKJKHierarchy() {
       runTest("compiler/testData/codegen/box/fakeOverride/fieldInJKJKHierarchy.kt");
@@ -28791,6 +28796,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("kt53041.kt")
         public void testKt53041() {
           runTest("compiler/testData/codegen/box/javaInterop/foreignAnnotationsTests/tests/kt53041.kt");
+        }
+
+        @TestMetadata("primitiveSubstitutionToDnnParameter.kt")
+        public void testPrimitiveSubstitutionToDnnParameter() {
+          runTest("compiler/testData/codegen/box/javaInterop/foreignAnnotationsTests/tests/primitiveSubstitutionToDnnParameter.kt");
         }
       }
     }

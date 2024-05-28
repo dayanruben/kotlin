@@ -21196,6 +21196,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
     }
 
     @Test
+    @TestMetadata("fakeOverrideWithMissingClassInSignature.kt")
+    public void testFakeOverrideWithMissingClassInSignature() {
+      runTest("compiler/testData/codegen/box/fakeOverride/fakeOverrideWithMissingClassInSignature.kt");
+    }
+
+    @Test
     @TestMetadata("fieldInJKJKHierarchy.kt")
     public void testFieldInJKJKHierarchy() {
       runTest("compiler/testData/codegen/box/fakeOverride/fieldInJKJKHierarchy.kt");
@@ -33983,6 +33989,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
         @TestMetadata("kt53041.kt")
         public void testKt53041() {
           runTest("compiler/testData/codegen/box/javaInterop/foreignAnnotationsTests/tests/kt53041.kt");
+        }
+
+        @Test
+        @TestMetadata("primitiveSubstitutionToDnnParameter.kt")
+        public void testPrimitiveSubstitutionToDnnParameter() {
+          runTest("compiler/testData/codegen/box/javaInterop/foreignAnnotationsTests/tests/primitiveSubstitutionToDnnParameter.kt");
         }
       }
     }

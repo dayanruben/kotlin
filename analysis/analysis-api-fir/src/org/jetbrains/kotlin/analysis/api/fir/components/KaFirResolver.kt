@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirArrayOfSymbolProvider.
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirArrayOfSymbolProvider.arrayOfSymbol
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirArrayOfSymbolProvider.arrayTypeToArrayOfCall
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.fir.utils.processEqualsFunctions
 import org.jetbrains.kotlin.analysis.api.getModule
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaAbstractResolver
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
@@ -36,7 +37,6 @@ import org.jetbrains.kotlin.analysis.utils.errors.withPsiEntry
 import org.jetbrains.kotlin.analysis.utils.printer.parentOfType
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
-import org.jetbrains.kotlin.fir.collectUpperBounds
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
 import org.jetbrains.kotlin.fir.declarations.fullyExpandedClass
@@ -52,15 +52,13 @@ import org.jetbrains.kotlin.fir.resolve.calls.Candidate
 import org.jetbrains.kotlin.fir.resolve.createConeDiagnosticForCandidateWithError
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeDiagnosticWithCandidates
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeHiddenCandidateError
-import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
-import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.fir.scopes.impl.declaredMemberScope
-import org.jetbrains.kotlin.fir.scopes.processOverriddenFunctions
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
+import org.jetbrains.kotlin.fir.types.resolvedType
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirSymbolEntry
 import org.jetbrains.kotlin.idea.references.KtDefaultAnnotationArgumentReference
@@ -69,6 +67,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.KtPsiUtil.deparenthesize
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
 import org.jetbrains.kotlin.toKtPsiSourceElement
@@ -169,6 +168,8 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
             ?: containingBinaryExpressionForLhs
             ?: containingUnaryExpressionForIncOrDec
             ?: psi.getContainingDotQualifiedExpressionForSelectorExpression()
+            ?: psi.getConstructorDelegationCallForDelegationReferenceExpression()
+            ?: psi.getExpressionForOperationReferenceExpression()
             ?: psi
         val fir = psiToResolve.getOrBuildFir(analysisSession.firResolveSession) ?: return emptyList()
         if (fir is FirDiagnosticHolder) {
@@ -179,6 +180,20 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
             psiToResolve == containingCallExpressionForCalleeExpression,
             psiToResolve == containingBinaryExpressionForLhs || psiToResolve == containingUnaryExpressionForIncOrDec
         )
+    }
+
+    /**
+     * When resolving [KtOperationReferenceExpression], we instead resolve the containing [KtWhenConditionInRange] or [KtBinaryExpression].
+     * This way, the corresponding FIR element is a call instead of a reference.
+     */
+    private fun KtElement.getExpressionForOperationReferenceExpression(): KtElement? {
+        if (this !is KtOperationReferenceExpression) return null
+        return when (val parent = parent) {
+            // Augment assignment resolves into KtCompoundVariableAccessCall, but we should resolve into a specific function
+            is KtBinaryExpression -> parent.takeUnless { operationSignTokenType in KtTokens.AUGMENTED_ASSIGNMENTS }
+            is KtWhenConditionInRange -> parent
+            else -> null
+        }
     }
 
     private fun FirElement.toKtCallInfo(
@@ -358,6 +373,14 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
         if (parent is KtDotQualifiedExpression && parent.selectorExpression == this) return parent
         if (parent is KtSafeQualifiedExpression && parent.selectorExpression == this) return parent
         return null
+    }
+
+    /**
+     * When resolving [KtConstructorDelegationReferenceExpression], we instead resolve the containing [KtConstructorDelegationCall].
+     * This way the corresponding FIR element is the [FirDelegatedConstructorCall] instead of the reference
+     */
+    private fun KtElement.getConstructorDelegationCallForDelegationReferenceExpression(): KtConstructorDelegationCall? {
+        return takeIf { it is KtConstructorDelegationReferenceExpression }?.parent as? KtConstructorDelegationCall
     }
 
     private fun createKtCall(
@@ -1002,14 +1025,11 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
                 resolveCalleeExpressionOfFunctionCall,
                 resolveFragmentOfCall
             )
-            is FirArrayLiteral, is FirEqualityOperatorCall -> {
+            is FirArrayLiteral, is FirEqualityOperatorCall, is FirCallableReferenceAccess -> {
                 toKtCallInfo(psi, resolveCalleeExpressionOfFunctionCall, resolveFragmentOfCall).toKtCallCandidateInfos()
             }
             is FirComparisonExpression -> {
                 compareToCall.toKtCallInfo(psi, resolveCalleeExpressionOfFunctionCall, resolveFragmentOfCall).toKtCallCandidateInfos()
-            }
-            is FirCallableReferenceAccess -> {
-                calleeReference.toKtCallInfo(psi, resolveCalleeExpressionOfFunctionCall, resolveFragmentOfCall).toKtCallCandidateInfos()
             }
             is FirResolvedQualifier -> toKtCallCandidateInfos()
             is FirDelegatedConstructorCall -> collectCallCandidatesForDelegatedConstructorCall(psi, resolveFragmentOfCall)
@@ -1100,9 +1120,13 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
         fun findDerivedClass(psi: KtElement): KtClassOrObject? {
             val parent = psi.parent
             return when (psi) {
-                is KtConstructorDelegationCall -> ((parent as? KtSecondaryConstructor)?.parent as? KtClassBody)?.parent as? KtClassOrObject
-                is KtSuperTypeCallEntry -> (parent as? KtSuperTypeList)?.parent as? KtClassOrObject
+                is KtConstructorDelegationCall -> (parent as? KtSecondaryConstructor)?.containingClassOrObject
+                is KtSuperTypeCallEntry -> {
+                    (parent as? KtSuperTypeList)?.parent as? KtClassOrObject
+                        ?: ((parent as? KtInitializerList)?.parent as? KtEnumEntry)?.containingClassOrObject
+                }
                 is KtConstructorCalleeExpression -> (parent as? KtElement)?.let(::findDerivedClass)
+                is KtEnumEntrySuperclassReferenceExpression -> psi.getReferencedNameElement() as? KtClassOrObject
                 else -> null
             }
         }
@@ -1243,26 +1267,14 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
         return when (operation) {
             FirOperation.EQ, FirOperation.NOT_EQ -> {
                 val leftOperand = arguments.firstOrNull() ?: return null
-                val session = analysisSession.useSiteSession
-                val leftOperandType = leftOperand.resolvedType.fullyExpandedType(session).upperBoundIfFlexible()
-                val equalsSymbol = when (leftOperandType) {
-                    is ConeTypeParameterType -> {
-                        leftOperandType.collectUpperBounds().firstNotNullOfOrNull { upperBound ->
-                            val upperBoundClassSymbol = upperBound.toSymbol(session) as? FirClassSymbol<*>
-                            upperBoundClassSymbol?.getEqualsSymbol()
-                        }
-                    }
-                    else -> {
-                        val classSymbol = leftOperandType.toSymbol(session) as? FirClassSymbol<*>
-                        classSymbol?.getEqualsSymbol()
-                    }
-                } ?: equalsSymbolInAny ?: return null
+
+                val equalsSymbol = getEqualsSymbol() ?: return null
                 val ktSignature = equalsSymbol.toKtSignature()
                 KaSuccessCallInfo(
                     KaSimpleFunctionCall(
                         KaPartiallyAppliedSymbol(
                             ktSignature,
-                            KaExplicitReceiverValue(leftPsi, leftOperandType.asKtType(), false, token),
+                            KaExplicitReceiverValue(leftPsi, leftOperand.resolvedType.asKtType(), false, token),
                             null
                         ),
                         LinkedHashMap<KtExpression, KaVariableLikeSignature<KaValueParameterSymbol>>().apply {
@@ -1277,29 +1289,13 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
         }
     }
 
-    private fun FirClassSymbol<*>.getEqualsSymbol(): FirNamedFunctionSymbol? {
-        val scope = unsubstitutedScope(
-            analysisSession.useSiteSession,
-            analysisSession.getScopeSessionFor(analysisSession.useSiteSession),
-            false,
-            memberRequiredPhase = FirResolvePhase.STATUS,
-        )
-
+    private fun FirEqualityOperatorCall.getEqualsSymbol(): FirNamedFunctionSymbol? {
         var equalsSymbol: FirNamedFunctionSymbol? = null
-        scope.processFunctionsByName(EQUALS) { equalsSymbolFromScope ->
-            if (equalsSymbol != null) return@processFunctionsByName
-            if (equalsSymbolFromScope == equalsSymbolInAny) {
-                equalsSymbol = equalsSymbolFromScope
-            }
-            scope.processOverriddenFunctions(equalsSymbolFromScope) {
-                if (it == equalsSymbolInAny) {
-                    equalsSymbol = equalsSymbolFromScope
-                    ProcessorAction.STOP
-                } else {
-                    ProcessorAction.NEXT
-                }
-            }
+        processEqualsFunctions(analysisSession.useSiteSession, analysisSession) {
+            if (equalsSymbol != null) return@processEqualsFunctions
+            equalsSymbol = it
         }
+
         return equalsSymbol ?: equalsSymbolInAny
     }
 
