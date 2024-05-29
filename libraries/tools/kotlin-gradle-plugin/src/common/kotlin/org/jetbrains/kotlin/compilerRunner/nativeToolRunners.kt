@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.build.report.metrics.GradleBuildTime
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
 import org.jetbrains.kotlin.gradle.dsl.NativeCacheKind
 import org.jetbrains.kotlin.gradle.dsl.NativeCacheOrchestration
+import org.jetbrains.kotlin.gradle.internal.properties.nativeProperties
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.useXcodeMessageStyle
@@ -33,20 +34,10 @@ import java.nio.file.Files
 import java.util.*
 import javax.inject.Inject
 
-private val Project.jvmArgs
-    get() = PropertiesProvider(this).nativeJvmArgs?.split("\\s+".toRegex()).orEmpty()
-
 internal val Project.konanHome: File
     get() = (PropertiesProvider(this).konanDataDir?.let { NativeCompilerDownloader(project).compilerDirectory }
         ?: PropertiesProvider(this).nativeHome?.let { file(it) }
         ?: NativeCompilerDownloader(project).compilerDirectory).absoluteFile
-
-internal val Project.disableKonanDaemon: Boolean
-    get() = PropertiesProvider(this).nativeDisableCompilerDaemon == true
-
-internal val Project.konanVersion: String
-    get() = PropertiesProvider(this).nativeVersion
-        ?: NativeCompilerDownloader.DEFAULT_KONAN_VERSION
 
 internal val Project.konanDataDir: String?
     get() = PropertiesProvider(this).konanDataDir
@@ -97,7 +88,6 @@ internal abstract class KotlinNativeToolRunner(
 ) : KotlinToolRunner(metricsReporter, objectsFactory, execOperations) {
 
     class Settings(
-        val konanVersion: String,
         val konanHome: String,
         val konanPropertiesFile: File,
         val useXcodeMessageStyle: Boolean,
@@ -108,11 +98,10 @@ internal abstract class KotlinNativeToolRunner(
     ) {
         companion object {
             fun of(konanHome: String, konanDataDir: String?, project: Project) = Settings(
-                konanVersion = project.konanVersion,
                 konanHome = konanHome,
                 konanPropertiesFile = project.file("${konanHome}/konan/konan.properties"),
-                useXcodeMessageStyle = project.useXcodeMessageStyle,
-                jvmArgs = project.jvmArgs,
+                useXcodeMessageStyle = project.useXcodeMessageStyle.get(),
+                jvmArgs = project.nativeProperties.jvmArgs.get(),
                 classpath = project.files(project.kotlinNativeCompilerJar, "${konanHome}/konan/lib/trove4j.jar"),
                 konanDataDir = konanDataDir,
                 kotlinCompilerArgumentsLogLevel = project.kotlinPropertiesProvider.kotlinCompilerArgumentsLogLevel
@@ -259,7 +248,7 @@ internal abstract class KotlinNativeCompilerRunner @Inject constructor(
         companion object {
             fun of(konanHome: String, konanDataDir: String?, project: Project) = Settings(
                 parent = KotlinNativeToolRunner.Settings.of(konanHome, konanDataDir, project),
-                disableKonanDaemon = project.disableKonanDaemon,
+                disableKonanDaemon = project.nativeProperties.forceDisableRunningInProcess.get(),
             )
         }
     }
