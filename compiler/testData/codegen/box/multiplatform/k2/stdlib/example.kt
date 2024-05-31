@@ -1,6 +1,5 @@
 // LANGUAGE: +MultiPlatformProjects
 // TARGET_BACKEND: JVM
-// TODO: KT-67753
 // ISSUE: KT-65841
 // ALLOW_KOTLIN_PACKAGE
 // STDLIB_COMPILATION
@@ -13,7 +12,8 @@
 
 package kotlin.internal
 
-internal annotation class ActualizeByJvmBuiltinProvider
+@OptionalExpectation
+internal expect annotation class ActualizeByJvmBuiltinProvider()
 
 // FILE: builtins.kt
 
@@ -26,6 +26,8 @@ internal annotation class ActualizeByJvmBuiltinProvider
 package kotlin
 
 import kotlin.internal.ActualizeByJvmBuiltinProvider
+
+annotation class OptionalExpectation
 
 @ActualizeByJvmBuiltinProvider
 expect interface Annotation
@@ -91,6 +93,10 @@ public expect fun intArrayOf(vararg elements: Int): IntArray
 @SinceKotlin("1.1")
 public expect inline fun <reified T : Enum<T>> enumValues(): Array<T>
 
+@Target(AnnotationTarget.TYPE)
+@MustBeDocumented
+public annotation class ExtensionFunctionType
+
 // FILE: testCommon.kt
 
 enum class TestEnumInCommon {
@@ -100,15 +106,23 @@ enum class TestEnumInCommon {
 annotation class AnnotationWithInt(val value: Int)
 
 @AnnotationWithInt(Int.MAX_VALUE)
-class TestClassInCommon // Currently it doesn't work with FIR2IR_FAKE_OVERRIDE_GENERATION (KT-67753)
+class TestClassInCommon
 
 fun testStringPlusInCommon() = "asdf" + 42
 fun anyInCommon() = Any()
 fun throwableInCommon() = Throwable()
 fun testIntArrayOf() = intArrayOf(1, 2, 3)
 
+// Reproduce `IrConstructorSymbolImpl is unbound` for explicitely declared `@ExtensionFunctionType`
+typealias funWithSuspend = suspend Any.() -> Any
+
+public expect interface ClassThatInheritsSyntheticFunction : () -> Any // Reproduce KT-68188
+
 // MODULE: platform()()(common)
+
 // FILE: testPlatform.kt
+
+public actual interface ClassThatInheritsSyntheticFunction : () -> Any // Reproduce KT-68188
 
 enum class TestEnumInPlatform {
     D, E, F

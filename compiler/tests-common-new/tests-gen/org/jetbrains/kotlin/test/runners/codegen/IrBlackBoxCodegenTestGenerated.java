@@ -16306,6 +16306,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
     }
 
     @Test
+    @TestMetadata("propertyOfDnnType.kt")
+    public void testPropertyOfDnnType() {
+      runTest("compiler/testData/codegen/box/dataClasses/propertyOfDnnType.kt");
+    }
+
+    @Test
     @TestMetadata("twoValParams.kt")
     public void testTwoValParams() {
       runTest("compiler/testData/codegen/box/dataClasses/twoValParams.kt");
@@ -21211,6 +21217,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
     @TestMetadata("function.kt")
     public void testFunction() {
       runTest("compiler/testData/codegen/box/fakeOverride/function.kt");
+    }
+
+    @Test
+    @TestMetadata("hierarchyOfExceptions.kt")
+    public void testHierarchyOfExceptions() {
+      runTest("compiler/testData/codegen/box/fakeOverride/hierarchyOfExceptions.kt");
     }
 
     @Test
@@ -31109,6 +31121,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
     @TestMetadata("innerWithDefaultArgument.kt")
     public void testInnerWithDefaultArgument() {
       runTest("compiler/testData/codegen/box/innerNested/innerWithDefaultArgument.kt");
+    }
+
+    @Test
+    @TestMetadata("innerWithDefaultArgumentGenericExtensionProperty.kt")
+    public void testInnerWithDefaultArgumentGenericExtensionProperty() {
+      runTest("compiler/testData/codegen/box/innerNested/innerWithDefaultArgumentGenericExtensionProperty.kt");
     }
 
     @Test

@@ -27,7 +27,7 @@ private val jvmFilePhases = createFilePhases<JvmBackendContext>(
     ::JvmLateinitLowering,
     ::JvmInventNamesForLocalClasses,
 
-    ::InlineCallableReferenceToLambdaPhase,
+    ::JvmInlineCallableReferenceToLambdaPhase,
     ::DirectInvokeLowering,
     ::FunctionReferenceLowering,
 
@@ -129,7 +129,7 @@ val jvmLoweringPhases = SameTypeNamedCompilerPhase(
     name = "IrLowering",
     description = "IR lowering",
     nlevels = 1,
-    actions = setOf(defaultDumper, validationAction),
+    actions = DEFAULT_IR_ACTIONS,
     lower = buildModuleLoweringsPhase(
         ::ExternalPackageParentPatcherLowering,
         ::FragmentSharedVariablesLowering,

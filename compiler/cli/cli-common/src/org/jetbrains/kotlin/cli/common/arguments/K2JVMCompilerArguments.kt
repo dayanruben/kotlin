@@ -733,16 +733,6 @@ See KT-45671 for more details."""
         }
 
     @Argument(
-        value = "-Xvalidate-ir",
-        description = "Validate IR before and after lowering."
-    )
-    var validateIr = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @Argument(
         value = "-Xvalidate-bytecode",
         description = "Validate generated JVM bytecode before and after optimizations."
     )
@@ -846,6 +836,8 @@ This option is deprecated and will be deleted in future versions."""
             checkFrozen()
             field = value
         }
+
+    override fun defaultIrVerificationMode(): IrVerificationMode = IrVerificationMode.NONE
 
     override fun configureAnalysisFlags(collector: MessageCollector, languageVersion: LanguageVersion): MutableMap<AnalysisFlag<*>, Any> {
         val result = super.configureAnalysisFlags(collector, languageVersion)

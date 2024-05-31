@@ -13364,6 +13364,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/dataClasses/privateValParams.kt");
     }
 
+    @TestMetadata("propertyOfDnnType.kt")
+    public void testPropertyOfDnnType() {
+      runTest("compiler/testData/codegen/box/dataClasses/propertyOfDnnType.kt");
+    }
+
     @TestMetadata("twoValParams.kt")
     public void testTwoValParams() {
       runTest("compiler/testData/codegen/box/dataClasses/twoValParams.kt");
@@ -17690,6 +17695,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestMetadata("function.kt")
     public void testFunction() {
       runTest("compiler/testData/codegen/box/fakeOverride/function.kt");
+    }
+
+    @TestMetadata("hierarchyOfExceptions.kt")
+    public void testHierarchyOfExceptions() {
+      runTest("compiler/testData/codegen/box/fakeOverride/hierarchyOfExceptions.kt");
     }
 
     @TestMetadata("internalFromFriendModule.kt")
@@ -26261,6 +26271,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestMetadata("innerWithDefaultArgument.kt")
     public void testInnerWithDefaultArgument() {
       runTest("compiler/testData/codegen/box/innerNested/innerWithDefaultArgument.kt");
+    }
+
+    @TestMetadata("innerWithDefaultArgumentGenericExtensionProperty.kt")
+    public void testInnerWithDefaultArgumentGenericExtensionProperty() {
+      runTest("compiler/testData/codegen/box/innerNested/innerWithDefaultArgumentGenericExtensionProperty.kt");
     }
 
     @TestMetadata("innerWithDefaultInner.kt")

@@ -38,6 +38,7 @@ object CommonExpressionCheckers : ExpressionCheckers() {
             FirAbstractSuperCallChecker,
             FirQualifiedSupertypeExtendedByOtherSupertypeChecker,
             FirProjectionsOnNonClassTypeArgumentChecker,
+            FirDataClassCopyUsageWillBecomeInaccessibleChecker,
             FirIncompatibleProjectionsOnTypeArgumentChecker,
             FirUpperBoundViolatedExpressionChecker,
             FirTypeArgumentsNotAllowedExpressionChecker,
@@ -67,7 +68,6 @@ object CommonExpressionCheckers : ExpressionCheckers() {
             FirConventionFunctionCallChecker,
             FirDivisionByZeroChecker,
             FirConstructorCallChecker,
-            FirDataClassCopyUsageWillBecomeInaccessibleChecker,
             FirSpreadOfNullableChecker,
             FirAssignmentOperatorCallChecker,
             FirNamedVarargChecker,
@@ -156,7 +156,7 @@ object CommonExpressionCheckers : ExpressionCheckers() {
 
     override val typeOperatorCallCheckers: Set<FirTypeOperatorCallChecker>
         get() = setOf(
-            FirCastOperatorsChecker
+            FirCastOperatorsChecker,
         )
 
     override val resolvedQualifierCheckers: Set<FirResolvedQualifierChecker>

@@ -25,6 +25,28 @@ plugins {
     id "kotlin-daemon-config"
 }
 
+File versionPropertiesFile = new File(rootProject.projectDir, "gradle/versions.properties")
+def versionProperties = new Properties()
+versionPropertiesFile.withInputStream {
+    versionProperties.load(it)
+}
+dependencyResolutionManagement {
+    components {
+        withModule("com.google.code.gson:gson") {
+            allVariants {
+                withDependencies {
+                    add("com.google.code.gson:gson") {
+                        version {
+                            it.require(versionProperties['versions.gson'])
+                        }
+                        because("Force using same gson version because of https://github.com/google/gson/pull/1991")
+                    }
+                }
+            }
+        }
+    }
+}
+
 def buildProperties = BuildPropertiesKt.getKotlinBuildPropertiesForSettings(settings)
 
 // modules
@@ -49,10 +71,6 @@ include ":benchmarks",
         ":compiler:resolution",
         ":compiler:serialization",
         ":compiler:psi",
-        ":compiler:visualizer",
-        ":compiler:visualizer:common",
-        ":compiler:visualizer:render-fir",
-        ":compiler:visualizer:render-psi",
         ":compiler:frontend",
         ":compiler:frontend.common",
         ":compiler:frontend.common-psi",
@@ -224,6 +242,7 @@ include ":kotlin-imports-dumper-compiler-plugin",
         ":kotlin-gradle-plugin-test-utils-embeddable",
         ":kotlin-gradle-plugin-integration-tests",
         ":kotlin-gradle-plugins-bom",
+        ":kotlin-privacy-manifests-plugin",
         ":compiler:build-tools:kotlin-build-statistics",
         ":gradle:android-test-fixes",
         ":gradle:gradle-warnings-detector",
@@ -395,7 +414,6 @@ if (!buildProperties.inJpsBuildIdeaSync) {
             ":prepare:ide-plugin-dependencies:parcelize-compiler-plugin-for-ide",
             ":prepare:ide-plugin-dependencies:lombok-compiler-plugin-for-ide",
             ":prepare:ide-plugin-dependencies:kotlin-objcexport-header-generator-for-ide",
-            ":prepare:ide-plugin-dependencies:tests-common-tests-for-ide",
             ":prepare:ide-plugin-dependencies:kotlin-compiler-testdata-for-ide",
             ":prepare:ide-plugin-dependencies:kotlin-compiler-tests-for-ide",
             ":prepare:ide-plugin-dependencies:low-level-api-fir-for-ide",
@@ -426,7 +444,8 @@ if (!buildProperties.inJpsBuildIdeaSync) {
 
 include ":compiler:build-tools:kotlin-build-tools-api",
         ":compiler:build-tools:kotlin-build-tools-impl",
-        ":compiler:build-tools:kotlin-build-tools-api-tests"
+        ":compiler:build-tools:kotlin-build-tools-api-tests",
+        ":compiler:build-tools:kotlin-build-tools-jdk-utils"
 
 if (!buildProperties.inJpsBuildIdeaSync) {
     include ":plugins:compose-compiler-plugin",
@@ -434,7 +453,8 @@ if (!buildProperties.inJpsBuildIdeaSync) {
             ":plugins:compose-compiler-plugin:compiler:integration-tests",
             ":plugins:compose-compiler-plugin:compiler-hosted",
             ":plugins:compose-compiler-plugin:compiler-hosted:integration-tests",
-            ":plugins:compose-compiler-plugin:compiler-hosted:integration-tests:protobuf-test-classes"
+            ":plugins:compose-compiler-plugin:compiler-hosted:integration-tests:protobuf-test-classes",
+            ":plugins:compose-compiler-plugin:compiler-hosted:runtime-tests"
 }
 
 // Swift Export modules
@@ -672,6 +692,7 @@ if (buildProperties.inJpsBuildIdeaSync) {
     project(':kotlin-stdlib:samples').projectDir = "$rootDir/libraries/stdlib/samples" as File
     project(":kotlin-stdlib-jvm-minimal-for-test").projectDir = "$rootDir/libraries/stdlib/jvm-minimal-for-test" as File
 
+    project(':tools').projectDir = "$rootDir/libraries/tools" as File
     project(':tools:binary-compatibility-validator').projectDir = "$rootDir/libraries/tools/binary-compatibility-validator" as File
     project(':tools:jdk-api-validator').projectDir = "$rootDir/libraries/tools/jdk-api-validator" as File
     project(':tools:kotlin-stdlib-gen').projectDir = "$rootDir/libraries/tools/kotlin-stdlib-gen" as File
@@ -804,6 +825,7 @@ project(':kotlin-gradle-plugin-model').projectDir = "$rootDir/libraries/tools/ko
 project(':kotlin-gradle-plugin-test-utils-embeddable').projectDir = "$rootDir/libraries/tools/kotlin-gradle-plugin-test-utils-embeddable" as File
 project(':kotlin-gradle-plugin-integration-tests').projectDir = "$rootDir/libraries/tools/kotlin-gradle-plugin-integration-tests" as File
 project(':kotlin-gradle-plugins-bom').projectDir = "$rootDir/libraries/tools/kotlin-gradle-plugins-bom" as File
+project(':kotlin-privacy-manifests-plugin').projectDir = "$rootDir/libraries/tools/kotlin-privacy-manifests-plugin" as File
 project(':gradle:android-test-fixes').projectDir = "$rootDir/libraries/tools/gradle/android-test-fixes" as File
 project(':gradle:gradle-warnings-detector').projectDir = "$rootDir/libraries/tools/gradle/gradle-warnings-detector" as File
 project(':gradle:kotlin-compiler-args-properties').projectDir = "$rootDir/libraries/tools/gradle/kotlin-compiler-args-properties" as File
@@ -819,6 +841,7 @@ project(':kotlin-sam-with-receiver').projectDir = "$rootDir/libraries/tools/kotl
 project(':kotlin-assignment').projectDir = "$rootDir/libraries/tools/kotlin-assignment" as File
 project(':kotlin-lombok').projectDir = "$rootDir/libraries/tools/kotlin-lombok" as File
 project(':kotlin-gradle-subplugin-example').projectDir = "$rootDir/libraries/examples/kotlin-gradle-subplugin-example" as File
+project(':examples').projectDir = "$rootDir/libraries/examples" as File
 project(':examples:annotation-processor-example').projectDir = "$rootDir/libraries/examples/annotation-processor-example" as File
 project(':kotlin-annotation-processing-embeddable').projectDir = "$rootDir/plugins/kapt3/kotlin-annotation-processing-embeddable" as File
 project(':kotlin-daemon-embeddable').projectDir = "$rootDir/prepare/kotlin-daemon-embeddable" as File
@@ -851,6 +874,7 @@ project(':examples:scripting-jvm-simple-script-host').projectDir = "$rootDir/lib
 project(':examples:scripting-jvm-maven-deps').projectDir = "$rootDir/libraries/examples/scripting/jvm-maven-deps/script" as File
 project(':examples:scripting-jvm-maven-deps-host').projectDir = "$rootDir/libraries/examples/scripting/jvm-maven-deps/host" as File
 project(':examples:scripting-jvm-embeddable-host').projectDir = "$rootDir/libraries/examples/scripting/jvm-embeddable-host" as File
+project(':pill').projectDir = "$rootDir/plugins/pill" as File
 project(':pill:pill-importer').projectDir = "$rootDir/plugins/pill/pill-importer" as File
 project(':pill:generate-all-tests').projectDir = "$rootDir/plugins/pill/generate-all-tests" as File
 project(':kotlin-imports-dumper-compiler-plugin').projectDir = "$rootDir/plugins/imports-dumper" as File
@@ -884,6 +908,7 @@ if (!buildProperties.inJpsBuildIdeaSync) {
     project(':plugins:compose-compiler-plugin:compiler-hosted:integration-tests').projectDir = file("$rootDir/plugins/compose/compiler-hosted/integration-tests")
     project(':plugins:compose-compiler-plugin:compiler-hosted:integration-tests:protobuf-test-classes').projectDir =
             file("$rootDir/plugins/compose/compiler-hosted/integration-tests/protobuf-test-classes")
+    project(':plugins:compose-compiler-plugin:compiler-hosted:runtime-tests').projectDir = file("$rootDir/plugins/compose/compiler-hosted/runtime-tests")
 }
 
 project(':kotlin-scripting-ide-services-unshaded').projectDir = "$rootDir/plugins/scripting/scripting-ide-services" as File

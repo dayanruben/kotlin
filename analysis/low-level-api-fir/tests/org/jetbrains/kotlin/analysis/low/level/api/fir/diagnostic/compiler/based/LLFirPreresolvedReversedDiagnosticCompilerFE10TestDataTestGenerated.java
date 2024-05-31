@@ -628,6 +628,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
     }
 
     @Test
+    @TestMetadata("incrementOnErrorCallable.kt")
+    public void testIncrementOnErrorCallable() {
+      runTest("compiler/testData/diagnostics/tests/incrementOnErrorCallable.kt");
+    }
+
+    @Test
     @TestMetadata("InferNullabilityInThenBlock.kt")
     public void testInferNullabilityInThenBlock() {
       runTest("compiler/testData/diagnostics/tests/InferNullabilityInThenBlock.kt");
@@ -1231,6 +1237,30 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
     @TestMetadata("ProjectionOnFunctionArgumentErrror.kt")
     public void testProjectionOnFunctionArgumentErrror() {
       runTest("compiler/testData/diagnostics/tests/ProjectionOnFunctionArgumentErrror.kt");
+    }
+
+    @Test
+    @TestMetadata("projectionProblemInIsExpression.kt")
+    public void testProjectionProblemInIsExpression() {
+      runTest("compiler/testData/diagnostics/tests/projectionProblemInIsExpression.kt");
+    }
+
+    @Test
+    @TestMetadata("projectionProblemInIsMultiTypealiasArgument.kt")
+    public void testProjectionProblemInIsMultiTypealiasArgument() {
+      runTest("compiler/testData/diagnostics/tests/projectionProblemInIsMultiTypealiasArgument.kt");
+    }
+
+    @Test
+    @TestMetadata("projectionProblemInIsTypealiasArgument.kt")
+    public void testProjectionProblemInIsTypealiasArgument() {
+      runTest("compiler/testData/diagnostics/tests/projectionProblemInIsTypealiasArgument.kt");
+    }
+
+    @Test
+    @TestMetadata("projectionProblemWithTypealiasArgument.kt")
+    public void testProjectionProblemWithTypealiasArgument() {
+      runTest("compiler/testData/diagnostics/tests/projectionProblemWithTypealiasArgument.kt");
     }
 
     @Test
@@ -7817,6 +7847,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
     @TestMetadata("compiler/testData/diagnostics/tests/controlFlowAnalysis")
     @TestDataPath("$PROJECT_ROOT")
     public class ControlFlowAnalysis {
+      @Test
+      @TestMetadata("accessEnumEntryInLazy.kt")
+      public void testAccessEnumEntryInLazy() {
+        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/accessEnumEntryInLazy.kt");
+      }
+
       @Test
       @TestMetadata("accessToCompanionInBaseEnumInitSection_function.kt")
       public void testAccessToCompanionInBaseEnumInitSection_function() {
@@ -37188,6 +37224,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("smartcastToStarProjection.kt")
       public void testSmartcastToStarProjection() {
         runTest("compiler/testData/diagnostics/tests/smartCasts/smartcastToStarProjection.kt");
+      }
+
+      @Test
+      @TestMetadata("smartcastWithComplexFlexibleType.kt")
+      public void testSmartcastWithComplexFlexibleType() {
+        runTest("compiler/testData/diagnostics/tests/smartCasts/smartcastWithComplexFlexibleType.kt");
       }
 
       @Test

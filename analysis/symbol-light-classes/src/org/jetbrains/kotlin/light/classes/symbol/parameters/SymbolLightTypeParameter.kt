@@ -122,9 +122,9 @@ internal class SymbolLightTypeParameter private constructor(
     override fun getAllMethods(): Array<PsiMethod> = PsiMethod.EMPTY_ARRAY
     override fun getAllInnerClasses(): Array<PsiClass> = PsiClass.EMPTY_ARRAY
     override fun findFieldByName(name: String?, checkBases: Boolean): PsiField? = null
-    override fun findMethodBySignature(patternMethod: PsiMethod?, checkBases: Boolean): PsiMethod? = null
-    override fun findMethodsBySignature(patternMethod: PsiMethod?, checkBases: Boolean): Array<PsiMethod> = PsiMethod.EMPTY_ARRAY
-    override fun findMethodsAndTheirSubstitutorsByName(name: String?, checkBases: Boolean): List<Pair<PsiMethod, PsiSubstitutor>> =
+    override fun findMethodBySignature(patternMethod: PsiMethod, checkBases: Boolean): PsiMethod? = null
+    override fun findMethodsBySignature(patternMethod: PsiMethod, checkBases: Boolean): Array<PsiMethod> = PsiMethod.EMPTY_ARRAY
+    override fun findMethodsAndTheirSubstitutorsByName(name: String, checkBases: Boolean): List<Pair<PsiMethod, PsiSubstitutor>> =
         emptyList()
 
     override fun getAllMethodsAndTheirSubstitutors(): List<Pair<PsiMethod, PsiSubstitutor>> = emptyList()
@@ -133,7 +133,7 @@ internal class SymbolLightTypeParameter private constructor(
     override fun getRBrace(): PsiElement? = null
     override fun getScope(): PsiElement = parent
     override fun isInheritor(baseClass: PsiClass, checkDeep: Boolean): Boolean = false
-    override fun isInheritorDeep(baseClass: PsiClass?, classToByPass: PsiClass?): Boolean = false
+    override fun isInheritorDeep(baseClass: PsiClass, classToByPass: PsiClass?): Boolean = false
     override fun getVisibleSignatures(): MutableCollection<HierarchicalMethodSignature> = mutableListOf()
     override fun setName(name: String): PsiElement = cannotModify()
     override fun getNameIdentifier(): PsiIdentifier? = null
