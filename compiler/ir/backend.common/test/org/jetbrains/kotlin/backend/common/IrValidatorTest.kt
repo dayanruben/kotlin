@@ -5,16 +5,11 @@
 
 package org.jetbrains.kotlin.backend.common
 
-import org.jetbrains.kotlin.backend.common.ir.Ir
-import org.jetbrains.kotlin.backend.common.ir.SharedVariablesManager
-import org.jetbrains.kotlin.backend.common.lower.InnerClassesSupport
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.UnsignedType
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.ERROR
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.WARNING
-import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.IrVerificationMode
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
@@ -36,7 +31,6 @@ import org.jetbrains.kotlin.ir.symbols.IrPropertySymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.impl.IrFileSymbolImpl
 import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.types.IrTypeSystemContext
 import org.jetbrains.kotlin.ir.types.SimpleTypeNullability
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.util.NaiveSourceBasedFileEntryImpl
@@ -45,19 +39,16 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.test.utils.TestMessageCollector
 import org.jetbrains.kotlin.test.utils.TestMessageCollector.Message
-import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
 import kotlin.reflect.KProperty
 import kotlin.test.*
 
 class IrValidatorTest {
 
     private lateinit var messageCollector: TestMessageCollector
-    private lateinit var context: TestBackendContext
 
     @BeforeTest
     fun setUp() {
         messageCollector = TestMessageCollector()
-        context = TestBackendContext(TestIrBuiltins, messageCollector)
     }
 
     private fun buildInvalidIrExpressionWithNoLocations(): IrElement {
@@ -105,10 +96,10 @@ class IrValidatorTest {
 
     private fun testValidation(mode: IrVerificationMode, tree: IrElement, expectedMessages: List<Message>) {
         runValidationAndAssert(mode) {
-            validateIr(context, mode) {
+            validateIr(messageCollector, mode) {
                 performBasicIrValidation(
                     tree,
-                    context.irBuiltIns,
+                    TestIrBuiltins,
                     phaseName = "IrValidatorTest",
                     checkTypes = true,
                 )
@@ -127,21 +118,27 @@ class IrValidatorTest {
     }
 
     @Test
-    fun `warnings are reported and no exception is thrown if IrVerificationMode is WARNIN (no debug info)`() {
+    fun `warnings are reported and no exception is thrown if IrVerificationMode is WARNING (no debug info)`() {
         testValidation(
             IrVerificationMode.WARNING,
             buildInvalidIrExpressionWithNoLocations(),
             listOf(
                 Message(
                     WARNING,
-                    "[IR VALIDATION] IrValidatorTest: unexpected type: expected <uninitialized parent>.String, got <uninitialized parent>.Any\n" +
-                            "STRING_CONCATENATION type=<uninitialized parent>.Any",
+                    """
+                    [IR VALIDATION] IrValidatorTest: unexpected type: expected <uninitialized parent>.String, got <uninitialized parent>.Any
+                    STRING_CONCATENATION type=<uninitialized parent>.Any
+                      inside CALL 'public final fun foo (): <uninitialized parent>.Any declared in <no parent>' type=<uninitialized parent>.Any origin=null
+                    """.trimIndent(),
                     null,
                 ),
                 Message(
                     WARNING,
-                    "[IR VALIDATION] IrValidatorTest: Duplicate IR node: STRING_CONCATENATION type=<uninitialized parent>.Any\n" +
-                            "STRING_CONCATENATION type=<uninitialized parent>.Any",
+                    """
+                    [IR VALIDATION] IrValidatorTest: Duplicate IR node: STRING_CONCATENATION type=<uninitialized parent>.Any
+                    STRING_CONCATENATION type=<uninitialized parent>.Any
+                      inside CALL 'public final fun foo (): <uninitialized parent>.Any declared in <no parent>' type=<uninitialized parent>.Any origin=null
+                    """.trimIndent(),
                     null,
                 ),
             ),
@@ -149,27 +146,44 @@ class IrValidatorTest {
     }
 
     @Test
-    fun `warnings are reported and no exception is thrown if IrVerificationMode is WARNIN (with debug info)`() {
+    fun `warnings are reported and no exception is thrown if IrVerificationMode is WARNING (with debug info)`() {
         testValidation(
             IrVerificationMode.WARNING,
             buildInvalidIrTreeWithLocations(),
             listOf(
                 Message(
                     WARNING,
-                    "[IR VALIDATION] IrValidatorTest: unexpected type: expected <uninitialized parent>.Unit, got <uninitialized parent>.Any\n" +
-                            "CALL 'public final fun foo (): <uninitialized parent>.Unit declared in org.sample' type=<uninitialized parent>.Any origin=null",
+                    """
+                    [IR VALIDATION] IrValidatorTest: unexpected type: expected <uninitialized parent>.Unit, got <uninitialized parent>.Any
+                    CALL 'public final fun foo (): <uninitialized parent>.Unit declared in org.sample' type=<uninitialized parent>.Any origin=null
+                      inside BLOCK_BODY
+                        inside FUN name:foo visibility:public modality:FINAL <> () returnType:<uninitialized parent>.Unit
+                          inside FILE fqName:org.sample fileName:test.kt
+                    """.trimIndent(),
                     CompilerMessageLocation.create("test.kt", 1, 7, null),
                 ),
                 Message(
                     WARNING,
-                    "[IR VALIDATION] IrValidatorTest: unexpected type: expected <uninitialized parent>.String, got <uninitialized parent>.Any\n" +
-                            "STRING_CONCATENATION type=<uninitialized parent>.Any",
+                    """
+                    [IR VALIDATION] IrValidatorTest: unexpected type: expected <uninitialized parent>.String, got <uninitialized parent>.Any
+                    STRING_CONCATENATION type=<uninitialized parent>.Any
+                      inside CALL 'public final fun foo (): <uninitialized parent>.Unit declared in org.sample' type=<uninitialized parent>.Any origin=null
+                        inside BLOCK_BODY
+                          inside FUN name:foo visibility:public modality:FINAL <> () returnType:<uninitialized parent>.Unit
+                            inside FILE fqName:org.sample fileName:test.kt
+                    """.trimIndent(),
                     CompilerMessageLocation.create("test.kt", 1, 10, null),
                 ),
                 Message(
                     WARNING,
-                    "[IR VALIDATION] IrValidatorTest: Duplicate IR node: STRING_CONCATENATION type=<uninitialized parent>.Any\n" +
-                            "STRING_CONCATENATION type=<uninitialized parent>.Any",
+                    """
+                    [IR VALIDATION] IrValidatorTest: Duplicate IR node: STRING_CONCATENATION type=<uninitialized parent>.Any
+                    STRING_CONCATENATION type=<uninitialized parent>.Any
+                      inside CALL 'public final fun foo (): <uninitialized parent>.Unit declared in org.sample' type=<uninitialized parent>.Any origin=null
+                        inside BLOCK_BODY
+                          inside FUN name:foo visibility:public modality:FINAL <> () returnType:<uninitialized parent>.Unit
+                            inside FILE fqName:org.sample fileName:test.kt
+                    """.trimIndent(),
                     CompilerMessageLocation.create("test.kt", 1, 10, null),
                 ),
             ),
@@ -184,14 +198,20 @@ class IrValidatorTest {
             listOf(
                 Message(
                     ERROR,
-                    "[IR VALIDATION] IrValidatorTest: unexpected type: expected <uninitialized parent>.String, got <uninitialized parent>.Any\n" +
-                            "STRING_CONCATENATION type=<uninitialized parent>.Any",
+                    """
+                    [IR VALIDATION] IrValidatorTest: unexpected type: expected <uninitialized parent>.String, got <uninitialized parent>.Any
+                    STRING_CONCATENATION type=<uninitialized parent>.Any
+                      inside CALL 'public final fun foo (): <uninitialized parent>.Any declared in <no parent>' type=<uninitialized parent>.Any origin=null
+                    """.trimIndent(),
                     null,
                 ),
                 Message(
                     ERROR,
-                    "[IR VALIDATION] IrValidatorTest: Duplicate IR node: STRING_CONCATENATION type=<uninitialized parent>.Any\n" +
-                            "STRING_CONCATENATION type=<uninitialized parent>.Any",
+                    """
+                    [IR VALIDATION] IrValidatorTest: Duplicate IR node: STRING_CONCATENATION type=<uninitialized parent>.Any
+                    STRING_CONCATENATION type=<uninitialized parent>.Any
+                      inside CALL 'public final fun foo (): <uninitialized parent>.Any declared in <no parent>' type=<uninitialized parent>.Any origin=null
+                    """.trimIndent(),
                     null,
                 ),
             ),
@@ -206,20 +226,37 @@ class IrValidatorTest {
             listOf(
                 Message(
                     ERROR,
-                    "[IR VALIDATION] IrValidatorTest: unexpected type: expected <uninitialized parent>.Unit, got <uninitialized parent>.Any\n" +
-                            "CALL 'public final fun foo (): <uninitialized parent>.Unit declared in org.sample' type=<uninitialized parent>.Any origin=null",
+                    """
+                    [IR VALIDATION] IrValidatorTest: unexpected type: expected <uninitialized parent>.Unit, got <uninitialized parent>.Any
+                    CALL 'public final fun foo (): <uninitialized parent>.Unit declared in org.sample' type=<uninitialized parent>.Any origin=null
+                      inside BLOCK_BODY
+                        inside FUN name:foo visibility:public modality:FINAL <> () returnType:<uninitialized parent>.Unit
+                          inside FILE fqName:org.sample fileName:test.kt
+                    """.trimIndent(),
                     CompilerMessageLocation.create("test.kt", 1, 7, null),
                 ),
                 Message(
                     ERROR,
-                    "[IR VALIDATION] IrValidatorTest: unexpected type: expected <uninitialized parent>.String, got <uninitialized parent>.Any\n" +
-                            "STRING_CONCATENATION type=<uninitialized parent>.Any",
+                    """
+                    [IR VALIDATION] IrValidatorTest: unexpected type: expected <uninitialized parent>.String, got <uninitialized parent>.Any
+                    STRING_CONCATENATION type=<uninitialized parent>.Any
+                      inside CALL 'public final fun foo (): <uninitialized parent>.Unit declared in org.sample' type=<uninitialized parent>.Any origin=null
+                        inside BLOCK_BODY
+                          inside FUN name:foo visibility:public modality:FINAL <> () returnType:<uninitialized parent>.Unit
+                            inside FILE fqName:org.sample fileName:test.kt
+                    """.trimIndent(),
                     CompilerMessageLocation.create("test.kt", 1, 10, null),
                 ),
                 Message(
                     ERROR,
-                    "[IR VALIDATION] IrValidatorTest: Duplicate IR node: STRING_CONCATENATION type=<uninitialized parent>.Any\n" +
-                            "STRING_CONCATENATION type=<uninitialized parent>.Any",
+                    """
+                    [IR VALIDATION] IrValidatorTest: Duplicate IR node: STRING_CONCATENATION type=<uninitialized parent>.Any
+                    STRING_CONCATENATION type=<uninitialized parent>.Any
+                      inside CALL 'public final fun foo (): <uninitialized parent>.Unit declared in org.sample' type=<uninitialized parent>.Any origin=null
+                        inside BLOCK_BODY
+                          inside FUN name:foo visibility:public modality:FINAL <> () returnType:<uninitialized parent>.Unit
+                            inside FILE fqName:org.sample fileName:test.kt
+                    """.trimIndent(),
                     CompilerMessageLocation.create("test.kt", 1, 10, null),
                 ),
             ),
@@ -238,8 +275,11 @@ class IrValidatorTest {
             listOf(
                 Message(
                     WARNING,
-                    "[IR VALIDATION] IrValidatorTest: Duplicate IR node: CLASS CLASS name:MyClass modality:FINAL visibility:public superTypes:[]\n" +
-                            "CLASS CLASS name:MyClass modality:FINAL visibility:public superTypes:[]",
+                    """
+                    [IR VALIDATION] IrValidatorTest: Duplicate IR node: CLASS CLASS name:MyClass modality:FINAL visibility:public superTypes:[]
+                    CLASS CLASS name:MyClass modality:FINAL visibility:public superTypes:[]
+                      inside CLASS CLASS name:MyClass modality:FINAL visibility:public superTypes:[]
+                    """.trimIndent(),
                     null
                 )
             )
@@ -276,45 +316,6 @@ class IrValidatorTest {
             ),
         )
     }
-}
-
-private class TestBackendContext(
-    override val irBuiltIns: IrBuiltIns,
-    override val messageCollector: TestMessageCollector
-) : CommonBackendContext {
-    override val builtIns: KotlinBuiltIns
-        get() = shouldNotBeCalled()
-
-    override val ir: Ir<TestBackendContext>
-        get() = shouldNotBeCalled()
-
-    override val configuration: CompilerConfiguration
-        get() = shouldNotBeCalled()
-
-    override val scriptMode: Boolean
-        get() = shouldNotBeCalled()
-
-    override val mapping: Mapping
-        get() = shouldNotBeCalled()
-
-    override val innerClassesSupport: InnerClassesSupport
-        get() = shouldNotBeCalled()
-
-    override val typeSystem: IrTypeSystemContext
-        get() = shouldNotBeCalled()
-
-    override val sharedVariablesManager: SharedVariablesManager
-        get() = shouldNotBeCalled()
-
-    override val internalPackageFqn: FqName
-        get() = shouldNotBeCalled()
-
-    override val irFactory: IrFactory
-        get() = IrFactoryImpl
-
-    override var inVerbosePhase: Boolean
-        get() = shouldNotBeCalled()
-        set(_) = shouldNotBeCalled()
 }
 
 private object TestIrBuiltins : IrBuiltIns() {
