@@ -2664,6 +2664,18 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         runTest("compiler/testData/diagnostics/tests/annotations/WrongAnnotationArgsOnObject.kt");
       }
 
+      @Test
+      @TestMetadata("wrongAnnotationTargetAnnotationOrder.kt")
+      public void testWrongAnnotationTargetAnnotationOrder() {
+        runTest("compiler/testData/diagnostics/tests/annotations/wrongAnnotationTargetAnnotationOrder.kt");
+      }
+
+      @Test
+      @TestMetadata("wrongAnnotationTargetAnnotationOrderProperSyntax.kt")
+      public void testWrongAnnotationTargetAnnotationOrderProperSyntax() {
+        runTest("compiler/testData/diagnostics/tests/annotations/wrongAnnotationTargetAnnotationOrderProperSyntax.kt");
+      }
+
       @Nested
       @TestMetadata("compiler/testData/diagnostics/tests/annotations/annotationParameterMustBeConstant")
       @TestDataPath("$PROJECT_ROOT")
@@ -25760,6 +25772,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
     @TestDataPath("$PROJECT_ROOT")
     public class Multiplatform {
       @Test
+      @TestMetadata("abstractEnumInIr.kt")
+      public void testAbstractEnumInIr() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/abstractEnumInIr.kt");
+      }
+
+      @Test
       @TestMetadata("actualClassDelegationWithImplicitType.kt")
       public void testActualClassDelegationWithImplicitType() {
         runTest("compiler/testData/diagnostics/tests/multiplatform/actualClassDelegationWithImplicitType.kt");
@@ -26128,6 +26146,18 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("platformRedeclarationOfExpect.kt")
       public void testPlatformRedeclarationOfExpect() {
         runTest("compiler/testData/diagnostics/tests/multiplatform/platformRedeclarationOfExpect.kt");
+      }
+
+      @Test
+      @TestMetadata("privateExpectFakeOverride.kt")
+      public void testPrivateExpectFakeOverride() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/privateExpectFakeOverride.kt");
+      }
+
+      @Test
+      @TestMetadata("privateExpectFakeOverride_incompatibleReturnType.kt")
+      public void testPrivateExpectFakeOverride_incompatibleReturnType() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/privateExpectFakeOverride_incompatibleReturnType.kt");
       }
 
       @Test
