@@ -61,9 +61,9 @@ internal object KaAnnotationValueRenderer {
                     append(classId.asSingleFqName().render())
                 }
 
-                if (type.ownTypeArguments.isNotEmpty()) {
+                if (type.typeArguments.isNotEmpty()) {
                     append('<')
-                    renderWithSeparator(type.ownTypeArguments, ", ") { typeProjection ->
+                    renderWithSeparator(type.typeArguments, ", ") { typeProjection ->
                         when (typeProjection) {
                             is KaStarTypeProjection -> append('*')
                             is KaTypeArgumentWithVariance -> renderType(typeProjection.type)
@@ -76,7 +76,7 @@ internal object KaAnnotationValueRenderer {
                 append("UNRESOLVED_CLASS")
             }
             else -> {
-                append(type.asStringForDebugging())
+                append(type)
             }
         }
     }

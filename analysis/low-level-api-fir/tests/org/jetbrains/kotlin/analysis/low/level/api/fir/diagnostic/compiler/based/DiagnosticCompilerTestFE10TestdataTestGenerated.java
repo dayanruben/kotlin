@@ -8069,6 +8069,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       }
 
       @Test
+      @TestMetadata("enumEntryAccessInCapturedBlock.kt")
+      public void testEnumEntryAccessInCapturedBlock() {
+        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/enumEntryAccessInCapturedBlock.kt");
+      }
+
+      @Test
       @TestMetadata("enumInterdependence.kt")
       public void testEnumInterdependence() {
         runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/enumInterdependence.kt");
@@ -18336,9 +18342,21 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         }
 
         @Test
+        @TestMetadata("capturedApproximationWithInproperUpperConstraint.kt")
+        public void testCapturedApproximationWithInproperUpperConstraint() {
+          runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/capturedApproximationWithInproperUpperConstraint.kt");
+        }
+
+        @Test
         @TestMetadata("capturedAssignment.kt")
         public void testCapturedAssignment() {
           runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/capturedAssignment.kt");
+        }
+
+        @Test
+        @TestMetadata("capturedAssignmentAfter.kt")
+        public void testCapturedAssignmentAfter() {
+          runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/capturedAssignmentAfter.kt");
         }
 
         @Test
@@ -30296,9 +30314,27 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         }
 
         @Test
+        @TestMetadata("kt68546.kt")
+        public void testKt68546() {
+          runTest("compiler/testData/diagnostics/tests/override/clashesOnInheritance/kt68546.kt");
+        }
+
+        @Test
+        @TestMetadata("kt68626.kt")
+        public void testKt68626() {
+          runTest("compiler/testData/diagnostics/tests/override/clashesOnInheritance/kt68626.kt");
+        }
+
+        @Test
         @TestMetadata("kt9550.kt")
         public void testKt9550() {
           runTest("compiler/testData/diagnostics/tests/override/clashesOnInheritance/kt9550.kt");
+        }
+
+        @Test
+        @TestMetadata("noFalsePositiveConflictingOverloadsOnSubstitution.kt")
+        public void testNoFalsePositiveConflictingOverloadsOnSubstitution() {
+          runTest("compiler/testData/diagnostics/tests/override/clashesOnInheritance/noFalsePositiveConflictingOverloadsOnSubstitution.kt");
         }
 
         @Test

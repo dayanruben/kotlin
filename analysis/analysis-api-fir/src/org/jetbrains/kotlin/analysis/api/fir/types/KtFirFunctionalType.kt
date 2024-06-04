@@ -34,11 +34,12 @@ internal class KaFirFunctionalType(
     override val token: KaLifetimeToken get() = builder.token
 
     override val classId: ClassId get() = withValidityAssertion { coneType.lookupTag.classId }
-    override val classSymbol: KaClassLikeSymbol by cached {
+
+    override val symbol: KaClassLikeSymbol by cached {
         builder.classifierBuilder.buildClassLikeSymbolByLookupTag(coneType.lookupTag)
             ?: errorWithFirSpecificEntries("Class was not found", coneType = coneType)
     }
-    override val ownTypeArguments: List<KaTypeProjection> get() = withValidityAssertion { qualifiers.last().typeArguments }
+    override val typeArguments: List<KaTypeProjection> get() = withValidityAssertion { qualifiers.last().typeArguments }
 
     override val qualifiers: List<KaClassTypeQualifier.KaResolvedClassTypeQualifier> by cached {
         UsualClassTypeQualifierBuilder.buildQualifiers(coneType, builder)
@@ -85,9 +86,9 @@ internal class KaFirFunctionalType(
         coneType.returnType(builder.rootSession).buildKtType()
     }
 
-    override fun asStringForDebugging(): String = withValidityAssertion { coneType.renderForDebugging() }
     override fun equals(other: Any?) = typeEquals(other)
     override fun hashCode() = typeHashcode()
+    override fun toString() = coneType.renderForDebugging()
 
     private fun ConeKotlinType.buildKtType(): KaType = builder.typeBuilder.buildKtType(this)
 }

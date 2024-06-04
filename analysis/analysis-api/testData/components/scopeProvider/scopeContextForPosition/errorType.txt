@@ -1,6 +1,6 @@
 element: e
 implicit receivers:
-  type: KaTypeErrorType:
+  type: KaErrorType:
     annotationsList: []
     type: ERROR_TYPE
   owner symbol: KaFirAnonymousFunctionSymbol
@@ -88,7 +88,7 @@ scopes:
         receiverParameter: null
         returnType: KaUsualClassType:
           annotationsList: []
-          ownTypeArguments: []
+          typeArguments: []
           type: kotlin/Unit
         symbolKind: TOP_LEVEL
         typeParameters: []

@@ -12,7 +12,7 @@ KaConstructorSymbol:
   receiverParameter: null
   returnType: KaUsualClassType:
     annotationsList: []
-    ownTypeArguments: []
+    typeArguments: []
     type: Foo
   symbolKind: CLASS_MEMBER
   typeParameters: []
@@ -34,8 +34,8 @@ KaConstructorSymbol:
           receiverParameter: null
           returnType: KaUsualClassType:
             annotationsList: []
-            ownTypeArguments: [
-              out KaTypeErrorType:
+            typeArguments: [
+              out KaErrorType:
                 annotationsList: []
                 type: ERROR_TYPE
             ]
@@ -63,8 +63,8 @@ KaConstructorSymbol:
           receiverParameter: null
           returnType: KaUsualClassType:
             annotationsList: []
-            ownTypeArguments: [
-              out KaTypeErrorType:
+            typeArguments: [
+              out KaErrorType:
                 annotationsList: []
                 type: ERROR_TYPE
             ]
@@ -75,7 +75,7 @@ KaConstructorSymbol:
           visibility: Public
           getDispatchReceiver(): KaUsualClassType:
             annotationsList: []
-            ownTypeArguments: []
+            typeArguments: []
             type: Foo
           getContainingFileSymbol: KaFileSymbol(varargInAnnotationPrimaryConstructorAsPropertyWithoutType.kt)
           getContainingJvmClassName: Foo
@@ -101,8 +101,8 @@ KaConstructorSymbol:
         receiverParameter: null
         returnType: KaUsualClassType:
           annotationsList: []
-          ownTypeArguments: [
-            out KaTypeErrorType:
+          typeArguments: [
+            out KaErrorType:
               annotationsList: []
               type: ERROR_TYPE
           ]
@@ -113,7 +113,7 @@ KaConstructorSymbol:
         visibility: Public
         getDispatchReceiver(): KaUsualClassType:
           annotationsList: []
-          ownTypeArguments: []
+          typeArguments: []
           type: Foo
         getContainingFileSymbol: KaFileSymbol(varargInAnnotationPrimaryConstructorAsPropertyWithoutType.kt)
         getContainingJvmClassName: Foo
@@ -132,7 +132,7 @@ KaConstructorSymbol:
       name: ints
       origin: SOURCE
       receiverParameter: null
-      returnType: KaTypeErrorType:
+      returnType: KaErrorType:
         annotationsList: []
         type: ERROR_TYPE
       symbolKind: LOCAL
@@ -167,7 +167,7 @@ KaNamedClassOrObjectSymbol:
   superTypes: [
     KaUsualClassType:
       annotationsList: []
-      ownTypeArguments: []
+      typeArguments: []
       type: kotlin/Annotation
   ]
   symbolKind: TOP_LEVEL

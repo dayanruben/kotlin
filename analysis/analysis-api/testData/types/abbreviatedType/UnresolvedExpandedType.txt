@@ -3,19 +3,20 @@ KaClassErrorType:
     abbreviatedType: null
     annotationsList: []
     classId: expansion/FooAlias
-    classSymbol: KaTypeAliasSymbol(expansion/FooAlias)
     nullability: NON_NULLABLE
-    ownTypeArguments: []
     qualifiers: [
       qualifier:
         name: FooAlias
         symbol: KaTypeAliasSymbol(expansion/FooAlias)
         typeArguments: []
     ]
+    symbol: KaTypeAliasSymbol(expansion/FooAlias)
+    typeArguments: []
   annotationsList: []
-  candidateClassSymbols: []
+  candidateSymbols: []
   errorMessage: Symbol not found for base/Foo
   nullability: NON_NULLABLE
+  presentableText: base.Foo
   qualifiers: [
     qualifier:
       name: base

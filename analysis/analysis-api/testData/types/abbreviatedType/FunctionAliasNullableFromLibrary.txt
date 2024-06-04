@@ -3,55 +3,26 @@ KaFunctionalType:
   annotationsList: []
   arity: 1
   classId: kotlin/Function1
-  classSymbol: KaNamedClassOrObjectSymbol(kotlin/Function1)
   contextReceivers: []
   hasContextReceivers: false
   hasReceiver: false
   isReflectType: false
   isSuspend: false
   nullability: NULLABLE
-  ownTypeArguments: [
-    KaUsualClassType:
-      abbreviatedType: null
-      annotationsList: []
-      classId: kotlin/String
-      classSymbol: KaNamedClassOrObjectSymbol(kotlin/String)
-      nullability: NON_NULLABLE
-      ownTypeArguments: []
-      qualifiers: [
-        qualifier:
-          name: String
-          symbol: KaNamedClassOrObjectSymbol(kotlin/String)
-          typeArguments: []
-      ]
-    KaUsualClassType:
-      abbreviatedType: null
-      annotationsList: []
-      classId: kotlin/Int
-      classSymbol: KaNamedClassOrObjectSymbol(kotlin/Int)
-      nullability: NON_NULLABLE
-      ownTypeArguments: []
-      qualifiers: [
-        qualifier:
-          name: Int
-          symbol: KaNamedClassOrObjectSymbol(kotlin/Int)
-          typeArguments: []
-      ]
-  ]
   parameterTypes: [
     KaUsualClassType:
       abbreviatedType: null
       annotationsList: []
       classId: kotlin/String
-      classSymbol: KaNamedClassOrObjectSymbol(kotlin/String)
       nullability: NON_NULLABLE
-      ownTypeArguments: []
       qualifiers: [
         qualifier:
           name: String
           symbol: KaNamedClassOrObjectSymbol(kotlin/String)
           typeArguments: []
       ]
+      symbol: KaNamedClassOrObjectSymbol(kotlin/String)
+      typeArguments: []
   ]
   qualifiers: [
     qualifier:
@@ -62,28 +33,28 @@ KaFunctionalType:
           abbreviatedType: null
           annotationsList: []
           classId: kotlin/String
-          classSymbol: KaNamedClassOrObjectSymbol(kotlin/String)
           nullability: NON_NULLABLE
-          ownTypeArguments: []
           qualifiers: [
             qualifier:
               name: String
               symbol: KaNamedClassOrObjectSymbol(kotlin/String)
               typeArguments: []
           ]
+          symbol: KaNamedClassOrObjectSymbol(kotlin/String)
+          typeArguments: []
         KaUsualClassType:
           abbreviatedType: null
           annotationsList: []
           classId: kotlin/Int
-          classSymbol: KaNamedClassOrObjectSymbol(kotlin/Int)
           nullability: NON_NULLABLE
-          ownTypeArguments: []
           qualifiers: [
             qualifier:
               name: Int
               symbol: KaNamedClassOrObjectSymbol(kotlin/Int)
               typeArguments: []
           ]
+          symbol: KaNamedClassOrObjectSymbol(kotlin/Int)
+          typeArguments: []
       ]
   ]
   receiverType: null
@@ -91,15 +62,44 @@ KaFunctionalType:
     abbreviatedType: null
     annotationsList: []
     classId: kotlin/Int
-    classSymbol: KaNamedClassOrObjectSymbol(kotlin/Int)
     nullability: NON_NULLABLE
-    ownTypeArguments: []
     qualifiers: [
       qualifier:
         name: Int
         symbol: KaNamedClassOrObjectSymbol(kotlin/Int)
         typeArguments: []
     ]
+    symbol: KaNamedClassOrObjectSymbol(kotlin/Int)
+    typeArguments: []
+  symbol: KaNamedClassOrObjectSymbol(kotlin/Function1)
+  typeArguments: [
+    KaUsualClassType:
+      abbreviatedType: null
+      annotationsList: []
+      classId: kotlin/String
+      nullability: NON_NULLABLE
+      qualifiers: [
+        qualifier:
+          name: String
+          symbol: KaNamedClassOrObjectSymbol(kotlin/String)
+          typeArguments: []
+      ]
+      symbol: KaNamedClassOrObjectSymbol(kotlin/String)
+      typeArguments: []
+    KaUsualClassType:
+      abbreviatedType: null
+      annotationsList: []
+      classId: kotlin/Int
+      nullability: NON_NULLABLE
+      qualifiers: [
+        qualifier:
+          name: Int
+          symbol: KaNamedClassOrObjectSymbol(kotlin/Int)
+          typeArguments: []
+      ]
+      symbol: KaNamedClassOrObjectSymbol(kotlin/Int)
+      typeArguments: []
+  ]
 
 Rendered type:
 ((kotlin.String) -> kotlin.Int)?

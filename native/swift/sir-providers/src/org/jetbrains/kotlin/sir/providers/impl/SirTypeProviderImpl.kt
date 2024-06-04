@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.sir.providers.impl
 
+import org.jetbrains.kotlin.analysis.api.KaAnalysisNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.*
@@ -32,6 +33,7 @@ public class SirTypeProviderImpl(
             .handleErrors(reportErrorType, reportUnsupportedType)
             .handleImports(ktAnalysisSession, processTypeImports)
 
+    @OptIn(KaAnalysisNonPublicApi::class)
     private fun buildSirNominalType(ktType: KaType, ktAnalysisSession: KaSession): SirType {
         fun buildPrimitiveType(ktType: KaType): SirType? = with(ktAnalysisSession) {
             when {
@@ -59,7 +61,7 @@ public class SirTypeProviderImpl(
 
         fun buildRegularType(ktType: KaType): SirType = when (ktType) {
             is KaUsualClassType -> with(sirSession) {
-                when (val classSymbol = ktType.classSymbol) {
+                when (val classSymbol = ktType.symbol) {
                     is KaSymbolWithVisibility -> {
                         if (classSymbol.sirVisibility(ktAnalysisSession) == SirVisibility.PUBLIC) {
                             SirNominalType(classSymbol.sirDeclaration() as SirNamedDeclaration)
@@ -75,8 +77,7 @@ public class SirTypeProviderImpl(
             is KaTypeParameterType,
             -> SirUnsupportedType()
             is KaErrorType -> SirErrorType(ktType.errorMessage)
-            else -> SirErrorType("Unexpected type ${ktType.asStringForDebugging()}")
-
+            else -> SirErrorType("Unexpected type $ktType")
         }
 
         return ktType.abbreviatedType?.let { buildRegularType(it) }

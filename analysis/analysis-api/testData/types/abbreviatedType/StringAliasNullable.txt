@@ -3,26 +3,26 @@ KaUsualClassType:
     abbreviatedType: null
     annotationsList: []
     classId: expansion/StringAlias
-    classSymbol: KaTypeAliasSymbol(expansion/StringAlias)
     nullability: NULLABLE
-    ownTypeArguments: []
     qualifiers: [
       qualifier:
         name: StringAlias
         symbol: KaTypeAliasSymbol(expansion/StringAlias)
         typeArguments: []
     ]
+    symbol: KaTypeAliasSymbol(expansion/StringAlias)
+    typeArguments: []
   annotationsList: []
   classId: kotlin/String
-  classSymbol: KaNamedClassOrObjectSymbol(kotlin/String)
   nullability: NULLABLE
-  ownTypeArguments: []
   qualifiers: [
     qualifier:
       name: String
       symbol: KaNamedClassOrObjectSymbol(kotlin/String)
       typeArguments: []
   ]
+  symbol: KaNamedClassOrObjectSymbol(kotlin/String)
+  typeArguments: []
 
 Rendered type:
 expansion.StringAlias?

@@ -329,6 +329,8 @@ enum class LanguageFeature(
     CorrectSpecificityCheckForSignedAndUnsigned(KOTLIN_2_1, kind = OTHER), // KT-35305
     AllowAccessToProtectedFieldFromSuperCompanion(KOTLIN_2_1), // KT-39868
     CheckLambdaAgainstTypeVariableContradictionInResolution(KOTLIN_2_1, kind = OTHER), // KT-58310
+    ProperUninitializedEnumEntryAccessAnalysis(KOTLIN_2_1, kind = BUG_FIX), // KT-68451
+    ImprovedCapturedTypeApproximationInInference(KOTLIN_2_1, kind = OTHER), // KT-64515
 
     // End of 2.* language features --------------------------------------------------
 

@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.analysis.api.types
 
+import org.jetbrains.kotlin.analysis.api.KaAnalysisNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaTypeProjection
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiversOwner
@@ -80,7 +81,10 @@ public sealed interface KaType : KaLifetimeOwner, KaAnnotated {
      */
     public val abbreviatedType: KaUsualClassType?
 
-    public fun asStringForDebugging(): String
+    @Deprecated("Use 'toString()' instead.", replaceWith = ReplaceWith("toString()"))
+    public fun asStringForDebugging(): String {
+        return withValidityAssertion { toString() }
+    }
 }
 
 public typealias KtType = KaType
@@ -97,33 +101,38 @@ public enum class KaTypeNullability(public val isNullable: Boolean) {
 
 public typealias KtTypeNullability = KaTypeNullability
 
-public sealed interface KaErrorType : KaType {
-    // todo should be replaced with diagnostics
+public interface KaErrorType : KaType {
+    @KaAnalysisNonPublicApi
     public val errorMessage: String
+
+    @KaAnalysisNonPublicApi
+    public val presentableText: String?
+
+    @KaAnalysisNonPublicApi
+    @Deprecated("Use 'presentableText' instead.")
+    public fun tryRenderAsNonErrorType(): String? = presentableText
 }
 
 public typealias KtErrorType = KaErrorType
 
-public abstract class KaTypeErrorType : KaErrorType {
-    public abstract fun tryRenderAsNonErrorType(): String?
-}
+public typealias KaTypeErrorType = KaErrorType
 
 public typealias KtTypeErrorType = KaTypeErrorType
 
-public sealed class KaClassType : KaType {
-    override fun toString(): String = asStringForDebugging()
-
-    public abstract val qualifiers: List<KaClassTypeQualifier>
-}
-
-public typealias KtClassType = KaClassType
-
-public sealed class KaNonErrorClassType : KaClassType() {
+public sealed class KaNonErrorClassType : KaType {
     public abstract val classId: ClassId
-    public abstract val classSymbol: KaClassLikeSymbol
-    public abstract val ownTypeArguments: List<KaTypeProjection>
+    public abstract val symbol: KaClassLikeSymbol
+    public abstract val typeArguments: List<KaTypeProjection>
 
-    abstract override val qualifiers: List<KaClassTypeQualifier.KaResolvedClassTypeQualifier>
+    public abstract val qualifiers: List<KaClassTypeQualifier.KaResolvedClassTypeQualifier>
+
+    @Deprecated("Use 'symbol' instead.", ReplaceWith("symbol"))
+    public val classSymbol: KaClassLikeSymbol
+        get() = symbol
+
+    @Deprecated("Use 'typeArguments' instead.", ReplaceWith("typeArguments"))
+    public val ownTypeArguments: List<KaTypeProjection>
+        get() = typeArguments
 }
 
 public typealias KtNonErrorClassType = KaNonErrorClassType
@@ -145,8 +154,14 @@ public abstract class KaUsualClassType : KaNonErrorClassType()
 
 public typealias KtUsualClassType = KaUsualClassType
 
-public abstract class KaClassErrorType : KaClassType(), KaErrorType {
-    public abstract val candidateClassSymbols: Collection<KaClassLikeSymbol>
+public abstract class KaClassErrorType : KaErrorType {
+    public abstract val qualifiers: List<KaClassTypeQualifier>
+
+    public abstract val candidateSymbols: Collection<KaClassLikeSymbol>
+
+    @Deprecated("Use 'candidateSymbols' instead.", ReplaceWith("candidateSymbols"))
+    public val candidateClassSymbols: Collection<KaClassLikeSymbol>
+        get() = candidateSymbols
 }
 
 public typealias KtClassErrorType = KaClassErrorType
@@ -160,7 +175,6 @@ public typealias KtTypeParameterType = KaTypeParameterType
 
 public abstract class KaCapturedType : KaType {
     public abstract val projection: KaTypeProjection
-    override fun toString(): String = asStringForDebugging()
 }
 
 public typealias KtCapturedType = KaCapturedType
@@ -169,8 +183,6 @@ public abstract class KaDefinitelyNotNullType : KaType {
     public abstract val original: KaType
 
     final override val nullability: KaTypeNullability get() = withValidityAssertion { KaTypeNullability.NON_NULLABLE }
-
-    override fun toString(): String = asStringForDebugging()
 }
 
 public typealias KtDefinitelyNotNullType = KaDefinitelyNotNullType
@@ -181,46 +193,15 @@ public typealias KtDefinitelyNotNullType = KaDefinitelyNotNullType
 public abstract class KaFlexibleType : KaType {
     public abstract val lowerBound: KaType
     public abstract val upperBound: KaType
-
-    override fun toString(): String = asStringForDebugging()
 }
 
 public typealias KtFlexibleType = KaFlexibleType
 
 public abstract class KaIntersectionType : KaType {
     public abstract val conjuncts: List<KaType>
-
-    override fun toString(): String = asStringForDebugging()
 }
 
 public typealias KtIntersectionType = KaIntersectionType
-
-/**
- * Non-denotable type representing some number type. This type generally come when retrieving some integer literal [KaType].
- * It is unknown which number type it exactly is, but possible options based on [value] can be retrieved via [possibleTypes].
- */
-public abstract class KaIntegerLiteralType : KaType {
-    /**
-     * Literal value for which the type was created.
-     */
-    public abstract val value: Long
-
-    /**
-     * Is the type unsigned (i.e. corresponding literal had `u` suffix)
-     */
-    public abstract val isUnsigned: Boolean
-
-    /**
-     * The list of `Number` types the type may be represented as.
-     *
-     * The possible options are: `Byte`, `Short` ,`Int`, `Long`, `UByte`, `UShort` `UInt`, `ULong`
-     */
-    public abstract val possibleTypes: Collection<KaClassType>
-
-    override fun toString(): String = asStringForDebugging()
-}
-
-public typealias KtIntegerLiteralType = KaIntegerLiteralType
 
 /**
  * A special dynamic type, which is used to support interoperability with dynamically typed libraries, platforms or languages.
@@ -228,8 +209,6 @@ public typealias KtIntegerLiteralType = KaIntegerLiteralType
  * Although this can be viewed as a flexible type (kotlin.Nothing..kotlin.Any?), a platform may assign special meaning to the
  * values of dynamic type, and handle differently from the regular flexible type.
  */
-public abstract class KaDynamicType : KaType {
-    override fun toString(): String = asStringForDebugging()
-}
+public abstract class KaDynamicType : KaType
 
 public typealias KtDynamicType = KaDynamicType

@@ -456,6 +456,11 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +annotations
         }
 
+        scriptReceiverParameter.configure {
+            +typeRefField.withTransform()
+            +booleanField("isBaseClassReceiver") // means coming from ScriptCompilationConfigurationKeys.baseClass (could be deprecated soon, see KT-68540)
+        }
+
         variable.configure {
             +name
             +declaredSymbol(variableSymbolType.withArgs(variable))
@@ -516,7 +521,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +declarations.withTransform().withReplace()
             +declaredSymbol(scriptSymbolType)
             +fieldList("parameters", property).withTransform()
-            +fieldList(contextReceiver, useMutableOrEmpty = true).withTransform()
+            +fieldList("receivers", scriptReceiverParameter, useMutableOrEmpty = true).withTransform()
             +field("resultPropertyName", nameType, nullable = true)
         }
 

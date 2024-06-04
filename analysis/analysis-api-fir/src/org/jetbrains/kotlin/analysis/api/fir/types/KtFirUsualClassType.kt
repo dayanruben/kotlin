@@ -27,8 +27,10 @@ internal class KaFirUsualClassType(
     private val builder: KaSymbolByFirBuilder,
 ) : KaUsualClassType(), KaFirType {
     override val token: KaLifetimeToken get() = builder.token
+
     override val classId: ClassId get() = withValidityAssertion { coneType.lookupTag.classId }
-    override val classSymbol: KaClassLikeSymbol
+
+    override val symbol: KaClassLikeSymbol
         get() = withValidityAssertion {
             builder.classifierBuilder.buildClassLikeSymbolByLookupTag(coneType.lookupTag)
                 ?: errorWithFirSpecificEntries("Class was not found", coneType = coneType)
@@ -38,7 +40,7 @@ internal class KaFirUsualClassType(
         UsualClassTypeQualifierBuilder.buildQualifiers(coneType, builder)
     }
 
-    override val ownTypeArguments: List<KaTypeProjection> get() = withValidityAssertion { qualifiers.last().typeArguments }
+    override val typeArguments: List<KaTypeProjection> get() = withValidityAssertion { qualifiers.last().typeArguments }
 
     override val annotationsList: KaAnnotationsList by cached {
         KaFirAnnotationListForType.create(coneType, builder)
@@ -50,7 +52,7 @@ internal class KaFirUsualClassType(
         builder.buildAbbreviatedType(coneType)
     }
 
-    override fun asStringForDebugging(): String = withValidityAssertion { coneType.renderForDebugging() }
     override fun equals(other: Any?) = typeEquals(other)
     override fun hashCode() = typeHashcode()
+    override fun toString() = coneType.renderForDebugging()
 }

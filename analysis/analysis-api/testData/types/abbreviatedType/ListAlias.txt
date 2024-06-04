@@ -3,35 +3,7 @@ KaUsualClassType:
     abbreviatedType: null
     annotationsList: []
     classId: expansion/ListAlias
-    classSymbol: KaTypeAliasSymbol(expansion/ListAlias)
     nullability: NON_NULLABLE
-    ownTypeArguments: [
-      KaUsualClassType:
-        abbreviatedType: KaUsualClassType:
-          abbreviatedType: null
-          annotationsList: []
-          classId: expansion/StringAlias
-          classSymbol: KaTypeAliasSymbol(expansion/StringAlias)
-          nullability: NON_NULLABLE
-          ownTypeArguments: []
-          qualifiers: [
-            qualifier:
-              name: StringAlias
-              symbol: KaTypeAliasSymbol(expansion/StringAlias)
-              typeArguments: []
-          ]
-        annotationsList: []
-        classId: kotlin/String
-        classSymbol: KaNamedClassOrObjectSymbol(kotlin/String)
-        nullability: NON_NULLABLE
-        ownTypeArguments: []
-        qualifiers: [
-          qualifier:
-            name: String
-            symbol: KaNamedClassOrObjectSymbol(kotlin/String)
-            typeArguments: []
-        ]
-    ]
     qualifiers: [
       qualifier:
         name: ListAlias
@@ -42,59 +14,59 @@ KaUsualClassType:
               abbreviatedType: null
               annotationsList: []
               classId: expansion/StringAlias
-              classSymbol: KaTypeAliasSymbol(expansion/StringAlias)
               nullability: NON_NULLABLE
-              ownTypeArguments: []
               qualifiers: [
                 qualifier:
                   name: StringAlias
                   symbol: KaTypeAliasSymbol(expansion/StringAlias)
                   typeArguments: []
               ]
+              symbol: KaTypeAliasSymbol(expansion/StringAlias)
+              typeArguments: []
             annotationsList: []
             classId: kotlin/String
-            classSymbol: KaNamedClassOrObjectSymbol(kotlin/String)
             nullability: NON_NULLABLE
-            ownTypeArguments: []
             qualifiers: [
               qualifier:
                 name: String
                 symbol: KaNamedClassOrObjectSymbol(kotlin/String)
                 typeArguments: []
             ]
+            symbol: KaNamedClassOrObjectSymbol(kotlin/String)
+            typeArguments: []
         ]
+    ]
+    symbol: KaTypeAliasSymbol(expansion/ListAlias)
+    typeArguments: [
+      KaUsualClassType:
+        abbreviatedType: KaUsualClassType:
+          abbreviatedType: null
+          annotationsList: []
+          classId: expansion/StringAlias
+          nullability: NON_NULLABLE
+          qualifiers: [
+            qualifier:
+              name: StringAlias
+              symbol: KaTypeAliasSymbol(expansion/StringAlias)
+              typeArguments: []
+          ]
+          symbol: KaTypeAliasSymbol(expansion/StringAlias)
+          typeArguments: []
+        annotationsList: []
+        classId: kotlin/String
+        nullability: NON_NULLABLE
+        qualifiers: [
+          qualifier:
+            name: String
+            symbol: KaNamedClassOrObjectSymbol(kotlin/String)
+            typeArguments: []
+        ]
+        symbol: KaNamedClassOrObjectSymbol(kotlin/String)
+        typeArguments: []
     ]
   annotationsList: []
   classId: kotlin/collections/List
-  classSymbol: KaNamedClassOrObjectSymbol(kotlin/collections/List)
   nullability: NON_NULLABLE
-  ownTypeArguments: [
-    KaUsualClassType:
-      abbreviatedType: KaUsualClassType:
-        abbreviatedType: null
-        annotationsList: []
-        classId: expansion/StringAlias
-        classSymbol: KaTypeAliasSymbol(expansion/StringAlias)
-        nullability: NON_NULLABLE
-        ownTypeArguments: []
-        qualifiers: [
-          qualifier:
-            name: StringAlias
-            symbol: KaTypeAliasSymbol(expansion/StringAlias)
-            typeArguments: []
-        ]
-      annotationsList: []
-      classId: kotlin/String
-      classSymbol: KaNamedClassOrObjectSymbol(kotlin/String)
-      nullability: NON_NULLABLE
-      ownTypeArguments: []
-      qualifiers: [
-        qualifier:
-          name: String
-          symbol: KaNamedClassOrObjectSymbol(kotlin/String)
-          typeArguments: []
-      ]
-  ]
   qualifiers: [
     qualifier:
       name: List
@@ -105,27 +77,55 @@ KaUsualClassType:
             abbreviatedType: null
             annotationsList: []
             classId: expansion/StringAlias
-            classSymbol: KaTypeAliasSymbol(expansion/StringAlias)
             nullability: NON_NULLABLE
-            ownTypeArguments: []
             qualifiers: [
               qualifier:
                 name: StringAlias
                 symbol: KaTypeAliasSymbol(expansion/StringAlias)
                 typeArguments: []
             ]
+            symbol: KaTypeAliasSymbol(expansion/StringAlias)
+            typeArguments: []
           annotationsList: []
           classId: kotlin/String
-          classSymbol: KaNamedClassOrObjectSymbol(kotlin/String)
           nullability: NON_NULLABLE
-          ownTypeArguments: []
           qualifiers: [
             qualifier:
               name: String
               symbol: KaNamedClassOrObjectSymbol(kotlin/String)
               typeArguments: []
           ]
+          symbol: KaNamedClassOrObjectSymbol(kotlin/String)
+          typeArguments: []
       ]
+  ]
+  symbol: KaNamedClassOrObjectSymbol(kotlin/collections/List)
+  typeArguments: [
+    KaUsualClassType:
+      abbreviatedType: KaUsualClassType:
+        abbreviatedType: null
+        annotationsList: []
+        classId: expansion/StringAlias
+        nullability: NON_NULLABLE
+        qualifiers: [
+          qualifier:
+            name: StringAlias
+            symbol: KaTypeAliasSymbol(expansion/StringAlias)
+            typeArguments: []
+        ]
+        symbol: KaTypeAliasSymbol(expansion/StringAlias)
+        typeArguments: []
+      annotationsList: []
+      classId: kotlin/String
+      nullability: NON_NULLABLE
+      qualifiers: [
+        qualifier:
+          name: String
+          symbol: KaNamedClassOrObjectSymbol(kotlin/String)
+          typeArguments: []
+      ]
+      symbol: KaNamedClassOrObjectSymbol(kotlin/String)
+      typeArguments: []
   ]
 
 Rendered type:

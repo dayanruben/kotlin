@@ -3,26 +3,26 @@ KaUsualClassType:
     abbreviatedType: null
     annotationsList: []
     classId: library1/TransitiveStringAlias
-    classSymbol: KaTypeAliasSymbol(library1/TransitiveStringAlias)
     nullability: NON_NULLABLE
-    ownTypeArguments: []
     qualifiers: [
       qualifier:
         name: TransitiveStringAlias
         symbol: KaTypeAliasSymbol(library1/TransitiveStringAlias)
         typeArguments: []
     ]
+    symbol: KaTypeAliasSymbol(library1/TransitiveStringAlias)
+    typeArguments: []
   annotationsList: []
   classId: kotlin/String
-  classSymbol: KaNamedClassOrObjectSymbol(kotlin/String)
   nullability: NON_NULLABLE
-  ownTypeArguments: []
   qualifiers: [
     qualifier:
       name: String
       symbol: KaNamedClassOrObjectSymbol(kotlin/String)
       typeArguments: []
   ]
+  symbol: KaNamedClassOrObjectSymbol(kotlin/String)
+  typeArguments: []
 
 Rendered type:
 library1.TransitiveStringAlias
