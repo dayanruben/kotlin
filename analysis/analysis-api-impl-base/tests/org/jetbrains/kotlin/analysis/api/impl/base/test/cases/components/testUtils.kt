@@ -8,22 +8,22 @@ package org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.calls.KaApplicableCallCandidateInfo
-import org.jetbrains.kotlin.analysis.api.calls.KaCall
-import org.jetbrains.kotlin.analysis.api.calls.KaCallCandidateInfo
-import org.jetbrains.kotlin.analysis.api.calls.KaCallInfo
-import org.jetbrains.kotlin.analysis.api.calls.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.KaCompoundArrayAccessCall
-import org.jetbrains.kotlin.analysis.api.calls.KaCompoundVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.calls.KaErrorCallInfo
-import org.jetbrains.kotlin.analysis.api.calls.KaInapplicableCallCandidateInfo
-import org.jetbrains.kotlin.analysis.api.calls.calls
-import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
 import org.jetbrains.kotlin.analysis.api.impl.base.KaChainedSubstitutor
 import org.jetbrains.kotlin.analysis.api.impl.base.KaMapBackedSubstitutor
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
+import org.jetbrains.kotlin.analysis.api.resolution.KaApplicableCallCandidateInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidateInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaInapplicableCallCandidateInfo
+import org.jetbrains.kotlin.analysis.api.resolution.calls
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionLikeSignature
@@ -320,4 +320,13 @@ internal fun KaSession.renderScopeWithParentDeclarations(scope: KaScope): String
             }
         }
     }
+}
+
+internal fun renderFrontendIndependentKClassNameOf(instanceOfClassToRender: Any): String {
+    var classToRender: Class<*> = instanceOfClassToRender::class.java
+    while (classToRender.simpleName.let { it.contains("Fir") || it.contains("Fe10") } == true) {
+        classToRender = classToRender.superclass
+    }
+
+    return classToRender.simpleName
 }

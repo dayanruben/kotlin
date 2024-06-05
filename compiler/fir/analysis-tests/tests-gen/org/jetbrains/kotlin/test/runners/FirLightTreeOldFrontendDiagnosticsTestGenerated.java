@@ -8069,6 +8069,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       }
 
       @Test
+      @TestMetadata("enumEntryAssignment.kt")
+      public void testEnumEntryAssignment() {
+        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/enumEntryAssignment.kt");
+      }
+
+      @Test
       @TestMetadata("enumInterdependence.kt")
       public void testEnumInterdependence() {
         runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/enumInterdependence.kt");
@@ -25028,6 +25034,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       @TestMetadata("OpenInterface.kt")
       public void testOpenInterface() {
         runTest("compiler/testData/diagnostics/tests/modifiers/OpenInterface.kt");
+      }
+
+      @Test
+      @TestMetadata("OpenInterface2.kt")
+      public void testOpenInterface2() {
+        runTest("compiler/testData/diagnostics/tests/modifiers/OpenInterface2.kt");
       }
 
       @Test

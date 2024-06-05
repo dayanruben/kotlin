@@ -68,8 +68,8 @@ object LanguageSettingsDirectives : SimpleDirectivesContainer() {
         description = "Allow compiling code in package 'kotlin' and allow not requiring kotlin.stdlib in module-info (AnalysisFlags.allowKotlinPackage)"
     )
 
-    val STDLIB_COMPILATION by directive(
-        description = "Enables corresponding analysis flag (AnalysisFlags.stdlibCompilation)"
+    val PREFER_IN_TEST_OVER_STDLIB by directive(
+        description = "Prefer in-test defined class over stdlib one if the names collide"
     )
 
     // It's inverted because otherwise we would have warnings in almost all KMP tests

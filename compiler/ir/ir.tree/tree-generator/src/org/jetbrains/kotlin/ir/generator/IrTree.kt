@@ -352,7 +352,7 @@ object IrTree : AbstractTreeBuilder() {
         parent(type(Packages.declarations, "IrAnnotationContainer"))
 
         +listField("annotations", constructorCall, mutability = Var, isChild = false) {
-            fromParent = true
+            isOverride = true
             skipInIrFactory()
         }
     }
@@ -585,6 +585,7 @@ object IrTree : AbstractTreeBuilder() {
         parent(overridableDeclaration.withArgs("S" to simpleFunctionSymbol))
         parent(attributeContainer)
 
+        +descriptor("FunctionDescriptor")
         +declaredSymbol(simpleFunctionSymbol)
         +listField("overriddenSymbols", simpleFunctionSymbol, mutability = Var) {
             skipInIrFactory()

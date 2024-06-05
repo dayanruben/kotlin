@@ -8075,6 +8075,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("enumEntryAssignment.kt")
+      public void testEnumEntryAssignment() {
+        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/enumEntryAssignment.kt");
+      }
+
+      @Test
       @TestMetadata("enumInterdependence.kt")
       public void testEnumInterdependence() {
         runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/enumInterdependence.kt");
@@ -25037,6 +25043,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("OpenInterface2.kt")
+      public void testOpenInterface2() {
+        runTest("compiler/testData/diagnostics/tests/modifiers/OpenInterface2.kt");
+      }
+
+      @Test
       @TestMetadata("primaryConstructorMissingBrackets.kt")
       public void testPrimaryConstructorMissingBrackets() {
         runTest("compiler/testData/diagnostics/tests/modifiers/primaryConstructorMissingBrackets.kt");
@@ -26212,12 +26224,6 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("smartcastOnMemberPropertyFromCommonClass.kt")
       public void testSmartcastOnMemberPropertyFromCommonClass() {
         runTest("compiler/testData/diagnostics/tests/multiplatform/smartcastOnMemberPropertyFromCommonClass.kt");
-      }
-
-      @Test
-      @TestMetadata("stdlibWithActualizationErrors.kt")
-      public void testStdlibWithActualizationErrors() {
-        runTest("compiler/testData/diagnostics/tests/multiplatform/stdlibWithActualizationErrors.kt");
       }
 
       @Test

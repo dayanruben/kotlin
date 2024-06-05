@@ -6,8 +6,6 @@
 package org.jetbrains.kotlin.generators.tests.analysis.api
 
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.annotations.*
-import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.callResolver.AbstractResolveCallTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.callResolver.AbstractResolveCandidatesTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.compileTimeConstantProvider.AbstractCompileTimeConstantEvaluatorTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.compilerFacility.AbstractCompilerFacilityTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.compilerFacility.AbstractFirPluginPrototypeCompilerFacilityTestWithAnalysis
@@ -40,6 +38,11 @@ import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.psiType
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.readWriteAccess.AbstractReadWriteAccessTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.referenceResolveProvider.AbstractIsImplicitCompanionReferenceTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.resolveExtensionInfoProvider.AbstractResolveExtensionInfoProviderTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.resolver.AbstractResolveCallTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.resolver.AbstractResolveCandidatesTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.resolver.AbstractResolveDanglingFileReferenceTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.resolver.AbstractResolveReferenceTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.resolver.AbstractResolveReferenceWithResolveExtensionTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.scopeProvider.*
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.signatureSubstitution.AbstractAnalysisApiSignatureContractsTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.signatureSubstitution.AbstractAnalysisApiSignatureSubstitutionTest
@@ -124,10 +127,10 @@ internal fun AnalysisApiTestGroup.generateAnalysisApiTests() {
 
         test<AbstractResolveCallTest>(init = init)
         test<AbstractResolveCandidatesTest>(init = init)
-        test<AbstractReferenceResolveTest>(init = init)
+        test<AbstractResolveReferenceTest>(init = init)
     }
 
-    test<AbstractDanglingFileReferenceResolveTest>(
+    test<AbstractResolveDanglingFileReferenceTest>(
         filter = frontendIs(FrontendKind.Fir)
                 and testModuleKindIs(TestModuleKind.Source, TestModuleKind.LibrarySource)
     ) {
@@ -176,7 +179,7 @@ private fun AnalysisApiTestGroup.generateResolveExtensionsTests() {
                 frontendIs(FrontendKind.Fir) and
                 testModuleKindIs(TestModuleKind.Source)
     ) {
-        test<AbstractReferenceResolveWithResolveExtensionTest> {
+        test<AbstractResolveReferenceWithResolveExtensionTest> {
             model(it, "referenceResolve")
         }
     }

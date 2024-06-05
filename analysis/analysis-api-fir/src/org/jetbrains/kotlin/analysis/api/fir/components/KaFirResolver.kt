@@ -5,11 +5,8 @@
 
 package org.jetbrains.kotlin.analysis.api.fir.components
 
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiMember
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.analysis.api.KaSymbolBasedReference
-import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaNonBoundToPsiErrorDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.KaFirSession
@@ -23,6 +20,23 @@ import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.fir.utils.processEqualsFunctions
 import org.jetbrains.kotlin.analysis.api.getModule
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaAbstractResolver
+import org.jetbrains.kotlin.analysis.api.resolution.*
+import org.jetbrains.kotlin.analysis.api.resolution.KaAnnotationCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaDelegatedConstructorCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaPartiallyAppliedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaPartiallyAppliedSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaPartiallyAppliedVariableSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableLikeSignature
@@ -911,7 +925,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
             }
             this is FirResolvedQualifier && this.source?.kind is KtFakeSourceElementKind.ImplicitReceiver -> {
                 val symbol = this.symbol ?: return null
-                KtImplicitReceiverValue(symbol.toKtSymbol(), resolvedType.asKtType())
+                KaImplicitReceiverValue(symbol.toKtSymbol(), resolvedType.asKtType())
             }
             else -> {
                 val psi = psi
