@@ -24346,6 +24346,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
     }
 
     @Test
+    @TestMetadata("packagePrivateCst.kt")
+    public void testPackagePrivateCst() {
+      runTest("compiler/testData/codegen/box/inference/packagePrivateCst.kt");
+    }
+
+    @Test
     @TestMetadata("plusAssignInsideLambda.kt")
     public void testPlusAssignInsideLambda() {
       runTest("compiler/testData/codegen/box/inference/plusAssignInsideLambda.kt");
@@ -52969,6 +52975,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
     @TestMetadata("kt6485.kt")
     public void testKt6485() {
       runTest("compiler/testData/codegen/box/regressions/kt6485.kt");
+    }
+
+    @Test
+    @TestMetadata("kt68727.kt")
+    public void testKt68727() {
+      runTest("compiler/testData/codegen/box/regressions/kt68727.kt");
     }
 
     @Test

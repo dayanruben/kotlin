@@ -20386,6 +20386,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/inference/overrideGenericDefaultMethod.kt");
     }
 
+    @TestMetadata("packagePrivateCst.kt")
+    public void testPackagePrivateCst() {
+      runTest("compiler/testData/codegen/box/inference/packagePrivateCst.kt");
+    }
+
     @TestMetadata("plusAssignInsideLambda.kt")
     public void testPlusAssignInsideLambda() {
       runTest("compiler/testData/codegen/box/inference/plusAssignInsideLambda.kt");
@@ -42753,6 +42758,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestMetadata("kt6485.kt")
     public void testKt6485() {
       runTest("compiler/testData/codegen/box/regressions/kt6485.kt");
+    }
+
+    @TestMetadata("kt68727.kt")
+    public void testKt68727() {
+      runTest("compiler/testData/codegen/box/regressions/kt68727.kt");
     }
 
     @TestMetadata("kt715.kt")

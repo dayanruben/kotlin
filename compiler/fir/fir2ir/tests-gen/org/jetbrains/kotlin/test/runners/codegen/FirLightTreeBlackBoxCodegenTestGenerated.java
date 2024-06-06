@@ -24346,6 +24346,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
     }
 
     @Test
+    @TestMetadata("packagePrivateCst.kt")
+    public void testPackagePrivateCst() {
+      runTest("compiler/testData/codegen/box/inference/packagePrivateCst.kt");
+    }
+
+    @Test
     @TestMetadata("plusAssignInsideLambda.kt")
     public void testPlusAssignInsideLambda() {
       runTest("compiler/testData/codegen/box/inference/plusAssignInsideLambda.kt");
@@ -38778,6 +38784,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
       @TestMetadata("kt66970.kt")
       public void testKt66970() {
         runTest("compiler/testData/codegen/box/multiplatform/k2/kt66970.kt");
+      }
+
+      @Test
+      @TestMetadata("kt68801.kt")
+      public void testKt68801() {
+        runTest("compiler/testData/codegen/box/multiplatform/k2/kt68801.kt");
       }
 
       @Test
@@ -53689,6 +53701,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
     @TestMetadata("kt6485.kt")
     public void testKt6485() {
       runTest("compiler/testData/codegen/box/regressions/kt6485.kt");
+    }
+
+    @Test
+    @TestMetadata("kt68727.kt")
+    public void testKt68727() {
+      runTest("compiler/testData/codegen/box/regressions/kt68727.kt");
     }
 
     @Test

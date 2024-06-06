@@ -27795,6 +27795,12 @@ public class FirWasmJsCodegenBoxTestGenerated extends AbstractFirWasmJsCodegenBo
       }
 
       @Test
+      @TestMetadata("kt68801.kt")
+      public void testKt68801() {
+        runTest("compiler/testData/codegen/box/multiplatform/k2/kt68801.kt");
+      }
+
+      @Test
       @TestMetadata("kt-65249.kt")
       public void testKt_65249() {
         runTest("compiler/testData/codegen/box/multiplatform/k2/kt-65249.kt");
@@ -38293,6 +38299,12 @@ public class FirWasmJsCodegenBoxTestGenerated extends AbstractFirWasmJsCodegenBo
     @TestMetadata("kt6434_2.kt")
     public void testKt6434_2() {
       runTest("compiler/testData/codegen/box/regressions/kt6434_2.kt");
+    }
+
+    @Test
+    @TestMetadata("kt68727.kt")
+    public void testKt68727() {
+      runTest("compiler/testData/codegen/box/regressions/kt68727.kt");
     }
 
     @Test
