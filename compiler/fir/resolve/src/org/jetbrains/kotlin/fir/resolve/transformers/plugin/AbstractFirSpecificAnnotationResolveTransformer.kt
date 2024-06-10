@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.fir.scopes.getSingleClassifier
 import org.jetbrains.kotlin.fir.scopes.impl.FirAbstractImportingScope
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirEnumEntrySymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildPlaceholderProjection
 import org.jetbrains.kotlin.fir.types.builder.buildStarProjection
@@ -55,6 +56,9 @@ abstract class AbstractFirSpecificAnnotationResolveTransformer(
         FirResolvePhase.COMPILER_REQUIRED_ANNOTATIONS,
         scopeSession = scopeSession,
         implicitTypeOnly = false,
+        // This transformer is only used for COMPILER_REQUIRED_ANNOTATIONS, which is <=SUPER_TYPES,
+        // so we can't yet expand typealiases.
+        expandTypeAliases = false,
     ) {
         override val expressionsTransformer: FirExpressionsResolveTransformer = FirEnumAnnotationArgumentsTransformer(this)
         override val declarationsTransformer: FirDeclarationsResolveTransformer? = null
@@ -287,6 +291,9 @@ abstract class AbstractFirSpecificAnnotationResolveTransformer(
         session,
         errorTypeAsResolved = false,
         resolveDeprecations = false,
+        // This transformer is only used for COMPILER_REQUIRED_ANNOTATIONS, which is <=SUPER_TYPES,
+        // so we can't yet expand typealiases.
+        expandTypeAliases = false,
     )
 
     @PrivateForInline
@@ -333,7 +340,7 @@ abstract class AbstractFirSpecificAnnotationResolveTransformer(
     }
 
     private fun resolveAnnotationsOnAnnotationIfNeeded(annotationTypeRef: FirResolvedTypeRef) {
-        val symbol = annotationTypeRef.coneType.toRegularClassSymbol(session) ?: return
+        val symbol = annotationTypeRef.coneType.toSymbol(session) as? FirRegularClassSymbol ?: return
         computationSession.resolveAnnotationsOnAnnotationIfNeeded(symbol, scopeSession)
     }
 

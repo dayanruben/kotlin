@@ -516,6 +516,24 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
     }
 
     @Test
+    @TestMetadata("actualizeExpectProtectedToJavaProtected.kt")
+    public void testActualizeExpectProtectedToJavaProtected() {
+      runTest("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect/actualizeExpectProtectedToJavaProtected.kt");
+    }
+
+    @Test
+    @TestMetadata("actualizePropertyByJavaField_supportedCase.kt")
+    public void testActualizePropertyByJavaField_supportedCase() {
+      runTest("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect/actualizePropertyByJavaField_supportedCase.kt");
+    }
+
+    @Test
+    @TestMetadata("actualizePropertyByJavaField_unsupportedCase.kt")
+    public void testActualizePropertyByJavaField_unsupportedCase() {
+      runTest("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect/actualizePropertyByJavaField_unsupportedCase.kt");
+    }
+
+    @Test
     public void testAllFilesPresentInActualAnnotationsNotMatchExpect() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), TargetBackend.JVM_IR, true);
     }

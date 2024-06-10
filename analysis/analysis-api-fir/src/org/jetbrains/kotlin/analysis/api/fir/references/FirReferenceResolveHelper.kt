@@ -67,7 +67,7 @@ internal object FirReferenceResolveHelper {
     }
 
     private fun ConeKotlinType.toTargetSymbol(session: FirSession, symbolBuilder: KaSymbolByFirBuilder): KaSymbol? {
-        val type = this as? ConeLookupTagBasedType
+        val type = abbreviatedTypeOrSelf as? ConeLookupTagBasedType
         val resolvedSymbol = type?.lookupTag?.toSymbol(session) as? FirBasedSymbol<*>
 
         val symbol = resolvedSymbol ?: run {
@@ -296,7 +296,7 @@ internal object FirReferenceResolveHelper {
             // a special `TypeAliasConstructorDescriptor` for this case. For FIR there is
             // FirConstructor.originalConstructorIfTypeAlias but that doesn't seem to help here as it
             // is null for the constructors we get.
-            val constructedType = fir.constructedTypeRef.coneType
+            val constructedType = fir.constructedTypeRef.coneType.abbreviatedTypeOrSelf
             val constructorReturnType = fir.calleeReference.toResolvedConstructorSymbol()?.resolvedReturnTypeRef?.type
             if (constructedType.classId != constructorReturnType?.classId) {
                 return getSymbolsForResolvedTypeRef(fir.constructedTypeRef as FirResolvedTypeRef, expression, session, symbolBuilder)

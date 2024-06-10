@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.fir.declarations.utils.isInner
 import org.jetbrains.kotlin.fir.declarations.utils.modality
 import org.jetbrains.kotlin.fir.declarations.utils.superConeTypes
 import org.jetbrains.kotlin.fir.expressions.*
-import org.jetbrains.kotlin.fir.resolve.directExpansionType
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
@@ -442,18 +441,6 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
         return attributes.toList()
     }
 
-    override fun KotlinTypeMarker.hasCustomAttributes(): Boolean {
-        require(this is ConeKotlinType)
-        val compilerAttributes = CompilerConeAttributes.classIdByCompilerAttributeKey
-        return this.attributes.any { it.key !in compilerAttributes && it !is CustomAnnotationTypeAttribute }
-    }
-
-    override fun KotlinTypeMarker.getCustomAttributes(): List<AnnotationMarker> {
-        require(this is ConeKotlinType)
-        val compilerAttributes = CompilerConeAttributes.classIdByCompilerAttributeKey
-        return attributes.filterNot { it.key in compilerAttributes || it is CustomAnnotationTypeAttribute }
-    }
-
     override fun SimpleTypeMarker.isStubType(): Boolean {
         return this is ConeStubType
     }
@@ -525,7 +512,6 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
         if (compilerAttribute != null) {
             return compilerAttribute in attributes
         }
-        val customAnnotations = attributes.customAnnotations
         return customAnnotations.any {
             it.resolvedType.fullyExpandedType(session).classId?.asSingleFqName() == fqName
         }
@@ -534,7 +520,6 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
     override fun KotlinTypeMarker.getAnnotationFirstArgumentValue(fqName: FqName): Any? {
         require(this is ConeKotlinType)
         // We don't check for compiler attributes because all of them doesn't have parameters
-        val customAnnotations = attributes.customAnnotations
         val annotationCall = customAnnotations.firstOrNull {
             it.resolvedType.fullyExpandedType(session).classId?.asSingleFqName() == fqName
         } ?: return null

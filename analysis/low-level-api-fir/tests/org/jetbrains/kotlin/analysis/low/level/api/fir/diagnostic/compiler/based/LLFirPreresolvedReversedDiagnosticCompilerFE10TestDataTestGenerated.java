@@ -256,6 +256,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
     }
 
     @Test
+    @TestMetadata("compilerRequiredAnnotationAsTypealias.kt")
+    public void testCompilerRequiredAnnotationAsTypealias() {
+      runTest("compiler/testData/diagnostics/tests/compilerRequiredAnnotationAsTypealias.kt");
+    }
+
+    @Test
     @TestMetadata("conflictingOverloadsPrivateFunctions.kt")
     public void testConflictingOverloadsPrivateFunctions() {
       runTest("compiler/testData/diagnostics/tests/conflictingOverloadsPrivateFunctions.kt");
@@ -973,6 +979,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
     @TestMetadata("missingConflictingOverloads.kt")
     public void testMissingConflictingOverloads() {
       runTest("compiler/testData/diagnostics/tests/missingConflictingOverloads.kt");
+    }
+
+    @Test
+    @TestMetadata("missingDependencyTypealias.kt")
+    public void testMissingDependencyTypealias() {
+      runTest("compiler/testData/diagnostics/tests/missingDependencyTypealias.kt");
     }
 
     @Test
@@ -26303,6 +26315,24 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("actualizeExpectProtectedToJavaProtected.kt")
+        public void testActualizeExpectProtectedToJavaProtected() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect/actualizeExpectProtectedToJavaProtected.kt");
+        }
+
+        @Test
+        @TestMetadata("actualizePropertyByJavaField_supportedCase.kt")
+        public void testActualizePropertyByJavaField_supportedCase() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect/actualizePropertyByJavaField_supportedCase.kt");
+        }
+
+        @Test
+        @TestMetadata("actualizePropertyByJavaField_unsupportedCase.kt")
+        public void testActualizePropertyByJavaField_unsupportedCase() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect/actualizePropertyByJavaField_unsupportedCase.kt");
+        }
+
+        @Test
         public void testAllFilesPresentInActualAnnotationsNotMatchExpect() {
           KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect"), Pattern.compile("^(.+)\\.(kt|kts)$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
         }
@@ -33374,6 +33404,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("callToProtectedOnSmartcast.kt")
       public void testCallToProtectedOnSmartcast() {
         runTest("compiler/testData/diagnostics/tests/resolve/callToProtectedOnSmartcast.kt");
+      }
+
+      @Test
+      @TestMetadata("callableReferenceAgainstTypeVariable.kt")
+      public void testCallableReferenceAgainstTypeVariable() {
+        runTest("compiler/testData/diagnostics/tests/resolve/callableReferenceAgainstTypeVariable.kt");
       }
 
       @Test
@@ -47410,6 +47446,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("kt4975.kt")
       public void testKt4975() {
         runTest("compiler/testData/diagnostics/testsWithStdLib/inference/kt4975.kt");
+      }
+
+      @Test
+      @TestMetadata("mapNotNullWithElvis.kt")
+      public void testMapNotNullWithElvis() {
+        runTest("compiler/testData/diagnostics/testsWithStdLib/inference/mapNotNullWithElvis.kt");
       }
 
       @Test

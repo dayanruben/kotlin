@@ -394,6 +394,10 @@ object AbstractExpectActualChecker {
                 // do nothing, entries are matched only by name
             }
 
+            actualDeclaration.isJavaField && expectDeclaration.canBeActualizedByJavaField -> {
+                // no specific checks, actualization by Java field is permitted in a limited well-known number of cases
+            }
+
             else -> error("Unsupported declarations: $expectDeclaration, $actualDeclaration")
         }
 
@@ -450,9 +454,14 @@ object AbstractExpectActualChecker {
         expectModality: Modality?,
         expectContainingClassModality: Modality?,
         actualVisibility: Visibility,
-        languageVersionSettings: LanguageVersionSettings,
+        languageVersionSettings: LanguageVersionSettings
     ): Boolean {
-        val compare = Visibilities.compare(expectVisibility, actualVisibility)
+        // In the case of actualization by a Java declaration such as a field or a method normalize the Java visibility
+        // to the closest Kotlin visibility.Example: "protected_and_package" -> "protected".
+        val normalizedActualVisibility = actualVisibility.normalize()
+
+        val compare = Visibilities.compare(expectVisibility, normalizedActualVisibility)
+
         val effectiveModality =
             when (languageVersionSettings.supportsFeature(LanguageFeature.SupportEffectivelyFinalInExpectActualVisibilityCheck)) {
                 true -> effectiveModality(expectModality, expectContainingClassModality)
@@ -546,7 +555,7 @@ object AbstractExpectActualChecker {
             expectedSetter.modality,
             expectContainingClass?.modality,
             actualSetter.visibility,
-            languageVersionSettings
+            languageVersionSettings,
         )
     }
 

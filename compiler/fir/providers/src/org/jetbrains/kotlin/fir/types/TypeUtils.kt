@@ -164,7 +164,7 @@ fun <T : ConeKotlinType> T.withAttributes(attributes: ConeAttributes): T {
 
     @Suppress("UNCHECKED_CAST")
     return when (this) {
-        is ConeErrorType -> this
+        is ConeErrorType -> ConeErrorType(diagnostic, isUninferredParameter, delegatedType, typeArguments, attributes)
         is ConeClassLikeTypeImpl -> ConeClassLikeTypeImpl(lookupTag, typeArguments, nullability.isNullable, attributes)
         is ConeDefinitelyNotNullType -> ConeDefinitelyNotNullType(original.withAttributes(attributes))
         is ConeTypeParameterTypeImpl -> ConeTypeParameterTypeImpl(lookupTag, nullability.isNullable, attributes)
@@ -183,6 +183,14 @@ fun <T : ConeKotlinType> T.withAttributes(attributes: ConeAttributes): T {
             withConeTypeEntry("type", this@withAttributes)
         }
     } as T
+}
+
+/**
+ * Adds or replaces an `AbbreviatedTypeAttribute`.
+ */
+fun ConeKotlinType.withAbbreviation(attribute: AbbreviatedTypeAttribute): ConeKotlinType {
+    val clearedAttributes = attributes.abbreviatedType?.let(attributes::remove) ?: attributes
+    return withAttributes(clearedAttributes + attribute)
 }
 
 fun <T : ConeKotlinType> T.withNullability(

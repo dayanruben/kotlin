@@ -256,6 +256,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
     }
 
     @Test
+    @TestMetadata("compilerRequiredAnnotationAsTypealias.kt")
+    public void testCompilerRequiredAnnotationAsTypealias() {
+      runTest("compiler/testData/diagnostics/tests/compilerRequiredAnnotationAsTypealias.kt");
+    }
+
+    @Test
     @TestMetadata("conflictingOverloadsPrivateFunctions.kt")
     public void testConflictingOverloadsPrivateFunctions() {
       runTest("compiler/testData/diagnostics/tests/conflictingOverloadsPrivateFunctions.kt");
@@ -973,6 +979,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
     @TestMetadata("missingConflictingOverloads.kt")
     public void testMissingConflictingOverloads() {
       runTest("compiler/testData/diagnostics/tests/missingConflictingOverloads.kt");
+    }
+
+    @Test
+    @TestMetadata("missingDependencyTypealias.kt")
+    public void testMissingDependencyTypealias() {
+      runTest("compiler/testData/diagnostics/tests/missingDependencyTypealias.kt");
     }
 
     @Test
@@ -30937,6 +30949,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("callableReferenceAgainstTypeVariable.kt")
+      public void testCallableReferenceAgainstTypeVariable() {
+        runTest("compiler/testData/diagnostics/tests/resolve/callableReferenceAgainstTypeVariable.kt");
+      }
+
+      @Test
       @TestMetadata("callableReferenceInCST.kt")
       public void testCallableReferenceInCST() {
         runTest("compiler/testData/diagnostics/tests/resolve/callableReferenceInCST.kt");
@@ -44964,6 +44982,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("kt4975.kt")
       public void testKt4975() {
         runTest("compiler/testData/diagnostics/testsWithStdLib/inference/kt4975.kt");
+      }
+
+      @Test
+      @TestMetadata("mapNotNullWithElvis.kt")
+      public void testMapNotNullWithElvis() {
+        runTest("compiler/testData/diagnostics/testsWithStdLib/inference/mapNotNullWithElvis.kt");
       }
 
       @Test

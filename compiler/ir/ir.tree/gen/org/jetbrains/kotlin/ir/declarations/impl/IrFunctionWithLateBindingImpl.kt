@@ -26,8 +26,8 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 
 class IrFunctionWithLateBindingImpl @IrImplementationDetail constructor(
-    override val startOffset: Int,
-    override val endOffset: Int,
+    override var startOffset: Int,
+    override var endOffset: Int,
     override var origin: IrDeclarationOrigin,
     override val factory: IrFactory,
     override var name: Name,
@@ -36,9 +36,9 @@ class IrFunctionWithLateBindingImpl @IrImplementationDetail constructor(
     override var isInline: Boolean,
     override var isExpect: Boolean,
     override var modality: Modality,
+    override var isFakeOverride: Boolean,
     override var isTailrec: Boolean,
     override var isSuspend: Boolean,
-    override var isFakeOverride: Boolean,
     override var isOperator: Boolean,
     override var isInfix: Boolean,
 ) : IrFunctionWithLateBinding() {
