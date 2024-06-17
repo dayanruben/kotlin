@@ -12,7 +12,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiReferenceList
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.getModule
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
@@ -549,7 +548,7 @@ internal fun KaSymbolWithMembers.createInnerClasses(
 ): List<SymbolLightClassBase> {
     val result = SmartList<SymbolLightClassBase>()
 
-    getStaticDeclaredMemberScope().getClassifierSymbols().filterIsInstance<KaNamedClassOrObjectSymbol>().mapNotNullTo(result) {
+    getStaticDeclaredMemberScope().classifiers.filterIsInstance<KaNamedClassOrObjectSymbol>().mapNotNullTo(result) {
         val classOrObjectDeclaration = it.sourcePsiSafe<KtClassOrObject>()
         if (classOrObjectDeclaration != null) {
             classOrObjectDeclaration.toLightClass() as? SymbolLightClassBase
@@ -573,8 +572,8 @@ internal fun KaSymbolWithMembers.createInnerClasses(
 
     if (containingClass is SymbolLightClassForAnnotationClass &&
         this is KaNamedClassOrObjectSymbol &&
-        hasAnnotation(StandardClassIds.Annotations.Repeatable) &&
-        !hasAnnotation(JvmStandardClassIds.Annotations.Java.Repeatable)
+        StandardClassIds.Annotations.Repeatable in annotations &&
+        JvmStandardClassIds.Annotations.Java.Repeatable !in annotations
     ) {
         result.add(SymbolLightClassForRepeatableAnnotationContainer(containingClass))
     }
@@ -631,7 +630,7 @@ internal fun SymbolLightClassBase.addPropertyBackingFields(
     nameGenerator: SymbolLightField.FieldNameGenerator,
     forceIsStaticTo: Boolean? = null,
 ) {
-    val propertySymbols = symbolWithMembers.getCombinedDeclaredMemberScope().getCallableSymbols()
+    val propertySymbols = symbolWithMembers.getCombinedDeclaredMemberScope().callables
         .filterIsInstance<KaPropertySymbol>()
         .applyIf(symbolWithMembers is KaClassOrObjectSymbol && symbolWithMembers.classKind == KaClassKind.COMPANION_OBJECT) {
             // All fields for companion object of classes are generated to the containing class

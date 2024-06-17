@@ -76,7 +76,7 @@ internal fun KaAnnotatedSymbol.isHiddenOrSynthetic(
     useSiteTargetFilter: AnnotationUseSiteTargetFilter = annotationUseSiteTarget.toFilter(),
 ) = isHiddenByDeprecation(this, annotationUseSiteTarget) || hasJvmSyntheticAnnotation(useSiteTargetFilter)
 
-internal fun KaAnnotatedSymbol.hasJvmFieldAnnotation(): Boolean = hasAnnotation(JvmStandardClassIds.Annotations.JvmField)
+internal fun KaAnnotatedSymbol.hasJvmFieldAnnotation(): Boolean = JvmStandardClassIds.Annotations.JvmField in annotations
 
 internal fun KaAnnotatedSymbol.hasPublishedApiAnnotation(
     useSiteTargetFilter: AnnotationUseSiteTargetFilter = AnyAnnotationUseSiteTargetFilter,
@@ -86,15 +86,15 @@ internal fun KaAnnotatedSymbol.hasDeprecatedAnnotation(
     useSiteTargetFilter: AnnotationUseSiteTargetFilter = AnyAnnotationUseSiteTargetFilter,
 ): Boolean = hasAnnotation(StandardClassIds.Annotations.Deprecated, useSiteTargetFilter)
 
-internal fun KaAnnotatedSymbol.hasJvmOverloadsAnnotation(): Boolean = hasAnnotation(JVM_OVERLOADS_CLASS_ID)
+internal fun KaAnnotatedSymbol.hasJvmOverloadsAnnotation(): Boolean = JVM_OVERLOADS_CLASS_ID in annotations
 
-internal fun KaAnnotatedSymbol.hasJvmNameAnnotation(): Boolean = hasAnnotation(JvmStandardClassIds.Annotations.JvmName)
+internal fun KaAnnotatedSymbol.hasJvmNameAnnotation(): Boolean = JvmStandardClassIds.Annotations.JvmName in annotations
 
 internal fun KaAnnotatedSymbol.hasJvmStaticAnnotation(
     useSiteTargetFilter: AnnotationUseSiteTargetFilter = AnyAnnotationUseSiteTargetFilter,
 ): Boolean = hasAnnotation(JvmStandardClassIds.Annotations.JvmStatic, useSiteTargetFilter)
 
-internal fun KaAnnotatedSymbol.hasInlineOnlyAnnotation(): Boolean = hasAnnotation(StandardClassIds.Annotations.InlineOnly)
+internal fun KaAnnotatedSymbol.hasInlineOnlyAnnotation(): Boolean = StandardClassIds.Annotations.InlineOnly in annotations
 
 context(KaSession)
 internal fun KaDeclarationSymbol.suppressWildcardMode(
@@ -111,20 +111,36 @@ internal fun KaAnnotatedSymbol.suppressWildcard(): Boolean? {
 }
 
 internal fun KaAnnotatedSymbol.getJvmSuppressWildcardsFromAnnotation(): Boolean? {
-    return annotationsByClassId(JvmStandardClassIds.Annotations.JvmSuppressWildcards).firstOrNull()?.let { annoApp ->
+    return annotations[JvmStandardClassIds.Annotations.JvmSuppressWildcards].firstOrNull()?.let { annoApp ->
         (annoApp.arguments.firstOrNull()?.expression as? KaConstantAnnotationValue)?.constantValue?.value as? Boolean
     }
 }
 
-internal fun KaAnnotatedSymbol.hasJvmWildcardAnnotation(): Boolean = hasAnnotation(JvmStandardClassIds.Annotations.JvmWildcard)
+internal fun KaAnnotatedSymbol.hasJvmWildcardAnnotation(): Boolean = JvmStandardClassIds.Annotations.JvmWildcard in annotations
 
 internal fun KaAnnotatedSymbol.findAnnotation(
     classId: ClassId,
     useSiteTargetFilter: AnnotationUseSiteTargetFilter = AnyAnnotationUseSiteTargetFilter,
-): KaAnnotationApplicationWithArgumentsInfo? {
+): KaAnnotation? {
     if (!hasAnnotation(classId, useSiteTargetFilter)) return null
 
     return annotationsByClassId(classId, useSiteTargetFilter).firstOrNull()
+}
+
+internal fun KaAnnotatedSymbol.hasAnnotation(
+    classId: ClassId,
+    useSiteTargetFilter: AnnotationUseSiteTargetFilter,
+): Boolean {
+    return annotations[classId]
+        .any { useSiteTargetFilter.isAllowed(it.useSiteTarget) }
+}
+
+internal fun KaAnnotatedSymbol.annotationsByClassId(
+    classId: ClassId,
+    useSiteTargetFilter: AnnotationUseSiteTargetFilter
+): List<KaAnnotation> {
+    return annotations[classId]
+        .filter { useSiteTargetFilter.isAllowed(it.useSiteTarget) }
 }
 
 context(KaSession)

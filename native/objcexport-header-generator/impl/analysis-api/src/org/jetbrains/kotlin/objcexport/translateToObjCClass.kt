@@ -20,7 +20,7 @@ fun KtClassOrObjectSymbol.translateToObjCClass(): ObjCClass? {
     val name = getObjCClassOrProtocolName()
     val attributes = (if (enumKind || final) listOf(OBJC_SUBCLASSING_RESTRICTED) else emptyList()) + name.toNameAttributes()
 
-    val comment: ObjCComment? = annotationsList.translateToObjCComment()
+    val comment: ObjCComment? = annotations.translateToObjCComment()
     val origin = getObjCExportStubOrigin()
 
     val superClass = translateSuperClass()
@@ -101,12 +101,12 @@ fun KtClassOrObjectSymbol.translateToObjCClass(): ObjCClass? {
 context(KtAnalysisSession)
 internal fun KtClassOrObjectSymbol.getCallableSymbolsForObjCMemberTranslation(): Set<KtCallableSymbol> {
     val generatedCallableSymbols = getMemberScope()
-        .getCallableSymbols()
+        .callables
         .filter { it.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED }
         .toSet()
 
     val declaredCallableSymbols = getDeclaredMemberScope()
-        .getCallableSymbols()
+        .callables
         .toSet()
 
     return generatedCallableSymbols + declaredCallableSymbols

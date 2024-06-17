@@ -4,11 +4,12 @@ KtNameReferenceExpression(44,47): 'foo'
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = KaImplicitReceiverValue:
           symbol = KaReceiverParameterSymbol:
-            annotationsList: []
+            annotations: []
+            location: LOCAL
             origin: SOURCE
             owningCallableSymbol: KaFunctionSymbol(/call)
             type: KaUsualClassType:
-              annotationsList: []
+              annotations: []
               typeArguments: []
               type: JavaClass
           type = JavaClass

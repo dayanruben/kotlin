@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValueFactory
 import org.jetbrains.kotlin.analysis.api.fir.KaSymbolByFirBuilder
+import org.jetbrains.kotlin.analysis.api.impl.base.annotations.KaAnnotationImpl
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.analysis.checkers.getContainingClassSymbol
 import org.jetbrains.kotlin.fir.declarations.FirClass
@@ -140,14 +141,15 @@ internal object FirAnnotationValueConverter {
                             }
 
                             KaAnnotationApplicationValue(
-                                KaAnnotationApplicationWithArgumentsInfo(
-                                    resolvedSymbol.callableId.classId,
-                                    psi as? KtCallElement,
+                                KaAnnotationImpl(
+                                    classId = resolvedSymbol.callableId.classId,
+                                    psi = psi as? KtCallElement,
                                     useSiteTarget = null,
-                                    toNamedConstantValue(builder.analysisSession, resultMap, builder),
+                                    hasArguments = arguments.isNotEmpty(),
+                                    lazyArguments = lazy { toNamedConstantValue(builder.analysisSession, resultMap, builder) },
                                     index = null,
-                                    constructorSymbolPointer = with(builder.analysisSession) {
-                                        builder.functionLikeBuilder.buildConstructorSymbol(resolvedSymbol).createPointer()
+                                    constructorSymbol = with(builder.analysisSession) {
+                                        builder.functionLikeBuilder.buildConstructorSymbol(resolvedSymbol)
                                     },
                                     token = token
                                 ),

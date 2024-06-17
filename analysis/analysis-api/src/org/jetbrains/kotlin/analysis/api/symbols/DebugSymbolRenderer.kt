@@ -19,7 +19,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaPossiblyNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassTypeQualifier
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
+import org.jetbrains.kotlin.analysis.api.types.KaTypeProjection
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
@@ -50,7 +53,7 @@ public class DebugSymbolRenderer(
         return prettyPrint { analysisSession.renderSymbol(symbol, this@prettyPrint) }
     }
 
-    public fun renderAnnotationApplication(analysisSession: KaSession, application: KaAnnotationApplication): String {
+    public fun renderAnnotationApplication(analysisSession: KaSession, application: KaAnnotation): String {
         return prettyPrint { analysisSession.renderAnnotationApplication(application, this@prettyPrint) }
     }
 
@@ -158,7 +161,7 @@ public class DebugSymbolRenderer(
         printer.withIndent {
             val members = apiClass.members
                 .filterIsInstance<KProperty<*>>()
-                .filter { it.name !in ignoredPropertyNames }
+                .filter { !it.hasAnnotation<Deprecated>() && it.name !in ignoredPropertyNames }
                 .sortedBy { it.name }
             appendLine()
             printCollectionIfNotEmpty(members, separator = "\n") { member ->
@@ -234,8 +237,8 @@ public class DebugSymbolRenderer(
             if (renderTypeByProperties) {
                 renderByPropertyNames(typeToRender, printer)
             } else {
-                append("annotationsList: ")
-                renderAnnotationsList(typeToRender.annotationsList, printer)
+                append("annotations: ")
+                renderAnnotationsList(typeToRender.annotations, printer)
 
                 if (typeToRender is KaNonErrorClassType) {
                     appendLine()
@@ -266,19 +269,15 @@ public class DebugSymbolRenderer(
         }
     }
 
-    private fun KaSession.renderAnnotationApplication(call: KaAnnotationApplication, printer: PrettyPrinter) {
+    private fun KaSession.renderAnnotationApplication(call: KaAnnotation, printer: PrettyPrinter) {
         with(printer) {
             renderValue(call.classId, printer, renderSymbolsFully = false)
             append('(')
-            if (call is KaAnnotationApplicationWithArgumentsInfo) {
-                call.arguments.sortedBy { it.name }.forEachIndexed { index, value ->
-                    if (index > 0) {
-                        append(", ")
-                    }
-                    renderValue(value, printer, renderSymbolsFully = false)
+            call.arguments.sortedBy { it.name }.forEachIndexed { index, value ->
+                if (index > 0) {
+                    append(", ")
                 }
-            } else {
-                append("isCallWithArguments=${call.isCallWithArguments}")
+                renderValue(value, printer, renderSymbolsFully = false)
             }
             append(')')
 
@@ -316,8 +315,8 @@ public class DebugSymbolRenderer(
             is KaNamedAnnotationValue -> renderNamedConstantValue(value, printer)
             is KaInitializerValue -> renderKtInitializerValue(value, printer)
             is KaContextReceiver -> renderContextReceiver(value, printer)
-            is KaAnnotationApplication -> renderAnnotationApplication(value, printer)
-            is KaAnnotationsList -> renderAnnotationsList(value, printer)
+            is KaAnnotation -> renderAnnotationApplication(value, printer)
+            is KaAnnotationList -> renderAnnotationsList(value, printer)
             is KtModule -> renderKtModule(value, printer)
             // Other custom values
             is Name -> printer.append(value.asString())
@@ -415,8 +414,8 @@ public class DebugSymbolRenderer(
         }
     }
 
-    private fun KaSession.renderAnnotationsList(value: KaAnnotationsList, printer: PrettyPrinter) {
-        renderList(value.annotations, printer, renderSymbolsFully = false)
+    private fun KaSession.renderAnnotationsList(value: KaAnnotationList, printer: PrettyPrinter) {
+        renderList(value, printer, renderSymbolsFully = false)
     }
 
     private fun getFrontendIndependentKClassOf(value: Any): KClass<*> {

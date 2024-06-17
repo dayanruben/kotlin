@@ -3,8 +3,11 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+@file:OptIn(KaExperimentalApi::class)
+
 package org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.scopeProvider
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.prettyPrintSignature
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.stringRepresentation
@@ -93,7 +96,7 @@ abstract class AbstractTypeScopeTest : AbstractAnalysisApiBasedTest() {
 
     @Suppress("unused")
     private fun KaSession.renderForTests(scope: KaScope): String {
-        val callables = scope.getCallableSymbols().toList()
+        val callables = scope.callables.toList()
         return prettyPrint {
             callables.forEach {
                 appendLine(DebugSymbolRenderer().render(analysisSession, it))
@@ -102,7 +105,7 @@ abstract class AbstractTypeScopeTest : AbstractAnalysisApiBasedTest() {
     }
 
     private fun KaSession.prettyPrintForTests(scope: KaScope): String {
-        val callables = scope.getCallableSymbols().toList()
+        val callables = scope.callables.toList()
         return prettyPrint {
             callables.forEach {
                 appendLine(it.render(renderer))

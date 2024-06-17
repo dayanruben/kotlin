@@ -6,11 +6,12 @@ KtCallExpression(51,56): 'foo()'
         dispatchReceiver = null
         extensionReceiver = KaImplicitReceiverValue:
           symbol = KaReceiverParameterSymbol:
-            annotationsList: []
+            annotations: []
+            location: LOCAL
             origin: SOURCE
             owningCallableSymbol: KaFunctionSymbol(/test)
             type: KaUsualClassType:
-              annotationsList: []
+              annotations: []
               typeArguments: []
               type: kotlin/Any
           type = kotlin.String

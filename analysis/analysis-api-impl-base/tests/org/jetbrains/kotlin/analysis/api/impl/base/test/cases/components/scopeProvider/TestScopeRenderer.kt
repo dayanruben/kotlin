@@ -3,8 +3,11 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+@file:OptIn(KaExperimentalApi::class)
+
 package org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.scopeProvider
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
@@ -136,9 +139,9 @@ internal object TestScopeRenderer {
             .toMutableList()
             .apply { sortBy { it.fqName.asString() } }
             .renderAll("packages") { prettyRenderPackage(it) }
-        scope.getClassifierSymbols().toList().renderAll("classifiers") { prettyRenderDeclaration(it) }
-        scope.getCallableSymbols().toList().renderAll("callables") { prettyRenderDeclaration(it) }
-        scope.getConstructors().toList().renderAll("constructors") { prettyRenderDeclaration(it) }
+        scope.classifiers.toList().renderAll("classifiers") { prettyRenderDeclaration(it) }
+        scope.callables.toList().renderAll("callables") { prettyRenderDeclaration(it) }
+        scope.constructors.toList().renderAll("constructors") { prettyRenderDeclaration(it) }
     }
 
     private fun prettyRenderPackage(symbol: KaPackageSymbol): String =

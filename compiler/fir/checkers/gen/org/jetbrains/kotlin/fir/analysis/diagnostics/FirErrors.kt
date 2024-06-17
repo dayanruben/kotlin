@@ -171,7 +171,7 @@ object FirErrors {
     val INNER_ON_TOP_LEVEL_SCRIPT_CLASS: KtDiagnosticFactoryForDeprecation0 by deprecationError0<PsiElement>(ProhibitScriptTopLevelInnerClasses)
     val ERROR_SUPPRESSION: KtDiagnosticFactory1<String> by warning1<PsiElement, String>()
     val MISSING_CONSTRUCTOR_KEYWORD: KtDiagnosticFactory0 by error0<PsiElement>()
-    val SINGLE_DOLLAR_INTERPOLATION_PREFIX: KtDiagnosticFactory0 by warning0<PsiElement>()
+    val REDUNDANT_INTERPOLATION_PREFIX: KtDiagnosticFactory0 by warning0<PsiElement>()
 
     // Unresolved
     val INVISIBLE_REFERENCE: KtDiagnosticFactory3<FirBasedSymbol<*>, Visibility, ClassId?> by error3<PsiElement, FirBasedSymbol<*>, Visibility, ClassId?>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
@@ -509,6 +509,7 @@ object FirErrors {
     val TYPE_VARIANCE_CONFLICT_IN_EXPANDED_TYPE: KtDiagnosticFactory4<FirTypeParameterSymbol, Variance, Variance, ConeKotlinType> by error4<PsiElement, FirTypeParameterSymbol, Variance, Variance, ConeKotlinType>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
     val SMARTCAST_IMPOSSIBLE: KtDiagnosticFactory4<ConeKotlinType, FirExpression, String, Boolean> by error4<KtExpression, ConeKotlinType, FirExpression, String, Boolean>()
     val SMARTCAST_IMPOSSIBLE_ON_IMPLICIT_INVOKE_RECEIVER: KtDiagnosticFactory4<ConeKotlinType, FirExpression, String, Boolean> by error4<KtExpression, ConeKotlinType, FirExpression, String, Boolean>()
+    val DEPRECATED_SMARTCAST_ON_DELEGATED_PROPERTY: KtDiagnosticFactory2<ConeKotlinType, FirCallableSymbol<*>> by warning2<KtExpression, ConeKotlinType, FirCallableSymbol<*>>()
     val REDUNDANT_NULLABLE: KtDiagnosticFactory0 by warning0<KtTypeReference>(SourceElementPositioningStrategies.REDUNDANT_NULLABLE)
     val PLATFORM_CLASS_MAPPED_TO_KOTLIN: KtDiagnosticFactory1<ClassId> by warning1<PsiElement, ClassId>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
     val INFERRED_TYPE_VARIABLE_INTO_EMPTY_INTERSECTION: KtDiagnosticFactoryForDeprecation4<String, Collection<ConeKotlinType>, String, String> by deprecationError4<PsiElement, String, Collection<ConeKotlinType>, String, String>(ForbidInferringTypeVariablesIntoEmptyIntersection)
@@ -863,6 +864,7 @@ object FirErrors {
     val NON_PUBLIC_CALL_FROM_PUBLIC_INLINE: KtDiagnosticFactory2<FirBasedSymbol<*>, FirBasedSymbol<*>> by error2<KtElement, FirBasedSymbol<*>, FirBasedSymbol<*>>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
     val NON_PUBLIC_INLINE_CALL_FROM_PUBLIC_INLINE: KtDiagnosticFactory2<FirBasedSymbol<*>, FirBasedSymbol<*>> by error2<KtElement, FirBasedSymbol<*>, FirBasedSymbol<*>>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
     val NON_PUBLIC_CALL_FROM_PUBLIC_INLINE_DEPRECATION: KtDiagnosticFactory2<FirBasedSymbol<*>, FirBasedSymbol<*>> by warning2<KtElement, FirBasedSymbol<*>, FirBasedSymbol<*>>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
+    val NON_PUBLIC_DATA_COPY_CALL_FROM_PUBLIC_INLINE: KtDiagnosticFactoryForDeprecation0 by deprecationError0<KtElement>(ErrorAboutDataClassCopyVisibilityChange, SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
     val PROTECTED_CONSTRUCTOR_CALL_FROM_PUBLIC_INLINE: KtDiagnosticFactory2<FirBasedSymbol<*>, FirBasedSymbol<*>> by error2<KtElement, FirBasedSymbol<*>, FirBasedSymbol<*>>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
     val PROTECTED_CALL_FROM_PUBLIC_INLINE_ERROR: KtDiagnosticFactory2<FirBasedSymbol<*>, FirBasedSymbol<*>> by error2<KtElement, FirBasedSymbol<*>, FirBasedSymbol<*>>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
     val PROTECTED_CALL_FROM_PUBLIC_INLINE: KtDiagnosticFactory2<FirBasedSymbol<*>, FirBasedSymbol<*>> by warning2<KtElement, FirBasedSymbol<*>, FirBasedSymbol<*>>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
