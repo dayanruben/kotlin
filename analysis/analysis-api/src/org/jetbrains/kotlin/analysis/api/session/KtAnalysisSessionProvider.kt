@@ -11,11 +11,11 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeTokenFactory
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
- * Provides [KaSession]s by use-site [KtElement]s or [KtModule]s.
+ * Provides [KaSession]s by use-site [KtElement]s or [KaModule]s.
  *
  * This provider should not be used directly.
  * Please use [analyze][org.jetbrains.kotlin.analysis.api.analyze] or [analyzeCopy][org.jetbrains.kotlin.analysis.api.analyzeCopy] instead.
@@ -24,39 +24,39 @@ import org.jetbrains.kotlin.psi.KtElement
 public abstract class KaSessionProvider(public val project: Project) : Disposable {
     public abstract val tokenFactory: KaLifetimeTokenFactory
 
-    public abstract fun getAnalysisSession(useSiteKtElement: KtElement): KaSession
+    public abstract fun getAnalysisSession(useSiteElement: KtElement): KaSession
 
-    public abstract fun getAnalysisSessionByUseSiteKtModule(useSiteKtModule: KtModule): KaSession
+    public abstract fun getAnalysisSession(useSiteModule: KaModule): KaSession
 
     // The `analyse` functions affect binary compatibility as they are inlined with every `analyze` call. To avoid breaking binary
     // compatibility, their implementations should not be changed unless absolutely necessary. It should be possible to put most
     // functionality into `beforeEnteringAnalysis` and/or `afterLeavingAnalysis`.
 
     public inline fun <R> analyze(
-        useSiteKtElement: KtElement,
+        useSiteElement: KtElement,
         action: KaSession.() -> R,
     ): R {
-        val analysisSession = getAnalysisSession(useSiteKtElement)
+        val analysisSession = getAnalysisSession(useSiteElement)
 
-        beforeEnteringAnalysis(analysisSession, useSiteKtElement)
+        beforeEnteringAnalysis(analysisSession, useSiteElement)
         return try {
             analysisSession.action()
         } finally {
-            afterLeavingAnalysis(analysisSession, useSiteKtElement)
+            afterLeavingAnalysis(analysisSession, useSiteElement)
         }
     }
 
     public inline fun <R> analyze(
-        useSiteKtModule: KtModule,
+        useSiteModule: KaModule,
         action: KaSession.() -> R,
     ): R {
-        val analysisSession = getAnalysisSessionByUseSiteKtModule(useSiteKtModule)
+        val analysisSession = getAnalysisSession(useSiteModule)
 
-        beforeEnteringAnalysis(analysisSession, useSiteKtModule)
+        beforeEnteringAnalysis(analysisSession, useSiteModule)
         return try {
             analysisSession.action()
         } finally {
-            afterLeavingAnalysis(analysisSession, useSiteKtModule)
+            afterLeavingAnalysis(analysisSession, useSiteModule)
         }
     }
 
@@ -74,7 +74,7 @@ public abstract class KaSessionProvider(public val project: Project) : Disposabl
      * The signature of [beforeEnteringAnalysis] should be kept stable to avoid breaking binary compatibility, since [analyze] is inlined.
      */
     @KaAnalysisApiInternals
-    public abstract fun beforeEnteringAnalysis(session: KaSession, useSiteModule: KtModule)
+    public abstract fun beforeEnteringAnalysis(session: KaSession, useSiteModule: KaModule)
 
     /**
      * [afterLeavingAnalysis] hooks into analysis *after* [analyze]'s action has been executed.
@@ -90,7 +90,7 @@ public abstract class KaSessionProvider(public val project: Project) : Disposabl
      * The signature of [afterLeavingAnalysis] should be kept stable to avoid breaking binary compatibility, since [analyze] is inlined.
      */
     @KaAnalysisApiInternals
-    public abstract fun afterLeavingAnalysis(session: KaSession, useSiteModule: KtModule)
+    public abstract fun afterLeavingAnalysis(session: KaSession, useSiteModule: KaModule)
 
     @TestOnly
     public abstract fun clearCaches()
@@ -104,4 +104,5 @@ public abstract class KaSessionProvider(public val project: Project) : Disposabl
     }
 }
 
+@Deprecated("Use 'KaSessionProvider' instead", ReplaceWith("KaSessionProvider"))
 public typealias KtAnalysisSessionProvider = KaSessionProvider

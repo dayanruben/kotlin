@@ -41,7 +41,7 @@ KaFunctionSymbol:
                       typeParameters: []
                       getContainingFileSymbol: KaFileSymbol(twoContracts.kt)
                       getContainingJvmClassName: TwoContractsKt
-                      getContainingModule: KtSourceModule "Sources of main"
+                      getContainingModule: KaSourceModule "Sources of main"
                       deprecationStatus: null
               isNegated: false
           right:
@@ -71,7 +71,7 @@ KaFunctionSymbol:
                       typeParameters: []
                       getContainingFileSymbol: KaFileSymbol(twoContracts.kt)
                       getContainingJvmClassName: TwoContractsKt
-                      getContainingModule: KtSourceModule "Sources of main"
+                      getContainingModule: KaSourceModule "Sources of main"
                       deprecationStatus: null
               isNegated: true
           operation: AND
@@ -94,7 +94,7 @@ KaFunctionSymbol:
               name: block
               origin: SOURCE
               receiverParameter: null
-              returnType: KaFunctionalType:
+              returnType: KaFunctionType:
                 annotations: []
                 typeArguments: [
                   KaUsualClassType:
@@ -106,7 +106,7 @@ KaFunctionSymbol:
               typeParameters: []
               getContainingFileSymbol: KaFileSymbol(twoContracts.kt)
               getContainingJvmClassName: TwoContractsKt
-              getContainingModule: KtSourceModule "Sources of main"
+              getContainingModule: KaSourceModule "Sources of main"
               deprecationStatus: null
       occurrencesRange: EXACTLY_ONCE
   ]
@@ -156,7 +156,7 @@ KaFunctionSymbol:
       typeParameters: []
       getContainingFileSymbol: KaFileSymbol(twoContracts.kt)
       getContainingJvmClassName: TwoContractsKt
-      getContainingModule: KtSourceModule "Sources of main"
+      getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
     KaValueParameterSymbol:
       annotations: []
@@ -180,7 +180,7 @@ KaFunctionSymbol:
       typeParameters: []
       getContainingFileSymbol: KaFileSymbol(twoContracts.kt)
       getContainingJvmClassName: TwoContractsKt
-      getContainingModule: KtSourceModule "Sources of main"
+      getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
     KaValueParameterSymbol:
       annotations: []
@@ -197,7 +197,7 @@ KaFunctionSymbol:
       name: block
       origin: SOURCE
       receiverParameter: null
-      returnType: KaFunctionalType:
+      returnType: KaFunctionType:
         annotations: []
         typeArguments: [
           KaUsualClassType:
@@ -209,11 +209,11 @@ KaFunctionSymbol:
       typeParameters: []
       getContainingFileSymbol: KaFileSymbol(twoContracts.kt)
       getContainingJvmClassName: TwoContractsKt
-      getContainingModule: KtSourceModule "Sources of main"
+      getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
   ]
   visibility: Public
   getContainingFileSymbol: KaFileSymbol(twoContracts.kt)
   getContainingJvmClassName: TwoContractsKt
-  getContainingModule: KtSourceModule "Sources of main"
+  getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null

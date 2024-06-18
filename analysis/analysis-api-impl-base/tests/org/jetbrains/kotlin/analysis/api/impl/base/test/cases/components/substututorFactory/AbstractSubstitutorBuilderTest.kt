@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.substututorFactory
 
-import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.stringRepresentation
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForDebug
@@ -25,7 +24,7 @@ abstract class AbstractSubstitutorBuilderTest : AbstractAnalysisApiBasedTest() {
     override fun doTestByMainFile(mainFile: KtFile, mainModule: KtTestModule, testServices: TestServices) {
         val declaration = testServices.expressionMarkerProvider.getElementOfTypeAtCaret<KtDeclaration>(mainFile)
         val actual = analyseForTest(declaration) {
-            val symbol = declaration.getSymbol() as KaCallableSymbol
+            val symbol = declaration.symbol as KaCallableSymbol
 
             val substitutor = buildSubstitutor {
                 substitution(getSymbolByName(mainFile, "A"), builtinTypes.int)

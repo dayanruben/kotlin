@@ -118,6 +118,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
     }
 
     @Test
+    @TestMetadata("assignmentsAndSmartcastsToUnrelatedProperty.kt")
+    public void testAssignmentsAndSmartcastsToUnrelatedProperty() {
+      runTest("compiler/testData/diagnostics/tests/assignmentsAndSmartcastsToUnrelatedProperty.kt");
+    }
+
+    @Test
     @TestMetadata("AutoCreatedIt.kt")
     public void testAutoCreatedIt() {
       runTest("compiler/testData/diagnostics/tests/AutoCreatedIt.kt");
@@ -1246,6 +1252,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
     }
 
     @Test
+    @TestMetadata("plusAssignVsPrivateSetter.kt")
+    public void testPlusAssignVsPrivateSetter() {
+      runTest("compiler/testData/diagnostics/tests/plusAssignVsPrivateSetter.kt");
+    }
+
+    @Test
     @TestMetadata("postfixIncSmartCast.kt")
     public void testPostfixIncSmartCast() {
       runTest("compiler/testData/diagnostics/tests/postfixIncSmartCast.kt");
@@ -1279,6 +1291,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
     @TestMetadata("PrivateSetterForOverridden.kt")
     public void testPrivateSetterForOverridden() {
       runTest("compiler/testData/diagnostics/tests/PrivateSetterForOverridden.kt");
+    }
+
+    @Test
+    @TestMetadata("privateSetterSmartcastsToPublicSetter.kt")
+    public void testPrivateSetterSmartcastsToPublicSetter() {
+      runTest("compiler/testData/diagnostics/tests/privateSetterSmartcastsToPublicSetter.kt");
     }
 
     @Test
@@ -1339,6 +1357,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
     @TestMetadata("PropertyInitializers.kt")
     public void testPropertyInitializers() {
       runTest("compiler/testData/diagnostics/tests/PropertyInitializers.kt");
+    }
+
+    @Test
+    @TestMetadata("propertyPrivateSetttersPlusAssign.kt")
+    public void testPropertyPrivateSetttersPlusAssign() {
+      runTest("compiler/testData/diagnostics/tests/propertyPrivateSetttersPlusAssign.kt");
     }
 
     @Test
@@ -9334,6 +9358,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       @TestMetadata("modifierFormBuiltinSuspendFun.kt")
       public void testModifierFormBuiltinSuspendFun() {
         runTest("compiler/testData/diagnostics/tests/coroutines/modifierFormBuiltinSuspendFun.kt");
+      }
+
+      @Test
+      @TestMetadata("suspendCallInInit.kt")
+      public void testSuspendCallInInit() {
+        runTest("compiler/testData/diagnostics/tests/coroutines/suspendCallInInit.kt");
       }
 
       @Test
@@ -26053,6 +26083,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       }
 
       @Test
+      @TestMetadata("delegationToExpectInterfacesWithClashingScopes.kt")
+      public void testDelegationToExpectInterfacesWithClashingScopes() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/delegationToExpectInterfacesWithClashingScopes.kt");
+      }
+
+      @Test
       @TestMetadata("expectAbstractToString.kt")
       public void testExpectAbstractToString() {
         runTest("compiler/testData/diagnostics/tests/multiplatform/expectAbstractToString.kt");
@@ -36699,9 +36735,21 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       }
 
       @Test
+      @TestMetadata("annotations.kt")
+      public void testAnnotations() {
+        runTest("compiler/testData/diagnostics/tests/smartCasts/annotations.kt");
+      }
+
+      @Test
       @TestMetadata("binaryOperatorsWithJumps.kt")
       public void testBinaryOperatorsWithJumps() {
         runTest("compiler/testData/diagnostics/tests/smartCasts/binaryOperatorsWithJumps.kt");
+      }
+
+      @Test
+      @TestMetadata("binaryOperatorsWithJumps_before.kt")
+      public void testBinaryOperatorsWithJumps_before() {
+        runTest("compiler/testData/diagnostics/tests/smartCasts/binaryOperatorsWithJumps_before.kt");
       }
 
       @Test
@@ -47124,6 +47172,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       @TestMetadata("duration.kt")
       public void testDuration() {
         runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/duration.kt");
+      }
+
+      @Test
+      @TestMetadata("enumCompanion.kt")
+      public void testEnumCompanion() {
+        runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/enumCompanion.kt");
       }
 
       @Test

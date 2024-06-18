@@ -24,27 +24,29 @@ import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackagePartProv
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderFactory
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderMerger
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinByModulesResolutionScopeProvider
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolutionScopeProvider
 import org.jetbrains.kotlin.analysis.api.standalone.base.declarations.KotlinStandaloneAnnotationsResolverFactory
 import org.jetbrains.kotlin.analysis.api.standalone.base.declarations.KotlinStandaloneDeclarationProviderFactory
 import org.jetbrains.kotlin.analysis.api.standalone.base.declarations.KotlinStandaloneDeclarationProviderMerger
+import org.jetbrains.kotlin.analysis.api.standalone.base.declarations.KotlinStandaloneFirCompilerPluginsProvider
 import org.jetbrains.kotlin.analysis.api.standalone.base.modification.KotlinStandaloneGlobalModificationService
 import org.jetbrains.kotlin.analysis.api.standalone.base.modification.KotlinStandaloneModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.api.standalone.base.packages.KotlinStandalonePackageProviderFactory
 import org.jetbrains.kotlin.analysis.api.standalone.base.packages.KotlinStandalonePackageProviderMerger
-import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.AnalysisApiSimpleServiceRegistrar
-import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.ApplicationServiceRegistration
-import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.FirStandaloneServiceRegistrar
-import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.KtStaticProjectStructureProvider
-import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.LLFirStandaloneLibrarySymbolProviderFactory
-import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.StandaloneProjectFactory
+import org.jetbrains.kotlin.analysis.api.standalone.base.projectStructure.AnalysisApiSimpleServiceRegistrar
+import org.jetbrains.kotlin.analysis.api.standalone.base.projectStructure.ApplicationServiceRegistration
+import org.jetbrains.kotlin.analysis.api.standalone.base.projectStructure.FirStandaloneServiceRegistrar
+import org.jetbrains.kotlin.analysis.api.standalone.base.projectStructure.KotlinStaticProjectStructureProvider
+import org.jetbrains.kotlin.analysis.api.standalone.base.projectStructure.LLFirStandaloneLibrarySymbolProviderFactory
+import org.jetbrains.kotlin.analysis.api.standalone.base.projectStructure.StandaloneProjectFactory
 import org.jetbrains.kotlin.analysis.api.standalone.base.services.LLStandaloneFirElementByPsiElementChooser
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.services.LLFirElementByPsiElementChooser
 import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirLibrarySymbolProviderFactory
-import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.builder.KtModuleProviderBuilder
 import org.jetbrains.kotlin.analysis.project.structure.builder.buildProjectStructureProvider
-import org.jetbrains.kotlin.analysis.project.structure.impl.KtSourceModuleImpl
+import org.jetbrains.kotlin.analysis.project.structure.impl.KaSourceModuleImpl
 import org.jetbrains.kotlin.analysis.project.structure.impl.buildKtModuleProviderByCompilerConfiguration
 import org.jetbrains.kotlin.analysis.project.structure.impl.getPsiFilesFromPaths
 import org.jetbrains.kotlin.analysis.project.structure.impl.getSourceFilePaths
@@ -98,7 +100,7 @@ public class StandaloneAnalysisAPISessionBuilder(
 
     public val project: Project = kotlinCoreProjectEnvironment.project
 
-    private lateinit var projectStructureProvider: KtStaticProjectStructureProvider
+    private lateinit var projectStructureProvider: KotlinStaticProjectStructureProvider
 
     public fun buildKtModuleProvider(init: KtModuleProviderBuilder.() -> Unit) {
         projectStructureProvider = buildProjectStructureProvider(kotlinCoreProjectEnvironment, init)
@@ -183,6 +185,18 @@ public class StandaloneAnalysisAPISessionBuilder(
         }
     }
 
+    /**
+     * Registers *optional* services for compiler plugin support.
+     *
+     * @param compilerConfiguration The [CompilerConfiguration] containing information about the registered compiler plugins.
+     */
+    public fun registerCompilerPluginServices(compilerConfiguration: CompilerConfiguration) {
+        registerProjectService(
+            KotlinCompilerPluginsProvider::class.java,
+            KotlinStandaloneFirCompilerPluginsProvider(compilerConfiguration),
+        )
+    }
+
     public fun build(): StandaloneAnalysisAPISession {
         StandaloneProjectFactory.registerServicesForProjectEnvironment(
             kotlinCoreProjectEnvironment,
@@ -191,7 +205,7 @@ public class StandaloneAnalysisAPISessionBuilder(
 
         val sourceKtFiles = projectStructureProvider.allSourceFiles.filterIsInstance<KtFile>()
         val libraryRoots = StandaloneProjectFactory.getAllBinaryRoots(
-            projectStructureProvider.allKtModules,
+            projectStructureProvider.allModules,
             kotlinCoreProjectEnvironment,
         )
 
@@ -199,9 +213,9 @@ public class StandaloneAnalysisAPISessionBuilder(
         registerProjectServices(sourceKtFiles, createPackagePartProvider)
 
         return StandaloneAnalysisAPISession(kotlinCoreProjectEnvironment) {
-            projectStructureProvider.allKtModules.mapNotNull { ktModule ->
-                if (ktModule !is KtSourceModule) return@mapNotNull null
-                check(ktModule is KtSourceModuleImpl)
+            projectStructureProvider.allModules.mapNotNull { ktModule ->
+                if (ktModule !is KaSourceModule) return@mapNotNull null
+                check(ktModule is KaSourceModuleImpl)
                 ktModule to ktModule.sourceRoots.filterIsInstance<PsiFile>()
             }.toMap()
         }

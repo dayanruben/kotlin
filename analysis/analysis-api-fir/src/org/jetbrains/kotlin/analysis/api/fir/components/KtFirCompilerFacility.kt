@@ -9,13 +9,18 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiErrorElement
 import org.jetbrains.kotlin.KtRealPsiSourceElement
 import org.jetbrains.kotlin.analysis.api.compile.CodeFragmentCapturedValue
+import org.jetbrains.kotlin.analysis.api.components.KaCodeCompilationException
 import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.KaCompilerFacility
+import org.jetbrains.kotlin.analysis.api.components.KaCompilerFacility.Companion.CODE_FRAGMENT_CLASS_NAME
+import org.jetbrains.kotlin.analysis.api.components.KaCompilerFacility.Companion.CODE_FRAGMENT_METHOD_NAME
 import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.KaFirSession
+import org.jetbrains.kotlin.analysis.api.impl.base.components.KaSessionComponent
 import org.jetbrains.kotlin.analysis.api.impl.base.util.KaCompiledFileForOutputFile
+import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.*
 import org.jetbrains.kotlin.analysis.low.level.api.fir.compile.CodeFragmentCapturedId
@@ -25,8 +30,8 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.llFirMo
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.llFirSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.codeFragment
-import org.jetbrains.kotlin.analysis.project.structure.KtDanglingFileModule
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
 import org.jetbrains.kotlin.backend.jvm.*
@@ -89,12 +94,28 @@ import org.jetbrains.kotlin.resolve.source.PsiSourceFile
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
+import org.jetbrains.kotlin.utils.exceptions.rethrowIntellijPlatformExceptionIfNeeded
 import java.util.*
 
 internal class KaFirCompilerFacility(
-    override val analysisSession: KaFirSession
-) : KaCompilerFacility(), KaFirSessionComponent {
+    override val analysisSessionProvider: () -> KaFirSession
+) : KaSessionComponent<KaFirSession>(), KaCompilerFacility, KaFirSessionComponent {
+
     override fun compile(
+        file: KtFile,
+        configuration: CompilerConfiguration,
+        target: KaCompilerTarget,
+        allowedErrorFilter: (KaDiagnostic) -> Boolean
+    ): KaCompilationResult = withValidityAssertion {
+        try {
+            compileUnsafe(file, configuration, target, allowedErrorFilter)
+        } catch (e: Throwable) {
+            rethrowIntellijPlatformExceptionIfNeeded(e)
+            throw KaCodeCompilationException(e)
+        }
+    }
+
+    private fun compileUnsafe(
         file: KtFile,
         configuration: CompilerConfiguration,
         target: KaCompilerTarget,
@@ -104,7 +125,7 @@ internal class KaFirCompilerFacility(
             is KaCompilerTarget.Jvm -> target.classBuilderFactory
         }
 
-        val syntaxErrors = SyntaxErrorReportingVisitor(analysisSession.useSiteSession) { it.asKtDiagnostic() }
+        val syntaxErrors = SyntaxErrorReportingVisitor(analysisSession.firSession) { it.asKtDiagnostic() }
             .also(file::accept).diagnostics
 
         if (syntaxErrors.isNotEmpty()) {
@@ -254,9 +275,9 @@ internal class KaFirCompilerFacility(
         }
     }
 
-    private fun computeTargetModules(module: KtModule): List<KtModule> {
+    private fun computeTargetModules(module: KaModule): List<KaModule> {
         return when (module) {
-            is KtDanglingFileModule -> listOf(module.contextModule, module)
+            is KaDanglingFileModule -> listOf(module.contextModule, module)
             else -> listOf(module)
         }
     }

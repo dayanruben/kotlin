@@ -5,9 +5,9 @@
 
 package org.jetbrains.kotlin.analysis.api.signatures
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
-import org.jetbrains.kotlin.analysis.api.annotations.KaConstantAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.annotationsByClassId
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableLikeSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
@@ -57,6 +57,7 @@ public abstract class KaVariableLikeSignature<out S : KaVariableLikeSymbol> : Ka
             runIf(nameCanBeDeclaredInAnnotation) { getValueFromParameterNameAnnotation() } ?: symbol.name
         }
 
+    @KaExperimentalApi
     abstract override fun substitute(substitutor: KaSubstitutor): KaVariableLikeSignature<S>
 
     private fun getValueFromParameterNameAnnotation(): Name? {
@@ -64,9 +65,9 @@ public abstract class KaVariableLikeSignature<out S : KaVariableLikeSymbol> : Ka
         val parameterNameArgument = resultingAnnotation.arguments
             .singleOrNull { it.name == StandardClassIds.Annotations.ParameterNames.parameterNameName }
 
-        val constantArgumentValue = parameterNameArgument?.expression as? KaConstantAnnotationValue ?: return null
+        val constantArgumentValue = parameterNameArgument?.expression as? KaAnnotationValue.ConstantValue ?: return null
 
-        return (constantArgumentValue.constantValue.value as? String)?.let(Name::identifier)
+        return (constantArgumentValue.value.value as? String)?.let(Name::identifier)
     }
 
     private fun findParameterNameAnnotation(): KaAnnotation? {
@@ -81,4 +82,5 @@ public abstract class KaVariableLikeSignature<out S : KaVariableLikeSymbol> : Ka
     }
 }
 
+@Deprecated("Use 'KaVariableLikeSignature' instead", ReplaceWith("KaVariableLikeSignature"))
 public typealias KtVariableLikeSignature<S> = KaVariableLikeSignature<S>

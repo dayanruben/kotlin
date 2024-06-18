@@ -5,9 +5,9 @@
 
 package org.jetbrains.kotlin.analysis.project.structure.builder
 
-import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.KtStaticProjectStructureProvider
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.project.structure.impl.KtStandaloneProjectStructureProvider
+import org.jetbrains.kotlin.analysis.api.standalone.base.projectStructure.KotlinStaticProjectStructureProvider
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.project.structure.impl.KotlinStandaloneProjectStructureProvider
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreProjectEnvironment
 import org.jetbrains.kotlin.platform.TargetPlatform
 import kotlin.contracts.ExperimentalContracts
@@ -17,17 +17,17 @@ import kotlin.contracts.contract
 public class KtModuleProviderBuilder(
     public val kotlinCoreProjectEnvironment: KotlinCoreProjectEnvironment,
 ) {
-    private val mainModules: MutableList<KtModule> = mutableListOf()
+    private val mainModules: MutableList<KaModule> = mutableListOf()
 
-    public fun <M : KtModule> addModule(module: M): M {
+    public fun <M : KaModule> addModule(module: M): M {
         mainModules.add(module)
         return module
     }
 
     public lateinit var platform: TargetPlatform
 
-    public fun build(): KtStaticProjectStructureProvider {
-        return KtStandaloneProjectStructureProvider(
+    public fun build(): KotlinStaticProjectStructureProvider {
+        return KotlinStandaloneProjectStructureProvider(
             platform,
             kotlinCoreProjectEnvironment.project,
             mainModules,
@@ -39,7 +39,7 @@ public class KtModuleProviderBuilder(
 internal inline fun buildProjectStructureProvider(
     kotlinCoreProjectEnvironment: KotlinCoreProjectEnvironment,
     init: KtModuleProviderBuilder.() -> Unit,
-): KtStaticProjectStructureProvider {
+): KotlinStaticProjectStructureProvider {
     contract {
         callsInPlace(init, InvocationKind.EXACTLY_ONCE)
     }

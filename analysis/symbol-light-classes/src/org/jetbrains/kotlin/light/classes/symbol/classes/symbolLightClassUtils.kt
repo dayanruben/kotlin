@@ -18,11 +18,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.symbols.markers.isPrivateOrPrivateToThis
 import org.jetbrains.kotlin.analysis.api.types.KaClassErrorType
-import org.jetbrains.kotlin.analysis.api.types.KaNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.platform.modification.createProjectWideOutOfBlockModificationTracker
 import org.jetbrains.kotlin.analysis.utils.errors.requireIsInstance
 import org.jetbrains.kotlin.analysis.utils.printer.parentOfType
@@ -56,13 +56,13 @@ import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addToStdlib.applyIf
 import java.util.*
 
-internal fun createSymbolLightClassNoCache(classOrObject: KtClassOrObject, ktModule: KtModule): KtLightClass? = when {
+internal fun createSymbolLightClassNoCache(classOrObject: KtClassOrObject, ktModule: KaModule): KtLightClass? = when {
     classOrObject.isObjectLiteral() -> SymbolLightClassForAnonymousObject(classOrObject, ktModule)
     classOrObject is KtEnumEntry -> lightClassForEnumEntry(classOrObject)
     else -> createLightClassNoCache(classOrObject, ktModule)
 }
 
-internal fun createLightClassNoCache(ktClassOrObject: KtClassOrObject, ktModule: KtModule): SymbolLightClassBase = when {
+internal fun createLightClassNoCache(ktClassOrObject: KtClassOrObject, ktModule: KaModule): SymbolLightClassBase = when {
     ktClassOrObject.hasModifier(INLINE_KEYWORD) -> SymbolLightClassForInlineClass(ktClassOrObject, ktModule)
     ktClassOrObject is KtClass && ktClassOrObject.isAnnotation() -> SymbolLightClassForAnnotationClass(ktClassOrObject, ktModule)
     ktClassOrObject is KtClass && ktClassOrObject.isInterface() -> SymbolLightClassForInterface(ktClassOrObject, ktModule)
@@ -82,7 +82,7 @@ internal fun KtClassOrObject.modificationTrackerForClassInnerStuff(): List<Modif
 context(KaSession)
 internal fun createLightClassNoCache(
     ktClassOrObjectSymbol: KaNamedClassOrObjectSymbol,
-    ktModule: KtModule,
+    ktModule: KaModule,
     manager: PsiManager,
 ): SymbolLightClassBase = when (ktClassOrObjectSymbol.classKind) {
     KaClassKind.INTERFACE -> SymbolLightClassForInterface(
@@ -305,7 +305,7 @@ internal fun SymbolLightClassBase.createPropertyAccessors(
     val originalElement = declaration.sourcePsiSafe<KtDeclaration>()
 
     val generatePropertyAnnotationsMethods =
-        (declaration.getContainingModule() as? KtSourceModule)
+        (declaration.containingModule as? KaSourceModule)
             ?.languageVersionSettings
             ?.getFlag(JvmAnalysisFlags.generatePropertyAnnotationsMethods) == true
 
@@ -485,12 +485,12 @@ internal fun SymbolLightClassForClassLike<*>.createInheritanceList(
 
     fun KaType.needToAddTypeIntoList(): Boolean {
         // Do not add redundant "extends java.lang.Object" anywhere
-        if (this.isAny) return false
+        if (this.isAnyType) return false
         // Interfaces have only extends lists
         if (isInterface) return forExtendsList
 
         return when (this) {
-            is KaNonErrorClassType -> {
+            is KaClassType -> {
                 // We don't have Enum among enums supertype in sources neither we do for decompiled class-files and light-classes
                 if (isEnum && this.classId == StandardClassIds.Enum) return false
 
@@ -530,7 +530,7 @@ internal fun SymbolLightClassForClassLike<*>.createInheritanceList(
                     // Add java supertype
                     listBuilder.addReference(mappedToNoCollectionAsIs)
                     // Add marker interface
-                    if (superType is KaNonErrorClassType) {
+                    if (superType is KaClassType) {
                         listBuilder.addMarkerInterfaceIfNeeded(superType.classId)
                     }
                 }
@@ -548,7 +548,7 @@ internal fun KaSymbolWithMembers.createInnerClasses(
 ): List<SymbolLightClassBase> {
     val result = SmartList<SymbolLightClassBase>()
 
-    getStaticDeclaredMemberScope().classifiers.filterIsInstance<KaNamedClassOrObjectSymbol>().mapNotNullTo(result) {
+    staticDeclaredMemberScope.classifiers.filterIsInstance<KaNamedClassOrObjectSymbol>().mapNotNullTo(result) {
         val classOrObjectDeclaration = it.sourcePsiSafe<KtClassOrObject>()
         if (classOrObjectDeclaration != null) {
             classOrObjectDeclaration.toLightClass() as? SymbolLightClassBase
@@ -558,7 +558,7 @@ internal fun KaSymbolWithMembers.createInnerClasses(
     }
 
     val jvmDefaultMode = classOrObject
-        ?.let { getModule(it) as? KtSourceModule }
+        ?.let { getModule(it) as? KaSourceModule }
         ?.languageVersionSettings
         ?.getFlag(JvmAnalysisFlags.jvmDefaultMode)
         ?: JvmDefaultMode.DISABLE
@@ -591,13 +591,13 @@ internal fun KtClassOrObject.checkIsInheritor(superClassOrigin: KtClassOrObject,
         return false
     }
 
-    val superClassSymbol = superClassOrigin.getClassOrObjectSymbol() ?: return false
+    val superClassSymbol = superClassOrigin.classSymbol ?: return false
 
     when (this) {
         is KtEnumEntry -> {
-            val enumEntrySymbol = this.getEnumEntrySymbol()
+            val enumEntrySymbol = this.symbol
             val classId = enumEntrySymbol.callableId?.classId ?: return false
-            val enumClassSymbol = getClassOrObjectSymbolByClassId(classId) ?: return false
+            val enumClassSymbol = findClass(classId) ?: return false
             if (enumClassSymbol == superClassSymbol) return true
             return if (checkDeep) {
                 enumClassSymbol.isSubClassOf(superClassSymbol)
@@ -607,7 +607,7 @@ internal fun KtClassOrObject.checkIsInheritor(superClassOrigin: KtClassOrObject,
         }
 
         else -> {
-            val subClassSymbol = this.getClassOrObjectSymbol()
+            val subClassSymbol = this.classSymbol
 
             if (subClassSymbol == null || subClassSymbol == superClassSymbol) return false
 
@@ -630,7 +630,7 @@ internal fun SymbolLightClassBase.addPropertyBackingFields(
     nameGenerator: SymbolLightField.FieldNameGenerator,
     forceIsStaticTo: Boolean? = null,
 ) {
-    val propertySymbols = symbolWithMembers.getCombinedDeclaredMemberScope().callables
+    val propertySymbols = symbolWithMembers.combinedDeclaredMemberScope.callables
         .filterIsInstance<KaPropertySymbol>()
         .applyIf(symbolWithMembers is KaClassOrObjectSymbol && symbolWithMembers.classKind == KaClassKind.COMPANION_OBJECT) {
             // All fields for companion object of classes are generated to the containing class

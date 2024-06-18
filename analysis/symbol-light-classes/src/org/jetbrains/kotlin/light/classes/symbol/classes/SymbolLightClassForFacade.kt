@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaPossibleMultiplatformSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.symbolPointerOfType
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.elements.FakeFileForLightClass
@@ -40,14 +40,14 @@ import org.jetbrains.kotlin.psi.KtFile
 internal class SymbolLightClassForFacade(
     override val facadeClassFqName: FqName,
     override val files: Collection<KtFile>,
-    ktModule: KtModule,
+    ktModule: KaModule,
 ) : SymbolLightClassBase(ktModule, files.first().manager), KtLightClassForFacade {
 
     init {
         require(files.isNotEmpty())
         /*
         Actually, here should be the following check
-        require(files.all { it.getKtModule() is KtSourceModule })
+        require(files.all { it.getKtModule() is KaSourceModule })
         but it is quite expensive
          */
         require(files.none { it.isCompiled })
@@ -55,7 +55,7 @@ internal class SymbolLightClassForFacade(
 
     private fun <T> withFileSymbols(action: KaSession.(List<KaFileSymbol>) -> T): T =
         analyzeForLightClasses(ktModule) {
-            action(files.map { it.getFileSymbol() })
+            action(files.map { it.symbol })
         }
 
     private val firstFileInFacade: KtFile get() = files.first()
@@ -87,7 +87,7 @@ internal class SymbolLightClassForFacade(
             val result = mutableListOf<KtLightMethod>()
             val methodsAndProperties = sequence<KaCallableSymbol> {
                 for (fileSymbol in fileSymbols) {
-                    for (callableSymbol in fileSymbol.getFileScope().callables) {
+                    for (callableSymbol in fileSymbol.fileScope.callables) {
                         if (callableSymbol !is KaFunctionSymbol && callableSymbol !is KaKotlinPropertySymbol) continue
                         @Suppress("USELESS_IS_CHECK") // K2 warning suppression, TODO: KT-62472
                         if (callableSymbol !is KaSymbolWithVisibility) continue
@@ -139,7 +139,7 @@ internal class SymbolLightClassForFacade(
         val nameGenerator = SymbolLightField.FieldNameGenerator()
         withFileSymbols { fileSymbols ->
             for (fileSymbol in fileSymbols) {
-                loadFieldsFromFile(fileSymbol.getFileScope(), nameGenerator, result)
+                loadFieldsFromFile(fileSymbol.fileScope, nameGenerator, result)
             }
         }
 

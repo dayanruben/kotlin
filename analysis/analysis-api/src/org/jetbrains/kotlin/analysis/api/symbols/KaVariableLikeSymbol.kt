@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.analysis.api.symbols
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaInitializerValue
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -20,6 +21,7 @@ public sealed class KaVariableLikeSymbol : KaCallableSymbol(), KaNamedSymbol, @S
     abstract override fun createPointer(): KaSymbolPointer<KaVariableLikeSymbol>
 }
 
+@Deprecated("Use 'KaVariableLikeSymbol' instead", ReplaceWith("KaVariableLikeSymbol"))
 public typealias KtVariableLikeSymbol = KaVariableLikeSymbol
 
 /**
@@ -55,6 +57,7 @@ public abstract class KaBackingFieldSymbol : KaVariableLikeSymbol() {
     }
 }
 
+@Deprecated("Use 'KaBackingFieldSymbol' instead", ReplaceWith("KaBackingFieldSymbol"))
 public typealias KtBackingFieldSymbol = KaBackingFieldSymbol
 
 /**
@@ -97,6 +100,7 @@ public abstract class KaEnumEntrySymbol : KaVariableLikeSymbol(), @Suppress("DEP
     abstract override fun createPointer(): KaSymbolPointer<KaEnumEntrySymbol>
 }
 
+@Deprecated("Use 'KaEnumEntrySymbol' instead", ReplaceWith("KaEnumEntrySymbol"))
 public typealias KtEnumEntrySymbol = KaEnumEntrySymbol
 
 /**
@@ -122,6 +126,7 @@ public typealias KtEnumEntrySymbol = KaEnumEntrySymbol
  */
 public interface KaEnumEntryInitializerSymbol : KaSymbolWithMembers
 
+@Deprecated("Use 'KaEnumEntryInitializerSymbol' instead", ReplaceWith("KaEnumEntryInitializerSymbol"))
 public typealias KtEnumEntryInitializerSymbol = KaEnumEntryInitializerSymbol
 
 public sealed class KaVariableSymbol : KaVariableLikeSymbol() {
@@ -130,6 +135,7 @@ public sealed class KaVariableSymbol : KaVariableLikeSymbol() {
     abstract override fun createPointer(): KaSymbolPointer<KaVariableSymbol>
 }
 
+@Deprecated("Use 'KaVariableSymbol' instead", ReplaceWith("KaVariableSymbol"))
 public typealias KtVariableSymbol = KaVariableSymbol
 
 public abstract class KaJavaFieldSymbol :
@@ -150,6 +156,7 @@ public abstract class KaJavaFieldSymbol :
     abstract override fun createPointer(): KaSymbolPointer<KaJavaFieldSymbol>
 }
 
+@Deprecated("Use 'KaJavaFieldSymbol' instead", ReplaceWith("KaJavaFieldSymbol"))
 public typealias KtJavaFieldSymbol = KaJavaFieldSymbol
 
 public sealed class KaPropertySymbol : KaVariableSymbol(),
@@ -181,11 +188,13 @@ public sealed class KaPropertySymbol : KaVariableSymbol(),
      * - [KaNonConstantInitializerValue] - initializer value was provided, and it is not a compile-time constant. In case of declaration from source it would include correponding [KtExpression]
      *
      */
+    @KaExperimentalApi
     public abstract val initializer: KaInitializerValue?
 
     abstract override fun createPointer(): KaSymbolPointer<KaPropertySymbol>
 }
 
+@Deprecated("Use 'KaPropertySymbol' instead", ReplaceWith("KaPropertySymbol"))
 public typealias KtPropertySymbol = KaPropertySymbol
 
 public abstract class KaKotlinPropertySymbol : KaPropertySymbol(), KaPossibleMultiplatformSymbol {
@@ -196,6 +205,7 @@ public abstract class KaKotlinPropertySymbol : KaPropertySymbol(), KaPossibleMul
     abstract override fun createPointer(): KaSymbolPointer<KaKotlinPropertySymbol>
 }
 
+@Deprecated("Use 'KaKotlinPropertySymbol' instead", ReplaceWith("KaKotlinPropertySymbol"))
 public typealias KtKotlinPropertySymbol = KaKotlinPropertySymbol
 
 public abstract class KaSyntheticJavaPropertySymbol : KaPropertySymbol() {
@@ -214,6 +224,7 @@ public abstract class KaSyntheticJavaPropertySymbol : KaPropertySymbol() {
     abstract override fun createPointer(): KaSymbolPointer<KaSyntheticJavaPropertySymbol>
 }
 
+@Deprecated("Use 'KaSyntheticJavaPropertySymbol' instead", ReplaceWith("KaSyntheticJavaPropertySymbol"))
 public typealias KtSyntheticJavaPropertySymbol = KaSyntheticJavaPropertySymbol
 
 public abstract class KaLocalVariableSymbol : KaVariableSymbol(),
@@ -232,11 +243,13 @@ public abstract class KaLocalVariableSymbol : KaVariableSymbol(),
     abstract override fun createPointer(): KaSymbolPointer<KaLocalVariableSymbol>
 }
 
+@Deprecated("Use 'KaLocalVariableSymbol' instead", ReplaceWith("KaLocalVariableSymbol"))
 public typealias KtLocalVariableSymbol = KaLocalVariableSymbol
 
 // TODO design common ancestor of parameter and receiver KTIJ-23745
 public sealed interface KaParameterSymbol : KaAnnotatedSymbol
 
+@Deprecated("Use 'KaParameterSymbol' instead", ReplaceWith("KaParameterSymbol"))
 public typealias KtParameterSymbol = KaParameterSymbol
 
 public abstract class KaValueParameterSymbol : KaVariableLikeSymbol(), KaParameterSymbol,
@@ -294,4 +307,5 @@ public abstract class KaValueParameterSymbol : KaVariableLikeSymbol(), KaParamet
     public open val generatedPrimaryConstructorProperty: KaKotlinPropertySymbol? get() = null
 }
 
+@Deprecated("Use 'KaValueParameterSymbol' instead", ReplaceWith("KaValueParameterSymbol"))
 public typealias KtValueParameterSymbol = KaValueParameterSymbol

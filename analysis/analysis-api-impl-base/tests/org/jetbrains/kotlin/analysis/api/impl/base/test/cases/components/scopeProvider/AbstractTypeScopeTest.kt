@@ -33,10 +33,10 @@ abstract class AbstractTypeScopeTest : AbstractAnalysisApiBasedTest() {
     override fun doTestByMainFile(mainFile: KtFile, mainModule: KtTestModule, testServices: TestServices) {
         val expression = testServices.expressionMarkerProvider.getSelectedElementOfType<KtExpression>(mainFile)
         analyseForTest(expression) {
-            val type = expression.getKaType()
+            val type = expression.expressionType
                 ?: error("expression $expression is not typable")
-            val typeScope = type.getTypeScope()
-            val declaredScopeByTypeScope = typeScope?.getDeclarationScope()
+            val typeScope = type.scope
+            val declaredScopeByTypeScope = typeScope?.declarationScope
 
             val scopeStringRepresentation = prettyPrint {
                 appendLine("Expression: ${expression.text}")
@@ -99,7 +99,7 @@ abstract class AbstractTypeScopeTest : AbstractAnalysisApiBasedTest() {
         val callables = scope.callables.toList()
         return prettyPrint {
             callables.forEach {
-                appendLine(DebugSymbolRenderer().render(analysisSession, it))
+                appendLine(DebugSymbolRenderer().render(useSiteSession, it))
             }
         }
     }

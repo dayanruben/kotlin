@@ -48,13 +48,13 @@ internal object DeclarationsInPackageProvider {
                 analysisSession.targetPlatform.isJvm() -> {
                     val psiPackage = PsiPackageImpl(PsiManager.getInstance(analysisSession.project), packageFqName.asString())
                     forEachNonKotlinPsiElementFinder(analysisSession.project) { finder ->
-                        finder.getClassNames(psiPackage, analysisSession.useSiteAnalysisScope)
+                        finder.getClassNames(psiPackage, analysisSession.analysisScope)
                             .mapNotNullTo(this, Name::identifier)
                     }
                 }
             }
 
-            addAll(collectGeneratedTopLevelClassifiers(packageFqName, analysisSession.useSiteSession))
+            addAll(collectGeneratedTopLevelClassifiers(packageFqName, analysisSession.firSession))
         }
     }
 
@@ -64,12 +64,12 @@ internal object DeclarationsInPackageProvider {
                 analysisSession.symbolNamesProvider.getTopLevelCallableNamesInPackage(packageFqName)
                     ?: analysisSession.useSiteScopeDeclarationProvider.getTopLevelCallableNamesInPackage(packageFqName)
             )
-            addAll(collectGeneratedTopLevelCallables(packageFqName, analysisSession.useSiteSession))
+            addAll(collectGeneratedTopLevelCallables(packageFqName, analysisSession.firSession))
         }
     }
 
     private val KaFirSession.symbolNamesProvider: FirSymbolNamesProvider
-        get() = useSiteSession.symbolProvider.symbolNamesProvider
+        get() = firSession.symbolProvider.symbolNamesProvider
 
     private fun collectGeneratedTopLevelClassifiers(packageFqName: FqName, session: FirSession): Set<Name> {
         val declarationGenerators = session.extensionService.declarationGenerators

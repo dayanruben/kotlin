@@ -31620,6 +31620,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
         }
 
         @Test
+        @TestMetadata("delegationToExpectInterface_noNewMembers.kt")
+        public void testDelegationToExpectInterface_noNewMembers() {
+          runTest("compiler/testData/codegen/box/multiplatform/k2/delegationToExpectInterface_noNewMembers.kt");
+        }
+
+        @Test
         @TestMetadata("expectValInInlineClass.kt")
         public void testExpectValInInlineClass() {
           runTest("compiler/testData/codegen/box/multiplatform/k2/expectValInInlineClass.kt");
@@ -49487,6 +49493,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
           @TestMetadata("defaultAfterBoundReference.kt")
           public void testDefaultAfterBoundReference() {
             runTest("compiler/testData/codegen/boxInline/defaultValues/lambdaInlining/callableReferences/defaultAfterBoundReference.kt");
+          }
+
+          @Test
+          @TestMetadata("defaultThatCapturesPreviousParameter.kt")
+          public void testDefaultThatCapturesPreviousParameter() {
+            runTest("compiler/testData/codegen/boxInline/defaultValues/lambdaInlining/callableReferences/defaultThatCapturesPreviousParameter.kt");
           }
 
           @Test

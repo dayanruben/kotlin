@@ -31,13 +31,13 @@ abstract class AbstractAnalysisApiSpecificAnnotationOnDeclarationTest : Abstract
         val classIdString = mainModule.testModule.directives.singleValue(Directives.CLASS_ID)
 
         val actual = analyseForTest(ktDeclaration) {
-            val declarationSymbol = ktDeclaration.getSymbol() as KaAnnotatedSymbol
+            val declarationSymbol = ktDeclaration.symbol as KaAnnotatedSymbol
             val annotationList = declarationSymbol.annotations
             val classId = ClassId.fromString(classIdString)
             val renderer = DebugSymbolRenderer()
             fun renderAnnotation(application: KaAnnotation): String = buildString {
                 appendLine("${KtDeclaration::class.simpleName}: ${ktDeclaration::class.simpleName} ${ktDeclaration.name}")
-                append(renderer.renderAnnotationApplication(analysisSession, application))
+                append(renderer.renderAnnotationApplication(useSiteSession, application))
             }
 
             val rawList = renderAnnotation(annotationList[classId].single())

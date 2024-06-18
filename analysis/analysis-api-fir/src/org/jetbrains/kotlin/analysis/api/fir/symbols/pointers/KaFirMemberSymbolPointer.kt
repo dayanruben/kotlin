@@ -32,13 +32,13 @@ internal abstract class KaFirMemberSymbolPointer<S : KaSymbol>(
             getSearchScope(analysisSession, owner)
         } ?: return null
 
-        return analysisSession.chooseCandidateAndCreateSymbol(scope, analysisSession.useSiteSession)
+        return analysisSession.chooseCandidateAndCreateSymbol(scope, analysisSession.firSession)
     }
 
     protected abstract fun KaFirSession.chooseCandidateAndCreateSymbol(candidates: FirScope, firSession: FirSession): S?
 
     protected open fun getSearchScope(analysisSession: KaFirSession, owner: FirClassSymbol<*>): FirScope? {
-        val firSession = analysisSession.useSiteSession
+        val firSession = analysisSession.firSession
         val scopeSession = analysisSession.getScopeSessionFor(firSession)
         return if (isStatic) {
             val firClass = owner.fir
@@ -59,7 +59,7 @@ internal abstract class KaFirMemberSymbolPointer<S : KaSymbol>(
 }
 
 internal inline fun <reified T : KaSymbol> KaSession.createOwnerPointer(symbol: KaSymbol): KaSymbolPointer<T> {
-    val containingSymbol = symbol.getContainingSymbol()
+    val containingSymbol = symbol.containingSymbol
         ?: error("Non-null symbol is expected for a member declaration")
 
     requireIsInstance<T>(containingSymbol)

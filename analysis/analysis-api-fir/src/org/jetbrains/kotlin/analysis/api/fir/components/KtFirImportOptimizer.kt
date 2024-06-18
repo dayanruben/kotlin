@@ -16,11 +16,12 @@ import org.jetbrains.kotlin.analysis.api.fir.isImplicitDispatchReceiver
 import org.jetbrains.kotlin.analysis.api.fir.references.KDocReferenceResolver
 import org.jetbrains.kotlin.analysis.api.fir.utils.computeImportableName
 import org.jetbrains.kotlin.analysis.api.fir.utils.firSymbol
-import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
+import org.jetbrains.kotlin.analysis.api.impl.base.components.KaSessionComponent
+import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirFile
 import org.jetbrains.kotlin.fir.FirElement
@@ -55,14 +56,9 @@ import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
 internal class KaFirImportOptimizer(
-    private val analysisSession: KaFirSession,
-    override val token: KaLifetimeToken,
-    private val firResolveSession: LLFirResolveSession
-) : KaImportOptimizer() {
-    private val firSession: FirSession
-        get() = firResolveSession.useSiteFirSession
-
-    override fun analyseImports(file: KtFile): KaImportOptimizerResult {
+    override val analysisSessionProvider: () -> KaFirSession
+) : KaSessionComponent<KaFirSession>(), KaImportOptimizer, KaFirSessionComponent {
+    override fun analyzeImportsToOptimize(file: KtFile): KaImportOptimizerResult = withValidityAssertion {
         val existingImports = file.importDirectives
         if (existingImports.isEmpty()) return KaImportOptimizerResult()
 
@@ -71,11 +67,14 @@ internal class KaFirImportOptimizer(
         return KaImportOptimizerResult(usedDeclarations, unresolvedNames)
     }
 
-    override fun getImportableName(symbol: KaSymbol): FqName? = when (symbol) {
-        is KaClassLikeSymbol -> symbol.classId?.asSingleFqName()
-        is KaCallableSymbol -> symbol.firSymbol.computeImportableName(firSession)
-        else -> null
-    }
+    override val KaSymbol.importableFqName: FqName?
+        get() = withValidityAssertion {
+            when (this) {
+                is KaClassLikeSymbol -> classId?.asSingleFqName()
+                is KaCallableSymbol -> firSymbol.computeImportableName(rootModuleSession)
+                else -> null
+            }
+        }
 
     private data class ReferencedEntitiesResult(
         val usedImports: Map<FqName, Set<Name>>,
@@ -223,7 +222,7 @@ internal class KaFirImportOptimizer(
 
             private fun importableNameForReferencedSymbol(qualifiedCall: FirQualifiedAccessExpression): FqName? {
                 return qualifiedCall.importableNameForImplicitlyDispatchedCallable()
-                    ?: qualifiedCall.referencedCallableSymbol?.computeImportableName(firSession)
+                    ?: qualifiedCall.referencedCallableSymbol?.computeImportableName(rootModuleSession)
             }
 
             /**
@@ -281,7 +280,7 @@ internal class KaFirImportOptimizer(
                 val qualifiedNameAsFqName = docName.getQualifiedNameAsFqName()
                 val importableNames = with(analysisSession) {
                     val resolvedSymbols = KDocReferenceResolver
-                        .resolveKdocFqName(analysisSession, qualifiedNameAsFqName, qualifiedNameAsFqName, docLink)
+                        .resolveKdocFqName(useSiteSession, qualifiedNameAsFqName, qualifiedNameAsFqName, docLink)
                     if (resolvedSymbols.isEmpty()) {
                         unresolvedNames += qualifiedNameAsFqName.shortName()
                         emptyList()
@@ -309,7 +308,7 @@ internal class KaFirImportOptimizer(
                             } else if (fqName != qualifiedNameAsFqName) {
                                 // or some kind of top level declaration with potential receiver
                                 this += fqName
-                                val receiverClassType = symbol.receiverParameter?.type as? KaNonErrorClassType
+                                val receiverClassType = symbol.receiverParameter?.type as? KaClassType
                                 val receiverFqName = receiverClassType?.classId?.asSingleFqName()
                                 // import has no receiver for receiver kdoc declaration:
                                 // for receiver case kdoc like `[Foo.bar]`

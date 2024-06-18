@@ -30,7 +30,9 @@ abstract class AbstractCompileTimeConstantEvaluatorTest : AbstractAnalysisApiBas
         }
         val actual = buildString {
             appendLine("expression: ${expression.text}")
-            appendLine("constant: ${constantValue?.renderAsKotlinConstant() ?: "NOT_EVALUATED"}")
+            appendLine("constant: ${constantValue?.render() ?: "NOT_EVALUATED"}")
+
+            @Suppress("DEPRECATION")
             appendLine("constantValueKind: ${constantValue?.constantValueKind ?: "NOT_EVALUATED"}")
         }
         testServices.assertions.assertEqualsToTestDataFileSibling(actual)

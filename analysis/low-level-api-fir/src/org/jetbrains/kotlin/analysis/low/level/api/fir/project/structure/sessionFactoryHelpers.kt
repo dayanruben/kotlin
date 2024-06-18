@@ -17,10 +17,10 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.resolve.extensions.LLFirN
 import org.jetbrains.kotlin.analysis.low.level.api.fir.resolve.extensions.LLFirResolveExtensionTool
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.LLFirExceptionHandler
-import org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider
-import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolutionScopeProvider
 import org.jetbrains.kotlin.analysis.api.platform.declarations.createAnnotationResolver
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider
 import org.jetbrains.kotlin.fir.FirExceptionHandler
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.SessionConfiguration
@@ -67,21 +67,24 @@ internal inline fun createCompositeSymbolProvider(
     FirCompositeSymbolProvider(session, buildList(createSubProviders))
 
 @SessionConfiguration
-internal fun FirSession.registerCompilerPluginExtensions(project: Project, module: KtSourceModule) {
-    val extensionProvider = project.getService<KtCompilerPluginsProvider>(KtCompilerPluginsProvider::class.java) ?: return
+internal fun FirSession.registerCompilerPluginExtensions(project: Project, module: KaSourceModule) {
     FirSessionConfigurator(this).apply {
-        val registrars = FirExtensionRegistrarAdapter.getInstances(project) +
-                extensionProvider.getRegisteredExtensions(module, FirExtensionRegistrarAdapter)
-        for (extensionRegistrar in registrars) {
-            registerExtensions((extensionRegistrar as FirExtensionRegistrar).configure())
-        }
+        FirExtensionRegistrarAdapter.getInstances(project).forEach(::applyExtensionRegistrar)
+
+        KotlinCompilerPluginsProvider.getInstance(project)
+            ?.getRegisteredExtensions(module, FirExtensionRegistrarAdapter)
+            ?.forEach(::applyExtensionRegistrar)
     }.configure()
+}
+
+private fun FirSessionConfigurator.applyExtensionRegistrar(registrar: FirExtensionRegistrarAdapter) {
+    registerExtensions((registrar as FirExtensionRegistrar).configure())
 }
 
 @SessionConfiguration
 internal fun LLFirSession.registerCompilerPluginServices(
     project: Project,
-    module: KtSourceModule
+    module: KaSourceModule
 ) {
     val projectWithDependenciesScope = KotlinResolutionScopeProvider.getInstance(project).getResolutionScope(module)
     val annotationsResolver = project.createAnnotationResolver(projectWithDependenciesScope)
@@ -89,5 +92,4 @@ internal fun LLFirSession.registerCompilerPluginServices(
     // We need FirRegisteredPluginAnnotations and FirPredicateBasedProvider during extensions' registration process
     register(FirRegisteredPluginAnnotations::class, LLFirIdeRegisteredPluginAnnotations(this, annotationsResolver))
     register(FirPredicateBasedProvider::class, LLFirIdePredicateBasedProvider(this, annotationsResolver))
-
 }

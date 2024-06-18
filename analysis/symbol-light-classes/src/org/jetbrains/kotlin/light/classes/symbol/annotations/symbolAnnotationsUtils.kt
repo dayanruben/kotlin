@@ -14,11 +14,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
-import org.jetbrains.kotlin.analysis.api.types.KaNonErrorClassType
-import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.asJava.classes.annotateByTypeAnnotationProvider
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
@@ -60,7 +56,7 @@ internal fun KaAnnotatedSymbol.getJvmNameFromAnnotation(
 ): String? {
     val annotation = findAnnotation(JvmStandardClassIds.Annotations.JvmName, useSiteTargetFilter)
     return annotation?.let {
-        (it.arguments.firstOrNull()?.expression as? KaConstantAnnotationValue)?.constantValue?.value as? String
+        (it.arguments.firstOrNull()?.expression as? KaAnnotationValue.ConstantValue)?.value?.value as? String
     }
 }
 
@@ -68,7 +64,7 @@ context(KaSession)
 internal fun isHiddenByDeprecation(
     symbol: KaAnnotatedSymbol,
     annotationUseSiteTarget: AnnotationUseSiteTarget? = null,
-): Boolean = symbol.getDeprecationStatus(annotationUseSiteTarget)?.deprecationLevel == DeprecationLevelValue.HIDDEN
+): Boolean = symbol.deprecationStatus(annotationUseSiteTarget)?.deprecationLevel == DeprecationLevelValue.HIDDEN
 
 context(KaSession)
 internal fun KaAnnotatedSymbol.isHiddenOrSynthetic(
@@ -112,7 +108,7 @@ internal fun KaAnnotatedSymbol.suppressWildcard(): Boolean? {
 
 internal fun KaAnnotatedSymbol.getJvmSuppressWildcardsFromAnnotation(): Boolean? {
     return annotations[JvmStandardClassIds.Annotations.JvmSuppressWildcards].firstOrNull()?.let { annoApp ->
-        (annoApp.arguments.firstOrNull()?.expression as? KaConstantAnnotationValue)?.constantValue?.value as? Boolean
+        (annoApp.arguments.firstOrNull()?.expression as? KaAnnotationValue.ConstantValue)?.value?.value as? Boolean
     }
 }
 
@@ -159,12 +155,12 @@ internal fun KaAnnotatedSymbol.computeThrowsList(
 
     fun handleAnnotationValue(annotationValue: KaAnnotationValue) {
         when (annotationValue) {
-            is KaArrayAnnotationValue -> {
+            is KaAnnotationValue.ArrayValue -> {
                 annotationValue.values.forEach(::handleAnnotationValue)
             }
 
-            is KaKClassAnnotationValue -> {
-                if (annotationValue.type is KaNonErrorClassType) {
+            is KaAnnotationValue.ClassLiteralValue -> {
+                if (annotationValue.type is KaClassType) {
                     val psiType = annotationValue.type.asPsiType(
                         useSitePosition,
                         allowErrorTypes = true,
@@ -220,7 +216,7 @@ fun annotateByKtType(
 
         yield(explicitTypeAnnotations + listOfNotNull(nullabilityAnnotation))
 
-        if (unwrappedType is KaNonErrorClassType) {
+        if (unwrappedType is KaClassType) {
             unwrappedType.typeArguments.forEach { typeProjection ->
                 typeProjection.type?.let {
                     yieldAll(getAnnotationsSequence(it))

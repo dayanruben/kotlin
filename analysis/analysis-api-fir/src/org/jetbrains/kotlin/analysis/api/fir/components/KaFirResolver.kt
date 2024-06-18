@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.analysis.api.fir.components
 
 import org.jetbrains.kotlin.KtFakeSourceElementKind
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.KaFirSession
 import org.jetbrains.kotlin.analysis.api.fir.getCandidateSymbols
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.fir.utils.processEqualsFunctions
 import org.jetbrains.kotlin.analysis.api.getModule
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaAbstractResolver
 import org.jetbrains.kotlin.analysis.api.impl.base.util.KaNonBoundToPsiErrorDiagnostic
+import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.resolution.KaAnnotationCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
@@ -45,9 +47,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFir
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirSafe
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.resolveToFirSymbolOfTypeSafe
 import org.jetbrains.kotlin.analysis.low.level.api.fir.resolver.AllCandidatesResolver
-import org.jetbrains.kotlin.analysis.utils.errors.withPsiEntry
+import org.jetbrains.kotlin.analysis.api.utils.errors.withPsiEntry
 import org.jetbrains.kotlin.analysis.utils.printer.parentOfType
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
@@ -78,6 +81,7 @@ import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirSymbolEntry
 import org.jetbrains.kotlin.idea.references.KtDefaultAnnotationArgumentReference
 import org.jetbrains.kotlin.idea.references.KtReference
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -96,8 +100,23 @@ import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.rethrowExceptionWithDetails
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
-internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbstractResolver(), KaFirSessionComponent {
-    override fun resolveToSymbols(reference: KtReference): Collection<KaSymbol> {
+@OptIn(KaExperimentalApi::class)
+internal class KaFirResolver(
+    override val analysisSessionProvider: () -> KaFirSession
+) : KaAbstractResolver<KaFirSession>(), KaFirSessionComponent {
+    override fun KtReference.isImplicitReferenceToCompanion(): Boolean = withValidityAssertion {
+        if (this !is KtSimpleNameReference) {
+            return false
+        }
+        val qualifier = element.getOrBuildFirSafe<FirResolvedQualifier>(analysisSession.firResolveSession) ?: return false
+        return qualifier.resolvedToCompanionObject
+    }
+
+    override fun KtReference.resolveToSymbols(): Collection<KaSymbol> = withValidityAssertion {
+        return doResolveToSymbols(this)
+    }
+
+    private fun doResolveToSymbols(reference: KtReference): Collection<KaSymbol> {
         if (reference is KtDefaultAnnotationArgumentReference) {
             return resolveDefaultAnnotationArgumentReference(reference)
         }
@@ -114,7 +133,11 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
         }
     }
 
-    override fun resolveCall(psi: KtElement): KaCallInfo? {
+    override fun KtElement.resolveToCall(): KaCallInfo? = withValidityAssertion {
+        return doResolveCall(this)
+    }
+
+    private fun doResolveCall(psi: KtElement): KaCallInfo? {
         return wrapError(psi) {
             val ktCallInfos = getCallInfo(
                 psi,
@@ -136,7 +159,11 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
         }
     }
 
-    override fun collectCallCandidates(psi: KtElement): List<KaCallCandidateInfo> = wrapError(psi) {
+    override fun KtElement.resolveToCallCandidates(): List<KaCallCandidateInfo> = withValidityAssertion {
+        return doCollectCallCandidates(this)
+    }
+
+    private fun doCollectCallCandidates(psi: KtElement): List<KaCallCandidateInfo> = wrapError(psi) {
         getCallInfo(
             psi,
             getErrorCallInfo = { emptyList() },
@@ -151,7 +178,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
     }
 
     private val equalsSymbolInAny: FirNamedFunctionSymbol? by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        val session = analysisSession.useSiteSession
+        val session = analysisSession.firSession
         val anyFirClass = session.builtinTypes.anyType.toRegularClassSymbol(session) ?: return@lazy null
         val scope = session.declaredMemberScope(
             anyFirClass,
@@ -276,7 +303,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
 
         return when (this) {
             is FirResolvable, is FirVariableAssignment -> {
-                when (val calleeReference = toReference(analysisSession.useSiteSession)) {
+                when (val calleeReference = toReference(analysisSession.firSession)) {
                     is FirResolvedErrorReference -> transformErrorReference(this, calleeReference)
                     is FirResolvedNamedReference -> when (calleeReference.resolvedSymbol) {
                         // `calleeReference.resolvedSymbol` isn't guaranteed to be callable. For example, function type parameters used in
@@ -1065,10 +1092,10 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
     }
 
     private fun FirResolvedQualifier.findQualifierConstructors(): List<KaConstructorSymbol> {
-        val classSymbol = this.symbol?.fullyExpandedClass(analysisSession.useSiteSession) ?: return emptyList()
+        val classSymbol = this.symbol?.fullyExpandedClass(analysisSession.firSession) ?: return emptyList()
         return classSymbol.unsubstitutedScope(
-            analysisSession.useSiteSession,
-            analysisSession.getScopeSessionFor(analysisSession.useSiteSession),
+            analysisSession.firSession,
+            analysisSession.getScopeSessionFor(analysisSession.firSession),
             withForcedTypeCalculator = true,
             memberRequiredPhase = null,
         )
@@ -1112,7 +1139,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
             }
 
         val calleeName = originalFunctionCall.calleeOrCandidateName ?: return emptyList()
-        val candidates = AllCandidatesResolver(analysisSession.useSiteSession).getAllCandidates(
+        val candidates = AllCandidatesResolver(analysisSession.firSession).getAllCandidates(
             analysisSession.firResolveSession,
             originalFunctionCall,
             calleeName,
@@ -1150,7 +1177,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
 
         val derivedClass = findDerivedClass(psi)?.resolveToFirSymbolOfTypeSafe<FirClassSymbol<*>>(firResolveSession) ?: return emptyList()
 
-        val candidates = AllCandidatesResolver(analysisSession.useSiteSession)
+        val candidates = AllCandidatesResolver(analysisSession.firSession)
             .getAllCandidatesForDelegatedConstructor(analysisSession.firResolveSession, this, derivedClass.toLookupTag(), psi)
 
         return candidates.mapNotNull {
@@ -1231,7 +1258,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
                     val defaultArrayOfSymbol = arrayOfSymbol(arrayOf) ?: return null
                     val substitutor = createSubstitutorFromTypeArguments(defaultArrayOfSymbol)
                     val partiallyAppliedSymbol = KaPartiallyAppliedSymbol(
-                        with(analysisSession) { defaultArrayOfSymbol.substitute(substitutor) },
+                        with(useSiteSession) { defaultArrayOfSymbol.substitute(substitutor) },
                         null,
                         null,
                     )
@@ -1312,7 +1339,7 @@ internal class KaFirResolver(override val analysisSession: KaFirSession) : KaAbs
 
     private fun FirEqualityOperatorCall.getEqualsSymbol(): FirNamedFunctionSymbol? {
         var equalsSymbol: FirNamedFunctionSymbol? = null
-        processEqualsFunctions(analysisSession.useSiteSession, analysisSession) {
+        processEqualsFunctions(analysisSession.firSession, analysisSession) {
             if (equalsSymbol != null) return@processEqualsFunctions
             equalsSymbol = it
         }

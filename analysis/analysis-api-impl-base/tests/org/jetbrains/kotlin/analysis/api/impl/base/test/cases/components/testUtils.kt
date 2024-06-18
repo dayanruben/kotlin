@@ -67,7 +67,7 @@ internal fun KaSession.stringRepresentation(any: Any?): String = with(any) {
             }
 
             @Suppress("DEPRECATION")
-            (this@with as? KaCallableSymbol)?.getDispatchReceiverType()?.let { dispatchReceiverType ->
+            (this@with as? KaCallableSymbol)?.dispatchReceiverType?.let { dispatchReceiverType ->
                 append("<dispatch receiver>: ${dispatchReceiverType.render()}")
                 if (valueParameters.isNotEmpty()) append(", ")
             }
@@ -81,7 +81,7 @@ internal fun KaSession.stringRepresentation(any: Any?): String = with(any) {
         is KaClassLikeSymbol -> classId?.toString() ?: nameOrAnonymous.asString()
         is KaPackageSymbol -> fqName.toString()
         is KaEnumEntrySymbol -> callableId?.toString() ?: name.asString()
-        is KaSymbol -> DebugSymbolRenderer().render(analysisSession, this)
+        is KaSymbol -> DebugSymbolRenderer().render(useSiteSession, this)
         is Boolean -> toString()
         is Map<*, *> -> if (isEmpty()) "{}" else entries.joinToString(
             separator = ",\n  ",
@@ -292,7 +292,7 @@ internal fun KaSession.renderScopeWithParentDeclarations(scope: KaScope): String
     }
 
     printCollection(scope.declarations.toList(), separator = "\n\n") { symbol ->
-        val containingDeclaration = symbol.getContainingSymbol() as KaClassLikeSymbol
+        val containingDeclaration = symbol.containingSymbol as KaClassLikeSymbol
         append(symbol.render(renderer))
         append(" fromClass ")
         append(containingDeclaration.classId?.asString())
@@ -300,7 +300,7 @@ internal fun KaSession.renderScopeWithParentDeclarations(scope: KaScope): String
             appendLine()
             withIndent {
                 printCollection(symbol.typeParameters, separator = "\n") { typeParameter ->
-                    val containingDeclarationForTypeParameter = typeParameter.getContainingSymbol()
+                    val containingDeclarationForTypeParameter = typeParameter.containingSymbol
                     append(typeParameter.render(renderer))
                     append(" from ")
                     append(containingDeclarationForTypeParameter?.qualifiedNameString())
@@ -312,7 +312,7 @@ internal fun KaSession.renderScopeWithParentDeclarations(scope: KaScope): String
             appendLine()
             withIndent {
                 printCollection(symbol.valueParameters, separator = "\n") { typeParameter ->
-                    val containingDeclarationForValueParameter = typeParameter.getContainingSymbol()
+                    val containingDeclarationForValueParameter = typeParameter.containingSymbol
                     append(typeParameter.render(renderer))
                     append(" from ")
                     append(containingDeclarationForValueParameter?.qualifiedNameString())
@@ -324,7 +324,7 @@ internal fun KaSession.renderScopeWithParentDeclarations(scope: KaScope): String
 
 internal fun renderFrontendIndependentKClassNameOf(instanceOfClassToRender: Any): String {
     var classToRender: Class<*> = instanceOfClassToRender::class.java
-    while (classToRender.simpleName.let { it.contains("Fir") || it.contains("Fe10") } == true) {
+    while (classToRender.simpleName.let { it.contains("Fir") || it.contains("Fe10") || it.contains("Base") } == true) {
         classToRender = classToRender.superclass
     }
 
