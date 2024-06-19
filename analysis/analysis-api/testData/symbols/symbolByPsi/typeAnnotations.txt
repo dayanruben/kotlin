@@ -1,4 +1,4 @@
-KaNamedClassOrObjectSymbol:
+KaNamedClassSymbol:
   annotations: [
     kotlin/annotation/Target(allowedTargets = [kotlin.annotation.AnnotationTarget.TYPE])
       psi: KtAnnotationEntry
@@ -31,7 +31,7 @@ KaNamedClassOrObjectSymbol:
   annotationApplicableTargets: [TYPE]
   deprecationStatus: null
 
-KaNamedClassOrObjectSymbol:
+KaNamedClassSymbol:
   annotations: [
     kotlin/annotation/Target(allowedTargets = [kotlin.annotation.AnnotationTarget.TYPE])
       psi: KtAnnotationEntry
@@ -64,7 +64,7 @@ KaNamedClassOrObjectSymbol:
   annotationApplicableTargets: [TYPE]
   deprecationStatus: null
 
-KaNamedClassOrObjectSymbol:
+KaNamedClassSymbol:
   annotations: [
     kotlin/annotation/Target(allowedTargets = [kotlin.annotation.AnnotationTarget.TYPE])
       psi: KtAnnotationEntry
@@ -97,7 +97,7 @@ KaNamedClassOrObjectSymbol:
   annotationApplicableTargets: [TYPE]
   deprecationStatus: null
 
-KaNamedClassOrObjectSymbol:
+KaNamedClassSymbol:
   annotations: [
     kotlin/annotation/Target(allowedTargets = [kotlin.annotation.AnnotationTarget.TYPE])
       psi: KtAnnotationEntry
@@ -160,6 +160,7 @@ KaConstructorSymbol:
           callableId: null
           contextReceivers: []
           isExtension: false
+          isVal: true
           location: PROPERTY
           name: field
           origin: PROPERTY_BACKING_FIELD
@@ -248,6 +249,7 @@ KaConstructorSymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: s
@@ -269,7 +271,7 @@ KaConstructorSymbol:
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
 
-KaNamedClassOrObjectSymbol:
+KaNamedClassSymbol:
   annotations: [
     kotlin/annotation/Target(allowedTargets = [kotlin.annotation.AnnotationTarget.TYPE])
       psi: KtAnnotationEntry
@@ -302,7 +304,7 @@ KaNamedClassOrObjectSymbol:
   annotationApplicableTargets: [TYPE]
   deprecationStatus: null
 
-KaNamedClassOrObjectSymbol:
+KaNamedClassSymbol:
   annotations: []
   classId: I
   classKind: INTERFACE
@@ -332,7 +334,7 @@ KaNamedClassOrObjectSymbol:
   annotationApplicableTargets: null
   deprecationStatus: null
 
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: /X.f
   contextReceivers: []
@@ -374,6 +376,7 @@ KaFunctionSymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: arg
@@ -409,6 +412,7 @@ KaKotlinPropertySymbol:
     callableId: null
     contextReceivers: []
     isExtension: false
+    isVal: true
     location: PROPERTY
     name: field
     origin: PROPERTY_BACKING_FIELD
@@ -502,7 +506,7 @@ KaKotlinPropertySymbol:
   javaSetterName: null
   setterDeprecationStatus: null
 
-KaNamedClassOrObjectSymbol:
+KaNamedClassSymbol:
   annotations: []
   classId: X
   classKind: CLASS
@@ -548,7 +552,7 @@ KaTypeParameterSymbol:
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
 
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: /foo
   contextReceivers: []
@@ -574,7 +578,7 @@ KaFunctionSymbol:
     annotations: []
     location: LOCAL
     origin: SOURCE
-    owningCallableSymbol: KaFunctionSymbol(/foo)
+    owningCallableSymbol: KaNamedFunctionSymbol(/foo)
     type: KaTypeParameterType:
       annotations: []
       type: T
@@ -615,7 +619,7 @@ KaTypeParameterSymbol:
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
 
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: /foo2
   contextReceivers: []
@@ -641,7 +645,7 @@ KaFunctionSymbol:
     annotations: []
     location: LOCAL
     origin: SOURCE
-    owningCallableSymbol: KaFunctionSymbol(/foo2)
+    owningCallableSymbol: KaNamedFunctionSymbol(/foo2)
     type: KaTypeParameterType:
       annotations: []
       type: T

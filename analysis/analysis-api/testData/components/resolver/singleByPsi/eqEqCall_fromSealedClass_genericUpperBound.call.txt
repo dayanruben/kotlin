@@ -8,12 +8,12 @@ KtBinaryExpression(357,375): 'oldItem == newItem'
           isSafeNavigation = false
           type = T
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = kotlin.Boolean
           symbol = /MessagePreview.equals(<dispatch receiver>: MessagePreview, other: kotlin.Any?): kotlin.Boolean
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = other
               receiverType = null
               returnType = kotlin.Any?
@@ -23,7 +23,7 @@ KtBinaryExpression(357,375): 'oldItem == newItem'
           callableId = /MessagePreview.equals
       typeArgumentsMapping = {}
       argumentMapping = {
-        newItem -> (KaVariableLikeSignature:
+        newItem -> (KaVariableSignature:
           name = other
           receiverType = null
           returnType = kotlin.Any?

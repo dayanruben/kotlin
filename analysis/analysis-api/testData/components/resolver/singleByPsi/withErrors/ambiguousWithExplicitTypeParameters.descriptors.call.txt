@@ -6,18 +6,18 @@ KtCallExpression(128,144): 'function<Int>(1)'
         partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
           dispatchReceiver = null
           extensionReceiver = null
-          signature = KaFunctionLikeSignature:
+          signature = KaFunctionSignature:
             receiverType = null
             returnType = kotlin.Unit
             symbol = /function(t: T, a: kotlin.Char): kotlin.Unit
             valueParameters = [
-              KaVariableLikeSignature:
+              KaVariableSignature:
                 name = t
                 receiverType = null
                 returnType = TypeVariable(T)
                 symbol = t: T
                 callableId = null,
-              KaVariableLikeSignature:
+              KaVariableSignature:
                 name = a
                 receiverType = null
                 returnType = kotlin.Char
@@ -27,7 +27,7 @@ KtCallExpression(128,144): 'function<Int>(1)'
             callableId = /function
         typeArgumentsMapping = {}
         argumentMapping = {
-          1 -> (KaVariableLikeSignature:
+          1 -> (KaVariableSignature:
             name = t
             receiverType = null
             returnType = TypeVariable(T)
@@ -39,18 +39,18 @@ KtCallExpression(128,144): 'function<Int>(1)'
         partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
           dispatchReceiver = null
           extensionReceiver = null
-          signature = KaFunctionLikeSignature:
+          signature = KaFunctionSignature:
             receiverType = null
             returnType = kotlin.Unit
             symbol = /function(u: U, b: kotlin.Boolean): kotlin.Unit
             valueParameters = [
-              KaVariableLikeSignature:
+              KaVariableSignature:
                 name = u
                 receiverType = null
                 returnType = TypeVariable(U)
                 symbol = u: U
                 callableId = null,
-              KaVariableLikeSignature:
+              KaVariableSignature:
                 name = b
                 receiverType = null
                 returnType = kotlin.Boolean
@@ -60,7 +60,7 @@ KtCallExpression(128,144): 'function<Int>(1)'
             callableId = /function
         typeArgumentsMapping = {}
         argumentMapping = {
-          1 -> (KaVariableLikeSignature:
+          1 -> (KaVariableSignature:
             name = u
             receiverType = null
             returnType = TypeVariable(U)
@@ -72,18 +72,18 @@ KtCallExpression(128,144): 'function<Int>(1)'
         partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
           dispatchReceiver = null
           extensionReceiver = null
-          signature = KaFunctionLikeSignature:
+          signature = KaFunctionSignature:
             receiverType = null
             returnType = kotlin.Unit
             symbol = /function(v: V, c: kotlin.String): kotlin.Unit
             valueParameters = [
-              KaVariableLikeSignature:
+              KaVariableSignature:
                 name = v
                 receiverType = null
                 returnType = TypeVariable(V)
                 symbol = v: V
                 callableId = null,
-              KaVariableLikeSignature:
+              KaVariableSignature:
                 name = c
                 receiverType = null
                 returnType = kotlin.String
@@ -93,7 +93,7 @@ KtCallExpression(128,144): 'function<Int>(1)'
             callableId = /function
         typeArgumentsMapping = {}
         argumentMapping = {
-          1 -> (KaVariableLikeSignature:
+          1 -> (KaVariableSignature:
             name = v
             receiverType = null
             returnType = TypeVariable(V)

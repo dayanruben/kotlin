@@ -1,4 +1,4 @@
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: /foo
   contextReceivers: []
@@ -37,6 +37,7 @@ KaFunctionSymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: inlineParameter
@@ -66,6 +67,7 @@ KaFunctionSymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: crossinlineParameter
@@ -95,6 +97,7 @@ KaFunctionSymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: true
+      isVal: true
       isVararg: false
       location: LOCAL
       name: noinlineParameter

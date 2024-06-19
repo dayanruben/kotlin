@@ -10,7 +10,7 @@ implicit receivers:
     annotations: []
     typeArguments: []
     type: kotlin/Enum.Companion
-  owner symbol: KaFirNamedClassOrObjectSymbol
+  owner symbol: KaFirNamedClassSymbol
 
 scopes:
   LocalScope, index = 0
@@ -28,7 +28,7 @@ scopes:
   TypeScope, index = 2
     packages: 0
     classifiers: 1
-      KaNamedClassOrObjectSymbol:
+      KaNamedClassSymbol:
         annotations: []
         classId: kotlin/Enum.Companion
         classKind: COMPANION_OBJECT
@@ -61,6 +61,7 @@ scopes:
           callableId: null
           contextReceivers: []
           isExtension: false
+          isVal: true
           location: PROPERTY
           name: field
           origin: PROPERTY_BACKING_FIELD
@@ -120,7 +121,7 @@ scopes:
         setter: null
         typeParameters: []
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: null
         contextReceivers: []
@@ -150,7 +151,7 @@ scopes:
         typeParameters: []
         valueParameters: []
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Enum.clone
         contextReceivers: []
@@ -180,7 +181,7 @@ scopes:
         typeParameters: []
         valueParameters: []
         visibility: Protected
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: /E.compareTo
         contextReceivers: []
@@ -219,6 +220,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: other
@@ -231,7 +233,7 @@ scopes:
             typeParameters: []
         ]
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Enum.equals
         contextReceivers: []
@@ -270,6 +272,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: other
@@ -282,7 +285,7 @@ scopes:
             typeParameters: []
         ]
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Enum.hashCode
         contextReceivers: []
@@ -312,7 +315,7 @@ scopes:
         typeParameters: []
         valueParameters: []
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Enum.toString
         contextReceivers: []
@@ -352,6 +355,7 @@ scopes:
           callableId: null
           contextReceivers: []
           isExtension: false
+          isVal: true
           location: PROPERTY
           name: field
           origin: PROPERTY_BACKING_FIELD
@@ -418,6 +422,7 @@ scopes:
           callableId: null
           contextReceivers: []
           isExtension: false
+          isVal: true
           location: PROPERTY
           name: field
           origin: PROPERTY_BACKING_FIELD
@@ -477,7 +482,7 @@ scopes:
         setter: null
         typeParameters: []
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: /E.getDeclaringClass
         contextReceivers: []
@@ -506,7 +511,7 @@ scopes:
         typeParameters: []
         valueParameters: []
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Enum.finalize
         contextReceivers: []
@@ -568,6 +573,7 @@ scopes:
         contextReceivers: []
         enumEntryInitializer: KaAnonymousObjectSymbol(<local>/<no name provided>)
         isExtension: false
+        isVal: true
         location: CLASS
         name: A
         origin: SOURCE
@@ -577,7 +583,7 @@ scopes:
           typeArguments: []
           type: E
         typeParameters: []
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: /E.values
         contextReceivers: []
@@ -612,7 +618,7 @@ scopes:
         typeParameters: []
         valueParameters: []
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: /E.valueOf
         contextReceivers: []
@@ -651,6 +657,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: value
@@ -730,7 +737,7 @@ scopes:
   StaticMemberScope, index = 4
     packages: 0
     classifiers: 1
-      KaNamedClassOrObjectSymbol:
+      KaNamedClassSymbol:
         annotations: []
         classId: kotlin/Enum.Companion
         classKind: COMPANION_OBJECT
@@ -762,7 +769,7 @@ scopes:
     packages: 0
     classifiers: 0
     callables: 3
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.equals
         contextReceivers: []
@@ -801,6 +808,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: other
@@ -813,7 +821,7 @@ scopes:
             typeParameters: []
         ]
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.hashCode
         contextReceivers: []
@@ -843,7 +851,7 @@ scopes:
         typeParameters: []
         valueParameters: []
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.toString
         contextReceivers: []
@@ -928,7 +936,7 @@ scopes:
         location: TOP_LEVEL
         origin: SOURCE
     classifiers: 1
-      KaNamedClassOrObjectSymbol:
+      KaNamedClassSymbol:
         annotations: []
         classId: E
         classKind: ENUM_CLASS

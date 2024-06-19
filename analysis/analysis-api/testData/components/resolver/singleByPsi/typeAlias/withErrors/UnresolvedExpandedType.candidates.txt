@@ -5,12 +5,12 @@ KtNameReferenceExpression(67,70): 'foo'
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = kotlin.Unit
           symbol = main/foo(t: {main.T=} ERROR CLASS: Symbol not found for A): kotlin.Unit
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = t
               receiverType = null
               returnType = {main.T=} ERROR CLASS: Symbol not found for A
@@ -20,7 +20,7 @@ KtNameReferenceExpression(67,70): 'foo'
           callableId = main/foo
       typeArgumentsMapping = {}
       argumentMapping = {
-        2 -> (KaVariableLikeSignature:
+        2 -> (KaVariableSignature:
           name = t
           receiverType = null
           returnType = {main.T=} ERROR CLASS: Symbol not found for A

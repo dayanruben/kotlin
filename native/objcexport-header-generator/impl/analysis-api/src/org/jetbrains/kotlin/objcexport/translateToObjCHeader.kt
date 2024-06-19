@@ -6,7 +6,7 @@
 package org.jetbrains.kotlin.objcexport
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.backend.konan.objcexport.*
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.objcexport.analysisApiUtils.*
@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.objcexport.extras.throwsAnnotationClassIds
 
 
 context(KaSession, KtObjCExportSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 fun translateToObjCHeader(
     files: List<KtObjCExportFile>,
     withObjCBaseDeclarations: Boolean = true,
@@ -70,6 +71,7 @@ private class KtObjCExportHeaderGenerator(
     private val objCClassForwardDeclarations = mutableSetOf<String>()
 
     context(KaSession, KtObjCExportSession)
+    @Suppress("CONTEXT_RECEIVERS_DEPRECATED")
     fun translateAll(files: List<KtObjCExportFile>) {
         /**
          * Step 1: Translate classifiers (class, interface, object, ...)
@@ -96,12 +98,14 @@ private class KtObjCExportHeaderGenerator(
     }
 
     context(KaSession, KtObjCExportSession)
+    @Suppress("CONTEXT_RECEIVERS_DEPRECATED")
     private fun translateClass(classId: ClassId) {
         val classOrObjectSymbol = findClass(classId) ?: return
         translateClassOrObjectSymbol(classOrObjectSymbol)
     }
 
     context(KaSession, KtObjCExportSession)
+    @Suppress("CONTEXT_RECEIVERS_DEPRECATED")
     private fun translateFileClassifiers(file: KtObjCExportFile) {
         val resolvedFile = file.resolve()
         resolvedFile.classifierSymbols.sortedWith(StableClassifierOrder).forEach { classOrObjectSymbol ->
@@ -110,6 +114,7 @@ private class KtObjCExportHeaderGenerator(
     }
 
     context(KaSession, KtObjCExportSession)
+    @Suppress("CONTEXT_RECEIVERS_DEPRECATED")
     private fun translateFileFacades(file: KtObjCExportFile) {
         val resolvedFile = file.resolve()
 
@@ -126,7 +131,8 @@ private class KtObjCExportHeaderGenerator(
     }
 
     context(KaSession, KtObjCExportSession)
-    private fun translateClassOrObjectSymbol(symbol: KaClassOrObjectSymbol): ObjCClass? {
+    @Suppress("CONTEXT_RECEIVERS_DEPRECATED")
+    private fun translateClassOrObjectSymbol(symbol: KaClassSymbol): ObjCClass? {
         /* No classId, no stubs ¯\_(ツ)_/¯ */
         val classId = symbol.classId ?: return null
 
@@ -224,6 +230,7 @@ private class KtObjCExportHeaderGenerator(
     }
 
     context(KaSession, KtObjCExportSession)
+    @Suppress("CONTEXT_RECEIVERS_DEPRECATED")
     fun buildObjCHeader(): ObjCHeader {
         val hasErrorTypes = objCStubs.hasErrorTypes()
 

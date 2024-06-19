@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationList
 import org.jetbrains.kotlin.analysis.api.annotations.KaNamedAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.renderAsSourceCode
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.objcexport.analysisApiUtils.isSuspend
 
 
 context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 internal fun KaAnnotationList.translateToObjCComment(): ObjCComment? {
     val annotations = getObjCDocumentedAnnotations()
         .mapNotNull { annotation -> renderAnnotation(annotation) }
@@ -39,7 +40,8 @@ internal fun KaAnnotationList.translateToObjCComment(): ObjCComment? {
  * [org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportTranslatorImpl.buildComment]
  */
 context(KaSession)
-internal fun KaFunctionLikeSymbol.translateToObjCComment(bridge: MethodBridge, parameters: List<ObjCParameter>): ObjCComment? {
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
+internal fun KaFunctionSymbol.translateToObjCComment(bridge: MethodBridge, parameters: List<ObjCParameter>): ObjCComment? {
     val throwsComments = if (isSuspend || bridge.returnsError) {
         val effectiveThrows = effectiveThrows.toSet()
         when {
@@ -79,6 +81,7 @@ internal fun KaFunctionLikeSymbol.translateToObjCComment(bridge: MethodBridge, p
  * [org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportTranslatorImpl.mustBeDocumentedParamAttributeList]
  */
 context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 private fun ObjCParameter.renderedObjCDocumentedParamAnnotations(parameterSymbol: KaValueParameterSymbol): String? {
     val renderedAnnotationsString = parameterSymbol.getObjCDocumentedAnnotations()
         .mapNotNull { annotation -> renderAnnotation(annotation) }

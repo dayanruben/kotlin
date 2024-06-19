@@ -4,7 +4,7 @@ implicit receivers:
     annotations: []
     typeArguments: []
     type: test/Child
-  owner symbol: KaFirNamedClassOrObjectSymbol
+  owner symbol: KaFirNamedClassSymbol
 
 scopes:
   LocalScope, index = 0
@@ -21,6 +21,7 @@ scopes:
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
+        isVal: true
         isVararg: false
         location: LOCAL
         name: constructorParam
@@ -44,6 +45,7 @@ scopes:
           callableId: null
           contextReceivers: []
           isExtension: false
+          isVal: true
           location: PROPERTY
           name: field
           origin: PROPERTY_BACKING_FIELD
@@ -103,7 +105,7 @@ scopes:
         setter: null
         typeParameters: []
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: test/Child.childMember
         contextReceivers: []
@@ -140,6 +142,7 @@ scopes:
           callableId: null
           contextReceivers: []
           isExtension: false
+          isVal: true
           location: PROPERTY
           name: field
           origin: PROPERTY_BACKING_FIELD
@@ -206,6 +209,7 @@ scopes:
           callableId: null
           contextReceivers: []
           isExtension: false
+          isVal: true
           location: PROPERTY
           name: field
           origin: PROPERTY_BACKING_FIELD
@@ -265,7 +269,7 @@ scopes:
         setter: null
         typeParameters: []
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: test/Base.baseMember
         contextReceivers: []
@@ -302,6 +306,7 @@ scopes:
           callableId: null
           contextReceivers: []
           isExtension: false
+          isVal: true
           location: PROPERTY
           name: field
           origin: PROPERTY_BACKING_FIELD
@@ -361,7 +366,7 @@ scopes:
         setter: null
         typeParameters: []
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.equals
         contextReceivers: []
@@ -400,6 +405,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: other
@@ -412,7 +418,7 @@ scopes:
             typeParameters: []
         ]
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.hashCode
         contextReceivers: []
@@ -442,7 +448,7 @@ scopes:
         typeParameters: []
         valueParameters: []
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.toString
         contextReceivers: []
@@ -503,6 +509,7 @@ scopes:
                 callableId: null
                 contextReceivers: []
                 isExtension: false
+                isVal: true
                 location: PROPERTY
                 name: field
                 origin: PROPERTY_BACKING_FIELD
@@ -567,6 +574,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: constructorProp
@@ -587,6 +595,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: constructorParam
@@ -609,7 +618,7 @@ scopes:
   PackageMemberScope, index = 3
     packages: 0
     classifiers: 2
-      KaNamedClassOrObjectSymbol:
+      KaNamedClassSymbol:
         annotations: []
         classId: test/Base
         classKind: CLASS
@@ -634,7 +643,7 @@ scopes:
         ]
         typeParameters: []
         visibility: Public
-      KaNamedClassOrObjectSymbol:
+      KaNamedClassSymbol:
         annotations: []
         classId: test/Child
         classKind: CLASS

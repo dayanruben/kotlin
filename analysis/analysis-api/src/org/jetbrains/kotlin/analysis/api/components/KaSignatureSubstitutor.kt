@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -7,11 +7,11 @@ package org.jetbrains.kotlin.analysis.api.components
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionLikeSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KaVariableLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaVariableLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 
 @KaExperimentalApi
@@ -30,7 +30,7 @@ public interface KaSignatureSubstitutor {
      * @see KaSubstitutor.substitute
      */
     @KaExperimentalApi
-    public fun <S : KaFunctionLikeSymbol> S.substitute(substitutor: KaSubstitutor): KaFunctionLikeSignature<S>
+    public fun <S : KaFunctionSymbol> S.substitute(substitutor: KaSubstitutor): KaFunctionSignature<S>
 
     /**
      * Applies a [substitutor] to the given symbols and return a signature with substituted types.
@@ -38,7 +38,7 @@ public interface KaSignatureSubstitutor {
      * @see KaSubstitutor.substitute
      */
     @KaExperimentalApi
-    public fun <S : KaVariableLikeSymbol> S.substitute(substitutor: KaSubstitutor): KaVariableLikeSignature<S>
+    public fun <S : KaVariableSymbol> S.substitute(substitutor: KaSubstitutor): KaVariableSignature<S>
 
     /**
      * Creates a new [KaCallableSignature] by given symbol and leave all types intact
@@ -50,11 +50,11 @@ public interface KaSignatureSubstitutor {
      * Creates a new [KaCallableSignature] by given symbol and leave all types intact
      */
     @KaExperimentalApi
-    public fun <S : KaFunctionLikeSymbol> S.asSignature(): KaFunctionLikeSignature<S>
+    public fun <S : KaFunctionSymbol> S.asSignature(): KaFunctionSignature<S>
 
     /**
      * Creates a new [KaCallableSignature] by given symbol and leave all types intact
      */
     @KaExperimentalApi
-    public fun <S : KaVariableLikeSymbol> S.asSignature(): KaVariableLikeSignature<S>
+    public fun <S : KaVariableSymbol> S.asSignature(): KaVariableSignature<S>
 }

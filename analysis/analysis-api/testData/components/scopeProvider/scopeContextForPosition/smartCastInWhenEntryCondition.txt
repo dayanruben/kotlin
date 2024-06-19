@@ -4,7 +4,7 @@ implicit receivers:
     annotations: []
     typeArguments: []
     type: A
-  owner symbol: KaFirFunctionSymbol
+  owner symbol: KaFirNamedFunctionSymbol
 
 scopes:
   LocalScope, index = 0
@@ -17,7 +17,7 @@ scopes:
     packages: 0
     classifiers: 0
     callables: 3
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.equals
         contextReceivers: []
@@ -56,6 +56,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: other
@@ -68,7 +69,7 @@ scopes:
             typeParameters: []
         ]
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.hashCode
         contextReceivers: []
@@ -98,7 +99,7 @@ scopes:
         typeParameters: []
         valueParameters: []
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.toString
         contextReceivers: []
@@ -189,7 +190,7 @@ scopes:
         location: TOP_LEVEL
         origin: SOURCE
     classifiers: 2
-      KaNamedClassOrObjectSymbol:
+      KaNamedClassSymbol:
         annotations: []
         classId: A
         classKind: CLASS
@@ -214,7 +215,7 @@ scopes:
         ]
         typeParameters: []
         visibility: Public
-      KaNamedClassOrObjectSymbol:
+      KaNamedClassSymbol:
         annotations: []
         classId: B
         classKind: CLASS
@@ -240,7 +241,7 @@ scopes:
         typeParameters: []
         visibility: Public
     callables: 1
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: /test
         contextReceivers: []
@@ -266,7 +267,7 @@ scopes:
           annotations: []
           location: LOCAL
           origin: SOURCE
-          owningCallableSymbol: KaFunctionSymbol(/test)
+          owningCallableSymbol: KaNamedFunctionSymbol(/test)
           type: KaUsualClassType:
             annotations: []
             typeArguments: []

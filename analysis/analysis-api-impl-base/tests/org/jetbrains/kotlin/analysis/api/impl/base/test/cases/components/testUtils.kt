@@ -26,8 +26,8 @@ import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionLikeSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KaVariableLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
@@ -48,10 +48,10 @@ internal fun KaSession.stringRepresentation(any: Any?): String = with(any) {
     fun KaType.render() = toString().replace('/', '.')
     return when (this) {
         null -> "null"
-        is KaFunctionLikeSymbol -> buildString {
+        is KaFunctionSymbol -> buildString {
             append(
                 when (this@with) {
-                    is KaFunctionSymbol -> callableId ?: name
+                    is KaNamedFunctionSymbol -> callableId ?: name
                     is KaSamConstructorSymbol -> callableId ?: name
                     is KaConstructorSymbol -> "<constructor>"
                     is KaPropertyGetterSymbol -> callableId ?: "<getter>"
@@ -61,7 +61,7 @@ internal fun KaSession.stringRepresentation(any: Any?): String = with(any) {
                 }
             )
             append("(")
-            (this@with as? KaFunctionSymbol)?.receiverParameter?.let { receiver ->
+            (this@with as? KaNamedFunctionSymbol)?.receiverParameter?.let { receiver ->
                 append("<extension receiver>: ${receiver.type.render()}")
                 if (valueParameters.isNotEmpty()) append(", ")
             }
@@ -77,10 +77,10 @@ internal fun KaSession.stringRepresentation(any: Any?): String = with(any) {
         }
         is KaValueParameterSymbol -> "${if (isVararg) "vararg " else ""}$name: ${returnType.render()}"
         is KaTypeParameterSymbol -> this.nameOrAnonymous.asString()
+        is KaEnumEntrySymbol -> callableId?.toString() ?: name.asString()
         is KaVariableSymbol -> "${if (isVal) "val" else "var"} $name: ${returnType.render()}"
         is KaClassLikeSymbol -> classId?.toString() ?: nameOrAnonymous.asString()
         is KaPackageSymbol -> fqName.toString()
-        is KaEnumEntrySymbol -> callableId?.toString() ?: name.asString()
         is KaSymbol -> DebugSymbolRenderer().render(useSiteSession, this)
         is Boolean -> toString()
         is Map<*, *> -> if (isEmpty()) "{}" else entries.joinToString(
@@ -134,16 +134,16 @@ internal fun KaSession.stringRepresentation(any: Any?): String = with(any) {
 
 private fun KaSession.stringRepresentation(signature: KaCallableSignature<*>): String = buildString {
     when (signature) {
-        is KaFunctionLikeSignature<*> -> append(KaFunctionLikeSignature::class.simpleName)
-        is KaVariableLikeSignature<*> -> append(KaVariableLikeSignature::class.simpleName)
+        is KaFunctionSignature<*> -> append(KaFunctionSignature::class.simpleName)
+        is KaVariableSignature<*> -> append(KaVariableSignature::class.simpleName)
     }
 
     val memberProperties = listOfNotNull(
-        KaVariableLikeSignature<*>::name.takeIf { signature is KaVariableLikeSignature<*> },
+        KaVariableSignature<*>::name.takeIf { signature is KaVariableSignature<*> },
         KaCallableSignature<*>::receiverType,
         KaCallableSignature<*>::returnType,
         KaCallableSignature<*>::symbol,
-        KaFunctionLikeSignature<*>::valueParameters.takeIf { signature is KaFunctionLikeSignature<*> },
+        KaFunctionSignature<*>::valueParameters.takeIf { signature is KaFunctionSignature<*> },
         KaCallableSignature<*>::callableId
     )
 
@@ -159,7 +159,7 @@ private fun String.indented() = replace("\n", "\n  ")
 
 internal fun KaSession.prettyPrintSignature(signature: KaCallableSignature<*>): String = prettyPrint {
     when (signature) {
-        is KaFunctionLikeSignature -> {
+        is KaFunctionSignature -> {
             append("fun ")
             signature.receiverType?.let { append('.'); append(it.render(position = Variance.INVARIANT)) }
             append((signature.symbol as KaNamedSymbol).name.asString())
@@ -171,12 +171,10 @@ internal fun KaSession.prettyPrintSignature(signature: KaCallableSignature<*>): 
             append(": ")
             append(signature.returnType.render(position = Variance.INVARIANT))
         }
-        is KaVariableLikeSignature -> {
+        is KaVariableSignature -> {
             val symbol = signature.symbol
-            if (symbol is KaVariableSymbol) {
-                append(if (symbol.isVal) "val" else "var")
-                append(" ")
-            }
+            append(if (symbol.isVal) "val" else "var")
+            append(" ")
             signature.receiverType?.let { append('.'); append(it.render(position = Variance.INVARIANT)) }
             append((symbol as KaNamedSymbol).name.asString())
             append(": ")
@@ -308,7 +306,7 @@ internal fun KaSession.renderScopeWithParentDeclarations(scope: KaScope): String
             }
         }
 
-        if (symbol is KaFunctionLikeSymbol && symbol.valueParameters.isNotEmpty()) {
+        if (symbol is KaFunctionSymbol && symbol.valueParameters.isNotEmpty()) {
             appendLine()
             withIndent {
                 printCollection(symbol.valueParameters, separator = "\n") { typeParameter ->

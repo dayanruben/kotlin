@@ -1,4 +1,4 @@
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: kotlin/collections/listOf
   contextReceivers: []
@@ -43,6 +43,7 @@ KaFunctionSymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: element
@@ -63,7 +64,7 @@ KaFunctionSymbol:
   getContainingModule: KaLibraryModule "Library kotlin-stdlib"
   deprecationStatus: null
 
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: [
     kotlin/internal/InlineOnly()
       psi: null
@@ -107,7 +108,7 @@ KaFunctionSymbol:
   getContainingModule: KaLibraryModule "Library kotlin-stdlib"
   deprecationStatus: null
 
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: kotlin/collections/listOf
   contextReceivers: []
@@ -152,6 +153,7 @@ KaFunctionSymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: true
       location: LOCAL
       name: elements

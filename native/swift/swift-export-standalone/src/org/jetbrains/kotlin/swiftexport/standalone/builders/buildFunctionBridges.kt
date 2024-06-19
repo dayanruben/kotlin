@@ -8,9 +8,9 @@ package org.jetbrains.kotlin.swiftexport.standalone.builders
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.sir.*
 import org.jetbrains.kotlin.sir.bridge.*
-import org.jetbrains.kotlin.sir.util.*
 import org.jetbrains.kotlin.sir.providers.source.KotlinSource
 import org.jetbrains.kotlin.sir.providers.utils.KotlinRuntimeModule
+import org.jetbrains.kotlin.sir.util.*
 import org.jetbrains.kotlin.utils.addIfNotNull
 
 internal fun buildBridgeRequests(generator: BridgeGenerator, container: SirDeclarationContainer): List<BridgeRequest> = buildList {
@@ -39,7 +39,7 @@ internal fun buildBridgeRequests(generator: BridgeGenerator, container: SirDecla
 }
 
 private fun SirFunction.constructBridgeRequests(generator: BridgeGenerator): List<BridgeRequest> {
-    val fqName = ((origin as? KotlinSource)?.symbol as? KaFunctionLikeSymbol)
+    val fqName = ((origin as? KotlinSource)?.symbol as? KaFunctionSymbol)
         ?.callableId?.asSingleFqName()
         ?.pathSegments()?.map { it.toString() }
         ?: return emptyList()
@@ -51,10 +51,10 @@ private fun SirFunction.constructBridgeRequests(generator: BridgeGenerator): Lis
 
 private fun SirVariable.constructBridgeRequests(generator: BridgeGenerator): List<BridgeRequest> {
     val fqName = when (val origin = origin) {
-        is KotlinSource -> (origin.symbol as? KaVariableLikeSymbol)
+        is KotlinSource -> (origin.symbol as? KaVariableSymbol)
             ?.callableId?.asSingleFqName()
             ?.pathSegments()?.map { it.toString() }
-        is SirOrigin.ObjectAccessor -> ((origin.`for` as KotlinSource).symbol as KaNamedClassOrObjectSymbol)
+        is SirOrigin.ObjectAccessor -> ((origin.`for` as KotlinSource).symbol as KaNamedClassSymbol)
             .classId?.asSingleFqName()
             ?.pathSegments()?.map { it.toString() }
         else -> null

@@ -121,11 +121,11 @@ internal fun ClassifierDescriptor.toKtClassifierSymbol(analysisContext: Fe10Anal
     }
 }
 
-internal fun ClassDescriptor.toKaClassSymbol(analysisContext: Fe10AnalysisContext): KaClassOrObjectSymbol {
+internal fun ClassDescriptor.toKaClassSymbol(analysisContext: Fe10AnalysisContext): KaClassSymbol {
     return if (DescriptorUtils.isAnonymousObject(this)) {
         KaFe10DescAnonymousObjectSymbol(this, analysisContext)
     } else {
-        KaFe10DescNamedClassOrObjectSymbol(this, analysisContext)
+        KaFe10DescNamedClassSymbol(this, analysisContext)
     }
 }
 
@@ -186,7 +186,7 @@ internal fun CallableDescriptor.toKtCallableSymbol(analysisContext: Fe10Analysis
             if (DescriptorUtils.isAnonymousFunction(unwrapped)) {
                 KaFe10DescAnonymousFunctionSymbol(unwrapped, analysisContext)
             } else {
-                KaFe10DescFunctionSymbol.build(unwrapped, analysisContext)
+                KaFe10DescNamedFunctionSymbol.build(unwrapped, analysisContext)
             }
         }
         is SyntheticFieldDescriptor -> KaFe10DescSyntheticFieldSymbol(unwrapped, analysisContext)

@@ -2,30 +2,30 @@ Expression: el
 KaType: kotlin.Pair<kotlin.Int, kotlin.Int>
 
 KaTypeScope:
-KaFunctionLikeSignature:
+KaFunctionSignature:
   receiverType = null
   returnType = kotlin.Int
   symbol = kotlin/Pair.component1(<dispatch receiver>: kotlin.Pair<A, B>): A
   valueParameters = []
   callableId = kotlin/Pair.component1
-KaFunctionLikeSignature:
+KaFunctionSignature:
   receiverType = null
   returnType = kotlin.Int
   symbol = kotlin/Pair.component2(<dispatch receiver>: kotlin.Pair<A, B>): B
   valueParameters = []
   callableId = kotlin/Pair.component2
-KaFunctionLikeSignature:
+KaFunctionSignature:
   receiverType = null
   returnType = kotlin.Pair<kotlin.Int, kotlin.Int>
   symbol = kotlin/Pair.copy(<dispatch receiver>: kotlin.Pair<A, B>, first: A, second: B): kotlin.Pair<A, B>
   valueParameters = [
-    KaVariableLikeSignature:
+    KaVariableSignature:
       name = first
       receiverType = null
       returnType = kotlin.Int
       symbol = first: A
       callableId = null,
-    KaVariableLikeSignature:
+    KaVariableSignature:
       name = second
       receiverType = null
       returnType = kotlin.Int
@@ -33,12 +33,12 @@ KaFunctionLikeSignature:
       callableId = null
   ]
   callableId = kotlin/Pair.copy
-KaFunctionLikeSignature:
+KaFunctionSignature:
   receiverType = null
   returnType = kotlin.Boolean
   symbol = kotlin/Pair.equals(<dispatch receiver>: kotlin.Pair<A, B>, other: kotlin.Any?): kotlin.Boolean
   valueParameters = [
-    KaVariableLikeSignature:
+    KaVariableSignature:
       name = other
       receiverType = null
       returnType = kotlin.Any?
@@ -46,25 +46,25 @@ KaFunctionLikeSignature:
       callableId = null
   ]
   callableId = kotlin/Pair.equals
-KaFunctionLikeSignature:
+KaFunctionSignature:
   receiverType = null
   returnType = kotlin.Int
   symbol = kotlin/Pair.hashCode(<dispatch receiver>: kotlin.Pair<A, B>): kotlin.Int
   valueParameters = []
   callableId = kotlin/Pair.hashCode
-KaFunctionLikeSignature:
+KaFunctionSignature:
   receiverType = null
   returnType = kotlin.String
   symbol = kotlin/Pair.toString(<dispatch receiver>: kotlin.Pair<A, B>): kotlin.String
   valueParameters = []
   callableId = kotlin/Pair.toString
-KaVariableLikeSignature:
+KaVariableSignature:
   name = first
   receiverType = null
   returnType = kotlin.Int
   symbol = val first: A
   callableId = kotlin/Pair.first
-KaVariableLikeSignature:
+KaVariableSignature:
   name = second
   receiverType = null
   returnType = kotlin.Int
@@ -73,7 +73,7 @@ KaVariableLikeSignature:
 
 
 Declaration Scope:
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: kotlin/Pair.component1
   contextReceivers: []
@@ -102,7 +102,7 @@ KaFunctionSymbol:
   typeParameters: []
   valueParameters: []
   visibility: Public
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: kotlin/Pair.component2
   contextReceivers: []
@@ -131,7 +131,7 @@ KaFunctionSymbol:
   typeParameters: []
   valueParameters: []
   visibility: Public
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: kotlin/Pair.copy
   contextReceivers: []
@@ -177,6 +177,7 @@ KaFunctionSymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: first
@@ -196,6 +197,7 @@ KaFunctionSymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: second
@@ -207,7 +209,7 @@ KaFunctionSymbol:
       typeParameters: []
   ]
   visibility: Public
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: kotlin/Pair.equals
   contextReceivers: []
@@ -246,6 +248,7 @@ KaFunctionSymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: other
@@ -258,7 +261,7 @@ KaFunctionSymbol:
       typeParameters: []
   ]
   visibility: Public
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: kotlin/Pair.hashCode
   contextReceivers: []
@@ -288,7 +291,7 @@ KaFunctionSymbol:
   typeParameters: []
   valueParameters: []
   visibility: Public
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: kotlin/Pair.toString
   contextReceivers: []
@@ -325,6 +328,7 @@ KaKotlinPropertySymbol:
     callableId: null
     contextReceivers: []
     isExtension: false
+    isVal: true
     location: PROPERTY
     name: field
     origin: PROPERTY_BACKING_FIELD
@@ -388,6 +392,7 @@ KaKotlinPropertySymbol:
     callableId: null
     contextReceivers: []
     isExtension: false
+    isVal: true
     location: PROPERTY
     name: field
     origin: PROPERTY_BACKING_FIELD

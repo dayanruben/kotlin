@@ -179,6 +179,8 @@ object FirErrors {
     val INVISIBLE_REFERENCE: KtDiagnosticFactory3<FirBasedSymbol<*>, Visibility, ClassId?> = KtDiagnosticFactory3("INVISIBLE_REFERENCE", ERROR, SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED, PsiElement::class)
     val UNRESOLVED_REFERENCE: KtDiagnosticFactory2<String, String?> = KtDiagnosticFactory2("UNRESOLVED_REFERENCE", ERROR, SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED, PsiElement::class)
     val UNRESOLVED_LABEL: KtDiagnosticFactory0 = KtDiagnosticFactory0("UNRESOLVED_LABEL", ERROR, SourceElementPositioningStrategies.LABEL, PsiElement::class)
+    val AMBIGUOUS_LABEL: KtDiagnosticFactory0 = KtDiagnosticFactory0("AMBIGUOUS_LABEL", ERROR, SourceElementPositioningStrategies.LABEL, PsiElement::class)
+    val LABEL_NAME_CLASH: KtDiagnosticFactory0 = KtDiagnosticFactory0("LABEL_NAME_CLASH", WARNING, SourceElementPositioningStrategies.LABEL, PsiElement::class)
     val DESERIALIZATION_ERROR: KtDiagnosticFactory0 = KtDiagnosticFactory0("DESERIALIZATION_ERROR", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
     val ERROR_FROM_JAVA_RESOLUTION: KtDiagnosticFactory0 = KtDiagnosticFactory0("ERROR_FROM_JAVA_RESOLUTION", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
     val MISSING_STDLIB_CLASS: KtDiagnosticFactory0 = KtDiagnosticFactory0("MISSING_STDLIB_CLASS", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
@@ -448,6 +450,7 @@ object FirErrors {
     val UNSUPPORTED_CONTEXTUAL_DECLARATION_CALL: KtDiagnosticFactory0 = KtDiagnosticFactory0("UNSUPPORTED_CONTEXTUAL_DECLARATION_CALL", ERROR, SourceElementPositioningStrategies.NAME_IDENTIFIER, KtElement::class)
     val SUBTYPING_BETWEEN_CONTEXT_RECEIVERS: KtDiagnosticFactory0 = KtDiagnosticFactory0("SUBTYPING_BETWEEN_CONTEXT_RECEIVERS", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class)
     val CONTEXT_RECEIVERS_WITH_BACKING_FIELD: KtDiagnosticFactory0 = KtDiagnosticFactory0("CONTEXT_RECEIVERS_WITH_BACKING_FIELD", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class)
+    val CONTEXT_RECEIVERS_DEPRECATED: KtDiagnosticFactory0 = KtDiagnosticFactory0("CONTEXT_RECEIVERS_DEPRECATED", WARNING, SourceElementPositioningStrategies.CONTEXT_KEYWORD, KtElement::class)
 
     // Types & type parameters
     val RECURSION_IN_IMPLICIT_TYPES: KtDiagnosticFactory0 = KtDiagnosticFactory0("RECURSION_IN_IMPLICIT_TYPES", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
@@ -599,7 +602,7 @@ object FirErrors {
     val USELESS_VARARG_ON_PARAMETER: KtDiagnosticFactory0 = KtDiagnosticFactory0("USELESS_VARARG_ON_PARAMETER", WARNING, SourceElementPositioningStrategies.DEFAULT, KtParameter::class)
     val MULTIPLE_VARARG_PARAMETERS: KtDiagnosticFactory0 = KtDiagnosticFactory0("MULTIPLE_VARARG_PARAMETERS", ERROR, SourceElementPositioningStrategies.PARAMETER_VARARG_MODIFIER, KtParameter::class)
     val FORBIDDEN_VARARG_PARAMETER_TYPE: KtDiagnosticFactory1<ConeKotlinType> = KtDiagnosticFactory1("FORBIDDEN_VARARG_PARAMETER_TYPE", ERROR, SourceElementPositioningStrategies.PARAMETER_VARARG_MODIFIER, KtParameter::class)
-    val VALUE_PARAMETER_WITH_NO_TYPE_ANNOTATION: KtDiagnosticFactory0 = KtDiagnosticFactory0("VALUE_PARAMETER_WITH_NO_TYPE_ANNOTATION", ERROR, SourceElementPositioningStrategies.DEFAULT, KtParameter::class)
+    val VALUE_PARAMETER_WITHOUT_EXPLICIT_TYPE: KtDiagnosticFactory0 = KtDiagnosticFactory0("VALUE_PARAMETER_WITHOUT_EXPLICIT_TYPE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtParameter::class)
     val CANNOT_INFER_PARAMETER_TYPE: KtDiagnosticFactory0 = KtDiagnosticFactory0("CANNOT_INFER_PARAMETER_TYPE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class)
     val NO_TAIL_CALLS_FOUND: KtDiagnosticFactory0 = KtDiagnosticFactory0("NO_TAIL_CALLS_FOUND", WARNING, SourceElementPositioningStrategies.TAILREC_MODIFIER, KtNamedFunction::class)
     val TAILREC_ON_VIRTUAL_MEMBER_ERROR: KtDiagnosticFactory0 = KtDiagnosticFactory0("TAILREC_ON_VIRTUAL_MEMBER_ERROR", ERROR, SourceElementPositioningStrategies.TAILREC_MODIFIER, KtNamedFunction::class)

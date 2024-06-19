@@ -8,12 +8,12 @@ KtBinaryExpression(31,36): 'i < j'
           isSafeNavigation = false
           type = kotlin.Int
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = kotlin.Int
           symbol = kotlin/Int.compareTo(<dispatch receiver>: kotlin.Int, other: kotlin.Int): kotlin.Int
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = other
               receiverType = null
               returnType = kotlin.Int
@@ -23,7 +23,7 @@ KtBinaryExpression(31,36): 'i < j'
           callableId = kotlin/Int.compareTo
       typeArgumentsMapping = {}
       argumentMapping = {
-        j -> (KaVariableLikeSignature:
+        j -> (KaVariableSignature:
           name = other
           receiverType = null
           returnType = kotlin.Int

@@ -7,15 +7,15 @@ package org.jetbrains.kotlin.analysis.api.fir
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.kotlin.analysis.api.fir.signatures.KaFirFunctionLikeSubstitutorBasedSignature
-import org.jetbrains.kotlin.analysis.api.fir.signatures.KaFirVariableLikeSubstitutorBasedSignature
+import org.jetbrains.kotlin.analysis.api.fir.signatures.KaFirFunctionSubstitutorBasedSignature
+import org.jetbrains.kotlin.analysis.api.fir.signatures.KaFirVariableSubstitutorBasedSignature
 import org.jetbrains.kotlin.analysis.api.fir.symbols.*
 import org.jetbrains.kotlin.analysis.api.fir.types.*
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProvider
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionLikeSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KaVariableLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
@@ -23,8 +23,8 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.types.KaTypeProjection
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
-import org.jetbrains.kotlin.analysis.low.level.api.fir.util.errorWithFirSpecificEntries
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.errorWithFirSpecificEntries
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.declarations.*
@@ -82,8 +82,8 @@ internal class KaSymbolByFirBuilder(
     private val symbolsCache = BuilderCache<FirBasedSymbol<*>, KaSymbol>()
 
     val classifierBuilder = ClassifierSymbolBuilder()
-    val functionLikeBuilder = FunctionLikeSymbolBuilder()
-    val variableLikeBuilder = VariableLikeSymbolBuilder()
+    val functionBuilder = FunctionSymbolBuilder()
+    val variableBuilder = VariableSymbolBuilder()
     val callableBuilder = CallableSymbolBuilder()
     val anonymousInitializerBuilder = AnonymousInitializerBuilder()
     val typeBuilder = TypeBuilder()
@@ -148,7 +148,7 @@ internal class KaSymbolByFirBuilder(
             }
         }
 
-        fun buildClassOrObjectSymbol(firSymbol: FirClassSymbol<*>): KaClassOrObjectSymbol {
+        fun buildClassOrObjectSymbol(firSymbol: FirClassSymbol<*>): KaClassSymbol {
             return when (firSymbol) {
                 is FirAnonymousObjectSymbol -> buildAnonymousObjectSymbol(firSymbol)
                 is FirRegularClassSymbol -> buildNamedClassOrObjectSymbol(firSymbol)
@@ -156,8 +156,8 @@ internal class KaSymbolByFirBuilder(
             }
         }
 
-        fun buildNamedClassOrObjectSymbol(symbol: FirRegularClassSymbol): KaFirNamedClassOrObjectSymbol {
-            return symbolsCache.cache(symbol) { KaFirNamedClassOrObjectSymbol(symbol, analysisSession) }
+        fun buildNamedClassOrObjectSymbol(symbol: FirRegularClassSymbol): KaFirNamedClassSymbol {
+            return symbolsCache.cache(symbol) { KaFirNamedClassSymbol(symbol, analysisSession) }
         }
 
         fun buildAnonymousObjectSymbol(symbol: FirAnonymousObjectSymbol): KaAnonymousObjectSymbol {
@@ -195,14 +195,14 @@ internal class KaSymbolByFirBuilder(
         }
     }
 
-    inner class FunctionLikeSymbolBuilder {
-        fun buildFunctionLikeSymbol(firSymbol: FirFunctionSymbol<*>): KaFunctionLikeSymbol {
+    inner class FunctionSymbolBuilder {
+        fun buildFunctionSymbol(firSymbol: FirFunctionSymbol<*>): KaFunctionSymbol {
             return when (firSymbol) {
                 is FirNamedFunctionSymbol -> {
                     if (firSymbol.origin == FirDeclarationOrigin.SamConstructor) {
                         buildSamConstructorSymbol(firSymbol)
                     } else {
-                        buildFunctionSymbol(firSymbol)
+                        buildNamedFunctionSymbol(firSymbol)
                     }
                 }
                 is FirConstructorSymbol -> buildConstructorSymbol(firSymbol)
@@ -212,33 +212,34 @@ internal class KaSymbolByFirBuilder(
             }
         }
 
-        fun buildFunctionLikeSignature(fir: FirFunctionSymbol<*>): KaFunctionLikeSignature<KaFunctionLikeSymbol> {
+        fun buildFunctionSignature(fir: FirFunctionSymbol<*>): KaFunctionSignature<KaFunctionSymbol> {
             if (fir is FirNamedFunctionSymbol && fir.origin != FirDeclarationOrigin.SamConstructor)
-                return buildFunctionSignature(fir)
-            return with(analysisSession) { buildFunctionLikeSymbol(fir).asSignature() }
+                return buildNamedFunctionSignature(fir)
+
+            return with(analysisSession) { buildFunctionSymbol(fir).asSignature() }
         }
 
-        fun buildFunctionSymbol(firSymbol: FirNamedFunctionSymbol): KaFirFunctionSymbol {
+        fun buildNamedFunctionSymbol(firSymbol: FirNamedFunctionSymbol): KaFirNamedFunctionSymbol {
             firSymbol.fir.unwrapSubstitutionOverrideIfNeeded()?.let {
-                return buildFunctionSymbol(it.symbol)
+                return buildNamedFunctionSymbol(it.symbol)
             }
 
             if (firSymbol.dispatchReceiverType?.contains { it is ConeStubType } == true) {
-                return buildFunctionSymbol(
+                return buildNamedFunctionSymbol(
                     firSymbol.originalIfFakeOverride()
                         ?: errorWithFirSpecificEntries("Stub type in real declaration", fir = firSymbol.fir)
                 )
             }
 
-            firSymbol.unwrapImportedFromObjectOrStatic(::buildFunctionSymbol)?.let { return it }
+            firSymbol.unwrapImportedFromObjectOrStatic(::buildNamedFunctionSymbol)?.let { return it }
 
             check(firSymbol.origin != FirDeclarationOrigin.SamConstructor)
-            return symbolsCache.cache(firSymbol) { KaFirFunctionSymbol(firSymbol, analysisSession) }
+            return symbolsCache.cache(firSymbol) { KaFirNamedFunctionSymbol(firSymbol, analysisSession) }
         }
 
-        fun buildFunctionSignature(firSymbol: FirNamedFunctionSymbol): KaFunctionLikeSignature<KaFirFunctionSymbol> {
+        fun buildNamedFunctionSignature(firSymbol: FirNamedFunctionSymbol): KaFunctionSignature<KaFirNamedFunctionSymbol> {
             firSymbol.lazyResolveToPhase(FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE)
-            return KaFirFunctionLikeSubstitutorBasedSignature(analysisSession.token, firSymbol, analysisSession.firSymbolBuilder)
+            return KaFirFunctionSubstitutorBasedSignature(analysisSession.token, firSymbol, analysisSession.firSymbolBuilder)
         }
 
         fun buildAnonymousFunctionSymbol(firSymbol: FirAnonymousFunctionSymbol): KaFirAnonymousFunctionSymbol {
@@ -262,7 +263,7 @@ internal class KaSymbolByFirBuilder(
             }
         }
 
-        fun buildPropertyAccessorSymbol(firSymbol: FirPropertyAccessorSymbol): KaFunctionLikeSymbol {
+        fun buildPropertyAccessorSymbol(firSymbol: FirPropertyAccessorSymbol): KaFunctionSymbol {
             return symbolsCache.cache(firSymbol) {
                 if (firSymbol.isGetter) {
                     KaFirPropertyGetterSymbol(firSymbol, analysisSession)
@@ -273,33 +274,27 @@ internal class KaSymbolByFirBuilder(
         }
     }
 
-    inner class VariableLikeSymbolBuilder {
-        fun buildVariableLikeSymbol(firSymbol: FirVariableSymbol<*>): KaVariableLikeSymbol {
-            return when (firSymbol) {
-                is FirPropertySymbol -> buildVariableSymbol(firSymbol)
-                is FirValueParameterSymbol -> buildValueParameterSymbol(firSymbol)
-                is FirFieldSymbol -> buildFieldSymbol(firSymbol)
-                is FirEnumEntrySymbol -> buildEnumEntrySymbol(firSymbol) // TODO enum entry should not be callable
-                is FirBackingFieldSymbol -> buildBackingFieldSymbol(firSymbol)
-                is FirErrorPropertySymbol -> buildErrorVariableSymbol(firSymbol)
-
-                is FirDelegateFieldSymbol -> throwUnexpectedElementError(firSymbol)
-            }
-        }
-
-        fun buildVariableLikeSignature(firSymbol: FirVariableSymbol<*>): KaVariableLikeSignature<KaVariableLikeSymbol> {
-            if (firSymbol is FirPropertySymbol && !firSymbol.isLocal && firSymbol !is FirSyntheticPropertySymbol) {
-                return buildPropertySignature(firSymbol)
-            }
-            return with(analysisSession) { buildVariableLikeSymbol(firSymbol).asSignature() }
-        }
-
-        fun buildVariableSymbol(firSymbol: FirPropertySymbol): KaVariableSymbol {
-            return when {
+    inner class VariableSymbolBuilder {
+        fun buildVariableSymbol(firSymbol: FirVariableSymbol<*>): KaVariableSymbol = when (firSymbol) {
+            is FirPropertySymbol -> when {
                 firSymbol.isLocal -> buildLocalVariableSymbol(firSymbol)
                 firSymbol is FirSyntheticPropertySymbol -> buildSyntheticJavaPropertySymbol(firSymbol)
                 else -> buildPropertySymbol(firSymbol)
             }
+            is FirValueParameterSymbol -> buildValueParameterSymbol(firSymbol)
+            is FirFieldSymbol -> buildFieldSymbol(firSymbol)
+            is FirEnumEntrySymbol -> buildEnumEntrySymbol(firSymbol) // TODO enum entry should not be callable
+            is FirBackingFieldSymbol -> buildBackingFieldSymbol(firSymbol)
+            is FirErrorPropertySymbol -> buildErrorVariableSymbol(firSymbol)
+
+            is FirDelegateFieldSymbol -> throwUnexpectedElementError(firSymbol)
+        }
+
+        fun buildVariableLikeSignature(firSymbol: FirVariableSymbol<*>): KaVariableSignature<KaVariableSymbol> {
+            if (firSymbol is FirPropertySymbol && !firSymbol.isLocal && firSymbol !is FirSyntheticPropertySymbol) {
+                return buildPropertySignature(firSymbol)
+            }
+            return with(analysisSession) { buildVariableSymbol(firSymbol).asSignature() }
         }
 
         fun buildPropertySymbol(firSymbol: FirPropertySymbol): KaVariableSymbol {
@@ -317,9 +312,9 @@ internal class KaSymbolByFirBuilder(
             }
         }
 
-        fun buildPropertySignature(firSymbol: FirPropertySymbol): KaVariableLikeSignature<KaVariableSymbol> {
+        fun buildPropertySignature(firSymbol: FirPropertySymbol): KaVariableSignature<KaVariableSymbol> {
             firSymbol.lazyResolveToPhase(FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE)
-            return KaFirVariableLikeSubstitutorBasedSignature(analysisSession.token, firSymbol, analysisSession.firSymbolBuilder)
+            return KaFirVariableSubstitutorBasedSignature(analysisSession.token, firSymbol, analysisSession.firSymbolBuilder)
         }
 
         fun buildLocalVariableSymbol(firSymbol: FirPropertySymbol): KaFirLocalVariableSymbol {
@@ -390,19 +385,17 @@ internal class KaSymbolByFirBuilder(
         fun buildCallableSymbol(firSymbol: FirCallableSymbol<*>): KaCallableSymbol {
             return when (firSymbol) {
                 is FirPropertyAccessorSymbol -> buildPropertyAccessorSymbol(firSymbol)
-                is FirFunctionSymbol<*> -> functionLikeBuilder.buildFunctionLikeSymbol(firSymbol)
-                is FirVariableSymbol<*> -> variableLikeBuilder.buildVariableLikeSymbol(firSymbol)
+                is FirFunctionSymbol<*> -> functionBuilder.buildFunctionSymbol(firSymbol)
+                is FirVariableSymbol<*> -> variableBuilder.buildVariableSymbol(firSymbol)
                 else -> throwUnexpectedElementError(firSymbol)
             }
         }
 
-        fun buildCallableSignature(firSymbol: FirCallableSymbol<*>): KaCallableSignature<KaCallableSymbol> {
-            return when (firSymbol) {
-                is FirPropertyAccessorSymbol ->  with(analysisSession) { buildPropertyAccessorSymbol(firSymbol).asSignature() }
-                is FirFunctionSymbol<*> -> functionLikeBuilder.buildFunctionLikeSignature(firSymbol)
-                is FirVariableSymbol<*> -> variableLikeBuilder.buildVariableLikeSignature(firSymbol)
-                else -> throwUnexpectedElementError(firSymbol)
-            }
+        fun buildCallableSignature(firSymbol: FirCallableSymbol<*>): KaCallableSignature<KaCallableSymbol> = when (firSymbol) {
+            is FirPropertyAccessorSymbol -> with(analysisSession) { buildPropertyAccessorSymbol(firSymbol).asSignature() }
+            is FirFunctionSymbol<*> -> functionBuilder.buildFunctionSignature(firSymbol)
+            is FirVariableSymbol<*> -> variableBuilder.buildVariableLikeSignature(firSymbol)
+            else -> throwUnexpectedElementError(firSymbol)
         }
 
 

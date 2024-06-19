@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
  *
  */
 context(KaSession, KtObjCExportSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 fun KaClassLikeSymbol.getObjCClassOrProtocolName(bareName: Boolean = false): ObjCExportClassOrProtocolName {
     val resolvedObjCNameAnnotation = resolveObjCNameAnnotation()
 
@@ -42,6 +43,7 @@ fun KaClassLikeSymbol.getObjCClassOrProtocolName(bareName: Boolean = false): Obj
 }
 
 context(KaSession, KtObjCExportSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 private fun KaClassLikeSymbol.getObjCName(
     resolvedObjCNameAnnotation: KtResolvedObjCNameAnnotation? = resolveObjCNameAnnotation(),
     bareName: Boolean = false,
@@ -65,6 +67,7 @@ private fun KaClassLikeSymbol.getObjCName(
 }
 
 context(KaSession, KtObjCExportSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 private fun KaClassLikeSymbol.getSwiftName(
     resolvedObjCNameAnnotation: KtResolvedObjCNameAnnotation? = resolveObjCNameAnnotation(),
     bareName: Boolean = false,
@@ -102,6 +105,7 @@ private fun KaClassLikeSymbol.getSwiftName(
 }
 
 context(KaSession, KtObjCExportSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 private fun KaClassLikeSymbol.canBeInnerSwift(): Boolean {
     if (configuration.objcGenerics && this.typeParameters.isNotEmpty()) {
         // Swift compiler doesn't seem to handle this case properly.
@@ -110,7 +114,7 @@ private fun KaClassLikeSymbol.canBeInnerSwift(): Boolean {
         return false
     }
 
-    if (this is KaClassOrObjectSymbol && this.classKind == KaClassKind.INTERFACE) {
+    if (this is KaClassSymbol && this.classKind == KaClassKind.INTERFACE) {
         // Swift doesn't support nested protocols.
         return false
     }
@@ -119,13 +123,14 @@ private fun KaClassLikeSymbol.canBeInnerSwift(): Boolean {
 }
 
 context(KaSession, KtObjCExportSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 private fun KaClassLikeSymbol.canBeOuterSwift(): Boolean {
     if (configuration.objcGenerics && this.typeParameters.isNotEmpty()) {
         // Swift nested classes are static but capture outer's generics.
         return false
     }
 
-    if (this is KaClassOrObjectSymbol && this.classKind == KaClassKind.INTERFACE) {
+    if (this is KaClassSymbol && this.classKind == KaClassKind.INTERFACE) {
         // Swift doesn't support outer protocols.
         return false
     }
@@ -139,6 +144,7 @@ private fun mangleSwiftNestedClassName(name: String): String = when (name) {
 }
 
 context(KaSession, KtObjCExportSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 private fun KaSymbol.getObjCModuleNamePrefix(): String? {
     val module = containingModule
     val moduleName = module.getObjCKotlinModuleName() ?: return null

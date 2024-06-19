@@ -5,6 +5,7 @@ KaKotlinPropertySymbol:
     callableId: null
     contextReceivers: []
     isExtension: false
+    isVal: true
     location: PROPERTY
     name: field
     origin: PROPERTY_BACKING_FIELD
@@ -96,6 +97,7 @@ KaKotlinPropertySymbol:
     callableId: null
     contextReceivers: []
     isExtension: false
+    isVal: true
     location: PROPERTY
     name: field
     origin: PROPERTY_BACKING_FIELD
@@ -187,6 +189,7 @@ KaKotlinPropertySymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: value
@@ -218,6 +221,7 @@ KaKotlinPropertySymbol:
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
+        isVal: true
         isVararg: false
         location: LOCAL
         name: value
@@ -264,6 +268,7 @@ KaKotlinPropertySymbol:
     callableId: null
     contextReceivers: []
     isExtension: false
+    isVal: true
     location: PROPERTY
     name: field
     origin: PROPERTY_BACKING_FIELD
@@ -370,7 +375,7 @@ KaKotlinPropertySymbol:
   javaSetterName: null
   setterDeprecationStatus: null
 
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: /I.foo
   contextReceivers: []
@@ -416,6 +421,7 @@ KaKotlinPropertySymbol:
     callableId: null
     contextReceivers: []
     isExtension: false
+    isVal: true
     location: PROPERTY
     name: field
     origin: PROPERTY_BACKING_FIELD
@@ -507,6 +513,7 @@ KaKotlinPropertySymbol:
     callableId: null
     contextReceivers: []
     isExtension: false
+    isVal: true
     location: PROPERTY
     name: field
     origin: PROPERTY_BACKING_FIELD
@@ -620,6 +627,7 @@ KaKotlinPropertySymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: value
@@ -662,6 +670,7 @@ KaKotlinPropertySymbol:
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
+        isVal: true
         isVararg: false
         location: LOCAL
         name: value
@@ -701,7 +710,7 @@ KaKotlinPropertySymbol:
   javaSetterName: setZoo
   setterDeprecationStatus: null
 
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: /I.smth
   contextReceivers: []
@@ -727,7 +736,7 @@ KaFunctionSymbol:
     annotations: []
     location: LOCAL
     origin: SOURCE
-    owningCallableSymbol: KaFunctionSymbol(/I.smth)
+    owningCallableSymbol: KaNamedFunctionSymbol(/I.smth)
     type: KaUsualClassType:
       annotations: []
       typeArguments: []
@@ -780,6 +789,7 @@ KaConstructorSymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: p

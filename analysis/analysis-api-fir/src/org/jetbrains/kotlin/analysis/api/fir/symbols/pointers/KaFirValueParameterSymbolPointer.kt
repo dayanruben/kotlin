@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.fir.declarations.FirFunction
 import org.jetbrains.kotlin.name.Name
 
 internal class KaFirValueParameterSymbolPointer(
-    private val ownerPointer: KaSymbolPointer<KaFunctionLikeSymbol>,
+    private val ownerPointer: KaSymbolPointer<KaFunctionSymbol>,
     private val name: Name,
     private val index: Int,
 ) : KaSymbolPointer<KaValueParameterSymbol>() {
@@ -28,7 +28,7 @@ internal class KaFirValueParameterSymbolPointer(
 
         val function = ownerSymbol.firSymbol.fir as? FirFunction ?: return null
         val firValueParameterSymbol = function.valueParameters.getOrNull(index)?.symbol?.takeIf { it.name == name } ?: return null
-        return analysisSession.firSymbolBuilder.variableLikeBuilder.buildValueParameterSymbol(firValueParameterSymbol)
+        return analysisSession.firSymbolBuilder.variableBuilder.buildValueParameterSymbol(firValueParameterSymbol)
     }
 
     override fun pointsToTheSameSymbolAs(other: KaSymbolPointer<KaSymbol>): Boolean = this === other ||

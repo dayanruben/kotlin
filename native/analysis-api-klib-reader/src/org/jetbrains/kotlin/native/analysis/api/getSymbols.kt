@@ -7,8 +7,8 @@ package org.jetbrains.kotlin.native.analysis.api
 
 import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.api.symbols.*
 
 /**
  * Note: A single [KlibDeclarationAddress] can be shared by multiple symbols.
@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
  * @see [getPropertySymbols]
  */
 context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 public fun KlibDeclarationAddress.getSymbols(): Sequence<KaSymbol> {
     return when (this) {
         is KlibClassAddress -> getClassOrObjectSymbol()?.let { symbol -> sequenceOf(symbol) } ?: emptySequence()
@@ -40,12 +41,14 @@ public fun KlibDeclarationAddress.getSymbols(): Sequence<KaSymbol> {
  * @see [getSymbols]
  */
 context(KaSession)
-public fun KlibClassAddress.getClassOrObjectSymbol(): KaClassOrObjectSymbol? {
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
+public fun KlibClassAddress.getClassOrObjectSymbol(): KaClassSymbol? {
     return findClass(classId)
         ?.takeIf { symbol -> symbol in this }
 }
 
 context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 public fun KlibTypeAliasAddress.getTypeAliasSymbol(): KaTypeAliasSymbol? {
     return findTypeAlias(classId)
         ?.takeIf { symbol -> symbol in this }
@@ -55,6 +58,7 @@ public fun KlibTypeAliasAddress.getTypeAliasSymbol(): KaTypeAliasSymbol? {
  * @see [getSymbols]
  */
 context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 public fun KlibCallableAddress.getCallableSymbols(): Sequence<KaCallableSymbol> {
     return when (this) {
         is KlibFunctionAddress -> getFunctionSymbols()
@@ -66,9 +70,10 @@ public fun KlibCallableAddress.getCallableSymbols(): Sequence<KaCallableSymbol> 
  * @see [getSymbols]
  */
 context(KaSession)
-public fun KlibFunctionAddress.getFunctionSymbols(): Sequence<KaFunctionSymbol> {
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
+public fun KlibFunctionAddress.getFunctionSymbols(): Sequence<KaNamedFunctionSymbol> {
     return findTopLevelCallables(packageFqName, callableName)
-        .filterIsInstance<KaFunctionSymbol>()
+        .filterIsInstance<KaNamedFunctionSymbol>()
         .filter { symbol -> symbol in this }
 }
 
@@ -76,6 +81,7 @@ public fun KlibFunctionAddress.getFunctionSymbols(): Sequence<KaFunctionSymbol> 
  * @see [getSymbols]
  */
 context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 public fun KlibPropertyAddress.getPropertySymbols(): Sequence<KaPropertySymbol> {
     return findTopLevelCallables(packageFqName, callableName)
         .filterIsInstance<KaPropertySymbol>()
@@ -83,6 +89,7 @@ public fun KlibPropertyAddress.getPropertySymbols(): Sequence<KaPropertySymbol> 
 }
 
 context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 @OptIn(KaNonPublicApi::class)
 private operator fun KlibDeclarationAddress.contains(symbol: KaDeclarationSymbol): Boolean {
     val symbolKlibSourceFileName = symbol.klibSourceFileName

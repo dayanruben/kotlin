@@ -1,4 +1,4 @@
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: [
     kotlin/OptIn(markerClass = [kotlin.contracts.ExperimentalContracts::class])
       psi: KtAnnotationEntry
@@ -24,6 +24,7 @@ KaFunctionSymbol:
                   isExtension: false
                   isImplicitLambdaParameter: false
                   isNoinline: false
+                  isVal: true
                   isVararg: false
                   location: LOCAL
                   name: value
@@ -79,6 +80,7 @@ KaFunctionSymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: value

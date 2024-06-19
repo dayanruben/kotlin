@@ -1,3 +1,8 @@
+/*
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+
 @file:Suppress("UNUSED_PARAMETER")
 
 package org.jetbrains.kotlin.objcexport
@@ -21,10 +26,11 @@ internal val KaSymbol.isConstructor: Boolean
     get() = this is KaConstructorSymbol
 
 context(KaSession, KtObjCExportSession)
-fun KaFunctionLikeSymbol.translateToObjCMethod(): ObjCMethod? {
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
+fun KaFunctionSymbol.translateToObjCMethod(): ObjCMethod? {
     if (!isVisibleInObjC()) return null
     if (isFakeOverride) return null
-    if (this is KaFunctionSymbol && isClone) return null
+    if (this is KaNamedFunctionSymbol && isClone) return null
     return buildObjCMethod()
 }
 
@@ -32,11 +38,12 @@ fun KaFunctionLikeSymbol.translateToObjCMethod(): ObjCMethod? {
  * [org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportTranslatorImpl.buildMethod]
  */
 context(KaSession, KtObjCExportSession)
-internal fun KaFunctionLikeSymbol.buildObjCMethod(
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
+internal fun KaFunctionSymbol.buildObjCMethod(
     unavailable: Boolean = false,
 ): ObjCMethod {
 
-    val bridge = if (this is KaFunctionSymbol) {
+    val bridge = if (this is KaNamedFunctionSymbol) {
         /**
          * Unlike constructor, a function can have base return type.
          * So in case of function we need to call [getFunctionMethodBridge] on [baseMethod]
@@ -112,7 +119,8 @@ internal fun KaCallableSymbol.isRefinedInSwift(): Boolean = when {
 }
 
 context(KaSession, KtObjCExportSession)
-internal fun KaFunctionLikeSymbol.getSwiftName(methodBridge: MethodBridge): String {
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
+internal fun KaFunctionSymbol.getSwiftName(methodBridge: MethodBridge): String {
     //assert(mapper.isBaseMethod(method)) //TODO: implement isBaseMethod
     if (this is KaNamedSymbol) {
         anyMethodSwiftNames[name]?.let { return it }
@@ -208,7 +216,8 @@ private fun splitSelector(selector: String): List<String> {
  * [org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportNamerImpl.getSelector]
  */
 context(KaSession, KtObjCExportSession)
-fun KaFunctionLikeSymbol.getSelector(methodBridge: MethodBridge): String {
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
+fun KaFunctionSymbol.getSelector(methodBridge: MethodBridge): String {
 
     if (this is KaNamedSymbol) {
         val name = this.name
@@ -265,7 +274,8 @@ fun KaFunctionLikeSymbol.getSelector(methodBridge: MethodBridge): String {
  * [org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportNamerImpl.getMangledName]
  */
 context(KaSession, KtObjCExportSession)
-private fun KaFunctionLikeSymbol.getMangledName(forSwift: Boolean): String {
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
+private fun KaFunctionSymbol.getMangledName(forSwift: Boolean): String {
     return if (this.isConstructor) {
         if (isArrayConstructor && !forSwift) "array" else "init"
     } else {
@@ -290,7 +300,8 @@ private fun String.startsWithWords(words: String) = this.startsWith(words) &&
  * [org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportTranslatorImpl.mapReturnType]
  */
 context(KaSession, KtObjCExportSession)
-fun KaFunctionLikeSymbol.mapReturnType(returnBridge: MethodBridge.ReturnValue): ObjCType {
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
+fun KaFunctionSymbol.mapReturnType(returnBridge: MethodBridge.ReturnValue): ObjCType {
     return when (returnBridge) {
         MethodBridge.ReturnValue.Suspend,
         MethodBridge.ReturnValue.Void,

@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.impl.base.test.SymbolByFqName.getSymbolDataFromFile
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -99,7 +99,7 @@ sealed class SymbolData {
             return symbols
         }
 
-        private fun KaSession.findMatchingCallableSymbols(classSymbol: KaClassOrObjectSymbol): List<KaCallableSymbol> {
+        private fun KaSession.findMatchingCallableSymbols(classSymbol: KaClassSymbol): List<KaCallableSymbol> {
             val declaredSymbols = classSymbol.combinedDeclaredMemberScope
                 .callables(callableId.callableName).toList()
 
@@ -120,7 +120,7 @@ sealed class SymbolData {
             val classSymbol = enumEntryId.classId?.let { findClass(it) }
                 ?: error("Cannot find enum class `${enumEntryId.classId}`.")
 
-            require(classSymbol is KaNamedClassOrObjectSymbol) { "`${enumEntryId.classId}` must be a named class." }
+            require(classSymbol is KaNamedClassSymbol) { "`${enumEntryId.classId}` must be a named class." }
             require(classSymbol.classKind == KaClassKind.ENUM_CLASS) { "`${enumEntryId.classId}` must be an enum class." }
 
             @Suppress("DEPRECATION")

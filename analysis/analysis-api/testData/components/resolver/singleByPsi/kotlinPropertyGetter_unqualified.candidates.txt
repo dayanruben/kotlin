@@ -7,14 +7,14 @@ KtNameReferenceExpression(50,51): 'i'
             annotations: []
             location: LOCAL
             origin: SOURCE
-            owningCallableSymbol: KaFunctionSymbol(/foo)
+            owningCallableSymbol: KaNamedFunctionSymbol(/foo)
             type: KaUsualClassType:
               annotations: []
               typeArguments: []
               type: A
           type = A
         extensionReceiver = null
-        signature = KaVariableLikeSignature:
+        signature = KaVariableSignature:
           name = i
           receiverType = null
           returnType = kotlin.Int

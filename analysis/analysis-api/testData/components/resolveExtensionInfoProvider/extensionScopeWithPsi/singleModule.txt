@@ -4,7 +4,7 @@ packages: 1
     location: TOP_LEVEL
     origin: SOURCE
 classifiers: 2
-  KaNamedClassOrObjectSymbol:
+  KaNamedClassSymbol:
     annotations: []
     classId: generated/GenClass1
     classKind: CLASS
@@ -33,7 +33,7 @@ classifiers: 2
       From resolve extension: true
       Resolve extension navigation targets: 1
         [Resolve extension navigation target for test for KtClass GenClass1]
-  KaNamedClassOrObjectSymbol:
+  KaNamedClassSymbol:
     annotations: []
     classId: generated/GenClass2
     classKind: CLASS
@@ -63,7 +63,7 @@ classifiers: 2
       Resolve extension navigation targets: 1
         [Resolve extension navigation target for test for KtClass GenClass2]
 callables: 5
-  KaFunctionSymbol:
+  KaNamedFunctionSymbol:
     annotations: []
     callableId: generated/genTopLevelFun1
     contextReceivers: []
@@ -102,6 +102,7 @@ callables: 5
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
+        isVal: true
         isVararg: false
         location: LOCAL
         name: foo
@@ -118,7 +119,7 @@ callables: 5
       From resolve extension: true
       Resolve extension navigation targets: 1
         [Resolve extension navigation target for test for KtNamedFunction genTopLevelFun1]
-  KaFunctionSymbol:
+  KaNamedFunctionSymbol:
     annotations: []
     callableId: generated/genTopLevelExtension1
     contextReceivers: []
@@ -144,7 +145,7 @@ callables: 5
       annotations: []
       location: LOCAL
       origin: SOURCE
-      owningCallableSymbol: KaFunctionSymbol(generated/genTopLevelExtension1)
+      owningCallableSymbol: KaNamedFunctionSymbol(generated/genTopLevelExtension1)
       type: KaUsualClassType:
         annotations: []
         typeArguments: []
@@ -167,6 +168,7 @@ callables: 5
       callableId: null
       contextReceivers: []
       isExtension: false
+      isVal: true
       location: PROPERTY
       name: field
       origin: PROPERTY_BACKING_FIELD
@@ -237,6 +239,7 @@ callables: 5
       callableId: null
       contextReceivers: []
       isExtension: false
+      isVal: true
       location: PROPERTY
       name: field
       origin: PROPERTY_BACKING_FIELD
@@ -316,6 +319,7 @@ callables: 5
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
+        isVal: true
         isVararg: false
         location: LOCAL
         name: value
@@ -343,6 +347,7 @@ callables: 5
           isExtension: false
           isImplicitLambdaParameter: false
           isNoinline: false
+          isVal: true
           isVararg: false
           location: LOCAL
           name: value
@@ -368,6 +373,7 @@ callables: 5
       callableId: null
       contextReceivers: []
       isExtension: false
+      isVal: true
       location: PROPERTY
       name: field
       origin: PROPERTY_BACKING_FIELD

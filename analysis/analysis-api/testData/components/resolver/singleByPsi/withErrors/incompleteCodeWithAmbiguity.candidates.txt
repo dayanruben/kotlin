@@ -6,12 +6,12 @@ KtCallExpression(89,100): 'Foo<String>'
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = Foo<T>
           symbol = <constructor>(len: kotlin.Int): Foo<T>
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = len
               receiverType = null
               returnType = kotlin.Int
@@ -24,7 +24,7 @@ KtCallExpression(89,100): 'Foo<String>'
       }
       argumentMapping = {}
     isInBestCandidates = false
-
+  
   KaInapplicableCallCandidateInfo:
     diagnostic = ERROR<OTHER_ERROR: Inapplicable candidate>
     candidate = KaSimpleFunctionCall:
@@ -32,12 +32,12 @@ KtCallExpression(89,100): 'Foo<String>'
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = Foo<T>
           symbol = <constructor>(s: kotlin.String): Foo<T>
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = s
               receiverType = null
               returnType = kotlin.String

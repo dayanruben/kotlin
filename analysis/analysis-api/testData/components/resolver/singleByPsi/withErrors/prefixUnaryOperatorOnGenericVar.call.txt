@@ -10,7 +10,7 @@ KtPrefixExpression(47,58): '++foo.value'
             isSafeNavigation = false
             type = kotlin.Int
           extensionReceiver = null
-          signature = KaFunctionLikeSignature:
+          signature = KaFunctionSignature:
             receiverType = null
             returnType = kotlin.Int
             symbol = kotlin/Int.inc(<dispatch receiver>: kotlin.Int): kotlin.Int
@@ -22,7 +22,7 @@ KtPrefixExpression(47,58): '++foo.value'
           expression = foo
           isSafeNavigation = false
           type = CInt32VarX<kotlin.Int>
-        signature = KaVariableLikeSignature:
+        signature = KaVariableSignature:
           name = value
           receiverType = CInt32VarX<kotlin.Int>
           returnType = kotlin.Int

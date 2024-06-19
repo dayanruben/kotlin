@@ -4,7 +4,7 @@ implicit receivers:
     annotations: []
     typeArguments: []
     type: <local>/Scope1
-  owner symbol: KaFirFunctionSymbol
+  owner symbol: KaFirNamedFunctionSymbol
 
 scopes:
   TypeScope, index = 0
@@ -18,6 +18,7 @@ scopes:
           callableId: null
           contextReceivers: []
           isExtension: false
+          isVal: true
           location: PROPERTY
           name: field
           origin: PROPERTY_BACKING_FIELD
@@ -103,7 +104,7 @@ scopes:
         setter: null
         typeParameters: []
         visibility: Local
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.equals
         contextReceivers: []
@@ -142,6 +143,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: other
@@ -154,7 +156,7 @@ scopes:
             typeParameters: []
         ]
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.hashCode
         contextReceivers: []
@@ -184,7 +186,7 @@ scopes:
         typeParameters: []
         valueParameters: []
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.toString
         contextReceivers: []
@@ -256,6 +258,7 @@ scopes:
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
+        isVal: true
         isVararg: false
         location: LOCAL
         name: df
@@ -303,7 +306,7 @@ scopes:
         location: TOP_LEVEL
         origin: SOURCE
     classifiers: 2
-      KaNamedClassOrObjectSymbol:
+      KaNamedClassSymbol:
         annotations: []
         classId: DataFrame
         classKind: INTERFACE
@@ -330,7 +333,7 @@ scopes:
           KaTypeParameterSymbol(T)
         ]
         visibility: Public
-      KaNamedClassOrObjectSymbol:
+      KaNamedClassSymbol:
         annotations: []
         classId: Refine
         classKind: ANNOTATION_CLASS
@@ -356,7 +359,7 @@ scopes:
         typeParameters: []
         visibility: Public
     callables: 2
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: [
           Refine()
             psi: KtAnnotationEntry
@@ -385,7 +388,7 @@ scopes:
           annotations: []
           location: LOCAL
           origin: SOURCE
-          owningCallableSymbol: KaFunctionSymbol(/add)
+          owningCallableSymbol: KaNamedFunctionSymbol(/add)
           type: KaUsualClassType:
             annotations: []
             typeArguments: [
@@ -418,6 +421,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: columnName
@@ -438,6 +442,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: expression
@@ -454,7 +459,7 @@ scopes:
             typeParameters: []
         ]
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: /test_1
         contextReceivers: []
@@ -493,6 +498,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: df

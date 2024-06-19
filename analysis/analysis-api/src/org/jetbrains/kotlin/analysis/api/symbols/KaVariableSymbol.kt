@@ -16,13 +16,18 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 
-public sealed class KaVariableLikeSymbol : KaCallableSymbol(), KaNamedSymbol, @Suppress("DEPRECATION") KaSymbolWithKind,
+public sealed class KaVariableSymbol : KaCallableSymbol(), KaNamedSymbol, @Suppress("DEPRECATION") KaSymbolWithKind,
     KaPossibleMemberSymbol {
-    abstract override fun createPointer(): KaSymbolPointer<KaVariableLikeSymbol>
+    public abstract val isVal: Boolean
+
+    abstract override fun createPointer(): KaSymbolPointer<KaVariableSymbol>
 }
 
-@Deprecated("Use 'KaVariableLikeSymbol' instead", ReplaceWith("KaVariableLikeSymbol"))
-public typealias KtVariableLikeSymbol = KaVariableLikeSymbol
+@Deprecated("Use 'KaVariableSymbol' instead", ReplaceWith("KaVariableSymbol"))
+public typealias KaVariableLikeSymbol = KaVariableSymbol
+
+@Deprecated("Use 'KaVariableSymbol' instead", ReplaceWith("KaVariableSymbol"))
+public typealias KtVariableLikeSymbol = KaVariableSymbol
 
 /**
  * Backing field of some member property
@@ -35,7 +40,7 @@ public typealias KtVariableLikeSymbol = KaVariableLikeSymbol
  *
  * Symbol at caret will be resolved to a [KaBackingFieldSymbol]
  */
-public abstract class KaBackingFieldSymbol : KaVariableLikeSymbol() {
+public abstract class KaBackingFieldSymbol : KaVariableSymbol() {
     public abstract val owningProperty: KaKotlinPropertySymbol
 
     final override val name: Name get() = withValidityAssertion { fieldName }
@@ -46,6 +51,7 @@ public abstract class KaBackingFieldSymbol : KaVariableLikeSymbol() {
     final override val isExtension: Boolean get() = withValidityAssertion { false }
     final override val receiverParameter: KaReceiverParameterSymbol? get() = withValidityAssertion { null }
     final override val contextReceivers: List<KaContextReceiver> get() = withValidityAssertion { emptyList() }
+    final override val isVal: Boolean get() = withValidityAssertion { true }
 
     final override val typeParameters: List<KaTypeParameterSymbol>
         get() = withValidityAssertion { emptyList() }
@@ -83,11 +89,12 @@ public typealias KtBackingFieldSymbol = KaBackingFieldSymbol
  *
  * `A` is an enum entry of enum class `E`. `x` is a property of `A`'s initializer and thus not accessible outside the initializer.
  */
-public abstract class KaEnumEntrySymbol : KaVariableLikeSymbol(), @Suppress("DEPRECATION") KaSymbolWithKind {
+public abstract class KaEnumEntrySymbol : KaVariableSymbol(), @Suppress("DEPRECATION") KaSymbolWithKind {
     final override val location: KaSymbolLocation get() = withValidityAssertion { KaSymbolLocation.CLASS }
     final override val isExtension: Boolean get() = withValidityAssertion { false }
     final override val receiverParameter: KaReceiverParameterSymbol? get() = withValidityAssertion { null }
     final override val contextReceivers: List<KaContextReceiver> get() = withValidityAssertion { emptyList() }
+    final override val isVal: Boolean get() = withValidityAssertion { true }
 
     final override val typeParameters: List<KaTypeParameterSymbol>
         get() = withValidityAssertion { emptyList() }
@@ -124,18 +131,12 @@ public typealias KtEnumEntrySymbol = KaEnumEntrySymbol
  * The initializer of `A` declares a member `x: Int`, which is inaccessible outside the initializer. Still, the corresponding
  * [KaEnumEntryInitializerSymbol] can be used to get a declared member scope that contains `x`.
  */
-public interface KaEnumEntryInitializerSymbol : KaSymbolWithMembers
+public interface KaEnumEntryInitializerSymbol : KaDeclarationContainerSymbol
 
 @Deprecated("Use 'KaEnumEntryInitializerSymbol' instead", ReplaceWith("KaEnumEntryInitializerSymbol"))
 public typealias KtEnumEntryInitializerSymbol = KaEnumEntryInitializerSymbol
 
-public sealed class KaVariableSymbol : KaVariableLikeSymbol() {
-    public abstract val isVal: Boolean
-
-    abstract override fun createPointer(): KaSymbolPointer<KaVariableSymbol>
-}
-
-@Deprecated("Use 'KaVariableSymbol' instead", ReplaceWith("KaVariableSymbol"))
+@Deprecated("Use 'KaVariableLikeSymbol' instead", ReplaceWith("KaVariableLikeSymbol"))
 public typealias KtVariableSymbol = KaVariableSymbol
 
 public abstract class KaJavaFieldSymbol :
@@ -218,8 +219,8 @@ public abstract class KaSyntheticJavaPropertySymbol : KaPropertySymbol() {
 
     abstract override val getter: KaPropertyGetterSymbol
 
-    public abstract val javaGetterSymbol: KaFunctionSymbol
-    public abstract val javaSetterSymbol: KaFunctionSymbol?
+    public abstract val javaGetterSymbol: KaNamedFunctionSymbol
+    public abstract val javaSetterSymbol: KaNamedFunctionSymbol?
 
     abstract override fun createPointer(): KaSymbolPointer<KaSyntheticJavaPropertySymbol>
 }
@@ -252,13 +253,14 @@ public sealed interface KaParameterSymbol : KaAnnotatedSymbol
 @Deprecated("Use 'KaParameterSymbol' instead", ReplaceWith("KaParameterSymbol"))
 public typealias KtParameterSymbol = KaParameterSymbol
 
-public abstract class KaValueParameterSymbol : KaVariableLikeSymbol(), KaParameterSymbol,
+public abstract class KaValueParameterSymbol : KaVariableSymbol(), KaParameterSymbol,
     @Suppress("DEPRECATION") KaSymbolWithKind, KaAnnotatedSymbol {
     final override val location: KaSymbolLocation get() = withValidityAssertion { KaSymbolLocation.LOCAL }
     final override val callableId: CallableId? get() = withValidityAssertion { null }
     final override val isExtension: Boolean get() = withValidityAssertion { false }
     final override val receiverParameter: KaReceiverParameterSymbol? get() = withValidityAssertion { null }
     final override val contextReceivers: List<KaContextReceiver> get() = withValidityAssertion { emptyList() }
+    final override val isVal: Boolean get() = withValidityAssertion { true }
 
     /**
      * Returns true if the function parameter is marked with `noinline` modifier

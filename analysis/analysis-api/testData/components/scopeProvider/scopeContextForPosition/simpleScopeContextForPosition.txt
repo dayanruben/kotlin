@@ -16,7 +16,7 @@ implicit receivers:
     annotations: []
     typeArguments: []
     type: C
-  owner symbol: KaFirNamedClassOrObjectSymbol
+  owner symbol: KaFirNamedClassSymbol
 
 scopes:
   LocalScope, index = 0
@@ -29,7 +29,7 @@ scopes:
     packages: 0
     classifiers: 0
     callables: 4
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: /A.memberInA
         contextReceivers: []
@@ -59,7 +59,7 @@ scopes:
         typeParameters: []
         valueParameters: []
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.equals
         contextReceivers: []
@@ -98,6 +98,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: other
@@ -110,7 +111,7 @@ scopes:
             typeParameters: []
         ]
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.hashCode
         contextReceivers: []
@@ -140,7 +141,7 @@ scopes:
         typeParameters: []
         valueParameters: []
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.toString
         contextReceivers: []
@@ -208,7 +209,7 @@ scopes:
     packages: 0
     classifiers: 0
     callables: 4
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: /B.memberInB
         contextReceivers: []
@@ -238,7 +239,7 @@ scopes:
         typeParameters: []
         valueParameters: []
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.equals
         contextReceivers: []
@@ -277,6 +278,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: other
@@ -289,7 +291,7 @@ scopes:
             typeParameters: []
         ]
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.hashCode
         contextReceivers: []
@@ -319,7 +321,7 @@ scopes:
         typeParameters: []
         valueParameters: []
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.toString
         contextReceivers: []
@@ -412,6 +414,7 @@ scopes:
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
+        isVal: true
         isVararg: false
         location: LOCAL
         name: lambdaArg
@@ -443,7 +446,7 @@ scopes:
           typeArguments: []
           type: kotlin/Int
         typeParameters: []
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: null
         contextReceivers: []
@@ -489,6 +492,7 @@ scopes:
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
+        isVal: true
         isVararg: false
         location: LOCAL
         name: param
@@ -519,7 +523,7 @@ scopes:
   TypeScope, index = 11
     packages: 0
     classifiers: 2
-      KaNamedClassOrObjectSymbol:
+      KaNamedClassSymbol:
         annotations: []
         classId: C.NestedInC
         classKind: CLASS
@@ -544,7 +548,7 @@ scopes:
         ]
         typeParameters: []
         visibility: Public
-      KaNamedClassOrObjectSymbol:
+      KaNamedClassSymbol:
         annotations: []
         classId: JavaClass.NestedInJavaClass
         classKind: CLASS
@@ -570,7 +574,7 @@ scopes:
         typeParameters: []
         visibility: PackageVisibility
     callables: 4
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: /C.methodInC
         contextReceivers: []
@@ -611,6 +615,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: param
@@ -623,7 +628,7 @@ scopes:
             typeParameters: []
         ]
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.equals
         contextReceivers: []
@@ -662,6 +667,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: other
@@ -674,7 +680,7 @@ scopes:
             typeParameters: []
         ]
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.hashCode
         contextReceivers: []
@@ -704,7 +710,7 @@ scopes:
         typeParameters: []
         valueParameters: []
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.toString
         contextReceivers: []
@@ -759,7 +765,7 @@ scopes:
   StaticMemberScope, index = 12
     packages: 0
     classifiers: 1
-      KaNamedClassOrObjectSymbol:
+      KaNamedClassSymbol:
         annotations: []
         classId: C.NestedInC
         classKind: CLASS
@@ -790,7 +796,7 @@ scopes:
   StaticMemberScope, index = 13
     packages: 0
     classifiers: 1
-      KaNamedClassOrObjectSymbol:
+      KaNamedClassSymbol:
         annotations: []
         classId: JavaClass.NestedInJavaClass
         classKind: CLASS
@@ -851,7 +857,7 @@ scopes:
         location: TOP_LEVEL
         origin: SOURCE
     classifiers: 3
-      KaNamedClassOrObjectSymbol:
+      KaNamedClassSymbol:
         annotations: []
         classId: A
         classKind: CLASS
@@ -876,7 +882,7 @@ scopes:
         ]
         typeParameters: []
         visibility: Public
-      KaNamedClassOrObjectSymbol:
+      KaNamedClassSymbol:
         annotations: []
         classId: B
         classKind: CLASS
@@ -901,7 +907,7 @@ scopes:
         ]
         typeParameters: []
         visibility: Public
-      KaNamedClassOrObjectSymbol:
+      KaNamedClassSymbol:
         annotations: []
         classId: C
         classKind: CLASS
@@ -927,7 +933,7 @@ scopes:
         typeParameters: []
         visibility: Public
     callables: 4
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: /withA
         contextReceivers: []
@@ -966,6 +972,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: f
@@ -987,7 +994,7 @@ scopes:
             typeParameters: []
         ]
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: /withB
         contextReceivers: []
@@ -1026,6 +1033,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: f
@@ -1047,7 +1055,7 @@ scopes:
             typeParameters: []
         ]
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: /withJavaClass
         contextReceivers: []
@@ -1086,6 +1094,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: f
@@ -1107,7 +1116,7 @@ scopes:
             typeParameters: []
         ]
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: /topLevel
         contextReceivers: []

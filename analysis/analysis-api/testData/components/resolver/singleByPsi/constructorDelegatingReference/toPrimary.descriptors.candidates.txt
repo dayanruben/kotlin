@@ -6,7 +6,7 @@ KtConstructorDelegationReferenceExpression(38,42): 'this'
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = A
           symbol = <constructor>(): A
@@ -15,19 +15,19 @@ KtConstructorDelegationReferenceExpression(38,42): 'this'
       typeArgumentsMapping = {}
       argumentMapping = {}
     isInBestCandidates = false
-
+  
   KaApplicableCallCandidateInfo:
     candidate = KaDelegatedConstructorCall:
       kind = THIS_CALL
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = A
           symbol = <constructor>(a: kotlin.Int): A
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = a
               receiverType = null
               returnType = kotlin.Int
@@ -37,7 +37,7 @@ KtConstructorDelegationReferenceExpression(38,42): 'this'
           callableId = null
       typeArgumentsMapping = {}
       argumentMapping = {
-        2 -> (KaVariableLikeSignature:
+        2 -> (KaVariableSignature:
           name = a
           receiverType = null
           returnType = kotlin.Int

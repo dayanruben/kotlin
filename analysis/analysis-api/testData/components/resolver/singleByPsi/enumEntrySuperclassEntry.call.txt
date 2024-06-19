@@ -5,12 +5,12 @@ KtSuperTypeCallEntry(107,110): '(1)'
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = EnumWithConstructor
           symbol = <constructor>(i: kotlin.Int): EnumWithConstructor
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = i
               receiverType = null
               returnType = kotlin.Int
@@ -20,7 +20,7 @@ KtSuperTypeCallEntry(107,110): '(1)'
           callableId = null
       typeArgumentsMapping = {}
       argumentMapping = {
-        1 -> (KaVariableLikeSignature:
+        1 -> (KaVariableSignature:
           name = i
           receiverType = null
           returnType = kotlin.Int

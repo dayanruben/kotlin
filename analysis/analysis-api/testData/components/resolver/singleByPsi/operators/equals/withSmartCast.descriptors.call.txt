@@ -8,12 +8,12 @@ KtOperationReferenceExpression(184,186): '=='
           isSafeNavigation = false
           type = BaseClass
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = kotlin.Boolean
           symbol = kotlin/Any.equals(<dispatch receiver>: kotlin.Any, other: kotlin.Any?): kotlin.Boolean
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = other
               receiverType = null
               returnType = kotlin.Any?
@@ -23,7 +23,7 @@ KtOperationReferenceExpression(184,186): '=='
           callableId = kotlin/Any.equals
       typeArgumentsMapping = {}
       argumentMapping = {
-        b2 -> (KaVariableLikeSignature:
+        b2 -> (KaVariableSignature:
           name = other
           receiverType = null
           returnType = kotlin.Any?

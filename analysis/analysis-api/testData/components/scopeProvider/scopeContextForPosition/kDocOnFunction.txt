@@ -4,14 +4,14 @@ implicit receivers:
     annotations: []
     typeArguments: []
     type: test/Receiver
-  owner symbol: KaFirFunctionSymbol
+  owner symbol: KaFirNamedFunctionSymbol
 
 scopes:
   TypeScope, index = 0
     packages: 0
     classifiers: 0
     callables: 3
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.equals
         contextReceivers: []
@@ -50,6 +50,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: other
@@ -62,7 +63,7 @@ scopes:
             typeParameters: []
         ]
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.hashCode
         contextReceivers: []
@@ -92,7 +93,7 @@ scopes:
         typeParameters: []
         valueParameters: []
         visibility: Public
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.toString
         contextReceivers: []
@@ -158,6 +159,7 @@ scopes:
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
+        isVal: true
         isVararg: false
         location: LOCAL
         name: param1
@@ -178,6 +180,7 @@ scopes:
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
+        isVal: true
         isVararg: false
         location: LOCAL
         name: param2
@@ -214,7 +217,7 @@ scopes:
   PackageMemberScope, index = 4
     packages: 0
     classifiers: 3
-      KaNamedClassOrObjectSymbol:
+      KaNamedClassSymbol:
         annotations: []
         classId: test/Receiver
         classKind: CLASS
@@ -239,7 +242,7 @@ scopes:
         ]
         typeParameters: []
         visibility: Public
-      KaNamedClassOrObjectSymbol:
+      KaNamedClassSymbol:
         annotations: []
         classId: test/Param1
         classKind: CLASS
@@ -264,7 +267,7 @@ scopes:
         ]
         typeParameters: []
         visibility: Public
-      KaNamedClassOrObjectSymbol:
+      KaNamedClassSymbol:
         annotations: []
         classId: test/Param2
         classKind: CLASS
@@ -290,7 +293,7 @@ scopes:
         typeParameters: []
         visibility: Public
     callables: 1
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: test/function
         contextReceivers: []
@@ -316,7 +319,7 @@ scopes:
           annotations: []
           location: LOCAL
           origin: SOURCE
-          owningCallableSymbol: KaFunctionSymbol(test/function)
+          owningCallableSymbol: KaNamedFunctionSymbol(test/function)
           type: KaUsualClassType:
             annotations: []
             typeArguments: []
@@ -338,6 +341,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: param1
@@ -358,6 +362,7 @@ scopes:
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
+            isVal: true
             isVararg: false
             location: LOCAL
             name: param2

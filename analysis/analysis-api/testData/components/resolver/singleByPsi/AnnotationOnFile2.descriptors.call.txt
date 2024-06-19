@@ -4,12 +4,12 @@ KtNameReferenceExpression(13,21): 'Suppress'
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = kotlin.Suppress
           symbol = <constructor>(vararg names: kotlin.String): kotlin.Suppress
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = names
               receiverType = null
               returnType = kotlin.String
@@ -19,7 +19,7 @@ KtNameReferenceExpression(13,21): 'Suppress'
           callableId = null
       typeArgumentsMapping = {}
       argumentMapping = {
-        "message" -> (KaVariableLikeSignature:
+        "message" -> (KaVariableSignature:
           name = names
           receiverType = null
           returnType = kotlin.String

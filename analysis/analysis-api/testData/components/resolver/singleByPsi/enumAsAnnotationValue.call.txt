@@ -4,12 +4,12 @@ KtAnnotationEntry(90,110): '@Annotation(Color.R)'
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = Annotation
           symbol = <constructor>(color: Color): Annotation
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = color
               receiverType = null
               returnType = Color
@@ -19,7 +19,7 @@ KtAnnotationEntry(90,110): '@Annotation(Color.R)'
           callableId = null
       typeArgumentsMapping = {}
       argumentMapping = {
-        Color.R -> (KaVariableLikeSignature:
+        Color.R -> (KaVariableSignature:
           name = color
           receiverType = null
           returnType = Color

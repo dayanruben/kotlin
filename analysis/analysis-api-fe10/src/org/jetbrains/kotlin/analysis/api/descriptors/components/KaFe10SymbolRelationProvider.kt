@@ -195,11 +195,11 @@ internal class KaFe10SymbolRelationProvider(
             overridesProvider.getAllOverriddenSymbols(this)
         }
 
-    override fun KaClassOrObjectSymbol.isSubClassOf(superClass: KaClassOrObjectSymbol): Boolean = withValidityAssertion {
+    override fun KaClassSymbol.isSubClassOf(superClass: KaClassSymbol): Boolean = withValidityAssertion {
         overridesProvider.isSubClassOf(this, superClass)
     }
 
-    override fun KaClassOrObjectSymbol.isDirectSubClassOf(superClass: KaClassOrObjectSymbol): Boolean = withValidityAssertion {
+    override fun KaClassSymbol.isDirectSubClassOf(superClass: KaClassSymbol): Boolean = withValidityAssertion {
         overridesProvider.isDirectSubClassOf(this, superClass)
     }
 
@@ -208,7 +208,7 @@ internal class KaFe10SymbolRelationProvider(
             throw NotImplementedError("Method is not implemented for FE 1.0")
         }
 
-    override fun KaCallableSymbol.getImplementationStatus(parentClassSymbol: KaClassOrObjectSymbol): ImplementationStatus? {
+    override fun KaCallableSymbol.getImplementationStatus(parentClassSymbol: KaClassSymbol): ImplementationStatus? {
         withValidityAssertion {
             throw NotImplementedError("Method is not implemented for FE 1.0")
         }
@@ -222,12 +222,12 @@ internal class KaFe10SymbolRelationProvider(
         }
 
     @Suppress("OVERRIDE_DEPRECATION")
-    override val KaCallableSymbol.originalContainingClassForOverride: KaClassOrObjectSymbol?
+    override val KaCallableSymbol.originalContainingClassForOverride: KaClassSymbol?
         get() = withValidityAssertion {
             val callableDescriptor = getSymbolDescriptor(this) as? CallableMemberDescriptor ?: return null
             val originalCallableDescriptor = callableDescriptor.findOriginalTopMostOverriddenDescriptors().firstOrNull() ?: return null
             val containingClassDescriptor = originalCallableDescriptor.containingDeclaration as? ClassDescriptor ?: return null
-            return containingClassDescriptor.toKtClassifierSymbol(analysisContext) as? KaClassOrObjectSymbol
+            return containingClassDescriptor.toKtClassifierSymbol(analysisContext) as? KaClassSymbol
         }
 
     override fun KaDeclarationSymbol.getExpectsForActual(): List<KaDeclarationSymbol> = withValidityAssertion {
@@ -241,7 +241,7 @@ internal class KaFe10SymbolRelationProvider(
             .toList()
     }
 
-    override val KaNamedClassOrObjectSymbol.sealedClassInheritors: List<KaNamedClassOrObjectSymbol>
+    override val KaNamedClassSymbol.sealedClassInheritors: List<KaNamedClassSymbol>
         get() = withValidityAssertion {
             val classDescriptor = getSymbolDescriptor(this) as? ClassDescriptor ?: return emptyList()
 
@@ -250,11 +250,11 @@ internal class KaFe10SymbolRelationProvider(
                 .supportsFeature(LanguageFeature.AllowSealedInheritorsInDifferentFilesOfSamePackage)
 
             return inheritorsProvider.computeSealedSubclasses(classDescriptor, allowInDifferentFiles)
-                .mapNotNull { it.toKtClassifierSymbol(analysisContext) as? KaNamedClassOrObjectSymbol }
+                .mapNotNull { it.toKtClassifierSymbol(analysisContext) as? KaNamedClassSymbol }
         }
 
     @Deprecated("Use the declaration scope instead.")
-    override val KaNamedClassOrObjectSymbol.enumEntries: List<KaEnumEntrySymbol>
+    override val KaNamedClassSymbol.enumEntries: List<KaEnumEntrySymbol>
         get() = withValidityAssertion {
             val enumDescriptor = getSymbolDescriptor(this) as? ClassDescriptor ?: return emptyList()
             if (enumDescriptor.kind != ClassKind.ENUM_CLASS) {
@@ -277,7 +277,7 @@ internal fun computeContainingSymbolOrSelf(symbol: KaSymbol, analysisSession: Ka
     with(analysisSession) {
         return when (symbol) {
             is KaValueParameterSymbol -> {
-                symbol.containingSymbol as? KaFunctionLikeSymbol ?: symbol
+                symbol.containingSymbol as? KaFunctionSymbol ?: symbol
             }
             is KaPropertyAccessorSymbol -> {
                 symbol.containingSymbol as? KaPropertySymbol ?: symbol

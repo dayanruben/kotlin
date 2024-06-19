@@ -5,7 +5,7 @@ scopes:
   ExplicitStarImportingScope, index = 1
     packages: 0
     classifiers: 1
-      KaNamedClassOrObjectSymbol:
+      KaNamedClassSymbol:
         annotations: []
         classId: other/A
         classKind: CLASS
@@ -31,7 +31,7 @@ scopes:
         typeParameters: []
         visibility: Public
     callables: 1
-      KaFunctionSymbol:
+      KaNamedFunctionSymbol:
         annotations: []
         callableId: other/b
         contextReceivers: []

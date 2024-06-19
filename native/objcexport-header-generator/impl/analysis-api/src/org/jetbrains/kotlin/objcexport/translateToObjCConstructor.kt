@@ -1,9 +1,14 @@
+/*
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+
 package org.jetbrains.kotlin.objcexport
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.backend.konan.descriptors.arrayTypes
 import org.jetbrains.kotlin.backend.konan.objcexport.ObjCInstanceType
 import org.jetbrains.kotlin.backend.konan.objcexport.ObjCMethod
@@ -14,7 +19,8 @@ import org.jetbrains.kotlin.objcexport.analysisApiUtils.hasExportForCompilerAnno
 import org.jetbrains.kotlin.objcexport.analysisApiUtils.isVisibleInObjC
 
 context(KaSession, KtObjCExportSession)
-fun KaClassOrObjectSymbol.translateToObjCConstructors(): List<ObjCMethod> {
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
+fun KaClassSymbol.translateToObjCConstructors(): List<ObjCMethod> {
 
     /* Translate declared constructors */
     val result = declaredMemberScope
@@ -74,7 +80,8 @@ fun KaClassOrObjectSymbol.translateToObjCConstructors(): List<ObjCMethod> {
  * Additional primary constructor which goes always after primary constructor ([ObjCMethod.name] == "init")
  */
 context(KaSession)
-private fun buildNewInitConstructor(constructor: KaFunctionLikeSymbol): ObjCMethod {
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
+private fun buildNewInitConstructor(constructor: KaFunctionSymbol): ObjCMethod {
     return ObjCMethod(
         comment = null,
         origin = constructor.getObjCExportStubOrigin(),

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.analysis.api.components.KaSymbolRelationProvider
 import org.jetbrains.kotlin.analysis.api.fir.KaFirSession
 import org.jetbrains.kotlin.analysis.api.fir.buildSymbol
-import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirSymbol
 import org.jetbrains.kotlin.analysis.api.fir.symbols.pointers.getClassLikeSymbol
@@ -306,7 +306,7 @@ internal class KaFirSymbolRelationProvider(
             val firSession = analysisSession.firSession
             val resolver = FirSamResolver(firSession, analysisSession.getScopeSessionFor(firSession))
             return resolver.getSamConstructor(owner)?.let {
-                analysisSession.firSymbolBuilder.functionLikeBuilder.buildSamConstructorSymbol(it.symbol)
+                analysisSession.firSymbolBuilder.functionBuilder.buildSamConstructorSymbol(it.symbol)
             }
         }
 
@@ -322,11 +322,11 @@ internal class KaFirSymbolRelationProvider(
             overridesProvider.getDirectlyOverriddenSymbols(this)
         }
 
-    override fun KaClassOrObjectSymbol.isSubClassOf(superClass: KaClassOrObjectSymbol): Boolean = withValidityAssertion {
+    override fun KaClassSymbol.isSubClassOf(superClass: KaClassSymbol): Boolean = withValidityAssertion {
         return overridesProvider.isSubClassOf(this, superClass)
     }
 
-    override fun KaClassOrObjectSymbol.isDirectSubClassOf(superClass: KaClassOrObjectSymbol): Boolean = withValidityAssertion {
+    override fun KaClassSymbol.isDirectSubClassOf(superClass: KaClassSymbol): Boolean = withValidityAssertion {
         return overridesProvider.isDirectSubClassOf(this, superClass)
     }
 
@@ -335,7 +335,7 @@ internal class KaFirSymbolRelationProvider(
             overridesProvider.getIntersectionOverriddenSymbols(this)
         }
 
-    override fun KaCallableSymbol.getImplementationStatus(parentClassSymbol: KaClassOrObjectSymbol): ImplementationStatus? {
+    override fun KaCallableSymbol.getImplementationStatus(parentClassSymbol: KaClassSymbol): ImplementationStatus? {
         withValidityAssertion {
             require(this is KaFirSymbol<*>)
             require(parentClassSymbol is KaFirSymbol<*>)
@@ -361,7 +361,7 @@ internal class KaFirSymbolRelationProvider(
         }
 
     @Suppress("OVERRIDE_DEPRECATION")
-    override val KaCallableSymbol.originalContainingClassForOverride: KaClassOrObjectSymbol?
+    override val KaCallableSymbol.originalContainingClassForOverride: KaClassSymbol?
         get() = withValidityAssertion {
             require(this is KaFirSymbol<*>)
 
@@ -370,7 +370,7 @@ internal class KaFirSymbolRelationProvider(
 
             val unwrappedFirSymbol = unwrappedDeclaration.symbol
             val unwrappedKtSymbol = analysisSession.firSymbolBuilder.callableBuilder.buildCallableSymbol(unwrappedFirSymbol)
-            return with(analysisSession) { unwrappedKtSymbol.containingSymbol as? KaClassOrObjectSymbol }
+            return with(analysisSession) { unwrappedKtSymbol.containingSymbol as? KaClassSymbol }
         }
 
     override fun KaDeclarationSymbol.getExpectsForActual(): List<KaDeclarationSymbol> = withValidityAssertion {
@@ -384,20 +384,20 @@ internal class KaFirSymbolRelationProvider(
             ?.map { analysisSession.firSymbolBuilder.buildSymbol(it) as KaDeclarationSymbol }.orEmpty()
     }
 
-    override val KaNamedClassOrObjectSymbol.sealedClassInheritors: List<KaNamedClassOrObjectSymbol>
+    override val KaNamedClassSymbol.sealedClassInheritors: List<KaNamedClassSymbol>
         get() = withValidityAssertion {
             require(modality == Modality.SEALED)
-            require(this is KaFirNamedClassOrObjectSymbol)
+            require(this is KaFirNamedClassSymbol)
 
             val inheritorClassIds = firSymbol.fir.getSealedClassInheritors(analysisSession.firSession)
 
             return with(analysisSession) {
-                inheritorClassIds.mapNotNull { findClass(it) as? KaNamedClassOrObjectSymbol }
+                inheritorClassIds.mapNotNull { findClass(it) as? KaNamedClassSymbol }
             }
         }
 
     @Deprecated("Use the declaration scope instead.")
-    override val KaNamedClassOrObjectSymbol.enumEntries: List<KaEnumEntrySymbol>
+    override val KaNamedClassSymbol.enumEntries: List<KaEnumEntrySymbol>
         get() = withValidityAssertion {
             require(classKind == KaClassKind.ENUM_CLASS)
             return with(analysisSession) {

@@ -8,12 +8,12 @@ KtNameReferenceExpression(54,64): 'plusAssign'
           expression = l
           isSafeNavigation = false
           type = kotlin.collections.MutableList<kotlin.Int>
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = kotlin.collections.MutableCollection<in kotlin.Int>
           returnType = kotlin.Unit
           symbol = kotlin/collections/plusAssign(<extension receiver>: kotlin.collections.MutableCollection<in T>, element: T): kotlin.Unit
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = element
               receiverType = null
               returnType = kotlin.Int
@@ -25,7 +25,7 @@ KtNameReferenceExpression(54,64): 'plusAssign'
         T -> (kotlin.Int)
       }
       argumentMapping = {
-        1 -> (KaVariableLikeSignature:
+        1 -> (KaVariableSignature:
           name = element
           receiverType = null
           returnType = kotlin.Int
@@ -33,7 +33,7 @@ KtNameReferenceExpression(54,64): 'plusAssign'
           callableId = null)
       }
     isInBestCandidates = true
-
+  
   KaInapplicableCallCandidateInfo:
     diagnostic = ERROR<UNRESOLVED_REFERENCE: OTHER_ERROR with plusAssign>
     candidate = KaSimpleFunctionCall:
@@ -44,12 +44,12 @@ KtNameReferenceExpression(54,64): 'plusAssign'
           expression = l
           isSafeNavigation = false
           type = kotlin.collections.MutableList<kotlin.Int>
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = kotlin.collections.MutableCollection<in kotlin.Int>
           returnType = kotlin.Unit
           symbol = kotlin/collections/plusAssign(<extension receiver>: kotlin.collections.MutableCollection<in T>, elements: kotlin.Array<T>): kotlin.Unit
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = elements
               receiverType = null
               returnType = kotlin.Array<kotlin.Int>
@@ -61,7 +61,7 @@ KtNameReferenceExpression(54,64): 'plusAssign'
         T -> (kotlin.Int)
       }
       argumentMapping = {
-        1 -> (KaVariableLikeSignature:
+        1 -> (KaVariableSignature:
           name = elements
           receiverType = null
           returnType = kotlin.Array<kotlin.Int>
@@ -69,7 +69,7 @@ KtNameReferenceExpression(54,64): 'plusAssign'
           callableId = null)
       }
     isInBestCandidates = false
-
+  
   KaInapplicableCallCandidateInfo:
     diagnostic = ERROR<UNRESOLVED_REFERENCE: OTHER_ERROR with plusAssign>
     candidate = KaSimpleFunctionCall:
@@ -80,12 +80,12 @@ KtNameReferenceExpression(54,64): 'plusAssign'
           expression = l
           isSafeNavigation = false
           type = kotlin.collections.MutableList<kotlin.Int>
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = kotlin.collections.MutableCollection<in kotlin.Int>
           returnType = kotlin.Unit
           symbol = kotlin/collections/plusAssign(<extension receiver>: kotlin.collections.MutableCollection<in T>, elements: kotlin.collections.Iterable<T>): kotlin.Unit
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = elements
               receiverType = null
               returnType = kotlin.collections.Iterable<kotlin.Int>
@@ -97,7 +97,7 @@ KtNameReferenceExpression(54,64): 'plusAssign'
         T -> (kotlin.Int)
       }
       argumentMapping = {
-        1 -> (KaVariableLikeSignature:
+        1 -> (KaVariableSignature:
           name = elements
           receiverType = null
           returnType = kotlin.collections.Iterable<kotlin.Int>
@@ -105,7 +105,7 @@ KtNameReferenceExpression(54,64): 'plusAssign'
           callableId = null)
       }
     isInBestCandidates = false
-
+  
   KaInapplicableCallCandidateInfo:
     diagnostic = ERROR<UNRESOLVED_REFERENCE: OTHER_ERROR with plusAssign>
     candidate = KaSimpleFunctionCall:
@@ -116,12 +116,12 @@ KtNameReferenceExpression(54,64): 'plusAssign'
           expression = l
           isSafeNavigation = false
           type = kotlin.collections.MutableList<kotlin.Int>
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = kotlin.collections.MutableCollection<in kotlin.Int>
           returnType = kotlin.Unit
           symbol = kotlin/collections/plusAssign(<extension receiver>: kotlin.collections.MutableCollection<in T>, elements: kotlin.sequences.Sequence<T>): kotlin.Unit
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = elements
               receiverType = null
               returnType = kotlin.sequences.Sequence<kotlin.Int>
@@ -133,7 +133,7 @@ KtNameReferenceExpression(54,64): 'plusAssign'
         T -> (kotlin.Int)
       }
       argumentMapping = {
-        1 -> (KaVariableLikeSignature:
+        1 -> (KaVariableSignature:
           name = elements
           receiverType = null
           returnType = kotlin.sequences.Sequence<kotlin.Int>
@@ -141,7 +141,7 @@ KtNameReferenceExpression(54,64): 'plusAssign'
           callableId = null)
       }
     isInBestCandidates = false
-
+  
   KaInapplicableCallCandidateInfo:
     diagnostic = ERROR<UNRESOLVED_REFERENCE: RECEIVER_TYPE_ERROR with plusAssign>
     candidate = KaSimpleFunctionCall:
@@ -152,12 +152,12 @@ KtNameReferenceExpression(54,64): 'plusAssign'
           expression = l
           isSafeNavigation = false
           type = kotlin.collections.MutableList<kotlin.Int>
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = kotlin.collections.MutableMap<in ERROR_TYPE, in ERROR_TYPE>
           returnType = kotlin.Unit
           symbol = kotlin/collections/plusAssign(<extension receiver>: kotlin.collections.MutableMap<in K, in V>, map: kotlin.collections.Map<K, V>): kotlin.Unit
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = map
               receiverType = null
               returnType = kotlin.collections.Map<ERROR_TYPE, ERROR_TYPE>
@@ -170,7 +170,7 @@ KtNameReferenceExpression(54,64): 'plusAssign'
         V -> (ERROR_TYPE)
       }
       argumentMapping = {
-        1 -> (KaVariableLikeSignature:
+        1 -> (KaVariableSignature:
           name = map
           receiverType = null
           returnType = kotlin.collections.Map<ERROR_TYPE, ERROR_TYPE>
@@ -178,7 +178,7 @@ KtNameReferenceExpression(54,64): 'plusAssign'
           callableId = null)
       }
     isInBestCandidates = false
-
+  
   KaInapplicableCallCandidateInfo:
     diagnostic = ERROR<UNRESOLVED_REFERENCE: RECEIVER_TYPE_ERROR with plusAssign>
     candidate = KaSimpleFunctionCall:
@@ -189,12 +189,12 @@ KtNameReferenceExpression(54,64): 'plusAssign'
           expression = l
           isSafeNavigation = false
           type = kotlin.collections.MutableList<kotlin.Int>
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = kotlin.collections.MutableMap<in ERROR_TYPE, in ERROR_TYPE>
           returnType = kotlin.Unit
           symbol = kotlin/collections/plusAssign(<extension receiver>: kotlin.collections.MutableMap<in K, in V>, pair: kotlin.Pair<K, V>): kotlin.Unit
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = pair
               receiverType = null
               returnType = kotlin.Pair<ERROR_TYPE, ERROR_TYPE>
@@ -207,7 +207,7 @@ KtNameReferenceExpression(54,64): 'plusAssign'
         V -> (ERROR_TYPE)
       }
       argumentMapping = {
-        1 -> (KaVariableLikeSignature:
+        1 -> (KaVariableSignature:
           name = pair
           receiverType = null
           returnType = kotlin.Pair<ERROR_TYPE, ERROR_TYPE>
@@ -215,7 +215,7 @@ KtNameReferenceExpression(54,64): 'plusAssign'
           callableId = null)
       }
     isInBestCandidates = false
-
+  
   KaInapplicableCallCandidateInfo:
     diagnostic = ERROR<UNRESOLVED_REFERENCE: RECEIVER_TYPE_ERROR with plusAssign>
     candidate = KaSimpleFunctionCall:
@@ -226,12 +226,12 @@ KtNameReferenceExpression(54,64): 'plusAssign'
           expression = l
           isSafeNavigation = false
           type = kotlin.collections.MutableList<kotlin.Int>
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = kotlin.collections.MutableMap<in ERROR_TYPE, in ERROR_TYPE>
           returnType = kotlin.Unit
           symbol = kotlin/collections/plusAssign(<extension receiver>: kotlin.collections.MutableMap<in K, in V>, pairs: kotlin.Array<out kotlin.Pair<K, V>>): kotlin.Unit
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = pairs
               receiverType = null
               returnType = kotlin.Array<out kotlin.Pair<ERROR_TYPE, ERROR_TYPE>>
@@ -244,7 +244,7 @@ KtNameReferenceExpression(54,64): 'plusAssign'
         V -> (ERROR_TYPE)
       }
       argumentMapping = {
-        1 -> (KaVariableLikeSignature:
+        1 -> (KaVariableSignature:
           name = pairs
           receiverType = null
           returnType = kotlin.Array<out kotlin.Pair<ERROR_TYPE, ERROR_TYPE>>
@@ -252,7 +252,7 @@ KtNameReferenceExpression(54,64): 'plusAssign'
           callableId = null)
       }
     isInBestCandidates = false
-
+  
   KaInapplicableCallCandidateInfo:
     diagnostic = ERROR<UNRESOLVED_REFERENCE: RECEIVER_TYPE_ERROR with plusAssign>
     candidate = KaSimpleFunctionCall:
@@ -263,12 +263,12 @@ KtNameReferenceExpression(54,64): 'plusAssign'
           expression = l
           isSafeNavigation = false
           type = kotlin.collections.MutableList<kotlin.Int>
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = kotlin.collections.MutableMap<in ERROR_TYPE, in ERROR_TYPE>
           returnType = kotlin.Unit
           symbol = kotlin/collections/plusAssign(<extension receiver>: kotlin.collections.MutableMap<in K, in V>, pairs: kotlin.collections.Iterable<kotlin.Pair<K, V>>): kotlin.Unit
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = pairs
               receiverType = null
               returnType = kotlin.collections.Iterable<kotlin.Pair<ERROR_TYPE, ERROR_TYPE>>
@@ -281,7 +281,7 @@ KtNameReferenceExpression(54,64): 'plusAssign'
         V -> (ERROR_TYPE)
       }
       argumentMapping = {
-        1 -> (KaVariableLikeSignature:
+        1 -> (KaVariableSignature:
           name = pairs
           receiverType = null
           returnType = kotlin.collections.Iterable<kotlin.Pair<ERROR_TYPE, ERROR_TYPE>>
@@ -289,7 +289,7 @@ KtNameReferenceExpression(54,64): 'plusAssign'
           callableId = null)
       }
     isInBestCandidates = false
-
+  
   KaInapplicableCallCandidateInfo:
     diagnostic = ERROR<UNRESOLVED_REFERENCE: RECEIVER_TYPE_ERROR with plusAssign>
     candidate = KaSimpleFunctionCall:
@@ -300,12 +300,12 @@ KtNameReferenceExpression(54,64): 'plusAssign'
           expression = l
           isSafeNavigation = false
           type = kotlin.collections.MutableList<kotlin.Int>
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = kotlin.collections.MutableMap<in ERROR_TYPE, in ERROR_TYPE>
           returnType = kotlin.Unit
           symbol = kotlin/collections/plusAssign(<extension receiver>: kotlin.collections.MutableMap<in K, in V>, pairs: kotlin.sequences.Sequence<kotlin.Pair<K, V>>): kotlin.Unit
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = pairs
               receiverType = null
               returnType = kotlin.sequences.Sequence<kotlin.Pair<ERROR_TYPE, ERROR_TYPE>>
@@ -318,7 +318,7 @@ KtNameReferenceExpression(54,64): 'plusAssign'
         V -> (ERROR_TYPE)
       }
       argumentMapping = {
-        1 -> (KaVariableLikeSignature:
+        1 -> (KaVariableSignature:
           name = pairs
           receiverType = null
           returnType = kotlin.sequences.Sequence<kotlin.Pair<ERROR_TYPE, ERROR_TYPE>>

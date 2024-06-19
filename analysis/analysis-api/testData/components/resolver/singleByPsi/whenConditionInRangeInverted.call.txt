@@ -8,12 +8,12 @@ KtWhenConditionInRange(177,190): '!in MyClass()'
           expression = MyClass()
           isSafeNavigation = false
           type = MyClass
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = MyClass
           returnType = kotlin.Boolean
           symbol = /contains(<extension receiver>: T, int: kotlin.Int): kotlin.Boolean
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = int
               receiverType = null
               returnType = kotlin.Int
@@ -25,7 +25,7 @@ KtWhenConditionInRange(177,190): '!in MyClass()'
         T -> (MyClass)
       }
       argumentMapping = {
-        3 -> (KaVariableLikeSignature:
+        3 -> (KaVariableSignature:
           name = int
           receiverType = null
           returnType = kotlin.Int

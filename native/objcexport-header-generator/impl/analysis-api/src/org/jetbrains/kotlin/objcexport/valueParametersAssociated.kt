@@ -1,3 +1,8 @@
+/*
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+
 package org.jetbrains.kotlin.objcexport
 
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -14,8 +19,9 @@ import org.jetbrains.kotlin.utils.addIfNotNull
  * See K1 implementation [org.jetbrains.kotlin.backend.konan.objcexport.MethodBrideExtensionsKt.valueParametersAssociated]
  */
 context(KaSession, KtObjCExportSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 internal fun MethodBridge.valueParametersAssociated(
-    function: KaFunctionLikeSymbol,
+    function: KaFunctionSymbol,
 ): List<Pair<MethodBridgeValueParameter, KtObjCParameterData?>> {
 
     val result = mutableListOf<Pair<MethodBridgeValueParameter, KtObjCParameterData?>>()
@@ -51,9 +57,10 @@ private fun MethodBridge.mapParameters(
 }
 
 context(KaSession, KtObjCExportSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 private fun MutableList<Pair<MethodBridgeValueParameter, KtObjCParameterData?>>.addReceiver(
     parameters: List<MethodBridgeValueParameter>,
-    function: KaFunctionLikeSymbol,
+    function: KaFunctionSymbol,
 ) {
 
     val receiverType = function.objCReceiverType
@@ -107,7 +114,8 @@ internal data class KtObjCParameterData(
  * Also see [isObjCProperty]
  */
 context(KaSession)
-internal val KaFunctionLikeSymbol.objCReceiverType: KaType?
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
+internal val KaFunctionSymbol.objCReceiverType: KaType?
     get() {
         return if (isConstructor) {
             /**
@@ -118,13 +126,13 @@ internal val KaFunctionLikeSymbol.objCReceiverType: KaType?
             dispatchReceiverType
         } else if (isExtension) {
             if (receiverParameter?.type?.isMappedObjCType == true) receiverParameter?.type
-            else if ((containingSymbol as? KaNamedClassOrObjectSymbol)?.isInner == true) receiverParameter?.type
+            else if ((containingSymbol as? KaNamedClassSymbol)?.isInner == true) receiverParameter?.type
             else if (receiverParameter?.type?.isObjCNothing == true) return receiverParameter?.type
             else null
         } else if (this is KaPropertyGetterSymbol || this is KaPropertySetterSymbol) {
             val property = containingSymbol as KaPropertySymbol
             val isExtension = property.isExtension
-            val isInner = (property.containingSymbol as? KaNamedClassOrObjectSymbol)?.isInner == true
+            val isInner = (property.containingSymbol as? KaNamedClassSymbol)?.isInner == true
             val receiverType = property.receiverType
             if (isExtension) {
                 if (isInner) {

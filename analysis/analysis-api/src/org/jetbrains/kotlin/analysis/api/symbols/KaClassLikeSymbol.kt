@@ -69,18 +69,21 @@ public abstract class KaTypeAliasSymbol : KaClassLikeSymbol(),
 @Deprecated("Use 'KaTypeAliasSymbol' instead", ReplaceWith("KaTypeAliasSymbol"))
 public typealias KtTypeAliasSymbol = KaTypeAliasSymbol
 
-public sealed class KaClassOrObjectSymbol : KaClassLikeSymbol(), KaSymbolWithMembers {
+public sealed class KaClassSymbol : KaClassLikeSymbol(), KaDeclarationContainerSymbol {
 
     public abstract val classKind: KaClassKind
     public abstract val superTypes: List<KaType>
 
-    abstract override fun createPointer(): KaSymbolPointer<KaClassOrObjectSymbol>
+    abstract override fun createPointer(): KaSymbolPointer<KaClassSymbol>
 }
 
-@Deprecated("Use 'KaClassOrObjectSymbol' instead", ReplaceWith("KaClassOrObjectSymbol"))
-public typealias KtClassOrObjectSymbol = KaClassOrObjectSymbol
+@Deprecated("Use 'KaClassSymbol' instead", ReplaceWith("KaClassSymbol"))
+public typealias KaClassOrObjectSymbol = KaClassSymbol
 
-public abstract class KaAnonymousObjectSymbol : KaClassOrObjectSymbol() {
+@Deprecated("Use 'KaClassSymbol' instead", ReplaceWith("KaClassSymbol"))
+public typealias KtClassOrObjectSymbol = KaClassSymbol
+
+public abstract class KaAnonymousObjectSymbol : KaClassSymbol() {
     final override val classKind: KaClassKind get() = withValidityAssertion { KaClassKind.ANONYMOUS_OBJECT }
     final override val classId: ClassId? get() = withValidityAssertion { null }
     final override val location: KaSymbolLocation get() = withValidityAssertion { KaSymbolLocation.LOCAL }
@@ -97,7 +100,7 @@ public abstract class KaAnonymousObjectSymbol : KaClassOrObjectSymbol() {
 @Deprecated("Use 'KaAnonymousObjectSymbol' instead", ReplaceWith("KaAnonymousObjectSymbol"))
 public typealias KtAnonymousObjectSymbol = KaAnonymousObjectSymbol
 
-public abstract class KaNamedClassOrObjectSymbol : KaClassOrObjectSymbol(),
+public abstract class KaNamedClassSymbol : KaClassSymbol(),
     KaSymbolWithModality,
     KaSymbolWithVisibility,
     KaNamedSymbol,
@@ -110,13 +113,16 @@ public abstract class KaNamedClassOrObjectSymbol : KaClassOrObjectSymbol(),
 
     public abstract val isExternal: Boolean
 
-    public abstract val companionObject: KaNamedClassOrObjectSymbol?
+    public abstract val companionObject: KaNamedClassSymbol?
 
-    abstract override fun createPointer(): KaSymbolPointer<KaNamedClassOrObjectSymbol>
+    abstract override fun createPointer(): KaSymbolPointer<KaNamedClassSymbol>
 }
 
-@Deprecated("Use 'KaNamedClassOrObjectSymbol' instead", ReplaceWith("KaNamedClassOrObjectSymbol"))
-public typealias KtNamedClassOrObjectSymbol = KaNamedClassOrObjectSymbol
+@Deprecated("Use 'KaNamedClassSymbol' instead", ReplaceWith("KaNamedClassSymbol"))
+public typealias KaNamedClassOrObjectSymbol = KaNamedClassSymbol
+
+@Deprecated("Use 'KaNamedClassSymbol' instead", ReplaceWith("KaNamedClassSymbol"))
+public typealias KtNamedClassOrObjectSymbol = KaNamedClassSymbol
 
 public enum class KaClassKind {
     CLASS,

@@ -5,12 +5,12 @@ KtConstructorDelegationCall(111,125): 'this(s.length)'
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = Sub
           symbol = <constructor>(p1: kotlin.Int): Sub
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = p1
               receiverType = null
               returnType = kotlin.Int
@@ -20,7 +20,7 @@ KtConstructorDelegationCall(111,125): 'this(s.length)'
           callableId = null
       typeArgumentsMapping = {}
       argumentMapping = {
-        s.length -> (KaVariableLikeSignature:
+        s.length -> (KaVariableSignature:
           name = p1
           receiverType = null
           returnType = kotlin.Int
@@ -36,12 +36,12 @@ KtConstructorDelegationCall(111,125): 'this(s.length)'
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = Sub
           symbol = <constructor>(s: kotlin.String): Sub
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = s
               receiverType = null
               returnType = kotlin.String

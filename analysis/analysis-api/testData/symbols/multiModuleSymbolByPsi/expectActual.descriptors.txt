@@ -1,6 +1,6 @@
 // FILE: Common.kt
 
-KaNamedClassOrObjectSymbol:
+KaNamedClassSymbol:
   annotations: []
   classId: sample/A
   classKind: OBJECT
@@ -26,7 +26,7 @@ KaNamedClassOrObjectSymbol:
   typeParameters: []
   visibility: Public
 
-KaNamedClassOrObjectSymbol:
+KaNamedClassSymbol:
   annotations: []
   classId: sample/B
   classKind: CLASS
@@ -81,6 +81,7 @@ KaConstructorSymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: s
@@ -123,6 +124,7 @@ KaConstructorSymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: n
@@ -136,7 +138,7 @@ KaConstructorSymbol:
   ]
   visibility: Public
 
-KaNamedClassOrObjectSymbol:
+KaNamedClassSymbol:
   annotations: []
   classId: sample/B.Nested
   classKind: CLASS
@@ -162,7 +164,7 @@ KaNamedClassOrObjectSymbol:
   typeParameters: []
   visibility: Public
 
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: sample/B.bar
   contextReceivers: []
@@ -200,6 +202,7 @@ KaKotlinPropertySymbol:
     callableId: null
     contextReceivers: []
     isExtension: false
+    isVal: true
     location: PROPERTY
     name: field
     origin: PROPERTY_BACKING_FIELD
@@ -260,7 +263,7 @@ KaKotlinPropertySymbol:
   typeParameters: []
   visibility: Public
 
-KaNamedClassOrObjectSymbol:
+KaNamedClassSymbol:
   annotations: []
   classId: sample/C
   classKind: CLASS
@@ -286,7 +289,7 @@ KaNamedClassOrObjectSymbol:
   typeParameters: []
   visibility: Public
 
-KaNamedClassOrObjectSymbol:
+KaNamedClassSymbol:
   annotations: []
   classId: sample/C.Nested
   classKind: CLASS
@@ -312,7 +315,7 @@ KaNamedClassOrObjectSymbol:
   typeParameters: []
   visibility: Public
 
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: sample/baz
   contextReceivers: []
@@ -350,6 +353,7 @@ KaKotlinPropertySymbol:
     callableId: null
     contextReceivers: []
     isExtension: false
+    isVal: true
     location: PROPERTY
     name: field
     origin: PROPERTY_BACKING_FIELD
@@ -429,6 +433,7 @@ KaKotlinPropertySymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: value
@@ -456,6 +461,7 @@ KaKotlinPropertySymbol:
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
+        isVal: true
         isVararg: false
         location: LOCAL
         name: value
@@ -473,7 +479,7 @@ KaKotlinPropertySymbol:
 
 // FILE: JvmAndroid.kt
 
-KaNamedClassOrObjectSymbol:
+KaNamedClassSymbol:
   annotations: []
   classId: sample/A
   classKind: OBJECT
@@ -499,7 +505,7 @@ KaNamedClassOrObjectSymbol:
   typeParameters: []
   visibility: Public
 
-KaNamedClassOrObjectSymbol:
+KaNamedClassSymbol:
   annotations: []
   classId: sample/B
   classKind: CLASS
@@ -554,6 +560,7 @@ KaConstructorSymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: s
@@ -596,6 +603,7 @@ KaConstructorSymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: n
@@ -609,7 +617,7 @@ KaConstructorSymbol:
   ]
   visibility: Public
 
-KaNamedClassOrObjectSymbol:
+KaNamedClassSymbol:
   annotations: []
   classId: sample/B.Nested
   classKind: CLASS
@@ -635,7 +643,7 @@ KaNamedClassOrObjectSymbol:
   typeParameters: []
   visibility: Public
 
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: sample/B.bar
   contextReceivers: []
@@ -673,6 +681,7 @@ KaKotlinPropertySymbol:
     callableId: null
     contextReceivers: []
     isExtension: false
+    isVal: true
     location: PROPERTY
     name: field
     origin: PROPERTY_BACKING_FIELD
@@ -748,7 +757,7 @@ KaTypeAliasSymbol:
   typeParameters: []
   visibility: Public
 
-KaNamedClassOrObjectSymbol:
+KaNamedClassSymbol:
   annotations: []
   classId: sample/D
   classKind: CLASS
@@ -774,7 +783,7 @@ KaNamedClassOrObjectSymbol:
   typeParameters: []
   visibility: Public
 
-KaNamedClassOrObjectSymbol:
+KaNamedClassSymbol:
   annotations: []
   classId: sample/D.Nested
   classKind: CLASS
@@ -800,7 +809,7 @@ KaNamedClassOrObjectSymbol:
   typeParameters: []
   visibility: Public
 
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: sample/baz
   contextReceivers: []
@@ -838,6 +847,7 @@ KaKotlinPropertySymbol:
     callableId: null
     contextReceivers: []
     isExtension: false
+    isVal: true
     location: PROPERTY
     name: field
     origin: PROPERTY_BACKING_FIELD
@@ -917,6 +927,7 @@ KaKotlinPropertySymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: value
@@ -944,6 +955,7 @@ KaKotlinPropertySymbol:
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
+        isVal: true
         isVararg: false
         location: LOCAL
         name: value

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
-import org.jetbrains.kotlin.analysis.api.symbols.KaVariableLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.name.Name
@@ -20,9 +20,9 @@ import org.jetbrains.kotlin.utils.addToStdlib.runIf
 /**
  * A signature of a variable-like symbol. This includes properties, enum entries local variables, etc.
  */
-public abstract class KaVariableLikeSignature<out S : KaVariableLikeSymbol> : KaCallableSignature<S>() {
+public abstract class KaVariableSignature<out S : KaVariableSymbol> : KaCallableSignature<S>() {
     /**
-     * A name of the variable with respect to the `@ParameterName` annotation. Can be different from the [KaVariableLikeSymbol.name].
+     * A name of the variable with respect to the `@ParameterName` annotation. Can be different from the [KaVariableSymbol.name].
      *
      * Some variables can have their names changed by special annotations like `@ParameterName(name = "newName")`. This is used to preserve
      * the names of the lambda parameters in the situations like this:
@@ -58,7 +58,7 @@ public abstract class KaVariableLikeSignature<out S : KaVariableLikeSymbol> : Ka
         }
 
     @KaExperimentalApi
-    abstract override fun substitute(substitutor: KaSubstitutor): KaVariableLikeSignature<S>
+    abstract override fun substitute(substitutor: KaSubstitutor): KaVariableSignature<S>
 
     private fun getValueFromParameterNameAnnotation(): Name? {
         val resultingAnnotation = findParameterNameAnnotation() ?: return null
@@ -82,5 +82,8 @@ public abstract class KaVariableLikeSignature<out S : KaVariableLikeSymbol> : Ka
     }
 }
 
-@Deprecated("Use 'KaVariableLikeSignature' instead", ReplaceWith("KaVariableLikeSignature"))
-public typealias KtVariableLikeSignature<S> = KaVariableLikeSignature<S>
+@Deprecated("Use 'KaVariableSignature' instead", ReplaceWith("KaVariableSignature"))
+public typealias KaVariableLikeSignature<S> = KaVariableSignature<S>
+
+@Deprecated("Use 'KaVariableSignature' instead", ReplaceWith("KaVariableSignature"))
+public typealias KtVariableLikeSignature<S> = KaVariableSignature<S>

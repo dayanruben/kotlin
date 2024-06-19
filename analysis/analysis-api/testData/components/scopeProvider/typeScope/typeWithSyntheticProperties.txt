@@ -2,18 +2,18 @@ Expression: a
 KaType: A
 
 KaTypeScope:
-KaFunctionLikeSignature:
+KaFunctionSignature:
   receiverType = null
   returnType = kotlin.Int!
   symbol = /JavaClass.getValue(<dispatch receiver>: JavaClass): kotlin.Int!
   valueParameters = []
   callableId = /JavaClass.getValue
-KaFunctionLikeSignature:
+KaFunctionSignature:
   receiverType = null
   returnType = kotlin.Boolean
   symbol = kotlin/Any.equals(<dispatch receiver>: kotlin.Any, other: kotlin.Any?): kotlin.Boolean
   valueParameters = [
-    KaVariableLikeSignature:
+    KaVariableSignature:
       name = other
       receiverType = null
       returnType = kotlin.Any?
@@ -21,19 +21,19 @@ KaFunctionLikeSignature:
       callableId = null
   ]
   callableId = kotlin/Any.equals
-KaFunctionLikeSignature:
+KaFunctionSignature:
   receiverType = null
   returnType = kotlin.Int
   symbol = kotlin/Any.hashCode(<dispatch receiver>: kotlin.Any): kotlin.Int
   valueParameters = []
   callableId = kotlin/Any.hashCode
-KaFunctionLikeSignature:
+KaFunctionSignature:
   receiverType = null
   returnType = kotlin.String
   symbol = kotlin/Any.toString(<dispatch receiver>: kotlin.Any): kotlin.String
   valueParameters = []
   callableId = kotlin/Any.toString
-KaVariableLikeSignature:
+KaVariableSignature:
   name = value
   receiverType = null
   returnType = kotlin.Int!
@@ -42,7 +42,7 @@ KaVariableLikeSignature:
 
 
 Declaration Scope:
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: /JavaClass.getValue
   contextReceivers: []
@@ -71,7 +71,7 @@ KaFunctionSymbol:
   typeParameters: []
   valueParameters: []
   visibility: Public
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: kotlin/Any.equals
   contextReceivers: []
@@ -110,6 +110,7 @@ KaFunctionSymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: other
@@ -122,7 +123,7 @@ KaFunctionSymbol:
       typeParameters: []
   ]
   visibility: Public
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: kotlin/Any.hashCode
   contextReceivers: []
@@ -152,7 +153,7 @@ KaFunctionSymbol:
   typeParameters: []
   valueParameters: []
   visibility: Public
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: kotlin/Any.toString
   contextReceivers: []
@@ -217,7 +218,7 @@ KaSyntheticJavaPropertySymbol:
   isOverride: false
   isStatic: false
   isVal: true
-  javaGetterSymbol: KaFunctionSymbol(/JavaClass.getValue)
+  javaGetterSymbol: KaNamedFunctionSymbol(/JavaClass.getValue)
   javaSetterSymbol: null
   location: CLASS
   modality: OPEN

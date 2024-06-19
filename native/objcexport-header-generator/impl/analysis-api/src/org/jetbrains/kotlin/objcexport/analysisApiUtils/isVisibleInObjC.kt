@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -22,13 +22,15 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
 context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 internal fun KaSymbol.isVisibleInObjC(): Boolean = when (this) {
     is KaCallableSymbol -> this.isVisibleInObjC()
-    is KaClassOrObjectSymbol -> this.isVisibleInObjC()
+    is KaClassSymbol -> this.isVisibleInObjC()
     else -> false
 }
 
 context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 internal fun KaCallableSymbol.isVisibleInObjC(): Boolean {
     if (this is KaSymbolWithVisibility && !isPublicApi(this)) return false
     if (this is KaPossibleMultiplatformSymbol && isExpect) return false
@@ -42,7 +44,8 @@ internal fun KaCallableSymbol.isVisibleInObjC(): Boolean {
 }
 
 context(KaSession)
-internal fun KaClassOrObjectSymbol.isVisibleInObjC(): Boolean {
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
+internal fun KaClassSymbol.isVisibleInObjC(): Boolean {
     // TODO if(specialMapped()) return false
     // TODO if(!defaultType.isObjCObjectType()) return false
 
@@ -61,6 +64,7 @@ Private utility functions
  */
 
 context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 private fun KaSymbol.isSealedClassConstructor(): Boolean {
     if (this !is KaConstructorSymbol) return false
     val containingSymbol = this.containingSymbol as? KaSymbolWithModality ?: return false
@@ -68,20 +72,22 @@ private fun KaSymbol.isSealedClassConstructor(): Boolean {
 }
 
 context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 @OptIn(ExperimentalContracts::class)
 private fun KaSymbol.isComponentNMethod(): Boolean {
     contract {
-        returns(true) implies (this@isComponentNMethod is KaFunctionSymbol)
+        returns(true) implies (this@isComponentNMethod is KaNamedFunctionSymbol)
     }
 
-    if (this !is KaFunctionSymbol) return false
+    if (this !is KaNamedFunctionSymbol) return false
     if (!this.isOperator) return false
-    val containingClassSymbol = this.containingSymbol as? KaNamedClassOrObjectSymbol ?: return false
+    val containingClassSymbol = this.containingSymbol as? KaNamedClassSymbol ?: return false
     if (!containingClassSymbol.isData) return false
     return DataClassResolver.isComponentLike(this.name)
 }
 
 context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 private fun KaCallableSymbol.isHiddenFromObjCByAnnotation(): Boolean {
     val overwrittenSymbols = directlyOverriddenSymbols.toList()
     if (overwrittenSymbols.isNotEmpty()) return overwrittenSymbols.first().isHiddenFromObjCByAnnotation()
@@ -89,9 +95,10 @@ private fun KaCallableSymbol.isHiddenFromObjCByAnnotation(): Boolean {
 }
 
 context(KaSession)
-private fun KaClassOrObjectSymbol.isHiddenFromObjCByAnnotation(): Boolean {
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
+private fun KaClassSymbol.isHiddenFromObjCByAnnotation(): Boolean {
     val containingSymbol = containingSymbol
-    if (containingSymbol is KaClassOrObjectSymbol && containingSymbol.isHiddenFromObjCByAnnotation()) return true
+    if (containingSymbol is KaClassSymbol && containingSymbol.isHiddenFromObjCByAnnotation()) return true
     return this.containsHidesFromObjCAnnotation()
 }
 
@@ -115,6 +122,7 @@ private fun KaClassOrObjectSymbol.isHiddenFromObjCByAnnotation(): Boolean {
  *
  */
 context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 private fun KaAnnotatedSymbol.containsHidesFromObjCAnnotation(): Boolean {
     return annotations.any { annotation ->
         val annotationClassId = annotation.classId ?: return@any false
@@ -124,6 +132,7 @@ private fun KaAnnotatedSymbol.containsHidesFromObjCAnnotation(): Boolean {
 }
 
 context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 @OptIn(KaExperimentalApi::class)
 private fun KaCallableSymbol.isHiddenFromObjCByDeprecation(): Boolean {
     /*
@@ -136,7 +145,7 @@ private fun KaCallableSymbol.isHiddenFromObjCByDeprecation(): Boolean {
         return true
     }
 
-    val containingClassSymbol = containingSymbol as? KaClassOrObjectSymbol
+    val containingClassSymbol = containingSymbol as? KaClassSymbol
     if (containingClassSymbol?.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) {
         return true
     }
@@ -145,8 +154,9 @@ private fun KaCallableSymbol.isHiddenFromObjCByDeprecation(): Boolean {
 }
 
 context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 @OptIn(KaExperimentalApi::class)
-private fun KaClassOrObjectSymbol.isHiddenFromObjCByDeprecation(): Boolean {
+private fun KaClassSymbol.isHiddenFromObjCByDeprecation(): Boolean {
     if (this.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return true
 
     // Note: ObjCExport requires super class of exposed class to be exposed.
@@ -160,7 +170,7 @@ private fun KaClassOrObjectSymbol.isHiddenFromObjCByDeprecation(): Boolean {
     // Also in Kotlin hidden class members (including other classes) aren't directly accessible.
     // So hide a class if its enclosing class is hidden:
     val containingSymbol = containingSymbol
-    if (containingSymbol is KaClassOrObjectSymbol && containingSymbol.isHiddenFromObjCByDeprecation()) {
+    if (containingSymbol is KaClassSymbol && containingSymbol.isHiddenFromObjCByDeprecation()) {
         return true
     }
 
@@ -168,8 +178,9 @@ private fun KaClassOrObjectSymbol.isHiddenFromObjCByDeprecation(): Boolean {
 }
 
 context(KaSession)
-private fun KaClassOrObjectSymbol.isInlined(): Boolean {
-    if (this !is KaNamedClassOrObjectSymbol) return false
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
+private fun KaClassSymbol.isInlined(): Boolean {
+    if (this !is KaNamedClassSymbol) return false
     if (this.isInline) return true
     // TODO: There are some native types that are 'implicitly inlined'
     return false

@@ -6,7 +6,7 @@ KtConstructorCalleeExpression(126,127): 'A'
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = A
           symbol = <constructor>(): A
@@ -15,7 +15,7 @@ KtConstructorCalleeExpression(126,127): 'A'
       typeArgumentsMapping = {}
       argumentMapping = {}
     isInBestCandidates = false
-
+  
   KaInapplicableCallCandidateInfo:
     diagnostic = ERROR<UNRESOLVED_REFERENCE: OTHER_ERROR with <init>>
     candidate = KaDelegatedConstructorCall:
@@ -23,12 +23,12 @@ KtConstructorCalleeExpression(126,127): 'A'
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = A
           symbol = <constructor>(p: kotlin.String): A
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = p
               receiverType = null
               returnType = kotlin.String
@@ -38,7 +38,7 @@ KtConstructorCalleeExpression(126,127): 'A'
           callableId = null
       typeArgumentsMapping = {}
       argumentMapping = {
-        5 -> (KaVariableLikeSignature:
+        5 -> (KaVariableSignature:
           name = p
           receiverType = null
           returnType = kotlin.String
@@ -46,19 +46,19 @@ KtConstructorCalleeExpression(126,127): 'A'
           callableId = null)
       }
     isInBestCandidates = false
-
+  
   KaApplicableCallCandidateInfo:
     candidate = KaDelegatedConstructorCall:
       kind = SUPER_CALL
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = A
           symbol = <constructor>(x: kotlin.Int): A
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = x
               receiverType = null
               returnType = kotlin.Int
@@ -68,7 +68,7 @@ KtConstructorCalleeExpression(126,127): 'A'
           callableId = null
       typeArgumentsMapping = {}
       argumentMapping = {
-        5 -> (KaVariableLikeSignature:
+        5 -> (KaVariableSignature:
           name = x
           receiverType = null
           returnType = kotlin.Int

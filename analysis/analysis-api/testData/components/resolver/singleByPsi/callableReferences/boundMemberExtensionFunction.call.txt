@@ -15,12 +15,12 @@ KtCallableReferenceExpression(230,238): 'Bar::foo'
               type: Foo
           type = Foo
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = Bar
           returnType = kotlin.Unit
           symbol = /Foo.foo(<extension receiver>: Bar, <dispatch receiver>: Foo, a: kotlin.Int): kotlin.Unit
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = a
               receiverType = null
               returnType = kotlin.Int

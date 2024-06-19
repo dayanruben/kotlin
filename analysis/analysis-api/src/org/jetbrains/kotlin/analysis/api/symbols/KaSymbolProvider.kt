@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -16,7 +16,7 @@ public interface KaSymbolProvider {
     public val KtDeclaration.symbol: KaDeclarationSymbol
 
     /**
-     * Creates [KaVariableLikeSymbol] by [KtParameter].
+     * Creates [KaVariableSymbol] by [KtParameter].
      *
      * Unfortunately, [KtParameter] in PSI stands for many things, and not all of them are represented by a single type of symbol,
      * so this function does not work for all possible [KtParameter]s.
@@ -29,15 +29,15 @@ public interface KaSymbolProvider {
      *
      * Otherwise, returns [KaValueParameterSymbol].
      */
-    public val KtParameter.symbol: KaVariableLikeSymbol
+    public val KtParameter.symbol: KaVariableSymbol
 
     /**
-     * Creates [KaFunctionLikeSymbol] by [KtNamedFunction]
+     * Creates [KaFunctionSymbol] by [KtNamedFunction]
      *
      * If [KtNamedFunction.getName] is `null` then returns [KaAnonymousFunctionSymbol]
-     * Otherwise, returns [KaFunctionSymbol]
+     * Otherwise, returns [KaNamedFunctionSymbol]
      */
-    public val KtNamedFunction.symbol: KaFunctionLikeSymbol
+    public val KtNamedFunction.symbol: KaFunctionSymbol
 
     public val KtConstructor<*>.symbol: KaConstructorSymbol
 
@@ -56,12 +56,12 @@ public interface KaSymbolProvider {
     public val KtObjectLiteralExpression.symbol: KaAnonymousObjectSymbol
 
     /** Returns a symbol for a given [KtClassOrObject]. Returns `null` for `KtEnumEntry` declarations. */
-    public val KtClassOrObject.classSymbol: KaClassOrObjectSymbol?
+    public val KtClassOrObject.classSymbol: KaClassSymbol?
 
-    public val KtObjectDeclaration.symbol: KaClassOrObjectSymbol
+    public val KtObjectDeclaration.symbol: KaClassSymbol
 
     /** Returns a symbol for a given named [KtClassOrObject]. Returns `null` for `KtEnumEntry` declarations and object literals. */
-    public val KtClassOrObject.namedClassSymbol: KaNamedClassOrObjectSymbol?
+    public val KtClassOrObject.namedClassSymbol: KaNamedClassSymbol?
 
     public val KtPropertyAccessor.symbol: KaPropertyAccessorSymbol
 
@@ -80,10 +80,10 @@ public interface KaSymbolProvider {
     public val KtScript.symbol: KaScriptSymbol
 
     @Deprecated("Use 'symbol' instead", replaceWith = ReplaceWith("symbol"))
-    public fun KtParameter.getParameterSymbol(): KaVariableLikeSymbol = symbol
+    public fun KtParameter.getParameterSymbol(): KaVariableSymbol = symbol
 
     @Deprecated("Use 'symbol' instead", replaceWith = ReplaceWith("symbol"))
-    public fun KtNamedFunction.getFunctionLikeSymbol(): KaFunctionLikeSymbol = symbol
+    public fun KtNamedFunction.getFunctionLikeSymbol(): KaFunctionSymbol = symbol
 
     @Deprecated("Use 'symbol' instead", replaceWith = ReplaceWith("symbol"))
     public fun KtConstructor<*>.getConstructorSymbol(): KaConstructorSymbol = symbol
@@ -110,10 +110,10 @@ public interface KaSymbolProvider {
     public fun KtObjectLiteralExpression.getAnonymousObjectSymbol(): KaAnonymousObjectSymbol = symbol
 
     @Deprecated("Use 'classSymbol' instead", replaceWith = ReplaceWith("classSymbol"))
-    public fun KtClassOrObject.getClassOrObjectSymbol(): KaClassOrObjectSymbol? = classSymbol
+    public fun KtClassOrObject.getClassOrObjectSymbol(): KaClassSymbol? = classSymbol
 
     @Deprecated("Use 'namedClassSymbol' instead", replaceWith = ReplaceWith("namedClassSymbol"))
-    public fun KtClassOrObject.getNamedClassOrObjectSymbol(): KaNamedClassOrObjectSymbol? = namedClassSymbol
+    public fun KtClassOrObject.getNamedClassOrObjectSymbol(): KaNamedClassSymbol? = namedClassSymbol
 
     @Deprecated("Use 'symbol' instead", replaceWith = ReplaceWith("symbol"))
     public fun KtPropertyAccessor.getPropertyAccessorSymbol(): KaPropertyAccessorSymbol = symbol
@@ -136,10 +136,10 @@ public interface KaSymbolProvider {
     /**
      * @return symbol with specified [this@getClassOrObjectSymbolByClassId] or `null` in case such symbol is not found
      */
-    public fun findClass(classId: ClassId): KaClassOrObjectSymbol?
+    public fun findClass(classId: ClassId): KaClassSymbol?
 
     @Deprecated("Use 'findClass() instead.", replaceWith = ReplaceWith("findClass(classId)"))
-    public fun getClassOrObjectSymbolByClassId(classId: ClassId): KaClassOrObjectSymbol? = findClass(classId)
+    public fun getClassOrObjectSymbolByClassId(classId: ClassId): KaClassSymbol? = findClass(classId)
 
     /**
      * @return [KaTypeAliasSymbol] with specified [classId] or `null` in case such symbol is not found
@@ -176,11 +176,13 @@ public interface KaSymbolProvider {
 }
 
 context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 @Deprecated("Use 'getSymbol()' instead", ReplaceWith("this.getSymbol() as S"))
 public inline fun <reified S : KaSymbol> KtDeclaration.getSymbolOfType(): S =
     withValidityAssertion { symbol } as S
 
 context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 @Deprecated("Use 'getSymbol()' instead", ReplaceWith("this.getSymbol() as? S"))
 public inline fun <reified S : KaSymbol> KtDeclaration.getSymbolOfTypeSafe(): S? =
     withValidityAssertion { symbol } as? S

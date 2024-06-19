@@ -43,6 +43,7 @@ KaAnonymousFunctionSymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: a
@@ -137,6 +138,7 @@ KaAnonymousFunctionSymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: a
@@ -231,6 +233,7 @@ KaAnonymousFunctionSymbol:
       isExtension: false
       isImplicitLambdaParameter: true
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: it
@@ -251,7 +254,7 @@ KaAnonymousFunctionSymbol:
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
 
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: /foo
   contextReceivers: []
@@ -286,7 +289,7 @@ KaFunctionSymbol:
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
 
-KaFunctionSymbol:
+KaNamedFunctionSymbol:
   annotations: []
   callableId: /bar
   contextReceivers: []
@@ -325,6 +328,7 @@ KaFunctionSymbol:
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
+      isVal: true
       isVararg: false
       location: LOCAL
       name: lmbd

@@ -8,12 +8,12 @@ KtNameReferenceExpression(83,94): 'setListener'
           isSafeNavigation = false
           type = JavaTest.SomeJavaClass
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = kotlin.Unit
           symbol = /JavaTest.SomeJavaClass.setListener(<dispatch receiver>: JavaTest.SomeJavaClass, listener: JavaTest.SAMInterface!): kotlin.Unit
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = listener
               receiverType = null
               returnType = JavaTest.SAMInterface!
@@ -23,7 +23,7 @@ KtNameReferenceExpression(83,94): 'setListener'
           callableId = /JavaTest.SomeJavaClass.setListener
       typeArgumentsMapping = {}
       argumentMapping = {
-        {} -> (KaVariableLikeSignature:
+        {} -> (KaVariableSignature:
           name = listener
           receiverType = null
           returnType = JavaTest.SAMInterface!

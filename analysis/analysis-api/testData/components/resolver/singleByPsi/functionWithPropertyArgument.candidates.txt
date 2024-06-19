@@ -5,12 +5,12 @@ KtCallExpression(44,62): 'foo(localProperty)'
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = kotlin.Unit
           symbol = /foo(i: kotlin.Int): kotlin.Unit
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = i
               receiverType = null
               returnType = kotlin.Int
@@ -20,7 +20,7 @@ KtCallExpression(44,62): 'foo(localProperty)'
           callableId = /foo
       typeArgumentsMapping = {}
       argumentMapping = {
-        localProperty -> (KaVariableLikeSignature:
+        localProperty -> (KaVariableSignature:
           name = i
           receiverType = null
           returnType = kotlin.Int

@@ -1,10 +1,15 @@
+/*
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+
 package org.jetbrains.kotlin.objcexport
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.backend.konan.KonanPrimitiveType
 import org.jetbrains.kotlin.backend.konan.objcexport.*
@@ -24,6 +29,7 @@ import org.jetbrains.kotlin.objcexport.extras.requiresForwardDeclaration
  * [org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportTranslatorImpl.mapType]
  */
 context(KaSession, KtObjCExportSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 internal fun KaType.translateToObjCType(typeBridge: TypeBridge): ObjCType {
     return when (typeBridge) {
         is ReferenceBridge -> this.translateToObjCReferenceType()
@@ -51,6 +57,7 @@ internal fun KaType.translateToObjCType(typeBridge: TypeBridge): ObjCType {
  * [org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportTranslatorImpl.mapReferenceType]
  */
 context(KaSession, KtObjCExportSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 internal fun KaType.translateToObjCReferenceType(): ObjCReferenceType {
     return mapToReferenceTypeIgnoringNullability().withNullabilityOf(this)
 }
@@ -59,6 +66,7 @@ internal fun KaType.translateToObjCReferenceType(): ObjCReferenceType {
  * [org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportTranslatorImpl.mapReferenceTypeIgnoringNullability]
  */
 context(KaSession, KtObjCExportSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 internal fun KaType.mapToReferenceTypeIgnoringNullability(): ObjCNonNullReferenceType {
     val fullyExpandedType = fullyExpandedType
     val classId = (fullyExpandedType as? KaClassType)?.classId
@@ -91,10 +99,10 @@ internal fun KaType.mapToReferenceTypeIgnoringNullability(): ObjCNonNullReferenc
     }
 
     /* Check if inline type represents 'regular' inline class */
-    val classSymbol: KaClassOrObjectSymbol? = if (classId != null) findClass(classId) else null
+    val classSymbol: KaClassSymbol? = if (classId != null) findClass(classId) else null
     run check@{
         if (classId == null) return@check
-        if (classSymbol !is KaNamedClassOrObjectSymbol) return@check
+        if (classSymbol !is KaNamedClassSymbol) return@check
         if (classSymbol.isInline) return ObjCIdType
     }
 
@@ -131,7 +139,7 @@ internal fun KaType.mapToReferenceTypeIgnoringNullability(): ObjCNonNullReferenc
             return ObjCIdType
         }
 
-        if (definingSymbol is KaClassOrObjectSymbol && definingSymbol.classKind == KaClassKind.INTERFACE) {
+        if (definingSymbol is KaClassSymbol && definingSymbol.classKind == KaClassKind.INTERFACE) {
             return ObjCIdType
         }
         /*
@@ -145,6 +153,7 @@ internal fun KaType.mapToReferenceTypeIgnoringNullability(): ObjCNonNullReferenc
 }
 
 context(KaSession, KtObjCExportSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 private val KaClassType.objCTypeName: String
     get() {
         return findClass(classId)?.getObjCClassOrProtocolName()?.objCName
@@ -152,6 +161,7 @@ private val KaClassType.objCTypeName: String
     }
 
 context(KaSession, KtObjCExportSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 internal fun KaType.translateTypeArgumentsToObjC(): List<ObjCNonNullReferenceType> {
     if (this !is KaClassType) return emptyList()
 

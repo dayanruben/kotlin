@@ -1,3 +1,8 @@
+/*
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+
 package org.jetbrains.kotlin.objcexport.analysisApiUtils
 
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -11,16 +16,17 @@ import org.jetbrains.kotlin.objcexport.*
 /**
  * This method is tightly bound with [valueParametersAssociated] and order in [MethodBridge.valueParameters] matters.
  * K1 function descriptor has property [allParameters], but analysis API doesn't so we need to combine manually in exact order:
- * [KtFunctionLikeSymbol.receiverParameter], [KtFunctionLikeSymbol.valueParameters] and inner class edge case.
+ * [KaFunctionSymbol.receiverParameter], [KaFunctionSymbol.valueParameters] and inner class edge case.
  * Then [valueParametersAssociated] associates parameters according the order.
  *
  * See K1 implementation [org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportMapperKt.bridgeMethodImpl]
  */
 context(KaSession, KtObjCExportSession)
-internal fun KaFunctionLikeSymbol.getFunctionMethodBridge(): MethodBridge {
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
+internal fun KaFunctionSymbol.getFunctionMethodBridge(): MethodBridge {
 
     val valueParameters = mutableListOf<MethodBridgeValueParameter>()
-    val isInner = (containingSymbol as? KaNamedClassOrObjectSymbol)?.isInner ?: false
+    val isInner = (containingSymbol as? KaNamedClassSymbol)?.isInner ?: false
 
     this.receiverParameter?.apply {
         valueParameters += bridgeParameter(this.type)
@@ -52,6 +58,7 @@ internal fun KaFunctionLikeSymbol.getFunctionMethodBridge(): MethodBridge {
 }
 
 context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 internal val KaCallableSymbol.bridgeReceiverType: MethodBridgeReceiver
     get() {
         return if (isArrayConstructor) {
@@ -67,6 +74,7 @@ internal val KaCallableSymbol.bridgeReceiverType: MethodBridgeReceiver
  * [ObjCExportMapper.bridgeParameter]
  */
 context(KaSession, KtObjCExportSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 private fun bridgeParameter(type: KaType): MethodBridgeValueParameter {
     return MethodBridgeValueParameter.Mapped(bridgeType(type))
 }
@@ -75,6 +83,7 @@ private fun bridgeParameter(type: KaType): MethodBridgeValueParameter {
  * [ObjCExportMapper.bridgeType]
  */
 context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 private fun bridgeType(
     type: KaType,
 ): TypeBridge {
@@ -117,6 +126,7 @@ private fun bridgeType(
  * [ObjCExportMapper.bridgeFunctionType]
  */
 context(KaSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 private fun bridgeFunctionType(type: KaType): TypeBridge {
 
     val numberOfParameters: Int
@@ -138,6 +148,7 @@ private fun bridgeFunctionType(type: KaType): TypeBridge {
  * [ObjCExportMapper.bridgeReturnType]
  */
 context(KaSession, KtObjCExportSession)
+@Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 private fun KaCallableSymbol.bridgeReturnType(): MethodBridge.ReturnValue {
 
     if (isArrayConstructor) {

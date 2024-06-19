@@ -5,12 +5,12 @@ KtCallExpression(108,119): 'processB(a)'
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = kotlin.Int
           symbol = /processB(b: B): kotlin.Int
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = b
               receiverType = null
               returnType = B
@@ -20,7 +20,7 @@ KtCallExpression(108,119): 'processB(a)'
           callableId = /processB
       typeArgumentsMapping = {}
       argumentMapping = {
-        a -> (KaVariableLikeSignature:
+        a -> (KaVariableSignature:
           name = b
           receiverType = null
           returnType = B

@@ -6,12 +6,12 @@ KtCallExpression(89,100): 'Foo<String>'
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = Foo<kotlin.String>
           symbol = <constructor>(len: kotlin.Int): Foo<T>
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = len
               receiverType = null
               returnType = kotlin.Int
@@ -30,12 +30,12 @@ KtCallExpression(89,100): 'Foo<String>'
       partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
         dispatchReceiver = null
         extensionReceiver = null
-        signature = KaFunctionLikeSignature:
+        signature = KaFunctionSignature:
           receiverType = null
           returnType = Foo<kotlin.String>
           symbol = <constructor>(s: kotlin.String): Foo<T>
           valueParameters = [
-            KaVariableLikeSignature:
+            KaVariableSignature:
               name = s
               receiverType = null
               returnType = kotlin.String
