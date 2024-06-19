@@ -13,6 +13,14 @@ import org.jetbrains.kotlin.analysis.api.contracts.description.Context
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.contracts.description.renderKaContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaPossiblyNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
@@ -360,9 +368,13 @@ public class DebugSymbolRenderer(
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun renderModule(module: KaModule, printer: PrettyPrinter) {
-        val ktModuleClass = module::class.allSuperclasses.first { it in kaModuleSubclasses }
-        printer.append(ktModuleClass.simpleName + " \"" + module.moduleDescription + "\"")
+        val apiClass = when (val moduleClass = module::class) {
+            in kaModuleApiSubclasses -> moduleClass
+            else -> moduleClass.allSuperclasses.first { it in kaModuleApiSubclasses }
+        }
+        printer.append(apiClass.simpleName + " \"" + module.moduleDescription + "\"")
     }
 
     private fun KClass<*>.allSealedSubClasses(): List<KClass<*>> = buildList {
@@ -370,14 +382,29 @@ public class DebugSymbolRenderer(
         sealedSubclasses.flatMapTo(this) { it.allSealedSubClasses() }
     }
 
-    private val kaModuleSubclasses = KaModule::class.allSealedSubClasses().distinct().sortedWith { a, b ->
-        when {
-            a == b -> 0
-            a.isSubclassOf(b) -> -1
-            b.isSubclassOf(a) -> 1
-            else -> 0
+    /**
+     * All [KaModule] classes which are part of the API (defined in `KaModule.kt`) and should be printed in test data.
+     */
+    @OptIn(KaPlatformInterface::class, KaExperimentalApi::class)
+    private val kaModuleApiSubclasses =
+        listOf(
+            KaModule::class,
+            KaSourceModule::class,
+            KaLibraryModule::class,
+            KaLibrarySourceModule::class,
+            KaBuiltinsModule::class,
+            KaScriptModule::class,
+            KaScriptDependencyModule::class,
+            KaDanglingFileModule::class,
+            KaNotUnderContentRootModule::class,
+        ).sortedWith { a, b ->
+            when {
+                a == b -> 0
+                a.isSubclassOf(b) -> -1
+                b.isSubclassOf(a) -> 1
+                else -> 0
+            }
         }
-    }
 
     private fun renderKtInitializerValue(value: KaInitializerValue, printer: PrettyPrinter) {
         with(printer) {

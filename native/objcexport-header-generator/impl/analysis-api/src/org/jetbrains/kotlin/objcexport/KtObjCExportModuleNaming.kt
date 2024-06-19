@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.objcexport
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
@@ -56,7 +57,7 @@ internal object KtKlibObjCExportModuleNaming : KtObjCExportModuleNaming {
         This information is theoretically available already (as also used by the Analysis Api), but not yet accessible.
          */
         if (module !is KaLibraryModule) return null
-        val binaryRoot = module.getBinaryRoots().singleOrNull() ?: return null
+        val binaryRoot = module.binaryRoots.singleOrNull() ?: return null
         if (!binaryRoot.isDirectory() && binaryRoot.extension != "klib") return null
         val library = runCatching { ToolingSingleFileKlibResolveStrategy.tryResolve(KonanFile(binaryRoot), DummyLogger) }
             .getOrElse { error -> error.printStackTrace(); return null } ?: return null
@@ -66,10 +67,11 @@ internal object KtKlibObjCExportModuleNaming : KtObjCExportModuleNaming {
 
 internal object KtSimpleObjCExportModuleNaming : KtObjCExportModuleNaming {
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     @Suppress("CONTEXT_RECEIVERS_DEPRECATED")
     override fun getModuleName(module: KaModule): String? {
         return when (module) {
-            is KaSourceModule -> module.stableModuleName ?: module.moduleName
+            is KaSourceModule -> module.stableModuleName ?: module.name
             is KaLibraryModule -> module.libraryName
             else -> null
         }

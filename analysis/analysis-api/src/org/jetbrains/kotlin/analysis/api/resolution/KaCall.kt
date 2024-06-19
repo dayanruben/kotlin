@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.analysis.api.resolution
 
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.validityAsserted
@@ -25,12 +26,12 @@ import org.jetbrains.kotlin.psi.KtExpression
 /**
  * A call to a function, a simple/compound access to a property, or a simple/compound access through `get` and `set` convention.
  */
-public sealed class KaCall : KaLifetimeOwner
+public sealed interface KaCall : KaLifetimeOwner
 
 /**
  * A call to a function, or a simple/compound access to a property.
  */
-public sealed class KaCallableMemberCall<S : KaCallableSymbol, C : KaCallableSignature<S>> : KaCall() {
+public sealed class KaCallableMemberCall<S : KaCallableSymbol, C : KaCallableSignature<S>> : KaCall {
     public abstract val partiallyAppliedSymbol: KaPartiallyAppliedSymbol<S, C>
 
     /**
@@ -58,7 +59,7 @@ public sealed class KaFunctionCall<S : KaFunctionSymbol>(
 /**
  * A call to a function.
  */
-public class KaSimpleFunctionCall(
+public class KaSimpleFunctionCall @KaImplementationDetail constructor(
     partiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaFunctionSymbol>,
     argumentMapping: LinkedHashMap<KtExpression, KaVariableSignature<KaValueParameterSymbol>>,
     typeArgumentsMapping: Map<KaTypeParameterSymbol, KaType>,
@@ -89,7 +90,7 @@ public class KaSimpleFunctionCall(
  * fun foo() {}
  * ```
  */
-public class KaAnnotationCall(
+public class KaAnnotationCall @KaImplementationDetail constructor(
     partiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaConstructorSymbol>,
     argumentMapping: LinkedHashMap<KtExpression, KaVariableSignature<KaValueParameterSymbol>>,
 ) : KaFunctionCall<KaConstructorSymbol>(argumentMapping) {
@@ -116,7 +117,7 @@ public class KaAnnotationCall(
  * }
  * ```
  */
-public class KaDelegatedConstructorCall(
+public class KaDelegatedConstructorCall @KaImplementationDetail constructor(
     partiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaConstructorSymbol>,
     kind: Kind,
     argumentMapping: LinkedHashMap<KtExpression, KaVariableSignature<KaValueParameterSymbol>>,
@@ -146,7 +147,7 @@ public sealed class KaVariableAccessCall : KaCallableMemberCall<KaVariableSymbol
 /**
  * A simple read or write to a variable or property.
  */
-public class KaSimpleVariableAccessCall(
+public class KaSimpleVariableAccessCall @KaImplementationDetail constructor(
     partiallyAppliedSymbol: KaPartiallyAppliedVariableSymbol<KaVariableSymbol>,
     typeArgumentsMapping: Map<KaTypeParameterSymbol, KaType>,
     simpleAccess: KaSimpleVariableAccess,
@@ -173,12 +174,13 @@ public interface KaCompoundAccessCall {
 }
 
 /**
- * A compound access of a mutable variable.  For example
- * ```
+ * Compound access of a mutable variable.
+ * For example:
+ * ```kotlin
  * fun test() {
  *   var i = 0
  *   i += 1
- *   // partiallyAppliedSymbol: {
+ *   // variablePartiallyAppliedSymbol: {
  *   //   symbol: `i`
  *   //   dispatchReceiver: null
  *   //   extensionReceiver: null
@@ -190,7 +192,7 @@ public interface KaCompoundAccessCall {
  *   // }
  *
  *   i++
- *   // partiallyAppliedSymbol: {
+ *   // variablePartiallyAppliedSymbol: {
  *   //   symbol: `i`
  *   //   dispatchReceiver: null
  *   //   extensionReceiver: null
@@ -202,25 +204,24 @@ public interface KaCompoundAccessCall {
  *   // }
  * }
  * ```
- * Note that if the variable has a `<op>Assign` member, then it's represented as a simple `KaFunctionCall`. For example,
- * ```
+ * Note that if the variable has a `<op>Assign` operator, then it's represented as a simple `KaFunctionCall`.
+ * For example,
+ * ```kotlin
  * fun test(m: MutableList<String>) {
  *   m += "a" // A simple `KaFunctionCall` to `MutableList.plusAssign`, not a `KaVariableAccessCall`. However, the dispatch receiver of this
  *            // call, `m`, is a simple read access represented as a `KaVariableAccessCall`
  * }
  * ```
  */
-public class KaCompoundVariableAccessCall(
-    partiallyAppliedSymbol: KaPartiallyAppliedVariableSymbol<KaVariableSymbol>,
-    typeArgumentsMapping: Map<KaTypeParameterSymbol, KaType>,
-    compoundAccess: KaCompoundAccess,
-) : KaVariableAccessCall(), KaCompoundAccessCall {
-    private val backingPartiallyAppliedSymbol: KaPartiallyAppliedVariableSymbol<KaVariableSymbol> = partiallyAppliedSymbol
-    override val token: KaLifetimeToken get() = backingPartiallyAppliedSymbol.token
+public interface KaCompoundVariableAccessCall : KaCall, KaCompoundAccessCall {
+    /**
+     * Represents a symbol of the mutated variable.
+     */
+    public val variablePartiallyAppliedSymbol: KaPartiallyAppliedVariableSymbol<KaVariableSymbol>
 
-    override val partiallyAppliedSymbol: KaPartiallyAppliedVariableSymbol<KaVariableSymbol> get() = withValidityAssertion { backingPartiallyAppliedSymbol }
-    override val typeArgumentsMapping: Map<KaTypeParameterSymbol, KaType> by validityAsserted(typeArgumentsMapping)
-    override val compoundAccess: KaCompoundAccess by validityAsserted(compoundAccess)
+    @Deprecated("Use 'variablePartiallyAppliedSymbol' instead", ReplaceWith("variablePartiallyAppliedSymbol"))
+    public val partiallyAppliedSymbol: KaPartiallyAppliedVariableSymbol<KaVariableSymbol>
+        get() = variablePartiallyAppliedSymbol
 }
 
 /**
@@ -259,12 +260,12 @@ public class KaCompoundVariableAccessCall(
  * The above call is represented as a simple `KaFunctionCall` to `MutableList.plusAssign`, with the dispatch receiver referencing the
  * `m["a"]`, which is again a simple `KaFunctionCall` to `ThrowingMap.get`.
  */
-public class KaCompoundArrayAccessCall(
+public class KaCompoundArrayAccessCall @KaImplementationDetail constructor(
     compoundAccess: KaCompoundAccess,
     indexArguments: List<KtExpression>,
     getPartiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaNamedFunctionSymbol>,
     setPartiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaNamedFunctionSymbol>,
-) : KaCall(), KaCompoundAccessCall {
+) : KaCall, KaCompoundAccessCall {
     private val backingCompoundAccess: KaCompoundAccess = compoundAccess
 
     override val token: KaLifetimeToken get() = backingCompoundAccess.token

@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.analysis.project.structure.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.computeTransitiveDependsOnDependencies
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
@@ -19,15 +20,16 @@ internal class KaLibraryModuleImpl(
     override val directDependsOnDependencies: List<KaModule>,
     override val directFriendDependencies: List<KaModule>,
     override val contentScope: GlobalSearchScope,
-    override val platform: TargetPlatform,
+    override val targetPlatform: TargetPlatform,
     override val project: Project,
-    private val binaryRoots: Collection<Path>,
+    override val binaryRoots: Collection<Path>,
     override val libraryName: String,
     override val librarySources: KaLibrarySourceModule?,
+
+    @KaPlatformInterface
+    override val isSdk: Boolean,
 ) : KaLibraryModule, KtModuleWithPlatform {
     override val transitiveDependsOnDependencies: List<KaModule> by lazy {
         computeTransitiveDependsOnDependencies(directDependsOnDependencies)
     }
-
-    override fun getBinaryRoots(): Collection<Path> = binaryRoots
 }

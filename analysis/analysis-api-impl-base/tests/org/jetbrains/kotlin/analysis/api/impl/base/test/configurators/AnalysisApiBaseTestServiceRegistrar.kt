@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaBinaryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.test.framework.project.structure.ktTestModuleStructure
 import org.jetbrains.kotlin.analysis.test.framework.services.configuration.AnalysisApiBinaryLibraryIndexingMode
 import org.jetbrains.kotlin.analysis.test.framework.services.configuration.libraryIndexingConfiguration
@@ -91,22 +91,22 @@ object AnalysisApiBaseTestServiceRegistrar : AnalysisApiTestServiceRegistrar() {
         // additionally build and index stubs for the library.
         val mainBinaryModules = moduleStructure.mainModules
             .filter { it.moduleKind == TestModuleKind.LibraryBinary }
-            .map { it.ktModule as KaBinaryModule }
+            .map { it.ktModule as KaLibraryModule }
 
         val sharedBinaryDependencies = moduleStructure.binaryModules.toMutableSet()
         for (mainModule in moduleStructure.mainModules) {
             val ktModule = mainModule.ktModule
-            if (ktModule !is KaBinaryModule) continue
+            if (ktModule !is KaLibraryModule) continue
             sharedBinaryDependencies -= ktModule
         }
 
         val mainBinaryRoots = StandaloneProjectFactory.getVirtualFilesForLibraryRoots(
-            mainBinaryModules.flatMap { it.getBinaryRoots() },
+            mainBinaryModules.flatMap { it.binaryRoots },
             testServices.environmentManager.getProjectEnvironment(),
         ).distinct()
 
         val sharedBinaryRoots = StandaloneProjectFactory.getVirtualFilesForLibraryRoots(
-            sharedBinaryDependencies.flatMap { binary -> binary.getBinaryRoots() },
+            sharedBinaryDependencies.flatMap { binary -> binary.binaryRoots },
             testServices.environmentManager.getProjectEnvironment()
         ).distinct()
 

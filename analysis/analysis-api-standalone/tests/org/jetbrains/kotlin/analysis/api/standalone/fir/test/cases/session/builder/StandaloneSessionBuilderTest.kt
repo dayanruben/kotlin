@@ -7,6 +7,7 @@
 package org.jetbrains.kotlin.analysis.api.standalone.fir.test.cases.session.builder
 
 import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
@@ -38,7 +39,7 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Paths
 import kotlin.test.assertEquals
 
-@OptIn(KaAnalysisApiInternals::class)
+@OptIn(KaAnalysisApiInternals::class, KaExperimentalApi::class)
 class StandaloneSessionBuilderTest : TestWithDisposable() {
     @Test
     fun testJdkSessionBuilder() {
@@ -51,7 +52,7 @@ class StandaloneSessionBuilderTest : TestWithDisposable() {
                         addBinaryRootsFromJdkHome(Paths.get(System.getProperty("java.home")), isJre = true)
                         addBinaryRootsFromJdkHome(Paths.get(System.getProperty("java.home")), isJre = false)
                         platform = JvmPlatforms.defaultJvmPlatform
-                        sdkName = "JDK"
+                        libraryName = "JDK"
                     }
                 )
                 sourceModule = addModule(
@@ -242,8 +243,8 @@ class StandaloneSessionBuilderTest : TestWithDisposable() {
         val ktCallExpression = ktFile.findDescendantOfType<KtCallExpression>()!!
         ktCallExpression.assertIsCallOf(CallableId(FqName.ROOT, Name.identifier("foo")))
 
-        assertEquals("main", sourceModule.moduleName)
-        assertEquals(sourceModule.moduleName, sourceModule.stableModuleName)
+        assertEquals("main", sourceModule.name)
+        assertEquals(sourceModule.name, sourceModule.stableModuleName)
     }
 
     @Test

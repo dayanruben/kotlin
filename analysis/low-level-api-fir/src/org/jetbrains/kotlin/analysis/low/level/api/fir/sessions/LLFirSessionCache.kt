@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir.sessions
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaBinaryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
@@ -16,11 +16,11 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaSdkModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.isStable
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.caches.CleanableSoftValueCache
+import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirBuiltinsSessionFactory
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkCanceled
 import org.jetbrains.kotlin.fir.FirModuleDataImpl
 import org.jetbrains.kotlin.fir.FirSession
@@ -56,7 +56,11 @@ class LLFirSessionCache(private val project: Project) : Disposable {
      * Must be called from a read action.
      */
     fun getSession(module: KaModule, preferBinary: Boolean = false): LLFirSession {
-        if (module is KaBinaryModule && (preferBinary || module is KaSdkModule)) {
+        if (module is KaBuiltinsModule && preferBinary) {
+            return LLFirBuiltinsSessionFactory.getInstance(project).getBuiltinsSession(module.targetPlatform)
+        }
+
+        if (module is KaLibraryModule && (preferBinary || module.isSdk)) {
             return getCachedSession(module, binaryCache) {
                 createPlatformAwareSessionFactory(module).createBinaryLibrarySession(module)
             }
@@ -129,7 +133,7 @@ class LLFirSessionCache(private val project: Project) : Disposable {
         ApplicationManager.getApplication().assertWriteAccessAllowed()
 
         val didSourceSessionExist = removeSessionFrom(module, sourceCache)
-        val didBinarySessionExist = module is KaBinaryModule && removeSessionFrom(module, binaryCache)
+        val didBinarySessionExist = module is KaLibraryModule && removeSessionFrom(module, binaryCache)
         val didDanglingFileSessionExist = module is KaDanglingFileModule && removeSessionFrom(module, danglingFileSessionCache)
         val didUnstableDanglingFileSessionExist = module is KaDanglingFileModule && removeSessionFrom(module, unstableDanglingFileSessionCache)
 
@@ -152,7 +156,7 @@ class LLFirSessionCache(private val project: Project) : Disposable {
             removeAllSessionsFrom(binaryCache)
         } else {
             // `binaryCache` can only contain library modules, so we only need to remove sessions from `sourceCache`.
-            removeAllMatchingSessionsFrom(sourceCache) { it !is KaBinaryModule && it !is KaLibrarySourceModule }
+            removeAllMatchingSessionsFrom(sourceCache) { it !is KaLibraryModule && it !is KaLibrarySourceModule }
         }
 
         removeAllDanglingFileSessions()
@@ -223,8 +227,14 @@ class LLFirSessionCache(private val project: Project) : Disposable {
         val sessionFactory = createPlatformAwareSessionFactory(module)
         return when (module) {
             is KaSourceModule -> sessionFactory.createSourcesSession(module)
-            is KaLibraryModule, is KaLibrarySourceModule -> sessionFactory.createLibrarySession(module)
-            is KaSdkModule -> sessionFactory.createBinaryLibrarySession(module)
+            is KaLibraryModule -> {
+                if (module.isSdk) {
+                    sessionFactory.createBinaryLibrarySession(module)
+                } else {
+                    sessionFactory.createLibrarySession(module)
+                }
+            }
+            is KaLibrarySourceModule -> sessionFactory.createLibrarySession(module)
             is KaScriptModule -> sessionFactory.createScriptSession(module)
             is KaDanglingFileModule -> {
                 //  Dangling file context must have an analyzable session, so we can properly compile code against it.
@@ -237,7 +247,7 @@ class LLFirSessionCache(private val project: Project) : Disposable {
     }
 
     private fun createPlatformAwareSessionFactory(module: KaModule): LLFirAbstractSessionFactory {
-        val targetPlatform = module.platform
+        val targetPlatform = module.targetPlatform
         return when {
             targetPlatform.all { it is JvmPlatform } -> LLFirJvmSessionFactory(project)
             targetPlatform.all { it is JsPlatform } -> LLFirJsSessionFactory(project)

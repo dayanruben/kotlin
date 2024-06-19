@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.platform.TargetPlatform
 
 class KaSourceModuleImpl(
-    override val moduleName: String,
-    override val platform: TargetPlatform,
+    override val name: String,
+    override val targetPlatform: TargetPlatform,
     override val languageVersionSettings: LanguageVersionSettings,
     override val project: Project,
     override val contentScope: GlobalSearchScope,
@@ -23,7 +23,5 @@ class KaSourceModuleImpl(
     override val directDependsOnDependencies: MutableList<KaModule> = mutableListOf()
     override val directFriendDependencies: MutableList<KaModule> = mutableListOf()
 
-    override fun toString(): String {
-        return moduleName
-    }
+    override fun toString(): String = name
 }

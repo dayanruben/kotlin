@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinFileBasedDe
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.platform.utils.mergeInto
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaBinaryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
@@ -83,7 +82,7 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
 
     abstract fun createSourcesSession(module: KaSourceModule): LLFirSourcesSession
     abstract fun createLibrarySession(module: KaModule): LLFirLibraryOrLibrarySourceResolvableModuleSession
-    abstract fun createBinaryLibrarySession(module: KaBinaryModule): LLFirLibrarySession
+    abstract fun createBinaryLibrarySession(module: KaLibraryModule): LLFirLibrarySession
 
     private fun createLibraryProvidersForScope(
         session: LLFirSession,
@@ -124,7 +123,7 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
     ): List<FirSymbolProvider>
 
     fun createScriptSession(module: KaScriptModule): LLFirScriptSession {
-        val platform = module.platform
+        val platform = module.targetPlatform
         val builtinsSession = LLFirBuiltinsSessionFactory.getInstance(project).getBuiltinsSession(platform)
         val languageVersionSettings = wrapLanguageVersionSettings(module.languageVersionSettings)
         val scopeProvider = FirKotlinScopeProvider(::wrapScopeWithJvmMapped)
@@ -291,7 +290,7 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
         scopeProvider: FirKotlinScopeProvider = FirKotlinScopeProvider(),
         additionalSessionConfiguration: LLFirSourcesSession.(context: SourceSessionCreationContext) -> Unit,
     ): LLFirSourcesSession {
-        val platform = module.platform
+        val platform = module.targetPlatform
         val builtinsSession = LLFirBuiltinsSessionFactory.getInstance(project).getBuiltinsSession(platform)
         val languageVersionSettings = wrapLanguageVersionSettings(module.languageVersionSettings)
 
@@ -372,7 +371,7 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
             }
         }
 
-        val platform = module.platform
+        val platform = module.targetPlatform
         val builtinsSession = LLFirBuiltinsSessionFactory.getInstance(project).getBuiltinsSession(platform)
         val languageVersionSettings = KotlinProjectStructureProvider.getInstance(project).libraryLanguageVersionSettings
 
@@ -454,10 +453,10 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
     protected class BinaryLibrarySessionCreationContext
 
     protected fun doCreateBinaryLibrarySession(
-        module: KaBinaryModule,
+        module: KaLibraryModule,
         additionalSessionConfiguration: LLFirLibrarySession.(context: BinaryLibrarySessionCreationContext) -> Unit,
     ): LLFirLibrarySession {
-        val platform = module.platform
+        val platform = module.targetPlatform
         val builtinsSession = LLFirBuiltinsSessionFactory.getInstance(project).getBuiltinsSession(platform)
 
         val session = LLFirLibrarySession(module, builtinsSession.builtinTypes)
@@ -504,7 +503,7 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
         additionalSessionConfiguration: context(DanglingFileSessionCreationContext) LLFirDanglingFileSession.() -> Unit,
     ): LLFirSession {
         val danglingFile = module.file
-        val platform = module.platform
+        val platform = module.targetPlatform
 
         val builtinsSession = LLFirBuiltinsSessionFactory.getInstance(project).getBuiltinsSession(platform)
         val languageVersionSettings = wrapLanguageVersionSettings(contextSession.languageVersionSettings)
@@ -618,7 +617,7 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
         fun getOrCreateSessionForDependency(dependency: KaModule): LLFirSession? = when (dependency) {
             is KaBuiltinsModule -> null // Built-ins are already added
 
-            is KaBinaryModule -> llFirSessionCache.getSession(dependency, preferBinary = true)
+            is KaLibraryModule -> llFirSessionCache.getSession(dependency, preferBinary = true)
 
             is KaSourceModule -> llFirSessionCache.getSession(dependency)
 
@@ -631,11 +630,7 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
                 llFirSessionCache.getSession(dependency)
             }
 
-            is KaScriptModule,
-            is KaScriptDependencyModule,
-            is KaNotUnderContentRootModule,
-            is KaLibrarySourceModule,
-            -> {
+            else -> {
                 errorWithAttachment("Module ${module::class} cannot depend on ${dependency::class}") {
                     withKaModuleEntry("module", module)
                     withKaModuleEntry("dependency", dependency)

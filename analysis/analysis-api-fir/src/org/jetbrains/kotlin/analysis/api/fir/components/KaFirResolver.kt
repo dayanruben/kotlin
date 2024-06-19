@@ -19,13 +19,13 @@ import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.fir.utils.processEqualsFunctions
 import org.jetbrains.kotlin.analysis.api.getModule
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaAbstractResolver
+import org.jetbrains.kotlin.analysis.api.impl.base.resolution.KaCompoundVariableAccessCallImpl
 import org.jetbrains.kotlin.analysis.api.impl.base.util.KaNonBoundToPsiErrorDiagnostic
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.resolution.KaAnnotationCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaDelegatedConstructorCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
@@ -133,11 +133,7 @@ internal class KaFirResolver(
         }
     }
 
-    override fun KtElement.resolveToCall(): KaCallInfo? = withValidityAssertion {
-        return doResolveCall(this)
-    }
-
-    private fun doResolveCall(psi: KtElement): KaCallInfo? {
+    override fun doResolveCall(psi: KtElement): KaCallInfo? {
         return wrapError(psi) {
             val ktCallInfos = getCallInfo(
                 psi,
@@ -159,11 +155,7 @@ internal class KaFirResolver(
         }
     }
 
-    override fun KtElement.resolveToCallCandidates(): List<KaCallCandidateInfo> = withValidityAssertion {
-        return doCollectCallCandidates(this)
-    }
-
-    private fun doCollectCallCandidates(psi: KtElement): List<KaCallCandidateInfo> = wrapError(psi) {
+    override fun doCollectCallCandidates(psi: KtElement): List<KaCallCandidateInfo> = wrapError(psi) {
         getCallInfo(
             psi,
             getErrorCallInfo = { emptyList() },
@@ -201,8 +193,6 @@ internal class KaFirResolver(
             resolveFragmentOfCall: Boolean,
         ) -> List<T>,
     ): List<T> {
-        if (!canBeResolvedAsCall(psi)) return emptyList()
-
         val containingCallExpressionForCalleeExpression = psi.getContainingCallExpressionForCalleeExpression()
         val containingBinaryExpressionForLhs = psi.getContainingBinaryExpressionForIncompleteLhs()
         val containingUnaryExpressionForIncOrDec = psi.getContainingUnaryIncOrDecExpression()
@@ -211,7 +201,6 @@ internal class KaFirResolver(
             ?: containingUnaryExpressionForIncOrDec
             ?: psi.getContainingDotQualifiedExpressionForSelectorExpression()
             ?: psi.getConstructorDelegationCallForDelegationReferenceExpression()
-            ?: psi.getExpressionForOperationReferenceExpression()
             ?: psi
         val fir = psiToResolve.getOrBuildFir(analysisSession.firResolveSession) ?: return emptyList()
         if (fir is FirDiagnosticHolder) {
@@ -222,20 +211,6 @@ internal class KaFirResolver(
             psiToResolve == containingCallExpressionForCalleeExpression,
             psiToResolve == containingBinaryExpressionForLhs || psiToResolve == containingUnaryExpressionForIncOrDec
         )
-    }
-
-    /**
-     * When resolving [KtOperationReferenceExpression], we instead resolve the containing [KtWhenConditionInRange] or [KtBinaryExpression].
-     * This way, the corresponding FIR element is a call instead of a reference.
-     */
-    private fun KtElement.getExpressionForOperationReferenceExpression(): KtElement? {
-        if (this !is KtOperationReferenceExpression) return null
-        return when (val parent = parent) {
-            // Augment assignment resolves into KtCompoundVariableAccessCall, but we should resolve into a specific function
-            is KtBinaryExpression -> parent.takeUnless { operationSignTokenType in KtTokens.AUGMENTED_ASSIGNMENTS }
-            is KtWhenConditionInRange -> parent
-            else -> null
-        }
     }
 
     private fun FirElement.toKtCallInfo(
@@ -731,9 +706,8 @@ internal class KaFirResolver(
                         KaSimpleVariableAccess.Read
                     )
                 } else {
-                    KaCompoundVariableAccessCall(
+                    KaCompoundVariableAccessCallImpl(
                         variablePartiallyAppliedSymbol,
-                        fir.unwrapLValue()?.toTypeArgumentsMapping(variablePartiallyAppliedSymbol) ?: emptyMap(),
                         KaCompoundAccess.CompoundAssign(operationPartiallyAppliedSymbol, compoundAssignKind, rightOperandPsi),
                     )
                 }
@@ -785,9 +759,8 @@ internal class KaFirResolver(
                         KaSimpleVariableAccess.Read
                     )
                 } else {
-                    KaCompoundVariableAccessCall(
+                    KaCompoundVariableAccessCallImpl(
                         variablePartiallyAppliedSymbol,
-                        fir.unwrapLValue()?.toTypeArgumentsMapping(variablePartiallyAppliedSymbol) ?: emptyMap(),
                         KaCompoundAccess.IncOrDecOperation(operationPartiallyAppliedSymbol, incOrDecOperationKind, incDecPrecedence),
                     )
                 }
@@ -1120,23 +1093,23 @@ internal class KaFirResolver(
         // callee and the variable as the explicit receiver. To correctly get all candidates, we need to get the original function
         // call's explicit receiver (if there is any) and callee (i.e., the variable).
         val unwrappedExplicitReceiver = explicitReceiver?.unwrapSmartcastExpression()
-        val originalFunctionCall =
-            if (this is FirImplicitInvokeCall && unwrappedExplicitReceiver is FirPropertyAccessExpression) {
-                val originalCallee = unwrappedExplicitReceiver.calleeReference.safeAs<FirNamedReference>() ?: return emptyList()
-                buildFunctionCall {
-                    // NOTE: We only need to copy the explicit receiver and not the dispatch and extension receivers as only the explicit
-                    // receiver is needed by the resolver. The dispatch and extension receivers are only assigned after resolution when a
-                    // candidate is selected.
-                    source = this@collectCallCandidates.source
-                    annotations.addAll(this@collectCallCandidates.annotations)
-                    typeArguments.addAll(this@collectCallCandidates.typeArguments)
-                    explicitReceiver = unwrappedExplicitReceiver.explicitReceiver
-                    argumentList = this@collectCallCandidates.argumentList
-                    calleeReference = originalCallee
-                }
-            } else {
-                this
+        val isUnwrappedImplicitInvokeCall = this is FirImplicitInvokeCall && unwrappedExplicitReceiver is FirPropertyAccessExpression
+        val originalFunctionCall = if (isUnwrappedImplicitInvokeCall) {
+            val originalCallee = unwrappedExplicitReceiver.calleeReference.safeAs<FirNamedReference>() ?: return emptyList()
+            buildFunctionCall {
+                // NOTE: We only need to copy the explicit receiver and not the dispatch and extension receivers as only the explicit
+                // receiver is needed by the resolver. The dispatch and extension receivers are only assigned after resolution when a
+                // candidate is selected.
+                source = this@collectCallCandidates.source
+                annotations.addAll(this@collectCallCandidates.annotations)
+                typeArguments.addAll(this@collectCallCandidates.typeArguments)
+                explicitReceiver = unwrappedExplicitReceiver.explicitReceiver
+                argumentList = this@collectCallCandidates.argumentList
+                calleeReference = originalCallee
             }
+        } else {
+            this
+        }
 
         val calleeName = originalFunctionCall.calleeOrCandidateName ?: return emptyList()
         val candidates = AllCandidatesResolver(analysisSession.firSession).getAllCandidates(
@@ -1146,13 +1119,15 @@ internal class KaFirResolver(
             psi,
             ResolutionMode.ContextIndependent,
         )
+
         return candidates.mapNotNull {
-            convertToKtCallCandidateInfo(
-                originalFunctionCall,
-                psi,
-                it.candidate,
-                it.isInBestCandidates,
-                resolveFragmentOfCall
+            convertToKaCallCandidateInfo(
+                resolvable = originalFunctionCall,
+                element = psi,
+                candidate = it.candidate,
+                isInBestCandidates = it.isInBestCandidates,
+                resolveFragmentOfCall = resolveFragmentOfCall,
+                isUnwrappedImplicitInvokeCall = isUnwrappedImplicitInvokeCall,
             )
         }
     }
@@ -1181,12 +1156,13 @@ internal class KaFirResolver(
             .getAllCandidatesForDelegatedConstructor(analysisSession.firResolveSession, this, derivedClass.toLookupTag(), psi)
 
         return candidates.mapNotNull {
-            convertToKtCallCandidateInfo(
-                this,
-                psi,
-                it.candidate,
-                it.isInBestCandidates,
-                resolveFragmentOfCall
+            convertToKaCallCandidateInfo(
+                resolvable = this,
+                element = psi,
+                candidate = it.candidate,
+                isInBestCandidates = it.isInBestCandidates,
+                resolveFragmentOfCall = resolveFragmentOfCall,
+                isUnwrappedImplicitInvokeCall = false,
             )
         }
     }
@@ -1199,17 +1175,26 @@ internal class KaFirResolver(
         }
     }
 
-    private fun convertToKtCallCandidateInfo(
+    private fun convertToKaCallCandidateInfo(
         resolvable: FirResolvable,
         element: KtElement,
         candidate: Candidate,
         isInBestCandidates: Boolean,
         resolveFragmentOfCall: Boolean,
+        isUnwrappedImplicitInvokeCall: Boolean,
     ): KaCallCandidateInfo? {
         val call = createKtCall(element, resolvable, candidate, resolveFragmentOfCall)
             ?: error("expect `createKtCall` to succeed for candidate")
+
         if (candidate.isSuccessful) {
-            return KaApplicableCallCandidateInfo(call, isInBestCandidates)
+            return KaApplicableCallCandidateInfo(
+                candidate = call,
+                isInBestCandidates = if (isUnwrappedImplicitInvokeCall) {
+                    (call as? KaSimpleFunctionCall)?.isImplicitInvoke == true
+                } else {
+                    isInBestCandidates
+                }
+            )
         }
 
         val diagnostic = createConeDiagnosticForCandidateWithError(candidate.lowestApplicability, candidate)

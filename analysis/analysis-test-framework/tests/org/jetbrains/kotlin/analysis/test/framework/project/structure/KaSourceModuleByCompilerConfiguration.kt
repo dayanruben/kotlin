@@ -9,12 +9,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.computeTransitiveDependsOnDependencies
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaBinaryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaSdkModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.standalone.base.projectStructure.StandaloneProjectFactory
 import org.jetbrains.kotlin.analysis.test.framework.services.environmentManager
@@ -44,7 +42,7 @@ abstract class KtModuleByCompilerConfiguration(
     private val compilerConfigurationProvider = testServices.compilerConfigurationProvider
     private val configuration = compilerConfigurationProvider.getCompilerConfiguration(testModule)
 
-    val moduleName: String
+    val name: String
         get() = testModule.name
 
     val directRegularDependencies: List<KaModule> by lazy(LazyThreadSafetyMode.PUBLICATION) {
@@ -54,7 +52,7 @@ abstract class KtModuleByCompilerConfiguration(
         }
     }
 
-    private fun computeLibraryDependencies(): List<KaBinaryModule> {
+    private fun computeLibraryDependencies(): List<KaLibraryModule> {
         val targetPlatform = testModule.targetPlatform
         return when {
             targetPlatform.isNative() -> {
@@ -71,19 +69,21 @@ abstract class KtModuleByCompilerConfiguration(
         }
     }
 
-    private fun createJdkFromConfiguration(): KaSdkModule? = configuration.get(JVMConfigurationKeys.JDK_HOME)?.let { jdkHome ->
+    private fun createJdkFromConfiguration(): KaLibraryModule? = configuration.get(JVMConfigurationKeys.JDK_HOME)?.let { jdkHome ->
         val jdkHomePaths = StandaloneProjectFactory.getDefaultJdkModulePaths(project, jdkHome.toPath())
         val scope = StandaloneProjectFactory.createSearchScopeByLibraryRoots(
             jdkHomePaths,
             testServices.environmentManager.getProjectEnvironment()
         )
 
-        KaJdkModuleImpl(
+        KaLibraryModuleImpl(
             "jdk",
             JvmPlatforms.defaultJvmPlatform,
             scope,
             project,
             jdkHomePaths,
+            librarySources = null,
+            isSdk = true,
         )
     }
 
@@ -111,7 +111,7 @@ abstract class KtModuleByCompilerConfiguration(
     val languageVersionSettings: LanguageVersionSettings
         get() = testModule.languageVersionSettings
 
-    val platform: TargetPlatform
+    val targetPlatform: TargetPlatform
         get() = testModule.targetPlatform
 }
 
@@ -141,14 +141,13 @@ class KaLibraryModuleByCompilerConfiguration(
     project: Project,
     testModule: TestModule,
     psiFiles: List<PsiFile>,
-    private val binaryRoots: List<Path>,
+    override val binaryRoots: List<Path>,
     testServices: TestServices
 ) : KtModuleByCompilerConfiguration(project, testModule, psiFiles, testServices), KaLibraryModule {
     override val ktModule: KaModule get() = this
     override val libraryName: String get() = testModule.name
     override val librarySources: KaLibrarySourceModule? get() = null
-
-    override fun getBinaryRoots(): Collection<Path> = binaryRoots
+    override val isSdk: Boolean get() = false
 
     override val contentScope: GlobalSearchScope =
         GlobalSearchScope.filesScope(project, psiFiles.map { it.virtualFile })
@@ -182,8 +181,9 @@ private class LibraryByRoots(
     override val directDependsOnDependencies: List<KaModule> get() = emptyList()
     override val transitiveDependsOnDependencies: List<KaModule> get() = emptyList()
     override val directFriendDependencies: List<KaModule> get() = emptyList()
-    override val platform: TargetPlatform get() = parentModule.platform
-    override fun getBinaryRoots(): Collection<Path> = roots
+    override val targetPlatform: TargetPlatform get() = parentModule.targetPlatform
+    override val binaryRoots: Collection<Path> get() = roots
+    override val isSdk: Boolean get() = false
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

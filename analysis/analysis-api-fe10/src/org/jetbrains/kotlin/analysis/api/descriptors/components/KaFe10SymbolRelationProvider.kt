@@ -154,17 +154,17 @@ internal class KaFe10SymbolRelationProvider(
         return object : KaLibraryModule {
             override val libraryName: String = libraryPath.fileName.toString().substringBeforeLast(".")
             override val librarySources: KaLibrarySourceModule? = null
-            override fun getBinaryRoots(): Collection<Path> = listOf(libraryPath)
+            override val isSdk: Boolean = false
+            override val binaryRoots: Collection<Path> = listOf(libraryPath)
             override val directRegularDependencies: List<KaModule> = emptyList()
             override val directDependsOnDependencies: List<KaModule> = emptyList()
             override val transitiveDependsOnDependencies: List<KaModule> = emptyList()
             override val directFriendDependencies: List<KaModule> = emptyList()
             override val contentScope: GlobalSearchScope = ProjectScope.getLibrariesScope(project)
-            override val platform: TargetPlatform
+            override val targetPlatform: TargetPlatform
                 get() = descriptor.platform!!
             override val project: Project
                 get() = analysisSession.analysisContext.resolveSession.project
-
         }
     }
 

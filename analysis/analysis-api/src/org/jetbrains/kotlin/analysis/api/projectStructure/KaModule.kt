@@ -3,11 +3,15 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+@file:OptIn(KaPlatformInterface::class)
+
 package org.jetbrains.kotlin.analysis.api.projectStructure
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtFile
@@ -18,9 +22,10 @@ import java.nio.file.Path
  *
  * [KaModule] is a Source Set (or considering a new project model naming a Fragment).
  * Some examples of a module: main source set, test source set, library, JDK.
- *
  */
-public sealed interface KaModule {
+@OptIn(ExperimentalSubclassOptIn::class)
+@SubclassOptInRequired(markerClass = KaPlatformInterface::class)
+public interface KaModule {
     /**
      * A list of Regular dependencies. Regular dependency allows the current module to see symbols from the dependent module. In the case
      * of a source set, it can be either the source set it depends on, a library, or an SDK.
@@ -64,7 +69,10 @@ public sealed interface KaModule {
      *
      * @see [TargetPlatform]
      */
-    public val platform: TargetPlatform
+    public val targetPlatform: TargetPlatform
+
+    @Deprecated("Use 'targetPlatform' instead.", replaceWith = ReplaceWith("targetPlatform"))
+    public val platform: TargetPlatform get() = targetPlatform
 
     /**
      * [Project] to which the current module belongs.
@@ -76,6 +84,7 @@ public sealed interface KaModule {
     /**
      * A human-readable description of the current module. E.g, "main sources of module 'analysis-api'".
      */
+    @KaExperimentalApi
     public val moduleDescription: String
 }
 
@@ -84,18 +93,27 @@ public sealed interface KaModule {
  *
  * Generally, a main or test Source Set.
  */
+@OptIn(ExperimentalSubclassOptIn::class)
+@SubclassOptInRequired(markerClass = KaPlatformInterface::class)
 public interface KaSourceModule : KaModule {
-    public val moduleName: String
+    public val name: String
+
+    @Deprecated("Use 'name' instead.", replaceWith = ReplaceWith("name"))
+    public val moduleName: String get() = name
 
     /**
      * A stable binary name of module from the *Kotlin* point of view.
      * Having correct module name is critical for `internal`-visibility mangling. See [org.jetbrains.kotlin.asJava.mangleInternalName]
+     *
+     * NOTE: [stableModuleName] will be removed in the future and replaced with a platform interface service.
      */
+    @KaExperimentalApi
     public val stableModuleName: String?
         get() = null
 
+    @KaExperimentalApi
     override val moduleDescription: String
-        get() = "Sources of $moduleName"
+        get() = "Sources of $name"
 
     /**
      * A set of Kotlin settings, like API version, supported features and flags.
@@ -104,48 +122,48 @@ public interface KaSourceModule : KaModule {
 }
 
 /**
- * A module which consists of binary declarations.
- */
-public sealed interface KaBinaryModule : KaModule {
-    /**
-     * A list of binary files which forms a binary module. It can be a list of JARs, KLIBs, folders with .class files.
-     *
-     * It should be consistent with [contentScope], so (pseudo-Kotlin):
-     * ```
-     * library.contentScope.contains(file) <=> library.getBinaryRoots().listRecursively().contains(file)
-     * ```
-     */
-    public fun getBinaryRoots(): Collection<Path>
-}
-
-/**
  * A module which represents a binary library, e.g. JAR or KLIB.
  */
-public interface KaLibraryModule : KaBinaryModule {
+@OptIn(ExperimentalSubclassOptIn::class)
+@SubclassOptInRequired(markerClass = KaPlatformInterface::class)
+public interface KaLibraryModule : KaModule {
     public val libraryName: String
+
+    /**
+     * A list of binary files which constitute the library. The list can contain JARs, KLIBs, folders with `.class` files, and so on.
+     *
+     * The paths should be consistent with the [contentScope], so the following equivalence should hold:
+     *
+     * ```
+     * library.contentScope.contains(file) <=> library.binaryRoots.listRecursively().contains(file)
+     * ```
+     */
+    public val binaryRoots: Collection<Path>
 
     /**
      * A library source, if any. If current module is a binary JAR, then [librarySources] corresponds to the sources JAR.
      */
     public val librarySources: KaLibrarySourceModule?
 
-    override val moduleDescription: String
-        get() = "Library $libraryName"
-}
+    /**
+     * Whether the module represents an SDK, such as the JDK.
+     */
+    @KaPlatformInterface
+    public val isSdk: Boolean
 
-/**
- * A module which represent some SDK, e.g. Java JDK.
- */
-public interface KaSdkModule : KaBinaryModule {
-    public val sdkName: String
-
+    @KaExperimentalApi
     override val moduleDescription: String
-        get() = "SDK $sdkName"
+        get() {
+            val label = if (isSdk) "SDK" else "Library"
+            return "$label $libraryName"
+        }
 }
 
 /**
  * Sources for some [KaLibraryModule].
  */
+@OptIn(ExperimentalSubclassOptIn::class)
+@SubclassOptInRequired(markerClass = KaPlatformInterface::class)
 public interface KaLibrarySourceModule : KaModule {
     public val libraryName: String
 
@@ -155,33 +173,39 @@ public interface KaLibrarySourceModule : KaModule {
      */
     public val binaryLibrary: KaLibraryModule
 
+    @KaExperimentalApi
     override val moduleDescription: String
         get() = "Library sources of $libraryName"
 }
 
 /**
  * A module which contains kotlin [builtins](https://kotlinlang.org/spec/built-in-types-and-their-semantics.html) for a specific platform.
- * Kotlin builtins usually reside in the compiler, so [contentScope] and [getBinaryRoots] are empty.
+ * Kotlin builtins usually reside in the compiler, so [contentScope] is empty.
  */
+@KaPlatformInterface
 public class KaBuiltinsModule(
-    override val platform: TargetPlatform,
+    override val targetPlatform: TargetPlatform,
     override val project: Project
-) : KaBinaryModule {
+) : KaModule {
     override val directRegularDependencies: List<KaModule> get() = emptyList()
     override val directDependsOnDependencies: List<KaModule> get() = emptyList()
     override val transitiveDependsOnDependencies: List<KaModule> get() = emptyList()
     override val directFriendDependencies: List<KaModule> get() = emptyList()
     override val contentScope: GlobalSearchScope get() = GlobalSearchScope.EMPTY_SCOPE
-    override fun getBinaryRoots(): Collection<Path> = emptyList()
-    override val moduleDescription: String get() = "Builtins for $platform"
 
-    override fun equals(other: Any?): Boolean = other is KaBuiltinsModule && this.platform == other.platform
-    override fun hashCode(): Int = platform.hashCode()
+    @KaExperimentalApi
+    override val moduleDescription: String get() = "Builtins for $targetPlatform"
+
+    override fun equals(other: Any?): Boolean = other is KaBuiltinsModule && this.targetPlatform == other.targetPlatform
+    override fun hashCode(): Int = targetPlatform.hashCode()
 }
 
 /**
  * A module for a Kotlin script file.
  */
+@KaExperimentalApi
+@OptIn(ExperimentalSubclassOptIn::class)
+@SubclassOptInRequired(markerClass = KaPlatformInterface::class)
 public interface KaScriptModule : KaModule {
     /**
      * A script PSI.
@@ -201,6 +225,7 @@ public interface KaScriptModule : KaModule {
  * A module for Kotlin script dependencies.
  * Must be either a [KaLibraryModule] or [KaLibrarySourceModule].
  */
+@KaPlatformInterface
 public interface KaScriptDependencyModule : KaModule {
     /**
      * A `VirtualFile` that backs the dependent script PSI, or `null` if the module is for project-level dependencies.
@@ -213,6 +238,7 @@ public interface KaScriptDependencyModule : KaModule {
  * Dangling files may be created for various purposes, such as: a code fragment for the evaluator, a sandbox for testing code modification
  * applicability, etc.
  */
+@KaPlatformInterface
 public interface KaDanglingFileModule : KaModule {
     /**
      * A temporary file PSI.
@@ -235,6 +261,7 @@ public interface KaDanglingFileModule : KaModule {
      */
     public val isCodeFragment: Boolean
 
+    @KaExperimentalApi
     override val moduleDescription: String
         get() = "Temporary file"
 }
@@ -249,6 +276,7 @@ public val KaDanglingFileModule.isStable: Boolean
 /**
  * A set of sources which live outside the project content root. E.g, testdata files or source files of some other project.
  */
+@KaPlatformInterface
 public interface KaNotUnderContentRootModule : KaModule {
     /**
      * Human-readable module name.
