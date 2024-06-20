@@ -12441,6 +12441,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       public void testDestructuringInInitializer() {
         runTest("compiler/testData/diagnostics/tests/destructuring/destructuringInInitializer.kt");
       }
+
+      @Test
+      @TestMetadata("destructuringInWhenSubject.kt")
+      public void testDestructuringInWhenSubject() {
+        runTest("compiler/testData/diagnostics/tests/destructuring/destructuringInWhenSubject.kt");
+      }
     }
 
     @Nested
@@ -27383,6 +27389,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("OverloadingByTypeParameterNullability.kt")
+      public void testOverloadingByTypeParameterNullability() {
+        runTest("compiler/testData/diagnostics/tests/overload/OverloadingByTypeParameterNullability.kt");
+      }
+
+      @Test
       @TestMetadata("overloadsFromCurrentAndSuperClass.kt")
       public void testOverloadsFromCurrentAndSuperClass() {
         runTest("compiler/testData/diagnostics/tests/overload/overloadsFromCurrentAndSuperClass.kt");
@@ -38526,6 +38538,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("QualifiedThis.kt")
       public void testQualifiedThis() {
         runTest("compiler/testData/diagnostics/tests/thisAndSuper/QualifiedThis.kt");
+      }
+
+      @Test
+      @TestMetadata("QualifiedThisAsExtensionCallableExpressionBody.kt")
+      public void testQualifiedThisAsExtensionCallableExpressionBody() {
+        runTest("compiler/testData/diagnostics/tests/thisAndSuper/QualifiedThisAsExtensionCallableExpressionBody.kt");
       }
 
       @Test

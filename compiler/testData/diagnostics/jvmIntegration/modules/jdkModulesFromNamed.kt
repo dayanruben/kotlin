@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // JDK_KIND: FULL_JDK_11
 // MODULE: main
 // FILE: module-info.java

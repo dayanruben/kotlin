@@ -12435,6 +12435,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       public void testDestructuringInInitializer() {
         runTest("compiler/testData/diagnostics/tests/destructuring/destructuringInInitializer.kt");
       }
+
+      @Test
+      @TestMetadata("destructuringInWhenSubject.kt")
+      public void testDestructuringInWhenSubject() {
+        runTest("compiler/testData/diagnostics/tests/destructuring/destructuringInWhenSubject.kt");
+      }
     }
 
     @Nested
@@ -27377,6 +27383,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       }
 
       @Test
+      @TestMetadata("OverloadingByTypeParameterNullability.kt")
+      public void testOverloadingByTypeParameterNullability() {
+        runTest("compiler/testData/diagnostics/tests/overload/OverloadingByTypeParameterNullability.kt");
+      }
+
+      @Test
       @TestMetadata("overloadsFromCurrentAndSuperClass.kt")
       public void testOverloadsFromCurrentAndSuperClass() {
         runTest("compiler/testData/diagnostics/tests/overload/overloadsFromCurrentAndSuperClass.kt");
@@ -38382,6 +38394,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       @TestMetadata("QualifiedThis.kt")
       public void testQualifiedThis() {
         runTest("compiler/testData/diagnostics/tests/thisAndSuper/QualifiedThis.kt");
+      }
+
+      @Test
+      @TestMetadata("QualifiedThisAsExtensionCallableExpressionBody.kt")
+      public void testQualifiedThisAsExtensionCallableExpressionBody() {
+        runTest("compiler/testData/diagnostics/tests/thisAndSuper/QualifiedThisAsExtensionCallableExpressionBody.kt");
       }
 
       @Test

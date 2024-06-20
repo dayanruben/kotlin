@@ -12441,6 +12441,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       public void testDestructuringInInitializer() {
         runTest("compiler/testData/diagnostics/tests/destructuring/destructuringInInitializer.kt");
       }
+
+      @Test
+      @TestMetadata("destructuringInWhenSubject.kt")
+      public void testDestructuringInWhenSubject() {
+        runTest("compiler/testData/diagnostics/tests/destructuring/destructuringInWhenSubject.kt");
+      }
     }
 
     @Nested
@@ -26443,6 +26449,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("valueClassWithPrivateConstructor.kt")
+      public void testValueClassWithPrivateConstructor() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/valueClassWithPrivateConstructor.kt");
+      }
+
+      @Test
       @TestMetadata("varSetterVisibility.kt")
       public void testVarSetterVisibility() {
         runTest("compiler/testData/diagnostics/tests/multiplatform/varSetterVisibility.kt");
@@ -29850,6 +29862,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("OverloadVarAndFunInClass.kt")
       public void testOverloadVarAndFunInClass() {
         runTest("compiler/testData/diagnostics/tests/overload/OverloadVarAndFunInClass.kt");
+      }
+
+      @Test
+      @TestMetadata("OverloadingByTypeParameterNullability.kt")
+      public void testOverloadingByTypeParameterNullability() {
+        runTest("compiler/testData/diagnostics/tests/overload/OverloadingByTypeParameterNullability.kt");
       }
 
       @Test
@@ -40996,6 +41014,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("QualifiedThis.kt")
       public void testQualifiedThis() {
         runTest("compiler/testData/diagnostics/tests/thisAndSuper/QualifiedThis.kt");
+      }
+
+      @Test
+      @TestMetadata("QualifiedThisAsExtensionCallableExpressionBody.kt")
+      public void testQualifiedThisAsExtensionCallableExpressionBody() {
+        runTest("compiler/testData/diagnostics/tests/thisAndSuper/QualifiedThisAsExtensionCallableExpressionBody.kt");
       }
 
       @Test
