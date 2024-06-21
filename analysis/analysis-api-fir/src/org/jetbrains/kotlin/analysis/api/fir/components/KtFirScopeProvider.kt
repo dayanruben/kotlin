@@ -12,6 +12,10 @@ import org.jetbrains.kotlin.analysis.api.fir.scopes.*
 import org.jetbrains.kotlin.analysis.api.fir.symbols.*
 import org.jetbrains.kotlin.analysis.api.fir.types.KaFirType
 import org.jetbrains.kotlin.analysis.api.fir.utils.firSymbol
+import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseImplicitReceiver
+import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseScopeContext
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKinds
+import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKindImpl
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaSessionComponent
 import org.jetbrains.kotlin.analysis.api.impl.base.scopes.KaCompositeScope
 import org.jetbrains.kotlin.analysis.api.impl.base.scopes.KaCompositeTypeScope
@@ -275,7 +279,7 @@ internal class KaFirScopeProvider(
             )
 
             val ktScopesWithKinds = createScopesWithKind(firImportingScopes.withIndex())
-            return KaScopeContext(ktScopesWithKinds, implicitReceivers = emptyList(), token)
+            return KaBaseScopeContext(ktScopesWithKinds, implicitReceivers = emptyList(), token)
         }
 
     override fun KtFile.scopeContext(position: KtElement): KaScopeContext = withValidityAssertion {
@@ -305,8 +309,7 @@ internal class KaFirScopeProvider(
             val receivers = listOfNotNull(towerDataElement.implicitReceiver) + towerDataElement.contextReceiverGroup.orEmpty()
 
             receivers.map { receiver ->
-                KaImplicitReceiver(
-                    token,
+                KaBaseImplicitReceiver(
                     firSymbolBuilder.typeBuilder.buildKtType(receiver.type),
                     firSymbolBuilder.buildSymbol(receiver.boundSymbol.fir),
                     index
@@ -322,12 +325,12 @@ internal class KaFirScopeProvider(
         }
         val ktScopesWithKinds = createScopesWithKind(firScopes)
 
-        return KaScopeContext(ktScopesWithKinds, implicitReceivers, token)
+        return KaBaseScopeContext(ktScopesWithKinds, implicitReceivers, token)
     }
 
     private fun createScopesWithKind(firScopes: Iterable<IndexedValue<FirScope>>): List<KaScopeWithKind> {
         return firScopes.map { (index, firScope) ->
-            KaScopeWithKind(convertToKtScope(firScope), getScopeKind(firScope, index), token)
+            KaScopeWithKindImpl(convertToKtScope(firScope), getScopeKind(firScope, index))
         }
     }
 
@@ -351,22 +354,22 @@ internal class KaFirScopeProvider(
     private fun getScopeKind(firScope: FirScope, indexInTower: Int): KaScopeKind = when (firScope) {
         is FirNameAwareOnlyCallablesScope -> getScopeKind(firScope.delegate, indexInTower)
 
-        is FirLocalScope -> KaScopeKind.LocalScope(indexInTower)
-        is FirTypeScope -> KaScopeKind.TypeScope(indexInTower)
-        is FirTypeParameterScope -> KaScopeKind.TypeParameterScope(indexInTower)
-        is FirPackageMemberScope -> KaScopeKind.PackageMemberScope(indexInTower)
+        is FirLocalScope -> KaScopeKinds.LocalScope(indexInTower)
+        is FirTypeScope -> KaScopeKinds.TypeScope(indexInTower)
+        is FirTypeParameterScope -> KaScopeKinds.TypeParameterScope(indexInTower)
+        is FirPackageMemberScope -> KaScopeKinds.PackageMemberScope(indexInTower)
 
-        is FirNestedClassifierScope -> KaScopeKind.StaticMemberScope(indexInTower)
-        is FirNestedClassifierScopeWithSubstitution -> KaScopeKind.StaticMemberScope(indexInTower)
-        is FirLazyNestedClassifierScope -> KaScopeKind.StaticMemberScope(indexInTower)
-        is FirStaticScope -> KaScopeKind.StaticMemberScope(indexInTower)
+        is FirNestedClassifierScope -> KaScopeKinds.StaticMemberScope(indexInTower)
+        is FirNestedClassifierScopeWithSubstitution -> KaScopeKinds.StaticMemberScope(indexInTower)
+        is FirLazyNestedClassifierScope -> KaScopeKinds.StaticMemberScope(indexInTower)
+        is FirStaticScope -> KaScopeKinds.StaticMemberScope(indexInTower)
 
-        is FirExplicitSimpleImportingScope -> KaScopeKind.ExplicitSimpleImportingScope(indexInTower)
-        is FirExplicitStarImportingScope -> KaScopeKind.ExplicitStarImportingScope(indexInTower)
-        is FirDefaultSimpleImportingScope -> KaScopeKind.DefaultSimpleImportingScope(indexInTower)
-        is FirDefaultStarImportingScope -> KaScopeKind.DefaultStarImportingScope(indexInTower)
+        is FirExplicitSimpleImportingScope -> KaScopeKinds.ExplicitSimpleImportingScope(indexInTower)
+        is FirExplicitStarImportingScope -> KaScopeKinds.ExplicitStarImportingScope(indexInTower)
+        is FirDefaultSimpleImportingScope -> KaScopeKinds.DefaultSimpleImportingScope(indexInTower)
+        is FirDefaultStarImportingScope -> KaScopeKinds.DefaultStarImportingScope(indexInTower)
 
-        is FirScriptDeclarationsScope -> KaScopeKind.ScriptMemberScope(indexInTower)
+        is FirScriptDeclarationsScope -> KaScopeKinds.ScriptMemberScope(indexInTower)
 
         else -> unexpectedElementError("scope", firScope)
     }

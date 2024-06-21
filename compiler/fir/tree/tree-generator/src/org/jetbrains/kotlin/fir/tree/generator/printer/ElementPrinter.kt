@@ -12,8 +12,8 @@ import org.jetbrains.kotlin.generators.tree.*
 import org.jetbrains.kotlin.generators.tree.printer.*
 
 private val elementsWithReplaceSource = setOf(
-    FirTreeBuilder.qualifiedAccessExpression,
-    FirTreeBuilder.delegatedConstructorCall,
+    FirTree.qualifiedAccessExpression,
+    FirTree.delegatedConstructorCall,
 )
 
 internal class ElementPrinter(printer: ImportCollectingPrinter) : AbstractElementPrinter<Element, Field>(printer) {
@@ -30,7 +30,7 @@ internal class ElementPrinter(printer: ImportCollectingPrinter) : AbstractElemen
                 element = element,
                 transformerClass = firTransformerType,
                 implementation = "transformer.transform${element.name}(this, data)",
-                returnType = TypeVariable("E", listOf(FirTreeBuilder.baseFirElement)),
+                returnType = TypeVariable("E", listOf(FirTree.rootElement)),
                 treeName = treeName,
             )
 
@@ -60,12 +60,12 @@ internal class ElementPrinter(printer: ImportCollectingPrinter) : AbstractElemen
             }
 
             for (field in allFields) {
-                if (!field.needsSeparateTransform) continue
+                if (!field.withTransform) continue
                 println()
                 transformFunctionDeclaration(
                     field = field,
                     returnType = element.withSelfArgs(),
-                    override = field.overriddenFields.any { it.needsSeparateTransform },
+                    override = field.overriddenFields.any { it.withTransform },
                     implementationKind = kind
                 )
                 println()
@@ -94,7 +94,7 @@ internal class ElementPrinter(printer: ImportCollectingPrinter) : AbstractElemen
                 printTransformChildrenMethod(
                     element = element,
                     transformerClass = firTransformerType,
-                    returnType = FirTreeBuilder.baseFirElement,
+                    returnType = FirTree.rootElement,
                 )
                 println()
             }

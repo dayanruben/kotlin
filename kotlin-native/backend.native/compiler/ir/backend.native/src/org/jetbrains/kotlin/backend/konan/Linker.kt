@@ -2,13 +2,11 @@ package org.jetbrains.kotlin.backend.konan
 
 import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
 import org.jetbrains.kotlin.konan.KonanExternalToolFailure
+import org.jetbrains.kotlin.konan.TempFiles
 import org.jetbrains.kotlin.konan.exec.Command
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.konan.library.KonanLibrary
-import org.jetbrains.kotlin.konan.target.CompilerOutputKind
-import org.jetbrains.kotlin.konan.target.Family
-import org.jetbrains.kotlin.konan.target.LinkerOutputKind
-import org.jetbrains.kotlin.konan.target.presetName
+import org.jetbrains.kotlin.konan.target.*
 import org.jetbrains.kotlin.library.metadata.isCInteropLibrary
 import org.jetbrains.kotlin.library.uniqueName
 
@@ -41,6 +39,7 @@ internal class Linker(
         private val config: KonanConfig,
         private val linkerOutput: LinkerOutputKind,
         private val outputFiles: OutputFiles,
+        private val tempFiles: TempFiles,
 ) {
     private val platform = config.platform
     private val linker = platform.linker
@@ -136,18 +135,21 @@ internal class Linker(
                 caches.dynamic +
                 libraryProvidedLinkerFlags + additionalLinkerArgs
 
-        return linker.finalLinkCommands(
-                objectFiles = objectFiles,
-                executable = executable,
-                libraries = linker.linkStaticLibraries(includedBinaries) + caches.static,
-                linkerArgs = linkerArgs,
-                optimize = optimize,
-                debug = debug,
-                kind = linkerOutput,
-                outputDsymBundle = outputFiles.symbolicInfoFile,
-                mimallocEnabled = config.allocationMode == AllocationMode.MIMALLOC,
-                sanitizer = config.sanitizer
-        )
+        return with(linker) {
+            LinkerArguments(
+                    tempFiles = tempFiles,
+                    objectFiles = objectFiles,
+                    executable = executable,
+                    libraries = linker.linkStaticLibraries(includedBinaries) + caches.static,
+                    linkerArgs = linkerArgs,
+                    optimize = optimize,
+                    debug = debug,
+                    kind = linkerOutput,
+                    outputDsymBundle = outputFiles.symbolicInfoFile,
+                    mimallocEnabled = config.allocationMode == AllocationMode.MIMALLOC,
+                    sanitizer = config.sanitizer,
+            ).finalLinkCommands()
+        }
     }
 }
 

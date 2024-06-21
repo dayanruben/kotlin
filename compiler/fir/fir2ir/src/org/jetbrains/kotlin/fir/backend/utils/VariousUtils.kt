@@ -161,7 +161,6 @@ fun IrType.toArrayOrPrimitiveArrayType(builtins: Fir2IrBuiltinSymbolsContainer):
 
 val IrClassSymbol.defaultTypeWithoutArguments: IrSimpleType
     get() = IrSimpleTypeImpl(
-        kotlinType = null,
         classifier = this,
         nullability = SimpleTypeNullability.DEFINITELY_NOT_NULL,
         arguments = emptyList(),

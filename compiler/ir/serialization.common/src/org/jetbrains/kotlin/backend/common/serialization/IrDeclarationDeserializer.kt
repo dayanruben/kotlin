@@ -120,7 +120,6 @@ class IrDeclarationDeserializer(
         val abbreviation = if (proto.hasAbbreviation()) deserializeTypeAbbreviation(proto.abbreviation) else null
 
         return IrSimpleTypeImpl(
-            null,
             symbol,
             deserializeSimpleTypeNullability(proto.nullability),
             arguments,
@@ -138,7 +137,6 @@ class IrDeclarationDeserializer(
         val abbreviation = if (proto.hasAbbreviation()) deserializeTypeAbbreviation(proto.abbreviation) else null
 
         return IrSimpleTypeImpl(
-            null,
             symbol,
             SimpleTypeNullability.fromHasQuestionMark(proto.hasQuestionMark),
             arguments,
@@ -155,14 +153,14 @@ class IrDeclarationDeserializer(
             deserializeAnnotations(proto.annotationList)
         )
 
-    private val SIMPLE_DYNAMIC_TYPE = IrDynamicTypeImpl(null, emptyList(), Variance.INVARIANT)
+    private val SIMPLE_DYNAMIC_TYPE = IrDynamicTypeImpl(emptyList(), Variance.INVARIANT)
 
     private fun deserializeDynamicType(proto: ProtoDynamicType): IrDynamicType {
         return if (proto.annotationCount == 0) {
             SIMPLE_DYNAMIC_TYPE
         } else {
             val annotations = deserializeAnnotations(proto.annotationList)
-            IrDynamicTypeImpl(null, annotations, Variance.INVARIANT)
+            IrDynamicTypeImpl(annotations, Variance.INVARIANT)
         }
     }
 

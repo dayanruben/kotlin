@@ -39,7 +39,7 @@ import org.jetbrains.kotlin.ir.generator.model.Element.Category.*
 import org.jetbrains.kotlin.ir.generator.model.ListField.Mutability.*
 import org.jetbrains.kotlin.ir.generator.model.ListField.Mutability.Array
 import org.jetbrains.kotlin.ir.generator.model.ListField.Mutability.MutableList
-import org.jetbrains.kotlin.ir.generator.model.SingleField
+import org.jetbrains.kotlin.ir.generator.model.SimpleField
 import org.jetbrains.kotlin.ir.generator.model.symbol.Symbol
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -54,7 +54,7 @@ import org.jetbrains.kotlin.utils.withIndent
 // 3) fields
 object IrTree : AbstractTreeBuilder() {
 
-    private fun descriptor(typeName: String, nullable: Boolean = false): SingleField =
+    private fun descriptor(typeName: String, nullable: Boolean = false): SimpleField =
         field(
             name = "descriptor",
             type = type(Packages.descriptors, typeName),
@@ -84,7 +84,7 @@ object IrTree : AbstractTreeBuilder() {
         }
     }
 
-    private val factory: SingleField = field("factory", irFactoryType, mutable = false)
+    private val factory: SimpleField = field("factory", irFactoryType, mutable = false)
 
     override val rootElement: Element by element(Other, name = "Element") {
         needAcceptMethod()
@@ -128,7 +128,7 @@ object IrTree : AbstractTreeBuilder() {
         // This class is defined manually, but the entry here needs to be kept actual as well,
         // to correctly generate related code.
         doPrint = false
-        typeKind = TypeKind.Class
+        kind = ImplementationKind.AbstractClass
         transformByChildren = true
         transformerReturnType = statement
         nameInVisitorMethod = "Declaration"
@@ -615,7 +615,7 @@ object IrTree : AbstractTreeBuilder() {
         needTransformMethod()
         visitorParameterName = "body"
         transformByChildren = true
-        typeKind = TypeKind.Class
+        kind = ImplementationKind.AbstractClass
     }
     val expressionBody: Element by element(Expression) {
         needTransformMethod()

@@ -10,9 +10,9 @@ import org.jetbrains.kotlin.konan.target.CompilerOutputKind
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.test.blackbox.support.*
 import org.jetbrains.kotlin.konan.test.blackbox.support.TestCase.*
-import org.jetbrains.kotlin.konan.test.blackbox.support.TestModule.Companion.allDependencies
-import org.jetbrains.kotlin.konan.test.blackbox.support.TestModule.Companion.allDependsOn
-import org.jetbrains.kotlin.konan.test.blackbox.support.TestModule.Companion.allFriends
+import org.jetbrains.kotlin.konan.test.blackbox.support.TestModule.Companion.allRegularDependencies
+import org.jetbrains.kotlin.konan.test.blackbox.support.TestModule.Companion.allDependsOnDependencies
+import org.jetbrains.kotlin.konan.test.blackbox.support.TestModule.Companion.allFriendDependencies
 import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.TestCompilationArtifact.*
 import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.TestCompilationDependencyType.*
 import org.jetbrains.kotlin.konan.test.blackbox.support.settings.*
@@ -376,25 +376,26 @@ internal class TestCompilationFactory {
                 val klibCompilations = modulesToKlib(setOf(dependencyModule), freeCompilerArgs, produceStaticCache, settings)
                 klibDependencies += klibCompilations.klib.asKlibDependency(type)
 
-                if (type == Library || type == IncludedLibrary) {
-                    staticCacheDependencies.addIfNotNull(klibCompilations.staticCache?.asStaticCacheDependency())
-                    staticCacheHeaderDependencies.addIfNotNull((klibCompilations.headerCache ?: klibCompilations.staticCache)?.asStaticCacheDependency())
-                }
+                staticCacheDependencies.addIfNotNull(klibCompilations.staticCache?.asStaticCacheDependency())
+                staticCacheHeaderDependencies.addIfNotNull((klibCompilations.headerCache ?: klibCompilations.staticCache)?.asStaticCacheDependency())
             }
 
-        sourceModules.allDependencies().collectDependencies(Library)
-        sourceModules.allFriends().collectDependencies(FriendLibrary)
+        sourceModules.allRegularDependencies().collectDependencies(Library)
+        sourceModules.allFriendDependencies().collectDependencies(FriendLibrary)
 
         return CompilationDependencies(klibDependencies, staticCacheDependencies, staticCacheHeaderDependencies)
     }
 
     private fun sortDependsOnTopologically(module: TestModule): List<TestModule> {
-        return topologicalSort(listOf(module), reverseOrder = true) { it.allDependsOn }
+        return topologicalSort(listOf(module), reverseOrder = true) { it.allDependsOnDependencies }
     }
 
     companion object {
-        private fun Set<TestModule>.allDependencies() = if (size == 1) first().allDependencies else flatMapToSet { it.allDependencies }
-        private fun Set<TestModule>.allFriends() = if (size == 1) first().allFriends else flatMapToSet { it.allFriends }
+        private fun Set<TestModule>.allRegularDependencies(): Set<TestModule> =
+            if (size == 1) first().allRegularDependencies else flatMapToSet { it.allRegularDependencies }
+
+        private fun Set<TestModule>.allFriendDependencies(): Set<TestModule> =
+            if (size == 1) first().allFriendDependencies else flatMapToSet { it.allFriendDependencies }
 
         private fun <T : TestCompilationDependencyType<KLIB>> TestCompilation<KLIB>.asKlibDependency(type: T): CompiledDependency<KLIB> =
             CompiledDependency(this, type)
