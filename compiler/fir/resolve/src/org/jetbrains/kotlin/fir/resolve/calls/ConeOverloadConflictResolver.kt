@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.fir.resolve.BodyResolveComponents
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.inference.ConeTypeParameterBasedTypeVariable
 import org.jetbrains.kotlin.fir.resolve.inference.InferenceComponents
-import org.jetbrains.kotlin.fir.resolve.inference.ResolvedCallableReferenceAtom
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.scopes.*
 import org.jetbrains.kotlin.fir.scopes.impl.overrides
@@ -286,7 +285,7 @@ class ConeOverloadConflictResolver(
 
     private fun Candidate.hasPostponedAtomWithAdaptation(): Boolean {
         return postponedAtoms.any {
-            it is ResolvedCallableReferenceAtom &&
+            it is ConeResolvedCallableReferenceAtom &&
                     (it.resultingReference as? FirNamedReferenceWithCandidate)?.candidate?.callableReferenceAdaptation != null
         }
     }
@@ -538,8 +537,10 @@ class ConeOverloadConflictResolver(
                     }
             } else {
                 called.contextReceivers.mapTo(this) { TypeWithConversion(it.typeRef.coneType.prepareType(session, call)) }
-                call.argumentMapping?.mapTo(this) { (_, parameter) ->
-                    parameter.toTypeWithConversion(session, call)
+                if (call.argumentMappingInitialized) {
+                    call.argumentMapping.mapTo(this) { (_, parameter) ->
+                        parameter.toTypeWithConversion(session, call)
+                    }
                 }
             }
         }
@@ -576,7 +577,7 @@ class ConeOverloadConflictResolver(
 
     private fun FirValueParameter.toFunctionTypeForSamOrNull(call: Candidate): ConeKotlinType? {
         val functionTypesOfSamConversions = call.functionTypesOfSamConversions ?: return null
-        return call.argumentMapping?.entries?.firstNotNullOfOrNull {
+        return call.argumentMapping.entries.firstNotNullOfOrNull {
             runIf(it.value == this) { functionTypesOfSamConversions[it.key.unwrapArgument()]?.functionalType }
         }
     }

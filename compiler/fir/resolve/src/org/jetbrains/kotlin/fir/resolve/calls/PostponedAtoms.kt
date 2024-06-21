@@ -3,7 +3,7 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.fir.resolve.inference
+package org.jetbrains.kotlin.fir.resolve.calls
 
 import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
@@ -15,21 +15,24 @@ import org.jetbrains.kotlin.fir.expressions.FirCallableReferenceAccess
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.references.FirNamedReference
 import org.jetbrains.kotlin.fir.resolve.DoubleColonLHS
-import org.jetbrains.kotlin.fir.resolve.calls.Candidate
+import org.jetbrains.kotlin.fir.resolve.inference.ConeTypeVariableForLambdaReturnType
 import org.jetbrains.kotlin.fir.types.*
+import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
 import org.jetbrains.kotlin.resolve.calls.model.LambdaWithTypeVariableAsExpectedTypeMarker
 import org.jetbrains.kotlin.resolve.calls.model.PostponedCallableReferenceMarker
 import org.jetbrains.kotlin.resolve.calls.model.PostponedResolvedAtomMarker
 import org.jetbrains.kotlin.types.model.KotlinTypeMarker
 import org.jetbrains.kotlin.utils.addIfNotNull
+import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 
 //  --------------------------- Variables ---------------------------
 
 
 //  -------------------------- Atoms --------------------------
 
-sealed class PostponedResolvedAtom : PostponedResolvedAtomMarker {
-    abstract val atom: FirElement
+sealed class ConePostponedResolvedAtom : PostponedResolvedAtomMarker {
+    abstract val fir: FirElement
+    abstract val expression: FirExpression
     abstract override val inputTypes: Collection<ConeKotlinType>
     abstract override val outputType: ConeKotlinType?
     override var analyzed: Boolean = false
@@ -38,8 +41,9 @@ sealed class PostponedResolvedAtom : PostponedResolvedAtomMarker {
 
 //  ------------- Lambdas -------------
 
-class ResolvedLambdaAtom(
-    override val atom: FirAnonymousFunction,
+class ConeResolvedLambdaAtom(
+    override val fir: FirAnonymousFunction,
+    private val _expression: FirAnonymousFunctionExpression?,
     expectedType: ConeKotlinType?,
     val expectedFunctionTypeKind: FunctionTypeKind?,
     val receiver: ConeKotlinType?,
@@ -51,7 +55,11 @@ class ResolvedLambdaAtom(
     // NB: It's not null right now only for lambdas inside the calls
     // TODO: Handle somehow that kind of lack of information once KT-67961 is fixed
     val sourceForFunctionExpression: KtSourceElement?,
-) : PostponedResolvedAtom() {
+) : ConePostponedResolvedAtom() {
+    override val expression: FirExpression
+        get() = _expression ?: errorWithAttachment("No expression for lambda") {
+            withFirEntry("lambda", fir)
+        }
 
     var typeVariableForLambdaReturnType: ConeTypeVariableForLambdaReturnType? = typeVariableForLambdaReturnType
         private set
@@ -81,22 +89,14 @@ class ResolvedLambdaAtom(
     fun replaceTypeVariableForLambdaReturnType(typeVariableForLambdaReturnType: ConeTypeVariableForLambdaReturnType) {
         this.typeVariableForLambdaReturnType = typeVariableForLambdaReturnType
     }
-
-    /**
-     * Set to true by resolution stage, if the corresponding parameter has BuilderInference annotation
-     * ```kotlin
-     *     fun foo(@BuilderInference b: Buildee<T>.() -> Unit) {}
-     *     fun test() = foo({ ... }) // Will be true for the lambda argument passed to b
-     * ```
-     */
-    var isCorrespondingParameterAnnotatedWithBuilderInference: Boolean = false
 }
 
-class LambdaWithTypeVariableAsExpectedTypeAtom(
-    override val atom: FirAnonymousFunctionExpression,
+class ConeLambdaWithTypeVariableAsExpectedTypeAtom(
+    override val expression: FirAnonymousFunctionExpression,
     private val initialExpectedTypeType: ConeKotlinType,
     val candidateOfOuterCall: Candidate,
-) : PostponedResolvedAtom(), LambdaWithTypeVariableAsExpectedTypeMarker {
+) : ConePostponedResolvedAtom(), LambdaWithTypeVariableAsExpectedTypeMarker {
+    override val fir: FirAnonymousFunction = expression.anonymousFunction
 
     override var parameterTypesFromDeclaration: List<ConeKotlinType?>? = null
         private set
@@ -123,15 +123,14 @@ class LambdaWithTypeVariableAsExpectedTypeAtom(
 
 //  ------------- References -------------
 
-class ResolvedCallableReferenceAtom(
-    val reference: FirCallableReferenceAccess,
+class ConeResolvedCallableReferenceAtom(
+    override val fir: FirCallableReferenceAccess,
     private val initialExpectedType: ConeKotlinType?,
     val lhs: DoubleColonLHS?,
     private val session: FirSession
-) : PostponedResolvedAtom(), PostponedCallableReferenceMarker {
-
-    override val atom: FirCallableReferenceAccess
-        get() = reference
+) : ConePostponedResolvedAtom(), PostponedCallableReferenceMarker {
+    override val expression: FirCallableReferenceAccess
+        get() = fir
 
     var hasBeenResolvedOnce: Boolean = false
     var hasBeenPostponed: Boolean = false

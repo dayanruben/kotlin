@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildNamedArgumentExpression
 import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeUnsupportedCallableReferenceTarget
-import org.jetbrains.kotlin.fir.resolve.inference.extractInputOutputTypesFromCallableReferenceExpectedType
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeArgumentConstraintPosition
 import org.jetbrains.kotlin.fir.scopes.CallableCopyTypeCalculator
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
@@ -75,9 +74,10 @@ internal object CheckCallableReferenceExpectedType : CheckerStage() {
             }
         }
 
-        candidate.resultingTypeForCallableReference = resultingType
-        candidate.callableReferenceAdaptation = callableReferenceAdaptation
-        candidate.outerConstraintBuilderEffect = fun ConstraintSystemOperation.() {
+        candidate.initializeCallableReferenceAdaptation(
+            callableReferenceAdaptation,
+            resultingType,
+        ) {
             addOtherSystem(candidate.system.currentStorage())
 
             // Callable references are either arguments to a call or are wrapped in a synthetic call for resolution.

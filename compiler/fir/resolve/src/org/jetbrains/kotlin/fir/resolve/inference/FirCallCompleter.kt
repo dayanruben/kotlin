@@ -265,10 +265,10 @@ class FirCallCompleter(
     }
 
     fun prepareLambdaAtomForFactoryPattern(
-        atom: ResolvedLambdaAtom,
+        atom: ConeResolvedLambdaAtom,
         candidate: Candidate,
     ) {
-        val returnVariable = ConeTypeVariableForLambdaReturnType(atom.atom, "_R")
+        val returnVariable = ConeTypeVariableForLambdaReturnType(atom.fir, "_R")
         val csBuilder = candidate.system.getBuilder()
         csBuilder.registerVariable(returnVariable)
         val functionalType = csBuilder.buildCurrentSubstitutor()
@@ -280,7 +280,7 @@ class FirCallCompleter(
             isNullable = functionalType.isNullable,
             functionalType.attributes
         )
-        csBuilder.addSubtypeConstraint(expectedType, functionalType, ConeArgumentConstraintPosition(atom.atom))
+        csBuilder.addSubtypeConstraint(expectedType, functionalType, ConeArgumentConstraintPosition(atom.fir))
         atom.replaceExpectedType(expectedType, returnVariable.defaultType)
         atom.replaceTypeVariableForLambdaReturnType(returnVariable)
     }
@@ -312,7 +312,7 @@ class FirCallCompleter(
 
     private inner class LambdaAnalyzerImpl : LambdaAnalyzer {
         override fun analyzeAndGetLambdaReturnArguments(
-            lambdaAtom: ResolvedLambdaAtom,
+            lambdaAtom: ConeResolvedLambdaAtom,
             receiverType: ConeKotlinType?,
             contextReceivers: List<ConeKotlinType>,
             parameters: List<ConeKotlinType>,
@@ -321,10 +321,10 @@ class FirCallCompleter(
             withPCLASession: Boolean,
             forOverloadByLambdaReturnType: Boolean,
         ): ReturnArgumentsAnalysisResult {
-            val lambdaArgument: FirAnonymousFunction = lambdaAtom.atom
+            val lambdaArgument: FirAnonymousFunction = lambdaAtom.fir
             val needItParam = lambdaArgument.valueParameters.isEmpty() && parameters.size == 1
 
-            val matchedParameter = candidate.argumentMapping?.firstNotNullOfOrNull { (currentArgument, currentValueParameter) ->
+            val matchedParameter = candidate.argumentMapping.firstNotNullOfOrNull { (currentArgument, currentValueParameter) ->
                 val currentLambdaArgument =
                     (currentArgument as? FirAnonymousFunctionExpression)?.anonymousFunction
                 if (currentLambdaArgument === lambdaArgument) {
@@ -342,7 +342,7 @@ class FirCallCompleter(
                     val itType = parameters.single()
                     buildValueParameter {
                         resolvePhase = FirResolvePhase.BODY_RESOLVE
-                        source = lambdaAtom.atom.source?.fakeElement(KtFakeSourceElementKind.ItLambdaParameter)
+                        source = lambdaAtom.fir.source?.fakeElement(KtFakeSourceElementKind.ItLambdaParameter)
                         containingFunctionSymbol = lambdaArgument.symbol
                         moduleData = session.moduleData
                         origin = FirDeclarationOrigin.Source
@@ -350,7 +350,7 @@ class FirCallCompleter(
                         symbol = FirValueParameterSymbol(name)
                         returnTypeRef =
                             itType.approximateLambdaInputType(symbol, withPCLASession).toFirResolvedTypeRef(
-                                lambdaAtom.atom.source?.fakeElement(KtFakeSourceElementKind.ItLambdaParameter)
+                                lambdaAtom.fir.source?.fakeElement(KtFakeSourceElementKind.ItLambdaParameter)
                             )
                         defaultValue = null
                         isCrossinline = false

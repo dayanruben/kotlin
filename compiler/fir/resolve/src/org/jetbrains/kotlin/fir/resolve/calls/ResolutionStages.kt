@@ -364,7 +364,7 @@ object CheckDslScopeViolation : ResolutionStage() {
         if (candidate.dispatchReceiver?.resolvedType?.fullyExpandedType(context.session)?.isSomeFunctionType(context.session) == true &&
             (candidate.symbol as? FirNamedFunctionSymbol)?.name == OperatorNameConventions.INVOKE
         ) {
-            val firstArg = candidate.argumentMapping?.keys?.firstOrNull() as? FirThisReceiverExpression ?: return
+            val firstArg = candidate.argumentMapping.keys.firstOrNull() as? FirThisReceiverExpression ?: return
             if (!firstArg.isImplicit) return
             checkImpl(
                 candidate,
@@ -503,7 +503,7 @@ internal object MapArguments : ResolutionStage() {
             candidate.originScope,
             callSiteIsOperatorCall = (callInfo.callSite as? FirFunctionCall)?.origin == FirFunctionCallOrigin.Operator
         )
-        candidate.argumentMapping = mapping.toArgumentToParameterMapping()
+        candidate.initializeArgumentMapping(mapping.toArgumentToParameterMapping())
         candidate.numDefaults = mapping.numDefaults()
 
         mapping.diagnostics.forEach(sink::reportDiagnostic)
@@ -514,8 +514,7 @@ internal object MapArguments : ResolutionStage() {
 internal object CheckArguments : CheckerStage() {
     override suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext) {
         candidate.symbol.lazyResolveToPhase(FirResolvePhase.STATUS)
-        val argumentMapping =
-            candidate.argumentMapping ?: error("Argument should be already mapped while checking arguments!")
+        val argumentMapping = candidate.argumentMapping
         val isInvokeFromExtensionFunctionType = candidate.isInvokeFromExtensionFunctionType
 
         for ((index, argument) in callInfo.arguments.withIndex()) {
@@ -557,7 +556,7 @@ private val Candidate.isInvokeFromExtensionFunctionType: Boolean
 
 internal fun Candidate.shouldHaveLowPriorityDueToSAM(bodyResolveComponents: BodyResolveComponents): Boolean {
     if (!usesSamConversion || isJavaApplicableCandidate()) return false
-    return argumentMapping!!.values.any {
+    return argumentMapping.values.any {
         val coneType = it.returnTypeRef.coneType
         bodyResolveComponents.samResolver.isSamType(coneType) &&
                 // Candidate is not from Java, so no flexible types are possible here
@@ -596,7 +595,7 @@ internal object EagerResolveOfCallableReferences : CheckerStage() {
     override suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext) {
         if (candidate.postponedAtoms.isEmpty()) return
         for (atom in candidate.postponedAtoms) {
-            if (atom is ResolvedCallableReferenceAtom) {
+            if (atom is ConeResolvedCallableReferenceAtom) {
                 val (applicability, success) =
                     context.bodyResolveComponents.callResolver.resolveCallableReference(
                         candidate, atom, hasSyntheticOuterCall = candidate.callInfo.name == ACCEPT_SPECIFIC_TYPE.callableName
@@ -862,7 +861,7 @@ internal object CheckLambdaAgainstTypeVariableContradiction : ResolutionStage() 
         }
 
         for (postponedAtom in candidate.postponedAtoms) {
-            if (postponedAtom !is LambdaWithTypeVariableAsExpectedTypeAtom) continue
+            if (postponedAtom !is ConeLambdaWithTypeVariableAsExpectedTypeAtom) continue
             postponedAtom.checkForContradiction(csBuilder, context, sink)
         }
     }
@@ -872,7 +871,7 @@ internal object CheckLambdaAgainstTypeVariableContradiction : ResolutionStage() 
      * lambda by checking if _any_ function type can satisfy the constraints of the type variable.
      * This makes some code green that would otherwise report an overload resolution ambiguity.
      */
-    private fun LambdaWithTypeVariableAsExpectedTypeAtom.checkForContradiction(
+    private fun ConeLambdaWithTypeVariableAsExpectedTypeAtom.checkForContradiction(
         csBuilder: NewConstraintSystemImpl,
         context: ResolutionContext,
         sink: CheckerSink,
@@ -895,7 +894,7 @@ internal object CheckLambdaAgainstTypeVariableContradiction : ResolutionStage() 
         // We don't add the constraint to the system in the end, we only check for contradictions and roll back the transaction.
         // This ensures we don't get any issues if a different function type constraint is added later, e.g., during completion.
         csBuilder.runTransaction {
-            addSubtypeConstraint(lambdaType, expectedType, ConeArgumentConstraintPosition(atom))
+            addSubtypeConstraint(lambdaType, expectedType, ConeArgumentConstraintPosition(fir))
             shouldReportError = hasContradiction
             false
         }
@@ -905,14 +904,14 @@ internal object CheckLambdaAgainstTypeVariableContradiction : ResolutionStage() 
                 ArgumentTypeMismatch(
                     expectedType,
                     lambdaType,
-                    atom,
+                    expression,
                     context.session.typeContext.isTypeMismatchDueToNullability(lambdaType, expectedType)
                 )
             )
         }
     }
 
-    private fun LambdaWithTypeVariableAsExpectedTypeAtom.hasFunctionTypeConstraint(
+    private fun ConeLambdaWithTypeVariableAsExpectedTypeAtom.hasFunctionTypeConstraint(
         csBuilder: NewConstraintSystemImpl,
         context: ResolutionContext,
     ): Boolean {

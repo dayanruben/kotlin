@@ -6,6 +6,8 @@
 package org.jetbrains.kotlin.fir.resolve.inference
 
 import org.jetbrains.kotlin.fir.declarations.FirAnonymousFunction
+import org.jetbrains.kotlin.fir.resolve.calls.ConeLambdaWithTypeVariableAsExpectedTypeAtom
+import org.jetbrains.kotlin.fir.resolve.calls.ConePostponedResolvedAtom
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeArgumentConstraintPosition
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeFixVariableConstraintPosition
 import org.jetbrains.kotlin.fir.symbols.ConeTypeParameterLookupTag
@@ -76,10 +78,10 @@ object ConeConstraintSystemUtilContext : ConstraintSystemUtilContext {
     }
 
     override fun createArgumentConstraintPosition(argument: PostponedAtomWithRevisableExpectedType): ArgumentConstraintPosition<*> {
-        require(argument is PostponedResolvedAtom) {
+        require(argument is ConePostponedResolvedAtom) {
             "${argument::class}"
         }
-        return ConeArgumentConstraintPosition(argument.atom)
+        return ConeArgumentConstraintPosition(argument.fir)
     }
 
     override fun <T> createFixVariableConstraintPosition(variable: TypeVariableMarker, atom: T): FixVariableConstraintPosition<T> {
@@ -89,10 +91,10 @@ object ConeConstraintSystemUtilContext : ConstraintSystemUtilContext {
     }
 
     override fun extractLambdaParameterTypesFromDeclaration(declaration: PostponedAtomWithRevisableExpectedType): List<ConeKotlinType?>? {
-        require(declaration is PostponedResolvedAtom)
+        require(declaration is ConePostponedResolvedAtom)
         return when (declaration) {
-            is LambdaWithTypeVariableAsExpectedTypeAtom -> {
-                val atom = declaration.atom.anonymousFunction
+            is ConeLambdaWithTypeVariableAsExpectedTypeAtom -> {
+                val atom = declaration.fir
                 return if (atom.isLambda) { // lambda - must return null in case of absent parameters
                     if (atom.valueParameters.isNotEmpty())
                         atom.collectDeclaredValueParameterTypes()
@@ -112,20 +114,20 @@ object ConeConstraintSystemUtilContext : ConstraintSystemUtilContext {
         valueParameters.map { it.returnTypeRef.coneTypeSafe() }
 
     override fun PostponedAtomWithRevisableExpectedType.isFunctionExpression(): Boolean {
-        require(this is PostponedResolvedAtom)
-        return this is LambdaWithTypeVariableAsExpectedTypeAtom && !this.atom.anonymousFunction.isLambda
+        require(this is ConePostponedResolvedAtom)
+        return this is ConeLambdaWithTypeVariableAsExpectedTypeAtom && !this.fir.isLambda
     }
 
     override fun PostponedAtomWithRevisableExpectedType.isFunctionExpressionWithReceiver(): Boolean {
-        require(this is PostponedResolvedAtom)
-        return this is LambdaWithTypeVariableAsExpectedTypeAtom &&
-                !this.atom.anonymousFunction.isLambda &&
-                this.atom.anonymousFunction.receiverParameter?.typeRef?.coneType != null
+        require(this is ConePostponedResolvedAtom)
+        return this is ConeLambdaWithTypeVariableAsExpectedTypeAtom &&
+                !this.fir.isLambda &&
+                this.fir.receiverParameter?.typeRef?.coneType != null
     }
 
     override fun PostponedAtomWithRevisableExpectedType.isLambda(): Boolean {
-        require(this is PostponedResolvedAtom)
-        return this is LambdaWithTypeVariableAsExpectedTypeAtom && this.atom.anonymousFunction.isLambda
+        require(this is ConePostponedResolvedAtom)
+        return this is ConeLambdaWithTypeVariableAsExpectedTypeAtom && this.fir.isLambda
     }
 
     override fun createTypeVariableForLambdaReturnType(): TypeVariableMarker {

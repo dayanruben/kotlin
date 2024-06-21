@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.fir.expressions.builder.buildThisReceiverExpressionC
 import org.jetbrains.kotlin.fir.expressions.impl.FirExpressionStub
 import org.jetbrains.kotlin.fir.resolve.FirSamResolver
 import org.jetbrains.kotlin.fir.resolve.inference.InferenceComponents
-import org.jetbrains.kotlin.fir.resolve.inference.PostponedResolvedAtom
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.BodyResolveContext
 import org.jetbrains.kotlin.fir.scopes.FirScope
@@ -53,22 +52,17 @@ class Candidate(
     bodyResolveContext: BodyResolveContext,
 ) : AbstractCallCandidate() {
 
+    // ---------------------------------------- Symbol ----------------------------------------
+
     override var symbol: FirBasedSymbol<*> = symbol
         private set
 
-
-    /**
-     * Please avoid updating symbol in the candidate whenever it's possible.
-     * The only case when currently it seems to be unavoidable is at
-     * [org.jetbrains.kotlin.fir.resolve.transformers.FirCallCompletionResultsWriterTransformer.refineSubstitutedMemberIfReceiverContainsTypeVariable]
-     */
-    @RequiresOptIn
-    annotation class UpdatingSymbol
-
-    @UpdatingSymbol
+    @UpdatingCandidateInvariants
     fun updateSymbol(symbol: FirBasedSymbol<*>) {
         this.symbol = symbol
     }
+
+    // ---------------------------------------- Constraint system ----------------------------------------
 
     val usedOuterCs: Boolean get() = system.usesOuterCs
 
@@ -98,33 +92,93 @@ class Candidate(
      * Substitutor from declared type parameters to type variables created for that candidate
      */
     lateinit var substitutor: ConeSubstitutor
+        private set
     lateinit var freshVariables: List<ConeTypeVariable>
+        private set
+
+    fun initializeSubstitutorAndVariables(substitutor: ConeSubstitutor, freshVariables: List<ConeTypeVariable>) {
+        this.substitutor = substitutor
+        this.freshVariables = freshVariables
+    }
+
+    @UpdatingCandidateInvariants
+    fun updateSubstitutor(substitutor: ConeSubstitutor) {
+        this.substitutor = substitutor
+    }
+
+    // ---------------------------------------- Conversions ----------------------------------------
+
     var resultingTypeForCallableReference: ConeKotlinType? = null
+        private set
     var outerConstraintBuilderEffect: (ConstraintSystemOperation.() -> Unit)? = null
+        private set
+
     val usesSamConversion: Boolean get() = functionTypesOfSamConversions != null
     val usesSamConversionOrSamConstructor: Boolean get() = usesSamConversion || symbol.origin == FirDeclarationOrigin.SamConstructor
 
     internal var callableReferenceAdaptation: CallableReferenceAdaptation? = null
-        set(value) {
-            field = value
-            usesFunctionConversion = value?.suspendConversionStrategy is CallableReferenceConversionStrategy.CustomConversion
-            if (value != null) {
-                numDefaults = value.defaults
-            }
+        private set
+
+    internal fun initializeCallableReferenceAdaptation(
+        callableReferenceAdaptation: CallableReferenceAdaptation?,
+        resultingTypeForCallableReference: ConeKotlinType,
+        outerConstraintBuilderEffect: ConstraintSystemOperation.() -> Unit
+    ) {
+        require(this.callableReferenceAdaptation == null) { "callableReferenceAdaptation already initialized" }
+        this.callableReferenceAdaptation = callableReferenceAdaptation
+        this.resultingTypeForCallableReference = resultingTypeForCallableReference
+        this.outerConstraintBuilderEffect = outerConstraintBuilderEffect
+        usesFunctionConversion = callableReferenceAdaptation?.suspendConversionStrategy is CallableReferenceConversionStrategy.CustomConversion
+        if (callableReferenceAdaptation != null) {
+            numDefaults = callableReferenceAdaptation.defaults
         }
+    }
 
     var usesFunctionConversion: Boolean = false
-
-    override var argumentMapping: LinkedHashMap<FirExpression, FirValueParameter>? = null
-    var numDefaults: Int = 0
     var functionTypesOfSamConversions: HashMap<FirExpression, FirSamResolver.SamConversionInfo>? = null
+        private set
+
+    fun initializeFunctionTypesOfSamConversions(types: HashMap<FirExpression, FirSamResolver.SamConversionInfo>) {
+        require(functionTypesOfSamConversions == null) { "functionTypesOfSamConversions already initialized" }
+        functionTypesOfSamConversions = types
+    }
+
+    // ---------------------------------------- Argument mapping ----------------------------------------
+
+    private var _argumentMapping: LinkedHashMap<FirExpression, FirValueParameter>? = null
+    override val argumentMappingInitialized: Boolean
+        get() = _argumentMapping != null
+    override val argumentMapping: LinkedHashMap<FirExpression, FirValueParameter>
+        get() = _argumentMapping ?: error("Argument mapping is not initialized yet")
+
+    fun initializeArgumentMapping(argumentMapping: LinkedHashMap<FirExpression, FirValueParameter>) {
+        require(_argumentMapping == null) { "Argument mapping already initialized" }
+        _argumentMapping = argumentMapping
+    }
+
+    @UpdatingCandidateInvariants
+    fun updateArgumentMapping(argumentMapping: LinkedHashMap<FirExpression, FirValueParameter>) {
+        _argumentMapping = argumentMapping
+    }
+
+    var numDefaults: Int = 0
+
+    // ---------------------------------------- Type argument mapping ----------------------------------------
+
     lateinit var typeArgumentMapping: TypeArgumentMapping
 
-    private val _postponedAtomsByFir: MutableMap<FirElement, PostponedResolvedAtom> = mutableMapOf()
-    val postponedAtomsByFir: Map<FirElement, PostponedResolvedAtom> get() = _postponedAtomsByFir
-    val postponedAtoms: Collection<PostponedResolvedAtom> get() = _postponedAtomsByFir.values
+    // ---------------------------------------- Postponed atoms ----------------------------------------
 
-    // PCLA-related parts
+    private val _postponedAtomsByFir: MutableMap<FirElement, MutableList<ConePostponedResolvedAtom>> = mutableMapOf()
+    val postponedAtomsByFir: Map<FirElement, List<ConePostponedResolvedAtom>> get() = _postponedAtomsByFir
+    val postponedAtoms: Collection<ConePostponedResolvedAtom> get() = _postponedAtomsByFir.values.flatten()
+
+    fun addPostponedAtom(atom: ConePostponedResolvedAtom) {
+        _postponedAtomsByFir.getOrPut(atom.fir) { mutableListOf() }.add(atom)
+    }
+
+    // ---------------------------------------- PCLA-related parts ----------------------------------------
+
     val postponedPCLACalls: MutableList<FirStatement> = mutableListOf()
     val lambdasAnalyzedWithPCLA: MutableList<FirAnonymousFunction> = mutableListOf()
 
@@ -132,12 +186,10 @@ class Candidate(
     // See the call sites of [FirDelegatedPropertyInferenceSession.completeSessionOrPostponeIfNonRoot]
     val onPCLACompletionResultsWritingCallbacks: MutableList<(ConeSubstitutor) -> Unit> = mutableListOf()
 
+    // ---------------------------------------- Applicability ----------------------------------------
+
     var lowestApplicability: CandidateApplicability = CandidateApplicability.RESOLVED
         private set
-
-    override var chosenExtensionReceiver: FirExpression? = givenExtensionReceiverOptions.singleOrNull()
-
-    var contextReceiverArguments: List<FirExpression>? = null
 
     override val applicability: CandidateApplicability
         get() = lowestApplicability
@@ -146,21 +198,11 @@ class Candidate(
     override val diagnostics: List<ResolutionDiagnostic>
         get() = _diagnostics
 
-    fun addPostponedAtom(atom: PostponedResolvedAtom) {
-        _postponedAtomsByFir[atom.atom] = atom
-    }
-
     fun addDiagnostic(diagnostic: ResolutionDiagnostic) {
         _diagnostics += diagnostic
         if (diagnostic.applicability < lowestApplicability) {
             lowestApplicability = diagnostic.applicability
         }
-    }
-
-    @CodeFragmentAdjustment
-    internal fun resetToResolved() {
-        lowestApplicability = CandidateApplicability.RESOLVED
-        _diagnostics.clear()
     }
 
     /**
@@ -177,9 +219,11 @@ class Candidate(
     val isSuccessful: Boolean
         get() = diagnostics.allSuccessful && (!systemInitialized || !system.hasContradiction)
 
-    var passedStages: Int = 0
+    // ---------------------------------------- Receivers ----------------------------------------
 
-    private var sourcesWereUpdated = false
+    override var chosenExtensionReceiver: FirExpression? = givenExtensionReceiverOptions.singleOrNull()
+
+    var contextReceiverArguments: List<FirExpression>? = null
 
     // FirExpressionStub can be located here in case of callable reference resolution
     fun dispatchReceiverExpression(): FirExpression? {
@@ -194,6 +238,8 @@ class Candidate(
     fun contextReceiverArguments(): List<FirExpression> {
         return contextReceiverArguments ?: emptyList()
     }
+
+    private var sourcesWereUpdated = false
 
     // In case of implicit receivers we want to update corresponding sources to generate correct offset. This method must be called only
     // once when candidate was selected and confirmed to be correct one.
@@ -220,7 +266,30 @@ class Candidate(
         }
     }
 
+    // ---------------------------------------- Backing field ----------------------------------------
+
     var hasVisibleBackingField: Boolean = false
+
+    // ---------------------------------------- Util ----------------------------------------
+
+    @CodeFragmentAdjustment
+    internal fun resetToResolved() {
+        lowestApplicability = CandidateApplicability.RESOLVED
+        _diagnostics.clear()
+    }
+
+    var passedStages: Int = 0
+
+
+    /**
+     * Please avoid updating symbol in the candidate whenever it's possible.
+     * The only case when currently it seems to be unavoidable is at
+     * [org.jetbrains.kotlin.fir.resolve.transformers.FirCallCompletionResultsWriterTransformer.refineSubstitutedMemberIfReceiverContainsTypeVariable]
+     */
+    @RequiresOptIn
+    annotation class UpdatingCandidateInvariants
+
+    // ---------------------------------------- hashcode/equals/toString ----------------------------------------
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
