@@ -1,9 +1,9 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.fir.resolve.calls
+package org.jetbrains.kotlin.fir.resolve.calls.stages
 
 import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
@@ -12,6 +12,9 @@ import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
+import org.jetbrains.kotlin.fir.resolve.calls.*
+import org.jetbrains.kotlin.fir.resolve.calls.candidate.Candidate
+import org.jetbrains.kotlin.fir.resolve.calls.candidate.CheckerSink
 import org.jetbrains.kotlin.fir.resolve.createFunctionType
 import org.jetbrains.kotlin.fir.resolve.inference.ConeTypeVariableForLambdaParameterType
 import org.jetbrains.kotlin.fir.resolve.inference.ConeTypeVariableForLambdaReturnType
@@ -46,6 +49,10 @@ internal object ArgumentCheckingProcessor {
     ) {
         val session: FirSession
             get() = context.session
+
+        fun reportDiagnostic(diagnostic: ResolutionDiagnostic) {
+            sink?.reportDiagnostic(diagnostic)
+        }
     }
 
     // -------------------------------------------- Public API --------------------------------------------
@@ -245,12 +252,12 @@ internal object ArgumentCheckingProcessor {
         when {
             isReceiver && isDispatch -> {
                 if (!expectedType.isNullable && argumentType.isMarkedNullable) {
-                    sink.reportDiagnostic(InapplicableWrongReceiver(expectedType, argumentType))
+                    reportDiagnostic(InapplicableWrongReceiver(expectedType, argumentType))
                 }
             }
 
             isReceiver && expectedType is ConeDynamicType && argumentType !is ConeDynamicType -> {
-                sink.reportDiagnostic(DynamicReceiverExpectedButWasNonDynamic(argumentType))
+                reportDiagnostic(DynamicReceiverExpectedButWasNonDynamic(argumentType))
             }
 
             else -> {
@@ -260,7 +267,7 @@ internal object ArgumentCheckingProcessor {
                 if (smartcastExpression != null && !smartcastExpression.isStable) {
                     val unstableType = smartcastExpression.smartcastType.coneType
                     if (csBuilder.addSubtypeConstraintIfCompatible(unstableType, expectedType, position)) {
-                        sink.reportDiagnostic(
+                        reportDiagnostic(
                             UnstableSmartCast(
                                 smartcastExpression,
                                 expectedType,
@@ -273,17 +280,17 @@ internal object ArgumentCheckingProcessor {
                 }
 
                 if (!isReceiver) {
-                    sink.reportDiagnostic(subtypeError(expectedType))
+                    reportDiagnostic(subtypeError(expectedType))
                     return
                 }
 
                 val nullableExpectedType = expectedType.withNullability(ConeNullability.NULLABLE, session.typeContext)
 
                 if (csBuilder.addSubtypeConstraintIfCompatible(argumentType, nullableExpectedType, position)) {
-                    sink.reportDiagnostic(UnsafeCall(argumentType))
+                    reportDiagnostic(UnsafeCall(argumentType))
                 } else {
                     csBuilder.addSubtypeConstraint(argumentType, expectedType, position)
-                    sink.reportDiagnostic(InapplicableWrongReceiver(expectedType, argumentType))
+                    reportDiagnostic(InapplicableWrongReceiver(expectedType, argumentType))
                 }
             }
         }
@@ -354,7 +361,7 @@ internal object ArgumentCheckingProcessor {
                 csBuilder.addSubtypeConstraint(lambdaType, expectedType, position)
             } else {
                 if (!csBuilder.addSubtypeConstraintIfCompatible(lambdaType, expectedType, position)) {
-                    sink.reportDiagnostic(
+                    reportDiagnostic(
                         ArgumentTypeMismatch(
                             expectedType, lambdaType, argument,
                             context.session.typeContext.isTypeMismatchDueToNullability(lambdaType, expectedType)
@@ -415,34 +422,30 @@ internal object ArgumentCheckingProcessor {
             candidate.addPostponedAtom(it)
         }
     }
-}
 
-private fun ConeInferenceContext.argumentTypeWithCustomConversion(
-    session: FirSession,
-    expectedType: ConeKotlinType,
-    argumentType: ConeKotlinType,
-): ConeKotlinType? {
-    // Expect the expected type to be a not regular functional type (e.g. suspend or custom)
-    val expectedTypeKind = expectedType.functionTypeKind(session) ?: return null
-    if (expectedTypeKind.isBasicFunctionOrKFunction) return null
+    private fun ConeInferenceContext.argumentTypeWithCustomConversion(
+        session: FirSession,
+        expectedType: ConeKotlinType,
+        argumentType: ConeKotlinType,
+    ): ConeKotlinType? {
+        // Expect the expected type to be a not regular functional type (e.g. suspend or custom)
+        val expectedTypeKind = expectedType.functionTypeKind(session) ?: return null
+        if (expectedTypeKind.isBasicFunctionOrKFunction) return null
 
-    // We want to check the argument type against non-suspend functional type.
-    val expectedFunctionType = expectedType.customFunctionTypeToSimpleFunctionType(session)
+        // We want to check the argument type against non-suspend functional type.
+        val expectedFunctionType = expectedType.customFunctionTypeToSimpleFunctionType(session)
 
-    val argumentTypeWithInvoke = argumentType.findSubtypeOfBasicFunctionType(session, expectedFunctionType) ?: return null
-    val functionType = argumentTypeWithInvoke.unwrapLowerBound()
-        .fastCorrespondingSupertypes(expectedFunctionType.typeConstructor())
-        ?.firstOrNull() as? ConeKotlinType ?: return null
+        val argumentTypeWithInvoke = argumentType.findSubtypeOfBasicFunctionType(session, expectedFunctionType) ?: return null
+        val functionType = argumentTypeWithInvoke.unwrapLowerBound()
+            .fastCorrespondingSupertypes(expectedFunctionType.typeConstructor())
+            ?.firstOrNull() as? ConeKotlinType ?: return null
 
-    val typeArguments = functionType.typeArguments.map { it.type ?: session.builtinTypes.nullableAnyType.type }.ifEmpty { return null }
-    return createFunctionType(
-        kind = expectedTypeKind,
-        parameters = typeArguments.subList(0, typeArguments.lastIndex),
-        receiverType = null,
-        rawReturnType = typeArguments.last(),
-    )
-}
-
-private fun CheckerSink?.reportDiagnostic(diagnostic: ResolutionDiagnostic) {
-    this?.reportDiagnostic(diagnostic)
+        val typeArguments = functionType.typeArguments.map { it.type ?: session.builtinTypes.nullableAnyType.type }.ifEmpty { return null }
+        return createFunctionType(
+            kind = expectedTypeKind,
+            parameters = typeArguments.subList(0, typeArguments.lastIndex),
+            receiverType = null,
+            rawReturnType = typeArguments.last(),
+        )
+    }
 }
