@@ -158,7 +158,14 @@ internal class PropertiesProvider private constructor(private val project: Proje
         get() = booleanProperty("kotlin.incremental.usePreciseJavaTracking")
 
     val useClasspathSnapshot: Boolean
-        get() = booleanProperty(KOTLIN_INCREMENTAL_USE_CLASSPATH_SNAPSHOT) ?: true
+        get() {
+            val propValue = booleanProperty(KOTLIN_INCREMENTAL_USE_CLASSPATH_SNAPSHOT)
+            if (propValue != null) project.reportDiagnosticOncePerBuild(
+                KotlinToolingDiagnostics.DeprecatedJvmHistoryBasedIncrementalCompilationDiagnostic()
+            )
+
+            return propValue ?: true
+        }
 
     /**
      * Enable exposing secondary 'classes' variant for JVM compilations.
@@ -167,7 +174,14 @@ internal class PropertiesProvider private constructor(private val project: Proje
         get() = booleanProperty(KOTLIN_JVM_ADD_CLASSES_VARIANT) ?: false
 
     val useKotlinAbiSnapshot: Boolean
-        get() = booleanProperty(KOTLIN_ABI_SNAPSHOT) ?: false
+        get() {
+            val propValue = booleanProperty(KOTLIN_ABI_SNAPSHOT)
+            if (propValue != null) project.reportDiagnosticOncePerBuild(
+                KotlinToolingDiagnostics.DeprecatedKotlinAbiSnapshotDiagnostic()
+            )
+
+            return propValue ?: false
+        }
 
     val keepMppDependenciesIntactInPoms: Boolean?
         get() = booleanProperty("kotlin.mpp.keepMppDependenciesIntactInPoms")
