@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -17,11 +17,11 @@ import org.jetbrains.kotlin.analysis.api.impl.base.annotations.KaEmptyAnnotation
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertyGetterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.name.CallableId
@@ -41,6 +41,12 @@ class KaFe10DescDefaultPropertyGetterSymbol(
 
     override val hasBody: Boolean
         get() = withValidityAssertion { false }
+
+    override val isActual: Boolean
+        get() = withValidityAssertion { propertyDescriptor.isActual }
+
+    override val isExpect: Boolean
+        get() = withValidityAssertion { propertyDescriptor.isExpect }
 
     override val valueParameters: List<KaValueParameterSymbol>
         get() = withValidityAssertion { emptyList() }
@@ -63,10 +69,10 @@ class KaFe10DescDefaultPropertyGetterSymbol(
     override val receiverParameter: KaReceiverParameterSymbol?
         get() = withValidityAssertion { propertyDescriptor.extensionReceiverParameter?.toKtReceiverParameterSymbol(analysisContext) }
 
-    override val modality: Modality
-        get() = withValidityAssertion { propertyDescriptor.ktModality }
+    override val modality: KaSymbolModality
+        get() = withValidityAssertion { propertyDescriptor.kaSymbolModality }
 
-    override val visibility: Visibility
+    override val compilerVisibility: Visibility
         get() = withValidityAssertion { propertyDescriptor.ktVisibility }
 
     override val annotations: KaAnnotationList

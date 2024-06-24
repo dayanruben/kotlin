@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.descriptors.symbols.psiBased.base.ktVis
 import org.jetbrains.kotlin.analysis.api.descriptors.utils.cached
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaPsiBasedSymbolPointer
@@ -54,12 +55,14 @@ internal class KaFe10PsiConstructorSymbol(
     override val hasStableParameterNames: Boolean
         get() = withValidityAssertion { true }
 
+    override val modality: KaSymbolModality get() = withValidityAssertion { KaSymbolModality.FINAL }
+
     override val returnType: KaType
         get() = withValidityAssertion {
             descriptor?.returnType?.toKtType(analysisContext) ?: createErrorType()
         }
 
-    override val visibility: Visibility
+    override val compilerVisibility: Visibility
         get() = withValidityAssertion { psi.ktVisibility ?: descriptor?.ktVisibility ?: Visibilities.Public }
 
     override val isActual: Boolean

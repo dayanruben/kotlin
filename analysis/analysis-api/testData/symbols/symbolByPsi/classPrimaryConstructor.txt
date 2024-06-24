@@ -1,6 +1,7 @@
 KaConstructorSymbol:
   annotations: []
   callableId: null
+  compilerVisibility: Public
   containingClassId: A
   contextReceivers: []
   hasStableParameterNames: true
@@ -9,6 +10,7 @@ KaConstructorSymbol:
   isExtension: false
   isPrimary: true
   location: CLASS
+  modality: FINAL
   origin: SOURCE
   receiverParameter: null
   returnType: KaUsualClassType:
@@ -20,16 +22,21 @@ KaConstructorSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: KaKotlinPropertySymbol:
         annotations: []
         backingFieldSymbol: KaBackingFieldSymbol:
           annotations: []
           callableId: null
+          compilerVisibility: Public
           contextReceivers: []
+          isActual: false
+          isExpect: false
           isExtension: false
           isVal: true
           location: PROPERTY
+          modality: FINAL
           name: field
           origin: PROPERTY_BACKING_FIELD
           owningProperty: KaKotlinPropertySymbol(/A.a)
@@ -38,20 +45,24 @@ KaConstructorSymbol:
             annotations: []
             typeArguments: []
             type: kotlin/Int
-          typeParameters: []
+          visibility: PUBLIC
           getContainingFileSymbol: KaFileSymbol(classPrimaryConstructor.kt)
           getContainingJvmClassName: A
           getContainingModule: KaSourceModule "Sources of main"
           deprecationStatus: null
         callableId: /A.a
+        compilerVisibility: Public
         contextReceivers: []
         getter: KaPropertyGetterSymbol:
           annotations: []
           callableId: null
+          compilerVisibility: Public
           contextReceivers: []
           hasBody: false
           hasStableParameterNames: true
+          isActual: false
           isDefault: true
+          isExpect: false
           isExtension: false
           isInline: false
           isOverride: false
@@ -63,9 +74,8 @@ KaConstructorSymbol:
             annotations: []
             typeArguments: []
             type: kotlin/Int
-          typeParameters: []
           valueParameters: []
-          visibility: Public
+          visibility: PUBLIC
           getDispatchReceiver(): KaUsualClassType:
             annotations: []
             typeArguments: []
@@ -99,7 +109,7 @@ KaConstructorSymbol:
           type: kotlin/Int
         setter: null
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
         getDispatchReceiver(): KaUsualClassType:
           annotations: []
           typeArguments: []
@@ -113,13 +123,16 @@ KaConstructorSymbol:
         javaSetterName: null
         setterDeprecationStatus: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: a
       origin: SOURCE
       receiverParameter: null
@@ -127,7 +140,7 @@ KaConstructorSymbol:
         annotations: []
         typeArguments: []
         type: kotlin/Int
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(classPrimaryConstructor.kt)
       getContainingJvmClassName: A
       getContainingModule: KaSourceModule "Sources of main"
@@ -135,16 +148,20 @@ KaConstructorSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: b
       origin: SOURCE
       receiverParameter: null
@@ -152,13 +169,13 @@ KaConstructorSymbol:
         annotations: []
         typeArguments: []
         type: kotlin/String
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(classPrimaryConstructor.kt)
       getContainingJvmClassName: A
       getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(classPrimaryConstructor.kt)
   getContainingJvmClassName: A
   getContainingModule: KaSourceModule "Sources of main"
@@ -169,6 +186,7 @@ KaNamedClassSymbol:
   classId: A
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -188,7 +206,7 @@ KaNamedClassSymbol:
       type: kotlin/Any
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(classPrimaryConstructor.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null

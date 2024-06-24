@@ -1,6 +1,7 @@
 KaConstructorSymbol:
   annotations: []
   callableId: null
+  compilerVisibility: Private
   containingClassId: Style
   contextReceivers: []
   hasStableParameterNames: true
@@ -9,6 +10,7 @@ KaConstructorSymbol:
   isExtension: false
   isPrimary: true
   location: CLASS
+  modality: FINAL
   origin: SOURCE
   receiverParameter: null
   returnType: KaUsualClassType:
@@ -20,16 +22,21 @@ KaConstructorSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Local
       contextReceivers: []
       generatedPrimaryConstructorProperty: KaKotlinPropertySymbol:
         annotations: []
         backingFieldSymbol: KaBackingFieldSymbol:
           annotations: []
           callableId: null
+          compilerVisibility: Private
           contextReceivers: []
+          isActual: false
+          isExpect: false
           isExtension: false
           isVal: true
           location: PROPERTY
+          modality: FINAL
           name: field
           origin: PROPERTY_BACKING_FIELD
           owningProperty: KaKotlinPropertySymbol(/Style.value)
@@ -38,20 +45,24 @@ KaConstructorSymbol:
             annotations: []
             typeArguments: []
             type: kotlin/String
-          typeParameters: []
+          visibility: PRIVATE
           getContainingFileSymbol: KaFileSymbol(enumValueMember.kt)
           getContainingJvmClassName: Style
           getContainingModule: KaSourceModule "Sources of main"
           deprecationStatus: null
         callableId: /Style.value
+        compilerVisibility: Public
         contextReceivers: []
         getter: KaPropertyGetterSymbol:
           annotations: []
           callableId: null
+          compilerVisibility: Public
           contextReceivers: []
           hasBody: false
           hasStableParameterNames: true
+          isActual: false
           isDefault: true
+          isExpect: false
           isExtension: false
           isInline: false
           isOverride: false
@@ -63,9 +74,8 @@ KaConstructorSymbol:
             annotations: []
             typeArguments: []
             type: kotlin/String
-          typeParameters: []
           valueParameters: []
-          visibility: Public
+          visibility: PUBLIC
           getDispatchReceiver(): KaUsualClassType:
             annotations: []
             typeArguments: []
@@ -99,7 +109,7 @@ KaConstructorSymbol:
           type: kotlin/String
         setter: null
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
         getDispatchReceiver(): KaUsualClassType:
           annotations: []
           typeArguments: []
@@ -113,13 +123,16 @@ KaConstructorSymbol:
         javaSetterName: null
         setterDeprecationStatus: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: value
       origin: SOURCE
       receiverParameter: null
@@ -127,13 +140,13 @@ KaConstructorSymbol:
         annotations: []
         typeArguments: []
         type: kotlin/String
-      typeParameters: []
+      visibility: LOCAL
       getContainingFileSymbol: KaFileSymbol(enumValueMember.kt)
       getContainingJvmClassName: Style
       getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
   ]
-  visibility: Private
+  visibility: PRIVATE
   getContainingFileSymbol: KaFileSymbol(enumValueMember.kt)
   getContainingJvmClassName: Style
   getContainingModule: KaSourceModule "Sources of main"
@@ -144,10 +157,14 @@ KaKotlinPropertySymbol:
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Private
     contextReceivers: []
+    isActual: false
+    isExpect: false
     isExtension: false
     isVal: true
     location: PROPERTY
+    modality: FINAL
     name: field
     origin: PROPERTY_BACKING_FIELD
     owningProperty: KaKotlinPropertySymbol(<local>/exitAnimation)
@@ -156,20 +173,24 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/String
-    typeParameters: []
+    visibility: PRIVATE
     getContainingFileSymbol: KaFileSymbol(enumValueMember.kt)
     getContainingJvmClassName: null
     getContainingModule: KaSourceModule "Sources of main"
     deprecationStatus: null
   callableId: null
+  compilerVisibility: Public
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Public
     contextReceivers: []
     hasBody: true
     hasStableParameterNames: true
+    isActual: false
     isDefault: false
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: true
@@ -181,9 +202,8 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/String
-    typeParameters: []
     valueParameters: []
-    visibility: Public
+    visibility: PUBLIC
     getDispatchReceiver(): KaUsualClassType:
       annotations: []
       typeArguments: []
@@ -217,7 +237,7 @@ KaKotlinPropertySymbol:
     type: kotlin/String
   setter: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -234,11 +254,15 @@ KaKotlinPropertySymbol:
 KaEnumEntrySymbol:
   annotations: []
   callableId: /Style.SHEET
+  compilerVisibility: Public
   contextReceivers: []
   enumEntryInitializer: KaEnumEntrySymbol(/Style.SHEET)
+  isActual: false
+  isExpect: false
   isExtension: false
   isVal: true
   location: CLASS
+  modality: FINAL
   name: SHEET
   origin: SOURCE
   receiverParameter: null
@@ -246,7 +270,7 @@ KaEnumEntrySymbol:
     annotations: []
     typeArguments: []
     type: Style
-  typeParameters: []
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(enumValueMember.kt)
   getContainingJvmClassName: Style
   getContainingModule: KaSourceModule "Sources of main"
@@ -257,10 +281,14 @@ KaKotlinPropertySymbol:
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Private
     contextReceivers: []
+    isActual: false
+    isExpect: false
     isExtension: false
     isVal: true
     location: PROPERTY
+    modality: FINAL
     name: field
     origin: PROPERTY_BACKING_FIELD
     owningProperty: KaKotlinPropertySymbol(/Style.exitAnimation)
@@ -269,20 +297,24 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/String
-    typeParameters: []
+    visibility: PRIVATE
     getContainingFileSymbol: KaFileSymbol(enumValueMember.kt)
     getContainingJvmClassName: Style
     getContainingModule: KaSourceModule "Sources of main"
     deprecationStatus: null
   callableId: /Style.exitAnimation
+  compilerVisibility: Public
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Public
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: true
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: false
@@ -294,9 +326,8 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/String
-    typeParameters: []
     valueParameters: []
-    visibility: Public
+    visibility: PUBLIC
     getDispatchReceiver(): KaUsualClassType:
       annotations: []
       typeArguments: []
@@ -330,7 +361,7 @@ KaKotlinPropertySymbol:
     type: kotlin/String
   setter: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -349,6 +380,7 @@ KaNamedClassSymbol:
   classId: Style
   classKind: ENUM_CLASS
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -373,7 +405,7 @@ KaNamedClassSymbol:
       type: kotlin/Enum<Style>
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(enumValueMember.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null

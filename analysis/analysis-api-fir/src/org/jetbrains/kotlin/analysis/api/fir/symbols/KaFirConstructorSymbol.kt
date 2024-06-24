@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.fir.utils.cached
 import org.jetbrains.kotlin.analysis.api.impl.base.symbols.pointers.KaCannotCreateSymbolPointerForLocalLibraryDeclarationException
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.isLocal
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaPsiBasedSymbolPointer
@@ -39,13 +40,13 @@ internal class KaFirConstructorSymbol(
     override val returnType: KaType get() = withValidityAssertion { firSymbol.returnType(builder) }
 
     override val valueParameters: List<KaValueParameterSymbol> by cached { firSymbol.createKtValueParameters(builder) }
-
     override val hasStableParameterNames: Boolean
         get() = withValidityAssertion {
             firSymbol.fir.hasStableParameterNames
         }
 
-    override val visibility: Visibility get() = withValidityAssertion { firSymbol.visibility }
+    override val modality: KaSymbolModality get() = withValidityAssertion { firSymbol.kaSymbolModality }
+    override val compilerVisibility: Visibility get() = withValidityAssertion { firSymbol.visibility }
 
     override val annotations by cached {
         KaFirAnnotationListForDeclaration.create(firSymbol, builder)

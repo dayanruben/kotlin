@@ -1,6 +1,7 @@
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /foo
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -27,7 +28,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Unit
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(script.kts)
   getContainingJvmClassName: null
   getContainingModule: KaScriptModule "Script script.kts"
@@ -38,10 +39,14 @@ KaKotlinPropertySymbol:
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Private
     contextReceivers: []
+    isActual: false
+    isExpect: false
     isExtension: false
     isVal: true
     location: PROPERTY
+    modality: FINAL
     name: field
     origin: PROPERTY_BACKING_FIELD
     owningProperty: KaKotlinPropertySymbol(/b)
@@ -50,20 +55,24 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
+    visibility: PRIVATE
     getContainingFileSymbol: KaFileSymbol(script.kts)
     getContainingJvmClassName: null
     getContainingModule: KaScriptModule "Script script.kts"
     deprecationStatus: null
   callableId: /b
+  compilerVisibility: Public
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Public
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: true
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: false
@@ -75,9 +84,8 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
     valueParameters: []
-    visibility: Public
+    visibility: PUBLIC
     getContainingFileSymbol: KaFileSymbol(script.kts)
     getContainingJvmClassName: null
     getContainingModule: KaScriptModule "Script script.kts"
@@ -107,7 +115,7 @@ KaKotlinPropertySymbol:
     type: kotlin/Int
   setter: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(script.kts)
   getContainingJvmClassName: null
   getContainingModule: KaScriptModule "Script script.kts"
@@ -120,6 +128,7 @@ KaKotlinPropertySymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /C.member
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -146,7 +155,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Unit
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -161,10 +170,14 @@ KaKotlinPropertySymbol:
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Private
     contextReceivers: []
+    isActual: false
+    isExpect: false
     isExtension: false
     isVal: true
     location: PROPERTY
+    modality: FINAL
     name: field
     origin: PROPERTY_BACKING_FIELD
     owningProperty: KaKotlinPropertySymbol(/C.prop)
@@ -173,20 +186,24 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Unit
-    typeParameters: []
+    visibility: PRIVATE
     getContainingFileSymbol: KaFileSymbol(script.kts)
     getContainingJvmClassName: C
     getContainingModule: KaScriptModule "Script script.kts"
     deprecationStatus: null
   callableId: /C.prop
+  compilerVisibility: Public
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Public
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: true
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: false
@@ -198,9 +215,8 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Unit
-    typeParameters: []
     valueParameters: []
-    visibility: Public
+    visibility: PUBLIC
     getDispatchReceiver(): KaUsualClassType:
       annotations: []
       typeArguments: []
@@ -234,7 +250,7 @@ KaKotlinPropertySymbol:
     type: kotlin/Unit
   setter: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -253,6 +269,7 @@ KaNamedClassSymbol:
   classId: C
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -272,7 +289,7 @@ KaNamedClassSymbol:
       type: kotlin/Any
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(script.kts)
   getContainingModule: KaScriptModule "Script script.kts"
   annotationApplicableTargets: null
@@ -280,10 +297,14 @@ KaNamedClassSymbol:
 
 KaScriptSymbol:
   annotations: []
+  compilerVisibility: Local
+  isActual: false
+  isExpect: false
   location: TOP_LEVEL
+  modality: FINAL
   name: <script-script.kts>
   origin: SOURCE
-  typeParameters: []
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(script.kts)
   getContainingModule: KaScriptModule "Script script.kts"
   deprecationStatus: null

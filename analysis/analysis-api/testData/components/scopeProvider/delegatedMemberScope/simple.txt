@@ -2,6 +2,7 @@ KaKotlinPropertySymbol:
   annotations: []
   backingFieldSymbol: null
   callableId: /A.zoo
+  compilerVisibility: Public
   contextReceivers: []
   getter: null
   hasBackingField: false
@@ -40,7 +41,7 @@ KaKotlinPropertySymbol:
     type: kotlin/Unit
   setter: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -57,6 +58,7 @@ KaKotlinPropertySymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /A.foo
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -83,7 +85,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Unit
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -97,6 +99,7 @@ KaKotlinPropertySymbol:
   annotations: []
   backingFieldSymbol: null
   callableId: /A.foo
+  compilerVisibility: Public
   contextReceivers: []
   getter: null
   hasBackingField: false
@@ -124,7 +127,7 @@ KaKotlinPropertySymbol:
     type: kotlin/Int
   setter: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -141,6 +144,7 @@ KaKotlinPropertySymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /A.smth
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -178,7 +182,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Short
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -192,6 +196,7 @@ KaKotlinPropertySymbol:
   annotations: []
   backingFieldSymbol: null
   callableId: /A.bar
+  compilerVisibility: Public
   contextReceivers: []
   getter: null
   hasBackingField: false
@@ -219,7 +224,7 @@ KaKotlinPropertySymbol:
     type: kotlin/Long
   setter: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -237,6 +242,7 @@ KaKotlinPropertySymbol:
   annotations: []
   backingFieldSymbol: null
   callableId: /A.doo
+  compilerVisibility: Public
   contextReceivers: []
   getter: null
   hasBackingField: false
@@ -275,7 +281,7 @@ KaKotlinPropertySymbol:
     type: kotlin/String
   setter: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []

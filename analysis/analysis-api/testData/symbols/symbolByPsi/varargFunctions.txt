@@ -1,6 +1,7 @@
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /primitive
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -30,16 +31,20 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: true
       location: LOCAL
+      modality: FINAL
       name: a
       origin: SOURCE
       receiverParameter: null
@@ -47,13 +52,13 @@ KaNamedFunctionSymbol:
         annotations: []
         typeArguments: []
         type: kotlin/Int
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(varargFunctions.kt)
       getContainingJvmClassName: VarargFunctionsKt
       getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(varargFunctions.kt)
   getContainingJvmClassName: VarargFunctionsKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -62,6 +67,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /nullablePrimitive
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -91,16 +97,20 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: true
       location: LOCAL
+      modality: FINAL
       name: b
       origin: SOURCE
       receiverParameter: null
@@ -108,13 +118,13 @@ KaNamedFunctionSymbol:
         annotations: []
         typeArguments: []
         type: kotlin/Float?
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(varargFunctions.kt)
       getContainingJvmClassName: VarargFunctionsKt
       getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(varargFunctions.kt)
   getContainingJvmClassName: VarargFunctionsKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -123,6 +133,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /nonPrimitive
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -152,16 +163,20 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: true
       location: LOCAL
+      modality: FINAL
       name: c
       origin: SOURCE
       receiverParameter: null
@@ -169,13 +184,13 @@ KaNamedFunctionSymbol:
         annotations: []
         typeArguments: []
         type: kotlin/Any
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(varargFunctions.kt)
       getContainingJvmClassName: VarargFunctionsKt
       getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(varargFunctions.kt)
   getContainingJvmClassName: VarargFunctionsKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -184,6 +199,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /error
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -213,29 +229,33 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: true
       location: LOCAL
+      modality: FINAL
       name: d
       origin: SOURCE
       receiverParameter: null
       returnType: KaClassErrorType:
         annotations: []
         type: ERROR_TYPE
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(varargFunctions.kt)
       getContainingJvmClassName: VarargFunctionsKt
       getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(varargFunctions.kt)
   getContainingJvmClassName: VarargFunctionsKt
   getContainingModule: KaSourceModule "Sources of main"

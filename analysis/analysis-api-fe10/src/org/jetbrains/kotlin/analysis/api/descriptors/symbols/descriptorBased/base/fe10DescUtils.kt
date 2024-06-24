@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.analysis.api.descriptors.symbols.psiBased.base.KaFe1
 import org.jetbrains.kotlin.analysis.api.descriptors.types.*
 import org.jetbrains.kotlin.analysis.api.impl.base.*
 import org.jetbrains.kotlin.analysis.api.impl.base.annotations.*
+import org.jetbrains.kotlin.analysis.api.impl.base.symbols.asKaSymbolModality
 import org.jetbrains.kotlin.analysis.api.impl.base.types.KaBaseStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.impl.base.types.KaBaseTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -394,8 +395,10 @@ internal val DeclarationDescriptorWithVisibility.ktVisibility: Visibility
         else -> Visibilities.Unknown
     }
 
-internal val MemberDescriptor.ktModality: Modality
+internal val DeclarationDescriptor.kaSymbolModality: KaSymbolModality
     get() {
+        if (this !is MemberDescriptor) return KaSymbolModality.FINAL
+
         val selfModality = this.modality
 
         if (selfModality == Modality.OPEN) {
@@ -403,12 +406,12 @@ internal val MemberDescriptor.ktModality: Modality
             if (containingDeclaration is ClassDescriptor && containingDeclaration.modality == Modality.FINAL) {
                 if (this !is CallableMemberDescriptor || dispatchReceiverParameter != null) {
                     // Non-static open callables in final class are counted as final (to match FIR)
-                    return Modality.FINAL
+                    return KaSymbolModality.FINAL
                 }
             }
         }
 
-        return this.modality
+        return this.modality.asKaSymbolModality
     }
 
 @OptIn(KaImplementationDetail::class)

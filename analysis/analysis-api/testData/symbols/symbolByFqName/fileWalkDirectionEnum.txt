@@ -1,6 +1,7 @@
 KaNamedFunctionSymbol:
   annotations: []
   callableId: kotlin/collections/listOf
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -36,29 +37,33 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: element
       origin: LIBRARY
       receiverParameter: null
       returnType: KaTypeParameterType:
         annotations: []
         type: T
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: null
       getContainingJvmClassName: kotlin.collections.CollectionsKt
       getContainingModule: KaLibraryModule "Library kotlin-stdlib"
       deprecationStatus: null
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: null
   getContainingJvmClassName: kotlin.collections.CollectionsKt
   getContainingModule: KaLibraryModule "Library kotlin-stdlib"
@@ -70,6 +75,7 @@ KaNamedFunctionSymbol:
       psi: null
   ]
   callableId: kotlin/collections/listOf
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -102,7 +108,7 @@ KaNamedFunctionSymbol:
     KaTypeParameterSymbol(T)
   ]
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: null
   getContainingJvmClassName: kotlin.collections.CollectionsKt
   getContainingModule: KaLibraryModule "Library kotlin-stdlib"
@@ -111,6 +117,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: kotlin/collections/listOf
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -146,29 +153,33 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: true
       location: LOCAL
+      modality: FINAL
       name: elements
       origin: LIBRARY
       receiverParameter: null
       returnType: KaTypeParameterType:
         annotations: []
         type: T
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: null
       getContainingJvmClassName: kotlin.collections.CollectionsKt
       getContainingModule: KaLibraryModule "Library kotlin-stdlib"
       deprecationStatus: null
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: null
   getContainingJvmClassName: kotlin.collections.CollectionsKt
   getContainingModule: KaLibraryModule "Library kotlin-stdlib"

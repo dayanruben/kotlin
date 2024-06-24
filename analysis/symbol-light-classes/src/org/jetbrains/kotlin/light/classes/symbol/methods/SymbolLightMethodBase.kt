@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -14,10 +14,9 @@ import com.intellij.psi.util.MethodSignature
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.asJava.builder.LightMemberOrigin
 import org.jetbrains.kotlin.asJava.checkIsMangled
 import org.jetbrains.kotlin.asJava.classes.KotlinLightReferenceListBuilder
@@ -26,8 +25,6 @@ import org.jetbrains.kotlin.asJava.classes.cannotModify
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.mangleInternalName
-import org.jetbrains.kotlin.descriptors.Visibilities
-import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.light.classes.symbol.SymbolLightMemberBase
 import org.jetbrains.kotlin.light.classes.symbol.annotations.getJvmNameFromAnnotation
@@ -120,15 +117,15 @@ internal abstract class SymbolLightMethodBase(
     context(KaSession)
     @Suppress("CONTEXT_RECEIVERS_DEPRECATED")
     @OptIn(KaExperimentalApi::class)
-    protected fun <T> T.computeJvmMethodName(
+    protected fun KaCallableSymbol.computeJvmMethodName(
         defaultName: String,
         containingClass: SymbolLightClassBase,
         annotationUseSiteTarget: AnnotationUseSiteTarget? = null,
-        visibility: Visibility = this.visibility,
-    ): String where T : KaAnnotatedSymbol, T : KaSymbolWithVisibility, T : KaCallableSymbol {
+        visibility: KaSymbolVisibility = this.visibility,
+    ): String {
         getJvmNameFromAnnotation(annotationUseSiteTarget.toOptionalFilter())?.let { return it }
 
-        if (visibility != Visibilities.Internal) return defaultName
+        if (visibility != KaSymbolVisibility.INTERNAL) return defaultName
         if (containingClass is KtLightClassForFacade) return defaultName
         if (hasPublishedApiAnnotation(annotationUseSiteTarget.toFilter())) return defaultName
 

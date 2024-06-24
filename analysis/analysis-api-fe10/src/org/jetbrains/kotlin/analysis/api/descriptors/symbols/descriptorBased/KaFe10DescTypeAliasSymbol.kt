@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.descriptors.symbols.isEqualTo
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.pointers.KaFe10NeverRestoringSymbolPointer
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaPsiBasedSymbolPointer
@@ -32,11 +33,14 @@ internal class KaFe10DescTypeAliasSymbol(
     override val typeParameters: List<KaTypeParameterSymbol>
         get() = withValidityAssertion { descriptor.declaredTypeParameters.map { KaFe10DescTypeParameterSymbol(it, analysisContext) } }
 
-    override val visibility: Visibility
+    override val compilerVisibility: Visibility
         get() = withValidityAssertion { descriptor.ktVisibility }
 
     override val expandedType: KaType
         get() = withValidityAssertion { descriptor.expandedType.toKtType(analysisContext) }
+
+    override val modality: KaSymbolModality
+        get() = withValidityAssertion { descriptor.kaSymbolModality }
 
     override val location: KaSymbolLocation
         get() = withValidityAssertion { descriptor.kaSymbolLocation }

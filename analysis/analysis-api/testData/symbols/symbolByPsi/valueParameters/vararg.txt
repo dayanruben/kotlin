@@ -1,6 +1,7 @@
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /foo
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -30,16 +31,20 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: true
       location: LOCAL
+      modality: FINAL
       name: ints
       origin: SOURCE
       receiverParameter: null
@@ -47,13 +52,13 @@ KaNamedFunctionSymbol:
         annotations: []
         typeArguments: []
         type: kotlin/Int
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(vararg.kt)
       getContainingJvmClassName: VarargKt
       getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(vararg.kt)
   getContainingJvmClassName: VarargKt
   getContainingModule: KaSourceModule "Sources of main"

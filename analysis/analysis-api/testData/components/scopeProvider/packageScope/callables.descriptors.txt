@@ -3,10 +3,14 @@ KaKotlinPropertySymbol:
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Private
     contextReceivers: []
+    isActual: false
+    isExpect: false
     isExtension: false
     isVal: true
     location: PROPERTY
+    modality: FINAL
     name: field
     origin: PROPERTY_BACKING_FIELD
     owningProperty: KaKotlinPropertySymbol(test/foo)
@@ -15,20 +19,24 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
+    visibility: PRIVATE
     getContainingFileSymbol: KaFileSymbol(Foo.kt)
     getContainingJvmClassName: test.FooKt
     getContainingModule: KaSourceModule "Sources of main"
     deprecationStatus: null
   callableId: test/foo
+  compilerVisibility: Public
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Public
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: true
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: false
@@ -40,9 +48,8 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
     valueParameters: []
-    visibility: Public
+    visibility: PUBLIC
     getContainingFileSymbol: KaFileSymbol(Foo.kt)
     getContainingJvmClassName: test.FooKt
     getContainingModule: KaSourceModule "Sources of main"
@@ -72,7 +79,7 @@ KaKotlinPropertySymbol:
     type: kotlin/Int
   setter: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(Foo.kt)
   getContainingJvmClassName: test.FooKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -85,6 +92,7 @@ KaKotlinPropertySymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: test/doFoo
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -111,7 +119,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Unit
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(Foo.kt)
   getContainingJvmClassName: test.FooKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -122,10 +130,14 @@ KaKotlinPropertySymbol:
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Private
     contextReceivers: []
+    isActual: false
+    isExpect: false
     isExtension: false
     isVal: true
     location: PROPERTY
+    modality: FINAL
     name: field
     origin: PROPERTY_BACKING_FIELD
     owningProperty: KaKotlinPropertySymbol(test/internalFoo)
@@ -134,20 +146,24 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
+    visibility: PRIVATE
     getContainingFileSymbol: KaFileSymbol(Foo.kt)
     getContainingJvmClassName: test.FooKt
     getContainingModule: KaSourceModule "Sources of main"
     deprecationStatus: null
   callableId: test/internalFoo
+  compilerVisibility: Internal
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Internal
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: true
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: false
@@ -159,9 +175,8 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
     valueParameters: []
-    visibility: Internal
+    visibility: INTERNAL
     getContainingFileSymbol: KaFileSymbol(Foo.kt)
     getContainingJvmClassName: test.FooKt
     getContainingModule: KaSourceModule "Sources of main"
@@ -191,7 +206,7 @@ KaKotlinPropertySymbol:
     type: kotlin/Int
   setter: null
   typeParameters: []
-  visibility: Internal
+  visibility: INTERNAL
   getContainingFileSymbol: KaFileSymbol(Foo.kt)
   getContainingJvmClassName: test.FooKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -204,6 +219,7 @@ KaKotlinPropertySymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: test/internalDoFoo
+  compilerVisibility: Internal
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -230,7 +246,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Unit
   typeParameters: []
   valueParameters: []
-  visibility: Internal
+  visibility: INTERNAL
   getContainingFileSymbol: KaFileSymbol(Foo.kt)
   getContainingJvmClassName: test.FooKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -241,10 +257,14 @@ KaKotlinPropertySymbol:
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Private
     contextReceivers: []
+    isActual: false
+    isExpect: false
     isExtension: false
     isVal: true
     location: PROPERTY
+    modality: FINAL
     name: field
     origin: PROPERTY_BACKING_FIELD
     owningProperty: KaKotlinPropertySymbol(test/privateFoo)
@@ -253,20 +273,24 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
+    visibility: PRIVATE
     getContainingFileSymbol: KaFileSymbol(Foo.kt)
     getContainingJvmClassName: test.FooKt
     getContainingModule: KaSourceModule "Sources of main"
     deprecationStatus: null
   callableId: test/privateFoo
+  compilerVisibility: Private
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Private
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: true
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: false
@@ -278,9 +302,8 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
     valueParameters: []
-    visibility: Private
+    visibility: PRIVATE
     getContainingFileSymbol: KaFileSymbol(Foo.kt)
     getContainingJvmClassName: test.FooKt
     getContainingModule: KaSourceModule "Sources of main"
@@ -310,7 +333,7 @@ KaKotlinPropertySymbol:
     type: kotlin/Int
   setter: null
   typeParameters: []
-  visibility: Private
+  visibility: PRIVATE
   getContainingFileSymbol: KaFileSymbol(Foo.kt)
   getContainingJvmClassName: test.FooKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -323,6 +346,7 @@ KaKotlinPropertySymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: test/privateDoFoo
+  compilerVisibility: Private
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -349,7 +373,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Unit
   typeParameters: []
   valueParameters: []
-  visibility: Private
+  visibility: PRIVATE
   getContainingFileSymbol: KaFileSymbol(Foo.kt)
   getContainingJvmClassName: test.FooKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -360,10 +384,14 @@ KaKotlinPropertySymbol:
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Private
     contextReceivers: []
+    isActual: false
+    isExpect: false
     isExtension: false
     isVal: true
     location: PROPERTY
+    modality: FINAL
     name: field
     origin: PROPERTY_BACKING_FIELD
     owningProperty: KaKotlinPropertySymbol(test/bar)
@@ -372,20 +400,24 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
+    visibility: PRIVATE
     getContainingFileSymbol: KaFileSymbol(Bar.kt)
     getContainingJvmClassName: test.BarKt
     getContainingModule: KaSourceModule "Sources of main"
     deprecationStatus: null
   callableId: test/bar
+  compilerVisibility: Public
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Public
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: true
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: false
@@ -397,9 +429,8 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
     valueParameters: []
-    visibility: Public
+    visibility: PUBLIC
     getContainingFileSymbol: KaFileSymbol(Bar.kt)
     getContainingJvmClassName: test.BarKt
     getContainingModule: KaSourceModule "Sources of main"
@@ -429,7 +460,7 @@ KaKotlinPropertySymbol:
     type: kotlin/Int
   setter: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(Bar.kt)
   getContainingJvmClassName: test.BarKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -442,6 +473,7 @@ KaKotlinPropertySymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: test/doBar
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -468,7 +500,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Unit
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(Bar.kt)
   getContainingJvmClassName: test.BarKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -479,10 +511,14 @@ KaKotlinPropertySymbol:
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Private
     contextReceivers: []
+    isActual: false
+    isExpect: false
     isExtension: false
     isVal: true
     location: PROPERTY
+    modality: FINAL
     name: field
     origin: PROPERTY_BACKING_FIELD
     owningProperty: KaKotlinPropertySymbol(test/internalBar)
@@ -491,20 +527,24 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
+    visibility: PRIVATE
     getContainingFileSymbol: KaFileSymbol(Bar.kt)
     getContainingJvmClassName: test.BarKt
     getContainingModule: KaSourceModule "Sources of main"
     deprecationStatus: null
   callableId: test/internalBar
+  compilerVisibility: Internal
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Internal
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: true
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: false
@@ -516,9 +556,8 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
     valueParameters: []
-    visibility: Internal
+    visibility: INTERNAL
     getContainingFileSymbol: KaFileSymbol(Bar.kt)
     getContainingJvmClassName: test.BarKt
     getContainingModule: KaSourceModule "Sources of main"
@@ -548,7 +587,7 @@ KaKotlinPropertySymbol:
     type: kotlin/Int
   setter: null
   typeParameters: []
-  visibility: Internal
+  visibility: INTERNAL
   getContainingFileSymbol: KaFileSymbol(Bar.kt)
   getContainingJvmClassName: test.BarKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -561,6 +600,7 @@ KaKotlinPropertySymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: test/internalDoBar
+  compilerVisibility: Internal
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -587,7 +627,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Unit
   typeParameters: []
   valueParameters: []
-  visibility: Internal
+  visibility: INTERNAL
   getContainingFileSymbol: KaFileSymbol(Bar.kt)
   getContainingJvmClassName: test.BarKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -598,10 +638,14 @@ KaKotlinPropertySymbol:
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Private
     contextReceivers: []
+    isActual: false
+    isExpect: false
     isExtension: false
     isVal: true
     location: PROPERTY
+    modality: FINAL
     name: field
     origin: PROPERTY_BACKING_FIELD
     owningProperty: KaKotlinPropertySymbol(test/privateBar)
@@ -610,20 +654,24 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
+    visibility: PRIVATE
     getContainingFileSymbol: KaFileSymbol(Bar.kt)
     getContainingJvmClassName: test.BarKt
     getContainingModule: KaSourceModule "Sources of main"
     deprecationStatus: null
   callableId: test/privateBar
+  compilerVisibility: Private
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Private
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: true
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: false
@@ -635,9 +683,8 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
     valueParameters: []
-    visibility: Private
+    visibility: PRIVATE
     getContainingFileSymbol: KaFileSymbol(Bar.kt)
     getContainingJvmClassName: test.BarKt
     getContainingModule: KaSourceModule "Sources of main"
@@ -667,7 +714,7 @@ KaKotlinPropertySymbol:
     type: kotlin/Int
   setter: null
   typeParameters: []
-  visibility: Private
+  visibility: PRIVATE
   getContainingFileSymbol: KaFileSymbol(Bar.kt)
   getContainingJvmClassName: test.BarKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -680,6 +727,7 @@ KaKotlinPropertySymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: test/privateDoBar
+  compilerVisibility: Private
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -706,7 +754,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Unit
   typeParameters: []
   valueParameters: []
-  visibility: Private
+  visibility: PRIVATE
   getContainingFileSymbol: KaFileSymbol(Bar.kt)
   getContainingJvmClassName: test.BarKt
   getContainingModule: KaSourceModule "Sources of main"

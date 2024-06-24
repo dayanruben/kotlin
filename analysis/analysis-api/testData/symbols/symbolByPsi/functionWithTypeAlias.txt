@@ -3,6 +3,7 @@ KaNamedClassSymbol:
   classId: A
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -22,7 +23,7 @@ KaNamedClassSymbol:
       type: kotlin/Any
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(functionWithTypeAlias.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null
@@ -31,6 +32,7 @@ KaNamedClassSymbol:
 KaTypeAliasSymbol:
   annotations: []
   classId: TypeAlias
+  compilerVisibility: Public
   expandedType: KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -38,10 +40,11 @@ KaTypeAliasSymbol:
   isActual: false
   isExpect: false
   location: TOP_LEVEL
+  modality: FINAL
   name: TypeAlias
   origin: SOURCE
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(functionWithTypeAlias.kt)
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
@@ -49,6 +52,7 @@ KaTypeAliasSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /function
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -78,16 +82,20 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: t
       origin: SOURCE
       receiverParameter: null
@@ -95,13 +103,13 @@ KaNamedFunctionSymbol:
         annotations: []
         typeArguments: []
         type: {TypeAlias=} A
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(functionWithTypeAlias.kt)
       getContainingJvmClassName: FunctionWithTypeAliasKt
       getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(functionWithTypeAlias.kt)
   getContainingJvmClassName: FunctionWithTypeAliasKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -110,6 +118,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /function
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -139,16 +148,20 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: t
       origin: SOURCE
       receiverParameter: null
@@ -156,13 +169,13 @@ KaNamedFunctionSymbol:
         annotations: []
         typeArguments: []
         type: A
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(functionWithTypeAlias.kt)
       getContainingJvmClassName: FunctionWithTypeAliasKt
       getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(functionWithTypeAlias.kt)
   getContainingJvmClassName: FunctionWithTypeAliasKt
   getContainingModule: KaSourceModule "Sources of main"

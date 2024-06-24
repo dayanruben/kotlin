@@ -8,16 +8,20 @@ scopes:
       KaValueParameterSymbol:
         annotations: []
         callableId: null
+        compilerVisibility: Public
         contextReceivers: []
         generatedPrimaryConstructorProperty: null
         hasDefaultValue: false
+        isActual: false
         isCrossinline: false
+        isExpect: false
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
         isVal: true
         isVararg: false
         location: LOCAL
+        modality: FINAL
         name: base
         origin: SOURCE
         receiverParameter: null
@@ -25,7 +29,7 @@ scopes:
           annotations: []
           typeArguments: []
           type: test/Base
-        typeParameters: []
+        visibility: PUBLIC
     constructors: 0
 
   ExplicitSimpleImportingScope, index = 1
@@ -42,6 +46,7 @@ scopes:
         classId: test/Base
         classKind: INTERFACE
         companionObject: null
+        compilerVisibility: Public
         contextReceivers: []
         isActual: false
         isData: false
@@ -61,12 +66,13 @@ scopes:
             type: kotlin/Any
         ]
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaNamedClassSymbol:
         annotations: []
         classId: test/Child
         classKind: CLASS
         companionObject: null
+        compilerVisibility: Public
         contextReceivers: []
         isActual: false
         isData: false
@@ -86,7 +92,7 @@ scopes:
             type: test/Base
         ]
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
     callables: 0
     constructors: 0
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -13,18 +13,20 @@ import org.jetbrains.kotlin.analysis.api.descriptors.symbols.pointers.KaFe10Neve
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySetterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaPsiBasedSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.descriptors.PropertySetterDescriptor
+import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.descriptors.hasBody
 import org.jetbrains.kotlin.name.CallableId
 
 internal class KaFe10DescPropertySetterSymbol(
     override val descriptor: PropertySetterDescriptor,
     override val analysisContext: Fe10AnalysisContext
-) : KaPropertySetterSymbol(), KaFe10DescMemberSymbol<PropertySetterDescriptor> {
+) : KaPropertySetterSymbol(), KaFe10DescSymbol<PropertySetterDescriptor> {
     override val returnType: KaType
         get() = withValidityAssertion { analysisContext.builtIns.unitType.toKtType(analysisContext) }
 
@@ -36,6 +38,18 @@ internal class KaFe10DescPropertySetterSymbol(
 
     override val isOverride: Boolean
         get() = withValidityAssertion { descriptor.isExplicitOverride }
+
+    override val modality: KaSymbolModality
+        get() = withValidityAssertion { descriptor.kaSymbolModality }
+
+    override val isActual: Boolean
+        get() = withValidityAssertion { descriptor.isActual }
+
+    override val isExpect: Boolean
+        get() = withValidityAssertion { descriptor.isExpect }
+
+    override val compilerVisibility: Visibility
+        get() = withValidityAssertion { descriptor.ktVisibility }
 
     override val hasBody: Boolean
         get() = withValidityAssertion { descriptor.hasBody() }

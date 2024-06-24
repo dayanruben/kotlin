@@ -3,10 +3,14 @@ KaKotlinPropertySymbol:
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Private
     contextReceivers: []
+    isActual: false
+    isExpect: false
     isExtension: false
     isVal: true
     location: PROPERTY
+    modality: FINAL
     name: field
     origin: PROPERTY_BACKING_FIELD
     owningProperty: KaKotlinPropertySymbol(/I.p)
@@ -15,20 +19,24 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: A
-    typeParameters: []
+    visibility: PRIVATE
     getContainingFileSymbol: KaFileSymbol(I.class)
     getContainingJvmClassName: I
     getContainingModule: KaLibraryModule "Library main"
     deprecationStatus: null
   callableId: /I.p
+  compilerVisibility: Private
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Private
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: true
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: false
@@ -40,9 +48,8 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: A
-    typeParameters: []
     valueParameters: []
-    visibility: Private
+    visibility: PRIVATE
     getDispatchReceiver(): KaUsualClassType:
       annotations: []
       typeArguments: []
@@ -76,7 +83,7 @@ KaKotlinPropertySymbol:
     type: A
   setter: null
   typeParameters: []
-  visibility: Private
+  visibility: PRIVATE
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -95,10 +102,14 @@ KaKotlinPropertySymbol:
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Private
     contextReceivers: []
+    isActual: false
+    isExpect: false
     isExtension: false
     isVal: true
     location: PROPERTY
+    modality: FINAL
     name: field
     origin: PROPERTY_BACKING_FIELD
     owningProperty: KaKotlinPropertySymbol(/I.bar)
@@ -107,20 +118,24 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Long
-    typeParameters: []
+    visibility: PRIVATE
     getContainingFileSymbol: KaFileSymbol(I.class)
     getContainingJvmClassName: I
     getContainingModule: KaLibraryModule "Library main"
     deprecationStatus: null
   callableId: /I.bar
+  compilerVisibility: Public
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Public
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: true
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: true
@@ -132,9 +147,8 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Long
-    typeParameters: []
     valueParameters: []
-    visibility: Public
+    visibility: PUBLIC
     getDispatchReceiver(): KaUsualClassType:
       annotations: []
       typeArguments: []
@@ -169,10 +183,13 @@ KaKotlinPropertySymbol:
   setter: KaPropertySetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Public
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: true
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: true
@@ -182,16 +199,20 @@ KaKotlinPropertySymbol:
     parameter: KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: value
       origin: SOURCE
       receiverParameter: null
@@ -199,7 +220,7 @@ KaKotlinPropertySymbol:
         annotations: []
         typeArguments: []
         type: kotlin/Long
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(I.class)
       getContainingJvmClassName: null
       getContainingModule: KaLibraryModule "Library main"
@@ -209,21 +230,24 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Unit
-    typeParameters: []
     valueParameters: [
       KaValueParameterSymbol:
         annotations: []
         callableId: null
+        compilerVisibility: Public
         contextReceivers: []
         generatedPrimaryConstructorProperty: null
         hasDefaultValue: false
+        isActual: false
         isCrossinline: false
+        isExpect: false
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
         isVal: true
         isVararg: false
         location: LOCAL
+        modality: FINAL
         name: value
         origin: SOURCE
         receiverParameter: null
@@ -231,13 +255,13 @@ KaKotlinPropertySymbol:
           annotations: []
           typeArguments: []
           type: kotlin/Long
-        typeParameters: []
+        visibility: PUBLIC
         getContainingFileSymbol: KaFileSymbol(I.class)
         getContainingJvmClassName: null
         getContainingModule: KaLibraryModule "Library main"
         deprecationStatus: null
     ]
-    visibility: Public
+    visibility: PUBLIC
     getDispatchReceiver(): KaUsualClassType:
       annotations: []
       typeArguments: []
@@ -247,7 +271,7 @@ KaKotlinPropertySymbol:
     getContainingModule: KaLibraryModule "Library main"
     deprecationStatus: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -266,10 +290,14 @@ KaKotlinPropertySymbol:
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Private
     contextReceivers: []
+    isActual: false
+    isExpect: false
     isExtension: false
     isVal: true
     location: PROPERTY
+    modality: FINAL
     name: field
     origin: PROPERTY_BACKING_FIELD
     owningProperty: KaKotlinPropertySymbol(/I.doo)
@@ -278,20 +306,24 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/String
-    typeParameters: []
+    visibility: PRIVATE
     getContainingFileSymbol: KaFileSymbol(I.class)
     getContainingJvmClassName: I
     getContainingModule: KaLibraryModule "Library main"
     deprecationStatus: null
   callableId: /I.doo
+  compilerVisibility: Public
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Public
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: true
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: true
@@ -314,9 +346,8 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/String
-    typeParameters: []
     valueParameters: []
-    visibility: Public
+    visibility: PUBLIC
     getDispatchReceiver(): KaUsualClassType:
       annotations: []
       typeArguments: []
@@ -361,7 +392,7 @@ KaKotlinPropertySymbol:
     type: kotlin/String
   setter: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -378,6 +409,7 @@ KaKotlinPropertySymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /I.foo
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -404,7 +436,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Unit
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -419,10 +451,14 @@ KaKotlinPropertySymbol:
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Private
     contextReceivers: []
+    isActual: false
+    isExpect: false
     isExtension: false
     isVal: true
     location: PROPERTY
+    modality: FINAL
     name: field
     origin: PROPERTY_BACKING_FIELD
     owningProperty: KaKotlinPropertySymbol(/I.foo)
@@ -431,20 +467,24 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
+    visibility: PRIVATE
     getContainingFileSymbol: KaFileSymbol(I.class)
     getContainingJvmClassName: I
     getContainingModule: KaLibraryModule "Library main"
     deprecationStatus: null
   callableId: /I.foo
+  compilerVisibility: Public
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Public
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: true
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: true
@@ -456,9 +496,8 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
     valueParameters: []
-    visibility: Public
+    visibility: PUBLIC
     getDispatchReceiver(): KaUsualClassType:
       annotations: []
       typeArguments: []
@@ -492,7 +531,7 @@ KaKotlinPropertySymbol:
     type: kotlin/Int
   setter: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -511,10 +550,14 @@ KaKotlinPropertySymbol:
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Private
     contextReceivers: []
+    isActual: false
+    isExpect: false
     isExtension: false
     isVal: true
     location: PROPERTY
+    modality: FINAL
     name: field
     origin: PROPERTY_BACKING_FIELD
     owningProperty: KaKotlinPropertySymbol(/I.zoo)
@@ -523,20 +566,24 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Unit
-    typeParameters: []
+    visibility: PRIVATE
     getContainingFileSymbol: KaFileSymbol(I.class)
     getContainingJvmClassName: I
     getContainingModule: KaLibraryModule "Library main"
     deprecationStatus: null
   callableId: /I.zoo
+  compilerVisibility: Public
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Public
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: true
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: true
@@ -559,9 +606,8 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Unit
-    typeParameters: []
     valueParameters: []
-    visibility: Public
+    visibility: PUBLIC
     getDispatchReceiver(): KaUsualClassType:
       annotations: []
       typeArguments: []
@@ -607,10 +653,13 @@ KaKotlinPropertySymbol:
   setter: KaPropertySetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Public
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: true
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: true
@@ -620,16 +669,20 @@ KaKotlinPropertySymbol:
     parameter: KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: value
       origin: SOURCE
       receiverParameter: null
@@ -637,7 +690,7 @@ KaKotlinPropertySymbol:
         annotations: []
         typeArguments: []
         type: kotlin/Unit
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(I.class)
       getContainingJvmClassName: null
       getContainingModule: KaLibraryModule "Library main"
@@ -658,21 +711,24 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Unit
-    typeParameters: []
     valueParameters: [
       KaValueParameterSymbol:
         annotations: []
         callableId: null
+        compilerVisibility: Public
         contextReceivers: []
         generatedPrimaryConstructorProperty: null
         hasDefaultValue: false
+        isActual: false
         isCrossinline: false
+        isExpect: false
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
         isVal: true
         isVararg: false
         location: LOCAL
+        modality: FINAL
         name: value
         origin: SOURCE
         receiverParameter: null
@@ -680,13 +736,13 @@ KaKotlinPropertySymbol:
           annotations: []
           typeArguments: []
           type: kotlin/Unit
-        typeParameters: []
+        visibility: PUBLIC
         getContainingFileSymbol: KaFileSymbol(I.class)
         getContainingJvmClassName: null
         getContainingModule: KaLibraryModule "Library main"
         deprecationStatus: null
     ]
-    visibility: Public
+    visibility: PUBLIC
     getDispatchReceiver(): KaUsualClassType:
       annotations: []
       typeArguments: []
@@ -696,7 +752,7 @@ KaKotlinPropertySymbol:
     getContainingModule: KaLibraryModule "Library main"
     deprecationStatus: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -713,6 +769,7 @@ KaKotlinPropertySymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /I.smth
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -750,7 +807,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Short
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -763,6 +820,7 @@ KaNamedFunctionSymbol:
 KaConstructorSymbol:
   annotations: []
   callableId: null
+  compilerVisibility: Public
   containingClassId: I
   contextReceivers: []
   hasStableParameterNames: true
@@ -771,6 +829,7 @@ KaConstructorSymbol:
   isExtension: false
   isPrimary: true
   location: CLASS
+  modality: FINAL
   origin: SOURCE
   receiverParameter: null
   returnType: KaUsualClassType:
@@ -782,16 +841,20 @@ KaConstructorSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: p
       origin: SOURCE
       receiverParameter: null
@@ -799,13 +862,13 @@ KaConstructorSymbol:
         annotations: []
         typeArguments: []
         type: A
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(I.class)
       getContainingJvmClassName: I
       getContainingModule: KaLibraryModule "Library main"
       deprecationStatus: null
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(I.class)
   getContainingJvmClassName: I
   getContainingModule: KaLibraryModule "Library main"

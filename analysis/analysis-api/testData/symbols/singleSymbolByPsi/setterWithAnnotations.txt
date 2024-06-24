@@ -6,10 +6,13 @@ KaPropertySetterSymbol:
       psi: KtAnnotationEntry
   ]
   callableId: null
+  compilerVisibility: Public
   contextReceivers: []
   hasBody: true
   hasStableParameterNames: true
+  isActual: false
   isDefault: false
+  isExpect: false
   isExtension: false
   isInline: false
   isOverride: false
@@ -24,16 +27,20 @@ KaPropertySetterSymbol:
         psi: KtAnnotationEntry
     ]
     callableId: null
+    compilerVisibility: Public
     contextReceivers: []
     generatedPrimaryConstructorProperty: null
     hasDefaultValue: false
+    isActual: false
     isCrossinline: false
+    isExpect: false
     isExtension: false
     isImplicitLambdaParameter: false
     isNoinline: false
     isVal: true
     isVararg: false
     location: LOCAL
+    modality: FINAL
     name: value
     origin: SOURCE
     receiverParameter: null
@@ -41,7 +48,7 @@ KaPropertySetterSymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
+    visibility: PUBLIC
     getContainingFileSymbol: KaFileSymbol(setterWithAnnotations.kt)
     getContainingJvmClassName: null
     getContainingModule: KaSourceModule "Sources of main"
@@ -51,7 +58,6 @@ KaPropertySetterSymbol:
     annotations: []
     typeArguments: []
     type: kotlin/Unit
-  typeParameters: []
   valueParameters: [
     KaValueParameterSymbol:
       annotations: [
@@ -61,16 +67,20 @@ KaPropertySetterSymbol:
           psi: KtAnnotationEntry
       ]
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: value
       origin: SOURCE
       receiverParameter: null
@@ -78,13 +88,13 @@ KaPropertySetterSymbol:
         annotations: []
         typeArguments: []
         type: kotlin/Int
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(setterWithAnnotations.kt)
       getContainingJvmClassName: null
       getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(setterWithAnnotations.kt)
   getContainingJvmClassName: SetterWithAnnotationsKt
   getContainingModule: KaSourceModule "Sources of main"

@@ -3,6 +3,7 @@ KaNamedClassSymbol:
   classId: A
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -22,7 +23,7 @@ KaNamedClassSymbol:
       type: kotlin/Any
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(similarSignatures.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null
@@ -33,6 +34,7 @@ KaNamedClassSymbol:
   classId: B
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -52,7 +54,7 @@ KaNamedClassSymbol:
       type: kotlin/Any
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(similarSignatures.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null
@@ -61,6 +63,7 @@ KaNamedClassSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /tooo
+  compilerVisibility: Public
   contextReceivers: [
     KtContextReceiver:
       label: null
@@ -94,7 +97,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Unit
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(similarSignatures.kt)
   getContainingJvmClassName: SimilarSignaturesKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -103,6 +106,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /tooo
+  compilerVisibility: Public
   contextReceivers: [
     KtContextReceiver:
       label: null
@@ -136,7 +140,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Unit
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(similarSignatures.kt)
   getContainingJvmClassName: SimilarSignaturesKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -145,6 +149,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /tooo
+  compilerVisibility: Public
   contextReceivers: [
     KtContextReceiver:
       label: null
@@ -184,7 +189,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Unit
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(similarSignatures.kt)
   getContainingJvmClassName: SimilarSignaturesKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -193,6 +198,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /tooo
+  compilerVisibility: Public
   contextReceivers: [
     KtContextReceiver:
       label: null
@@ -232,7 +238,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Unit
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(similarSignatures.kt)
   getContainingJvmClassName: SimilarSignaturesKt
   getContainingModule: KaSourceModule "Sources of main"

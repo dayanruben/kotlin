@@ -2,6 +2,7 @@ KaKotlinPropertySymbol:
   annotations: []
   backingFieldSymbol: null
   callableId: /A.foo
+  compilerVisibility: Public
   contextReceivers: []
   getter: null
   hasBackingField: false
@@ -29,7 +30,7 @@ KaKotlinPropertySymbol:
     type: kotlin/Int
   setter: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []

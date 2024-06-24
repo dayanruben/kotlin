@@ -3,6 +3,7 @@ KaNamedClassSymbol:
   classId: java/lang/String
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -38,7 +39,7 @@ KaNamedClassSymbol:
       type: kotlin/CharSequence
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: null
   getContainingModule: KaLibraryModule "SDK jdk"
   annotationApplicableTargets: null

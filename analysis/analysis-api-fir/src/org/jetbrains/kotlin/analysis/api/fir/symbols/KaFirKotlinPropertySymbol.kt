@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaPsiBasedSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.containingClassLookupTag
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
@@ -56,6 +55,7 @@ internal class KaFirKotlinPropertySymbol(
     override val returnType: KaType get() = withValidityAssertion { firSymbol.returnType(builder) }
     override val receiverParameter: KaReceiverParameterSymbol? get() = withValidityAssertion { firSymbol.receiver(builder) }
 
+    @KaExperimentalApi
     override val contextReceivers: List<KaContextReceiver> by cached { firSymbol.createContextReceivers(builder) }
 
     override val isExtension: Boolean get() = withValidityAssertion { firSymbol.isExtension }
@@ -74,8 +74,8 @@ internal class KaFirKotlinPropertySymbol(
             }
         }
 
-    override val modality: Modality get() = withValidityAssertion { firSymbol.modality }
-    override val visibility: Visibility get() = withValidityAssertion { firSymbol.visibility }
+    override val modality: KaSymbolModality get() = withValidityAssertion { firSymbol.kaSymbolModality }
+    override val compilerVisibility: Visibility get() = withValidityAssertion { firSymbol.visibility }
 
     override val annotations by cached {
         KaFirAnnotationListForDeclaration.create(firSymbol, builder)

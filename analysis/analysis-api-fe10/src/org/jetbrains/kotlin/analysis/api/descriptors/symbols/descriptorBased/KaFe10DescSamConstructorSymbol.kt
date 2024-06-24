@@ -1,10 +1,11 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisContext
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.calculateHashCode
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaPsiBasedSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.calls.inference.returnTypeOrNothing
@@ -42,12 +44,25 @@ internal class KaFe10DescSamConstructorSymbol(
     override val callableId: CallableId?
         get() = withValidityAssertion { expandedDescriptor.callableIdIfNotLocal }
 
+    override val isActual: Boolean
+        get() = withValidityAssertion { descriptor.isActual }
+
+    override val isExpect: Boolean
+        get() = withValidityAssertion { descriptor.isExpect }
+
+    override val modality: KaSymbolModality
+        get() = withValidityAssertion { descriptor.kaSymbolModality }
+
+    override val compilerVisibility: Visibility
+        get() = withValidityAssertion { descriptor.ktVisibility }
+
     override val returnType: KaType
         get() = withValidityAssertion { descriptor.returnTypeOrNothing.toKtType(analysisContext) }
 
     override val receiverParameter: KaReceiverParameterSymbol?
         get() = withValidityAssertion { descriptor.extensionReceiverParameter?.toKtReceiverParameterSymbol(analysisContext) }
 
+    @KaExperimentalApi
     override val contextReceivers: List<KaContextReceiver>
         get() = withValidityAssertion { descriptor.createContextReceivers(analysisContext) }
 

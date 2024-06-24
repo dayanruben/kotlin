@@ -1,10 +1,13 @@
 KaPropertyGetterSymbol:
   annotations: []
   callableId: null
+  compilerVisibility: Public
   contextReceivers: []
   hasBody: true
   hasStableParameterNames: true
+  isActual: false
   isDefault: false
+  isExpect: false
   isExtension: false
   isInline: false
   isOverride: false
@@ -23,9 +26,8 @@ KaPropertyGetterSymbol:
     ]
     typeArguments: []
     type: @R|Anno1|()  @R|Anno2|()  @R|Anno3|()  {@R|Anno3|()  SecondTypeAlias=} BaseInterface
-  typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(typeAnnotationsOnPropertyGetterReturnType.kt)
   getContainingJvmClassName: TypeAnnotationsOnPropertyGetterReturnTypeKt
   getContainingModule: KaSourceModule "Sources of main"

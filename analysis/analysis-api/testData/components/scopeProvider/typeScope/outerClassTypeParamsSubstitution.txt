@@ -58,6 +58,7 @@ Declaration Scope:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /Outer.A.foo
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -104,54 +105,66 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: x
       origin: SOURCE
       receiverParameter: null
       returnType: KaTypeParameterType:
         annotations: []
         type: X
-      typeParameters: []
+      visibility: PUBLIC
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: y
       origin: SOURCE
       receiverParameter: null
       returnType: KaTypeParameterType:
         annotations: []
         type: Y
-      typeParameters: []
+      visibility: PUBLIC
   ]
-  visibility: Public
+  visibility: PUBLIC
 KaKotlinPropertySymbol:
   annotations: []
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Private
     contextReceivers: []
+    isActual: false
+    isExpect: false
     isExtension: false
     isVal: true
     location: PROPERTY
+    modality: FINAL
     name: field
     origin: PROPERTY_BACKING_FIELD
     owningProperty: KaKotlinPropertySymbol(/Outer.A.map)
@@ -167,16 +180,20 @@ KaKotlinPropertySymbol:
           type: O
       ]
       type: kotlin/collections/Map<X, O>
-    typeParameters: []
+    visibility: PRIVATE
   callableId: /Outer.A.map
+  compilerVisibility: Public
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Public
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: true
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: false
@@ -195,9 +212,8 @@ KaKotlinPropertySymbol:
           type: O
       ]
       type: kotlin/collections/Map<X, O>
-    typeParameters: []
     valueParameters: []
-    visibility: Public
+    visibility: PUBLIC
   hasBackingField: true
   hasGetter: true
   hasSetter: false
@@ -230,10 +246,11 @@ KaKotlinPropertySymbol:
     type: kotlin/collections/Map<X, O>
   setter: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
 KaNamedFunctionSymbol:
   annotations: []
   callableId: kotlin/Any.equals
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -263,16 +280,20 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: other
       origin: LIBRARY
       receiverParameter: null
@@ -280,12 +301,13 @@ KaNamedFunctionSymbol:
         annotations: []
         typeArguments: []
         type: kotlin/Any?
-      typeParameters: []
+      visibility: PUBLIC
   ]
-  visibility: Public
+  visibility: PUBLIC
 KaNamedFunctionSymbol:
   annotations: []
   callableId: kotlin/Any.hashCode
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -312,10 +334,11 @@ KaNamedFunctionSymbol:
     type: kotlin/Int
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
 KaNamedFunctionSymbol:
   annotations: []
   callableId: kotlin/Any.toString
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -342,5 +365,5 @@ KaNamedFunctionSymbol:
     type: kotlin/String
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
 

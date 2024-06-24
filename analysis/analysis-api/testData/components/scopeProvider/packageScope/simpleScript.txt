@@ -3,6 +3,7 @@ KaNamedClassSymbol:
   classId: test/C
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -22,7 +23,7 @@ KaNamedClassSymbol:
       type: kotlin/Any
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(simpleScript.kts)
   getContainingModule: KaScriptModule "Script simpleScript.kts"
   annotationApplicableTargets: null
@@ -33,6 +34,7 @@ KaNamedClassSymbol:
   classId: test/I
   classKind: INTERFACE
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -52,7 +54,7 @@ KaNamedClassSymbol:
       type: kotlin/Any
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(simpleScript.kts)
   getContainingModule: KaScriptModule "Script simpleScript.kts"
   annotationApplicableTargets: null
@@ -63,6 +65,7 @@ KaNamedClassSymbol:
   classId: test/O
   classKind: OBJECT
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -82,7 +85,7 @@ KaNamedClassSymbol:
       type: kotlin/Any
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(simpleScript.kts)
   getContainingModule: KaScriptModule "Script simpleScript.kts"
   annotationApplicableTargets: null

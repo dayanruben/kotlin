@@ -3,6 +3,7 @@ KaNamedClassSymbol:
   classId: test/B.InnerClassInB
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -22,7 +23,7 @@ KaNamedClassSymbol:
       type: kotlin/Any
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(innerClass.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null
@@ -31,6 +32,7 @@ KaNamedClassSymbol:
 KaConstructorSymbol:
   annotations: []
   callableId: null
+  compilerVisibility: Public
   containingClassId: test/B
   contextReceivers: []
   hasStableParameterNames: true
@@ -39,6 +41,7 @@ KaConstructorSymbol:
   isExtension: false
   isPrimary: true
   location: CLASS
+  modality: FINAL
   origin: SOURCE_MEMBER_GENERATED
   receiverParameter: null
   returnType: KaUsualClassType:
@@ -47,7 +50,7 @@ KaConstructorSymbol:
     type: test/B
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(innerClass.kt)
   getContainingJvmClassName: test.B
   getContainingModule: KaSourceModule "Sources of main"

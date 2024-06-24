@@ -16,7 +16,10 @@ import org.jetbrains.kotlin.analysis.api.impl.base.symbols.pointers.KaCannotCrea
 import org.jetbrains.kotlin.analysis.api.impl.base.symbols.pointers.KaUnsupportedSymbolLocation
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.asKaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaPsiBasedSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -37,17 +40,22 @@ internal class KaFirTypeAliasSymbol(
     override val name: Name get() = withValidityAssertion { firSymbol.name }
     override val classId: ClassId? get() = withValidityAssertion { firSymbol.getClassId() }
 
-    override val visibility: Visibility
+    override val visibility: KaSymbolVisibility
         get() = withValidityAssertion {
+            // TODO: We should use resolvedStatus, because it can be altered by status-transforming compiler plugins. See KT-58572
             when (val possiblyRawVisibility = firSymbol.fir.visibility) {
-                Visibilities.Unknown -> Visibilities.Public
-                else -> possiblyRawVisibility
+                Visibilities.Unknown -> KaSymbolVisibility.PUBLIC
+                else -> possiblyRawVisibility.asKaSymbolVisibility
             }
         }
+
+    override val compilerVisibility: Visibility
+        get() = withValidityAssertion { firSymbol.visibility }
 
     override val typeParameters by cached { firSymbol.createKtTypeParameters(builder) }
 
     override val expandedType: KaType by cached { builder.typeBuilder.buildKtType(firSymbol.resolvedExpandedTypeRef) }
+    override val modality: KaSymbolModality get() = withValidityAssertion { firSymbol.kaSymbolModality }
 
     override val annotations: KaAnnotationList by cached {
         KaFirAnnotationListForDeclaration.create(firSymbol, builder)

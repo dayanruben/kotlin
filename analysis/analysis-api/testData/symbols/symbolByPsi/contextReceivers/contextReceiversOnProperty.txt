@@ -3,10 +3,14 @@ KaKotlinPropertySymbol:
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Private
     contextReceivers: []
+    isActual: false
+    isExpect: false
     isExtension: false
     isVal: true
     location: PROPERTY
+    modality: FINAL
     name: field
     origin: PROPERTY_BACKING_FIELD
     owningProperty: KaKotlinPropertySymbol(/y)
@@ -15,12 +19,13 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
+    visibility: PRIVATE
     getContainingFileSymbol: KaFileSymbol(contextReceiversOnProperty.kt)
     getContainingJvmClassName: ContextReceiversOnPropertyKt
     getContainingModule: KaSourceModule "Sources of main"
     deprecationStatus: null
   callableId: /y
+  compilerVisibility: Public
   contextReceivers: [
     KtContextReceiver:
       label: null
@@ -38,10 +43,13 @@ KaKotlinPropertySymbol:
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Public
     contextReceivers: []
     hasBody: true
     hasStableParameterNames: true
+    isActual: false
     isDefault: false
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: false
@@ -53,9 +61,8 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
     valueParameters: []
-    visibility: Public
+    visibility: PUBLIC
     getContainingFileSymbol: KaFileSymbol(contextReceiversOnProperty.kt)
     getContainingJvmClassName: ContextReceiversOnPropertyKt
     getContainingModule: KaSourceModule "Sources of main"
@@ -85,7 +92,7 @@ KaKotlinPropertySymbol:
     type: kotlin/Int
   setter: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(contextReceiversOnProperty.kt)
   getContainingJvmClassName: ContextReceiversOnPropertyKt
   getContainingModule: KaSourceModule "Sources of main"

@@ -18,12 +18,12 @@ import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
+import org.jetbrains.kotlin.fir.declarations.utils.isActual
+import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.declarations.utils.isOverride
 import org.jetbrains.kotlin.fir.declarations.utils.isStatic
-import org.jetbrains.kotlin.fir.declarations.utils.modality
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.symbols.SyntheticSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirSyntheticPropertySymbol
@@ -39,7 +39,8 @@ internal class KaFirSyntheticJavaPropertySymbol(
 
     override val isVal: Boolean get() = withValidityAssertion { firSymbol.isVal }
     override val name: Name get() = withValidityAssertion { firSymbol.name }
-
+    override val isActual: Boolean get() = withValidityAssertion { firSymbol.isActual }
+    override val isExpect: Boolean get() = withValidityAssertion { firSymbol.isExpect }
     override val returnType: KaType get() = withValidityAssertion { firSymbol.returnType(builder) }
     override val receiverParameter: KaReceiverParameterSymbol? get() = withValidityAssertion { firSymbol.receiver(builder) }
 
@@ -52,8 +53,8 @@ internal class KaFirSyntheticJavaPropertySymbol(
     @KaExperimentalApi
     override val initializer: KaInitializerValue? by cached { firSymbol.getKtConstantInitializer(builder) }
 
-    override val modality: Modality get() = withValidityAssertion { firSymbol.modality }
-    override val visibility: Visibility get() = withValidityAssertion { firSymbol.visibility }
+    override val modality: KaSymbolModality get() = withValidityAssertion { firSymbol.kaSymbolModality }
+    override val compilerVisibility: Visibility get() = withValidityAssertion { firSymbol.visibility }
 
     override val annotations by cached {
         KaFirAnnotationListForDeclaration.create(firSymbol, builder)

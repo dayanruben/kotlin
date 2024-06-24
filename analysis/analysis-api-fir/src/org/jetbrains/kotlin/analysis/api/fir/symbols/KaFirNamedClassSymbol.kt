@@ -7,17 +7,21 @@ package org.jetbrains.kotlin.analysis.api.fir.symbols
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.fir.KaFirSession
 import org.jetbrains.kotlin.analysis.api.fir.annotations.KaFirAnnotationListForDeclaration
 import org.jetbrains.kotlin.analysis.api.fir.findPsi
 import org.jetbrains.kotlin.analysis.api.fir.utils.cached
+import org.jetbrains.kotlin.analysis.api.impl.base.symbols.asKaSymbolModality
 import org.jetbrains.kotlin.analysis.api.impl.base.symbols.toKtClassKind
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
-import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.asKaSymbolVisibility
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationStatus
@@ -40,23 +44,25 @@ internal class KaFirNamedClassSymbol(
     override val classId: ClassId?
         get() = withValidityAssertion { firSymbol.getClassId() }
 
-    override val modality: Modality
+    override val modality: KaSymbolModality
         get() = withValidityAssertion {
-            firSymbol.optionallyResolvedStatus.modality
+            firSymbol.optionallyResolvedStatus.modality?.asKaSymbolModality
                 ?: when (classKind) { // default modality
-                    KaClassKind.INTERFACE -> Modality.ABSTRACT
-                    else -> Modality.FINAL
+                    KaClassKind.INTERFACE -> KaSymbolModality.ABSTRACT
+                    else -> KaSymbolModality.FINAL
                 }
         }
 
-    override val visibility: Visibility
+    override val visibility: KaSymbolVisibility
         get() = withValidityAssertion {
-            // TODO: We should use resolvedStatus, because it can be altered by status-transforming compiler plugins. See KT-58572
             when (val possiblyRawVisibility = firSymbol.fir.visibility) {
-                Visibilities.Unknown -> if (firSymbol.fir.isLocal) Visibilities.Local else Visibilities.Public
-                else -> possiblyRawVisibility
+                Visibilities.Unknown -> if (firSymbol.fir.isLocal) KaSymbolVisibility.LOCAL else KaSymbolVisibility.PUBLIC
+                else -> possiblyRawVisibility.asKaSymbolVisibility
             }
         }
+
+    override val compilerVisibility: Visibility
+        get() = withValidityAssertion { firSymbol.visibility }
 
     override val annotations by cached {
         KaFirAnnotationListForDeclaration.create(firSymbol, builder)
@@ -70,6 +76,7 @@ internal class KaFirNamedClassSymbol(
     override val isActual: Boolean get() = withValidityAssertion { firSymbol.isActual }
     override val isExpect: Boolean get() = withValidityAssertion { firSymbol.isExpect }
 
+    @KaExperimentalApi
     override val contextReceivers: List<KaContextReceiver> get() = withValidityAssertion { firSymbol.createContextReceivers(builder) }
 
     override val companionObject: KaFirNamedClassSymbol? by cached {

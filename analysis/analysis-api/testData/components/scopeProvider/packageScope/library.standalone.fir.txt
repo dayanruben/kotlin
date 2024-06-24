@@ -1,6 +1,7 @@
 KaNamedFunctionSymbol:
   annotations: []
   callableId: library/api/fooApi3
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -27,7 +28,7 @@ KaNamedFunctionSymbol:
     type: kotlin/String
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(extension.kt)
   getContainingJvmClassName: library.api.ExtensionKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -36,6 +37,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: library/api/internalFooApi3
+  compilerVisibility: Internal
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -62,7 +64,7 @@ KaNamedFunctionSymbol:
     type: kotlin/String
   typeParameters: []
   valueParameters: []
-  visibility: Internal
+  visibility: INTERNAL
   getContainingFileSymbol: KaFileSymbol(extension.kt)
   getContainingJvmClassName: library.api.ExtensionKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -71,6 +73,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: library/api/privateFooApi3
+  compilerVisibility: Private
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -97,7 +100,7 @@ KaNamedFunctionSymbol:
     type: kotlin/String
   typeParameters: []
   valueParameters: []
-  visibility: Private
+  visibility: PRIVATE
   getContainingFileSymbol: KaFileSymbol(extension.kt)
   getContainingJvmClassName: library.api.ExtensionKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -106,6 +109,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: library/api/barApi3
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -143,7 +147,7 @@ KaNamedFunctionSymbol:
     type: library/api/I
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(extension.kt)
   getContainingJvmClassName: library.api.ExtensionKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -152,6 +156,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: library/api/internalBarApi3
+  compilerVisibility: Internal
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -189,7 +194,7 @@ KaNamedFunctionSymbol:
     type: library/api/I
   typeParameters: []
   valueParameters: []
-  visibility: Internal
+  visibility: INTERNAL
   getContainingFileSymbol: KaFileSymbol(extension.kt)
   getContainingJvmClassName: library.api.ExtensionKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -198,6 +203,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: library/api/privateBarApi3
+  compilerVisibility: Private
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -235,7 +241,7 @@ KaNamedFunctionSymbol:
     type: library/api/I
   typeParameters: []
   valueParameters: []
-  visibility: Private
+  visibility: PRIVATE
   getContainingFileSymbol: KaFileSymbol(extension.kt)
   getContainingJvmClassName: library.api.ExtensionKt
   getContainingModule: KaSourceModule "Sources of main"
@@ -244,6 +250,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: library/api/fooApi2
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -270,7 +277,7 @@ KaNamedFunctionSymbol:
     type: kotlin/String
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: null
   getContainingJvmClassName: library.api.C1Kt
   getContainingModule: KaLibraryModule "Library library"
@@ -279,6 +286,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: library/api/internalFooApi2
+  compilerVisibility: Internal
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -305,7 +313,7 @@ KaNamedFunctionSymbol:
     type: kotlin/String
   typeParameters: []
   valueParameters: []
-  visibility: Internal
+  visibility: INTERNAL
   getContainingFileSymbol: null
   getContainingJvmClassName: library.api.C1Kt
   getContainingModule: KaLibraryModule "Library library"
@@ -314,6 +322,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: library/api/privateFooApi2
+  compilerVisibility: Private
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -340,7 +349,7 @@ KaNamedFunctionSymbol:
     type: kotlin/String
   typeParameters: []
   valueParameters: []
-  visibility: Private
+  visibility: PRIVATE
   getContainingFileSymbol: null
   getContainingJvmClassName: library.api.C1Kt
   getContainingModule: KaLibraryModule "Library library"
@@ -349,6 +358,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: library/api/barApi2
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -386,7 +396,7 @@ KaNamedFunctionSymbol:
     type: library/api/I
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: null
   getContainingJvmClassName: library.api.C1Kt
   getContainingModule: KaLibraryModule "Library library"
@@ -395,6 +405,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: library/api/internalBarApi2
+  compilerVisibility: Internal
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -432,7 +443,7 @@ KaNamedFunctionSymbol:
     type: library/api/InternalI
   typeParameters: []
   valueParameters: []
-  visibility: Internal
+  visibility: INTERNAL
   getContainingFileSymbol: null
   getContainingJvmClassName: library.api.C1Kt
   getContainingModule: KaLibraryModule "Library library"
@@ -441,6 +452,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: library/api/privateBarApi2
+  compilerVisibility: Private
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -478,7 +490,7 @@ KaNamedFunctionSymbol:
     type: library/api/I
   typeParameters: []
   valueParameters: []
-  visibility: Private
+  visibility: PRIVATE
   getContainingFileSymbol: null
   getContainingJvmClassName: library.api.C1Kt
   getContainingModule: KaLibraryModule "Library library"
@@ -487,6 +499,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: library/api/fooApi1
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -513,7 +526,7 @@ KaNamedFunctionSymbol:
     type: kotlin/String
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: null
   getContainingJvmClassName: library.api.IKt
   getContainingModule: KaLibraryModule "Library library"
@@ -522,6 +535,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: library/api/internalFooApi1
+  compilerVisibility: Internal
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -548,7 +562,7 @@ KaNamedFunctionSymbol:
     type: kotlin/String
   typeParameters: []
   valueParameters: []
-  visibility: Internal
+  visibility: INTERNAL
   getContainingFileSymbol: null
   getContainingJvmClassName: library.api.IKt
   getContainingModule: KaLibraryModule "Library library"
@@ -557,6 +571,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: library/api/privateFooApi1
+  compilerVisibility: Private
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -583,7 +598,7 @@ KaNamedFunctionSymbol:
     type: kotlin/String
   typeParameters: []
   valueParameters: []
-  visibility: Private
+  visibility: PRIVATE
   getContainingFileSymbol: null
   getContainingJvmClassName: library.api.IKt
   getContainingModule: KaLibraryModule "Library library"
@@ -592,6 +607,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: library/api/barApi1
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -629,7 +645,7 @@ KaNamedFunctionSymbol:
     type: library/api/I
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: null
   getContainingJvmClassName: library.api.IKt
   getContainingModule: KaLibraryModule "Library library"
@@ -638,6 +654,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: library/api/internalBarApi1
+  compilerVisibility: Internal
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -675,7 +692,7 @@ KaNamedFunctionSymbol:
     type: library/api/InternalI
   typeParameters: []
   valueParameters: []
-  visibility: Internal
+  visibility: INTERNAL
   getContainingFileSymbol: null
   getContainingJvmClassName: library.api.IKt
   getContainingModule: KaLibraryModule "Library library"
@@ -684,6 +701,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: library/api/privateBarApi1
+  compilerVisibility: Private
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -721,7 +739,7 @@ KaNamedFunctionSymbol:
     type: library/api/PrivateI
   typeParameters: []
   valueParameters: []
-  visibility: Private
+  visibility: PRIVATE
   getContainingFileSymbol: null
   getContainingJvmClassName: library.api.IKt
   getContainingModule: KaLibraryModule "Library library"
@@ -732,6 +750,7 @@ KaNamedClassSymbol:
   classId: library/api/FakeI
   classKind: INTERFACE
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -751,7 +770,7 @@ KaNamedClassSymbol:
       type: library/api/I
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(extension.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null
@@ -762,6 +781,7 @@ KaNamedClassSymbol:
   classId: library/api/InternalFakeI
   classKind: INTERFACE
   companionObject: null
+  compilerVisibility: Internal
   contextReceivers: []
   isActual: false
   isData: false
@@ -781,7 +801,7 @@ KaNamedClassSymbol:
       type: library/api/I
   ]
   typeParameters: []
-  visibility: Internal
+  visibility: INTERNAL
   getContainingFileSymbol: KaFileSymbol(extension.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null
@@ -792,6 +812,7 @@ KaNamedClassSymbol:
   classId: library/api/PrivateFakeI
   classKind: INTERFACE
   companionObject: null
+  compilerVisibility: Private
   contextReceivers: []
   isActual: false
   isData: false
@@ -811,7 +832,7 @@ KaNamedClassSymbol:
       type: library/api/I
   ]
   typeParameters: []
-  visibility: Private
+  visibility: PRIVATE
   getContainingFileSymbol: KaFileSymbol(extension.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null
@@ -822,6 +843,7 @@ KaNamedClassSymbol:
   classId: library/api/PrivateI
   classKind: INTERFACE
   companionObject: null
+  compilerVisibility: Private
   contextReceivers: []
   isActual: false
   isData: false
@@ -841,7 +863,7 @@ KaNamedClassSymbol:
       type: kotlin/Any
   ]
   typeParameters: []
-  visibility: Private
+  visibility: PRIVATE
   getContainingFileSymbol: null
   getContainingModule: KaLibraryModule "Library library"
   annotationApplicableTargets: null
@@ -852,6 +874,7 @@ KaNamedClassSymbol:
   classId: library/api/InternalI
   classKind: INTERFACE
   companionObject: null
+  compilerVisibility: Internal
   contextReceivers: []
   isActual: false
   isData: false
@@ -871,7 +894,7 @@ KaNamedClassSymbol:
       type: kotlin/Any
   ]
   typeParameters: []
-  visibility: Internal
+  visibility: INTERNAL
   getContainingFileSymbol: null
   getContainingModule: KaLibraryModule "Library library"
   annotationApplicableTargets: null
@@ -882,6 +905,7 @@ KaNamedClassSymbol:
   classId: library/api/I
   classKind: INTERFACE
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -901,7 +925,7 @@ KaNamedClassSymbol:
       type: kotlin/Any
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: null
   getContainingModule: KaLibraryModule "Library library"
   annotationApplicableTargets: null
@@ -912,6 +936,7 @@ KaNamedClassSymbol:
   classId: library/api/C1
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -931,7 +956,7 @@ KaNamedClassSymbol:
       type: library/api/I
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: null
   getContainingModule: KaLibraryModule "Library library"
   annotationApplicableTargets: null
@@ -942,6 +967,7 @@ KaNamedClassSymbol:
   classId: library/api/InternalC1
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Internal
   contextReceivers: []
   isActual: false
   isData: false
@@ -961,7 +987,7 @@ KaNamedClassSymbol:
       type: library/api/InternalI
   ]
   typeParameters: []
-  visibility: Internal
+  visibility: INTERNAL
   getContainingFileSymbol: null
   getContainingModule: KaLibraryModule "Library library"
   annotationApplicableTargets: null
@@ -972,6 +998,7 @@ KaNamedClassSymbol:
   classId: library/api/PrivateC1
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Private
   contextReceivers: []
   isActual: false
   isData: false
@@ -991,7 +1018,7 @@ KaNamedClassSymbol:
       type: library/api/I
   ]
   typeParameters: []
-  visibility: Private
+  visibility: PRIVATE
   getContainingFileSymbol: null
   getContainingModule: KaLibraryModule "Library library"
   annotationApplicableTargets: null

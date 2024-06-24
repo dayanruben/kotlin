@@ -5,22 +5,19 @@
 
 package org.jetbrains.kotlin.analysis.api.symbols
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.markers.*
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 
-public sealed class KaPropertyAccessorSymbol : KaFunctionSymbol(),
-    KaPossibleMemberSymbol,
-    KaSymbolWithModality,
-    KaSymbolWithVisibility,
+public sealed class KaPropertyAccessorSymbol :
+    KaFunctionSymbol(),
     @Suppress("DEPRECATION") KaSymbolWithKind {
 
     final override val isExtension: Boolean get() = withValidityAssertion { false }
 
-    final override val typeParameters: List<KaTypeParameterSymbol>
-        get() = withValidityAssertion { emptyList() }
-
+    @KaExperimentalApi
     final override val contextReceivers: List<KaContextReceiver> get() = withValidityAssertion { emptyList() }
 
     public abstract val isDefault: Boolean

@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased
 
 import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisContext
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.calculateHashCode
@@ -18,11 +19,13 @@ import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaPsiBasedSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.DescriptorUtils
@@ -30,7 +33,7 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils
 internal class KaFe10DescNamedClassSymbol(
     override val descriptor: ClassDescriptor,
     override val analysisContext: Fe10AnalysisContext
-) : KaNamedClassSymbol(), KaFe10DescMemberSymbol<ClassDescriptor> {
+) : KaNamedClassSymbol(), KaFe10DescSymbol<ClassDescriptor> {
     override val name: Name
         get() = withValidityAssertion { descriptor.name }
 
@@ -63,6 +66,7 @@ internal class KaFe10DescNamedClassSymbol(
             }
         }
 
+    @KaExperimentalApi
     override val contextReceivers: List<KaContextReceiver>
         get() = withValidityAssertion { descriptor.createContextReceivers(analysisContext) }
 
@@ -85,6 +89,12 @@ internal class KaFe10DescNamedClassSymbol(
 
     override val location: KaSymbolLocation
         get() = withValidityAssertion { descriptor.kaSymbolLocation }
+
+    override val modality: KaSymbolModality
+        get() = withValidityAssertion { descriptor.kaSymbolModality }
+
+    override val compilerVisibility: Visibility
+        get() = withValidityAssertion { descriptor.ktVisibility }
 
     override val typeParameters: List<KaTypeParameterSymbol>
         get() = withValidityAssertion { descriptor.declaredTypeParameters.map { KaFe10DescTypeParameterSymbol(it, analysisContext) } }

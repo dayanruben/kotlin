@@ -20,6 +20,7 @@ scopes:
       KaNamedFunctionSymbol:
         annotations: []
         callableId: /JavaClass.getValue
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: false
@@ -45,10 +46,11 @@ scopes:
           type: kotlin/Int!
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.equals
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -78,16 +80,20 @@ scopes:
           KaValueParameterSymbol:
             annotations: []
             callableId: null
+            compilerVisibility: Public
             contextReceivers: []
             generatedPrimaryConstructorProperty: null
             hasDefaultValue: false
+            isActual: false
             isCrossinline: false
+            isExpect: false
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
             isVal: true
             isVararg: false
             location: LOCAL
+            modality: FINAL
             name: other
             origin: LIBRARY
             receiverParameter: null
@@ -95,12 +101,13 @@ scopes:
               annotations: []
               typeArguments: []
               type: kotlin/Any?
-            typeParameters: []
+            visibility: PUBLIC
         ]
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.hashCode
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -127,10 +134,11 @@ scopes:
           type: kotlin/Int
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.toString
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -157,19 +165,23 @@ scopes:
           type: kotlin/String
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaSyntheticJavaPropertySymbol:
         annotations: []
         backingFieldSymbol: null
         callableId: /JavaClass.value
+        compilerVisibility: Public
         contextReceivers: []
         getter: KaPropertyGetterSymbol:
           annotations: []
           callableId: /JavaClass.getValue
+          compilerVisibility: Public
           contextReceivers: []
           hasBody: false
           hasStableParameterNames: true
+          isActual: false
           isDefault: false
+          isExpect: false
           isExtension: false
           isInline: false
           isOverride: false
@@ -180,14 +192,15 @@ scopes:
           returnType: KaFlexibleType:
             annotations: []
             type: kotlin/Int!
-          typeParameters: []
           valueParameters: []
-          visibility: Public
+          visibility: PUBLIC
         hasBackingField: true
         hasGetter: true
         hasSetter: false
         initializer: null
+        isActual: false
         isDelegatedProperty: false
+        isExpect: false
         isExtension: false
         isFromPrimaryConstructor: false
         isOverride: false
@@ -205,11 +218,12 @@ scopes:
           type: kotlin/Int!
         setter: null
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
     constructors: 1
       KaConstructorSymbol:
         annotations: []
         callableId: null
+        compilerVisibility: Public
         containingClassId: JavaClass
         contextReceivers: []
         hasStableParameterNames: false
@@ -218,6 +232,7 @@ scopes:
         isExtension: false
         isPrimary: true
         location: CLASS
+        modality: FINAL
         origin: JAVA_SOURCE
         receiverParameter: null
         returnType: KaUsualClassType:
@@ -226,7 +241,7 @@ scopes:
           type: JavaClass
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
 
   LocalScope, index = 2
     packages: 0
@@ -272,6 +287,7 @@ scopes:
         classId: JavaClass
         classKind: CLASS
         companionObject: null
+        compilerVisibility: Public
         contextReceivers: []
         isActual: false
         isData: false
@@ -291,11 +307,12 @@ scopes:
             type: kotlin/Any
         ]
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
     callables: 1
       KaNamedFunctionSymbol:
         annotations: []
         callableId: /test
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -330,7 +347,7 @@ scopes:
           type: kotlin/Unit
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
     constructors: 0
 
   DefaultSimpleImportingScope, index = 5

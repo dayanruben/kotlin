@@ -2,14 +2,18 @@ KaSyntheticJavaPropertySymbol:
   annotations: []
   backingFieldSymbol: null
   callableId: /JavaClass.foo
+  compilerVisibility: Public
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: /JavaClass.getFoo
+    compilerVisibility: Public
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: false
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: false
@@ -33,9 +37,8 @@ KaSyntheticJavaPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
     valueParameters: []
-    visibility: Public
+    visibility: PUBLIC
     getContainingFileSymbol: null
     getContainingJvmClassName: Could not render due to kotlin.NotImplementedError: An operation is not implemented: org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.KaFe10DescPropertyGetterSymbol
 
@@ -46,7 +49,9 @@ KaSyntheticJavaPropertySymbol:
   hasGetter: true
   hasSetter: false
   initializer: null
+  isActual: false
   isDelegatedProperty: false
+  isExpect: false
   isExtension: true
   isFromPrimaryConstructor: false
   isOverride: false
@@ -77,7 +82,7 @@ KaSyntheticJavaPropertySymbol:
     type: kotlin/Int
   setter: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: null
   getContainingJvmClassName: Could not render due to kotlin.NotImplementedError: An operation is not implemented: org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.KaFe10DescSyntheticJavaPropertySymbol
 

@@ -1,6 +1,7 @@
 KaConstructorSymbol:
   annotations: []
   callableId: null
+  compilerVisibility: Public
   containingClassId: Foo
   contextReceivers: []
   hasStableParameterNames: true
@@ -9,6 +10,7 @@ KaConstructorSymbol:
   isExtension: false
   isPrimary: true
   location: CLASS
+  modality: FINAL
   origin: SOURCE
   receiverParameter: null
   returnType: KaUsualClassType:
@@ -20,16 +22,21 @@ KaConstructorSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: KaKotlinPropertySymbol:
         annotations: []
         backingFieldSymbol: KaBackingFieldSymbol:
           annotations: []
           callableId: null
+          compilerVisibility: Public
           contextReceivers: []
+          isActual: false
+          isExpect: false
           isExtension: false
           isVal: true
           location: PROPERTY
+          modality: FINAL
           name: field
           origin: PROPERTY_BACKING_FIELD
           owningProperty: KaKotlinPropertySymbol(/Foo.ints)
@@ -38,20 +45,24 @@ KaConstructorSymbol:
             annotations: []
             typeArguments: []
             type: kotlin/IntArray
-          typeParameters: []
+          visibility: PUBLIC
           getContainingFileSymbol: KaFileSymbol(varargInAnnotationPrimaryConstructorAsProperty.kt)
           getContainingJvmClassName: Foo
           getContainingModule: KaSourceModule "Sources of main"
           deprecationStatus: null
         callableId: /Foo.ints
+        compilerVisibility: Public
         contextReceivers: []
         getter: KaPropertyGetterSymbol:
           annotations: []
           callableId: null
+          compilerVisibility: Public
           contextReceivers: []
           hasBody: false
           hasStableParameterNames: true
+          isActual: false
           isDefault: true
+          isExpect: false
           isExtension: false
           isInline: false
           isOverride: false
@@ -63,9 +74,8 @@ KaConstructorSymbol:
             annotations: []
             typeArguments: []
             type: kotlin/IntArray
-          typeParameters: []
           valueParameters: []
-          visibility: Public
+          visibility: PUBLIC
           getDispatchReceiver(): KaUsualClassType:
             annotations: []
             typeArguments: []
@@ -99,7 +109,7 @@ KaConstructorSymbol:
           type: kotlin/IntArray
         setter: null
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
         getDispatchReceiver(): KaUsualClassType:
           annotations: []
           typeArguments: []
@@ -113,13 +123,16 @@ KaConstructorSymbol:
         javaSetterName: null
         setterDeprecationStatus: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: true
       location: LOCAL
+      modality: FINAL
       name: ints
       origin: SOURCE
       receiverParameter: null
@@ -127,13 +140,13 @@ KaConstructorSymbol:
         annotations: []
         typeArguments: []
         type: kotlin/Int
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(varargInAnnotationPrimaryConstructorAsProperty.kt)
       getContainingJvmClassName: Foo
       getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(varargInAnnotationPrimaryConstructorAsProperty.kt)
   getContainingJvmClassName: Foo
   getContainingModule: KaSourceModule "Sources of main"
@@ -144,6 +157,7 @@ KaNamedClassSymbol:
   classId: Foo
   classKind: ANNOTATION_CLASS
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -163,7 +177,7 @@ KaNamedClassSymbol:
       type: kotlin/Annotation
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(varargInAnnotationPrimaryConstructorAsProperty.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: [CLASS, ANNOTATION_CLASS, PROPERTY, FIELD, LOCAL_VARIABLE, VALUE_PARAMETER, CONSTRUCTOR, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER, BACKING_FIELD]

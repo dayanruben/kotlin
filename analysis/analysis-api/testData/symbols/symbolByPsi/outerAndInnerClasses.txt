@@ -1,25 +1,33 @@
 KaTypeParameterSymbol:
   annotations: []
+  compilerVisibility: Local
+  isActual: false
+  isExpect: false
   isReified: false
   location: CLASS
+  modality: FINAL
   name: T
   origin: SOURCE
-  typeParameters: []
   upperBounds: []
   variance: INVARIANT
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
 
 KaTypeParameterSymbol:
   annotations: []
+  compilerVisibility: Local
+  isActual: false
+  isExpect: false
   isReified: false
   location: CLASS
+  modality: FINAL
   name: T1
   origin: SOURCE
-  typeParameters: []
   upperBounds: []
   variance: INVARIANT
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
@@ -29,6 +37,7 @@ KaNamedClassSymbol:
   classId: X.Y
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -50,7 +59,7 @@ KaNamedClassSymbol:
   typeParameters: [
     KaTypeParameterSymbol(T1)
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null
@@ -58,13 +67,17 @@ KaNamedClassSymbol:
 
 KaTypeParameterSymbol:
   annotations: []
+  compilerVisibility: Local
+  isActual: false
+  isExpect: false
   isReified: false
   location: CLASS
+  modality: FINAL
   name: T2
   origin: SOURCE
-  typeParameters: []
   upperBounds: []
   variance: INVARIANT
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
@@ -74,6 +87,7 @@ KaNamedClassSymbol:
   classId: X.Z
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -95,7 +109,7 @@ KaNamedClassSymbol:
   typeParameters: [
     KaTypeParameterSymbol(T2)
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null
@@ -103,39 +117,51 @@ KaNamedClassSymbol:
 
 KaTypeParameterSymbol:
   annotations: []
+  compilerVisibility: Local
+  isActual: false
+  isExpect: false
   isReified: false
   location: LOCAL
+  modality: FINAL
   name: T3
   origin: SOURCE
-  typeParameters: []
   upperBounds: []
   variance: INVARIANT
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
 
 KaTypeParameterSymbol:
   annotations: []
+  compilerVisibility: Local
+  isActual: false
+  isExpect: false
   isReified: false
   location: CLASS
+  modality: FINAL
   name: T4
   origin: SOURCE
-  typeParameters: []
   upperBounds: []
   variance: INVARIANT
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
 
 KaTypeParameterSymbol:
   annotations: []
+  compilerVisibility: Local
+  isActual: false
+  isExpect: false
   isReified: false
   location: CLASS
+  modality: FINAL
   name: T5
   origin: SOURCE
-  typeParameters: []
   upperBounds: []
   variance: INVARIANT
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
@@ -145,6 +171,7 @@ KaNamedClassSymbol:
   classId: null
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Local
   contextReceivers: []
   isActual: false
   isData: false
@@ -166,7 +193,7 @@ KaNamedClassSymbol:
   typeParameters: [
     KaTypeParameterSymbol(T5)
   ]
-  visibility: Local
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null
@@ -174,13 +201,17 @@ KaNamedClassSymbol:
 
 KaTypeParameterSymbol:
   annotations: []
+  compilerVisibility: Local
+  isActual: false
+  isExpect: false
   isReified: false
   location: CLASS
+  modality: FINAL
   name: T6
   origin: SOURCE
-  typeParameters: []
   upperBounds: []
   variance: INVARIANT
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
@@ -190,6 +221,7 @@ KaNamedClassSymbol:
   classId: null
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Local
   contextReceivers: []
   isActual: false
   isData: false
@@ -211,7 +243,7 @@ KaNamedClassSymbol:
   typeParameters: [
     KaTypeParameterSymbol(T6)
   ]
-  visibility: Local
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null
@@ -219,26 +251,34 @@ KaNamedClassSymbol:
 
 KaTypeParameterSymbol:
   annotations: []
+  compilerVisibility: Local
+  isActual: false
+  isExpect: false
   isReified: false
   location: CLASS
+  modality: FINAL
   name: T
   origin: SOURCE
-  typeParameters: []
   upperBounds: []
   variance: INVARIANT
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
 
 KaTypeParameterSymbol:
   annotations: []
+  compilerVisibility: Local
+  isActual: false
+  isExpect: false
   isReified: false
   location: CLASS
+  modality: FINAL
   name: T1
   origin: SOURCE
-  typeParameters: []
   upperBounds: []
   variance: INVARIANT
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
@@ -248,6 +288,7 @@ KaNamedClassSymbol:
   classId: null
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Local
   contextReceivers: []
   isActual: false
   isData: false
@@ -269,7 +310,7 @@ KaNamedClassSymbol:
   typeParameters: [
     KaTypeParameterSymbol(T1)
   ]
-  visibility: Local
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null
@@ -277,13 +318,17 @@ KaNamedClassSymbol:
 
 KaTypeParameterSymbol:
   annotations: []
+  compilerVisibility: Local
+  isActual: false
+  isExpect: false
   isReified: false
   location: CLASS
+  modality: FINAL
   name: T2
   origin: SOURCE
-  typeParameters: []
   upperBounds: []
   variance: INVARIANT
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
@@ -293,6 +338,7 @@ KaNamedClassSymbol:
   classId: null
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Local
   contextReceivers: []
   isActual: false
   isData: false
@@ -314,7 +360,7 @@ KaNamedClassSymbol:
   typeParameters: [
     KaTypeParameterSymbol(T2)
   ]
-  visibility: Local
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null
@@ -322,39 +368,51 @@ KaNamedClassSymbol:
 
 KaTypeParameterSymbol:
   annotations: []
+  compilerVisibility: Local
+  isActual: false
+  isExpect: false
   isReified: false
   location: LOCAL
+  modality: FINAL
   name: T3
   origin: SOURCE
-  typeParameters: []
   upperBounds: []
   variance: INVARIANT
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
 
 KaTypeParameterSymbol:
   annotations: []
+  compilerVisibility: Local
+  isActual: false
+  isExpect: false
   isReified: false
   location: CLASS
+  modality: FINAL
   name: T4
   origin: SOURCE
-  typeParameters: []
   upperBounds: []
   variance: INVARIANT
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
 
 KaTypeParameterSymbol:
   annotations: []
+  compilerVisibility: Local
+  isActual: false
+  isExpect: false
   isReified: false
   location: CLASS
+  modality: FINAL
   name: T5
   origin: SOURCE
-  typeParameters: []
   upperBounds: []
   variance: INVARIANT
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
@@ -364,6 +422,7 @@ KaNamedClassSymbol:
   classId: null
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Local
   contextReceivers: []
   isActual: false
   isData: false
@@ -385,7 +444,7 @@ KaNamedClassSymbol:
   typeParameters: [
     KaTypeParameterSymbol(T5)
   ]
-  visibility: Local
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null
@@ -393,13 +452,17 @@ KaNamedClassSymbol:
 
 KaTypeParameterSymbol:
   annotations: []
+  compilerVisibility: Local
+  isActual: false
+  isExpect: false
   isReified: false
   location: CLASS
+  modality: FINAL
   name: T6
   origin: SOURCE
-  typeParameters: []
   upperBounds: []
   variance: INVARIANT
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
@@ -409,6 +472,7 @@ KaNamedClassSymbol:
   classId: null
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Local
   contextReceivers: []
   isActual: false
   isData: false
@@ -430,7 +494,7 @@ KaNamedClassSymbol:
   typeParameters: [
     KaTypeParameterSymbol(T6)
   ]
-  visibility: Local
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null
@@ -441,6 +505,7 @@ KaNamedClassSymbol:
   classId: null
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Local
   contextReceivers: []
   isActual: false
   isData: false
@@ -462,7 +527,7 @@ KaNamedClassSymbol:
   typeParameters: [
     KaTypeParameterSymbol(T4)
   ]
-  visibility: Local
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null
@@ -471,6 +536,7 @@ KaNamedClassSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: null
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -499,7 +565,7 @@ KaNamedFunctionSymbol:
     KaTypeParameterSymbol(T3)
   ]
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: [
@@ -518,6 +584,7 @@ KaNamedClassSymbol:
   classId: null
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Local
   contextReceivers: []
   isActual: false
   isData: false
@@ -539,7 +606,7 @@ KaNamedClassSymbol:
   typeParameters: [
     KaTypeParameterSymbol(T)
   ]
-  visibility: Local
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null
@@ -550,6 +617,7 @@ KaNamedClassSymbol:
   classId: null
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Local
   contextReceivers: []
   isActual: false
   isData: false
@@ -571,7 +639,7 @@ KaNamedClassSymbol:
   typeParameters: [
     KaTypeParameterSymbol(T4)
   ]
-  visibility: Local
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null
@@ -580,6 +648,7 @@ KaNamedClassSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /X.foo
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -608,7 +677,7 @@ KaNamedFunctionSymbol:
     KaTypeParameterSymbol(T3)
   ]
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: [
@@ -627,6 +696,7 @@ KaNamedClassSymbol:
   classId: X
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -648,7 +718,7 @@ KaNamedClassSymbol:
   typeParameters: [
     KaTypeParameterSymbol(T)
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(outerAndInnerClasses.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null

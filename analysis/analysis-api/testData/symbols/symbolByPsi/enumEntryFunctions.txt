@@ -1,6 +1,7 @@
 KaNamedFunctionSymbol:
   annotations: []
   callableId: null
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -27,7 +28,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Unit
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -40,11 +41,15 @@ KaNamedFunctionSymbol:
 KaEnumEntrySymbol:
   annotations: []
   callableId: /MyEnumClass.FirstEntry
+  compilerVisibility: Public
   contextReceivers: []
   enumEntryInitializer: KaAnonymousObjectSymbol(<local>/<no name provided>)
+  isActual: false
+  isExpect: false
   isExtension: false
   isVal: true
   location: CLASS
+  modality: FINAL
   name: FirstEntry
   origin: SOURCE
   receiverParameter: null
@@ -52,7 +57,7 @@ KaEnumEntrySymbol:
     annotations: []
     typeArguments: []
     type: MyEnumClass
-  typeParameters: []
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(enumEntryFunctions.kt)
   getContainingJvmClassName: MyEnumClass
   getContainingModule: KaSourceModule "Sources of main"
@@ -61,11 +66,15 @@ KaEnumEntrySymbol:
 KaEnumEntrySymbol:
   annotations: []
   callableId: /MyEnumClass.SecondEntry
+  compilerVisibility: Public
   contextReceivers: []
   enumEntryInitializer: null
+  isActual: false
+  isExpect: false
   isExtension: false
   isVal: true
   location: CLASS
+  modality: FINAL
   name: SecondEntry
   origin: SOURCE
   receiverParameter: null
@@ -73,7 +82,7 @@ KaEnumEntrySymbol:
     annotations: []
     typeArguments: []
     type: MyEnumClass
-  typeParameters: []
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(enumEntryFunctions.kt)
   getContainingJvmClassName: MyEnumClass
   getContainingModule: KaSourceModule "Sources of main"
@@ -82,6 +91,7 @@ KaEnumEntrySymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: null
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -108,7 +118,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Unit
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -121,6 +131,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: null
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -150,16 +161,20 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: i
       origin: SOURCE
       receiverParameter: null
@@ -167,13 +182,13 @@ KaNamedFunctionSymbol:
         annotations: []
         typeArguments: []
         type: kotlin/Int
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(enumEntryFunctions.kt)
       getContainingJvmClassName: null
       getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
   ]
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -186,11 +201,15 @@ KaNamedFunctionSymbol:
 KaEnumEntrySymbol:
   annotations: []
   callableId: /MyEnumClass.ThirdEntry
+  compilerVisibility: Public
   contextReceivers: []
   enumEntryInitializer: KaAnonymousObjectSymbol(<local>/<no name provided>)
+  isActual: false
+  isExpect: false
   isExtension: false
   isVal: true
   location: CLASS
+  modality: FINAL
   name: ThirdEntry
   origin: SOURCE
   receiverParameter: null
@@ -198,7 +217,7 @@ KaEnumEntrySymbol:
     annotations: []
     typeArguments: []
     type: MyEnumClass
-  typeParameters: []
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(enumEntryFunctions.kt)
   getContainingJvmClassName: MyEnumClass
   getContainingModule: KaSourceModule "Sources of main"
@@ -209,6 +228,7 @@ KaNamedClassSymbol:
   classId: MyEnumClass
   classKind: ENUM_CLASS
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -233,7 +253,7 @@ KaNamedClassSymbol:
       type: kotlin/Enum<MyEnumClass>
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(enumEntryFunctions.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null

@@ -1,6 +1,7 @@
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /foo
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -30,16 +31,20 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: inlineParameter
       origin: SOURCE
       receiverParameter: null
@@ -52,7 +57,7 @@ KaNamedFunctionSymbol:
             type: kotlin/Int
         ]
         type: kotlin/Function0<kotlin/Int>
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(parameterInlining.kt)
       getContainingJvmClassName: ParameterInliningKt
       getContainingModule: KaSourceModule "Sources of main"
@@ -60,16 +65,20 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: true
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: crossinlineParameter
       origin: SOURCE
       receiverParameter: null
@@ -82,7 +91,7 @@ KaNamedFunctionSymbol:
             type: kotlin/Int
         ]
         type: kotlin/Function0<kotlin/Int>
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(parameterInlining.kt)
       getContainingJvmClassName: ParameterInliningKt
       getContainingModule: KaSourceModule "Sources of main"
@@ -90,16 +99,20 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: true
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: noinlineParameter
       origin: SOURCE
       receiverParameter: null
@@ -112,13 +125,13 @@ KaNamedFunctionSymbol:
             type: kotlin/Int
         ]
         type: kotlin/Function0<kotlin/Int>
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(parameterInlining.kt)
       getContainingJvmClassName: ParameterInliningKt
       getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(parameterInlining.kt)
   getContainingJvmClassName: ParameterInliningKt
   getContainingModule: KaSourceModule "Sources of main"

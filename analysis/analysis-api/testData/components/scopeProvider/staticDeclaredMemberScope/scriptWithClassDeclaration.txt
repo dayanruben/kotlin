@@ -3,6 +3,7 @@ KaNamedClassSymbol:
   classId: Person
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -22,7 +23,7 @@ KaNamedClassSymbol:
       type: kotlin/Any
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(scriptWithClassDeclaration.kts)
   getContainingModule: KaScriptModule "Script scriptWithClassDeclaration.kts"
   annotationApplicableTargets: null

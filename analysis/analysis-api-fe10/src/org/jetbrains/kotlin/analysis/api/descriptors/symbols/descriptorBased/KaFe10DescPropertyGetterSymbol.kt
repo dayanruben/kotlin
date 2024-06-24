@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -13,11 +13,13 @@ import org.jetbrains.kotlin.analysis.api.descriptors.symbols.pointers.KaFe10Neve
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertyGetterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaPsiBasedSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.descriptors.PropertyGetterDescriptor
+import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.descriptors.hasBody
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.resolve.calls.inference.returnTypeOrNothing
@@ -25,7 +27,7 @@ import org.jetbrains.kotlin.resolve.calls.inference.returnTypeOrNothing
 internal class KaFe10DescPropertyGetterSymbol(
     override val descriptor: PropertyGetterDescriptor,
     override val analysisContext: Fe10AnalysisContext
-) : KaPropertyGetterSymbol(), KaFe10DescMemberSymbol<PropertyGetterDescriptor> {
+) : KaPropertyGetterSymbol(), KaFe10DescSymbol<PropertyGetterDescriptor> {
     override val isDefault: Boolean
         get() = withValidityAssertion { descriptor.isDefault }
 
@@ -37,6 +39,18 @@ internal class KaFe10DescPropertyGetterSymbol(
 
     override val hasBody: Boolean
         get() = withValidityAssertion { descriptor.hasBody() }
+
+    override val isActual: Boolean
+        get() = withValidityAssertion { descriptor.isActual }
+
+    override val isExpect: Boolean
+        get() = withValidityAssertion { descriptor.isExpect }
+
+    override val modality: KaSymbolModality
+        get() = withValidityAssertion { descriptor.kaSymbolModality }
+
+    override val compilerVisibility: Visibility
+        get() = withValidityAssertion { descriptor.ktVisibility }
 
     override val valueParameters: List<KaValueParameterSymbol>
         get() = withValidityAssertion { descriptor.valueParameters.map { KaFe10DescValueParameterSymbol(it, analysisContext) } }

@@ -13,6 +13,7 @@ classifiers: 2
     classId: rex1/RexClass1
     classKind: INTERFACE
     companionObject: null
+    compilerVisibility: Public
     contextReceivers: []
     isActual: false
     isData: false
@@ -32,7 +33,7 @@ classifiers: 2
         type: kotlin/Any
     ]
     typeParameters: []
-    visibility: Public
+    visibility: PUBLIC
     PSI: KtClass RexClass1 [from rex1.kt]
       From resolve extension: true
       Resolve extension navigation targets: 1
@@ -42,6 +43,7 @@ classifiers: 2
     classId: rex2/RexClass2
     classKind: INTERFACE
     companionObject: null
+    compilerVisibility: Public
     contextReceivers: []
     isActual: false
     isData: false
@@ -61,7 +63,7 @@ classifiers: 2
         type: kotlin/Any
     ]
     typeParameters: []
-    visibility: Public
+    visibility: PUBLIC
     PSI: KtClass RexClass2 [from rex2.kt]
       From resolve extension: true
       Resolve extension navigation targets: 1
@@ -70,6 +72,7 @@ callables: 2
   KaNamedFunctionSymbol:
     annotations: []
     callableId: rex1/rexCallable1
+    compilerVisibility: Public
     contextReceivers: []
     contractEffects: []
     hasStableParameterNames: true
@@ -96,7 +99,7 @@ callables: 2
       type: kotlin/Any
     typeParameters: []
     valueParameters: []
-    visibility: Public
+    visibility: PUBLIC
     PSI: KtNamedFunction rexCallable1 [from rex1.kt]
       From resolve extension: true
       Resolve extension navigation targets: 1
@@ -104,6 +107,7 @@ callables: 2
   KaNamedFunctionSymbol:
     annotations: []
     callableId: rex2/rexCallable2
+    compilerVisibility: Public
     contextReceivers: []
     contractEffects: []
     hasStableParameterNames: true
@@ -130,7 +134,7 @@ callables: 2
       type: kotlin/Any
     typeParameters: []
     valueParameters: []
-    visibility: Public
+    visibility: PUBLIC
     PSI: KtNamedFunction rexCallable2 [from rex2.kt]
       From resolve extension: true
       Resolve extension navigation targets: 1

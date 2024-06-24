@@ -6,6 +6,7 @@ KaNamedClassSymbol:
   classId: foo/MyClass
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -29,7 +30,7 @@ KaNamedClassSymbol:
       type: foo/MyInterface
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(myInterfaceSupertype.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null

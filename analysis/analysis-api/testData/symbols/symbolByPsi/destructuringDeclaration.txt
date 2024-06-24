@@ -1,6 +1,7 @@
 KaConstructorSymbol:
   annotations: []
   callableId: null
+  compilerVisibility: Public
   containingClassId: P
   contextReceivers: []
   hasStableParameterNames: true
@@ -9,6 +10,7 @@ KaConstructorSymbol:
   isExtension: false
   isPrimary: true
   location: CLASS
+  modality: FINAL
   origin: SOURCE
   receiverParameter: null
   returnType: KaUsualClassType:
@@ -20,16 +22,21 @@ KaConstructorSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: KaKotlinPropertySymbol:
         annotations: []
         backingFieldSymbol: KaBackingFieldSymbol:
           annotations: []
           callableId: null
+          compilerVisibility: Public
           contextReceivers: []
+          isActual: false
+          isExpect: false
           isExtension: false
           isVal: true
           location: PROPERTY
+          modality: FINAL
           name: field
           origin: PROPERTY_BACKING_FIELD
           owningProperty: KaKotlinPropertySymbol(/P.x)
@@ -38,20 +45,24 @@ KaConstructorSymbol:
             annotations: []
             typeArguments: []
             type: kotlin/Int
-          typeParameters: []
+          visibility: PUBLIC
           getContainingFileSymbol: KaFileSymbol(destructuringDeclaration.kt)
           getContainingJvmClassName: P
           getContainingModule: KaSourceModule "Sources of main"
           deprecationStatus: null
         callableId: /P.x
+        compilerVisibility: Public
         contextReceivers: []
         getter: KaPropertyGetterSymbol:
           annotations: []
           callableId: null
+          compilerVisibility: Public
           contextReceivers: []
           hasBody: false
           hasStableParameterNames: true
+          isActual: false
           isDefault: true
+          isExpect: false
           isExtension: false
           isInline: false
           isOverride: false
@@ -63,9 +74,8 @@ KaConstructorSymbol:
             annotations: []
             typeArguments: []
             type: kotlin/Int
-          typeParameters: []
           valueParameters: []
-          visibility: Public
+          visibility: PUBLIC
           getDispatchReceiver(): KaUsualClassType:
             annotations: []
             typeArguments: []
@@ -99,7 +109,7 @@ KaConstructorSymbol:
           type: kotlin/Int
         setter: null
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
         getDispatchReceiver(): KaUsualClassType:
           annotations: []
           typeArguments: []
@@ -113,13 +123,16 @@ KaConstructorSymbol:
         javaSetterName: null
         setterDeprecationStatus: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: x
       origin: SOURCE
       receiverParameter: null
@@ -127,7 +140,7 @@ KaConstructorSymbol:
         annotations: []
         typeArguments: []
         type: kotlin/Int
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(destructuringDeclaration.kt)
       getContainingJvmClassName: P
       getContainingModule: KaSourceModule "Sources of main"
@@ -135,16 +148,21 @@ KaConstructorSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: KaKotlinPropertySymbol:
         annotations: []
         backingFieldSymbol: KaBackingFieldSymbol:
           annotations: []
           callableId: null
+          compilerVisibility: Public
           contextReceivers: []
+          isActual: false
+          isExpect: false
           isExtension: false
           isVal: true
           location: PROPERTY
+          modality: FINAL
           name: field
           origin: PROPERTY_BACKING_FIELD
           owningProperty: KaKotlinPropertySymbol(/P.y)
@@ -153,20 +171,24 @@ KaConstructorSymbol:
             annotations: []
             typeArguments: []
             type: kotlin/Int
-          typeParameters: []
+          visibility: PUBLIC
           getContainingFileSymbol: KaFileSymbol(destructuringDeclaration.kt)
           getContainingJvmClassName: P
           getContainingModule: KaSourceModule "Sources of main"
           deprecationStatus: null
         callableId: /P.y
+        compilerVisibility: Public
         contextReceivers: []
         getter: KaPropertyGetterSymbol:
           annotations: []
           callableId: null
+          compilerVisibility: Public
           contextReceivers: []
           hasBody: false
           hasStableParameterNames: true
+          isActual: false
           isDefault: true
+          isExpect: false
           isExtension: false
           isInline: false
           isOverride: false
@@ -178,9 +200,8 @@ KaConstructorSymbol:
             annotations: []
             typeArguments: []
             type: kotlin/Int
-          typeParameters: []
           valueParameters: []
-          visibility: Public
+          visibility: PUBLIC
           getDispatchReceiver(): KaUsualClassType:
             annotations: []
             typeArguments: []
@@ -214,7 +235,7 @@ KaConstructorSymbol:
           type: kotlin/Int
         setter: null
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
         getDispatchReceiver(): KaUsualClassType:
           annotations: []
           typeArguments: []
@@ -228,13 +249,16 @@ KaConstructorSymbol:
         javaSetterName: null
         setterDeprecationStatus: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: y
       origin: SOURCE
       receiverParameter: null
@@ -242,13 +266,13 @@ KaConstructorSymbol:
         annotations: []
         typeArguments: []
         type: kotlin/Int
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(destructuringDeclaration.kt)
       getContainingJvmClassName: P
       getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(destructuringDeclaration.kt)
   getContainingJvmClassName: P
   getContainingModule: KaSourceModule "Sources of main"
@@ -259,6 +283,7 @@ KaNamedClassSymbol:
   classId: P
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: true
@@ -278,7 +303,7 @@ KaNamedClassSymbol:
       type: kotlin/Any
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(destructuringDeclaration.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null
@@ -287,10 +312,14 @@ KaNamedClassSymbol:
 KaLocalVariableSymbol:
   annotations: []
   callableId: null
+  compilerVisibility: Local
   contextReceivers: []
+  isActual: false
+  isExpect: false
   isExtension: false
   isVal: true
   location: LOCAL
+  modality: FINAL
   name: l
   origin: SOURCE
   receiverParameter: null
@@ -298,7 +327,7 @@ KaLocalVariableSymbol:
     annotations: []
     typeArguments: []
     type: kotlin/Int
-  typeParameters: []
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(destructuringDeclaration.kt)
   getContainingJvmClassName: null
   getContainingModule: KaSourceModule "Sources of main"
@@ -307,10 +336,14 @@ KaLocalVariableSymbol:
 KaLocalVariableSymbol:
   annotations: []
   callableId: null
+  compilerVisibility: Local
   contextReceivers: []
+  isActual: false
+  isExpect: false
   isExtension: false
   isVal: true
   location: LOCAL
+  modality: FINAL
   name: r
   origin: SOURCE
   receiverParameter: null
@@ -318,7 +351,7 @@ KaLocalVariableSymbol:
     annotations: []
     typeArguments: []
     type: kotlin/Int
-  typeParameters: []
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(destructuringDeclaration.kt)
   getContainingJvmClassName: null
   getContainingModule: KaSourceModule "Sources of main"
@@ -327,6 +360,7 @@ KaLocalVariableSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /destruct
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -353,7 +387,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Int
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(destructuringDeclaration.kt)
   getContainingJvmClassName: DestructuringDeclarationKt
   getContainingModule: KaSourceModule "Sources of main"

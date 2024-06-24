@@ -6,10 +6,14 @@ KaKotlinPropertySymbol:
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Public
     contextReceivers: []
+    isActual: false
+    isExpect: false
     isExtension: false
     isVal: true
     location: PROPERTY
+    modality: FINAL
     name: field
     origin: PROPERTY_BACKING_FIELD
     owningProperty: KaKotlinPropertySymbol(one/topLevelVariableWithAnnotations)
@@ -18,12 +22,13 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Long
-    typeParameters: []
+    visibility: PUBLIC
     getContainingFileSymbol: null
     getContainingJvmClassName: one.LibKt
     getContainingModule: KaLibraryModule "Library lib"
     deprecationStatus: null
   callableId: one/topLevelVariableWithAnnotations
+  compilerVisibility: Public
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: [
@@ -31,10 +36,13 @@ KaKotlinPropertySymbol:
         psi: null
     ]
     callableId: null
+    compilerVisibility: Public
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: false
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: false
@@ -46,9 +54,8 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Long
-    typeParameters: []
     valueParameters: []
-    visibility: Public
+    visibility: PUBLIC
     getContainingFileSymbol: null
     getContainingJvmClassName: one.LibKt
     getContainingModule: KaLibraryModule "Library lib"
@@ -82,10 +89,13 @@ KaKotlinPropertySymbol:
         psi: null
     ]
     callableId: null
+    compilerVisibility: Public
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: false
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: false
@@ -98,16 +108,20 @@ KaKotlinPropertySymbol:
           psi: null
       ]
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: value
       origin: LIBRARY
       receiverParameter: null
@@ -115,7 +129,7 @@ KaKotlinPropertySymbol:
         annotations: []
         typeArguments: []
         type: kotlin/Long
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: null
       getContainingJvmClassName: null
       getContainingModule: KaLibraryModule "Library lib"
@@ -125,7 +139,6 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Unit
-    typeParameters: []
     valueParameters: [
       KaValueParameterSymbol:
         annotations: [
@@ -133,16 +146,20 @@ KaKotlinPropertySymbol:
             psi: null
         ]
         callableId: null
+        compilerVisibility: Public
         contextReceivers: []
         generatedPrimaryConstructorProperty: null
         hasDefaultValue: false
+        isActual: false
         isCrossinline: false
+        isExpect: false
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
         isVal: true
         isVararg: false
         location: LOCAL
+        modality: FINAL
         name: value
         origin: LIBRARY
         receiverParameter: null
@@ -150,19 +167,19 @@ KaKotlinPropertySymbol:
           annotations: []
           typeArguments: []
           type: kotlin/Long
-        typeParameters: []
+        visibility: PUBLIC
         getContainingFileSymbol: null
         getContainingJvmClassName: null
         getContainingModule: KaLibraryModule "Library lib"
         deprecationStatus: null
     ]
-    visibility: Public
+    visibility: PUBLIC
     getContainingFileSymbol: null
     getContainingJvmClassName: one.LibKt
     getContainingModule: KaLibraryModule "Library lib"
     deprecationStatus: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: null
   getContainingJvmClassName: one.LibKt
   getContainingModule: KaLibraryModule "Library lib"

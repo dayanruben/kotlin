@@ -1,7 +1,10 @@
 KaJavaFieldSymbol:
   annotations: []
   callableId: /JavaClass.field
+  compilerVisibility: Public
   contextReceivers: []
+  isActual: false
+  isExpect: false
   isExtension: false
   isStatic: false
   isVal: false
@@ -14,8 +17,7 @@ KaJavaFieldSymbol:
     annotations: []
     typeArguments: []
     type: kotlin/Int
-  typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -28,7 +30,10 @@ KaJavaFieldSymbol:
 KaJavaFieldSymbol:
   annotations: []
   callableId: /JavaClass.field2
+  compilerVisibility: Public
   contextReceivers: []
+  isActual: false
+  isExpect: false
   isExtension: false
   isStatic: false
   isVal: false
@@ -40,8 +45,7 @@ KaJavaFieldSymbol:
   returnType: KaFlexibleType:
     annotations: []
     type: kotlin/String!
-  typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -54,6 +58,7 @@ KaJavaFieldSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /JavaClass.foo
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: false
@@ -79,7 +84,7 @@ KaNamedFunctionSymbol:
     type: kotlin/String!
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -92,6 +97,7 @@ KaNamedFunctionSymbol:
 KaConstructorSymbol:
   annotations: []
   callableId: null
+  compilerVisibility: Public
   containingClassId: JavaClass
   contextReceivers: []
   hasStableParameterNames: false
@@ -100,6 +106,7 @@ KaConstructorSymbol:
   isExtension: false
   isPrimary: true
   location: CLASS
+  modality: FINAL
   origin: JAVA_SOURCE
   receiverParameter: null
   returnType: KaUsualClassType:
@@ -108,7 +115,7 @@ KaConstructorSymbol:
     type: JavaClass
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: null
   getContainingJvmClassName: JavaClass
   getContainingModule: KaSourceModule "Sources of main"

@@ -8,11 +8,15 @@ package org.jetbrains.kotlin.analysis.test.framework.services
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
+import org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBuiltinsModuleImpl
 import org.jetbrains.kotlin.analysis.api.standalone.base.projectStructure.StandaloneProjectFactory
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
+import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
+import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInDecompilationInterceptor
 import org.jetbrains.kotlin.analysis.test.framework.projectStructure.ktTestModuleStructure
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironmentMode
+import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreProjectEnvironment
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.languageVersionSettings
@@ -34,6 +38,7 @@ abstract class AnalysisApiEnvironmentManager : TestService {
     abstract fun getApplicationEnvironment(): KotlinCoreApplicationEnvironment
 }
 
+@OptIn(KaAnalysisApiInternals::class)
 class AnalysisApiEnvironmentManagerImpl(
     override val testServices: TestServices,
     override val testRootDisposable: Disposable,
@@ -50,13 +55,26 @@ class AnalysisApiEnvironmentManagerImpl(
             projectDisposable = _projectEnvironment.parentDisposable,
             applicationDisposable = _projectEnvironment.environment.parentDisposable,
         )
+        KotlinCoreEnvironment.underApplicationLock {
+            _projectEnvironment.environment.application.apply {
+                if (getServiceIfCreated(BuiltinsVirtualFileProvider::class.java) == null) {
+                    registerService(BuiltinsVirtualFileProvider::class.java, BuiltinsVirtualFileProviderTestImpl())
+                }
+                if (getServiceIfCreated(KotlinBuiltInDecompilationInterceptor::class.java) == null) {
+                    registerService(
+                        KotlinBuiltInDecompilationInterceptor::class.java,
+                        KotlinBuiltInDecompilationInterceptorTestImpl::class.java
+                    )
+                }
+            }
+        }
     }
 
     override fun initializeProjectStructure() {
         val ktTestModuleStructure = testServices.ktTestModuleStructure
         val useSiteModule = testServices.moduleStructure.modules.first()
         val useSiteCompilerConfiguration = testServices.compilerConfigurationProvider.getCompilerConfiguration(useSiteModule)
-        val builtinsModule = KaBuiltinsModule(useSiteModule.targetPlatform, getProject())
+        val builtinsModule = KaBuiltinsModuleImpl(useSiteModule.targetPlatform, getProject())
 
         val globalLanguageVersionSettings = useSiteModule.languageVersionSettings
 

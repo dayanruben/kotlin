@@ -32,6 +32,7 @@ scopes:
       KaNamedFunctionSymbol:
         annotations: []
         callableId: /A.memberInA
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -58,10 +59,11 @@ scopes:
           type: kotlin/Unit
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.equals
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -91,16 +93,20 @@ scopes:
           KaValueParameterSymbol:
             annotations: []
             callableId: null
+            compilerVisibility: Public
             contextReceivers: []
             generatedPrimaryConstructorProperty: null
             hasDefaultValue: false
+            isActual: false
             isCrossinline: false
+            isExpect: false
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
             isVal: true
             isVararg: false
             location: LOCAL
+            modality: FINAL
             name: other
             origin: LIBRARY
             receiverParameter: null
@@ -108,12 +114,13 @@ scopes:
               annotations: []
               typeArguments: []
               type: kotlin/Any?
-            typeParameters: []
+            visibility: PUBLIC
         ]
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.hashCode
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -140,10 +147,11 @@ scopes:
           type: kotlin/Int
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.toString
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -170,11 +178,12 @@ scopes:
           type: kotlin/String
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
     constructors: 1
       KaConstructorSymbol:
         annotations: []
         callableId: null
+        compilerVisibility: Public
         containingClassId: A
         contextReceivers: []
         hasStableParameterNames: true
@@ -183,6 +192,7 @@ scopes:
         isExtension: false
         isPrimary: true
         location: CLASS
+        modality: FINAL
         origin: SOURCE_MEMBER_GENERATED
         receiverParameter: null
         returnType: KaUsualClassType:
@@ -191,7 +201,7 @@ scopes:
           type: A
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
 
   LocalScope, index = 2
     packages: 0
@@ -212,6 +222,7 @@ scopes:
       KaNamedFunctionSymbol:
         annotations: []
         callableId: /B.memberInB
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -238,10 +249,11 @@ scopes:
           type: kotlin/Unit
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.equals
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -271,16 +283,20 @@ scopes:
           KaValueParameterSymbol:
             annotations: []
             callableId: null
+            compilerVisibility: Public
             contextReceivers: []
             generatedPrimaryConstructorProperty: null
             hasDefaultValue: false
+            isActual: false
             isCrossinline: false
+            isExpect: false
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
             isVal: true
             isVararg: false
             location: LOCAL
+            modality: FINAL
             name: other
             origin: LIBRARY
             receiverParameter: null
@@ -288,12 +304,13 @@ scopes:
               annotations: []
               typeArguments: []
               type: kotlin/Any?
-            typeParameters: []
+            visibility: PUBLIC
         ]
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.hashCode
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -320,10 +337,11 @@ scopes:
           type: kotlin/Int
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.toString
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -350,11 +368,12 @@ scopes:
           type: kotlin/String
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
     constructors: 1
       KaConstructorSymbol:
         annotations: []
         callableId: null
+        compilerVisibility: Public
         containingClassId: B
         contextReceivers: []
         hasStableParameterNames: true
@@ -363,6 +382,7 @@ scopes:
         isExtension: false
         isPrimary: true
         location: CLASS
+        modality: FINAL
         origin: SOURCE_MEMBER_GENERATED
         receiverParameter: null
         returnType: KaUsualClassType:
@@ -371,7 +391,7 @@ scopes:
           type: B
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
 
   LocalScope, index = 5
     packages: 0
@@ -386,10 +406,14 @@ scopes:
       KaLocalVariableSymbol:
         annotations: []
         callableId: null
+        compilerVisibility: Local
         contextReceivers: []
+        isActual: false
+        isExpect: false
         isExtension: false
         isVal: true
         location: LOCAL
+        modality: FINAL
         name: localVarA
         origin: SOURCE
         receiverParameter: null
@@ -397,7 +421,7 @@ scopes:
           annotations: []
           typeArguments: []
           type: kotlin/Int
-        typeParameters: []
+        visibility: LOCAL
     constructors: 0
 
   LocalScope, index = 7
@@ -407,16 +431,20 @@ scopes:
       KaValueParameterSymbol:
         annotations: []
         callableId: null
+        compilerVisibility: Public
         contextReceivers: []
         generatedPrimaryConstructorProperty: null
         hasDefaultValue: false
+        isActual: false
         isCrossinline: false
+        isExpect: false
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
         isVal: true
         isVararg: false
         location: LOCAL
+        modality: FINAL
         name: lambdaArg
         origin: SOURCE
         receiverParameter: null
@@ -424,7 +452,7 @@ scopes:
           annotations: []
           typeArguments: []
           type: kotlin/String
-        typeParameters: []
+        visibility: PUBLIC
     constructors: 0
 
   LocalScope, index = 8
@@ -434,10 +462,14 @@ scopes:
       KaLocalVariableSymbol:
         annotations: []
         callableId: null
+        compilerVisibility: Local
         contextReceivers: []
+        isActual: false
+        isExpect: false
         isExtension: false
         isVal: true
         location: LOCAL
+        modality: FINAL
         name: localVarB
         origin: SOURCE
         receiverParameter: null
@@ -445,10 +477,11 @@ scopes:
           annotations: []
           typeArguments: []
           type: kotlin/Int
-        typeParameters: []
+        visibility: LOCAL
       KaNamedFunctionSymbol:
         annotations: []
         callableId: null
+        compilerVisibility: Local
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -475,7 +508,7 @@ scopes:
           type: kotlin/Unit
         typeParameters: []
         valueParameters: []
-        visibility: Local
+        visibility: LOCAL
     constructors: 0
 
   LocalScope, index = 9
@@ -485,16 +518,20 @@ scopes:
       KaValueParameterSymbol:
         annotations: []
         callableId: null
+        compilerVisibility: Public
         contextReceivers: []
         generatedPrimaryConstructorProperty: null
         hasDefaultValue: false
+        isActual: false
         isCrossinline: false
+        isExpect: false
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
         isVal: true
         isVararg: false
         location: LOCAL
+        modality: FINAL
         name: param
         origin: SOURCE
         receiverParameter: null
@@ -502,7 +539,7 @@ scopes:
           annotations: []
           typeArguments: []
           type: kotlin/String?
-        typeParameters: []
+        visibility: PUBLIC
     constructors: 0
 
   TypeParameterScope, index = 10
@@ -510,13 +547,17 @@ scopes:
     classifiers: 1
       KaTypeParameterSymbol:
         annotations: []
+        compilerVisibility: Local
+        isActual: false
+        isExpect: false
         isReified: false
         location: LOCAL
+        modality: FINAL
         name: T
         origin: SOURCE
-        typeParameters: []
         upperBounds: []
         variance: INVARIANT
+        visibility: LOCAL
     callables: 0
     constructors: 0
 
@@ -528,6 +569,7 @@ scopes:
         classId: C.NestedInC
         classKind: CLASS
         companionObject: null
+        compilerVisibility: Public
         contextReceivers: []
         isActual: false
         isData: false
@@ -547,12 +589,13 @@ scopes:
             type: kotlin/Any
         ]
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaNamedClassSymbol:
         annotations: []
         classId: JavaClass.NestedInJavaClass
         classKind: CLASS
         companionObject: null
+        compilerVisibility: PackageVisibility
         contextReceivers: []
         isActual: false
         isData: false
@@ -572,11 +615,12 @@ scopes:
             type: kotlin/Any
         ]
         typeParameters: []
-        visibility: PackageVisibility
+        visibility: PACKAGE_PRIVATE
     callables: 4
       KaNamedFunctionSymbol:
         annotations: []
         callableId: /C.methodInC
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -608,16 +652,20 @@ scopes:
           KaValueParameterSymbol:
             annotations: []
             callableId: null
+            compilerVisibility: Public
             contextReceivers: []
             generatedPrimaryConstructorProperty: null
             hasDefaultValue: false
+            isActual: false
             isCrossinline: false
+            isExpect: false
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
             isVal: true
             isVararg: false
             location: LOCAL
+            modality: FINAL
             name: param
             origin: SOURCE
             receiverParameter: null
@@ -625,12 +673,13 @@ scopes:
               annotations: []
               typeArguments: []
               type: kotlin/String?
-            typeParameters: []
+            visibility: PUBLIC
         ]
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.equals
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -660,16 +709,20 @@ scopes:
           KaValueParameterSymbol:
             annotations: []
             callableId: null
+            compilerVisibility: Public
             contextReceivers: []
             generatedPrimaryConstructorProperty: null
             hasDefaultValue: false
+            isActual: false
             isCrossinline: false
+            isExpect: false
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
             isVal: true
             isVararg: false
             location: LOCAL
+            modality: FINAL
             name: other
             origin: LIBRARY
             receiverParameter: null
@@ -677,12 +730,13 @@ scopes:
               annotations: []
               typeArguments: []
               type: kotlin/Any?
-            typeParameters: []
+            visibility: PUBLIC
         ]
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.hashCode
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -709,10 +763,11 @@ scopes:
           type: kotlin/Int
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.toString
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -739,11 +794,12 @@ scopes:
           type: kotlin/String
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
     constructors: 1
       KaConstructorSymbol:
         annotations: []
         callableId: null
+        compilerVisibility: Public
         containingClassId: C
         contextReceivers: []
         hasStableParameterNames: true
@@ -752,6 +808,7 @@ scopes:
         isExtension: false
         isPrimary: true
         location: CLASS
+        modality: FINAL
         origin: SOURCE_MEMBER_GENERATED
         receiverParameter: null
         returnType: KaUsualClassType:
@@ -760,7 +817,7 @@ scopes:
           type: C
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
 
   StaticMemberScope, index = 12
     packages: 0
@@ -770,6 +827,7 @@ scopes:
         classId: C.NestedInC
         classKind: CLASS
         companionObject: null
+        compilerVisibility: Public
         contextReceivers: []
         isActual: false
         isData: false
@@ -789,7 +847,7 @@ scopes:
             type: kotlin/Any
         ]
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
     callables: 0
     constructors: 0
 
@@ -801,6 +859,7 @@ scopes:
         classId: JavaClass.NestedInJavaClass
         classKind: CLASS
         companionObject: null
+        compilerVisibility: PackageVisibility
         contextReceivers: []
         isActual: false
         isData: false
@@ -820,7 +879,7 @@ scopes:
             type: kotlin/Any
         ]
         typeParameters: []
-        visibility: PackageVisibility
+        visibility: PACKAGE_PRIVATE
     callables: 0
     constructors: 0
 
@@ -862,6 +921,7 @@ scopes:
         classId: A
         classKind: CLASS
         companionObject: null
+        compilerVisibility: Public
         contextReceivers: []
         isActual: false
         isData: false
@@ -881,12 +941,13 @@ scopes:
             type: kotlin/Any
         ]
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaNamedClassSymbol:
         annotations: []
         classId: B
         classKind: CLASS
         companionObject: null
+        compilerVisibility: Public
         contextReceivers: []
         isActual: false
         isData: false
@@ -906,12 +967,13 @@ scopes:
             type: kotlin/Any
         ]
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaNamedClassSymbol:
         annotations: []
         classId: C
         classKind: CLASS
         companionObject: null
+        compilerVisibility: Public
         contextReceivers: []
         isActual: false
         isData: false
@@ -931,12 +993,13 @@ scopes:
             type: JavaClass
         ]
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaNamedClassSymbol:
         annotations: []
         classId: JavaClass
         classKind: CLASS
         companionObject: null
+        compilerVisibility: Public
         contextReceivers: []
         isActual: false
         isData: false
@@ -956,11 +1019,12 @@ scopes:
             type: kotlin/Any
         ]
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
     callables: 4
       KaNamedFunctionSymbol:
         annotations: []
         callableId: /withA
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -990,16 +1054,20 @@ scopes:
           KaValueParameterSymbol:
             annotations: []
             callableId: null
+            compilerVisibility: Public
             contextReceivers: []
             generatedPrimaryConstructorProperty: null
             hasDefaultValue: false
+            isActual: false
             isCrossinline: false
+            isExpect: false
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
             isVal: true
             isVararg: false
             location: LOCAL
+            modality: FINAL
             name: f
             origin: SOURCE
             receiverParameter: null
@@ -1016,12 +1084,13 @@ scopes:
                   type: kotlin/Unit
               ]
               type: @ExtensionFunctionType kotlin/Function1<A, kotlin/Unit>
-            typeParameters: []
+            visibility: PUBLIC
         ]
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: /withB
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -1051,16 +1120,20 @@ scopes:
           KaValueParameterSymbol:
             annotations: []
             callableId: null
+            compilerVisibility: Public
             contextReceivers: []
             generatedPrimaryConstructorProperty: null
             hasDefaultValue: false
+            isActual: false
             isCrossinline: false
+            isExpect: false
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
             isVal: true
             isVararg: false
             location: LOCAL
+            modality: FINAL
             name: f
             origin: SOURCE
             receiverParameter: null
@@ -1077,12 +1150,13 @@ scopes:
                   type: kotlin/Unit
               ]
               type: @ExtensionFunctionType kotlin/Function1<B, kotlin/Unit>
-            typeParameters: []
+            visibility: PUBLIC
         ]
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: /withJavaClass
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -1112,16 +1186,20 @@ scopes:
           KaValueParameterSymbol:
             annotations: []
             callableId: null
+            compilerVisibility: Public
             contextReceivers: []
             generatedPrimaryConstructorProperty: null
             hasDefaultValue: false
+            isActual: false
             isCrossinline: false
+            isExpect: false
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
             isVal: true
             isVararg: false
             location: LOCAL
+            modality: FINAL
             name: f
             origin: SOURCE
             receiverParameter: null
@@ -1138,12 +1216,13 @@ scopes:
                   type: kotlin/Unit
               ]
               type: @ExtensionFunctionType kotlin/Function1<JavaClass, kotlin/Unit>
-            typeParameters: []
+            visibility: PUBLIC
         ]
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: /topLevel
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -1170,7 +1249,7 @@ scopes:
           type: kotlin/Int
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
     constructors: 0
 
   DefaultSimpleImportingScope, index = 16

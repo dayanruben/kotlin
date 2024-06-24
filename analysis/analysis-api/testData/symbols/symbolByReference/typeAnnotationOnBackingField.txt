@@ -1,10 +1,14 @@
 KaBackingFieldSymbol:
   annotations: []
   callableId: null
+  compilerVisibility: Private
   contextReceivers: []
+  isActual: false
+  isExpect: false
   isExtension: false
   isVal: true
   location: PROPERTY
+  modality: FINAL
   name: field
   origin: PROPERTY_BACKING_FIELD
   owningProperty: KaKotlinPropertySymbol(/foo)
@@ -20,7 +24,7 @@ KaBackingFieldSymbol:
     ]
     typeArguments: []
     type: @R|Anno1|()  @R|Anno2|()  @R|Anno3|()  {@R|Anno3|()  SecondTypeAlias=} BaseInterface
-  typeParameters: []
+  visibility: PRIVATE
   getContainingFileSymbol: KaFileSymbol(typeAnnotationOnBackingField.kt)
   getContainingJvmClassName: TypeAnnotationOnBackingFieldKt
   getContainingModule: KaSourceModule "Sources of main"

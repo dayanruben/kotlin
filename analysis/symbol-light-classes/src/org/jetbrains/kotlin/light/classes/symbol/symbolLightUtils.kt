@@ -16,17 +16,11 @@ import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.platform.modification.createProjectWideOutOfBlockModificationTracker
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithTypeParameters
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMember
 import org.jetbrains.kotlin.asJava.elements.psiType
-import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.descriptors.Visibilities
-import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.light.classes.symbol.annotations.*
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassBase
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassForClassLike
@@ -61,17 +55,17 @@ internal fun KaSession.mapType(
     return psiType as? PsiClassType
 }
 
-internal fun KaSymbolWithModality.computeSimpleModality(): String? = when (modality) {
-    Modality.SEALED -> PsiModifier.ABSTRACT
-    Modality.FINAL -> PsiModifier.FINAL
-    Modality.ABSTRACT -> PsiModifier.ABSTRACT
-    Modality.OPEN -> null
+internal fun KaDeclarationSymbol.computeSimpleModality(): String? = when (modality) {
+    KaSymbolModality.SEALED -> PsiModifier.ABSTRACT
+    KaSymbolModality.FINAL -> PsiModifier.FINAL
+    KaSymbolModality.ABSTRACT -> PsiModifier.ABSTRACT
+    KaSymbolModality.OPEN -> null
 }
 
 context(KaSession)
 @Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 internal fun KaClassSymbol.enumClassModality(): String? {
-    if (memberScope.callables.any { (it as? KaSymbolWithModality)?.modality == Modality.ABSTRACT }) {
+    if (memberScope.callables.any { it.modality == KaSymbolModality.ABSTRACT }) {
         return PsiModifier.ABSTRACT
     }
 
@@ -89,30 +83,31 @@ private fun KaEnumEntrySymbol.requiresSubClass(): Boolean {
     return initializer.combinedDeclaredMemberScope.declarations.any { it !is KaConstructorSymbol }
 }
 
-internal fun KaSymbolWithVisibility.toPsiVisibilityForMember(): String = visibility.toPsiVisibilityForMember()
+internal fun KaDeclarationSymbol.toPsiVisibilityForMember(): String = visibility.toPsiVisibilityForMember()
 
-internal fun KaSymbolWithVisibility.toPsiVisibilityForClass(isNested: Boolean): String = visibility.toPsiVisibilityForClass(isNested)
+internal fun KaDeclarationSymbol.toPsiVisibilityForClass(isNested: Boolean): String = visibility.toPsiVisibilityForClass(isNested)
 
-private fun Visibility.toPsiVisibilityForMember(): String = when (this) {
-    Visibilities.Private, Visibilities.PrivateToThis -> PsiModifier.PRIVATE
-    Visibilities.Protected -> PsiModifier.PROTECTED
+internal fun KaSymbolVisibility.toPsiVisibilityForMember(): String = when (this) {
+    KaSymbolVisibility.PRIVATE -> PsiModifier.PRIVATE
+    KaSymbolVisibility.PROTECTED -> PsiModifier.PROTECTED
     else -> PsiModifier.PUBLIC
 }
 
-private fun Visibility.toPsiVisibilityForClass(isNested: Boolean): String = when (isNested) {
+private fun KaSymbolVisibility.toPsiVisibilityForClass(isNested: Boolean): String = when (isNested) {
     false -> when (this) {
-        Visibilities.Public,
-        Visibilities.Protected,
-        Visibilities.Local,
-        Visibilities.Internal -> PsiModifier.PUBLIC
+        KaSymbolVisibility.PUBLIC,
+        KaSymbolVisibility.PROTECTED,
+        KaSymbolVisibility.LOCAL,
+        KaSymbolVisibility.INTERNAL,
+            -> PsiModifier.PUBLIC
 
         else -> PsiModifier.PACKAGE_LOCAL
     }
 
     true -> when (this) {
-        Visibilities.Public, Visibilities.Internal, Visibilities.Local -> PsiModifier.PUBLIC
-        Visibilities.Protected -> PsiModifier.PROTECTED
-        Visibilities.Private -> PsiModifier.PRIVATE
+        KaSymbolVisibility.PUBLIC, KaSymbolVisibility.INTERNAL, KaSymbolVisibility.LOCAL -> PsiModifier.PUBLIC
+        KaSymbolVisibility.PROTECTED -> PsiModifier.PROTECTED
+        KaSymbolVisibility.PRIVATE -> PsiModifier.PRIVATE
         else -> PsiModifier.PACKAGE_LOCAL
     }
 }
@@ -297,7 +292,7 @@ internal fun <T : KaSymbol> KaSymbolPointer<T>.restoreSymbolOrThrowIfDisposed():
 internal fun hasTypeParameters(
     ktModule: KaModule,
     declaration: KtTypeParameterListOwner?,
-    declarationPointer: KaSymbolPointer<KaSymbolWithTypeParameters>,
+    declarationPointer: KaSymbolPointer<KaDeclarationSymbol>,
 ): Boolean = declaration?.typeParameters?.isNotEmpty() ?: declarationPointer.withSymbol(ktModule) {
     it.typeParameters.isNotEmpty()
 }

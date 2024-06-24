@@ -21,6 +21,7 @@ scopes:
         classId: test/Base
         classKind: CLASS
         companionObject: null
+        compilerVisibility: Public
         contextReceivers: []
         isActual: false
         isData: false
@@ -40,12 +41,13 @@ scopes:
             type: kotlin/Any
         ]
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaNamedClassSymbol:
         annotations: []
         classId: test/Child
         classKind: CLASS
         companionObject: null
+        compilerVisibility: Public
         contextReceivers: []
         isActual: false
         isData: false
@@ -65,7 +67,7 @@ scopes:
             type: test/Base
         ]
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
     callables: 0
     constructors: 0
 

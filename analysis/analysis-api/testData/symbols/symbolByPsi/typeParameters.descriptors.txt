@@ -1,12 +1,16 @@
 KaTypeParameterSymbol:
   annotations: []
+  compilerVisibility: Local
+  isActual: false
+  isExpect: false
   isReified: false
   location: LOCAL
+  modality: FINAL
   name: T
   origin: SOURCE
-  typeParameters: []
   upperBounds: []
   variance: INVARIANT
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(typeParameters.kt)
   getContainingModule: KaSourceModule "Sources of main"
   deprecationStatus: null
@@ -14,10 +18,14 @@ KaTypeParameterSymbol:
 KaLocalVariableSymbol:
   annotations: []
   callableId: null
+  compilerVisibility: Local
   contextReceivers: []
+  isActual: false
+  isExpect: false
   isExtension: false
   isVal: true
   location: LOCAL
+  modality: FINAL
   name: x
   origin: SOURCE
   receiverParameter: null
@@ -25,7 +33,7 @@ KaLocalVariableSymbol:
     annotations: []
     typeArguments: []
     type: kotlin/Int
-  typeParameters: []
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(typeParameters.kt)
   getContainingJvmClassName: null
   getContainingModule: KaSourceModule "Sources of main"
@@ -34,6 +42,7 @@ KaLocalVariableSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /f
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -60,7 +69,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Unit
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(typeParameters.kt)
   getContainingJvmClassName: TypeParametersKt
   getContainingModule: KaSourceModule "Sources of main"

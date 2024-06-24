@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaPsiBasedSymbolPointe
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtProperty
@@ -28,7 +29,7 @@ import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 internal class KaFe10DescSyntheticJavaPropertySymbol(
     override val descriptor: SyntheticJavaPropertyDescriptor,
     override val analysisContext: Fe10AnalysisContext
-) : KaSyntheticJavaPropertySymbol(), KaFe10DescMemberSymbol<SyntheticJavaPropertyDescriptor> {
+) : KaSyntheticJavaPropertySymbol(), KaFe10DescSymbol<SyntheticJavaPropertyDescriptor> {
     override val name: Name
         get() = withValidityAssertion { descriptor.name }
 
@@ -38,8 +39,20 @@ internal class KaFe10DescSyntheticJavaPropertySymbol(
     override val isOverride: Boolean
         get() = withValidityAssertion { descriptor.isExplicitOverride }
 
+    override val modality: KaSymbolModality
+        get() = withValidityAssertion { descriptor.kaSymbolModality }
+
+    override val compilerVisibility: Visibility
+        get() = withValidityAssertion { descriptor.ktVisibility }
+
     override val isStatic: Boolean
         get() = withValidityAssertion { DescriptorUtils.isStaticDeclaration(descriptor) }
+
+    override val isActual: Boolean
+        get() = withValidityAssertion { descriptor.isActual }
+
+    override val isExpect: Boolean
+        get() = withValidityAssertion { descriptor.isExpect }
 
     override val isVal: Boolean
         get() = withValidityAssertion { !descriptor.isVar }

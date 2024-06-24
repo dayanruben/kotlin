@@ -4,6 +4,7 @@ KaNamedFunctionSymbol:
       psi: KtAnnotationEntry
   ]
   callableId: /check
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: [
     KaContractConditionalContractEffectDeclaration:
@@ -15,16 +16,20 @@ KaNamedFunctionSymbol:
             KaValueParameterSymbol:
               annotations: []
               callableId: null
+              compilerVisibility: Public
               contextReceivers: []
               generatedPrimaryConstructorProperty: null
               hasDefaultValue: false
+              isActual: false
               isCrossinline: false
+              isExpect: false
               isExtension: false
               isImplicitLambdaParameter: false
               isNoinline: false
               isVal: true
               isVararg: false
               location: LOCAL
+              modality: FINAL
               name: value
               origin: SOURCE
               receiverParameter: null
@@ -32,7 +37,7 @@ KaNamedFunctionSymbol:
                 annotations: []
                 typeArguments: []
                 type: kotlin/Boolean
-              typeParameters: []
+              visibility: PUBLIC
               getContainingFileSymbol: KaFileSymbol(returnsContract.kt)
               getContainingJvmClassName: ReturnsContractKt
               getContainingModule: KaSourceModule "Sources of main"
@@ -65,16 +70,20 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: value
       origin: SOURCE
       receiverParameter: null
@@ -82,13 +91,13 @@ KaNamedFunctionSymbol:
         annotations: []
         typeArguments: []
         type: kotlin/Boolean
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(returnsContract.kt)
       getContainingJvmClassName: ReturnsContractKt
       getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(returnsContract.kt)
   getContainingJvmClassName: ReturnsContractKt
   getContainingModule: KaSourceModule "Sources of main"

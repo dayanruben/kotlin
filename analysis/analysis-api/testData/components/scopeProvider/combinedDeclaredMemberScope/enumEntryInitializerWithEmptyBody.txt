@@ -1,6 +1,7 @@
 KaConstructorSymbol:
   annotations: []
   callableId: null
+  compilerVisibility: Private
   containingClassId: null
   contextReceivers: []
   hasStableParameterNames: true
@@ -9,6 +10,7 @@ KaConstructorSymbol:
   isExtension: false
   isPrimary: true
   location: CLASS
+  modality: FINAL
   origin: SOURCE_MEMBER_GENERATED
   receiverParameter: null
   returnType: KaUsualClassType:
@@ -17,7 +19,7 @@ KaConstructorSymbol:
     type: test/<anonymous>
   typeParameters: []
   valueParameters: []
-  visibility: Private
+  visibility: PRIVATE
   getContainingFileSymbol: KaFileSymbol(enumEntryInitializerWithEmptyBody.kt)
   getContainingJvmClassName: null
   getContainingModule: KaSourceModule "Sources of main"

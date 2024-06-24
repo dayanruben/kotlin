@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisContext
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaPsiBasedSymbolPointer
@@ -27,6 +29,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.contracts.description.ContractProviderKey
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.load.java.descriptors.JavaCallableMemberDescriptor
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
@@ -38,7 +41,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 internal class KaFe10DescNamedFunctionSymbol private constructor(
     override val descriptor: FunctionDescriptor,
     override val analysisContext: Fe10AnalysisContext,
-) : KaNamedFunctionSymbol(), KaFe10DescMemberSymbol<FunctionDescriptor> {
+) : KaNamedFunctionSymbol(), KaFe10DescSymbol<FunctionDescriptor> {
     override val name: Name
         get() = withValidityAssertion { descriptor.name }
 
@@ -50,6 +53,12 @@ internal class KaFe10DescNamedFunctionSymbol private constructor(
 
     override val location: KaSymbolLocation
         get() = withValidityAssertion { descriptor.kaSymbolLocation }
+
+    override val modality: KaSymbolModality
+        get() = withValidityAssertion { descriptor.kaSymbolModality }
+
+    override val compilerVisibility: Visibility
+        get() = withValidityAssertion { descriptor.ktVisibility }
 
     override val isSuspend: Boolean
         get() = withValidityAssertion { descriptor.isSuspend }
@@ -117,6 +126,7 @@ internal class KaFe10DescNamedFunctionSymbol private constructor(
     override val receiverParameter: KaReceiverParameterSymbol?
         get() = withValidityAssertion { descriptor.extensionReceiverParameter?.toKtReceiverParameterSymbol(analysisContext) }
 
+    @KaExperimentalApi
     override val contextReceivers: List<KaContextReceiver>
         get() = withValidityAssertion { descriptor.createContextReceivers(analysisContext) }
 

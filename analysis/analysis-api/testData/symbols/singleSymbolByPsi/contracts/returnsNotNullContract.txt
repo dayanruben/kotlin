@@ -4,6 +4,7 @@ KaNamedFunctionSymbol:
       psi: KtAnnotationEntry
   ]
   callableId: /returnsNotNullContract
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: [
     KaContractConditionalContractEffectDeclaration:
@@ -17,16 +18,20 @@ KaNamedFunctionSymbol:
                 KaValueParameterSymbol:
                   annotations: []
                   callableId: null
+                  compilerVisibility: Public
                   contextReceivers: []
                   generatedPrimaryConstructorProperty: null
                   hasDefaultValue: false
+                  isActual: false
                   isCrossinline: false
+                  isExpect: false
                   isExtension: false
                   isImplicitLambdaParameter: false
                   isNoinline: false
                   isVal: true
                   isVararg: false
                   location: LOCAL
+                  modality: FINAL
                   name: foo
                   origin: SOURCE
                   receiverParameter: null
@@ -34,7 +39,7 @@ KaNamedFunctionSymbol:
                     annotations: []
                     typeArguments: []
                     type: kotlin/Any?
-                  typeParameters: []
+                  visibility: PUBLIC
                   getContainingFileSymbol: KaFileSymbol(returnsNotNullContract.kt)
                   getContainingJvmClassName: ReturnsNotNullContractKt
                   getContainingModule: KaSourceModule "Sources of main"
@@ -68,16 +73,20 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: foo
       origin: SOURCE
       receiverParameter: null
@@ -85,13 +94,13 @@ KaNamedFunctionSymbol:
         annotations: []
         typeArguments: []
         type: kotlin/Any?
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(returnsNotNullContract.kt)
       getContainingJvmClassName: ReturnsNotNullContractKt
       getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(returnsNotNullContract.kt)
   getContainingJvmClassName: ReturnsNotNullContractKt
   getContainingModule: KaSourceModule "Sources of main"

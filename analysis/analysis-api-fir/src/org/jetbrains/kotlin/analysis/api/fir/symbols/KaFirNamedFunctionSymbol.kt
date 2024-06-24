@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.analysis.api.fir.symbols
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.fir.KaFirSession
@@ -24,11 +25,11 @@ import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaPsiBasedSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.containingClassLookupTag
 import org.jetbrains.kotlin.fir.contracts.FirEffectDeclaration
@@ -58,6 +59,8 @@ internal class KaFirNamedFunctionSymbol(
 
     override val returnType: KaType get() = withValidityAssertion { firSymbol.returnType(builder) }
     override val receiverParameter: KaReceiverParameterSymbol? get() = withValidityAssertion { firSymbol.receiver(builder) }
+
+    @KaExperimentalApi
     override val contextReceivers: List<KaContextReceiver> by cached { firSymbol.createContextReceivers(builder) }
 
     override val typeParameters by cached { firSymbol.createKtTypeParameters(builder) }
@@ -94,8 +97,8 @@ internal class KaFirNamedFunctionSymbol(
             }
         }
 
-    override val modality: Modality get() = withValidityAssertion { firSymbol.modality }
-    override val visibility: Visibility get() = withValidityAssertion { firSymbol.visibility }
+    override val modality: KaSymbolModality get() = withValidityAssertion { firSymbol.kaSymbolModality }
+    override val compilerVisibility: Visibility get() = withValidityAssertion { firSymbol.visibility }
 
     override fun createPointer(): KaSymbolPointer<KaNamedFunctionSymbol> = withValidityAssertion {
         KaPsiBasedSymbolPointer.createForSymbolFromSource<KaNamedFunctionSymbol>(this)?.let { return it }

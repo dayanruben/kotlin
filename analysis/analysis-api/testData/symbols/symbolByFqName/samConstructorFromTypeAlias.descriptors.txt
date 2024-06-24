@@ -1,10 +1,14 @@
 KaSamConstructorSymbol:
   annotations: []
   callableId: one/MyInterface
+  compilerVisibility: Public
   contextReceivers: []
   hasStableParameterNames: true
+  isActual: false
+  isExpect: false
   isExtension: false
   location: TOP_LEVEL
+  modality: FINAL
   name: MyInterface
   origin: SAM_CONSTRUCTOR
   receiverParameter: null
@@ -17,16 +21,20 @@ KaSamConstructorSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Local
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: function
       origin: SOURCE
       receiverParameter: null
@@ -39,12 +47,13 @@ KaSamConstructorSymbol:
             type: kotlin/Unit
         ]
         type: kotlin/Function0<kotlin/Unit>
-      typeParameters: []
+      visibility: LOCAL
       getContainingFileSymbol: KaFileSymbol(samConstructorFromTypeAlias.kt)
       getContainingJvmClassName: one.SamConstructorFromTypeAliasKt
       getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
   ]
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(samConstructorFromTypeAlias.kt)
   getContainingJvmClassName: one.SamConstructorFromTypeAliasKt
   getContainingModule: KaSourceModule "Sources of main"

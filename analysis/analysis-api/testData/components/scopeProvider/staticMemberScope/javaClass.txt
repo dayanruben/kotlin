@@ -1,6 +1,7 @@
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /JavaClass.bar
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: false
@@ -26,7 +27,7 @@ KaNamedFunctionSymbol:
     type: kotlin/String!
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: null
   getContainingJvmClassName: JavaClass
   getContainingModule: KaSourceModule "Sources of main"
@@ -35,7 +36,10 @@ KaNamedFunctionSymbol:
 KaJavaFieldSymbol:
   annotations: []
   callableId: /SuperClass.superFoo
+  compilerVisibility: Public
   contextReceivers: []
+  isActual: false
+  isExpect: false
   isExtension: false
   isStatic: true
   isVal: false
@@ -48,8 +52,7 @@ KaJavaFieldSymbol:
     annotations: []
     typeArguments: []
     type: kotlin/Int
-  typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: null
   getContainingJvmClassName: SuperClass
   getContainingModule: KaSourceModule "Sources of main"
@@ -58,6 +61,7 @@ KaJavaFieldSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /SuperClass.superBar
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: false
@@ -83,7 +87,7 @@ KaNamedFunctionSymbol:
     type: kotlin/String!
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: null
   getContainingJvmClassName: SuperClass
   getContainingModule: KaSourceModule "Sources of main"
@@ -92,7 +96,10 @@ KaNamedFunctionSymbol:
 KaJavaFieldSymbol:
   annotations: []
   callableId: /JavaClass.foo
+  compilerVisibility: Public
   contextReceivers: []
+  isActual: false
+  isExpect: false
   isExtension: false
   isStatic: true
   isVal: false
@@ -105,8 +112,7 @@ KaJavaFieldSymbol:
     annotations: []
     typeArguments: []
     type: kotlin/Int
-  typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: null
   getContainingJvmClassName: JavaClass
   getContainingModule: KaSourceModule "Sources of main"
@@ -117,6 +123,7 @@ KaNamedClassSymbol:
   classId: JavaClass.InnerClass
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -136,7 +143,7 @@ KaNamedClassSymbol:
       type: kotlin/Any
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: null
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null
@@ -147,6 +154,7 @@ KaNamedClassSymbol:
   classId: JavaClass.NestedClass
   classKind: CLASS
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -166,7 +174,7 @@ KaNamedClassSymbol:
       type: kotlin/Any
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: null
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null

@@ -1,6 +1,7 @@
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /foo
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -30,16 +31,20 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: action
       origin: SOURCE
       receiverParameter: null
@@ -52,13 +57,13 @@ KaNamedFunctionSymbol:
             type: kotlin/Int
         ]
         type: kotlin/Function0<kotlin/Int>
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(simpleScriptWithResultDeclaration.kts)
       getContainingJvmClassName: null
       getContainingModule: KaScriptModule "Script simpleScriptWithResultDeclaration.kts"
       deprecationStatus: null
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(simpleScriptWithResultDeclaration.kts)
   getContainingJvmClassName: null
   getContainingModule: KaScriptModule "Script simpleScriptWithResultDeclaration.kts"
@@ -68,14 +73,18 @@ KaKotlinPropertySymbol:
   annotations: []
   backingFieldSymbol: null
   callableId: /$$result
+  compilerVisibility: Public
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Public
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: true
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: false
@@ -87,9 +96,8 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Unit
-    typeParameters: []
     valueParameters: []
-    visibility: Public
+    visibility: PUBLIC
     getContainingFileSymbol: KaFileSymbol(simpleScriptWithResultDeclaration.kts)
     getContainingJvmClassName: null
     getContainingModule: KaScriptModule "Script simpleScriptWithResultDeclaration.kts"
@@ -119,7 +127,7 @@ KaKotlinPropertySymbol:
     type: kotlin/Unit
   setter: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(simpleScriptWithResultDeclaration.kts)
   getContainingJvmClassName: null
   getContainingModule: KaScriptModule "Script simpleScriptWithResultDeclaration.kts"

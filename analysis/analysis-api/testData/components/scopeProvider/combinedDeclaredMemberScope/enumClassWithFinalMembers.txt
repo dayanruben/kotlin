@@ -1,11 +1,15 @@
 KaEnumEntrySymbol:
   annotations: []
   callableId: test/E.A
+  compilerVisibility: Public
   contextReceivers: []
   enumEntryInitializer: KaAnonymousObjectSymbol(<local>/<no name provided>)
+  isActual: false
+  isExpect: false
   isExtension: false
   isVal: true
   location: CLASS
+  modality: FINAL
   name: A
   origin: SOURCE
   receiverParameter: null
@@ -13,7 +17,7 @@ KaEnumEntrySymbol:
     annotations: []
     typeArguments: []
     type: test/E
-  typeParameters: []
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(enumClassWithFinalMembers.kt)
   getContainingJvmClassName: test.E
   getContainingModule: KaSourceModule "Sources of main"
@@ -22,11 +26,15 @@ KaEnumEntrySymbol:
 KaEnumEntrySymbol:
   annotations: []
   callableId: test/E.B
+  compilerVisibility: Public
   contextReceivers: []
   enumEntryInitializer: null
+  isActual: false
+  isExpect: false
   isExtension: false
   isVal: true
   location: CLASS
+  modality: FINAL
   name: B
   origin: SOURCE
   receiverParameter: null
@@ -34,7 +42,7 @@ KaEnumEntrySymbol:
     annotations: []
     typeArguments: []
     type: test/E
-  typeParameters: []
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(enumClassWithFinalMembers.kt)
   getContainingJvmClassName: test.E
   getContainingModule: KaSourceModule "Sources of main"
@@ -45,10 +53,14 @@ KaKotlinPropertySymbol:
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Private
     contextReceivers: []
+    isActual: false
+    isExpect: false
     isExtension: false
     isVal: true
     location: PROPERTY
+    modality: FINAL
     name: field
     origin: PROPERTY_BACKING_FIELD
     owningProperty: KaKotlinPropertySymbol(test/E.foo)
@@ -57,20 +69,24 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
+    visibility: PRIVATE
     getContainingFileSymbol: KaFileSymbol(enumClassWithFinalMembers.kt)
     getContainingJvmClassName: test.E
     getContainingModule: KaSourceModule "Sources of main"
     deprecationStatus: null
   callableId: test/E.foo
+  compilerVisibility: Public
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Public
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: true
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: false
@@ -82,9 +98,8 @@ KaKotlinPropertySymbol:
       annotations: []
       typeArguments: []
       type: kotlin/Int
-    typeParameters: []
     valueParameters: []
-    visibility: Public
+    visibility: PUBLIC
     getDispatchReceiver(): KaUsualClassType:
       annotations: []
       typeArguments: []
@@ -118,7 +133,7 @@ KaKotlinPropertySymbol:
     type: kotlin/Int
   setter: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -135,6 +150,7 @@ KaKotlinPropertySymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: test/E.bar
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -161,7 +177,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Unit
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []
@@ -174,6 +190,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: test/E.values
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -205,7 +222,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Array<test/E>
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(enumClassWithFinalMembers.kt)
   getContainingJvmClassName: test.E
   getContainingModule: KaSourceModule "Sources of main"
@@ -214,6 +231,7 @@ KaNamedFunctionSymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: test/E.valueOf
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -243,16 +261,20 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: value
       origin: SOURCE_MEMBER_GENERATED
       receiverParameter: null
@@ -260,13 +282,13 @@ KaNamedFunctionSymbol:
         annotations: []
         typeArguments: []
         type: kotlin/String
-      typeParameters: []
+      visibility: PUBLIC
       getContainingFileSymbol: KaFileSymbol(enumClassWithFinalMembers.kt)
       getContainingJvmClassName: test.E
       getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(enumClassWithFinalMembers.kt)
   getContainingJvmClassName: test.E
   getContainingModule: KaSourceModule "Sources of main"
@@ -276,14 +298,18 @@ KaKotlinPropertySymbol:
   annotations: []
   backingFieldSymbol: null
   callableId: test/E.entries
+  compilerVisibility: Public
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
+    compilerVisibility: Public
     contextReceivers: []
     hasBody: false
     hasStableParameterNames: true
+    isActual: false
     isDefault: true
+    isExpect: false
     isExtension: false
     isInline: false
     isOverride: false
@@ -300,9 +326,8 @@ KaKotlinPropertySymbol:
           type: test/E
       ]
       type: kotlin/enums/EnumEntries<test/E>
-    typeParameters: []
     valueParameters: []
-    visibility: Public
+    visibility: PUBLIC
     getContainingFileSymbol: KaFileSymbol(enumClassWithFinalMembers.kt)
     getContainingJvmClassName: test.E
     getContainingModule: KaSourceModule "Sources of main"
@@ -337,7 +362,7 @@ KaKotlinPropertySymbol:
     type: kotlin/enums/EnumEntries<test/E>
   setter: null
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(enumClassWithFinalMembers.kt)
   getContainingJvmClassName: test.E
   getContainingModule: KaSourceModule "Sources of main"
@@ -350,6 +375,7 @@ KaKotlinPropertySymbol:
 KaConstructorSymbol:
   annotations: []
   callableId: null
+  compilerVisibility: Private
   containingClassId: test/E
   contextReceivers: []
   hasStableParameterNames: true
@@ -358,6 +384,7 @@ KaConstructorSymbol:
   isExtension: false
   isPrimary: true
   location: CLASS
+  modality: FINAL
   origin: SOURCE_MEMBER_GENERATED
   receiverParameter: null
   returnType: KaUsualClassType:
@@ -366,7 +393,7 @@ KaConstructorSymbol:
     type: test/E
   typeParameters: []
   valueParameters: []
-  visibility: Private
+  visibility: PRIVATE
   getContainingFileSymbol: KaFileSymbol(enumClassWithFinalMembers.kt)
   getContainingJvmClassName: test.E
   getContainingModule: KaSourceModule "Sources of main"

@@ -3,6 +3,7 @@ KaNamedClassSymbol:
   classId: kotlin/io/FileWalkDirection
   classKind: ENUM_CLASS
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -27,7 +28,7 @@ KaNamedClassSymbol:
       type: kotlin/Enum<kotlin/io/FileWalkDirection>
   ]
   typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: null
   getContainingModule: KaLibraryModule "Library kotlin-stdlib"
   annotationApplicableTargets: null

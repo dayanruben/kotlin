@@ -14,16 +14,20 @@ scopes:
       KaValueParameterSymbol:
         annotations: []
         callableId: null
+        compilerVisibility: Public
         contextReceivers: []
         generatedPrimaryConstructorProperty: null
         hasDefaultValue: false
+        isActual: false
         isCrossinline: false
+        isExpect: false
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
         isVal: true
         isVararg: false
         location: LOCAL
+        modality: FINAL
         name: constructorParam
         origin: SOURCE
         receiverParameter: null
@@ -31,7 +35,7 @@ scopes:
           annotations: []
           typeArguments: []
           type: kotlin/Int
-        typeParameters: []
+        visibility: PUBLIC
     constructors: 0
 
   TypeScope, index = 1
@@ -43,10 +47,14 @@ scopes:
         backingFieldSymbol: KaBackingFieldSymbol:
           annotations: []
           callableId: null
+          compilerVisibility: Public
           contextReceivers: []
+          isActual: false
+          isExpect: false
           isExtension: false
           isVal: true
           location: PROPERTY
+          modality: FINAL
           name: field
           origin: PROPERTY_BACKING_FIELD
           owningProperty: KaKotlinPropertySymbol(test/Child.constructorProp)
@@ -55,16 +63,20 @@ scopes:
             annotations: []
             typeArguments: []
             type: kotlin/Int
-          typeParameters: []
+          visibility: PUBLIC
         callableId: test/Child.constructorProp
+        compilerVisibility: Public
         contextReceivers: []
         getter: KaPropertyGetterSymbol:
           annotations: []
           callableId: null
+          compilerVisibility: Public
           contextReceivers: []
           hasBody: false
           hasStableParameterNames: true
+          isActual: false
           isDefault: true
+          isExpect: false
           isExtension: false
           isInline: false
           isOverride: false
@@ -76,9 +88,8 @@ scopes:
             annotations: []
             typeArguments: []
             type: kotlin/Int
-          typeParameters: []
           valueParameters: []
-          visibility: Public
+          visibility: PUBLIC
         hasBackingField: true
         hasGetter: true
         hasSetter: false
@@ -104,10 +115,11 @@ scopes:
           type: kotlin/Int
         setter: null
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: test/Child.childMember
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -134,16 +146,20 @@ scopes:
           type: kotlin/Int
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaKotlinPropertySymbol:
         annotations: []
         backingFieldSymbol: KaBackingFieldSymbol:
           annotations: []
           callableId: null
+          compilerVisibility: Private
           contextReceivers: []
+          isActual: false
+          isExpect: false
           isExtension: false
           isVal: true
           location: PROPERTY
+          modality: FINAL
           name: field
           origin: PROPERTY_BACKING_FIELD
           owningProperty: KaKotlinPropertySymbol(test/Child.childProp)
@@ -152,16 +168,20 @@ scopes:
             annotations: []
             typeArguments: []
             type: kotlin/Int
-          typeParameters: []
+          visibility: PRIVATE
         callableId: test/Child.childProp
+        compilerVisibility: Public
         contextReceivers: []
         getter: KaPropertyGetterSymbol:
           annotations: []
           callableId: null
+          compilerVisibility: Public
           contextReceivers: []
           hasBody: false
           hasStableParameterNames: true
+          isActual: false
           isDefault: true
+          isExpect: false
           isExtension: false
           isInline: false
           isOverride: false
@@ -173,9 +193,8 @@ scopes:
             annotations: []
             typeArguments: []
             type: kotlin/Int
-          typeParameters: []
           valueParameters: []
-          visibility: Public
+          visibility: PUBLIC
         hasBackingField: true
         hasGetter: true
         hasSetter: false
@@ -201,16 +220,20 @@ scopes:
           type: kotlin/Int
         setter: null
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaKotlinPropertySymbol:
         annotations: []
         backingFieldSymbol: KaBackingFieldSymbol:
           annotations: []
           callableId: null
+          compilerVisibility: Public
           contextReceivers: []
+          isActual: false
+          isExpect: false
           isExtension: false
           isVal: true
           location: PROPERTY
+          modality: FINAL
           name: field
           origin: PROPERTY_BACKING_FIELD
           owningProperty: KaKotlinPropertySymbol(test/Base.value)
@@ -219,16 +242,20 @@ scopes:
             annotations: []
             typeArguments: []
             type: kotlin/Int
-          typeParameters: []
+          visibility: PUBLIC
         callableId: test/Base.value
+        compilerVisibility: Public
         contextReceivers: []
         getter: KaPropertyGetterSymbol:
           annotations: []
           callableId: null
+          compilerVisibility: Public
           contextReceivers: []
           hasBody: false
           hasStableParameterNames: true
+          isActual: false
           isDefault: true
+          isExpect: false
           isExtension: false
           isInline: false
           isOverride: false
@@ -240,9 +267,8 @@ scopes:
             annotations: []
             typeArguments: []
             type: kotlin/Int
-          typeParameters: []
           valueParameters: []
-          visibility: Public
+          visibility: PUBLIC
         hasBackingField: true
         hasGetter: true
         hasSetter: false
@@ -268,10 +294,11 @@ scopes:
           type: kotlin/Int
         setter: null
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: test/Base.baseMember
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -298,16 +325,20 @@ scopes:
           type: kotlin/Int
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaKotlinPropertySymbol:
         annotations: []
         backingFieldSymbol: KaBackingFieldSymbol:
           annotations: []
           callableId: null
+          compilerVisibility: Private
           contextReceivers: []
+          isActual: false
+          isExpect: false
           isExtension: false
           isVal: true
           location: PROPERTY
+          modality: FINAL
           name: field
           origin: PROPERTY_BACKING_FIELD
           owningProperty: KaKotlinPropertySymbol(test/Base.baseProp)
@@ -316,16 +347,20 @@ scopes:
             annotations: []
             typeArguments: []
             type: kotlin/Int
-          typeParameters: []
+          visibility: PRIVATE
         callableId: test/Base.baseProp
+        compilerVisibility: Public
         contextReceivers: []
         getter: KaPropertyGetterSymbol:
           annotations: []
           callableId: null
+          compilerVisibility: Public
           contextReceivers: []
           hasBody: false
           hasStableParameterNames: true
+          isActual: false
           isDefault: true
+          isExpect: false
           isExtension: false
           isInline: false
           isOverride: false
@@ -337,9 +372,8 @@ scopes:
             annotations: []
             typeArguments: []
             type: kotlin/Int
-          typeParameters: []
           valueParameters: []
-          visibility: Public
+          visibility: PUBLIC
         hasBackingField: true
         hasGetter: true
         hasSetter: false
@@ -365,10 +399,11 @@ scopes:
           type: kotlin/Int
         setter: null
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.equals
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -398,16 +433,20 @@ scopes:
           KaValueParameterSymbol:
             annotations: []
             callableId: null
+            compilerVisibility: Public
             contextReceivers: []
             generatedPrimaryConstructorProperty: null
             hasDefaultValue: false
+            isActual: false
             isCrossinline: false
+            isExpect: false
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
             isVal: true
             isVararg: false
             location: LOCAL
+            modality: FINAL
             name: other
             origin: LIBRARY
             receiverParameter: null
@@ -415,12 +454,13 @@ scopes:
               annotations: []
               typeArguments: []
               type: kotlin/Any?
-            typeParameters: []
+            visibility: PUBLIC
         ]
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.hashCode
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -447,10 +487,11 @@ scopes:
           type: kotlin/Int
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.toString
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -477,11 +518,12 @@ scopes:
           type: kotlin/String
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
     constructors: 1
       KaConstructorSymbol:
         annotations: []
         callableId: null
+        compilerVisibility: Public
         containingClassId: test/Child
         contextReceivers: []
         hasStableParameterNames: true
@@ -490,6 +532,7 @@ scopes:
         isExtension: false
         isPrimary: true
         location: CLASS
+        modality: FINAL
         origin: SOURCE
         receiverParameter: null
         returnType: KaUsualClassType:
@@ -501,16 +544,21 @@ scopes:
           KaValueParameterSymbol:
             annotations: []
             callableId: null
+            compilerVisibility: Public
             contextReceivers: []
             generatedPrimaryConstructorProperty: KaKotlinPropertySymbol:
               annotations: []
               backingFieldSymbol: KaBackingFieldSymbol:
                 annotations: []
                 callableId: null
+                compilerVisibility: Public
                 contextReceivers: []
+                isActual: false
+                isExpect: false
                 isExtension: false
                 isVal: true
                 location: PROPERTY
+                modality: FINAL
                 name: field
                 origin: PROPERTY_BACKING_FIELD
                 owningProperty: KaKotlinPropertySymbol(test/Child.constructorProp)
@@ -519,16 +567,20 @@ scopes:
                   annotations: []
                   typeArguments: []
                   type: kotlin/Int
-                typeParameters: []
+                visibility: PUBLIC
               callableId: test/Child.constructorProp
+              compilerVisibility: Public
               contextReceivers: []
               getter: KaPropertyGetterSymbol:
                 annotations: []
                 callableId: null
+                compilerVisibility: Public
                 contextReceivers: []
                 hasBody: false
                 hasStableParameterNames: true
+                isActual: false
                 isDefault: true
+                isExpect: false
                 isExtension: false
                 isInline: false
                 isOverride: false
@@ -540,9 +592,8 @@ scopes:
                   annotations: []
                   typeArguments: []
                   type: kotlin/Int
-                typeParameters: []
                 valueParameters: []
-                visibility: Public
+                visibility: PUBLIC
               hasBackingField: true
               hasGetter: true
               hasSetter: false
@@ -568,15 +619,18 @@ scopes:
                 type: kotlin/Int
               setter: null
               typeParameters: []
-              visibility: Public
+              visibility: PUBLIC
             hasDefaultValue: false
+            isActual: false
             isCrossinline: false
+            isExpect: false
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
             isVal: true
             isVararg: false
             location: LOCAL
+            modality: FINAL
             name: constructorProp
             origin: SOURCE
             receiverParameter: null
@@ -584,20 +638,24 @@ scopes:
               annotations: []
               typeArguments: []
               type: kotlin/Int
-            typeParameters: []
+            visibility: PUBLIC
           KaValueParameterSymbol:
             annotations: []
             callableId: null
+            compilerVisibility: Public
             contextReceivers: []
             generatedPrimaryConstructorProperty: null
             hasDefaultValue: false
+            isActual: false
             isCrossinline: false
+            isExpect: false
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
             isVal: true
             isVararg: false
             location: LOCAL
+            modality: FINAL
             name: constructorParam
             origin: SOURCE
             receiverParameter: null
@@ -605,9 +663,9 @@ scopes:
               annotations: []
               typeArguments: []
               type: kotlin/Int
-            typeParameters: []
+            visibility: PUBLIC
         ]
-        visibility: Public
+        visibility: PUBLIC
 
   ExplicitSimpleImportingScope, index = 2
     packages: 0
@@ -623,6 +681,7 @@ scopes:
         classId: test/Base
         classKind: CLASS
         companionObject: null
+        compilerVisibility: Public
         contextReceivers: []
         isActual: false
         isData: false
@@ -642,12 +701,13 @@ scopes:
             type: kotlin/Any
         ]
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaNamedClassSymbol:
         annotations: []
         classId: test/Child
         classKind: CLASS
         companionObject: null
+        compilerVisibility: Public
         contextReceivers: []
         isActual: false
         isData: false
@@ -667,7 +727,7 @@ scopes:
             type: test/Base
         ]
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
     callables: 0
     constructors: 0
 

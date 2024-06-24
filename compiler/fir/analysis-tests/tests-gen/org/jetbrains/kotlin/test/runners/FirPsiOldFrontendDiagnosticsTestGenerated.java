@@ -17403,6 +17403,24 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("kt69159Simplified.kt")
+      public void testKt69159Simplified() {
+        runTest("compiler/testData/diagnostics/tests/inference/kt69159Simplified.kt");
+      }
+
+      @Test
+      @TestMetadata("kt69159WithComparable.kt")
+      public void testKt69159WithComparable() {
+        runTest("compiler/testData/diagnostics/tests/inference/kt69159WithComparable.kt");
+      }
+
+      @Test
+      @TestMetadata("kt69326.kt")
+      public void testKt69326() {
+        runTest("compiler/testData/diagnostics/tests/inference/kt69326.kt");
+      }
+
+      @Test
       @TestMetadata("lambdaAgainstSimpleTypeMismatch.kt")
       public void testLambdaAgainstSimpleTypeMismatch() {
         runTest("compiler/testData/diagnostics/tests/inference/lambdaAgainstSimpleTypeMismatch.kt");
@@ -22736,6 +22754,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("fieldOverridesNothing.kt")
       public void testFieldOverridesNothing() {
         runTest("compiler/testData/diagnostics/tests/j+k/fieldOverridesNothing.kt");
+      }
+
+      @Test
+      @TestMetadata("fileJvmNameSameAsClass.kt")
+      public void testFileJvmNameSameAsClass() {
+        runTest("compiler/testData/diagnostics/tests/j+k/fileJvmNameSameAsClass.kt");
       }
 
       @Test
@@ -34958,6 +34982,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("propertyToNotNull.kt")
       public void testPropertyToNotNull() {
         runTest("compiler/testData/diagnostics/tests/smartCasts/propertyToNotNull.kt");
+      }
+
+      @Test
+      @TestMetadata("qualifiedObjectAfterSmartCast.kt")
+      public void testQualifiedObjectAfterSmartCast() {
+        runTest("compiler/testData/diagnostics/tests/smartCasts/qualifiedObjectAfterSmartCast.kt");
       }
 
       @Test

@@ -11,8 +11,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.*
 import org.jetbrains.kotlin.backend.konan.KonanFqNames
-import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
@@ -33,8 +31,8 @@ internal fun KaSymbol.isVisibleInObjC(): Boolean = when (this) {
 context(KaSession)
 @Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 internal fun KaCallableSymbol.isVisibleInObjC(): Boolean {
-    if (this is KaSymbolWithVisibility && !this.isPublic) return false
-    if (this is KaPossibleMultiplatformSymbol && isExpect) return false
+    if (!this.isPublic) return false
+    if (isExpect) return false
 
     if (this.isHiddenFromObjCByDeprecation()) return false
     if (this.isHiddenFromObjCByAnnotation()) return false
@@ -49,7 +47,7 @@ internal fun KaClassSymbol.isVisibleInObjC(): Boolean {
     // TODO if(specialMapped()) return false
     // TODO if(!defaultType.isObjCObjectType()) return false
 
-    if (this is KaSymbolWithVisibility && !isPublicApi(this)) return false
+    if (!isPublicApi(this)) return false
     if (this.isHiddenFromObjCByDeprecation()) return false
     if (this.isHiddenFromObjCByAnnotation()) return false
     if (!this.classKind.isVisibleInObjC()) return false
@@ -72,15 +70,15 @@ private val KaCallableSymbol.isPublic: Boolean
          *
          * See details at [org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportMapperKt.shouldBeExposed]
          */
-        return (this as KaSymbolWithVisibility).visibility != Visibilities.Internal && isPublicApi(this)
+        return visibility != KaSymbolVisibility.INTERNAL && isPublicApi(this)
     }
 
 context(KaSession)
 @Suppress("CONTEXT_RECEIVERS_DEPRECATED")
 private fun KaSymbol.isSealedClassConstructor(): Boolean {
     if (this !is KaConstructorSymbol) return false
-    val containingSymbol = this.containingSymbol as? KaSymbolWithModality ?: return false
-    return containingSymbol.modality == Modality.SEALED
+    val containingSymbol = this.containingSymbol ?: return false
+    return containingSymbol.modality == KaSymbolModality.SEALED
 }
 
 context(KaSession)

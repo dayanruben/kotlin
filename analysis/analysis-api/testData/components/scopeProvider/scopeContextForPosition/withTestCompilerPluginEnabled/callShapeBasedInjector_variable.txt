@@ -16,10 +16,14 @@ scopes:
         backingFieldSymbol: KaBackingFieldSymbol:
           annotations: []
           callableId: null
+          compilerVisibility: Local
           contextReceivers: []
+          isActual: false
+          isExpect: false
           isExtension: false
           isVal: true
           location: PROPERTY
+          modality: FINAL
           name: field
           origin: PROPERTY_BACKING_FIELD
           owningProperty: KaKotlinPropertySymbol(<local>/column)
@@ -28,16 +32,20 @@ scopes:
             annotations: []
             typeArguments: []
             type: kotlin/Int
-          typeParameters: []
+          visibility: LOCAL
         callableId: null
+        compilerVisibility: Local
         contextReceivers: []
         getter: KaPropertyGetterSymbol:
           annotations: []
           callableId: null
+          compilerVisibility: Local
           contextReceivers: []
           hasBody: false
           hasStableParameterNames: true
+          isActual: false
           isDefault: true
+          isExpect: false
           isExtension: false
           isInline: false
           isOverride: false
@@ -62,9 +70,8 @@ scopes:
             annotations: []
             typeArguments: []
             type: kotlin/Int
-          typeParameters: []
           valueParameters: []
-          visibility: Local
+          visibility: LOCAL
         hasBackingField: true
         hasGetter: true
         hasSetter: false
@@ -103,10 +110,11 @@ scopes:
           type: kotlin/Int
         setter: null
         typeParameters: []
-        visibility: Local
+        visibility: LOCAL
       KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.equals
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -136,16 +144,20 @@ scopes:
           KaValueParameterSymbol:
             annotations: []
             callableId: null
+            compilerVisibility: Public
             contextReceivers: []
             generatedPrimaryConstructorProperty: null
             hasDefaultValue: false
+            isActual: false
             isCrossinline: false
+            isExpect: false
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
             isVal: true
             isVararg: false
             location: LOCAL
+            modality: FINAL
             name: other
             origin: LIBRARY
             receiverParameter: null
@@ -153,12 +165,13 @@ scopes:
               annotations: []
               typeArguments: []
               type: kotlin/Any?
-            typeParameters: []
+            visibility: PUBLIC
         ]
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.hashCode
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -185,10 +198,11 @@ scopes:
           type: kotlin/Int
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: kotlin/Any.toString
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -215,11 +229,12 @@ scopes:
           type: kotlin/String
         typeParameters: []
         valueParameters: []
-        visibility: Public
+        visibility: PUBLIC
     constructors: 1
       KaConstructorSymbol:
         annotations: []
         callableId: null
+        compilerVisibility: Local
         containingClassId: null
         contextReceivers: []
         hasStableParameterNames: true
@@ -228,6 +243,7 @@ scopes:
         isExtension: false
         isPrimary: true
         location: CLASS
+        modality: FINAL
         origin: PLUGIN
         receiverParameter: null
         returnType: KaUsualClassType:
@@ -236,7 +252,7 @@ scopes:
           type: <local>/Scope1
         typeParameters: []
         valueParameters: []
-        visibility: Local
+        visibility: LOCAL
 
   LocalScope, index = 1
     packages: 0
@@ -245,10 +261,14 @@ scopes:
       KaLocalVariableSymbol:
         annotations: []
         callableId: null
+        compilerVisibility: Local
         contextReceivers: []
+        isActual: false
+        isExpect: false
         isExtension: false
         isVal: true
         location: LOCAL
+        modality: FINAL
         name: df
         origin: SOURCE
         receiverParameter: null
@@ -261,7 +281,7 @@ scopes:
               type: <local>/DataFrameType
           ]
           type: DataFrame<<local>/DataFrameType>
-        typeParameters: []
+        visibility: LOCAL
     constructors: 0
 
   LocalScope, index = 2
@@ -271,16 +291,20 @@ scopes:
       KaValueParameterSymbol:
         annotations: []
         callableId: null
+        compilerVisibility: Public
         contextReceivers: []
         generatedPrimaryConstructorProperty: null
         hasDefaultValue: false
+        isActual: false
         isCrossinline: false
+        isExpect: false
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
         isVal: true
         isVararg: false
         location: LOCAL
+        modality: FINAL
         name: df
         origin: SOURCE
         receiverParameter: null
@@ -290,7 +314,7 @@ scopes:
             *
           ]
           type: DataFrame<*>
-        typeParameters: []
+        visibility: PUBLIC
     constructors: 0
 
   ExplicitSimpleImportingScope, index = 3
@@ -331,6 +355,7 @@ scopes:
         classId: DataFrame
         classKind: INTERFACE
         companionObject: null
+        compilerVisibility: Public
         contextReceivers: []
         isActual: false
         isData: false
@@ -352,12 +377,13 @@ scopes:
         typeParameters: [
           KaTypeParameterSymbol(T)
         ]
-        visibility: Public
+        visibility: PUBLIC
       KaNamedClassSymbol:
         annotations: []
         classId: Refine
         classKind: ANNOTATION_CLASS
         companionObject: null
+        compilerVisibility: Public
         contextReceivers: []
         isActual: false
         isData: false
@@ -377,7 +403,7 @@ scopes:
             type: kotlin/Annotation
         ]
         typeParameters: []
-        visibility: Public
+        visibility: PUBLIC
     callables: 2
       KaNamedFunctionSymbol:
         annotations: [
@@ -385,6 +411,7 @@ scopes:
             psi: KtAnnotationEntry
         ]
         callableId: /add
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -434,16 +461,20 @@ scopes:
           KaValueParameterSymbol:
             annotations: []
             callableId: null
+            compilerVisibility: Public
             contextReceivers: []
             generatedPrimaryConstructorProperty: null
             hasDefaultValue: false
+            isActual: false
             isCrossinline: false
+            isExpect: false
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
             isVal: true
             isVararg: false
             location: LOCAL
+            modality: FINAL
             name: columnName
             origin: SOURCE
             receiverParameter: null
@@ -451,20 +482,24 @@ scopes:
               annotations: []
               typeArguments: []
               type: kotlin/String
-            typeParameters: []
+            visibility: PUBLIC
           KaValueParameterSymbol:
             annotations: []
             callableId: null
+            compilerVisibility: Public
             contextReceivers: []
             generatedPrimaryConstructorProperty: null
             hasDefaultValue: false
+            isActual: false
             isCrossinline: false
+            isExpect: false
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
             isVal: true
             isVararg: false
             location: LOCAL
+            modality: FINAL
             name: expression
             origin: SOURCE
             receiverParameter: null
@@ -476,12 +511,13 @@ scopes:
                   type: R
               ]
               type: kotlin/Function0<R>
-            typeParameters: []
+            visibility: PUBLIC
         ]
-        visibility: Public
+        visibility: PUBLIC
       KaNamedFunctionSymbol:
         annotations: []
         callableId: /test_1
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -511,16 +547,20 @@ scopes:
           KaValueParameterSymbol:
             annotations: []
             callableId: null
+            compilerVisibility: Public
             contextReceivers: []
             generatedPrimaryConstructorProperty: null
             hasDefaultValue: false
+            isActual: false
             isCrossinline: false
+            isExpect: false
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
             isVal: true
             isVararg: false
             location: LOCAL
+            modality: FINAL
             name: df
             origin: SOURCE
             receiverParameter: null
@@ -530,9 +570,9 @@ scopes:
                 *
               ]
               type: DataFrame<*>
-            typeParameters: []
+            visibility: PUBLIC
         ]
-        visibility: Public
+        visibility: PUBLIC
     constructors: 0
 
   DefaultSimpleImportingScope, index = 5

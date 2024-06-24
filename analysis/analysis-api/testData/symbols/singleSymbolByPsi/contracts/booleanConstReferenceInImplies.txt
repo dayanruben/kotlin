@@ -4,6 +4,7 @@ KaNamedFunctionSymbol:
       psi: KtAnnotationEntry
   ]
   callableId: /booleanConstReferenceInImplies
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: [
     KaContractConditionalContractEffectDeclaration:
@@ -40,7 +41,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Boolean
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(booleanConstReferenceInImplies.kt)
   getContainingJvmClassName: BooleanConstReferenceInImpliesKt
   getContainingModule: KaSourceModule "Sources of main"

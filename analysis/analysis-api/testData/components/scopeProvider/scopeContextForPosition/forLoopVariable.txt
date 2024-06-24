@@ -14,10 +14,14 @@ scopes:
       KaLocalVariableSymbol:
         annotations: []
         callableId: null
+        compilerVisibility: Local
         contextReceivers: []
+        isActual: false
+        isExpect: false
         isExtension: false
         isVal: true
         location: LOCAL
+        modality: FINAL
         name: <iterator>
         origin: SOURCE
         receiverParameter: null
@@ -30,7 +34,7 @@ scopes:
               type: kotlin/Int
           ]
           type: kotlin/collections/Iterator<kotlin/Int>
-        typeParameters: []
+        visibility: LOCAL
     constructors: 0
 
   LocalScope, index = 2
@@ -46,16 +50,20 @@ scopes:
       KaValueParameterSymbol:
         annotations: []
         callableId: null
+        compilerVisibility: Public
         contextReceivers: []
         generatedPrimaryConstructorProperty: null
         hasDefaultValue: false
+        isActual: false
         isCrossinline: false
+        isExpect: false
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
         isVal: true
         isVararg: false
         location: LOCAL
+        modality: FINAL
         name: list
         origin: SOURCE
         receiverParameter: null
@@ -68,7 +76,7 @@ scopes:
               type: kotlin/Int
           ]
           type: kotlin/collections/List<kotlin/Int>
-        typeParameters: []
+        visibility: PUBLIC
     constructors: 0
 
   ExplicitSimpleImportingScope, index = 4
@@ -84,6 +92,7 @@ scopes:
       KaNamedFunctionSymbol:
         annotations: []
         callableId: test/usage
+        compilerVisibility: Public
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
@@ -113,16 +122,20 @@ scopes:
           KaValueParameterSymbol:
             annotations: []
             callableId: null
+            compilerVisibility: Public
             contextReceivers: []
             generatedPrimaryConstructorProperty: null
             hasDefaultValue: false
+            isActual: false
             isCrossinline: false
+            isExpect: false
             isExtension: false
             isImplicitLambdaParameter: false
             isNoinline: false
             isVal: true
             isVararg: false
             location: LOCAL
+            modality: FINAL
             name: list
             origin: SOURCE
             receiverParameter: null
@@ -135,9 +148,9 @@ scopes:
                   type: kotlin/Int
               ]
               type: kotlin/collections/List<kotlin/Int>
-            typeParameters: []
+            visibility: PUBLIC
         ]
-        visibility: Public
+        visibility: PUBLIC
     constructors: 0
 
   DefaultSimpleImportingScope, index = 6

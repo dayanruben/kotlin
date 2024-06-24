@@ -1,16 +1,20 @@
 KaValueParameterSymbol:
   annotations: []
   callableId: null
+  compilerVisibility: Public
   contextReceivers: []
   generatedPrimaryConstructorProperty: null
   hasDefaultValue: false
+  isActual: false
   isCrossinline: false
+  isExpect: false
   isExtension: false
   isImplicitLambdaParameter: false
   isNoinline: false
   isVal: true
   isVararg: false
   location: LOCAL
+  modality: FINAL
   name: value
   origin: SOURCE
   receiverParameter: null
@@ -18,7 +22,7 @@ KaValueParameterSymbol:
     annotations: []
     typeArguments: []
     type: kotlin/Int
-  typeParameters: []
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(setterValueParameter.kt)
   getContainingJvmClassName: null
   getContainingModule: KaSourceModule "Sources of main"

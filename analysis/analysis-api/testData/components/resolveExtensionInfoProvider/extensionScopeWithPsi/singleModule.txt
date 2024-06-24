@@ -9,6 +9,7 @@ classifiers: 2
     classId: generated/GenClass1
     classKind: CLASS
     companionObject: null
+    compilerVisibility: Public
     contextReceivers: []
     isActual: false
     isData: false
@@ -28,7 +29,7 @@ classifiers: 2
         type: kotlin/Any
     ]
     typeParameters: []
-    visibility: Public
+    visibility: PUBLIC
     PSI: KtClass GenClass1 [from extension1.kt]
       From resolve extension: true
       Resolve extension navigation targets: 1
@@ -38,6 +39,7 @@ classifiers: 2
     classId: generated/GenClass2
     classKind: CLASS
     companionObject: null
+    compilerVisibility: Public
     contextReceivers: []
     isActual: false
     isData: false
@@ -57,7 +59,7 @@ classifiers: 2
         type: kotlin/Any
     ]
     typeParameters: []
-    visibility: Public
+    visibility: PUBLIC
     PSI: KtClass GenClass2 [from extension2.kt]
       From resolve extension: true
       Resolve extension navigation targets: 1
@@ -66,6 +68,7 @@ callables: 5
   KaNamedFunctionSymbol:
     annotations: []
     callableId: generated/genTopLevelFun1
+    compilerVisibility: Public
     contextReceivers: []
     contractEffects: []
     hasStableParameterNames: true
@@ -95,16 +98,20 @@ callables: 5
       KaValueParameterSymbol:
         annotations: []
         callableId: null
+        compilerVisibility: Public
         contextReceivers: []
         generatedPrimaryConstructorProperty: null
         hasDefaultValue: false
+        isActual: false
         isCrossinline: false
+        isExpect: false
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
         isVal: true
         isVararg: false
         location: LOCAL
+        modality: FINAL
         name: foo
         origin: SOURCE
         receiverParameter: null
@@ -112,9 +119,9 @@ callables: 5
           annotations: []
           typeArguments: []
           type: generated/GenClass2
-        typeParameters: []
+        visibility: PUBLIC
     ]
-    visibility: Public
+    visibility: PUBLIC
     PSI: KtNamedFunction genTopLevelFun1 [from extension1.kt]
       From resolve extension: true
       Resolve extension navigation targets: 1
@@ -122,6 +129,7 @@ callables: 5
   KaNamedFunctionSymbol:
     annotations: []
     callableId: generated/genTopLevelExtension1
+    compilerVisibility: Public
     contextReceivers: []
     contractEffects: []
     hasStableParameterNames: true
@@ -156,7 +164,7 @@ callables: 5
       type: kotlin/Int
     typeParameters: []
     valueParameters: []
-    visibility: Public
+    visibility: PUBLIC
     PSI: KtNamedFunction genTopLevelExtension1 [from extension1.kt]
       From resolve extension: true
       Resolve extension navigation targets: 1
@@ -166,10 +174,14 @@ callables: 5
     backingFieldSymbol: KaBackingFieldSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Private
       contextReceivers: []
+      isActual: false
+      isExpect: false
       isExtension: false
       isVal: true
       location: PROPERTY
+      modality: FINAL
       name: field
       origin: PROPERTY_BACKING_FIELD
       owningProperty: KaKotlinPropertySymbol(generated/genTopLevelVal1)
@@ -178,16 +190,20 @@ callables: 5
         annotations: []
         typeArguments: []
         type: kotlin/String
-      typeParameters: []
+      visibility: PRIVATE
     callableId: generated/genTopLevelVal1
+    compilerVisibility: Public
     contextReceivers: []
     getter: KaPropertyGetterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       hasBody: false
       hasStableParameterNames: true
+      isActual: false
       isDefault: true
+      isExpect: false
       isExtension: false
       isInline: false
       isOverride: false
@@ -199,9 +215,8 @@ callables: 5
         annotations: []
         typeArguments: []
         type: kotlin/String
-      typeParameters: []
       valueParameters: []
-      visibility: Public
+      visibility: PUBLIC
     hasBackingField: true
     hasGetter: true
     hasSetter: false
@@ -227,7 +242,7 @@ callables: 5
       type: kotlin/String
     setter: null
     typeParameters: []
-    visibility: Public
+    visibility: PUBLIC
     PSI: KtProperty genTopLevelVal1 [from extension1.kt]
       From resolve extension: true
       Resolve extension navigation targets: 1
@@ -237,10 +252,14 @@ callables: 5
     backingFieldSymbol: KaBackingFieldSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Private
       contextReceivers: []
+      isActual: false
+      isExpect: false
       isExtension: false
       isVal: true
       location: PROPERTY
+      modality: FINAL
       name: field
       origin: PROPERTY_BACKING_FIELD
       owningProperty: KaKotlinPropertySymbol(generated/genTopLevelVar1)
@@ -249,16 +268,20 @@ callables: 5
         annotations: []
         typeArguments: []
         type: kotlin/String
-      typeParameters: []
+      visibility: PRIVATE
     callableId: generated/genTopLevelVar1
+    compilerVisibility: Public
     contextReceivers: []
     getter: KaPropertyGetterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       hasBody: false
       hasStableParameterNames: true
+      isActual: false
       isDefault: true
+      isExpect: false
       isExtension: false
       isInline: false
       isOverride: false
@@ -270,9 +293,8 @@ callables: 5
         annotations: []
         typeArguments: []
         type: kotlin/String
-      typeParameters: []
       valueParameters: []
-      visibility: Public
+      visibility: PUBLIC
     hasBackingField: true
     hasGetter: true
     hasSetter: true
@@ -299,10 +321,13 @@ callables: 5
     setter: KaPropertySetterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Internal
       contextReceivers: []
       hasBody: false
       hasStableParameterNames: true
+      isActual: false
       isDefault: true
+      isExpect: false
       isExtension: false
       isInline: false
       isOverride: false
@@ -312,16 +337,20 @@ callables: 5
       parameter: KaValueParameterSymbol:
         annotations: []
         callableId: null
+        compilerVisibility: Public
         contextReceivers: []
         generatedPrimaryConstructorProperty: null
         hasDefaultValue: false
+        isActual: false
         isCrossinline: false
+        isExpect: false
         isExtension: false
         isImplicitLambdaParameter: false
         isNoinline: false
         isVal: true
         isVararg: false
         location: LOCAL
+        modality: FINAL
         name: value
         origin: SOURCE
         receiverParameter: null
@@ -329,27 +358,30 @@ callables: 5
           annotations: []
           typeArguments: []
           type: kotlin/String
-        typeParameters: []
+        visibility: PUBLIC
       receiverParameter: null
       returnType: KaUsualClassType:
         annotations: []
         typeArguments: []
         type: kotlin/Unit
-      typeParameters: []
       valueParameters: [
         KaValueParameterSymbol:
           annotations: []
           callableId: null
+          compilerVisibility: Public
           contextReceivers: []
           generatedPrimaryConstructorProperty: null
           hasDefaultValue: false
+          isActual: false
           isCrossinline: false
+          isExpect: false
           isExtension: false
           isImplicitLambdaParameter: false
           isNoinline: false
           isVal: true
           isVararg: false
           location: LOCAL
+          modality: FINAL
           name: value
           origin: SOURCE
           receiverParameter: null
@@ -357,11 +389,11 @@ callables: 5
             annotations: []
             typeArguments: []
             type: kotlin/String
-          typeParameters: []
+          visibility: PUBLIC
       ]
-      visibility: Internal
+      visibility: INTERNAL
     typeParameters: []
-    visibility: Public
+    visibility: PUBLIC
     PSI: KtProperty genTopLevelVar1 [from extension1.kt]
       From resolve extension: true
       Resolve extension navigation targets: 1
@@ -371,10 +403,14 @@ callables: 5
     backingFieldSymbol: KaBackingFieldSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Private
       contextReceivers: []
+      isActual: false
+      isExpect: false
       isExtension: false
       isVal: true
       location: PROPERTY
+      modality: FINAL
       name: field
       origin: PROPERTY_BACKING_FIELD
       owningProperty: KaKotlinPropertySymbol(generated/genExtensionVal1)
@@ -383,16 +419,20 @@ callables: 5
         annotations: []
         typeArguments: []
         type: kotlin/Int
-      typeParameters: []
+      visibility: PRIVATE
     callableId: generated/genExtensionVal1
+    compilerVisibility: Public
     contextReceivers: []
     getter: KaPropertyGetterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Public
       contextReceivers: []
       hasBody: true
       hasStableParameterNames: true
+      isActual: false
       isDefault: false
+      isExpect: false
       isExtension: false
       isInline: false
       isOverride: false
@@ -412,9 +452,8 @@ callables: 5
         annotations: []
         typeArguments: []
         type: kotlin/Int
-      typeParameters: []
       valueParameters: []
-      visibility: Public
+      visibility: PUBLIC
     hasBackingField: false
     hasGetter: true
     hasSetter: false
@@ -448,7 +487,7 @@ callables: 5
       type: kotlin/Int
     setter: null
     typeParameters: []
-    visibility: Public
+    visibility: PUBLIC
     PSI: KtProperty genExtensionVal1 [from extension1.kt]
       From resolve extension: true
       Resolve extension navigation targets: 1

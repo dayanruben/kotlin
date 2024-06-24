@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaPsiBasedSymbolPointe
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
@@ -32,12 +33,18 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 internal class KaFe10DescKotlinPropertySymbol(
     override val descriptor: PropertyDescriptorImpl,
     override val analysisContext: Fe10AnalysisContext
-) : KaKotlinPropertySymbol(), KaFe10DescMemberSymbol<PropertyDescriptorImpl> {
+) : KaKotlinPropertySymbol(), KaFe10DescSymbol<PropertyDescriptorImpl> {
     override val name: Name
         get() = withValidityAssertion { descriptor.name }
 
     override val location: KaSymbolLocation
         get() = withValidityAssertion { descriptor.kaSymbolLocation }
+
+    override val modality: KaSymbolModality
+        get() = withValidityAssertion { descriptor.kaSymbolModality }
+
+    override val compilerVisibility: Visibility
+        get() = withValidityAssertion { descriptor.ktVisibility }
 
     override val isLateInit: Boolean
         get() = withValidityAssertion { descriptor.isLateInit }
@@ -117,6 +124,7 @@ internal class KaFe10DescKotlinPropertySymbol(
     override val receiverParameter: KaReceiverParameterSymbol?
         get() = withValidityAssertion { descriptor.extensionReceiverParameter?.toKtReceiverParameterSymbol(analysisContext) }
 
+    @KaExperimentalApi
     override val contextReceivers: List<KaContextReceiver>
         get() = withValidityAssertion { descriptor.createContextReceivers(analysisContext) }
 

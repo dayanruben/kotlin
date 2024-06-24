@@ -5,17 +5,21 @@
 
 package org.jetbrains.kotlin.analysis.api.symbols
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiversOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.markers.*
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.types.Variance
 
-public sealed class KaClassifierSymbol : KaSymbol, KaPossiblyNamedSymbol, KaDeclarationSymbol
+public sealed class KaClassifierSymbol : KaSymbol, @Suppress("DEPRECATION") KaPossiblyNamedSymbol, KaDeclarationSymbol
 
 @Deprecated("Use 'KaClassifierSymbol' instead", ReplaceWith("KaClassifierSymbol"))
 public typealias KtClassifierSymbol = KaClassifierSymbol
@@ -26,19 +30,24 @@ public val KaClassifierSymbol.nameOrAnonymous: Name
 public abstract class KaTypeParameterSymbol : KaClassifierSymbol(), KaNamedSymbol {
     abstract override fun createPointer(): KaSymbolPointer<KaTypeParameterSymbol>
 
-    final override val typeParameters: List<KaTypeParameterSymbol>
-        get() = withValidityAssertion { emptyList() }
-
     public abstract val upperBounds: List<KaType>
     public abstract val variance: Variance
     public abstract val isReified: Boolean
+
+    final override val modality: KaSymbolModality get() = withValidityAssertion { KaSymbolModality.FINAL }
+    final override val isActual: Boolean get() = withValidityAssertion { false }
+    final override val isExpect: Boolean get() = withValidityAssertion { false }
+
+    @KaExperimentalApi
+    final override val compilerVisibility: Visibility get() = withValidityAssertion { Visibilities.Local }
 }
 
 @Deprecated("Use 'KaTypeParameterSymbol' instead", ReplaceWith("KaTypeParameterSymbol"))
 public typealias KtTypeParameterSymbol = KaTypeParameterSymbol
 
-public sealed class KaClassLikeSymbol : KaClassifierSymbol(), @Suppress("DEPRECATION") KaSymbolWithKind, KaPossibleMemberSymbol,
-    KaPossibleMultiplatformSymbol {
+public sealed class KaClassLikeSymbol :
+    KaClassifierSymbol(),
+    @Suppress("DEPRECATION") KaSymbolWithKind {
     /**
      * The [ClassId] of this class, or `null` if this class is local.
      */
@@ -53,9 +62,11 @@ public sealed class KaClassLikeSymbol : KaClassifierSymbol(), @Suppress("DEPRECA
 @Deprecated("Use 'KaClassLikeSymbol' instead", ReplaceWith("KaClassLikeSymbol"))
 public typealias KtClassLikeSymbol = KaClassLikeSymbol
 
+@OptIn(KaImplementationDetail::class)
 public abstract class KaTypeAliasSymbol : KaClassLikeSymbol(),
-    KaSymbolWithVisibility,
-    KaNamedSymbol {
+    KaNamedSymbol,
+    KaTypeParameterOwnerSymbol
+{
 
     /**
      * Returns type from right-hand site of type alias
@@ -87,12 +98,8 @@ public abstract class KaAnonymousObjectSymbol : KaClassSymbol() {
     final override val classKind: KaClassKind get() = withValidityAssertion { KaClassKind.ANONYMOUS_OBJECT }
     final override val classId: ClassId? get() = withValidityAssertion { null }
     final override val location: KaSymbolLocation get() = withValidityAssertion { KaSymbolLocation.LOCAL }
-    final override val name: Name? get() = withValidityAssertion { null }
-    final override val isActual: Boolean get() = withValidityAssertion { false }
-    final override val isExpect: Boolean get() = withValidityAssertion { false }
 
-    final override val typeParameters: List<KaTypeParameterSymbol>
-        get() = withValidityAssertion { emptyList() }
+    final override val name: Name? get() = withValidityAssertion { null }
 
     abstract override fun createPointer(): KaSymbolPointer<KaAnonymousObjectSymbol>
 }
@@ -100,9 +107,9 @@ public abstract class KaAnonymousObjectSymbol : KaClassSymbol() {
 @Deprecated("Use 'KaAnonymousObjectSymbol' instead", ReplaceWith("KaAnonymousObjectSymbol"))
 public typealias KtAnonymousObjectSymbol = KaAnonymousObjectSymbol
 
+@OptIn(KaImplementationDetail::class, KaExperimentalApi::class)
 public abstract class KaNamedClassSymbol : KaClassSymbol(),
-    KaSymbolWithModality,
-    KaSymbolWithVisibility,
+    KaTypeParameterOwnerSymbol,
     KaNamedSymbol,
     KaContextReceiversOwner {
 

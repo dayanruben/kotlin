@@ -3,6 +3,7 @@ KaNamedClassSymbol:
   classId: kotlin/reflect/KClass
   classKind: INTERFACE
   companionObject: null
+  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -32,7 +33,7 @@ KaNamedClassSymbol:
   typeParameters: [
     KaTypeParameterSymbol(T)
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: null
   getContainingModule: KaLibraryModule "Library kotlin-stdlib"
   annotationApplicableTargets: null

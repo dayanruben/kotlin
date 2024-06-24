@@ -2,9 +2,11 @@ KaAnonymousObjectSymbol:
   annotations: []
   classId: null
   classKind: ANONYMOUS_OBJECT
+  compilerVisibility: Local
   isActual: false
   isExpect: false
   location: LOCAL
+  modality: FINAL
   name: null
   origin: SOURCE
   superTypes: [
@@ -13,7 +15,7 @@ KaAnonymousObjectSymbol:
       typeArguments: []
       type: kotlin/Any
   ]
-  typeParameters: []
+  visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(objectWithTypeArgsAsExpression.kt)
   getContainingModule: KaSourceModule "Sources of main"
   annotationApplicableTargets: null

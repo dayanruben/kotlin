@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.analysis.api.symbols
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -37,16 +38,14 @@ public abstract class KaAnonymousFunctionSymbol : KaFunctionSymbol() {
     final override val location: KaSymbolLocation get() = withValidityAssertion { KaSymbolLocation.LOCAL }
     final override val callableId: CallableId? get() = withValidityAssertion { null }
 
-    final override val typeParameters: List<KaTypeParameterSymbol>
-        get() = withValidityAssertion { emptyList() }
-
     abstract override fun createPointer(): KaSymbolPointer<KaAnonymousFunctionSymbol>
 }
 
 @Deprecated("Use 'KaAnonymousFunctionSymbol' instead", ReplaceWith("KaAnonymousFunctionSymbol"))
 public typealias KtAnonymousFunctionSymbol = KaAnonymousFunctionSymbol
 
-public abstract class KaSamConstructorSymbol : KaFunctionSymbol(), KaNamedSymbol {
+@OptIn(KaImplementationDetail::class)
+public abstract class KaSamConstructorSymbol : KaFunctionSymbol(), KaNamedSymbol, KaTypeParameterOwnerSymbol {
     final override val location: KaSymbolLocation get() = withValidityAssertion { KaSymbolLocation.TOP_LEVEL }
 
     abstract override fun createPointer(): KaSymbolPointer<KaSamConstructorSymbol>
@@ -55,12 +54,11 @@ public abstract class KaSamConstructorSymbol : KaFunctionSymbol(), KaNamedSymbol
 @Deprecated("Use 'KaSamConstructorSymbol' instead", ReplaceWith("KaSamConstructorSymbol"))
 public typealias KtSamConstructorSymbol = KaSamConstructorSymbol
 
-public abstract class KaNamedFunctionSymbol : KaFunctionSymbol(),
+@OptIn(KaImplementationDetail::class)
+public abstract class KaNamedFunctionSymbol :
+    KaFunctionSymbol(),
     KaNamedSymbol,
-    KaPossibleMemberSymbol,
-    KaPossibleMultiplatformSymbol,
-    KaSymbolWithModality,
-    KaSymbolWithVisibility {
+    KaTypeParameterOwnerSymbol {
 
     public abstract val isSuspend: Boolean
     public abstract val isOperator: Boolean
@@ -91,10 +89,10 @@ public abstract class KaNamedFunctionSymbol : KaFunctionSymbol(),
 @Deprecated("Use 'KaNamedFunctionSymbol' instead", ReplaceWith("KaNamedFunctionSymbol"))
 public typealias KtFunctionSymbol = KaNamedFunctionSymbol
 
-public abstract class KaConstructorSymbol : KaFunctionSymbol(),
-    KaPossibleMemberSymbol,
-    KaPossibleMultiplatformSymbol,
-    KaSymbolWithVisibility {
+@OptIn(KaImplementationDetail::class)
+public abstract class KaConstructorSymbol :
+    KaFunctionSymbol(),
+    KaTypeParameterOwnerSymbol {
 
     public abstract val isPrimary: Boolean
 
@@ -110,6 +108,8 @@ public abstract class KaConstructorSymbol : KaFunctionSymbol(),
     final override val location: KaSymbolLocation get() = withValidityAssertion { KaSymbolLocation.CLASS }
     final override val isExtension: Boolean get() = withValidityAssertion { false }
     final override val receiverParameter: KaReceiverParameterSymbol? get() = withValidityAssertion { null }
+
+    @KaExperimentalApi
     final override val contextReceivers: List<KaContextReceiver> get() = withValidityAssertion { emptyList() }
 
     abstract override fun createPointer(): KaSymbolPointer<KaConstructorSymbol>

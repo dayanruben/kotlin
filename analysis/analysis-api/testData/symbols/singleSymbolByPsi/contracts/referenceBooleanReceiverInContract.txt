@@ -4,6 +4,7 @@ KaNamedFunctionSymbol:
       psi: KtAnnotationEntry
   ]
   callableId: /referenceReceiverInContract
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: [
     KaContractConditionalContractEffectDeclaration:
@@ -60,7 +61,7 @@ KaNamedFunctionSymbol:
     type: kotlin/Unit
   typeParameters: []
   valueParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(referenceBooleanReceiverInContract.kt)
   getContainingJvmClassName: ReferenceBooleanReceiverInContractKt
   getContainingModule: KaSourceModule "Sources of main"

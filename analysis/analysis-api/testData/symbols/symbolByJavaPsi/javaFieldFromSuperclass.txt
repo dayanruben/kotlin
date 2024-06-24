@@ -1,7 +1,10 @@
 KaJavaFieldSymbol:
   annotations: []
   callableId: /SuperClass.count
+  compilerVisibility: Public
   contextReceivers: []
+  isActual: false
+  isExpect: false
   isExtension: false
   isStatic: false
   isVal: false
@@ -13,8 +16,7 @@ KaJavaFieldSymbol:
   returnType: KaFlexibleType:
     annotations: []
     type: kotlin/Int!
-  typeParameters: []
-  visibility: Public
+  visibility: PUBLIC
   getDispatchReceiver(): KaUsualClassType:
     annotations: []
     typeArguments: []

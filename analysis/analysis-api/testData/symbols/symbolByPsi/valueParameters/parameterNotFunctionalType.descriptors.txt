@@ -1,6 +1,7 @@
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /f
+  compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
   hasStableParameterNames: true
@@ -30,16 +31,20 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Local
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: p
       origin: SOURCE
       receiverParameter: null
@@ -58,7 +63,7 @@ KaNamedFunctionSymbol:
             type: ERROR_TYPE
         ]
         type: kotlin/Function2<kotlin/Int, ERROR_TYPE, ERROR_TYPE>
-      typeParameters: []
+      visibility: LOCAL
       getContainingFileSymbol: KaFileSymbol(parameterNotFunctionalType.kt)
       getContainingJvmClassName: ParameterNotFunctionalTypeKt
       getContainingModule: KaSourceModule "Sources of main"
@@ -66,29 +71,33 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
+      compilerVisibility: Local
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDefaultValue: false
+      isActual: false
       isCrossinline: false
+      isExpect: false
       isExtension: false
       isImplicitLambdaParameter: false
       isNoinline: false
       isVal: true
       isVararg: false
       location: LOCAL
+      modality: FINAL
       name: <no name provided>
       origin: SOURCE
       receiverParameter: null
       returnType: KaErrorType:
         annotations: []
         type: ERROR_TYPE
-      typeParameters: []
+      visibility: LOCAL
       getContainingFileSymbol: KaFileSymbol(parameterNotFunctionalType.kt)
       getContainingJvmClassName: ParameterNotFunctionalTypeKt
       getContainingModule: KaSourceModule "Sources of main"
       deprecationStatus: null
   ]
-  visibility: Public
+  visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(parameterNotFunctionalType.kt)
   getContainingJvmClassName: ParameterNotFunctionalTypeKt
   getContainingModule: KaSourceModule "Sources of main"
