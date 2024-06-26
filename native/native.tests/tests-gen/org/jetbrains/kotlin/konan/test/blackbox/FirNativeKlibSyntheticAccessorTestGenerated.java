@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
 @TestMetadata("compiler/testData/klib/syntheticAccessors")
 @TestDataPath("$PROJECT_ROOT")
 @EnforcedProperty(property = ClassLevelProperty.TEST_KIND, propertyValue = "STANDALONE")
+@EnforcedProperty(property = ClassLevelProperty.CACHE_MODE, propertyValue = "NO")
 @UseExtTestCaseGroupProvider()
 @Tag("frontend-fir")
 @FirPipeline()
@@ -38,6 +39,7 @@ public class FirNativeKlibSyntheticAccessorTestGenerated extends AbstractNativeK
   @TestMetadata("compiler/testData/klib/syntheticAccessors/privateMember")
   @TestDataPath("$PROJECT_ROOT")
   @EnforcedProperty(property = ClassLevelProperty.TEST_KIND, propertyValue = "STANDALONE")
+  @EnforcedProperty(property = ClassLevelProperty.CACHE_MODE, propertyValue = "NO")
   @UseExtTestCaseGroupProvider()
   @Tag("frontend-fir")
   @FirPipeline()
@@ -51,6 +53,7 @@ public class FirNativeKlibSyntheticAccessorTestGenerated extends AbstractNativeK
     @TestMetadata("compiler/testData/klib/syntheticAccessors/privateMember/crossFilePrivateLeak")
     @TestDataPath("$PROJECT_ROOT")
     @EnforcedProperty(property = ClassLevelProperty.TEST_KIND, propertyValue = "STANDALONE")
+    @EnforcedProperty(property = ClassLevelProperty.CACHE_MODE, propertyValue = "NO")
     @UseExtTestCaseGroupProvider()
     @Tag("frontend-fir")
     @FirPipeline()
@@ -61,9 +64,21 @@ public class FirNativeKlibSyntheticAccessorTestGenerated extends AbstractNativeK
       }
 
       @Test
+      @TestMetadata("leakingPrivateConstructorThroughInternalInlineFun.kt")
+      public void testLeakingPrivateConstructorThroughInternalInlineFun() {
+        runTest("compiler/testData/klib/syntheticAccessors/privateMember/crossFilePrivateLeak/leakingPrivateConstructorThroughInternalInlineFun.kt");
+      }
+
+      @Test
       @TestMetadata("leakingPrivateMethod.kt")
       public void testLeakingPrivateMethod() {
         runTest("compiler/testData/klib/syntheticAccessors/privateMember/crossFilePrivateLeak/leakingPrivateMethod.kt");
+      }
+
+      @Test
+      @TestMetadata("leakingPrivateMethodFromLocalObjectInsideInternalInline.kt")
+      public void testLeakingPrivateMethodFromLocalObjectInsideInternalInline() {
+        runTest("compiler/testData/klib/syntheticAccessors/privateMember/crossFilePrivateLeak/leakingPrivateMethodFromLocalObjectInsideInternalInline.kt");
       }
 
       @Test
@@ -101,6 +116,7 @@ public class FirNativeKlibSyntheticAccessorTestGenerated extends AbstractNativeK
     @TestMetadata("compiler/testData/klib/syntheticAccessors/privateMember/crossModulePrivateLeak")
     @TestDataPath("$PROJECT_ROOT")
     @EnforcedProperty(property = ClassLevelProperty.TEST_KIND, propertyValue = "STANDALONE")
+    @EnforcedProperty(property = ClassLevelProperty.CACHE_MODE, propertyValue = "NO")
     @UseExtTestCaseGroupProvider()
     @Tag("frontend-fir")
     @FirPipeline()
@@ -111,9 +127,21 @@ public class FirNativeKlibSyntheticAccessorTestGenerated extends AbstractNativeK
       }
 
       @Test
+      @TestMetadata("leakingPrivateConstructorThroughInternalInlineFun.kt")
+      public void testLeakingPrivateConstructorThroughInternalInlineFun() {
+        runTest("compiler/testData/klib/syntheticAccessors/privateMember/crossModulePrivateLeak/leakingPrivateConstructorThroughInternalInlineFun.kt");
+      }
+
+      @Test
       @TestMetadata("leakingPrivateMethod.kt")
       public void testLeakingPrivateMethod() {
         runTest("compiler/testData/klib/syntheticAccessors/privateMember/crossModulePrivateLeak/leakingPrivateMethod.kt");
+      }
+
+      @Test
+      @TestMetadata("leakingPrivateMethodFromLocalObjectInsideInternalInline.kt")
+      public void testLeakingPrivateMethodFromLocalObjectInsideInternalInline() {
+        runTest("compiler/testData/klib/syntheticAccessors/privateMember/crossModulePrivateLeak/leakingPrivateMethodFromLocalObjectInsideInternalInline.kt");
       }
 
       @Test
@@ -151,6 +179,7 @@ public class FirNativeKlibSyntheticAccessorTestGenerated extends AbstractNativeK
     @TestMetadata("compiler/testData/klib/syntheticAccessors/privateMember/singleFile")
     @TestDataPath("$PROJECT_ROOT")
     @EnforcedProperty(property = ClassLevelProperty.TEST_KIND, propertyValue = "STANDALONE")
+    @EnforcedProperty(property = ClassLevelProperty.CACHE_MODE, propertyValue = "NO")
     @UseExtTestCaseGroupProvider()
     @Tag("frontend-fir")
     @FirPipeline()
@@ -161,9 +190,21 @@ public class FirNativeKlibSyntheticAccessorTestGenerated extends AbstractNativeK
       }
 
       @Test
+      @TestMetadata("usePrivateConstructorFromInternalInline.kt")
+      public void testUsePrivateConstructorFromInternalInline() {
+        runTest("compiler/testData/klib/syntheticAccessors/privateMember/singleFile/usePrivateConstructorFromInternalInline.kt");
+      }
+
+      @Test
       @TestMetadata("usePrivateMethodFromInternalInline.kt")
       public void testUsePrivateMethodFromInternalInline() {
         runTest("compiler/testData/klib/syntheticAccessors/privateMember/singleFile/usePrivateMethodFromInternalInline.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateMethodFromLocalObjectInsideInternalInline.kt")
+      public void testUsePrivateMethodFromLocalObjectInsideInternalInline() {
+        runTest("compiler/testData/klib/syntheticAccessors/privateMember/singleFile/usePrivateMethodFromLocalObjectInsideInternalInline.kt");
       }
 
       @Test
@@ -184,6 +225,7 @@ public class FirNativeKlibSyntheticAccessorTestGenerated extends AbstractNativeK
   @TestMetadata("compiler/testData/klib/syntheticAccessors/topLevelPrivate")
   @TestDataPath("$PROJECT_ROOT")
   @EnforcedProperty(property = ClassLevelProperty.TEST_KIND, propertyValue = "STANDALONE")
+  @EnforcedProperty(property = ClassLevelProperty.CACHE_MODE, propertyValue = "NO")
   @UseExtTestCaseGroupProvider()
   @Tag("frontend-fir")
   @FirPipeline()
@@ -197,6 +239,7 @@ public class FirNativeKlibSyntheticAccessorTestGenerated extends AbstractNativeK
     @TestMetadata("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossFilePrivateLeak")
     @TestDataPath("$PROJECT_ROOT")
     @EnforcedProperty(property = ClassLevelProperty.TEST_KIND, propertyValue = "STANDALONE")
+    @EnforcedProperty(property = ClassLevelProperty.CACHE_MODE, propertyValue = "NO")
     @UseExtTestCaseGroupProvider()
     @Tag("frontend-fir")
     @FirPipeline()
@@ -259,6 +302,7 @@ public class FirNativeKlibSyntheticAccessorTestGenerated extends AbstractNativeK
     @TestMetadata("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossModulePrivateLeak")
     @TestDataPath("$PROJECT_ROOT")
     @EnforcedProperty(property = ClassLevelProperty.TEST_KIND, propertyValue = "STANDALONE")
+    @EnforcedProperty(property = ClassLevelProperty.CACHE_MODE, propertyValue = "NO")
     @UseExtTestCaseGroupProvider()
     @Tag("frontend-fir")
     @FirPipeline()
@@ -321,6 +365,7 @@ public class FirNativeKlibSyntheticAccessorTestGenerated extends AbstractNativeK
     @TestMetadata("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile")
     @TestDataPath("$PROJECT_ROOT")
     @EnforcedProperty(property = ClassLevelProperty.TEST_KIND, propertyValue = "STANDALONE")
+    @EnforcedProperty(property = ClassLevelProperty.CACHE_MODE, propertyValue = "NO")
     @UseExtTestCaseGroupProvider()
     @Tag("frontend-fir")
     @FirPipeline()

@@ -5,13 +5,24 @@
 
 package org.jetbrains.kotlin.analysis.api.platform.lifetime
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
+import org.jetbrains.kotlin.analysis.api.platform.KotlinPlatformComponent
 import kotlin.reflect.KClass
 
-public interface KaLifetimeTokenFactory {
+public interface KotlinLifetimeTokenFactory : KotlinPlatformComponent {
     public val identifier: KClass<out KaLifetimeToken>
 
+    /**
+     * Creates a [KaLifetimeToken] for a specific analysis session represented by a [modificationTracker].
+     *
+     * @param modificationTracker A modification tracker which tracks the validity of the analysis session's content.
+     */
     public fun create(project: Project, modificationTracker: ModificationTracker): KaLifetimeToken
+
+    public companion object {
+        public fun getInstance(project: Project): KotlinLifetimeTokenFactory = project.service()
+    }
 }
