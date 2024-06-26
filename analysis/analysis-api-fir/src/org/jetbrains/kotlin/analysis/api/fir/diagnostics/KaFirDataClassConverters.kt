@@ -459,6 +459,14 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.MISSING_DEPENDENCY_SUPERCLASS_IN_TYPE_ARGUMENT) { firDiagnostic ->
+        MissingDependencySuperclassInTypeArgumentImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.MISSING_DEPENDENCY_CLASS_IN_LAMBDA_PARAMETER) { firDiagnostic ->
         MissingDependencyClassInLambdaParameterImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
@@ -4936,12 +4944,14 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.NON_PUBLIC_DATA_COPY_CALL_FROM_PUBLIC_INLINE.errorFactory) { firDiagnostic ->
         NonPublicDataCopyCallFromPublicInlineErrorImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
     }
     add(FirErrors.NON_PUBLIC_DATA_COPY_CALL_FROM_PUBLIC_INLINE.warningFactory) { firDiagnostic ->
         NonPublicDataCopyCallFromPublicInlineWarningImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -5371,6 +5381,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             firSymbolBuilder.functionBuilder.buildNamedFunctionSymbol(firDiagnostic.a),
             firDiagnostic.b,
             firSymbolBuilder.functionBuilder.buildNamedFunctionSymbol(firDiagnostic.c),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION) { firDiagnostic ->
+        NotYetSupportedLocalInlineFunctionImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

@@ -424,6 +424,13 @@ internal class MissingDependencySuperclassImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.MissingDependencySuperclass
 
+internal class MissingDependencySuperclassInTypeArgumentImpl(
+    override val missingType: KaType,
+    override val declarationType: KaType,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.MissingDependencySuperclassInTypeArgument
+
 internal class MissingDependencyClassInLambdaParameterImpl(
     override val type: KaType,
     override val parameterName: Name,
@@ -4149,11 +4156,13 @@ internal class NonPublicCallFromPublicInlineDeprecationImpl(
 ) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.NonPublicCallFromPublicInlineDeprecation
 
 internal class NonPublicDataCopyCallFromPublicInlineErrorImpl(
+    override val inlineDeclaration: KaSymbol,
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.NonPublicDataCopyCallFromPublicInlineError
 
 internal class NonPublicDataCopyCallFromPublicInlineWarningImpl(
+    override val inlineDeclaration: KaSymbol,
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.NonPublicDataCopyCallFromPublicInlineWarning
@@ -4519,6 +4528,11 @@ internal class AccidentalOverrideClashByJvmSignatureImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtNamedFunction>(firDiagnostic, token), KaFirDiagnostic.AccidentalOverrideClashByJvmSignature
+
+internal class NotYetSupportedLocalInlineFunctionImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtDeclaration>(firDiagnostic, token), KaFirDiagnostic.NotYetSupportedLocalInlineFunction
 
 internal class JavaTypeMismatchImpl(
     override val expectedType: KaType,

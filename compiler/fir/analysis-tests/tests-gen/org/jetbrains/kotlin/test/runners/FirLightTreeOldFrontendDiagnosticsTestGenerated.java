@@ -1768,6 +1768,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
     }
 
     @Test
+    @TestMetadata("typealiasAnnotationWithFixedTypeArgument.kt")
+    public void testTypealiasAnnotationWithFixedTypeArgument() {
+      runTest("compiler/testData/diagnostics/tests/typealiasAnnotationWithFixedTypeArgument.kt");
+    }
+
+    @Test
     @TestMetadata("typealiasInAnnotationPrimitiveVararg.kt")
     public void testTypealiasInAnnotationPrimitiveVararg() {
       runTest("compiler/testData/diagnostics/tests/typealiasInAnnotationPrimitiveVararg.kt");
@@ -13398,6 +13404,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       @TestMetadata("transformErrorTypeChildrenWhileTransformingPartiallyResolvedType.kt")
       public void testTransformErrorTypeChildrenWhileTransformingPartiallyResolvedType() {
         runTest("compiler/testData/diagnostics/tests/exceptions/transformErrorTypeChildrenWhileTransformingPartiallyResolvedType.kt");
+      }
+
+      @Test
+      @TestMetadata("unresolvedReferenceDuringProjectionRelationChecking.kt")
+      public void testUnresolvedReferenceDuringProjectionRelationChecking() {
+        runTest("compiler/testData/diagnostics/tests/exceptions/unresolvedReferenceDuringProjectionRelationChecking.kt");
       }
     }
 
@@ -25682,6 +25694,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       @TestMetadata("samWithSuspendFunctionFromAnotherModule.kt")
       public void testSamWithSuspendFunctionFromAnotherModule() {
         runTest("compiler/testData/diagnostics/tests/multimodule/samWithSuspendFunctionFromAnotherModule.kt");
+      }
+
+      @Test
+      @TestMetadata("SupertypesWithInaccessibleTypeArguments.kt")
+      public void testSupertypesWithInaccessibleTypeArguments() {
+        runTest("compiler/testData/diagnostics/tests/multimodule/SupertypesWithInaccessibleTypeArguments.kt");
       }
 
       @Test

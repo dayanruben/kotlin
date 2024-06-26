@@ -367,6 +367,12 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val declarationType: KaType
     }
 
+    interface MissingDependencySuperclassInTypeArgument : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = MissingDependencySuperclassInTypeArgument::class
+        val missingType: KaType
+        val declarationType: KaType
+    }
+
     interface MissingDependencyClassInLambdaParameter : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = MissingDependencyClassInLambdaParameter::class
         val type: KaType
@@ -3444,10 +3450,12 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface NonPublicDataCopyCallFromPublicInlineError : KaFirDiagnostic<KtElement> {
         override val diagnosticClass get() = NonPublicDataCopyCallFromPublicInlineError::class
+        val inlineDeclaration: KaSymbol
     }
 
     interface NonPublicDataCopyCallFromPublicInlineWarning : KaFirDiagnostic<KtElement> {
         override val diagnosticClass get() = NonPublicDataCopyCallFromPublicInlineWarning::class
+        val inlineDeclaration: KaSymbol
     }
 
     interface ProtectedConstructorCallFromPublicInline : KaFirDiagnostic<KtElement> {
@@ -3745,6 +3753,10 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val hidden: KaFunctionSymbol
         val overrideDescription: String
         val regular: KaFunctionSymbol
+    }
+
+    interface NotYetSupportedLocalInlineFunction : KaFirDiagnostic<KtDeclaration> {
+        override val diagnosticClass get() = NotYetSupportedLocalInlineFunction::class
     }
 
     interface JavaTypeMismatch : KaFirDiagnostic<KtExpression> {

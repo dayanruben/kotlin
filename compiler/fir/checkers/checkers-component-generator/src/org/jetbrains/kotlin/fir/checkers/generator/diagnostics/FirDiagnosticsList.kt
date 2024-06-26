@@ -189,6 +189,10 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<ConeKotlinType>("missingType")
             parameter<ConeKotlinType>("declarationType")
         }
+        val MISSING_DEPENDENCY_SUPERCLASS_IN_TYPE_ARGUMENT by warning<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED) {
+            parameter<ConeKotlinType>("missingType")
+            parameter<ConeKotlinType>("declarationType")
+        }
         val MISSING_DEPENDENCY_CLASS_IN_LAMBDA_PARAMETER by warning<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED) {
             parameter<ConeKotlinType>("type")
             parameter<Name>("parameterName")
@@ -1744,7 +1748,9 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val NON_PUBLIC_DATA_COPY_CALL_FROM_PUBLIC_INLINE by deprecationError<KtElement>(
             LanguageFeature.ErrorAboutDataClassCopyVisibilityChange,
             PositioningStrategy.REFERENCE_BY_QUALIFIED
-        )
+        ) {
+            parameter<Symbol>("inlineDeclaration")
+        }
 
         val PROTECTED_CONSTRUCTOR_CALL_FROM_PUBLIC_INLINE by error<KtElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
             parameter<Symbol>("inlineDeclaration")
