@@ -8858,6 +8858,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         }
 
         @Test
+        @TestMetadata("nonLocalJump.kt")
+        public void testNonLocalJump() {
+          runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/deadCode/nonLocalJump.kt");
+        }
+
+        @Test
         @TestMetadata("reassignementInUnreachableCode.kt")
         public void testReassignementInUnreachableCode() {
           runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/deadCode/reassignementInUnreachableCode.kt");
@@ -10802,6 +10808,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       @TestMetadata("mappedFunctionNotImplemented.kt")
       public void testMappedFunctionNotImplemented() {
         runTest("compiler/testData/diagnostics/tests/declarationChecks/mappedFunctionNotImplemented.kt");
+      }
+
+      @Test
+      @TestMetadata("memberPropertyInitialized.kt")
+      public void testMemberPropertyInitialized() {
+        runTest("compiler/testData/diagnostics/tests/declarationChecks/memberPropertyInitialized.kt");
       }
 
       @Test
@@ -27976,6 +27988,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       @TestMetadata("NonGenerics.kt")
       public void testNonGenerics() {
         runTest("compiler/testData/diagnostics/tests/override/NonGenerics.kt");
+      }
+
+      @Test
+      @TestMetadata("nothingToOverrideMessage.kt")
+      public void testNothingToOverrideMessage() {
+        runTest("compiler/testData/diagnostics/tests/override/nothingToOverrideMessage.kt");
       }
 
       @Test

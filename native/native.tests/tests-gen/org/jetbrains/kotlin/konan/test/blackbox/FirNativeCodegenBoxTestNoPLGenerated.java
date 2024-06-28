@@ -22233,6 +22233,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
       }
 
       @Test
+      @TestMetadata("equalityForIndyLambdaParameter.kt")
+      public void testEqualityForIndyLambdaParameter() {
+        runTest("compiler/testData/codegen/box/inlineClasses/equalityForIndyLambdaParameter.kt");
+      }
+
+      @Test
       @TestMetadata("equalsCallsLeftArgument.kt")
       public void testEqualsCallsLeftArgument() {
         // There is a registered source transformer for the testcase: TransformersFunctions.getRemoveOptionalJvmInlineAnnotation()
@@ -33310,6 +33316,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
       }
 
       @Test
+      @TestMetadata("BoundedGenericValueInRangeCheck.kt")
+      public void testBoundedGenericValueInRangeCheck() {
+        runTest("compiler/testData/codegen/box/operatorConventions/BoundedGenericValueInRangeCheck.kt");
+      }
+
+      @Test
       @TestMetadata("genericArrayAccessCall.kt")
       public void testGenericArrayAccessCall() {
         runTest("compiler/testData/codegen/box/operatorConventions/genericArrayAccessCall.kt");
@@ -35898,6 +35910,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
         @TestMetadata("smartCastOnBothEnds.kt")
         public void testSmartCastOnBothEnds() {
           runTest("compiler/testData/codegen/box/ranges/contains/smartCastOnBothEnds.kt");
+        }
+
+        @Test
+        @TestMetadata("smartCastOnBothEndsGeneric.kt")
+        public void testSmartCastOnBothEndsGeneric() {
+          runTest("compiler/testData/codegen/box/ranges/contains/smartCastOnBothEndsGeneric.kt");
         }
 
         @Test
