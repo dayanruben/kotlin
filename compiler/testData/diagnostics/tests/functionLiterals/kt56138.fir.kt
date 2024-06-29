@@ -18,9 +18,9 @@ fun test_2() {
 
 fun test_3(b: Boolean) {
     val x1: String.(String) -> String = if (b) {
-        <!ARGUMENT_TYPE_MISMATCH!>{ str, <!CANNOT_INFER_PARAMETER_TYPE!>str2<!> -> "this" }<!>
+        { str, <!CANNOT_INFER_PARAMETER_TYPE!>str2<!> -> "this" }
     } else {
-        <!ARGUMENT_TYPE_MISMATCH!>{ str, <!CANNOT_INFER_PARAMETER_TYPE!>str2<!> -> "this" }<!>
+        { str, <!CANNOT_INFER_PARAMETER_TYPE!>str2<!> -> "this" }
     }
 
     val x2: String.() -> String = if (b) {

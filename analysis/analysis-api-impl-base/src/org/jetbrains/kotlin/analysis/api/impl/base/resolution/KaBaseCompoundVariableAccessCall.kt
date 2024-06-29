@@ -9,21 +9,19 @@ import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.validityAsserted
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
-import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundAccess
+import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundOperation
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaPartiallyAppliedVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 
 @KaImplementationDetail
-class KaCompoundVariableAccessCallImpl(
-    partiallyAppliedSymbol: KaPartiallyAppliedVariableSymbol<KaVariableSymbol>,
-    compoundAccess: KaCompoundAccess,
+class KaBaseCompoundVariableAccessCall(
+    private val backingPartiallyAppliedSymbol: KaPartiallyAppliedVariableSymbol<KaVariableSymbol>,
+    compoundAccess: KaCompoundOperation,
 ) : KaCompoundVariableAccessCall {
-    private val backingPartiallyAppliedSymbol: KaPartiallyAppliedVariableSymbol<KaVariableSymbol> = partiallyAppliedSymbol
-
     override val variablePartiallyAppliedSymbol: KaPartiallyAppliedVariableSymbol<KaVariableSymbol>
         get() = withValidityAssertion { backingPartiallyAppliedSymbol }
 
     override val token: KaLifetimeToken get() = backingPartiallyAppliedSymbol.token
-    override val compoundAccess: KaCompoundAccess by validityAsserted(compoundAccess)
+    override val compoundOperation: KaCompoundOperation by validityAsserted(compoundAccess)
 }

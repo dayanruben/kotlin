@@ -951,6 +951,18 @@ public class FirWasmJsCodegenBoxInlineTestGenerated extends AbstractFirWasmJsCod
     }
 
     @Test
+    @TestMetadata("kt69457.kt")
+    public void testKt69457() {
+      runTest("compiler/testData/codegen/boxInline/callableReference/kt69457.kt");
+    }
+
+    @Test
+    @TestMetadata("kt69470.kt")
+    public void testKt69470() {
+      runTest("compiler/testData/codegen/boxInline/callableReference/kt69470.kt");
+    }
+
+    @Test
     @TestMetadata("propertyIntrinsic.kt")
     public void testPropertyIntrinsic() {
       runTest("compiler/testData/codegen/boxInline/callableReference/propertyIntrinsic.kt");

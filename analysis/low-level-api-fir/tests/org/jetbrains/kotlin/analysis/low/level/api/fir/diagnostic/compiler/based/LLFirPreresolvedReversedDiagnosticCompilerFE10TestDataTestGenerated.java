@@ -26215,6 +26215,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("expectConstructors.kt")
+      public void testExpectConstructors() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/expectConstructors.kt");
+      }
+
+      @Test
       @TestMetadata("expectDataObject.kt")
       public void testExpectDataObject() {
         runTest("compiler/testData/diagnostics/tests/multiplatform/expectDataObject.kt");
@@ -40022,6 +40028,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("chainedFunSuspendConversionForSimpleExpression.kt")
       public void testChainedFunSuspendConversionForSimpleExpression() {
         runTest("compiler/testData/diagnostics/tests/suspendConversion/chainedFunSuspendConversionForSimpleExpression.kt");
+      }
+
+      @Test
+      @TestMetadata("conversionInLastStatementOfWhenBranch.kt")
+      public void testConversionInLastStatementOfWhenBranch() {
+        runTest("compiler/testData/diagnostics/tests/suspendConversion/conversionInLastStatementOfWhenBranch.kt");
       }
 
       @Test
