@@ -1,4 +1,4 @@
-import KotlinBridges_main
+@_implementationOnly import KotlinBridges_main
 import KotlinRuntime
 
 public typealias Clazz = main.org.kotlin.foo.Clazz
@@ -59,6 +59,13 @@ public extension main.org.kotlin.foo {
         arg: Swift.Int32
     ) -> Swift.Int32 {
         return org_kotlin_foo_function__TypesOfArguments__int32_t__(arg)
+    }
+}
+public extension main.demo.shared {
+    public typealias Integer = Swift.Int32
+}
+public enum demo {
+    public enum shared {
     }
 }
 public enum org {

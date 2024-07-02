@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBod
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirExpressionsResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
 import org.jetbrains.kotlin.fir.resolve.transformers.doesResolutionResultOverrideOtherToPreserveCompatibility
+import org.jetbrains.kotlin.fir.resolve.transformers.unwrapAtoms
 import org.jetbrains.kotlin.fir.scopes.impl.originalConstructorIfTypeAlias
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
@@ -459,7 +460,7 @@ class FirCallResolver(
                     },
                     calleeReference.source
                 )
-                resolvedCallableReferenceAtom.resultingReference = errorReference
+                resolvedCallableReferenceAtom.initializeResultingReference(errorReference)
                 return@runCallableReferenceResolution applicability to false
             }
             reducedCandidates.size > 1 -> {
@@ -469,7 +470,7 @@ class FirCallResolver(
                         ConeAmbiguityError(info.name, applicability, reducedCandidates),
                         calleeReference.source
                     )
-                    resolvedCallableReferenceAtom.resultingReference = errorReference
+                    resolvedCallableReferenceAtom.initializeResultingReference(errorReference)
                     return@runCallableReferenceResolution applicability to false
                 }
                 resolvedCallableReferenceAtom.hasBeenPostponed = true
@@ -493,7 +494,7 @@ class FirCallResolver(
             applicability,
             createResolvedReferenceWithoutCandidateForLocalVariables = false
         )
-        resolvedCallableReferenceAtom.resultingReference = reference
+        resolvedCallableReferenceAtom.initializeResultingReference(reference)
         resolvedCallableReferenceAtom.resultingTypeForCallableReference = chosenCandidate.resultingTypeForCallableReference
 
         return@runCallableReferenceResolution applicability to true
@@ -597,9 +598,12 @@ class FirCallResolver(
                 // We don't want to force full completion before the whole call is completed so that type variables are preserved.
                 // But we need to pass expectType to figure out the correct *arrayOf* function (because Array<T> and primitive arrays can't be matched).
                 val mapping = transformer.resolutionContext.bodyResolveComponents.mapArguments(
-                    annotation.arguments, constructorSymbol.fir, originScope = null, callSiteIsOperatorCall = false,
+                    annotation.arguments.map { ConeCallAtom.createRawAtom(it) },
+                    constructorSymbol.fir,
+                    originScope = null,
+                    callSiteIsOperatorCall = false,
                 )
-                val argumentsToParameters = mapping.toArgumentToParameterMapping()
+                val argumentsToParameters = mapping.toArgumentToParameterMapping().unwrapAtoms()
 
                 fun FirCall.transformArgumentList(getExpectedType: (FirExpression) -> FirTypeRef?) {
                     replaceArgumentList(

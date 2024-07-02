@@ -332,9 +332,11 @@ enum class LanguageFeature(
     ImprovedCapturedTypeApproximationInInference(KOTLIN_2_1, kind = OTHER), // KT-64515
     ImprovedVarianceInCst(KOTLIN_2_1, kind = OTHER), // KT-68970
     InferMoreImplicationsFromBooleanExpressions(KOTLIN_2_1, kind = OTHER), // KT-64193
+    ExhaustivenessChecksOnTypeParameterBounds(KOTLIN_2_1, kind = OTHER), // KT-21908
 
     // 2.2
 
+    BreakContinueInInlineLambdas(KOTLIN_2_2), // KT-1436
     UnstableSmartcastOnDelegatedProperties(KOTLIN_2_2, kind = BUG_FIX), // KT-57417
     ReferencesToSyntheticJavaProperties(KOTLIN_2_2), // KT-8575
     ForbidUsingExpressionTypesWithInaccessibleContent(KOTLIN_2_2, kind = BUG_FIX), // KT-66691
@@ -374,7 +376,6 @@ enum class LanguageFeature(
 
     // Experimental features
 
-    BreakContinueInInlineLambdas(null), // KT-1436
     JsEnableExtensionFunctionInExternals(null, kind = OTHER),
     PackagePrivateFileClassesWithAllPrivateMembers(null), // Disabled until the breaking change is approved by the committee, see KT-10884.
     BooleanElvisBoundSmartCasts(null), // see KT-26357 for details
@@ -536,7 +537,7 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware, L
             str.split(".", "-").let { if (it.size >= 2) fromVersionString("${it[0]}.${it[1]}") else null }
 
         // Version status
-        //            1.0..1.3        1.4..1.6           1.7..2.0    2.1..2.2
+        //            1.0..1.3        1.4..1.6           1.7..2.1    2.2
         // Language:  UNSUPPORTED --> DEPRECATED ------> STABLE ---> EXPERIMENTAL
         // API:       UNSUPPORTED --> DEPRECATED ------> STABLE ---> EXPERIMENTAL
 
@@ -550,7 +551,7 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware, L
         val FIRST_NON_DEPRECATED = KOTLIN_1_7
 
         @JvmField
-        val LATEST_STABLE = KOTLIN_2_0
+        val LATEST_STABLE = KOTLIN_2_1
     }
 }
 

@@ -8,6 +8,8 @@ package org.jetbrains.kotlin.fir.resolve.inference
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
+import org.jetbrains.kotlin.fir.resolve.calls.ConeAtomWithCandidate
+import org.jetbrains.kotlin.fir.resolve.calls.ConeCallAtom
 import org.jetbrains.kotlin.fir.resolve.calls.candidate.Candidate
 import org.jetbrains.kotlin.fir.resolve.calls.candidate.candidate
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeExpectedTypeConstraintPosition
@@ -69,7 +71,7 @@ class FirPCLAInferenceSession(
         currentCommonSystem.replaceContentWith(candidate.system.currentStorage())
 
         if (completionMode == ConstraintSystemCompletionMode.PCLA_POSTPONED_CALL) {
-            outerCandidate.postponedPCLACalls += call
+            outerCandidate.postponedPCLACalls += ConeAtomWithCandidate(call, candidate)
         }
     }
 
@@ -119,7 +121,7 @@ class FirPCLAInferenceSession(
     }
 
     fun integrateChildSession(
-        childCalls: Collection<FirStatement>,
+        childCalls: Collection<ConeCallAtom>,
         childStorage: ConstraintStorage,
         onCompletionResultsWriting: (ConeSubstitutor) -> Unit,
     ) {
@@ -240,8 +242,8 @@ class FirPCLAInferenceSession(
 
         // We can't analyze independently the calls which have postponed receivers
         // Even if the calls themselves are trivial
-        if (dispatchReceiver?.isReceiverPostponed() == true) return false
-        if (givenExtensionReceiverOptions.any { it.isReceiverPostponed() }) return false
+        if (dispatchReceiver?.expression?.isReceiverPostponed() == true) return false
+        if (givenExtensionReceiverOptions.any { it.expression.isReceiverPostponed() }) return false
         // At the step of candidate's system creation, there are no chosen context receiver values, yet
         // (see org.jetbrains.kotlin.fir.resolve.calls.CheckContextReceivers)
         // Thus, we just postpone everything with symbols requiring some context receivers
@@ -342,8 +344,14 @@ class FirTypeVariablesAfterPCLATransformer(private val substitutor: ConeSubstitu
      *   and receivers of candidates are not direct FIR children of calls, so they won't be visited during regular transformChildren
      */
     private fun processCandidate(candidate: Candidate) {
-        candidate.dispatchReceiver = candidate.dispatchReceiver?.transform(this, data = null)
-        candidate.chosenExtensionReceiver = candidate.chosenExtensionReceiver?.transform(this, data = null)
-        candidate.contextReceiverArguments = candidate.contextReceiverArguments?.map { it.transform(this, data = null) }
+        candidate.dispatchReceiver = ConeCallAtom.createRawAtom(
+            candidate.dispatchReceiver?.expression?.transform(this, data = null)
+        )
+        candidate.chosenExtensionReceiver = ConeCallAtom.createRawAtom(
+            candidate.chosenExtensionReceiver?.expression?.transform(this, data = null)
+        )
+        candidate.contextReceiverArguments = candidate.contextReceiverArguments?.map {
+            ConeCallAtom.createRawAtom(it.expression.transform(this, data = null))
+        }
     }
 }

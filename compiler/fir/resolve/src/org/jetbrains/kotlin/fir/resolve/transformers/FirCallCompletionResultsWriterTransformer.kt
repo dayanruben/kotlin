@@ -206,7 +206,7 @@ class FirCallCompletionResultsWriterTransformer(
 
     private fun runPCLARelatedTasksForCandidate(candidate: Candidate) {
         for (postponedCall in candidate.postponedPCLACalls) {
-            postponedCall.transformSingle(this, null)
+            postponedCall.fir.transformSingle(this, null)
         }
 
         for (callback in candidate.onPCLACompletionResultsWritingCallbacks) {
@@ -411,7 +411,7 @@ class FirCallCompletionResultsWriterTransformer(
         return when {
             this.isError -> originalArgumentList.arguments
             predefinedMapping != null -> predefinedMapping.keys.toList()
-            else -> candidate.argumentMapping.keys.toList()
+            else -> candidate.argumentMapping.keys.unwrapAtoms()
         }
     }
 
@@ -607,7 +607,7 @@ class FirCallCompletionResultsWriterTransformer(
         argumentList: List<FirExpression>,
         precomputedArgumentMapping: LinkedHashMap<FirExpression, FirValueParameter>? = null
     ): ResultingArgumentsMapping {
-        val argumentMapping = precomputedArgumentMapping ?: this.argumentMapping
+        val argumentMapping = precomputedArgumentMapping ?: this.argumentMapping.unwrapAtoms()
         val varargParameter = argumentMapping.values.firstOrNull { it.isVararg }
         return if (varargParameter != null) {
             // Create a FirVarargArgumentExpression for the vararg arguments
@@ -708,7 +708,9 @@ class FirCallCompletionResultsWriterTransformer(
                 name = calleeReference.name
                 resolvedSymbol = calleeReference.candidateSymbol
                 inferredTypeArguments.addAll(computeTypeArgumentTypes(calleeReference.candidate))
-                mappedArguments = subCandidate.callableReferenceAdaptation?.mappedArguments ?: emptyMap()
+                mappedArguments = subCandidate.callableReferenceAdaptation?.mappedArguments?.mapValues { (_, argument) ->
+                    argument.map { it.expression }
+                } ?: emptyMap()
             }
         }
 
@@ -778,7 +780,8 @@ class FirCallCompletionResultsWriterTransformer(
         val isIntegerOperator = symbol.isWrappedIntegerOperator()
 
         var samConversions: MutableMap<FirElement, FirSamResolver.SamConversionInfo>? = null
-        val arguments = argumentMapping.flatMap { (argument, valueParameter) ->
+        val arguments = argumentMapping.flatMap { (atom, valueParameter) ->
+            val argument = atom.expression
             val expectedType = when {
                 isIntegerOperator -> ConeIntegerConstantOperatorTypeImpl(
                     isUnsigned = symbol.isWrappedIntegerOperatorForUnsignedType() && callInfo.name in binaryOperatorsWithSignedArgument,
@@ -1116,7 +1119,7 @@ class FirCallCompletionResultsWriterTransformer(
             if (diagnostic is ConeConstraintSystemHasContradiction) {
                 val candidate = diagnostic.candidate as Candidate
                 val newSyntheticCallType =
-                    session.typeContext.commonSuperTypeOrNull(candidate.argumentMapping.keys.map { it.resolvedType })
+                    session.typeContext.commonSuperTypeOrNull(candidate.argumentMapping.keys.map { it.expression.resolvedType })
                 if (newSyntheticCallType != null && !newSyntheticCallType.hasError()) {
                     syntheticCall.replaceConeTypeOrNull(newSyntheticCallType)
                 }
@@ -1262,4 +1265,16 @@ private fun <K, V : Any> LinkedHashMap<out K, out V?>.filterValuesNotNull(): Lin
         }
     }
     return result
+}
+
+fun <V> LinkedHashMap<ConeCallAtom, V>.unwrapAtoms(): LinkedHashMap<FirExpression, V> {
+    return mapKeysToLinkedMap { it.expression }
+}
+
+inline fun <K1, K2, V> LinkedHashMap<K1, V>.mapKeysToLinkedMap(transform: (K1) -> K2): LinkedHashMap<K2, V> {
+    return mapKeysTo(LinkedHashMap()) { transform(it.key) }
+}
+
+private fun Collection<ConeCallAtom>.unwrapAtoms(): List<FirExpression> {
+    return map { it.expression }
 }

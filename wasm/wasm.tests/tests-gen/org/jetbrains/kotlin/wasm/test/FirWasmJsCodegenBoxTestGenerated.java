@@ -15192,6 +15192,12 @@ public class FirWasmJsCodegenBoxTestGenerated extends AbstractFirWasmJsCodegenBo
     }
 
     @Test
+    @TestMetadata("enumEntriesCompatibilityCheckNoPrioritizedEnumEntries.kt")
+    public void testEnumEntriesCompatibilityCheckNoPrioritizedEnumEntries() {
+      runTest("compiler/testData/codegen/box/enum/enumEntriesCompatibilityCheckNoPrioritizedEnumEntries.kt");
+    }
+
+    @Test
     @TestMetadata("enumEntriesInCompanion.kt")
     public void testEnumEntriesInCompanion() {
       runTest("compiler/testData/codegen/box/enum/enumEntriesInCompanion.kt");
@@ -27901,12 +27907,6 @@ public class FirWasmJsCodegenBoxTestGenerated extends AbstractFirWasmJsCodegenBo
       }
 
       @Test
-      @TestMetadata("delegationToExpectInterface_noNewMembers.kt")
-      public void testDelegationToExpectInterface_noNewMembers() {
-        runTest("compiler/testData/codegen/box/multiplatform/k2/delegationToExpectInterface_noNewMembers.kt");
-      }
-
-      @Test
       @TestMetadata("expectValInInlineClass.kt")
       public void testExpectValInInlineClass() {
         runTest("compiler/testData/codegen/box/multiplatform/k2/expectValInInlineClass.kt");
@@ -27958,6 +27958,12 @@ public class FirWasmJsCodegenBoxTestGenerated extends AbstractFirWasmJsCodegenBo
       @TestMetadata("privateConstructorWithDefaults.kt")
       public void testPrivateConstructorWithDefaults() {
         runTest("compiler/testData/codegen/box/multiplatform/k2/privateConstructorWithDefaults.kt");
+      }
+
+      @Test
+      @TestMetadata("regularAndDeprecatedOverloads.kt")
+      public void testRegularAndDeprecatedOverloads() {
+        runTest("compiler/testData/codegen/box/multiplatform/k2/regularAndDeprecatedOverloads.kt");
       }
 
       @Nested
@@ -28417,6 +28423,52 @@ public class FirWasmJsCodegenBoxTestGenerated extends AbstractFirWasmJsCodegenBo
         @TestMetadata("withTypeParameter.kt")
         public void testWithTypeParameter() {
           runTest("compiler/testData/codegen/box/multiplatform/k2/defaultArguments/withTypeParameter.kt");
+        }
+      }
+
+      @Nested
+      @TestMetadata("compiler/testData/codegen/box/multiplatform/k2/delegation")
+      @TestDataPath("$PROJECT_ROOT")
+      public class Delegation {
+        @Test
+        public void testAllFilesPresentInDelegation() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/multiplatform/k2/delegation"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.WASM, true);
+        }
+
+        @Test
+        @TestMetadata("delegationToExpectInterfaceByExpectFun.kt")
+        public void testDelegationToExpectInterfaceByExpectFun() {
+          runTest("compiler/testData/codegen/box/multiplatform/k2/delegation/delegationToExpectInterfaceByExpectFun.kt");
+        }
+
+        @Test
+        @TestMetadata("delegationToExpectInterface_noNewMembers.kt")
+        public void testDelegationToExpectInterface_noNewMembers() {
+          runTest("compiler/testData/codegen/box/multiplatform/k2/delegation/delegationToExpectInterface_noNewMembers.kt");
+        }
+
+        @Test
+        @TestMetadata("delegationToExpectInterface_withNewMembers.kt")
+        public void testDelegationToExpectInterface_withNewMembers() {
+          runTest("compiler/testData/codegen/box/multiplatform/k2/delegation/delegationToExpectInterface_withNewMembers.kt");
+        }
+
+        @Test
+        @TestMetadata("delegationToExpectInterface_withNewMembersSameName.kt")
+        public void testDelegationToExpectInterface_withNewMembersSameName() {
+          runTest("compiler/testData/codegen/box/multiplatform/k2/delegation/delegationToExpectInterface_withNewMembersSameName.kt");
+        }
+
+        @Test
+        @TestMetadata("delegationToExpectInterface_withOverrideInDelegated.kt")
+        public void testDelegationToExpectInterface_withOverrideInDelegated() {
+          runTest("compiler/testData/codegen/box/multiplatform/k2/delegation/delegationToExpectInterface_withOverrideInDelegated.kt");
+        }
+
+        @Test
+        @TestMetadata("delegationWithIntersection.kt")
+        public void testDelegationWithIntersection() {
+          runTest("compiler/testData/codegen/box/multiplatform/k2/delegation/delegationWithIntersection.kt");
         }
       }
 

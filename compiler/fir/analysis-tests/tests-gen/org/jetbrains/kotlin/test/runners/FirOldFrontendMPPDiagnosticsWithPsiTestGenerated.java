@@ -146,9 +146,33 @@ public class FirOldFrontendMPPDiagnosticsWithPsiTestGenerated extends AbstractFi
   }
 
   @Test
+  @TestMetadata("delegationToExpectInterfaceMixedWithInheritance.kt")
+  public void testDelegationToExpectInterfaceMixedWithInheritance() {
+    runTest("compiler/testData/diagnostics/tests/multiplatform/delegationToExpectInterfaceMixedWithInheritance.kt");
+  }
+
+  @Test
   @TestMetadata("delegationToExpectInterfacesWithClashingScopes.kt")
   public void testDelegationToExpectInterfacesWithClashingScopes() {
     runTest("compiler/testData/diagnostics/tests/multiplatform/delegationToExpectInterfacesWithClashingScopes.kt");
+  }
+
+  @Test
+  @TestMetadata("delegationWithIntersectionAndTypeParameters.kt")
+  public void testDelegationWithIntersectionAndTypeParameters() {
+    runTest("compiler/testData/diagnostics/tests/multiplatform/delegationWithIntersectionAndTypeParameters.kt");
+  }
+
+  @Test
+  @TestMetadata("delegationWithTypeParametersAndInheritance.kt")
+  public void testDelegationWithTypeParametersAndInheritance() {
+    runTest("compiler/testData/diagnostics/tests/multiplatform/delegationWithTypeParametersAndInheritance.kt");
+  }
+
+  @Test
+  @TestMetadata("delegationWithTypeParametersAndJavaActualization.kt")
+  public void testDelegationWithTypeParametersAndJavaActualization() {
+    runTest("compiler/testData/diagnostics/tests/multiplatform/delegationWithTypeParametersAndJavaActualization.kt");
   }
 
   @Test
@@ -353,6 +377,12 @@ public class FirOldFrontendMPPDiagnosticsWithPsiTestGenerated extends AbstractFi
   @TestMetadata("kt64166.kt")
   public void testKt64166() {
     runTest("compiler/testData/diagnostics/tests/multiplatform/kt64166.kt");
+  }
+
+  @Test
+  @TestMetadata("missingActual.kt")
+  public void testMissingActual() {
+    runTest("compiler/testData/diagnostics/tests/multiplatform/missingActual.kt");
   }
 
   @Test

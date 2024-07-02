@@ -21,6 +21,7 @@ dependencies {
     testImplementation(project(":compiler:ir.serialization.native"))
     testImplementation(project(":compiler:fir:native"))
     testImplementation(project(":kotlin-util-klib-abi"))
+    testImplementation(project(":native:swift:sir"))
     testImplementation(project(":native:swift:swift-export-standalone"))
     testImplementation(projectTests(":kotlin-util-klib-abi"))
     testApi(platform(libs.junit.bom))
@@ -57,6 +58,7 @@ val cachesTest = nativeTest("cachesTest", "caches")
 val klibTest = nativeTest("klibTest", "klib")
 val standaloneTest = nativeTest("standaloneTest", "standalone")
 val gcTest = nativeTest("gcTest", "gc")
+val swiftExportTest = nativeTest("swiftExportTest", "swiftexport")
 
 val testTags = findProperty("kotlin.native.tests.tags")?.toString()
 // Note: arbitrary JUnit tag expressions can be used in this property.

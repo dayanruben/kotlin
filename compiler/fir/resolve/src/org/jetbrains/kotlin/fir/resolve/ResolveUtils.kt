@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.fir.resolve.calls.candidate.FirPropertyWithExplicitB
 import org.jetbrains.kotlin.fir.resolve.calls.isVisible
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.FirAnonymousFunctionReturnExpressionInfo
 import org.jetbrains.kotlin.fir.resolve.diagnostics.*
-import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
 import org.jetbrains.kotlin.fir.scopes.FirTypeScope
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
@@ -627,7 +626,7 @@ fun FirResolvedTypeRef.initialTypeOfCandidate(candidate: Candidate): ConeKotlinT
 
 fun FirCallableDeclaration.getContainingClass(session: FirSession): FirRegularClass? =
     this.containingClassLookupTag()?.let { lookupTag ->
-        session.symbolProvider.getSymbolByLookupTag(lookupTag)?.fir as? FirRegularClass
+        lookupTag.toRegularClassSymbol(session)?.fir
     }
 
 internal fun FirFunction.areNamedArgumentsForbiddenIgnoringOverridden(): Boolean =
@@ -728,8 +727,11 @@ fun createConeDiagnosticForCandidateWithError(
                 // We report the nearest invisible containing declaration, otherwise we'll get a confusing diagnostic like
                 // Cannot access 'foo', it is public in 'Bar'.
                 declaration
-                    .parentDeclarationSequence(session, candidate.dispatchReceiver, candidate.callInfo.containingDeclarations)
-                    ?.firstOrNull {
+                    .parentDeclarationSequence(
+                        session,
+                        candidate.dispatchReceiver?.expression,
+                        candidate.callInfo.containingDeclarations
+                    )?.firstOrNull {
                         !session.visibilityChecker.isVisible(
                             it,
                             session,

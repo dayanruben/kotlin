@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // LANGUAGE: -ProhibitGenericArrayClassLiteral
 // MODULE: m1-common
 // FILE: common.kt
@@ -29,11 +28,11 @@ expect annotation class Anno(
     val str: String = "fizz",
     val k: KClass<*> = Number::class,
     val e: E = E.E1,
-    // TODO: val a: A = A("1"),
+    val a: A = A("1"),
     val stra: Array<String> = ["bu", "zz"],
     val ka: Array<KClass<*>> = [Double::class, String::class, LongArray::class, Array<Array<Array<Int>>>::class, Unit::class],
-    val ea: Array<E> = [E.E2, E.E3]
-    // TODO: val aa: Array<A> = [A("2"), A("3")]
+    val ea: Array<E> = [E.E2, E.E3],
+    val aa: Array<A> = [A("2"), A("3")],
 )
 
 enum class E { E1, E2, E3 }
@@ -46,7 +45,7 @@ fun test() {}
 // MODULE: m2-jvm()()(m1-common)
 // FILE: jvm.kt
 
-actual typealias Anno = Jnno
+actual typealias <!ACTUAL_ANNOTATION_CONFLICTING_DEFAULT_ARGUMENT_VALUE, ACTUAL_ANNOTATION_CONFLICTING_DEFAULT_ARGUMENT_VALUE!>Anno<!> = Jnno
 
 // FILE: Jnno.java
 
@@ -72,9 +71,9 @@ public @interface Jnno {
     String str() default "fi" + "zz";
     Class<?> k() default Number.class;
     E e() default E.E1;
-    // TODO: A a() default @A("1");
+    A a() default @A("1");
     String[] stra() default {"bu", "zz"};
     Class<?>[] ka() default {double.class, String.class, long[].class, Integer[][][].class, void.class};
     E[] ea() default {E.E2, E.E3};
-    // TODO: A[] aa() default {@A("2"), @A("3")};
+    A[] aa() default {@A("2"), @A("3")};
 }
