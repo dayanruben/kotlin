@@ -538,6 +538,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
     }
 
     @Test
+    @TestMetadata("falseNegativeSuperCallWithDefaults.kt")
+    public void testFalseNegativeSuperCallWithDefaults() {
+      runTest("compiler/testData/diagnostics/tests/falseNegativeSuperCallWithDefaults.kt");
+    }
+
+    @Test
     @TestMetadata("fileDependencyRecursion.kt")
     public void testFileDependencyRecursion() {
       runTest("compiler/testData/diagnostics/tests/fileDependencyRecursion.kt");
@@ -22123,6 +22129,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("kt51366.kt")
+      public void testKt51366() {
+        runTest("compiler/testData/diagnostics/tests/inlineClasses/kt51366.kt");
+      }
+
+      @Test
       @TestMetadata("lateinitInlineClassesOff.kt")
       public void testLateinitInlineClassesOff() {
         runTest("compiler/testData/diagnostics/tests/inlineClasses/lateinitInlineClassesOff.kt");
@@ -42575,6 +42587,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("kt51366.kt")
+      public void testKt51366() {
+        runTest("compiler/testData/diagnostics/tests/valueClasses/kt51366.kt");
+      }
+
+      @Test
       @TestMetadata("lateinitValueClasses.kt")
       public void testLateinitValueClasses() {
         runTest("compiler/testData/diagnostics/tests/valueClasses/lateinitValueClasses.kt");
@@ -43800,6 +43818,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("NonExhaustiveWithNullabilityCheck.kt")
       public void testNonExhaustiveWithNullabilityCheck() {
         runTest("compiler/testData/diagnostics/tests/when/NonExhaustiveWithNullabilityCheck.kt");
+      }
+
+      @Test
+      @TestMetadata("nullableSubjectWithIsCheck.kt")
+      public void testNullableSubjectWithIsCheck() {
+        runTest("compiler/testData/diagnostics/tests/when/nullableSubjectWithIsCheck.kt");
       }
 
       @Test

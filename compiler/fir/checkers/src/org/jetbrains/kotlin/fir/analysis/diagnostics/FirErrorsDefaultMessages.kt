@@ -58,6 +58,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ABSTRACT_MEMBER_N
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ABSTRACT_MEMBER_NOT_IMPLEMENTED_BY_ENUM_ENTRY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ABSTRACT_PROPERTY_IN_NON_ABSTRACT_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ABSTRACT_PROPERTY_IN_PRIMARY_CONSTRUCTOR_PARAMETERS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ABSTRACT_PROPERTY_WITHOUT_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ABSTRACT_PROPERTY_WITH_GETTER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ABSTRACT_PROPERTY_WITH_INITIALIZER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ABSTRACT_PROPERTY_WITH_SETTER
@@ -385,6 +386,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.LATEINIT_INTRINSI
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.LATEINIT_INTRINSIC_CALL_ON_NON_LITERAL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.LATEINIT_NULLABLE_BACKING_FIELD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.LATEINIT_PROPERTY_FIELD_DECLARATION_WITH_INITIALIZER
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.LATEINIT_PROPERTY_WITHOUT_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.LEAKED_IN_PLACE_LAMBDA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.LOCAL_ANNOTATION_CLASS_ERROR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.LOCAL_EXTENSION_PROPERTY
@@ -790,7 +792,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(ILLEGAL_UNDERSCORE, "Incorrect usage of underscore in numeric literal.")
 //            map.put(EXPRESSION_REQUIRED, ...) // &
         map.put(BREAK_OR_CONTINUE_OUTSIDE_A_LOOP, "'break' and 'continue' are only allowed inside loops.")
-        map.put(NOT_A_LOOP_LABEL, "Label does not denote a loop.") // *
+        map.put(NOT_A_LOOP_LABEL, "Label does not denote a reachable loop.") // *
         map.put(BREAK_OR_CONTINUE_JUMPS_ACROSS_FUNCTION_BOUNDARY, "'break' or 'continue' crosses a function or class boundary.")
         map.put(VARIABLE_EXPECTED, "Variable expected.")
         map.put(DELEGATION_IN_INTERFACE, "Delegation cannot be used in interfaces.")
@@ -1278,7 +1280,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         // Applicability
         map.put(NONE_APPLICABLE, "None of the following candidates is applicable:{0}", SYMBOLS_ON_NEXT_LINES)
         map.put(INAPPLICABLE_CANDIDATE, "Inapplicable candidate(s): {0}", SYMBOL)
-        map.put(INAPPLICABLE_LATEINIT_MODIFIER, "''lateinit'' modifier ''{0}''.", TO_STRING)
+        map.put(INAPPLICABLE_LATEINIT_MODIFIER, "''lateinit'' modifier {0}.", TO_STRING)
         map.put(VARARG_OUTSIDE_PARENTHESES, "Passing value as a vararg is allowed only inside a parenthesized argument list.")
         map.put(NAMED_ARGUMENTS_NOT_ALLOWED, "Named arguments are prohibited for {0}.", TO_STRING)
         map.put(NON_VARARG_SPREAD, "The spread operator (*foo) can only be applied in a vararg position.")
@@ -1421,7 +1423,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(RECURSION_IN_IMPLICIT_TYPES, "Recursion in implicit types.")
         map.put(INFERENCE_ERROR, "Inference error.")
         map.put(ILLEGAL_PROJECTION_USAGE, "Illegal projection usage.")
-        map.put(PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT, "Projections on type arguments of functions and properties are prohibited.")
+        map.put(PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT, "Projections are not allowed on type arguments of functions calls.")
         map.put(
             UPPER_BOUND_VIOLATED,
             "Type argument is not within its bounds: should be subtype of ''{0}''.{2}",
@@ -2046,6 +2048,14 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             PROPERTY_WITH_NO_TYPE_NO_INITIALIZER,
             "This property must have an explicit type, be initialized, or be delegated."
         )
+        map.put(
+            ABSTRACT_PROPERTY_WITHOUT_TYPE,
+            "Abstract property must have an explicit type."
+        )
+        map.put(
+            LATEINIT_PROPERTY_WITHOUT_TYPE,
+            "'lateinit' property must have an explicit type."
+        )
 
         map.put(VARIABLE_WITH_NO_TYPE_NO_INITIALIZER, "This variable must either have an explicit type or be initialized.")
 
@@ -2062,7 +2072,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(MUST_BE_INITIALIZED_OR_FINAL_OR_ABSTRACT_WARNING, "Property must be initialized, be final, or be abstract. This warning will become an error in future releases.")
 
         map.put(EXTENSION_PROPERTY_MUST_HAVE_ACCESSORS_OR_BE_ABSTRACT, "Extension property must have accessors or be abstract.")
-        map.put(UNNECESSARY_LATEINIT, "'Lateinit' is unnecessary: definitely initialized in constructors.")
+        map.put(UNNECESSARY_LATEINIT, "'lateinit' is unnecessary: definitely initialized in constructors.")
 
         map.put(BACKING_FIELD_IN_INTERFACE, "Property in interface cannot have a backing field.")
         map.put(EXTENSION_PROPERTY_WITH_BACKING_FIELD, "Extension property cannot be initialized because it has no backing field.")
