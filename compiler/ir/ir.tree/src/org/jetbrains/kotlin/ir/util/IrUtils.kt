@@ -1623,3 +1623,21 @@ fun IrModuleFragment.addFile(file: IrFile) {
     files.add(file)
     file.module = this
 }
+
+fun IrFunctionAccessExpression.receiverAndArgs(): List<IrExpression> {
+    return (arrayListOf(this.dispatchReceiver, this.extensionReceiver) +
+            symbol.owner.valueParameters.mapIndexed { i, _ -> getValueArgument(i) }).filterNotNull()
+}
+
+val IrFunction.propertyIfAccessor: IrDeclaration
+    get() = (this as? IrSimpleFunction)?.correspondingPropertySymbol?.owner ?: this
+
+/**
+ * Whether this declaration (or its corresponding property if it's a property accessor) has the [PublishedApi] annotation.
+ */
+fun IrDeclaration.isPublishedApi(): Boolean =
+    hasAnnotation(StandardClassIds.Annotations.PublishedApi) ||
+            (this as? IrSimpleFunction)
+                ?.correspondingPropertySymbol
+                ?.owner
+                ?.hasAnnotation(StandardClassIds.Annotations.PublishedApi) ?: false
