@@ -4614,6 +4614,16 @@ internal class SynchronizedOnInlineImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.SynchronizedOnInline
 
+internal class SynchronizedOnValueClassErrorImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.SynchronizedOnValueClassError
+
+internal class SynchronizedOnValueClassWarningImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.SynchronizedOnValueClassWarning
+
 internal class SynchronizedOnSuspendErrorImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
@@ -4906,6 +4916,18 @@ internal class InapplicableJvmFieldWarningImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.InapplicableJvmFieldWarning
+
+internal class SynchronizedBlockOnValueClassOrPrimitiveErrorImpl(
+    override val valueClassOrPrimitive: KaType,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.SynchronizedBlockOnValueClassOrPrimitiveError
+
+internal class SynchronizedBlockOnValueClassOrPrimitiveWarningImpl(
+    override val valueClassOrPrimitive: KaType,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.SynchronizedBlockOnValueClassOrPrimitiveWarning
 
 internal class JvmSyntheticOnDelegateImpl(
     firDiagnostic: KtPsiDiagnostic,

@@ -23688,6 +23688,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("overrideAnClashWithJvmSignatureInMPP.kt")
+        public void testOverrideAnClashWithJvmSignatureInMPP() {
+          runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/overrideAnClashWithJvmSignatureInMPP.kt");
+        }
+
+        @Test
         @TestMetadata("removeAt.kt")
         public void testRemoveAt() {
           runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/removeAt.kt");
@@ -26464,6 +26470,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("nestedClassViaActualTypealiasWithTypeParam.kt")
       public void testNestedClassViaActualTypealiasWithTypeParam() {
         runTest("compiler/testData/diagnostics/tests/multiplatform/nestedClassViaActualTypealiasWithTypeParam.kt");
+      }
+
+      @Test
+      @TestMetadata("noOverrideClashWithSignatureInMppCommon.kt")
+      public void testNoOverrideClashWithSignatureInMppCommon() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/noOverrideClashWithSignatureInMppCommon.kt");
       }
 
       @Test
@@ -48530,6 +48542,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
     @TestDataPath("$PROJECT_ROOT")
     public class Multiplatform {
       @Test
+      @TestMetadata("actualExternalInJs.kt")
+      public void testActualExternalInJs() {
+        runTest("compiler/testData/diagnostics/testsWithStdLib/multiplatform/actualExternalInJs.kt");
+      }
+
+      @Test
       public void testAllFilesPresentInMultiplatform() {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/testsWithStdLib/multiplatform"), Pattern.compile("^(.+)\\.(kt|kts)$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
       }
@@ -48538,6 +48556,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("collections.kt")
       public void testCollections() {
         runTest("compiler/testData/diagnostics/testsWithStdLib/multiplatform/collections.kt");
+      }
+
+      @Test
+      @TestMetadata("duplicateSupertype.kt")
+      public void testDuplicateSupertype() {
+        runTest("compiler/testData/diagnostics/testsWithStdLib/multiplatform/duplicateSupertype.kt");
       }
 
       @Test

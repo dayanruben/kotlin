@@ -201,7 +201,9 @@ internal class BaseDirs(val testBuildDir: File)
  */
 internal class Timeouts(val executionTimeout: Duration) {
     companion object {
-        val DEFAULT_EXECUTION_TIMEOUT: Duration get() = 30.seconds
+        // Don't forget to adjust the following tests when increasing the timeout:
+        //   native/native.tests/testData/samples/standalone_notr_long_running*.kt
+        val DEFAULT_EXECUTION_TIMEOUT: Duration get() = 60.seconds
     }
 }
 

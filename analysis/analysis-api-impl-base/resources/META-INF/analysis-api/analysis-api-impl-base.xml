@@ -1,4 +1,6 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="/META-INF/extensions/compiler.xml"/>
+
   <extensionPoints>
     <extensionPoint
         qualifiedName="org.jetbrains.kotlin.kaResolveExtensionProvider"
@@ -42,5 +44,12 @@
     />
 
     <java.elementFinder implementation="org.jetbrains.kotlin.asJava.finder.JavaElementFinder"/>
+
+    <registryKey
+        defaultValue="false"
+        description="Throw an exception in the case of inconsistency in decompiled light classes"
+        key="kotlin.decompiled.light.classes.check.inconsistency"
+        restartRequired="false"
+    />
   </extensions>
 </idea-plugin>
