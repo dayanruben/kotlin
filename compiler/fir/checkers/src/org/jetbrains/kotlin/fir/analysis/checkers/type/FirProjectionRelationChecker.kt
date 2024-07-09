@@ -15,9 +15,7 @@ import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.extractArgumentsTypeRefAndSource
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
-import org.jetbrains.kotlin.fir.resolve.createParametersSubstitutor
-import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
-import org.jetbrains.kotlin.fir.resolve.mapParametersToArgumentsOf
+import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.chain
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
@@ -27,11 +25,11 @@ import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.types.Variance
 
-object FirProjectionRelationChecker : FirTypeRefChecker(MppCheckerKind.Common) {
-    override fun check(typeRef: FirTypeRef, context: CheckerContext, reporter: DiagnosticReporter) {
+object FirProjectionRelationChecker : FirResolvedTypeRefChecker(MppCheckerKind.Common) {
+    override fun check(typeRef: FirResolvedTypeRef, context: CheckerContext, reporter: DiagnosticReporter) {
         if (typeRef.source?.kind?.shouldSkipErrorTypeReporting != false) return
-        val type = typeRef.coneTypeSafe<ConeClassLikeType>()?.abbreviatedTypeOrSelf
-        val fullyExpandedType = type?.fullyExpandedType(context.session) ?: return
+        val type = typeRef.coneType.abbreviatedTypeOrSelf
+        val fullyExpandedType = type.fullyExpandedType(context.session)
 
         val potentiallyProblematicArguments = collectPotentiallyProblematicArguments(typeRef, context.session)
 

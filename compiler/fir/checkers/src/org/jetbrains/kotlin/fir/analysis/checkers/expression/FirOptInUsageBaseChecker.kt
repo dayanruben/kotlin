@@ -94,7 +94,7 @@ object FirOptInUsageBaseChecker {
         fromSupertype: Boolean
     ) {
         for (annotation in annotations) {
-            val annotationType = annotation.annotationTypeRef.coneTypeSafe<ConeClassLikeType>() ?: continue
+            val annotationType = annotation.annotationTypeRef.coneType as? ConeClassLikeType ?: continue
             val className = when (this) {
                 is FirRegularClass -> name.asString()
                 is FirCallableDeclaration -> symbol.callableId.className?.shortName()?.asString()
@@ -199,7 +199,7 @@ object FirOptInUsageBaseChecker {
         dispatchReceiverType: ConeKotlinType?,
         result: SmartSet<Experimentality>
     ) {
-        val parentClassSymbol = containingClassLookupTag()?.toSymbol(context.session) as? FirRegularClassSymbol
+        val parentClassSymbol = containingClassLookupTag()?.toRegularClassSymbol(context.session)
         if (this is FirConstructor) {
             val ownerClassLikeSymbol = this.typeAliasForConstructor ?: parentClassSymbol
             // For other callable we check dispatch receiver type instead
@@ -207,8 +207,7 @@ object FirOptInUsageBaseChecker {
                 context, result, visited, fromSetter = false, dispatchReceiverType = null, fromSupertype = false
             )
         } else {
-            // Without coneTypeSafe v fails in MT test (FirRenderer.kt)
-            returnTypeRef.coneTypeSafe<ConeKotlinType>()?.abbreviatedTypeOrSelf.addExperimentalities(context, result, visited)
+            returnTypeRef.coneType.abbreviatedTypeOrSelf.addExperimentalities(context, result, visited)
             receiverParameter?.typeRef?.coneType?.abbreviatedTypeOrSelf.addExperimentalities(context, result, visited)
         }
         if (!symbol.isStatic) {

@@ -83,32 +83,43 @@ public enum class ErrorTypeStrategy {
     }
 }
 
-public sealed interface InputModule {
-    public val name: String
-    public val path: Path
-
-    public class Binary(
-        override val name: String,
-        override val path: Path,
-    ) : InputModule
-}
+public data class InputModule(
+    public val name: String,
+    public val path: Path,
+    public val config: SwiftExportConfig,
+)
 
 public sealed class SwiftExportModule(
     public val name: String,
-    public val dependencies: List<SwiftExportModule>
+    public val dependencies: List<Reference>
 ) : Serializable {
 
+    public class Reference(
+        public val name: String
+    ) {
+        public lateinit var module: SwiftExportModule
+    }
+
+    // used by packages module only
     public class SwiftOnly(
         public val swiftApi: Path,
         name: String,
-        dependencies: List<SwiftExportModule>
-    ): SwiftExportModule(name, dependencies)
+    ) : SwiftExportModule(name, emptyList()) {
+        override fun equals(other: Any?): Boolean =
+            other is SwiftOnly && swiftApi == other.swiftApi && name == other.name
+
+        override fun hashCode(): Int {
+            var result = swiftApi.hashCode()
+            result = 31 * result + name.hashCode()
+            return result
+        }
+    }
 
     public class BridgesToKotlin(
         public val files: SwiftExportFiles,
         public val bridgeName: String,
         name: String,
-        dependencies: List<SwiftExportModule>,
+        dependencies: List<Reference>,
     ) : SwiftExportModule(name, dependencies)
 }
 
@@ -141,24 +152,50 @@ public fun createDummyLogger(): SwiftExportLogger = object : SwiftExportLogger {
     }
 }
 
-// temporal HACK.
-// Otherwise SirModule becomes part of public API and there is no reason to actually do that in long run.
-// fixme: KT-68864
-public fun runSwiftExport(
-    input: InputModule.Binary,
-    dependencies: List<InputModule.Binary> = emptyList(),
-    config: SwiftExportConfig,
-): Result<List<SwiftExportModule>> = runSwiftExport(input, dependencies, null, config)
-
 /**
  * A root function for running Swift Export from build tool
  */
 public fun runSwiftExport(
-    input: InputModule.Binary,
-    dependencies: List<InputModule.Binary> = emptyList(),
-    moduleForPackages: SirModule?,
-    config: SwiftExportConfig,
+    input: Set<InputModule>,
+): Result<Set<SwiftExportModule>> = runCatching {
+    // ATTENTION:
+    // 1. Each call to `actualRunSwiftExport` will end with a write operation of contents of this module onto file-system.
+    // 2. Each call to `actualRunSwiftExport` will modify this module AND there is no synchronization mechanism inplace.
+    val moduleForPackages = buildModule {
+        name = "ExportedKotlinPackages"
+    }
+
+    val swiftExportOutputs = input.flatMap { rootModule ->
+        /**
+         * This value represents dependencies of current module.
+         * The actual dependency graph is unknown at this point - there is only an array of modules to translate. This particular value
+         * will be used to initialize Analysis API session. It is an error to pass module as a dependency to itself - therefor there is
+         * a need to remove the current translation module from the list of dependencies.
+         */
+        val dependencies = input - rootModule
+        actualRunSwiftExport(
+            input = rootModule,
+            dependencies = dependencies,
+            moduleForPackages = moduleForPackages,
+        ).getOrThrow()
+    }.toSet()
+
+    swiftExportOutputs.forEach { realModule ->
+        realModule.dependencies.forEach { dep ->
+            dep.module = swiftExportOutputs.first { it.name == dep.name }
+        }
+    }
+
+    return@runCatching swiftExportOutputs
+}
+
+
+private fun actualRunSwiftExport(
+    input: InputModule,
+    dependencies: Set<InputModule>,
+    moduleForPackages: SirModule,
 ): Result<List<SwiftExportModule>> = runCatching {
+    val config = input.config
     val stableDeclarationsOrder = config.settings.containsKey(STABLE_DECLARATIONS_ORDER)
     val renderDocComments = config.settings[RENDER_DOC_COMMENTS] != "false"
     val bridgeModuleNamePrefix = config.settings.getOrElse(BRIDGE_MODULE_NAME) {
@@ -220,20 +257,34 @@ public fun runSwiftExport(
             additionalSwiftLinesProvider = additionalSwiftLinesProvider,
         )
     }
-    return@runCatching listOf(
-        SwiftExportModule.BridgesToKotlin(
-            name = buildResult.mainModule.name,
-            dependencies = if (config.multipleModulesHandlingStrategy == MultipleModulesHandlingStrategy.IntoSingleModule) emptyList() else listOf(
-                SwiftExportModule.SwiftOnly(
-                    name = buildResult.moduleForPackageEnums.name,
-                    dependencies = emptyList(),
-                    swiftApi = buildResult.moduleForPackageEnums.createOutputFiles(config.outputPath.parent).swiftApi,
-                )
-            ),
-            bridgeName = bridgesModuleName,
-            files = buildResult.mainModule.createOutputFiles(config.outputPath)
+
+    val resultingDependencies = buildList {
+        if (config.multipleModulesHandlingStrategy == MultipleModulesHandlingStrategy.OneToOneModuleMapping) {
+            addReference(buildResult.moduleForPackageEnums.name)
+        }
+        buildResult.mainModule.imports
+            .filter { it.moduleName !in setOf(buildResult.moduleForPackageEnums.name, KotlinRuntimeModule.name, bridgesModuleName) }
+            .forEach { addReference(it.moduleName) }
+    }
+
+    return@runCatching buildList {
+        add(
+            SwiftExportModule.BridgesToKotlin(
+                name = buildResult.mainModule.name,
+                dependencies = resultingDependencies,
+                bridgeName = bridgesModuleName,
+                files = buildResult.mainModule.createOutputFiles(config.outputPath)
+            )
         )
-    )
+        if (config.multipleModulesHandlingStrategy == MultipleModulesHandlingStrategy.OneToOneModuleMapping) {
+            add(
+                SwiftExportModule.SwiftOnly(
+                    name = moduleForPackages.name,
+                    swiftApi = buildResult.moduleForPackageEnums.createOutputFiles(config.outputPath.parent).swiftApi
+                )
+            )
+        }
+    }
 }
 
 private fun SirModule.createOutputFiles(outputPath: Path): SwiftExportFiles = SwiftExportFiles(
@@ -241,3 +292,6 @@ private fun SirModule.createOutputFiles(outputPath: Path): SwiftExportFiles = Sw
     kotlinBridges = (outputPath / name / "$name.kt"),
     cHeaderBridges = (outputPath / name / "$name.h")
 )
+
+private fun MutableList<SwiftExportModule.Reference>.addReference(destinationModuleName: String): Boolean =
+    add(SwiftExportModule.Reference(destinationModuleName))

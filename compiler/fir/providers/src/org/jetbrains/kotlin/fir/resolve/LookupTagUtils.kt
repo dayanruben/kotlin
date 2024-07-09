@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.fakeElement
 import org.jetbrains.kotlin.fir.FirFunctionTypeParameter
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.getAnnotationsByClassId
 import org.jetbrains.kotlin.fir.declarations.utils.isInner
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
@@ -18,9 +17,11 @@ import org.jetbrains.kotlin.fir.expressions.builder.buildAnnotation
 import org.jetbrains.kotlin.fir.expressions.builder.buildAnnotationArgumentMapping
 import org.jetbrains.kotlin.fir.expressions.builder.buildLiteralExpression
 import org.jetbrains.kotlin.fir.getContainingClassLookupTag
-import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
-import org.jetbrains.kotlin.fir.symbols.*
-import org.jetbrains.kotlin.fir.symbols.impl.*
+import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
+import org.jetbrains.kotlin.fir.symbols.ConeTypeParameterLookupTag
+import org.jetbrains.kotlin.fir.symbols.impl.ConeClassLikeLookupTagImpl
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.LookupTagInternals
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
@@ -29,62 +30,15 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.util.WeakPair
 
-/**
- * Main operation on the [ConeClassifierLookupTag]
- *
- * Lookups the tag into its target within the given [useSiteSession]
- *
- * The second step of type refinement, see `/docs/fir/k2_kmp.md`
- *
- * @see ConeClassifierLookupTag
- */
-fun ConeClassifierLookupTag.toSymbol(useSiteSession: FirSession): FirClassifierSymbol<*>? =
-    when (this) {
-        is ConeClassLikeLookupTag -> toSymbol(useSiteSession)
-        is ConeClassifierLookupTagWithFixedSymbol -> this.symbol
-        else -> error("missing branch for ${javaClass.name}")
-    }
-
-/**
- * @see toSymbol
- */
-@OptIn(LookupTagInternals::class)
-fun ConeClassLikeLookupTag.toSymbol(useSiteSession: FirSession): FirClassLikeSymbol<*>? {
-    if (this is ConeClassLookupTagWithFixedSymbol) {
-        return this.symbol
-    }
-    (this as? ConeClassLikeLookupTagImpl)?.boundSymbol?.takeIf { it.first === useSiteSession }?.let { return it.second }
-
-    return useSiteSession.symbolProvider.getClassLikeSymbolByClassId(classId).also {
-        (this as? ConeClassLikeLookupTagImpl)?.bindSymbolToLookupTag(useSiteSession, it)
-    }
-}
-
-/**
- * @see toSymbol
- */
-fun ConeClassLikeLookupTag.toClassSymbol(session: FirSession): FirClassSymbol<*>? =
-    toSymbol(session) as? FirClassSymbol<*>
-
-/**
- * @see toSymbol
- */
-fun ConeClassLikeLookupTag.toRegularClassSymbol(session: FirSession): FirRegularClassSymbol? =
-    toSymbol(session) as? FirRegularClassSymbol
-
-
 fun FirClassLikeSymbol<*>.getClassAndItsOuterClassesWhenLocal(session: FirSession): Set<FirClassLikeSymbol<*>> =
     generateSequence(this.takeIf { it.isLocal }) {
         if (it.isInner) it.getContainingClassLookupTag()?.toRegularClassSymbol(session) else null
     }.toSet()
 
-@OptIn(LookupTagInternals::class)
+@LookupTagInternals
 fun ConeClassLikeLookupTagImpl.bindSymbolToLookupTag(session: FirSession, symbol: FirClassLikeSymbol<*>?) {
     boundSymbol = WeakPair(session, symbol)
 }
-
-@SymbolInternals
-fun ConeClassLikeLookupTag.toRegularClass(session: FirSession): FirRegularClass? = toRegularClassSymbol(session)?.fir
 
 fun ConeKotlinType.withParameterNameAnnotation(parameter: FirFunctionTypeParameter, session: FirSession): ConeKotlinType {
     val name = parameter.name

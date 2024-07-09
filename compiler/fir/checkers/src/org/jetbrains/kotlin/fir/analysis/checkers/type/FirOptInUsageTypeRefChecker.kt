@@ -20,18 +20,19 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPT_IN_MARKER_CAN
 import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.getContainingClassLookupTag
+import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
-object FirOptInUsageTypeRefChecker : FirTypeRefChecker(MppCheckerKind.Common) {
-    override fun check(typeRef: FirTypeRef, context: CheckerContext, reporter: DiagnosticReporter) {
+object FirOptInUsageTypeRefChecker : FirResolvedTypeRefChecker(MppCheckerKind.Common) {
+    override fun check(typeRef: FirResolvedTypeRef, context: CheckerContext, reporter: DiagnosticReporter) {
         val source = typeRef.source
-        val delegatedTypeRef = (typeRef as? FirResolvedTypeRef)?.delegatedTypeRef
+        val delegatedTypeRef = typeRef.delegatedTypeRef
         if (source?.kind !is KtRealSourceElementKind) return
         // ConeClassLikeType filters out all delegatedTypeRefs from here
-        val expandedTypealiasType = typeRef.coneTypeSafe<ConeClassLikeType>() ?: return
+        val expandedTypealiasType = typeRef.coneType.fullyExpandedType(context.session) as? ConeClassLikeType ?: return
         val coneType = expandedTypealiasType.abbreviatedTypeOrSelf as? ConeClassLikeType ?: return
         val symbol = coneType.toSymbol(context.session) ?: return
 

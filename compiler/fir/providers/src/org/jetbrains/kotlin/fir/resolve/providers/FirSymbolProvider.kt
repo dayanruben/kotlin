@@ -67,11 +67,6 @@ fun FirSession.getClassDeclaredPropertySymbols(classId: ClassId, name: Name): Li
     return classMemberScope?.getProperties(name).orEmpty()
 }
 
-inline fun <reified T : FirBasedSymbol<*>> FirSession.getSymbolByTypeRef(typeRef: FirTypeRef): T? {
-    val lookupTag = (typeRef.coneTypeSafe<ConeSimpleKotlinType>()?.fullyExpandedType(this) as? ConeLookupTagBasedType)?.lookupTag
-        ?: return null
-    return lookupTag.toSymbol(this) as? T
-}
 
 fun FirSession.getRegularClassSymbolByClassIdFromDependencies(classId: ClassId): FirRegularClassSymbol? {
     return dependenciesSymbolProvider.getClassLikeSymbolByClassId(classId) as? FirRegularClassSymbol
@@ -79,10 +74,6 @@ fun FirSession.getRegularClassSymbolByClassIdFromDependencies(classId: ClassId):
 
 fun FirSession.getRegularClassSymbolByClassId(classId: ClassId): FirRegularClassSymbol? {
     return symbolProvider.getClassLikeSymbolByClassId(classId) as? FirRegularClassSymbol
-}
-
-fun ClassId.toSymbol(session: FirSession): FirClassifierSymbol<*>? {
-    return session.symbolProvider.getClassLikeSymbolByClassId(this)
 }
 
 val FirSession.symbolProvider: FirSymbolProvider by FirSession.sessionComponentAccessor()

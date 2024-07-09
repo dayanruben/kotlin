@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.fir.declarations.utils.expandedConeType
 import org.jetbrains.kotlin.fir.declarations.utils.fromPrimaryConstructor
 import org.jetbrains.kotlin.fir.declarations.utils.isFromSealedClass
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
+import org.jetbrains.kotlin.fir.resolve.toRegularClassSymbol
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
@@ -52,7 +53,7 @@ object FirExposedVisibilityDeclarationChecker : FirBasicDeclarationChecker(MppCh
         val isInterface = declaration.classKind == ClassKind.INTERFACE
         for (supertypeRef in supertypes) {
             if (supertypeRef.source?.kind == KtFakeSourceElementKind.EnumSuperTypeRef) continue
-            val supertype = supertypeRef.coneTypeSafe<ConeClassLikeType>() ?: continue
+            val supertype = supertypeRef.coneType
             val classSymbol = supertype.toRegularClassSymbol(context.session) ?: continue
             val superIsInterface = classSymbol.classKind == ClassKind.INTERFACE
             if (superIsInterface != isInterface) {

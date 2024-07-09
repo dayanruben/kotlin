@@ -19,9 +19,8 @@ import org.jetbrains.kotlin.fir.resolve.substitution.AbstractConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.resolve.substitution.wrapProjection
-import org.jetbrains.kotlin.fir.resolve.toSymbol
+import org.jetbrains.kotlin.fir.resolve.toRegularClassSymbol
 import org.jetbrains.kotlin.fir.resolve.withCombinedAttributesFrom
-import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -37,7 +36,7 @@ fun checkUpperBoundViolated(
     reporter: DiagnosticReporter,
     isIgnoreTypeParameters: Boolean = false
 ) {
-    val type = typeRef?.coneTypeSafe<ConeClassLikeType>() ?: return
+    val type = typeRef?.coneType as? ConeClassLikeType ?: return
     checkUpperBoundViolated(typeRef, type, context, reporter, isIgnoreTypeParameters)
 }
 
@@ -48,8 +47,6 @@ private fun checkUpperBoundViolated(
     reporter: DiagnosticReporter,
     isIgnoreTypeParameters: Boolean = false,
 ) {
-    if (notExpandedType.typeArguments.isEmpty()) return
-
     // If we have FirTypeRef information, add KtSourceElement information to each argument of the type and fully expand.
     val type = if (typeRef != null) {
         (notExpandedType.abbreviatedTypeOrSelf as? ConeClassLikeType)
@@ -58,10 +55,12 @@ private fun checkUpperBoundViolated(
             ?.withArguments { it.withSource(FirTypeRefSource(null, typeRef.source)) }
             ?: return
     } else {
-        notExpandedType
+        notExpandedType.fullyExpandedType(context.session)
     }
 
-    val prototypeClassSymbol = type.lookupTag.toSymbol(context.session) as? FirRegularClassSymbol ?: return
+    if (type.typeArguments.isEmpty()) return
+
+    val prototypeClassSymbol = type.lookupTag.toRegularClassSymbol(context.session) ?: return
 
     val typeParameterSymbols = prototypeClassSymbol.typeParameterSymbols
 
@@ -100,9 +99,7 @@ internal class FE10LikeConeSubstitutor(
             return StandardClassIds.Any.constructClassLikeType(emptyArray(), isNullable = true).withProjection(projection)
         }
 
-        val result =
-            projection.type!!.updateNullabilityIfNeeded(type)?.withCombinedAttributesFrom(type)
-                ?: return null
+        val result = projection.type!!.updateNullabilityIfNeeded(type).withCombinedAttributesFrom(type)
 
         return result.withProjection(projection)
     }

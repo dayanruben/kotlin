@@ -808,6 +808,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
     }
 
     @Test
+    @TestMetadata("invalidAnnotation.kt")
+    public void testInvalidAnnotation() {
+      runTest("compiler/testData/diagnostics/tests/invalidAnnotation.kt");
+    }
+
+    @Test
     @TestMetadata("invalidTargetCrashesCompiler.kt")
     public void testInvalidTargetCrashesCompiler() {
       runTest("compiler/testData/diagnostics/tests/invalidTargetCrashesCompiler.kt");
@@ -37948,12 +37954,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
-        @TestMetadata("basicOn.kt")
-        public void testBasicOn() {
-          runTest("compiler/testData/diagnostics/tests/smartCasts/elvis/basicOn.kt");
-        }
-
-        @Test
         @TestMetadata("elvisResultSavedInVal.kt")
         public void testElvisResultSavedInVal() {
           runTest("compiler/testData/diagnostics/tests/smartCasts/elvis/elvisResultSavedInVal.kt");
@@ -46361,18 +46361,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
-      @TestMetadata("allowResultInReturnType_1_3.kt")
-      public void testAllowResultInReturnType_1_3() {
-        runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/allowResultInReturnType_1_3.kt");
-      }
-
-      @Test
-      @TestMetadata("allowResultInReturnType_1_4.kt")
-      public void testAllowResultInReturnType_1_4() {
-        runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/allowResultInReturnType_1_4.kt");
-      }
-
-      @Test
       @TestMetadata("basicBuildListBuildMap.kt")
       public void testBasicBuildListBuildMap() {
         runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/basicBuildListBuildMap.kt");
@@ -46388,6 +46376,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("coroutineContext.kt")
       public void testCoroutineContext() {
         runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/coroutineContext.kt");
+      }
+
+      @Test
+      @TestMetadata("disallowResultInReturnType.kt")
+      public void testDisallowResultInReturnType() {
+        runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/disallowResultInReturnType.kt");
       }
 
       @Test
@@ -46640,12 +46634,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("usageOfResultTypeInReturnType.kt")
       public void testUsageOfResultTypeInReturnType() {
         runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/usageOfResultTypeInReturnType.kt");
-      }
-
-      @Test
-      @TestMetadata("usageOfResultTypeInReturnType_1_4.kt")
-      public void testUsageOfResultTypeInReturnType_1_4() {
-        runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/usageOfResultTypeInReturnType_1_4.kt");
       }
 
       @Test
@@ -49345,33 +49333,15 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
-      @TestMetadata("correctSmartcasts_after.kt")
-      public void testCorrectSmartcasts_after() {
-        runTest("compiler/testData/diagnostics/testsWithStdLib/tryCatch/correctSmartcasts_after.kt");
-      }
-
-      @Test
       @TestMetadata("falseNegativeSmartcasts.kt")
       public void testFalseNegativeSmartcasts() {
         runTest("compiler/testData/diagnostics/testsWithStdLib/tryCatch/falseNegativeSmartcasts.kt");
       }
 
       @Test
-      @TestMetadata("falseNegativeSmartcasts_after.kt")
-      public void testFalseNegativeSmartcasts_after() {
-        runTest("compiler/testData/diagnostics/testsWithStdLib/tryCatch/falseNegativeSmartcasts_after.kt");
-      }
-
-      @Test
       @TestMetadata("falsePositiveSmartcasts.kt")
       public void testFalsePositiveSmartcasts() {
         runTest("compiler/testData/diagnostics/testsWithStdLib/tryCatch/falsePositiveSmartcasts.kt");
-      }
-
-      @Test
-      @TestMetadata("falsePositiveSmartcasts_after.kt")
-      public void testFalsePositiveSmartcasts_after() {
-        runTest("compiler/testData/diagnostics/testsWithStdLib/tryCatch/falsePositiveSmartcasts_after.kt");
       }
 
       @Test

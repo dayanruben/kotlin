@@ -293,7 +293,7 @@ open class FirJvmSerializerExtension(
     private fun FirProperty.isJvmFieldPropertyInInterfaceCompanion(): Boolean {
         if (!hasJvmFieldAnnotation(session)) return false
 
-        val containerSymbol = (dispatchReceiverType as? ConeClassLikeType)?.lookupTag?.toRegularClassSymbol(session)
+        val containerSymbol = dispatchReceiverType?.classLikeLookupTagIfAny?.toRegularClassSymbol(session)
         // Note: companions are anyway forbidden in local classes
         if (containerSymbol == null || !containerSymbol.isCompanion || containerSymbol.isLocal) {
             return false
@@ -365,7 +365,7 @@ class FirJvmSignatureSerializer(stringTable: FirElementAwareStringTable) : JvmSi
     }
 
     private fun mapTypeDefault(typeRef: FirTypeRef): String? {
-        val classId = typeRef.coneTypeSafe<ConeClassLikeType>()?.classId
+        val classId = typeRef.coneType.classId
         return if (classId == null) null else ClassMapperLite.mapClass(classId.asString())
     }
 }

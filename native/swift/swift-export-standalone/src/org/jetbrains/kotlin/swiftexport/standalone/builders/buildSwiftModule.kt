@@ -26,10 +26,7 @@ import org.jetbrains.kotlin.sir.providers.impl.SirSingleModuleProvider
 import org.jetbrains.kotlin.sir.providers.utils.UnsupportedDeclarationReporter
 import org.jetbrains.kotlin.sir.util.addChild
 import org.jetbrains.kotlin.sir.util.isValidSwiftIdentifier
-import org.jetbrains.kotlin.swiftexport.standalone.InputModule
-import org.jetbrains.kotlin.swiftexport.standalone.MultipleModulesHandlingStrategy
-import org.jetbrains.kotlin.swiftexport.standalone.SwiftExportConfig
-import org.jetbrains.kotlin.swiftexport.standalone.SwiftExportLogger
+import org.jetbrains.kotlin.swiftexport.standalone.*
 import org.jetbrains.kotlin.swiftexport.standalone.klib.KlibScope
 import org.jetbrains.kotlin.swiftexport.standalone.session.StandaloneSirSession
 import kotlin.io.path.Path
@@ -40,8 +37,8 @@ internal class SwiftModuleBuildResults(
 )
 
 internal fun buildSwiftModule(
-    input: InputModule.Binary,
-    dependencies: List<InputModule.Binary>,
+    input: InputModule,
+    dependencies: Set<InputModule>,
     moduleForPackages: SirModule?,
     config: SwiftExportConfig,
     unsupportedDeclarationReporter: UnsupportedDeclarationReporter,
@@ -49,7 +46,7 @@ internal fun buildSwiftModule(
     val (useSiteModule, mainModule, scopeProvider) =
         createModuleWithScopeProviderFromBinary(config.distribution, input, dependencies)
     val moduleProvider = when (config.multipleModulesHandlingStrategy) {
-        MultipleModulesHandlingStrategy.OneToOneModuleMapping -> SirOneToOneModuleProvider(mainModuleName = input.name)
+        MultipleModulesHandlingStrategy.OneToOneModuleMapping -> SirOneToOneModuleProvider()
         MultipleModulesHandlingStrategy.IntoSingleModule -> SirSingleModuleProvider(swiftModuleName = input.name)
     }
     val moduleForPackageEnums = when (config.multipleModulesHandlingStrategy) {
@@ -107,8 +104,8 @@ private data class ModuleWithScopeProvider(
 
 private fun createModuleWithScopeProviderFromBinary(
     kotlinDistribution: Distribution,
-    input: InputModule.Binary,
-    dependencies: List<InputModule.Binary>,
+    input: InputModule,
+    dependencies: Set<InputModule>,
 ): ModuleWithScopeProvider {
     lateinit var binaryModule: KaLibraryModule
     lateinit var fakeSourceModule: KaSourceModule
@@ -145,7 +142,7 @@ private fun createModuleWithScopeProviderFromBinary(
 }
 
 private fun KtModuleProviderBuilder.addModuleForSwiftExportConsumption(
-    input: InputModule.Binary,
+    input: InputModule,
     stdlib: KaLibraryModule,
 ): KaLibraryModule = buildKtLibraryModule {
     addBinaryRoot(input.path)

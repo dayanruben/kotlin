@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.types
 
 import org.jetbrains.kotlin.fir.expressions.*
+import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.types.impl.FirImplicitBuiltinTypeRef
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
 import org.jetbrains.kotlin.name.ClassId
@@ -19,6 +20,7 @@ import kotlin.contracts.contract
 inline fun <reified T : ConeKotlinType> FirTypeRef.coneTypeUnsafe(): T = (this as FirResolvedTypeRef).type as T
 
 @OptIn(ExperimentalContracts::class)
+@SymbolInternals
 inline fun <reified T : ConeKotlinType> FirTypeRef.coneTypeSafe(): T? {
     contract {
         returnsNotNull() implies (this@coneTypeSafe is FirResolvedTypeRef)
@@ -108,7 +110,7 @@ private val FirTypeRef.lookupTagBasedOrNull: ConeLookupTagBasedType?
 
 private fun FirTypeRef.isBuiltinType(classId: ClassId, isNullable: Boolean): Boolean {
     val type = this.lookupTagBasedOrNull ?: return false
-    return (type as? ConeClassLikeType)?.lookupTag?.classId == classId && type.isNullable == isNullable
+    return type.classLikeLookupTagIfAny?.classId == classId && type.isNullable == isNullable
 }
 
 val FirTypeRef.isMarkedNullable: Boolean?

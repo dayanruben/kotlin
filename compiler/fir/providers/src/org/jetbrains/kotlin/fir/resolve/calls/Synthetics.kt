@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.fir.declarations.synthetic.buildSyntheticProperty
 import org.jetbrains.kotlin.fir.declarations.utils.isStatic
 import org.jetbrains.kotlin.fir.resolve.calls.FirSyntheticPropertiesScope.SyntheticGetterCompatibility.*
 import org.jetbrains.kotlin.fir.resolve.lookupSuperTypes
+import org.jetbrains.kotlin.fir.resolve.toRegularClassSymbol
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.resolve.transformers.ReturnTypeCalculator
 import org.jetbrains.kotlin.fir.scopes.*
@@ -340,14 +341,13 @@ class FirSyntheticPropertiesScope private constructor(
      * }
      */
     private fun isJavaTypeOnThePath(baseType: ConeSimpleKotlinType?): Boolean {
-        val lookupTagToStop = (baseType as? ConeLookupTagBasedType)?.lookupTag ?: return false
-        val dispatchReceiverClassSymbol = (dispatchReceiverType as? ConeLookupTagBasedType)?.lookupTag?.toSymbol(session) ?: return false
+        val lookupTagToStop = baseType?.lookupTagIfAny ?: return false
+        val dispatchReceiverClassSymbol = dispatchReceiverType.lookupTagIfAny?.toSymbol(session) ?: return false
 
         val typeContext = session.typeContext
         fun checkType(type: ConeClassLikeType): Boolean {
-            val state = typeContext.newTypeCheckerState(errorTypesEqualToAnything = false, stubTypesEqualToAnything = false)
             if (type.toRegularClassSymbol(session)?.isJavaOrEnhancement == true) {
-                if (AbstractTypeChecker.isSubtypeOfClass(state, type.lookupTag, lookupTagToStop)) {
+                if (AbstractTypeChecker.isSubtypeOfClass(typeContext, type.lookupTag, lookupTagToStop)) {
                     return true
                 }
             }

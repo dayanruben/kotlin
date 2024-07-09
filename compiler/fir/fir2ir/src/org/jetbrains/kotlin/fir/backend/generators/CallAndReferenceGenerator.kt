@@ -7,14 +7,11 @@ package org.jetbrains.kotlin.fir.backend.generators
 
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.backend.*
 import org.jetbrains.kotlin.fir.backend.utils.*
-import org.jetbrains.kotlin.fir.backend.utils.convertCatching
-import org.jetbrains.kotlin.fir.backend.utils.implicitCast
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isCompanion
 import org.jetbrains.kotlin.fir.declarations.utils.isInterface
@@ -55,7 +52,6 @@ import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
-import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.resolve.calls.NewCommonSuperTypeCalculator.commonSuperType
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.types.Variance
@@ -166,7 +162,7 @@ class CallAndReferenceGenerator(
                 )
             }
 
-            fun convertReferenceToField(fieldSymbol: FirFieldSymbol): IrExpression? {
+            fun convertReferenceToField(fieldSymbol: FirFieldSymbol): IrExpression {
                 val field = fieldSymbol.fir
                 val irPropertySymbol = fieldSymbol.toSymbolForCall() as IrPropertySymbol
                 val irFieldSymbol = declarationStorage.findBackingFieldOfProperty(irPropertySymbol)!!
@@ -285,8 +281,8 @@ class CallAndReferenceGenerator(
             return null
         }
         val superTypeRef = dispatchReceiverReference.superTypeRef
-        val coneSuperType = superTypeRef.coneTypeSafe<ConeClassLikeType>() ?: return null
-        val firClassSymbol = coneSuperType.fullyExpandedType(session).lookupTag.toSymbol(session) as? FirClassSymbol<*>
+        val coneSuperType = superTypeRef.coneType
+        val firClassSymbol = coneSuperType.fullyExpandedType(session).toClassSymbol(session)
         if (firClassSymbol != null) {
             return classifierStorage.getIrClassSymbol(firClassSymbol)
         }
@@ -319,7 +315,7 @@ class CallAndReferenceGenerator(
                     return type.intersectedTypes.first {
                         val componentConstructor = with(typeContext) { it.lowerBoundIfFlexible().typeConstructor() }
                         AbstractTypeChecker.isSubtypeOfClass(
-                            typeContext.newTypeCheckerState(errorTypesEqualToAnything = false, stubTypesEqualToAnything = false),
+                            typeContext,
                             componentConstructor,
                             containingClassLookupTag
                         )
@@ -886,14 +882,13 @@ class CallAndReferenceGenerator(
     }
 
     fun convertToIrConstructorCall(annotation: FirAnnotation): IrExpression {
-        val coneType = annotation.annotationTypeRef.coneTypeSafe<ConeLookupTagBasedType>()
-            ?.fullyExpandedType(session) as? ConeLookupTagBasedType
-        val type = coneType?.toIrType()
-        val symbol = type?.classifierOrNull
+        val coneType = annotation.annotationTypeRef.coneType.fullyExpandedType(session)
+        val type = coneType.toIrType()
+        val symbol = type.classifierOrNull
         val firConstructorSymbol = (annotation.toResolvedCallableSymbol(session) as? FirConstructorSymbol)
             ?: run {
                 // Fallback for FirReferencePlaceholderForResolvedAnnotations from jar
-                val fir = coneType?.lookupTag?.toSymbol(session)?.fir as? FirClass
+                val fir = coneType.toClassSymbol(session)?.fir
                 var constructorSymbol: FirConstructorSymbol? = null
                 fir?.unsubstitutedScope(c)?.processDeclaredConstructors {
                     if (it.fir.isPrimary && constructorSymbol == null) {
@@ -906,7 +901,7 @@ class CallAndReferenceGenerator(
             // This `if` can't be replaced with `when` yet, because smart casts won't work :(
             if (symbol !is IrClassSymbol) {
                 return@convertWithOffsets IrErrorCallExpressionImpl(
-                    startOffset, endOffset, type ?: createErrorType(), "Unresolved reference: ${annotation.render()}"
+                    startOffset, endOffset, type, "Unresolved reference: ${annotation.render()}"
                 )
             } else if (firConstructorSymbol == null) {
                 return@convertWithOffsets IrErrorCallExpressionImpl(
@@ -949,7 +944,7 @@ class CallAndReferenceGenerator(
         return buildAnnotationCall {
             useSiteTarget = this@toAnnotationCall.useSiteTarget
             annotationTypeRef = this@toAnnotationCall.annotationTypeRef
-            val symbol = annotationTypeRef.coneType.fullyExpandedType(session).toSymbol(session) as? FirRegularClassSymbol ?: return null
+            val symbol = annotationTypeRef.coneType.fullyExpandedType(session).toRegularClassSymbol(session) ?: return null
 
             val constructorSymbol = symbol.unsubstitutedScope(c).getDeclaredConstructors().firstOrNull() ?: return null
 
@@ -979,7 +974,7 @@ class CallAndReferenceGenerator(
         qualifier: FirResolvedQualifier,
         callableReferenceAccess: FirCallableReferenceAccess?,
     ): IrExpression? {
-        val classSymbol = (qualifier.resolvedType as? ConeClassLikeType)?.lookupTag?.toSymbol(session)
+        val classSymbol = qualifier.resolvedType.toClassLikeSymbol(session)
 
         if (callableReferenceAccess?.isBound == false) {
             return null
