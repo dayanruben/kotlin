@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.fir.resolve.calls.candidate
 
 import org.jetbrains.kotlin.fir.resolve.calls.*
 
-fun ConeCallAtom.processCandidatesAndPostponedAtoms(
+fun ConeResolutionAtom.processCandidatesAndPostponedAtoms(
     candidateProcessor: (Candidate) -> Unit,
     postponedAtomsProcessor: (ConePostponedResolvedAtom) -> Unit
 ) {
@@ -15,7 +15,7 @@ fun ConeCallAtom.processCandidatesAndPostponedAtoms(
     context.processCandidatesAndPostponedAtoms(this)
 }
 
-fun ConeCallAtom.processPostponedAtoms(postponedAtomsProcessor: (ConePostponedResolvedAtom) -> Unit) {
+fun ConeResolutionAtom.processPostponedAtoms(postponedAtomsProcessor: (ConePostponedResolvedAtom) -> Unit) {
     processCandidatesAndPostponedAtoms(candidateProcessor = {}, postponedAtomsProcessor)
 }
 
@@ -23,14 +23,14 @@ private class Context(
     val candidateProcessor: (Candidate) -> Unit,
     val postponedAtomsProcessor: (ConePostponedResolvedAtom) -> Unit
 ) {
-    val visited: MutableSet<ConeCallAtom> = mutableSetOf()
+    val visited: MutableSet<ConeResolutionAtom> = mutableSetOf()
 }
 
-private fun Context.processCandidatesAndPostponedAtoms(atom: ConeCallAtom?) {
+private fun Context.processCandidatesAndPostponedAtoms(atom: ConeResolutionAtom?) {
     if (atom == null) return
     if (!visited.add(atom)) return
     when (atom) {
-        is ConeResolvedAtom -> {}
+        is ConeSimpleLeafResolutionAtom -> {}
 
         // lambdas
         is ConeResolvedLambdaAtom -> {
@@ -45,14 +45,12 @@ private fun Context.processCandidatesAndPostponedAtoms(atom: ConeCallAtom?) {
             postponedAtomsProcessor(atom)
             processCandidatesAndPostponedAtoms(atom.subAtom)
         }
-        is ConeRawLambdaAtom -> processCandidatesAndPostponedAtoms(atom.subAtom)
 
         // callable references
         is ConeResolvedCallableReferenceAtom -> {
             postponedAtomsProcessor(atom)
             processCandidatesAndPostponedAtoms(atom.subAtom)
         }
-        is ConeRawCallableReferenceAtom -> processCandidatesAndPostponedAtoms(atom.subAtom)
 
         // candidates
         is ConeAtomWithCandidate -> {
@@ -66,10 +64,7 @@ private fun Context.processCandidatesAndPostponedAtoms(atom: ConeCallAtom?) {
             }
         }
 
-        // complex expressions
-        is ConeBlockAtom -> processCandidatesAndPostponedAtoms(atom.lastExpressionAtom)
-        is ConeWrappedExpressionAtom -> processCandidatesAndPostponedAtoms(atom.subAtom)
-        is ConeErrorExpressionAtom -> processCandidatesAndPostponedAtoms(atom.subAtom)
-        is ConeSafeCallAtom -> processCandidatesAndPostponedAtoms(atom.selector)
+        is ConeResolutionAtomWithSingleChild -> processCandidatesAndPostponedAtoms(atom.subAtom)
+        is ConeResolutionAtomWithPostponedChild -> processCandidatesAndPostponedAtoms(atom.subAtom)
     }
 }

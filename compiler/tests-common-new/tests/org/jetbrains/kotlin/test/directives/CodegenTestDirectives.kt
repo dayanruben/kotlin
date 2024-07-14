@@ -177,6 +177,12 @@ object CodegenTestDirectives : SimpleDirectivesContainer() {
         description = "Ignores failures of signature dump comparison for tests with the $DUMP_SIGNATURES directive if the test uses the K2 frontend and the specified backend."
     )
 
+    val SKIP_DESERIALIZED_IR_TEXT_DUMP by directive(
+        description = """
+        Skips ${IrTextDumpHandler::class}, when running a test against the deserialized IR
+        """
+    )
+
     val DUMP_IR_FOR_GIVEN_PHASES by valueDirective<AnyNamedPhase>(
         description = "Dumps backend IR after given lowerings (enables ${PhasedIrDumpHandler::class})",
         parser = { error("Cannot parse value $it for \"DUMP_IR_FOR_GIVEN_PHASES\" directive. All arguments must be specified via code in test system") }
@@ -268,6 +274,13 @@ object CodegenTestDirectives : SimpleDirectivesContainer() {
         visibility checks enabled before lowering, but enabling these checks after inlining by default will cause most tests to fail,
         because some lowerings that are run before inlining generate calls to internal intrinsics (KT-67304), and inlining in general may
         cause visibility violations until we start generating synthetic accessors (KT-64865).
+        """.trimIndent()
+    )
+
+    val ENABLE_EXPERIMENTAL_DOUBLE_INLINING by directive(
+        """
+            Enable double-inlining for KLIB-based backend.
+            Equivalent to passing the '-Xklib-double-inlining' CLI flag.
         """.trimIndent()
     )
 }

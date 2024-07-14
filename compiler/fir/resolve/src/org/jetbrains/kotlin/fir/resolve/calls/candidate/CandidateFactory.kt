@@ -81,8 +81,8 @@ class CandidateFactory private constructor(
 
         val result = Candidate(
             symbol,
-            ConeCallAtom.createRawAtom(dispatchReceiver),
-            givenExtensionReceiverOptions.map { ConeCallAtom.createRawAtom(it) },
+            ConeResolutionAtom.createRawAtom(dispatchReceiver),
+            givenExtensionReceiverOptions.map { ConeResolutionAtom.createRawAtom(it) },
             explicitReceiverKind,
             context.inferenceComponents.constraintSystemFactory,
             baseSystem,
@@ -201,7 +201,7 @@ class CandidateFactory private constructor(
     }
 
     private fun FirExpression?.isCandidateFromCompanionObjectTypeScope(useSiteSession: FirSession): Boolean {
-        val resolvedQualifier = this as? FirResolvedQualifier ?: return false
+        val resolvedQualifier = this?.unwrapSmartcastExpression() as? FirResolvedQualifier ?: return false
         val originClassOfCandidate = this.resolvedType.classId ?: return false
         val companion = resolvedQualifier.symbol?.fullyExpandedClass(useSiteSession)?.fir?.companionObjectSymbol
         return companion?.classId == originClassOfCandidate

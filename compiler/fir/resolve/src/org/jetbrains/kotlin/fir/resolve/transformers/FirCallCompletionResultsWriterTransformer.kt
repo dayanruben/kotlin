@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
 import org.jetbrains.kotlin.fir.declarations.utils.isInline
 import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
+import org.jetbrains.kotlin.fir.diagnostics.ConeUnexpectedTypeArgumentsError
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildSamConversionExpression
@@ -193,10 +194,7 @@ class FirCallCompletionResultsWriterTransformer(
         }
 
         qualifiedAccessExpression.replaceConeTypeOrNull(type)
-
-        if (declaration !is FirErrorFunction) {
-            qualifiedAccessExpression.replaceTypeArguments(typeArguments)
-        }
+        qualifiedAccessExpression.replaceTypeArguments(typeArguments)
 
         runPCLARelatedTasksForCandidate(subCandidate)
 
@@ -206,7 +204,7 @@ class FirCallCompletionResultsWriterTransformer(
 
     private fun runPCLARelatedTasksForCandidate(candidate: Candidate) {
         for (postponedCall in candidate.postponedPCLACalls) {
-            postponedCall.fir.transformSingle(this, null)
+            postponedCall.expression.transformSingle(this, null)
         }
 
         for (callback in candidate.onPCLACompletionResultsWritingCallbacks) {
@@ -774,7 +772,7 @@ class FirCallCompletionResultsWriterTransformer(
 
     private fun Candidate.createArgumentsMapping(): ExpectedArgumentType.ArgumentsMap? {
         val lambdasReturnType = postponedAtoms.filterIsInstance<ConeResolvedLambdaAtom>().associate {
-            Pair(it.fir, finallySubstituteOrSelf(substitutor.substituteOrSelf(it.returnType)))
+            Pair(it.anonymousFunction, finallySubstituteOrSelf(substitutor.substituteOrSelf(it.returnType)))
         }
 
         val isIntegerOperator = symbol.isWrappedIntegerOperator()
@@ -874,7 +872,17 @@ class FirCallCompletionResultsWriterTransformer(
         // We must ensure that all extra type arguments are preserved in the result, so that they can still be resolved later (e.g. for
         // navigation in the IDE).
         return if (typeArguments.size < access.typeArguments.size) {
-            typeArguments + access.typeArguments.subList(typeArguments.size, access.typeArguments.size)
+            typeArguments + access.typeArguments.subList(typeArguments.size, access.typeArguments.size).map {
+                if (it !is FirPlaceholderProjection) it
+                else buildTypeProjectionWithVariance {
+                    source = it.source
+                    typeRef = buildErrorTypeRef {
+                        source = it.source
+                        diagnostic = ConeSimpleDiagnostic("Unmapped placeholder type argument")
+                    }
+                    variance = Variance.INVARIANT
+                }
+            }
         } else typeArguments
     }
 
@@ -1267,7 +1275,7 @@ private fun <K, V : Any> LinkedHashMap<out K, out V?>.filterValuesNotNull(): Lin
     return result
 }
 
-fun <V> LinkedHashMap<ConeCallAtom, V>.unwrapAtoms(): LinkedHashMap<FirExpression, V> {
+fun <V> LinkedHashMap<ConeResolutionAtom, V>.unwrapAtoms(): LinkedHashMap<FirExpression, V> {
     return mapKeysToLinkedMap { it.expression }
 }
 
@@ -1275,6 +1283,6 @@ inline fun <K1, K2, V> LinkedHashMap<K1, V>.mapKeysToLinkedMap(transform: (K1) -
     return mapKeysTo(LinkedHashMap()) { transform(it.key) }
 }
 
-private fun Collection<ConeCallAtom>.unwrapAtoms(): List<FirExpression> {
+private fun Collection<ConeResolutionAtom>.unwrapAtoms(): List<FirExpression> {
     return map { it.expression }
 }

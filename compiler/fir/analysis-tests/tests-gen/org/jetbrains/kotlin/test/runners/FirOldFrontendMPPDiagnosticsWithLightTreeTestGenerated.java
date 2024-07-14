@@ -1892,6 +1892,12 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
   @TestDataPath("$PROJECT_ROOT")
   public class Hmpp {
     @Test
+    @TestMetadata("actualizationToExpectClass.kt")
+    public void testActualizationToExpectClass() {
+      runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/actualizationToExpectClass.kt");
+    }
+
+    @Test
     @TestMetadata("actualizeSubtypeBeforeSupertype.kt")
     public void testActualizeSubtypeBeforeSupertype() {
       runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/actualizeSubtypeBeforeSupertype.kt");
@@ -1954,6 +1960,18 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
     @TestMetadata("kt-55570.kt")
     public void testKt_55570() {
       runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/kt-55570.kt");
+    }
+
+    @Test
+    @TestMetadata("recursiveActualTypealiasExpansion_1.kt")
+    public void testRecursiveActualTypealiasExpansion_1() {
+      runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/recursiveActualTypealiasExpansion_1.kt");
+    }
+
+    @Test
+    @TestMetadata("recursiveActualTypealiasExpansion_2.kt")
+    public void testRecursiveActualTypealiasExpansion_2() {
+      runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/recursiveActualTypealiasExpansion_2.kt");
     }
 
     @Test

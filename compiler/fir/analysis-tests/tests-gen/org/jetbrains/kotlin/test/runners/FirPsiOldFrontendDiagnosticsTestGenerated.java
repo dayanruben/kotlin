@@ -1768,6 +1768,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
     }
 
     @Test
+    @TestMetadata("typeExposureAsABound.kt")
+    public void testTypeExposureAsABound() {
+      runTest("compiler/testData/diagnostics/tests/typeExposureAsABound.kt");
+    }
+
+    @Test
     @TestMetadata("TypeInference.kt")
     public void testTypeInference() {
       runTest("compiler/testData/diagnostics/tests/TypeInference.kt");
@@ -17751,6 +17757,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("underscoredTypeArgumentInErroneousCall.kt")
+      public void testUnderscoredTypeArgumentInErroneousCall() {
+        runTest("compiler/testData/diagnostics/tests/inference/underscoredTypeArgumentInErroneousCall.kt");
+      }
+
+      @Test
       @TestMetadata("underscoredTypeInForbiddenPositions.kt")
       public void testUnderscoredTypeInForbiddenPositions() {
         runTest("compiler/testData/diagnostics/tests/inference/underscoredTypeInForbiddenPositions.kt");
@@ -22766,6 +22778,18 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("defaultMethodsIndirectInheritance.kt")
       public void testDefaultMethodsIndirectInheritance() {
         runTest("compiler/testData/diagnostics/tests/j+k/defaultMethodsIndirectInheritance.kt");
+      }
+
+      @Test
+      @TestMetadata("defaultMethodsIndirectInheritance_before.kt")
+      public void testDefaultMethodsIndirectInheritance_before() {
+        runTest("compiler/testData/diagnostics/tests/j+k/defaultMethodsIndirectInheritance_before.kt");
+      }
+
+      @Test
+      @TestMetadata("defaultMethods_before.kt")
+      public void testDefaultMethods_before() {
+        runTest("compiler/testData/diagnostics/tests/j+k/defaultMethods_before.kt");
       }
 
       @Test
@@ -39145,9 +39169,21 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("expansionWithinElvis.kt")
+      public void testExpansionWithinElvis() {
+        runTest("compiler/testData/diagnostics/tests/typealias/expansionWithinElvis.kt");
+      }
+
+      @Test
       @TestMetadata("exposedExpandedType.kt")
       public void testExposedExpandedType() {
         runTest("compiler/testData/diagnostics/tests/typealias/exposedExpandedType.kt");
+      }
+
+      @Test
+      @TestMetadata("flexibleTypeExpansion.kt")
+      public void testFlexibleTypeExpansion() {
+        runTest("compiler/testData/diagnostics/tests/typealias/flexibleTypeExpansion.kt");
       }
 
       @Test

@@ -83,7 +83,6 @@ abstract class InlineFunctionResolverReplacingCoroutineIntrinsics<Ctx : CommonBa
 open class FunctionInlining(
     val context: CommonBackendContext,
     private val inlineFunctionResolver: InlineFunctionResolver,
-    private val innerClassesSupport: InnerClassesSupport? = null,
     private val insertAdditionalImplicitCasts: Boolean = false,
     private val regenerateInlinedAnonymousObjects: Boolean = false,
 ) : IrElementTransformerVoidWithContext(), BodyLoweringPass {
@@ -132,7 +131,6 @@ open class FunctionInlining(
             expression, actualCallee, currentScope ?: containerScope!!, parent,
             context,
             inlineFunctionResolver,
-            innerClassesSupport,
             insertAdditionalImplicitCasts
         )
         return inliner.inline().markAsRegenerated()
@@ -162,7 +160,6 @@ open class FunctionInlining(
         val parent: IrDeclarationParent?,
         val context: CommonBackendContext,
         private val inlineFunctionResolver: InlineFunctionResolver,
-        private val innerClassesSupport: InnerClassesSupport? = null,
         private val insertAdditionalImplicitCasts: Boolean = false,
     ) {
         private val elementsWithLocationToPatch = hashSetOf<IrGetValue>()
@@ -308,11 +305,10 @@ open class FunctionInlining(
                 val irFunction = irBlock.statements[0].let {
                     it.transformChildrenVoid(this)
                     copyIrElement.copy(it) as IrFunction
-                }.apply {
-                    origin = IrDeclarationOrigin.ADAPTER_FOR_CALLABLE_REFERENCE
                 }
                 val irFunctionReference = irBlock.statements[1] as IrFunctionReference
                 val inlinedFunctionReference = inlineFunctionReference(irCall, irFunctionReference, irFunction)
+                irFunction.origin = IrDeclarationOrigin.ADAPTER_FOR_CALLABLE_REFERENCE
                 return IrBlockImpl(
                     irCall.startOffset, irCall.endOffset,
                     inlinedFunctionReference.type, origin = null,
@@ -421,7 +417,7 @@ open class FunctionInlining(
                         putTypeArgument(index, irFunctionReference.getTypeArgument(index))
                 }
 
-                return if (inlineFunctionResolver.needsInlining(inlinedFunction)) {
+                return if (inlineFunctionResolver.needsInlining(inlinedFunction) || inlinedFunction.isStubForInline()) {
                     // `attributeOwnerId` is used to get the original reference instead of a reference on `stub_for_inlining`
                     inlineFunction(immediateCall, inlinedFunction, irFunctionReference.attributeOwnerId)
                 } else {
@@ -492,8 +488,6 @@ open class FunctionInlining(
         private fun ParameterToArgument.andAllOuterClasses(): List<ParameterToArgument> {
             val allParametersReplacements = mutableListOf(this)
 
-            if (innerClassesSupport == null) return allParametersReplacements
-
             var currentThisSymbol = parameter.symbol
             var parameterClassDeclaration = parameter.type.classifierOrNull?.owner as? IrClass ?: return allParametersReplacements
 
@@ -506,7 +500,7 @@ open class FunctionInlining(
                     argumentExpression = IrGetFieldImpl(
                         UNDEFINED_OFFSET,
                         UNDEFINED_OFFSET,
-                        innerClassesSupport.getOuterThisField(parameterClassDeclaration).symbol,
+                        context.innerClassesSupport.getOuterThisField(parameterClassDeclaration).symbol,
                         outerClassThis.type,
                         IrGetValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, currentThisSymbol)
                     )
@@ -778,5 +772,4 @@ enum class NonReifiedTypeParameterRemappingMode {
 /**
  * Checks if the given function should be treated by 1st phase of inlining (inlining of private functions).
  */
-fun IrFunction.isConsideredAsPrivateForInlining(): Boolean =
-    DescriptorVisibilities.isPrivate(visibility) || visibility == DescriptorVisibilities.LOCAL
+fun IrFunction.isConsideredAsPrivateForInlining(): Boolean = DescriptorVisibilities.isPrivate(visibility)

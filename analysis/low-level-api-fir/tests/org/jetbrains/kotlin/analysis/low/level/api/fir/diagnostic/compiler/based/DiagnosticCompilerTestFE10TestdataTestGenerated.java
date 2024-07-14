@@ -1768,6 +1768,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
     }
 
     @Test
+    @TestMetadata("typeExposureAsABound.kt")
+    public void testTypeExposureAsABound() {
+      runTest("compiler/testData/diagnostics/tests/typeExposureAsABound.kt");
+    }
+
+    @Test
     @TestMetadata("TypeInference.kt")
     public void testTypeInference() {
       runTest("compiler/testData/diagnostics/tests/TypeInference.kt");
@@ -17751,6 +17757,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       }
 
       @Test
+      @TestMetadata("underscoredTypeArgumentInErroneousCall.kt")
+      public void testUnderscoredTypeArgumentInErroneousCall() {
+        runTest("compiler/testData/diagnostics/tests/inference/underscoredTypeArgumentInErroneousCall.kt");
+      }
+
+      @Test
       @TestMetadata("underscoredTypeInForbiddenPositions.kt")
       public void testUnderscoredTypeInForbiddenPositions() {
         runTest("compiler/testData/diagnostics/tests/inference/underscoredTypeInForbiddenPositions.kt");
@@ -22766,6 +22778,18 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       @TestMetadata("defaultMethodsIndirectInheritance.kt")
       public void testDefaultMethodsIndirectInheritance() {
         runTest("compiler/testData/diagnostics/tests/j+k/defaultMethodsIndirectInheritance.kt");
+      }
+
+      @Test
+      @TestMetadata("defaultMethodsIndirectInheritance_before.kt")
+      public void testDefaultMethodsIndirectInheritance_before() {
+        runTest("compiler/testData/diagnostics/tests/j+k/defaultMethodsIndirectInheritance_before.kt");
+      }
+
+      @Test
+      @TestMetadata("defaultMethods_before.kt")
+      public void testDefaultMethods_before() {
+        runTest("compiler/testData/diagnostics/tests/j+k/defaultMethods_before.kt");
       }
 
       @Test
@@ -27949,6 +27973,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       @TestDataPath("$PROJECT_ROOT")
       public class Hmpp {
         @Test
+        @TestMetadata("actualizationToExpectClass.kt")
+        public void testActualizationToExpectClass() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/actualizationToExpectClass.kt");
+        }
+
+        @Test
         @TestMetadata("actualizeSubtypeBeforeSupertype.kt")
         public void testActualizeSubtypeBeforeSupertype() {
           runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/actualizeSubtypeBeforeSupertype.kt");
@@ -28011,6 +28041,18 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         @TestMetadata("kt-55570.kt")
         public void testKt_55570() {
           runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/kt-55570.kt");
+        }
+
+        @Test
+        @TestMetadata("recursiveActualTypealiasExpansion_1.kt")
+        public void testRecursiveActualTypealiasExpansion_1() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/recursiveActualTypealiasExpansion_1.kt");
+        }
+
+        @Test
+        @TestMetadata("recursiveActualTypealiasExpansion_2.kt")
+        public void testRecursiveActualTypealiasExpansion_2() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/recursiveActualTypealiasExpansion_2.kt");
         }
 
         @Test
@@ -41675,9 +41717,21 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       }
 
       @Test
+      @TestMetadata("expansionWithinElvis.kt")
+      public void testExpansionWithinElvis() {
+        runTest("compiler/testData/diagnostics/tests/typealias/expansionWithinElvis.kt");
+      }
+
+      @Test
       @TestMetadata("exposedExpandedType.kt")
       public void testExposedExpandedType() {
         runTest("compiler/testData/diagnostics/tests/typealias/exposedExpandedType.kt");
+      }
+
+      @Test
+      @TestMetadata("flexibleTypeExpansion.kt")
+      public void testFlexibleTypeExpansion() {
+        runTest("compiler/testData/diagnostics/tests/typealias/flexibleTypeExpansion.kt");
       }
 
       @Test

@@ -361,6 +361,15 @@ abstract class FirAbstractBodyResolveTransformerDispatcher(
         FirExpressionsResolveTransformer::transformDelegatedConstructorCall,
     )
 
+    override fun transformMultiDelegatedConstructorCall(
+        multiDelegatedConstructorCall: FirMultiDelegatedConstructorCall,
+        data: ResolutionMode,
+    ): FirStatement = expressionTransformation(
+        multiDelegatedConstructorCall,
+        data,
+        FirExpressionsResolveTransformer::transformMultiDelegatedConstructorCall,
+    )
+
     override fun transformIndexedAccessAugmentedAssignment(
         indexedAccessAugmentedAssignment: FirIndexedAccessAugmentedAssignment,
         data: ResolutionMode,
@@ -578,10 +587,10 @@ abstract class FirAbstractBodyResolveTransformerDispatcher(
     override fun transformAnonymousFunctionExpression(
         anonymousFunctionExpression: FirAnonymousFunctionExpression,
         data: ResolutionMode,
-    ): FirStatement = expressionTransformation(
+    ): FirStatement = declarationTransformation(
         anonymousFunctionExpression,
         data,
-        FirExpressionsResolveTransformer::transformAnonymousFunctionExpression,
+        FirDeclarationsResolveTransformer::transformAnonymousFunctionExpression,
     )
 
     override fun transformValueParameter(

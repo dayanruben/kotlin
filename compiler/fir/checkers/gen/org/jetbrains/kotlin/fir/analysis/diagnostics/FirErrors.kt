@@ -360,6 +360,7 @@ object FirErrors {
     val EXPOSED_SUPER_INTERFACE: KtDiagnosticFactory3<EffectiveVisibility, FirBasedSymbol<*>, EffectiveVisibility> = KtDiagnosticFactory3("EXPOSED_SUPER_INTERFACE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtTypeReference::class)
     val EXPOSED_SUPER_CLASS: KtDiagnosticFactory3<EffectiveVisibility, FirBasedSymbol<*>, EffectiveVisibility> = KtDiagnosticFactory3("EXPOSED_SUPER_CLASS", ERROR, SourceElementPositioningStrategies.DEFAULT, KtTypeReference::class)
     val EXPOSED_TYPE_PARAMETER_BOUND: KtDiagnosticFactory3<EffectiveVisibility, FirBasedSymbol<*>, EffectiveVisibility> = KtDiagnosticFactory3("EXPOSED_TYPE_PARAMETER_BOUND", ERROR, SourceElementPositioningStrategies.DEFAULT, KtTypeReference::class)
+    val EXPOSED_TYPE_PARAMETER_BOUND_DEPRECATION_WARNING: KtDiagnosticFactory3<EffectiveVisibility, FirBasedSymbol<*>, EffectiveVisibility> = KtDiagnosticFactory3("EXPOSED_TYPE_PARAMETER_BOUND_DEPRECATION_WARNING", WARNING, SourceElementPositioningStrategies.DEFAULT, KtTypeReference::class)
 
     // Modifiers
     val INAPPLICABLE_INFIX_MODIFIER: KtDiagnosticFactory0 = KtDiagnosticFactory0("INAPPLICABLE_INFIX_MODIFIER", ERROR, SourceElementPositioningStrategies.INFIX_MODIFIER, PsiElement::class)
@@ -708,6 +709,7 @@ object FirErrors {
     val ACTUAL_TYPE_ALIAS_WITH_COMPLEX_SUBSTITUTION: KtDiagnosticFactory0 = KtDiagnosticFactory0("ACTUAL_TYPE_ALIAS_WITH_COMPLEX_SUBSTITUTION", ERROR, SourceElementPositioningStrategies.DECLARATION_SIGNATURE, KtTypeAlias::class)
     val ACTUAL_TYPE_ALIAS_TO_NULLABLE_TYPE: KtDiagnosticFactory0 = KtDiagnosticFactory0("ACTUAL_TYPE_ALIAS_TO_NULLABLE_TYPE", ERROR, SourceElementPositioningStrategies.DECLARATION_SIGNATURE, KtTypeAlias::class)
     val ACTUAL_TYPE_ALIAS_TO_NOTHING: KtDiagnosticFactory0 = KtDiagnosticFactory0("ACTUAL_TYPE_ALIAS_TO_NOTHING", ERROR, SourceElementPositioningStrategies.DECLARATION_SIGNATURE, KtTypeAlias::class)
+    val ACTUAL_TYPE_ALIAS_TO_EXPECT: KtDiagnosticFactory0 = KtDiagnosticFactory0("ACTUAL_TYPE_ALIAS_TO_EXPECT", ERROR, SourceElementPositioningStrategies.DECLARATION_SIGNATURE, KtTypeAlias::class)
     val ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS: KtDiagnosticFactory0 = KtDiagnosticFactory0("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS", ERROR, SourceElementPositioningStrategies.PARAMETERS_WITH_DEFAULT_VALUE, KtFunction::class)
     val DEFAULT_ARGUMENTS_IN_EXPECT_WITH_ACTUAL_TYPEALIAS: KtDiagnosticFactory2<FirClassSymbol<*>, Collection<FirCallableSymbol<*>>> = KtDiagnosticFactory2("DEFAULT_ARGUMENTS_IN_EXPECT_WITH_ACTUAL_TYPEALIAS", ERROR, SourceElementPositioningStrategies.DEFAULT, KtTypeAlias::class)
     val DEFAULT_ARGUMENTS_IN_EXPECT_ACTUALIZED_BY_FAKE_OVERRIDE: KtDiagnosticFactory2<FirRegularClassSymbol, Collection<FirNamedFunctionSymbol>> = KtDiagnosticFactory2("DEFAULT_ARGUMENTS_IN_EXPECT_ACTUALIZED_BY_FAKE_OVERRIDE", ERROR, SourceElementPositioningStrategies.SUPERTYPES_LIST, KtClass::class)

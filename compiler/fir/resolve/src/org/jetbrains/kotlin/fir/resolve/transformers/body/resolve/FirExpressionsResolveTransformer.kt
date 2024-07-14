@@ -1172,6 +1172,8 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
             getClassCall
         }
 
+        // unwrapSmartCastExpression() shouldn't be here, otherwise we can get FirResolvedQualifier instead of a real receiver
+        // see e.g. uselessCastLeadsToRecursiveProblem.kt
         val typeOfExpression = when (val lhs = transformedGetClassCall.argument) {
             is FirResolvedQualifier -> {
                 lhs.replaceResolvedToCompanionObject(newResolvedToCompanionObject = false)
@@ -1391,6 +1393,19 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
         }
 
         return result
+    }
+
+    override fun transformMultiDelegatedConstructorCall(
+        multiDelegatedConstructorCall: FirMultiDelegatedConstructorCall,
+        data: ResolutionMode,
+    ): FirStatement {
+        multiDelegatedConstructorCall.transformChildren(transformer, data)
+        multiDelegatedConstructorCall.replaceConeTypeOrNull(
+            multiDelegatedConstructorCall.delegatedConstructorCalls.firstNotNullOfOrNull {
+                it.constructedTypeRef.coneType
+            } ?: ConeErrorType(ConeSimpleDiagnostic("Unresolved type for ambiguous delegated constructor call"))
+        )
+        return multiDelegatedConstructorCall
     }
 
     private val FirDelegatedConstructorCall.isCallToDelegatedConstructorWithoutArguments
@@ -1780,14 +1795,6 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
         }
         dataFlowAnalyzer.exitAnonymousObjectExpression(anonymousObjectExpression)
         return anonymousObjectExpression
-    }
-
-    override fun transformAnonymousFunctionExpression(
-        anonymousFunctionExpression: FirAnonymousFunctionExpression,
-        data: ResolutionMode
-    ): FirStatement {
-        dataFlowAnalyzer.enterAnonymousFunctionExpression(anonymousFunctionExpression)
-        return anonymousFunctionExpression.transformAnonymousFunction(transformer, data)
     }
 
     // ------------------------------------------------------------------------------------------------

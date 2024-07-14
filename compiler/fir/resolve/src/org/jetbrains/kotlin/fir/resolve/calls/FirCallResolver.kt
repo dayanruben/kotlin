@@ -112,7 +112,7 @@ class FirCallResolver(
 
         functionCall.replaceCalleeReference(nameReference)
         val candidate = (nameReference as? FirNamedReferenceWithCandidate)?.candidate
-        val resolvedReceiver = functionCall.explicitReceiver
+        val resolvedReceiver = functionCall.explicitReceiver?.unwrapSmartcastExpression()
         if (candidate != null && resolvedReceiver is FirResolvedQualifier) {
             resolvedReceiver.replaceResolvedToCompanionObject(candidate.isFromCompanionObjectTypeScope)
         }
@@ -351,7 +351,7 @@ class FirCallResolver(
             else -> null
         }
 
-        (qualifiedAccess.explicitReceiver as? FirResolvedQualifier)?.replaceResolvedToCompanionObject(
+        (qualifiedAccess.explicitReceiver?.unwrapSmartcastExpression() as? FirResolvedQualifier)?.replaceResolvedToCompanionObject(
             reducedCandidates.isNotEmpty() && reducedCandidates.all { it.isFromCompanionObjectTypeScope }
         )
 
@@ -414,7 +414,7 @@ class FirCallResolver(
         hasSyntheticOuterCall: Boolean,
     ): Pair<CandidateApplicability, Boolean> = components.context.inferenceSession.runCallableReferenceResolution(containingCallCandidate) {
         val constraintSystemBuilder = containingCallCandidate.csBuilder
-        val callableReferenceAccess = resolvedCallableReferenceAtom.fir
+        val callableReferenceAccess = resolvedCallableReferenceAtom.expression
         val calleeReference = callableReferenceAccess.calleeReference
         val lhs = resolvedCallableReferenceAtom.lhs
         val coneSubstitutor = constraintSystemBuilder.buildCurrentSubstitutor() as ConeSubstitutor
@@ -438,7 +438,7 @@ class FirCallResolver(
         val (reducedCandidates, applicability) = reduceCandidates(result, callableReferenceAccess.explicitReceiver)
         val nonEmptyAndAllSuccessful = reducedCandidates.isNotEmpty() && reducedCandidates.all { it.isSuccessful }
 
-        (callableReferenceAccess.explicitReceiver as? FirResolvedQualifier)?.replaceResolvedToCompanionObject(
+        (callableReferenceAccess.explicitReceiver?.unwrapSmartcastExpression() as? FirResolvedQualifier)?.replaceResolvedToCompanionObject(
             reducedCandidates.isNotEmpty() && reducedCandidates.all { it.isFromCompanionObjectTypeScope }
         )
 
@@ -598,7 +598,10 @@ class FirCallResolver(
                 // We don't want to force full completion before the whole call is completed so that type variables are preserved.
                 // But we need to pass expectType to figure out the correct *arrayOf* function (because Array<T> and primitive arrays can't be matched).
                 val mapping = transformer.resolutionContext.bodyResolveComponents.mapArguments(
-                    annotation.arguments.map { ConeCallAtom.createRawAtom(it) },
+                    annotation.arguments.map {
+                        @OptIn(UnsafeExpressionUtility::class)
+                        ConeResolutionAtom.createRawAtomForPotentiallyUnresolvedExpression(it)
+                    },
                     constructorSymbol.fir,
                     originScope = null,
                     callSiteIsOperatorCall = false,

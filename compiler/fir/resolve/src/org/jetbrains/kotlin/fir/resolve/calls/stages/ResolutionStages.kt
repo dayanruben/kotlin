@@ -53,30 +53,6 @@ abstract class ResolutionStage {
     abstract suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext)
 }
 
-internal object CheckExplicitReceiverConsistency : ResolutionStage() {
-    override suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext) {
-        val receiverKind = candidate.explicitReceiverKind
-        val explicitReceiver = callInfo.explicitReceiver
-        when (receiverKind) {
-            NO_EXPLICIT_RECEIVER -> {
-                if (explicitReceiver != null && explicitReceiver !is FirResolvedQualifier && !explicitReceiver.isSuperReferenceExpression()) {
-                    return sink.yieldDiagnostic(InapplicableWrongReceiver(actualType = explicitReceiver.resolvedType))
-                }
-            }
-            EXTENSION_RECEIVER, DISPATCH_RECEIVER -> {
-                if (explicitReceiver == null) {
-                    return sink.yieldDiagnostic(InapplicableWrongReceiver())
-                }
-            }
-            BOTH_RECEIVERS -> {
-                if (explicitReceiver == null) {
-                    return sink.yieldDiagnostic(InapplicableWrongReceiver())
-                }
-            }
-        }
-    }
-}
-
 object CheckExtensionReceiver : ResolutionStage() {
     override suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext) {
         val callSite = callInfo.callSite
@@ -150,7 +126,7 @@ object CheckExtensionReceiver : ResolutionStage() {
 }
 
 private fun prepareReceivers(
-    argumentExtensionReceiver: ConeCallAtom,
+    argumentExtensionReceiver: ConeResolutionAtom,
     expectedType: ConeKotlinType,
     context: ResolutionContext,
 ): ReceiverDescription {
@@ -164,7 +140,7 @@ private fun prepareReceivers(
 }
 
 private data class ReceiverDescription(
-    val atom: ConeCallAtom,
+    val atom: ConeResolutionAtom,
     val type: ConeKotlinType,
 )
 
@@ -237,7 +213,7 @@ object CheckContextReceivers : ResolutionStage() {
                     ?: towerDataElement.contextReceiverGroup?.map { it.receiverExpression }
             }
 
-        val resultingContextReceiverArguments = mutableListOf<ConeCallAtom>()
+        val resultingContextReceiverArguments = mutableListOf<ConeResolutionAtom>()
         for (expectedType in contextReceiverExpectedTypes) {
             val matchingReceivers = candidate.findClosestMatchingReceivers(expectedType, receiverGroups, context)
             when (matchingReceivers.size) {
@@ -302,7 +278,7 @@ private fun Candidate.findClosestMatchingReceivers(
     for (receiverGroup in receiverGroups) {
         val currentResult =
             receiverGroup
-                .map { prepareReceivers(ConeCallAtom.createRawAtom(it), expectedType, context) }
+                .map { prepareReceivers(ConeResolutionAtom.createRawAtom(it), expectedType, context) }
                 .filter { system.isSubtypeConstraintCompatible(it.type, expectedType, SimpleConstraintSystemConstraintPosition) }
 
         if (currentResult.isNotEmpty()) return currentResult
@@ -492,18 +468,11 @@ private fun FirExpression?.isSuperCall(): Boolean {
     return calleeReference is FirSuperReference
 }
 
-private fun FirExpression.isSuperReferenceExpression(): Boolean {
-    return if (this is FirQualifiedAccessExpression) {
-        val calleeReference = calleeReference
-        calleeReference is FirSuperReference
-    } else false
-}
-
 internal object MapArguments : ResolutionStage() {
     override suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext) {
         val symbol = candidate.symbol as? FirFunctionSymbol<*> ?: return sink.reportDiagnostic(HiddenCandidate)
         val function = symbol.fir
-        val arguments = callInfo.arguments.map { ConeCallAtom.createRawAtom(it) }
+        val arguments = callInfo.arguments.map { ConeResolutionAtom.createRawAtom(it) }
         val mapping = context.bodyResolveComponents.mapArguments(
             arguments,
             function,
@@ -519,9 +488,15 @@ internal object MapArguments : ResolutionStage() {
         sink.yieldIfNeed()
     }
 
-    private fun List<ConeCallAtom>.unwrapNamedArgumentsForDynamicCall(function: FirFunction): List<ConeCallAtom> {
+    private fun List<ConeResolutionAtom>.unwrapNamedArgumentsForDynamicCall(function: FirFunction): List<ConeResolutionAtom> {
         if (function.origin != FirDeclarationOrigin.DynamicScope) return this
-        return map { (it as? ConeNamedArgumentAtom)?.subAtom ?: it }
+        return map {
+            if (it is ConeResolutionAtomWithSingleChild && it.expression is FirNamedArgumentExpression) {
+                it.subAtom ?: error("SubAtom for named argument is null")
+            } else {
+                it
+            }
+        }
     }
 }
 
@@ -864,7 +839,7 @@ internal object CheckLambdaAgainstTypeVariableContradiction : ResolutionStage() 
         // We don't add the constraint to the system in the end, we only check for contradictions and roll back the transaction.
         // This ensures we don't get any issues if a different function type constraint is added later, e.g., during completion.
         csBuilder.runTransaction {
-            addSubtypeConstraint(lambdaType, expectedType, ConeArgumentConstraintPosition(fir))
+            addSubtypeConstraint(lambdaType, expectedType, ConeArgumentConstraintPosition(anonymousFunction))
             shouldReportError = hasContradiction
             false
         }

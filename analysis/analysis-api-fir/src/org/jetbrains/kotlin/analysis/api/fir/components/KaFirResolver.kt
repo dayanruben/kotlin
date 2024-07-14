@@ -10,11 +10,11 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.KaFirSession
 import org.jetbrains.kotlin.analysis.api.fir.getCandidateSymbols
 import org.jetbrains.kotlin.analysis.api.fir.isInvokeFunction
-import org.jetbrains.kotlin.analysis.api.fir.scopes.getConstructors
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirArrayOfSymbolProvider.arrayOf
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirArrayOfSymbolProvider.arrayOfSymbol
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirArrayOfSymbolProvider.arrayTypeToArrayOfCall
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.fir.utils.firSymbol
 import org.jetbrains.kotlin.analysis.api.fir.utils.processEqualsFunctions
 import org.jetbrains.kotlin.analysis.api.getModule
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaAbstractResolver
@@ -71,6 +71,7 @@ import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeDiagnosticWithCandidates
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeHiddenCandidateError
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.resolve.transformers.unwrapAtoms
+import org.jetbrains.kotlin.fir.scopes.getDeclaredConstructors
 import org.jetbrains.kotlin.fir.scopes.impl.declaredMemberScope
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
@@ -101,7 +102,7 @@ import org.jetbrains.kotlin.utils.exceptions.rethrowExceptionWithDetails
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
 internal class KaFirResolver(
-    override val analysisSessionProvider: () -> KaFirSession
+    override val analysisSessionProvider: () -> KaFirSession,
 ) : KaAbstractResolver<KaFirSession>(), KaFirSessionComponent {
     override fun KtReference.isImplicitReferenceToCompanion(): Boolean = withValidityAssertion {
         if (this !is KtSimpleNameReference) {
@@ -422,21 +423,31 @@ internal class KaFirResolver(
             ?: return null
         if (targetSymbol !is FirCallableSymbol<*>) return null
         if (targetSymbol is FirErrorFunctionSymbol || targetSymbol is FirErrorPropertySymbol) return null
-        val unsubstitutedKtSignature = targetSymbol.toKaSignature()
 
-        handleCompoundAccessCall(psi, fir, resolveFragmentOfCall)?.let { return it }
+        val firTypeArgumentsMapping = when (fir) {
+            is FirQualifiedAccessExpression -> fir.toFirTypeArgumentsMapping(targetSymbol)
+            is FirVariableAssignment -> fir.unwrapLValue()?.toFirTypeArgumentsMapping(targetSymbol).orEmpty()
+            is FirDelegatedConstructorCall -> fir.toFirTypeArgumentsMapping(targetSymbol)
+            else -> emptyMap()
+        }
+
+        val typeArgumentsMapping = firTypeArgumentsMapping.asKaTypeParametersMapping()
+
+        handleCompoundAccessCall(psi, fir, resolveFragmentOfCall, typeArgumentsMapping)?.let { return it }
+
+        val signature = with(analysisSession) {
+            // TODO: Ideally, we should get the substitutor from the candidate. But it seems there is no way to get the substitutor from the
+            //  candidate, `Candidate.substitutor` is not complete. maybe we can carry over the final substitutor if it's available from
+            //  body resolve phase?
+            val substitutor = substitutorByMap(firTypeArgumentsMapping, firSession).toKtSubstitutor()
+
+            // This is crucial to create a signature by Fir symbol as it can be call-site substitution
+            val unsubstitutedSignature = targetSymbol.toKaSignature()
+            unsubstitutedSignature.substitute(substitutor)
+        }
 
         var firstArgIsExtensionReceiver = false
         var isImplicitInvoke = false
-
-        // TODO: Ideally, we should get the substitutor from the candidate. But it seems there is no way to get the substitutor from the
-        //  candidate, `Candidate.substitutor` is not complete. maybe we can carry over the final substitutor if it's available from
-        //  body resolve phase?
-        val substitutor = when (fir) {
-            is FirQualifiedAccessExpression -> fir.createSubstitutorFromTypeArguments(targetSymbol)
-            is FirVariableAssignment -> fir.unwrapLValue()?.createSubstitutorFromTypeArguments(targetSymbol)
-            else -> null
-        } ?: KaSubstitutor.Empty(token)
 
         fun createKtPartiallyAppliedSymbolForImplicitInvoke(
             dispatchReceiver: FirExpression?,
@@ -532,55 +543,60 @@ internal class KaFirResolver(
                 }
             }
             return KaBasePartiallyAppliedSymbol(
-                backingSignature = with(analysisSession) { unsubstitutedKtSignature.substitute(substitutor) },
+                backingSignature = signature,
                 dispatchReceiver = dispatchReceiverValue,
                 extensionReceiver = extensionReceiverValue,
             )
         }
 
-        val partiallyAppliedSymbol = if (candidate != null) {
-            if (fir is FirImplicitInvokeCall ||
-                (calleeReference.calleeOrCandidateName != OperatorNameConventions.INVOKE && targetSymbol.isInvokeFunction())
-            ) {
-                // Implicit invoke (e.g., `x()`) will have a different callee symbol (e.g., `x`) than the candidate (e.g., `invoke`).
-                createKtPartiallyAppliedSymbolForImplicitInvoke(
-                    candidate.dispatchReceiver?.expression,
-                    candidate.chosenExtensionReceiver?.expression,
-                    candidate.explicitReceiverKind
-                )
-            } else {
-                KaBasePartiallyAppliedSymbol(
-                    backingSignature = with(analysisSession) { unsubstitutedKtSignature.substitute(substitutor) },
+        val partiallyAppliedSymbol = when {
+            candidate != null -> when {
+                fir is FirImplicitInvokeCall ||
+                        calleeReference.calleeOrCandidateName != OperatorNameConventions.INVOKE && targetSymbol.isInvokeFunction() -> {
+
+                    // Implicit invoke (e.g., `x()`) will have a different callee symbol (e.g., `x`) than the candidate (e.g., `invoke`).
+                    createKtPartiallyAppliedSymbolForImplicitInvoke(
+                        candidate.dispatchReceiver?.expression,
+                        candidate.chosenExtensionReceiver?.expression,
+                        candidate.explicitReceiverKind,
+                    )
+                }
+
+                else -> KaBasePartiallyAppliedSymbol(
+                    backingSignature = signature,
                     dispatchReceiver = candidate.dispatchReceiver?.expression?.toKtReceiverValue(),
                     extensionReceiver = candidate.chosenExtensionReceiver?.expression?.toKtReceiverValue(),
                 )
             }
-        } else if (fir is FirImplicitInvokeCall) {
-            val explicitReceiverKind = if (fir.explicitReceiver == fir.dispatchReceiver) {
-                ExplicitReceiverKind.DISPATCH_RECEIVER
-            } else {
-                ExplicitReceiverKind.EXTENSION_RECEIVER
+
+            fir is FirImplicitInvokeCall -> {
+                val explicitReceiverKind = if (fir.explicitReceiver == fir.dispatchReceiver) {
+                    ExplicitReceiverKind.DISPATCH_RECEIVER
+                } else {
+                    ExplicitReceiverKind.EXTENSION_RECEIVER
+                }
+
+                createKtPartiallyAppliedSymbolForImplicitInvoke(fir.dispatchReceiver, fir.extensionReceiver, explicitReceiverKind)
             }
-            createKtPartiallyAppliedSymbolForImplicitInvoke(fir.dispatchReceiver, fir.extensionReceiver, explicitReceiverKind)
-        } else if (fir is FirQualifiedAccessExpression) {
-            KaBasePartiallyAppliedSymbol(
-                with(analysisSession) { unsubstitutedKtSignature.substitute(substitutor) },
+
+            fir is FirQualifiedAccessExpression -> KaBasePartiallyAppliedSymbol(
+                signature,
                 fir.dispatchReceiver?.toKtReceiverValue(),
-                fir.extensionReceiver?.toKtReceiverValue()
+                fir.extensionReceiver?.toKtReceiverValue(),
             )
-        } else if (fir is FirVariableAssignment) {
-            KaBasePartiallyAppliedSymbol(
-                with(analysisSession) { unsubstitutedKtSignature.substitute(substitutor) },
+
+            fir is FirVariableAssignment -> KaBasePartiallyAppliedSymbol(
+                signature,
                 fir.dispatchReceiver?.toKtReceiverValue(),
-                fir.extensionReceiver?.toKtReceiverValue()
+                fir.extensionReceiver?.toKtReceiverValue(),
             )
-        } else {
-            KaBasePartiallyAppliedSymbol(unsubstitutedKtSignature, dispatchReceiver = null, extensionReceiver = null)
+
+            else -> KaBasePartiallyAppliedSymbol(signature, dispatchReceiver = null, extensionReceiver = null)
         }
 
         return when (fir) {
             is FirAnnotationCall -> {
-                if (unsubstitutedKtSignature.symbol !is KaConstructorSymbol) return null
+                if (partiallyAppliedSymbol.symbol !is KaConstructorSymbol) return null
                 @Suppress("UNCHECKED_CAST") // safe because of the above check on targetKtSymbol
                 KaBaseAnnotationCall(
                     partiallyAppliedSymbol as KaPartiallyAppliedFunctionSymbol<KaConstructorSymbol>,
@@ -588,34 +604,34 @@ internal class KaFirResolver(
                 )
             }
             is FirDelegatedConstructorCall -> {
-                if (unsubstitutedKtSignature.symbol !is KaConstructorSymbol) return null
+                if (partiallyAppliedSymbol.symbol !is KaConstructorSymbol) return null
                 @Suppress("UNCHECKED_CAST") // safe because of the above check on targetKtSymbol
                 KaBaseDelegatedConstructorCall(
                     partiallyAppliedSymbol as KaPartiallyAppliedFunctionSymbol<KaConstructorSymbol>,
                     if (fir.isThis) KaDelegatedConstructorCall.Kind.THIS_CALL else KaDelegatedConstructorCall.Kind.SUPER_CALL,
                     fir.createArgumentMapping(partiallyAppliedSymbol.signature as KaFunctionSignature<*>),
-                    fir.toTypeArgumentsMapping(partiallyAppliedSymbol)
+                    typeArgumentsMapping,
                 )
             }
             is FirVariableAssignment -> {
-                if (unsubstitutedKtSignature.symbol !is KaVariableSymbol) return null
+                if (partiallyAppliedSymbol.symbol !is KaVariableSymbol) return null
                 val rhs = fir.rValue.psi as? KtExpression
                 @Suppress("UNCHECKED_CAST") // safe because of the above check on targetKtSymbol
                 KaBaseSimpleVariableAccessCall(
                     partiallyAppliedSymbol as KaPartiallyAppliedVariableSymbol<KaVariableSymbol>,
-                    fir.unwrapLValue()?.toTypeArgumentsMapping(partiallyAppliedSymbol) ?: emptyMap(),
+                    typeArgumentsMapping,
                     KaBaseSimpleVariableWriteAccess(rhs),
                 )
             }
             is FirPropertyAccessExpression, is FirCallableReferenceAccess -> {
                 @Suppress("USELESS_IS_CHECK") // K2 warning suppression, TODO: KT-62472
                 require(fir is FirQualifiedAccessExpression)
-                when (unsubstitutedKtSignature.symbol) {
+                when (partiallyAppliedSymbol.symbol) {
                     is KaVariableSymbol -> {
                         @Suppress("UNCHECKED_CAST") // safe because of the above check on targetKtSymbol
                         KaBaseSimpleVariableAccessCall(
                             partiallyAppliedSymbol as KaPartiallyAppliedVariableSymbol<KaVariableSymbol>,
-                            fir.toTypeArgumentsMapping(partiallyAppliedSymbol),
+                            typeArgumentsMapping,
                             KaBaseSimpleVariableReadAccess,
                         )
                     }
@@ -625,14 +641,14 @@ internal class KaFirResolver(
                         KaBaseSimpleFunctionCall(
                             partiallyAppliedSymbol as KaPartiallyAppliedFunctionSymbol<KaFunctionSymbol>,
                             emptyMap(),
-                            fir.toTypeArgumentsMapping(partiallyAppliedSymbol),
+                            typeArgumentsMapping,
                             isImplicitInvoke,
                         )
                     }
                 }
             }
             is FirFunctionCall -> {
-                if (unsubstitutedKtSignature.symbol !is KaFunctionSymbol) return null
+                if (partiallyAppliedSymbol.symbol !is KaFunctionSymbol) return null
                 val argumentMapping = if (candidate is Candidate) {
                     runIf(candidate.argumentMappingInitialized) { candidate.argumentMapping.unwrapAtoms() }
                 } else {
@@ -651,7 +667,7 @@ internal class KaFirResolver(
                     argumentMappingWithoutExtensionReceiver
                         ?.createArgumentMapping(partiallyAppliedSymbol.signature as KaFunctionSignature<*>)
                         ?: emptyMap(),
-                    fir.toTypeArgumentsMapping(partiallyAppliedSymbol),
+                    typeArgumentsMapping,
                     isImplicitInvoke
                 )
             }
@@ -667,127 +683,148 @@ internal class KaFirResolver(
         }
     }
 
-    private fun handleCompoundAccessCall(psi: KtElement, fir: FirElement, resolveFragmentOfCall: Boolean): KaCall? {
-        if (psi is KtBinaryExpression && psi.operationToken in KtTokens.AUGMENTED_ASSIGNMENTS) {
-            val rightOperandPsi = deparenthesize(psi.right) ?: return null
-            val leftOperandPsi = deparenthesize(psi.left) ?: return null
-            val compoundAssignKind = psi.getCompoundAssignKind()
-
-            // handle compound assignment with array access convention
-            if (fir is FirFunctionCall && fir.calleeReference.name == OperatorNameConventions.SET && leftOperandPsi is KtArrayAccessExpression) {
-                val (operationPartiallyAppliedSymbol, getPartiallyAppliedSymbol, setPartiallyAppliedSymbol) =
-                    getOperationPartiallyAppliedSymbolsForCompoundArrayAssignment(fir, leftOperandPsi) ?: return null
-
-                val getAccessArgumentMapping = LinkedHashMap<KtExpression, KaVariableSignature<KaValueParameterSymbol>>().apply {
-                    putAll(leftOperandPsi.indexExpressions.zip(getPartiallyAppliedSymbol.signature.valueParameters))
-                }
-
-                return if (resolveFragmentOfCall) {
-                    KaBaseSimpleFunctionCall(
-                        getPartiallyAppliedSymbol,
-                        getAccessArgumentMapping,
-                        fir.toTypeArgumentsMapping(getPartiallyAppliedSymbol),
-                        false
-                    )
-                } else {
-                    KaBaseCompoundArrayAccessCall(
-                        KaBaseCompoundAssignOperation(operationPartiallyAppliedSymbol, compoundAssignKind, rightOperandPsi),
-                        leftOperandPsi.indexExpressions,
-                        getPartiallyAppliedSymbol,
-                        setPartiallyAppliedSymbol
-                    )
-                }
-            }
-
-            // handle compound assignment with variable
-            if (fir is FirVariableAssignment && (leftOperandPsi is KtDotQualifiedExpression ||
-                        leftOperandPsi is KtNameReferenceExpression)
-            ) {
-                val variablePartiallyAppliedSymbol = fir.toPartiallyAppliedSymbol() ?: return null
-                val operationPartiallyAppliedSymbol =
-                    getOperationPartiallyAppliedSymbolsForCompoundVariableAccess(fir, leftOperandPsi) ?: return null
-                return if (resolveFragmentOfCall) {
-                    KaBaseSimpleVariableAccessCall(
-                        variablePartiallyAppliedSymbol,
-                        fir.unwrapLValue()?.toTypeArgumentsMapping(variablePartiallyAppliedSymbol) ?: emptyMap(),
-                        KaBaseSimpleVariableReadAccess,
-                    )
-                } else {
-                    KaBaseCompoundVariableAccessCall(
-                        variablePartiallyAppliedSymbol,
-                        KaBaseCompoundAssignOperation(operationPartiallyAppliedSymbol, compoundAssignKind, rightOperandPsi),
-                    )
-                }
-            }
-        } else if (psi is KtUnaryExpression && psi.operationToken in KtTokens.INCREMENT_AND_DECREMENT) {
-            val precedence = when (psi) {
-                is KtPostfixExpression -> KaCompoundUnaryOperation.Precedence.POSTFIX
-                else -> KaCompoundUnaryOperation.Precedence.PREFIX
-            }
-
-            val incOrDecOperationKind = psi.getInOrDecOperationKind()
-            val baseExpression = deparenthesize(psi.baseExpression)
-
-            // handle inc/dec/ with array access convention
-            if (fir is FirFunctionCall && fir.calleeReference.name == OperatorNameConventions.SET && baseExpression is KtArrayAccessExpression) {
-                val (operationPartiallyAppliedSymbol, getPartiallyAppliedSymbol, setPartiallyAppliedSymbol) =
-                    getOperationPartiallyAppliedSymbolsForIncOrDecOperation(fir, baseExpression, precedence) ?: return null
-
-                val getAccessArgumentMapping = LinkedHashMap<KtExpression, KaVariableSignature<KaValueParameterSymbol>>().apply {
-                    putAll(baseExpression.indexExpressions.zip(getPartiallyAppliedSymbol.signature.valueParameters))
-                }.ifEmpty { emptyMap() }
-
-                return if (resolveFragmentOfCall) {
-                    KaBaseSimpleFunctionCall(
-                        getPartiallyAppliedSymbol,
-                        getAccessArgumentMapping,
-                        fir.toTypeArgumentsMapping(getPartiallyAppliedSymbol),
-                        false
-                    )
-                } else {
-                    KaBaseCompoundArrayAccessCall(
-                        KaBaseCompoundUnaryOperation(operationPartiallyAppliedSymbol, incOrDecOperationKind, precedence),
-                        baseExpression.indexExpressions,
-                        getPartiallyAppliedSymbol,
-                        setPartiallyAppliedSymbol
-                    )
-                }
-            }
-
-            // handle inc/dec/ with variable
-            if (fir is FirVariableAssignment && (baseExpression is KtDotQualifiedExpression ||
-                        baseExpression is KtNameReferenceExpression)
-            ) {
-                val variablePartiallyAppliedSymbol = fir.toPartiallyAppliedSymbol() ?: return null
-                val operationPartiallyAppliedSymbol =
-                    getOperationPartiallyAppliedSymbolsForCompoundVariableAccess(fir, baseExpression) ?: return null
-                return if (resolveFragmentOfCall) {
-                    KaBaseSimpleVariableAccessCall(
-                        variablePartiallyAppliedSymbol,
-                        fir.unwrapLValue()?.toTypeArgumentsMapping(variablePartiallyAppliedSymbol) ?: emptyMap(),
-                        KaBaseSimpleVariableReadAccess,
-                    )
-                } else {
-                    KaBaseCompoundVariableAccessCall(
-                        variablePartiallyAppliedSymbol,
-                        KaBaseCompoundUnaryOperation(operationPartiallyAppliedSymbol, incOrDecOperationKind, precedence),
-                    )
-                }
-            }
+    /**
+     * Handle compound assignment with array access convention
+     */
+    private fun createKaCallForArrayAccessConvention(
+        fir: FirElement,
+        accessExpression: KtExpression?,
+        resolveFragmentOfCall: Boolean,
+        contextProvider: (FirFunctionCall, KtArrayAccessExpression) -> CompoundArrayAccessContext?,
+        compoundOperationProvider: (KaPartiallyAppliedFunctionSymbol<KaNamedFunctionSymbol>) -> KaCompoundOperation,
+    ): KaCall? {
+        if (fir !is FirFunctionCall || fir.calleeReference.name != OperatorNameConventions.SET || accessExpression !is KtArrayAccessExpression) {
+            return null
         }
-        return null
+
+        val context = contextProvider(fir, accessExpression) ?: return null
+        val getSymbol = context.getSymbol
+        val getArgumentMapping = accessExpression.indexExpressions.zip(getSymbol.signature.valueParameters).toMap()
+        return if (resolveFragmentOfCall) {
+            KaBaseSimpleFunctionCall(
+                backingPartiallyAppliedSymbol = getSymbol,
+                argumentMapping = getArgumentMapping,
+                typeArgumentsMapping = fir.toFirTypeArgumentsMapping(getSymbol.symbol.firSymbol).asKaTypeParametersMapping(),
+                isImplicitInvoke = false,
+            )
+        } else {
+            KaBaseCompoundArrayAccessCall(
+                backingCompoundAccess = compoundOperationProvider(context.operationSymbol),
+                indexArguments = accessExpression.indexExpressions,
+                getPartiallyAppliedSymbol = getSymbol,
+                setPartiallyAppliedSymbol = context.setSymbol
+            )
+        }
     }
 
-    private data class CompoundArrayAccessPartiallyAppliedSymbols(
-        val operationPartiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaNamedFunctionSymbol>,
-        val getPartiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaNamedFunctionSymbol>,
-        val setPartiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaNamedFunctionSymbol>,
+    /**
+     * Handle compound assignment with variable
+     */
+    private fun createKaCallForVariableAccessConvention(
+        fir: FirElement,
+        accessExpression: KtExpression?,
+        resolveFragmentOfCall: Boolean,
+        typeArgumentsMapping: Map<KaTypeParameterSymbol, KaType>,
+        compoundOperationProvider: (KaPartiallyAppliedFunctionSymbol<KaNamedFunctionSymbol>) -> KaCompoundOperation,
+    ): KaCall? {
+        if (fir !is FirVariableAssignment || accessExpression !is KtDotQualifiedExpression && accessExpression !is KtNameReferenceExpression) {
+            return null
+        }
+
+        val variableSymbol = fir.toPartiallyAppliedSymbol() ?: return null
+        val operationSymbol = getOperationPartiallyAppliedSymbolsForCompoundVariableAccess(fir, accessExpression) ?: return null
+        return if (resolveFragmentOfCall) {
+            KaBaseSimpleVariableAccessCall(
+                backingPartiallyAppliedSymbol = variableSymbol,
+                typeArgumentsMapping = typeArgumentsMapping,
+                simpleAccess = KaBaseSimpleVariableReadAccess,
+            )
+        } else {
+            KaBaseCompoundVariableAccessCall(
+                backingPartiallyAppliedSymbol = variableSymbol,
+                compoundAccess = compoundOperationProvider(operationSymbol),
+            )
+        }
+    }
+
+    private fun createKaCallForCompoundAccessConvention(
+        fir: FirElement,
+        accessExpression: KtExpression?,
+        resolveFragmentOfCall: Boolean,
+        typeArgumentsMapping: Map<KaTypeParameterSymbol, KaType>,
+        contextProvider: (FirFunctionCall, KtArrayAccessExpression) -> CompoundArrayAccessContext?,
+        compoundOperationProvider: (KaPartiallyAppliedFunctionSymbol<KaNamedFunctionSymbol>) -> KaCompoundOperation,
+    ): KaCall? = createKaCallForArrayAccessConvention(
+        fir = fir,
+        accessExpression = accessExpression,
+        resolveFragmentOfCall = resolveFragmentOfCall,
+        contextProvider = contextProvider,
+        compoundOperationProvider = compoundOperationProvider
+    ) ?: createKaCallForVariableAccessConvention(
+        fir = fir,
+        accessExpression = accessExpression,
+        resolveFragmentOfCall = resolveFragmentOfCall,
+        typeArgumentsMapping = typeArgumentsMapping,
+        compoundOperationProvider = compoundOperationProvider
+    )
+
+    private fun handleCompoundAccessCall(
+        psi: KtElement,
+        fir: FirElement,
+        resolveFragmentOfCall: Boolean,
+        typeArgumentsMapping: Map<KaTypeParameterSymbol, KaType>,
+    ): KaCall? {
+        return when {
+            psi is KtBinaryExpression && psi.operationToken in KtTokens.AUGMENTED_ASSIGNMENTS -> {
+                val rightOperandPsi = deparenthesize(psi.right) ?: return null
+                val leftOperandPsi = deparenthesize(psi.left) ?: return null
+                val compoundAssignKind = psi.getCompoundAssignKind()
+
+                createKaCallForCompoundAccessConvention(
+                    fir = fir,
+                    accessExpression = leftOperandPsi,
+                    resolveFragmentOfCall = resolveFragmentOfCall,
+                    typeArgumentsMapping = typeArgumentsMapping,
+                    contextProvider = ::getOperationPartiallyAppliedSymbolsForCompoundArrayAssignment,
+                    compoundOperationProvider = { KaBaseCompoundAssignOperation(it, compoundAssignKind, rightOperandPsi) },
+                )
+            }
+
+            psi is KtUnaryExpression && psi.operationToken in KtTokens.INCREMENT_AND_DECREMENT -> {
+                val precedence = when (psi) {
+                    is KtPostfixExpression -> KaCompoundUnaryOperation.Precedence.POSTFIX
+                    else -> KaCompoundUnaryOperation.Precedence.PREFIX
+                }
+
+                val incOrDecOperationKind = psi.getInOrDecOperationKind()
+                val baseExpression = deparenthesize(psi.baseExpression)
+
+                createKaCallForCompoundAccessConvention(
+                    fir = fir,
+                    accessExpression = baseExpression,
+                    resolveFragmentOfCall = resolveFragmentOfCall,
+                    typeArgumentsMapping = typeArgumentsMapping,
+                    contextProvider = { firCall, ktExpression ->
+                        getOperationPartiallyAppliedSymbolsForIncOrDecOperation(firCall, ktExpression, precedence)
+                    },
+                    compoundOperationProvider = { KaBaseCompoundUnaryOperation(it, incOrDecOperationKind, precedence) },
+                )
+            }
+
+            else -> null
+        }
+    }
+
+    private class CompoundArrayAccessContext(
+        val operationSymbol: KaPartiallyAppliedFunctionSymbol<KaNamedFunctionSymbol>,
+        val getSymbol: KaPartiallyAppliedFunctionSymbol<KaNamedFunctionSymbol>,
+        val setSymbol: KaPartiallyAppliedFunctionSymbol<KaNamedFunctionSymbol>,
     )
 
     private fun getOperationPartiallyAppliedSymbolsForCompoundArrayAssignment(
         fir: FirFunctionCall,
         arrayAccessExpression: KtArrayAccessExpression,
-    ): CompoundArrayAccessPartiallyAppliedSymbols? {
+    ): CompoundArrayAccessContext? {
         // The last argument of `set` is the new value to be set. This value should be a call to the respective `plus`, `minus`,
         // `times`, `div`, or `rem` function.
         val operationCall = fir.arguments.lastOrNull() as? FirFunctionCall ?: return null
@@ -802,7 +839,7 @@ internal class KaFirResolver(
                 ?: return null
         val setPartiallyAppliedSymbol = fir.toPartiallyAppliedSymbol(arrayAccessExpression.arrayExpression) ?: return null
 
-        return CompoundArrayAccessPartiallyAppliedSymbols(
+        return CompoundArrayAccessContext(
             operationPartiallyAppliedSymbol,
             getPartiallyAppliedSymbol,
             setPartiallyAppliedSymbol
@@ -813,7 +850,7 @@ internal class KaFirResolver(
         fir: FirFunctionCall,
         arrayAccessExpression: KtArrayAccessExpression,
         incDecPrecedence: KaCompoundUnaryOperation.Precedence,
-    ): CompoundArrayAccessPartiallyAppliedSymbols? {
+    ): CompoundArrayAccessContext? {
         val lastArg = fir.arguments.lastOrNull() ?: return null
         val setPartiallyAppliedSymbol = fir.toPartiallyAppliedSymbol(arrayAccessExpression.arrayExpression) ?: return null
         return when (incDecPrecedence) {
@@ -824,12 +861,13 @@ internal class KaFirResolver(
                 // The get call is the explicit receiver of this operation call
                 val getCall = operationCall.explicitReceiver as? FirFunctionCall ?: return null
                 val getPartiallyAppliedSymbol = getCall.toPartiallyAppliedSymbol(arrayAccessExpression.arrayExpression) ?: return null
-                CompoundArrayAccessPartiallyAppliedSymbols(
+                CompoundArrayAccessContext(
                     operationPartiallyAppliedSymbol,
                     getPartiallyAppliedSymbol,
                     setPartiallyAppliedSymbol
                 )
             }
+
             KaCompoundUnaryOperation.Precedence.POSTFIX -> {
                 // For postfix case, the last argument is the operation call invoked on a synthetic local variable `<unary>`. This local
                 // variable is initialized by calling the `get` function.
@@ -838,7 +876,7 @@ internal class KaFirResolver(
                 val receiverOfOperationCall = operationCall.explicitReceiver ?: return null
                 val getCall = getInitializerOfReferencedLocalVariable(receiverOfOperationCall)
                 val getPartiallyAppliedSymbol = getCall?.toPartiallyAppliedSymbol(arrayAccessExpression.arrayExpression) ?: return null
-                CompoundArrayAccessPartiallyAppliedSymbols(
+                CompoundArrayAccessContext(
                     operationPartiallyAppliedSymbol,
                     getPartiallyAppliedSymbol,
                     setPartiallyAppliedSymbol
@@ -959,22 +997,16 @@ internal class KaFirResolver(
     private fun FirVariableSymbol<*>.toKaSignature(): KaVariableSignature<KaVariableSymbol> =
         firSymbolBuilder.variableBuilder.buildVariableLikeSignature(this)
 
-    private fun FirQualifiedAccessExpression.toTypeArgumentsMapping(
-        partiallyAppliedSymbol: KaPartiallyAppliedSymbol<*, *>,
-    ): Map<KaTypeParameterSymbol, KaType> {
-        return toTypeArgumentsMapping(typeArguments, partiallyAppliedSymbol)
+    private fun FirQualifiedAccessExpression.toFirTypeArgumentsMapping(symbol: FirCallableSymbol<*>): Map<FirTypeParameterSymbol, ConeKotlinType> {
+        return toFirTypeArgumentsMapping(typeArguments, symbol)
     }
 
-    private fun FirResolvedQualifier.toTypeArgumentsMapping(
-        partiallyAppliedSymbol: KaPartiallyAppliedSymbol<*, *>,
-    ): Map<KaTypeParameterSymbol, KaType> {
-        return toTypeArgumentsMapping(typeArguments, partiallyAppliedSymbol)
+    private fun FirResolvedQualifier.toFirTypeArgumentsMapping(symbol: FirCallableSymbol<*>): Map<FirTypeParameterSymbol, ConeKotlinType> {
+        return toFirTypeArgumentsMapping(typeArguments, symbol)
     }
 
-    private fun FirDelegatedConstructorCall.toTypeArgumentsMapping(
-        partiallyAppliedSymbol: KaPartiallyAppliedSymbol<*, *>,
-    ): Map<KaTypeParameterSymbol, KaType> {
-        val typeParameters = partiallyAppliedSymbol.symbol.typeParameters.ifEmpty { return emptyMap() }
+    private fun FirDelegatedConstructorCall.toFirTypeArgumentsMapping(symbol: FirCallableSymbol<*>): Map<FirTypeParameterSymbol, ConeKotlinType> {
+        val typeParameters = symbol.typeParameterSymbols.ifEmpty { return emptyMap() }
         val typeArguments = constructedTypeRef.coneType.typeArguments
         // In all cases, the size of arguments and parameters is the same,
         // so this check exists just to be sure
@@ -983,44 +1015,42 @@ internal class KaFirResolver(
         return buildMap(typeArguments.size) {
             for ((index, projection) in typeArguments.withIndex()) {
                 if (projection !is ConeKotlinType) return emptyMap()
-                put(typeParameters[index], projection.asKtType())
+                put(typeParameters[index], projection)
             }
         }
     }
 
     /**
-     * Maps [typeArguments] to the type parameters of [partiallyAppliedSymbol].
+     * Maps [typeArguments] to the type parameters of [symbol].
      *
      * If too many type arguments are provided, a mapping is still created. Extra type arguments are simply ignored. If this wasn't the
      * case, the resulting [KaCall] would contain no type arguments at all, which can cause problems later. If too few type arguments are
-     * provided, an empty map is returned defensively so that [toTypeArgumentsMapping] doesn't conjure any error types. If you want to map
+     * provided, an empty map is returned defensively so that [toFirTypeArgumentsMapping] doesn't conjure any error types. If you want to map
      * too few type arguments meaningfully, please provide filler types explicitly.
      */
-    private fun toTypeArgumentsMapping(
+    private fun toFirTypeArgumentsMapping(
         typeArguments: List<FirTypeProjection>,
-        partiallyAppliedSymbol: KaPartiallyAppliedSymbol<*, *>,
-    ): Map<KaTypeParameterSymbol, KaType> {
-        val typeParameters = partiallyAppliedSymbol.symbol.typeParameters
+        symbol: FirCallableSymbol<*>,
+    ): Map<FirTypeParameterSymbol, ConeKotlinType> {
+        val typeParameters = symbol.typeParameterSymbols
         if (typeParameters.isEmpty()) return emptyMap()
         if (typeArguments.size < typeParameters.size) return emptyMap()
 
-        val result = mutableMapOf<KaTypeParameterSymbol, KaType>()
+        val result = mutableMapOf<FirTypeParameterSymbol, ConeKotlinType>()
 
         for ((index, typeParameter) in typeParameters.withIndex()) {
             // After resolution all type arguments should be usual types (not FirPlaceholderProjection)
             val typeArgument = typeArguments[index]
             if (typeArgument !is FirTypeProjectionWithVariance || typeArgument.variance != Variance.INVARIANT) return emptyMap()
-            result[typeParameter] = typeArgument.typeRef.coneType.asKtType()
+            result[typeParameter] = typeArgument.typeRef.coneType
         }
 
         return result
     }
 
-    private fun FirArrayLiteral.toTypeArgumentsMapping(
-        partiallyAppliedSymbol: KaPartiallyAppliedSymbol<*, *>,
-    ): Map<KaTypeParameterSymbol, KaType> {
+    private fun FirArrayLiteral.toTypeArgumentsMapping(symbol: KaDeclarationSymbol): Map<KaTypeParameterSymbol, KaType> {
         val elementType = resolvedType.arrayElementType()?.asKtType() ?: return emptyMap()
-        val typeParameter = partiallyAppliedSymbol.symbol.typeParameters.singleOrNull() ?: return emptyMap()
+        val typeParameter = symbol.typeParameters.singleOrNull() ?: return emptyMap()
         return mapOf(typeParameter to elementType)
     }
 
@@ -1074,23 +1104,30 @@ internal class KaFirResolver(
         }
     }
 
-    private fun FirResolvedQualifier.findQualifierConstructors(): List<KaConstructorSymbol> {
+    private fun FirResolvedQualifier.findQualifierConstructors(): List<FirConstructorSymbol> {
         val classSymbol = this.symbol?.fullyExpandedClass(analysisSession.firSession) ?: return emptyList()
         return classSymbol.unsubstitutedScope(
             analysisSession.firSession,
             analysisSession.getScopeSessionFor(analysisSession.firSession),
             withForcedTypeCalculator = true,
             memberRequiredPhase = null,
-        )
-            .getConstructors(analysisSession.firSymbolBuilder)
-            .toList()
+        ).getDeclaredConstructors()
     }
 
-    private fun FirResolvedQualifier.toKtCalls(constructors: List<KaConstructorSymbol>): List<KaCall> {
+    private fun Map<FirTypeParameterSymbol, ConeKotlinType>.asKaTypeParametersMapping(): Map<KaTypeParameterSymbol, KaType> {
+        return map { (key, value) ->
+            firSymbolBuilder.classifierBuilder.buildTypeParameterSymbol(key) to value.asKtType()
+        }.toMap()
+    }
+
+    private fun FirResolvedQualifier.toKtCalls(constructors: List<FirConstructorSymbol>): List<KaCall> {
         analysisSession.apply {
             return constructors.map { constructor ->
-                val partiallyAppliedSymbol = KaBasePartiallyAppliedSymbol(constructor.asSignature(), null, null)
-                KaBaseSimpleFunctionCall(partiallyAppliedSymbol, emptyMap(), toTypeArgumentsMapping(partiallyAppliedSymbol), false)
+                val signature = constructor.toKaSignature()
+                val partiallyAppliedSymbol = KaBasePartiallyAppliedSymbol(signature as KaFunctionSignature<*>, null, null)
+                val firTypeArgumentsMapping = toFirTypeArgumentsMapping(constructor)
+                val typeArgumentsMapping = firTypeArgumentsMapping.asKaTypeParametersMapping()
+                KaBaseSimpleFunctionCall(partiallyAppliedSymbol, emptyMap(), typeArgumentsMapping, false)
             }
         }
     }
@@ -1262,7 +1299,7 @@ internal class KaFirResolver(
                             KaBaseSimpleFunctionCall(
                                 partiallyAppliedSymbol,
                                 createArgumentMapping(defaultArrayOfSymbol, substitutor),
-                                this@toKtCallInfo.toTypeArgumentsMapping(partiallyAppliedSymbol),
+                                this@toKtCallInfo.toTypeArgumentsMapping(defaultArrayOfSymbol),
                                 false,
                             )
                         ),
@@ -1286,7 +1323,7 @@ internal class KaFirResolver(
             KaBaseSimpleFunctionCall(
                 partiallyAppliedSymbol,
                 createArgumentMapping(arrayOfSymbol, substitutor),
-                this@toKtCallInfo.toTypeArgumentsMapping(partiallyAppliedSymbol),
+                this@toKtCallInfo.toTypeArgumentsMapping(arrayOfSymbol),
                 false
             )
         )

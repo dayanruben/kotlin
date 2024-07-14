@@ -41,7 +41,7 @@ fun FirVisibilityChecker.isVisible(
                 declaration.isStatic &&
                 isExplicitReceiverExpression(dispatchReceiver)
     ) {
-        when (val classLikeSymbol = (dispatchReceiver as? FirResolvedQualifier)?.symbol) {
+        when (val classLikeSymbol = (dispatchReceiver?.unwrapSmartcastExpression() as? FirResolvedQualifier)?.symbol) {
             is FirRegularClassSymbol -> classLikeSymbol.fir
             is FirTypeAliasSymbol -> classLikeSymbol.fullyExpandedClass(callInfo.session)?.fir
             is FirAnonymousObjectSymbol,
@@ -103,7 +103,7 @@ fun FirVisibilityChecker.isVisible(
         // }
         // Here smart cast is still necessary, because without it 'status' cannot be resolved at all
         if (!isVisible(declaration, callInfo, candidate.dispatchReceiver?.expression, skipCheckForContainingClassVisibility = true)) {
-            candidate.dispatchReceiver = ConeCallAtom.createRawAtom(dispatchReceiverWithoutSmartCastType)
+            candidate.dispatchReceiver = ConeResolutionAtom.createRawAtom(dispatchReceiverWithoutSmartCastType)
         }
     }
 

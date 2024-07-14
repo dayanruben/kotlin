@@ -1432,6 +1432,14 @@ internal class ExposedTypeParameterBoundImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtTypeReference>(firDiagnostic, token), KaFirDiagnostic.ExposedTypeParameterBound
 
+internal class ExposedTypeParameterBoundDeprecationWarningImpl(
+    override val elementVisibility: EffectiveVisibility,
+    override val restrictingDeclaration: KaSymbol,
+    override val restrictingVisibility: EffectiveVisibility,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtTypeReference>(firDiagnostic, token), KaFirDiagnostic.ExposedTypeParameterBoundDeprecationWarning
+
 internal class InapplicableInfixModifierImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
@@ -3324,6 +3332,11 @@ internal class ActualTypeAliasToNothingImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtTypeAlias>(firDiagnostic, token), KaFirDiagnostic.ActualTypeAliasToNothing
+
+internal class ActualTypeAliasToExpectImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtTypeAlias>(firDiagnostic, token), KaFirDiagnostic.ActualTypeAliasToExpect
 
 internal class ActualFunctionWithDefaultArgumentsImpl(
     firDiagnostic: KtPsiDiagnostic,

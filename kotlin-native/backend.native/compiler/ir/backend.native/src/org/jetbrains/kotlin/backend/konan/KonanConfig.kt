@@ -9,13 +9,14 @@ import com.google.common.base.StandardSystemProperty
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.backend.common.linkage.issues.UserVisibleIrModulesSupport
 import org.jetbrains.kotlin.backend.konan.ir.BridgesPolicy
+import org.jetbrains.kotlin.backend.konan.objcexport.ObjCEntryPoints
+import org.jetbrains.kotlin.backend.konan.objcexport.readObjCEntryPoints
 import org.jetbrains.kotlin.backend.konan.serialization.KonanUserVisibleIrModulesSupport
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.config.kotlinSourceRoots
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.config.IrVerificationMode
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.ir.linkage.partial.partialLinkageConfig
 import org.jetbrains.kotlin.konan.file.File
@@ -230,11 +231,18 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
         configuration.get(BinaryOptions.objcDisposeWithRunLoop) ?: true
     }
 
+    val objcEntryPoints: ObjCEntryPoints by lazy {
+        configuration
+                .get(BinaryOptions.objcExportEntryPointsPath)
+                ?.let { File(it).readObjCEntryPoints() }
+                ?: ObjCEntryPoints.ALL
+    }
+
     val enableSafepointSignposts: Boolean = configuration.get(BinaryOptions.enableSafepointSignposts)?.also {
         if (it && !target.supportsSignposts) {
             configuration.report(CompilerMessageSeverity.STRONG_WARNING, "Signposts are not available on $target. The setting will have no effect.")
         }
-    } ?: target.supportsSignposts
+    } ?: false // Disabled by default because of KT-68928
 
     val globalDataLazyInit: Boolean by lazy {
         configuration.get(BinaryOptions.globalDataLazyInit) ?: true

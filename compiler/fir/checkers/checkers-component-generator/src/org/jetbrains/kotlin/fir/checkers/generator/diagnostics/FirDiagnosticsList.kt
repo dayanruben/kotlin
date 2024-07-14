@@ -496,6 +496,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val EXPOSED_SUPER_INTERFACE by exposedVisibilityError<KtTypeReference>()
         val EXPOSED_SUPER_CLASS by exposedVisibilityError<KtTypeReference>()
         val EXPOSED_TYPE_PARAMETER_BOUND by exposedVisibilityError<KtTypeReference>()
+        val EXPOSED_TYPE_PARAMETER_BOUND_DEPRECATION_WARNING by exposedVisibilityWarning<KtTypeReference>()
     }
 
     val MODIFIERS by object : DiagnosticGroup("Modifiers") {
@@ -1351,6 +1352,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val ACTUAL_TYPE_ALIAS_WITH_COMPLEX_SUBSTITUTION by error<KtTypeAlias>(PositioningStrategy.DECLARATION_SIGNATURE)
         val ACTUAL_TYPE_ALIAS_TO_NULLABLE_TYPE by error<KtTypeAlias>(PositioningStrategy.DECLARATION_SIGNATURE)
         val ACTUAL_TYPE_ALIAS_TO_NOTHING by error<KtTypeAlias>(PositioningStrategy.DECLARATION_SIGNATURE)
+        val ACTUAL_TYPE_ALIAS_TO_EXPECT by error<KtTypeAlias>(PositioningStrategy.DECLARATION_SIGNATURE)
         val ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS by error<KtFunction>(PositioningStrategy.PARAMETERS_WITH_DEFAULT_VALUE)
         val DEFAULT_ARGUMENTS_IN_EXPECT_WITH_ACTUAL_TYPEALIAS by error<KtTypeAlias> {
             parameter<FirClassSymbol<*>>("expectClassSymbol")
@@ -1913,6 +1915,12 @@ private inline fun <reified P : PsiElement> AbstractDiagnosticGroup.exposedVisib
     positioningStrategy: PositioningStrategy = PositioningStrategy.DEFAULT
 ): PropertyDelegateProvider<Any?, ReadOnlyProperty<AbstractDiagnosticGroup, RegularDiagnosticData>> {
     return error<P>(positioningStrategy, exposedVisibilityDiagnosticInit)
+}
+
+private inline fun <reified P : PsiElement> AbstractDiagnosticGroup.exposedVisibilityWarning(
+    positioningStrategy: PositioningStrategy = PositioningStrategy.DEFAULT
+): PropertyDelegateProvider<Any?, ReadOnlyProperty<AbstractDiagnosticGroup, RegularDiagnosticData>> {
+    return warning<P>(positioningStrategy, exposedVisibilityDiagnosticInit)
 }
 
 private inline fun <reified P : PsiElement> AbstractDiagnosticGroup.exposedVisibilityDeprecationError(

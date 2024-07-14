@@ -11,12 +11,11 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.cli.jvm.compiler.jarfs.FastJarFileSystem
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.junit.Assert
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.FileOutputStream
-import java.io.PrintStream
+import java.io.*
+import java.util.zip.CRC32
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import kotlin.random.Random
 
 
 class FastJarFSTest : TestCase() {
@@ -82,7 +81,10 @@ class FastJarFSTest : TestCase() {
             coreAppEnv!!.jarFileSystem.findFileByPath(badJarFile.absolutePath + "!/a.class")
         }
         // Asserting that core jar FS still behaves the same way as the "emulation" implemented in FastJarFS
-        Assert.assertTrue(errFromCoreJarFs.contains("WARN: error in opening zip file"))
+        Assert.assertTrue(
+            errFromCoreJarFs.contains("WARN: error in opening zip file") ||
+                    errFromCoreJarFs.contains("WARN: zip END header not found")
+        )
     }
 
     fun testEmptyJar() {
@@ -102,6 +104,178 @@ class FastJarFSTest : TestCase() {
         // Asserting that core jar FS still behaves the same way as the "emulation" implemented in FastJarFS
         Assert.assertTrue(errFromCoreJarFs.contains("WARN: zip file is empty"))
     }
+
+    fun testPlainDecoding() {
+        val fs = fs ?: return
+        val tmpDir = KotlinTestUtils.tmpDirForTest(this)
+        val jarFile = File(tmpDir, "tmp.jar")
+
+        val data = "someFlatData"
+        ZipOutputStream(FileOutputStream(jarFile)).use { out ->
+            val buf = data.toByteArray()
+            out.setMethod(ZipOutputStream.STORED)
+            val entry = ZipEntry("flat.txt").apply {
+                size = buf.size.toLong()
+                compressedSize = buf.size.toLong()
+                val crc32compute = CRC32()
+                crc32compute.update(buf)
+                crc = crc32compute.value
+            }
+            out.putNextEntry(entry)
+            out.write(buf)
+            out.closeEntry()
+        }
+        assertEquals(data, String(fs.findFileByPath(jarFile.absolutePath + "!/flat.txt")!!.contentsToByteArray()))
+    }
+
+    // TODO: unmute the tests below, see KT-69831
+
+    // takes too long to run
+    fun skip_testInterleaveSmallAndBigJarEntriesInOrder() {
+        // tests the zip file larger than Int.MAX_VALUE, so it doesn't fit into MappedByteBuffer, but smaller than UInt.MAX__VALUE,
+        // so no ZIP64 format is triggered
+        val fs = fs ?: return
+        val tmpDir = KotlinTestUtils.tmpDirForTest(this)
+        val jarFile = File(tmpDir, "tmp.jar")
+
+        val chunkSize = 1024 * 1024
+        val repetitions = (Int.MAX_VALUE.toLong() + 1) / chunkSize
+
+        ZipOutputStream(FileOutputStream(jarFile)).use { out ->
+            out.addEntry("small1.txt") { append("smallOne") }
+            out.addRandomEntry("big.txt", chunkSize, repetitions)
+            out.addEntry("small2.txt") { append("smallTwo") }
+        }
+
+        assert(jarFile.length() > Int.MAX_VALUE)
+        assertEquals("smallOne", String(fs.findFileByPath(jarFile.absolutePath + "!/small1.txt")!!.contentsToByteArray()))
+        assertEquals(repetitions * chunkSize, fs.findFileByPath(jarFile.absolutePath + "!/big.txt")!!.length)
+        assertEquals("smallTwo", String(fs.findFileByPath(jarFile.absolutePath + "!/small2.txt")!!.contentsToByteArray()))
+    }
+
+    // takes too long to run
+    fun skip_testInterleaveSmallAndBigJarEntriesOutOfOrder() {
+        // similar to testInterleaveSmallAndBigJarEntriesInOrder, but with out of order files reading, promting more remappings
+        val fs = fs ?: return
+        val tmpDir = KotlinTestUtils.tmpDirForTest(this)
+        val jarFile = File(tmpDir, "tmp.jar")
+
+        val chunkSize = 1024 * 1024
+        val repetitions = (Int.MAX_VALUE.toLong() + 1) / chunkSize
+
+        ZipOutputStream(FileOutputStream(jarFile)).use { out ->
+            out.addEntry("small1.txt") { append("smallOne") }
+            out.addRandomEntry("big.txt", chunkSize, repetitions)
+            out.addEntry("small2.txt") { append("smallTwo") }
+        }
+
+        assert(jarFile.length() > Int.MAX_VALUE)
+        assertEquals("smallTwo", String(fs.findFileByPath(jarFile.absolutePath + "!/small2.txt")!!.contentsToByteArray()))
+        assertEquals(repetitions * chunkSize, fs.findFileByPath(jarFile.absolutePath + "!/big.txt")!!.length)
+        assertEquals("smallOne", String(fs.findFileByPath(jarFile.absolutePath + "!/small1.txt")!!.contentsToByteArray()))
+    }
+
+    // takes too long to run
+    fun skip_testInterleaveSmallAndBigJarEntriesInOrderZip64() {
+        // tests the zip file larger than UInt.MAX_VALUE, so ZIP64 fields are used in the directory
+        val fs = fs ?: return
+        val tmpDir = KotlinTestUtils.tmpDirForTest(this)
+        val jarFile = File(tmpDir, "tmp.jar")
+
+        val chunkSize = 1024 * 1024
+        val repetitions = (Int.MAX_VALUE.toLong() + 1) / chunkSize
+
+        ZipOutputStream(FileOutputStream(jarFile)).use { out ->
+            out.addEntry("small1.txt") { append("smallOne") }
+            out.addRandomEntry("big1.txt", chunkSize, repetitions)
+            out.addEntry("small2.txt") { append("smallTwo") }
+            out.addRandomEntry("big2.txt", chunkSize, repetitions + 2)
+            out.addEntry("small3.txt") { append("smallThree") }
+        }
+
+        assert(jarFile.length() > UInt.MAX_VALUE.toLong())
+        assertEquals("smallOne", String(fs.findFileByPath(jarFile.absolutePath + "!/small1.txt")!!.contentsToByteArray()))
+        assertEquals(repetitions * chunkSize, fs.findFileByPath(jarFile.absolutePath + "!/big1.txt")!!.length)
+        assertEquals("smallTwo", String(fs.findFileByPath(jarFile.absolutePath + "!/small2.txt")!!.contentsToByteArray()))
+        assertEquals((repetitions + 2) * chunkSize, fs.findFileByPath(jarFile.absolutePath + "!/big2.txt")!!.length)
+        assertEquals("smallThree", String(fs.findFileByPath(jarFile.absolutePath + "!/small3.txt")!!.contentsToByteArray()))
+    }
+
+    // takes too long to run
+    fun skip_testInterleaveSmallAndBigJarEntriesOutOfOrderZip64() {
+        // similar to testInterleaveSmallAndBigJarEntriesInOrderZip64, but with out of order files reading, promting more remappings
+        val fs = fs ?: return
+        val tmpDir = KotlinTestUtils.tmpDirForTest(this)
+        val jarFile = File(tmpDir, "tmp.jar")
+
+        val chunkSize = 1024 * 1024
+        val repetitions = (Int.MAX_VALUE.toLong() + 1) / chunkSize
+
+        ZipOutputStream(FileOutputStream(jarFile)).use { out ->
+            out.addEntry("small1.txt") { append("smallOne") }
+            out.addRandomEntry("big1.txt", chunkSize, repetitions)
+            out.addEntry("small2.txt") { append("smallTwo") }
+            out.addRandomEntry("big2.txt", chunkSize, repetitions + 2)
+            out.addEntry("small3.txt") { append("smallThree") }
+        }
+
+        assert(jarFile.length() > UInt.MAX_VALUE.toLong())
+        assertEquals("smallThree", String(fs.findFileByPath(jarFile.absolutePath + "!/small3.txt")!!.contentsToByteArray()))
+        assertEquals((repetitions + 2) * chunkSize, fs.findFileByPath(jarFile.absolutePath + "!/big2.txt")!!.length)
+        assertEquals("smallTwo", String(fs.findFileByPath(jarFile.absolutePath + "!/small2.txt")!!.contentsToByteArray()))
+        assertEquals(repetitions * chunkSize, fs.findFileByPath(jarFile.absolutePath + "!/big1.txt")!!.length)
+        assertEquals("smallOne", String(fs.findFileByPath(jarFile.absolutePath + "!/small1.txt")!!.contentsToByteArray()))
+    }
+
+    fun skip_testBigJarDirectory() {
+        // it will be nice to have a test that checks logic of ZIP directory reading on the directories that doesn't fit to MappedByteBuffer
+        // but this tests fails with OOM on such zip file generation.
+        // TODO: find out how to implement such tests
+        val fs = fs ?: return
+        val tmpDir = KotlinTestUtils.tmpDirForTest(this)
+        val jarFile = File(tmpDir, "tmp.jar")
+        val out = ZipOutputStream(FileOutputStream(jarFile))
+
+        val chunkSize = 1024 * 4
+        val characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+        val chunk = generateSequence { characters[Random.nextInt(0, characters.length)] }.take(chunkSize).joinToString(separator = "")
+        val entriesNumber = (Int.MAX_VALUE.toLong() + 1) / chunkSize
+        for (i in 0..entriesNumber) {
+            out.putNextEntry(ZipEntry("$i$chunk"))
+            out.writer().apply {
+                append(i.toString())
+                flush()
+            }
+            out.closeEntry()
+        }
+        out.putNextEntry(ZipEntry("000"))
+        out.writer().apply {
+            append("!")
+            flush()
+        }
+        out.close()
+
+        fs.findFileByPath(jarFile.absolutePath + "!/000")
+    }
+}
+
+private fun ZipOutputStream.addEntry(name: String, body: OutputStreamWriter.() -> Unit) {
+    putNextEntry(ZipEntry(name))
+    writer().apply {
+        body()
+        flush()
+    }
+    closeEntry()
+}
+
+private fun ZipOutputStream.addRandomEntry(name: String, chunkSize: Int, repetitions: Long) {
+    putNextEntry(ZipEntry(name))
+    val chunk = Random.nextBytes(ByteArray(chunkSize), 0, chunkSize)
+    for (i in 0 until repetitions) {
+        write(chunk)
+    }
+    flush()
+    closeEntry()
 }
 
 private fun captureErr(body: () -> Unit): String {

@@ -481,7 +481,7 @@ object FirTree : AbstractFirTreeBuilder() {
     val anonymousFunctionExpression: Element by element(Expression) {
         parent(expression)
 
-        +field(anonymousFunction, withTransform = true)
+        +field(anonymousFunction, withTransform = true, withReplace = true)
         +field("isTrailingLambda", boolean, withReplace = true) {
             replaceOptInAnnotation = rawFirApi
         }
@@ -617,6 +617,7 @@ object FirTree : AbstractFirTreeBuilder() {
         parent(resolvable)
         parent(call)
         parent(contextReceiverArgumentListOwner)
+        parent(expression)
 
         +field("constructedTypeRef", typeRef, withReplace = true)
         +field("dispatchReceiver", expression, nullable = true, withReplace = true, withTransform = true)
@@ -1214,7 +1215,7 @@ object FirTree : AbstractFirTreeBuilder() {
         +field("usedAsExpression", boolean)
     }
 
-    val typeProjection: Element by element(TypeRefElement)
+    val typeProjection: Element by sealedElement(TypeRefElement)
 
     val typeProjectionWithVariance: Element by element(TypeRefElement) {
         parent(typeProjection)

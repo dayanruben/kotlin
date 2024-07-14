@@ -342,7 +342,11 @@ private object WhenOnSealedClassExhaustivenessChecker : WhenExhaustivenessChecke
         whenExpression.accept(ConditionChecker, Flags(allSubclasses, checkedSubclasses, session))
         (allSubclasses - checkedSubclasses).mapNotNullTo(destination) {
             when (it) {
-                is FirClassSymbol<*> -> WhenMissingCase.IsTypeCheckIsMissing(it.classId, it.fir.classKind.isSingleton)
+                is FirClassSymbol<*> -> WhenMissingCase.IsTypeCheckIsMissing(
+                    it.classId,
+                    it.fir.classKind.isSingleton,
+                    it.ownTypeParameterSymbols.size
+                )
                 is FirVariableSymbol<*> -> WhenMissingCase.EnumCheckIsMissing(it.callableId)
                 else -> null
             }
@@ -363,7 +367,7 @@ private object WhenOnSealedClassExhaustivenessChecker : WhenExhaustivenessChecke
                 else -> return
             }
 
-            val symbol = when (val argument = equalityOperatorCall.arguments[1]) {
+            val symbol = when (val argument = equalityOperatorCall.arguments[1].unwrapSmartcastExpression()) {
                 is FirResolvedQualifier -> {
                     val firClass = (argument.symbol as? FirRegularClassSymbol)?.fir
                     if (firClass?.classKind == ClassKind.OBJECT) {

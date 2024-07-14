@@ -40,7 +40,7 @@ plugins {
     id("idea-rt-hack")
     id("resolve-dependencies")
     id("org.gradle.crypto.checksum") version "1.4.0"
-    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.13.1" apply false
+    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.15.1" apply false
     signing
     id("org.jetbrains.kotlin.jvm") apply false
     id("org.jetbrains.kotlin.plugin.serialization") apply false
@@ -100,7 +100,7 @@ if (!project.hasProperty("versions.kotlin-native")) {
     extra["versions.kotlin-native"] = if (kotlinBuildProperties.isKotlinNativeEnabled) {
         kotlinBuildProperties.defaultSnapshotVersion
     } else {
-        "2.0.20-dev-4770"
+        "2.1.0-dev-1329"
     }
 }
 
@@ -816,6 +816,7 @@ tasks {
         dependsOn(":native:native.tests:driver:check")
         dependsOn(":native:native.tests:stress:check")
         dependsOn(":native:native.tests:klib-compatibility:check")
+        dependsOn(":tools:binary-compatibility-validator:check")
         dependsOn(":native:objcexport-header-generator:check")
         dependsOn(":native:swift:swift-export-standalone:test")
     }

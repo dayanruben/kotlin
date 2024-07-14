@@ -67,7 +67,7 @@ class FirCallCompleter(
         resolutionMode: ResolutionMode,
         // Only expected to be true for resolving different versions of augmented assignments
         skipEvenPartialCompletion: Boolean = false,
-    ): T where T : FirResolvable, T : FirStatement {
+    ): T where T : FirResolvable, T : FirExpression {
         val typeRef = components.typeFromCallee(call)
 
         val reference = call.calleeReference as? FirNamedReferenceWithCandidate ?: return call
@@ -75,10 +75,8 @@ class FirCallCompleter(
         val candidate = reference.candidate
         val initialType = typeRef.initialTypeOfCandidate(candidate)
 
-        if (call is FirExpression) {
-            call.resultType = initialType
-            session.lookupTracker?.recordTypeResolveAsLookup(initialType, call.source, components.context.file.source)
-        }
+        call.resultType = initialType
+        session.lookupTracker?.recordTypeResolveAsLookup(initialType, call.source, components.context.file.source)
 
         addConstraintFromExpectedType(
             candidate,
@@ -253,7 +251,7 @@ class FirCallCompleter(
         call: T,
         initialType: ConeKotlinType,
         analyzer: PostponedArgumentsAnalyzer? = null,
-    ) where T : FirStatement, T : FirResolvable {
+    ) where T : FirExpression, T : FirResolvable {
         @Suppress("NAME_SHADOWING")
         val analyzer = analyzer ?: createPostponedArgumentsAnalyzer(transformer.resolutionContext)
         completer.complete(
@@ -271,7 +269,7 @@ class FirCallCompleter(
         atom: ConeResolvedLambdaAtom,
         candidate: Candidate,
     ) {
-        val returnVariable = ConeTypeVariableForLambdaReturnType(atom.fir, "_R")
+        val returnVariable = ConeTypeVariableForLambdaReturnType(atom.anonymousFunction, "_R")
         val csBuilder = candidate.system.getBuilder()
         csBuilder.registerVariable(returnVariable)
         val functionalType = csBuilder.buildCurrentSubstitutor()
@@ -283,7 +281,7 @@ class FirCallCompleter(
             isNullable = functionalType.isNullable,
             functionalType.attributes
         )
-        csBuilder.addSubtypeConstraint(expectedType, functionalType, ConeArgumentConstraintPosition(atom.fir))
+        csBuilder.addSubtypeConstraint(expectedType, functionalType, ConeArgumentConstraintPosition(atom.anonymousFunction))
         atom.replaceExpectedType(expectedType, returnVariable.defaultType)
         atom.replaceTypeVariableForLambdaReturnType(returnVariable)
     }
@@ -324,21 +322,21 @@ class FirCallCompleter(
             withPCLASession: Boolean,
             forOverloadByLambdaReturnType: Boolean,
         ): ReturnArgumentsAnalysisResult {
-            val lambdaArgument: FirAnonymousFunction = lambdaAtom.fir
-            val needItParam = lambdaArgument.valueParameters.isEmpty() && parameters.size == 1
+            val lambda: FirAnonymousFunction = lambdaAtom.anonymousFunction
+            val needItParam = lambda.valueParameters.isEmpty() && parameters.size == 1
 
             val matchedParameter = candidate.argumentMapping.firstNotNullOfOrNull { (currentAtom, currentValueParameter) ->
                 val currentArgument = currentAtom.expression
                 val currentLambdaArgument =
                     (currentArgument as? FirAnonymousFunctionExpression)?.anonymousFunction
-                if (currentLambdaArgument === lambdaArgument) {
+                if (currentLambdaArgument === lambda) {
                     currentValueParameter
                 } else {
                     null
                 }
             }
 
-            lambdaArgument.matchingParameterFunctionType = matchedParameter?.returnTypeRef?.coneType
+            lambda.matchingParameterFunctionType = matchedParameter?.returnTypeRef?.coneType
 
             val itParam = when {
                 needItParam -> {
@@ -346,15 +344,15 @@ class FirCallCompleter(
                     val itType = parameters.single()
                     buildValueParameter {
                         resolvePhase = FirResolvePhase.BODY_RESOLVE
-                        source = lambdaAtom.fir.source?.fakeElement(KtFakeSourceElementKind.ItLambdaParameter)
-                        containingFunctionSymbol = lambdaArgument.symbol
+                        source = lambdaAtom.anonymousFunction.source?.fakeElement(KtFakeSourceElementKind.ItLambdaParameter)
+                        containingFunctionSymbol = lambda.symbol
                         moduleData = session.moduleData
                         origin = FirDeclarationOrigin.Source
                         this.name = name
                         symbol = FirValueParameterSymbol(name)
                         returnTypeRef =
                             itType.approximateLambdaInputType(symbol, withPCLASession).toFirResolvedTypeRef(
-                                lambdaAtom.fir.source?.fakeElement(KtFakeSourceElementKind.ItLambdaParameter)
+                                lambdaAtom.anonymousFunction.source?.fakeElement(KtFakeSourceElementKind.ItLambdaParameter)
                             )
                         defaultValue = null
                         isCrossinline = false
@@ -365,24 +363,24 @@ class FirCallCompleter(
                 else -> null
             }
 
-            val expectedReturnTypeRef = expectedReturnType?.let { lambdaArgument.returnTypeRef.resolvedTypeFromPrototype(it) }
+            val expectedReturnTypeRef = expectedReturnType?.let { lambda.returnTypeRef.resolvedTypeFromPrototype(it) }
 
             when {
-                receiverType == null -> lambdaArgument.replaceReceiverParameter(null)
+                receiverType == null -> lambda.replaceReceiverParameter(null)
                 !lambdaAtom.coerceFirstParameterToExtensionReceiver -> {
-                    lambdaArgument.receiverParameter?.apply {
+                    lambda.receiverParameter?.apply {
                         val type = receiverType.approximateLambdaInputType(valueParameter = null, withPCLASession)
                         val source =
                             source?.fakeElement(KtFakeSourceElementKind.LambdaReceiver)
-                                ?: lambdaArgument.source?.fakeElement(KtFakeSourceElementKind.LambdaReceiver)
+                                ?: lambda.source?.fakeElement(KtFakeSourceElementKind.LambdaReceiver)
                         replaceTypeRef(typeRef.resolvedTypeFromPrototype(type, source))
                     }
                 }
-                else -> lambdaArgument.replaceReceiverParameter(null)
+                else -> lambda.replaceReceiverParameter(null)
             }
 
             if (contextReceivers.isNotEmpty()) {
-                lambdaArgument.replaceContextReceivers(
+                lambda.replaceContextReceivers(
                     contextReceivers.map { contextReceiverType ->
                         buildContextReceiver {
                             typeRef = buildResolvedTypeRef {
@@ -402,7 +400,7 @@ class FirCallCompleter(
                 }
                 else -> parameters
             }
-            lambdaArgument.valueParameters.forEachIndexed { index, parameter ->
+            lambda.valueParameters.forEachIndexed { index, parameter ->
                 if (index >= theParameters.size) {
                     // May happen in erroneous code, see KT-60450
                     // In test forEachOnZip.kt we have two declared parameters, but in fact forEach expects only one
@@ -424,40 +422,45 @@ class FirCallCompleter(
                 lookupTracker?.recordTypeResolveAsLookup(newReturnTypeRef, parameter.source, fileSource)
             }
 
-            lambdaArgument.replaceValueParameters(lambdaArgument.valueParameters + listOfNotNull(itParam))
-            lambdaArgument.replaceReturnTypeRef(
+            lambda.replaceValueParameters(lambda.valueParameters + listOfNotNull(itParam))
+            lambda.replaceReturnTypeRef(
                 expectedReturnTypeRef?.also {
-                    lookupTracker?.recordTypeResolveAsLookup(it, lambdaArgument.source, fileSource)
+                    lookupTracker?.recordTypeResolveAsLookup(it, lambda.source, fileSource)
                 } ?: components.noExpectedType
             )
 
             var additionalConstraints: ConstraintStorage? = null
 
-            transformer.context.withAnonymousFunctionTowerDataContext(lambdaArgument.symbol) {
-                val pclaInferenceSession =
-                    runIf(withPCLASession) {
-                        candidate.lambdasAnalyzedWithPCLA += lambdaArgument
-
-                        FirPCLAInferenceSession(candidate, session.inferenceComponents)
-                    }
-
+            transformer.context.withAnonymousFunctionTowerDataContext(lambda.symbol) {
+                val pclaInferenceSession = runIf(withPCLASession) {
+                    candidate.lambdasAnalyzedWithPCLA += lambda
+                    FirPCLAInferenceSession(candidate, session.inferenceComponents)
+                }
+                val lambdaExpression = lambdaAtom.expression
+                val declarationsTransformer = transformer.declarationsTransformer!!
                 if (pclaInferenceSession != null) {
                     transformer.context.withInferenceSession(pclaInferenceSession) {
-                        lambdaArgument.transformSingle(transformer, ResolutionMode.LambdaResolution(expectedReturnTypeRef))
+                        declarationsTransformer.doTransformAnonymousFunction(
+                            lambdaExpression,
+                            ResolutionMode.LambdaResolution(expectedReturnTypeRef)
+                        )
 
                         applyResultsToMainCandidate()
                     }
                 } else {
                     additionalConstraints =
                         transformer.context.inferenceSession.runLambdaCompletion(candidate, forOverloadByLambdaReturnType) {
-                            lambdaArgument.transformSingle(transformer, ResolutionMode.LambdaResolution(expectedReturnTypeRef))
+                            declarationsTransformer.doTransformAnonymousFunction(
+                                lambdaExpression,
+                                ResolutionMode.LambdaResolution(expectedReturnTypeRef)
+                            )
                         }
                 }
             }
-            transformer.context.dropContextForAnonymousFunction(lambdaArgument)
+            transformer.context.dropContextForAnonymousFunction(lambda)
 
-            val returnArguments = components.dataFlowAnalyzer.returnExpressionsOfAnonymousFunction(lambdaArgument)
-                .map { ConeCallAtom.createRawAtom(it.expression) }
+            val returnArguments = components.dataFlowAnalyzer.returnExpressionsOfAnonymousFunction(lambda)
+                .map { ConeResolutionAtom.createRawAtom(it.expression) }
 
             return ReturnArgumentsAnalysisResult(returnArguments, additionalConstraints)
         }
