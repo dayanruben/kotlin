@@ -172,16 +172,10 @@ fun Project.configureKotlinCompilationOptions() {
             }
         }
 
-        val jvmCompilerArgs = listOf(
-            "-Xno-optimized-callable-references",
-            "-Xno-kotlin-nothing-value-exception",
-        )
-
         val projectsWithOptInToUnsafeCastFunctionsFromAddToStdLib: List<String> by rootProject.extra
 
         tasks.withType<KotlinJvmCompile>().configureEach {
             compilerOptions {
-                freeCompilerArgs.addAll(jvmCompilerArgs)
                 if (renderDiagnosticNames) {
                     freeCompilerArgs.add("-Xrender-internal-diagnostic-names")
                 }
