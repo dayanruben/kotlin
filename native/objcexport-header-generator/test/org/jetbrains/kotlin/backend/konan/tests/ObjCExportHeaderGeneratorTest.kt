@@ -253,12 +253,7 @@ class ObjCExportHeaderGeneratorTest(private val generator: HeaderGenerator) {
         doTest(headersTestDataDir.resolve("classWithGenerics"))
     }
 
-    /**
-     * - init method missing
-     * - 'new constructor' missing
-     */
     @Test
-    @TodoAnalysisApi
     fun `test - objectWithGenericSuperclass`() {
         doTest(headersTestDataDir.resolve("objectWithGenericSuperclass"))
     }
@@ -463,6 +458,16 @@ class ObjCExportHeaderGeneratorTest(private val generator: HeaderGenerator) {
     @Test
     fun `test - internalPublicApi`() {
         doTest(headersTestDataDir.resolve("internalPublicApi"))
+    }
+
+    @Test
+    fun `test - extension with primitive parameter`() {
+        doTest(headersTestDataDir.resolve("extensionWithPrimitiveParameter"))
+    }
+
+    @Test
+    fun `test - generic super type`() {
+        doTest(headersTestDataDir.resolve("genericSuperType"))
     }
 
     private fun doTest(root: File, configuration: Configuration = Configuration()) {

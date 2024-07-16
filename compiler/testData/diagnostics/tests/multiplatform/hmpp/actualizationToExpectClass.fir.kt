@@ -2,12 +2,12 @@
 // MODULE: common
 expect class Common
 
-<!EXPECT_ACTUAL_MISMATCH{JVM}!>expect fun commonFun(a: Common)<!>
-<!EXPECT_ACTUAL_INCOMPATIBILITY{JVM}!>expect var commonProp: Common<!>
+expect fun commonFun(a: Common)
+expect var commonProp: Common
 
 //MODULE: intermediate()()(common)
 expect class Intermediate
-<!ACTUAL_TYPE_ALIAS_TO_EXPECT!>actual typealias Common = Intermediate<!>
+actual typealias Common = Intermediate
 
 expect fun intermediateFun(a: Common, b: Intermediate)
 expect var intermediateProp: Intermediate

@@ -493,6 +493,12 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = InterfaceCantCallDefaultMethodViaSuper::class
     }
 
+    interface JavaClassInheritsKtPrivateClass : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = JavaClassInheritsKtPrivateClass::class
+        val javaClass: KaType
+        val privateKotlinClass: KaType
+    }
+
     interface NotASupertype : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = NotASupertype::class
     }
@@ -2767,10 +2773,6 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = ActualTypeAliasToNothing::class
     }
 
-    interface ActualTypeAliasToExpect : KaFirDiagnostic<KtTypeAlias> {
-        override val diagnosticClass get() = ActualTypeAliasToExpect::class
-    }
-
     interface ActualFunctionWithDefaultArguments : KaFirDiagnostic<KtFunction> {
         override val diagnosticClass get() = ActualFunctionWithDefaultArguments::class
     }
@@ -4137,6 +4139,11 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
     interface JavaFieldShadowedByKotlinProperty : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = JavaFieldShadowedByKotlinProperty::class
         val kotlinProperty: KaVariableSymbol
+    }
+
+    interface MissingBuiltInDeclaration : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = MissingBuiltInDeclaration::class
+        val symbol: KaSymbol
     }
 
     interface ImplementingFunctionInterface : KaFirDiagnostic<KtClassOrObject> {

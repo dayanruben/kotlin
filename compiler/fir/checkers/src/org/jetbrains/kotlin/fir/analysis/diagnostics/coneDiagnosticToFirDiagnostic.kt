@@ -54,7 +54,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
 
 private fun ConeDiagnostic.toKtDiagnostic(
-    session: FirSession,
     source: KtSourceElement?,
     callOrAssignmentSource: KtSourceElement?
 ): KtDiagnostic? = when (this) {
@@ -117,19 +116,22 @@ private fun ConeDiagnostic.toKtDiagnostic(
             if (it !is AbstractCallCandidate<*>) return@all false
             // Ambiguous candidates may be not fully processed, so argument mapping may be not initialized
             if (!it.argumentMappingInitialized) return@all false
-            it.argumentMapping.keys.any { atom ->
-                val arg = atom.expression
-                arg.resolvedType.hasError() && arg !is FirAnonymousFunctionExpression && arg !is FirCallableReferenceAccess
-            }
+            it.argumentMapping.keys.any(AbstractConeResolutionAtom::containsErrorTypeForSuppressingAmbiguityError) ||
+                    it.contextReceiverArguments?.any(AbstractConeResolutionAtom::containsErrorTypeForSuppressingAmbiguityError) == true ||
+                    it.chosenExtensionReceiver?.containsErrorTypeForSuppressingAmbiguityError() == true
         } -> null
         applicability.isSuccess -> FirErrors.OVERLOAD_RESOLUTION_AMBIGUITY.createOn(source, this.candidates.map { it.symbol })
         applicability == CandidateApplicability.UNSAFE_CALL -> {
-            val (unsafeCall, candidate) = candidates.firstNotNullOf { it.diagnostics.firstIsInstanceOrNull<UnsafeCall>()?.to(it) }
+            val (unsafeCall, candidate) = candidates.firstNotNullOf {
+                (it as? AbstractCallCandidate<*>)?.diagnostics?.firstIsInstanceOrNull<UnsafeCall>()?.to(it)
+            }
             mapUnsafeCallError(candidate, unsafeCall, source, callOrAssignmentSource)
         }
 
         applicability == CandidateApplicability.UNSTABLE_SMARTCAST -> {
-            val unstableSmartcast = this.candidates.firstNotNullOf { it.diagnostics.firstIsInstanceOrNull<UnstableSmartCast>() }
+            val unstableSmartcast = this.candidates.firstNotNullOf {
+                (it as? AbstractCallCandidate<*>)?.diagnostics?.firstIsInstanceOrNull<UnstableSmartCast>()
+            }
             unstableSmartcast.mapUnstableSmartCast()
         }
 
@@ -198,6 +200,11 @@ private fun ConeDiagnostic.toKtDiagnostic(
     else -> throw IllegalArgumentException("Unsupported diagnostic type: ${this.javaClass}")
 }
 
+private fun AbstractConeResolutionAtom.containsErrorTypeForSuppressingAmbiguityError(): Boolean {
+    val arg = expression
+    return arg.resolvedType.hasError() && arg !is FirAnonymousFunctionExpression && arg !is FirCallableReferenceAccess
+}
+
 /**
  * `DelegatingConstructorCall` because in this case there is either `UNRESOLVED_REFERENCE` or `SYNTAX` already.
  * `ErrorTypeRef` because in this case there is `SYNTAX` already.
@@ -220,12 +227,12 @@ fun ConeDiagnostic.toFirDiagnostics(
     return when (this) {
         is ConeInapplicableCandidateError -> mapInapplicableCandidateError(session, this, source, callOrAssignmentSource)
         is ConeConstraintSystemHasContradiction -> mapSystemHasContradictionError(session, this, source, callOrAssignmentSource)
-        else -> listOfNotNull(toKtDiagnostic(session, source, callOrAssignmentSource))
+        else -> listOfNotNull(toKtDiagnostic(source, callOrAssignmentSource))
     }
 }
 
 private fun mapUnsafeCallError(
-    candidate: AbstractCandidate,
+    candidate: AbstractCallCandidate<*>,
     rootCause: UnsafeCall,
     source: KtSourceElement?,
     qualifiedAccessSource: KtSourceElement?,
@@ -487,7 +494,7 @@ private fun ConstraintSystemError.toDiagnostic(
     source: KtSourceElement?,
     qualifiedAccessSource: KtSourceElement?,
     typeContext: ConeTypeContext,
-    candidate: AbstractCandidate,
+    candidate: AbstractCallCandidate<*>,
 ): KtDiagnostic? {
     return when (this) {
         is NewConstraintError -> {
@@ -605,7 +612,7 @@ private fun ConstraintSystemError.toDiagnostic(
     }
 }
 
-private fun AbstractCandidate.sourceOfCallToSymbolWith(
+private fun AbstractCallCandidate<*>.sourceOfCallToSymbolWith(
     typeVariable: ConeTypeVariable,
 ): KtSourceElement? {
     if (typeVariable !is ConeTypeParameterBasedTypeVariable) return null

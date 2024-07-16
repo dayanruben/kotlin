@@ -128,6 +128,11 @@ class FirPCLAInferenceSession(
         outerCandidate.onPCLACompletionResultsWritingCallbacks += onCompletionResultsWriting
     }
 
+    @OptIn(TemporaryInferenceSessionHook::class) // Needed to override
+    override fun updateExpressionReturnTypeWithCurrentSubstitutorInPCLA(expression: FirExpression, resolutionMode: ResolutionMode) {
+        expression.updateReturnTypeWithCurrentSubstitutor(resolutionMode)
+    }
+
     private fun FirExpression.updateReturnTypeWithCurrentSubstitutor(
         resolutionMode: ResolutionMode,
     ) {
@@ -215,7 +220,7 @@ class FirPCLAInferenceSession(
             is ResolutionMode.WithExpectedType -> when {
                 // For assignments like myVarContainingTV = SomeCallWithNonTrivialInference(...)
                 // We should integrate even simple calls into the PCLA tree, too
-                callInfo.resolutionMode.expectedTypeRef.type.containsNotFixedTypeVariables() -> return false
+                callInfo.resolutionMode.expectedTypeRef.coneType.containsNotFixedTypeVariables() -> return false
             }
             is ResolutionMode.WithStatus, is ResolutionMode.LambdaResolution ->
                 error("$this call should not be analyzed in ${callInfo.resolutionMode}")
@@ -249,7 +254,7 @@ class FirPCLAInferenceSession(
 
         // Accesses to local variables or local functions which return types contain not fixed TVs
         val returnType = (symbol as? FirCallableSymbol)?.let(returnTypeCalculator::tryCalculateReturnType)
-        if (returnType?.type?.containsNotFixedTypeVariables() == true) return false
+        if (returnType?.coneType?.containsNotFixedTypeVariables() == true) return false
 
         // Now, we've got some sort of call/variable access/callable reference/synthetic call (see hierarchy of FirResolvable)
         // It has regular independent receivers and trivial return type
@@ -332,7 +337,7 @@ class FirTypeVariablesAfterPCLATransformer(private val substitutor: ConeSubstitu
     }
 
     override fun transformResolvedTypeRef(resolvedTypeRef: FirResolvedTypeRef, data: Nothing?): FirTypeRef =
-        substitutor.substituteOrNull(resolvedTypeRef.type)?.let {
+        substitutor.substituteOrNull(resolvedTypeRef.coneType)?.let {
             resolvedTypeRef.withReplacedConeType(it)
         } ?: resolvedTypeRef
 

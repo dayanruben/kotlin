@@ -13,6 +13,7 @@ object JvmExpressionCheckers : ExpressionCheckers() {
         get() = setOf(
             FirJvmProtectedInSuperClassCompanionCallChecker,
             FirJvmReflectionApiCallChecker,
+            FirJvmMissingBuiltInDeclarationChecker
         )
 
     override val qualifiedAccessExpressionCheckers: Set<FirQualifiedAccessExpressionChecker>
@@ -22,6 +23,7 @@ object JvmExpressionCheckers : ExpressionCheckers() {
             FirQualifiedAccessJavaNullabilityWarningChecker,
             FirJvmModuleAccessibilityQualifiedAccessChecker,
             FirJvmInlineTargetQualifiedAccessChecker,
+            FirJavaClassInheritsKtPrivateClassExprChecker,
         )
 
     override val propertyAccessExpressionCheckers: Set<FirPropertyAccessExpressionChecker>

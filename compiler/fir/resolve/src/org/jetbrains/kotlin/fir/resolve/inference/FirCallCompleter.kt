@@ -75,7 +75,14 @@ class FirCallCompleter(
         val candidate = reference.candidate
         val initialType = typeRef.initialTypeOfCandidate(candidate)
 
-        call.resultType = initialType
+        // Annotation types are resolved during type resolution, and generic arguments aren't inferred.
+        // Updating the type of an annotation call is a no-op, it only checks if it's the same as the type of the annotation type ref.
+        // In the case of a generic annotation, we would set it to a type containing type variable types which would cause an exception.
+        // Delegated constructor calls always have type Unit but typeFromCallee returns the type of the superclass.
+        if (call !is FirAnnotationCall && call !is FirDelegatedConstructorCall) {
+            call.resultType = initialType
+        }
+
         session.lookupTracker?.recordTypeResolveAsLookup(initialType, call.source, components.context.file.source)
 
         addConstraintFromExpectedType(
@@ -166,7 +173,7 @@ class FirCallCompleter(
         resolutionMode: ResolutionMode,
     ) {
         if (resolutionMode !is ResolutionMode.WithExpectedType) return
-        val expectedType = resolutionMode.expectedTypeRef.type.fullyExpandedType(session)
+        val expectedType = resolutionMode.expectedTypeRef.coneType.fullyExpandedType(session)
 
         val system = candidate.system
         when {
@@ -384,7 +391,7 @@ class FirCallCompleter(
                     contextReceivers.map { contextReceiverType ->
                         buildContextReceiver {
                             typeRef = buildResolvedTypeRef {
-                                type = contextReceiverType
+                                coneType = contextReceiverType
                             }
                         }
                     }

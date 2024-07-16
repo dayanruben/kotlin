@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.builtins.StandardNames.DEFAULT_VALUE_PARAMETER
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fakeElement
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.caches.FirCache
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.fir.declarations.synthetic.buildSyntheticProperty
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
+import org.jetbrains.kotlin.fir.expressions.FirErrorExpression
 import org.jetbrains.kotlin.fir.expressions.FirLiteralExpression
 import org.jetbrains.kotlin.fir.expressions.unexpandedClassId
 import org.jetbrains.kotlin.fir.java.FirJavaFacade
@@ -34,9 +36,11 @@ import org.jetbrains.kotlin.fir.java.JavaTypeParameterStack
 import org.jetbrains.kotlin.fir.java.declarations.*
 import org.jetbrains.kotlin.fir.java.symbols.FirJavaOverriddenSyntheticPropertySymbol
 import org.jetbrains.kotlin.fir.java.toConeKotlinTypeProbablyFlexible
+import org.jetbrains.kotlin.fir.resolve.getSuperTypes
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutorByMap
+import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.CallableCopyTypeCalculator
 import org.jetbrains.kotlin.fir.scopes.DeferredCallableCopyReturnType
 import org.jetbrains.kotlin.fir.scopes.deferredCallableCopyReturnType
@@ -51,6 +55,7 @@ import org.jetbrains.kotlin.fir.types.impl.ConeTypeParameterTypeImpl
 import org.jetbrains.kotlin.fir.types.impl.FirImplicitTypeRefImplWithoutSource
 import org.jetbrains.kotlin.fir.types.jvm.FirJavaTypeRef
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
+import org.jetbrains.kotlin.lexer.KtTokens.PRIVATE_KEYWORD
 import org.jetbrains.kotlin.load.java.*
 import org.jetbrains.kotlin.load.java.AnnotationQualifierApplicabilityType.VALUE_PARAMETER
 import org.jetbrains.kotlin.load.java.typeEnhancement.*
@@ -84,6 +89,10 @@ class FirSignatureEnhancement(
     // While in one of the cases FirSignatureEnhancement is created just one step before annotations resolution
     private val contextQualifiers: JavaTypeQualifiersByElementType? by lazy(LazyThreadSafetyMode.NONE) {
         typeQualifierResolver.extractDefaultQualifiers(owner)
+    }
+
+    private val privateKtSuperClass: ConeKotlinType? by lazy {
+        owner.symbol.getSuperTypes(session, substituteSuperTypes = false).firstOrNull { it.toSymbol(session)?.fir?.visibility is Visibilities.Private }
     }
 
     private val enhancementsCache = session.enhancedSymbolStorage.cacheByOwner.getValue(owner.symbol, null)
@@ -146,9 +155,9 @@ class FirSignatureEnhancement(
                     firElement, firElement.computeDefaultQualifiers(),
                     predefinedEnhancementInfo = null
                 ).let {
-                    val coneTypeOrNull = it.coneTypeOrNull
-                    val lowerBound = coneTypeOrNull?.lowerBoundIfFlexible()
-                    if (lowerBound != null && lowerBound.isString && firElement.isStatic && firElement.hasConstantInitializer) {
+                    val coneTypeOrNull = it.coneType
+                    val lowerBound = coneTypeOrNull.lowerBoundIfFlexible()
+                    if (lowerBound.isString && firElement.isStatic && firElement.hasConstantInitializer) {
                         it.withReplacedConeType(coneTypeOrNull.withNullability(ConeNullability.NOT_NULL, session.typeContext))
                     } else {
                         it
@@ -224,6 +233,7 @@ class FirSignatureEnhancement(
         }
 
         val firMethod = original.fir
+        firMethod.inheritedKtPrivateCls = privateKtSuperClass
         when (firMethod) {
             is FirJavaMethod -> performBoundsResolutionForJavaMethodOrConstructorTypeParameters(
                 firMethod.typeParameters, firMethod.source, firMethod::withTypeParameterBoundsResolveLock
@@ -313,7 +323,6 @@ class FirSignatureEnhancement(
         val functionSymbol: FirFunctionSymbol<*>
         var isJavaRecordComponent = false
 
-        val typeParameterSubstitutionMap = mutableMapOf<FirTypeParameterSymbol, ConeKotlinType>()
         var typeParameterSubstitutor: ConeSubstitutor? = null
         val declarationOrigin =
             if (isIntersectionOverride) FirDeclarationOrigin.IntersectionOverride else FirDeclarationOrigin.Enhancement
@@ -323,7 +332,6 @@ class FirSignatureEnhancement(
                 val symbol = FirConstructorSymbol(methodId).also { functionSymbol = it }
                 val builder: FirAbstractConstructorBuilder = if (firMethod.isPrimary) {
                     FirPrimaryConstructorBuilder().apply {
-                        returnTypeRef = newReturnTypeRef!! // Constructors don't have overriddens, newReturnTypeRef is never null
                         val resolvedStatus = firMethod.status as? FirResolvedDeclarationStatus
                         status = if (resolvedStatus != null) {
                             FirResolvedDeclarationStatusImpl(
@@ -344,7 +352,6 @@ class FirSignatureEnhancement(
                     }
                 } else {
                     FirConstructorBuilder().apply {
-                        returnTypeRef = newReturnTypeRef!! // Constructors don't have overriddens, newReturnTypeRef is never null
                         status = firMethod.status
                         this.symbol = symbol
                         dispatchReceiverType = firMethod.dispatchReceiverType
@@ -356,8 +363,17 @@ class FirSignatureEnhancement(
                     moduleData = this@FirSignatureEnhancement.moduleData
                     resolvePhase = FirResolvePhase.ANALYZED_DEPENDENCIES
                     origin = declarationOrigin
-                    // TODO: we should set a new origin / containing declaration to type parameters (KT-60440)
-                    this.typeParameters += firMethod.typeParameters
+                    typeParameterSubstitutor =
+                        this.typeParameters.copyTypeParametersWithNewContainingDeclaration(firMethod, declarationOrigin, functionSymbol)
+                    returnTypeRef = if (typeParameterSubstitutor != null && newReturnTypeRef is FirResolvedTypeRef) {
+                        newReturnTypeRef.withReplacedConeType(
+                            typeParameterSubstitutor.substituteOrNull(newReturnTypeRef.coneType)
+                        )
+                    } else {
+                        newReturnTypeRef!! // Constructors don't have overriddens, newReturnTypeRef is never null
+                    }
+                    typeParameters.replaceTypeParameterBounds(typeParameterSubstitutor)
+                    // Constructors has no extension receiver, and deferredCalc is always null for them
                 }
             }
             is FirSimpleFunction -> {
@@ -378,20 +394,9 @@ class FirSignatureEnhancement(
                         FirNamedFunctionSymbol(methodId)
                     }.also { functionSymbol = it }
                     resolvePhase = FirResolvePhase.ANALYZED_DEPENDENCIES
-                    typeParameters += firMethod.typeParameters.map { typeParameter ->
-                        val newTypeParameter = buildTypeParameterCopy(typeParameter) {
-                            origin = declarationOrigin
-                            symbol = FirTypeParameterSymbol()
-                            containingDeclarationSymbol = functionSymbol
-                        }
-                        typeParameterSubstitutionMap[typeParameter.symbol] = ConeTypeParameterTypeImpl(
-                            newTypeParameter.symbol.toLookupTag(), isNullable = false
-                        )
-                        newTypeParameter
-                    }
-                    if (typeParameterSubstitutionMap.isNotEmpty()) {
-                        typeParameterSubstitutor = ConeSubstitutorByMap.create(typeParameterSubstitutionMap, session)
-                    }
+                    typeParameterSubstitutor =
+                        this.typeParameters.copyTypeParametersWithNewContainingDeclaration(firMethod, declarationOrigin, functionSymbol)
+
                     returnTypeRef = if (typeParameterSubstitutor != null && newReturnTypeRef is FirResolvedTypeRef) {
                         newReturnTypeRef.withReplacedConeType(
                             typeParameterSubstitutor?.substituteOrNull(newReturnTypeRef.coneType)
@@ -409,13 +414,7 @@ class FirSignatureEnhancement(
                             source = receiverType.source?.fakeElement(KtFakeSourceElementKind.ReceiverFromType)
                         }
                     }
-                    typeParameters.forEach { typeParameter ->
-                        typeParameter.replaceBounds(
-                            typeParameter.bounds.map { boundTypeRef ->
-                                boundTypeRef.withReplacedConeType(typeParameterSubstitutor?.substituteOrNull(boundTypeRef.coneType))
-                            }
-                        )
-                    }
+                    typeParameters.replaceTypeParameterBounds(typeParameterSubstitutor)
 
                     dispatchReceiverType = firMethod.dispatchReceiverType
                     attributes = firMethod.attributes.copy().apply {
@@ -434,7 +433,12 @@ class FirSignatureEnhancement(
             }
         }.apply {
             val newValueParameters = firMethod.valueParameters.zip(enhancedValueParameterTypes) { valueParameter, enhancedReturnType ->
-                valueParameter.defaultValue?.replaceConeTypeOrNull(enhancedReturnType.coneType)
+                // Java annotation default values with binary expressions like `1.0 / 0.0`
+                // are not properly supported and produce error expressions, see IDEA-207252.
+                // Updating the type of an error expression causes an exception.
+                if (valueParameter.defaultValue !is FirErrorExpression) {
+                    valueParameter.defaultValue?.replaceConeTypeOrNull(enhancedReturnType.coneType)
+                }
 
                 buildValueParameter {
                     source = valueParameter.source
@@ -465,6 +469,45 @@ class FirSignatureEnhancement(
         }
 
         return function.symbol
+    }
+
+    private fun <T : FirTypeParameterRef> MutableList<T>.copyTypeParametersWithNewContainingDeclaration(
+        firMethod: FirFunction,
+        declarationOrigin: FirDeclarationOrigin,
+        functionSymbol: FirFunctionSymbol<*>,
+    ): ConeSubstitutor? {
+        val typeParameterSubstitutionMap = mutableMapOf<FirTypeParameterSymbol, ConeKotlinType>()
+        this += firMethod.typeParameters.map { typeParameter ->
+            val newTypeParameter = if (typeParameter is FirTypeParameter) buildTypeParameterCopy(typeParameter) {
+                origin = declarationOrigin
+                this.symbol = FirTypeParameterSymbol()
+                containingDeclarationSymbol = functionSymbol
+            } else typeParameter
+            if (typeParameter is FirTypeParameter) {
+                typeParameterSubstitutionMap[typeParameter.symbol] = ConeTypeParameterTypeImpl(
+                    newTypeParameter.symbol.toLookupTag(), isNullable = false
+                )
+            }
+            @Suppress("UNCHECKED_CAST")
+            newTypeParameter as T
+        }
+
+        if (typeParameterSubstitutionMap.isNotEmpty()) {
+            return ConeSubstitutorByMap.create(typeParameterSubstitutionMap, session)
+        }
+        return null
+    }
+
+    private fun List<FirTypeParameterRef>.replaceTypeParameterBounds(typeParameterSubstitutor: ConeSubstitutor?) {
+        forEach { typeParameter ->
+            if (typeParameter is FirTypeParameter) {
+                typeParameter.replaceBounds(
+                    typeParameter.bounds.map { boundTypeRef ->
+                        boundTypeRef.withReplacedConeType(typeParameterSubstitutor?.substituteOrNull(boundTypeRef.coneType))
+                    }
+                )
+            }
+        }
     }
 
     private fun PredefinedFunctionEnhancementInfo.useWarningsIfErrorModeIsNotEnabledYet(): PredefinedFunctionEnhancementInfo {
@@ -615,7 +658,7 @@ class FirSignatureEnhancement(
 
     private inline fun List<FirTypeParameterRef>.replaceEnhancedBounds(
         secondRoundBounds: List<MutableList<FirResolvedTypeRef>>,
-        crossinline block: (FirTypeParameter, FirResolvedTypeRef) -> FirResolvedTypeRef
+        crossinline block: (FirTypeParameter, FirResolvedTypeRef) -> FirResolvedTypeRef,
     ) {
         var currentIndex = 0
         for (typeParameter in this) {
@@ -650,7 +693,7 @@ class FirSignatureEnhancement(
                 }
             }
             purelyImplementedSupertype?.let {
-                add(buildResolvedTypeRef { type = it })
+                add(buildResolvedTypeRef { coneType = it })
             }
         }
     }
@@ -774,7 +817,7 @@ class FirSignatureEnhancement(
                         typeInSignature = TypeInSignature.ReturnPossiblyDeferred(calc),
                         predefinedEnhancementInfo?.returnTypeInfo,
                         forAnnotationMember = forAnnotationMember
-                    ).type
+                    ).coneType
                 }
 
                 override fun toString(): String = "Deferred for Enhancement (Overriddens with Implicit Types)"
@@ -890,7 +933,7 @@ class FirSignatureEnhancement(
         val typesFromOverridden = typeRefsFromOverridden.map { it.toConeKotlinType(mode, typeRef.source) }
         val qualifiers = typeWithoutEnhancement.computeIndexedQualifiers(typesFromOverridden, predefined)
         return buildResolvedTypeRef {
-            type = typeWithoutEnhancement.enhance(session, qualifiers) ?: typeWithoutEnhancement
+            coneType = typeWithoutEnhancement.enhance(session, qualifiers) ?: typeWithoutEnhancement
             annotations += typeRef.annotations
             source = typeRef.source
         }
@@ -961,7 +1004,7 @@ private class EnhancementSignatureParts(
 
     override fun getDefaultNullability(
         referencedParameterBoundsNullability: NullabilityQualifierWithMigrationStatus?,
-        defaultTypeQualifiers: JavaDefaultQualifiers?
+        defaultTypeQualifiers: JavaDefaultQualifiers?,
     ): NullabilityQualifierWithMigrationStatus? {
         return referencedParameterBoundsNullability?.takeIf { it.qualifier == NullabilityQualifier.NOT_NULL }
             ?: defaultTypeQualifiers?.nullabilityQualifier

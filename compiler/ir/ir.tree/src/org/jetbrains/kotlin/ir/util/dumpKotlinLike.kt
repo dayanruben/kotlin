@@ -68,10 +68,19 @@ data class KotlinLikeDumpOptions(
     val stableOrder: Boolean = false,
     val normalizeNames: Boolean = false,
     val printExpectDeclarations: Boolean = true,
+
+    /**
+     * Whether to print member declarations (default: true).
+     * - For [IrDeclarationContainer]s such as [IrFile] and [IrClass] these are the direct member declarations.
+     * - For [IrProperty] these are the backing [IrField] and accessors.
+     */
+    val printMemberDeclarations: Boolean = true,
+
+    /** When exactly the declaration visibility should be printed? */
+    val visibilityPrintingStrategy: VisibilityPrintingStrategy = VisibilityPrintingStrategy.PRINT_IF_NON_PUBLIC,
+
     /*
     TODO add more options:
-     always print visibility?
-     omit local visibility?
      always print modality
      print special names as is, and other strategies?
      print body for default accessors
@@ -98,6 +107,12 @@ enum class BodyPrintingStrategy {
     NO_BODIES,
     PRINT_ONLY_LOCAL_CLASSES_AND_FUNCTIONS,
     PRINT_BODIES,
+}
+
+enum class VisibilityPrintingStrategy {
+    ALWAYS,
+    PRINT_IF_NON_PUBLIC,
+    // TODO: omit local visibility?
 }
 
 /**
@@ -271,7 +286,9 @@ private class KotlinLikeDumper(val p: Printer, val options: KotlinLikeDumpOption
         }
         if (!p.isEmpty) p.printlnWithNoIndent()
 
-        declaration.declarations.ordered().forEach { it.accept(this, null) }
+        if (options.printMemberDeclarations) {
+            declaration.declarations.ordered().forEach { it.accept(this, null) }
+        }
 
         if (options.printRegionsPerFile) p.println("//endregion")
     }
@@ -328,11 +345,13 @@ private class KotlinLikeDumper(val p: Printer, val options: KotlinLikeDumpOption
         declaration.printWhereClauseIfNeededWithNoIndent()
 
         p.printlnWithNoIndent(" {")
-        p.pushIndent()
 
-        declaration.declarations.ordered().forEach { it.accept(this, declaration) }
+        if (options.printMemberDeclarations) {
+            p.pushIndent()
+            declaration.declarations.ordered().forEach { it.accept(this, declaration) }
+            p.popIndent()
+        }
 
-        p.popIndent()
         p.println("}")
         p.printlnWithNoIndent()
     }
@@ -398,7 +417,10 @@ private class KotlinLikeDumper(val p: Printer, val options: KotlinLikeDumpOption
 
     private fun printVisibility(visibility: DescriptorVisibility) {
         // TODO don't print visibility if it's not changed in override?
-        p(visibility, DescriptorVisibilities.DEFAULT_VISIBILITY) { name }
+        val shouldBePrinted = visibility != DescriptorVisibilities.DEFAULT_VISIBILITY ||
+                options.visibilityPrintingStrategy == VisibilityPrintingStrategy.ALWAYS
+
+        p(condition = shouldBePrinted, visibility.name)
     }
 
     private fun printParameterModifiersWithNoIndent(
@@ -850,31 +872,34 @@ private class KotlinLikeDumper(val p: Printer, val options: KotlinLikeDumpOption
         }
 
         p.printlnWithNoIndent()
-        p.pushIndent()
 
-        // TODO share code with visitField?
-        // it's not valid kotlin
-        declaration.backingField?.initializer?.let {
-            if (options.bodyPrintingStrategy != BodyPrintingStrategy.NO_BODIES) {
-                // If the strategy is PRINT_ONLY_LOCAL_CLASSES_AND_FUNCTIONS, the local declarations in the backing field initializer
-                // will be printed under 'field'.
-                p.print("field")
+        if (options.printMemberDeclarations) {
+            p.pushIndent()
+
+            // TODO share code with visitField?
+            // it's not valid kotlin
+            declaration.backingField?.initializer?.let {
+                if (options.bodyPrintingStrategy != BodyPrintingStrategy.NO_BODIES) {
+                    // If the strategy is PRINT_ONLY_LOCAL_CLASSES_AND_FUNCTIONS, the local declarations in the backing field initializer
+                    // will be printed under 'field'.
+                    p.print("field")
+                }
+                if (options.bodyPrintingStrategy == BodyPrintingStrategy.PRINT_BODIES) {
+                    p.printWithNoIndent(" = ")
+                }
+                it.accept(this, declaration)
+                if (options.bodyPrintingStrategy != BodyPrintingStrategy.NO_BODIES) {
+                    p.printlnWithNoIndent()
+                }
             }
-            if (options.bodyPrintingStrategy == BodyPrintingStrategy.PRINT_BODIES) {
-                p.printWithNoIndent(" = ")
-            }
-            it.accept(this, declaration)
-            if (options.bodyPrintingStrategy != BodyPrintingStrategy.NO_BODIES) {
-                p.printlnWithNoIndent()
-            }
+
+            // TODO generate better name for set parameter `<set-?>`?
+            declaration.getter?.printAccessor("get", declaration)
+            declaration.setter?.printAccessor("set", declaration)
+
+            p.popIndent()
+            p.printlnWithNoIndent()
         }
-
-        // TODO generate better name for set parameter `<set-?>`?
-        declaration.getter?.printAccessor("get", declaration)
-        declaration.setter?.printAccessor("set", declaration)
-
-        p.popIndent()
-        p.printlnWithNoIndent()
     }
 
     private fun IrSimpleFunction.printAccessor(s: String, property: IrDeclaration) {
