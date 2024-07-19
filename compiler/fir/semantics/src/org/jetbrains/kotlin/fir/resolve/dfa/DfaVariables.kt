@@ -13,31 +13,17 @@ import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.declarations.utils.isFinal
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
-import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
+import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.types.SmartcastStability
+import java.util.*
 
-data class Identifier(
-    val symbol: FirBasedSymbol<*>,
-    val dispatchReceiver: DataFlowVariable?,
-    val extensionReceiver: DataFlowVariable?
-) {
-    override fun toString(): String {
-        val callableId = (symbol as? FirCallableSymbol<*>)?.callableId
-        return "[$callableId, dispatchReceiver = $dispatchReceiver, extensionReceiver = $extensionReceiver]"
-    }
-}
-
-sealed class DataFlowVariable(private val variableIndexForDebug: Int) : Comparable<DataFlowVariable> {
-    final override fun toString(): String {
-        return "d$variableIndexForDebug"
-    }
-
-    override fun compareTo(other: DataFlowVariable): Int = variableIndexForDebug.compareTo(other.variableIndexForDebug)
-}
+sealed class DataFlowVariable
 
 private enum class PropertyStability(
     val inherentInstability: SmartcastStability?,
@@ -65,45 +51,52 @@ private enum class PropertyStability(
 }
 
 class RealVariable(
-    val identifier: Identifier,
-    val originalType: ConeKotlinType?,
-    val isThisReference: Boolean,
-    val explicitReceiverVariable: DataFlowVariable?,
-    variableIndexForDebug: Int,
-) : DataFlowVariable(variableIndexForDebug) {
-    val dependentVariables: MutableSet<RealVariable> = mutableSetOf()
+    val symbol: FirBasedSymbol<*>,
+    val isReceiver: Boolean,
+    val dispatchReceiver: RealVariable?,
+    val extensionReceiver: RealVariable?,
+    val originalType: ConeKotlinType,
+) : DataFlowVariable() {
+    companion object {
+        fun local(symbol: FirVariableSymbol<*>): RealVariable =
+            RealVariable(symbol, isReceiver = false, dispatchReceiver = null, extensionReceiver = null, symbol.resolvedReturnType)
 
-    override fun equals(other: Any?): Boolean {
-        return this === other
+        fun receiver(symbol: FirBasedSymbol<*>, type: ConeKotlinType): RealVariable =
+            RealVariable(symbol, isReceiver = true, dispatchReceiver = null, extensionReceiver = null, type)
     }
 
-    private val _hashCode by lazy {
-        31 * identifier.hashCode() + (explicitReceiverVariable?.hashCode() ?: 0)
-    }
+    // `originalType` cannot be included into equality comparisons because it can be a captured type.
+    // Those are normally not equal to each other, but if this variable is stable, then it is in fact the same type.
+    override fun equals(other: Any?): Boolean =
+        other is RealVariable && symbol == other.symbol && isReceiver == other.isReceiver &&
+                dispatchReceiver == other.dispatchReceiver && extensionReceiver == other.extensionReceiver
 
-    override fun hashCode(): Int {
-        return _hashCode
-    }
+    override fun hashCode(): Int =
+        Objects.hash(symbol, isReceiver, dispatchReceiver, extensionReceiver)
 
-    init {
-        if (explicitReceiverVariable is RealVariable) {
-            explicitReceiverVariable.dependentVariables.add(this)
+    override fun toString(): String =
+        (if (isReceiver) "this@" else "") + when (symbol) {
+            is FirClassSymbol<*> -> "${symbol.classId}"
+            is FirCallableSymbol<*> -> "${symbol.callableId}"
+            else -> "$symbol"
+        } + when {
+            dispatchReceiver != null && extensionReceiver != null -> "(${dispatchReceiver}, ${extensionReceiver})"
+            dispatchReceiver != null || extensionReceiver != null -> "(${dispatchReceiver ?: extensionReceiver})"
+            else -> ""
         }
-    }
 
     fun getStability(flow: Flow, session: FirSession): SmartcastStability {
-        if (!isThisReference) {
+        if (!isReceiver) {
             val stability = propertyStability
 
             val isUnstableSmartcastOnDelegatedProperties =
                 session.languageVersionSettings.supportsFeature(LanguageFeature.UnstableSmartcastOnDelegatedProperties)
-            if (isUnstableSmartcastOnDelegatedProperties && (identifier.symbol.fir as? FirProperty)?.isDelegated == true) return SmartcastStability.DELEGATED_PROPERTY
+            if (isUnstableSmartcastOnDelegatedProperties && (symbol.fir as? FirProperty)?.isDelegated == true) return SmartcastStability.DELEGATED_PROPERTY
 
             stability.inherentInstability?.let { return it }
-            val dispatchReceiver = identifier.dispatchReceiver as? RealVariable
             if (stability.checkReceiver && dispatchReceiver?.hasFinalType(flow, session) == false)
                 return SmartcastStability.PROPERTY_WITH_GETTER
-            if (stability.checkModule && !(identifier.symbol.fir as FirVariable).isInCurrentOrFriendModule(session))
+            if (stability.checkModule && !(symbol.fir as FirVariable).isInCurrentOrFriendModule(session))
                 return SmartcastStability.ALIEN_PUBLIC_PROPERTY
             // Members of unstable values should always be unstable, as the receiver could've changed.
             dispatchReceiver?.getStability(flow, session)?.takeIf { it != SmartcastStability.STABLE_VALUE }?.let { return it }
@@ -113,10 +106,10 @@ class RealVariable(
     }
 
     private fun hasFinalType(flow: Flow, session: FirSession): Boolean =
-        originalType?.isFinal(session) == true || flow.getTypeStatement(this)?.exactType?.any { it.isFinal(session) } == true
+        originalType.isFinal(session) || flow.getTypeStatement(this)?.exactType?.any { it.isFinal(session) } == true
 
     private val propertyStability: PropertyStability by lazy {
-        when (val fir = identifier.symbol.fir) {
+        when (val fir = symbol.fir) {
             !is FirVariable -> PropertyStability.PRIVATE_OR_CONST_VAL // named object or containing class for a static field reference
             is FirEnumEntry -> PropertyStability.PRIVATE_OR_CONST_VAL
             is FirErrorProperty -> PropertyStability.PRIVATE_OR_CONST_VAL
@@ -147,32 +140,7 @@ class RealVariable(
     }
 }
 
-class SyntheticVariable(val fir: FirElement, variableIndexForDebug: Int) : DataFlowVariable(variableIndexForDebug) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as SyntheticVariable
-
-        return fir isEqualsTo other.fir
-    }
-
-    override fun hashCode(): Int {
-        // hack for enums
-        return if (fir is FirResolvedQualifier) {
-            31 * fir.packageFqName.hashCode() + fir.classId.hashCode()
-        } else {
-            fir.hashCode()
-        }
-    }
-}
-
-private infix fun FirElement.isEqualsTo(other: FirElement): Boolean {
-    if (this !is FirResolvedQualifier || other !is FirResolvedQualifier) return this == other
-    if (packageFqName != other.packageFqName) return false
-    if (classId != other.classId) return false
-    return true
-}
+data class SyntheticVariable(val fir: FirExpression) : DataFlowVariable()
 
 private fun ConeKotlinType.isFinal(session: FirSession): Boolean = when (this) {
     is ConeFlexibleType -> lowerBound.isFinal(session)

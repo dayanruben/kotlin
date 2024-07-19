@@ -8216,6 +8216,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("elvisOperator.kt")
+        public void testElvisOperator() {
+          runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/definiteReturn/elvisOperator.kt");
+        }
+
+        @Test
         @TestMetadata("kt3444_ReturnFromLocalFunctions.kt")
         public void testKt3444_ReturnFromLocalFunctions() {
           runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/definiteReturn/kt3444_ReturnFromLocalFunctions.kt");
@@ -10388,6 +10394,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("kt5232.kt")
       public void testKt5232() {
         runTest("compiler/testData/diagnostics/tests/defaultArguments/kt5232.kt");
+      }
+
+      @Test
+      @TestMetadata("overrideWithoutDefaultButBaseWithDefaultAndKMP.kt")
+      public void testOverrideWithoutDefaultButBaseWithDefaultAndKMP() {
+        runTest("compiler/testData/diagnostics/tests/defaultArguments/overrideWithoutDefaultButBaseWithDefaultAndKMP.kt");
       }
 
       @Test
@@ -19823,6 +19835,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
           public void testKt68889() {
             runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/kt68889.kt");
           }
+
+          @Test
+          @TestMetadata("namedArgumentTypeSubstitution.kt")
+          public void testNamedArgumentTypeSubstitution() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/namedArgumentTypeSubstitution.kt");
+          }
         }
 
         @Nested
@@ -26265,6 +26283,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("dontDeprioritizeExpectFunIfShapeIsMoreSpecific.kt")
+      public void testDontDeprioritizeExpectFunIfShapeIsMoreSpecific() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/dontDeprioritizeExpectFunIfShapeIsMoreSpecific.kt");
+      }
+
+      @Test
       @TestMetadata("expectAbstractToString.kt")
       public void testExpectAbstractToString() {
         runTest("compiler/testData/diagnostics/tests/multiplatform/expectAbstractToString.kt");
@@ -27453,6 +27477,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         @TestMetadata("expectedVsNonExpectedWithDefaults.kt")
         public void testExpectedVsNonExpectedWithDefaults() {
           runTest("compiler/testData/diagnostics/tests/multiplatform/defaultArguments/expectedVsNonExpectedWithDefaults.kt");
+        }
+
+        @Test
+        @TestMetadata("genericArrayClassReference.kt")
+        public void testGenericArrayClassReference() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/defaultArguments/genericArrayClassReference.kt");
         }
 
         @Test
@@ -32574,6 +32604,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("RedeclarationMainInFile.kt")
       public void testRedeclarationMainInFile() {
         runTest("compiler/testData/diagnostics/tests/redeclarations/RedeclarationMainInFile.kt");
+      }
+
+      @Test
+      @TestMetadata("RedeclarationMainInOtherFile.kt")
+      public void testRedeclarationMainInOtherFile() {
+        runTest("compiler/testData/diagnostics/tests/redeclarations/RedeclarationMainInOtherFile.kt");
       }
 
       @Test
@@ -37709,9 +37745,21 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("smartCastWithAndTrue.kt")
+      public void testSmartCastWithAndTrue() {
+        runTest("compiler/testData/diagnostics/tests/smartCasts/smartCastWithAndTrue.kt");
+      }
+
+      @Test
       @TestMetadata("smartCastWithOrFalse.kt")
       public void testSmartCastWithOrFalse() {
         runTest("compiler/testData/diagnostics/tests/smartCasts/smartCastWithOrFalse.kt");
+      }
+
+      @Test
+      @TestMetadata("smartCastWithOrFalse_InferMoreImplicationsFromBooleanExpressions.kt")
+      public void testSmartCastWithOrFalse_InferMoreImplicationsFromBooleanExpressions() {
+        runTest("compiler/testData/diagnostics/tests/smartCasts/smartCastWithOrFalse_InferMoreImplicationsFromBooleanExpressions.kt");
       }
 
       @Test

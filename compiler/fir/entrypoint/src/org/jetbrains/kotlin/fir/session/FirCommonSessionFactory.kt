@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.session
 
+import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.fir.FirModuleData
@@ -16,7 +17,6 @@ import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.java.FirProjectSessionProvider
 import org.jetbrains.kotlin.fir.resolve.providers.impl.*
 import org.jetbrains.kotlin.fir.scopes.FirKotlinScopeProvider
-import org.jetbrains.kotlin.fir.session.FirSessionFactoryHelper.registerDefaultComponents
 import org.jetbrains.kotlin.fir.session.environment.AbstractProjectEnvironment
 import org.jetbrains.kotlin.fir.session.environment.AbstractProjectFileSearchScope
 import org.jetbrains.kotlin.incremental.components.EnumWhenTracker
@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.load.kotlin.PackageAndMetadataPartProvider
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.serialization.deserialization.KotlinMetadataFinder
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
+import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 
 object FirCommonSessionFactory : FirAbstractSessionFactory() {
     fun createLibrarySession(
@@ -70,15 +71,17 @@ object FirCommonSessionFactory : FirAbstractSessionFactory() {
                         )
                     },
                     syntheticFunctionInterfaceProvider,
-                    FirBuiltinsSymbolProvider(
-                        session,
-                        FirClasspathBuiltinSymbolProvider(
+                    runUnless(languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation)) {
+                        FirBuiltinsSymbolProvider(
                             session,
-                            builtinsModuleData,
-                            kotlinScopeProvider
-                        ) { projectEnvironment.getKotlinClassFinder(librariesScope).findBuiltInsData(it) },
-                        FirFallbackBuiltinSymbolProvider(session, builtinsModuleData, kotlinScopeProvider)
-                    ),
+                            FirClasspathBuiltinSymbolProvider(
+                                session,
+                                builtinsModuleData,
+                                kotlinScopeProvider
+                            ) { projectEnvironment.getKotlinClassFinder(librariesScope).findBuiltInsData(it) },
+                            FirFallbackBuiltinSymbolProvider(session, builtinsModuleData, kotlinScopeProvider)
+                        )
+                    },
                     FirBuiltinSyntheticFunctionInterfaceProvider.initialize(session, builtinsModuleData, kotlinScopeProvider),
                     FirCloneableSymbolProvider(session, builtinsModuleData, kotlinScopeProvider),
                 )

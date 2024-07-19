@@ -1054,8 +1054,6 @@ class ControlFlowGraphBuilder {
         return exitNode
     }
 
-    private val FirExpression.booleanLiteralValue: Boolean? get() = (this as? FirLiteralExpression)?.value as? Boolean?
-
     // ----------------------------------- Try-catch-finally -----------------------------------
 
     fun enterTryExpression(tryExpression: FirTryExpression): Pair<TryExpressionEnterNode, TryMainBlockEnterNode> {
@@ -1485,7 +1483,6 @@ class ControlFlowGraphBuilder {
         }
 
         val lhsIsNotNullNode = createElvisLhsIsNotNullNode(elvisExpression).also {
-            // TODO Refactor annotation arguments phase to not build CFG so that we can use resolvedType instead, see KT-61834
             @OptIn(UnresolvedExpressionTypeAccess::class)
             val lhsIsNull = elvisExpression.lhs.coneTypeOrNull?.isNullableNothing == true
             addEdge(lhsExitNode, it, isDead = lhsIsNull)
@@ -1503,9 +1500,16 @@ class ControlFlowGraphBuilder {
 
     fun exitElvis(lhsIsNotNull: Boolean, callCompleted: Boolean): ElvisExitNode {
         val exitNode = exitElvisExpressionNodes.pop()
-        addNewSimpleNode(exitNode, isDead = lhsIsNotNull)
+        val returnsNothing = callCompleted && exitNode.fir.hasNothingType
+        if (returnsNothing) {
+            addNonSuccessfullyTerminatingNode(exitNode)
+        } else {
+            addNewSimpleNode(exitNode, isDead = lhsIsNotNull)
+        }
         mergeDataFlowFromPostponedLambdas(exitNode, callCompleted)
-        exitNode.updateDeadStatus()
+        if (!returnsNothing) {
+            exitNode.updateDeadStatus()
+        }
         return exitNode
     }
 
@@ -1619,7 +1623,6 @@ val FirControlFlowGraphOwner.isUsedInControlFlowGraphBuilderForScript: Boolean
         else -> false
     }
 
-// TODO Refactor annotation arguments phase to not build CFG so that we can use resolvedType instead, see KT-61834
 @OptIn(UnresolvedExpressionTypeAccess::class)
 private val FirExpression.hasNothingType: Boolean
     get() = coneTypeOrNull?.isNothing == true
@@ -1637,4 +1640,4 @@ fun FirAnonymousFunction.lastStatement(): FirStatement? {
     return last.unwrapBlocks()
 }
 
-
+val FirExpression.booleanLiteralValue: Boolean? get() = (this as? FirLiteralExpression)?.value as? Boolean?

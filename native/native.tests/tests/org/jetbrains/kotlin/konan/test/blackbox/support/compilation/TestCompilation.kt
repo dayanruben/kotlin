@@ -63,6 +63,17 @@ abstract class BasicCompilation<A : TestCompilationArtifact>(
             doCompile()
     }
 
+    /**
+     * IR validation options passed to the compiler.
+     */
+    protected open val irValidationCompilerOptions = listOf(
+        // Enable basic IR validation before all lowerings (IrValidationBeforeLoweringPhase)
+        // and after all lowerings (IrValidationAfterLoweringPhase).
+        "-Xverify-ir=error",
+        // Additionally, validate IR after each compilation phase
+        "-Xphases-to-validate-after=all"
+    )
+
     private fun ArgsBuilder.applyCommonArgs() {
         add("-kotlin-home", home.dir.absolutePath)
         add("-target", targets.testTarget.name)
@@ -70,12 +81,7 @@ abstract class BasicCompilation<A : TestCompilationArtifact>(
         if (freeCompilerArgs.assertionsMode.assertionsEnabledWith(optimizationMode))
             add("-enable-assertions")
 
-        // Enable basic IR validation before all lowerings (IrValidationBeforeLoweringPhase)
-        // and after all lowerings (IrValidationAfterLoweringPhase).
-        add("-Xverify-ir=error")
-
-        // Additionally, validate IR after each compilation phase
-        add("-Xphases-to-validate-after=all")
+        add(irValidationCompilerOptions)
 
         // We use dev distribution for tests as it provides a full set of testing utilities,
         // which might not be available in user distribution.
@@ -130,6 +136,35 @@ abstract class BasicCompilation<A : TestCompilationArtifact>(
 
     private fun ArgsBuilder.applySources() {
         addFlattenedTwice(sourceModules, { it.files }) { it.location.path }
+    }
+
+    // Explicitly set the IR module name when no test grouping is performed.
+    private fun ArgsBuilder.applyModuleName() {
+        if ("-module-name" in this)
+            return // Don't overwrite the specially passed module name.
+
+        val mainSourceModule: TestModule? = when {
+            // Single test module -> single IR module.
+            sourceModules.size == 1 -> sourceModules.first()
+
+            // There can be test modules representing KMP-common modules that do not materialize
+            // into separate IR modules. So, it's necessary to exclude them.
+            else -> buildSet {
+                addAll(sourceModules)
+                removeAll(sourceModules.flatMapToSet { it.allDependsOnDependencies })
+            }.singleOrNull()
+        }
+
+        if (mainSourceModule !is TestModule.Exclusive)
+            return
+
+        val testKind = mainSourceModule.testCase.kind
+        if (testKind == TestKind.STANDALONE ||
+            testKind == TestKind.STANDALONE_NO_TR ||
+            testKind == TestKind.STANDALONE_LLDB
+        ) {
+            add("-module-name", mainSourceModule.name)
+        }
     }
 
     protected open fun postCompileCheck() = Unit
@@ -190,6 +225,7 @@ abstract class BasicCompilation<A : TestCompilationArtifact>(
         applyDependencies(this)
         applyFreeArgs()
         applyCompilerPlugins()
+        applyModuleName()
         applySources()
     }
 }
@@ -628,6 +664,7 @@ class ExecutableCompilation(
         }
         applyPartialLinkageArgs(partialLinkageConfig)
         applyFileCheckArgs(expectedArtifact.fileCheckStage, expectedArtifact.fileCheckDump)
+        applyDumpSyntheticAccessorsArgs(expectedArtifact)
         super.applySpecificArgs(argsBuilder)
     }
 
@@ -667,6 +704,13 @@ class ExecutableCompilation(
                 add("-Xsave-llvm-ir-after=$it")
                 add("-Xsave-llvm-ir-directory=${fileCheckDump!!.parent}")
             }
+
+        internal fun ArgsBuilder.applyDumpSyntheticAccessorsArgs(executable: Executable) {
+            val syntheticAccessorsDumpDir = executable.syntheticAccessorsDumpDir
+            if (syntheticAccessorsDumpDir != null) {
+                add("-Xdump-synthetic-accessors-to=${syntheticAccessorsDumpDir.path}")
+            }
+        }
     }
 }
 
@@ -765,6 +809,11 @@ internal class TestBundleCompilation(
     override val binaryOptions = BinaryOptions.RuntimeAssertionsMode.chooseFor(cacheMode, optimizationMode, freeCompilerArgs.assertionsMode)
 
     private val partialLinkageConfig: UsedPartialLinkageConfig = settings.get()
+
+    override val irValidationCompilerOptions: List<String> = listOf(
+        "-Xverify-ir=warning",
+        "-Xphases-to-validate-after=all"
+    )
 
     override fun applySpecificArgs(argsBuilder: ArgsBuilder): Unit = with(argsBuilder) {
         add(

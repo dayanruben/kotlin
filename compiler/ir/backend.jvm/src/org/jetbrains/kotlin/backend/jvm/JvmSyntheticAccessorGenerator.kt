@@ -19,14 +19,24 @@ import org.jetbrains.kotlin.load.java.JavaDescriptorVisibilities
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.org.objectweb.asm.Opcodes
 
-class JvmSyntheticAccessorGenerator(context: JvmBackendContext) : SyntheticAccessorGenerator<JvmBackendContext>(context) {
+class JvmSyntheticAccessorGenerator(context: JvmBackendContext) :
+    SyntheticAccessorGenerator<JvmBackendContext, List<ScopeWithIr>>(context) {
+
+    companion object {
+        const val SUPER_QUALIFIER_SUFFIX_MARKER = "s"
+        const val JVM_DEFAULT_MARKER = "jd"
+        const val COMPANION_PROPERTY_MARKER = "cp"
+    }
 
     override fun accessorModality(parent: IrDeclarationParent): Modality =
         if (parent is IrClass && parent.isJvmInterface) Modality.OPEN else Modality.FINAL
 
-    override fun IrDeclarationWithVisibility.accessorParent(parent: IrDeclarationParent, scopes: List<ScopeWithIr>): IrDeclarationParent =
+    override fun IrDeclarationWithVisibility.accessorParent(
+        parent: IrDeclarationParent,
+        scopeInfo: List<ScopeWithIr>,
+    ): IrDeclarationParent =
         if (visibility == JavaDescriptorVisibilities.PROTECTED_STATIC_VISIBILITY) {
-            val classes = scopes.map { it.irElement }.filterIsInstance<IrClass>()
+            val classes = scopeInfo.map { it.irElement }.filterIsInstance<IrClass>()
             val companions = classes.mapNotNull(IrClass::companionObject)
             val objectsInScope =
                 classes.flatMap { it.declarations.filter(IrDeclaration::isAnonymousObject).filterIsInstance<IrClass>() }
@@ -36,34 +46,84 @@ class JvmSyntheticAccessorGenerator(context: JvmBackendContext) : SyntheticAcces
             parent
         }
 
-    override fun mapFunctionName(function: IrSimpleFunction): String = context.defaultMethodSignatureMapper.mapFunctionName(function)
-
-    override fun functionAccessorSuffix(function: IrSimpleFunction, superQualifier: IrClassSymbol?, scopes: List<ScopeWithIr>): String {
-        val currentClass = scopes.lastOrNull { it.scope.scopeOwnerSymbol is IrClassSymbol }?.irElement as? IrClass
-        if (currentClass != null &&
-            currentClass.origin == JvmLoweredDeclarationOrigin.DEFAULT_IMPLS &&
-            currentClass.parentAsClass == function.parentAsClass
-        ) {
-            // The only function accessors placed on interfaces are for private functions and JvmDefault implementations.
-            // The two cannot clash.
-            return if (DescriptorVisibilities.isPrivate(function.visibility)) "" else "\$jd"
-        }
-        return super.functionAccessorSuffix(function, superQualifier, scopes)
+    override fun AccessorNameBuilder.buildFunctionName(
+        function: IrSimpleFunction,
+        superQualifier: IrClassSymbol?,
+        scopeInfo: List<ScopeWithIr>
+    ) {
+        contribute(context.defaultMethodSignatureMapper.mapFunctionName(function))
+        contributeFunctionSuffix(function, superQualifier, scopeInfo)
     }
 
-    override fun fieldGetterName(field: IrField): String = JvmAbi.getterName(field.name.asString())
+    private fun AccessorNameBuilder.contributeFunctionSuffix(
+        function: IrSimpleFunction,
+        superQualifier: IrClassSymbol?,
+        scopeInfo: List<ScopeWithIr>
+    ) {
+        val currentClass = scopeInfo.lastOrNull { it.scope.scopeOwnerSymbol is IrClassSymbol }?.irElement as? IrClass
+        when {
+            currentClass != null &&
+                    currentClass.origin == JvmLoweredDeclarationOrigin.DEFAULT_IMPLS &&
+                    currentClass.parentAsClass == function.parentAsClass -> {
+                // The only function accessors placed on interfaces are for private functions and JvmDefault implementations.
+                // The two cannot clash.
+                if (!DescriptorVisibilities.isPrivate(function.visibility))
+                    contribute(JVM_DEFAULT_MARKER)
+            }
 
-    override fun fieldSetterName(field: IrField): String = JvmAbi.setterName(field.name.asString())
+            // Accessors for top level functions never need a suffix.
+            function.isTopLevel -> Unit
 
-    override fun fieldAccessorSuffix(field: IrField, superQualifierSymbol: IrClassSymbol?): String {
-        // Special _c_ompanion _p_roperty suffix for accessing companion backing field moved to outer
+            // Accessor for _s_uper-qualified call
+            superQualifier != null -> {
+                contribute(SUPER_QUALIFIER_SUFFIX_MARKER + superQualifier.owner.syntheticAccessorToSuperSuffix())
+            }
+
+            // Access to protected members that need an accessor must be because they are inherited,
+            // hence accessed on a _s_upertype. If what is accessed is static, we can point to different
+            // parts of the inheritance hierarchy and need to distinguish with a suffix.
+            function.isStatic && function.visibility.isProtected -> {
+                contribute(SUPER_QUALIFIER_SUFFIX_MARKER + function.parentAsClass.syntheticAccessorToSuperSuffix())
+            }
+        }
+    }
+
+    override fun AccessorNameBuilder.buildFieldGetterName(field: IrField, superQualifierSymbol: IrClassSymbol?) {
+        contribute(JvmAbi.getterName(field.name.asString()))
+        contributeFieldAccessorSuffix(field, superQualifierSymbol)
+    }
+
+    override fun AccessorNameBuilder.buildFieldSetterName(field: IrField, superQualifierSymbol: IrClassSymbol?) {
+        contribute(JvmAbi.setterName(field.name.asString()))
+        contributeFieldAccessorSuffix(field, superQualifierSymbol)
+    }
+
+    /**
+     * For both _reading_ and _writing_ field accessors, the suffix that includes some of [field]'s important properties.
+     */
+    private fun AccessorNameBuilder.contributeFieldAccessorSuffix(field: IrField, superQualifierSymbol: IrClassSymbol?) {
         if (field.origin == JvmLoweredDeclarationOrigin.COMPANION_PROPERTY_BACKING_FIELD && !field.parentAsClass.isCompanion) {
-            return "cp"
+            // Special _c_ompanion _p_roperty suffix for accessing companion backing field moved to outer
+            contribute(COMPANION_PROPERTY_MARKER)
+        } else {
+            contribute(PROPERTY_MARKER)
+
+            if (superQualifierSymbol != null) {
+                contribute(SUPER_QUALIFIER_SUFFIX_MARKER + superQualifierSymbol.owner.syntheticAccessorToSuperSuffix())
+            } else if (field.isStatic && field.visibility.isProtected) {
+                // Accesses to static protected fields that need an accessor must be due to being inherited, hence accessed on a
+                // _s_upertype. If the field is static, the super class the access is on can be different, and therefore
+                // we generate a suffix to distinguish access to field with different receiver types in the super hierarchy.
+                contribute(SUPER_QUALIFIER_SUFFIX_MARKER + field.parentAsClass.syntheticAccessorToSuperSuffix())
+            }
         }
-        return super.fieldAccessorSuffix(field, superQualifierSymbol)
     }
 
-    override val DescriptorVisibility.isProtected: Boolean
+    private fun IrClass.syntheticAccessorToSuperSuffix(): String =
+        // TODO: change this to `fqNameUnsafe.asString().replace(".", "_")` as soon as we're ready to break compatibility with pre-KT-21178 code
+        name.asString().hashCode().toString()
+
+    private val DescriptorVisibility.isProtected: Boolean
         get() = AsmUtil.getVisibilityAccessFlag(delegate) == Opcodes.ACC_PROTECTED
 
     private fun createSyntheticConstructorAccessor(declaration: IrConstructor): IrConstructor =

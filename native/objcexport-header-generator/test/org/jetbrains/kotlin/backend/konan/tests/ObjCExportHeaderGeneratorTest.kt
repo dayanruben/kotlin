@@ -470,6 +470,16 @@ class ObjCExportHeaderGeneratorTest(private val generator: HeaderGenerator) {
         doTest(headersTestDataDir.resolve("genericSuperType"))
     }
 
+    @Test
+    fun `test - class and extension function in same file`() {
+        doTest(headersTestDataDir.resolve("classAndExtensionFunctionInSameFile"))
+    }
+
+    @Test
+    fun `test - empty top level facades`() {
+        doTest(headersTestDataDir.resolve("emptyTopLevelFacades"))
+    }
+
     private fun doTest(root: File, configuration: Configuration = Configuration()) {
         if (!root.isDirectory) fail("Expected ${root.absolutePath} to be directory")
         val generatedHeaders = generator.generateHeaders(root, configuration).toString()

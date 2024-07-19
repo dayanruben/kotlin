@@ -176,6 +176,12 @@ public class FirOldFrontendMPPDiagnosticsWithPsiTestGenerated extends AbstractFi
   }
 
   @Test
+  @TestMetadata("dontDeprioritizeExpectFunIfShapeIsMoreSpecific.kt")
+  public void testDontDeprioritizeExpectFunIfShapeIsMoreSpecific() {
+    runTest("compiler/testData/diagnostics/tests/multiplatform/dontDeprioritizeExpectFunIfShapeIsMoreSpecific.kt");
+  }
+
+  @Test
   @TestMetadata("expectAbstractToString.kt")
   public void testExpectAbstractToString() {
     runTest("compiler/testData/diagnostics/tests/multiplatform/expectAbstractToString.kt");
@@ -1364,6 +1370,12 @@ public class FirOldFrontendMPPDiagnosticsWithPsiTestGenerated extends AbstractFi
     @TestMetadata("expectedVsNonExpectedWithDefaults.kt")
     public void testExpectedVsNonExpectedWithDefaults() {
       runTest("compiler/testData/diagnostics/tests/multiplatform/defaultArguments/expectedVsNonExpectedWithDefaults.kt");
+    }
+
+    @Test
+    @TestMetadata("genericArrayClassReference.kt")
+    public void testGenericArrayClassReference() {
+      runTest("compiler/testData/diagnostics/tests/multiplatform/defaultArguments/genericArrayClassReference.kt");
     }
 
     @Test

@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.backend.common.ScopeWithIr
 import org.jetbrains.kotlin.backend.common.ir.Symbols
 import org.jetbrains.kotlin.backend.common.ir.isInlineLambdaBlock
 import org.jetbrains.kotlin.backend.common.ir.isPure
-import org.jetbrains.kotlin.backend.common.lower.InnerClassesSupport
 import org.jetbrains.kotlin.backend.common.lower.LoweredStatementOrigins.INLINED_FUNCTION_ARGUMENTS
 import org.jetbrains.kotlin.backend.common.lower.LoweredStatementOrigins.INLINED_FUNCTION_DEFAULT_ARGUMENTS
 import org.jetbrains.kotlin.backend.common.lower.LoweredStatementOrigins.INLINED_FUNCTION_REFERENCE
@@ -164,7 +163,7 @@ open class FunctionInlining(
     ) {
         private val elementsWithLocationToPatch = hashSetOf<IrGetValue>()
 
-        val copyIrElement = run {
+        val inlineFunctionBodyPreprocessor = run {
             val typeParameters =
                 when (callee) {
                     is IrConstructor -> callee.parentAsClass.typeParameters
@@ -174,24 +173,19 @@ open class FunctionInlining(
                 (0 until callSite.typeArgumentsCount).associate {
                     typeParameters[it].symbol to callSite.getTypeArgument(it)
                 }
-            DeepCopyIrTreeWithSymbolsForInliner(typeArguments, parent, NonReifiedTypeParameterRemappingMode.ERASE)
+            InlineFunctionBodyPreprocessor(typeArguments, parent)
         }
 
         val substituteMap = mutableMapOf<IrValueParameter, IrExpression>()
 
         fun inline() = inlineFunction(callSite, callee, callee.originalFunction)
 
-        private fun <E : IrElement> E.copy(): E {
-            @Suppress("UNCHECKED_CAST")
-            return copyIrElement.copy(this) as E
-        }
-
         private fun inlineFunction(
             callSite: IrFunctionAccessExpression,
             callee: IrFunction,
             originalInlinedElement: IrElement,
         ): IrReturnableBlock {
-            val copiedCallee = callee.copy().apply {
+            val copiedCallee = inlineFunctionBodyPreprocessor.preprocess(callee).apply {
                 parent = callee.parent
             }
 
@@ -257,7 +251,7 @@ open class FunctionInlining(
                     if (argument is IrGetValue && argument in elementsWithLocationToPatch)
                         argument.copyWithOffsets(newExpression.startOffset, newExpression.endOffset)
                     else
-                        argument.copy()
+                        argument.deepCopyWithSymbols()
 
                 return ret.doImplicitCastIfNeededTo(newExpression.type)
             }
@@ -304,7 +298,7 @@ open class FunctionInlining(
             fun inlineAdaptedFunctionReference(irCall: IrCall, irBlock: IrBlock): IrBlock {
                 val irFunction = irBlock.statements[0].let {
                     it.transformChildrenVoid(this)
-                    copyIrElement.copy(it) as IrFunction
+                    (it as IrFunction).deepCopyWithSymbols(it.parent)
                 }
                 val irFunctionReference = irBlock.statements[1] as IrFunctionReference
                 val inlinedFunctionReference = inlineFunctionReference(irCall, irFunctionReference, irFunction)
@@ -366,51 +360,48 @@ open class FunctionInlining(
                         )
                 }.apply {
                     for (parameter in functionParameters) {
-                        val argument =
-                            if (parameter !in unboundArgsSet) {
+                        val argument = when {
+                            parameter !in unboundArgsSet -> {
                                 val arg = boundFunctionParametersMap[parameter]!!
-                                if (arg is IrGetValue && arg in elementsWithLocationToPatch)
+                                if (arg is IrGetValue && arg in elementsWithLocationToPatch) {
                                     arg.copyWithOffsets(irCall.startOffset, irCall.endOffset)
-                                else arg.copy()
-                            } else {
-                                if (unboundIndex == valueParameters.size && parameter.defaultValue != null)
-                                    parameter.defaultValue!!.expression.copy()
-                                else if (!parameter.isVararg) {
-                                    assert(unboundIndex < valueParameters.size) {
-                                        "Attempt to use unbound parameter outside of the callee's value parameters"
-                                    }
-                                    valueParameters[unboundIndex++].second
                                 } else {
-                                    val elements = mutableListOf<IrVarargElement>()
-                                    while (unboundIndex < valueParameters.size) {
-                                        val (param, value) = valueParameters[unboundIndex++]
-                                        val substitutedParamType = param.type.substitute(superTypeArgumentsMap)
-                                        if (substitutedParamType == parameter.varargElementType!!)
-                                            elements += value
-                                        else
-                                            elements += IrSpreadElementImpl(irCall.startOffset, irCall.endOffset, value)
-                                    }
-                                    IrVarargImpl(
-                                        irCall.startOffset, irCall.endOffset,
-                                        parameter.type,
-                                        parameter.varargElementType!!,
-                                        elements
-                                    )
+                                    arg.deepCopyWithSymbols()
                                 }
                             }
-                        when (parameter) {
-                            function.dispatchReceiverParameter ->
-                                this.dispatchReceiver = argument.doImplicitCastIfNeededTo(inlinedFunction.dispatchReceiverParameter!!.type)
-
-                            function.extensionReceiverParameter ->
-                                this.extensionReceiver = argument.doImplicitCastIfNeededTo(inlinedFunction.extensionReceiverParameter!!.type)
-
-                            else ->
-                                putValueArgument(
-                                    parameter.index,
-                                    argument.doImplicitCastIfNeededTo(inlinedFunction.valueParameters[parameter.index].type)
+                            unboundIndex == valueParameters.size && parameter.defaultValue != null -> {
+                                continue
+                            }
+                            !parameter.isVararg -> {
+                                assert(unboundIndex < valueParameters.size) {
+                                    "Attempt to use unbound parameter outside of the callee's value parameters"
+                                }
+                                valueParameters[unboundIndex++].second
+                            }
+                            else -> {
+                                val elements = mutableListOf<IrVarargElement>()
+                                while (unboundIndex < valueParameters.size) {
+                                    val (param, value) = valueParameters[unboundIndex++]
+                                    val substitutedParamType = param.type.substitute(superTypeArgumentsMap)
+                                    if (substitutedParamType == parameter.varargElementType!!)
+                                        elements += value
+                                    else
+                                        elements += IrSpreadElementImpl(irCall.startOffset, irCall.endOffset, value)
+                                }
+                                IrVarargImpl(
+                                    irCall.startOffset, irCall.endOffset,
+                                    parameter.type,
+                                    parameter.varargElementType!!,
+                                    elements
                                 )
+                            }
                         }
+                        val parameterToSet = when (parameter) {
+                            function.dispatchReceiverParameter -> inlinedFunction.dispatchReceiverParameter!!
+                            function.extensionReceiverParameter -> inlinedFunction.extensionReceiverParameter!!
+                            else -> inlinedFunction.valueParameters[parameter.index]
+                        }
+                        putArgument(parameterToSet, argument.doImplicitCastIfNeededTo(parameterToSet.type))
                     }
                     assert(unboundIndex == valueParameters.size) { "Not all arguments of the callee are used" }
                     for (index in 0 until irFunctionReference.typeArgumentsCount)
@@ -763,10 +754,6 @@ open class FunctionInlining(
             }
         }
     }
-}
-
-enum class NonReifiedTypeParameterRemappingMode {
-    LEAVE_AS_IS, SUBSTITUTE, ERASE
 }
 
 /**

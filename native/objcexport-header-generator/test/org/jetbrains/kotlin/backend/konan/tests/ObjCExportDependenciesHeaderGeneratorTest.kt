@@ -150,6 +150,11 @@ class ObjCExportDependenciesHeaderGeneratorTest(
         )
     }
 
+    @Test
+    fun `test - property with companion type from dependency`() {
+        doTest(dependenciesDir.resolve("propertyWithCompanionTypeFromDependency"))
+    }
+
     /**
      * https://youtrack.jetbrains.com/issue/KT-65327/Support-reading-klib-contents-in-Analysis-API
      * Requires being able to use AA to iterate over symbols to 'export' the dependency
@@ -171,6 +176,16 @@ class ObjCExportDependenciesHeaderGeneratorTest(
         doTest(
             dependenciesDir.resolve("completionCoroutinesHandlerException"), configuration = HeaderGenerator.Configuration(
                 dependencies = listOfNotNull(testLibraryKotlinxCoroutines)
+            )
+        )
+    }
+
+    @Test
+    fun `test - testInternalLibrary`() {
+        doTest(
+            dependenciesDir.resolve("testInternalLibrary"), configuration = HeaderGenerator.Configuration(
+                dependencies = listOfNotNull(testInternalKlibFile),
+                exportedDependencies = setOf(testInternalKlibFile)
             )
         )
     }

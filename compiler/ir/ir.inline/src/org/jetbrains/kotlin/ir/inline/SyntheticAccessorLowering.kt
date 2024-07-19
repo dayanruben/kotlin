@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.ir.inline
 
 import org.jetbrains.kotlin.backend.common.BodyLoweringPass
 import org.jetbrains.kotlin.backend.common.CommonBackendContext
-import org.jetbrains.kotlin.backend.common.lower.inline.SyntheticAccessorGenerator
+import org.jetbrains.kotlin.backend.common.lower.inline.KlibSyntheticAccessorGenerator
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationWithVisibility
@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 class SyntheticAccessorLowering(
     context: CommonBackendContext,
 ) : BodyLoweringPass {
-    private val accessorGenerator = SyntheticAccessorGenerator(context, addAccessorToParent = true)
+    private val accessorGenerator = KlibSyntheticAccessorGenerator(context)
     override fun lower(irBody: IrBody, container: IrDeclaration) {
         val inlineFunction = container.parentDeclarationsWithSelf.firstOrNull { it is IrFunction && it.isInline } as? IrFunction
             ?: return
@@ -46,7 +46,7 @@ class SyntheticAccessorLowering(
 }
 
 private class SyntheticAccessorTransformer(
-    private val accessorGenerator: SyntheticAccessorGenerator<CommonBackendContext>,
+    private val accessorGenerator: KlibSyntheticAccessorGenerator,
 ) : IrElementTransformerVoid() {
 
     // TODO: Take into account visibilities of containers
@@ -59,7 +59,7 @@ private class SyntheticAccessorTransformer(
         if (!expression.symbol.owner.isAbiPrivate) {
             return super.visitFunctionAccess(expression)
         }
-        val accessor = accessorGenerator.getSyntheticFunctionAccessor(expression, emptyList())
+        val accessor = accessorGenerator.getSyntheticFunctionAccessor(expression, null)
 
         // TODO(KT-69527): Set the proper visibility for the accessor (the max visibility of all the inline functions that reference it)
         return super.visitFunctionAccess(accessorGenerator.modifyFunctionAccessExpression(expression, accessor.symbol))
