@@ -118,9 +118,6 @@ private val File.canKlibBePassedToCompiler get() = (extension == "klib" || isDir
 
 internal fun Collection<File>.filterKlibsPassedToCompiler(): List<File> = filter(File::canKlibBePassedToCompiler)
 
-/* Returned FileCollection is lazy */
-internal fun FileCollection.filterKlibsPassedToCompiler(): FileCollection = filter(File::canKlibBePassedToCompiler)
-
 // endregion
 @Suppress("DEPRECATION")
 @DisableCachingByDefault(because = "Abstract super-class, not to be instantiated directly")
@@ -266,10 +263,6 @@ abstract class AbstractKotlinNativeCompile<
     @get:Optional
     @get:Nested
     var kotlinPluginData: Provider<KotlinCompilerPluginData>? = null
-
-    private val languageSettingsBuilder by project.provider {
-        compilation.languageSettings
-    }
 
     @get:Internal
     internal val manifestFile: Provider<RegularFile> get() = projectLayout.buildDirectory.file("tmp/$name/inputManifest")
@@ -752,7 +745,6 @@ internal class CacheBuilder(
     class Settings(
         val runnerSettings: KotlinNativeCompilerRunner.Settings,
         val konanCacheKind: NativeCacheKind,
-        val libraries: FileCollection,
         val gradleUserHomeDir: File,
         val konanTarget: KonanTarget,
         val toolOptions: KotlinCommonCompilerToolOptions,
@@ -782,7 +774,6 @@ internal class CacheBuilder(
                 return Settings(
                     runnerSettings = KotlinNativeCompilerRunner.Settings.of(konanHome, konanDataDir, project),
                     konanCacheKind = konanCacheKind,
-                    libraries = binary.compilation.compileDependencyFiles,
                     gradleUserHomeDir = project.gradle.gradleUserHomeDir,
                     konanTarget = konanTarget,
                     toolOptions = toolOptions,
@@ -814,9 +805,6 @@ internal class CacheBuilder(
         get() = settings.konanCacheKind
 
     // Inputs and outputs
-    private val libraries: FileCollection
-        get() = settings.libraries
-
     private val target: String
         get() = konanTarget.name
 

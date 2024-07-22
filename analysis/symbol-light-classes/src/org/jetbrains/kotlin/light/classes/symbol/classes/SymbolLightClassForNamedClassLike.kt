@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.light.classes.symbol.modifierLists.GranularModifiers
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.utils.addToStdlib.applyIf
 
-abstract class SymbolLightClassForNamedClassLike : SymbolLightClassForClassLike<KaNamedClassSymbol> {
+internal abstract class SymbolLightClassForNamedClassLike : SymbolLightClassForClassLike<KaNamedClassSymbol> {
     constructor(
         ktAnalysisSession: KaSession,
         ktModule: KaModule,
@@ -114,7 +114,7 @@ abstract class SymbolLightClassForNamedClassLike : SymbolLightClassForClassLike<
                 filter { it.isConstOrJvmField }
             }
             ?.forEach {
-                createField(
+                createAndAddField(
                     declaration = it,
                     nameGenerator = nameGenerator,
                     isStatic = true,

@@ -223,6 +223,12 @@ public class SymbolLightClassesEqualityByFqNameForLibraryTestGenerated extends A
   }
 
   @Test
+  @TestMetadata("internalValueClass.kt")
+  public void testInternalValueClass() {
+    runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/internalValueClass.kt");
+  }
+
+  @Test
   @TestMetadata("InvalidJavaIdentifierAsAnnotationArgument.kt")
   public void testInvalidJavaIdentifierAsAnnotationArgument() {
     runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/InvalidJavaIdentifierAsAnnotationArgument.kt");
@@ -301,6 +307,12 @@ public class SymbolLightClassesEqualityByFqNameForLibraryTestGenerated extends A
   }
 
   @Test
+  @TestMetadata("privateValueClass.kt")
+  public void testPrivateValueClass() {
+    runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/privateValueClass.kt");
+  }
+
+  @Test
   @TestMetadata("PropertyTypeParameterAnnotation.kt")
   public void testPropertyTypeParameterAnnotation() {
     runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/PropertyTypeParameterAnnotation.kt");
@@ -364,6 +376,42 @@ public class SymbolLightClassesEqualityByFqNameForLibraryTestGenerated extends A
   @TestMetadata("ValueClassInParametersWithJvmName.kt")
   public void testValueClassInParametersWithJvmName() {
     runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/ValueClassInParametersWithJvmName.kt");
+  }
+
+  @Test
+  @TestMetadata("valueClassMembers.kt")
+  public void testValueClassMembers() {
+    runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/valueClassMembers.kt");
+  }
+
+  @Test
+  @TestMetadata("valueClassWithDelegatedSuperInterface.kt")
+  public void testValueClassWithDelegatedSuperInterface() {
+    runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/valueClassWithDelegatedSuperInterface.kt");
+  }
+
+  @Test
+  @TestMetadata("valueClassWithInternalParam.kt")
+  public void testValueClassWithInternalParam() {
+    runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/valueClassWithInternalParam.kt");
+  }
+
+  @Test
+  @TestMetadata("valueClassWithPrivateParam.kt")
+  public void testValueClassWithPrivateParam() {
+    runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/valueClassWithPrivateParam.kt");
+  }
+
+  @Test
+  @TestMetadata("valueClassWithSuperInterface.kt")
+  public void testValueClassWithSuperInterface() {
+    runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/valueClassWithSuperInterface.kt");
+  }
+
+  @Test
+  @TestMetadata("valueClassWithValueClass.kt")
+  public void testValueClassWithValueClass() {
+    runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/valueClassWithValueClass.kt");
   }
 
   @Test
