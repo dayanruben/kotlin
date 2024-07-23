@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.internal.KOTLIN_BUILD_TOOLS_API_IMPL
 import org.jetbrains.kotlin.gradle.internal.KOTLIN_COMPILER_EMBEDDABLE
 import org.jetbrains.kotlin.gradle.internal.KOTLIN_MODULE_GROUP
+import org.jetbrains.kotlin.gradle.internal.diagnostics.AgpCompatibilityCheck.runAgpCompatibilityCheckIfAgpIsApplied
 import org.jetbrains.kotlin.gradle.internal.properties.PropertiesBuildService
 import org.jetbrains.kotlin.gradle.internal.properties.nativeProperties
 import org.jetbrains.kotlin.gradle.logging.kotlinDebug
@@ -69,6 +70,8 @@ abstract class DefaultKotlinBasePlugin : KotlinBasePlugin {
 
     override fun apply(project: Project) {
         project.registerDefaultVariantImplementations()
+        checkGradleCompatibility()
+        project.runAgpCompatibilityCheckIfAgpIsApplied()
 
         if (project.kotlinPropertiesProvider.enableFusMetricsCollection) {
             BuildFusService.registerIfAbsent(project, pluginVersion)
@@ -258,7 +261,6 @@ abstract class KotlinBasePluginWrapper : DefaultKotlinBasePlugin() {
     override fun apply(project: Project) {
         super.apply(project)
         project.logger.info("Using Kotlin Gradle Plugin $pluginVariant variant")
-        checkGradleCompatibility()
 
         project.configurations.maybeCreateResolvable(NATIVE_COMPILER_PLUGIN_CLASSPATH_CONFIGURATION_NAME).apply {
             isVisible = false

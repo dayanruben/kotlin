@@ -1,4 +1,4 @@
-KtDotQualifiedExpression(68,76): 's.action'
+KtDotQualifiedExpression(53,61): 's.action'
   KaErrorCallInfo:
     candidateCalls = [
       KaSimpleFunctionCall:

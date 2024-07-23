@@ -77,6 +77,12 @@ public class FirIdeNormalAnalysisSourceModuleResolveCallTestGenerated extends Ab
   }
 
   @Test
+  @TestMetadata("annotationInAnnotation_collectionLiteral_badSpread.kt")
+  public void testAnnotationInAnnotation_collectionLiteral_badSpread() {
+    runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/annotationInAnnotation_collectionLiteral_badSpread.kt");
+  }
+
+  @Test
   @TestMetadata("annotationInAnnotation_multipleAnnotations_arrayOf.kt")
   public void testAnnotationInAnnotation_multipleAnnotations_arrayOf() {
     runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/annotationInAnnotation_multipleAnnotations_arrayOf.kt");
@@ -1142,6 +1148,12 @@ public class FirIdeNormalAnalysisSourceModuleResolveCallTestGenerated extends Ab
   @TestMetadata("SeveralOverrides.kt")
   public void testSeveralOverrides() {
     runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/SeveralOverrides.kt");
+  }
+
+  @Test
+  @TestMetadata("shadowedProperty.kt")
+  public void testShadowedProperty() {
+    runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/shadowedProperty.kt");
   }
 
   @Test
@@ -4103,6 +4115,12 @@ public class FirIdeNormalAnalysisSourceModuleResolveCallTestGenerated extends Ab
       }
 
       @Test
+      @TestMetadata("gtAndGenericAmbiguity.kt")
+      public void testGtAndGenericAmbiguity() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/operators/compareTo/gtAndGenericAmbiguity.kt");
+      }
+
+      @Test
       @TestMetadata("gtEq.kt")
       public void testGtEq() {
         runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/operators/compareTo/gtEq.kt");
@@ -4853,6 +4871,18 @@ public class FirIdeNormalAnalysisSourceModuleResolveCallTestGenerated extends Ab
     @TestMetadata("ByReturnExpression.kt")
     public void testByReturnExpression() {
       runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/withErrors/ByReturnExpression.kt");
+    }
+
+    @Test
+    @TestMetadata("callWithUnresolvedReturnType.kt")
+    public void testCallWithUnresolvedReturnType() {
+      runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/withErrors/callWithUnresolvedReturnType.kt");
+    }
+
+    @Test
+    @TestMetadata("callWithUnresolvedTypeBound.kt")
+    public void testCallWithUnresolvedTypeBound() {
+      runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/withErrors/callWithUnresolvedTypeBound.kt");
     }
 
     @Test

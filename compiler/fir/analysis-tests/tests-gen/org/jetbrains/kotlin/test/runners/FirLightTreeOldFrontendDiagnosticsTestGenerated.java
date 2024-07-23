@@ -6721,6 +6721,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       }
 
       @Test
+      @TestMetadata("arrayLiteralInNestedAnnotationCall.kt")
+      public void testArrayLiteralInNestedAnnotationCall() {
+        runTest("compiler/testData/diagnostics/tests/collectionLiterals/arrayLiteralInNestedAnnotationCall.kt");
+      }
+
+      @Test
       @TestMetadata("basicCollectionLiterals.kt")
       public void testBasicCollectionLiterals() {
         runTest("compiler/testData/diagnostics/tests/collectionLiterals/basicCollectionLiterals.kt");
@@ -7858,6 +7864,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       @TestMetadata("propertiesOrderInPackage.kt")
       public void testPropertiesOrderInPackage() {
         runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/propertiesOrderInPackage.kt");
+      }
+
+      @Test
+      @TestMetadata("reassignmenGraphLoop.kt")
+      public void testReassignmenGraphLoop() {
+        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/reassignmenGraphLoop.kt");
       }
 
       @Test
@@ -19834,6 +19846,18 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
           @TestMetadata("kt68889.kt")
           public void testKt68889() {
             runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/kt68889.kt");
+          }
+
+          @Test
+          @TestMetadata("kt69170.kt")
+          public void testKt69170() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/kt69170.kt");
+          }
+
+          @Test
+          @TestMetadata("kt69170Original.kt")
+          public void testKt69170Original() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/kt69170Original.kt");
           }
 
           @Test
@@ -36367,6 +36391,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         @TestMetadata("assignmentConversion.kt")
         public void testAssignmentConversion() {
           runTest("compiler/testData/diagnostics/tests/smartCasts/variables/assignmentConversion.kt");
+        }
+
+        @Test
+        @TestMetadata("branchesBeforeAssignment.kt")
+        public void testBranchesBeforeAssignment() {
+          runTest("compiler/testData/diagnostics/tests/smartCasts/variables/branchesBeforeAssignment.kt");
         }
 
         @Test

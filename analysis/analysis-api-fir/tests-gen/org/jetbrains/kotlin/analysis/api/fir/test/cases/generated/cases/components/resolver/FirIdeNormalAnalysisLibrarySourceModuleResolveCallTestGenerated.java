@@ -77,6 +77,12 @@ public class FirIdeNormalAnalysisLibrarySourceModuleResolveCallTestGenerated ext
   }
 
   @Test
+  @TestMetadata("annotationInAnnotation_collectionLiteral_badSpread.kt")
+  public void testAnnotationInAnnotation_collectionLiteral_badSpread() {
+    runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/annotationInAnnotation_collectionLiteral_badSpread.kt");
+  }
+
+  @Test
   @TestMetadata("annotationInAnnotation_multipleAnnotations_arrayOf.kt")
   public void testAnnotationInAnnotation_multipleAnnotations_arrayOf() {
     runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/annotationInAnnotation_multipleAnnotations_arrayOf.kt");
@@ -1142,6 +1148,12 @@ public class FirIdeNormalAnalysisLibrarySourceModuleResolveCallTestGenerated ext
   @TestMetadata("SeveralOverrides.kt")
   public void testSeveralOverrides() {
     runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/SeveralOverrides.kt");
+  }
+
+  @Test
+  @TestMetadata("shadowedProperty.kt")
+  public void testShadowedProperty() {
+    runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/shadowedProperty.kt");
   }
 
   @Test
@@ -3938,6 +3950,12 @@ public class FirIdeNormalAnalysisLibrarySourceModuleResolveCallTestGenerated ext
       @TestMetadata("gtAndGeneric.kt")
       public void testGtAndGeneric() {
         runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/operators/compareTo/gtAndGeneric.kt");
+      }
+
+      @Test
+      @TestMetadata("gtAndGenericAmbiguity.kt")
+      public void testGtAndGenericAmbiguity() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/operators/compareTo/gtAndGenericAmbiguity.kt");
       }
 
       @Test

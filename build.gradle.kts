@@ -100,7 +100,7 @@ if (!project.hasProperty("versions.kotlin-native")) {
     extra["versions.kotlin-native"] = if (kotlinBuildProperties.isKotlinNativeEnabled) {
         kotlinBuildProperties.defaultSnapshotVersion
     } else {
-        "2.1.0-dev-1329"
+        "2.1.0-dev-2394"
     }
 }
 
@@ -1109,15 +1109,16 @@ val zipCompilerWithSignature by secureZipTask(zipCompiler)
 
 configure<IdeaModel> {
     module {
-        excludeDirs = files(
-            project.layout.buildDirectory,
-            commonLocalDataDir,
-            ".gradle",
-            "dependencies",
-            "dist",
-            "tmp",
-            "intellij"
-        ).toSet()
+        excludeDirs.addAll(
+            files(
+                commonLocalDataDir,
+                ".kotlin",
+                "test.output",
+                "dist",
+                "tmp",
+                "intellij",
+            )
+        )
     }
 }
 

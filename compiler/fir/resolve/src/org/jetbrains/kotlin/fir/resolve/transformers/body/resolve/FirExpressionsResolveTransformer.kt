@@ -26,17 +26,22 @@ import org.jetbrains.kotlin.fir.references.builder.buildSimpleNamedReference
 import org.jetbrains.kotlin.fir.references.impl.FirSimpleNamedReference
 import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.calls.*
+import org.jetbrains.kotlin.fir.resolve.calls.ResolvedCallArgument.VarargArgument
 import org.jetbrains.kotlin.fir.resolve.calls.candidate.Candidate
 import org.jetbrains.kotlin.fir.resolve.calls.candidate.FirErrorReferenceWithCandidate
 import org.jetbrains.kotlin.fir.resolve.calls.candidate.FirNamedReferenceWithCandidate
 import org.jetbrains.kotlin.fir.resolve.calls.candidate.candidate
+import org.jetbrains.kotlin.fir.resolve.calls.stages.mapArguments
 import org.jetbrains.kotlin.fir.resolve.diagnostics.*
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.transformers.replaceLambdaArgumentInvocationKinds
+import org.jetbrains.kotlin.fir.resolve.transformers.unwrapAtoms
 import org.jetbrains.kotlin.fir.scopes.impl.isWrappedIntegerOperator
 import org.jetbrains.kotlin.fir.scopes.impl.isWrappedIntegerOperatorForUnsignedType
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirConstructorSymbol
 import org.jetbrains.kotlin.fir.types.*
+import org.jetbrains.kotlin.fir.types.arrayElementType
 import org.jetbrains.kotlin.fir.types.builder.buildErrorTypeRef
 import org.jetbrains.kotlin.fir.visitors.FirDefaultTransformer
 import org.jetbrains.kotlin.fir.visitors.FirTransformer
@@ -51,6 +56,7 @@ import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.TypeApproximatorConfiguration
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.PrivateForInline
+import org.jetbrains.kotlin.utils.addToStdlib.applyIf
 
 open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveTransformerDispatcher) :
     FirPartialBodyResolveTransformer(transformer) {
@@ -489,11 +495,18 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
                 // at 2nd stage in provideDelegate mode we are trying to resolve someDelegate.provideDelegate(),
                 // and 'someDelegate' explicit receiver is resolved at 1st stage
                 // See also FirDeclarationsResolveTransformer.transformWrappedDelegateExpression
-                val withResolvedExplicitReceiver =
-                    if (callResolutionMode == CallResolutionMode.PROVIDE_DELEGATE) functionCall else transformExplicitReceiverOf(functionCall)
+                val withResolvedExplicitReceiver = when (callResolutionMode) {
+                    CallResolutionMode.PROVIDE_DELEGATE -> functionCall
+                    else -> transformExplicitReceiverOf(functionCall)
+                }
                 withResolvedExplicitReceiver.also {
                     dataFlowAnalyzer.exitCallExplicitReceiver()
-                    it.replaceArgumentList(it.argumentList.transform(this, ResolutionMode.ContextDependent))
+
+                    if (enableArrayOfCallTransformation && data is ResolutionMode.WithExpectedType) {
+                        transformCallArgumentsInsideAnnotationContext(functionCall, data)
+                    } else {
+                        it.replaceArgumentList(it.argumentList.transform(this, ResolutionMode.ContextDependent))
+                    }
                     dataFlowAnalyzer.exitCallArguments()
                 }
             } else {
@@ -531,6 +544,78 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
             }
             return result
         }
+
+    /**
+     * Transforms the value arguments of some call inside the context of an annotation call.
+     * Typically, we would fine here a nested annotation call `@Foo(Bar())` or an array factory call like `arrayOf`.
+     */
+    private fun transformCallArgumentsInsideAnnotationContext(call: FirFunctionCall, data: ResolutionMode.WithExpectedType) {
+        // Special handling of nested calls inside annotation calls/default values.
+        val expectedType = data.expectedTypeRef.coneType
+        if (expectedType.fullyExpandedType(session).toClassSymbol(session)?.classKind == ClassKind.ANNOTATION_CLASS) {
+            // Annotation calls inside annotation calls are treated similar to regular annotation calls,
+            // mainly so that array literals are resolved with the correct expected type.
+            val constructorSymbol = callResolver.getAnnotationConstructorSymbol(expectedType, null)
+            transformAnnotationCallArguments(call, constructorSymbol)
+        } else {
+            // `arrayOf` calls inside annotation calls don't get special treatment, but we track the array element type.
+            // This is necessary because the expected type needs to reach nested array literals for them to be resolved properly.
+            // Example: @Foo(arrayOf(Bar([1]))
+            val expectedArrayElementType = expectedType.arrayElementType()?.let { data.copy(it.toFirResolvedTypeRef()) }
+            call.replaceArgumentList(
+                call.argumentList.transform(
+                    this,
+                    expectedArrayElementType ?: ResolutionMode.ContextDependent
+                )
+            )
+        }
+    }
+
+    /**
+     * Transforms the value arguments of a call to an annotation inside the context of an annotation call.
+     * This is either the top-level [FirAnnotationCall] or a nested [FirFunctionCall] to an annotation like in `@Foo(Bar())`.
+     */
+    fun transformAnnotationCallArguments(call: FirCall, constructorSymbol: FirConstructorSymbol?) {
+        if (constructorSymbol != null && call.arguments.isNotEmpty()) {
+            // Arguments of annotation calls may contain array literals.
+            // To properly resolve array literals and report type mismatches, we need to know the expected type.
+            // Because the symbol for an annotation call is already known, we can run argument mapping and extract the expected type
+            // from the parameter.
+            val mapping = transformer.resolutionContext.bodyResolveComponents.mapArguments(
+                call.arguments.map {
+                    @OptIn(UnsafeExpressionUtility::class)
+                    ConeResolutionAtom.createRawAtomForPotentiallyUnresolvedExpression(it)
+                },
+                constructorSymbol.fir,
+                originScope = null,
+                callSiteIsOperatorCall = false,
+            )
+            val argumentsToParameters = mapping.toArgumentToParameterMapping().unwrapAtoms()
+
+            call.replaceArgumentList(buildArgumentList {
+                source = call.argumentList.source
+                call.argumentList.arguments.mapTo(arguments) { arg ->
+                    val parameter = argumentsToParameters[arg]
+                    val expectedType = parameter?.returnTypeRef?.coneTypeOrNull
+                    val parameterType = expectedType
+                        ?.applyIf(mapping.parameterToCallArgumentMap[parameter] is VarargArgument && arg !is FirWrappedArgumentExpression) {
+                            arrayElementType()
+                        }
+                    val resolutionMode = parameterType?.let {
+                        ResolutionMode.WithExpectedType(
+                            it.toFirResolvedTypeRef(),
+                            forceFullCompletion = false,
+                            fromAnnotationCallArgument = true,
+                        )
+                    } ?: ResolutionMode.ContextDependent
+
+                    arg.transformSingle(transformer, resolutionMode)
+                }
+            })
+        } else {
+            call.replaceArgumentList(call.argumentList.transform(transformer, ResolutionMode.ContextDependent))
+        }
+    }
 
     private fun FirFunctionCall.transformToIntegerOperatorCallOrApproximateItIfNeeded(resolutionMode: ResolutionMode): FirFunctionCall {
         if (!explicitReceiver.isIntegerLiteralOrOperatorCall()) return this
@@ -1738,15 +1823,15 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
     override fun transformArrayLiteral(arrayLiteral: FirArrayLiteral, data: ResolutionMode): FirStatement =
         whileAnalysing(session, arrayLiteral) {
             when (data) {
-                is ResolutionMode.ContextDependent -> {
-                    // Argument in non-annotation call (unsupported) or if type of array parameter is unresolved.
-                    arrayLiteral.transformChildren(transformer, data)
-                    arrayLiteral
-                }
                 is ResolutionMode.WithExpectedType -> {
                     // Default value of array parameter (Array<T> or primitive array such as IntArray, FloatArray, ...)
                     // or argument for array parameter in annotation call.
-                    arrayLiteral.transformChildren(transformer, ResolutionMode.ContextDependent)
+                    arrayLiteral.transformChildren(
+                        transformer,
+                        data.expectedType?.coneTypeOrNull?.arrayElementType()?.let { withExpectedType(it) }
+                            ?: ResolutionMode.ContextDependent,
+                    )
+
                     val call = components.syntheticCallGenerator.generateSyntheticArrayOfCall(
                         arrayLiteral,
                         data.expectedTypeRef,
@@ -1758,12 +1843,20 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
                 }
                 else -> {
                     // Other unsupported usage.
+                    arrayLiteral.transformChildren(transformer, ResolutionMode.ContextDependent)
+                    // We set the type to Array<Any> because arguments need to have a type during resolution of the synthetic call.
+                    // We remove the type so that it will be set during completion to the CST of the arguments.
+                    arrayLiteral.replaceConeTypeOrNull(
+                        StandardClassIds.Array.constructClassLikeType(
+                            arrayOf(StandardClassIds.Any.constructClassLikeType())
+                        )
+                    )
                     val syntheticIdCall = components.syntheticCallGenerator.generateSyntheticIdCall(
                         arrayLiteral,
                         resolutionContext,
                         data,
                     )
-                    arrayLiteral.transformChildren(transformer, ResolutionMode.ContextDependent)
+                    arrayLiteral.replaceConeTypeOrNull(null)
                     callCompleter.completeCall(syntheticIdCall, ResolutionMode.ContextIndependent)
                     arrayLiteral
                 }
