@@ -223,9 +223,12 @@ fun deserializeClassToSymbol(
         }
 
         valueClassRepresentation =
-            classProto.loadValueClassRepresentation(context.nameResolver, context.typeTable, context.typeDeserializer::simpleType) { name ->
+            classProto.loadValueClassRepresentation(
+                context.nameResolver,
+                context.typeTable,
+                { context.typeDeserializer.rigidType(it) }) { name ->
                 val member = declarations.singleOrNull { it is FirProperty && it.receiverParameter == null && it.name == name }
-                (member as FirProperty?)?.returnTypeRef?.coneType as ConeSimpleKotlinType
+                (member as FirProperty?)?.returnTypeRef?.coneType as ConeRigidType
             } ?: computeValueClassRepresentation(this, session)
 
         replaceAnnotations(

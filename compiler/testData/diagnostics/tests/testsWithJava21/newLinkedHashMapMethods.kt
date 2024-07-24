@@ -1,6 +1,7 @@
-// ISSUE: KT-64640
-// WITH_STDLIB
+// LATEST_LV_DIFFERENCE
 // FIR_IDENTICAL
+// WITH_STDLIB
+// ISSUE: KT-64640
 
 fun foo(x: LinkedHashMap<Int, String>, y: java.util.SequencedMap<Int, String>, z: HashMap<Int, String>) {
     x.putFirst(0, "0")

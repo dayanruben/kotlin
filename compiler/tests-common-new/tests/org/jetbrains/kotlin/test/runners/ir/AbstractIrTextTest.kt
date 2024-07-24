@@ -60,7 +60,10 @@ abstract class AbstractIrTextTest<FrontendOutput : ResultingArtifact.FrontendOut
             targetPlatform = this@AbstractIrTextTest.targetPlatform
             artifactKind = BinaryKind.NoArtifact
             targetBackend = this@AbstractIrTextTest.targetBackend
-            dependencyKind = DependencyKind.Source
+            dependencyKind = when (targetBackend) {
+                TargetBackend.JS_IR, TargetBackend.WASM -> DependencyKind.KLib // these irText pipelines register Klib artifacts during *KlibSerializerFacade
+                else -> DependencyKind.Source
+            }
         }
 
         defaultDirectives {

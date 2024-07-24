@@ -284,7 +284,7 @@ object FirJvmErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
 
         map.put(
             INTERFACE_CANT_CALL_DEFAULT_METHOD_VIA_SUPER,
-            "Calling JVM-default members via super is supported only in Kotlin 2.1 and later.",
+            "Calling JVM-default members via super is supported only in Kotlin 2.1 and later, or with -Xjvm-default=all/all-compatibility.",
         )
         map.put(
             SUBCLASS_CANT_CALL_COMPANION_PROTECTED_NON_STATIC,
@@ -378,7 +378,7 @@ object FirJvmErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(
             JAVA_CLASS_INHERITS_KT_PRIVATE_CLASS,
             "Java class ''{0}'' declaring this callable should not inherit directly or indirectly private Kotlin class ''{1}''.",
-            RENDER_TYPE,
+            TO_STRING,
             RENDER_TYPE
         )
 
