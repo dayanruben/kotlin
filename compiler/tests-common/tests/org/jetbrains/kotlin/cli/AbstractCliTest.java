@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.cli;
@@ -26,12 +15,11 @@ import kotlin.text.Charsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.checkers.ThirdPartyAnnotationPathsKt;
-import org.jetbrains.kotlin.cli.common.CLITool;
+import org.jetbrains.kotlin.cli.common.CLICompiler;
 import org.jetbrains.kotlin.cli.common.CompilerSystemProperties;
 import org.jetbrains.kotlin.cli.common.ExitCode;
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer;
 import org.jetbrains.kotlin.cli.js.K2JSCompiler;
-import org.jetbrains.kotlin.cli.js.dce.K2JSDce;
 import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler;
 import org.jetbrains.kotlin.cli.metadata.K2MetadataCompiler;
 import org.jetbrains.kotlin.test.CompilerTestUtil;
@@ -60,14 +48,14 @@ public abstract class AbstractCliTest extends TestCaseWithTmpdir {
     private static final String BUILD_FILE_ARGUMENT_PREFIX = "-Xbuild-file=";
 
     public static Pair<String, ExitCode> executeCompilerGrabOutput(
-            @NotNull CLITool<?> compiler,
+            @NotNull CLICompiler<?> compiler,
             @NotNull List<String> args
     ) {
         return executeCompilerGrabOutput(compiler, args, null);
     }
 
     public static Pair<String, ExitCode> executeCompilerGrabOutput(
-            @NotNull CLITool<?> compiler,
+            @NotNull CLICompiler<?> compiler,
             @NotNull List<String> args,
             @Nullable MessageRenderer messageRenderer
     ) {
@@ -114,7 +102,7 @@ public abstract class AbstractCliTest extends TestCaseWithTmpdir {
         return exitCode == null ? normalizedOutputWithoutExitCode : (normalizedOutputWithoutExitCode + exitCode + "\n");
     }
 
-    protected void doTest(@NotNull String fileName, @NotNull CLITool<?> compiler) {
+    protected void doTest(@NotNull String fileName, @NotNull CLICompiler<?> compiler) {
         System.setProperty("java.awt.headless", "true");
 
         File environmentTestConfig = new File(fileName.replaceFirst("\\.args$", ".env"));
@@ -313,10 +301,6 @@ public abstract class AbstractCliTest extends TestCaseWithTmpdir {
 
     protected void doJsTest(@NotNull String fileName) {
         doTest(fileName, new K2JSCompiler());
-    }
-
-    protected void doJsDceTest(@NotNull String fileName) {
-        doTest(fileName, new K2JSDce());
     }
 
     protected void doMetadataTest(@NotNull String fileName) {

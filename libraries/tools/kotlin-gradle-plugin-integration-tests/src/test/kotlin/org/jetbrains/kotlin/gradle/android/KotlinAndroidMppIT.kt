@@ -8,8 +8,8 @@ package org.jetbrains.kotlin.gradle.android
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics
 import org.jetbrains.kotlin.gradle.testbase.*
+import org.jetbrains.kotlin.gradle.testbase.TestVersions.AgpCompatibilityMatrix
 import org.jetbrains.kotlin.gradle.tooling.BuildKotlinToolingMetadataTask
-import org.jetbrains.kotlin.gradle.util.AGPVersion
 import org.jetbrains.kotlin.gradle.util.replaceText
 import org.jetbrains.kotlin.gradle.util.testResolveAllConfigurations
 import org.junit.jupiter.api.DisplayName
@@ -495,6 +495,45 @@ class KotlinAndroidMppIT : KGPBaseTest() {
         }
     }
 
+    @DisplayName("KT-69585: kmp + android depends on another kmp + android project via included build should not fail on pom rewrite action")
+    @GradleAndroidTest
+    fun kt69585PublishWithDependencyOnIncludedBuildsDoesntFail(
+        gradleVersion: GradleVersion,
+        agpVersion: String,
+        jdkVersion: JdkVersions.ProvidedJdk,
+    ) {
+        project(
+            "new-mpp-android",
+            gradleVersion,
+            buildOptions = defaultBuildOptions.copy(androidVersion = agpVersion),
+            buildJdk = jdkVersion.location
+        ) {
+            settingsGradle.replaceText("include ':app', ':lib'", "include ':lib'")
+            includeOtherProjectAsIncludedBuild("lib", "new-mpp-android", "libFromIncluded")
+            subProject("lib").buildGradleKts.appendText("""
+                
+                kotlin { 
+                  sourceSets.getByName("androidLibMain").dependencies {
+                    implementation("com.example:libFromIncluded:1.0")
+                  }
+                }
+                """.trimIndent()
+            )
+            build(":lib:generatePomFileForAndroidLibReleasePublication") {
+                val pomText = projectPath
+                    .resolve("lib/build/publications/androidLibRelease/pom-default.xml")
+                    .readText()
+                    .replace("""\s+""".toRegex(), "")
+                assertContains(
+                    pomText,
+                    // TODO: When KT-69974 is fixed replace it with this
+                    // ...<artifactId>libFromIncluded-android</artifactId>...
+                    """<groupId>com.example</groupId><artifactId>libFromIncluded</artifactId><version>1.0</version>"""
+                )
+            }
+        }
+    }
+
     @DisplayName("android app can depend on mpp lib")
     @GradleAndroidTest
     fun testAndroidWithNewMppApp(
@@ -817,8 +856,10 @@ class KotlinAndroidMppIT : KGPBaseTest() {
             }
         }
 
-        val checkedConsumerAGPVersions = TestVersions.AgpCompatibilityMatrix.entries
-            .filter { agp -> AGPVersion.fromString(agp.version) < AGPVersion.fromString(TestVersions.AGP.MAX_SUPPORTED) }
+        val checkedConsumerAGPVersions = AgpCompatibilityMatrix.entries
+            .filter { agp ->
+                AgpCompatibilityMatrix.fromVersion(agp.version) < AgpCompatibilityMatrix.fromVersion(TestVersions.AGP.MAX_SUPPORTED)
+            }
 
         checkedConsumerAGPVersions.forEach { consumerAgpVersion ->
             println(

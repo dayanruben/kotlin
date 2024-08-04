@@ -59,6 +59,7 @@ import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.KtTypeProjection
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtVariableDeclaration
 import org.jetbrains.kotlin.psi.KtWhenCondition
@@ -1005,6 +1006,18 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.PROJECTION_IN_TYPE_OF_ANNOTATION_MEMBER.errorFactory) { firDiagnostic ->
+        ProjectionInTypeOfAnnotationMemberErrorImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.PROJECTION_IN_TYPE_OF_ANNOTATION_MEMBER.warningFactory) { firDiagnostic ->
+        ProjectionInTypeOfAnnotationMemberWarningImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.LOCAL_ANNOTATION_CLASS_ERROR) { firDiagnostic ->
         LocalAnnotationClassErrorImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -1300,6 +1313,18 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.POTENTIALLY_NON_REPORTED_ANNOTATION) { firDiagnostic ->
         PotentiallyNonReportedAnnotationImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.THROWS_IN_ANNOTATION.errorFactory) { firDiagnostic ->
+        ThrowsInAnnotationErrorImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.THROWS_IN_ANNOTATION.warningFactory) { firDiagnostic ->
+        ThrowsInAnnotationWarningImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -2516,6 +2541,18 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.REIFIED_TYPE_PARAMETER_NO_INLINE) { firDiagnostic ->
         ReifiedTypeParameterNoInlineImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.REIFIED_TYPE_PARAMETER_ON_ALIAS.errorFactory) { firDiagnostic ->
+        ReifiedTypeParameterOnAliasErrorImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.REIFIED_TYPE_PARAMETER_ON_ALIAS.warningFactory) { firDiagnostic ->
+        ReifiedTypeParameterOnAliasWarningImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -5492,6 +5529,18 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirJvmErrors.SYNCHRONIZED_IN_INTERFACE) { firDiagnostic ->
         SynchronizedInInterfaceImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.SYNCHRONIZED_IN_ANNOTATION.errorFactory) { firDiagnostic ->
+        SynchronizedInAnnotationErrorImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.SYNCHRONIZED_IN_ANNOTATION.warningFactory) { firDiagnostic ->
+        SynchronizedInAnnotationWarningImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

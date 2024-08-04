@@ -21,7 +21,6 @@ import kotlin.io.path.*
 
 @OsCondition(supportedOn = [OS.MAC], enabledOnCI = [OS.MAC])
 @DisplayName("Tests for K/N with Apple Framework")
-@GradleTestVersions(minVersion = Gradle.G_7_0)
 @NativeGradlePluginTests
 class AppleFrameworkIT : KGPBaseTest() {
 
@@ -406,6 +405,10 @@ class AppleFrameworkIT : KGPBaseTest() {
         nativeProject(
             "sharedAppleFramework",
             gradleVersion,
+            buildOptions = defaultBuildOptions.copy(
+                // KT-55832
+                configurationCache = BuildOptions.ConfigurationCacheValue.DISABLED
+            )
         ) {
             val environmentVariables = EnvironmentalVariables(
                 "CONFIGURATION" to "debug",
@@ -441,6 +444,10 @@ class AppleFrameworkIT : KGPBaseTest() {
         nativeProject(
             "sharedAppleFramework",
             gradleVersion,
+            buildOptions = defaultBuildOptions.copy(
+                // KT-55832
+                configurationCache = BuildOptions.ConfigurationCacheValue.DISABLED
+            )
         ) {
             val environmentVariables = EnvironmentalVariables(
                 "CONFIGURATION" to "debug",
@@ -470,6 +477,10 @@ class AppleFrameworkIT : KGPBaseTest() {
         nativeProject(
             "sharedAppleFramework",
             gradleVersion,
+            buildOptions = defaultBuildOptions.copy(
+                // KT-55832
+                configurationCache = BuildOptions.ConfigurationCacheValue.DISABLED
+            )
         ) {
             val environmentVariables = EnvironmentalVariables(
                 "CONFIGURATION" to "debug",
@@ -499,6 +510,10 @@ class AppleFrameworkIT : KGPBaseTest() {
         nativeProject(
             "sharedAppleFramework",
             gradleVersion,
+            buildOptions = defaultBuildOptions.copy(
+                // KT-55832
+                configurationCache = BuildOptions.ConfigurationCacheValue.DISABLED
+            )
         ) {
             val environmentVariables = EnvironmentalVariables(
                 "CONFIGURATION" to "debug",
@@ -577,7 +592,11 @@ class AppleFrameworkIT : KGPBaseTest() {
         nativeProject(
             "appleGradlePluginConsumesAppleFrameworks",
             gradleVersion,
-            buildJdk = providedJdk.location
+            buildJdk = providedJdk.location,
+            buildOptions = defaultBuildOptions.copy(
+                // Apple plugin doesn't support configuration cache
+                configurationCache = BuildOptions.ConfigurationCacheValue.DISABLED,
+            )
         ) {
             fun dependencyInsight(configuration: String) = arrayOf(
                 ":iosApp:dependencyInsight", "--configuration", configuration, "--dependency", "iosLib"
@@ -607,13 +626,12 @@ class AppleFrameworkIT : KGPBaseTest() {
     // Should always be green because the CI Xcode version must be supported
     @DisplayName("Xcode version too high diagnostic isn't emitted")
     @GradleTest
-    @GradleTestVersions(minVersion = Gradle.G_7_4)
     fun testXcodeVersionTooHighDiagnosticNotEmitted(gradleVersion: GradleVersion) {
         nativeProject(
             "sharedAppleFramework",
             gradleVersion,
             // enable CC to make sure that external process isn't run during configuration
-            buildOptions = defaultBuildOptions.copy(configurationCache = true),
+            buildOptions = defaultBuildOptions.copy(configurationCache = BuildOptions.ConfigurationCacheValue.ENABLED),
         ) {
             build(":shared:linkReleaseFrameworkIosSimulatorArm64") {
                 assertNoDiagnostic(KotlinToolingDiagnostics.XcodeVersionTooHighWarning)

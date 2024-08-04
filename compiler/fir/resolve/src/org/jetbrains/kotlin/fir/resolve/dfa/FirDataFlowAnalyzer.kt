@@ -1142,37 +1142,37 @@ abstract class FirDataFlowAnalyzer(
 
     // ----------------------------------- Boolean operators -----------------------------------
 
-    fun enterBinaryLogicExpression(binaryLogicExpression: FirBinaryLogicExpression) {
-        graphBuilder.enterBinaryLogicExpression(binaryLogicExpression).mergeIncomingFlow()
+    fun enterBooleanOperatorExpression(booleanOperatorExpression: FirBooleanOperatorExpression) {
+        graphBuilder.enterBooleanOperatorExpression(booleanOperatorExpression).mergeIncomingFlow()
     }
 
-    fun exitLeftBinaryLogicExpressionArgument(binaryLogicExpression: FirBinaryLogicExpression) {
-        val (leftExitNode, rightEnterNode) = graphBuilder.exitLeftBinaryLogicExpressionArgument(binaryLogicExpression)
+    fun exitLeftBooleanOperatorExpressionArgument(booleanOperatorExpression: FirBooleanOperatorExpression) {
+        val (leftExitNode, rightEnterNode) = graphBuilder.exitLeftBooleanOperatorExpressionArgument(booleanOperatorExpression)
         leftExitNode.mergeIncomingFlow()
         rightEnterNode.mergeIncomingFlow { _, flow ->
-            val leftOperandVariable = flow.getVariableIfUsed(binaryLogicExpression.leftOperand) ?: return@mergeIncomingFlow
-            val saturatingValue = binaryLogicExpression.kind != LogicOperationKind.AND
+            val leftOperandVariable = flow.getVariableIfUsed(booleanOperatorExpression.leftOperand) ?: return@mergeIncomingFlow
+            val saturatingValue = booleanOperatorExpression.kind != LogicOperationKind.AND
             flow.commitOperationStatement(leftOperandVariable eq !saturatingValue)
         }
     }
 
-    fun exitBinaryLogicExpression(binaryLogicExpression: FirBinaryLogicExpression) {
-        graphBuilder.exitBinaryLogicExpression(binaryLogicExpression).mergeBinaryLogicOperatorFlow()
+    fun exitBooleanOperatorExpression(booleanOperatorExpression: FirBooleanOperatorExpression) {
+        graphBuilder.exitBooleanOperatorExpression(booleanOperatorExpression).mergeBooleanLogicOperatorFlow()
     }
 
-    private fun AbstractBinaryExitNode<FirBinaryLogicExpression>.mergeBinaryLogicOperatorFlow() = mergeIncomingFlow { path, flow ->
+    private fun BooleanOperatorExitNode.mergeBooleanLogicOperatorFlow() = mergeIncomingFlow { path, flow ->
         val inferMoreImplications =
             components.session.languageVersionSettings.supportsFeature(LanguageFeature.InferMoreImplicationsFromBooleanExpressions)
 
         // The saturating value is one that, when returned by any argument, also has to be returned by the entire expression:
         // `true` for `||` and `false` for `&&`.
         val saturatingValue = fir.kind != LogicOperationKind.AND
-        val flowFromLeft = leftOperandNode?.getFlow(path)
+        val flowFromLeft = leftOperandNode.getFlow(path)
         val flowFromRight = rightOperandNode.getFlow(path)
         // Not checking this variable for reassignments is safe because the only statement we will approve on it is
         // `leftVariable eq saturatingValue`, which implies that the right side, along with any assignments in it,
         // did not execute at all due to short-circuiting.
-        val leftVariable = flowFromLeft?.takeIf { fir.leftOperand.resolvedType.isBoolean }?.getVariableIfUsed(fir.leftOperand)
+        val leftVariable = flowFromLeft.takeIf { fir.leftOperand.resolvedType.isBoolean }?.getVariableIfUsed(fir.leftOperand)
         val rightVariable = flowFromRight.takeIf { fir.rightOperand.resolvedType.isBoolean }?.getVariableIfUsed(fir.rightOperand)
 
         when {
@@ -1184,7 +1184,7 @@ abstract class FirDataFlowAnalyzer(
             }
 
             // Value of the expression = value of the right hand side.
-            inferMoreImplications && leftOperandNode == null -> {
+            inferMoreImplications && fir.leftOperand.booleanLiteralValue == !saturatingValue -> {
                 if (rightVariable != null) {
                     logicSystem.translateVariableFromConditionInStatements(flow, rightVariable, SyntheticVariable(fir))
                 }

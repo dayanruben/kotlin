@@ -22,6 +22,7 @@ private const val RUNTIME_TEST_ROOT = "plugins/compose/compiler-hosted/runtime-t
 /**
  * Takes Compose tests from runtime-tests module and runs them on compiler + plugin built from source.
  */
+@Ignore // The tests cannot be run against jvmstubs
 @RunWith(RuntimeTestsK1.RuntimeTestRunner::class)
 class RuntimeTestsK1 {
     class RuntimeTestRunner(cls: Class<*>) : Suite(
@@ -30,6 +31,7 @@ class RuntimeTestsK1 {
     )
 }
 
+@Ignore // The tests cannot be run against jvmstubs
 @RunWith(RuntimeTestsK2.RuntimeTestRunner::class)
 class RuntimeTestsK2 {
     class RuntimeTestRunner(cls: Class<*>) : Suite(
@@ -98,7 +100,15 @@ private class RuntimeTestCompiler(
     private fun compileRuntimeTestClasses(sourceRoot: File, commonSources: List<File>, jvmSources: List<File>): List<Class<*>> {
         val generatedClassLoader = createClassLoader(
             commonSourceFiles = commonSources.map { it.toSourceFile(sourceRoot.commonSourceRoot()) },
-            platformSourceFiles = jvmSources.map { it.toSourceFile(sourceRoot.jvmSourceRoot()) }
+            platformSourceFiles = jvmSources.map { it.toSourceFile(sourceRoot.jvmSourceRoot()) },
+            additionalPaths = listOf(
+                Classpath.composeTestUtilsJar(),
+                Classpath.kotlinxCoroutinesJar(),
+                Classpath.jarFor<kotlinx.coroutines.test.TestDispatcher>(), // kotlinx-coroutines-test
+                Classpath.jarFor(kotlin.test.asserter::class.java.canonicalName), // kotlin-test metadata
+                Classpath.jarFor<kotlin.test.Asserter>(), // kotlin-test
+                Classpath.jarFor<Test>() // junit
+            )
         )
 
         val parent = generatedClassLoader.parent

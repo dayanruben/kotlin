@@ -346,7 +346,6 @@ class MppIdeDependencyResolutionIT : KGPBaseTest() {
         }
     }
 
-    @GradleTestVersions(minVersion = TestVersions.Gradle.G_7_6)
     @GradleTest
     fun `test dependency on java testFixtures and feature source sets`(gradleVersion: GradleVersion) {
         project(
@@ -415,7 +414,6 @@ class MppIdeDependencyResolutionIT : KGPBaseTest() {
         }
     }
 
-    @GradleTestVersions(minVersion = TestVersions.Gradle.G_7_2)
     @GradleTest
     fun `test resolve sources for dependency with multiple capabilities`(gradleVersion: GradleVersion) {
         project(

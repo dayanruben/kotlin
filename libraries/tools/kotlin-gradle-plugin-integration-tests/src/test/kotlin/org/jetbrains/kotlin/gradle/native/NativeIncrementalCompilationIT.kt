@@ -31,7 +31,6 @@ class NativeIncrementalCompilationIT : KGPBaseTest() {
     )
 
     @DisplayName("KT-63742: Check that kotlinNativeLink task passes all required args for cache orchestration and ic")
-    @GradleTestVersions(minVersion = TestVersions.Gradle.G_7_4) // DefaultResolvedComponentResult with configuration cache is supported only after 7.4
     @GradleTest
     fun checkArgumentsForIncrementalCache(gradleVersion: GradleVersion) {
         nativeProject("native-incremental-simple", gradleVersion) {
@@ -75,7 +74,7 @@ class NativeIncrementalCompilationIT : KGPBaseTest() {
 
             // enabled incremental cache and configuration cache parameters
             val withIncrementalCacheAndConfigurationCacheBuildOptions = defaultBuildOptions.copy(
-                configurationCache = true,
+                configurationCache = BuildOptions.ConfigurationCacheValue.ENABLED,
                 nativeOptions = defaultBuildOptions.nativeOptions.copy(
                     incremental = true
                 )

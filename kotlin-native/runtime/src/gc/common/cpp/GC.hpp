@@ -13,6 +13,7 @@
 #include "GCScheduler.hpp"
 #include "ReferenceOps.hpp"
 #include "RunLoopFinalizerProcessor.hpp"
+#include "TypeLayout.hpp"
 #include "Utils.hpp"
 
 namespace kotlin {
@@ -86,8 +87,8 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-void beforeHeapRefUpdate(mm::DirectRefAccessor ref, ObjHeader* value) noexcept;
-OBJ_GETTER(weakRefReadBarrier, std::atomic<ObjHeader*>& weakReferee) noexcept;
+void beforeHeapRefUpdate(mm::DirectRefAccessor ref, ObjHeader* value, bool loadAtomic) noexcept;
+OBJ_GETTER(weakRefReadBarrier, std_support::atomic_ref<ObjHeader*> weakReferee) noexcept;
 
 bool isMarked(ObjHeader* object) noexcept;
 

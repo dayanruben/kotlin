@@ -124,6 +124,11 @@ public class CompilerLightClassTestGenerated extends AbstractCompilerLightClassT
     runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/Delegation.kt");
   }
 
+  @TestMetadata("Deprecated.kt")
+  public void testDeprecated() {
+    runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/Deprecated.kt");
+  }
+
   @TestMetadata("DeprecatedEnumEntry.kt")
   public void testDeprecatedEnumEntry() {
     runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/DeprecatedEnumEntry.kt");
@@ -575,6 +580,16 @@ public class CompilerLightClassTestGenerated extends AbstractCompilerLightClassT
     @TestMetadata("AllPrivate.kt")
     public void testAllPrivate() {
       runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/AllPrivate.kt");
+    }
+
+    @TestMetadata("DelegatedProperty.kt")
+    public void testDelegatedProperty() {
+      runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/DelegatedProperty.kt");
+    }
+
+    @TestMetadata("Deprecated.kt")
+    public void testDeprecated() {
+      runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/Deprecated.kt");
     }
 
     @TestMetadata("FunctionTypeParameterAnnotation.kt")

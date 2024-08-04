@@ -6,6 +6,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilerExecutionStrategy
 import org.jetbrains.kotlin.gradle.testbase.*
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.io.TempDir
@@ -146,13 +147,12 @@ class SimpleKotlinGradleIT : KGPBaseTest() {
     // https://sourceforge.net/p/proguard/bugs/735/
     // Gradle 7 compatibility issue: https://github.com/Guardsquare/proguard/issues/136
     @GradleTest
-    @GradleTestVersions(maxVersion = TestVersions.Gradle.G_6_8)
     @DisplayName("Should correctly interop with ProGuard")
+    @TestMetadata("interopWithProguarded")
     fun testInteropWithProguarded(gradleVersion: GradleVersion) {
         project(
             "interopWithProguarded",
             gradleVersion,
-            buildOptions = defaultBuildOptions.copy(warningMode = WarningMode.Summary)
         ) {
             build("build") {
                 assertTasksExecuted(":test")
@@ -206,11 +206,6 @@ class SimpleKotlinGradleIT : KGPBaseTest() {
     @DisplayName("Proper Gradle plugin variant is used")
     @GradleTestVersions(
         additionalVersions = [
-            TestVersions.Gradle.G_7_0,
-            TestVersions.Gradle.G_7_1,
-            TestVersions.Gradle.G_7_3,
-            TestVersions.Gradle.G_7_4,
-            TestVersions.Gradle.G_7_5,
             TestVersions.Gradle.G_7_6,
             TestVersions.Gradle.G_8_0,
             TestVersions.Gradle.G_8_1,
@@ -235,24 +230,11 @@ class SimpleKotlinGradleIT : KGPBaseTest() {
                     GradleVersion.version(TestVersions.Gradle.G_8_1) -> "gradle81"
                     GradleVersion.version(TestVersions.Gradle.G_8_0) -> "gradle80"
                     GradleVersion.version(TestVersions.Gradle.G_7_6) -> "gradle76"
-                    GradleVersion.version(TestVersions.Gradle.G_7_5) -> "gradle75"
-                    GradleVersion.version(TestVersions.Gradle.G_7_4) -> "gradle74"
-                    in GradleVersion.version(TestVersions.Gradle.G_7_1)..GradleVersion.version(TestVersions.Gradle.G_7_3) -> "gradle71"
-                    GradleVersion.version(TestVersions.Gradle.G_7_0) -> "gradle70"
                     else -> "main"
                 }
 
                 assertOutputContains("Using Kotlin Gradle Plugin $expectedVariant variant")
             }
-        }
-    }
-
-    @DisplayName("Accessing Kotlin SourceSet in KotlinDSL")
-    @GradleTestVersions(maxVersion = TestVersions.Gradle.G_7_1)
-    @GradleTest
-    internal fun kotlinDslSourceSets(gradleVersion: GradleVersion) {
-        project("sourceSetsKotlinDsl", gradleVersion) {
-            build("assemble")
         }
     }
 

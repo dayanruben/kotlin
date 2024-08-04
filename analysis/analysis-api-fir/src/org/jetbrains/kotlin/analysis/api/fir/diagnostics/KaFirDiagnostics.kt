@@ -77,6 +77,7 @@ import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.KtTypeProjection
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtVariableDeclaration
 import org.jetbrains.kotlin.psi.KtWhenCondition
@@ -737,6 +738,14 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = InvalidTypeOfAnnotationMember::class
     }
 
+    interface ProjectionInTypeOfAnnotationMemberError : KaFirDiagnostic<KtTypeReference> {
+        override val diagnosticClass get() = ProjectionInTypeOfAnnotationMemberError::class
+    }
+
+    interface ProjectionInTypeOfAnnotationMemberWarning : KaFirDiagnostic<KtTypeReference> {
+        override val diagnosticClass get() = ProjectionInTypeOfAnnotationMemberWarning::class
+    }
+
     interface LocalAnnotationClassError : KaFirDiagnostic<KtClassOrObject> {
         override val diagnosticClass get() = LocalAnnotationClassError::class
     }
@@ -938,6 +947,14 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface PotentiallyNonReportedAnnotation : KaFirDiagnostic<KtAnnotationEntry> {
         override val diagnosticClass get() = PotentiallyNonReportedAnnotation::class
+    }
+
+    interface ThrowsInAnnotationError : KaFirDiagnostic<KtAnnotationEntry> {
+        override val diagnosticClass get() = ThrowsInAnnotationError::class
+    }
+
+    interface ThrowsInAnnotationWarning : KaFirDiagnostic<KtAnnotationEntry> {
+        override val diagnosticClass get() = ThrowsInAnnotationWarning::class
     }
 
     interface JsModuleProhibitedOnVar : KaFirDiagnostic<KtElement> {
@@ -1786,6 +1803,14 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface ReifiedTypeParameterNoInline : KaFirDiagnostic<KtTypeParameter> {
         override val diagnosticClass get() = ReifiedTypeParameterNoInline::class
+    }
+
+    interface ReifiedTypeParameterOnAliasError : KaFirDiagnostic<KtTypeParameter> {
+        override val diagnosticClass get() = ReifiedTypeParameterOnAliasError::class
+    }
+
+    interface ReifiedTypeParameterOnAliasWarning : KaFirDiagnostic<KtTypeParameter> {
+        override val diagnosticClass get() = ReifiedTypeParameterOnAliasWarning::class
     }
 
     interface TypeParametersNotAllowed : KaFirDiagnostic<KtDeclaration> {
@@ -3832,6 +3857,14 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface SynchronizedInInterface : KaFirDiagnostic<KtAnnotationEntry> {
         override val diagnosticClass get() = SynchronizedInInterface::class
+    }
+
+    interface SynchronizedInAnnotationError : KaFirDiagnostic<KtAnnotationEntry> {
+        override val diagnosticClass get() = SynchronizedInAnnotationError::class
+    }
+
+    interface SynchronizedInAnnotationWarning : KaFirDiagnostic<KtAnnotationEntry> {
+        override val diagnosticClass get() = SynchronizedInAnnotationWarning::class
     }
 
     interface SynchronizedOnInline : KaFirDiagnostic<KtAnnotationEntry> {

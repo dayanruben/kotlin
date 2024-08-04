@@ -55,8 +55,23 @@ fun main(args: Array<String>) {
         }
 
         testGroup("js/js.tests/tests-gen", "compiler/testData/klib/syntheticAccessors") {
-            testClass<AbstractFirJsKlibSyntheticAccessorTest> {
+            testClass<AbstractFirJsKlibSyntheticAccessorInPhase1Test> {
                 model()
+            }
+            testClass<AbstractFirJsKlibSyntheticAccessorInPhase2Test> {
+                model()
+            }
+        }
+
+        testGroup("js/js.tests/klib-compatibility/tests-gen", "compiler/testData/klib/versionCompatibility") {
+            testClass<AbstractJsKlibCompatibilityNoICTestCase> {
+                model(pattern = "^([^_](.+))$", targetBackend = TargetBackend.JS_IR, recursive = false)
+            }
+            testClass<AbstractJsKlibCompatibilityNoICES6TestCase> {
+                model(pattern = "^([^_](.+))$", targetBackend = TargetBackend.JS_IR, recursive = false)
+            }
+            testClass<AbstractJsKlibCompatibilityWithICTestCase> {
+                model(pattern = "^([^_](.+))$", targetBackend = TargetBackend.JS_IR, recursive = false)
             }
         }
 

@@ -12,9 +12,12 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.declarations.utils.modality
 import org.jetbrains.kotlin.fir.expressions.FirCallableReferenceAccess
+import org.jetbrains.kotlin.fir.expressions.FirNamedArgumentExpression
+import org.jetbrains.kotlin.fir.expressions.FirSpreadArgumentExpression
 import org.jetbrains.kotlin.fir.expressions.unwrapArgument
 import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.resolve.BodyResolveComponents
+import org.jetbrains.kotlin.fir.resolve.calls.ConeResolutionAtom
 import org.jetbrains.kotlin.fir.resolve.calls.ConeResolvedCallableReferenceAtom
 import org.jetbrains.kotlin.fir.resolve.calls.candidate.Candidate
 import org.jetbrains.kotlin.fir.resolve.calls.candidate.FirNamedReferenceWithCandidate
@@ -307,7 +310,7 @@ class ConeOverloadConflictResolver(
 
         val bestCandidatesByParameterTypes = candidateSignatures.filter { signature ->
             candidateSignatures.all { other ->
-                signature === other || isNotLessSpecificCallWithArgumentMapping(signature, other, discriminateGenerics, useOriginalSamTypes)
+                signature === other || isEquallyOrMoreSpecificCallWithArgumentMapping(signature, other, discriminateGenerics, useOriginalSamTypes)
             }
         }
 
@@ -317,7 +320,7 @@ class ConeOverloadConflictResolver(
     /**
      * `call1` is not less specific than `call2`
      */
-    private fun isNotLessSpecificCallWithArgumentMapping(
+    private fun isEquallyOrMoreSpecificCallWithArgumentMapping(
         call1: CandidateSignature,
         call2: CandidateSignature,
         discriminateGenerics: Boolean,
@@ -329,12 +332,12 @@ class ConeOverloadConflictResolver(
     private fun List<CandidateSignature>.exactMaxWith(): CandidateSignature? {
         var result: CandidateSignature? = null
         for (candidate in this) {
-            if (result == null || checkExpectAndNotLessSpecificShape(candidate, result)) {
+            if (result == null || checkExpectAndEquallyOrMoreSpecificShape(candidate, result)) {
                 result = candidate
             }
         }
         if (result == null) return null
-        if (any { it != result && checkExpectAndNotLessSpecificShape(it, result) }) {
+        if (any { it != result && checkExpectAndEquallyOrMoreSpecificShape(it, result) }) {
             return null
         }
         return result
@@ -343,7 +346,7 @@ class ConeOverloadConflictResolver(
     /**
      * call1.expect
      */
-    private fun checkExpectAndNotLessSpecificShape(
+    private fun checkExpectAndEquallyOrMoreSpecificShape(
         call1: FlatSignature<Candidate>,
         call2: FlatSignature<Candidate>
     ): Boolean {
@@ -387,7 +390,7 @@ class ConeOverloadConflictResolver(
         if (call1.contextReceiverCount > call2.contextReceiverCount) return true
         if (call1.contextReceiverCount < call2.contextReceiverCount) return false
 
-        return createEmptyConstraintSystem().isSignatureNotLessSpecific(
+        return createEmptyConstraintSystem().isSignatureEquallyOrMoreSpecific(
             call1,
             call2,
             SpecificityComparisonWithNumerics,
@@ -398,7 +401,7 @@ class ConeOverloadConflictResolver(
 
     @Suppress("PrivatePropertyName")
     private val SpecificityComparisonWithNumerics = object : SpecificityComparisonCallbacks {
-        override fun isNonSubtypeNotLessSpecific(specific: KotlinTypeMarker, general: KotlinTypeMarker): Boolean {
+        override fun isNonSubtypeEquallyOrMoreSpecific(specific: KotlinTypeMarker, general: KotlinTypeMarker): Boolean {
             requireOrDescribe(specific is ConeKotlinType, specific)
             requireOrDescribe(general is ConeKotlinType, general)
 
@@ -501,10 +504,15 @@ class ConeOverloadConflictResolver(
         )
     }
 
-    private fun FirValueParameter.argumentType(): ConeKotlinType {
+    private fun FirValueParameter.argumentType(argument: ConeResolutionAtom): ConeKotlinType {
         val type = returnTypeRef.coneType
-        if (isVararg) return type.arrayElementType()!!
-        return type
+        val isPassedAsNamedArgument = argument.expression is FirNamedArgumentExpression // Both spread and non-spread
+        val isPassedAsSpreadArgument = argument.expression is FirSpreadArgumentExpression
+
+        return when {
+            isVararg && !isPassedAsNamedArgument && !isPassedAsSpreadArgument -> type.arrayElementType()!!
+            else -> type
+        }
     }
 
     private fun computeSignatureTypes(
@@ -524,16 +532,16 @@ class ConeOverloadConflictResolver(
             } else {
                 called.contextReceivers.mapTo(this) { TypeWithConversion(it.typeRef.coneType.prepareType(session, call)) }
                 if (call.argumentMappingInitialized) {
-                    call.argumentMapping.mapTo(this) { (_, parameter) ->
-                        parameter.toTypeWithConversion(session, call)
+                    call.argumentMapping.mapTo(this) { (argument, parameter) ->
+                        parameter.toTypeWithConversion(argument, session, call)
                     }
                 }
             }
         }
     }
 
-    private fun FirValueParameter.toTypeWithConversion(session: FirSession, call: Candidate): TypeWithConversion {
-        val argumentType = argumentType().prepareType(session, call)
+    private fun FirValueParameter.toTypeWithConversion(argument: ConeResolutionAtom, session: FirSession, call: Candidate): TypeWithConversion {
+        val argumentType = argumentType(argument).prepareType(session, call)
         val functionTypeForSam = toFunctionTypeForSamOrNull(call)
         return if (functionTypeForSam == null) {
             TypeWithConversion(argumentType)

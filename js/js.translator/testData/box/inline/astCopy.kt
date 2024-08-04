@@ -2,8 +2,6 @@
 // EXPECTED_REACHABLE_NODES: 1281
 package foo
 
-// CHECK_FUNCTIONS_HAVE_SAME_LINES: syntaxTestInline syntaxTest TARGET_BACKENDS=JS
-
 inline fun syntaxTestInline() {
     var result: Int = -0
 
@@ -67,8 +65,8 @@ fun syntaxTest() {
     syntaxTestInline()
 }
 
-// CHECK_BREAKS_COUNT: function=box count=0 TARGET_BACKENDS=JS_IR
-// CHECK_LABELS_COUNT: function=box name=$l$block count=0 TARGET_BACKENDS=JS_IR
+// CHECK_BREAKS_COUNT: function=box count=0
+// CHECK_LABELS_COUNT: function=box name=$l$block count=0
 fun box(): String {
     syntaxTest()
     return "OK"

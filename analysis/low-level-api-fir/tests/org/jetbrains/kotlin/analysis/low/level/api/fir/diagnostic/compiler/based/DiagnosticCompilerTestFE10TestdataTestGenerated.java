@@ -82,6 +82,18 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
     }
 
     @Test
+    @TestMetadata("ambiguityWithVararg.kt")
+    public void testAmbiguityWithVararg() {
+      runTest("compiler/testData/diagnostics/tests/ambiguityWithVararg.kt");
+    }
+
+    @Test
+    @TestMetadata("ambiguityWithVarargManyExamples.kt")
+    public void testAmbiguityWithVarargManyExamples() {
+      runTest("compiler/testData/diagnostics/tests/ambiguityWithVarargManyExamples.kt");
+    }
+
+    @Test
     @TestMetadata("ambiguousLabelInExtensionFunctionWithOuterClass.kt")
     public void testAmbiguousLabelInExtensionFunctionWithOuterClass() {
       runTest("compiler/testData/diagnostics/tests/ambiguousLabelInExtensionFunctionWithOuterClass.kt");
@@ -1465,6 +1477,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
     @TestMetadata("RecursiveTypeParameterEqualityCheck.kt")
     public void testRecursiveTypeParameterEqualityCheck() {
       runTest("compiler/testData/diagnostics/tests/RecursiveTypeParameterEqualityCheck.kt");
+    }
+
+    @Test
+    @TestMetadata("recursiveTypealiasWithProjection.kt")
+    public void testRecursiveTypealiasWithProjection() {
+      runTest("compiler/testData/diagnostics/tests/recursiveTypealiasWithProjection.kt");
     }
 
     @Test
@@ -8237,6 +8255,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         @TestMetadata("elvisOperator.kt")
         public void testElvisOperator() {
           runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/definiteReturn/elvisOperator.kt");
+        }
+
+        @Test
+        @TestMetadata("InlineReturn.kt")
+        public void testInlineReturn() {
+          runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/definiteReturn/InlineReturn.kt");
         }
 
         @Test
@@ -15461,6 +15485,18 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         @TestMetadata("ReifiedClass.kt")
         public void testReifiedClass() {
           runTest("compiler/testData/diagnostics/tests/generics/tpAsReified/ReifiedClass.kt");
+        }
+
+        @Test
+        @TestMetadata("ReifiedTypeAliasDisabled.kt")
+        public void testReifiedTypeAliasDisabled() {
+          runTest("compiler/testData/diagnostics/tests/generics/tpAsReified/ReifiedTypeAliasDisabled.kt");
+        }
+
+        @Test
+        @TestMetadata("ReifiedTypeAliasEnabled.kt")
+        public void testReifiedTypeAliasEnabled() {
+          runTest("compiler/testData/diagnostics/tests/generics/tpAsReified/ReifiedTypeAliasEnabled.kt");
         }
       }
 
@@ -25318,6 +25354,22 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
     }
 
     @Nested
+    @TestMetadata("compiler/testData/diagnostics/tests/metadata")
+    @TestDataPath("$PROJECT_ROOT")
+    public class Metadata {
+      @Test
+      public void testAllFilesPresentInMetadata() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/metadata"), Pattern.compile("^(.+)\\.(kt|kts)$"), Pattern.compile("^(.+)\\.(reversed|fir|ll|latestLV)\\.kts?$"), true);
+      }
+
+      @Test
+      @TestMetadata("exhaustiveExpectBoolean.kt")
+      public void testExhaustiveExpectBoolean() {
+        runTest("compiler/testData/diagnostics/tests/metadata/exhaustiveExpectBoolean.kt");
+      }
+    }
+
+    @Nested
     @TestMetadata("compiler/testData/diagnostics/tests/modifiers")
     @TestDataPath("$PROJECT_ROOT")
     public class Modifiers {
@@ -35135,6 +35187,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       }
 
       @Test
+      @TestMetadata("samConversionToGenericWrongNullabilityForbidden.kt")
+      public void testSamConversionToGenericWrongNullabilityForbidden() {
+        runTest("compiler/testData/diagnostics/tests/samConversions/samConversionToGenericWrongNullabilityForbidden.kt");
+      }
+
+      @Test
       @TestMetadata("samConversionWithCallableReference.kt")
       public void testSamConversionWithCallableReference() {
         runTest("compiler/testData/diagnostics/tests/samConversions/samConversionWithCallableReference.kt");
@@ -44736,6 +44794,18 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         }
 
         @Test
+        @TestMetadata("annotationPropertyGettersDisabled.kt")
+        public void testAnnotationPropertyGettersDisabled() {
+          runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationApplicability/annotationPropertyGettersDisabled.kt");
+        }
+
+        @Test
+        @TestMetadata("annotationPropertyGettersEnabled.kt")
+        public void testAnnotationPropertyGettersEnabled() {
+          runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationApplicability/annotationPropertyGettersEnabled.kt");
+        }
+
+        @Test
         @TestMetadata("annotationsOnUseSiteTargets.kt")
         public void testAnnotationsOnUseSiteTargets() {
           runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationApplicability/annotationsOnUseSiteTargets.kt");
@@ -48794,6 +48864,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       @TestMetadata("classArrayInAnnotation.kt")
       public void testClassArrayInAnnotation() {
         runTest("compiler/testData/diagnostics/testsWithStdLib/reflection/classArrayInAnnotation.kt");
+      }
+
+      @Test
+      @TestMetadata("lambdaInsteadOfKFunction.kt")
+      public void testLambdaInsteadOfKFunction() {
+        runTest("compiler/testData/diagnostics/testsWithStdLib/reflection/lambdaInsteadOfKFunction.kt");
       }
 
       @Test

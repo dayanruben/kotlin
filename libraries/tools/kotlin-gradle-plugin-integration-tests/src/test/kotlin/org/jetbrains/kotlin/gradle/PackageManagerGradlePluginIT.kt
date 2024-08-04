@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.LockCopyTask.Companion.UPGRADE
 import org.jetbrains.kotlin.gradle.targets.js.npm.fromSrcPackageJson
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin
 import org.jetbrains.kotlin.gradle.testbase.*
-import org.jetbrains.kotlin.gradle.testbase.TestVersions.Gradle.G_7_6
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.condition.OS
 import kotlin.io.path.deleteExisting
@@ -55,10 +54,8 @@ class NpmGradlePluginIT : PackageManagerGradlePluginIT() {
     @DisplayName("package-lock is OS independent")
     @GradleTest
     @OsCondition(enabledOnCI = [OS.WINDOWS])
-    @GradleTestVersions(minVersion = G_7_6)
     fun testPackageLockOsIndependent(gradleVersion: GradleVersion) {
         project("kotlin-js-package-lock-project", gradleVersion) {
-            buildGradleKts.modify(::transformBuildScriptWithPluginsDsl)
 
             build(":kotlinStorePackageLock") {
                 val packageLock = projectPath.resolve(KOTLIN_JS_STORE).resolve(PACKAGE_LOCK)
@@ -135,7 +132,6 @@ abstract class PackageManagerGradlePluginIT : KGPBaseTest() {
 
     @DisplayName("js composite build works with lock file persistence")
     @GradleTest
-    @GradleTestVersions(minVersion = G_7_6)
     fun testJsCompositeBuildWithUpgradeLockFile(gradleVersion: GradleVersion) {
         project("js-composite-build", gradleVersion) {
             testJsCompositeBuildWithUpgradeLockFile(
@@ -149,16 +145,6 @@ abstract class PackageManagerGradlePluginIT : KGPBaseTest() {
         upgradeTask: String,
         storeTask: String,
     ) {
-        buildGradleKts.modify(::transformBuildScriptWithPluginsDsl)
-
-        subProject("lib").apply {
-            buildGradleKts.modify(::transformBuildScriptWithPluginsDsl)
-        }
-
-        subProject("base").apply {
-            buildGradleKts.modify(::transformBuildScriptWithPluginsDsl)
-        }
-
         build(upgradeTask) {
             assertTasksExecuted(":base:publicPackageJson")
             assertTasksExecuted(":lib:lib-2:publicPackageJson")

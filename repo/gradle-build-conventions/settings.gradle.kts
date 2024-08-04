@@ -14,7 +14,7 @@ pluginManagement {
 
 plugins {
     id("build-cache")
-    id("gradle-enterprise")
+    id("develocity")
     id("jvm-toolchain-provisioning")
     id("kotlin-daemon-config")
 }
@@ -31,3 +31,4 @@ include(":buildsrc-compat")
 include(":prepare-deps")
 include(":generators")
 include(":compiler-tests-convention")
+include(":android-sdk-provisioner")

@@ -144,7 +144,10 @@ class FirWhenExhaustivenessTransformer(private val bodyResolveComponents: BodyRe
         val unwrappedIntersectionTypes = subjectType.unwrapTypeParameterAndIntersectionTypes(bodyResolveComponents.session)
 
         for (unwrappedSubjectType in unwrappedIntersectionTypes) {
-            if (unwrappedSubjectType.toRegularClassSymbol(session)?.isExpect != true) {
+            // `kotlin.Boolean` is always exhaustive despite the fact it could be `expect` (relevant for stdlib K2)
+            if (unwrappedSubjectType.toRegularClassSymbol(session)?.isExpect != true ||
+                unwrappedSubjectType.classId == StandardClassIds.Boolean
+            ) {
                 val localStatus = computeStatusForNonIntersectionType(unwrappedSubjectType, session, whenExpression)
                 when {
                     localStatus === ExhaustivenessStatus.ProperlyExhaustive -> {
@@ -206,9 +209,9 @@ private sealed class WhenExhaustivenessChecker {
             whenBranch.condition.accept(this, data)
         }
 
-        override fun visitBinaryLogicExpression(binaryLogicExpression: FirBinaryLogicExpression, data: D) {
-            if (binaryLogicExpression.kind == LogicOperationKind.OR) {
-                binaryLogicExpression.acceptChildren(this, data)
+        override fun visitBooleanOperatorExpression(booleanOperatorExpression: FirBooleanOperatorExpression, data: D) {
+            if (booleanOperatorExpression.kind == LogicOperationKind.OR) {
+                booleanOperatorExpression.acceptChildren(this, data)
             }
         }
     }

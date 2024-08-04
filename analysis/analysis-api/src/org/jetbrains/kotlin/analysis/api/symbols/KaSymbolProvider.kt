@@ -47,7 +47,9 @@ public interface KaSymbolProvider {
 
     public val KtEnumEntry.symbol: KaEnumEntrySymbol
 
+    @Deprecated("This API is unsafe. Use 'symbol' instead", replaceWith = ReplaceWith("symbol as KaAnonymousFunctionSymbol"))
     public val KtNamedFunction.anonymousSymbol: KaAnonymousFunctionSymbol
+        get() = symbol as KaAnonymousFunctionSymbol
 
     public val KtFunctionLiteral.symbol: KaAnonymousFunctionSymbol
 
@@ -97,8 +99,8 @@ public interface KaSymbolProvider {
     @Deprecated("Use 'symbol' instead", replaceWith = ReplaceWith("symbol"))
     public fun KtEnumEntry.getEnumEntrySymbol(): KaEnumEntrySymbol = symbol
 
-    @Deprecated("Use 'anonymousSymbol' instead", replaceWith = ReplaceWith("anonymousSymbol"))
-    public fun KtNamedFunction.getAnonymousFunctionSymbol(): KaAnonymousFunctionSymbol = anonymousSymbol
+    @Deprecated("Use 'symbol' instead", replaceWith = ReplaceWith("symbol as KaAnonymousFunctionSymbol"))
+    public fun KtNamedFunction.getAnonymousFunctionSymbol(): KaAnonymousFunctionSymbol = symbol as KaAnonymousFunctionSymbol
 
     @Deprecated("Use 'symbol' instead", replaceWith = ReplaceWith("symbol"))
     public fun KtFunctionLiteral.getAnonymousFunctionSymbol(): KaAnonymousFunctionSymbol = symbol

@@ -130,6 +130,8 @@ class Fir2IrVisitor(
         @OptIn(UnsafeDuringIrConstructionAPI::class)
         val irEnumEntry = classifierStorage.getIrEnumEntrySymbol(enumEntry).owner
         annotationGenerator.generate(irEnumEntry, enumEntry)
+        if (configuration.skipBodies) return irEnumEntry
+
         val correspondingClass = irEnumEntry.correspondingClass
         val initializer = enumEntry.initializer
         val irType = enumEntry.returnTypeRef.toIrType(c)
@@ -332,8 +334,12 @@ class Fir2IrVisitor(
 
         declarationStorage.enterScope(irFunction.symbol)
         conversionScope.withParent(irFunction) {
-            val irBlock = codeFragment.block.convertToIrBlock(forceUnitType = false)
-            irFunction.body = irFactory.createExpressionBody(irBlock)
+            irFunction.body = if (configuration.skipBodies) {
+                irFactory.createExpressionBody(IrConstImpl.defaultValueForType(UNDEFINED_OFFSET, UNDEFINED_OFFSET, irFunction.returnType))
+            } else {
+                val irBlock = codeFragment.block.convertToIrBlock(forceUnitType = false)
+                irFactory.createExpressionBody(irBlock)
+            }
         }
         declarationStorage.leaveScope(irFunction.symbol)
 
@@ -393,7 +399,9 @@ class Fir2IrVisitor(
         val irAnonymousInitializer = declarationStorage.getIrAnonymousInitializer(anonymousInitializer)
         declarationStorage.enterScope(irAnonymousInitializer.symbol)
         conversionScope.withInitBlock(irAnonymousInitializer) {
-            irAnonymousInitializer.body = convertToIrBlockBody(anonymousInitializer.body!!)
+            irAnonymousInitializer.body =
+                if (configuration.skipBodies) irFactory.createBlockBody(UNDEFINED_OFFSET, UNDEFINED_OFFSET)
+                else convertToIrBlockBody(anonymousInitializer.body!!)
         }
         declarationStorage.leaveScope(irAnonymousInitializer.symbol)
         return irAnonymousInitializer
@@ -543,7 +551,10 @@ class Fir2IrVisitor(
                 varargArgumentsExpression.resolvedType.toIrType(c),
                 varargArgumentsExpression.coneElementTypeOrNull?.toIrType(c)
                     ?: error("Vararg expression has incorrect type"),
-                varargArgumentsExpression.arguments.map { it.convertToIrVarargElement() }
+                varargArgumentsExpression.arguments.mapNotNull {
+                    if (isGetClassOfUnresolvedTypeInAnnotation(it)) null
+                    else it.convertToIrVarargElement()
+                }
             )
         }
     }
@@ -1693,21 +1704,21 @@ class Fir2IrVisitor(
         LogicOperationKind.OR -> IrDynamicOperator.OROR
     }
 
-    override fun visitBinaryLogicExpression(binaryLogicExpression: FirBinaryLogicExpression, data: Any?): IrElement {
-        return binaryLogicExpression.convertWithOffsets<IrElement> { startOffset, endOffset ->
-            val leftOperand = binaryLogicExpression.leftOperand.accept(this, data) as IrExpression
-            val rightOperand = binaryLogicExpression.rightOperand.accept(this, data) as IrExpression
+    override fun visitBooleanOperatorExpression(booleanOperatorExpression: FirBooleanOperatorExpression, data: Any?): IrElement {
+        return booleanOperatorExpression.convertWithOffsets<IrElement> { startOffset, endOffset ->
+            val leftOperand = booleanOperatorExpression.leftOperand.accept(this, data) as IrExpression
+            val rightOperand = booleanOperatorExpression.rightOperand.accept(this, data) as IrExpression
             if (leftOperand.type is IrDynamicType) {
                 IrDynamicOperatorExpressionImpl(
                     startOffset,
                     endOffset,
                     builtins.booleanType,
-                    binaryLogicExpression.kind.toIrDynamicOperator(),
+                    booleanOperatorExpression.kind.toIrDynamicOperator(),
                 ).apply {
                     receiver = leftOperand
                     arguments.add(rightOperand)
                 }
-            } else when (binaryLogicExpression.kind) {
+            } else when (booleanOperatorExpression.kind) {
                 LogicOperationKind.AND -> {
                     IrWhenImpl(startOffset, endOffset, builtins.booleanType, IrStatementOrigin.ANDAND).apply {
                         branches.add(IrBranchImpl(leftOperand, rightOperand))
@@ -1723,6 +1734,12 @@ class Fir2IrVisitor(
             }
         }
     }
+
+    internal fun isGetClassOfUnresolvedTypeInAnnotation(expression: FirExpression): Boolean =
+    // In kapt mode, skip `Unresolved::class` in annotation arguments, because it cannot be handled by IrInterpreter,
+        // and because this replicates K1 behavior (see `ConstantExpressionEvaluatorVisitor.visitClassLiteralExpression`).
+        configuration.skipBodies && annotationMode &&
+                expression is FirGetClassCall && expression.argument.resolvedType is ConeErrorType
 }
 
 val KtSourceElement.isChildOfForLoop: Boolean

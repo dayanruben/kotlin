@@ -5,7 +5,9 @@
 
 package org.jetbrains.kotlin.light.classes.symbol.classes
 
+import com.intellij.psi.PsiField
 import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierList
 import com.intellij.psi.PsiReferenceList
@@ -16,7 +18,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.symbolPointerOfType
 import org.jetbrains.kotlin.asJava.classes.lazyPub
-import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.light.classes.symbol.annotations.AbstractClassAdditionalAnnotationsProvider
 import org.jetbrains.kotlin.light.classes.symbol.annotations.GranularAnnotationsBox
 import org.jetbrains.kotlin.light.classes.symbol.annotations.SymbolAnnotationsProvider
@@ -86,7 +87,9 @@ internal abstract class SymbolLightClassForInterfaceOrAnnotationClass : SymbolLi
 
     final override fun getModifierList(): PsiModifierList? = _modifierList
 
-    override fun getOwnFields(): List<KtLightField> = cachedValue {
+    override val ownConstructors: Array<PsiMethod> get() = PsiMethod.EMPTY_ARRAY
+
+    override fun getOwnFields(): List<PsiField> = cachedValue {
         withClassSymbol { classSymbol ->
             buildList {
                 addCompanionObjectFieldIfNeeded(this, classSymbol)

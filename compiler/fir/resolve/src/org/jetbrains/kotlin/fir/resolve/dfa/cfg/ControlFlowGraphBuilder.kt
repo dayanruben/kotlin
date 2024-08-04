@@ -1011,39 +1011,28 @@ class ControlFlowGraphBuilder {
 
     // ----------------------------------- Boolean operators -----------------------------------
 
-    fun enterBinaryLogicExpression(binaryLogicExpression: FirBinaryLogicExpression): CFGNode<FirBinaryLogicExpression> {
-        return when (binaryLogicExpression.kind) {
-            LogicOperationKind.AND -> createBinaryAndEnterNode(binaryLogicExpression)
-            LogicOperationKind.OR -> createBinaryOrEnterNode(binaryLogicExpression)
-        }.also { addNewSimpleNode(it) }
+    fun enterBooleanOperatorExpression(booleanOperatorExpression: FirBooleanOperatorExpression): CFGNode<FirBooleanOperatorExpression> {
+        return createBooleanOperatorEnterNode(booleanOperatorExpression).also { addNewSimpleNode(it) }
     }
 
-    fun exitLeftBinaryLogicExpressionArgument(
-        binaryLogicExpression: FirBinaryLogicExpression,
-    ): Pair<CFGNode<FirBinaryLogicExpression>, CFGNode<FirBinaryLogicExpression>> {
-        val (leftExitNode, rightEnterNode) = when (binaryLogicExpression.kind) {
-            LogicOperationKind.AND ->
-                createBinaryAndExitLeftOperandNode(binaryLogicExpression) to createBinaryAndEnterRightOperandNode(binaryLogicExpression)
-            LogicOperationKind.OR ->
-                createBinaryOrExitLeftOperandNode(binaryLogicExpression) to createBinaryOrEnterRightOperandNode(binaryLogicExpression)
-        }
+    fun exitLeftBooleanOperatorExpressionArgument(
+        booleanOperatorExpression: FirBooleanOperatorExpression,
+    ): Pair<CFGNode<FirBooleanOperatorExpression>, CFGNode<FirBooleanOperatorExpression>> {
+        val (leftExitNode, rightEnterNode) = createBooleanOperatorExitLeftOperandNode(booleanOperatorExpression) to createBooleanOperatorEnterRightOperandNode(booleanOperatorExpression)
         addNewSimpleNode(leftExitNode)
         lastNodes.push(leftExitNode) // to create an exit edge later
         val rhsNeverExecuted =
-            binaryLogicExpression.leftOperand.booleanLiteralValue == (binaryLogicExpression.kind != LogicOperationKind.AND)
+            booleanOperatorExpression.leftOperand.booleanLiteralValue == (booleanOperatorExpression.kind != LogicOperationKind.AND)
         addNewSimpleNode(rightEnterNode, isDead = rhsNeverExecuted)
         return leftExitNode to rightEnterNode
     }
 
-    fun exitBinaryLogicExpression(binaryLogicExpression: FirBinaryLogicExpression): AbstractBinaryExitNode<FirBinaryLogicExpression> {
-        val exitNode = when (binaryLogicExpression.kind) {
-            LogicOperationKind.AND -> createBinaryAndExitNode(binaryLogicExpression)
-            LogicOperationKind.OR -> createBinaryOrExitNode(binaryLogicExpression)
-        }
+    fun exitBooleanOperatorExpression(booleanOperatorExpression: FirBooleanOperatorExpression): BooleanOperatorExitNode {
         val rightNode = lastNodes.pop()
         val leftNode = lastNodes.pop()
+        val exitNode = createBooleanOperatorExitNode(booleanOperatorExpression, leftNode, rightNode)
         val rhsAlwaysExecuted =
-            binaryLogicExpression.leftOperand.booleanLiteralValue == (binaryLogicExpression.kind == LogicOperationKind.AND)
+            booleanOperatorExpression.leftOperand.booleanLiteralValue == (booleanOperatorExpression.kind == LogicOperationKind.AND)
         if (rhsAlwaysExecuted) {
             addEdge(rightNode, exitNode)
         } else {

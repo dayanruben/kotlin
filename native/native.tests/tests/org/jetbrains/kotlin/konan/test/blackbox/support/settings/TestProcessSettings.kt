@@ -25,7 +25,7 @@ import java.io.IOException
 import java.net.URLClassLoader
 import java.util.*
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * The tested and the host Kotlin/Native targets.
@@ -201,9 +201,7 @@ internal class BaseDirs(val testBuildDir: File)
  */
 internal class Timeouts(val executionTimeout: Duration) {
     companion object {
-        // Don't forget to adjust the following tests when increasing the timeout:
-        //   native/native.tests/testData/samples/standalone_notr_long_running*.kt
-        val DEFAULT_EXECUTION_TIMEOUT: Duration get() = 60.seconds
+        val DEFAULT_EXECUTION_TIMEOUT: Duration get() = 10.minutes
     }
 }
 

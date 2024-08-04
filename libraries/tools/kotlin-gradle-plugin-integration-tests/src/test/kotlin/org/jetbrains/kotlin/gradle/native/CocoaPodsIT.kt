@@ -36,7 +36,6 @@ import kotlin.test.assertTrue
 @OsCondition(supportedOn = [OS.MAC], enabledOnCI = [OS.MAC])
 @DisplayName("CocoaPods plugin tests")
 @NativeGradlePluginTests
-@GradleTestVersions(minVersion = TestVersions.Gradle.G_7_0)
 @OptIn(EnvironmentalVariablesOverride::class)
 class CocoaPodsIT : KGPBaseTest() {
 
@@ -104,9 +103,7 @@ class CocoaPodsIT : KGPBaseTest() {
 
             buildWithCocoapodsWrapper(":kotlin-library:podImport") {
                 podImportAsserts(subProject("kotlin-library").buildGradleKts, "kotlin-library")
-                if (gradleVersion >= GradleVersion.version(TestVersions.Gradle.G_7_6)) {
-                    assertOutputContains("Podfile location is set")
-                }
+                assertOutputContains("Podfile location is set")
             }
 
             buildWithCocoapodsWrapper(":second-library:podImport") {
@@ -529,7 +526,9 @@ class CocoaPodsIT : KGPBaseTest() {
                     cocoapodsPlatform = "iphonesimulator",
                     cocoapodsArchs = "x86_64",
                     cocoapodsConfiguration = "Debug"
-                )
+                ),
+                // KT-55832
+                configurationCache = BuildOptions.ConfigurationCacheValue.DISABLED
             )
             buildAndFail("syncFramework", buildOptions = buildOptions) {
                 assertOutputContains("error: Could not find com.example.unknown:dependency:0.0.1.")
@@ -546,8 +545,10 @@ class CocoaPodsIT : KGPBaseTest() {
                 nativeOptions = this.buildOptions.nativeOptions.copy(
                     cocoapodsPlatform = "iphonesimulator",
                     cocoapodsArchs = "x86_64",
-                    cocoapodsConfiguration = "Debug"
-                )
+                    cocoapodsConfiguration = "Debug",
+                ),
+                // KT-55832
+                configurationCache = BuildOptions.ConfigurationCacheValue.DISABLED
             )
             buildAndFail("syncFramework", buildOptions = buildOptions) {
                 assertOutputContains("/native-cocoapods-template/src/commonMain/kotlin/A.kt:5:2: error: Syntax error: Expecting a top level declaration")
@@ -566,7 +567,9 @@ class CocoaPodsIT : KGPBaseTest() {
                     cocoapodsPlatform = "iphonesimulator",
                     cocoapodsArchs = "x86_64",
                     cocoapodsConfiguration = "Debug"
-                )
+                ),
+                // KT-55832
+                configurationCache = BuildOptions.ConfigurationCacheValue.DISABLED
             )
             buildAndFail("linkPodDebugFrameworkIOS", buildOptions = buildOptions) {
                 assertOutputContains("e: file:///")
@@ -587,7 +590,9 @@ class CocoaPodsIT : KGPBaseTest() {
                     cocoapodsArchs = "x86_64",
                     cocoapodsConfiguration = "Debug",
                     useXcodeMessageStyle = true
-                )
+                ),
+                // KT-55832
+                configurationCache = BuildOptions.ConfigurationCacheValue.DISABLED
             )
             buildAndFail("linkPodDebugFrameworkIOS", buildOptions = buildOptions) {
                 assertOutputContains("/native-cocoapods-template/src/commonMain/kotlin/A.kt:5:2: error: Syntax error: Expecting a top level declaration")
@@ -768,9 +773,9 @@ class CocoaPodsIT : KGPBaseTest() {
             )
 
             buildWithCocoapodsWrapper(":linkPodDebugFrameworkIOS") {
-                assertTasksExecuted(":podBuildAFNetworkingIphonesimulator")
-                assertTasksExecuted(":podBuildSDWebImageIphonesimulator")
-                assertTasksExecuted(":podBuildSSZipArchiveIphonesimulator")
+                assertTasksExecuted(":podBuildAFNetworkingIosSimulator")
+                assertTasksExecuted(":podBuildSDWebImageIosSimulator")
+                assertTasksExecuted(":podBuildSSZipArchiveIosSimulator")
 
                 assertTasksExecuted(":cinteropSDWebImageIOS")
 
@@ -894,7 +899,6 @@ class CocoaPodsIT : KGPBaseTest() {
     }
 
     @DisplayName("Configuration cache works in a complex scenario")
-    @GradleTestVersions(minVersion = TestVersions.Gradle.G_7_6)
     @GradleTest
     fun testConfigurationCacheWorksInAComplexScenario(gradleVersion: GradleVersion) {
         val buildOptions = defaultBuildOptions.copy(
@@ -904,7 +908,7 @@ class CocoaPodsIT : KGPBaseTest() {
                 cocoapodsArchs = "x86_64",
                 cocoapodsConfiguration = "Debug"
             ),
-            configurationCache = true
+            configurationCache = BuildOptions.ConfigurationCacheValue.ENABLED
         )
 
         nativeProjectWithCocoapodsAndIosAppPodFile(

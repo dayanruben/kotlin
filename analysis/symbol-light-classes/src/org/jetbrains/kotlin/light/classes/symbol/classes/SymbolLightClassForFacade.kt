@@ -18,9 +18,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.pointers.symbolPointerOfType
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.elements.FakeFileForLightClass
-import org.jetbrains.kotlin.asJava.elements.KtLightField
-import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.fileClasses.isJvmMultifileClassFile
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.light.classes.symbol.analyzeForLightClasses
@@ -69,7 +66,6 @@ internal class SymbolLightClassForFacade(
                     annotationsProvider = SymbolAnnotationsProvider(
                         ktModule = this.ktModule,
                         annotatedSymbolPointer = firstFileInFacade.symbolPointerOfType<KaFileSymbol>(),
-                        annotationUseSiteTargetFilter = AnnotationUseSiteTarget.FILE.toOptionalFilter(),
                     )
                 )
             },
@@ -80,9 +76,11 @@ internal class SymbolLightClassForFacade(
 
     override fun getScope(): PsiElement = parent
 
+    override val ownConstructors: Array<PsiMethod> get() = PsiMethod.EMPTY_ARRAY
+
     override fun getOwnMethods(): List<PsiMethod> = cachedValue {
         withFileSymbols { fileSymbols ->
-            val result = mutableListOf<KtLightMethod>()
+            val result = mutableListOf<PsiMethod>()
             val methodsAndProperties = sequence<KaCallableSymbol> {
                 for (fileSymbol in fileSymbols) {
                     for (callableSymbol in fileSymbol.fileScope.callables) {
@@ -111,7 +109,7 @@ internal class SymbolLightClassForFacade(
     private fun loadFieldsFromFile(
         fileScope: KaScope,
         nameGenerator: SymbolLightField.FieldNameGenerator,
-        result: MutableList<KtLightField>
+        result: MutableList<PsiField>
     ) {
         for (propertySymbol in fileScope.callables) {
             if (propertySymbol !is KaKotlinPropertySymbol) continue
@@ -132,7 +130,7 @@ internal class SymbolLightClassForFacade(
         this?.toPsiVisibilityForMember()?.let { it == PsiModifier.PUBLIC } != false
 
     override fun getOwnFields(): List<PsiField> = cachedValue {
-        val result = mutableListOf<KtLightField>()
+        val result = mutableListOf<PsiField>()
         val nameGenerator = SymbolLightField.FieldNameGenerator()
         withFileSymbols { fileSymbols ->
             for (fileSymbol in fileSymbols) {
@@ -171,7 +169,7 @@ internal class SymbolLightClassForFacade(
 
     override fun getInterfaces(): Array<out PsiClass> = PsiClass.EMPTY_ARRAY
     override fun getInnerClasses(): Array<out PsiClass> = PsiClass.EMPTY_ARRAY
-    override fun getOwnInnerClasses(): List<PsiClass> = listOf()
+    override fun getOwnInnerClasses(): List<PsiClass> = emptyList()
     override fun getAllInnerClasses(): Array<PsiClass> = PsiClass.EMPTY_ARRAY
     override fun findInnerClassByName(@NonNls name: String, checkBases: Boolean): PsiClass? = null
     override fun isInheritorDeep(baseClass: PsiClass, classToByPass: PsiClass?): Boolean = false

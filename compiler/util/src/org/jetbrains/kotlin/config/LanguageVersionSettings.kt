@@ -336,6 +336,10 @@ enum class LanguageFeature(
     ProhibitSynchronizationByValueClassesAndPrimitives(KOTLIN_2_1, kind = OTHER), // KT-67791
     AllowSuperCallToJavaInterface(KOTLIN_2_1, kind = OTHER), // KT-69729
     ProhibitJavaClassInheritingPrivateKotlinClass(KOTLIN_2_1, kind = OTHER), // KT-66328
+    ProhibitReturningIncorrectNullabilityValuesFromSamConstructorLambdaOfJdkInterfaces(KOTLIN_2_1, kind = BUG_FIX), // KT-57014
+    // It's not a fully blown LF, but mostly a way to manage potential unexpected semantic changes
+    // See the single usage at org.jetbrains.kotlin.fir.types.ConeTypeApproximator.fastPathSkipApproximation
+    AvoidApproximationOfRecursiveCapturedTypesWithNoReason(KOTLIN_2_1, kind = OTHER), // KT-69995
 
     // 2.2
 
@@ -345,6 +349,9 @@ enum class LanguageFeature(
     ForbidUsingExpressionTypesWithInaccessibleContent(KOTLIN_2_2, kind = BUG_FIX), // KT-66691
     ForbidUsingSupertypesWithInaccessibleContentInTypeArguments(KOTLIN_2_2, kind = BUG_FIX), // KT-66691, KT-66742
     ReportExposedTypeForMoreCasesOfTypeParameterBounds(KOTLIN_2_2, kind = BUG_FIX), // KT-69653
+    ForbidReifiedTypeParametersOnTypeAliases(KOTLIN_2_2, kind = BUG_FIX), // KT-70163
+    ForbidProjectionsInAnnotationProperties(KOTLIN_2_2, kind = BUG_FIX), // KT-70002
+    ForbidJvmAnnotationsOnAnnotationParameters(KOTLIN_2_2, kind = BUG_FIX), // KT-25861
 
     // End of 2.* language features --------------------------------------------------
 

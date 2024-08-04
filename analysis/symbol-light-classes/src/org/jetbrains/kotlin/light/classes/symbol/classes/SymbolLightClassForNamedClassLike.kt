@@ -6,7 +6,9 @@
 package org.jetbrains.kotlin.light.classes.symbol.classes
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
 import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
@@ -18,8 +20,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.isLocal
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.asJava.classes.getParentForLocalDeclaration
 import org.jetbrains.kotlin.asJava.classes.lazyPub
-import org.jetbrains.kotlin.asJava.elements.KtLightField
-import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.light.classes.symbol.annotations.hasJvmStaticAnnotation
 import org.jetbrains.kotlin.light.classes.symbol.fields.SymbolLightField
@@ -69,7 +69,7 @@ internal abstract class SymbolLightClassForNamedClassLike : SymbolLightClassForC
     context(KaSession)
     @Suppress("CONTEXT_RECEIVERS_DEPRECATED")
     protected fun addMethodsFromCompanionIfNeeded(
-        result: MutableList<KtLightMethod>,
+        result: MutableList<PsiMethod>,
         classSymbol: KaNamedClassSymbol,
     ) {
         val companionObjectSymbol = classSymbol.companionObject ?: return
@@ -102,7 +102,7 @@ internal abstract class SymbolLightClassForNamedClassLike : SymbolLightClassForC
     context(KaSession)
     @Suppress("CONTEXT_RECEIVERS_DEPRECATED")
     internal fun addFieldsFromCompanionIfNeeded(
-        result: MutableList<KtLightField>,
+        result: MutableList<PsiField>,
         classSymbol: KaNamedClassSymbol,
         nameGenerator: SymbolLightField.FieldNameGenerator,
     ) {
@@ -125,7 +125,7 @@ internal abstract class SymbolLightClassForNamedClassLike : SymbolLightClassForC
 
     context(KaSession)
     @Suppress("CONTEXT_RECEIVERS_DEPRECATED")
-    protected fun addCompanionObjectFieldIfNeeded(result: MutableList<KtLightField>, classSymbol: KaNamedClassSymbol) {
+    protected fun addCompanionObjectFieldIfNeeded(result: MutableList<PsiField>, classSymbol: KaNamedClassSymbol) {
         val companionObjectSymbols: List<KaNamedClassSymbol>? = classOrObjectDeclaration?.companionObjects?.mapNotNull {
             it.namedClassSymbol
         } ?: classSymbol.companionObject?.let(::listOf)

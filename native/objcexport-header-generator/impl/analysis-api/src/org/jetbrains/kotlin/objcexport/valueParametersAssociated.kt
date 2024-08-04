@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.objcexport
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.backend.konan.objcexport.MethodBridge
 import org.jetbrains.kotlin.backend.konan.objcexport.MethodBridgeValueParameter
 import org.jetbrains.kotlin.name.Name
@@ -79,7 +80,7 @@ private fun KaSession.addReceiver(
 ) {
 
     val receiverType = getObjCReceiverType(function)
-    val receiverTypeName = receiverType?.expandedSymbol?.name
+    val receiverTypeName = getObjCReceiverTypeName(receiverType)
 
     if (receiverType != null && receiverTypeName != null) {
         list.add(
@@ -91,6 +92,11 @@ private fun KaSession.addReceiver(
             )
         )
     }
+}
+
+private fun KaSession.getObjCReceiverTypeName(type: KaType?): Name? {
+    return if (type?.expandedSymbol != null) type.expandedSymbol?.name
+    else if (type is KaTypeParameterType) type.name else null
 }
 
 private fun KtObjCExportSession.mapBridgeToFunctionParameters(
@@ -120,6 +126,7 @@ data class KtObjCParameterData(
  * 3. property extension of inner class
  * 4. function extension of [isMappedObjCType], i.e. fun String.foo()
  * 5. function extension of [Nothing], i.e. fun Nothing.foo()
+ * 5. function extension of `Interface`, i.e. fun Foo.foo() where Foo is Interface
  *
  * Members with non null [objCReceiverType] will have name `receiver`:
  * ```objective-c
@@ -138,11 +145,9 @@ internal fun KaSession.getObjCReceiverType(symbol: KaFunctionSymbol?): KaType? {
         @Suppress("DEPRECATION")
         symbol.dispatchReceiverType
     } else if (symbol.isExtension) {
-        val receiverParameterType = symbol.receiverParameter?.returnType
-        if (isMappedObjCType(receiverParameterType)) receiverParameterType
-        else if ((symbol.containingDeclaration as? KaNamedClassSymbol)?.isInner == true) receiverParameterType
-        else if (receiverParameterType != null && isObjCNothing(receiverParameterType)) return receiverParameterType
-        else null
+        val receiverType = symbol.receiverParameter?.returnType
+        if (isObjCNothing(receiverType)) receiverType
+        else if (getClassIfCategory(symbol) == null) receiverType else null
     } else if (symbol is KaPropertyGetterSymbol || symbol is KaPropertySetterSymbol) {
         val property = symbol.containingDeclaration as KaPropertySymbol
         val isExtension = property.isExtension

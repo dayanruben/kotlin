@@ -24,15 +24,15 @@ SingleObjectPage* SingleObjectPage::Create(uint64_t cellCount) noexcept {
 
 SingleObjectPage::SingleObjectPage(AllocationSize objectSize) noexcept {
     auto& heap = mm::GlobalData::Instance().allocator().impl().heap();
-    heap.allocatedSizeTracker().recordDifference(static_cast<ptrdiff_t>(objectSize.inBytes()), false);
+    heap.allocatedSizeTracker().recordDifferenceAndNotifyScheduler(static_cast<ptrdiff_t>(objectSize.inBytes()));
 }
 
 void SingleObjectPage::Destroy() noexcept {
-    auto* object = reinterpret_cast<kotlin::alloc::HeapObjHeader*>(data_)->object();
+    auto* object = reinterpret_cast<CustomHeapObject*>(data_)->object();
     auto objectSize = AllocationSize::bytesAtLeast(CustomAllocator::GetAllocatedHeapSize(object));
 
     auto& heap = mm::GlobalData::Instance().allocator().impl().heap();
-    heap.allocatedSizeTracker().recordDifference(-static_cast<ptrdiff_t>(objectSize.inBytes()), false);
+    heap.allocatedSizeTracker().recordDifference(-static_cast<ptrdiff_t>(objectSize.inBytes()));
 
     Free(this, pageSize(objectSize).inBytes());
 }

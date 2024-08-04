@@ -16,7 +16,7 @@ class BuildFusStatisticsIT : KGPDaemonsBaseTest() {
     @DisplayName("works for project with buildSrc and kotlinDsl plugin")
     @GradleTest
     @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_7_6, TestVersions.Gradle.G_8_0, TestVersions.Gradle.G_8_2, TestVersions.Gradle.G_8_3],
+        additionalVersions = [TestVersions.Gradle.G_8_0, TestVersions.Gradle.G_8_2, TestVersions.Gradle.G_8_3],
     )
     fun testCompatibilityBuildSrcWithKotlinDsl(gradleVersion: GradleVersion) {
         project(
@@ -92,17 +92,9 @@ class BuildFusStatisticsIT : KGPDaemonsBaseTest() {
         project("simpleProject", gradleVersion) {
             buildGradle.modify {
                 """
-                ${addBuildScriptDependency()}    
-                    
-                $it
+                ${applyFusPluginAndCreateTestFusTask(it)}
                 
-                ${applyFusStatisticPlugin()}
-                
-                ${createTestFusTaskClass()}
-                
-                tasks.register("test-fus", TestFusTask.class).get().doLast {
-                  fusStatisticsBuildService.get().reportMetric("$metricName", $metricValue, null)
-                }
+                ${registerTaskAndReportMetric("test-fus", metricName, metricValue)}
                 """.trimIndent()
             }
 
@@ -117,6 +109,14 @@ class BuildFusStatisticsIT : KGPDaemonsBaseTest() {
             }
         }
     }
+
+    private fun applyFusPluginAndCreateTestFusTask(buildScript: String) = """${addBuildScriptDependency()}    
+                        
+                    $buildScript
+                    
+                    ${applyFusStatisticPlugin()}
+                    
+                    ${createTestFusTaskClass()}"""
 
     private fun addBuildScriptDependency() = """
         buildscript {
@@ -153,21 +153,12 @@ class BuildFusStatisticsIT : KGPDaemonsBaseTest() {
         project("simpleProject", gradleVersion) {
             buildGradle.modify {
                 """
-                ${addBuildScriptDependency()}    
-                    
-                $it
+                ${applyFusPluginAndCreateTestFusTask(it)}
                 
-                ${applyFusStatisticPlugin()}
+                ${registerTaskAndReportMetric("test-fus", metricName, metricValue)}
                 
-                ${createTestFusTaskClass()}
-                
-                tasks.register("test-fus", TestFusTask.class).get().doLast {
-                  fusStatisticsBuildService.get().reportMetric("$metricName", $metricValue, null)
-                }
-                
-                tasks.register("test-fus-second", TestFusTask.class).get().doLast {
-                  fusStatisticsBuildService.get().reportMetric("$metricName", 2, null)
-                }
+                ${registerTaskAndReportMetric("test-fus-second", metricName, "2")}
+            
                 """.trimIndent()
             }
 
@@ -180,6 +171,35 @@ class BuildFusStatisticsIT : KGPDaemonsBaseTest() {
                     "METRIC_NAME=1",
                     "BUILD FINISHED"
                 )
+            }
+        }
+    }
+
+    private fun registerTaskAndReportMetric(taskName: String, metricName: String, metricValue: Any) =
+        """
+            tasks.register("$taskName", TestFusTask.class) {
+                doLast {
+                      fusStatisticsBuildService.get().reportMetric("$metricName", "$metricValue", null)
+                }
+           }
+           """
+
+    @DisplayName("test invalid fus report directory")
+    @GradleTest
+    fun testInvalidFusReportDir(gradleVersion: GradleVersion) {
+        project("simpleProject", gradleVersion) {
+            buildGradle.modify {
+                """
+                ${applyFusPluginAndCreateTestFusTask(it)}
+                
+                ${registerTaskAndReportMetric("test-fus", "metricName", "metricValue")}
+                
+                """.trimIndent()
+            }
+
+            //For kotlin.fus.statistics.path= a root folder will be used, no permission is graded to create /kotlin-fus folder
+            build("test-fus", "-Pkotlin.fus.statistics.path=") {
+                assertOutputContains("Failed to create directory '/kotlin-fus' for FUS report. FUS report won't be created")
             }
         }
     }

@@ -13,7 +13,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.internals.KOTLIN_NATIVE_IGNORE_DISABLED_TARGETS_PROPERTY
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeOutputKind
-import org.jetbrains.kotlin.gradle.report.BuildReportType
 import org.jetbrains.kotlin.gradle.testbase.*
 import org.jetbrains.kotlin.gradle.util.capitalize
 import org.jetbrains.kotlin.gradle.util.replaceText
@@ -396,7 +395,7 @@ class GeneralNativeIT : KGPBaseTest() {
                  * - Before 8.0 Gradle doesn't deserialize CC during the first execution and the issue is not visible
                  * - Before 7.4.2 there is a CC serialization failure because Gradle can't serialize ComponentResult
                  */
-                configurationCache = gradleVersion >= GradleVersion.version(TestVersions.Gradle.G_8_0)
+                configurationCache = enableConfigurationCacheSinceGradle(TestVersions.Gradle.G_8_0, gradleVersion)
             )
         ) {
             val binaries = mutableListOf(
@@ -539,7 +538,6 @@ class GeneralNativeIT : KGPBaseTest() {
 
     @OptIn(EnvironmentalVariablesOverride::class)
     @DisplayName("Checking native tests")
-    @GradleTestVersions(minVersion = TestVersions.Gradle.G_7_0)
     @GradleTest
     fun testNativeTests(gradleVersion: GradleVersion) {
         nativeProject("native-tests", gradleVersion) {
@@ -578,18 +576,13 @@ class GeneralNativeIT : KGPBaseTest() {
             val bootedSimulatorsBefore = getBootedSimulators()
 
             // Check the case when all tests pass.
-            build("check") {
+            build("check", forceOutput = true) {
 
                 assertTasksExecuted(*testsToExecute.toTypedArray())
                 assertTasksSkipped(*testsToSkip.toTypedArray())
 
-                if (gradleVersion < GradleVersion.version(TestVersions.Gradle.G_8_0)) {
-                    assertOutputContains("org.foo.test.TestKt.fooTest PASSED")
-                    assertOutputContains("org.foo.test.TestKt.barTest PASSED")
-                } else {
-                    assertOutputContains("org.foo.test.TestKt.fooTest[host] PASSED")
-                    assertOutputContains("org.foo.test.TestKt.barTest[host] PASSED")
-                }
+                assertOutputContains("org.foo.test.TestKt.fooTest[host] PASSED")
+                assertOutputContains("org.foo.test.TestKt.barTest[host] PASSED")
 
                 assertFileInProjectExists(defaultOutputFile)
             }
@@ -674,11 +667,7 @@ class GeneralNativeIT : KGPBaseTest() {
             assertTasksExecuted(*testsToExecute.toTypedArray())
             assertTasksSkipped(*testsToSkip.toTypedArray())
 
-            if (gradleVersion < GradleVersion.version(TestVersions.Gradle.G_8_0)) {
-                assertOutputContains("org.foo.test.TestKt.fail FAILED")
-            } else {
-                assertOutputContains("org.foo.test.TestKt.fail[host] FAILED")
-            }
+            assertOutputContains("org.foo.test.TestKt.fail[host] FAILED")
         }
 
         // Check that individual test reports are created correctly.
@@ -979,7 +968,6 @@ class GeneralNativeIT : KGPBaseTest() {
     }
 
     @DisplayName("Checks allowing to override download url")
-    @GradleTestVersions(minVersion = TestVersions.Gradle.G_7_0)
     @GradleTest
     fun shouldAllowToOverrideDownloadUrl(gradleVersion: GradleVersion, @TempDir customKonanDir: Path) {
         nativeProject(

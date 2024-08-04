@@ -9,6 +9,7 @@ import org.gradle.api.logging.LogLevel
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.testbase.*
 import org.jetbrains.kotlin.test.TestMetadata
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
@@ -121,7 +122,7 @@ class ComposeIT : KGPBaseTest() {
                         assertOutputContains(
                             "Starting in Kotlin 2.0, the Compose Compiler Gradle plugin is required\n" +
                                     "  when compose is enabled. See the following link for more information:\n" +
-                                    "  https://d.android.com/r/studio-ui/compose-compiler\n"
+                                    "  https://d.android.com/r/studio-ui/compose-compiler"
                         )
                     }
                 }
@@ -331,6 +332,7 @@ class ComposeIT : KGPBaseTest() {
 
     @DisplayName("Run Compose compiler with the latest runtime")
     @GradleAndroidTest
+    @AndroidTestVersions(minVersion = TestVersions.AGP.MAX_SUPPORTED)
     @OtherGradlePluginTests
     @TestMetadata("AndroidSimpleApp")
     fun testComposePluginWithRuntimeLatest(

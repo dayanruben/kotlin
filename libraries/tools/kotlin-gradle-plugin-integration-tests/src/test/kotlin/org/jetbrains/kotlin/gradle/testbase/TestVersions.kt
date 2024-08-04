@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.gradle.testbase
 
 import org.gradle.api.JavaVersion
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.utils.minSupportedGradleVersion
+import org.jetbrains.kotlin.gradle.internals.MINIMALLY_SUPPORTED_GRADLE_VERSION
 
 // Must be in sync with gradleVersions in libraries/tools/kotlin-gradle-plugin-integration-tests/build.gradle.kts KTI-1612
 interface TestVersions {
@@ -15,14 +15,6 @@ interface TestVersions {
     // https://gradle.org/nightly/
     // Gradle nightly releases retention policy is 3 months
     object Gradle {
-        const val G_6_8 = "6.8.3"
-        const val G_6_9 = "6.9.4"
-        const val G_7_0 = "7.0.2"
-        const val G_7_1 = "7.1.1"
-        const val G_7_2 = "7.2"
-        const val G_7_3 = "7.3.3"
-        const val G_7_4 = "7.4.2"
-        const val G_7_5 = "7.5.1"
         const val G_7_6 = "7.6.3"
         const val G_8_0 = "8.0.2"
         const val G_8_1 = "8.1.1"
@@ -35,7 +27,8 @@ interface TestVersions {
         const val G_8_8 = "8.8"
         const val G_8_9 = "8.9"
 
-        const val MIN_SUPPORTED = minSupportedGradleVersion
+        // Should be the same as GradleCompatibilityCheck.minSupportedGradleVersion
+        const val MIN_SUPPORTED = MINIMALLY_SUPPORTED_GRADLE_VERSION
         const val MAX_SUPPORTED = G_8_9
     }
 
@@ -69,8 +62,8 @@ interface TestVersions {
         val maxSupportedGradleVersion: GradleVersion,
         val requiredJdkVersion: JavaVersion,
     ) {
-        AGP_73(AGP.AGP_73, GradleVersion.version(Gradle.G_7_4), GradleVersion.version(Gradle.G_7_5), JavaVersion.VERSION_11),
-        AGP_74(AGP.AGP_74, GradleVersion.version(Gradle.G_7_5), GradleVersion.version(Gradle.G_7_6), JavaVersion.VERSION_11),
+        AGP_73(AGP.AGP_73, GradleVersion.version(Gradle.G_7_6), GradleVersion.version(Gradle.G_7_6), JavaVersion.VERSION_11),
+        AGP_74(AGP.AGP_74, GradleVersion.version(Gradle.G_7_6), GradleVersion.version(Gradle.G_7_6), JavaVersion.VERSION_11),
         AGP_80(AGP.AGP_80, GradleVersion.version(Gradle.G_8_0), GradleVersion.version(Gradle.G_8_0), JavaVersion.VERSION_17),
         AGP_81(AGP.AGP_81, GradleVersion.version(Gradle.G_8_1), GradleVersion.version(Gradle.G_8_4), JavaVersion.VERSION_17),
         AGP_82(AGP.AGP_82, GradleVersion.version(Gradle.G_8_2), GradleVersion.version(Gradle.G_8_4), JavaVersion.VERSION_17),
@@ -79,6 +72,12 @@ interface TestVersions {
         AGP_85(AGP.AGP_85, GradleVersion.version(Gradle.G_8_7), GradleVersion.version(Gradle.G_8_9), JavaVersion.VERSION_17),
         AGP_86(AGP.AGP_86, GradleVersion.version(Gradle.G_8_7), GradleVersion.version(Gradle.G_8_9), JavaVersion.VERSION_17),
         ;
+
+        companion object {
+            fun fromVersion(
+                agpVersion: String
+            ): AgpCompatibilityMatrix = AgpCompatibilityMatrix.entries.first { it.version == agpVersion }
+        }
     }
 
     object COCOAPODS {

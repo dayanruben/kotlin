@@ -26,8 +26,8 @@ import org.jetbrains.kotlin.resolve.calls.inference.components.ConstraintSystemC
 import org.jetbrains.kotlin.resolve.calls.inference.components.TypeVariableDirectionCalculator
 import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintStorage
 import org.jetbrains.kotlin.resolve.calls.inference.model.NewConstraintSystemImpl
-import org.jetbrains.kotlin.types.model.TypeConstructorMarker
 import org.jetbrains.kotlin.types.model.defaultType
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 /**
  * @see [docs/fir/pcla.md]
@@ -137,14 +137,13 @@ class FirPCLAInferenceSession(
     private fun FirExpression.updateReturnTypeWithCurrentSubstitutor(
         resolutionMode: ResolutionMode,
     ) {
-        val additionalBindings = mutableMapOf<TypeConstructorMarker, ConeKotlinType>()
         val system = (this as? FirResolvable)?.candidate()?.system ?: currentCommonSystem
 
-        if (resolutionMode is ResolutionMode.ReceiverResolution) {
-            fixCurrentResultIfTypeVariableAndReturnBinding(resolvedType, system)?.let { additionalBindings += it }
+        val additionalBinding = runIf(resolutionMode is ResolutionMode.ReceiverResolution) {
+            semiFixCurrentResultIfTypeVariableAndReturnBinding(resolvedType, system)
         }
 
-        val substitutor = system.buildCurrentSubstitutor(additionalBindings) as ConeSubstitutor
+        val substitutor = system.buildCurrentSubstitutor(additionalBinding) as ConeSubstitutor
         val updatedType = substitutor.substituteOrNull(resolvedType)
 
         if (updatedType != null) {
@@ -153,25 +152,14 @@ class FirPCLAInferenceSession(
     }
 
     override fun getAndSemiFixCurrentResultIfTypeVariable(type: ConeKotlinType): ConeKotlinType? =
-        fixCurrentResultIfTypeVariableAndReturnBinding(type, currentCommonSystem)?.second
+        semiFixCurrentResultIfTypeVariableAndReturnBinding(type, currentCommonSystem)?.second
 
-    fun fixCurrentResultIfTypeVariableAndReturnBinding(
+    fun semiFixCurrentResultIfTypeVariableAndReturnBinding(
         type: ConeKotlinType,
         myCs: NewConstraintSystemImpl,
     ): Pair<ConeTypeVariableTypeConstructor, ConeKotlinType>? {
-        return when (type) {
-            is ConeFlexibleType -> fixCurrentResultIfTypeVariableAndReturnBinding(type.lowerBound, myCs)
-            is ConeDefinitelyNotNullType -> fixCurrentResultIfTypeVariableAndReturnBinding(type.original, myCs)
-            is ConeTypeVariableType -> fixCurrentResultForNestedTypeVariable(type, myCs)
-            else -> null
-        }
-    }
-
-    private fun fixCurrentResultForNestedTypeVariable(
-        type: ConeTypeVariableType,
-        myCs: NewConstraintSystemImpl,
-    ): Pair<ConeTypeVariableTypeConstructor, ConeKotlinType>? {
-        val coneTypeVariableTypeConstructor = type.typeConstructor
+        val coneTypeVariableTypeConstructor = (type.unwrapToSimpleTypeUsingLowerBound() as? ConeTypeVariableType)?.typeConstructor
+            ?: return null
 
         require(coneTypeVariableTypeConstructor in myCs.allTypeVariables) {
             "$coneTypeVariableTypeConstructor not found"
@@ -302,7 +290,7 @@ class FirPCLAInferenceSession(
 
             is FirCall -> argumentList.arguments.all { it.isTrivialArgument() }
 
-            is FirBinaryLogicExpression -> leftOperand.isTrivialArgument() && rightOperand.isTrivialArgument()
+            is FirBooleanOperatorExpression -> leftOperand.isTrivialArgument() && rightOperand.isTrivialArgument()
             is FirComparisonExpression -> compareToCall.isTrivialArgument()
 
             is FirCheckedSafeCallSubject -> originalReceiverRef.value.isTrivialArgument()

@@ -14,11 +14,10 @@
 # OWNER_LIST: "Kotlin Release"
 # OWNER_LIST: "Kotlin Language Evolution"
 # OWNER_LIST: "Kotlin in Fleet"
-# OWNER_LIST: "Compose Multiplatform"
+# OWNER_LIST: Compose
 # OWNER_LIST: Parcelize
 # OWNER_LIST: Mikhail.Glukhikh Dmitriy.Novozhilov Kirill.Rakhman
 # OWNER_LIST: Yan.Zhulanow
-# OWNER_LIST: Dmitry.Gridin
 # OWNER_LIST: Alexander.Udalov
 # OWNER_LIST: Zalim.Bashorov
 # OWNER_LIST: Ilya.Goncharov Artem.Kobzar
@@ -41,8 +40,6 @@
 /.space/ "Kotlin Build Infrastructure"
 
 /analysis/ "Kotlin IDE Analysis Core"
-/analysis/light-classes-base/ Dmitry.Gridin
-/analysis/symbol-light-classes/ Dmitry.Gridin
 /analysis/analysis-api-fir/src/org/jetbrains/kotlin/analysis/api/fir/diagnostics/KaFirDiagnostics.kt "Kotlin Compiler Core"
 /analysis/analysis-api-fir/src/org/jetbrains/kotlin/analysis/api/fir/diagnostics/KaFirDiagnosticsImpl.kt "Kotlin Compiler Core"
 /analysis/analysis-api-fir/src/org/jetbrains/kotlin/analysis/api/fir/diagnostics/KaFirDataClassConverters.kt "Kotlin Compiler Core"
@@ -119,7 +116,6 @@
 /compiler/testData/classpathOrder/ "Kotlin JVM"
 /compiler/testData/cli/ "Kotlin Compiler Core"
 /compiler/testData/cli/js/ "Kotlin Common Backend" "Kotlin Compiler Core"
-/compiler/testData/cli/js-dce/ "Kotlin Common Backend" "Kotlin Compiler Core"
 /compiler/testData/cli/jvm/ "Kotlin JVM" "Kotlin Compiler Core"
 /compiler/testData/cli/metadata/ "Kotlin Compiler Core"
 /compiler/testData/codegen/asmLike/ "Kotlin JVM"
@@ -383,7 +379,7 @@
 /plugins/android-extensions/ "Kotlin Compiler Core"
 /plugins/assign-plugin/ "Kotlin Compiler Core"
 /plugins/atomicfu/ "Kotlin Libraries"
-/plugins/compose/ "Compose Multiplatform"
+/plugins/compose/ Compose
 /plugins/fir-plugin-prototype/ "Kotlin Compiler Core"
 /plugins/imports-dumper/ "Kotlin Compiler Core"
 /plugins/jvm-abi-gen/ "Kotlin JVM"
@@ -421,7 +417,7 @@
 /wasm/ "Kotlin Wasm"
 
 # Generated files (no review required)
-*Generated.java "Kotlin" "Kotlin IDE Analysis Core" "Compose Multiplatform" "Parcelize"
+*Generated.java "Kotlin" "Kotlin IDE Analysis Core" "Compose" "Parcelize"
 
 # Singular files
 /.gitattributes "Kotlin Build Infrastructure"

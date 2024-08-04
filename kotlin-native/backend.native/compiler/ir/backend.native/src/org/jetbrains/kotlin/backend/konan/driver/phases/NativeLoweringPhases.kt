@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.backend.common.lower.coroutines.AddContinuationToNon
 import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesExtractionFromInlineFunctionsLowering
 import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesInInlineFunctionsLowering
 import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesInInlineLambdasLowering
+import org.jetbrains.kotlin.backend.common.lower.inline.OuterThisInInlineFunctionsSpecialAccessorLowering
 import org.jetbrains.kotlin.backend.common.lower.optimizations.LivenessAnalysis
 import org.jetbrains.kotlin.backend.common.lower.optimizations.PropertyAccessorInlineLowering
 import org.jetbrains.kotlin.backend.common.phaser.*
@@ -178,23 +179,14 @@ private val sharedVariablesPhase = createFileLoweringPhase(
         prerequisite = setOf(lateinitPhase)
 )
 
-private val lowerOuterThisInInlineFunctionsPhase = createFileLoweringPhase(
+private val outerThisSpecialAccessorInInlineFunctionsPhase = createFileLoweringPhase(
         { context, irFile ->
-            irFile.acceptChildrenVoid(object : IrElementVisitorVoid {
-                override fun visitElement(element: IrElement) {
-                    element.acceptChildrenVoid(this)
-                }
-
-                override fun visitFunction(declaration: IrFunction) {
-                    declaration.acceptChildrenVoid(this)
-
-                    if (declaration.isInline)
-                        OuterThisLowering(context).lower(declaration)
-                }
-            })
+            // Make accessors public if `SyntheticAccessorLowering` is disabled.
+            val generatePublicAccessors = !context.config.configuration.getBoolean(KlibConfigurationKeys.EXPERIMENTAL_DOUBLE_INLINING)
+            OuterThisInInlineFunctionsSpecialAccessorLowering(context, generatePublicAccessors).lower(irFile)
         },
-        name = "LowerOuterThisInInlineFunctions",
-        description = "Lower outer this in inline functions"
+        name = "OuterThisInInlineFunctionsSpecialAccessorLowering",
+        description = "Generate a special private member accessor for outer@this implicit value parameter in inline functions"
 )
 
 private val extractLocalClassesFromInlineBodies = createFileLoweringPhase(
@@ -404,7 +396,7 @@ private val inlineOnlyPrivateFunctionsPhase = createFileLoweringPhase(
         },
         name = "InlineOnlyPrivateFunctions",
         description = "The first phase of inlining (inline only private functions)",
-        prerequisite = setOf(lowerBeforeInlinePhase, arrayConstructorPhase, extractLocalClassesFromInlineBodies)
+        prerequisite = setOf(lowerBeforeInlinePhase, arrayConstructorPhase, extractLocalClassesFromInlineBodies, outerThisSpecialAccessorInInlineFunctionsPhase)
 )
 
 internal val syntheticAccessorGenerationPhase = createFileLoweringPhase(
@@ -420,7 +412,7 @@ internal val inlineAllFunctionsPhase = createFileLoweringPhase(
         },
         name = "InlineAllFunctions",
         description = "The second phase of inlining (inline all functions)",
-        prerequisite = setOf(lowerBeforeInlinePhase, arrayConstructorPhase, extractLocalClassesFromInlineBodies)
+        prerequisite = setOf(lowerBeforeInlinePhase, arrayConstructorPhase, extractLocalClassesFromInlineBodies, outerThisSpecialAccessorInInlineFunctionsPhase)
 )
 
 private val interopPhase = createFileLoweringPhase(
@@ -606,7 +598,7 @@ internal fun PhaseEngine<NativeGenerationState>.getLoweringsUpToAndIncludingSynt
         lowerBeforeInlinePhase,
         lateinitPhase,
         sharedVariablesPhase,
-        lowerOuterThisInInlineFunctionsPhase,
+        outerThisSpecialAccessorInInlineFunctionsPhase,
         extractLocalClassesFromInlineBodies,
         inlineCallableReferenceToLambdaPhase,
         arrayConstructorPhase,
