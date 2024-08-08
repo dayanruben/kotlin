@@ -7,10 +7,17 @@ package org.jetbrains.kotlin.ir.declarations.lazy
 
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.util.deserializedIr
 
 abstract class AbstractIrLazyFunction : IrSimpleFunction(), IrLazyFunctionBase {
     abstract val isDeserializationEnabled: Boolean
+
+    override var dispatchReceiverParameter: IrValueParameter? = null
+
+    override var extensionReceiverParameter: IrValueParameter? = null
+
+    override var valueParameters: List<IrValueParameter> = emptyList()
 
     fun tryLoadIr(): Boolean {
         if (!isInline || isFakeOverride) return false

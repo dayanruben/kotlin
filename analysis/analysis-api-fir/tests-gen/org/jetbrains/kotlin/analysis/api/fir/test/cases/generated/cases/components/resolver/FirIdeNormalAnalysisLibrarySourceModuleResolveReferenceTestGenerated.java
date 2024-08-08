@@ -557,6 +557,12 @@ public class FirIdeNormalAnalysisLibrarySourceModuleResolveReferenceTestGenerate
   }
 
   @Test
+  @TestMetadata("functionCallWithNonTrailingLambdaArgument2.kt")
+  public void testFunctionCallWithNonTrailingLambdaArgument2() {
+    runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/functionCallWithNonTrailingLambdaArgument2.kt");
+  }
+
+  @Test
   @TestMetadata("functionCallWithSpreadArgument.kt")
   public void testFunctionCallWithSpreadArgument() {
     runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/functionCallWithSpreadArgument.kt");
@@ -1896,6 +1902,12 @@ public class FirIdeNormalAnalysisLibrarySourceModuleResolveReferenceTestGenerate
       @TestMetadata("TypeAnnotation.kt")
       public void testTypeAnnotation() {
         runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/codeFragment/typeCodeFragment/TypeAnnotation.kt");
+      }
+
+      @Test
+      @TestMetadata("TypeParameter.kt")
+      public void testTypeParameter() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/codeFragment/typeCodeFragment/TypeParameter.kt");
       }
     }
   }

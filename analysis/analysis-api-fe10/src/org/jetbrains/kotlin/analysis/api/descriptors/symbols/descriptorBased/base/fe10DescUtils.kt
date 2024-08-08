@@ -300,7 +300,7 @@ internal fun KotlinType.toKtType(analysisContext: Fe10AnalysisContext): KaType {
             }
 
             return when (val typeDeclaration = typeConstructor.declarationDescriptor) {
-                is FunctionClassDescriptor -> KaFe10FunctionalType(unwrappedType, typeDeclaration, analysisContext)
+                is FunctionClassDescriptor -> KaFe10FunctionType(unwrappedType, typeDeclaration, analysisContext)
                 is ClassDescriptor -> KaFe10UsualClassType(unwrappedType, typeDeclaration, analysisContext)
                 else -> {
                     val errorType =
@@ -501,9 +501,7 @@ internal fun ConstantValue<*>.toKaAnnotationValue(analysisContext: Fe10AnalysisC
                     value.annotationClass?.classId,
                     psi = null,
                     useSiteTarget = null,
-                    hasArguments = value.allValueArguments.isNotEmpty(),
                     lazyArguments = lazy { value.getKtNamedAnnotationArguments(analysisContext) },
-                    index = null,
                     constructorSymbol = null,
                     token = token
                 ),
@@ -684,17 +682,12 @@ internal fun createKtInitializerValue(
     return KaNonConstantInitializerValue(initializer)
 }
 
-internal fun AnnotationDescriptor.toKaAnnotation(
-    analysisContext: Fe10AnalysisContext,
-    index: Int,
-): KaAnnotation {
+internal fun AnnotationDescriptor.toKaAnnotation(analysisContext: Fe10AnalysisContext): KaAnnotation {
     return KaAnnotationImpl(
         classId = classIdForAnnotation,
         psi = psi,
         useSiteTarget = useSiteTarget,
-        hasArguments = allValueArguments.isNotEmpty(),
         lazyArguments = lazy { getKtNamedAnnotationArguments(analysisContext) },
-        index = index,
         constructorSymbol = null,
         token = analysisContext.token
     )

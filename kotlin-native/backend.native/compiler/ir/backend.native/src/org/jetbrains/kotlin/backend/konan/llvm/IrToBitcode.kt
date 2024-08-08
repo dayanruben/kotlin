@@ -472,10 +472,10 @@ internal class CodeGeneratorVisitor(
 
     //-------------------------------------------------------------------------//
 
-    val ctorFunctionSignature = LlvmFunctionSignature(LlvmRetType(llvm.voidType))
+    val ctorFunctionSignature = LlvmFunctionSignature(LlvmRetType(llvm.voidType, isObjectType = false))
     val kNodeInitType = llvm.runtime.initNodeType
     val kMemoryStateType = llvm.runtime.memoryStateType
-    val kInitFuncType = LlvmFunctionSignature(LlvmRetType(llvm.voidType), listOf(LlvmParamType(llvm.int32Type), LlvmParamType(pointerType(kMemoryStateType))))
+    val kInitFuncType = LlvmFunctionSignature(LlvmRetType(llvm.voidType, isObjectType = false), listOf(LlvmParamType(llvm.int32Type), LlvmParamType(pointerType(kMemoryStateType))))
 
     //-------------------------------------------------------------------------//
 
@@ -545,7 +545,7 @@ internal class CodeGeneratorVisitor(
                         storeHeapRef(codegen.kNullObjHeaderPtr, address)
                     }
                     state.globalInitState?.let {
-                        store(llvm.int32(FILE_NOT_INITIALIZED), it)
+                        store(llvm.intptr(FILE_NOT_INITIALIZED), it)
                     }
                     ret(null)
                 }
@@ -785,17 +785,17 @@ internal class CodeGeneratorVisitor(
 
     private fun getGlobalInitStateFor(container: IrDeclarationContainer): LLVMValueRef =
             llvm.initializersGenerationState.fileGlobalInitStates.getOrPut(container) {
-                codegen.addGlobal("state_global$${container.initVariableSuffix}", llvm.int32Type, false).also {
-                    LLVMSetInitializer(it, llvm.int32(FILE_NOT_INITIALIZED))
+                codegen.addGlobal("state_global$${container.initVariableSuffix}", llvm.intptrType, false).also {
+                    LLVMSetInitializer(it, llvm.intptr(FILE_NOT_INITIALIZED))
                     LLVMSetLinkage(it, LLVMLinkage.LLVMInternalLinkage)
                 }
             }
 
     private fun getThreadLocalInitStateFor(container: IrDeclarationContainer): AddressAccess =
             llvm.initializersGenerationState.fileThreadLocalInitStates.getOrPut(container) {
-                codegen.addKotlinThreadLocal("state_thread_local$${container.initVariableSuffix}", llvm.int32Type,
-                        LLVMPreferredAlignmentOfType(llvm.runtime.targetData, llvm.int32Type), false).also {
-                    LLVMSetInitializer((it as GlobalAddressAccess).getAddress(null), llvm.int32(FILE_NOT_INITIALIZED))
+                codegen.addKotlinThreadLocal("state_thread_local$${container.initVariableSuffix}", llvm.intptrType,
+                        LLVMPreferredAlignmentOfType(llvm.runtime.targetData, llvm.intptrType), false).also {
+                    LLVMSetInitializer((it as GlobalAddressAccess).getAddress(null), llvm.intptr(FILE_NOT_INITIALIZED))
                 }
             }
 
@@ -1692,7 +1692,7 @@ internal class CodeGeneratorVisitor(
             if (dstClass.isObjCMetaClass()) {
                 val isClass = llvm.externalNativeRuntimeFunction(
                         "object_isClass",
-                        LlvmRetType(llvm.int8Type),
+                        LlvmRetType(llvm.int8Type, isObjectType = false),
                         listOf(LlvmParamType(llvm.int8PtrType))
                 )
                 call(isClass, listOf(objCObject)).let {
@@ -2434,8 +2434,8 @@ internal class CodeGeneratorVisitor(
         val bbExit = basicBlock("label_continue", null)
         moveBlockAfterEntry(bbExit)
         moveBlockAfterEntry(bbInit)
-        val state = load(llvm.int32Type, statePtr, memoryOrder = LLVMAtomicOrdering.LLVMAtomicOrderingAcquire)
-        condBr(icmpEq(state, llvm.int32(FILE_INITIALIZED)), bbExit, bbInit)
+        val state = load(llvm.intptrType, statePtr, memoryOrder = LLVMAtomicOrdering.LLVMAtomicOrderingAcquire)
+        condBr(icmpEq(state, llvm.intptr(FILE_INITIALIZED)), bbExit, bbInit)
         positionAtEnd(bbInit)
         call(llvm.callInitGlobalPossiblyLock, listOf(statePtr, initializerPtr),
                 exceptionHandler = currentCodeContext.exceptionHandler)
@@ -2456,13 +2456,13 @@ internal class CodeGeneratorVisitor(
         moveBlockAfterEntry(bbExit)
         moveBlockAfterEntry(bbCheckLocalState)
         moveBlockAfterEntry(bbInit)
-        val globalState = load(llvm.int32Type, globalStatePtr)
+        val globalState = load(llvm.intptrType, globalStatePtr)
         LLVMSetVolatile(globalState, 1)
         // Make sure we're not in the middle of global initializer invocation -
         // thread locals can be initialized only after all shared globals have been initialized.
-        condBr(icmpNe(globalState, llvm.int32(FILE_INITIALIZED)), bbExit, bbCheckLocalState)
+        condBr(icmpNe(globalState, llvm.intptr(FILE_INITIALIZED)), bbExit, bbCheckLocalState)
         positionAtEnd(bbCheckLocalState)
-        condBr(icmpNe(load(llvm.int32Type, localStatePtr), llvm.int32(FILE_INITIALIZED)), bbInit, bbExit)
+        condBr(icmpNe(load(llvm.intptrType, localStatePtr), llvm.intptr(FILE_INITIALIZED)), bbInit, bbExit)
         positionAtEnd(bbInit)
         call(llvm.callInitThreadLocal, listOf(globalStatePtr, localStatePtr, initializerPtr),
                 exceptionHandler = currentCodeContext.exceptionHandler)
@@ -2480,9 +2480,9 @@ internal class CodeGeneratorVisitor(
         val bbExit = basicBlock("label_continue", null)
         moveBlockAfterEntry(bbExit)
         moveBlockAfterEntry(bbInit)
-        condBr(icmpEq(load(llvm.int32Type, statePtr), llvm.int32(FILE_INITIALIZED)), bbExit, bbInit)
+        condBr(icmpEq(load(llvm.intptrType, statePtr), llvm.intptr(FILE_INITIALIZED)), bbExit, bbInit)
         positionAtEnd(bbInit)
-        call(llvm.callInitThreadLocal, listOf(llvm.kNullInt32Ptr, statePtr, initializerPtr),
+        call(llvm.callInitThreadLocal, listOf(llvm.kNullIntptrPtr, statePtr, initializerPtr),
                 exceptionHandler = currentCodeContext.exceptionHandler)
         br(bbExit)
         positionAtEnd(bbExit)
@@ -2547,7 +2547,7 @@ internal class CodeGeneratorVisitor(
         val protocolGetterName = annotation.getAnnotationStringValue("protocolGetter")
         val protocolGetterProto = LlvmFunctionProto(
                 protocolGetterName,
-                LlvmFunctionSignature(LlvmRetType(llvm.int8PtrType)),
+                LlvmFunctionSignature(LlvmRetType(llvm.int8PtrType, isObjectType = false)),
                 origin = FunctionOrigin.OwnedBy(irClass),
                 linkage = LLVMLinkage.LLVMExternalLinkage,
                 independent = true // Protocol is header-only declaration.
@@ -2967,8 +2967,7 @@ internal fun NativeGenerationState.generateRuntimeConstantsModule() : LLVMModule
     setRuntimeConstGlobal("Kotlin_needDebugInfo", llvm.constInt32(if (shouldContainDebugInfo()) 1 else 0))
     setRuntimeConstGlobal("Kotlin_runtimeAssertsMode", llvm.constInt32(config.runtimeAssertsMode.value))
     setRuntimeConstGlobal("Kotlin_disableMmap", llvm.constInt32(if (config.disableMmap) 1 else 0))
-    setRuntimeConstGlobal("Kotlin_disableAllocatorOverheadEstimate", llvm.constInt32(if (config.disableAllocatorOverheadEstimate) 1 else 0))
-    
+
     val runtimeLogs = ConstArray(llvm.int32Type, LoggingTag.entries.sortedBy { it.ord }.map {
         config.runtimeLogs[it]!!.ord.let { llvm.constInt32(it) }
     })

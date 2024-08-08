@@ -640,6 +640,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
     }
 
     @Test
+    @TestMetadata("illegalCharsInPackageWithDots.kt")
+    public void testIllegalCharsInPackageWithDots() {
+      runTest("compiler/testData/diagnostics/tests/illegalCharsInPackageWithDots.kt");
+    }
+
+    @Test
     @TestMetadata("implicitIntersection.kt")
     public void testImplicitIntersection() {
       runTest("compiler/testData/diagnostics/tests/implicitIntersection.kt");
@@ -1189,6 +1195,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
     @TestMetadata("nonConstNotCall.kt")
     public void testNonConstNotCall() {
       runTest("compiler/testData/diagnostics/tests/nonConstNotCall.kt");
+    }
+
+    @Test
+    @TestMetadata("nothingBound.kt")
+    public void testNothingBound() {
+      runTest("compiler/testData/diagnostics/tests/nothingBound.kt");
     }
 
     @Test
@@ -7804,6 +7816,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("kt897.kt")
       public void testKt897() {
         runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/kt897.kt");
+      }
+
+      @Test
+      @TestMetadata("lambdaCaptureUninitializedProperty.kt")
+      public void testLambdaCaptureUninitializedProperty() {
+        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/lambdaCaptureUninitializedProperty.kt");
       }
 
       @Test
