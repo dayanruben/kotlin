@@ -72,9 +72,12 @@ class MppMetadataResolutionIT : KGPBaseTest() {
     @GradleTest
     @TestMetadata(value = "new-mpp-lib-and-app")
     fun testResolveMppProjectDependencyToMetadata(gradleVersion: GradleVersion) {
+        val buildOptions = defaultBuildOptions
+
         project(
             projectName = "new-mpp-lib-and-app/sample-app",
             gradleVersion = gradleVersion,
+            buildOptions = buildOptions,
         ) {
 
             includeOtherProjectAsSubmodule(
@@ -93,7 +96,7 @@ class MppMetadataResolutionIT : KGPBaseTest() {
                     "Expected no unresolved configurations, but found ${unresolvedConfigurations.size}: $unresolvedConfigurations",
                 )
 
-                buildResult.assertOutputContains(">> :commonMainResolvable$METADATA_CONFIGURATION_NAME_SUFFIX --> sample-lib-metadata-1.0.jar")
+                buildResult.assertOutputContains(">> :commonMainResolvable$METADATA_CONFIGURATION_NAME_SUFFIX --> source-set-metadata-locations.json")
             }
         }
     }
