@@ -12,16 +12,17 @@ import org.gradle.api.Project
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry
 import org.jetbrains.kotlin.gradle.plugin.internal.*
-import org.jetbrains.kotlin.gradle.plugin.internal.BasePluginConfigurationG70
-import org.jetbrains.kotlin.gradle.plugin.internal.JavaSourceSetsAccessorG70
+import org.jetbrains.kotlin.gradle.plugin.internal.ConfigurationTimePropertiesAccessorG71
+import org.jetbrains.kotlin.gradle.plugin.internal.IdeaSyncDetectorG71
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.UnameExecutor
 import javax.inject.Inject
 
-private const val PLUGIN_VARIANT_NAME = "gradle70"
+private const val PLUGIN_VARIANT_NAME = "gradle71"
 
 open class KotlinPluginWrapper @Inject constructor(
     registry: ToolingModelBuilderRegistry
 ) : AbstractKotlinPluginWrapper(registry) {
+
     override val pluginVariant: String = PLUGIN_VARIANT_NAME
 
     override fun apply(project: Project) {
@@ -33,6 +34,7 @@ open class KotlinPluginWrapper @Inject constructor(
 open class KotlinCommonPluginWrapper @Inject constructor(
     registry: ToolingModelBuilderRegistry
 ) : AbstractKotlinCommonPluginWrapper(registry) {
+
     override val pluginVariant: String = PLUGIN_VARIANT_NAME
 
     override fun apply(project: Project) {
@@ -44,6 +46,7 @@ open class KotlinCommonPluginWrapper @Inject constructor(
 open class KotlinAndroidPluginWrapper @Inject constructor(
     registry: ToolingModelBuilderRegistry
 ) : AbstractKotlinAndroidPluginWrapper(registry) {
+
     override val pluginVariant: String = PLUGIN_VARIANT_NAME
 
     override fun apply(project: Project) {
@@ -56,6 +59,7 @@ open class KotlinAndroidPluginWrapper @Inject constructor(
 open class Kotlin2JsPluginWrapper @Inject constructor(
     registry: ToolingModelBuilderRegistry
 ) : AbstractKotlin2JsPluginWrapper(registry) {
+
     override val pluginVariant: String = PLUGIN_VARIANT_NAME
 
     override fun apply(project: Project) {
@@ -65,6 +69,7 @@ open class Kotlin2JsPluginWrapper @Inject constructor(
 }
 
 open class KotlinMultiplatformPluginWrapper : AbstractKotlinMultiplatformPluginWrapper() {
+
     override val pluginVariant: String = PLUGIN_VARIANT_NAME
 
     override fun apply(project: Project) {
@@ -73,8 +78,8 @@ open class KotlinMultiplatformPluginWrapper : AbstractKotlinMultiplatformPluginW
     }
 }
 
-@Suppress("unused")
 open class KotlinJsPluginWrapper : AbstractKotlinJsPluginWrapper() {
+
     override val pluginVariant: String = PLUGIN_VARIANT_NAME
 
     override fun apply(project: Project) {
@@ -133,26 +138,22 @@ open class KotlinApiPlugin : KotlinBaseApiPlugin() {
 
 private fun Project.registerVariantImplementations() {
     val factories = VariantImplementationFactoriesConfigurator.get(gradle)
-    factories[JavaSourceSetsAccessor.JavaSourceSetsAccessorVariantFactory::class] =
-        JavaSourceSetsAccessorG70.JavaSourceSetAccessorVariantFactoryG70()
-    factories[BasePluginConfiguration.BasePluginConfigurationVariantFactory::class] =
-        BasePluginConfigurationG70.BasePluginConfigurationVariantFactoryG70()
     factories[IdeaSyncDetector.IdeaSyncDetectorVariantFactory::class] =
-        IdeaSyncDetectorG70.IdeaSyncDetectorVariantFactoryG70()
+        IdeaSyncDetectorG71.IdeaSyncDetectorVariantFactoryG71()
     factories[ConfigurationTimePropertiesAccessor.ConfigurationTimePropertiesAccessorVariantFactory::class] =
-        ConfigurationTimePropertiesAccessorG70.ConfigurationTimePropertiesAccessorVariantFactoryG70()
+        ConfigurationTimePropertiesAccessorG71.ConfigurationTimePropertiesAccessorVariantFactoryG71()
     factories[MppTestReportHelper.MppTestReportHelperVariantFactory::class] =
-        MppTestReportHelperG70.MppTestReportHelperVariantFactoryG70()
+        MppTestReportHelperG71.MppTestReportHelperVariantFactoryG71()
     factories[KotlinTestReportCompatibilityHelper.KotlinTestReportCompatibilityHelperVariantFactory::class] =
-        KotlinTestReportCompatibilityHelperG70.KotlinTestReportCompatibilityHelperVariantFactoryG70()
+        KotlinTestReportCompatibilityHelperG71.KotlinTestReportCompatibilityHelperVariantFactoryG71()
     factories[ArtifactTypeAttributeAccessor.ArtifactTypeAttributeAccessorVariantFactory::class] =
-        ArtifactTypeAttributeAccessorG70.ArtifactTypeAttributeAccessorVariantFactoryG70()
+        ArtifactTypeAttributeAccessorG71.ArtifactTypeAttributeAccessorVariantFactoryG71()
     factories[ProjectIsolationStartParameterAccessor.Factory::class] =
-        ProjectIsolationStartParameterAccessorG70.Factory()
+        ProjectIsolationStartParameterAccessorG71.Factory()
     factories[CompatibilityConventionRegistrar.Factory::class] =
-        CompatibilityConventionRegistrarG70.Factory()
+        CompatibilityConventionRegistrarG71.Factory()
     factories[UnameExecutor.UnameExecutorVariantFactory::class] =
-        UnameExecutorG70.UnameExecutorVariantFactoryG70()
-    factories[ConfigurationCacheStartParameterAccessor.Factory::class] = ConfigurationCacheStartParameterAccessorG70.Factory()
-    factories[AttributesConfigurationHelper.AttributeConfigurationHelperVariantFactory::class] = AttributeConfigurationHelperVariantFactoryG70()
+        UnameExecutorG71.UnameExecutorVariantFactoryG71()
+    factories[ConfigurationCacheStartParameterAccessor.Factory::class] = ConfigurationCacheStartParameterAccessorG71.Factory()
+    factories[AttributesConfigurationHelper.AttributeConfigurationHelperVariantFactory::class] = AttributeConfigurationHelperVariantFactoryG71()
 }

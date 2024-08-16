@@ -105,6 +105,7 @@ fun IrCatchImpl(
     startOffset = startOffset,
     endOffset = endOffset,
     catchParameter = catchParameter,
+    origin = null
 )
 
 fun IrCatchImpl(
@@ -112,11 +113,13 @@ fun IrCatchImpl(
     endOffset: Int,
     catchParameter: IrVariable,
     result: IrExpression,
+    origin: IrStatementOrigin? = null
 ) = IrCatchImpl(
     constructorIndicator = null,
     startOffset = startOffset,
     endOffset = endOffset,
     catchParameter = catchParameter,
+    origin = origin
 ).apply {
     this.result = result
 }
@@ -171,7 +174,7 @@ fun IrConstantObjectImpl(
 fun IrConstantPrimitiveImpl(
     startOffset: Int,
     endOffset: Int,
-    value: IrConst<*>,
+    value: IrConst,
 ) = IrConstantPrimitiveImpl(
     constructorIndicator = null,
     startOffset = startOffset,
@@ -184,7 +187,7 @@ fun <T> IrConstImpl(
     startOffset: Int,
     endOffset: Int,
     type: IrType,
-    kind: IrConstKind<T>,
+    kind: IrConstKind,
     value: T,
 ) = IrConstImpl(
     constructorIndicator = null,
@@ -423,7 +426,6 @@ fun IrInlinedFunctionBlockImpl(
     startOffset: Int,
     endOffset: Int,
     type: IrType,
-    inlineCall: IrFunctionAccessExpression,
     inlinedElement: IrElement,
     origin: IrStatementOrigin? = null,
 ) = IrInlinedFunctionBlockImpl(
@@ -431,7 +433,6 @@ fun IrInlinedFunctionBlockImpl(
     startOffset = startOffset,
     endOffset = endOffset,
     type = type,
-    inlineCall = inlineCall,
     inlinedElement = inlinedElement,
     origin = origin,
 )
@@ -440,7 +441,6 @@ fun IrInlinedFunctionBlockImpl(
     startOffset: Int,
     endOffset: Int,
     type: IrType,
-    inlineCall: IrFunctionAccessExpression,
     inlinedElement: IrElement,
     origin: IrStatementOrigin?,
     statements: List<IrStatement>,
@@ -449,7 +449,6 @@ fun IrInlinedFunctionBlockImpl(
     startOffset = startOffset,
     endOffset = endOffset,
     type = type,
-    inlineCall = inlineCall,
     inlinedElement = inlinedElement,
     origin = origin,
 ).apply {

@@ -158,7 +158,6 @@ class ComposeLikeDefaultArgumentRewriter(
                         type = defaultParameterType(param),
                         isAssignable = param.defaultValue != null,
                         symbol = IrValueParameterSymbolImpl(),
-                        index = param.index,
                         varargElementType = param.varargElementType,
                         isCrossinline = param.isCrossinline,
                         isNoinline = param.isNoinline,
@@ -254,7 +253,7 @@ class ComposeLikeDefaultArgumentRewriter(
         )
     }
 
-    private fun irConst(value: Int): IrConst<Int> = IrConstImpl(
+    private fun irConst(value: Int): IrConst = IrConstImpl(
         UNDEFINED_OFFSET,
         UNDEFINED_OFFSET,
         context.irBuiltIns.intType,

@@ -1504,6 +1504,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
     }
 
     @Test
+    @TestMetadata("renderConstructorWithIntersection.kt")
+    public void testRenderConstructorWithIntersection() {
+      runTest("compiler/testData/diagnostics/tests/renderConstructorWithIntersection.kt");
+    }
+
+    @Test
     @TestMetadata("renderingOfTypesWithSameName.kt")
     public void testRenderingOfTypesWithSameName() {
       runTest("compiler/testData/diagnostics/tests/renderingOfTypesWithSameName.kt");
@@ -7864,6 +7870,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("nestedTryFinally.kt")
       public void testNestedTryFinally() {
         runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/nestedTryFinally.kt");
+      }
+
+      @Test
+      @TestMetadata("nestedTryFinallyLambda.kt")
+      public void testNestedTryFinallyLambda() {
+        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/nestedTryFinallyLambda.kt");
       }
 
       @Test
@@ -32915,6 +32927,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("crashWithStarProjection.kt")
+      public void testCrashWithStarProjection() {
+        runTest("compiler/testData/diagnostics/tests/regressions/crashWithStarProjection.kt");
+      }
+
+      @Test
       @TestMetadata("delegationWithReceiver.kt")
       public void testDelegationWithReceiver() {
         runTest("compiler/testData/diagnostics/tests/regressions/delegationWithReceiver.kt");
@@ -32978,6 +32996,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("ErrorsOnIbjectExpressionsAsParameters.kt")
       public void testErrorsOnIbjectExpressionsAsParameters() {
         runTest("compiler/testData/diagnostics/tests/regressions/ErrorsOnIbjectExpressionsAsParameters.kt");
+      }
+
+      @Test
+      @TestMetadata("functionTypeFromTypeParameterType.kt")
+      public void testFunctionTypeFromTypeParameterType() {
+        runTest("compiler/testData/diagnostics/tests/regressions/functionTypeFromTypeParameterType.kt");
       }
 
       @Test
@@ -37910,6 +37934,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("smartcastWithComplexFlexibleType.kt")
       public void testSmartcastWithComplexFlexibleType() {
         runTest("compiler/testData/diagnostics/tests/smartCasts/smartcastWithComplexFlexibleType.kt");
+      }
+
+      @Test
+      @TestMetadata("stabilityOnReceiverWithDifferentModality.kt")
+      public void testStabilityOnReceiverWithDifferentModality() {
+        runTest("compiler/testData/diagnostics/tests/smartCasts/stabilityOnReceiverWithDifferentModality.kt");
       }
 
       @Test

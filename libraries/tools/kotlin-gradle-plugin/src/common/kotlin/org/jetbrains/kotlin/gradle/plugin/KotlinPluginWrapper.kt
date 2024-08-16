@@ -147,16 +147,6 @@ abstract class DefaultKotlinBasePlugin : KotlinBasePlugin {
         val factories = VariantImplementationFactoriesConfigurator.get(project.gradle)
 
         factories.putIfAbsent(
-            JavaSourceSetsAccessor.JavaSourceSetsAccessorVariantFactory::class,
-            DefaultJavaSourceSetsAccessorVariantFactory()
-        )
-
-        factories.putIfAbsent(
-            BasePluginConfiguration.BasePluginConfigurationVariantFactory::class,
-            DefaultBasePluginConfigurationVariantFactory()
-        )
-
-        factories.putIfAbsent(
             IdeaSyncDetector.IdeaSyncDetectorVariantFactory::class,
             DefaultIdeaSyncDetectorVariantFactory()
         )
