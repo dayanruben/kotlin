@@ -235,7 +235,7 @@ class BodyGenerator(
         val firstCatchParameterIsJsException = context.backendContext.isWasmJsTarget &&
                 firstCatchBlock.catchParameter.type == wasmSymbols.jsRelatedSymbols.jsException.defaultType
 
-        val nestedCatchLabel = runIf(!hasOnlySingleCatchBlock || (firstCatchParameterIsJsException && !canUseJsTag)) {
+        val nestedCatchLabel = runIf(!needCatchAllOnly && firstCatchParameterIsJsException && (!hasOnlySingleCatchBlock || !canUseJsTag)) {
             body.buildBlock(context.transformBlockResultType(irBuiltIns.throwableType))
         }
 
@@ -649,7 +649,7 @@ class BodyGenerator(
             }
         }
         if (!backendContext.configuration.getNotNull(WasmConfigurationKeys.WASM_ENABLE_ASSERTS)) {
-            if (call.symbol in wasmSymbols.assertFuncs) {
+            if (call.symbol in wasmSymbols.asserts) {
                 body.buildGetUnit()
                 return
             }
@@ -915,30 +915,31 @@ class BodyGenerator(
     override fun visitInlinedFunctionBlock(inlinedBlock: IrInlinedFunctionBlock) {
         body.buildNop(inlinedBlock.getSourceLocation())
 
-        val inlineFunction = when (val inlineDeclaration = inlinedBlock.inlineDeclaration) {
-            is IrProperty -> inlineDeclaration.getter
-            else -> inlineDeclaration as? IrFunction
-        } ?: compilationException("Function was expected", inlinedBlock.inlineDeclaration)
-
+        val inlineFunction = inlinedBlock.inlineFunction
         functionContext.stepIntoInlinedFunction(inlineFunction)
         super.visitInlinedFunctionBlock(inlinedBlock)
         functionContext.stepOutLastInlinedFunction()
     }
 
+    override fun visitInlinedFunctionBlock(inlinedBlock: IrInlinedFunctionBlock, data: Nothing?) {
+        val inlineFunction = inlinedBlock.inlineFunction
+        val correspondingProperty = (inlineFunction as? IrSimpleFunction)?.correspondingPropertySymbol
+        val owner = correspondingProperty?.owner ?: inlineFunction
+        val name = owner.fqNameWhenAvailable?.asString() ?: owner.name.asString()
+
+        body.commentGroupStart { "Inlined call of `$name`" }
+        super.visitInlinedFunctionBlock(inlinedBlock, data)
+    }
+
+    override fun visitReturnableBlock(expression: IrReturnableBlock) {
+        functionContext.defineNonLocalReturnLevel(
+            expression.symbol,
+            body.buildBlock(context.transformBlockResultType(expression.type))
+        )
+        super.visitReturnableBlock(expression)
+    }
+
     private fun processContainerExpression(expression: IrContainerExpression) {
-        if (expression is IrReturnableBlock) {
-            val inlineFunction = expression.symbol.owner.inlineFunction
-            val correspondingProperty = (inlineFunction as? IrSimpleFunction)?.correspondingPropertySymbol
-            val owner = correspondingProperty?.owner ?: inlineFunction
-            val name = owner?.fqNameWhenAvailable?.asString() ?: owner?.name?.asString() ?: "<UNKNOWN>"
-
-            body.commentGroupStart { "Inlined call of `$name`" }
-            functionContext.defineNonLocalReturnLevel(
-                expression.symbol,
-                body.buildBlock(context.transformBlockResultType(expression.type))
-            )
-        }
-
         val statements = expression.statements
         statements.forEachIndexed { i, statement ->
             if (i != statements.lastIndex) {

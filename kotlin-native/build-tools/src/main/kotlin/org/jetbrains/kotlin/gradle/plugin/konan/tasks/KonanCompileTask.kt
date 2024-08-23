@@ -13,6 +13,7 @@ import org.gradle.api.internal.file.FileOperations
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.services.ServiceReference
 import org.gradle.api.tasks.*
 import org.gradle.process.ExecOperations
 import org.jetbrains.kotlin.gradle.plugin.konan.KonanCliCompilerRunner
@@ -30,7 +31,7 @@ abstract class KonanCompileTask @Inject constructor(
         private val objectFactory: ObjectFactory,
 ) : DefaultTask() {
     init {
-        this.notCompatibleWithConfigurationCache("project references stored")
+        KonanCliRunnerIsolatedClassLoadersService.registerIfAbsent(project)
     }
 
     // Changing the compiler version must rebuild the library.
@@ -57,12 +58,12 @@ abstract class KonanCompileTask @Inject constructor(
         }
     }
 
-    @get:Internal
-    val isolatedClassLoadersService = KonanCliRunnerIsolatedClassLoadersService.attachingToTask(this)
+    @ServiceReference("KonanCliRunnerIsolatedClassLoadersService")
+    abstract fun getIsolatedClassLoadersService(): Property<KonanCliRunnerIsolatedClassLoadersService>
 
     @TaskAction
     fun run() {
-        val toolRunner = KonanCliCompilerRunner(fileOperations, execOperations, logger, isolatedClassLoadersService, compilerDistributionPath.get())
+        val toolRunner = KonanCliCompilerRunner(fileOperations, execOperations, logger, getIsolatedClassLoadersService().get(), compilerDistributionPath.get())
 
         outputDirectory.asFile.get().mkdirs()
         val args = buildList {
@@ -76,9 +77,18 @@ abstract class KonanCompileTask @Inject constructor(
             add(konanTarget.get().visibleName)
 
             addAll(extraOpts.get())
+            add(sourceSets.joinToString(",", prefix = "-Xfragments=") { it.name })
+
+            val fragmentSources = sequence {
+                for (s in sourceSets) {
+                    for (f in s.files) {
+                        yield("${s.name}:${f.absolutePath}")
+                    }
+                }
+            }
+            add(fragmentSources.joinToString(",", prefix="-Xfragment-sources="))
 
             sourceSets.flatMap { it.files }.mapTo(this) { it.absolutePath }
-            sourceSets.asMap.filterKeys { it != "nativeMain" }.flatMap { it.value.files }.mapTo(this) { "-Xcommon-sources=${it.absolutePath}" }
         }
         toolRunner.run(args)
     }

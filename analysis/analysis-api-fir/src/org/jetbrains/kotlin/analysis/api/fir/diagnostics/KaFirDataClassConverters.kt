@@ -1276,6 +1276,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.ANNOTATION_IN_CONTRACT_ERROR) { firDiagnostic ->
+        AnnotationInContractErrorImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.COMPILER_REQUIRED_ANNOTATION_AMBIGUITY) { firDiagnostic ->
         CompilerRequiredAnnotationAmbiguityImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
@@ -3288,6 +3294,21 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.METHOD_OF_ANY_IMPLEMENTED_IN_INTERFACE) { firDiagnostic ->
         MethodOfAnyImplementedInInterfaceImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.EXTENSION_SHADOWED_BY_MEMBER) { firDiagnostic ->
+        ExtensionShadowedByMemberImpl(
+            firSymbolBuilder.callableBuilder.buildCallableSymbol(firDiagnostic.a),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.EXTENSION_FUNCTION_SHADOWED_BY_MEMBER_PROPERTY_WITH_INVOKE) { firDiagnostic ->
+        ExtensionFunctionShadowedByMemberPropertyWithInvokeImpl(
+            firSymbolBuilder.callableBuilder.buildCallableSymbol(firDiagnostic.a),
+            firSymbolBuilder.callableBuilder.buildCallableSymbol(firDiagnostic.b),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

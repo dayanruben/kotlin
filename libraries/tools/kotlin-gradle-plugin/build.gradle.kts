@@ -173,7 +173,6 @@ dependencies {
     if (!kotlinBuildProperties.isInJpsBuildIdeaSync) {
         // Adding workaround KT-57317 for Gradle versions where Kotlin runtime <1.8.0
         "mainEmbedded"(project(":kotlin-build-tools-enum-compat"))
-        "gradle74Embedded"(project(":kotlin-build-tools-enum-compat"))
         "gradle75Embedded"(project(":kotlin-build-tools-enum-compat"))
         "gradle76Embedded"(project(":kotlin-build-tools-enum-compat"))
     }
@@ -289,6 +288,7 @@ tasks {
         }
     }
     GradlePluginVariant.values().forEach { variant ->
+        if (kotlinBuildProperties.isInJpsBuildIdeaSync) return@forEach
         val sourceSet = sourceSets.getByName(variant.sourceSetName)
         val taskSuffix = sourceSet.jarTaskName.capitalize()
         val shadowJarTaskName = "$EMBEDDABLE_COMPILER_TASK_NAME$taskSuffix"

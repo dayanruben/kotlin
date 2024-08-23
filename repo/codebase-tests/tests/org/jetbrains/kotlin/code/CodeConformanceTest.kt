@@ -65,7 +65,9 @@ class CodeConformanceTest : TestCase() {
                 "repo/codebase-tests/tests/org/jetbrains/kotlin/code/CodeConformanceTest.kt",
                 "kotlin-native/build",
                 "kotlin-native/performance",
-                "kotlin-native/samples"
+                "kotlin-native/samples",
+                "wasm/wasm.debug.browsers/node_modules",
+                "wasm/wasm.debug.browsers/.gradle",
             )
         )
 
@@ -141,6 +143,8 @@ class CodeConformanceTest : TestCase() {
                 "repo/gradle-build-conventions/compiler-tests-convention/build/generated-sources",
                 "repo/gradle-build-conventions/android-sdk-provisioner/build/generated-sources",
                 "repo/gradle-build-conventions/asm-deprecating-transformer/build/generated-sources",
+                "wasm/wasm.debug.browsers/node_modules",
+                "wasm/wasm.debug.browsers/.gradle",
                 ".gradle/expanded",
             )
         )
@@ -227,8 +231,7 @@ class CodeConformanceTest : TestCase() {
                 """.trimMargin(),
                 allowedFiles = listOf(
                     "libraries/tools/kotlin-gradle-plugin/src/common/kotlin/org/jetbrains/kotlin/gradle/utils/gradleAttributesContainerUtils.kt",
-                    "libraries/tools/kotlin-gradle-plugin/src/main/kotlin/org/jetbrains/kotlin/gradle/plugin/internal/AttributesConfigurationHelperG71.kt",
-                    "libraries/tools/kotlin-gradle-plugin/src/gradle74/kotlin/org/jetbrains/kotlin/gradle/plugin/internal/AttributesConfigurationHelperG74.kt",
+                    "libraries/tools/kotlin-gradle-plugin/src/main/kotlin/org/jetbrains/kotlin/gradle/plugin/internal/AttributesConfigurationHelperG74.kt",
                     "libraries/tools/kotlin-gradle-plugin-integration-tests/src/test/kotlin/org/jetbrains/kotlin/gradle/native/GeneralNativeIT.kt",
                     "libraries/tools/kotlin-gradle-plugin-integration-tests/src/test/kotlin/org/jetbrains/kotlin/gradle/KotlinGradlePluginIT.kt",
                     "repo/gradle-build-conventions/buildsrc-compat/src/main/kotlin/plugins/CustomVariantPublishingDsl.kt",

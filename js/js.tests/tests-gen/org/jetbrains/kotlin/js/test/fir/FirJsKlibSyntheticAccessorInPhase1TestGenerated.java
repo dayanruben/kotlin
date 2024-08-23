@@ -336,6 +336,12 @@ public class FirJsKlibSyntheticAccessorInPhase1TestGenerated extends AbstractFir
       }
 
       @Test
+      @TestMetadata("leakingPrivateConstructorWithTypeParameter.kt")
+      public void testLeakingPrivateConstructorWithTypeParameter() {
+        runTest("compiler/testData/klib/syntheticAccessors/privateMember/crossFilePrivateLeak/leakingPrivateConstructorWithTypeParameter.kt");
+      }
+
+      @Test
       @TestMetadata("leakingPrivateExtensionFun.kt")
       public void testLeakingPrivateExtensionFun() {
         runTest("compiler/testData/klib/syntheticAccessors/privateMember/crossFilePrivateLeak/leakingPrivateExtensionFun.kt");
@@ -534,6 +540,12 @@ public class FirJsKlibSyntheticAccessorInPhase1TestGenerated extends AbstractFir
       }
 
       @Test
+      @TestMetadata("leakingSeveralPrivateConstructorsThroughInternalInlineFun.kt")
+      public void testLeakingSeveralPrivateConstructorsThroughInternalInlineFun() {
+        runTest("compiler/testData/klib/syntheticAccessors/privateMember/crossFilePrivateLeak/leakingSeveralPrivateConstructorsThroughInternalInlineFun.kt");
+      }
+
+      @Test
       @TestMetadata("usePrivateConstValFromInternalInline.kt")
       public void testUsePrivateConstValFromInternalInline() {
         runTest("compiler/testData/klib/syntheticAccessors/privateMember/crossFilePrivateLeak/usePrivateConstValFromInternalInline.kt");
@@ -601,6 +613,12 @@ public class FirJsKlibSyntheticAccessorInPhase1TestGenerated extends AbstractFir
       @TestMetadata("leakingPrivateConstructorThroughInternalInlineFun.kt")
       public void testLeakingPrivateConstructorThroughInternalInlineFun() {
         runTest("compiler/testData/klib/syntheticAccessors/privateMember/crossModulePrivateLeak/leakingPrivateConstructorThroughInternalInlineFun.kt");
+      }
+
+      @Test
+      @TestMetadata("leakingPrivateConstructorWithTypeParameter.kt")
+      public void testLeakingPrivateConstructorWithTypeParameter() {
+        runTest("compiler/testData/klib/syntheticAccessors/privateMember/crossModulePrivateLeak/leakingPrivateConstructorWithTypeParameter.kt");
       }
 
       @Test
@@ -802,6 +820,12 @@ public class FirJsKlibSyntheticAccessorInPhase1TestGenerated extends AbstractFir
       }
 
       @Test
+      @TestMetadata("leakingSeveralPrivateConstructorsThroughInternalInlineFun.kt")
+      public void testLeakingSeveralPrivateConstructorsThroughInternalInlineFun() {
+        runTest("compiler/testData/klib/syntheticAccessors/privateMember/crossModulePrivateLeak/leakingSeveralPrivateConstructorsThroughInternalInlineFun.kt");
+      }
+
+      @Test
       @TestMetadata("usePrivateConstValFromInternalInline.kt")
       public void testUsePrivateConstValFromInternalInline() {
         runTest("compiler/testData/klib/syntheticAccessors/privateMember/crossModulePrivateLeak/usePrivateConstValFromInternalInline.kt");
@@ -857,6 +881,12 @@ public class FirJsKlibSyntheticAccessorInPhase1TestGenerated extends AbstractFir
       @TestMetadata("usePrivateConstructorFromInternalInline.kt")
       public void testUsePrivateConstructorFromInternalInline() {
         runTest("compiler/testData/klib/syntheticAccessors/privateMember/singleFile/usePrivateConstructorFromInternalInline.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateConstructorWithTypeParameter.kt")
+      public void testUsePrivateConstructorWithTypeParameter() {
+        runTest("compiler/testData/klib/syntheticAccessors/privateMember/singleFile/usePrivateConstructorWithTypeParameter.kt");
       }
 
       @Test
@@ -935,6 +965,12 @@ public class FirJsKlibSyntheticAccessorInPhase1TestGenerated extends AbstractFir
       @TestMetadata("usePrivateVarFromReferenceInPublicInlineFun.kt")
       public void testUsePrivateVarFromReferenceInPublicInlineFun() {
         runTest("compiler/testData/klib/syntheticAccessors/privateMember/singleFile/usePrivateVarFromReferenceInPublicInlineFun.kt");
+      }
+
+      @Test
+      @TestMetadata("useSeveralPrivateConstructorsThroughInternalInlineFun.kt")
+      public void testUseSeveralPrivateConstructorsThroughInternalInlineFun() {
+        runTest("compiler/testData/klib/syntheticAccessors/privateMember/singleFile/useSeveralPrivateConstructorsThroughInternalInlineFun.kt");
       }
     }
   }

@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.backend.konan.lower
 
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
-import org.jetbrains.kotlin.ir.util.inlineFunction
 import org.jetbrains.kotlin.ir.util.innerInlinedBlockOrThis
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.konan.Context
@@ -53,8 +52,9 @@ internal class ReturnsInsertionLowering(val context: Context) : FileLoweringPass
             override fun visitBlock(expression: IrBlock) {
                 expression.acceptChildrenVoid(this)
                 if (expression !is IrReturnableBlock) return
-                if (expression.inlineFunction?.returnType == context.irBuiltIns.unitType) {
-                    val container = expression.innerInlinedBlockOrThis.statements
+                val inlinedBlock = expression.innerInlinedBlockOrThis as? IrInlinedFunctionBlock ?: return
+                if (inlinedBlock.inlineFunction.returnType == context.irBuiltIns.unitType) {
+                    val container = inlinedBlock.statements
                     val offset = (container.lastOrNull() ?: expression).endOffset
                     context.createIrBuilder(expression.symbol, offset, offset).run {
                         container += irReturn(irCall(symbols.theUnitInstance, context.irBuiltIns.unitType))

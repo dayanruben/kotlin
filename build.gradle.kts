@@ -101,7 +101,7 @@ if (!project.hasProperty("versions.kotlin-native")) {
     extra["versions.kotlin-native"] = if (kotlinBuildProperties.isKotlinNativeEnabled) {
         kotlinBuildProperties.defaultSnapshotVersion
     } else {
-        "2.1.0-dev-3409"
+        "2.1.0-dev-5109"
     }
 }
 
@@ -878,6 +878,7 @@ tasks {
 
     register("miscCompilerTest") {
         dependsOn(":compiler:test")
+        dependsOn(":compiler:tests-integration:test")
         dependsOn("incrementalCompilationTest")
         dependsOn("scriptingTest")
         dependsOn("jvmCompilerIntegrationTest")

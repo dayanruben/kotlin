@@ -922,6 +922,10 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = AnnotationInWhereClauseError::class
     }
 
+    interface AnnotationInContractError : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = AnnotationInContractError::class
+    }
+
     interface CompilerRequiredAnnotationAmbiguity : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = CompilerRequiredAnnotationAmbiguity::class
         val typeFromCompilerPhase: KaType
@@ -2324,6 +2328,17 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface MethodOfAnyImplementedInInterface : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = MethodOfAnyImplementedInInterface::class
+    }
+
+    interface ExtensionShadowedByMember : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = ExtensionShadowedByMember::class
+        val member: KaCallableSymbol
+    }
+
+    interface ExtensionFunctionShadowedByMemberPropertyWithInvoke : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = ExtensionFunctionShadowedByMemberPropertyWithInvoke::class
+        val member: KaCallableSymbol
+        val invokeOperator: KaCallableSymbol
     }
 
     interface LocalObjectNotAllowed : KaFirDiagnostic<KtNamedDeclaration> {

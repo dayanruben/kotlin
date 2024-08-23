@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.backend.konan.lower
 
 import org.jetbrains.kotlin.backend.common.DeclarationTransformer
+import org.jetbrains.kotlin.backend.common.getCompilerMessageLocation
 import org.jetbrains.kotlin.backend.common.lower.*
 import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesExtractionFromInlineFunctionsLowering
 import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesInInlineFunctionsLowering
@@ -13,12 +14,17 @@ import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesInInlineLamb
 import org.jetbrains.kotlin.backend.common.lower.inline.OuterThisInInlineFunctionsSpecialAccessorLowering
 import org.jetbrains.kotlin.backend.konan.*
 import org.jetbrains.kotlin.config.KlibConfigurationKeys
+import org.jetbrains.kotlin.ir.builders.Scope
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrFunction
+import org.jetbrains.kotlin.ir.expressions.IrCall
+import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.inline.CallInlinerStrategy
 import org.jetbrains.kotlin.ir.inline.InlineFunctionResolverReplacingCoroutineIntrinsics
 import org.jetbrains.kotlin.ir.inline.SyntheticAccessorLowering
 import org.jetbrains.kotlin.ir.irAttribute
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
+import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.deepCopyWithSymbols
 import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.getPackageFragment
@@ -81,7 +87,7 @@ internal class NativeInlineFunctionResolver(
 
         val experimentalDoubleInlining = context.config.configuration.getBoolean(KlibConfigurationKeys.EXPERIMENTAL_DOUBLE_INLINING)
 
-        TypeOfLowering(context).lower(body, function, irFile)
+        NativeAssertionWrapperLowering(context).lower(function)
 
         NullableFieldsForLateinitCreationLowering(context).lowerWithLocalDeclarations(function)
         NullableFieldsDeclarationLowering(context).lowerWithLocalDeclarations(function)
@@ -115,5 +121,21 @@ internal class NativeInlineFunctionResolver(
     private fun DeclarationTransformer.lowerWithLocalDeclarations(function: IrFunction) {
         if (transformFlat(function) != null)
             error("Unexpected transformation of function ${function.dump()}")
+    }
+
+    override val callInlinerStrategy: CallInlinerStrategy = NativeCallInlinerStrategy()
+
+    inner class NativeCallInlinerStrategy : CallInlinerStrategy {
+        private lateinit var builder: NativeRuntimeReflectionIrBuilder
+        override fun at(scope: Scope, expression: IrExpression) {
+            val symbols = this@NativeInlineFunctionResolver.context.ir.symbols
+            builder = context.createIrBuilder(scope.scopeOwnerSymbol, expression.startOffset, expression.endOffset)
+                    .toNativeRuntimeReflectionBuilder(symbols) { message ->
+                        this@NativeInlineFunctionResolver.context.reportCompilationError(message, getCompilerMessageLocation())
+                    }
+        }
+        override fun postProcessTypeOf(expression: IrCall, nonSubstitutedTypeArgument: IrType): IrExpression {
+            return builder.irKType(nonSubstitutedTypeArgument)
+        }
     }
 }

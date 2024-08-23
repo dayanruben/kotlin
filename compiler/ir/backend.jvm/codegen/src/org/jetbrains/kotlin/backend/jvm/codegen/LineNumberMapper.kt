@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.backend.jvm.codegen
 
 import org.jetbrains.kotlin.backend.jvm.ir.fileParentBeforeInline
+import org.jetbrains.kotlin.backend.jvm.ir.inlineDeclaration
 import org.jetbrains.kotlin.backend.jvm.ir.isInlineOnly
 import org.jetbrains.kotlin.codegen.inline.SMAP
 import org.jetbrains.kotlin.codegen.inline.SourceMapCopier
@@ -215,6 +216,7 @@ class LineNumberMapper(private val expressionCodegen: ExpressionCodegen) {
         return firstFunctionInlineBlock?.inlineDeclaration?.parentClassOrNull ?: irFunction.parentAsClass
     }
 
+    // TODO KT-69366 This function is not working correctly if default argument was a reference
     private fun IrInlinedFunctionBlock.isInvokeOnDefaultArg(): Boolean {
         val call = this.inlineCall!!
         val expected = this.inlineDeclaration

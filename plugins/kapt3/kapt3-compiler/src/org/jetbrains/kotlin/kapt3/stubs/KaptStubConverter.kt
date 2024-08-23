@@ -25,6 +25,9 @@ import com.sun.tools.javac.tree.JCTree.*
 import com.sun.tools.javac.tree.TreeMaker
 import com.sun.tools.javac.tree.TreeScanner
 import kotlinx.kapt.KaptIgnored
+import org.jetbrains.kotlin.KtPsiSourceElement
+import org.jetbrains.kotlin.backend.jvm.extensions.JvmIrDeclarationOrigin
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.coroutines.CONTINUATION_PARAMETER_NAME
@@ -32,6 +35,32 @@ import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAM
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
+import org.jetbrains.kotlin.fir.FirElement
+import org.jetbrains.kotlin.fir.analysis.checkers.classKind
+import org.jetbrains.kotlin.fir.backend.FirAnnotationSourceElement
+import org.jetbrains.kotlin.fir.backend.FirMetadataSource
+import org.jetbrains.kotlin.fir.containingClassLookupTag
+import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.expressions.*
+import org.jetbrains.kotlin.fir.psi
+import org.jetbrains.kotlin.fir.references.impl.FirPropertyFromParameterResolvedNamedReference
+import org.jetbrains.kotlin.fir.references.resolved
+import org.jetbrains.kotlin.fir.references.toResolvedEnumEntrySymbol
+import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeUnresolvedError
+import org.jetbrains.kotlin.fir.resolve.providers.firProvider
+import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
+import org.jetbrains.kotlin.fir.resolve.transformers.PackageResolutionResult
+import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirArrayOfCallTransformer
+import org.jetbrains.kotlin.fir.resolve.transformers.resolveToPackageOrClass
+import org.jetbrains.kotlin.fir.scopes.impl.declaredMemberScope
+import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
+import org.jetbrains.kotlin.fir.symbols.SymbolInternals
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirFieldSymbol
+import org.jetbrains.kotlin.fir.types.*
+import org.jetbrains.kotlin.fir.visitors.FirDefaultVisitorVoid
+import org.jetbrains.kotlin.ir.declarations.IrField
+import org.jetbrains.kotlin.ir.descriptors.IrBasedClassDescriptor
 import org.jetbrains.kotlin.kapt3.KaptContextForStubGeneration
 import org.jetbrains.kotlin.kapt3.base.*
 import org.jetbrains.kotlin.kapt3.base.javac.kaptError
@@ -46,6 +75,7 @@ import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.sources.JavaSourceElement
 import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.isOneSegmentFQN
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.ArrayFqNames
@@ -58,18 +88,20 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.constants.*
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
+import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassOrAny
 import org.jetbrains.kotlin.resolve.descriptorUtil.isCompanionObject
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin
 import org.jetbrains.kotlin.resolve.jvm.replaceAnonymousTypeWithSuperType
 import org.jetbrains.kotlin.resolve.source.getPsi
+import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.error.ErrorTypeKind
 import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isEnum
+import org.jetbrains.kotlin.util.PrivateForInline
 import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.tree.*
@@ -141,6 +173,27 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
     private var done = false
 
     private val treeMakerImportMethod = TreeMaker::class.java.declaredMethods.single { it.name == "Import" }
+
+    internal val typeReferenceToFirType = mutableMapOf<KtTypeReference, ConeKotlinType>().apply {
+        for (file in kaptContext.firFiles) {
+            file.accept(object : FirDefaultVisitorVoid() {
+                override fun visitElement(element: FirElement) {
+                    element.acceptChildren(this)
+                }
+
+                override fun visitResolvedTypeRef(resolvedTypeRef: FirResolvedTypeRef) {
+                    val psi = resolvedTypeRef.psi
+                    if (psi is KtTypeReference) {
+                        this@apply[psi] = resolvedTypeRef.coneType
+                    }
+                }
+
+                override fun visitErrorTypeRef(errorTypeRef: FirErrorTypeRef) {
+                    visitResolvedTypeRef(errorTypeRef)
+                }
+            })
+        }
+    }
 
     fun convert(): List<KaptStub> {
         if (kaptContext.logger.isVerbose) {
@@ -225,7 +278,8 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
         classDeclaration.mods.annotations = classDeclaration.mods.annotations
 
         val ktFile = origin.element?.containingFile as? KtFile
-        val imports = if (ktFile != null && correctErrorTypes) convertImports(ktFile, classDeclaration) else JavacList.nil()
+        val firFile = findFirFile(origin)
+        val imports = convertImports(ktFile, firFile, classDeclaration)
 
         val classes = JavacList.of<JCTree>(classDeclaration)
 
@@ -242,6 +296,15 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
         postProcess(topLevel)
 
         return KaptStub(topLevel, lineMappings.serialize())
+    }
+
+    private fun findFirFile(origin: JvmDeclarationOrigin): FirFile? {
+        val irClass = (origin.descriptor as? IrBasedClassDescriptor)?.owner
+        return when (val metadata = irClass?.metadata) {
+            is FirMetadataSource.Class -> kaptContext.firSession?.firProvider?.getFirClassifierContainerFile(metadata.fir.symbol)
+            is FirMetadataSource.File -> metadata.fir
+            else -> null
+        }
     }
 
     private fun postProcess(topLevel: JCCompilationUnit) {
@@ -275,14 +338,43 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
         })
     }
 
-    private fun convertImports(file: KtFile, classDeclaration: JCClassDecl): JavacList<JCTree> {
+    private fun convertImports(file: KtFile?, firFile: FirFile?, classDeclaration: JCClassDecl): JavacList<JCTree> {
+        if (!correctErrorTypes) return JavacList.nil()
+
         val imports = mutableListOf<JCImport>()
         val importedShortNames = mutableSetOf<String>()
 
+        val addImport = fun(fqName: FqName, isAllUnder: Boolean) {
+            val importedExpr = treeMaker.FqName(fqName.asString())
+            if (isAllUnder) {
+                imports += treeMakerImportMethod.invoke(
+                    treeMaker, treeMaker.Select(importedExpr, treeMaker.nameTable.names.asterisk), false
+                ) as JCImport
+            } else {
+                if (importedShortNames.add(fqName.shortName().asString())) {
+                    imports += treeMakerImportMethod.invoke(treeMaker, importedExpr, false) as JCImport
+                }
+            }
+        }
+
+        if (firFile != null) {
+            convertImportsFir(firFile, classDeclaration, addImport)
+        } else if (file != null) {
+            convertImportsPsi(file, classDeclaration, addImport)
+        }
+
+        return JavacList.from(imports)
+    }
+
+    private fun convertImportsPsi(
+        file: KtFile,
+        classDeclaration: JCClassDecl,
+        addImport: (fqName: FqName, isAllUnder: Boolean) -> Unit,
+    ): Unit {
         // We prefer ordinary imports over aliased ones.
         val sortedImportDirectives = file.importDirectives.partition { it.aliasName == null }.run { first + second }
 
-        loop@ for (importDirective in sortedImportDirectives) {
+        for (importDirective in sortedImportDirectives) {
             // Qualified name should be valid Java fq-name
             val importedFqName = importDirective.importedFqName?.takeIf { it.pathSegments().size > 1 } ?: continue
             if (!isValidQualifiedName(importedFqName)) continue
@@ -299,7 +391,7 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
                 val allTargets = bindingContext[BindingContext.AMBIGUOUS_REFERENCE_TARGET, referenceExpression] ?: return@run null
                 allTargets.find { it is CallableDescriptor }?.let { return@run it }
 
-                return@run allTargets.firstOrNull()
+                allTargets.firstOrNull()
             }
 
             val isCallableImport = importedReference is CallableDescriptor
@@ -307,25 +399,49 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
             val isAllUnderClassifierImport = importDirective.isAllUnder && importedReference is ClassifierDescriptor
 
             if (isCallableImport || isEnumEntry || isAllUnderClassifierImport) {
-                continue@loop
+                continue
             }
 
-            val importedExpr = treeMaker.FqName(importedFqName.asString())
-
-            imports += if (importDirective.isAllUnder) {
-                treeMakerImportMethod.invoke(
-                    treeMaker, treeMaker.Select(importedExpr, treeMaker.nameTable.names.asterisk), false
-                ) as JCImport
-            } else {
-                if (!importedShortNames.add(importedFqName.shortName().asString())) {
-                    continue
-                }
-
-                treeMakerImportMethod.invoke(treeMaker, importedExpr, false) as JCImport
-            }
+            addImport(importedFqName, importDirective.isAllUnder)
         }
+    }
 
-        return JavacList.from(imports)
+    private fun convertImportsFir(
+        file: FirFile,
+        classDeclaration: JCClassDecl,
+        addImport: (fqName: FqName, isAllUnder: Boolean) -> Unit,
+    ) {
+        val firSession = file.moduleData.session
+
+        // We prefer ordinary imports over aliased ones.
+        val sortedImportDirectives = file.imports.partition { it.aliasName == null }.run { first + second }
+
+        for (importDirective in sortedImportDirectives) {
+            // Qualified name should be valid Java fq-name
+            val importedFqName = importDirective.importedFqName?.takeIf { it.pathSegments().size > 1 } ?: continue
+            if (!isValidQualifiedName(importedFqName)) continue
+
+            val shortName = importedFqName.shortName()
+            if (shortName.asString() == classDeclaration.simpleName.toString()) continue
+
+            val isTopLevelCallable = firSession.symbolProvider.getTopLevelCallableSymbols(importedFqName.parent(), shortName).isNotEmpty()
+            if (isTopLevelCallable) continue
+
+            val resolvedParentClassId = (importDirective as? FirResolvedImport)?.resolvedParentClassId
+            val importedClass = resolvedParentClassId?.let { resolveToPackageOrClass(firSession.symbolProvider, it) }
+            if (importedClass is PackageResolutionResult.PackageOrClass) {
+                val classSymbol = importedClass.classSymbol
+                val isEnumEntry = classSymbol?.classKind == ClassKind.ENUM_CLASS
+                if (isEnumEntry) continue
+
+                if (classSymbol is FirClassSymbol<*>) {
+                    if (importDirective.isAllUnder) continue
+                    if (shortName in firSession.declaredMemberScope(classSymbol, null).getCallableNames()) continue
+                }
+            }
+
+            addImport(importedFqName, importDirective.isAllUnder)
+        }
     }
 
     /**
@@ -460,7 +576,7 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
 
         lineMappings.registerClass(clazz)
 
-        val superTypes = calculateSuperTypes(clazz, genericType)
+        val superTypes = calculateSuperTypes(clazz, genericType, descriptor)
 
         val classPosition = lineMappings.getPosition(clazz)
         val sortedFields = JavacList.from(fields.sortedWith(MembersPositionComparator(classPosition, fieldsPositions)))
@@ -478,7 +594,9 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
 
     private class ClassSupertypes(val superClass: JCExpression?, val interfaces: JavacList<JCExpression>)
 
-    private fun calculateSuperTypes(clazz: ClassNode, genericType: SignatureParser.ClassGenericSignature): ClassSupertypes {
+    private fun calculateSuperTypes(
+        clazz: ClassNode, genericType: SignatureParser.ClassGenericSignature, descriptor: DeclarationDescriptor,
+    ): ClassSupertypes {
         val hasSuperClass = clazz.superName != "java/lang/Object" && !clazz.isEnum()
 
         val defaultSuperTypes = ClassSupertypes(
@@ -493,7 +611,8 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
         val declaration = kaptContext.origins[clazz]?.element as? KtClassOrObject ?: return defaultSuperTypes
         if (declaration.computeJvmInternalName() != clazz.name) return defaultSuperTypes
 
-        val (superClass, superInterfaces) = partitionSuperTypes(declaration) ?: return defaultSuperTypes
+        val firClass = ((descriptor as? IrBasedClassDescriptor)?.owner?.metadata as? FirMetadataSource.Class)?.fir
+        val (superClass, superInterfaces) = partitionSuperTypes(declaration, firClass) ?: return defaultSuperTypes
 
         val sameSuperClassCount = (superClass == null) == (defaultSuperTypes.superClass == null)
         val sameSuperInterfaceCount = superInterfaces.size == defaultSuperTypes.interfaces.size
@@ -530,7 +649,7 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
         }
     }
 
-    private fun partitionSuperTypes(declaration: KtClassOrObject): Pair<KtTypeReference?, List<KtTypeReference>>? {
+    private fun partitionSuperTypes(declaration: KtClassOrObject, firClass: FirClass?): Pair<KtTypeReference?, List<KtTypeReference>>? {
         val superTypeEntries = declaration.superTypeListEntries
             .takeIf { it.isNotEmpty() }
             ?: return Pair(null, emptyList())
@@ -540,21 +659,13 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
         val otherEntries = mutableListOf<KtSuperTypeListEntry>()
 
         for (entry in superTypeEntries) {
-            val type = kaptContext.bindingContext[BindingContext.TYPE, entry.typeReference]
-            val classDescriptor = type?.constructor?.declarationDescriptor as? ClassDescriptor
-
-            if (type != null && !type.isError && classDescriptor != null) {
-                val container = if (classDescriptor.kind == ClassKind.INTERFACE) interfaceEntries else classEntries
-                container += entry
-                continue
+            val isInterface = isSuperTypeDefinitelyInterface(entry, firClass)
+            val container = when {
+                isInterface != null -> if (isInterface) interfaceEntries else classEntries
+                entry is KtSuperTypeCallEntry -> classEntries
+                else -> otherEntries
             }
-
-            if (entry is KtSuperTypeCallEntry) {
-                classEntries += entry
-                continue
-            }
-
-            otherEntries += entry
+            container += entry
         }
 
         for (entry in otherEntries) {
@@ -574,6 +685,27 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
         }
 
         return Pair(classEntries.firstOrNull()?.typeReference, interfaceEntries.mapNotNull { it.typeReference })
+    }
+
+    private fun isSuperTypeDefinitelyInterface(entry: KtSuperTypeListEntry, firClass: FirClass?): Boolean? {
+        val type = kaptContext.bindingContext[BindingContext.TYPE, entry.typeReference]
+        if (type != null && !type.isError) {
+            val classDescriptor = type.constructor.declarationDescriptor as? ClassDescriptor
+            if (classDescriptor != null) {
+                return classDescriptor.kind == ClassKind.INTERFACE
+            }
+        }
+        if (firClass != null) {
+            val firSuperTypeRef = firClass.superTypeRefs.firstOrNull { (it.source as? KtPsiSourceElement)?.psi == entry.typeReference }
+            val symbolProvider = kaptContext.firSession?.symbolProvider
+            if (firSuperTypeRef != null && symbolProvider != null) {
+                val superFirClass = firSuperTypeRef.coneTypeOrNull?.classId?.let(symbolProvider::getClassLikeSymbolByClassId)
+                if (superFirClass != null) {
+                    return superFirClass.classKind == ClassKind.INTERFACE
+                }
+            }
+        }
+        return null
     }
 
     private fun KtClass.hasOnlySecondaryConstructors(): Boolean {
@@ -730,6 +862,12 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
         val value = field.value
 
         val origin = kaptContext.origins[field]
+        val irField = (origin as? JvmIrDeclarationOrigin)?.declaration as? IrField
+        val firInitializer = when (val metadata = irField?.metadata) {
+            is FirMetadataSource.Field -> metadata.fir.initializer
+            is FirMetadataSource.Property -> metadata.fir.initializer
+            else -> null
+        }
 
         val propertyInitializer = when (val declaration = origin?.element) {
             is KtProperty -> declaration.initializer
@@ -738,11 +876,14 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
         }
 
         if (value != null) {
-            if (propertyInitializer != null) {
-                return convertConstantValueArguments(containingClass, value, listOf(propertyInitializer))
+            return when {
+                firInitializer != null ->
+                    convertConstantValueArgumentsFir(containingClass, value, listOf(firInitializer))
+                propertyInitializer != null ->
+                    convertConstantValueArguments(containingClass, value, listOf(propertyInitializer))
+                else ->
+                    convertValueOfPrimitiveTypeOrString(value)
             }
-
-            return convertValueOfPrimitiveTypeOrString(value)
         }
 
         val propertyType = (origin?.descriptor as? PropertyDescriptor)?.returnType
@@ -756,6 +897,11 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
             if (enumClass is ClassDescriptor && enumClass.isInsideCompanionObject()) {
                 return null
             }
+        }
+
+        val firProperty = (irField?.metadata as? FirMetadataSource.Property)?.fir
+        if (firProperty != null) {
+            convertNonConstPropertyInitializerFir(firProperty, containingClass)?.let { return it }
         }
 
         if (propertyInitializer != null && propertyType != null) {
@@ -774,6 +920,53 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
         }
 
         return null
+    }
+
+    @OptIn(SymbolInternals::class)
+    private fun convertNonConstPropertyInitializerFir(property: FirProperty, containingClass: ClassNode): JCExpression? {
+        val propertyInitializer = property.initializer ?: return null
+        val reference = propertyInitializer.toReference(kaptContext.firSession!!)
+        val expression =
+            if (kaptContext.options[KaptFlag.DUMP_DEFAULT_PARAMETER_VALUES])
+                ((reference as? FirPropertyFromParameterResolvedNamedReference)?.resolvedSymbol?.fir as? FirValueParameter)
+                    ?.defaultValue ?: propertyInitializer
+            else propertyInitializer
+        val asmValue = evaluateFirExpression(expression) ?: return null
+        return convertConstantValueArgumentsFir(containingClass, asmValue, listOf(expression))
+    }
+
+    private fun evaluateFirExpression(initialExpression: FirExpression): Any? {
+        val session = kaptContext.firSession!!
+        val expression =
+            if (initialExpression is FirFunctionCall)
+                FirArrayOfCallTransformer().transformFunctionCall(initialExpression, session) as FirExpression
+            else initialExpression
+
+        // KT-70839 K2 kapt: consider using IR evaluator instead of FIR for non-const property initializers
+        @OptIn(PrivateConstantEvaluatorAPI::class, PrivateForInline::class)
+        val result = FirExpressionEvaluator.evaluateExpression(expression, session)?.result ?: return null
+
+        return when (result) {
+            is FirLiteralExpression -> result.value?.let { constValue ->
+                when (result.kind) {
+                    ConstantValueKind.Int -> (constValue as Number).toInt()
+                    ConstantValueKind.UnsignedInt -> (constValue as Number).toInt()
+                    ConstantValueKind.Byte -> (constValue as Number).toByte()
+                    ConstantValueKind.UnsignedByte -> (constValue as Number).toByte()
+                    ConstantValueKind.Short -> (constValue as Number).toShort()
+                    ConstantValueKind.UnsignedShort -> (constValue as Number).toShort()
+                    else -> constValue
+                }
+            }
+            is FirPropertyAccessExpression -> result.calleeReference.toResolvedEnumEntrySymbol()?.let { enumEntry ->
+                val enumType = AsmUtil.asmTypeByClassId(enumEntry.callableId.classId!!)
+                arrayOf(enumType.descriptor, enumEntry.name.asString())
+            }
+            is FirArrayLiteral -> {
+                result.argumentList.arguments.map(::evaluateFirExpression)
+            }
+            else -> null
+        }
     }
 
     private fun DeclarationDescriptor.isInsideCompanionObject(): Boolean {
@@ -947,7 +1140,7 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
         } else if (isConstructor) {
             // We already checked it in convertClass()
             val declaration = kaptContext.origins[containingClass]?.descriptor as ClassDescriptor
-            val superClass = declaration.getSuperClassOrAny()
+            val superClass = declaration.getNonErrorSuperClassNotAny()
             val superClassConstructor = superClass.constructors.firstOrNull {
                 it.visibility.isVisible(null, it, declaration, useSpecialRulesForPrivateSealedConstructors = true)
             }
@@ -977,6 +1170,20 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
             genericSignature.parameterTypes, genericSignature.exceptionTypes,
             body, defaultValue
         ).keepSignature(lineMappings, method).keepKdocCommentsIfNecessary(method)
+    }
+
+    private fun ClassDescriptor.getNonErrorSuperClassNotAny(): ClassDescriptor {
+        // Based on `ClassDescriptor.getSuperClassNotAny`, but filters out error types because in K2 kapt, FIR classes (and thus IR, and
+        // IR-based descriptors) still have error supertypes, while in K1 kapt they are filtered out on the frontend level.
+        for (supertype in defaultType.constructor.supertypes) {
+            if (!supertype.isError && !KotlinBuiltIns.isAnyOrNullableAny(supertype)) {
+                val superClassifier = supertype.constructor.declarationDescriptor
+                if (DescriptorUtils.isClassOrEnumClass(superClassifier)) {
+                    return superClassifier as ClassDescriptor
+                }
+            }
+        }
+        return builtIns.any
     }
 
     private fun isIgnored(annotations: List<AnnotationNode>?): Boolean {
@@ -1128,6 +1335,11 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
         return nonErrorType
     }
 
+    private fun FirAnnotation.convertNonErrorAnnotationType(type: KotlinType): JCExpression? =
+        if (correctErrorTypes && type.containsErrorTypes())
+            convertFirType(resolvedType)
+        else null
+
     private fun isValidQualifiedName(name: FqName) = name.pathSegments().all { isValidIdentifier(it.asString()) }
 
     private fun isValidIdentifier(name: String, canBeConstructor: Boolean = false): Boolean {
@@ -1228,7 +1440,9 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
         }
 
         val ktAnnotation = annotationDescriptor?.source?.getPsi() as? KtAnnotationEntry
-        val annotationFqName = getNonErrorType(
+        val firSource = annotationDescriptor?.source as? FirAnnotationSourceElement
+        val firAnnotation = firSource?.fir
+        val annotationFqName = firAnnotation?.convertNonErrorAnnotationType(annotationDescriptor.type) ?: getNonErrorType(
             annotationDescriptor?.type,
             ANNOTATION,
             { ktAnnotation?.typeReference },
@@ -1242,25 +1456,118 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
             }
         )
 
-        val argMapping = ktAnnotation?.calleeExpression
+        val firArgMapping = firAnnotation?.argumentMapping?.mapping ?: emptyMap()
+
+        val argMapping: Map<String, ResolvedValueArgument> = ktAnnotation?.calleeExpression
             ?.getResolvedCall(kaptContext.bindingContext)?.valueArguments
             ?.mapKeys { it.key.name.asString() }
             ?: emptyMap()
 
         val constantValues = pairedListToMap(annotation.values)
 
-        val values = if (argMapping.isNotEmpty()) {
-            argMapping.mapNotNull { (parameterName, arg) ->
-                if (arg is DefaultValueArgument) return@mapNotNull null
-                convertAnnotationArgumentWithName(containingClass, constantValues[parameterName], arg, parameterName)
+        val values = when {
+            firArgMapping.isNotEmpty() -> {
+                val allParameterNames = firArgMapping.keys.mapTo(mutableSetOf()) { it.asString() } + constantValues.keys
+                allParameterNames.mapNotNull { name ->
+                    val firArg = firArgMapping[Name.identifier(name)]
+                    convertAnnotationArgumentWithNameFir(containingClass, constantValues[name], firArg, name)
+                }
             }
-        } else {
-            constantValues.mapNotNull { (parameterName, arg) ->
-                convertAnnotationArgumentWithName(containingClass, arg, null, parameterName)
+            argMapping.isNotEmpty() -> {
+                argMapping.mapNotNull { (parameterName, arg) ->
+                    if (arg is DefaultValueArgument) return@mapNotNull null
+                    convertAnnotationArgumentWithName(containingClass, constantValues[parameterName], arg, parameterName)
+                }
+            }
+            else -> {
+                constantValues.mapNotNull { (parameterName, arg) ->
+                    convertAnnotationArgumentWithName(containingClass, arg, null, parameterName)
+                }
             }
         }
 
         return treeMaker.Annotation(annotationFqName, JavacList.from(values))
+    }
+
+    private fun convertAnnotationArgumentWithNameFir(
+        containingClass: ClassNode,
+        constantValue: Any?,
+        value: FirExpression?,
+        name: String,
+    ): JCExpression? {
+        if (!isValidIdentifier(name)) return null
+        val expr = when (value) {
+            is FirArrayLiteral -> {
+                convertConstantValueArgumentsFir(containingClass, constantValue, value.arguments)
+            }
+            is FirVarargArgumentsExpression -> {
+                convertConstantValueArgumentsFir(containingClass, constantValue, value.arguments)
+            }
+            is FirGetClassCall -> {
+                convertFirGetClassCall(value)
+            }
+            else -> {
+                convertConstantValueArgumentsFir(containingClass, constantValue, listOfNotNull(value))
+            }
+        } ?: return null
+        return treeMaker.Assign(treeMaker.SimpleName(name), expr)
+    }
+
+    private fun convertConstantValueArgumentsFir(
+        containingClass: ClassNode,
+        constantValue: Any?,
+        args: List<FirExpression>,
+    ): JCExpression? {
+        if (constantValue is List<*>) {
+            if (args.size > constantValue.size) {
+                val literalExpression = mapJList(args, ::convertFirGetClassCall)
+                if (literalExpression.size == args.size) {
+                    return treeMaker.NewArray(null, null, literalExpression)
+                }
+            }
+        }
+
+        if (constantValue.isOfPrimitiveType() && args.size == 1) {
+            // Do not inline primitive constants
+            tryParseReferenceToIntConstant(args.single())?.let { return it }
+        } else if (constantValue is List<*> &&
+            constantValue.isNotEmpty() &&
+            args.isNotEmpty() &&
+            constantValue.all { it.isOfPrimitiveType() }
+        ) {
+            val parsed = args.mapNotNull(::tryParseReferenceToIntConstant).toJavacList()
+            if (parsed.size == args.size) {
+                return treeMaker.NewArray(null, null, parsed)
+            }
+        }
+
+        return convertLiteralExpression(containingClass, constantValue)
+    }
+
+    private fun tryParseReferenceToIntConstant(expression: FirExpression): JCExpression? {
+        if (expression !is FirPropertyAccessExpression) return null
+        val field = expression.calleeReference.resolved?.resolvedSymbol as? FirFieldSymbol ?: return null
+        if (!field.isJavaOrEnhancement || field.dispatchReceiverType != null) return null
+        val containingClass = field.containingClassLookupTag() ?: return null
+        val fqName = containingClass.classId.asSingleFqName().child(field.name)
+        return treeMaker.FqName(fqName)
+    }
+
+    private fun convertFirGetClassCall(expression: FirExpression): JCExpression? {
+        if (expression !is FirGetClassCall) return null
+        val kClassType = expression.resolvedType
+        val type = kClassType.typeArguments.single().type ?: return null
+        val typeExpression = convertFirType(type)
+        return treeMaker.Select(typeExpression, treeMaker.name("class"))
+    }
+
+    private fun convertFirType(type: ConeKotlinType): JCExpression? {
+        val fqName = when (type) {
+            is ConeErrorType -> (type.diagnostic as? ConeUnresolvedError)?.qualifier
+            is ConeLookupTagBasedType -> (type.lookupTag as? ConeClassLikeLookupTag)?.classId?.asSingleFqName()?.asString()
+            else -> null
+        } ?: return null
+        return treeMaker.FqName(fqName)
     }
 
     private fun convertAnnotationArgumentWithName(

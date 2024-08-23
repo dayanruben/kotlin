@@ -6444,6 +6444,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
     }
 
     @Test
+    @TestMetadata("delegationToJavaImplementation.kt")
+    public void testDelegationToJavaImplementation() {
+      runTest("compiler/testData/codegen/box/classDelegation/delegationToJavaImplementation.kt");
+    }
+
+    @Test
     @TestMetadata("delegationToOutTypeParameter.kt")
     public void testDelegationToOutTypeParameter() {
       runTest("compiler/testData/codegen/box/classDelegation/delegationToOutTypeParameter.kt");
@@ -31839,6 +31845,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/invokedynamic"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
     }
 
+    @Test
+    @TestMetadata("extensionFunInvoke.kt")
+    public void testExtensionFunInvoke() {
+      runTest("compiler/testData/codegen/box/invokedynamic/extensionFunInvoke.kt");
+    }
+
     @Nested
     @TestMetadata("compiler/testData/codegen/box/invokedynamic/lambdas")
     @TestDataPath("$PROJECT_ROOT")
@@ -32926,6 +32938,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
       @Test
       public void testAllFilesPresentInSerializable() {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/invokedynamic/serializable"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+      }
+
+      @Test
+      @TestMetadata("implicitCast.kt")
+      public void testImplicitCast() {
+        runTest("compiler/testData/codegen/box/invokedynamic/serializable/implicitCast.kt");
       }
 
       @Test
@@ -53141,6 +53159,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
       }
 
       @Test
+      @TestMetadata("inNestedInline.kt")
+      public void testInNestedInline() {
+        runTest("compiler/testData/codegen/box/reflection/typeOf/inNestedInline.kt");
+      }
+
+      @Test
       @TestMetadata("inlineClasses.kt")
       public void testInlineClasses() {
         runTest("compiler/testData/codegen/box/reflection/typeOf/inlineClasses.kt");
@@ -58373,6 +58397,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
     @TestMetadata("finally9.kt")
     public void testFinally9() {
       runTest("compiler/testData/codegen/box/try/finally9.kt");
+    }
+
+    @Test
+    @TestMetadata("kt70753.kt")
+    public void testKt70753() {
+      runTest("compiler/testData/codegen/box/try/kt70753.kt");
     }
 
     @Test

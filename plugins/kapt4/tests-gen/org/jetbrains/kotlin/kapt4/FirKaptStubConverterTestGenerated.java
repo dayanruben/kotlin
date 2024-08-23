@@ -132,6 +132,18 @@ public class FirKaptStubConverterTestGenerated extends AbstractFirKaptStubConver
   }
 
   @Test
+  @TestMetadata("dataClassWithCustomProperty.kt")
+  public void testDataClassWithCustomProperty() {
+    runTest("plugins/kapt3/kapt3-compiler/testData/converter/dataClassWithCustomProperty.kt");
+  }
+
+  @Test
+  @TestMetadata("dataClassWithUnresolvedComponentType.kt")
+  public void testDataClassWithUnresolvedComponentType() {
+    runTest("plugins/kapt3/kapt3-compiler/testData/converter/dataClassWithUnresolvedComponentType.kt");
+  }
+
+  @Test
   @TestMetadata("defaultImpls.kt")
   public void testDefaultImpls() {
     runTest("plugins/kapt3/kapt3-compiler/testData/converter/defaultImpls.kt");
@@ -297,6 +309,12 @@ public class FirKaptStubConverterTestGenerated extends AbstractFirKaptStubConver
   @TestMetadata("implicitReturnTypes.kt")
   public void testImplicitReturnTypes() {
     runTest("plugins/kapt3/kapt3-compiler/testData/converter/implicitReturnTypes.kt");
+  }
+
+  @Test
+  @TestMetadata("importNestedClass.kt")
+  public void testImportNestedClass() {
+    runTest("plugins/kapt3/kapt3-compiler/testData/converter/importNestedClass.kt");
   }
 
   @Test
@@ -633,6 +651,12 @@ public class FirKaptStubConverterTestGenerated extends AbstractFirKaptStubConver
   @TestMetadata("nestedClassesNonRootPackage.kt")
   public void testNestedClassesNonRootPackage() {
     runTest("plugins/kapt3/kapt3-compiler/testData/converter/nestedClassesNonRootPackage.kt");
+  }
+
+  @Test
+  @TestMetadata("nonConstProperties.kt")
+  public void testNonConstProperties() {
+    runTest("plugins/kapt3/kapt3-compiler/testData/converter/nonConstProperties.kt");
   }
 
   @Test

@@ -33,6 +33,8 @@ import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
+import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrFieldAccessExpression
 import org.jetbrains.kotlin.ir.expressions.impl.*
@@ -181,31 +183,19 @@ internal class ClassMemberGenerator(
                     irFunction.parent is IrClass && irFunction.parentAsClass.isData -> {
                         require(irFunction is IrSimpleFunction)
                         when {
-                            DataClassResolver.isComponentLike(irFunction.name) -> when (val firBody = firFunction?.body) {
+                            DataClassResolver.isComponentLike(irFunction.name) -> when (firFunction?.body) {
                                 null -> dataClassMembersGenerator.registerCopyOrComponentFunction(irFunction)
-                                else -> irFunction.body = visitor.convertToIrBlockBody(firBody)
+                                else -> irFunction.body = convertBody(firFunction)
                             }
-                            DataClassResolver.isCopy(irFunction.name) -> when (val firBody = firFunction?.body) {
+                            DataClassResolver.isCopy(irFunction.name) -> when (firFunction?.body) {
                                 null -> dataClassMembersGenerator.registerCopyOrComponentFunction(irFunction)
-                                else -> irFunction.body = visitor.convertToIrBlockBody(firBody)
+                                else -> irFunction.body = convertBody(firFunction)
                             }
-                            else -> irFunction.body = firFunction?.body?.let { visitor.convertToIrBlockBody(it) }
+                            else -> irFunction.body = convertBody(firFunction)
                         }
                     }
                     else -> {
-                        val firBody = firFunction?.body
-                        irFunction.body =
-                            when {
-                                firBody == null -> null
-                                configuration.skipBodies -> factory.createBlockBody(startOffset, endOffset).also { body ->
-                                    val expression =
-                                        IrErrorExpressionImpl(startOffset, endOffset, builtins.nothingType, SKIP_BODIES_ERROR_DESCRIPTION)
-                                    body.statements.add(
-                                        IrReturnImpl(startOffset, endOffset, builtins.nothingType, irFunction.symbol, expression)
-                                    )
-                                }
-                                else -> visitor.convertToIrBlockBody(firBody)
-                            }
+                        irFunction.body = convertBody(firFunction)
                     }
                 }
             }
@@ -215,6 +205,21 @@ internal class ClassMemberGenerator(
             }
         }
         return irFunction
+    }
+
+    private fun IrFunction.convertBody(firFunction: FirFunction?): IrBlockBody? {
+        val firBody = firFunction?.body
+        return when {
+            firBody == null -> null
+            configuration.skipBodies -> factory.createBlockBody(startOffset, endOffset).also { body ->
+                val expression =
+                    IrErrorExpressionImpl(startOffset, endOffset, builtins.nothingType, SKIP_BODIES_ERROR_DESCRIPTION)
+                body.statements.add(
+                    IrReturnImpl(startOffset, endOffset, builtins.nothingType, symbol, expression)
+                )
+            }
+            else -> visitor.convertToIrBlockBody(firBody)
+        }
     }
 
     fun convertPropertyContent(irProperty: IrProperty, property: FirProperty): IrProperty {
@@ -248,7 +253,7 @@ internal class ClassMemberGenerator(
             declarationStorage.enterScope(irField.symbol)
             val initializerExpression = field.initializer
             if (irField.initializer == null && initializerExpression != null && !configuration.skipBodies) {
-                irField.initializer = irFactory.createExpressionBody(visitor.convertToIrExpression(initializerExpression))
+                irField.initializer = IrFactoryImpl.createExpressionBody(visitor.convertToIrExpression(initializerExpression))
             }
             declarationStorage.leaveScope(irField.symbol)
         }
@@ -266,7 +271,7 @@ internal class ClassMemberGenerator(
                 declarationStorage.enterScope(this@initializeBackingField.symbol)
                 // NB: initializer can be already converted
                 if (initializer == null && initializerExpression != null) {
-                    initializer = irFactory.createExpressionBody(
+                    initializer = IrFactoryImpl.createExpressionBody(
                         run {
                             val irExpression = visitor.convertToIrExpression(initializerExpression, isDelegate = property.delegate != null)
                             if (property.delegate == null) {
@@ -420,15 +425,25 @@ internal class ClassMemberGenerator(
 
         val firDefaultValue = firValueParameter.defaultValue
         if (firDefaultValue != null) {
-            this.defaultValue =
-                factory.createExpressionBody(
-                    if (configuration.skipBodies && !parent.isAnnotationConstructor)
+            this.defaultValue = when {
+                configuration.skipBodies && parent.isDataClassCopy ->
+                    // Replicate K1 behavior, which removes default values of data class copy parameters in skipBodies (kapt) mode.
+                    null
+                configuration.skipBodies && !parent.isAnnotationConstructor ->
+                    factory.createExpressionBody(
                         IrErrorExpressionImpl(startOffset, endOffset, builtins.nothingType, SKIP_BODIES_ERROR_DESCRIPTION)
-                    else visitor.convertToIrExpression(firDefaultValue)
-                )
+                    )
+                else ->
+                    factory.createExpressionBody(
+                        visitor.convertToIrExpression(firDefaultValue)
+                    )
+            }
         }
     }
 
     private val IrElement.isAnnotationConstructor: Boolean
         get() = this is IrConstructor && parentAsClass.isAnnotationClass
+
+    private val IrElement.isDataClassCopy: Boolean
+        get() = this is IrSimpleFunction && DataClassResolver.isCopy(name) && parent.let { it is IrClass && it.isData }
 }

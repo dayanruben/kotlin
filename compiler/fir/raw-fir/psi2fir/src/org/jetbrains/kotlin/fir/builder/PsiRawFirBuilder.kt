@@ -860,7 +860,8 @@ open class PsiRawFirBuilder(
                             useSiteTarget = entry.useSiteTarget?.getAnnotationUseSiteTarget()
                             annotationTypeRef = entry.typeReference.toFirOrErrorType()
                             diagnostic = ConeSimpleDiagnostic(
-                                "Type parameter annotations are not allowed inside where clauses", DiagnosticKind.AnnotationNotAllowed,
+                                "Type parameter annotations are not allowed inside where clauses",
+                                DiagnosticKind.AnnotationInWhereClause,
                             )
                             val name = (annotationTypeRef as? FirUserTypeRef)?.qualifier?.last()?.name
                                 ?: Name.special("<no-annotation-name>")
@@ -2821,7 +2822,7 @@ open class PsiRawFirBuilder(
                         val multiDeclaration = ktParameter.destructuringDeclaration
                         val firLoopParameter = generateTemporaryVariable(
                             moduleData = baseModuleData,
-                            source = expression.loopParameter?.toFirSourceElement(),
+                            source = ktParameter.toFirSourceElement(),
                             name = if (multiDeclaration != null) SpecialNames.DESTRUCT else ktParameter.nameAsSafeName,
                             initializer = buildFunctionCall {
                                 source = rangeSource

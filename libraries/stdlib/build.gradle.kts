@@ -43,10 +43,11 @@ fun outgoingConfiguration(name: String, configure: Action<Configuration> = Actio
         configure(this)
     }
 
-fun KotlinCommonCompilerOptions.mainCompilationWithK1() {
-    languageVersion = KotlinVersion.KOTLIN_1_9
+fun KotlinCommonCompilerOptions.mainCompilationOptions() {
+    languageVersion = KotlinVersion.KOTLIN_2_0
     apiVersion = KotlinVersion.KOTLIN_2_0
-    freeCompilerArgs.add("-Xsuppress-api-version-greater-than-language-version-error")
+    freeCompilerArgs.add("-Xstdlib-compilation")
+    freeCompilerArgs.add("-Xdont-warn-on-error-suppression")
 }
 
 val configurationBuiltins = resolvingConfiguration("builtins") {
@@ -56,8 +57,8 @@ dependencies {
     configurationBuiltins(project(":core:builtins"))
 }
 
-val builtinsDir = "${rootDir}/core/builtins"
-val builtinsSrcDir = "${layout.buildDirectory.get().asFile}/src/builtin-sources"
+val jvmBuiltinsRelativeDir = "libraries/stdlib/jvm/builtins"
+val jvmBuiltinsDir = "${rootDir}/${jvmBuiltinsRelativeDir}"
 
 val jsDir = "${projectDir}/js"
 val jsBuiltinsSrcDir = "${layout.buildDirectory.get().asFile}/src/js-builtin-sources"
@@ -93,7 +94,7 @@ kotlin {
                                 diagnosticNamesArg,
                             )
                         )
-                        mainCompilationWithK1()
+                        mainCompilationOptions()
                         // workaround for compiling legacy MPP metadata, remove when this compilation is not needed anymore
                         // restate the list of opt-ins
                         optIn.addAll(commonOptIns)
@@ -135,11 +136,10 @@ kotlin {
                                 "-Xmultifile-parts-inherit",
                                 "-Xuse-14-inline-classes-mangling-scheme",
                                 "-Xno-new-java-annotation-targets",
-                                "-Xlink-via-signatures",
                                 diagnosticNamesArg,
                             )
                         )
-                        mainCompilationWithK1()
+                        mainCompilationOptions()
                     }
                 }
                 defaultSourceSet {
@@ -167,7 +167,7 @@ kotlin {
                                 diagnosticNamesArg,
                             )
                         )
-                        mainCompilationWithK1()
+                        mainCompilationOptions()
                     }
                 }
             }
@@ -186,7 +186,7 @@ kotlin {
                                 diagnosticNamesArg,
                             )
                         )
-                        mainCompilationWithK1()
+                        mainCompilationOptions()
                     }
                 }
             }
@@ -253,7 +253,7 @@ kotlin {
                     }
                 }
                 compileTaskProvider.configure {
-                    compilerOptions.mainCompilationWithK1()
+                    compilerOptions.mainCompilationOptions()
                 }
             }
         }
@@ -277,7 +277,7 @@ kotlin {
                 kotlinOptions.freeCompilerArgs += "-Xir-module-name=$KOTLIN_WASM_STDLIB_NAME"
                 kotlinOptions.allWarningsAsErrors = true
                 compileTaskProvider.configure {
-                    compilerOptions.mainCompilationWithK1()
+                    compilerOptions.mainCompilationOptions()
                 }
             }
         }
@@ -354,13 +354,6 @@ kotlin {
                 srcDir("common/src")
                 srcDir(files("src").builtBy(prepareCommonSources))
                 srcDir("unsigned/src")
-                if (!kotlinBuildProperties.isInIdeaSync) {
-                    srcDir("$builtinsDir/src/kotlin/internal")
-                }
-                if (kotlinBuildProperties.isInIdeaSync) {
-                    // required for correct resolution of builtin classes in common code in K2 IDE
-                    srcDir("$builtinsDir/src")
-                }
             }
         }
         commonTest {
@@ -383,7 +376,6 @@ kotlin {
             val jvmSrcDirs = listOfNotNull(
                 "jvm/src",
                 "jvm/runtime",
-                "$builtinsDir/src".takeUnless { kotlinBuildProperties.isInIdeaSync }
             )
             project.sourceSets["main"].java.srcDirs(*jvmSrcDirs.toTypedArray())
             kotlin.setSrcDirs(jvmSrcDirs)
@@ -432,27 +424,14 @@ kotlin {
 
             prepareJsIrMainSources.configure {
                 val unimplementedNativeBuiltIns =
-                    (file("$builtinsDir/native/kotlin/").list()!!.toSortedSet() - file("$jsDir/builtins/").list()!!)
-                        .map { "core/builtins/native/kotlin/$it" }
+                    (file(jvmBuiltinsDir).list()!!.toSortedSet() - file("$jsDir/builtins/").list()!!)
+                        .map { "$jvmBuiltinsRelativeDir/$it" }
 
-                // TODO: try to reuse absolute paths defined in the beginning
-                val sources = listOf(
-                    "core/builtins/src/kotlin/",
-                ) + unimplementedNativeBuiltIns
-
-                val excluded = listOf(
-                    // JS-specific optimized version of emptyArray() already defined
-                    "core/builtins/src/kotlin/ArrayIntrinsics.kt",
-                    // included in common
-                    "core/builtins/src/kotlin/internal/**",
-                )
+                val sources = unimplementedNativeBuiltIns
 
                 sources.forEach { path ->
                     from("$rootDir/$path") {
                         into(path.dropLastWhile { it != '/' })
-                        excluded.filter { it.startsWith(path) }.forEach {
-                            exclude(it.substring(path.length))
-                        }
                     }
                 }
 
@@ -504,22 +483,14 @@ kotlin {
             }
             prepareWasmBuiltinSources.configure {
                 val unimplementedNativeBuiltIns =
-                    (file("$rootDir/core/builtins/native/kotlin/").list().toSortedSet() - file("wasm/builtins/kotlin/").list())
-                        .map { "core/builtins/native/kotlin/$it" }
+                    (file(jvmBuiltinsDir).list().toSortedSet() - file("wasm/builtins/kotlin/").list())
+                        .map { "$jvmBuiltinsRelativeDir/$it" }
 
-                val sources = listOf(
-                    "core/builtins/src/kotlin/"
-                ) + unimplementedNativeBuiltIns
-
-
+                val sources = unimplementedNativeBuiltIns
 
                 val excluded = listOf(
-                    // included in commonMain
-                    "internal/InternalAnnotations.kt",
-                    // JS-specific optimized version of emptyArray() already defined
-                    "ArrayIntrinsics.kt",
                     // Included with K/N collections
-                    "Collections.kt", "Iterator.kt", "Iterators.kt"
+                    "Collections.kt", "Iterator.kt"
                 )
 
                 sources.forEach { path ->
@@ -650,6 +621,7 @@ dependencies {
 tasks {
     val metadataJar by existing(Jar::class) {
         archiveAppendix.set("metadata")
+        archiveExtension.set("klib")
     }
     val sourcesJar by existing(Jar::class) {
         archiveAppendix.set("metadata")
@@ -670,7 +642,9 @@ tasks {
         duplicatesStrategy = DuplicatesStrategy.FAIL
         archiveAppendix.set(null as String?)
         into("jvmMain") {
-            from("${rootDir}/core/builtins/native")
+            from(jvmBuiltinsDir) {
+                into("kotlin")
+            }
             from(kotlin.sourceSets["jvmMainJdk7"].kotlin) {
                 into("jdk7")
             }
@@ -713,15 +687,14 @@ tasks {
                 // just to depend on source-generating tasks
                 exclude("**")
             }
-            from("${rootDir}/core/builtins/native/kotlin") {
+            from(jvmBuiltinsDir) {
                 into("kotlin")
                 include("Comparable.kt")
                 include("Enum.kt")
             }
-            from("$jsBuiltinsSrcDir/core/builtins/native") {
-                exclude("kotlin/Comparable.kt")
+            from("$jsBuiltinsSrcDir/libraries/stdlib/jvm") {
+                exclude("builtins/Comparable.kt")
             }
-            from("$jsBuiltinsSrcDir/core/builtins/src")
             from("$jsBuiltinsSrcDir/libraries/stdlib/js/src")
             from("$jsDir/builtins") {
                 into("kotlin")
@@ -875,6 +848,7 @@ publishing {
                 }
                 artifact(tasks["metadataJar"]) {
                     classifier = "common"
+                    extension = "klib"
                 }
             }
             variant("metadataSourcesElementsFromJvm") {

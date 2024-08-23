@@ -1105,6 +1105,11 @@ internal class AnnotationInWhereClauseErrorImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.AnnotationInWhereClauseError
 
+internal class AnnotationInContractErrorImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.AnnotationInContractError
+
 internal class CompilerRequiredAnnotationAmbiguityImpl(
     override val typeFromCompilerPhase: KaType,
     override val typeFromTypesPhase: KaType,
@@ -2786,6 +2791,19 @@ internal class MethodOfAnyImplementedInInterfaceImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.MethodOfAnyImplementedInInterface
+
+internal class ExtensionShadowedByMemberImpl(
+    override val member: KaCallableSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.ExtensionShadowedByMember
+
+internal class ExtensionFunctionShadowedByMemberPropertyWithInvokeImpl(
+    override val member: KaCallableSymbol,
+    override val invokeOperator: KaCallableSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.ExtensionFunctionShadowedByMemberPropertyWithInvoke
 
 internal class LocalObjectNotAllowedImpl(
     override val objectName: Name,
