@@ -37,7 +37,10 @@ import org.jetbrains.kotlin.utils.keysToMap
 import java.io.File
 import org.jetbrains.kotlin.konan.file.File as KFile
 
-internal class K2MetadataKlibSerializer(
+/**
+ * Produces metadata klib using K1 compiler
+ */
+internal class K1MetadataKlibSerializer(
     configuration: CompilerConfiguration,
     environment: KotlinCoreEnvironment
 ) : AbstractMetadataSerializer<CommonAnalysisResult>(configuration, environment) {
@@ -50,7 +53,7 @@ internal class K2MetadataKlibSerializer(
         })
     }
 
-    override fun serialize(analysisResult: CommonAnalysisResult, destDir: File) {
+    override fun serialize(analysisResult: CommonAnalysisResult, destDir: File): OutputInfo? {
         val project = environment.project
         val module = analysisResult.moduleDescriptor
 
@@ -65,6 +68,7 @@ internal class K2MetadataKlibSerializer(
         ).serializeModule(module)
 
         buildKotlinMetadataLibrary(configuration, serializedMetadata, destDir)
+        return null
     }
 }
 

@@ -33,7 +33,10 @@ import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.io.File
 
-open class MetadataSerializer(
+/**
+ * Produces legacy metadata artifact using K1 compiler
+ */
+open class K1LegacyMetadataSerializer(
     configuration: CompilerConfiguration,
     environment: KotlinCoreEnvironment,
     private val dependOnOldBuiltIns: Boolean,
@@ -46,7 +49,7 @@ open class MetadataSerializer(
         return runCommonAnalysisForSerialization(environment, dependOnOldBuiltIns, dependencyContainerFactory = { null })
     }
 
-    override fun serialize(analysisResult: CommonAnalysisResult, destDir: File) {
+    override fun serialize(analysisResult: CommonAnalysisResult, destDir: File): OutputInfo {
         val languageVersionSettings = environment.configuration.languageVersionSettings
         val files = environment.getSourceFiles()
         val project = environment.project
@@ -112,16 +115,10 @@ open class MetadataSerializer(
 
         kotlinModuleFile.parentFile.mkdirs()
         kotlinModuleFile.writeBytes(packageTableBytes)
+        return OutputInfo(totalSize, totalFiles)
     }
 
     protected open fun createSerializerExtension(): KotlinSerializerExtensionBase = MetadataSerializerExtension(metadataVersion)
-
-    private fun getPackageFilePath(packageFqName: FqName, fileName: String): String =
-        packageFqName.asString().replace('.', '/') + "/" +
-                PackagePartClassUtils.getFilePartShortName(fileName) + DOT_METADATA_FILE_EXTENSION
-
-    private fun getClassFilePath(classId: ClassId): String =
-        classId.asSingleFqName().asString().replace('.', '/') + DOT_METADATA_FILE_EXTENSION
 
     protected inner class PackageSerializer(
         private val classes: Collection<DeclarationDescriptor>,
@@ -187,3 +184,10 @@ open class MetadataSerializer(
         }
     }
 }
+
+internal fun getClassFilePath(classId: ClassId): String =
+    classId.asSingleFqName().asString().replace('.', '/') + DOT_METADATA_FILE_EXTENSION
+
+internal fun getPackageFilePath(packageFqName: FqName, fileName: String): String =
+    packageFqName.asString().replace('.', '/') + "/" +
+            PackagePartClassUtils.getFilePartShortName(fileName) + DOT_METADATA_FILE_EXTENSION

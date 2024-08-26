@@ -45,7 +45,10 @@ import org.jetbrains.kotlin.platform.CommonPlatforms
 import java.io.File
 import org.jetbrains.kotlin.konan.file.File as KFile
 
-internal class FirMetadataSerializer(
+/**
+ * Produces metadata klib using K2 compiler
+ */
+internal open class FirMetadataSerializer(
     configuration: CompilerConfiguration,
     environment: KotlinCoreEnvironment
 ) : AbstractMetadataSerializer<List<ModuleCompilerAnalyzedOutput>>(configuration, environment) {
@@ -148,7 +151,7 @@ internal class FirMetadataSerializer(
         val renderDiagnosticNames = configuration.getBoolean(CLIConfigurationKeys.RENDER_DIAGNOSTIC_INTERNAL_NAME)
         FirDiagnosticsCompilerResultsReporter.reportToMessageCollector(diagnosticsReporter, messageCollector, renderDiagnosticNames)
 
-        return if (diagnosticsReporter.hasErrors) {
+        return if (messageCollector.hasErrors()) {
             null
         } else {
             outputs
@@ -157,7 +160,7 @@ internal class FirMetadataSerializer(
         }
     }
 
-    override fun serialize(analysisResult: List<ModuleCompilerAnalyzedOutput>, destDir: File) {
+    override fun serialize(analysisResult: List<ModuleCompilerAnalyzedOutput>, destDir: File): OutputInfo? {
         val fragments = mutableMapOf<String, MutableList<ByteArray>>()
 
         for (output in analysisResult) {
@@ -202,5 +205,6 @@ internal class FirMetadataSerializer(
         val serializedMetadata = SerializedMetadata(module, fragmentParts, fragmentNames)
 
         buildKotlinMetadataLibrary(configuration, serializedMetadata, destDir)
+        return null
     }
 }
