@@ -45,8 +45,6 @@ import org.jetbrains.kotlin.gradle.report.BuildMetricsService
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsPlugin
 import org.jetbrains.kotlin.gradle.targets.js.KotlinWasmTargetAttribute
-import org.jetbrains.kotlin.gradle.targets.js.nodejs.DefaultUnameExecutorVariantFactory
-import org.jetbrains.kotlin.gradle.targets.js.nodejs.UnameExecutor
 import org.jetbrains.kotlin.gradle.targets.metadata.isKotlinGranularMetadataEnabled
 import org.jetbrains.kotlin.gradle.targets.native.internal.CInteropCommonizerArtifactTypeAttribute
 import org.jetbrains.kotlin.gradle.targets.native.internal.CInteropKlibLibraryElements
@@ -162,18 +160,8 @@ abstract class DefaultKotlinBasePlugin : KotlinBasePlugin {
         )
 
         factories.putIfAbsent(
-            UnameExecutor.UnameExecutorVariantFactory::class,
-            DefaultUnameExecutorVariantFactory()
-        )
-
-        factories.putIfAbsent(
             ConfigurationCacheStartParameterAccessor.Factory::class,
             DefaultConfigurationCacheStartParameterAccessorVariantFactory()
-        )
-
-        factories.putIfAbsent(
-            AttributesConfigurationHelper.AttributeConfigurationHelperVariantFactory::class,
-            DefaultAttributeConfigurationHelperVariantFactory()
         )
     }
 

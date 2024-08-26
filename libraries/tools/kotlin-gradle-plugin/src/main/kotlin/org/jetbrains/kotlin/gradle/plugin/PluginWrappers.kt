@@ -13,10 +13,9 @@ import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.model.ObjectFactory
 import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry
 import org.jetbrains.kotlin.gradle.plugin.internal.*
-import org.jetbrains.kotlin.gradle.targets.js.nodejs.UnameExecutor
 import javax.inject.Inject
 
-private const val PLUGIN_VARIANT_NAME = "gradle74"
+private const val PLUGIN_VARIANT_NAME = "gradle75"
 
 open class KotlinPluginWrapper @Inject constructor(
     registry: ToolingModelBuilderRegistry
@@ -137,14 +136,10 @@ open class KotlinApiPlugin : KotlinBaseApiPlugin() {
 private fun Project.registerVariantImplementations() {
     val factories = VariantImplementationFactoriesConfigurator.get(gradle)
     factories[MppTestReportHelper.MppTestReportHelperVariantFactory::class] =
-        MppTestReportHelperG74.MppTestReportHelperVariantFactoryG74()
+        MppTestReportHelperG75.MppTestReportHelperVariantFactoryG75()
     factories[ProjectIsolationStartParameterAccessor.Factory::class] =
-        ProjectIsolationStartParameterAccessorG74.Factory()
+        ProjectIsolationStartParameterAccessorG75.Factory()
     factories[CompatibilityConventionRegistrar.Factory::class] =
-        CompatibilityConventionRegistrarG74.Factory()
-    factories[UnameExecutor.UnameExecutorVariantFactory::class] =
-        UnameExecutorG74.UnameExecutorVariantFactoryG74()
-    factories[ConfigurationCacheStartParameterAccessor.Factory::class] = ConfigurationCacheStartParameterAccessorG74.Factory()
-    factories[AttributesConfigurationHelper.AttributeConfigurationHelperVariantFactory::class] =
-        AttributeConfigurationHelperVariantFactoryG74()
+        CompatibilityConventionRegistrarG75.Factory()
+    factories[ConfigurationCacheStartParameterAccessor.Factory::class] = ConfigurationCacheStartParameterAccessorG75.Factory()
 }

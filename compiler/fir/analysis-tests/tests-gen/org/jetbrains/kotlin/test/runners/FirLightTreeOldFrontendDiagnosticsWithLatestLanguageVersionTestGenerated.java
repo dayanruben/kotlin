@@ -7843,6 +7843,36 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       }
 
       @Test
+      @TestMetadata("lambdaCaptureInConstructor.kt")
+      public void testLambdaCaptureInConstructor() {
+        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/lambdaCaptureInConstructor.kt");
+      }
+
+      @Test
+      @TestMetadata("lambdaCaptureInExtensionReceiver.kt")
+      public void testLambdaCaptureInExtensionReceiver() {
+        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/lambdaCaptureInExtensionReceiver.kt");
+      }
+
+      @Test
+      @TestMetadata("lambdaCaptureInJavaFunction.kt")
+      public void testLambdaCaptureInJavaFunction() {
+        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/lambdaCaptureInJavaFunction.kt");
+      }
+
+      @Test
+      @TestMetadata("lambdaCaptureInitializedPropertyInOtherArgument.kt")
+      public void testLambdaCaptureInitializedPropertyInOtherArgument() {
+        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/lambdaCaptureInitializedPropertyInOtherArgument.kt");
+      }
+
+      @Test
+      @TestMetadata("lambdaCaptureUninitializedInOtherArgument.kt")
+      public void testLambdaCaptureUninitializedInOtherArgument() {
+        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/lambdaCaptureUninitializedInOtherArgument.kt");
+      }
+
+      @Test
       @TestMetadata("lambdaCaptureUninitializedProperty.kt")
       public void testLambdaCaptureUninitializedProperty() {
         runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/lambdaCaptureUninitializedProperty.kt");
@@ -8125,6 +8155,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
         @TestMetadata("commentsInDeadCode.kt")
         public void testCommentsInDeadCode() {
           runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/deadCode/commentsInDeadCode.kt");
+        }
+
+        @Test
+        @TestMetadata("deadAnonymousObject.kt")
+        public void testDeadAnonymousObject() {
+          runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/deadCode/deadAnonymousObject.kt");
         }
 
         @Test
@@ -21686,6 +21722,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       @TestMetadata("publishedApi.kt")
       public void testPublishedApi() {
         runTest("compiler/testData/diagnostics/tests/inline/publishedApi.kt");
+      }
+
+      @Test
+      @TestMetadata("publishedApiSubstitutionOverride.kt")
+      public void testPublishedApiSubstitutionOverride() {
+        runTest("compiler/testData/diagnostics/tests/inline/publishedApiSubstitutionOverride.kt");
       }
 
       @Test

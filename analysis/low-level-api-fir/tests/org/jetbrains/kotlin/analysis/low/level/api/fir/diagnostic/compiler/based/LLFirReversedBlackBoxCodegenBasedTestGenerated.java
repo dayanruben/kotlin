@@ -4343,6 +4343,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
     }
 
     @Test
+    @TestMetadata("starProjectionCallableReference.kt")
+    public void testStarProjectionCallableReference() {
+      runTest("compiler/testData/codegen/box/callableReference/starProjectionCallableReference.kt");
+    }
+
+    @Test
     @TestMetadata("staticMethod.kt")
     public void testStaticMethod() {
       runTest("compiler/testData/codegen/box/callableReference/staticMethod.kt");
@@ -39303,6 +39309,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
       @TestMetadata("kt68801.kt")
       public void testKt68801() {
         runTest("compiler/testData/codegen/box/multiplatform/k2/kt68801.kt");
+      }
+
+      @Test
+      @TestMetadata("kt70894.kt")
+      public void testKt70894() {
+        runTest("compiler/testData/codegen/box/multiplatform/k2/kt70894.kt");
       }
 
       @Test
