@@ -15798,6 +15798,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
       }
 
       @Test
+      @TestMetadata("kt69534.kt")
+      public void testKt69534() {
+        runTest("compiler/testData/codegen/box/exceptions/kt69534.kt");
+      }
+
+      @Test
       @TestMetadata("rethrow.kt")
       public void testRethrow() {
         runTest("compiler/testData/codegen/box/exceptions/rethrow.kt");
@@ -20528,6 +20534,7 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
         register("compiler/testData/codegen/box/inlineClasses/kt52913.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
         register("compiler/testData/codegen/box/inlineClasses/kt54455.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
         register("compiler/testData/codegen/box/inlineClasses/kt57973.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
+        register("compiler/testData/codegen/box/inlineClasses/kt70461.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
         register("compiler/testData/codegen/box/inlineClasses/lateinitInlineClasses.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
         register("compiler/testData/codegen/box/inlineClasses/mangledDefaultParameterFunction.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
         register("compiler/testData/codegen/box/inlineClasses/mangledDefaultParameterFunctionGeneric.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
@@ -22410,6 +22417,13 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
       public void testKt57973() {
         // There is a registered source transformer for the testcase: TransformersFunctions.getRemoveOptionalJvmInlineAnnotation()
         runTest("compiler/testData/codegen/box/inlineClasses/kt57973.kt");
+      }
+
+      @Test
+      @TestMetadata("kt70461.kt")
+      public void testKt70461() {
+        // There is a registered source transformer for the testcase: TransformersFunctions.getRemoveOptionalJvmInlineAnnotation()
+        runTest("compiler/testData/codegen/box/inlineClasses/kt70461.kt");
       }
 
       @Test
@@ -26244,9 +26258,20 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
       @TestDataPath("$PROJECT_ROOT")
       @UseExtTestCaseGroupProvider()
       public class UnboxGenericParameter {
+        public UnboxGenericParameter() {
+          register("compiler/testData/codegen/box/inlineClasses/unboxGenericParameter/genericArrayInlineClassCast.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
+        }
+
         @Test
         public void testAllFilesPresentInUnboxGenericParameter() {
           KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/inlineClasses/unboxGenericParameter"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+        }
+
+        @Test
+        @TestMetadata("genericArrayInlineClassCast.kt")
+        public void testGenericArrayInlineClassCast() {
+          // There is a registered source transformer for the testcase: TransformersFunctions.getRemoveOptionalJvmInlineAnnotation()
+          runTest("compiler/testData/codegen/box/inlineClasses/unboxGenericParameter/genericArrayInlineClassCast.kt");
         }
 
         @Nested

@@ -8,8 +8,9 @@
 package org.jetbrains.kotlin.gradle.report
 
 import com.gradle.scan.plugin.BuildScanExtension
+import org.jetbrains.kotlin.gradle.internal.report.BuildScanApi
 
-class BuildScanExtensionHolder(val buildScan: BuildScanExtension) : java.io.Serializable {
+class BuildScanExtensionHolder(private val buildScan: BuildScanExtension) : java.io.Serializable, BuildScanApi {
 
     companion object {
         internal operator fun invoke(extension: Any): BuildScanExtensionHolder? {
@@ -27,5 +28,17 @@ class BuildScanExtensionHolder(val buildScan: BuildScanExtension) : java.io.Seri
 
             return buildScanExtension?.let { BuildScanExtensionHolder(it) }
         }
+    }
+
+    override fun tag(tag: String) {
+        buildScan.tag(tag)
+    }
+
+    override fun value(name: String, value: String) {
+        buildScan.value(name, value)
+    }
+
+    override fun buildFinished(action: () -> Unit) {
+        buildScan.buildFinished { action() }
     }
 }

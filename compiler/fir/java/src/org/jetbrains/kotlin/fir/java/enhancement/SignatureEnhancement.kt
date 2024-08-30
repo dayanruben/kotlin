@@ -235,7 +235,6 @@ class FirSignatureEnhancement(
         }
 
         val firMethod = original.fir
-        firMethod.inheritedKtPrivateCls = privateKtSuperClass
         when (firMethod) {
             is FirJavaMethod -> performBoundsResolutionForJavaMethodOrConstructorTypeParameters(
                 firMethod.typeParameters, firMethod.source, firMethod::withTypeParameterBoundsResolveLock
@@ -245,13 +244,16 @@ class FirSignatureEnhancement(
             )
             else -> {}
         }
+
         return enhanceMethod(
             firMethod,
             original.callableId,
             name,
             original is FirIntersectionOverrideFunctionSymbol,
             precomputedOverridden
-        )
+        ).also {
+            it.fir.inheritedKtPrivateCls = privateKtSuperClass
+        }
     }
 
     private fun FirCallableSymbol<*>.isEnhanceable(): Boolean {
@@ -572,7 +574,7 @@ class FirSignatureEnhancement(
     ): Boolean {
         for (typeParameter in typeParameters) {
             if (typeParameter is FirJavaTypeParameter) {
-                if (!typeParameter.performFirstRoundOfBoundsResolution(session, javaTypeParameterStack, source)) {
+                if (!typeParameter.performFirstRoundOfBoundsResolution(javaTypeParameterStack, source)) {
                     return false
                 }
             }

@@ -102,7 +102,7 @@ internal class NativeInlineFunctionResolver(
 
         LocalClassesInInlineLambdasLowering(context).lower(body, function)
 
-        if (!(context.config.produce.isCache || functionIsCached)) {
+        if (!context.config.produce.isCache && !functionIsCached && !experimentalDoubleInlining) {
             // Do not extract local classes off of inline functions from cached libraries.
             LocalClassesInInlineFunctionsLowering(context).lower(body, function)
             LocalClassesExtractionFromInlineFunctionsLowering(context).lower(body, function)

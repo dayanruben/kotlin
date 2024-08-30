@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.SessionConfiguration
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.deserialization.ModuleDataProvider
 import org.jetbrains.kotlin.fir.deserialization.SingleModuleDataProvider
@@ -29,7 +30,11 @@ import org.jetbrains.kotlin.serialization.deserialization.KotlinMetadataFinder
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 
-object FirCommonSessionFactory : FirAbstractSessionFactory() {
+@OptIn(SessionConfiguration::class)
+object FirCommonSessionFactory : FirAbstractSessionFactory<Nothing?, Nothing?>() {
+
+    // ==================================== Library session ====================================
+
     fun createLibrarySession(
         mainModuleName: Name,
         sessionProvider: FirProjectSessionProvider,
@@ -40,19 +45,14 @@ object FirCommonSessionFactory : FirAbstractSessionFactory() {
         resolvedKLibs: List<KotlinResolvedLibrary>,
         packageAndMetadataPartProvider: PackageAndMetadataPartProvider,
         languageVersionSettings: LanguageVersionSettings,
-        registerExtraComponents: ((FirSession) -> Unit),
     ): FirSession {
         return createLibrarySession(
             mainModuleName,
+            context = null,
             sessionProvider,
             moduleDataProvider,
             languageVersionSettings,
             extensionRegistrars,
-            registerExtraComponents = {
-                it.registerDefaultComponents()
-                registerExtraComponents(it)
-            },
-            createKotlinScopeProvider = { FirKotlinScopeProvider() },
             createProviders = { session, builtinsModuleData, kotlinScopeProvider, syntheticFunctionInterfaceProvider ->
                 listOfNotNull(
                     MetadataSymbolProvider(
@@ -81,6 +81,16 @@ object FirCommonSessionFactory : FirAbstractSessionFactory() {
         )
     }
 
+    override fun createKotlinScopeProviderForLibrarySession(): FirKotlinScopeProvider {
+        return FirKotlinScopeProvider()
+    }
+
+    override fun FirSession.registerLibrarySessionComponents(c: Nothing?) {
+        registerDefaultComponents()
+    }
+
+    // ==================================== Platform session ====================================
+
     fun createModuleBasedSession(
         moduleData: FirModuleData,
         sessionProvider: FirProjectSessionProvider,
@@ -91,11 +101,11 @@ object FirCommonSessionFactory : FirAbstractSessionFactory() {
         lookupTracker: LookupTracker? = null,
         enumWhenTracker: EnumWhenTracker? = null,
         importTracker: ImportTracker? = null,
-        registerExtraComponents: ((FirSession) -> Unit) = {},
         init: FirSessionConfigurator.() -> Unit = {}
     ): FirSession {
         return createModuleBasedSession(
             moduleData,
+            context = null,
             sessionProvider,
             extensionRegistrars,
             languageVersionSettings,
@@ -103,21 +113,6 @@ object FirCommonSessionFactory : FirAbstractSessionFactory() {
             enumWhenTracker,
             importTracker,
             init,
-            registerExtraComponents = {
-                it.registerDefaultComponents()
-                registerExtraComponents(it)
-            },
-            registerExtraCheckers = {},
-            createKotlinScopeProvider = {
-                if (languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation)) {
-                    /**
-                     * For stdlib and builtin compilation, we don't want to hide @PlatformDependent declarations from the metadata
-                     */
-                    FirKotlinScopeProvider { _, declaredScope, _, _, _ -> declaredScope }
-                } else {
-                    FirKotlinScopeProvider()
-                }
-            },
             createProviders = { session, kotlinScopeProvider, symbolProvider, generatedSymbolsProvider, dependencies ->
                 var symbolProviderForBinariesFromIncrementalCompilation: MetadataSymbolProvider? = null
                 incrementalCompilationContext?.let {
@@ -146,4 +141,29 @@ object FirCommonSessionFactory : FirAbstractSessionFactory() {
             }
         )
     }
+
+    override fun createKotlinScopeProviderForSourceSession(
+        moduleData: FirModuleData,
+        languageVersionSettings: LanguageVersionSettings,
+    ): FirKotlinScopeProvider {
+        return if (languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation)) {
+            /**
+             * For stdlib and builtin compilation, we don't want to hide @PlatformDependent declarations from the metadata
+             */
+            FirKotlinScopeProvider { _, declaredScope, _, _, _ -> declaredScope }
+        } else {
+            FirKotlinScopeProvider()
+        }
+    }
+
+    override fun FirSessionConfigurator.registerPlatformCheckers(c: Nothing?) {}
+
+    override fun FirSession.registerSourceSessionComponents(c: Nothing?) {
+        registerDefaultComponents()
+    }
+
+    // ==================================== Common parts ====================================
+
+    // ==================================== Utilities ====================================
+
 }

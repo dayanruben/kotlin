@@ -142,7 +142,6 @@ private val functionInliningPhase = makeIrModulePhase(
         expectDeclarationsRemovingPhase,
         wrapInlineDeclarationsWithReifiedTypeParametersPhase,
         localClassesInInlineLambdasPhase,
-        localClassesInInlineFunctionsPhase,
     )
 )
 

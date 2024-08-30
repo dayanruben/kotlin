@@ -10,12 +10,11 @@ import org.gradle.api.Named
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.file.SourceDirectorySet
-import org.gradle.api.model.ObjectFactory
 import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry
 import org.jetbrains.kotlin.gradle.plugin.internal.*
 import javax.inject.Inject
 
-private const val PLUGIN_VARIANT_NAME = "gradle75"
+private const val PLUGIN_VARIANT_NAME = "gradle76"
 
 open class KotlinPluginWrapper @Inject constructor(
     registry: ToolingModelBuilderRegistry
@@ -127,6 +126,7 @@ open class KotlinPlatformCommonPlugin : KotlinPlatformPluginBase("common") {
 }
 
 open class KotlinApiPlugin : KotlinBaseApiPlugin() {
+
     override fun apply(project: Project) {
         project.registerVariantImplementations()
         super.apply(project)
@@ -135,11 +135,10 @@ open class KotlinApiPlugin : KotlinBaseApiPlugin() {
 
 private fun Project.registerVariantImplementations() {
     val factories = VariantImplementationFactoriesConfigurator.get(gradle)
-    factories[MppTestReportHelper.MppTestReportHelperVariantFactory::class] =
-        MppTestReportHelperG75.MppTestReportHelperVariantFactoryG75()
     factories[ProjectIsolationStartParameterAccessor.Factory::class] =
-        ProjectIsolationStartParameterAccessorG75.Factory()
+        ProjectIsolationStartParameterAccessorG76.Factory()
     factories[CompatibilityConventionRegistrar.Factory::class] =
-        CompatibilityConventionRegistrarG75.Factory()
-    factories[ConfigurationCacheStartParameterAccessor.Factory::class] = ConfigurationCacheStartParameterAccessorG75.Factory()
+        CompatibilityConventionRegistrarG76.Factory()
+    factories[ConfigurationCacheStartParameterAccessor.Factory::class] =
+        ConfigurationCacheStartParameterAccessorG76.Factory()
 }

@@ -10,6 +10,8 @@ import org.gradle.internal.os.OperatingSystem
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.commonizer.CommonizerTarget
+import org.jetbrains.kotlin.gradle.idea.testFixtures.utils.copy
+import org.jetbrains.kotlin.gradle.plugin.mpp.KmpIsolatedProjectsSupport
 import org.jetbrains.kotlin.gradle.testbase.*
 import org.jetbrains.kotlin.gradle.util.replaceText
 import org.jetbrains.kotlin.gradle.util.reportSourceSetCommonizerDependencies
@@ -32,6 +34,9 @@ open class CommonizerIT : KGPBaseTest() {
     companion object {
         private const val commonizerOutput = "Preparing commonized Kotlin/Native libraries"
     }
+
+    override val defaultBuildOptions: BuildOptions
+        get() = super.defaultBuildOptions.enableKmpIsolatedProjectSupport()
 
     @DisplayName("Commonize native distribution with Ios Linux and Windows")
     @GradleTest
@@ -476,26 +481,6 @@ open class CommonizerIT : KGPBaseTest() {
                 assertTasksSkipped(":cinteropSimpleTarget2")
                 assertTasksExecuted(":cinteropSimpleTarget1")
                 assertTasksExecuted(":commonizeCInterop")
-            }
-        }
-    }
-
-    @DisplayName("KT-52243 cinterop caching")
-    @GradleTest
-    fun testCInteropCaching(gradleVersion: GradleVersion) {
-        nativeProject("commonizeCurlInterop", gradleVersion) {
-
-            configureCommonizerTargets()
-
-            val localBuildCacheDir = projectPath.resolve("local-build-cache-dir").also { assertTrue(it.toFile().mkdirs()) }
-            enableLocalBuildCache(localBuildCacheDir)
-
-            build(":commonize", buildOptions = defaultBuildOptions.copy(buildCacheEnabled = true)) {
-                assertTasksExecuted(":cinteropCurlTargetA", ":cinteropCurlTargetB")
-            }
-            build(":clean") {}
-            build(":commonize", buildOptions = defaultBuildOptions.copy(buildCacheEnabled = true)) {
-                assertTasksFromCache(":cinteropCurlTargetA", ":cinteropCurlTargetB")
             }
         }
     }

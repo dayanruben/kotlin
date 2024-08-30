@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -42,22 +42,6 @@ object JsEnvironmentConfigurationDirectives : SimpleDirectivesContainer() {
     val SKIP_NODE_JS by directive(
         description = "",
         applicability = DirectiveApplicability.Global
-    )
-
-    val SKIP_MINIFICATION by directive(
-        description = "",
-        applicability = DirectiveApplicability.Global
-    )
-
-    val SKIP_SOURCEMAP_REMAPPING by directive(
-        description = "",
-        applicability = DirectiveApplicability.Global
-    )
-
-    val EXPECTED_REACHABLE_NODES by valueDirective(
-        description = "",
-        applicability = DirectiveApplicability.Global,
-        parser = { it.toIntOrNull() }
     )
 
     val RECOMPILE by directive(
@@ -168,11 +152,6 @@ object JsEnvironmentConfigurationDirectives : SimpleDirectivesContainer() {
 
     val GENERATE_NODE_JS_RUNNER by directive(
         description = "Enables generation of `.node.js` file",
-        applicability = DirectiveApplicability.Global
-    )
-
-    val RUN_MINIFIER_BY_DEFAULT by directive(
-        description = "Enables minifier even if `EXPECTED_REACHABLE_NODES` directive is not set",
         applicability = DirectiveApplicability.Global
     )
 

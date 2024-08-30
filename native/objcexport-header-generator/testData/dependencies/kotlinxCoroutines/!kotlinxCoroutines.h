@@ -6,7 +6,7 @@
 #import <Foundation/NSString.h>
 #import <Foundation/NSValue.h>
 
-@class AtomicOp<__contravariant T>, BufferOverflow, ChannelFactory, ChannelFlow<T>, CloseableCoroutineDispatcher, CoroutineDispatcher, CoroutineDispatcherKey, CoroutineExceptionHandlerKey, CoroutineName, CoroutineNameKey, CoroutineStart, Dispatchers, GlobalScope, JobKey, JobSupport, KotlinAbstractCoroutineContextElement, KotlinAbstractCoroutineContextKey<B, E>, KotlinArray<T>, KotlinCancellationException, KotlinEnum<E>, KotlinEnumCompanion, KotlinException, KotlinIllegalStateException, KotlinIntArray, KotlinIntIterator, KotlinIntProgression, KotlinIntProgressionCompanion, KotlinIntRange, KotlinIntRangeCompanion, KotlinLongArray, KotlinLongIterator, KotlinLongProgression, KotlinLongProgressionCompanion, KotlinLongRange, KotlinLongRangeCompanion, KotlinNoSuchElementException, KotlinNothing, KotlinRuntimeException, KotlinThrowable, KotlinUnit, LockFreeLinkedListNode, MainCoroutineDispatcher, NonCancellable, NonDisposableHandle, OpDescriptor, SharingCommand, SharingStartedCompanion, SynchronizedObject, ThreadSafeHeap<T>, TimeoutCancellationException;
+@class AtomicOp<__contravariant T>, AtomicfuSynchronizedObject, AtomicfuSynchronizedObjectLockState, AtomicfuSynchronizedObjectStatus, BufferOverflow, ChannelFactory, ChannelFlow<T>, CloseableCoroutineDispatcher, CoroutineDispatcher, CoroutineDispatcherKey, CoroutineExceptionHandlerKey, CoroutineName, CoroutineNameKey, CoroutineStart, Dispatchers, GlobalScope, JobKey, JobSupport, KotlinAbstractCoroutineContextElement, KotlinAbstractCoroutineContextKey<B, E>, KotlinArray<T>, KotlinAtomicReference<T>, KotlinCancellationException, KotlinEnum<E>, KotlinEnumCompanion, KotlinException, KotlinIllegalStateException, KotlinIntArray, KotlinIntIterator, KotlinIntProgression, KotlinIntProgressionCompanion, KotlinIntRange, KotlinIntRangeCompanion, KotlinLongArray, KotlinLongIterator, KotlinLongProgression, KotlinLongProgressionCompanion, KotlinLongRange, KotlinLongRangeCompanion, KotlinNoSuchElementException, KotlinNothing, KotlinRuntimeException, KotlinThrowable, KotlinUnit, LockFreeLinkedListNode, MainCoroutineDispatcher, NonCancellable, NonDisposableHandle, OpDescriptor, SharingCommand, SharingStartedCompanion, ThreadSafeHeap<T>, TimeoutCancellationException;
 
 @protocol BroadcastChannel, CancellableContinuation, Channel, ChannelIterator, ChildHandle, ChildJob, CompletableDeferred, CompletableJob, CopyableThrowable, CoroutineExceptionHandler, CoroutineScope, Deferred, DisposableHandle, Flow, FlowCollector, FusibleFlow, Job, KotlinClosedRange, KotlinComparable, KotlinContinuation, KotlinContinuationInterceptor, KotlinCoroutineContext, KotlinCoroutineContextElement, KotlinCoroutineContextKey, KotlinFunction, KotlinIterable, KotlinIterator, KotlinKAnnotatedElement, KotlinKClass, KotlinKClassifier, KotlinKDeclarationContainer, KotlinOpenEndRange, KotlinSequence, KotlinSuspendFunction0, KotlinSuspendFunction1, KotlinSuspendFunction2, KotlinSuspendFunction3, KotlinSuspendFunction4, KotlinSuspendFunction5, KotlinSuspendFunction6, MainDispatcherFactory, MutableSharedFlow, MutableStateFlow, Mutex, ParentJob, ProducerScope, ReceiveChannel, Runnable, SelectBuilder, SelectClause, SelectClause0, SelectClause1, SelectClause2, SelectInstance, Semaphore, SendChannel, SharedFlow, SharingStarted, StateFlow;
 
@@ -1015,11 +1015,20 @@ __attribute__((objc_subclassing_restricted))
 @property (readonly) int32_t loadPriority __attribute__((swift_name("loadPriority")));
 @end
 
-__attribute__((objc_subclassing_restricted))
-@interface SynchronizedObject : Base
+@interface AtomicfuSynchronizedObject : Base
+- (instancetype)init __attribute__((swift_name("init()"))) __attribute__((objc_designated_initializer));
++ (instancetype)new __attribute__((availability(swift, unavailable, message="use object initializers instead")));
+- (void)lock __attribute__((swift_name("lock()")));
+- (BOOL)tryLock __attribute__((swift_name("tryLock()")));
+- (void)unlock __attribute__((swift_name("unlock()")));
+
+/**
+ * @note This property has protected visibility in Kotlin source and is intended only for use by subclasses.
+*/
+@property (readonly, getter=lock_) KotlinAtomicReference<AtomicfuSynchronizedObjectLockState *> *lock __attribute__((swift_name("lock")));
 @end
 
-@interface ThreadSafeHeap<T> : SynchronizedObject
+@interface ThreadSafeHeap<T> : AtomicfuSynchronizedObject
 - (instancetype)init __attribute__((swift_name("init()"))) __attribute__((objc_designated_initializer));
 + (instancetype)new __attribute__((availability(swift, unavailable, message="use object initializers instead")));
 - (void)addLastNode:(T)node __attribute__((swift_name("addLast(node:)")));
@@ -1120,10 +1129,6 @@ __attribute__((objc_subclassing_restricted))
 @property (readonly) int32_t size __attribute__((swift_name("size")));
 @end
 
-@interface KotlinArray (Extensions)
-- (id<Flow>)asFlow __attribute__((swift_name("asFlow()")));
-@end
-
 __attribute__((objc_subclassing_restricted))
 @interface KotlinIntArray : Base
 + (instancetype)arrayWithSize:(int32_t)size __attribute__((swift_name("init(size:)")));
@@ -1136,10 +1141,6 @@ __attribute__((objc_subclassing_restricted))
 @property (readonly) int32_t size __attribute__((swift_name("size")));
 @end
 
-@interface KotlinIntArray (Extensions)
-- (id<Flow>)asFlow __attribute__((swift_name("asFlow()")));
-@end
-
 __attribute__((objc_subclassing_restricted))
 @interface KotlinLongArray : Base
 + (instancetype)arrayWithSize:(int32_t)size __attribute__((swift_name("init(size:)")));
@@ -1150,10 +1151,6 @@ __attribute__((objc_subclassing_restricted))
 - (KotlinLongIterator *)iterator __attribute__((swift_name("iterator()")));
 - (void)setIndex:(int32_t)index value:(int64_t)value __attribute__((swift_name("set(index:value:)")));
 @property (readonly) int32_t size __attribute__((swift_name("size")));
-@end
-
-@interface KotlinLongArray (Extensions)
-- (id<Flow>)asFlow __attribute__((swift_name("asFlow()")));
 @end
 
 @protocol KotlinIterable
@@ -1214,10 +1211,6 @@ __attribute__((objc_subclassing_restricted))
 @property (readonly, getter=start_) Int *start __attribute__((swift_name("start")));
 @end
 
-@interface KotlinIntRange (Extensions)
-- (id<Flow>)asFlow __attribute__((swift_name("asFlow()")));
-@end
-
 @interface KotlinLongProgression : Base <KotlinIterable>
 @property (class, readonly, getter=companion) KotlinLongProgressionCompanion *companion __attribute__((swift_name("companion")));
 - (BOOL)isEqual:(id _Nullable)other __attribute__((swift_name("isEqual(_:)")));
@@ -1248,27 +1241,6 @@ __attribute__((objc_subclassing_restricted))
 @property (readonly) Long *endExclusive __attribute__((swift_name("endExclusive"))) __attribute__((deprecated("Can throw an exception when it's impossible to represent the value with Long type, for example, when the range includes MAX_VALUE. It's recommended to use 'endInclusive' property that doesn't throw.")));
 @property (readonly) Long *endInclusive __attribute__((swift_name("endInclusive")));
 @property (readonly, getter=start_) Long *start __attribute__((swift_name("start")));
-@end
-
-@interface KotlinLongRange (Extensions)
-- (id<Flow>)asFlow __attribute__((swift_name("asFlow()")));
-@end
-
-@interface CoroutineDispatcher (Extensions)
-
-/**
- * @note This method converts instances of CancellationException to errors.
- * Other uncaught Kotlin exceptions are fatal.
-*/
-- (void)invokeBlock:(id<KotlinSuspendFunction1>)block completionHandler:(void (^)(id _Nullable_result, NSError * _Nullable))completionHandler __attribute__((swift_name("invoke(block:completionHandler:)")));
-@end
-
-@interface Dispatchers (Extensions)
-@property (readonly) CoroutineDispatcher *IO __attribute__((swift_name("IO")));
-@end
-
-@interface SharingStartedCompanion (Extensions)
-- (id<SharingStarted>)WhileSubscribedStopTimeout:(int64_t)stopTimeout replayExpiration:(int64_t)replayExpiration __attribute__((swift_name("WhileSubscribed(stopTimeout:replayExpiration:)")));
 @end
 
 __attribute__((objc_subclassing_restricted))
@@ -2012,12 +1984,12 @@ __attribute__((objc_subclassing_restricted))
 
 __attribute__((objc_subclassing_restricted))
 @interface Synchronized_commonKt : Base
-+ (id _Nullable)synchronizedLock:(SynchronizedObject *)lock block:(id _Nullable (^)(void))block __attribute__((swift_name("synchronized(lock:block:)")));
++ (id _Nullable)synchronizedLock:(AtomicfuSynchronizedObject *)lock block:(id _Nullable (^)(void))block __attribute__((swift_name("synchronized(lock:block:)")));
 @end
 
 __attribute__((objc_subclassing_restricted))
 @interface SynchronizedKt : Base
-+ (id _Nullable)synchronizedImplLock:(SynchronizedObject *)lock block:(id _Nullable (^)(void))block __attribute__((swift_name("synchronizedImpl(lock:block:)")));
++ (id _Nullable)synchronizedImplLock:(AtomicfuSynchronizedObject *)lock block:(id _Nullable (^)(void))block __attribute__((swift_name("synchronizedImpl(lock:block:)")));
 @end
 
 __attribute__((objc_subclassing_restricted))
@@ -2140,6 +2112,32 @@ __attribute__((objc_subclassing_restricted))
 + (instancetype)allocWithZone:(struct _NSZone *)zone __attribute__((unavailable));
 + (instancetype)companion __attribute__((swift_name("init()")));
 @property (class, readonly, getter=shared) KotlinEnumCompanion *shared __attribute__((swift_name("shared")));
+@end
+
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("AtomicfuSynchronizedObject.LockState")))
+@interface AtomicfuSynchronizedObjectLockState : Base
+- (instancetype)initWithStatus:(AtomicfuSynchronizedObjectStatus *)status nestedLocks:(int32_t)nestedLocks waiters:(int32_t)waiters ownerThreadId:(void * _Nullable)ownerThreadId mutex:(void * _Nullable)mutex __attribute__((swift_name("init(status:nestedLocks:waiters:ownerThreadId:mutex:)"))) __attribute__((objc_designated_initializer));
+@property (readonly) void * _Nullable mutex __attribute__((swift_name("mutex")));
+@property (readonly) int32_t nestedLocks __attribute__((swift_name("nestedLocks")));
+@property (readonly) void * _Nullable ownerThreadId __attribute__((swift_name("ownerThreadId")));
+@property (readonly) AtomicfuSynchronizedObjectStatus *status __attribute__((swift_name("status")));
+@property (readonly) int32_t waiters __attribute__((swift_name("waiters")));
+@end
+
+
+/**
+ * @note annotations
+ *   kotlin.SinceKotlin(version="1.9")
+*/
+__attribute__((objc_subclassing_restricted))
+@interface KotlinAtomicReference<T> : Base
+- (instancetype)initWithValue:(T _Nullable)value __attribute__((swift_name("init(value:)"))) __attribute__((objc_designated_initializer));
+- (T _Nullable)compareAndExchangeExpected:(T _Nullable)expected newValue:(T _Nullable)newValue __attribute__((swift_name("compareAndExchange(expected:newValue:)")));
+- (BOOL)compareAndSetExpected:(T _Nullable)expected newValue:(T _Nullable)newValue __attribute__((swift_name("compareAndSet(expected:newValue:)")));
+- (T _Nullable)getAndSetNewValue:(T _Nullable)newValue __attribute__((swift_name("getAndSet(newValue:)")));
+- (NSString *)description __attribute__((swift_name("description()")));
+@property T _Nullable value __attribute__((swift_name("value")));
 @end
 
 @protocol KotlinSuspendFunction0 <KotlinFunction>
@@ -2302,6 +2300,56 @@ __attribute__((objc_subclassing_restricted))
  * Other uncaught Kotlin exceptions are fatal.
 */
 - (void)invokeP1:(id _Nullable)p1 p2:(id _Nullable)p2 p3:(id _Nullable)p3 p4:(id _Nullable)p4 p5:(id _Nullable)p5 p6:(id _Nullable)p6 completionHandler:(void (^)(id _Nullable_result, NSError * _Nullable))completionHandler __attribute__((swift_name("invoke(p1:p2:p3:p4:p5:p6:completionHandler:)")));
+@end
+
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("AtomicfuSynchronizedObject.Status")))
+@interface AtomicfuSynchronizedObjectStatus : KotlinEnum<AtomicfuSynchronizedObjectStatus *>
++ (instancetype)alloc __attribute__((unavailable));
++ (instancetype)allocWithZone:(struct _NSZone *)zone __attribute__((unavailable));
+- (instancetype)initWithName:(NSString *)name ordinal:(int32_t)ordinal __attribute__((swift_name("init(name:ordinal:)"))) __attribute__((objc_designated_initializer)) __attribute__((unavailable));
+@property (class, readonly) AtomicfuSynchronizedObjectStatus *unlocked __attribute__((swift_name("unlocked")));
+@property (class, readonly) AtomicfuSynchronizedObjectStatus *thin __attribute__((swift_name("thin")));
+@property (class, readonly) AtomicfuSynchronizedObjectStatus *fat __attribute__((swift_name("fat")));
++ (KotlinArray<AtomicfuSynchronizedObjectStatus *> *)values __attribute__((swift_name("values()")));
+@property (class, readonly) NSArray<AtomicfuSynchronizedObjectStatus *> *entries __attribute__((swift_name("entries")));
+@end
+
+@interface KotlinIntArray (Extensions)
+- (id<Flow>)asFlow __attribute__((swift_name("asFlow()")));
+@end
+
+@interface KotlinLongArray (Extensions)
+- (id<Flow>)asFlow __attribute__((swift_name("asFlow()")));
+@end
+
+@interface KotlinIntRange (Extensions)
+- (id<Flow>)asFlow __attribute__((swift_name("asFlow()")));
+@end
+
+@interface KotlinLongRange (Extensions)
+- (id<Flow>)asFlow __attribute__((swift_name("asFlow()")));
+@end
+
+@interface CoroutineDispatcher (Extensions)
+
+/**
+ * @note This method converts instances of CancellationException to errors.
+ * Other uncaught Kotlin exceptions are fatal.
+*/
+- (void)invokeBlock:(id<KotlinSuspendFunction1>)block completionHandler:(void (^)(id _Nullable_result, NSError * _Nullable))completionHandler __attribute__((swift_name("invoke(block:completionHandler:)")));
+@end
+
+@interface Dispatchers (Extensions)
+@property (readonly) CoroutineDispatcher *IO __attribute__((swift_name("IO")));
+@end
+
+@interface SharingStartedCompanion (Extensions)
+- (id<SharingStarted>)WhileSubscribedStopTimeout:(int64_t)stopTimeout replayExpiration:(int64_t)replayExpiration __attribute__((swift_name("WhileSubscribed(stopTimeout:replayExpiration:)")));
+@end
+
+@interface KotlinArray (Extensions)
+- (id<Flow>)asFlow __attribute__((swift_name("asFlow()")));
 @end
 
 #pragma pop_macro("_Nullable_result")

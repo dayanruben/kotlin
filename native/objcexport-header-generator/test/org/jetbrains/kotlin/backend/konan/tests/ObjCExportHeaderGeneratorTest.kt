@@ -505,6 +505,36 @@ class ObjCExportHeaderGeneratorTest(private val generator: HeaderGenerator) {
         doTest(headersTestDataDir.resolve("collectionTypeArguments"))
     }
 
+    @Test
+    fun `test - extension order`() {
+        doTest(headersTestDataDir.resolve("extensionOrder"))
+    }
+
+    @Test
+    fun `test - basicConstructorWithUpperBoundParameters`() {
+        doTest(headersTestDataDir.resolve("basicConstructorWithUpperBoundParameters"))
+    }
+
+    @Test
+    fun `test - basicMethodParameterWithUpperBound`() {
+        doTest(headersTestDataDir.resolve("basicMethodParameterWithUpperBound"))
+    }
+
+    @Test
+    fun `test - methodWithMultipleUpperBoundsParameters`() {
+        doTest(headersTestDataDir.resolve("methodWithMultipleUpperBoundsParameters"))
+    }
+
+    @Test
+    fun `test - basicGenericsInAndOut`() {
+        doTest(headersTestDataDir.resolve("basicGenericsInAndOut"))
+    }
+
+    @Test
+    fun `test - methodWithMultipleTypeParameters`() {
+        doTest(headersTestDataDir.resolve("methodWithMultipleTypeParameters"))
+    }
+
     private fun doTest(root: File, configuration: Configuration = Configuration()) {
         if (!root.isDirectory) fail("Expected ${root.absolutePath} to be directory")
         val generatedHeaders = generator.generateHeaders(root, configuration).toString()

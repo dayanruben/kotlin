@@ -22885,6 +22885,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       }
 
       @Test
+      @TestMetadata("IltAsExtensionReceiver.kt")
+      public void testIltAsExtensionReceiver() {
+        runTest("compiler/testData/diagnostics/tests/integerLiterals/IltAsExtensionReceiver.kt");
+      }
+
+      @Test
       @TestMetadata("intToLongConversion.kt")
       public void testIntToLongConversion() {
         runTest("compiler/testData/diagnostics/tests/integerLiterals/intToLongConversion.kt");
@@ -40938,6 +40944,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       @TestMetadata("privateFromInAnonymousObject.kt")
       public void testPrivateFromInAnonymousObject() {
         runTest("compiler/testData/diagnostics/tests/visibility/privateFromInAnonymousObject.kt");
+      }
+
+      @Test
+      @TestMetadata("privateSealedNested.kt")
+      public void testPrivateSealedNested() {
+        runTest("compiler/testData/diagnostics/tests/visibility/privateSealedNested.kt");
       }
 
       @Test
