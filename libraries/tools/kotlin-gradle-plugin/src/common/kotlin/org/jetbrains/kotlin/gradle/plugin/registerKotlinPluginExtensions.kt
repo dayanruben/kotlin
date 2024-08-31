@@ -9,6 +9,7 @@ import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.artifacts.*
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.internal.CustomizeKotlinDependenciesSetupAction
+import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinGradleProjectChecker
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnosticsSetupAction
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.checkers.*
@@ -109,6 +110,11 @@ internal fun Project.registerKotlinPluginExtensions() {
         register(project, ConfigureFrameworkExportSideEffect)
         register(project, SetupCInteropApiElementsConfigurationSideEffect)
         register(project, SetupEmbedAndSignAppleFrameworkTaskSideEffect)
+        if (useNonPackedKlibs) {
+            register(project, MaybeAddWorkaroundForSecondaryVariantsBug)
+            register(project, CreateNonPackedKlibVariantsSideEffect)
+            register(project, ConfigureNonPackedKlibConsumingSideEffect)
+        }
     }
 
     KotlinCompilationSideEffect.extensionPoint.apply {
@@ -177,3 +183,5 @@ private val Project.isJvm get() = kotlinJvmExtensionOrNull != null
 private val Project.isJs get() = kotlinExtensionOrNull is KotlinJsProjectExtension
 
 private val Project.isAndroid get() = kotlinExtension is KotlinAndroidProjectExtension
+
+private val Project.useNonPackedKlibs get() = kotlinPropertiesProvider.useNonPackedKlibs

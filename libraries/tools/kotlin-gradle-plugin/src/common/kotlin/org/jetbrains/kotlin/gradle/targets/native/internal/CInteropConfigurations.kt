@@ -10,10 +10,12 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.attributes.*
 import org.gradle.api.tasks.TaskProvider
+import org.jetbrains.kotlin.gradle.artifacts.maybeCreateKlibPackingTask
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation.Companion.MAIN_COMPILATION_NAME
 import org.jetbrains.kotlin.gradle.plugin.KotlinNativeTargetConfigurator.NativeArtifactFormat
 import org.jetbrains.kotlin.gradle.plugin.KotlinPluginLifecycle.Stage.AfterFinaliseDsl
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
+import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.categoryByName
 import org.jetbrains.kotlin.gradle.plugin.launchInStage
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
@@ -26,18 +28,25 @@ import org.jetbrains.kotlin.gradle.utils.createConsumable
 import org.jetbrains.kotlin.gradle.utils.findConsumable
 
 internal fun createCInteropApiElementsKlibArtifact(
-    target: KotlinNativeTarget,
+    compilation: KotlinNativeCompilation,
     settings: DefaultCInteropSettings,
     interopTask: TaskProvider<out CInteropProcess>,
 ) {
-    val project = target.project
-    val configurationName = cInteropApiElementsConfigurationName(target)
+    val project = compilation.project
+    val configurationName = cInteropApiElementsConfigurationName(compilation.target)
     val configuration = project.configurations.getByName(configurationName)
-    project.artifacts.add(configuration.name, interopTask.flatMap { it.outputFileProvider }) { artifact ->
+    val (packTask, packedArtifactFile) = if (project.kotlinPropertiesProvider.useNonPackedKlibs) {
+        // the default artifact should be compressed
+        val packTask = compilation.maybeCreateKlibPackingTask(settings.classifier, interopTask)
+        packTask to packTask.map { it.archiveFile.get().asFile }
+    } else {
+        interopTask to interopTask.flatMap { it.klibFile }
+    }
+    project.artifacts.add(configuration.name, packedArtifactFile) { artifact ->
         artifact.extension = "klib"
         artifact.type = "klib"
-        artifact.classifier = "cinterop-${settings.name}"
-        artifact.builtBy(interopTask)
+        artifact.classifier = settings.classifier
+        artifact.builtBy(packTask)
     }
 }
 
@@ -53,7 +62,7 @@ internal fun Project.locateOrCreateCInteropDependencyConfiguration(
         extendsFrom(compileOnlyConfiguration, implementationConfiguration)
         isVisible = false
 
-        /* Deferring attributes to wait for compilation.attributes to be configured  by user*/
+        /* Deferring attributes to wait for compilation.attributes to be configured by user */
         launchInStage(AfterFinaliseDsl) {
             usesPlatformOf(compilation.target)
             compilation.copyAttributesTo(project.providers, dest = attributes)
@@ -70,6 +79,18 @@ internal val KotlinNativeCompilation.cInteropDependencyConfigurationName: String
 
 internal val SetupCInteropApiElementsConfigurationSideEffect = KotlinTargetSideEffect<KotlinNativeTarget> { target ->
     target.project.locateOrCreateCInteropApiElementsConfiguration(target)
+}
+
+// Workaround for https://github.com/gradle/gradle/issues/29630
+internal val MaybeAddWorkaroundForSecondaryVariantsBug = KotlinTargetSideEffect<KotlinNativeTarget> { target ->
+    // at this moment, there's no version with fix of the bug
+    target.project.artifacts.add(
+        cInteropApiElementsConfigurationName(target),
+        target.project.file("non-existing-file-workaround-for-gradle-29630.txt")
+    ) { fakeArtifact ->
+        fakeArtifact.extension = "txt"
+        fakeArtifact.type = "workaround-for-gradle-29630"
+    }
 }
 
 internal fun Project.locateOrCreateCInteropApiElementsConfiguration(target: KotlinTarget): Configuration {
@@ -94,7 +115,7 @@ internal fun Project.locateOrCreateCInteropApiElementsConfiguration(target: Kotl
     }
 }
 
-private fun cInteropApiElementsConfigurationName(target: KotlinTarget): String {
+internal fun cInteropApiElementsConfigurationName(target: KotlinTarget): String {
     return target.name + "CInteropApiElements"
 }
 
