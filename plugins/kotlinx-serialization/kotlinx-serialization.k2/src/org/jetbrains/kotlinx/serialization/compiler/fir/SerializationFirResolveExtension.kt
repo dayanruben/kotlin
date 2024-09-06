@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.fir.copy
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.buildSimpleFunctionCopy
 import org.jetbrains.kotlin.fir.declarations.utils.isCompanion
-import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.extensions.*
 import org.jetbrains.kotlin.fir.plugin.*
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
@@ -237,8 +236,7 @@ class SerializationFirResolveExtension(session: FirSession) : FirDeclarationGene
             returnTypeProvider = { typeParameters ->
                 val parametersAsArguments = typeParameters.map { it.toConeType() }.toTypedArray<ConeTypeProjection>()
                 kSerializerId.constructClassLikeType(
-                    arrayOf(serializableClassSymbol.constructType(parametersAsArguments, false)),
-                    isNullable = false
+                    arrayOf(serializableClassSymbol.constructType(parametersAsArguments)),
                 )
             }
         ) {
@@ -314,10 +312,8 @@ class SerializationFirResolveExtension(session: FirSession) : FirDeclarationGene
                     arrayOf(
                         owner.constructType(
                             typeParameters.map { it.toConeType() }.toTypedArray(),
-                            isNullable = false
                         )
                     ),
-                    isNullable = false
                 )
             }
         }.apply {

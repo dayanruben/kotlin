@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.fir.expressions.impl.FirLazyDelegatedConstructorCall
 import org.jetbrains.kotlin.fir.expressions.impl.FirUnitExpression
 import org.jetbrains.kotlin.fir.isCatchParameter
 import org.jetbrains.kotlin.fir.references.*
-import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -524,7 +523,7 @@ class FirRenderer(
 
             val meaningfulBounds = typeParameter.bounds.filter {
                 if (it !is FirResolvedTypeRef) return@filter true
-                if (!it.coneType.isNullable) return@filter true
+                if (!it.coneType.isMarkedOrFlexiblyNullable) return@filter true
                 val type = it.coneType as? ConeLookupTagBasedType ?: return@filter true
                 (type.lookupTag as? ConeClassLikeLookupTag)?.classId != StandardClassIds.Any
             }

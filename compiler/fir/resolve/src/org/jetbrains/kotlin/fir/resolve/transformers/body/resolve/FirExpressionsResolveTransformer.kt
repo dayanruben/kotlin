@@ -404,7 +404,9 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
         whileAnalysing(session, safeCallExpression) {
             withContainingSafeCallExpression(safeCallExpression) {
                 safeCallExpression.transformAnnotations(this, ResolutionMode.ContextIndependent)
-                safeCallExpression.transformReceiver(this, ResolutionMode.ContextIndependent)
+
+                safeCallExpression.transformReceiver(this, ResolutionMode.ReceiverResolution)
+                safeCallExpression.transformReceiver(components.integerLiteralAndOperatorApproximationTransformer, null)
 
                 val receiver = safeCallExpression.receiver
 
@@ -633,7 +635,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
 
         val integerOperatorType = ConeIntegerConstantOperatorTypeImpl(
             isUnsigned = resolvedSymbol.isWrappedIntegerOperatorForUnsignedType(),
-            ConeNullability.NOT_NULL
+            isMarkedNullable = false
         )
 
         val approximationIsNeeded =
@@ -1027,7 +1029,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
             }
             SAFE_AS -> {
                 resolved.resultType = conversionTypeRef.coneType.withNullability(
-                    ConeNullability.NULLABLE, session.typeContext,
+                    nullable = true, session.typeContext,
                 )
             }
             else -> error("Unknown type operator: ${resolved.operation}")
@@ -1052,7 +1054,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
                             it.lookupTag.toSymbol(session)?.fir?.typeParameters?.isEmpty() == true
                 }?.let {
                     if (operation == SAFE_AS)
-                        it.withNullability(ConeNullability.NULLABLE, session.typeContext)
+                        it.withNullability(nullable = true, session.typeContext)
                     else
                         it
                 }
@@ -1241,7 +1243,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
                             ConeStarProjection
                         }
                     }
-                val type = symbol?.constructType(typeArguments, isNullable = false)
+                val type = symbol?.constructType(typeArguments)
                 if (type != null) {
                     lhs.replaceConeTypeOrNull(
                         type.also {
@@ -1255,7 +1257,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
             }
             is FirResolvedReifiedParameterReference -> {
                 val symbol = lhs.symbol
-                symbol.constructType(emptyArray(), isNullable = false)
+                symbol.constructType()
             }
             else -> {
                 if (!shouldComputeTypeOfGetClassCallWithNotQualifierInLhs(getClassCall)) return transformedGetClassCall
@@ -1301,7 +1303,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
                     }
                     data is ResolutionMode.ReceiverResolution && !data.forCallableReference -> {
                         require(expressionType is ConeIntegerLiteralConstantTypeImpl)
-                        ConeIntegerConstantOperatorTypeImpl(expressionType.isUnsigned, ConeNullability.NOT_NULL)
+                        ConeIntegerConstantOperatorTypeImpl(expressionType.isUnsigned, isMarkedNullable = false)
                     }
                     expectedTypeRef != null -> {
                         require(expressionType is ConeIntegerLiteralConstantTypeImpl)

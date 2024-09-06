@@ -36,10 +36,9 @@ public class SirVisibilityCheckerImpl(
                 ktSymbol.isConsumableBySirBuilder()
             }
             is KaTypeAliasSymbol -> ktSymbol.expandedType.fullyExpandedType
-                .takeIf { !it.isMarkedNullable }
-                ?.let {
+                .let {
                     it.isPrimitive || it.isNothingType || it.isVisible(ktAnalysisSession)
-                } ?: false
+                }
             else -> false
         }
         return if (isConsumable) SirVisibility.PUBLIC else SirVisibility.PRIVATE
@@ -79,7 +78,7 @@ public class SirVisibilityCheckerImpl(
 
     private fun KaNamedClassSymbol.isConsumableBySirBuilder(ktAnalysisSession: KaSession): Boolean =
         with(ktAnalysisSession) {
-            if (!((classKind == KaClassKind.CLASS) || classKind == KaClassKind.OBJECT)) {
+            if (classKind != KaClassKind.CLASS && classKind != KaClassKind.OBJECT && classKind != KaClassKind.COMPANION_OBJECT) {
                 unsupportedDeclarationReporter
                     .report(this@isConsumableBySirBuilder, "${classKind.name.lowercase()} classifiers are not supported yet.")
                 return@with false

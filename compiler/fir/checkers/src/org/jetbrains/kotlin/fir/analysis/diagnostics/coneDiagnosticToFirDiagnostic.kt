@@ -122,10 +122,14 @@ private fun ConeDiagnostic.toKtDiagnostic(
         } -> null
         applicability.isSuccess -> FirErrors.OVERLOAD_RESOLUTION_AMBIGUITY.createOn(source, this.candidates.map { it.symbol })
         applicability == CandidateApplicability.UNSAFE_CALL -> {
-            val (unsafeCall, candidate) = candidates.firstNotNullOf {
-                (it as? AbstractCallCandidate<*>)?.diagnostics?.firstIsInstanceOrNull<UnsafeCall>()?.to(it)
+            val diagnosticAndCandidate = candidates.firstNotNullOfOrNull {
+                (it as? AbstractCallCandidate<*>)?.diagnostics?.firstIsInstanceOrNull<InapplicableNullableReceiver>()?.to(it)
             }
-            mapUnsafeCallError(candidate, unsafeCall, source, callOrAssignmentSource)
+            if (diagnosticAndCandidate != null) {
+                mapInapplicableNullableReceiver(diagnosticAndCandidate.second, diagnosticAndCandidate.first, source, callOrAssignmentSource)
+            } else {
+                FirErrors.NONE_APPLICABLE.createOn(source, this.candidates.map { it.symbol })
+            }
         }
 
         applicability == CandidateApplicability.UNSTABLE_SMARTCAST -> {
@@ -231,9 +235,9 @@ fun ConeDiagnostic.toFirDiagnostics(
     }
 }
 
-private fun mapUnsafeCallError(
+private fun mapInapplicableNullableReceiver(
     candidate: AbstractCallCandidate<*>,
-    rootCause: UnsafeCall,
+    rootCause: InapplicableNullableReceiver,
     source: KtSourceElement?,
     qualifiedAccessSource: KtSourceElement?,
 ): KtDiagnostic {
@@ -382,7 +386,7 @@ private fun mapInapplicableCandidateError(
                 rootCause.argument.source ?: source
             )
 
-            is UnsafeCall -> mapUnsafeCallError(diagnostic.candidate, rootCause, source, qualifiedAccessSource)
+            is InapplicableNullableReceiver -> mapInapplicableNullableReceiver(diagnostic.candidate, rootCause, source, qualifiedAccessSource)
             is ManyLambdaExpressionArguments -> FirErrors.MANY_LAMBDA_EXPRESSION_ARGUMENTS.createOn(rootCause.argument.source ?: source)
             is InfixCallOfNonInfixFunction -> FirErrors.INFIX_MODIFIER_REQUIRED.createOn(source, rootCause.function)
             is OperatorCallOfNonOperatorFunction ->
@@ -531,7 +535,7 @@ private fun ConstraintSystemError.toDiagnostic(
                         if (!lowerConeType.isNullableNothing)
                             lowerConeType
                         else
-                            upperConeType.withNullability(ConeNullability.NULLABLE, typeContext)
+                            upperConeType.withNullability(nullable = true, typeContext)
 
                     FirErrors.TYPE_MISMATCH.createOn(
                         qualifiedAccessSource ?: source,

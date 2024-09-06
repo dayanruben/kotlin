@@ -200,80 +200,7 @@ KaNamedFunctionSymbol:
       returnType: KaUsualClassType:
         annotations: []
         typeArguments: []
-        type: kotlin/Double
-      visibility: PUBLIC
-      getContainingFileSymbol: null
-      getContainingJvmClassName: kotlin.Int
-      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-      deprecationStatus: null
-  ]
-  visibility: PUBLIC
-  getDispatchReceiver(): KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/Int
-  getContainingFileSymbol: null
-  getContainingJvmClassName: kotlin.Int
-  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-  deprecationStatus: null
-
-KaNamedFunctionSymbol:
-  annotations: [
-    kotlin/internal/IntrinsicConstEvaluation()
-      psi: null
-  ]
-  callableId: kotlin/Int.compareTo
-  compilerVisibility: Public
-  contextReceivers: []
-  contractEffects: []
-  hasStableParameterNames: true
-  isActual: false
-  isBuiltinFunctionInvoke: false
-  isExpect: false
-  isExtension: false
-  isExternal: false
-  isInfix: false
-  isInline: false
-  isOperator: true
-  isOverride: false
-  isStatic: false
-  isSuspend: false
-  isTailRec: false
-  location: CLASS
-  modality: FINAL
-  name: compareTo
-  origin: LIBRARY
-  receiverParameter: null
-  returnType: KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/Int
-  typeParameters: []
-  valueParameters: [
-    KaValueParameterSymbol:
-      annotations: []
-      callableId: null
-      compilerVisibility: Public
-      contextReceivers: []
-      generatedPrimaryConstructorProperty: null
-      hasDefaultValue: false
-      isActual: false
-      isCrossinline: false
-      isExpect: false
-      isExtension: false
-      isImplicitLambdaParameter: false
-      isNoinline: false
-      isVal: true
-      isVararg: false
-      location: LOCAL
-      modality: FINAL
-      name: other
-      origin: LIBRARY
-      receiverParameter: null
-      returnType: KaUsualClassType:
-        annotations: []
-        typeArguments: []
-        type: kotlin/Float
+        type: kotlin/Short
       visibility: PUBLIC
       getContainingFileSymbol: null
       getContainingJvmClassName: kotlin.Int
@@ -492,7 +419,80 @@ KaNamedFunctionSymbol:
       returnType: KaUsualClassType:
         annotations: []
         typeArguments: []
-        type: kotlin/Short
+        type: kotlin/Float
+      visibility: PUBLIC
+      getContainingFileSymbol: null
+      getContainingJvmClassName: kotlin.Int
+      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+      deprecationStatus: null
+  ]
+  visibility: PUBLIC
+  getDispatchReceiver(): KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/Int
+  getContainingFileSymbol: null
+  getContainingJvmClassName: kotlin.Int
+  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+  deprecationStatus: null
+
+KaNamedFunctionSymbol:
+  annotations: [
+    kotlin/internal/IntrinsicConstEvaluation()
+      psi: null
+  ]
+  callableId: kotlin/Int.compareTo
+  compilerVisibility: Public
+  contextReceivers: []
+  contractEffects: []
+  hasStableParameterNames: true
+  isActual: false
+  isBuiltinFunctionInvoke: false
+  isExpect: false
+  isExtension: false
+  isExternal: false
+  isInfix: false
+  isInline: false
+  isOperator: true
+  isOverride: false
+  isStatic: false
+  isSuspend: false
+  isTailRec: false
+  location: CLASS
+  modality: FINAL
+  name: compareTo
+  origin: LIBRARY
+  receiverParameter: null
+  returnType: KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/Int
+  typeParameters: []
+  valueParameters: [
+    KaValueParameterSymbol:
+      annotations: []
+      callableId: null
+      compilerVisibility: Public
+      contextReceivers: []
+      generatedPrimaryConstructorProperty: null
+      hasDefaultValue: false
+      isActual: false
+      isCrossinline: false
+      isExpect: false
+      isExtension: false
+      isImplicitLambdaParameter: false
+      isNoinline: false
+      isVal: true
+      isVararg: false
+      location: LOCAL
+      modality: FINAL
+      name: other
+      origin: LIBRARY
+      receiverParameter: null
+      returnType: KaUsualClassType:
+        annotations: []
+        typeArguments: []
+        type: kotlin/Double
       visibility: PUBLIC
       getContainingFileSymbol: null
       getContainingJvmClassName: kotlin.Int
@@ -652,80 +652,7 @@ KaNamedFunctionSymbol:
   returnType: KaUsualClassType:
     annotations: []
     typeArguments: []
-    type: kotlin/Double
-  typeParameters: []
-  valueParameters: [
-    KaValueParameterSymbol:
-      annotations: []
-      callableId: null
-      compilerVisibility: Public
-      contextReceivers: []
-      generatedPrimaryConstructorProperty: null
-      hasDefaultValue: false
-      isActual: false
-      isCrossinline: false
-      isExpect: false
-      isExtension: false
-      isImplicitLambdaParameter: false
-      isNoinline: false
-      isVal: true
-      isVararg: false
-      location: LOCAL
-      modality: FINAL
-      name: other
-      origin: LIBRARY
-      receiverParameter: null
-      returnType: KaUsualClassType:
-        annotations: []
-        typeArguments: []
-        type: kotlin/Double
-      visibility: PUBLIC
-      getContainingFileSymbol: null
-      getContainingJvmClassName: kotlin.Int
-      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-      deprecationStatus: null
-  ]
-  visibility: PUBLIC
-  getDispatchReceiver(): KaUsualClassType:
-    annotations: []
-    typeArguments: []
     type: kotlin/Int
-  getContainingFileSymbol: null
-  getContainingJvmClassName: kotlin.Int
-  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-  deprecationStatus: null
-
-KaNamedFunctionSymbol:
-  annotations: [
-    kotlin/internal/IntrinsicConstEvaluation()
-      psi: null
-  ]
-  callableId: kotlin/Int.div
-  compilerVisibility: Public
-  contextReceivers: []
-  contractEffects: []
-  hasStableParameterNames: true
-  isActual: false
-  isBuiltinFunctionInvoke: false
-  isExpect: false
-  isExtension: false
-  isExternal: false
-  isInfix: false
-  isInline: false
-  isOperator: true
-  isOverride: false
-  isStatic: false
-  isSuspend: false
-  isTailRec: false
-  location: CLASS
-  modality: FINAL
-  name: div
-  origin: LIBRARY
-  receiverParameter: null
-  returnType: KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/Float
   typeParameters: []
   valueParameters: [
     KaValueParameterSymbol:
@@ -751,7 +678,7 @@ KaNamedFunctionSymbol:
       returnType: KaUsualClassType:
         annotations: []
         typeArguments: []
-        type: kotlin/Float
+        type: kotlin/Short
       visibility: PUBLIC
       getContainingFileSymbol: null
       getContainingJvmClassName: kotlin.Int
@@ -944,7 +871,7 @@ KaNamedFunctionSymbol:
   returnType: KaUsualClassType:
     annotations: []
     typeArguments: []
-    type: kotlin/Int
+    type: kotlin/Float
   typeParameters: []
   valueParameters: [
     KaValueParameterSymbol:
@@ -970,7 +897,80 @@ KaNamedFunctionSymbol:
       returnType: KaUsualClassType:
         annotations: []
         typeArguments: []
-        type: kotlin/Short
+        type: kotlin/Float
+      visibility: PUBLIC
+      getContainingFileSymbol: null
+      getContainingJvmClassName: kotlin.Int
+      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+      deprecationStatus: null
+  ]
+  visibility: PUBLIC
+  getDispatchReceiver(): KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/Int
+  getContainingFileSymbol: null
+  getContainingJvmClassName: kotlin.Int
+  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+  deprecationStatus: null
+
+KaNamedFunctionSymbol:
+  annotations: [
+    kotlin/internal/IntrinsicConstEvaluation()
+      psi: null
+  ]
+  callableId: kotlin/Int.div
+  compilerVisibility: Public
+  contextReceivers: []
+  contractEffects: []
+  hasStableParameterNames: true
+  isActual: false
+  isBuiltinFunctionInvoke: false
+  isExpect: false
+  isExtension: false
+  isExternal: false
+  isInfix: false
+  isInline: false
+  isOperator: true
+  isOverride: false
+  isStatic: false
+  isSuspend: false
+  isTailRec: false
+  location: CLASS
+  modality: FINAL
+  name: div
+  origin: LIBRARY
+  receiverParameter: null
+  returnType: KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/Double
+  typeParameters: []
+  valueParameters: [
+    KaValueParameterSymbol:
+      annotations: []
+      callableId: null
+      compilerVisibility: Public
+      contextReceivers: []
+      generatedPrimaryConstructorProperty: null
+      hasDefaultValue: false
+      isActual: false
+      isCrossinline: false
+      isExpect: false
+      isExtension: false
+      isImplicitLambdaParameter: false
+      isNoinline: false
+      isVal: true
+      isVararg: false
+      location: LOCAL
+      modality: FINAL
+      name: other
+      origin: LIBRARY
+      receiverParameter: null
+      returnType: KaUsualClassType:
+        annotations: []
+        typeArguments: []
+        type: kotlin/Double
       visibility: PUBLIC
       getContainingFileSymbol: null
       getContainingJvmClassName: kotlin.Int
@@ -1246,80 +1246,7 @@ KaNamedFunctionSymbol:
   returnType: KaUsualClassType:
     annotations: []
     typeArguments: []
-    type: kotlin/Double
-  typeParameters: []
-  valueParameters: [
-    KaValueParameterSymbol:
-      annotations: []
-      callableId: null
-      compilerVisibility: Public
-      contextReceivers: []
-      generatedPrimaryConstructorProperty: null
-      hasDefaultValue: false
-      isActual: false
-      isCrossinline: false
-      isExpect: false
-      isExtension: false
-      isImplicitLambdaParameter: false
-      isNoinline: false
-      isVal: true
-      isVararg: false
-      location: LOCAL
-      modality: FINAL
-      name: other
-      origin: LIBRARY
-      receiverParameter: null
-      returnType: KaUsualClassType:
-        annotations: []
-        typeArguments: []
-        type: kotlin/Double
-      visibility: PUBLIC
-      getContainingFileSymbol: null
-      getContainingJvmClassName: kotlin.Int
-      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-      deprecationStatus: null
-  ]
-  visibility: PUBLIC
-  getDispatchReceiver(): KaUsualClassType:
-    annotations: []
-    typeArguments: []
     type: kotlin/Int
-  getContainingFileSymbol: null
-  getContainingJvmClassName: kotlin.Int
-  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-  deprecationStatus: null
-
-KaNamedFunctionSymbol:
-  annotations: [
-    kotlin/internal/IntrinsicConstEvaluation()
-      psi: null
-  ]
-  callableId: kotlin/Int.minus
-  compilerVisibility: Public
-  contextReceivers: []
-  contractEffects: []
-  hasStableParameterNames: true
-  isActual: false
-  isBuiltinFunctionInvoke: false
-  isExpect: false
-  isExtension: false
-  isExternal: false
-  isInfix: false
-  isInline: false
-  isOperator: true
-  isOverride: false
-  isStatic: false
-  isSuspend: false
-  isTailRec: false
-  location: CLASS
-  modality: FINAL
-  name: minus
-  origin: LIBRARY
-  receiverParameter: null
-  returnType: KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/Float
   typeParameters: []
   valueParameters: [
     KaValueParameterSymbol:
@@ -1345,7 +1272,7 @@ KaNamedFunctionSymbol:
       returnType: KaUsualClassType:
         annotations: []
         typeArguments: []
-        type: kotlin/Float
+        type: kotlin/Short
       visibility: PUBLIC
       getContainingFileSymbol: null
       getContainingJvmClassName: kotlin.Int
@@ -1538,7 +1465,7 @@ KaNamedFunctionSymbol:
   returnType: KaUsualClassType:
     annotations: []
     typeArguments: []
-    type: kotlin/Int
+    type: kotlin/Float
   typeParameters: []
   valueParameters: [
     KaValueParameterSymbol:
@@ -1564,7 +1491,80 @@ KaNamedFunctionSymbol:
       returnType: KaUsualClassType:
         annotations: []
         typeArguments: []
-        type: kotlin/Short
+        type: kotlin/Float
+      visibility: PUBLIC
+      getContainingFileSymbol: null
+      getContainingJvmClassName: kotlin.Int
+      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+      deprecationStatus: null
+  ]
+  visibility: PUBLIC
+  getDispatchReceiver(): KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/Int
+  getContainingFileSymbol: null
+  getContainingJvmClassName: kotlin.Int
+  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+  deprecationStatus: null
+
+KaNamedFunctionSymbol:
+  annotations: [
+    kotlin/internal/IntrinsicConstEvaluation()
+      psi: null
+  ]
+  callableId: kotlin/Int.minus
+  compilerVisibility: Public
+  contextReceivers: []
+  contractEffects: []
+  hasStableParameterNames: true
+  isActual: false
+  isBuiltinFunctionInvoke: false
+  isExpect: false
+  isExtension: false
+  isExternal: false
+  isInfix: false
+  isInline: false
+  isOperator: true
+  isOverride: false
+  isStatic: false
+  isSuspend: false
+  isTailRec: false
+  location: CLASS
+  modality: FINAL
+  name: minus
+  origin: LIBRARY
+  receiverParameter: null
+  returnType: KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/Double
+  typeParameters: []
+  valueParameters: [
+    KaValueParameterSymbol:
+      annotations: []
+      callableId: null
+      compilerVisibility: Public
+      contextReceivers: []
+      generatedPrimaryConstructorProperty: null
+      hasDefaultValue: false
+      isActual: false
+      isCrossinline: false
+      isExpect: false
+      isExtension: false
+      isImplicitLambdaParameter: false
+      isNoinline: false
+      isVal: true
+      isVararg: false
+      location: LOCAL
+      modality: FINAL
+      name: other
+      origin: LIBRARY
+      receiverParameter: null
+      returnType: KaUsualClassType:
+        annotations: []
+        typeArguments: []
+        type: kotlin/Double
       visibility: PUBLIC
       getContainingFileSymbol: null
       getContainingJvmClassName: kotlin.Int
@@ -1757,80 +1757,7 @@ KaNamedFunctionSymbol:
   returnType: KaUsualClassType:
     annotations: []
     typeArguments: []
-    type: kotlin/Double
-  typeParameters: []
-  valueParameters: [
-    KaValueParameterSymbol:
-      annotations: []
-      callableId: null
-      compilerVisibility: Public
-      contextReceivers: []
-      generatedPrimaryConstructorProperty: null
-      hasDefaultValue: false
-      isActual: false
-      isCrossinline: false
-      isExpect: false
-      isExtension: false
-      isImplicitLambdaParameter: false
-      isNoinline: false
-      isVal: true
-      isVararg: false
-      location: LOCAL
-      modality: FINAL
-      name: other
-      origin: LIBRARY
-      receiverParameter: null
-      returnType: KaUsualClassType:
-        annotations: []
-        typeArguments: []
-        type: kotlin/Double
-      visibility: PUBLIC
-      getContainingFileSymbol: null
-      getContainingJvmClassName: kotlin.Int
-      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-      deprecationStatus: null
-  ]
-  visibility: PUBLIC
-  getDispatchReceiver(): KaUsualClassType:
-    annotations: []
-    typeArguments: []
     type: kotlin/Int
-  getContainingFileSymbol: null
-  getContainingJvmClassName: kotlin.Int
-  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-  deprecationStatus: null
-
-KaNamedFunctionSymbol:
-  annotations: [
-    kotlin/internal/IntrinsicConstEvaluation()
-      psi: null
-  ]
-  callableId: kotlin/Int.plus
-  compilerVisibility: Public
-  contextReceivers: []
-  contractEffects: []
-  hasStableParameterNames: true
-  isActual: false
-  isBuiltinFunctionInvoke: false
-  isExpect: false
-  isExtension: false
-  isExternal: false
-  isInfix: false
-  isInline: false
-  isOperator: true
-  isOverride: false
-  isStatic: false
-  isSuspend: false
-  isTailRec: false
-  location: CLASS
-  modality: FINAL
-  name: plus
-  origin: LIBRARY
-  receiverParameter: null
-  returnType: KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/Float
   typeParameters: []
   valueParameters: [
     KaValueParameterSymbol:
@@ -1856,7 +1783,7 @@ KaNamedFunctionSymbol:
       returnType: KaUsualClassType:
         annotations: []
         typeArguments: []
-        type: kotlin/Float
+        type: kotlin/Short
       visibility: PUBLIC
       getContainingFileSymbol: null
       getContainingJvmClassName: kotlin.Int
@@ -2049,7 +1976,7 @@ KaNamedFunctionSymbol:
   returnType: KaUsualClassType:
     annotations: []
     typeArguments: []
-    type: kotlin/Int
+    type: kotlin/Float
   typeParameters: []
   valueParameters: [
     KaValueParameterSymbol:
@@ -2075,287 +2002,7 @@ KaNamedFunctionSymbol:
       returnType: KaUsualClassType:
         annotations: []
         typeArguments: []
-        type: kotlin/Short
-      visibility: PUBLIC
-      getContainingFileSymbol: null
-      getContainingJvmClassName: kotlin.Int
-      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-      deprecationStatus: null
-  ]
-  visibility: PUBLIC
-  getDispatchReceiver(): KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/Int
-  getContainingFileSymbol: null
-  getContainingJvmClassName: kotlin.Int
-  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-  deprecationStatus: null
-
-KaNamedFunctionSymbol:
-  annotations: []
-  callableId: kotlin/Int.rangeTo
-  compilerVisibility: Public
-  contextReceivers: []
-  contractEffects: []
-  hasStableParameterNames: true
-  isActual: false
-  isBuiltinFunctionInvoke: false
-  isExpect: false
-  isExtension: false
-  isExternal: false
-  isInfix: false
-  isInline: false
-  isOperator: true
-  isOverride: false
-  isStatic: false
-  isSuspend: false
-  isTailRec: false
-  location: CLASS
-  modality: FINAL
-  name: rangeTo
-  origin: LIBRARY
-  receiverParameter: null
-  returnType: KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/ranges/IntRange
-  typeParameters: []
-  valueParameters: [
-    KaValueParameterSymbol:
-      annotations: []
-      callableId: null
-      compilerVisibility: Public
-      contextReceivers: []
-      generatedPrimaryConstructorProperty: null
-      hasDefaultValue: false
-      isActual: false
-      isCrossinline: false
-      isExpect: false
-      isExtension: false
-      isImplicitLambdaParameter: false
-      isNoinline: false
-      isVal: true
-      isVararg: false
-      location: LOCAL
-      modality: FINAL
-      name: other
-      origin: LIBRARY
-      receiverParameter: null
-      returnType: KaUsualClassType:
-        annotations: []
-        typeArguments: []
-        type: kotlin/Byte
-      visibility: PUBLIC
-      getContainingFileSymbol: null
-      getContainingJvmClassName: kotlin.Int
-      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-      deprecationStatus: null
-  ]
-  visibility: PUBLIC
-  getDispatchReceiver(): KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/Int
-  getContainingFileSymbol: null
-  getContainingJvmClassName: kotlin.Int
-  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-  deprecationStatus: null
-
-KaNamedFunctionSymbol:
-  annotations: []
-  callableId: kotlin/Int.rangeTo
-  compilerVisibility: Public
-  contextReceivers: []
-  contractEffects: []
-  hasStableParameterNames: true
-  isActual: false
-  isBuiltinFunctionInvoke: false
-  isExpect: false
-  isExtension: false
-  isExternal: false
-  isInfix: false
-  isInline: false
-  isOperator: true
-  isOverride: false
-  isStatic: false
-  isSuspend: false
-  isTailRec: false
-  location: CLASS
-  modality: FINAL
-  name: rangeTo
-  origin: LIBRARY
-  receiverParameter: null
-  returnType: KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/ranges/IntRange
-  typeParameters: []
-  valueParameters: [
-    KaValueParameterSymbol:
-      annotations: []
-      callableId: null
-      compilerVisibility: Public
-      contextReceivers: []
-      generatedPrimaryConstructorProperty: null
-      hasDefaultValue: false
-      isActual: false
-      isCrossinline: false
-      isExpect: false
-      isExtension: false
-      isImplicitLambdaParameter: false
-      isNoinline: false
-      isVal: true
-      isVararg: false
-      location: LOCAL
-      modality: FINAL
-      name: other
-      origin: LIBRARY
-      receiverParameter: null
-      returnType: KaUsualClassType:
-        annotations: []
-        typeArguments: []
-        type: kotlin/Int
-      visibility: PUBLIC
-      getContainingFileSymbol: null
-      getContainingJvmClassName: kotlin.Int
-      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-      deprecationStatus: null
-  ]
-  visibility: PUBLIC
-  getDispatchReceiver(): KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/Int
-  getContainingFileSymbol: null
-  getContainingJvmClassName: kotlin.Int
-  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-  deprecationStatus: null
-
-KaNamedFunctionSymbol:
-  annotations: []
-  callableId: kotlin/Int.rangeTo
-  compilerVisibility: Public
-  contextReceivers: []
-  contractEffects: []
-  hasStableParameterNames: true
-  isActual: false
-  isBuiltinFunctionInvoke: false
-  isExpect: false
-  isExtension: false
-  isExternal: false
-  isInfix: false
-  isInline: false
-  isOperator: true
-  isOverride: false
-  isStatic: false
-  isSuspend: false
-  isTailRec: false
-  location: CLASS
-  modality: FINAL
-  name: rangeTo
-  origin: LIBRARY
-  receiverParameter: null
-  returnType: KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/ranges/LongRange
-  typeParameters: []
-  valueParameters: [
-    KaValueParameterSymbol:
-      annotations: []
-      callableId: null
-      compilerVisibility: Public
-      contextReceivers: []
-      generatedPrimaryConstructorProperty: null
-      hasDefaultValue: false
-      isActual: false
-      isCrossinline: false
-      isExpect: false
-      isExtension: false
-      isImplicitLambdaParameter: false
-      isNoinline: false
-      isVal: true
-      isVararg: false
-      location: LOCAL
-      modality: FINAL
-      name: other
-      origin: LIBRARY
-      receiverParameter: null
-      returnType: KaUsualClassType:
-        annotations: []
-        typeArguments: []
-        type: kotlin/Long
-      visibility: PUBLIC
-      getContainingFileSymbol: null
-      getContainingJvmClassName: kotlin.Int
-      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-      deprecationStatus: null
-  ]
-  visibility: PUBLIC
-  getDispatchReceiver(): KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/Int
-  getContainingFileSymbol: null
-  getContainingJvmClassName: kotlin.Int
-  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-  deprecationStatus: null
-
-KaNamedFunctionSymbol:
-  annotations: []
-  callableId: kotlin/Int.rangeTo
-  compilerVisibility: Public
-  contextReceivers: []
-  contractEffects: []
-  hasStableParameterNames: true
-  isActual: false
-  isBuiltinFunctionInvoke: false
-  isExpect: false
-  isExtension: false
-  isExternal: false
-  isInfix: false
-  isInline: false
-  isOperator: true
-  isOverride: false
-  isStatic: false
-  isSuspend: false
-  isTailRec: false
-  location: CLASS
-  modality: FINAL
-  name: rangeTo
-  origin: LIBRARY
-  receiverParameter: null
-  returnType: KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/ranges/IntRange
-  typeParameters: []
-  valueParameters: [
-    KaValueParameterSymbol:
-      annotations: []
-      callableId: null
-      compilerVisibility: Public
-      contextReceivers: []
-      generatedPrimaryConstructorProperty: null
-      hasDefaultValue: false
-      isActual: false
-      isCrossinline: false
-      isExpect: false
-      isExtension: false
-      isImplicitLambdaParameter: false
-      isNoinline: false
-      isVal: true
-      isVararg: false
-      location: LOCAL
-      modality: FINAL
-      name: other
-      origin: LIBRARY
-      receiverParameter: null
-      returnType: KaUsualClassType:
-        annotations: []
-        typeArguments: []
-        type: kotlin/Short
+        type: kotlin/Float
       visibility: PUBLIC
       getContainingFileSymbol: null
       getContainingJvmClassName: kotlin.Int
@@ -2374,312 +2021,10 @@ KaNamedFunctionSymbol:
 
 KaNamedFunctionSymbol:
   annotations: [
-    kotlin/SinceKotlin(version = "1.9")
-      psi: null
-    kotlin/WasExperimental(markerClass = [kotlin.ExperimentalStdlibApi::class])
-      psi: null
-  ]
-  callableId: kotlin/Int.rangeUntil
-  compilerVisibility: Public
-  contextReceivers: []
-  contractEffects: []
-  hasStableParameterNames: true
-  isActual: false
-  isBuiltinFunctionInvoke: false
-  isExpect: false
-  isExtension: false
-  isExternal: false
-  isInfix: false
-  isInline: false
-  isOperator: true
-  isOverride: false
-  isStatic: false
-  isSuspend: false
-  isTailRec: false
-  location: CLASS
-  modality: FINAL
-  name: rangeUntil
-  origin: LIBRARY
-  receiverParameter: null
-  returnType: KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/ranges/IntRange
-  typeParameters: []
-  valueParameters: [
-    KaValueParameterSymbol:
-      annotations: []
-      callableId: null
-      compilerVisibility: Public
-      contextReceivers: []
-      generatedPrimaryConstructorProperty: null
-      hasDefaultValue: false
-      isActual: false
-      isCrossinline: false
-      isExpect: false
-      isExtension: false
-      isImplicitLambdaParameter: false
-      isNoinline: false
-      isVal: true
-      isVararg: false
-      location: LOCAL
-      modality: FINAL
-      name: other
-      origin: LIBRARY
-      receiverParameter: null
-      returnType: KaUsualClassType:
-        annotations: []
-        typeArguments: []
-        type: kotlin/Byte
-      visibility: PUBLIC
-      getContainingFileSymbol: null
-      getContainingJvmClassName: kotlin.Int
-      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-      deprecationStatus: null
-  ]
-  visibility: PUBLIC
-  getDispatchReceiver(): KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/Int
-  getContainingFileSymbol: null
-  getContainingJvmClassName: kotlin.Int
-  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-  deprecationStatus: null
-
-KaNamedFunctionSymbol:
-  annotations: [
-    kotlin/SinceKotlin(version = "1.9")
-      psi: null
-    kotlin/WasExperimental(markerClass = [kotlin.ExperimentalStdlibApi::class])
-      psi: null
-  ]
-  callableId: kotlin/Int.rangeUntil
-  compilerVisibility: Public
-  contextReceivers: []
-  contractEffects: []
-  hasStableParameterNames: true
-  isActual: false
-  isBuiltinFunctionInvoke: false
-  isExpect: false
-  isExtension: false
-  isExternal: false
-  isInfix: false
-  isInline: false
-  isOperator: true
-  isOverride: false
-  isStatic: false
-  isSuspend: false
-  isTailRec: false
-  location: CLASS
-  modality: FINAL
-  name: rangeUntil
-  origin: LIBRARY
-  receiverParameter: null
-  returnType: KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/ranges/IntRange
-  typeParameters: []
-  valueParameters: [
-    KaValueParameterSymbol:
-      annotations: []
-      callableId: null
-      compilerVisibility: Public
-      contextReceivers: []
-      generatedPrimaryConstructorProperty: null
-      hasDefaultValue: false
-      isActual: false
-      isCrossinline: false
-      isExpect: false
-      isExtension: false
-      isImplicitLambdaParameter: false
-      isNoinline: false
-      isVal: true
-      isVararg: false
-      location: LOCAL
-      modality: FINAL
-      name: other
-      origin: LIBRARY
-      receiverParameter: null
-      returnType: KaUsualClassType:
-        annotations: []
-        typeArguments: []
-        type: kotlin/Int
-      visibility: PUBLIC
-      getContainingFileSymbol: null
-      getContainingJvmClassName: kotlin.Int
-      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-      deprecationStatus: null
-  ]
-  visibility: PUBLIC
-  getDispatchReceiver(): KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/Int
-  getContainingFileSymbol: null
-  getContainingJvmClassName: kotlin.Int
-  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-  deprecationStatus: null
-
-KaNamedFunctionSymbol:
-  annotations: [
-    kotlin/SinceKotlin(version = "1.9")
-      psi: null
-    kotlin/WasExperimental(markerClass = [kotlin.ExperimentalStdlibApi::class])
-      psi: null
-  ]
-  callableId: kotlin/Int.rangeUntil
-  compilerVisibility: Public
-  contextReceivers: []
-  contractEffects: []
-  hasStableParameterNames: true
-  isActual: false
-  isBuiltinFunctionInvoke: false
-  isExpect: false
-  isExtension: false
-  isExternal: false
-  isInfix: false
-  isInline: false
-  isOperator: true
-  isOverride: false
-  isStatic: false
-  isSuspend: false
-  isTailRec: false
-  location: CLASS
-  modality: FINAL
-  name: rangeUntil
-  origin: LIBRARY
-  receiverParameter: null
-  returnType: KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/ranges/LongRange
-  typeParameters: []
-  valueParameters: [
-    KaValueParameterSymbol:
-      annotations: []
-      callableId: null
-      compilerVisibility: Public
-      contextReceivers: []
-      generatedPrimaryConstructorProperty: null
-      hasDefaultValue: false
-      isActual: false
-      isCrossinline: false
-      isExpect: false
-      isExtension: false
-      isImplicitLambdaParameter: false
-      isNoinline: false
-      isVal: true
-      isVararg: false
-      location: LOCAL
-      modality: FINAL
-      name: other
-      origin: LIBRARY
-      receiverParameter: null
-      returnType: KaUsualClassType:
-        annotations: []
-        typeArguments: []
-        type: kotlin/Long
-      visibility: PUBLIC
-      getContainingFileSymbol: null
-      getContainingJvmClassName: kotlin.Int
-      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-      deprecationStatus: null
-  ]
-  visibility: PUBLIC
-  getDispatchReceiver(): KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/Int
-  getContainingFileSymbol: null
-  getContainingJvmClassName: kotlin.Int
-  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-  deprecationStatus: null
-
-KaNamedFunctionSymbol:
-  annotations: [
-    kotlin/SinceKotlin(version = "1.9")
-      psi: null
-    kotlin/WasExperimental(markerClass = [kotlin.ExperimentalStdlibApi::class])
-      psi: null
-  ]
-  callableId: kotlin/Int.rangeUntil
-  compilerVisibility: Public
-  contextReceivers: []
-  contractEffects: []
-  hasStableParameterNames: true
-  isActual: false
-  isBuiltinFunctionInvoke: false
-  isExpect: false
-  isExtension: false
-  isExternal: false
-  isInfix: false
-  isInline: false
-  isOperator: true
-  isOverride: false
-  isStatic: false
-  isSuspend: false
-  isTailRec: false
-  location: CLASS
-  modality: FINAL
-  name: rangeUntil
-  origin: LIBRARY
-  receiverParameter: null
-  returnType: KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/ranges/IntRange
-  typeParameters: []
-  valueParameters: [
-    KaValueParameterSymbol:
-      annotations: []
-      callableId: null
-      compilerVisibility: Public
-      contextReceivers: []
-      generatedPrimaryConstructorProperty: null
-      hasDefaultValue: false
-      isActual: false
-      isCrossinline: false
-      isExpect: false
-      isExtension: false
-      isImplicitLambdaParameter: false
-      isNoinline: false
-      isVal: true
-      isVararg: false
-      location: LOCAL
-      modality: FINAL
-      name: other
-      origin: LIBRARY
-      receiverParameter: null
-      returnType: KaUsualClassType:
-        annotations: []
-        typeArguments: []
-        type: kotlin/Short
-      visibility: PUBLIC
-      getContainingFileSymbol: null
-      getContainingJvmClassName: kotlin.Int
-      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-      deprecationStatus: null
-  ]
-  visibility: PUBLIC
-  getDispatchReceiver(): KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/Int
-  getContainingFileSymbol: null
-  getContainingJvmClassName: kotlin.Int
-  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-  deprecationStatus: null
-
-KaNamedFunctionSymbol:
-  annotations: [
-    kotlin/SinceKotlin(version = "1.1")
-      psi: null
     kotlin/internal/IntrinsicConstEvaluation()
       psi: null
   ]
-  callableId: kotlin/Int.rem
+  callableId: kotlin/Int.plus
   compilerVisibility: Public
   contextReceivers: []
   contractEffects: []
@@ -2698,82 +2043,7 @@ KaNamedFunctionSymbol:
   isTailRec: false
   location: CLASS
   modality: FINAL
-  name: rem
-  origin: LIBRARY
-  receiverParameter: null
-  returnType: KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/Int
-  typeParameters: []
-  valueParameters: [
-    KaValueParameterSymbol:
-      annotations: []
-      callableId: null
-      compilerVisibility: Public
-      contextReceivers: []
-      generatedPrimaryConstructorProperty: null
-      hasDefaultValue: false
-      isActual: false
-      isCrossinline: false
-      isExpect: false
-      isExtension: false
-      isImplicitLambdaParameter: false
-      isNoinline: false
-      isVal: true
-      isVararg: false
-      location: LOCAL
-      modality: FINAL
-      name: other
-      origin: LIBRARY
-      receiverParameter: null
-      returnType: KaUsualClassType:
-        annotations: []
-        typeArguments: []
-        type: kotlin/Byte
-      visibility: PUBLIC
-      getContainingFileSymbol: null
-      getContainingJvmClassName: kotlin.Int
-      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-      deprecationStatus: null
-  ]
-  visibility: PUBLIC
-  getDispatchReceiver(): KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/Int
-  getContainingFileSymbol: null
-  getContainingJvmClassName: kotlin.Int
-  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-  deprecationStatus: null
-
-KaNamedFunctionSymbol:
-  annotations: [
-    kotlin/SinceKotlin(version = "1.1")
-      psi: null
-    kotlin/internal/IntrinsicConstEvaluation()
-      psi: null
-  ]
-  callableId: kotlin/Int.rem
-  compilerVisibility: Public
-  contextReceivers: []
-  contractEffects: []
-  hasStableParameterNames: true
-  isActual: false
-  isBuiltinFunctionInvoke: false
-  isExpect: false
-  isExtension: false
-  isExternal: false
-  isInfix: false
-  isInline: false
-  isOperator: true
-  isOverride: false
-  isStatic: false
-  isSuspend: false
-  isTailRec: false
-  location: CLASS
-  modality: FINAL
-  name: rem
+  name: plus
   origin: LIBRARY
   receiverParameter: null
   returnType: KaUsualClassType:
@@ -2823,6 +2093,586 @@ KaNamedFunctionSymbol:
   deprecationStatus: null
 
 KaNamedFunctionSymbol:
+  annotations: []
+  callableId: kotlin/Int.rangeTo
+  compilerVisibility: Public
+  contextReceivers: []
+  contractEffects: []
+  hasStableParameterNames: true
+  isActual: false
+  isBuiltinFunctionInvoke: false
+  isExpect: false
+  isExtension: false
+  isExternal: false
+  isInfix: false
+  isInline: false
+  isOperator: true
+  isOverride: false
+  isStatic: false
+  isSuspend: false
+  isTailRec: false
+  location: CLASS
+  modality: FINAL
+  name: rangeTo
+  origin: LIBRARY
+  receiverParameter: null
+  returnType: KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/ranges/IntRange
+  typeParameters: []
+  valueParameters: [
+    KaValueParameterSymbol:
+      annotations: []
+      callableId: null
+      compilerVisibility: Public
+      contextReceivers: []
+      generatedPrimaryConstructorProperty: null
+      hasDefaultValue: false
+      isActual: false
+      isCrossinline: false
+      isExpect: false
+      isExtension: false
+      isImplicitLambdaParameter: false
+      isNoinline: false
+      isVal: true
+      isVararg: false
+      location: LOCAL
+      modality: FINAL
+      name: other
+      origin: LIBRARY
+      receiverParameter: null
+      returnType: KaUsualClassType:
+        annotations: []
+        typeArguments: []
+        type: kotlin/Byte
+      visibility: PUBLIC
+      getContainingFileSymbol: null
+      getContainingJvmClassName: kotlin.Int
+      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+      deprecationStatus: null
+  ]
+  visibility: PUBLIC
+  getDispatchReceiver(): KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/Int
+  getContainingFileSymbol: null
+  getContainingJvmClassName: kotlin.Int
+  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+  deprecationStatus: null
+
+KaNamedFunctionSymbol:
+  annotations: []
+  callableId: kotlin/Int.rangeTo
+  compilerVisibility: Public
+  contextReceivers: []
+  contractEffects: []
+  hasStableParameterNames: true
+  isActual: false
+  isBuiltinFunctionInvoke: false
+  isExpect: false
+  isExtension: false
+  isExternal: false
+  isInfix: false
+  isInline: false
+  isOperator: true
+  isOverride: false
+  isStatic: false
+  isSuspend: false
+  isTailRec: false
+  location: CLASS
+  modality: FINAL
+  name: rangeTo
+  origin: LIBRARY
+  receiverParameter: null
+  returnType: KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/ranges/IntRange
+  typeParameters: []
+  valueParameters: [
+    KaValueParameterSymbol:
+      annotations: []
+      callableId: null
+      compilerVisibility: Public
+      contextReceivers: []
+      generatedPrimaryConstructorProperty: null
+      hasDefaultValue: false
+      isActual: false
+      isCrossinline: false
+      isExpect: false
+      isExtension: false
+      isImplicitLambdaParameter: false
+      isNoinline: false
+      isVal: true
+      isVararg: false
+      location: LOCAL
+      modality: FINAL
+      name: other
+      origin: LIBRARY
+      receiverParameter: null
+      returnType: KaUsualClassType:
+        annotations: []
+        typeArguments: []
+        type: kotlin/Short
+      visibility: PUBLIC
+      getContainingFileSymbol: null
+      getContainingJvmClassName: kotlin.Int
+      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+      deprecationStatus: null
+  ]
+  visibility: PUBLIC
+  getDispatchReceiver(): KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/Int
+  getContainingFileSymbol: null
+  getContainingJvmClassName: kotlin.Int
+  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+  deprecationStatus: null
+
+KaNamedFunctionSymbol:
+  annotations: []
+  callableId: kotlin/Int.rangeTo
+  compilerVisibility: Public
+  contextReceivers: []
+  contractEffects: []
+  hasStableParameterNames: true
+  isActual: false
+  isBuiltinFunctionInvoke: false
+  isExpect: false
+  isExtension: false
+  isExternal: false
+  isInfix: false
+  isInline: false
+  isOperator: true
+  isOverride: false
+  isStatic: false
+  isSuspend: false
+  isTailRec: false
+  location: CLASS
+  modality: FINAL
+  name: rangeTo
+  origin: LIBRARY
+  receiverParameter: null
+  returnType: KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/ranges/IntRange
+  typeParameters: []
+  valueParameters: [
+    KaValueParameterSymbol:
+      annotations: []
+      callableId: null
+      compilerVisibility: Public
+      contextReceivers: []
+      generatedPrimaryConstructorProperty: null
+      hasDefaultValue: false
+      isActual: false
+      isCrossinline: false
+      isExpect: false
+      isExtension: false
+      isImplicitLambdaParameter: false
+      isNoinline: false
+      isVal: true
+      isVararg: false
+      location: LOCAL
+      modality: FINAL
+      name: other
+      origin: LIBRARY
+      receiverParameter: null
+      returnType: KaUsualClassType:
+        annotations: []
+        typeArguments: []
+        type: kotlin/Int
+      visibility: PUBLIC
+      getContainingFileSymbol: null
+      getContainingJvmClassName: kotlin.Int
+      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+      deprecationStatus: null
+  ]
+  visibility: PUBLIC
+  getDispatchReceiver(): KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/Int
+  getContainingFileSymbol: null
+  getContainingJvmClassName: kotlin.Int
+  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+  deprecationStatus: null
+
+KaNamedFunctionSymbol:
+  annotations: []
+  callableId: kotlin/Int.rangeTo
+  compilerVisibility: Public
+  contextReceivers: []
+  contractEffects: []
+  hasStableParameterNames: true
+  isActual: false
+  isBuiltinFunctionInvoke: false
+  isExpect: false
+  isExtension: false
+  isExternal: false
+  isInfix: false
+  isInline: false
+  isOperator: true
+  isOverride: false
+  isStatic: false
+  isSuspend: false
+  isTailRec: false
+  location: CLASS
+  modality: FINAL
+  name: rangeTo
+  origin: LIBRARY
+  receiverParameter: null
+  returnType: KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/ranges/LongRange
+  typeParameters: []
+  valueParameters: [
+    KaValueParameterSymbol:
+      annotations: []
+      callableId: null
+      compilerVisibility: Public
+      contextReceivers: []
+      generatedPrimaryConstructorProperty: null
+      hasDefaultValue: false
+      isActual: false
+      isCrossinline: false
+      isExpect: false
+      isExtension: false
+      isImplicitLambdaParameter: false
+      isNoinline: false
+      isVal: true
+      isVararg: false
+      location: LOCAL
+      modality: FINAL
+      name: other
+      origin: LIBRARY
+      receiverParameter: null
+      returnType: KaUsualClassType:
+        annotations: []
+        typeArguments: []
+        type: kotlin/Long
+      visibility: PUBLIC
+      getContainingFileSymbol: null
+      getContainingJvmClassName: kotlin.Int
+      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+      deprecationStatus: null
+  ]
+  visibility: PUBLIC
+  getDispatchReceiver(): KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/Int
+  getContainingFileSymbol: null
+  getContainingJvmClassName: kotlin.Int
+  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+  deprecationStatus: null
+
+KaNamedFunctionSymbol:
+  annotations: [
+    kotlin/SinceKotlin(version = "1.9")
+      psi: null
+    kotlin/WasExperimental(markerClass = [kotlin.ExperimentalStdlibApi::class])
+      psi: null
+  ]
+  callableId: kotlin/Int.rangeUntil
+  compilerVisibility: Public
+  contextReceivers: []
+  contractEffects: []
+  hasStableParameterNames: true
+  isActual: false
+  isBuiltinFunctionInvoke: false
+  isExpect: false
+  isExtension: false
+  isExternal: false
+  isInfix: false
+  isInline: false
+  isOperator: true
+  isOverride: false
+  isStatic: false
+  isSuspend: false
+  isTailRec: false
+  location: CLASS
+  modality: FINAL
+  name: rangeUntil
+  origin: LIBRARY
+  receiverParameter: null
+  returnType: KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/ranges/IntRange
+  typeParameters: []
+  valueParameters: [
+    KaValueParameterSymbol:
+      annotations: []
+      callableId: null
+      compilerVisibility: Public
+      contextReceivers: []
+      generatedPrimaryConstructorProperty: null
+      hasDefaultValue: false
+      isActual: false
+      isCrossinline: false
+      isExpect: false
+      isExtension: false
+      isImplicitLambdaParameter: false
+      isNoinline: false
+      isVal: true
+      isVararg: false
+      location: LOCAL
+      modality: FINAL
+      name: other
+      origin: LIBRARY
+      receiverParameter: null
+      returnType: KaUsualClassType:
+        annotations: []
+        typeArguments: []
+        type: kotlin/Byte
+      visibility: PUBLIC
+      getContainingFileSymbol: null
+      getContainingJvmClassName: kotlin.Int
+      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+      deprecationStatus: null
+  ]
+  visibility: PUBLIC
+  getDispatchReceiver(): KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/Int
+  getContainingFileSymbol: null
+  getContainingJvmClassName: kotlin.Int
+  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+  deprecationStatus: null
+
+KaNamedFunctionSymbol:
+  annotations: [
+    kotlin/SinceKotlin(version = "1.9")
+      psi: null
+    kotlin/WasExperimental(markerClass = [kotlin.ExperimentalStdlibApi::class])
+      psi: null
+  ]
+  callableId: kotlin/Int.rangeUntil
+  compilerVisibility: Public
+  contextReceivers: []
+  contractEffects: []
+  hasStableParameterNames: true
+  isActual: false
+  isBuiltinFunctionInvoke: false
+  isExpect: false
+  isExtension: false
+  isExternal: false
+  isInfix: false
+  isInline: false
+  isOperator: true
+  isOverride: false
+  isStatic: false
+  isSuspend: false
+  isTailRec: false
+  location: CLASS
+  modality: FINAL
+  name: rangeUntil
+  origin: LIBRARY
+  receiverParameter: null
+  returnType: KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/ranges/IntRange
+  typeParameters: []
+  valueParameters: [
+    KaValueParameterSymbol:
+      annotations: []
+      callableId: null
+      compilerVisibility: Public
+      contextReceivers: []
+      generatedPrimaryConstructorProperty: null
+      hasDefaultValue: false
+      isActual: false
+      isCrossinline: false
+      isExpect: false
+      isExtension: false
+      isImplicitLambdaParameter: false
+      isNoinline: false
+      isVal: true
+      isVararg: false
+      location: LOCAL
+      modality: FINAL
+      name: other
+      origin: LIBRARY
+      receiverParameter: null
+      returnType: KaUsualClassType:
+        annotations: []
+        typeArguments: []
+        type: kotlin/Short
+      visibility: PUBLIC
+      getContainingFileSymbol: null
+      getContainingJvmClassName: kotlin.Int
+      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+      deprecationStatus: null
+  ]
+  visibility: PUBLIC
+  getDispatchReceiver(): KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/Int
+  getContainingFileSymbol: null
+  getContainingJvmClassName: kotlin.Int
+  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+  deprecationStatus: null
+
+KaNamedFunctionSymbol:
+  annotations: [
+    kotlin/SinceKotlin(version = "1.9")
+      psi: null
+    kotlin/WasExperimental(markerClass = [kotlin.ExperimentalStdlibApi::class])
+      psi: null
+  ]
+  callableId: kotlin/Int.rangeUntil
+  compilerVisibility: Public
+  contextReceivers: []
+  contractEffects: []
+  hasStableParameterNames: true
+  isActual: false
+  isBuiltinFunctionInvoke: false
+  isExpect: false
+  isExtension: false
+  isExternal: false
+  isInfix: false
+  isInline: false
+  isOperator: true
+  isOverride: false
+  isStatic: false
+  isSuspend: false
+  isTailRec: false
+  location: CLASS
+  modality: FINAL
+  name: rangeUntil
+  origin: LIBRARY
+  receiverParameter: null
+  returnType: KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/ranges/IntRange
+  typeParameters: []
+  valueParameters: [
+    KaValueParameterSymbol:
+      annotations: []
+      callableId: null
+      compilerVisibility: Public
+      contextReceivers: []
+      generatedPrimaryConstructorProperty: null
+      hasDefaultValue: false
+      isActual: false
+      isCrossinline: false
+      isExpect: false
+      isExtension: false
+      isImplicitLambdaParameter: false
+      isNoinline: false
+      isVal: true
+      isVararg: false
+      location: LOCAL
+      modality: FINAL
+      name: other
+      origin: LIBRARY
+      receiverParameter: null
+      returnType: KaUsualClassType:
+        annotations: []
+        typeArguments: []
+        type: kotlin/Int
+      visibility: PUBLIC
+      getContainingFileSymbol: null
+      getContainingJvmClassName: kotlin.Int
+      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+      deprecationStatus: null
+  ]
+  visibility: PUBLIC
+  getDispatchReceiver(): KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/Int
+  getContainingFileSymbol: null
+  getContainingJvmClassName: kotlin.Int
+  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+  deprecationStatus: null
+
+KaNamedFunctionSymbol:
+  annotations: [
+    kotlin/SinceKotlin(version = "1.9")
+      psi: null
+    kotlin/WasExperimental(markerClass = [kotlin.ExperimentalStdlibApi::class])
+      psi: null
+  ]
+  callableId: kotlin/Int.rangeUntil
+  compilerVisibility: Public
+  contextReceivers: []
+  contractEffects: []
+  hasStableParameterNames: true
+  isActual: false
+  isBuiltinFunctionInvoke: false
+  isExpect: false
+  isExtension: false
+  isExternal: false
+  isInfix: false
+  isInline: false
+  isOperator: true
+  isOverride: false
+  isStatic: false
+  isSuspend: false
+  isTailRec: false
+  location: CLASS
+  modality: FINAL
+  name: rangeUntil
+  origin: LIBRARY
+  receiverParameter: null
+  returnType: KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/ranges/LongRange
+  typeParameters: []
+  valueParameters: [
+    KaValueParameterSymbol:
+      annotations: []
+      callableId: null
+      compilerVisibility: Public
+      contextReceivers: []
+      generatedPrimaryConstructorProperty: null
+      hasDefaultValue: false
+      isActual: false
+      isCrossinline: false
+      isExpect: false
+      isExtension: false
+      isImplicitLambdaParameter: false
+      isNoinline: false
+      isVal: true
+      isVararg: false
+      location: LOCAL
+      modality: FINAL
+      name: other
+      origin: LIBRARY
+      receiverParameter: null
+      returnType: KaUsualClassType:
+        annotations: []
+        typeArguments: []
+        type: kotlin/Long
+      visibility: PUBLIC
+      getContainingFileSymbol: null
+      getContainingJvmClassName: kotlin.Int
+      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+      deprecationStatus: null
+  ]
+  visibility: PUBLIC
+  getDispatchReceiver(): KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/Int
+  getContainingFileSymbol: null
+  getContainingJvmClassName: kotlin.Int
+  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+  deprecationStatus: null
+
+KaNamedFunctionSymbol:
   annotations: [
     kotlin/SinceKotlin(version = "1.1")
       psi: null
@@ -2854,7 +2704,7 @@ KaNamedFunctionSymbol:
   returnType: KaUsualClassType:
     annotations: []
     typeArguments: []
-    type: kotlin/Float
+    type: kotlin/Int
   typeParameters: []
   valueParameters: [
     KaValueParameterSymbol:
@@ -2880,7 +2730,82 @@ KaNamedFunctionSymbol:
       returnType: KaUsualClassType:
         annotations: []
         typeArguments: []
-        type: kotlin/Float
+        type: kotlin/Byte
+      visibility: PUBLIC
+      getContainingFileSymbol: null
+      getContainingJvmClassName: kotlin.Int
+      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+      deprecationStatus: null
+  ]
+  visibility: PUBLIC
+  getDispatchReceiver(): KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/Int
+  getContainingFileSymbol: null
+  getContainingJvmClassName: kotlin.Int
+  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+  deprecationStatus: null
+
+KaNamedFunctionSymbol:
+  annotations: [
+    kotlin/SinceKotlin(version = "1.1")
+      psi: null
+    kotlin/internal/IntrinsicConstEvaluation()
+      psi: null
+  ]
+  callableId: kotlin/Int.rem
+  compilerVisibility: Public
+  contextReceivers: []
+  contractEffects: []
+  hasStableParameterNames: true
+  isActual: false
+  isBuiltinFunctionInvoke: false
+  isExpect: false
+  isExtension: false
+  isExternal: false
+  isInfix: false
+  isInline: false
+  isOperator: true
+  isOverride: false
+  isStatic: false
+  isSuspend: false
+  isTailRec: false
+  location: CLASS
+  modality: FINAL
+  name: rem
+  origin: LIBRARY
+  receiverParameter: null
+  returnType: KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/Int
+  typeParameters: []
+  valueParameters: [
+    KaValueParameterSymbol:
+      annotations: []
+      callableId: null
+      compilerVisibility: Public
+      contextReceivers: []
+      generatedPrimaryConstructorProperty: null
+      hasDefaultValue: false
+      isActual: false
+      isCrossinline: false
+      isExpect: false
+      isExtension: false
+      isImplicitLambdaParameter: false
+      isNoinline: false
+      isVal: true
+      isVararg: false
+      location: LOCAL
+      modality: FINAL
+      name: other
+      origin: LIBRARY
+      receiverParameter: null
+      returnType: KaUsualClassType:
+        annotations: []
+        typeArguments: []
+        type: kotlin/Short
       visibility: PUBLIC
       getContainingFileSymbol: null
       getContainingJvmClassName: kotlin.Int
@@ -3079,7 +3004,7 @@ KaNamedFunctionSymbol:
   returnType: KaUsualClassType:
     annotations: []
     typeArguments: []
-    type: kotlin/Int
+    type: kotlin/Float
   typeParameters: []
   valueParameters: [
     KaValueParameterSymbol:
@@ -3105,7 +3030,82 @@ KaNamedFunctionSymbol:
       returnType: KaUsualClassType:
         annotations: []
         typeArguments: []
-        type: kotlin/Short
+        type: kotlin/Float
+      visibility: PUBLIC
+      getContainingFileSymbol: null
+      getContainingJvmClassName: kotlin.Int
+      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+      deprecationStatus: null
+  ]
+  visibility: PUBLIC
+  getDispatchReceiver(): KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/Int
+  getContainingFileSymbol: null
+  getContainingJvmClassName: kotlin.Int
+  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+  deprecationStatus: null
+
+KaNamedFunctionSymbol:
+  annotations: [
+    kotlin/SinceKotlin(version = "1.1")
+      psi: null
+    kotlin/internal/IntrinsicConstEvaluation()
+      psi: null
+  ]
+  callableId: kotlin/Int.rem
+  compilerVisibility: Public
+  contextReceivers: []
+  contractEffects: []
+  hasStableParameterNames: true
+  isActual: false
+  isBuiltinFunctionInvoke: false
+  isExpect: false
+  isExtension: false
+  isExternal: false
+  isInfix: false
+  isInline: false
+  isOperator: true
+  isOverride: false
+  isStatic: false
+  isSuspend: false
+  isTailRec: false
+  location: CLASS
+  modality: FINAL
+  name: rem
+  origin: LIBRARY
+  receiverParameter: null
+  returnType: KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/Double
+  typeParameters: []
+  valueParameters: [
+    KaValueParameterSymbol:
+      annotations: []
+      callableId: null
+      compilerVisibility: Public
+      contextReceivers: []
+      generatedPrimaryConstructorProperty: null
+      hasDefaultValue: false
+      isActual: false
+      isCrossinline: false
+      isExpect: false
+      isExtension: false
+      isImplicitLambdaParameter: false
+      isNoinline: false
+      isVal: true
+      isVararg: false
+      location: LOCAL
+      modality: FINAL
+      name: other
+      origin: LIBRARY
+      receiverParameter: null
+      returnType: KaUsualClassType:
+        annotations: []
+        typeArguments: []
+        type: kotlin/Double
       visibility: PUBLIC
       getContainingFileSymbol: null
       getContainingJvmClassName: kotlin.Int
@@ -3371,80 +3371,7 @@ KaNamedFunctionSymbol:
   returnType: KaUsualClassType:
     annotations: []
     typeArguments: []
-    type: kotlin/Double
-  typeParameters: []
-  valueParameters: [
-    KaValueParameterSymbol:
-      annotations: []
-      callableId: null
-      compilerVisibility: Public
-      contextReceivers: []
-      generatedPrimaryConstructorProperty: null
-      hasDefaultValue: false
-      isActual: false
-      isCrossinline: false
-      isExpect: false
-      isExtension: false
-      isImplicitLambdaParameter: false
-      isNoinline: false
-      isVal: true
-      isVararg: false
-      location: LOCAL
-      modality: FINAL
-      name: other
-      origin: LIBRARY
-      receiverParameter: null
-      returnType: KaUsualClassType:
-        annotations: []
-        typeArguments: []
-        type: kotlin/Double
-      visibility: PUBLIC
-      getContainingFileSymbol: null
-      getContainingJvmClassName: kotlin.Int
-      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-      deprecationStatus: null
-  ]
-  visibility: PUBLIC
-  getDispatchReceiver(): KaUsualClassType:
-    annotations: []
-    typeArguments: []
     type: kotlin/Int
-  getContainingFileSymbol: null
-  getContainingJvmClassName: kotlin.Int
-  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
-  deprecationStatus: null
-
-KaNamedFunctionSymbol:
-  annotations: [
-    kotlin/internal/IntrinsicConstEvaluation()
-      psi: null
-  ]
-  callableId: kotlin/Int.times
-  compilerVisibility: Public
-  contextReceivers: []
-  contractEffects: []
-  hasStableParameterNames: true
-  isActual: false
-  isBuiltinFunctionInvoke: false
-  isExpect: false
-  isExtension: false
-  isExternal: false
-  isInfix: false
-  isInline: false
-  isOperator: true
-  isOverride: false
-  isStatic: false
-  isSuspend: false
-  isTailRec: false
-  location: CLASS
-  modality: FINAL
-  name: times
-  origin: LIBRARY
-  receiverParameter: null
-  returnType: KaUsualClassType:
-    annotations: []
-    typeArguments: []
-    type: kotlin/Float
   typeParameters: []
   valueParameters: [
     KaValueParameterSymbol:
@@ -3470,7 +3397,7 @@ KaNamedFunctionSymbol:
       returnType: KaUsualClassType:
         annotations: []
         typeArguments: []
-        type: kotlin/Float
+        type: kotlin/Short
       visibility: PUBLIC
       getContainingFileSymbol: null
       getContainingJvmClassName: kotlin.Int
@@ -3663,7 +3590,7 @@ KaNamedFunctionSymbol:
   returnType: KaUsualClassType:
     annotations: []
     typeArguments: []
-    type: kotlin/Int
+    type: kotlin/Float
   typeParameters: []
   valueParameters: [
     KaValueParameterSymbol:
@@ -3689,7 +3616,80 @@ KaNamedFunctionSymbol:
       returnType: KaUsualClassType:
         annotations: []
         typeArguments: []
-        type: kotlin/Short
+        type: kotlin/Float
+      visibility: PUBLIC
+      getContainingFileSymbol: null
+      getContainingJvmClassName: kotlin.Int
+      getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+      deprecationStatus: null
+  ]
+  visibility: PUBLIC
+  getDispatchReceiver(): KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/Int
+  getContainingFileSymbol: null
+  getContainingJvmClassName: kotlin.Int
+  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
+  deprecationStatus: null
+
+KaNamedFunctionSymbol:
+  annotations: [
+    kotlin/internal/IntrinsicConstEvaluation()
+      psi: null
+  ]
+  callableId: kotlin/Int.times
+  compilerVisibility: Public
+  contextReceivers: []
+  contractEffects: []
+  hasStableParameterNames: true
+  isActual: false
+  isBuiltinFunctionInvoke: false
+  isExpect: false
+  isExtension: false
+  isExternal: false
+  isInfix: false
+  isInline: false
+  isOperator: true
+  isOverride: false
+  isStatic: false
+  isSuspend: false
+  isTailRec: false
+  location: CLASS
+  modality: FINAL
+  name: times
+  origin: LIBRARY
+  receiverParameter: null
+  returnType: KaUsualClassType:
+    annotations: []
+    typeArguments: []
+    type: kotlin/Double
+  typeParameters: []
+  valueParameters: [
+    KaValueParameterSymbol:
+      annotations: []
+      callableId: null
+      compilerVisibility: Public
+      contextReceivers: []
+      generatedPrimaryConstructorProperty: null
+      hasDefaultValue: false
+      isActual: false
+      isCrossinline: false
+      isExpect: false
+      isExtension: false
+      isImplicitLambdaParameter: false
+      isNoinline: false
+      isVal: true
+      isVararg: false
+      location: LOCAL
+      modality: FINAL
+      name: other
+      origin: LIBRARY
+      receiverParameter: null
+      returnType: KaUsualClassType:
+        annotations: []
+        typeArguments: []
+        type: kotlin/Double
       visibility: PUBLIC
       getContainingFileSymbol: null
       getContainingJvmClassName: kotlin.Int

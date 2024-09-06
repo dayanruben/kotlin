@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -10,83 +10,100 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationList
 import org.jetbrains.kotlin.analysis.api.fir.KaFirSession
 import org.jetbrains.kotlin.analysis.api.fir.annotations.KaFirAnnotationListForReceiverParameter
-import org.jetbrains.kotlin.analysis.api.fir.symbols.pointers.KaFirReceiverParameterSymbolPointer
-import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
+import org.jetbrains.kotlin.analysis.api.fir.hasAnnotation
+import org.jetbrains.kotlin.analysis.api.fir.utils.firSymbol
+import org.jetbrains.kotlin.analysis.api.impl.base.annotations.KaBaseEmptyAnnotationList
+import org.jetbrains.kotlin.analysis.api.impl.base.symbols.pointers.KaBaseReceiverParameterSymbolPointer
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.descriptors.Visibility
-import org.jetbrains.kotlin.fir.declarations.utils.visibility
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
+import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
-import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.name.SpecialNames
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.requireWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
-internal class KaFirReceiverParameterSymbol(
-    val firSymbol: FirCallableSymbol<*>,
+internal class KaFirReceiverParameterSymbol private constructor(
+    val owningBackingPsi: KtCallableDeclaration?,
     val analysisSession: KaFirSession,
-) : KaReceiverParameterSymbol(), KaLifetimeOwner {
-    override val token: KaLifetimeToken get() = analysisSession.token
-    override val psi: PsiElement? = withValidityAssertion { firSymbol.fir.receiverParameter?.typeRef?.psi }
+    val owningKaSymbol: KaCallableSymbol,
+) : KaReceiverParameterSymbol() {
+    val owningFirSymbol: FirCallableSymbol<*>
+        get() = owningKaSymbol.firSymbol
 
     init {
-        requireWithAttachment(firSymbol.fir.receiverParameter != null, { "${firSymbol::class} doesn't have an extension receiver." }) {
-            withFirEntry("callable", firSymbol.fir)
+        requireWithAttachment(
+            owningBackingPsi == null || owningBackingPsi.receiverTypeReference != null,
+            { "${owningBackingPsi!!::class.simpleName} doesn't have an extension receiver." },
+        ) {
+            withPsiEntry("declaration", owningBackingPsi)
         }
     }
 
+    override val token: KaLifetimeToken
+        get() = analysisSession.token
+
+    override val psi: PsiElement?
+        get() = withValidityAssertion {
+            owningBackingPsi?.receiverTypeReference ?: owningFirSymbol.fir.receiverParameter?.typeRef?.psi
+        }
+
     override val returnType: KaType
         get() = withValidityAssertion {
-            firSymbol.receiverType(analysisSession.firSymbolBuilder)
-                ?: errorWithAttachment("${firSymbol::class} doesn't have an extension receiver") {
-                    withFirEntry("callable", firSymbol.fir)
-                }
+            owningFirSymbol.resolvedReceiverTypeRef?.let {
+                analysisSession.firSymbolBuilder.typeBuilder.buildKtType(it)
+            } ?: errorWithAttachment("${owningFirSymbol::class.simpleName} doesn't have an extension receiver") {
+                withFirEntry("callable", owningFirSymbol.fir)
+            }
         }
 
     override val owningCallableSymbol: KaCallableSymbol
-        get() = withValidityAssertion {
-            analysisSession.firSymbolBuilder.callableBuilder.buildCallableSymbol(firSymbol)
-        }
+        get() = withValidityAssertion { owningKaSymbol }
 
-    override val origin: KaSymbolOrigin = withValidityAssertion { firSymbol.fir.ktSymbolOrigin() }
-
-    override val modality: KaSymbolModality
-        get() = withValidityAssertion { firSymbol.kaSymbolModality }
+    override val origin: KaSymbolOrigin
+        get() = withValidityAssertion { owningKaSymbol.origin }
 
     @KaExperimentalApi
     override val compilerVisibility: Visibility
-        get() = withValidityAssertion { firSymbol.visibility }
-
-    override val isActual: Boolean
-        get() = withValidityAssertion { false }
-
-    override val isExpect: Boolean
-        get() = withValidityAssertion { false }
-
-    override val name: Name
-        get() = withValidityAssertion { SpecialNames.RECEIVER }
+        get() = withValidityAssertion { FirResolvedDeclarationStatusImpl.DEFAULT_STATUS_FOR_STATUSLESS_DECLARATIONS.visibility }
 
     override fun createPointer(): KaSymbolPointer<KaReceiverParameterSymbol> = withValidityAssertion {
-        KaFirReceiverParameterSymbolPointer(owningCallableSymbol.createPointer())
+        KaBaseReceiverParameterSymbolPointer(owningKaSymbol.createPointer())
     }
 
     override val annotations: KaAnnotationList
         get() = withValidityAssertion {
-            KaFirAnnotationListForReceiverParameter.create(firSymbol, builder = analysisSession.firSymbolBuilder)
+            if (owningBackingPsi?.receiverTypeReference?.hasAnnotation(AnnotationUseSiteTarget.RECEIVER) == false)
+                KaBaseEmptyAnnotationList(token)
+            else
+                KaFirAnnotationListForReceiverParameter.create(owningFirSymbol, builder = analysisSession.firSymbolBuilder)
         }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        return other is KaFirReceiverParameterSymbol && this.firSymbol == other.firSymbol
-    }
+    override fun equals(other: Any?): Boolean = this === other ||
+            other is KaFirReceiverParameterSymbol &&
+            other.owningKaSymbol == this.owningKaSymbol
 
-    override fun hashCode(): Int = 31 * firSymbol.hashCode()
+    override fun hashCode(): Int = 31 * owningKaSymbol.hashCode() + KaFirKotlinPropertySymbol.HASH_CODE_ADDITION_FOR_RECEIVER
+
+    companion object {
+        fun create(
+            owningBackingPsi: KtCallableDeclaration?,
+            analysisSession: KaFirSession,
+            owningKaSymbol: KaCallableSymbol,
+        ): KaFirReceiverParameterSymbol? {
+            if (owningBackingPsi != null && owningBackingPsi.receiverTypeReference == null) return null
+            if (owningBackingPsi == null && owningKaSymbol.firSymbol.fir.receiverParameter == null) return null
+
+            return KaFirReceiverParameterSymbol(owningBackingPsi, analysisSession, owningKaSymbol)
+        }
+    }
 }

@@ -239,7 +239,10 @@ class Fir2IrImplicitCastInserter(private val c: Fir2IrComponents) : Fir2IrCompon
     }
 
     private fun ConeKotlinType.acceptsNullValues(): Boolean {
+        // For Captured(in Type) it only accepts nulls if `Type` does
         if (this is ConeCapturedType && this.constructor.projection.kind == ProjectionKind.IN) {
+            // But `Captured(in Type)?` does accepts nulls independently of `Type`
+            if (isMarkedNullable) return true
             return constructor.projection.type!!.canBeNull(session)
         }
         return canBeNull(session) || hasEnhancedNullability
@@ -418,15 +421,9 @@ class Fir2IrImplicitCastInserter(private val c: Fir2IrComponents) : Fir2IrCompon
         internal fun typeCanBeEnhancedOrFlexibleNullable(type: ConeKotlinType, session: FirSession): Boolean {
             return when {
                 type.hasEnhancedNullability -> true
-                type.hasFlexibleNullability && type.canBeNull(session) -> true
+                type.hasFlexibleMarkedNullability && type.canBeNull(session) -> true
                 else -> false
             }
         }
-
-        private val ConeKotlinType.hasFlexibleNullability: Boolean
-            get() {
-                if (this !is ConeFlexibleType) return false
-                return lowerBound.isMarkedNullable != upperBound.isMarkedNullable
-            }
     }
 }

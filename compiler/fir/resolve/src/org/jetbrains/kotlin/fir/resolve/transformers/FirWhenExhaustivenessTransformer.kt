@@ -65,7 +65,15 @@ class FirWhenExhaustivenessTransformer(private val bodyResolveComponents: BodyRe
             return when {
                 this is ConeIntersectionType -> intersectedTypes
                 this is ConeTypeParameterType && session.languageVersionSettings.supportsFeature(LanguageFeature.ImprovedExhaustivenessChecksIn21)
-                    -> lookupTag.typeParameterSymbol.resolvedBounds.flatMap { it.coneType.unwrapTypeParameterAndIntersectionTypes(session) }
+                    -> buildList {
+                    lookupTag.typeParameterSymbol.resolvedBounds.flatMapTo(this) {
+                        it.coneType.unwrapTypeParameterAndIntersectionTypes(session)
+                    }
+                    add(this@unwrapTypeParameterAndIntersectionTypes)
+                }
+                this is ConeDefinitelyNotNullType && session.languageVersionSettings.supportsFeature(LanguageFeature.ImprovedExhaustivenessChecksIn21)
+                    -> original.unwrapTypeParameterAndIntersectionTypes(session)
+                    .map { it.makeConeTypeDefinitelyNotNullOrNotNull(session.typeContext) }
                 else -> listOf(this)
             }
         }
@@ -219,7 +227,7 @@ private sealed class WhenExhaustivenessChecker {
 
 private object WhenOnNullableExhaustivenessChecker : WhenExhaustivenessChecker() {
     override fun isApplicable(subjectType: ConeKotlinType, session: FirSession): Boolean {
-        return subjectType.isNullable
+        return subjectType.isMarkedOrFlexiblyNullable
     }
 
     override fun computeMissingCases(
@@ -252,7 +260,7 @@ private object WhenOnNullableExhaustivenessChecker : WhenExhaustivenessChecker()
         }
 
         override fun visitTypeOperatorCall(typeOperatorCall: FirTypeOperatorCall, data: Flags) {
-            if (typeOperatorCall.conversionTypeRef.coneType.isNullable) {
+            if (typeOperatorCall.operation == FirOperation.IS && typeOperatorCall.conversionTypeRef.coneType.isMarkedOrFlexiblyNullable) {
                 data.containsNull = true
             }
         }
@@ -502,7 +510,7 @@ private data object WhenSelfTypeExhaustivenessChecker : WhenExhaustivenessChecke
         }
 
         // If NullIsMissing was *not* reported, the subject can safely be converted to a not-null type.
-        val convertedSubjectType = subjectType.withNullability(nullability = ConeNullability.NOT_NULL, typeContext = session.typeContext)
+        val convertedSubjectType = subjectType.withNullability(nullable = false, typeContext = session.typeContext)
 
         val checkedTypes = mutableSetOf<ConeKotlinType>()
         whenExpression.accept(ConditionChecker, checkedTypes)

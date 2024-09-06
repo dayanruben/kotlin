@@ -1759,6 +1759,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
       public void testKt53100_casts() {
         runTest("compiler/testData/codegen/box/boxing/kt53100_casts.kt");
       }
+
+      @Test
+      @TestMetadata("missingValueClassUnboxing.kt")
+      public void testMissingValueClassUnboxing() {
+        runTest("compiler/testData/codegen/box/boxing/missingValueClassUnboxing.kt");
+      }
     }
 
     @Nested
@@ -18783,6 +18789,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
           @TestMetadata("kt43710.kt")
           public void testKt43710() {
             runTest("compiler/testData/codegen/box/inference/pcla/issues/kt43710.kt");
+          }
+
+          @Test
+          @TestMetadata("kt43710b.kt")
+          public void testKt43710b() {
+            runTest("compiler/testData/codegen/box/inference/pcla/issues/kt43710b.kt");
           }
 
           @Test
@@ -38775,6 +38787,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
         @TestMetadata("kt36953_continue.kt")
         public void testKt36953_continue() {
           runTest("compiler/testData/codegen/box/ranges/unsigned/kt36953_continue.kt");
+        }
+
+        @Test
+        @TestMetadata("kt67383.kt")
+        public void testKt67383() {
+          runTest("compiler/testData/codegen/box/ranges/unsigned/kt67383.kt");
         }
 
         @Test

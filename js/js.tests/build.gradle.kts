@@ -245,25 +245,21 @@ fun Test.setUpJsBoxTests(jsEnabled: Boolean, jsIrEnabled: Boolean, firEnabled: B
         systemProperty("kotlin.js.reduced.stdlib.path", "libraries/stdlib/js-ir-minimal-for-test/build/classes/kotlin/js/main")
         inputs.dir(rootDir.resolve("libraries/stdlib/js-ir-minimal-for-test/build/classes/kotlin/js/main"))
 
-        dependsOn(":kotlin-test:compileKotlinJs")
+        dependsOn(":kotlin-test:jsJar")
         systemProperty("kotlin.js.kotlin.test.klib.path", "libraries/kotlin.test/build/libs/kotlin-test-js-$version.klib")
         inputs.file(rootDir.resolve("libraries/kotlin.test/build/libs/kotlin-test-js-$version.klib"))
     }
 
-    exclude("org/jetbrains/kotlin/js/testOld/api/*")
-
     if (jsEnabled && !jsIrEnabled) {
-        include("org/jetbrains/kotlin/integration/AntTaskJsTest.class")
-        include("org/jetbrains/kotlin/js/testOld/*")
-        include("org/jetbrains/kotlin/js/testOld/ast/*")
-        include("org/jetbrains/kotlin/js/testOld/optimizer/*")
         include("org/jetbrains/kotlin/js/test/*")
     }
     if (!jsEnabled) {
         when {
             firEnabled && !es6Enabled -> {
                 include("org/jetbrains/kotlin/js/test/fir/*")
+                include("org/jetbrains/kotlin/js/testOld/*")
                 include("org/jetbrains/kotlin/js/testOld/klib/*")
+                include("org/jetbrains/kotlin/js/testOld/optimizer/*")
 
                 exclude("org/jetbrains/kotlin/js/test/fir/FirJsES6BoxTestGenerated.class")
                 exclude("org/jetbrains/kotlin/js/test/fir/FirJsES6CodegenBoxTestGenerated.class")
@@ -290,7 +286,9 @@ fun Test.setUpJsBoxTests(jsEnabled: Boolean, jsIrEnabled: Boolean, firEnabled: B
 
                 include("org/jetbrains/kotlin/incremental/*")
                 include("org/jetbrains/kotlin/js/testOld/compatibility/binary/JsKlibBinaryCompatibilityTestGenerated.class")
+                include("org/jetbrains/kotlin/js/testOld/*")
                 include("org/jetbrains/kotlin/js/testOld/klib/*")
+                include("org/jetbrains/kotlin/js/testOld/optimizer/*")
                 include("org/jetbrains/kotlin/benchmarks/GenerateIrRuntime.class")
                 include("org/jetbrains/kotlin/integration/JsIrAnalysisHandlerExtensionTest.class")
 

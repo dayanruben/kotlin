@@ -48,12 +48,12 @@ class TypeInfo(
 
 private val FirClassSymbol<*>.isBuiltin get() = isPrimitiveType() || classId == StandardClassIds.String || isEnumClass
 
-internal val TypeInfo.isNullableEnum get() = isEnumClass && type.isNullable
+internal val TypeInfo.isNullableEnum get() = isEnumClass && type.isMarkedOrFlexiblyNullable
 
 internal fun TypeInfo.isIdentityLess(session: FirSession) =
     session.identityLessPlatformDeterminer.isIdentityLess(this) || isValueClass
 
-internal val TypeInfo.isNotNullPrimitive get() = isPrimitive && !type.isNullable
+internal val TypeInfo.isNotNullPrimitive get() = isPrimitive && !type.isMarkedOrFlexiblyNullable
 
 private val FirClassSymbol<*>.isFinalClass get() = isClass && isFinal
 
@@ -68,7 +68,7 @@ internal fun ConeKotlinType.toTypeInfo(session: FirSession): TypeInfo {
     val bounds = collectUpperBounds().map { it.replaceArgumentsWithStarProjections() }
     val type = bounds.ifNotEmpty { ConeTypeIntersector.intersectTypes(session.typeContext, this) }?.fullyExpandedType(session)
         ?: session.builtinTypes.nullableAnyType.coneType
-    val notNullType = type.withNullability(ConeNullability.NOT_NULL, session.typeContext)
+    val notNullType = type.withNullability(nullable = false, session.typeContext)
     val boundsSymbols = bounds.mapNotNull { it.toClassSymbol(session) }
 
     return TypeInfo(
@@ -80,15 +80,15 @@ internal fun ConeKotlinType.toTypeInfo(session: FirSession): TypeInfo {
         isFinal = boundsSymbols.any { it.isFinalClass },
         isClass = boundsSymbols.any { it.isClass },
         // In K1's intersector, `canHaveSubtypes()` is called for `nullabilityStripped`.
-        withNullability(ConeNullability.NOT_NULL, session.typeContext).canHaveSubtypesAccordingToK1(session),
+        withNullability(nullable = false, session.typeContext).canHaveSubtypesAccordingToK1(session),
     )
 }
 
 internal fun ConeKotlinType.toKotlinTypeIfPlatform(session: FirSession): ConeClassLikeType? =
-    session.platformClassMapper.getCorrespondingKotlinClass(classId)?.constructClassLikeType(typeArgumentsOfLowerBoundIfFlexible, isNullable, attributes)
+    session.platformClassMapper.getCorrespondingKotlinClass(classId)?.constructClassLikeType(typeArgumentsOfLowerBoundIfFlexible, isMarkedNullable, attributes)
 
 internal fun ConeKotlinType.toPlatformTypeIfKotlin(session: FirSession): ConeClassLikeType? =
-    session.platformClassMapper.getCorrespondingPlatformClass(classId)?.constructClassLikeType(typeArgumentsOfLowerBoundIfFlexible, isNullable, attributes)
+    session.platformClassMapper.getCorrespondingPlatformClass(classId)?.constructClassLikeType(typeArgumentsOfLowerBoundIfFlexible, isMarkedNullable, attributes)
 
 internal class ArgumentInfo(
     val argument: FirExpression,

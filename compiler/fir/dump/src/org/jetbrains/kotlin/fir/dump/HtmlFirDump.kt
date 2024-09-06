@@ -671,12 +671,12 @@ class HtmlFirDump internal constructor(private var linkResolver: FirLinkResolver
     }
 
     private fun FlowContent.generate(flexibleType: ConeFlexibleType) {
-        if (flexibleType.lowerBound.nullability == ConeNullability.NOT_NULL &&
-            flexibleType.upperBound.nullability == ConeNullability.NULLABLE &&
+        if (!flexibleType.lowerBound.isMarkedNullable &&
+            flexibleType.upperBound.isMarkedNullable &&
             AbstractStrictEqualityTypeChecker.strictEqualTypes(
                 session.typeContext,
                 flexibleType.lowerBound,
-                flexibleType.upperBound.withNullability(ConeNullability.NOT_NULL, session.typeContext)
+                flexibleType.upperBound.withNullability(nullable = false, session.typeContext)
             )
         ) {
             generate(flexibleType.lowerBound)

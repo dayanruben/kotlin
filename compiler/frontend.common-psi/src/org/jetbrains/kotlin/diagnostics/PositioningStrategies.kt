@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
 
 object PositioningStrategies {
-    open class DeclarationHeader<T : KtDeclaration> : PositioningStrategy<T>() {
+    open class DeclarationHeader<T : PsiElement> : PositioningStrategy<T>() {
         override fun isValid(element: T): Boolean {
             if (element is KtNamedDeclaration &&
                 element !is KtObjectDeclaration &&
@@ -257,8 +257,8 @@ object PositioningStrategies {
     }
 
     @JvmField
-    val CALLABLE_DECLARATION_SIGNATURE_NO_MODIFIERS: PositioningStrategy<KtDeclaration> = object : DeclarationHeader<KtDeclaration>() {
-        override fun mark(element: KtDeclaration): List<TextRange> {
+    val CALLABLE_DECLARATION_SIGNATURE_NO_MODIFIERS: PositioningStrategy<PsiElement> = object : DeclarationHeader<PsiElement>() {
+        override fun mark(element: PsiElement): List<TextRange> {
             when (element) {
                 is KtNamedFunction -> {
                     val startElement = element.funKeyword ?: element
@@ -282,7 +282,11 @@ object PositioningStrategies {
                     return markRange(element.namePlaceholder, endOfSignatureElement)
                 }
             }
-            return DECLARATION_SIGNATURE.mark(element)
+            return if (element is KtDeclaration) {
+                DECLARATION_SIGNATURE.mark(element)
+            } else {
+                DEFAULT.mark(element)
+            }
         }
     }
 
@@ -498,7 +502,7 @@ object PositioningStrategies {
         }
     }
 
-    private open class ModifierSetBasedPositioningStrategy(private val modifierSet: TokenSet) : PositioningStrategy<KtModifierListOwner>() {
+    private open class ModifierSetBasedPositioningStrategy(private val modifierSet: TokenSet) : PositioningStrategy<PsiElement>() {
         constructor(vararg tokens: IElementType) : this(TokenSet.create(*tokens))
 
         protected fun markModifier(element: KtModifierListOwner?): List<TextRange>? =
@@ -506,9 +510,11 @@ object PositioningStrategies {
                 element?.modifierList?.getModifier(it as KtModifierKeywordToken)?.textRange
             }.takeIf { it.isNotEmpty() }
 
-        override fun mark(element: KtModifierListOwner): List<TextRange> {
-            val result = markModifier(element)
-            if (result != null) return result
+        override fun mark(element: PsiElement): List<TextRange> {
+            if (element is KtModifierListOwner) {
+                val result = markModifier(element)
+                if (result != null) return result
+            }
 
             // Try to resolve situation when there's no visibility modifiers written before element
             if (element is PsiNameIdentifierOwner) {
@@ -521,17 +527,14 @@ object PositioningStrategies {
             val elementToMark = when (element) {
                 is KtObjectDeclaration -> element.getObjectKeyword()!!
                 is KtPropertyAccessor -> element.namePlaceholder
-                is KtAnonymousInitializer, is KtPrimaryConstructor -> element
-                else -> throw IllegalArgumentException(
-                    "Can't find text range for element '${element::class.java.canonicalName}' with the text '${element.text}'"
-                )
+                else -> element
             }
             return markElement(elementToMark)
         }
     }
 
     private class InlineFunPositioningStrategy : ModifierSetBasedPositioningStrategy(KtTokens.INLINE_KEYWORD) {
-        override fun mark(element: KtModifierListOwner): List<TextRange> {
+        override fun mark(element: PsiElement): List<TextRange> {
             if (element is KtProperty) {
                 return markModifier(element.getter) ?: markModifier(element.setter) ?: super.mark(element)
             }
@@ -1120,6 +1123,12 @@ object PositioningStrategies {
         override fun mark(element: KtTypeReference): List<TextRange> {
             val parent = element.parent as? KtDelegatedSuperTypeEntry ?: return super.mark(element)
             return markElement(parent.byKeywordNode.psi ?: element)
+        }
+    }
+
+    val PROPERTY_DELEGATE_BY_KEYWORD: PositioningStrategy<KtExpression> = object : PositioningStrategy<KtExpression>() {
+        override fun mark(element: KtExpression): List<TextRange> {
+            return markElement((element.parent as? KtPropertyDelegate)?.byKeywordNode?.psi ?: element)
         }
     }
 

@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
+import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.FunctionWithJsFuncAnnotationInliner
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.translateJsCodeIntoStatementList
 import org.jetbrains.kotlin.ir.backend.js.utils.emptyScope
 import org.jetbrains.kotlin.ir.builders.*
@@ -28,12 +29,57 @@ import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
+import org.jetbrains.kotlin.js.backend.JsToStringGenerationVisitor
 import org.jetbrains.kotlin.js.backend.ast.*
+import org.jetbrains.kotlin.js.sourceMap.SourceFilePathResolver
+import org.jetbrains.kotlin.js.sourceMap.SourceMap3Builder
+import org.jetbrains.kotlin.js.sourceMap.SourceMapBuilderConsumer
+import org.jetbrains.kotlin.js.util.TextOutputImpl
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
+import java.io.File
 
-// Outlines `kotlin.js.js(code: String)` calls where JS code references Kotlin locals.
-// Makes locals usages explicit.
+/**
+ * Outlines `kotlin.js.js(code: String)` calls where the JavaScript code passed as a string literal references Kotlin locals.
+ * Makes the usages of locals explicit.
+ *
+ * Transforms a call to `kotlin.js.js` into a call to generated local external function annotated with `@kotlin.js.JsOutlinedFunction`.
+ *
+ * The `sourceMap` argument of the annotation maps the offsets in its `code` argument to the offsets in the original Kotlin source.
+ *
+ * **Before the transformation:**
+ * ```kotlin
+ * fun foo(x: Int): Int {
+ *   val theAnswer = 42
+ *   return js("x + theAnswer")
+ * }
+ * ```
+ *
+ * **After the transformation:**
+ * ```kotlin
+ * fun foo(x: Int): Int {
+ *
+ *   @kotlin.js.JsOutlinedFunction(
+ *     code = "function (x, theAnswer) { return x + theAnswer; }",
+ *     sourceMap = """
+ *     {
+ *       "version": 3
+ *       "sources": ["foo.kt"]
+ *       "sourcesContent": [null]
+ *       "names":[],
+ *       "mappings": "+BAKc,CAAE,CAAE,S"
+ *     }
+ *     """
+ *   )
+ *   /*local*/ external fun foo$outlinedJsCode$(x: Int, theAnswer: Int): dynamic
+ *
+ *   val theAnswer = 42
+ *   return foo$outlinedJsCode$(x, theAnswer)
+ * }
+ * ```
+ *
+ * The outlined functions are inlined again later by [FunctionWithJsFuncAnnotationInliner] during the codegen phase.
+ */
 class JsCodeOutliningLowering(val backendContext: JsIrBackendContext) : BodyLoweringPass {
     override fun lower(irBody: IrBody, container: IrDeclaration) {
         // Fast path to avoid tracking locals scopes for bodies without js() calls
@@ -178,12 +224,13 @@ private class JsCodeOutlineTransformer(
         // Building outlined IR function skeleton
         val outlinedFunction = createOutlinedFunction(kotlinLocalsUsedInJs)
         outlinedFunctions += outlinedFunction
-        val annotation = addJsFunAnnotation(outlinedFunction)
+        val annotation = addSpecialAnnotation(outlinedFunction)
 
         // Building JS Ast function
         val newFun = createJsFunction(jsStatements, kotlinLocalsUsedInJs)
-        val jsFunCode = newFun.toString()
+        val (jsFunCode, sourceMap) = printJsCodeWithDebugInfo(newFun)
         annotation.putValueArgument(0, jsFunCode.toIrConst(backendContext.irBuiltIns.stringType))
+        annotation.putValueArgument(1, sourceMap.toIrConst(backendContext.irBuiltIns.stringType))
 
         return with(backendContext.createIrBuilder(container.symbol)) {
             irCall(outlinedFunction).apply {
@@ -194,11 +241,11 @@ private class JsCodeOutlineTransformer(
         }
     }
 
-    private fun addJsFunAnnotation(outlinedFunction: IrSimpleFunction): IrConstructorCall {
+    private fun addSpecialAnnotation(outlinedFunction: IrSimpleFunction): IrConstructorCall {
         val builder = backendContext.createIrBuilder(outlinedFunction.symbol)
         val annotation = builder.irCallConstructor(
-            backendContext.intrinsics.jsFunAnnotationSymbol.constructors.first(),
-            typeArguments = emptyList()
+            backendContext.intrinsics.jsOutlinedFunctionAnnotationSymbol.constructors.first(),
+            typeArguments = emptyList(),
         )
         outlinedFunction.annotations += annotation
         return annotation
@@ -222,6 +269,24 @@ private class JsCodeOutlineTransformer(
             newFun.parameters.add(JsParameter(jsName))
         }
         return newFun
+    }
+
+    private fun printJsCodeWithDebugInfo(jsFunction: JsFunction): Pair<String, String> {
+        val jsCode = TextOutputImpl()
+        val sourceMapBuilder = SourceMap3Builder(
+            generatedFile = null,
+            getCurrentOutputColumn = jsCode::getColumn,
+            pathPrefix = "",
+        )
+        val sourceMapBuilderConsumer = SourceMapBuilderConsumer(
+            File("."),
+            sourceMapBuilder,
+            SourceFilePathResolver(emptyList()),
+            provideCurrentModuleContent = false,
+            provideExternalModuleContent = false,
+        )
+        JsToStringGenerationVisitor(jsCode, sourceMapBuilderConsumer).accept(jsFunction)
+        return jsCode.toString() to sourceMapBuilder.build()
     }
 
     private fun createOutlinedFunction(kotlinLocalsUsedInJs: Map<JsName, IrValueDeclaration>): IrSimpleFunction {
@@ -290,7 +355,7 @@ class JsScopesCollector : RecursiveJsVisitor() {
 
 private class KotlinLocalsUsageCollector(
     private val scopeInfo: JsScopesCollector,
-    private val findValueDeclarationWithName: (String) -> IrValueDeclaration?
+    private val findValueDeclarationWithName: (String) -> IrValueDeclaration?,
 ) : RecursiveJsVisitor() {
     private val functionStack = mutableListOf<JsFunction?>(null)
     private val processedNames = mutableSetOf<String>()

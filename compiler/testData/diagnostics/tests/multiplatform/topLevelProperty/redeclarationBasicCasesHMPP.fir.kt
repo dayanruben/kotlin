@@ -4,9 +4,9 @@
 // TARGET_PLATFORM: Common
 expect val <!REDECLARATION!>x1<!>: Int
 
-<!AMBIGUOUS_ACTUALS{JVM}!>expect val x2: Int<!>
+<!AMBIGUOUS_ACTUALS{JVM}!>expect<!> val x2: Int
 
-<!AMBIGUOUS_ACTUALS{JVM}!>expect val x3: Int<!>
+<!AMBIGUOUS_ACTUALS{JVM}!>expect<!> val x3: Int
 
 // MODULE: intermediate()()(common)
 // TARGET_PLATFORM: Common
@@ -17,7 +17,7 @@ val <!ACTUAL_MISSING, ACTUAL_MISSING{METADATA}, REDECLARATION!>x2<!> = 2
 actual val <!REDECLARATION!>x3<!> = 3
 
 // MODULE: main()()(intermediate)
-<!AMBIGUOUS_EXPECTS!>actual val x1 = 1<!>
+<!AMBIGUOUS_EXPECTS!>actual<!> val x1 = 1
 
 actual val x2 = 2
 

@@ -5,23 +5,22 @@
 
 package org.jetbrains.kotlin.analysis.api.fir.symbols
 
+import com.intellij.psi.PsiErrorElement
 import org.jetbrains.kotlin.analysis.api.fir.KaFirSession
 import org.jetbrains.kotlin.analysis.api.fir.components.KaFirSessionComponent
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseSymbolProvider
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirFile
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.resolveToFirSymbolOfType
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.errorWithFirSpecificEntries
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
-import org.jetbrains.kotlin.fir.symbols.impl.*
-import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirTypeAliasSymbol
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isObjectLiteral
+import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
 internal class KaFirSymbolProvider(
     override val analysisSessionProvider: () -> KaFirSession,
@@ -36,102 +35,85 @@ internal class KaFirSymbolProvider(
                     psi = this,
                 )
 
-                isLoopParameter || isCatchParameter -> firSymbolBuilder.variableBuilder.buildLocalVariableSymbol(
-                    resolveToFirSymbolOfType<FirPropertySymbol>(firResolveSession)
-                )
-
-                else -> firSymbolBuilder.variableBuilder.buildValueParameterSymbol(
-                    resolveToFirSymbolOfType<FirValueParameterSymbol>(firResolveSession)
-                )
+                isLoopParameter || isCatchParameter -> KaFirLocalVariableSymbol(this, analysisSession)
+                else -> KaFirValueParameterSymbol(this, analysisSession)
             }
         }
 
     override val KtFile.symbol: KaFileSymbol
         get() = withValidityAssertion {
-            firSymbolBuilder.buildFileSymbol(
-                getOrBuildFirFile(firResolveSession).symbol
-            )
+            KaFirFileSymbol(this, analysisSession)
         }
 
     override val KtScript.symbol: KaScriptSymbol
         get() = withValidityAssertion {
-            firSymbolBuilder.buildScriptSymbol(
-                resolveToFirSymbolOfType<FirScriptSymbol>(firResolveSession)
-            )
+            KaFirScriptSymbol(this, analysisSession)
         }
 
     override val KtNamedFunction.symbol: KaFunctionSymbol
         get() = withValidityAssertion {
-            firSymbolBuilder.functionBuilder.buildFunctionSymbol(
-                resolveToFirSymbolOfType<FirFunctionSymbol<*>>(firResolveSession),
-            )
+            if (isAnonymous) {
+                KaFirAnonymousFunctionSymbol(this, analysisSession)
+            } else {
+                KaFirNamedFunctionSymbol(this, analysisSession)
+            }
         }
 
     override val KtConstructor<*>.symbol: KaConstructorSymbol
         get() = withValidityAssertion {
-            firSymbolBuilder.functionBuilder.buildConstructorSymbol(
-                resolveToFirSymbolOfType<FirConstructorSymbol>(firResolveSession)
-            )
+            KaFirConstructorSymbol(this, analysisSession)
         }
 
     override val KtTypeParameter.symbol: KaTypeParameterSymbol
         get() = withValidityAssertion {
-            firSymbolBuilder.classifierBuilder.buildTypeParameterSymbol(
-                resolveToFirSymbolOfType<FirTypeParameterSymbol>(firResolveSession)
-            )
+            KaFirTypeParameterSymbol(this, analysisSession)
         }
 
     override val KtTypeAlias.symbol: KaTypeAliasSymbol
         get() = withValidityAssertion {
-            firSymbolBuilder.classifierBuilder.buildTypeAliasSymbol(
-                resolveToFirSymbolOfType<FirTypeAliasSymbol>(firResolveSession)
-            )
+            KaFirTypeAliasSymbol(this, analysisSession)
         }
 
     override val KtEnumEntry.symbol: KaEnumEntrySymbol
         get() = withValidityAssertion {
-            firSymbolBuilder.buildEnumEntrySymbol(
-                resolveToFirSymbolOfType<FirEnumEntrySymbol>(firResolveSession)
-            )
+            KaFirEnumEntrySymbol(this, analysisSession)
         }
 
     override val KtFunctionLiteral.symbol: KaAnonymousFunctionSymbol
         get() = withValidityAssertion {
-            firSymbolBuilder.functionBuilder.buildAnonymousFunctionSymbol(
-                resolveToFirSymbolOfType<FirAnonymousFunctionSymbol>(firResolveSession)
-            )
+            KaFirAnonymousFunctionSymbol(this, analysisSession)
         }
 
     override val KtProperty.symbol: KaVariableSymbol
         get() = withValidityAssertion {
-            firSymbolBuilder.variableBuilder.buildVariableSymbol(
-                resolveToFirSymbolOfType<FirPropertySymbol>(firResolveSession)
-            )
+            if (isLocal) {
+                KaFirLocalVariableSymbol(this, analysisSession)
+            } else {
+                KaFirKotlinPropertySymbol.create(this, analysisSession)
+            }
         }
 
     override val KtObjectLiteralExpression.symbol: KaAnonymousObjectSymbol
         get() = withValidityAssertion {
-            firSymbolBuilder.classifierBuilder.buildAnonymousObjectSymbol(
-                objectDeclaration.resolveToFirSymbolOfType<FirAnonymousObjectSymbol>(firResolveSession)
-            )
+            KaFirAnonymousObjectSymbol(objectDeclaration, analysisSession)
         }
 
     override val KtObjectDeclaration.symbol: KaClassSymbol
         get() = withValidityAssertion {
-            firSymbolBuilder.classifierBuilder.buildClassOrObjectSymbol(
-                resolveToFirSymbolOfType<FirClassSymbol<*>>(firResolveSession)
-            )
+            if (isObjectLiteral()) {
+                KaFirAnonymousObjectSymbol(this, analysisSession)
+            } else {
+                KaFirNamedClassSymbol(this, analysisSession)
+            }
         }
 
     override val KtClassOrObject.classSymbol: KaClassSymbol?
         get() = withValidityAssertion {
-            if (this is KtEnumEntry) {
-                return null
+            when (this) {
+                is KtEnumEntry -> null
+                is KtObjectDeclaration -> symbol
+                else -> KaFirNamedClassSymbol(this, analysisSession)
             }
-
-            firSymbolBuilder.classifierBuilder.buildClassOrObjectSymbol(
-                resolveToFirSymbolOfType<FirClassSymbol<*>>(firResolveSession)
-            )
         }
 
     override val KtClassOrObject.namedClassSymbol: KaNamedClassSymbol?
@@ -140,37 +122,48 @@ internal class KaFirSymbolProvider(
                 return null
             }
 
-            firSymbolBuilder.classifierBuilder.buildNamedClassOrObjectSymbol(
-                resolveToFirSymbolOfType<FirRegularClassSymbol>(firResolveSession)
-            )
+            KaFirNamedClassSymbol(this, analysisSession)
         }
 
     override val KtPropertyAccessor.symbol: KaPropertyAccessorSymbol
         get() = withValidityAssertion {
-            firSymbolBuilder.functionBuilder.buildPropertyAccessorSymbol(
-                resolveToFirSymbolOfType<FirPropertyAccessorSymbol>(firResolveSession)
-            )
+            if (isGetter) {
+                KaFirPropertyGetterSymbol.create(this, analysisSession)
+            } else {
+                KaFirPropertySetterSymbol.create(this, analysisSession)
+            }
         }
 
     override val KtClassInitializer.symbol: KaClassInitializerSymbol
         get() = withValidityAssertion {
-            firSymbolBuilder.anonymousInitializerBuilder.buildClassInitializer(
-                resolveToFirSymbolOfType<FirAnonymousInitializerSymbol>(firResolveSession)
-            )
+            KaFirClassInitializerSymbol(this, analysisSession)
         }
 
     override val KtDestructuringDeclarationEntry.symbol: KaVariableSymbol
         get() = withValidityAssertion {
-            firSymbolBuilder.variableBuilder.buildVariableSymbol(
-                resolveToFirSymbolOfType<FirVariableSymbol<*>>(firResolveSession)
-            )
+            when (val parent = parent) {
+                is KtDestructuringDeclaration -> {
+                    if (parent.parent?.parent is KtScript) {
+                        KaFirKotlinPropertySymbol.create(this, analysisSession)
+                    } else {
+                        KaFirLocalVariableSymbol(this, analysisSession)
+                    }
+                }
+
+                is PsiErrorElement -> {
+                    val destructuringDeclaration = parent.parent as KtDestructuringDeclaration
+                    KaFirErrorVariableSymbol(destructuringDeclaration, analysisSession)
+                }
+
+                else -> errorWithFirSpecificEntries("Unexpected type of parent", psi = this) {
+                    withPsiEntry("parent", parent)
+                }
+            }
         }
 
     override val KtDestructuringDeclaration.symbol: KaDestructuringDeclarationSymbol
         get() = withValidityAssertion {
-            firSymbolBuilder.buildDestructuringDeclarationSymbol(
-                resolveToFirSymbolOfType<FirVariableSymbol<*>>(firResolveSession)
-            )
+            KaFirDestructuringDeclarationSymbol(this, analysisSession)
         }
 
     override fun findClass(classId: ClassId): KaClassSymbol? = withValidityAssertion {

@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.name.CallableId
 
 internal class KaFe10DescPropertySetterSymbol(
     override val descriptor: PropertySetterDescriptor,
-    override val analysisContext: Fe10AnalysisContext
+    override val analysisContext: Fe10AnalysisContext,
 ) : KaPropertySetterSymbol(), KaFe10DescSymbol<PropertySetterDescriptor> {
     override val returnType: KaType
         get() = withValidityAssertion { analysisContext.builtIns.unitType.toKtType(analysisContext) }
@@ -42,9 +42,6 @@ internal class KaFe10DescPropertySetterSymbol(
     override val modality: KaSymbolModality
         get() = withValidityAssertion { descriptor.kaSymbolModality }
 
-    override val isActual: Boolean
-        get() = withValidityAssertion { descriptor.isActual }
-
     override val isExpect: Boolean
         get() = withValidityAssertion { descriptor.isExpect }
 
@@ -53,9 +50,6 @@ internal class KaFe10DescPropertySetterSymbol(
 
     override val hasBody: Boolean
         get() = withValidityAssertion { descriptor.hasBody() }
-
-    override val valueParameters: List<KaValueParameterSymbol>
-        get() = withValidityAssertion { descriptor.valueParameters.map { KaFe10DescValueParameterSymbol(it, analysisContext) } }
 
     override val hasStableParameterNames: Boolean
         get() = withValidityAssertion { true }

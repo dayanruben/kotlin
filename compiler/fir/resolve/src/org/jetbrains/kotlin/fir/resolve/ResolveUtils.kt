@@ -34,7 +34,6 @@ import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.fir.scopes.impl.importedFromObjectOrStaticData
 import org.jetbrains.kotlin.fir.scopes.impl.typeAliasForConstructor
 import org.jetbrains.kotlin.fir.scopes.processOverriddenFunctions
-import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
@@ -297,7 +296,7 @@ fun createFunctionType(
     return ConeClassLikeTypeImpl(
         functionTypeId.toLookupTag(),
         receiverAndParameterTypes.toTypedArray(),
-        isNullable = false,
+        isMarkedNullable = false,
         attributes = attributes
     )
 }
@@ -309,7 +308,7 @@ fun createKPropertyType(
 ): ConeLookupTagBasedType {
     val arguments = if (receiverType != null) listOf(receiverType, rawReturnType) else listOf(rawReturnType)
     val classId = StandardClassIds.reflectByName("K${if (isMutable) "Mutable" else ""}Property${arguments.size - 1}")
-    return ConeClassLikeTypeImpl(classId.toLookupTag(), arguments.toTypedArray(), isNullable = false)
+    return ConeClassLikeTypeImpl(classId.toLookupTag(), arguments.toTypedArray(), isMarkedNullable = false)
 }
 
 fun BodyResolveComponents.buildResolvedQualifierForClass(
@@ -387,7 +386,7 @@ fun FirResolvedQualifier.setTypeOfQualifier(components: BodyResolveComponents) {
 
 internal fun typeForReifiedParameterReference(parameterReferenceBuilder: FirResolvedReifiedParameterReferenceBuilder): ConeLookupTagBasedType {
     val typeParameterSymbol = parameterReferenceBuilder.symbol
-    return typeParameterSymbol.constructType(emptyArray(), false)
+    return typeParameterSymbol.constructType()
 }
 
 internal fun typeForQualifierByDeclaration(
@@ -399,12 +398,12 @@ internal fun typeForQualifierByDeclaration(
     }
     if (declaration is FirRegularClass) {
         if (declaration.classKind == ClassKind.OBJECT) {
-            return declaration.symbol.constructType(emptyArray(), false)
+            return declaration.symbol.constructType()
         } else {
             val companionObjectSymbol = declaration.companionObjectSymbol
             if (companionObjectSymbol != null) {
                 session.lookupTracker?.recordCompanionLookup(companionObjectSymbol.classId, element.source, file.source)
-                return companionObjectSymbol.constructType(emptyArray(), false)
+                return companionObjectSymbol.constructType()
             }
         }
     }
@@ -496,7 +495,7 @@ private fun BodyResolveComponents.typeFromSymbol(symbol: FirBasedSymbol<*>): Fir
         is FirClassifierSymbol<*> -> {
             buildResolvedTypeRef {
                 source = null
-                coneType = symbol.constructType(emptyArray(), isNullable = false)
+                coneType = symbol.constructType()
             }
         }
         else -> errorWithAttachment("Failed to extract type from symbol: ${symbol::class.java}") {
@@ -574,12 +573,12 @@ fun FirSafeCallExpression.propagateTypeFromQualifiedAccessAfterNullCheck(
     val resultingType = when {
         selector is FirExpression && !selector.isStatementLikeExpression -> {
             val type = selector.resolvedType
-            type.withNullability(ConeNullability.NULLABLE, session.typeContext)
+            type.withNullability(nullable = true, session.typeContext)
         }
         // Branch for things that shouldn't be used as expressions.
         // They are forced to return not-null `Unit`, regardless of the receiver.
         else -> {
-            StandardClassIds.Unit.constructClassLikeType(emptyArray(), isNullable = false)
+            StandardClassIds.Unit.constructClassLikeType(emptyArray(), isMarkedNullable = false)
         }
     }
 
@@ -759,7 +758,7 @@ fun FirNamedReferenceWithCandidate.toErrorReference(diagnostic: ConeDiagnostic):
 }
 
 val FirTypeParameterSymbol.defaultType: ConeTypeParameterType
-    get() = ConeTypeParameterTypeImpl(toLookupTag(), isNullable = false)
+    get() = ConeTypeParameterTypeImpl(toLookupTag(), isMarkedNullable = false)
 
 fun ConeClassLikeLookupTag.isRealOwnerOf(declarationSymbol: FirCallableSymbol<*>): Boolean =
     this == declarationSymbol.dispatchReceiverClassLookupTagOrNull()

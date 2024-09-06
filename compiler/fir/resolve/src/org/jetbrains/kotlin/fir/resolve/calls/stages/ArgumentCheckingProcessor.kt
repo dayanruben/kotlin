@@ -122,7 +122,7 @@ internal object ArgumentCheckingProcessor {
                         // Assignment
                         null -> checkApplicabilityForArgumentType(
                             atom,
-                            StandardClassIds.Unit.constructClassLikeType(emptyArray(), isNullable = false),
+                            StandardClassIds.Unit.constructClassLikeType(emptyArray(), isMarkedNullable = false),
                             SimpleConstraintSystemConstraintPosition,
                         )
                         else -> resolvePlainExpressionArgument(
@@ -176,7 +176,7 @@ internal object ArgumentCheckingProcessor {
         val capturedType = prepareCapturedType(argumentType, context)
 
         var argumentTypeForApplicabilityCheck = capturedType.applyIf(useNullableArgumentType) {
-            withNullability(ConeNullability.NULLABLE, session.typeContext)
+            withNullability(nullable = true, session.typeContext)
         }
 
         // If the argument is of functional type and the expected type is a suspend function type, we need to do "suspend conversion."
@@ -206,7 +206,7 @@ internal object ArgumentCheckingProcessor {
         val expression = atom.expression
 
         fun subtypeError(actualExpectedType: ConeKotlinType): ResolutionDiagnostic {
-            if (expression.isNullLiteral && actualExpectedType.nullability == ConeNullability.NOT_NULL) {
+            if (expression.isNullLiteral && !actualExpectedType.isMarkedOrFlexiblyNullable) {
                 return NullForNotNullType(expression, actualExpectedType)
             }
 
@@ -222,7 +222,7 @@ internal object ArgumentCheckingProcessor {
 
                     val originalTypeParameter = lookupTag.originalTypeParameter as? ConeTypeParameterLookupTag
                     if (originalTypeParameter != null) {
-                        return ConeTypeParameterTypeImpl(originalTypeParameter, type.isNullable, type.attributes)
+                        return ConeTypeParameterTypeImpl(originalTypeParameter, type.isMarkedNullable, type.attributes)
                     }
                 } else if (type is ConeIntegerLiteralType) {
                     return type.possibleTypes.firstOrNull() ?: type
@@ -247,7 +247,7 @@ internal object ArgumentCheckingProcessor {
 
         when {
             isReceiver && isDispatch -> {
-                if (!expectedType.isNullable && argumentType.isMarkedNullable) {
+                if (!expectedType.isMarkedOrFlexiblyNullable && argumentType.isMarkedNullable) {
                     reportDiagnostic(InapplicableWrongReceiver(expectedType, argumentType))
                 }
             }
@@ -280,10 +280,10 @@ internal object ArgumentCheckingProcessor {
                     return
                 }
 
-                val nullableExpectedType = expectedType.withNullability(ConeNullability.NULLABLE, session.typeContext)
+                val nullableExpectedType = expectedType.withNullability(nullable = true, session.typeContext)
 
                 if (csBuilder.addSubtypeConstraintIfCompatible(argumentType, nullableExpectedType, position)) {
-                    reportDiagnostic(UnsafeCall(argumentType))
+                    reportDiagnostic(InapplicableNullableReceiver(argumentType))
                 } else {
                     csBuilder.addSubtypeConstraint(argumentType, expectedType, position)
                     reportDiagnostic(InapplicableWrongReceiver(expectedType, argumentType))

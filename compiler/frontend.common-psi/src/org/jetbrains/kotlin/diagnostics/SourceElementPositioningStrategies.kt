@@ -335,9 +335,6 @@ object SourceElementPositioningStrategies {
         PositioningStrategies.LABEL
     )
 
-    // TODO
-    val INCOMPATIBLE_DECLARATION = DEFAULT
-
     val NOT_SUPPORTED_IN_INLINE_MOST_RELEVANT = SourceElementPositioningStrategy(
         LightTreePositioningStrategies.NOT_SUPPORTED_IN_INLINE_MOST_RELEVANT,
         PositioningStrategies.NOT_SUPPORTED_IN_INLINE_MOST_RELEVANT
@@ -406,6 +403,11 @@ object SourceElementPositioningStrategies {
     val DELEGATED_SUPERTYPE_BY_KEYWORD = SourceElementPositioningStrategy(
         LightTreePositioningStrategies.DELEGATED_SUPERTYPE_BY_KEYWORD,
         PositioningStrategies.DELEGATED_SUPERTYPE_BY_KEYWORD
+    )
+
+    val PROPERTY_DELEGATE_BY_KEYWORD = SourceElementPositioningStrategy(
+        LightTreePositioningStrategies.PROPERTY_DELEGATE_BY_KEYWORD,
+        PositioningStrategies.PROPERTY_DELEGATE_BY_KEYWORD
     )
 
     val CALL_ELEMENT_WITH_DOT = SourceElementPositioningStrategy(

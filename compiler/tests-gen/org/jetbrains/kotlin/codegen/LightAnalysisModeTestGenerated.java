@@ -20033,6 +20033,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
           runTest("compiler/testData/codegen/box/inference/pcla/issues/kt43710.kt");
         }
 
+        @TestMetadata("kt43710b.kt")
+        public void testKt43710b() {
+          runTest("compiler/testData/codegen/box/inference/pcla/issues/kt43710b.kt");
+        }
+
         @TestMetadata("kt44241.kt")
         public void testKt44241() {
           runTest("compiler/testData/codegen/box/inference/pcla/issues/kt44241.kt");
@@ -29094,6 +29099,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       @TestMetadata("mapPut.kt")
       public void testMapPut() {
         runTest("compiler/testData/codegen/box/javaInterop/notNullAssertions/mapPut.kt");
+      }
+
+      @TestMetadata("noAssertionForNulllableCaptured.kt")
+      public void testNoAssertionForNulllableCaptured() {
+        runTest("compiler/testData/codegen/box/javaInterop/notNullAssertions/noAssertionForNulllableCaptured.kt");
       }
 
       @TestMetadata("nonNullableTypeParameter.kt")
@@ -38496,6 +38506,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       @TestMetadata("kt36953_continue.kt")
       public void testKt36953_continue() {
         runTest("compiler/testData/codegen/box/ranges/unsigned/kt36953_continue.kt");
+      }
+
+      @TestMetadata("kt67383.kt")
+      public void testKt67383() {
+        runTest("compiler/testData/codegen/box/ranges/unsigned/kt67383.kt");
       }
 
       @TestMetadata("outOfBoundsInMixedContains.kt")

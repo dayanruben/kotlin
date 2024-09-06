@@ -898,6 +898,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
     }
 
     @Test
+    @TestMetadata("KotlinActualAnnotationHasNoEffectInKotlin.kt")
+    public void testKotlinActualAnnotationHasNoEffectInKotlin() {
+      runTest("compiler/testData/diagnostics/tests/KotlinActualAnnotationHasNoEffectInKotlin.kt");
+    }
+
+    @Test
     @TestMetadata("kt11167.kt")
     public void testKt11167() {
       runTest("compiler/testData/diagnostics/tests/kt11167.kt");
@@ -1519,6 +1525,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
     @TestMetadata("recursiveTypealiasWithProjection.kt")
     public void testRecursiveTypealiasWithProjection() {
       runTest("compiler/testData/diagnostics/tests/recursiveTypealiasWithProjection.kt");
+    }
+
+    @Test
+    @TestMetadata("redundantExplicitTypeWithIntegerLiterals.kt")
+    public void testRedundantExplicitTypeWithIntegerLiterals() {
+      runTest("compiler/testData/diagnostics/tests/redundantExplicitTypeWithIntegerLiterals.kt");
     }
 
     @Test
@@ -16521,6 +16533,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("dnnArgumentInferred.kt")
+      public void testDnnArgumentInferred() {
+        runTest("compiler/testData/diagnostics/tests/inference/dnnArgumentInferred.kt");
+      }
+
+      @Test
       @TestMetadata("dontThrowEmptyIntersectionException.kt")
       public void testDontThrowEmptyIntersectionException() {
         runTest("compiler/testData/diagnostics/tests/inference/dontThrowEmptyIntersectionException.kt");
@@ -17082,6 +17100,18 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("nullableUpperBound.kt")
       public void testNullableUpperBound() {
         runTest("compiler/testData/diagnostics/tests/inference/nullableUpperBound.kt");
+      }
+
+      @Test
+      @TestMetadata("nullableVsDnnVariations.kt")
+      public void testNullableVsDnnVariations() {
+        runTest("compiler/testData/diagnostics/tests/inference/nullableVsDnnVariations.kt");
+      }
+
+      @Test
+      @TestMetadata("nullableVsDnnVariationsDisabled.kt")
+      public void testNullableVsDnnVariationsDisabled() {
+        runTest("compiler/testData/diagnostics/tests/inference/nullableVsDnnVariationsDisabled.kt");
       }
 
       @Test
@@ -18210,6 +18240,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("definitelyNotNullTypeInArgumentsDisabled.kt")
+        public void testDefinitelyNotNullTypeInArgumentsDisabled() {
+          runTest("compiler/testData/diagnostics/tests/inference/constraints/definitelyNotNullTypeInArgumentsDisabled.kt");
+        }
+
+        @Test
         @TestMetadata("definitelyNotNullTypeInReturnPosition.kt")
         public void testDefinitelyNotNullTypeInReturnPosition() {
           runTest("compiler/testData/diagnostics/tests/inference/constraints/definitelyNotNullTypeInReturnPosition.kt");
@@ -19316,6 +19352,18 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("semifixOuterVariable.kt")
+        public void testSemifixOuterVariable() {
+          runTest("compiler/testData/diagnostics/tests/inference/pcla/semifixOuterVariable.kt");
+        }
+
+        @Test
+        @TestMetadata("semifixOuterVariableFeatureDisabled.kt")
+        public void testSemifixOuterVariableFeatureDisabled() {
+          runTest("compiler/testData/diagnostics/tests/inference/pcla/semifixOuterVariableFeatureDisabled.kt");
+        }
+
+        @Test
         @TestMetadata("simpleLambdaInCallWithAnotherLambdaWithBuilderInference.kt")
         public void testSimpleLambdaInCallWithAnotherLambdaWithBuilderInference() {
           runTest("compiler/testData/diagnostics/tests/inference/pcla/simpleLambdaInCallWithAnotherLambdaWithBuilderInference.kt");
@@ -19514,6 +19562,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
           @TestMetadata("kt43710.kt")
           public void testKt43710() {
             runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/kt43710.kt");
+          }
+
+          @Test
+          @TestMetadata("kt43710b.kt")
+          public void testKt43710b() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/kt43710b.kt");
           }
 
           @Test
@@ -26412,6 +26466,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("actualTypealiasToNonexistent.kt")
+      public void testActualTypealiasToNonexistent() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/actualTypealiasToNonexistent.kt");
+      }
+
+      @Test
       @TestMetadata("actualTypealiasToSpecialAnnotation.kt")
       public void testActualTypealiasToSpecialAnnotation() {
         runTest("compiler/testData/diagnostics/tests/multiplatform/actualTypealiasToSpecialAnnotation.kt");
@@ -27853,6 +27913,64 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         @TestMetadata("hidden.kt")
         public void testHidden() {
           runTest("compiler/testData/diagnostics/tests/multiplatform/deprecatedAnnotation/hidden.kt");
+        }
+      }
+
+      @Nested
+      @TestMetadata("compiler/testData/diagnostics/tests/multiplatform/directJavaActualization")
+      @TestDataPath("$PROJECT_ROOT")
+      public class DirectJavaActualization {
+        @Test
+        public void testAllFilesPresentInDirectJavaActualization() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform/directJavaActualization"), Pattern.compile("^(.+)\\.(kt|kts)$"), Pattern.compile("^(.+)\\.(reversed|fir|ll|latestLV)\\.kts?$"), true);
+        }
+
+        @Test
+        @TestMetadata("directJavaActualization_actualWithoutExpect.kt")
+        public void testDirectJavaActualization_actualWithoutExpect() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/directJavaActualization/directJavaActualization_actualWithoutExpect.kt");
+        }
+
+        @Test
+        @TestMetadata("directJavaActualization_annotationOnlyOnExpect.kt")
+        public void testDirectJavaActualization_annotationOnlyOnExpect() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/directJavaActualization/directJavaActualization_annotationOnlyOnExpect.kt");
+        }
+
+        @Test
+        @TestMetadata("directJavaActualization_classifierIncompatibilities.kt")
+        public void testDirectJavaActualization_classifierIncompatibilities() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/directJavaActualization/directJavaActualization_classifierIncompatibilities.kt");
+        }
+
+        @Test
+        @TestMetadata("directJavaActualization_javaInDifferentModule.kt")
+        public void testDirectJavaActualization_javaInDifferentModule() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/directJavaActualization/directJavaActualization_javaInDifferentModule.kt");
+        }
+
+        @Test
+        @TestMetadata("directJavaActualization_missingAnnotationOnJava.kt")
+        public void testDirectJavaActualization_missingAnnotationOnJava() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/directJavaActualization/directJavaActualization_missingAnnotationOnJava.kt");
+        }
+
+        @Test
+        @TestMetadata("directJavaActualization_multipleActuals.kt")
+        public void testDirectJavaActualization_multipleActuals() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/directJavaActualization/directJavaActualization_multipleActuals.kt");
+        }
+
+        @Test
+        @TestMetadata("directJavaActualization_requiresOptIn.kt")
+        public void testDirectJavaActualization_requiresOptIn() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/directJavaActualization/directJavaActualization_requiresOptIn.kt");
+        }
+
+        @Test
+        @TestMetadata("directJavaActualization_simple.kt")
+        public void testDirectJavaActualization_simple() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/directJavaActualization/directJavaActualization_simple.kt");
         }
       }
 
@@ -30896,6 +31014,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("nothingToOverrideMessage.kt")
       public void testNothingToOverrideMessage() {
         runTest("compiler/testData/diagnostics/tests/override/nothingToOverrideMessage.kt");
+      }
+
+      @Test
+      @TestMetadata("nothingToOverrideMessageWithJava.kt")
+      public void testNothingToOverrideMessageWithJava() {
+        runTest("compiler/testData/diagnostics/tests/override/nothingToOverrideMessageWithJava.kt");
       }
 
       @Test
@@ -43932,6 +44056,18 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("ExhaustiveNullableSelfType.kt")
       public void testExhaustiveNullableSelfType() {
         runTest("compiler/testData/diagnostics/tests/when/ExhaustiveNullableSelfType.kt");
+      }
+
+      @Test
+      @TestMetadata("ExhaustiveOnTypeParameterWithSealedClassUpperBound.kt")
+      public void testExhaustiveOnTypeParameterWithSealedClassUpperBound() {
+        runTest("compiler/testData/diagnostics/tests/when/ExhaustiveOnTypeParameterWithSealedClassUpperBound.kt");
+      }
+
+      @Test
+      @TestMetadata("ExhaustiveOnTypeParameterWithSealedInterfaceUpperBound.kt")
+      public void testExhaustiveOnTypeParameterWithSealedInterfaceUpperBound() {
+        runTest("compiler/testData/diagnostics/tests/when/ExhaustiveOnTypeParameterWithSealedInterfaceUpperBound.kt");
       }
 
       @Test

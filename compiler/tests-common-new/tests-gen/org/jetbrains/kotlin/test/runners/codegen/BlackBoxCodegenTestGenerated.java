@@ -22624,6 +22624,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("kt43710b.kt")
+        public void testKt43710b() {
+          runTest("compiler/testData/codegen/box/inference/pcla/issues/kt43710b.kt");
+        }
+
+        @Test
         @TestMetadata("kt44241.kt")
         public void testKt44241() {
           runTest("compiler/testData/codegen/box/inference/pcla/issues/kt44241.kt");
@@ -32338,6 +32344,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
       @TestMetadata("mapPut.kt")
       public void testMapPut() {
         runTest("compiler/testData/codegen/box/javaInterop/notNullAssertions/mapPut.kt");
+      }
+
+      @Test
+      @TestMetadata("noAssertionForNulllableCaptured.kt")
+      public void testNoAssertionForNulllableCaptured() {
+        runTest("compiler/testData/codegen/box/javaInterop/notNullAssertions/noAssertionForNulllableCaptured.kt");
       }
 
       @Test
@@ -45332,6 +45344,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
       @TestMetadata("kt36953_continue.kt")
       public void testKt36953_continue() {
         runTest("compiler/testData/codegen/box/ranges/unsigned/kt36953_continue.kt");
+      }
+
+      @Test
+      @TestMetadata("kt67383.kt")
+      public void testKt67383() {
+        runTest("compiler/testData/codegen/box/ranges/unsigned/kt67383.kt");
       }
 
       @Test

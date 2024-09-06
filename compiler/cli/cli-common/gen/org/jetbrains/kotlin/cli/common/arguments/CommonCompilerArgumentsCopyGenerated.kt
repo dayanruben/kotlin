@@ -20,6 +20,7 @@ fun copyCommonCompilerArguments(from: CommonCompilerArguments, to: CommonCompile
     to.commonSources = from.commonSources?.copyOf()
     to.consistentDataClassCopyVisibility = from.consistentDataClassCopyVisibility
     to.contextReceivers = from.contextReceivers
+    to.directJavaActualization = from.directJavaActualization
     to.disableDefaultScriptingPlugin = from.disableDefaultScriptingPlugin
     to.disablePhases = from.disablePhases?.copyOf()
     to.dontWarnOnErrorSuppression = from.dontWarnOnErrorSuppression
@@ -78,7 +79,7 @@ fun copyCommonCompilerArguments(from: CommonCompilerArguments, to: CommonCompile
     to.suppressedDiagnostics = from.suppressedDiagnostics?.copyOf()
     to.unrestrictedBuilderInference = from.unrestrictedBuilderInference
     to.useExperimental = from.useExperimental?.copyOf()
-    to.useFirExtendedCheckers = from.useFirExtendedCheckers
+    to.useFirExperimentalCheckers = from.useFirExperimentalCheckers
     to.useFirIC = from.useFirIC
     to.useFirLT = from.useFirLT
     to.useK2 = from.useK2

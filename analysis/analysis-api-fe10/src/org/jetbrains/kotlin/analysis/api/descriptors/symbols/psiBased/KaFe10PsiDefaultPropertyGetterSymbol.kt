@@ -24,13 +24,16 @@ import org.jetbrains.kotlin.analysis.api.descriptors.symbols.psiBased.base.kaSym
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.psiBased.base.ktVisibility
 import org.jetbrains.kotlin.analysis.api.descriptors.utils.cached
 import org.jetbrains.kotlin.analysis.api.impl.base.annotations.KaBaseEmptyAnnotationList
-import org.jetbrains.kotlin.analysis.api.impl.base.symbols.pointers.KaPropertyGetterSymbolPointer
+import org.jetbrains.kotlin.analysis.api.impl.base.symbols.pointers.KaBasePropertyGetterSymbolPointer
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaPsiBasedSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyGetterDescriptor
+import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.psi.KtProperty
@@ -39,7 +42,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 
 internal class KaFe10PsiDefaultPropertyGetterSymbol(
     private val propertyPsi: KtProperty,
-    override val analysisContext: Fe10AnalysisContext
+    override val analysisContext: Fe10AnalysisContext,
 ) : KaPropertyGetterSymbol(), KaFe10Symbol {
     val descriptor: PropertyGetterDescriptor? by cached {
         val bindingContext = analysisContext.analyze(propertyPsi, Fe10AnalysisFacade.AnalysisMode.PARTIAL)
@@ -64,12 +67,6 @@ internal class KaFe10PsiDefaultPropertyGetterSymbol(
     override val hasBody: Boolean
         get() = withValidityAssertion { false }
 
-    override val valueParameters: List<KaValueParameterSymbol>
-        get() = withValidityAssertion { emptyList() }
-
-    override val hasStableParameterNames: Boolean
-        get() = withValidityAssertion { true }
-
     override val callableId: CallableId?
         get() = withValidityAssertion { null }
 
@@ -91,10 +88,6 @@ internal class KaFe10PsiDefaultPropertyGetterSymbol(
     override val compilerVisibility: Visibility
         get() = withValidityAssertion { propertyPsi.ktVisibility ?: descriptor?.ktVisibility ?: Visibilities.Public }
 
-
-    override val isActual: Boolean
-        get() = withValidityAssertion { descriptor?.isActual == true }
-
     override val isExpect: Boolean
         get() = withValidityAssertion { descriptor?.isExpect == true }
 
@@ -104,7 +97,7 @@ internal class KaFe10PsiDefaultPropertyGetterSymbol(
         }
 
     override fun createPointer(): KaSymbolPointer<KaPropertyGetterSymbol> = withValidityAssertion {
-        KaPsiBasedSymbolPointer.createForSymbolFromPsi<KaPropertySymbol>(propertyPsi)?.let(::KaPropertyGetterSymbolPointer)
+        KaPsiBasedSymbolPointer.createForSymbolFromPsi<KaPropertySymbol>(propertyPsi)?.let(::KaBasePropertyGetterSymbolPointer)
             ?: KaFe10NeverRestoringSymbolPointer()
     }
 

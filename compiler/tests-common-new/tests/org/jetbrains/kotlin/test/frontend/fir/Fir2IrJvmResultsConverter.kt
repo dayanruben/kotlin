@@ -51,8 +51,13 @@ internal class Fir2IrJvmResultsConverter(testServices: TestServices) : AbstractF
         return JvmIrSpecialAnnotationSymbolProvider
     }
 
-    override fun createExtraActualDeclarationExtractorInitializer(): (Fir2IrComponents) -> IrExtraActualDeclarationExtractor? {
-        return FirJvmBuiltinProviderActualDeclarationExtractor.Companion::initializeIfNeeded
+    override fun createExtraActualDeclarationExtractorInitializer(): (Fir2IrComponents) -> List<IrExtraActualDeclarationExtractor> {
+        return {
+            listOfNotNull(
+                FirJvmBuiltinProviderActualDeclarationExtractor.initializeIfNeeded(it),
+                FirDirectJavaActualDeclarationExtractor.initializeIfNeeded(it)
+            )
+        }
     }
 
     override fun resolveLibraries(module: TestModule, compilerConfiguration: CompilerConfiguration): List<KotlinResolvedLibrary> {

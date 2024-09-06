@@ -1,5 +1,4 @@
 // ISSUE: KT-64635
-// FIR_IDENTICAL
 import kotlin.reflect.KProperty
 
 class Context

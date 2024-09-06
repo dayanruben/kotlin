@@ -8,18 +8,11 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir.sessions
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.isStable
+import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
-import org.jetbrains.kotlin.analysis.low.level.api.fir.caches.CleanableSoftValueCache
+import org.jetbrains.kotlin.analysis.low.level.api.fir.caches.cleanable.CleanableSoftValueReferenceCache
+import org.jetbrains.kotlin.analysis.low.level.api.fir.caches.cleanable.CleanableValueReferenceCache
+import org.jetbrains.kotlin.analysis.low.level.api.fir.caches.cleanable.CleanableWeakValueReferenceCache
 import org.jetbrains.kotlin.analysis.low.level.api.fir.projectStructure.LLFirBuiltinsSessionFactory
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkCanceled
 import org.jetbrains.kotlin.fir.FirModuleDataImpl
@@ -28,11 +21,18 @@ import org.jetbrains.kotlin.fir.PrivateSessionConstructor
 import org.jetbrains.kotlin.fir.session.registerModuleData
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.JsPlatform
+import org.jetbrains.kotlin.platform.WasmPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatform
 
-private typealias SessionStorage = CleanableSoftValueCache<KaModule, LLFirSession>
+/**
+ * A type of cache which is used by [LLFirSessionCache] to store [LLFirSession]s.
+ *
+ * Removal from the session storage invokes the [LLFirSession]'s cleaner, which marks the session as invalid and disposes any disposables
+ * registered with the session's disposable.
+ */
+private typealias SessionStorage = CleanableValueReferenceCache<KaModule, LLFirSession>
 
 @LLFirInternals
 class LLFirSessionCache(private val project: Project) : Disposable {
@@ -42,12 +42,16 @@ class LLFirSessionCache(private val project: Project) : Disposable {
         }
     }
 
-    // Removal from the session storage invokes the `LLFirSession`'s cleaner, which marks the session as invalid and disposes any
-    // disposables registered with the `LLFirSession`'s disposable.
-    private val sourceCache: SessionStorage = CleanableSoftValueCache(LLFirSession::createSessionCleaner)
-    private val binaryCache: SessionStorage = CleanableSoftValueCache(LLFirSession::createSessionCleaner)
-    private val danglingFileSessionCache: SessionStorage = CleanableSoftValueCache(LLFirSession::createSessionCleaner)
-    private val unstableDanglingFileSessionCache: SessionStorage = CleanableSoftValueCache(LLFirSession::createSessionCleaner)
+    private val sourceCache: SessionStorage = createWeakValueCache()
+    private val binaryCache: SessionStorage = createSoftValueCache()
+    private val danglingFileSessionCache: SessionStorage = createWeakValueCache()
+    private val unstableDanglingFileSessionCache: SessionStorage = createWeakValueCache()
+
+    private fun createWeakValueCache(): SessionStorage =
+        CleanableWeakValueReferenceCache { LLFirSessionCleaner(it.requestedDisposableOrNull) }
+
+    private fun createSoftValueCache(): SessionStorage =
+        CleanableSoftValueReferenceCache { LLFirSessionCleaner(it.requestedDisposableOrNull) }
 
     /**
      * Returns the existing session if found, or creates a new session and caches it.
@@ -252,6 +256,7 @@ class LLFirSessionCache(private val project: Project) : Disposable {
         return when {
             targetPlatform.all { it is JvmPlatform } -> LLFirJvmSessionFactory(project)
             targetPlatform.all { it is JsPlatform } -> LLFirJsSessionFactory(project)
+            targetPlatform.all { it is WasmPlatform } -> LLFirWasmSessionFactory(project)
             targetPlatform.all { it is NativePlatform } -> LLFirNativeSessionFactory(project)
             else -> LLFirCommonSessionFactory(project)
         }
@@ -260,8 +265,6 @@ class LLFirSessionCache(private val project: Project) : Disposable {
     override fun dispose() {
     }
 }
-
-private fun LLFirSession.createSessionCleaner(): LLFirSessionCleaner = LLFirSessionCleaner(requestedDisposableOrNull)
 
 internal fun LLFirSessionConfigurator.Companion.configure(session: LLFirSession) {
     val project = session.project

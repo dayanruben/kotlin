@@ -19,14 +19,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
-import org.jetbrains.kotlin.fir.declarations.utils.isActual
-import org.jetbrains.kotlin.fir.declarations.utils.isExpect
-import org.jetbrains.kotlin.fir.declarations.utils.isOverride
-import org.jetbrains.kotlin.fir.declarations.utils.isStatic
-import org.jetbrains.kotlin.fir.declarations.utils.visibility
+import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.symbols.SyntheticSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirSyntheticPropertySymbol
-import org.jetbrains.kotlin.fir.symbols.impl.isExtension
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 
@@ -41,13 +36,18 @@ internal class KaFirSyntheticJavaPropertySymbol(
     override val isActual: Boolean get() = withValidityAssertion { firSymbol.isActual }
     override val isExpect: Boolean get() = withValidityAssertion { firSymbol.isExpect }
     override val returnType: KaType get() = withValidityAssertion { firSymbol.returnType(builder) }
-    override val receiverParameter: KaReceiverParameterSymbol? get() = withValidityAssertion { firSymbol.receiver(builder) }
+
+    override val receiverParameter: KaReceiverParameterSymbol?
+        get() = withValidityAssertion { KaFirReceiverParameterSymbol.create(null, analysisSession, this) }
 
     override val typeParameters: List<KaTypeParameterSymbol>
         get() = withValidityAssertion { firSymbol.createKtTypeParameters(builder) }
 
+    override val isExtension: Boolean
+        get() = withValidityAssertion { false }
 
-    override val isExtension: Boolean get() = withValidityAssertion { firSymbol.isExtension }
+    override val origin: KaSymbolOrigin
+        get() = super<KaSyntheticJavaPropertySymbol>.origin
 
     override val initializer: KaInitializerValue? get() = withValidityAssertion { firSymbol.getKtConstantInitializer(builder) }
 
@@ -59,11 +59,12 @@ internal class KaFirSyntheticJavaPropertySymbol(
             KaFirAnnotationListForDeclaration.create(firSymbol, builder)
         }
 
-    override val callableId: CallableId? get() = withValidityAssertion { firSymbol.getCallableId() }
+    override val callableId: CallableId?
+        get() = withValidityAssertion { firSymbol.getCallableId() }
 
     override val getter: KaPropertyGetterSymbol
         get() = withValidityAssertion {
-            builder.functionBuilder.buildGetterSymbol(firSymbol.getterSymbol!!)
+            KaFirSyntheticPropertyGetterSymbol(firSymbol.getterSymbol!!, analysisSession)
         }
 
     override val javaGetterSymbol: KaNamedFunctionSymbol
@@ -80,19 +81,15 @@ internal class KaFirSyntheticJavaPropertySymbol(
 
     override val setter: KaPropertySetterSymbol?
         get() = withValidityAssertion {
-            firSymbol.setterSymbol?.let { builder.functionBuilder.buildPropertyAccessorSymbol(it) } as? KaPropertySetterSymbol
+            firSymbol.setterSymbol?.let {
+                KaFirSyntheticPropertySetterSymbol(it, analysisSession)
+            }
         }
 
-    override val backingFieldSymbol: KaBackingFieldSymbol?
-        get() = null
-
-    override val isFromPrimaryConstructor: Boolean get() = withValidityAssertion { false }
     override val isOverride: Boolean get() = withValidityAssertion { firSymbol.isOverride }
     override val isStatic: Boolean get() = withValidityAssertion { firSymbol.isStatic }
 
     override val hasSetter: Boolean get() = withValidityAssertion { firSymbol.setterSymbol != null }
-
-    override val origin: KaSymbolOrigin get() = withValidityAssertion { KaSymbolOrigin.JAVA_SYNTHETIC_PROPERTY }
 
     override fun createPointer(): KaSymbolPointer<KaSyntheticJavaPropertySymbol> = withValidityAssertion {
         KaFirJavaSyntheticPropertySymbolPointer(

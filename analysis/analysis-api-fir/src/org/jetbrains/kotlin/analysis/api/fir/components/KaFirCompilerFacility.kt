@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.codegen.CodegenFactory
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.diagnostics.*
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
@@ -135,7 +136,7 @@ internal class KaFirCompilerFacility(
 
         val mainFirFile = getFullyResolvedFirFile(file)
 
-        val frontendDiagnostics = file.collectDiagnosticsForFile(firResolveSession, DiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+        val frontendDiagnostics = file.collectDiagnosticsForFile(firResolveSession, DiagnosticCheckerFilter.ONLY_DEFAULT_CHECKERS)
         val frontendErrors = computeErrors(frontendDiagnostics, allowedErrorFilter)
 
         if (frontendErrors.isNotEmpty()) {
@@ -167,7 +168,7 @@ internal class KaFirCompilerFacility(
         require(targetFiles.isNotEmpty())
 
         val jvmIrDeserializer = JvmIrDeserializerImpl()
-        val diagnosticReporter = DiagnosticReporterFactory.createPendingReporter()
+        val diagnosticReporter = DiagnosticReporterFactory.createPendingReporter(configuration.messageCollector)
 
         val irGeneratorExtensions = IrGenerationExtension.getInstances(project)
 
@@ -293,6 +294,8 @@ internal class KaFirCompilerFacility(
     ): Fir2IrActualizedResult {
         val fir2IrConfiguration = Fir2IrConfiguration.forAnalysisApi(effectiveConfiguration, session.languageVersionSettings, diagnosticReporter)
         val firResult = FirResult(listOf(ModuleCompilerAnalyzedOutput(session, session.getScopeSession(), firFiles)))
+        val singleOutput = firResult.outputs.size == 1
+        check(singleOutput) { "Single output invariant is used in the lambda below" }
 
         return firResult.convertToIrAndActualize(
             fir2IrExtensions,
@@ -303,7 +306,15 @@ internal class KaFirCompilerFacility(
             DefaultBuiltIns.Instance,
             ::JvmIrTypeSystemContext,
             JvmIrSpecialAnnotationSymbolProvider,
-            FirJvmBuiltinProviderActualDeclarationExtractor.Companion::initializeIfNeeded,
+            extraActualDeclarationExtractorsInitializer = {
+                error(
+                    "extraActualDeclarationExtractorsInitializer should never be called, because outputs is a list of a single element. " +
+                            "Output is single ($singleOutput) => " +
+                            "dependentIrFragments will always be empty => " +
+                            "IrActualizer will never be called => " +
+                            "extraActualDeclarationExtractorsInitializer will never be called"
+                )
+            },
         )
     }
 

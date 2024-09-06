@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.fir.signatures.KaFirFunctionSubstitutor
 import org.jetbrains.kotlin.analysis.api.fir.signatures.KaFirVariableSubstitutorBasedSignature
 import org.jetbrains.kotlin.analysis.api.fir.symbols.*
 import org.jetbrains.kotlin.analysis.api.fir.types.*
+import org.jetbrains.kotlin.analysis.api.fir.utils.firSymbol
 import org.jetbrains.kotlin.analysis.api.fir.utils.toVariance
 import org.jetbrains.kotlin.analysis.api.impl.base.types.KaBaseStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.impl.base.types.KaBaseTypeArgumentWithVariance
@@ -28,7 +29,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.util.errorWithFirSpecific
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.declarations.FirOuterClassTypeParameterRef
+import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.impl.FirFieldImpl
 import org.jetbrains.kotlin.fir.diagnostics.ConeCannotInferTypeParameterType
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
@@ -48,7 +49,6 @@ import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutorByMap
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.impl.importedFromObjectOrStaticData
 import org.jetbrains.kotlin.fir.scopes.impl.originalConstructorIfTypeAlias
-import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.ConeTypeParameterLookupTag
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
@@ -62,6 +62,7 @@ import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.requireWithAttachment
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
@@ -81,7 +82,6 @@ internal class KaSymbolByFirBuilder(
     val functionBuilder = FunctionSymbolBuilder()
     val variableBuilder = VariableSymbolBuilder()
     val callableBuilder = CallableSymbolBuilder()
-    val anonymousInitializerBuilder = AnonymousInitializerBuilder()
     val typeBuilder = TypeBuilder()
 
     fun buildSymbol(fir: FirDeclaration): KaSymbol = buildSymbol(fir.symbol)
@@ -92,11 +92,6 @@ internal class KaSymbolByFirBuilder(
         is FirFileSymbol -> buildFileSymbol(firSymbol)
         is FirScriptSymbol -> buildScriptSymbol(firSymbol)
         else -> throwUnexpectedElementError(firSymbol)
-    }
-
-
-    fun buildDestructuringDeclarationSymbol(firSymbol: FirVariableSymbol<*>): KaDestructuringDeclarationSymbol {
-        return KaFirDestructuringDeclarationSymbol(firSymbol, analysisSession)
     }
 
     fun buildEnumEntrySymbol(firSymbol: FirEnumEntrySymbol): KaEnumEntrySymbol = KaFirEnumEntrySymbol(firSymbol, analysisSession)
@@ -130,20 +125,11 @@ internal class KaSymbolByFirBuilder(
         }
 
 
-        fun buildClassLikeSymbol(firSymbol: FirClassLikeSymbol<*>): KaClassLikeSymbol {
-            return when (firSymbol) {
-                is FirClassSymbol<*> -> buildClassOrObjectSymbol(firSymbol)
-                is FirTypeAliasSymbol -> buildTypeAliasSymbol(firSymbol)
-                else -> throwUnexpectedElementError(firSymbol)
-            }
-        }
-
-        fun buildClassOrObjectSymbol(firSymbol: FirClassSymbol<*>): KaClassSymbol {
-            return when (firSymbol) {
-                is FirAnonymousObjectSymbol -> buildAnonymousObjectSymbol(firSymbol)
-                is FirRegularClassSymbol -> buildNamedClassOrObjectSymbol(firSymbol)
-                else -> throwUnexpectedElementError(firSymbol)
-            }
+        fun buildClassLikeSymbol(firSymbol: FirClassLikeSymbol<*>): KaClassLikeSymbol = when (firSymbol) {
+            is FirAnonymousObjectSymbol -> buildAnonymousObjectSymbol(firSymbol)
+            is FirRegularClassSymbol -> buildNamedClassOrObjectSymbol(firSymbol)
+            is FirTypeAliasSymbol -> buildTypeAliasSymbol(firSymbol)
+            else -> throwUnexpectedElementError(firSymbol)
         }
 
         fun buildNamedClassOrObjectSymbol(symbol: FirRegularClassSymbol): KaNamedClassSymbol {
@@ -247,37 +233,24 @@ internal class KaSymbolByFirBuilder(
             return KaFirSamConstructorSymbol(firSymbol, analysisSession)
         }
 
-        fun buildPropertyAccessorSymbol(firSymbol: FirPropertyAccessorSymbol): KaPropertyAccessorSymbol = when {
-            firSymbol.isGetter -> buildGetterSymbol(firSymbol)
-            else -> buildSetterSymbol(firSymbol)
-        }
-
-        fun buildGetterSymbol(firSymbol: FirPropertyAccessorSymbol): KaPropertyGetterSymbol {
-            checkRequirementForBuildingSymbol<KaFirPropertyGetterSymbol>(firSymbol, firSymbol.isGetter)
-
-            firSymbol.propertySymbol.fir.unwrapSubstitutionOverrideIfNeeded()?.let { unwrapped ->
-                val getterSymbol = unwrapped.symbol.getterSymbol ?: errorWithFirSpecificEntries("No getter found", fir = unwrapped) {
-                    withFirEntry("original", firSymbol.fir)
-                }
-
-                return buildGetterSymbol(getterSymbol)
+        fun buildPropertyAccessorSymbol(firSymbol: FirPropertyAccessorSymbol): KaPropertyAccessorSymbol {
+            val propertySymbol = variableBuilder.buildVariableSymbol(firSymbol.propertySymbol)
+            requireWithAttachment(
+                propertySymbol is KaPropertySymbol,
+                { "Unexpected property symbol type: ${propertySymbol::class.simpleName}" },
+            ) {
+                withFirSymbolEntry("propertySymbol", firSymbol.propertySymbol)
             }
 
-            return KaFirPropertyGetterSymbol(firSymbol, analysisSession)
-        }
-
-        fun buildSetterSymbol(firSymbol: FirPropertyAccessorSymbol): KaPropertySetterSymbol {
-            checkRequirementForBuildingSymbol<KaFirPropertySetterSymbol>(firSymbol, firSymbol.isSetter)
-
-            firSymbol.propertySymbol.fir.unwrapSubstitutionOverrideIfNeeded()?.let { unwrapped ->
-                val setterSymbol = unwrapped.symbol.setterSymbol ?: errorWithFirSpecificEntries("No setter found", fir = unwrapped) {
-                    withFirEntry("original", firSymbol.fir)
-                }
-
-                return buildSetterSymbol(setterSymbol)
+            val accessorSymbol = if (firSymbol.isGetter) propertySymbol.getter else propertySymbol.setter
+            requireWithAttachment(
+                accessorSymbol != null,
+                { "Inconsistent state: property accessor is null while property symbol is not null" },
+            ) {
+                withFirSymbolEntry("propertySymbol", firSymbol.propertySymbol)
             }
 
-            return KaFirPropertySetterSymbol(firSymbol, analysisSession)
+            return accessorSymbol
         }
     }
 
@@ -314,7 +287,7 @@ internal class KaSymbolByFirBuilder(
 
             firSymbol.unwrapImportedFromObjectOrStatic(::buildPropertySymbol)?.let { return it }
 
-            return KaFirKotlinPropertySymbol(firSymbol, analysisSession)
+            return KaFirKotlinPropertySymbol.create(firSymbol, analysisSession)
         }
 
         fun buildPropertySignature(firSymbol: FirPropertySymbol): KaVariableSignature<KaVariableSymbol> {
@@ -323,7 +296,6 @@ internal class KaSymbolByFirBuilder(
         }
 
         fun buildLocalVariableSymbol(firSymbol: FirPropertySymbol): KaLocalVariableSymbol {
-            checkRequirementForBuildingSymbol<KaFirLocalVariableSymbol>(firSymbol, firSymbol.isLocal)
             return KaFirLocalVariableSymbol(firSymbol, analysisSession)
         }
 
@@ -350,7 +322,18 @@ internal class KaSymbolByFirBuilder(
                 return buildValueParameterSymbol(unwrappedParameter)
             }
 
-            return KaFirValueParameterSymbol(firSymbol, analysisSession)
+            return if (functionSymbol is FirPropertyAccessorSymbol && functionSymbol.fir is FirDefaultPropertyAccessor) {
+                val owner = functionBuilder.buildPropertyAccessorSymbol(functionSymbol)
+                requireWithAttachment(
+                    owner is KaFirDefaultPropertySetterSymbol,
+                    { "Unexpected owner type: ${owner::class.simpleName}" }
+                ) {
+                    withFirSymbolEntry("function", functionSymbol)
+                }
+
+                KaFirDefaultSetterValueParameter(owner)
+            } else
+                KaFirValueParameterSymbol(firSymbol, analysisSession)
         }
 
 
@@ -362,8 +345,27 @@ internal class KaSymbolByFirBuilder(
             return KaFirJavaFieldSymbol(firSymbol, analysisSession)
         }
 
-        fun buildBackingFieldSymbol(firSymbol: FirBackingFieldSymbol): KaBackingFieldSymbol =
-            KaFirBackingFieldSymbol(firSymbol, analysisSession)
+        fun buildBackingFieldSymbol(firSymbol: FirBackingFieldSymbol): KaBackingFieldSymbol {
+            val propertySymbol = buildPropertySymbol(firSymbol.propertySymbol)
+            requireWithAttachment(
+                propertySymbol is KaPropertySymbol,
+                { "Inconsistent state: property symbol is not a ${KaPropertySymbol::class.simpleName}" },
+            ) {
+                withFirSymbolEntry("property", propertySymbol.firSymbol)
+                withFirSymbolEntry("backingField", firSymbol)
+            }
+
+            val backingFieldSymbol = propertySymbol.backingFieldSymbol
+            requireWithAttachment(
+                backingFieldSymbol != null,
+                { "Inconsistent state: backing field symbol is null" },
+            ) {
+                withFirSymbolEntry("property", propertySymbol.firSymbol)
+                withFirSymbolEntry("backingField", firSymbol)
+            }
+
+            return backingFieldSymbol
+        }
 
         private fun FirField.isJavaFieldOrSubstitutionOverrideOfJavaField(): Boolean = when (this) {
             is FirJavaField -> true
@@ -389,18 +391,7 @@ internal class KaSymbolByFirBuilder(
 
         fun buildExtensionReceiverSymbol(firSymbol: FirCallableSymbol<*>): KaReceiverParameterSymbol? {
             if (firSymbol.fir.receiverParameter == null) return null
-
-            firSymbol.fir.unwrapSubstitutionOverrideIfNeeded()?.let { unwrappedCallable ->
-                return buildExtensionReceiverSymbol(unwrappedCallable.symbol)
-            }
-
-            return KaFirReceiverParameterSymbol(firSymbol, analysisSession)
-        }
-    }
-
-    inner class AnonymousInitializerBuilder {
-        fun buildClassInitializer(firSymbol: FirAnonymousInitializerSymbol): KaClassInitializerSymbol {
-            return KaFirClassInitializerSymbol(firSymbol, analysisSession)
+            return buildCallableSymbol(firSymbol).receiverParameter
         }
     }
 
@@ -411,7 +402,6 @@ internal class KaSymbolByFirBuilder(
                     coneType.lookupTag.toSymbol(rootSession) == null -> {
                         KaFirClassErrorType(
                             coneType = coneType,
-                            coneNullability = coneType.nullability,
                             coneDiagnostic = ConeUnresolvedSymbolError(coneType.lookupTag.classId),
                             builder = this@KaSymbolByFirBuilder
                         )
@@ -423,10 +413,10 @@ internal class KaSymbolByFirBuilder(
             is ConeTypeParameterType -> KaFirTypeParameterType(coneType, this@KaSymbolByFirBuilder)
             is ConeErrorType -> when (val diagnostic = coneType.diagnostic) {
                 is ConeUnresolvedError, is ConeUnmatchedTypeArgumentsError -> {
-                    KaFirClassErrorType(coneType, coneType.nullability, diagnostic, this@KaSymbolByFirBuilder)
+                    KaFirClassErrorType(coneType, diagnostic, this@KaSymbolByFirBuilder)
                 }
                 else -> {
-                    KaFirErrorType(coneType, coneType.nullability, this@KaSymbolByFirBuilder)
+                    KaFirErrorType(coneType, this@KaSymbolByFirBuilder)
                 }
             }
             is ConeDynamicType -> KaFirDynamicType(coneType, this@KaSymbolByFirBuilder)

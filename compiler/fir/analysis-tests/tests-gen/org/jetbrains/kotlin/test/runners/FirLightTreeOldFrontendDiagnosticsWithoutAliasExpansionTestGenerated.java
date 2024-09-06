@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.test.runners;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.util.KtTestUtil;
+import org.jetbrains.kotlin.test.utils.TransformersFunctions;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -73,6 +74,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithoutAliasExpansionTestGenerate
     @TestMetadata("GenericArgumentConsistency.kt")
     public void testGenericArgumentConsistency() {
       runTest("compiler/testData/diagnostics/tests/GenericArgumentConsistency.kt");
+    }
+
+    @Test
+    @TestMetadata("KotlinActualAnnotationHasNoEffectInKotlin.kt")
+    public void testKotlinActualAnnotationHasNoEffectInKotlin() {
+      runTest("compiler/testData/diagnostics/tests/KotlinActualAnnotationHasNoEffectInKotlin.kt");
     }
 
     @Test
@@ -826,6 +833,11 @@ public class FirLightTreeOldFrontendDiagnosticsWithoutAliasExpansionTestGenerate
     @TestMetadata("compiler/testData/diagnostics/tests/lateinit")
     @TestDataPath("$PROJECT_ROOT")
     public class Lateinit {
+      @Test
+      @TestMetadata("modifierApplicability_lv12.kt")
+      public void testModifierApplicability_lv12() {
+        runTest("compiler/testData/diagnostics/tests/lateinit/modifierApplicability_lv12.kt");
+      }
     }
 
     @Nested
@@ -1004,6 +1016,17 @@ public class FirLightTreeOldFrontendDiagnosticsWithoutAliasExpansionTestGenerate
       @TestMetadata("TypeAliasVsProperty.kt")
       public void testTypeAliasVsProperty() {
         runTest("compiler/testData/diagnostics/tests/redeclarations/TypeAliasVsProperty.kt");
+      }
+
+      @Nested
+      @TestMetadata("compiler/testData/diagnostics/tests/redeclarations/shadowedExtension")
+      @TestDataPath("$PROJECT_ROOT")
+      public class ShadowedExtension {
+        @Test
+        @TestMetadata("extensionFunShadowedByMemberFun.kt")
+        public void testExtensionFunShadowedByMemberFun() {
+          runTest("compiler/testData/diagnostics/tests/redeclarations/shadowedExtension/extensionFunShadowedByMemberFun.kt");
+        }
       }
     }
 
@@ -1970,6 +1993,17 @@ public class FirLightTreeOldFrontendDiagnosticsWithoutAliasExpansionTestGenerate
       @TestMetadata("overloadsWithUnsignedAfter.kt")
       public void testOverloadsWithUnsignedAfter() {
         runTest("compiler/testData/diagnostics/tests/unsignedTypes/overloadsWithUnsignedAfter.kt");
+      }
+    }
+
+    @Nested
+    @TestMetadata("compiler/testData/diagnostics/tests/valueClasses")
+    @TestDataPath("$PROJECT_ROOT")
+    public class ValueClasses {
+      @Test
+      @TestMetadata("annotations.kt")
+      public void testAnnotations() {
+        runTest("compiler/testData/diagnostics/tests/valueClasses/annotations.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithUniversal());
       }
     }
 

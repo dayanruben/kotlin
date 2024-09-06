@@ -15,8 +15,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.*
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.SpecialNames
 
 public sealed class KaVariableSymbol :
     KaCallableSymbol(),
@@ -47,23 +50,29 @@ public typealias KtVariableLikeSymbol = KaVariableSymbol
 public abstract class KaBackingFieldSymbol : KaVariableSymbol() {
     public abstract val owningProperty: KaKotlinPropertySymbol
 
-    final override val name: Name get() = withValidityAssertion { fieldName }
+    final override val name: Name get() = withValidityAssertion { StandardNames.BACKING_FIELD }
+
+    /** PSI may be not-null in the case of explicit backing field ([KEEP-278](https://github.com/Kotlin/KEEP/issues/278)) */
     final override val psi: PsiElement? get() = withValidityAssertion { null }
     final override val location: KaSymbolLocation get() = withValidityAssertion { KaSymbolLocation.PROPERTY }
     override val origin: KaSymbolOrigin get() = withValidityAssertion { KaSymbolOrigin.PROPERTY_BACKING_FIELD }
     final override val callableId: CallableId? get() = withValidityAssertion { null }
     final override val isExtension: Boolean get() = withValidityAssertion { false }
     final override val receiverParameter: KaReceiverParameterSymbol? get() = withValidityAssertion { null }
+    final override val modality: KaSymbolModality get() = withValidityAssertion { KaSymbolModality.FINAL }
+
+    // KT-70767: for the backing field expect/action is meaningless as it doesn't have such a semantic
+
+    final override val isActual: Boolean get() = withValidityAssertion { false }
+    final override val isExpect: Boolean get() = withValidityAssertion { false }
+
+    @KaExperimentalApi
+    final override val compilerVisibility: Visibility get() = withValidityAssertion { Visibilities.Private }
 
     @KaExperimentalApi
     final override val contextReceivers: List<KaContextReceiver> get() = withValidityAssertion { emptyList() }
-    final override val isVal: Boolean get() = withValidityAssertion { true }
 
     abstract override fun createPointer(): KaSymbolPointer<KaBackingFieldSymbol>
-
-    public companion object {
-        private val fieldName = StandardNames.BACKING_FIELD
-    }
 }
 
 @Deprecated("Use 'KaBackingFieldSymbol' instead", ReplaceWith("KaBackingFieldSymbol"))
@@ -100,6 +109,12 @@ public abstract class KaEnumEntrySymbol : KaVariableSymbol(), @Suppress("DEPRECA
     @KaExperimentalApi
     final override val contextReceivers: List<KaContextReceiver> get() = withValidityAssertion { emptyList() }
     final override val isVal: Boolean get() = withValidityAssertion { true }
+    final override val modality: KaSymbolModality get() = withValidityAssertion { KaSymbolModality.FINAL }
+
+    @KaExperimentalApi
+    final override val compilerVisibility: Visibility get() = withValidityAssertion { Visibilities.Public }
+
+    final override val isActual: Boolean get() = withValidityAssertion { false }
 
     /**
      * Returns the enum entry's initializer, or `null` if the enum entry doesn't have a body.
@@ -227,7 +242,9 @@ public abstract class KaSyntheticJavaPropertySymbol : KaPropertySymbol() {
 
     @KaExperimentalApi
     final override val contextReceivers: List<KaContextReceiver> get() = withValidityAssertion { emptyList() }
-
+    final override val backingFieldSymbol: KaBackingFieldSymbol? get() = withValidityAssertion { null }
+    final override val isFromPrimaryConstructor: Boolean get() = withValidityAssertion { false }
+    override val origin: KaSymbolOrigin get() = withValidityAssertion { KaSymbolOrigin.JAVA_SYNTHETIC_PROPERTY }
 
     abstract override val getter: KaPropertyGetterSymbol
 
@@ -249,6 +266,12 @@ public abstract class KaLocalVariableSymbol : KaVariableSymbol(),
     @KaExperimentalApi
     final override val contextReceivers: List<KaContextReceiver> get() = withValidityAssertion { emptyList() }
     final override val location: KaSymbolLocation get() = withValidityAssertion { KaSymbolLocation.LOCAL }
+    final override val modality: KaSymbolModality get() = withValidityAssertion { KaSymbolModality.FINAL }
+    final override val isActual: Boolean get() = withValidityAssertion { false }
+    final override val isExpect: Boolean get() = withValidityAssertion { false }
+
+    @KaExperimentalApi
+    final override val compilerVisibility: Visibility get() = withValidityAssertion { Visibilities.Local }
 
     abstract override fun createPointer(): KaSymbolPointer<KaLocalVariableSymbol>
 }
@@ -266,6 +289,11 @@ public sealed class KaParameterSymbol : KaVariableSymbol() {
     @KaExperimentalApi
     final override val contextReceivers: List<KaContextReceiver> get() = withValidityAssertion { emptyList() }
     final override val isVal: Boolean get() = withValidityAssertion { true }
+    final override val isExpect: Boolean get() = withValidityAssertion { false }
+    final override val isActual: Boolean get() = withValidityAssertion { false }
+    final override val modality: KaSymbolModality get() = withValidityAssertion { KaSymbolModality.FINAL }
+
+    abstract override fun createPointer(): KaSymbolPointer<KaParameterSymbol>
 }
 
 @Deprecated("Use 'KaParameterSymbol' instead", ReplaceWith("KaParameterSymbol"))
@@ -334,6 +362,9 @@ public abstract class KaReceiverParameterSymbol : KaParameterSymbol() {
      * In terms of the example above -- this is link to the function foo.
      */
     public abstract val owningCallableSymbol: KaCallableSymbol
+
+    final override val name: Name
+        get() = withValidityAssertion { SpecialNames.RECEIVER }
 
     abstract override fun createPointer(): KaSymbolPointer<KaReceiverParameterSymbol>
 }

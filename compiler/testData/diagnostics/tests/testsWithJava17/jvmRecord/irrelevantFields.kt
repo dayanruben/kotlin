@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // API_VERSION: 1.5
 // LANGUAGE: +JvmRecordSupport
 // SKIP_TXT

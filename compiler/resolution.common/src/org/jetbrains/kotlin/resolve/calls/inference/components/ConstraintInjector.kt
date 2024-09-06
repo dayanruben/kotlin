@@ -92,7 +92,7 @@ class ConstraintInjector(
         val typeCheckerState = TypeCheckerStateForConstraintInjector(c, IncorporationConstraintPosition(initialConstraint))
 
         // We add constraints like `T? == Foo!` in the old way
-        if (!typeVariable.isSimpleType() || typeVariable.isMarkedNullable()) {
+        if (!typeVariable.isRigidType() || typeVariable.isMarkedNullable()) {
             addInitialEqualityConstraintThroughSubtyping(typeVariable, equalType, typeCheckerState)
             return
         }
@@ -158,11 +158,15 @@ class ConstraintInjector(
         constraintSet: Collection<Pair<TypeVariableMarker, Constraint>>,
         position: IncorporationConstraintPosition
     ) {
+        val typeCheckerState = TypeCheckerStateForConstraintInjector(c, position)
         processGivenConstraints(
             c,
-            TypeCheckerStateForConstraintInjector(c, position),
+            typeCheckerState,
             constraintSet,
         )
+        if (languageVersionSettings.supportsFeature(LanguageFeature.InferenceEnhancementsIn21)) {
+            processConstraintsIgnoringForksData(typeCheckerState, c, skipProperEqualityConstraints = true)
+        }
     }
 
     private fun processConstraints(
@@ -305,7 +309,8 @@ class ConstraintInjector(
         private var stackForConstraintsSetsFromCurrentForkPoint: Stack<MutableList<ForkPointBranchDescription>>? = null
         private var stackForConstraintSetFromCurrentForkPointBranch: Stack<MutableList<Pair<TypeVariableMarker, Constraint>>>? = null
 
-        override val isInferenceCompatibilityEnabled = languageVersionSettings.supportsFeature(LanguageFeature.InferenceCompatibility)
+        override val languageVersionSettings: LanguageVersionSettings
+            get() = this@ConstraintInjector.languageVersionSettings
 
         private val allowForking: Boolean
             get() = constraintIncorporator.utilContext.isForcedAllowForkingInferenceSystem
@@ -418,13 +423,13 @@ class ConstraintInjector(
             if (!isSubtypeOf(upperType)) {
                 // TODO: Get rid of this additional workarounds for flexible types once KT-59138 is fixed and
                 //  the relevant feature for disabling it will be removed.
-                if (shouldTryUseDifferentFlexibilityForUpperType && upperType.isSimpleType()) {
+                if (shouldTryUseDifferentFlexibilityForUpperType && upperType.isRigidType()) {
                     /*
                      * Please don't reuse this logic.
                      * It's necessary to solve constraint systems when flexibility isn't propagated through a type variable.
                      * It's OK in the old inference because it uses already substituted types, that are with the correct flexibility.
                      */
-                    require(upperType is SimpleTypeMarker)
+                    require(upperType is RigidTypeMarker)
                     val flexibleUpperType = createFlexibleType(upperType, upperType.withNullability(true))
                     if (!isSubtypeOf(flexibleUpperType)) {
                         c.addError(NewConstraintError(lowerType, flexibleUpperType, position))
@@ -436,7 +441,7 @@ class ConstraintInjector(
         }
 
         // from AbstractTypeCheckerContextForConstraintSystem
-        override fun isMyTypeVariable(type: SimpleTypeMarker): Boolean =
+        override fun isMyTypeVariable(type: RigidTypeMarker): Boolean =
             c.allTypeVariables.containsKey(type.typeConstructor().unwrapStubTypeVariableConstructor())
 
         override fun addUpperConstraint(typeVariable: TypeConstructorMarker, superType: KotlinTypeMarker) =

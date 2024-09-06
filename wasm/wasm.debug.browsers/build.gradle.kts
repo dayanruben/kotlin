@@ -31,24 +31,22 @@ val cleanBuild by tasks.registering(Delete::class) {
 val cleanNpm by tasks.registering(Delete::class) {
     group = "build"
 
-    dependsOn(cleanBuild)
-
     delete = setOf("node_modules")
 }
 
 val npmBuild by tasks.registering(NpxTask::class) {
     group = "build"
 
-    dependsOn(tasks.npmInstall, cleanBuild)
+    dependsOn(tasks.npmInstall)
 
     command.set("rollup")
     workingDir.set(projectDir)
     args.set(listOf("-c", "rollup.config.mjs", "--silent"))
+    environment.set(mapOf("NODE_OPTIONS" to "--disable-warning=ExperimentalWarning"))
 
     inputs.dir("src")
     outputs.file("build/out/custom-formatters.js")
 }
-
 
 tasks {
     npmInstall {
@@ -60,7 +58,7 @@ tasks {
     }
 
     clean {
-        dependsOn(cleanNpm)
+        dependsOn(cleanNpm, cleanBuild)
     }
 }
 

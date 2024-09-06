@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.fir.resolve.substitution.ConeRawScopeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.scopes.impl.*
-import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhaseWithCallableMembers
 import org.jetbrains.kotlin.fir.types.*
@@ -250,7 +249,7 @@ fun ConeKotlinType.scopeForSupertype(
 
 fun ConeClassLikeType.substitutorForSuperType(useSiteSession: FirSession, classTypeSymbol: FirRegularClassSymbol): ConeSubstitutor {
     return when {
-        this.type.attributes.contains(CompilerConeAttributes.RawType) -> ConeRawScopeSubstitutor(useSiteSession)
+        this.attributes.contains(CompilerConeAttributes.RawType) -> ConeRawScopeSubstitutor(useSiteSession)
         else -> substitutor(classTypeSymbol, this, useSiteSession)
     }
 }

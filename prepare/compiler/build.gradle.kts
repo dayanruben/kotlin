@@ -1,6 +1,8 @@
 @file:Suppress("HasPlatformType")
 
 import org.gradle.internal.jvm.Jvm
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.plugin.attributes.KlibPackaging
 import java.util.regex.Pattern.quote
 
 description = "Kotlin Compiler"
@@ -225,7 +227,7 @@ dependencies {
     fatJarContents(commonDependency("org.fusesource.jansi", "jansi"))
     fatJarContents(protobufFull())
     fatJarContents(commonDependency("com.google.code.findbugs", "jsr305"))
-    fatJarContents(commonDependency("io.javaslang", "javaslang"))
+    fatJarContents(libs.vavr)
     fatJarContents(commonDependency("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm")) { isTransitive = false }
 
     fatJarContents(intellijCore())
@@ -250,7 +252,11 @@ dependencies {
 val librariesKotlinTestFiles = files(
     listOf(null, "junit", "junit5", "testng", "js").map { suffix ->
         listOf(null, "sources").map { classifier ->
-            configurations.detachedConfiguration(dependencies.create(kotlinTest(suffix, classifier))).apply { isTransitive = false }
+            configurations.detachedConfiguration(dependencies.create(kotlinTest(suffix, classifier))).apply {
+                isTransitive = false
+                @OptIn(ExperimentalKotlinGradlePluginApi::class)
+                attributes.attribute(KlibPackaging.ATTRIBUTE, objects.named(KlibPackaging.PACKED))
+            }
         }
     }
 )

@@ -71,7 +71,6 @@ import org.jetbrains.kotlin.utils.join
 import org.jetbrains.kotlin.wasm.config.WasmConfigurationKeys
 import java.io.File
 import java.io.IOException
-import java.util.*
 import kotlin.math.min
 
 private val K2JSCompilerArguments.granularity: JsGenerationGranularity
@@ -235,6 +234,13 @@ class K2JSCompiler : CLICompiler<K2JSCompilerArguments>() {
         configuration.put(KlibConfigurationKeys.PRODUCE_KLIB_SIGNATURES_CLASH_CHECKS, arguments.enableSignatureClashChecks)
 
         configuration.put(KlibConfigurationKeys.EXPERIMENTAL_DOUBLE_INLINING, arguments.experimentalDoubleInlining)
+        configuration.put(
+            KlibConfigurationKeys.DUPLICATED_UNIQUE_NAME_STRATEGY,
+            DuplicatedUniqueNameStrategy.parseOrDefault(
+                arguments.duplicatedUniqueNameStrategy,
+                default = DuplicatedUniqueNameStrategy.DENY
+            )
+        )
 
         // ----
 
@@ -559,7 +565,8 @@ class K2JSCompiler : CLICompiler<K2JSCompilerArguments>() {
                 sourceModule.getModuleDescriptor(it)
             }
 
-            val diagnosticsReporter = DiagnosticReporterFactory.createPendingReporter()
+            val messageCollector = environmentForJS.configuration.getNotNull(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY)
+            val diagnosticsReporter = DiagnosticReporterFactory.createPendingReporter(messageCollector)
             generateKLib(
                 sourceModule,
                 outputKlibPath,
@@ -572,7 +579,6 @@ class K2JSCompiler : CLICompiler<K2JSCompilerArguments>() {
                 wasmTarget = if (!arguments.wasm) null else arguments.wasmTarget?.let(WasmTarget::fromName)
             )
 
-            val messageCollector = environmentForJS.configuration.getNotNull(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY)
             reportCollectedDiagnostics(environmentForJS.configuration, diagnosticsReporter, messageCollector)
             if (diagnosticsReporter.hasErrors) {
                 throw CompilationErrorException()
@@ -591,7 +597,7 @@ class K2JSCompiler : CLICompiler<K2JSCompilerArguments>() {
         val configuration = environmentForJS.configuration
         val performanceManager = configuration.get(CLIConfigurationKeys.PERF_MANAGER)
         val messageCollector = configuration.getNotNull(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY)
-        val diagnosticsReporter = DiagnosticReporterFactory.createPendingReporter()
+        val diagnosticsReporter = DiagnosticReporterFactory.createPendingReporter(messageCollector)
 
         val mainModule = MainModule.SourceFiles(environmentForJS.getSourceFiles())
         val moduleStructure = ModulesStructure(environmentForJS.project, mainModule, configuration, libraries, friendLibraries)

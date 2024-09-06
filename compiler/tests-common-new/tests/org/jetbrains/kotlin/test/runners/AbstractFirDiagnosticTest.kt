@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.test.runners
 
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
 import org.jetbrains.kotlin.diagnostics.impl.SimpleDiagnosticsCollector
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.SessionConfiguration
@@ -25,7 +26,8 @@ import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives.DUMP_VFIR
 import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives.FIR_DUMP
 import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives.TEST_ALONGSIDE_K1_TESTDATA
 import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives.USE_LATEST_LANGUAGE_VERSION
-import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives.WITH_EXTENDED_CHECKERS
+import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives.WITH_EXPERIMENTAL_CHECKERS
+import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives.WITH_EXTRA_CHECKERS
 import org.jetbrains.kotlin.test.directives.JvmEnvironmentConfigurationDirectives.JDK_KIND
 import org.jetbrains.kotlin.test.directives.JvmEnvironmentConfigurationDirectives.WITH_REFLECT
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.ALLOW_DANGEROUS_LANGUAGE_VERSION_TESTING
@@ -90,7 +92,7 @@ abstract class AbstractFirLightTreeDiagnosticsWithoutAliasExpansionTest : Abstra
 }
 
 class LightTreeSyntaxDiagnosticsReporterHolder : TestService {
-    val reporter = SimpleDiagnosticsCollector()
+    val reporter = SimpleDiagnosticsCollector(BaseDiagnosticsCollector.RawReporter.DO_NOTHING)
 }
 
 val TestServices.lightTreeSyntaxDiagnosticsReporterHolder: LightTreeSyntaxDiagnosticsReporterHolder? by TestServices.nullableTestServiceAccessor()
@@ -231,13 +233,21 @@ fun TestConfigurationBuilder.baseFirDiagnosticTestConfiguration(
     }
 
     forTestsMatching(
-        "compiler/fir/analysis-tests/testData/resolve/extendedCheckers/*" or
-                "compiler/testData/diagnostics/tests/controlFlowAnalysis/deadCode/*" or
+        "compiler/fir/analysis-tests/testData/resolve/extraCheckers/*" or
+                "compiler/testData/diagnostics/tests/controlFlowAnalysis/deadCode/*"
+    ) {
+        defaultDirectives {
+            +WITH_EXTRA_CHECKERS
+        }
+    }
+
+    forTestsMatching(
+        "compiler/fir/analysis-tests/testData/resolve/extraCheckers/*" or
                 "compiler/fir/analysis-tests/testData/resolveWithStdlib/contracts/fromSource/bad/returnsImplies/*" or
                 "compiler/fir/analysis-tests/testData/resolveWithStdlib/contracts/fromSource/good/returnsImplies/*"
     ) {
         defaultDirectives {
-            +WITH_EXTENDED_CHECKERS
+            +WITH_EXPERIMENTAL_CHECKERS
         }
     }
 

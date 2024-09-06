@@ -43,7 +43,37 @@ public class Fe10IdeNormalAnalysisSourceModuleSingleSymbolByPsiTestGenerated ext
 
   @Test
   public void testAllFilesPresentInSingleSymbolByPsi() {
-    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/symbols/singleSymbolByPsi"), Pattern.compile("^(.+)\\.kt$"), null, true);
+    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/symbols/singleSymbolByPsi"), Pattern.compile("^(.+)\\.kt$"), null, true, "withTestCompilerPluginEnabled");
+  }
+
+  @Test
+  @TestMetadata("annotationPropertyWithComplexDefaultValue.kt")
+  public void testAnnotationPropertyWithComplexDefaultValue() {
+    runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/annotationPropertyWithComplexDefaultValue.kt");
+  }
+
+  @Test
+  @TestMetadata("annotationPropertyWithDefaultValue.kt")
+  public void testAnnotationPropertyWithDefaultValue() {
+    runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/annotationPropertyWithDefaultValue.kt");
+  }
+
+  @Test
+  @TestMetadata("annotationPropertyWithoutDefaultValue.kt")
+  public void testAnnotationPropertyWithoutDefaultValue() {
+    runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/annotationPropertyWithoutDefaultValue.kt");
+  }
+
+  @Test
+  @TestMetadata("catchWithName.kt")
+  public void testCatchWithName() {
+    runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/catchWithName.kt");
+  }
+
+  @Test
+  @TestMetadata("catchWithoutName.kt")
+  public void testCatchWithoutName() {
+    runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/catchWithoutName.kt");
   }
 
   @Test
@@ -71,6 +101,12 @@ public class Fe10IdeNormalAnalysisSourceModuleSingleSymbolByPsiTestGenerated ext
   }
 
   @Test
+  @TestMetadata("functionFromInitBlock.kt")
+  public void testFunctionFromInitBlock() {
+    runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/functionFromInitBlock.kt");
+  }
+
+  @Test
   @TestMetadata("functionWithReceiverAnnotation.kt")
   public void testFunctionWithReceiverAnnotation() {
     runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/functionWithReceiverAnnotation.kt");
@@ -89,6 +125,18 @@ public class Fe10IdeNormalAnalysisSourceModuleSingleSymbolByPsiTestGenerated ext
   }
 
   @Test
+  @TestMetadata("lambdaParameterWithName.kt")
+  public void testLambdaParameterWithName() {
+    runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/lambdaParameterWithName.kt");
+  }
+
+  @Test
+  @TestMetadata("lambdaParameterWithoutName.kt")
+  public void testLambdaParameterWithoutName() {
+    runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/lambdaParameterWithoutName.kt");
+  }
+
+  @Test
   @TestMetadata("nestedTypeAnnotationWithTypeAlias.kt")
   public void testNestedTypeAnnotationWithTypeAlias() {
     runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/nestedTypeAnnotationWithTypeAlias.kt");
@@ -98,6 +146,42 @@ public class Fe10IdeNormalAnalysisSourceModuleSingleSymbolByPsiTestGenerated ext
   @TestMetadata("nestedTypeAnnotationWithTypeAliasAsAnnotation.kt")
   public void testNestedTypeAnnotationWithTypeAliasAsAnnotation() {
     runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/nestedTypeAnnotationWithTypeAliasAsAnnotation.kt");
+  }
+
+  @Test
+  @TestMetadata("overriddenPropertyWithoutOverriddenSetter_param.kt")
+  public void testOverriddenPropertyWithoutOverriddenSetter_param() {
+    runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/overriddenPropertyWithoutOverriddenSetter_param.kt");
+  }
+
+  @Test
+  @TestMetadata("overriddenPropertyWithoutOverriddenSetter_property.kt")
+  public void testOverriddenPropertyWithoutOverriddenSetter_property() {
+    runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/overriddenPropertyWithoutOverriddenSetter_property.kt");
+  }
+
+  @Test
+  @TestMetadata("overriddenPropertyWithoutOverriddenSetter_property_private_setter.kt")
+  public void testOverriddenPropertyWithoutOverriddenSetter_property_private_setter() {
+    runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/overriddenPropertyWithoutOverriddenSetter_property_private_setter.kt");
+  }
+
+  @Test
+  @TestMetadata("overriddenPropertyWithoutOverriddenSetter_property_setter.kt")
+  public void testOverriddenPropertyWithoutOverriddenSetter_property_setter() {
+    runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/overriddenPropertyWithoutOverriddenSetter_property_setter.kt");
+  }
+
+  @Test
+  @TestMetadata("propertyFromInitBlock.kt")
+  public void testPropertyFromInitBlock() {
+    runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/propertyFromInitBlock.kt");
+  }
+
+  @Test
+  @TestMetadata("propertyFromWhenExpression.kt")
+  public void testPropertyFromWhenExpression() {
+    runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/propertyFromWhenExpression.kt");
   }
 
   @Test
@@ -232,7 +316,7 @@ public class Fe10IdeNormalAnalysisSourceModuleSingleSymbolByPsiTestGenerated ext
   public class Contracts {
     @Test
     public void testAllFilesPresentInContracts() {
-      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/symbols/singleSymbolByPsi/contracts"), Pattern.compile("^(.+)\\.kt$"), null, true);
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/symbols/singleSymbolByPsi/contracts"), Pattern.compile("^(.+)\\.kt$"), null, true, "withTestCompilerPluginEnabled");
     }
 
     @Test
@@ -344,7 +428,7 @@ public class Fe10IdeNormalAnalysisSourceModuleSingleSymbolByPsiTestGenerated ext
   public class Destructuring {
     @Test
     public void testAllFilesPresentInDestructuring() {
-      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/symbols/singleSymbolByPsi/destructuring"), Pattern.compile("^(.+)\\.kt$"), null, true);
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/symbols/singleSymbolByPsi/destructuring"), Pattern.compile("^(.+)\\.kt$"), null, true, "withTestCompilerPluginEnabled");
     }
 
     @Test
@@ -408,7 +492,7 @@ public class Fe10IdeNormalAnalysisSourceModuleSingleSymbolByPsiTestGenerated ext
   public class Errors {
     @Test
     public void testAllFilesPresentInErrors() {
-      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/symbols/singleSymbolByPsi/errors"), Pattern.compile("^(.+)\\.kt$"), null, true);
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/symbols/singleSymbolByPsi/errors"), Pattern.compile("^(.+)\\.kt$"), null, true, "withTestCompilerPluginEnabled");
     }
 
     @Test
@@ -418,9 +502,21 @@ public class Fe10IdeNormalAnalysisSourceModuleSingleSymbolByPsiTestGenerated ext
     }
 
     @Test
+    @TestMetadata("delegatedPropertyWithAccessors.kt")
+    public void testDelegatedPropertyWithAccessors() {
+      runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/errors/delegatedPropertyWithAccessors.kt");
+    }
+
+    @Test
     @TestMetadata("incompleteFunctionTypeParameter.kt")
     public void testIncompleteFunctionTypeParameter() {
       runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/errors/incompleteFunctionTypeParameter.kt");
+    }
+
+    @Test
+    @TestMetadata("initWithAnnotations.kt")
+    public void testInitWithAnnotations() {
+      runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/errors/initWithAnnotations.kt");
     }
 
     @Test
@@ -475,6 +571,12 @@ public class Fe10IdeNormalAnalysisSourceModuleSingleSymbolByPsiTestGenerated ext
     @TestMetadata("topLevelDestructuringDeclarationMutable.kt")
     public void testTopLevelDestructuringDeclarationMutable() {
       runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/errors/topLevelDestructuringDeclarationMutable.kt");
+    }
+
+    @Test
+    @TestMetadata("valPropertyWithSetter.kt")
+    public void testValPropertyWithSetter() {
+      runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/errors/valPropertyWithSetter.kt");
     }
   }
 }

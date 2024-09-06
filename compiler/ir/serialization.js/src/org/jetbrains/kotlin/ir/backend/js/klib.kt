@@ -453,7 +453,11 @@ class ModulesStructure(
     val allDependenciesResolution = CommonKLibResolver.resolveWithoutDependencies(
         dependencies,
         compilerConfiguration.messageCollector.toLogger(),
-        compilerConfiguration.get(JSConfigurationKeys.ZIP_FILE_SYSTEM_ACCESSOR)
+        compilerConfiguration.get(JSConfigurationKeys.ZIP_FILE_SYSTEM_ACCESSOR),
+        duplicatedUniqueNameStrategy = compilerConfiguration.get(
+            KlibConfigurationKeys.DUPLICATED_UNIQUE_NAME_STRATEGY,
+            DuplicatedUniqueNameStrategy.DENY
+        ),
     )
 
     val allDependencies: List<KotlinLibrary>

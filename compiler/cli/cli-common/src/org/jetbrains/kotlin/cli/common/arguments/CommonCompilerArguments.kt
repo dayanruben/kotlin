@@ -518,10 +518,10 @@ This flag is deprecated and will soon be removed in favor of '-Xverify-ir-visibi
         }
 
     @Argument(
-        value = "-Xuse-fir-extended-checkers",
-        description = "Use extended analysis mode based on the frontend IR.\nWarning: This feature is not yet production-ready."
+        value = "-Xuse-fir-experimental-checkers",
+        description = "Enable experimental frontend IR checkers that are not yet ready for production."
     )
-    var useFirExtendedCheckers = false
+    var useFirExperimentalCheckers = false
         set(value) {
             checkFrozen()
             field = value
@@ -707,6 +707,16 @@ The corresponding calls' declarations may not be marked with @BuilderInference."
         }
 
     @Argument(
+        value = "-Xdirect-java-actualization",
+        description = "Enable experimental direct Java actualization support."
+    )
+    var directJavaActualization = false
+        set(value) {
+            checkFrozen()
+            field = value
+        }
+
+    @Argument(
         value = "-Xmulti-dollar-interpolation",
         description = "Enable experimental multi-dollar interpolation."
     )
@@ -882,6 +892,10 @@ The corresponding calls' declarations may not be marked with @BuilderInference."
 
             if (nonLocalBreakContinue) {
                 put(LanguageFeature.BreakContinueInInlineLambdas, LanguageFeature.State.ENABLED)
+            }
+
+            if (directJavaActualization) {
+                put(LanguageFeature.DirectJavaActualization, LanguageFeature.State.ENABLED)
             }
 
             if (inlineClasses) {

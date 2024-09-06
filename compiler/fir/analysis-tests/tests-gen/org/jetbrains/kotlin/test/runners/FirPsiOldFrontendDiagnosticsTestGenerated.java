@@ -898,6 +898,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
     }
 
     @Test
+    @TestMetadata("KotlinActualAnnotationHasNoEffectInKotlin.kt")
+    public void testKotlinActualAnnotationHasNoEffectInKotlin() {
+      runTest("compiler/testData/diagnostics/tests/KotlinActualAnnotationHasNoEffectInKotlin.kt");
+    }
+
+    @Test
     @TestMetadata("kt11167.kt")
     public void testKt11167() {
       runTest("compiler/testData/diagnostics/tests/kt11167.kt");
@@ -1519,6 +1525,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
     @TestMetadata("recursiveTypealiasWithProjection.kt")
     public void testRecursiveTypealiasWithProjection() {
       runTest("compiler/testData/diagnostics/tests/recursiveTypealiasWithProjection.kt");
+    }
+
+    @Test
+    @TestMetadata("redundantExplicitTypeWithIntegerLiterals.kt")
+    public void testRedundantExplicitTypeWithIntegerLiterals() {
+      runTest("compiler/testData/diagnostics/tests/redundantExplicitTypeWithIntegerLiterals.kt");
     }
 
     @Test
@@ -16521,6 +16533,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("dnnArgumentInferred.kt")
+      public void testDnnArgumentInferred() {
+        runTest("compiler/testData/diagnostics/tests/inference/dnnArgumentInferred.kt");
+      }
+
+      @Test
       @TestMetadata("dontThrowEmptyIntersectionException.kt")
       public void testDontThrowEmptyIntersectionException() {
         runTest("compiler/testData/diagnostics/tests/inference/dontThrowEmptyIntersectionException.kt");
@@ -17082,6 +17100,18 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("nullableUpperBound.kt")
       public void testNullableUpperBound() {
         runTest("compiler/testData/diagnostics/tests/inference/nullableUpperBound.kt");
+      }
+
+      @Test
+      @TestMetadata("nullableVsDnnVariations.kt")
+      public void testNullableVsDnnVariations() {
+        runTest("compiler/testData/diagnostics/tests/inference/nullableVsDnnVariations.kt");
+      }
+
+      @Test
+      @TestMetadata("nullableVsDnnVariationsDisabled.kt")
+      public void testNullableVsDnnVariationsDisabled() {
+        runTest("compiler/testData/diagnostics/tests/inference/nullableVsDnnVariationsDisabled.kt");
       }
 
       @Test
@@ -18210,6 +18240,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         }
 
         @Test
+        @TestMetadata("definitelyNotNullTypeInArgumentsDisabled.kt")
+        public void testDefinitelyNotNullTypeInArgumentsDisabled() {
+          runTest("compiler/testData/diagnostics/tests/inference/constraints/definitelyNotNullTypeInArgumentsDisabled.kt");
+        }
+
+        @Test
         @TestMetadata("definitelyNotNullTypeInReturnPosition.kt")
         public void testDefinitelyNotNullTypeInReturnPosition() {
           runTest("compiler/testData/diagnostics/tests/inference/constraints/definitelyNotNullTypeInReturnPosition.kt");
@@ -19316,6 +19352,18 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         }
 
         @Test
+        @TestMetadata("semifixOuterVariable.kt")
+        public void testSemifixOuterVariable() {
+          runTest("compiler/testData/diagnostics/tests/inference/pcla/semifixOuterVariable.kt");
+        }
+
+        @Test
+        @TestMetadata("semifixOuterVariableFeatureDisabled.kt")
+        public void testSemifixOuterVariableFeatureDisabled() {
+          runTest("compiler/testData/diagnostics/tests/inference/pcla/semifixOuterVariableFeatureDisabled.kt");
+        }
+
+        @Test
         @TestMetadata("simpleLambdaInCallWithAnotherLambdaWithBuilderInference.kt")
         public void testSimpleLambdaInCallWithAnotherLambdaWithBuilderInference() {
           runTest("compiler/testData/diagnostics/tests/inference/pcla/simpleLambdaInCallWithAnotherLambdaWithBuilderInference.kt");
@@ -19514,6 +19562,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
           @TestMetadata("kt43710.kt")
           public void testKt43710() {
             runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/kt43710.kt");
+          }
+
+          @Test
+          @TestMetadata("kt43710b.kt")
+          public void testKt43710b() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/kt43710b.kt");
           }
 
           @Test
@@ -28334,6 +28388,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("nothingToOverrideMessage.kt")
       public void testNothingToOverrideMessage() {
         runTest("compiler/testData/diagnostics/tests/override/nothingToOverrideMessage.kt");
+      }
+
+      @Test
+      @TestMetadata("nothingToOverrideMessageWithJava.kt")
+      public void testNothingToOverrideMessageWithJava() {
+        runTest("compiler/testData/diagnostics/tests/override/nothingToOverrideMessageWithJava.kt");
       }
 
       @Test
@@ -41370,6 +41430,18 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("ExhaustiveNullableSelfType.kt")
       public void testExhaustiveNullableSelfType() {
         runTest("compiler/testData/diagnostics/tests/when/ExhaustiveNullableSelfType.kt");
+      }
+
+      @Test
+      @TestMetadata("ExhaustiveOnTypeParameterWithSealedClassUpperBound.kt")
+      public void testExhaustiveOnTypeParameterWithSealedClassUpperBound() {
+        runTest("compiler/testData/diagnostics/tests/when/ExhaustiveOnTypeParameterWithSealedClassUpperBound.kt");
+      }
+
+      @Test
+      @TestMetadata("ExhaustiveOnTypeParameterWithSealedInterfaceUpperBound.kt")
+      public void testExhaustiveOnTypeParameterWithSealedInterfaceUpperBound() {
+        runTest("compiler/testData/diagnostics/tests/when/ExhaustiveOnTypeParameterWithSealedInterfaceUpperBound.kt");
       }
 
       @Test

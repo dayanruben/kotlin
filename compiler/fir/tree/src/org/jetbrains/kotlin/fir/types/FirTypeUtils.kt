@@ -118,11 +118,8 @@ private val FirTypeRef.lookupTagBasedOrNull: ConeLookupTagBasedType?
 
 private fun FirTypeRef.isBuiltinType(classId: ClassId, isNullable: Boolean): Boolean {
     val type = this.lookupTagBasedOrNull ?: return false
-    return type.classLikeLookupTagIfAny?.classId == classId && type.isNullable == isNullable
+    return type.classLikeLookupTagIfAny?.classId == classId && type.isMarkedNullable == isNullable
 }
-
-val FirTypeRef.isMarkedNullable: Boolean?
-    get() = if (this is FirTypeRefWithNullability) this.isMarkedNullable else lookupTagBasedOrNull?.isMarkedNullable
 
 val FirFunctionTypeRef.parametersCount: Int
     get() = if (receiverTypeRef != null)
@@ -187,7 +184,7 @@ fun ConeKotlinType.arrayElementTypeArgument(checkUnsignedArrays: Boolean = true)
         StandardClassIds.elementTypeByUnsignedArrayType[classId]
     }
     if (elementType != null) {
-        return elementType.constructClassLikeType(emptyArray(), isNullable = false)
+        return elementType.constructClassLikeType(emptyArray(), isMarkedNullable = false)
     }
 
     return null

@@ -33,13 +33,12 @@ import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
-import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.resolve.BindingContext
 
 internal class KaFe10PsiPropertySetterSymbol(
     override val psi: KtPropertyAccessor,
-    override val analysisContext: Fe10AnalysisContext
+    override val analysisContext: Fe10AnalysisContext,
 ) : KaPropertySetterSymbol(), KaFe10PsiSymbol<KtPropertyAccessor, PropertySetterDescriptor> {
     override val descriptor: PropertySetterDescriptor? by cached {
         val bindingContext = analysisContext.analyze(psi, AnalysisMode.PARTIAL)
@@ -51,9 +50,6 @@ internal class KaFe10PsiPropertySetterSymbol(
 
     override val compilerVisibility: Visibility
         get() = withValidityAssertion { psi.ktVisibility ?: descriptor?.ktVisibility ?: psi.property.ktVisibility ?: Visibilities.Public }
-
-    override val isActual: Boolean
-        get() = withValidityAssertion { descriptor?.isActual ?: psi.hasActualModifier() }
 
     override val isExpect: Boolean
         get() = withValidityAssertion { descriptor?.isExpect ?: psi.hasExpectModifier() }
@@ -69,9 +65,6 @@ internal class KaFe10PsiPropertySetterSymbol(
 
     override val hasBody: Boolean
         get() = withValidityAssertion { psi.hasBody() }
-
-    override val valueParameters: List<KaValueParameterSymbol>
-        get() = withValidityAssertion { psi.valueParameters.map { KaFe10PsiValueParameterSymbol(it, analysisContext) } }
 
     override val hasStableParameterNames: Boolean
         get() = withValidityAssertion { true }

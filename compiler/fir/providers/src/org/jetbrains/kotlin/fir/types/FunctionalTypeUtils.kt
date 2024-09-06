@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.fir.scopes.CallableCopyTypeCalculator
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.fir.scopes.processOverriddenFunctions
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
-import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.impl.FirFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
@@ -123,7 +122,7 @@ fun ConeKotlinType.customFunctionTypeToSimpleFunctionType(session: FirSession): 
         session = session,
         kind = newKind,
         additionalAnnotations = kind.annotationOnInvokeClassId
-            ?.takeUnless { classId -> type.attributes.customAnnotations.hasAnnotation(classId, session) }
+            ?.takeUnless { classId -> attributes.customAnnotations.hasAnnotation(classId, session) }
             ?.let { annotationClassId ->
                 listOf(buildAnnotation {
                     argumentMapping = FirEmptyAnnotationArgumentMapping
@@ -146,7 +145,7 @@ fun ConeKotlinType.createFunctionTypeWithNewKind(
     val typeArguments = expandedType.typeArgumentsOfLowerBoundIfFlexible
     return functionTypeId.toLookupTag().constructClassType(
         updateTypeArguments?.let { typeArguments.updateTypeArguments() } ?: typeArguments,
-        isNullable = expandedType.isNullable,
+        isMarkedNullable = expandedType.isMarkedOrFlexiblyNullable,
         attributes = expandedType.attributes.add(additionalAnnotations.computeTypeAttributes(session, shouldExpandTypeAliases = false)),
     )
 }

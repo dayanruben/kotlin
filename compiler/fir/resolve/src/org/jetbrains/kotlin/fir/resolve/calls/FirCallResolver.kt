@@ -39,7 +39,6 @@ import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirExpressions
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
 import org.jetbrains.kotlin.fir.resolve.transformers.doesResolutionResultOverrideOtherToPreserveCompatibility
 import org.jetbrains.kotlin.fir.scopes.impl.originalConstructorIfTypeAlias
-import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
@@ -57,7 +56,6 @@ import org.jetbrains.kotlin.resolve.calls.tower.ApplicabilityDetail
 import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
 import org.jetbrains.kotlin.resolve.calls.tower.isSuccess
 import org.jetbrains.kotlin.types.Variance
-import org.jetbrains.kotlin.util.CodeFragmentAdjustment
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
@@ -591,8 +589,9 @@ class FirCallResolver(
     fun resolveAnnotationCall(annotation: FirAnnotationCall): FirAnnotationCall? {
         val reference = annotation.calleeReference as? FirSimpleNamedReference ?: return null
         val annotationClassSymbol = annotation.getCorrespondingClassSymbolOrNull(session)
+        val annotationTypeRef = annotation.annotationTypeRef
+        val annotationConeType = annotationTypeRef.coneType
         val resolvedReference = if (annotationClassSymbol != null && annotationClassSymbol.fir.classKind == ClassKind.ANNOTATION_CLASS) {
-            val annotationConeType = annotation.annotationTypeRef.coneType
             val constructorSymbol = getAnnotationConstructorSymbol(annotationConeType, annotationClassSymbol)
 
             transformer.transformAnnotationCallArguments(annotation, constructorSymbol)
@@ -617,12 +616,18 @@ class FirCallResolver(
 
             buildReferenceWithErrorCandidate(
                 callInfo,
-                if (annotationClassSymbol != null) ConeIllegalAnnotationError(reference.name)
-                //calleeReference and annotationTypeRef are both error nodes so we need to avoid doubling of the diagnostic report
-                else ConeUnreportedDuplicateDiagnostic(
-                    //prefer diagnostic with symbol, e.g. to use the symbol during navigation in IDE
-                    (annotation.resolvedType as? ConeErrorType)?.diagnostic as? ConeDiagnosticWithSymbol<*>
-                        ?: ConeUnresolvedNameError(reference.name)),
+                if (annotationClassSymbol != null) {
+                    ConeIllegalAnnotationError(reference.name)
+                } else if (annotationConeType is ConeErrorType || annotationConeType !is ConeClassLikeType) {
+                    //calleeReference and annotationTypeRef are both error nodes so we need to avoid doubling of the diagnostic report
+                    ConeUnreportedDuplicateDiagnostic(
+                        //prefer diagnostic with symbol, e.g. to use the symbol during navigation in IDE
+                        (annotationConeType as? ConeErrorType)?.diagnostic as? ConeDiagnosticWithSymbol<*>
+                            ?: ConeUnresolvedNameError(reference.name)
+                    )
+                } else {
+                    ConeIllegalAnnotationError(reference.name)
+                },
                 reference.source
             )
         }
@@ -804,13 +809,7 @@ class FirCallResolver(
             else -> {
                 val candidate = candidates.single()
                 runIf(!candidate.isSuccessful) {
-                    if (needTreatErrorCandidateAsResolved(candidate)) {
-                        @OptIn(CodeFragmentAdjustment::class)
-                        candidate.resetToResolved()
-                        null
-                    } else {
-                        createConeDiagnosticForCandidateWithError(applicability, candidate)
-                    }
+                    createConeDiagnosticForCandidateWithError(applicability, candidate)
                 }
             }
         }
@@ -863,13 +862,6 @@ class FirCallResolver(
             }
         }
         return FirNamedReferenceWithCandidate(source, name, candidate)
-    }
-
-    private fun needTreatErrorCandidateAsResolved(candidate: Candidate): Boolean {
-        return if (candidate.isCodeFragmentVisibilityError) {
-            components.resolutionStageRunner.fullyProcessCandidate(candidate, transformer.resolutionContext)
-            candidate.diagnostics.all { it.isSuccess || it.applicability == CandidateApplicability.K2_VISIBILITY_ERROR }
-        } else false
     }
 
     private fun createErrorReferenceForSingleCandidate(

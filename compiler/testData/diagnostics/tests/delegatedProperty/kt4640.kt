@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 //KT-4640 "Trace is erased after resolution completion" exception
 
 class ValueWrapper()

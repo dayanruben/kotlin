@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.DeferredCallableCopyReturnType
 import org.jetbrains.kotlin.fir.scopes.deferredCallableCopyReturnType
-import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
@@ -645,7 +644,7 @@ object FirFakeOverrideGenerator {
         }
 
         val copiedContextReceiverTypes = newContextReceiverTypes?.map {
-            it?.type?.let(substitutor::substituteOrNull)
+            it?.let(substitutor::substituteOrNull)
         } ?: baseCallable.contextReceivers.map {
             substitutor.substituteOrNull(it.typeRef.coneType)
         }
@@ -758,7 +757,7 @@ object FirFakeOverrideGenerator {
         }
 
         val substitutionMapForNewParameters = member.typeParameters.zip(newTypeParameters).associate { (original, new) ->
-            Pair(original.symbol, ConeTypeParameterTypeImpl(new.symbol.toLookupTag(), isNullable = false))
+            Pair(original.symbol, ConeTypeParameterTypeImpl(new.symbol.toLookupTag(), isMarkedNullable = false))
         }
 
         val additionalSubstitutor = substitutorByMap(substitutionMapForNewParameters, useSiteSession)

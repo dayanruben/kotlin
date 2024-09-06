@@ -6,8 +6,7 @@
 package org.jetbrains.kotlin.fir.renderer
 
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
-import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
-import org.jetbrains.kotlin.fir.symbols.ConeClassifierLookupTag
+import org.jetbrains.kotlin.fir.types.ConeClassifierLookupTag
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.types.model.TypeConstructorMarker
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
@@ -105,12 +104,13 @@ open class ConeTypeRenderer(
                 }
             }
         }
-        if (type !is ConeFlexibleType && type !is ConeErrorType) {
-            builder.append(type.nullability.suffix)
+        if (type !is ConeFlexibleType && type !is ConeErrorType && type.isMarkedNullable) {
+            builder.append("?")
         }
     }
 
     open fun renderConstructor(constructor: TypeConstructorMarker) {
+        require(constructor is ConeTypeConstructorMarker)
         when (constructor) {
             is ConeTypeVariableTypeConstructor -> {
                 builder.append("TypeVariable(")
@@ -152,7 +152,7 @@ open class ConeTypeRenderer(
     private fun ConeFlexibleType.renderForSameLookupTags(): Boolean {
         if (lowerBound is ConeLookupTagBasedType && upperBound is ConeLookupTagBasedType &&
             lowerBound.lookupTag == upperBound.lookupTag &&
-            lowerBound.nullability == ConeNullability.NOT_NULL && upperBound.nullability == ConeNullability.NULLABLE
+            !lowerBound.isMarkedNullable && upperBound.isMarkedNullable
         ) {
             if (lowerBound !is ConeClassLikeType || lowerBound.typeArguments.isEmpty()) {
                 if (upperBound !is ConeClassLikeType || upperBound.typeArguments.isEmpty()) {

@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.analysis.api.fir.components
 import org.jetbrains.kotlin.analysis.api.components.KaBuiltinTypes
 import org.jetbrains.kotlin.analysis.api.components.KaTypeProvider
 import org.jetbrains.kotlin.analysis.api.fir.KaFirSession
-import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirSymbol
 import org.jetbrains.kotlin.analysis.api.fir.symbols.dispatchReceiverType
 import org.jetbrains.kotlin.analysis.api.fir.types.KaFirType
@@ -16,7 +15,6 @@ import org.jetbrains.kotlin.analysis.api.fir.types.PublicTypeApproximator
 import org.jetbrains.kotlin.analysis.api.fir.utils.ConeSupertypeCalculationMode
 import org.jetbrains.kotlin.analysis.api.fir.utils.getAllStrictSupertypes
 import org.jetbrains.kotlin.analysis.api.fir.utils.getDirectSupertypes
-import org.jetbrains.kotlin.analysis.api.fir.utils.toConeNullability
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaSessionComponent
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -24,11 +22,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFir
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirFile
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirOfType
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.resolveToFirSymbolOfTypeSafe
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.throwUnexpectedFirElementError
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.*
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.llFirSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.ContextCollector
 import org.jetbrains.kotlin.fir.FirElement
@@ -41,18 +35,17 @@ import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.java.enhancement.EnhancedForWarningConeSubstitutor
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.resolve.SessionHolderImpl
-import org.jetbrains.kotlin.fir.symbols.impl.*
-import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
+import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
 import org.jetbrains.kotlin.fir.types.*
-import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
-import org.jetbrains.kotlin.fir.types.impl.ConeTypeParameterTypeImpl
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
 internal class KaFirTypeProvider(
-    override val analysisSessionProvider: () -> KaFirSession
+    override val analysisSessionProvider: () -> KaFirSession,
 ) : KaSessionComponent<KaFirSession>(), KaTypeProvider, KaFirSessionComponent {
     override val builtinTypes: KaBuiltinTypes by lazy {
         KaFirBuiltInTypes(rootModuleSession.builtinTypes, firSymbolBuilder, token)
@@ -93,16 +86,11 @@ internal class KaFirTypeProvider(
 
     override val KaNamedClassSymbol.defaultType: KaType
         get() = withValidityAssertion {
-            require(this is KaFirNamedClassSymbol)
-            firSymbol.lazyResolveToPhase(FirResolvePhase.SUPER_TYPES)
-            val firClass = firSymbol.fir
-            val type = ConeClassLikeTypeImpl(
-                firClass.symbol.toLookupTag(),
-                firClass.typeParameters.map { ConeTypeParameterTypeImpl(it.symbol.toLookupTag(), isNullable = false) }.toTypedArray(),
-                isNullable = false
-            )
-
-            return type.asKtType()
+            analysisSession.buildClassType(this) {
+                for (typeParameterSymbol in typeParameters) {
+                    argument(analysisSession.buildTypeParameterType(typeParameterSymbol))
+                }
+            }
         }
 
     override val Iterable<KaType>.commonSupertype: KaType
@@ -210,7 +198,7 @@ internal class KaFirTypeProvider(
                         is FirResolvedQualifier -> {
                             explicitReceiver.symbol?.toLookupTag()?.constructType(
                                 explicitReceiver.typeArguments.map { it.toConeTypeProjection() }.toTypedArray(),
-                                isNullable = explicitReceiver.isNullableLHSForCallableReference
+                                isMarkedNullable = explicitReceiver.isNullableLHSForCallableReference
                             )?.asKtType()
                                 ?: fir.resolvedType.getReceiverOfReflectionType()?.asKtType()
                         }
@@ -233,7 +221,7 @@ internal class KaFirTypeProvider(
 
     override fun KaType.withNullability(newNullability: KaTypeNullability): KaType = withValidityAssertion {
         require(this is KaFirType)
-        return coneType.withNullability(newNullability.toConeNullability(), rootModuleSession.typeContext).asKtType()
+        return coneType.withNullability(nullable = newNullability == KaTypeNullability.NULLABLE, rootModuleSession.typeContext).asKtType()
     }
 
     override fun KaType.hasCommonSubtypeWith(that: KaType): Boolean = withValidityAssertion {

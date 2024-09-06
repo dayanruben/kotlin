@@ -395,7 +395,11 @@ tailrec fun findAssignment(element: PsiElement?): KtBinaryExpression? =
     }
 
 fun KtStringTemplateExpression.getContentRange(): TextRange {
-    val start = node.firstChildNode.textLength
+    val interpolationPrefixOrOpenQuote = node.firstChildNode ?: return TextRange.EMPTY_RANGE
+    val openQuoteAfterPrefixOrNull = interpolationPrefixOrOpenQuote.treeNext?.takeIf { secondNode ->
+        interpolationPrefixOrOpenQuote.elementType == KtTokens.INTERPOLATION_PREFIX && secondNode.elementType == KtTokens.OPEN_QUOTE
+    }
+    val start = interpolationPrefixOrOpenQuote.textLength + (openQuoteAfterPrefixOrNull?.textLength ?: 0)
     val lastChild = node.lastChildNode
     val length = textLength
     return TextRange(start, if (lastChild.elementType == KtTokens.CLOSING_QUOTE) length - lastChild.textLength else length)
@@ -430,7 +434,8 @@ fun KtSimpleNameExpression.isCallee(): Boolean {
 val KtStringTemplateExpression.plainContent: String
     get() = getContentRange().substring(text)
 
-fun KtStringTemplateExpression.isSingleQuoted(): Boolean = node.firstChildNode.textLength == 1
+fun KtStringTemplateExpression.isSingleQuoted(): Boolean =
+    node.findChildByType(KtTokens.OPEN_QUOTE)?.textLength == 1
 
 val KtNamedDeclaration.isPrivateNestedClassOrObject: Boolean get() = this is KtClassOrObject && isPrivate() && !isTopLevel()
 

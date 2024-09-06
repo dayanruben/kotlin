@@ -137,7 +137,7 @@ private fun ConeClassLikeType.applyNullabilityFrom(
     session: FirSession,
     abbreviation: ConeClassLikeType
 ): ConeClassLikeType {
-    if (abbreviation.isMarkedNullable) return withNullability(ConeNullability.NULLABLE, session.typeContext)
+    if (abbreviation.isMarkedNullable) return withNullability(nullable = true, session.typeContext)
     return this
 }
 
@@ -213,7 +213,7 @@ private fun mapTypeAliasArguments(
     useSiteSession: FirSession,
 ): ConeKotlinType {
     if (typeAlias.typeParameters.isNotEmpty() && abbreviatedType.typeArguments.isEmpty()) {
-        return resultingType.lookupTag.constructClassType(ConeTypeProjection.EMPTY_ARRAY, resultingType.isNullable)
+        return resultingType.lookupTag.constructClassType(isMarkedNullable = resultingType.isMarkedNullable)
     }
 
     return typeAlias.createParametersSubstitutor(abbreviatedType, useSiteSession).substituteOrSelf(resultingType)

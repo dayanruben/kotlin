@@ -8,61 +8,57 @@ package org.jetbrains.kotlin.backend.common.phaser
 import org.jetbrains.kotlin.backend.common.*
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.IrVerificationMode
-import org.jetbrains.kotlin.config.KlibConfigurationKeys
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 
 abstract class IrValidationPhase<Context : CommonBackendContext>(val context: Context) : ModuleLoweringPass {
+    protected abstract val defaultValidationConfig: IrValidatorConfig
 
     final override fun lower(irModule: IrModuleFragment) {
         val verificationMode = context.configuration.get(CommonConfigurationKeys.VERIFY_IR, IrVerificationMode.NONE)
+        val phaseName = this.javaClass.simpleName
         validateIr(context.messageCollector, verificationMode) {
-            validate(irModule, phaseName = this@IrValidationPhase.javaClass.simpleName)
+            performBasicIrValidation(
+                irModule,
+                context.irBuiltIns,
+                phaseName,
+                defaultValidationConfig,
+            )
+            additionalValidation(irModule, phaseName)
         }
     }
 
-    protected abstract fun IrValidationContext.validate(irModule: IrModuleFragment, phaseName: String)
+    protected open fun IrValidationContext.additionalValidation(irModule: IrModuleFragment, phaseName: String) {}
 }
 
 open class IrValidationBeforeLoweringPhase<Context : CommonBackendContext>(context: Context) : IrValidationPhase<Context>(context) {
-    override fun IrValidationContext.validate(irModule: IrModuleFragment, phaseName: String) {
-        performBasicIrValidation(
-            irModule,
-            context.irBuiltIns,
-            phaseName,
+    override val defaultValidationConfig: IrValidatorConfig
+        get() = IrValidatorConfig(
             checkTypes = false, // TODO: Re-enable checking types (KT-68663)
             checkValueScopes = true,
             checkTypeParameterScopes = false, // TODO: Re-enable checking out-of-scope type parameter usages (KT-69305)
             checkCrossFileFieldUsage = context.configuration.getBoolean(CommonConfigurationKeys.ENABLE_IR_VISIBILITY_CHECKS),
             checkVisibilities = context.configuration.getBoolean(CommonConfigurationKeys.ENABLE_IR_VISIBILITY_CHECKS),
         )
-    }
 }
 
 class IrValidationAfterInliningOnlyPrivateFunctionsPhase<Context : CommonBackendContext>(
     context: Context,
     private val checkInlineFunctionCallSites: InlineFunctionUseSiteChecker
 ) : IrValidationPhase<Context>(context) {
-    override fun IrValidationContext.validate(irModule: IrModuleFragment, phaseName: String) {
-        performBasicIrValidation(
-            irModule,
-            context.irBuiltIns,
-            phaseName,
+    override val defaultValidationConfig: IrValidatorConfig
+        get() = IrValidatorConfig(
             checkTypes = false, // TODO: Re-enable checking types (KT-68663)
-            checkVisibilities = false,
-            checkInlineFunctionUseSites = checkInlineFunctionCallSites
+            checkVisibilities = false, // TODO: Enable checking visibilities (KT-69516)
+            checkInlineFunctionUseSites = checkInlineFunctionCallSites,
         )
-    }
 }
 
 class IrValidationAfterInliningAllFunctionsPhase<Context : CommonBackendContext>(
     context: Context,
     private val checkInlineFunctionCallSites: InlineFunctionUseSiteChecker? = null
 ) : IrValidationPhase<Context>(context) {
-    override fun IrValidationContext.validate(irModule: IrModuleFragment, phaseName: String) {
-        performBasicIrValidation(
-            irModule,
-            context.irBuiltIns,
-            phaseName,
+    override val defaultValidationConfig: IrValidatorConfig
+        get() = IrValidatorConfig(
             checkTypes = false, // TODO: Re-enable checking types (KT-68663)
             checkValueScopes = context.configuration.getBoolean(CommonConfigurationKeys.ENABLE_IR_VISIBILITY_CHECKS_AFTER_INLINING),
             checkCrossFileFieldUsage = context.configuration.getBoolean(CommonConfigurationKeys.ENABLE_IR_VISIBILITY_CHECKS_AFTER_INLINING),
@@ -70,11 +66,9 @@ class IrValidationAfterInliningAllFunctionsPhase<Context : CommonBackendContext>
             checkVisibilities = context.configuration.getBoolean(CommonConfigurationKeys.ENABLE_IR_VISIBILITY_CHECKS_AFTER_INLINING),
             checkInlineFunctionUseSites = checkInlineFunctionCallSites
         )
-    }
 }
 
 open class IrValidationAfterLoweringPhase<Context : CommonBackendContext>(context: Context) : IrValidationPhase<Context>(context) {
-    override fun IrValidationContext.validate(irModule: IrModuleFragment, phaseName: String) {
-        performBasicIrValidation(irModule, context.irBuiltIns, phaseName)
-    }
+    override val defaultValidationConfig: IrValidatorConfig
+        get() = IrValidatorConfig()
 }

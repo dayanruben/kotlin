@@ -155,7 +155,6 @@ private fun processConstructors(
                         outerType,
                         abbreviation = matchedSymbol.constructType(
                             Array(typeArguments.size) { typeArguments[it].toConeTypeProjection() },
-                            isNullable = false, ConeAttributes.Empty,
                         ),
                     )
                 } else {

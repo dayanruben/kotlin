@@ -445,7 +445,7 @@ class FirCallCompletionResultsWriterTransformer(
             val explicitArgument = typeArgumentMapping[index].toConeTypeProjection().type ?: continue
 
             overridingMap[freshVariable.typeConstructor] =
-                baseTypeArgument.withNullability(explicitArgument.nullability, session.typeContext)
+                baseTypeArgument.withNullabilityOf(explicitArgument, session.typeContext)
         }
 
         if (overridingMap.isEmpty()) return null
@@ -530,7 +530,7 @@ class FirCallCompletionResultsWriterTransformer(
     private fun FirExpression.wrapInSamExpression(expectedArgumentType: ConeKotlinType): FirExpression {
         return buildSamConversionExpression {
             expression = this@wrapInSamExpression
-            coneTypeOrNull = expectedArgumentType.withNullability(resolvedType.nullability, session.typeContext)
+            coneTypeOrNull = expectedArgumentType.withNullabilityOf(resolvedType, session.typeContext)
                 .let {
                     typeApproximator.approximateToSuperType(
                         it,
@@ -633,7 +633,7 @@ class FirCallCompletionResultsWriterTransformer(
         // Substitutor from type variables (not type parameters)
         substitutor: ConeSubstitutor = finalSubstitutor,
     ): ConeKotlinType {
-        val initialType = candidate.substitutor.substituteOrSelf(type)
+        val initialType = candidate.substitutor.substituteOrSelf(this)
         val substitutedType = finallySubstituteOrNull(initialType, substitutor)
         val finalType = typeApproximator.approximateToSuperType(
             type = substitutedType ?: initialType,
@@ -776,7 +776,7 @@ class FirCallCompletionResultsWriterTransformer(
             val expectedType = when {
                 isIntegerOperator -> ConeIntegerConstantOperatorTypeImpl(
                     isUnsigned = symbol.isWrappedIntegerOperatorForUnsignedType() && callInfo.name in binaryOperatorsWithSignedArgument,
-                    ConeNullability.NOT_NULL
+                    isMarkedNullable = false
                 )
                 valueParameter.isVararg -> valueParameter.returnTypeRef.substitute(this).varargElementType()
                 else -> valueParameter.returnTypeRef.substitute(this)
@@ -999,7 +999,7 @@ class FirCallCompletionResultsWriterTransformer(
     }
 
     private fun ConeKotlinType.functionTypeKindForDeserializedConeType(): FunctionTypeKind? {
-        val coneClassLikeType = type as? ConeClassLikeType ?: return null
+        val coneClassLikeType = this as? ConeClassLikeType ?: return null
         val classId = coneClassLikeType.classId ?: return null
         return session.functionTypeService.extractSingleExtensionKindForDeserializedConeType(classId, coneClassLikeType.customAnnotations)
     }

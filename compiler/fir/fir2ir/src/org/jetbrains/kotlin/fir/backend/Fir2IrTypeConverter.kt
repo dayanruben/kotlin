@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.fir.resolve.dfa.cfg.isLocalClassOrAnonymousObject
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeUnresolvedError
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.toSymbol
-import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassifierSymbol
 import org.jetbrains.kotlin.fir.types.*
@@ -107,7 +106,6 @@ class Fir2IrTypeConverter(
     ): IrType {
         return when (this) {
             is ConeErrorType -> {
-                val isMarkedNullable = nullability == ConeNullability.NULLABLE
                 when (val diagnostic = diagnostic) {
                     is ConeUnresolvedError -> createErrorType(diagnostic.qualifier, isMarkedNullable)
                     else -> createErrorType(diagnostic.reason, isMarkedNullable)
@@ -186,10 +184,10 @@ class Fir2IrTypeConverter(
             is ConeRawType -> {
                 // Upper bound has star projections here, so we take lower one
                 // (some reflection tests rely on this)
-                lowerBound.withNullability(upperBound.nullability, session.typeContext).toIrType(
+                lowerBound.withNullabilityOf(upperBound, session.typeContext).toIrType(
                     typeOrigin,
                     annotations,
-                    hasFlexibleNullability = lowerBound.nullability != upperBound.nullability,
+                    hasFlexibleNullability = lowerBound.isMarkedNullable != upperBound.isMarkedNullable,
                     hasFlexibleMutability = isMutabilityFlexible(),
                     hasFlexibleArrayElementVariance = false,
                     addRawTypeAnnotation = true
@@ -207,12 +205,12 @@ class Fir2IrTypeConverter(
                     val intermediate = if (lower is ConeClassLikeType && lower.lookupTag == upper.lookupTag && !isRaw) {
                         lower.replaceArguments(upper.getArguments())
                     } else lower
-                    (intermediate.withNullability(upper.isNullable) as ConeKotlinType)
+                    (intermediate.withNullability(upper.isMarkedNullable) as ConeKotlinType)
                         .withAttributes(lower.attributes)
                         .toIrType(
                             typeOrigin,
                             annotations,
-                            hasFlexibleNullability = lower.nullability != upper.nullability,
+                            hasFlexibleNullability = lower.isMarkedNullable != upper.isMarkedNullable,
                             hasFlexibleMutability = isMutabilityFlexible(),
                             hasFlexibleArrayElementVariance = hasFlexibleArrayElementVariance(),
                             addRawTypeAnnotation = isRaw,
@@ -221,7 +219,7 @@ class Fir2IrTypeConverter(
                     upperBound.toIrType(
                         typeOrigin,
                         annotations,
-                        hasFlexibleNullability = lowerBound.nullability != upperBound.nullability,
+                        hasFlexibleNullability = lowerBound.isMarkedNullable != upperBound.isMarkedNullable,
                         hasFlexibleMutability = isMutabilityFlexible(),
                         hasFlexibleArrayElementVariance = false,
                         addRawTypeAnnotation = false,

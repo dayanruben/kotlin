@@ -1,4 +1,5 @@
 // DIAGNOSTICS: -UNUSED_PARAMETER -UNUSED_EXPRESSION -UNUSED_VARIABLE
+// LANGUAGE: +InferenceEnhancementsIn21
 
 class Foo<T>(x: T)
 class Bar<S>

@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.analysis.api.fir.KaFirSession
 import org.jetbrains.kotlin.analysis.api.fir.findPsi
 import org.jetbrains.kotlin.analysis.api.fir.getJvmNameFromAnnotation
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirPsiJavaClassSymbol
-import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirSymbol
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.fir.types.KaFirType
@@ -81,13 +80,13 @@ import org.jetbrains.kotlin.psi
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import org.jetbrains.kotlin.types.model.SimpleTypeMarker
+import org.jetbrains.kotlin.types.model.RigidTypeMarker
 import org.jetbrains.kotlin.types.updateArgumentModeFromAnnotations
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.org.objectweb.asm.Type
 
 internal class KaFirJavaInteroperabilityComponent(
-    override val analysisSessionProvider: () -> KaFirSession
+    override val analysisSessionProvider: () -> KaFirSession,
 ) : KaSessionComponent<KaFirSession>(), KaJavaInteroperabilityComponent, KaFirSessionComponent {
     private val jvmTypeMapper: FirJvmTypeMapper by lazy {
         when {
@@ -145,7 +144,7 @@ internal class KaFirJavaInteroperabilityComponent(
         allowErrorTypes: Boolean,
         forceValueClassResolution: Boolean,
     ): PsiTypeElement? {
-        if (this !is SimpleTypeMarker) return null
+        if (this !is RigidTypeMarker) return null
 
         if (!allowErrorTypes && (this is ConeErrorType)) return null
 
@@ -336,7 +335,7 @@ internal class KaFirJavaInteroperabilityComponent(
                         symbol.containingDeclaration as? KaPropertySymbol ?: symbol
                     }
                     is KaBackingFieldSymbol -> symbol.owningProperty
-                    is KaFirReceiverParameterSymbol -> symbol.owningCallableSymbol
+                    is KaReceiverParameterSymbol -> symbol.owningCallableSymbol
                     else -> symbol
                 }
 
@@ -548,11 +547,9 @@ private class AnonymousTypesSubstitutor(
         }
 
         val firClassNode = type.lookupTag.toSymbol(session) as? FirClassSymbol
-        if (firClassNode != null) {
-            firClassNode.resolvedSuperTypes.singleOrNull()?.let { return it }
-        }
+        firClassNode?.resolvedSuperTypes?.singleOrNull()?.let { return it }
 
-        return if (type.nullability.isNullable) session.builtinTypes.nullableAnyType.coneType
+        return if (type.isMarkedNullable) session.builtinTypes.nullableAnyType.coneType
         else session.builtinTypes.anyType.coneType
     }
 

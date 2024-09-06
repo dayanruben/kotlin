@@ -122,11 +122,7 @@ fun generateJUnit3CompilerTests(args: Array<String>, mainClassName: String?) {
                 )
             }
 
-            testClass<AbstractKapt3BuilderModeBytecodeShapeTest> {
-                model("codegen/kapt", targetBackend = TargetBackend.JVM)
-            }
-
-            testClass<AbstractIrKapt3BuilderModeBytecodeShapeTest> {
+            testClass<AbstractKaptModeBytecodeShapeTest> {
                 model("codegen/kapt", targetBackend = TargetBackend.JVM_IR)
             }
 
@@ -224,7 +220,7 @@ fun generateJUnit3CompilerTests(args: Array<String>, mainClassName: String?) {
 
 
 
-            testClass<AbstractCompileKotlinAgainstJavaTest> {
+            testClass<AbstractCompileKotlinWithJavacIntegrationTest> {
                 model(
                     "compileKotlinAgainstJava",
                     testClassName = "WithAPT",
@@ -338,7 +334,7 @@ fun generateJUnit3CompilerTests(args: Array<String>, mainClassName: String?) {
             }
 
 
-            testClass<AbstractIrCompileKotlinAgainstJavaTest> {
+            testClass<AbstractIrCompileKotlinWithJavacIntegrationTest> {
                 model(
                     "compileKotlinAgainstJava",
                     testClassName = "WithAPT",

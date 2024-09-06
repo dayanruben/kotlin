@@ -497,7 +497,7 @@ fun checkTypeMismatch(
     var lValueType = lValueOriginalType
     var rValueType = rValue.resolvedType
     if (source.kind is KtFakeSourceElementKind.DesugaredIncrementOrDecrement) {
-        if (!lValueType.isNullable && rValueType.isNullable) {
+        if (!lValueType.isMarkedOrFlexiblyNullable && rValueType.isMarkedOrFlexiblyNullable) {
             val tempType = rValueType
             rValueType = lValueType
             lValueType = tempType
@@ -516,7 +516,7 @@ fun checkTypeMismatch(
         } -> {
             reporter.reportOn(assignment.source, FirErrors.SETTER_PROJECTED_OUT, resolvedSymbol, context)
         }
-        rValue.isNullLiteral && lValueType.nullability == ConeNullability.NOT_NULL -> {
+        rValue.isNullLiteral && !lValueType.isMarkedOrFlexiblyNullable -> {
             reporter.reportOn(rValue.source, FirErrors.NULL_FOR_NONNULL_TYPE, lValueType, context)
         }
         isInitializer -> {
@@ -530,7 +530,7 @@ fun checkTypeMismatch(
             )
         }
         source.kind is KtFakeSourceElementKind.DesugaredIncrementOrDecrement || assignment?.source?.kind is KtFakeSourceElementKind.DesugaredIncrementOrDecrement -> {
-            if (!lValueType.isNullable && rValueType.isNullable) {
+            if (!lValueType.isMarkedOrFlexiblyNullable && rValueType.isMarkedOrFlexiblyNullable) {
                 val tempType = rValueType
                 rValueType = lValueType
                 lValueType = tempType

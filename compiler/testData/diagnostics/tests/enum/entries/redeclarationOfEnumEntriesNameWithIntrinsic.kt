@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // LANGUAGE: -EnumEntries, -PrioritizedEnumEntries
 // WITH_STDLIB
 

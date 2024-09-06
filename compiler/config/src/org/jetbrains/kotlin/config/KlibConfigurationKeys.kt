@@ -32,4 +32,30 @@ object KlibConfigurationKeys {
             "Narrow the visibility of generated synthetic accessors to _internal_" +
                     " if such accessors are only used in inline functions that are not a part of public ABI"
         )
+
+    @JvmField
+    val DUPLICATED_UNIQUE_NAME_STRATEGY: CompilerConfigurationKey<DuplicatedUniqueNameStrategy> =
+        CompilerConfigurationKey.create("Duplicated KLIB dependencies handling strategy")
+}
+
+enum class DuplicatedUniqueNameStrategy(val alias: String) {
+    DENY(Aliases.DENY),
+    ALLOW_ALL_WITH_WARNING(Aliases.ALLOW_ALL_WITH_WARNING),
+    ALLOW_FIRST_WITH_WARNING(Aliases.ALLOW_FIRST_WITH_WARNING),
+    ;
+
+    override fun toString() = alias
+
+    private object Aliases {
+        const val DENY = "deny"
+        const val ALLOW_ALL_WITH_WARNING = "allow-all-with-warning"
+        const val ALLOW_FIRST_WITH_WARNING = "allow-first-with-warning"
+    }
+
+    companion object {
+        const val ALL_ALIASES = "${Aliases.DENY}|${Aliases.ALLOW_ALL_WITH_WARNING}|${Aliases.ALLOW_FIRST_WITH_WARNING}"
+
+        fun parseOrDefault(flagValue: String?, default: DuplicatedUniqueNameStrategy): DuplicatedUniqueNameStrategy =
+            entries.singleOrNull { it.alias == flagValue } ?: default
+    }
 }

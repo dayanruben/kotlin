@@ -155,6 +155,12 @@ public class FirIdeNormalAnalysisSourceModuleSymbolByReferenceTestGenerated exte
   }
 
   @Test
+  @TestMetadata("javaOverriddenSyntheticProperty.kt")
+  public void testJavaOverriddenSyntheticProperty() {
+    runTest("analysis/analysis-api/testData/symbols/symbolByReference/javaOverriddenSyntheticProperty.kt");
+  }
+
+  @Test
   @TestMetadata("javaStaticField.kt")
   public void testJavaStaticField() {
     runTest("analysis/analysis-api/testData/symbols/symbolByReference/javaStaticField.kt");
@@ -495,6 +501,18 @@ public class FirIdeNormalAnalysisSourceModuleSymbolByReferenceTestGenerated exte
     @TestMetadata("generatedCompanionWorksAsValue.kt")
     public void testGeneratedCompanionWorksAsValue() {
       runTest("analysis/analysis-api/testData/symbols/symbolByReference/withTestCompilerPluginEnabled/generatedCompanionWorksAsValue.kt");
+    }
+
+    @Test
+    @TestMetadata("generatedNestedClassInLocalClass.kt")
+    public void testGeneratedNestedClassInLocalClass() {
+      runTest("analysis/analysis-api/testData/symbols/symbolByReference/withTestCompilerPluginEnabled/generatedNestedClassInLocalClass.kt");
+    }
+
+    @Test
+    @TestMetadata("generatedNestedClassInNestedInLocalClass.kt")
+    public void testGeneratedNestedClassInNestedInLocalClass() {
+      runTest("analysis/analysis-api/testData/symbols/symbolByReference/withTestCompilerPluginEnabled/generatedNestedClassInNestedInLocalClass.kt");
     }
   }
 }

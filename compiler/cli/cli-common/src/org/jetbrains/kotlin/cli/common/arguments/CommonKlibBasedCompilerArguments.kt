@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.cli.common.arguments
 
+import org.jetbrains.kotlin.config.DuplicatedUniqueNameStrategy
+
 abstract class CommonKlibBasedCompilerArguments : CommonCompilerArguments() {
     companion object {
         @JvmStatic
@@ -63,5 +65,16 @@ abstract class CommonKlibBasedCompilerArguments : CommonCompilerArguments() {
         set(value) {
             checkFrozen()
             field = value
+        }
+
+    @Argument(
+        value = "-Xklib-duplicated-unique-name-strategy",
+        valueDescription = "{${DuplicatedUniqueNameStrategy.ALL_ALIASES}}",
+        description = "Klib dependencies usage strategy when multiple KLIBs has same `unique_name` property value."
+    )
+    var duplicatedUniqueNameStrategy: String? = null
+        set(value) {
+            checkFrozen()
+            field = if (value.isNullOrEmpty()) null else value
         }
 }

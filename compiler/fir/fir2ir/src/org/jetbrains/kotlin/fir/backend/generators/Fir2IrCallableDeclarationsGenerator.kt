@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.fir.resolve.calls.FirSimpleSyntheticPropertySymbol
 import org.jetbrains.kotlin.fir.resolve.isKFunctionInvoke
 import org.jetbrains.kotlin.fir.resolve.providers.firProvider
 import org.jetbrains.kotlin.fir.resolve.providers.getContainingFile
-import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.*
@@ -752,7 +751,28 @@ class Fir2IrCallableDeclarationsGenerator(private val c: Fir2IrComponents) : Fir
                 isNoinline = valueParameter.isNoinline,
                 isHidden = false,
             ).apply {
-                val defaultValue = valueParameter.defaultValue
+                val defaultValue = valueParameter.defaultValue ?: run tryFindInExpect@{
+                    /*
+                    Scenarios, such as evaluating expressions in the debugger, will 'allow non-cached declarations'.
+                    In this case some symbols, which can be considered 'dependencies' will not produce IR.
+                    Therefore, the 'FunctionDefaultParametersActualizer' will not run.
+
+                    In such cases, we're trying to look up default values from such 'dependency' classes manually
+                     */
+                    if (!c.configuration.allowNonCachedDeclarations) return@tryFindInExpect null
+
+                    val actualFunction = valueParameter.containingFunctionSymbol
+                    if (!actualFunction.isActual) return@tryFindInExpect null
+
+                    val expectFunction = actualFunction.getSingleMatchedExpectForActualOrNull()
+                        ?: return@tryFindInExpect null
+
+                    val expectValueParam = expectFunction.valueParameterSymbols.find { it.name == name }
+                        ?: return@tryFindInExpect null
+
+                    expectValueParam.fir.defaultValue
+                }
+
                 if (!skipDefaultParameter && defaultValue != null) {
                     this.defaultValue = when {
                         forcedDefaultValueConversion && defaultValue !is FirExpressionStub ->

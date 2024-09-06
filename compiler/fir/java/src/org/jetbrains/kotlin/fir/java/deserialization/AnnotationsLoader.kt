@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.*
 import org.jetbrains.kotlin.fir.java.createConstantOrError
 import org.jetbrains.kotlin.fir.languageVersionSettings
-import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -197,7 +196,7 @@ internal class AnnotationsLoader(private val session: FirSession, private val ko
 
     private fun ConeClassLikeLookupTag.toDefaultResolvedTypeRef(): FirResolvedTypeRef =
         buildResolvedTypeRef {
-            coneType = constructClassType(emptyArray(), isNullable = false)
+            coneType = constructClassType()
         }
 
     private fun createEnumEntryAccess(classId: ClassId, name: Name): FirEnumEntryDeserializedAccessExpression =

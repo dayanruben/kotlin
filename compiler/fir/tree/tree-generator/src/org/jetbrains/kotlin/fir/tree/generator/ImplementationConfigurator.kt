@@ -117,7 +117,7 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
                 withGetter = true
             }
             default("coneTypeOrNull") {
-                value = "ConeClassLikeTypeImpl(StandardClassIds.Unit.toLookupTag(), typeArguments = emptyArray(), isNullable = false)"
+                value = "ConeClassLikeTypeImpl(StandardClassIds.Unit.toLookupTag(), typeArguments = emptyArray(), isMarkedNullable = false)"
                 isMutable = false
             }
             additionalImports(
@@ -453,7 +453,7 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
         impl(enumEntryDeserializedAccessExpression) {
             noSource()
             default("coneTypeOrNull") {
-                value = "enumClassId.toLookupTag().constructClassType(emptyArray(), false)"
+                value = "enumClassId.toLookupTag().constructClassType()"
                 additionalImports(toLookupTagImport, constructClassTypeImport)
             }
         }

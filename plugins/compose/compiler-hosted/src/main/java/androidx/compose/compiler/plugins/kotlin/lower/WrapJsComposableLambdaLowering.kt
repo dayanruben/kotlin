@@ -24,7 +24,6 @@ import androidx.compose.compiler.plugins.kotlin.FeatureFlags
 import androidx.compose.compiler.plugins.kotlin.ModuleMetrics
 import androidx.compose.compiler.plugins.kotlin.analysis.StabilityInferencer
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
-import org.jetbrains.kotlin.backend.common.serialization.signature.IdSignatureFactory
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrImplementationDetail
@@ -47,6 +46,7 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.DeepCopySymbolRemapper
 import org.jetbrains.kotlin.ir.util.SYNTHETIC_OFFSET
+import org.jetbrains.kotlin.ir.util.deepCopyWithoutPatchingParents
 import org.jetbrains.kotlin.ir.util.fqNameForIrSerialization
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.isVararg
@@ -118,7 +118,7 @@ class WrapJsComposableLambdaLowering(
         return when (expression.symbol.owner.fqNameForIrSerialization) {
             ComposeCallableIds.composableLambda.asSingleFqName() -> {
                 transformComposableLambdaCall(
-                    originalCall = original,
+                    originalCall = original.deepCopyWithoutPatchingParents(), // To avoid duplicated IR nodes, since we reuse the call's args
                     currentComposer = original.getValueArgument(0),
                     lambda = original.getValueArgument(
                         original.valueArgumentsCount - 1
@@ -127,8 +127,8 @@ class WrapJsComposableLambdaLowering(
             }
             ComposeCallableIds.rememberComposableLambda.asSingleFqName() -> {
                 transformComposableLambdaCall(
-                    originalCall = original,
-                    currentComposer =  original.getValueArgument(3),
+                    originalCall = original.deepCopyWithoutPatchingParents(), // To avoid duplicated IR nodes, since we reuse the call's args
+                    currentComposer = original.getValueArgument(3),
                     lambda = original.getValueArgument(2) as IrFunctionExpression
                 )
             }
@@ -189,8 +189,7 @@ class WrapJsComposableLambdaLowering(
             endOffset = SYNTHETIC_OFFSET,
             type = lambda.type,
             symbol = rememberFunSymbol,
-            typeArgumentsCount = 1,
-            valueArgumentsCount = 4
+            typeArgumentsCount = 1
         ).apply {
             putTypeArgument(0, lambda.type)
             putValueArgument(0, irGet(composableLambdaVar)) // key1
@@ -229,8 +228,7 @@ class WrapJsComposableLambdaLowering(
             endOffset = SYNTHETIC_OFFSET,
             type = returnType,
             symbol = runSymbol,
-            typeArgumentsCount = 1,
-            valueArgumentsCount = 1
+            typeArgumentsCount = 1
         ).apply {
             putTypeArgument(0, returnType)
             putValueArgument(0, runBlock)

@@ -50,16 +50,6 @@ fun CompilerConfiguration.setupFromArguments(arguments: K2NativeCompilerArgument
     put(INCLUDED_BINARY_FILES, arguments.includeBinaries.toNonNullList())
     put(NATIVE_LIBRARY_FILES, arguments.nativeLibraries.toNonNullList())
 
-    if (arguments.repositories != null) {
-        // Show the warning also if `-repo` was really specified.
-        report(
-                WARNING,
-                "'-repo' ('-r') compiler option is deprecated and will be removed in one of the future releases. " +
-                        "Please use library paths instead of library names in all compiler options such as '-library' ('-l')."
-        )
-    }
-    put(REPOSITORIES, arguments.repositories.toNonNullList())
-
     // TODO: Collect all the explicit file names into an object
     // and teach the compiler to work with temporaries and -save-temps.
 
@@ -169,6 +159,7 @@ fun CompilerConfiguration.setupFromArguments(arguments: K2NativeCompilerArgument
             kotlinSourceRoots.isNotEmpty()
                     || !arguments.includes.isNullOrEmpty()
                     || !arguments.exportedLibraries.isNullOrEmpty()
+                    || (outputKind == CompilerOutputKind.PROGRAM && arguments.libraries?.isNotEmpty() == true)
                     || outputKind.isCache
                     || arguments.checkDependencies
     )

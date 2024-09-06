@@ -246,18 +246,18 @@ abstract class FirSyntheticFunctionInterfaceProviderBase(
 
                     fun createSuperType(kind: FunctionTypeKind): FirResolvedTypeRef {
                         return kind.classId(arity).toLookupTag()
-                            .constructClassType(typeArguments.map { it.coneType }.toTypedArray(), isNullable = false)
+                            .constructClassType(typeArguments.map { it.coneType }.toTypedArray())
                             .toFirResolvedTypeRef()
                     }
 
                     if (kind.isReflectType) {
                         superTypeRefs += StandardClassIds.KFunction.toLookupTag()
-                            .constructClassType(arrayOf(typeArguments.last().coneType), isNullable = false)
+                            .constructClassType(arrayOf(typeArguments.last().coneType))
                             .toFirResolvedTypeRef()
                         superTypeRefs += createSuperType(kind.nonReflectKind())
                     } else {
                         superTypeRefs += StandardClassIds.Function.toLookupTag()
-                            .constructClassType(arrayOf(typeArguments.last().coneType), isNullable = false)
+                            .constructClassType(arrayOf(typeArguments.last().coneType))
                             .toFirResolvedTypeRef()
                     }
 
@@ -293,7 +293,7 @@ abstract class FirSyntheticFunctionInterfaceProviderBase(
                             kind.annotationOnInvokeClassId?.let { annotationClassId ->
                                 annotations += buildAnnotation {
                                     annotationTypeRef = annotationClassId
-                                        .constructClassLikeType(emptyArray(), isNullable = false)
+                                        .constructClassLikeType()
                                         .toFirResolvedTypeRef()
                                     argumentMapping = FirEmptyAnnotationArgumentMapping
                                 }
