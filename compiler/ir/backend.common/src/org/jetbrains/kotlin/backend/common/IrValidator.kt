@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.ir.visitors.acceptVoid
 typealias ReportIrValidationError = (IrFile?, IrElement, String, List<IrElement>) -> Unit
 
 data class IrValidatorConfig(
+    val checkTreeConsistency: Boolean = true,
     val checkTypes: Boolean = false,
     val checkProperties: Boolean = false,
     val checkValueScopes: Boolean = false,
@@ -161,7 +162,9 @@ private fun performBasicIrValidation(
         // Performing other checks may cause e.g. infinite recursion.
         return
     }
-    element.checkDeclarationParents(reportError)
+    if (validatorConfig.checkTreeConsistency) {
+        element.checkDeclarationParents(reportError)
+    }
 }
 
 /**
@@ -169,6 +172,11 @@ private fun performBasicIrValidation(
  * (if the verification mode passed to [validateIr] is [IrVerificationMode.ERROR])
  */
 sealed interface IrValidationContext {
+
+    /**
+     * A string that each validation error will begin with.
+     */
+    var customMessagePrefix: String?
 
     /**
      * Logs the validation error into the underlying [MessageCollector].
@@ -213,6 +221,8 @@ private class IrValidationContextImpl(
     private val mode: IrVerificationMode
 ) : IrValidationContext {
 
+    override var customMessagePrefix: String? = null
+
     private var hasValidationErrors: Boolean = false
 
     override fun reportIrValidationError(
@@ -232,8 +242,14 @@ private class IrValidationContextImpl(
         messageCollector.report(
             severity,
             buildString {
-                append("[IR VALIDATION] ")
-                append(phaseMessage)
+                val customMessagePrefix = customMessagePrefix
+                if (customMessagePrefix == null) {
+                    append("[IR VALIDATION] ")
+                    append(phaseMessage)
+                } else {
+                    append(customMessagePrefix)
+                    append(" ")
+                }
                 appendLine(message)
                 append(element.render())
                 for ((i, parent) in parentChain.asReversed().withIndex()) {

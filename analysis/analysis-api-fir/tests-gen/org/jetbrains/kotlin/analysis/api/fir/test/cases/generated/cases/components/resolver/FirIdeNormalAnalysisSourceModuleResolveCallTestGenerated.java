@@ -2431,6 +2431,28 @@ public class FirIdeNormalAnalysisSourceModuleResolveCallTestGenerated extends Ab
   }
 
   @Nested
+  @TestMetadata("analysis/analysis-api/testData/components/resolver/singleByPsi/globallyDuplicateLibraries")
+  @TestDataPath("$PROJECT_ROOT")
+  public class GloballyDuplicateLibraries {
+    @Test
+    public void testAllFilesPresentInGloballyDuplicateLibraries() {
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/components/resolver/singleByPsi/globallyDuplicateLibraries"), Pattern.compile("^(.+)\\.kt$"), null, true);
+    }
+
+    @Test
+    @TestMetadata("functionCallsInIndependentModulesWithGloballyDuplicateJavaLibrary.kt")
+    public void testFunctionCallsInIndependentModulesWithGloballyDuplicateJavaLibrary() {
+      runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/globallyDuplicateLibraries/functionCallsInIndependentModulesWithGloballyDuplicateJavaLibrary.kt");
+    }
+
+    @Test
+    @TestMetadata("functionCallsInIndependentModulesWithGloballyDuplicateLibrary.kt")
+    public void testFunctionCallsInIndependentModulesWithGloballyDuplicateLibrary() {
+      runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/globallyDuplicateLibraries/functionCallsInIndependentModulesWithGloballyDuplicateLibrary.kt");
+    }
+  }
+
+  @Nested
   @TestMetadata("analysis/analysis-api/testData/components/resolver/singleByPsi/inImport")
   @TestDataPath("$PROJECT_ROOT")
   public class InImport {
@@ -2889,6 +2911,12 @@ public class FirIdeNormalAnalysisSourceModuleResolveCallTestGenerated extends Ab
     @TestMetadata("JavaReference.kt")
     public void testJavaReference() {
       runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/java/JavaReference.kt");
+    }
+
+    @Test
+    @TestMetadata("JavaSameSourceLibrary.kt")
+    public void testJavaSameSourceLibrary() {
+      runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/java/JavaSameSourceLibrary.kt");
     }
 
     @Test
@@ -5392,6 +5420,18 @@ public class FirIdeNormalAnalysisSourceModuleResolveCallTestGenerated extends Ab
     }
 
     @Test
+    @TestMetadata("MissingTypeArgumentBeforeDot.kt")
+    public void testMissingTypeArgumentBeforeDot() {
+      runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/withErrors/MissingTypeArgumentBeforeDot.kt");
+    }
+
+    @Test
+    @TestMetadata("MissingTypeArgumentBeforeDotQualified.kt")
+    public void testMissingTypeArgumentBeforeDotQualified() {
+      runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/withErrors/MissingTypeArgumentBeforeDotQualified.kt");
+    }
+
+    @Test
     @TestMetadata("NoSelectorInDotQualifiedCall.kt")
     public void testNoSelectorInDotQualifiedCall() {
       runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/withErrors/NoSelectorInDotQualifiedCall.kt");
@@ -5680,6 +5720,12 @@ public class FirIdeNormalAnalysisSourceModuleResolveCallTestGenerated extends Ab
       @TestMetadata("ClassNameSecondQualifierBeforeOneUnsresolvedClassWithTwoResolvedWithDot.kt")
       public void testClassNameSecondQualifierBeforeOneUnsresolvedClassWithTwoResolvedWithDot() {
         runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/withErrors/partiallyUnresolvedTypeQualifier/ClassNameSecondQualifierBeforeOneUnsresolvedClassWithTwoResolvedWithDot.kt");
+      }
+
+      @Test
+      @TestMetadata("GenericClassNameBeforeOneUnresolvedClass.kt")
+      public void testGenericClassNameBeforeOneUnresolvedClass() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/withErrors/partiallyUnresolvedTypeQualifier/GenericClassNameBeforeOneUnresolvedClass.kt");
       }
     }
   }

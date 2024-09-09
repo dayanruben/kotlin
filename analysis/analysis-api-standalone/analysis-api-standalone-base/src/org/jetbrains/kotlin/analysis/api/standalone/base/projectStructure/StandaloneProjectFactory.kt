@@ -243,8 +243,14 @@ object StandaloneProjectFactory {
             rootsWithSingleJavaFileRoots.partition { (file) -> file.isDirectory || file.extension != JavaFileType.DEFAULT_EXTENSION }
 
         val corePackageIndex = project.getService(PackageIndex::class.java) as CorePackageIndex
-        val rootsIndex = JvmDependenciesDynamicCompoundIndex().apply {
-            addIndex(JvmDependenciesIndexImpl(roots))
+
+        /**
+         * We set `shouldOnlyFindFirstClass` to `false` for the following reason: In Standalone, we have a global view on the project, and
+         * thus the index may contain multiple relevant classes with the same name which later (after the index access) need to be filtered
+         * with a scope. See [org.jetbrains.kotlin.cli.jvm.index.JvmDependenciesIndex.findClasses] for a more detailed explanation.
+         */
+        val rootsIndex = JvmDependenciesDynamicCompoundIndex(shouldOnlyFindFirstClass = false).apply {
+            addIndex(JvmDependenciesIndexImpl(roots, shouldOnlyFindFirstClass = false))
             indexedRoots.forEach { javaRoot ->
                 if (javaRoot.file.isDirectory) {
                     if (javaRoot.type == JavaRoot.RootType.SOURCE) {
@@ -334,12 +340,19 @@ object StandaloneProjectFactory {
         return result.toList()
     }
 
-    fun getAllBinaryRoots(
-        modules: List<KaModule>,
-        environment: KotlinCoreProjectEnvironment,
-    ): List<JavaRoot> = withAllTransitiveDependencies(modules)
-        .filterIsInstance<KaLibraryModule>()
-        .flatMap { it.getJavaRoots(environment) }
+    fun getAllBinaryRoots(modules: List<KaModule>, environment: KotlinCoreProjectEnvironment): List<JavaRoot> {
+        return buildList {
+            for (module in withAllTransitiveDependencies(modules)) {
+                val roots = when (module) {
+                    is KaLibraryModule -> module.getJavaRoots(environment)
+                    is KaLibrarySourceModule -> module.binaryLibrary.getJavaRoots(environment)
+                    else -> emptyList()
+                }
+
+                addAll(roots)
+            }
+        }
+    }
 
     fun createSearchScopeByLibraryRoots(
         binaryRoots: Collection<Path>,
