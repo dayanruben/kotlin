@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.util.ContextCollector.Fil
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
+import org.jetbrains.kotlin.fir.declarations.utils.memberDeclarationNameOrNull
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
@@ -32,6 +33,7 @@ import org.jetbrains.kotlin.fir.resolve.dfa.smartCastedType
 import org.jetbrains.kotlin.fir.resolve.transformers.ReturnTypeCalculatorForFullBodyResolve
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.BodyResolveContext
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.addReceiversFromExtensions
+import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.typeContext
@@ -233,8 +235,10 @@ private class ContextCollectorVisitor(
     override fun visitElement(element: FirElement) {
         dumpContext(element, ContextKind.SELF)
 
-        onActive {
-            withParent(element) {
+        withParent(element) {
+            dumpContext(element, ContextKind.BODY)
+
+            onActive {
                 element.acceptChildren(this)
             }
         }
@@ -256,7 +260,7 @@ private class ContextCollectorVisitor(
 
         val response = filter(psi)
         if (response != FilterResponse.SKIP) {
-            result[key] = computeContext(fir)
+            result[key] = computeContext(fir, kind)
         }
 
         if (response == FilterResponse.STOP) {
@@ -264,17 +268,20 @@ private class ContextCollectorVisitor(
         }
     }
 
-    private fun computeContext(fir: FirElement): Context {
+    private fun computeContext(fir: FirElement, kind: ContextKind): Context {
         val implicitReceiverStack = context.towerDataContext.implicitReceiverStack
 
         val smartCasts = mutableMapOf<RealVariable, Set<ConeKotlinType>>()
 
-        val cfgNode = getClosestControlFlowNode(fir)
+        val cfgNode = getClosestControlFlowNode(fir, kind)
 
         if (cfgNode != null) {
             val flow = cfgNode.flow
 
-            for (realVariable in flow.knownVariables) {
+            val realVariables = flow.knownVariables
+                .sortedBy { it.symbol.memberDeclarationNameOrNull?.asString() }
+
+            for (realVariable in realVariables) {
                 val typeStatement = flow.getTypeStatement(realVariable) ?: continue
                 val stability = realVariable.getStability(flow, bodyHolder.session)
                 if (stability != SmartcastStability.STABLE_VALUE && stability != SmartcastStability.CAPTURED_VARIABLE) {
@@ -304,15 +311,15 @@ private class ContextCollectorVisitor(
         return Context(towerDataContextSnapshot, smartCasts)
     }
 
-    private fun getClosestControlFlowNode(fir: FirElement): CFGNode<*>? {
-        val selfNode = getControlFlowNode(fir)
+    private fun getClosestControlFlowNode(fir: FirElement, kind: ContextKind): CFGNode<*>? {
+        val selfNode = getControlFlowNode(fir, kind)
         if (selfNode != null) {
             return selfNode
         }
 
         // For some specific elements, such as types or references, there is usually no associated 'CFGNode'.
         for (parent in parents.asReversed()) {
-            val parentNode = getControlFlowNode(parent)
+            val parentNode = getControlFlowNode(parent, kind)
             if (parentNode != null) {
                 return parentNode
             }
@@ -321,15 +328,25 @@ private class ContextCollectorVisitor(
         return null
     }
 
-    private fun getControlFlowNode(fir: FirElement): CFGNode<*>? {
+    private fun getControlFlowNode(fir: FirElement, kind: ContextKind): CFGNode<*>? {
         for (container in context.containers.asReversed()) {
             val cfgOwner = container as? FirControlFlowGraphOwner ?: continue
             val cfgReference = cfgOwner.controlFlowGraphReference ?: continue
             val cfg = cfgReference.controlFlowGraph ?: continue
 
-            val node = cfg.nodes.lastOrNull { isAcceptedControlFlowNode(it) && it.fir === fir }
+            val nodes = cfg.nodes
+
+            val node = nodes.firstOrNull { isAcceptedControlFlowNode(it) && it.fir === fir }
             if (node != null) {
-                return node
+                return when (kind) {
+                    ContextKind.SELF -> {
+                        // For the 'SELF' mode, we need to find the state *before* the 'FirElement'
+                        node.previousNodes.singleOrNull()?.takeIf { it in nodes } ?: node
+                    }
+                    ContextKind.BODY -> {
+                        node
+                    }
+                }
             } else if (!cfg.isSubGraph) {
                 return null
             }

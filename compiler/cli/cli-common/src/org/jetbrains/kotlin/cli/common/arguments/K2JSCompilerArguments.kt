@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -16,8 +16,14 @@ class K2JSCompilerArguments : CommonKlibBasedCompilerArguments() {
         @JvmStatic private val serialVersionUID = 0L
     }
 
+    // TODO: KT-70222 Remove this option in 2.2
     @Deprecated("It is senseless to use with IR compiler. Only for compatibility.")
-    @Argument(value = "-output", valueDescription = "<filepath>", description = "Destination *.js file for the compilation result.")
+    @Argument(
+        value = "-output",
+        valueDescription = "<filepath>",
+        description = """This option does nothing and is left for compatibility with the legacy backend.
+It is deprecated and will be removed in Kotlin 2.2."""
+    )
     var outputFile: String? = null
         set(value) {
             checkFrozen()
@@ -44,16 +50,21 @@ class K2JSCompilerArguments : CommonKlibBasedCompilerArguments() {
         }
 
     @GradleOption(
-        value = DefaultValue.BOOLEAN_TRUE_DEFAULT,
+        value = DefaultValue.BOOLEAN_FALSE_DEFAULT,
         gradleInputType = GradleInputTypes.INPUT,
         shouldGenerateDeprecatedKotlinOptions = true,
     )
     @GradleDeprecatedOption(
         message = "Only for legacy backend.",
-        level = DeprecationLevel.WARNING, // TODO: KT-65990 switch to ERROR in 2.1
-        removeAfter = LanguageVersion.KOTLIN_2_1,
+        level = DeprecationLevel.ERROR, // TODO: KT-70222 Remove completely in 2.2
+        removeAfter = LanguageVersion.KOTLIN_2_2,
     )
-    @Argument(value = "-no-stdlib", description = "Don't automatically include the default Kotlin/JS stdlib in compilation dependencies.")
+    @Deprecated("It is senseless to use with IR compiler. Only for compatibility.")
+    @Argument(
+        value = "-no-stdlib",
+        description = """This option does nothing and is left for compatibility with the legacy backend.
+It is deprecated and will be removed in Kotlin 2.2."""
+    )
     var noStdlib = false
         set(value) {
             checkFrozen()
@@ -145,7 +156,7 @@ class K2JSCompilerArguments : CommonKlibBasedCompilerArguments() {
     @Argument(
         value = "-source-map-names-policy",
         valueDescription = "{no|simple-names|fully-qualified-names}",
-        description = "Mode for mapping generated names to original names (IR backend only)."
+        description = "Mode for mapping generated names to original names."
     )
     var sourceMapNamesPolicy: String? = null
         set(value) {
@@ -154,17 +165,21 @@ class K2JSCompilerArguments : CommonKlibBasedCompilerArguments() {
         }
 
     @GradleOption(
-        value = DefaultValue.BOOLEAN_TRUE_DEFAULT,
+        value = DefaultValue.BOOLEAN_FALSE_DEFAULT,
         gradleInputType = GradleInputTypes.INPUT,
         shouldGenerateDeprecatedKotlinOptions = true,
     )
     @GradleDeprecatedOption(
         message = "Only for legacy backend.",
-        level = DeprecationLevel.WARNING, // TODO: KT-65990 switch to ERROR in 2.1
-        removeAfter = LanguageVersion.KOTLIN_2_1,
+        level = DeprecationLevel.ERROR, // TODO: KT-70222 Remove completely in 2.2
+        removeAfter = LanguageVersion.KOTLIN_2_2,
     )
     @Deprecated("It is senseless to use with IR compiler. Only for compatibility.")
-    @Argument(value = "-meta-info", description = "Generate .meta.js and .kjsm files with metadata. Use this to create a library.")
+    @Argument(
+        value = "-meta-info",
+        description = """This option does nothing and is left for compatibility with the legacy backend.
+It is deprecated and will be removed in Kotlin 2.2."""
+    )
     var metaInfo = false
         set(value) {
             checkFrozen()
@@ -230,8 +245,7 @@ class K2JSCompilerArguments : CommonKlibBasedCompilerArguments() {
 
     @Argument(
         value = "-Xir-produce-klib-dir",
-        description = """Generate an unpacked klib into the parent directory of the output JS file.
-In combination with '-meta-info', this generates both IR and pre-IR versions of the library."""
+        description = "Generate an unpacked klib into the parent directory of the output JS file."
     )
     var irProduceKlibDir = false
         set(value) {
@@ -241,7 +255,7 @@ In combination with '-meta-info', this generates both IR and pre-IR versions of 
 
     @Argument(
         value = "-Xir-produce-klib-file",
-        description = "Generate a packed klib into the file specified by '-output'. This disables the pre-IR backend."
+        description = "Generate a packed klib into the directory specified by '-ir-output-dir'."
     )
     var irProduceKlibFile = false
         set(value) {
@@ -249,7 +263,7 @@ In combination with '-meta-info', this generates both IR and pre-IR versions of 
             field = value
         }
 
-    @Argument(value = "-Xir-produce-js", description = "Generate a JS file using the IR backend. This option also disables the pre-IR backend.")
+    @Argument(value = "-Xir-produce-js", description = "Generate a JS file using the IR backend.")
     var irProduceJs = false
         set(value) {
             checkFrozen()
@@ -331,13 +345,6 @@ In combination with '-meta-info', this generates both IR and pre-IR versions of 
 
     @Argument(value = "-Xir-minimized-member-names", description = "Minimize the names of members.")
     var irMinimizedMemberNames = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @Argument(value = "-Xir-only", description = "Disable the pre-IR backend.")
-    var irOnly = false
         set(value) {
             checkFrozen()
             field = value
@@ -451,7 +458,7 @@ In combination with '-meta-info', this generates both IR and pre-IR versions of 
 
     @Argument(
         value = "-Xgenerate-dts",
-        description = "Generate a TypeScript declaration .d.ts file alongside the JS file. This is available only in the IR backend."
+        description = "Generate a TypeScript declaration .d.ts file alongside the JS file."
     )
     var generateDts = false
         set(value) {
@@ -471,7 +478,7 @@ In combination with '-meta-info', this generates both IR and pre-IR versions of 
 
     @Argument(
         value = "-Xstrict-implicit-export-types",
-        description = "Generate strict types for implicitly exported entities inside d.ts files. This is available in the IR backend only."
+        description = "Generate strict types for implicitly exported entities inside d.ts files."
     )
     var strictImplicitExportType = false
         set(value) {

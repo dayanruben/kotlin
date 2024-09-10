@@ -150,12 +150,10 @@ class JsWasmStdlibSpecialCompatibilityChecksTest : TestCaseWithTmpdir() {
 
             runJsCompiler(messageCollector) {
                 this.freeArgs = listOf(sourceFile.absolutePath)
-                this.noStdlib = true // it is passed explicitly
                 this.libraries = fakeStdlib.absolutePath
                 this.outputDir = outputDir.absolutePath
                 this.moduleName = moduleName
                 this.irProduceKlibFile = true
-                this.irOnly = true
                 this.irModuleName = moduleName
                 this.wasm = isWasm
             }
