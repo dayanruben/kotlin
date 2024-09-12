@@ -112,14 +112,22 @@ public annotation class Throws(vararg val exceptionClasses: KClass<out Throwable
  *
  * # Migration
  *
- * Rewrite the code using explicit `actual typealias`. Unfortunately, it requires you to move your expect declarations into another
- * package. Refer to [KT-58545](https://youtrack.jetbrains.com/issue/KT-58545) for more detailed migration example.
+ * Alternatives:
+ * 1. Rewrite the code using explicit `actual typealias`. Unfortunately, it requires you to move your expect declarations into another package.
+ *    Refer to [KT-58545](https://youtrack.jetbrains.com/issue/KT-58545) for a more detailed migration example.
+ * 2. Use `kotlin.jvm.KotlinActual` experimental feature. See https://youtrack.jetbrains.com/issue/KT-67202
  */
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.CLASS)
 @ExperimentalMultiplatform
 @MustBeDocumented
 @SinceKotlin("1.9")
+@Deprecated(
+    "Please migrate to kotlin.jvm.KotlinActual in kotlin-annotations-jvm. " +
+            "ImplicitlyActualizedByJvmDeclaration will be dropped in future versions of Kotlin. " +
+            "See https://youtrack.jetbrains.com/issue/KT-67202"
+)
+@DeprecatedSinceKotlin(errorSince = "2.1")
 public actual annotation class ImplicitlyActualizedByJvmDeclaration
 
 /**

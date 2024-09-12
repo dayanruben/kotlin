@@ -35,7 +35,6 @@ class FirJavaValueParameter @FirImplementationDetail constructor(
     override val source: KtSourceElement?,
     override val moduleData: FirModuleData,
     override val origin: FirDeclarationOrigin.Java,
-    resolvePhase: FirResolvePhase,
     override val attributes: FirDeclarationAttributes,
     override var returnTypeRef: FirTypeRef,
     override val name: Name,
@@ -55,7 +54,7 @@ class FirJavaValueParameter @FirImplementationDetail constructor(
         symbol.bind(this)
 
         @OptIn(ResolveStateAccess::class)
-        this.resolveState = resolvePhase.asResolveState()
+        this.resolveState = FirResolvePhase.ANALYZED_DEPENDENCIES.asResolveState()
     }
 
     override val isCrossinline: Boolean
@@ -70,7 +69,7 @@ class FirJavaValueParameter @FirImplementationDetail constructor(
     override val isVar: Boolean
         get() = false
 
-    override val annotations: List<FirAnnotation> get() = annotationList.getAnnotations()
+    override val annotations: List<FirAnnotation> get() = annotationList
 
     override val receiverParameter: FirReceiverParameter?
         get() = null
@@ -153,7 +152,7 @@ class FirJavaValueParameter @FirImplementationDetail constructor(
     }
 
     override fun replaceAnnotations(newAnnotations: List<FirAnnotation>) {
-        throw AssertionError("Mutating annotations for FirJava* is not supported")
+        shouldNotBeCalled(::replaceAnnotations, ::annotations)
     }
 
     override fun <D> transformAnnotations(transformer: FirTransformer<D>, data: D): FirValueParameter {
@@ -229,7 +228,6 @@ class FirJavaValueParameterBuilder {
             source,
             moduleData,
             origin = javaOrigin(isFromSource),
-            resolvePhase = FirResolvePhase.ANALYZED_DEPENDENCIES,
             attributes,
             returnTypeRef,
             name,

@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.types.impl.makeTypeProjection
 import org.jetbrains.kotlin.ir.util.*
+import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.mpp.*
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -40,9 +41,9 @@ internal abstract class IrExpectActualMatchingContext(
     val typeContext: IrTypeSystemContext,
     val expectToActualClassMap: ClassActualizationInfo.ActualClassMapping
 ) : ExpectActualMatchingContext<IrSymbol>, TypeSystemContext by typeContext {
-    // This incompatibility is often suppressed in the source code (e.g. in kotlin-stdlib).
-    // The backend must be able to do expect-actual matching to emit bytecode
-    // That's why we disable the checker here. Probably, this checker can be enabled once KT-60426 is fixed
+    // Default params are not checked on backend because backend ignores expect classes in fake override builder.
+    // See https://github.com/JetBrains/kotlin/commit/8d725753f8f8d430101a17bc1049463a6319359b
+    // Default params can't be accurately checked without information about overriddenSymbols of expect classes members
     override val shouldCheckDefaultParams: Boolean
         get() = false
 
@@ -456,15 +457,8 @@ internal abstract class IrExpectActualMatchingContext(
         }
     }
 
-    override fun RegularClassSymbolMarker.isNotSamInterface(): Boolean {
-        /*
-         * This is incorrect for java classes (because all java interfaces are considered as fun interfaces),
-         *   but it's fine to not to check if some java interfaces is really SAM or not, because if one
-         *   tries to actualize `expect fun interface` with typealias to non-SAM java interface, frontend
-         *   will report an error and IR matching won't be invoked
-         */
-        return !asIr().isFun
-    }
+    override fun RegularClassSymbolMarker.isSamInterface(): Boolean =
+        this.asIr().functions.singleOrNull { it.modality == Modality.ABSTRACT } != null
 
     override fun CallableSymbolMarker.isFakeOverride(containingExpectClass: RegularClassSymbolMarker?): Boolean {
         return asIr().isFakeOverride

@@ -8284,6 +8284,24 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("deadLocalDeclaration.kt")
+        public void testDeadLocalDeclaration() {
+          runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/deadCode/deadLocalDeclaration.kt");
+        }
+
+        @Test
+        @TestMetadata("deadNestedDeclaration.kt")
+        public void testDeadNestedDeclaration() {
+          runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/deadCode/deadNestedDeclaration.kt");
+        }
+
+        @Test
+        @TestMetadata("deadPostponedLambda.kt")
+        public void testDeadPostponedLambda() {
+          runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/deadCode/deadPostponedLambda.kt");
+        }
+
+        @Test
         @TestMetadata("expressionInUnitLiteral.kt")
         public void testExpressionInUnitLiteral() {
           runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/deadCode/expressionInUnitLiteral.kt");
@@ -27926,6 +27944,18 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("directJavaActualization_actualClassWithoutExpect_sharedActual.kt")
+        public void testDirectJavaActualization_actualClassWithoutExpect_sharedActual() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/directJavaActualization/directJavaActualization_actualClassWithoutExpect_sharedActual.kt");
+        }
+
+        @Test
+        @TestMetadata("directJavaActualization_actualMemberWithoutExpect_sharedActual.kt")
+        public void testDirectJavaActualization_actualMemberWithoutExpect_sharedActual() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/directJavaActualization/directJavaActualization_actualMemberWithoutExpect_sharedActual.kt");
+        }
+
+        @Test
         @TestMetadata("directJavaActualization_actualWithoutExpect.kt")
         public void testDirectJavaActualization_actualWithoutExpect() {
           runTest("compiler/testData/diagnostics/tests/multiplatform/directJavaActualization/directJavaActualization_actualWithoutExpect.kt");
@@ -27941,6 +27971,18 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         @TestMetadata("directJavaActualization_classifierIncompatibilities.kt")
         public void testDirectJavaActualization_classifierIncompatibilities() {
           runTest("compiler/testData/diagnostics/tests/multiplatform/directJavaActualization/directJavaActualization_classifierIncompatibilities.kt");
+        }
+
+        @Test
+        @TestMetadata("directJavaActualization_defaultParams.kt")
+        public void testDirectJavaActualization_defaultParams() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/directJavaActualization/directJavaActualization_defaultParams.kt");
+        }
+
+        @Test
+        @TestMetadata("directJavaActualization_funInterface_fakeOverrideInJava.kt")
+        public void testDirectJavaActualization_funInterface_fakeOverrideInJava() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/directJavaActualization/directJavaActualization_funInterface_fakeOverrideInJava.kt");
         }
 
         @Test

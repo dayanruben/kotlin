@@ -201,12 +201,13 @@ open class IncrementalFirJvmCompilerRunner(
                     )
 
                     val analysisResults =
-                        compileModuleToAnalyzedFir(
-                            ModuleCompilerInput(targetId, groupedSources, configuration),
+                        @OptIn(IncrementalCompilationApi::class) compileModuleToAnalyzedFirViaLightTreeIncrementally(
                             projectEnvironment,
-                            emptyList(),
-                            incrementalExcludesScope,
+                            messageCollector,
+                            configuration,
+                            ModuleCompilerInput(targetId, groupedSources, configuration),
                             diagnosticsReporter,
+                            incrementalExcludesScope,
                         )
 
                     // TODO: consider what to do if many compilations find a main class

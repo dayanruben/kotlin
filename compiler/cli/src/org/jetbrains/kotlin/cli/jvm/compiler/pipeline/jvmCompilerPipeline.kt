@@ -16,14 +16,13 @@ import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.io.URLUtil
-import org.jetbrains.kotlin.KtSourceFile
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory
 import org.jetbrains.kotlin.backend.jvm.JvmIrDeserializerImpl
 import org.jetbrains.kotlin.backend.jvm.JvmIrSpecialAnnotationSymbolProvider
 import org.jetbrains.kotlin.backend.jvm.JvmIrTypeSystemContext
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
-import org.jetbrains.kotlin.cli.common.*
+import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.config.KotlinSourceRoot
 import org.jetbrains.kotlin.cli.common.fir.reportToMessageCollector
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
@@ -51,8 +50,6 @@ import org.jetbrains.kotlin.fir.backend.Fir2IrConfiguration
 import org.jetbrains.kotlin.fir.backend.Fir2IrExtensions
 import org.jetbrains.kotlin.fir.backend.jvm.*
 import org.jetbrains.kotlin.fir.backend.utils.extractFirDeclarations
-import org.jetbrains.kotlin.fir.extensions.FirAnalysisHandlerExtension
-import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.pipeline.*
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
 import org.jetbrains.kotlin.fir.session.IncrementalCompilationContext
@@ -63,86 +60,25 @@ import org.jetbrains.kotlin.load.kotlin.MetadataFinderFactory
 import org.jetbrains.kotlin.load.kotlin.PackagePartProvider
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
 import org.jetbrains.kotlin.load.kotlin.incremental.IncrementalPackagePartProvider
-import org.jetbrains.kotlin.modules.Module
 import org.jetbrains.kotlin.modules.TargetId
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus
 import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver
-import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import java.io.File
 
-fun compileModulesUsingFrontendIrAndLightTree(
-    projectEnvironment: VfsBasedProjectEnvironment,
-    compilerConfiguration: CompilerConfiguration,
-    messageCollector: MessageCollector,
-    buildFile: File?,
-    module: Module,
-    targetDescription: String,
-    checkSourceFiles: Boolean,
-    isPrintingVersion: Boolean,
-): Boolean {
-    ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
-
-    val performanceManager = compilerConfiguration[CLIConfigurationKeys.PERF_MANAGER]
-    performanceManager?.notifyCompilerInitialized(0, 0, targetDescription)
-
-    val project = projectEnvironment.project
-    FirAnalysisHandlerExtension.analyze(project, compilerConfiguration)?.let { return it }
-
-    val moduleConfiguration = compilerConfiguration.copy().applyModuleProperties(module, buildFile).apply {
-        put(JVMConfigurationKeys.FRIEND_PATHS, module.getFriendPaths())
-    }
-    val groupedSources = collectSources(compilerConfiguration, projectEnvironment, messageCollector)
-    if (messageCollector.hasErrors()) {
-        return false
-    }
-
-    if (checkSourceFiles && groupedSources.isEmpty() && buildFile == null) {
-        if (isPrintingVersion) return true
-        messageCollector.report(CompilerMessageSeverity.ERROR, "No source files")
-        return false
-    }
-
-    val renderDiagnosticNames = moduleConfiguration.getBoolean(CLIConfigurationKeys.RENDER_DIAGNOSTIC_INTERNAL_NAME)
-    val diagnosticsReporter = FirKotlinToJvmBytecodeCompiler.createPendingReporter(messageCollector)
-
-    val analysisResults = compileModuleToAnalyzedFir(
-        ModuleCompilerInput(TargetId(module), groupedSources, moduleConfiguration),
-        projectEnvironment,
-        emptyList(),
-        null,
-        diagnosticsReporter,
-    )
-
-    if (!checkKotlinPackageUsageForLightTree(moduleConfiguration, analysisResults.outputs.flatMap { it.fir })) {
-        return false
-    }
-
-    val mainClassFqName = runIf(moduleConfiguration.get(JVMConfigurationKeys.OUTPUT_JAR) != null) {
-        findMainClass(analysisResults.outputs.last().fir)
-    }
-
-    if (diagnosticsReporter.hasErrors) {
-        diagnosticsReporter.reportToMessageCollector(messageCollector, renderDiagnosticNames)
-        return false
-    }
-
+internal fun FrontendContextForSingleModule.runBackend(
+    firResult: FirResult,
+    diagnosticsReporter: BaseDiagnosticsCollector,
+): GenerationState {
     val compilerEnvironment = ModuleCompilerEnvironment(projectEnvironment, diagnosticsReporter)
-    val irInput = convertAnalyzedFirToIr(moduleConfiguration, TargetId(module), analysisResults, compilerEnvironment)
+    val irInput = convertAnalyzedFirToIr(configuration, TargetId(module), firResult, compilerEnvironment)
 
     val codegenOutput = generateCodeFromIr(irInput, compilerEnvironment)
 
-    diagnosticsReporter.reportToMessageCollector(
-        messageCollector, moduleConfiguration.getBoolean(CLIConfigurationKeys.RENDER_DIAGNOSTIC_INTERNAL_NAME)
-    )
+    diagnosticsReporter.reportToMessageCollector(messageCollector, renderDiagnosticName)
 
-    return writeOutputsIfNeeded(
-        project,
-        compilerConfiguration,
-        messageCollector,
-        listOf(codegenOutput.generationState),
-        mainClassFqName
-    )
+    ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
+
+    return codegenOutput.generationState
 }
 
 fun convertAnalyzedFirToIr(
@@ -270,63 +206,6 @@ fun generateCodeFromIr(
     performanceManager?.notifyGenerationFinished()
 
     return ModuleCompilerOutput(generationState, builderFactory)
-}
-
-fun compileModuleToAnalyzedFir(
-    input: ModuleCompilerInput,
-    projectEnvironment: VfsBasedProjectEnvironment,
-    previousStepsSymbolProviders: List<FirSymbolProvider>,
-    incrementalExcludesScope: AbstractProjectFileSearchScope?,
-    diagnosticsReporter: BaseDiagnosticsCollector,
-): FirResult {
-    val moduleConfiguration = input.configuration
-    val performanceManager = moduleConfiguration[CLIConfigurationKeys.PERF_MANAGER]
-    performanceManager?.notifyAnalysisStarted()
-
-    var librariesScope = projectEnvironment.getSearchScopeForProjectLibraries()
-    val rootModuleName = input.targetId.name
-
-    val incrementalCompilationScope = createIncrementalCompilationScope(
-        moduleConfiguration,
-        projectEnvironment,
-        incrementalExcludesScope
-    )?.also { librariesScope -= it }
-
-    val extensionRegistrars = FirExtensionRegistrar.getInstances(projectEnvironment.project)
-
-    val allSources = mutableListOf<KtSourceFile>().apply {
-        addAll(input.groupedSources.commonSources)
-        addAll(input.groupedSources.platformSources)
-    }
-    // TODO: handle friends paths
-    val libraryList = createLibraryListForJvm(rootModuleName, moduleConfiguration, friendPaths = emptyList())
-    val sessionWithSources = prepareJvmSessions(
-        allSources, moduleConfiguration, projectEnvironment, Name.special("<$rootModuleName>"),
-        extensionRegistrars, librariesScope, libraryList,
-        isCommonSource = input.groupedSources.isCommonSourceForLt,
-        isScript = { false },
-        fileBelongsToModule = input.groupedSources.fileBelongsToModuleForLt,
-        createProviderAndScopeForIncrementalCompilation = { files ->
-            val scope = projectEnvironment.getSearchScopeBySourceFiles(files)
-            createContextForIncrementalCompilation(
-                moduleConfiguration,
-                projectEnvironment,
-                scope,
-                previousStepsSymbolProviders,
-                incrementalCompilationScope
-            )
-        }
-    )
-
-    val countFilesAndLines = if (performanceManager == null) null else performanceManager::addSourcesStats
-
-    val outputs = sessionWithSources.map { (session, sources) ->
-        buildResolveAndCheckFirViaLightTree(session, sources, diagnosticsReporter, countFilesAndLines)
-    }
-    outputs.runPlatformCheckers(diagnosticsReporter)
-
-    performanceManager?.notifyAnalysisFinished()
-    return FirResult(outputs)
 }
 
 fun createIncrementalCompilationScope(

@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirErrorExpression
 import org.jetbrains.kotlin.fir.expressions.FirLiteralExpression
 import org.jetbrains.kotlin.fir.expressions.unexpandedClassId
-import org.jetbrains.kotlin.fir.java.FirJavaFacade
 import org.jetbrains.kotlin.fir.java.FirJavaTypeConversionMode
 import org.jetbrains.kotlin.fir.java.JavaTypeParameterStack
 import org.jetbrains.kotlin.fir.java.declarations.*
@@ -168,6 +167,7 @@ class FirSignatureEnhancement(
 
                 val symbol = FirFieldSymbol(original.callableId)
                 buildJavaField {
+                    this.containingClassSymbol = owner.symbol
                     source = firElement.source
                     moduleData = this@FirSignatureEnhancement.moduleData
                     this.symbol = symbol
@@ -175,7 +175,7 @@ class FirSignatureEnhancement(
                     returnTypeRef = newReturnTypeRef
                     isFromSource = original.origin.fromSource
                     isVar = firElement.isVar
-                    annotationList = FirJavaAnnotationList { firElement.annotations }
+                    annotationList = FirDelegatedJavaAnnotationList(firElement)
                     status = firElement.status
                     if (firElement is FirJavaField) {
                         lazyInitializer = firElement.lazyInitializer
@@ -236,8 +236,8 @@ class FirSignatureEnhancement(
 
         val firMethod = original.fir
         when (firMethod) {
-            is FirJavaMethod -> enhanceTypeParameterBounds(firMethod, firMethod.source, firMethod::withTypeParameterBoundsResolveLock)
-            is FirJavaConstructor -> enhanceTypeParameterBounds(firMethod, firMethod.source, firMethod::withTypeParameterBoundsResolveLock)
+            is FirJavaMethod -> enhanceTypeParameterBounds(firMethod, firMethod::withTypeParameterBoundsResolveLock)
+            is FirJavaConstructor -> enhanceTypeParameterBounds(firMethod, firMethod::withTypeParameterBoundsResolveLock)
             else -> {}
         }
 
@@ -528,19 +528,23 @@ class FirSignatureEnhancement(
         function.replaceStatus(newStatus)
     }
 
-    fun performBoundsResolutionForClassTypeParameters(facade: FirJavaFacade, klass: FirJavaClass, source: KtSourceElement?) {
-        enhanceTypeParameterBounds(klass, source, facade::withClassTypeParameterBoundsResolveLock)
+    private fun enhanceTypeParameterBounds(owner: FirTypeParameterRefsOwner, lock: (() -> Unit) -> Unit) {
+        enhanceTypeParameterBounds(owner, owner.typeParameters, lock)
     }
 
-    private fun enhanceTypeParameterBounds(owner: FirTypeParameterRefsOwner, source: KtSourceElement?, lock: (() -> Unit) -> Unit) {
-        val typeParameters = owner.typeParameters
+    fun enhanceTypeParameterBounds(
+        owner: FirTypeParameterRefsOwner,
+        typeParameters: List<FirTypeParameterRef>,
+        lock: (() -> Unit) -> Unit,
+    ) {
         if (typeParameters.isEmpty()) return
-        val newBoundsSuccessfullyPublished = enhanceTypeParameterBoundsFirstRound(typeParameters, source, lock)
+        val fakeSource = owner.source?.fakeElement(KtFakeSourceElementKind.Enhancement)
+        val newBoundsSuccessfullyPublished = enhanceTypeParameterBoundsFirstRound(typeParameters, fakeSource, lock)
         if (!newBoundsSuccessfullyPublished) {
             return
         }
 
-        enhanceTypeParameterBoundsSecondRound(typeParameters, source, lock)
+        enhanceTypeParameterBoundsSecondRound(typeParameters, fakeSource, lock)
     }
 
     private inline fun enhanceTypeParameterBounds(
@@ -731,7 +735,8 @@ class FirSignatureEnhancement(
             typeParameterCount == supertypeParameterCount ->
                 typeParameters.map { ConeTypeParameterTypeImpl(ConeTypeParameterLookupTag(it.symbol), isMarkedNullable = false) }
             typeParameterCount == 1 && supertypeParameterCount > 1 && purelyImplementedClassIdFromAnnotation == null -> {
-                val projection = ConeTypeParameterTypeImpl(ConeTypeParameterLookupTag(typeParameters.first().symbol), isMarkedNullable = false)
+                val projection =
+                    ConeTypeParameterTypeImpl(ConeTypeParameterLookupTag(typeParameters.first().symbol), isMarkedNullable = false)
                 (1..supertypeParameterCount).map { projection }
             }
             else -> return null

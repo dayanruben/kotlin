@@ -12,12 +12,14 @@ import org.jetbrains.kotlin.fir.builder.FirBuilderDsl
 import org.jetbrains.kotlin.fir.contracts.FirContractDescription
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.FirConstructorBuilder
+import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirBlock
 import org.jetbrains.kotlin.fir.expressions.FirDelegatedConstructorCall
 import org.jetbrains.kotlin.fir.java.enhancement.FirEmptyJavaAnnotationList
 import org.jetbrains.kotlin.fir.java.enhancement.FirJavaAnnotationList
 import org.jetbrains.kotlin.fir.references.FirControlFlowGraphReference
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirConstructorSymbol
 import org.jetbrains.kotlin.fir.types.ConeSimpleKotlinType
 import org.jetbrains.kotlin.fir.types.FirTypeRef
@@ -40,9 +42,9 @@ class FirJavaConstructor @FirImplementationDetail constructor(
     override val valueParameters: MutableList<FirValueParameter>,
     override val typeParameters: MutableList<FirTypeParameterRef>,
     private val annotationList: FirJavaAnnotationList,
-    override var status: FirDeclarationStatus,
-    resolvePhase: FirResolvePhase,
+    private val originalStatus: FirResolvedDeclarationStatusImpl,
     override val dispatchReceiverType: ConeSimpleKotlinType?,
+    private val containingClassSymbol: FirClassSymbol<*>,
 ) : FirConstructor() {
     override val receiverParameter: FirReceiverParameter? get() = null
     override var deprecationsProvider: DeprecationsProvider = UnresolvedDeprecationProvider
@@ -53,7 +55,7 @@ class FirJavaConstructor @FirImplementationDetail constructor(
         symbol.bind(this)
 
         @OptIn(ResolveStateAccess::class)
-        this.resolveState = resolvePhase.asResolveState()
+        this.resolveState = FirResolvePhase.ANALYZED_DEPENDENCIES.asResolveState()
     }
 
     private val typeParameterBoundsResolveLock = ReentrantLock()
@@ -68,7 +70,14 @@ class FirJavaConstructor @FirImplementationDetail constructor(
 
     override val controlFlowGraphReference: FirControlFlowGraphReference? get() = null
 
-    override val annotations: List<FirAnnotation> get() = annotationList.getAnnotations()
+    override val annotations: List<FirAnnotation> get() = annotationList
+
+    // TODO: the lazy deprecationsProvider is a workaround for KT-55387, some non-lazy solution should probably be used instead
+    override val status: FirDeclarationStatus by lazy {
+        applyStatusTransformerExtensions(this, originalStatus) {
+            transformStatus(it, this@FirJavaConstructor, containingClassSymbol, isLocal = false)
+        }
+    }
 
     override val contextReceivers: List<FirContextReceiver>
         get() = emptyList()
@@ -101,8 +110,6 @@ class FirJavaConstructor @FirImplementationDetail constructor(
         transformReturnTypeRef(transformer, data)
         transformTypeParameters(transformer, data)
         transformValueParameters(transformer, data)
-        status = status.transformSingle(transformer, data)
-        transformAnnotations(transformer, data)
         return this
     }
 
@@ -115,12 +122,11 @@ class FirJavaConstructor @FirImplementationDetail constructor(
     }
 
     override fun <D> transformStatus(transformer: FirTransformer<D>, data: D): FirJavaConstructor {
-        status = status.transformSingle(transformer, data)
         return this
     }
 
     override fun replaceAnnotations(newAnnotations: List<FirAnnotation>) {
-        throw AssertionError("Mutating annotations for FirJava* is not supported")
+        shouldNotBeCalled(::replaceAnnotations, ::annotations)
     }
 
     override fun <D> transformAnnotations(transformer: FirTransformer<D>, data: D): FirJavaConstructor {
@@ -175,7 +181,7 @@ class FirJavaConstructor @FirImplementationDetail constructor(
     }
 
     override fun replaceStatus(newStatus: FirDeclarationStatus) {
-        status = newStatus
+        shouldNotBeCalled(::replaceStatus, ::status)
     }
 }
 
@@ -185,6 +191,7 @@ class FirJavaConstructorBuilder : FirConstructorBuilder() {
     var isPrimary: Boolean by Delegates.notNull()
     var isFromSource: Boolean by Delegates.notNull()
     var annotationList: FirJavaAnnotationList = FirEmptyJavaAnnotationList
+    lateinit var containingClassSymbol: FirClassSymbol<*>
 
     @OptIn(FirImplementationDetail::class)
     override fun build(): FirJavaConstructor {
@@ -198,9 +205,9 @@ class FirJavaConstructorBuilder : FirConstructorBuilder() {
             valueParameters,
             typeParameters,
             annotationList,
-            status,
-            resolvePhase = FirResolvePhase.ANALYZED_DEPENDENCIES,
+            status as FirResolvedDeclarationStatusImpl,
             dispatchReceiverType,
+            containingClassSymbol,
         )
     }
 
