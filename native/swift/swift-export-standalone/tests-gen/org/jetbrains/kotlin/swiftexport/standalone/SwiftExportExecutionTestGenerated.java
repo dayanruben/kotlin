@@ -42,6 +42,12 @@ public class SwiftExportExecutionTestGenerated extends AbstractSwiftExportExecut
   }
 
   @Test
+  @TestMetadata("classMappings")
+  public void testClassMappings() {
+    runTest("native/swift/swift-export-standalone/testData/execution/classMappings/");
+  }
+
+  @Test
   @TestMetadata("never_type")
   public void testNever_type() {
     runTest("native/swift/swift-export-standalone/testData/execution/never_type/");
@@ -51,6 +57,12 @@ public class SwiftExportExecutionTestGenerated extends AbstractSwiftExportExecut
   @TestMetadata("null_type")
   public void testNull_type() {
     runTest("native/swift/swift-export-standalone/testData/execution/null_type/");
+  }
+
+  @Test
+  @TestMetadata("nullable_never_type")
+  public void testNullable_never_type() {
+    runTest("native/swift/swift-export-standalone/testData/execution/nullable_never_type/");
   }
 
   @Test

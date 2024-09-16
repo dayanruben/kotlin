@@ -28,8 +28,8 @@ internal fun generateBridgeSources(
     val cBridgePrinter = createCBridgePrinter()
 
     requests
-        .let { if (stableDeclarationsOrder) it.sorted() else it }
-        .flatMap(bridgeGenerator::generateFunctionBridges)
+        .let { if (stableDeclarationsOrder) it.sortedWith(StableBridgeRequestComparator) else it }
+        .flatMap(bridgeGenerator::generateBridges)
         .forEach {
             kotlinBridgePrinter.add(it)
             cBridgePrinter.add(it)

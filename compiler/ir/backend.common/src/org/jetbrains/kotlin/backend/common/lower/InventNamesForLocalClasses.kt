@@ -6,8 +6,7 @@
 package org.jetbrains.kotlin.backend.common.lower
 
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
-import org.jetbrains.kotlin.backend.common.ir.getDefaultAdditionalStatementsFromInlinedBlock
-import org.jetbrains.kotlin.backend.common.ir.getNonDefaultAdditionalStatementsFromInlinedBlock
+import org.jetbrains.kotlin.backend.common.ir.getTmpVariablesForArguments
 import org.jetbrains.kotlin.backend.common.ir.getOriginalStatementsFromInlinedBlock
 import org.jetbrains.kotlin.ir.util.isFunctionInlining
 import org.jetbrains.kotlin.ir.IrElement
@@ -93,9 +92,8 @@ abstract class InventNamesForLocalClasses(private val shouldIncludeVariableName:
         }
 
         override fun visitInlinedFunctionBlock(inlinedBlock: IrInlinedFunctionBlock, data: NameBuilder) {
-            inlinedBlock.getNonDefaultAdditionalStatementsFromInlinedBlock().forEach { it.accept(this, data) }
             if (!data.processingInlinedFunction && inlinedBlock.isFunctionInlining()) {
-                inlinedBlock.getDefaultAdditionalStatementsFromInlinedBlock().forEach { it.accept(this, data) }
+                inlinedBlock.getTmpVariablesForArguments().forEach { it.accept(this, data) }
 
                 val inlinedAt = inlinedBlock.inlineFunction.name.asString()
                 val newData = data.append("\$inlined\$$inlinedAt").copy(isLocal = true, processingInlinedFunction = true)

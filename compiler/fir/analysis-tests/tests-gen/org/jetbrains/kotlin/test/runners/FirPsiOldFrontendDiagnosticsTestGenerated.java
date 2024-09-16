@@ -5286,6 +5286,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         public void testSpecialCalls() {
           runTest("compiler/testData/diagnostics/tests/callableReference/generic/specialCalls.kt");
         }
+
+        @Test
+        @TestMetadata("withExpectedGenericJavaFunction.kt")
+        public void testWithExpectedGenericJavaFunction() {
+          runTest("compiler/testData/diagnostics/tests/callableReference/generic/withExpectedGenericJavaFunction.kt");
+        }
       }
 
       @Nested
@@ -41949,6 +41955,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         @TestMetadata("smartCasts.kt")
         public void testSmartCasts() {
           runTest("compiler/testData/diagnostics/tests/when/guard/smartCasts.kt");
+        }
+
+        @Test
+        @TestMetadata("suggestGuard.kt")
+        public void testSuggestGuard() {
+          runTest("compiler/testData/diagnostics/tests/when/guard/suggestGuard.kt");
         }
 
         @Test
