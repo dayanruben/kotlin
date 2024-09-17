@@ -257,7 +257,6 @@ open class InnerClassConstructorCallsLowering(val context: CommonBackendContext)
                 val newCall = IrDelegatingConstructorCallImpl(
                     expression.startOffset, expression.endOffset, context.irBuiltIns.unitType, newCallee.symbol,
                     typeArgumentsCount = expression.typeArgumentsCount,
-                    valueArgumentsCount = newCallee.valueParameters.size
                 ).apply { copyTypeArgumentsFrom(expression) }
 
                 newCall.putValueArgument(0, dispatchReceiver)
@@ -290,7 +289,6 @@ open class InnerClassConstructorCallsLowering(val context: CommonBackendContext)
                         type,
                         newCallee.symbol,
                         typeArgumentsCount = typeArgumentsCount,
-                        valueArgumentsCount = newCallee.valueParameters.size,
                         reflectionTarget = newReflectionTarget?.symbol,
                         origin = origin
                     )

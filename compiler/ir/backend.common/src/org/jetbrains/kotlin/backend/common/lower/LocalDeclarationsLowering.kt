@@ -450,7 +450,6 @@ open class LocalDeclarationsLowering(
                     context.irBuiltIns.unitType,
                     newCallee.symbol,
                     typeArgumentsCount = expression.typeArgumentsCount,
-                    valueArgumentsCount = newCallee.valueParameters.size
                 ).also {
                     it.fillArguments2(expression, newCallee)
                     it.copyTypeArgumentsFrom(expression)
@@ -515,7 +514,6 @@ open class LocalDeclarationsLowering(
                     expression.type, // TODO functional type for transformed descriptor
                     newCallee.symbol,
                     typeArgumentsCount = typeParameters.size,
-                    valueArgumentsCount = newCallee.valueParameters.size,
                     reflectionTarget = newReflectionTarget?.symbol,
                     origin = expression.origin
                 ).also {

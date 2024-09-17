@@ -19244,9 +19244,33 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("kt69040.kt")
+        public void testKt69040() {
+          runTest("compiler/testData/diagnostics/tests/inference/pcla/kt69040.kt");
+        }
+
+        @Test
         @TestMetadata("labaledCall.kt")
         public void testLabaledCall() {
           runTest("compiler/testData/diagnostics/tests/inference/pcla/labaledCall.kt");
+        }
+
+        @Test
+        @TestMetadata("lambdaBelongsToOuterCall.kt")
+        public void testLambdaBelongsToOuterCall() {
+          runTest("compiler/testData/diagnostics/tests/inference/pcla/lambdaBelongsToOuterCall.kt");
+        }
+
+        @Test
+        @TestMetadata("lambdaBelongsToOuterCallAdditionalFixedVariable.kt")
+        public void testLambdaBelongsToOuterCallAdditionalFixedVariable() {
+          runTest("compiler/testData/diagnostics/tests/inference/pcla/lambdaBelongsToOuterCallAdditionalFixedVariable.kt");
+        }
+
+        @Test
+        @TestMetadata("lambdaBelongsToOuterCallUnitConstraint.kt")
+        public void testLambdaBelongsToOuterCallUnitConstraint() {
+          runTest("compiler/testData/diagnostics/tests/inference/pcla/lambdaBelongsToOuterCallUnitConstraint.kt");
         }
 
         @Test
@@ -19570,6 +19594,64 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
           @TestMetadata("simpleGreen.kt")
           public void testSimpleGreen() {
             runTest("compiler/testData/diagnostics/tests/inference/pcla/csForks/simpleGreen.kt");
+          }
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/diagnostics/tests/inference/pcla/forceLambdaCompletionFromReturnStatement")
+        @TestDataPath("$PROJECT_ROOT")
+        public class ForceLambdaCompletionFromReturnStatement {
+          @Test
+          public void testAllFilesPresentInForceLambdaCompletionFromReturnStatement() {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/inference/pcla/forceLambdaCompletionFromReturnStatement"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll|latestLV)\\.kts?$"), true);
+          }
+
+          @Test
+          @TestMetadata("differentBehaviorWhenSpecifiedArgument.kt")
+          public void testDifferentBehaviorWhenSpecifiedArgument() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/forceLambdaCompletionFromReturnStatement/differentBehaviorWhenSpecifiedArgument.kt");
+          }
+
+          @Test
+          @TestMetadata("differentBehaviorWhenSpecifiedArgument20.kt")
+          public void testDifferentBehaviorWhenSpecifiedArgument20() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/forceLambdaCompletionFromReturnStatement/differentBehaviorWhenSpecifiedArgument20.kt");
+          }
+
+          @Test
+          @TestMetadata("earlyReturn.kt")
+          public void testEarlyReturn() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/forceLambdaCompletionFromReturnStatement/earlyReturn.kt");
+          }
+
+          @Test
+          @TestMetadata("earlyReturn20.kt")
+          public void testEarlyReturn20() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/forceLambdaCompletionFromReturnStatement/earlyReturn20.kt");
+          }
+
+          @Test
+          @TestMetadata("multiLambdas.kt")
+          public void testMultiLambdas() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/forceLambdaCompletionFromReturnStatement/multiLambdas.kt");
+          }
+
+          @Test
+          @TestMetadata("multiLambdas20.kt")
+          public void testMultiLambdas20() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/forceLambdaCompletionFromReturnStatement/multiLambdas20.kt");
+          }
+
+          @Test
+          @TestMetadata("noPostponedAtomForNestedLambda.kt")
+          public void testNoPostponedAtomForNestedLambda() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/forceLambdaCompletionFromReturnStatement/noPostponedAtomForNestedLambda.kt");
+          }
+
+          @Test
+          @TestMetadata("noPostponedAtomForNestedLambda20.kt")
+          public void testNoPostponedAtomForNestedLambda20() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/forceLambdaCompletionFromReturnStatement/noPostponedAtomForNestedLambda20.kt");
           }
         }
 
@@ -21281,6 +21363,28 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("noRecursionOnCallingPureKotlinFunctionAsSyntheticJavaAccessor.kt")
         public void testNoRecursionOnCallingPureKotlinFunctionAsSyntheticJavaAccessor() {
           runTest("compiler/testData/diagnostics/tests/inference/regressions/noRecursionOnCallingPureKotlinFunctionAsSyntheticJavaAccessor.kt");
+        }
+      }
+
+      @Nested
+      @TestMetadata("compiler/testData/diagnostics/tests/inference/reified")
+      @TestDataPath("$PROJECT_ROOT")
+      public class Reified {
+        @Test
+        public void testAllFilesPresentInReified() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/inference/reified"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll|latestLV)\\.kts?$"), true);
+        }
+
+        @Test
+        @TestMetadata("ReifiedIntersectionError.kt")
+        public void testReifiedIntersectionError() {
+          runTest("compiler/testData/diagnostics/tests/inference/reified/ReifiedIntersectionError.kt");
+        }
+
+        @Test
+        @TestMetadata("ReifiedIntersectionWarning.kt")
+        public void testReifiedIntersectionWarning() {
+          runTest("compiler/testData/diagnostics/tests/inference/reified/ReifiedIntersectionWarning.kt");
         }
       }
 

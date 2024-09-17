@@ -161,17 +161,8 @@ class ConstraintSystemCompleter(components: BodyResolveComponents) {
             if (areThereAppearedProperConstraintsForSomeVariable)
                 continue
 
-            if (completionMode == ConstraintSystemCompletionMode.PCLA_POSTPONED_CALL) {
-                // Complete all lambdas, maybe with fixing type variables used as top-level input types.
-                // It's necessary because we need to process all data-flow info before going to the next statement.
-                if (analyzeRemainingNotAnalyzedPostponedArgument(postponedArguments) {
-                        analyzer.analyze(it, withPCLASession = false)
-                    }
-                ) continue
-                reportNotEnoughInformationForTypeVariablesRequiredForInputTypesOfLambdas(
-                    postponedArguments, topLevelType, dependencyProvider, topLevelAtoms
-                )
-            } else if (completionMode != ConstraintSystemCompletionMode.PARTIAL) {
+            if (completionMode.fixNotInferredTypeVariablesToErrorType) {
+                // Currently, it's for FULL and UNTIL_FIRST_LAMBDA, but probably should be left only to FULL
                 // Stage 8: report "not enough information" for uninferred type variables
                 reportNotEnoughTypeInformation(
                     completionMode, topLevelAtoms, topLevelType, postponedArguments
@@ -179,6 +170,7 @@ class ConstraintSystemCompleter(components: BodyResolveComponents) {
             }
 
             // Stage 9: force analysis of remaining not analyzed postponed arguments and rerun stages if there are
+            // It's either FULL or PCLA_POSTPONED_CALL modes (see `Forcing lambda analysis` at docs/fir/pcla.md)
             if (completionMode.allLambdasShouldBeAnalyzed) {
                 if (analyzeRemainingNotAnalyzedPostponedArgument(postponedArguments) {
                         analyzer.analyze(it, withPCLASession = false)
@@ -187,30 +179,6 @@ class ConstraintSystemCompleter(components: BodyResolveComponents) {
             }
 
             break
-        }
-    }
-
-    private fun ConstraintSystemCompletionContext.reportNotEnoughInformationForTypeVariablesRequiredForInputTypesOfLambdas(
-        postponedArguments: List<ConePostponedResolvedAtom>,
-        topLevelType: ConeKotlinType,
-        dependencyProvider: TypeVariableDependencyInformationProvider,
-        topLevelAtoms: List<ConeResolutionAtom>,
-    ) {
-        for (argument in postponedArguments) {
-            val variableForFixation = postponedArgumentsInputTypesResolver.findNextVariableForReportingNotInferredInputType(
-                this,
-                argument,
-                postponedArguments,
-                topLevelType,
-                dependencyProvider,
-            ) ?: continue
-
-            assert(!variableForFixation.isReady) {
-                "At this stage there should be no remaining variables with proper constraints from input types"
-            }
-
-            val variableWithConstraints = notFixedTypeVariables.getValue(variableForFixation.variable)
-            processVariableWhenNotEnoughInformation(variableWithConstraints, topLevelAtoms)
         }
     }
 

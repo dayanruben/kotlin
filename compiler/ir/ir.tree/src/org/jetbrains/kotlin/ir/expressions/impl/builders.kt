@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.ir.expressions.impl
 
 import org.jetbrains.kotlin.descriptors.SourceElement
-import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
@@ -801,14 +800,13 @@ fun IrCallImpl(
     typeArgumentsCount: Int = symbol.getRealOwner().typeParameters.size,
     origin: IrStatementOrigin? = null,
     superQualifierSymbol: IrClassSymbol? = null,
-    valueArgumentsCount: Int = symbol.getRealOwner().valueParameters.size,
 ): IrCallImpl = IrCallImplWithShape(
     startOffset = startOffset,
     endOffset = endOffset,
     type = type,
     symbol = symbol,
     typeArgumentsCount = typeArgumentsCount,
-    valueArgumentsCount = valueArgumentsCount,
+    valueArgumentsCount = symbol.getRealOwner().valueParameters.size,
     origin = origin,
     superQualifierSymbol = superQualifierSymbol,
 )
@@ -843,7 +841,6 @@ fun IrConstructorCallImpl(
     constructorTypeArgumentsCount: Int,
     origin: IrStatementOrigin? = null,
     source: SourceElement = SourceElement.NO_SOURCE,
-    valueArgumentsCount: Int = symbol.owner.valueParameters.size,
 ): IrConstructorCallImpl = IrConstructorCallImplWithShape(
     startOffset = startOffset,
     endOffset = endOffset,
@@ -851,7 +848,7 @@ fun IrConstructorCallImpl(
     symbol = symbol,
     typeArgumentsCount = typeArgumentsCount,
     constructorTypeArgumentsCount = constructorTypeArgumentsCount,
-    valueArgumentsCount = valueArgumentsCount,
+    valueArgumentsCount = symbol.owner.valueParameters.size,
     origin = origin,
     source = source
 )
@@ -885,14 +882,13 @@ fun IrDelegatingConstructorCallImpl(
     type: IrType,
     symbol: IrConstructorSymbol,
     typeArgumentsCount: Int,
-    valueArgumentsCount: Int = symbol.owner.valueParameters.size,
 ): IrDelegatingConstructorCallImpl = IrDelegatingConstructorCallImplWithShape(
     startOffset = startOffset,
     endOffset = endOffset,
     type = type,
     symbol = symbol,
     typeArgumentsCount = typeArgumentsCount,
-    valueArgumentsCount = valueArgumentsCount
+    valueArgumentsCount = symbol.owner.valueParameters.size
 )
 
 fun IrDelegatingConstructorCallImplWithShape(
@@ -919,14 +915,13 @@ fun IrEnumConstructorCallImpl(
     type: IrType,
     symbol: IrConstructorSymbol,
     typeArgumentsCount: Int,
-    valueArgumentsCount: Int = symbol.owner.valueParameters.size,
 ): IrEnumConstructorCallImpl = IrEnumConstructorCallImplWithShape(
     startOffset = startOffset,
     endOffset = endOffset,
     type = type,
     symbol = symbol,
     typeArgumentsCount = typeArgumentsCount,
-    valueArgumentsCount = valueArgumentsCount
+    valueArgumentsCount = symbol.owner.valueParameters.size
 )
 
 fun IrEnumConstructorCallImplWithShape(
@@ -953,7 +948,6 @@ fun IrFunctionReferenceImpl(
     type: IrType,
     symbol: IrFunctionSymbol,
     typeArgumentsCount: Int,
-    valueArgumentsCount: Int = symbol.getRealOwner().valueParameters.size,
     reflectionTarget: IrFunctionSymbol? = symbol,
     origin: IrStatementOrigin? = null,
 ): IrFunctionReferenceImpl = IrFunctionReferenceImplWithShape(
@@ -962,7 +956,7 @@ fun IrFunctionReferenceImpl(
     type = type,
     symbol = symbol,
     typeArgumentsCount = typeArgumentsCount,
-    valueArgumentsCount = valueArgumentsCount,
+    valueArgumentsCount = symbol.getRealOwner().valueParameters.size,
     reflectionTarget = reflectionTarget,
     origin = origin,
 )
@@ -1042,12 +1036,19 @@ fun IrCallImpl.Companion.fromSymbolDescriptor(
     endOffset: Int,
     type: IrType,
     symbol: IrSimpleFunctionSymbol,
-    typeArgumentsCount: Int = symbol.descriptor.typeParametersCount,
-    valueArgumentsCount: Int = symbol.descriptor.valueParameters.size + symbol.descriptor.contextReceiverParameters.size,
     origin: IrStatementOrigin? = null,
     superQualifierSymbol: IrClassSymbol? = null,
 ): IrCallImpl =
-    IrCallImplWithShape(startOffset, endOffset, type, symbol, typeArgumentsCount, valueArgumentsCount, origin, superQualifierSymbol)
+    IrCallImplWithShape(
+        startOffset = startOffset,
+        endOffset = endOffset,
+        type = type,
+        symbol = symbol,
+        typeArgumentsCount = symbol.descriptor.typeParametersCount,
+        valueArgumentsCount = symbol.descriptor.valueParameters.size + symbol.descriptor.contextReceiverParameters.size,
+        origin = origin,
+        superQualifierSymbol = superQualifierSymbol
+    )
 
 fun IrCallImpl.Companion.fromSymbolOwner(
     startOffset: Int,
@@ -1158,10 +1159,15 @@ fun IrDelegatingConstructorCallImpl.Companion.fromSymbolDescriptor(
     endOffset: Int,
     type: IrType,
     symbol: IrConstructorSymbol,
-    typeArgumentsCount: Int = symbol.descriptor.typeParametersCount,
-    valueArgumentsCount: Int = symbol.descriptor.valueParameters.size + symbol.descriptor.contextReceiverParameters.size,
 ): IrDelegatingConstructorCallImpl =
-    IrDelegatingConstructorCallImplWithShape(startOffset, endOffset, type, symbol, typeArgumentsCount, valueArgumentsCount)
+    IrDelegatingConstructorCallImplWithShape(
+        startOffset = startOffset,
+        endOffset = endOffset,
+        type = type,
+        symbol = symbol,
+        typeArgumentsCount = symbol.descriptor.typeParametersCount,
+        valueArgumentsCount = symbol.descriptor.valueParameters.size + symbol.descriptor.contextReceiverParameters.size,
+    )
 
 @UnsafeDuringIrConstructionAPI
 fun IrDelegatingConstructorCallImpl.Companion.fromSymbolOwner(
@@ -1180,17 +1186,16 @@ fun IrFunctionReferenceImpl.Companion.fromSymbolDescriptor(
     endOffset: Int,
     type: IrType,
     symbol: IrFunctionSymbol,
-    typeArgumentsCount: Int,
     reflectionTarget: IrFunctionSymbol?,
     origin: IrStatementOrigin? = null,
 ): IrFunctionReferenceImpl = IrFunctionReferenceImplWithShape(
-    startOffset, endOffset,
-    type,
-    symbol,
-    typeArgumentsCount,
-    symbol.descriptor.valueParameters.size + symbol.descriptor.contextReceiverParameters.size,
-    reflectionTarget,
-    origin
+    startOffset = startOffset, endOffset = endOffset,
+    type = type,
+    symbol = symbol,
+    typeArgumentsCount = symbol.descriptor.typeParametersCount,
+    valueArgumentsCount = symbol.descriptor.valueParameters.size + symbol.descriptor.contextReceiverParameters.size,
+    reflectionTarget = reflectionTarget,
+    origin = origin
 )
 
 fun IrFunctionReferenceImpl.Companion.fromSymbolOwner(
@@ -1206,7 +1211,6 @@ fun IrFunctionReferenceImpl.Companion.fromSymbolOwner(
     type,
     symbol,
     typeArgumentsCount,
-    symbol.owner.valueParameters.size,
     reflectionTarget,
     origin
 )
