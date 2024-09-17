@@ -5252,7 +5252,6 @@ public final class org/jetbrains/kotlin/gradle/targets/js/testing/karma/KotlinKa
 	public final fun useChromeCanaryHeadless ()V
 	public final fun useChromeHeadless ()V
 	public final fun useChromeHeadlessNoSandbox ()V
-	public final fun useChromeHeadlessWasmGc ()V
 	public final fun useChromium ()V
 	public final fun useChromiumHeadless ()V
 	public final fun useConfigDirectory (Ljava/io/File;)V
@@ -6701,7 +6700,7 @@ public abstract class org/jetbrains/kotlin/gradle/tasks/GradleCompileTaskProvide
 	public final fun getSessionsDir ()Lorg/gradle/api/provider/Provider;
 }
 
-public abstract class org/jetbrains/kotlin/gradle/tasks/Kotlin2JsCompile : org/jetbrains/kotlin/gradle/tasks/AbstractKotlinCompile, org/jetbrains/kotlin/gradle/dsl/KotlinJsCompile, org/jetbrains/kotlin/gradle/internal/tasks/ProducesKlib, org/jetbrains/kotlin/gradle/plugin/statistics/UsesBuildFusService, org/jetbrains/kotlin/gradle/targets/js/internal/UsesLibraryFilterCachingService, org/jetbrains/kotlin/gradle/tasks/K2MultiplatformCompilationTask {
+public abstract class org/jetbrains/kotlin/gradle/tasks/Kotlin2JsCompile : org/jetbrains/kotlin/gradle/tasks/AbstractKotlinCompile, org/jetbrains/kotlin/gradle/dsl/KotlinJsCompile, org/jetbrains/kotlin/gradle/internal/tasks/ProducesKlib, org/jetbrains/kotlin/gradle/targets/js/internal/UsesLibraryFilterCachingService, org/jetbrains/kotlin/gradle/tasks/K2MultiplatformCompilationTask {
 	public fun <init> (Lorg/jetbrains/kotlin/gradle/dsl/KotlinJsCompilerOptions;Lorg/gradle/api/model/ObjectFactory;Lorg/gradle/workers/WorkerExecutor;)V
 	public synthetic fun callCompilerAsync$kotlin_gradle_plugin_common (Lorg/jetbrains/kotlin/cli/common/arguments/CommonCompilerArguments;Lorg/gradle/work/InputChanges;Lorg/jetbrains/kotlin/gradle/tasks/TaskOutputsBackup;)V
 	public fun compilerOptions (Lkotlin/jvm/functions/Function1;)V
