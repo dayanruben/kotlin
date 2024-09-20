@@ -361,13 +361,6 @@ It is deprecated and will be removed in Kotlin 2.2."""
             field = if (value.isNullOrEmpty()) null else value
         }
 
-    @Argument(value = "-Xir-base-class-in-metadata", description = "Write base classes into metadata.")
-    var irBaseClassInMetadata = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
     @Argument(
         value = "-Xir-safe-external-boolean",
         description = "Wrap access to external 'Boolean' properties with an explicit conversion to 'Boolean'."
@@ -405,13 +398,6 @@ It is deprecated and will be removed in Kotlin 2.2."""
 
     @Argument(value = "-Xir-per-file", description = "Generate one .js file per source file.")
     var irPerFile = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @Argument(value = "-Xir-new-ir2js", description = "New fragment-based 'ir2js'.")
-    var irNewIr2Js = true
         set(value) {
             checkFrozen()
             field = value
@@ -532,13 +518,23 @@ It is deprecated and will be removed in Kotlin 2.2."""
             field = value
         }
 
+    @Deprecated("It is senseless to use with IR compiler. Only for compatibility.")
     @GradleOption(
-        value = DefaultValue.BOOLEAN_TRUE_DEFAULT,
+        value = DefaultValue.BOOLEAN_FALSE_DEFAULT,
         gradleInputType = GradleInputTypes.INPUT,
         shouldGenerateDeprecatedKotlinOptions = true,
     )
-    @Argument(value = "-Xtyped-arrays", description = "Translate primitive arrays into JS typed arrays.")
-    var typedArrays = true
+    @GradleDeprecatedOption(
+        message = "Only for legacy backend.",
+        level = DeprecationLevel.WARNING, // TODO: KT-70222 Replace with ERROR in 2.2, remove completely in 2.3
+        removeAfter = LanguageVersion.KOTLIN_2_2,
+    )
+    @Argument(
+        value = "-Xtyped-arrays",
+        description = """This option does nothing and is left for compatibility with the legacy backend.
+It is deprecated and will be removed in a future release."""
+    )
+    var typedArrays = false
         set(value) {
             checkFrozen()
             field = value
@@ -572,13 +568,6 @@ It is deprecated and will be removed in Kotlin 2.2."""
         description = "Enable extension function members in external interfaces."
     )
     var extensionFunctionsInExternals = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @Argument(value = "-Xenable-js-scripting", description = "Enable experimental support for .kts files using K/JS (with '-Xir' only).")
-    var enableJsScripting = false
         set(value) {
             checkFrozen()
             field = value
@@ -687,13 +676,6 @@ It is deprecated and will be removed in Kotlin 2.2."""
     }
 
     override fun configureAnalysisFlags(collector: MessageCollector, languageVersion: LanguageVersion): MutableMap<AnalysisFlag<*>, Any> {
-        // TODO: 'enableJsScripting' is used in intellij tests
-        //   Drop it after removing the usage from the intellij repository:
-        //   https://github.com/JetBrains/intellij-community/blob/master/plugins/kotlin/gradle/gradle-java/tests/test/org/jetbrains/kotlin/gradle/CompilerArgumentsCachingTest.kt#L329
-        collector.deprecationWarn(enableJsScripting, false, "-Xenable-js-scripting")
-        collector.deprecationWarn(irBaseClassInMetadata, false, "-Xir-base-class-in-metadata")
-        collector.deprecationWarn(irNewIr2Js, true, "-Xir-new-ir2js")
-
         if (irPerFile && (moduleKind != MODULE_ES && target != ES_2015)) {
             collector.report(
                 CompilerMessageSeverity.ERROR,

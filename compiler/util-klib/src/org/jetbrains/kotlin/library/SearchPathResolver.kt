@@ -123,8 +123,14 @@ abstract class KotlinLibrarySearchPathResolver<L : KotlinLibrary>(
 
     abstract fun libraryComponentBuilder(file: File, isDefault: Boolean): List<L>
 
-    private val directLibraries: List<KotlinLibrary> by lazy {
-        directLibs.mapNotNull { SearchRoot.lookUpByAbsolutePath(File(it)) }.flatMap { libraryComponentBuilder(it, false) }
+    private val directLibraryUniqueNames: Map</* Unique Name*/ String, File> by lazy {
+        HashMap<String, File>().apply {
+            for (directLib in directLibs) {
+                val absolutePath = SearchRoot.lookUpByAbsolutePath(File(directLib)) ?: continue
+                val uniqueName = libraryComponentBuilder(absolutePath, false).singleOrNull()?.uniqueName ?: continue
+                this[uniqueName] = absolutePath
+            }
+        }
     }
 
     override val searchRoots: List<SearchRoot> by lazy {
@@ -141,17 +147,6 @@ abstract class KotlinLibrarySearchPathResolver<L : KotlinLibrary>(
     }
 
     /**
-     * Returns a [File] instance if the [path] is valid on the current file system and null otherwise.
-     * Doesn't check whether the file denoted by [path] really exists.
-     */
-    private fun validFileOrNull(path: String): File? =
-        try {
-            File(Paths.get(path))
-        } catch (_: InvalidPathException) {
-            null
-        }
-
-    /**
      * Returns a sequence of libraries passed to the compiler directly for which unique_name == [givenName].
      */
     private fun directLibsSequence(givenName: String): Sequence<File> {
@@ -163,11 +158,7 @@ abstract class KotlinLibrarySearchPathResolver<L : KotlinLibrary>(
         // resolution) so we can pass it to the compiler directly. This code takes this into account and looks for
         // a library dependencies also in libs passed to the compiler as files (passed to the resolver as the
         // 'directLibraries' property).
-        return directLibraries.asSequence().filter {
-            it.uniqueName == givenName
-        }.map {
-            it.libraryFile
-        }
+        return generateSequence { directLibraryUniqueNames[givenName] }
     }
 
     override fun resolutionSequence(givenPath: String): Sequence<File> {
@@ -188,8 +179,7 @@ abstract class KotlinLibrarySearchPathResolver<L : KotlinLibrary>(
                         LookupResult.NotFound -> null
                     }
                 }
-                // The given path still may denote a unique name of a direct library.
-                directLibsSequence(givenPath) + repoLibs
+                repoLibs + directLibsSequence(givenPath) // The given path still may denote a unique name of a direct library.
             }
         }
         return sequence.filterNotNull()
@@ -386,3 +376,58 @@ class CompilerSingleFileKlibResolveAllowingIrProvidersStrategy(
             libraryFile.absolutePath, logger, knownIrProviders
         ).resolve(libraryFile.absolutePath)
 }
+
+/**
+ * Note: The chosen approach is a kind of hack: Instead of doing honest
+ * check inside KLIB resolver if a unique name was passed as one of
+ * user-defined libs (e.g., via `-library` or `-l` CLI argument), we do
+ * post-check. The post-check runs after the KLIB resolver, and just
+ * makes sure that every item that has been passed as a user-defined lib
+ * and looks like a unique name actually matches the file name of the KLIB.
+ *
+ * This approach works good enough. And it is much simpler to implement
+ * than implementing the "honest" check. Anyway, it's a temporary
+ * solution that will exist until we replace the KLIB resolved by
+ * a completely new, much simpler and well-tested component.
+ *
+ * Note: This check may give false positives in case unique name
+ * includes path separator character. We consider this as an ultimately
+ * rare case, and accept the possible risks.
+ */
+fun validateNoLibrariesWerePassedViaCliByUniqueName(givenNames: List<String>, resolvedLibraries: List<KotlinLibrary>, logger: Logger) {
+    if (givenNames.isEmpty() || resolvedLibraries.isEmpty()) return
+
+    val potentiallyUniqueNames: Set<String> = givenNames.filterTo(hashSetOf()) { givenName ->
+        val given: File? = validFileOrNull(givenName)
+        given == null || given.nameSegments.size == 1
+    }
+
+    if (potentiallyUniqueNames.isEmpty()) return
+
+    for (library in resolvedLibraries) {
+        val uniqueName = library.uniqueName
+        if (uniqueName in potentiallyUniqueNames && uniqueName != library.libraryFile.name) {
+            // The name of the library file or the library directory does not match the unique name,
+            // and at the same time this unique name was specified at CLI argument.
+            // Need to report an error.
+            logger.error(
+                "KLIB resolver: Library '${library.libraryFile}' was found by its unique name '$uniqueName'. " +
+                        "This could happen if the library unique name was passed instead of the library path via the compiler CLI argument `-library` (`-l`). " +
+                        "Note that using unique name is deprecated and will become unavailable in one of the future Kotlin releases. " +
+                        "Please, specify full paths to libraries in compiler CLI arguments."
+            )
+        }
+    }
+}
+
+/**
+ * Returns a [File] instance if the [path] is valid on the current file system and null otherwise.
+ * Doesn't check whether the file denoted by [path] really exists.
+ */
+private fun validFileOrNull(path: String): File? =
+    try {
+        File(Paths.get(path))
+    } catch (_: InvalidPathException) {
+        null
+    }
+

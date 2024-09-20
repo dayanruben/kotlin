@@ -85,11 +85,10 @@ import org.jetbrains.kotlin.name.Name
  */
 class ComposableDefaultParamLowering(
     context: IrPluginContext,
-    symbolRemapper: DeepCopySymbolRemapper,
     metrics: ModuleMetrics,
     stabilityInferencer: StabilityInferencer,
     featureFlags: FeatureFlags,
-) : AbstractComposeLowering(context, symbolRemapper, metrics, stabilityInferencer, featureFlags) {
+) : AbstractComposeLowering(context, metrics, stabilityInferencer, featureFlags) {
     private val originalToTransformed = mutableMapOf<IrSimpleFunction, IrSimpleFunction>()
 
     override fun lower(module: IrModuleFragment) {
@@ -226,14 +225,14 @@ class ComposableDefaultParamLowering(
         // move receiver parameters to value parameters
         val dispatcherReceiver = wrapper.dispatchReceiverParameter
         if (dispatcherReceiver != null) {
-            wrapper.valueParameters += dispatcherReceiver
             wrapper.dispatchReceiverParameter = null
+            wrapper.valueParameters += dispatcherReceiver
         }
 
         val extensionReceiver = wrapper.extensionReceiverParameter
         if (extensionReceiver != null) {
-            wrapper.valueParameters += extensionReceiver
             wrapper.extensionReceiverParameter = null
+            wrapper.valueParameters += extensionReceiver
         }
 
         wrapper.body = DeclarationIrBuilder(

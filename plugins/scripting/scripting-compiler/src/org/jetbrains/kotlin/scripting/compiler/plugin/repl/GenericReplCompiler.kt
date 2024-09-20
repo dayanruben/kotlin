@@ -3,6 +3,8 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+@file:Suppress("DEPRECATION")
+
 package org.jetbrains.kotlin.scripting.compiler.plugin.repl
 
 import com.intellij.openapi.Disposable
@@ -18,7 +20,7 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.descriptors.ScriptDescriptor
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.scripting.definitions.KotlinScriptDefinition
-import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
+import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import java.io.File
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
@@ -75,7 +77,7 @@ open class GenericReplCompiler(
 
             @Suppress("DEPRECATION")
             val newDependencies =
-                ScriptDependenciesProvider.getInstance(checker.environment.project)?.getScriptConfiguration(psiFile)
+                ScriptConfigurationsProvider.getInstance(checker.environment.project)?.getScriptConfiguration(psiFile)
                     ?.legacyDependencies
             var classpathAddendum: List<File>? = null
             if (compilerState.lastDependencies != newDependencies) {

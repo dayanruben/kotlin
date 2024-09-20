@@ -1001,9 +1001,9 @@ public class NativeCodegenLocalTestGenerated extends AbstractNativeCodegenBoxTes
     }
 
     @Test
-    @TestMetadata("localClassesInInlineFunctionExtraction.kt")
-    public void testLocalClassesInInlineFunctionExtraction() {
-      runTest("native/native.tests/testData/codegen/fileCheck/localClassesInInlineFunctionExtraction.kt");
+    @TestMetadata("noLocalClassesInInlineFunctionExtraction.kt")
+    public void testNoLocalClassesInInlineFunctionExtraction() {
+      runTest("native/native.tests/testData/codegen/fileCheck/noLocalClassesInInlineFunctionExtraction.kt");
     }
 
     @Test
@@ -1560,12 +1560,6 @@ public class NativeCodegenLocalTestGenerated extends AbstractNativeCodegenBoxTes
     @TestMetadata("anonymousObjectInInlineFunction.kt")
     public void testAnonymousObjectInInlineFunction() {
       runTest("native/native.tests/testData/codegen/kclass/anonymousObjectInInlineFunction.kt");
-    }
-
-    @Test
-    @TestMetadata("anonymousObjectInInlineFunctionWithCache.kt")
-    public void testAnonymousObjectInInlineFunctionWithCache() {
-      runTest("native/native.tests/testData/codegen/kclass/anonymousObjectInInlineFunctionWithCache.kt");
     }
 
     @Test

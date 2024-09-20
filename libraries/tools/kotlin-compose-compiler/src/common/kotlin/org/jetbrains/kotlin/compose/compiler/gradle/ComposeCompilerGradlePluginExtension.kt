@@ -26,7 +26,17 @@ import org.gradle.api.provider.SetProperty
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import javax.inject.Inject
 
-abstract class ComposeCompilerGradlePluginExtension @Inject constructor(objectFactory: ObjectFactory) {
+/**
+ * Provides DSL to configure Compose compiler plugin options.
+ *
+ * It is available in the build scripts under "composeCompiler" name:
+ * ```
+ * composeCompiler {
+ *    ...
+ * }
+ * ```
+ */
+abstract class ComposeCompilerGradlePluginExtension @Inject internal constructor(objectFactory: ObjectFactory) {
     /**
      * Generate function key meta classes with annotations indicating the functions and their group keys.
      *
@@ -51,7 +61,7 @@ abstract class ComposeCompilerGradlePluginExtension @Inject constructor(objectFa
      * number of stable classes/parameters, skippable functions, etc.
      *
      * For more information, see these links:
-     *  - [AndroidX compiler metrics](https://github.com/androidx/androidx/blob/androidx-main/compose/compiler/design/compiler-metrics.md)
+     *  - [AndroidX compiler metrics](https://github.com/JetBrains/kotlin/blob/master/plugins/compose/design/compiler-metrics.md)
      *  - [Composable metrics blog post](https://chrisbanes.me/posts/composable-metrics/)
      */
     abstract val metricsDestination: DirectoryProperty
@@ -64,7 +74,7 @@ abstract class ComposeCompilerGradlePluginExtension @Inject constructor(objectFa
      * which are restartable, which are readonly, etc.
      *
      * For more information, see these links:
-     *  - [AndroidX compiler metrics](https://github.com/androidx/androidx/blob/androidx-main/compose/compiler/design/compiler-metrics.md)
+     *  - [AndroidX compiler metrics](https://github.com/JetBrains/kotlin/blob/master/plugins/compose/design/compiler-metrics.md)
      *  - [Composable metrics blog post](https://chrisbanes.me/posts/composable-metrics/)
      */
     abstract val reportsDestination: DirectoryProperty
@@ -109,7 +119,7 @@ abstract class ComposeCompilerGradlePluginExtension @Inject constructor(objectFa
      * unstable parameters become skippable and lambdas with unstable captures will be memoized.
      *
      * For more information, see this link:
-     *  - [AndroidX strong skipping](https://github.com/androidx/androidx/blob/androidx-main/compose/compiler/design/strong-skipping.md)
+     *  - [AndroidX strong skipping](https://github.com/JetBrains/kotlin/blob/master/plugins/compose/design/strong-skipping.md)
      */
     @Deprecated("Use the featureFlags option instead")
     val enableStrongSkippingMode: Property<Boolean> = objectFactory.property(Boolean::class.java).convention(true)

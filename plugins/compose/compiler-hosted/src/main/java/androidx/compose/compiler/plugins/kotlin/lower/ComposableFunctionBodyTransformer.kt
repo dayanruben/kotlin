@@ -378,14 +378,13 @@ interface IrChangedBitMaskVariable : IrChangedBitMaskValue {
  */
 class ComposableFunctionBodyTransformer(
     context: IrPluginContext,
-    symbolRemapper: DeepCopySymbolRemapper,
     metrics: ModuleMetrics,
     stabilityInferencer: StabilityInferencer,
     private val collectSourceInformation: Boolean,
     private val traceMarkersEnabled: Boolean,
     featureFlags: FeatureFlags,
 ) :
-    AbstractComposeLowering(context, symbolRemapper, metrics, stabilityInferencer, featureFlags),
+    AbstractComposeLowering(context, metrics, stabilityInferencer, featureFlags),
     FileLoweringPass,
     ModuleLoweringPass {
 
@@ -769,8 +768,7 @@ class ComposableFunctionBodyTransformer(
         val body = declaration.body!!
 
         val hasExplicitGroups = declaration.hasExplicitGroups
-        val isReadOnly = declaration.hasReadOnlyAnnotation ||
-                declaration.isComposableDelegatedAccessor()
+        val isReadOnly = declaration.hasReadOnlyAnnotation || declaration.isComposableDelegatedAccessor()
 
         // An outer group is required if we are a lambda or dynamic method or the runtime doesn't
         // support remember after call. A outer group is explicitly elided by readonly and has
@@ -843,7 +841,7 @@ class ComposableFunctionBodyTransformer(
                                 scope,
                                 irFunctionSourceKey()
                             )
-                        collectSourceInformation && !hasExplicitGroups ->
+                        collectSourceInformation ->
                             irSourceInformationMarkerStart(
                                 body,
                                 scope,
@@ -856,7 +854,7 @@ class ComposableFunctionBodyTransformer(
                     *transformed.statements.toTypedArray(),
                     when {
                         outerGroupRequired -> irEndReplaceGroup(scope = scope)
-                        collectSourceInformation && !hasExplicitGroups ->
+                        collectSourceInformation ->
                             irSourceInformationMarkerEnd(body, scope)
                         else -> null
                     },
@@ -865,7 +863,7 @@ class ComposableFunctionBodyTransformer(
             )
         }
 
-        if (!outerGroupRequired && !hasExplicitGroups) {
+        if (!outerGroupRequired) {
             scope.realizeEndCalls {
                 irComposite(
                     statements = listOfNotNull(
@@ -1325,54 +1323,53 @@ class ComposableFunctionBodyTransformer(
 
         val setDefaults = mutableStatementContainer()
         val skipDefaults = mutableStatementContainer()
-//        val parametersScope = Scope.ParametersScope()
-        parameters.fastForEachIndexed { slotIndex, param ->
-            val defaultIndex = scope.defaultIndexForSlotIndex(slotIndex)
-            val defaultValue = param.defaultValue?.expression
-            if (defaultParam != null && defaultValue != null) {
-//                val transformedDefault = inScope(parametersScope) {
-//                    defaultValue.expression.transform(this, null)
-//                }
 
-                // we want to call this on the transformed version.
-                defaultExprIsStatic[slotIndex] = defaultValue.isStatic()
-                defaultExpr[slotIndex] = defaultValue
-                val hasStaticDefaultExpr = defaultExprIsStatic[slotIndex]
-                when {
-                    isSkippableDeclaration && !hasStaticDefaultExpr &&
-                            dirty is IrChangedBitMaskVariable -> {
-                        // If we are setting the parameter to the default expression and
-                        // running the default expression again, and the expression isn't
-                        // provably static, we can't be certain that the dirty value of
-                        // SAME is going to be valid. We must mark it as UNCERTAIN. In order
-                        // to avoid slot-table misalignment issues, we must mark it as
-                        // UNCERTAIN even when we skip the defaults, so that any child
-                        // function receives UNCERTAIN vs SAME/DIFFERENT deterministically.
-                        setDefaults.statements.add(
-                            irIf(
-                                condition = irGetBit(defaultParam, defaultIndex),
-                                body = irBlock(
-                                    statements = listOf(
-                                        irSet(param, defaultValue),
-                                        dirty.irSetSlotUncertain(slotIndex)
+        withScope(defaultScope) {
+            parameters.fastForEachIndexed { slotIndex, param ->
+                val defaultIndex = scope.defaultIndexForSlotIndex(slotIndex)
+                val defaultValue = param.defaultValue?.expression
+                if (defaultParam != null && defaultValue != null) {
+
+                    // we want to call this on the transformed version.
+                    defaultExprIsStatic[slotIndex] = defaultValue.isStatic()
+                    defaultExpr[slotIndex] = defaultValue
+                    val hasStaticDefaultExpr = defaultExprIsStatic[slotIndex]
+                    when {
+                        isSkippableDeclaration && !hasStaticDefaultExpr &&
+                                dirty is IrChangedBitMaskVariable -> {
+                            // If we are setting the parameter to the default expression and
+                            // running the default expression again, and the expression isn't
+                            // provably static, we can't be certain that the dirty value of
+                            // SAME is going to be valid. We must mark it as UNCERTAIN. In order
+                            // to avoid slot-table misalignment issues, we must mark it as
+                            // UNCERTAIN even when we skip the defaults, so that any child
+                            // function receives UNCERTAIN vs SAME/DIFFERENT deterministically.
+                            setDefaults.statements.add(
+                                irIf(
+                                    condition = irGetBit(defaultParam, defaultIndex),
+                                    body = irBlock(
+                                        statements = listOf(
+                                            irSet(param, defaultValue),
+                                            dirty.irSetSlotUncertain(slotIndex)
+                                        )
                                     )
                                 )
                             )
-                        )
-                        skipDefaults.statements.add(
-                            irIf(
-                                condition = irGetBit(defaultParam, defaultIndex),
-                                body = dirty.irSetSlotUncertain(slotIndex)
+                            skipDefaults.statements.add(
+                                irIf(
+                                    condition = irGetBit(defaultParam, defaultIndex),
+                                    body = dirty.irSetSlotUncertain(slotIndex)
+                                )
                             )
-                        )
-                    }
-                    else -> {
-                        setDefaults.statements.add(
-                            irIf(
-                                condition = irGetBit(defaultParam, defaultIndex),
-                                body = irSet(param, defaultValue)
+                        }
+                        else -> {
+                            setDefaults.statements.add(
+                                irIf(
+                                    condition = irGetBit(defaultParam, defaultIndex),
+                                    body = irSet(param, defaultValue)
+                                )
                             )
-                        )
+                        }
                     }
                 }
             }
@@ -1591,7 +1588,7 @@ class ComposableFunctionBodyTransformer(
             // otherwise, we wrap the whole thing in an if expression with a skip
             scope.hasDefaultsGroup = true
             scope.metrics.recordGroup()
-            bodyPreamble.statements.add(irStartDefaults(sourceElement))
+            bodyPreamble.statements.add(irStartDefaults(sourceElement, defaultScope))
             bodyPreamble.statements.add(
                 irIfThenElse(
                     // this prevents us from re-executing the defaults if this function is getting
@@ -1914,8 +1911,7 @@ class ComposableFunctionBodyTransformer(
             is IrField,
             is IrProperty,
             is IrFunction,
-            is IrClass,
-            -> {
+            is IrClass -> {
                 // these declarations get scopes, but they are handled individually
                 return super.visitDeclaration(declaration)
             }
@@ -1925,8 +1921,7 @@ class ComposableFunctionBodyTransformer(
             is IrTypeParameter,
             is IrLocalDelegatedProperty,
             is IrValueDeclaration,
-            is IrScript,
-            -> {
+            is IrScript -> {
                 // these declarations do not create new "scopes", so we do nothing
                 return super.visitDeclaration(declaration)
             }
@@ -2132,12 +2127,15 @@ class ComposableFunctionBodyTransformer(
             irIfTraceInProgress(irCall(it))
         }
 
-    private fun irStartDefaults(element: IrElement): IrExpression {
-        return irMethodCall(
-            irCurrentComposer(),
-            startDefaultsFunction,
-            element.startOffset,
-            element.endOffset
+    private fun irStartDefaults(element: IrElement, scope: Scope.BlockScope): IrExpression {
+        return irWithSourceInformation(
+            irMethodCall(
+                irCurrentComposer(),
+                startDefaultsFunction,
+                element.startOffset,
+                element.endOffset
+            ),
+            scope
         )
     }
 
@@ -3750,8 +3748,9 @@ class ComposableFunctionBodyTransformer(
 
     override fun visitWhen(expression: IrWhen): IrExpression {
         if (!isInComposableScope) return super.visitWhen(expression)
+        if (currentFunctionScope.function.hasExplicitGroups) return super.visitWhen(expression)
 
-        val optimizeGroups = FeatureFlag.OptimizeNonSkippingGroups.enabled && !currentFunctionScope.function.hasExplicitGroups
+        val optimizeGroups = FeatureFlag.OptimizeNonSkippingGroups.enabled
 
         // Composable calls in conditions are more expensive than composable calls in the different
         // result branches of the when clause. This is because if we have N branches of a when
@@ -4820,12 +4819,16 @@ private fun mutableStatementContainer(context: IrPluginContext): IrContainerExpr
     )
 }
 
-private fun IrFunction.callInformation(): String {
-    val inlineMarker = if (isInline) "C" else ""
-    return if (!name.isSpecial)
-        "${inlineMarker}C(${name.asString()})"
-    else "${inlineMarker}C"
-}
+private fun IrFunction.callInformation(): String =
+    buildString {
+        append('C')
+        if (isInline) append('C')
+        if (!isLambda()) {
+            append('(')
+            append(name.asString())
+            append(')')
+        }
+    }
 
 // Parameter information is an index from the sorted order of the parameters to the
 // actual order. This is used to reorder the fields of the lambda class generated for

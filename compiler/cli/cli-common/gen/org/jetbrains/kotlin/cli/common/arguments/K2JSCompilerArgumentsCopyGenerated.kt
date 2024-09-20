@@ -12,7 +12,6 @@ fun copyK2JSCompilerArguments(from: K2JSCompilerArguments, to: K2JSCompilerArgum
 
     to.cacheDirectory = from.cacheDirectory
     to.debuggerCustomFormatters = from.debuggerCustomFormatters
-    to.enableJsScripting = from.enableJsScripting
     to.extensionFunctionsInExternals = from.extensionFunctionsInExternals
     to.fakeOverrideValidator = from.fakeOverrideValidator
     to.friendModules = from.friendModules
@@ -21,7 +20,6 @@ fun copyK2JSCompilerArguments(from: K2JSCompilerArguments, to: K2JSCompilerArgum
     to.generatePolyfills = from.generatePolyfills
     to.includeUnavailableSourcesIntoSourceMap = from.includeUnavailableSourcesIntoSourceMap
     to.includes = from.includes
-    to.irBaseClassInMetadata = from.irBaseClassInMetadata
     to.irBuildCache = from.irBuildCache
     to.irDce = from.irDce
     to.irDceDumpDeclarationIrSizesToFile = from.irDceDumpDeclarationIrSizesToFile
@@ -32,7 +30,6 @@ fun copyK2JSCompilerArguments(from: K2JSCompilerArguments, to: K2JSCompilerArgum
     to.irKeep = from.irKeep
     to.irMinimizedMemberNames = from.irMinimizedMemberNames
     to.irModuleName = from.irModuleName
-    to.irNewIr2Js = from.irNewIr2Js
     to.irPerFile = from.irPerFile
     to.irPerModule = from.irPerModule
     to.irPerModuleOutputName = from.irPerModuleOutputName
@@ -62,6 +59,7 @@ fun copyK2JSCompilerArguments(from: K2JSCompilerArguments, to: K2JSCompilerArgum
     to.sourceMapPrefix = from.sourceMapPrefix
     to.strictImplicitExportType = from.strictImplicitExportType
     to.target = from.target
+    @Suppress("DEPRECATION")
     to.typedArrays = from.typedArrays
     to.useEsArrowFunctions = from.useEsArrowFunctions
     to.useEsClasses = from.useEsClasses

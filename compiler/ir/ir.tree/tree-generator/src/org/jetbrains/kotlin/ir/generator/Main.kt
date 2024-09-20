@@ -35,6 +35,8 @@ fun main(args: Array<String>) {
                 elementVisitorVoidType to ::VisitorVoidPrinter,
                 elementTransformerType to ::TransformerPrinter.bind(model.rootElement),
                 elementTransformerVoidType to ::TransformerVoidPrinter,
+                typeVisitorType to ::TypeVisitorPrinter.bind(model.rootElement),
+                typeVisitorVoidType to ::TypeVisitorVoidPrinter.bind(model.rootElement),
                 typeTransformerType to ::TypeTransformerPrinter.bind(model.rootElement),
                 typeTransformerVoidType to ::TypeTransformerVoidPrinter.bind(model.rootElement),
             ),

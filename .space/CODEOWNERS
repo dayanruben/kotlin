@@ -199,6 +199,8 @@
 /compiler/tests-common-new/ "Kotlin Frontend"
 /compiler/tests-common-new/tests-gen/org/jetbrains/kotlin/test/runners/codegen/ "Kotlin Frontend" "Kotlin JVM" "Kotlin Common Backend" "Kotlin Native" "Kotlin Wasm"
 /compiler/tests-common-new/tests-gen/org/jetbrains/kotlin/test/runners/ir/ "Kotlin Frontend" "Kotlin JVM" "Kotlin Common Backend" "Kotlin Native" "Kotlin Wasm"
+/compiler/tests-common-new/tests/org/jetbrains/kotlin/test/directives/WasmEnvironmentConfigurationDirectives.kt "Kotlin Wasm"
+/compiler/tests-common-new/tests/org/jetbrains/kotlin/test/services/configuration/WasmEnvironmentConfigurator.kt "Kotlin Wasm"
 /compiler/tests-compiler-utils/ "Kotlin Frontend"
 /compiler/tests-integration/ "Kotlin Frontend"
 /compiler/tests-integration/tests/org/jetbrains/kotlin/klib/ "Kotlin Common Backend"
@@ -324,6 +326,8 @@
 /libraries/tools/kotlin-gradle-plugin-idea-for-compatibility-tests/ "Kotlin Build Tools"
 /libraries/tools/kotlin-gradle-plugin-idea-proto/ "Kotlin Build Tools"
 /libraries/tools/kotlin-gradle-plugin-integration-tests/ "Kotlin Build Tools"
+/libraries/tools/kotlin-gradle-plugin-integration-tests/src/test/resources/testProject/new-mpp-wasm-*/ "Kotlin Build Tools" "Kotlin Wasm"
+/libraries/tools/kotlin-gradle-plugin-integration-tests/src/test/resources/testProject/wasm-*/ "Kotlin Build Tools" "Kotlin Wasm"
 /libraries/tools/kotlin-gradle-plugin-model/ "Kotlin Build Tools"
 /libraries/tools/kotlin-gradle-plugin-npm-versions-codegen/ Ilya.Goncharov
 /libraries/tools/kotlin-gradle-plugin-test-utils-embeddable/ "Kotlin Build Tools"
@@ -419,7 +423,7 @@
 /wasm/ "Kotlin Wasm"
 
 # Generated files (no review required)
-*Generated.java "Kotlin" "Kotlin IDE Analysis Core" "Compose" "Parcelize"
+*Generated.java "Kotlin" "Kotlin IDE Analysis Core" "Kotlin Wasm" "Compose" "Parcelize" 
 
 # Singular files
 /.gitattributes "Kotlin Build Infrastructure"

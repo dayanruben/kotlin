@@ -11358,6 +11358,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         runTest("compiler/testData/diagnostics/tests/delegation/kt8154.kt");
       }
 
+      @Test
+      @TestMetadata("multipleDelegationRegression.kt")
+      public void testMultipleDelegationRegression() {
+        runTest("compiler/testData/diagnostics/tests/delegation/multipleDelegationRegression.kt");
+      }
+
       @Nested
       @TestMetadata("compiler/testData/diagnostics/tests/delegation/clashes")
       @TestDataPath("$PROJECT_ROOT")
@@ -12220,6 +12226,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("genericWithEnumBound.kt")
       public void testGenericWithEnumBound() {
         runTest("compiler/testData/diagnostics/tests/enum/genericWithEnumBound.kt");
+      }
+
+      @Test
+      @TestMetadata("giantEnumWithConstructor.kt")
+      public void testGiantEnumWithConstructor() {
+        runTest("compiler/testData/diagnostics/tests/enum/giantEnumWithConstructor.kt");
       }
 
       @Test
@@ -28075,6 +28087,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("directJavaActualization_annotationOnlyOnExpect.kt")
         public void testDirectJavaActualization_annotationOnlyOnExpect() {
           runTest("compiler/testData/diagnostics/tests/multiplatform/directJavaActualization/directJavaActualization_annotationOnlyOnExpect.kt");
+        }
+
+        @Test
+        @TestMetadata("directJavaActualization_clashWithActualTypealias.kt")
+        public void testDirectJavaActualization_clashWithActualTypealias() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/directJavaActualization/directJavaActualization_clashWithActualTypealias.kt");
         }
 
         @Test

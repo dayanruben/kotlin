@@ -2586,6 +2586,18 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
     public void testKt53100_casts() {
       runTest("compiler/testData/codegen/box/boxing/kt53100_casts.kt");
     }
+
+    @Test
+    @TestMetadata("kt71550.kt")
+    public void testKt71550() {
+      runTest("compiler/testData/codegen/box/boxing/kt71550.kt");
+    }
+
+    @Test
+    @TestMetadata("kt71550_2.kt")
+    public void testKt71550_2() {
+      runTest("compiler/testData/codegen/box/boxing/kt71550_2.kt");
+    }
   }
 
   @Nested
@@ -36784,6 +36796,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
     }
 
     @Test
+    @TestMetadata("extensionInAnotherObject.kt")
+    public void testExtensionInAnotherObject() {
+      runTest("compiler/testData/codegen/box/jvmStatic/extensionInAnotherObject.kt");
+    }
+
+    @Test
     @TestMetadata("extensionPropertyGetter.kt")
     public void testExtensionPropertyGetter() {
       runTest("compiler/testData/codegen/box/jvmStatic/extensionPropertyGetter.kt");
@@ -50567,6 +50585,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
       }
 
       @Test
+      @TestMetadata("dataClassCopyWithValueClass.kt")
+      public void testDataClassCopyWithValueClass() {
+        runTest("compiler/testData/codegen/box/reflection/callBy/dataClassCopyWithValueClass.kt");
+      }
+
+      @Test
       @TestMetadata("defaultAndNonDefaultIntertwined.kt")
       public void testDefaultAndNonDefaultIntertwined() {
         runTest("compiler/testData/codegen/box/reflection/callBy/defaultAndNonDefaultIntertwined.kt");
@@ -51137,9 +51161,27 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
       }
 
       @Test
+      @TestMetadata("qualifiedNameJVM.kt")
+      public void testQualifiedNameJVM() {
+        runTest("compiler/testData/codegen/box/reflection/classes/qualifiedNameJVM.kt");
+      }
+
+      @Test
       @TestMetadata("qualifiedNameOfStandardClasses.kt")
       public void testQualifiedNameOfStandardClasses() {
         runTest("compiler/testData/codegen/box/reflection/classes/qualifiedNameOfStandardClasses.kt");
+      }
+
+      @Test
+      @TestMetadata("qualifiedNameOfStandardClassesJVM.kt")
+      public void testQualifiedNameOfStandardClassesJVM() {
+        runTest("compiler/testData/codegen/box/reflection/classes/qualifiedNameOfStandardClassesJVM.kt");
+      }
+
+      @Test
+      @TestMetadata("qualifiedNameWithDollars.kt")
+      public void testQualifiedNameWithDollars() {
+        runTest("compiler/testData/codegen/box/reflection/classes/qualifiedNameWithDollars.kt");
       }
 
       @Test

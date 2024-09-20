@@ -76,6 +76,12 @@ public class OutOfContentRootGetOrBuildFirTestGenerated extends AbstractOutOfCon
     }
 
     @Test
+    @TestMetadata("annotationInsideWhereClass.kt")
+    public void testAnnotationInsideWhereClass() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/annotations/annotationInsideWhereClass.kt");
+    }
+
+    @Test
     @TestMetadata("annotationInsideWhereFunction.kt")
     public void testAnnotationInsideWhereFunction() {
       runTest("analysis/low-level-api-fir/testData/getOrBuildFir/annotations/annotationInsideWhereFunction.kt");
@@ -1188,6 +1194,12 @@ public class OutOfContentRootGetOrBuildFirTestGenerated extends AbstractOutOfCon
     }
 
     @Test
+    @TestMetadata("functionalTypeInsideAlias.kt")
+    public void testFunctionalTypeInsideAlias() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/types/functionalTypeInsideAlias.kt");
+    }
+
+    @Test
     @TestMetadata("invalidTypeArgumentsCount.kt")
     public void testInvalidTypeArgumentsCount() {
       runTest("analysis/low-level-api-fir/testData/getOrBuildFir/types/invalidTypeArgumentsCount.kt");
@@ -1335,6 +1347,12 @@ public class OutOfContentRootGetOrBuildFirTestGenerated extends AbstractOutOfCon
     @TestMetadata("unresolvedTypeConsturctorResolvedTypeArgument.kt")
     public void testUnresolvedTypeConsturctorResolvedTypeArgument() {
       runTest("analysis/low-level-api-fir/testData/getOrBuildFir/types/unresolvedTypeConsturctorResolvedTypeArgument.kt");
+    }
+
+    @Test
+    @TestMetadata("whereClass.kt")
+    public void testWhereClass() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/types/whereClass.kt");
     }
 
     @Test
