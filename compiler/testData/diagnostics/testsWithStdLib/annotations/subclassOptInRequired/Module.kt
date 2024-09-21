@@ -1,6 +1,5 @@
 // FIR_IDENTICAL
 // MODULE: a
-@file:OptIn(ExperimentalSubclassOptIn::class)
 package a
 
 @RequiresOptIn
@@ -13,4 +12,4 @@ open class B {}
 package b
 import a.B
 
-class C : <!OPT_IN_USAGE_ERROR!>B<!>()
+class C : <!OPT_IN_TO_INHERITANCE_ERROR!>B<!>()

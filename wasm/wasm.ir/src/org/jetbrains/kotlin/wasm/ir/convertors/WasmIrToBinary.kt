@@ -58,7 +58,8 @@ class WasmIrToBinary(
     val module: WasmModule,
     val moduleName: String,
     val emitNameSection: Boolean,
-    private val debugInformationGenerator: DebugInformationGenerator? = null
+    private val debugInformationGenerator: DebugInformationGenerator? = null,
+    private val optimizeInstructionFlow: Boolean = true
 ) : DebugInformationConsumer {
     private var b: ByteWriter = ByteWriter.OutputStream(outputStream)
 
@@ -294,7 +295,7 @@ class WasmIrToBinary(
             is WasmImmediate.DataIdx -> b.writeVarUInt32(x.value.owner)
             is WasmImmediate.TableIdx -> b.writeVarUInt32(x.value.owner)
             is WasmImmediate.LabelIdx -> b.writeVarUInt32(x.value)
-            is WasmImmediate.TagIdx -> b.writeVarUInt32(x.value)
+            is WasmImmediate.TagIdx -> b.writeVarUInt32(x.value.owner)
             is WasmImmediate.LabelIdxVector -> {
                 b.writeVarUInt32(x.value.size)
                 for (target in x.value) {
@@ -418,7 +419,7 @@ class WasmIrToBinary(
 
     private fun appendImportedFunction(function: WasmFunction.Imported) {
         b.writeString(function.importPair.moduleName)
-        b.writeString(function.importPair.declarationName)
+        b.writeString(function.importPair.declarationName.owner)
         b.writeByte(0)  // Function external kind.
         b.writeVarUInt32(function.type.owner.index)
     }
@@ -430,7 +431,7 @@ class WasmIrToBinary(
     private fun appendTable(table: WasmTable) {
         if (table.importPair != null) {
             b.writeString(table.importPair.moduleName)
-            b.writeString(table.importPair.declarationName)
+            b.writeString(table.importPair.declarationName.owner)
             b.writeByte(1)
         }
 
@@ -441,7 +442,7 @@ class WasmIrToBinary(
     private fun appendMemory(memory: WasmMemory) {
         if (memory.importPair != null) {
             b.writeString(memory.importPair.moduleName)
-            b.writeString(memory.importPair.declarationName)
+            b.writeString(memory.importPair.declarationName.owner)
             b.writeByte(2)
         }
         appendLimits(memory.limits)
@@ -450,7 +451,7 @@ class WasmIrToBinary(
     private fun appendGlobal(c: WasmGlobal) {
         if (c.importPair != null) {
             b.writeString(c.importPair.moduleName)
-            b.writeString(c.importPair.declarationName)
+            b.writeString(c.importPair.declarationName.owner)
             b.writeByte(3)
             appendType(c.type)
             b.writeVarUInt1(c.isMutable)
@@ -464,7 +465,7 @@ class WasmIrToBinary(
     private fun appendTag(t: WasmTag) {
         if (t.importPair != null) {
             b.writeString(t.importPair.moduleName)
-            b.writeString(t.importPair.declarationName)
+            b.writeString(t.importPair.declarationName.owner)
             b.writeByte(4)
         }
         b.writeByte(0) // attribute
@@ -473,8 +474,18 @@ class WasmIrToBinary(
     }
 
     private fun appendExpr(expr: Iterable<WasmInstr>) {
-        expr.forEach { appendInstr(it) }
-        appendInstr(WasmInstrWithLocation(WasmOp.END, SourceLocation.NoLocation("End of instruction list")))
+        val expressionWithEndOp = sequence {
+            yieldAll(expr)
+            yield(WasmInstrWithLocation(WasmOp.END, SourceLocation.NoLocation("End of instruction list")))
+        }
+
+        if (optimizeInstructionFlow) {
+            for (instruction in processInstructionsFlow(expressionWithEndOp)) {
+                appendInstr(instruction)
+            }
+        } else {
+            expressionWithEndOp.forEach(::appendInstr)
+        }
     }
 
     private fun appendExport(export: WasmExport<*>) {
@@ -605,7 +616,8 @@ class WasmIrToBinary(
     }
 
     fun appendModuleFieldReference(field: WasmNamedModuleField) {
-        val id = field.id ?: error("${field::class} ${field.name} ID is unlinked")
+        val id = field.id
+            ?: error("${field::class} ${field.name} ID is unlinked")
         b.writeVarUInt32(id)
     }
 
@@ -630,6 +642,11 @@ abstract class ByteWriter {
 
     fun writeUByte(v: UByte) {
         writeByte(v.toByte())
+    }
+
+    fun writeUInt16(v: UShort) {
+        writeByte(v.toByte())
+        writeByte((v.toUInt() shr 8).toByte())
     }
 
     fun writeUInt32(v: UInt) {

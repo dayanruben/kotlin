@@ -52,7 +52,8 @@ open class SExpressionBuilder {
 
 
 class WasmIrToText(
-    private val debugInformationGenerator: DebugInformationGenerator? = null
+    private val debugInformationGenerator: DebugInformationGenerator? = null,
+    private val optimizeInstructionFlow: Boolean = true,
 ) : SExpressionBuilder(), DebugInformationConsumer {
     override fun consumeDebugInformation(debugInformation: DebugInformation) {
         debugInformation.forEach {
@@ -76,6 +77,16 @@ class WasmIrToText(
         repeat(value.toInt()) { alignEffective *= 2 }
         if (alignEffective != 0L)
             appendElement("align=$alignEffective")
+    }
+
+    private fun appendInstrList(instr: List<WasmInstr>) {
+        if (optimizeInstructionFlow) {
+            for (instruction in processInstructionsFlow(instr.asSequence())) {
+                appendInstr(instruction)
+            }
+        } else {
+            instr.forEach(::appendInstr)
+        }
     }
 
     private fun appendInstr(wasmInstr: WasmInstr) {
@@ -371,7 +382,7 @@ class WasmIrToText(
     private fun WasmImportDescriptor.appendImportPair() {
         sameLineList("import") {
             toWatString(moduleName)
-            toWatString(declarationName)
+            toWatString(declarationName.owner)
         }
     }
 
@@ -386,7 +397,7 @@ class WasmIrToText(
                 }
             }
             function.locals.forEach { if (!it.isParameter) appendLocal(it) }
-            function.instructions.forEach { appendInstr(it) }
+            appendInstrList(function.instructions)
         }
     }
 
@@ -423,7 +434,7 @@ class WasmIrToText(
             else
                 appendType(global.type)
 
-            global.init.forEach { appendInstr(it) }
+            appendInstrList(global.init)
         }
     }
 

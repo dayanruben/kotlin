@@ -57,7 +57,9 @@ private class TestGenerator(
         if (irFile.declarations.isEmpty()) return
         ArrayList(irFile.declarations).forEach {
             if (it is IrClass) {
-                generateTestCalls(it) { if (groupByPackage) suiteForPackage(it) else context.createTestContainerFun(it) }
+                context.irFactory.stageController.restrictTo(it) {
+                    generateTestCalls(it) { if (groupByPackage) suiteForPackage(it) else context.createTestContainerFun(it) }
+                }
             }
 
             // TODO top-level functions
@@ -68,8 +70,9 @@ private class TestGenerator(
 
     private fun suiteForPackage(container: IrDeclaration): IrSimpleFunction {
         val irFile = container.file
+        val fn = context.createTestContainerFun(container)
         return packageSuites.getOrPut(irFile.packageFqName) {
-            context.suiteFun!!.createInvocation(irFile.packageFqName.asString(), context.createTestContainerFun(container))
+            context.suiteFun!!.createInvocation(irFile.packageFqName.asString(), fn)
         }
     }
 
@@ -85,6 +88,7 @@ private class TestGenerator(
             this.returnType = if (this@createInvocation == context.suiteFun!!) context.irBuiltIns.unitType else context.irBuiltIns.anyNType
             this.origin = JsIrBuilder.SYNTHESIZED_DECLARATION
         }
+
         function.parent = parentFunction
         function.body = body
 

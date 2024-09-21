@@ -19,12 +19,13 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 internal class WasmUsefulDeclarationProcessor(
     override val context: WasmBackendContext,
     printReachabilityInfo: Boolean,
-    dumpReachabilityInfoToFile: String?
+    dumpReachabilityInfoToFile: String?,
 ) : UsefulDeclarationProcessor(printReachabilityInfo, removeUnusedAssociatedObjects = false, dumpReachabilityInfoToFile) {
 
     // The mapping from function for wrapping a kotlin closure/lambda with JS closure to function used to call a kotlin closure from JS side.
-    private val kotlinClosureToJsClosureConvertFunToKotlinClosureCallFun =
-        context.kotlinClosureToJsConverters.entries.associate { (k, v) -> v to context.closureCallExports[k] }
+    private val kotlinClosureToJsClosureConvertFunToKotlinClosureCallFun = context.fileContexts.mapValues { (_, fileContext) ->
+        fileContext.kotlinClosureToJsConverters.entries.associate { (k, v) -> v to fileContext.closureCallExports[k] }
+    }
 
     override val bodyVisitor: BodyVisitorBase = object : BodyVisitorBase() {
         override fun visitConst(expression: IrConst, data: IrDeclaration) = when (expression.kind) {
@@ -118,6 +119,21 @@ internal class WasmUsefulDeclarationProcessor(
         }
     }
 
+    override fun handleAssociatedObjects() {
+        for (klass in classesWithObjectAssociations) {
+            if (removeUnusedAssociatedObjects && !klass.isReachable()) continue
+
+            for (annotation in klass.annotations) {
+                val annotationClass = annotation.symbol.owner.constructedClass
+                if (removeUnusedAssociatedObjects && !annotationClass.isReachable()) continue
+
+                annotation.associatedObject()?.let { obj ->
+                    context.mapping.objectToGetInstanceFunction[obj]?.enqueue(klass, "associated object factory")
+                }
+            }
+        }
+    }
+
     private fun IrType.getInlinedValueTypeIfAny(): IrType? = when (this) {
         context.irBuiltIns.booleanType,
         context.irBuiltIns.byteType,
@@ -189,7 +205,7 @@ internal class WasmUsefulDeclarationProcessor(
         irFunction.getEffectiveValueParameters().forEach { it.enqueueValueParameterType(irFunction) }
         irFunction.returnType.enqueueType(irFunction, "function return type")
 
-        kotlinClosureToJsClosureConvertFunToKotlinClosureCallFun[irFunction]?.enqueue(
+        kotlinClosureToJsClosureConvertFunToKotlinClosureCallFun[irFunction.fileOrNull]?.get(irFunction)?.enqueue(
             irFunction,
             "kotlin closure to JS closure conversion",
             false

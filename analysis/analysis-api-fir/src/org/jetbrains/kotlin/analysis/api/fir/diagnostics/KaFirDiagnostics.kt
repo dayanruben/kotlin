@@ -1091,6 +1091,18 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val message: String
     }
 
+    interface OptInToInheritance : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = OptInToInheritance::class
+        val optInMarkerClassId: ClassId
+        val message: String
+    }
+
+    interface OptInToInheritanceError : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = OptInToInheritanceError::class
+        val optInMarkerClassId: ClassId
+        val message: String
+    }
+
     interface OptInOverride : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = OptInOverride::class
         val optInMarkerClassId: ClassId
@@ -1687,7 +1699,7 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
     interface WrongNumberOfTypeArguments : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = WrongNumberOfTypeArguments::class
         val expectedCount: Int
-        val classifier: KaClassLikeSymbol
+        val owner: KaSymbol
     }
 
     interface NoTypeArgumentsOnRhs : KaFirDiagnostic<PsiElement> {
