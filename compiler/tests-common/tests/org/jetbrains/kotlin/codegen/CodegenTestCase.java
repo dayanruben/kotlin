@@ -139,15 +139,22 @@ public abstract class CodegenTestCase extends KotlinBaseTest<KotlinBaseTest.Test
     }
 
     protected void loadFiles(@NotNull String... names) {
-        myFiles = CodegenTestFiles.create(myEnvironment.getProject(), names);
+        List<KtFile> files = new ArrayList<>(names.length);
+        for (String name : names) {
+            try {
+                String content = KtTestUtil.doLoadFile(KtTestUtil.getTestDataPathBase() + "/codegen/", name);
+                KtFile file = KtTestUtil.createFile(name, content, myEnvironment.getProject());
+                files.add(file);
+            }
+            catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        myFiles = CodegenTestFiles.create(files);
     }
 
     protected void loadFile() {
         loadFile(getPrefix() + "/" + getTestName(true) + ".kt");
-    }
-
-    protected void loadMultiFiles(@NotNull List<TestFile> files) {
-        myFiles = loadMultiFiles(files, myEnvironment.getProject());
     }
 
     @NotNull
@@ -250,15 +257,10 @@ public abstract class CodegenTestCase extends KotlinBaseTest<KotlinBaseTest.Test
 
     @NotNull
     protected String generateToText() {
-        return generateToText(null);
-    }
-
-    @NotNull
-    protected String generateToText(@Nullable String ignorePathPrefix) {
         if (classFileFactory == null) {
             classFileFactory = generateFiles(myEnvironment, myFiles);
         }
-        return classFileFactory.createText(ignorePathPrefix);
+        return classFileFactory.createText(null);
     }
 
     @NotNull
@@ -425,7 +427,7 @@ public abstract class CodegenTestCase extends KotlinBaseTest<KotlinBaseTest.Test
         );
         setupEnvironment(myEnvironment);
 
-        loadMultiFiles(files);
+        myFiles = loadMultiFiles(files, myEnvironment.getProject());
 
         generateClassesInFile(reportProblems);
 
@@ -508,8 +510,8 @@ public abstract class CodegenTestCase extends KotlinBaseTest<KotlinBaseTest.Test
 
     @NotNull
     @Override
-    public TargetBackend getBackend() {
-        return TargetBackend.JVM;
+    public final TargetBackend getBackend() {
+        return TargetBackend.JVM_IR;
     }
 
     @Override

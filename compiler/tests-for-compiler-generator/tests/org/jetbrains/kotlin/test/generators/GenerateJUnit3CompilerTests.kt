@@ -11,10 +11,6 @@ import org.jetbrains.kotlin.cfg.AbstractDataFlowTest
 import org.jetbrains.kotlin.cfg.AbstractPseudoValueTest
 import org.jetbrains.kotlin.cli.AbstractCliTest
 import org.jetbrains.kotlin.codegen.*
-import org.jetbrains.kotlin.codegen.defaultConstructor.AbstractDefaultArgumentsReflectionTest
-import org.jetbrains.kotlin.codegen.defaultConstructor.fir.AbstractFirLightTreeDefaultArgumentsReflectionTest
-import org.jetbrains.kotlin.codegen.defaultConstructor.fir.AbstractFirPsiDefaultArgumentsReflectionTest
-import org.jetbrains.kotlin.codegen.defaultConstructor.ir.AbstractIrDefaultArgumentsReflectionTest
 import org.jetbrains.kotlin.codegen.fir.*
 import org.jetbrains.kotlin.codegen.ir.*
 import org.jetbrains.kotlin.codegen.ir.AbstractIrWriteSignatureTest
@@ -121,14 +117,6 @@ fun generateJUnit3CompilerTests(args: Array<String>, mainClassName: String?) {
                 model("codegen/kapt", targetBackend = TargetBackend.JVM_IR)
             }
 
-            testClass<AbstractTopLevelMembersInvocationTest> {
-                model("codegen/topLevelMemberInvocation", extension = null, recursive = false)
-            }
-
-            testClass<AbstractDefaultArgumentsReflectionTest> {
-                model("codegen/defaultArguments/reflection")
-            }
-
             testClass<AbstractLoadJavaTest> {
                 model("loadJava/compiledJava", extension = "java", testMethod = "doTestCompiledJava")
                 model("loadJava/compiledJavaAndKotlin", extension = "txt", testMethod = "doTestCompiledJavaAndKotlin")
@@ -188,10 +176,6 @@ fun generateJUnit3CompilerTests(args: Array<String>, mainClassName: String?) {
 
             testClass<AbstractModuleXmlParserTest> {
                 model("modules.xml", extension = "xml")
-            }
-
-            testClass<AbstractWriteSignatureTest> {
-                model("writeSignature")
             }
 
             testClass<AbstractControlFlowTest> {
@@ -300,10 +284,6 @@ fun generateJUnit3CompilerTests(args: Array<String>, mainClassName: String?) {
                 model("writeFlags", targetBackend = TargetBackend.JVM_IR)
             }
 
-            testClass<AbstractIrDefaultArgumentsReflectionTest> {
-                model("codegen/defaultArguments/reflection", targetBackend = TargetBackend.JVM_IR)
-            }
-
             testClass<AbstractIrWriteSignatureTest> {
                 model("writeSignature", targetBackend = TargetBackend.JVM_IR)
             }
@@ -316,20 +296,12 @@ fun generateJUnit3CompilerTests(args: Array<String>, mainClassName: String?) {
                 model("writeFlags", targetBackend = TargetBackend.JVM_IR)
             }
 
-            testClass<AbstractFirPsiDefaultArgumentsReflectionTest> {
-                model("codegen/defaultArguments/reflection", targetBackend = TargetBackend.JVM_IR)
-            }
-
             testClass<AbstractFirPsiWriteSignatureTest> {
                 model("writeSignature", targetBackend = TargetBackend.JVM_IR)
             }
 
             testClass<AbstractFirLightTreeWriteFlagsTest> {
                 model("writeFlags", targetBackend = TargetBackend.JVM_IR)
-            }
-
-            testClass<AbstractFirLightTreeDefaultArgumentsReflectionTest> {
-                model("codegen/defaultArguments/reflection", targetBackend = TargetBackend.JVM_IR)
             }
 
             testClass<AbstractFirLightTreeCheckLocalVariablesTableTest> {
