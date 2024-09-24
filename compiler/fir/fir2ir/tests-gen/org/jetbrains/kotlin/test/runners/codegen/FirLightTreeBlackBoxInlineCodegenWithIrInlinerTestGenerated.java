@@ -853,12 +853,6 @@ public class FirLightTreeBlackBoxInlineCodegenWithIrInlinerTestGenerated extends
     }
 
     @Test
-    @TestMetadata("defaultParametersAndLastVararg.kt")
-    public void testDefaultParametersAndLastVararg() {
-      runTest("compiler/testData/codegen/boxInline/argumentOrder/defaultParametersAndLastVararg.kt");
-    }
-
-    @Test
     @TestMetadata("defaultParametersAndLastVarargWithCorrectOrder.kt")
     public void testDefaultParametersAndLastVarargWithCorrectOrder() {
       runTest("compiler/testData/codegen/boxInline/argumentOrder/defaultParametersAndLastVarargWithCorrectOrder.kt");
@@ -898,12 +892,6 @@ public class FirLightTreeBlackBoxInlineCodegenWithIrInlinerTestGenerated extends
     @TestMetadata("simpleInClass.kt")
     public void testSimpleInClass() {
       runTest("compiler/testData/codegen/boxInline/argumentOrder/simpleInClass.kt");
-    }
-
-    @Test
-    @TestMetadata("varargAndDefaultParameters.kt")
-    public void testVarargAndDefaultParameters() {
-      runTest("compiler/testData/codegen/boxInline/argumentOrder/varargAndDefaultParameters.kt");
     }
 
     @Test
@@ -2647,6 +2635,12 @@ public class FirLightTreeBlackBoxInlineCodegenWithIrInlinerTestGenerated extends
     public void testExtension() {
       runTest("compiler/testData/codegen/boxInline/functionExpression/extension.kt");
     }
+
+    @Test
+    @TestMetadata("kt71659.kt")
+    public void testKt71659() {
+      runTest("compiler/testData/codegen/boxInline/functionExpression/kt71659.kt");
+    }
   }
 
   @Nested
@@ -2696,24 +2690,6 @@ public class FirLightTreeBlackBoxInlineCodegenWithIrInlinerTestGenerated extends
     @TestMetadata("kt62313.kt")
     public void testKt62313() {
       runTest("compiler/testData/codegen/boxInline/inlineClasses/kt62313.kt");
-    }
-
-    @Test
-    @TestMetadata("noReturnTypeManglingFun.kt")
-    public void testNoReturnTypeManglingFun() {
-      runTest("compiler/testData/codegen/boxInline/inlineClasses/noReturnTypeManglingFun.kt");
-    }
-
-    @Test
-    @TestMetadata("noReturnTypeManglingFunJvmName.kt")
-    public void testNoReturnTypeManglingFunJvmName() {
-      runTest("compiler/testData/codegen/boxInline/inlineClasses/noReturnTypeManglingFunJvmName.kt");
-    }
-
-    @Test
-    @TestMetadata("noReturnTypeManglingVal.kt")
-    public void testNoReturnTypeManglingVal() {
-      runTest("compiler/testData/codegen/boxInline/inlineClasses/noReturnTypeManglingVal.kt");
     }
 
     @Test
@@ -3811,12 +3787,6 @@ public class FirLightTreeBlackBoxInlineCodegenWithIrInlinerTestGenerated extends
         }
 
         @Test
-        @TestMetadata("kt31923_wrong.kt")
-        public void testKt31923_wrong() {
-          runTest("compiler/testData/codegen/boxInline/nonLocalReturns/tryFinally/exceptionTable/kt31923_wrong.kt");
-        }
-
-        @Test
         @TestMetadata("nested.kt")
         public void testNested() {
           runTest("compiler/testData/codegen/boxInline/nonLocalReturns/tryFinally/exceptionTable/nested.kt");
@@ -4863,12 +4833,6 @@ public class FirLightTreeBlackBoxInlineCodegenWithIrInlinerTestGenerated extends
     }
 
     @Test
-    @TestMetadata("smapWithOldSyntax.kt")
-    public void testSmapWithOldSyntax() {
-      runTest("compiler/testData/codegen/boxInline/smap/smapWithOldSyntax.kt");
-    }
-
-    @Test
     @TestMetadata("tryFinally1.kt")
     public void testTryFinally1() {
       runTest("compiler/testData/codegen/boxInline/smap/tryFinally1.kt");
@@ -5895,18 +5859,6 @@ public class FirLightTreeBlackBoxInlineCodegenWithIrInlinerTestGenerated extends
     }
 
     @Test
-    @TestMetadata("protectedMembers.kt")
-    public void testProtectedMembers() {
-      runTest("compiler/testData/codegen/boxInline/syntheticAccessors/protectedMembers.kt");
-    }
-
-    @Test
-    @TestMetadata("protectedMembersFromSuper.kt")
-    public void testProtectedMembersFromSuper() {
-      runTest("compiler/testData/codegen/boxInline/syntheticAccessors/protectedMembersFromSuper.kt");
-    }
-
-    @Test
     @TestMetadata("superCall.kt")
     public void testSuperCall() {
       runTest("compiler/testData/codegen/boxInline/syntheticAccessors/superCall.kt");
@@ -5967,12 +5919,6 @@ public class FirLightTreeBlackBoxInlineCodegenWithIrInlinerTestGenerated extends
       @TestMetadata("protectedInCrossinline.kt")
       public void testProtectedInCrossinline() {
         runTest("compiler/testData/codegen/boxInline/syntheticAccessors/withinInlineLambda/protectedInCrossinline.kt");
-      }
-
-      @Test
-      @TestMetadata("protectedMembersFromSuper.kt")
-      public void testProtectedMembersFromSuper() {
-        runTest("compiler/testData/codegen/boxInline/syntheticAccessors/withinInlineLambda/protectedMembersFromSuper.kt");
       }
 
       @Test

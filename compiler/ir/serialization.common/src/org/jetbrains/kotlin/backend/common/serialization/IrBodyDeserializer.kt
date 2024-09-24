@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.descriptors.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.symbols.*
@@ -244,6 +243,9 @@ class IrBodyDeserializer(
             symbol, typeArgumentsCount = proto.memberAccess.typeArgumentCount,
             constructorTypeArgumentsCount = proto.constructorTypeArgumentsCount,
             valueArgumentsCount = proto.memberAccess.valueArgumentCount,
+            contextParameterCount = 0,
+            hasDispatchReceiver = proto.memberAccess.hasDispatchReceiver(),
+            hasExtensionReceiver = proto.memberAccess.hasExtensionReceiver(),
             origin = deserializeIrStatementOrigin(proto.hasOriginName()) { proto.originName }
         ).also {
             deserializeMemberAccessCommon(it, proto.memberAccess)
@@ -261,6 +263,9 @@ class IrBodyDeserializer(
                 start, end, type,
                 symbol, proto.memberAccess.typeArgumentCount,
                 proto.memberAccess.valueArgumentList.size,
+                contextParameterCount = 0,
+                hasDispatchReceiver = proto.memberAccess.hasDispatchReceiver(),
+                hasExtensionReceiver = proto.memberAccess.hasExtensionReceiver(),
                 origin,
                 superSymbol
             )
@@ -291,7 +296,10 @@ class IrBodyDeserializer(
             builtIns.unitType,
             symbol,
             proto.memberAccess.typeArgumentCount,
-            proto.memberAccess.valueArgumentCount
+            proto.memberAccess.valueArgumentCount,
+            contextParameterCount = 0,
+            hasDispatchReceiver = proto.memberAccess.hasDispatchReceiver(),
+            hasExtensionReceiver = proto.memberAccess.hasExtensionReceiver(),
         )
 
         deserializeMemberAccessCommon(call, proto.memberAccess)
@@ -311,7 +319,10 @@ class IrBodyDeserializer(
             builtIns.unitType,
             symbol,
             proto.memberAccess.typeArgumentCount,
-            proto.memberAccess.valueArgumentCount
+            proto.memberAccess.valueArgumentCount,
+            contextParameterCount = 0,
+            hasDispatchReceiver = proto.memberAccess.hasDispatchReceiver(),
+            hasExtensionReceiver = proto.memberAccess.hasExtensionReceiver(),
         )
         deserializeMemberAccessCommon(call, proto.memberAccess)
         return call
@@ -378,6 +389,9 @@ class IrBodyDeserializer(
             symbol,
             proto.memberAccess.typeArgumentCount,
             proto.memberAccess.valueArgumentCount,
+            contextParameterCount = 0,
+            hasDispatchReceiver = proto.memberAccess.hasDispatchReceiver(),
+            hasExtensionReceiver = proto.memberAccess.hasExtensionReceiver(),
             reflectionTarget,
             origin
         )
@@ -471,9 +485,11 @@ class IrBodyDeserializer(
 
         val origin = deserializeIrStatementOrigin(proto.hasOriginName()) { proto.originName }
 
-        val callable = IrPropertyReferenceImpl(
+        val callable = IrPropertyReferenceImplWithShape(
             start, end, type,
             symbol,
+            proto.memberAccess.hasDispatchReceiver(),
+            proto.memberAccess.hasExtensionReceiver(),
             proto.memberAccess.typeArgumentCount,
             field,
             getter,

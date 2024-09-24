@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -12,20 +12,21 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
-import org.jetbrains.kotlin.analysis.low.level.api.fir.projectStructure.LLFirModuleData
 import org.jetbrains.kotlin.analysis.low.level.api.fir.projectStructure.LLLibrarySymbolProviderFactory
+import org.jetbrains.kotlin.analysis.low.level.api.fir.projectStructure.moduleData
 import org.jetbrains.kotlin.analysis.low.level.api.fir.providers.LLFirJavaSymbolProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.providers.LLFirModuleWithDependenciesSymbolProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.providers.nullableJavaSymbolProvider
-import org.jetbrains.kotlin.fir.BuiltinTypes
 import org.jetbrains.kotlin.fir.SessionConfiguration
 import org.jetbrains.kotlin.fir.backend.jvm.FirJvmTypeMapper
 import org.jetbrains.kotlin.fir.deserialization.SingleModuleDataProvider
 import org.jetbrains.kotlin.fir.java.JavaSymbolProvider
 import org.jetbrains.kotlin.fir.java.deserialization.OptionalAnnotationClassesProvider
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
+import org.jetbrains.kotlin.fir.resolve.providers.firProvider
 import org.jetbrains.kotlin.fir.resolve.scopes.wrapScopeWithJvmMapped
 import org.jetbrains.kotlin.fir.scopes.FirKotlinScopeProvider
+import org.jetbrains.kotlin.fir.scopes.kotlinScopeProvider
 import org.jetbrains.kotlin.fir.session.registerJavaComponents
 import org.jetbrains.kotlin.load.java.createJavaClassFinder
 import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver
@@ -36,7 +37,7 @@ internal class LLFirJvmSessionFactory(project: Project) : LLFirAbstractSessionFa
     override fun createSourcesSession(module: KaSourceModule): LLFirSourcesSession {
         return doCreateSourcesSession(module, FirKotlinScopeProvider(::wrapScopeWithJvmMapped)) { context ->
             registerJavaComponents(JavaModuleResolver.getInstance(project))
-            val javaSymbolProvider = LLFirJavaSymbolProvider(this, context.moduleData, project, context.contentScope)
+            val javaSymbolProvider = LLFirJavaSymbolProvider(this, context.contentScope)
             register(JavaSymbolProvider::class, javaSymbolProvider)
 
             register(
@@ -60,7 +61,7 @@ internal class LLFirJvmSessionFactory(project: Project) : LLFirAbstractSessionFa
     override fun createLibrarySession(module: KaModule): LLFirLibraryOrLibrarySourceResolvableModuleSession {
         return doCreateLibrarySession(module) { context ->
             registerJavaComponents(JavaModuleResolver.getInstance(project))
-            val javaSymbolProvider = LLFirJavaSymbolProvider(this, context.moduleData, project, context.contentScope)
+            val javaSymbolProvider = LLFirJavaSymbolProvider(this, context.contentScope)
             register(
                 FirSymbolProvider::class,
                 LLFirModuleWithDependenciesSymbolProvider(
@@ -113,24 +114,18 @@ internal class LLFirJvmSessionFactory(project: Project) : LLFirAbstractSessionFa
 
     override fun createProjectLibraryProvidersForScope(
         session: LLFirSession,
-        moduleData: LLFirModuleData,
-        kotlinScopeProvider: FirKotlinScopeProvider,
-        project: Project,
-        builtinTypes: BuiltinTypes,
         scope: GlobalSearchScope,
         isFallbackDependenciesProvider: Boolean,
     ): List<FirSymbolProvider> {
+        val moduleData = session.moduleData
         val moduleDataProvider = SingleModuleDataProvider(moduleData)
         val packagePartProvider = project.createPackagePartProvider(scope)
         return buildList {
-            val firJavaFacade = LLFirJavaFacadeForBinaries(session, project.createJavaClassFinder(scope), moduleDataProvider)
+            val firJavaFacade = LLFirJavaFacadeForBinaries(session, project.createJavaClassFinder(scope))
             val deserializedSymbolProviderFactory = LLLibrarySymbolProviderFactory.fromSettings(project)
             addAll(
                 deserializedSymbolProviderFactory.createJvmLibrarySymbolProvider(
                     session,
-                    moduleData,
-                    kotlinScopeProvider,
-                    moduleDataProvider,
                     firJavaFacade,
                     packagePartProvider,
                     scope,
@@ -141,7 +136,7 @@ internal class LLFirJvmSessionFactory(project: Project) : LLFirAbstractSessionFa
                 OptionalAnnotationClassesProvider.createIfNeeded(
                     session,
                     moduleDataProvider,
-                    kotlinScopeProvider,
+                    session.kotlinScopeProvider,
                     packagePartProvider
                 )
             )

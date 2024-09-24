@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.js.test.ir;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.util.KtTestUtil;
+import org.junit.jupiter.api.Tag;
 import org.jetbrains.kotlin.test.TargetBackend;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.jupiter.api.Nested;
@@ -19,6 +20,7 @@ import java.util.regex.Pattern;
 @SuppressWarnings("all")
 @TestMetadata("compiler/testData/codegen/boxInline")
 @TestDataPath("$PROJECT_ROOT")
+@Tag("legacy-frontend")
 public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTest {
   @Test
   public void testAllFilesPresentInBoxInline() {
@@ -28,6 +30,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/annotations")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class Annotations {
     @Test
     public void testAllFilesPresentInAnnotations() {
@@ -50,6 +53,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/anonymousObject")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class AnonymousObject {
     @Test
     public void testAllFilesPresentInAnonymousObject() {
@@ -473,6 +477,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/anonymousObject/enumEntries")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class EnumEntries {
       @Test
       public void testAllFilesPresentInEnumEntries() {
@@ -483,6 +488,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/anonymousObject/enumWhen")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class EnumWhen {
       @Test
       public void testAllFilesPresentInEnumWhen() {
@@ -517,6 +523,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/anonymousObject/properRecapturing")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class ProperRecapturing {
       @Test
       public void testAllFilesPresentInProperRecapturing() {
@@ -563,6 +570,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/anonymousObject/properRecapturingInClass")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class ProperRecapturingInClass {
       @Test
       public void testAllFilesPresentInProperRecapturingInClass() {
@@ -645,6 +653,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/anonymousObject/sam")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class Sam {
       @Test
       public void testAllFilesPresentInSam() {
@@ -655,6 +664,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/anonymousObject/twoCapturedReceivers")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class TwoCapturedReceivers {
       @Test
       public void testAllFilesPresentInTwoCapturedReceivers() {
@@ -708,6 +718,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/argumentOrder")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class ArgumentOrder {
     @Test
     public void testAllFilesPresentInArgumentOrder() {
@@ -736,12 +747,6 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @TestMetadata("capturedInExtension.kt")
     public void testCapturedInExtension() {
       runTest("compiler/testData/codegen/boxInline/argumentOrder/capturedInExtension.kt");
-    }
-
-    @Test
-    @TestMetadata("defaultParametersAndLastVararg.kt")
-    public void testDefaultParametersAndLastVararg() {
-      runTest("compiler/testData/codegen/boxInline/argumentOrder/defaultParametersAndLastVararg.kt");
     }
 
     @Test
@@ -787,12 +792,6 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     }
 
     @Test
-    @TestMetadata("varargAndDefaultParameters.kt")
-    public void testVarargAndDefaultParameters() {
-      runTest("compiler/testData/codegen/boxInline/argumentOrder/varargAndDefaultParameters.kt");
-    }
-
-    @Test
     @TestMetadata("varargAndDefaultParametersWithCorrectOrder.kt")
     public void testVarargAndDefaultParametersWithCorrectOrder() {
       runTest("compiler/testData/codegen/boxInline/argumentOrder/varargAndDefaultParametersWithCorrectOrder.kt");
@@ -802,6 +801,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/arrayConvention")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class ArrayConvention {
     @Test
     public void testAllFilesPresentInArrayConvention() {
@@ -848,6 +848,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/assert")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class Assert {
     @Test
     public void testAllFilesPresentInAssert() {
@@ -858,6 +859,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/builders")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class Builders {
     @Test
     public void testAllFilesPresentInBuilders() {
@@ -868,6 +870,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/bytecodePreprocessing")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class BytecodePreprocessing {
     @Test
     public void testAllFilesPresentInBytecodePreprocessing() {
@@ -878,6 +881,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/callableReference")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class CallableReference {
     @Test
     @TestMetadata("adapted.kt")
@@ -995,6 +999,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/callableReference/adaptedReferences")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class AdaptedReferences {
       @Test
       public void testAllFilesPresentInAdaptedReferences() {
@@ -1047,6 +1052,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/callableReference/bound")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class Bound {
       @Test
       public void testAllFilesPresentInBound() {
@@ -1214,6 +1220,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/capture")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class Capture {
     @Test
     public void testAllFilesPresentInCapture() {
@@ -1290,6 +1297,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/complex")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class Complex {
     @Test
     public void testAllFilesPresentInComplex() {
@@ -1348,6 +1356,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/complexStack")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class ComplexStack {
     @Test
     public void testAllFilesPresentInComplexStack() {
@@ -1412,6 +1421,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/contracts")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class Contracts {
     @Test
     public void testAllFilesPresentInContracts() {
@@ -1512,6 +1522,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/defaultValues")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class DefaultValues {
     @Test
     @TestMetadata("33Parameters.kt")
@@ -1641,6 +1652,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/defaultValues/lambdaInlining")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class LambdaInlining {
       @Test
       public void testAllFilesPresentInLambdaInlining() {
@@ -1848,6 +1860,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
       @Nested
       @TestMetadata("compiler/testData/codegen/boxInline/defaultValues/lambdaInlining/callableReferences")
       @TestDataPath("$PROJECT_ROOT")
+      @Tag("legacy-frontend")
       public class CallableReferences {
         @Test
         public void testAllFilesPresentInCallableReferences() {
@@ -2033,6 +2046,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/defaultValues/maskElimination")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class MaskElimination {
       @Test
       @TestMetadata("32Parameters.kt")
@@ -2086,6 +2100,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/delegatedProperty")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class DelegatedProperty {
     @Test
     public void testAllFilesPresentInDelegatedProperty() {
@@ -2132,6 +2147,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/dontReify")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class DontReify {
     @Test
     public void testAllFilesPresentInDontReify() {
@@ -2202,6 +2218,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/enclosingInfo")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class EnclosingInfo {
     @Test
     public void testAllFilesPresentInEnclosingInfo() {
@@ -2212,6 +2229,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/enum")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class Enum {
     @Test
     public void testAllFilesPresentInEnum() {
@@ -2312,6 +2330,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/functionExpression")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class FunctionExpression {
     @Test
     public void testAllFilesPresentInFunctionExpression() {
@@ -2323,11 +2342,18 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     public void testExtension() {
       runTest("compiler/testData/codegen/boxInline/functionExpression/extension.kt");
     }
+
+    @Test
+    @TestMetadata("kt71659.kt")
+    public void testKt71659() {
+      runTest("compiler/testData/codegen/boxInline/functionExpression/kt71659.kt");
+    }
   }
 
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/inlineArgsInplace")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class InlineArgsInplace {
     @Test
     public void testAllFilesPresentInInlineArgsInplace() {
@@ -2344,6 +2370,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/inlineClasses")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class InlineClasses {
     @Test
     public void testAllFilesPresentInInlineClasses() {
@@ -2375,18 +2402,6 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     }
 
     @Test
-    @TestMetadata("noReturnTypeManglingFun.kt")
-    public void testNoReturnTypeManglingFun() {
-      runTest("compiler/testData/codegen/boxInline/inlineClasses/noReturnTypeManglingFun.kt");
-    }
-
-    @Test
-    @TestMetadata("noReturnTypeManglingVal.kt")
-    public void testNoReturnTypeManglingVal() {
-      runTest("compiler/testData/codegen/boxInline/inlineClasses/noReturnTypeManglingVal.kt");
-    }
-
-    @Test
     @TestMetadata("withReturnTypeManglingFun.kt")
     public void testWithReturnTypeManglingFun() {
       runTest("compiler/testData/codegen/boxInline/inlineClasses/withReturnTypeManglingFun.kt");
@@ -2401,6 +2416,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/inlineClasses/unboxGenericParameter")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class UnboxGenericParameter {
       @Test
       public void testAllFilesPresentInUnboxGenericParameter() {
@@ -2410,6 +2426,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
       @Nested
       @TestMetadata("compiler/testData/codegen/boxInline/inlineClasses/unboxGenericParameter/funInterface")
       @TestDataPath("$PROJECT_ROOT")
+      @Tag("legacy-frontend")
       public class FunInterface {
         @Test
         public void testAllFilesPresentInFunInterface() {
@@ -2456,6 +2473,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
       @Nested
       @TestMetadata("compiler/testData/codegen/boxInline/inlineClasses/unboxGenericParameter/lambda")
       @TestDataPath("$PROJECT_ROOT")
+      @Tag("legacy-frontend")
       public class Lambda {
         @Test
         public void testAllFilesPresentInLambda() {
@@ -2502,6 +2520,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
       @Nested
       @TestMetadata("compiler/testData/codegen/boxInline/inlineClasses/unboxGenericParameter/objectLiteral")
       @TestDataPath("$PROJECT_ROOT")
+      @Tag("legacy-frontend")
       public class ObjectLiteral {
         @Test
         public void testAllFilesPresentInObjectLiteral() {
@@ -2550,6 +2569,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/innerClasses")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class InnerClasses {
     @Test
     public void testAllFilesPresentInInnerClasses() {
@@ -2608,6 +2628,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/invokedynamic")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class Invokedynamic {
     @Test
     public void testAllFilesPresentInInvokedynamic() {
@@ -2617,6 +2638,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/invokedynamic/lambdas")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class Lambdas {
       @Test
       public void testAllFilesPresentInLambdas() {
@@ -2627,6 +2649,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/invokedynamic/sam")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class Sam {
       @Test
       public void testAllFilesPresentInSam() {
@@ -2638,6 +2661,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/jvmName")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class JvmName {
     @Test
     public void testAllFilesPresentInJvmName() {
@@ -2648,6 +2672,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/jvmPackageName")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class JvmPackageName {
     @Test
     public void testAllFilesPresentInJvmPackageName() {
@@ -2658,6 +2683,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/lambdaClassClash")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class LambdaClassClash {
     @Test
     public void testAllFilesPresentInLambdaClassClash() {
@@ -2680,6 +2706,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/lambdaTransformation")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class LambdaTransformation {
     @Test
     public void testAllFilesPresentInLambdaTransformation() {
@@ -2720,6 +2747,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/localFunInLambda")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class LocalFunInLambda {
     @Test
     public void testAllFilesPresentInLocalFunInLambda() {
@@ -2760,6 +2788,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/multiModule")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class MultiModule {
     @Test
     public void testAllFilesPresentInMultiModule() {
@@ -2776,6 +2805,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/multifileClasses")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class MultifileClasses {
     @Test
     public void testAllFilesPresentInMultifileClasses() {
@@ -2786,6 +2816,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/multiplatform")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class Multiplatform {
     @Test
     public void testAllFilesPresentInMultiplatform() {
@@ -2795,6 +2826,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/multiplatform/defaultArguments")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class DefaultArguments {
       @Test
       public void testAllFilesPresentInDefaultArguments() {
@@ -2812,6 +2844,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/noInline")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class NoInline {
     @Test
     public void testAllFilesPresentInNoInline() {
@@ -2864,6 +2897,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/nonLocalReturns")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class NonLocalReturns {
     @Test
     public void testAllFilesPresentInNonLocalReturns() {
@@ -3011,6 +3045,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/nonLocalReturns/deparenthesize")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class Deparenthesize {
       @Test
       public void testAllFilesPresentInDeparenthesize() {
@@ -3033,6 +3068,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/nonLocalReturns/tryFinally")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class TryFinally {
       @Test
       public void testAllFilesPresentInTryFinally() {
@@ -3120,6 +3156,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
       @Nested
       @TestMetadata("compiler/testData/codegen/boxInline/nonLocalReturns/tryFinally/callSite")
       @TestDataPath("$PROJECT_ROOT")
+      @Tag("legacy-frontend")
       public class CallSite {
         @Test
         public void testAllFilesPresentInCallSite() {
@@ -3166,6 +3203,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
       @Nested
       @TestMetadata("compiler/testData/codegen/boxInline/nonLocalReturns/tryFinally/chained")
       @TestDataPath("$PROJECT_ROOT")
+      @Tag("legacy-frontend")
       public class Chained {
         @Test
         public void testAllFilesPresentInChained() {
@@ -3224,6 +3262,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
       @Nested
       @TestMetadata("compiler/testData/codegen/boxInline/nonLocalReturns/tryFinally/declSite")
       @TestDataPath("$PROJECT_ROOT")
+      @Tag("legacy-frontend")
       public class DeclSite {
         @Test
         public void testAllFilesPresentInDeclSite() {
@@ -3306,6 +3345,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
       @Nested
       @TestMetadata("compiler/testData/codegen/boxInline/nonLocalReturns/tryFinally/exceptionTable")
       @TestDataPath("$PROJECT_ROOT")
+      @Tag("legacy-frontend")
       public class ExceptionTable {
         @Test
         public void testAllFilesPresentInExceptionTable() {
@@ -3436,6 +3476,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
       @Nested
       @TestMetadata("compiler/testData/codegen/boxInline/nonLocalReturns/tryFinally/variables")
       @TestDataPath("$PROJECT_ROOT")
+      @Tag("legacy-frontend")
       public class Variables {
         @Test
         public void testAllFilesPresentInVariables() {
@@ -3454,6 +3495,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/optimizations")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class Optimizations {
     @Test
     public void testAllFilesPresentInOptimizations() {
@@ -3470,6 +3512,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/private")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class Private {
     @Test
     @TestMetadata("accessorForConst.kt")
@@ -3552,6 +3595,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/property")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class Property {
     @Test
     public void testAllFilesPresentInProperty() {
@@ -3646,6 +3690,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/reified")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class Reified {
     @Test
     public void testAllFilesPresentInReified() {
@@ -3775,6 +3820,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/reified/checkCast")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class CheckCast {
       @Test
       public void testAllFilesPresentInCheckCast() {
@@ -3839,6 +3885,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/reified/defaultLambda")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class DefaultLambda {
       @Test
       public void testAllFilesPresentInDefaultLambda() {
@@ -3849,6 +3896,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/reified/isCheck")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class IsCheck {
       @Test
       public void testAllFilesPresentInIsCheck() {
@@ -3878,6 +3926,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/signature")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class Signature {
     @Test
     public void testAllFilesPresentInSignature() {
@@ -3888,6 +3937,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/signatureMangling")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class SignatureMangling {
     @Test
     public void testAllFilesPresentInSignatureMangling() {
@@ -3898,6 +3948,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/simple")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class Simple {
     @Test
     public void testAllFilesPresentInSimple() {
@@ -4046,6 +4097,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/smap")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class Smap {
     @Test
     public void testAllFilesPresentInSmap() {
@@ -4167,12 +4219,6 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     }
 
     @Test
-    @TestMetadata("smapWithOldSyntax.kt")
-    public void testSmapWithOldSyntax() {
-      runTest("compiler/testData/codegen/boxInline/smap/smapWithOldSyntax.kt");
-    }
-
-    @Test
     @TestMetadata("tryFinally1.kt")
     public void testTryFinally1() {
       runTest("compiler/testData/codegen/boxInline/smap/tryFinally1.kt");
@@ -4181,6 +4227,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/smap/anonymous")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class Anonymous {
       @Test
       public void testAllFilesPresentInAnonymous() {
@@ -4251,6 +4298,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/smap/defaultLambda")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class DefaultLambda {
       @Test
       public void testAllFilesPresentInDefaultLambda() {
@@ -4315,6 +4363,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/smap/inlineOnly")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class InlineOnly {
       @Test
       public void testAllFilesPresentInInlineOnly() {
@@ -4349,6 +4398,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/smap/newsmap")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class Newsmap {
       @Test
       public void testAllFilesPresentInNewsmap() {
@@ -4383,6 +4433,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/smap/resolve")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class Resolve {
       @Test
       public void testAllFilesPresentInResolve() {
@@ -4406,6 +4457,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/special")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class Special {
     @Test
     public void testAllFilesPresentInSpecial() {
@@ -4476,6 +4528,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/stackOnReturn")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class StackOnReturn {
     @Test
     public void testAllFilesPresentInStackOnReturn() {
@@ -4582,6 +4635,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/suspend")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class Suspend {
     @Test
     public void testAllFilesPresentInSuspend() {
@@ -4741,6 +4795,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/suspend/callableReference")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class CallableReference {
       @Test
       public void testAllFilesPresentInCallableReference() {
@@ -4781,6 +4836,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/suspend/defaultParameter")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class DefaultParameter {
       @Test
       public void testAllFilesPresentInDefaultParameter() {
@@ -4827,6 +4883,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/suspend/inlineClass")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class InlineClass {
       @Test
       public void testAllFilesPresentInInlineClass() {
@@ -4861,6 +4918,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/suspend/inlineUsedAsNoinline")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class InlineUsedAsNoinline {
       @Test
       public void testAllFilesPresentInInlineUsedAsNoinline() {
@@ -4883,6 +4941,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/suspend/receiver")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class Receiver {
       @Test
       public void testAllFilesPresentInReceiver() {
@@ -4941,6 +5000,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/suspend/stateMachine")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class StateMachine {
       @Test
       public void testAllFilesPresentInStateMachine() {
@@ -5090,6 +5150,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/syntheticAccessors")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class SyntheticAccessors {
     @Test
     public void testAllFilesPresentInSyntheticAccessors() {
@@ -5115,18 +5176,6 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     }
 
     @Test
-    @TestMetadata("protectedMembers.kt")
-    public void testProtectedMembers() {
-      runTest("compiler/testData/codegen/boxInline/syntheticAccessors/protectedMembers.kt");
-    }
-
-    @Test
-    @TestMetadata("protectedMembersFromSuper.kt")
-    public void testProtectedMembersFromSuper() {
-      runTest("compiler/testData/codegen/boxInline/syntheticAccessors/protectedMembersFromSuper.kt");
-    }
-
-    @Test
     @TestMetadata("superCall.kt")
     public void testSuperCall() {
       runTest("compiler/testData/codegen/boxInline/syntheticAccessors/superCall.kt");
@@ -5147,6 +5196,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
     @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/syntheticAccessors/withinInlineLambda")
     @TestDataPath("$PROJECT_ROOT")
+    @Tag("legacy-frontend")
     public class WithinInlineLambda {
       @Test
       public void testAllFilesPresentInWithinInlineLambda() {
@@ -5190,12 +5240,6 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
       }
 
       @Test
-      @TestMetadata("protectedMembersFromSuper.kt")
-      public void testProtectedMembersFromSuper() {
-        runTest("compiler/testData/codegen/boxInline/syntheticAccessors/withinInlineLambda/protectedMembersFromSuper.kt");
-      }
-
-      @Test
       @TestMetadata("superCall.kt")
       public void testSuperCall() {
         runTest("compiler/testData/codegen/boxInline/syntheticAccessors/withinInlineLambda/superCall.kt");
@@ -5212,6 +5256,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/trait")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class Trait {
     @Test
     public void testAllFilesPresentInTrait() {
@@ -5228,6 +5273,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/tryCatchFinally")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class TryCatchFinally {
     @Test
     public void testAllFilesPresentInTryCatchFinally() {
@@ -5262,6 +5308,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/typeParameters")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class TypeParameters {
     @Test
     public void testAllFilesPresentInTypeParameters() {
@@ -5308,6 +5355,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/varargs")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class Varargs {
     @Test
     public void testAllFilesPresentInVarargs() {
@@ -5336,6 +5384,7 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
   @Nested
   @TestMetadata("compiler/testData/codegen/boxInline/wasm-new-exception-handling")
   @TestDataPath("$PROJECT_ROOT")
+  @Tag("legacy-frontend")
   public class Wasm_new_exception_handling {
     @Test
     public void testAllFilesPresentInWasm_new_exception_handling() {

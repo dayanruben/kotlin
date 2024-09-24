@@ -8,20 +8,16 @@ package org.jetbrains.kotlin.gradle.plugin.konan.tasks
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.internal.file.FileOperations
-import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
+import org.gradle.api.services.ServiceReference
 import org.gradle.api.tasks.*
 import org.gradle.process.ExecOperations
 import org.jetbrains.kotlin.gradle.plugin.konan.KonanCliCompilerRunner
-import org.jetbrains.kotlin.konan.library.defaultResolver
 import org.jetbrains.kotlin.konan.target.CompilerOutputKind
-import org.jetbrains.kotlin.konan.target.Distribution
 import org.jetbrains.kotlin.konan.target.PlatformManager
-import org.jetbrains.kotlin.library.uniqueName
-import org.jetbrains.kotlin.*
-import org.jetbrains.kotlin.gradle.plugin.konan.KonanCliRunnerIsolatedClassLoadersService
+import org.jetbrains.kotlin.gradle.plugin.konan.prepareAsOutput
+import org.jetbrains.kotlin.gradle.plugin.konan.registerIsolatedClassLoadersServiceIfAbsent
 import org.jetbrains.kotlin.nativeDistribution.nativeDistribution
-import org.jetbrains.kotlin.util.Logger
 import java.io.File
 import java.util.*
 import javax.inject.Inject
@@ -69,22 +65,14 @@ abstract class KonanCacheTask @Inject constructor(
     @get:Input
     var cachedLibraries: Map<File, File> = emptyMap()
 
-    private val isolatedClassLoadersService = KonanCliRunnerIsolatedClassLoadersService.attachingToTask(this)
+    @get:ServiceReference
+    protected val isolatedClassLoadersService = project.gradle.sharedServices.registerIsolatedClassLoadersServiceIfAbsent()
 
     @TaskAction
     fun compile() {
-        // This code uses bootstrap version of util-klib and fails due to the older default ABI than library being used
-        // A possible solution is to read it manually from manifest file or this check should be done by the compiler itself
-//        check(klibUniqName == readKlibUniqNameFromManifest()) {
-//            "klibUniqName mismatch: configured '$klibUniqName', resolved '${readKlibUniqNameFromManifest()}'"
-//        }
-
         // Compiler doesn't create a cache if the cacheFile already exists. So we need to remove it manually.
-        if (cacheFile.exists()) {
-            val deleted = cacheFile.deleteRecursively()
-            check(deleted) { "Cannot delete stale cache: ${cacheFile.absolutePath}" }
-        }
-        cacheDirectory.mkdirs()
+        cacheFile.prepareAsOutput()
+
         val konanHome = compilerDistributionPath.get().absolutePath
         val additionalCacheFlags = PlatformManager(konanHome).let {
             it.targetByName(target).let(it::loader).additionalCacheFlags
@@ -101,6 +89,6 @@ abstract class KonanCacheTask @Inject constructor(
             args += "-Xmake-per-file-cache"
         args += additionalCacheFlags
         args += cachedLibraries.map { "-Xcached-library=${it.key},${it.value}" }
-        KonanCliCompilerRunner(fileOperations, execOperations, logger, isolatedClassLoadersService, konanHome).run(args)
+        KonanCliCompilerRunner(fileOperations, execOperations, logger, isolatedClassLoadersService.get(), konanHome).run(args)
     }
 }

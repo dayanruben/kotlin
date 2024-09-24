@@ -9,10 +9,10 @@ import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.Usage
 import org.jetbrains.kotlin.gradle.dsl.multiplatformExtensionOrNull
 import org.jetbrains.kotlin.gradle.plugin.*
+import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
-import org.jetbrains.kotlin.gradle.plugin.mpp.configureSourcesPublicationAttributes
-import org.jetbrains.kotlin.gradle.plugin.mpp.internal
-import org.jetbrains.kotlin.gradle.plugin.mpp.isSourcesPublishableFuture
+import org.jetbrains.kotlin.gradle.plugin.mpp.publishing.configureResourcesPublicationAttributes
+import org.jetbrains.kotlin.gradle.plugin.mpp.publishing.configureSourcesPublicationAttributes
 import org.jetbrains.kotlin.gradle.plugin.mpp.resources.resourcesPublicationExtension
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 import org.jetbrains.kotlin.gradle.utils.addSecondaryOutgoingJvmClassesVariant
@@ -37,6 +37,7 @@ internal val CreateTargetConfigurationsSideEffect = KotlinTargetSideEffect { tar
     }
 
     val apiElementScope = configurations.maybeCreateDependencyScope(mainCompilation.apiConfigurationName)
+
     configurations.maybeCreateConsumable(target.apiElementsConfigurationName).apply {
         description = "API elements for main."
         isVisible = false

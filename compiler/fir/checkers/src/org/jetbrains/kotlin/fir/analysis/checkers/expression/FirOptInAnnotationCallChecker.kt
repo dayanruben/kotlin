@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
-import org.jetbrains.kotlin.fir.analysis.checkers.extractClassFromArgument
+import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirOptInUsageBaseChecker.getSourceForIsMarkerDiagnostic
 import org.jetbrains.kotlin.fir.analysis.checkers.extractClassesFromArgument
 import org.jetbrains.kotlin.fir.analysis.checkers.modality
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
@@ -22,8 +22,7 @@ import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.findArgumentByName
 import org.jetbrains.kotlin.fir.declarations.utils.isFun
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
-import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
-import org.jetbrains.kotlin.fir.expressions.arguments
+import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.classLikeLookupTagIfAny
@@ -48,9 +47,10 @@ object FirOptInAnnotationCallChecker : FirAnnotationCallChecker(MppCheckerKind.C
                 if (arguments.isEmpty()) {
                     reporter.reportOn(expression.source, FirErrors.OPT_IN_WITHOUT_ARGUMENTS, context)
                 } else {
-                    val annotationClasses = expression.findArgumentByName(OPT_IN_ANNOTATION_CLASS)
-                    for (classSymbol in annotationClasses?.extractClassesFromArgument(context.session).orEmpty()) {
-                        checkOptInArgumentIsMarker(classSymbol, classId, expression.source, reporter, context)
+                    for ((index, classSymbol) in expression.findArgumentByName(OPT_IN_ANNOTATION_CLASS)
+                        ?.extractClassesFromArgument(context.session).orEmpty().withIndex()) {
+                        val source = expression.getSourceForIsMarkerDiagnostic(classId, index)
+                        checkOptInArgumentIsMarker(classSymbol, classId, source, reporter, context)
                     }
                 }
             }
@@ -82,8 +82,13 @@ object FirOptInAnnotationCallChecker : FirAnnotationCallChecker(MppCheckerKind.C
                     return
                 }
             }
-            val classSymbol = expression.findArgumentByName(OPT_IN_ANNOTATION_CLASS)?.extractClassFromArgument(context.session) ?: return
-            checkOptInArgumentIsMarker(classSymbol, classId, expression.source, reporter, context)
+
+            val classSymbols = expression.findArgumentByName(OPT_IN_ANNOTATION_CLASS)?.extractClassesFromArgument(context.session).orEmpty()
+
+            classSymbols.forEachIndexed { index, classSymbol ->
+                val source = expression.getSourceForIsMarkerDiagnostic(classId, index)
+                checkOptInArgumentIsMarker(classSymbol, classId, source, reporter, context)
+            }
         }
     }
 
@@ -112,13 +117,13 @@ object FirOptInAnnotationCallChecker : FirAnnotationCallChecker(MppCheckerKind.C
         annotationClassId: ClassId,
         source: KtSourceElement?,
         reporter: DiagnosticReporter,
-        context: CheckerContext
+        context: CheckerContext,
     ) {
         with(FirOptInUsageBaseChecker) {
             if (classSymbol.loadExperimentalityForMarkerAnnotation(context.session) == null) {
                 val diagnostic = when (annotationClassId) {
                     OPT_IN_CLASS_ID -> FirErrors.OPT_IN_ARGUMENT_IS_NOT_MARKER
-                    SUBCLASS_OPT_IN_REQUIRED_CLASS_ID -> FirErrors.SUBCLASS_OPT_ARGUMENT_IS_NOT_MARKER
+                    SUBCLASS_OPT_IN_REQUIRED_CLASS_ID -> FirErrors.SUBCLASS_OPT_IN_ARGUMENT_IS_NOT_MARKER
                     else -> return
                 }
                 reporter.reportOn(

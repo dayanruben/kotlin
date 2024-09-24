@@ -5,14 +5,12 @@
 
 package org.jetbrains.kotlin.gradle
 
-import org.gradle.api.logging.configuration.WarningMode
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.testbase.*
+import org.jetbrains.kotlin.gradle.testbase.addDefaultSettingsToSettingsGradle
+import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.condition.DisabledOnOs
-import org.junit.jupiter.api.condition.OS
-import org.junit.jupiter.api.io.TempDir
-import java.nio.file.Path
 import kotlin.io.path.appendText
 import kotlin.io.path.readLines
 import kotlin.io.path.readText
@@ -111,4 +109,45 @@ class PublishingIT : KGPBaseTest() {
             }
         }
     }
+
+    @DisplayName("KT-69974: pom rewriting with substitutions and included builds")
+    @TestMetadata("pom-rewriter")
+    @GradleTest
+    fun testPomRewriter(gradleVersion: GradleVersion) {
+        val localRepo = defaultLocalRepo(gradleVersion)
+        project(
+            "pom-rewriter",
+            gradleVersion,
+            localRepoDir = localRepo,
+            buildOptions = defaultBuildOptions.disableIsolatedProjectsButEnableKmpSupportForMaxGradle(gradleVersion),
+        ) {
+
+            projectPath.resolve("included").addDefaultSettingsToSettingsGradle(
+                gradleVersion,
+                DependencyManagement.DefaultDependencyManagement(),
+                localRepo,
+                true
+            )
+
+            build("publishJvmPublicationToCustomRepository") {
+                val actualPomContent = localRepo.resolve("pom-rewriter")
+                    .resolve("pom-rewriter-root-jvm")
+                    .resolve("1.0.0")
+                    .resolve("pom-rewriter-root-jvm-1.0.0.pom")
+                    .readText()
+                    .replace(buildOptions.kotlinVersion, "{kotlin_version}")
+
+                val expectedPomName = if (kmpIsolatedProjectsSupportEnabled) {
+                    "expected-pom-kmp-isolated-projects-support-pom-rewriter.xml"
+                } else {
+                    "expected-pom-legacy-pom-rewriter.xml"
+                }
+                val expectedPomFile = projectPath.resolve(expectedPomName)
+
+                KotlinTestUtils.assertEqualsToFile(expectedPomFile, actualPomContent)
+            }
+        }
+    }
+
+
 }

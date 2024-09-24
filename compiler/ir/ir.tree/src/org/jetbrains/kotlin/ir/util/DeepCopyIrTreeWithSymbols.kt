@@ -564,6 +564,9 @@ open class DeepCopyIrTreeWithSymbols(
             expression.typeArgumentsCount,
             expression.constructorTypeArgumentsCount,
             expression.valueArgumentsCount,
+            expression.targetContextParameterCount,
+            expression.targetHasDispatchReceiver,
+            expression.targetHasExtensionReceiver,
             mapStatementOrigin(expression.origin)
         ).apply {
             copyRemappedTypeArgumentsFrom(expression)
@@ -588,6 +591,9 @@ open class DeepCopyIrTreeWithSymbols(
             newCallee,
             expression.typeArgumentsCount,
             expression.valueArgumentsCount,
+            expression.targetContextParameterCount,
+            expression.targetHasDispatchReceiver,
+            expression.targetHasExtensionReceiver,
             mapStatementOrigin(expression.origin),
             expression.superQualifierSymbol?.let(symbolRemapper::getReferencedClass)
         ).apply {
@@ -615,7 +621,10 @@ open class DeepCopyIrTreeWithSymbols(
             expression.type.remapType(),
             newConstructor,
             expression.typeArgumentsCount,
-            expression.valueArgumentsCount
+            expression.valueArgumentsCount,
+            expression.targetContextParameterCount,
+            expression.targetHasDispatchReceiver,
+            expression.targetHasExtensionReceiver,
         ).apply {
             copyRemappedTypeArgumentsFrom(expression)
             transformValueArguments(expression)
@@ -629,7 +638,10 @@ open class DeepCopyIrTreeWithSymbols(
             expression.type.remapType(),
             newConstructor,
             expression.typeArgumentsCount,
-            expression.valueArgumentsCount
+            expression.valueArgumentsCount,
+            expression.targetContextParameterCount,
+            expression.targetHasDispatchReceiver,
+            expression.targetHasExtensionReceiver,
         ).apply {
             copyRemappedTypeArgumentsFrom(expression)
             transformValueArguments(expression)
@@ -652,6 +664,9 @@ open class DeepCopyIrTreeWithSymbols(
             symbol,
             expression.typeArgumentsCount,
             expression.valueArgumentsCount,
+            expression.targetContextParameterCount,
+            expression.targetHasDispatchReceiver,
+            expression.targetHasExtensionReceiver,
             reflectionTarget,
             mapStatementOrigin(expression.origin)
         ).apply {
@@ -670,10 +685,12 @@ open class DeepCopyIrTreeWithSymbols(
     }
 
     override fun visitPropertyReference(expression: IrPropertyReference): IrPropertyReference =
-        IrPropertyReferenceImpl(
+        IrPropertyReferenceImplWithShape(
             expression.startOffset, expression.endOffset,
             expression.type.remapType(),
             symbolRemapper.getReferencedProperty(expression.symbol),
+            expression.targetHasDispatchReceiver,
+            expression.targetHasExtensionReceiver,
             expression.typeArgumentsCount,
             expression.field?.let { symbolRemapper.getReferencedField(it) },
             expression.getter?.let { symbolRemapper.getReferencedSimpleFunction(it) },
