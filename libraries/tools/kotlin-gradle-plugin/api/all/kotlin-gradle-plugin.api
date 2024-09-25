@@ -5242,23 +5242,6 @@ public final class org/jetbrains/kotlin/gradle/targets/js/testing/karma/KarmaCon
 	public fun <init> (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
 }
 
-public final class org/jetbrains/kotlin/gradle/targets/js/testing/karma/KarmaFile {
-	public fun <init> (Ljava/lang/String;ZZZ)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Z
-	public final fun component3 ()Z
-	public final fun component4 ()Z
-	public final fun copy (Ljava/lang/String;ZZZ)Lorg/jetbrains/kotlin/gradle/targets/js/testing/karma/KarmaFile;
-	public static synthetic fun copy$default (Lorg/jetbrains/kotlin/gradle/targets/js/testing/karma/KarmaFile;Ljava/lang/String;ZZZILjava/lang/Object;)Lorg/jetbrains/kotlin/gradle/targets/js/testing/karma/KarmaFile;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getIncluded ()Z
-	public final fun getPattern ()Ljava/lang/String;
-	public final fun getServed ()Z
-	public final fun getWatched ()Z
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
 public final class org/jetbrains/kotlin/gradle/targets/js/testing/karma/KarmaStackTraceProcessorKt {
 	public static final fun processKarmaStackTrace (Ljava/lang/String;)Ljava/lang/String;
 	public static final fun processWebpackName (Ljava/lang/String;)Ljava/lang/String;
@@ -6423,7 +6406,7 @@ public final class org/jetbrains/kotlin/gradle/targets/native/tasks/artifact/Kot
 	public fun registerAssembleTask (Lorg/gradle/api/Project;)V
 }
 
-public abstract class org/jetbrains/kotlin/gradle/targets/native/tasks/artifact/KotlinNativeLinkArtifactTask : org/gradle/api/DefaultTask, org/jetbrains/kotlin/gradle/internal/UsesClassLoadersCachingBuildService, org/jetbrains/kotlin/gradle/report/UsesBuildMetricsService, org/jetbrains/kotlin/gradle/targets/native/UsesKonanPropertiesBuildService, org/jetbrains/kotlin/gradle/targets/native/toolchain/UsesKotlinNativeBundleBuildService, org/jetbrains/kotlin/gradle/tasks/KotlinToolTask {
+public abstract class org/jetbrains/kotlin/gradle/targets/native/tasks/artifact/KotlinNativeLinkArtifactTask : org/gradle/api/DefaultTask, org/jetbrains/kotlin/gradle/internal/UsesClassLoadersCachingBuildService, org/jetbrains/kotlin/gradle/plugin/statistics/UsesBuildFusService, org/jetbrains/kotlin/gradle/report/UsesBuildMetricsService, org/jetbrains/kotlin/gradle/targets/native/UsesKonanPropertiesBuildService, org/jetbrains/kotlin/gradle/targets/native/toolchain/UsesKotlinNativeBundleBuildService, org/jetbrains/kotlin/gradle/tasks/KotlinToolTask {
 	public fun <init> (Lorg/jetbrains/kotlin/konan/target/KonanTarget;Lorg/jetbrains/kotlin/konan/target/CompilerOutputKind;Lorg/gradle/api/model/ObjectFactory;Lorg/gradle/api/file/ProjectLayout;)V
 	public final fun getAllWarningsAsErrors ()Z
 	public abstract fun getBaseName ()Lorg/gradle/api/provider/Property;
@@ -6868,7 +6851,7 @@ public abstract class org/jetbrains/kotlin/gradle/tasks/KotlinNativeCompile : or
 	public fun setupCompilerArgs (Lorg/jetbrains/kotlin/cli/common/arguments/K2NativeCompilerArguments;ZZ)V
 }
 
-public abstract class org/jetbrains/kotlin/gradle/tasks/KotlinNativeLink : org/jetbrains/kotlin/gradle/tasks/AbstractKotlinCompileTool, org/jetbrains/kotlin/gradle/internal/UsesClassLoadersCachingBuildService, org/jetbrains/kotlin/gradle/report/UsesBuildMetricsService, org/jetbrains/kotlin/gradle/targets/native/UsesKonanPropertiesBuildService, org/jetbrains/kotlin/gradle/targets/native/toolchain/UsesKotlinNativeBundleBuildService, org/jetbrains/kotlin/gradle/tasks/KotlinToolTask {
+public abstract class org/jetbrains/kotlin/gradle/tasks/KotlinNativeLink : org/jetbrains/kotlin/gradle/tasks/AbstractKotlinCompileTool, org/jetbrains/kotlin/gradle/internal/UsesClassLoadersCachingBuildService, org/jetbrains/kotlin/gradle/plugin/statistics/UsesBuildFusService, org/jetbrains/kotlin/gradle/report/UsesBuildMetricsService, org/jetbrains/kotlin/gradle/targets/native/UsesKonanPropertiesBuildService, org/jetbrains/kotlin/gradle/targets/native/toolchain/UsesKotlinNativeBundleBuildService, org/jetbrains/kotlin/gradle/tasks/KotlinToolTask {
 	public fun <init> (Lorg/jetbrains/kotlin/gradle/plugin/mpp/NativeBinary;Lorg/gradle/api/model/ObjectFactory;)V
 	public final fun compile ()V
 	public synthetic fun createCompilerArguments (Lorg/jetbrains/kotlin/gradle/plugin/KotlinCompilerArgumentsProducer$CreateCompilerArgumentsContext;)Lorg/jetbrains/kotlin/cli/common/arguments/CommonToolArguments;

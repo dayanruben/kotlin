@@ -2851,6 +2851,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       }
 
       @Test
+      @TestMetadata("wrongAnnotationTarget.kt")
+      public void testWrongAnnotationTarget() {
+        runTest("compiler/testData/diagnostics/tests/annotations/wrongAnnotationTarget.kt");
+      }
+
+      @Test
       @TestMetadata("wrongAnnotationTargetAnnotationOrder.kt")
       public void testWrongAnnotationTargetAnnotationOrder() {
         runTest("compiler/testData/diagnostics/tests/annotations/wrongAnnotationTargetAnnotationOrder.kt");
@@ -39469,6 +39475,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       }
 
       @Test
+      @TestMetadata("illegalTypeInTypeAliasExpansionDisabled.kt")
+      public void testIllegalTypeInTypeAliasExpansionDisabled() {
+        runTest("compiler/testData/diagnostics/tests/typealias/illegalTypeInTypeAliasExpansionDisabled.kt");
+      }
+
+      @Test
       @TestMetadata("import.kt")
       public void testImport() {
         runTest("compiler/testData/diagnostics/tests/typealias/import.kt");
@@ -41949,6 +41961,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
     @TestMetadata("ArrayOfNothing.kt")
     public void testArrayOfNothing() {
       runTest("compiler/testData/diagnostics/testsWithStdLib/ArrayOfNothing.kt");
+    }
+
+    @Test
+    @TestMetadata("ArrayOfNothingDisabled.kt")
+    public void testArrayOfNothingDisabled() {
+      runTest("compiler/testData/diagnostics/testsWithStdLib/ArrayOfNothingDisabled.kt");
     }
 
     @Test
@@ -46604,6 +46622,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       @TestMetadata("reifiedNothingSubstitution.kt")
       public void testReifiedNothingSubstitution() {
         runTest("compiler/testData/diagnostics/testsWithStdLib/reified/reifiedNothingSubstitution.kt");
+      }
+
+      @Test
+      @TestMetadata("reifiedNothingSubstitutionDisabled.kt")
+      public void testReifiedNothingSubstitutionDisabled() {
+        runTest("compiler/testData/diagnostics/testsWithStdLib/reified/reifiedNothingSubstitutionDisabled.kt");
       }
     }
 

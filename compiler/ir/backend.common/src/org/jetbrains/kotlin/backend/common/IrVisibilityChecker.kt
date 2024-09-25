@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.ir.util.fileOrNull
 import org.jetbrains.kotlin.ir.util.getPackageFragment
 import org.jetbrains.kotlin.ir.util.isPublishedApi
 import org.jetbrains.kotlin.ir.util.parentClassOrNull
-import org.jetbrains.kotlin.ir.visitors.IrTypeTransformerVoid
+import org.jetbrains.kotlin.ir.visitors.IrTypeVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.library.KOTLINTEST_MODULE_NAME
 import org.jetbrains.kotlin.library.KOTLIN_JS_STDLIB_NAME
@@ -56,7 +56,7 @@ internal class IrVisibilityChecker(
     private val module: IrModuleFragment,
     private val file: IrFile,
     private val reportError: ReportIrValidationError,
-) : IrTypeTransformerVoid() {
+) : IrTypeVisitorVoid() {
 
     companion object {
         private val EXCLUDED_MODULE_NAMES: Set<Name> =
@@ -153,21 +153,11 @@ internal class IrVisibilityChecker(
         }
     }
 
-    private fun List<IrTypeArgument>.checkVisibilities(element: IrElement) {
-        for (argument in this) {
-            (argument as? IrTypeProjection)?.type?.checkVisibilitiesInType(element)
+    override fun visitType(container: IrElement, type: IrType) {
+        if (type is IrSimpleType) {
+            checkVisibility(type.classifier, container)
         }
     }
-
-    private fun IrType.checkVisibilitiesInType(element: IrElement) {
-        if (this is IrSimpleType) {
-            checkVisibility(classifier, element)
-            arguments.checkVisibilities(element)
-        }
-    }
-
-    override fun <Type : IrType?> transformType(container: IrElement, type: Type): Type =
-        type.also { it?.checkVisibilitiesInType(container) }
 
     override fun visitDeclarationReference(expression: IrDeclarationReference) {
         checkVisibility(expression.symbol, expression)

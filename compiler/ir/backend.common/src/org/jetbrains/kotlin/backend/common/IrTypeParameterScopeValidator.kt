@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeProjection
 import org.jetbrains.kotlin.ir.util.render
-import org.jetbrains.kotlin.ir.visitors.IrTypeTransformerVoid
+import org.jetbrains.kotlin.ir.visitors.IrTypeVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 
@@ -29,7 +29,7 @@ internal class IrTypeParameterScopeValidator(private val reportError: ReportErro
         element.acceptVoid(Checker())
     }
 
-    private inner class Checker : IrTypeTransformerVoid() {
+    private inner class Checker : IrTypeVisitorVoid() {
         private val scopeStack = ScopeStack<IrTypeParameterSymbol>()
 
         private fun checkTypeParameterReference(element: IrElement, typeParameterSymbol: IrTypeParameterSymbol) {
@@ -42,18 +42,6 @@ internal class IrTypeParameterScopeValidator(private val reportError: ReportErro
             }
         }
 
-        private fun visitTypeAccess(element: IrElement, type: IrType) {
-            if (type !is IrSimpleType) return
-            (type.classifier as? IrTypeParameterSymbol)?.let {
-                checkTypeParameterReference(element, it)
-            }
-            for (arg in type.arguments) {
-                if (arg is IrTypeProjection) {
-                    visitTypeAccess(element, arg.type)
-                }
-            }
-        }
-
         private fun withTypeParametersInScope(container: IrTypeParametersContainer, block: () -> Unit) {
             scopeStack.withNewScope(
                 outerScopesAreInvisible = container is IrClass && !container.isInner && container.visibility != DescriptorVisibilities.LOCAL,
@@ -62,11 +50,10 @@ internal class IrTypeParameterScopeValidator(private val reportError: ReportErro
             )
         }
 
-        override fun <Type : IrType?> transformType(container: IrElement, type: Type): Type {
-            if (type != null) {
-                visitTypeAccess(container, type)
+        override fun visitType(container: IrElement, type: IrType) {
+            ((type as? IrSimpleType)?.classifier as? IrTypeParameterSymbol)?.let {
+                checkTypeParameterReference(container, it)
             }
-            return type
         }
 
         override fun visitElement(element: IrElement) {
