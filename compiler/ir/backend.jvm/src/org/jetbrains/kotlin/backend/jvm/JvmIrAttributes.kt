@@ -33,3 +33,13 @@ var IrConstructor.hiddenConstructorOfSealedClass: IrConstructor? by irAttribute(
 var IrClass.continuationClassVarsCountByType: Map<Type, Int>? by irAttribute(followAttributeOwner = true)
 
 var IrClass.isPublicAbi: Boolean by irFlag(followAttributeOwner = false)
+
+// If the JVM fqname of a class differs from what is implied by its parent, e.g. if it's a file class
+// annotated with @JvmPackageName, the correct name is recorded here.
+var IrClass.classNameOverride: JvmClassName? by irAttribute(followAttributeOwner = false)
+
+var IrFunction.viewOfOriginalSuspendFunction: IrSimpleFunction? by irAttribute(followAttributeOwner = false)
+
+var IrSimpleFunction.staticDefaultStub: IrSimpleFunction? by irAttribute(followAttributeOwner = false)
+
+var IrAttributeContainer.isEnclosedInConstructor: Boolean by irFlag(followAttributeOwner = true)

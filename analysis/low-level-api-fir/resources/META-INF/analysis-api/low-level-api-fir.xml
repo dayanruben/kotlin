@@ -31,6 +31,9 @@
     <projectService
         serviceImplementation="org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirDeclarationModificationService"
     />
+    <projectService
+        serviceImplementation="org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirInBlockModificationTracker"
+    />
   </extensions>
 
   <projectListeners>
@@ -61,6 +64,14 @@
     <listener
         class="org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionInvalidationService$LLPsiModificationTrackerListener"
         topic="com.intellij.psi.util.PsiModificationTracker$Listener"
+    />
+    <listener
+        class="org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirInBlockModificationListenerForCodeFragments"
+        topic="org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirInBlockModificationListener"
+    />
+    <listener
+        class="org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirInBlockModificationTracker$Listener"
+        topic="org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirInBlockModificationListener"
     />
   </projectListeners>
 </idea-plugin>

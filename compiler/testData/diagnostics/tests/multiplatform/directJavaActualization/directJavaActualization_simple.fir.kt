@@ -10,8 +10,8 @@ expect open class Foo() : Base {
     fun foo()
     open fun fakeOverrideInActual()
 
-    class Nested
-    inner class Inner
+    class Nested()
+    inner class Inner()
 }
 
 // MODULE: m2-jvm()()(m1-common)
@@ -25,8 +25,12 @@ expect open class Foo() : Base {
 
     public void additionalMember() {}
 
-    @kotlin.annotations.jvm.KotlinActual public static class Nested {}
-    @kotlin.annotations.jvm.KotlinActual public class Inner {}
+    @kotlin.annotations.jvm.KotlinActual public static class Nested {
+        @kotlin.annotations.jvm.KotlinActual public Nested() {}
+    }
+    @kotlin.annotations.jvm.KotlinActual public class Inner {
+        @kotlin.annotations.jvm.KotlinActual public Inner() {}
+    }
 }
 
 // FILE: JavaBase.java
