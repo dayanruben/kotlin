@@ -5,37 +5,25 @@
 
 package org.jetbrains.kotlin.ir.interpreter.transformer
 
-import org.jetbrains.kotlin.constant.EvaluatedConstTracker
 import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.incremental.components.InlineConstTracker
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
-import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.IrConstructor
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
+import org.jetbrains.kotlin.ir.declarations.IrField
+import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrStringConcatenationImpl
-import org.jetbrains.kotlin.ir.interpreter.IrInterpreter
-import org.jetbrains.kotlin.ir.interpreter.checker.EvaluationMode
-import org.jetbrains.kotlin.ir.interpreter.checker.IrInterpreterChecker
 import org.jetbrains.kotlin.ir.interpreter.createGetField
 import org.jetbrains.kotlin.ir.util.parentClassOrNull
-import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
+import org.jetbrains.kotlin.ir.visitors.IrTransformer
 import kotlin.math.max
 import kotlin.math.min
 
 internal abstract class IrConstExpressionTransformer(
-    interpreter: IrInterpreter,
-    irFile: IrFile,
-    mode: EvaluationMode,
-    checker: IrInterpreterChecker,
-    evaluatedConstTracker: EvaluatedConstTracker?,
-    inlineConstTracker: InlineConstTracker?,
-    onWarning: (IrFile, IrElement, IrErrorExpression) -> Unit,
-    onError: (IrFile, IrElement, IrErrorExpression) -> Unit,
-    suppressExceptions: Boolean,
-) : IrConstTransformer(
-    interpreter, irFile, mode, checker, evaluatedConstTracker, inlineConstTracker, onWarning, onError, suppressExceptions
-), IrElementTransformer<IrConstExpressionTransformer.Data> {
+    private val context: IrConstEvaluationContext,
+) : IrTransformer<IrConstExpressionTransformer.Data>() {
     internal data class Data(val inConstantExpression: Boolean = false)
 
     override fun visitFunction(declaration: IrFunction, data: Data): IrStatement {
@@ -48,8 +36,8 @@ internal abstract class IrConstExpressionTransformer(
     }
 
     override fun visitCall(expression: IrCall, data: Data): IrElement {
-        if (expression.canBeInterpreted()) {
-            return expression.interpret(failAsError = data.inConstantExpression)
+        if (context.canBeInterpreted(expression)) {
+            return context.interpret(expression, failAsError = data.inConstantExpression)
         }
         return super.visitCall(expression, data)
     }
@@ -59,16 +47,16 @@ internal abstract class IrConstExpressionTransformer(
         val expression = initializer?.expression ?: return declaration
         val getField = declaration.createGetField()
 
-        if (getField.canBeInterpreted()) {
-            initializer.expression = expression.interpret(failAsError = true)
+        if (context.canBeInterpreted(getField)) {
+            initializer.expression = context.interpret(expression, failAsError = true)
         }
 
         return super.visitField(declaration, data)
     }
 
     override fun visitGetField(expression: IrGetField, data: Data): IrExpression {
-        if (expression.canBeInterpreted()) {
-            return expression.interpret(failAsError = data.inConstantExpression)
+        if (context.canBeInterpreted(expression)) {
+            return context.interpret(expression, failAsError = data.inConstantExpression)
         }
         return super.visitGetField(expression, data)
     }
@@ -78,7 +66,9 @@ internal abstract class IrConstExpressionTransformer(
             this.startOffset, this.endOffset, expression.type, listOf(this@wrapInStringConcat)
         )
 
-        fun IrExpression.wrapInToStringConcatAndInterpret(): IrExpression = wrapInStringConcat().interpret(failAsError = data.inConstantExpression)
+        fun IrExpression.wrapInToStringConcatAndInterpret(): IrExpression =
+            context.interpret(wrapInStringConcat(), failAsError = data.inConstantExpression)
+
         fun IrExpression.getConstStringOrEmpty(): String = if (this is IrConst) value.toString() else ""
 
         // If we have some complex expression in arguments (like some `IrComposite`) we will skip it,
@@ -90,11 +80,11 @@ internal abstract class IrConstExpressionTransformer(
         for (next in transformed.arguments) {
             val last = folded.lastOrNull()
             when {
-                !next.wrapInStringConcat().canBeInterpreted() -> {
+                !context.canBeInterpreted(next.wrapInStringConcat()) -> {
                     folded += next
                     buildersList.add(StringBuilder(next.getConstStringOrEmpty()))
                 }
-                last == null || !last.wrapInStringConcat().canBeInterpreted() -> {
+                last == null || !context.canBeInterpreted(last.wrapInStringConcat()) -> {
                     val result = next.wrapInToStringConcatAndInterpret()
                     folded += result
                     buildersList.add(StringBuilder(result.getConstStringOrEmpty()))

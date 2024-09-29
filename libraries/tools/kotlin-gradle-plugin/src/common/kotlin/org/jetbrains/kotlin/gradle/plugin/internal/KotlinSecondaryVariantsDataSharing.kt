@@ -15,6 +15,7 @@ import org.gradle.api.attributes.Attribute
 import org.gradle.api.attributes.AttributeContainer
 import org.gradle.api.attributes.Usage
 import org.gradle.api.file.FileCollection
+import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
@@ -41,12 +42,13 @@ internal interface KotlinShareableDataAsSecondaryVariant
  * Service to share configuration state between Kotlin Projects as Configuration Secondary Variants
  */
 internal class KotlinSecondaryVariantsDataSharing(
-    private val project: Project
+    private val project: Project,
 ) {
-    fun <T: KotlinShareableDataAsSecondaryVariant> shareDataFromProvider(
+    fun <T : KotlinShareableDataAsSecondaryVariant> shareDataFromProvider(
         key: String,
         outgoingConfiguration: Configuration,
-        dataProvider: Provider<T>
+        dataProvider: Provider<T>,
+        taskDependencies: List<Any> = emptyList(),
     ) {
         val taskName = lowerCamelCaseName("export", key, "for", outgoingConfiguration.name)
         val task = project.tasks.register(taskName, ExportKotlinProjectDataTask::class.java) { task ->
@@ -57,12 +59,23 @@ internal class KotlinSecondaryVariantsDataSharing(
             taskOutputData.set(dataProvider)
 
             task.outputFile.set(project.layout.buildDirectory.file("kotlin/kotlin-project-shared-data/$fileName"))
+            task.dependsOn(taskDependencies)
         }
 
-        val fileFromTask = task.flatMap { it.outputFile }
+        shareDataFromExistingTask(key, outgoingConfiguration, task.flatMap { it.outputFile })
+    }
+
+    private fun shareDataFromExistingTask(
+        key: String,
+        outgoingConfiguration: Configuration,
+        taskOutputProvider: Provider<RegularFile>,
+        taskDependencies: List<Any> = emptyList(),
+    ) {
+
         outgoingConfiguration.outgoing.variants.create(key) { variant ->
-            variant.artifact(fileFromTask) { artifact ->
+            variant.artifact(taskOutputProvider) { artifact ->
                 artifact.type = key
+                artifact.builtBy(taskDependencies)
             }
             variant.attributes.configureAttributes(key)
         }
@@ -113,6 +126,11 @@ internal class KotlinProjectSharedDataProvider<T : KotlinShareableDataAsSecondar
         // It can happen in Android Gradle Plugin for example, as they have a lot of secondary variants with few attributes
         val keyFromResolvedArtifact = variant.attributes.getAttribute(kotlinProjectSharedDataAttribute) ?: return null
         if (key != keyFromResolvedArtifact) return null
+
+        // In some cases, for example CInterop transformations for IDE, actual artifact file may not exists
+        // this can happen because consuming task doesn't not depend on the resolved artifacts collection
+        // and producing task may not be invoked. So checking for file existence is required here.
+        if (!file.exists()) return null
 
         val content = file.readText()
         return runCatching { JsonUtils.gson.fromJson(content, clazz) }.getOrNull()

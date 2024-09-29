@@ -5,15 +5,14 @@
 
 package kotlin.native.concurrent
 
-import kotlin.native.internal.GCUnsafeCall
-
 /**
  * Exception thrown whenever freezing is not possible.
  *
  * @param toFreeze an object intended to be frozen.
  * @param blocker an object preventing freezing, usually one marked with [ensureNeverFrozen] earlier.
  */
-@FreezingIsDeprecated
+@Deprecated("Support for the legacy memory manager has been completely removed. Usages of this exception can be safely dropped.")
+@DeprecatedSinceKotlin(errorSince = "2.1")
 public class FreezingException(toFreeze: Any, blocker: Any) :
         RuntimeException("freezing of $toFreeze has failed, first blocker is $blocker")
 
@@ -22,7 +21,8 @@ public class FreezingException(toFreeze: Any, blocker: Any) :
  *
  * @param where a frozen object that was attempted to mutate
  */
-@FreezingIsDeprecated
+@Deprecated("Support for the legacy memory manager has been completely removed. Usages of this exception can be safely dropped.")
+@DeprecatedSinceKotlin(errorSince = "2.1")
 public class InvalidMutabilityException(message: String) : RuntimeException(message)
 
 /**
@@ -33,7 +33,8 @@ public class InvalidMutabilityException(message: String) : RuntimeException(mess
  * @return the object itself
  * @see ensureNeverFrozen
  */
-@FreezingIsDeprecated
+@Deprecated("Support for the legacy memory manager has been completely removed. Usages of this function can be safely dropped.", ReplaceWith("this"))
+@DeprecatedSinceKotlin(errorSince = "2.1")
 public fun <T> T.freeze(): T = this
 
 /**
@@ -41,7 +42,8 @@ public fun <T> T.freeze(): T = this
  *
  * @return true if given object is null or frozen or permanent
  */
-@FreezingIsDeprecated
+@Deprecated("Support for the legacy memory manager has been completely removed. Consequently, this property is always `false`.", ReplaceWith("false"))
+@DeprecatedSinceKotlin(errorSince = "2.1")
 public val Any?.isFrozen: Boolean
     get() = false
 
@@ -52,5 +54,6 @@ public val Any?.isFrozen: Boolean
  * @throws FreezingException thrown immediately if this object is already frozen
  * @see freeze
  */
-@FreezingIsDeprecated
+@Deprecated("Support for the legacy memory manager has been completely removed. Usages of this function can be safely dropped.")
+@DeprecatedSinceKotlin(errorSince = "2.1")
 public fun Any.ensureNeverFrozen() {}

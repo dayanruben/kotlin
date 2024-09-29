@@ -9,6 +9,7 @@ import org.gradle.api.tasks.*
 import org.gradle.work.NormalizeLineEndings
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
+import org.jetbrains.kotlin.gradle.plugin.internal.kotlinSecondaryVariantsDataSharing
 import org.jetbrains.kotlin.gradle.plugin.mpp.internal.projectStructureMetadataResolvableConfiguration
 import org.jetbrains.kotlin.gradle.plugin.sources.internal
 import org.jetbrains.kotlin.gradle.utils.currentBuild
@@ -36,6 +37,22 @@ internal class MetadataDependencyTransformationTaskInputs(
     val projectStructureMetadataFileCollection: ConfigurableFileCollection = project.filesProvider {
         kotlinSourceSet.internal.projectStructureMetadataResolvableConfiguration?.lenientArtifactsView?.artifactFiles
     }
+
+    @Suppress("unused") // Gradle input
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    @get:IgnoreEmptyDirectories
+    @get:NormalizeLineEndings
+    @get:Optional
+    val sourceSetConfigurationToResolve: FileCollection? =
+        // This configuration is resolvable only for P2P dependencies, for IDE import we should not invoke sourceSet metadata compilations
+        if (keepProjectDependencies) {
+            project.kotlinSecondaryVariantsDataSharing
+                .consumeCommonSourceSetMetadataLocations(kotlinSourceSet.internal.resolvableMetadataConfiguration)
+                .files
+        } else {
+            null
+        }
 
     @Suppress("unused") // Gradle input
     @get:InputFiles

@@ -214,9 +214,9 @@ include ":plugins:plugins-interactions-testing"
 
 include ":kotlin-imports-dumper-compiler-plugin",
         ":kotlin-script-runtime",
-        ":plugins:fir-plugin-prototype",
-        ":plugins:fir-plugin-prototype:plugin-annotations",
-        ":plugins:fir-plugin-prototype:fir-plugin-ic-test",
+        ":plugins:plugin-sandbox",
+        ":plugins:plugin-sandbox:plugin-annotations",
+        ":plugins:plugin-sandbox:fir-plugin-ic-test",
         ":kotlin-metadata",
         ":kotlin-metadata-jvm",
         ":kotlinx-metadata-klib",

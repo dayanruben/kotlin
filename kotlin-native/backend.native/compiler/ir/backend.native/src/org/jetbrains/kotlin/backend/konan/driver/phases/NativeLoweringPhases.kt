@@ -338,7 +338,7 @@ private val finallyBlocksPhase = createFileLoweringPhase(
 )
 
 private val testProcessorPhase = createFileLoweringPhase(
-        { context, irFile -> TestProcessor(context).process(irFile) },
+        lowering = ::TestProcessor,
         name = "TestProcessor",
         description = "Unit test processor"
 )
@@ -354,7 +354,13 @@ private val functionReferencePhase = createFileLoweringPhase(
         lowering = ::FunctionReferenceLowering,
         name = "FunctionReference",
         description = "Function references lowering",
-        prerequisite = setOf(localFunctionsPhase) // TODO: make weak dependency on `testProcessorPhase`
+)
+
+private val buildNamesForFunctionReferenceImpls = createFileLoweringPhase(
+        lowering = ::FunctionReferenceImplNamesBuilder,
+        name = "BuildNamesForFunctionReferenceImpls",
+        description = "Build names for function reference impls",
+        prerequisite = setOf(functionReferencePhase, localFunctionsPhase)
 )
 
 private val staticFunctionReferenceOptimizationPhase = createFileLoweringPhase(
@@ -652,7 +658,10 @@ internal fun PhaseEngine<NativeGenerationState>.getLoweringsAfterInlining(): Low
         assertionRemoverPhase,
         constEvaluationPhase,
         provisionalFunctionExpressionPhase,
+        inventNamesForLocalClasses,
+        functionReferencePhase,
         postInlinePhase,
+        testProcessorPhase.takeIf { context.config.configuration.getNotNull(KonanConfigKeys.GENERATE_TEST_RUNNER) != TestRunnerKind.NONE },
         contractsDslRemovePhase,
         annotationImplementationPhase,
         rangeContainsLoweringPhase,
@@ -662,16 +671,14 @@ internal fun PhaseEngine<NativeGenerationState>.getLoweringsAfterInlining(): Low
         stringConcatenationTypeNarrowingPhase.takeIf { context.config.optimizationsEnabled },
         enumConstructorsPhase,
         initializersPhase,
-        inventNamesForLocalClasses,
         localFunctionsPhase,
+        buildNamesForFunctionReferenceImpls,
         volatilePhase,
         tailrecPhase,
         defaultParameterExtentPhase,
         innerClassPhase,
         dataClassesPhase,
         ifNullExpressionsFusionPhase,
-        testProcessorPhase.takeIf { context.config.configuration.getNotNull(KonanConfigKeys.GENERATE_TEST_RUNNER) != TestRunnerKind.NONE },
-        functionReferencePhase,
         delegationPhase,
         staticFunctionReferenceOptimizationPhase,
         singleAbstractMethodPhase,

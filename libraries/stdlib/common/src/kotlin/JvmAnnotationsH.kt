@@ -161,7 +161,7 @@ public expect annotation class JvmRecord()
 @MustBeDocumented
 @OptionalExpectation
 @Deprecated("Use kotlin.concurrent.Volatile annotation in multiplatform code instead.", ReplaceWith("kotlin.concurrent.Volatile", "kotlin.concurrent.Volatile"))
-@DeprecatedSinceKotlin(warningSince = "1.9")
+@DeprecatedSinceKotlin(warningSince = "1.9", errorSince = "2.1")
 public expect annotation class Volatile()
 
 /**
@@ -195,7 +195,7 @@ public expect annotation class Strictfp()
 @MustBeDocumented
 @OptionalExpectation
 @Deprecated("Synchronizing methods on a class instance is not supported on platforms other than JVM. If you need to annotate a common method as JVM-synchronized, introduce your own optional-expectation annotation and actualize it with a typealias to kotlin.jvm.Synchronized.")
-@DeprecatedSinceKotlin(warningSince = "1.8")
+@DeprecatedSinceKotlin(warningSince = "1.8", errorSince = "2.1")
 public expect annotation class Synchronized()
 
 

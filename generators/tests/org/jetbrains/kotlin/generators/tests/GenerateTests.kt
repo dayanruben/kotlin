@@ -11,10 +11,10 @@ import org.jetbrains.kotlin.assignment.plugin.AbstractFirLightTreeBlackBoxCodege
 import org.jetbrains.kotlin.assignment.plugin.AbstractFirPsiAssignmentPluginDiagnosticTest
 import org.jetbrains.kotlin.assignment.plugin.AbstractIrBlackBoxCodegenTestAssignmentPlugin
 import org.jetbrains.kotlin.compiler.plugins.AbstractPluginInteractionFirBlackBoxCodegenTest
-import org.jetbrains.kotlin.fir.plugin.runners.AbstractFirLightTreePluginBlackBoxCodegenTest
-import org.jetbrains.kotlin.fir.plugin.runners.AbstractFirLoadK2CompiledWithPluginJsKotlinTest
-import org.jetbrains.kotlin.fir.plugin.runners.AbstractFirLoadK2CompiledWithPluginJvmKotlinTest
-import org.jetbrains.kotlin.fir.plugin.runners.AbstractFirPsiPluginDiagnosticTest
+import org.jetbrains.kotlin.plugin.sandbox.AbstractFirLightTreePluginBlackBoxCodegenTest
+import org.jetbrains.kotlin.plugin.sandbox.AbstractFirLoadK2CompiledWithPluginJsKotlinTest
+import org.jetbrains.kotlin.plugin.sandbox.AbstractFirLoadK2CompiledWithPluginJvmKotlinTest
+import org.jetbrains.kotlin.plugin.sandbox.AbstractFirPsiPluginDiagnosticTest
 import org.jetbrains.kotlin.generators.generateTestGroupSuiteWithJUnit5
 import org.jetbrains.kotlin.generators.impl.generateTestGroupSuite
 import org.jetbrains.kotlin.generators.tests.IncrementalTestsGeneratorUtil.Companion.IcTestTypes.PURE_KOTLIN
@@ -178,7 +178,7 @@ fun main(args: Array<String>) {
             }
         }
 
-        testGroup("plugins/fir-plugin-prototype/fir-plugin-ic-test/tests-gen", "plugins/fir-plugin-prototype/fir-plugin-ic-test/testData") {
+        testGroup("plugins/plugin-sandbox/fir-plugin-ic-test/tests-gen", "plugins/plugin-sandbox/fir-plugin-ic-test/testData") {
             testClass<AbstractIncrementalK2JvmWithPluginCompilerRunnerTest> {
                 model("pureKotlin", extension = null, recursive = false, targetBackend = TargetBackend.JVM_IR)
             }
@@ -220,7 +220,7 @@ fun main(args: Array<String>) {
             }
         }
 
-        testGroup("plugins/fir-plugin-prototype/tests-gen", "plugins/fir-plugin-prototype/testData") {
+        testGroup("plugins/plugin-sandbox/tests-gen", "plugins/plugin-sandbox/testData") {
             testClass<AbstractFirPsiPluginDiagnosticTest> {
                 model("diagnostics")
             }

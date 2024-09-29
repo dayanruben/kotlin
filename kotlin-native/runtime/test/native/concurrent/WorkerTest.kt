@@ -26,7 +26,7 @@ class WorkerTest {
         assertEquals("Still working", execute(TransferMode.SAFE, { "Still" }) { "$it working" }.result)
     }
 
-    @OptIn(FreezingIsDeprecated::class)
+    @Suppress("DEPRECATION_ERROR") // Freezing API
     @Test
     fun executeWithDetachedObjectGraph() = withWorker {
         data class SharedDataMember(val double: Double)

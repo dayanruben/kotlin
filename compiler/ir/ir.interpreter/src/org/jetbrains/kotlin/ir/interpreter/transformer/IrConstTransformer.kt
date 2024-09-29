@@ -5,30 +5,23 @@
 
 package org.jetbrains.kotlin.ir.interpreter.transformer
 
-import org.jetbrains.kotlin.constant.ErrorValue
 import org.jetbrains.kotlin.constant.EvaluatedConstTracker
 import org.jetbrains.kotlin.incremental.components.InlineConstTracker
 import org.jetbrains.kotlin.ir.IrElement
-import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.expressions.*
-import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
+import org.jetbrains.kotlin.ir.declarations.IrField
+import org.jetbrains.kotlin.ir.declarations.IrFile
+import org.jetbrains.kotlin.ir.declarations.path
+import org.jetbrains.kotlin.ir.expressions.IrConst
+import org.jetbrains.kotlin.ir.expressions.IrErrorExpression
 import org.jetbrains.kotlin.ir.interpreter.IrInterpreter
 import org.jetbrains.kotlin.ir.interpreter.checker.EvaluationMode
-import org.jetbrains.kotlin.ir.interpreter.checker.IrInterpreterChecker
-import org.jetbrains.kotlin.ir.interpreter.checker.IrInterpreterCheckerData
 import org.jetbrains.kotlin.ir.interpreter.checker.IrInterpreterCommonChecker
 import org.jetbrains.kotlin.ir.interpreter.preprocessor.IrInterpreterConstGetterPreprocessor
 import org.jetbrains.kotlin.ir.interpreter.preprocessor.IrInterpreterKCallableNamePreprocessor
 import org.jetbrains.kotlin.ir.interpreter.preprocessor.IrInterpreterPreprocessorData
-import org.jetbrains.kotlin.ir.interpreter.property
-import org.jetbrains.kotlin.ir.interpreter.toConstantValue
 import org.jetbrains.kotlin.ir.util.classId
-import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.parentAsClass
-import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
-import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
-import org.jetbrains.kotlin.ir.visitors.acceptVoid
-import org.jetbrains.kotlin.utils.exceptions.rethrowIntellijPlatformExceptionIfNeeded
 
 fun IrElement.transformConst(
     irFile: IrFile,
@@ -41,17 +34,22 @@ fun IrElement.transformConst(
     suppressExceptions: Boolean = false,
 ): IrElement {
     val checker = IrInterpreterCommonChecker()
-    val irConstExpressionTransformer = IrConstOnlyNecessaryTransformer(
-        interpreter, irFile, mode, checker, evaluatedConstTracker, inlineConstTracker, onWarning, onError, suppressExceptions
+
+    val constEvaluationContext = IrConstEvaluationContext(
+        interpreter,
+        irFile,
+        mode,
+        checker,
+        evaluatedConstTracker,
+        inlineConstTracker,
+        onWarning,
+        onError,
+        suppressExceptions,
     )
 
-    val irConstDeclarationAnnotationTransformer = IrConstDeclarationAnnotationTransformer(
-        interpreter, irFile, mode, checker, evaluatedConstTracker, inlineConstTracker, onWarning, onError, suppressExceptions
-    )
-
-    val irConstTypeAnnotationTransformer = IrConstTypeAnnotationTransformer(
-        interpreter, irFile, mode, checker, evaluatedConstTracker, inlineConstTracker, onWarning, onError, suppressExceptions
-    )
+    val irConstExpressionTransformer = IrConstOnlyNecessaryTransformer(constEvaluationContext)
+    val irConstDeclarationAnnotationTransformer = IrConstDeclarationAnnotationTransformer(constEvaluationContext)
+    val irConstTypeAnnotationTransformer = IrConstTypeAnnotationTransformer(constEvaluationContext)
 
     return this.transform(irConstExpressionTransformer, IrConstExpressionTransformer.Data()).apply {
         irConstDeclarationAnnotationTransformer.visitAnnotations(this)
@@ -70,9 +68,11 @@ fun IrFile.runConstOptimizations(
 
     val checker = IrInterpreterCommonChecker()
     val irConstExpressionTransformer = IrConstAllTransformer(
-        interpreter, preprocessedFile, mode, checker, evaluatedConstTracker, inlineConstTracker,
-        { _, _, _ -> }, { _, _, _ -> },
-        suppressExceptions
+        IrConstEvaluationContext(
+            interpreter, preprocessedFile, mode, checker, evaluatedConstTracker, inlineConstTracker,
+            { _, _, _ -> }, { _, _, _ -> },
+            suppressExceptions
+        )
     )
     preprocessedFile.transform(irConstExpressionTransformer, IrConstExpressionTransformer.Data())
 }
@@ -86,99 +86,6 @@ private fun IrFile.preprocessForConstTransformer(
         preprocessor.preprocess(file, IrInterpreterPreprocessorData(mode, interpreter.irBuiltIns))
     }
     return preprocessedFile
-}
-
-internal abstract class IrConstTransformer(
-    private val interpreter: IrInterpreter,
-    private val irFile: IrFile,
-    private val mode: EvaluationMode,
-    private val checker: IrInterpreterChecker,
-    private val evaluatedConstTracker: EvaluatedConstTracker?,
-    private val inlineConstTracker: InlineConstTracker?,
-    private val onWarning: (IrFile, IrElement, IrErrorExpression) -> Unit,
-    private val onError: (IrFile, IrElement, IrErrorExpression) -> Unit,
-    private val suppressExceptions: Boolean,
-) {
-    private fun IrExpression.warningIfError(original: IrExpression): IrExpression {
-        if (this is IrErrorExpression) {
-            onWarning(irFile, original, this)
-            return original
-        }
-        return this
-    }
-
-    private fun IrExpression.reportIfError(original: IrExpression): IrExpression {
-        if (this is IrErrorExpression) {
-            onError(irFile, original, this)
-            return when (mode) {
-                // need to pass any const value to be able to get some bytecode and then report error
-                is EvaluationMode.OnlyIntrinsicConst -> IrConstImpl.constNull(startOffset, endOffset, type)
-                else -> original
-            }
-        }
-        return this
-    }
-
-    protected fun IrExpression.canBeInterpreted(): Boolean {
-        return try {
-            this.accept(checker, IrInterpreterCheckerData(irFile, mode, interpreter.irBuiltIns))
-        } catch (e: Throwable) {
-            rethrowIntellijPlatformExceptionIfNeeded(e)
-            if (suppressExceptions) {
-                return false
-            }
-            throw AssertionError("Error occurred while optimizing an expression:\n${this.dump()}", e)
-        }
-    }
-
-    protected fun IrExpression.interpret(failAsError: Boolean): IrExpression {
-        val result = try {
-            interpreter.interpret(this, irFile)
-        } catch (e: Throwable) {
-            rethrowIntellijPlatformExceptionIfNeeded(e)
-            if (suppressExceptions) {
-                return this
-            }
-            throw AssertionError("Error occurred while optimizing an expression:\n${this.dump()}", e)
-        }
-
-        result.saveInConstTracker()
-
-        if (result is IrConst) {
-            reportInlinedJavaConst(result)
-        }
-
-        return if (failAsError) result.reportIfError(this) else result.warningIfError(this)
-    }
-
-    protected fun IrExpression.saveInConstTracker() {
-        evaluatedConstTracker?.save(
-            startOffset, endOffset, irFile.nameWithPackage,
-            constant = if (this is IrErrorExpression) ErrorValue.create(description) else this.toConstantValue()
-        )
-    }
-
-    private fun IrExpression.reportInlinedJavaConst(result: IrConst) {
-        this.acceptVoid(object : IrElementVisitorVoid {
-            override fun visitElement(element: IrElement) {
-                element.acceptChildrenVoid(this)
-            }
-
-            private fun report(field: IrField) {
-                inlineConstTracker?.reportOnIr(irFile, field, result)
-            }
-
-            override fun visitGetField(expression: IrGetField) {
-                report(expression.symbol.owner)
-                super.visitGetField(expression)
-            }
-
-            override fun visitCall(expression: IrCall) {
-                expression.symbol.owner.property?.backingField?.let { backingField -> report(backingField) }
-                super.visitCall(expression)
-            }
-        })
-    }
 }
 
 fun InlineConstTracker.reportOnIr(irFile: IrFile, field: IrField, value: IrConst) {

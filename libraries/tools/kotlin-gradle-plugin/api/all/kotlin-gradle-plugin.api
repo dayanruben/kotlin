@@ -1392,10 +1392,6 @@ public final class org/jetbrains/kotlin/gradle/plugin/diagnostics/KotlinToolingD
 	public final fun invoke (Lorg/gradle/api/Project;Ljava/lang/Iterable;)Lorg/jetbrains/kotlin/gradle/plugin/diagnostics/ToolingDiagnostic;
 }
 
-public final class org/jetbrains/kotlin/gradle/plugin/diagnostics/KotlinToolingDiagnostics$KotlinDefaultHierarchyFallbackNativeTargetShortcutUsageDetected : org/jetbrains/kotlin/gradle/plugin/diagnostics/ToolingDiagnosticFactory {
-	public static final field INSTANCE Lorg/jetbrains/kotlin/gradle/plugin/diagnostics/KotlinToolingDiagnostics$KotlinDefaultHierarchyFallbackNativeTargetShortcutUsageDetected;
-}
-
 public final class org/jetbrains/kotlin/gradle/plugin/diagnostics/KotlinToolingDiagnostics$KotlinJvmMainRunTaskConflict : org/jetbrains/kotlin/gradle/plugin/diagnostics/ToolingDiagnosticFactory {
 	public static final field INSTANCE Lorg/jetbrains/kotlin/gradle/plugin/diagnostics/KotlinToolingDiagnostics$KotlinJvmMainRunTaskConflict;
 	public final fun invoke (Ljava/lang/String;Ljava/lang/String;)Lorg/jetbrains/kotlin/gradle/plugin/diagnostics/ToolingDiagnostic;
@@ -2243,9 +2239,7 @@ public final class org/jetbrains/kotlin/gradle/plugin/mpp/KotlinUsages {
 	public static final field KOTLIN_API Ljava/lang/String;
 	public static final field KOTLIN_CINTEROP Ljava/lang/String;
 	public static final field KOTLIN_COMMONIZED_CINTEROP Ljava/lang/String;
-	public static final field KOTLIN_LOCAL_METADATA Ljava/lang/String;
 	public static final field KOTLIN_METADATA Ljava/lang/String;
-	public static final field KOTLIN_PSM_METADATA Ljava/lang/String;
 	public static final field KOTLIN_RESOURCES Ljava/lang/String;
 	public static final field KOTLIN_RESOURCES_JS Ljava/lang/String;
 	public static final field KOTLIN_RUNTIME Ljava/lang/String;
