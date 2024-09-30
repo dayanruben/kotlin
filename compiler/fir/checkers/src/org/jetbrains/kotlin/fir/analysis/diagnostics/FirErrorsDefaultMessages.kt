@@ -443,6 +443,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NAME_FOR_AMBIGUOU
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NAME_IN_CONSTRAINT_IS_NOT_A_TYPE_PARAMETER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NESTED_CLASS_ACCESSED_VIA_INSTANCE_REFERENCE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NESTED_CLASS_NOT_ALLOWED
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NESTED_CLASS_NOT_ALLOWED_IN_LOCAL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NEWER_VERSION_IN_SINCE_KOTLIN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NEW_INFERENCE_ERROR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER
@@ -574,6 +575,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDECLARATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_ANNOTATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_ANNOTATION_TARGET
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_CALL_OF_CONVERSION_METHOD
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_ELSE_IN_WHEN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_EXPLICIT_BACKING_FIELD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_EXPLICIT_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_INTERPOLATION_PREFIX
@@ -815,6 +817,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             "Delegated member ''{0}'' hides supertype override ''{1}''. Please specify proper override explicitly.", SYMBOL, SYMBOL
         )
         map.put(NESTED_CLASS_NOT_ALLOWED, "''{0}'' is prohibited here.", TO_STRING)
+        map.put(NESTED_CLASS_NOT_ALLOWED_IN_LOCAL, "''{0}'' is prohibited here.", TO_STRING)
         map.put(VAL_OR_VAR_ON_LOOP_PARAMETER, "''{0}'' on loop parameter is prohibited.", TO_STRING)
         map.put(VAL_OR_VAR_ON_FUN_PARAMETER, "''{0}'' on function parameter is prohibited.", TO_STRING)
         map.put(VAL_OR_VAR_ON_CATCH_PARAMETER, "''{0}'' on catch parameter is prohibited.", TO_STRING)
@@ -2516,6 +2519,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             WHEN_MISSING_CASES
         )
         map.put(ELSE_MISPLACED_IN_WHEN, "'else' entry must be the last one in a 'when' expression.")
+        map.put(REDUNDANT_ELSE_IN_WHEN, "'when' is exhaustive so 'else' is redundant here")
         map.put(
             COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT,
             "Use '||' instead of commas in conditions of 'when' without a subject."

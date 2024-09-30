@@ -6639,6 +6639,18 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("companionInInnerOfObjectExpression.kt")
+      public void testCompanionInInnerOfObjectExpression() {
+        runTest("compiler/testData/diagnostics/tests/classObjects/companionInInnerOfObjectExpression.kt");
+      }
+
+      @Test
+      @TestMetadata("companionInInnerOfObjectExpressionAfter.kt")
+      public void testCompanionInInnerOfObjectExpressionAfter() {
+        runTest("compiler/testData/diagnostics/tests/classObjects/companionInInnerOfObjectExpressionAfter.kt");
+      }
+
+      @Test
       @TestMetadata("companionObjectOfPrivateClassVisibility.kt")
       public void testCompanionObjectOfPrivateClassVisibility() {
         runTest("compiler/testData/diagnostics/tests/classObjects/companionObjectOfPrivateClassVisibility.kt");
@@ -41447,6 +41459,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("ExhaustivePlatformAnnotated.kt")
+      public void testExhaustivePlatformAnnotated() {
+        runTest("compiler/testData/diagnostics/tests/when/ExhaustivePlatformAnnotated.kt");
+      }
+
+      @Test
       @TestMetadata("ExhaustivePlatformBoolean.kt")
       public void testExhaustivePlatformBoolean() {
         runTest("compiler/testData/diagnostics/tests/when/ExhaustivePlatformBoolean.kt");
@@ -41492,6 +41510,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("ExhaustiveReturnThrow.kt")
       public void testExhaustiveReturnThrow() {
         runTest("compiler/testData/diagnostics/tests/when/ExhaustiveReturnThrow.kt");
+      }
+
+      @Test
+      @TestMetadata("ExhaustiveSealedInterface.kt")
+      public void testExhaustiveSealedInterface() {
+        runTest("compiler/testData/diagnostics/tests/when/ExhaustiveSealedInterface.kt");
       }
 
       @Test
