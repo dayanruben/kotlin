@@ -31038,6 +31038,12 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
         }
 
         @Test
+        @TestMetadata("enumStaticMethods.kt")
+        public void testEnumStaticMethods() {
+          runTest("compiler/testData/codegen/box/multiplatform/k2/enumStaticMethods.kt");
+        }
+
+        @Test
         @TestMetadata("expectNonExpectOverloads.kt")
         public void testExpectNonExpectOverloads() {
           runTest("compiler/testData/codegen/box/multiplatform/k2/expectNonExpectOverloads.kt");
@@ -32826,18 +32832,6 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
       @TestMetadata("reassignmentLhsCaching.kt")
       public void testReassignmentLhsCaching() {
         runTest("compiler/testData/codegen/box/operatorConventions/reassignmentLhsCaching.kt");
-      }
-
-      @Test
-      @TestMetadata("remAssignmentOperation.kt")
-      public void testRemAssignmentOperation() {
-        runTest("compiler/testData/codegen/box/operatorConventions/remAssignmentOperation.kt");
-      }
-
-      @Test
-      @TestMetadata("remOverModOperation.kt")
-      public void testRemOverModOperation() {
-        runTest("compiler/testData/codegen/box/operatorConventions/remOverModOperation.kt");
       }
 
       @Test

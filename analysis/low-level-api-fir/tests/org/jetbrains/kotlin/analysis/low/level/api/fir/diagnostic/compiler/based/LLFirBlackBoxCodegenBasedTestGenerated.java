@@ -39304,6 +39304,12 @@ public class LLFirBlackBoxCodegenBasedTestGenerated extends AbstractLLFirBlackBo
       }
 
       @Test
+      @TestMetadata("enumStaticMethods.kt")
+      public void testEnumStaticMethods() {
+        runTest("compiler/testData/codegen/box/multiplatform/k2/enumStaticMethods.kt");
+      }
+
+      @Test
       @TestMetadata("expectAnnotationAsTypeAlias.kt")
       public void testExpectAnnotationAsTypeAlias() {
         runTest("compiler/testData/codegen/box/multiplatform/k2/expectAnnotationAsTypeAlias.kt");
@@ -41398,18 +41404,6 @@ public class LLFirBlackBoxCodegenBasedTestGenerated extends AbstractLLFirBlackBo
     @TestMetadata("reassignmentLhsCaching.kt")
     public void testReassignmentLhsCaching() {
       runTest("compiler/testData/codegen/box/operatorConventions/reassignmentLhsCaching.kt");
-    }
-
-    @Test
-    @TestMetadata("remAssignmentOperation.kt")
-    public void testRemAssignmentOperation() {
-      runTest("compiler/testData/codegen/box/operatorConventions/remAssignmentOperation.kt");
-    }
-
-    @Test
-    @TestMetadata("remOverModOperation.kt")
-    public void testRemOverModOperation() {
-      runTest("compiler/testData/codegen/box/operatorConventions/remOverModOperation.kt");
     }
 
     @Test
@@ -55924,12 +55918,6 @@ public class LLFirBlackBoxCodegenBasedTestGenerated extends AbstractLLFirBlackBo
         @TestMetadata("invoke.kt")
         public void testInvoke() {
           runTest("compiler/testData/codegen/box/sam/adapters/operators/invoke.kt");
-        }
-
-        @Test
-        @TestMetadata("legacyModOperator.kt")
-        public void testLegacyModOperator() {
-          runTest("compiler/testData/codegen/box/sam/adapters/operators/legacyModOperator.kt");
         }
 
         @Test
