@@ -65,7 +65,7 @@ open class Child : overrides.Parent {
         poly: overrides.Parent,
         nullablePoly: overrides.Parent?
     ) -> Swift.Void {
-        return Child_actuallyOverride__TypesOfArguments__Swift_Int32_opt__overrides_Parent_overrides_Parent_opt___(self.__externalRCRef(), nullable.flatMap { it in NSNumber(value: it) }, poly.__externalRCRef(), nullablePoly?.__externalRCRef() ?? 0)
+        return Child_actuallyOverride__TypesOfArguments__Swift_Int32_opt__overrides_Parent_overrides_Parent_opt___(self.__externalRCRef(), nullable.map { it in NSNumber(value: it) } ?? .none, poly.__externalRCRef(), nullablePoly.map { it in it.__externalRCRef() } ?? 0)
     }
     public final override func finalOverrideFunc() -> Swift.Void {
         return Child_finalOverrideFunc(self.__externalRCRef())
@@ -154,7 +154,7 @@ open class Parent : KotlinRuntime.KotlinBase {
     }
     open var subtypeOptionalPrimitiveVar: Swift.Int32? {
         get {
-            return Parent_subtypeOptionalPrimitiveVar_get(self.__externalRCRef())?.int32Value
+            return Parent_subtypeOptionalPrimitiveVar_get(self.__externalRCRef()).map { it in it.int32Value }
         }
     }
     public final var value: Swift.String {
@@ -220,6 +220,6 @@ open class Parent : KotlinRuntime.KotlinBase {
         return switch Parent_subtypeOptionalObjectFunc(self.__externalRCRef()) { case 0: .none; case let res: overrides.Parent(__externalRCRef: res); }
     }
     open func subtypeOptionalPrimitiveFunc() -> Swift.Int32? {
-        return Parent_subtypeOptionalPrimitiveFunc(self.__externalRCRef())?.int32Value
+        return Parent_subtypeOptionalPrimitiveFunc(self.__externalRCRef()).map { it in it.int32Value }
     }
 }
