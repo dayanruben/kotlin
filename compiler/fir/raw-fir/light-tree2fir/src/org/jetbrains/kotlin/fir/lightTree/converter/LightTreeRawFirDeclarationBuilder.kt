@@ -12,7 +12,10 @@ import org.jetbrains.kotlin.*
 import org.jetbrains.kotlin.ElementTypeUtils.isExpression
 import org.jetbrains.kotlin.KtNodeTypes.*
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.*
 import org.jetbrains.kotlin.fir.*
@@ -629,18 +632,10 @@ class LightTreeRawFirDeclarationBuilder(
                             DataClassMembersGenerator(
                                 classNode,
                                 this,
+                                firPrimaryConstructor,
                                 zippedParameters,
                                 context.packageFqName,
                                 context.className,
-                                createClassTypeRefWithSourceKind = { firPrimaryConstructor.returnTypeRef.copyWithNewSourceKind(it) },
-                                createParameterTypeRefWithSourceKind = { property, kind -> property.returnTypeRef.copyWithNewSourceKind(kind) },
-                                addValueParameterAnnotations = { valueParam ->
-                                    valueParam.forEachChildren {
-                                        if (it.tokenType == MODIFIER_LIST) convertAnnotationList(it).filterTo(annotations) {
-                                            it.useSiteTarget.appliesToPrimaryConstructorParameter()
-                                        }
-                                    }
-                                },
                             ).generate()
                         }
 
@@ -2106,17 +2101,13 @@ class LightTreeRawFirDeclarationBuilder(
         index: Int
     ): FirTypeRef {
         lateinit var firTypeRef: FirTypeRef
-        var firExpression: FirExpression? = null
+        var expressionNode: LighterASTNode? = null
         explicitDelegation.forEachChildren {
             when (it.tokenType) {
                 TYPE_REFERENCE -> firTypeRef = convertType(it)
-                else -> if (it.isExpression()) firExpression = expressionConverter.getAsFirExpression(it, "Should have delegate")
+                else -> if (it.isExpression()) expressionNode = it
             }
         }
-
-        val calculatedFirExpression = firExpression ?: buildErrorExpression(
-            explicitDelegation.toFirSourceElement(), ConeSyntaxDiagnostic("Should have delegate")
-        )
 
         delegateFieldsMap.put(
             index,
@@ -2125,11 +2116,17 @@ class LightTreeRawFirDeclarationBuilder(
                 moduleData = baseModuleData
                 origin = FirDeclarationOrigin.Synthetic.DelegateField
                 name = NameUtils.delegateFieldName(delegateFieldsMap.size)
-                returnTypeRef = firTypeRef
                 symbol = FirFieldSymbol(CallableId(context.currentClassId, name))
+                returnTypeRef = firTypeRef
+                withContainerSymbol(symbol) {
+                    val errorReason = "Should have delegate"
+                    initializer = expressionNode?.let {
+                        expressionConverter.getAsFirExpression(it, errorReason)
+                    } ?: buildErrorExpression(explicitDelegation.toFirSourceElement(), ConeSyntaxDiagnostic(errorReason))
+                }
+
                 isVar = false
                 status = FirDeclarationStatusImpl(Visibilities.Private, Modality.FINAL)
-                initializer = calculatedFirExpression
                 dispatchReceiverType = currentDispatchReceiverType()
             }.symbol
         )
