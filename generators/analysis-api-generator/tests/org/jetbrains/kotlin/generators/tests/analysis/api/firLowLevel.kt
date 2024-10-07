@@ -18,7 +18,11 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostic.compiler.based
 import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostic.compiler.based.AbstractLLFirPreresolvedReversedDiagnosticCompilerTestDataTest
 import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostic.compiler.based.AbstractLLFirPreresolvedReversedScriptDiagnosticCompilerTestDataTest
 import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostic.compiler.based.AbstractLLFirReversedBlackBoxCodegenBasedTest
+import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostic.compiler.based.AbstractLLFirReversedSerializationBlackBoxCodegenBasedTest
+import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostic.compiler.based.AbstractLLFirReversedSerializationDiagnosticTest
 import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostic.compiler.based.AbstractLLFirScriptDiagnosticCompilerTestDataTest
+import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostic.compiler.based.AbstractLLFirSerializationBlackBoxCodegenBasedTest
+import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostic.compiler.based.AbstractLLFirSerializationDiagnosticTest
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.*
 import org.jetbrains.kotlin.analysis.low.level.api.fir.resolve.AbstractErrorResistanceTest
 import org.jetbrains.kotlin.analysis.low.level.api.fir.resolve.AbstractOutOfContentRootLazyDeclarationResolveScopeBasedTest
@@ -112,6 +116,10 @@ internal fun TestGroupSuite.generateFirLowLevelApiTests() {
 
         testClass<AbstractBuiltinsBinaryLazyDeclarationResolveTest> {
             model("lazyResolveBuiltinsBinary")
+        }
+
+        testClass<AbstractFirSourceLazyDeclarationResolveByReferenceTest> {
+            model("lazyResolveByReference")
         }
 
         testClass<AbstractSourceLazyDeclarationResolveScopeBasedTest> {
@@ -393,6 +401,7 @@ internal fun TestGroupSuite.generateFirLowLevelApiTests() {
                 "codegen/box",
                 excludeDirs = listOf(
                     "script", // script is excluded until KT-60127 is implemented
+                    "multiplatform/k1",
                 )
             )
         }
@@ -402,6 +411,7 @@ internal fun TestGroupSuite.generateFirLowLevelApiTests() {
                 "codegen/box",
                 excludeDirs = listOf(
                     "script", // script is excluded until KT-60127 is implemented
+                    "multiplatform/k1",
                 )
             )
         }
@@ -457,6 +467,38 @@ internal fun TestGroupSuite.generateFirLowLevelApiTests() {
 
         testClass<AbstractCodeFragmentContextModificationLLFirSessionInvalidationTest> {
             model("sessions/sessionInvalidation")
+        }
+    }
+
+    testGroup(testsRoot = "analysis/low-level-api-fir/tests", testDataRoot = "plugins/kotlinx-serialization/testData") {
+        run {
+            fun TestGroup.TestClass.diagnosticsModelInit() {
+                model("diagnostics", excludedPattern = TestGeneratorUtil.KT_OR_KTS_WITH_FIR_PREFIX)
+                model("firMembers")
+            }
+
+            testClass<AbstractLLFirSerializationDiagnosticTest> {
+                diagnosticsModelInit()
+            }
+
+            testClass<AbstractLLFirReversedSerializationDiagnosticTest> {
+                diagnosticsModelInit()
+            }
+        }
+
+        run {
+            fun TestGroup.TestClass.blackBoxModelInit() {
+                model("boxIr")
+                model("codegen")
+            }
+
+            testClass<AbstractLLFirSerializationBlackBoxCodegenBasedTest> {
+                blackBoxModelInit()
+            }
+
+            testClass<AbstractLLFirReversedSerializationBlackBoxCodegenBasedTest> {
+                blackBoxModelInit()
+            }
         }
     }
 }

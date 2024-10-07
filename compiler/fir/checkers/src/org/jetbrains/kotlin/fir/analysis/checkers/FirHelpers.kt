@@ -45,6 +45,7 @@ import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtParameter.VAL_VAR_TOKEN_SET
 import org.jetbrains.kotlin.resolve.AnnotationTargetList
+import org.jetbrains.kotlin.resolve.AnnotationTargetListForDeprecation
 import org.jetbrains.kotlin.resolve.AnnotationTargetLists
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.types.TypeApproximatorConfiguration
@@ -556,7 +557,9 @@ fun checkTypeMismatch(
 
 internal fun checkCondition(condition: FirExpression, context: CheckerContext, reporter: DiagnosticReporter) {
     val coneType = condition.resolvedType.fullyExpandedType(context.session).lowerBoundIfFlexible()
-    if (coneType !is ConeErrorType && !coneType.isSubtypeOf(context.session.typeContext, context.session.builtinTypes.booleanType.coneType)) {
+    if (coneType !is ConeErrorType &&
+        !coneType.isSubtypeOf(context.session.typeContext, context.session.builtinTypes.booleanType.coneType)
+    ) {
         reporter.reportOn(
             condition.source,
             FirErrors.CONDITION_TYPE_MISMATCH,
@@ -630,17 +633,23 @@ fun FirFunctionSymbol<*>.isFunctionForExpectTypeFromCastFeature(): Boolean {
     fun FirTypeRef.isBadType() =
         coneType.contains { (it.lowerBoundIfFlexible() as? ConeTypeParameterType)?.lookupTag == typeParameterSymbol.toLookupTag() }
 
-    if (valueParameterSymbols.any { it.resolvedReturnTypeRef.isBadType() } || resolvedReceiverTypeRef?.isBadType() == true) return false
-
-    return true
+    return valueParameterSymbols.none { it.resolvedReturnTypeRef.isBadType() } || resolvedReceiverTypeRef?.isBadType() == true
 }
 
 private val FirCallableDeclaration.isMember get() = dispatchReceiverType != null
 
 fun getActualTargetList(container: FirAnnotationContainer): AnnotationTargetList {
     val annotated =
-        if (container is FirBackingField && !container.propertySymbol.hasBackingField) container.propertyIfBackingField
-        else container
+        if (container is FirBackingField) {
+            when {
+                !container.propertySymbol.hasBackingField -> container.propertyIfBackingField
+                container.propertySymbol.getContainingClassSymbol()?.classKind == ClassKind.ANNOTATION_CLASS -> {
+                    @OptIn(AnnotationTargetListForDeprecation::class)
+                    return TargetLists.T_MEMBER_PROPERTY_IN_ANNOTATION
+                }
+                else -> container
+            }
+        } else container
 
     return when (annotated) {
         is FirRegularClass -> {
@@ -777,18 +786,6 @@ fun FirNamedFunctionSymbol.directOverriddenFunctions(session: FirSession, scopeS
 
 fun FirNamedFunctionSymbol.directOverriddenFunctions(context: CheckerContext) =
     directOverriddenFunctions(context.session, context.sessionHolder.scopeSession)
-
-inline fun <C : MutableCollection<FirNamedFunctionSymbol>> FirNamedFunctionSymbol.collectOverriddenFunctionsWhere(
-    collection: C,
-    context: CheckerContext,
-    crossinline condition: (FirNamedFunctionSymbol) -> Boolean,
-) = collection.apply {
-    processOverriddenFunctions(context) {
-        if (condition(it)) {
-            add(it)
-        }
-    }
-}
 
 inline fun FirNamedFunctionSymbol.processOverriddenFunctions(
     context: CheckerContext,

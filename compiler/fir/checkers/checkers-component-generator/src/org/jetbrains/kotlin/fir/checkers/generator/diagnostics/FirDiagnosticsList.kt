@@ -121,6 +121,10 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         }
         val MISSING_CONSTRUCTOR_KEYWORD by error<PsiElement>()
         val REDUNDANT_INTERPOLATION_PREFIX by warning<PsiElement>()
+        val WRAPPED_LHS_IN_ASSIGNMENT by deprecationError<PsiElement>(
+            LanguageFeature.ForbidParenthesizedLhsInAssignments,
+            PositioningStrategy.OUTERMOST_PARENTHESES_IN_ASSIGNMENT_LHS,
+        )
     }
 
     val UNRESOLVED by object : DiagnosticGroup("Unresolved") {
@@ -403,6 +407,10 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val ANNOTATION_ON_SUPERCLASS by deprecationError<KtAnnotationEntry>(LanguageFeature.ProhibitUseSiteTargetAnnotationsOnSuperTypes)
         val RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION by deprecationError<PsiElement>(LanguageFeature.RestrictRetentionForExpressionAnnotations)
         val WRONG_ANNOTATION_TARGET by error<KtAnnotationEntry> {
+            parameter<String>("actualTarget")
+            parameter<Collection<KotlinTarget>>("allowedTargets")
+        }
+        val WRONG_ANNOTATION_TARGET_WARNING by warning<KtAnnotationEntry> {
             parameter<String>("actualTarget")
             parameter<Collection<KotlinTarget>>("allowedTargets")
         }

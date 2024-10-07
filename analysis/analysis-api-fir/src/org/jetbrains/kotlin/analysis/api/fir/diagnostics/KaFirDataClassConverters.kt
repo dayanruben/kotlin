@@ -316,6 +316,18 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.WRAPPED_LHS_IN_ASSIGNMENT.errorFactory) { firDiagnostic ->
+        WrappedLhsInAssignmentErrorImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.WRAPPED_LHS_IN_ASSIGNMENT.warningFactory) { firDiagnostic ->
+        WrappedLhsInAssignmentWarningImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.INVISIBLE_REFERENCE) { firDiagnostic ->
         InvisibleReferenceImpl(
             firSymbolBuilder.buildSymbol(firDiagnostic.a),
@@ -1196,6 +1208,16 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.WRONG_ANNOTATION_TARGET) { firDiagnostic ->
         WrongAnnotationTargetImpl(
+            firDiagnostic.a,
+            firDiagnostic.b.map { kotlinTarget ->
+                kotlinTarget
+            },
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.WRONG_ANNOTATION_TARGET_WARNING) { firDiagnostic ->
+        WrongAnnotationTargetWarningImpl(
             firDiagnostic.a,
             firDiagnostic.b.map { kotlinTarget ->
                 kotlinTarget

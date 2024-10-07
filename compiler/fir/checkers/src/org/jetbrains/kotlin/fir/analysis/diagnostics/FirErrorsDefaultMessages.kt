@@ -539,6 +539,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OVERRIDING_FINAL_
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OVERRIDING_FINAL_MEMBER_BY_DELEGATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PACKAGE_CANNOT_BE_IMPORTED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PACKAGE_CONFLICTS_WITH_CLASSIFIER
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRAPPED_LHS_IN_ASSIGNMENT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PLATFORM_CLASS_MAPPED_TO_KOTLIN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PLUGIN_AMBIGUOUS_INTERCEPTED_SYMBOL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.POTENTIALLY_NON_REPORTED_ANNOTATION
@@ -758,6 +759,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VOLATILE_ON_DELEG
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VOLATILE_ON_VALUE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WHEN_GUARD_WITHOUT_SUBJECT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_ANNOTATION_TARGET
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_ANNOTATION_TARGET_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_CONDITION_SUGGEST_GUARD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_EXTENSION_FUNCTION_TYPE
@@ -904,6 +906,10 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
         map.put(MISSING_CONSTRUCTOR_KEYWORD, "Use the 'constructor' keyword after the modifiers of the primary constructor.")
         map.put(REDUNDANT_INTERPOLATION_PREFIX, "Redundant interpolation prefix.")
+        map.put(
+            WRAPPED_LHS_IN_ASSIGNMENT,
+            "Wrapping the left-hand side of assignments in parentheses, labels or annotations is not allowed."
+        )
         map.put(UNRESOLVED_REFERENCE, "Unresolved reference ''{0}''{1}.", NULLABLE_STRING, FOR_OPTIONAL_OPERATOR)
         map.put(UNRESOLVED_IMPORT, "Unresolved reference ''{0}''.", NULLABLE_STRING) // &
         map.put(DUPLICATE_PARAMETER_NAME_IN_FUNCTION_TYPE, "Duplicate parameter name in a function type.")
@@ -1138,6 +1144,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(ANNOTATION_ON_SUPERCLASS, "Annotations on superclasses are meaningless.")
         map.put(RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION, "Expression annotations with retention other than SOURCE are prohibited.")
         map.put(WRONG_ANNOTATION_TARGET, "This annotation is not applicable to target ''{0}''. Applicable targets: {1}", TO_STRING, KOTLIN_TARGETS)
+        map.put(WRONG_ANNOTATION_TARGET_WARNING, "Application of this annotation to target ''{0}'' will be forbidden soon. Applicable targets: {1}", TO_STRING, KOTLIN_TARGETS)
         map.put(INAPPLICABLE_TARGET_ON_PROPERTY, "''@{0}:'' annotations can only be applied to property declarations.", TO_STRING)
         map.put(
             INAPPLICABLE_TARGET_ON_PROPERTY_WARNING,

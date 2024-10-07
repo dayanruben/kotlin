@@ -46,9 +46,9 @@ public class FirPsiPluginDiagnosticTestGenerated extends AbstractFirPsiPluginDia
     }
 
     @Test
-    @TestMetadata("mixingComposableAndNormalFunctions.kt")
-    public void testMixingComposableAndNormalFunctions() {
-      runTest("plugins/plugin-sandbox/testData/diagnostics/checkers/mixingComposableAndNormalFunctions.kt");
+    @TestMetadata("mixingInlineableAndNormalFunctions.kt")
+    public void testMixingInlineableAndNormalFunctions() {
+      runTest("plugins/plugin-sandbox/testData/diagnostics/checkers/mixingInlineableAndNormalFunctions.kt");
     }
 
     @Test
@@ -95,6 +95,12 @@ public class FirPsiPluginDiagnosticTestGenerated extends AbstractFirPsiPluginDia
     @TestMetadata("inference.kt")
     public void testInference() {
       runTest("plugins/plugin-sandbox/testData/diagnostics/functionalTypes/inference.kt");
+    }
+
+    @Test
+    @TestMetadata("inlineability.kt")
+    public void testInlineability() {
+      runTest("plugins/plugin-sandbox/testData/diagnostics/functionalTypes/inlineability.kt");
     }
 
     @Test

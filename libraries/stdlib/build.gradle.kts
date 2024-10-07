@@ -97,9 +97,6 @@ kotlin {
                             )
                         )
                         mainCompilationOptions()
-                        // workaround for compiling legacy MPP metadata, remove when this compilation is not needed anymore
-                        // restate the list of opt-ins
-                        optIn.addAll(commonOptIns)
                     }
                 }
             }
@@ -599,14 +596,12 @@ kotlin {
 
 dependencies {
     val jvmMainApi by configurations.getting
-    val commonMainMetadataElementsWithClassifier by configurations.creating
     val metadataApiElements by configurations.getting
     val nativeApiElements = configurations.maybeCreate("nativeApiElements")
     constraints {
         // there is no dependency anymore from kotlin-stdlib to kotlin-stdlib-common,
         // but use this constraint to align it if another library brings it transitively
         jvmMainApi(project(":kotlin-stdlib-common"))
-        commonMainMetadataElementsWithClassifier(project(":kotlin-stdlib-common"))
         metadataApiElements(project(":kotlin-stdlib-common"))
         nativeApiElements(project(":kotlin-stdlib-common"))
         // to avoid split package and duplicate classes on classpath after moving them from these artifacts in 1.8.0
@@ -616,9 +611,15 @@ dependencies {
 }
 
 tasks {
-    val metadataJar by existing(Jar::class) {
+    val allMetadataJar by existing(Jar::class) {
+        archiveClassifier = "all"
+    }
+    val metadataJar by registering(Jar::class) {
         archiveAppendix.set("metadata")
         archiveExtension.set("klib")
+    }
+    kotlin.metadata().compilations.named { it == "commonMain" }.configureEach {
+        metadataJar.configure { from(output.allOutputs) }
     }
     val sourcesJar by existing(Jar::class) {
         archiveAppendix.set("metadata")
@@ -727,9 +728,11 @@ tasks {
         val distJsJar = configurations.create("distJsJar")
         val distJsSourcesJar = configurations.create("distJsSourcesJar")
         val distJsKlib = configurations.create("distJsKlib")
+        val commonMainMetadataElements by configurations.creating
 
         add(distJsSourcesJar.name, jsSourcesJar)
         add(distJsKlib.name, jsJar)
+        add(commonMainMetadataElements.name, metadataJar)
     }
 
 
@@ -841,19 +844,6 @@ publishing {
             variant("jvmSourcesElements")
 
             variant("metadataApiElements")
-            variant("commonMainMetadataElementsWithClassifier") {
-                name = "commonMainMetadataElements"
-                configuration {
-                    isCanBeConsumed = false
-                }
-                attributes {
-                    copyAttributes(from = project.configurations["commonMainMetadataElements"].attributes, to = this)
-                }
-                artifact(tasks["metadataJar"]) {
-                    classifier = "common"
-                    extension = "klib"
-                }
-            }
             variant("metadataSourcesElementsFromJvm") {
                 name = "metadataSourcesElements"
                 configuration {
@@ -877,16 +867,6 @@ publishing {
             }
         }
 
-        // we cannot publish legacy common artifact with metadata in kotlin-stdlib-common
-        // because it will cause problems in explicitly configured stdlib dependencies in project
-//        val common = module("commonModule") {
-//            mavenPublication {
-//                artifactId = "$artifactBaseName-common"
-//                configureKotlinPomAttributes(project, "Kotlin Common Standard Library (for compatibility with legacy multiplatform)")
-//                artifact(tasks["sourcesJar"]) // publish sources.jar just for maven, without including it in Gradle metadata
-//            }
-//            variant("commonMainMetadataElements")
-//        }
         val js = module("jsModule") {
             mavenPublication {
                 artifactId = "$artifactBaseName-js"

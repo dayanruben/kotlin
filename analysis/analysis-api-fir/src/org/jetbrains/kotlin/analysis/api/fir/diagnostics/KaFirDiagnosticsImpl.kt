@@ -304,6 +304,16 @@ internal class RedundantInterpolationPrefixImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.RedundantInterpolationPrefix
 
+internal class WrappedLhsInAssignmentErrorImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.WrappedLhsInAssignmentError
+
+internal class WrappedLhsInAssignmentWarningImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.WrappedLhsInAssignmentWarning
+
 internal class InvisibleReferenceImpl(
     override val reference: KaSymbol,
     override val visible: Visibility,
@@ -1044,6 +1054,13 @@ internal class WrongAnnotationTargetImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.WrongAnnotationTarget
+
+internal class WrongAnnotationTargetWarningImpl(
+    override val actualTarget: String,
+    override val allowedTargets: List<KotlinTarget>,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.WrongAnnotationTargetWarning
 
 internal class WrongAnnotationTargetWithUseSiteTargetImpl(
     override val actualTarget: String,

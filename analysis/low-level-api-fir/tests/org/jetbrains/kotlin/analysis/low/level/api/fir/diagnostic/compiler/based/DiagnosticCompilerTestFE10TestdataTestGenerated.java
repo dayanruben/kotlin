@@ -1336,6 +1336,42 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
     }
 
     @Test
+    @TestMetadata("parenthesesWithAssignmentOrSet.kt")
+    public void testParenthesesWithAssignmentOrSet() {
+      runTest("compiler/testData/diagnostics/tests/parenthesesWithAssignmentOrSet.kt");
+    }
+
+    @Test
+    @TestMetadata("parenthesesWithAssignmentOrSetValCornerCases.kt")
+    public void testParenthesesWithAssignmentOrSetValCornerCases() {
+      runTest("compiler/testData/diagnostics/tests/parenthesesWithAssignmentOrSetValCornerCases.kt");
+    }
+
+    @Test
+    @TestMetadata("parenthesesWithAssignmentOrSetVarCornerCases.kt")
+    public void testParenthesesWithAssignmentOrSetVarCornerCases() {
+      runTest("compiler/testData/diagnostics/tests/parenthesesWithAssignmentOrSetVarCornerCases.kt");
+    }
+
+    @Test
+    @TestMetadata("parenthesesWithIncrements.kt")
+    public void testParenthesesWithIncrements() {
+      runTest("compiler/testData/diagnostics/tests/parenthesesWithIncrements.kt");
+    }
+
+    @Test
+    @TestMetadata("parenthesesWithIndexedAssignmentOrSetValCornerCases.kt")
+    public void testParenthesesWithIndexedAssignmentOrSetValCornerCases() {
+      runTest("compiler/testData/diagnostics/tests/parenthesesWithIndexedAssignmentOrSetValCornerCases.kt");
+    }
+
+    @Test
+    @TestMetadata("parenthesesWithIndexedAssignmentOrSetVarCornerCases.kt")
+    public void testParenthesesWithIndexedAssignmentOrSetVarCornerCases() {
+      runTest("compiler/testData/diagnostics/tests/parenthesesWithIndexedAssignmentOrSetVarCornerCases.kt");
+    }
+
+    @Test
     @TestMetadata("phantomIntersections.kt")
     public void testPhantomIntersections() {
       runTest("compiler/testData/diagnostics/tests/phantomIntersections.kt");
@@ -7306,6 +7342,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       @TestMetadata("nonKotlinContractCall.kt")
       public void testNonKotlinContractCall() {
         runTest("compiler/testData/diagnostics/tests/contracts/nonKotlinContractCall.kt");
+      }
+
+      @Test
+      @TestMetadata("nonKotlinContractCall2.kt")
+      public void testNonKotlinContractCall2() {
+        runTest("compiler/testData/diagnostics/tests/contracts/nonKotlinContractCall2.kt");
       }
 
       @Nested
@@ -45289,6 +45331,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         @TestMetadata("multifileClassPartWithJavaAnnotation.kt")
         public void testMultifileClassPartWithJavaAnnotation() {
           runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationApplicability/multifileClassPartWithJavaAnnotation.kt");
+        }
+
+        @Test
+        @TestMetadata("onPropertyAnnotation.kt")
+        public void testOnPropertyAnnotation() {
+          runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationApplicability/onPropertyAnnotation.kt");
         }
 
         @Test

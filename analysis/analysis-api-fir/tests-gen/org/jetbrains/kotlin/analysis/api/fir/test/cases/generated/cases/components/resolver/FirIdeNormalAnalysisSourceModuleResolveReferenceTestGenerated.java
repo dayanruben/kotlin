@@ -3109,6 +3109,12 @@ public class FirIdeNormalAnalysisSourceModuleResolveReferenceTestGenerated exten
       }
 
       @Test
+      @TestMetadata("KT-69047.kt")
+      public void testKT_69047() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/extensions/KT-69047.kt");
+      }
+
+      @Test
       @TestMetadata("nonExtensions.kt")
       public void testNonExtensions() {
         runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/extensions/nonExtensions.kt");
@@ -3201,6 +3207,12 @@ public class FirIdeNormalAnalysisSourceModuleResolveReferenceTestGenerated exten
       }
 
       @Test
+      @TestMetadata("KT-64190.kt")
+      public void testKT_64190() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/imports/KT-64190.kt");
+      }
+
+      @Test
       @TestMetadata("SameNameClassesFromStarImports.kt")
       public void testSameNameClassesFromStarImports() {
         runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/imports/SameNameClassesFromStarImports.kt");
@@ -3232,6 +3244,18 @@ public class FirIdeNormalAnalysisSourceModuleResolveReferenceTestGenerated exten
       @TestMetadata("FunctionQualifiedWithKotlinSubclass.kt")
       public void testFunctionQualifiedWithKotlinSubclass() {
         runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/javaDeclarations/FunctionQualifiedWithKotlinSubclass.kt");
+      }
+
+      @Test
+      @TestMetadata("KT-69128.kt")
+      public void testKT_69128() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/javaDeclarations/KT-69128.kt");
+      }
+
+      @Test
+      @TestMetadata("KT-69736.kt")
+      public void testKT_69736() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/javaDeclarations/KT-69736.kt");
       }
 
       @Test
