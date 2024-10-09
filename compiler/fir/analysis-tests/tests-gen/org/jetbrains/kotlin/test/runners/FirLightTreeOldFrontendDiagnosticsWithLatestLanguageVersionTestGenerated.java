@@ -2245,6 +2245,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       }
 
       @Test
+      @TestMetadata("arrayLiteralFalseNegativeInsideLambda.kt")
+      public void testArrayLiteralFalseNegativeInsideLambda() {
+        runTest("compiler/testData/diagnostics/tests/annotations/arrayLiteralFalseNegativeInsideLambda.kt");
+      }
+
+      @Test
       @TestMetadata("arrayLiteralInAnnotationCompanion_after.kt")
       public void testArrayLiteralInAnnotationCompanion_after() {
         runTest("compiler/testData/diagnostics/tests/annotations/arrayLiteralInAnnotationCompanion_after.kt");
@@ -6666,6 +6672,18 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       @TestMetadata("classWithFunctionSupertype_before.kt")
       public void testClassWithFunctionSupertype_before() {
         runTest("compiler/testData/diagnostics/tests/classObjects/classWithFunctionSupertype_before.kt");
+      }
+
+      @Test
+      @TestMetadata("companionInInnerOfLocalClass.kt")
+      public void testCompanionInInnerOfLocalClass() {
+        runTest("compiler/testData/diagnostics/tests/classObjects/companionInInnerOfLocalClass.kt");
+      }
+
+      @Test
+      @TestMetadata("companionInInnerOfLocalClassAfter.kt")
+      public void testCompanionInInnerOfLocalClassAfter() {
+        runTest("compiler/testData/diagnostics/tests/classObjects/companionInInnerOfLocalClassAfter.kt");
       }
 
       @Test
@@ -11676,6 +11694,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       @TestMetadata("deprecatedField.kt")
       public void testDeprecatedField() {
         runTest("compiler/testData/diagnostics/tests/deprecated/deprecatedField.kt");
+      }
+
+      @Test
+      @TestMetadata("deprecatedGenericType.kt")
+      public void testDeprecatedGenericType() {
+        runTest("compiler/testData/diagnostics/tests/deprecated/deprecatedGenericType.kt");
       }
 
       @Test
@@ -19064,6 +19088,18 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
         }
 
         @Test
+        @TestMetadata("assignmentOperatorAmbiguity.kt")
+        public void testAssignmentOperatorAmbiguity() {
+          runTest("compiler/testData/diagnostics/tests/inference/pcla/assignmentOperatorAmbiguity.kt");
+        }
+
+        @Test
+        @TestMetadata("assignmentPlusOperator.kt")
+        public void testAssignmentPlusOperator() {
+          runTest("compiler/testData/diagnostics/tests/inference/pcla/assignmentPlusOperator.kt");
+        }
+
+        @Test
         @TestMetadata("assignmentUsingIncompletePCLACall.kt")
         public void testAssignmentUsingIncompletePCLACall() {
           runTest("compiler/testData/diagnostics/tests/inference/pcla/assignmentUsingIncompletePCLACall.kt");
@@ -20181,6 +20217,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
           }
 
           @Test
+          @TestMetadata("kt71662.kt")
+          public void testKt71662() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/kt71662.kt");
+          }
+
+          @Test
           @TestMetadata("namedArgumentTypeSubstitution.kt")
           public void testNamedArgumentTypeSubstitution() {
             runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/namedArgumentTypeSubstitution.kt");
@@ -20795,6 +20837,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
         @TestMetadata("recursiveTypes.kt")
         public void testRecursiveTypes() {
           runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/recursiveTypes.kt");
+        }
+
+        @Test
+        @TestMetadata("starProjectionOfRecursiveTypeParameterAsReifiedTypeArgument.kt")
+        public void testStarProjectionOfRecursiveTypeParameterAsReifiedTypeArgument() {
+          runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/starProjectionOfRecursiveTypeParameterAsReifiedTypeArgument.kt");
         }
 
         @Test
@@ -38576,6 +38624,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       @TestMetadata("newListMethods.kt")
       public void testNewListMethods() {
         runTest("compiler/testData/diagnostics/tests/testsWithJava17/newListMethods.kt");
+      }
+
+      @Test
+      @TestMetadata("nullSourceInJvmModuleChecker.kt")
+      public void testNullSourceInJvmModuleChecker() {
+        runTest("compiler/testData/diagnostics/tests/testsWithJava17/nullSourceInJvmModuleChecker.kt");
       }
 
       @Nested

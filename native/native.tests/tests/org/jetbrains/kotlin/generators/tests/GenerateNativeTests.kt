@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.konan.test.blackbox.*
 import org.jetbrains.kotlin.konan.test.blackbox.support.ClassLevelProperty
 import org.jetbrains.kotlin.konan.test.blackbox.support.EnforcedHostTarget
 import org.jetbrains.kotlin.konan.test.blackbox.support.EnforcedProperty
+import org.jetbrains.kotlin.konan.test.blackbox.support.KLIB_IR_INLINER
 import org.jetbrains.kotlin.konan.test.blackbox.support.group.*
 import org.jetbrains.kotlin.konan.test.diagnostics.*
 import org.jetbrains.kotlin.konan.test.irtext.AbstractClassicNativeIrTextTest
@@ -173,6 +174,21 @@ fun main() {
             }
         }
 
+        // 1st phase IR Inliner tests (IR inliner is invoked before K2 Klib Serializer)
+        testGroup("native/native.tests/klib-ir-inliner/tests-gen", "compiler/testData/codegen") {
+            testClass<AbstractNativeCodegenBoxTest>(
+                suiteTestClassName = "FirNativeCodegenBoxWithInlinedFunInKlibTestGenerated",
+                annotations = listOf(
+                    *frontendFir(),
+                    klibIrInliner(),
+                    provider<UseExtTestCaseGroupProvider>()
+                )
+            ) {
+                model("box", targetBackend = TargetBackend.NATIVE, excludeDirs = k1BoxTestDir)
+                model("boxInline", targetBackend = TargetBackend.NATIVE, excludeDirs = k1BoxTestDir)
+            }
+        }
+
         // KLIB evolution tests.
         testGroup("native/native.tests/tests-gen", "compiler/testData/klib/evolution") {
             testClass<AbstractNativeKlibEvolutionTest>(
@@ -240,7 +256,10 @@ fun main() {
                 model("builtins/builtinsDefs", pattern = "^([^_](.+))$", recursive = false)
             }
             testClass<AbstractNativeCInteropKT39120Test>(
-                suiteTestClassName = "CInteropKT39120TestGenerated"
+                suiteTestClassName = "CInteropKT39120TestGenerated",
+                annotations = listOf(
+                    *frontendFir()
+                ),
             ) {
                 model("KT-39120/defs", pattern = "^([^_](.+))$", recursive = false)
             }
@@ -717,6 +736,7 @@ fun frontendFir() = arrayOf(
     annotation(FirPipeline::class.java)
 )
 
+private fun klibIrInliner() = annotation(Tag::class.java, KLIB_IR_INLINER)
 private fun klib() = annotation(Tag::class.java, "klib")
 private fun debugger() = annotation(Tag::class.java, "debugger")
 private fun infrastructure() = annotation(Tag::class.java, "infrastructure")

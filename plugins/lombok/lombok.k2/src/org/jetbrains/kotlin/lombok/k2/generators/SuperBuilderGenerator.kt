@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.fir.java.declarations.FirJavaMethod
 import org.jetbrains.kotlin.fir.moduleData
 import org.jetbrains.kotlin.fir.resolve.defaultType
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
 import org.jetbrains.kotlin.fir.toFirResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
@@ -50,38 +49,41 @@ class SuperBuilderGenerator(session: FirSession) : AbstractBuilderGenerator<Supe
         return builderClassId.constructClassLikeType(arrayOf(ConeStarProjection, ConeStarProjection), isMarkedNullable = false)
     }
 
-    override fun getBuilderType(builderClassSymbol: FirRegularClassSymbol): ConeKotlinType {
-        return builderClassSymbol.typeParameterSymbols[BUILDER_TYPE_PARAMETER_INDEX].defaultType
+    override fun getBuilderType(builderSymbol: FirClassSymbol<*>): ConeKotlinType {
+        return builderSymbol.typeParameterSymbols[BUILDER_TYPE_PARAMETER_INDEX].defaultType
     }
 
-    override fun getBuilderMethods(
+    override fun MutableMap<Name, FirJavaMethod>.addBuilderMethodsIfNeeded(
         builder: SuperBuilder,
         classSymbol: FirClassSymbol<*>,
-        builderClassSymbol: FirRegularClassSymbol,
-    ): List<FirJavaMethod> {
-        val builderTypeParameterSymbols = builderClassSymbol.typeParameterSymbols
+        builderSymbol: FirClassSymbol<*>,
+        existingFunctionNames: Set<Name>,
+    ) {
+        val builderTypeParameterSymbols = builderSymbol.typeParameterSymbols
 
-        return listOf(
-            builderClassSymbol.createJavaMethod(
-                Name.identifier("self"),
+        addIfNeeded(Name.identifier("self"), existingFunctionNames) {
+            builderSymbol.createJavaMethod(
+                it,
                 valueParameters = emptyList(),
                 returnTypeRef = builderTypeParameterSymbols[BUILDER_TYPE_PARAMETER_INDEX].defaultType.toFirResolvedTypeRef(),
                 visibility = Visibilities.Protected,
                 modality = Modality.ABSTRACT
-            ),
-            builderClassSymbol.createJavaMethod(
-                Name.identifier(builder.buildMethodName),
+            )
+        }
+        addIfNeeded(Name.identifier(builder.buildMethodName), existingFunctionNames) {
+            builderSymbol.createJavaMethod(
+                it,
                 valueParameters = emptyList(),
                 returnTypeRef = builderTypeParameterSymbols[CLASS_TYPE_PARAMETER_INDEX].defaultType.toFirResolvedTypeRef(),
                 visibility = Visibilities.Public,
                 modality = Modality.ABSTRACT
             )
-        )
+        }
     }
 
     override fun FirJavaClassBuilder.completeBuilder(
         classSymbol: FirClassSymbol<*>,
-        builderClassSymbol: FirRegularClassSymbol,
+        builderSymbol: FirClassSymbol<*>,
     ) {
         val classTypeParameterSymbol = FirTypeParameterSymbol()
         val builderTypeParameterSymbol = FirTypeParameterSymbol()
@@ -92,7 +94,7 @@ class SuperBuilderGenerator(session: FirSession) : AbstractBuilderGenerator<Supe
             resolvePhase = FirResolvePhase.ANALYZED_DEPENDENCIES
             this.name = Name.identifier("C")
             symbol = classTypeParameterSymbol
-            containingDeclarationSymbol = builderClassSymbol
+            containingDeclarationSymbol = builderSymbol
             variance = Variance.INVARIANT
             isReified = false
             bounds += buildResolvedTypeRef {
@@ -105,11 +107,11 @@ class SuperBuilderGenerator(session: FirSession) : AbstractBuilderGenerator<Supe
             resolvePhase = FirResolvePhase.ANALYZED_DEPENDENCIES
             this.name = Name.identifier("B")
             symbol = builderTypeParameterSymbol
-            containingDeclarationSymbol = builderClassSymbol
+            containingDeclarationSymbol = builderSymbol
             variance = Variance.INVARIANT
             isReified = false
             bounds += buildResolvedTypeRef {
-                coneType = builderClassSymbol.constructType(
+                coneType = builderSymbol.constructType(
                     typeArguments = arrayOf(
                         classTypeParameterSymbol.defaultType,
                         builderTypeParameterSymbol.defaultType,
