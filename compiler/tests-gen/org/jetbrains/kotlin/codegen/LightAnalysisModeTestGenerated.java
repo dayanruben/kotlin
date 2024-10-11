@@ -33515,6 +33515,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/notNullAssertions/noCallAssertions.kt");
     }
 
+    @TestMetadata("nonNullReassignmentWithFlexible.kt")
+    public void testNonNullReassignmentWithFlexible() {
+      runTest("compiler/testData/codegen/box/notNullAssertions/nonNullReassignmentWithFlexible.kt");
+    }
+
     @TestMetadata("rightElvisOperand.kt")
     public void testRightElvisOperand() {
       runTest("compiler/testData/codegen/box/notNullAssertions/rightElvisOperand.kt");
@@ -47942,6 +47947,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/valueClasses/tryExpressions.kt");
     }
 
+    @TestMetadata("uLongInValueClass.kt")
+    public void testULongInValueClass() {
+      runTest("compiler/testData/codegen/box/valueClasses/uLongInValueClass.kt");
+    }
+
     @TestMetadata("visibility.kt")
     public void testVisibility() {
       runTest("compiler/testData/codegen/box/valueClasses/visibility.kt");
@@ -47985,6 +47995,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
   @TestDataPath("$PROJECT_ROOT")
   @RunWith(JUnit3RunnerWithInners.class)
   public static class Vararg extends AbstractLightAnalysisModeTest {
+    @TestMetadata("kt52146_samWithSelfTypeAndStarProjection.kt")
+    public void ignoreKt52146_samWithSelfTypeAndStarProjection() {
+      runTest("compiler/testData/codegen/box/vararg/kt52146_samWithSelfTypeAndStarProjection.kt");
+    }
+
     private void runTest(String testDataFilePath) {
       KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
     }
@@ -48051,11 +48066,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestMetadata("kt46092.kt")
     public void testKt46092() {
       runTest("compiler/testData/codegen/box/vararg/kt46092.kt");
-    }
-
-    @TestMetadata("kt52146_samWithSelfTypeAndStarProjection.kt")
-    public void testKt52146_samWithSelfTypeAndStarProjection() {
-      runTest("compiler/testData/codegen/box/vararg/kt52146_samWithSelfTypeAndStarProjection.kt");
     }
 
     @TestMetadata("kt581.kt")

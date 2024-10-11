@@ -39268,6 +39268,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
     }
 
     @Test
+    @TestMetadata("nonNullReassignmentWithFlexible.kt")
+    public void testNonNullReassignmentWithFlexible() {
+      runTest("compiler/testData/codegen/box/notNullAssertions/nonNullReassignmentWithFlexible.kt");
+    }
+
+    @Test
     @TestMetadata("rightElvisOperand.kt")
     public void testRightElvisOperand() {
       runTest("compiler/testData/codegen/box/notNullAssertions/rightElvisOperand.kt");
@@ -58939,6 +58945,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
     @TestMetadata("tryExpressions.kt")
     public void testTryExpressions() {
       runTest("compiler/testData/codegen/box/valueClasses/tryExpressions.kt");
+    }
+
+    @Test
+    @TestMetadata("uLongInValueClass.kt")
+    public void testULongInValueClass() {
+      runTest("compiler/testData/codegen/box/valueClasses/uLongInValueClass.kt");
     }
 
     @Test

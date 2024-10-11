@@ -39145,6 +39145,12 @@ public class LLFirBlackBoxCodegenBasedTestGenerated extends AbstractLLFirBlackBo
       }
 
       @Test
+      @TestMetadata("AbstractMutableList_modCount_deprecated.kt")
+      public void testAbstractMutableList_modCount_deprecated() {
+        runTest("compiler/testData/codegen/box/multiplatform/k2/AbstractMutableList_modCount_deprecated.kt");
+      }
+
+      @Test
       @TestMetadata("actualInnerClassesFirMemberMapping.kt")
       public void testActualInnerClassesFirMemberMapping() {
         runTest("compiler/testData/codegen/box/multiplatform/k2/actualInnerClassesFirMemberMapping.kt");
@@ -40242,6 +40248,12 @@ public class LLFirBlackBoxCodegenBasedTestGenerated extends AbstractLLFirBlackBo
     @TestMetadata("noCallAssertions.kt")
     public void testNoCallAssertions() {
       runTest("compiler/testData/codegen/box/notNullAssertions/noCallAssertions.kt");
+    }
+
+    @Test
+    @TestMetadata("nonNullReassignmentWithFlexible.kt")
+    public void testNonNullReassignmentWithFlexible() {
+      runTest("compiler/testData/codegen/box/notNullAssertions/nonNullReassignmentWithFlexible.kt");
     }
 
     @Test
@@ -60056,6 +60068,12 @@ public class LLFirBlackBoxCodegenBasedTestGenerated extends AbstractLLFirBlackBo
     @TestMetadata("tryExpressions.kt")
     public void testTryExpressions() {
       runTest("compiler/testData/codegen/box/valueClasses/tryExpressions.kt");
+    }
+
+    @Test
+    @TestMetadata("uLongInValueClass.kt")
+    public void testULongInValueClass() {
+      runTest("compiler/testData/codegen/box/valueClasses/uLongInValueClass.kt");
     }
 
     @Test

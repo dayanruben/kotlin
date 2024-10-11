@@ -238,6 +238,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
     }
 
     @Test
+    @TestMetadata("companionObjectInEnumAccess.kt")
+    public void testCompanionObjectInEnumAccess() {
+      runTest("compiler/testData/diagnostics/tests/companionObjectInEnumAccess.kt");
+    }
+
+    @Test
     @TestMetadata("CompareToWithErrorType.kt")
     public void testCompareToWithErrorType() {
       runTest("compiler/testData/diagnostics/tests/CompareToWithErrorType.kt");
@@ -1213,6 +1219,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
     @TestMetadata("noUnusedOnDelegationWithProvider.kt")
     public void testNoUnusedOnDelegationWithProvider() {
       runTest("compiler/testData/diagnostics/tests/noUnusedOnDelegationWithProvider.kt");
+    }
+
+    @Test
+    @TestMetadata("noValueForParameterOfLambda.kt")
+    public void testNoValueForParameterOfLambda() {
+      runTest("compiler/testData/diagnostics/tests/noValueForParameterOfLambda.kt");
     }
 
     @Test
@@ -15885,12 +15897,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
-      @TestMetadata("ImportFromRootPackage.kt")
-      public void testImportFromRootPackage() {
-        runTest("compiler/testData/diagnostics/tests/imports/ImportFromRootPackage.kt");
-      }
-
-      @Test
       @TestMetadata("importFunctionWithAllUnderImport.kt")
       public void testImportFunctionWithAllUnderImport() {
         runTest("compiler/testData/diagnostics/tests/imports/importFunctionWithAllUnderImport.kt");
@@ -16041,12 +16047,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
-      @TestMetadata("noImportFromRootPackage.kt")
-      public void testNoImportFromRootPackage() {
-        runTest("compiler/testData/diagnostics/tests/imports/noImportFromRootPackage.kt");
-      }
-
-      @Test
       @TestMetadata("OperatorRenameOnImport.kt")
       public void testOperatorRenameOnImport() {
         runTest("compiler/testData/diagnostics/tests/imports/OperatorRenameOnImport.kt");
@@ -16104,6 +16104,30 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("renamedImportInDifferentFile.kt")
       public void testRenamedImportInDifferentFile() {
         runTest("compiler/testData/diagnostics/tests/imports/renamedImportInDifferentFile.kt");
+      }
+
+      @Test
+      @TestMetadata("RootPackage.kt")
+      public void testRootPackage() {
+        runTest("compiler/testData/diagnostics/tests/imports/RootPackage.kt");
+      }
+
+      @Test
+      @TestMetadata("RootPackageImportsA.kt")
+      public void testRootPackageImportsA() {
+        runTest("compiler/testData/diagnostics/tests/imports/RootPackageImportsA.kt");
+      }
+
+      @Test
+      @TestMetadata("RootPackageImportsB.kt")
+      public void testRootPackageImportsB() {
+        runTest("compiler/testData/diagnostics/tests/imports/RootPackageImportsB.kt");
+      }
+
+      @Test
+      @TestMetadata("RootPackageNoImports.kt")
+      public void testRootPackageNoImports() {
+        runTest("compiler/testData/diagnostics/tests/imports/RootPackageNoImports.kt");
       }
 
       @Test
@@ -35797,6 +35821,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       public void testSimpleCorrectKT() {
         runTest("compiler/testData/diagnostics/tests/samConversions/SimpleCorrectKT.kt");
       }
+
+      @Test
+      @TestMetadata("typeMismatchOnGenericSam.kt")
+      public void testTypeMismatchOnGenericSam() {
+        runTest("compiler/testData/diagnostics/tests/samConversions/typeMismatchOnGenericSam.kt");
+      }
     }
 
     @Nested
@@ -49089,6 +49119,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
     @TestMetadata("compiler/testData/diagnostics/testsWithStdLib/multiplatform")
     @TestDataPath("$PROJECT_ROOT")
     public class Multiplatform {
+      @Test
+      @TestMetadata("actualDeprecated.kt")
+      public void testActualDeprecated() {
+        runTest("compiler/testData/diagnostics/testsWithStdLib/multiplatform/actualDeprecated.kt");
+      }
+
       @Test
       @TestMetadata("actualExternalInJs.kt")
       public void testActualExternalInJs() {
