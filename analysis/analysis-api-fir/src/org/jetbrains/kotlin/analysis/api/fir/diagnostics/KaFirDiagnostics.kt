@@ -606,6 +606,11 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = CyclicInheritanceHierarchy::class
     }
 
+    interface ExpandedTypeCannotBeInherited : KaFirDiagnostic<KtTypeReference> {
+        override val diagnosticClass get() = ExpandedTypeCannotBeInherited::class
+        val type: KaType
+    }
+
     interface ProjectionInImmediateArgumentToSupertype : KaFirDiagnostic<KtModifierListOwner> {
         override val diagnosticClass get() = ProjectionInImmediateArgumentToSupertype::class
     }
@@ -3878,6 +3883,18 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val hidden: KaFunctionSymbol
         val overrideDescription: String
         val regular: KaFunctionSymbol
+    }
+
+    interface ImplementationByDelegationWithDifferentGenericSignatureError : KaFirDiagnostic<KtTypeReference> {
+        override val diagnosticClass get() = ImplementationByDelegationWithDifferentGenericSignatureError::class
+        val base: KaFunctionSymbol
+        val override: KaFunctionSymbol
+    }
+
+    interface ImplementationByDelegationWithDifferentGenericSignatureWarning : KaFirDiagnostic<KtTypeReference> {
+        override val diagnosticClass get() = ImplementationByDelegationWithDifferentGenericSignatureWarning::class
+        val base: KaFunctionSymbol
+        val override: KaFunctionSymbol
     }
 
     interface NotYetSupportedLocalInlineFunction : KaFirDiagnostic<KtDeclaration> {

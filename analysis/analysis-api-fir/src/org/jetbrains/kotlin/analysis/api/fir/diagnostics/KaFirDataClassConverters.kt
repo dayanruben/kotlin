@@ -804,6 +804,13 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.EXPANDED_TYPE_CANNOT_BE_INHERITED) { firDiagnostic ->
+        ExpandedTypeCannotBeInheritedImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.PROJECTION_IN_IMMEDIATE_ARGUMENT_TO_SUPERTYPE) { firDiagnostic ->
         ProjectionInImmediateArgumentToSupertypeImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -5562,6 +5569,22 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             firSymbolBuilder.functionBuilder.buildNamedFunctionSymbol(firDiagnostic.a),
             firDiagnostic.b,
             firSymbolBuilder.functionBuilder.buildNamedFunctionSymbol(firDiagnostic.c),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.IMPLEMENTATION_BY_DELEGATION_WITH_DIFFERENT_GENERIC_SIGNATURE.errorFactory) { firDiagnostic ->
+        ImplementationByDelegationWithDifferentGenericSignatureErrorImpl(
+            firSymbolBuilder.functionBuilder.buildNamedFunctionSymbol(firDiagnostic.a),
+            firSymbolBuilder.functionBuilder.buildNamedFunctionSymbol(firDiagnostic.b),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.IMPLEMENTATION_BY_DELEGATION_WITH_DIFFERENT_GENERIC_SIGNATURE.warningFactory) { firDiagnostic ->
+        ImplementationByDelegationWithDifferentGenericSignatureWarningImpl(
+            firSymbolBuilder.functionBuilder.buildNamedFunctionSymbol(firDiagnostic.a),
+            firSymbolBuilder.functionBuilder.buildNamedFunctionSymbol(firDiagnostic.b),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

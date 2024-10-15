@@ -715,6 +715,12 @@ internal class CyclicInheritanceHierarchyImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.CyclicInheritanceHierarchy
 
+internal class ExpandedTypeCannotBeInheritedImpl(
+    override val type: KaType,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtTypeReference>(firDiagnostic, token), KaFirDiagnostic.ExpandedTypeCannotBeInherited
+
 internal class ProjectionInImmediateArgumentToSupertypeImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
@@ -4676,6 +4682,20 @@ internal class AccidentalOverrideClashByJvmSignatureImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtNamedFunction>(firDiagnostic, token), KaFirDiagnostic.AccidentalOverrideClashByJvmSignature
+
+internal class ImplementationByDelegationWithDifferentGenericSignatureErrorImpl(
+    override val base: KaFunctionSymbol,
+    override val override: KaFunctionSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtTypeReference>(firDiagnostic, token), KaFirDiagnostic.ImplementationByDelegationWithDifferentGenericSignatureError
+
+internal class ImplementationByDelegationWithDifferentGenericSignatureWarningImpl(
+    override val base: KaFunctionSymbol,
+    override val override: KaFunctionSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtTypeReference>(firDiagnostic, token), KaFirDiagnostic.ImplementationByDelegationWithDifferentGenericSignatureWarning
 
 internal class NotYetSupportedLocalInlineFunctionImpl(
     firDiagnostic: KtPsiDiagnostic,

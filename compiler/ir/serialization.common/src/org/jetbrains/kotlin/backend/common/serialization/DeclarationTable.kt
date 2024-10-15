@@ -41,7 +41,7 @@ abstract class GlobalDeclarationTable(val mangler: IrMangler) {
         recordInSignatureClashDetector: Boolean,
     ): IdSignature {
         return table.getOrPut(declaration) {
-            publicIdSignatureComputer.composePublicIdSignature(declaration, compatibleMode)
+            publicIdSignatureComputer.computePublicIdSignature(declaration, compatibleMode)
         }.also {
             if (recordInSignatureClashDetector && it.isPubliclyVisible && !it.isLocal) {
                 clashDetector.trackDeclaration(declaration, it)
@@ -72,7 +72,7 @@ abstract class DeclarationTable<GDT : GlobalDeclarationTable>(val globalDeclarat
     fun signatureByDeclaration(declaration: IrDeclaration, compatibleMode: Boolean, recordInSignatureClashDetector: Boolean): IdSignature {
         tryComputeBackendSpecificSignature(declaration)?.let { return it }
         return if (declaration.shouldHaveLocalSignature(compatibleMode)) {
-            table.getOrPut(declaration) { fileLocalIdSignatureComputer.composeFileLocalIdSignature(declaration, compatibleMode) }
+            table.getOrPut(declaration) { fileLocalIdSignatureComputer.computeFileLocalIdSignature(declaration, compatibleMode) }
         } else {
             globalDeclarationTable.computeSignatureByDeclaration(declaration, compatibleMode, recordInSignatureClashDetector)
         }
