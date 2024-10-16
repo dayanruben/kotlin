@@ -79,6 +79,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.OVERLOADS_
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.OVERLOADS_WITHOUT_DEFAULT_ARGUMENTS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.OVERRIDE_CANNOT_BE_STATIC
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.POSITIONED_VALUE_ARGUMENT_FOR_JAVA_ANNOTATION
+import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.PROPERTY_HIDES_JAVA_FIELD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.REDUNDANT_REPEATABLE_ANNOTATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.REPEATABLE_ANNOTATION_HAS_NESTED_CLASS_NAMED_CONTAINER
@@ -162,15 +163,20 @@ object FirJvmErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
 
         map.put(
             UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS,
-            "Type argument is not within its bounds: should be subtype of ''{0}''.",
+            "Type argument is not within its bounds: must be subtype of ''{0}''.",
             RENDER_TYPE,
             RENDER_TYPE
         )
         map.put(
             UPPER_BOUND_VIOLATED_IN_TYPEALIAS_EXPANSION_BASED_ON_JAVA_ANNOTATIONS,
-            "Type argument is not within its bounds: should be subtype of ''{0}''.",
+            "Type argument is not within its bounds: must be subtype of ''{0}''.",
             RENDER_TYPE,
             RENDER_TYPE
+        )
+        map.put(
+            PROPERTY_HIDES_JAVA_FIELD,
+            "This property hides Java field ''{0}'' thus making it inaccessible.",
+            SYMBOL,
         )
 
         map.put(UPPER_BOUND_CANNOT_BE_ARRAY, "Upper bound of type parameter cannot be an array.")
@@ -204,16 +210,16 @@ object FirJvmErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
 
         map.put(LOCAL_JVM_RECORD, "Local '@JvmRecord' classes are prohibited.")
-        map.put(NON_FINAL_JVM_RECORD, "'@JvmRecord' class should be final.")
-        map.put(ENUM_JVM_RECORD, "'@JvmRecord' class should not be an enum.")
+        map.put(NON_FINAL_JVM_RECORD, "'@JvmRecord' class must be final.")
+        map.put(ENUM_JVM_RECORD, "'@JvmRecord' class cannot be an enum.")
         map.put(
             JVM_RECORD_WITHOUT_PRIMARY_CONSTRUCTOR_PARAMETERS,
             "Primary constructor with parameters is required for '@JvmRecord' class."
         )
-        map.put(JVM_RECORD_NOT_VAL_PARAMETER, "Constructor parameter of '@JvmRecord' class should be a 'val'.")
+        map.put(JVM_RECORD_NOT_VAL_PARAMETER, "Constructor parameter of '@JvmRecord' class must be a 'val'.")
         map.put(JVM_RECORD_NOT_LAST_VARARG_PARAMETER, "Only the last constructor parameter of '@JvmRecord' can be a vararg.")
         map.put(JVM_RECORD_EXTENDS_CLASS, "Record cannot extend a class.", RENDER_TYPE)
-        map.put(INNER_JVM_RECORD, "'@JvmRecord' class should not be inner.")
+        map.put(INNER_JVM_RECORD, "'@JvmRecord' class cannot be inner.")
         map.put(FIELD_IN_JVM_RECORD, "Non-constructor properties with backing field in '@JvmRecord' class are prohibited.")
         map.put(DELEGATION_BY_IN_JVM_RECORD, "Delegation is prohibited for '@JvmRecord' classes.")
         map.put(NON_DATA_CLASS_JVM_RECORD, "Only data classes are allowed to be marked as '@JvmRecord'.")
@@ -388,7 +394,7 @@ object FirJvmErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
 
         map.put(
             JAVA_CLASS_INHERITS_KT_PRIVATE_CLASS,
-            "Java class ''{0}'' declaring this callable should not inherit directly or indirectly private Kotlin class ''{1}''.",
+            "Java class ''{0}'' declaring this member directly or indirectly extends the private Kotlin class ''{1}''.",
             TO_STRING,
             RENDER_TYPE
         )
