@@ -14893,6 +14893,18 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("unclearTypeMismatch.kt")
+      public void testUnclearTypeMismatch() {
+        runTest("compiler/testData/diagnostics/tests/generics/unclearTypeMismatch.kt");
+      }
+
+      @Test
+      @TestMetadata("unclearTypeMismatchWithCapturedTypes.kt")
+      public void testUnclearTypeMismatchWithCapturedTypes() {
+        runTest("compiler/testData/diagnostics/tests/generics/unclearTypeMismatchWithCapturedTypes.kt");
+      }
+
+      @Test
       @TestMetadata("unresolvedClassifierInWhere.kt")
       public void testUnresolvedClassifierInWhere() {
         runTest("compiler/testData/diagnostics/tests/generics/unresolvedClassifierInWhere.kt");
@@ -15210,6 +15222,18 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
           @TestMetadata("inStaticScope.kt")
           public void testInStaticScope() {
             runTest("compiler/testData/diagnostics/tests/generics/innerClasses/implicitArguments/inStaticScope.kt");
+          }
+
+          @Test
+          @TestMetadata("runtimeCrashOnInnerWithImplicitInArgument.kt")
+          public void testRuntimeCrashOnInnerWithImplicitInArgument() {
+            runTest("compiler/testData/diagnostics/tests/generics/innerClasses/implicitArguments/runtimeCrashOnInnerWithImplicitInArgument.kt");
+          }
+
+          @Test
+          @TestMetadata("runtimeCrashOnInnerWithImplicitOutArgument.kt")
+          public void testRuntimeCrashOnInnerWithImplicitOutArgument() {
+            runTest("compiler/testData/diagnostics/tests/generics/innerClasses/implicitArguments/runtimeCrashOnInnerWithImplicitOutArgument.kt");
           }
 
           @Test
@@ -17385,6 +17409,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       }
 
       @Test
+      @TestMetadata("underscoredInEnumMap.kt")
+      public void testUnderscoredInEnumMap() {
+        runTest("compiler/testData/diagnostics/tests/inference/underscoredInEnumMap.kt");
+      }
+
+      @Test
       @TestMetadata("underscoredTypeArgument.kt")
       public void testUnderscoredTypeArgument() {
         runTest("compiler/testData/diagnostics/tests/inference/underscoredTypeArgument.kt");
@@ -17743,6 +17773,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         @TestMetadata("kt52782.kt")
         public void testKt52782() {
           runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/kt52782.kt");
+        }
+
+        @Test
+        @TestMetadata("kt72177.kt")
+        public void testKt72177() {
+          runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/kt72177.kt");
         }
 
         @Test
@@ -46914,46 +46950,6 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("isInitialized.kt")
       public void testIsInitialized() {
         runTest("compiler/testData/diagnostics/testsWithStdLib/lateinit/isInitialized.kt");
-      }
-    }
-
-    @Nested
-    @TestMetadata("compiler/testData/diagnostics/testsWithStdLib/multiplatform")
-    @TestDataPath("$PROJECT_ROOT")
-    public class Multiplatform {
-      @Test
-      @TestMetadata("actualDeprecated.kt")
-      public void testActualDeprecated() {
-        runTest("compiler/testData/diagnostics/testsWithStdLib/multiplatform/actualDeprecated.kt");
-      }
-
-      @Test
-      @TestMetadata("actualExternalInJs.kt")
-      public void testActualExternalInJs() {
-        runTest("compiler/testData/diagnostics/testsWithStdLib/multiplatform/actualExternalInJs.kt");
-      }
-
-      @Test
-      public void testAllFilesPresentInMultiplatform() {
-        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/testsWithStdLib/multiplatform"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|fir|ll|latestLV)\\.kts?$"), true);
-      }
-
-      @Test
-      @TestMetadata("collections.kt")
-      public void testCollections() {
-        runTest("compiler/testData/diagnostics/testsWithStdLib/multiplatform/collections.kt");
-      }
-
-      @Test
-      @TestMetadata("duplicateSupertype.kt")
-      public void testDuplicateSupertype() {
-        runTest("compiler/testData/diagnostics/testsWithStdLib/multiplatform/duplicateSupertype.kt");
-      }
-
-      @Test
-      @TestMetadata("jvmOverloads.kt")
-      public void testJvmOverloads() {
-        runTest("compiler/testData/diagnostics/testsWithStdLib/multiplatform/jvmOverloads.kt");
       }
     }
 

@@ -241,7 +241,6 @@ val fe10CompilerModules = arrayOf(
     ":js:js.parser",
     ":js:js.frontend",
     ":js:js.translator",
-    ":js:js.dce",
     ":native:frontend.native",
     ":wasm:wasm.frontend",
     ":compiler:backend.common.jvm",
@@ -828,6 +827,7 @@ tasks {
         dependsOn(":tools:binary-compatibility-validator:check")
         dependsOn(":native:objcexport-header-generator:check")
         dependsOn(":native:swift:swift-export-standalone:test")
+        dependsOn(":native:swift:swift-export-ide:test")
     }
 
     // These are unit tests of Native compiler

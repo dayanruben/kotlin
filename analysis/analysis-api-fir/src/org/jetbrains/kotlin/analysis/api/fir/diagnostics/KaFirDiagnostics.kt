@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.psi.KtBackingField
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpressionWithTypeRHS
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
 import org.jetbrains.kotlin.psi.KtClassLiteralExpression
@@ -886,6 +887,14 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val actualTarget: String
         val useSiteTarget: String
         val allowedTargets: List<KotlinTarget>
+    }
+
+    interface JvmSerializableLambdaOnInlinedFunctionLiteralsError : KaFirDiagnostic<KtAnnotationEntry> {
+        override val diagnosticClass get() = JvmSerializableLambdaOnInlinedFunctionLiteralsError::class
+    }
+
+    interface JvmSerializableLambdaOnInlinedFunctionLiteralsWarning : KaFirDiagnostic<KtAnnotationEntry> {
+        override val diagnosticClass get() = JvmSerializableLambdaOnInlinedFunctionLiteralsWarning::class
     }
 
     interface InapplicableTargetOnProperty : KaFirDiagnostic<KtAnnotationEntry> {
@@ -3901,7 +3910,7 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = NotYetSupportedLocalInlineFunction::class
     }
 
-    interface PropertyHidesJavaField : KaFirDiagnostic<KtProperty> {
+    interface PropertyHidesJavaField : KaFirDiagnostic<KtCallableDeclaration> {
         override val diagnosticClass get() = PropertyHidesJavaField::class
         val hidden: KaVariableSymbol
     }

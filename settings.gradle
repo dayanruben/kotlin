@@ -134,7 +134,6 @@ include ":benchmarks",
         ":js:js.engines",
         ":js:js.frontend",
         ":js:js.translator",
-        ":js:js.dce",
         ":js:js.tests",
         ":js:js.tests:klib-compatibility",
         ":native:kotlin-native-utils",
@@ -963,6 +962,8 @@ if (buildProperties.isKotlinNativeEnabled) {
     include ':kotlin-native:utilities:cli-runner'
     include ':kotlin-native:klib'
     include ':kotlin-native:common'
+    include ':kotlin-native:common:env'
+    include ':kotlin-native:common:files'
     include ':kotlin-native:runtime'
     include ':kotlin-native:libllvmext'
     include ':kotlin-native:llvmDebugInfoC'
@@ -971,6 +972,7 @@ if (buildProperties.isKotlinNativeEnabled) {
     include ':kotlin-native:platformLibs'
     include ':kotlin-native:libclangext'
     include ':kotlin-native:llvmInterop'
+    include ':kotlin-native:libclangInterop'
     include ':kotlin-native:backend.native:tests'
     project(':kotlin-native:backend.native:tests').projectDir = "$rootDir/kotlin-native/backend.native/tests" as File
     include ':kotlin-native:prepare:kotlin-native-compiler-embeddable'
