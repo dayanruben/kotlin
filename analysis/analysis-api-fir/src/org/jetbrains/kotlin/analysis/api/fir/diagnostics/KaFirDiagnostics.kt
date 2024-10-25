@@ -889,14 +889,6 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val allowedTargets: List<KotlinTarget>
     }
 
-    interface JvmSerializableLambdaOnInlinedFunctionLiteralsError : KaFirDiagnostic<KtAnnotationEntry> {
-        override val diagnosticClass get() = JvmSerializableLambdaOnInlinedFunctionLiteralsError::class
-    }
-
-    interface JvmSerializableLambdaOnInlinedFunctionLiteralsWarning : KaFirDiagnostic<KtAnnotationEntry> {
-        override val diagnosticClass get() = JvmSerializableLambdaOnInlinedFunctionLiteralsWarning::class
-    }
-
     interface InapplicableTargetOnProperty : KaFirDiagnostic<KtAnnotationEntry> {
         override val diagnosticClass get() = InapplicableTargetOnProperty::class
         val useSiteDescription: String
@@ -986,14 +978,6 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface PotentiallyNonReportedAnnotation : KaFirDiagnostic<KtAnnotationEntry> {
         override val diagnosticClass get() = PotentiallyNonReportedAnnotation::class
-    }
-
-    interface ThrowsInAnnotationError : KaFirDiagnostic<KtAnnotationEntry> {
-        override val diagnosticClass get() = ThrowsInAnnotationError::class
-    }
-
-    interface ThrowsInAnnotationWarning : KaFirDiagnostic<KtAnnotationEntry> {
-        override val diagnosticClass get() = ThrowsInAnnotationWarning::class
     }
 
     interface JsModuleProhibitedOnVar : KaFirDiagnostic<KtElement> {
@@ -1522,6 +1506,13 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val expectedType: KaType
         val actualType: KaType
         val isMismatchDueToNullability: Boolean
+    }
+
+    interface MemberProjectedOut : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = MemberProjectedOut::class
+        val receiver: KaType
+        val projection: String
+        val symbol: KaCallableSymbol
     }
 
     interface NullForNonnullType : KaFirDiagnostic<PsiElement> {
@@ -3041,6 +3032,8 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface SetterProjectedOut : KaFirDiagnostic<KtBinaryExpression> {
         override val diagnosticClass get() = SetterProjectedOut::class
+        val receiverType: KaType
+        val projection: String
         val property: KaVariableSymbol
     }
 
@@ -3351,11 +3344,6 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
     interface InvalidCharacters : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = InvalidCharacters::class
         val message: String
-    }
-
-    interface DangerousCharacters : KaFirDiagnostic<KtNamedDeclaration> {
-        override val diagnosticClass get() = DangerousCharacters::class
-        val characters: String
     }
 
     interface EqualityNotApplicable : KaFirDiagnostic<KtBinaryExpression> {
@@ -4052,6 +4040,22 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val javaRepeatable: FqName
     }
 
+    interface ThrowsInAnnotationError : KaFirDiagnostic<KtAnnotationEntry> {
+        override val diagnosticClass get() = ThrowsInAnnotationError::class
+    }
+
+    interface ThrowsInAnnotationWarning : KaFirDiagnostic<KtAnnotationEntry> {
+        override val diagnosticClass get() = ThrowsInAnnotationWarning::class
+    }
+
+    interface JvmSerializableLambdaOnInlinedFunctionLiteralsError : KaFirDiagnostic<KtAnnotationEntry> {
+        override val diagnosticClass get() = JvmSerializableLambdaOnInlinedFunctionLiteralsError::class
+    }
+
+    interface JvmSerializableLambdaOnInlinedFunctionLiteralsWarning : KaFirDiagnostic<KtAnnotationEntry> {
+        override val diagnosticClass get() = JvmSerializableLambdaOnInlinedFunctionLiteralsWarning::class
+    }
+
     interface LocalJvmRecord : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = LocalJvmRecord::class
     }
@@ -4286,6 +4290,11 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
     interface MissingBuiltInDeclaration : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = MissingBuiltInDeclaration::class
         val symbol: KaSymbol
+    }
+
+    interface DangerousCharacters : KaFirDiagnostic<KtNamedDeclaration> {
+        override val diagnosticClass get() = DangerousCharacters::class
+        val characters: String
     }
 
     interface ImplementingFunctionInterface : KaFirDiagnostic<KtClassOrObject> {

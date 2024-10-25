@@ -17818,6 +17818,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("projectedOutTypeMismatch.kt")
+        public void testProjectedOutTypeMismatch() {
+          runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/projectedOutTypeMismatch.kt");
+        }
+
+        @Test
         @TestMetadata("propagateNullailityOnSupertypesWhenCaptureTypes.kt")
         public void testPropagateNullailityOnSupertypesWhenCaptureTypes() {
           runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/propagateNullailityOnSupertypesWhenCaptureTypes.kt");
@@ -30100,6 +30106,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("disallowForSamAdapterFunction.kt")
       public void testDisallowForSamAdapterFunction() {
         runTest("compiler/testData/diagnostics/tests/namedArguments/disallowForSamAdapterFunction.kt");
+      }
+
+      @Test
+      @TestMetadata("multipleJavaOverloadsNamedArgumentsNotAllowed.kt")
+      public void testMultipleJavaOverloadsNamedArgumentsNotAllowed() {
+        runTest("compiler/testData/diagnostics/tests/namedArguments/multipleJavaOverloadsNamedArgumentsNotAllowed.kt");
       }
 
       @Test

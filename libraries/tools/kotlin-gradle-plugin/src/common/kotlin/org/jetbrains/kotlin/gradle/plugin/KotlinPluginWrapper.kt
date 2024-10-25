@@ -17,7 +17,6 @@
 package org.jetbrains.kotlin.gradle.plugin
 
 import org.gradle.api.GradleException
-import org.gradle.api.NamedDomainObjectFactory
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ExternalDependency
@@ -41,7 +40,6 @@ import org.jetbrains.kotlin.gradle.plugin.internal.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.internal.initSwiftExportClasspathConfigurations
 import org.jetbrains.kotlin.gradle.plugin.mpp.resources.resolve.KotlinTargetResourcesResolutionStrategy
-import org.jetbrains.kotlin.gradle.plugin.sources.DefaultKotlinSourceSetFactory
 import org.jetbrains.kotlin.gradle.plugin.statistics.BuildFusService
 import org.jetbrains.kotlin.gradle.report.BuildMetricsService
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
@@ -155,6 +153,11 @@ abstract class DefaultKotlinBasePlugin : KotlinBasePlugin {
             ConfigurationCacheStartParameterAccessor.Factory::class,
             DefaultConfigurationCacheStartParameterAccessorVariantFactory()
         )
+
+        factories.putIfAbsent(
+            MavenPublicationComponentAccessor.Factory::class,
+            DefaultMavenPublicationComponentAccessorFactory()
+        )
     }
 
     protected fun setupAttributeMatchingStrategy(
@@ -195,9 +198,6 @@ abstract class KotlinBasePluginWrapper : DefaultKotlinBasePlugin() {
 
     abstract val pluginVariant: String
 
-    internal open fun kotlinSourceSetFactory(project: Project): NamedDomainObjectFactory<KotlinSourceSet> =
-        DefaultKotlinSourceSetFactory(project)
-
     override fun apply(project: Project) {
         super.apply(project)
         project.logger.info("Using Kotlin Gradle Plugin $pluginVariant variant")
@@ -212,14 +212,6 @@ abstract class KotlinBasePluginWrapper : DefaultKotlinBasePlugin() {
 
         project.createKotlinExtension(projectExtensionClass).apply {
             coreLibrariesVersion = pluginVersion
-
-            fun kotlinSourceSetContainer(factory: NamedDomainObjectFactory<KotlinSourceSet>) =
-                project.container(KotlinSourceSet::class.java, factory)
-
-            val topLevelExtension = project.topLevelExtension
-            if (topLevelExtension is KotlinProjectExtension) {
-                project.kotlinExtension.sourceSets = kotlinSourceSetContainer(kotlinSourceSetFactory(project))
-            }
         }
 
         project.extensions.add(KotlinTestsRegistry.PROJECT_EXTENSION_NAME, createTestRegistry(project))

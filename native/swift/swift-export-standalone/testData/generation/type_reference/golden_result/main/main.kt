@@ -1,3 +1,4 @@
+@file:kotlin.Suppress("DEPRECATION_ERROR")
 @file:kotlin.native.internal.objc.BindClassToObjCName(namespace.deeper.Class_with_package::class, "22ExportedKotlinPackages9namespaceO6deeperO4mainE18Class_with_packageC")
 @file:kotlin.native.internal.objc.BindClassToObjCName(namespace.deeper.Class_with_package.INNER_CLASS::class, "22ExportedKotlinPackages9namespaceO6deeperO4mainE18Class_with_packageC11INNER_CLASSC")
 @file:kotlin.native.internal.objc.BindClassToObjCName(namespace.deeper.Class_with_package.INNER_OBJECT::class, "22ExportedKotlinPackages9namespaceO6deeperO4mainE18Class_with_packageC12INNER_OBJECTC")
@@ -287,6 +288,18 @@ public fun __root___combine__TypesOfArguments__main_Class_without_package_Export
     val __arg3 = kotlin.native.internal.ref.dereferenceExternalRCRef(arg3) as Object_without_package
     val __arg4 = kotlin.native.internal.ref.dereferenceExternalRCRef(arg4) as namespace.deeper.Object_with_package
     combine(__arg1, __arg2, __arg3, __arg4)
+}
+
+@ExportedBridge("__root___extensionOnNullabeRef__TypesOfArguments__main_Class_without_package_opt___")
+public fun __root___extensionOnNullabeRef__TypesOfArguments__main_Class_without_package_opt___(receiver: kotlin.native.internal.NativePtr): Unit {
+    val __receiver = if (receiver == kotlin.native.internal.NativePtr.NULL) null else kotlin.native.internal.ref.dereferenceExternalRCRef(receiver) as Class_without_package
+    __receiver.extensionOnNullabeRef()
+}
+
+@ExportedBridge("__root___extensionOnNullablePrimitive__TypesOfArguments__Swift_Int32_opt___")
+public fun __root___extensionOnNullablePrimitive__TypesOfArguments__Swift_Int32_opt___(receiver: kotlin.native.internal.NativePtr): Unit {
+    val __receiver = if (receiver == kotlin.native.internal.NativePtr.NULL) null else interpretObjCPointer<Int>(receiver)
+    __receiver.extensionOnNullablePrimitive()
 }
 
 @ExportedBridge("__root___nullablePrim_get")

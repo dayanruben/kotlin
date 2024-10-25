@@ -50,7 +50,7 @@ object SwiftIrTree : AbstractSwiftIrTreeBuilder() {
         +field("parent", declarationParent, mutable = true, isChild = false) {
             useInBaseTransformerDetection = false
         }
-        +listField("attributes", attributeType, isMutableList = true)
+        +listField("attributes", attributeType)
     }
 
     val classMemberDeclaration by sealedElement {
@@ -137,6 +137,7 @@ object SwiftIrTree : AbstractSwiftIrTreeBuilder() {
         parent(classMemberDeclaration)
 
         +field("name", string)
+        +field("extensionReceiverParameter", parameterType, nullable = true)
         +listField("parameters", parameterType)
         +field("returnType", typeType)
     }
