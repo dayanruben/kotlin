@@ -46,14 +46,14 @@ enum class ProcessResult {
     }
 }
 
-abstract class TowerScopeLevel {
-    abstract fun processFunctionsByName(info: CallInfo, processor: TowerScopeLevelProcessor<FirFunctionSymbol<*>>): ProcessResult
+abstract class TowerLevel {
+    abstract fun processFunctionsByName(info: CallInfo, processor: LevelProcessor<FirFunctionSymbol<*>>): ProcessResult
 
-    abstract fun processPropertiesByName(info: CallInfo, processor: TowerScopeLevelProcessor<FirVariableSymbol<*>>): ProcessResult
+    abstract fun processPropertiesByName(info: CallInfo, processor: LevelProcessor<FirVariableSymbol<*>>): ProcessResult
 
-    abstract fun processObjectsByName(info: CallInfo, processor: TowerScopeLevelProcessor<FirBasedSymbol<*>>): ProcessResult
+    abstract fun processObjectsByName(info: CallInfo, processor: LevelProcessor<FirBasedSymbol<*>>): ProcessResult
 
-    interface TowerScopeLevelProcessor<in T : FirBasedSymbol<*>> {
+    interface LevelProcessor<in T : FirBasedSymbol<*>> {
         fun consumeCandidate(
             symbol: T,
             dispatchReceiver: FirExpression?,
@@ -65,25 +65,26 @@ abstract class TowerScopeLevel {
     }
 }
 
-
-// This is more like "dispatch receiver-based tower level"
-// Here we always have an explicit or implicit dispatch receiver, and can access members of its scope
-// (which is separated from currently accessible scope, see below)
-// So: dispatch receiver = given explicit or implicit receiver (always present)
-// So: extension receiver = either none, if dispatch receiver = explicit receiver,
-//     or given implicit or explicit receiver, otherwise
-class MemberScopeTowerLevel(
+/**
+ * Here we always have an explicit or implicit dispatch receiver and can access members of its scope
+ * (which is separated from the currently accessible scope, see below).
+ * So:
+ * * dispatch receiver = given explicit or implicit receiver (always present);
+ * * extension receiver = either none, if dispatch receiver = explicit receiver,
+ *     or given implicit or explicit receiver, otherwise
+ */
+class DispatchReceiverMemberScopeTowerLevel(
     private val bodyResolveComponents: BodyResolveComponents,
     val dispatchReceiverValue: ReceiverValue,
     private val givenExtensionReceiverOptions: List<FirExpression>,
     private val skipSynthetics: Boolean,
-) : TowerScopeLevel() {
+) : TowerLevel() {
     private val scopeSession: ScopeSession get() = bodyResolveComponents.scopeSession
     private val session: FirSession get() = bodyResolveComponents.session
 
     private fun <T : FirCallableSymbol<*>> processMembers(
         info: CallInfo,
-        output: TowerScopeLevelProcessor<T>,
+        output: LevelProcessor<T>,
         processScopeMembers: FirScope.(processor: (T) -> Unit) -> Unit
     ): ProcessResult {
         val scope = dispatchReceiverValue.scope(session, scopeSession) ?: return ProcessResult.SCOPE_EMPTY
@@ -255,7 +256,7 @@ class MemberScopeTowerLevel(
     }
 
     private fun <T : FirCallableSymbol<*>> consumeCandidates(
-        output: TowerScopeLevelProcessor<T>,
+        output: LevelProcessor<T>,
         candidatesWithoutSmartcast: Collection<MemberWithBaseScope<T>>?,
         // The map is not null only if there's a smart cast type on a dispatch receiver
         // and candidates are present both in smart cast and original types.
@@ -304,7 +305,7 @@ class MemberScopeTowerLevel(
 
     override fun processFunctionsByName(
         info: CallInfo,
-        processor: TowerScopeLevelProcessor<FirFunctionSymbol<*>>
+        processor: LevelProcessor<FirFunctionSymbol<*>>
     ): ProcessResult {
         val lookupTracker = session.lookupTracker
         return processMembers(info, processor) { consumer ->
@@ -323,7 +324,7 @@ class MemberScopeTowerLevel(
 
     override fun processPropertiesByName(
         info: CallInfo,
-        processor: TowerScopeLevelProcessor<FirVariableSymbol<*>>
+        processor: LevelProcessor<FirVariableSymbol<*>>
     ): ProcessResult {
         val lookupTracker = session.lookupTracker
         return processMembers(info, processor) { consumer ->
@@ -337,7 +338,7 @@ class MemberScopeTowerLevel(
 
     override fun processObjectsByName(
         info: CallInfo,
-        processor: TowerScopeLevelProcessor<FirBasedSymbol<*>>
+        processor: LevelProcessor<FirBasedSymbol<*>>
     ): ProcessResult {
         return ProcessResult.FOUND
     }
@@ -351,39 +352,39 @@ class ContextReceiverGroupMemberScopeTowerLevel(
     bodyResolveComponents: BodyResolveComponents,
     contextReceiverGroup: ContextReceiverGroup,
     givenExtensionReceiverOptions: List<FirExpression> = emptyList(),
-) : TowerScopeLevel() {
-    private val memberScopeLevels = contextReceiverGroup.map {
-        MemberScopeTowerLevel(bodyResolveComponents, it, givenExtensionReceiverOptions, false)
+) : TowerLevel() {
+    private val dispatchReceiverMemberScopeTowerLevels = contextReceiverGroup.map {
+        DispatchReceiverMemberScopeTowerLevel(bodyResolveComponents, it, givenExtensionReceiverOptions, false)
     }
 
-    override fun processFunctionsByName(info: CallInfo, processor: TowerScopeLevelProcessor<FirFunctionSymbol<*>>): ProcessResult {
-        return memberScopeLevels.minOf { it.processFunctionsByName(info, processor) }
+    override fun processFunctionsByName(info: CallInfo, processor: LevelProcessor<FirFunctionSymbol<*>>): ProcessResult {
+        return dispatchReceiverMemberScopeTowerLevels.minOf { it.processFunctionsByName(info, processor) }
     }
 
-    override fun processPropertiesByName(info: CallInfo, processor: TowerScopeLevelProcessor<FirVariableSymbol<*>>): ProcessResult {
-        return memberScopeLevels.minOf { it.processPropertiesByName(info, processor) }
+    override fun processPropertiesByName(info: CallInfo, processor: LevelProcessor<FirVariableSymbol<*>>): ProcessResult {
+        return dispatchReceiverMemberScopeTowerLevels.minOf { it.processPropertiesByName(info, processor) }
     }
 
-    override fun processObjectsByName(info: CallInfo, processor: TowerScopeLevelProcessor<FirBasedSymbol<*>>): ProcessResult {
-        return memberScopeLevels.minOf { it.processObjectsByName(info, processor) }
+    override fun processObjectsByName(info: CallInfo, processor: LevelProcessor<FirBasedSymbol<*>>): ProcessResult {
+        return dispatchReceiverMemberScopeTowerLevels.minOf { it.processObjectsByName(info, processor) }
     }
 }
 
-// This is more like "scope-based tower level"
-// We can access here members of currently accessible scope which is not influenced by explicit receiver
-// We can either have no explicit receiver at all, or it can be an extension receiver
-// An explicit receiver never can be a dispatch receiver at this level
-// So: dispatch receiver = strictly none (EXCEPTIONS: importing scopes with import from objects, synthetic field variable)
-// So: extension receiver = either none or explicit
-// (if explicit receiver exists, it always *should* be an extension receiver)
-internal class ScopeTowerLevel(
+/**
+ * We can access here members of currently accessible scope which is not influenced by explicit receiver.
+ * We can either have no explicit receiver at all, or it can be an extension receiver.
+ * An explicit receiver never can be a dispatch receiver at this level.
+ * * dispatch receiver = strictly none (EXCEPTIONS: importing scopes with import from objects, synthetic field variable)
+ * * extension receiver = either none or explicit (if explicit receiver exists, it always *should* be an extension receiver)
+ */
+internal class ScopeBasedTowerLevel(
     private val bodyResolveComponents: BodyResolveComponents,
     givenScope: FirScope,
     private val givenExtensionReceiverOptions: List<FirExpression>,
     private val withHideMembersOnly: Boolean,
     private val constructorFilter: ConstructorFilter,
     private val dispatchReceiverForStatics: ExpressionReceiverValue?
-) : TowerScopeLevel() {
+) : TowerLevel() {
     private val session: FirSession get() = bodyResolveComponents.session
 
     private val scope = if (session.languageVersionSettings.supportsFeature(LanguageFeature.MultiPlatformProjects)) {
@@ -461,7 +462,7 @@ internal class ScopeTowerLevel(
     private fun <T : FirBasedSymbol<*>> consumeCallableCandidate(
         candidate: FirCallableSymbol<*>,
         callInfo: CallInfo,
-        processor: TowerScopeLevelProcessor<T>
+        processor: LevelProcessor<T>
     ) {
         candidate.lazyResolveToPhase(FirResolvePhase.TYPES)
         if (withHideMembersOnly && candidate.getAnnotationByClassId(HidesMembers, session) == null) {
@@ -488,7 +489,7 @@ internal class ScopeTowerLevel(
 
     override fun processFunctionsByName(
         info: CallInfo,
-        processor: TowerScopeLevelProcessor<FirFunctionSymbol<*>>
+        processor: LevelProcessor<FirFunctionSymbol<*>>
     ): ProcessResult {
         val lookupTracker = session.lookupTracker
         var empty = true
@@ -508,7 +509,7 @@ internal class ScopeTowerLevel(
 
     override fun processPropertiesByName(
         info: CallInfo,
-        processor: TowerScopeLevelProcessor<FirVariableSymbol<*>>
+        processor: LevelProcessor<FirVariableSymbol<*>>
     ): ProcessResult {
         val lookupTracker = session.lookupTracker
         var empty = true
@@ -523,7 +524,7 @@ internal class ScopeTowerLevel(
 
     override fun processObjectsByName(
         info: CallInfo,
-        processor: TowerScopeLevelProcessor<FirBasedSymbol<*>>
+        processor: LevelProcessor<FirBasedSymbol<*>>
     ): ProcessResult {
         var empty = true
         session.lookupTracker?.recordCallLookup(info, scope.scopeOwnerLookupNames)
