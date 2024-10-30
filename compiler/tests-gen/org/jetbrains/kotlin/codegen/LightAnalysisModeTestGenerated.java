@@ -5862,6 +5862,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/classDelegation/delegationToOutTypeParameter.kt");
     }
 
+    @TestMetadata("delegationToStarProjectedType.kt")
+    public void testDelegationToStarProjectedType() {
+      runTest("compiler/testData/codegen/box/classDelegation/delegationToStarProjectedType.kt");
+    }
+
     @TestMetadata("delegationToTypeParameter.kt")
     public void testDelegationToTypeParameter() {
       runTest("compiler/testData/codegen/box/classDelegation/delegationToTypeParameter.kt");
@@ -10441,6 +10446,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       @TestMetadata("kt22694_1_3.kt")
       public void testKt22694_1_3() {
         runTest("compiler/testData/codegen/box/coroutines/controlFlow/kt22694_1_3.kt");
+      }
+
+      @TestMetadata("kt72464.kt")
+      public void testKt72464() {
+        runTest("compiler/testData/codegen/box/coroutines/controlFlow/kt72464.kt");
       }
 
       @TestMetadata("labeledWhile.kt")
@@ -45423,6 +45433,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/smartCasts/kt52432.kt");
     }
 
+    @TestMetadata("kt72391.kt")
+    public void testKt72391() {
+      runTest("compiler/testData/codegen/box/smartCasts/kt72391.kt");
+    }
+
     @TestMetadata("lambdaArgumentWithoutType.kt")
     public void testLambdaArgumentWithoutType() {
       runTest("compiler/testData/codegen/box/smartCasts/lambdaArgumentWithoutType.kt");
@@ -48340,11 +48355,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
   @TestDataPath("$PROJECT_ROOT")
   @RunWith(JUnit3RunnerWithInners.class)
   public static class Vararg extends AbstractLightAnalysisModeTest {
-    @TestMetadata("kt52146_samWithSelfTypeAndStarProjection.kt")
-    public void ignoreKt52146_samWithSelfTypeAndStarProjection() {
-      runTest("compiler/testData/codegen/box/vararg/kt52146_samWithSelfTypeAndStarProjection.kt");
-    }
-
     private void runTest(String testDataFilePath) {
       KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
     }
@@ -48411,6 +48421,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestMetadata("kt46092.kt")
     public void testKt46092() {
       runTest("compiler/testData/codegen/box/vararg/kt46092.kt");
+    }
+
+    @TestMetadata("kt52146_samWithSelfTypeAndStarProjection.kt")
+    public void testKt52146_samWithSelfTypeAndStarProjection() {
+      runTest("compiler/testData/codegen/box/vararg/kt52146_samWithSelfTypeAndStarProjection.kt");
     }
 
     @TestMetadata("kt581.kt")

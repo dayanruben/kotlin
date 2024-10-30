@@ -26,45 +26,6 @@ import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.utils.addIfNotNull
 
-fun SessionHolder.collectImplicitReceivers(
-    type: ConeKotlinType?,
-    owner: FirDeclaration
-): ImplicitReceivers {
-    val implicitCompanionValues = mutableListOf<ImplicitReceiverValue<*>>()
-    val contextReceiverValues = mutableListOf<ContextReceiverValue<*>>()
-    val implicitReceiverValue = when (owner) {
-        is FirClass -> {
-            val towerElementsForClass = collectTowerDataElementsForClass(owner, type!!)
-            implicitCompanionValues.addAll(towerElementsForClass.implicitCompanionValues)
-            contextReceiverValues.addAll(towerElementsForClass.contextReceivers)
-
-            towerElementsForClass.thisReceiver
-        }
-        is FirFunction -> {
-            contextReceiverValues.addAll(owner.createContextReceiverValues(this))
-            type?.let { ImplicitExtensionReceiverValue(owner.symbol, type, session, scopeSession) }
-        }
-        is FirVariable -> {
-            contextReceiverValues.addAll(owner.createContextReceiverValues(this))
-            type?.let { ImplicitExtensionReceiverValue(owner.symbol, type, session, scopeSession) }
-        }
-        else -> {
-            if (type != null) {
-                throw IllegalArgumentException("Incorrect label & receiver owner: ${owner.javaClass}")
-            }
-
-            null
-        }
-    }
-    return ImplicitReceivers(implicitReceiverValue, implicitCompanionValues, contextReceiverValues)
-}
-
-data class ImplicitReceivers(
-    val implicitReceiverValue: ImplicitReceiverValue<*>?,
-    val implicitCompanionValues: List<ImplicitReceiverValue<*>>,
-    val contextReceivers: List<ContextReceiverValue<*>>,
-)
-
 fun SessionHolder.collectTowerDataElementsForClass(owner: FirClass, defaultType: ConeKotlinType): TowerElementsForClass {
     val allImplicitCompanionValues = mutableListOf<ImplicitReceiverValue<*>>()
 
@@ -111,7 +72,6 @@ fun SessionHolder.collectTowerDataElementsForClass(owner: FirClass, defaultType:
         companionReceiver,
         companionObject?.staticScope(this),
         superClassesStaticsAndCompanionReceivers.asReversed(),
-        allImplicitCompanionValues.asReversed()
     )
 }
 
@@ -123,8 +83,6 @@ class TowerElementsForClass(
     val companionStaticScope: FirScope?,
     // Ordered from inner scopes to outer scopes.
     val superClassesStaticsAndCompanionReceivers: List<FirTowerDataElement>,
-    // Ordered from inner scopes to outer scopes.
-    val implicitCompanionValues: List<ImplicitReceiverValue<*>>
 )
 
 class FirTowerDataContext private constructor(
@@ -132,7 +90,7 @@ class FirTowerDataContext private constructor(
     // These properties are effectively redundant, their content should be consistent with `towerDataElements`,
     // i.e. implicitReceiverStack == towerDataElements.mapNotNull { it.receiver }
     // i.e. localScopes == towerDataElements.mapNotNull { it.scope?.takeIf { it.isLocal } }
-    val implicitReceiverStack: PersistentImplicitReceiverStack,
+    val implicitReceiverStack: ImplicitReceiverStack,
     val classesUnderInitialization: PersistentList<FirClassSymbol<*>>,
     val localScopes: FirLocalScopes,
     val nonLocalTowerDataElements: PersistentList<FirTowerDataElement>
@@ -140,7 +98,7 @@ class FirTowerDataContext private constructor(
 
     constructor() : this(
         persistentListOf(),
-        PersistentImplicitReceiverStack(),
+        ImplicitReceiverStack(),
         persistentListOf(),
         persistentListOf(),
         persistentListOf()
@@ -198,7 +156,7 @@ class FirTowerDataContext private constructor(
 
         return FirTowerDataContext(
             towerDataElements.add(element),
-            contextReceiverGroup.fold(implicitReceiverStack, PersistentImplicitReceiverStack::addContextReceiver),
+            contextReceiverGroup.fold(implicitReceiverStack, ImplicitReceiverStack::addContextReceiver),
             classesUnderInitialization,
             localScopes,
             nonLocalTowerDataElements.add(element)

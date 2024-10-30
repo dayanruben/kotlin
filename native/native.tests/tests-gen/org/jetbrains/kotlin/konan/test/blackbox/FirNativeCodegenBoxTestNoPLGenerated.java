@@ -5255,6 +5255,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
       }
 
       @Test
+      @TestMetadata("delegationToStarProjectedType.kt")
+      public void testDelegationToStarProjectedType() {
+        runTest("compiler/testData/codegen/box/classDelegation/delegationToStarProjectedType.kt");
+      }
+
+      @Test
       @TestMetadata("delegationToTypeParameter.kt")
       public void testDelegationToTypeParameter() {
         runTest("compiler/testData/codegen/box/classDelegation/delegationToTypeParameter.kt");
@@ -10603,6 +10609,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
         @TestMetadata("kt22694_1_3.kt")
         public void testKt22694_1_3() {
           runTest("compiler/testData/codegen/box/coroutines/controlFlow/kt22694_1_3.kt");
+        }
+
+        @Test
+        @TestMetadata("kt72464.kt")
+        public void testKt72464() {
+          runTest("compiler/testData/codegen/box/coroutines/controlFlow/kt72464.kt");
         }
 
         @Test
@@ -44677,6 +44689,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
       @TestMetadata("kt52432.kt")
       public void testKt52432() {
         runTest("compiler/testData/codegen/box/smartCasts/kt52432.kt");
+      }
+
+      @Test
+      @TestMetadata("kt72391.kt")
+      public void testKt72391() {
+        runTest("compiler/testData/codegen/box/smartCasts/kt72391.kt");
       }
 
       @Test
