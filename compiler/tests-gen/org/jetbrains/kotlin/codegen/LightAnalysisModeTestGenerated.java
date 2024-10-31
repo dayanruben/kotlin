@@ -29315,6 +29315,16 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/javaInterop/kjkPropertyAndExtensionProperty.kt");
     }
 
+    @TestMetadata("varargCall1.kt")
+    public void ignoreVarargCall1() {
+      runTest("compiler/testData/codegen/box/javaInterop/varargCall1.kt");
+    }
+
+    @TestMetadata("varargCall2.kt")
+    public void ignoreVarargCall2() {
+      runTest("compiler/testData/codegen/box/javaInterop/varargCall2.kt");
+    }
+
     private void runTest(String testDataFilePath) {
       KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
     }
@@ -47774,6 +47784,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/unit/unitClassObject.kt");
     }
 
+    @TestMetadata("unitCoercionWithElvis.kt")
+    public void testUnitCoercionWithElvis() {
+      runTest("compiler/testData/codegen/box/unit/unitCoercionWithElvis.kt");
+    }
+
     @TestMetadata("UnitValue.kt")
     public void testUnitValue() {
       runTest("compiler/testData/codegen/box/unit/UnitValue.kt");
@@ -48165,6 +48180,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestMetadata("inlineFunctions.kt")
     public void testInlineFunctions() {
       runTest("compiler/testData/codegen/box/valueClasses/inlineFunctions.kt");
+    }
+
+    @TestMetadata("kt54897.kt")
+    public void testKt54897() {
+      runTest("compiler/testData/codegen/box/valueClasses/kt54897.kt");
     }
 
     @TestMetadata("kt59079.kt")

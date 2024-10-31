@@ -34845,6 +34845,18 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
       runTest("compiler/testData/codegen/box/javaInterop/unresolvedJavaClassInDifferentFile.kt");
     }
 
+    @Test
+    @TestMetadata("varargCall1.kt")
+    public void testVarargCall1() {
+      runTest("compiler/testData/codegen/box/javaInterop/varargCall1.kt");
+    }
+
+    @Test
+    @TestMetadata("varargCall2.kt")
+    public void testVarargCall2() {
+      runTest("compiler/testData/codegen/box/javaInterop/varargCall2.kt");
+    }
+
     @Nested
     @TestMetadata("compiler/testData/codegen/box/javaInterop/foreignAnnotationsTests")
     @TestDataPath("$PROJECT_ROOT")
@@ -58474,6 +58486,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
     }
 
     @Test
+    @TestMetadata("unitCoercionWithElvis.kt")
+    public void testUnitCoercionWithElvis() {
+      runTest("compiler/testData/codegen/box/unit/unitCoercionWithElvis.kt");
+    }
+
+    @Test
     @TestMetadata("UnitValue.kt")
     public void testUnitValue() {
       runTest("compiler/testData/codegen/box/unit/UnitValue.kt");
@@ -58921,6 +58939,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
     @TestMetadata("inlineFunctions.kt")
     public void testInlineFunctions() {
       runTest("compiler/testData/codegen/box/valueClasses/inlineFunctions.kt");
+    }
+
+    @Test
+    @TestMetadata("kt54897.kt")
+    public void testKt54897() {
+      runTest("compiler/testData/codegen/box/valueClasses/kt54897.kt");
     }
 
     @Test

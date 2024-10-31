@@ -11204,6 +11204,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         }
 
         @Test
+        @TestMetadata("commonSupertype.kt")
+        public void testCommonSupertype() {
+          runTest("compiler/testData/diagnostics/tests/delegatedProperty/provideDelegate/commonSupertype.kt");
+        }
+
+        @Test
         @TestMetadata("genericProvideDelegate.kt")
         public void testGenericProvideDelegate() {
           runTest("compiler/testData/diagnostics/tests/delegatedProperty/provideDelegate/genericProvideDelegate.kt");
@@ -19460,6 +19466,18 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         }
 
         @Test
+        @TestMetadata("namedArgumentToBeResolved.kt")
+        public void testNamedArgumentToBeResolved() {
+          runTest("compiler/testData/diagnostics/tests/inference/pcla/namedArgumentToBeResolved.kt");
+        }
+
+        @Test
+        @TestMetadata("namedArgumentTypeSubstitution.kt")
+        public void testNamedArgumentTypeSubstitution() {
+          runTest("compiler/testData/diagnostics/tests/inference/pcla/namedArgumentTypeSubstitution.kt");
+        }
+
+        @Test
         @TestMetadata("nestedLambdaWithLastLambdaContainingCall.kt")
         public void testNestedLambdaWithLastLambdaContainingCall() {
           runTest("compiler/testData/diagnostics/tests/inference/pcla/nestedLambdaWithLastLambdaContainingCall.kt");
@@ -20888,12 +20906,6 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
           @TestMetadata("kt72272.kt")
           public void testKt72272() {
             runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/kt72272.kt");
-          }
-
-          @Test
-          @TestMetadata("namedArgumentTypeSubstitution.kt")
-          public void testNamedArgumentTypeSubstitution() {
-            runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/namedArgumentTypeSubstitution.kt");
           }
         }
 
@@ -25343,6 +25355,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         @TestMetadata("referenceToSamFunctionAgainstExpectedType.kt")
         public void testReferenceToSamFunctionAgainstExpectedType() {
           runTest("compiler/testData/diagnostics/tests/j+k/sam/referenceToSamFunctionAgainstExpectedType.kt");
+        }
+
+        @Test
+        @TestMetadata("runWithSamArgumentAndIfInside.kt")
+        public void testRunWithSamArgumentAndIfInside() {
+          runTest("compiler/testData/diagnostics/tests/j+k/sam/runWithSamArgumentAndIfInside.kt");
         }
 
         @Test
@@ -40788,6 +40806,28 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
     }
 
     @Nested
+    @TestMetadata("compiler/testData/diagnostics/tests/unitCoercion")
+    @TestDataPath("$PROJECT_ROOT")
+    public class UnitCoercion {
+      @Test
+      public void testAllFilesPresentInUnitCoercion() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/unitCoercion"), Pattern.compile("^(.+)\\.(kt)$"), Pattern.compile("^(.+)\\.(reversed|fir|ll|latestLV)\\.kts?$"), true, "multiplatform");
+      }
+
+      @Test
+      @TestMetadata("elvisRHSRemainsNullable.kt")
+      public void testElvisRHSRemainsNullable() {
+        runTest("compiler/testData/diagnostics/tests/unitCoercion/elvisRHSRemainsNullable.kt");
+      }
+
+      @Test
+      @TestMetadata("elvisRHSRemainsNullableDisabledFeature.kt")
+      public void testElvisRHSRemainsNullableDisabledFeature() {
+        runTest("compiler/testData/diagnostics/tests/unitCoercion/elvisRHSRemainsNullableDisabledFeature.kt");
+      }
+    }
+
+    @Nested
     @TestMetadata("compiler/testData/diagnostics/tests/unitConversion")
     @TestDataPath("$PROJECT_ROOT")
     public class UnitConversion {
@@ -41082,6 +41122,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
       @TestMetadata("kt51366.kt")
       public void testKt51366() {
         runTest("compiler/testData/diagnostics/tests/valueClasses/kt51366.kt");
+      }
+
+      @Test
+      @TestMetadata("kt57527.kt")
+      public void testKt57527() {
+        runTest("compiler/testData/diagnostics/tests/valueClasses/kt57527.kt");
       }
 
       @Test
