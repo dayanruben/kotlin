@@ -127,6 +127,28 @@ abstract class AbstractComposeLowering(
 
     fun IrType.unboxInlineClass() = unboxType() ?: this
 
+    fun IrType.defaultParameterType(): IrType {
+        val type = this
+        val constructorAccessible = !type.isPrimitiveType() &&
+                type.classOrNull?.owner?.primaryConstructor != null
+        return when {
+            type.isPrimitiveType() -> type
+            type.isInlineClassType() -> if (context.platform.isJvm() || constructorAccessible) {
+                if (type.unboxInlineClass().isPrimitiveType()) {
+                    type
+                } else {
+                    type.makeNullable()
+                }
+            } else {
+                // k/js and k/native: private constructors of value classes can be not accessible.
+                // Therefore it won't be possible to create a "fake" default argument for calls.
+                // Making it nullable allows to pass null.
+                type.makeNullable()
+            }
+            else -> type.makeNullable()
+        }
+    }
+
     fun IrType.replaceArgumentsWithStarProjections(): IrType =
         when (this) {
             is IrSimpleType -> IrSimpleTypeImpl(
@@ -860,7 +882,7 @@ abstract class AbstractComposeLowering(
             isStatic = true
             isFinal = true
             type = context.irBuiltIns.intType
-            visibility = DescriptorVisibilities.PUBLIC
+            visibility = if (context.platform.isJvm()) DescriptorVisibilities.PUBLIC else DescriptorVisibilities.PRIVATE
         }
     }
 
