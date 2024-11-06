@@ -24910,6 +24910,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("twoInheritedContains.kt")
+        public void testTwoInheritedContains() {
+          runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/twoInheritedContains.kt");
+        }
+
+        @Test
         @TestMetadata("weirdCharBuffers.kt")
         public void testWeirdCharBuffers() {
           runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/weirdCharBuffers.kt");
@@ -35470,6 +35476,18 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("behaviorIfApplicabilityIsResolveWithError.kt")
+        public void testBehaviorIfApplicabilityIsResolveWithError() {
+          runTest("compiler/testData/diagnostics/tests/resolve/dslMarker/behaviorIfApplicabilityIsResolveWithError.kt");
+        }
+
+        @Test
+        @TestMetadata("callableReferences.kt")
+        public void testCallableReferences() {
+          runTest("compiler/testData/diagnostics/tests/resolve/dslMarker/callableReferences.kt");
+        }
+
+        @Test
         @TestMetadata("dslMarkerOnTypealias.kt")
         public void testDslMarkerOnTypealias() {
           runTest("compiler/testData/diagnostics/tests/resolve/dslMarker/dslMarkerOnTypealias.kt");
@@ -35539,6 +35557,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         @TestMetadata("nestedWithSameReceiver.kt")
         public void testNestedWithSameReceiver() {
           runTest("compiler/testData/diagnostics/tests/resolve/dslMarker/nestedWithSameReceiver.kt");
+        }
+
+        @Test
+        @TestMetadata("noErrorInsideDelegatedConstructorCallOfAnonymousObject.kt")
+        public void testNoErrorInsideDelegatedConstructorCallOfAnonymousObject() {
+          runTest("compiler/testData/diagnostics/tests/resolve/dslMarker/noErrorInsideDelegatedConstructorCallOfAnonymousObject.kt");
         }
 
         @Test
@@ -48089,6 +48113,18 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         @TestMetadata("elvisOperatorAgainstFlexibleType.kt")
         public void testElvisOperatorAgainstFlexibleType() {
           runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/elvisOperatorAgainstFlexibleType.kt");
+        }
+
+        @Test
+        @TestMetadata("expectedSomeTypesOnIllegalSelector.kt")
+        public void testExpectedSomeTypesOnIllegalSelector() {
+          runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/expectedSomeTypesOnIllegalSelector.kt");
+        }
+
+        @Test
+        @TestMetadata("expectedSomeTypesOnNormalSelector.kt")
+        public void testExpectedSomeTypesOnNormalSelector() {
+          runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/expectedSomeTypesOnNormalSelector.kt");
         }
 
         @Test

@@ -6177,6 +6177,12 @@ public class JvmAbiConsistencyTestRestGenerated extends AbstractJvmAbiConsistenc
       }
 
       @Test
+      @TestMetadata("inheritranceFromJavaUtilProperties.kt")
+      public void testInheritranceFromJavaUtilProperties() {
+        runTest("compiler/testData/codegen/boxModernJdk/testsWithJava11/inheritranceFromJavaUtilProperties.kt");
+      }
+
+      @Test
       @TestMetadata("kt36984.kt")
       public void testKt36984() {
         runTest("compiler/testData/codegen/boxModernJdk/testsWithJava11/kt36984.kt");
@@ -10195,6 +10201,12 @@ public class JvmAbiConsistencyTestRestGenerated extends AbstractJvmAbiConsistenc
         }
 
         @Test
+        @TestMetadata("forInRangeToUByteMaxValue.kt")
+        public void testForInRangeToUByteMaxValue() {
+          runTest("compiler/testData/codegen/bytecodeText/forLoop/unsigned/forInRangeToUByteMaxValue.kt");
+        }
+
+        @Test
         @TestMetadata("forInRangeToUIntMaxValue.kt")
         public void testForInRangeToUIntMaxValue() {
           runTest("compiler/testData/codegen/bytecodeText/forLoop/unsigned/forInRangeToUIntMaxValue.kt");
@@ -10204,6 +10216,12 @@ public class JvmAbiConsistencyTestRestGenerated extends AbstractJvmAbiConsistenc
         @TestMetadata("forInRangeToULongMaxValue.kt")
         public void testForInRangeToULongMaxValue() {
           runTest("compiler/testData/codegen/bytecodeText/forLoop/unsigned/forInRangeToULongMaxValue.kt");
+        }
+
+        @Test
+        @TestMetadata("forInRangeToUShortMaxValue.kt")
+        public void testForInRangeToUShortMaxValue() {
+          runTest("compiler/testData/codegen/bytecodeText/forLoop/unsigned/forInRangeToUShortMaxValue.kt");
         }
 
         @Test
