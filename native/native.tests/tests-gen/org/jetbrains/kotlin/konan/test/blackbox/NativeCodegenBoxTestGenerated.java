@@ -15362,9 +15362,9 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
       }
 
       @Test
-      @TestMetadata("enumEntriesCompatibilityCheckNoPrioritizedEnumEntries.kt")
-      public void testEnumEntriesCompatibilityCheckNoPrioritizedEnumEntries() {
-        runTest("compiler/testData/codegen/box/enum/enumEntriesCompatibilityCheckNoPrioritizedEnumEntries.kt");
+      @TestMetadata("enumEntriesCompatibilityCheckPrioritized.kt")
+      public void testEnumEntriesCompatibilityCheckPrioritized() {
+        runTest("compiler/testData/codegen/box/enum/enumEntriesCompatibilityCheckPrioritized.kt");
       }
 
       @Test
@@ -43621,6 +43621,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
       @TestMetadata("genericTypeAliasConstructor2.kt")
       public void testGenericTypeAliasConstructor2() {
         runTest("compiler/testData/codegen/box/typealias/genericTypeAliasConstructor2.kt");
+      }
+
+      @Test
+      @TestMetadata("genericTypeAliasConstructor_implicitTypeArguments.kt")
+      public void testGenericTypeAliasConstructor_implicitTypeArguments() {
+        runTest("compiler/testData/codegen/box/typealias/genericTypeAliasConstructor_implicitTypeArguments.kt");
       }
 
       @Test
