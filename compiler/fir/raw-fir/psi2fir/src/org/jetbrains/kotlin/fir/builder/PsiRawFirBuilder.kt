@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.builtins.StandardNames.BACKING_FIELD
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.*
 import org.jetbrains.kotlin.fir.*
+import org.jetbrains.kotlin.fir.analysis.firstFunctionCallInBlockHasLambdaArgumentWithLabel
 import org.jetbrains.kotlin.fir.analysis.isCallTheFirstStatement
 import org.jetbrains.kotlin.fir.contracts.FirContractDescription
 import org.jetbrains.kotlin.fir.contracts.builder.buildRawContractDescription
@@ -430,6 +431,7 @@ open class PsiRawFirBuilder(
                                 val blockSourcePsi = it.source?.psi
                                 val diagnostic = when {
                                     blockSourcePsi == null || !isCallTheFirstStatement(blockSourcePsi) -> ConeContractShouldBeFirstStatement
+                                    functionCallHasLabel(blockSourcePsi) -> ConeContractMayNotHaveLabel
                                     else -> null
                                 }
                                 processLegacyContractDescription(block, diagnostic)
@@ -448,6 +450,9 @@ open class PsiRawFirBuilder(
 
         private fun isCallTheFirstStatement(psi: PsiElement): Boolean =
             isCallTheFirstStatement(psi, { it.elementType }, { it.allChildren.toList() })
+
+        private fun functionCallHasLabel(psi: PsiElement): Boolean =
+            firstFunctionCallInBlockHasLambdaArgumentWithLabel(psi, { it.elementType }, { it.allChildren.toList() })
 
         private fun ValueArgument?.toFirExpression(): FirExpression {
             if (this == null) {
@@ -654,7 +659,7 @@ open class PsiRawFirBuilder(
 
         private fun KtParameter.toFirValueParameter(
             defaultTypeRef: FirTypeRef?,
-            functionSymbol: FirFunctionSymbol<*>,
+            containingDeclarationSymbol: FirBasedSymbol<*>,
             valueParameterDeclaration: ValueParameterDeclaration,
             additionalAnnotations: List<FirAnnotation> = emptyList(),
         ): FirValueParameter {
@@ -692,7 +697,7 @@ open class PsiRawFirBuilder(
                 } else null
                 isCrossinline = hasModifier(CROSSINLINE_KEYWORD)
                 isNoinline = hasModifier(NOINLINE_KEYWORD)
-                containingFunctionSymbol = functionSymbol
+                this.containingDeclarationSymbol = containingDeclarationSymbol
                 annotations += additionalAnnotations
             }
         }
@@ -1171,7 +1176,7 @@ open class PsiRawFirBuilder(
                     symbol = constructorSymbol
                     delegatedConstructor = firDelegatedCall
                     typeParameters += constructorTypeParametersFromConstructedClass(ownerTypeParameters)
-                    this.contextReceivers.addAll(convertContextReceivers(owner.contextReceivers, constructorSymbol))
+                    this.contextReceivers.addContextReceivers(owner.contextReceiverList, constructorSymbol)
                     this@toFirConstructor?.extractAnnotationsTo(this)
                     this@toFirConstructor?.extractValueParametersTo(this, symbol, ValueParameterDeclaration.PRIMARY_CONSTRUCTOR)
                     this.body = null
@@ -1406,7 +1411,7 @@ open class PsiRawFirBuilder(
                             name = StandardNames.DEFAULT_VALUE_PARAMETER
 
                             symbol = FirValueParameterSymbol(name)
-                            containingFunctionSymbol = functionSymbol
+                            containingDeclarationSymbol = functionSymbol
 
                             returnTypeRef = file.getContentElement().toFirOrErrorType()
                             isCrossinline = false
@@ -1516,18 +1521,38 @@ open class PsiRawFirBuilder(
             }
         }
 
-        private fun convertContextReceivers(
-            receivers: List<KtContextReceiver>,
+        private fun MutableList<FirContextReceiver>.addContextReceivers(
+            contextList: KtContextReceiverList?,
             containingDeclarationSymbol: FirBasedSymbol<*>,
-        ): List<FirContextReceiver> {
-            return receivers.map { contextReceiverElement ->
+        ) {
+            if (contextList == null) return
+            contextList.contextParameters().mapTo(this) { contextParameterElement ->
+                val valueParameter = contextParameterElement.toFirValueParameter(
+                    defaultTypeRef = null,
+                    containingDeclarationSymbol = containingDeclarationSymbol,
+                    valueParameterDeclaration = ValueParameterDeclaration.CONTEXT_PARAMETER,
+                )
+
+                buildContextReceiver {
+                    this.source = valueParameter.source
+                    this.customLabelName = valueParameter.name
+                    this.returnTypeRef = valueParameter.returnTypeRef
+
+                    this.symbol = FirReceiverParameterSymbol()
+                    this.moduleData = baseModuleData
+                    this.origin = FirDeclarationOrigin.Source
+                    this.containingDeclarationSymbol = containingDeclarationSymbol
+                }
+            }
+
+            contextList.contextReceivers().mapTo(this) { contextReceiverElement ->
                 buildContextReceiver {
                     this.source = contextReceiverElement.toFirSourceElement()
                     this.customLabelName = contextReceiverElement.labelNameAsName()
                     this.labelNameFromTypeRef = contextReceiverElement.typeReference()?.nameForReceiverLabel()?.let(Name::identifier)
 
                     contextReceiverElement.typeReference()?.toFirType()?.let {
-                        this.typeRef = it
+                        this.returnTypeRef = it
                     }
 
                     this.symbol = FirReceiverParameterSymbol()
@@ -1680,7 +1705,7 @@ open class PsiRawFirBuilder(
                             initCompanionObjectSymbolAttr()
 
                             context.popFirTypeParameters()
-                            contextReceivers.addAll(convertContextReceivers(classOrObject.contextReceivers, symbol))
+                            contextReceivers.addContextReceivers(classOrObject.contextReceiverList, classSymbol)
                         }.also {
                             it.delegateFieldsMap = delegatedFieldsMap
                         }
@@ -1828,7 +1853,7 @@ open class PsiRawFirBuilder(
                             isSuspend = function.hasModifier(SUSPEND_KEYWORD)
                         }
 
-                        contextReceivers.addAll(convertContextReceivers(function.contextReceivers, functionSymbol))
+                        contextReceivers.addContextReceivers(function.contextReceiverList, functionSymbol)
                     }
                 }
 
@@ -1930,7 +1955,7 @@ open class PsiRawFirBuilder(
                         val name = SpecialNames.DESTRUCT
                         val multiParameter = buildValueParameter {
                             source = valueParameter.toFirSourceElement()
-                            containingFunctionSymbol = this@buildAnonymousFunction.symbol
+                            containingDeclarationSymbol = this@buildAnonymousFunction.symbol
                             moduleData = baseModuleData
                             origin = FirDeclarationOrigin.Source
                             returnTypeRef = valueParameter.typeReference.toFirOrImplicitType()
@@ -2033,7 +2058,7 @@ open class PsiRawFirBuilder(
                         isFromEnumClass = owner.hasModifier(ENUM_KEYWORD)
                     }
                     dispatchReceiverType = owner.obtainDispatchReceiverForConstructor()
-                    contextReceivers.addAll(convertContextReceivers(owner.contextReceivers, symbol))
+                    contextReceivers.addContextReceivers(owner.contextReceiverList, symbol)
                     if (!owner.hasModifier(EXTERNAL_KEYWORD) && !status.isExpect || isExplicitDelegationCall()) {
                         delegatedConstructor = buildOrLazyDelegatedConstructorCall(
                             isThis = isDelegatedCallToThis(),
@@ -2262,7 +2287,7 @@ open class PsiRawFirBuilder(
                         else -> propertyAnnotations.filterStandalonePropertyRelevantAnnotations(isVar)
                     }
 
-                    contextReceivers.addAll(convertContextReceivers(this@toFirProperty.contextReceivers, propertySymbol))
+                    contextReceivers.addContextReceivers(this@toFirProperty.contextReceiverList, propertySymbol)
                 }.also {
                     if (!isLocal) {
                         fillDanglingConstraintsTo(it)

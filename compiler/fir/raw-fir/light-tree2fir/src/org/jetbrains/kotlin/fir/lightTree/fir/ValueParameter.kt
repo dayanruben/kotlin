@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.fir.expressions.builder.buildAnnotationCallCopy
 import org.jetbrains.kotlin.fir.expressions.builder.buildPropertyAccessExpression
 import org.jetbrains.kotlin.fir.lightTree.fir.modifier.Modifier
 import org.jetbrains.kotlin.fir.references.builder.buildPropertyFromParameterResolvedNamedReference
-import org.jetbrains.kotlin.fir.symbols.impl.FirFunctionSymbol
+import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
@@ -57,7 +57,7 @@ class ValueParameter(
     private val additionalAnnotations: List<FirAnnotation>,
     val name: Name,
     val defaultValue: FirExpression?,
-    private val containingFunctionSymbol: FirFunctionSymbol<*>?,
+    private val containingDeclarationSymbol: FirBasedSymbol<*>?,
     val destructuringDeclaration: DestructuringDeclaration? = null
 ) {
     fun hasValOrVar(): Boolean {
@@ -91,7 +91,7 @@ class ValueParameter(
             defaultValue = this@ValueParameter.defaultValue
             isCrossinline = modifiers.hasCrossinline()
             isNoinline = modifiers.hasNoinline()
-            containingFunctionSymbol = this@ValueParameter.containingFunctionSymbol
+            containingDeclarationSymbol = this@ValueParameter.containingDeclarationSymbol
                 ?: error("containingFunctionSymbol should present when converting ValueParameter to a FirValueParameter")
 
             annotations += this@ValueParameter.annotations

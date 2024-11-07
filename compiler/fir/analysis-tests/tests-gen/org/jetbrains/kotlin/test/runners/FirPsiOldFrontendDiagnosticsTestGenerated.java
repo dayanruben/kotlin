@@ -736,6 +736,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
     }
 
     @Test
+    @TestMetadata("incDecInsideClasses.kt")
+    public void testIncDecInsideClasses() {
+      runTest("compiler/testData/diagnostics/tests/incDecInsideClasses.kt");
+    }
+
+    @Test
     @TestMetadata("incGenericExtensionProperty.kt")
     public void testIncGenericExtensionProperty() {
       runTest("compiler/testData/diagnostics/tests/incGenericExtensionProperty.kt");
@@ -13758,6 +13764,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         }
 
         @Test
+        @TestMetadata("withDelegatedProperty.kt")
+        public void testWithDelegatedProperty() {
+          runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/withDelegatedProperty.kt");
+        }
+
+        @Test
         @TestMetadata("withExplicitReceiver.kt")
         public void testWithExplicitReceiver() {
           runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/withExplicitReceiver.kt");
@@ -23922,6 +23934,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
       @TestMetadata("collectorInference.kt")
       public void testCollectorInference() {
         runTest("compiler/testData/diagnostics/tests/j+k/collectorInference.kt");
+      }
+
+      @Test
+      @TestMetadata("complexGenericOverride.kt")
+      public void testComplexGenericOverride() {
+        runTest("compiler/testData/diagnostics/tests/j+k/complexGenericOverride.kt");
       }
 
       @Test
@@ -44011,6 +44029,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         @TestMetadata("DiagnosticDefaultMessage_warning.kt")
         public void testDiagnosticDefaultMessage_warning() {
           runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/DiagnosticDefaultMessage_warning.kt");
+        }
+
+        @Test
+        @TestMetadata("differentDiagnosticsOnSameMarker.kt")
+        public void testDifferentDiagnosticsOnSameMarker() {
+          runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/differentDiagnosticsOnSameMarker.kt");
         }
 
         @Test

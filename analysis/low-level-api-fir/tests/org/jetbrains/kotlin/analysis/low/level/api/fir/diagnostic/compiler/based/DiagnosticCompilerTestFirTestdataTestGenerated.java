@@ -1739,6 +1739,22 @@ public class DiagnosticCompilerTestFirTestdataTestGenerated extends AbstractDiag
     }
 
     @Nested
+    @TestMetadata("compiler/fir/analysis-tests/testData/resolve/contextParameters")
+    @TestDataPath("$PROJECT_ROOT")
+    public class ContextParameters {
+      @Test
+      public void testAllFilesPresentInContextParameters() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/contextParameters"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
+      }
+
+      @Test
+      @TestMetadata("smoke.kt")
+      public void testSmoke() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/smoke.kt");
+      }
+    }
+
+    @Nested
     @TestMetadata("compiler/fir/analysis-tests/testData/resolve/contracts")
     @TestDataPath("$PROJECT_ROOT")
     public class Contracts {
@@ -2959,6 +2975,12 @@ public class DiagnosticCompilerTestFirTestdataTestGenerated extends AbstractDiag
       @TestMetadata("kt69190.kt")
       public void testKt69190() {
         runTest("compiler/fir/analysis-tests/testData/resolve/extraCheckers/kt69190.kt");
+      }
+
+      @Test
+      @TestMetadata("kt72164.kt")
+      public void testKt72164() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/extraCheckers/kt72164.kt");
       }
 
       @Test

@@ -516,7 +516,7 @@ class FirMemberDeserializer(private val c: FirDeserializationContext) {
         return buildContextReceiver {
             val type = typeRef.coneType
             this.labelNameFromTypeRef = (type as? ConeLookupTagBasedType)?.lookupTag?.name
-            this.typeRef = typeRef
+            this.returnTypeRef = typeRef
             symbol = FirReceiverParameterSymbol()
             moduleData = c.moduleData
             this.origin = origin
@@ -718,7 +718,7 @@ class FirMemberDeserializer(private val c: FirDeserializationContext) {
             val name = c.nameResolver.getName(proto.name)
             buildValueParameter {
                 moduleData = c.moduleData
-                this.containingFunctionSymbol = functionSymbol
+                this.containingDeclarationSymbol = functionSymbol
                 origin = FirDeclarationOrigin.Library
                 returnTypeRef = proto.type(c.typeTable).toTypeRef(c)
                 this.name = name
