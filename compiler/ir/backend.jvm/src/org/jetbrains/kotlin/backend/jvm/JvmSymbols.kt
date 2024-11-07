@@ -111,7 +111,7 @@ class JvmSymbols(
                 "kotlin.internal" -> kotlinInternalPackage
                 else -> error("Other packages are not supported yet: $fqName")
             }
-            createImplicitParameterDeclarationWithWrappedDescriptor()
+            createThisReceiverParameter()
             block(this)
         }.symbol
 
@@ -162,7 +162,7 @@ class JvmSymbols(
             name = Name.identifier("Kotlin")
         }.apply {
             parent = klass
-            createImplicitParameterDeclarationWithWrappedDescriptor()
+            createThisReceiverParameter()
         })
     }
 
@@ -1112,10 +1112,7 @@ class JvmSymbols(
             val irClass = this
             parent = javaLangAnnotationPackage
             javaLangAnnotationPackage.addChild(this)
-            thisReceiver = buildValueParameter(this) {
-                name = Name.identifier("\$this")
-                type = IrSimpleTypeImpl(irClass.symbol, false, emptyList(), emptyList())
-            }
+            createThisReceiverParameter()
         }
 
         private fun buildAnnotationConstructor(annotationClass: IrClass): IrConstructor =
