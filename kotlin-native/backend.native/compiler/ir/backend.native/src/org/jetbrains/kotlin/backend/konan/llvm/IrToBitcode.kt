@@ -901,40 +901,33 @@ internal class CodeGeneratorVisitor(
 
     private fun evaluateExpression(value: IrExpression, resultSlot: LLVMValueRef? = null): LLVMValueRef {
         updateBuilderDebugLocation(value)
-        when (value) {
-            is IrTypeOperatorCall    -> return evaluateTypeOperator           (value, resultSlot)
-            is IrCall                -> return evaluateCall                   (value, resultSlot)
-            is IrConstructorCall, is IrDelegatingConstructorCall ->
-                                        error("Should've been lowered: ${value.render()}")
-            is IrInstanceInitializerCall ->
-                                        return evaluateInstanceInitializerCall(value)
-            is IrGetValue            -> return evaluateGetValue               (value, resultSlot)
-            is IrSetValue            -> return evaluateSetValue               (value)
-            is IrGetField            -> return evaluateGetField               (value, resultSlot)
-            is IrSetField            -> return evaluateSetField               (value)
-            is IrConst               -> return evaluateConst                  (value).llvm
-            is IrReturn              -> return evaluateReturn                 (value)
-            is IrWhen                -> return evaluateWhen                   (value, resultSlot)
-            is IrThrow               -> return evaluateThrow                  (value)
-            is IrTry                 -> return evaluateTry                    (value)
-            is IrReturnableBlock     -> return evaluateReturnableBlock        (value, resultSlot)
-            is IrInlinedFunctionBlock-> return evaluateInlinedBlock           (value, resultSlot)
-            is IrContainerExpression -> return evaluateContainerExpression    (value, resultSlot)
-            is IrWhileLoop           -> return evaluateWhileLoop              (value)
-            is IrDoWhileLoop         -> return evaluateDoWhileLoop            (value)
-            is IrVararg              -> return evaluateVararg                 (value)
-            is IrBreak               -> return evaluateBreak                  (value)
-            is IrContinue            -> return evaluateContinue               (value)
-            is IrGetObjectValue      -> return evaluateGetObjectValue         (value)
-            is IrFunctionReference   -> return evaluateFunctionReference      (value)
-            is IrSuspendableExpression ->
-                                        return evaluateSuspendableExpression  (value, resultSlot)
-            is IrSuspensionPoint     -> return evaluateSuspensionPoint        (value)
-            is IrClassReference ->      return evaluateClassReference         (value)
-            is IrConstantValue ->       return evaluateConstantValue          (value).llvm
-            else                     -> {
-                TODO(ir2string(value))
-            }
+        return when (value) {
+            is IrTypeOperatorCall -> evaluateTypeOperator(value, resultSlot)
+            is IrCall -> evaluateCall(value, resultSlot)
+            is IrInstanceInitializerCall -> evaluateInstanceInitializerCall(value)
+            is IrGetValue -> evaluateGetValue(value, resultSlot)
+            is IrSetValue -> evaluateSetValue(value)
+            is IrGetField -> evaluateGetField(value, resultSlot)
+            is IrSetField -> evaluateSetField(value)
+            is IrConst -> evaluateConst(value).llvm
+            is IrReturn -> evaluateReturn(value)
+            is IrWhen -> evaluateWhen(value, resultSlot)
+            is IrThrow -> evaluateThrow(value)
+            is IrTry -> evaluateTry(value)
+            is IrReturnableBlock -> evaluateReturnableBlock(value, resultSlot)
+            is IrInlinedFunctionBlock -> evaluateInlinedBlock(value, resultSlot)
+            is IrContainerExpression -> evaluateContainerExpression(value, resultSlot)
+            is IrWhileLoop -> evaluateWhileLoop(value)
+            is IrDoWhileLoop -> evaluateDoWhileLoop(value)
+            is IrVararg -> evaluateVararg(value)
+            is IrBreak -> evaluateBreak(value)
+            is IrContinue -> evaluateContinue(value)
+            is IrRawFunctionReference -> evaluateRawFunctionReference(value)
+            is IrSuspendableExpression -> evaluateSuspendableExpression(value, resultSlot)
+            is IrSuspensionPoint -> evaluateSuspensionPoint(value)
+            is IrClassReference -> evaluateClassReference(value)
+            is IrConstantValue -> evaluateConstantValue(value).llvm
+            else -> error("The node must be lowered before code generation: ${value.render()}")
         }
     }
 
@@ -947,13 +940,6 @@ internal class CodeGeneratorVisitor(
     }
 
     private fun IrStatement.generate() = generateStatement(this)
-
-    //-------------------------------------------------------------------------//
-
-    private fun evaluateGetObjectValue(value: IrGetObjectValue): LLVMValueRef {
-        error("Should be lowered out: ${value.symbol.owner.render()}")
-    }
-
 
     //-------------------------------------------------------------------------//
 
@@ -2286,18 +2272,17 @@ internal class CodeGeneratorVisitor(
 
     //-------------------------------------------------------------------------//
 
-    private fun evaluateFunctionReference(expression: IrFunctionReference): LLVMValueRef {
-        // TODO: consider creating separate IR element for pointer to function.
-        assert (expression.type.getClass()?.symbol?.hasEqualFqName(InteropFqNames.cPointer.toSafe()) == true) {
-            "assert: should be ${InteropFqNames.cPointer}, ${expression.type.render()} found"
+    private fun evaluateRawFunctionReference(expression: IrRawFunctionReference): LLVMValueRef {
+        require(expression.type.getClass()?.symbol?.hasEqualFqName(InteropFqNames.cPointer.toSafe()) == true) {
+            "Raw reference should be ${InteropFqNames.cPointer}, ${expression.type.render()} found"
         }
-
-        assert (expression.getArgumentsWithIr().isEmpty())
-
         val function = expression.symbol.owner
-        require(function is IrSimpleFunction) { "References to constructors should've been lowered: ${expression.render()}" }
-        assert (function.dispatchReceiverParameter == null)
-
+        require(function is IrSimpleFunction) {
+            "Raw reference can't be for constructor: ${expression.render()}"
+        }
+        require(function.dispatchReceiverParameter == null) {
+            "Raw reference can't be for member function: ${expression.render()}"
+        }
         return codegen.functionEntryPointAddress(function)
     }
 

@@ -161,7 +161,7 @@ class JsIrBackendContext(
     override val catchAllThrowableType: IrType
         get() = dynamicType
 
-    override val sharedVariablesManager = JsSharedVariablesManager(this)
+    override val sharedVariablesManager = JsSharedVariablesManager(this.irBuiltIns, this.dynamicType, this.intrinsics)
 
     override val internalPackageFqn = JS_PACKAGE_FQNAME
 
@@ -184,7 +184,7 @@ class JsIrBackendContext(
         }
 
     override val coroutineSymbols =
-        JsCommonCoroutineSymbols(symbolTable, module, this)
+        JsCommonCoroutineSymbols(symbolTable, module)
 
     override val jsPromiseSymbol: IrClassSymbol?
         get() = intrinsics.promiseClassSymbol

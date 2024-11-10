@@ -27603,6 +27603,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       }
 
       @Test
+      @TestMetadata("expectActualExtensionOverride.kt")
+      public void testExpectActualExtensionOverride() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/expectActualExtensionOverride.kt");
+      }
+
+      @Test
       @TestMetadata("expectActualInTheSameModule.kt")
       public void testExpectActualInTheSameModule() {
         runTest("compiler/testData/diagnostics/tests/multiplatform/expectActualInTheSameModule.kt");
@@ -30048,6 +30054,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("expectActualExtension.kt")
+        public void testExpectActualExtension() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/topLevelFun/expectActualExtension.kt");
+        }
+
+        @Test
         @TestMetadata("functionModifiers.kt")
         public void testFunctionModifiers() {
           runTest("compiler/testData/diagnostics/tests/multiplatform/topLevelFun/functionModifiers.kt");
@@ -30115,6 +30127,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         @TestMetadata("differentKindsOfProperties.kt")
         public void testDifferentKindsOfProperties() {
           runTest("compiler/testData/diagnostics/tests/multiplatform/topLevelProperty/differentKindsOfProperties.kt");
+        }
+
+        @Test
+        @TestMetadata("expectActualExtensionProperty.kt")
+        public void testExpectActualExtensionProperty() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/topLevelProperty/expectActualExtensionProperty.kt");
         }
 
         @Test
@@ -43127,6 +43145,18 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
       @TestMetadata("abbreviatedSupertypesErrors.kt")
       public void testAbbreviatedSupertypesErrors() {
         runTest("compiler/testData/diagnostics/tests/typealias/abbreviatedSupertypesErrors.kt");
+      }
+
+      @Test
+      @TestMetadata("aliasToNotKnownAnnotation.kt")
+      public void testAliasToNotKnownAnnotation() {
+        runTest("compiler/testData/diagnostics/tests/typealias/aliasToNotKnownAnnotation.kt");
+      }
+
+      @Test
+      @TestMetadata("aliasToNotKnownJavaAnnotation.kt")
+      public void testAliasToNotKnownJavaAnnotation() {
+        runTest("compiler/testData/diagnostics/tests/typealias/aliasToNotKnownJavaAnnotation.kt");
       }
 
       @Test
