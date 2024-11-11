@@ -17897,6 +17897,12 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
         runTest("compiler/testData/codegen/box/funInterface/suspendFunInterfaceConversionCodegen.kt");
       }
 
+      @Test
+      @TestMetadata("typealiasedFunInterface.kt")
+      public void testTypealiasedFunInterface() {
+        runTest("compiler/testData/codegen/box/funInterface/typealiasedFunInterface.kt");
+      }
+
       @Nested
       @TestMetadata("compiler/testData/codegen/box/funInterface/equality")
       @TestDataPath("$PROJECT_ROOT")
@@ -49492,6 +49498,31 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
       @TestMetadata("kt71659.kt")
       public void testKt71659() {
         runTest("compiler/testData/codegen/boxInline/functionExpression/kt71659.kt");
+      }
+    }
+
+    @Nested
+    @TestMetadata("compiler/testData/codegen/boxInline/functionReference")
+    @TestDataPath("$PROJECT_ROOT")
+    @Tag("frontend-fir")
+    @FirPipeline()
+    @UseExtTestCaseGroupProvider()
+    public class FunctionReference {
+      @Test
+      public void testAllFilesPresentInFunctionReference() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/boxInline/functionReference"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+      }
+
+      @Test
+      @TestMetadata("fourthOrder.kt")
+      public void testFourthOrder() {
+        runTest("compiler/testData/codegen/boxInline/functionReference/fourthOrder.kt");
+      }
+
+      @Test
+      @TestMetadata("thirdOrder.kt")
+      public void testThirdOrder() {
+        runTest("compiler/testData/codegen/boxInline/functionReference/thirdOrder.kt");
       }
     }
 
