@@ -75,6 +75,15 @@ abstract class FirAbstractBodyResolveTransformerDispatcher(
         FirDeclarationsResolveTransformer::transformCodeFragment,
     )
 
+    override fun transformReplSnippet(
+        replSnippet: FirReplSnippet,
+        data: ResolutionMode,
+    ): FirReplSnippet = declarationTransformation(
+        replSnippet,
+        data,
+        FirDeclarationsResolveTransformer::transformReplSnippet,
+    )
+
     override fun <E : FirElement> transformElement(element: E, data: ResolutionMode): E {
         @Suppress("UNCHECKED_CAST")
         return (element.transformChildren(this, data) as E)
@@ -483,6 +492,24 @@ abstract class FirAbstractBodyResolveTransformerDispatcher(
         backingField,
         data,
         FirDeclarationsResolveTransformer::transformBackingField,
+    )
+
+    override fun transformReceiverParameter(
+        receiverParameter: FirReceiverParameter,
+        data: ResolutionMode,
+    ): FirReceiverParameter = declarationTransformation(
+        receiverParameter,
+        data,
+        FirDeclarationsResolveTransformer::transformReceiverParameter,
+    )
+
+    override fun transformContextReceiver(
+        contextReceiver: FirContextReceiver,
+        data: ResolutionMode,
+    ): FirContextReceiver = declarationTransformation(
+        contextReceiver,
+        data,
+        FirDeclarationsResolveTransformer::transformContextReceiver,
     )
 
     override fun transformField(

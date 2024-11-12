@@ -17,11 +17,16 @@ import org.jetbrains.kotlin.fir.declarations.builder.buildValueParameter
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyBackingField
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
-import org.jetbrains.kotlin.fir.declarations.utils.*
+import org.jetbrains.kotlin.fir.declarations.utils.hasExplicitBackingField
+import org.jetbrains.kotlin.fir.declarations.utils.isConst
+import org.jetbrains.kotlin.fir.declarations.utils.isInline
+import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirSingleExpressionBlock
+import org.jetbrains.kotlin.fir.extensions.extensionService
+import org.jetbrains.kotlin.fir.extensions.replSnippetResolveExtensions
 import org.jetbrains.kotlin.fir.references.FirResolvedErrorReference
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.*
@@ -779,6 +784,26 @@ open class FirDeclarationsResolveTransformer(
         }
     }
 
+    override fun transformReplSnippet(replSnippet: FirReplSnippet, data: ResolutionMode): FirReplSnippet {
+        if (!implicitTypeOnly) {
+            context.withReplSnippet(replSnippet, components) {
+                dataFlowAnalyzer.enterReplSnippet(replSnippet, buildGraph = true)
+                replSnippet.transformBody(this, data)
+                val returnType = replSnippet.body.statements.lastOrNull()?.let {
+                    (it as? FirExpression)?.resolvedType
+                } ?:session.builtinTypes.unitType.coneType
+                replSnippet.replaceResultTypeRef(
+                    returnType.toFirResolvedTypeRef(replSnippet.source?.fakeElement(KtFakeSourceElementKind.ImplicitFunctionReturnType))
+                )
+                for (resolveExt in session.extensionService.replSnippetResolveExtensions) {
+                    resolveExt.updateResolved(replSnippet)
+                }
+                dataFlowAnalyzer.exitReplSnippet()
+            }
+        }
+        return replSnippet
+    }
+
     override fun transformCodeFragment(codeFragment: FirCodeFragment, data: ResolutionMode): FirCodeFragment {
         dataFlowAnalyzer.enterCodeFragment(codeFragment)
         context.withCodeFragment(codeFragment, components) {
@@ -1037,6 +1062,24 @@ open class FirDeclarationsResolveTransformer(
             val graph = dataFlowAnalyzer.exitInitBlock()
             result.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(graph))
             result
+        }
+    }
+
+    override fun transformReceiverParameter(
+        receiverParameter: FirReceiverParameter,
+        data: ResolutionMode,
+    ): FirReceiverParameter = whileAnalysing(session, receiverParameter) {
+        context.withReceiverParameter(receiverParameter) {
+            transformDeclarationContent(receiverParameter, data) as FirReceiverParameter
+        }
+    }
+
+    override fun transformContextReceiver(
+        contextReceiver: FirContextReceiver,
+        data: ResolutionMode,
+    ): FirContextReceiver = whileAnalysing(session, contextReceiver) {
+        context.withContextReceiver(contextReceiver) {
+            transformDeclarationContent(contextReceiver, data) as FirContextReceiver
         }
     }
 
