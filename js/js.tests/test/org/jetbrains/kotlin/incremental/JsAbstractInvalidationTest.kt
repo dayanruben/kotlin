@@ -194,16 +194,14 @@ abstract class JsAbstractInvalidationTest(
         }
 
         private fun getPhaseConfig(configuration: CompilerConfiguration, stepId: Int): PhaseConfig {
-            val jsPhases = getJsPhases(configuration)
-
             if (DebugMode.fromSystemProperty("kotlin.js.debugMode") < DebugMode.SUPER_DEBUG) {
-                return PhaseConfig(jsPhases)
+                return PhaseConfig()
             }
 
+            val jsPhases = getJsPhases(configuration)
             return PhaseConfig(
-                jsPhases,
-                dumpToDirectory = buildDir.resolve("irdump").resolve("step-$stepId").path,
-                toDumpStateAfter = jsPhases.toPhaseMap().values.toSet()
+                toDumpStateAfter = jsPhases.toPhaseMap().values.toSet(),
+                dumpToDirectory = buildDir.resolve("irdump").resolve("step-$stepId").path
             )
         }
 
