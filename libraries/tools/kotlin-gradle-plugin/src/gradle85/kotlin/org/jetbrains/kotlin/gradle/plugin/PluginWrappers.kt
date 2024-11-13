@@ -84,36 +84,11 @@ open class KotlinJsPluginWrapper : AbstractKotlinJsPluginWrapper() {
     }
 }
 
-open class KotlinPlatformJvmPlugin : KotlinPlatformImplementationPluginBase("jvm") {
-    override fun apply(project: Project) {
-        project.applyPlugin<KotlinPluginWrapper>()
-        super.apply(project)
-    }
-}
-
 open class KotlinPlatformJsPlugin : KotlinPlatformImplementationPluginBase("js") {
     override fun apply(project: Project) {
         @Suppress("DEPRECATION_ERROR")
         project.applyPlugin<Kotlin2JsPluginWrapper>()
         super.apply(project)
-    }
-}
-
-open class KotlinPlatformAndroidPlugin : KotlinPlatformImplementationPluginBase("android") {
-    override fun apply(project: Project) {
-        project.applyPlugin<KotlinAndroidPluginWrapper>()
-        super.apply(project)
-    }
-
-    override fun namedSourceSetsContainer(project: Project): NamedDomainObjectContainer<*> =
-        (project.extensions.getByName("android") as BaseExtension).sourceSets
-
-    override fun addCommonSourceSetToPlatformSourceSet(commonSourceSet: Named, platformProject: Project) {
-        val androidExtension = platformProject.extensions.getByName("android") as BaseExtension
-        val androidSourceSet = androidExtension.sourceSets.findByName(commonSourceSet.name) ?: return
-        val kotlinSourceSet = androidSourceSet.getExtension<SourceDirectorySet>(KOTLIN_DSL_NAME)
-            ?: return
-        kotlinSourceSet.source(getKotlinSourceDirectorySetSafe(commonSourceSet)!!)
     }
 }
 
