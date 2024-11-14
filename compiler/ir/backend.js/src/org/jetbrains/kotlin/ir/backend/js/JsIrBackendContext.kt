@@ -23,20 +23,16 @@ import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
-import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
-import org.jetbrains.kotlin.ir.backend.js.ir.JsIrBuilder
 import org.jetbrains.kotlin.ir.backend.js.lower.JsInnerClassesSupport
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.JsGenerationGranularity
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.JsPolyfills
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.translateJsCodeIntoStatementList
 import org.jetbrains.kotlin.ir.backend.js.utils.*
-import org.jetbrains.kotlin.ir.builders.declarations.addFunction
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrExternalPackageFragmentImpl
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
-import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.linkage.partial.partialLinkageConfig
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.symbols.impl.DescriptorlessExternalPackageFragmentSymbol
@@ -77,7 +73,6 @@ class JsIrBackendContext(
 ) : JsCommonBackendContext {
 
     val polyfills = JsPolyfills()
-    val fieldToInitializer = WeakHashMap<IrField, IrExpression>()
     val globalIrInterner = IrInterningService()
 
     val localClassNames = WeakHashMap<IrClass, String>()
@@ -98,13 +93,6 @@ class JsIrBackendContext(
     override val irFactory: IrFactory = symbolTable.irFactory
 
     override var inVerbosePhase: Boolean = false
-
-    override fun isSideEffectFree(call: IrCall): Boolean =
-        call.symbol in intrinsics.primitiveToLiteralConstructor.values ||
-                call.symbol == intrinsics.arrayLiteral ||
-                call.symbol == intrinsics.arrayConcat ||
-                call.symbol == intrinsics.jsBoxIntrinsic ||
-                call.symbol == intrinsics.jsUnboxIntrinsic
 
     val devMode = configuration[JSConfigurationKeys.DEVELOPER_MODE] ?: false
     override val es6mode = configuration[JSConfigurationKeys.USE_ES6_CLASSES] ?: false
@@ -296,6 +284,13 @@ class JsIrBackendContext(
                         }
                 }
             }
+
+            override fun isSideEffectFree(call: IrCall): Boolean =
+                call.symbol in intrinsics.primitiveToLiteralConstructor.values ||
+                        call.symbol == intrinsics.arrayLiteral ||
+                        call.symbol == intrinsics.arrayConcat ||
+                        call.symbol == intrinsics.jsBoxIntrinsic ||
+                        call.symbol == intrinsics.jsUnboxIntrinsic
         }
 
         override fun shouldGenerateHandlerParameterForDefaultBodyFun() = true
@@ -394,7 +389,7 @@ class JsIrBackendContext(
             ?: return null
         val jsCode = annotation.getValueArgument(0)
             ?: compilationException("@${annotationClassId.shortClassName} annotation must contain the JS code argument", annotation)
-        val statements = translateJsCodeIntoStatementList(jsCode, this, declaration)
+        val statements = translateJsCodeIntoStatementList(jsCode, declaration)
             ?: compilationException("Could not parse JS code", annotation)
         val parsedJsFunction = statements.singleOrNull()
             ?.safeAs<JsExpressionStatement>()
