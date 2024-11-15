@@ -15,14 +15,9 @@ import org.jetbrains.kotlin.analysis.api.components.KaSymbolRelationProvider
 import org.jetbrains.kotlin.analysis.api.descriptors.KaFe10Session
 import org.jetbrains.kotlin.analysis.api.descriptors.components.base.KaFe10SessionComponent
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.KaFe10PackageSymbol
-import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.KaFe10DescEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.KaFe10DescSamConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.KaFe10DynamicFunctionDescValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.getDescriptor
-import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.getSymbolDescriptor
-import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.toKtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.toKtClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.toKtSymbol
+import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.*
 import org.jetbrains.kotlin.analysis.api.getModule
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaSessionComponent
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -31,17 +26,12 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.descriptors.ClassifierDescriptorWithTypeParameters
-import org.jetbrains.kotlin.descriptors.MemberDescriptor
-import org.jetbrains.kotlin.descriptors.PropertyAccessorDescriptor
-import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.ir.util.kotlinPackageFqn
 import org.jetbrains.kotlin.load.java.lazy.descriptors.LazyJavaPackageFragment
 import org.jetbrains.kotlin.load.java.sam.JvmSamConversionOracle
-import org.jetbrains.kotlin.load.kotlin.*
+import org.jetbrains.kotlin.load.kotlin.JvmPackagePartSource
+import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinarySourceElement
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
@@ -237,15 +227,6 @@ internal class KaFe10SymbolRelationProvider(
             return originalCallableDescriptor.toKtCallableSymbol(analysisContext) ?: this
         }
 
-    @Suppress("OVERRIDE_DEPRECATION")
-    override val KaCallableSymbol.originalContainingClassForOverride: KaClassSymbol?
-        get() = withValidityAssertion {
-            val callableDescriptor = getSymbolDescriptor(this) as? CallableMemberDescriptor ?: return null
-            val originalCallableDescriptor = callableDescriptor.findOriginalTopMostOverriddenDescriptors().firstOrNull() ?: return null
-            val containingClassDescriptor = originalCallableDescriptor.containingDeclaration as? ClassDescriptor ?: return null
-            return containingClassDescriptor.toKtClassifierSymbol(analysisContext) as? KaClassSymbol
-        }
-
     override fun KaDeclarationSymbol.getExpectsForActual(): List<KaDeclarationSymbol> = withValidityAssertion {
         if (psiSafe<KtDeclaration>()?.hasActualModifier() != true) return emptyList()
         val memberDescriptor = (getSymbolDescriptor(this) as? MemberDescriptor)?.takeIf { it.isActual } ?: return emptyList()
@@ -267,25 +248,6 @@ internal class KaFe10SymbolRelationProvider(
 
             return inheritorsProvider.computeSealedSubclasses(classDescriptor, allowInDifferentFiles)
                 .mapNotNull { it.toKtClassifierSymbol(analysisContext) as? KaNamedClassSymbol }
-        }
-
-    @Deprecated("Use the declaration scope instead.")
-    override val KaNamedClassSymbol.enumEntries: List<KaEnumEntrySymbol>
-        get() = withValidityAssertion {
-            val enumDescriptor = getSymbolDescriptor(this) as? ClassDescriptor ?: return emptyList()
-            if (enumDescriptor.kind != ClassKind.ENUM_CLASS) {
-                return emptyList()
-            }
-
-            val result = mutableListOf<KaEnumEntrySymbol>()
-
-            for (entryDescriptor in enumDescriptor.unsubstitutedMemberScope.getContributedDescriptors()) {
-                if (entryDescriptor is ClassDescriptor && entryDescriptor.kind == ClassKind.ENUM_ENTRY) {
-                    result += KaFe10DescEnumEntrySymbol(entryDescriptor, analysisContext)
-                }
-            }
-
-            return result
         }
 }
 

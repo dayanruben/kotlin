@@ -261,7 +261,7 @@ private val tailrecPhase = createFileLoweringPhase(
 private val volatilePhase = createFileLoweringPhase(
         ::VolatileFieldsLowering,
         name = "VolatileFields",
-        prerequisite = setOf(localFunctionsPhase)
+        prerequisite = setOf()
 )
 
 private val defaultParameterExtentPhase = createFileLoweringPhase(
@@ -307,10 +307,16 @@ private val testProcessorPhase = createFileLoweringPhase(
         name = "TestProcessor",
 )
 
-private val delegationPhase = createFileLoweringPhase(
-        lowering = ::PropertyDelegationLowering,
-        name = "Delegation",
-        prerequisite = setOf(volatilePhase)
+private val delegatedPropertyOptimizationPhase = createFileLoweringPhase(
+        lowering = ::DelegatedPropertyOptimizationLowering,
+        name = "DelegatedPropertyOptimization",
+        prerequisite = setOf()
+)
+
+private val propertyReferencePhase = createFileLoweringPhase(
+        lowering = ::PropertyReferenceLowering,
+        name = "PropertyReference",
+        prerequisite = setOf(volatilePhase, delegatedPropertyOptimizationPhase)
 )
 
 private val functionReferencePhase = createFileLoweringPhase(
@@ -318,10 +324,10 @@ private val functionReferencePhase = createFileLoweringPhase(
         name = "FunctionReference",
 )
 
-private val staticFunctionReferenceOptimizationPhase = createFileLoweringPhase(
-        lowering = ::StaticFunctionReferenceOptimization,
-        name = "StaticFunctionReferenceOptimization",
-        prerequisite = setOf(functionReferencePhase, delegationPhase)
+private val staticCallableReferenceOptimizationPhase = createFileLoweringPhase(
+        lowering = ::StaticCallableReferenceOptimization,
+        name = "StaticCallableReferenceOptimization",
+        prerequisite = setOf(functionReferencePhase, propertyReferencePhase)
 )
 
 private val enumWhenPhase = createFileLoweringPhase(
@@ -566,9 +572,12 @@ internal fun KonanConfig.getLoweringsAfterInlining(): LoweringList = listOfNotNu
         stripTypeAliasDeclarationsPhase,
         assertionRemoverPhase,
         provisionalFunctionExpressionPhase,
+        volatilePhase,
+        testProcessorPhase.takeIf { this.configuration.getNotNull(KonanConfigKeys.GENERATE_TEST_RUNNER) != TestRunnerKind.NONE },
+        delegatedPropertyOptimizationPhase,
+        propertyReferencePhase,
         functionReferencePhase,
         postInlinePhase,
-        testProcessorPhase.takeIf { this.configuration.getNotNull(KonanConfigKeys.GENERATE_TEST_RUNNER) != TestRunnerKind.NONE },
         contractsDslRemovePhase,
         annotationImplementationPhase,
         rangeContainsLoweringPhase,
@@ -580,14 +589,12 @@ internal fun KonanConfig.getLoweringsAfterInlining(): LoweringList = listOfNotNu
         initializersPhase,
         inventNamesForLocalClasses,
         localFunctionsPhase,
-        volatilePhase,
         tailrecPhase,
         defaultParameterExtentPhase,
         innerClassPhase,
         dataClassesPhase,
         ifNullExpressionsFusionPhase,
-        delegationPhase,
-        staticFunctionReferenceOptimizationPhase,
+        staticCallableReferenceOptimizationPhase,
         singleAbstractMethodPhase,
         enumWhenPhase,
         finallyBlocksPhase,

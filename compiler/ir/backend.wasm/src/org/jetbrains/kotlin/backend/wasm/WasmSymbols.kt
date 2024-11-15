@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.backend.wasm
 
-import org.jetbrains.kotlin.backend.common.ir.Symbols
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -14,6 +13,7 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
+import org.jetbrains.kotlin.ir.backend.js.JsCommonSymbols
 import org.jetbrains.kotlin.ir.backend.js.ReflectionSymbols
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.wasm.config.WasmConfigurationKeys
 class WasmSymbols(
     private val context: WasmBackendContext,
     private val symbolTable: SymbolTable
-) : Symbols(context.irBuiltIns, symbolTable) {
+) : JsCommonSymbols(context.module, context.irBuiltIns, symbolTable) {
 
     private val kotlinTopLevelPackage: PackageViewDescriptor =
         context.module.getPackage(FqName("kotlin"))
@@ -92,15 +92,15 @@ class WasmSymbols(
     override val stringBuilder =
         getIrClass(FqName("kotlin.text.StringBuilder"))
     override val coroutineImpl =
-        context.coroutineSymbols.coroutineImpl
+        coroutineSymbols.coroutineImpl
     override val coroutineSuspendedGetter =
-        context.coroutineSymbols.coroutineSuspendedGetter
+        coroutineSymbols.coroutineSuspendedGetter
     override val getContinuation =
         getInternalFunction("getContinuation")
     override val continuationClass =
-        context.coroutineSymbols.continuationClass
+        coroutineSymbols.continuationClass
     override val coroutineContextGetter =
-        symbolTable.descriptorExtension.referenceSimpleFunction(context.coroutineSymbols.coroutineContextProperty.getter!!)
+        symbolTable.descriptorExtension.referenceSimpleFunction(coroutineSymbols.coroutineContextProperty.getter!!)
     override val suspendCoroutineUninterceptedOrReturn =
         getInternalFunction("suspendCoroutineUninterceptedOrReturn")
     override val coroutineGetContext =

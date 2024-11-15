@@ -14,6 +14,10 @@ import org.jetbrains.kotlin.fir.SessionConfiguration
 import org.jetbrains.kotlin.fir.symbols.FirLazyDeclarationResolver
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.test.*
+import org.jetbrains.kotlin.test.backend.handlers.NoFirCompilationErrorsHandler
+import org.jetbrains.kotlin.test.backend.handlers.NoLightTreeParsingErrorsHandler
+import org.jetbrains.kotlin.test.backend.handlers.NoPsiParsingErrorsHandler
+import org.jetbrains.kotlin.test.backend.handlers.testTierExceptionInverter
 import org.jetbrains.kotlin.test.backend.ir.IrDiagnosticsHandler
 import org.jetbrains.kotlin.test.builders.*
 import org.jetbrains.kotlin.test.directives.CodegenTestDirectives
@@ -60,6 +64,16 @@ fun TestConfigurationBuilder.configureDiagnosticTest(parser: FirParser) {
 abstract class AbstractFirDiagnosticTestBase(val parser: FirParser) : AbstractKotlinCompilerTest() {
     override fun TestConfigurationBuilder.configuration() {
         configureDiagnosticTest(parser)
+
+        forTestsMatching(
+            "compiler/testData/diagnostics/tests/*" or
+                    "compiler/testData/diagnostics/testsWithStdLib/*" or
+                    "compiler/fir/analysis-tests/testData/resolve/*" or
+                    "compiler/fir/analysis-tests/testData/resolveWithStdlib/*" or
+                    "compiler/fir/analysis-tests/testData/resolveFreezesIDE/*"
+        ) {
+            useAfterAnalysisCheckers(::PartialTestTierChecker)
+        }
     }
 }
 
@@ -90,6 +104,46 @@ abstract class AbstractFirLightTreeDiagnosticsWithoutAliasExpansionTest : Abstra
         }
     }
 }
+
+abstract class AbstractTieredFrontendJvmTest(val parser: FirParser) : AbstractKotlinCompilerTest() {
+    override fun TestConfigurationBuilder.configuration() {
+        configureTieredFrontendJvmTest(parser)
+
+        val (handlers, checker) = listOfNotNull(
+            // Makes the FIR tier fail if there are errors; otherwise, it would fail on meta-infos mismatch.
+            // But it's important to continue processing next modules in diagnostic tests, otherwise
+            // we won't collect their meta-infos and see a difference.
+            { NoFirCompilationErrorsHandler(it, failureDisablesNextSteps = false) },
+            // `<SYNTAX>` is reported separately
+            when (parser) {
+                FirParser.LightTree -> ::NoLightTreeParsingErrorsHandler
+                FirParser.Psi -> ::NoPsiParsingErrorsHandler
+            },
+        ).toTieredHandlersAndCheckerOf(TestTierLabel.FRONTEND)
+
+        configureFirHandlersStep { useHandlers(handlers) }
+        useAfterAnalysisCheckers(checker)
+    }
+}
+
+fun <A : ResultingArtifact<A>> List<Constructor<AnalysisHandler<A>>>.toTieredHandlersAndCheckerOf(
+    tier: TestTierLabel,
+): Pair<List<Constructor<AnalysisHandler<A>>>, Constructor<AfterAnalysisChecker>> {
+    val invertedHandlers = map { testTierExceptionInverter(tier, it) }
+    val checker = { it: TestServices -> TestTierChecker(tier, numberOfMarkerHandlersPerModule = invertedHandlers.size, it) }
+    return invertedHandlers to checker
+}
+
+fun TestConfigurationBuilder.configureTieredFrontendJvmTest(parser: FirParser) {
+    configureDiagnosticTest(parser)
+
+    if (parser == FirParser.LightTree) {
+        useAdditionalService { LightTreeSyntaxDiagnosticsReporterHolder() }
+    }
+}
+
+open class AbstractTieredFrontendJvmLightTreeTest : AbstractTieredFrontendJvmTest(FirParser.LightTree)
+open class AbstractTieredFrontendJvmPsiTest : AbstractTieredFrontendJvmTest(FirParser.Psi)
 
 class LightTreeSyntaxDiagnosticsReporterHolder : TestService {
     val reporter = SimpleDiagnosticsCollector(BaseDiagnosticsCollector.RawReporter.DO_NOTHING)
@@ -131,8 +185,6 @@ fun TestConfigurationBuilder.configureIrActualizerDiagnosticsTest() {
     @OptIn(TestInfrastructureInternals::class)
     useModuleStructureTransformers(DuplicateFileNameChecker)
 }
-
-open class AbstractFirPsiWithActualizerDiagnosticsTest : AbstractFirWithActualizerDiagnosticsTest(FirParser.Psi)
 
 open class AbstractFirLightTreeWithActualizerDiagnosticsTest : AbstractFirWithActualizerDiagnosticsTest(FirParser.LightTree)
 open class AbstractFirLightTreeWithActualizerDiagnosticsWithLatestLanguageVersionTest : AbstractFirLightTreeWithActualizerDiagnosticsTest() {

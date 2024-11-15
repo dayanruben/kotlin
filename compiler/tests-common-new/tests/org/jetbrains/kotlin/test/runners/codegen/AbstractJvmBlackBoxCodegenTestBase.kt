@@ -85,7 +85,11 @@ fun TestConfigurationBuilder.configureJvmBoxCodegenSettings(includeAllDumpHandle
         +REPORT_ONLY_EXPLICITLY_DEFINED_DEBUG_INFO
     }
 
-    forTestsNotMatching("compiler/testData/codegen/box/diagnostics/functions/tailRecursion/*") {
+    forTestsNotMatching(
+        "compiler/testData/codegen/box/diagnostics/functions/tailRecursion/*" or
+                "compiler/testData/diagnostics/*" or
+                "compiler/fir/analysis-tests/testData/*"
+    ) {
         defaultDirectives {
             DIAGNOSTICS with "-warnings"
         }
