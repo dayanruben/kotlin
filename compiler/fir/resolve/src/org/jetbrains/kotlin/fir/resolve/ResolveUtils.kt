@@ -777,3 +777,15 @@ fun ConeClassLikeLookupTag.isRealOwnerOf(declarationSymbol: FirCallableSymbol<*>
     this == declarationSymbol.dispatchReceiverClassLookupTagOrNull()
 
 val FirUserTypeRef.shortName: Name get() = qualifier.last().name
+
+val FirThisReference.referencedMemberSymbol: FirBasedSymbol<*>?
+    get() = when (val boundSymbol = boundSymbol) {
+        is FirReceiverParameterSymbol -> boundSymbol.containingDeclarationSymbol
+        is FirClassSymbol -> boundSymbol
+        null -> null
+        is FirTypeParameterSymbol, is FirTypeAliasSymbol -> errorWithAttachment(
+            message = "Unexpected FirThisOwnerSymbol ${boundSymbol::class.simpleName}"
+        ) {
+            withFirEntry("FIR", fir = boundSymbol.fir)
+        }
+    }
