@@ -73,8 +73,6 @@ dependencies {
     compileOnly(project(":compiler:backend"))
     compileOnly(project(":compiler:ir.backend.common"))
 
-    compileOnly(project(":js:js.frontend"))
-    compileOnly(project(":js:js.translator"))
     compileOnly(project(":compiler:backend.js"))
 
     compileOnly(project(":compiler:backend.jvm"))
