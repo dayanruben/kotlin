@@ -1,3 +1,0 @@
-org.jetbrains.kotlin.test.MuteInCondition
-org.jetbrains.kotlin.test.MuteInTestWatcher
-org.jetbrains.kotlin.test.MuteInInvocationInterceptor

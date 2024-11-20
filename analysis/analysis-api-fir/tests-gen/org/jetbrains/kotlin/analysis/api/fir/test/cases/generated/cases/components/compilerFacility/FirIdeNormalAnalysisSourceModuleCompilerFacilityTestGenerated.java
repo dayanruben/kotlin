@@ -178,6 +178,12 @@ public class FirIdeNormalAnalysisSourceModuleCompilerFacilityTestGenerated exten
     runTest("analysis/analysis-api/testData/components/compilerFacility/compilation/sourceLibModuleInlinePropertyGetter.kt");
   }
 
+  @Test
+  @TestMetadata("twoTargetFiles.kt")
+  public void testTwoTargetFiles() {
+    runTest("analysis/analysis-api/testData/components/compilerFacility/compilation/twoTargetFiles.kt");
+  }
+
   @Nested
   @TestMetadata("analysis/analysis-api/testData/components/compilerFacility/compilation/codeFragments")
   @TestDataPath("$PROJECT_ROOT")
@@ -437,6 +443,12 @@ public class FirIdeNormalAnalysisSourceModuleCompilerFacilityTestGenerated exten
       }
 
       @Test
+      @TestMetadata("localFunction2.kt")
+      public void testLocalFunction2() {
+        runTest("analysis/analysis-api/testData/components/compilerFacility/compilation/codeFragments/capturing/localFunction2.kt");
+      }
+
+      @Test
       @TestMetadata("localFunctionContainingClassClosure.kt")
       public void testLocalFunctionContainingClassClosure() {
         runTest("analysis/analysis-api/testData/components/compilerFacility/compilation/codeFragments/capturing/localFunctionContainingClassClosure.kt");
@@ -476,6 +488,18 @@ public class FirIdeNormalAnalysisSourceModuleCompilerFacilityTestGenerated exten
       @TestMetadata("localFunctionParameterClosure.kt")
       public void testLocalFunctionParameterClosure() {
         runTest("analysis/analysis-api/testData/components/compilerFacility/compilation/codeFragments/capturing/localFunctionParameterClosure.kt");
+      }
+
+      @Test
+      @TestMetadata("localFunctionWithMultiFileClass.kt")
+      public void testLocalFunctionWithMultiFileClass() {
+        runTest("analysis/analysis-api/testData/components/compilerFacility/compilation/codeFragments/capturing/localFunctionWithMultiFileClass.kt");
+      }
+
+      @Test
+      @TestMetadata("localFunctionsInNestedClass.kt")
+      public void testLocalFunctionsInNestedClass() {
+        runTest("analysis/analysis-api/testData/components/compilerFacility/compilation/codeFragments/capturing/localFunctionsInNestedClass.kt");
       }
 
       @Test

@@ -7607,6 +7607,19 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
     }
 
     @Nested
+    @TestMetadata("compiler/testData/codegen/box/contextParameters")
+    @TestDataPath("$PROJECT_ROOT")
+    @Tag("frontend-fir")
+    @FirPipeline()
+    @UseExtTestCaseGroupProvider()
+    public class ContextParameters {
+      @Test
+      public void testAllFilesPresentInContextParameters() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/contextParameters"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+      }
+    }
+
+    @Nested
     @TestMetadata("compiler/testData/codegen/box/contracts")
     @TestDataPath("$PROJECT_ROOT")
     @Tag("frontend-fir")
@@ -35143,12 +35156,6 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
           @TestMetadata("topLevelProperty.kt")
           public void testTopLevelProperty() {
             runTest("compiler/testData/codegen/box/properties/lateinit/isInitializedAndDeinitialize/topLevelProperty.kt");
-          }
-
-          @Test
-          @TestMetadata("topLevelPropertyMultiModule.kt")
-          public void testTopLevelPropertyMultiModule() {
-            runTest("compiler/testData/codegen/box/properties/lateinit/isInitializedAndDeinitialize/topLevelPropertyMultiModule.kt");
           }
         }
 

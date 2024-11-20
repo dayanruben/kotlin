@@ -1,34 +1,34 @@
 FILE: smoke.kt
-    context(s@R|kotlin/String|)
+    context(s: R|kotlin/String|)
     public final class C : R|kotlin/Any| {
         public constructor(): R|C| {
             super<R|kotlin/Any|>()
         }
 
     }
-    context(s@R|kotlin/String|)
+    context(s: R|kotlin/String|)
     public final fun f(): R|kotlin/String| {
-        ^f <Unresolved name: s>#.R|kotlin/plus|(this@R|context of /f|)
+        ^f R|<local>/s|.R|kotlin/String.plus|(this@s#)
     }
-    context(<unused var>@R|kotlin/String|)
+    context(<unused var>: R|kotlin/String|)
     public final val p: R|kotlin/String|
         public get(): R|kotlin/String| {
             ^ R|/f|()
         }
-    context(s@R|kotlin/String|)
+    context(s: R|kotlin/String|)
     public final var p2: R|kotlin/String|
         public get(): R|kotlin/String| {
-            ^ <Unresolved name: s>#.R|kotlin/plus|(this@R|context of /p2|)
+            ^ R|<local>/s|.R|kotlin/String.plus|(this@s#)
         }
         public set(value: R|kotlin/String|): R|kotlin/Unit| {
-            <Unresolved name: s>#.R|kotlin/plus|(this@R|context of /p2|)
+            R|<local>/s|.R|kotlin/String.plus|(this@s#)
         }
-    context(s@R|kotlin/Any|)
+    context(s: R|kotlin/Any|)
     public final val p3: R|kotlin/String|
         public get(): R|kotlin/String| {
             ^ when () {
-                (<Unresolved name: s># is R|kotlin/String|) ->  {
-                    <Unresolved name: s>#
+                (R|<local>/s| is R|kotlin/String|) ->  {
+                    R|<local>/s|.R|kotlin/String.plus|(R|/f|())
                 }
                 else ->  {
                     String()
@@ -36,10 +36,19 @@ FILE: smoke.kt
             }
 
         }
-    context(s@R|kotlin/String|)
+    context(s: R|kotlin/String|)
     public final fun f2(): R|kotlin/Unit| {
-        this@R|context of /f2|.R|kotlin/String.length|
+        <Unresolved name: length>#
     }
-    context(<unused var>@R|kotlin/Any|)
+    context(s: R|kotlin/String|)
+    public final fun f3(): R|kotlin/Int| {
+        ^f3 R|<local>/s|.R|kotlin/String.length|
+    }
+    context(s: R|kotlin/String|)
+    public final val p4: R|kotlin/String|
+        public get(): R|kotlin/String| {
+            ^ R|<local>/s|
+        }
+    context(<unused var>: R|kotlin/Any|)
     public final fun escapedBackTick(): R|kotlin/Unit| {
     }

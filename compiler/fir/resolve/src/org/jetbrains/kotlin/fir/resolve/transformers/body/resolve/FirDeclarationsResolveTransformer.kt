@@ -7,12 +7,12 @@ package org.jetbrains.kotlin.fir.resolve.transformers.body.resolve
 
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fakeElement
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.declarations.builder.buildContextReceiver
 import org.jetbrains.kotlin.fir.declarations.builder.buildValueParameter
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyBackingField
@@ -52,6 +52,7 @@ import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
 import org.jetbrains.kotlin.fir.visitors.FirTransformer
 import org.jetbrains.kotlin.fir.visitors.transformSingle
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.resolve.calls.inference.buildCurrentSubstitutor
 import org.jetbrains.kotlin.resolve.calls.inference.components.TypeVariableDirectionCalculator
 import org.jetbrains.kotlin.resolve.calls.inference.model.ProvideDelegateFixationPosition
@@ -711,6 +712,12 @@ open class FirDeclarationsResolveTransformer(
                 accessor.replaceReturnTypeRef(propertyTypeRef)
             }
 
+            for (parameter in owner.contextReceivers) {
+                if (!parameter.isLegacyContextReceiver()) {
+                    context.storeVariable(parameter, session)
+                }
+            }
+
             if (accessor is FirDefaultPropertyAccessor || accessor.body == null) {
                 transformFunction(accessor, ResolutionMode.ContextIndependent, shouldResolveEverything)
             } else {
@@ -987,7 +994,11 @@ open class FirDeclarationsResolveTransformer(
         if (shouldResolveEverything) {
             // Annotations here are required only in the case of a local class member function.
             // Separate annotation transformers are responsible in the case of non-local functions.
-            function.transformReturnTypeRef(this, data).transformValueParameters(this, data).transformAnnotations(this, data)
+            function
+                .transformReturnTypeRef(this, data)
+                .transformContextReceivers(this, data)
+                .transformValueParameters(this, data)
+                .transformAnnotations(this, data)
         }
 
         if (!bodyResolved) {
@@ -1070,15 +1081,6 @@ open class FirDeclarationsResolveTransformer(
     ): FirReceiverParameter = whileAnalysing(session, receiverParameter) {
         context.withReceiverParameter(receiverParameter) {
             transformDeclarationContent(receiverParameter, data) as FirReceiverParameter
-        }
-    }
-
-    override fun transformContextReceiver(
-        contextReceiver: FirContextReceiver,
-        data: ResolutionMode,
-    ): FirContextReceiver = whileAnalysing(session, contextReceiver) {
-        context.withContextReceiver(contextReceiver) {
-            transformDeclarationContent(contextReceiver, data) as FirContextReceiver
         }
     }
 
@@ -1226,14 +1228,21 @@ open class FirDeclarationsResolveTransformer(
         lambda.replaceContextReceivers(
             lambda.contextReceivers.takeIf { it.isNotEmpty() }
                 ?: resolvedLambdaAtom?.contextReceiverTypes?.map { receiverType ->
-                    buildContextReceiver {
-                        this.returnTypeRef = buildResolvedTypeRef {
-                            coneType = receiverType
-                        }
-                        symbol = FirReceiverParameterSymbol()
+                    buildValueParameter {
+                        resolvePhase = FirResolvePhase.BODY_RESOLVE
+                        source = lambda.source?.fakeElement(KtFakeSourceElementKind.LambdaContextParameter)
+                        containingDeclarationSymbol = lambda.symbol
                         moduleData = session.moduleData
                         origin = FirDeclarationOrigin.Source
-                        containingDeclarationSymbol = lambda.symbol
+                        name = SpecialNames.UNDERSCORE_FOR_UNUSED_VAR
+                        symbol = FirValueParameterSymbol(name)
+                        returnTypeRef = receiverType
+                            .toFirResolvedTypeRef(lambda.source?.fakeElement(KtFakeSourceElementKind.LambdaContextParameter))
+                        valueParameterKind = if (session.languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) {
+                            FirValueParameterKind.ContextParameter
+                        } else {
+                            FirValueParameterKind.LegacyContextReceiver
+                        }
                     }
                 }.orEmpty()
         )

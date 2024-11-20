@@ -688,6 +688,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
     }
 
     @Test
+    @TestMetadata("functionTypeInitializerTypeMismatch.kt")
+    public void testFunctionTypeInitializerTypeMismatch() {
+      runTest("compiler/testData/diagnostics/tests/functionTypeInitializerTypeMismatch.kt");
+    }
+
+    @Test
     @TestMetadata("GenericArgumentConsistency.kt")
     public void testGenericArgumentConsistency() {
       runTest("compiler/testData/diagnostics/tests/GenericArgumentConsistency.kt");
@@ -13803,6 +13809,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("priorityInTower.kt")
         public void testPriorityInTower() {
           runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/priorityInTower.kt");
+        }
+
+        @Test
+        @TestMetadata("resolutionByName.kt")
+        public void testResolutionByName() {
+          runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/resolutionByName.kt");
         }
 
         @Test

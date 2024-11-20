@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin.Companion.FILLED_FOR_UNBOUND_SYMBOL
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.expressions.IrSyntheticBodyKind
 import org.jetbrains.kotlin.ir.irFlag
@@ -428,6 +429,12 @@ class Fir2IrDeclarationStorage(
 
     fun <T : IrFunction> T.putParametersInScope(function: FirFunction): T {
         val contextReceivers = function.contextReceiversForFunctionOrContainingProperty()
+
+        for ((firParameter, irParameter) in contextReceivers.zip(this.valueParameters.take(contextReceivers.size))) {
+            if (!firParameter.isLegacyContextReceiver()) {
+                localStorage.putParameter(firParameter, irParameter.symbol)
+            }
+        }
 
         for ((firParameter, irParameter) in function.valueParameters.zip(valueParameters.drop(contextReceivers.size))) {
             localStorage.putParameter(firParameter, irParameter.symbol)
@@ -1232,6 +1239,7 @@ class Fir2IrDeclarationStorage(
             is FirNamedFunctionSymbol -> createAndCacheIrFunction(
                 originalSymbol.fir,
                 irParent,
+                predefinedOrigin = FILLED_FOR_UNBOUND_SYMBOL,
                 fakeOverrideOwnerLookupTag = null
             )
 

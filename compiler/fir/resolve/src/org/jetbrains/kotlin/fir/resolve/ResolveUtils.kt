@@ -478,7 +478,7 @@ fun BodyResolveComponents.typeFromCallee(access: FirElement, calleeReference: Fi
         }
         is FirThisReference -> {
             val labelName = calleeReference.labelName
-            val possibleImplicitReceivers = implicitReceiverStack[labelName]
+            val possibleImplicitReceivers = implicitValueStorage[labelName]
             buildResolvedTypeRef {
                 source = null
                 coneType = when {
@@ -781,6 +781,7 @@ val FirUserTypeRef.shortName: Name get() = qualifier.last().name
 val FirThisReference.referencedMemberSymbol: FirBasedSymbol<*>?
     get() = when (val boundSymbol = boundSymbol) {
         is FirReceiverParameterSymbol -> boundSymbol.containingDeclarationSymbol
+        is FirValueParameterSymbol -> boundSymbol.containingDeclarationSymbol
         is FirClassSymbol -> boundSymbol
         null -> null
         is FirTypeParameterSymbol, is FirTypeAliasSymbol -> errorWithAttachment(

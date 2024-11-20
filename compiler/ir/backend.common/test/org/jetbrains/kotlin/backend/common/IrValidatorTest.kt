@@ -138,8 +138,10 @@ class IrValidatorTest {
                         checkValueScopes = true,
                         checkTypeParameterScopes = true,
                         checkCrossFileFieldUsage = true,
+                        checkAllKotlinFieldsArePrivate = true,
                         checkVisibilities = true,
                         checkVarargTypes = true,
+                        checkInlineFunctionUseSites = { it.symbol.owner.name.toString() != "inlineFunctionUseSiteNotPermitted" }
                     )
                 )
                 assertEquals(expectedMessages, messageCollector.messages)
@@ -357,7 +359,154 @@ class IrValidatorTest {
     }
 
     @Test
-    fun `private declarations can't be referenced from a different file`() {
+    fun `private functions can't be referenced from a different file`() {
+        val file1 = createIrFile("a.kt")
+        val function1 = IrFactoryImpl.buildFun {
+            name = Name.identifier("foo")
+            returnType = TestIrBuiltins.unitType
+            visibility = DescriptorVisibilities.PRIVATE
+        }
+        file1.addChild(function1)
+        val file2 = createIrFile("b.kt")
+        val function2 = IrFactoryImpl.buildFun {
+            name = Name.identifier("bar")
+            returnType = TestIrBuiltins.unitType
+        }
+        val functionCall =
+            IrCallImpl(
+                UNDEFINED_OFFSET, UNDEFINED_OFFSET, TestIrBuiltins.unitType, function1.symbol,
+                typeArgumentsCount = 0,
+            )
+        val body = IrFactoryImpl.createBlockBody(UNDEFINED_OFFSET, UNDEFINED_OFFSET)
+        body.statements.add(functionCall)
+        function2.body = body
+        file2.addChild(function2)
+        testValidation(
+            IrVerificationMode.ERROR,
+            file2,
+            listOf(
+                Message(
+                    ERROR,
+                    """
+                    [IR VALIDATION] IrValidatorTest: The following element references 'private' declaration that is invisible in the current scope:
+                    CALL 'private final fun foo (): kotlin.Unit declared in org.sample' type=kotlin.Unit origin=null
+                      inside BLOCK_BODY
+                        inside FUN name:bar visibility:public modality:FINAL <> () returnType:kotlin.Unit
+                          inside FILE fqName:org.sample fileName:b.kt
+                    """.trimIndent(),
+                    CompilerMessageLocation.create("b.kt", 0, 0, null),
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `private classes can't be referenced from a different file`() {
+        val file1 = createIrFile("a.kt")
+        val privateClass = IrFactoryImpl.buildClass {
+            name = Name.identifier("PrivateClass")
+            visibility = DescriptorVisibilities.PRIVATE
+        }
+        val constructor = IrFactoryImpl.createConstructor(
+            startOffset = UNDEFINED_OFFSET,
+            endOffset = UNDEFINED_OFFSET,
+            origin = IrDeclarationOrigin.DEFINED,
+            name = SpecialNames.INIT,
+            visibility = DescriptorVisibilities.PRIVATE,
+            isInline = false,
+            isExpect = false,
+            returnType = null,
+            symbol = IrConstructorSymbolImpl(),
+            isPrimary = true
+        )
+        privateClass.addChild(constructor)
+        val file2 = createIrFile("b.kt")
+        val function = IrFactoryImpl.buildFun {
+            name = Name.identifier("foo")
+            returnType = TestIrBuiltins.unitType
+        }
+        val constructorCall = IrConstructorCallImpl(
+            startOffset = UNDEFINED_OFFSET,
+            endOffset = UNDEFINED_OFFSET,
+            type = TestIrBuiltins.anyType,
+            symbol = constructor.symbol,
+            typeArgumentsCount = 0,
+            constructorTypeArgumentsCount = 0,
+        )
+        val body = IrFactoryImpl.createBlockBody(UNDEFINED_OFFSET, UNDEFINED_OFFSET)
+        body.statements.add(constructorCall)
+        function.body = body
+        file1.addChild(privateClass)
+        file2.addChild(function)
+        testValidation(
+            IrVerificationMode.ERROR,
+            file2,
+            listOf(
+                Message(
+                    ERROR,
+                    """
+                    [IR VALIDATION] IrValidatorTest: The following element references 'private' declaration that is invisible in the current scope:
+                    CONSTRUCTOR_CALL 'private constructor <init> () [primary] declared in org.sample.PrivateClass' type=kotlin.Any origin=null
+                      inside BLOCK_BODY
+                        inside FUN name:foo visibility:public modality:FINAL <> () returnType:kotlin.Unit
+                          inside FILE fqName:org.sample fileName:b.kt
+                    """.trimIndent(),
+                    CompilerMessageLocation.create("b.kt", 0, 0, null),
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `private properties can't be referenced from a different file`() {
+        val file1 = createIrFile("a.kt")
+        val privateProperty = IrFactoryImpl.buildProperty {
+            name = Name.identifier("privateProperty")
+            visibility = DescriptorVisibilities.PRIVATE
+        }
+        val file2 = createIrFile("b.kt")
+        val function = IrFactoryImpl.buildFun {
+            name = Name.identifier("foo")
+            returnType = TestIrBuiltins.unitType
+        }
+        val propertyReference = IrPropertyReferenceImplWithShape(
+            startOffset = UNDEFINED_OFFSET,
+            endOffset = UNDEFINED_OFFSET,
+            type = TestIrBuiltins.unitType,
+            symbol = privateProperty.symbol,
+            hasDispatchReceiver = false,
+            hasExtensionReceiver = false,
+            typeArgumentsCount = 0,
+            field = null,
+            getter = null,
+            setter = null,
+        )
+        val body = IrFactoryImpl.createBlockBody(UNDEFINED_OFFSET, UNDEFINED_OFFSET)
+        body.statements.add(propertyReference)
+        function.body = body
+        file1.addChild(privateProperty)
+        file2.addChild(function)
+        testValidation(
+            IrVerificationMode.ERROR,
+            file2,
+            listOf(
+                Message(
+                    ERROR,
+                    """
+                    [IR VALIDATION] IrValidatorTest: The following element references 'private' declaration that is invisible in the current scope:
+                    PROPERTY_REFERENCE 'private final privateProperty [val] declared in org.sample' field=null getter=null setter=null type=kotlin.Unit origin=null
+                      inside BLOCK_BODY
+                        inside FUN name:foo visibility:public modality:FINAL <> () returnType:kotlin.Unit
+                          inside FILE fqName:org.sample fileName:b.kt
+                    """.trimIndent(),
+                    CompilerMessageLocation.create("b.kt", 0, 0, null),
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `private types can't be referenced from a different file`() {
         val file1 = createIrFile("a.kt")
         val klass = IrFactoryImpl.buildClass {
             name = Name.identifier("MyClass")
@@ -442,6 +591,7 @@ class IrValidatorTest {
         val field = IrFactoryImpl.buildField {
             name = Name.identifier("myField")
             type = TestIrBuiltins.anyType
+            visibility = DescriptorVisibilities.PRIVATE
         }
         field.initializer = IrFactoryImpl.createExpressionBody(12, 43, IrGetValueImpl(13, 42, vp.symbol))
         file.addChild(field)
@@ -455,11 +605,75 @@ class IrValidatorTest {
                     [IR VALIDATION] IrValidatorTest: The following expression references a value that is not available in the current scope.
                     GET_VAR 'myVP: kotlin.Any declared in org.sample.foo' type=kotlin.Any origin=null
                       inside EXPRESSION_BODY
-                        inside FIELD name:myField type:kotlin.Any visibility:public
+                        inside FIELD name:myField type:kotlin.Any visibility:private
                           inside FILE fqName:org.sample fileName:test.kt
                     """.trimIndent(),
                     CompilerMessageLocation.create("test.kt", 2, 4, null),
                 )
+            ),
+        )
+    }
+
+    // TODO: Ensure errors for public `const` fields are reported as part of resolving KT-71243.
+    @Test
+    fun `non-private fields are reported`() {
+        val file = createIrFile()
+        val klass = IrFactoryImpl.buildClass {
+            name = Name.identifier("MyClass")
+        }
+        val publicField = IrFactoryImpl.buildField {
+            name = Name.identifier("publicField")
+            type = TestIrBuiltins.anyType
+        }
+        val lateinitProperty = IrFactoryImpl.buildProperty {
+            name = Name.identifier("lateinitProperty")
+            isLateinit = true
+        }
+        val lateinitField = IrFactoryImpl.buildField {
+            name = Name.identifier("lateinitField")
+            type = TestIrBuiltins.anyType
+        }
+        lateinitProperty.backingField = lateinitField
+        lateinitField.correspondingPropertySymbol = lateinitProperty.symbol
+        val constProperty = IrFactoryImpl.buildProperty {
+            name = Name.identifier("constProperty")
+            isConst = true
+        }
+        val constField = IrFactoryImpl.buildField {
+            name = Name.identifier("constField")
+            type = TestIrBuiltins.anyType
+        }
+        constProperty.backingField = constField
+        constField.correspondingPropertySymbol = constProperty.symbol
+        klass.addChild(publicField)
+        klass.addChild(lateinitProperty)
+        klass.addChild(constProperty)
+        file.addChild(klass)
+        testValidation(
+            IrVerificationMode.WARNING,
+            file,
+            listOf(
+                Message(
+                    WARNING,
+                    """
+                    [IR VALIDATION] IrValidatorTest: Kotlin fields are expected to always be private
+                    FIELD name:publicField type:kotlin.Any visibility:public
+                      inside CLASS CLASS name:MyClass modality:FINAL visibility:public superTypes:[]
+                        inside FILE fqName:org.sample fileName:test.kt
+                    """.trimIndent(),
+                    CompilerMessageLocation.create("test.kt", 0, 0, null),
+                ),
+                Message(
+                    WARNING,
+                    """
+                    [IR VALIDATION] IrValidatorTest: Kotlin fields are expected to always be private
+                    FIELD name:lateinitField type:kotlin.Any visibility:public
+                      inside PROPERTY name:lateinitProperty visibility:public modality:FINAL [lateinit,val]
+                        inside CLASS CLASS name:MyClass modality:FINAL visibility:public superTypes:[]
+                          inside FILE fqName:org.sample fileName:test.kt
+                    """.trimIndent(),
+                    CompilerMessageLocation.create("test.kt", 0, 0, null),
+                ),
             ),
         )
     }
@@ -581,6 +795,7 @@ class IrValidatorTest {
         val field = IrFactoryImpl.buildField {
             name = Name.identifier("myField")
             type = IrSimpleTypeImpl(tp.symbol, SimpleTypeNullability.NOT_SPECIFIED, emptyList(), emptyList())
+            visibility = DescriptorVisibilities.PRIVATE
         }
         file.addChild(field)
         testValidation(
@@ -591,7 +806,7 @@ class IrValidatorTest {
                     WARNING,
                     """
                     [IR VALIDATION] IrValidatorTest: The following element references a type parameter 'TYPE_PARAMETER name:E index:0 variance: superTypes:[] reified:false' that is not available in the current scope.
-                    FIELD name:myField type:E of org.sample.MyClass visibility:public
+                    FIELD name:myField type:E of org.sample.MyClass visibility:private
                       inside FILE fqName:org.sample fileName:test.kt
                     """.trimIndent(),
                     CompilerMessageLocation.create("test.kt", 0, 0, null),
@@ -854,6 +1069,114 @@ class IrValidatorTest {
                             inside FILE fqName:org.sample fileName:test.kt
                     """.trimIndent(),
                     CompilerMessageLocation.create("test.kt", 1, 10, null)
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `accesses to not permitted inline function use site are reported`() {
+        val function1 = IrFactoryImpl.buildFun {
+            name = Name.identifier("inlineFunctionUseSiteNotPermitted")
+            returnType = TestIrBuiltins.anyType
+            isInline = true
+        }
+        val function2 = IrFactoryImpl.buildFun {
+            name = Name.identifier("inlineFunctionUseSitePermitted")
+            returnType = TestIrBuiltins.anyType
+            isInline = true
+        }
+        val function3 = IrFactoryImpl.buildFun {
+            name = Name.identifier("foo")
+            returnType = TestIrBuiltins.anyType
+        }
+        val functionCall1 = IrCallImpl(
+            UNDEFINED_OFFSET, UNDEFINED_OFFSET, TestIrBuiltins.anyType, function1.symbol,
+            typeArgumentsCount = 0,
+        )
+        val functionCall2 = IrCallImpl(
+            UNDEFINED_OFFSET, UNDEFINED_OFFSET, TestIrBuiltins.anyType, function2.symbol,
+            typeArgumentsCount = 0,
+        )
+        val body = IrFactoryImpl.createBlockBody(UNDEFINED_OFFSET, UNDEFINED_OFFSET)
+        body.statements.add(functionCall1)
+        body.statements.add(functionCall2)
+        function3.body = body
+        val file = createIrFile()
+        file.addChild(function1)
+        file.addChild(function2)
+        file.addChild(function3)
+        testValidation(
+            IrVerificationMode.ERROR,
+            file,
+            listOf(
+                Message(
+                    ERROR,
+                    """
+                    [IR VALIDATION] IrValidatorTest: The following element references public inline function inlineFunctionUseSiteNotPermitted
+                    CALL 'public final fun inlineFunctionUseSiteNotPermitted (): kotlin.Any [inline] declared in org.sample' type=kotlin.Any origin=null
+                      inside BLOCK_BODY
+                        inside FUN name:foo visibility:public modality:FINAL <> () returnType:kotlin.Any
+                          inside FILE fqName:org.sample fileName:test.kt
+                    """.trimIndent(),
+                    CompilerMessageLocation.create("test.kt", 0, 0, null)
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `references to not permitted inline function use site are reported`() {
+        val function1 = IrFactoryImpl.buildFun {
+            name = Name.identifier("inlineFunctionUseSiteNotPermitted")
+            returnType = TestIrBuiltins.anyType
+            isInline = true
+        }
+        val function2 = IrFactoryImpl.buildFun {
+            name = Name.identifier("inlineFunctionUseSitePermitted")
+            returnType = TestIrBuiltins.anyType
+            isInline = true
+        }
+        val function3 = IrFactoryImpl.buildFun {
+            name = Name.identifier("foo")
+            returnType = TestIrBuiltins.anyType
+        }
+        val functionReference1 = IrFunctionReferenceImpl(
+            startOffset = UNDEFINED_OFFSET,
+            endOffset = UNDEFINED_OFFSET,
+            type = TestIrBuiltins.anyType,
+            symbol = function1.symbol,
+            typeArgumentsCount = 0
+        )
+        val functionReference2 = IrFunctionReferenceImpl(
+            startOffset = UNDEFINED_OFFSET,
+            endOffset = UNDEFINED_OFFSET,
+            type = TestIrBuiltins.anyType,
+            symbol = function2.symbol,
+            typeArgumentsCount = 0
+        )
+        val body = IrFactoryImpl.createBlockBody(UNDEFINED_OFFSET, UNDEFINED_OFFSET)
+        body.statements.add(functionReference1)
+        body.statements.add(functionReference2)
+        function3.body = body
+        val file = createIrFile()
+        file.addChild(function1)
+        file.addChild(function2)
+        file.addChild(function3)
+        testValidation(
+            IrVerificationMode.ERROR,
+            file,
+            listOf(
+                Message(
+                    ERROR,
+                    """
+                    [IR VALIDATION] IrValidatorTest: The following element references public inline function inlineFunctionUseSiteNotPermitted
+                    FUNCTION_REFERENCE 'public final fun inlineFunctionUseSiteNotPermitted (): kotlin.Any [inline] declared in org.sample' type=kotlin.Any origin=null reflectionTarget=<same>
+                      inside BLOCK_BODY
+                        inside FUN name:foo visibility:public modality:FINAL <> () returnType:kotlin.Any
+                          inside FILE fqName:org.sample fileName:test.kt
+                    """.trimIndent(),
+                    CompilerMessageLocation.create("test.kt", 0, 0, null)
                 )
             )
         )

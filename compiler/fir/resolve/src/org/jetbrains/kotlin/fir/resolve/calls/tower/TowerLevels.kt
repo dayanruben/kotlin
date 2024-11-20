@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.fakeElement
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.declarations.utils.isInner
 import org.jetbrains.kotlin.fir.declarations.utils.isStatic
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirSmartCastExpression
@@ -76,7 +75,6 @@ class DispatchReceiverMemberScopeTowerLevel(
         processScopeMembers: FirScope.(processor: (T) -> Unit) -> Unit
     ): ProcessResult {
         val scope = dispatchReceiverValue.scope(session, scopeSession) ?: return ProcessResult.SCOPE_EMPTY
-        var (empty, candidates) = scope.collectCandidates(processScopeMembers)
 
         val receiverTypeWithoutSmartCast = getOriginalReceiverExpressionIfStableSmartCast()?.resolvedType
         val scopeWithoutSmartcast = receiverTypeWithoutSmartCast?.scope(
@@ -86,24 +84,26 @@ class DispatchReceiverMemberScopeTowerLevel(
             requiredMembersPhase = FirResolvePhase.STATUS,
         )
 
+        var processResult: ProcessResult
         if (scopeWithoutSmartcast == null) {
-            consumeCandidates(
-                output,
-                candidatesWithoutSmartcast = candidates,
-                candidatesWithSmartcast = null
-            )
+            processResult = scope.processCandidates(processScopeMembers) { candidate ->
+                output.consumeCandidate(
+                    candidate,
+                    dispatchReceiverValue.receiverExpression,
+                    givenExtensionReceiverOptions,
+                    scope,
+                    isFromOriginalTypeInPresenceOfSmartCast = false
+                )
+            }
         } else {
             val map: MutableMap<T, MemberFromSmartcastScope<T>> = mutableMapOf()
 
-            scopeWithoutSmartcast.collectCandidates(processScopeMembers).let { (isEmpty, originalCandidates) ->
-                empty = empty && isEmpty
-                for (originalCandidate in originalCandidates) {
-                    map[originalCandidate.member] = MemberFromSmartcastScope(originalCandidate, DispatchReceiverToUse.UnwrapSmartcast)
-                }
+            processResult = scopeWithoutSmartcast.processCandidates(processScopeMembers) { candidate ->
+                map[candidate] =
+                    MemberFromSmartcastScope(MemberWithBaseScope(candidate, scopeWithoutSmartcast), DispatchReceiverToUse.UnwrapSmartcast)
             }
 
-            for (candidateFromSmartCast in candidates) {
-                val memberFromSmartcast = candidateFromSmartCast.member
+            processResult += scope.processCandidates(processScopeMembers) { memberFromSmartcast ->
                 val keyMember = unwrapSubstitutionOverrideForSmartcastedThisAccessInAnonymousInitializer(memberFromSmartcast)
                     ?: memberFromSmartcast
                 val existing = map[keyMember]
@@ -113,18 +113,17 @@ class DispatchReceiverMemberScopeTowerLevel(
                 // - When the smart-casted type is always null, we want to return it and report UNSAFE_CALL.
                 // - When the original type can be null, in this case the smart-case either makes it not-null or the call is red anyway.
                 if (existing == null || dispatchReceiverValue.type.isNullableNothing || receiverTypeWithoutSmartCast.canBeNull(session)) {
-                    map[candidateFromSmartCast.member] = MemberFromSmartcastScope(candidateFromSmartCast, DispatchReceiverToUse.SmartcastWithoutUnwrapping)
+                    map[memberFromSmartcast] = MemberFromSmartcastScope(
+                        MemberWithBaseScope(memberFromSmartcast, scope),
+                        DispatchReceiverToUse.SmartcastWithoutUnwrapping
+                    )
                 } else {
                     existing.dispatchReceiverToUse = DispatchReceiverToUse.SmartcastIfUnwrappedInvisible
                 }
             }
 
-            consumeCandidates(
-                output,
-                // all the candidates, both from original type and smart cast
-                candidatesWithoutSmartcast = null,
-                candidatesWithSmartcast = map
-            )
+            // all the candidates, both from original type and smart cast
+            consumeCandidates(output, candidatesWithSmartcast = map)
         }
 
         if (givenExtensionReceiverOptions.isEmpty() && !skipSynthetics) {
@@ -163,7 +162,7 @@ class DispatchReceiverMemberScopeTowerLevel(
             )
 
             withSynthetic?.processScopeMembers { symbol ->
-                empty = false
+                processResult = ProcessResult.FOUND
                 output.consumeCandidate(
                     symbol,
                     dispatchReceiverValue.receiverExpression,
@@ -172,7 +171,7 @@ class DispatchReceiverMemberScopeTowerLevel(
                 )
             }
         }
-        return if (empty) ProcessResult.SCOPE_EMPTY else ProcessResult.FOUND
+        return processResult
     }
 
     /**
@@ -222,46 +221,37 @@ class DispatchReceiverMemberScopeTowerLevel(
         var dispatchReceiverToUse: DispatchReceiverToUse,
     )
 
-    private fun <T : FirCallableSymbol<*>> FirTypeScope.collectCandidates(
-        processScopeMembers: FirScope.(processor: (T) -> Unit) -> Unit
-    ): Pair<Boolean, List<MemberWithBaseScope<T>>> {
-        var empty = true
-        val result = mutableListOf<MemberWithBaseScope<T>>()
+    private inline fun <T : FirCallableSymbol<*>> FirTypeScope.processCandidates(
+        processScopeMembers: FirScope.(processor: (T) -> Unit) -> Unit,
+        crossinline candidateProcessor: (T) -> Unit,
+    ): ProcessResult {
+        var result = ProcessResult.SCOPE_EMPTY
         processScopeMembers { candidate ->
-            empty = false
+            result = ProcessResult.FOUND
             if (candidate.hasConsistentExtensionReceiver(givenExtensionReceiverOptions)) {
-                val fir = candidate.fir
-                // Calls on a dispatch receiver cannot be:
-                // - a constructor call unless it's an inner class
-                // - a SAM constructor call
-                if ((fir as? FirConstructor)?.isInner == false || fir.origin == FirDeclarationOrigin.SamConstructor) {
-                    return@processScopeMembers
-                }
-                result += MemberWithBaseScope(candidate, this)
+                candidateProcessor(candidate)
             }
         }
-        return empty to result
+        return result
     }
 
+    /**
+     * The method consumes candidates if only there's a smart cast type on a dispatch receiver,
+     * and candidates are present both in smart cast and original types.
+     * `isFromSmartCast[candidate] == true` if exactly that member is present in smart cast type.
+     */
     private fun <T : FirCallableSymbol<*>> consumeCandidates(
         output: TowerLevelProcessor,
-        candidatesWithoutSmartcast: Collection<MemberWithBaseScope<T>>?,
-        // The map is not null only if there's a smart cast type on a dispatch receiver
-        // and candidates are present both in smart cast and original types.
-        // isFromSmartCast[candidate] == true iff exactly that member is present in smart cast type
-        candidatesWithSmartcast: Map<T, MemberFromSmartcastScope<T>>?
+        candidatesWithSmartcast: Map<T, MemberFromSmartcastScope<T>>,
     ) {
-        val candidates = candidatesWithoutSmartcast
-            ?: candidatesWithSmartcast?.values?.map { it.memberWithBaseScope }
-            ?: error("candidatesWithoutSmartcast or candidatesWithSmartcast should be not null")
+        for (scopeWithSmartcast in candidatesWithSmartcast.values) {
+            val (candidate, scope) = scopeWithSmartcast.memberWithBaseScope
 
-        for ((candidate, scope) in candidates) {
             if (candidate.hasConsistentExtensionReceiver(givenExtensionReceiverOptions)) {
-                val dispatchReceiverToUse = candidatesWithSmartcast?.getValue(candidate)?.dispatchReceiverToUse
-                val isFromOriginalTypeInPresenceOfSmartCast = dispatchReceiverToUse?.unwrapSmartcast == true
+                val dispatchReceiverToUse = scopeWithSmartcast.dispatchReceiverToUse
+                val isFromOriginalTypeInPresenceOfSmartCast = dispatchReceiverToUse.unwrapSmartcast
                 val dispatchReceiver = when {
-                    isFromOriginalTypeInPresenceOfSmartCast ->
-                        getOriginalReceiverExpressionIfStableSmartCast()
+                    isFromOriginalTypeInPresenceOfSmartCast -> getOriginalReceiverExpressionIfStableSmartCast()
                     else -> dispatchReceiverValue.receiverExpression
                 }
 
@@ -410,7 +400,7 @@ internal class ScopeBasedTowerLevel(
                 val lookupTag = candidate.fir.propertySymbol.dispatchReceiverClassLookupTagOrNull()
                 return when {
                     lookupTag != null -> {
-                        bodyResolveComponents.implicitReceiverStack.lastDispatchReceiver { implicitReceiverValue ->
+                        bodyResolveComponents.implicitValueStorage.lastDispatchReceiver { implicitReceiverValue ->
                             implicitReceiverValue.type.fullyExpandedType(session).lookupTagIfAny == lookupTag
                         }
                     }

@@ -40,7 +40,7 @@ internal class FirEnumEntryImpl(
     override var deprecationsProvider: DeprecationsProvider,
     override val containerSource: DeserializedContainerSource?,
     override val dispatchReceiverType: ConeSimpleKotlinType?,
-    override var contextReceivers: MutableOrEmptyList<FirContextReceiver>,
+    override var contextReceivers: MutableOrEmptyList<FirValueParameter>,
     override val name: Name,
     override var initializer: FirExpression?,
     override var backingField: FirBackingField?,
@@ -79,6 +79,7 @@ internal class FirEnumEntryImpl(
         transformTypeParameters(transformer, data)
         transformStatus(transformer, data)
         transformReturnTypeRef(transformer, data)
+        transformContextReceivers(transformer, data)
         transformInitializer(transformer, data)
         transformBackingField(transformer, data)
         transformOtherChildren(transformer, data)
@@ -101,6 +102,11 @@ internal class FirEnumEntryImpl(
     }
 
     override fun <D> transformReceiverParameter(transformer: FirTransformer<D>, data: D): FirEnumEntryImpl {
+        return this
+    }
+
+    override fun <D> transformContextReceivers(transformer: FirTransformer<D>, data: D): FirEnumEntryImpl {
+        contextReceivers.transformInplace(transformer, data)
         return this
     }
 
@@ -132,7 +138,6 @@ internal class FirEnumEntryImpl(
     }
 
     override fun <D> transformOtherChildren(transformer: FirTransformer<D>, data: D): FirEnumEntryImpl {
-        contextReceivers.transformInplace(transformer, data)
         transformAnnotations(transformer, data)
         return this
     }
@@ -151,7 +156,7 @@ internal class FirEnumEntryImpl(
         deprecationsProvider = newDeprecationsProvider
     }
 
-    override fun replaceContextReceivers(newContextReceivers: List<FirContextReceiver>) {
+    override fun replaceContextReceivers(newContextReceivers: List<FirValueParameter>) {
         contextReceivers = newContextReceivers.toMutableOrEmpty()
     }
 

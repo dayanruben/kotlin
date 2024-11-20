@@ -12,6 +12,7 @@ plugins {
     kotlin("plugin.serialization")
     id("jps-compatible")
     alias(libs.plugins.gradle.node)
+    id("d8-configuration")
 }
 
 val cacheRedirectorEnabled = findProperty("cacheRedirectorEnabled")?.toString()?.toBoolean() == true
@@ -88,7 +89,6 @@ dependencies {
 
 val generationRoot = projectDir.resolve("tests-gen")
 
-useD8Plugin()
 optInToExperimentalCompilerApi()
 
 sourceSets {
@@ -213,7 +213,9 @@ fun Test.setupNodeJs() {
 }
 
 fun Test.setUpJsBoxTests(tags: String?) {
-    setupV8()
+    with(d8KotlinBuild) {
+        setupV8()
+    }
 
     setupNodeJs()
     dependsOn(npmInstall)

@@ -7226,6 +7226,15 @@ public class NativeUnboundIrSerializationTestGenerated extends AbstractNativeUnb
     }
 
     @Nested
+    @TestMetadata("compiler/testData/codegen/box/contextParameters")
+    @TestDataPath("$PROJECT_ROOT")
+    @Tag("frontend-fir")
+    @FirPipeline()
+    @Tag("klib")
+    public class ContextParameters {
+    }
+
+    @Nested
     @TestMetadata("compiler/testData/codegen/box/contracts")
     @TestDataPath("$PROJECT_ROOT")
     @Tag("frontend-fir")
@@ -33314,12 +33323,6 @@ public class NativeUnboundIrSerializationTestGenerated extends AbstractNativeUnb
           @TestMetadata("topLevelProperty.kt")
           public void testTopLevelProperty() {
             runTest("compiler/testData/codegen/box/properties/lateinit/isInitializedAndDeinitialize/topLevelProperty.kt");
-          }
-
-          @Test
-          @TestMetadata("topLevelPropertyMultiModule.kt")
-          public void testTopLevelPropertyMultiModule() {
-            runTest("compiler/testData/codegen/box/properties/lateinit/isInitializedAndDeinitialize/topLevelPropertyMultiModule.kt");
           }
         }
 

@@ -49,6 +49,7 @@ plugins {
     }
     `jvm-toolchains`
     alias(libs.plugins.gradle.node) apply false
+    id("nodejs-cache-redirector-configuration")
 }
 
 val isTeamcityBuild = project.kotlinBuildProperties.isTeamcityBuild
@@ -740,15 +741,17 @@ tasks {
     val coreLibsPublishable = coreLibProjects + listOf(":kotlin-stdlib-common")
     val coreLibsBuildable = coreLibProjects + listOf(":kotlin-stdlib-jvm-minimal-for-test", ":kotlin-stdlib-js-ir-minimal-for-test")
 
-    aggregateLibsTask("coreLibsClean", "clean",
+    aggregateLibsTask(
+        "coreLibsClean", "clean",
         (coreLibProjects + coreLibsBuildable + coreLibsPublishable).distinct() +
-            ":kotlin-stdlib:samples"
+                ":kotlin-stdlib:samples"
     )
 
     aggregateLibsTask("coreLibsAssemble", "assemble", coreLibsBuildable)
     aggregateLibsTask("coreLibsInstall", "install", coreLibsPublishable)
     aggregateLibsTask("coreLibsPublish", "publish", coreLibsPublishable)
-    aggregateLibsTask("coreLibsTest", "check",
+    aggregateLibsTask(
+        "coreLibsTest", "check",
         coreLibsBuildable + listOfNotNull(
             ":kotlin-stdlib:samples",
             ":kotlin-test:kotlin-test-js-it".takeIf { !kotlinBuildProperties.isInJpsBuildIdeaSync },
@@ -1147,13 +1150,8 @@ if (disableVerificationTasks) {
 
 gradle.taskGraph.whenReady(checkYarnAndNPMSuppressed)
 
-@Suppress("DEPRECATION")
 plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin::class) {
     extensions.configure(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension::class.java) {
-        if (kotlinBuildProperties.isCacheRedirectorEnabled) {
-            downloadBaseUrl = "https://cache-redirector.jetbrains.com/nodejs.org/dist"
-        }
-
         npmInstallTaskProvider.configure {
             args += listOf("--network-concurrency", "1", "--mutex", "network")
         }
@@ -1168,12 +1166,12 @@ plugins.withType(com.github.gradle.node.NodePlugin::class) {
     }
 }
 
-@Suppress("DEPRECATION")
 afterEvaluate {
     if (kotlinBuildProperties.isCacheRedirectorEnabled) {
         rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin::class.java) {
-            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension>().downloadBaseUrl =
+            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootEnvSpec>().downloadBaseUrl =
                 "https://cache-redirector.jetbrains.com/github.com/yarnpkg/yarn/releases/download"
+
             rootProject.the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension>().yarnLockMismatchReport =
                 YarnLockMismatchReport.WARNING
         }

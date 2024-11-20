@@ -76,6 +76,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirReceiverParameterSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeAliasSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhaseRecursively
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
@@ -199,7 +200,7 @@ internal class KaFirCompilerFacility(
                     targetFiles = ktFiles,
                     codeFragmentMappings = null,
                     codegenFactory = codegenFactory,
-                    generateClassFilter = SingleFileGenerateClassFilter(dependencyFile, compilationPeerData.inlinedClasses),
+                    generateClassFilter = SingleFileGenerateClassFilter(listOf(dependencyFile), compilationPeerData.inlinedClasses),
                     diagnosticReporter = diagnosticReporter,
                     jvmGeneratorExtensions = JvmFir2IrExtensions(dependencyConfiguration, jvmIrDeserializer),
                     allowedErrorFilter = allowedErrorFilter,
@@ -270,7 +271,7 @@ internal class KaFirCompilerFacility(
             targetFiles,
             codeFragmentMappings,
             codegenFactory,
-            SingleFileGenerateClassFilter(file, compilationPeerData.inlinedClasses),
+            SingleFileGenerateClassFilter(targetFiles, compilationPeerData.inlinedClasses),
             diagnosticReporter,
             jvmGeneratorExtensions,
             allowedErrorFilter,
@@ -570,7 +571,7 @@ internal class KaFirCompilerFacility(
             val id = when (calleeReference) {
                 is FirThisReference -> when (val boundSymbol = calleeReference.boundSymbol) {
                     is FirClassSymbol -> CodeFragmentCapturedId(boundSymbol)
-                    is FirReceiverParameterSymbol -> when (val referencedSymbol = calleeReference.referencedMemberSymbol) {
+                    is FirReceiverParameterSymbol, is FirValueParameterSymbol -> when (val referencedSymbol = calleeReference.referencedMemberSymbol) {
                         // Specific (deprecated) case for a class context receiver
                         // TODO: remove with KT-72994
                         is FirClassSymbol -> CodeFragmentCapturedId(referencedSymbol)
@@ -625,13 +626,13 @@ internal class KaFirCompilerFacility(
     }
 
     private class SingleFileGenerateClassFilter(
-        private val file: KtFile,
+        private val files: List<KtFile>,
         private val inlinedClasses: Set<KtClassOrObject>
     ) : GenerationState.GenerateClassFilter() {
         private val filesWithInlinedClasses = inlinedClasses.mapTo(mutableSetOf()) { it.containingKtFile }
 
         override fun shouldGeneratePackagePart(ktFile: KtFile): Boolean {
-            return file === ktFile || ktFile in filesWithInlinedClasses
+            return ktFile in files || ktFile in filesWithInlinedClasses
         }
 
         override fun shouldAnnotateClass(processingClassOrObject: KtClassOrObject): Boolean {
@@ -639,13 +640,11 @@ internal class KaFirCompilerFacility(
         }
 
         override fun shouldGenerateClass(processingClassOrObject: KtClassOrObject): Boolean {
-            return processingClassOrObject.containingKtFile === file ||
+            return processingClassOrObject.containingKtFile in files ||
                     processingClassOrObject is KtObjectDeclaration && processingClassOrObject in inlinedClasses
         }
 
-        override fun shouldGenerateScript(script: KtScript): Boolean {
-            return script.containingKtFile === file
-        }
+        override fun shouldGenerateScript(script: KtScript): Boolean = script.containingKtFile in files
 
         override fun shouldGenerateCodeFragment(script: KtCodeFragment) = false
     }

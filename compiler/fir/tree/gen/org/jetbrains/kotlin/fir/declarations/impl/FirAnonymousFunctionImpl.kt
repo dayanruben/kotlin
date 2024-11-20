@@ -44,7 +44,7 @@ internal class FirAnonymousFunctionImpl(
     override var deprecationsProvider: DeprecationsProvider,
     override val containerSource: DeserializedContainerSource?,
     override val dispatchReceiverType: ConeSimpleKotlinType?,
-    override var contextReceivers: MutableOrEmptyList<FirContextReceiver>,
+    override var contextReceivers: MutableOrEmptyList<FirValueParameter>,
     override var controlFlowGraphReference: FirControlFlowGraphReference?,
     override val valueParameters: MutableList<FirValueParameter>,
     override var body: FirBlock?,
@@ -84,7 +84,7 @@ internal class FirAnonymousFunctionImpl(
         transformStatus(transformer, data)
         transformReturnTypeRef(transformer, data)
         transformReceiverParameter(transformer, data)
-        contextReceivers.transformInplace(transformer, data)
+        transformContextReceivers(transformer, data)
         controlFlowGraphReference = controlFlowGraphReference?.transform(transformer, data)
         transformValueParameters(transformer, data)
         transformBody(transformer, data)
@@ -112,6 +112,11 @@ internal class FirAnonymousFunctionImpl(
 
     override fun <D> transformReceiverParameter(transformer: FirTransformer<D>, data: D): FirAnonymousFunctionImpl {
         receiverParameter = receiverParameter?.transform(transformer, data)
+        return this
+    }
+
+    override fun <D> transformContextReceivers(transformer: FirTransformer<D>, data: D): FirAnonymousFunctionImpl {
+        contextReceivers.transformInplace(transformer, data)
         return this
     }
 
@@ -155,7 +160,7 @@ internal class FirAnonymousFunctionImpl(
         deprecationsProvider = newDeprecationsProvider
     }
 
-    override fun replaceContextReceivers(newContextReceivers: List<FirContextReceiver>) {
+    override fun replaceContextReceivers(newContextReceivers: List<FirValueParameter>) {
         contextReceivers = newContextReceivers.toMutableOrEmpty()
     }
 

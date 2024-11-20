@@ -40,7 +40,7 @@ open class FirBackingFieldImpl @FirImplementationDetail constructor(
     override var deprecationsProvider: DeprecationsProvider,
     override val containerSource: DeserializedContainerSource?,
     override val dispatchReceiverType: ConeSimpleKotlinType?,
-    override var contextReceivers: MutableOrEmptyList<FirContextReceiver>,
+    override var contextReceivers: MutableOrEmptyList<FirValueParameter>,
     override val name: Name,
     override var delegate: FirExpression?,
     override val isVar: Boolean,
@@ -78,6 +78,7 @@ open class FirBackingFieldImpl @FirImplementationDetail constructor(
     override fun <D> transformChildren(transformer: FirTransformer<D>, data: D): FirBackingFieldImpl {
         transformReturnTypeRef(transformer, data)
         transformReceiverParameter(transformer, data)
+        transformContextReceivers(transformer, data)
         transformDelegate(transformer, data)
         transformGetter(transformer, data)
         transformSetter(transformer, data)
@@ -96,6 +97,11 @@ open class FirBackingFieldImpl @FirImplementationDetail constructor(
 
     override fun <D> transformReceiverParameter(transformer: FirTransformer<D>, data: D): FirBackingFieldImpl {
         receiverParameter = receiverParameter?.transform(transformer, data)
+        return this
+    }
+
+    override fun <D> transformContextReceivers(transformer: FirTransformer<D>, data: D): FirBackingFieldImpl {
+        contextReceivers.transformInplace(transformer, data)
         return this
     }
 
@@ -140,7 +146,6 @@ open class FirBackingFieldImpl @FirImplementationDetail constructor(
     }
 
     override fun <D> transformOtherChildren(transformer: FirTransformer<D>, data: D): FirBackingFieldImpl {
-        contextReceivers.transformInplace(transformer, data)
         transformAnnotations(transformer, data)
         return this
     }
@@ -157,7 +162,7 @@ open class FirBackingFieldImpl @FirImplementationDetail constructor(
         deprecationsProvider = newDeprecationsProvider
     }
 
-    override fun replaceContextReceivers(newContextReceivers: List<FirContextReceiver>) {
+    override fun replaceContextReceivers(newContextReceivers: List<FirValueParameter>) {
         contextReceivers = newContextReceivers.toMutableOrEmpty()
     }
 

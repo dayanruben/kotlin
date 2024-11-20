@@ -7608,6 +7608,19 @@ public class NativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenBoxT
     }
 
     @Nested
+    @TestMetadata("compiler/testData/codegen/box/contextParameters")
+    @TestDataPath("$PROJECT_ROOT")
+    @UseExtTestCaseGroupProvider()
+    @UsePartialLinkage(mode = Mode.DISABLED)
+    @Tag("no-partial-linkage-may-be-skipped")
+    public class ContextParameters {
+      @Test
+      public void testAllFilesPresentInContextParameters() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/contextParameters"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+      }
+    }
+
+    @Nested
     @TestMetadata("compiler/testData/codegen/box/contracts")
     @TestDataPath("$PROJECT_ROOT")
     @UseExtTestCaseGroupProvider()
@@ -34490,12 +34503,6 @@ public class NativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenBoxT
           @TestMetadata("topLevelProperty.kt")
           public void testTopLevelProperty() {
             runTest("compiler/testData/codegen/box/properties/lateinit/isInitializedAndDeinitialize/topLevelProperty.kt");
-          }
-
-          @Test
-          @TestMetadata("topLevelPropertyMultiModule.kt")
-          public void testTopLevelPropertyMultiModule() {
-            runTest("compiler/testData/codegen/box/properties/lateinit/isInitializedAndDeinitialize/topLevelPropertyMultiModule.kt");
           }
         }
 

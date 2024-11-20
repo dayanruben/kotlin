@@ -52,6 +52,11 @@ sealed class KtFakeSourceElementKind(final override val shouldSkipErrorTypeRepor
     object ImplicitThisReceiverExpression : KtFakeSourceElementKind()
 
     /**
+     * for implicit context parameter arguments of calls.
+     */
+    object ImplicitContextParameterArgument : KtFakeSourceElementKind()
+
+    /**
      * for type arguments that were inferred as opposed to specified
      * explicitly via `<>`
      */
@@ -345,6 +350,12 @@ sealed class KtFakeSourceElementKind(final override val shouldSkipErrorTypeRepor
      * where `it` parameter declaration has fake source
      */
     object ItLambdaParameter : KtFakeSourceElementKind()
+
+    /**
+     * For function type `context(Foo) () -> Unit`,
+     * the context parameter with type `Foo` of the anonymous function.
+     */
+    object LambdaContextParameter : KtFakeSourceElementKind()
 
     /**
      * While it doesn't have an explicit source, it still has a type that might be a ConeErrorType

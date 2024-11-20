@@ -431,6 +431,12 @@ public class TieredFrontendJvmLightTreeTestGenerated extends AbstractTieredFront
     }
 
     @Test
+    @TestMetadata("functionTypeInitializerTypeMismatch.kt")
+    public void testFunctionTypeInitializerTypeMismatch() {
+      runTest("compiler/testData/diagnostics/tests/functionTypeInitializerTypeMismatch.kt");
+    }
+
+    @Test
     @TestMetadata("GenericArgumentConsistency.kt")
     public void testGenericArgumentConsistency() {
       runTest("compiler/testData/diagnostics/tests/GenericArgumentConsistency.kt");
@@ -8091,6 +8097,12 @@ public class TieredFrontendJvmLightTreeTestGenerated extends AbstractTieredFront
         @TestMetadata("outerClass.kt")
         public void testOuterClass() {
           runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/outerClass.kt");
+        }
+
+        @Test
+        @TestMetadata("resolutionByName.kt")
+        public void testResolutionByName() {
+          runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/resolutionByName.kt");
         }
 
         @Test
@@ -28268,6 +28280,12 @@ public class TieredFrontendJvmLightTreeTestGenerated extends AbstractTieredFront
     @TestMetadata("compiler/fir/analysis-tests/testData/resolve/contextParameters")
     @TestDataPath("$PROJECT_ROOT")
     public class ContextParameters {
+      @Test
+      @TestMetadata("contextLambda.kt")
+      public void testContextLambda() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/contextLambda.kt");
+      }
+
       @Test
       @TestMetadata("smoke.kt")
       public void testSmoke() {
