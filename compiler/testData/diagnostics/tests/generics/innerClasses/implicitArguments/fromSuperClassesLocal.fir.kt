@@ -10,7 +10,7 @@ private fun <E> foobar() = {
             fun a() = A<E, X, Y, Z>()
         }
 
-        typealias LocalAlias<W> = A<E, X, Y, W>
+        <!WRONG_MODIFIER_TARGET!>inner<!> typealias LocalAlias<W> = A<E, X, Y, W>
     }
 
     class Derived : LocalOuter<Double, Short>() {
@@ -27,7 +27,7 @@ private fun noParameters() = {
             fun a() = A<Any, X, Y, Z>()
         }
 
-        typealias LocalAlias2<W> = A<Any, X, Y, W>
+        <!WRONG_MODIFIER_TARGET!>inner<!> typealias LocalAlias2<W> = A<Any, X, Y, W>
     }
 
     class Derived2 : LocalOuter2<Double, Short>() {
@@ -43,7 +43,7 @@ fun test() {
     x = foobar<String>()
 
     x().foo().a() checkType { _<A<String, Double, Short, Long>>() }
-    x().bar() checkType { <!UNRESOLVED_REFERENCE_WRONG_RECEIVER!>_<!><A<String, Double, Short, Char>>() }
+    x().bar() checkType { _<A<String, Double, Short, Char>>() }
 
     x = <!ASSIGNMENT_TYPE_MISMATCH!>foobar<Int>()<!>
 
@@ -51,5 +51,5 @@ fun test() {
     y = noParameters()
 
     y().foo().a() checkType { _<A<Any, Double, Short, Long>>() }
-    y().bar() checkType { <!UNRESOLVED_REFERENCE_WRONG_RECEIVER!>_<!><A<Any, Double, Short, Char>>() }
+    y().bar() checkType { _<A<Any, Double, Short, Char>>() }
 }

@@ -4551,6 +4551,30 @@ public class TieredBackendJvmPsiTestGenerated extends AbstractTieredBackendJvmPs
     @TestDataPath("$PROJECT_ROOT")
     public class Delegation {
       @Test
+      @TestMetadata("Delegation_DifferentGenerics_Intersection.kt")
+      public void testDelegation_DifferentGenerics_Intersection() {
+        runTest("compiler/testData/diagnostics/tests/delegation/Delegation_DifferentGenerics_Intersection.kt");
+      }
+
+      @Test
+      @TestMetadata("Delegation_DifferentGenerics_MultipleDelegation.kt")
+      public void testDelegation_DifferentGenerics_MultipleDelegation() {
+        runTest("compiler/testData/diagnostics/tests/delegation/Delegation_DifferentGenerics_MultipleDelegation.kt");
+      }
+
+      @Test
+      @TestMetadata("Delegation_DifferentGenerics_RawType.kt")
+      public void testDelegation_DifferentGenerics_RawType() {
+        runTest("compiler/testData/diagnostics/tests/delegation/Delegation_DifferentGenerics_RawType.kt");
+      }
+
+      @Test
+      @TestMetadata("Delegation_GenericWithRawType.kt")
+      public void testDelegation_GenericWithRawType() {
+        runTest("compiler/testData/diagnostics/tests/delegation/Delegation_GenericWithRawType.kt");
+      }
+
+      @Test
       @TestMetadata("Delegation_Hierarchy.kt")
       public void testDelegation_Hierarchy() {
         runTest("compiler/testData/diagnostics/tests/delegation/Delegation_Hierarchy.kt");
@@ -24487,6 +24511,17 @@ public class TieredBackendJvmPsiTestGenerated extends AbstractTieredBackendJvmPs
       @TestMetadata("simpleImportOuter.kt")
       public void testSimpleImportOuter() {
         runTest("compiler/fir/analysis-tests/testData/resolve/multifile/simpleImportOuter.kt");
+      }
+    }
+
+    @Nested
+    @TestMetadata("compiler/fir/analysis-tests/testData/resolve/nestedTypeAliases")
+    @TestDataPath("$PROJECT_ROOT")
+    public class NestedTypeAliases {
+      @Test
+      @TestMetadata("simple.kt")
+      public void testSimple() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/nestedTypeAliases/simple.kt");
       }
     }
 

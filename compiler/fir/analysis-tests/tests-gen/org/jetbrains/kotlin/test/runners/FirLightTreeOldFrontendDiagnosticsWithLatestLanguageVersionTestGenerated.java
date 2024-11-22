@@ -11479,9 +11479,51 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       }
 
       @Test
+      @TestMetadata("Delegation_DifferentGenerics_Intersection.kt")
+      public void testDelegation_DifferentGenerics_Intersection() {
+        runTest("compiler/testData/diagnostics/tests/delegation/Delegation_DifferentGenerics_Intersection.kt");
+      }
+
+      @Test
+      @TestMetadata("Delegation_DifferentGenerics_Intersection_After.kt")
+      public void testDelegation_DifferentGenerics_Intersection_After() {
+        runTest("compiler/testData/diagnostics/tests/delegation/Delegation_DifferentGenerics_Intersection_After.kt");
+      }
+
+      @Test
+      @TestMetadata("Delegation_DifferentGenerics_MultipleDelegation.kt")
+      public void testDelegation_DifferentGenerics_MultipleDelegation() {
+        runTest("compiler/testData/diagnostics/tests/delegation/Delegation_DifferentGenerics_MultipleDelegation.kt");
+      }
+
+      @Test
+      @TestMetadata("Delegation_DifferentGenerics_MultipleDelegation_After.kt")
+      public void testDelegation_DifferentGenerics_MultipleDelegation_After() {
+        runTest("compiler/testData/diagnostics/tests/delegation/Delegation_DifferentGenerics_MultipleDelegation_After.kt");
+      }
+
+      @Test
+      @TestMetadata("Delegation_DifferentGenerics_RawType.kt")
+      public void testDelegation_DifferentGenerics_RawType() {
+        runTest("compiler/testData/diagnostics/tests/delegation/Delegation_DifferentGenerics_RawType.kt");
+      }
+
+      @Test
+      @TestMetadata("Delegation_DifferentGenerics_RawType_After.kt")
+      public void testDelegation_DifferentGenerics_RawType_After() {
+        runTest("compiler/testData/diagnostics/tests/delegation/Delegation_DifferentGenerics_RawType_After.kt");
+      }
+
+      @Test
       @TestMetadata("Delegation_DifferentGenerics_Substitution.kt")
       public void testDelegation_DifferentGenerics_Substitution() {
         runTest("compiler/testData/diagnostics/tests/delegation/Delegation_DifferentGenerics_Substitution.kt");
+      }
+
+      @Test
+      @TestMetadata("Delegation_GenericWithRawType.kt")
+      public void testDelegation_GenericWithRawType() {
+        runTest("compiler/testData/diagnostics/tests/delegation/Delegation_GenericWithRawType.kt");
       }
 
       @Test
@@ -42024,6 +42066,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       @TestMetadata("privateToThisK1Crash.kt")
       public void testPrivateToThisK1Crash() {
         runTest("compiler/testData/diagnostics/tests/visibility/privateToThisK1Crash.kt");
+      }
+
+      @Test
+      @TestMetadata("privateTypeInProjection.kt")
+      public void testPrivateTypeInProjection() {
+        runTest("compiler/testData/diagnostics/tests/visibility/privateTypeInProjection.kt");
       }
 
       @Test

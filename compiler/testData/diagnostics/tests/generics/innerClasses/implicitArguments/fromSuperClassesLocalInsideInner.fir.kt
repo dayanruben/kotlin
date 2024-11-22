@@ -12,7 +12,7 @@ class Outer<T> {
                     fun a() = A<T, F, E, X, Y, Z>()
                 }
 
-                typealias LocalAlias<W> = A<T, F, E, X, Y, W>
+                <!WRONG_MODIFIER_TARGET!>inner<!> typealias LocalAlias<W> = A<T, F, E, X, Y, W>
             }
 
             class Derived : LocalOuter<Double, Short>() {
@@ -29,7 +29,7 @@ class Outer<T> {
                     fun a() = A<T, F, Any, X, Y, Z>()
                 }
 
-                typealias LocalAlias2<W> = A<T, F, Any, X, Y, W>
+                <!WRONG_MODIFIER_TARGET!>inner<!> typealias LocalAlias2<W> = A<T, F, Any, X, Y, W>
             }
 
             class Derived2 : LocalOuter2<Double, Short>() {
@@ -44,7 +44,7 @@ class Outer<T> {
             x = foobar<String>()
 
             x().foo().a() checkType { _<A<T, F, String, Double, Short, Long>>() }
-            x().bar() checkType { <!UNRESOLVED_REFERENCE_WRONG_RECEIVER!>_<!><A<T, F, String, Double, Short, Char>>() }
+            x().bar() checkType { _<A<T, F, String, Double, Short, Char>>() }
 
             x = <!ASSIGNMENT_TYPE_MISMATCH!>foobar<Int>()<!>
             x = <!ASSIGNMENT_TYPE_MISMATCH!>z.foobar<String>()<!>
@@ -53,7 +53,7 @@ class Outer<T> {
             y = noParameters()
 
             y().foo().a() checkType { _<A<T, F, Any, Double, Short, Long>>() }
-            y().bar() checkType { <!UNRESOLVED_REFERENCE_WRONG_RECEIVER!>_<!><A<T, F, Any, Double, Short, Char>>() }
+            y().bar() checkType { _<A<T, F, Any, Double, Short, Char>>() }
         }
     }
 }
