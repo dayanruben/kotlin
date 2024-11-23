@@ -2456,6 +2456,36 @@ internal class NullableOnDefinitelyNotNullableImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.NullableOnDefinitelyNotNullable
 
+internal class InferredInvisibleReifiedTypeArgumentErrorImpl(
+    override val typeParameter: KaTypeParameterSymbol,
+    override val typeArgumentType: KaType,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.InferredInvisibleReifiedTypeArgumentError
+
+internal class InferredInvisibleReifiedTypeArgumentWarningImpl(
+    override val typeParameter: KaTypeParameterSymbol,
+    override val typeArgumentType: KaType,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.InferredInvisibleReifiedTypeArgumentWarning
+
+internal class InferredInvisibleVarargTypeArgumentErrorImpl(
+    override val typeParameter: KaTypeParameterSymbol,
+    override val typeArgumentType: KaType,
+    override val valueParameter: KaSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.InferredInvisibleVarargTypeArgumentError
+
+internal class InferredInvisibleVarargTypeArgumentWarningImpl(
+    override val typeParameter: KaTypeParameterSymbol,
+    override val typeArgumentType: KaType,
+    override val valueParameter: KaSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.InferredInvisibleVarargTypeArgumentWarning
+
 internal class ExtensionInClassReferenceNotAllowedImpl(
     override val referencedDeclaration: KaCallableSymbol,
     firDiagnostic: KtPsiDiagnostic,
@@ -4225,6 +4255,16 @@ internal class UnusedAnonymousParameterImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.UnusedAnonymousParameter
+
+internal class UnusedExpressionImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.UnusedExpression
+
+internal class UnusedLambdaExpressionImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.UnusedLambdaExpression
 
 internal class ReturnNotAllowedImpl(
     firDiagnostic: KtPsiDiagnostic,

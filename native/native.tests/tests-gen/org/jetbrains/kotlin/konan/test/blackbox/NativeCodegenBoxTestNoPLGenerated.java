@@ -7778,6 +7778,12 @@ public class NativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenBoxT
       }
 
       @Test
+      @TestMetadata("breakInDoWhile.kt")
+      public void testBreakInDoWhile() {
+        runTest("compiler/testData/codegen/box/controlStructures/breakInDoWhile.kt");
+      }
+
+      @Test
       @TestMetadata("breakInFinally.kt")
       public void testBreakInFinally() {
         runTest("compiler/testData/codegen/box/controlStructures/breakInFinally.kt");
@@ -33650,6 +33656,19 @@ public class NativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenBoxT
           public void testPrimitiveEqObjectShort() {
             runTest("compiler/testData/codegen/box/primitiveTypes/equalityWithObject/generated/primitiveEqObjectShort.kt");
           }
+        }
+      }
+
+      @Nested
+      @TestMetadata("compiler/testData/codegen/box/primitiveTypes/identityEqualsWithNullable")
+      @TestDataPath("$PROJECT_ROOT")
+      @UseExtTestCaseGroupProvider()
+      @UsePartialLinkage(mode = Mode.DISABLED)
+      @Tag("no-partial-linkage-may-be-skipped")
+      public class IdentityEqualsWithNullable {
+        @Test
+        public void testAllFilesPresentInIdentityEqualsWithNullable() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/primitiveTypes/identityEqualsWithNullable"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
         }
       }
 

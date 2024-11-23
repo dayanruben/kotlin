@@ -7382,6 +7382,12 @@ public class NativeUnboundIrSerializationTestGenerated extends AbstractNativeUnb
       }
 
       @Test
+      @TestMetadata("breakInDoWhile.kt")
+      public void testBreakInDoWhile() {
+        runTest("compiler/testData/codegen/box/controlStructures/breakInDoWhile.kt");
+      }
+
+      @Test
       @TestMetadata("breakInFinally.kt")
       public void testBreakInFinally() {
         runTest("compiler/testData/codegen/box/controlStructures/breakInFinally.kt");
@@ -32510,6 +32516,15 @@ public class NativeUnboundIrSerializationTestGenerated extends AbstractNativeUnb
             runTest("compiler/testData/codegen/box/primitiveTypes/equalityWithObject/generated/primitiveEqObjectShort.kt");
           }
         }
+      }
+
+      @Nested
+      @TestMetadata("compiler/testData/codegen/box/primitiveTypes/identityEqualsWithNullable")
+      @TestDataPath("$PROJECT_ROOT")
+      @Tag("frontend-fir")
+      @FirPipeline()
+      @Tag("klib")
+      public class IdentityEqualsWithNullable {
       }
 
       @Nested

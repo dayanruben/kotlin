@@ -128,7 +128,7 @@ internal val functionsWithoutBoundCheck = createSimpleNamedCompilerPhase<Context
 )
 
 private val removeExpectDeclarationsPhase = createFileLoweringPhase(
-        ::ExpectDeclarationsRemoving,
+        ::ExpectDeclarationsRemoveLowering,
         name = "RemoveExpectDeclarations",
 )
 
@@ -454,10 +454,15 @@ private val bridgesPhase = createFileLoweringPhase(
         prerequisite = setOf(coroutinesPhase)
 )
 
+private val eraseGenericCallsReturnTypesPhase = createFileLoweringPhase(
+        name = "EraseGenericCallsReturnTypesPhase",
+        lowering = ::GenericCallsReturnTypeEraser,
+)
+
 private val autoboxPhase = createFileLoweringPhase(
         ::Autoboxing,
         name = "Autobox",
-        prerequisite = setOf(bridgesPhase, coroutinesPhase)
+        prerequisite = setOf(bridgesPhase, coroutinesPhase, eraseGenericCallsReturnTypesPhase)
 )
 
 private val constructorsLoweringPhase = createFileLoweringPhase(
@@ -612,6 +617,7 @@ internal fun KonanConfig.getLoweringsAfterInlining(): LoweringList = listOfNotNu
         bridgesPhase,
         exportInternalAbiPhase.takeIf { this.produce.isCache },
         useInternalAbiPhase,
+        eraseGenericCallsReturnTypesPhase,
         autoboxPhase,
         constructorsLoweringPhase,
 )
