@@ -27,7 +27,7 @@ fun KtDiagnosticFactoryToRendererMap.verifyMessages(objectWithErrors: Any) {
     }
 
     if (errors.isNotEmpty()) {
-        Assert.fail(errors.joinToString("\n", prefix = "\n"))
+        Assert.fail(errors.joinToString("\n\n", postfix = "\n\nSee https://youtrack.jetbrains.com/articles/KT-A-610 for the style guide.\n\n"))
     }
 }
 
@@ -58,22 +58,59 @@ fun KtDiagnosticFactoryToRendererMap.verifyMessageForFactory(factory: AbstractKt
         else -> 0
     }
 
-    for (parameter in messageParameterRegex.findAll(renderer.message)) {
+    val message = renderer.message
+
+    for (parameter in messageParameterRegex.findAll(message)) {
         val index = parameter.value.substring(1, 2).toInt()
         if (index >= parameterCount) {
             add("Message for ${property.name} references wrong parameter {$index}")
         }
     }
 
-    if (parameterCount > 0 && renderer.message.contains("(?<!')'(?!')".toRegex())) {
+    if (parameterCount > 0 && message.contains("(?<!')'(?!')".toRegex())) {
         add("Renderer for ${property.name} has parameters and contains a single quote. Text inside single quotes is not formatted in MessageFormat. Use double quotes instead.")
     }
 
-    if (parameterCount == 0 && renderer.message.contains("(?<!')''(?!')".toRegex())) {
+    if (parameterCount == 0 && message.contains("(?<!')''(?!')".toRegex())) {
         add("Renderer for ${property.name} has no parameters and contains double quote. Single quotes should be used.")
     }
 
-    if (property.name !in lastCharExclusions && !renderer.message.last().toString().matches(lastCharRegex)) {
+    if (property.name !in lastCharExclusions && !message.last().toString().matches(lastCharRegex)) {
         add("Renderer for ${property.name} should end with a full stop. If this error is a false positive, add the name of the diagnostic to the list of exclusions.")
     }
+
+    fun MutableList<String>.checkRule(regex: Regex, hasProblem: String, exclusions: Set<String> = emptySet()) {
+        if (property.name !in exclusions && message.contains(regex)) {
+            val updatedMessage = message.replace(regex) { matchResult -> "[[${matchResult.value}]]" }
+            add(
+                "Message of ${property.name} $hasProblem:\n$updatedMessage\nIf this error is a false positive, add the name of the diagnostic to the list of exclusions."
+            )
+        }
+    }
+
+    checkRule(
+        """\b(colour|favour|realise|analyse|centre|defence|offence|licence|cancelled|metre|tonne|cheque|catalogue|neighbour|grey|programme)\b""".toRegex(
+            RegexOption.IGNORE_CASE),
+        "uses British spelling. Use American spelling instead"
+    )
+
+    checkRule(
+        """\b(?:we|us|you(?!\s+have))\b""".toRegex(RegexOption.IGNORE_CASE),
+        "uses 'we', 'us' or 'you'.",
+        setOf(
+            FirErrors.CONTEXT_RECEIVERS_DEPRECATED.name,
+            FirErrors.NO_TYPE_ARGUMENTS_ON_RHS.name,
+            "PARCELABLE_TYPE_NOT_SUPPORTED",
+        )
+    )
+    checkRule(
+        """\bplease\b""".toRegex(RegexOption.IGNORE_CASE),
+        "uses overly polite tone",
+        setOf(FirErrors.CONTEXT_RECEIVERS_DEPRECATED.name, FirErrors.ERROR_SUPPRESSION.name)
+    )
+
+    checkRule(
+        """\b(?:probably|likely|maybe|certainly|possibly|undoubtedly|presumably|apparently|hopefully)\b""".toRegex(RegexOption.IGNORE_CASE),
+        "uses adverb of probability (likely, maybe, ...)",
+    )
 }

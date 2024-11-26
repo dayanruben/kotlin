@@ -12136,6 +12136,12 @@ public class TieredFrontendJvmPsiTestGenerated extends AbstractTieredFrontendJvm
       @TestDataPath("$PROJECT_ROOT")
       public class Regressions {
         @Test
+        @TestMetadata("classSubstitutedWithOwnFunctionTypeParameter.kt")
+        public void testClassSubstitutedWithOwnFunctionTypeParameter() {
+          runTest("compiler/testData/diagnostics/tests/inference/regressions/classSubstitutedWithOwnFunctionTypeParameter.kt");
+        }
+
+        @Test
         @TestMetadata("kt1029.kt")
         public void testKt1029() {
           runTest("compiler/testData/diagnostics/tests/inference/regressions/kt1029.kt");
@@ -21781,6 +21787,12 @@ public class TieredFrontendJvmPsiTestGenerated extends AbstractTieredFrontendJvm
         }
 
         @Test
+        @TestMetadata("classMembers.kt")
+        public void testClassMembers() {
+          runTest("compiler/testData/diagnostics/tests/smartCasts/variables/classMembers.kt");
+        }
+
+        @Test
         @TestMetadata("doWhileWithMiddleBreak.kt")
         public void testDoWhileWithMiddleBreak() {
           runTest("compiler/testData/diagnostics/tests/smartCasts/variables/doWhileWithMiddleBreak.kt");
@@ -29086,6 +29098,12 @@ public class TieredFrontendJvmPsiTestGenerated extends AbstractTieredFrontendJvm
       @TestMetadata("kt72164.kt")
       public void testKt72164() {
         runTest("compiler/fir/analysis-tests/testData/resolve/extraCheckers/kt72164.kt");
+      }
+
+      @Test
+      @TestMetadata("kt72537.kt")
+      public void testKt72537() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/extraCheckers/kt72537.kt");
       }
 
       @Test

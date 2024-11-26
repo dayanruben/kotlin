@@ -16,10 +16,11 @@ import org.jetbrains.kotlin.konan.test.blackbox.support.parseModule
 import org.jetbrains.kotlin.konan.test.blackbox.support.settings.KotlinNativeTargets
 import org.jetbrains.kotlin.konan.test.blackbox.support.util.getAbsoluteFile
 import org.jetbrains.kotlin.library.abi.*
-import org.jetbrains.kotlin.library.abi.directives.LibraryAbiDumpDirectives
-import org.jetbrains.kotlin.library.abi.directives.LibraryAbiDumpDirectives.EXCLUDED_CLASSES
-import org.jetbrains.kotlin.library.abi.directives.LibraryAbiDumpDirectives.EXCLUDED_PACKAGES
-import org.jetbrains.kotlin.library.abi.directives.LibraryAbiDumpDirectives.NON_PUBLIC_MARKERS
+import org.jetbrains.kotlin.test.backend.handlers.KlibAbiDumpHandler.Companion.abiDumpFileExtension
+import org.jetbrains.kotlin.test.directives.KlibAbiDumpDirectives
+import org.jetbrains.kotlin.test.directives.KlibAbiDumpDirectives.KLIB_ABI_DUMP_EXCLUDED_CLASSES
+import org.jetbrains.kotlin.test.directives.KlibAbiDumpDirectives.KLIB_ABI_DUMP_EXCLUDED_PACKAGES
+import org.jetbrains.kotlin.test.directives.KlibAbiDumpDirectives.KLIB_ABI_DUMP_NON_PUBLIC_MARKERS
 import org.jetbrains.kotlin.test.directives.model.ComposedDirectivesContainer
 import org.jetbrains.kotlin.test.services.JUnit5Assertions
 import org.jetbrains.kotlin.test.services.JUnit5Assertions.assertEqualsToFile
@@ -74,7 +75,8 @@ abstract class AbstractNativeLibraryAbiReaderTest : AbstractNativeSimpleTest() {
             assertTrue(sourceFile.isFile) { "Source file does not exist: $sourceFile" }
 
             return sourceFile to AbiSignatureVersion.allSupportedByAbiReader.associateWith { signatureVersion ->
-                val dumpFile = sourceFile.withReplacedExtensionOrNull("kt", "v${signatureVersion.versionNumber}.txt")!!
+                val dumpFileExtension = abiDumpFileExtension(signatureVersion.versionNumber)
+                val dumpFile = sourceFile.withReplacedExtensionOrNull("kt", dumpFileExtension)!!
                 assertTrue(dumpFile.isFile) { "Dump file does not exist: $dumpFile" }
                 dumpFile
             }
@@ -84,7 +86,7 @@ abstract class AbstractNativeLibraryAbiReaderTest : AbstractNativeSimpleTest() {
 
         internal fun parseDirectives(sourceFile: File): FromDirectives {
             val directivesParser = RegisteredDirectivesParser(
-                ComposedDirectivesContainer(LibraryAbiDumpDirectives, TestDirectives),
+                ComposedDirectivesContainer(KlibAbiDumpDirectives, TestDirectives),
                 JUnit5Assertions
             )
             sourceFile.forEachLine(action = directivesParser::parse)
@@ -96,9 +98,9 @@ abstract class AbstractNativeLibraryAbiReaderTest : AbstractNativeSimpleTest() {
                 Location(sourceFile)
             ).name
 
-            val excludedPackages = registeredDirectives[EXCLUDED_PACKAGES]
-            val excludedClasses = registeredDirectives[EXCLUDED_CLASSES]
-            val nonPublicMarkers = registeredDirectives[NON_PUBLIC_MARKERS]
+            val excludedPackages = registeredDirectives[KLIB_ABI_DUMP_EXCLUDED_PACKAGES]
+            val excludedClasses = registeredDirectives[KLIB_ABI_DUMP_EXCLUDED_CLASSES]
+            val nonPublicMarkers = registeredDirectives[KLIB_ABI_DUMP_NON_PUBLIC_MARKERS]
 
             return FromDirectives(
                 moduleName = moduleName,

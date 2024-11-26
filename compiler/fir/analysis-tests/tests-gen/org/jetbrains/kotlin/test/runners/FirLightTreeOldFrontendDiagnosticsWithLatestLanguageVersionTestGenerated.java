@@ -21920,6 +21920,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
         }
 
         @Test
+        @TestMetadata("classSubstitutedWithOwnFunctionTypeParameter.kt")
+        public void testClassSubstitutedWithOwnFunctionTypeParameter() {
+          runTest("compiler/testData/diagnostics/tests/inference/regressions/classSubstitutedWithOwnFunctionTypeParameter.kt");
+        }
+
+        @Test
         @TestMetadata("compareBy.kt")
         public void testCompareBy() {
           runTest("compiler/testData/diagnostics/tests/inference/regressions/compareBy.kt");
@@ -37789,6 +37795,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
         @TestMetadata("capturedWithControlJumps.kt")
         public void testCapturedWithControlJumps() {
           runTest("compiler/testData/diagnostics/tests/smartCasts/variables/capturedWithControlJumps.kt");
+        }
+
+        @Test
+        @TestMetadata("classMembers.kt")
+        public void testClassMembers() {
+          runTest("compiler/testData/diagnostics/tests/smartCasts/variables/classMembers.kt");
         }
 
         @Test

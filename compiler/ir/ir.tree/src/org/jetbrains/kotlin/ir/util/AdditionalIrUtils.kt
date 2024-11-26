@@ -23,7 +23,7 @@ fun IrClassifierSymbol?.isArrayOrPrimitiveArray(builtins: IrBuiltIns): Boolean =
 
 // Constructors can't be marked as inline in metadata, hence this check.
 fun IrFunction.isInlineArrayConstructor(): Boolean =
-    this is IrConstructor && valueParameters.size == 2 && constructedClass.defaultType.let { it.isArray() || it.isPrimitiveArray() }
+    this is IrConstructor && hasShape(regularParameters = 2) && constructedClass.defaultType.let { it.isArray() || it.isPrimitiveArray() }
 
 val IrDeclarationParent.fqNameForIrSerialization: FqName
     get() = when (this) {
@@ -198,9 +198,6 @@ val IrDeclaration.isPropertyField get() =
 
 val IrDeclaration.isJvmInlineClassConstructor get() =
     this is IrSimpleFunction && name.asString() == "constructor-impl"
-
-val IrDeclaration.isTopLevelDeclaration get() =
-    parent !is IrDeclaration && !this.isPropertyAccessor && !this.isPropertyField
 
 val IrDeclaration.isAnonymousObject get() = this is IrClass && name == SpecialNames.NO_NAME_PROVIDED
 
