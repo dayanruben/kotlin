@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.test.backend.handlers.NoCompilationErrorsHandler
 import org.jetbrains.kotlin.test.backend.handlers.NoFirCompilationErrorsHandler
 import org.jetbrains.kotlin.test.backend.ir.IrBackendInput
 import org.jetbrains.kotlin.test.builders.*
+import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.LANGUAGE
 import org.jetbrains.kotlin.test.directives.configureFirParser
 import org.jetbrains.kotlin.test.frontend.classic.ClassicFrontend2IrConverter
 import org.jetbrains.kotlin.test.frontend.classic.ClassicFrontendFacade
@@ -44,8 +45,6 @@ abstract class AbstractLibraryAbiReaderTest<FrontendOutput : ResultingArtifact.F
     abstract val converter: Constructor<Frontend2BackendConverter<FrontendOutput, IrBackendInput>>
     abstract val backendFacade: Constructor<BackendFacade<IrBackendInput, BinaryArtifacts.KLib>>
 
-    open fun TestConfigurationBuilder.applyConfigurators() {}
-
     override fun TestConfigurationBuilder.configuration() {
         globalDefaults {
             frontend = this@AbstractLibraryAbiReaderTest.frontend
@@ -55,24 +54,15 @@ abstract class AbstractLibraryAbiReaderTest<FrontendOutput : ResultingArtifact.F
             dependencyKind = DependencyKind.Binary
         }
 
-        useAfterAnalysisCheckers(
-            ::BlackBoxCodegenSuppressor
-        )
-
-        applyConfigurators()
+        useAfterAnalysisCheckers(::BlackBoxCodegenSuppressor)
+        useAdditionalService(::LibraryProvider)
 
         facadeStep(frontendFacade)
-
         classicFrontendHandlersStep {
-            useHandlers(
-                ::NoCompilationErrorsHandler
-            )
+            useHandlers(::NoCompilationErrorsHandler)
         }
-
         firHandlersStep {
-            useHandlers(
-                ::NoFirCompilationErrorsHandler
-            )
+            useHandlers(::NoFirCompilationErrorsHandler)
         }
 
         facadeStep(converter)
@@ -80,26 +70,20 @@ abstract class AbstractLibraryAbiReaderTest<FrontendOutput : ResultingArtifact.F
 
         facadeStep(backendFacade)
         klibArtifactsHandlersStep {
-            useHandlers(
-                ::KlibAbiDumpHandler
-            )
+            useHandlers(::KlibAbiDumpHandler)
         }
     }
 }
 
 abstract class AbstractJsLibraryAbiReaderTest<FrontendOutput : ResultingArtifact.FrontendOutput<FrontendOutput>> :
-    AbstractLibraryAbiReaderTest<FrontendOutput>(
-        JsPlatforms.defaultJsPlatform,
-        TargetBackend.JS_IR,
-    ) {
+    AbstractLibraryAbiReaderTest<FrontendOutput>(JsPlatforms.defaultJsPlatform, TargetBackend.JS_IR) {
 
-    override fun TestConfigurationBuilder.applyConfigurators() {
+    override fun configure(builder: TestConfigurationBuilder) = with(builder) {
         useConfigurators(
             ::CommonEnvironmentConfigurator,
             ::JsEnvironmentConfigurator,
         )
-
-        useAdditionalService(::LibraryProvider)
+        super.configure(builder)
     }
 }
 
@@ -116,8 +100,11 @@ open class AbstractFirJsLibraryAbiReaderTest : AbstractJsLibraryAbiReaderTest<Fi
     override val backendFacade: Constructor<BackendFacade<IrBackendInput, BinaryArtifacts.KLib>>
         get() = ::FirJsKlibSerializerFacade
 
-    override fun configure(builder: TestConfigurationBuilder) {
-        builder.configureFirParser(FirParser.Psi)
+    override fun configure(builder: TestConfigurationBuilder) = with(builder) {
+        defaultDirectives {
+            LANGUAGE with "+ContextReceivers"
+        }
+        configureFirParser(FirParser.LightTree)
         super.configure(builder)
     }
 }

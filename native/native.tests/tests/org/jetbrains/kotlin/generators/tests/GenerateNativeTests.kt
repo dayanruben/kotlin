@@ -291,22 +291,6 @@ fun main() {
         }
 
         generateTestGroupSuiteWithJUnit5 {
-            testGroup("native/native.tests/tests-gen", "compiler/testData/klib/dump-abi/content") {
-                testClass<AbstractNativeLibraryAbiReaderTest>(
-                    suiteTestClassName = "NativeLibraryAbiReaderTest"
-                ) {
-                    model(targetBackend = TargetBackend.NATIVE)
-                }
-                testClass<AbstractNativeLibraryAbiReaderTest>(
-                    suiteTestClassName = "FirNativeLibraryAbiReaderTest",
-                    annotations = listOf(
-                        *frontendFir()
-                    )
-                ) {
-                    model(targetBackend = TargetBackend.NATIVE)
-                }
-            }
-
             testGroup("native/native.tests/tests-gen", "compiler/testData/klib/dump-abi/cinterop") {
                 testClass<AbstractNativeCInteropLibraryAbiReaderTest>(
                     suiteTestClassName = "NativeCInteropLibraryAbiReaderTest"

@@ -905,7 +905,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(INNER_ON_TOP_LEVEL_SCRIPT_CLASS, "Top-level script class cannot be inner.")
         map.put(
             ERROR_SUPPRESSION,
-            "This code uses error suppression for ''{0}''. While it might compile and work, the compiler behavior is UNSPECIFIED and WON''T BE PRESERVED. Please report your use case to the Kotlin issue tracker instead: https://kotl.in/issue",
+            "This code uses error suppression for ''{0}''. While it might compile and work, the compiler behavior is UNSPECIFIED and WILL NOT BE PRESERVED. Please report your use case to the Kotlin issue tracker instead: https://kotl.in/issue",
             TO_STRING
         )
         map.put(MISSING_CONSTRUCTOR_KEYWORD, "Use the 'constructor' keyword after the modifiers of the primary constructor.")
@@ -1114,7 +1114,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(SUPERTYPES_FOR_ANNOTATION_CLASS, "Annotation class cannot have supertypes.")
         map.put(
             ILLEGAL_KOTLIN_VERSION_STRING_VALUE,
-            "Invalid value in version annotation (should be 'major.minor' or 'major.minor.patch')."
+            "Invalid value in version annotation (must be 'major.minor' or 'major.minor.patch')."
         )
         map.put(NEWER_VERSION_IN_SINCE_KOTLIN, "The version is greater than the specified API version {0}.", NULLABLE_STRING)
         map.put(
@@ -1123,7 +1123,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
         map.put(
             DEPRECATED_SINCE_KOTLIN_WITHOUT_ARGUMENTS,
-            "'DeprecatedSinceKotlin' annotation should have at least one argument."
+            "'DeprecatedSinceKotlin' annotation must have at least one argument."
         )
         map.put(
             DEPRECATED_SINCE_KOTLIN_WITHOUT_DEPRECATED,
@@ -1491,7 +1491,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(
             CONTEXT_RECEIVERS_DEPRECATED,
             "Experimental context receivers are deprecated and will be superseded by context parameters. " +
-                    "Please don't use context receivers. You can either pass parameters explicitly or use members with extensions.\n\n" +
+                    "Please do not use context receivers. You can either pass parameters explicitly or use members with extensions.\n\n" +
                     "See new context parameters proposal: https://github.com/Kotlin/KEEP/blob/context-parameters/proposals/context-parameters.md. " +
                     "During the transition period, neither context receivers nor context parameters will be supported. " +
                     "This warning will become an error in future releases."
@@ -1564,7 +1564,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
         map.put(
             NO_TYPE_ARGUMENTS_ON_RHS,
-            "$wrongNumberOfTypeArguments. Use {1} if you don''t intend to pass type arguments.",
+            "$wrongNumberOfTypeArguments. Use {1} if you do not intend to pass type arguments.",
             null,
             RENDER_CLASS_OR_OBJECT_NAME_QUOTED
         )
@@ -1718,8 +1718,8 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(IMPLICIT_NOTHING_RETURN_TYPE, "Return type 'Nothing' needs to be specified explicitly.")
         map.put(IMPLICIT_NOTHING_PROPERTY_TYPE, "Property type 'Nothing' needs to be specified explicitly.")
 
-        map.put(ABBREVIATED_NOTHING_RETURN_TYPE, "'Nothing' return type can't be specified with type alias.")
-        map.put(ABBREVIATED_NOTHING_PROPERTY_TYPE, "'Nothing' property type can't be specified with type alias.")
+        map.put(ABBREVIATED_NOTHING_RETURN_TYPE, "'Nothing' return type cannot be specified with type alias.")
+        map.put(ABBREVIATED_NOTHING_PROPERTY_TYPE, "'Nothing' property type cannot be specified with type alias.")
 
         map.put(CYCLIC_GENERIC_UPPER_BOUND, "Type parameter has cyclic upper bounds.")
 
@@ -1765,7 +1765,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
 
         map.put(CLASS_LITERAL_LHS_NOT_A_CLASS, "Only classes are allowed on the left-hand side of a class literal.")
-        map.put(NULLABLE_TYPE_IN_CLASS_LITERAL_LHS, "Type in a class literal must not be nullable.")
+        map.put(NULLABLE_TYPE_IN_CLASS_LITERAL_LHS, "Type in a class literal cannot be nullable.")
         map.put(
             EXPRESSION_OF_NULLABLE_TYPE_IN_CLASS_LITERAL_LHS,
             "Expression in class literal has nullable type ''{0}''. Use ''!!'' to make the type non-nullable.",
@@ -2771,7 +2771,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             NON_PUBLIC_DATA_COPY_CALL_FROM_PUBLIC_INLINE,
             "This ''copy'' usage exposes the non-public primary constructor of a ''data class''. " +
                     "The ''copy'' will change its visibility in future versions of Kotlin. " +
-                    "The public-API inline {0} won''t be able to access non-public-API ''copy''. " +
+                    "The public-API inline {0} will not be able to access non-public-API ''copy''. " +
                     "See https://youtrack.jetbrains.com/issue/KT-11914",
             SYMBOL_KIND,
         )
@@ -2806,7 +2806,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
         map.put(
             NULLABLE_INLINE_PARAMETER,
-            "Inline parameter ''{0}'' of ''{1}'' must not be nullable. Add ''noinline'' modifier to the parameter declaration or make its type not nullable.",
+            "Inline parameter ''{0}'' of ''{1}'' cannot be nullable. Add ''noinline'' modifier to the parameter declaration or make its type not nullable.",
             SYMBOL,
             SYMBOL
         )
@@ -2941,7 +2941,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(ASSIGNED_VALUE_IS_NEVER_READ, "Assigned value is never read.")
         map.put(VARIABLE_INITIALIZER_IS_REDUNDANT, "Initializer is redundant.")
         map.put(VARIABLE_NEVER_READ, "Variable is never read.")
-        map.put(UNUSED_ANONYMOUS_PARAMETER, "Parameter ''{0}'' is never used, could be renamed to ''_''.", SYMBOL)
+        map.put(UNUSED_ANONYMOUS_PARAMETER, "Parameter ''{0}'' is never used, consider renaming it to ''_''.", SYMBOL)
         map.put(UNUSED_EXPRESSION, "Expression is unused.")
         map.put(UNUSED_LAMBDA_EXPRESSION, "Lambda expression is never invoked. To create a scoped block, use 'run { ... }'.")
 

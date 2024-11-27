@@ -2,6 +2,7 @@
 // ISSUE: KT-71508
 // ISSUE: KT-71480
 // ISSUE: KT-71511
+// ISSUE: KT-73387  vvvv
 // LANGUAGE: +ProhibitJavaClassInheritingPrivateKotlinClass
 
 // FILE: J1.java

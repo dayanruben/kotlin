@@ -107,17 +107,18 @@ object KeysContainerGenerator {
                 else -> "get($keyAccess)"
             }
             println("get() = $getterBody")
-            val valueForPut = when {
-                nullable -> "requireNotNull(value) { \"nullable values are not allowed\" }"
-                else -> "value"
+            val (putMethod, valueForPut) = when {
+                !key.throwOnNull -> "putIfNotNull" to "value"
+                nullable -> "put" to "requireNotNull(value) { \"nullable values are not allowed\" }"
+                else -> "put" to "value"
             }
-            println("set(value) { put($keyAccess, $valueForPut) }")
+            println("set(value) { $putMethod($keyAccess, $valueForPut) }")
         }
         println()
     }
 
     private fun SmartPrinter.generateCollectionKeyAccessors(container: KeysContainer, key: CollectionKey) {
-        println("var CompilerConfiguration.${key.accessorName}: ${key.mutableTypeString}")
+        println("var CompilerConfiguration.${key.accessorName}: ${key.typeString}")
         val keyAccess = container.keyAccessString(key)
         withIndent {
             val getterFunction = when (key) {

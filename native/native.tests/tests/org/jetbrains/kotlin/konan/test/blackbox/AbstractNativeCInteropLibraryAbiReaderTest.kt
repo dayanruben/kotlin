@@ -35,9 +35,12 @@ import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Tag
 import java.io.File
 
+// TODO (KT-73377): This kind of tests needs to be rewritten to the Frontend Team test infrastructure, the same way
+//  as `AbstractNativeLibraryAbiReaderTest` was. However, this would require implementing a new type of source
+//  files - `*.def` files.
 @Tag("klib")
 @OptIn(ExperimentalLibraryAbiReader::class)
-abstract class AbstractNativeLibraryAbiReaderTest : AbstractNativeSimpleTest() {
+abstract class AbstractNativeCInteropLibraryAbiReaderTest : AbstractNativeSimpleTest() {
     fun runTest(localPath: String) {
         val (sourceFile, dumpFiles) = computeTestFiles(localPath)
         val (moduleName, filters) = parseDirectives(sourceFile)
@@ -49,7 +52,6 @@ abstract class AbstractNativeLibraryAbiReaderTest : AbstractNativeSimpleTest() {
             testCase = generateTestCaseWithSingleFile(
                 sourceFile = sourceFile,
                 moduleName = moduleName,
-                freeCompilerArgs = TestCompilerArgs("-Xcontext-receivers")
             ),
             dependencies = customDependencies.toTypedArray()
         ).resultingArtifact.klibFile
@@ -66,7 +68,23 @@ abstract class AbstractNativeLibraryAbiReaderTest : AbstractNativeSimpleTest() {
         }
     }
 
-    internal open fun produceCustomDependencies(sourceFile: File): List<TestCompilationArtifact.KLIB> = emptyList()
+    private fun produceCustomDependencies(sourceFile: File): List<TestCompilationArtifact.KLIB> {
+        val targets: KotlinNativeTargets = testRunSettings.get()
+
+        assumeTrue(targets.hostTarget.family.isAppleFamily) // ObjC tests can run only on Apple targets.
+
+        val defFile = sourceFile.withExtension(".def")
+        assertTrue(defFile.isFile) { "Def file does not exist: $defFile" }
+
+        return listOf(
+            cinteropToLibrary(
+                targets = targets,
+                defFile = defFile,
+                outputDir = buildDir,
+                freeCompilerArgs = TestCompilerArgs.EMPTY
+            ).assertSuccess().resultingArtifact
+        )
+    }
 
     companion object {
         private fun computeTestFiles(localPath: String): Pair<File, Map<AbiSignatureVersion, File>> {
@@ -111,25 +129,5 @@ abstract class AbstractNativeLibraryAbiReaderTest : AbstractNativeSimpleTest() {
                 )
             )
         }
-    }
-}
-
-abstract class AbstractNativeCInteropLibraryAbiReaderTest : AbstractNativeLibraryAbiReaderTest() {
-    override fun produceCustomDependencies(sourceFile: File): List<TestCompilationArtifact.KLIB> {
-        val targets: KotlinNativeTargets = testRunSettings.get()
-
-        assumeTrue(targets.hostTarget.family.isAppleFamily) // ObjC tests can run only on Apple targets.
-
-        val defFile = sourceFile.withExtension(".def")
-        assertTrue(defFile.isFile) { "Def file does not exist: $defFile" }
-
-        return listOf(
-            cinteropToLibrary(
-                targets = targets,
-                defFile = defFile,
-                outputDir = buildDir,
-                freeCompilerArgs = TestCompilerArgs.EMPTY
-            ).assertSuccess().resultingArtifact
-        )
     }
 }

@@ -113,4 +113,23 @@ fun KtDiagnosticFactoryToRendererMap.verifyMessageForFactory(factory: AbstractKt
         """\b(?:probably|likely|maybe|certainly|possibly|undoubtedly|presumably|apparently|hopefully)\b""".toRegex(RegexOption.IGNORE_CASE),
         "uses adverb of probability (likely, maybe, ...)",
     )
+
+    checkRule(
+        """\b(?:could|should|would|shall)\b""".toRegex(RegexOption.IGNORE_CASE),
+        "uses modal verb (could, should, ...) with uncertainty",
+        setOf(
+            FirErrors.VERSION_REQUIREMENT_DEPRECATION.name,
+            FirErrors.NON_PUBLIC_INLINE_CALL_FROM_PUBLIC_INLINE.name
+        )
+    )
+
+    checkRule(
+        """\b(?:must|ca|is|wo|do)n''?t\b""".toRegex(RegexOption.IGNORE_CASE),
+        "uses contraction",
+    )
+
+    checkRule(
+        """\bmust not\b""".toRegex(RegexOption.IGNORE_CASE),
+        "uses 'must not'. Replace with 'cannot'",
+    )
 }
