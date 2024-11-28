@@ -39,7 +39,6 @@ class WasmBackendContext(
     propertyLazyInitialization: Boolean,
     override val configuration: CompilerConfiguration,
 ) : JsCommonBackendContext {
-    override val builtIns = module.builtIns
     override val typeSystem: IrTypeSystemContext = IrTypeSystemContextImpl(irBuiltIns)
     override var inVerbosePhase: Boolean = false
     override val irFactory: IrFactory = symbolTable.irFactory
@@ -84,8 +83,6 @@ class WasmBackendContext(
 
     override val internalPackageFqn = FqName("kotlin.wasm")
 
-    val kotlinWasmInternalPackageFqn = internalPackageFqn.child(Name.identifier("internal"))
-
     val wasmSymbols: WasmSymbols = WasmSymbols(irBuiltIns, configuration)
     override val symbols = wasmSymbols
     override val reflectionSymbols: ReflectionSymbols get() = wasmSymbols.reflectionSymbols
@@ -96,7 +93,7 @@ class WasmBackendContext(
     override val propertyLazyInitialization: PropertyLazyInitialization =
         PropertyLazyInitialization(enabled = propertyLazyInitialization, eagerInitialization = wasmSymbols.eagerInitialization)
 
-    override val ir = object : Ir<WasmBackendContext>(this) {
+    override val ir = object : Ir() {
         override val symbols: WasmSymbols = wasmSymbols
         override fun shouldGenerateHandlerParameterForDefaultBodyFun() = true
     }

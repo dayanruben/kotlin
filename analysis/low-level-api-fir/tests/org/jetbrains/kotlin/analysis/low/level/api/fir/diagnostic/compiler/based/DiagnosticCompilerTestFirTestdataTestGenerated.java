@@ -1748,6 +1748,12 @@ public class DiagnosticCompilerTestFirTestdataTestGenerated extends AbstractDiag
       }
 
       @Test
+      @TestMetadata("callableReference.kt")
+      public void testCallableReference() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/callableReference.kt");
+      }
+
+      @Test
       @TestMetadata("contextLambda.kt")
       public void testContextLambda() {
         runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/contextLambda.kt");
@@ -1757,6 +1763,40 @@ public class DiagnosticCompilerTestFirTestdataTestGenerated extends AbstractDiag
       @TestMetadata("smoke.kt")
       public void testSmoke() {
         runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/smoke.kt");
+      }
+
+      @Nested
+      @TestMetadata("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics")
+      @TestDataPath("$PROJECT_ROOT")
+      public class Diagnostics {
+        @Test
+        public void testAllFilesPresentInDiagnostics() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("contextParameterSyntaxWithoutLanguageFeature.kt")
+        public void testContextParameterSyntaxWithoutLanguageFeature() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/contextParameterSyntaxWithoutLanguageFeature.kt");
+        }
+
+        @Test
+        @TestMetadata("nameClashes.kt")
+        public void testNameClashes() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/nameClashes.kt");
+        }
+
+        @Test
+        @TestMetadata("subtyping.kt")
+        public void testSubtyping() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/subtyping.kt");
+        }
+
+        @Test
+        @TestMetadata("unsupportedContextParameters.kt")
+        public void testUnsupportedContextParameters() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/unsupportedContextParameters.kt");
+        }
       }
     }
 
@@ -2003,6 +2043,12 @@ public class DiagnosticCompilerTestFirTestdataTestGenerated extends AbstractDiag
       @TestMetadata("instanceAccessBeforeSuperCall.kt")
       public void testInstanceAccessBeforeSuperCall() {
         runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/instanceAccessBeforeSuperCall.kt");
+      }
+
+      @Test
+      @TestMetadata("instanceAccessBeforeSuperCallErrorOnRed.kt")
+      public void testInstanceAccessBeforeSuperCallErrorOnRed() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/instanceAccessBeforeSuperCallErrorOnRed.kt");
       }
 
       @Test

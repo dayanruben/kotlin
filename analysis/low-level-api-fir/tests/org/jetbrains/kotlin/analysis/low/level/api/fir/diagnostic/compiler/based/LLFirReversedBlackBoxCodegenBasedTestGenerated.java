@@ -4829,6 +4829,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
         }
 
         @Test
+        @TestMetadata("propertyReferenceToSuspendFunction.kt")
+        public void testPropertyReferenceToSuspendFunction() {
+          runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/suspendConversion/propertyReferenceToSuspendFunction.kt");
+        }
+
+        @Test
         @TestMetadata("simple.kt")
         public void testSimple() {
           runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/suspendConversion/simple.kt");
@@ -43793,6 +43799,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
     }
 
     @Test
+    @TestMetadata("eagerInitializationWithSimpleObject.kt")
+    public void testEagerInitializationWithSimpleObject() {
+      runTest("compiler/testData/codegen/box/properties/eagerInitializationWithSimpleObject.kt");
+    }
+
+    @Test
     @TestMetadata("field.kt")
     public void testField() {
       runTest("compiler/testData/codegen/box/properties/field.kt");
@@ -57772,6 +57784,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
     @TestMetadata("smartcastOnImplicitDispatchReceiver.kt")
     public void testSmartcastOnImplicitDispatchReceiver() {
       runTest("compiler/testData/codegen/box/smartCasts/smartcastOnImplicitDispatchReceiver.kt");
+    }
+
+    @Test
+    @TestMetadata("smartcastToProjectedType.kt")
+    public void testSmartcastToProjectedType() {
+      runTest("compiler/testData/codegen/box/smartCasts/smartcastToProjectedType.kt");
     }
 
     @Test

@@ -66,7 +66,6 @@ class JvmBackendContext(
 
     override val irFactory: IrFactory = IrFactoryImpl
 
-    override val builtIns = state.module.builtIns
     override val typeSystem: IrTypeSystemContext = JvmIrTypeSystemContext(irBuiltIns)
     val defaultTypeMapper = IrTypeMapper(this)
     val defaultMethodSignatureMapper = MethodSignatureMapper(this, defaultTypeMapper)
@@ -101,8 +100,6 @@ class JvmBackendContext(
     override var inVerbosePhase: Boolean = false
 
     override val configuration get() = state.configuration
-
-    override val internalPackageFqn = FqName("kotlin.jvm")
 
     val inlineClassReplacements = MemoizedInlineClassReplacements(config.functionsWithInlineClassReturnTypesMangled, irFactory, this)
 
@@ -151,7 +148,7 @@ class JvmBackendContext(
     override val optimizeNullChecksUsingKotlinNullability: Boolean
         get() = false
 
-    inner class JvmIr : Ir<JvmBackendContext>(this) {
+    inner class JvmIr : Ir() {
         override val symbols = JvmSymbols(this@JvmBackendContext)
 
         override fun shouldGenerateHandlerParameterForDefaultBodyFun() = true

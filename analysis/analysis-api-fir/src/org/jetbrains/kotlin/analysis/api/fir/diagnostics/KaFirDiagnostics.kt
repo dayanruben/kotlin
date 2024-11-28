@@ -51,6 +51,7 @@ import org.jetbrains.kotlin.psi.KtClassLiteralExpression
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
+import org.jetbrains.kotlin.psi.KtContextReceiver
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtDelegatedSuperTypeEntry
@@ -1648,13 +1649,13 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val kinds: List<FunctionTypeKind>
     }
 
-    interface NoContextReceiver : KaFirDiagnostic<KtElement> {
-        override val diagnosticClass get() = NoContextReceiver::class
+    interface NoContextArgument : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = NoContextArgument::class
         val contextReceiverRepresentation: KaType
     }
 
-    interface MultipleArgumentsApplicableForContextReceiver : KaFirDiagnostic<KtElement> {
-        override val diagnosticClass get() = MultipleArgumentsApplicableForContextReceiver::class
+    interface AmbiguousContextArgument : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = AmbiguousContextArgument::class
         val contextReceiverRepresentation: KaType
     }
 
@@ -1670,12 +1671,29 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = SubtypingBetweenContextReceivers::class
     }
 
-    interface ContextReceiversWithBackingField : KaFirDiagnostic<KtElement> {
-        override val diagnosticClass get() = ContextReceiversWithBackingField::class
+    interface ContextParametersWithBackingField : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = ContextParametersWithBackingField::class
     }
 
     interface ContextReceiversDeprecated : KaFirDiagnostic<KtElement> {
         override val diagnosticClass get() = ContextReceiversDeprecated::class
+    }
+
+    interface ContextClassOrConstructor : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = ContextClassOrConstructor::class
+    }
+
+    interface ContextParameterWithoutName : KaFirDiagnostic<KtContextReceiver> {
+        override val diagnosticClass get() = ContextParameterWithoutName::class
+    }
+
+    interface ContextParameterWithDefault : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = ContextParameterWithDefault::class
+    }
+
+    interface CallableReferenceToContextualDeclaration : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = CallableReferenceToContextualDeclaration::class
+        val symbol: KaCallableSymbol
     }
 
     interface RecursionInImplicitTypes : KaFirDiagnostic<PsiElement> {

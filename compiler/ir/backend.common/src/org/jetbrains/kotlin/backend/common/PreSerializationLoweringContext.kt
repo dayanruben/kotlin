@@ -25,21 +25,14 @@ class PreSerializationLoweringContext(
     override val irBuiltIns: IrBuiltIns,
     override val configuration: CompilerConfiguration,
 ) : CommonBackendContext {
-
-    override val builtIns: KotlinBuiltIns
-        get() = shouldNotBeCalled()
-
     override val mapping: Mapping = Mapping()
 
     override val typeSystem: IrTypeSystemContext = IrTypeSystemContextImpl(irBuiltIns)
 
-    override val ir: Ir<PreSerializationLoweringContext>
+    override val ir: Ir
         get() = TODO("Not yet implemented") // Should be implemented in scope of KT-71415
 
     override val innerClassesSupport: InnerClassesSupport
-        get() = TODO("Not yet implemented") // Should be implemented in scope of KT-71415
-
-    override val internalPackageFqn: FqName
         get() = TODO("Not yet implemented") // Should be implemented in scope of KT-71415
 
     override val irFactory: IrFactory

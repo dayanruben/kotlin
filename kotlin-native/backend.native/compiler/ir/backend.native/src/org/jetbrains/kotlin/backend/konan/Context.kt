@@ -39,11 +39,9 @@ internal class Context(
         val symbolTable: ReferenceSymbolTable,
 ) : KonanBackendContext(config) {
 
-    override val ir: KonanIr = KonanIr(this, symbols)
+    override val ir: KonanIr = KonanIr(symbols)
 
     override val configuration get() = config.configuration
-
-    override val internalPackageFqn: FqName = RuntimeNames.kotlinNativeInternalPackageName
 
     override val optimizeLoopsOverUnsignedArrays = true
 

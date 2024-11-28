@@ -84,8 +84,6 @@ class JsIrBackendContext(
 
     val fieldDataCache = WeakHashMap<IrClass, Map<IrField, String>>()
 
-    override val builtIns = module.builtIns
-
     override val typeSystem: IrTypeSystemContext = IrTypeSystemContextImpl(irBuiltIns)
 
     override val irFactory: IrFactory = symbolTable.irFactory
@@ -158,7 +156,7 @@ class JsIrBackendContext(
         .let { symbolTable.descriptorExtension.referenceSimpleFunction(it!!) }
 
     override val symbols = JsSymbols(irBuiltIns, irFactory.stageController, intrinsics)
-    override val ir = object : Ir<JsIrBackendContext>(this) {
+    override val ir = object : Ir() {
         override val symbols = this@JsIrBackendContext.symbols
         override fun shouldGenerateHandlerParameterForDefaultBodyFun() = true
     }

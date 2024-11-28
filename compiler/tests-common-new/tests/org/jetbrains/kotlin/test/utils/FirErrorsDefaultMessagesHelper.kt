@@ -35,7 +35,7 @@ private val messageParameterRegex = """\{\d.*?}""".toRegex()
 
 private val lastCharRegex = """[.}\d]""".toRegex()
 
-private val lastCharExclusions = setOf(
+private val lastCharExclusions = listOf(
     FirErrors.DATA_CLASS_COPY_VISIBILITY_WILL_BE_CHANGED.name,
     FirErrors.ERROR_SUPPRESSION.name,
     FirErrors.NOT_A_MULTIPLATFORM_COMPILATION.name,

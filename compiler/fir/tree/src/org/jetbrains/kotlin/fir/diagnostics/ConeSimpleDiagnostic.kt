@@ -97,6 +97,10 @@ object ConeContractMayNotHaveLabel : ConeDiagnostic {
     override val reason: String get() = "Contract call may not have a label."
 }
 
+object ConeContextParameterWithDefaultValue : ConeDiagnostic {
+    override val reason: String get() = "Context parameters cannot have default values"
+}
+
 enum class DiagnosticKind {
     ExpressionExpected,
     NotLoopLabel,
@@ -125,7 +129,6 @@ enum class DiagnosticKind {
     NotASupertype,
     SuperNotAvailable,
     AnnotationInWhereClause,
-    AnnotationInContract,
 
     LoopInSupertype,
     RecursiveTypealiasExpansion,

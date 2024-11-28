@@ -52,6 +52,7 @@ import org.jetbrains.kotlin.psi.KtClassLiteralExpression
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
+import org.jetbrains.kotlin.psi.KtContextReceiver
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtDelegatedSuperTypeEntry
@@ -1975,17 +1976,17 @@ internal class AmbiguousFunctionTypeKindImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.AmbiguousFunctionTypeKind
 
-internal class NoContextReceiverImpl(
+internal class NoContextArgumentImpl(
     override val contextReceiverRepresentation: KaType,
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.NoContextReceiver
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.NoContextArgument
 
-internal class MultipleArgumentsApplicableForContextReceiverImpl(
+internal class AmbiguousContextArgumentImpl(
     override val contextReceiverRepresentation: KaType,
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.MultipleArgumentsApplicableForContextReceiver
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.AmbiguousContextArgument
 
 internal class AmbiguousCallWithImplicitContextReceiverImpl(
     firDiagnostic: KtPsiDiagnostic,
@@ -2002,15 +2003,36 @@ internal class SubtypingBetweenContextReceiversImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.SubtypingBetweenContextReceivers
 
-internal class ContextReceiversWithBackingFieldImpl(
+internal class ContextParametersWithBackingFieldImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.ContextReceiversWithBackingField
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.ContextParametersWithBackingField
 
 internal class ContextReceiversDeprecatedImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.ContextReceiversDeprecated
+
+internal class ContextClassOrConstructorImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.ContextClassOrConstructor
+
+internal class ContextParameterWithoutNameImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtContextReceiver>(firDiagnostic, token), KaFirDiagnostic.ContextParameterWithoutName
+
+internal class ContextParameterWithDefaultImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.ContextParameterWithDefault
+
+internal class CallableReferenceToContextualDeclarationImpl(
+    override val symbol: KaCallableSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.CallableReferenceToContextualDeclaration
 
 internal class RecursionInImplicitTypesImpl(
     firDiagnostic: KtPsiDiagnostic,

@@ -5,11 +5,9 @@
 
 package org.jetbrains.kotlin.backend.common
 
-import org.jetbrains.kotlin.backend.common.ir.Ir
 import org.jetbrains.kotlin.backend.common.lower.InnerClassesSupport
 import org.jetbrains.kotlin.backend.common.phaser.BackendContextHolder
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
 import org.jetbrains.kotlin.ir.builders.irCall
@@ -19,6 +17,7 @@ import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.linkage.partial.PartialLinkageSupportForLowerings
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.IrTypeSystemContext
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
@@ -27,12 +26,10 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
  * (those that are executed after deserializing IR from KLIBs, or any lowering in the JVM backend).
  */
 interface CommonBackendContext : LoweringContext, LoggingContext, ErrorReportingContext, BackendContextHolder {
-    override val ir: Ir<CommonBackendContext>
+    val typeSystem: IrTypeSystemContext
 
     override val heldBackendContext: CommonBackendContext
         get() = this
-
-    val configuration: CompilerConfiguration
 
     override val messageCollector: MessageCollector
         get() = configuration.messageCollector

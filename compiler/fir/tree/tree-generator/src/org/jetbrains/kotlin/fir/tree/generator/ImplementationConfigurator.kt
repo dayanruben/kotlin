@@ -320,13 +320,18 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
             }
             publicImplementation()
 
-            defaultNull("receiverParameter", "delegate", "getter", "setter", withGetter = true)
+            defaultNull("receiverParameter", "delegate", "getter", "setter", "containerSource", "backingField", withGetter = true)
+            defaultEmptyList("contextReceivers", "typeParameters", withGetter = true)
         }
 
         impl(enumEntry) {
             defaultTrue("isVal", withGetter = true)
             defaultFalse("isVar", withGetter = true)
-            defaultNull("receiverParameter", "delegate", "getter", "setter", withGetter = true)
+            defaultNull(
+                "receiverParameter", "delegate", "getter", "setter", "containerSource", "dispatchReceiverType", "backingField",
+                withGetter = true
+            )
+            defaultEmptyList("contextReceivers", "typeParameters", withGetter = true)
         }
 
         impl(namedArgumentExpression) {
@@ -393,7 +398,8 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
         }
 
         impl(thisReceiverExpression) {
-            defaultNoReceivers()
+            defaultNull("explicitReceiver", "dispatchReceiver", "extensionReceiver", withGetter = true)
+            defaultEmptyList("contextReceiverArguments", withGetter = true)
         }
 
         impl(expression, "FirUnitExpression") {
@@ -409,15 +415,14 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
         }
 
         impl(anonymousFunction) {
+            defaultNull("containerSource", withGetter = true)
         }
 
         noImpl(anonymousFunctionExpression)
 
         impl(propertyAccessor) {
-            default("receiverParameter") {
-                value = "null"
-                withGetter = true
-            }
+            defaultNull("receiverParameter", "containerSource", withGetter = true)
+            defaultEmptyList("contextReceivers", "typeParameters", withGetter = true)
             default("isSetter") {
                 value = "!isGetter"
                 withGetter = true
@@ -428,6 +433,15 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
 
         impl(backingField) {
             kind = OpenClass
+            defaultNull(
+                "receiverParameter", "delegate", "getter", "setter", "backingField", "dispatchReceiverType", "containerSource",
+                withGetter = true
+            )
+
+            defaultEmptyList(
+                "contextReceivers", "typeParameters",
+                withGetter = true
+            )
         }
 
         impl(whenSubjectExpression) {
@@ -575,7 +589,10 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
         fun AbstractImplementationConfigurator<Implementation, Element, Field>.ImplementationContext.configureCommonValueParameter() {
             defaultTrue("isVal", withGetter = true)
             defaultFalse("isVar", withGetter = true)
-            defaultNull("getter", "setter", "initializer", "delegate", "receiverParameter", "dispatchReceiverType", "backingField", withGetter = true)
+            defaultNull(
+                "getter", "setter", "initializer", "delegate", "receiverParameter", "dispatchReceiverType", "backingField", "containerSource",
+                withGetter = true
+            )
             defaultEmptyList("contextReceivers", withGetter = true)
         }
 

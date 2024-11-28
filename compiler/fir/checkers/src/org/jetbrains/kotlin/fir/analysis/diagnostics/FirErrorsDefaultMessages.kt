@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers.STRING
 import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers.commaSeparated
 import org.jetbrains.kotlin.diagnostics.rendering.LanguageFeatureMessageRenderer
 import org.jetbrains.kotlin.diagnostics.rendering.Renderer
+import org.jetbrains.kotlin.fir.analysis.checkers.config.FirContextReceiversLanguageVersionSettingsChecker
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.AMBIGUOUS_CALLS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.CALLABLES_FQ_NAMES
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.CALLEE_NAME
@@ -172,7 +173,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONST_VAL_WITH_DE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONST_VAL_WITH_GETTER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONST_VAL_WITH_NON_CONST_INITIALIZER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONTEXT_RECEIVERS_DEPRECATED
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONTEXT_RECEIVERS_WITH_BACKING_FIELD
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONTEXT_PARAMETERS_WITH_BACKING_FIELD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONTRACT_NOT_ALLOWED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CREATING_AN_INSTANCE_OF_ABSTRACT_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CYCLE_IN_ANNOTATION_PARAMETER
@@ -423,7 +424,9 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MIXING_FUNCTIONAL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MIXING_SUSPEND_AND_NON_SUSPEND_SUPERTYPES
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MULTIPLE_ARGUMENTS_APPLICABLE_FOR_CONTEXT_RECEIVER
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.AMBIGUOUS_CONTEXT_ARGUMENT
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CALLABLE_REFERENCE_TO_CONTEXTUAL_DECLARATION
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONTEXT_CLASS_OR_CONSTRUCTOR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_WHEN_NO_EXPLICIT_OVERRIDE
@@ -489,7 +492,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NOT_YET_SUPPORTED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_COMPANION_OBJECT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_CONSTRUCTOR
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_CONTEXT_RECEIVER
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_CONTEXT_ARGUMENT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_ELSE_IN_WHEN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_EXPLICIT_RETURN_TYPE_IN_API_MODE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_EXPLICIT_RETURN_TYPE_IN_API_MODE_WARNING
@@ -707,6 +710,8 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSIGNED_LITERAL_
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_CLASS_LITERALS_WITH_EMPTY_LHS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_CONTEXTUAL_DECLARATION_CALL
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONTEXT_PARAMETER_WITHOUT_NAME
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONTEXT_PARAMETER_WITH_DEFAULT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_FEATURE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_INHERITANCE_FROM_JAVA_MEMBER_REFERENCING_KOTLIN_FUNCTION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_SEALED_FUN_INTERFACE
@@ -1488,18 +1493,21 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(AMBIGUOUS_FUNCTION_TYPE_KIND, "Multiple function type conversions are prohibited for a single type. Detected type conversions: {0}", FUNCTIONAL_TYPE_KINDS)
         map.put(NEXT_NONE_APPLICABLE, "None of the ''next()'' functions is applicable for this expression. Candidates are:{0}", SYMBOLS_ON_NEXT_LINES)
 
-        map.put(
-            CONTEXT_RECEIVERS_DEPRECATED,
-            "Experimental context receivers are deprecated and will be superseded by context parameters. " +
-                    "Please do not use context receivers. You can either pass parameters explicitly or use members with extensions.\n\n" +
-                    "See new context parameters proposal: https://github.com/Kotlin/KEEP/blob/context-parameters/proposals/context-parameters.md. " +
-                    "During the transition period, neither context receivers nor context parameters will be supported. " +
-                    "This warning will become an error in future releases."
+        map.put(CONTEXT_RECEIVERS_DEPRECATED, FirContextReceiversLanguageVersionSettingsChecker.CONTEXT_RECEIVER_MESSAGE)
+        map.put(CONTEXT_CLASS_OR_CONSTRUCTOR,
+                """
+                    Contextual classes and constructors are deprecated and will not be supported when context parameters are enabled. Consider migrating to regular parameters.
+                    
+                    See the context parameters proposal for more details: https://kotl.in/context-parameters
+                    This warning will become an error in future releases.
+                    """.trimIndent()
         )
-        map.put(NO_CONTEXT_RECEIVER, "No context receiver for ''{0}'' found.", RENDER_TYPE)
+        map.put(CONTEXT_PARAMETER_WITHOUT_NAME, "Context parameters must be named. Use '_' to declare an anonymous context parameter.")
+        map.put(CONTEXT_PARAMETER_WITH_DEFAULT, "Context parameters cannot have default values.")
+        map.put(NO_CONTEXT_ARGUMENT, "No context argument for ''{0}'' found.", RENDER_TYPE)
         map.put(
-            MULTIPLE_ARGUMENTS_APPLICABLE_FOR_CONTEXT_RECEIVER,
-            "Multiple arguments applicable to context receiver ''{0}''.",
+            AMBIGUOUS_CONTEXT_ARGUMENT,
+            "Multiple potential context arguments for ''{0}'' in scope.",
             RENDER_TYPE
         )
         map.put(
@@ -1508,15 +1516,20 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
         map.put(
             UNSUPPORTED_CONTEXTUAL_DECLARATION_CALL,
-            "To use contextual declarations, specify the '-Xcontext-receivers' compiler option."
+            "To call contextual declarations, specify the '-Xcontext-parameters' compiler option."
         )
         map.put(
             SUBTYPING_BETWEEN_CONTEXT_RECEIVERS,
             "Subtyping relation between context receivers is prohibited."
         )
         map.put(
-            CONTEXT_RECEIVERS_WITH_BACKING_FIELD,
-            "Property with context receivers cannot be initialized because it has no backing field."
+            CONTEXT_PARAMETERS_WITH_BACKING_FIELD,
+            "Property with context parameters cannot be initialized because it has no backing field."
+        )
+        map.put(
+            CALLABLE_REFERENCE_TO_CONTEXTUAL_DECLARATION,
+            "Callable reference to ''{0}'' is unsupported because it has context parameters.",
+            SYMBOL,
         )
         map.put(
             SELF_CALL_IN_NESTED_OBJECT_CONSTRUCTOR_ERROR,

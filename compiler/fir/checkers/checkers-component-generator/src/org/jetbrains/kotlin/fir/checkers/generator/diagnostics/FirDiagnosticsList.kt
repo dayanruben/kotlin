@@ -745,19 +745,25 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         }
     }
 
-    val CONTEXT_RECEIVERS_RESOLUTION by object : DiagnosticGroup("Context receivers resolution") {
-        val NO_CONTEXT_RECEIVER by error<KtElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
+    val CONTEXT_PARAMETERS_RESOLUTION by object : DiagnosticGroup("Context parameters resolution") {
+        val NO_CONTEXT_ARGUMENT by error<KtElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
             parameter<ConeKotlinType>("contextReceiverRepresentation")
         }
-        val MULTIPLE_ARGUMENTS_APPLICABLE_FOR_CONTEXT_RECEIVER by error<KtElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
+        val AMBIGUOUS_CONTEXT_ARGUMENT by error<KtElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
             parameter<ConeKotlinType>("contextReceiverRepresentation")
         }
         val AMBIGUOUS_CALL_WITH_IMPLICIT_CONTEXT_RECEIVER by error<KtElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED)
         val UNSUPPORTED_CONTEXTUAL_DECLARATION_CALL by error<KtElement>(PositioningStrategy.NAME_IDENTIFIER)
         val SUBTYPING_BETWEEN_CONTEXT_RECEIVERS by error<KtElement>(PositioningStrategy.DEFAULT)
-        val CONTEXT_RECEIVERS_WITH_BACKING_FIELD by error<KtElement>(PositioningStrategy.DEFAULT)
+        val CONTEXT_PARAMETERS_WITH_BACKING_FIELD by error<KtElement>(PositioningStrategy.DEFAULT)
         val CONTEXT_RECEIVERS_DEPRECATED by warning<KtElement>(PositioningStrategy.CONTEXT_KEYWORD)
+        val CONTEXT_CLASS_OR_CONSTRUCTOR by warning<KtElement>(PositioningStrategy.CONTEXT_KEYWORD)
 
+        val CONTEXT_PARAMETER_WITHOUT_NAME by error<KtContextReceiver>()
+        val CONTEXT_PARAMETER_WITH_DEFAULT by error<KtElement>()
+        val CALLABLE_REFERENCE_TO_CONTEXTUAL_DECLARATION by error<KtElement>() {
+            parameter<FirCallableSymbol<*>>("symbol")
+        }
     }
 
     val TYPES_AND_TYPE_PARAMETERS by object : DiagnosticGroup("Types & type parameters") {

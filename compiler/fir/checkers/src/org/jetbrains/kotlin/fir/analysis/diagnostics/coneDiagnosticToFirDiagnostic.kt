@@ -200,6 +200,7 @@ private fun ConeDiagnostic.toKtDiagnostic(
     is ConeMultipleLabelsAreForbidden -> FirErrors.MULTIPLE_LABELS_ARE_FORBIDDEN.createOn(this.source)
     is ConeNoInferTypeMismatch -> FirErrors.TYPE_MISMATCH.createOn(source, lowerType, upperType, false)
     is ConeDynamicUnsupported -> FirErrors.UNSUPPORTED.createOn(source, "dynamic type")
+    is ConeContextParameterWithDefaultValue -> FirErrors.CONTEXT_PARAMETER_WITH_DEFAULT.createOn(source)
     else -> throw IllegalArgumentException("Unsupported diagnostic type: ${this.javaClass}")
 }
 
@@ -341,7 +342,7 @@ private fun mapInapplicableCandidateError(
             is NoReceiverAllowed -> FirErrors.NO_RECEIVER_ALLOWED.createOn(qualifiedAccessSource ?: source)
 
             is NoApplicableValueForContextReceiver ->
-                FirErrors.NO_CONTEXT_RECEIVER.createOn(
+                FirErrors.NO_CONTEXT_ARGUMENT.createOn(
                     qualifiedAccessSource ?: source,
                     rootCause.expectedContextReceiverType.removeTypeVariableTypes(typeContext)
                 )
@@ -349,7 +350,7 @@ private fun mapInapplicableCandidateError(
             is UnsupportedContextualDeclarationCall -> FirErrors.UNSUPPORTED_CONTEXTUAL_DECLARATION_CALL.createOn(source)
 
             is AmbiguousValuesForContextReceiverParameter ->
-                FirErrors.MULTIPLE_ARGUMENTS_APPLICABLE_FOR_CONTEXT_RECEIVER.createOn(
+                FirErrors.AMBIGUOUS_CONTEXT_ARGUMENT.createOn(
                     qualifiedAccessSource ?: source,
                     rootCause.expectedContextReceiverType.removeTypeVariableTypes(typeContext)
                 )
@@ -745,7 +746,6 @@ private fun ConeSimpleDiagnostic.getFactory(source: KtSourceElement?): KtDiagnos
         DiagnosticKind.NotASupertype -> FirErrors.NOT_A_SUPERTYPE
         DiagnosticKind.SuperNotAvailable -> FirErrors.SUPER_NOT_AVAILABLE
         DiagnosticKind.AnnotationInWhereClause -> FirErrors.ANNOTATION_IN_WHERE_CLAUSE_ERROR
-        DiagnosticKind.AnnotationInContract -> FirErrors.ANNOTATION_IN_CONTRACT_ERROR
         DiagnosticKind.UnresolvedSupertype,
         DiagnosticKind.UnresolvedExpandedType,
         DiagnosticKind.Other -> FirErrors.OTHER_ERROR

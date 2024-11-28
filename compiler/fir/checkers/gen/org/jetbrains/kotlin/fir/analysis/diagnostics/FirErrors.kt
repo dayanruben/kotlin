@@ -97,6 +97,7 @@ import org.jetbrains.kotlin.psi.KtClassLiteralExpression
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
+import org.jetbrains.kotlin.psi.KtContextReceiver
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtDelegatedSuperTypeEntry
@@ -462,14 +463,18 @@ object FirErrors {
     val NEXT_AMBIGUITY: KtDiagnosticFactory1<Collection<FirBasedSymbol<*>>> = KtDiagnosticFactory1("NEXT_AMBIGUITY", ERROR, SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED, PsiElement::class)
     val AMBIGUOUS_FUNCTION_TYPE_KIND: KtDiagnosticFactory1<Collection<FunctionTypeKind>> = KtDiagnosticFactory1("AMBIGUOUS_FUNCTION_TYPE_KIND", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
 
-    // Context receivers resolution
-    val NO_CONTEXT_RECEIVER: KtDiagnosticFactory1<ConeKotlinType> = KtDiagnosticFactory1("NO_CONTEXT_RECEIVER", ERROR, SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED, KtElement::class)
-    val MULTIPLE_ARGUMENTS_APPLICABLE_FOR_CONTEXT_RECEIVER: KtDiagnosticFactory1<ConeKotlinType> = KtDiagnosticFactory1("MULTIPLE_ARGUMENTS_APPLICABLE_FOR_CONTEXT_RECEIVER", ERROR, SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED, KtElement::class)
+    // Context parameters resolution
+    val NO_CONTEXT_ARGUMENT: KtDiagnosticFactory1<ConeKotlinType> = KtDiagnosticFactory1("NO_CONTEXT_ARGUMENT", ERROR, SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED, KtElement::class)
+    val AMBIGUOUS_CONTEXT_ARGUMENT: KtDiagnosticFactory1<ConeKotlinType> = KtDiagnosticFactory1("AMBIGUOUS_CONTEXT_ARGUMENT", ERROR, SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED, KtElement::class)
     val AMBIGUOUS_CALL_WITH_IMPLICIT_CONTEXT_RECEIVER: KtDiagnosticFactory0 = KtDiagnosticFactory0("AMBIGUOUS_CALL_WITH_IMPLICIT_CONTEXT_RECEIVER", ERROR, SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED, KtElement::class)
     val UNSUPPORTED_CONTEXTUAL_DECLARATION_CALL: KtDiagnosticFactory0 = KtDiagnosticFactory0("UNSUPPORTED_CONTEXTUAL_DECLARATION_CALL", ERROR, SourceElementPositioningStrategies.NAME_IDENTIFIER, KtElement::class)
     val SUBTYPING_BETWEEN_CONTEXT_RECEIVERS: KtDiagnosticFactory0 = KtDiagnosticFactory0("SUBTYPING_BETWEEN_CONTEXT_RECEIVERS", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class)
-    val CONTEXT_RECEIVERS_WITH_BACKING_FIELD: KtDiagnosticFactory0 = KtDiagnosticFactory0("CONTEXT_RECEIVERS_WITH_BACKING_FIELD", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class)
+    val CONTEXT_PARAMETERS_WITH_BACKING_FIELD: KtDiagnosticFactory0 = KtDiagnosticFactory0("CONTEXT_PARAMETERS_WITH_BACKING_FIELD", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class)
     val CONTEXT_RECEIVERS_DEPRECATED: KtDiagnosticFactory0 = KtDiagnosticFactory0("CONTEXT_RECEIVERS_DEPRECATED", WARNING, SourceElementPositioningStrategies.CONTEXT_KEYWORD, KtElement::class)
+    val CONTEXT_CLASS_OR_CONSTRUCTOR: KtDiagnosticFactory0 = KtDiagnosticFactory0("CONTEXT_CLASS_OR_CONSTRUCTOR", WARNING, SourceElementPositioningStrategies.CONTEXT_KEYWORD, KtElement::class)
+    val CONTEXT_PARAMETER_WITHOUT_NAME: KtDiagnosticFactory0 = KtDiagnosticFactory0("CONTEXT_PARAMETER_WITHOUT_NAME", ERROR, SourceElementPositioningStrategies.DEFAULT, KtContextReceiver::class)
+    val CONTEXT_PARAMETER_WITH_DEFAULT: KtDiagnosticFactory0 = KtDiagnosticFactory0("CONTEXT_PARAMETER_WITH_DEFAULT", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class)
+    val CALLABLE_REFERENCE_TO_CONTEXTUAL_DECLARATION: KtDiagnosticFactory1<FirCallableSymbol<*>> = KtDiagnosticFactory1("CALLABLE_REFERENCE_TO_CONTEXTUAL_DECLARATION", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class)
 
     // Types & type parameters
     val RECURSION_IN_IMPLICIT_TYPES: KtDiagnosticFactory0 = KtDiagnosticFactory0("RECURSION_IN_IMPLICIT_TYPES", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)

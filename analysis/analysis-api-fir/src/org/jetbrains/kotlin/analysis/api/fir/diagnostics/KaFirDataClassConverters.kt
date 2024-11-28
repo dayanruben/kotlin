@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.psi.KtClassLiteralExpression
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
+import org.jetbrains.kotlin.psi.KtContextReceiver
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtDelegatedSuperTypeEntry
@@ -2314,15 +2315,15 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.NO_CONTEXT_RECEIVER) { firDiagnostic ->
-        NoContextReceiverImpl(
+    add(FirErrors.NO_CONTEXT_ARGUMENT) { firDiagnostic ->
+        NoContextArgumentImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.MULTIPLE_ARGUMENTS_APPLICABLE_FOR_CONTEXT_RECEIVER) { firDiagnostic ->
-        MultipleArgumentsApplicableForContextReceiverImpl(
+    add(FirErrors.AMBIGUOUS_CONTEXT_ARGUMENT) { firDiagnostic ->
+        AmbiguousContextArgumentImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
@@ -2346,14 +2347,39 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.CONTEXT_RECEIVERS_WITH_BACKING_FIELD) { firDiagnostic ->
-        ContextReceiversWithBackingFieldImpl(
+    add(FirErrors.CONTEXT_PARAMETERS_WITH_BACKING_FIELD) { firDiagnostic ->
+        ContextParametersWithBackingFieldImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
     }
     add(FirErrors.CONTEXT_RECEIVERS_DEPRECATED) { firDiagnostic ->
         ContextReceiversDeprecatedImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.CONTEXT_CLASS_OR_CONSTRUCTOR) { firDiagnostic ->
+        ContextClassOrConstructorImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.CONTEXT_PARAMETER_WITHOUT_NAME) { firDiagnostic ->
+        ContextParameterWithoutNameImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.CONTEXT_PARAMETER_WITH_DEFAULT) { firDiagnostic ->
+        ContextParameterWithDefaultImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.CALLABLE_REFERENCE_TO_CONTEXTUAL_DECLARATION) { firDiagnostic ->
+        CallableReferenceToContextualDeclarationImpl(
+            firSymbolBuilder.callableBuilder.buildCallableSymbol(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

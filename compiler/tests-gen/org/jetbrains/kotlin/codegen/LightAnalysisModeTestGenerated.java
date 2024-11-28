@@ -4137,6 +4137,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
           runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/suspendConversion/nullableParameter.kt");
         }
 
+        @TestMetadata("propertyReferenceToSuspendFunction.kt")
+        public void testPropertyReferenceToSuspendFunction() {
+          runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/suspendConversion/propertyReferenceToSuspendFunction.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() {
           runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/suspendConversion/simple.kt");
@@ -45815,6 +45820,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestMetadata("smartcastOnImplicitDispatchReceiver.kt")
     public void testSmartcastOnImplicitDispatchReceiver() {
       runTest("compiler/testData/codegen/box/smartCasts/smartcastOnImplicitDispatchReceiver.kt");
+    }
+
+    @TestMetadata("smartcastToProjectedType.kt")
+    public void testSmartcastToProjectedType() {
+      runTest("compiler/testData/codegen/box/smartCasts/smartcastToProjectedType.kt");
     }
 
     @TestMetadata("smartcastToStarType.kt")

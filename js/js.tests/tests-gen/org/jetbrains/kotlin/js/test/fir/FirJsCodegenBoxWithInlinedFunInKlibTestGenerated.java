@@ -3384,6 +3384,12 @@ public class FirJsCodegenBoxWithInlinedFunInKlibTestGenerated extends AbstractFi
         }
 
         @Test
+        @TestMetadata("propertyReferenceToSuspendFunction.kt")
+        public void testPropertyReferenceToSuspendFunction() {
+          runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/suspendConversion/propertyReferenceToSuspendFunction.kt");
+        }
+
+        @Test
         @TestMetadata("simple.kt")
         public void testSimple() {
           runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/suspendConversion/simple.kt");
@@ -31563,6 +31569,12 @@ public class FirJsCodegenBoxWithInlinedFunInKlibTestGenerated extends AbstractFi
     @TestMetadata("eagerInitializationGlobal3.kt")
     public void testEagerInitializationGlobal3() {
       runTest("compiler/testData/codegen/box/properties/eagerInitializationGlobal3.kt");
+    }
+
+    @Test
+    @TestMetadata("eagerInitializationWithSimpleObject.kt")
+    public void testEagerInitializationWithSimpleObject() {
+      runTest("compiler/testData/codegen/box/properties/eagerInitializationWithSimpleObject.kt");
     }
 
     @Test

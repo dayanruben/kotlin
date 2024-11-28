@@ -695,7 +695,14 @@ open class PsiRawFirBuilder(
                 }
 
                 defaultValue = if (hasDefaultValue()) {
-                    buildOrLazyExpression(null) { { this@toFirValueParameter.defaultValue }.toFirExpression("Should have default value") }
+                    if (valueParameterDeclaration == ValueParameterDeclaration.CONTEXT_PARAMETER) {
+                        buildErrorExpression {
+                            source = this@toFirValueParameter.toFirSourceElement(KtFakeSourceElementKind.ContextParameterDefaultValue)
+                            diagnostic = ConeContextParameterWithDefaultValue
+                        }
+                    } else {
+                        buildOrLazyExpression(null) { { this@toFirValueParameter.defaultValue }.toFirExpression("Should have default value") }
+                    }
                 } else null
                 isCrossinline = hasModifier(CROSSINLINE_KEYWORD)
                 isNoinline = hasModifier(NOINLINE_KEYWORD)
@@ -2170,6 +2177,9 @@ open class PsiRawFirBuilder(
                     }
                     dispatchReceiverType = owner.obtainDispatchReceiverForConstructor()
                     contextReceivers.addContextReceivers(owner.contextReceiverList, symbol)
+                    if (contextParameterEnabled) {
+                        contextReceivers.addContextReceivers(this@toFirConstructor.getChildOfType(), symbol)
+                    }
                     if (!owner.hasModifier(EXTERNAL_KEYWORD) && !status.isExpect || isExplicitDelegationCall()) {
                         delegatedConstructor = buildOrLazyDelegatedConstructorCall(
                             isThis = isDelegatedCallToThis(),

@@ -17,24 +17,20 @@
 package org.jetbrains.kotlin.backend.common
 
 import org.jetbrains.kotlin.backend.common.ir.Ir
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.declarations.IrFactory
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrValueParameter
-import org.jetbrains.kotlin.ir.types.IrTypeSystemContext
-import org.jetbrains.kotlin.name.FqName
 
 /**
  * A context that is used to pass data to both first (before IR serialization) and second (after IR deserialization) stage compiler
  * lowerings.
  */
 interface LoweringContext {
-    val ir: Ir<LoweringContext>
-    val builtIns: KotlinBuiltIns
+    val configuration: CompilerConfiguration
+    val ir: Ir
     val irBuiltIns: IrBuiltIns
-    val typeSystem: IrTypeSystemContext
-    val internalPackageFqn: FqName
     val irFactory: IrFactory
 
     // TODO(KT-73155): Pull this down to CommonBackendContext
