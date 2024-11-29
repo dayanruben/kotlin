@@ -192,8 +192,8 @@ class CallAndReferenceGenerator(
                     IrFunctionReferenceImplWithShape(
                         startOffset, endOffset, type, irFunctionSymbol,
                         typeArgumentsCount = function.typeParameters.size,
-                        valueArgumentsCount = function.valueParameters.size + function.contextReceivers.size,
-                        contextParameterCount = function.contextReceivers.size,
+                        valueArgumentsCount = function.valueParameters.size + function.contextParameters.size,
+                        contextParameterCount = function.contextParameters.size,
                         hasDispatchReceiver = function.dispatchReceiverType != null,
                         hasExtensionReceiver = function.isExtension,
                         reflectionTarget = irFunctionSymbol
@@ -553,7 +553,7 @@ class CallAndReferenceGenerator(
                         irSymbol,
                         typeArgumentsCount = totalTypeParametersCount,
                         valueArgumentsCount = firSymbol.valueParametersSize(),
-                        contextParameterCount = constructor.contextReceivers.size,
+                        contextParameterCount = constructor.contextParameters.size,
                         constructorTypeArgumentsCount = constructorTypeParametersCount,
                         hasDispatchReceiver = firSymbol.dispatchReceiverType != null,
                         hasExtensionReceiver = firSymbol.isExtension,
@@ -578,7 +578,7 @@ class CallAndReferenceGenerator(
                         startOffset, endOffset, irType, irSymbol,
                         typeArgumentsCount = firSymbol.typeParameterSymbols.size,
                         valueArgumentsCount = firSymbol.valueParametersSize(),
-                        contextParameterCount = firSymbol.fir.contextReceivers.size,
+                        contextParameterCount = firSymbol.fir.contextParameters.size,
                         hasDispatchReceiver = firSymbol.dispatchReceiverType != null,
                         hasExtensionReceiver = firSymbol.isExtension,
                         origin = callOrigin,
@@ -622,8 +622,8 @@ class CallAndReferenceGenerator(
                                 finalIrType,
                                 getterSymbol,
                                 typeArgumentsCount = property.typeParameters.size,
-                                valueArgumentsCount = property.contextReceivers.size,
-                                contextParameterCount = property.contextReceivers.size,
+                                valueArgumentsCount = property.contextParameters.size,
+                                contextParameterCount = property.contextParameters.size,
                                 hasDispatchReceiver = property.dispatchReceiverType != null,
                                 hasExtensionReceiver = property.isExtension,
                                 origin = incOrDecSourceKindToIrStatementOrigin[qualifiedAccess.source?.kind]
@@ -672,8 +672,8 @@ class CallAndReferenceGenerator(
     private fun FirCallableSymbol<*>.valueParametersSize(): Int {
         return when (this) {
             is FirSyntheticPropertySymbol -> 0
-            is FirNamedFunctionSymbol -> fir.valueParameters.size + fir.contextReceivers.size
-            is FirConstructorSymbol -> fir.valueParameters.size + fir.contextReceivers.size
+            is FirNamedFunctionSymbol -> fir.valueParameters.size + fir.contextParameters.size
+            is FirConstructorSymbol -> fir.valueParameters.size + fir.contextParameters.size
             is FirFunctionSymbol<*> -> fir.valueParameters.size
             else -> error("Illegal symbol: ${this::class}")
         }
@@ -795,7 +795,7 @@ class CallAndReferenceGenerator(
                             origin = origin,
                             superQualifierSymbol = variableAssignment.dispatchReceiver?.superQualifierSymbolForFunctionAndPropertyAccess()
                         ).apply {
-                            putContextReceiverArguments(lValue)
+                            putContextArguments(lValue)
                             putValueArgument(0, irRhsWithCast)
                         }
 
@@ -812,14 +812,14 @@ class CallAndReferenceGenerator(
                         setterSymbol != null -> IrCallImplWithShape(
                             startOffset, endOffset, type, setterSymbol,
                             typeArgumentsCount = firProperty.typeParameters.size,
-                            valueArgumentsCount = 1 + firProperty.contextReceivers.size,
-                            contextParameterCount = firProperty.contextReceivers.size,
+                            valueArgumentsCount = 1 + firProperty.contextParameters.size,
+                            contextParameterCount = firProperty.contextParameters.size,
                             hasDispatchReceiver = firProperty.dispatchReceiverType != null,
                             hasExtensionReceiver = firProperty.isExtension,
                             origin = origin,
                             superQualifierSymbol = variableAssignment.dispatchReceiver?.superQualifierSymbolForFunctionAndPropertyAccess()
                         ).apply {
-                            putValueArgument(putContextReceiverArguments(lValue), irRhsWithCast)
+                            putValueArgument(putContextArguments(lValue), irRhsWithCast)
                         }
 
                         backingFieldSymbol != null -> IrSetFieldImpl(
@@ -951,7 +951,7 @@ class CallAndReferenceGenerator(
                         // `irConstructor.owner.valueParameters.size`.
                         // See KT-58294
                         valueArgumentsCount = firConstructorSymbol.valueParameterSymbols.size,
-                        contextParameterCount = firConstructorSymbol.resolvedContextReceivers.size,
+                        contextParameterCount = firConstructorSymbol.resolvedContextParameters.size,
                         hasDispatchReceiver = firConstructorSymbol.dispatchReceiverType != null,
                         hasExtensionReceiver = firConstructorSymbol.isExtension,
                         typeArgumentsCount = fullyExpandedConstructorSymbol.typeParameterSymbols.size,
@@ -1048,7 +1048,7 @@ class CallAndReferenceGenerator(
         val call = statement as? FirCall
         return when (this) {
             is IrMemberAccessExpression<*> -> {
-                val contextReceiverCount = putContextReceiverArguments(statement)
+                val contextArgumentCount = putContextArguments(statement)
                 if (call == null) return this
                 val argumentsCount = call.arguments.size
                 if (argumentsCount <= valueArgumentsCount) {
@@ -1056,7 +1056,7 @@ class CallAndReferenceGenerator(
                         val (valueParameters, argumentMapping, substitutor) = extractArgumentsMapping(call)
                         if (argumentMapping != null && (visitor.annotationMode || argumentMapping.isNotEmpty()) && valueParameters != null) {
                             return applyArgumentsWithReorderingIfNeeded(
-                                argumentMapping, valueParameters, substitutor, contextReceiverCount, call,
+                                argumentMapping, valueParameters, substitutor, contextArgumentCount, call,
                             )
                         }
                         check(argumentsCount == 0) { "Non-empty unresolved argument list." }
@@ -1104,27 +1104,27 @@ class CallAndReferenceGenerator(
         }
     }
 
-    private fun IrMemberAccessExpression<*>.putContextReceiverArguments(statement: FirStatement?): Int {
-        if (statement !is FirContextReceiverArgumentListOwner) return 0
+    private fun IrMemberAccessExpression<*>.putContextArguments(statement: FirStatement?): Int {
+        if (statement !is FirContextArgumentListOwner) return 0
 
-        val contextReceiverCount = statement.contextReceiverArguments.size
-        if (contextReceiverCount > 0) {
-            for (index in 0 until contextReceiverCount) {
+        val contextArgumentCount = statement.contextArguments.size
+        if (contextArgumentCount > 0) {
+            for (index in 0 until contextArgumentCount) {
                 putValueArgument(
                     index,
-                    visitor.convertToIrExpression(statement.contextReceiverArguments[index]),
+                    visitor.convertToIrExpression(statement.contextArguments[index]),
                 )
             }
         }
 
-        return contextReceiverCount
+        return contextArgumentCount
     }
 
     private fun IrMemberAccessExpression<*>.applyArgumentsWithReorderingIfNeeded(
         argumentMapping: Map<FirExpression, FirValueParameter>,
         valueParameters: List<FirValueParameter>,
         substitutor: ConeSubstitutor,
-        contextReceiverCount: Int,
+        contextArgumentCount: Int,
         call: FirCall,
     ): IrExpression {
         val converted = convertArguments(argumentMapping, substitutor)
@@ -1145,7 +1145,7 @@ class CallAndReferenceGenerator(
                 extensionReceiver = extensionReceiver?.freeze("\$receiver")
                 for ((parameter, irArgument) in converted) {
                     putValueArgument(
-                        valueParameters.indexOf(parameter) + contextReceiverCount,
+                        valueParameters.indexOf(parameter) + contextArgumentCount,
                         irArgument.freeze(parameter.name.asString())
                     )
                 }
@@ -1153,7 +1153,7 @@ class CallAndReferenceGenerator(
             }
         } else {
             for ((parameter, irArgument) in converted) {
-                putValueArgument(valueParameters.indexOf(parameter) + contextReceiverCount, irArgument)
+                putValueArgument(valueParameters.indexOf(parameter) + contextArgumentCount, irArgument)
             }
             if (visitor.annotationMode) {
                 val function = call.toReference(session)?.toResolvedCallableSymbol()?.fir as? FirFunction

@@ -101,7 +101,7 @@ object FirTree : AbstractFirTreeBuilder() {
         +referencedSymbol(callableSymbolType.withArgs(callableDeclaration))
         +field("containerSource", type<DeserializedContainerSource>(), nullable = true)
         +field("dispatchReceiverType", coneSimpleKotlinTypeType, nullable = true)
-        +listField(name = "contextReceivers", valueParameter, useMutableOrEmpty = true, withReplace = true, withTransform = true)
+        +listField(name = "contextParameters", valueParameter, useMutableOrEmpty = true, withReplace = true, withTransform = true)
     }
 
     val function: Element by sealedElement(Declaration) {
@@ -274,14 +274,14 @@ object FirTree : AbstractFirTreeBuilder() {
         +field("rhs", expression, withTransform = true)
     }
 
-    val contextReceiverArgumentListOwner: Element by element(Expression) {
-        +listField("contextReceiverArguments", expression, useMutableOrEmpty = true, withReplace = true)
+    val contextArgumentListOwner: Element by element(Expression) {
+        +listField("contextArguments", expression, useMutableOrEmpty = true, withReplace = true)
     }
 
     val qualifiedAccessExpression: Element by element(Expression) {
         parent(expression)
         parent(resolvable)
-        parent(contextReceiverArgumentListOwner)
+        parent(contextArgumentListOwner)
 
         +typeArguments {
             withTransform = true
@@ -427,7 +427,7 @@ object FirTree : AbstractFirTreeBuilder() {
         +field("hasLazyNestedClassifiers", boolean)
         +referencedSymbol("companionObjectSymbol", regularClassSymbolType, nullable = true, withReplace = true)
         +listField("superTypeRefs", typeRef, withReplace = true)
-        +listField(name = "contextReceivers", valueParameter, useMutableOrEmpty = true, withTransform = true)
+        +listField(name = "contextParameters", valueParameter, useMutableOrEmpty = true, withTransform = true)
     }
 
     val anonymousObject: Element by element(Declaration) {
@@ -607,7 +607,7 @@ object FirTree : AbstractFirTreeBuilder() {
     val delegatedConstructorCall: Element by element(Expression) {
         parent(resolvable)
         parent(call)
-        parent(contextReceiverArgumentListOwner)
+        parent(contextArgumentListOwner)
         parent(expression)
 
         +field("constructedTypeRef", typeRef, withReplace = true)
@@ -1159,7 +1159,7 @@ object FirTree : AbstractFirTreeBuilder() {
         +listField("parameters", functionTypeParameter)
         +field("returnTypeRef", typeRef)
         +field("isSuspend", boolean)
-        +listField("contextReceiverTypeRefs", typeRef)
+        +listField("contextParameterTypeRefs", typeRef)
     }
 
     val dynamicTypeRef: Element by element(TypeRefElement) {

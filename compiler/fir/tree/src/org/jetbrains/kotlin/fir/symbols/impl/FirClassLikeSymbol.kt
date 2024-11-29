@@ -78,11 +78,11 @@ class FirRegularClassSymbol(classId: ClassId) : FirClassSymbol<FirRegularClass>(
     val companionObjectSymbol: FirRegularClassSymbol?
         get() = fir.companionObjectSymbol
 
-    val resolvedContextReceivers: List<FirValueParameter>
+    val resolvedContextParameters: List<FirValueParameter>
         get() {
-            if (fir.contextReceivers.isEmpty()) return emptyList()
+            if (fir.contextParameters.isEmpty()) return emptyList()
             lazyResolveToPhase(FirResolvePhase.TYPES)
-            return fir.contextReceivers
+            return fir.contextParameters
         }
 }
 

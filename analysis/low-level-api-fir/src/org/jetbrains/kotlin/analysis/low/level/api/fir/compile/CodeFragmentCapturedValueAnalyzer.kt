@@ -154,10 +154,10 @@ private class CodeFragmentCapturedValueVisitor(
                                 if (labelName != SpecialNames.UNDERSCORE_FOR_UNUSED_VAR) {
                                     val isCrossingInlineBounds = isCrossingInlineBounds(element, symbol)
                                     val index = when (val containingDeclaration = symbol.containingDeclarationSymbol.fir) {
-                                        is FirCallableDeclaration -> containingDeclaration.contextReceivers.indexOf(
+                                        is FirCallableDeclaration -> containingDeclaration.contextParameters.indexOf(
                                             valueParameter
                                         )
-                                        is FirRegularClass -> containingDeclaration.contextReceivers.indexOf(valueParameter)
+                                        is FirRegularClass -> containingDeclaration.contextParameters.indexOf(valueParameter)
                                         else -> errorWithFirSpecificEntries(
                                             message = "Unexpected containing declaration ${containingDeclaration::class.simpleName}",
                                             fir = containingDeclaration

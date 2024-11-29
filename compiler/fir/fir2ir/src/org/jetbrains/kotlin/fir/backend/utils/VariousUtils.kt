@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.analysis.checkers.getContainingClassSymbol
 import org.jetbrains.kotlin.fir.backend.*
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.declarations.utils.isStatic
 import org.jetbrains.kotlin.fir.expressions.FirComponentCall
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
 import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
@@ -43,11 +42,11 @@ fun FirRegularClass.getIrSymbolsForSealedSubclasses(c: Fir2IrComponents): List<I
     }.filterIsInstance<IrClassSymbol>()
 }
 
-fun FirCallableDeclaration.contextReceiversForFunctionOrContainingProperty(): List<FirValueParameter> =
+fun FirCallableDeclaration.contextParametersForFunctionOrContainingProperty(): List<FirValueParameter> =
     if (this is FirPropertyAccessor)
-        this.propertySymbol.fir.contextReceivers
+        this.propertySymbol.fir.contextParameters
     else
-        this.contextReceivers
+        this.contextParameters
 
 fun List<IrDeclaration>.extractFirDeclarations(): Set<FirDeclaration> {
     return this.mapTo(mutableSetOf()) { ((it as IrMetadataSourceOwner).metadata as FirMetadataSource).fir }
@@ -168,7 +167,7 @@ val IrClassSymbol.defaultTypeWithoutArguments: IrSimpleType
 
 val FirCallableSymbol<*>.isInlineClassProperty: Boolean
     get() {
-        if (this !is FirPropertySymbol || dispatchReceiverType == null || receiverParameter != null || resolvedContextReceivers.isNotEmpty()) return false
+        if (this !is FirPropertySymbol || dispatchReceiverType == null || receiverParameter != null || resolvedContextParameters.isNotEmpty()) return false
         val containingClass = getContainingClassSymbol() as? FirRegularClassSymbol ?: return false
         val inlineClassRepresentation = containingClass.fir.inlineClassRepresentation ?: return false
         return inlineClassRepresentation.underlyingPropertyName == this.name

@@ -110,7 +110,7 @@ internal class ClassMemberGenerator(
                         irFunction.putParametersInScope(firFunction)
                     }
                 }
-                val irParameters = valueParameters.drop(firFunction.contextReceivers.size)
+                val irParameters = valueParameters.drop(firFunction.contextParameters.size)
                 val annotationMode = containingClass?.classKind == ClassKind.ANNOTATION_CLASS && irFunction is IrConstructor
                 for ((valueParameter, firValueParameter) in irParameters.zip(firFunction.valueParameters)) {
                     visitor.withAnnotationMode(enableAnnotationMode = annotationMode) {
@@ -131,14 +131,14 @@ internal class ClassMemberGenerator(
                         body.statements += irDelegatingConstructorCall
                     }
 
-                    if (containingClass is FirRegularClass && containingClass.contextReceivers.isNotEmpty()) {
+                    if (containingClass is FirRegularClass && containingClass.contextParameters.isNotEmpty()) {
                         val contextReceiverFields =
                             c.classifierStorage.getFieldsWithContextReceiversForClass(irClass, containingClass)
 
                         val thisParameter =
                             conversionScope.dispatchReceiverParameter(irClass) ?: error("No found this parameter for $irClass")
 
-                        for (index in containingClass.contextReceivers.indices) {
+                        for (index in containingClass.contextParameters.indices) {
                             require(contextReceiverFields.size > index) {
                                 "Not defined context receiver #${index} for $irClass. " +
                                         "Context receivers found: $contextReceiverFields"
@@ -383,7 +383,7 @@ internal class ClassMemberGenerator(
                     irConstructorSymbol,
                     typeArgumentsCount = constructor.typeParameters.size,
                     valueArgumentsCount = constructor.valueParameters.size,
-                    contextParameterCount = constructor.contextReceivers.size,
+                    contextParameterCount = constructor.contextParameters.size,
                     hasDispatchReceiver = constructor.dispatchReceiverType != null,
                     hasExtensionReceiver = constructor.isExtension,
                 )
@@ -393,8 +393,8 @@ internal class ClassMemberGenerator(
                     builtins.unitType,
                     irConstructorSymbol,
                     typeArgumentsCount = constructor.typeParameters.size,
-                    valueArgumentsCount = constructor.valueParameters.size + constructor.contextReceivers.size,
-                    contextParameterCount = constructor.contextReceivers.size,
+                    valueArgumentsCount = constructor.valueParameters.size + constructor.contextParameters.size,
+                    contextParameterCount = constructor.contextParameters.size,
                     hasDispatchReceiver = constructor.dispatchReceiverType != null,
                     hasExtensionReceiver = constructor.isExtension,
                 )

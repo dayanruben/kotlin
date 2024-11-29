@@ -128,13 +128,13 @@ internal abstract class NonLocalAnnotationVisitor<T> : FirVisitor<Unit, T>() {
 
     override fun visitRegularClass(regularClass: FirRegularClass, data: T) {
         visitMemberDeclaration(regularClass, data)
-        regularClass.contextReceivers.forEach { it.accept(this, data) }
+        regularClass.contextParameters.forEach { it.accept(this, data) }
         regularClass.superTypeRefs.forEach { it.accept(this, data) }
     }
 
     override fun visitCallableDeclaration(callableDeclaration: FirCallableDeclaration, data: T) {
         visitMemberDeclaration(callableDeclaration, data)
-        callableDeclaration.contextReceivers.forEach { it.accept(this, data) }
+        callableDeclaration.contextParameters.forEach { it.accept(this, data) }
         callableDeclaration.receiverParameter?.accept(this, data)
         callableDeclaration.returnTypeRef.accept(this, data)
     }

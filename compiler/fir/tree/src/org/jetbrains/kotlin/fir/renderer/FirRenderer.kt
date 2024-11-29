@@ -53,7 +53,7 @@ class FirRenderer(
     override val resolvedQualifierRenderer: FirResolvedQualifierRenderer = FirResolvedQualifierRendererWithLabel(),
     override val getClassCallRenderer: FirGetClassCallRenderer = FirGetClassCallRendererForDebugging(),
     override val supertypeRenderer: FirSupertypeRenderer? = FirSupertypeRenderer(),
-    private val lineBreakAfterContextReceivers: Boolean = true,
+    private val lineBreakAfterContextParameters: Boolean = true,
     private val renderFieldAnnotationSeparately: Boolean = true,
     private val renderVarargTypes: Boolean = false,
 ) : FirRendererComponents {
@@ -146,13 +146,13 @@ class FirRenderer(
         }
     }
 
-    private fun renderContexts(contextReceivers: List<FirValueParameter>) {
-        if (contextReceivers.isEmpty()) return
+    private fun renderContexts(contextParameters: List<FirValueParameter>) {
+        if (contextParameters.isEmpty()) return
         print("context(")
-        renderSeparated(contextReceivers, visitor)
+        renderSeparated(contextParameters, visitor)
         print(")")
 
-        if (lineBreakAfterContextReceivers) {
+        if (lineBreakAfterContextParameters) {
             printer.newLine()
         } else {
             print(" ")
@@ -261,7 +261,7 @@ class FirRenderer(
         }
 
         override fun visitCallableDeclaration(callableDeclaration: FirCallableDeclaration) {
-            renderContexts(callableDeclaration.contextReceivers)
+            renderContexts(callableDeclaration.contextParameters)
             annotationRenderer?.render(callableDeclaration)
             if (callableDeclaration is FirProperty) {
                 val backingField = callableDeclaration.backingField
@@ -336,7 +336,7 @@ class FirRenderer(
         }
 
         override fun visitRegularClass(regularClass: FirRegularClass) {
-            renderContexts(regularClass.contextReceivers)
+            renderContexts(regularClass.contextParameters)
             annotationRenderer?.render(regularClass)
             visitMemberDeclaration(regularClass)
             supertypeRenderer?.renderSupertypes(regularClass)
@@ -856,9 +856,9 @@ class FirRenderer(
         }
 
         override fun visitFunctionTypeRef(functionTypeRef: FirFunctionTypeRef) {
-            if (functionTypeRef.contextReceiverTypeRefs.isNotEmpty()) {
+            if (functionTypeRef.contextParameterTypeRefs.isNotEmpty()) {
                 print("context(")
-                renderSeparated(functionTypeRef.contextReceiverTypeRefs, visitor)
+                renderSeparated(functionTypeRef.contextParameterTypeRefs, visitor)
                 print(")")
             }
 

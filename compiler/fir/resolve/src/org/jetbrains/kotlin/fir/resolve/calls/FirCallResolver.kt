@@ -122,7 +122,7 @@ class FirCallResolver(
                 dispatchReceiver = candidate.dispatchReceiverExpression()
                 extensionReceiver = candidate.chosenExtensionReceiverExpression()
                 argumentList = candidate.callInfo.argumentList
-                contextReceiverArguments.addAll(candidate.contextReceiverArguments())
+                contextArguments.addAll(candidate.contextArguments())
             }
         } else {
             functionCall
@@ -416,7 +416,7 @@ class FirCallResolver(
             qualifiedAccess.apply {
                 replaceDispatchReceiver(candidate.dispatchReceiverExpression())
                 replaceExtensionReceiver(candidate.chosenExtensionReceiverExpression())
-                replaceContextReceiverArguments(candidate.contextReceiverArguments())
+                replaceContextArguments(candidate.contextArguments())
                 addNonFatalDiagnostics(candidate)
             }
         }
@@ -719,7 +719,7 @@ class FirCallResolver(
                 if (symbol is FirConstructorSymbol && symbol.fir.isInner) {
                     replaceDispatchReceiver(singleCandidate.dispatchReceiverExpression())
                 }
-                replaceContextReceiverArguments(singleCandidate.contextReceiverArguments())
+                replaceContextArguments(singleCandidate.contextArguments())
             }
         }
     }

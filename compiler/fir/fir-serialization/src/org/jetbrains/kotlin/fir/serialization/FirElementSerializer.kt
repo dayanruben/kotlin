@@ -150,7 +150,7 @@ class FirElementSerializer private constructor(
         builder: ProtoBuf.Package.Builder,
         actualizedExpectDeclarations: Set<FirDeclaration>?,
     ): ProtoBuf.Package.Builder {
-        extension.serializePackage(packageFqName, builder)
+        extension.serializePackage(packageFqName, builder, versionRequirementTable, this)
         // Next block will process declarations from plugins.
         // Such declarations don't belong to any file, so there is no need to call `extension.processFile`.
         for (declaration in providedDeclarationsService.getProvidedTopLevelDeclarations(packageFqName, scopeSession)) {
@@ -303,12 +303,12 @@ class FirElementSerializer private constructor(
         }
 
         if (klass is FirRegularClass) {
-            for (contextReceiver in klass.contextReceivers) {
-                val typeRef = contextReceiver.returnTypeRef
+            for (contextParameter in klass.contextParameters) {
+                val typeRef = contextParameter.returnTypeRef
                 if (useTypeTable()) {
                     builder.addContextReceiverTypeId(typeId(typeRef))
                 } else {
-                    builder.addContextReceiverType(typeProto(contextReceiver.returnTypeRef))
+                    builder.addContextReceiverType(typeProto(contextParameter.returnTypeRef))
                 }
             }
         }
@@ -574,7 +574,7 @@ class FirElementSerializer private constructor(
         builder.name = getSimpleNameIndex(property.name)
 
         if (useTypeTable()) {
-            builder.returnTypeId = local.typeId(property.returnTypeRef)
+            builder.returnTypeId = local.typeId(property.returnTypeRef, toSuper = true)
         } else {
             builder.setReturnType(local.typeProto(property.returnTypeRef, toSuper = true))
         }
@@ -583,12 +583,12 @@ class FirElementSerializer private constructor(
             builder.addTypeParameter(local.typeParameterProto(typeParameter))
         }
 
-        for (contextReceiver in property.contextReceivers) {
-            val typeRef = contextReceiver.returnTypeRef
+        for (contextParameter in property.contextParameters) {
+            val typeRef = contextParameter.returnTypeRef
             if (useTypeTable()) {
                 builder.addContextReceiverTypeId(local.typeId(typeRef))
             } else {
-                builder.addContextReceiverType(local.typeProto(contextReceiver.returnTypeRef))
+                builder.addContextReceiverType(local.typeProto(contextParameter.returnTypeRef))
             }
         }
 
@@ -660,7 +660,7 @@ class FirElementSerializer private constructor(
         builder.name = getSimpleNameIndex(name)
 
         if (useTypeTable()) {
-            builder.returnTypeId = local.typeId(function.returnTypeRef)
+            builder.returnTypeId = local.typeId(function.returnTypeRef, toSuper = true)
         } else {
             builder.setReturnType(local.typeProto(function.returnTypeRef, toSuper = true))
         }
@@ -671,12 +671,12 @@ class FirElementSerializer private constructor(
             builder.addTypeParameter(local.typeParameterProto(typeParameter))
         }
 
-        for (contextReceiver in function.contextReceivers) {
-            val typeRef = contextReceiver.returnTypeRef
+        for (contextParameter in function.contextParameters) {
+            val typeRef = contextParameter.returnTypeRef
             if (useTypeTable()) {
                 builder.addContextReceiverTypeId(local.typeId(typeRef))
             } else {
-                builder.addContextReceiverType(local.typeProto(contextReceiver.returnTypeRef))
+                builder.addContextReceiverType(local.typeProto(contextParameter.returnTypeRef))
             }
         }
 
@@ -909,14 +909,14 @@ class FirElementSerializer private constructor(
             return builder
         }
 
-    fun typeId(typeRef: FirTypeRef): Int {
+    fun typeId(typeRef: FirTypeRef, toSuper: Boolean = false): Int {
         if (typeRef !is FirResolvedTypeRef) {
             return -1 // TODO: serializeErrorType?
         }
-        return typeId(typeRef.coneType)
+        return typeId(typeRef.coneType, toSuper)
     }
 
-    fun typeId(type: ConeKotlinType): Int = typeTable[typeProto(type)]
+    fun typeId(type: ConeKotlinType, toSuper: Boolean = false): Int = typeTable[typeProto(type, toSuper)]
 
     private fun typeProto(typeRef: FirTypeRef, toSuper: Boolean = false): ProtoBuf.Type.Builder {
         return typeProto(typeRef.coneType, toSuper, correspondingTypeRef = typeRef)
@@ -1011,14 +1011,14 @@ class FirElementSerializer private constructor(
                     }
                 }
                 fillFromPossiblyInnerType(builder, type, abbreviationOnly)
-                if (type.hasContextReceivers) {
+                if (type.hasContextParameters) {
                     typeAnnotations.addIfNotNull(
                         createAnnotationFromAttribute(
                             correspondingTypeRef?.annotations, CompilerConeAttributes.ContextFunctionTypeParams.ANNOTATION_CLASS_ID,
                             argumentMapping = buildAnnotationArgumentMapping {
                                 this.mapping[StandardNames.CONTEXT_FUNCTION_TYPE_PARAMETER_COUNT_NAME] =
                                     buildLiteralExpression(
-                                        source = null, ConstantValueKind.Int, type.contextReceiversNumberForFunctionType, setType = true
+                                        source = null, ConstantValueKind.Int, type.contextParameterNumberForFunctionType, setType = true
                                     )
                             }
                         )

@@ -28,7 +28,7 @@ object FirContextReceiversDeprecatedDeclarationChecker : FirBasicDeclarationChec
             // Skip the lambdas. They don't have `context` explicitly written => `context` is written somewhere else.
             // Plus, I'd not say that lambdas are declarations. They are rather values
             declaration !is FirAnonymousFunction &&
-            declaration.contextReceivers.onlyLegacyContextReceivers()
+            declaration.contextParameters.onlyLegacyContextReceivers()
         ) {
             val factory = if (declaration is FirConstructor && declaration !is FirPrimaryConstructor) {
                 FirErrors.CONTEXT_CLASS_OR_CONSTRUCTOR
@@ -37,7 +37,7 @@ object FirContextReceiversDeprecatedDeclarationChecker : FirBasicDeclarationChec
             }
             reporter.reportOn(declaration.source, factory, context)
         }
-        if (declaration is FirRegularClass && declaration.contextReceivers.onlyLegacyContextReceivers()) {
+        if (declaration is FirRegularClass && declaration.contextParameters.onlyLegacyContextReceivers()) {
             reporter.reportOn(declaration.source, FirErrors.CONTEXT_CLASS_OR_CONSTRUCTOR, context)
         }
     }

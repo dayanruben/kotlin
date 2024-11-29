@@ -114,7 +114,7 @@ private fun ConeDiagnostic.toKtDiagnostic(
             // Ambiguous candidates may be not fully processed, so argument mapping may be not initialized
             if (!it.argumentMappingInitialized) return@all false
             it.argumentMapping.keys.any(AbstractConeResolutionAtom::containsErrorTypeForSuppressingAmbiguityError) ||
-                    it.contextReceiverArguments?.any(AbstractConeResolutionAtom::containsErrorTypeForSuppressingAmbiguityError) == true ||
+                    it.contextArguments?.any(AbstractConeResolutionAtom::containsErrorTypeForSuppressingAmbiguityError) == true ||
                     it.chosenExtensionReceiver?.containsErrorTypeForSuppressingAmbiguityError() == true
         } -> null
         applicability.isSuccess -> FirErrors.OVERLOAD_RESOLUTION_AMBIGUITY.createOn(source, this.candidates.map { it.symbol })
@@ -341,7 +341,7 @@ private fun mapInapplicableCandidateError(
 
             is NoReceiverAllowed -> FirErrors.NO_RECEIVER_ALLOWED.createOn(qualifiedAccessSource ?: source)
 
-            is NoApplicableValueForContextReceiver ->
+            is NoContextArgument ->
                 FirErrors.NO_CONTEXT_ARGUMENT.createOn(
                     qualifiedAccessSource ?: source,
                     rootCause.expectedContextReceiverType.removeTypeVariableTypes(typeContext)
@@ -349,7 +349,7 @@ private fun mapInapplicableCandidateError(
 
             is UnsupportedContextualDeclarationCall -> FirErrors.UNSUPPORTED_CONTEXTUAL_DECLARATION_CALL.createOn(source)
 
-            is AmbiguousValuesForContextReceiverParameter ->
+            is AmbiguousContextArgument ->
                 FirErrors.AMBIGUOUS_CONTEXT_ARGUMENT.createOn(
                     qualifiedAccessSource ?: source,
                     rootCause.expectedContextReceiverType.removeTypeVariableTypes(typeContext)

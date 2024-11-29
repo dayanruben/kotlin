@@ -242,7 +242,7 @@ class FirSamResolver(
         val newParameterTypes = samConstructorForClass.valueParameters.map {
             substitutor.substituteOrSelf(it.returnTypeRef.coneType)
         }
-        val newContextReceiverTypes = samConstructorForClass.contextReceivers.map {
+        val newContextParameterTypes = samConstructorForClass.contextParameters.map {
             substitutor.substituteOrSelf(it.returnTypeRef.coneType)
         }
 
@@ -252,7 +252,7 @@ class FirSamResolver(
             session, FirDeclarationOrigin.SamConstructor,
             newDispatchReceiverType = null,
             newReceiverType = null,
-            newContextReceiverTypes = newContextReceiverTypes,
+            newContextParameterTypes = newContextParameterTypes,
             newReturnType = type.withAbbreviation(AbbreviatedTypeAttribute(typeAliasSymbol.defaultType())),
             newParameterTypes = newParameterTypes,
             newTypeParameters = typeAliasSymbol.fir.typeParameters,
@@ -522,7 +522,7 @@ private fun FirSimpleFunction.getFunctionTypeForAbstractMethod(session: FirSessi
     val parameterTypes = valueParameters.map {
         it.returnTypeRef.coneTypeSafe<ConeKotlinType>() ?: ConeErrorType(ConeIntermediateDiagnostic("No type for parameter $it"))
     }
-    val contextReceiversTypes = contextReceivers.map {
+    val contextParameterTypes = contextParameters.map {
         it.returnTypeRef.coneTypeSafe<ConeKotlinType>() ?: ConeErrorType(ConeIntermediateDiagnostic("No type for context receiver $it"))
     }
     val kind = session.functionTypeService.extractSingleSpecialKindForFunction(symbol) ?: FunctionTypeKind.Function
@@ -531,7 +531,7 @@ private fun FirSimpleFunction.getFunctionTypeForAbstractMethod(session: FirSessi
         parameterTypes,
         receiverType = receiverParameter?.typeRef?.coneType,
         rawReturnType = returnTypeRef.coneType,
-        contextReceivers = contextReceiversTypes
+        contextParameters = contextParameterTypes
     )
 }
 

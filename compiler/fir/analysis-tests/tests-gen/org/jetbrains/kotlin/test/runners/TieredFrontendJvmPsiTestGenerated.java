@@ -10594,6 +10594,12 @@ public class TieredFrontendJvmPsiTestGenerated extends AbstractTieredFrontendJvm
         }
 
         @Test
+        @TestMetadata("capturedFunctionalType.kt")
+        public void testCapturedFunctionalType() {
+          runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/capturedFunctionalType.kt");
+        }
+
+        @Test
         @TestMetadata("capturedType.kt")
         public void testCapturedType() {
           runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/capturedType.kt");
@@ -12145,6 +12151,12 @@ public class TieredFrontendJvmPsiTestGenerated extends AbstractTieredFrontendJvm
         @TestMetadata("classSubstitutedWithOwnFunctionTypeParameter.kt")
         public void testClassSubstitutedWithOwnFunctionTypeParameter() {
           runTest("compiler/testData/diagnostics/tests/inference/regressions/classSubstitutedWithOwnFunctionTypeParameter.kt");
+        }
+
+        @Test
+        @TestMetadata("functionalSuperTypeOfIntersectionType.kt")
+        public void testFunctionalSuperTypeOfIntersectionType() {
+          runTest("compiler/testData/diagnostics/tests/inference/regressions/functionalSuperTypeOfIntersectionType.kt");
         }
 
         @Test
