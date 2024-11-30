@@ -5,8 +5,8 @@
 
 package org.jetbrains.kotlin.config.keys.generator
 
-import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
-import org.jetbrains.kotlin.backend.common.phaser.PhaseConfigurationService
+import org.jetbrains.kotlin.config.phaser.PhaseConfig
+import org.jetbrains.kotlin.config.phaser.PhaseConfigurationService
 import org.jetbrains.kotlin.cli.common.CommonCompilerPerformanceManager
 import org.jetbrains.kotlin.cli.common.config.ContentRoot
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
@@ -45,8 +45,6 @@ object CLIConfigurationKeysContainer : KeysContainer("org.jetbrains.kotlin.cli.c
     )
 
     val METADATA_DESTINATION_DIRECTORY by key<File>("metadata destination directory", comment = "See K2MetadataCompilerArguments")
-
-    val PHASE_CONFIG by key<PhaseConfig>("phase configuration")
 
     val FLEXIBLE_PHASE_CONFIG by key<PhaseConfigurationService>("flexible phase configuration")
 

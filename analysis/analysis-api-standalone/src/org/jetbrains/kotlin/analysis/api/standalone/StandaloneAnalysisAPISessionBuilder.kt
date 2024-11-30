@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificatio
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackagePartProviderFactory
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderFactory
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderMerger
+import org.jetbrains.kotlin.analysis.api.platform.permissions.KotlinAnalysisPermissionOptions
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinByModulesResolutionScopeProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolutionScopeProvider
@@ -39,6 +40,7 @@ import org.jetbrains.kotlin.analysis.api.standalone.base.modification.KotlinStan
 import org.jetbrains.kotlin.analysis.api.standalone.base.modification.KotlinStandaloneModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.api.standalone.base.packages.KotlinStandalonePackageProviderFactory
 import org.jetbrains.kotlin.analysis.api.standalone.base.packages.KotlinStandalonePackageProviderMerger
+import org.jetbrains.kotlin.analysis.api.standalone.base.permissions.KotlinStandaloneAnalysisPermissionOptions
 import org.jetbrains.kotlin.analysis.api.standalone.base.projectStructure.AnalysisApiSimpleServiceRegistrar
 import org.jetbrains.kotlin.analysis.api.standalone.base.projectStructure.ApplicationServiceRegistration
 import org.jetbrains.kotlin.analysis.api.standalone.base.projectStructure.FirStandaloneServiceRegistrar
@@ -65,7 +67,6 @@ import kotlin.contracts.contract
 public class StandaloneAnalysisAPISessionBuilder(
     projectDisposable: Disposable,
     unitTestMode: Boolean,
-    classLoader: ClassLoader = MockProject::class.java.classLoader
 ) {
     init {
         // We depend on swing (indirectly through PSI or something), so we want to declare headless mode,
@@ -80,7 +81,6 @@ public class StandaloneAnalysisAPISessionBuilder(
         StandaloneProjectFactory.createProjectEnvironment(
             projectDisposable,
             KotlinCoreApplicationEnvironmentMode.fromUnitTestModeFlag(unitTestMode),
-            classLoader = classLoader
         )
 
     private val serviceRegistrars = listOf(FirStandaloneServiceRegistrar, StandaloneSessionServiceRegistrar)
@@ -88,12 +88,7 @@ public class StandaloneAnalysisAPISessionBuilder(
     init {
         val application = kotlinCoreProjectEnvironment.environment.application
         ApplicationServiceRegistration.registerWithCustomRegistration(application, serviceRegistrars) {
-            // TODO (KT-68186): Passing the class loader explicitly is a workaround for KT-68186.
-            if (this is FirStandaloneServiceRegistrar) {
-                registerApplicationServicesWithCustomClassLoader(application, classLoader)
-            } else {
-                registerApplicationServices(application, data = Unit)
-            }
+            registerApplicationServices(application, data = Unit)
         }
     }
 
@@ -233,8 +228,7 @@ public class StandaloneAnalysisAPISessionBuilder(
 internal object StandaloneSessionServiceRegistrar : AnalysisApiSimpleServiceRegistrar() {
     override fun registerApplicationServices(application: MockApplication) {
         application.apply {
-            // TODO (KT-68386): Re-enable once KT-68386 is fixed.
-            //registerService(KotlinAnalysisPermissionOptions::class.java, KotlinStandaloneAnalysisPermissionOptions::class.java)
+            registerService(KotlinAnalysisPermissionOptions::class.java, KotlinStandaloneAnalysisPermissionOptions::class.java)
         }
     }
 
@@ -252,7 +246,6 @@ internal object StandaloneSessionServiceRegistrar : AnalysisApiSimpleServiceRegi
 public inline fun buildStandaloneAnalysisAPISession(
     projectDisposable: Disposable = Disposer.newDisposable("StandaloneAnalysisAPISession.project"),
     unitTestMode: Boolean = false,
-    classLoader: ClassLoader = MockProject::class.java.classLoader,
     init: StandaloneAnalysisAPISessionBuilder.() -> Unit,
 ): StandaloneAnalysisAPISession {
     contract {
@@ -261,7 +254,6 @@ public inline fun buildStandaloneAnalysisAPISession(
     return StandaloneAnalysisAPISessionBuilder(
         projectDisposable,
         unitTestMode,
-        classLoader
     ).apply(init).build()
 }
 

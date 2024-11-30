@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.test.services.configuration
 
 import com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE
 import com.intellij.util.lang.JavaVersion
-import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
+import org.jetbrains.kotlin.config.phaser.PhaseConfig
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.jvm.addModularRootIfNotNull
@@ -345,12 +345,11 @@ open class JvmEnvironmentConfigurator(testServices: TestServices) : EnvironmentC
         val dumpDirectory = testServices.getOrCreateTempDirectory(PhasedIrDumpHandler.DUMPED_IR_FOLDER_NAME)
         val phases = module.directives[CodegenTestDirectives.DUMP_IR_FOR_GIVEN_PHASES].toSet()
         if (phases.isNotEmpty()) {
-            val phaseConfig = PhaseConfig(
+            phaseConfig = PhaseConfig(
                 toDumpStateBefore = phases,
                 toDumpStateAfter = phases,
                 dumpToDirectory = dumpDirectory.absolutePath
             )
-            put(CLIConfigurationKeys.PHASE_CONFIG, phaseConfig)
         }
     }
 

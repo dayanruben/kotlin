@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.gradle.plugin.internal
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.component.ComponentIdentifier
 import org.gradle.api.artifacts.result.ResolvedArtifactResult
 import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
@@ -23,10 +24,12 @@ import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.work.DisableCachingByDefault
+import org.jetbrains.kotlin.gradle.tasks.locateOrRegisterTask
 import org.jetbrains.kotlin.gradle.utils.JsonUtils
 import org.jetbrains.kotlin.gradle.utils.LazyResolvedConfiguration
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 import org.jetbrains.kotlin.gradle.utils.projectStoredProperty
+import org.jetbrains.kotlin.gradle.utils.registerArtifact
 
 internal val Project.kotlinSecondaryVariantsDataSharing: KotlinSecondaryVariantsDataSharing by projectStoredProperty {
     KotlinSecondaryVariantsDataSharing(project)
@@ -51,16 +54,16 @@ internal class KotlinSecondaryVariantsDataSharing(
         taskDependencies: List<Any> = emptyList(),
     ) {
         val taskName = lowerCamelCaseName("export", key, "for", outgoingConfiguration.name)
-        val task = project.tasks.register(taskName, ExportKotlinProjectDataTask::class.java) { task ->
+        val task = project.locateOrRegisterTask<ExportKotlinProjectDataTask>(taskName, configureTask = {
             val fileName = "${key}_${outgoingConfiguration.name}.json"
 
             @Suppress("UNCHECKED_CAST")
-            val taskOutputData = task.outputData as Property<T>
+            val taskOutputData = outputData as Property<T>
             taskOutputData.set(dataProvider)
 
-            task.outputFile.set(project.layout.buildDirectory.file("kotlin/kotlin-project-shared-data/$fileName"))
-            task.dependsOn(taskDependencies)
-        }
+            outputFile.set(project.layout.buildDirectory.file("kotlin/kotlin-project-shared-data/$fileName"))
+            dependsOn(taskDependencies)
+        })
 
         shareDataFromExistingTask(key, outgoingConfiguration, task.flatMap { it.outputFile })
     }
@@ -71,11 +74,21 @@ internal class KotlinSecondaryVariantsDataSharing(
         taskOutputProvider: Provider<RegularFile>,
         taskDependencies: List<Any> = emptyList(),
     ) {
+        if (outgoingConfiguration.outgoing.variants.names.contains(key)) {
+            project.logger.warn(
+                "KotlinSecondaryVariantsDataSharing can't create secondary variant with name $key "
+                        + "on configuration $outgoingConfiguration. Something can be declared twice or have clashing names. "
+                        + "Please report this to https://kotl.in/issue"
+            )
+            return
+        }
 
         outgoingConfiguration.outgoing.variants.create(key) { variant ->
-            variant.artifact(taskOutputProvider) { artifact ->
-                artifact.type = key
-                artifact.builtBy(taskDependencies)
+            variant.registerArtifact(
+                artifactProvider = taskOutputProvider,
+                type = key
+            ) {
+                builtBy(taskDependencies)
             }
             variant.attributes.configureAttributes(key)
         }
@@ -85,10 +98,12 @@ internal class KotlinSecondaryVariantsDataSharing(
         key: String,
         incomingConfiguration: Configuration,
         clazz: Class<T>,
+        componentFilter: ((ComponentIdentifier) -> Boolean)? = null,
     ): KotlinProjectSharedDataProvider<T> {
-        val lazyResolvedConfiguration = LazyResolvedConfiguration(incomingConfiguration) { attributes ->
+        val lazyResolvedConfiguration = LazyResolvedConfiguration(incomingConfiguration, configureArtifactView = {
             attributes.configureAttributes(key)
-        }
+            if (componentFilter != null) this.componentFilter(componentFilter)
+        })
         return KotlinProjectSharedDataProvider(key, lazyResolvedConfiguration, clazz)
     }
 

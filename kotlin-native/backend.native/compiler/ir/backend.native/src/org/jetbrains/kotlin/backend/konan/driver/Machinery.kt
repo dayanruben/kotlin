@@ -7,11 +7,11 @@ package org.jetbrains.kotlin.backend.konan.driver
 
 import org.jetbrains.kotlin.backend.common.DisposableContext
 import org.jetbrains.kotlin.backend.common.ErrorReportingContext
-import org.jetbrains.kotlin.backend.common.LoggingContext
-import org.jetbrains.kotlin.backend.common.phaser.PhaseConfigurationService
+import org.jetbrains.kotlin.config.LoggingContext
+import org.jetbrains.kotlin.config.phaser.PhaseConfigurationService
 import org.jetbrains.kotlin.backend.common.phaser.PhaseEngine
-import org.jetbrains.kotlin.backend.common.phaser.PhaserState
-import org.jetbrains.kotlin.backend.common.phaser.SimpleNamedCompilerPhase
+import org.jetbrains.kotlin.config.phaser.PhaserState
+import org.jetbrains.kotlin.config.phaser.SimpleNamedCompilerPhase
 import org.jetbrains.kotlin.backend.konan.ConfigChecks
 import org.jetbrains.kotlin.backend.konan.KonanConfig
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector

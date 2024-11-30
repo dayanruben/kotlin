@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.gradle
 
+import io.ktor.util.*
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.commonizer.CommonizerTarget
 import org.jetbrains.kotlin.commonizer.identityString
@@ -35,7 +36,6 @@ class MppIdeDependencyResolutionIT : KGPBaseTest() {
     override val defaultBuildOptions: BuildOptions
         get() = super.defaultBuildOptions
             .disableConfigurationCache_KT70416()
-            .enableKmpIsolatedProjectSupport()
 
     @GradleTest
     fun testCommonizedPlatformDependencyResolution(gradleVersion: GradleVersion) {
@@ -217,7 +217,7 @@ class MppIdeDependencyResolutionIT : KGPBaseTest() {
     }
 
     @GradleTest
-    fun `test cinterops - are stored in root gradle folder`(
+    fun `test cinterops - are stored in project-wide persistent cache folder`(
         gradleVersion: GradleVersion,
     ) {
         project(
@@ -236,7 +236,7 @@ class MppIdeDependencyResolutionIT : KGPBaseTest() {
                     if (cinterop.classpath.isEmpty()) fail("Missing classpath for $cinterop")
                     cinterop.classpath.forEach { cinteropFile ->
                         /* Check file was copied into root .gradle folder */
-                        assertEquals(persistentCInteropsCache.toFile().absoluteFile, cinteropFile.parentFile.absoluteFile)
+                        assertEquals(persistentCInteropsCache.toFile().canonicalPath, cinteropFile.parentFile.canonicalPath)
 
                         /* Check crc in file name */
                         val crc = CRC32()

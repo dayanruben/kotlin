@@ -437,8 +437,8 @@ open class HierarchicalMppIT : KGPBaseTest() {
 
             val expectedProjectStructureMetadata = expectedProjectStructureMetadata(
                 sourceSetModuleDependencies = mapOf(
-                    "jvmAndJsMain" to setOf("com.example.thirdparty" to "third-party-lib"),
-                    "linuxAndJsMain" to emptySet(),
+                    "jvmAndJsMain" to setOf("com.example.thirdparty" to "third-party-lib", "org.jetbrains.kotlin" to "kotlin-stdlib"),
+                    "linuxAndJsMain" to setOf("org.jetbrains.kotlin" to "kotlin-stdlib"),
                     "commonMain" to setOf("org.jetbrains.kotlin" to "kotlin-stdlib")
                 )
             )
@@ -492,8 +492,14 @@ open class HierarchicalMppIT : KGPBaseTest() {
 
             val expectedProjectStructureMetadata = expectedProjectStructureMetadata(
                 sourceSetModuleDependencies = mapOf(
-                    "jvmAndJsMain" to emptySet(),
-                    "linuxAndJsMain" to emptySet(),
+                    "jvmAndJsMain" to setOf(
+                        "org.jetbrains.kotlin" to "kotlin-stdlib",
+                        "com.example.foo" to "my-lib-foo",
+                    ),
+                    "linuxAndJsMain" to setOf(
+                        "org.jetbrains.kotlin" to "kotlin-stdlib",
+                        "com.example.foo" to "my-lib-foo",
+                    ),
                     "commonMain" to setOf(
                         "org.jetbrains.kotlin" to "kotlin-stdlib",
                         "com.example.foo" to "my-lib-foo"
