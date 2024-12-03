@@ -33,7 +33,6 @@ import org.jetbrains.kotlin.test.runners.ir.AbstractIrTextTest.KlibFacades
 import org.jetbrains.kotlin.test.services.sourceProviders.AdditionalDiagnosticsSourceFilesProvider
 import org.jetbrains.kotlin.test.services.sourceProviders.CodegenHelpersSourceFilesProvider
 import org.jetbrains.kotlin.test.services.sourceProviders.CoroutineHelpersSourceFilesProvider
-import org.jetbrains.kotlin.utils.bind
 
 abstract class AbstractIrTextTest<FrontendOutput : ResultingArtifact.FrontendOutput<FrontendOutput>>(
     protected val targetPlatform: TargetPlatform,
@@ -109,11 +108,10 @@ abstract class AbstractIrTextTest<FrontendOutput : ResultingArtifact.FrontendOut
 
 fun <InputArtifactKind> HandlersStepBuilder<IrBackendInput, InputArtifactKind>.useIrTextHandlers(
     testConfigurationBuilder: TestConfigurationBuilder,
-    isDeserializedInput: Boolean,
     includeAllDumpHandlers: Boolean = true,
 ) where InputArtifactKind : BackendKind<IrBackendInput> {
     useHandlers(
-        ::IrTextDumpHandler.bind(isDeserializedInput),
+        ::IrTextDumpHandler,
         ::IrTreeVerifierHandler,
         ::IrPrettyKotlinDumpHandler,
     )
@@ -125,14 +123,6 @@ fun <InputArtifactKind> HandlersStepBuilder<IrBackendInput, InputArtifactKind>.u
     testConfigurationBuilder.useAfterAnalysisCheckers(
         ::FirIrDumpIdenticalChecker,
     )
-}
-
-fun TestConfigurationBuilder.klibSteps(klibFacades: KlibFacades, includeAllDumpHandlers: Boolean) = klibFacades.run {
-    facadeStep(serializerFacade)
-    klibArtifactsHandlersStep {
-        useHandlers(::KlibAbiDumpHandler)
-    }
-    facadeStep(deserializerFacade)
 }
 
 fun <FrontendOutput : ResultingArtifact.FrontendOutput<FrontendOutput>> TestConfigurationBuilder.configureAbstractIrTextSettings(
@@ -177,13 +167,21 @@ fun <FrontendOutput : ResultingArtifact.FrontendOutput<FrontendOutput>> TestConf
 
     facadeStep(converter)
 
-    irHandlersStep { useIrTextHandlers(this@configureAbstractIrTextSettings, isDeserializedInput = false, includeAllDumpHandlers) }
+    irHandlersStep { useIrTextHandlers(this@configureAbstractIrTextSettings, includeAllDumpHandlers) }
 
-    klibFacades?.let {
-        klibSteps(it, includeAllDumpHandlers)
+    if (klibFacades != null) {
+        irHandlersStep {
+            useHandlers({ SerializedIrDumpHandler(it, isAfterDeserialization = false) })
+        }
+
+        facadeStep(klibFacades.serializerFacade)
+        klibArtifactsHandlersStep {
+            useHandlers(::KlibAbiDumpHandler)
+        }
+        facadeStep(klibFacades.deserializerFacade)
 
         deserializedIrHandlersStep {
-            useIrTextHandlers(this@configureAbstractIrTextSettings, isDeserializedInput = true, includeAllDumpHandlers)
+            useHandlers({ SerializedIrDumpHandler(it, isAfterDeserialization = true) })
         }
     }
 }

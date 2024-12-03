@@ -1899,6 +1899,12 @@ public class ClassicNativeIrTextTestGenerated extends AbstractClassicNativeIrTex
     }
 
     @Test
+    @TestMetadata("smartcastToIntersection.kt")
+    public void testSmartcastToIntersection() {
+      runTest("compiler/testData/ir/irText/expressions/smartcastToIntersection.kt");
+    }
+
+    @Test
     @TestMetadata("specializedTypeAliasConstructorCall.kt")
     public void testSpecializedTypeAliasConstructorCall() {
       runTest("compiler/testData/ir/irText/expressions/specializedTypeAliasConstructorCall.kt");
@@ -3014,6 +3020,12 @@ public class ClassicNativeIrTextTestGenerated extends AbstractClassicNativeIrTex
     @Test
     public void testAllFilesPresentInProperties() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/ir/irText/properties"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+    }
+
+    @Test
+    @TestMetadata("setters.kt")
+    public void testSetters() {
+      runTest("compiler/testData/ir/irText/properties/setters.kt");
     }
 
     @Test

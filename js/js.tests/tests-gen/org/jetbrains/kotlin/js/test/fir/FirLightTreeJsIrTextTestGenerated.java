@@ -1899,6 +1899,12 @@ public class FirLightTreeJsIrTextTestGenerated extends AbstractFirLightTreeJsIrT
     }
 
     @Test
+    @TestMetadata("smartcastToIntersection.kt")
+    public void testSmartcastToIntersection() {
+      runTest("compiler/testData/ir/irText/expressions/smartcastToIntersection.kt");
+    }
+
+    @Test
     @TestMetadata("specializedTypeAliasConstructorCall.kt")
     public void testSpecializedTypeAliasConstructorCall() {
       runTest("compiler/testData/ir/irText/expressions/specializedTypeAliasConstructorCall.kt");
@@ -3076,6 +3082,12 @@ public class FirLightTreeJsIrTextTestGenerated extends AbstractFirLightTreeJsIrT
       }
 
       @Test
+      @TestMetadata("external.kt")
+      public void testExternal() {
+        runTest("compiler/testData/ir/irText/js/external/external.kt");
+      }
+
+      @Test
       @TestMetadata("kt38765.kt")
       public void testKt38765() {
         runTest("compiler/testData/ir/irText/js/external/kt38765.kt");
@@ -3158,6 +3170,12 @@ public class FirLightTreeJsIrTextTestGenerated extends AbstractFirLightTreeJsIrT
     @Test
     public void testAllFilesPresentInProperties() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/ir/irText/properties"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR, true);
+    }
+
+    @Test
+    @TestMetadata("setters.kt")
+    public void testSetters() {
+      runTest("compiler/testData/ir/irText/properties/setters.kt");
     }
 
     @Test

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -19,39 +19,32 @@ import org.jetbrains.kotlin.constant.StringValue
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.propertyNameByGetMethodName
 import org.jetbrains.kotlin.load.java.propertyNamesBySetMethodName
-import org.jetbrains.kotlin.load.kotlin.MemberSignature
 import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.hasSuspendModifier
 import org.jetbrains.kotlin.psi.stubs.impl.KotlinAnnotationEntryStubImpl
-import org.jetbrains.kotlin.type.MapPsiToAsmDesc
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addIfNotNull
+import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-abstract class KotlinDeclarationInCompiledFileSearcher {
-    abstract fun findDeclarationInCompiledFile(file: KtClsFile, member: PsiMember, signature: MemberSignature): KtDeclaration?
+class KotlinDeclarationInCompiledFileSearcher {
     fun findDeclarationInCompiledFile(file: KtClsFile, member: PsiMember): KtDeclaration? {
-        val signature = when (member) {
-            is PsiField -> {
-                val desc = MapPsiToAsmDesc.typeDesc(member.type)
-                MemberSignature.fromFieldNameAndDesc(member.name, desc)
+        if (member is PsiClass) return null
+        val memberName = member.name ?: return null
+
+        val relativeClassName = generateSequence(member.containingClass) { it.containingClass }
+            .toList()
+            .ifNotEmpty {
+                subList(0, size - 1).asReversed().map { Name.identifier(it.name!!) }
             }
+            .orEmpty()
 
-            is PsiMethod -> {
-                val desc = MapPsiToAsmDesc.methodDesc(member)
-                val name = if (member.isConstructor) "<init>" else member.name
-                MemberSignature.fromMethodNameAndDesc(name, desc)
-            }
-
-            else -> null
-        } ?: return null
-
-        return findDeclarationInCompiledFile(file, member, signature)
+        return findByStubs(file, relativeClassName, member, memberName)
     }
 
-    protected fun findByStubs(
+    private fun findByStubs(
         file: KtClsFile,
         relativeClassName: List<Name>,
         member: PsiMember,

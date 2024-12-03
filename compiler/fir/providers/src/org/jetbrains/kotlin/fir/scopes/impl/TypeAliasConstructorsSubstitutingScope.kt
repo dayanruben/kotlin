@@ -7,29 +7,26 @@ package org.jetbrains.kotlin.fir.scopes.impl
 
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.declarations.FirConstructor
-import org.jetbrains.kotlin.fir.declarations.FirDeclarationDataKey
-import org.jetbrains.kotlin.fir.declarations.FirDeclarationDataRegistry
-import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
-import org.jetbrains.kotlin.fir.declarations.FirFunction
+import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.buildConstructedClassTypeParameterRef
 import org.jetbrains.kotlin.fir.declarations.builder.buildConstructorCopy
 import org.jetbrains.kotlin.fir.declarations.builder.buildReceiverParameter
+import org.jetbrains.kotlin.fir.declarations.builder.buildValueParameterCopy
 import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.defaultType
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.scopes.DelicateScopeAPI
 import org.jetbrains.kotlin.fir.scopes.FirScope
-import org.jetbrains.kotlin.fir.symbols.impl.FirConstructorSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirReceiverParameterSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirFunctionSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirTypeAliasSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
 
 private object TypeAliasConstructorKey : FirDeclarationDataKey()
 
 var <T : FirFunction> T.originalConstructorIfTypeAlias: T? by FirDeclarationDataRegistry.data(TypeAliasConstructorKey)
+val <T : FirFunction> FirFunctionSymbol<T>.originalConstructorIfTypeAlias: T?
+    get() = fir.originalConstructorIfTypeAlias
+
 val FirFunctionSymbol<*>.isTypeAliasedConstructor: Boolean
     get() = fir.originalConstructorIfTypeAlias != null
 
@@ -61,11 +58,41 @@ class TypeAliasConstructorsSubstitutingScope(
 
             processor(
                 buildConstructorCopy(originalConstructorSymbol.fir) {
+                    // Typealiased constructors point to the typealias source 
+                    // for the convenience of Analysis API
+                    source = typeAliasSymbol.source
+
                     symbol = FirConstructorSymbol(originalConstructorSymbol.callableId)
                     origin = FirDeclarationOrigin.Synthetic.TypeAliasConstructor
 
+                    // We consider typealiased constructors to be coming
+                    // from the module of the typealias
+                    moduleData = typeAliasSymbol.moduleData
+
                     this.typeParameters.clear()
-                    typeParameters.mapTo(this.typeParameters) { buildConstructedClassTypeParameterRef { symbol = it.symbol } }
+                    typeParameters.mapTo(this.typeParameters) {
+                        buildConstructedClassTypeParameterRef { symbol = it.symbol }
+                    }
+
+                    valueParameters.clear()
+                    originalConstructorSymbol.fir.valueParameters.mapTo(valueParameters) { originalValueParameter ->
+                        buildValueParameterCopy(originalValueParameter) {
+                            symbol = FirValueParameterSymbol(originalValueParameter.name)
+                            moduleData = typeAliasSymbol.moduleData
+                            origin = FirDeclarationOrigin.Synthetic.TypeAliasConstructor
+                            containingDeclarationSymbol = this@buildConstructorCopy.symbol
+                        }
+                    }
+
+                    contextParameters.clear()
+                    originalConstructorSymbol.fir.contextParameters.mapTo(contextParameters) { originalContextReceiver ->
+                        buildValueParameterCopy(originalContextReceiver) {
+                            symbol = FirValueParameterSymbol(originalContextReceiver.name)
+                            moduleData = typeAliasSymbol.moduleData
+                            origin = FirDeclarationOrigin.Synthetic.TypeAliasConstructor
+                            containingDeclarationSymbol = this@buildConstructorCopy.symbol
+                        }
+                    }
 
                     if (aliasedTypeExpansionGloballyEnabled) {
                         returnTypeRef = returnTypeRef.withReplacedConeType(
@@ -95,7 +122,7 @@ class TypeAliasConstructorsSubstitutingScope(
                             buildReceiverParameter {
                                 typeRef = it
                                 symbol = FirReceiverParameterSymbol()
-                                moduleData = originalConstructorSymbol.moduleData
+                                moduleData = typeAliasSymbol.moduleData
                                 origin = FirDeclarationOrigin.Synthetic.TypeAliasConstructor
                                 containingDeclarationSymbol = this@buildConstructorCopy.symbol
                             }
