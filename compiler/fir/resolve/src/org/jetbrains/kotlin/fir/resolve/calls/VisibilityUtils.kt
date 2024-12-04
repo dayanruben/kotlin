@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.fir.references.FirThisReference
 import org.jetbrains.kotlin.fir.resolve.calls.candidate.CallInfo
 import org.jetbrains.kotlin.fir.resolve.calls.candidate.Candidate
 import org.jetbrains.kotlin.fir.symbols.impl.FirAnonymousObjectSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirConstructorSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeAliasSymbol
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
@@ -29,7 +30,7 @@ import org.jetbrains.kotlin.fir.types.resolvedType
 import org.jetbrains.kotlin.fir.types.typeContext
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
-fun FirVisibilityChecker.isVisible(
+private fun FirVisibilityChecker.isVisible(
     declaration: FirMemberDeclaration,
     callInfo: CallInfo,
     dispatchReceiver: FirExpression?,
@@ -65,8 +66,17 @@ fun FirVisibilityChecker.isVisible(
     skipCheckForContainingClassVisibility: Boolean = false,
 ): Boolean {
     val callInfo = candidate.callInfo
+    // Dispatch receiver should not be considered during constructor call checking
+    // (Containing classes of the given dispatcher receiver).
+    // Moreover, a constructor call can be obtained from a typealias,
+    // and it's a single way to use the typealias with a specified dispatch receiver (for instance, nested typealias).
+    // That's why the checking for only typealias symbol is also valid.
+    val dispatchReceiverExpression = if (candidate.symbol.let { it is FirConstructorSymbol || it is FirTypeAliasSymbol })
+        null
+    else
+        candidate.dispatchReceiver?.expression
 
-    if (!isVisible(declaration, callInfo, candidate.dispatchReceiver?.expression, skipCheckForContainingClassVisibility)) {
+    if (!isVisible(declaration, callInfo, dispatchReceiverExpression, skipCheckForContainingClassVisibility)) {
         // There are some examples when applying smart cast makes a callable invisible
         // open class A {
         //     private fun foo() {}
@@ -83,9 +93,15 @@ fun FirVisibilityChecker.isVisible(
         // }
         // In both these examples (see !!! above) we should try to drop smart cast to B and repeat a visibility check
         val dispatchReceiverWithoutSmartCastType =
-            removeSmartCastTypeForAttemptToFitVisibility(candidate.dispatchReceiver?.expression, candidate.callInfo.session) ?: return false
+            removeSmartCastTypeForAttemptToFitVisibility(dispatchReceiverExpression, candidate.callInfo.session) ?: return false
 
-        if (!isVisible(declaration, callInfo, dispatchReceiverWithoutSmartCastType, skipCheckForContainingClassVisibility)) return false
+        if (!isVisible(
+                declaration,
+                callInfo,
+                dispatchReceiverWithoutSmartCastType,
+                skipCheckForContainingClassVisibility
+            )
+        ) return false
 
         // Note: in case of a smart cast, we already checked the visibility of the smart cast target before,
         // so now it's visibility is not important, only callable visibility itself should be taken into account
@@ -101,7 +117,7 @@ fun FirVisibilityChecker.isVisible(
         //    if (param is Info) param.status
         // }
         // Here smart cast is still necessary, because without it 'status' cannot be resolved at all
-        if (!isVisible(declaration, callInfo, candidate.dispatchReceiver?.expression, skipCheckForContainingClassVisibility = true)) {
+        if (!isVisible(declaration, callInfo, dispatchReceiverExpression, skipCheckForContainingClassVisibility = true)) {
             candidate.dispatchReceiver = ConeResolutionAtom.createRawAtom(dispatchReceiverWithoutSmartCastType)
         }
     }
@@ -111,7 +127,7 @@ fun FirVisibilityChecker.isVisible(
         candidate.hasVisibleBackingField = isVisible(
             backingField,
             callInfo,
-            candidate.dispatchReceiver?.expression,
+            dispatchReceiverExpression,
             skipCheckForContainingClassVisibility
         )
     }

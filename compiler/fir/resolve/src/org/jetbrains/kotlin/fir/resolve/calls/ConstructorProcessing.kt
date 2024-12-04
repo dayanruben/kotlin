@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.FirClassLikeDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirMemberDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
+import org.jetbrains.kotlin.fir.declarations.FirTypeAlias
 import org.jetbrains.kotlin.fir.declarations.utils.isInner
 import org.jetbrains.kotlin.fir.resolve.BodyResolveComponents
 import org.jetbrains.kotlin.fir.resolve.calls.candidate.CallInfo
@@ -25,19 +26,31 @@ import org.jetbrains.kotlin.fir.scopes.impl.FirDefaultStarImportingScope
 import org.jetbrains.kotlin.fir.scopes.impl.TypeAliasConstructorsSubstitutingScope
 import org.jetbrains.kotlin.fir.scopes.scopeForClass
 import org.jetbrains.kotlin.fir.symbols.impl.*
+import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.whileAnalysing
 import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
 
-internal enum class ConstructorFilter(val acceptInner: Boolean, val acceptNested: Boolean) {
-    OnlyInner(acceptInner = true, acceptNested = false),
-    OnlyNested(acceptInner = false, acceptNested = true),
-    Both(acceptInner = true, acceptNested = true);
+internal enum class ConstructorFilter {
+    OnlyInner,
+    OnlyNested,
+    Both;
 
-    fun accepts(memberDeclaration: FirMemberDeclaration): Boolean {
-        return when (memberDeclaration.isInner) {
-            true -> acceptInner
-            false -> acceptNested
+    fun accepts(memberDeclaration: FirMemberDeclaration, session: FirSession): Boolean {
+        return when (this) {
+            Both -> true
+            OnlyInner -> memberDeclaration.isInner(session)
+            OnlyNested -> !memberDeclaration.isInner(session)
+        }
+    }
+
+    private fun FirMemberDeclaration.isInner(session: FirSession): Boolean {
+        return if (isInner) {
+            true
+        } else {
+            if (this !is FirTypeAlias) return false
+            lazyResolveToPhase(FirResolvePhase.SUPER_TYPES)
+            fullyExpandedClass(session)?.isInner == true
         }
     }
 }
@@ -95,7 +108,7 @@ private fun FirScope.getFirstClassifierOrNull(
     fun process(symbol: FirClassifierSymbol<*>, substitutor: ConeSubstitutor) {
         val classifierDeclaration = symbol.fir
         if (classifierDeclaration is FirClassLikeDeclaration) {
-            if (constructorFilter.accepts(classifierDeclaration)) {
+            if (constructorFilter.accepts(classifierDeclaration, session)) {
                 collector.processCandidate(symbol, substitutor)
             }
         }
@@ -155,8 +168,7 @@ private fun processConstructors(
                 }
             }
             is FirClassSymbol -> {
-                @Suppress("USELESS_CAST") // K2 warning suppression, TODO: KT-62472
-                val firClass = matchedSymbol.fir as FirClass
+                val firClass = matchedSymbol.fir
                 when (firClass.classKind) {
                     ClassKind.INTERFACE -> null
                     else -> firClass.scopeForClass(

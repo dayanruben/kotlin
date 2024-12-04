@@ -18864,6 +18864,12 @@ public class TieredBackendJvmLightTreeTestGenerated extends AbstractTieredBacken
       }
 
       @Test
+      @TestMetadata("innerClassTypeAliasConstructorReference.kt")
+      public void testInnerClassTypeAliasConstructorReference() {
+        runTest("compiler/testData/diagnostics/tests/typealias/innerClassTypeAliasConstructorReference.kt");
+      }
+
+      @Test
       @TestMetadata("intToLongApproximationThroughTypeAlias.kt")
       public void testIntToLongApproximationThroughTypeAlias() {
         runTest("compiler/testData/diagnostics/tests/typealias/intToLongApproximationThroughTypeAlias.kt");
@@ -24462,6 +24468,12 @@ public class TieredBackendJvmLightTreeTestGenerated extends AbstractTieredBacken
     @TestMetadata("compiler/fir/analysis-tests/testData/resolve/nestedTypeAliases")
     @TestDataPath("$PROJECT_ROOT")
     public class NestedTypeAliases {
+      @Test
+      @TestMetadata("nestedTypeAliasWithInnerRHS.kt")
+      public void testNestedTypeAliasWithInnerRHS() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/nestedTypeAliases/nestedTypeAliasWithInnerRHS.kt");
+      }
+
       @Test
       @TestMetadata("simple.kt")
       public void testSimple() {

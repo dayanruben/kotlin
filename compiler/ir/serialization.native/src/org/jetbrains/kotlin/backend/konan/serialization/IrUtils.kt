@@ -41,7 +41,7 @@ fun IrDeclaration.isFromCInteropLibrary(): Boolean {
     else
         getSourceElementFromDescriptor(topLevelDeclaration)
 
-    return containerSource is KlibDeserializedContainerSource && containerSource.isFromCInteropLibrary
+    return containerSource is KlibDeserializedContainerSource && containerSource.klib.isCInteropLibrary()
 }
 
 /**
@@ -79,7 +79,7 @@ private fun getSourceElementFromDescriptor(topLevelDeclaration: IrDeclaration): 
     return (topLevelDeclarationDescriptor?.containingDeclaration as? PackageFragmentDescriptor)?.source
 }
 
-private fun IrDeclaration.findTopLevelDeclaration(): IrDeclaration = when (val parent = this.parent) {
+private tailrec fun IrDeclaration.findTopLevelDeclaration(): IrDeclaration = when (val parent = this.parent) {
     is IrDeclaration -> parent.findTopLevelDeclaration()
     else -> this
 }

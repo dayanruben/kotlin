@@ -245,6 +245,11 @@ class FirElementSerializer private constructor(
         for (declaration in callableMembers) {
             if (declaration !is FirEnumEntry && declaration.isStatic) continue // ??? Miss values() & valueOf()
             if (!declaration.isNotPrivateOrShouldBeSerialized(produceHeaderKlib)) continue
+            // We have such declarations when compiling stdlib, but we don't need them as serialized bultins metadata
+            if (declaration.origin == FirDeclarationOrigin.Enhancement
+                || declaration.origin == FirDeclarationOrigin.Synthetic.FakeHiddenInPreparationForNewJdk) {
+                continue
+            }
             when (declaration) {
                 is FirProperty -> propertyProto(declaration)?.let { builder.addProperty(it) }
                 is FirSimpleFunction -> functionProto(declaration)?.let { builder.addFunction(it) }
@@ -666,8 +671,6 @@ class FirElementSerializer private constructor(
         }
 
         for (typeParameter in function.typeParameters) {
-            @Suppress("USELESS_IS_CHECK") // K2 warning suppression, TODO: KT-62472
-            if (typeParameter !is FirTypeParameter) continue
             builder.addTypeParameter(local.typeParameterProto(typeParameter))
         }
 

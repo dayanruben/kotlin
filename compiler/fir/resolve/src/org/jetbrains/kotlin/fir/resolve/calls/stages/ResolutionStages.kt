@@ -67,7 +67,7 @@ object CheckExtensionReceiver : ResolutionStage() {
             }
         }
 
-        val expectedReceiverType = candidate.getExpectedReceiverType() ?: return
+        val expectedReceiverType = candidate.symbol.getExpectedReceiverType() ?: return
         val expectedType = candidate.substitutor.substituteOrSelf(expectedReceiverType)
 
         // Probably, we should add an assertion here since we check consistency on the level of scope tower levels
@@ -117,11 +117,6 @@ object CheckExtensionReceiver : ResolutionStage() {
         candidate.chosenExtensionReceiver = atom
 
         sink.yieldIfNeed()
-    }
-
-    private fun Candidate.getExpectedReceiverType(): ConeKotlinType? {
-        val callableSymbol = symbol as? FirCallableSymbol<*> ?: return null
-        return callableSymbol.fir.receiverParameter?.typeRef?.coneType
     }
 }
 
@@ -612,35 +607,19 @@ internal object CheckVisibility : ResolutionStage() {
 
     override suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext) {
         val visibilityChecker = callInfo.session.visibilityChecker
-        val symbol = candidate.symbol
-        val declaration = symbol.fir
-        if (declaration is FirMemberDeclaration && declaration !is FirConstructor) {
-            if (!visibilityChecker.isVisible(declaration, candidate)) {
-                sink.yieldVisibilityError(callInfo)
-                return
-            }
-        }
+        val declaration = candidate.symbol.fir as? FirMemberDeclaration ?: return
 
         if (declaration is FirConstructor) {
             val classSymbol = declaration.returnTypeRef.coneType.classLikeLookupTagIfAny?.toSymbol(context.session)
-
-            if (classSymbol is FirRegularClassSymbol) {
-                if (classSymbol.fir.classKind.isSingleton) {
-                    sink.yieldDiagnostic(HiddenCandidate)
-                }
-
-                val visible = visibilityChecker.isVisible(
-                    declaration,
-                    candidate.callInfo,
-                    dispatchReceiver = null
-                )
-                if (!visible) {
-                    sink.yieldVisibilityError(callInfo)
-                }
+            if (classSymbol is FirRegularClassSymbol && classSymbol.fir.classKind.isSingleton) {
+                sink.yieldDiagnostic(HiddenCandidate)
             }
+        }
 
-            val typeAlias = declaration.typeAliasForConstructor
-            if (typeAlias != null) {
+        if (!visibilityChecker.isVisible(declaration, candidate)) {
+            sink.yieldVisibilityError(callInfo)
+        } else {
+            (declaration as? FirConstructor)?.typeAliasForConstructor?.let { typeAlias ->
                 if (!visibilityChecker.isVisible(typeAlias.fir, candidate)) {
                     sink.yieldVisibilityError(callInfo)
                 }

@@ -62,6 +62,8 @@ public interface KaTypeProvider {
     /**
      * Returns the representation of [this] in terms of [KaType].
      *
+     * Type parameters are substituted with matching type parameter types, e.g. `List<T>` for the `List` class.
+     *
      * @see KaTypeCreator
      */
     public val KaClassifierSymbol.defaultType: KaType
@@ -80,16 +82,29 @@ public interface KaTypeProvider {
         get() = asList().commonSupertype
 
     /**
-     * Resolve [KtTypeReference] and return corresponding [KaType] if resolved.
+     * Resolves the given [KtTypeReference] to its corresponding [KaType].
      *
-     * This may raise an exception if the resolution ends up with an unexpected kind.
+     * This may raise an exception if the resolution ends up with an unexpected result.
      */
     public val KtTypeReference.type: KaType
 
     /**
-     * Resolve [KtDoubleColonExpression] and return [KaType] of its receiver.
+     * Resolves the given [KtDoubleColonExpression] to the [KaType] of its receiver.
      *
-     * Return `null` if the resolution fails or the resolved callable reference is not a reflection type.
+     * The result may be `null` if the resolution fails or the resolved callable reference is not a reflection type.
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * class Foo {
+     *     fun bar() { }
+     * }
+     *
+     * val foo = Foo()
+     * foo::bar
+     * ```
+     *
+     * Here, `receiverType` for `foo::bar` returns `Foo` (the type of `foo`).
      */
     public val KtDoubleColonExpression.receiverType: KaType?
 
