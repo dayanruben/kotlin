@@ -12,8 +12,6 @@ import org.jetbrains.kotlin.backend.common.extensions.IrPluginContextImpl
 import org.jetbrains.kotlin.backend.common.ir.isJvmBuiltin
 import org.jetbrains.kotlin.backend.common.ir.isBytecodeGenerationSuppressed
 import org.jetbrains.kotlin.backend.common.linkage.issues.checkNoUnboundSymbols
-import org.jetbrains.kotlin.config.phaser.PhaseConfig
-import org.jetbrains.kotlin.config.phaser.invokeToplevel
 import org.jetbrains.kotlin.backend.common.serialization.DescriptorByIdSignatureFinderImpl
 import org.jetbrains.kotlin.backend.jvm.codegen.EnumEntriesIntrinsicMappingsCacheImpl
 import org.jetbrains.kotlin.backend.jvm.codegen.JvmIrIntrinsicExtension
@@ -28,7 +26,8 @@ import org.jetbrains.kotlin.codegen.addCompiledPartsAndSort
 import org.jetbrains.kotlin.codegen.loadCompiledModule
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.config.phaser.CompilerPhase
+import org.jetbrains.kotlin.config.phaser.PhaseConfig
+import org.jetbrains.kotlin.config.phaser.invokeToplevel
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
 import org.jetbrains.kotlin.idea.MainFunctionDetector
@@ -45,7 +44,10 @@ import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrModuleFragmentImpl
 import org.jetbrains.kotlin.ir.linkage.IrProvider
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
-import org.jetbrains.kotlin.ir.util.*
+import org.jetbrains.kotlin.ir.util.ExternalDependenciesGenerator
+import org.jetbrains.kotlin.ir.util.ReferenceSymbolTable
+import org.jetbrains.kotlin.ir.util.SymbolTable
+import org.jetbrains.kotlin.ir.util.TypeTranslator
 import org.jetbrains.kotlin.library.metadata.DeserializedKlibModuleOrigin
 import org.jetbrains.kotlin.library.metadata.KlibModuleOrigin
 import org.jetbrains.kotlin.metadata.jvm.JvmModuleProtoBuf
@@ -61,39 +63,16 @@ import org.jetbrains.kotlin.psi2ir.preprocessing.SourceDeclarationsPreprocessor
 import org.jetbrains.kotlin.resolve.CleanableBindingContext
 import org.jetbrains.kotlin.serialization.StringTableImpl
 import org.jetbrains.kotlin.serialization.deserialization.builtins.BuiltInSerializerProtocol
-import org.jetbrains.kotlin.utils.IDEAPlatforms
-import org.jetbrains.kotlin.utils.IDEAPluginsCompatibilityAPI
 
 open class JvmIrCodegenFactory(
     configuration: CompilerConfiguration,
-    private val phaseConfig: PhaseConfig?,
     private val externalMangler: JvmDescriptorMangler? = null,
     private val externalSymbolTable: SymbolTable? = null,
     private val jvmGeneratorExtensions: JvmGeneratorExtensionsImpl = JvmGeneratorExtensionsImpl(configuration),
     private val evaluatorFragmentInfoForPsi2Ir: EvaluatorFragmentInfo? = null,
     private val ideCodegenSettings: IdeCodegenSettings = IdeCodegenSettings(),
 ) : CodegenFactory {
-
-    @IDEAPluginsCompatibilityAPI(IDEAPlatforms._221, message = "Please migrate to the other constructor", plugins = "Android Studio")
-    constructor(
-        configuration: CompilerConfiguration,
-        phaseConfig: PhaseConfig?,
-        externalMangler: JvmDescriptorMangler? = null,
-        externalSymbolTable: SymbolTable? = null,
-        jvmGeneratorExtensions: JvmGeneratorExtensionsImpl = JvmGeneratorExtensionsImpl(configuration),
-        @Suppress("UNUSED_PARAMETER")
-        prefixPhases: CompilerPhase<JvmBackendContext, IrModuleFragment, IrModuleFragment>? = null,
-        evaluatorFragmentInfoForPsi2Ir: EvaluatorFragmentInfo? = null,
-        shouldStubAndNotLinkUnboundSymbols: Boolean = false,
-    ) : this(
-        configuration,
-        phaseConfig,
-        externalMangler,
-        externalSymbolTable,
-        jvmGeneratorExtensions,
-        evaluatorFragmentInfoForPsi2Ir,
-        IdeCodegenSettings(shouldStubAndNotLinkUnboundSymbols = shouldStubAndNotLinkUnboundSymbols),
-    )
+    private val phaseConfig: PhaseConfig = configuration.phaseConfig ?: PhaseConfig()
 
     /**
      * @param shouldStubAndNotLinkUnboundSymbols
@@ -128,7 +107,6 @@ open class JvmIrCodegenFactory(
         val irModuleFragment: IrModuleFragment,
         val irBuiltIns: IrBuiltIns,
         val symbolTable: SymbolTable,
-        val phaseConfig: PhaseConfig?,
         val irProviders: List<IrProvider>,
         val extensions: JvmGeneratorExtensions,
         val backendExtension: JvmBackendExtension,
@@ -299,7 +277,6 @@ open class JvmIrCodegenFactory(
             irModuleFragment,
             psi2irContext.irBuiltIns,
             symbolTable,
-            phaseConfig,
             irProviders,
             jvmGeneratorExtensions,
             JvmBackendExtension.Default,
@@ -333,16 +310,15 @@ open class JvmIrCodegenFactory(
     }
 
     override fun invokeLowerings(state: GenerationState, input: CodegenFactory.BackendInput): CodegenFactory.CodegenInput {
-        val (irModuleFragment, irBuiltIns, symbolTable, customPhaseConfig, irProviders, extensions, backendExtension, irPluginContext, notifyCodegenStart) =
+        val (irModuleFragment, irBuiltIns, symbolTable, irProviders, extensions, backendExtension, irPluginContext, notifyCodegenStart) =
             input as JvmIrBackendInput
         val irSerializer = if (
             state.configuration.get(JVMConfigurationKeys.SERIALIZE_IR, JvmSerializeIrMode.NONE) != JvmSerializeIrMode.NONE
         )
             JvmIrSerializerImpl(state.configuration)
         else null
-        val phaseConfig = customPhaseConfig ?: PhaseConfig()
         val context = JvmBackendContext(
-            state, irBuiltIns, symbolTable, phaseConfig, extensions,
+            state, irBuiltIns, symbolTable, extensions,
             backendExtension, irSerializer, JvmIrDeserializerImpl(), irProviders, irPluginContext
         )
         if (evaluatorFragmentInfoForPsi2Ir != null) {
@@ -378,7 +354,7 @@ open class JvmIrCodegenFactory(
         if (hasErrors()) return
 
         notifyCodegenStart()
-        jvmCodegenPhases.invokeToplevel(PhaseConfig(), context, module)
+        jvmCodegenPhases.invokeToplevel(phaseConfig, context, module)
 
         if (hasErrors()) return
         // TODO: split classes into groups connected by inline calls; call this after every group
@@ -462,7 +438,6 @@ open class JvmIrCodegenFactory(
                 irModuleFragment,
                 irPluginContext.irBuiltIns,
                 symbolTable,
-                phaseConfig,
                 irProviders,
                 extensions,
                 backendExtension,

@@ -6,6 +6,8 @@
 package org.jetbrains.kotlin.ir.util
 
 import org.jetbrains.kotlin.AbstractKtSourceElement
+import org.jetbrains.kotlin.CompilerVersionOfApiDeprecation
+import org.jetbrains.kotlin.DeprecatedForRemovalCompilerApi
 import org.jetbrains.kotlin.KtOffsetsOnlySourceElement
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -173,18 +175,7 @@ val IrClass.invokeFun: IrSimpleFunction?
 val IrDeclarationContainer.properties: Sequence<IrProperty>
     get() = declarations.asSequence().filterIsInstance<IrProperty>()
 
-fun IrFunction.addExplicitParametersTo(parametersList: MutableList<IrValueParameter>) {
-    parametersList.addAll(parameters)
-}
-
 private fun Boolean.toInt(): Int = if (this) 1 else 0
-
-val IrFunction.explicitParametersCount: Int
-    get() = parameters.size
-
-val IrFunction.explicitParameters: List<IrValueParameter>
-    get() = parameters
-
 /**
  * [IrFunction.parameters], except [IrFunction.dispatchReceiverParameter], if present.
  */
@@ -1161,7 +1152,7 @@ fun IrFunction.createDispatchReceiverParameter(origin: IrDeclarationOrigin? = nu
 val IrFunction.allParameters: List<IrValueParameter>
     get() = when (this) {
         is IrConstructor -> {
-            ArrayList<IrValueParameter>(allParametersCount).also {
+            ArrayList<IrValueParameter>(parameters.size + 1).also {
                 it.add(
                     this.constructedClass.thisReceiver
                         ?: error(this.render())
@@ -1172,12 +1163,6 @@ val IrFunction.allParameters: List<IrValueParameter>
         is IrSimpleFunction -> {
             parameters
         }
-    }
-
-val IrFunction.allParametersCount: Int
-    get() = when (this) {
-        is IrConstructor -> parameters.size + 1
-        is IrSimpleFunction -> parameters.size
     }
 
 private object LoweringsFakeOverrideBuilderStrategy : FakeOverrideBuilderStrategy.BindToPrivateSymbols(
@@ -1580,14 +1565,30 @@ const val SKIP_BODIES_ERROR_DESCRIPTION = "skipBodies"
 
 // === Junkyard ===
 
-/**
- * Deprecated, use [createThisReceiverParameter]
- */
+@DeprecatedForRemovalCompilerApi(CompilerVersionOfApiDeprecation._2_1_20, replaceWith = "createThisReceiverParameter()")
 fun IrClass.createImplicitParameterDeclarationWithWrappedDescriptor() =
     createThisReceiverParameter()
 
-/**
- * Deprecated, use [createThisReceiverParameter]
- */
+@DeprecatedForRemovalCompilerApi(CompilerVersionOfApiDeprecation._2_1_20, replaceWith = "createThisReceiverParameter()")
 fun IrClass.createParameterDeclarations() =
     createThisReceiverParameter()
+
+@DeprecatedForRemovalCompilerApi(CompilerVersionOfApiDeprecation._2_1_20, replaceWith = "parameters.size")
+val IrFunction.explicitParametersCount: Int
+    get() = parameters.size
+
+@DeprecatedForRemovalCompilerApi(CompilerVersionOfApiDeprecation._2_1_20, replaceWith = "parameters")
+val IrFunction.explicitParameters: List<IrValueParameter>
+    get() = parameters
+
+@DeprecatedForRemovalCompilerApi(CompilerVersionOfApiDeprecation._2_1_20)
+fun IrFunction.addExplicitParametersTo(parametersList: MutableList<IrValueParameter>) {
+    parametersList.addAll(parameters)
+}
+
+@DeprecatedForRemovalCompilerApi(CompilerVersionOfApiDeprecation._2_1_20, replaceWith = "allParameters.size")
+val IrFunction.allParametersCount: Int
+    get() = when (this) {
+        is IrConstructor -> parameters.size + 1
+        is IrSimpleFunction -> parameters.size
+    }

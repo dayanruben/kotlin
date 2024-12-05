@@ -286,7 +286,7 @@ object KotlinToJVMBytecodeCompiler {
 
     private fun convertToIr(environment: KotlinCoreEnvironment, result: AnalysisResult): Pair<CodegenFactory, CodegenFactory.BackendInput> {
         val configuration = environment.configuration
-        val codegenFactory = JvmIrCodegenFactory(configuration, configuration.phaseConfig)
+        val codegenFactory = JvmIrCodegenFactory(configuration)
 
         val input = CodegenFactory.IrConversionInput(
             environment.project,
@@ -307,16 +307,13 @@ object KotlinToJVMBytecodeCompiler {
         return Pair(codegenFactory, backendInput)
     }
 
-    internal fun Fir2IrActualizedResult.codegenFactoryWithJvmIrBackendInput(
+    internal fun Fir2IrActualizedResult.toBackendInput(
         configuration: CompilerConfiguration
-    ): Pair<CodegenFactory, CodegenFactory.BackendInput> {
-        val phaseConfig = configuration.phaseConfig
-        val codegenFactory = JvmIrCodegenFactory(configuration, phaseConfig)
-        return codegenFactory to JvmIrCodegenFactory.JvmIrBackendInput(
+    ): CodegenFactory.BackendInput {
+        return JvmIrCodegenFactory.JvmIrBackendInput(
             irModuleFragment,
             irBuiltIns,
             symbolTable,
-            phaseConfig,
             components.irProviders,
             JvmGeneratorExtensionsImpl(configuration),
             JvmBackendExtension.Default,

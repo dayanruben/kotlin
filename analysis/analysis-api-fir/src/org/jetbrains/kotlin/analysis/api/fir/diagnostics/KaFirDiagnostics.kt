@@ -2091,6 +2091,14 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val valueParameter: KaSymbol
     }
 
+    interface GenericQualifierOnConstructorCallError : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = GenericQualifierOnConstructorCallError::class
+    }
+
+    interface GenericQualifierOnConstructorCallWarning : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = GenericQualifierOnConstructorCallWarning::class
+    }
+
     interface ExtensionInClassReferenceNotAllowed : KaFirDiagnostic<KtExpression> {
         override val diagnosticClass get() = ExtensionInClassReferenceNotAllowed::class
         val referencedDeclaration: KaCallableSymbol
@@ -3982,6 +3990,12 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = TypeMismatchWhenFlexibilityChanges::class
         val expectedType: KaType
         val actualType: KaType
+    }
+
+    interface JavaClassOnCompanion : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = JavaClassOnCompanion::class
+        val actualType: KaType
+        val expectedType: KaType
     }
 
     interface UpperBoundCannotBeArray : KaFirDiagnostic<PsiElement> {
