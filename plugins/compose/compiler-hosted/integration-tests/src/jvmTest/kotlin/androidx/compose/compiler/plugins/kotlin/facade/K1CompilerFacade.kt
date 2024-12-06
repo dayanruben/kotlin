@@ -94,35 +94,19 @@ class K1CompilerFacade(environment: KotlinCoreEnvironment) : KotlinCompilerFacad
 
         val codegenFactory = JvmIrCodegenFactory(environment.configuration)
 
-        val state = GenerationState.Builder(
+        val state = GenerationState(
             environment.project,
-            ClassBuilderFactories.TEST,
             analysisResult.moduleDescriptor,
-            analysisResult.bindingContext,
-            analysisResult.files,
-            environment.configuration
-        ).codegenFactory(codegenFactory).build()
-
-        state.beforeCompile()
+            environment.configuration,
+            ClassBuilderFactories.TEST,
+        )
 
         val psi2irInput = CodegenFactory.IrConversionInput.fromGenerationStateAndFiles(
-            state,
-            analysisResult.files
+            state, analysisResult.files, analysisResult.bindingContext,
         )
         val backendInput = codegenFactory.convertToIr(psi2irInput)
 
-        // For JVM-specific errors
-        try {
-            AnalyzingUtils.throwExceptionOnErrors(state.collectedExtraJvmDiagnostics)
-        } catch (e: Throwable) {
-            throw TestsCompilerError(e)
-        }
-
-        return K1FrontendResult(
-            state,
-            backendInput,
-            codegenFactory
-        )
+        return K1FrontendResult(state, backendInput, codegenFactory)
     }
 
     override fun compileToIr(files: List<SourceFile>): IrModuleFragment =

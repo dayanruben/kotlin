@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.repl.*
 import org.jetbrains.kotlin.cli.jvm.config.JvmClasspathRoot
-import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.CodegenFactory
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -102,13 +101,7 @@ open class GenericReplCompiler(
                 else -> error("Unexpected result ${analysisResult::class.java}")
             }
 
-            val generationState = GenerationState.Builder(
-                psiFile.project,
-                ClassBuilderFactories.BINARIES,
-                compilerState.analyzerEngine.module,
-                compilerState.analyzerEngine.trace.bindingContext,
-                compilerConfiguration
-            ).build()
+            val generationState = GenerationState(psiFile.project, compilerState.analyzerEngine.module, compilerConfiguration)
 
             val generatorExtensions =
                 object : JvmGeneratorExtensionsImpl(checker.environment.configuration) {
@@ -121,7 +114,11 @@ open class GenericReplCompiler(
 
             codegenFactory.generateModule(
                 generationState,
-                codegenFactory.convertToIr(CodegenFactory.IrConversionInput.fromGenerationStateAndFiles(generationState, listOf(psiFile))),
+                codegenFactory.convertToIr(
+                    CodegenFactory.IrConversionInput.fromGenerationStateAndFiles(
+                        generationState, listOf(psiFile), compilerState.analyzerEngine.trace.bindingContext,
+                    )
+                ),
             )
 
             compilerState.history.push(LineId(codeLine.no, 0, codeLine.hashCode()), scriptDescriptor)

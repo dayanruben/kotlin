@@ -26,7 +26,10 @@ import org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory
 import org.jetbrains.kotlin.backend.jvm.JvmIrDeserializerImpl
 import org.jetbrains.kotlin.cli.common.fir.FirDiagnosticsCompilerResultsReporter
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
-import org.jetbrains.kotlin.cli.jvm.compiler.*
+import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
+import org.jetbrains.kotlin.cli.jvm.compiler.PsiBasedProjectFileSearchScope
+import org.jetbrains.kotlin.cli.jvm.compiler.TopDownAnalyzerFacadeForJVM
+import org.jetbrains.kotlin.cli.jvm.compiler.VfsBasedProjectEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.pipeline.convertToIrAndActualizeForJvm
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.state.GenerationState
@@ -227,19 +230,15 @@ class K2CompilerFacade(environment: KotlinCoreEnvironment) : KotlinCompilerFacad
         val irModuleFragment = frontendResult.firResult.irModuleFragment
         val components = frontendResult.firResult.components
 
-        val generationState = GenerationState.Builder(
+        val generationState = GenerationState(
             project,
-            ClassBuilderFactories.TEST,
             irModuleFragment.descriptor,
-            NoScopeRecordCliBindingTrace(project).bindingContext,
-            configuration
-        ).jvmBackendClassResolver(
-            FirJvmBackendClassResolver(components)
-        ).build()
+            configuration,
+            ClassBuilderFactories.TEST,
+            jvmBackendClassResolver = FirJvmBackendClassResolver(components),
+        )
 
-        generationState.beforeCompile()
-        val codegenFactory = JvmIrCodegenFactory(configuration)
-        codegenFactory.generateModuleInFrontendIRMode(
+        JvmIrCodegenFactory(configuration).generateModuleInFrontendIRMode(
             generationState,
             irModuleFragment,
             frontendResult.firResult.symbolTable,

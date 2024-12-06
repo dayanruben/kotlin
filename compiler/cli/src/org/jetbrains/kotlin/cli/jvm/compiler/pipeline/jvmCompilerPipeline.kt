@@ -47,7 +47,9 @@ import org.jetbrains.kotlin.fir.backend.Fir2IrConfiguration
 import org.jetbrains.kotlin.fir.backend.Fir2IrExtensions
 import org.jetbrains.kotlin.fir.backend.jvm.*
 import org.jetbrains.kotlin.fir.backend.utils.extractFirDeclarations
-import org.jetbrains.kotlin.fir.pipeline.*
+import org.jetbrains.kotlin.fir.pipeline.Fir2IrActualizedResult
+import org.jetbrains.kotlin.fir.pipeline.FirResult
+import org.jetbrains.kotlin.fir.pipeline.convertToIrAndActualize
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
 import org.jetbrains.kotlin.fir.session.IncrementalCompilationContext
 import org.jetbrains.kotlin.fir.session.environment.AbstractProjectFileSearchScope
@@ -153,38 +155,26 @@ fun generateCodeFromIr(
     input: ModuleCompilerIrBackendInput,
     environment: ModuleCompilerEnvironment
 ): ModuleCompilerOutput {
-    // IR
-    val codegenFactory = JvmIrCodegenFactory(input.configuration)
-    val project = environment.projectEnvironment.project
-
-    val dummyBindingContext = NoScopeRecordCliBindingTrace(project).bindingContext
-
     val builderFactory =
         if (input.configuration.getBoolean(JVMConfigurationKeys.SKIP_BODIES)) OriginCollectingClassBuilderFactory(ClassBuilderMode.KAPT3)
         else ClassBuilderFactories.BINARIES
 
-    val generationState = GenerationState.Builder(
-        project, builderFactory,
-        input.irModuleFragment.descriptor, dummyBindingContext, input.configuration
-    ).targetId(
-        input.targetId
-    ).moduleName(
-        input.targetId.name
-    ).outDirectory(
-        input.configuration[JVMConfigurationKeys.OUTPUT_DIRECTORY]
-    ).onIndependentPartCompilationEnd(
-        createOutputFilesFlushingCallbackIfPossible(input.configuration)
-    ).jvmBackendClassResolver(
-        FirJvmBackendClassResolver(input.components)
-    ).diagnosticReporter(
-        environment.diagnosticsReporter
-    ).build()
+    val generationState = GenerationState(
+        environment.projectEnvironment.project,
+        input.irModuleFragment.descriptor,
+        input.configuration,
+        builderFactory,
+        targetId = input.targetId,
+        moduleName = input.targetId.name,
+        onIndependentPartCompilationEnd = createOutputFilesFlushingCallbackIfPossible(input.configuration),
+        jvmBackendClassResolver = FirJvmBackendClassResolver(input.components),
+        diagnosticReporter = environment.diagnosticsReporter,
+    )
 
     val performanceManager = input.configuration[CLIConfigurationKeys.PERF_MANAGER]
     performanceManager?.notifyGenerationStarted()
     performanceManager?.notifyIRLoweringStarted()
-    generationState.beforeCompile()
-    codegenFactory.generateModuleInFrontendIRMode(
+    JvmIrCodegenFactory(input.configuration).generateModuleInFrontendIRMode(
         generationState,
         input.irModuleFragment,
         input.symbolTable,

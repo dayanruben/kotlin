@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.backend.wasm.ic.IrFactoryImplForWasmIC
 import org.jetbrains.kotlin.backend.wasm.ir2wasm.WasmModuleFragmentGenerator
 import org.jetbrains.kotlin.backend.wasm.ir2wasm.WasmModuleMetadataCache
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
+import org.jetbrains.kotlin.config.phaseConfig
 import org.jetbrains.kotlin.ir.backend.js.MainModule
 import org.jetbrains.kotlin.ir.backend.js.dce.DceDumpNameCache
 import org.jetbrains.kotlin.ir.backend.js.dce.dumpDeclarationIrSizesIfNeed
@@ -44,9 +45,10 @@ class WasmLoweringFacade(
         require(WasmEnvironmentConfigurator.isMainModule(module, testServices))
         require(inputArtifact is IrBackendInput.WasmDeserializedFromKlibBackendInput)
 
+        val configuration = testServices.compilerConfigurationProvider.getCompilerConfiguration(module)
         val moduleInfo = inputArtifact.moduleInfo
         val debugMode = DebugMode.fromSystemProperty("kotlin.wasm.debugMode")
-        val wasmPhases = getWasmPhases(isIncremental = false)
+        val wasmPhases = getWasmPhases(configuration, isIncremental = false)
         val phaseConfig = if (debugMode >= DebugMode.SUPER_DEBUG) {
             val outputDirBase = testServices.getWasmTestOutputDirectory()
             val dumpOutputDir = File(outputDirBase, "irdump")
@@ -60,7 +62,7 @@ class WasmLoweringFacade(
         }
 
         val mainModule = MainModule.Klib(inputArtifact.klib.absolutePath)
-        val configuration = testServices.compilerConfigurationProvider.getCompilerConfiguration(module)
+        configuration.phaseConfig = phaseConfig
 
         val testPackage = extractTestPackage(testServices)
         val performanceManager = configuration[CLIConfigurationKeys.PERF_MANAGER]
@@ -71,7 +73,6 @@ class WasmLoweringFacade(
             mainModule,
             configuration,
             performanceManager,
-            phaseConfig = phaseConfig,
             exportedDeclarations = setOf(FqName.fromSegments(listOfNotNull(testPackage, "box"))),
             propertyLazyInitialization = true,
             generateTypeScriptFragment = generateDts
