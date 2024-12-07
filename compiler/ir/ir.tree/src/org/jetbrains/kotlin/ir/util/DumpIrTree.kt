@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.ir.visitors.IrElementVisitor
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.utils.Printer
+import org.jetbrains.kotlin.utils.addToStdlib.applyIf
 
 fun IrElement.dump(options: DumpIrTreeOptions = DumpIrTreeOptions()): String =
     try {
@@ -69,6 +70,7 @@ data class DumpIrTreeOptions(
     val printModuleName: Boolean = true,
     val printFilePath: Boolean = true,
     val printExpectDeclarations: Boolean = true,
+    val printSourceRetentionAnnotations: Boolean = true,
     val isHiddenDeclaration: (IrDeclaration) -> Boolean = { false },
 )
 
@@ -188,7 +190,7 @@ class DumpIrTreeVisitor(
         declaration.dumpLabeledElementWith(data) {
             dumpAnnotations(declaration)
             declaration.correspondingPropertySymbol?.dumpInternal("correspondingProperty")
-            declaration.overriddenSymbols.dumpItems("overridden") { it.dump() }
+            declaration.overriddenSymbols.dumpSymbolReferences("overridden")
             declaration.typeParameters.dumpElements()
             declaration.dispatchReceiverParameter?.accept(this, "\$this")
 
@@ -204,7 +206,7 @@ class DumpIrTreeVisitor(
     }
 
     private fun dumpAnnotations(element: IrAnnotationContainer) {
-        element.annotations.dumpItems("annotations") { irAnnotation: IrConstructorCall ->
+        element.annotations.filterOutSourceRetentions(options).dumpItems("annotations") { irAnnotation: IrConstructorCall ->
             printer.println(elementRenderer.renderAsAnnotation(irAnnotation))
         }
     }
@@ -231,7 +233,7 @@ class DumpIrTreeVisitor(
         if (declaration.isHidden()) return
         declaration.dumpLabeledElementWith(data) {
             dumpAnnotations(declaration)
-            declaration.overriddenSymbols.dumpItems("overridden") { it.dump() }
+            declaration.overriddenSymbols.dumpSymbolReferences("overridden")
             declaration.backingField?.accept(this, "")
             declaration.getter?.accept(this, "")
             declaration.setter?.accept(this, "")
@@ -463,6 +465,15 @@ class DumpIrTreeVisitor(
             forEach {
                 renderElement(it)
             }
+        }
+    }
+
+    private fun Collection<IrSymbol>.dumpSymbolReferences(caption: String) {
+        if (isEmpty()) return
+        indented(caption) {
+            map(elementRenderer::renderSymbolReference)
+                .applyIf(options.stableOrder) { sorted() }
+                .forEach { printer.println(it) }
         }
     }
 

@@ -74,7 +74,7 @@ fun prepareJvmSessionsForScripting(
  *   - legacy (one platform and one common module)
  *   - HMPP (multiple number of modules)
  */
-internal fun <F> FrontendContext.prepareJvmSessions(
+fun <F> FrontendContext.prepareJvmSessions(
     files: List<F>,
     rootModuleNameAsString: String,
     friendPaths: List<String>,
@@ -120,6 +120,33 @@ internal fun <F> FrontendContext.prepareJvmSessions(
     fileBelongsToModule: (F, String) -> Boolean,
     createProviderAndScopeForIncrementalCompilation: (List<F>) -> IncrementalCompilationContext?,
 ): List<SessionWithSources<F>> {
+    return prepareJvmSessions(
+        files,
+        rootModuleName,
+        configuration,
+        projectEnvironment,
+        librariesScope,
+        libraryList,
+        isCommonSource,
+        isScript,
+        fileBelongsToModule,
+        createProviderAndScopeForIncrementalCompilation,
+    )
+}
+
+internal fun <F> prepareJvmSessions(
+    files: List<F>,
+    rootModuleName: Name,
+    configuration: CompilerConfiguration,
+    projectEnvironment: VfsBasedProjectEnvironment,
+    librariesScope: AbstractProjectFileSearchScope,
+    libraryList: DependencyListForCliModule,
+    isCommonSource: (F) -> Boolean,
+    isScript: (F) -> Boolean,
+    fileBelongsToModule: (F, String) -> Boolean,
+    createProviderAndScopeForIncrementalCompilation: (List<F>) -> IncrementalCompilationContext?,
+): List<SessionWithSources<F>> {
+    val extensionRegistrars = FirExtensionRegistrar.getInstances(projectEnvironment.project)
     val javaSourcesScope = projectEnvironment.getSearchScopeForProjectJavaSources()
     val predefinedJavaComponents = FirSharableJavaComponents(firCachesFactoryForCliMode)
 
