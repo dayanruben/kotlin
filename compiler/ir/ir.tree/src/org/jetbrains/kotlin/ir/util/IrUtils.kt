@@ -431,7 +431,7 @@ fun irConstructorCall(
             endOffset = endOffset,
             type = type,
             symbol = newSymbol,
-            typeArgumentsCount = typeArgumentsCount,
+            typeArgumentsCount = typeArguments.size,
             constructorTypeArgumentsCount = 0,
             origin = origin
         ).apply {
@@ -474,7 +474,7 @@ fun irCall(
             endOffset,
             newReturnType ?: type,
             newSymbol,
-            typeArgumentsCount,
+            typeArguments.size,
             origin = origin,
             superQualifierSymbol = newSuperQualifierSymbol
         ).apply {
@@ -593,7 +593,7 @@ fun IrMemberAccessExpression<*>.getTypeSubstitutionMap(irFunction: IrFunction): 
         }
     }
     return typeParameters.withIndex().associateTo(result) {
-        it.value.symbol to getTypeArgument(it.index)!!
+        it.value.symbol to this.typeArguments[it.index]!!
     }
 }
 
@@ -688,7 +688,7 @@ fun IrExpression.remapReceiver(oldReceiver: IrValueParameter?, newReceiver: IrVa
     is IrGetValue ->
         IrGetValueImpl(startOffset, endOffset, type, newReceiver?.symbol.takeIf { symbol == oldReceiver?.symbol } ?: symbol, origin)
     is IrCall ->
-        IrCallImpl(startOffset, endOffset, type, symbol, typeArgumentsCount, origin, superQualifierSymbol).also {
+        IrCallImpl(startOffset, endOffset, type, symbol, typeArguments.size, origin, superQualifierSymbol).also {
             for (param in symbol.owner.parameters) {
                 val argument = arguments[param.indexInParameters]
                 it.arguments[param.indexInParameters] =
@@ -853,42 +853,24 @@ fun IrTypeParameter.copyToWithoutSuperTypes(
     this.index = index
 }
 
-fun IrFunction.copyReceiverParametersFrom(from: IrFunction, substitutionMap: Map<IrTypeParameterSymbol, IrType>) {
-    dispatchReceiverParameter = from.dispatchReceiverParameter?.run {
-        factory.createValueParameter(
-            startOffset = startOffset,
-            endOffset = endOffset,
-            origin = origin,
-            name = name,
-            type = type.substitute(substitutionMap),
-            isAssignable = isAssignable,
-            symbol = IrValueParameterSymbolImpl(),
-            varargElementType = varargElementType?.substitute(substitutionMap),
-            isCrossinline = isCrossinline,
-            isNoinline = isNoinline,
-            isHidden = isHidden,
-        ).also { parameter ->
-            parameter.parent = this@copyReceiverParametersFrom
-        }
-    }
-    extensionReceiverParameter = from.extensionReceiverParameter?.copyTo(this)
+fun IrFunction.copyParametersFrom(from: IrFunction) {
+    copyParametersFrom(from, makeTypeParameterSubstitutionMap(from, this))
 }
 
-fun IrFunction.copyValueParametersFrom(from: IrFunction, substitutionMap: Map<IrTypeParameterSymbol, IrType>) {
-    copyReceiverParametersFrom(from, substitutionMap)
-    valueParameters = valueParameters memoryOptimizedPlus from.valueParameters.map {
-        it.copyTo(this, type = it.type.substitute(substitutionMap))
+fun IrFunction.copyParametersFrom(from: IrFunction, substitutionMap: Map<IrTypeParameterSymbol, IrType>) {
+    parameters = parameters memoryOptimizedPlus from.parameters.map {
+        it.copyTo(
+            this,
+            type = it.type.substitute(substitutionMap),
+            varargElementType = it.varargElementType?.substitute(substitutionMap),
+        )
     }
 }
 
-fun IrFunction.copyParameterDeclarationsFrom(from: IrFunction) {
+fun IrFunction.copyValueAndTypeParametersFrom(from: IrFunction) {
     assert(typeParameters.isEmpty())
     copyTypeParametersFrom(from)
-    copyValueParametersFrom(from)
-}
-
-fun IrFunction.copyValueParametersFrom(from: IrFunction) {
-    copyValueParametersFrom(from, makeTypeParameterSubstitutionMap(from, this))
+    copyParametersFrom(from)
 }
 
 fun IrTypeParametersContainer.copyTypeParameters(
@@ -989,7 +971,7 @@ fun IrFunction.copyValueParametersToStatic(
 
 fun IrFunctionAccessExpression.passTypeArgumentsFrom(irFunction: IrTypeParametersContainer, offset: Int = 0) {
     irFunction.typeParameters.forEachIndexed { i, param ->
-        putTypeArgument(i + offset, param.defaultType)
+        typeArguments[i + offset] = param.defaultType
     }
 }
 

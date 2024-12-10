@@ -4483,6 +4483,12 @@ public class TieredFrontendJvmPsiTestGenerated extends AbstractTieredFrontendJvm
       }
 
       @Test
+      @TestMetadata("dslMarker.kt")
+      public void testDslMarker() {
+        runTest("compiler/testData/diagnostics/tests/contextParameters/dslMarker.kt");
+      }
+
+      @Test
       @TestMetadata("overloadAmbiguity.kt")
       public void testOverloadAmbiguity() {
         runTest("compiler/testData/diagnostics/tests/contextParameters/overloadAmbiguity.kt");
@@ -14379,6 +14385,12 @@ public class TieredFrontendJvmPsiTestGenerated extends AbstractTieredFrontendJvm
         }
 
         @Test
+        @TestMetadata("syntheticPropertyFromKotlin_error.kt")
+        public void testSyntheticPropertyFromKotlin_error() {
+          runTest("compiler/testData/diagnostics/tests/j+k/properties/syntheticPropertyFromKotlin_error.kt");
+        }
+
+        @Test
         @TestMetadata("syntheticPropertyFromKotlin_k1Like.kt")
         public void testSyntheticPropertyFromKotlin_k1Like() {
           runTest("compiler/testData/diagnostics/tests/j+k/properties/syntheticPropertyFromKotlin_k1Like.kt");
@@ -19065,9 +19077,21 @@ public class TieredFrontendJvmPsiTestGenerated extends AbstractTieredFrontendJvm
         }
 
         @Test
+        @TestMetadata("callableReferenceAsCallArgument.kt")
+        public void testCallableReferenceAsCallArgument() {
+          runTest("compiler/testData/diagnostics/tests/resolve/dslMarker/callableReferenceAsCallArgument.kt");
+        }
+
+        @Test
         @TestMetadata("callableReferences.kt")
         public void testCallableReferences() {
           runTest("compiler/testData/diagnostics/tests/resolve/dslMarker/callableReferences.kt");
+        }
+
+        @Test
+        @TestMetadata("dslMarkerOnExpectedTypeForInvokeExtensionCall.kt")
+        public void testDslMarkerOnExpectedTypeForInvokeExtensionCall() {
+          runTest("compiler/testData/diagnostics/tests/resolve/dslMarker/dslMarkerOnExpectedTypeForInvokeExtensionCall.kt");
         }
 
         @Test
@@ -29153,6 +29177,12 @@ public class TieredFrontendJvmPsiTestGenerated extends AbstractTieredFrontendJvm
       @TestMetadata("compiler/fir/analysis-tests/testData/resolve/expresssions/operators")
       @TestDataPath("$PROJECT_ROOT")
       public class Operators {
+        @Test
+        @TestMetadata("binaryOpIntStackOverflow.kt")
+        public void testBinaryOpIntStackOverflow() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/expresssions/operators/binaryOpIntStackOverflow.kt");
+        }
+
         @Test
         @TestMetadata("plusAndPlusAssign.kt")
         public void testPlusAndPlusAssign() {
