@@ -2883,6 +2883,22 @@ internal class VirtualMemberHiddenImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtNamedDeclaration>(firDiagnostic, token), KaFirDiagnostic.VirtualMemberHidden
 
+internal class ParameterNameChangedOnOverrideImpl(
+    override val superType: KaClassLikeSymbol,
+    override val conflictingParameter: KaSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtParameter>(firDiagnostic, token), KaFirDiagnostic.ParameterNameChangedOnOverride
+
+internal class DifferentNamesForTheSameParameterInSupertypesImpl(
+    override val currentParameter: KaSymbol,
+    override val conflictingParameter: KaSymbol,
+    override val parameterNumber: Int,
+    override val conflictingFunctions: List<KaFunctionSymbol>,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtClassOrObject>(firDiagnostic, token), KaFirDiagnostic.DifferentNamesForTheSameParameterInSupertypes
+
 internal class ManyCompanionObjectsImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,

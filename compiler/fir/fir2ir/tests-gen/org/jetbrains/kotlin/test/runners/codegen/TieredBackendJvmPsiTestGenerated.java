@@ -13243,6 +13243,12 @@ public class TieredBackendJvmPsiTestGenerated extends AbstractTieredBackendJvmPs
       }
 
       @Test
+      @TestMetadata("differentNamesForTheSameParametersInSupertypesForLibraryDependency.kt")
+      public void testDifferentNamesForTheSameParametersInSupertypesForLibraryDependency() {
+        runTest("compiler/testData/diagnostics/tests/namedArguments/differentNamesForTheSameParametersInSupertypesForLibraryDependency.kt");
+      }
+
+      @Test
       @TestMetadata("namedArgumentsInOverloads.kt")
       public void testNamedArgumentsInOverloads() {
         runTest("compiler/testData/diagnostics/tests/namedArguments/namedArgumentsInOverloads.kt");
@@ -23317,6 +23323,12 @@ public class TieredBackendJvmPsiTestGenerated extends AbstractTieredBackendJvmPs
     @TestMetadata("compiler/fir/analysis-tests/testData/resolve/diagnostics")
     @TestDataPath("$PROJECT_ROOT")
     public class Diagnostics {
+      @Test
+      @TestMetadata("conflictingOverloads2.kt")
+      public void testConflictingOverloads2() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/conflictingOverloads2.kt");
+      }
+
       @Test
       @TestMetadata("javaInheritsPrivateJavaClass.kt")
       public void testJavaInheritsPrivateJavaClass() {

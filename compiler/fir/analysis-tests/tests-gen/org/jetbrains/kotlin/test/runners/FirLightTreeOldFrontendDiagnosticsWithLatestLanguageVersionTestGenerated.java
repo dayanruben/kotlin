@@ -26839,6 +26839,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       }
 
       @Test
+      @TestMetadata("inlineValueClass.kt")
+      public void testInlineValueClass() {
+        runTest("compiler/testData/diagnostics/tests/modifiers/inlineValueClass.kt");
+      }
+
+      @Test
       @TestMetadata("internalInInterface.kt")
       public void testInternalInInterface() {
         runTest("compiler/testData/diagnostics/tests/modifiers/internalInInterface.kt");
@@ -27678,6 +27684,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       @TestMetadata("ambiguousNamedArgumentsWithGenerics3.kt")
       public void testAmbiguousNamedArgumentsWithGenerics3() {
         runTest("compiler/testData/diagnostics/tests/namedArguments/ambiguousNamedArgumentsWithGenerics3.kt");
+      }
+
+      @Test
+      @TestMetadata("differentNamesForTheSameParametersInSupertypesForLibraryDependency.kt")
+      public void testDifferentNamesForTheSameParametersInSupertypesForLibraryDependency() {
+        runTest("compiler/testData/diagnostics/tests/namedArguments/differentNamesForTheSameParametersInSupertypesForLibraryDependency.kt");
       }
 
       @Test

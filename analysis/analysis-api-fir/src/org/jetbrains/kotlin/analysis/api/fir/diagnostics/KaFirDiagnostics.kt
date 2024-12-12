@@ -2410,6 +2410,20 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val overriddenContainer: KaClassLikeSymbol
     }
 
+    interface ParameterNameChangedOnOverride : KaFirDiagnostic<KtParameter> {
+        override val diagnosticClass get() = ParameterNameChangedOnOverride::class
+        val superType: KaClassLikeSymbol
+        val conflictingParameter: KaSymbol
+    }
+
+    interface DifferentNamesForTheSameParameterInSupertypes : KaFirDiagnostic<KtClassOrObject> {
+        override val diagnosticClass get() = DifferentNamesForTheSameParameterInSupertypes::class
+        val currentParameter: KaSymbol
+        val conflictingParameter: KaSymbol
+        val parameterNumber: Int
+        val conflictingFunctions: List<KaFunctionSymbol>
+    }
+
     interface ManyCompanionObjects : KaFirDiagnostic<KtObjectDeclaration> {
         override val diagnosticClass get() = ManyCompanionObjects::class
     }
