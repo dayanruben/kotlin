@@ -69,8 +69,11 @@ abstract class AbstractSetupTask<Env : AbstractEnv, Spec : EnvSpec<Env>>(
         get() = downloadBaseUrlProvider.orNull
 
     @get:OutputDirectory
-    internal val destinationProvider: RegularFileProperty = project.objects.fileProperty()
+    val destinationProvider: RegularFileProperty = project.objects.fileProperty()
         .fileProvider(env.map { it.dir })
+        .also {
+            it.disallowChanges()
+        }
 
     @Deprecated("Use destinationProvider instead. It uses Gradle Provider API.")
     val destination: File
@@ -83,7 +86,9 @@ abstract class AbstractSetupTask<Env : AbstractEnv, Spec : EnvSpec<Env>>(
                 val file = it.asFile
                 file.parentFile.resolve("${file.name}.hash")
             }
-        )
+        ).also {
+            it.disallowChanges()
+        }
 
     @Deprecated("Use destinationHashFileProvider instead. It uses Gradle Provider API.")
     val destinationHashFile: File

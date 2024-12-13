@@ -13,7 +13,11 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isInfix
 import org.jetbrains.kotlin.fir.declarations.utils.isOperator
 import org.jetbrains.kotlin.fir.declarations.utils.modality
+import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
+import org.jetbrains.kotlin.fir.diagnostics.ConeUnreportedDuplicateDiagnostic
+import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.expressions.*
+import org.jetbrains.kotlin.fir.expressions.builder.buildExpressionStub
 import org.jetbrains.kotlin.fir.references.FirSuperReference
 import org.jetbrains.kotlin.fir.references.symbol
 import org.jetbrains.kotlin.fir.resolve.*
@@ -40,7 +44,6 @@ import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintKind
 import org.jetbrains.kotlin.resolve.calls.inference.model.NewConstraintSystemImpl
 import org.jetbrains.kotlin.resolve.calls.inference.model.SimpleConstraintSystemConstraintPosition
 import org.jetbrains.kotlin.resolve.calls.inference.runTransaction
-import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind.DISPATCH_RECEIVER
 import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 import org.jetbrains.kotlin.resolve.descriptorUtil.DYNAMIC_EXTENSION_FQ_NAME
@@ -48,7 +51,6 @@ import org.jetbrains.kotlin.types.AbstractNullabilityChecker
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.types.TypeApproximatorConfiguration
 import org.jetbrains.kotlin.types.model.typeConstructor
-import org.jetbrains.kotlin.util.OperatorNameConventions
 
 abstract class ResolutionStage {
     abstract suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext)
@@ -75,7 +77,7 @@ object CheckExtensionReceiver : ResolutionStage() {
         if (candidate.givenExtensionReceiverOptions.isEmpty()) return
 
         val preparedReceivers = candidate.givenExtensionReceiverOptions.map {
-            prepareReceivers(it, expectedType, context)
+            prepareReceivers(it, expectedType, context.session)
         }
 
         if (preparedReceivers.size == 1) {
@@ -124,13 +126,13 @@ object CheckExtensionReceiver : ResolutionStage() {
 private fun prepareReceivers(
     argumentExtensionReceiver: ConeResolutionAtom,
     expectedType: ConeKotlinType,
-    context: ResolutionContext,
+    session: FirSession,
 ): ReceiverDescription {
     val argumentType = captureFromTypeParameterUpperBoundIfNeeded(
         argumentType = argumentExtensionReceiver.expression.resolvedType,
         expectedType = expectedType,
-        session = context.session
-    ).let { prepareCapturedType(it, context) }
+        session = session
+    ).let { prepareCapturedType(it, session) }
         .let {
             when (it) {
                 is ConeIntegerConstantOperatorType -> it.possibleTypes.first()
@@ -200,9 +202,10 @@ object CheckDispatchReceiver : ResolutionStage() {
 
 object CheckContextArguments : ResolutionStage() {
     override suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext) {
-        val contextExpectedTypes = (candidate.symbol as? FirCallableSymbol<*>)?.fir?.contextParameters?.map {
-            candidate.substitutor.substituteOrSelf(it.returnTypeRef.coneType)
-        }?.takeUnless { it.isEmpty() } ?: return
+        val contextExpectedTypes = run {
+            candidate.expectedContextParameterTypesForInvoke
+                ?: candidate.obtainRegularExpectedContextTypesOrNull()
+        }?.map(candidate.substitutor::substituteOrSelf) ?: return
 
         if (!context.session.languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters) &&
             !context.session.languageVersionSettings.supportsFeature(LanguageFeature.ContextReceivers)
@@ -211,34 +214,94 @@ object CheckContextArguments : ResolutionStage() {
             return
         }
 
-        val receiverGroups: List<List<FirExpression>> =
-            context.bodyResolveContext.towerDataContext.towerDataElements.asReversed().mapNotNull { towerDataElement ->
-                towerDataElement.implicitReceiver?.receiverExpression?.let(::listOf)
-                    ?: towerDataElement.implicitContextGroup?.map { it.computeExpression() }
-            }
+        val resultingContextArguments = candidate.mapContextArgumentsOrNull(
+            contextExpectedTypes,
+            context.bodyResolveContext.towerDataContext,
+            sink
+        )
 
-        val resultingContextArguments = mutableListOf<ConeResolutionAtom>()
-        for (expectedType in contextExpectedTypes) {
-            val matchingReceivers = candidate.findClosestMatchingReceivers(expectedType, receiverGroups, context)
-            when (matchingReceivers.size) {
-                0 -> {
-                    sink.reportDiagnostic(NoContextArgument(expectedType))
-                    return
-                }
-                1 -> {
-                    val matchingReceiver = matchingReceivers.single()
-                    resultingContextArguments.add(matchingReceiver.atom)
-                    candidate.system.addSubtypeConstraint(matchingReceiver.type, expectedType, SimpleConstraintSystemConstraintPosition)
-                }
-                else -> {
-                    sink.reportDiagnostic(AmbiguousContextArgument(expectedType))
-                    return
-                }
+        when {
+            candidate.expectedContextParameterTypesForInvoke != null -> {
+                candidate.replaceArgumentPrefixForInvokeWithImplicitlyMappedContextValues(
+                    contextExpectedTypes,
+                    resultingContextArguments,
+                )
+            }
+            else -> {
+                candidate.contextArguments = resultingContextArguments
             }
         }
-
-        candidate.contextArguments = resultingContextArguments
     }
+
+    private fun Candidate.obtainRegularExpectedContextTypesOrNull(): List<ConeKotlinType>? =
+        (symbol as? FirCallableSymbol<*>)?.fir?.contextParameters?.map { it.returnTypeRef.coneType }
+            ?.takeUnless { it.isEmpty() }
+
+    private fun Candidate.replaceArgumentPrefixForInvokeWithImplicitlyMappedContextValues(
+        contextExpectedTypes: List<ConeKotlinType>,
+        resultingContextArguments: List<ConeResolutionAtom>?,
+    ) {
+        val newArgumentPrefix = mutableListOf<ConeResolutionAtom>()
+        for (index in contextExpectedTypes.indices) {
+            val newValue =
+                resultingContextArguments?.get(index) ?: ConeResolutionAtom.createRawAtom(
+                    buildErrorExpression(
+                        source = callInfo.callSite.source,
+                        // `mapContextArgumentsOrNull` should report a diagnostic to the sink
+                        // if `resultingContextArguments == null`
+                        ConeUnreportedDuplicateDiagnostic(
+                            ConeSimpleDiagnostic(
+                                "Unresolved context argument",
+                                DiagnosticKind.Other
+                            )
+                        )
+                    )
+                )
+
+            newArgumentPrefix.add(newValue)
+        }
+
+        @OptIn(Candidate.UpdatingCandidateInvariants::class)
+        replaceArgumentPrefix(newArgumentPrefix)
+    }
+}
+
+/**
+ * If any diagnostics are reported to [sink], `null` is returned.
+ */
+fun Candidate.mapContextArgumentsOrNull(
+    contextReceiverExpectedTypes: List<ConeKotlinType>,
+    towerDataContext: FirTowerDataContext,
+    sink: CheckerSink,
+): List<ConeResolutionAtom>? {
+    val receiverGroups: List<List<FirExpression>> =
+        towerDataContext.towerDataElements.asReversed().mapNotNull { towerDataElement ->
+            towerDataElement.implicitReceiver?.receiverExpression?.let(::listOf)
+                ?: towerDataElement.implicitContextGroup?.map { it.computeExpression() }
+        }
+
+    val resultingContextArguments = mutableListOf<ConeResolutionAtom>()
+
+    for (expectedType in contextReceiverExpectedTypes) {
+        val matchingReceivers = findClosestMatchingReceivers(expectedType, receiverGroups)
+        when (matchingReceivers.size) {
+            0 -> {
+                sink.reportDiagnostic(NoContextArgument(expectedType))
+                return null
+            }
+            1 -> {
+                val matchingReceiver = matchingReceivers.single()
+                resultingContextArguments.add(matchingReceiver.atom)
+                system.addSubtypeConstraint(matchingReceiver.type, expectedType, SimpleConstraintSystemConstraintPosition)
+            }
+            else -> {
+                sink.reportDiagnostic(AmbiguousContextArgument(expectedType))
+                return null
+            }
+        }
+    }
+
+    return resultingContextArguments
 }
 
 object TypeVariablesInExplicitReceivers : ResolutionStage() {
@@ -277,12 +340,11 @@ object TypeVariablesInExplicitReceivers : ResolutionStage() {
 private fun Candidate.findClosestMatchingReceivers(
     expectedType: ConeKotlinType,
     receiverGroups: List<List<FirExpression>>,
-    context: ResolutionContext,
 ): List<ReceiverDescription> {
     for (receiverGroup in receiverGroups) {
         val currentResult =
             receiverGroup
-                .map { prepareReceivers(ConeResolutionAtom.createRawAtom(it), expectedType, context) }
+                .map { prepareReceivers(ConeResolutionAtom.createRawAtom(it), expectedType, callInfo.session) }
                 .filter { system.isSubtypeConstraintCompatible(it.type, expectedType, SimpleConstraintSystemConstraintPosition) }
 
         if (currentResult.isNotEmpty()) return currentResult
@@ -339,12 +401,7 @@ object CheckDslScopeViolation : ResolutionStage() {
         // ```
         // `useX()` is a call to `invoke` with `useX` as the dispatch receiver. In the FIR tree, extension receiver is represented as an
         // implicit `this` expression passed as the first argument.
-        if (
-            candidate.dispatchReceiver?.expression?.resolvedType
-                ?.fullyExpandedType(context.session)
-                ?.isSomeFunctionType(context.session) == true
-            && (candidate.symbol as? FirNamedFunctionSymbol)?.name == OperatorNameConventions.INVOKE
-        ) {
+        if (callInfo.isImplicitInvoke) {
             for (atom in candidate.argumentMapping.keys) {
                 checkImpl(
                     atom,
@@ -522,7 +579,18 @@ internal object MapArguments : ResolutionStage() {
         // and then try to re-initialize it second time inside 'preprocessLambdaArgument' -> 'createResolvedLambdaAtom' for a functional one
         //
         // So the pattern is "lambda at use-site with two different candidates"
-        val arguments = callInfo.arguments.map { ConeResolutionAtom.createRawAtom(it) }
+        val arguments = buildList {
+            candidate.getExpectedContextParameterTypesForInvoke(context, function, sink)?.let { expectedContextTypes ->
+                // Those stubs shall be replaced at CheckContextArguments.replaceArgumentPrefixForInvokeWithImplicitlyMappedContextValues
+                addAll(expectedContextTypes.map {
+                    @OptIn(UnsafeExpressionUtility::class) // It's a temporary atom anyway
+                    ConeResolutionAtom.createRawAtomForPotentiallyUnresolvedExpression(buildExpressionStub())
+                })
+                candidate.expectedContextParameterTypesForInvoke = expectedContextTypes
+            }
+            callInfo.arguments.mapTo(this) { ConeResolutionAtom.createRawAtom(it) }
+        }
+
         val mapping = context.bodyResolveComponents.mapArguments(
             arguments,
             function,
@@ -548,12 +616,56 @@ internal object MapArguments : ResolutionStage() {
             }
         }
     }
+
+    /**
+     * Non-trivial values are returned only for `invoke` function obtained from a function type like `context(C..) () -> ...`
+     * and only for the case, when explicit arguments for the context part are missing.
+     *
+     * @return expected context parameter types implicit values for which needs to be resolved and bound later
+     * @return or `null` when further candidate processing should work as usual, i.e., no stub arguments need to be added
+     *         and no extra context value resolution has to be done.
+     */
+    private fun Candidate.getExpectedContextParameterTypesForInvoke(
+        context: ResolutionContext,
+        function: FirFunction,
+        sink: CheckerSink,
+    ): List<ConeKotlinType>? {
+        if (!callInfo.isImplicitInvoke) return null
+        if (!context.session.languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) return null
+
+        val dispatchReceiverType = dispatchReceiver?.expression?.resolvedType?.fullyExpandedType(callInfo.session)
+        val contextExpectedTypes = dispatchReceiverType?.contextParameterTypes(context.session)
+        // If it's non-empty => `function` is strictly a [FunctionN.invoke]
+        if (contextExpectedTypes.isNullOrEmpty()) return null
+
+        // If there are too many arguments with appended context values, we assume they _all_ should be passed explicitly
+        // NB: We don't consider default/vararg parameters here, as function types don't have such concepts, which is why
+        // we may just compare the number of arguments and parameters instead of trying to make sure none of them
+        // might be defaulted.
+        if (contextExpectedTypes.size + callInfo.arguments.size > function.valueParameters.size) {
+            // The only exception is ImplicitInvokeMode.ReceiverAsArgument:
+            // if the call-site is an implicit invoke-call with receiver,
+            // and the function type has both, context parameters and a receiver,
+            // then we MUST pass context arguments implicitly.
+            // Otherwise, we would allow calling `f: context(String, Int) Boolean.() -> Unit` with `"".f(1, true)`.
+            //
+            // So, in this case if some of the context values (or all of them) are seemingly passed explicitly,
+            // we report a diagnostic.
+            // See compiler/testData/diagnostics/tests/contextParameters/invoke.fir.kt
+            if (callInfo.implicitInvokeMode == ImplicitInvokeMode.ReceiverAsArgument) {
+                sink.reportDiagnostic(UnsupportedContextualDeclarationCall)
+            }
+
+            return null
+        }
+
+        return contextExpectedTypes
+    }
 }
 
 internal val Candidate.isInvokeFromExtensionFunctionType: Boolean
-    get() = explicitReceiverKind == DISPATCH_RECEIVER
+    get() = this.callInfo.isImplicitInvoke
             && dispatchReceiver?.expression?.resolvedType?.fullyExpandedType(this.callInfo.session)?.isExtensionFunctionType == true
-            && (symbol as? FirNamedFunctionSymbol)?.name == OperatorNameConventions.INVOKE
 
 internal fun Candidate.shouldHaveLowPriorityDueToSAM(bodyResolveComponents: BodyResolveComponents): Boolean {
     if (!usesSamConversion || isJavaApplicableCandidate()) return false
