@@ -151,6 +151,11 @@ private val inlineCallableReferenceToLambdaPhase = createFileLoweringPhase(
         name = "NativeInlineCallableReferenceToLambdaPhase",
 )
 
+private val upgradeCallableReferencesPhase = createFileLoweringPhase(
+        ::UpgradeCallableReferences,
+        name = "UpgradeCallableReferences",
+)
+
 private val arrayConstructorPhase = createFileLoweringPhase(
         ::ArrayConstructorLowering,
         name = "ArrayConstructor",
@@ -202,12 +207,6 @@ private val postInlinePhase = createFileLoweringPhase(
 private val contractsDslRemovePhase = createFileLoweringPhase(
         { context: Context -> ContractsDslRemover(context) },
         name = "RemoveContractsDsl",
-)
-
-// TODO make all lambda-related stuff work with IrFunctionExpression and drop this phase (see kotlin: dd3f8ecaacd)
-private val provisionalFunctionExpressionPhase = createFileLoweringPhase(
-        ::ProvisionalFunctionExpressionLowering,
-        name = "FunctionExpression",
 )
 
 private val flattenStringConcatenationPhase = createFileLoweringPhase(
@@ -573,10 +572,10 @@ internal fun KonanConfig.getLoweringsUpToAndIncludingSyntheticAccessors(): Lower
 )
 
 internal fun KonanConfig.getLoweringsAfterInlining(): LoweringList = listOfNotNull(
+        upgradeCallableReferencesPhase,
         removeExpectDeclarationsPhase,
         stripTypeAliasDeclarationsPhase,
         assertionRemoverPhase,
-        provisionalFunctionExpressionPhase,
         volatilePhase,
         testProcessorPhase.takeIf { this.configuration.getNotNull(KonanConfigKeys.GENERATE_TEST_RUNNER) != TestRunnerKind.NONE },
         delegatedPropertyOptimizationPhase,
