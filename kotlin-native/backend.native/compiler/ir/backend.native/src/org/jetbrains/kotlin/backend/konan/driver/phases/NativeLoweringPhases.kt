@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.backend.jvm.ir.isReifiedTypeParameter
 import org.jetbrains.kotlin.backend.konan.*
 import org.jetbrains.kotlin.backend.konan.driver.utilities.getDefaultIrActions
 import org.jetbrains.kotlin.backend.konan.ir.FunctionsWithoutBoundCheckGenerator
-import org.jetbrains.kotlin.backend.konan.ir.KonanSharedVariablesManager
 import org.jetbrains.kotlin.backend.konan.lower.*
 import org.jetbrains.kotlin.backend.konan.lower.InitializersLowering
 import org.jetbrains.kotlin.backend.konan.optimizations.NativeForLoopsLowering
@@ -146,11 +145,6 @@ private val annotationImplementationPhase = createFileLoweringPhase(
 )
 
 
-private val inlineCallableReferenceToLambdaPhase = createFileLoweringPhase(
-        lowering = { context: NativeGenerationState -> NativeInlineCallableReferenceToLambdaPhase(context) },
-        name = "NativeInlineCallableReferenceToLambdaPhase",
-)
-
 private val upgradeCallableReferencesPhase = createFileLoweringPhase(
         ::UpgradeCallableReferences,
         name = "UpgradeCallableReferences",
@@ -159,7 +153,7 @@ private val upgradeCallableReferencesPhase = createFileLoweringPhase(
 private val arrayConstructorPhase = createFileLoweringPhase(
         ::ArrayConstructorLowering,
         name = "ArrayConstructor",
-        prerequisite = setOf(inlineCallableReferenceToLambdaPhase)
+        prerequisite = setOf(upgradeCallableReferencesPhase)
 )
 
 private val lateinitPhase = createFileLoweringPhase(
@@ -168,17 +162,13 @@ private val lateinitPhase = createFileLoweringPhase(
 )
 
 private val sharedVariablesPhase = createFileLoweringPhase(
-        { context: KonanBackendContext -> SharedVariablesLowering(KonanSharedVariablesManager(context.irBuiltIns, context.ir.symbols)) },
+        ::SharedVariablesLowering,
         name = "SharedVariables",
         prerequisite = setOf(lateinitPhase)
 )
 
 private val outerThisSpecialAccessorInInlineFunctionsPhase = createFileLoweringPhase(
-        { context: LoweringContext ->
-            // Make accessors public if `SyntheticAccessorLowering` is disabled.
-            val generatePublicAccessors = context.configuration.getBoolean(KlibConfigurationKeys.NO_DOUBLE_INLINING)
-            OuterThisInInlineFunctionsSpecialAccessorLowering(context, generatePublicAccessors)
-        },
+        ::OuterThisInInlineFunctionsSpecialAccessorLowering,
         name = "OuterThisInInlineFunctionsSpecialAccessorLowering",
 )
 
@@ -192,11 +182,6 @@ private val extractLocalClassesFromInlineBodies = createFileLoweringPhase(
         },
         name = "ExtractLocalClassesFromInlineBodies",
         prerequisite = setOf(sharedVariablesPhase),
-)
-
-private val wrapInlineDeclarationsWithReifiedTypeParametersLowering = createFileLoweringPhase(
-        ::WrapInlineDeclarationsWithReifiedTypeParametersLowering,
-        name = "WrapInlineDeclarationsWithReifiedTypeParameters",
 )
 
 private val postInlinePhase = createFileLoweringPhase(
@@ -564,15 +549,13 @@ internal fun KonanConfig.getLoweringsUpToAndIncludingSyntheticAccessors(): Lower
     sharedVariablesPhase,
     outerThisSpecialAccessorInInlineFunctionsPhase,
     extractLocalClassesFromInlineBodies,
-    inlineCallableReferenceToLambdaPhase,
+    upgradeCallableReferencesPhase,
     arrayConstructorPhase,
-    wrapInlineDeclarationsWithReifiedTypeParametersLowering,
     inlineOnlyPrivateFunctionsPhase.takeUnless { this.configuration.getBoolean(KlibConfigurationKeys.NO_DOUBLE_INLINING) },
     syntheticAccessorGenerationPhase.takeUnless { this.configuration.getBoolean(KlibConfigurationKeys.NO_DOUBLE_INLINING) },
 )
 
 internal fun KonanConfig.getLoweringsAfterInlining(): LoweringList = listOfNotNull(
-        upgradeCallableReferencesPhase,
         removeExpectDeclarationsPhase,
         stripTypeAliasDeclarationsPhase,
         assertionRemoverPhase,

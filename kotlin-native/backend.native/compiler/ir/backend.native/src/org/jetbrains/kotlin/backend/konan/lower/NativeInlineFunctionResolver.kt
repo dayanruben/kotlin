@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.backend.common.lower.*
 import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesInInlineLambdasLowering
 import org.jetbrains.kotlin.backend.common.lower.inline.OuterThisInInlineFunctionsSpecialAccessorLowering
 import org.jetbrains.kotlin.backend.konan.*
-import org.jetbrains.kotlin.backend.konan.ir.KonanSharedVariablesManager
 import org.jetbrains.kotlin.config.KlibConfigurationKeys
 import org.jetbrains.kotlin.ir.builders.Scope
 import org.jetbrains.kotlin.ir.declarations.IrFunction
@@ -47,21 +46,18 @@ internal class NativeInlineFunctionResolver(
 
         LateinitLowering(context).lower(body)
 
-        SharedVariablesLowering(KonanSharedVariablesManager(context.irBuiltIns, context.ir.symbols)).lower(body, function)
+        SharedVariablesLowering(context).lower(body, function)
 
-        OuterThisInInlineFunctionsSpecialAccessorLowering(
-                context,
-                generatePublicAccessors = !doubleInliningEnabled // Make accessors public if `SyntheticAccessorLowering` is disabled.
-        ).lowerWithoutAddingAccessorsToParents(function)
+        OuterThisInInlineFunctionsSpecialAccessorLowering(context).lowerWithoutAddingAccessorsToParents(function)
 
         LocalClassesInInlineLambdasLowering(context).lower(body, function)
         // Do not extract local classes off of inline functions from cached libraries.
         // LocalClassesInInlineFunctionsLowering(context).lower(body, function)
         // LocalClassesExtractionFromInlineFunctionsLowering(context).lower(body, function)
 
-        NativeInlineCallableReferenceToLambdaPhase(generationState).lower(function)
+        UpgradeCallableReferences(context).lower(function)
+
         ArrayConstructorLowering(context).lower(body, function)
-        WrapInlineDeclarationsWithReifiedTypeParametersLowering(context).lower(body, function)
 
         if (doubleInliningEnabled) {
             NativeIrInliner(generationState, inlineMode = InlineMode.PRIVATE_INLINE_FUNCTIONS).lower(body, function)
