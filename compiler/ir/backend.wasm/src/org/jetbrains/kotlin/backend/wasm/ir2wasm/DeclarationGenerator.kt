@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.backend.js.lower.CallableReferenceLowering
 import org.jetbrains.kotlin.ir.backend.js.lower.originalFqName
 import org.jetbrains.kotlin.ir.backend.js.utils.*
 import org.jetbrains.kotlin.ir.declarations.*
@@ -33,6 +34,7 @@ class DeclarationGenerator(
     private val wasmModuleTypeTransformer: WasmModuleTypeTransformer,
     private val wasmModuleMetadataCache: WasmModuleMetadataCache,
     private val allowIncompleteImplementations: Boolean,
+    private val skipCommentInstructions: Boolean,
 ) : IrElementVisitorVoid {
 
     // Shortcuts
@@ -97,8 +99,6 @@ class DeclarationGenerator(
 
         val wasmImportModule = declaration.getWasmImportDescriptor()
         val jsCode = declaration.getJsFunAnnotation()
-        val functionStartLocation = declaration.getSourceLocation(declaration.symbol, declaration.fileOrNull)
-        val functionEndLocation = declaration.getSourceLocation(declaration.symbol, declaration.fileOrNull, LocationType.END)
 
         val importedName = when {
             wasmImportModule != null -> {
@@ -122,11 +122,15 @@ class DeclarationGenerator(
             // Imported functions don't have bodies. Declaring the signature:
             wasmFileCodegenContext.defineFunction(
                 declaration.symbol,
-                WasmFunction.Imported(watName, functionTypeSymbol, importedName, functionStartLocation)
+                WasmFunction.Imported(watName, functionTypeSymbol, importedName)
             )
             // TODO: Support re-export of imported functions.
             return
         }
+
+        val locationTarget = declaration.locationTarget
+        val functionStartLocation = locationTarget.getSourceLocation(declaration.symbol, declaration.fileOrNull)
+        val functionEndLocation = locationTarget.getSourceLocation(declaration.symbol, declaration.fileOrNull, LocationType.END)
 
         val function = WasmFunction.Defined(
             watName,
@@ -139,7 +143,8 @@ class DeclarationGenerator(
             function,
             backendContext,
             wasmFileCodegenContext,
-            wasmModuleTypeTransformer
+            wasmModuleTypeTransformer,
+            skipCommentInstructions
         )
 
         for (irParameter in irParameters) {
@@ -394,45 +399,37 @@ class DeclarationGenerator(
         val (simpleNameAddress, simpleNamePoolId) = wasmFileCodegenContext.referenceStringLiteralAddressAndId(simpleName)
 
         val typeInfo = ConstantDataStruct(
-            name = "TypeInfo",
             elements = listOf(
-                ConstantDataIntField("TypePackageNameLength", qualifier.length),
-                ConstantDataIntField("TypePackageNameId", packageNamePoolId),
-                ConstantDataIntField("TypePackageNamePtr", packageNameAddress),
-                ConstantDataIntField("TypeNameLength", simpleName.length),
-                ConstantDataIntField("TypeNameId", simpleNamePoolId),
-                ConstantDataIntField("TypeNamePtr", simpleNameAddress)
+                ConstantDataIntField(qualifier.length),
+                ConstantDataIntField(packageNamePoolId),
+                ConstantDataIntField(packageNameAddress),
+                ConstantDataIntField(simpleName.length),
+                ConstantDataIntField(simpleNamePoolId),
+                ConstantDataIntField(simpleNameAddress)
             )
         )
 
         val superClass = klass.getSuperClass(backendContext.irBuiltIns)
         val superTypeId = superClass?.let {
-            ConstantDataIntField("SuperTypeId", wasmFileCodegenContext.referenceTypeId(it.symbol))
-        } ?: ConstantDataIntField("SuperTypeId", -1)
+            ConstantDataIntField(wasmFileCodegenContext.referenceTypeId(it.symbol))
+        } ?: ConstantDataIntField(-1)
 
         val typeInfoContent = mutableListOf(typeInfo, superTypeId)
         if (!klass.isAbstractOrSealed) {
             typeInfoContent.add(interfaceTable(classMetadata))
         }
 
-        return ConstantDataStruct(
-            name = "Class TypeInfo: ${klass.fqNameWhenAvailable} ",
-            elements = typeInfoContent
-        )
+        return ConstantDataStruct(elements = typeInfoContent)
     }
 
     private fun interfaceTable(classMetadata: ClassMetadata): ConstantDataStruct {
         val interfaces = classMetadata.interfaces
-        val size = ConstantDataIntField("size", interfaces.size)
+        val size = ConstantDataIntField(interfaces.size)
         val interfaceIds = ConstantDataIntArray(
-            "interfaceIds",
             interfaces.map { wasmFileCodegenContext.referenceTypeId(it.symbol) },
         )
 
-        return ConstantDataStruct(
-            name = "Class interface table: ${classMetadata.klass.fqNameWhenAvailable} ",
-            elements = listOf(size, interfaceIds)
-        )
+        return ConstantDataStruct(elements = listOf(size, interfaceIds))
     }
 
 
@@ -443,7 +440,7 @@ class DeclarationGenerator(
         val wasmType = wasmModuleTypeTransformer.transformType(declaration.type)
 
         val initBody = mutableListOf<WasmInstr>()
-        val wasmExpressionGenerator = WasmExpressionBuilder(initBody)
+        val wasmExpressionGenerator = WasmExpressionBuilder(initBody, skipCommentInstructions = skipCommentInstructions)
 
         val initValue: IrExpression? = declaration.initializer?.expression
         if (initValue != null) {
@@ -462,7 +459,8 @@ class DeclarationGenerator(
                     stubFunction,
                     backendContext,
                     wasmFileCodegenContext,
-                    wasmModuleTypeTransformer
+                    wasmModuleTypeTransformer,
+                    skipCommentInstructions,
                 )
                 val bodyGenerator = BodyGenerator(
                     backendContext,
@@ -552,5 +550,16 @@ fun generateConstExpression(
             body.buildConstI32(stringValue.length, location)
             body.buildCall(context.referenceFunction(backendContext.wasmSymbols.stringGetLiteral), location)
             body.commentGroupEnd()
+        }
+    }
+
+val IrFunction.locationTarget: IrElement
+    get() = when (origin) {
+        IrDeclarationOrigin.FUNCTION_FOR_DEFAULT_PARAMETER -> this
+        IrDeclarationOrigin.LOCAL_FUNCTION_FOR_LAMBDA -> this
+        else -> when (parentClassOrNull?.origin) {
+            CallableReferenceLowering.LAMBDA_IMPL,
+            IrDeclarationOrigin.LOCAL_FUNCTION_FOR_LAMBDA -> this
+            else -> body ?: this
         }
     }

@@ -160,14 +160,13 @@ class WasmSerializer(outputStream: OutputStream) {
             serializeWasmSymbolReadOnly(func.type, ::serializeWasmFunctionType)
             when (func) {
                 is WasmFunction.Defined -> withTag(FunctionTags.DEFINED) {
-                    serializeSourceLocation(func.startLocation)
-                    serializeSourceLocation(func.endLocation)
                     serializeList(func.locals, ::serializeWasmLocal)
                     serializeList(func.instructions, ::serializeWasmInstr)
+                    serializeSourceLocation(func.startLocation)
+                    serializeSourceLocation(func.endLocation)
                 }
                 is WasmFunction.Imported -> withTag(FunctionTags.IMPORTED) {
                     serializeWasmImportDescriptor(func.importPair)
-                    serializeSourceLocation(func.startLocation)
                 }
             }
         }
@@ -414,13 +413,9 @@ class WasmSerializer(outputStream: OutputStream) {
     private fun serializeSourceLocation(sl: SourceLocation) =
         when (sl) {
             SourceLocation.NoLocation -> setTag(LocationTags.NO_LOCATION)
-            is SourceLocation.Location -> withTag(LocationTags.LOCATION) {
-                serializeString(sl.module)
-                serializeString(sl.file)
-                b.writeUInt32(sl.line.toUInt())
-                b.writeUInt32(sl.column.toUInt())
-            }
-            is SourceLocation.IgnoredLocation -> withTag(LocationTags.IGNORED_LOCATION) {
+            SourceLocation.IgnoredLocation -> setTag(LocationTags.IGNORED_LOCATION)
+            SourceLocation.NextLocation -> setTag(LocationTags.NEXT_LOCATION)
+            is SourceLocation.DefinedLocation -> withTag(LocationTags.LOCATION) {
                 serializeString(sl.module)
                 serializeString(sl.file)
                 b.writeUInt32(sl.line.toUInt())
@@ -531,33 +526,28 @@ class WasmSerializer(outputStream: OutputStream) {
     }
 
     private fun serializeConstantDataCharArray(constantDataCharArray: ConstantDataCharArray) {
-        serializeString(constantDataCharArray.name)
         serializeList(constantDataCharArray.value) { serializeWasmSymbolReadOnly(it) { b.writeUInt32(it.code.toUInt()) } }
     }
 
     private fun serializeConstantDataCharField(constantDataCharField: ConstantDataCharField) {
-        serializeString(constantDataCharField.name)
         serializeWasmSymbolReadOnly(constantDataCharField.value) { b.writeUInt32(it.code.toUInt()) }
     }
 
     private fun serializeConstantDataIntArray(constantDataIntArray: ConstantDataIntArray) {
-        serializeString(constantDataIntArray.name)
         serializeList(constantDataIntArray.value) { serializeWasmSymbolReadOnly(it) { b.writeUInt32(it.toUInt()) } }
     }
 
     private fun serializeConstantDataIntField(constantDataIntField: ConstantDataIntField) {
-        serializeString(constantDataIntField.name)
         serializeWasmSymbolReadOnly(constantDataIntField.value) { b.writeUInt32(it.toUInt()) }
     }
 
     private fun serializeConstantDataIntegerArray(constantDataIntegerArray: ConstantDataIntegerArray) {
-        serializeString(constantDataIntegerArray.name)
         serializeList(constantDataIntegerArray.value) { b.writeUInt64(it.toULong()) }
         b.writeUInt32(constantDataIntegerArray.integerSize.toUInt())
     }
 
     private fun serializeConstantDataStruct(constantDataStruct: ConstantDataStruct) {
-        serializeString(constantDataStruct.name)
+//        serializeString(constantDataStruct.name)
         serializeList(constantDataStruct.elements, ::serializeConstantDataElement)
     }
 
