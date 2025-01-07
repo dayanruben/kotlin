@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrReturnableBlockSymbol
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
+import org.jetbrains.kotlin.ir.util.erasedUpperBound
 import org.jetbrains.kotlin.ir.util.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.util.isNullable
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
@@ -797,7 +798,7 @@ class BodyGenerator(
 
     private fun isDownCastAlwaysSuccessInRuntime(fromType: IrType, toType: IrType): Boolean {
         val upperBound = fromType.erasedUpperBound
-        if (upperBound != null && upperBound.symbol.isSubtypeOfClass(backendContext.wasmSymbols.wasmAnyRefClass)) {
+        if (upperBound.symbol.isSubtypeOfClass(backendContext.wasmSymbols.wasmAnyRefClass)) {
             return false
         }
         return fromType.getRuntimeClass(irBuiltIns).isSubclassOf(toType.getRuntimeClass(irBuiltIns))
@@ -953,7 +954,7 @@ class BodyGenerator(
     }
 
     override fun visitInlinedFunctionBlock(inlinedBlock: IrInlinedFunctionBlock) {
-        val inlineFunction = inlinedBlock.inlineFunctionSymbol?.owner
+        val inlineFunction = inlinedBlock.inlinedFunctionSymbol?.owner
         val correspondingProperty = (inlineFunction as? IrSimpleFunction)?.correspondingPropertySymbol
         val owner = correspondingProperty?.owner ?: inlineFunction
         val name = owner?.fqNameWhenAvailable?.asString() ?: owner?.name?.asString() ?: "UNKNOWN"
@@ -961,7 +962,7 @@ class BodyGenerator(
         body.commentGroupStart { "Inlined call of `$name`" }
         body.buildNop(inlinedBlock.getSourceLocation())
 
-        functionContext.stepIntoInlinedFunction(inlinedBlock.inlineFunctionSymbol, inlinedBlock.fileEntry)
+        functionContext.stepIntoInlinedFunction(inlinedBlock.inlinedFunctionSymbol, inlinedBlock.inlinedFunctionFileEntry)
         super.visitInlinedFunctionBlock(inlinedBlock)
         functionContext.stepOutLastInlinedFunction()
     }
