@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageFeature.MultiPlatformProjects
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.checkers.registerExperimentalCheckers
 import org.jetbrains.kotlin.fir.checkers.registerExtraCommonCheckers
@@ -88,7 +89,7 @@ open class FirFrontendFacade(
     }
 
     override fun analyze(module: TestModule): FirOutputArtifact {
-        val isMppSupported = module.languageVersionSettings.supportsFeature(LanguageFeature.MultiPlatformProjects)
+        val isMppSupported = module.languageVersionSettings.supportsFeature(MultiPlatformProjects)
 
         val sortedModules = if (isMppSupported) sortDependsOnTopologically(module) else listOf(module)
 
@@ -96,7 +97,7 @@ open class FirFrontendFacade(
 
         val project = testServices.compilerConfigurationProvider.getProject(module)
         val extensionRegistrars = FirExtensionRegistrar.getInstances(project)
-        val targetPlatform = module.targetPlatform
+        val targetPlatform = module.targetPlatform(testServices)
         val predefinedJavaComponents = runIf(targetPlatform.isJvm()) {
             FirSharableJavaComponents(firCachesFactoryForCliMode)
         }
@@ -125,7 +126,7 @@ open class FirFrontendFacade(
     private fun initializeModuleData(modules: List<TestModule>): Pair<Map<TestModule, FirModuleData>, ModuleDataProvider> {
         val mainModule = modules.last()
 
-        val targetPlatform = mainModule.targetPlatform
+        val targetPlatform = mainModule.targetPlatform(testServices)
 
         // the special name is required for `KlibMetadataModuleDescriptorFactoryImpl.createDescriptorOptionalBuiltIns`
         // it doesn't seem convincingly legitimate, probably should be refactored
@@ -150,8 +151,8 @@ open class FirFrontendFacade(
                 regularModules,
                 dependsOnModules,
                 friendModules,
-                mainModule.targetPlatform,
-                isCommon = module.targetPlatform.isCommon(),
+                targetPlatform,
+                isCommon = module.languageVersionSettings.supportsFeature(MultiPlatformProjects) && !module.isLeafModuleInMppGraph(testServices),
             )
 
             moduleInfoProvider.registerModuleData(module, moduleData)
@@ -175,9 +176,10 @@ open class FirFrontendFacade(
         val compilerConfigurationProvider = testServices.compilerConfigurationProvider
         val projectEnvironment: VfsBasedProjectEnvironment?
         val languageVersionSettings = module.languageVersionSettings
-        val isCommon = module.targetPlatform.isCommon()
+        val targetPlatform = module.targetPlatform(testServices)
+        val isCommon = targetPlatform.isCommon()
         val session = when {
-            isCommon || module.targetPlatform.isJvm() -> {
+            isCommon || targetPlatform.isJvm() -> {
                 val packagePartProviderFactory = compilerConfigurationProvider.getPackagePartProviderFactory(module)
                 projectEnvironment = VfsBasedProjectEnvironment(
                     project, VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL),
@@ -220,7 +222,7 @@ open class FirFrontendFacade(
                     ).also(::registerExtraComponents)
                 }
             }
-            module.targetPlatform.isJs() -> {
+            targetPlatform.isJs() -> {
                 projectEnvironment = null
                 TestFirJsSessionFactory.createLibrarySession(
                     moduleName,
@@ -232,7 +234,7 @@ open class FirFrontendFacade(
                     extensionRegistrars,
                 ).also(::registerExtraComponents)
             }
-            module.targetPlatform.isNative() -> {
+            targetPlatform.isNative() -> {
                 projectEnvironment = null
                 TestFirNativeSessionFactory.createLibrarySession(
                     moduleName,
@@ -245,7 +247,7 @@ open class FirFrontendFacade(
                     languageVersionSettings,
                 ).also(::registerExtraComponents)
             }
-            module.targetPlatform.isWasm() -> {
+            targetPlatform.isWasm() -> {
                 projectEnvironment = null
                 TestFirWasmSessionFactory.createLibrarySession(
                     moduleName,
@@ -467,7 +469,7 @@ open class FirFrontendFacade(
                 return false
             }
 
-            return if (module.languageVersionSettings.supportsFeature(LanguageFeature.MultiPlatformProjects)) {
+            return if (module.languageVersionSettings.supportsFeature(MultiPlatformProjects)) {
                 module.isLeafModuleInMppGraph(testServices)
             } else {
                 true
