@@ -10391,12 +10391,6 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
         }
 
         @Test
-        @TestMetadata("kt72464.kt")
-        public void testKt72464() {
-          runTest("compiler/testData/codegen/box/coroutines/controlFlow/kt72464.kt");
-        }
-
-        @Test
         @TestMetadata("labeledWhile.kt")
         public void testLabeledWhile() {
           runTest("compiler/testData/codegen/box/coroutines/controlFlow/labeledWhile.kt");
@@ -33344,6 +33338,30 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
       }
 
       @Test
+      @TestMetadata("eagerInitializationGlobal1.kt")
+      public void testEagerInitializationGlobal1() {
+        runTest("compiler/testData/codegen/box/properties/eagerInitializationGlobal1.kt");
+      }
+
+      @Test
+      @TestMetadata("eagerInitializationGlobal2.kt")
+      public void testEagerInitializationGlobal2() {
+        runTest("compiler/testData/codegen/box/properties/eagerInitializationGlobal2.kt");
+      }
+
+      @Test
+      @TestMetadata("eagerInitializationGlobal3.kt")
+      public void testEagerInitializationGlobal3() {
+        runTest("compiler/testData/codegen/box/properties/eagerInitializationGlobal3.kt");
+      }
+
+      @Test
+      @TestMetadata("eagerInitializationGlobal4.kt")
+      public void testEagerInitializationGlobal4() {
+        runTest("compiler/testData/codegen/box/properties/eagerInitializationGlobal4.kt");
+      }
+
+      @Test
       @TestMetadata("field.kt")
       public void testField() {
         runTest("compiler/testData/codegen/box/properties/field.kt");
@@ -43928,6 +43946,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
       @Test
       public void testAllFilesPresentInTypealias() {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/typealias"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+      }
+
+      @Test
+      @TestMetadata("callTypeAliasWithInnerRhsInStaticScope.kt")
+      public void testCallTypeAliasWithInnerRhsInStaticScope() {
+        runTest("compiler/testData/codegen/box/typealias/callTypeAliasWithInnerRhsInStaticScope.kt");
       }
 
       @Test

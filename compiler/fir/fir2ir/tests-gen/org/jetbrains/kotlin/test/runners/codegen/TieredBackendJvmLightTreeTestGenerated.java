@@ -18814,6 +18814,12 @@ public class TieredBackendJvmLightTreeTestGenerated extends AbstractTieredBacken
     @TestDataPath("$PROJECT_ROOT")
     public class Typealias {
       @Test
+      @TestMetadata("callableReferenceWithTypeAliasToObjectLHSOriginal.kt")
+      public void testCallableReferenceWithTypeAliasToObjectLHSOriginal() {
+        runTest("compiler/testData/diagnostics/tests/typealias/callableReferenceWithTypeAliasToObjectLHSOriginal.kt");
+      }
+
+      @Test
       @TestMetadata("classReference.kt")
       public void testClassReference() {
         runTest("compiler/testData/diagnostics/tests/typealias/classReference.kt");
@@ -23140,6 +23146,12 @@ public class TieredBackendJvmLightTreeTestGenerated extends AbstractTieredBacken
     @TestMetadata("compiler/fir/analysis-tests/testData/resolve/contextParameters")
     @TestDataPath("$PROJECT_ROOT")
     public class ContextParameters {
+      @Test
+      @TestMetadata("expectActualMatch.kt")
+      public void testExpectActualMatch() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/expectActualMatch.kt");
+      }
+
       @Nested
       @TestMetadata("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics")
       @TestDataPath("$PROJECT_ROOT")

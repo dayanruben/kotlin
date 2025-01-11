@@ -1,7 +1,8 @@
 // IGNORE_BACKEND_K1: ANY
-// IGNORE_BACKEND_K2: ANY
-// ISSUE: KT-74107 (blocked by)
+// ISSUE: KT-74107
 // LANGUAGE: +NestedTypeAliases
+
+// FILE: staticScope.kt
 
 class Bar {
     inner class Inner {
@@ -21,8 +22,29 @@ class Bar {
         if (TA2toInner2("OK").p != "OK") return "FAIL"
         if (TAtoNested("OK").p != "OK") return "FAIL"
 
+        val callable = ::TAtoInner
+        if (callable().p != "OK") return "FAIL"
+
         return "OK"
     }
 }
 
-fun box(): String = Bar().bar()
+// FILE: main.kt
+
+import Bar.TAtoInner
+import Bar.TA2toInner2
+
+fun test(): String {
+    val bar = Bar()
+
+    if (bar.TAtoInner().p != "OK") return "FAIL"
+    if (bar.TA2toInner2("OK").p != "OK") return "FAIL"
+
+    return "OK"
+}
+
+fun box(): String {
+    if (test() != "OK") return "FAIL"
+
+    return Bar().bar()
+}

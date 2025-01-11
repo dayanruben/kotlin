@@ -13386,12 +13386,6 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
       }
 
       @Test
-      @TestMetadata("kt72464.kt")
-      public void testKt72464() {
-        runTest("compiler/testData/codegen/box/coroutines/controlFlow/kt72464.kt");
-      }
-
-      @Test
       @TestMetadata("labeledWhile.kt")
       public void testLabeledWhile() {
         runTest("compiler/testData/codegen/box/coroutines/controlFlow/labeledWhile.kt");
@@ -43965,6 +43959,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
     }
 
     @Test
+    @TestMetadata("eagerInitializationGlobal4.kt")
+    public void testEagerInitializationGlobal4() {
+      runTest("compiler/testData/codegen/box/properties/eagerInitializationGlobal4.kt");
+    }
+
+    @Test
     @TestMetadata("eagerInitializationWithSimpleObject.kt")
     public void testEagerInitializationWithSimpleObject() {
       runTest("compiler/testData/codegen/box/properties/eagerInitializationWithSimpleObject.kt");
@@ -60206,6 +60206,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
     @Test
     public void testAllFilesPresentInTypealias() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/typealias"), Pattern.compile("^(.+)\\.kt$"), null, true);
+    }
+
+    @Test
+    @TestMetadata("callTypeAliasWithInnerRhsInStaticScope.kt")
+    public void testCallTypeAliasWithInnerRhsInStaticScope() {
+      runTest("compiler/testData/codegen/box/typealias/callTypeAliasWithInnerRhsInStaticScope.kt");
     }
 
     @Test
