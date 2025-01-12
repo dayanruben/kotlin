@@ -14021,12 +14021,6 @@ public class TieredFrontendJvmPsiTestGenerated extends AbstractTieredFrontendJvm
       }
 
       @Test
-      @TestMetadata("overrideWithTypeParameter.kt")
-      public void testOverrideWithTypeParameter() {
-        runTest("compiler/testData/diagnostics/tests/j+k/overrideWithTypeParameter.kt");
-      }
-
-      @Test
       @TestMetadata("overrideWithTypeParameterAfter.kt")
       public void testOverrideWithTypeParameterAfter() {
         runTest("compiler/testData/diagnostics/tests/j+k/overrideWithTypeParameterAfter.kt");
@@ -17089,9 +17083,9 @@ public class TieredFrontendJvmPsiTestGenerated extends AbstractTieredFrontendJvm
       }
 
       @Test
-      @TestMetadata("dnnOverridesFlexible.kt")
-      public void testDnnOverridesFlexible() {
-        runTest("compiler/testData/diagnostics/tests/override/dnnOverridesFlexible.kt");
+      @TestMetadata("dnnOverridesFlexibleOff.kt")
+      public void testDnnOverridesFlexibleOff() {
+        runTest("compiler/testData/diagnostics/tests/override/dnnOverridesFlexibleOff.kt");
       }
 
       @Test
@@ -17266,6 +17260,36 @@ public class TieredFrontendJvmPsiTestGenerated extends AbstractTieredFrontendJvm
       @TestMetadata("OverrideWithErrors.kt")
       public void testOverrideWithErrors() {
         runTest("compiler/testData/diagnostics/tests/override/OverrideWithErrors.kt");
+      }
+
+      @Test
+      @TestMetadata("overridesWithFlexibleBase4.kt")
+      public void testOverridesWithFlexibleBase4() {
+        runTest("compiler/testData/diagnostics/tests/override/overridesWithFlexibleBase4.kt");
+      }
+
+      @Test
+      @TestMetadata("overridesWithFlexibleBaseOff.kt")
+      public void testOverridesWithFlexibleBaseOff() {
+        runTest("compiler/testData/diagnostics/tests/override/overridesWithFlexibleBaseOff.kt");
+      }
+
+      @Test
+      @TestMetadata("overridesWithFlexibleBaseOff2.kt")
+      public void testOverridesWithFlexibleBaseOff2() {
+        runTest("compiler/testData/diagnostics/tests/override/overridesWithFlexibleBaseOff2.kt");
+      }
+
+      @Test
+      @TestMetadata("overridesWithFlexibleBaseOff3.kt")
+      public void testOverridesWithFlexibleBaseOff3() {
+        runTest("compiler/testData/diagnostics/tests/override/overridesWithFlexibleBaseOff3.kt");
+      }
+
+      @Test
+      @TestMetadata("overridesWithFlexibleBaseOff4.kt")
+      public void testOverridesWithFlexibleBaseOff4() {
+        runTest("compiler/testData/diagnostics/tests/override/overridesWithFlexibleBaseOff4.kt");
       }
 
       @Test

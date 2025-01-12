@@ -32117,6 +32117,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       }
 
       @Test
+      @TestMetadata("dnnOverridesFlexibleOff.kt")
+      public void testDnnOverridesFlexibleOff() {
+        runTest("compiler/testData/diagnostics/tests/override/dnnOverridesFlexibleOff.kt");
+      }
+
+      @Test
       @TestMetadata("DuplicateMethod.kt")
       public void testDuplicateMethod() {
         runTest("compiler/testData/diagnostics/tests/override/DuplicateMethod.kt");
@@ -32402,6 +32408,54 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
       @TestMetadata("OverrideWithErrors.kt")
       public void testOverrideWithErrors() {
         runTest("compiler/testData/diagnostics/tests/override/OverrideWithErrors.kt");
+      }
+
+      @Test
+      @TestMetadata("overridesWithFlexibleBase.kt")
+      public void testOverridesWithFlexibleBase() {
+        runTest("compiler/testData/diagnostics/tests/override/overridesWithFlexibleBase.kt");
+      }
+
+      @Test
+      @TestMetadata("overridesWithFlexibleBase2.kt")
+      public void testOverridesWithFlexibleBase2() {
+        runTest("compiler/testData/diagnostics/tests/override/overridesWithFlexibleBase2.kt");
+      }
+
+      @Test
+      @TestMetadata("overridesWithFlexibleBase3.kt")
+      public void testOverridesWithFlexibleBase3() {
+        runTest("compiler/testData/diagnostics/tests/override/overridesWithFlexibleBase3.kt");
+      }
+
+      @Test
+      @TestMetadata("overridesWithFlexibleBase4.kt")
+      public void testOverridesWithFlexibleBase4() {
+        runTest("compiler/testData/diagnostics/tests/override/overridesWithFlexibleBase4.kt");
+      }
+
+      @Test
+      @TestMetadata("overridesWithFlexibleBaseOff.kt")
+      public void testOverridesWithFlexibleBaseOff() {
+        runTest("compiler/testData/diagnostics/tests/override/overridesWithFlexibleBaseOff.kt");
+      }
+
+      @Test
+      @TestMetadata("overridesWithFlexibleBaseOff2.kt")
+      public void testOverridesWithFlexibleBaseOff2() {
+        runTest("compiler/testData/diagnostics/tests/override/overridesWithFlexibleBaseOff2.kt");
+      }
+
+      @Test
+      @TestMetadata("overridesWithFlexibleBaseOff3.kt")
+      public void testOverridesWithFlexibleBaseOff3() {
+        runTest("compiler/testData/diagnostics/tests/override/overridesWithFlexibleBaseOff3.kt");
+      }
+
+      @Test
+      @TestMetadata("overridesWithFlexibleBaseOff4.kt")
+      public void testOverridesWithFlexibleBaseOff4() {
+        runTest("compiler/testData/diagnostics/tests/override/overridesWithFlexibleBaseOff4.kt");
       }
 
       @Test

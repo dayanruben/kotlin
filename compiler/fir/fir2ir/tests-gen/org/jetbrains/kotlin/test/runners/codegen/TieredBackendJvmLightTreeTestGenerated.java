@@ -10495,6 +10495,12 @@ public class TieredBackendJvmLightTreeTestGenerated extends AbstractTieredBacken
       }
 
       @Test
+      @TestMetadata("overrideWithTypeParameter.kt")
+      public void testOverrideWithTypeParameter() {
+        runTest("compiler/testData/diagnostics/tests/j+k/overrideWithTypeParameter.kt");
+      }
+
+      @Test
       @TestMetadata("overrideWithTypeParameterReverse.kt")
       public void testOverrideWithTypeParameterReverse() {
         runTest("compiler/testData/diagnostics/tests/j+k/overrideWithTypeParameterReverse.kt");
@@ -13877,6 +13883,12 @@ public class TieredBackendJvmLightTreeTestGenerated extends AbstractTieredBacken
       }
 
       @Test
+      @TestMetadata("dnnOverridesFlexible.kt")
+      public void testDnnOverridesFlexible() {
+        runTest("compiler/testData/diagnostics/tests/override/dnnOverridesFlexible.kt");
+      }
+
+      @Test
       @TestMetadata("dnnOverridesFlexibleDnnRepresentation.kt")
       public void testDnnOverridesFlexibleDnnRepresentation() {
         runTest("compiler/testData/diagnostics/tests/override/dnnOverridesFlexibleDnnRepresentation.kt");
@@ -13988,6 +14000,24 @@ public class TieredBackendJvmLightTreeTestGenerated extends AbstractTieredBacken
       @TestMetadata("MultipleDefaultParametersInSupertypesWithOverloads.kt")
       public void testMultipleDefaultParametersInSupertypesWithOverloads() {
         runTest("compiler/testData/diagnostics/tests/override/MultipleDefaultParametersInSupertypesWithOverloads.kt");
+      }
+
+      @Test
+      @TestMetadata("overridesWithFlexibleBase.kt")
+      public void testOverridesWithFlexibleBase() {
+        runTest("compiler/testData/diagnostics/tests/override/overridesWithFlexibleBase.kt");
+      }
+
+      @Test
+      @TestMetadata("overridesWithFlexibleBase2.kt")
+      public void testOverridesWithFlexibleBase2() {
+        runTest("compiler/testData/diagnostics/tests/override/overridesWithFlexibleBase2.kt");
+      }
+
+      @Test
+      @TestMetadata("overridesWithFlexibleBase3.kt")
+      public void testOverridesWithFlexibleBase3() {
+        runTest("compiler/testData/diagnostics/tests/override/overridesWithFlexibleBase3.kt");
       }
 
       @Test
