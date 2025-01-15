@@ -452,7 +452,7 @@ enum class LanguageFeature(
     // K1 support only. We keep it, as it's currently unclear what to do with this feature in K2
     DisableCheckingChangedProgressionsResolve(sinceVersion = null, kind = OTHER), // KT-49276
 
-    ContextSensitiveEnumResolutionInWhen(sinceVersion = null, kind = UNSTABLE_FEATURE), // KT-52774
+    ContextSensitiveEnumResolutionInWhen(sinceVersion = null, kind = TEST_ONLY), // KT-52774
     DontCreateSyntheticPropertiesWithoutBaseJavaGetter(sinceVersion = null, kind = OTHER), // KT-64358
     JavaTypeParameterDefaultRepresentationWithDNN(sinceVersion = null, kind = OTHER), // KT-59138
     ProperFieldAccessGenerationForFieldAccessShadowedByKotlinProperty(sinceVersion = null, kind = OTHER), // KT-56386
@@ -602,7 +602,7 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware, L
             str.split(".", "-").let { if (it.size >= 2) fromVersionString("${it[0]}.${it[1]}") else null }
 
         // Version status
-        //            1.0..1.5        1.6..1.7           1.8..2.1    2.2..2.3
+        //            1.0..1.5        1.6..1.7           1.8..2.2    2.3
         // Language:  UNSUPPORTED --> DEPRECATED ------> STABLE ---> EXPERIMENTAL
         // API:       UNSUPPORTED --> DEPRECATED ------> STABLE ---> EXPERIMENTAL
 
@@ -616,7 +616,7 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware, L
         val FIRST_NON_DEPRECATED = KOTLIN_1_8
 
         @JvmField
-        val LATEST_STABLE = KOTLIN_2_1
+        val LATEST_STABLE = KOTLIN_2_2
     }
 }
 
