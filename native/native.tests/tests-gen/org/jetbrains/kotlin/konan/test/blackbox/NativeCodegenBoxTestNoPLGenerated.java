@@ -29357,6 +29357,19 @@ public class NativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenBoxT
       }
 
       @Nested
+      @TestMetadata("compiler/testData/codegen/box/javaInterop/commonAtomicTypes")
+      @TestDataPath("$PROJECT_ROOT")
+      @UseExtTestCaseGroupProvider()
+      @UsePartialLinkage(mode = Mode.DISABLED)
+      @Tag("no-partial-linkage-may-be-skipped")
+      public class CommonAtomicTypes {
+        @Test
+        public void testAllFilesPresentInCommonAtomicTypes() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/javaInterop/commonAtomicTypes"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+        }
+      }
+
+      @Nested
       @TestMetadata("compiler/testData/codegen/box/javaInterop/foreignAnnotationsTests")
       @TestDataPath("$PROJECT_ROOT")
       @UseExtTestCaseGroupProvider()
@@ -45780,9 +45793,9 @@ public class NativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenBoxT
       }
 
       @Test
-      @TestMetadata("uLongInValueClass.kt")
-      public void testULongInValueClass() {
-        runTest("compiler/testData/codegen/box/valueClasses/uLongInValueClass.kt");
+      @TestMetadata("valueClassInValueClass.kt")
+      public void testValueClassInValueClass() {
+        runTest("compiler/testData/codegen/box/valueClasses/valueClassInValueClass.kt");
       }
 
       @Nested

@@ -358,6 +358,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
     }
 
     @Test
+    @TestMetadata("contentEqualsSuggestionForTypedArrays.kt")
+    public void testContentEqualsSuggestionForTypedArrays() {
+      runTest("compiler/testData/diagnostics/tests/contentEqualsSuggestionForTypedArrays.kt");
+    }
+
+    @Test
     @TestMetadata("CovariantOverrideType.kt")
     public void testCovariantOverrideType() {
       runTest("compiler/testData/diagnostics/tests/CovariantOverrideType.kt");
@@ -30043,6 +30049,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         @Test
         public void testAllFilesPresentInJava() {
           KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform/java"), Pattern.compile("^(.+)\\.(kt|kts)$"), Pattern.compile("^(.+)\\.(reversed|fir|ll|latestLV)\\.kts?$"), true, "lightTree");
+        }
+
+        @Test
+        @TestMetadata("atomicTypes.kt")
+        public void testAtomicTypes() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/java/atomicTypes.kt");
         }
 
         @Test

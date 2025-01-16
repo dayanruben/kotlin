@@ -358,6 +358,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
     }
 
     @Test
+    @TestMetadata("contentEqualsSuggestionForTypedArrays.kt")
+    public void testContentEqualsSuggestionForTypedArrays() {
+      runTest("compiler/testData/diagnostics/tests/contentEqualsSuggestionForTypedArrays.kt");
+    }
+
+    @Test
     @TestMetadata("CovariantOverrideType.kt")
     public void testCovariantOverrideType() {
       runTest("compiler/testData/diagnostics/tests/CovariantOverrideType.kt");
@@ -30059,6 +30065,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @Test
         public void testAllFilesPresentInJava() {
           KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform/java"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll|latestLV)\\.kts?$"), true);
+        }
+
+        @Test
+        @TestMetadata("atomicTypes.kt")
+        public void testAtomicTypes() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/java/atomicTypes.kt");
         }
 
         @Test
