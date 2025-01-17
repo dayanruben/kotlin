@@ -1008,8 +1008,6 @@ tasks {
     register("kaptTests") {
         dependsOn(":kotlin-annotation-processing:test")
         dependsOn(":kotlin-annotation-processing:testJdk11")
-        dependsOn(":kotlin-annotation-processing-compiler:test")
-        dependsOn(":kotlin-annotation-processing-compiler:testJdk11")
         dependsOn(":kotlin-annotation-processing-base:test")
         dependsOn(":kotlin-annotation-processing-cli:test")
     }
@@ -1197,24 +1195,8 @@ plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin:
     }
 }
 
-plugins.withType(com.github.gradle.node.NodePlugin::class) {
-    extensions.configure(com.github.gradle.node.NodeExtension::class) {
-        if (kotlinBuildProperties.isCacheRedirectorEnabled) {
-            distBaseUrl = "https://cache-redirector.jetbrains.com/nodejs.org/dist"
-        }
-    }
-}
-
-afterEvaluate {
-    if (kotlinBuildProperties.isCacheRedirectorEnabled) {
-        rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin::class.java) {
-            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootEnvSpec>().downloadBaseUrl =
-                "https://cache-redirector.jetbrains.com/github.com/yarnpkg/yarn/releases/download"
-
-            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension>().yarnLockMismatchReport =
-                YarnLockMismatchReport.WARNING
-        }
-    }
+if (kotlinBuildProperties.isCacheRedirectorEnabled) {
+    configureJsCacheRedirector()
 }
 
 afterEvaluate {
