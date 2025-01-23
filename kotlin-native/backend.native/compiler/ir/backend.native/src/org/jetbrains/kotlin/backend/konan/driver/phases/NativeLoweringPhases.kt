@@ -12,8 +12,6 @@ import org.jetbrains.kotlin.backend.common.ir.Symbols
 import org.jetbrains.kotlin.backend.common.ir.isReifiable
 import org.jetbrains.kotlin.backend.common.lower.*
 import org.jetbrains.kotlin.backend.common.lower.coroutines.AddContinuationToNonLocalSuspendFunctionsLowering
-import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesExtractionFromInlineFunctionsLowering
-import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesInInlineFunctionsLowering
 import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesInInlineLambdasLowering
 import org.jetbrains.kotlin.backend.common.lower.inline.OuterThisInInlineFunctionsSpecialAccessorLowering
 import org.jetbrains.kotlin.backend.common.lower.optimizations.LivenessAnalysis
@@ -26,7 +24,6 @@ import org.jetbrains.kotlin.backend.konan.ir.FunctionsWithoutBoundCheckGenerator
 import org.jetbrains.kotlin.backend.konan.lower.*
 import org.jetbrains.kotlin.backend.konan.lower.InitializersLowering
 import org.jetbrains.kotlin.backend.konan.optimizations.NativeForLoopsLowering
-import org.jetbrains.kotlin.config.KlibConfigurationKeys
 import org.jetbrains.kotlin.config.phaser.NamedCompilerPhase
 import org.jetbrains.kotlin.config.phaser.SimpleNamedCompilerPhase
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
@@ -175,13 +172,7 @@ private val outerThisSpecialAccessorInInlineFunctionsPhase = createFileLoweringP
 )
 
 private val extractLocalClassesFromInlineBodies = createFileLoweringPhase(
-        { context, irFile ->
-            LocalClassesInInlineLambdasLowering(context).lower(irFile)
-            if (!context.config.produce.isCache && context.config.configuration.getBoolean(KlibConfigurationKeys.NO_DOUBLE_INLINING)) {
-                LocalClassesInInlineFunctionsLowering(context).lower(irFile)
-                LocalClassesExtractionFromInlineFunctionsLowering(context).lower(irFile)
-            }
-        },
+        ::LocalClassesInInlineLambdasLowering,
         name = "ExtractLocalClassesFromInlineBodies",
         prerequisite = setOf(sharedVariablesPhase),
 )
@@ -360,7 +351,7 @@ private val inlineOnlyPrivateFunctionsPhase = createFileLoweringPhase(
 private val syntheticAccessorGenerationPhase = createFileLoweringPhase(
         lowering = ::SyntheticAccessorLowering,
         name = "SyntheticAccessorGeneration",
-        prerequisite = setOf(inlineOnlyPrivateFunctionsPhase),
+        prerequisite = setOf(inlineOnlyPrivateFunctionsPhase, outerThisSpecialAccessorInInlineFunctionsPhase),
 )
 
 /**
@@ -553,7 +544,7 @@ internal val constEvaluationPhase = createFileLoweringPhase(
 internal val nativeLoweringsOfTheFirstPhase: List<SimpleNamedCompilerPhase<LoweringContext, IrModuleFragment, IrModuleFragment>> =
         listOf(upgradeCallableReferencesModuleWisePhase, assertionWrapperModuleWisePhase) + loweringsOfTheFirstPhase
 
-internal fun KonanConfig.getLoweringsUpToAndIncludingSyntheticAccessors(): LoweringList = listOfNotNull(
+internal fun getLoweringsUpToAndIncludingSyntheticAccessors(): LoweringList = listOfNotNull(
     upgradeCallableReferencesFileWisePhase,
     assertionWrapperFileWisePhase,
     lateinitPhase,
@@ -561,8 +552,8 @@ internal fun KonanConfig.getLoweringsUpToAndIncludingSyntheticAccessors(): Lower
     outerThisSpecialAccessorInInlineFunctionsPhase,
     extractLocalClassesFromInlineBodies,
     arrayConstructorPhase,
-    inlineOnlyPrivateFunctionsPhase.takeUnless { this.configuration.getBoolean(KlibConfigurationKeys.NO_DOUBLE_INLINING) },
-    syntheticAccessorGenerationPhase.takeUnless { this.configuration.getBoolean(KlibConfigurationKeys.NO_DOUBLE_INLINING) },
+    inlineOnlyPrivateFunctionsPhase,
+    syntheticAccessorGenerationPhase,
 )
 
 internal fun KonanConfig.getLoweringsAfterInlining(): LoweringList = listOfNotNull(

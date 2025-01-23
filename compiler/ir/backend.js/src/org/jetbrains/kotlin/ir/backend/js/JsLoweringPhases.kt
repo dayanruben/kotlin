@@ -11,8 +11,6 @@ import org.jetbrains.kotlin.backend.common.ir.isReifiable
 import org.jetbrains.kotlin.backend.common.lower.*
 import org.jetbrains.kotlin.backend.common.lower.coroutines.AddContinuationToLocalSuspendFunctionsLowering
 import org.jetbrains.kotlin.backend.common.lower.coroutines.AddContinuationToNonLocalSuspendFunctionsLowering
-import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesExtractionFromInlineFunctionsLowering
-import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesInInlineFunctionsLowering
 import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesInInlineLambdasLowering
 import org.jetbrains.kotlin.backend.common.lower.inline.OuterThisInInlineFunctionsSpecialAccessorLowering
 import org.jetbrains.kotlin.backend.common.lower.loops.ForLoopsLowering
@@ -205,22 +203,6 @@ private val localClassesInInlineLambdasPhase = makeIrModulePhase(
     name = "LocalClassesInInlineLambdasPhase",
 )
 
-private val localClassesInInlineFunctionsPhase = makeIrModulePhase(
-    ::LocalClassesInInlineFunctionsLowering,
-    name = "LocalClassesInInlineFunctionsPhase",
-)
-
-private val localClassesExtractionFromInlineFunctionsPhase = makeIrModulePhase(
-    { context -> LocalClassesExtractionFromInlineFunctionsLowering(context) },
-    name = "localClassesExtractionFromInlineFunctionsPhase",
-    prerequisite = setOf(localClassesInInlineFunctionsPhase)
-)
-
-private val legacySyntheticAccessorLoweringPhase = makeIrModulePhase(
-    ::LegacySyntheticAccessorLowering,
-    name = "LegacySyntheticAccessorLowering",
-)
-
 private val wrapInlineDeclarationsWithReifiedTypeParametersLowering = makeIrModulePhase(
     ::WrapInlineDeclarationsWithReifiedTypeParametersLowering,
     name = "WrapInlineDeclarationsWithReifiedTypeParametersLowering",
@@ -249,7 +231,7 @@ private val inlineOnlyPrivateFunctionsPhase = makeIrModulePhase(
 private val syntheticAccessorGenerationPhase = makeIrModulePhase(
     lowering = ::SyntheticAccessorLowering,
     name = "SyntheticAccessorGeneration",
-    prerequisite = setOf(inlineOnlyPrivateFunctionsPhase),
+    prerequisite = setOf(inlineOnlyPrivateFunctionsPhase, outerThisSpecialAccessorInInlineFunctionsPhase),
 )
 
 /**
@@ -761,22 +743,16 @@ fun getJsLowerings(
     sharedVariablesLoweringPhase,
     outerThisSpecialAccessorInInlineFunctionsPhase,
     localClassesInInlineLambdasPhase,
-    localClassesInInlineFunctionsPhase.takeIf { configuration.getBoolean(KlibConfigurationKeys.NO_DOUBLE_INLINING) },
-    localClassesExtractionFromInlineFunctionsPhase.takeIf { configuration.getBoolean(KlibConfigurationKeys.NO_DOUBLE_INLINING) },
     inlineCallableReferenceToLambdaPhase,
     arrayConstructorPhase,
-    legacySyntheticAccessorLoweringPhase.takeIf { configuration.getBoolean(KlibConfigurationKeys.NO_DOUBLE_INLINING) },
     wrapInlineDeclarationsWithReifiedTypeParametersLowering,
-    inlineOnlyPrivateFunctionsPhase.takeUnless { configuration.getBoolean(KlibConfigurationKeys.NO_DOUBLE_INLINING) },
-    syntheticAccessorGenerationPhase.takeUnless { configuration.getBoolean(KlibConfigurationKeys.NO_DOUBLE_INLINING) },
+    inlineOnlyPrivateFunctionsPhase,
+    syntheticAccessorGenerationPhase,
     // Note: The validation goes after both `inlineOnlyPrivateFunctionsPhase` and `syntheticAccessorGenerationPhase`
     // just because it goes so in Native.
-    validateIrAfterInliningOnlyPrivateFunctions.takeUnless { configuration.getBoolean(KlibConfigurationKeys.NO_DOUBLE_INLINING) },
+    validateIrAfterInliningOnlyPrivateFunctions,
     inlineAllFunctionsPhase,
-    dumpSyntheticAccessorsPhase.takeIf {
-        !configuration.getBoolean(KlibConfigurationKeys.NO_DOUBLE_INLINING) &&
-                configuration[KlibConfigurationKeys.SYNTHETIC_ACCESSORS_DUMP_DIR] != null
-    },
+    dumpSyntheticAccessorsPhase.takeIf { configuration[KlibConfigurationKeys.SYNTHETIC_ACCESSORS_DUMP_DIR] != null },
     validateIrAfterInliningAllFunctions,
     // END: Common Native/JS/Wasm prefix.
 

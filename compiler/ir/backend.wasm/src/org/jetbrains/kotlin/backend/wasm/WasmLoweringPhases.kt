@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.backend.common.ir.Symbols.Companion.isTypeOfIntrinsi
 import org.jetbrains.kotlin.backend.common.ir.isReifiable
 import org.jetbrains.kotlin.backend.common.lower.*
 import org.jetbrains.kotlin.backend.common.lower.coroutines.AddContinuationToNonLocalSuspendFunctionsLowering
-import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesInInlineFunctionsLowering
 import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesInInlineLambdasLowering
 import org.jetbrains.kotlin.backend.common.lower.inline.OuterThisInInlineFunctionsSpecialAccessorLowering
 import org.jetbrains.kotlin.backend.common.lower.loops.ForLoopsLowering
@@ -149,11 +148,6 @@ private val localClassesInInlineLambdasPhase = makeIrModulePhase(
     name = "LocalClassesInInlineLambdasPhase",
 )
 
-private val localClassesInInlineFunctionsPhase = makeIrModulePhase(
-    ::LocalClassesInInlineFunctionsLowering,
-    name = "LocalClassesInInlineFunctionsPhase",
-)
-
 private val outerThisSpecialAccessorInInlineFunctionsPhase = makeIrModulePhase(
     ::OuterThisInInlineFunctionsSpecialAccessorLowering,
     name = "OuterThisInInlineFunctionsSpecialAccessorLowering",
@@ -171,7 +165,7 @@ private val inlineOnlyPrivateFunctionsPhase = makeIrModulePhase(
 internal val syntheticAccessorGenerationPhase = makeIrModulePhase(
     lowering = ::SyntheticAccessorLowering,
     name = "SyntheticAccessorGeneration",
-    prerequisite = setOf(inlineOnlyPrivateFunctionsPhase),
+    prerequisite = setOf(inlineOnlyPrivateFunctionsPhase, outerThisSpecialAccessorInInlineFunctionsPhase),
 )
 
 private val inlineAllFunctionsPhase = makeIrModulePhase(
