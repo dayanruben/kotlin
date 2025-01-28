@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.backend.common.ir.isReifiable
 import org.jetbrains.kotlin.backend.common.lower.*
 import org.jetbrains.kotlin.backend.common.lower.coroutines.AddContinuationToNonLocalSuspendFunctionsLowering
 import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesInInlineLambdasLowering
-import org.jetbrains.kotlin.backend.common.lower.inline.OuterThisInInlineFunctionsSpecialAccessorLowering
 import org.jetbrains.kotlin.backend.common.lower.optimizations.LivenessAnalysis
 import org.jetbrains.kotlin.backend.common.phaser.*
 import org.jetbrains.kotlin.backend.common.runOnFilePostfix
@@ -164,11 +163,6 @@ private val sharedVariablesPhase = createFileLoweringPhase(
         ::SharedVariablesLowering,
         name = "SharedVariables",
         prerequisite = setOf(lateinitPhase)
-)
-
-private val outerThisSpecialAccessorInInlineFunctionsPhase = createFileLoweringPhase(
-        ::OuterThisInInlineFunctionsSpecialAccessorLowering,
-        name = "OuterThisInInlineFunctionsSpecialAccessorLowering",
 )
 
 private val extractLocalClassesFromInlineBodies = createFileLoweringPhase(
@@ -354,10 +348,16 @@ private val inlineOnlyPrivateFunctionsPhase = createFileLoweringPhase(
         name = "InlineOnlyPrivateFunctions",
 )
 
+private val outerThisSpecialAccessorInInlineFunctionsPhase = createFileLoweringPhase(
+        ::OuterThisInInlineFunctionsSpecialAccessorLowering,
+        name = "OuterThisInInlineFunctionsSpecialAccessorLowering",
+        prerequisite = setOf(inlineOnlyPrivateFunctionsPhase)
+)
+
 private val syntheticAccessorGenerationPhase = createFileLoweringPhase(
         lowering = ::SyntheticAccessorLowering,
         name = "SyntheticAccessorGeneration",
-        prerequisite = setOf(inlineOnlyPrivateFunctionsPhase, outerThisSpecialAccessorInInlineFunctionsPhase),
+        prerequisite = setOf(outerThisSpecialAccessorInInlineFunctionsPhase),
 )
 
 /**
@@ -555,10 +555,10 @@ internal fun getLoweringsUpToAndIncludingSyntheticAccessors(): LoweringList = li
     assertionWrapperFileWisePhase,
     lateinitPhase,
     sharedVariablesPhase,
-    outerThisSpecialAccessorInInlineFunctionsPhase,
     extractLocalClassesFromInlineBodies,
     arrayConstructorPhase,
     inlineOnlyPrivateFunctionsPhase,
+    outerThisSpecialAccessorInInlineFunctionsPhase,
     syntheticAccessorGenerationPhase,
 )
 
