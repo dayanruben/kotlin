@@ -12,6 +12,7 @@ import org.gradle.internal.jvm.Jvm
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics
 import org.jetbrains.kotlin.gradle.testbase.*
+import org.jetbrains.kotlin.gradle.util.replaceText
 import org.junit.jupiter.api.DisplayName
 import java.io.File
 import kotlin.io.path.appendText
@@ -421,6 +422,12 @@ class JvmTargetValidationTest : KGPBaseTest() {
                 """.trimIndent()
             )
 
+            if (!isWithJavaSupported) {
+                listOf("lib", "dependsOnPlainJvm", "dependsOnJvmWithJava").forEach {
+                    subProject(it).buildGradleKts.replaceText("withJava()", "")
+                }
+            }
+
             subProject("lib").buildGradleKts.appendText(
                 """
                 |
@@ -450,6 +457,12 @@ class JvmTargetValidationTest : KGPBaseTest() {
                 kotlin.jvm.target.validation.mode = error
                 """.trimIndent()
             )
+
+            if (!isWithJavaSupported) {
+                listOf("lib", "dependsOnPlainJvm", "dependsOnJvmWithJava").forEach {
+                    subProject(it).buildGradleKts.replaceText("withJava()", "")
+                }
+            }
 
             subProject("lib").buildGradleKts.appendText(
                 """

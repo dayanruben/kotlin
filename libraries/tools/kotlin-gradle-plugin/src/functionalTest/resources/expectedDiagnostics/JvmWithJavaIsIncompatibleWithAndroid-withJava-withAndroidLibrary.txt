@@ -1,3 +1,6 @@
+[KMPWithJavaDiagnostic | WARNING] Kotlin multiplatform plugin always configures Java sources compilation and 'withJava()' configuration is deprecated.
+Please remove 'withJava()' method call from build configuration.
+----
 [JvmWithJavaIsIncompatibleWithAndroid | FATAL] 'withJava()' is not compatible with Android Plugins
 Incompatible Android Plugin applied: 'com.android.library'
 

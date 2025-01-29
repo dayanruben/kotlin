@@ -10296,6 +10296,12 @@ public class FirBlackBoxCodegenTestWithInlineScopesGenerated extends AbstractFir
     }
 
     @Test
+    @TestMetadata("assignmentOfContextVar.kt")
+    public void testAssignmentOfContextVar() {
+      runTest("compiler/testData/codegen/box/contextParameters/assignmentOfContextVar.kt");
+    }
+
+    @Test
     @TestMetadata("classMemberAndTopLevelExtensionWithContext.kt")
     public void testClassMemberAndTopLevelExtensionWithContext() {
       runTest("compiler/testData/codegen/box/contextParameters/classMemberAndTopLevelExtensionWithContext.kt");
@@ -15806,6 +15812,12 @@ public class FirBlackBoxCodegenTestWithInlineScopesGenerated extends AbstractFir
       @TestMetadata("fakeInlinerVariables.kt")
       public void testFakeInlinerVariables() {
         runTest("compiler/testData/codegen/box/coroutines/varSpilling/fakeInlinerVariables.kt");
+      }
+
+      @Test
+      @TestMetadata("inlineClassAsLambdaParameter.kt")
+      public void testInlineClassAsLambdaParameter() {
+        runTest("compiler/testData/codegen/box/coroutines/varSpilling/inlineClassAsLambdaParameter.kt");
       }
 
       @Test
