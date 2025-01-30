@@ -49,8 +49,9 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
             return ExitCode.OK
         }
 
-        val pluginLoadResult =
-                PluginCliParser.loadPluginsSafe(arguments.pluginClasspaths, arguments.pluginOptions, arguments.pluginConfigurations, configuration)
+        val pluginLoadResult = PluginCliParser.loadPluginsSafe(
+            arguments.pluginClasspaths, arguments.pluginOptions, arguments.pluginConfigurations, configuration, rootDisposable,
+        )
         if (pluginLoadResult != ExitCode.OK) return pluginLoadResult
 
         val enoughArguments = arguments.freeArgs.isNotEmpty() || arguments.isUsefulWithoutFreeArgs
@@ -110,10 +111,7 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
         configuration.put(KlibConfigurationKeys.PRODUCE_KLIB_SIGNATURES_CLASH_CHECKS, arguments.enableSignatureClashChecks)
 
         arguments.dumpSyntheticAccessorsTo?.let { configuration.put(KlibConfigurationKeys.SYNTHETIC_ACCESSORS_DUMP_DIR, it) }
-        configuration.put(
-            KlibConfigurationKeys.SYNTHETIC_ACCESSORS_WITH_NARROWED_VISIBILITY,
-            arguments.narrowedSyntheticAccessorsVisibility
-        )
+        configuration.syntheticAccessorsWithNarrowedVisibility = arguments.narrowedSyntheticAccessorsVisibility
         configuration.put(
             KlibConfigurationKeys.DUPLICATED_UNIQUE_NAME_STRATEGY,
             DuplicatedUniqueNameStrategy.parseOrDefault(

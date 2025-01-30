@@ -392,8 +392,8 @@ internal class CodeGeneratorVisitor(
         val scopeState = llvm.initializersGenerationState.reset(oldScopeState)
         scopeState.takeIf { !it.isEmpty() }?.let {
             buildInitializerFunctions(it)
-            val initNode = createInitNode(createInitBody(it))
-            llvm.irStaticInitializers.add(IrStaticInitializer(konanLibrary, createInitCtor(initNode)))
+            val runtimeInitializer = createInitBody(it)
+            llvm.irStaticInitializers.add(IrStaticInitializer(konanLibrary, runtimeInitializer))
         }
     }
 
@@ -445,9 +445,8 @@ internal class CodeGeneratorVisitor(
     val FILE_NOT_INITIALIZED = 0
     val FILE_INITIALIZED = 2
 
-    private fun createInitBody(state: ScopeInitializersGenerationState): LlvmCallable {
-        val initFunctionProto = kInitFuncType.toProto("", null, LLVMLinkage.LLVMPrivateLinkage)
-        return generateFunction(codegen, initFunctionProto) {
+    private fun createInitBody(state: ScopeInitializersGenerationState): RuntimeInitializer {
+        return generateRuntimeInitializer {
             using(FunctionScope(function, this)) {
                 val bbInit = basicBlock("init", null)
                 val bbLocalInit = basicBlock("local_init", null)
@@ -510,10 +509,25 @@ internal class CodeGeneratorVisitor(
         }
     }
 
+    private fun mergeRuntimeInitializers(
+            runtimeInitializers: List<RuntimeInitializer>
+    ): RuntimeInitializer = generateRuntimeInitializer {
+        runtimeInitializers.forEach {
+            this.call(it.llvmCallable, listOf(param(0), param(1)), exceptionHandler = ExceptionHandler.Caller)
+        }
+        ret(null)
+    }
+
+    private fun generateRuntimeInitializer(block: FunctionGenerationContext.() -> Unit): RuntimeInitializer {
+        val initFunctionProto = kInitFuncType.toProto("", null, LLVMLinkage.LLVMPrivateLinkage)
+        return RuntimeInitializer(generateFunction(codegen, initFunctionProto, code = block))
+    }
+
     //-------------------------------------------------------------------------//
     // Creates static struct InitNode $nodeName = {$initName, NULL};
 
-    private fun createInitNode(initFunction: LlvmCallable): LLVMValueRef {
+    private fun createInitNode(runtimeInitializer: RuntimeInitializer): LLVMValueRef {
+        val initFunction = runtimeInitializer.llvmCallable
         val nextInitNode = LLVMConstNull(pointerType(kNodeInitType))
         val argList = cValuesOf(initFunction.toConstPointer().llvm, nextInitNode)
         // Create static object of class InitNode.
@@ -2691,14 +2705,14 @@ internal class CodeGeneratorVisitor(
         // Note: the list of libraries is topologically sorted (in order for initializers to be called correctly).
         val dependencies = (generationState.dependenciesTracker.allBitcodeDependencies + listOf(null)/* Null for "current" non-library module */)
 
-        val libraryToInitializers = dependencies.associate { it?.library to mutableListOf<LlvmCallable>() }
+        val libraryToInitializers = dependencies.associate { it?.library to mutableListOf<RuntimeInitializer>() }
 
         llvm.irStaticInitializers.forEach {
             val library = it.konanLibrary
             val initializers = libraryToInitializers[library]
                     ?: error("initializer for not included library ${library?.libraryFile}")
 
-            initializers.add(it.initializer)
+            initializers.add(it.runtimeInitializer)
         }
 
         fun fileCtorName(libraryName: String, fileName: String) = "$libraryName:$fileName".moduleConstructorName
@@ -2709,7 +2723,10 @@ internal class CodeGeneratorVisitor(
 
         val ctorFunctions = dependencies.flatMap { dependency ->
             val library = dependency?.library
-            val initializers = libraryToInitializers.getValue(library)
+            val initializer = libraryToInitializers.getValue(library)
+                    .takeIf { it.isNotEmpty() }
+                    ?.let { mergeRuntimeInitializers(it) }
+                    ?.let { createInitCtor(createInitNode(it)) }
 
             val ctorName = when {
                 // TODO: Try to not use moduleId.
@@ -2724,11 +2741,11 @@ internal class CodeGeneratorVisitor(
                 val otherInitializers = llvm.otherStaticInitializers.takeIf { library == null }.orEmpty()
 
                 listOf(
-                    appendStaticInitializers(ctorProto(ctorName), initializers + otherInitializers)
+                    appendStaticInitializers(ctorProto(ctorName), listOfNotNull(initializer) + otherInitializers)
                 )
             } else {
                 // A cached library.
-                check(initializers.isEmpty()) {
+                check(initializer == null) {
                     "found initializer from ${library.libraryFile}, which is not included into compilation"
                 }
 
