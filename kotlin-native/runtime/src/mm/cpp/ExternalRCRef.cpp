@@ -29,42 +29,31 @@ constexpr unsigned kPermanentTag = 1;
 }
 
 RUNTIME_NOTHROW extern "C" mm::RawExternalRCRef* Kotlin_native_internal_ref_createRetainedExternalRCRef(KRef obj) {
-    RuntimeAssert(obj != nullptr, "Cannot handle nullptr");
     return mm::createRetainedExternalRCRef(obj);
 }
 
+RUNTIME_NOTHROW extern "C" mm::RawExternalRCRef* Kotlin_native_internal_ref_createUnretainedExternalRCRef(KRef obj) {
+    return mm::createUnretainedExternalRCRef(obj);
+}
+
 RUNTIME_NOTHROW extern "C" void Kotlin_native_internal_ref_disposeExternalRCRef(mm::RawExternalRCRef* ref) {
-    RuntimeAssert(ref != nullptr, "Cannot handle nullptr");
     return mm::disposeExternalRCRef(ref);
 }
 
 RUNTIME_NOTHROW extern "C" OBJ_GETTER(Kotlin_native_internal_ref_dereferenceExternalRCRef, mm::RawExternalRCRef* ref) {
-    AssertThreadState(ThreadState::kRunnable);
-    RuntimeAssert(ref != nullptr, "Cannot handle nullptr");
     RETURN_OBJ(mm::dereferenceExternalRCRef(ref));
 }
 
 RUNTIME_NOTHROW extern "C" void Kotlin_native_internal_ref_retainExternalRCRef(mm::RawExternalRCRef* ref) {
-    RuntimeAssert(ref != nullptr, "Cannot handle nullptr");
     mm::retainExternalRCRef(ref);
 }
 
 RUNTIME_NOTHROW extern "C" void Kotlin_native_internal_ref_releaseExternalRCRef(mm::RawExternalRCRef* ref) {
-    RuntimeAssert(ref != nullptr, "Cannot handle nullptr");
     mm::releaseExternalRCRef(ref);
 }
 
-RUNTIME_NOTHROW extern "C" bool Kotlin_native_internal_ref_tryRetainExternalRCRef(mm::RawExternalRCRef* ref) {
-    RuntimeAssert(ref != nullptr, "Cannot handle nullptr");
-    AssertThreadState(ThreadState::kRunnable);
-    if (externalRCRefAsPermanentObject(ref)) return true;
-    auto refImpl = mm::ExternalRCRefImpl::fromRaw(ref);
-    ObjHolder holder;
-    if (refImpl->tryRef(holder.slot())) {
-        refImpl->retainRef();
-        return true;
-    }
-    return false;
+RUNTIME_NOTHROW extern "C" OBJ_GETTER(Kotlin_native_internal_ref_dereferenceExternalRCRefOrNull, mm::RawExternalRCRef* ref) {
+    RETURN_RESULT_OF(mm::tryRefExternalRCRef, ref);
 }
 
 mm::ExternalRCRefImpl::ExternalRCRefImpl(mm::ExternalRCRefRegistry& registry, KRef obj, Rc rc) noexcept : obj_(obj), rc_(rc) {
