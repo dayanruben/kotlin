@@ -4,9 +4,7 @@
  */
 
 #include "polyhash/common.h"
-#include "polyhash/x86.h"
-
-#if defined(__x86_64__) or defined(__i386__)
+#include "polyhash/PolyHash.h"
 
 #define __SSE41__ __attribute__((target("sse4.1")))
 #define __AVX2__ __attribute__((target("avx2")))
@@ -27,12 +25,12 @@ alignas(32) constexpr auto b4  = RepeatingPowers<8>(31, 4);  // [base^4,  base^4
 struct SSETraits {
     using VecType = __m128i;
     using Vec128Type = __m128i;
-    using U16VecType = __m128i;
 
     static VecType initVec() { return _mm_setzero_si128(); }
     static Vec128Type initVec128() { return _mm_setzero_si128(); }
     static int vec128toInt(Vec128Type x) { return _mm_cvtsi128_si32(x); }
-    static VecType u16Load(U16VecType const* x) { return _mm_cvtepu16_epi32(_mm_loadl_epi64(x)); }
+    static VecType load(uint16_t const* x) { return _mm_cvtepu16_epi32(_mm_loadl_epi64(reinterpret_cast<__m128i const*>(x))); }
+    static VecType load(uint8_t const* x) { return _mm_cvtepu8_epi32(_mm_set_epi32(0, 0, 0, *reinterpret_cast<uint32_t const*>(x))); }
     static Vec128Type vec128Mul(Vec128Type x, Vec128Type y) { return _mm_mullo_epi32(x, y); }
     static Vec128Type vec128Add(Vec128Type x, Vec128Type y) { return _mm_add_epi32(x, y); }
     static VecType vecMul(VecType x, VecType y) { return _mm_mullo_epi32(x, y); }
@@ -48,22 +46,14 @@ struct SSETraits {
 
 #include "polyhash/attributeSensitiveFunctions.inc"
 
-    static int polyHashUnalignedUnrollUpTo8(int n, uint16_t const* str) {
+    template <typename UnitType>
+    static int polyHashUnaligned(int n, UnitType const* str) {
         Vec128Type res = initVec128();
-
+        if (n >= 8) {
+            polyHashUnroll4<SSETraits>(n, str, res, &b16[0], &p64[48]);
+        }
         polyHashUnroll2<SSETraits>(n, str, res, &b8[0], &p64[56]);
         polyHashTail<SSETraits>(n, str, res, &b4[0], &p64[60]);
-
-        return vec128toInt(res);
-    }
-
-    static int polyHashUnalignedUnrollUpTo16(int n, uint16_t const* str) {
-        Vec128Type res = initVec128();
-
-        polyHashUnroll4<SSETraits>(n, str, res, &b16[0], &p64[48]);
-        polyHashUnroll2<SSETraits>(n, str, res, &b8[0], &p64[56]);
-        polyHashTail<SSETraits>(n, str, res, &b4[0], &p64[60]);
-
         return vec128toInt(res);
     }
 };
@@ -75,12 +65,12 @@ struct SSETraits {
 struct AVX2Traits {
     using VecType = __m256i;
     using Vec128Type = __m128i;
-    using U16VecType = __m128i;
 
     static VecType initVec() { return _mm256_setzero_si256(); }
     static Vec128Type initVec128() { return _mm_setzero_si128(); }
     static int vec128toInt(Vec128Type x) { return _mm_cvtsi128_si32(x); }
-    static VecType u16Load(U16VecType const* x) { return _mm256_cvtepu16_epi32(*x); }
+    static VecType load(uint16_t const* x) { return _mm256_cvtepu16_epi32(*reinterpret_cast<__m128i const*>(x)); }
+    static VecType load(uint8_t const* x) { return _mm256_cvtepu8_epi32(_mm_loadl_epi64(reinterpret_cast<__m128i const*>(x))); }
     static Vec128Type vec128Mul(Vec128Type x, Vec128Type y) { return _mm_mullo_epi32(x, y); }
     static Vec128Type vec128Add(Vec128Type x, Vec128Type y) { return _mm_add_epi32(x, y); }
     static VecType vecMul(VecType x, VecType y) { return _mm256_mullo_epi32(x, y); }
@@ -99,79 +89,47 @@ struct AVX2Traits {
 
 #include "polyhash/attributeSensitiveFunctions.inc"
 
-    static int polyHashUnalignedUnrollUpTo16(int n, uint16_t const* str) {
+    template <typename UnitType>
+    static int polyHashUnaligned(int n, UnitType const* str) {
         Vec128Type res = initVec128();
-
+        if (n >= 32) {
+#if defined(__x86_64__)
+            // Such big unrolling requires 64-bit mode (in 32-bit mode there are only 8 vector registers)
+            if (n >= 144) {
+                polyHashUnroll8<AVX2Traits>(n, str, res, &b64[0], &p64[0]);
+            }
+#endif
+            polyHashUnroll4<AVX2Traits>(n, str, res, &b32[0], &p64[32]);
+        }
         polyHashUnroll2<AVX2Traits>(n, str, res, &b16[0], &p64[48]);
         polyHashTail<AVX2Traits>(n, str, res, &b8[0], &p64[56]);
         polyHashTail<SSETraits>(n, str, res, &b4[0], &p64[60]);
-
-        return vec128toInt(res);
-    }
-
-    static int polyHashUnalignedUnrollUpTo32(int n, uint16_t const* str) {
-        Vec128Type res = initVec128();
-
-        polyHashUnroll4<AVX2Traits>(n, str, res, &b32[0], &p64[32]);
-        polyHashUnroll2<AVX2Traits>(n, str, res, &b16[0], &p64[48]);
-        polyHashTail<AVX2Traits>(n, str, res, &b8[0], &p64[56]);
-        polyHashTail<SSETraits>(n, str, res, &b4[0], &p64[60]);
-
-        return vec128toInt(res);
-    }
-
-    static int polyHashUnalignedUnrollUpTo64(int n, uint16_t const* str) {
-        Vec128Type res = initVec128();
-
-        polyHashUnroll8<AVX2Traits>(n, str, res, &b64[0], &p64[0]);
-        polyHashUnroll4<AVX2Traits>(n, str, res, &b32[0], &p64[32]);
-        polyHashUnroll2<AVX2Traits>(n, str, res, &b16[0], &p64[48]);
-        polyHashTail<AVX2Traits>(n, str, res, &b8[0], &p64[56]);
-        polyHashTail<SSETraits>(n, str, res, &b4[0], &p64[60]);
-
         return vec128toInt(res);
     }
 };
 
 #pragma clang attribute pop
 
-#if defined(__x86_64__)
-    const bool x64 = true;
-#else
-    const bool x64 = false;
-#endif
     bool initialized = false;
     bool sseSupported = false;
     bool avx2Supported = false;
 
 }
 
-int polyHash_x86(int length, uint16_t const* str) {
+template <typename UnitType>
+int polyHash(int length, UnitType const* str) {
     if (!initialized) {
         initialized = true;
         sseSupported = __builtin_cpu_supports("sse4.1");
         avx2Supported = __builtin_cpu_supports("avx2");
     }
     if (length < 16 || (!sseSupported && !avx2Supported)) {
-        // Either vectorization is not supported or the string is too short to gain from it.
         return polyHash_naive(length, str);
     }
-    uint32_t res;
-    if (length < 32)
-        res = SSETraits::polyHashUnalignedUnrollUpTo8(length / 4, str);
-    else if (!avx2Supported)
-        res = SSETraits::polyHashUnalignedUnrollUpTo16(length / 4, str);
-    else if (length < 128)
-        res = AVX2Traits::polyHashUnalignedUnrollUpTo16(length / 4, str);
-    else if (!x64 || length < 576)
-        res = AVX2Traits::polyHashUnalignedUnrollUpTo32(length / 4, str);
-    else // Such big unrolling requires 64-bit mode (in 32-bit mode there are only 8 vector registers)
-        res = AVX2Traits::polyHashUnalignedUnrollUpTo64(length / 4, str);
-
-    // Handle the tail naively.
+    uint32_t res = length < 32 || !avx2Supported
+        ? SSETraits::polyHashUnaligned(length / 4, str)
+        : AVX2Traits::polyHashUnaligned(length / 4, str);
     for (int i = length & 0xFFFFFFFC; i < length; ++i)
         res = res * 31 + str[i];
     return res;
 }
-
-#endif

@@ -2495,9 +2495,15 @@ class LightTreeRawFirDeclarationBuilder(
             this.parameters += parameters
             isSuspend = allTypeModifiers.any { it.hasSuspend() }
 
-            if (contextList != null) {
-                buildList { addContextParameters(contextList, context.containerSymbol) }
-                    .forEach { contextParameterTypeRefs.add(it.returnTypeRef) }
+            contextList?.forEachChildren {
+                when (it.elementType) {
+                    CONTEXT_RECEIVER, VALUE_PARAMETER -> {
+                        val typeReference = it.getChildNodeByType(TYPE_REFERENCE)
+
+                        contextParameterTypeRefs += typeReference?.let(this@LightTreeRawFirDeclarationBuilder::convertType)
+                            ?: buildErrorTypeRef { diagnostic = ConeSimpleDiagnostic("Type missing") }
+                    }
+                }
             }
         }
     }
@@ -2578,7 +2584,7 @@ class LightTreeRawFirDeclarationBuilder(
 
         val name = convertValueParameterName(identifier.nameAsSafeName(), valueParameterDeclaration) { identifier }
         val valueParameterSymbol = FirValueParameterSymbol(name)
-        withContainerSymbol(valueParameterSymbol, isLocal = valueParameterDeclaration != ValueParameterDeclaration.FUNCTION) {
+        withContainerSymbol(valueParameterSymbol, isLocal = !valueParameterDeclaration.isAnnotationOwner) {
             valueParameter.forEachChildren {
                 when (it.tokenType) {
                     TYPE_REFERENCE -> firType = convertType(it)
