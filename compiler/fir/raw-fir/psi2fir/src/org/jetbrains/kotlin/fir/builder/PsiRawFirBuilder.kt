@@ -1980,8 +1980,6 @@ open class PsiRawFirBuilder(
                             isExternal = function.hasModifier(EXTERNAL_KEYWORD)
                             isSuspend = function.hasModifier(SUSPEND_KEYWORD)
                         }
-
-                        contextParameters.addContextParameters(function.contextReceiverList, functionSymbol)
                     }
                 }
 
@@ -1998,6 +1996,7 @@ open class PsiRawFirBuilder(
                     if (this is FirSimpleFunctionBuilder) {
                         function.extractTypeParametersTo(this, symbol)
                     }
+                    contextParameters.addContextParameters(function.contextReceiverList, functionSymbol)
                     for (valueParameter in function.valueParameters) {
                         valueParameters += valueParameter.toFirValueParameter(
                             null,
@@ -2187,9 +2186,7 @@ open class PsiRawFirBuilder(
                     }
                     dispatchReceiverType = owner.obtainDispatchReceiverForConstructor()
                     contextParameters.addContextParameters(owner.contextReceiverList, symbol)
-                    if (contextParameterEnabled) {
-                        contextParameters.addContextParameters(this@toFirConstructor.modifierList?.getChildOfType(), symbol)
-                    }
+                    contextParameters.addContextParameters(this@toFirConstructor.modifierList?.contextReceiverList, symbol)
                     if (!owner.hasModifier(EXTERNAL_KEYWORD) && !status.isExpect || isExplicitDelegationCall()) {
                         delegatedConstructor = buildOrLazyDelegatedConstructorCall(
                             isThis = isDelegatedCallToThis(),

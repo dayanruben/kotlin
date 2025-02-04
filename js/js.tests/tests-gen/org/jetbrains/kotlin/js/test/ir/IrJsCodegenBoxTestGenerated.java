@@ -7005,6 +7005,18 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
     }
 
     @Test
+    @TestMetadata("contextualAnonymousFunction.kt")
+    public void testContextualAnonymousFunction() {
+      runTest("compiler/testData/codegen/box/contextParameters/contextualAnonymousFunction.kt");
+    }
+
+    @Test
+    @TestMetadata("contextualLocalFunction.kt")
+    public void testContextualLocalFunction() {
+      runTest("compiler/testData/codegen/box/contextParameters/contextualLocalFunction.kt");
+    }
+
+    @Test
     @TestMetadata("propertyWithContextAndWithout.kt")
     public void testPropertyWithContextAndWithout() {
       runTest("compiler/testData/codegen/box/contextParameters/propertyWithContextAndWithout.kt");

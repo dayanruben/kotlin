@@ -51091,6 +51091,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
           }
 
           @Test
+          @TestMetadata("contextInLocalFunction.kt")
+          public void testContextInLocalFunction() {
+            runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/declarationAndUsages/contextInLocalFunction.kt");
+          }
+
+          @Test
           @TestMetadata("contextOnGetterSetter.kt")
           public void testContextOnGetterSetter() {
             runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/declarationAndUsages/contextOnGetterSetter.kt");
@@ -51118,6 +51124,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
           @TestMetadata("contextWithAnnotation.kt")
           public void testContextWithAnnotation() {
             runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/declarationAndUsages/contextWithAnnotation.kt");
+          }
+
+          @Test
+          @TestMetadata("contextualAnonymousFunction.kt")
+          public void testContextualAnonymousFunction() {
+            runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/declarationAndUsages/contextualAnonymousFunction.kt");
           }
 
           @Test

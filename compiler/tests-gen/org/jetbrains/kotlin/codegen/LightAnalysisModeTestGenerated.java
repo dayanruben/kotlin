@@ -8101,6 +8101,16 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/contextParameters/contextTypeOverrideInJava.kt");
     }
 
+    @TestMetadata("contextualAnonymousFunction.kt")
+    public void testContextualAnonymousFunction() {
+      runTest("compiler/testData/codegen/box/contextParameters/contextualAnonymousFunction.kt");
+    }
+
+    @TestMetadata("contextualLocalFunction.kt")
+    public void testContextualLocalFunction() {
+      runTest("compiler/testData/codegen/box/contextParameters/contextualLocalFunction.kt");
+    }
+
     @TestMetadata("propertyWithContextAndWithout.kt")
     public void testPropertyWithContextAndWithout() {
       runTest("compiler/testData/codegen/box/contextParameters/propertyWithContextAndWithout.kt");
@@ -40150,6 +40160,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("differentPositions.kt")
         public void testDifferentPositions() {
           runTest("compiler/testData/codegen/box/reflection/annotations/onTypes/differentPositions.kt");
+        }
+
+        @TestMetadata("localClass.kt")
+        public void testLocalClass() {
+          runTest("compiler/testData/codegen/box/reflection/annotations/onTypes/localClass.kt");
         }
       }
 
