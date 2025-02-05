@@ -14,6 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
+import org.jetbrains.kotlin.analysis.api.platform.KaCachedService
 import org.jetbrains.kotlin.analysis.api.platform.declarations.createDeclarationProvider
 import org.jetbrains.kotlin.analysis.api.platform.modification.createAllLibrariesModificationTracker
 import org.jetbrains.kotlin.analysis.api.platform.modification.createProjectWideOutOfBlockModificationTracker
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.asJava.KotlinAsJavaSupportBase
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
+import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolBasedFakeLightClass
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassForFacade
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassForScript
@@ -107,7 +109,8 @@ private fun KaModule.isLightClassSupportAvailable(): Boolean {
 }
 
 internal class SymbolKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<KaModule>(project) {
-    private val projectStructureProvider by lazy { KotlinProjectStructureProvider.Companion.getInstance(project) }
+    @KaCachedService
+    private val projectStructureProvider by lazyPub { KotlinProjectStructureProvider.getInstance(project) }
 
     private fun PsiElement.getModuleIfSupportEnabled(): KaModule? {
         return projectStructureProvider.getModule(
@@ -170,7 +173,7 @@ internal class SymbolKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupport
 
     override fun getSubPackages(fqn: FqName, scope: GlobalSearchScope): Collection<FqName> =
         project.createPackageProvider(scope)
-            .getKotlinOnlySubPackagesFqNames(fqn, nameFilter = { true })
+            .getKotlinOnlySubpackageNames(fqn)
             .map { fqn.child(it) }
 
     override fun createInstanceOfLightScript(script: KtScript): KtLightClass? {
