@@ -24619,6 +24619,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("javaOverrideOfExtensionProperty.kt")
+      public void testJavaOverrideOfExtensionProperty() {
+        runTest("compiler/testData/diagnostics/tests/j+k/javaOverrideOfExtensionProperty.kt");
+      }
+
+      @Test
       @TestMetadata("javaStaticImport.kt")
       public void testJavaStaticImport() {
         runTest("compiler/testData/diagnostics/tests/j+k/javaStaticImport.kt");
@@ -43514,6 +43520,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       @TestMetadata("destructuringDeclarations.kt")
       public void testDestructuringDeclarations() {
         runTest("compiler/testData/diagnostics/tests/typeParameters/destructuringDeclarations.kt");
+      }
+
+      @Test
+      @TestMetadata("dnnAsPropertyReceiver.kt")
+      public void testDnnAsPropertyReceiver() {
+        runTest("compiler/testData/diagnostics/tests/typeParameters/dnnAsPropertyReceiver.kt");
       }
 
       @Test
