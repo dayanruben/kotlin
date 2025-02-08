@@ -17,6 +17,12 @@ import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.modules.KotlinModuleXmlBuilder
 import org.jetbrains.kotlin.test.kotlinPathsForDistDirectoryForTests
+import org.jetbrains.kotlin.util.CodeAnalysisMeasurement
+import org.jetbrains.kotlin.util.CodeGenerationMeasurement
+import org.jetbrains.kotlin.util.PerformanceManager
+import org.jetbrains.kotlin.util.CompilerInitializationMeasurement
+import org.jetbrains.kotlin.util.GarbageCollectionMeasurement
+import org.jetbrains.kotlin.util.IRMeasurement
 import org.jetbrains.kotlin.util.PerformanceCounter
 import org.jetbrains.kotlin.utils.KotlinPaths
 import org.jetbrains.kotlin.utils.PathUtil
@@ -142,7 +148,7 @@ abstract class AbstractFullPipelineModularizedTest : AbstractModularizedTest() {
             args.jsr305 = originalArguments.jsr305
             args.nullabilityAnnotations = originalArguments.nullabilityAnnotations
             args.jspecifyAnnotations = originalArguments.jspecifyAnnotations
-            args.jvmDefaultOld = originalArguments.jvmDefaultOld
+            args.jvmDefault = originalArguments.jvmDefault
             args.jdkRelease = originalArguments.jdkRelease
             args.progressiveMode = originalArguments.progressiveMode
             args.optIn = (moduleData.optInAnnotations + (originalArguments.optIn ?: emptyArray())).toTypedArray()
@@ -286,7 +292,7 @@ abstract class AbstractFullPipelineModularizedTest : AbstractModularizedTest() {
         configureArguments(args, moduleData)
 
         val manager = CompilerPerformanceManager()
-        val services = Services.Builder().register(CommonCompilerPerformanceManager::class.java, manager).build()
+        val services = Services.Builder().register(PerformanceManager::class.java, manager).build()
         val collector = TestMessageCollector()
         val result = try {
             CompilerSystemProperties.KOTLIN_COMPILER_ENVIRONMENT_KEEPALIVE_PROPERTY.value = "true"
@@ -322,9 +328,11 @@ abstract class AbstractFullPipelineModularizedTest : AbstractModularizedTest() {
     }
 
 
-    private inner class CompilerPerformanceManager : CommonCompilerPerformanceManager("Modularized test performance manager") {
+    private inner class CompilerPerformanceManager : PerformanceManager("Modularized test performance manager") {
 
         fun reportCumulativeTime(): CumulativeTime {
+            val measurements = getMeasurementResults()
+
             val gcInfo = measurements.filterIsInstance<GarbageCollectionMeasurement>()
                 .associate { it.garbageCollectionKind to GCInfo(it.garbageCollectionKind, it.milliseconds, it.count) }
 

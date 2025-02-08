@@ -7,7 +7,10 @@ package org.jetbrains.sir.lightclasses.nodes
 
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.sir.*
 import org.jetbrains.kotlin.sir.builder.buildGetter
@@ -60,7 +63,7 @@ private class SirClassFromKtSymbol(
         ktSymbol.superTypes.filterIsInstanceAnd<KaClassType> {
             it.isRegularClass && it.classId != DefaultTypeClassIds.ANY
         }.firstOrNull()?.let {
-            it.symbol.sirDeclarations().firstIsInstanceOrNull<SirClass>()
+            it.symbol.toSir().allDeclarations.firstIsInstanceOrNull<SirClass>()
                 ?.also { ktSymbol.containingModule.sirModule().updateImport(SirImport(it.containingModule().name)) }
                 ?.let { SirNominalType(it) }
         } ?: let {
@@ -177,7 +180,7 @@ internal abstract class SirAbstractClassFromKtSymbol(
             .filterIsInstance<KaClassType>().mapNotNull { it.expandedSymbol }.filter {
                 it.classKind == KaClassKind.INTERFACE
             }.flatMap {
-                it.sirDeclarations().filterIsInstance<SirProtocol>().also {
+                it.toSir().allDeclarations.filterIsInstance<SirProtocol>().also {
                     it.forEach {
                         ktSymbol.containingModule.sirModule().updateImport(SirImport(it.containingModule().name))
                     }

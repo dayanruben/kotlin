@@ -681,9 +681,15 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFirTestDataTestGenerated 
     }
 
     @Test
-    @TestMetadata("topLevelDestruction.kt")
-    public void testTopLevelDestruction() {
-      runTest("compiler/fir/analysis-tests/testData/resolve/topLevelDestruction.kt");
+    @TestMetadata("topLevelDestructuring.kt")
+    public void testTopLevelDestructuring() {
+      runTest("compiler/fir/analysis-tests/testData/resolve/topLevelDestructuring.kt");
+    }
+
+    @Test
+    @TestMetadata("topLevelDestructuring2.kt")
+    public void testTopLevelDestructuring2() {
+      runTest("compiler/fir/analysis-tests/testData/resolve/topLevelDestructuring2.kt");
     }
 
     @Test

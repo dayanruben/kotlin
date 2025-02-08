@@ -196,6 +196,19 @@ abstract class AbstractRawFirBuilder<T>(val baseSession: FirSession, val context
         }
     }
 
+    inline fun <T> withContainerReplSymbol(
+        symbol: FirReplSnippetSymbol,
+        block: () -> T,
+    ): T {
+        require(context.containingReplSymbol == null) { "Nested snippets are not supported" }
+        context.containingReplSymbol = symbol
+        return try {
+            block()
+        } finally {
+            context.containingReplSymbol = null
+        }
+    }
+
     protected open fun addCapturedTypeParameters(
         status: Boolean,
         declarationSource: KtSourceElement?,
@@ -1228,13 +1241,17 @@ abstract class AbstractRawFirBuilder<T>(val baseSession: FirSession, val context
         }
     }
 
-    protected fun buildErrorTopLevelDestructuringDeclaration(source: KtSourceElement): FirErrorProperty = buildErrorProperty {
+    protected fun buildErrorTopLevelDestructuringDeclaration(
+        source: KtSourceElement,
+        initializer: FirExpression?,
+    ): FirErrorProperty = buildErrorProperty {
         this.source = source
         moduleData = baseModuleData
         origin = FirDeclarationOrigin.Source
         name = Name.special("<destructuring>")
         diagnostic = ConeDestructuringDeclarationsOnTopLevel
         symbol = FirErrorPropertySymbol(diagnostic)
+        this.initializer = initializer
     }
 
     protected fun createNoTypeForParameterTypeRef(parameterSource: KtSourceElement): FirErrorTypeRef {
