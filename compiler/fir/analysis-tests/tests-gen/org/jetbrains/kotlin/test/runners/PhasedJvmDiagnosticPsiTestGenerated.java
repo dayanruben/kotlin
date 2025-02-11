@@ -12514,6 +12514,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
         }
 
         @Test
+        @TestMetadata("enumEntriesAmbiguityForbidden.kt")
+        public void testEnumEntriesAmbiguityForbidden() {
+          runTest("compiler/testData/diagnostics/tests/enum/entries/enumEntriesAmbiguityForbidden.kt");
+        }
+
+        @Test
         @TestMetadata("enumEntriesAmbiguityPrioritized.kt")
         public void testEnumEntriesAmbiguityPrioritized() {
           runTest("compiler/testData/diagnostics/tests/enum/entries/enumEntriesAmbiguityPrioritized.kt");
@@ -12547,6 +12553,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
         @TestMetadata("javaEnumEntriesAmbiguity.kt")
         public void testJavaEnumEntriesAmbiguity() {
           runTest("compiler/testData/diagnostics/tests/enum/entries/javaEnumEntriesAmbiguity.kt");
+        }
+
+        @Test
+        @TestMetadata("javaEnumEntriesAmbiguityForbidden.kt")
+        public void testJavaEnumEntriesAmbiguityForbidden() {
+          runTest("compiler/testData/diagnostics/tests/enum/entries/javaEnumEntriesAmbiguityForbidden.kt");
         }
 
         @Test
@@ -51786,6 +51798,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
         @TestMetadata("memberWithAContext.kt")
         public void testMemberWithAContext() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/multiplatform/memberWithAContext.kt");
+        }
+
+        @Test
+        @TestMetadata("overloadWithContext.kt")
+        public void testOverloadWithContext() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/multiplatform/overloadWithContext.kt");
         }
 
         @Test
