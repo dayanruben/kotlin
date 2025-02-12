@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.gradle.plugin.diagnostics
 
 import org.gradle.api.InvalidUserCodeException
 import org.gradle.api.logging.Logger
+import org.gradle.api.logging.configuration.WarningMode
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.ToolingDiagnostic.Severity.*
 
 internal fun renderReportedDiagnostics(
@@ -24,11 +25,25 @@ internal fun renderReportedDiagnostic(
     logger: Logger,
     renderingOptions: ToolingDiagnosticRenderingOptions
 ) {
-    when (diagnostic.severity) {
+    val effectiveSeverity = if (renderingOptions.ignoreWarningMode) {
+        diagnostic.severity
+    } else {
+        // Early return if warnings are disabled and it's not an error and not fatal
+        if (renderingOptions.warningMode == WarningMode.None && diagnostic.severity == WARNING) {
+            return
+        }
+
+        if (diagnostic.severity == WARNING && renderingOptions.warningMode == WarningMode.Fail)
+            ERROR
+        else
+            diagnostic.severity
+
+        //TODO: KT-74986 Support WarningMode.Summary mode for gradle diagnostics
+    }
+
+    when (effectiveSeverity) {
         WARNING -> logger.warn("w: ${diagnostic.render(renderingOptions)}\n")
-
         ERROR -> logger.error("e: ${diagnostic.render(renderingOptions)}\n")
-
         FATAL -> throw diagnostic.createAnExceptionForFatalDiagnostic(renderingOptions)
     }
 }
