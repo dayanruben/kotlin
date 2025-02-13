@@ -93,7 +93,11 @@ open class FirDeclarationsResolveTransformer(
     private fun prepareSignatureForBodyResolve(callableMember: FirCallableDeclaration) {
         callableMember.transformReturnTypeRef(transformer, ResolutionMode.ContextIndependent)
         callableMember.transformReceiverParameter(transformer, ResolutionMode.ContextIndependent)
-        callableMember.transformContextParameters(transformer, ResolutionMode.ContextIndependent)
+
+        callableMember.contextParameters.forEach {
+            it.transformReturnTypeRef(transformer, ResolutionMode.ContextIndependent)
+        }
+
         if (callableMember is FirFunction) {
             callableMember.valueParameters.forEach {
                 it.transformReturnTypeRef(transformer, ResolutionMode.ContextIndependent)
@@ -1349,6 +1353,7 @@ open class FirDeclarationsResolveTransformer(
         // `transformFunction` will replace both `typeRef` and `returnTypeRef`, so make sure to keep the former.
         val lambdaType = anonymousFunction.typeRef
         return context.withAnonymousFunction(anonymousFunction, components) {
+            doTransformTypeParameters(anonymousFunction)
             withFullBodyResolve {
                 transformFunction(
                     anonymousFunction,

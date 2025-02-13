@@ -61,7 +61,8 @@ open class IncrementalFirJvmCompilerRunner(
     outputDirs: Collection<File>?,
     modulesApiHistory: ModulesApiHistory,
     kotlinSourceFilesExtensions: Set<String> = DEFAULT_KOTLIN_SOURCE_FILES_EXTENSIONS,
-    classpathChanges: ClasspathChanges
+    classpathChanges: ClasspathChanges,
+    icFeatures: IncrementalCompilationFeatures = IncrementalCompilationFeatures.DEFAULT_CONFIGURATION,
 ) : IncrementalJvmCompilerRunner(
     workingDir,
     reporter,
@@ -70,7 +71,8 @@ open class IncrementalFirJvmCompilerRunner(
     outputDirs,
     modulesApiHistory,
     kotlinSourceFilesExtensions,
-    classpathChanges
+    classpathChanges,
+    icFeatures,
 ) {
 
     override fun runCompiler(
@@ -182,7 +184,10 @@ open class IncrementalFirJvmCompilerRunner(
             val performanceManager = configuration[CLIConfigurationKeys.PERF_MANAGER]
             val compilerEnvironment = ModuleCompilerEnvironment(projectEnvironment, diagnosticsReporter)
 
-            performanceManager?.notifyCompilerInitialized(0, 0, "${targetId.name}-${targetId.type}")
+            performanceManager?.apply {
+                targetDescription = "${targetId.name}-${targetId.type}"
+                notifyCompilerInitialized()
+            }
 
             // !! main class - maybe from cache?
             var mainClassFqName: FqName? = null
