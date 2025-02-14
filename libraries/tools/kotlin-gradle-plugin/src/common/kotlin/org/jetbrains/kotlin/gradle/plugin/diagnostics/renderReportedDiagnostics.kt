@@ -66,22 +66,19 @@ private fun ToolingDiagnostic.render(
     showStacktrace: Boolean = renderingOptions.showStacktrace,
 ): String = buildString {
     with(renderingOptions) {
+        val diagnosticOutput = if (coloredOutput) styled(showSeverityEmoji) else plain(showSeverityEmoji)
+
+        // Main message
         if (useParsableFormat) {
             appendLine(this@render)
         } else {
-            if (showSeverityEmoji) {
-                when (severity) {
-                    WARNING -> append("⚠️ ")
-                    ERROR, FATAL -> append("❌ ")
-                }
-            }
-            appendLine(identifier.displayName)
-            appendLine(message)
-            solutions.filter { it.isNotBlank() }.forEach {
+            appendLine(diagnosticOutput.name)
+            appendLine(diagnosticOutput.message)
+            diagnosticOutput.solution?.let {
                 appendLine(it)
             }
-            documentation?.let {
-                appendLine(it.additionalUrlContext)
+            diagnosticOutput.documentation?.let {
+                appendLine(it)
             }
         }
 

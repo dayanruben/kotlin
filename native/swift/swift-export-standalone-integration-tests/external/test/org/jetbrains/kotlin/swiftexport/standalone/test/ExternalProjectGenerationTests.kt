@@ -9,6 +9,7 @@ import com.intellij.testFramework.TestDataPath
 import org.jetbrains.kotlin.konan.test.blackbox.support.group.FirPipeline
 import org.jetbrains.kotlin.konan.test.blackbox.support.group.UseStandardTestCaseGroupProvider
 import org.jetbrains.kotlin.konan.test.testLibraryAKlibFile
+import org.jetbrains.kotlin.konan.test.testLibraryKotlinxSerializationCore
 import org.jetbrains.kotlin.swiftexport.standalone.runSwiftExport
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.jupiter.api.Test
@@ -29,11 +30,25 @@ class ExternalProjectGenerationTests : AbstractKlibBasedSwiftRunnerTest() {
         validateFullLibraryDump(klibSettings, "testLibraryA_full_dump")
     }
 
-    private fun validateFullLibraryDump(klib: KlibExportSettings, goldenData: String) {
+    @Test
+    fun `kotlinx-serialization-core`() {
+        val klibSettings = KlibExportSettings(
+            testLibraryKotlinxSerializationCore,
+            "KotlinSerialization",
+            "kotlinx.serialization",
+        )
+        validateFullLibraryDump(klibSettings, "kotlinx-serialization-core")
+    }
+
+    private fun validateFullLibraryDump(
+        klib: KlibExportSettings,
+        goldenData: String,
+        validateKotlinBridge: Boolean = false,
+    ) {
         val config = klib.createConfig(tmpdir.toPath().resolve(klib.swiftModuleName))
         val inputModule = klib.createInputModule(config)
         val result = runSwiftExport(setOf(inputModule)).getOrThrow()
-        validateSwiftExportOutput(testDataDir.resolve(goldenData), result)
+        validateSwiftExportOutput(testDataDir.resolve(goldenData), result, validateKotlinBridge)
     }
 
 }

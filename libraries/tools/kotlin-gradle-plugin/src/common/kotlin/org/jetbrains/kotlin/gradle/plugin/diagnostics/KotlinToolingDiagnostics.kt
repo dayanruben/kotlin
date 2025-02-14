@@ -924,13 +924,13 @@ object KotlinToolingDiagnostics {
     object KotlinTargetAlreadyDeclaredWarning : KotlinTargetAlreadyDeclared(WARNING)
     object KotlinTargetAlreadyDeclaredError : KotlinTargetAlreadyDeclared(ERROR)
 
-    object KotlinCompilationSourceDeprecation : ToolingDiagnosticFactory(WARNING, DiagnosticGroups.KGP.Deprecation) {
+    object KotlinCompilationSourceDeprecation : ToolingDiagnosticFactory(ERROR, DiagnosticGroups.KGP.Deprecation) {
         operator fun invoke(trace: Throwable?) = build(throwable = trace) {
             title("`KotlinCompilation.source(KotlinSourceSet)` Method Deprecated")
                 .description {
                     """
                     `KotlinCompilation.source(KotlinSourceSet)` method is deprecated
-                    and will be removed in upcoming Kotlin releases.
+                    and will be removed in Kotlin 2.3
                     """.trimIndent()
                 }
                 .solution {
@@ -1582,6 +1582,18 @@ object KotlinToolingDiagnostics {
                 .solution {
                     "Please remove '${PropertiesProvider.PropertyNames.KOTLIN_INCREMENTAL_USE_CLASSPATH_SNAPSHOT}' from your " +
                             "Gradle properties."
+                }
+        }
+    }
+
+    object AbiValidationUnsupportedTarget : ToolingDiagnosticFactory(WARNING, DiagnosticGroups.KGP.Experimental) {
+        operator fun invoke(targetName: String): ToolingDiagnostic = build {
+            title("ABI Validation: unsupported target")
+                .description {
+                    "Target $targetName is not supported by the host compiler and a KLib ABI dump could not be directly generated for it."
+                }
+                .solution {
+                    "Build project on suitable machine"
                 }
         }
     }

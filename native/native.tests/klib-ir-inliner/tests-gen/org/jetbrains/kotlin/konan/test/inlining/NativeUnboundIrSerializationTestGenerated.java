@@ -29057,14 +29057,6 @@ public class NativeUnboundIrSerializationTestGenerated extends AbstractNativeUnb
         }
 
         @Nested
-        @TestMetadata("compiler/testData/codegen/box/multiplatform/k2/lightTree")
-        @TestDataPath("$PROJECT_ROOT")
-        @FirPipeline()
-        @Tag("klib")
-        public class LightTree {
-        }
-
-        @Nested
         @TestMetadata("compiler/testData/codegen/box/multiplatform/k2/migratedOldTests")
         @TestDataPath("$PROJECT_ROOT")
         @FirPipeline()

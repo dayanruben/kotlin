@@ -550,6 +550,24 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
     }
 
     @Test
+    @TestMetadata("errorProneAtomicArrayPrimitives.kt")
+    public void testErrorProneAtomicArrayPrimitives() {
+      runTest("compiler/testData/diagnostics/tests/errorProneAtomicArrayPrimitives.kt");
+    }
+
+    @Test
+    @TestMetadata("errorProneAtomicArrayPrimitivesAllJavaMethods.kt")
+    public void testErrorProneAtomicArrayPrimitivesAllJavaMethods() {
+      runTest("compiler/testData/diagnostics/tests/errorProneAtomicArrayPrimitivesAllJavaMethods.kt");
+    }
+
+    @Test
+    @TestMetadata("errorProneAtomicArraySuggestions.kt")
+    public void testErrorProneAtomicArraySuggestions() {
+      runTest("compiler/testData/diagnostics/tests/errorProneAtomicArraySuggestions.kt");
+    }
+
+    @Test
     @TestMetadata("errorProneAtomicReferencePrimitives.kt")
     public void testErrorProneAtomicReferencePrimitives() {
       runTest("compiler/testData/diagnostics/tests/errorProneAtomicReferencePrimitives.kt");
@@ -28504,6 +28522,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("annotationArgRendering.kt")
+        public void testAnnotationArgRendering() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect/annotationArgRendering.kt");
+        }
+
+        @Test
         @TestMetadata("annotationArgumentsConstExpressions.kt")
         public void testAnnotationArgumentsConstExpressions() {
           runTest("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect/annotationArgumentsConstExpressions.kt");
@@ -28747,22 +28771,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("withOtherIncomatibilities.kt")
         public void testWithOtherIncomatibilities() {
           runTest("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect/withOtherIncomatibilities.kt");
-        }
-
-        @Nested
-        @TestMetadata("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect/lightTree")
-        @TestDataPath("$PROJECT_ROOT")
-        public class LightTree {
-          @Test
-          public void testAllFilesPresentInLightTree() {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect/lightTree"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll|latestLV)\\.kts?$"), true);
-          }
-
-          @Test
-          @TestMetadata("annotationArgRendering.kt")
-          public void testAnnotationArgRendering() {
-            runTest("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect/lightTree/annotationArgRendering.kt");
-          }
         }
       }
 
