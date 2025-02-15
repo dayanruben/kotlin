@@ -60,8 +60,8 @@ open class IncrementalFirJvmCompilerRunner(
     buildHistoryFile: File?,
     outputDirs: Collection<File>?,
     modulesApiHistory: ModulesApiHistory,
-    kotlinSourceFilesExtensions: Set<String> = DEFAULT_KOTLIN_SOURCE_FILES_EXTENSIONS,
     classpathChanges: ClasspathChanges,
+    kotlinSourceFilesExtensions: Set<String> = DEFAULT_KOTLIN_SOURCE_FILES_EXTENSIONS,
     icFeatures: IncrementalCompilationFeatures = IncrementalCompilationFeatures.DEFAULT_CONFIGURATION,
 ) : IncrementalJvmCompilerRunner(
     workingDir,
@@ -69,8 +69,8 @@ open class IncrementalFirJvmCompilerRunner(
     buildHistoryFile,
     outputDirs,
     modulesApiHistory,
-    kotlinSourceFilesExtensions,
     classpathChanges,
+    kotlinSourceFilesExtensions,
     icFeatures,
 ) {
 
@@ -85,6 +85,7 @@ open class IncrementalFirJvmCompilerRunner(
     ): Pair<ExitCode, Collection<File>> {
 //        val isIncremental = true // TODO
         val collector = GroupingMessageCollector(messageCollector, args.allWarningsAsErrors, args.reportAllWarnings)
+        val allSourcesWithJava = allSources + args.javaSources()
         // from K2JVMCompiler (~)
         val moduleName = args.moduleName ?: JvmProtoBufUtil.DEFAULT_MODULE_NAME
         val targetId = TargetId(moduleName, "java-production") // TODO: get rid of magic constant
@@ -145,6 +146,7 @@ open class IncrementalFirJvmCompilerRunner(
                 configureAdvancedJvmOptions(args)
                 configureKlibPaths(args)
                 configureJdkClasspathRoots()
+                configureJdkHome(args)
 
                 val destination = File(args.destination ?: ".")
                 if (destination.path.endsWith(".jar")) {
@@ -155,7 +157,7 @@ open class IncrementalFirJvmCompilerRunner(
                 addAll(JVMConfigurationKeys.MODULES, listOf(ModuleBuilder(targetId.name, destination.path, targetId.type)))
 
                 configureBaseRoots(args)
-                configureSourceRootsFromSources(allSources, commonSources, args.javaPackagePrefix)
+                configureSourceRootsFromSources(allSourcesWithJava, commonSources, args.javaPackagePrefix)
             }
             // - /configuration
 
@@ -346,3 +348,5 @@ fun CompilerConfiguration.configureSourceRootsFromSources(
         }
     }
 }
+
+private fun K2JVMCompilerArguments.javaSources(): List<File> = freeArgs.filter { it.endsWith(".java") }.map { File(it) }
