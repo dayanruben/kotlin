@@ -4361,6 +4361,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
     }
 
     @Test
+    @TestMetadata("kt62550NewBehavior.kt")
+    public void testKt62550NewBehavior() {
+      runTest("compiler/testData/codegen/box/callableReference/kt62550NewBehavior.kt");
+    }
+
+    @Test
     @TestMetadata("nested.kt")
     public void testNested() {
       runTest("compiler/testData/codegen/box/callableReference/nested.kt");
@@ -21155,6 +21161,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
     }
 
     @Test
+    @TestMetadata("selectingLambdas.kt")
+    public void testSelectingLambdas() {
+      runTest("compiler/testData/codegen/box/extensionFunctions/selectingLambdas.kt");
+    }
+
+    @Test
     @TestMetadata("shared.kt")
     public void testShared() {
       runTest("compiler/testData/codegen/box/extensionFunctions/shared.kt");
@@ -22648,12 +22660,6 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
     @TestMetadata("SamWithReceiverMavenProjectImportHandler.kt")
     public void testSamWithReceiverMavenProjectImportHandler() {
       runTest("compiler/testData/codegen/box/fir/SamWithReceiverMavenProjectImportHandler.kt");
-    }
-
-    @Test
-    @TestMetadata("selectingLambdas.kt")
-    public void testSelectingLambdas() {
-      runTest("compiler/testData/codegen/box/fir/selectingLambdas.kt");
     }
 
     @Test
@@ -57172,6 +57178,12 @@ public class LLFirReversedBlackBoxCodegenBasedTestGenerated extends AbstractLLFi
     @TestMetadata("smartCastSamConversion.kt")
     public void testSmartCastSamConversion() {
       runTest("compiler/testData/codegen/box/sam/smartCastSamConversion.kt");
+    }
+
+    @Test
+    @TestMetadata("topLevelConversions.kt")
+    public void testTopLevelConversions() {
+      runTest("compiler/testData/codegen/box/sam/topLevelConversions.kt");
     }
 
     @Nested

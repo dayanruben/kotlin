@@ -3742,6 +3742,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
       runTest("compiler/testData/codegen/box/callableReference/kt62550.kt");
     }
 
+    @TestMetadata("kt62550NewBehavior.kt")
+    public void testKt62550NewBehavior() {
+      runTest("compiler/testData/codegen/box/callableReference/kt62550NewBehavior.kt");
+    }
+
     @TestMetadata("nested.kt")
     public void testNested() {
       runTest("compiler/testData/codegen/box/callableReference/nested.kt");
@@ -17193,6 +17198,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
   @TestDataPath("$PROJECT_ROOT")
   @RunWith(JUnit3RunnerWithInners.class)
   public static class ExtensionFunctions extends AbstractLightAnalysisModeTest {
+    @TestMetadata("selectingLambdas.kt")
+    public void ignoreSelectingLambdas() {
+      runTest("compiler/testData/codegen/box/extensionFunctions/selectingLambdas.kt");
+    }
+
     private void runTest(String testDataFilePath) {
       KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
     }
@@ -18399,11 +18409,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestMetadata("emptyIntersectionWarning.kt")
     public void ignoreEmptyIntersectionWarning() {
       runTest("compiler/testData/codegen/box/fir/emptyIntersectionWarning.kt");
-    }
-
-    @TestMetadata("selectingLambdas.kt")
-    public void ignoreSelectingLambdas() {
-      runTest("compiler/testData/codegen/box/fir/selectingLambdas.kt");
     }
 
     @TestMetadata("typeParameterInClashingAccessor.kt")
@@ -45195,6 +45200,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestMetadata("smartCastSamConversion.kt")
     public void testSmartCastSamConversion() {
       runTest("compiler/testData/codegen/box/sam/smartCastSamConversion.kt");
+    }
+
+    @TestMetadata("topLevelConversions.kt")
+    public void testTopLevelConversions() {
+      runTest("compiler/testData/codegen/box/sam/topLevelConversions.kt");
     }
 
     @TestMetadata("compiler/testData/codegen/box/sam/adapters")

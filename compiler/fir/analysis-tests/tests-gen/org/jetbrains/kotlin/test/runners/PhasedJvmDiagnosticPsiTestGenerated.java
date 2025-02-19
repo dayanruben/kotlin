@@ -47881,6 +47881,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       }
 
       @Test
+      @TestMetadata("optInDifferentModules.kt")
+      public void testOptInDifferentModules() {
+        runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/optInDifferentModules.kt");
+      }
+
+      @Test
       @TestMetadata("overridableCheck.kt")
       public void testOverridableCheck() {
         runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/overridableCheck.kt");
@@ -54000,6 +54006,18 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       }
 
       @Test
+      @TestMetadata("lambdasReturnsShareCS.kt")
+      public void testLambdasReturnsShareCS() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/inference/lambdasReturnsShareCS.kt");
+      }
+
+      @Test
+      @TestMetadata("lambdasReturnsShareCSFeatureDisabled.kt")
+      public void testLambdasReturnsShareCSFeatureDisabled() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/inference/lambdasReturnsShareCSFeatureDisabled.kt");
+      }
+
+      @Test
       @TestMetadata("nestedExtensionFunctionType.kt")
       public void testNestedExtensionFunctionType() {
         runTest("compiler/fir/analysis-tests/testData/resolve/inference/nestedExtensionFunctionType.kt");
@@ -54057,6 +54075,18 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       @TestMetadata("recursiveSelfTypes.kt")
       public void testRecursiveSelfTypes() {
         runTest("compiler/fir/analysis-tests/testData/resolve/inference/recursiveSelfTypes.kt");
+      }
+
+      @Test
+      @TestMetadata("samConversionTopLevel.kt")
+      public void testSamConversionTopLevel() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/inference/samConversionTopLevel.kt");
+      }
+
+      @Test
+      @TestMetadata("samConversionTopLevelFeatureDisabled.kt")
+      public void testSamConversionTopLevelFeatureDisabled() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/inference/samConversionTopLevelFeatureDisabled.kt");
       }
 
       @Test
