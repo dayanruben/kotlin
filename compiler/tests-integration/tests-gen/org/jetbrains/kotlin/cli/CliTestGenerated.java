@@ -1227,6 +1227,16 @@ public class CliTestGenerated extends AbstractCliTest {
       runTest("compiler/testData/cli/jvm/XsupressWarnings/suppressAllWarningsJvm.args");
     }
 
+    @TestMetadata("warningLevelAndNowarn.args")
+    public void testWarningLevelAndNowarn() {
+      runTest("compiler/testData/cli/jvm/XsupressWarnings/warningLevelAndNowarn.args");
+    }
+
+    @TestMetadata("warningLevelAndWerror.args")
+    public void testWarningLevelAndWerror() {
+      runTest("compiler/testData/cli/jvm/XsupressWarnings/warningLevelAndWerror.args");
+    }
+
     @TestMetadata("warningSuppression.args")
     public void testWarningSuppression() {
       runTest("compiler/testData/cli/jvm/XsupressWarnings/warningSuppression.args");
@@ -1811,6 +1821,21 @@ public class CliTestGenerated extends AbstractCliTest {
     @TestMetadata("version.args")
     public void testVersion() {
       runTest("compiler/testData/cli/jvm/version.args");
+    }
+
+    @TestMetadata("warningLevels_correct.args")
+    public void testWarningLevels_correct() {
+      runTest("compiler/testData/cli/jvm/warningLevels_correct.args");
+    }
+
+    @TestMetadata("warningLevels_duplicated.args")
+    public void testWarningLevels_duplicated() {
+      runTest("compiler/testData/cli/jvm/warningLevels_duplicated.args");
+    }
+
+    @TestMetadata("warningLevels_incorrect.args")
+    public void testWarningLevels_incorrect() {
+      runTest("compiler/testData/cli/jvm/warningLevels_incorrect.args");
     }
 
     @TestMetadata("werror.args")
