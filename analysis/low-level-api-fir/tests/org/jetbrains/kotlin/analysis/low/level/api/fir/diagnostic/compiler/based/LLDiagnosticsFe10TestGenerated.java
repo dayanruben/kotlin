@@ -8297,6 +8297,12 @@ public class LLDiagnosticsFe10TestGenerated extends AbstractLLDiagnosticsTest {
       }
 
       @Test
+      @TestMetadata("propertiesInitWithParent.kt")
+      public void testPropertiesInitWithParent() {
+        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/propertiesInitWithParent.kt");
+      }
+
+      @Test
       @TestMetadata("propertiesOrderInPackage.kt")
       public void testPropertiesOrderInPackage() {
         runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/propertiesOrderInPackage.kt");
@@ -19378,9 +19384,21 @@ public class LLDiagnosticsFe10TestGenerated extends AbstractLLDiagnosticsTest {
         }
 
         @Test
+        @TestMetadata("failForkPointWhenNoneOfThemSuccessful.kt")
+        public void testFailForkPointWhenNoneOfThemSuccessful() {
+          runTest("compiler/testData/diagnostics/tests/inference/forks/failForkPointWhenNoneOfThemSuccessful.kt");
+        }
+
+        @Test
         @TestMetadata("forkInWhen.kt")
         public void testForkInWhen() {
           runTest("compiler/testData/diagnostics/tests/inference/forks/forkInWhen.kt");
+        }
+
+        @Test
+        @TestMetadata("kt75444Original.kt")
+        public void testKt75444Original() {
+          runTest("compiler/testData/diagnostics/tests/inference/forks/kt75444Original.kt");
         }
 
         @Test

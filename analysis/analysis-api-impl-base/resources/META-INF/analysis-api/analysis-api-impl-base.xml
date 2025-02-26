@@ -12,7 +12,10 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceImplementation="org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade"/>
+    <projectService
+        serviceInterface="org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade"
+        serviceImplementation="org.jetbrains.kotlin.analysis.api.impl.base.java.KaBaseKotlinJavaPsiFacade"
+    />
 
     <projectService
         serviceInterface="org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver"
@@ -50,8 +53,18 @@
     />
 
     <projectService
+        serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaResolutionScopeProvider"
+        serviceImplementation="org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBaseResolutionScopeProvider"
+    />
+
+    <projectService
         serviceInterface="org.jetbrains.kotlin.analysis.api.platform.lifetime.KaLifetimeTracker"
         serviceImplementation="org.jetbrains.kotlin.analysis.api.impl.base.lifetime.KaBaseLifetimeTracker"
+    />
+
+    <projectService
+        serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaContentScopeProvider"
+        serviceImplementation="org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBaseContentScopeProvider"
     />
 
     <applicationService serviceImplementation="org.jetbrains.kotlin.analysis.decompiled.light.classes.origin.KotlinDeclarationInCompiledFileSearcher" />
@@ -71,5 +84,9 @@
         key="kotlin.analysis.unrelatedSymbolCreation.allowed"
         restartRequired="false"
     />
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <kotlinContentScopeRefiner implementation="org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaResolveExtensionToContentScopeRefinerBridge"/>
   </extensions>
 </idea-plugin>
