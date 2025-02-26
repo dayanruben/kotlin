@@ -205,12 +205,10 @@ class BuildReportsIT : KGPBaseTest() {
                 "Compiler code analysis:",
                 "Compiler code generation:",
                 "Compiler initialization time:",
-                "Compiler IR translation line number:",
-                "Compiler IR lowering line number:",
-                "Compiler IR generation line number:",
-                "Compiler IR translation:",
+                "Number of lines analyzed:",
+                "Compiler translation to IR:",
                 "Compiler IR lowering:",
-                "Compiler IR generation:",
+                "Compiler backend:",
             )
         }
     }

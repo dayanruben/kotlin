@@ -7071,6 +7071,12 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
     }
 
     @Test
+    @TestMetadata("functionalType.kt")
+    public void testFunctionalType() {
+      runTest("compiler/testData/codegen/box/contextParameters/functionalType.kt");
+    }
+
+    @Test
     @TestMetadata("propertyWithContextAndWithout.kt")
     public void testPropertyWithContextAndWithout() {
       runTest("compiler/testData/codegen/box/contextParameters/propertyWithContextAndWithout.kt");
@@ -18842,12 +18848,6 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
       }
 
       @Test
-      @TestMetadata("changingResolveIfDontUseBuilderInferenceDisabledFeature.kt")
-      public void testChangingResolveIfDontUseBuilderInferenceDisabledFeature() {
-        runTest("compiler/testData/codegen/box/inference/pcla/changingResolveIfDontUseBuilderInferenceDisabledFeature.kt");
-      }
-
-      @Test
       @TestMetadata("constraintsBetweenTwoStubVariables.kt")
       public void testConstraintsBetweenTwoStubVariables() {
         runTest("compiler/testData/codegen/box/inference/pcla/constraintsBetweenTwoStubVariables.kt");
@@ -29889,12 +29889,6 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
     }
 
     @Test
-    @TestMetadata("objectLiteralInClosure.kt")
-    public void testObjectLiteralInClosure() {
-      runTest("compiler/testData/codegen/box/objects/objectLiteralInClosure.kt");
-    }
-
-    @Test
     @TestMetadata("objectVsClassInitialization_kt5291.kt")
     public void testObjectVsClassInitialization_kt5291() {
       runTest("compiler/testData/codegen/box/objects/objectVsClassInitialization_kt5291.kt");
@@ -39572,12 +39566,6 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
     @TestMetadata("kt35914.kt")
     public void testKt35914() {
       runTest("compiler/testData/codegen/box/regressions/kt35914.kt");
-    }
-
-    @Test
-    @TestMetadata("kt3850.kt")
-    public void testKt3850() {
-      runTest("compiler/testData/codegen/box/regressions/kt3850.kt");
     }
 
     @Test

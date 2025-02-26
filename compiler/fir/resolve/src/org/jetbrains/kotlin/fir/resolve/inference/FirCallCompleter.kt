@@ -6,6 +6,8 @@
 package org.jetbrains.kotlin.fir.resolve.inference
 
 import org.jetbrains.kotlin.KtFakeSourceElementKind
+import org.jetbrains.kotlin.KtFakeSourceElementKind.ImplicitReturnTypeOfLambdaValueParameter
+import org.jetbrains.kotlin.KtFakeSourceElementKind.ItLambdaParameter
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.fakeElement
@@ -369,7 +371,7 @@ class FirCallCompleter(
                     val itType = parameters.single()
                     buildValueParameter {
                         resolvePhase = FirResolvePhase.BODY_RESOLVE
-                        source = lambdaAtom.anonymousFunction.source?.fakeElement(KtFakeSourceElementKind.ItLambdaParameter)
+                        source = lambdaAtom.anonymousFunction.source?.fakeElement(ItLambdaParameter)
                         containingDeclarationSymbol = lambda.symbol
                         moduleData = session.moduleData
                         origin = FirDeclarationOrigin.Source
@@ -377,7 +379,7 @@ class FirCallCompleter(
                         symbol = FirValueParameterSymbol(name)
                         returnTypeRef =
                             itType.approximateLambdaInputType(symbol, withPCLASession, candidate).toFirResolvedTypeRef(
-                                lambdaAtom.anonymousFunction.source?.fakeElement(KtFakeSourceElementKind.ItLambdaParameter)
+                                lambdaAtom.anonymousFunction.source?.fakeElement(ImplicitReturnTypeOfLambdaValueParameter)
                             )
                         defaultValue = null
                         isCrossinline = false
@@ -432,9 +434,12 @@ class FirCallCompleter(
                     return@forEachIndexed
                 }
                 val newReturnType = theParameters[index].approximateLambdaInputType(parameter.symbol, withPCLASession, candidate)
+                val newReturnTypeSource = parameter.source?.fakeElement(ImplicitReturnTypeOfLambdaValueParameter)
                 val newReturnTypeRef = if (parameter.returnTypeRef is FirImplicitTypeRef) {
-                    newReturnType.toFirResolvedTypeRef(parameter.source?.fakeElement(KtFakeSourceElementKind.ImplicitReturnTypeOfLambdaValueParameter))
-                } else parameter.returnTypeRef.resolvedTypeFromPrototype(newReturnType)
+                    newReturnType.toFirResolvedTypeRef(newReturnTypeSource)
+                } else {
+                    parameter.returnTypeRef.resolvedTypeFromPrototype(newReturnType, newReturnTypeSource)
+                }
                 parameter.replaceReturnTypeRef(newReturnTypeRef)
                 lookupTracker?.recordTypeResolveAsLookup(newReturnTypeRef, parameter.source, fileSource)
             }
@@ -553,7 +558,7 @@ class FirCallCompleter(
                             .approximateLambdaInputType(parameter.symbol, withPCLASession, candidate)
                             .toFirResolvedTypeRef(
                                 parameter.returnTypeRef.source
-                                    ?: parameter.source?.fakeElement(KtFakeSourceElementKind.ImplicitReturnTypeOfLambdaValueParameter)
+                                    ?: parameter.source?.fakeElement(ImplicitReturnTypeOfLambdaValueParameter)
                             )
                     )
                 }

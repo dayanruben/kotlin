@@ -25,6 +25,8 @@ import org.jetbrains.kotlin.konan.target.CompilerOutputKind
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.library.uniqueName
 import org.jetbrains.kotlin.protobuf.ExtensionRegistryLite
+import org.jetbrains.kotlin.util.PhaseType
+import org.jetbrains.kotlin.util.PerformanceManager
 import java.util.*
 
 /**
@@ -60,6 +62,7 @@ class KonanDriver(
         val project: Project,
         val environment: KotlinCoreEnvironment,
         val configuration: CompilerConfiguration,
+        val performanceManager: PerformanceManager?,
         val compilationSpawner: CompilationSpawner
 ) {
     fun run() {
@@ -145,12 +148,11 @@ class KonanDriver(
             konanConfig.cacheSupport.checkConsistency()
         }
 
-        val performanceManager = configuration[CLIConfigurationKeys.PERF_MANAGER]
         val sourcesFiles = environment.getSourceFiles()
         performanceManager?.apply {
             targetDescription = "${konanConfig.moduleId}-${konanConfig.produce}"
             addSourcesStats(sourcesFiles.size, environment.countLinesOfCode(sourcesFiles))
-            notifyCompilerInitialized()
+            notifyPhaseFinished(PhaseType.Initialization)
         }
 
         DynamicCompilerDriver(performanceManager).run(konanConfig, environment)
