@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.test.framework.test.configurators.TestModul
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.FrontendKind;
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisSessionMode;
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisApiMode;
-import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.resolver.AbstractResolveDanglingFileReferenceTest;
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.resolver.AbstractNonPhysicalResolveDanglingFileReferenceTest;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 @SuppressWarnings("all")
 @TestMetadata("analysis/analysis-api/testData/danglingFileReferenceResolve")
 @TestDataPath("$PROJECT_ROOT")
-public class FirIdeNormalAnalysisSourceModuleResolveDanglingFileReferenceTestGenerated extends AbstractResolveDanglingFileReferenceTest {
+public class FirIdeDependentAnalysisSourceModuleNonPhysicalResolveDanglingFileReferenceTestGenerated extends AbstractNonPhysicalResolveDanglingFileReferenceTest {
   @NotNull
   @Override
   public AnalysisApiTestConfigurator getConfigurator() {
@@ -35,7 +35,7 @@ public class FirIdeNormalAnalysisSourceModuleResolveDanglingFileReferenceTestGen
       new AnalysisApiTestConfiguratorFactoryData(
         FrontendKind.Fir,
         TestModuleKind.Source,
-        AnalysisSessionMode.Normal,
+        AnalysisSessionMode.Dependent,
         AnalysisApiMode.Ide
       )
     );
@@ -188,6 +188,12 @@ public class FirIdeNormalAnalysisSourceModuleResolveDanglingFileReferenceTestGen
     }
 
     @Test
+    @TestMetadata("userDataCopy.kt")
+    public void testUserDataCopy() {
+      runTest("analysis/analysis-api/testData/danglingFileReferenceResolve/ignoreSelf/userDataCopy.kt");
+    }
+
+    @Test
     @TestMetadata("valueParameter.kt")
     public void testValueParameter() {
       runTest("analysis/analysis-api/testData/danglingFileReferenceResolve/ignoreSelf/valueParameter.kt");
@@ -285,6 +291,12 @@ public class FirIdeNormalAnalysisSourceModuleResolveDanglingFileReferenceTestGen
     @TestMetadata("topLevelFunction.kt")
     public void testTopLevelFunction() {
       runTest("analysis/analysis-api/testData/danglingFileReferenceResolve/preferSelf/topLevelFunction.kt");
+    }
+
+    @Test
+    @TestMetadata("userDataCopy.kt")
+    public void testUserDataCopy() {
+      runTest("analysis/analysis-api/testData/danglingFileReferenceResolve/preferSelf/userDataCopy.kt");
     }
 
     @Test
