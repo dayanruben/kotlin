@@ -120,10 +120,12 @@ class KonanSymbols(
 
     val interopCPointer = interopClass(InteropFqNames.cPointerName)
     val interopCPointed = interopClass(InteropFqNames.cPointedName)
+    val interopCVariable = interopClass(InteropFqNames.cVariableName)
     val interopCstr = findTopLevelPropertyGetter(InteropFqNames.packageName, InteropFqNames.cstrPropertyName, string)
     val interopWcstr = findTopLevelPropertyGetter(InteropFqNames.packageName, InteropFqNames.wcstrPropertyName, string)
     val interopMemScope = interopClass(InteropFqNames.memScopeName)
     val interopCValue = interopClass(InteropFqNames.cValueName)
+    val interopCValues = interopClass(InteropFqNames.cValuesName)
     val interopCValuesRef = interopClass(InteropFqNames.cValuesRefName)
     val interopCValueWrite = interopFunction(InteropFqNames.cValueWriteFunName) {
         symbolFinder.isExtensionReceiverClass(it, interopCValue)

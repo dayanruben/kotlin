@@ -52,8 +52,8 @@ object MetadataFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifa
     name = "MetadataFrontendPipelinePhase",
     postActions = setOf(PerformanceNotifications.AnalysisFinished, CheckCompilationErrors.CheckDiagnosticCollector)
 ) {
-    override fun executePhase(input: ConfigurationPipelineArtifact): MetadataFrontendPipelineArtifact? {
-        val (configuration, diagnosticsCollector, rootDisposable) = input
+    override fun executePhase(input: ConfigurationPipelineArtifact): MetadataFrontendPipelineArtifact {
+        val (configuration, diagnosticsReporter, rootDisposable) = input
         val messageCollector = configuration.messageCollector
         val rootModuleName = Name.special("<${configuration.moduleName!!}>")
         val isLightTree = configuration.getBoolean(CommonConfigurationKeys.USE_LIGHT_TREE)
@@ -69,8 +69,6 @@ object MetadataFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifa
             friendDependencies(configuration[K2MetadataConfigurationKeys.FRIEND_PATHS] ?: emptyList())
             dependsOnDependencies(refinedPaths.map { it.toPath() })
         }
-
-        val diagnosticsReporter = DiagnosticReporterFactory.createPendingReporter(messageCollector)
 
         val klibFiles = configuration.get(CLIConfigurationKeys.CONTENT_ROOTS).orEmpty()
             .filterIsInstance<JvmClasspathRoot>()
@@ -186,7 +184,7 @@ object MetadataFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifa
         return MetadataFrontendPipelineArtifact(
             FirResult(outputs),
             configuration,
-            diagnosticsCollector,
+            diagnosticsReporter,
             sourceFiles
         )
     }
