@@ -48,8 +48,13 @@ import org.jetbrains.kotlin.incremental.util.reportException
 import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.progress.CompilationCanceledStatus
-import org.jetbrains.kotlin.util.BackendMeasurement
-import org.jetbrains.kotlin.util.*
+import org.jetbrains.kotlin.util.PerformanceManager
+import org.jetbrains.kotlin.util.PhaseType
+import org.jetbrains.kotlin.util.Time
+import org.jetbrains.kotlin.util.forEachPhaseMeasurement
+import org.jetbrains.kotlin.util.getLinesPerSecond
+import org.jetbrains.kotlin.util.removeSuffixIfPresent
+import org.jetbrains.kotlin.util.toMetadataVersion
 import java.io.File
 import java.nio.file.Files
 
@@ -654,36 +659,46 @@ abstract class IncrementalCompilerRunner<
     }
 
     protected fun reportPerformanceData(defaultPerformanceManager: PerformanceManager) {
-        val lines = defaultPerformanceManager.lines.takeIf { it > 0 }
-        if (lines != null) {
-            reporter.addMetric(GradleBuildPerformanceMetric.SOURCE_LINES_NUMBER, lines.toLong())
+        val moduleStats = defaultPerformanceManager.unitStats
+        if (moduleStats.linesCount > 0) {
+            reporter.addMetric(GradleBuildPerformanceMetric.SOURCE_LINES_NUMBER, moduleStats.linesCount.toLong())
         }
-        defaultPerformanceManager.measurements.forEach {
-            when (it) {
-                is CompilerInitializationMeasurement -> reporter.addTimeMetricMs(GradleBuildTime.COMPILER_INITIALIZATION, it.milliseconds)
-                is CodeAnalysisMeasurement -> {
-                    reporter.addTimeMetricMs(GradleBuildTime.CODE_ANALYSIS, it.milliseconds)
-                    if (lines != null && it.milliseconds > 0) {
-                        reporter.addMetric(GradleBuildPerformanceMetric.ANALYSIS_LPS, lines * 1000 / it.milliseconds)
-                    }
-                }
-                is TranslationToIrMeasurement -> {
-                    reporter.addTimeMetricMs(GradleBuildTime.TRANSLATION_TO_IR, it.milliseconds)
-                }
-                is IrLoweringMeasurement -> {
-                    reporter.addTimeMetricMs(GradleBuildTime.IR_LOWERING, it.milliseconds)
-                }
-                is BackendMeasurement -> {
-                    reporter.addTimeMetricMs(GradleBuildTime.BACKEND, it.milliseconds)
-                }
+
+        fun reportLps(lpsMetrics: GradleBuildPerformanceMetric, time: Time) {
+            if (time != Time.ZERO) {
+                reporter.addMetric(lpsMetrics, moduleStats.getLinesPerSecond(time).toLong())
             }
         }
-        val loweringAndBackendTimeMs = defaultPerformanceManager.getLoweringAndBackendTimeMs()
-        if (loweringAndBackendTimeMs > 0) {
-            reporter.addTimeMetricMs(GradleBuildTime.CODE_GENERATION, loweringAndBackendTimeMs)
-            if (lines != null) {
-                reporter.addMetric(GradleBuildPerformanceMetric.CODE_GENERATION_LPS, lines * 1000 / loweringAndBackendTimeMs)
+
+        var codegenTime: Time = Time.ZERO
+
+        moduleStats.forEachPhaseMeasurement { phaseType, time ->
+            if (time == null) return@forEachPhaseMeasurement
+
+            val gradleBuildTime = when (phaseType) {
+                PhaseType.Initialization -> GradleBuildTime.COMPILER_INITIALIZATION
+                PhaseType.Analysis -> GradleBuildTime.CODE_ANALYSIS
+                PhaseType.TranslationToIr -> GradleBuildTime.TRANSLATION_TO_IR
+                PhaseType.IrLowering -> {
+                    codegenTime += time
+                    GradleBuildTime.IR_LOWERING
+                }
+                PhaseType.Backend -> {
+                    codegenTime += time
+                    GradleBuildTime.BACKEND
+                }
             }
+
+            reporter.addTimeMetricMs(gradleBuildTime, time.millis)
+
+            if (phaseType == PhaseType.Analysis) {
+                reportLps(GradleBuildPerformanceMetric.ANALYSIS_LPS, time)
+            }
+        }
+
+        if (codegenTime != Time.ZERO) {
+            reporter.addTimeMetricMs(GradleBuildTime.CODE_GENERATION, codegenTime.millis)
+            reportLps(GradleBuildPerformanceMetric.CODE_GENERATION_LPS, codegenTime)
         }
     }
 }

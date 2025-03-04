@@ -23,6 +23,9 @@ class ReplReceiver1 {
     val ok = "OK"
 }
 
+class TestReplReceiver1() { fun checkReceiver(block: ReplReceiver1.() -> Any) = block(ReplReceiver1()) }
+
+
 class CustomK2ReplTest {
 
     @Test
@@ -43,14 +46,71 @@ class CustomK2ReplTest {
 
     @Test
     fun testWithImplicitReceiver() {
-        evalAndCheckSnippets(
+        evalAndCheckSnippetsWithReplReceiver1(
             sequenceOf("val x = ok", "ok", "x",),
             sequenceOf(null, "OK", "OK"),
+        )
+    }
+
+    @Test
+    fun testWithImplicitReceiverWithShadowing() {
+        evalAndCheckSnippetsWithReplReceiver1(
+            sequenceOf("val ok = 42", "ok",),
+            sequenceOf(null, 42),
+        )
+    }
+
+    @Test
+    fun testWithImplicitReceiverIntExtension() {
+        evalAndCheckSnippetsWithReplReceiver1(
+            sequenceOf(
+                "fun org.jetbrains.kotlin.scripting.compiler.test.ReplReceiver1.foo() = ok.length",
+                "foo()",
+            ),
+            sequenceOf(null, 2),
+        )
+    }
+
+    @Test
+    fun testWithImplicitReceiverExtExtension() {
+        evalAndCheckSnippetsWithReplReceiver1(
+            sequenceOf(
+                "val obj = org.jetbrains.kotlin.scripting.compiler.test.TestReplReceiver1()",
+                "obj.checkReceiver { ok }",
+            ),
+            sequenceOf(null, "OK"),
+        )
+    }
+
+    @Test
+    fun testWithReceiverExtension() {
+        evalAndCheckSnippets(
+            sequenceOf(
+                "val obj = org.jetbrains.kotlin.scripting.compiler.test.TestReplReceiver1()",
+                "obj.checkReceiver { ok }",
+            ),
+            sequenceOf(null, "OK"),
+        )
+    }
+
+    @Test
+    fun testWithUpdatingDefaultImports() {
+        evalAndCheckSnippets(
+            sequenceOf(
+                "kotlin.random.Random.nextInt(10)/10",
+                "Random.nextInt(10)/10",
+            ),
+            sequenceOf(0, 0),
             baseCompilationConfiguration.with {
-                implicitReceivers(ReplReceiver1::class)
-            },
-            baseEvaluationConfiguration.with {
-                implicitReceivers(ReplReceiver1())
+                refineConfiguration {
+                    beforeCompiling { (script, config, _) ->
+                        config.with {
+                            if (!script.text.contains("kotlin.random.Random")) {
+                                defaultImports("kotlin.random.Random")
+                            }
+                        }.asSuccess()
+                    }
+                }
             }
         )
     }
@@ -117,4 +177,22 @@ private fun evalAndCheckSnippets(
 
     val evaluationResults = compileAndEvalSnippets(snippets, compilationConfiguration, evaluationConfiguration)
     checkEvaluatedSnippets(expectedResultVals, evaluationResults)
+}
+
+private fun evalAndCheckSnippetsWithReplReceiver1(
+    snippets: Sequence<String>,
+    expectedResultVals: Sequence<Any?>,
+    compilationConfiguration: ScriptCompilationConfiguration = baseCompilationConfiguration,
+    evaluationConfiguration: ScriptEvaluationConfiguration = baseEvaluationConfiguration
+) {
+    evalAndCheckSnippets(
+        snippets, expectedResultVals,
+        compilationConfiguration.with {
+            implicitReceivers(ReplReceiver1::class)
+        },
+        evaluationConfiguration.with {
+            implicitReceivers(ReplReceiver1())
+        }
+    )
+
 }
