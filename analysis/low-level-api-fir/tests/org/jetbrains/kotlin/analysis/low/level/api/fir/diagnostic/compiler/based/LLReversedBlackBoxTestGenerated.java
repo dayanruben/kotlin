@@ -35669,6 +35669,24 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
     }
 
     @Test
+    @TestMetadata("platformToLateinit.kt")
+    public void testPlatformToLateinit() {
+      runTest("compiler/testData/codegen/box/javaInterop/platformToLateinit.kt");
+    }
+
+    @Test
+    @TestMetadata("platformToLateinit2.kt")
+    public void testPlatformToLateinit2() {
+      runTest("compiler/testData/codegen/box/javaInterop/platformToLateinit2.kt");
+    }
+
+    @Test
+    @TestMetadata("platformToLateinit3.kt")
+    public void testPlatformToLateinit3() {
+      runTest("compiler/testData/codegen/box/javaInterop/platformToLateinit3.kt");
+    }
+
+    @Test
     @TestMetadata("protectedField.kt")
     public void testProtectedField() {
       runTest("compiler/testData/codegen/box/javaInterop/protectedField.kt");
@@ -53055,12 +53073,6 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
       @TestMetadata("functionExpressionInProperty.kt")
       public void testFunctionExpressionInProperty() {
         runTest("compiler/testData/codegen/box/reflection/enclosing/functionExpressionInProperty.kt");
-      }
-
-      @Test
-      @TestMetadata("kt11969.kt")
-      public void testKt11969() {
-        runTest("compiler/testData/codegen/box/reflection/enclosing/kt11969.kt");
       }
 
       @Test

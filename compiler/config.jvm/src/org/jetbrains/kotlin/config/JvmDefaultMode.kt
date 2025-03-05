@@ -31,3 +31,7 @@ enum class JvmDefaultMode(val description: String, val oldDescription: String) {
         }
     }
 }
+
+val LanguageVersionSettings.jvmDefaultMode: JvmDefaultMode
+    get() = getFlag(JvmAnalysisFlags.jvmDefaultMode)
+        ?: if (supportsFeature(LanguageFeature.JvmDefaultEnableByDefault)) JvmDefaultMode.ENABLE else JvmDefaultMode.DISABLE
