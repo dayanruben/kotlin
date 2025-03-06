@@ -54,6 +54,7 @@ abstract class IrTypeVisitorVoid : IrTypeVisitor<Unit, Nothing?>() {
     }
 
     open fun visitElement(element: IrElement) {
+        element.acceptChildrenVoid(this)
     }
 
     final override fun visitDeclaration(declaration: IrDeclarationBase, data: Nothing?) {

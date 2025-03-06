@@ -83,6 +83,9 @@ internal class TypeVisitorVoidPrinter(
                 element.parentInVisitor?.let {
                     println(it.visitFunctionName, "(", element.visitorParameterName, ")")
                 }
+                if (element.isRootElement) {
+                    println(element.visitorParameterName, ".acceptChildrenVoid(this)")
+                }
             }
         }
     }
