@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.*
 import org.jetbrains.kotlin.ElementTypeUtils.getOperationSymbol
 import org.jetbrains.kotlin.ElementTypeUtils.isExpression
 import org.jetbrains.kotlin.KtNodeTypes.*
-import org.jetbrains.kotlin.KtNodeTypes.STRING_TEMPLATE
 import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
@@ -35,8 +34,7 @@ import org.jetbrains.kotlin.fir.lightTree.fir.ValueParameter
 import org.jetbrains.kotlin.fir.lightTree.fir.WhenEntry
 import org.jetbrains.kotlin.fir.lightTree.fir.addDestructuringStatements
 import org.jetbrains.kotlin.fir.references.FirNamedReference
-import org.jetbrains.kotlin.fir.references.FirSuperReference
-import org.jetbrains.kotlin.fir.references.builder.buildErrorNamedReference
+import org.jetbrains.kotlin.fir.references.buildErrorNamedReferenceWithNoName
 import org.jetbrains.kotlin.fir.references.builder.buildExplicitSuperReference
 import org.jetbrains.kotlin.fir.references.builder.buildExplicitThisReference
 import org.jetbrains.kotlin.fir.references.builder.buildSimpleNamedReference
@@ -57,7 +55,6 @@ import org.jetbrains.kotlin.psi.stubs.elements.KtNameReferenceExpressionElementT
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
-import kotlin.collections.contains
 
 class LightTreeRawFirExpressionBuilder(
     session: FirSession,
@@ -757,12 +754,12 @@ class LightTreeRawFirExpressionBuilder(
                 }
             )
 
-            superNode != null || (additionalArgument as? FirResolvable)?.calleeReference is FirSuperReference -> {
+            superNode != null || additionalArgument is FirSuperReceiverExpression -> {
                 CalleeAndReceiver(
-                    buildErrorNamedReference {
-                        this.source = superNode?.toFirSourceElement() ?: (additionalArgument as? FirResolvable)?.calleeReference?.source
-                        diagnostic = ConeSimpleDiagnostic("Super cannot be a callee", DiagnosticKind.SuperNotAllowed)
-                    }
+                    buildErrorNamedReferenceWithNoName(
+                        source = superNode?.toFirSourceElement() ?: (additionalArgument as? FirResolvable)?.calleeReference?.source,
+                        diagnostic = ConeSimpleDiagnostic("Super cannot be a callee", DiagnosticKind.SuperNotAllowed),
+                    )
                 )
             }
 
@@ -777,10 +774,10 @@ class LightTreeRawFirExpressionBuilder(
             }
 
             else -> CalleeAndReceiver(
-                buildErrorNamedReference {
-                    this.source = source
-                    diagnostic = ConeSyntaxDiagnostic("Call has no callee")
-                }
+                buildErrorNamedReferenceWithNoName(
+                    diagnostic = ConeSyntaxDiagnostic("Call has no callee"),
+                    source,
+                )
             )
         }
 
@@ -1605,7 +1602,7 @@ class LightTreeRawFirExpressionBuilder(
             }
         }
 
-        return buildPropertyAccessExpression {
+        return buildSuperReceiverExpression {
             val sourceElement = superExpression.toFirSourceElement()
             source = sourceElement
             calleeReference = buildExplicitSuperReference {

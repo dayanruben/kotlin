@@ -895,6 +895,7 @@ object FirTree : AbstractFirTreeBuilder() {
 
     val propertyAccessExpression: Element by element(Expression) {
         parent(qualifiedAccessExpression)
+        +field("calleeReference", namedReference, withReplace = true, withTransform = true)
     }
 
     val getClassCall: Element by element(Expression) {
@@ -1195,6 +1196,11 @@ object FirTree : AbstractFirTreeBuilder() {
         parent(diagnosticHolder)
     }
 
+    val errorSuperReference: Element by element(Reference) {
+        parent(superReference)
+        parent(diagnosticHolder)
+    }
+
     val intersectionTypeRef: Element by element(TypeRefElement) {
         parent(unresolvedTypeRef)
 
@@ -1207,6 +1213,12 @@ object FirTree : AbstractFirTreeBuilder() {
 
         +field("calleeReference", thisReference)
         +field("isImplicit", boolean)
+    }
+
+    val superReceiverExpression: Element by element(Expression) {
+        parent(qualifiedAccessExpression)
+
+        +field("calleeReference", superReference)
     }
 
     val inaccessibleReceiverExpression: Element by element(Expression) {

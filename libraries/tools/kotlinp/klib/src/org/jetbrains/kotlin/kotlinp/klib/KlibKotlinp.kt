@@ -44,15 +44,8 @@ class KlibKotlinp(
         appendLine("}")
     }
 
-    override fun getAnnotations(clazz: KmClass): List<KmAnnotation> = clazz.klibAnnotations
-    override fun getAnnotations(constructor: KmConstructor): List<KmAnnotation> = constructor.klibAnnotations
-    override fun getAnnotations(function: KmFunction): List<KmAnnotation> = function.klibAnnotations
-    override fun getAnnotations(property: KmProperty): List<KmAnnotation> = property.klibAnnotations
-    override fun getGetterAnnotations(property: KmProperty): List<KmAnnotation> = property.klibGetterAnnotations
-    override fun getSetterAnnotations(property: KmProperty): List<KmAnnotation> = property.klibSetterAnnotations
     override fun getAnnotations(typeParameter: KmTypeParameter): List<KmAnnotation> = typeParameter.annotations
     override fun getAnnotations(type: KmType): List<KmAnnotation> = type.annotations
-    override fun getAnnotations(valueParameter: KmValueParameter): List<KmAnnotation> = valueParameter.klibAnnotations
 
     override fun Printer.appendSignatures(clazz: KmClass) = appendSignature { classSignature(clazz) }
     override fun Printer.appendSignatures(constructor: KmConstructor) = appendSignature { constructorSignature(constructor) }
@@ -71,7 +64,7 @@ class KlibKotlinp(
         clazz.klibEnumEntries.forEach { enumEntry ->
             appendLine()
             appendSignature { enumEntrySignature(enumEntry) }
-            appendAnnotations(hasAnnotations = null, enumEntry.annotations)
+            appendAnnotations(enumEntry.annotations)
             appendLine(enumEntry.name, ",")
         }
     }

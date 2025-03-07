@@ -401,6 +401,11 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
             defaultEmptyList("contextArguments", withGetter = true)
         }
 
+        impl(superReceiverExpression) {
+            defaultNull("explicitReceiver", "extensionReceiver", withGetter = true)
+            defaultEmptyList("contextArguments", withGetter = true)
+        }
+
         impl(expression, "FirUnitExpression") {
             kDoc(
                 """
@@ -580,9 +585,7 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
             kind = Object
         }
 
-        impl(errorNamedReference) {
-            default("name", "Name.special(\"<\${diagnostic.reason}>\")")
-        }
+        impl(errorNamedReference)
 
         impl(breakExpression) {
             defaultBuiltInType("Nothing")
