@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.swiftexport.standalone.test
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.kotlin.konan.test.blackbox.support.group.FirPipeline
 import org.jetbrains.kotlin.konan.test.blackbox.support.group.UseStandardTestCaseGroupProvider
 import org.jetbrains.kotlin.konan.test.testLibraryAKlibFile
 import org.jetbrains.kotlin.konan.test.testLibraryKotlinxSerializationCore
@@ -18,7 +17,6 @@ import java.io.File
 
 @TestMetadata("native/swift/swift-export-standalone-integration-tests/external/testData/generation")
 @TestDataPath("\$PROJECT_ROOT")
-@FirPipeline
 @UseStandardTestCaseGroupProvider
 class ExternalProjectGenerationTests : AbstractKlibBasedSwiftRunnerTest() {
 
@@ -26,6 +24,7 @@ class ExternalProjectGenerationTests : AbstractKlibBasedSwiftRunnerTest() {
     fun `full export of testLibraryA`() {
         val klibSettings = KlibExportSettings(
             testLibraryAKlibFile,
+            targets.testTarget,
             "testLibraryA",
         )
         validateFullLibraryDump(klibSettings, "testLibraryA_full_dump")
@@ -35,6 +34,7 @@ class ExternalProjectGenerationTests : AbstractKlibBasedSwiftRunnerTest() {
     fun `kotlinx-serialization-core`() {
         val klibSettings = KlibExportSettings(
             testLibraryKotlinxSerializationCore,
+            targets.testTarget,
             "KotlinSerialization",
             "kotlinx.serialization",
         )

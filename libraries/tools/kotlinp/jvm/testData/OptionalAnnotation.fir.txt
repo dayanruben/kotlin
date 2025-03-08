@@ -1,13 +1,4 @@
-// test/D.class
-// ------------------------------------------
-public final annotation class test/D : kotlin/Annotation {
-
-  // signature: <init>()V
-  public constructor()
-
-  // module name: test-module
-}
-// test/OptionalAnnotationKt.class
+// test/CommonKt.class
 // ------------------------------------------
 package {
 
@@ -18,13 +9,22 @@ package {
   @test/D
   public final fun ok(): kotlin/Unit
 
-  // module name: test-module
+  // module name: jvm
 }
-// META-INF/test-module.kotlin_module
+// test/D.class
+// ------------------------------------------
+public final annotation class test/D : kotlin/Annotation {
+
+  // signature: <init>()V
+  public constructor()
+
+  // module name: jvm
+}
+// META-INF/jvm.kotlin_module
 // ------------------------------------------
 module {
   package test {
-    test/OptionalAnnotationKt
+    test/CommonKt
   }
 
   // Optional annotations
@@ -53,14 +53,6 @@ module {
   }
   @kotlin/OptionalExpectation
   public final expect annotation class test/C : kotlin/Annotation {
-
-    // signature: <init>()V
-    public constructor()
-
-    // module name: main
-  }
-  @kotlin/OptionalExpectation
-  public final expect annotation class test/D : kotlin/Annotation {
 
     // signature: <init>()V
     public constructor()

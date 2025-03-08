@@ -200,6 +200,7 @@ val commonCompilerModules = arrayOf(
     ":compiler:build-tools:kotlin-build-statistics",
     ":compiler:build-tools:kotlin-build-tools-api",
     ":js:js.config",
+    ":js:js.frontend.common",
     ":wasm:wasm.config",
 ).also { extra["commonCompilerModules"] = it }
 
@@ -212,8 +213,9 @@ val firCompilerCoreModules = arrayOf(
     ":compiler:fir:fir-deserialization",
     ":compiler:fir:plugin-utils",
     ":compiler:fir:tree",
-    ":compiler:fir:java",
-    ":compiler:fir:native",
+    ":compiler:fir:fir-jvm",
+    ":compiler:fir:fir-js",
+    ":compiler:fir:fir-native",
     ":compiler:fir:raw-fir:raw-fir.common",
     ":compiler:fir:raw-fir:psi2fir",
     ":compiler:fir:checkers",

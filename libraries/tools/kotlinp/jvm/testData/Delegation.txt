@@ -18,10 +18,6 @@ public abstract interface I : kotlin/Any {
   public abstract fun foo(): kotlin/Unit
 
   // module name: test-module
-
-  // has method bodies in interface
-
-  // is compiled in compatibility mode
 }
 // META-INF/test-module.kotlin_module
 // ------------------------------------------

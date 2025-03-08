@@ -287,8 +287,7 @@ private fun bridgeDeclarationName(bridgeName: String, parameterBridges: List<Bri
             .replace(".", "_")
             .replace(",", "_")
             .replace("<", "_")
-            .replace(">", "_") +
-                if (it.bridge is Bridge.AsOptionalWrapper) "_opt_" else ""
+            .replace(">", "_")
     }
     val suffixString = if (parameterBridges.isNotEmpty()) "__TypesOfArguments__${nameSuffixForOverloadSimulation}__" else ""
     val result = "${bridgeName}${suffixString}".cIdentifier
@@ -468,7 +467,11 @@ private fun bridgeNominalType(type: SirNominalType): Bridge {
         is SirTypealias -> bridgeType(subtype.type)
 
         // TODO: Right now, we just assume everything nominal that we do not recognize is a class. We should make this decision looking at kotlin type?
-        else -> Bridge.AsObject(type, KotlinType.KotlinObject, CType.Object)
+        else -> if (type.typeDeclaration.parent is SirPlatformModule) {
+            Bridge.AsNSObject(type)
+        } else {
+            Bridge.AsObject(type, KotlinType.KotlinObject, CType.Object)
+        }
     }
 }
 
@@ -519,6 +522,7 @@ private sealed class CType {
     data object id : Predefined("id")
     data object NSString : Predefined("NSString *")
     data object NSNumber : Predefined("NSNumber *")
+    data object NSObject : Predefined("id<NSObject>") // NSProxy and NSObject conforms to this
 
     sealed class Generic(base: String, vararg args: CType) : Predefined(
         repr = "$base<${args.joinToString(", ") { it.render("").trim() }}> *"
@@ -545,7 +549,7 @@ private sealed class CType {
     }
 }
 
-private enum class KotlinType(val repr: kotlin.String) {
+private enum class KotlinType(val repr: String) {
     Unit("Unit"),
 
     Boolean("Boolean"),
@@ -745,6 +749,16 @@ private sealed class Bridge(
         }
     }
 
+    class AsNSObject(
+        swiftType: SirNominalType,
+    ) : AsObjCBridged(swiftType, CType.NSObject) {
+        override val inSwiftSources: InSwiftSourcesConversion = object : NilableIdentityValueConversion {
+            override fun renderNil(): String = "nil"
+            override fun kotlinToSwift(typeNamer: SirTypeNamer, valueExpression: String): String =
+                "$valueExpression as! ${typeNamer.swiftFqName(swiftType)}"
+        }
+    }
+
     abstract class AsNSCollection(
         swiftType: SirNominalType,
         cType: CType,
@@ -816,7 +830,11 @@ private sealed class Bridge(
 
     class AsOptionalWrapper(
         val wrappedObject: Bridge,
-    ) : Bridge(wrappedObject.swiftType, wrappedObject.kotlinType, wrappedObject.cType) {
+    ) : Bridge(
+        wrappedObject.swiftType.optional(),
+        wrappedObject.kotlinType,
+        wrappedObject.cType
+    ) {
 
         override val inKotlinSources: ValueConversion
             get() = object : ValueConversion {
@@ -827,7 +845,7 @@ private sealed class Bridge(
                 }
 
                 override fun kotlinToSwift(typeNamer: SirTypeNamer, valueExpression: String): String {
-                    return "if ($valueExpression == null) return kotlin.native.internal.NativePtr.NULL else return ${
+                    return "if ($valueExpression == null) kotlin.native.internal.NativePtr.NULL else ${
                         wrappedObject.inKotlinSources.kotlinToSwift(typeNamer, valueExpression)
                     }"
                 }
@@ -844,9 +862,9 @@ private sealed class Bridge(
                 return when (wrappedObject) {
                     is AsObjCBridged ->
                         valueExpression.mapSwift { wrappedObject.inSwiftSources.kotlinToSwift(typeNamer, it) }
-                    is AsObject, is AsExistential -> "switch $valueExpression { case ${wrappedObject.inSwiftSources.renderNil()}: .none; case let res: ${
+                    is AsObject, is AsExistential -> "{ switch $valueExpression { case ${wrappedObject.inSwiftSources.renderNil()}: .none; case let res: ${
                         wrappedObject.inSwiftSources.kotlinToSwift(typeNamer, "res")
-                    }; }"
+                    }; } }()"
                     is AsIs,
                     is AsOpaqueObject,
                     is AsOutError,
