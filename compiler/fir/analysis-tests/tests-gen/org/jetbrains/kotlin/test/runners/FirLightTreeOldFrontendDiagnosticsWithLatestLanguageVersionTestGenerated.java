@@ -29217,6 +29217,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       }
 
       @Test
+      @TestMetadata("conflictingOverloadsWithContextParameters.kt")
+      public void testConflictingOverloadsWithContextParameters() {
+        runTest("compiler/testData/diagnostics/tests/overload/conflictingOverloadsWithContextParameters.kt");
+      }
+
+      @Test
       @TestMetadata("ConstructorVsFunOverload.kt")
       public void testConstructorVsFunOverload() {
         runTest("compiler/testData/diagnostics/tests/overload/ConstructorVsFunOverload.kt");
@@ -32149,6 +32155,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
         @TestMetadata("extensionVsNonPublicMember.kt")
         public void testExtensionVsNonPublicMember() {
           runTest("compiler/testData/diagnostics/tests/redeclarations/shadowedExtension/extensionVsNonPublicMember.kt");
+        }
+
+        @Test
+        @TestMetadata("extensionWithContext.kt")
+        public void testExtensionWithContext() {
+          runTest("compiler/testData/diagnostics/tests/redeclarations/shadowedExtension/extensionWithContext.kt");
         }
 
         @Test

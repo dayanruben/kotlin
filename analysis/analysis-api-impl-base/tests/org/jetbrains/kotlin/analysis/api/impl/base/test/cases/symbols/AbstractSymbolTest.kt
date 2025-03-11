@@ -553,6 +553,13 @@ private fun KaSymbol.dropBackingPsi() {
         "KaFirPsiJavaClassSymbol",
         "KaFirPsiJavaTypeParameterSymbol",
             -> return
+
+        // There classes depend on the property PSI. The owning property is already invalidated above
+        "KaFirDefaultPropertyGetterSymbol",
+        "KaFirDefaultPropertySetterSymbol",
+        "KaFirPropertyGetterSymbol",
+        "KaFirPropertySetterSymbol",
+            -> return
     }
 
     val property = thisClass.memberProperties.single { it.name == "backingPsi" }

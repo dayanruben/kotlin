@@ -195,7 +195,6 @@ private fun <F> prepareKlibSessions(
             sessionFactory.createSharedLibrarySession(
                 rootModuleName,
                 sessionProvider,
-                libraryList.moduleDataProvider,
                 configuration,
                 extensionRegistrars,
             )
@@ -249,7 +248,6 @@ fun <F> prepareMetadataSessions(
             FirMetadataSessionFactory.createSharedLibrarySession(
                 rootModuleName,
                 sessionProvider,
-                libraryList.moduleDataProvider,
                 languageVersionSettings,
                 extensionRegistrars,
             )
@@ -369,10 +367,11 @@ object SessionConstructionUtils {
     ): SessionWithSources<F> =
         createSingleSession(
             scripts, Name.identifier("${rootModuleName.asString()}-scripts"),
+            @OptIn(PrivateSessionConstructor::class)
             DependencyListForCliModule(
                 libraryList.regularDependencies,
                 listOf(lastModuleData),
-                libraryList.friendsDependencies,
+                libraryList.friendDependencies,
                 libraryList.moduleDataProvider
             ),
             targetPlatform,
@@ -388,11 +387,11 @@ object SessionConstructionUtils {
         noinline sessionConfigurator: FirSessionConfigurator.() -> Unit,
         createFirSession: FirSessionProducer<F>,
     ): SessionWithSources<F> {
-        val platformModuleData = FirModuleDataImpl(
+        val platformModuleData = FirSourceModuleData(
             rootModuleName,
             libraryList.regularDependencies,
             libraryList.dependsOnDependencies,
-            libraryList.friendsDependencies,
+            libraryList.friendDependencies,
             targetPlatform,
         )
 
@@ -413,20 +412,20 @@ object SessionConstructionUtils {
         isCommonSource: (F) -> Boolean,
         createFirSession: FirSessionProducer<F>,
     ): List<SessionWithSources<F>> {
-        val commonModuleData = FirModuleDataImpl(
+        val commonModuleData = FirSourceModuleData(
             Name.identifier("${rootModuleName.asString()}-common"),
             libraryList.regularDependencies,
             listOf(),
-            libraryList.friendsDependencies,
+            libraryList.friendDependencies,
             targetPlatform,
             isCommon = true
         )
 
-        val platformModuleData = FirModuleDataImpl(
+        val platformModuleData = FirSourceModuleData(
             rootModuleName,
             libraryList.regularDependencies,
             listOf(commonModuleData),
-            libraryList.friendsDependencies,
+            libraryList.friendDependencies,
             targetPlatform,
             isCommon = false
         )
@@ -473,11 +472,11 @@ object SessionConstructionUtils {
             } else {
                 Name.special("<${module.name}>")
             }
-            val moduleData = FirModuleDataImpl(
+            val moduleData = FirSourceModuleData(
                 moduleName,
                 libraryList.regularDependencies,
                 dependsOnDependencies = dependencies,
-                libraryList.friendsDependencies,
+                libraryList.friendDependencies,
                 targetPlatform,
                 isCommon = index < hmppModuleStructure.modules.size - 1
             )

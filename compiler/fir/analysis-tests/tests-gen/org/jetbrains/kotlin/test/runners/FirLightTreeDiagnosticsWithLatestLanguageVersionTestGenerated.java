@@ -1594,6 +1594,12 @@ public class FirLightTreeDiagnosticsWithLatestLanguageVersionTestGenerated exten
       }
 
       @Test
+      @TestMetadata("notImplementedEqualsWithContextParameters.kt")
+      public void testNotImplementedEqualsWithContextParameters() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/checkers/notImplementedEqualsWithContextParameters.kt");
+      }
+
+      @Test
       @TestMetadata("notUselessCast_1.kt")
       public void testNotUselessCast_1() {
         runTest("compiler/fir/analysis-tests/testData/resolve/checkers/notUselessCast_1.kt");
@@ -1627,6 +1633,12 @@ public class FirLightTreeDiagnosticsWithLatestLanguageVersionTestGenerated exten
       @TestMetadata("unsuccessfullCastToStartProjectedType.kt")
       public void testUnsuccessfullCastToStartProjectedType() {
         runTest("compiler/fir/analysis-tests/testData/resolve/checkers/unsuccessfullCastToStartProjectedType.kt");
+      }
+
+      @Test
+      @TestMetadata("uselessCast.kt")
+      public void testUselessCast() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/checkers/uselessCast.kt");
       }
 
       @Test
@@ -2052,6 +2064,12 @@ public class FirLightTreeDiagnosticsWithLatestLanguageVersionTestGenerated exten
         @TestMetadata("anonymousFunctionsWithModifiers.kt")
         public void testAnonymousFunctionsWithModifiers() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/anonymousFunctionsWithModifiers.kt");
+        }
+
+        @Test
+        @TestMetadata("contextParameterNameChanged.kt")
+        public void testContextParameterNameChanged() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/contextParameterNameChanged.kt");
         }
 
         @Test

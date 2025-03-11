@@ -80,7 +80,6 @@ open class FirReplFrontendFacade(testServices: TestServices) : FrontendFacade<Fi
         val sharedLibrarySession = FirJvmSessionFactory.createSharedLibrarySession(
             Name.special("<${testModule.name}>"),
             testServices.firModuleInfoProvider.firSessionProvider,
-            libraryList.moduleDataProvider,
             projectEnvironment,
             extensionRegistrars,
             librariesSearchScope,
@@ -124,10 +123,10 @@ open class FirReplFrontendFacade(testServices: TestServices) : FrontendFacade<Fi
 
         val regularModules = libraryList.regularDependencies + moduleInfoProvider.getRegularDependentSourceModules(module)
         // TODO: collect instead of recursive traversal on each new snippet
-        val friendModules = libraryList.friendsDependencies + moduleInfoProvider.getDependentFriendSourceModulesRecursively(module)
+        val friendModules = libraryList.friendDependencies + moduleInfoProvider.getDependentFriendSourceModulesRecursively(module)
         val dependsOnModules = libraryList.dependsOnDependencies + moduleInfoProvider.getDependentDependsOnSourceModules(module)
 
-        return FirModuleDataImpl(
+        return FirSourceModuleData(
             Name.special("<${module.name}>"),
             regularModules,
             dependsOnModules,

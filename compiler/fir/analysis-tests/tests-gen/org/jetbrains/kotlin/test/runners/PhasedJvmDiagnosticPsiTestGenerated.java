@@ -27534,6 +27534,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       }
 
       @Test
+      @TestMetadata("valueClassWithExtraProperty.kt")
+      public void testValueClassWithExtraProperty() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/valueClassWithExtraProperty.kt");
+      }
+
+      @Test
       @TestMetadata("valueClassWithPrivateConstructor.kt")
       public void testValueClassWithPrivateConstructor() {
         runTest("compiler/testData/diagnostics/tests/multiplatform/valueClassWithPrivateConstructor.kt");
@@ -30838,6 +30844,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       }
 
       @Test
+      @TestMetadata("conflictingOverloadsWithContextParameters.kt")
+      public void testConflictingOverloadsWithContextParameters() {
+        runTest("compiler/testData/diagnostics/tests/overload/conflictingOverloadsWithContextParameters.kt");
+      }
+
+      @Test
       @TestMetadata("ConstructorVsFunOverload.kt")
       public void testConstructorVsFunOverload() {
         runTest("compiler/testData/diagnostics/tests/overload/ConstructorVsFunOverload.kt");
@@ -33646,6 +33658,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
         @TestMetadata("extensionVsNonPublicMember.kt")
         public void testExtensionVsNonPublicMember() {
           runTest("compiler/testData/diagnostics/tests/redeclarations/shadowedExtension/extensionVsNonPublicMember.kt");
+        }
+
+        @Test
+        @TestMetadata("extensionWithContext.kt")
+        public void testExtensionWithContext() {
+          runTest("compiler/testData/diagnostics/tests/redeclarations/shadowedExtension/extensionWithContext.kt");
         }
 
         @Test
@@ -51562,6 +51580,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       }
 
       @Test
+      @TestMetadata("notImplementedEqualsWithContextParameters.kt")
+      public void testNotImplementedEqualsWithContextParameters() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/checkers/notImplementedEqualsWithContextParameters.kt");
+      }
+
+      @Test
       @TestMetadata("notUselessCast_1.kt")
       public void testNotUselessCast_1() {
         runTest("compiler/fir/analysis-tests/testData/resolve/checkers/notUselessCast_1.kt");
@@ -51595,6 +51619,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       @TestMetadata("unsuccessfullCastToStartProjectedType.kt")
       public void testUnsuccessfullCastToStartProjectedType() {
         runTest("compiler/fir/analysis-tests/testData/resolve/checkers/unsuccessfullCastToStartProjectedType.kt");
+      }
+
+      @Test
+      @TestMetadata("uselessCast.kt")
+      public void testUselessCast() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/checkers/uselessCast.kt");
       }
 
       @Test
@@ -51990,6 +52020,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
         @TestMetadata("anonymousFunctionsWithModifiers.kt")
         public void testAnonymousFunctionsWithModifiers() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/anonymousFunctionsWithModifiers.kt");
+        }
+
+        @Test
+        @TestMetadata("contextParameterNameChanged.kt")
+        public void testContextParameterNameChanged() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/contextParameterNameChanged.kt");
         }
 
         @Test

@@ -60,7 +60,6 @@ import org.jetbrains.kotlin.test.services.configuration.NativeEnvironmentConfigu
 import org.jetbrains.kotlin.test.services.configuration.WasmEnvironmentConfigurator
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.wasm.config.WasmConfigurationKeys
-import java.nio.file.Paths
 import org.jetbrains.kotlin.konan.file.File as KFile
 
 open class FirFrontendFacade(testServices: TestServices) : FrontendFacade<FirOutputArtifact>(testServices, FrontendKinds.FIR) {
@@ -124,22 +123,21 @@ open class FirFrontendFacade(testServices: TestServices) : FrontendFacade<FirOut
         // the special name is required for `KlibMetadataModuleDescriptorFactoryImpl.createDescriptorOptionalBuiltIns`
         // it doesn't seem convincingly legitimate, probably should be refactored
         val moduleName = Name.special("<${mainModule.name}>")
-        val binaryModuleData = BinaryModuleData.initialize(moduleName, targetPlatform)
 
         val compilerConfigurationProvider = testServices.compilerConfigurationProvider
         val configuration = compilerConfigurationProvider.getCompilerConfiguration(mainModule)
 
-        val libraryList = initializeLibraryList(mainModule, binaryModuleData, targetPlatform, configuration, testServices)
+        val libraryList = initializeLibraryList(mainModule, moduleName, targetPlatform, configuration, testServices)
 
         val moduleInfoProvider = testServices.firModuleInfoProvider
         val moduleDataMap = mutableMapOf<TestModule, FirModuleData>()
 
         for (module in modules) {
             val regularModules = libraryList.regularDependencies + moduleInfoProvider.getRegularDependentSourceModules(module)
-            val friendModules = libraryList.friendsDependencies + moduleInfoProvider.getDependentFriendSourceModules(module)
+            val friendModules = libraryList.friendDependencies + moduleInfoProvider.getDependentFriendSourceModules(module)
             val dependsOnModules = libraryList.dependsOnDependencies + moduleInfoProvider.getDependentDependsOnSourceModules(module)
 
-            val moduleData = FirModuleDataImpl(
+            val moduleData = FirSourceModuleData(
                 Name.special("<${module.name}>"),
                 regularModules,
                 dependsOnModules,
@@ -193,7 +191,6 @@ open class FirFrontendFacade(testServices: TestServices) : FrontendFacade<FirOut
                     val sharedLibrarySession = FirMetadataSessionFactory.createSharedLibrarySession(
                         mainModuleName = moduleName,
                         sessionProvider = sessionProvider,
-                        moduleDataProvider = moduleDataProvider,
                         languageVersionSettings = languageVersionSettings,
                         extensionRegistrars = extensionRegistrars,
                     )
@@ -213,7 +210,6 @@ open class FirFrontendFacade(testServices: TestServices) : FrontendFacade<FirOut
                     val sharedLibrarySession = FirJvmSessionFactory.createSharedLibrarySession(
                         moduleName,
                         sessionProvider,
-                        moduleDataProvider,
                         projectEnvironment,
                         extensionRegistrars,
                         projectFileSearchScope,
@@ -427,40 +423,40 @@ open class FirFrontendFacade(testServices: TestServices) : FrontendFacade<FirOut
     companion object {
         fun initializeLibraryList(
             mainModule: TestModule,
-            binaryModuleData: BinaryModuleData,
+            mainModuleName: Name,
             targetPlatform: TargetPlatform,
             configuration: CompilerConfiguration,
             testServices: TestServices
         ): DependencyListForCliModule {
-            return DependencyListForCliModule.build(binaryModuleData) {
+            return DependencyListForCliModule.build(mainModuleName) {
                 when {
                     targetPlatform.isCommon() || targetPlatform.isJvm() -> {
-                        dependencies(configuration.jvmModularRoots.map { it.toPath() })
-                        dependencies(configuration.jvmClasspathRoots.map { it.toPath() })
+                        dependencies(configuration.jvmModularRoots.map { it.absolutePath })
+                        dependencies(configuration.jvmClasspathRoots.map { it.absolutePath })
                         friendDependencies(configuration[JVMConfigurationKeys.FRIEND_PATHS] ?: emptyList())
                     }
                     targetPlatform.isJs() -> {
                         val runtimeKlibsPaths = JsEnvironmentConfigurator.getRuntimePathsForModule(mainModule, testServices)
                         val (transitiveLibraries, friendLibraries) = getTransitivesAndFriends(mainModule, testServices)
-                        dependencies(runtimeKlibsPaths.map { Paths.get(it).toAbsolutePath() })
-                        dependencies(transitiveLibraries.map { it.toPath().toAbsolutePath() })
-                        friendDependencies(friendLibraries.map { it.toPath().toAbsolutePath() })
+                        dependencies(runtimeKlibsPaths)
+                        dependencies(transitiveLibraries.map { it.absolutePath })
+                        friendDependencies(friendLibraries.map { it.absolutePath })
                     }
                     targetPlatform.isNative() -> {
                         val runtimeKlibsPaths = NativeEnvironmentConfigurator.getRuntimePathsForModule(mainModule, testServices)
                         val (transitiveLibraries, friendLibraries) = getTransitivesAndFriends(mainModule, testServices)
-                        dependencies(runtimeKlibsPaths.map { Paths.get(it).toAbsolutePath() })
-                        dependencies(transitiveLibraries.map { it.toPath().toAbsolutePath() })
-                        friendDependencies(friendLibraries.map { it.toPath().toAbsolutePath() })
+                        dependencies(runtimeKlibsPaths)
+                        dependencies(transitiveLibraries.map { it.absolutePath })
+                        friendDependencies(friendLibraries.map { it.absolutePath })
                     }
                     targetPlatform.isWasm() -> {
                         val runtimeKlibsPaths = WasmEnvironmentConfigurator.getRuntimePathsForModule(
                             configuration.get(WasmConfigurationKeys.WASM_TARGET, WasmTarget.JS)
                         )
                         val (transitiveLibraries, friendLibraries) = getTransitivesAndFriends(mainModule, testServices)
-                        dependencies(runtimeKlibsPaths.map { Paths.get(it).toAbsolutePath() })
-                        dependencies(transitiveLibraries.map { it.toPath().toAbsolutePath() })
-                        friendDependencies(friendLibraries.map { it.toPath().toAbsolutePath() })
+                        dependencies(runtimeKlibsPaths)
+                        dependencies(transitiveLibraries.map { it.absolutePath })
+                        friendDependencies(friendLibraries.map { it.absolutePath })
                     }
                     else -> error("Unsupported")
                 }

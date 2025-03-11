@@ -458,7 +458,9 @@ private fun List<FirCallableSymbol<*>>.subjectToManyNotImplemented(): Boolean {
 private val FirNamedFunctionSymbol.matchesDataClassSyntheticMemberSignatures: Boolean
     get() {
         val name = callableId.callableName
-        return (name == OperatorNameConventions.EQUALS && matchesEqualsSignature) ||
+        return receiverParameter == null &&
+                resolvedContextParameters.isEmpty() &&
+                (name == OperatorNameConventions.EQUALS && matchesEqualsSignature) ||
                 (name == HASHCODE_NAME && matchesHashCodeSignature) ||
                 (name == OperatorNameConventions.TO_STRING && matchesToStringSignature)
     }
@@ -696,7 +698,9 @@ fun FirFunctionSymbol<*>.isFunctionForExpectTypeFromCastFeature(): Boolean {
     fun FirTypeRef.isBadType() =
         coneType.contains { (it.lowerBoundIfFlexible() as? ConeTypeParameterType)?.lookupTag == typeParameterSymbol.toLookupTag() }
 
-    return valueParameterSymbols.none { it.resolvedReturnTypeRef.isBadType() } || resolvedReceiverTypeRef?.isBadType() == true
+    return valueParameterSymbols.none { it.resolvedReturnTypeRef.isBadType() }
+            && resolvedReceiverTypeRef?.isBadType() != true
+            && resolvedContextParameters.none { it.returnTypeRef.isBadType() }
 }
 
 private val FirCallableDeclaration.isMember get() = dispatchReceiverType != null

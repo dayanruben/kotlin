@@ -32,18 +32,16 @@ object FirSessionFactoryHelper {
         incrementalCompilationContext: IncrementalCompilationContext?,
         extensionRegistrars: List<FirExtensionRegistrar>,
         needRegisterJavaElementFinder: Boolean,
-        dependenciesConfigurator: DependencyListForCliModule.Builder.() -> Unit = {},
+        dependenciesConfigurator: DependencyListForCliModule.Builder.BuilderForDefaultDependenciesModule.() -> Unit = {},
         noinline sessionConfigurator: FirSessionConfigurator.() -> Unit = {},
     ): FirSession {
-        val binaryModuleData = BinaryModuleData.initialize(moduleName, platform)
-        val dependencyList = DependencyListForCliModule.build(binaryModuleData, init = dependenciesConfigurator)
+        val dependencyList = DependencyListForCliModule.build(moduleName, init = dependenciesConfigurator)
         val sessionProvider = externalSessionProvider ?: FirProjectSessionProvider()
         val packagePartProvider = projectEnvironment.getPackagePartProvider(librariesScope)
         val languageVersionSettings = configuration.languageVersionSettings
         val sharedLibrarySession = FirJvmSessionFactory.createSharedLibrarySession(
             moduleName,
             sessionProvider,
-            dependencyList.moduleDataProvider,
             projectEnvironment,
             extensionRegistrars,
             librariesScope,
@@ -64,11 +62,11 @@ object FirSessionFactoryHelper {
             predefinedJavaComponents = null,
         )
 
-        val mainModuleData = FirModuleDataImpl(
+        val mainModuleData = FirSourceModuleData(
             moduleName,
             dependencyList.regularDependencies,
             dependencyList.dependsOnDependencies,
-            dependencyList.friendsDependencies,
+            dependencyList.friendDependencies,
             platform,
         )
         return FirJvmSessionFactory.createSourceSession(
@@ -90,7 +88,7 @@ object FirSessionFactoryHelper {
     @OptIn(SessionConfiguration::class, PrivateSessionConstructor::class)
     fun createEmptySession(): FirSession {
         return object : FirSession(null, Kind.Source) {}.apply {
-            val moduleData = FirModuleDataImpl(
+            val moduleData = FirSourceModuleData(
                 Name.identifier("<stub module>"),
                 dependencies = emptyList(),
                 dependsOnDependencies = emptyList(),

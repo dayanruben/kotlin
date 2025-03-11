@@ -28583,6 +28583,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("valueClassWithExtraProperty.kt")
+      public void testValueClassWithExtraProperty() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/valueClassWithExtraProperty.kt");
+      }
+
+      @Test
       @TestMetadata("valueClassWithPrivateConstructor.kt")
       public void testValueClassWithPrivateConstructor() {
         runTest("compiler/testData/diagnostics/tests/multiplatform/valueClassWithPrivateConstructor.kt");
@@ -32047,6 +32053,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("conflictingOverloadsWithContextParameters.kt")
+      public void testConflictingOverloadsWithContextParameters() {
+        runTest("compiler/testData/diagnostics/tests/overload/conflictingOverloadsWithContextParameters.kt");
+      }
+
+      @Test
       @TestMetadata("ConstructorVsFunOverload.kt")
       public void testConstructorVsFunOverload() {
         runTest("compiler/testData/diagnostics/tests/overload/ConstructorVsFunOverload.kt");
@@ -34985,6 +34997,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("extensionVsNonPublicMember.kt")
         public void testExtensionVsNonPublicMember() {
           runTest("compiler/testData/diagnostics/tests/redeclarations/shadowedExtension/extensionVsNonPublicMember.kt");
+        }
+
+        @Test
+        @TestMetadata("extensionWithContext.kt")
+        public void testExtensionWithContext() {
+          runTest("compiler/testData/diagnostics/tests/redeclarations/shadowedExtension/extensionWithContext.kt");
         }
 
         @Test

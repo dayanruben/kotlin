@@ -26,9 +26,9 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.jvmTarget
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporterFactory
-import org.jetbrains.kotlin.fir.FirModuleCapabilities
+import org.jetbrains.kotlin.fir.FirBinaryDependenciesModuleData
 import org.jetbrains.kotlin.fir.FirModuleData
-import org.jetbrains.kotlin.fir.FirModuleDataImpl
+import org.jetbrains.kotlin.fir.FirSourceModuleData
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.deserialization.ModuleDataProvider
@@ -43,7 +43,6 @@ import org.jetbrains.kotlin.fir.session.firCachesFactoryForCliMode
 import org.jetbrains.kotlin.load.kotlin.PackagePartProvider
 import org.jetbrains.kotlin.modules.TargetId
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade
 import org.jetbrains.kotlin.scripting.compiler.plugin.ReplCompilerPluginRegistrar
@@ -139,7 +138,6 @@ class K2ReplCompiler(
             val sharedLibrarySession = FirJvmSessionFactory.createSharedLibrarySession(
                 mainModuleName = moduleName,
                 sessionProvider = sessionProvider,
-                moduleDataProvider = moduleDataProvider,
                 projectEnvironment = projectEnvironment,
                 extensionRegistrars = extensionRegistrars,
                 scope = projectFileSearchScope,
@@ -195,14 +193,7 @@ class ReplModuleDataProvider(baseLibraryPaths: List<Path>) : ModuleDataProvider(
 
     val baseDependenciesModuleData = makeLibraryModuleData(Name.special("<REPL-base>"))
 
-    private fun makeLibraryModuleData(name: Name): FirModuleDataImpl = FirModuleDataImpl(
-        name,
-        dependencies = emptyList(),
-        dependsOnDependencies = emptyList(),
-        friendDependencies = emptyList(),
-        platform,
-        FirModuleCapabilities.Empty
-    )
+    private fun makeLibraryModuleData(name: Name): FirModuleData = FirBinaryDependenciesModuleData(name)
 
     val pathToModuleData: MutableMap<Path, FirModuleData> = mutableMapOf()
     val moduleDataHistory: MutableList<FirModuleData> = mutableListOf()
@@ -211,9 +202,6 @@ class ReplModuleDataProvider(baseLibraryPaths: List<Path>) : ModuleDataProvider(
         baseLibraryPaths.associateTo(pathToModuleData) { it to baseDependenciesModuleData }
         moduleDataHistory.add(baseDependenciesModuleData)
     }
-
-    override val platform: TargetPlatform
-        get() = JvmPlatforms.unspecifiedJvmPlatform
 
     override val allModuleData: Collection<FirModuleData>
         get() = moduleDataHistory
@@ -237,13 +225,12 @@ class ReplModuleDataProvider(baseLibraryPaths: List<Path>) : ModuleDataProvider(
     }
 
     fun addNewSnippetModuleData(name: Name): FirModuleData =
-        FirModuleDataImpl(
+        FirSourceModuleData(
             name,
             dependencies = moduleDataHistory.filter { it.dependencies.isEmpty() },
             dependsOnDependencies = emptyList(),
             friendDependencies = moduleDataHistory.filter { it.dependencies.isNotEmpty() },
-            platform,
-            FirModuleCapabilities.Empty
+            JvmPlatforms.defaultJvmPlatform,
         ).also { moduleDataHistory.add(it) }
 }
 

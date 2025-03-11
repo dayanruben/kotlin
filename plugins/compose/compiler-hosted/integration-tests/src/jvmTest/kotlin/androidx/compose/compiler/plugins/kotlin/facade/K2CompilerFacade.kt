@@ -118,11 +118,7 @@ class K2CompilerFacade(environment: KotlinCoreEnvironment) : KotlinCompilerFacad
         val rootModuleName = configuration.get(CommonConfigurationKeys.MODULE_NAME, "main")
 
         val projectSessionProvider = FirProjectSessionProvider()
-        val binaryModuleData = BinaryModuleData.initialize(
-            Name.identifier(rootModuleName),
-            CommonPlatforms.defaultCommonPlatform,
-        )
-        val dependencyList = DependencyListForCliModule.build(binaryModuleData)
+        val dependencyList = DependencyListForCliModule.build(Name.identifier(rootModuleName))
         val projectEnvironment = VfsBasedProjectEnvironment(
             project,
             VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL),
@@ -133,7 +129,6 @@ class K2CompilerFacade(environment: KotlinCoreEnvironment) : KotlinCompilerFacad
         val sharedLibrarySession = FirJvmSessionFactory.createSharedLibrarySession(
             Name.identifier(rootModuleName),
             projectSessionProvider,
-            dependencyList.moduleDataProvider,
             projectEnvironment,
             FirExtensionRegistrar.getInstances(project),
             librariesScope,
@@ -154,19 +149,19 @@ class K2CompilerFacade(environment: KotlinCoreEnvironment) : KotlinCompilerFacad
             predefinedJavaComponents = null,
         )
 
-        val commonModuleData = FirModuleDataImpl(
+        val commonModuleData = FirSourceModuleData(
             Name.identifier("$rootModuleName-common"),
             dependencyList.regularDependencies,
             dependencyList.dependsOnDependencies,
-            dependencyList.friendsDependencies,
+            dependencyList.friendDependencies,
             CommonPlatforms.defaultCommonPlatform,
         )
 
-        val platformModuleData = FirModuleDataImpl(
+        val platformModuleData = FirSourceModuleData(
             Name.identifier(rootModuleName),
             dependencyList.regularDependencies,
             dependencyList.dependsOnDependencies + commonModuleData,
-            dependencyList.friendsDependencies,
+            dependencyList.friendDependencies,
             JvmPlatforms.jvm8,
         )
 

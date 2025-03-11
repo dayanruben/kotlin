@@ -35,14 +35,12 @@ import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.config.moduleName
 import org.jetbrains.kotlin.config.useLightTree
-import org.jetbrains.kotlin.fir.BinaryModuleData
 import org.jetbrains.kotlin.fir.DependencyListForCliModule
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.pipeline.*
 import org.jetbrains.kotlin.library.metadata.resolver.impl.KotlinResolvedLibraryImpl
 import org.jetbrains.kotlin.library.resolveSingleFileKlib
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.util.PhaseType
 import org.jetbrains.kotlin.util.PotentiallyIncorrectPhaseTimeMeasurement
 import java.io.File
@@ -57,16 +55,12 @@ object MetadataFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifa
         val rootModuleName = Name.special("<${configuration.moduleName!!}>")
         val isLightTree = configuration.getBoolean(CommonConfigurationKeys.USE_LIGHT_TREE)
 
-        val binaryModuleData = BinaryModuleData.Companion.initialize(
-            rootModuleName,
-            CommonPlatforms.defaultCommonPlatform,
-        )
-        val libraryList = DependencyListForCliModule.Companion.build(binaryModuleData) {
+        val libraryList = DependencyListForCliModule.build(rootModuleName) {
             val refinedPaths = configuration.get(K2MetadataConfigurationKeys.REFINES_PATHS)?.map { File(it) }.orEmpty()
-            dependencies(configuration.jvmClasspathRoots.filter { it !in refinedPaths }.map { it.toPath() })
-            dependencies(configuration.jvmModularRoots.map { it.toPath() })
+            dependencies(configuration.jvmClasspathRoots.filter { it !in refinedPaths }.map { it.absolutePath })
+            dependencies(configuration.jvmModularRoots.map { it.absolutePath })
             friendDependencies(configuration[K2MetadataConfigurationKeys.FRIEND_PATHS] ?: emptyList())
-            dependsOnDependencies(refinedPaths.map { it.toPath() })
+            dependsOnDependencies(refinedPaths.map { it.absolutePath })
         }
 
         val klibFiles = configuration.get(CLIConfigurationKeys.CONTENT_ROOTS).orEmpty()
