@@ -36,7 +36,6 @@ import org.jetbrains.kotlin.fir.types.builder.buildErrorTypeRef
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
 import org.jetbrains.kotlin.fir.types.impl.ConeTypeParameterTypeImpl
-import org.jetbrains.kotlin.fir.types.lowerBoundIfFlexible
 import org.jetbrains.kotlin.fir.utils.exceptions.withConeTypeEntry
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -47,8 +46,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.applyIf
 import org.jetbrains.kotlin.utils.addToStdlib.butIf
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
-import org.jetbrains.kotlin.fir.types.lowerBoundIfFlexible as coneLowerBoundIfFlexible
-import org.jetbrains.kotlin.fir.types.upperBoundIfFlexible as coneUpperBoundIfFlexible
 
 fun ConeInferenceContext.commonSuperTypeOrNull(types: List<ConeKotlinType>): ConeKotlinType? {
     return when (types.size) {
@@ -157,13 +154,13 @@ fun <T : ConeKotlinType> T.withArguments(arguments: Array<out ConeTypeProjection
     }
 
     @Suppress("UNCHECKED_CAST")
-    return when (val t = this as ConeKotlinType) {
-        is ConeClassLikeTypeImpl -> ConeClassLikeTypeImpl(t.lookupTag, arguments, isMarkedNullable, attributes) as T
-        is ConeDefinitelyNotNullType -> ConeDefinitelyNotNullType(t.original.withArguments(arguments)) as T
-        is ConeRawType -> ConeRawType.create(t.lowerBound.withArguments(arguments), t.upperBound.withArguments(arguments)) as T
+    return when (this) {
+        is ConeClassLikeTypeImpl -> ConeClassLikeTypeImpl(lookupTag, arguments, isMarkedNullable, attributes)
+        is ConeDefinitelyNotNullType -> ConeDefinitelyNotNullType(original.withArguments(arguments))
+        is ConeRawType -> ConeRawType.create(lowerBound.withArguments(arguments), upperBound.withArguments(arguments))
         is ConeDynamicType -> error()
-        is ConeFlexibleType -> ConeFlexibleType(t.lowerBound.withArguments(arguments), t.upperBound.withArguments(arguments)) as T
-        is ConeErrorType -> ConeErrorType(t.diagnostic, t.isUninferredParameter, typeArguments = arguments, attributes = attributes) as T
+        is ConeFlexibleType -> ConeFlexibleType(lowerBound.withArguments(arguments), upperBound.withArguments(arguments), isTrivial)
+        is ConeErrorType -> ConeErrorType(diagnostic, isUninferredParameter, typeArguments = arguments, attributes = attributes)
         is ConeIntersectionType,
         is ConeTypeVariableType,
         is ConeStubType,
@@ -171,7 +168,7 @@ fun <T : ConeKotlinType> T.withArguments(arguments: Array<out ConeTypeProjection
         is ConeCapturedType,
         is ConeLookupTagBasedType, // ConeLookupTagBasedType is in fact not possible (covered by previous ones)
         -> error()
-    }
+    } as T
 }
 
 inline fun <T : ConeKotlinType> T.withArguments(replacement: (ConeTypeProjection) -> ConeTypeProjection): T {
@@ -193,7 +190,7 @@ fun <T : ConeKotlinType> T.withAttributes(attributes: ConeAttributes): T {
         is ConeTypeParameterTypeImpl -> ConeTypeParameterTypeImpl(lookupTag, isMarkedNullable, attributes)
         is ConeRawType -> ConeRawType.create(lowerBound.withAttributes(attributes), upperBound.withAttributes(attributes))
         is ConeDynamicType -> ConeDynamicType(lowerBound.withAttributes(attributes), upperBound.withAttributes(attributes))
-        is ConeFlexibleType -> ConeFlexibleType(lowerBound.withAttributes(attributes), upperBound.withAttributes(attributes))
+        is ConeFlexibleType -> ConeFlexibleType(lowerBound.withAttributes(attributes), upperBound.withAttributes(attributes), isTrivial)
         is ConeTypeVariableType -> ConeTypeVariableType(isMarkedNullable, typeConstructor, attributes)
         is ConeCapturedType -> copy(attributes = attributes)
         // TODO: Consider correct application of attributes to ConeIntersectionType
@@ -202,7 +199,8 @@ fun <T : ConeKotlinType> T.withAttributes(attributes: ConeAttributes): T {
         // Attributes for stub types are not supported, and it's not obvious if it should
         is ConeStubType -> this
         is ConeIntegerLiteralType -> this
-        else -> errorWithAttachment("Not supported: ${this::class}") {
+        // ConeLookupTagBasedType cannot be sealed so we need the extra branch to make the when exhaustive
+        is ConeLookupTagBasedType -> errorWithAttachment("Not supported: ${this::class}") {
             withConeTypeEntry("type", this@withAttributes)
         }
     } as T
@@ -252,11 +250,16 @@ fun <T : ConeKotlinType> T.withNullability(
         is ConeTypeParameterTypeImpl -> ConeTypeParameterTypeImpl(lookupTag, nullable, theAttributes)
         is ConeDynamicType -> this
         is ConeFlexibleType -> {
-            coneFlexibleOrSimpleType(
-                typeContext,
-                lowerBound.withNullability(nullable, typeContext, preserveAttributes = preserveAttributes),
-                upperBound.withNullability(nullable, typeContext, preserveAttributes = preserveAttributes)
-            )
+            if (isTrivial) {
+                lowerBound.withNullability(nullable, typeContext, preserveAttributes = preserveAttributes)
+            } else {
+                coneFlexibleOrSimpleType(
+                    typeContext,
+                    lowerBound.withNullability(nullable, typeContext, preserveAttributes = preserveAttributes),
+                    upperBound.withNullability(nullable, typeContext, preserveAttributes = preserveAttributes),
+                    isTrivial = false
+                )
+            }
         }
 
         is ConeTypeVariableType -> ConeTypeVariableType(isMarkedNullable = nullable, typeConstructor, theAttributes)
@@ -281,25 +284,102 @@ fun <T : ConeKotlinType> T.withNullability(
 
         is ConeIntegerLiteralConstantType -> ConeIntegerLiteralConstantTypeImpl(value, possibleTypes, isUnsigned, nullable)
         is ConeIntegerConstantOperatorType -> ConeIntegerConstantOperatorTypeImpl(isUnsigned, nullable)
-        else -> error("sealed: ${this::class}")
+        // ConeLookupTagBasedType cannot be sealed so we need the extra branch to make the when exhaustive
+        is ConeLookupTagBasedType -> error("sealed: ${this::class}")
     } as T
+}
+
+/**
+ * Returns a [ConeFlexibleType] with [f] applied to both bounds. If [f] returns `null` for both bounds, `null` is returned.
+ *
+ * @param dropIdentity if `true` and the result of `f(bound)` is equal to the unprocessed bound, it will be treated like `null`.
+ */
+inline fun ConeFlexibleType.mapTypesOrNull(
+    typeContext: ConeTypeContext,
+    dropIdentity: Boolean = false,
+    f: (ConeRigidType) -> ConeKotlinType?,
+): ConeKotlinType? {
+    return when {
+        isTrivial -> {
+            when (val mappedLowerBound = f(lowerBound).takeIf { !dropIdentity || it !== lowerBound }) {
+                null -> null
+                is ConeRigidType -> coneFlexibleOrSimpleType(
+                    typeContext,
+                    mappedLowerBound,
+                    mappedLowerBound.withNullability(true, typeContext, preserveAttributes = true),
+                    isTrivial = true
+                )
+                is ConeFlexibleType -> mappedLowerBound
+            }
+        }
+        else -> {
+            val mappedLowerBound = f(lowerBound).takeIf { !dropIdentity || it !== lowerBound }
+            val mappedUpperBound = f(upperBound).takeIf { !dropIdentity || it !== upperBound }
+            when {
+                mappedLowerBound == null && mappedUpperBound == null -> null
+                this !is ConeRawType -> coneFlexibleOrSimpleType(
+                    typeContext,
+                    mappedLowerBound ?: lowerBound,
+                    mappedUpperBound ?: upperBound,
+                    isTrivial = false
+                )
+                else -> ConeRawType.create(
+                    mappedLowerBound?.lowerBoundIfFlexible() ?: this.lowerBound,
+                    mappedUpperBound?.upperBoundIfFlexible() ?: this.upperBound
+                )
+            }
+        }
+    }
+}
+
+
+/**
+ * Returns a [ConeFlexibleType] with [f] applied to both bounds. If [f] returns `null` for both bounds, the original type is returned.
+ *
+ * @param dropIdentity if `true` and the result of `f(bound)` is equal to the unprocessed bound, it will be treated like `null`.
+ */
+inline fun ConeFlexibleType.mapTypesOrSelf(
+    typeContext: ConeTypeContext,
+    dropIdentity: Boolean = false,
+    f: (ConeRigidType) -> ConeKotlinType?,
+): ConeKotlinType {
+    return mapTypesOrNull(typeContext, dropIdentity, f) ?: this
 }
 
 fun coneFlexibleOrSimpleType(
     typeContext: ConeTypeContext,
     lowerBound: ConeKotlinType,
     upperBound: ConeKotlinType,
+    isTrivial: Boolean,
 ): ConeKotlinType {
     return when (lowerBound) {
-        is ConeFlexibleType -> coneFlexibleOrSimpleType(typeContext, lowerBound.lowerBound, upperBound)
+        is ConeFlexibleType -> coneFlexibleOrSimpleType(typeContext, lowerBound.lowerBound, upperBound, isTrivial)
         is ConeRigidType -> when (upperBound) {
-            is ConeFlexibleType -> coneFlexibleOrSimpleType(typeContext, lowerBound, upperBound.upperBound)
-            is ConeRigidType -> when {
-                AbstractStrictEqualityTypeChecker.strictEqualTypes(typeContext, lowerBound, upperBound) -> lowerBound
-                else -> ConeFlexibleType(lowerBound, upperBound)
+            is ConeFlexibleType -> coneFlexibleOrSimpleType(typeContext, lowerBound, upperBound.upperBound, isTrivial)
+            is ConeRigidType -> {
+                val areBoundsEqual = if (isTrivial) {
+                    lowerBound == upperBound
+                } else {
+                    AbstractStrictEqualityTypeChecker.strictEqualTypes(typeContext, lowerBound, upperBound)
+                }
+
+                if (areBoundsEqual) {
+                    lowerBound
+                } else {
+                    ConeFlexibleType(lowerBound, upperBound, isTrivial = isTrivial)
+                }
             }
         }
     }
+}
+
+/**
+ * This method doesn't guarantee that the created flexible type has different bounds.
+ *
+ * It is expected that the caller verifies that the receiver is a not null-marked, not-error type.
+ */
+fun ConeRigidType.toTrivialFlexibleType(typeContext: ConeTypeContext): ConeFlexibleType {
+    return ConeFlexibleType(this, this.withNullability(true, typeContext), isTrivial = true)
 }
 
 fun ConeKotlinType.isExtensionFunctionType(session: FirSession): Boolean {
@@ -520,15 +600,10 @@ internal fun ConeTypeContext.captureFromExpressionInternal(type: ConeKotlinType)
             // At the same time, capturing of raw(-like) types leads to issues like KT-63982 or breaks tests like
             // testData/codegen/box/reflection/typeOf/rawTypes_after.kt.
             // Therefore, we return null if nothing was captured for either bound.
-
-            val lowerIntersectedType =
-                intersectTypes(replaceArgumentsWithCapturedArgumentsByIntersectionComponents(type.lowerBound) ?: return null)
-                    .withNullability(type.lowerBound.canBeNull(session), this)
-            val upperIntersectedType =
-                intersectTypes(replaceArgumentsWithCapturedArgumentsByIntersectionComponents(type.upperBound) ?: return null)
-                    .withNullability(type.upperBound.canBeNull(session), this)
-
-            ConeFlexibleType(lowerIntersectedType.coneLowerBoundIfFlexible(), upperIntersectedType.coneUpperBoundIfFlexible())
+            type.mapTypesOrNull(this) {
+                intersectTypes(replaceArgumentsWithCapturedArgumentsByIntersectionComponents(it) ?: return null)
+                    .withNullability(it.canBeNull(session), this)
+            }
         }
         is ConeIntersectionType -> {
             capturedArgumentsByComponents = captureArgumentsForIntersectionType(type) ?: return null
@@ -833,7 +908,8 @@ private fun ConeKotlinType.eraseAsUpperBound(
             coneFlexibleOrSimpleType(
                 session.typeContext,
                 lowerBound.eraseAsUpperBound(session, cache, mode),
-                upperBound.eraseAsUpperBound(session, cache, mode)
+                upperBound.eraseAsUpperBound(session, cache, mode),
+                isTrivial = false
             )
 
         is ConeTypeParameterType ->
@@ -861,6 +937,7 @@ fun ConeKotlinType.convertToNonRawVersion(): ConeKotlinType {
         return ConeFlexibleType(
             lowerBound.withAttributes(this.attributes.remove(CompilerConeAttributes.RawType)),
             upperBound,
+            isTrivial = false,
         )
     }
 

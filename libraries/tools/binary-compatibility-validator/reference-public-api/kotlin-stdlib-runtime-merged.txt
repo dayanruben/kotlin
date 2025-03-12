@@ -3185,6 +3185,9 @@ public final class kotlin/enums/EnumEntriesKt {
 	public static final fun enumEntries ([Ljava/lang/Enum;)Lkotlin/enums/EnumEntries;
 }
 
+public abstract interface annotation class kotlin/experimental/ExpectRefinement : java/lang/annotation/Annotation {
+}
+
 public abstract interface annotation class kotlin/experimental/ExperimentalNativeApi : java/lang/annotation/Annotation {
 }
 

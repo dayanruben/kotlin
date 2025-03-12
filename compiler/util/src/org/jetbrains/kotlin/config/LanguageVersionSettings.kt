@@ -434,6 +434,7 @@ enum class LanguageFeature(
 
     // Experimental features
 
+    ExpectRefinement(sinceVersion = null),
     JsEnableExtensionFunctionInExternals(null, kind = OTHER),
     PackagePrivateFileClassesWithAllPrivateMembers(null), // Disabled until the breaking change is approved by the committee, see KT-10884.
     MultiPlatformProjects(sinceVersion = null),
@@ -472,6 +473,7 @@ enum class LanguageFeature(
     NestedTypeAliases(sinceVersion = null, kind = UNSTABLE_FEATURE), // KT-45285
     ForbidUsingSupertypesWithInaccessibleContentInTypeArguments(sinceVersion = null, kind = BUG_FIX), // KT-66691, KT-66742
     ContextSensitiveResolutionUsingExpectedType(sinceVersion = null, kind = OTHER), // KT-16768
+    AnnotationsInMetadata(sinceVersion = null, kind = OTHER), // KT-57919
     ;
 
     init {
