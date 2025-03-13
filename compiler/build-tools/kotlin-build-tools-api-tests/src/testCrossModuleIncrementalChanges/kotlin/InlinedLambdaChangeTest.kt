@@ -6,7 +6,9 @@ package org.jetbrains.kotlin.buildtools.api.tests.compilation
 
 import org.jetbrains.kotlin.buildtools.api.CompilerExecutionStrategyConfiguration
 import org.jetbrains.kotlin.buildtools.api.jvm.ClassSnapshotGranularity
+import org.jetbrains.kotlin.buildtools.api.tests.compilation.assertions.assertLogContainsPatterns
 import org.jetbrains.kotlin.buildtools.api.tests.compilation.model.DefaultStrategyAgnosticCompilationTest
+import org.jetbrains.kotlin.buildtools.api.tests.compilation.model.LogLevel
 import org.jetbrains.kotlin.buildtools.api.tests.compilation.model.SnapshotConfig
 import org.jetbrains.kotlin.buildtools.api.tests.compilation.scenario.scenario
 import org.jetbrains.kotlin.buildtools.api.tests.compilation.util.compile
@@ -18,7 +20,6 @@ import org.junit.jupiter.api.DisplayName
 
 // When adding or changing tests, make sure that test sources don't have unintended changes in whitespace, copyright notices and similar things:
 // debug info is sensitive to changes in line numbers, and it's part of default inline function abiHash
-@Disabled("KT-62555")
 class InlinedLambdaChangeTest : BaseCompilationTest() {
     @DefaultStrategyAgnosticCompilationTest
     @DisplayName("When inlined lambda's body changes, its call site is recompiled")
@@ -140,6 +141,26 @@ class InlinedLambdaChangeTest : BaseCompilationTest() {
     }
 
     @DefaultStrategyAgnosticCompilationTest
+    @DisplayName("Changes in inlined named class")
+    @TestMetadata("ic-scenarios/inline-local-class/local-named/lib")
+    fun testLocalNamedClass(strategyConfig: CompilerExecutionStrategyConfiguration) {
+        scenario(strategyConfig) {
+            val lib = module("ic-scenarios/inline-local-class/local-named/lib")
+            val app = module(
+                "ic-scenarios/inline-local-class/local-named/app",
+                dependencies = listOf(lib),
+                snapshotConfig = SnapshotConfig(ClassSnapshotGranularity.CLASS_MEMBER_LEVEL, true),
+            )
+            lib.replaceFileWithVersion("inlinedLocalClass.kt", "addNamedClass")
+            lib.compile { module, scenarioModule ->
+                expectFail()
+                assertLogContainsPatterns(LogLevel.ERROR, ".*Local classes are not yet supported in inline functions.*".toRegex())
+            }
+            // if at any point local named classes become supported, test the scenario as usual
+        }
+    }
+
+    @DefaultStrategyAgnosticCompilationTest
     @DisplayName("Changes in unused code should not trigger recompilation of call site")
     @TestMetadata("ic-scenarios/inline-local-class/no-recompile/lib")
     fun testNoRecompilationNeeded(strategyConfig: CompilerExecutionStrategyConfiguration) {
@@ -253,7 +274,7 @@ class InlinedLambdaChangeTest : BaseCompilationTest() {
     }
 
     @DefaultStrategyAgnosticCompilationTest
-    @DisplayName("Recompilation of call site affected by a anonymous object - basic")
+    @DisplayName("Recompilation of call site affected by an anonymous object - basic")
     @TestMetadata("ic-scenarios/inline-local-class/inline-anonymous-object/lib")
     fun testAnonymousObjectBaseTypeChange(strategyConfig: CompilerExecutionStrategyConfiguration) {
         scenario(strategyConfig) {
@@ -274,9 +295,9 @@ class InlinedLambdaChangeTest : BaseCompilationTest() {
         }
     }
 
-    @Disabled("broken! other snapshotting strategies might work better here")
+    @Disabled("KT-75883 - here callable's code creates a new object so there's no INSTANCE")
     @DefaultStrategyAgnosticCompilationTest
-    @DisplayName("Recompilation of call site affected by a anonymous object - slightly evil")
+    @DisplayName("Recompilation of call site affected by an anonymous object - slightly evil")
     @TestMetadata("ic-scenarios/inline-local-class/inline-anonymous-object-evil/lib")
     fun testAnonymousObjectBaseTypeChangeWithOverloads(strategyConfig: CompilerExecutionStrategyConfiguration) {
         scenario(strategyConfig) {

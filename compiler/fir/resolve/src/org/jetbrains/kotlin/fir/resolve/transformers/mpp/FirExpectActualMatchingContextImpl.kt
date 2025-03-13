@@ -138,7 +138,7 @@ class FirExpectActualMatchingContextImpl private constructor(
         get() = asSymbol().setterSymbol
 
     override val PropertySymbolMarker.contextParameters: List<ValueParameterSymbolMarker>
-        get() = asSymbol().resolvedContextParameters.map { it.symbol }
+        get() = asSymbol().contextParameterSymbols
 
     override fun createExpectActualTypeParameterSubstitutor(
         expectActualTypeParameters: List<Pair<TypeParameterSymbolMarker, TypeParameterSymbolMarker>>,
@@ -264,7 +264,7 @@ class FirExpectActualMatchingContextImpl private constructor(
     override val CallableSymbolMarker.dispatchReceiverType: SimpleTypeMarker?
         get() = asSymbol().dispatchReceiverType
     override val CallableSymbolMarker.extensionReceiverType: KotlinTypeMarker?
-        get() = asSymbol().resolvedReceiverTypeRef?.coneType
+        get() = asSymbol().resolvedReceiverType
     override val CallableSymbolMarker.extensionReceiverTypeRef: TypeRefMarker?
         get() = asSymbol().resolvedReceiverTypeRef
     override val CallableSymbolMarker.returnType: KotlinTypeMarker
@@ -293,7 +293,7 @@ class FirExpectActualMatchingContextImpl private constructor(
         get() = asSymbol().valueParameterSymbols
 
     override val FunctionSymbolMarker.contextParameters: List<ValueParameterSymbolMarker>
-        get() = asSymbol().resolvedContextParameters.map { it.symbol }
+        get() = asSymbol().contextParameterSymbols
 
     override val ValueParameterSymbolMarker.isVararg: Boolean
         get() = asSymbol().isVararg

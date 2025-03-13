@@ -6506,6 +6506,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
     }
 
     @Test
+    @TestMetadata("parallelHierarchy.kt")
+    public void testParallelHierarchy() {
+      runTest("compiler/testData/codegen/box/casts/parallelHierarchy.kt");
+    }
+
+    @Test
     @TestMetadata("unitAsAny.kt")
     public void testUnitAsAny() {
       runTest("compiler/testData/codegen/box/casts/unitAsAny.kt");
@@ -22664,6 +22670,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
       @Test
       public void testAllFilesPresentInContextSensitiveResolution() {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/fir/contextSensitiveResolution"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+      }
+
+      @Test
+      @TestMetadata("argumentPosition.kt")
+      public void testArgumentPosition() {
+        runTest("compiler/testData/codegen/box/fir/contextSensitiveResolution/argumentPosition.kt");
       }
 
       @Test

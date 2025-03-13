@@ -6571,6 +6571,12 @@ public class LLBlackBoxTestGenerated extends AbstractLLBlackBoxTest {
     }
 
     @Test
+    @TestMetadata("parallelHierarchy.kt")
+    public void testParallelHierarchy() {
+      runTest("compiler/testData/codegen/box/casts/parallelHierarchy.kt");
+    }
+
+    @Test
     @TestMetadata("toNativePointers.kt")
     public void testToNativePointers() {
       runTest("compiler/testData/codegen/box/casts/toNativePointers.kt");
@@ -22777,6 +22783,12 @@ public class LLBlackBoxTestGenerated extends AbstractLLBlackBoxTest {
       @Test
       public void testAllFilesPresentInContextSensitiveResolution() {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/fir/contextSensitiveResolution"), Pattern.compile("^(.+)\\.kt$"), null, true);
+      }
+
+      @Test
+      @TestMetadata("argumentPosition.kt")
+      public void testArgumentPosition() {
+        runTest("compiler/testData/codegen/box/fir/contextSensitiveResolution/argumentPosition.kt");
       }
 
       @Test

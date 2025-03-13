@@ -171,8 +171,8 @@ private fun FirNamedFunctionSymbol.jvmNameAsString(session: FirSession): String 
         ?: name.asString()
 
 private val FirFunctionSymbol<*>.explicitParameterTypes: List<ConeKotlinType>
-    get() = resolvedContextParameters.map { it.returnTypeRef.coneType } +
-            listOfNotNull(receiverParameter?.typeRef?.coneType) +
+    get() = contextParameterSymbols.map { it.resolvedReturnType } +
+            listOfNotNull(resolvedReceiverType) +
             valueParameterSymbols.map { it.resolvedReturnType }
 
 internal val FirDeclaration.composeMetadata: ComposeMetadata?

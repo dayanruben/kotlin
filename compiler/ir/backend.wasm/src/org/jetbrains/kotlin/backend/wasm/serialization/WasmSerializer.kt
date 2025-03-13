@@ -254,6 +254,7 @@ class WasmSerializer(outputStream: OutputStream) {
             WasmHeapType.Simple.Func -> setTag(HeapTypeTags.FUNC)
             WasmHeapType.Simple.NoExtern -> setTag(HeapTypeTags.NO_EXTERN)
             WasmHeapType.Simple.None -> setTag(HeapTypeTags.NONE)
+            WasmHeapType.Simple.NoFunc -> setTag(HeapTypeTags.NO_FUNC)
             WasmHeapType.Simple.Struct -> setTag(HeapTypeTags.STRUCT)
             is WasmHeapType.Type -> withTag(HeapTypeTags.HEAP_TYPE) { serializeWasmSymbolReadOnly(type.type) { serializeWasmTypeDeclaration(it) } }
         }
@@ -272,12 +273,6 @@ class WasmSerializer(outputStream: OutputStream) {
                 WasmOp.PSEUDO_COMMENT_PREVIOUS_INSTR -> 0xFFFF - 0
                 WasmOp.PSEUDO_COMMENT_GROUP_START -> 0xFFFF - 1
                 WasmOp.PSEUDO_COMMENT_GROUP_END -> 0xFFFF - 2
-                WasmOp.MACRO_IF -> 0xFFFF - 3
-                WasmOp.MACRO_ELSE -> 0xFFFF - 4
-                WasmOp.MACRO_END_IF -> 0xFFFF - 5
-                WasmOp.MACRO_TABLE -> 0xFFFF - 6
-                WasmOp.MACRO_TABLE_INDEX -> 0xFFFF - 7
-                WasmOp.MACRO_TABLE_END -> 0xFFFF - 8
                 else -> error("Unknown pseudo-opcode: $instr")
             }
         }
@@ -290,7 +285,7 @@ class WasmSerializer(outputStream: OutputStream) {
 
     private fun serializeWasmImmediate(i: WasmImmediate): Unit =
         when (i) {
-            is WasmImmediate.BlockType.Function -> withTag(ImmediateTags.BLOCK_TYPE_FUNCTION) { serializeWasmFunctionType(i.type) }
+            is WasmImmediate.BlockType.Function -> withTag(ImmediateTags.BLOCK_TYPE_FUNCTION) { serializeWasmSymbolReadOnly(i.type, ::serializeWasmFunctionType) }
             is WasmImmediate.BlockType.Value -> withTagNullable(ImmediateTags.BLOCK_TYPE_VALUE, i.type) { serializeWasmType(i.type!!) }
             is WasmImmediate.Catch -> withTag(ImmediateTags.CATCH) { serializeCatchImmediate(i) }
             is WasmImmediate.ConstF32 -> withTag(ImmediateTags.CONST_F32) { b.writeUInt32(i.rawBits) }
@@ -627,17 +622,12 @@ class WasmSerializer(outputStream: OutputStream) {
             serializeReferencableAndDefinable(functionTypes, ::serializeIdSignature, ::serializeWasmFunctionType)
             serializeReferencableAndDefinable(gcTypes, ::serializeIdSignature, ::serializeWasmTypeDeclaration)
             serializeReferencableAndDefinable(vTableGcTypes, ::serializeIdSignature, ::serializeWasmTypeDeclaration)
-            serializeReferencableElements(classITableGcType, ::serializeIdSignature, ::serializeWasmTypeDeclaration)
-            serializeReferencableElements(classITableInterfaceSlot, ::serializeIdSignature, ::serializeInt)
-            serializeReferencableElements(classITableInterfaceTableSize, ::serializeIdSignature, ::serializeInt)
-            serializeReferencableElements(classITableInterfaceHasImplementors, ::serializeIdSignature, ::serializeInt)
             serializeMap(typeInfo, ::serializeIdSignature, ::serializeConstantDataElement)
             serializeReferencableElements(classIds, ::serializeIdSignature, ::serializeInt)
             serializeReferencableElements(interfaceIds, ::serializeIdSignature, ::serializeInt)
             serializeReferencableElements(stringLiteralAddress, ::serializeString, ::serializeInt)
             serializeReferencableElements(stringLiteralPoolId, ::serializeString, ::serializeInt)
             serializeReferencableElements(constantArrayDataSegmentId, { serializePair(it, { serializeList(it, ::serializeLong) }, ::serializeWasmType)}, ::serializeInt)
-            serializeList(interfaceUnions) { serializeList(it, ::serializeIdSignature) }
             serializeMap(jsFuns, ::serializeIdSignature, ::serializeJsCodeSnippet)
             serializeMap(jsModuleImports, ::serializeIdSignature, ::serializeString)
             serializeList(exports, ::serializeWasmExport)
@@ -652,7 +642,14 @@ class WasmSerializer(outputStream: OutputStream) {
             serializeSet(jsModuleAndQualifierReferences, ::serializeJsModuleAndQualifierReference)
             serializeList(classAssociatedObjectsInstanceGetters, ::serializeClassAssociatedObjects)
             serializeNullable(builtinIdSignatures, ::serializeBuiltinIdSignatures)
+            serializeNullable(specialITableTypes, ::serializeInterfaceTableTypes)
         }
+
+    private fun serializeInterfaceTableTypes(specialITableTypes: SpecialITableTypes) {
+        serializeWasmSymbolReadOnly(specialITableTypes.wasmAnyArrayType, ::serializeWasmArrayDeclaration)
+        serializeWasmSymbolReadOnly(specialITableTypes.wasmFuncArrayType, ::serializeWasmArrayDeclaration)
+        serializeWasmSymbolReadOnly(specialITableTypes.specialSlotITableType, ::serializeWasmTypeDeclaration)
+    }
 
     private fun serializeBuiltinIdSignatures(builtinIdSignatures: BuiltinIdSignatures) {
         serializeNullable(builtinIdSignatures.throwable, ::serializeIdSignature)

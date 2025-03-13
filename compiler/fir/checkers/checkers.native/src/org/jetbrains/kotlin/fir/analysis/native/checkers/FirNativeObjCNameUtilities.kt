@@ -41,14 +41,14 @@ object FirNativeObjCNameUtilities {
             is FirFunctionSymbol<*> -> buildList {
                 add((this@getObjCNames as FirBasedSymbol<*>).getObjCName(session))
                 add(resolvedReceiverTypeRef?.getObjCName(session))
-                add(receiverParameter?.getObjCName(session))
+                add(receiverParameterSymbol?.getObjCName(session))
                 valueParameterSymbols.forEach { add(it.getObjCName(session)) }
-                resolvedContextParameters.forEach { add(it.getObjCName(session)) }
+                contextParameterSymbols.forEach { add(it.getObjCName(session)) }
             }
             is FirPropertySymbol -> buildList {
                 add((this@getObjCNames as FirBasedSymbol<*>).getObjCName(session))
-                add(receiverParameter?.getObjCName(session))
-                resolvedContextParameters.forEach { add(it.getObjCName(session)) }
+                add(receiverParameterSymbol?.getObjCName(session))
+                contextParameterSymbols.forEach { add(it.getObjCName(session)) }
             }
             else -> listOf(getObjCName(session))
         }
