@@ -21555,6 +21555,54 @@ public class LLReversedDiagnosticsFe10TestGenerated extends AbstractLLReversedDi
           public void testKt72272() {
             runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/kt72272.kt");
           }
+
+          @Test
+          @TestMetadata("kt74819.kt")
+          public void testKt74819() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/kt74819.kt");
+          }
+
+          @Test
+          @TestMetadata("kt74819a.kt")
+          public void testKt74819a() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/kt74819a.kt");
+          }
+
+          @Test
+          @TestMetadata("kt74819b.kt")
+          public void testKt74819b() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/kt74819b.kt");
+          }
+
+          @Test
+          @TestMetadata("kt74819c.kt")
+          public void testKt74819c() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/kt74819c.kt");
+          }
+
+          @Test
+          @TestMetadata("kt74819d.kt")
+          public void testKt74819d() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/kt74819d.kt");
+          }
+
+          @Test
+          @TestMetadata("kt74819f.kt")
+          public void testKt74819f() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/kt74819f.kt");
+          }
+
+          @Test
+          @TestMetadata("kt74819g.kt")
+          public void testKt74819g() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/kt74819g.kt");
+          }
+
+          @Test
+          @TestMetadata("kt74819h.kt")
+          public void testKt74819h() {
+            runTest("compiler/testData/diagnostics/tests/inference/pcla/issues/kt74819h.kt");
+          }
         }
 
         @Nested
