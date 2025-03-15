@@ -1329,11 +1329,18 @@ private class ElementsToShortenCollector(
         val candidates = coneAmbiguityError.candidates.map { it.symbol as FirCallableSymbol<*> }
         require(candidates.isNotEmpty()) { "Cannot have zero candidates" }
 
-        val distinctCandidates = candidates.distinctBy { it.callableId }
-        return distinctCandidates.singleOrNull()
-            ?: errorWithAttachment("Expected all candidates to have same callableId but some of them but was different") {
-                withEntry("callableIds", distinctCandidates.map { it.callableId.asSingleFqName() }.joinToString())
+        val distinctCandidates = candidates.distinctBy { candidate ->
+            // A workaround to squash functions and constructors with the same name together.
+            when (candidate) {
+                is FirConstructorSymbol -> {
+                    val classId = candidate.typeAliasConstructorInfo?.typeAliasSymbol?.classId ?: candidate.classIdIfExists
+                    classId?.asSingleFqName()
+                }
+                else -> candidate.callableId.asSingleFqName()
             }
+        }
+
+        return distinctCandidates.singleOrNull()
     }
 
     private fun findFakePackageToShorten(wholeQualifiedExpression: KtDotQualifiedExpression): ElementToShorten? {

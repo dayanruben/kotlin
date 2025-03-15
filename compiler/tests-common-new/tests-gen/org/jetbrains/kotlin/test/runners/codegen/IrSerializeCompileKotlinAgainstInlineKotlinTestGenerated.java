@@ -429,6 +429,12 @@ public class IrSerializeCompileKotlinAgainstInlineKotlinTestGenerated extends Ab
     }
 
     @Test
+    @TestMetadata("kt75902.kt")
+    public void testKt75902() {
+      runTest("compiler/testData/codegen/boxInline/anonymousObject/kt75902.kt");
+    }
+
+    @Test
     @TestMetadata("kt8133.kt")
     public void testKt8133() {
       runTest("compiler/testData/codegen/boxInline/anonymousObject/kt8133.kt");
@@ -1652,6 +1658,40 @@ public class IrSerializeCompileKotlinAgainstInlineKotlinTestGenerated extends Ab
     @TestMetadata("spillConstructorArgumentsAndInlineLambdaParameter.kt")
     public void testSpillConstructorArgumentsAndInlineLambdaParameter() {
       runTest("compiler/testData/codegen/boxInline/complexStack/spillConstructorArgumentsAndInlineLambdaParameter.kt");
+    }
+  }
+
+  @Nested
+  @TestMetadata("compiler/testData/codegen/boxInline/contextParameters")
+  @TestDataPath("$PROJECT_ROOT")
+  public class ContextParameters {
+    @Test
+    public void testAllFilesPresentInContextParameters() {
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/boxInline/contextParameters"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR_SERIALIZE, true);
+    }
+
+    @Test
+    @TestMetadata("contextAndReceiver.kt")
+    public void testContextAndReceiver() {
+      runTest("compiler/testData/codegen/boxInline/contextParameters/contextAndReceiver.kt");
+    }
+
+    @Test
+    @TestMetadata("contextOnly.kt")
+    public void testContextOnly() {
+      runTest("compiler/testData/codegen/boxInline/contextParameters/contextOnly.kt");
+    }
+
+    @Test
+    @TestMetadata("contextReceiverAndParameter.kt")
+    public void testContextReceiverAndParameter() {
+      runTest("compiler/testData/codegen/boxInline/contextParameters/contextReceiverAndParameter.kt");
+    }
+
+    @Test
+    @TestMetadata("contextReceiverAndParameterLong.kt")
+    public void testContextReceiverAndParameterLong() {
+      runTest("compiler/testData/codegen/boxInline/contextParameters/contextReceiverAndParameterLong.kt");
     }
   }
 
