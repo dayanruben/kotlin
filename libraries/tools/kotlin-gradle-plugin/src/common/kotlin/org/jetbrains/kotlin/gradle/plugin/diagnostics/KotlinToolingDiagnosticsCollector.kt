@@ -6,31 +6,18 @@
 package org.jetbrains.kotlin.gradle.plugin.diagnostics
 
 import org.gradle.api.Project
-import org.gradle.api.model.ObjectFactory
-import org.gradle.api.provider.Property
+import org.gradle.api.logging.Logger
 import org.gradle.api.provider.Provider
 import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
-import org.gradle.api.tasks.Internal
-import org.jetbrains.kotlin.gradle.plugin.variantImplementationFactoryProvider
 import org.jetbrains.kotlin.gradle.utils.registerClassLoaderScopedBuildService
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import javax.inject.Inject
 
 private typealias ToolingDiagnosticId = String
 private typealias GradleProjectPath = String
 
-internal abstract class KotlinToolingDiagnosticsCollector @Inject constructor(
-    private val objects: ObjectFactory,
-) : BuildService<KotlinToolingDiagnosticsCollector.Parameter> {
-    interface Parameter : BuildServiceParameters {
-        val problemsReporterFactory: Property<ProblemsReporter.Factory>
-    }
-
-    @get:Internal
-    internal val problemsReporter get() = parameters.problemsReporterFactory.get().getInstance(objects)
-
+internal abstract class KotlinToolingDiagnosticsCollector : BuildService<BuildServiceParameters.None> {
     /**
      * When collector is in transparent mode, any diagnostics received will be immediately rendered
      * instead of collected
@@ -51,20 +38,32 @@ internal abstract class KotlinToolingDiagnosticsCollector @Inject constructor(
         reportOnce: Boolean = false,
         key: ToolingDiagnosticId = diagnostic.id,
     ) {
-        if (reportedIds.add(key) || !reportOnce) {
+        if (reportedIds.add(key) || !reportOnce){
             handleDiagnostic(project, diagnostic)
         }
     }
 
     fun report(
+        task: UsesKotlinToolingDiagnostics,
+        diagnostic: ToolingDiagnostic,
+        reportOnce: Boolean = false,
+        key: ToolingDiagnosticId = diagnostic.id,
+    ) {
+        report(task, task.logger, diagnostic, reportOnce, key)
+    }
+
+    fun report(
         from: UsesKotlinToolingDiagnosticsParameters,
+        logger: Logger,
         diagnostic: ToolingDiagnostic,
         reportOnce: Boolean = false,
         key: ToolingDiagnosticId = diagnostic.id,
     ) {
         if (reportedIds.add(key) || !reportOnce) {
             val options = from.diagnosticRenderingOptions.get()
-            problemsReporter.reportProblemDiagnostic(diagnostic, options)
+            if (!diagnostic.isSuppressed(options)) {
+                renderReportedDiagnostic(diagnostic, logger, options)
+            }
         }
     }
 
@@ -77,7 +76,7 @@ internal abstract class KotlinToolingDiagnosticsCollector @Inject constructor(
         if (diagnostic.isSuppressed(options)) return
 
         if (isTransparent) {
-            problemsReporter.reportProblemDiagnostic(diagnostic, options)
+            renderReportedDiagnostic(diagnostic, project.logger, options)
             return
         }
 
@@ -92,9 +91,8 @@ internal abstract class KotlinToolingDiagnosticsCollector @Inject constructor(
 }
 
 internal val Project.kotlinToolingDiagnosticsCollectorProvider: Provider<KotlinToolingDiagnosticsCollector>
-    get() = gradle.registerClassLoaderScopedBuildService(KotlinToolingDiagnosticsCollector::class) {
-        it.parameters.problemsReporterFactory.set(variantImplementationFactoryProvider<ProblemsReporter.Factory>())
-    }
+    get() = gradle.registerClassLoaderScopedBuildService(KotlinToolingDiagnosticsCollector::class)
+
 
 internal val Project.kotlinToolingDiagnosticsCollector: KotlinToolingDiagnosticsCollector
     get() = kotlinToolingDiagnosticsCollectorProvider.get()
@@ -133,5 +131,10 @@ internal annotation class ImmediateDiagnosticReporting
 @ImmediateDiagnosticReporting
 internal fun Project.reportDiagnosticImmediately(diagnostic: ToolingDiagnostic) {
     val renderingOptions = ToolingDiagnosticRenderingOptions.forProject(project)
-    diagnostic.renderReportedDiagnostic(logger, renderingOptions)
+    if (diagnostic.isSuppressed(renderingOptions)) return
+    renderReportedDiagnostic(
+        diagnostic,
+        project.logger,
+        renderingOptions
+    )
 }
