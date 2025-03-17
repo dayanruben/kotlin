@@ -535,7 +535,7 @@ object FirErrors {
     val IMPLICIT_NOTHING_PROPERTY_TYPE: KtDiagnosticFactory0 = KtDiagnosticFactory0("IMPLICIT_NOTHING_PROPERTY_TYPE", ERROR, SourceElementPositioningStrategies.NAME_IDENTIFIER, PsiElement::class)
     val ABBREVIATED_NOTHING_RETURN_TYPE: KtDiagnosticFactory0 = KtDiagnosticFactory0("ABBREVIATED_NOTHING_RETURN_TYPE", ERROR, SourceElementPositioningStrategies.NAME_IDENTIFIER, PsiElement::class)
     val ABBREVIATED_NOTHING_PROPERTY_TYPE: KtDiagnosticFactory0 = KtDiagnosticFactory0("ABBREVIATED_NOTHING_PROPERTY_TYPE", ERROR, SourceElementPositioningStrategies.NAME_IDENTIFIER, PsiElement::class)
-    val CYCLIC_GENERIC_UPPER_BOUND: KtDiagnosticFactory0 = KtDiagnosticFactory0("CYCLIC_GENERIC_UPPER_BOUND", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
+    val CYCLIC_GENERIC_UPPER_BOUND: KtDiagnosticFactory1<List<FirTypeParameterSymbol>> = KtDiagnosticFactory1("CYCLIC_GENERIC_UPPER_BOUND", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
     val FINITE_BOUNDS_VIOLATION: KtDiagnosticFactory0 = KtDiagnosticFactory0("FINITE_BOUNDS_VIOLATION", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
     val FINITE_BOUNDS_VIOLATION_IN_JAVA: KtDiagnosticFactory1<List<FirBasedSymbol<*>>> = KtDiagnosticFactory1("FINITE_BOUNDS_VIOLATION_IN_JAVA", WARNING, SourceElementPositioningStrategies.DECLARATION_NAME, PsiElement::class)
     val EXPANSIVE_INHERITANCE: KtDiagnosticFactory0 = KtDiagnosticFactory0("EXPANSIVE_INHERITANCE", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
@@ -731,6 +731,8 @@ object FirErrors {
     val LATEINIT_INTRINSIC_CALL_IN_INLINE_FUNCTION: KtDiagnosticFactory0 = KtDiagnosticFactory0("LATEINIT_INTRINSIC_CALL_IN_INLINE_FUNCTION", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
     val LATEINIT_INTRINSIC_CALL_ON_NON_ACCESSIBLE_PROPERTY: KtDiagnosticFactory1<FirBasedSymbol<*>> = KtDiagnosticFactory1("LATEINIT_INTRINSIC_CALL_ON_NON_ACCESSIBLE_PROPERTY", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
     val LOCAL_EXTENSION_PROPERTY: KtDiagnosticFactory0 = KtDiagnosticFactory0("LOCAL_EXTENSION_PROPERTY", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
+    val UNNAMED_VAR_PROPERTY: KtDiagnosticFactory0 = KtDiagnosticFactory0("UNNAMED_VAR_PROPERTY", ERROR, SourceElementPositioningStrategies.VAL_OR_VAR_NODE, PsiElement::class)
+    val UNNAMED_DELEGATED_PROPERTY: KtDiagnosticFactory0 = KtDiagnosticFactory0("UNNAMED_DELEGATED_PROPERTY", ERROR, SourceElementPositioningStrategies.PROPERTY_DELEGATE_BY_KEYWORD, PsiElement::class)
 
     // Multi-platform projects
     val EXPECTED_DECLARATION_WITH_BODY: KtDiagnosticFactory0 = KtDiagnosticFactory0("EXPECTED_DECLARATION_WITH_BODY", ERROR, SourceElementPositioningStrategies.DECLARATION_SIGNATURE, KtDeclaration::class)

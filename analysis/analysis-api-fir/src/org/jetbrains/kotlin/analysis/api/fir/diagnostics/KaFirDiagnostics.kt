@@ -1969,6 +1969,7 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface CyclicGenericUpperBound : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = CyclicGenericUpperBound::class
+        val typeParameters: List<KaTypeParameterSymbol>
     }
 
     interface FiniteBoundsViolation : KaFirDiagnostic<PsiElement> {
@@ -2907,6 +2908,14 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface LocalExtensionProperty : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = LocalExtensionProperty::class
+    }
+
+    interface UnnamedVarProperty : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = UnnamedVarProperty::class
+    }
+
+    interface UnnamedDelegatedProperty : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = UnnamedDelegatedProperty::class
     }
 
     interface ExpectedDeclarationWithBody : KaFirDiagnostic<KtDeclaration> {

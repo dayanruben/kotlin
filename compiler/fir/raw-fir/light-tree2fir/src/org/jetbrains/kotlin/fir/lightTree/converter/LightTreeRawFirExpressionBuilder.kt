@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -1171,11 +1171,8 @@ class LightTreeRawFirExpressionBuilder(
         } else {
             nameSource.fakeElement(KtFakeSourceElementKind.ReferenceInAtomicQualifiedAccess)
         }
+
         return buildPropertyAccessExpression {
-            val rawText = referenceExpression.asText
-            if (rawText.isUnderscore) {
-                nonFatalDiagnostics.add(ConeUnderscoreUsageWithoutBackticks(nameSource))
-            }
             source = nameSource
             calleeReference = createSimpleNamedReference(referenceSourceElement, referenceExpression)
         }
@@ -1298,10 +1295,15 @@ class LightTreeRawFirExpressionBuilder(
                     source = blockNode?.toFirSourceElement()
                     val valueParameter = parameter ?: return@block
                     val multiDeclaration = valueParameter.destructuringDeclaration
+                    val quotedName = valueParameter.source.lighterASTNode.getChildNodeByType(IDENTIFIER)?.asText
                     val firLoopParameter = generateTemporaryVariable(
                         baseModuleData,
                         valueParameter.source,
-                        if (multiDeclaration != null) SpecialNames.DESTRUCT else valueParameter.name,
+                        name = when {
+                            multiDeclaration != null -> SpecialNames.DESTRUCT
+                            quotedName == "_" -> SpecialNames.UNDERSCORE_FOR_UNUSED_VAR
+                            else -> valueParameter.name
+                        },
                         buildFunctionCall {
                             source = rangeSource
                             calleeReference = buildSimpleNamedReference {
