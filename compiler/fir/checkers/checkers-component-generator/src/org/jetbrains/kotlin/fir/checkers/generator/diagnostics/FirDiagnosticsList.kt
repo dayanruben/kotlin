@@ -737,6 +737,14 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val NESTED_CLASS_ACCESSED_VIA_INSTANCE_REFERENCE by error<PsiElement> {
             parameter<FirClassLikeSymbol<*>>("symbol")
         }
+
+        val COMPARE_TO_TYPE_MISMATCH by error<KtExpression>(PositioningStrategy.OPERATOR) {
+            parameter<ConeKotlinType>("actualType")
+        }
+
+        val HAS_NEXT_FUNCTION_TYPE_MISMATCH by error<KtExpression> {
+            parameter<ConeKotlinType>("actualType")
+        }
     }
 
     val AMBIGUITY by object : DiagnosticGroup("Ambiguity") {

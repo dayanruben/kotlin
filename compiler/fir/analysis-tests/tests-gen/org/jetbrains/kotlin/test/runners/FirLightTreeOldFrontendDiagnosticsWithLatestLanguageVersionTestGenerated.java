@@ -25125,6 +25125,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       }
 
       @Test
+      @TestMetadata("overrideWithTypeParameterNoFlexible.kt")
+      public void testOverrideWithTypeParameterNoFlexible() {
+        runTest("compiler/testData/diagnostics/tests/j+k/overrideWithTypeParameterNoFlexible.kt");
+      }
+
+      @Test
       @TestMetadata("overrideWithTypeParameterReverse.kt")
       public void testOverrideWithTypeParameterReverse() {
         runTest("compiler/testData/diagnostics/tests/j+k/overrideWithTypeParameterReverse.kt");
@@ -29195,6 +29201,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       }
 
       @Test
+      @TestMetadata("missingCompareToTypeMismatchOnInapplicableOperatorFun.kt")
+      public void testMissingCompareToTypeMismatchOnInapplicableOperatorFun() {
+        runTest("compiler/testData/diagnostics/tests/operatorsOverloading/missingCompareToTypeMismatchOnInapplicableOperatorFun.kt");
+      }
+
+      @Test
       @TestMetadata("plusAssignOnArray.kt")
       public void testPlusAssignOnArray() {
         runTest("compiler/testData/diagnostics/tests/operatorsOverloading/plusAssignOnArray.kt");
@@ -30099,6 +30111,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       }
 
       @Test
+      @TestMetadata("overridesWithFlexibleBase5.kt")
+      public void testOverridesWithFlexibleBase5() {
+        runTest("compiler/testData/diagnostics/tests/override/overridesWithFlexibleBase5.kt");
+      }
+
+      @Test
       @TestMetadata("overridesWithFlexibleBaseOff.kt")
       public void testOverridesWithFlexibleBaseOff() {
         runTest("compiler/testData/diagnostics/tests/override/overridesWithFlexibleBaseOff.kt");
@@ -30120,6 +30138,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       @TestMetadata("overridesWithFlexibleBaseOff4.kt")
       public void testOverridesWithFlexibleBaseOff4() {
         runTest("compiler/testData/diagnostics/tests/override/overridesWithFlexibleBaseOff4.kt");
+      }
+
+      @Test
+      @TestMetadata("overridesWithFlexibleBaseOff5.kt")
+      public void testOverridesWithFlexibleBaseOff5() {
+        runTest("compiler/testData/diagnostics/tests/override/overridesWithFlexibleBaseOff5.kt");
       }
 
       @Test
@@ -34627,6 +34651,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       }
 
       @Test
+      @TestMetadata("samConversionToGenericWrongNullabilityForbiddenAndNoFlexible.kt")
+      public void testSamConversionToGenericWrongNullabilityForbiddenAndNoFlexible() {
+        runTest("compiler/testData/diagnostics/tests/samConversions/samConversionToGenericWrongNullabilityForbiddenAndNoFlexible.kt");
+      }
+
+      @Test
       @TestMetadata("samConversionWithCallableReference.kt")
       public void testSamConversionWithCallableReference() {
         runTest("compiler/testData/diagnostics/tests/samConversions/samConversionWithCallableReference.kt");
@@ -34708,6 +34738,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       @TestMetadata("samWithLambdaDnnRepresentation.kt")
       public void testSamWithLambdaDnnRepresentation() {
         runTest("compiler/testData/diagnostics/tests/samConversions/samWithLambdaDnnRepresentation.kt");
+      }
+
+      @Test
+      @TestMetadata("samWithLambdaNoFlexible.kt")
+      public void testSamWithLambdaNoFlexible() {
+        runTest("compiler/testData/diagnostics/tests/samConversions/samWithLambdaNoFlexible.kt");
       }
 
       @Test

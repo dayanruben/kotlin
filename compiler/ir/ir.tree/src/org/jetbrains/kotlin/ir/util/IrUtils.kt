@@ -214,6 +214,17 @@ val IrFunction.nonDispatchParameters: List<IrValueParameter>
 val IrFunctionAccessExpression.nonDispatchArguments: List<IrExpression?>
     get() = if (symbol.owner.dispatchReceiverParameter != null) arguments.drop(1) else arguments.toList()
 
+/**
+ * The function that will be called on `KCallable.invoke()`.
+ *
+ * Note: in the future it may be possible that `getterFunction` would be nullable, at which point it won't be that easy.
+ */
+val IrRichCallableReference<*>.invokeFunction: IrSimpleFunction
+    get() = when (this) {
+        is IrRichFunctionReference -> invokeFunction
+        is IrRichPropertyReference -> getterFunction
+    }
+
 val IrBody.statements: List<IrStatement>
     get() = when (this) {
         is IrBlockBody -> statements
@@ -830,7 +841,11 @@ fun IrFunction.copyParametersFrom(from: IrFunction) {
 }
 
 fun IrFunction.copyParametersFrom(from: IrFunction, substitutionMap: Map<IrTypeParameterSymbol, IrType>) {
-    parameters = parameters memoryOptimizedPlus from.parameters.map {
+    copyParameters(from.parameters, substitutionMap)
+}
+
+fun IrFunction.copyParameters(source: List<IrValueParameter>, substitutionMap: Map<IrTypeParameterSymbol, IrType>) {
+    parameters = parameters memoryOptimizedPlus source.map {
         it.copyTo(
             this,
             type = it.type.substitute(substitutionMap),
@@ -1551,3 +1566,5 @@ fun IrMemberAccessExpression<IrFunctionSymbol>.copyValueArgumentsFrom(
 ) {
     arguments.assignFrom(src.arguments)
 }
+
+fun <S : IrBindableSymbol<*, O>, O : IrSymbolOwner> S.getOwnerIfBound(): O? = if (isBound) owner else null

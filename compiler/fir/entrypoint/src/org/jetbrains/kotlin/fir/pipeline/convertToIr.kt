@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.pipeline
 
 import org.jetbrains.kotlin.backend.common.*
+import org.jetbrains.kotlin.backend.common.BackendException
 import org.jetbrains.kotlin.backend.common.actualizer.*
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.IrVerificationMode
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSession
@@ -373,7 +375,7 @@ private class Fir2IrPipeline(
                 try {
                     file.acceptVoid(ClassVisitor())
                 } catch (e: Throwable) {
-                    CodegenUtil.reportBackendException(e, "IR fake override builder", file.fileEntry.name) { offset ->
+                    BackendException.report(e, "IR fake override builder", file.fileEntry.name) { offset ->
                         file.fileEntry.takeIf { it.supportsDebugInfo }?.let {
                             val (line, column) = it.getLineAndColumnNumbers(offset)
                             line to column
@@ -436,8 +438,9 @@ private fun IrPluginContext.runMandatoryIrValidation(
     fir2IrConfiguration: Fir2IrConfiguration,
 ) {
     if (!fir2IrConfiguration.validateIrAfterPlugins) return
-    // TODO(KT-71138): Replace with IrVerificationMode.ERROR in Kotlin 2.2
-    validateIr(fir2IrConfiguration.messageCollector, IrVerificationMode.WARNING) {
+    val mode =
+        if (languageVersionSettings.languageVersion >= LanguageVersion.KOTLIN_2_2) IrVerificationMode.ERROR else IrVerificationMode.WARNING
+    validateIr(fir2IrConfiguration.messageCollector, mode) {
         customMessagePrefix = if (extension == null) {
             "The frontend generated invalid IR. This is a compiler bug, please report it to https://kotl.in/issue."
         } else {

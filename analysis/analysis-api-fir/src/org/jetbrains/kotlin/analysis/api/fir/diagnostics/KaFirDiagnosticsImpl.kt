@@ -1983,6 +1983,18 @@ internal class NestedClassAccessedViaInstanceReferenceImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.NestedClassAccessedViaInstanceReference
 
+internal class CompareToTypeMismatchImpl(
+    override val actualType: KaType,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtExpression>(firDiagnostic, token), KaFirDiagnostic.CompareToTypeMismatch
+
+internal class HasNextFunctionTypeMismatchImpl(
+    override val actualType: KaType,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtExpression>(firDiagnostic, token), KaFirDiagnostic.HasNextFunctionTypeMismatch
+
 internal class OverloadResolutionAmbiguityImpl(
     override val candidates: List<KaSymbol>,
     firDiagnostic: KtPsiDiagnostic,

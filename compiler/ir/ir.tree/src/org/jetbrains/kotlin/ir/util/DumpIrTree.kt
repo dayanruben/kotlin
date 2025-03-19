@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
+import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.visitors.IrVisitor
 import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
@@ -68,12 +69,17 @@ fun IrFile.dumpTreesFromLineNumber(lineNumber: Int, options: DumpIrTreeOptions =
  * @property printDispatchReceiverTypeInFakeOverrides If the dispatch receiver type should be printed.
  *   Otherwise, it will be substituted with some fixed placeholder value.
  * @property printParameterNamesInOverriddenSymbols If names of value parameters should be printed in overridden function symbols.
+ * @property printMemberAccessExpressionArgumentNames If real names of type and value arguments of [IrMemberAccessExpression]s
+ *   should be printer. By default, this option is turned on. If it's off, then indices are rendered instead of names.
  * @property printSealedSubclasses Whether sealed subclasses of a sealed class/interface should be printed.
  * @property replaceImplicitSetterParameterNameWith If not null, them implicit value parameter name [IMPLICIT_SET_PARAMETER] would be
  *   replaced by the given value.
  * @property isHiddenDeclaration The filter that can be used to exclude some declarations from printing.
  * @property filePathRenderer allows to post-process the rendered IrFile name
  * @property printSourceOffsets If source offsets of elements should be printed.
+ * @property guessTypeBySignatureOfUnboundClassifierSymbol If an unbound symbol is met in [IrSimpleType], should we try to guess
+ *   the fully qualified name of the class by symbol's signature or just render the standard "unbound symbol" text.
+ * @property referenceRenderingStrategy Determines the exact way how [IrSymbol] references are rendered in IR expressions and IR declarations.
  */
 data class DumpIrTreeOptions(
     val normalizeNames: Boolean = false,
@@ -92,11 +98,14 @@ data class DumpIrTreeOptions(
     val printAnnotationsInFakeOverrides: Boolean = true,
     val printDispatchReceiverTypeInFakeOverrides: Boolean = true,
     val printParameterNamesInOverriddenSymbols: Boolean = true,
+    val printMemberAccessExpressionArgumentNames: Boolean = true,
     val printSealedSubclasses: Boolean = true,
     val replaceImplicitSetterParameterNameWith: Name? = null,
     val isHiddenDeclaration: (IrDeclaration) -> Boolean = { false },
     val filePathRenderer: (IrFile, String) -> String = { _, name -> name },
     val printSourceOffsets: Boolean = false,
+    val guessTypeBySignatureOfUnboundClassifierSymbol: Boolean = false,
+    val referenceRenderingStrategy: ReferenceRenderingStrategy = ReferenceRenderingStrategy.Default,
 ) {
     /**
      * A customizable filter to exclude some (or all) flags for declarations or declaration references.
@@ -113,6 +122,22 @@ data class DumpIrTreeOptions(
         companion object {
             val KEEP_ALL_FLAGS = FlagsFilter { _, _, flags -> flags }
             val NO_FLAGS_FOR_REFERENCES = FlagsFilter { _, isReference, flags -> flags.takeUnless { isReference }.orEmpty() }
+        }
+    }
+
+    sealed interface ReferenceRenderingStrategy {
+        /**
+         * Use KT-like text rendered for all references.
+         * See also [RenderIrElementVisitor.BoundSymbolReferenceRenderer].
+         */
+        object Default : ReferenceRenderingStrategy
+
+        /**
+         * Use a custom implementation of reference rendering.
+         * Falls back to [Default] if [renderReference] returns `null`.
+         */
+        fun interface Custom : ReferenceRenderingStrategy {
+            fun renderReference(symbol: IrSymbol): String?
         }
     }
 }
@@ -206,7 +231,7 @@ class DumpIrTreeVisitor(
         declaration.dumpLabeledElementWith(data) {
             dumpAnnotations(declaration)
             runIf(options.printSealedSubclasses) {
-                declaration.sealedSubclasses.dumpItems("sealedSubclasses") { it.dump() }
+                declaration.sealedSubclasses.dumpItems("sealedSubclasses") { it.dumpAsReference() }
             }
             declaration.thisReceiver?.accept(this, "thisReceiver")
             declaration.typeParameters.dumpElements()
@@ -249,13 +274,6 @@ class DumpIrTreeVisitor(
             printer.println(elementRenderer.renderAsAnnotation(irAnnotation))
         }
     }
-
-    private fun IrSymbol.dump(label: String? = null) =
-        printer.println(
-            elementRenderer.renderSymbolReference(this).let {
-                if (label != null) "$label: $it" else it
-            }
-        )
 
     override fun visitConstructor(declaration: IrConstructor, data: String) {
         if (declaration.isHidden()) return
@@ -328,7 +346,7 @@ class DumpIrTreeVisitor(
     }
 
     private fun IrMemberAccessExpression<*>.getTypeParameterNames(expectedCount: Int): List<String> =
-        if (symbol.isBound)
+        if (options.printMemberAccessExpressionArgumentNames && symbol.isBound)
             symbol.owner.getTypeParameterNames(expectedCount)
         else
             getPlaceholderParameterNames(expectedCount)
@@ -501,12 +519,12 @@ class DumpIrTreeVisitor(
             printer.println("$label: UNBOUND ${javaClass.simpleName}")
     }
 
-    private fun IrSymbol.dumpAsReference(label: String) {
-        if (isBound)
-            dump(label)
-        else
-            printer.println("$label: UNBOUND ${javaClass.simpleName}")
-    }
+    private fun IrSymbol.dumpAsReference(label: String? = null) =
+        printer.println(
+            elementRenderer.renderSymbolReference(this).let {
+                if (label != null) "$label: $it" else it
+            }
+        )
 
     private fun IrFileEntry.dumpInternal(label: String? = null) {
         val prefix = if (label != null) "$label: " else ""
@@ -548,7 +566,7 @@ class DumpTreeFromSourceLineVisitor(
 }
 
 internal fun IrMemberAccessExpression<*>.getValueParameterNamesForDebug(options: DumpIrTreeOptions): List<String> {
-    val function = if (symbol.isBound) symbol.owner as? IrFunction else null
+    val function = if (options.printMemberAccessExpressionArgumentNames && symbol.isBound) symbol.owner as? IrFunction else null
     return getValueParameterNamesForDebug(function, arguments.size, options)
 }
 

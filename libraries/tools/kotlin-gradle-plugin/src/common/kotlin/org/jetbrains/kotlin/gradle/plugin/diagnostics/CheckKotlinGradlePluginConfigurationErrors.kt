@@ -26,10 +26,16 @@ internal abstract class CheckKotlinGradlePluginConfigurationErrors : DefaultTask
     @get:Internal
     abstract val renderingOptions: Property<ToolingDiagnosticRenderingOptions>
 
+    @get:Internal
+    abstract val problemsReporter: Property<ProblemsReporter>
+
     @TaskAction
     fun checkNoErrors() {
-        if (errorDiagnostics.get().isNotEmpty()) {
-            renderReportedDiagnostics(errorDiagnostics.get(), logger, renderingOptions.get())
+        val diagnostics = errorDiagnostics.get()
+        val reporter = problemsReporter.get()
+        val options = renderingOptions.get()
+        if (diagnostics.isNotEmpty()) {
+            diagnostics.reportProblems(reporter, options)
             throw InvalidUserCodeException("Kotlin Gradle Plugin reported errors. Check the log for details")
         }
     }
@@ -56,6 +62,7 @@ internal fun Project.locateOrRegisterCheckKotlinGradlePluginErrorsTask(): TaskPr
             }
         )
         task.usesService(kotlinToolingDiagnosticsCollectorProvider)
+        task.problemsReporter.set(kotlinToolingDiagnosticsCollectorProvider.map { it.problemsReporter })
         task.renderingOptions.set(ToolingDiagnosticRenderingOptions.forProject(this))
         task.description = DESCRIPTION
         task.group = LifecycleBasePlugin.VERIFICATION_GROUP

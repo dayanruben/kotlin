@@ -18,11 +18,11 @@ import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.*
 import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.TestCompilationArtifact.*
 import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.TestCompilationDependencyType.*
 import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.TestCompilationResult.Companion.assertSuccess
-import org.jetbrains.kotlin.konan.test.blackbox.support.group.UsePartialLinkage
 import org.jetbrains.kotlin.konan.test.blackbox.support.runner.TestExecutable
 import org.jetbrains.kotlin.konan.test.blackbox.support.runner.TestRunChecks
 import org.jetbrains.kotlin.konan.test.blackbox.support.settings.*
 import org.jetbrains.kotlin.konan.test.blackbox.support.util.*
+import org.jetbrains.kotlin.test.TargetBackend
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
 import org.opentest4j.TestAbortedException
@@ -33,6 +33,9 @@ abstract class AbstractKlibLinkageTest : AbstractNativeSimpleTest() {
         override val testDir = getAbsoluteFile(testPath)
         override val buildDir get() = this@AbstractKlibLinkageTest.buildDir
         override val stdlibFile get() = this@AbstractKlibLinkageTest.stdlibFile
+        override val targetBackend get() = TargetBackend.NATIVE
+        override val isK2: Boolean
+            get() = testRunSettings.get<PipelineType>() == PipelineType.K2
 
         override val testModeConstructorParameters = buildMap {
             this["isNative"] = "true"
@@ -61,16 +64,21 @@ abstract class AbstractKlibLinkageTest : AbstractNativeSimpleTest() {
             dependencies: Dependencies,
             klibFile: File,
             compilerEdition: KlibCompilerEdition,
-        ) = this@AbstractKlibLinkageTest.buildKlib(moduleName, buildDirs.sourceDir, dependencies, klibFile, compilerEdition)
+            compilerArguments: List<String>,
+        ) = this@AbstractKlibLinkageTest.buildKlib(
+            moduleName,
+            buildDirs.sourceDir,
+            dependencies,
+            klibFile,
+            compilerEdition,
+            compilerArguments
+        )
 
 
         override fun buildBinaryAndRun(mainModule: Dependency, otherDependencies: Dependencies) =
             this@AbstractKlibLinkageTest.buildBinaryAndRun(mainModule, otherDependencies)
 
         override fun onNonEmptyBuildDirectory(directory: File) = backupDirectoryContents(directory)
-
-        override fun isIgnoredTest(projectInfo: ProjectInfo) =
-            super.isIgnoredTest(projectInfo) || projectInfo.name == "externalDeclarations" || projectInfo.name == "externalDeclarationsKJS"
 
         override fun onIgnoredTest() = throw TestAbortedException()
     }
@@ -99,6 +107,7 @@ abstract class AbstractKlibLinkageTest : AbstractNativeSimpleTest() {
         dependencies: Dependencies,
         klibFile: File,
         compilerEdition: KlibCompilerEdition,
+        compilerArguments: List<String>,
     )
 
     internal fun buildBinaryAndRun(mainModule: Dependency, otherDependencies: Dependencies) {
