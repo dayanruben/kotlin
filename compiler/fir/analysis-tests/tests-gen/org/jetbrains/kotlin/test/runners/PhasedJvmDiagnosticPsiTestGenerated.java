@@ -1218,6 +1218,18 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
     }
 
     @Test
+    @TestMetadata("makeSureCastNeverSucceedsRequiresDfaWarningsFeature_Off.kt")
+    public void testMakeSureCastNeverSucceedsRequiresDfaWarningsFeature_Off() {
+      runTest("compiler/testData/diagnostics/tests/makeSureCastNeverSucceedsRequiresDfaWarningsFeature_Off.kt");
+    }
+
+    @Test
+    @TestMetadata("makeSureCastNeverSucceedsRequiresDfaWarningsFeature_On.kt")
+    public void testMakeSureCastNeverSucceedsRequiresDfaWarningsFeature_On() {
+      runTest("compiler/testData/diagnostics/tests/makeSureCastNeverSucceedsRequiresDfaWarningsFeature_On.kt");
+    }
+
+    @Test
     @TestMetadata("missedTypeArgumentsInAnnotationCall.kt")
     public void testMissedTypeArgumentsInAnnotationCall() {
       runTest("compiler/testData/diagnostics/tests/missedTypeArgumentsInAnnotationCall.kt");
@@ -16537,6 +16549,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       }
 
       @Test
+      @TestMetadata("anonymousFunctionAgainsSuspendFunctionType.kt")
+      public void testAnonymousFunctionAgainsSuspendFunctionType() {
+        runTest("compiler/testData/diagnostics/tests/inference/anonymousFunctionAgainsSuspendFunctionType.kt");
+      }
+
+      @Test
       @TestMetadata("assertThatInNumerousIf.kt")
       public void testAssertThatInNumerousIf() {
         runTest("compiler/testData/diagnostics/tests/inference/assertThatInNumerousIf.kt");
@@ -16618,6 +16636,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       @TestMetadata("completionOfMultipleLambdas.kt")
       public void testCompletionOfMultipleLambdas() {
         runTest("compiler/testData/diagnostics/tests/inference/completionOfMultipleLambdas.kt");
+      }
+
+      @Test
+      @TestMetadata("ComplexGenericTypeMismatchInGenericLambdaReturnPosition.kt")
+      public void testComplexGenericTypeMismatchInGenericLambdaReturnPosition() {
+        runTest("compiler/testData/diagnostics/tests/inference/ComplexGenericTypeMismatchInGenericLambdaReturnPosition.kt");
       }
 
       @Test
@@ -22298,6 +22322,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       @TestMetadata("assignment.kt")
       public void testAssignment() {
         runTest("compiler/testData/diagnostics/tests/inline/assignment.kt");
+      }
+
+      @Test
+      @TestMetadata("callableReferenceOnInlineParameter.kt")
+      public void testCallableReferenceOnInlineParameter() {
+        runTest("compiler/testData/diagnostics/tests/inline/callableReferenceOnInlineParameter.kt");
       }
 
       @Test
@@ -56890,6 +56920,18 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       @TestMetadata("multipleAnnotationsWithDefaultTarget.kt")
       public void testMultipleAnnotationsWithDefaultTarget() {
         runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/annotations/multipleAnnotationsWithDefaultTarget.kt");
+      }
+
+      @Test
+      @TestMetadata("useSiteTargetOnExpression.kt")
+      public void testUseSiteTargetOnExpression() {
+        runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/annotations/useSiteTargetOnExpression.kt");
+      }
+
+      @Test
+      @TestMetadata("useSiteTargetOnExpressionForbidden.kt")
+      public void testUseSiteTargetOnExpressionForbidden() {
+        runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/annotations/useSiteTargetOnExpressionForbidden.kt");
       }
     }
 

@@ -1222,6 +1222,18 @@ public class LLReversedDiagnosticsFe10TestGenerated extends AbstractLLReversedDi
     }
 
     @Test
+    @TestMetadata("makeSureCastNeverSucceedsRequiresDfaWarningsFeature_Off.kt")
+    public void testMakeSureCastNeverSucceedsRequiresDfaWarningsFeature_Off() {
+      runTest("compiler/testData/diagnostics/tests/makeSureCastNeverSucceedsRequiresDfaWarningsFeature_Off.kt");
+    }
+
+    @Test
+    @TestMetadata("makeSureCastNeverSucceedsRequiresDfaWarningsFeature_On.kt")
+    public void testMakeSureCastNeverSucceedsRequiresDfaWarningsFeature_On() {
+      runTest("compiler/testData/diagnostics/tests/makeSureCastNeverSucceedsRequiresDfaWarningsFeature_On.kt");
+    }
+
+    @Test
     @TestMetadata("missedTypeArgumentsInAnnotationCall.kt")
     public void testMissedTypeArgumentsInAnnotationCall() {
       runTest("compiler/testData/diagnostics/tests/missedTypeArgumentsInAnnotationCall.kt");
@@ -17101,6 +17113,12 @@ public class LLReversedDiagnosticsFe10TestGenerated extends AbstractLLReversedDi
       }
 
       @Test
+      @TestMetadata("anonymousFunctionAgainsSuspendFunctionType.kt")
+      public void testAnonymousFunctionAgainsSuspendFunctionType() {
+        runTest("compiler/testData/diagnostics/tests/inference/anonymousFunctionAgainsSuspendFunctionType.kt");
+      }
+
+      @Test
       @TestMetadata("assertThatInNumerousIf.kt")
       public void testAssertThatInNumerousIf() {
         runTest("compiler/testData/diagnostics/tests/inference/assertThatInNumerousIf.kt");
@@ -17182,6 +17200,12 @@ public class LLReversedDiagnosticsFe10TestGenerated extends AbstractLLReversedDi
       @TestMetadata("completionOfMultipleLambdas.kt")
       public void testCompletionOfMultipleLambdas() {
         runTest("compiler/testData/diagnostics/tests/inference/completionOfMultipleLambdas.kt");
+      }
+
+      @Test
+      @TestMetadata("ComplexGenericTypeMismatchInGenericLambdaReturnPosition.kt")
+      public void testComplexGenericTypeMismatchInGenericLambdaReturnPosition() {
+        runTest("compiler/testData/diagnostics/tests/inference/ComplexGenericTypeMismatchInGenericLambdaReturnPosition.kt");
       }
 
       @Test
@@ -23112,6 +23136,12 @@ public class LLReversedDiagnosticsFe10TestGenerated extends AbstractLLReversedDi
       @TestMetadata("assignment.kt")
       public void testAssignment() {
         runTest("compiler/testData/diagnostics/tests/inline/assignment.kt");
+      }
+
+      @Test
+      @TestMetadata("callableReferenceOnInlineParameter.kt")
+      public void testCallableReferenceOnInlineParameter() {
+        runTest("compiler/testData/diagnostics/tests/inline/callableReferenceOnInlineParameter.kt");
       }
 
       @Test
