@@ -12781,6 +12781,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestDataPath("$PROJECT_ROOT")
       public class Inner {
         @Test
+        @TestMetadata("constructorCallFromOutside.kt")
+        public void testConstructorCallFromOutside() {
+          runTest("compiler/testData/diagnostics/tests/enum/inner/constructorCallFromOutside.kt");
+        }
+
+        @Test
         @TestMetadata("existingClassObject.kt")
         public void testExistingClassObject() {
           runTest("compiler/testData/diagnostics/tests/enum/inner/existingClassObject.kt");
@@ -16444,6 +16450,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
         @TestMetadata("declarationAfterIncompleteElvis.kt")
         public void testDeclarationAfterIncompleteElvis() {
           runTest("compiler/testData/diagnostics/tests/incompleteCode/diagnosticWithSyntaxError/declarationAfterIncompleteElvis.kt");
+        }
+
+        @Test
+        @TestMetadata("expressionBodyEmptyParens.kt")
+        public void testExpressionBodyEmptyParens() {
+          runTest("compiler/testData/diagnostics/tests/incompleteCode/diagnosticWithSyntaxError/expressionBodyEmptyParens.kt");
         }
 
         @Test
