@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.fir.tree.generator.FirTree.FieldSets.declarations
 import org.jetbrains.kotlin.fir.tree.generator.FirTree.FieldSets.typeArguments
 import org.jetbrains.kotlin.fir.tree.generator.FirTree.FieldSets.typeParameters
 import org.jetbrains.kotlin.fir.tree.generator.context.AbstractFirTreeBuilder
+import org.jetbrains.kotlin.fir.tree.generator.directDeclarationsAccessAnnotation
 import org.jetbrains.kotlin.fir.tree.generator.model.Element
 import org.jetbrains.kotlin.fir.tree.generator.model.Element.Kind.*
 import org.jetbrains.kotlin.fir.tree.generator.model.fieldSet
@@ -295,8 +296,8 @@ object FirTree : AbstractFirTreeBuilder() {
         parent(expression)
         parent(diagnosticHolder)
 
-        +field("selector", errorExpression)
-        +field("receiver", expression)
+        +field("selector", errorExpression, withTransform = true)
+        +field("receiver", expression, withReplace = true)
     }
 
     val literalExpression: Element by element(Expression) {
@@ -1308,6 +1309,7 @@ object FirTree : AbstractFirTreeBuilder() {
         val declarations = fieldSet(
             listField(declaration) {
                 useInBaseTransformerDetection = false
+                optInAnnotation = directDeclarationsAccessAnnotation
             }
         )
 

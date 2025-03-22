@@ -22,10 +22,7 @@ import org.jetbrains.kotlin.fir.expressions.impl.FirResolvedArgumentList
 import org.jetbrains.kotlin.fir.expressions.impl.toAnnotationArgumentMapping
 import org.jetbrains.kotlin.fir.extensions.*
 import org.jetbrains.kotlin.fir.references.*
-import org.jetbrains.kotlin.fir.references.builder.buildErrorSuperReference
-import org.jetbrains.kotlin.fir.references.builder.buildExplicitSuperReference
-import org.jetbrains.kotlin.fir.references.builder.buildResolvedNamedReference
-import org.jetbrains.kotlin.fir.references.builder.buildSimpleNamedReference
+import org.jetbrains.kotlin.fir.references.builder.*
 import org.jetbrains.kotlin.fir.references.impl.FirSimpleNamedReference
 import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode.ArrayLiteralPosition
@@ -193,7 +190,9 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
                         else -> qualifiedAccessExpression
                     },
                     data,
-                )
+                ).let {
+                    runContextSensitiveResolutionIfNeeded(it, data) ?: it
+                }
 
                 fun FirExpression.alsoRecordLookup() = also {
                     if (transformedCallee.isResolved) {
@@ -230,6 +229,51 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
             }
         }
         return result
+    }
+
+    private fun runContextSensitiveResolutionIfNeeded(
+        originalExpression: FirExpression,
+        data: ResolutionMode,
+    ): FirExpression? {
+        if (originalExpression !is FirPropertyAccessExpression) return null
+        if (!session.languageVersionSettings.supportsFeature(LanguageFeature.ContextSensitiveResolutionUsingExpectedType)) return null
+
+        val expectedType =
+            (data as? ResolutionMode.WithExpectedType)?.hintForContextSensitiveResolution ?: data.expectedType ?: return null
+
+        if (!originalExpression.shouldBeResolvedInContextSensitiveMode()) return null
+
+        val newExpression =
+            components.runContextSensitiveResolutionForPropertyAccess(originalExpression, expectedType)
+                ?: return null
+
+        if ((data as? ResolutionMode.WithExpectedType)?.expectedTypeMismatchIsReportedInChecker == true) return newExpression
+
+        if (!newExpression.resolvedType.isSubtypeOf(expectedType, session, errorTypesEqualToAnything = true)) {
+            return buildPropertyAccessExpression {
+                source = originalExpression.source
+                calleeReference = buildErrorNamedReference {
+                    source = originalExpression.calleeReference.source
+                    name = originalExpression.calleeReference.name
+                    diagnostic = ConeTypeMismatch(newExpression.resolvedType, expectedType)
+                }
+                coneTypeOrNull = newExpression.resolvedType
+            }
+        }
+
+        return newExpression
+    }
+
+    override fun transformQualifiedErrorAccessExpression(qualifiedErrorAccessExpression: FirQualifiedErrorAccessExpression, data: ResolutionMode): FirStatement {
+        qualifiedErrorAccessExpression.transformAnnotations(this, data)
+        qualifiedErrorAccessExpression.transformSelector(this, data)
+        qualifiedErrorAccessExpression.replaceReceiver(
+            qualifiedErrorAccessExpression.receiver.transformAsExplicitReceiver(
+                ResolutionMode.ReceiverResolution,
+                isUsedAsGetClassReceiver = false
+            )
+        )
+        return qualifiedErrorAccessExpression
     }
 
     fun <Q : FirQualifiedAccessExpression> transformExplicitReceiverOf(qualifiedAccessExpression: Q): Q {
@@ -990,7 +1034,18 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
         // One of the reasons is just consistency with K1 and with the desugared form `a.equals(b)`. See KT-47409 for clarifications.
         val leftArgumentTransformed: FirExpression = arguments[0].transform(transformer, ResolutionMode.ContextIndependent)
         dataFlowAnalyzer.exitEqualityOperatorLhs()
-        val rightArgumentTransformed: FirExpression = arguments[1].transform(transformer, withExpectedType(builtinTypes.nullableAnyType))
+        val rightArgumentTransformed: FirExpression =
+            arguments[1].transform(
+                transformer,
+                withExpectedType(
+                    // We use `Any?` as a real expected type used for inference and other things
+                    builtinTypes.nullableAnyType,
+                    // But for context-sensitive resolution cases like myValue == ENUM_ENTRY we use the type of the LHS.
+                    // Potentially, we might just use LHS type just as a regular expected type which would be used both
+                    // for inference and context-sensitive resolution but that would be a very big shift in the semantics.
+                    hintForContextSensitiveResolution = leftArgumentTransformed.resolvedType,
+                )
+            )
 
         equalityOperatorCall
             .transformAnnotations(transformer, ResolutionMode.ContextIndependent)

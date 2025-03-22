@@ -348,7 +348,6 @@ internal object EscapeAnalysis {
             val lifetimes: MutableMap<IrElement, Lifetime>,
             val propagateExiledToHeapObjects: Boolean
     ) {
-        private val enableLocalObjects: Boolean = context.config.enableLocalObjects
 
         private val symbols = context.symbols
         private val throwable = symbols.throwable.owner
@@ -1655,11 +1654,7 @@ internal object EscapeAnalysis {
                     val computedLifetime = lifetimeOf(node)
                     var lifetime = computedLifetime
 
-                    if (!enableLocalObjects && lifetime == Lifetime.LOCAL) {
-                        lifetime = Lifetime.GLOBAL
-                    }
-
-                    if (lifetime != Lifetime.STACK && lifetime != Lifetime.LOCAL) {
+                    if (lifetime != Lifetime.STACK) {
                         // TODO: Support other lifetimes - requires arenas.
                         lifetime = Lifetime.GLOBAL
                     }
@@ -1676,18 +1671,15 @@ internal object EscapeAnalysis {
                                     stackArrayCandidates += ArrayStaticAllocation(ptgNode, irClass, arrayLength!!, arraySizeInBytes.toInt())
                                 } else {
                                     // Can be placed into the local arena.
-                                    lifetime = if (enableLocalObjects) {
-                                        Lifetime.LOCAL
-                                    } else {
-                                        Lifetime.GLOBAL
-                                    }
+                                    // TODO. Support Lifetime.LOCAL
+                                    lifetime = Lifetime.GLOBAL
                                 }
                             }
                         }
                     }
 
                     if (lifetime != computedLifetime) {
-                        if (propagateExiledToHeapObjects && lifetime == Lifetime.GLOBAL && node is DataFlowIR.Node.Alloc) {
+                        if (propagateExiledToHeapObjects && node is DataFlowIR.Node.Alloc) {
                             context.log { "Forcing node ${nodeToString(node)} to escape" }
                             escapeOrigins += ptgNode
                             propagateEscapeOrigin(ptgNode)
@@ -1706,15 +1698,13 @@ internal object EscapeAnalysis {
                         ptgNode.forcedLifetime = Lifetime.STACK_ARRAY(length)
                     } else {
                         remainedToAlloc = 0
-                        if (enableLocalObjects) {
-                            ptgNode.forcedLifetime = Lifetime.LOCAL
-                        } else if (irClass.symbol == symbols.array && propagateExiledToHeapObjects) {
+                        // Do not exile primitive arrays - they ain't reference no object.
+                        if (irClass.symbol == symbols.array && propagateExiledToHeapObjects) {
                             context.log { "Forcing node ${nodeToString(ptgNode.node!!)} to escape" }
                             escapeOrigins += ptgNode
                             propagateEscapeOrigin(ptgNode)
                         } else {
-                            // Do not exile primitive arrays - they ain't reference no object.
-                            ptgNode.forcedLifetime = Lifetime.GLOBAL
+                            ptgNode.forcedLifetime = Lifetime.GLOBAL // TODO: Change to LOCAL when supported.
                         }
                     }
                 }
@@ -1809,6 +1799,7 @@ internal object EscapeAnalysis {
                     moduleDFG, lifetimes,
                     // The GC must be careful not to scan exiled objects, that have already became dead,
                     // as they may reference other already destroyed stack-allocated objects.
+                    // TODO somehow tag these object, so that GC could handle them properly.
                     propagateExiledToHeapObjects = context.config.gc == GC.CONCURRENT_MARK_AND_SWEEP
             ).analyze()
         } catch (t: Throwable) {

@@ -5,12 +5,39 @@
 
 package org.jetbrains.kotlin.arguments.dsl.types
 
+import kotlinx.serialization.Serializable
+import org.jetbrains.kotlin.arguments.dsl.base.KotlinReleaseVersion
 import org.jetbrains.kotlin.arguments.dsl.base.ReleaseDependent
 
-// TODO: make it sealed and update KotlinCompilerArgumentsLevelTest once types will appear
-interface KotlinArgumentValueType<T : Any> {
+sealed interface KotlinArgumentValueType<T : Any> {
     val isNullable: ReleaseDependent<Boolean>
     val defaultValue: ReleaseDependent<T?>
+
+    fun stringRepresentation(value: T?): String?
 }
 
-object AllKotlinArgumentTypes
+@Serializable
+class BooleanType(
+    override val isNullable: ReleaseDependent<Boolean> = ReleaseDependent(true),
+    override val defaultValue: ReleaseDependent<Boolean?> = ReleaseDependent(null),
+) : KotlinArgumentValueType<Boolean> {
+    override fun stringRepresentation(value: Boolean?): String? {
+        return value?.toString()
+    }
+}
+
+@Serializable
+class KotlinVersionType(
+    override val isNullable: ReleaseDependent<Boolean> = ReleaseDependent(true),
+    override val defaultValue: ReleaseDependent<KotlinVersion?> = ReleaseDependent(
+        KotlinVersion.v2_0,
+        KotlinReleaseVersion.v1_4_0..KotlinReleaseVersion.v1_9_20 to KotlinVersion.v1_9
+    )
+) : KotlinArgumentValueType<KotlinVersion> {
+    override fun stringRepresentation(value: KotlinVersion?): String? {
+        return value?.versionName?.valueOrNullStringLiteral
+    }
+}
+
+private val String?.valueOrNullStringLiteral: String
+    get() = "\"${this}\""

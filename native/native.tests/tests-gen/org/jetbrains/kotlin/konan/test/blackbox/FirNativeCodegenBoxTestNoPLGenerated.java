@@ -17975,9 +17975,21 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
         }
 
         @Test
+        @TestMetadata("basicExampleWithEnumAndWhens.kt")
+        public void testBasicExampleWithEnumAndWhens() {
+          runTest("compiler/testData/codegen/box/fir/contextSensitiveResolution/basicExampleWithEnumAndWhens.kt");
+        }
+
+        @Test
         @TestMetadata("eitherInTypePosition.kt")
         public void testEitherInTypePosition() {
           runTest("compiler/testData/codegen/box/fir/contextSensitiveResolution/eitherInTypePosition.kt");
+        }
+
+        @Test
+        @TestMetadata("otherExpressionKindsPosition.kt")
+        public void testOtherExpressionKindsPosition() {
+          runTest("compiler/testData/codegen/box/fir/contextSensitiveResolution/otherExpressionKindsPosition.kt");
         }
       }
 
@@ -50620,6 +50632,24 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
       public void testLocalFunInLambdaCapturesOuterVariable() {
         runTest("compiler/testData/codegen/boxInline/localFunInLambda/localFunInLambdaCapturesOuterVariable.kt");
       }
+
+      @Test
+      @TestMetadata("localFunInLambdaInsideAnonymousObject.kt")
+      public void testLocalFunInLambdaInsideAnonymousObject() {
+        runTest("compiler/testData/codegen/boxInline/localFunInLambda/localFunInLambdaInsideAnonymousObject.kt");
+      }
+
+      @Test
+      @TestMetadata("localFunInLambdaNoInline.kt")
+      public void testLocalFunInLambdaNoInline() {
+        runTest("compiler/testData/codegen/boxInline/localFunInLambda/localFunInLambdaNoInline.kt");
+      }
+
+      @Test
+      @TestMetadata("localFunInLambdaOutsideAnonymousObject.kt")
+      public void testLocalFunInLambdaOutsideAnonymousObject() {
+        runTest("compiler/testData/codegen/boxInline/localFunInLambda/localFunInLambdaOutsideAnonymousObject.kt");
+      }
     }
 
     @Nested
@@ -50683,6 +50713,31 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
         public void testReceiversAndParametersInLambda() {
           runTest("compiler/testData/codegen/boxInline/multiplatform/defaultArguments/receiversAndParametersInLambda.kt");
         }
+      }
+    }
+
+    @Nested
+    @TestMetadata("compiler/testData/codegen/boxInline/nestedInline")
+    @TestDataPath("$PROJECT_ROOT")
+    @UseExtTestCaseGroupProvider()
+    @UsePartialLinkage(mode = Mode.DISABLED)
+    @Tag("no-partial-linkage-may-be-skipped")
+    public class NestedInline {
+      @Test
+      public void testAllFilesPresentInNestedInline() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/boxInline/nestedInline"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+      }
+
+      @Test
+      @TestMetadata("nestedInlineLetLet.kt")
+      public void testNestedInlineLetLet() {
+        runTest("compiler/testData/codegen/boxInline/nestedInline/nestedInlineLetLet.kt");
+      }
+
+      @Test
+      @TestMetadata("nestedInlineLetLetComplex.kt")
+      public void testNestedInlineLetLetComplex() {
+        runTest("compiler/testData/codegen/boxInline/nestedInline/nestedInlineLetLetComplex.kt");
       }
     }
 
