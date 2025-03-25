@@ -117,6 +117,7 @@ public class KmClass : KmDeclarationContainer {
     /**
      * Annotations on the class.
      */
+    @ExperimentalAnnotationsInMetadata
     public val annotations: MutableList<KmAnnotation> = ArrayList(0)
 
     /**
@@ -191,6 +192,7 @@ public class KmConstructor internal constructor(internal var flags: Int) {
     /**
      * Annotations on the constructor.
      */
+    @ExperimentalAnnotationsInMetadata
     public val annotations: MutableList<KmAnnotation> = ArrayList(0)
 
     internal val extensions: List<KmConstructorExtension> =
@@ -218,6 +220,11 @@ public class KmFunction internal constructor(internal var flags: Int, public var
      * Type of the receiver of the function, if this is an extension function.
      */
     public var receiverParameterType: KmType? = null
+
+    /**
+     * Annotations on the extension receiver of the function, if this is an extension function.
+     */
+    public val extensionReceiverParameterAnnotations: MutableList<KmAnnotation> = ArrayList(0)
 
     /**
      * Types of context receivers of the function.
@@ -249,6 +256,7 @@ public class KmFunction internal constructor(internal var flags: Int, public var
     /**
      * Annotations on the function.
      */
+    @ExperimentalAnnotationsInMetadata
     public val annotations: MutableList<KmAnnotation> = ArrayList(0)
 
     internal val extensions: List<KmFunctionExtension> =
@@ -267,6 +275,7 @@ public class KmPropertyAccessorAttributes internal constructor(internal var flag
     /**
      * Annotations on the property accessor.
      */
+    @ExperimentalAnnotationsInMetadata
     public val annotations: MutableList<KmAnnotation> = ArrayList(0)
 }
 
@@ -325,6 +334,12 @@ public class KmProperty internal constructor(
     public var receiverParameterType: KmType? = null
 
     /**
+     * Annotations on the extension receiver of the property, if this is an extension property.
+     */
+    @ExperimentalAnnotationsInMetadata
+    public val extensionReceiverParameterAnnotations: MutableList<KmAnnotation> = ArrayList(0)
+
+    /**
      * Types of context receivers of the property.
      */
     @ExperimentalContextReceivers
@@ -356,7 +371,20 @@ public class KmProperty internal constructor(
     /**
      * Annotations on the property.
      */
+    @ExperimentalAnnotationsInMetadata
     public val annotations: MutableList<KmAnnotation> = ArrayList(0)
+
+    /**
+     * Annotations on the property's backing field, or empty list if the property doesn't have one.
+     */
+    @ExperimentalAnnotationsInMetadata
+    public val backingFieldAnnotations: MutableList<KmAnnotation> = ArrayList(0)
+
+    /**
+     * Annotations on the property's delegate field, or empty list if the property is not delegated.
+     */
+    @ExperimentalAnnotationsInMetadata
+    public val delegateFieldAnnotations: MutableList<KmAnnotation> = ArrayList(0)
 
     internal val extensions: List<KmPropertyExtension> =
         MetadataExtensions.INSTANCES.map(MetadataExtensions::createPropertyExtension)
@@ -436,6 +464,7 @@ public class KmValueParameter internal constructor(
     /**
      * Annotations on the value parameter.
      */
+    @ExperimentalAnnotationsInMetadata
     public val annotations: MutableList<KmAnnotation> = ArrayList(0)
 
     internal val extensions: List<KmValueParameterExtension> =
@@ -477,6 +506,12 @@ public class KmTypeParameter internal constructor(
  * @property name the name of the enum entry
  */
 public class KmEnumEntry(public var name: String) {
+    /**
+     * Annotations on the enum entry.
+     */
+    @ExperimentalAnnotationsInMetadata
+    public val annotations: MutableList<KmAnnotation> = ArrayList(0)
+
     internal val extensions: List<KmEnumEntryExtension> =
         MetadataExtensions.INSTANCES.mapNotNull(MetadataExtensions::createEnumEntryExtension)
 

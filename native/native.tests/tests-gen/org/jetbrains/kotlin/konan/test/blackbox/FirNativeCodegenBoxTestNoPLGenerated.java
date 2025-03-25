@@ -12937,6 +12937,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
         }
 
         @Test
+        @TestMetadata("kt75926.kt")
+        public void testKt75926() {
+          runTest("compiler/testData/codegen/box/coroutines/varSpilling/kt75926.kt");
+        }
+
+        @Test
         @TestMetadata("lvtWithInlineOnly.kt")
         public void testLvtWithInlineOnly() {
           runTest("compiler/testData/codegen/box/coroutines/varSpilling/lvtWithInlineOnly.kt");
@@ -51481,30 +51487,6 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
       @TestMetadata("kt8095.kt")
       public void testKt8095() {
         runTest("compiler/testData/codegen/boxInline/private/kt8095.kt");
-      }
-
-      @Test
-      @TestMetadata("nestedInPrivateClass.kt")
-      public void testNestedInPrivateClass() {
-        runTest("compiler/testData/codegen/boxInline/private/nestedInPrivateClass.kt");
-      }
-
-      @Test
-      @TestMetadata("nestedInPrivateClass2.kt")
-      public void testNestedInPrivateClass2() {
-        runTest("compiler/testData/codegen/boxInline/private/nestedInPrivateClass2.kt");
-      }
-
-      @Test
-      @TestMetadata("privateClass.kt")
-      public void testPrivateClass() {
-        runTest("compiler/testData/codegen/boxInline/private/privateClass.kt");
-      }
-
-      @Test
-      @TestMetadata("privateClassExtensionLambda.kt")
-      public void testPrivateClassExtensionLambda() {
-        runTest("compiler/testData/codegen/boxInline/private/privateClassExtensionLambda.kt");
       }
 
       @Test

@@ -17,6 +17,7 @@ import kotlin.metadata.internal.*
 import kotlin.metadata.internal.common.KmModuleFragment
 import kotlin.metadata.internal.extensions.*
 
+@OptIn(ExperimentalAnnotationsInMetadata::class)
 internal class KlibMetadataExtensions : MetadataExtensions {
 
     private fun ReadContext.getSourceFile(index: Int) =
@@ -130,7 +131,7 @@ internal class KlibMetadataExtensions : MetadataExtensions {
         extension.ordinal = proto.getExtensionOrNull(KlibMetadataProtoBuf.enumEntryOrdinal)
         extension.uniqId = proto.getExtensionOrNull(KlibMetadataProtoBuf.enumEntryUniqId)?.readUniqId()
         for (annotation in proto.getExtension(KlibMetadataProtoBuf.enumEntryAnnotation)) {
-            extension.annotations.add(annotation.readAnnotation(c.strings))
+            kmEnumEntry.annotations.add(annotation.readAnnotation(c.strings))
         }
     }
 

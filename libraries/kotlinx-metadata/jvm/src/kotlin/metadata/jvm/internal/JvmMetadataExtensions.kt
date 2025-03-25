@@ -17,6 +17,7 @@ import kotlin.metadata.jvm.JvmMemberSignature
 import kotlin.metadata.jvm.JvmMethodSignature
 import kotlin.metadata.jvm.wrapAsPublic
 
+@OptIn(ExperimentalAnnotationsInMetadata::class)
 internal class JvmMetadataExtensions : MetadataExtensions {
     override fun readClassExtensions(kmClass: KmClass, proto: ProtoBuf.Class, c: ReadContext) {
         val ext = kmClass.jvm
@@ -55,6 +56,7 @@ internal class JvmMetadataExtensions : MetadataExtensions {
     override fun readFunctionExtensions(kmFunction: KmFunction, proto: ProtoBuf.Function, c: ReadContext) {
         val ext = kmFunction.jvm
         proto.annotationList.mapTo(kmFunction.annotations) { it.readAnnotation(c.strings) }
+        proto.extensionReceiverAnnotationList.mapTo(kmFunction.extensionReceiverParameterAnnotations) { it.readAnnotation(c.strings) }
         ext.signature = JvmProtoBufUtil.getJvmMethodSignature(proto, c.strings, c.types)?.wrapAsPublic()
 
         val lambdaClassOriginName = proto.getExtensionOrNull(JvmProtoBuf.lambdaClassOriginName)
@@ -71,6 +73,9 @@ internal class JvmMetadataExtensions : MetadataExtensions {
         kmProperty.setter?.let { setter ->
             proto.setterAnnotationList.mapTo(setter.annotations) { it.readAnnotation(c.strings) }
         }
+        proto.extensionReceiverAnnotationList.mapTo(kmProperty.extensionReceiverParameterAnnotations) { it.readAnnotation(c.strings) }
+        proto.backingFieldAnnotationList.mapTo(kmProperty.backingFieldAnnotations) { it.readAnnotation(c.strings) }
+        proto.delegateFieldAnnotationList.mapTo(kmProperty.delegateFieldAnnotations) { it.readAnnotation(c.strings) }
 
         val fieldSignature = JvmProtoBufUtil.getJvmFieldSignature(proto, c.strings, c.types)
         val propertySignature = proto.getExtensionOrNull(JvmProtoBuf.propertySignature)
@@ -106,6 +111,9 @@ internal class JvmMetadataExtensions : MetadataExtensions {
     }
 
     override fun readEnumEntryExtensions(kmEnumEntry: KmEnumEntry, proto: ProtoBuf.EnumEntry, c: ReadContext) {
+        for (annotation in proto.annotationList) {
+            kmEnumEntry.annotations.add(annotation.readAnnotation(c.strings))
+        }
     }
 
     override fun readTypeExtensions(kmType: KmType, proto: ProtoBuf.Type, c: ReadContext) {
@@ -162,6 +170,9 @@ internal class JvmMetadataExtensions : MetadataExtensions {
     ) {
         with(kmFunction.jvm) {
             proto.addAllAnnotation(kmFunction.annotations.map { it.writeAnnotation(c.strings).build() })
+            proto.addAllExtensionReceiverAnnotation(
+                kmFunction.extensionReceiverParameterAnnotations.map { it.writeAnnotation(c.strings).build() }
+            )
             signature?.let { proto.setExtension(JvmProtoBuf.methodSignature, it.toJvmMethodSignature(c)) }
             lambdaClassOriginName?.let { proto.setExtension(JvmProtoBuf.lambdaClassOriginName, c[it]) }
         }
@@ -175,6 +186,11 @@ internal class JvmMetadataExtensions : MetadataExtensions {
         kmProperty.setter?.let { setter ->
             proto.addAllSetterAnnotation(setter.annotations.map { it.writeAnnotation(c.strings).build() })
         }
+        proto.addAllExtensionReceiverAnnotation(
+            kmProperty.extensionReceiverParameterAnnotations.map { it.writeAnnotation(c.strings).build() }
+        )
+        proto.addAllBackingFieldAnnotation(kmProperty.backingFieldAnnotations.map { it.writeAnnotation(c.strings).build() })
+        proto.addAllDelegateFieldAnnotation(kmProperty.delegateFieldAnnotations.map { it.writeAnnotation(c.strings).build() })
 
         val composedSignature: JvmProtoBuf.JvmPropertySignature.Builder = JvmProtoBuf.JvmPropertySignature.newBuilder()
         var hasSignature = false
@@ -224,6 +240,9 @@ internal class JvmMetadataExtensions : MetadataExtensions {
     }
 
     override fun writeEnumEntryExtensions(enumEntry: KmEnumEntry, proto: ProtoBuf.EnumEntry.Builder, c: WriteContext) {
+        enumEntry.annotations.forEach { annotation ->
+            proto.addAnnotation(annotation.writeAnnotation(c.strings).build())
+        }
     }
 
     override fun writeTypeExtensions(type: KmType, proto: ProtoBuf.Type.Builder, c: WriteContext) =

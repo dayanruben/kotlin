@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.kotlinp
 import kotlin.contracts.ExperimentalContracts
 import kotlin.metadata.*
 
+@OptIn(ExperimentalAnnotationsInMetadata::class)
 abstract class Kotlinp(protected val settings: Settings) {
     fun renderAnnotation(annotation: KmAnnotation, printer: Printer): Unit = with(printer) {
         append(annotation.className)
@@ -64,9 +65,12 @@ abstract class Kotlinp(protected val settings: Settings) {
         }
     }
 
-    protected fun Printer.appendAnnotations(annotations: List<KmAnnotation>, onePerLine: Boolean = true) {
+    protected fun Printer.appendAnnotations(annotations: List<KmAnnotation>, onePerLine: Boolean = true, useSiteTarget: String? = null) {
         annotations.forEach { annotation ->
             append("@")
+            if (useSiteTarget != null) {
+                append(useSiteTarget).append(":")
+            }
             renderAnnotation(annotation, this)
             if (onePerLine) appendLine() else append(" ")
         }
@@ -105,7 +109,12 @@ abstract class Kotlinp(protected val settings: Settings) {
                 appendLine()
                 appendCommentedLine("nested class: $it")
             }
-            appendEnumEntries(clazz)
+            clazz.kmEnumEntries.forEach { enumEntry ->
+                appendLine()
+                appendSignatures(enumEntry)
+                appendAnnotations(enumEntry.annotations)
+                appendLine(enumEntry.name, ",")
+            }
             clazz.sealedSubclasses.sortIfNeeded { it }.forEach {
                 appendLine()
                 appendCommentedLine("sealed subclass: $it")
@@ -159,6 +168,7 @@ abstract class Kotlinp(protected val settings: Settings) {
         appendVersionRequirements(function.versionRequirements)
         appendSignatures(function)
         appendAnnotations(function.annotations)
+        appendAnnotations(function.extensionReceiverParameterAnnotations, useSiteTarget = "receiver")
         appendContextReceiverTypes(function.contextReceiverTypes)
         renderFunctionModifiers(function, printer)
         append("fun ")
@@ -293,6 +303,9 @@ abstract class Kotlinp(protected val settings: Settings) {
         appendSignatures(property)
         appendCustomAttributes(property)
         appendAnnotations(property.annotations)
+        appendAnnotations(property.backingFieldAnnotations, useSiteTarget = "field")
+        appendAnnotations(property.delegateFieldAnnotations, useSiteTarget = "delegate")
+        appendAnnotations(property.extensionReceiverParameterAnnotations, useSiteTarget = "receiver")
         appendContextReceiverTypes(property.contextReceiverTypes)
         renderPropertyModifiers(property, printer)
         append(if (property.isVar) "var " else "val ")
@@ -541,11 +554,10 @@ abstract class Kotlinp(protected val settings: Settings) {
     protected open fun Printer.appendGetterSignatures(property: KmProperty) = Unit
     protected open fun Printer.appendSetterSignatures(property: KmProperty) = Unit
     protected open fun Printer.appendSignatures(typeAlias: KmTypeAlias) = Unit
+    protected open fun Printer.appendSignatures(enumEntry: KmEnumEntry) = Unit
 
     protected open fun Printer.appendOrigin(clazz: KmClass) = Unit
     protected open fun Printer.appendOrigin(function: KmFunction) = Unit
-
-    protected abstract fun Printer.appendEnumEntries(clazz: KmClass)
 
     protected open fun Printer.appendCustomAttributes(clazz: KmClass) = Unit
     protected open fun Printer.appendCustomAttributes(pkg: KmPackage) = Unit

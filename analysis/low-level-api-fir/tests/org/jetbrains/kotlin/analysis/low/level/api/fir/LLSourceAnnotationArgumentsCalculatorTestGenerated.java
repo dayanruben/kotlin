@@ -571,6 +571,18 @@ public class LLSourceAnnotationArgumentsCalculatorTestGenerated extends Abstract
       }
 
       @Test
+      @TestMetadata("destructuringInsideCallChain.kt")
+      public void testDestructuringInsideCallChain() {
+        runTest("compiler/fir/raw-fir/psi2fir/testData/rawBuilder/declarations/invalidCode/destructuringInsideCallChain.kt");
+      }
+
+      @Test
+      @TestMetadata("duplicatedContextParameter.kt")
+      public void testDuplicatedContextParameter() {
+        runTest("compiler/fir/raw-fir/psi2fir/testData/rawBuilder/declarations/invalidCode/duplicatedContextParameter.kt");
+      }
+
+      @Test
       @TestMetadata("setterWithNoBodyAndDifferentValueParameterType.kt")
       public void testSetterWithNoBodyAndDifferentValueParameterType() {
         runTest("compiler/fir/raw-fir/psi2fir/testData/rawBuilder/declarations/invalidCode/setterWithNoBodyAndDifferentValueParameterType.kt");
