@@ -14,14 +14,12 @@ import org.jetbrains.kotlin.backend.common.checkers.IrInlineDeclarationChecker
 import org.jetbrains.kotlin.backend.common.serialization.metadata.KlibSingleFileMetadataSerializer
 import org.jetbrains.kotlin.backend.common.serialization.metadata.serializeKlibHeader
 import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.config.KlibConfigurationKeys
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.forcesPreReleaseBinariesIfEnabled
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.impl.deduplicating
-import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrDiagnosticReporter
 import org.jetbrains.kotlin.ir.KtDiagnosticReporterWithImplicitIrBasedContext
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
@@ -90,10 +88,8 @@ fun KtSourceFile.toIoFileOrNull(): File? = when (this) {
  *
  * @param moduleName The name of the module being serialized to be written into the KLIB header.
  * @param irModuleFragment The IR to be serialized into the KLIB being produced, or `null` if this is going to be a metadata-only KLIB.
- * @param irBuiltins IR builtins for `irModuleFragment`, or `null` if this is going to be a metadata-only KLIB.
  * @param configuration Used to determine certain serialization parameters and enable/disable serialization diagnostics.
  * @param diagnosticReporter Used for reporting serialization-time diagnostics, for example, about clashing IR signatures.
- * @param compatibilityMode The information about KLIB ABI.
  * @param cleanFiles In the case of incremental compilation, the list of files that were not changed and therefore don't need to be
  *     serialized again.
  * @param dependencies The list of KLIBs that the KLIB being produced depends on.
@@ -107,21 +103,11 @@ fun KtSourceFile.toIoFileOrNull(): File? = when (this) {
 fun <Dependency : KotlinLibrary, SourceFile> serializeModuleIntoKlib(
     moduleName: String,
     irModuleFragment: IrModuleFragment?,
-    irBuiltins: IrBuiltIns?,
     configuration: CompilerConfiguration,
     diagnosticReporter: DiagnosticReporter,
-    compatibilityMode: CompatibilityMode,
     cleanFiles: List<KotlinFileSerializedData>,
     dependencies: List<Dependency>,
-    createModuleSerializer: (
-        irDiagnosticReporter: IrDiagnosticReporter,
-        irBuiltins: IrBuiltIns,
-        compatibilityMode: CompatibilityMode,
-        normalizeAbsolutePaths: Boolean,
-        sourceBaseDirs: Collection<String>,
-        languageVersionSettings: LanguageVersionSettings,
-        shouldCheckSignaturesOnUniqueness: Boolean,
-    ) -> IrModuleSerializer<*>,
+    createModuleSerializer: (irDiagnosticReporter: IrDiagnosticReporter) -> IrModuleSerializer<*>,
     metadataSerializer: KlibSingleFileMetadataSerializer<SourceFile>,
     platformKlibCheckers: List<(IrDiagnosticReporter) -> IrVisitor<*, Nothing?>> = emptyList(),
     processCompiledFileData: ((File, KotlinFileSerializedData) -> Unit)? = null,
@@ -153,12 +139,6 @@ fun <Dependency : KotlinLibrary, SourceFile> serializeModuleIntoKlib(
 
         createModuleSerializer(
             irDiagnosticReporter,
-            irBuiltins!!,
-            compatibilityMode,
-            configuration.getBoolean(KlibConfigurationKeys.KLIB_NORMALIZE_ABSOLUTE_PATH),
-            configuration.getList(KlibConfigurationKeys.KLIB_RELATIVE_PATH_BASES),
-            configuration.languageVersionSettings,
-            configuration.get(KlibConfigurationKeys.PRODUCE_KLIB_SIGNATURES_CLASH_CHECKS, true),
         ).serializedIrModule(it)
     }
 

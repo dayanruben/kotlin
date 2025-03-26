@@ -1408,6 +1408,11 @@ public class CliTestGenerated extends AbstractCliTest {
       runTest("compiler/testData/cli/jvm/contextReceiversDeprecated.args");
     }
 
+    @TestMetadata("contextSensitive.args")
+    public void testContextSensitive() {
+      runTest("compiler/testData/cli/jvm/contextSensitive.args");
+    }
+
     @TestMetadata("coroutinesEnable.args")
     public void testCoroutinesEnable() {
       runTest("compiler/testData/cli/jvm/coroutinesEnable.args");
@@ -2009,11 +2014,6 @@ public class CliTestGenerated extends AbstractCliTest {
     @TestMetadata("noModuleName.args")
     public void testNoModuleName() {
       runTest("compiler/testData/cli/js/noModuleName.args");
-    }
-
-    @TestMetadata("noStdlib.args")
-    public void testNoStdlib() {
-      runTest("compiler/testData/cli/js/noStdlib.args");
     }
 
     @TestMetadata("nonExistingKotlinHome.args")

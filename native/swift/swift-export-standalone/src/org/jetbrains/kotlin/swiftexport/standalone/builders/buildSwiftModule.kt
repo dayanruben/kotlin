@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.swiftexport.standalone.builders
 
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.standalone.buildStandaloneAnalysisAPISession
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
@@ -19,6 +18,7 @@ import org.jetbrains.kotlin.analysis.project.structure.builder.buildKtSourceModu
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.sir.*
 import org.jetbrains.kotlin.sir.builder.buildModule
+import org.jetbrains.kotlin.sir.providers.SirAndKaSession
 import org.jetbrains.kotlin.sir.providers.SirSession
 import org.jetbrains.kotlin.sir.providers.impl.SirKaClassReferenceHandler
 import org.jetbrains.kotlin.sir.providers.impl.SirOneToOneModuleProvider
@@ -28,37 +28,36 @@ import org.jetbrains.kotlin.swiftexport.standalone.config.SwiftExportConfig
 import org.jetbrains.kotlin.swiftexport.standalone.config.SwiftModuleConfig
 import org.jetbrains.kotlin.swiftexport.standalone.klib.KlibScope
 import org.jetbrains.kotlin.swiftexport.standalone.session.StandaloneSirSession
-import kotlin.sequences.forEach
 
 internal fun buildSirSession(
+    mainModuleName: String,
     kaModules: KaModules,
     config: SwiftExportConfig,
     moduleConfig: SwiftModuleConfig,
     referenceHandler: SirKaClassReferenceHandler? = null,
 ): SirSession = StandaloneSirSession(
     useSiteModule = kaModules.useSiteModule,
-    moduleToTranslate = kaModules.mainModule,
+    moduleToTranslate = kaModules.mainModules.single { it.libraryName == mainModuleName },
     errorTypeStrategy = config.errorTypeStrategy.toInternalType(),
     unsupportedTypeStrategy = config.unsupportedTypeStrategy.toInternalType(),
     moduleForPackageEnums = buildModule { name = config.moduleForPackagesName },
     unsupportedDeclarationReporter = moduleConfig.unsupportedDeclarationReporter,
-    moduleProvider = SirOneToOneModuleProvider(kaModules.dependencies?.platform ?: emptyList()),
+    moduleProvider = SirOneToOneModuleProvider(kaModules.platformLibraries),
     targetPackageFqName = moduleConfig.targetPackageFqName,
     referencedTypeHandler = referenceHandler
 )
 
 /**
  * Translates the given [module] to a [SirModule].
- * The result is stored as a side effect in [sirSession]'s [org.jetbrains.kotlin.sir.providers.SirModuleProvider].
+ * The result is stored as a side effect in [this.sirSession]'s [org.jetbrains.kotlin.sir.providers.SirModuleProvider].
  * [scopeToDeclarations] allows filtering declarations during translation.
  */
-internal fun KaSession.translateModule(
-    sirSession: SirSession,
+internal fun SirAndKaSession.translateModule(
     module: KaLibraryModule,
     scopeToDeclarations: (KaScope) -> Sequence<KaDeclarationSymbol> = { it.declarations },
-) {
+): SirModule {
     val scope = KlibScope(module, useSiteSession)
-    extractAllTransitively(scopeToDeclarations(scope), sirSession, useSiteSession)
+    extractAllTransitively(scopeToDeclarations(scope))
         .toList()
         .forEach { (oldParent, children) ->
             children
@@ -68,78 +67,63 @@ internal fun KaSession.translateModule(
                     newParent.addChild { declaration }
                 }
         }
+    return module.sirModule()
 }
 
-private fun extractAllTransitively(
+private fun SirAndKaSession.extractAllTransitively(
     declarations: Sequence<KaDeclarationSymbol>,
-    sirSession: SirSession,
-    kaSession: KaSession,
-): Sequence<Pair<SirDeclarationParent, List<SirDeclaration>>> = with(sirSession) {
-    generateSequence<List<Pair<SirDeclarationParent, List<SirDeclaration>>>>(declarations.extractDeclarations(kaSession).groupBy { it.parent }.toList()) {
-        it.flatMap { (_, children) ->
-                children.filterIsInstance<SirDeclarationContainer>()
-                    .map { it to it.declarations }
-            }.takeIf { it.isNotEmpty() }
-    }.flatten()
-}
+): Sequence<Pair<SirDeclarationParent, List<SirDeclaration>>> = generateSequence(
+    declarations.extractDeclarations(useSiteSession).groupBy { it.parent }.toList()
+) {
+    it.flatMap { (_, children) ->
+        children
+            .filterIsInstance<SirDeclarationContainer>()
+            .map { it to it.declarations }
+    }.takeIf { it.isNotEmpty() }
+}.flatten()
+
 
 /**
- * Post-processed result of [buildStandaloneAnalysisAPISession].
- * [useSiteModule] is the module that should be passed to [analyze].
- * [mainModule] is the parent for declarations from [scopeProvider].
- * We have to make this difference because Analysis API is not suited to work
- * without a root source module (yet?).
- * [dependencies] are dependencies for the translated module.
+ * [useSiteModule] a target for creating Analysis API session via [analyze].
+ * [mainModules] Kotlin modules, which _might_ be translated to Swift.
+ * [platformLibraries] Platform libraries from the Kotlin Native distribution.
  */
 internal class KaModules(
     val useSiteModule: KaModule,
-    val mainModule: KaLibraryModule,
-    val dependencies: SwiftExportDependencies<KaLibraryModule>?,
-)
+    private val modulesToInputs: Map<KaLibraryModule, InputModule>,
+    val platformLibraries: List<KaLibraryModule>,
+) {
+    val inputsToModules: Map<InputModule, KaLibraryModule> = modulesToInputs.map { it.value to it.key }.toMap()
+    val mainModules: List<KaLibraryModule> = modulesToInputs.keys.toList()
+    fun configFor(module: KaLibraryModule): SwiftModuleConfig =
+        modulesToInputs[module]?.config ?: error("No config for module ${module.libraryName}")
+}
 
 internal fun createKaModulesForStandaloneAnalysis(
-    input: InputModule,
+    inputs: Set<InputModule>,
     targetPlatform: TargetPlatform,
-    dependencies: SwiftExportDependencies<InputModule>?,
+    platformLibraries: Set<InputModule>,
 ): KaModules {
-    lateinit var binaryModule: KaLibraryModule
+    lateinit var binaryModules: Map<KaLibraryModule, InputModule>
     lateinit var fakeSourceModule: KaSourceModule
-    var resultedDependencies: SwiftExportDependencies<KaLibraryModule>? = null
+    var platformLibraryModules: List<KaLibraryModule> = emptyList()
     buildStandaloneAnalysisAPISession {
         buildKtModuleProvider {
             platform = targetPlatform
-            binaryModule = inputModuleIntoKaLibraryModule(input, targetPlatform)
-            resultedDependencies = dependencies?.map { inputModuleIntoKaLibraryModule(it, targetPlatform) }
+            binaryModules = inputs.associate { inputModuleIntoKaLibraryModule(it, targetPlatform) to it }
+            platformLibraryModules = platformLibraries.map { inputModuleIntoKaLibraryModule(it, targetPlatform) }
             // It's a pure hack: Analysis API does not properly work without root source modules.
             fakeSourceModule = addModule(
                 buildKtSourceModule {
                     platform = targetPlatform
                     moduleName = "fakeSourceModule"
-                    addRegularDependency(binaryModule)
-                    resultedDependencies?.forEach(::addRegularDependency)
+                    binaryModules.forEachKey(::addRegularDependency)
+                    platformLibraryModules.forEach(::addRegularDependency)
                 }
             )
         }
     }
-    return KaModules(
-        fakeSourceModule,
-        binaryModule,
-        resultedDependencies
-    )
-}
-
-internal class SwiftExportDependencies<T>(
-    val user: Set<T>,
-    val stdlib: T,
-    val platform: Set<T>,
-) {
-    inline fun <R> map(transform: (T) -> R) = SwiftExportDependencies(
-        user = user.map(transform).toSet(),
-        stdlib = transform(stdlib),
-        platform = platform.map(transform).toSet(),
-    )
-
-    inline fun forEach(block: (T) -> Unit): Unit = (user + stdlib + platform).forEach(block)
+    return KaModules(fakeSourceModule, binaryModules, platformLibraryModules)
 }
 
 private fun KtModuleProviderBuilder.inputModuleIntoKaLibraryModule(
@@ -152,3 +136,5 @@ private fun KtModuleProviderBuilder.inputModuleIntoKaLibraryModule(
         libraryName = input.name
     }
 )
+
+private inline fun <K> Map<out K, *>.forEachKey(action: (K) -> Unit) = keys.forEach(action)

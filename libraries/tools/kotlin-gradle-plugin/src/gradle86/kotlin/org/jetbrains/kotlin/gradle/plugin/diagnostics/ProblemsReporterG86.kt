@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.gradle.plugin.diagnostics
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.problems.ProblemReporter
 import org.gradle.api.problems.ProblemSpec
 import org.gradle.api.problems.Problems
 import org.jetbrains.kotlin.gradle.utils.newInstance
@@ -40,6 +41,20 @@ internal abstract class ProblemsReporterG86 @Inject constructor(
             .apply {
                 throwable?.let { spec.withException(it) }
             }
+    }
+
+    internal fun ProblemReporter.report(
+        renderedDiagnostic: ReportedDiagnostic,
+        fillSpec: (ProblemSpec, KotlinDiagnosticsException?) -> Unit
+    ) {
+        try {
+            when (renderedDiagnostic) {
+                is ReportedDiagnostic.Message -> reporting { fillSpec(it, null) }
+                is ReportedDiagnostic.Throwable -> throwing { fillSpec(it, renderedDiagnostic.throwable) }
+            }
+        } catch (e: NoSuchMethodError) {
+            logger.error("Can't invoke reporter method:", e)
+        }
     }
 
     class Factory : ProblemsReporter.Factory {

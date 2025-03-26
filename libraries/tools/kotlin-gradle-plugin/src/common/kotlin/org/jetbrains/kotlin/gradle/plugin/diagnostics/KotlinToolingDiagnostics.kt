@@ -845,44 +845,6 @@ internal object KotlinToolingDiagnostics {
         }
     }
 
-    private val presetsDeprecationSeverity = ERROR
-
-    object TargetFromPreset : ToolingDiagnosticFactory(presetsDeprecationSeverity, DiagnosticGroup.Kgp.Deprecation) {
-        const val DEPRECATION_MESSAGE = "The targetFromPreset() $PRESETS_DEPRECATION_MESSAGE_SUFFIX"
-        operator fun invoke() = build {
-            title("targetFromPreset() Method Deprecated")
-                .description(DEPRECATION_MESSAGE)
-                .solution(PRESETS_DEPRECATION_SOLUTION)
-                .documentationLink(URI(PRESETS_DEPRECATION_URL)) { url ->
-                    "$PRESETS_DEPRECATION_URL_PREFIX $url"
-                }
-        }
-    }
-
-    object FromPreset : ToolingDiagnosticFactory(presetsDeprecationSeverity, DiagnosticGroup.Kgp.Deprecation) {
-        const val DEPRECATION_MESSAGE = "The fromPreset() $PRESETS_DEPRECATION_MESSAGE_SUFFIX"
-        operator fun invoke() = build {
-            title("fromPreset() Function Deprecated")
-                .description(DEPRECATION_MESSAGE)
-                .solution(PRESETS_DEPRECATION_SOLUTION)
-                .documentationLink(URI(PRESETS_DEPRECATION_URL)) { url ->
-                    "$PRESETS_DEPRECATION_URL_PREFIX $url"
-                }
-        }
-    }
-
-    object CreateTarget : ToolingDiagnosticFactory(presetsDeprecationSeverity, DiagnosticGroup.Kgp.Deprecation) {
-        private const val DEPRECATION_MESSAGE = "The KotlinTargetPreset.createTarget() $PRESETS_DEPRECATION_MESSAGE_SUFFIX"
-        operator fun invoke() = build {
-            title("KotlinTargetPreset.createTarget() Method Deprecated")
-                .description(DEPRECATION_MESSAGE)
-                .solution(PRESETS_DEPRECATION_SOLUTION)
-                .documentationLink(URI(PRESETS_DEPRECATION_URL)) { url ->
-                    "$PRESETS_DEPRECATION_URL_PREFIX $url"
-                }
-        }
-    }
-
     object JvmWithJavaIsIncompatibleWithAndroid : ToolingDiagnosticFactory(FATAL, DiagnosticGroup.Kgp.Misconfiguration) {
         operator fun invoke(androidPluginId: String, trace: Throwable?) = build(throwable = trace) {
             title("`withJava()` in JVM Target Incompatible with Android Plugins")
@@ -1344,19 +1306,6 @@ internal object KotlinToolingDiagnostics {
         }
     }
 
-    object DeprecatedJvmHistoryBasedIncrementalCompilationDiagnostic : ToolingDiagnosticFactory(ERROR, DiagnosticGroup.Kgp.Deprecation) {
-        operator fun invoke(): ToolingDiagnostic = build {
-            title("History-Based Incremental Compilation Deprecated for JVM Platform")
-                .description {
-                    "History based incremental compilation approach for JVM platform is deprecated and will be removed" +
-                            " soon in favor of approach based on ABI snapshots."
-                }
-                .solution {
-                    "Please remove '${PropertiesProvider.PropertyNames.KOTLIN_INCREMENTAL_USE_CLASSPATH_SNAPSHOT}=false' from 'gradle.properties' file."
-                }
-        }
-    }
-
     object KMPJavaPluginsIncompatibilityDiagnostic : ToolingDiagnosticFactory(ERROR, DiagnosticGroup.Kgp.Misconfiguration) {
 
         operator fun invoke(
@@ -1570,25 +1519,6 @@ internal object KotlinToolingDiagnostics {
                 }
                 .solution {
                     "Please update Kotlin language version in your build scripts at least to 2.0"
-                }
-        }
-    }
-
-    object IcFirMisconfigurationRequireClasspathSnapshots : ToolingDiagnosticFactory(
-        predefinedSeverity = FATAL,
-        predefinedGroup = DiagnosticGroup.Kgp.Misconfiguration,
-    ) {
-        operator fun invoke(
-            taskPath: String
-        ) = build {
-            title("FIR based incremental compilation mode compatibility")
-                .description {
-                    "FIR based incremental compilation is only working in the classpath snapshots based mode while task '$taskPath' " +
-                            "has it disabled."
-                }
-                .solution {
-                    "Please remove '${PropertiesProvider.PropertyNames.KOTLIN_INCREMENTAL_USE_CLASSPATH_SNAPSHOT}' from your " +
-                            "Gradle properties."
                 }
         }
     }

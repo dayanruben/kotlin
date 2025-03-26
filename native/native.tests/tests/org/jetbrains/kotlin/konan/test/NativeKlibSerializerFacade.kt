@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.konan.test
 
-import org.jetbrains.kotlin.backend.common.serialization.CompatibilityMode
 import org.jetbrains.kotlin.backend.common.serialization.IrSerializationSettings
 import org.jetbrains.kotlin.backend.common.serialization.SerializerOutput
 import org.jetbrains.kotlin.backend.common.serialization.metadata.KlibMetadataMonolithicSerializer
@@ -23,7 +22,6 @@ import org.jetbrains.kotlin.konan.library.impl.buildLibrary
 import org.jetbrains.kotlin.library.*
 import org.jetbrains.kotlin.library.metadata.KlibMetadataFactories
 import org.jetbrains.kotlin.library.metadata.NullFlexibleTypeDeserializer
-import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.test.backend.ir.IrBackendFacade
 import org.jetbrains.kotlin.test.backend.ir.IrBackendInput
@@ -37,7 +35,6 @@ import org.jetbrains.kotlin.test.services.*
 import org.jetbrains.kotlin.test.services.configuration.NativeEnvironmentConfigurator.Companion.getKlibArtifactFile
 import org.jetbrains.kotlin.test.services.configuration.nativeEnvironmentConfigurator
 import org.jetbrains.kotlin.util.klibMetadataVersionOrDefault
-import org.jetbrains.kotlin.util.toKlibMetadataVersion
 
 abstract class AbstractNativeKlibSerializerFacade(
     testServices: TestServices
@@ -149,12 +146,7 @@ class ClassicNativeKlibSerializerFacade(testServices: TestServices) : AbstractNa
         ).serializeModule(frontendOutput.analysisResult.moduleDescriptor)
 
         val serializerIr = KonanIrModuleSerializer(
-            settings = IrSerializationSettings(
-                languageVersionSettings = configuration.languageVersionSettings,
-                normalizeAbsolutePaths = configuration.getBoolean(KlibConfigurationKeys.KLIB_NORMALIZE_ABSOLUTE_PATH),
-                sourceBaseDirs = configuration.getList(KlibConfigurationKeys.KLIB_RELATIVE_PATH_BASES),
-                shouldCheckSignaturesOnUniqueness = configuration.get(KlibConfigurationKeys.PRODUCE_KLIB_SIGNATURES_CLASH_CHECKS, true)
-            ),
+            settings = IrSerializationSettings(configuration),
             KtDiagnosticReporterWithImplicitIrBasedContext(diagnosticReporter, configuration.languageVersionSettings),
             inputArtifact.irPluginContext.irBuiltIns,
         ).serializedIrModule(inputArtifact.irModuleFragment)
@@ -180,32 +172,15 @@ class FirNativeKlibSerializerFacade(testServices: TestServices) : AbstractNative
     ) = serializeModuleIntoKlib(
         moduleName = inputArtifact.irModuleFragment.name.asString(),
         inputArtifact.irModuleFragment,
-        inputArtifact.irPluginContext.irBuiltIns,
         configuration,
         diagnosticReporter,
-        CompatibilityMode.CURRENT,
         cleanFiles = emptyList(),
         usedLibrariesForManifest,
-        createModuleSerializer = {
-                irDiagnosticReporter,
-                irBuiltIns,
-                compatibilityMode,
-                normalizeAbsolutePaths,
-                sourceBaseDirs,
-                languageVersionSettings,
-                shouldCheckSignaturesOnUniqueness,
-            ->
+        createModuleSerializer = { irDiagnosticReporter ->
             KonanIrModuleSerializer(
-                settings = IrSerializationSettings(
-                    compatibilityMode = compatibilityMode,
-                    normalizeAbsolutePaths = normalizeAbsolutePaths,
-                    sourceBaseDirs = sourceBaseDirs,
-                    languageVersionSettings = languageVersionSettings,
-                    shouldCheckSignaturesOnUniqueness = shouldCheckSignaturesOnUniqueness,
-                    reuseExistingSignaturesForSymbols = languageVersionSettings.supportsFeature(LanguageFeature.IrInlinerBeforeKlibSerialization)
-                ),
+                settings = IrSerializationSettings(configuration),
                 diagnosticReporter = irDiagnosticReporter,
-                irBuiltIns = irBuiltIns,
+                irBuiltIns = inputArtifact.irPluginContext.irBuiltIns,
             )
         },
         inputArtifact.metadataSerializer ?: error("expected metadata serializer"),
