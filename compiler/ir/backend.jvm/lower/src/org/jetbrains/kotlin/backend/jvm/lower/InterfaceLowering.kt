@@ -25,12 +25,12 @@ import org.jetbrains.kotlin.ir.expressions.IrReturn
 import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.defaultType
-import org.jetbrains.kotlin.ir.util.functions
-import org.jetbrains.kotlin.ir.util.isMethodOfAny
-import org.jetbrains.kotlin.ir.util.parentAsClass
-import org.jetbrains.kotlin.ir.util.resolveFakeOverrideOrFail
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
+import org.jetbrains.kotlin.name.JvmStandardClassIds.JVM_DEFAULT_WITHOUT_COMPATIBILITY_FQ_NAME
+import org.jetbrains.kotlin.name.JvmStandardClassIds.JVM_DEFAULT_WITH_COMPATIBILITY_FQ_NAME
+import org.jetbrains.kotlin.utils.addToStdlib.assignFrom
 
 /**
  * Moves interface members with default implementations to the associated DefaultImpls classes with bridges. It then performs a traversal
@@ -69,8 +69,8 @@ internal class InterfaceLowering(val context: JvmBackendContext) : IrElementTran
     private fun handleInterface(irClass: IrClass) {
         val jvmDefaultMode = context.config.jvmDefaultMode
         val isCompatibilityMode =
-            (jvmDefaultMode == JvmDefaultMode.ENABLE && !irClass.hasJvmDefaultNoCompatibilityAnnotation()) ||
-                    (jvmDefaultMode == JvmDefaultMode.NO_COMPATIBILITY && irClass.hasJvmDefaultWithCompatibilityAnnotation())
+            (jvmDefaultMode == JvmDefaultMode.ENABLE && !irClass.hasAnnotation(JVM_DEFAULT_WITHOUT_COMPATIBILITY_FQ_NAME)) ||
+                    (jvmDefaultMode == JvmDefaultMode.NO_COMPATIBILITY && irClass.hasAnnotation(JVM_DEFAULT_WITH_COMPATIBILITY_FQ_NAME))
         // There are 5 cases for functions on interfaces:
         for (function in irClass.functions) {
             when {
@@ -232,9 +232,7 @@ internal class InterfaceLowering(val context: JvmBackendContext) : IrElementTran
                     call.typeArguments[i] = createPlaceholderAnyNType(context.irBuiltIns)
                 }
 
-                valueParameters.forEachIndexed { i, it ->
-                    call.putValueArgument(i, IrGetValueImpl(startOffset, endOffset, it.symbol))
-                }
+                call.arguments.assignFrom(nonDispatchParameters) { IrGetValueImpl(startOffset, endOffset, it.symbol) }
             },
         )
     }
@@ -254,18 +252,7 @@ internal class InterfaceLowering(val context: JvmBackendContext) : IrElementTran
                     call.typeArguments[i] = typeParameter.defaultType
                 }
 
-                var offset = 0
-                callTarget.dispatchReceiverParameter?.let {
-                    call.dispatchReceiver = IrGetValueImpl(startOffset, endOffset, valueParameters[offset].symbol)
-                    offset += 1
-                }
-                callTarget.extensionReceiverParameter?.let {
-                    call.extensionReceiver = IrGetValueImpl(startOffset, endOffset, valueParameters[offset].symbol)
-                    offset += 1
-                }
-                for (i in offset until valueParameters.size) {
-                    call.putValueArgument(i - offset, IrGetValueImpl(startOffset, endOffset, valueParameters[i].symbol))
-                }
+                call.arguments.assignFrom(parameters) { IrGetValueImpl(startOffset, endOffset, it.symbol) }
             })
     }
 

@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.fir.types
 
 import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
-import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnosticWithNullability
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.types.model.*
@@ -58,20 +57,29 @@ sealed class ConeRigidType : ConeKotlinType(), RigidTypeMarker
  */
 sealed class ConeSimpleKotlinType : ConeRigidType(), SimpleTypeMarker
 
-class ConeClassLikeErrorLookupTag(override val classId: ClassId) : ConeClassLikeLookupTag()
+class ConeClassLikeErrorLookupTag(
+    override val classId: ClassId,
+    val diagnostic: ConeDiagnostic,
+    /**
+     * A type the error type is somehow related to, e.g., a type parameter type that is uninferred.
+     */
+    val delegatedType: ConeKotlinType? = null,
+) : ConeClassLikeLookupTag()
 
 class ConeErrorType(
-    val diagnostic: ConeDiagnostic,
+    diagnostic: ConeDiagnostic,
     val isUninferredParameter: Boolean = false,
-    val delegatedType: ConeKotlinType? = null,
+    delegatedType: ConeKotlinType? = null,
     override val typeArguments: Array<out ConeTypeProjection> = EMPTY_ARRAY,
-    override val attributes: ConeAttributes = ConeAttributes.Empty
+    override val attributes: ConeAttributes = ConeAttributes.Empty,
+    val nullable: Boolean? = null,
+    override val lookupTag: ConeClassLikeErrorLookupTag =
+        ConeClassLikeErrorLookupTag(delegatedType?.classId ?: ClassId.fromString("<error>"), diagnostic, delegatedType)
 ) : ConeClassLikeType() {
-    override val lookupTag: ConeClassLikeLookupTag
-        get() = ConeClassLikeErrorLookupTag(ClassId.fromString("<error>"))
-
     override val isMarkedNullable: Boolean
-        get() = (diagnostic as? ConeDiagnosticWithNullability)?.isNullable == true
+        get() = nullable == true
+    val diagnostic: ConeDiagnostic get() = lookupTag.diagnostic
+    val delegatedType: ConeKotlinType? get() = lookupTag.delegatedType
 
     override fun equals(other: Any?): Boolean = this === other
     override fun hashCode(): Int = System.identityHashCode(this)

@@ -1,11 +1,10 @@
 // RUN_PIPELINE_TILL: BACKEND
-// FIR_IDENTICAL
-// JVM_TARGET: 1.8
-// JVM_DEFAULT_MODE: enable
+// JVM_DEFAULT_MODE: no-compatibility
 
-@JvmDefaultWithoutCompatibility
+@JvmDefaultWithCompatibility
 interface A<T> {
     fun test(p: T) {}
 }
 
+@JvmDefaultWithCompatibility
 class B : A<String> {}

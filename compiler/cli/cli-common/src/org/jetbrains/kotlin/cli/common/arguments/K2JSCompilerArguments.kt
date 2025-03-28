@@ -5,20 +5,12 @@
 
 package org.jetbrains.kotlin.cli.common.arguments
 
+import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.kotlin.cli.common.arguments.K2JsArgumentConstants.*
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
-import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import org.jetbrains.kotlin.config.AnalysisFlag
-import org.jetbrains.kotlin.config.AnalysisFlags.allowFullyQualifiedNameInKClass
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
 
 // TODO remove inheritance from K2WasmCompilerArguments after or within extracting Wasm parts from JS CLI (KT-56850) 
 class K2JSCompilerArguments : K2WasmCompilerArguments() {
-    companion object {
-        @JvmStatic private val serialVersionUID = 0L
-    }
-
     @Argument(value = "-ir-output-dir", valueDescription = "<directory>", description = "Destination for generated files.")
     var outputDir: String? = null
         set(value) {
@@ -476,7 +468,7 @@ It is deprecated and will be removed in a future release."""
             checkFrozen()
             field = value
         }
-    
+
     @Argument(
         value = "-Xoptimize-generated-js",
         description = "Perform additional optimizations on the generated JS code."
@@ -487,36 +479,9 @@ It is deprecated and will be removed in a future release."""
             field = value
         }
 
-    private fun MessageCollector.deprecationWarn(value: Boolean, defaultValue: Boolean, name: String) {
-        if (value != defaultValue) {
-            report(CompilerMessageSeverity.WARNING, "'$name' is deprecated and ignored, it will be removed in a future release")
-        }
-    }
-
-    override fun configureAnalysisFlags(collector: MessageCollector, languageVersion: LanguageVersion): MutableMap<AnalysisFlag<*>, Any> {
-        if (irPerFile && (moduleKind != MODULE_ES && target != ES_2015)) {
-            collector.report(
-                CompilerMessageSeverity.ERROR,
-                "Per-file compilation can't be used with any `moduleKind` except `es` (ECMAScript Modules)"
-            )
-        }
-
-        return super.configureAnalysisFlags(collector, languageVersion).also {
-            it[allowFullyQualifiedNameInKClass] = wasm && wasmKClassFqn //Only enabled WASM BE supports this flag
-        }
-    }
-
-    override fun configureLanguageFeatures(collector: MessageCollector): MutableMap<LanguageFeature, LanguageFeature.State> {
-        return super.configureLanguageFeatures(collector).apply {
-            if (extensionFunctionsInExternals) {
-                this[LanguageFeature.JsEnableExtensionFunctionInExternals] = LanguageFeature.State.ENABLED
-            }
-            this[LanguageFeature.JsAllowValueClassesInExternals] = LanguageFeature.State.ENABLED
-            if (wasm) {
-                this[LanguageFeature.JsAllowImplementingFunctionInterface] = LanguageFeature.State.ENABLED
-            }
-        }
-    }
+    @get:Transient
+    @field:kotlin.jvm.Transient
+    override val configurator: CommonCompilerArgumentsConfigurator = K2JSCompilerArgumentsConfigurator()
 
     override fun copyOf(): Freezable = copyK2JSCompilerArguments(this, K2JSCompilerArguments())
 }

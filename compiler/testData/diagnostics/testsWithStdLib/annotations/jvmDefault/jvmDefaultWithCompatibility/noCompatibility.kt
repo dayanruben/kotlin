@@ -1,6 +1,4 @@
-// RUN_PIPELINE_TILL: FRONTEND
-// FIR_IDENTICAL
-// JVM_TARGET: 1.8
+// RUN_PIPELINE_TILL: BACKEND
 // JVM_DEFAULT_MODE: no-compatibility
 
 @JvmDefaultWithCompatibility

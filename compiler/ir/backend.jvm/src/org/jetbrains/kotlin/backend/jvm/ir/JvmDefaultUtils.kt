@@ -21,8 +21,6 @@ import org.jetbrains.kotlin.metadata.deserialization.getExtensionOrNull
 import org.jetbrains.kotlin.metadata.jvm.JvmProtoBuf
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.name.JvmStandardClassIds.JVM_DEFAULT_FQ_NAME
-import org.jetbrains.kotlin.name.JvmStandardClassIds.JVM_DEFAULT_NO_COMPATIBILITY_FQ_NAME
-import org.jetbrains.kotlin.name.JvmStandardClassIds.JVM_DEFAULT_WITH_COMPATIBILITY_FQ_NAME
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedClassDescriptor
 
 fun IrFunction.isSimpleFunctionCompiledToJvmDefault(jvmDefaultMode: JvmDefaultMode): Boolean {
@@ -34,7 +32,7 @@ fun IrSimpleFunction.isCompiledToJvmDefault(jvmDefaultMode: JvmDefaultMode): Boo
         "`isCompiledToJvmDefault` should be called on non-fakeoverrides and non-abstract methods from interfaces ${ir2string(this)}"
     }
     if (origin == IrDeclarationOrigin.IR_EXTERNAL_JAVA_DECLARATION_STUB) return false
-    if (hasJvmDefault()) return true
+    if (propertyIfAccessor.hasAnnotation(JVM_DEFAULT_FQ_NAME)) return true
     val parentAsMaybeDeserializedClass = parent as? IrLazyClassBase
     val isNewPlaceForBodyGeneration = parentAsMaybeDeserializedClass?.let {
         if (it.isK2) it.isNewPlaceForBodyGeneration
@@ -43,9 +41,6 @@ fun IrSimpleFunction.isCompiledToJvmDefault(jvmDefaultMode: JvmDefaultMode): Boo
     return isNewPlaceForBodyGeneration ?: jvmDefaultMode.isEnabled
 }
 
-fun IrFunction.hasJvmDefault(): Boolean = propertyIfAccessor.hasAnnotation(JVM_DEFAULT_FQ_NAME)
-fun IrClass.hasJvmDefaultNoCompatibilityAnnotation(): Boolean = hasAnnotation(JVM_DEFAULT_NO_COMPATIBILITY_FQ_NAME)
-fun IrClass.hasJvmDefaultWithCompatibilityAnnotation(): Boolean = hasAnnotation(JVM_DEFAULT_WITH_COMPATIBILITY_FQ_NAME)
 fun IrFunction.hasPlatformDependent(): Boolean = propertyIfAccessor.hasAnnotation(PLATFORM_DEPENDENT_ANNOTATION_FQ_NAME)
 
 fun IrSimpleFunction.isDefinitelyNotDefaultImplsMethod(
@@ -62,7 +57,7 @@ fun IrSimpleFunction.isDefinitelyNotDefaultImplsMethod(
 private fun IrSimpleFunction.isCloneableClone(): Boolean =
     name.asString() == "clone" &&
             (parent as? IrClass)?.fqNameWhenAvailable?.asString() == "kotlin.Cloneable" &&
-            valueParameters.isEmpty()
+            hasShape(dispatchReceiver = true)
 
 /**
  * Given a fake override in a class, returns an overridden declaration with implementation in interface, such that a method delegating to that

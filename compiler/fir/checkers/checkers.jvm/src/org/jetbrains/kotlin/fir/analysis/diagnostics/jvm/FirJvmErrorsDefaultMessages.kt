@@ -52,9 +52,8 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.JAVA_MODUL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.JAVA_MODULE_DOES_NOT_READ_UNNAMED_MODULE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.JAVA_SAM_INTERFACE_CONSTRUCTOR_REFERENCE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.JAVA_TYPE_MISMATCH
-import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.JVM_DEFAULT_IN_DECLARATION
-import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.JVM_DEFAULT_WITH_COMPATIBILITY_IN_DECLARATION
-import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.JVM_DEFAULT_WITH_COMPATIBILITY_NOT_ON_INTERFACE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.JVM_DEFAULT_WITHOUT_COMPATIBILITY_NOT_IN_ENABLE_MODE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.JVM_DEFAULT_WITH_COMPATIBILITY_NOT_IN_NO_COMPATIBILITY_MODE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.JVM_INLINE_WITHOUT_VALUE_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.JVM_PACKAGE_NAME_CANNOT_BE_EMPTY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.JVM_PACKAGE_NAME_MUST_BE_VALID_NAME
@@ -289,14 +288,13 @@ object FirJvmErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION, "Value classes without '@JvmInline' annotation are not yet supported.")
         map.put(JVM_INLINE_WITHOUT_VALUE_CLASS, "'@JvmInline' annotation is applicable only to value classes.")
 
-        map.put(JVM_DEFAULT_IN_DECLARATION, "Usage of ''@{0}'' is only allowed with ''-jvm-default'' option.", STRING)
         map.put(
-            JVM_DEFAULT_WITH_COMPATIBILITY_IN_DECLARATION,
-            "Usage of '@JvmDefaultWithCompatibility' is only allowed with '-jvm-default=no-compatibility' option."
+            JVM_DEFAULT_WITHOUT_COMPATIBILITY_NOT_IN_ENABLE_MODE,
+            "Usage of '@JvmDefaultWithoutCompatibility' is only allowed with '-jvm-default=enable' option."
         )
         map.put(
-            JVM_DEFAULT_WITH_COMPATIBILITY_NOT_ON_INTERFACE,
-            "'@JvmDefaultWithCompatibility' annotation is allowed only on interfaces."
+            JVM_DEFAULT_WITH_COMPATIBILITY_NOT_IN_NO_COMPATIBILITY_MODE,
+            "Usage of '@JvmDefaultWithCompatibility' is only allowed with '-jvm-default=no-compatibility' option."
         )
 
         map.put(EXTERNAL_DECLARATION_IN_INTERFACE, "Members of interfaces cannot be external.")

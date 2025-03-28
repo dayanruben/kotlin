@@ -24660,6 +24660,30 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
     }
 
     @Test
+    @TestMetadata("capturedSelfInsideIntersection.kt")
+    public void testCapturedSelfInsideIntersection() {
+      runTest("compiler/testData/codegen/box/inference/capturedSelfInsideIntersection.kt");
+    }
+
+    @Test
+    @TestMetadata("capturedSelfInsideIntersection2.kt")
+    public void testCapturedSelfInsideIntersection2() {
+      runTest("compiler/testData/codegen/box/inference/capturedSelfInsideIntersection2.kt");
+    }
+
+    @Test
+    @TestMetadata("capturedSelfInsideIntersection3.kt")
+    public void testCapturedSelfInsideIntersection3() {
+      runTest("compiler/testData/codegen/box/inference/capturedSelfInsideIntersection3.kt");
+    }
+
+    @Test
+    @TestMetadata("capturedSelfInsideIntersection4.kt")
+    public void testCapturedSelfInsideIntersection4() {
+      runTest("compiler/testData/codegen/box/inference/capturedSelfInsideIntersection4.kt");
+    }
+
+    @Test
     @TestMetadata("capturedStarProjection.kt")
     public void testCapturedStarProjection() {
       runTest("compiler/testData/codegen/box/inference/capturedStarProjection.kt");
@@ -27303,6 +27327,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
     @TestMetadata("constructorImplVisibilityGeneric.kt")
     public void testConstructorImplVisibilityGeneric() {
       runTest("compiler/testData/codegen/box/inlineClasses/constructorImplVisibilityGeneric.kt");
+    }
+
+    @Test
+    @TestMetadata("contextParameters.kt")
+    public void testContextParameters() {
+      runTest("compiler/testData/codegen/box/inlineClasses/contextParameters.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
     }
 
     @Test
@@ -60263,6 +60293,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
     @TestMetadata("conditionalExpressions.kt")
     public void testConditionalExpressions() {
       runTest("compiler/testData/codegen/box/valueClasses/conditionalExpressions.kt");
+    }
+
+    @Test
+    @TestMetadata("contextParameters.kt")
+    public void testContextParameters() {
+      runTest("compiler/testData/codegen/box/valueClasses/contextParameters.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
     }
 
     @Test
