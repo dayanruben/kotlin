@@ -27,19 +27,19 @@ import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Aggregates [KT][KtElement] -> [FIR][org.jetbrains.kotlin.fir.FirElement] mappings and diagnostics for associated [KtFile].
+ * Aggregates [KT][KtElement] -> [FIR][org.jetbrains.kotlin.fir.FirElement] mappings and diagnostics for the associated [KtFile].
  *
- * For every [KtFile] we need mapping for, we have [FileStructure] which contains a tree like-structure of [FileStructureElement].
+ * For every [KtFile] we need a mapping for, we have a [FileStructure] which contains a tree-like structure of [FileStructureElement]s.
  *
- * When we want to get `KT -> FIR` mapping,
- * we [getOrPut][getStructureElementFor] [FileStructureElement] for the closest non-local declaration
+ * When we want to get a `KT -> FIR` mapping,
+ * we [getOrPut][getStructureElementFor] a [FileStructureElement] for the closest non-local element (usually a declaration)
  * which contains the requested [KtElement].
  *
- * Some of [FileStructureElement] can be invalidated in the case on in-block PSI modification.
+ * Some [FileStructureElement]s can be invalidated in case of an in-block PSI modification.
  * See [invalidateElement] and [LLFirDeclarationModificationService] for details.
  *
  * The mapping is an optimization to avoid searching for the associated [FirElement][org.jetbrains.kotlin.fir.FirElement]
- * by [KtElement] as it requires deep traverse through the main element of [FileStructureElement].
+ * by a [KtElement], as it requires a deep traversal through the main element of [FileStructureElement].
  *
  * @see org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.FirElementBuilder
  * @see FileStructureElement
@@ -88,7 +88,7 @@ internal class FileStructure private constructor(
     }
 
     /**
-     * @return [FileStructureElement] for the closest non-local declaration which contains this [element].
+     * @return [FileStructureElement] for the closest non-local element which contains this [element].
      */
     fun getStructureElementFor(
         element: KtElement,
@@ -130,11 +130,11 @@ internal class FileStructure private constructor(
         for (entry in superTypeListEntries) {
             if (entry !is KtSuperTypeCallEntry) continue
 
-            // the structure element for `KtTypeReference` inside super class call is class declaration and not primary constructor
+            // the structure element for `KtTypeReference` inside the super class call is a class declaration and not a primary constructor
             val typeReferenceIsAncestor = entry.calleeExpression.typeReference?.isAncestor(element, strict = false) == true
             if (typeReferenceIsAncestor) return false
 
-            // the structure element for `KtSuperTypeCallEntry` is primary constructor
+            // the structure element for `KtSuperTypeCallEntry` is a primary constructor
             if (entry.isAncestor(element, strict = false)) return true
         }
 
@@ -190,6 +190,18 @@ internal class FileStructure private constructor(
         return structureElements.toList().asReversed()
     }
 
+    private fun createRootStructure(): RootStructureElement {
+        val firFile = moduleComponents.firFileBuilder.buildRawFirFileWithCaching(ktFile)
+        firFile.lazyResolveToPhase(FirResolvePhase.BODY_RESOLVE.previous)
+        return RootStructureElement(firFile, moduleComponents)
+    }
+
+    private fun createCodeFragmentStructure(): DeclarationStructureElement {
+        val firCodeFragment = firFile.codeFragment
+        firCodeFragment.lazyResolveToPhase(FirResolvePhase.BODY_RESOLVE)
+        return DeclarationStructureElement(firFile, firCodeFragment, moduleComponents)
+    }
+
     private fun createDeclarationStructure(declaration: KtDeclaration): FileStructureElement {
         val firDeclaration = declaration.findSourceNonLocalFirDeclaration(firFile, firProvider)
         return FileElementFactory.createFileStructureElement(
@@ -209,24 +221,11 @@ internal class FileStructure private constructor(
         return DeclarationStructureElement(firFile, firDanglingModifierList, moduleComponents)
     }
 
-    private fun createStructureElement(container: KtElement): FileStructureElement = when {
-        container is KtCodeFragment -> {
-            val firCodeFragment = firFile.codeFragment
-            firCodeFragment.lazyResolveToPhase(FirResolvePhase.BODY_RESOLVE)
-
-            DeclarationStructureElement(firFile, firCodeFragment, moduleComponents)
-        }
-
-        container is KtFile -> {
-            val firFile = moduleComponents.firFileBuilder.buildRawFirFileWithCaching(ktFile)
-            firFile.lazyResolveToPhase(FirResolvePhase.BODY_RESOLVE.previous)
-
-            RootStructureElement(firFile, moduleComponents)
-        }
-
-        container is KtDeclaration -> createDeclarationStructure(container)
-        container is KtModifierList -> createDanglingModifierListStructure(container)
-
+    private fun createStructureElement(container: KtElement): FileStructureElement = when (container) {
+        is KtCodeFragment -> createCodeFragmentStructure()
+        is KtFile -> createRootStructure()
+        is KtDeclaration -> createDeclarationStructure(container)
+        is KtModifierList -> createDanglingModifierListStructure(container)
         else -> errorWithAttachment("Invalid container ${container::class}") {
             withPsiEntry("container", container)
         }

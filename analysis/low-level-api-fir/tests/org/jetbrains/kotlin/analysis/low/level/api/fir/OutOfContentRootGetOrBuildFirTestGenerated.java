@@ -106,9 +106,21 @@ public class OutOfContentRootGetOrBuildFirTestGenerated extends AbstractOutOfCon
     }
 
     @Test
+    @TestMetadata("annotationOnEnumEntry.kt")
+    public void testAnnotationOnEnumEntry() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/annotations/annotationOnEnumEntry.kt");
+    }
+
+    @Test
     @TestMetadata("annotationOnReturnType.kt")
     public void testAnnotationOnReturnType() {
       runTest("analysis/low-level-api-fir/testData/getOrBuildFir/annotations/annotationOnReturnType.kt");
+    }
+
+    @Test
+    @TestMetadata("annotationReferenceOnEnumEntry.kt")
+    public void testAnnotationReferenceOnEnumEntry() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/annotations/annotationReferenceOnEnumEntry.kt");
     }
 
     @Test
@@ -121,6 +133,12 @@ public class OutOfContentRootGetOrBuildFirTestGenerated extends AbstractOutOfCon
     @TestMetadata("danglingAnnotationInClass.kt")
     public void testDanglingAnnotationInClass() {
       runTest("analysis/low-level-api-fir/testData/getOrBuildFir/annotations/danglingAnnotationInClass.kt");
+    }
+
+    @Test
+    @TestMetadata("danglingModifierInsideEnumEntry.kt")
+    public void testDanglingModifierInsideEnumEntry() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/annotations/danglingModifierInsideEnumEntry.kt");
     }
 
     @Test
@@ -1672,6 +1690,12 @@ public class OutOfContentRootGetOrBuildFirTestGenerated extends AbstractOutOfCon
     }
 
     @Test
+    @TestMetadata("enumClassWithDanglingModifierList.kt")
+    public void testEnumClassWithDanglingModifierList() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/wholeDeclaration/enumClassWithDanglingModifierList.kt");
+    }
+
+    @Test
     @TestMetadata("enumEntry.kt")
     public void testEnumEntry() {
       runTest("analysis/low-level-api-fir/testData/getOrBuildFir/wholeDeclaration/enumEntry.kt");
@@ -1693,6 +1717,12 @@ public class OutOfContentRootGetOrBuildFirTestGenerated extends AbstractOutOfCon
     @TestMetadata("fileAnnotationList.kt")
     public void testFileAnnotationList() {
       runTest("analysis/low-level-api-fir/testData/getOrBuildFir/wholeDeclaration/fileAnnotationList.kt");
+    }
+
+    @Test
+    @TestMetadata("functionInsideFileAnnotation.kt")
+    public void testFunctionInsideFileAnnotation() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/wholeDeclaration/functionInsideFileAnnotation.kt");
     }
 
     @Test
