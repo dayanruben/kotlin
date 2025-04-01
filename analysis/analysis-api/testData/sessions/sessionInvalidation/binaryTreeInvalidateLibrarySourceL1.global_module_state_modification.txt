@@ -1,4 +1,4 @@
-Module names of invalidated sessions:
+Invalidated sessions:
 A
 B
 C
@@ -8,3 +8,4 @@ F
 G
 L1
 L2
+L2 (resolvable session)

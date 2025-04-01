@@ -1,5 +1,4 @@
 // RUN_PIPELINE_TILL: BACKEND
-// FIR_IDENTICAL
 // WITH_EXTRA_CHECKERS
 // DIAGNOSTICS: +UNUSED_EXPRESSION, +UNUSED_LAMBDA_EXPRESSION, -UNUSED_VARIABLE
 
@@ -55,6 +54,28 @@ fun testWhen() {
             ""
         }
     }
+
+    when {
+        else -> Unit
+    }
+
+    when (a) {
+        "" -> Unit
+    }
+
+    when {
+        else -> {
+            Unit
+        }
+    }
+
+    when {
+        else -> when {
+            else -> {
+                Unit
+            }
+        }
+    }
 }
 
 fun testIfElse(
@@ -98,7 +119,7 @@ fun testLambda() {
 
     run {
         <!UNUSED_EXPRESSION!>""<!>
-        Unit // actually unused
+        Unit
     }
 
     consume {
@@ -108,7 +129,7 @@ fun testLambda() {
 
     consume {
         <!UNUSED_EXPRESSION!>""<!>
-        Unit // actually unused
+        Unit
     }
 
     consume<Unit> {
@@ -117,6 +138,6 @@ fun testLambda() {
 
     consume<Unit> {
         <!UNUSED_EXPRESSION!>""<!>
-        Unit // actually unused
+        Unit
     }
 }

@@ -9,7 +9,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.impl.base.util.LibraryUtils
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.standalone.base.projectStructure.StandaloneProjectFactory
+import org.jetbrains.kotlin.analysis.test.framework.hasFallbackDependencies
 import org.jetbrains.kotlin.analysis.test.framework.services.environmentManager
 import org.jetbrains.kotlin.analysis.test.framework.services.libraries.compiledLibraryProvider
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.TestModuleKind
@@ -31,7 +33,10 @@ object KtLibrarySourceTestModuleFactory : KtTestModuleFactory {
         testServices: TestServices,
         project: Project,
     ): KtTestModule {
-        Assume.assumeFalse("Compilation of multi-platform libraries is not supported", testModule.targetPlatform(testServices).isMultiPlatform())
+        Assume.assumeFalse(
+            "Compilation of multi-platform libraries is not supported",
+            testModule.targetPlatform(testServices).isMultiPlatform(),
+        )
 
         val (libraryJars, librarySourcesJars) = testServices.compiledLibraryProvider.compileToLibrary(testModule, dependencyBinaryRoots)
 
@@ -56,7 +61,7 @@ fun createKtLibrarySourceModule(
     testServices: TestServices,
 ): KtTestModule {
     val targetPlatform = testModule.targetPlatform(testServices)
-    val libraryKtModule = KaLibraryModuleImpl(
+    val libraryKtModule = object : KaLibraryModuleImpl(
         testModule.name,
         targetPlatform,
         StandaloneProjectFactory.createSearchScopeByLibraryRoots(
@@ -69,7 +74,20 @@ fun createKtLibrarySourceModule(
         binaryRoots = libraryJars,
         librarySources = null,
         isSdk = false,
-    )
+    ) {
+        private val librarySourceModuleImpl by lazy(LazyThreadSafetyMode.PUBLICATION) {
+            librarySources as? KaLibrarySourceModuleImpl ?: error(
+                "The library module created to back library sources should have a `${KaLibrarySourceModuleImpl::class.simpleName}`."
+            )
+        }
+
+        // The dependencies of a library module and its library sources should be in sync. Since dependencies are only added later by the
+        // test infrastructure to the library source module (which is exported as a `KtTestModule`), the easiest way to synchronize
+        // dependencies is to back the library module's dependencies with the library source module's dependencies.
+        override val directRegularDependencies: MutableList<KaModule> get() = librarySourceModuleImpl.directRegularDependencies
+        override val directFriendDependencies: MutableList<KaModule> get() = librarySourceModuleImpl.directFriendDependencies
+        override val directDependsOnDependencies: MutableList<KaModule> get() = librarySourceModuleImpl.directDependsOnDependencies
+    }
 
     val decompiledPsiFilesFromSourceJar = librarySourcesJars.flatMap { LibraryUtils.getAllPsiFilesFromJar(it, project) }
     val librarySourceKtModule = KaLibrarySourceModuleImpl(
@@ -79,6 +97,10 @@ fun createKtLibrarySourceModule(
         project,
         binaryLibrary = libraryKtModule,
     )
+
+    if (testModule.hasFallbackDependencies) {
+        librarySourceKtModule.directRegularDependencies += KaLibraryFallbackDependenciesModuleImpl(libraryKtModule)
+    }
 
     libraryKtModule.librarySources = librarySourceKtModule
     return KtTestModule(TestModuleKind.LibrarySource, testModule, librarySourceKtModule, decompiledPsiFilesFromSourceJar)

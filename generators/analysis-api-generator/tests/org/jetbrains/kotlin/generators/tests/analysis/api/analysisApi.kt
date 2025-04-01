@@ -97,22 +97,9 @@ internal fun AnalysisApiTestGroup.generateAnalysisApiTests() {
                         // Sources with errors cannot be compiled to a library.
                         add("withErrors")
 
-                        // Tests which rely on missing dependencies (e.g. the main module missing a dependency to a library module) will not
-                        // work as expected with library source modules, because they use "rest symbol providers" which provide symbols from
-                        // all other libraries (as dependencies between libraries are not usually known). So the "missing" dependencies
-                        // would effectively not be missing.
+                        // Main modules in tests which rely on missing dependencies (e.g. the main module missing a dependency to a library
+                        // module) cannot be compiled to a library.
                         add("missingDependency")
-
-                        // Tests which rely on a particular project structure where independent modules depend on globally duplicate
-                        // libraries will not work as expected with library source modules because of "rest symbol providers." For example,
-                        // we could have two libraries `L1` and `L2` which both contain a class `X` of the same name. We have two
-                        // independent modules `A` and `B`, where `A` depends on `L1`, and `B` depends on `L2`. From `A`, we should see `X`
-                        // from `L1`, and from `B`, we should see `X` from `L2`.
-                        //
-                        // "Rest symbol providers" break such tests. Let's say `A` is a `LibrarySource` module. Then its rest library
-                        // provider will find both versions of `X` from `L1` and `L2`. It will return a symbol for one version, which may
-                        // not be the one expected by `A`.
-                        add("globallyDuplicateLibraries")
                     }
 
                     else -> {}
