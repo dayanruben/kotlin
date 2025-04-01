@@ -647,10 +647,13 @@ class FirCallCompletionResultsWriterTransformer(
         // Substitutor from type variables (not type parameters)
         substitutor: ConeSubstitutor = finalSubstitutor,
     ): ConeKotlinType {
+        // Type parameters are replaced with type variables
         val initialType = candidate.substitutor.substituteOrSelf(this)
-        val substitutedType = finallySubstituteOrNull(initialType, substitutor)
+        // Type variables are replaced with final type arguments
+        val substitutedType = finallySubstituteOrNull(initialType, substitutor) ?: initialType
+        // Everything is approximated
         val finalType = typeApproximator.approximateToSuperType(
-            type = substitutedType ?: initialType,
+            type = substitutedType,
             TypeApproximatorConfiguration.IntermediateApproximationToSupertypeAfterCompletionInK2,
         ) ?: substitutedType
 
@@ -659,7 +662,7 @@ class FirCallCompletionResultsWriterTransformer(
         //
         // In FE1.0, it's not necessary since the annotation for elvis have some strange form (see org.jetbrains.kotlin.resolve.descriptorUtil.AnnotationsWithOnly)
         // that is not propagated further.
-        return finalType?.removeExactAttribute() ?: this
+        return finalType.removeExactAttribute()
     }
 
     private fun ConeKotlinType.removeExactAttribute(): ConeKotlinType {

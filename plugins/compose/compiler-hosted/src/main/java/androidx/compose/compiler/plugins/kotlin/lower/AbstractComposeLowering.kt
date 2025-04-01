@@ -19,15 +19,18 @@
 package androidx.compose.compiler.plugins.kotlin.lower
 
 import androidx.compose.compiler.plugins.kotlin.*
+import androidx.compose.compiler.plugins.kotlin.ComposeFqNames.InternalPackage
 import androidx.compose.compiler.plugins.kotlin.analysis.*
 import androidx.compose.compiler.plugins.kotlin.lower.hiddenfromobjc.hiddenFromObjCClassId
 import org.jetbrains.kotlin.GeneratedDeclarationKey
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
+import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
 import org.jetbrains.kotlin.backend.jvm.ir.isInlineClassType
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.backend.FirMetadataSource
 import org.jetbrains.kotlin.fir.declarations.utils.klibSourceFile
 import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
@@ -1479,7 +1482,7 @@ abstract class AbstractComposeLowering(
         )
     }
 
-    internal fun IrFunction.copyParametersFrom(original: IrFunction) {
+    internal fun IrFunction.copyParametersFrom(original: IrFunction, copyDefaultValues: Boolean = true) {
         val newFunction = this
         // here generic value parameters will be applied
         newFunction.copyTypeParametersFrom(original)
@@ -1496,7 +1499,11 @@ abstract class AbstractComposeLowering(
                 name = name,
                 type = it.type.remapTypeParameters(original, newFunction),
                 // remapping the type parameters explicitly
-                defaultValue = it.defaultValue?.copyWithNewTypeParams(original, newFunction)
+                defaultValue = if (copyDefaultValues) {
+                    it.defaultValue?.copyWithNewTypeParams(original, newFunction)
+                } else {
+                    null
+                }
             )
         }
         newFunction.dispatchReceiverParameter =
@@ -1504,11 +1511,13 @@ abstract class AbstractComposeLowering(
         newFunction.extensionReceiverParameter =
             original.extensionReceiverParameter?.copyWithNewTypeParams(original, newFunction)
 
-        newFunction.valueParameters.forEach {
-            it.defaultValue?.transformDefaultValue(
-                originalFunction = original,
-                newFunction = newFunction
-            )
+        if (copyDefaultValues) {
+            newFunction.valueParameters.forEach {
+                it.defaultValue?.transformDefaultValue(
+                    originalFunction = original,
+                    newFunction = newFunction
+                )
+            }
         }
     }
 
@@ -1654,6 +1663,56 @@ abstract class AbstractComposeLowering(
         copy.body = null
         return copy
     }
+
+    protected fun IrFunction.shouldBeRestartable(): Boolean {
+        // Only insert observe scopes in non-empty composable function
+        if (body == null || this !is IrSimpleFunction)
+            return false
+
+        if (isLocal && parentClassOrNull?.origin != JvmLoweredDeclarationOrigin.LAMBDA_IMPL) {
+            return false
+        }
+
+        // Do not insert observe scope in an inline function
+        if (isInline)
+            return false
+
+        if (hasNonRestartableAnnotation)
+            return false
+
+        if (hasExplicitGroups)
+            return false
+
+        // Do not insert an observe scope if the function has a return result
+        if (!returnType.isUnit())
+            return false
+
+        if (isComposableDelegatedAccessor())
+            return false
+
+        // Virtual functions with default params are called through wrapper generated in
+        // ComposableDefaultParamLowering. The restartable group is moved to the wrapper, while
+        // the function itself is no longer restartable.
+        if (isVirtualFunctionWithDefaultParam()) {
+            return false
+        }
+
+        // Open functions cannot be restartable since restart logic makes a virtual call (todo: b/329477544)
+        if (modality == Modality.OPEN && parentClassOrNull?.isFinalClass != true) {
+            return false
+        }
+
+        // Check if the descriptor has restart scope calls resolved
+        // Lambdas should be ignored. All composable lambdas are wrapped by a restartable
+        // function wrapper by ComposerLambdaMemoization which supplies the startRestartGroup/
+        // endRestartGroup pair on behalf of the lambda.
+        return origin != IrDeclarationOrigin.LOCAL_FUNCTION_FOR_LAMBDA
+    }
+
+    private fun IrFunction.isVirtualFunctionWithDefaultParam(): Boolean =
+        this is IrSimpleFunction &&
+                (isVirtualFunctionWithDefaultParam != null ||
+                        overriddenSymbols.any { it.owner.isVirtualFunctionWithDefaultParam() })
 }
 
 private val unsafeSymbolsRegex = "[ <>]".toRegex()
@@ -1728,9 +1787,14 @@ internal inline fun <reified T : IrElement> T.copyWithNewTypeParams(
     return transform(deepCopy, null).patchDeclarationParents(target) as T
 }
 
-// Stub origin indicates that function should not be transformed in any way
-// and only exists for backwards compatibility.
-object ComposeBackwardsCompatibleStubOrigin : IrDeclarationOrigin {
-    override val name = "ComposeBackwardsCompatibleStubOrigin"
-    override val isSynthetic = true
-}
+fun IrType.isSyntheticComposableFunction() =
+    classOrNull?.owner?.let {
+        it.name.asString().startsWith("ComposableFunction") &&
+                it.packageFqName == InternalPackage
+    } ?: false
+
+fun IrType.isKComposableFunction() =
+    classOrNull?.owner?.let {
+        it.name.asString().startsWith("KComposableFunction") &&
+                it.packageFqName == InternalPackage
+    } ?: false
