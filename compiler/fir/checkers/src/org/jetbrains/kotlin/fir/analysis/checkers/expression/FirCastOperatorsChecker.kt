@@ -17,7 +17,8 @@ import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.types.*
 
 object FirCastOperatorsChecker : FirTypeOperatorCallChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirTypeOperatorCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirTypeOperatorCall) {
         val arguments = expression.argumentList.arguments
         require(arguments.size == 1) { "Type operator call with non-1 arguments" }
 
@@ -28,7 +29,7 @@ object FirCastOperatorsChecker : FirTypeOperatorCallChecker(MppCheckerKind.Commo
             .toTypeInfo(context.session)
 
         if (expression.operation in FirOperation.TYPES && r.directType is ConeDynamicType) {
-            reporter.reportOn(expression.conversionTypeRef.source, FirErrors.DYNAMIC_NOT_ALLOWED, context)
+            reporter.reportOn(expression.conversionTypeRef.source, FirErrors.DYNAMIC_NOT_ALLOWED)
         }
 
         val checkApplicability = when (expression.operation) {

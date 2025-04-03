@@ -59,7 +59,7 @@ public class IncrementalK2FirICLightTreeJvmJpsTestGenerated extends AbstractIncr
     }
 
     public void testAllFilesPresentInPureKotlinAbstractIncrementalK2FirICLightTreeJvmJpsTest() {
-      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("jps/jps-plugin/testData/incremental/pureKotlin"), Pattern.compile("^([^\\.]+)$"), Pattern.compile("(^.*Expect.*)|(^companionConstantChanged)"), TargetBackend.JVM_IR, false);
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("jps/jps-plugin/testData/incremental/pureKotlin"), Pattern.compile("^([^\\.]+)$"), Pattern.compile("(^.*Expect.*)|(^companionConstantChanged)|(.*NoJps.*)"), TargetBackend.JVM_IR, false);
     }
 
     @TestMetadata("annotations")
@@ -717,7 +717,7 @@ public class IncrementalK2FirICLightTreeJvmJpsTestGenerated extends AbstractIncr
     }
 
     public void testAllFilesPresentInClassHierarchyAffectedAbstractIncrementalK2FirICLightTreeJvmJpsTest() {
-      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("jps/jps-plugin/testData/incremental/classHierarchyAffected"), Pattern.compile("^([^\\.]+)$"), Pattern.compile("(^.*Expect.*)|(^companionConstantChanged)"), TargetBackend.JVM_IR, false);
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("jps/jps-plugin/testData/incremental/classHierarchyAffected"), Pattern.compile("^([^\\.]+)$"), Pattern.compile("(^.*Expect.*)|(^companionConstantChanged)|(.*NoJps.*)"), TargetBackend.JVM_IR, false);
     }
 
     @TestMetadata("annotationFlagRemoved")

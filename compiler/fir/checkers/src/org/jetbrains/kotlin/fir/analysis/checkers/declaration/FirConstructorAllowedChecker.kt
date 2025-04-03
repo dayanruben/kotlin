@@ -24,7 +24,8 @@ import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.lexer.KtTokens
 
 object FirConstructorAllowedChecker : FirConstructorChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirConstructor, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirConstructor) {
         val containingClass = context.containingDeclarations.lastOrNull() as? FirClass ?: return
         val source = declaration.source
         val elementType = source?.elementType
@@ -32,14 +33,14 @@ object FirConstructorAllowedChecker : FirConstructorChecker(MppCheckerKind.Commo
             return
         }
         when (containingClass.classKind) {
-            ClassKind.OBJECT -> reporter.reportOn(source, FirErrors.CONSTRUCTOR_IN_OBJECT, context)
-            ClassKind.INTERFACE -> reporter.reportOn(source, FirErrors.CONSTRUCTOR_IN_INTERFACE, context)
-            ClassKind.ENUM_ENTRY -> reporter.reportOn(source, FirErrors.CONSTRUCTOR_IN_OBJECT, context)
+            ClassKind.OBJECT -> reporter.reportOn(source, FirErrors.CONSTRUCTOR_IN_OBJECT)
+            ClassKind.INTERFACE -> reporter.reportOn(source, FirErrors.CONSTRUCTOR_IN_INTERFACE)
+            ClassKind.ENUM_ENTRY -> reporter.reportOn(source, FirErrors.CONSTRUCTOR_IN_OBJECT)
             ClassKind.ENUM_CLASS -> if (declaration.visibility != Visibilities.Private) {
-                reporter.reportOn(source, FirErrors.NON_PRIVATE_CONSTRUCTOR_IN_ENUM, context)
+                reporter.reportOn(source, FirErrors.NON_PRIVATE_CONSTRUCTOR_IN_ENUM)
             }
             ClassKind.CLASS -> when (containingClass) {
-                is FirAnonymousObject -> reporter.reportOn(source, FirErrors.CONSTRUCTOR_IN_OBJECT, context)
+                is FirAnonymousObject -> reporter.reportOn(source, FirErrors.CONSTRUCTOR_IN_OBJECT)
                 is FirRegularClass -> if (containingClass.modality == Modality.SEALED) {
                     val modifierList = source.getModifierList() ?: return
                     val hasIllegalModifier = modifierList.modifiers.any {
@@ -47,7 +48,7 @@ object FirConstructorAllowedChecker : FirConstructorChecker(MppCheckerKind.Commo
                         token in KtTokens.VISIBILITY_MODIFIERS && token != KtTokens.PROTECTED_KEYWORD && token != KtTokens.PRIVATE_KEYWORD
                     }
                     if (hasIllegalModifier) {
-                        reporter.reportOn(source, FirErrors.NON_PRIVATE_OR_PROTECTED_CONSTRUCTOR_IN_SEALED, context)
+                        reporter.reportOn(source, FirErrors.NON_PRIVATE_OR_PROTECTED_CONSTRUCTOR_IN_SEALED)
                     }
                 }
             }

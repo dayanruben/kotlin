@@ -10449,6 +10449,12 @@ public class FirNativeCodegenBoxWithInlinedFunInKlibTestGenerated extends Abstra
       }
 
       @Test
+      @TestMetadata("suspendFunctionAsSupertypeWithInlinedFunInKlib.kt")
+      public void testSuspendFunctionAsSupertypeWithInlinedFunInKlib() {
+        runTest("compiler/testData/codegen/box/coroutines/suspendFunctionAsSupertypeWithInlinedFunInKlib.kt");
+      }
+
+      @Test
       @TestMetadata("suspendFunctionMethodReference.kt")
       public void testSuspendFunctionMethodReference() {
         runTest("compiler/testData/codegen/box/coroutines/suspendFunctionMethodReference.kt");
@@ -19492,6 +19498,12 @@ public class FirNativeCodegenBoxWithInlinedFunInKlibTestGenerated extends Abstra
       }
 
       @Test
+      @TestMetadata("capturedTypeWhenSubject.kt")
+      public void testCapturedTypeWhenSubject() {
+        runTest("compiler/testData/codegen/box/inference/capturedTypeWhenSubject.kt");
+      }
+
+      @Test
       @TestMetadata("capturedTypesSubstitutionIntoAbbreviation.kt")
       public void testCapturedTypesSubstitutionIntoAbbreviation() {
         runTest("compiler/testData/codegen/box/inference/capturedTypesSubstitutionIntoAbbreviation.kt");
@@ -21487,6 +21499,9 @@ public class FirNativeCodegenBoxWithInlinedFunInKlibTestGenerated extends Abstra
       public InlineClasses() {
         register("compiler/testData/codegen/box/inlineClasses/annotatedMemberExtensionProperty.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
         register("compiler/testData/codegen/box/inlineClasses/annotatedMemberExtensionPropertyGeneric.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
+        register("compiler/testData/codegen/box/inlineClasses/anonymousObjectAsDefaultParam.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
+        register("compiler/testData/codegen/box/inlineClasses/anonymousObjectAsDefaultParamFull.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
+        register("compiler/testData/codegen/box/inlineClasses/anonymousObjectAsDefaultParamSingleFile.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
         register("compiler/testData/codegen/box/inlineClasses/anySuperCall.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
         register("compiler/testData/codegen/box/inlineClasses/anySuperCallGeneric.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
         register("compiler/testData/codegen/box/inlineClasses/boundCallableReferencePassedToInlineFunction.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
@@ -21840,6 +21855,27 @@ public class FirNativeCodegenBoxWithInlinedFunInKlibTestGenerated extends Abstra
       public void testAnnotatedMemberExtensionPropertyGeneric() {
         // There is a registered source transformer for the testcase: TransformersFunctions.getRemoveOptionalJvmInlineAnnotation()
         runTest("compiler/testData/codegen/box/inlineClasses/annotatedMemberExtensionPropertyGeneric.kt");
+      }
+
+      @Test
+      @TestMetadata("anonymousObjectAsDefaultParam.kt")
+      public void testAnonymousObjectAsDefaultParam() {
+        // There is a registered source transformer for the testcase: TransformersFunctions.getRemoveOptionalJvmInlineAnnotation()
+        runTest("compiler/testData/codegen/box/inlineClasses/anonymousObjectAsDefaultParam.kt");
+      }
+
+      @Test
+      @TestMetadata("anonymousObjectAsDefaultParamFull.kt")
+      public void testAnonymousObjectAsDefaultParamFull() {
+        // There is a registered source transformer for the testcase: TransformersFunctions.getRemoveOptionalJvmInlineAnnotation()
+        runTest("compiler/testData/codegen/box/inlineClasses/anonymousObjectAsDefaultParamFull.kt");
+      }
+
+      @Test
+      @TestMetadata("anonymousObjectAsDefaultParamSingleFile.kt")
+      public void testAnonymousObjectAsDefaultParamSingleFile() {
+        // There is a registered source transformer for the testcase: TransformersFunctions.getRemoveOptionalJvmInlineAnnotation()
+        runTest("compiler/testData/codegen/box/inlineClasses/anonymousObjectAsDefaultParamSingleFile.kt");
       }
 
       @Test
@@ -47316,15 +47352,33 @@ public class FirNativeCodegenBoxWithInlinedFunInKlibTestGenerated extends Abstra
       }
 
       @Test
+      @TestMetadata("fakeOverrideGenericBase.kt")
+      public void testFakeOverrideGenericBase() {
+        runTest("compiler/testData/codegen/boxInline/anonymousObject/fakeOverrideGenericBase.kt");
+      }
+
+      @Test
       @TestMetadata("fakeOverrideInDefaultMultiModule.kt")
       public void testFakeOverrideInDefaultMultiModule() {
         runTest("compiler/testData/codegen/boxInline/anonymousObject/fakeOverrideInDefaultMultiModule.kt");
       }
 
       @Test
+      @TestMetadata("fakeOverrideLocalGenericBase.kt")
+      public void testFakeOverrideLocalGenericBase() {
+        runTest("compiler/testData/codegen/boxInline/anonymousObject/fakeOverrideLocalGenericBase.kt");
+      }
+
+      @Test
       @TestMetadata("fakeOverrideMultiModule.kt")
       public void testFakeOverrideMultiModule() {
         runTest("compiler/testData/codegen/boxInline/anonymousObject/fakeOverrideMultiModule.kt");
+      }
+
+      @Test
+      @TestMetadata("fakeOverrideReferenceGenericBase.kt")
+      public void testFakeOverrideReferenceGenericBase() {
+        runTest("compiler/testData/codegen/boxInline/anonymousObject/fakeOverrideReferenceGenericBase.kt");
       }
 
       @Test
@@ -50157,6 +50211,12 @@ public class FirNativeCodegenBoxWithInlinedFunInKlibTestGenerated extends Abstra
       @TestMetadata("extensionReceiver.kt")
       public void testExtensionReceiver() {
         runTest("compiler/testData/codegen/boxInline/noInline/extensionReceiver.kt");
+      }
+
+      @Test
+      @TestMetadata("inheritedLambdaAsGeneric.kt")
+      public void testInheritedLambdaAsGeneric() {
+        runTest("compiler/testData/codegen/boxInline/noInline/inheritedLambdaAsGeneric.kt");
       }
 
       @Test

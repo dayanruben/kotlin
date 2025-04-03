@@ -25,7 +25,8 @@ import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 object FirContextParametersDeclarationChecker : FirBasicDeclarationChecker(MppCheckerKind.Platform) {
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirDeclaration) {
         if (declaration.source?.kind is KtFakeSourceElementKind) return
 
         val contextListSources = declaration.source?.findContextReceiverListSources().orEmpty().ifEmpty { return }
@@ -33,7 +34,7 @@ object FirContextParametersDeclarationChecker : FirBasicDeclarationChecker(MppCh
         val source = contextListSources.first()
 
         if (contextListSources.size > 1) {
-            reporter.reportOn(source, FirErrors.MULTIPLE_CONTEXT_LISTS, context)
+            reporter.reportOn(source, FirErrors.MULTIPLE_CONTEXT_LISTS)
         }
 
         val contextReceiversEnabled = context.languageVersionSettings.supportsFeature(LanguageFeature.ContextReceivers)
@@ -63,8 +64,7 @@ object FirContextParametersDeclarationChecker : FirBasicDeclarationChecker(MppCh
             reporter.reportOn(
                 source,
                 FirErrors.UNSUPPORTED,
-                errorMessage,
-                context
+                errorMessage
             )
         }
 
@@ -75,8 +75,7 @@ object FirContextParametersDeclarationChecker : FirBasicDeclarationChecker(MppCh
             reporter.reportOn(
                 source,
                 FirErrors.UNSUPPORTED_FEATURE,
-                LanguageFeature.ContextParameters to context.languageVersionSettings,
-                context
+                LanguageFeature.ContextParameters to context.languageVersionSettings
             )
             return
         }
@@ -85,8 +84,7 @@ object FirContextParametersDeclarationChecker : FirBasicDeclarationChecker(MppCh
             if (checkSubTypes(contextParameters.map { it.returnTypeRef.coneType }, context)) {
                 reporter.reportOn(
                     source,
-                    FirErrors.SUBTYPING_BETWEEN_CONTEXT_RECEIVERS,
-                    context
+                    FirErrors.SUBTYPING_BETWEEN_CONTEXT_RECEIVERS
                 )
             }
             for (parameter in contextParameters) {
@@ -94,8 +92,7 @@ object FirContextParametersDeclarationChecker : FirBasicDeclarationChecker(MppCh
                     reporter.reportOn(
                         parameter.source,
                         FirErrors.UNSUPPORTED_FEATURE,
-                        LanguageFeature.ContextParameters to context.languageVersionSettings,
-                        context
+                        LanguageFeature.ContextParameters to context.languageVersionSettings
                     )
                 }
             }
@@ -104,11 +101,11 @@ object FirContextParametersDeclarationChecker : FirBasicDeclarationChecker(MppCh
         if (contextParametersEnabled) {
             for (parameter in contextParameters) {
                 if (parameter.isLegacyContextReceiver()) {
-                    reporter.reportOn(parameter.source, FirErrors.CONTEXT_PARAMETER_WITHOUT_NAME, context)
+                    reporter.reportOn(parameter.source, FirErrors.CONTEXT_PARAMETER_WITHOUT_NAME)
                 }
 
                 parameter.source?.getModifierList()?.modifiers?.forEach { modifier ->
-                    reporter.reportOn(modifier.source, FirErrors.WRONG_MODIFIER_TARGET, modifier.token, "context parameter", context)
+                    reporter.reportOn(modifier.source, FirErrors.WRONG_MODIFIER_TARGET, modifier.token, "context parameter")
                 }
 
                 FirFunctionParameterChecker.checkValOrVar(parameter, reporter, context)

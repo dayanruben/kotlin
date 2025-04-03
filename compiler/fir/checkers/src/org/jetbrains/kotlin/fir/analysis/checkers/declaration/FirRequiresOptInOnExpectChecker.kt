@@ -19,11 +19,8 @@ import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.resolve.calls.mpp.isIllegalRequiresOptInAnnotation
 
 object FirRequiresOptInOnExpectChecker : FirBasicDeclarationChecker(MppCheckerKind.Common) {
-    override fun check(
-        declaration: FirDeclaration,
-        context: CheckerContext,
-        reporter: DiagnosticReporter,
-    ) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirDeclaration) {
         if (context.session.languageVersionSettings.supportsFeature(LanguageFeature.MultiPlatformProjects) &&
             declaration is FirRegularClass &&
             declaration.isExpect &&
@@ -32,7 +29,7 @@ object FirRequiresOptInOnExpectChecker : FirBasicDeclarationChecker(MppCheckerKi
                 isIllegalRequiresOptInAnnotation(on = expectSymbol, expectSymbol, context.languageVersionSettings)
             }
         ) {
-            reporter.reportOn(declaration.source, FirErrors.EXPECT_ACTUAL_OPT_IN_ANNOTATION, context)
+            reporter.reportOn(declaration.source, FirErrors.EXPECT_ACTUAL_OPT_IN_ANNOTATION)
         }
     }
 }

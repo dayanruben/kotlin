@@ -51,21 +51,21 @@ open class KtDiagnosticReporterWithContext(
 
         fun report(factory: KtDiagnosticFactory0) {
             sourceElement?.let {
-                reportOn(it, factory, this)
+                reportOn(it, factory)
                 checkAndCommitReportsOn(it, this)
             }
         }
 
         fun <A : Any> report(factory: KtDiagnosticFactory1<A>, a: A) {
             sourceElement?.let {
-                reportOn(it, factory, a, this)
+                reportOn(it, factory, a)
                 checkAndCommitReportsOn(it, this)
             }
         }
 
         fun <A : Any, B : Any> report(factory: KtDiagnosticFactory2<A, B>, a: A, b: B) {
             sourceElement?.let {
-                reportOn(it, factory, a, b, this)
+                reportOn(it, factory, a, b)
                 checkAndCommitReportsOn(it, this)
             }
         }
@@ -80,7 +80,7 @@ open class KtDiagnosticReporterWithContext(
 
         fun <A : Any, B : Any, C : Any> report(factory: KtDiagnosticFactory3<A, B, C>, a: A, b: B, c: C) {
             sourceElement?.let {
-                reportOn(it, factory, a, b, c, this)
+                reportOn(it, factory, a, b, c)
                 checkAndCommitReportsOn(it, this)
             }
         }

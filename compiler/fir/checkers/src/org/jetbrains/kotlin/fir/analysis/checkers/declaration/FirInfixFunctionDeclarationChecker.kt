@@ -14,14 +14,15 @@ import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.FirFunction
 
 object FirInfixFunctionDeclarationChecker : FirFunctionChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirFunction, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirFunction) {
         if (!declaration.status.isInfix) return
         if (
             (declaration.valueParameters.size != 1) ||
             !hasExtensionOrDispatchReceiver(declaration, context) ||
             declaration.valueParameters.single().isVararg
         ) {
-            reporter.reportOn(declaration.source, FirErrors.INAPPLICABLE_INFIX_MODIFIER, context)
+            reporter.reportOn(declaration.source, FirErrors.INAPPLICABLE_INFIX_MODIFIER)
         }
     }
 

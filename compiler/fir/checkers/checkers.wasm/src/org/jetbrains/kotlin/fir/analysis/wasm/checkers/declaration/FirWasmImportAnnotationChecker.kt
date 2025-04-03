@@ -23,16 +23,17 @@ import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.name.WasmStandardClassIds
 
 object FirWasmImportAnnotationChecker : FirBasicDeclarationChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirDeclaration) {
         val annotation: FirAnnotation =
             declaration.annotations.getAnnotationByClassId(WasmStandardClassIds.Annotations.WasmImport, context.session) ?: return
 
         if (!context.isTopLevel) {
-            reporter.reportOn(annotation.source, FirWasmErrors.NESTED_WASM_IMPORT, context)
+            reporter.reportOn(annotation.source, FirWasmErrors.NESTED_WASM_IMPORT)
         }
 
         if (!declaration.symbol.isEffectivelyExternal(context.session)) {
-            reporter.reportOn(annotation.source, FirWasmErrors.WASM_IMPORT_ON_NON_EXTERNAL_DECLARATION, context)
+            reporter.reportOn(annotation.source, FirWasmErrors.WASM_IMPORT_ON_NON_EXTERNAL_DECLARATION)
         }
 
         if (declaration is FirFunction) {

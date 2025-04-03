@@ -25,7 +25,8 @@ import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirIntersectionCallableSymbol
 
 object FirAbstractSuperCallChecker : FirQualifiedAccessExpressionChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirQualifiedAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirQualifiedAccessExpression) {
         // require the receiver to be the super reference
         if (expression.explicitReceiverIsNotSuperReference()) return
 
@@ -40,7 +41,7 @@ object FirAbstractSuperCallChecker : FirQualifiedAccessExpressionChecker(MppChec
 
             if (containingClassSymbol.isAbstract) {
                 if (declarationSymbol.isAbstract) {
-                    reporter.reportOn(expression.calleeReference.source, FirErrors.ABSTRACT_SUPER_CALL, context)
+                    reporter.reportOn(expression.calleeReference.source, FirErrors.ABSTRACT_SUPER_CALL)
                 }
                 if (declarationSymbol is FirIntersectionCallableSymbol) {
                     val symbolFromBaseClass = declarationSymbol.intersections.firstOrNull {
@@ -48,9 +49,9 @@ object FirAbstractSuperCallChecker : FirQualifiedAccessExpressionChecker(MppChec
                     }
                     if (symbolFromBaseClass?.isAbstract == true) {
                         if (context.languageVersionSettings.supportsFeature(LanguageFeature.ForbidSuperDelegationToAbstractFakeOverride)) {
-                            reporter.reportOn(expression.calleeReference.source, FirErrors.ABSTRACT_SUPER_CALL, context)
+                            reporter.reportOn(expression.calleeReference.source, FirErrors.ABSTRACT_SUPER_CALL)
                         } else {
-                            reporter.reportOn(expression.calleeReference.source, FirErrors.ABSTRACT_SUPER_CALL_WARNING, context)
+                            reporter.reportOn(expression.calleeReference.source, FirErrors.ABSTRACT_SUPER_CALL_WARNING)
                         }
                     }
                 }

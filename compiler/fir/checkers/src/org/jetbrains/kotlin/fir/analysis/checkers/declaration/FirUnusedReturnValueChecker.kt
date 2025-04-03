@@ -35,11 +35,8 @@ import org.jetbrains.kotlin.name.StandardClassIds
 
 
 object FirReturnValueAnnotationsChecker : FirBasicDeclarationChecker(MppCheckerKind.Common) {
-    override fun check(
-        declaration: FirDeclaration,
-        context: CheckerContext,
-        reporter: DiagnosticReporter,
-    ) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirDeclaration) {
         if (context.languageVersionSettings.getFlag(AnalysisFlags.returnValueCheckerMode) != ReturnValueCheckerMode.DISABLED) return
 
         val session = context.session
@@ -47,8 +44,7 @@ object FirReturnValueAnnotationsChecker : FirBasicDeclarationChecker(MppCheckerK
             if (annotation.isMustUseReturnValue(session) || annotation.isIgnorableValue(session)) {
                 reporter.reportOn(
                     annotation.source,
-                    FirErrors.IGNORABILITY_ANNOTATIONS_WITH_CHECKER_DISABLED,
-                    context
+                    FirErrors.IGNORABILITY_ANNOTATIONS_WITH_CHECKER_DISABLED
                 )
             }
         }

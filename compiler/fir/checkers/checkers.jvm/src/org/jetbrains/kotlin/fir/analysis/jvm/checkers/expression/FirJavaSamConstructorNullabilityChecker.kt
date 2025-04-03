@@ -25,7 +25,8 @@ import org.jetbrains.kotlin.types.AbstractTypeChecker
 
 object FirJavaSamConstructorNullabilityChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
 
-    override fun check(expression: FirFunctionCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirFunctionCall) {
         val languageVersionSettings = context.session.languageVersionSettings
         if (languageVersionSettings.supportsFeature(LanguageFeature.JavaTypeParameterDefaultRepresentationWithDNN)) return
         val reportError = languageVersionSettings.supportsFeature(
@@ -57,16 +58,14 @@ object FirJavaSamConstructorNullabilityChecker : FirFunctionCallChecker(MppCheck
                         FirErrors.ARGUMENT_TYPE_MISMATCH,
                         returnedExpressionType,
                         expectedReturnType,
-                        true,
-                        context,
+                        true
                     )
                 } else {
                     reporter.reportOn(
                         returnedExpression.source,
                         FirJvmErrors.TYPE_MISMATCH_WHEN_FLEXIBILITY_CHANGES,
                         returnedExpressionType,
-                        expectedReturnType,
-                        context,
+                        expectedReturnType
                     )
                 }
             }

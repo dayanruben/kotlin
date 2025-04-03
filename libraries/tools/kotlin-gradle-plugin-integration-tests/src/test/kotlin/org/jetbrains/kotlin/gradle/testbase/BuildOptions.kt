@@ -31,7 +31,7 @@ data class BuildOptions(
     val kotlinVersion: String = TestVersions.Kotlin.CURRENT,
     val warningMode: WarningMode = WarningMode.Fail,
     val ignoreWarningModeSeverityOverride: Boolean? = null, // Do not change ToolingDiagnostic severity when warningMode is defined as Fail
-    val configurationCache: ConfigurationCacheValue = ConfigurationCacheValue.AUTO,
+    val configurationCache: ConfigurationCacheValue = ConfigurationCacheValue.ENABLED,
     val isolatedProjects: IsolatedProjectsMode = IsolatedProjectsMode.DISABLED,
     val configurationCacheProblems: ConfigurationCacheProblems = ConfigurationCacheProblems.FAIL,
     val parallel: Boolean = true,
@@ -427,6 +427,14 @@ fun BuildOptions.withBundledKotlinNative() = copy(
         version = null
     )
 )
+
+fun BuildOptions.disableConfigurationCacheForGradle7(
+    currentGradleVersion: GradleVersion,
+) = if (currentGradleVersion < GradleVersion.version(TestVersions.Gradle.G_8_0)) {
+    copy(configurationCache = BuildOptions.ConfigurationCacheValue.DISABLED)
+} else {
+    this
+}
 
 // TODO: KT-70416 :resolveIdeDependencies doesn't support Configuration Cache & Project Isolation
 fun BuildOptions.disableConfigurationCache_KT70416() = copy(configurationCache = BuildOptions.ConfigurationCacheValue.DISABLED)

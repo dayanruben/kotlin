@@ -22,7 +22,8 @@ object FirJvmFunctionDelegateMemberNameClashChecker : FirBasicDeclarationChecker
     private val functionDelegateName: Name = Name.identifier("functionDelegate")
     private val getFunctionDelegateName: Name = Name.identifier("getFunctionDelegate")
 
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirDeclaration) {
         if (declaration !is FirCallableDeclaration) return
         val containingClassSymbol = declaration.getContainingClassSymbol() as? FirRegularClassSymbol ?: return
         if (!containingClassSymbol.isFun) return
@@ -31,7 +32,7 @@ object FirJvmFunctionDelegateMemberNameClashChecker : FirBasicDeclarationChecker
         if (declaration is FirSimpleFunction && declaration.name == getFunctionDelegateName ||
             declaration is FirProperty && declaration.name == functionDelegateName
         ) {
-            reporter.reportOn(declaration.source, FirJvmErrors.FUNCTION_DELEGATE_MEMBER_NAME_CLASH, context)
+            reporter.reportOn(declaration.source, FirJvmErrors.FUNCTION_DELEGATE_MEMBER_NAME_CLASH)
         }
     }
 }

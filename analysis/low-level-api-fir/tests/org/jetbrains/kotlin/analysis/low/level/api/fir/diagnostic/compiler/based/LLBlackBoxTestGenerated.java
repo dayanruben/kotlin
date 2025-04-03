@@ -13355,6 +13355,12 @@ public class LLBlackBoxTestGenerated extends AbstractLLBlackBoxTest {
     }
 
     @Test
+    @TestMetadata("suspendFunctionAsSupertypeWithInlinedFunInKlib.kt")
+    public void testSuspendFunctionAsSupertypeWithInlinedFunInKlib() {
+      runTest("compiler/testData/codegen/box/coroutines/suspendFunctionAsSupertypeWithInlinedFunInKlib.kt");
+    }
+
+    @Test
     @TestMetadata("suspendFunctionMethodReference.kt")
     public void testSuspendFunctionMethodReference() {
       runTest("compiler/testData/codegen/box/coroutines/suspendFunctionMethodReference.kt");
@@ -24809,6 +24815,12 @@ public class LLBlackBoxTestGenerated extends AbstractLLBlackBoxTest {
     }
 
     @Test
+    @TestMetadata("capturedTypeWhenSubject.kt")
+    public void testCapturedTypeWhenSubject() {
+      runTest("compiler/testData/codegen/box/inference/capturedTypeWhenSubject.kt");
+    }
+
+    @Test
     @TestMetadata("capturedTypesSubstitutionIntoAbbreviation.kt")
     public void testCapturedTypesSubstitutionIntoAbbreviation() {
       runTest("compiler/testData/codegen/box/inference/capturedTypesSubstitutionIntoAbbreviation.kt");
@@ -26984,6 +26996,24 @@ public class LLBlackBoxTestGenerated extends AbstractLLBlackBoxTest {
     @TestMetadata("annotatedMemberExtensionPropertyGeneric.kt")
     public void testAnnotatedMemberExtensionPropertyGeneric() {
       runTest("compiler/testData/codegen/box/inlineClasses/annotatedMemberExtensionPropertyGeneric.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithUniversal());
+    }
+
+    @Test
+    @TestMetadata("anonymousObjectAsDefaultParam.kt")
+    public void testAnonymousObjectAsDefaultParam() {
+      runTest("compiler/testData/codegen/box/inlineClasses/anonymousObjectAsDefaultParam.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithUniversal());
+    }
+
+    @Test
+    @TestMetadata("anonymousObjectAsDefaultParamFull.kt")
+    public void testAnonymousObjectAsDefaultParamFull() {
+      runTest("compiler/testData/codegen/box/inlineClasses/anonymousObjectAsDefaultParamFull.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithUniversal());
+    }
+
+    @Test
+    @TestMetadata("anonymousObjectAsDefaultParamSingleFile.kt")
+    public void testAnonymousObjectAsDefaultParamSingleFile() {
+      runTest("compiler/testData/codegen/box/inlineClasses/anonymousObjectAsDefaultParamSingleFile.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithUniversal());
     }
 
     @Test

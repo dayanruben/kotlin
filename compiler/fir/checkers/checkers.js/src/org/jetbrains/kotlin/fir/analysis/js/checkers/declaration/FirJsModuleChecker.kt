@@ -24,23 +24,24 @@ import org.jetbrains.kotlin.name.JsStandardClassIds.Annotations.JsModule
 import org.jetbrains.kotlin.name.JsStandardClassIds.Annotations.JsNonModule
 
 object FirJsModuleChecker : FirBasicDeclarationChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirDeclaration) {
         checkSuperClass(declaration, context, reporter)
 
         if (declaration is FirFile || !declaration.isEitherModuleOrNonModule(context.session)) return
 
         if (declaration is FirProperty && declaration.isVar) {
-            reporter.reportOn(declaration.source, FirJsErrors.JS_MODULE_PROHIBITED_ON_VAR, context)
+            reporter.reportOn(declaration.source, FirJsErrors.JS_MODULE_PROHIBITED_ON_VAR)
         }
 
         val closestNonLocal = context.closestNonLocalWith(declaration)?.symbol ?: return
 
         if (!closestNonLocal.isNativeObject(context)) {
-            reporter.reportOn(declaration.source, FirJsErrors.JS_MODULE_PROHIBITED_ON_NON_NATIVE, context)
+            reporter.reportOn(declaration.source, FirJsErrors.JS_MODULE_PROHIBITED_ON_NON_NATIVE)
         }
 
         if (context.isTopLevel && context.containingFile?.isEitherModuleOrNonModule(context.session) == true) {
-            reporter.reportOn(declaration.source, FirJsErrors.NESTED_JS_MODULE_PROHIBITED, context)
+            reporter.reportOn(declaration.source, FirJsErrors.NESTED_JS_MODULE_PROHIBITED)
         }
     }
 

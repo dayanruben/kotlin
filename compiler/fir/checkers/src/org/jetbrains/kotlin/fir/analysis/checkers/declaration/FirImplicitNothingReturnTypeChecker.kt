@@ -22,7 +22,8 @@ import org.jetbrains.kotlin.fir.types.isNothing
 
 object FirImplicitNothingReturnTypeChecker : FirCallableDeclarationChecker(MppCheckerKind.Common) {
 
-    override fun check(declaration: FirCallableDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirCallableDeclaration) {
         if (declaration !is FirSimpleFunction && declaration !is FirProperty) return
         if (declaration is FirProperty && declaration.isLocal) return
         if (declaration.isOverride) return
@@ -36,7 +37,7 @@ object FirImplicitNothingReturnTypeChecker : FirCallableDeclarationChecker(MppCh
                     is FirProperty -> FirErrors.ABBREVIATED_NOTHING_PROPERTY_TYPE
                     else -> error("Should not be here")
                 }
-                reporter.reportOn(declaration.source, factory, context)
+                reporter.reportOn(declaration.source, factory)
             }
             return
         }
@@ -46,7 +47,7 @@ object FirImplicitNothingReturnTypeChecker : FirCallableDeclarationChecker(MppCh
                 is FirProperty -> FirErrors.IMPLICIT_NOTHING_PROPERTY_TYPE
                 else -> error("Should not be here")
             }
-            reporter.reportOn(declaration.source, factory, context)
+            reporter.reportOn(declaration.source, factory)
         }
     }
 }

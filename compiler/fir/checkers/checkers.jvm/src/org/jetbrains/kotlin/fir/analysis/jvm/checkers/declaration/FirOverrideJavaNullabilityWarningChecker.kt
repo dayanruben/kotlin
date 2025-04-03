@@ -27,21 +27,24 @@ import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 sealed class FirOverrideJavaNullabilityWarningChecker(mppKind: MppCheckerKind) : FirAbstractOverrideChecker(mppKind) {
     object Regular : FirOverrideJavaNullabilityWarningChecker(MppCheckerKind.Platform) {
-        override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+        context(context: CheckerContext, reporter: DiagnosticReporter)
+        override fun check(declaration: FirClass) {
             if (declaration.isExpect) return
-            super.check(declaration, context, reporter)
+            super.check(declaration)
         }
     }
 
     object ForExpectClass : FirOverrideJavaNullabilityWarningChecker(MppCheckerKind.Common) {
-        override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+        context(context: CheckerContext, reporter: DiagnosticReporter)
+        override fun check(declaration: FirClass) {
             if (!declaration.isExpect) return
-            super.check(declaration, context, reporter)
+            super.check(declaration)
         }
     }
 
     @OptIn(ScopeFunctionRequiresPrewarm::class)
-    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirClass) {
         val substitutor = EnhancedForWarningConeSubstitutor(context.session.typeContext)
         val scope = declaration.unsubstitutedScope(context)
         val typeCheckerState = context.session.typeContext.newTypeCheckerState(
@@ -66,8 +69,7 @@ sealed class FirOverrideJavaNullabilityWarningChecker(mppKind: MppCheckerKind) :
                                 memberSymbol.source,
                                 FirJvmErrors.WRONG_NULLABILITY_FOR_JAVA_OVERRIDE,
                                 memberSymbol,
-                                substitutedBase,
-                                context
+                                substitutedBase
                             )
                         }
 
@@ -77,7 +79,7 @@ sealed class FirOverrideJavaNullabilityWarningChecker(mppKind: MppCheckerKind) :
                 if (anyBaseEnhanced && !anyReported) {
                     memberSymbol.checkReturnType(enhancedOverrides, typeCheckerState, context)?.let {
                         reporter.reportOn(
-                            memberSymbol.source, FirJvmErrors.WRONG_NULLABILITY_FOR_JAVA_OVERRIDE, memberSymbol, it, context
+                            memberSymbol.source, FirJvmErrors.WRONG_NULLABILITY_FOR_JAVA_OVERRIDE, memberSymbol, it
                         )
                     }
                 }
@@ -94,8 +96,7 @@ sealed class FirOverrideJavaNullabilityWarningChecker(mppKind: MppCheckerKind) :
                                 memberSymbol.source,
                                 FirJvmErrors.WRONG_NULLABILITY_FOR_JAVA_OVERRIDE,
                                 memberSymbol,
-                                substitutedBase,
-                                context
+                                substitutedBase
                             )
                         }
 
@@ -105,7 +106,7 @@ sealed class FirOverrideJavaNullabilityWarningChecker(mppKind: MppCheckerKind) :
                 if (anyBaseEnhanced && !anyReported) {
                     memberSymbol.checkReturnType(enhancedOverrides, typeCheckerState, context)?.let {
                         reporter.reportOn(
-                            memberSymbol.source, FirJvmErrors.WRONG_NULLABILITY_FOR_JAVA_OVERRIDE, memberSymbol, it, context
+                            memberSymbol.source, FirJvmErrors.WRONG_NULLABILITY_FOR_JAVA_OVERRIDE, memberSymbol, it
                         )
                     }
                 }

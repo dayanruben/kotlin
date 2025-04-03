@@ -22,7 +22,8 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
 import org.jetbrains.kotlin.fir.types.*
 
 object FirDelegateUsesExtensionPropertyTypeParameterChecker : FirPropertyChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirProperty, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirProperty) {
         if (!declaration.isExtension) return
         val delegate = declaration.delegate ?: return
         val parameters = declaration.typeParameters.mapTo(hashSetOf()) { it.symbol }
@@ -30,7 +31,7 @@ object FirDelegateUsesExtensionPropertyTypeParameterChecker : FirPropertyChecker
         val usedTypeParameterSymbol = delegate.resolvedType.findUsedTypeParameterSymbol(parameters, delegate, context)
             ?: return
 
-        reporter.reportOn(declaration.source, FirErrors.DELEGATE_USES_EXTENSION_PROPERTY_TYPE_PARAMETER, usedTypeParameterSymbol, context)
+        reporter.reportOn(declaration.source, FirErrors.DELEGATE_USES_EXTENSION_PROPERTY_TYPE_PARAMETER, usedTypeParameterSymbol)
     }
 
     private fun ConeKotlinType.findUsedTypeParameterSymbol(

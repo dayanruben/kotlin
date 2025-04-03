@@ -22,7 +22,8 @@ import org.jetbrains.kotlin.fir.declarations.impl.FirPrimaryConstructor
 import org.jetbrains.kotlin.fir.declarations.isLegacyContextReceiver
 
 object FirContextReceiversDeprecatedDeclarationChecker : FirBasicDeclarationChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirDeclaration) {
         if (context.languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) return
 
         if (declaration is FirCallableDeclaration &&
@@ -32,14 +33,14 @@ object FirContextReceiversDeprecatedDeclarationChecker : FirBasicDeclarationChec
             declaration.contextParameters.onlyLegacyContextReceivers()
         ) {
             if (declaration is FirConstructor && declaration !is FirPrimaryConstructor) {
-                reporter.reportOn(declaration.source, FirErrors.CONTEXT_CLASS_OR_CONSTRUCTOR, context)
+                reporter.reportOn(declaration.source, FirErrors.CONTEXT_CLASS_OR_CONSTRUCTOR)
             } else {
                 val message = FirContextParametersLanguageVersionSettingsChecker.getMessage(context.languageVersionSettings)
-                reporter.reportOn(declaration.source, FirErrors.CONTEXT_RECEIVERS_DEPRECATED, message, context)
+                reporter.reportOn(declaration.source, FirErrors.CONTEXT_RECEIVERS_DEPRECATED, message)
             }
         }
         if (declaration is FirRegularClass && declaration.contextParameters.onlyLegacyContextReceivers()) {
-            reporter.reportOn(declaration.source, FirErrors.CONTEXT_CLASS_OR_CONSTRUCTOR, context)
+            reporter.reportOn(declaration.source, FirErrors.CONTEXT_CLASS_OR_CONSTRUCTOR)
         }
     }
 

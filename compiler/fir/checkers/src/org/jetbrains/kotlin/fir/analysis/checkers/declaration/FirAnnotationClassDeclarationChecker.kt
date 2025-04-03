@@ -39,12 +39,13 @@ import org.jetbrains.kotlin.name.StandardClassIds.unsignedArrayTypeByElementType
 import org.jetbrains.kotlin.types.Variance
 
 object FirAnnotationClassDeclarationChecker : FirRegularClassChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirRegularClass) {
         if (declaration.classKind != ANNOTATION_CLASS) return
-        if (declaration.isLocal) reporter.reportOn(declaration.source, FirErrors.LOCAL_ANNOTATION_CLASS_ERROR, context)
+        if (declaration.isLocal) reporter.reportOn(declaration.source, FirErrors.LOCAL_ANNOTATION_CLASS_ERROR)
 
         if (declaration.superTypeRefs.size != 1) {
-            reporter.reportOn(declaration.source, FirErrors.SUPERTYPES_FOR_ANNOTATION_CLASS, context)
+            reporter.reportOn(declaration.source, FirErrors.SUPERTYPES_FOR_ANNOTATION_CLASS)
         }
 
         declaration.processAllDeclarations(context.session) { member ->
@@ -56,7 +57,7 @@ object FirAnnotationClassDeclarationChecker : FirRegularClassChecker(MppCheckerK
             KotlinTarget.EXPRESSION in declaration.getAllowedAnnotationTargets(session)
         ) {
             val target = declaration.getRetentionAnnotation(session) ?: declaration.getTargetAnnotation(session) ?: declaration
-            reporter.reportOn(target.source, FirErrors.RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION, context)
+            reporter.reportOn(target.source, FirErrors.RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION)
         }
 
         checkCyclesInParameters(declaration.symbol, context, reporter)

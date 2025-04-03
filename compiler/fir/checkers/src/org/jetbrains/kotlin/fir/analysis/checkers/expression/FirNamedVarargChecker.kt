@@ -26,7 +26,8 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
 object FirNamedVarargChecker : FirCallChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirCall) {
         if (expression !is FirFunctionCall &&
             expression !is FirAnnotation &&
             expression !is FirDelegatedConstructorCall &&
@@ -45,7 +46,7 @@ object FirNamedVarargChecker : FirCallChecker(MppCheckerKind.Common) {
             if (!isNamedSpread(argument)) return
             if (!argument.isFakeSpread && argument.isNamed) {
                 if (isVararg && (expression as? FirResolvable)?.calleeReference !is FirResolvedErrorReference) {
-                    reporter.reportOn(argument.expression.source, redundantSpreadWarningFactory, context)
+                    reporter.reportOn(argument.expression.source, redundantSpreadWarningFactory)
                 }
                 return
             }
@@ -58,15 +59,13 @@ object FirNamedVarargChecker : FirCallChecker(MppCheckerKind.Common) {
             if (isAnnotation) {
                 reporter.reportOn(
                     argument.expression.source,
-                    FirErrors.ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_ANNOTATION,
-                    context
+                    FirErrors.ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_ANNOTATION
                 )
             } else {
                 reporter.reportOn(
                     argument.expression.source,
                     FirErrors.ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION,
-                    expectedArrayType,
-                    context,
+                    expectedArrayType
                 )
             }
         }

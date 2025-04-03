@@ -14,11 +14,12 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 
 object FirInlineBodySimpleFunctionChecker : FirSimpleFunctionChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirSimpleFunction, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirSimpleFunction) {
         val inlineFunctionBodyContext = context.inlineFunctionBodyContext ?: return
 
         if (context.containingDeclarations.lastOrNull() === inlineFunctionBodyContext.inlineFunction) {
-            reporter.reportOn(declaration.source, FirErrors.NOT_YET_SUPPORTED_IN_INLINE, "Local functions", context)
+            reporter.reportOn(declaration.source, FirErrors.NOT_YET_SUPPORTED_IN_INLINE, "Local functions")
         }
     }
 }

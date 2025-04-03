@@ -108,7 +108,13 @@ open class CommonizerIT : KGPBaseTest() {
     @DisplayName("Commonize Curl Interop UP-TO-DATE check")
     @GradleTest
     fun testCommonizeCurlInteropUTDCheck(gradleVersion: GradleVersion) {
-        nativeProject("commonizeCurlInterop", gradleVersion) {
+        nativeProject(
+            "commonizeCurlInterop",
+            gradleVersion,
+            // with CC enabled on Gradle 7 `CInteropCommonizerTask.getAllInteropGroupsForUpToDateCheck` nested input
+            // always fails the up-to-date check
+            buildOptions = defaultBuildOptions.disableConfigurationCacheForGradle7(gradleVersion),
+        ) {
 
             configureCommonizerTargets()
 

@@ -25,7 +25,8 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.unwrapFakeOverridesOrDelegated
 
 object FirSuperCallWithDefaultsChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirFunctionCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirFunctionCall) {
         if (expression.explicitReceiverIsNotSuperReference()) return
 
         val functionSymbol = expression.calleeReference.toResolvedNamedFunctionSymbol()
@@ -47,8 +48,7 @@ object FirSuperCallWithDefaultsChecker : FirFunctionCallChecker(MppCheckerKind.C
             reporter.reportOn(
                 expression.calleeReference.source,
                 FirErrors.SUPER_CALL_WITH_DEFAULT_PARAMETERS,
-                functionSymbol.name.asString(),
-                context
+                functionSymbol.name.asString()
             )
         }
     }

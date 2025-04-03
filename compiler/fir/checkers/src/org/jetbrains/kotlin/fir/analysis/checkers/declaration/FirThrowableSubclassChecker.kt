@@ -19,13 +19,14 @@ import org.jetbrains.kotlin.fir.declarations.utils.superConeTypes
 import org.jetbrains.kotlin.fir.types.ConeErrorType
 
 object FirThrowableSubclassChecker : FirClassChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirClass) {
         if (!declaration.hasThrowableSupertype(context))
             return
 
         if (declaration.typeParameters.isNotEmpty()) {
             declaration.typeParameters.firstOrNull()?.source?.let {
-                reporter.reportOn(it, FirErrors.GENERIC_THROWABLE_SUBCLASS, context)
+                reporter.reportOn(it, FirErrors.GENERIC_THROWABLE_SUBCLASS)
             }
 
             val shouldReport = when (declaration) {
@@ -34,10 +35,10 @@ object FirThrowableSubclassChecker : FirClassChecker(MppCheckerKind.Common) {
             }
 
             if (shouldReport) {
-                reporter.reportOn(declaration.source, FirErrors.INNER_CLASS_OF_GENERIC_THROWABLE_SUBCLASS, context)
+                reporter.reportOn(declaration.source, FirErrors.INNER_CLASS_OF_GENERIC_THROWABLE_SUBCLASS)
             }
         } else if (declaration.hasGenericOuterDeclaration(context)) {
-            reporter.reportOn(declaration.source, FirErrors.INNER_CLASS_OF_GENERIC_THROWABLE_SUBCLASS, context)
+            reporter.reportOn(declaration.source, FirErrors.INNER_CLASS_OF_GENERIC_THROWABLE_SUBCLASS)
         }
     }
 

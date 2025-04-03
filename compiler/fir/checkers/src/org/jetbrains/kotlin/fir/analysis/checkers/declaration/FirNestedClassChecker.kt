@@ -25,7 +25,8 @@ import org.jetbrains.kotlin.fir.declarations.utils.isReplSnippetDeclaration
 // No need to visit anonymous object since an anonymous object is always inner. This aligns with
 // compiler/frontend/src/org/jetbrains/kotlin/resolve/ModifiersChecker.java:198
 object FirNestedClassChecker : FirRegularClassChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirRegularClass) {
         if (declaration.isReplSnippetDeclaration != null) return
         // Local enums / objects / companion objects are handled with different diagnostic codes.
         // Exception is companion of local inner class.
@@ -38,7 +39,7 @@ object FirNestedClassChecker : FirRegularClassChecker(MppCheckerKind.Common) {
         // Since 1.3, enum entries can contain inner classes only.
         // Companion objects are reported with code WRONG_MODIFIER_CONTAINING_DECLARATION instead
         if (containingDeclaration.classKind == ClassKind.ENUM_ENTRY && !declaration.isInner && !isCompanion) {
-            reporter.reportOn(declaration.source, NESTED_CLASS_NOT_ALLOWED, declaration.description, context)
+            reporter.reportOn(declaration.source, NESTED_CLASS_NOT_ALLOWED, declaration.description)
             return
         }
 
@@ -47,9 +48,9 @@ object FirNestedClassChecker : FirRegularClassChecker(MppCheckerKind.Common) {
 
         if (!declaration.isInner && (containingDeclaration.isInner || containerIsLocal || context.isInsideAnonymousObject)) {
             if (declaration.isLocal && isCompanion) {
-                reporter.reportOn(declaration.source, NESTED_CLASS_NOT_ALLOWED_IN_LOCAL, declaration.description, context)
+                reporter.reportOn(declaration.source, NESTED_CLASS_NOT_ALLOWED_IN_LOCAL, declaration.description)
             } else {
-                reporter.reportOn(declaration.source, NESTED_CLASS_NOT_ALLOWED, declaration.description, context)
+                reporter.reportOn(declaration.source, NESTED_CLASS_NOT_ALLOWED, declaration.description)
             }
         }
     }

@@ -23,7 +23,8 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirConstructorSymbol
 import org.jetbrains.kotlin.lexer.KtTokens
 
 object FirOpenMemberChecker : FirClassChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirClass) {
         if (declaration.canHaveOpenMembers) return
         declaration.symbol.processAllDeclaredCallables(context.session) { memberDeclaration ->
             if (// Marking a constructor `open` is an error covered by diagnostic code WRONG_MODIFIER_TARGET
@@ -34,9 +35,9 @@ object FirOpenMemberChecker : FirClassChecker(MppCheckerKind.Common) {
                 memberDeclaration.hasModifier(KtTokens.OPEN_KEYWORD) && source.shouldReportOpenFromSource
             ) {
                 if (declaration.classKind == ClassKind.OBJECT) {
-                    reporter.reportOn(source, FirErrors.NON_FINAL_MEMBER_IN_OBJECT, context)
+                    reporter.reportOn(source, FirErrors.NON_FINAL_MEMBER_IN_OBJECT)
                 } else {
-                    reporter.reportOn(source, FirErrors.NON_FINAL_MEMBER_IN_FINAL_CLASS, context)
+                    reporter.reportOn(source, FirErrors.NON_FINAL_MEMBER_IN_FINAL_CLASS)
                 }
             }
         }

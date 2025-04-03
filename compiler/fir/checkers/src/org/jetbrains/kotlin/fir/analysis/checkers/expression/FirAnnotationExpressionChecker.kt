@@ -44,14 +44,15 @@ object FirAnnotationExpressionChecker : FirAnnotationCallChecker(MppCheckerKind.
         sinceKotlinFqName,
     )
 
-    override fun check(expression: FirAnnotationCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirAnnotationCall) {
         val argumentMapping = expression.argumentMapping.mapping
         val annotationClassId = expression.toAnnotationClassId(context.session)
         val fqName = annotationClassId?.asSingleFqName()
         for (arg in argumentMapping.values) {
             val argExpression = (arg as? FirErrorExpression)?.expression ?: arg
             checkAnnotationArgumentWithSubElements(argExpression, context.session, reporter, context)
-                ?.let { reporter.reportOn(argExpression.source, it, context) }
+                ?.let { reporter.reportOn(argExpression.source, it) }
         }
 
         checkAnnotationsWithVersion(fqName, expression, context, reporter)

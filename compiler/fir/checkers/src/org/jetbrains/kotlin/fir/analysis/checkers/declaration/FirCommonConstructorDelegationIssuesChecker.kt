@@ -24,7 +24,8 @@ import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
 
 object FirCommonConstructorDelegationIssuesChecker : FirRegularClassChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirRegularClass) {
         val containingClass = context.containingDeclarations.lastIsInstanceOrNull<FirRegularClass>()
         if (declaration.isEffectivelyExternal(containingClass, context)) return
         val cyclicConstructors = mutableSetOf<FirConstructorSymbol>()
@@ -54,8 +55,7 @@ object FirCommonConstructorDelegationIssuesChecker : FirRegularClassChecker(MppC
                 if (!isEffectivelyExpect && it.resolvedDelegatedConstructorCall?.isThis != true) {
                     reporter.reportOn(
                         it.resolvedDelegatedConstructorCall?.source ?: it.source,
-                        FirErrors.PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED,
-                        context
+                        FirErrors.PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED
                     )
                 }
             }
@@ -66,13 +66,13 @@ object FirCommonConstructorDelegationIssuesChecker : FirRegularClassChecker(MppC
                     it.resolvedDelegatedConstructorCall?.source?.kind is KtFakeSourceElementKind &&
                     !it.isExpect
                 ) {
-                    reporter.reportOn(it.source, FirErrors.EXPLICIT_DELEGATION_CALL_REQUIRED, context)
+                    reporter.reportOn(it.source, FirErrors.EXPLICIT_DELEGATION_CALL_REQUIRED)
                 }
             }
         }
 
         cyclicConstructors.forEach {
-            reporter.reportOn(it.resolvedDelegatedConstructorCall?.source, FirErrors.CYCLIC_CONSTRUCTOR_DELEGATION_CALL, context)
+            reporter.reportOn(it.resolvedDelegatedConstructorCall?.source, FirErrors.CYCLIC_CONSTRUCTOR_DELEGATION_CALL)
         }
     }
 

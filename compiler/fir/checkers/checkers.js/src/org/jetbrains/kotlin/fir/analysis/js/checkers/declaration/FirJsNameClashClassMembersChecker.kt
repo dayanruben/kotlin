@@ -33,16 +33,18 @@ import org.jetbrains.kotlin.utils.addToStdlib.popLast
 
 sealed class FirJsNameClashClassMembersChecker(mppKind: MppCheckerKind) : FirClassChecker(mppKind) {
     object Regular : FirJsNameClashClassMembersChecker(MppCheckerKind.Platform) {
-        override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+        context(context: CheckerContext, reporter: DiagnosticReporter)
+        override fun check(declaration: FirClass) {
             if (declaration.isExpect) return
-            super.check(declaration, context, reporter)
+            super.check(declaration)
         }
     }
 
     object ForExpectClass : FirJsNameClashClassMembersChecker(MppCheckerKind.Common) {
-        override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+        context(context: CheckerContext, reporter: DiagnosticReporter)
+        override fun check(declaration: FirClass) {
             if (!declaration.isExpect) return
-            super.check(declaration, context, reporter)
+            super.check(declaration)
         }
     }
 
@@ -190,7 +192,8 @@ sealed class FirJsNameClashClassMembersChecker(mppKind: MppCheckerKind) : FirCla
         return null
     }
 
-    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirClass) {
         if (!declaration.symbol.isPresentInGeneratedCode(context.session)) {
             return
         }
@@ -209,11 +212,11 @@ sealed class FirJsNameClashClassMembersChecker(mppKind: MppCheckerKind) : FirCla
                     is FirCallableSymbol<*> -> symbol.unwrapFakeOverridesOrDelegated().source
                     else -> symbol.source
                 } ?: declaration.source
-                reporter.reportOn(source, FirJsErrors.JS_NAME_CLASH, name, clashedWith, context)
+                reporter.reportOn(source, FirJsErrors.JS_NAME_CLASH, name, clashedWith)
             }
 
             fakeOverrideStableNames.findFirstFakeOverrideClash(stableNameCollector)?.let { (fakeOverrideSymbol, clashedWith) ->
-                reporter.reportOn(declaration.source, FirJsErrors.JS_FAKE_NAME_CLASH, name, fakeOverrideSymbol, clashedWith, context)
+                reporter.reportOn(declaration.source, FirJsErrors.JS_FAKE_NAME_CLASH, name, fakeOverrideSymbol, clashedWith)
             }
         }
     }

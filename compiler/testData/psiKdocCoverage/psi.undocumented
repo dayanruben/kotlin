@@ -98,6 +98,7 @@ KtNodeTypes.java:KtNodeTypes:SCRIPT
 KtNodeTypes.java:KtNodeTypes:SCRIPT_INITIALIZER
 KtNodeTypes.java:KtNodeTypes:SECONDARY_CONSTRUCTOR
 KtNodeTypes.java:KtNodeTypes:SHORT_STRING_TEMPLATE_ENTRY
+KtNodeTypes.java:KtNodeTypes:STRING_INTERPOLATION_PREFIX
 KtNodeTypes.java:KtNodeTypes:STRING_TEMPLATE
 KtNodeTypes.java:KtNodeTypes:SUPER_EXPRESSION
 KtNodeTypes.java:KtNodeTypes:SUPER_TYPE_CALL_ENTRY
@@ -258,7 +259,7 @@ psi/KtBlockExpression.java:KtBlockExpression:@SuppressWarnings({"unused", "Metho
 psi/KtBlockExpression.java:KtBlockExpression:KtBlockExpression(CharSequence)
 psi/KtBlockStringTemplateEntry.java:KtBlockStringTemplateEntry
 psi/KtBlockStringTemplateEntry.java:KtBlockStringTemplateEntry:KtBlockStringTemplateEntry(ASTNode)
-psi/KtBlockStringTemplateEntry.java:KtBlockStringTemplateEntry:KtBlockStringTemplateEntry(KotlinPlaceHolderWithTextStub<KtBlockStringTemplateEntry>)
+psi/KtBlockStringTemplateEntry.java:KtBlockStringTemplateEntry:KtBlockStringTemplateEntry(KotlinBlockStringTemplateEntryStub)
 psi/KtBreakExpression.java:KtBreakExpression
 psi/KtBreakExpression.java:KtBreakExpression:KtBreakExpression(ASTNode)
 psi/KtCallElement.java:KtCallElement
@@ -1077,7 +1078,8 @@ psi/KtSimpleNameExpression.kt:abstract KtSimpleNameExpressionImpl
 psi/KtSimpleNameStringTemplateEntry.java:KtSimpleNameStringTemplateEntry
 psi/KtSimpleNameStringTemplateEntry.java:KtSimpleNameStringTemplateEntry:KtSimpleNameStringTemplateEntry(ASTNode)
 psi/KtSimpleNameStringTemplateEntry.java:KtSimpleNameStringTemplateEntry:KtSimpleNameStringTemplateEntry(KotlinPlaceHolderWithTextStub<KtSimpleNameStringTemplateEntry>)
-psi/KtStringTemplateEntry.java:KtStringTemplateEntry:@Nullable getExpression()
+psi/KtStringInterpolationPrefix.kt:KtStringInterpolationPrefix:KtStringInterpolationPrefix(ASTNode)
+psi/KtStringInterpolationPrefix.kt:KtStringInterpolationPrefix:KtStringInterpolationPrefix(KotlinStringInterpolationPrefixStub)
 psi/KtStringTemplateEntry.java:KtStringTemplateEntry:KtStringTemplateEntry(ASTNode)
 psi/KtStringTemplateEntry.java:KtStringTemplateEntry:KtStringTemplateEntry(KotlinPlaceHolderWithTextStub<? extends KtStringTemplateEntry>, IStubElementType)
 psi/KtStringTemplateEntry.java:KtStringTemplateEntry:static final EMPTY_ARRAY
@@ -1087,7 +1089,6 @@ psi/KtStringTemplateEntryWithExpression.java:KtStringTemplateEntryWithExpression
 psi/KtStringTemplateEntryWithExpression.java:abstract KtStringTemplateEntryWithExpression
 psi/KtStringTemplateExpression.java:KtStringTemplateExpression
 psi/KtStringTemplateExpression.java:KtStringTemplateExpression:@NotNull getEntries()
-psi/KtStringTemplateExpression.java:KtStringTemplateExpression:@Nullable getInterpolationPrefix()
 psi/KtStringTemplateExpression.java:KtStringTemplateExpression:KtStringTemplateExpression(ASTNode)
 psi/KtStringTemplateExpression.java:KtStringTemplateExpression:KtStringTemplateExpression(KotlinPlaceHolderStub<KtStringTemplateExpression>)
 psi/KtStringTemplateExpression.java:KtStringTemplateExpression:hasInterpolation()
@@ -1895,6 +1896,7 @@ psi/stubs/StubInterfaces.kt:KotlinAnnotationUseSiteTargetStub
 psi/stubs/StubInterfaces.kt:KotlinAnnotationUseSiteTargetStub:getUseSiteTarget()
 psi/stubs/StubInterfaces.kt:KotlinBackingFieldStub
 psi/stubs/StubInterfaces.kt:KotlinBackingFieldStub:hasInitializer()
+psi/stubs/StubInterfaces.kt:KotlinBlockStringTemplateEntryStub
 psi/stubs/StubInterfaces.kt:KotlinCallableStubBase
 psi/stubs/StubInterfaces.kt:KotlinCallableStubBase:isExtension()
 psi/stubs/StubInterfaces.kt:KotlinCallableStubBase:isTopLevel()
@@ -1962,6 +1964,7 @@ psi/stubs/StubInterfaces.kt:KotlinPropertyStub:hasInitializer()
 psi/stubs/StubInterfaces.kt:KotlinPropertyStub:hasReturnTypeRef()
 psi/stubs/StubInterfaces.kt:KotlinPropertyStub:isVar()
 psi/stubs/StubInterfaces.kt:KotlinScriptStub
+psi/stubs/StubInterfaces.kt:KotlinStringInterpolationPrefixStub
 psi/stubs/StubInterfaces.kt:KotlinStubWithFqName
 psi/stubs/StubInterfaces.kt:KotlinStubWithFqName:getFqName()
 psi/stubs/StubInterfaces.kt:KotlinTypeAliasStub
@@ -1986,6 +1989,7 @@ psi/stubs/elements/KtAnnotationEntryElementType.java:KtAnnotationEntryElementTyp
 psi/stubs/elements/KtAnnotationUseSiteTargetElementType.kt:KtAnnotationUseSiteTargetElementType
 psi/stubs/elements/KtBackingFieldElementType.java:KtBackingFieldElementType
 psi/stubs/elements/KtBackingFieldElementType.java:KtBackingFieldElementType:KtBackingFieldElementType(String)
+psi/stubs/elements/KtBlockStringTemplateEntryElementType.kt:KtBlockStringTemplateEntryElementType
 psi/stubs/elements/KtClassElementType.java:KtClassElementType
 psi/stubs/elements/KtClassElementType.java:KtClassElementType:KtClassElementType(String)
 psi/stubs/elements/KtClassElementType.java:KtClassElementType:static getStubType(boolean)
@@ -2027,6 +2031,7 @@ psi/stubs/elements/KtPropertyElementType.java:KtPropertyElementType
 psi/stubs/elements/KtPropertyElementType.java:KtPropertyElementType:KtPropertyElementType(String)
 psi/stubs/elements/KtScriptElementType.kt:KtScriptElementType
 psi/stubs/elements/KtSecondaryConstructorElementType.kt:KtSecondaryConstructorElementType
+psi/stubs/elements/KtStringInterpolationPrefixElementType.kt:KtStringInterpolationPrefixElementType
 psi/stubs/elements/KtStringTemplateExpressionElementType.kt:KtStringTemplateExpressionElementType
 psi/stubs/elements/KtStubElementType.java:KtStubElementType:@NotNull createPsiFromAst(ASTNode)
 psi/stubs/elements/KtStubElementType.java:KtStubElementType:@NotNull getArrayFactory()
@@ -2084,6 +2089,7 @@ psi/stubs/elements/KtStubElementTypes.java:KtStubElementTypes:REFERENCE_EXPRESSI
 psi/stubs/elements/KtStubElementTypes.java:KtStubElementTypes:SCRIPT
 psi/stubs/elements/KtStubElementTypes.java:KtStubElementTypes:SECONDARY_CONSTRUCTOR
 psi/stubs/elements/KtStubElementTypes.java:KtStubElementTypes:SHORT_STRING_TEMPLATE_ENTRY
+psi/stubs/elements/KtStubElementTypes.java:KtStubElementTypes:STRING_INTERPOLATION_PREFIX
 psi/stubs/elements/KtStubElementTypes.java:KtStubElementTypes:STRING_TEMPLATE
 psi/stubs/elements/KtStubElementTypes.java:KtStubElementTypes:SUPER_TYPE_CALL_ENTRY
 psi/stubs/elements/KtStubElementTypes.java:KtStubElementTypes:SUPER_TYPE_ENTRY
@@ -2136,6 +2142,7 @@ psi/stubs/impl/KotlinAnnotationEntryStubImpl.kt:KotlinAnnotationEntryStubImpl
 psi/stubs/impl/KotlinAnnotationUseSiteStubImpl.kt:KotlinAnnotationUseSiteTargetStubImpl
 psi/stubs/impl/KotlinBackingFieldStubImpl.java:KotlinBackingFieldStubImpl
 psi/stubs/impl/KotlinBackingFieldStubImpl.java:KotlinBackingFieldStubImpl:KotlinBackingFieldStubImpl(StubElement<?>, boolean)
+psi/stubs/impl/KotlinBlockStringTemplateEntryStubImpl.kt:KotlinBlockStringTemplateEntryStubImpl
 psi/stubs/impl/KotlinClassLiteralExpressionStubImpl.kt:KotlinClassLiteralExpressionStubImpl
 psi/stubs/impl/KotlinClassStubImpl.kt:KotlinClassStubImpl
 psi/stubs/impl/KotlinCollectionLiteralExpressionStubImpl.kt:KotlinCollectionLiteralExpressionStubImpl
@@ -2219,6 +2226,7 @@ psi/stubs/impl/KotlinPropertyAccessorStubImpl.java:KotlinPropertyAccessorStubImp
 psi/stubs/impl/KotlinPropertyAccessorStubImpl.java:KotlinPropertyAccessorStubImpl:KotlinPropertyAccessorStubImpl(StubElement, boolean, boolean, boolean)
 psi/stubs/impl/KotlinPropertyStubImpl.kt:KotlinPropertyStubImpl
 psi/stubs/impl/KotlinScriptStubImpl.kt:KotlinScriptStubImpl
+psi/stubs/impl/KotlinStringInterpolationPrefixStubImpl.kt:KotlinStringInterpolationPrefixStubImpl
 psi/stubs/impl/KotlinStubBaseImpl.kt:STUB_TO_STRING_PREFIX
 psi/stubs/impl/KotlinStubBaseImpl.kt:open KotlinStubBaseImpl
 psi/stubs/impl/KotlinStubOrigin.kt:Companion:@JvmStatic deserialize(StubInputStream)

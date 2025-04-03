@@ -43,12 +43,13 @@ abstract class FirWebCommonExternalChecker(private val allowCompanionInInterface
 
     abstract fun hasExternalLikeAnnotations(declaration: FirDeclaration, session: FirSession): Boolean
 
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirDeclaration) {
         if (!isNativeOrEffectivelyExternal(declaration.symbol, context.session)) return
 
         if (!context.isTopLevel) {
             if (declaration !is FirPropertyAccessor && declaration.isDirectlyExternal(context.session)) {
-                reporter.reportOn(declaration.source, FirWebCommonErrors.NESTED_EXTERNAL_DECLARATION, context)
+                reporter.reportOn(declaration.source, FirWebCommonErrors.NESTED_EXTERNAL_DECLARATION)
             }
         }
 
@@ -65,7 +66,7 @@ abstract class FirWebCommonExternalChecker(private val allowCompanionInInterface
             }
 
             if (classKind != null) {
-                reporter.reportOn(declaration.source, FirWebCommonErrors.WRONG_EXTERNAL_DECLARATION, classKind, context)
+                reporter.reportOn(declaration.source, FirWebCommonErrors.WRONG_EXTERNAL_DECLARATION, classKind)
             }
 
             if (declaration.isEnumClass) {
@@ -77,7 +78,7 @@ abstract class FirWebCommonExternalChecker(private val allowCompanionInInterface
             declaration !is FirField &&
             declaration.isPrivateMemberOfExternalClass(context.session)
         ) {
-            reporter.reportOn(declaration.source, FirWebCommonErrors.WRONG_EXTERNAL_DECLARATION, "private member of class", context)
+            reporter.reportOn(declaration.source, FirWebCommonErrors.WRONG_EXTERNAL_DECLARATION, "private member of class")
         }
 
         val container = context.containingDeclarations.lastOrNull()
@@ -87,7 +88,7 @@ abstract class FirWebCommonExternalChecker(private val allowCompanionInInterface
             !declaration.classKind.isInterface && (!allowCompanionInInterface || !declaration.status.isCompanion) &&
             container is FirClass && container.classKind.isInterface
         ) {
-            reporter.reportOn(declaration.source, FirWebCommonErrors.NESTED_CLASS_IN_EXTERNAL_INTERFACE, context)
+            reporter.reportOn(declaration.source, FirWebCommonErrors.NESTED_CLASS_IN_EXTERNAL_INTERFACE)
         }
 
         if (
@@ -98,7 +99,7 @@ abstract class FirWebCommonExternalChecker(private val allowCompanionInInterface
             container.isInterface &&
             declaration.nameOrSpecialName != DEFAULT_NAME_FOR_COMPANION_OBJECT
         ) {
-            reporter.reportOn(declaration.source, FirWebCommonErrors.NAMED_COMPANION_IN_EXTERNAL_INTERFACE, context)
+            reporter.reportOn(declaration.source, FirWebCommonErrors.NAMED_COMPANION_IN_EXTERNAL_INTERFACE)
         }
 
 
@@ -108,7 +109,7 @@ abstract class FirWebCommonExternalChecker(private val allowCompanionInInterface
                 is FirProperty -> "extension property"
                 else -> "extension member"
             }
-            reporter.reportOn(declaration.source, FirWebCommonErrors.WRONG_EXTERNAL_DECLARATION, target, context)
+            reporter.reportOn(declaration.source, FirWebCommonErrors.WRONG_EXTERNAL_DECLARATION, target)
         }
 
         if (
@@ -116,7 +117,7 @@ abstract class FirWebCommonExternalChecker(private val allowCompanionInInterface
             declaration.isNonAbstractMemberIfInterface(context.session) &&
             !declaration.isNullableProperty()
         ) {
-            reporter.reportOn(declaration.source, FirWebCommonErrors.NON_ABSTRACT_MEMBER_OF_EXTERNAL_INTERFACE, context)
+            reporter.reportOn(declaration.source, FirWebCommonErrors.NON_ABSTRACT_MEMBER_OF_EXTERNAL_INTERFACE)
         }
 
         declaration.checkBody(context, reporter)

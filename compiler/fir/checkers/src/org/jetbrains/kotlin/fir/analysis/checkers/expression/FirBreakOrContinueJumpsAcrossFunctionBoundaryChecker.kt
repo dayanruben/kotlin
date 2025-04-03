@@ -17,7 +17,8 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.*
 
 object FirBreakOrContinueJumpsAcrossFunctionBoundaryChecker : FirLoopJumpChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirLoopJump, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirLoopJump) {
         val targetElement = expression.target.labeledElement.block
         val path = context.containingElements.dropWhile { it != targetElement }
         val inlineLambdasSupported = context.languageVersionSettings.supportsFeature(LanguageFeature.BreakContinueInInlineLambdas)
@@ -36,12 +37,12 @@ object FirBreakOrContinueJumpsAcrossFunctionBoundaryChecker : FirLoopJumpChecker
         when {
             notTransparentDeclarationKinds.isEmpty() -> {}
             notTransparentDeclarationKinds.any { it == NotInalienableDeclaration } -> {
-                reporter.reportOn(expression.source, FirErrors.BREAK_OR_CONTINUE_JUMPS_ACROSS_FUNCTION_BOUNDARY, context)
+                reporter.reportOn(expression.source, FirErrors.BREAK_OR_CONTINUE_JUMPS_ACROSS_FUNCTION_BOUNDARY)
             }
             !inlineLambdasSupported -> {
                 reporter.reportOn(
                     expression.source, FirErrors.UNSUPPORTED_FEATURE,
-                    LanguageFeature.BreakContinueInInlineLambdas to context.languageVersionSettings, context
+                    LanguageFeature.BreakContinueInInlineLambdas to context.languageVersionSettings
                 )
             }
         }

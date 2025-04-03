@@ -22,22 +22,23 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.name.NativeStandardInteropNames.objCOutletClassId
 
 object FirNativeObjCOutletChecker : FirClassChecker(MppCheckerKind.Platform) {
-    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirClass) {
         val session = context.session
 
         fun checkCanGenerateFunctionImp(setter: FirPropertyAccessorSymbol) {
             if (setter.valueParameterSymbols.size > 2)
-                reporter.reportOn(setter.source, FirNativeErrors.TWO_OR_LESS_PARAMETERS_ARE_SUPPORTED_HERE, context)
+                reporter.reportOn(setter.source, FirNativeErrors.TWO_OR_LESS_PARAMETERS_ARE_SUPPORTED_HERE)
         }
 
         fun checkCanGenerateOutletSetterImp(property: FirPropertySymbol) {
             if (!property.isVar) {
-                reporter.reportOn(property.source, FirNativeErrors.PROPERTY_MUST_BE_VAR, objCOutletClassId.asSingleFqName(), context)
+                reporter.reportOn(property.source, FirNativeErrors.PROPERTY_MUST_BE_VAR, objCOutletClassId.asSingleFqName())
                 return
             }
 
             property.receiverParameterSymbol?.let {
-                reporter.reportOn(it.source, FirNativeErrors.MUST_NOT_HAVE_EXTENSION_RECEIVER, "@${objCOutletClassId.asFqNameString()}", context)
+                reporter.reportOn(it.source, FirNativeErrors.MUST_NOT_HAVE_EXTENSION_RECEIVER, "@${objCOutletClassId.asFqNameString()}")
             }
 
             val type = property.resolvedReturnTypeRef
@@ -46,8 +47,7 @@ object FirNativeObjCOutletChecker : FirClassChecker(MppCheckerKind.Platform) {
                     property.resolvedReturnTypeRef.source,
                     FirNativeErrors.MUST_BE_OBJC_OBJECT_TYPE,
                     "@${objCOutletClassId.asSingleFqName()} type",
-                    type.coneType,
-                    context
+                    type.coneType
                 )
 
             checkCanGenerateFunctionImp(property.setterSymbol!!)

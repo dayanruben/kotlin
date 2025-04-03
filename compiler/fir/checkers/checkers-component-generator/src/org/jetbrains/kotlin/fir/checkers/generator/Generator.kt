@@ -304,7 +304,15 @@ class Generator(
             withIndent {
                 println("try {")
                 withIndent {
-                    println("checker.check(element, context, reporter)")
+                    println("with(context) {")
+                    withIndent {
+                        println("with(reporter) {")
+                        withIndent {
+                            println("checker.check(element)")
+                        }
+                        println("}")
+                    }
+                    println("}")
                 }
                 println("} catch (e: Exception) {")
                 withIndent {

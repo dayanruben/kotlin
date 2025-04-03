@@ -21,7 +21,8 @@ import org.jetbrains.kotlin.util.OperatorNameConventions.TO_STRING
 
 // TODO: rewrite with declared member scope
 object FirMethodOfAnyImplementedInInterfaceChecker : FirRegularClassChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirRegularClass) {
         if (!declaration.isInterface) {
             return
         }
@@ -38,7 +39,7 @@ object FirMethodOfAnyImplementedInInterfaceChecker : FirRegularClassChecker(MppC
             }
 
             if (methodOfAny) {
-                reporter.reportOn(function.source, FirErrors.METHOD_OF_ANY_IMPLEMENTED_IN_INTERFACE, context)
+                reporter.reportOn(function.source, FirErrors.METHOD_OF_ANY_IMPLEMENTED_IN_INTERFACE)
             }
         }
     }

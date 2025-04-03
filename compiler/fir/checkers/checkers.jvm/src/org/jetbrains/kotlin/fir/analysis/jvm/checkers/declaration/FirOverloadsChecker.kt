@@ -24,7 +24,8 @@ import org.jetbrains.kotlin.fir.resolve.dfa.cfg.isLocalClassOrAnonymousObject
 import org.jetbrains.kotlin.name.JvmStandardClassIds.JVM_OVERLOADS_CLASS_ID
 
 object FirOverloadsChecker : FirFunctionChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirFunction, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirFunction) {
         val session = context.session
         val annotation = declaration.getAnnotationByClassId(JVM_OVERLOADS_CLASS_ID, session) ?: return
 
@@ -35,18 +36,18 @@ object FirOverloadsChecker : FirFunctionChecker(MppCheckerKind.Common) {
         val containingDeclaration = declaration.getContainingClassSymbol()
         when {
             containingDeclaration?.classKind == ClassKind.INTERFACE ->
-                reporter.reportOn(annotation.source, FirJvmErrors.OVERLOADS_INTERFACE, context)
+                reporter.reportOn(annotation.source, FirJvmErrors.OVERLOADS_INTERFACE)
             declaration.isAbstract ->
-                reporter.reportOn(annotation.source, FirJvmErrors.OVERLOADS_ABSTRACT, context)
+                reporter.reportOn(annotation.source, FirJvmErrors.OVERLOADS_ABSTRACT)
             (declaration is FirSimpleFunction && declaration.isLocal) ||
                     context.containingDeclarations.any { it.isLocalClassOrAnonymousObject() } ->
-                reporter.reportOn(annotation.source, FirJvmErrors.OVERLOADS_LOCAL, context)
+                reporter.reportOn(annotation.source, FirJvmErrors.OVERLOADS_LOCAL)
             declaration is FirConstructor && containingDeclaration?.classKind == ClassKind.ANNOTATION_CLASS ->
-                reporter.reportOn(annotation.source, FirJvmErrors.OVERLOADS_ANNOTATION_CLASS_CONSTRUCTOR, context)
+                reporter.reportOn(annotation.source, FirJvmErrors.OVERLOADS_ANNOTATION_CLASS_CONSTRUCTOR)
             !declaration.visibility.isPublicAPI && declaration.visibility != Visibilities.Internal ->
-                reporter.reportOn(annotation.source, FirJvmErrors.OVERLOADS_PRIVATE, context)
+                reporter.reportOn(annotation.source, FirJvmErrors.OVERLOADS_PRIVATE)
             ownerOfParametersWithDefaultValues.valueParameterSymbols.none { it.hasDefaultValue } ->
-                reporter.reportOn(annotation.source, FirJvmErrors.OVERLOADS_WITHOUT_DEFAULT_ARGUMENTS, context)
+                reporter.reportOn(annotation.source, FirJvmErrors.OVERLOADS_WITHOUT_DEFAULT_ARGUMENTS)
         }
     }
 }

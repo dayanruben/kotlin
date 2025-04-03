@@ -19,7 +19,8 @@ import org.jetbrains.kotlin.fir.isCatchParameter
 import org.jetbrains.kotlin.name.SpecialNames
 
 object FirUnnamedPropertyChecker : FirPropertyChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirProperty, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirProperty) {
         if (declaration.name != SpecialNames.UNDERSCORE_FOR_UNUSED_VAR) {
             return
         }
@@ -27,11 +28,11 @@ object FirUnnamedPropertyChecker : FirPropertyChecker(MppCheckerKind.Common) {
         val isDesugaredComponentCall = declaration.initializer?.source?.kind == KtFakeSourceElementKind.DesugaredComponentFunctionCall
 
         if (declaration.isVar && !isDesugaredComponentCall) {
-            reporter.reportOn(declaration.source, FirErrors.UNNAMED_VAR_PROPERTY, context)
+            reporter.reportOn(declaration.source, FirErrors.UNNAMED_VAR_PROPERTY)
         }
 
         if (declaration.delegate != null) {
-            reporter.reportOn(declaration.delegate?.source, FirErrors.UNNAMED_DELEGATED_PROPERTY, context)
+            reporter.reportOn(declaration.delegate?.source, FirErrors.UNNAMED_DELEGATED_PROPERTY)
         }
 
         if (!isDesugaredComponentCall && declaration.isCatchParameter != true) {

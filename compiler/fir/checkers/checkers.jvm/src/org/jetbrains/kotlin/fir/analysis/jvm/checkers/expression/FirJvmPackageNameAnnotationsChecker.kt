@@ -26,21 +26,22 @@ object FirJvmPackageNameAnnotationsChecker : FirAnnotationChecker(MppCheckerKind
 
     private val jvmPackageNameClassId = ClassId.topLevel(FqName("kotlin.jvm.JvmPackageName"))
 
-    override fun check(expression: FirAnnotation, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirAnnotation) {
         val lookupTag = expression.annotationTypeRef.coneType.classLikeLookupTagIfAny ?: return
         if (lookupTag.classId != jvmPackageNameClassId) return
 
         val nameValue = expression.getStringArgument(StandardNames.NAME, context.session) ?: return
         if (nameValue.isEmpty()) {
-            reporter.reportOn(expression.source, FirJvmErrors.JVM_PACKAGE_NAME_CANNOT_BE_EMPTY, context)
+            reporter.reportOn(expression.source, FirJvmErrors.JVM_PACKAGE_NAME_CANNOT_BE_EMPTY)
         } else if (!isValidJavaFqName(nameValue)) {
-            reporter.reportOn(expression.source, FirJvmErrors.JVM_PACKAGE_NAME_MUST_BE_VALID_NAME, context)
+            reporter.reportOn(expression.source, FirJvmErrors.JVM_PACKAGE_NAME_MUST_BE_VALID_NAME)
         }
 
         val file = context.containingFile ?: return
         @OptIn(DirectDeclarationsAccess::class)
         if (file.declarations.any { it is FirClass }) {
-            reporter.reportOn(expression.source, FirJvmErrors.JVM_PACKAGE_NAME_NOT_SUPPORTED_IN_FILES_WITH_CLASSES, context)
+            reporter.reportOn(expression.source, FirJvmErrors.JVM_PACKAGE_NAME_NOT_SUPPORTED_IN_FILES_WITH_CLASSES)
         }
     }
 }

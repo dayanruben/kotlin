@@ -23,7 +23,8 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.types.ConstantValueKind
 
 object RedundantExplicitTypeChecker : FirPropertyChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirProperty, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirProperty) {
         if (!declaration.isLocal) return
         if (declaration.returnTypeRef.source == null) return
 
@@ -81,7 +82,7 @@ object RedundantExplicitTypeChecker : FirPropertyChecker(MppCheckerKind.Common) 
             else -> return
         }
 
-        reporter.reportOn(declaration.returnTypeRef.source, FirErrors.REDUNDANT_EXPLICIT_TYPE, context)
+        reporter.reportOn(declaration.returnTypeRef.source, FirErrors.REDUNDANT_EXPLICIT_TYPE)
     }
 
     private fun ConeKotlinType.isSame(other: ClassId?): Boolean {

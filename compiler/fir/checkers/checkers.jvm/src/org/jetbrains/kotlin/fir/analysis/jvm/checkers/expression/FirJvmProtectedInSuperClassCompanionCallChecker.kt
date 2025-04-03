@@ -34,7 +34,8 @@ import org.jetbrains.kotlin.types.AbstractTypeChecker
 
 // TODO: consider what to do with it
 object FirJvmProtectedInSuperClassCompanionCallChecker : FirBasicExpressionChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirStatement, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirStatement) {
         val dispatchReceiver = when (expression) {
             is FirQualifiedAccessExpression -> expression.dispatchReceiver
             is FirVariableAssignment -> expression.dispatchReceiver
@@ -82,7 +83,7 @@ object FirJvmProtectedInSuperClassCompanionCallChecker : FirBasicExpressionCheck
                 it.symbol == dispatchClassSymbol || it.symbol == companionContainingClassSymbol
             } == null
         ) {
-            reporter.reportOn(calleeReference.source, FirJvmErrors.SUBCLASS_CANT_CALL_COMPANION_PROTECTED_NON_STATIC, context)
+            reporter.reportOn(calleeReference.source, FirJvmErrors.SUBCLASS_CANT_CALL_COMPANION_PROTECTED_NON_STATIC)
         }
     }
 }

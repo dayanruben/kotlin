@@ -1,7 +1,8 @@
 // WITH_STDLIB
 // LANGUAGE: +SuspendFunctionAsSupertype
+// LANGUAGE: -IrInlinerBeforeKlibSerialization
 // IGNORE_IR_DESERIALIZATION_TEST: NATIVE
-// ^^^ KT-74942: non-deterministic value param names resolution in fake overrides
+// ^^^ This test demonstrates how without IR Inliner on 1st phase, there is a discrepancy in the name of value parameter of `FAKE_OVERRIDE name:invoke`
 
 import kotlin.coroutines.*
 

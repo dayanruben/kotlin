@@ -24,15 +24,15 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualMatchingCompatibility
 
 object FirExpectRefinementChecker : FirBasicDeclarationChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirDeclaration) {
         val hasExpectRefinementAnnotation =
             declaration.hasAnnotation(StandardClassIds.Annotations.ExpectRefinement, context.session)
         val isExpect = declaration is FirMemberDeclaration && declaration.isExpect
         if (hasExpectRefinementAnnotation && (!isExpect || !context.isTopLevel)) {
             reporter.reportOn(
                 declaration.source,
-                FirErrors.EXPECT_REFINEMENT_ANNOTATION_WRONG_TARGET,
-                context
+                FirErrors.EXPECT_REFINEMENT_ANNOTATION_WRONG_TARGET
             )
             return
         }
@@ -43,16 +43,14 @@ object FirExpectRefinementChecker : FirBasicDeclarationChecker(MppCheckerKind.Co
             if (!hasExpectRefinementAnnotation) {
                 reporter.reportOn(
                     declaration.source,
-                    FirErrors.EXPECT_REFINEMENT_ANNOTATION_MISSING,
-                    context
+                    FirErrors.EXPECT_REFINEMENT_ANNOTATION_MISSING
                 )
             }
             if (!context.languageVersionSettings.supportsFeature(LanguageFeature.ExpectRefinement)) {
                 reporter.reportOn(
                     declaration.source,
                     FirErrors.UNSUPPORTED_FEATURE,
-                    LanguageFeature.ExpectRefinement to context.languageVersionSettings,
-                    context
+                    LanguageFeature.ExpectRefinement to context.languageVersionSettings
                 )
             }
         }
@@ -61,8 +59,7 @@ object FirExpectRefinementChecker : FirBasicDeclarationChecker(MppCheckerKind.Co
                 declaration.source,
                 FirErrors.ACTUAL_WITHOUT_EXPECT,
                 declaration.symbol,
-                matchingData,
-                context
+                matchingData
             )
         }
     }

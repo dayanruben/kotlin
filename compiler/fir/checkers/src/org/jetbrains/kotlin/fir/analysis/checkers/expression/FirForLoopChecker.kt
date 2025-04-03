@@ -40,7 +40,8 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 object FirForLoopChecker : FirBlockChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirBlock, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirBlock) {
         if (expression.source?.kind != KtFakeSourceElementKind.DesugaredForLoop) return
 
         val statements = expression.statements
@@ -88,7 +89,7 @@ object FirForLoopChecker : FirBlockChecker(MppCheckerKind.Common) {
 
         val loopParameterSource = loopParameter.source
         loopParameterSource.valOrVarKeyword?.let {
-            reporter.reportOn(loopParameterSource, FirErrors.VAL_OR_VAR_ON_LOOP_PARAMETER, it, context)
+            reporter.reportOn(loopParameterSource, FirErrors.VAL_OR_VAR_ON_LOOP_PARAMETER, it)
         }
     }
 

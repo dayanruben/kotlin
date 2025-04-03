@@ -29,10 +29,11 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
 import org.jetbrains.kotlin.fir.types.*
 
 object FirAnyTypeAliasChecker : FirTypeAliasChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirTypeAlias, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirTypeAlias) {
         if (!context.isTopLevel) {
             if (declaration.isLocal) {
-                reporter.reportOn(declaration.source, FirErrors.UNSUPPORTED, "Local type aliases are unsupported.", context)
+                reporter.reportOn(declaration.source, FirErrors.UNSUPPORTED, "Local type aliases are unsupported.")
             } else {
                 declaration.requireFeatureSupport(LanguageFeature.NestedTypeAliases, context, reporter)
             }
@@ -52,8 +53,7 @@ object FirAnyTypeAliasChecker : FirTypeAliasChecker(MppCheckerKind.Common) {
             reporter.reportOn(
                 declaration.expandedTypeRef.source,
                 FirErrors.TYPEALIAS_EXPANDS_TO_ARRAY_OF_NOTHINGS,
-                fullyExpandedType,
-                context
+                fullyExpandedType
             )
         }
     }

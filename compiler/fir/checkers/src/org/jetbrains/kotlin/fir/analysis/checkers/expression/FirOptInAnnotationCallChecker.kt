@@ -34,7 +34,8 @@ import org.jetbrains.kotlin.resolve.checkers.OptInNames.OPT_IN_CLASS_ID
 import org.jetbrains.kotlin.resolve.checkers.OptInNames.SUBCLASS_OPT_IN_REQUIRED_CLASS_ID
 
 object FirOptInAnnotationCallChecker : FirAnnotationCallChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirAnnotationCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirAnnotationCall) {
         val lookupTag = expression.annotationTypeRef.coneType.classLikeLookupTagIfAny ?: return
         val classId = lookupTag.classId
         val isRequiresOptIn = classId == OptInNames.REQUIRES_OPT_IN_CLASS_ID
@@ -45,7 +46,7 @@ object FirOptInAnnotationCallChecker : FirAnnotationCallChecker(MppCheckerKind.C
             if (isOptIn) {
                 val arguments = expression.arguments
                 if (arguments.isEmpty()) {
-                    reporter.reportOn(expression.source, FirErrors.OPT_IN_WITHOUT_ARGUMENTS, context)
+                    reporter.reportOn(expression.source, FirErrors.OPT_IN_WITHOUT_ARGUMENTS)
                 } else {
                     for ((index, classSymbol) in expression.findArgumentByName(OPT_IN_ANNOTATION_CLASS)
                         ?.extractClassesFromArgument(context.session).orEmpty().withIndex()) {
@@ -59,7 +60,7 @@ object FirOptInAnnotationCallChecker : FirAnnotationCallChecker(MppCheckerKind.C
             if (declaration != null) {
                 val (isSubclassOptInApplicable, message) = getSubclassOptInApplicabilityAndMessage(declaration)
                 if (!isSubclassOptInApplicable && message != null) {
-                    reporter.reportOn(expression.source, FirErrors.SUBCLASS_OPT_IN_INAPPLICABLE, message, context)
+                    reporter.reportOn(expression.source, FirErrors.SUBCLASS_OPT_IN_INAPPLICABLE, message)
                     return
                 }
             }

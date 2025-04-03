@@ -42,7 +42,8 @@ import org.jetbrains.kotlin.parcelize.ParcelizeNames.IGNORED_ON_PARCEL_FQ_NAMES
 import org.jetbrains.kotlin.parcelize.ParcelizeNames.PARCELER_ID
 
 class FirParcelizePropertyChecker(private val parcelizeAnnotations: List<ClassId>) : FirPropertyChecker(MppCheckerKind.Platform) {
-    override fun check(declaration: FirProperty, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirProperty) {
         val session = context.session
         val containingClassSymbol = declaration.dispatchReceiverType?.toRegularClassSymbol(session) ?: return
 
@@ -54,7 +55,7 @@ class FirParcelizePropertyChecker(private val parcelizeAnnotations: List<ClassId
                 !declaration.hasIgnoredOnParcel(session) &&
                 !containingClassSymbol.hasCustomParceler(session)
             ) {
-                reporter.reportOn(declaration.source, KtErrorsParcelize.PROPERTY_WONT_BE_SERIALIZED, context)
+                reporter.reportOn(declaration.source, KtErrorsParcelize.PROPERTY_WONT_BE_SERIALIZED)
             }
             if (fromPrimaryConstructor) {
                 checkParcelableClassProperty(declaration, containingClassSymbol, context, reporter)
@@ -64,7 +65,7 @@ class FirParcelizePropertyChecker(private val parcelizeAnnotations: List<ClassId
         if (declaration.name == CREATOR_NAME && containingClassSymbol.isCompanion && declaration.hasJvmFieldAnnotation(session)) {
             val outerClass = context.containingDeclarations.asReversed().getOrNull(1) as? FirRegularClass
             if (outerClass != null && outerClass.symbol.isParcelize(session, parcelizeAnnotations)) {
-                reporter.reportOn(declaration.source, KtErrorsParcelize.CREATOR_DEFINITION_IS_NOT_ALLOWED, context)
+                reporter.reportOn(declaration.source, KtErrorsParcelize.CREATOR_DEFINITION_IS_NOT_ALLOWED)
             }
         }
     }

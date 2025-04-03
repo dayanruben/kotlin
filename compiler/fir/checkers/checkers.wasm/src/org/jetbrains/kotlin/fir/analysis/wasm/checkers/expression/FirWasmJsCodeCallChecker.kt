@@ -22,7 +22,8 @@ import org.jetbrains.kotlin.js.common.isValidES5Identifier
 import org.jetbrains.kotlin.name.WebCommonStandardClassIds
 
 object FirWasmJsCodeCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirFunctionCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirFunctionCall) {
         val symbol = expression.calleeReference.toResolvedCallableSymbol() ?: return
 
         if (symbol.callableId != WebCommonStandardClassIds.Callables.Js) {
@@ -42,43 +43,42 @@ object FirWasmJsCodeCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) 
         val source = expression.calleeReference.source
 
         if (!isContainingDeclarationTopLevel) {
-            reporter.reportOn(source, FirWasmErrors.JSCODE_WRONG_CONTEXT, context)
+            reporter.reportOn(source, FirWasmErrors.JSCODE_WRONG_CONTEXT)
             return
         }
 
         when (containingDeclaration) {
             is FirSimpleFunction -> {
                 if (!containingDeclaration.hasValidJsCodeBody()) {
-                    reporter.reportOn(source, FirWasmErrors.JSCODE_WRONG_CONTEXT, context)
+                    reporter.reportOn(source, FirWasmErrors.JSCODE_WRONG_CONTEXT)
                 } else {
                     if (containingDeclaration.isSuspend) {
-                        reporter.reportOn(source, FirWasmErrors.JSCODE_UNSUPPORTED_FUNCTION_KIND, "suspend function", context)
+                        reporter.reportOn(source, FirWasmErrors.JSCODE_UNSUPPORTED_FUNCTION_KIND, "suspend function")
                     }
                     if (containingDeclaration.isInline) {
-                        reporter.reportOn(source, FirWasmErrors.JSCODE_UNSUPPORTED_FUNCTION_KIND, "inline function", context)
+                        reporter.reportOn(source, FirWasmErrors.JSCODE_UNSUPPORTED_FUNCTION_KIND, "inline function")
                     }
                     if (containingDeclaration.isExtension) {
                         reporter.reportOn(
                             source,
                             FirWasmErrors.JSCODE_UNSUPPORTED_FUNCTION_KIND,
-                            "function with extension receiver",
-                            context
+                            "function with extension receiver"
                         )
                     }
                     for (parameter in containingDeclaration.valueParameters) {
                         if (parameter.name.identifierOrNullIfSpecial?.isValidES5Identifier() != true) {
-                            reporter.reportOn(parameter.source, FirWasmErrors.JSCODE_INVALID_PARAMETER_NAME, context)
+                            reporter.reportOn(parameter.source, FirWasmErrors.JSCODE_INVALID_PARAMETER_NAME)
                         }
                     }
                 }
             }
             is FirProperty -> {
                 if (!containingDeclaration.hasValidJsCodeBody()) {
-                    reporter.reportOn(source, FirWasmErrors.JSCODE_WRONG_CONTEXT, context)
+                    reporter.reportOn(source, FirWasmErrors.JSCODE_WRONG_CONTEXT)
                 }
             }
             else -> {
-                reporter.reportOn(source, FirWasmErrors.JSCODE_WRONG_CONTEXT, context)
+                reporter.reportOn(source, FirWasmErrors.JSCODE_WRONG_CONTEXT)
             }
         }
     }

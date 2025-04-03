@@ -43,7 +43,8 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
 object FirNotImplementedOverrideChecker : FirClassChecker(MppCheckerKind.Platform) {
-    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirClass) {
         if (declaration.isExpect && !context.languageVersionSettings.getFlag(AnalysisFlags.metadataCompilation)) return
         val source = declaration.source ?: return
         val sourceKind = source.kind
@@ -126,7 +127,6 @@ object FirNotImplementedOverrideChecker : FirClassChecker(MppCheckerKind.Platfor
                 classSymbol,
                 abstractVar,
                 implementationVal,
-                context,
             )
         }
         if (!canHaveAbstractDeclarations) {
@@ -143,8 +143,7 @@ object FirNotImplementedOverrideChecker : FirClassChecker(MppCheckerKind.Platfor
                     source,
                     ABSTRACT_MEMBER_NOT_IMPLEMENTED_BY_ENUM_ENTRY,
                     containingDeclaration.symbol,
-                    fromInitializerOfEnumEntry,
-                    context,
+                    fromInitializerOfEnumEntry
                 )
             }
 
@@ -153,9 +152,7 @@ object FirNotImplementedOverrideChecker : FirClassChecker(MppCheckerKind.Platfor
                     source,
                     ABSTRACT_MEMBER_NOT_IMPLEMENTED,
                     classSymbol,
-                    notFromInitializerOfEnumEntry.map { it.unwrapFakeOverrides() },
-                    context,
-                )
+                    notFromInitializerOfEnumEntry.map { it.unwrapFakeOverrides() })
             }
 
             if (notFromInterfaceOrEnum.isNotEmpty()) {
@@ -163,17 +160,15 @@ object FirNotImplementedOverrideChecker : FirClassChecker(MppCheckerKind.Platfor
                     source,
                     ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED,
                     classSymbol,
-                    notFromInterfaceOrEnum.map { it.unwrapFakeOverrides() },
-                    context,
-                )
+                    notFromInterfaceOrEnum.map { it.unwrapFakeOverrides() })
             }
         }
         if (!canHaveAbstractDeclarations && invisibleSymbols.isNotEmpty()) {
-            reporter.reportOn(source, INVISIBLE_ABSTRACT_MEMBER_FROM_SUPER, classSymbol, invisibleSymbols, context)
+            reporter.reportOn(source, INVISIBLE_ABSTRACT_MEMBER_FROM_SUPER, classSymbol, invisibleSymbols)
         }
 
         manyImplementationsDelegationSymbols.forEach {
-            reporter.reportOn(source, MANY_IMPL_MEMBER_NOT_IMPLEMENTED, classSymbol, it, context)
+            reporter.reportOn(source, MANY_IMPL_MEMBER_NOT_IMPLEMENTED, classSymbol, it)
         }
 
         delegationOverrideOfFinal.forEach { (delegated, final) ->
@@ -181,8 +176,7 @@ object FirNotImplementedOverrideChecker : FirClassChecker(MppCheckerKind.Platfor
                 source,
                 OVERRIDING_FINAL_MEMBER_BY_DELEGATION,
                 delegated,
-                final,
-                context
+                final
             )
         }
 
@@ -191,8 +185,7 @@ object FirNotImplementedOverrideChecker : FirClassChecker(MppCheckerKind.Platfor
                 source,
                 DELEGATED_MEMBER_HIDES_SUPERTYPE_OVERRIDE,
                 delegated,
-                open,
-                context
+                open
             )
         }
 
@@ -206,7 +199,7 @@ object FirNotImplementedOverrideChecker : FirClassChecker(MppCheckerKind.Platfor
                         it.containingClassLookupTag()?.toRegularClassSymbol(context.session)?.classKind == ClassKind.CLASS
                     }
                 ) {
-                    reporter.reportOn(source, MANY_IMPL_MEMBER_NOT_IMPLEMENTED, classSymbol, notImplementedIntersectionSymbol, context)
+                    reporter.reportOn(source, MANY_IMPL_MEMBER_NOT_IMPLEMENTED, classSymbol, notImplementedIntersectionSymbol)
                 } else {
                     if (canHaveAbstractDeclarations && abstractIntersections.any {
                             it.containingClassLookupTag()?.toRegularClassSymbol(context.session)?.classKind == ClassKind.CLASS
@@ -214,7 +207,7 @@ object FirNotImplementedOverrideChecker : FirClassChecker(MppCheckerKind.Platfor
                     ) {
                         return
                     }
-                    reporter.reportOn(source, MANY_INTERFACES_MEMBER_NOT_IMPLEMENTED, classSymbol, notImplementedIntersectionSymbol, context)
+                    reporter.reportOn(source, MANY_INTERFACES_MEMBER_NOT_IMPLEMENTED, classSymbol, notImplementedIntersectionSymbol)
                 }
             }
         }

@@ -21,7 +21,8 @@ import org.jetbrains.kotlin.fir.types.contains
 import org.jetbrains.kotlin.name.StandardClassIds.Annotations.FunctionN
 
 object FirBadInheritedJavaSignaturesChecker : FirClassChecker(MppCheckerKind.Platform) {
-    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirClass) {
         fun containsFunctionN(type: ConeKotlinType) = type.classId == FunctionN
 
         declaration.unsubstitutedScope(context, withForcedTypeCalculator = true).processAllCallables { symbol ->
@@ -45,7 +46,7 @@ object FirBadInheritedJavaSignaturesChecker : FirClassChecker(MppCheckerKind.Pla
                 reporter.reportOn(
                     declaration.source,
                     FirErrors.UNSUPPORTED_INHERITANCE_FROM_JAVA_MEMBER_REFERENCING_KOTLIN_FUNCTION,
-                    symbol, context,
+                    symbol
                 )
             }
         }

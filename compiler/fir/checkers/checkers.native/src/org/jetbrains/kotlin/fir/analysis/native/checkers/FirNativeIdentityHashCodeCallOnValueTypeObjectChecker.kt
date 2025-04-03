@@ -23,12 +23,13 @@ import org.jetbrains.kotlin.name.Name
 internal object FirNativeIdentityHashCodeCallOnValueTypeObjectChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
     private val identityHashCodeCallableId = CallableId(FqName("kotlin.native"), Name.identifier("identityHashCode"),)
 
-    override fun check(expression: FirFunctionCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirFunctionCall) {
         val symbol = expression.toResolvedCallableSymbol() ?: return
         if (symbol.callableId != identityHashCodeCallableId) return
         val argumentType = expression.extensionReceiver?.resolvedType ?: return
         if (argumentType.isPrimitiveOrNullablePrimitive || argumentType.isValueClass(context.session)) {
-            reporter.reportOn(expression.source, FirNativeErrors.IDENTITY_HASH_CODE_ON_VALUE_TYPE, argumentType, context)
+            reporter.reportOn(expression.source, FirNativeErrors.IDENTITY_HASH_CODE_ON_VALUE_TYPE, argumentType)
         }
     }
 }

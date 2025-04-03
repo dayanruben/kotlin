@@ -6,10 +6,10 @@
 package org.jetbrains.kotlin.ir.inline
 
 import org.jetbrains.kotlin.backend.common.ir.Symbols
-import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrDeclarationParent
 import org.jetbrains.kotlin.ir.declarations.IrFunction
+import org.jetbrains.kotlin.ir.declarations.IrParameterKind
 import org.jetbrains.kotlin.ir.declarations.IrTypeParametersContainer
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
@@ -32,7 +32,6 @@ private enum class NonReifiedTypeParameterRemappingMode {
 
 internal class InlineFunctionBodyPreprocessor(
     val typeArguments: Map<IrTypeParameterSymbol, IrType?>?,
-    val parent: IrDeclarationParent?,
     val strategy: CallInlinerStrategy,
 ) {
 
@@ -51,10 +50,21 @@ internal class InlineFunctionBodyPreprocessor(
             } else {
                 it
             }
+        } as IrFunction
+
+        result.patchDeclarationParents(irElement.parent)
+
+        // Make all arguments regular and noinline if needed.
+        for ((originalParameter, newParameter) in irElement.parameters.zip(result.parameters)) {
+            newParameter.kind = IrParameterKind.Regular
+            // It can become inline accidentally because of substitution of type parameter to inline function
+            // To revert it we mark it as noinline explicitly
+            if (!originalParameter.isInlineParameter() && newParameter.isInlineParameter()) {
+                newParameter.isNoinline = true
+            }
         }
 
-        result.patchDeclarationParents(parent)
-        return result as IrFunction
+        return result
     }
 
     private inner class InlinerTypeRemapper(

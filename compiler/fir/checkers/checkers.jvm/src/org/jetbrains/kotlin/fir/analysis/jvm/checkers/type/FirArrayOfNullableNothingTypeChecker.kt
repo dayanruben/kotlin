@@ -21,7 +21,8 @@ import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
 
 object FirArrayOfNullableNothingTypeChecker : FirResolvedTypeRefChecker(MppCheckerKind.Common) {
-    override fun check(typeRef: FirResolvedTypeRef, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(typeRef: FirResolvedTypeRef) {
         if (!context.languageVersionSettings.supportsFeature(LanguageFeature.NullableNothingInReifiedPosition)) return
         val coneType = typeRef.coneType
         val fullyExpandedType = coneType.fullyExpandedType(context.session)
@@ -33,7 +34,7 @@ object FirArrayOfNullableNothingTypeChecker : FirResolvedTypeRefChecker(MppCheck
             if (lastContainingDeclaration !is FirTypeAlias ||
                 lastContainingDeclaration.expandedConeType?.isMalformedExpandedType(context, allowNullableNothing = false) == true
             ) {
-                reporter.reportOn(typeRef.source, FirErrors.UNSUPPORTED, "'Array<Nothing?>' is not supported on the JVM.", context)
+                reporter.reportOn(typeRef.source, FirErrors.UNSUPPORTED, "'Array<Nothing?>' is not supported on the JVM.")
             }
         }
     }

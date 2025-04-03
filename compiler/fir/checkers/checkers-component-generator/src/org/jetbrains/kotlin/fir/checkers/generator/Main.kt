@@ -183,7 +183,7 @@ fun main(args: Array<String>) {
             declarationPackage,
             "FirDeclarationChecker",
             FirDeclaration::class,
-            FirDeclaration::class
+            FirDeclaration::class,
         ) {
             alias<FirDeclaration>("BasicDeclarationChecker").let {
                 visitAlso<FirDanglingModifierList>(it)

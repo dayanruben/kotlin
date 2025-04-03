@@ -19,17 +19,18 @@ import org.jetbrains.kotlin.fir.declarations.utils.isAbstract
 import org.jetbrains.kotlin.fir.symbols.impl.isExtension
 
 object FirExplicitBackingFieldForbiddenChecker : FirBackingFieldChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirBackingField, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirBackingField) {
         if (declaration is FirDefaultPropertyBackingField) {
             return
         }
 
         if (declaration.propertySymbol.isAbstract) {
-            reporter.reportOn(declaration.source, getProperDiagnostic(context), context)
+            reporter.reportOn(declaration.source, getProperDiagnostic(context))
         }
 
         if (declaration.propertySymbol.isExtension) {
-            reporter.reportOn(declaration.source, FirErrors.EXPLICIT_BACKING_FIELD_IN_EXTENSION, context)
+            reporter.reportOn(declaration.source, FirErrors.EXPLICIT_BACKING_FIELD_IN_EXTENSION)
         }
     }
 

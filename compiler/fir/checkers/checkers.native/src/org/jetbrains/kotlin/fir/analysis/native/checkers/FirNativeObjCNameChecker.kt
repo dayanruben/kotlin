@@ -35,13 +35,14 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
 object FirNativeObjCNameChecker : FirBasicDeclarationChecker(MppCheckerKind.Platform) {
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirDeclaration) {
         if (declaration is FirValueParameter) return // those are checked with the FirFunction
         val objCNames = declaration.symbol.getObjCNames(context.session).filterNotNull()
         if (objCNames.isEmpty()) return
         if (declaration is FirCallableDeclaration && declaration.isOverride) {
             for (objCName in objCNames) {
-                reporter.reportOn(objCName.annotation.source, INAPPLICABLE_OBJC_NAME, context)
+                reporter.reportOn(objCName.annotation.source, INAPPLICABLE_OBJC_NAME)
             }
         }
         objCNames.forEach { checkObjCName(it, declaration, context, reporter) }

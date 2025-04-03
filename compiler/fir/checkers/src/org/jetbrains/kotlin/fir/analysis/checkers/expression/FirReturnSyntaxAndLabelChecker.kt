@@ -25,18 +25,19 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirAnonymousFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirFunctionSymbol
 
 object FirReturnSyntaxAndLabelChecker : FirReturnExpressionChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirReturnExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirReturnExpression) {
         val source = expression.source
         if (source?.kind is KtFakeSourceElementKind.ImplicitReturn) return
 
         val labeledElement = expression.target.labeledElement
         val targetSymbol = labeledElement.symbol
         if (labeledElement is FirErrorFunction && (labeledElement.diagnostic as? ConeSimpleDiagnostic)?.kind == DiagnosticKind.NotAFunctionLabel) {
-            reporter.reportOn(source, FirErrors.NOT_A_FUNCTION_LABEL, context)
+            reporter.reportOn(source, FirErrors.NOT_A_FUNCTION_LABEL)
         } else if (labeledElement is FirErrorFunction && (labeledElement.diagnostic as? ConeSimpleDiagnostic)?.kind == DiagnosticKind.UnresolvedLabel) {
-            reporter.reportOn(source, FirErrors.UNRESOLVED_LABEL, context)
+            reporter.reportOn(source, FirErrors.UNRESOLVED_LABEL)
         } else if (!isReturnAllowed(targetSymbol, context)) {
-            reporter.reportOn(source, FirErrors.RETURN_NOT_ALLOWED, context)
+            reporter.reportOn(source, FirErrors.RETURN_NOT_ALLOWED)
         }
 
         if (targetSymbol is FirAnonymousFunctionSymbol) {
@@ -52,7 +53,7 @@ object FirReturnSyntaxAndLabelChecker : FirReturnExpressionChecker(MppCheckerKin
                         it is FirAnonymousFunctionExpression && it.anonymousFunction.symbol == targetSymbol
                     }
                 ) {
-                    reporter.reportOn(source, FirErrors.RETURN_FOR_BUILT_IN_SUSPEND, context)
+                    reporter.reportOn(source, FirErrors.RETURN_FOR_BUILT_IN_SUSPEND)
                 }
             }
         }
@@ -62,7 +63,7 @@ object FirReturnSyntaxAndLabelChecker : FirReturnExpressionChecker(MppCheckerKin
             containingDeclaration.body is FirSingleExpressionBlock &&
             containingDeclaration.source?.kind != KtFakeSourceElementKind.DelegatedPropertyAccessor
         ) {
-            reporter.reportOn(source, FirErrors.RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY, context)
+            reporter.reportOn(source, FirErrors.RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY)
         }
     }
 

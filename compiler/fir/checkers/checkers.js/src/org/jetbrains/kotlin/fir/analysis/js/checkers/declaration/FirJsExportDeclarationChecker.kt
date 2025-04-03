@@ -38,7 +38,8 @@ import org.jetbrains.kotlin.name.SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT
 import org.jetbrains.kotlin.types.Variance
 
 object FirJsExportDeclarationChecker : FirBasicDeclarationChecker(MppCheckerKind.Platform) {
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirDeclaration) {
         if (!declaration.symbol.isExportedObject(context) || declaration !is FirMemberDeclaration) {
             return
         }
@@ -50,7 +51,7 @@ object FirJsExportDeclarationChecker : FirBasicDeclarationChecker(MppCheckerKind
             for (upperBound in typeParameter.symbol.resolvedBounds) {
                 if (!upperBound.coneType.isExportable(context.session)) {
                     val source = upperBound.source ?: typeParameter.source ?: declaration.source
-                    reporter.reportOn(source, FirJsErrors.NON_EXPORTABLE_TYPE, "upper bound", upperBound.coneType, context)
+                    reporter.reportOn(source, FirJsErrors.NON_EXPORTABLE_TYPE, "upper bound", upperBound.coneType)
                 }
             }
         }
@@ -59,14 +60,14 @@ object FirJsExportDeclarationChecker : FirBasicDeclarationChecker(MppCheckerKind
             val type = valueParameter.returnTypeRef.coneType
             if (!type.isExportable(context.session)) {
                 val source = valueParameter.source ?: declaration.source
-                reporter.reportOn(source, FirJsErrors.NON_EXPORTABLE_TYPE, "parameter", type, context)
+                reporter.reportOn(source, FirJsErrors.NON_EXPORTABLE_TYPE, "parameter", type)
             }
         }
 
         val hasJsName = declaration.hasAnnotation(JsStandardClassIds.Annotations.JsName, context.session)
 
         fun reportWrongExportedDeclaration(kind: String) {
-            reporter.reportOn(declaration.source, FirJsErrors.WRONG_EXPORTED_DECLARATION, kind, context)
+            reporter.reportOn(declaration.source, FirJsErrors.WRONG_EXPORTED_DECLARATION, kind)
         }
 
         if (declaration.isExpect) {
@@ -111,7 +112,7 @@ object FirJsExportDeclarationChecker : FirBasicDeclarationChecker(MppCheckerKind
                 val returnType = declaration.returnTypeRef.coneType
 
                 if (declaration !is FirConstructor && !returnType.isExportableReturn(context.session)) {
-                    reporter.reportOn(declaration.source, FirJsErrors.NON_EXPORTABLE_TYPE, "return", returnType, context)
+                    reporter.reportOn(declaration.source, FirJsErrors.NON_EXPORTABLE_TYPE, "return", returnType)
                 }
             }
 
@@ -134,7 +135,7 @@ object FirJsExportDeclarationChecker : FirBasicDeclarationChecker(MppCheckerKind
                 val enumEntriesProperty = containingClass?.let(declaration::isEnumEntries) ?: false
                 val returnType = declaration.returnTypeRef.coneType
                 if (!enumEntriesProperty && !returnType.isExportable(context.session)) {
-                    reporter.reportOn(declaration.source, FirJsErrors.NON_EXPORTABLE_TYPE, "property", returnType, context)
+                    reporter.reportOn(declaration.source, FirJsErrors.NON_EXPORTABLE_TYPE, "property", returnType)
                 }
             }
 
@@ -171,7 +172,7 @@ object FirJsExportDeclarationChecker : FirBasicDeclarationChecker(MppCheckerKind
                 }
 
                 if (context.isInsideInterface && declaration.status.isCompanion && declaration.nameOrSpecialName != DEFAULT_NAME_FOR_COMPANION_OBJECT) {
-                    reporter.reportOn(declaration.source, FirJsErrors.NAMED_COMPANION_IN_EXPORTED_INTERFACE, context)
+                    reporter.reportOn(declaration.source, FirJsErrors.NAMED_COMPANION_IN_EXPORTED_INTERFACE)
                 }
 
                 if (wrongDeclaration != null) {

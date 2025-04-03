@@ -24,7 +24,8 @@ private val ARRAY_CLASS_IDS = listOf(StandardClassIds.Array)
     .plus(StandardClassIds.unsignedArrayTypeByElementType.values)
 
 object ArrayEqualityCanBeReplacedWithEquals : FirBasicExpressionChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirStatement, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirStatement) {
         if (expression !is FirEqualityOperatorCall) return
         if (expression.operation != FirOperation.EQ && expression.operation != FirOperation.NOT_EQ) return
         val arguments = expression.arguments
@@ -35,7 +36,7 @@ object ArrayEqualityCanBeReplacedWithEquals : FirBasicExpressionChecker(MppCheck
         val rightClassId = ARRAY_CLASS_IDS.indexOf(right.resolvedType.fullyExpandedClassId(context.session))
 
         if (leftClassId != -1 && leftClassId == rightClassId) {
-            reporter.reportOn(expression.source, ARRAY_EQUALITY_OPERATOR_CAN_BE_REPLACED_WITH_EQUALS, context)
+            reporter.reportOn(expression.source, ARRAY_EQUALITY_OPERATOR_CAN_BE_REPLACED_WITH_EQUALS)
         }
     }
 }

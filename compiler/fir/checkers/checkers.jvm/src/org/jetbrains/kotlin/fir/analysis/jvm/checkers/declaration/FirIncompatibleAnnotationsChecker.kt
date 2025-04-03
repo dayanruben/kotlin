@@ -24,14 +24,11 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.utils.KOTLIN_TO_JAVA_ANNOTATION_TARGETS
 
 object FirIncompatibleAnnotationsChecker : FirClassChecker(MppCheckerKind.Common) {
-    override fun check(
-        declaration: FirClass,
-        context: CheckerContext,
-        reporter: DiagnosticReporter,
-    ) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirClass) {
         val javaTarget = declaration.getAnnotationByClassId(Java.Target, context.session) ?: return
         when (val kotlinTarget = declaration.getTargetAnnotation(context.session)) {
-            null -> reporter.reportOn(javaTarget.source, FirJvmErrors.ANNOTATION_TARGETS_ONLY_IN_JAVA, context)
+            null -> reporter.reportOn(javaTarget.source, FirJvmErrors.ANNOTATION_TARGETS_ONLY_IN_JAVA)
             else -> reportIncompatibleTargets(kotlinTarget, javaTarget, context, reporter)
         }
     }

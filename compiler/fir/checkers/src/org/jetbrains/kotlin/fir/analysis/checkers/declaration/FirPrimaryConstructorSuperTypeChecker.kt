@@ -28,12 +28,13 @@ import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
 
 /** Checker on super type declarations in the primary constructor of a class declaration. */
 object FirPrimaryConstructorSuperTypeChecker : FirClassChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirClass) {
         if (declaration.isInterface) {
             with(SourceNavigator.forElement(declaration)) {
                 for (superTypeRef in declaration.superTypeRefs) {
                     if (superTypeRef.isInConstructorCallee()) {
-                        reporter.reportOn(superTypeRef.source, FirErrors.SUPERTYPE_INITIALIZED_IN_INTERFACE, context)
+                        reporter.reportOn(superTypeRef.source, FirErrors.SUPERTYPE_INITIALIZED_IN_INTERFACE)
                     }
                 }
             }

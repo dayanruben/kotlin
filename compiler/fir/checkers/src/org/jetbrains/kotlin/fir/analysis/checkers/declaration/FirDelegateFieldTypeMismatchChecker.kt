@@ -22,7 +22,8 @@ import org.jetbrains.kotlin.fir.types.resolvedType
 
 object FirDelegateFieldTypeMismatchChecker : FirRegularClassChecker(MppCheckerKind.Common) {
     @SymbolInternals
-    override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirRegularClass) {
         for (it in declaration.superTypeRefs.indices) {
             val supertype = declaration.superTypeRefs[it]
             val field = declaration.delegateFieldsMap?.get(it)?.fir ?: continue
@@ -38,8 +39,7 @@ object FirDelegateFieldTypeMismatchChecker : FirRegularClassChecker(MppCheckerKi
                     FirErrors.TYPE_MISMATCH,
                     field.returnTypeRef.coneType,
                     initializer.resolvedType,
-                    false,
-                    context,
+                    false
                 )
             }
         }

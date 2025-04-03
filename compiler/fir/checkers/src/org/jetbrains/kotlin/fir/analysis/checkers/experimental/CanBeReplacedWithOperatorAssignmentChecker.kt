@@ -33,7 +33,8 @@ val PRECEDENCE_MAP: Map<Name, KotlinExpressionParsing.Precedence> = KotlinExpres
     .toMap()
 
 object CanBeReplacedWithOperatorAssignmentChecker : FirVariableAssignmentChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirVariableAssignment, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirVariableAssignment) {
         val lValue = expression.calleeReference
         if (lValue !is FirResolvedNamedReference) return
         if (expression.source?.kind is KtFakeSourceElementKind) return
@@ -47,7 +48,7 @@ object CanBeReplacedWithOperatorAssignmentChecker : FirVariableAssignmentChecker
         if (rValueResolvedSymbol.dispatchReceiverClassTypeOrNull()?.isPrimitive != true) return
 
         if (canBeReplaced(lValue, rValue, context)) {
-            reporter.reportOn(expression.source, FirErrors.CAN_BE_REPLACED_WITH_OPERATOR_ASSIGNMENT, context)
+            reporter.reportOn(expression.source, FirErrors.CAN_BE_REPLACED_WITH_OPERATOR_ASSIGNMENT)
         }
     }
 

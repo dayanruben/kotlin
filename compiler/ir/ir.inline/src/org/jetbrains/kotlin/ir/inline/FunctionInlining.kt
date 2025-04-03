@@ -90,14 +90,16 @@ open class FunctionInlining(
         }
 
         inlineFunctionResolver.callInlinerStrategy.at(data, expression)
-        val inliner = CallInlining(
-            expression, actualCallee, data as? IrDeclarationParent ?: data.parent,
+        return CallInlining(
+            actualCallee,
             context,
             inlineFunctionResolver,
             insertAdditionalImplicitCasts,
             produceOuterThisFields
-        )
-        return inliner.inline().markAsRegenerated()
+        ).inline(
+            callSite = expression,
+            parent = data as? IrDeclarationParent ?: data.parent
+        ).markAsRegenerated()
     }
 
     private fun IrBlock.markAsRegenerated(): IrBlock {
@@ -119,9 +121,7 @@ open class FunctionInlining(
 }
 
 private class CallInlining(
-    val callSite: IrFunctionAccessExpression,
     val callee: IrFunction,
-    val parent: IrDeclarationParent,
     val context: LoweringContext,
     private val inlineFunctionResolver: InlineFunctionResolver,
     private val insertAdditionalImplicitCasts: Boolean,
@@ -129,29 +129,21 @@ private class CallInlining(
 ) {
     private val elementsWithLocationToPatch = hashSetOf<IrGetValue>()
 
-    fun inline() = inlineFunction(callSite, callee, callee.originalFunction)
+    fun inline(callSite: IrFunctionAccessExpression, parent: IrDeclarationParent) =
+        inlineFunction(callSite, callee, callee.originalFunction).patchDeclarationParents(parent)
 
     private fun inlineFunction(
         callSite: IrFunctionAccessExpression,
         callee: IrFunction,
         originalInlinedElement: IrElement,
     ): IrBlock {
-        val inlineFunctionBodyPreprocessor = run {
-            // TODO KT-76105 Please make some decent housekeeping around here
-            val typeParameters =
-                when (callee) {
-                    is IrConstructor -> callee.parentAsClass.typeParameters
-                    is IrSimpleFunction -> callee.typeParameters
-                }
-            val typeArguments =
-                callSite.typeArguments.indices.associate {
-                    typeParameters[it].symbol to callSite.typeArguments[it]
-                }
-            InlineFunctionBodyPreprocessor(typeArguments, parent, inlineFunctionResolver.callInlinerStrategy)
-        }
-
-        val copiedCallee = inlineFunctionBodyPreprocessor.preprocess(callee).apply {
-            parent = callee.parent
+        val copiedCallee = run {
+            val typeParameters = callee.allTypeParameters
+            val typeArgumentsMap = callSite.typeArguments.indices.associate {
+                typeParameters[it].symbol to callSite.typeArguments[it]
+            }
+            InlineFunctionBodyPreprocessor(typeArgumentsMap, inlineFunctionResolver.callInlinerStrategy)
+                .preprocess(callee)
         }
 
         val outerIrBuilder = context.createIrBuilder(copiedCallee.symbol, callSite.startOffset, callSite.endOffset)
@@ -163,7 +155,7 @@ private class CallInlining(
 
         val returnType = callSite.type
 
-        val inlineResult = outerIrBuilder.irBlockOrSingleExpression(origin = IrStatementOrigin.INLINE_ARGS_CONTAINER) {
+        return outerIrBuilder.irBlockOrSingleExpression(origin = IrStatementOrigin.INLINE_ARGS_CONTAINER) {
             +irReturnableBlock(returnType) {
                 val inlinedFunctionBlock = irInlinedFunctionBlock(
                     inlinedFunctionStartOffset = inlineFunctionToStore.startOffset,
@@ -202,8 +194,6 @@ private class CallInlining(
             }
             at(callSite) // block is using offsets at the end, let's restore them just in case
         } as IrBlock
-
-        return inlineResult.patchDeclarationParents(parent)
     }
 
     //---------------------------------------------------------------------//
@@ -490,32 +480,23 @@ private class CallInlining(
     ) {
         val argumentExpression: IrExpression = originalArgumentExpression.unwrapAdditionalImplicitCastsIfNeeded()
 
-        val isInlinableLambdaArgument: Boolean
+        val isInlinable: Boolean
             // must take "original" parameter because it can have generic type and so considered as no inline; see `lambdaAsGeneric.kt`
-            get() = parameter.getOriginalParameter().isInlineParameter() &&
+            get() = parameter.isInlineParameter() &&
                     (argumentExpression is IrFunctionReference
                             || argumentExpression is IrFunctionExpression
                             || argumentExpression is IrRichFunctionReference
+                            || argumentExpression is IrPropertyReference
+                            || argumentExpression is IrRichPropertyReference
                             || argumentExpression.isAdaptedFunctionReference()
                             || argumentExpression.isInlineLambdaBlock()
-                            || argumentExpression.isLambdaBlock())
-
-        val isInlinablePropertyReference: Boolean
-            // must take "original" parameter because it can have generic type and so considered as no inline; see `lambdaAsGeneric.kt`
-            get() = parameter.getOriginalParameter().isInlineParameter() && (
-                    argumentExpression is IrPropertyReference || argumentExpression is IrRichPropertyReference
-                    )
+                            || argumentExpression.isLambdaBlock()
+                            )
 
         val isImmutableVariableLoad: Boolean
             get() = argumentExpression.let { argument ->
                 argument is IrGetValue && !argument.symbol.owner.let { it is IrVariable && it.isVar }
             }
-
-        private fun IrValueParameter.getOriginalParameter(): IrValueParameter {
-            if (this.parent !is IrFunction) return this
-            val original = (this.parent as IrFunction).originalFunction
-            return original.allParameters.singleOrNull { it.name == this.name && it.startOffset == this.startOffset } ?: this
-        }
     }
 
 
@@ -598,9 +579,9 @@ private class CallInlining(
                 }
             }
         }
-        if (callSite.dispatchReceiver != null && callee.dispatchReceiverParameter != null)
+        if (callSite.dispatchReceiver != null)
             parameterToArgument += ParameterToArgument(
-                parameter = callee.dispatchReceiverParameter!!,
+                parameter = callee.parameters[0],
                 originalArgumentExpression = callSite.dispatchReceiver!!
             ).allOuterClasses()
 
@@ -661,7 +642,8 @@ private class CallInlining(
     private fun evaluateArguments(
         callSiteBuilder: IrStatementsBuilder<*>,
         inlinedBlockBuilder: IrStatementsBuilder<*>,
-        callSite: IrFunctionAccessExpression, callee: IrFunction,
+        callSite: IrFunctionAccessExpression,
+        callee: IrFunction,
         substituteMap: MutableMap<IrValueParameter, IrExpression>
     ) {
 
@@ -674,9 +656,7 @@ private class CallInlining(
              * For simplicity and to produce simpler IR we don't create temporaries for every immutable variable,
              * not only for those referring to inlinable lambdas.
              */
-            if ((argument.isInlinableLambdaArgument || argument.isInlinablePropertyReference)
-                && inlineFunctionResolver.inlineMode != InlineMode.ALL_FUNCTIONS
-            ) {
+            if (argument.isInlinable && inlineFunctionResolver.inlineMode != InlineMode.ALL_FUNCTIONS) {
                 val evaluationBuilder = if (argument.isDefaultArg) inlinedBlockBuilder else callSiteBuilder
                 substituteMap[parameter] = variableInitializer
                 when (variableInitializer) {

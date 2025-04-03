@@ -21,14 +21,15 @@ import org.jetbrains.kotlin.fir.types.resolvedType
 import org.jetbrains.kotlin.fir.types.typeContext
 
 object FirJavaUnnecessaryNotNullChecker: FirCheckNotNullCallChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirCheckNotNullCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirCheckNotNullCall) {
         val argument = expression.arguments.singleOrNull() ?: return
         val argumentType = EnhancedForWarningConeSubstitutor(context.session.typeContext)
             .substituteOrNull(argument.resolvedType)
             ?.fullyExpandedType(context.session) ?: return
 
         if (!argumentType.canBeNull(context.session) && context.languageVersionSettings.supportsFeature(LanguageFeature.EnableDfaWarningsInK2)) {
-            reporter.reportOn(expression.source, FirErrors.UNNECESSARY_NOT_NULL_ASSERTION, argumentType, context)
+            reporter.reportOn(expression.source, FirErrors.UNNECESSARY_NOT_NULL_ASSERTION, argumentType)
         }
     }
 }

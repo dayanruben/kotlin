@@ -27,30 +27,31 @@ import org.jetbrains.kotlin.name.NativeStandardInteropNames.objCActionClassId
 
 object FirNativeObjCActionChecker : FirClassChecker(MppCheckerKind.Platform) {
     @OptIn(UnexpandedTypeCheck::class)
-    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirClass) {
         val session = context.session
 
         fun checkCanGenerateFunctionImp(function: FirNamedFunctionSymbol) {
             if (function.valueParameterSymbols.size > 2)
-                reporter.reportOn(function.source, FirNativeErrors.TWO_OR_LESS_PARAMETERS_ARE_SUPPORTED_HERE, context)
+                reporter.reportOn(function.source, FirNativeErrors.TWO_OR_LESS_PARAMETERS_ARE_SUPPORTED_HERE)
         }
 
         fun checkCanGenerateActionImp(function: FirNamedFunctionSymbol) {
             val action = "@${objCActionClassId.asFqNameString()}"
 
             function.receiverParameterSymbol?.let {
-                reporter.reportOn(it.source, MUST_NOT_HAVE_EXTENSION_RECEIVER, "$action method", context)
+                reporter.reportOn(it.source, MUST_NOT_HAVE_EXTENSION_RECEIVER, "$action method")
             }
 
             function.valueParameterSymbols.forEach {
                 val kotlinType = it.resolvedReturnTypeRef
                 if (!kotlinType.isObjCObjectType(session))
-                    reporter.reportOn(it.source, MUST_BE_OBJC_OBJECT_TYPE, "$action method parameter type", kotlinType.coneType, context)
+                    reporter.reportOn(it.source, MUST_BE_OBJC_OBJECT_TYPE, "$action method parameter type", kotlinType.coneType)
             }
 
             val returnType = function.resolvedReturnTypeRef
             if (!returnType.isUnit)
-                reporter.reportOn(function.source, MUST_BE_UNIT_TYPE, "$action method return type", returnType.coneType, context)
+                reporter.reportOn(function.source, MUST_BE_UNIT_TYPE, "$action method return type", returnType.coneType)
 
             checkCanGenerateFunctionImp(function)
         }

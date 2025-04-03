@@ -37,7 +37,8 @@ import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
 
 object FirImportsChecker : FirFileChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirFile, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirFile) {
         declaration.imports.forEach { import ->
             if (import.source?.kind?.shouldSkipErrorTypeReporting == true) return@forEach
             if (import.isAllUnder) {
@@ -52,7 +53,7 @@ object FirImportsChecker : FirFileChecker(MppCheckerKind.Common) {
                     checkOperatorRename(import, context, reporter)
                 }
             }
-            checkImportApiStatus(import, context, reporter)
+            checkImportApiStatus(import)
         }
         checkConflictingImports(declaration.imports, context, reporter)
     }
@@ -342,11 +343,12 @@ object FirImportsChecker : FirFileChecker(MppCheckerKind.Common) {
         }
     }
 
-    private fun checkImportApiStatus(import: FirImport, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    private fun checkImportApiStatus(import: FirImport) {
         val importedFqName = import.importedFqName ?: return
         if (importedFqName.isRoot || importedFqName.shortName().asString().isEmpty()) return
         val classId = (import as? FirResolvedImport)?.resolvedParentClassId ?: ClassId.topLevel(importedFqName)
         val symbol = classId.toSymbol(context.session) ?: return
-        FirDeprecationChecker.reportApiStatusIfNeeded(import.source, symbol, context, reporter)
+        FirDeprecationChecker.reportApiStatusIfNeeded(import.source, symbol)
     }
 }

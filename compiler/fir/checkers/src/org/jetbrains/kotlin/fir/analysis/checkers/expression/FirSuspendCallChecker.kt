@@ -38,7 +38,8 @@ object FirSuspendCallChecker : FirQualifiedAccessExpressionChecker(MppCheckerKin
 
     internal val KOTLIN_SUSPEND_BUILT_IN_FUNCTION_CALLABLE_ID = CallableId(StandardClassIds.BASE_KOTLIN_PACKAGE, BUILTIN_SUSPEND_NAME)
 
-    override fun check(expression: FirQualifiedAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirQualifiedAccessExpression) {
         val reference = expression.calleeReference.resolved ?: return
         val symbol = reference.resolvedSymbol as? FirCallableSymbol ?: return
         if (reference.name == BUILTIN_SUSPEND_NAME ||
@@ -60,25 +61,24 @@ object FirSuspendCallChecker : FirQualifiedAccessExpressionChecker(MppCheckerKin
         val enclosingSuspendFunction = findEnclosingSuspendFunction(context)
         if (enclosingSuspendFunction == null) {
             when (symbol) {
-                is FirNamedFunctionSymbol -> reporter.reportOn(expression.source, FirErrors.ILLEGAL_SUSPEND_FUNCTION_CALL, symbol, context)
-                is FirPropertySymbol -> reporter.reportOn(expression.source, FirErrors.ILLEGAL_SUSPEND_PROPERTY_ACCESS, symbol, context)
+                is FirNamedFunctionSymbol -> reporter.reportOn(expression.source, FirErrors.ILLEGAL_SUSPEND_FUNCTION_CALL, symbol)
+                is FirPropertySymbol -> reporter.reportOn(expression.source, FirErrors.ILLEGAL_SUSPEND_PROPERTY_ACCESS, symbol)
                 else -> {
                 }
             }
         } else {
             if (!checkNonLocalReturnUsage(enclosingSuspendFunction, context)) {
-                reporter.reportOn(expression.source, FirErrors.NON_LOCAL_SUSPENSION_POINT, context)
+                reporter.reportOn(expression.source, FirErrors.NON_LOCAL_SUSPENSION_POINT)
             }
             if (isInScopeForDefaultParameterValues(enclosingSuspendFunction, context)) {
                 reporter.reportOn(
                     expression.source,
                     FirErrors.UNSUPPORTED,
-                    "Suspend function call in default parameter value is unsupported.",
-                    context
+                    "Suspend function call in default parameter value is unsupported."
                 )
             }
             if (!checkRestrictsSuspension(expression, enclosingSuspendFunction, symbol, context)) {
-                reporter.reportOn(expression.source, FirErrors.ILLEGAL_RESTRICTED_SUSPENDING_FUNCTION_CALL, context)
+                reporter.reportOn(expression.source, FirErrors.ILLEGAL_RESTRICTED_SUSPENDING_FUNCTION_CALL)
             }
         }
     }

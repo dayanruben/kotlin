@@ -21,13 +21,13 @@ import org.jetbrains.kotlin.fir.resolve.toRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.resolvedType
 
 object FirUnsupportedArrayLiteralChecker : FirArrayLiteralChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirArrayLiteral, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirArrayLiteral) {
         if (!isInsideAnnotationCall(context) && !isInsideAnnotationConstructor(context)) {
             reporter.reportOn(
                 expression.source,
                 FirErrors.UNSUPPORTED,
-                "Collection literals outside of annotations are unsupported.",
-                context
+                "Collection literals outside of annotations are unsupported."
             )
         }
     }

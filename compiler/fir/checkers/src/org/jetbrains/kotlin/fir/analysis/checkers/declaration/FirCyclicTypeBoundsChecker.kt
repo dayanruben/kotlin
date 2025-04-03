@@ -18,7 +18,8 @@ import org.jetbrains.kotlin.fir.types.*
 
 object FirCyclicTypeBoundsChecker : FirBasicDeclarationChecker(MppCheckerKind.Common) {
 
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirDeclaration) {
         if (declaration !is FirMemberDeclaration) return
         if (declaration is FirConstructor || declaration is FirTypeAlias) return
         val actualTypeParameters = declaration.typeParameters.filterNot { it is FirOuterClassTypeParameterRef }.takeIf { it.isNotEmpty() }
@@ -52,7 +53,7 @@ object FirCyclicTypeBoundsChecker : FirBasicDeclarationChecker(MppCheckerKind.Co
                     listOf(typeParameter.source)
                 }
                 targets.forEach {
-                    reporter.reportOn(it, FirErrors.CYCLIC_GENERIC_UPPER_BOUND, typeParameterCycle, context)
+                    reporter.reportOn(it, FirErrors.CYCLIC_GENERIC_UPPER_BOUND, typeParameterCycle)
                 }
             }
         }

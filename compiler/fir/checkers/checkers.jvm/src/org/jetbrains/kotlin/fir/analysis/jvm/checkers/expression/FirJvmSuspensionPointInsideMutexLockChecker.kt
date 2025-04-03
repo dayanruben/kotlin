@@ -30,7 +30,8 @@ object FirJvmSuspensionPointInsideMutexLockChecker : FirFunctionCallChecker(MppC
     private val withLockCallableId = CallableId(FqName("kotlin.concurrent"), Name.identifier("withLock"))
     private val synchronizedBlockParamName = Name.identifier("block")
 
-    override fun check(expression: FirFunctionCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirFunctionCall) {
         val symbol = expression.calleeReference.toResolvedCallableSymbol() ?: return
         if (!symbol.isSuspend) return
         var anonymousFunctionArg: FirAnonymousFunction? = null
@@ -71,7 +72,7 @@ object FirJvmSuspensionPointInsideMutexLockChecker : FirFunctionCallChecker(MppC
         // There is no need to report SUSPENSION_POINT_INSIDE_CRITICAL_SECTION if enclosing suspend function is not found
         // Because ILLEGAL_SUSPEND_FUNCTION_CALL is reported in this case
         if (isMutexLockFound && isSuspendFunctionFound) {
-            reporter.reportOn(expression.source, FirJvmErrors.SUSPENSION_POINT_INSIDE_CRITICAL_SECTION, symbol, context)
+            reporter.reportOn(expression.source, FirJvmErrors.SUSPENSION_POINT_INSIDE_CRITICAL_SECTION, symbol)
         }
     }
 }

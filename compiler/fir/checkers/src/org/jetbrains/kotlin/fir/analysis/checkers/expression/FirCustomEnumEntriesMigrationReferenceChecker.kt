@@ -16,12 +16,13 @@ import org.jetbrains.kotlin.fir.expressions.FirCallableReferenceAccess
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeResolutionResultOverridesOtherToPreserveCompatibility
 
 object FirCustomEnumEntriesMigrationReferenceChecker : FirCallableReferenceAccessChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirCallableReferenceAccess, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirCallableReferenceAccess) {
         if (context.languageVersionSettings.supportsFeature(LanguageFeature.PrioritizedEnumEntries)) return
         if (expression.calleeReference.name == StandardNames.ENUM_ENTRIES &&
             expression.nonFatalDiagnostics.any { it is ConeResolutionResultOverridesOtherToPreserveCompatibility }
         ) {
-            reporter.reportOn(expression.source, FirErrors.DEPRECATED_ACCESS_TO_ENUM_ENTRY_PROPERTY_AS_REFERENCE, context)
+            reporter.reportOn(expression.source, FirErrors.DEPRECATED_ACCESS_TO_ENUM_ENTRY_PROPERTY_AS_REFERENCE)
         }
     }
 }

@@ -35,8 +35,7 @@ internal fun CheckerContext.checkCompanionOfSerializableClass(
     reporter.reportOn(
         companionObjectSymbol.serializableOrMetaAnnotationSource(session),
         FirSerializationErrors.COMPANION_OBJECT_IS_SERIALIZABLE_INSIDE_SERIALIZABLE_CLASS,
-        classSymbol,
-        this
+        classSymbol
     )
 }
 
@@ -55,8 +54,7 @@ internal fun CheckerContext.checkCompanionSerializerDependency(
             companionObjectSymbol.getSerializerAnnotation(session)?.source,
             FirSerializationErrors.COMPANION_OBJECT_SERIALIZER_INSIDE_OTHER_SERIALIZABLE_CLASS,
             classSymbol.defaultType(),
-            serializerForInCompanion.defaultType(),
-            context
+            serializerForInCompanion.defaultType()
         )
     }
 
@@ -67,8 +65,7 @@ internal fun CheckerContext.checkCompanionSerializerDependency(
                 reporter.reportOn(
                     classSymbol.serializableOrMetaAnnotationSource(session),
                     FirSerializationErrors.COMPANION_OBJECT_AS_CUSTOM_SERIALIZER_DEPRECATED,
-                    classSymbol,
-                    context
+                    classSymbol
                 )
             } else {
                 // @Serializable class Foo / @Serializer(Bar::class) companion object — prohibited as vague and confusing
@@ -91,8 +88,7 @@ internal fun CheckerContext.checkCompanionSerializerDependency(
                 companionObjectSymbol.getSerializerAnnotation(session)?.source,
                 FirSerializationErrors.COMPANION_OBJECT_SERIALIZER_INSIDE_NON_SERIALIZABLE_CLASS,
                 classSymbol.defaultType(),
-                serializerForInCompanion.defaultType(),
-                context
+                serializerForInCompanion.defaultType()
             )
         }
     }

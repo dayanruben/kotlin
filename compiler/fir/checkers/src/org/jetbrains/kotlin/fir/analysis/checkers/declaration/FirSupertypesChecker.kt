@@ -40,7 +40,8 @@ import org.jetbrains.kotlin.toKtLightSourceElement
 import org.jetbrains.kotlin.util.getChildren
 
 object FirSupertypesChecker : FirClassChecker(MppCheckerKind.Platform) {
-    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirClass) {
         if (declaration.source?.kind is KtFakeSourceElementKind) return
         val isInterface = declaration.classKind == ClassKind.INTERFACE
         var extensionFunctionSupertypeReported = false
@@ -58,16 +59,16 @@ object FirSupertypesChecker : FirClassChecker(MppCheckerKind.Platform) {
             val supertypeIsDynamic = originalSupertype is ConeDynamicType
             when {
                 originalSupertype.isMarkedNullable -> {
-                    reporter.reportOn(superTypeRef.source, FirErrors.NULLABLE_SUPERTYPE, context)
+                    reporter.reportOn(superTypeRef.source, FirErrors.NULLABLE_SUPERTYPE)
                 }
                 expandedSupertype.isMarkedNullable -> {
-                    reporter.reportOn(superTypeRef.source, FirErrors.NULLABLE_SUPERTYPE_THROUGH_TYPEALIAS, context)
+                    reporter.reportOn(superTypeRef.source, FirErrors.NULLABLE_SUPERTYPE_THROUGH_TYPEALIAS)
                 }
             }
             if (!extensionFunctionSupertypeReported && originalSupertype.isExtensionFunctionType &&
                 !context.session.languageVersionSettings.supportsFeature(LanguageFeature.FunctionalTypeWithExtensionAsSupertype)
             ) {
-                reporter.reportOn(superTypeRef.source, FirErrors.SUPERTYPE_IS_EXTENSION_FUNCTION_TYPE, context)
+                reporter.reportOn(superTypeRef.source, FirErrors.SUPERTYPE_IS_EXTENSION_FUNCTION_TYPE)
                 extensionFunctionSupertypeReported = true
             }
 
@@ -77,28 +78,28 @@ object FirSupertypesChecker : FirClassChecker(MppCheckerKind.Platform) {
 
             if (symbol is FirRegularClassSymbol) {
                 if (!superClassSymbols.add(symbol)) {
-                    reporter.reportOn(superTypeRef.source, FirErrors.SUPERTYPE_APPEARS_TWICE, context)
+                    reporter.reportOn(superTypeRef.source, FirErrors.SUPERTYPE_APPEARS_TWICE)
                 }
                 if (symbol.classKind != ClassKind.INTERFACE) {
                     if (classAppeared) {
-                        reporter.reportOn(superTypeRef.source, FirErrors.MANY_CLASSES_IN_SUPERTYPE_LIST, context)
+                        reporter.reportOn(superTypeRef.source, FirErrors.MANY_CLASSES_IN_SUPERTYPE_LIST)
                     } else {
                         classAppeared = true
                     }
                     // DYNAMIC_SUPERTYPE will be reported separately
                     if (!interfaceWithSuperclassReported && !supertypeIsDynamic) {
-                        reporter.reportOn(superTypeRef.source, FirErrors.INTERFACE_WITH_SUPERCLASS, context)
+                        reporter.reportOn(superTypeRef.source, FirErrors.INTERFACE_WITH_SUPERCLASS)
                         interfaceWithSuperclassReported = true
                     }
                 }
                 val isObject = symbol.classKind == ClassKind.OBJECT
                 // DYNAMIC_SUPERTYPE will be reported separately
                 if (!finalSupertypeReported && !isObject && symbol.modality == Modality.FINAL && !supertypeIsDynamic) {
-                    reporter.reportOn(superTypeRef.source, FirErrors.FINAL_SUPERTYPE, context)
+                    reporter.reportOn(superTypeRef.source, FirErrors.FINAL_SUPERTYPE)
                     finalSupertypeReported = true
                 }
                 if (!singletonInSupertypeReported && isObject) {
-                    reporter.reportOn(superTypeRef.source, FirErrors.SINGLETON_IN_SUPERTYPE, context)
+                    reporter.reportOn(superTypeRef.source, FirErrors.SINGLETON_IN_SUPERTYPE)
                     singletonInSupertypeReported = true
                 }
             }

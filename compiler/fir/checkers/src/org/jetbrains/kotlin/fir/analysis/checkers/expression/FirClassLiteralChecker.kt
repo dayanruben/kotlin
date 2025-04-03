@@ -27,14 +27,15 @@ import org.jetbrains.kotlin.lexer.KtTokens.QUEST
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
 object FirClassLiteralChecker : FirGetClassCallChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirGetClassCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirGetClassCall) {
         val source = expression.source ?: return
         if (source.kind is KtFakeSourceElementKind) return
         val argument = expression.argument
         if (argument is FirResolvedQualifier) {
             val classId = argument.classId
             if (classId == OptInNames.REQUIRES_OPT_IN_CLASS_ID || classId == OptInNames.OPT_IN_CLASS_ID) {
-                reporter.reportOn(argument.source, FirErrors.OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION, context)
+                reporter.reportOn(argument.source, FirErrors.OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION)
             }
         }
 
@@ -55,13 +56,12 @@ object FirClassLiteralChecker : FirGetClassCallChecker(MppCheckerKind.Common) {
                 resolvedFullyExpandedType.isNullableTypeParameter(context.session.typeContext)
         if (isNullable) {
             if (argument.canBeDoubleColonLHSAsType) {
-                reporter.reportOn(source, FirErrors.NULLABLE_TYPE_IN_CLASS_LITERAL_LHS, context)
+                reporter.reportOn(source, FirErrors.NULLABLE_TYPE_IN_CLASS_LITERAL_LHS)
             } else {
                 reporter.reportOn(
                     argument.source,
                     FirErrors.EXPRESSION_OF_NULLABLE_TYPE_IN_CLASS_LITERAL_LHS,
-                    argument.resolvedType,
-                    context
+                    argument.resolvedType
                 )
             }
             return
@@ -70,7 +70,7 @@ object FirClassLiteralChecker : FirGetClassCallChecker(MppCheckerKind.Common) {
         argument.safeAsTypeParameterSymbol?.let {
             if (!it.isReified) {
                 // E.g., fun <T: Any> foo(): Any = T::class
-                reporter.reportOn(source, FirErrors.TYPE_PARAMETER_AS_REIFIED, it, context)
+                reporter.reportOn(source, FirErrors.TYPE_PARAMETER_AS_REIFIED, it)
             }
         }
 
@@ -82,11 +82,11 @@ object FirClassLiteralChecker : FirGetClassCallChecker(MppCheckerKind.Common) {
             val expectedTypeArgumentSize = symbol?.ownTypeParameterSymbols?.size ?: 0
             if (expectedTypeArgumentSize != argument.typeArguments.size) {
                 if (symbol != null) {
-                    reporter.reportOn(argument.source, FirErrors.WRONG_NUMBER_OF_TYPE_ARGUMENTS, expectedTypeArgumentSize, symbol, context)
+                    reporter.reportOn(argument.source, FirErrors.WRONG_NUMBER_OF_TYPE_ARGUMENTS, expectedTypeArgumentSize, symbol)
                 }
                 return
             }
-            reporter.reportOn(source, FirErrors.CLASS_LITERAL_LHS_NOT_A_CLASS, context)
+            reporter.reportOn(source, FirErrors.CLASS_LITERAL_LHS_NOT_A_CLASS)
         }
     }
 

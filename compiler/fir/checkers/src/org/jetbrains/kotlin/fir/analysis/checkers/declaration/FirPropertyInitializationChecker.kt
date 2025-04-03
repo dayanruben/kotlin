@@ -19,7 +19,8 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
 
 object FirPropertyInitializationChecker : FirRegularClassChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirRegularClass) {
         val declaredLater = mutableSetOf<FirPropertySymbol>()
         val visitor = object : FirVisitorVoid() {
             override fun visitElement(element: FirElement) = element.acceptChildren(this)
@@ -42,7 +43,7 @@ object FirPropertyInitializationChecker : FirRegularClassChecker(MppCheckerKind.
                 variableAssignment.acceptChildren(this)
                 val propertySymbol = variableAssignment.calleeReference?.toResolvedCallableSymbol() as? FirPropertySymbol ?: return
                 if (propertySymbol !in declaredLater) return
-                reporter.reportOn(variableAssignment.lValue.source, FirErrors.INITIALIZATION_BEFORE_DECLARATION, propertySymbol, context)
+                reporter.reportOn(variableAssignment.lValue.source, FirErrors.INITIALIZATION_BEFORE_DECLARATION, propertySymbol)
             }
         }
 

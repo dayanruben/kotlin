@@ -29,7 +29,8 @@ import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.types.*
 
 object FirFunctionReturnTypeMismatchChecker : FirReturnExpressionChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirReturnExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirReturnExpression) {
         // checked in FirDelegatedPropertyChecker
         if (expression.source?.kind == KtFakeSourceElementKind.DelegatedPropertyAccessor) return
 
@@ -87,7 +88,7 @@ object FirFunctionReturnTypeMismatchChecker : FirReturnExpressionChecker(MppChec
 
         if (!isSubtypeForTypeMismatch(typeContext, subtype = returnExpressionType, supertype = functionReturnType)) {
             if (resultExpression.isNullLiteral && !functionReturnType.isMarkedOrFlexiblyNullable) {
-                reporter.reportOn(resultExpression.source, NULL_FOR_NONNULL_TYPE, functionReturnType, context)
+                reporter.reportOn(resultExpression.source, NULL_FOR_NONNULL_TYPE, functionReturnType)
             } else {
                 val isDueToNullability =
                     context.session.typeContext.isTypeMismatchDueToNullability(returnExpressionType, functionReturnType)
@@ -100,8 +101,7 @@ object FirFunctionReturnTypeMismatchChecker : FirReturnExpressionChecker(MppChec
                         functionReturnType,
                         resultExpression,
                         resultExpression.smartcastStability.description,
-                        isDueToNullability,
-                        context
+                        isDueToNullability
                     )
                 } else {
                     reporter.reportOn(
@@ -110,8 +110,7 @@ object FirFunctionReturnTypeMismatchChecker : FirReturnExpressionChecker(MppChec
                         functionReturnType,
                         returnExpressionType,
                         targetElement,
-                        isDueToNullability,
-                        context
+                        isDueToNullability
                     )
                 }
             }
@@ -130,8 +129,7 @@ object FirFunctionReturnTypeMismatchChecker : FirReturnExpressionChecker(MppChec
                 functionReturnType,
                 returnExpressionType,
                 targetElement,
-                false,
-                context
+                false
             )
         }
     }

@@ -23,7 +23,8 @@ import org.jetbrains.kotlin.types.expressions.OperatorConventions.ASSIGN_METHOD
 
 object FirAssignmentPluginFunctionChecker : FirSimpleFunctionChecker(MppCheckerKind.Common) {
 
-    override fun check(declaration: FirSimpleFunction, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirSimpleFunction) {
         if (declaration.origin != FirDeclarationOrigin.Source) return
         if (!declaration.isAssignMethod()) return
 
@@ -34,7 +35,7 @@ object FirAssignmentPluginFunctionChecker : FirSimpleFunctionChecker(MppCheckerK
         }
         if (!context.session.annotationMatchingService.isAnnotated(receiverClassSymbol)) return
         if (!declaration.returnTypeRef.coneType.isUnit) {
-            reporter.reportOn(declaration.source, DECLARATION_ERROR_ASSIGN_METHOD_SHOULD_RETURN_UNIT, context)
+            reporter.reportOn(declaration.source, DECLARATION_ERROR_ASSIGN_METHOD_SHOULD_RETURN_UNIT)
         }
     }
 

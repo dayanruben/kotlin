@@ -20,10 +20,11 @@ import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.languageVersionSettings
 
 object FirTypeParametersInObjectChecker : FirClassChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirClass) {
         if (declaration.classKind == ClassKind.OBJECT && declaration is FirRegularClass) {
             if (declaration.typeParameters.isNotEmpty()) {
-                reporter.reportOn(declaration.source, FirErrors.TYPE_PARAMETERS_IN_OBJECT, context)
+                reporter.reportOn(declaration.source, FirErrors.TYPE_PARAMETERS_IN_OBJECT)
             }
         } else if (declaration.classKind == ClassKind.CLASS && declaration is FirAnonymousObject) {
             if (declaration.source?.getChild(KtNodeTypes.TYPE_PARAMETER_LIST, depth = 1) != null) {
@@ -33,7 +34,7 @@ object FirTypeParametersInObjectChecker : FirClassChecker(MppCheckerKind.Common)
                     } else {
                         FirErrors.TYPE_PARAMETERS_IN_ANONYMOUS_OBJECT
                     }
-                reporter.reportOn(declaration.source, diagnosticFactory, context)
+                reporter.reportOn(declaration.source, diagnosticFactory)
             }
         }
     }

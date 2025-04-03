@@ -21,7 +21,8 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.name.StandardClassIds
 
 object FirSuperclassNotAccessibleFromInterfaceChecker : FirQualifiedAccessExpressionChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirQualifiedAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirQualifiedAccessExpression) {
         if (expression.explicitReceiverIsNotSuperReference()) return
 
         val closestClass = context.findClosest<FirClass>() ?: return
@@ -31,7 +32,7 @@ object FirSuperclassNotAccessibleFromInterfaceChecker : FirQualifiedAccessExpres
                 expression.toResolvedCallableSymbol()?.getContainingClassSymbol() as? FirRegularClassSymbol ?: return
 
             if (containingClassSymbol.source != null && containingClassSymbol.classKind == ClassKind.CLASS && containingClassSymbol.classId != StandardClassIds.Any) {
-                reporter.reportOn(expression.explicitReceiver?.source, FirErrors.SUPERCLASS_NOT_ACCESSIBLE_FROM_INTERFACE, context)
+                reporter.reportOn(expression.explicitReceiver?.source, FirErrors.SUPERCLASS_NOT_ACCESSIBLE_FROM_INTERFACE)
             }
         }
     }

@@ -18,7 +18,8 @@ import org.jetbrains.kotlin.fir.declarations.utils.isEnumClass
 import org.jetbrains.kotlin.fir.symbols.impl.FirConstructorSymbol
 
 object FirDelegationSuperCallInEnumConstructorChecker : FirRegularClassChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirRegularClass) {
         if (!declaration.isEnumClass) {
             return
         }
@@ -28,7 +29,7 @@ object FirDelegationSuperCallInEnumConstructorChecker : FirRegularClassChecker(M
                 it.resolvedDelegatedConstructorCall?.isThis == false &&
                 it.resolvedDelegatedConstructorCall?.source?.kind !is KtFakeSourceElementKind
             ) {
-                reporter.reportOn(it.resolvedDelegatedConstructorCall?.source, FirErrors.DELEGATION_SUPER_CALL_IN_ENUM_CONSTRUCTOR, context)
+                reporter.reportOn(it.resolvedDelegatedConstructorCall?.source, FirErrors.DELEGATION_SUPER_CALL_IN_ENUM_CONSTRUCTOR)
             }
         }
     }

@@ -32,7 +32,8 @@ import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualMatchingCompatibil
 
 @Suppress("DuplicatedCode")
 object FirExpectActualDeclarationChecker : FirBasicDeclarationChecker(MppCheckerKind.Platform) {
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirDeclaration) {
         if (declaration !is FirMemberDeclaration) return
         if (!context.session.languageVersionSettings.supportsFeature(LanguageFeature.MultiPlatformProjects)) {
             if ((declaration.isExpect || declaration.isActual) && containsExpectOrActualModifier(declaration) &&
@@ -41,7 +42,6 @@ object FirExpectActualDeclarationChecker : FirBasicDeclarationChecker(MppChecker
                 reporter.reportOn(
                     declaration.source,
                     FirErrors.NOT_A_MULTIPLATFORM_COMPILATION,
-                    context,
                     positioningStrategy = SourceElementPositioningStrategies.EXPECT_ACTUAL_MODIFIER
                 )
             }

@@ -20,7 +20,8 @@ import org.jetbrains.kotlin.lexer.KtTokens
 
 object FirOperatorModifierChecker : FirFunctionChecker(MppCheckerKind.Common) {
 
-    override fun check(declaration: FirFunction, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirFunction) {
         if (!declaration.isOperator) return
         //we are not interested in implicit operators from override
         if (!declaration.hasModifier(KtTokens.OPERATOR_KEYWORD)) return
@@ -28,13 +29,13 @@ object FirOperatorModifierChecker : FirFunctionChecker(MppCheckerKind.Common) {
         when (val checkResult = OperatorFunctionChecks.isOperator(declaration, context.session, context.scopeSession)) {
             CheckResult.SuccessCheck -> {}
             CheckResult.IllegalFunctionName -> {
-                reporter.reportOn(declaration.source, FirErrors.INAPPLICABLE_OPERATOR_MODIFIER, "illegal function name", context)
+                reporter.reportOn(declaration.source, FirErrors.INAPPLICABLE_OPERATOR_MODIFIER, "illegal function name")
             }
             is CheckResult.IllegalSignature -> {
-                reporter.reportOn(declaration.source, FirErrors.INAPPLICABLE_OPERATOR_MODIFIER, checkResult.error, context)
+                reporter.reportOn(declaration.source, FirErrors.INAPPLICABLE_OPERATOR_MODIFIER, checkResult.error)
             }
             CheckResult.AnonymousOperatorFunction -> {
-                reporter.reportOn(declaration.source, FirErrors.INAPPLICABLE_OPERATOR_MODIFIER, "anonymous function", context)
+                reporter.reportOn(declaration.source, FirErrors.INAPPLICABLE_OPERATOR_MODIFIER, "anonymous function")
             }
         }
     }

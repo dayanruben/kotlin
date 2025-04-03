@@ -18,7 +18,8 @@ import org.jetbrains.kotlin.fir.java.enhancement.inheritedKtPrivateCls
 
 object FirJavaClassInheritsKtPrivateClassDeclarationChecker : FirConstructorChecker(MppCheckerKind.Common) {
 
-    override fun check(declaration: FirConstructor, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirConstructor) {
         if (!context.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitJavaClassInheritingPrivateKotlinClass))
             return
 
@@ -28,7 +29,7 @@ object FirJavaClassInheritsKtPrivateClassDeclarationChecker : FirConstructorChec
         if (inheritedKtPrivateCls != null) {
             val javaClassId = resolvedDelegatedConstructor.containingClassLookupTag()!!.classId
             reporter.reportOn(
-                delegatedConstructorCall.source, JAVA_CLASS_INHERITS_KT_PRIVATE_CLASS, javaClassId, inheritedKtPrivateCls, context
+                delegatedConstructorCall.source, JAVA_CLASS_INHERITS_KT_PRIVATE_CLASS, javaClassId, inheritedKtPrivateCls
             )
         }
     }

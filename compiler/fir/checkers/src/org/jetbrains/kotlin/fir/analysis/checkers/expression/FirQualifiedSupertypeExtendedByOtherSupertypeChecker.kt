@@ -20,7 +20,8 @@ import org.jetbrains.kotlin.fir.references.FirSuperReference
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 
 object FirQualifiedSupertypeExtendedByOtherSupertypeChecker : FirQualifiedAccessExpressionChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirQualifiedAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirQualifiedAccessExpression) {
         if (context.languageVersionSettings.supportsFeature(LanguageFeature.QualifiedSupertypeMayBeExtendedByOtherSupertype)) return
         // require to be called over a super reference
         val superReference = (expression.calleeReference as? FirSuperReference)
@@ -65,8 +66,7 @@ object FirQualifiedSupertypeExtendedByOtherSupertypeChecker : FirQualifiedAccess
             reporter.reportOn(
                 superReference.superTypeRef.source,
                 FirErrors.QUALIFIED_SUPERTYPE_EXTENDED_BY_OTHER_SUPERTYPE,
-                candidate,
-                context
+                candidate
             )
         }
     }

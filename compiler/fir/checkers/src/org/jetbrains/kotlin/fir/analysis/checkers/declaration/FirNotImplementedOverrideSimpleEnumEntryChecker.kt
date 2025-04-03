@@ -21,20 +21,23 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 
 sealed class FirNotImplementedOverrideSimpleEnumEntryChecker(mppKind: MppCheckerKind) : FirClassChecker(mppKind) {
     object Regular : FirNotImplementedOverrideSimpleEnumEntryChecker(MppCheckerKind.Platform) {
-        override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+        context(context: CheckerContext, reporter: DiagnosticReporter)
+        override fun check(declaration: FirClass) {
             if (declaration.isExpect) return
-            super.check(declaration, context, reporter)
+            super.check(declaration)
         }
     }
 
     object ForExpectClass : FirNotImplementedOverrideSimpleEnumEntryChecker(MppCheckerKind.Common) {
-        override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+        context(context: CheckerContext, reporter: DiagnosticReporter)
+        override fun check(declaration: FirClass) {
             if (!declaration.isExpect) return
-            super.check(declaration, context, reporter)
+            super.check(declaration)
         }
     }
 
-    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirClass) {
         if (!declaration.isEnumClass) return
 
         // Enum entries with an initializer are handled by FirNotImplementedOverrideChecker since they contain an AnonymousObject.
@@ -53,7 +56,7 @@ sealed class FirNotImplementedOverrideSimpleEnumEntryChecker(mppKind: MppChecker
         if (notImplemented.isEmpty()) return
 
         for (enumEntry in enumEntries) {
-            reporter.reportOn(enumEntry.source, ABSTRACT_MEMBER_NOT_IMPLEMENTED_BY_ENUM_ENTRY, enumEntry.symbol, notImplemented, context)
+            reporter.reportOn(enumEntry.source, ABSTRACT_MEMBER_NOT_IMPLEMENTED_BY_ENUM_ENTRY, enumEntry.symbol, notImplemented)
         }
     }
 }

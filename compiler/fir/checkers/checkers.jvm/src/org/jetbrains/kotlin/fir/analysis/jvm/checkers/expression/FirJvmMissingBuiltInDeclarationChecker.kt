@@ -24,12 +24,13 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
 
 object FirJvmMissingBuiltInDeclarationChecker : FirBasicExpressionChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirStatement, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirStatement) {
         if (context.languageVersionSettings.getFlag(JvmAnalysisFlags.suppressMissingBuiltinsError)) return
 
         fun reportIfNeeded(classSymbol: FirClassLikeSymbol<*>?): Boolean {
             if (classSymbol?.origin == FirDeclarationOrigin.BuiltInsFallback) {
-                reporter.reportOn(expression.source, FirJvmErrors.MISSING_BUILT_IN_DECLARATION, classSymbol, context)
+                reporter.reportOn(expression.source, FirJvmErrors.MISSING_BUILT_IN_DECLARATION, classSymbol)
                 return true
             }
             return false

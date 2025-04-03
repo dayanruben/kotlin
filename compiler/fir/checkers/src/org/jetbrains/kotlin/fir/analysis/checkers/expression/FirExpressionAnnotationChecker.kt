@@ -26,7 +26,8 @@ import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.coneType
 
 object FirExpressionAnnotationChecker : FirBasicExpressionChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirStatement, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirStatement) {
         // Declarations are checked separately
         // See KT-58723 about annotations on non-expression statements
         if (expression is FirDeclaration || expression is FirErrorExpression) {
@@ -51,9 +52,9 @@ object FirExpressionAnnotationChecker : FirBasicExpressionChecker(MppCheckerKind
             val allowedAnnotationTargets = annotation.getAllowedAnnotationTargets(context.session)
             // We don't want to report WRONG_ANNOTATION_TARGET on a block according to KT-52175
             if (!inRealBlock && KotlinTarget.EXPRESSION !in allowedAnnotationTargets) {
-                reporter.reportOn(annotation.source, FirErrors.WRONG_ANNOTATION_TARGET, "expression", allowedAnnotationTargets, context)
+                reporter.reportOn(annotation.source, FirErrors.WRONG_ANNOTATION_TARGET, "expression", allowedAnnotationTargets)
             } else if (useSiteTarget != null) {
-                reporter.reportOn(annotation.source, FirErrors.ANNOTATION_WITH_USE_SITE_TARGET_ON_EXPRESSION, context)
+                reporter.reportOn(annotation.source, FirErrors.ANNOTATION_WITH_USE_SITE_TARGET_ON_EXPRESSION)
             }
 
             checkRepeatedAnnotation(useSiteTarget, existingTargetsForAnnotation, annotation, context, reporter, annotation.source)

@@ -21,7 +21,8 @@ import org.jetbrains.kotlin.fir.references.toResolvedPropertySymbol
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeResolutionResultOverridesOtherToPreserveCompatibility
 
 object FirCustomEnumEntriesMigrationAccessChecker : FirPropertyAccessExpressionChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirPropertyAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirPropertyAccessExpression) {
         if (context.languageVersionSettings.supportsFeature(LanguageFeature.PrioritizedEnumEntries)) return
         val referencedSymbol = expression.calleeReference.toResolvedPropertySymbol() ?: return
         if (referencedSymbol.name != StandardNames.ENUM_ENTRIES) return
@@ -31,11 +32,11 @@ object FirCustomEnumEntriesMigrationAccessChecker : FirPropertyAccessExpressionC
         if (expression.dispatchReceiver?.unwrapSmartcastExpression() is FirResolvedQualifier ||
             expression.extensionReceiver?.unwrapSmartcastExpression() is FirResolvedQualifier
         ) {
-            reporter.reportOn(expression.source, FirErrors.DEPRECATED_ACCESS_TO_ENUM_ENTRY_COMPANION_PROPERTY, context)
+            reporter.reportOn(expression.source, FirErrors.DEPRECATED_ACCESS_TO_ENUM_ENTRY_COMPANION_PROPERTY)
         } else if (context.containingDeclarations.any { it is FirClass && it.isEnumClass }) {
-            reporter.reportOn(expression.source, FirErrors.DEPRECATED_ACCESS_TO_ENTRY_PROPERTY_FROM_ENUM, context)
+            reporter.reportOn(expression.source, FirErrors.DEPRECATED_ACCESS_TO_ENTRY_PROPERTY_FROM_ENUM)
         } else {
-            reporter.reportOn(expression.source, FirErrors.DEPRECATED_ACCESS_TO_ENTRIES_PROPERTY, context)
+            reporter.reportOn(expression.source, FirErrors.DEPRECATED_ACCESS_TO_ENTRIES_PROPERTY)
         }
     }
 }

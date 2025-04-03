@@ -33,7 +33,8 @@ private fun isMarkedWithPublishedApi(a: FirAnnotation): Boolean =
     a.annotationTypeRef.coneType.classId?.asFqNameString() == PUBLISHED_API
 
 object AtomicfuPropertyChecker: FirPropertyChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirProperty, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirProperty) {
         if (!declaration.isKotlinxAtomicfu()) return
         val containingClassSymbol = declaration.dispatchReceiverType?.toClassLikeSymbol(context.session)
         if (declaration.visibility.isPublicAPI &&
@@ -41,8 +42,7 @@ object AtomicfuPropertyChecker: FirPropertyChecker(MppCheckerKind.Common) {
             reporter.reportOn(
                 declaration.source,
                 AtomicfuErrors.PUBLIC_ATOMICS_ARE_FORBIDDEN,
-                declaration.source.text.toString(),
-                context
+                declaration.source.text.toString()
             )
         } else {
             if ((declaration.visibility.isPublicAPI || declaration.isPublishedApi()) &&
@@ -50,8 +50,7 @@ object AtomicfuPropertyChecker: FirPropertyChecker(MppCheckerKind.Common) {
                 reporter.reportOn(
                     declaration.source,
                     AtomicfuErrors.PUBLISHED_API_ATOMICS_ARE_FORBIDDEN,
-                    declaration.source.text.toString(),
-                    context
+                    declaration.source.text.toString()
                 )
             }
         }
@@ -59,8 +58,7 @@ object AtomicfuPropertyChecker: FirPropertyChecker(MppCheckerKind.Common) {
             reporter.reportOn(
                 declaration.source,
                 AtomicfuErrors.ATOMIC_PROPERTIES_SHOULD_BE_VAL,
-                declaration.source.text.toString(),
-                context
+                declaration.source.text.toString()
             )
         }
     }

@@ -34,11 +34,8 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirFunctionSymbol
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 object ComposableFunctionChecker : FirFunctionChecker(MppCheckerKind.Common) {
-    override fun check(
-        declaration: FirFunction,
-        context: CheckerContext,
-        reporter: DiagnosticReporter,
-    ) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirFunction) {
         val isComposable = declaration.hasComposableAnnotation(context.session)
 
         val overrides = declaration.getDirectOverriddenFunctions(context)
@@ -48,8 +45,7 @@ object ComposableFunctionChecker : FirFunctionChecker(MppCheckerKind.Common) {
                 reporter.reportOn(
                     declaration.source,
                     FirErrors.CONFLICTING_OVERLOADS,
-                    listOf(declaration.symbol, override),
-                    context
+                    listOf(declaration.symbol, override)
                 )
             }
 
@@ -61,8 +57,7 @@ object ComposableFunctionChecker : FirFunctionChecker(MppCheckerKind.Common) {
             if (expectDeclaration.hasComposableAnnotation(context.session) != isComposable) {
                 reporter.reportOn(
                     declaration.source,
-                    ComposeErrors.MISMATCHED_COMPOSABLE_IN_EXPECT_ACTUAL,
-                    context
+                    ComposeErrors.MISMATCHED_COMPOSABLE_IN_EXPECT_ACTUAL
                 )
             }
         }
@@ -71,7 +66,7 @@ object ComposableFunctionChecker : FirFunctionChecker(MppCheckerKind.Common) {
 
         // Composable suspend functions are unsupported
         if (declaration.isSuspend) {
-            reporter.reportOn(declaration.source, ComposeErrors.COMPOSABLE_SUSPEND_FUN, context)
+            reporter.reportOn(declaration.source, ComposeErrors.COMPOSABLE_SUSPEND_FUN)
         }
 
         // Check that there are no default arguments in abstract composable functions
@@ -79,22 +74,21 @@ object ComposableFunctionChecker : FirFunctionChecker(MppCheckerKind.Common) {
             if (overrides.any { it.valueParameterSymbols.any { it.hasDefaultValue } && it.isMissingCompatMetadata() }) {
                 reporter.reportOn(
                     declaration.source,
-                    ComposeErrors.DEPRECATED_OPEN_COMPOSABLE_DEFAULT_PARAMETER_VALUE,
-                    context
+                    ComposeErrors.DEPRECATED_OPEN_COMPOSABLE_DEFAULT_PARAMETER_VALUE
                 )
             }
         }
 
         // Composable main functions are not allowed.
         if (declaration.symbol.isMain(context.session)) {
-            reporter.reportOn(declaration.source, ComposeErrors.COMPOSABLE_FUN_MAIN, context)
+            reporter.reportOn(declaration.source, ComposeErrors.COMPOSABLE_FUN_MAIN)
         }
 
         // Disallow composable setValue operators
         if (declaration.isOperator &&
             declaration.nameOrSpecialName == OperatorNameConventions.SET_VALUE
         ) {
-            reporter.reportOn(declaration.source, ComposeErrors.COMPOSE_INVALID_DELEGATE, context)
+            reporter.reportOn(declaration.source, ComposeErrors.COMPOSE_INVALID_DELEGATE)
         }
     }
 }

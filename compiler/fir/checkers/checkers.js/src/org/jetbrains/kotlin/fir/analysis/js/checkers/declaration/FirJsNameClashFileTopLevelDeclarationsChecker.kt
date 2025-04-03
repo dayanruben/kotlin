@@ -33,7 +33,8 @@ object FirJsNameClashFileTopLevelDeclarationsChecker : FirFileChecker(MppChecker
         }
     }
 
-    override fun check(declaration: FirFile, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirFile) {
         val topLevelDeclarationsWithStableName = mutableMapOf<String, MutableList<FirJsStableName>>()
         @OptIn(DirectDeclarationsAccess::class)
         for (topLevelDeclaration in declaration.declarations) {
@@ -43,7 +44,7 @@ object FirJsNameClashFileTopLevelDeclarationsChecker : FirFileChecker(MppChecker
             for (symbol in stableNames) {
                 val clashed = stableNames.collectNameClashesWith(symbol).takeIf { it.isNotEmpty() } ?: continue
                 val source = symbol.symbol.source ?: declaration.source
-                reporter.reportOn(source, FirJsErrors.JS_NAME_CLASH, name, clashed.map { it.symbol }, context)
+                reporter.reportOn(source, FirJsErrors.JS_NAME_CLASH, name, clashed.map { it.symbol })
             }
         }
     }

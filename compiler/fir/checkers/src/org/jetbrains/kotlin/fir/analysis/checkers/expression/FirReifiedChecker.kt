@@ -28,7 +28,8 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.text
 
 object FirReifiedChecker : FirQualifiedAccessExpressionChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirQualifiedAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirQualifiedAccessExpression) {
         val calleeReference = expression.calleeReference
         val typeArguments = expression.typeArguments
         val callableSymbol = calleeReference.toResolvedCallableSymbol()
@@ -64,7 +65,7 @@ object FirReifiedChecker : FirQualifiedAccessExpressionChecker(MppCheckerKind.Co
                 varargTypeParameter == typeParameter && isTypeArgumentVisibilityBroken(context, typeArgument) && (!isExplicit || isPlaceHolder)
             ) {
                 reporter.reportOn(
-                    source, FirErrors.INFERRED_INVISIBLE_VARARG_TYPE_ARGUMENT, typeParameter, typeArgument, varargParameter, context
+                    source, FirErrors.INFERRED_INVISIBLE_VARARG_TYPE_ARGUMENT, typeParameter, typeArgument, varargParameter
                 )
             }
         }

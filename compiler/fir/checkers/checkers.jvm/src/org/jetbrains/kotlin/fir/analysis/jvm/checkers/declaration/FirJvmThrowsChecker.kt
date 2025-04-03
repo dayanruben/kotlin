@@ -19,14 +19,15 @@ import org.jetbrains.kotlin.fir.declarations.getAnnotationByClassId
 import org.jetbrains.kotlin.name.JvmStandardClassIds.THROWS_ANNOTATION_CLASS_ID
 
 object FirJvmThrowsChecker : FirFunctionChecker(MppCheckerKind.Platform) {
-    override fun check(declaration: FirFunction, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirFunction) {
         val session = context.session
         val annotation = declaration.getAnnotationByClassId(THROWS_ANNOTATION_CLASS_ID, session) ?: return
 
         val containingClass = declaration.getContainingClassSymbol() ?: return
         when {
             containingClass.classKind == ClassKind.ANNOTATION_CLASS ->
-                reporter.reportOn(annotation.source, FirJvmErrors.THROWS_IN_ANNOTATION, context)
+                reporter.reportOn(annotation.source, FirJvmErrors.THROWS_IN_ANNOTATION)
         }
     }
 }

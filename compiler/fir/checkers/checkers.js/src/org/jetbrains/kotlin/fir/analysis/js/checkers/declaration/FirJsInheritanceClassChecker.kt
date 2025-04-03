@@ -30,20 +30,23 @@ import org.jetbrains.kotlin.fir.types.*
 
 sealed class FirJsInheritanceClassChecker(mppKind: MppCheckerKind) : FirClassChecker(mppKind) {
     object Regular : FirJsInheritanceClassChecker(MppCheckerKind.Platform) {
-        override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+        context(context: CheckerContext, reporter: DiagnosticReporter)
+        override fun check(declaration: FirClass) {
             if (declaration.isExpect) return
-            super.check(declaration, context, reporter)
+            super.check(declaration)
         }
     }
 
     object ForExpectClass : FirJsInheritanceClassChecker(MppCheckerKind.Common) {
-        override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+        context(context: CheckerContext, reporter: DiagnosticReporter)
+        override fun check(declaration: FirClass) {
             if (!declaration.isExpect) return
-            super.check(declaration, context, reporter)
+            super.check(declaration)
         }
     }
 
-    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirClass) {
         val session = context.session
         val isEffectivelyExternal = declaration.symbol.isEffectivelyExternal(session)
 
@@ -53,7 +56,7 @@ sealed class FirJsInheritanceClassChecker(mppKind: MppCheckerKind) : FirClassChe
                 .mapNotNull { it.toSymbol(session)?.fullyExpandedClass(session) }
 
             if (superTypes.any { !it.isEffectivelyExternal(session) }) {
-                reporter.reportOn(declaration.source, FirJsErrors.EXTERNAL_TYPE_EXTENDS_NON_EXTERNAL_TYPE, context)
+                reporter.reportOn(declaration.source, FirJsErrors.EXTERNAL_TYPE_EXTENDS_NON_EXTERNAL_TYPE)
             }
         }
 
@@ -63,7 +66,7 @@ sealed class FirJsInheritanceClassChecker(mppKind: MppCheckerKind) : FirClassChe
             if (fakeOverriddenMethod != null) {
                 reporter.reportOn(
                     declaration.source, FirJsErrors.OVERRIDING_EXTERNAL_FUN_WITH_OPTIONAL_PARAMS_WITH_FAKE,
-                    fakeOverriddenMethod, context
+                    fakeOverriddenMethod
                 )
             }
         }
@@ -74,7 +77,7 @@ sealed class FirJsInheritanceClassChecker(mppKind: MppCheckerKind) : FirClassChe
                 it.isBuiltinFunctionalTypeOrSubtype(session) && !it.isSuspendFunctionTypeOrSubtype(session)
             }
         ) {
-            reporter.reportOn(declaration.source, FirJsErrors.IMPLEMENTING_FUNCTION_INTERFACE, context)
+            reporter.reportOn(declaration.source, FirJsErrors.IMPLEMENTING_FUNCTION_INTERFACE)
         }
     }
 

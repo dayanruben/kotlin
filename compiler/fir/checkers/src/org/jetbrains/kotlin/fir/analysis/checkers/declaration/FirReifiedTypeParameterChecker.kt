@@ -14,7 +14,8 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isInline
 
 object FirReifiedTypeParameterChecker : FirTypeParameterChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirTypeParameter, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirTypeParameter) {
         if (!declaration.isReified) return
         val containingDeclaration = context.containingDeclarations.lastOrNull() ?: return
 
@@ -23,11 +24,11 @@ object FirReifiedTypeParameterChecker : FirTypeParameterChecker(MppCheckerKind.C
                 (containingDeclaration is FirProperty && !containingDeclaration.areAccessorsInline())
 
         if (forbidReified) {
-            reporter.reportOn(declaration.source, FirErrors.REIFIED_TYPE_PARAMETER_NO_INLINE, context)
+            reporter.reportOn(declaration.source, FirErrors.REIFIED_TYPE_PARAMETER_NO_INLINE)
         }
 
         if (containingDeclaration is FirTypeAlias) {
-            reporter.reportOn(declaration.source, FirErrors.REIFIED_TYPE_PARAMETER_ON_ALIAS, context)
+            reporter.reportOn(declaration.source, FirErrors.REIFIED_TYPE_PARAMETER_ON_ALIAS)
         }
     }
 

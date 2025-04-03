@@ -18,28 +18,27 @@ import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.name.StandardClassIds
 
 object FirDataClassConsistentDataCopyAnnotationChecker : FirClassChecker(MppCheckerKind.Common) {
-    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirClass) {
         val consistentCopy = declaration.getAnnotationByClassId(StandardClassIds.Annotations.ConsistentCopyVisibility, context.session)
         val exposedCopy = declaration.getAnnotationByClassId(StandardClassIds.Annotations.ExposedCopyVisibility, context.session)
 
         when {
             consistentCopy != null && (declaration !is FirRegularClass || !declaration.isData) -> {
-                reporter.reportOn(consistentCopy.source, FirErrors.DATA_CLASS_CONSISTENT_COPY_WRONG_ANNOTATION_TARGET, context)
+                reporter.reportOn(consistentCopy.source, FirErrors.DATA_CLASS_CONSISTENT_COPY_WRONG_ANNOTATION_TARGET)
             }
             exposedCopy != null && (declaration !is FirRegularClass || !declaration.isData) -> {
-                reporter.reportOn(exposedCopy.source, FirErrors.DATA_CLASS_CONSISTENT_COPY_WRONG_ANNOTATION_TARGET, context)
+                reporter.reportOn(exposedCopy.source, FirErrors.DATA_CLASS_CONSISTENT_COPY_WRONG_ANNOTATION_TARGET)
             }
             else -> {
                 if (consistentCopy != null && exposedCopy != null) {
                     reporter.reportOn(
                         exposedCopy.source,
-                        FirErrors.DATA_CLASS_CONSISTENT_COPY_AND_EXPOSED_COPY_ARE_INCOMPATIBLE_ANNOTATIONS,
-                        context
+                        FirErrors.DATA_CLASS_CONSISTENT_COPY_AND_EXPOSED_COPY_ARE_INCOMPATIBLE_ANNOTATIONS
                     )
                     reporter.reportOn(
                         consistentCopy.source,
-                        FirErrors.DATA_CLASS_CONSISTENT_COPY_AND_EXPOSED_COPY_ARE_INCOMPATIBLE_ANNOTATIONS,
-                        context
+                        FirErrors.DATA_CLASS_CONSISTENT_COPY_AND_EXPOSED_COPY_ARE_INCOMPATIBLE_ANNOTATIONS
                     )
                 }
 
@@ -54,8 +53,7 @@ object FirDataClassConsistentDataCopyAnnotationChecker : FirClassChecker(MppChec
                     reporter.reportOn(
                         consistentCopy.source,
                         FirErrors.REDUNDANT_ANNOTATION,
-                        StandardClassIds.Annotations.ConsistentCopyVisibility,
-                        context
+                        StandardClassIds.Annotations.ConsistentCopyVisibility
                     )
                 }
 
@@ -63,8 +61,7 @@ object FirDataClassConsistentDataCopyAnnotationChecker : FirClassChecker(MppChec
                     reporter.reportOn(
                         exposedCopy.source,
                         FirErrors.REDUNDANT_ANNOTATION,
-                        StandardClassIds.Annotations.ExposedCopyVisibility,
-                        context
+                        StandardClassIds.Annotations.ExposedCopyVisibility
                     )
                 }
             }

@@ -19,7 +19,8 @@ import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 
 object FirJavaClassInheritsKtPrivateClassExpressionChecker : FirQualifiedAccessExpressionChecker(MppCheckerKind.Common) {
 
-    override fun check(expression: FirQualifiedAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirQualifiedAccessExpression) {
         if (!context.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitJavaClassInheritingPrivateKotlinClass))
             return
 
@@ -28,7 +29,7 @@ object FirJavaClassInheritsKtPrivateClassExpressionChecker : FirQualifiedAccessE
         if (inheritedKtPrivateCls != null) {
             // Only Java methods & constructors can have inheritedKtPrivateCls, and they always have containing class
             val javaClassId = calleeSymbol.containingClassLookupTag()!!.classId
-            reporter.reportOn(expression.source, JAVA_CLASS_INHERITS_KT_PRIVATE_CLASS, javaClassId, inheritedKtPrivateCls, context)
+            reporter.reportOn(expression.source, JAVA_CLASS_INHERITS_KT_PRIVATE_CLASS, javaClassId, inheritedKtPrivateCls)
         }
     }
 }

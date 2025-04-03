@@ -89,7 +89,8 @@ private class Checker(
         val CHECK = ClassId(FqName("org.jetbrains.kotlinx.dataframe.annotations"), Name.identifier("Check"))
     }
 
-    override fun check(expression: FirFunctionCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirFunctionCall) {
         with(KotlinTypeFacadeImpl(context.session, isTest)) {
             analyzeCast(expression, reporter, context)
 //            analyzeRefinedCallShape(expression, reporter = object : InterpretationErrorReporter {
@@ -159,7 +160,8 @@ private class Checker(
 private data object PropertySchemaReporter : FirPropertyChecker(mppKind = MppCheckerKind.Common) {
     val SCHEMA by info1<KtElement, String>(SourceElementPositioningStrategies.DECLARATION_NAME)
 
-    override fun check(declaration: FirProperty, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirProperty) {
         context.sessionContext {
             declaration.returnTypeRef.coneType.let { type ->
                 reportSchema(reporter, declaration.source, SCHEMA, type, context)
@@ -171,7 +173,8 @@ private data object PropertySchemaReporter : FirPropertyChecker(mppKind = MppChe
 private data object FunctionCallSchemaReporter : FirFunctionCallChecker(mppKind = MppCheckerKind.Common) {
     val SCHEMA by info1<KtElement, String>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
 
-    override fun check(expression: FirFunctionCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirFunctionCall) {
         if (expression.calleeReference.name in setOf(Name.identifier("let"), Name.identifier("run"))) return
         val initializer = expression.resolvedType
         context.sessionContext {
@@ -183,11 +186,8 @@ private data object FunctionCallSchemaReporter : FirFunctionCallChecker(mppKind 
 private data object PropertyAccessSchemaReporter : FirPropertyAccessExpressionChecker(mppKind = MppCheckerKind.Common) {
     val SCHEMA by info1<KtElement, String>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
 
-    override fun check(
-        expression: FirPropertyAccessExpression,
-        context: CheckerContext,
-        reporter: DiagnosticReporter
-    ) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirPropertyAccessExpression) {
         val initializer = expression.resolvedType
         context.sessionContext {
             reportSchema(reporter, expression.source, SCHEMA, initializer, context)
@@ -198,7 +198,8 @@ private data object PropertyAccessSchemaReporter : FirPropertyAccessExpressionCh
 private data object FunctionDeclarationSchemaReporter : FirSimpleFunctionChecker(mppKind = MppCheckerKind.Common) {
     val SCHEMA by info1<KtElement, String>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
 
-    override fun check(declaration: FirSimpleFunction, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirSimpleFunction) {
         val type = declaration.returnTypeRef.coneType
         context.sessionContext {
             reportSchema(reporter, declaration.source, SCHEMA, type, context)

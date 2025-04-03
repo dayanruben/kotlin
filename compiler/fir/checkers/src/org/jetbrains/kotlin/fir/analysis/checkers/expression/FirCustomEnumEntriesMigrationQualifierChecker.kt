@@ -16,11 +16,12 @@ import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeResolutionResultOverridesOtherToPreserveCompatibility
 
 object FirCustomEnumEntriesMigrationQualifierChecker : FirResolvedQualifierChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirResolvedQualifier, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirResolvedQualifier) {
         if (context.languageVersionSettings.supportsFeature(LanguageFeature.PrioritizedEnumEntries)) return
         if (expression.symbol?.name != StandardNames.ENUM_ENTRIES) return
         if (expression.nonFatalDiagnostics.none { it is ConeResolutionResultOverridesOtherToPreserveCompatibility }) return
 
-        reporter.reportOn(expression.source, FirErrors.DEPRECATED_ACCESS_TO_ENTRIES_AS_QUALIFIER, context)
+        reporter.reportOn(expression.source, FirErrors.DEPRECATED_ACCESS_TO_ENTRIES_AS_QUALIFIER)
     }
 }

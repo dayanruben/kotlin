@@ -19,7 +19,8 @@ import org.jetbrains.kotlin.fir.types.unwrapToSimpleTypeUsingLowerBound
 
 object FirPropertyTypeParametersChecker : FirPropertyChecker(MppCheckerKind.Common) {
 
-    override fun check(declaration: FirProperty, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirProperty) {
         if (declaration.isLocal) return
 
         val boundsByName = declaration.typeParameters.associate { it.name to it.symbol.resolvedBounds }
@@ -39,7 +40,7 @@ object FirPropertyTypeParametersChecker : FirPropertyChecker(MppCheckerKind.Comm
 
         val usedNames = usedTypes.filterIsInstance<ConeTypeParameterType>().map { it.lookupTag.name }
         declaration.typeParameters.filterNot { usedNames.contains(it.name) }.forEach { danglingParam ->
-            reporter.reportOn(danglingParam.source, FirErrors.TYPE_PARAMETER_OF_PROPERTY_NOT_USED_IN_RECEIVER, context)
+            reporter.reportOn(danglingParam.source, FirErrors.TYPE_PARAMETER_OF_PROPERTY_NOT_USED_IN_RECEIVER)
         }
     }
 }

@@ -9674,6 +9674,12 @@ public class FirJsCodegenBoxWithInlinedFunInKlibTestGenerated extends AbstractFi
       }
 
       @Test
+      @TestMetadata("suspendFunctionAsSupertypeWithInlinedFunInKlib.kt")
+      public void testSuspendFunctionAsSupertypeWithInlinedFunInKlib() {
+        runTest("compiler/testData/codegen/box/coroutines/suspendFunctionAsSupertypeWithInlinedFunInKlib.kt");
+      }
+
+      @Test
       @TestMetadata("suspendFunctionMethodReference.kt")
       public void testSuspendFunctionMethodReference() {
         runTest("compiler/testData/codegen/box/coroutines/suspendFunctionMethodReference.kt");
@@ -18488,6 +18494,12 @@ public class FirJsCodegenBoxWithInlinedFunInKlibTestGenerated extends AbstractFi
       }
 
       @Test
+      @TestMetadata("capturedTypeWhenSubject.kt")
+      public void testCapturedTypeWhenSubject() {
+        runTest("compiler/testData/codegen/box/inference/capturedTypeWhenSubject.kt");
+      }
+
+      @Test
       @TestMetadata("capturedTypesSubstitutionIntoAbbreviation.kt")
       public void testCapturedTypesSubstitutionIntoAbbreviation() {
         runTest("compiler/testData/codegen/box/inference/capturedTypesSubstitutionIntoAbbreviation.kt");
@@ -20471,6 +20483,24 @@ public class FirJsCodegenBoxWithInlinedFunInKlibTestGenerated extends AbstractFi
       @TestMetadata("annotatedMemberExtensionPropertyGeneric.kt")
       public void testAnnotatedMemberExtensionPropertyGeneric() {
         runTest("compiler/testData/codegen/box/inlineClasses/annotatedMemberExtensionPropertyGeneric.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
+      }
+
+      @Test
+      @TestMetadata("anonymousObjectAsDefaultParam.kt")
+      public void testAnonymousObjectAsDefaultParam() {
+        runTest("compiler/testData/codegen/box/inlineClasses/anonymousObjectAsDefaultParam.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
+      }
+
+      @Test
+      @TestMetadata("anonymousObjectAsDefaultParamFull.kt")
+      public void testAnonymousObjectAsDefaultParamFull() {
+        runTest("compiler/testData/codegen/box/inlineClasses/anonymousObjectAsDefaultParamFull.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
+      }
+
+      @Test
+      @TestMetadata("anonymousObjectAsDefaultParamSingleFile.kt")
+      public void testAnonymousObjectAsDefaultParamSingleFile() {
+        runTest("compiler/testData/codegen/box/inlineClasses/anonymousObjectAsDefaultParamSingleFile.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
       }
 
       @Test
@@ -44356,15 +44386,33 @@ public class FirJsCodegenBoxWithInlinedFunInKlibTestGenerated extends AbstractFi
       }
 
       @Test
+      @TestMetadata("fakeOverrideGenericBase.kt")
+      public void testFakeOverrideGenericBase() {
+        runTest("compiler/testData/codegen/boxInline/anonymousObject/fakeOverrideGenericBase.kt");
+      }
+
+      @Test
       @TestMetadata("fakeOverrideInDefaultMultiModule.kt")
       public void testFakeOverrideInDefaultMultiModule() {
         runTest("compiler/testData/codegen/boxInline/anonymousObject/fakeOverrideInDefaultMultiModule.kt");
       }
 
       @Test
+      @TestMetadata("fakeOverrideLocalGenericBase.kt")
+      public void testFakeOverrideLocalGenericBase() {
+        runTest("compiler/testData/codegen/boxInline/anonymousObject/fakeOverrideLocalGenericBase.kt");
+      }
+
+      @Test
       @TestMetadata("fakeOverrideMultiModule.kt")
       public void testFakeOverrideMultiModule() {
         runTest("compiler/testData/codegen/boxInline/anonymousObject/fakeOverrideMultiModule.kt");
+      }
+
+      @Test
+      @TestMetadata("fakeOverrideReferenceGenericBase.kt")
+      public void testFakeOverrideReferenceGenericBase() {
+        runTest("compiler/testData/codegen/boxInline/anonymousObject/fakeOverrideReferenceGenericBase.kt");
       }
 
       @Test
@@ -47097,6 +47145,12 @@ public class FirJsCodegenBoxWithInlinedFunInKlibTestGenerated extends AbstractFi
       @TestMetadata("extensionReceiver.kt")
       public void testExtensionReceiver() {
         runTest("compiler/testData/codegen/boxInline/noInline/extensionReceiver.kt");
+      }
+
+      @Test
+      @TestMetadata("inheritedLambdaAsGeneric.kt")
+      public void testInheritedLambdaAsGeneric() {
+        runTest("compiler/testData/codegen/boxInline/noInline/inheritedLambdaAsGeneric.kt");
       }
 
       @Test

@@ -20,7 +20,8 @@ import org.jetbrains.kotlin.fir.resolve.calls.FirSimpleSyntheticPropertySymbol
 import org.jetbrains.kotlin.fir.resolve.calls.noJavaOrigin
 
 object FirSyntheticPropertyWithoutJavaOriginChecker : FirPropertyAccessExpressionChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirPropertyAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirPropertyAccessExpression) {
         if (context.languageVersionSettings.supportsFeature(LanguageFeature.DontCreateSyntheticPropertiesWithoutBaseJavaGetter)) return
         val syntheticProperty = expression.toResolvedCallableSymbol() as? FirSimpleSyntheticPropertySymbol ?: return
         val containingAssignment = context.callsOrAssignments.getOrNull(context.callsOrAssignments.size - 2) as? FirVariableAssignment
@@ -35,16 +36,14 @@ object FirSyntheticPropertyWithoutJavaOriginChecker : FirPropertyAccessExpressio
                     expression.source,
                     FirErrors.FUNCTION_CALL_EXPECTED,
                     originalFunction.name.asString(),
-                    false,
-                    context
+                    false
                 )
             } else {
                 reporter.reportOn(
                     expression.source,
                     FirJvmErrors.SYNTHETIC_PROPERTY_WITHOUT_JAVA_ORIGIN,
                     originalFunction,
-                    originalFunction.name,
-                    context
+                    originalFunction.name
                 )
             }
         }

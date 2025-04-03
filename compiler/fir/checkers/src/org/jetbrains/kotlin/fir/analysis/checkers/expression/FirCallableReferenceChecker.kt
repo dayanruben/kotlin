@@ -30,11 +30,12 @@ import org.jetbrains.kotlin.fir.symbols.impl.hasContextParameters
 import org.jetbrains.kotlin.fir.types.*
 
 object FirCallableReferenceChecker : FirQualifiedAccessExpressionChecker(MppCheckerKind.Common) {
-    override fun check(expression: FirQualifiedAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(expression: FirQualifiedAccessExpression) {
         if (expression !is FirCallableReferenceAccess) return
 
         if (expression.hasQuestionMarkAtLHS && expression.explicitReceiver?.unwrapSmartcastExpression() !is FirResolvedQualifier) {
-            reporter.reportOn(expression.source, FirErrors.SAFE_CALLABLE_REFERENCE_CALL, context)
+            reporter.reportOn(expression.source, FirErrors.SAFE_CALLABLE_REFERENCE_CALL)
         }
 
         // UNRESOLVED_REFERENCE will be reported separately.

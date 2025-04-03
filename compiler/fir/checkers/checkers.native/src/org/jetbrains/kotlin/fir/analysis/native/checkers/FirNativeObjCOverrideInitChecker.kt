@@ -26,7 +26,8 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.name.NativeStandardInteropNames.objCOverrideInitClassId
 
 object FirNativeObjCOverrideInitChecker : FirClassChecker(MppCheckerKind.Platform) {
-    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    override fun check(declaration: FirClass) {
         val session = context.session
 
         fun FirClassSymbol<*>.constructors(session: FirSession): List<FirConstructorSymbol> {
@@ -56,15 +57,13 @@ object FirNativeObjCOverrideInitChecker : FirClassChecker(MppCheckerKind.Platfor
                     reporter.reportOn(
                         constructor.source,
                         FirNativeErrors.CONSTRUCTOR_DOES_NOT_OVERRIDE_ANY_SUPER_CONSTRUCTOR,
-                        objCOverrideInitClassId.asSingleFqName(),
-                        context
+                        objCOverrideInitClassId.asSingleFqName()
                     )
                 else
                     reporter.reportOn(
                         constructor.source,
                         FirNativeErrors.CONSTRUCTOR_MATCHES_SEVERAL_SUPER_CONSTRUCTORS,
-                        objCOverrideInitClassId.asSingleFqName(),
-                        context
+                        objCOverrideInitClassId.asSingleFqName()
                     )
                 return
             }
@@ -80,8 +79,7 @@ object FirNativeObjCOverrideInitChecker : FirClassChecker(MppCheckerKind.Platfor
                     reporter.reportOn(
                         constructor.source,
                         FirNativeErrors.CONSTRUCTOR_OVERRIDES_ALREADY_OVERRIDDEN_OBJC_INITIALIZER,
-                        objCOverrideInitClassId.asSingleFqName(),
-                        context
+                        objCOverrideInitClassId.asSingleFqName()
                     )
                 }
             }
