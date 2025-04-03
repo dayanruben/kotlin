@@ -2109,6 +2109,12 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
         }
 
         @Test
+        @TestMetadata("noContextArgument.kt")
+        public void testNoContextArgument() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/noContextArgument.kt");
+        }
+
+        @Test
         @TestMetadata("subtyping.kt")
         public void testSubtyping() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/subtyping.kt");
@@ -8643,6 +8649,18 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
       @TestMetadata("stringConstructors.kt")
       public void testStringConstructors() {
         runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/stringConstructors.kt");
+      }
+
+      @Test
+      @TestMetadata("typeAnnotationArgument.kt")
+      public void testTypeAnnotationArgument() {
+        runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/typeAnnotationArgument.kt");
+      }
+
+      @Test
+      @TestMetadata("typeAnnotationArgument2.kt")
+      public void testTypeAnnotationArgument2() {
+        runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/typeAnnotationArgument2.kt");
       }
 
       @Test

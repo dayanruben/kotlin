@@ -17,8 +17,6 @@ import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.InternalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.*
-import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptionsDeprecated
-import org.jetbrains.kotlin.gradle.dsl.KotlinCompileDeprecated
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import org.jetbrains.kotlin.tooling.core.HasMutableExtras
 
@@ -209,7 +207,7 @@ interface KotlinCompilation<UNUSED : KotlinAnyOptionsDeprecated> : Named,
     /**
      * @suppress
      */
-    @Suppress("DEPRECATION")
+    @Suppress("DEPRECATION", "TYPEALIAS_EXPANSION_DEPRECATION_ERROR")
     @Deprecated(
         message = "Accessing task instance directly is deprecated. Scheduled for removal in Kotlin 2.3.",
         replaceWith = ReplaceWith("compileTaskProvider"),
@@ -220,6 +218,7 @@ interface KotlinCompilation<UNUSED : KotlinAnyOptionsDeprecated> : Named,
     /**
      * @suppress
      */
+    @Suppress("DEPRECATION", "TYPEALIAS_EXPANSION_DEPRECATION_ERROR")
     @Deprecated(
         message = "Replaced with compileTaskProvider. Scheduled for removal in Kotlin 2.3.",
         replaceWith = ReplaceWith("compileTaskProvider"),
@@ -232,7 +231,8 @@ interface KotlinCompilation<UNUSED : KotlinAnyOptionsDeprecated> : Named,
      */
     @OptIn(InternalKotlinGradlePluginApi::class)
     @Deprecated(
-        message = KOTLIN_OPTIONS_DEPRECATION_MESSAGE
+        message = KOTLIN_OPTIONS_DEPRECATION_MESSAGE,
+        level = DeprecationLevel.ERROR,
     )
     val kotlinOptions: KotlinCommonOptionsDeprecated
 
@@ -241,10 +241,11 @@ interface KotlinCompilation<UNUSED : KotlinAnyOptionsDeprecated> : Named,
      */
     @OptIn(InternalKotlinGradlePluginApi::class)
     @Deprecated(
-        message = KOTLIN_OPTIONS_DEPRECATION_MESSAGE
+        message = KOTLIN_OPTIONS_DEPRECATION_MESSAGE,
+        level = DeprecationLevel.ERROR,
     )
     fun kotlinOptions(configure: KotlinCommonOptionsDeprecated.() -> Unit) {
-        @Suppress("DEPRECATION")
+        @Suppress("DEPRECATION_ERROR")
         configure(kotlinOptions)
     }
 
@@ -253,10 +254,11 @@ interface KotlinCompilation<UNUSED : KotlinAnyOptionsDeprecated> : Named,
      */
     @OptIn(InternalKotlinGradlePluginApi::class)
     @Deprecated(
-        message = KOTLIN_OPTIONS_DEPRECATION_MESSAGE
+        message = KOTLIN_OPTIONS_DEPRECATION_MESSAGE,
+        level = DeprecationLevel.ERROR,
     )
     fun kotlinOptions(configure: Action<KotlinCommonOptionsDeprecated>) {
-        @Suppress("DEPRECATION")
+        @Suppress("DEPRECATION_ERROR")
         configure.execute(kotlinOptions)
     }
 
