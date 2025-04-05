@@ -16,11 +16,7 @@ import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.types.*
-import org.jetbrains.kotlin.ir.util.IdSignature
-import org.jetbrains.kotlin.ir.util.getAllArgumentsWithIr
-import org.jetbrains.kotlin.ir.util.isFakeOverride
-import org.jetbrains.kotlin.ir.util.isInterface
-import org.jetbrains.kotlin.ir.util.render
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
@@ -176,6 +172,8 @@ open class IrFileSerializer(
 
     protected val protoDebugInfoMap = hashMapOf<String, Int>()
     protected val protoDebugInfoArray = arrayListOf<String>()
+
+    private val preprocessedToOriginalInlineFunctions = mutableMapOf<IrSimpleFunction, IrSimpleFunction>()
 
     private var isInsideInline: Boolean = false
 
@@ -1126,7 +1124,10 @@ open class IrFileSerializer(
 
     private fun serializeIrDeclarationBase(declaration: IrDeclaration, flags: Long?): ProtoDeclarationBase {
         return with(ProtoDeclarationBase.newBuilder()) {
-            symbol = serializeIrSymbol((declaration as IrSymbolOwner).symbol, isDeclared = true)
+            symbol = serializeIrSymbol(
+                (declaration as IrSymbolOwner).symbol,
+                isDeclared = declaration !in preprocessedToOriginalInlineFunctions
+            )
             coordinates = serializeCoordinates(declaration.startOffset, declaration.endOffset)
             addAllAnnotation(serializeAnnotations(declaration.annotations))
             flags?.let { setFlags(it) }
@@ -1211,6 +1212,8 @@ open class IrFileSerializer(
             .build()
 
     private fun serializeIrFunction(declaration: IrSimpleFunction): ProtoFunction {
+        declaration.erasedTopLevelCopy?.let { preprocessedToOriginalInlineFunctions[it] = declaration }
+
         val proto = ProtoFunction.newBuilder()
             .setBase(serializeIrFunctionBase(declaration, FunctionFlags.encode(declaration)))
 
@@ -1509,20 +1512,26 @@ open class IrFileSerializer(
                 return@forEach
             }
 
-            val byteArray = serializeDeclaration(it).toByteArray()
-            val idSig = declarationTable.signatureByDeclaration(
-                it,
-                settings.compatibilityMode.legacySignaturesForPrivateAndLocalDeclarations,
-                recordInSignatureClashDetector = false
-            )
-            require(idSig == idSig.topLevelSignature()) { "IdSig: $idSig\ntopLevel: ${idSig.topLevelSignature()}" }
-            require(!idSig.isPackageSignature()) { "IsSig: $idSig\nDeclaration: ${it.render()}" }
-
-            // TODO: keep order similar
-            val sigIndex = protoIdSignatureMap[idSig] ?: error("Not found ID for $idSig (${it.render()})")
-            topLevelDeclarations.add(SerializedDeclaration(sigIndex, idSig.render(), byteArray))
-            proto.addDeclarationId(sigIndex)
+            val serializedDeclaration = serializeTopLevelDeclaration(it)
+            topLevelDeclarations.add(serializedDeclaration)
+            proto.addDeclarationId(serializedDeclaration.id)
         }
+
+        val preprocessedInlineFunctions =
+            preprocessedToOriginalInlineFunctions.map { (preprocessedInlineFunction, originalInlineFunction) ->
+                val originalIdSignature = declarationTable.signatureByDeclaration(
+                    originalInlineFunction,
+                    settings.compatibilityMode.legacySignaturesForPrivateAndLocalDeclarations,
+                    recordInSignatureClashDetector = false
+                )
+                val originalSigIndex = protoIdSignatureMap[originalIdSignature]
+                    ?: error("Not found ID for $originalIdSignature (${originalInlineFunction.render()})")
+                proto.addOriginalToPreprocessedInlineFunctions(originalSigIndex)
+
+                val serializedPreprocessedInlineFunction = serializeTopLevelDeclaration(preprocessedInlineFunction)
+                proto.addOriginalToPreprocessedInlineFunctions(serializedPreprocessedInlineFunction.id)
+                serializedPreprocessedInlineFunction
+            }
 
         val includeLineStartOffsets = !(settings.publicAbiOnly && protoBodyArray.isEmpty())
         if (settings.abiCompatibilityLevel.isAtLeast(ABI_LEVEL_2_2)) {
@@ -1553,6 +1562,7 @@ open class IrFileSerializer(
             strings = IrStringWriter(protoStringArray).writeIntoMemory(),
             bodies = IrArrayWriter(protoBodyArray.map { it.toByteArray() }).writeIntoMemory(),
             declarations = IrDeclarationWriter(topLevelDeclarations).writeIntoMemory(),
+            inlineDeclarations = IrDeclarationWriter(preprocessedInlineFunctions).writeIntoMemory(),
             debugInfo = IrStringWriter(protoDebugInfoArray).writeIntoMemory(),
             backendSpecificMetadata = backendSpecificMetadata(file)?.toByteArray(),
             fileEntries = with(protoIrFileEntryArray) {
@@ -1564,6 +1574,21 @@ open class IrFileSerializer(
                 }
             },
         )
+    }
+
+    private fun serializeTopLevelDeclaration(topLevelDeclaration: IrDeclaration): SerializedDeclaration {
+        val byteArray = serializeDeclaration(topLevelDeclaration).toByteArray()
+        val idSig = declarationTable.signatureByDeclaration(
+            topLevelDeclaration,
+            settings.compatibilityMode.legacySignaturesForPrivateAndLocalDeclarations,
+            recordInSignatureClashDetector = false
+        )
+        require(idSig == idSig.topLevelSignature()) { "IdSig: $idSig\ntopLevel: ${idSig.topLevelSignature()}" }
+        require(!idSig.isPackageSignature()) { "IsSig: $idSig\nDeclaration: ${topLevelDeclaration.render()}" }
+
+        // TODO: keep order similar
+        val sigIndex = protoIdSignatureMap[idSig] ?: error("Not found ID for $idSig (${topLevelDeclaration.render()})")
+        return SerializedDeclaration(sigIndex, byteArray)
     }
 
     private fun tryMatchPath(fileName: String): String? {

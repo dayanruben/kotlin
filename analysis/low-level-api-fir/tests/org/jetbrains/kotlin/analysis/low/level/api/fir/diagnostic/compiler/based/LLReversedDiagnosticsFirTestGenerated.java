@@ -2027,6 +2027,12 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
         }
 
         @Test
+        @TestMetadata("typealiasToContextFunctionType.kt")
+        public void testTypealiasToContextFunctionType() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/declarationAndUsages/typealiasToContextFunctionType.kt");
+        }
+
+        @Test
         @TestMetadata("usageOfTypeWithContext.kt")
         public void testUsageOfTypeWithContext() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/declarationAndUsages/usageOfTypeWithContext.kt");
@@ -2247,6 +2253,12 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
         }
 
         @Test
+        @TestMetadata("genericPropertyOverride.kt")
+        public void testGenericPropertyOverride() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/overrides/genericPropertyOverride.kt");
+        }
+
+        @Test
         @TestMetadata("intersectionOverride.kt")
         public void testIntersectionOverride() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/overrides/intersectionOverride.kt");
@@ -2310,6 +2322,12 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
         @TestMetadata("substitutionOverride.kt")
         public void testSubstitutionOverride() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/overrides/substitutionOverride.kt");
+        }
+
+        @Test
+        @TestMetadata("varPropertyOverride.kt")
+        public void testVarPropertyOverride() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/overrides/varPropertyOverride.kt");
         }
 
         @Test

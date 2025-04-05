@@ -450,6 +450,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
     }
 
     @Test
+    @TestMetadata("transitiveAnnotationsViaJava.kt")
+    public void testTransitiveAnnotationsViaJava() {
+      runTest("compiler/testData/codegen/box/annotations/transitiveAnnotationsViaJava.kt");
+    }
+
+    @Test
     @TestMetadata("typealiasAnnotationWithNonTrivialTypeArguments.kt")
     public void testTypealiasAnnotationWithNonTrivialTypeArguments() {
       runTest("compiler/testData/codegen/box/annotations/typealiasAnnotationWithNonTrivialTypeArguments.kt");
@@ -10323,6 +10329,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
     @TestMetadata("assignmentOfContextVar.kt")
     public void testAssignmentOfContextVar() {
       runTest("compiler/testData/codegen/box/contextParameters/assignmentOfContextVar.kt");
+    }
+
+    @Test
+    @TestMetadata("classCastException.kt")
+    public void testClassCastException() {
+      runTest("compiler/testData/codegen/box/contextParameters/classCastException.kt");
     }
 
     @Test

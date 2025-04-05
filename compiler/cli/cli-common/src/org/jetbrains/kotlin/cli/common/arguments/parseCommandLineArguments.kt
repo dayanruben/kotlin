@@ -18,7 +18,6 @@ package org.jetbrains.kotlin.cli.common.arguments
 
 import org.jetbrains.kotlin.cli.common.CompilerSystemProperties
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.utils.SmartList
@@ -47,6 +46,8 @@ annotation class Argument(
         const val default = ","
         const val none = ""
         const val pathSeparator = "<path_separator>"
+        const val space = " "
+        const val semicolon = ";"
     }
 }
 
@@ -319,16 +320,3 @@ fun validateArguments(errors: ArgumentParseErrors?): String? {
     return null
 }
 
-/**
- * Instructs the annotated argument to enable the specified [LanguageFeature] when set to `true`.
- */
-@Target(AnnotationTarget.FIELD)
-@Repeatable
-annotation class Enables(val feature: LanguageFeature)
-
-/**
- * Instructs the annotated argument to disable the specified [LanguageFeature] when set to `true`.
- */
-@Target(AnnotationTarget.FIELD)
-@Repeatable
-annotation class Disables(val feature: LanguageFeature)

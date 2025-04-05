@@ -13625,6 +13625,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
         }
 
         @Test
+        @TestMetadata("contextualExtensionImplicitInvoke.kt")
+        public void testContextualExtensionImplicitInvoke() {
+          runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/contextualExtensionImplicitInvoke.kt");
+        }
+
+        @Test
         @TestMetadata("contextualFunctionalTypeConversion.kt")
         public void testContextualFunctionalTypeConversion() {
           runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/contextualFunctionalTypeConversion.kt");
@@ -52333,6 +52339,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
         }
 
         @Test
+        @TestMetadata("typealiasToContextFunctionType.kt")
+        public void testTypealiasToContextFunctionType() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/declarationAndUsages/typealiasToContextFunctionType.kt");
+        }
+
+        @Test
         @TestMetadata("usageOfTypeWithContext.kt")
         public void testUsageOfTypeWithContext() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/declarationAndUsages/usageOfTypeWithContext.kt");
@@ -52533,6 +52545,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
         }
 
         @Test
+        @TestMetadata("genericPropertyOverride.kt")
+        public void testGenericPropertyOverride() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/overrides/genericPropertyOverride.kt");
+        }
+
+        @Test
         @TestMetadata("intersectionOverride.kt")
         public void testIntersectionOverride() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/overrides/intersectionOverride.kt");
@@ -52596,6 +52614,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
         @TestMetadata("substitutionOverride.kt")
         public void testSubstitutionOverride() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/overrides/substitutionOverride.kt");
+        }
+
+        @Test
+        @TestMetadata("varPropertyOverride.kt")
+        public void testVarPropertyOverride() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/overrides/varPropertyOverride.kt");
         }
 
         @Test
