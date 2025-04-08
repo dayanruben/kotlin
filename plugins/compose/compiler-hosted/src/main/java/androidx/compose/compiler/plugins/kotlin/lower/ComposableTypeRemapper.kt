@@ -39,12 +39,10 @@ import org.jetbrains.kotlin.utils.memoryOptimizedMap
 
 internal fun IrFunction.needsComposableRemapping(): Boolean {
     if (
-        dispatchReceiverParameter?.type.containsComposableAnnotation() ||
-        extensionReceiverParameter?.type.containsComposableAnnotation() ||
         returnType.containsComposableAnnotation()
     ) return true
 
-    for (param in valueParameters) {
+    for (param in parameters) {
         if (param.type.containsComposableAnnotation()) return true
     }
     return false
@@ -184,7 +182,7 @@ internal class ComposableTypeTransformer(
             val realParams = containingClass.typeParameters.size - 1
             // with composer and changed
             val newArgsSize = realParams + 1 + changedParamCount(realParams, 0)
-            val newFnClass = context.function(newArgsSize).owner
+            val newFnClass = context.irBuiltIns.functionN(newArgsSize)
 
             val newFn = newFnClass
                 .functions
@@ -346,10 +344,10 @@ class ComposableTypeRemapper(
                     oldIrArguments.last()
 
         val newArgSize = oldIrArguments.size - 1 + extraArgs.size
-        val functionCls = context.function(newArgSize)
+        val functionCls = context.irBuiltIns.functionN(newArgSize)
 
         return IrSimpleTypeImpl(
-            functionCls,
+            functionCls.symbol,
             type.nullability,
             newIrArguments.map { remapTypeArgument(it) },
             type.annotations.filter { !it.isComposableAnnotation() },

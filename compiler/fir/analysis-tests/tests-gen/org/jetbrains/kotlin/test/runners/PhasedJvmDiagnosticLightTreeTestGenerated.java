@@ -17824,6 +17824,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
         }
 
         @Test
+        @TestMetadata("flexibleCapturedReceiver.kt")
+        public void testFlexibleCapturedReceiver() {
+          runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/flexibleCapturedReceiver.kt");
+        }
+
+        @Test
         @TestMetadata("genericWildcardUpperBound.kt")
         public void testGenericWildcardUpperBound() {
           runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/genericWildcardUpperBound.kt");
@@ -30063,6 +30069,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("disallowForSamAdapterFunction.kt")
       public void testDisallowForSamAdapterFunction() {
         runTest("compiler/testData/diagnostics/tests/namedArguments/disallowForSamAdapterFunction.kt");
+      }
+
+      @Test
+      @TestMetadata("multipleJavaCandidates.kt")
+      public void testMultipleJavaCandidates() {
+        runTest("compiler/testData/diagnostics/tests/namedArguments/multipleJavaCandidates.kt");
       }
 
       @Test
