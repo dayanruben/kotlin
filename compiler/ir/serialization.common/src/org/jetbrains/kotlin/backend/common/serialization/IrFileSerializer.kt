@@ -5,9 +5,10 @@
 
 package org.jetbrains.kotlin.backend.common.serialization
 
-import org.jetbrains.kotlin.backend.common.serialization.KlibAbiCompatibilityLevel.ABI_LEVEL_2_2
 import org.jetbrains.kotlin.backend.common.serialization.encodings.*
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrSimpleTypeNullability
+import org.jetbrains.kotlin.config.KlibAbiCompatibilityLevel
+import org.jetbrains.kotlin.config.KlibAbiCompatibilityLevel.ABI_LEVEL_2_2
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities.INTERNAL
 import org.jetbrains.kotlin.ir.IrElement
@@ -66,8 +67,6 @@ import org.jetbrains.kotlin.backend.common.serialization.proto.IrFunction as Pro
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrFunctionBase as ProtoFunctionBase
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrFunctionExpression as ProtoFunctionExpression
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrFunctionReference as ProtoFunctionReference
-import org.jetbrains.kotlin.backend.common.serialization.proto.IrRichFunctionReference as ProtoRichFunctionReference
-import org.jetbrains.kotlin.backend.common.serialization.proto.IrRichPropertyReference as ProtoRichPropertyReference
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrGetClass as ProtoGetClass
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrGetEnumValue as ProtoGetEnumValue
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrGetField as ProtoGetField
@@ -84,6 +83,8 @@ import org.jetbrains.kotlin.backend.common.serialization.proto.IrProperty as Pro
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrPropertyReference as ProtoPropertyReference
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrReturn as ProtoReturn
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrReturnableBlock as ProtoReturnableBlock
+import org.jetbrains.kotlin.backend.common.serialization.proto.IrRichFunctionReference as ProtoRichFunctionReference
+import org.jetbrains.kotlin.backend.common.serialization.proto.IrRichPropertyReference as ProtoRichPropertyReference
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrSetField as ProtoSetField
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrSetValue as ProtoSetValue
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrSimpleType as ProtoSimpleType
@@ -217,8 +218,22 @@ open class IrFileSerializer(
 
     private fun serializeIrDeclarationOrigin(origin: IrDeclarationOrigin): Int = serializeString(origin.name)
 
-    private fun serializeIrStatementOrigin(origin: IrStatementOrigin): Int =
-        serializeString(origin.debugName)
+    private inline fun serializeIrStatementOrigin(origin: IrStatementOrigin?, saveOriginIndex: (Int) -> Unit) {
+        if (origin == null) {
+            // Nothing to serialize.
+            return
+        }
+
+        if (IrStatementOrigin.IMPLICIT_ARGUMENT == origin && settings.abiCompatibilityLevel == KlibAbiCompatibilityLevel.ABI_LEVEL_2_1) {
+            // Kotlin compiler version 2.1.x fails in an attempt to deserialize unknown statement origins.
+            // So, as a workaround, we try to avoid serializing such statements when exporting to KLIB ABI level 2.1.
+            // For details, see KT-76131, KT-75624, KT-75393.
+            return
+        }
+
+        val originIndex = serializeString(origin.debugName)
+        saveOriginIndex(originIndex)
+    }
 
     private fun serializeCoordinates(start: Int, end: Int): Long =
         if (settings.publicAbiOnly && !isInsideInline) 0 else BinaryCoordinates.encode(start, end)
@@ -292,8 +307,8 @@ open class IrFileSerializer(
                     // Compute the signature:
                     when {
                         symbolOwner is IrDeclaration -> declarationTable.signatureByDeclaration(
-                            symbolOwner,
-                            settings.compatibilityMode.legacySignaturesForPrivateAndLocalDeclarations,
+                            declaration = symbolOwner,
+                            compatibleMode = false,
                             recordInSignatureClashDetector = isDeclared
                         )
 
@@ -486,7 +501,7 @@ open class IrFileSerializer(
     private fun serializeBlock(block: IrBlock): ProtoBlock {
         val proto = ProtoBlock.newBuilder()
 
-        block.origin?.let { proto.setOriginName(serializeIrStatementOrigin(it)) }
+        serializeIrStatementOrigin(block.origin, proto::setOriginName)
 
         block.statements.forEach {
             proto.addStatement(serializeStatement(it))
@@ -518,7 +533,7 @@ open class IrFileSerializer(
     private fun serializeComposite(composite: IrComposite): ProtoComposite {
         val proto = ProtoComposite.newBuilder()
 
-        composite.origin?.let { proto.setOriginName(serializeIrStatementOrigin(it)) }
+        serializeIrStatementOrigin(composite.origin, proto::setOriginName)
         composite.statements.forEach {
             proto.addStatement(serializeStatement(it))
         }
@@ -588,7 +603,7 @@ open class IrFileSerializer(
     private fun serializeCall(call: IrCall): ProtoCall {
         val proto = ProtoCall.newBuilder()
         proto.symbol = serializeIrSymbol(call.symbol)
-        call.origin?.let { proto.originName = serializeIrStatementOrigin(it) }
+        serializeIrStatementOrigin(call.origin, proto::setOriginName)
 
         call.superQualifierSymbol?.let {
             proto.`super` = serializeIrSymbol(it)
@@ -603,15 +618,13 @@ open class IrFileSerializer(
             symbol = serializeIrSymbol(call.symbol)
             constructorTypeArgumentsCount = call.constructorTypeArgumentsCount
             memberAccess = serializeMemberAccessCommon(call)
-            call.origin?.let {
-                originName = serializeIrStatementOrigin(it)
-            }
+            serializeIrStatementOrigin(call.origin, ::setOriginName)
         }.build()
 
     private fun serializeFunctionExpression(functionExpression: IrFunctionExpression): ProtoFunctionExpression =
         ProtoFunctionExpression.newBuilder().apply {
             function = serializeIrFunction(functionExpression.function)
-            originName = serializeIrStatementOrigin(functionExpression.origin)
+            serializeIrStatementOrigin(functionExpression.origin, ::setOriginName)
         }.build()
 
     private fun serializeFunctionReference(callable: IrFunctionReference): ProtoFunctionReference {
@@ -620,7 +633,7 @@ open class IrFileSerializer(
             .setMemberAccess(serializeMemberAccessCommon(callable))
 
         callable.reflectionTarget?.let { proto.reflectionTargetSymbol = serializeIrSymbol(it) }
-        callable.origin?.let { proto.originName = serializeIrStatementOrigin(it) }
+        serializeIrStatementOrigin(callable.origin, proto::setOriginName)
         return proto.build()
     }
 
@@ -634,7 +647,7 @@ open class IrFileSerializer(
                 addBoundValues(serializeExpression(boundValue))
             }
             invokeFunction = serializeIrFunction(callable.invokeFunction)
-            callable.origin?.let { originName = serializeIrStatementOrigin(it) }
+            serializeIrStatementOrigin(callable.origin, ::setOriginName)
             flags = RichFunctionReferenceFlags.encode(callable)
         }.build()
     }
@@ -649,7 +662,7 @@ open class IrFileSerializer(
             }
             getterFunction = serializeIrFunction(callable.getterFunction)
             callable.setterFunction?.let { setterFunction = serializeIrFunction(it) }
-            callable.origin?.let { originName = serializeIrStatementOrigin(it) }
+            serializeIrStatementOrigin(callable.origin, ::setOriginName)
         }.build()
     }
 
@@ -661,7 +674,7 @@ open class IrFileSerializer(
             .setGetter(serializeIrSymbol(callable.getter))
             .setSymbol(serializeIrSymbol(callable.symbol))
 
-        callable.origin?.let { proto.setOriginName(serializeIrStatementOrigin(it)) }
+        serializeIrStatementOrigin(callable.origin, proto::setOriginName)
         callable.setter?.let { proto.setSetter(serializeIrSymbol(it)) }
 
         return proto.build()
@@ -672,7 +685,7 @@ open class IrFileSerializer(
             .setMemberAccess(serializeMemberAccessCommon(callable))
             .setSymbol(serializeIrSymbol(callable.symbol))
 
-        callable.origin?.let { proto.originName = serializeIrStatementOrigin(it) }
+        serializeIrStatementOrigin(callable.origin, proto::setOriginName)
         callable.field?.let { proto.field = serializeIrSymbol(it) }
         callable.getter?.let { proto.getter = serializeIrSymbol(it) }
         callable.setter?.let { proto.setter = serializeIrSymbol(it) }
@@ -746,14 +759,14 @@ open class IrFileSerializer(
     private fun serializeGetField(expression: IrGetField): ProtoGetField =
         ProtoGetField.newBuilder()
             .setFieldAccess(serializeFieldAccessCommon(expression)).apply {
-                expression.origin?.let { originName = serializeIrStatementOrigin(it) }
+                serializeIrStatementOrigin(expression.origin, ::setOriginName)
             }
             .build()
 
     private fun serializeGetValue(expression: IrGetValue): ProtoGetValue =
         ProtoGetValue.newBuilder()
             .setSymbol(serializeIrSymbol(expression.symbol)).apply {
-                expression.origin?.let { originName = serializeIrStatementOrigin(it) }
+                serializeIrStatementOrigin(expression.origin, ::setOriginName)
             }
             .build()
 
@@ -782,7 +795,7 @@ open class IrFileSerializer(
         ProtoSetField.newBuilder()
             .setFieldAccess(serializeFieldAccessCommon(expression))
             .setValue(serializeExpression(expression.value)).apply {
-                expression.origin?.let { originName = serializeIrStatementOrigin(it) }
+                serializeIrStatementOrigin(expression.origin, ::setOriginName)
             }
             .build()
 
@@ -790,7 +803,7 @@ open class IrFileSerializer(
         ProtoSetValue.newBuilder()
             .setSymbol(serializeIrSymbol(expression.symbol))
             .setValue(serializeExpression(expression.value)).apply {
-                expression.origin?.let { originName = serializeIrStatementOrigin(it) }
+                serializeIrStatementOrigin(expression.origin, ::setOriginName)
             }
             .build()
 
@@ -890,7 +903,7 @@ open class IrFileSerializer(
     private fun serializeWhen(expression: IrWhen): ProtoWhen {
         val proto = ProtoWhen.newBuilder()
 
-        expression.origin?.let { proto.setOriginName(serializeIrStatementOrigin(it)) }
+        serializeIrStatementOrigin(expression.origin, proto::setOriginName)
 
         val branches = expression.branches
         branches.forEach {
@@ -906,7 +919,7 @@ open class IrFileSerializer(
 
         val proto = ProtoLoop.newBuilder()
             .setCondition(serializeExpression(expression.condition)).apply {
-                expression.origin?.let { originName = serializeIrStatementOrigin(it) }
+                serializeIrStatementOrigin(expression.origin, ::setOriginName)
             }
 
         expression.label?.let {
@@ -1521,7 +1534,7 @@ open class IrFileSerializer(
             preprocessedToOriginalInlineFunctions.map { (preprocessedInlineFunction, originalInlineFunction) ->
                 val originalIdSignature = declarationTable.signatureByDeclaration(
                     originalInlineFunction,
-                    settings.compatibilityMode.legacySignaturesForPrivateAndLocalDeclarations,
+                    compatibleMode = false,
                     recordInSignatureClashDetector = false
                 )
                 val originalSigIndex = protoIdSignatureMap[originalIdSignature]
@@ -1580,7 +1593,7 @@ open class IrFileSerializer(
         val byteArray = serializeDeclaration(topLevelDeclaration).toByteArray()
         val idSig = declarationTable.signatureByDeclaration(
             topLevelDeclaration,
-            settings.compatibilityMode.legacySignaturesForPrivateAndLocalDeclarations,
+            compatibleMode = false,
             recordInSignatureClashDetector = false
         )
         require(idSig == idSig.topLevelSignature()) { "IdSig: $idSig\ntopLevel: ${idSig.topLevelSignature()}" }

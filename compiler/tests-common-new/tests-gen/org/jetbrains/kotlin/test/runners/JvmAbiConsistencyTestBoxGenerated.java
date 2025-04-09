@@ -50043,9 +50043,9 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
       }
 
       @Test
-      @TestMetadata("annotationRetentionAnnotation.kt")
-      public void testAnnotationRetentionAnnotation() {
-        runTest("compiler/testData/codegen/box/reflection/annotations/annotationRetentionAnnotation.kt");
+      @TestMetadata("annotationRetentionAndTarget.kt")
+      public void testAnnotationRetentionAndTarget() {
+        runTest("compiler/testData/codegen/box/reflection/annotations/annotationRetentionAndTarget.kt");
       }
 
       @Test
@@ -52870,6 +52870,18 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
       @TestMetadata("functions.kt")
       public void testFunctions() {
         runTest("compiler/testData/codegen/box/reflection/modifiers/functions.kt");
+      }
+
+      @Test
+      @TestMetadata("javaClassModality.kt")
+      public void testJavaClassModality() {
+        runTest("compiler/testData/codegen/box/reflection/modifiers/javaClassModality.kt");
+      }
+
+      @Test
+      @TestMetadata("javaClasses.kt")
+      public void testJavaClasses() {
+        runTest("compiler/testData/codegen/box/reflection/modifiers/javaClasses.kt");
       }
 
       @Test

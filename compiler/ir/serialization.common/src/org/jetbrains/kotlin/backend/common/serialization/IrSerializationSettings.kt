@@ -6,9 +6,11 @@
 package org.jetbrains.kotlin.backend.common.serialization
 
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.KlibAbiCompatibilityLevel
 import org.jetbrains.kotlin.config.KlibConfigurationKeys
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.config.klibAbiCompatibilityLevel
 import org.jetbrains.kotlin.config.klibNormalizeAbsolutePath
 import org.jetbrains.kotlin.config.klibRelativePathBases
 import org.jetbrains.kotlin.config.languageVersionSettings
@@ -18,7 +20,6 @@ import org.jetbrains.kotlin.ir.IrFileEntry
  * Various settings used during serialization of IR modules and IR files.
  *
  * @property languageVersionSettings The language version settings.
- * @property compatibilityMode The compatibility mode for computing signatures. See [CompatibilityMode] for more details.
  * @property publicAbiOnly Whether only the part of IR that comprises public ABI should be serialized.
  *   This setting is used for generating so-called "header KLIBs".
  * @property bodiesOnlyForInlines Whether to serialize bodies of only inline functions. Effectively, this setting is only relevant to Kotlin/JVM.
@@ -35,23 +36,11 @@ import org.jetbrains.kotlin.ir.IrFileEntry
 class IrSerializationSettings(
     configuration: CompilerConfiguration,
     val languageVersionSettings: LanguageVersionSettings = configuration.languageVersionSettings,
-    val compatibilityMode: CompatibilityMode = CompatibilityMode.CURRENT,
     val publicAbiOnly: Boolean = false,
     val bodiesOnlyForInlines: Boolean = publicAbiOnly,
     val sourceBaseDirs: Collection<String> = configuration.klibRelativePathBases,
     val normalizeAbsolutePaths: Boolean = configuration.klibNormalizeAbsolutePath,
     val shouldCheckSignaturesOnUniqueness: Boolean = configuration.get(KlibConfigurationKeys.PRODUCE_KLIB_SIGNATURES_CLASH_CHECKS, true),
     val reuseExistingSignaturesForSymbols: Boolean = languageVersionSettings.supportsFeature(LanguageFeature.IrInlinerBeforeKlibSerialization),
-    val abiCompatibilityLevel: KlibAbiCompatibilityLevel = KlibAbiCompatibilityLevel.ABI_LEVEL_2_2,
+    val abiCompatibilityLevel: KlibAbiCompatibilityLevel = configuration.klibAbiCompatibilityLevel,
 )
-
-enum class KlibAbiCompatibilityLevel(val major: Int, val minor: Int) {
-    ABI_LEVEL_2_1(2, 1),
-    ABI_LEVEL_2_2(2, 2),
-    ;
-
-    override fun toString() = "$major.$minor"
-
-    fun isAtLeast(other: KlibAbiCompatibilityLevel): Boolean =
-        major > other.major || major == other.major && minor >= other.minor
-}
