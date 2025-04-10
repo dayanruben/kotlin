@@ -19,7 +19,6 @@ dependencies {
     testCompileOnly(kotlinTest("junit"))
 
     testImplementation(libs.junit4)
-    testImplementation(project(":compiler:tests-mutes:mutes-junit4"))
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter.api)
     testImplementation(libs.junit.platform.launcher)
@@ -60,7 +59,12 @@ sourceSets {
 
 projectTest(
     parallel = true,
-    defineJDKEnvVariables = listOf(JdkMajorVersion.JDK_1_8, JdkMajorVersion.JDK_11_0, JdkMajorVersion.JDK_17_0),
+    defineJDKEnvVariables = listOf(
+        JdkMajorVersion.JDK_1_8,
+        JdkMajorVersion.JDK_11_0,
+        JdkMajorVersion.JDK_17_0,
+        JdkMajorVersion.JDK_21_0
+    ),
     jUnitMode = JUnitMode.JUnit4
 ) {
     dependsOn(":dist")
@@ -68,7 +72,6 @@ projectTest(
     workingDir = rootDir
 
     useJUnitPlatform()
-    muteWithDatabase()
 
     systemProperty("kotlin.test.script.classpath", testSourceSet.output.classesDirs.joinToString(File.pathSeparator))
     val antLauncherJarPathProvider = project.provider {

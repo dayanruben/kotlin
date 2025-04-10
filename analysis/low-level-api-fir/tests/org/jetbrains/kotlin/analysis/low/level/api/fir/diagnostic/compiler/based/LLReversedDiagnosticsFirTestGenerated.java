@@ -8054,6 +8054,12 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
       }
 
       @Test
+      @TestMetadata("javaFunctionParamNullability.kt")
+      public void testJavaFunctionParamNullability() {
+        runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij/javaFunctionParamNullability.kt");
+      }
+
+      @Test
       @TestMetadata("lambdaForKfunction.kt")
       public void testLambdaForKfunction() {
         runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij/lambdaForKfunction.kt");
@@ -8643,6 +8649,12 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
       @TestMetadata("receiverResolutionInLambda.kt")
       public void testReceiverResolutionInLambda() {
         runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/receiverResolutionInLambda.kt");
+      }
+
+      @Test
+      @TestMetadata("reifiedToNothing.kt")
+      public void testReifiedToNothing() {
+        runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/reifiedToNothing.kt");
       }
 
       @Test

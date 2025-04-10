@@ -14756,6 +14756,12 @@ public class FirWasmJsCodegenBoxTestGenerated extends AbstractFirWasmJsCodegenBo
     }
 
     @Test
+    @TestMetadata("contextParameters.kt")
+    public void testContextParameters() {
+      runTest("compiler/testData/codegen/box/directInvokeOptimization/contextParameters.kt");
+    }
+
+    @Test
     @TestMetadata("contructorRef.kt")
     public void testContructorRef() {
       runTest("compiler/testData/codegen/box/directInvokeOptimization/contructorRef.kt");
@@ -18855,12 +18861,6 @@ public class FirWasmJsCodegenBoxTestGenerated extends AbstractFirWasmJsCodegenBo
       }
 
       @Test
-      @TestMetadata("withExpectedType.kt")
-      public void testWithExpectedType() {
-        runTest("compiler/testData/codegen/box/inference/pcla/withExpectedType.kt");
-      }
-
-      @Test
       @TestMetadata("withoutAnnotation.kt")
       public void testWithoutAnnotation() {
         runTest("compiler/testData/codegen/box/inference/pcla/withoutAnnotation.kt");
@@ -19323,6 +19323,12 @@ public class FirWasmJsCodegenBoxTestGenerated extends AbstractFirWasmJsCodegenBo
         @TestMetadata("kt76058.kt")
         public void testKt76058() {
           runTest("compiler/testData/codegen/box/inference/pcla/issues/kt76058.kt");
+        }
+
+        @Test
+        @TestMetadata("kt76171.kt")
+        public void testKt76171() {
+          runTest("compiler/testData/codegen/box/inference/pcla/issues/kt76171.kt");
         }
       }
 
@@ -29557,6 +29563,16 @@ public class FirWasmJsCodegenBoxTestGenerated extends AbstractFirWasmJsCodegenBo
         @Test
         public void testAllFilesPresentInHmpp() {
           KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/multiplatform/k2/hmpp"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.WASM, true);
+        }
+      }
+
+      @Nested
+      @TestMetadata("compiler/testData/codegen/box/multiplatform/k2/lenientMode")
+      @TestDataPath("$PROJECT_ROOT")
+      public class LenientMode {
+        @Test
+        public void testAllFilesPresentInLenientMode() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/multiplatform/k2/lenientMode"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.WASM, true);
         }
       }
 
@@ -43095,12 +43111,6 @@ public class FirWasmJsCodegenBoxTestGenerated extends AbstractFirWasmJsCodegenBo
     @TestMetadata("unsignedLiteralsForMaxLongValue.kt")
     public void testUnsignedLiteralsForMaxLongValue() {
       runTest("compiler/testData/codegen/box/unsignedTypes/unsignedLiteralsForMaxLongValue.kt");
-    }
-
-    @Test
-    @TestMetadata("unsignedLiteralsInApiVersion14.kt")
-    public void testUnsignedLiteralsInApiVersion14() {
-      runTest("compiler/testData/codegen/box/unsignedTypes/unsignedLiteralsInApiVersion14.kt");
     }
 
     @Test

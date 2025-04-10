@@ -168,7 +168,6 @@ enum class LanguageFeature(
     CorrectSourceMappingSyntax(KOTLIN_1_5, kind = UNSTABLE_FEATURE),
     ProperArrayConventionSetterWithDefaultCalls(KOTLIN_1_5, kind = OTHER),
     AdaptedCallableReferenceAgainstReflectiveType(null),
-    InferenceCompatibility(KOTLIN_1_5, kind = BUG_FIX),
     RequiredPrimaryConstructorDelegationCallInEnums(KOTLIN_1_5, kind = BUG_FIX),
     ApproximateAnonymousReturnTypesInPrivateInlineFunctions(KOTLIN_1_5, kind = BUG_FIX),
     ForbidReferencingToUnderscoreNamedParameterOfCatchBlock(KOTLIN_1_5, kind = BUG_FIX),
@@ -192,7 +191,6 @@ enum class LanguageFeature(
     SuspendFunctionAsSupertype(KOTLIN_1_6),
     UnrestrictedBuilderInference(KOTLIN_1_6),
     ClassTypeParameterAnnotations(KOTLIN_1_6),
-    TypeInferenceOnCallsWithSelfTypes(KOTLIN_1_6),
     WarnAboutNonExhaustiveWhenOnAlgebraicTypes(KOTLIN_1_6, kind = BUG_FIX),
     InstantiationOfAnnotationClasses(KOTLIN_1_6),
     OptInContagiousSignatures(KOTLIN_1_6, kind = BUG_FIX),
@@ -232,7 +230,6 @@ enum class LanguageFeature(
     PartiallySpecifiedTypeArguments(KOTLIN_1_7),
     EliminateAmbiguitiesWithExternalTypeParameters(KOTLIN_1_7),
     EliminateAmbiguitiesOnInheritedSamInterfaces(KOTLIN_1_7),
-    ConsiderExtensionReceiverFromConstrainsInLambda(KOTLIN_1_7, kind = BUG_FIX), // KT-49832
     ProperInternalVisibilityCheckInImportingScope(KOTLIN_1_7, kind = BUG_FIX),
     InlineClassImplementationByDelegation(KOTLIN_1_7),
     QualifiedSupertypeMayBeExtendedByOtherSupertype(KOTLIN_1_7),
@@ -385,12 +382,13 @@ enum class LanguageFeature(
     ForbidSyntheticPropertiesWithoutBaseJavaGetter(KOTLIN_2_2, kind = BUG_FIX), // KT-72305, KT-64358
     AnnotationDefaultTargetMigrationWarning(KOTLIN_2_2, kind = BUG_FIX), // KT-73255, KT-73494
     AllowDnnTypeOverridingFlexibleType(KOTLIN_2_2, kind = OTHER), // KT-74049
-    PreferDependentTypeVariablesWithProperArgumentConstraint(KOTLIN_2_2, kind = OTHER), // KT-71854
     ForbidEnumEntryNamedEntries(KOTLIN_2_2, kind = BUG_FIX), // KT-72829, KT-58920
     WhenGuards(KOTLIN_2_2, kind = OTHER), // KT-13626
     MultiDollarInterpolation(KOTLIN_2_2, kind = OTHER), // KT-2425
     JvmDefaultEnableByDefault(KOTLIN_2_2, kind = OTHER), // KT-71768
     ForbidExposureOfPrivateTypesInNonPrivateInlineFunctionsInKlibs(sinceVersion = KOTLIN_2_2, kind = BUG_FIX), // KT-70916
+    JvmIndyAllowLambdasWithAnnotations(KOTLIN_2_2, kind = OTHER), // KT-76606
+    FixationEnhancementsIn22(KOTLIN_2_2, kind = OTHER), // KT-76345, KT-71854
 
     // 2.3
 
