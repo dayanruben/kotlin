@@ -26333,6 +26333,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
         }
 
         @Test
+        @TestMetadata("loopParameter.kt")
+        public void testLoopParameter() {
+          runTest("compiler/testData/diagnostics/tests/lateinit/local/loopParameter.kt");
+        }
+
+        @Test
         @TestMetadata("uninitialized.kt")
         public void testUninitialized() {
           runTest("compiler/testData/diagnostics/tests/lateinit/local/uninitialized.kt");
@@ -53303,6 +53309,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("valOnAnnotationParameter.kt")
       public void testValOnAnnotationParameter() {
         runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/valOnAnnotationParameter.kt");
+      }
+
+      @Test
+      @TestMetadata("VirtualMemberHiddenOnMemberFromMappedJavaScope.kt")
+      public void testVirtualMemberHiddenOnMemberFromMappedJavaScope() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/VirtualMemberHiddenOnMemberFromMappedJavaScope.kt");
       }
 
       @Nested

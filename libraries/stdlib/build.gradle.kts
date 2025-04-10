@@ -49,8 +49,8 @@ fun outgoingConfiguration(name: String, configure: Action<Configuration> = Actio
     }
 
 fun KotlinCommonCompilerOptions.mainCompilationOptions() {
-    languageVersion = KotlinVersion.KOTLIN_2_1
-    apiVersion = KotlinVersion.KOTLIN_2_1
+    languageVersion = KotlinVersion.KOTLIN_2_2
+    apiVersion = KotlinVersion.KOTLIN_2_2
     freeCompilerArgs.add("-Xstdlib-compilation")
     freeCompilerArgs.add("-Xdont-warn-on-error-suppression")
     freeCompilerArgs.add("-Xcontext-parameters")
@@ -129,6 +129,7 @@ kotlin {
                         freeCompilerArgs.set(
                             listOfNotNull(
                                 "-Xjdk-release=6",
+                                "-jvm-default=disable",
                                 "-Xallow-kotlin-package",
                                 "-Xexpect-actual-classes",
                                 "-Xmultifile-parts-inherit",
@@ -159,6 +160,7 @@ kotlin {
                         freeCompilerArgs.set(
                             listOfNotNull(
                                 "-Xjdk-release=7",
+                                "-jvm-default=disable",
                                 "-Xallow-kotlin-package",
                                 "-Xexpect-actual-classes",
                                 "-Xmultifile-parts-inherit",
@@ -180,6 +182,7 @@ kotlin {
                         freeCompilerArgs.set(
                             listOfNotNull(
                                 "-Xallow-kotlin-package",
+                                "-jvm-default=disable",
                                 "-Xmultifile-parts-inherit",
                                 "-Xno-new-java-annotation-targets",
                                 "-Xexplicit-api=strict",

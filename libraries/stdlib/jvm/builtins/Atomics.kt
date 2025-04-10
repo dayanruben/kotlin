@@ -12,7 +12,7 @@ package kotlin.concurrent.atomics
 /**
  * An [Int] value that may be updated atomically.
  *
- * Instances of [AtomicInt] are represented by [java.util.concurrent.atomic.AtomicInteger] and provide the the same atomicity guarantees.
+ * Instances of [AtomicInt] are represented by [java.util.concurrent.atomic.AtomicInteger] and provide the same atomicity guarantees.
  *
  * @sample samples.concurrent.atomics.AtomicJvmSamples.processItems
  */
@@ -89,7 +89,7 @@ public actual class AtomicInt actual constructor(value: Int) {
 /**
  * A [Long] value that may be updated atomically.
  *
- * Instances of [AtomicLong] are represented by [java.util.concurrent.atomic.AtomicLong] and provide the the same atomicity guarantees.
+ * Instances of [AtomicLong] are represented by [java.util.concurrent.atomic.AtomicLong] and provide the same atomicity guarantees.
  */
 @SinceKotlin("2.1")
 @ExperimentalAtomicApi
@@ -164,7 +164,7 @@ public actual class AtomicLong actual constructor(value: Long) {
 /**
  * A [Boolean] value that may be updated atomically.
  *
- * Instances of [AtomicBoolean] are represented by [java.util.concurrent.atomic.AtomicBoolean] and provide the the same atomicity guarantees.
+ * Instances of [AtomicBoolean] are represented by [java.util.concurrent.atomic.AtomicBoolean] and provide the same atomicity guarantees.
  */
 @SinceKotlin("2.1")
 @ExperimentalAtomicApi
@@ -225,7 +225,7 @@ public actual class AtomicBoolean actual constructor(value: Boolean) {
 /**
  * An object reference that may be updated atomically.
  *
- * Instances of [AtomicReference] are represented by [java.util.concurrent.atomic.AtomicReference] and provide the the same atomicity guarantees.
+ * Instances of [AtomicReference] are represented by [java.util.concurrent.atomic.AtomicReference] and provide the same atomicity guarantees.
  */
 @SinceKotlin("2.1")
 @ExperimentalAtomicApi
@@ -255,7 +255,7 @@ public actual class AtomicReference<T> actual constructor(value: T) {
      * Atomically stores the given [new value][newValue] into this [AtomicReference] if the current value equals the [expected value][expectedValue],
      * returns true if the operation was successful and false only if the current value was not equal to the expected value.
      *
-     * Comparison of values is done by value.
+     * Comparison of values is done by reference.
      *
      * Has the same memory effects as [java.util.concurrent.atomic.AtomicReference.compareAndSet].
      */
@@ -265,7 +265,7 @@ public actual class AtomicReference<T> actual constructor(value: T) {
      * Atomically stores the given [new value][newValue] into this [AtomicReference] if the current value equals the [expected value][expectedValue]
      * and returns the old value in any case.
      *
-     * Comparison of values is done by value.
+     * Comparison of values is done by reference.
      *
      * In order to maintain compatibility with Java 8, [compareAndExchange] is implemented using [java.util.concurrent.atomic.AtomicReference.compareAndSet],
      * since [java.util.concurrent.atomic.AtomicReference.compareAndExchange] method is only available starting from Java 9.
