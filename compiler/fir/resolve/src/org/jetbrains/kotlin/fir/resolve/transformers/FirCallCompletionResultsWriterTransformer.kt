@@ -1020,10 +1020,18 @@ class FirCallCompletionResultsWriterTransformer(
             ?: runUnless(containingCallIsError) { (data as? ExpectedArgumentType.ArgumentsMap)?.lambdasReturnTypes?.get(anonymousFunction) }
 
         val newData = expectedReturnType?.toExpectedType(data?.contextSensitiveResolutionReplacements)
-        val result = transformElement(anonymousFunction, newData)
         for ((expression, _) in returnExpressions) {
             expression.transformSingle(this, newData)
         }
+
+        // TODO: Avoid recursive transformation of statements again (KT-76677)
+        // The only thing that seems necessary is writing the resulting type of the block
+        // from already analyzed statements.
+        // On the other hand, what does "resulting type of a block" means and why it's obtained from the last statement-only
+        // is a different question.
+        // Currently, it only seems to be heavily used by org.jetbrains.kotlin.fir.resolve.ResolveUtilsKt.addReturnToLastStatementIfNeeded
+        // below when checking the `isNothing` case.
+        anonymousFunction.body?.let { transformBlock(it, newData) }
 
         val resultReturnType = anonymousFunction.computeReturnType(
             session,
@@ -1033,9 +1041,9 @@ class FirCallCompletionResultsWriterTransformer(
         )
 
         if (initialReturnType != resultReturnType) {
-            val fakeSource = result.source?.fakeElement(KtFakeSourceElementKind.ImplicitFunctionReturnType)
-            result.replaceReturnTypeRef(result.returnTypeRef.resolvedTypeFromPrototype(resultReturnType, fakeSource))
-            session.lookupTracker?.recordTypeResolveAsLookup(result.returnTypeRef, result.source, context.file.source)
+            val fakeSource = anonymousFunction.source?.fakeElement(KtFakeSourceElementKind.ImplicitFunctionReturnType)
+            anonymousFunction.replaceReturnTypeRef(anonymousFunction.returnTypeRef.resolvedTypeFromPrototype(resultReturnType, fakeSource))
+            session.lookupTracker?.recordTypeResolveAsLookup(anonymousFunction.returnTypeRef, anonymousFunction.source, context.file.source)
             needUpdateLambdaType = true
         }
 
@@ -1044,13 +1052,13 @@ class FirCallCompletionResultsWriterTransformer(
             // class ID and annotations. On the other hand, `functionTypeKind()` checks only class ID.
             val kind = initialExpectedType?.functionTypeKindForDeserializedConeType()
                 ?: initialExpectedType?.functionTypeKind(session)
-                ?: result.typeRef.coneTypeSafe<ConeClassLikeType>()?.functionTypeKind(session)
-            result.replaceTypeRef(result.constructFunctionTypeRef(session, kind))
-            session.lookupTracker?.recordTypeResolveAsLookup(result.typeRef, result.source, context.file.source)
+                ?: anonymousFunction.typeRef.coneTypeSafe<ConeClassLikeType>()?.functionTypeKind(session)
+            anonymousFunction.replaceTypeRef(anonymousFunction.constructFunctionTypeRef(session, kind))
+            session.lookupTracker?.recordTypeResolveAsLookup(anonymousFunction.typeRef, anonymousFunction.source, context.file.source)
         }
         // Have to delay this until the type is written to avoid adding a return if the type is Unit.
-        result.addReturnToLastStatementIfNeeded(session)
-        return result
+        anonymousFunction.addReturnToLastStatementIfNeeded(session)
+        return anonymousFunction
     }
 
     /**
