@@ -34,9 +34,10 @@ interface KotlinNativeArtifact : KotlinArtifact {
     val modes: Set<NativeBuildType>
     val isStatic: Boolean
     val linkerOptions: List<String>
-    @Suppress("DEPRECATION")
+    @Suppress("DEPRECATION_ERROR")
     @Deprecated(
-        "Please migrate to toolOptionsConfigure DSL. More details are here: https://kotl.in/u1r8ln"
+        message = "Please migrate to toolOptionsConfigure DSL. More details are here: https://kotl.in/u1r8ln",
+        level = DeprecationLevel.ERROR,
     )
     val kotlinOptionsFn: KotlinCommonToolOptions.() -> Unit
     val toolOptionsConfigure: KotlinCommonCompilerToolOptions.() -> Unit
@@ -111,10 +112,12 @@ interface KotlinNativeArtifactConfig : KotlinArtifactConfig {
     fun modes(vararg modes: NativeBuildType)
     var isStatic: Boolean
     var linkerOptions: List<String>
+    @OptIn(InternalKotlinGradlePluginApi::class)
     @Deprecated(
-        "Please migrate to toolOptions DSL. More details are here: https://kotl.in/u1r8ln"
+        message = KOTLIN_OPTIONS_AS_TOOLS_DEPRECATION_MESSAGE,
+        level = DeprecationLevel.ERROR,
     )
-    fun kotlinOptions(@Suppress("DEPRECATION") fn: Action<KotlinCommonToolOptions>)
+    fun kotlinOptions(@Suppress("DEPRECATION_ERROR") fn: Action<KotlinCommonToolOptions>)
     fun toolOptions(configure: Action<KotlinCommonCompilerToolOptions>)
     fun binaryOption(name: String, value: String)
 }

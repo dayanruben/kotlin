@@ -3515,6 +3515,10 @@ public abstract interface annotation class kotlin/jvm/JvmDefaultWithCompatibilit
 public abstract interface annotation class kotlin/jvm/JvmDefaultWithoutCompatibility : java/lang/annotation/Annotation {
 }
 
+public abstract interface annotation class kotlin/jvm/JvmExposeBoxed : java/lang/annotation/Annotation {
+	public abstract fun jvmName ()Ljava/lang/String;
+}
+
 public abstract interface annotation class kotlin/jvm/JvmField : java/lang/annotation/Annotation {
 }
 
@@ -3709,6 +3713,9 @@ public final class kotlin/jvm/internal/BooleanSpreadBuilder : kotlin/jvm/interna
 	public final fun add (Z)V
 	public synthetic fun getSize (Ljava/lang/Object;)I
 	public final fun toArray ()[Z
+}
+
+public final class kotlin/jvm/internal/BoxingConstructorMarker {
 }
 
 public final class kotlin/jvm/internal/ByteCompanionObject {
@@ -5382,6 +5389,7 @@ public final class kotlin/sequences/SequencesKt {
 	public static final fun scan (Lkotlin/sequences/Sequence;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Lkotlin/sequences/Sequence;
 	public static final fun scanIndexed (Lkotlin/sequences/Sequence;Ljava/lang/Object;Lkotlin/jvm/functions/Function3;)Lkotlin/sequences/Sequence;
 	public static final fun sequence (Lkotlin/jvm/functions/Function2;)Lkotlin/sequences/Sequence;
+	public static final fun sequenceOf (Ljava/lang/Object;)Lkotlin/sequences/Sequence;
 	public static final fun sequenceOf ([Ljava/lang/Object;)Lkotlin/sequences/Sequence;
 	public static final fun shuffled (Lkotlin/sequences/Sequence;)Lkotlin/sequences/Sequence;
 	public static final fun shuffled (Lkotlin/sequences/Sequence;Lkotlin/random/Random;)Lkotlin/sequences/Sequence;

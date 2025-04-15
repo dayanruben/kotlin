@@ -1,5 +1,6 @@
 @file:Suppress("UNUSED_VARIABLE", "NAME_SHADOWING", "DEPRECATION")
 import org.gradle.jvm.tasks.Jar
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
@@ -20,6 +21,7 @@ import plugins.configureDefaultPublishing
 import plugins.configureKotlinPomAttributes
 import plugins.publishing.configureMultiModuleMavenPublishing
 import plugins.publishing.copyAttributes
+import java.nio.file.Files
 import kotlin.io.path.copyTo
 
 plugins {
@@ -220,6 +222,11 @@ kotlin {
                 associateWith(mainJdk7)
                 associateWith(mainJdk8)
             }
+            val recursiveDeletionTest by creating {
+                associateWith(main)
+                associateWith(mainJdk7)
+                associateWith(mainJdk8)
+            }
         }
     }
     js(IR) {
@@ -279,34 +286,11 @@ kotlin {
         }
     }
 
-    // Please remove this check after bootstrap and replacing @ExperimentalWasmDsl
-    val newExperimentalWasmDslAvailable = runCatching {
-        Class.forName("org.jetbrains.kotlin.gradle.ExperimentalWasmDsl")
-    }.isSuccess
-
-    if (newExperimentalWasmDslAvailable) {
-        logger.warn(
-            """
-            Apparently kotlin bootstrap just happened. And @ExperimentalWasmDsl annotation was moved to a new FQN.
-            Please replace 'org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl' 
-            with 'org.jetbrains.kotlin.gradle.ExperimentalWasmDsl'
-            and remove this check.
-            
-            Please note that the same check exists in kotlin-test module. Fix it there too.
-            """.trimIndent()
-        )
-    }
-
-    @Suppress("OPT_IN_USAGE")
-    // Remove line above and uncomment line below after bootstrap
-    // @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         commonWasmTargetConfiguration()
     }
-
-    @Suppress("OPT_IN_USAGE")
-    // Remove line above and uncomment line below after bootstrap
-    // @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    @OptIn(ExperimentalWasmDsl::class)
     wasmWasi {
         commonWasmTargetConfiguration()
     }
@@ -400,6 +384,13 @@ kotlin {
                 api(kotlinTest("junit"))
             }
             kotlin.srcDir("jvm/testLongRunning")
+        }
+
+        val jvmRecursiveDeletionTest by getting {
+            dependencies {
+                api(kotlinTest("junit"))
+            }
+            kotlin.srcDir("jdk7/recursiveDeletionTest")
         }
 
         val jsMain by getting {
@@ -834,6 +825,32 @@ tasks {
         }
     }
 
+    val jvmRecursiveDeletionTestTmpDir = layout.buildDirectory.asFile.map {
+        it.toPath().resolve("recursiveDeletionTestsWorkDir")
+    }
+
+    val jvmRecursiveDeletionTestCleanup by registering(Delete::class) {
+        setDelete(jvmRecursiveDeletionTestTmpDir)
+    }
+
+    // A dedicated task for tests on files and directories deletion from the current working directory.
+    // To prevent (to some extent) accidental removal of surrounding files and directories when tested functions
+    // are malfunctioning, this task gets its own working directory where removal will take place.
+    val jvmRecursiveDeletionTest by registering(Test::class) {
+        group = "verification"
+        val compilation = kotlin.jvm().compilations["recursiveDeletionTest"]
+
+        testClassesDirs = compilation.output.classesDirs
+        classpath = compilation.compileDependencyFiles + compilation.runtimeDependencyFiles + compilation.output.allOutputs
+
+        doFirst {
+            workingDir = jvmRecursiveDeletionTestTmpDir.get().toFile()
+            workingDir.deleteRecursively()
+            workingDir.mkdirs()
+        }
+        finalizedBy(jvmRecursiveDeletionTestCleanup)
+    }
+    check.configure { dependsOn(jvmRecursiveDeletionTest) }
 }
 
 

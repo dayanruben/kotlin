@@ -99,10 +99,12 @@ abstract class WasmAbstractInvalidationTest(
                 baseFileName = mainModuleInfo.moduleName,
                 emitNameSection = false,
                 generateSourceMaps = false,
-                generateWat = false
+                generateWat = false,
+                useDebuggerCustomFormatters = false,
+                generateDwarf = false
             )
 
-            writeCompilationResult(res, buildDir, mainModuleInfo.moduleName, false)
+            writeCompilationResult(res, buildDir, mainModuleInfo.moduleName)
 
             WasmVM.NodeJs.run(
                 "./test.mjs",

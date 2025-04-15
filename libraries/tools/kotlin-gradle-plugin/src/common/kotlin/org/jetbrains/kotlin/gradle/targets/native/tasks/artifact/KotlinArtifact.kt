@@ -58,12 +58,15 @@ abstract class KotlinNativeArtifactConfigImpl(artifactName: String) : KotlinArti
         toolOptionsConfigure = configure::execute
     }
 
-    @Suppress("DEPRECATION")
+    @Suppress("DEPRECATION_ERROR")
     internal var kotlinOptionsFn: KotlinCommonToolOptions.() -> Unit = {}
 
-    @Deprecated("Please migrate to toolOptions DSL. More details are here: https://kotl.in/u1r8ln")
+    @Deprecated(
+        message = KOTLIN_OPTIONS_AS_TOOLS_DEPRECATION_MESSAGE,
+        level = DeprecationLevel.ERROR,
+    )
     override fun kotlinOptions(
-        @Suppress("DEPRECATION") fn: Action<KotlinCommonToolOptions>
+        @Suppress("DEPRECATION_ERROR") fn: Action<KotlinCommonToolOptions>
     ) {
         kotlinOptionsFn = fn::execute
     }
