@@ -138,7 +138,7 @@ class K2JSCompiler : CLICompiler<K2JSCompilerArguments>() {
 
         // Produce KLIBs and get module (run analysis if main module is sources)
         var sourceModule: ModulesStructure? = null
-        val includes = arguments.includes
+        val includes = configuration.includes
         if (includes == null) {
             val outputKlibPath =
                 if (arguments.irProduceKlibFile) outputDir.resolve("$outputName.klib").normalize().absolutePath
@@ -268,13 +268,13 @@ class K2JSCompiler : CLICompiler<K2JSCompilerArguments>() {
             val icData = environmentForJS.configuration.incrementalDataProvider?.getSerializedData(moduleSourceFiles) ?: emptyList()
 
             val (moduleFragment, irPluginContext) = generateIrForKlibSerialization(
-                environmentForJS.project,
-                moduleSourceFiles,
-                environmentForJS.configuration,
-                sourceModule.jsFrontEndResult.jsAnalysisResult,
-                sourceModule.allDependencies,
-                icData,
-                IrFactoryImpl,
+                project = environmentForJS.project,
+                files = moduleSourceFiles,
+                configuration = environmentForJS.configuration,
+                analysisResult = sourceModule.jsFrontEndResult.jsAnalysisResult,
+                sortedDependencies = sourceModule.allDependencies,
+                icData = icData,
+                irFactory = IrFactoryImpl,
             ) {
                 sourceModule.getModuleDescriptor(it)
             }

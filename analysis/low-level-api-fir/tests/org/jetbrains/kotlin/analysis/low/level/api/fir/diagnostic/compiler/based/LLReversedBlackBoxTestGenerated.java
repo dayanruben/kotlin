@@ -4235,6 +4235,12 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
     }
 
     @Test
+    @TestMetadata("generticReferences.kt")
+    public void testGenerticReferences() {
+      runTest("compiler/testData/codegen/box/callableReference/generticReferences.kt");
+    }
+
+    @Test
     @TestMetadata("inlineArrayConstructors.kt")
     public void testInlineArrayConstructors() {
       runTest("compiler/testData/codegen/box/callableReference/inlineArrayConstructors.kt");
@@ -10610,6 +10616,12 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
     @TestMetadata("simple.kt")
     public void testSimple() {
       runTest("compiler/testData/codegen/box/contextParameters/simple.kt");
+    }
+
+    @Test
+    @TestMetadata("suspendContextParemetersWithExtension.kt")
+    public void testSuspendContextParemetersWithExtension() {
+      runTest("compiler/testData/codegen/box/contextParameters/suspendContextParemetersWithExtension.kt");
     }
 
     @Test
@@ -17903,6 +17915,12 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
     }
 
     @Test
+    @TestMetadata("lazyDelegateInObject.kt")
+    public void testLazyDelegateInObject() {
+      runTest("compiler/testData/codegen/box/delegatedProperty/lazyDelegateInObject.kt");
+    }
+
+    @Test
     @TestMetadata("local.kt")
     public void testLocal() {
       runTest("compiler/testData/codegen/box/delegatedProperty/local.kt");
@@ -18740,6 +18758,12 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
     @TestMetadata("delegationToIntersectionType2.kt")
     public void testDelegationToIntersectionType2() {
       runTest("compiler/testData/codegen/box/delegation/delegationToIntersectionType2.kt");
+    }
+
+    @Test
+    @TestMetadata("delegationToIntersectionType3.kt")
+    public void testDelegationToIntersectionType3() {
+      runTest("compiler/testData/codegen/box/delegation/delegationToIntersectionType3.kt");
     }
 
     @Test

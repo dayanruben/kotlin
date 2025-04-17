@@ -2922,6 +2922,12 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
     }
 
     @Test
+    @TestMetadata("generticReferences.kt")
+    public void testGenerticReferences() {
+      runTest("compiler/testData/codegen/box/callableReference/generticReferences.kt");
+    }
+
+    @Test
     @TestMetadata("inlineArrayConstructors.kt")
     public void testInlineArrayConstructors() {
       runTest("compiler/testData/codegen/box/callableReference/inlineArrayConstructors.kt");
@@ -7077,6 +7083,12 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
     @TestMetadata("sameNameWithPropertyName.kt")
     public void testSameNameWithPropertyName() {
       runTest("compiler/testData/codegen/box/contextParameters/sameNameWithPropertyName.kt");
+    }
+
+    @Test
+    @TestMetadata("suspendContextParemetersWithExtension.kt")
+    public void testSuspendContextParemetersWithExtension() {
+      runTest("compiler/testData/codegen/box/contextParameters/suspendContextParemetersWithExtension.kt");
     }
 
     @Test
@@ -13386,6 +13398,12 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
     }
 
     @Test
+    @TestMetadata("lazyDelegateInObject.kt")
+    public void testLazyDelegateInObject() {
+      runTest("compiler/testData/codegen/box/delegatedProperty/lazyDelegateInObject.kt");
+    }
+
+    @Test
     @TestMetadata("local.kt")
     public void testLocal() {
       runTest("compiler/testData/codegen/box/delegatedProperty/local.kt");
@@ -14121,6 +14139,12 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
     @TestMetadata("delegationToIntersectionType.kt")
     public void testDelegationToIntersectionType() {
       runTest("compiler/testData/codegen/box/delegation/delegationToIntersectionType.kt");
+    }
+
+    @Test
+    @TestMetadata("delegationToIntersectionType3.kt")
+    public void testDelegationToIntersectionType3() {
+      runTest("compiler/testData/codegen/box/delegation/delegationToIntersectionType3.kt");
     }
 
     @Test
