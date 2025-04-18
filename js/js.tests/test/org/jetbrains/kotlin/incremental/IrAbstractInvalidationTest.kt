@@ -21,7 +21,9 @@ import org.jetbrains.kotlin.ir.backend.js.generateKLib
 import org.jetbrains.kotlin.ir.backend.js.getSerializedData
 import org.jetbrains.kotlin.ir.backend.js.prepareAnalyzedSourceModule
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
+import org.jetbrains.kotlin.js.config.friendLibraries
 import org.jetbrains.kotlin.js.config.incrementalDataProvider
+import org.jetbrains.kotlin.js.config.libraries
 import org.jetbrains.kotlin.serialization.js.ModuleKind
 import org.jetbrains.kotlin.test.TargetBackend
 import java.io.File
@@ -65,8 +67,22 @@ abstract class AbstractJsIrInvalidationWithPLTest(granularity: JsGenerationGranu
         granularity,
         workingDirPath
     ) {
-    override fun createConfiguration(moduleName: String, language: List<String>, moduleKind: ModuleKind): CompilerConfiguration {
-        val config = super.createConfiguration(moduleName, language, moduleKind)
+    override fun createConfiguration(
+        moduleName: String,
+        moduleKind: ModuleKind,
+        languageFeatures: List<String>,
+        allLibraries: List<String>,
+        friendLibraries: List<String>,
+        includedLibrary: String?,
+    ): CompilerConfiguration {
+        val config = super.createConfiguration(
+            moduleName = moduleName,
+            moduleKind = moduleKind,
+            languageFeatures = languageFeatures,
+            allLibraries = allLibraries,
+            friendLibraries = friendLibraries,
+            includedLibrary = includedLibrary,
+        )
         config.setupPartialLinkageConfig(PartialLinkageConfig(PartialLinkageMode.ENABLE, PartialLinkageLogLevel.WARNING))
         return config
     }
@@ -81,8 +97,6 @@ abstract class IrAbstractInvalidationTest(
         configuration: CompilerConfiguration,
         moduleName: String,
         sourceDir: File,
-        dependencies: Collection<File>,
-        friends: Collection<File>,
         outputKlibFile: File
     ) {
         val projectJs = environment.project
@@ -93,8 +107,8 @@ abstract class IrAbstractInvalidationTest(
             project = projectJs,
             files = sourceFiles,
             configuration = configuration,
-            dependencies = dependencies.map { it.canonicalPath },
-            friendDependencies = friends.map { it.canonicalPath },
+            dependencies = configuration.libraries,
+            friendDependencies = configuration.friendLibraries,
             analyzer = AnalyzerWithCompilerReport(configuration)
         )
 
