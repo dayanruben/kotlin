@@ -25,6 +25,36 @@ public class IrSteppingWithBytecodeInlinerTestGenerated extends AbstractIrSteppi
   }
 
   @Test
+  @TestMetadata("annotatedConstructor.kt")
+  public void testAnnotatedConstructor() {
+    runTest("compiler/testData/debug/stepping/annotatedConstructor.kt");
+  }
+
+  @Test
+  @TestMetadata("annotatedFunction.kt")
+  public void testAnnotatedFunction() {
+    runTest("compiler/testData/debug/stepping/annotatedFunction.kt");
+  }
+
+  @Test
+  @TestMetadata("annotatedInlineFunctionWithDefault.kt")
+  public void testAnnotatedInlineFunctionWithDefault() {
+    runTest("compiler/testData/debug/stepping/annotatedInlineFunctionWithDefault.kt");
+  }
+
+  @Test
+  @TestMetadata("annotatedLocalVariable.kt")
+  public void testAnnotatedLocalVariable() {
+    runTest("compiler/testData/debug/stepping/annotatedLocalVariable.kt");
+  }
+
+  @Test
+  @TestMetadata("annotatedProperty.kt")
+  public void testAnnotatedProperty() {
+    runTest("compiler/testData/debug/stepping/annotatedProperty.kt");
+  }
+
+  @Test
   @TestMetadata("anonymousFunction.kt")
   public void testAnonymousFunction() {
     runTest("compiler/testData/debug/stepping/anonymousFunction.kt");

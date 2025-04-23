@@ -7512,6 +7512,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
     @TestDataPath("$PROJECT_ROOT")
     public class Contracts {
       @Test
+      @TestMetadata("contractInDiagnosticRendering.kt")
+      public void testContractInDiagnosticRendering() {
+        runTest("compiler/testData/diagnostics/tests/contracts/contractInDiagnosticRendering.kt");
+      }
+
+      @Test
       @TestMetadata("nonKotlinContractCall.kt")
       public void testNonKotlinContractCall() {
         runTest("compiler/testData/diagnostics/tests/contracts/nonKotlinContractCall.kt");
@@ -41358,6 +41364,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       }
 
       @Test
+      @TestMetadata("complexCases.kt")
+      public void testComplexCases() {
+        runTest("compiler/testData/diagnostics/tests/suspendConversion/complexCases.kt");
+      }
+
+      @Test
       @TestMetadata("conversionInLastStatementOfWhenBranch.kt")
       public void testConversionInLastStatementOfWhenBranch() {
         runTest("compiler/testData/diagnostics/tests/suspendConversion/conversionInLastStatementOfWhenBranch.kt");
@@ -54941,6 +54953,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       @TestMetadata("coercionToUnitWithEarlyReturn.kt")
       public void testCoercionToUnitWithEarlyReturn() {
         runTest("compiler/fir/analysis-tests/testData/resolve/inference/coercionToUnitWithEarlyReturn.kt");
+      }
+
+      @Test
+      @TestMetadata("conflictedExpectedType.kt")
+      public void testConflictedExpectedType() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/inference/conflictedExpectedType.kt");
       }
 
       @Test

@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.isObject
 import org.jetbrains.kotlin.diagnostics.findChildByType
 import org.jetbrains.kotlin.fir.*
+import org.jetbrains.kotlin.fir.backend.Fir2IrImplicitCastInserter.NoConversionsExpected
 import org.jetbrains.kotlin.fir.backend.generators.ClassMemberGenerator
 import org.jetbrains.kotlin.fir.backend.generators.OperatorExpressionGenerator
 import org.jetbrains.kotlin.fir.backend.utils.*
@@ -163,7 +164,9 @@ class Fir2IrVisitor(
             if (delegatedConstructor != null) {
                 with(memberGenerator) {
                     irEnumEntry.initializerExpression = IrFactoryImpl.createExpressionBody(
-                        delegatedConstructor.toIrDelegatingConstructorCall()
+                        delegatedConstructor.convertWithOffsets { startOffset, endOffset ->
+                            delegatedConstructor.toIrDelegatingConstructorCall(startOffset, endOffset)
+                        }
                     )
                 }
             }
@@ -588,8 +591,20 @@ class Fir2IrVisitor(
                 varargArgumentsExpression.coneElementTypeOrNull?.toIrType(c)
                     ?: error("Vararg expression has incorrect type"),
                 varargArgumentsExpression.arguments.mapNotNull {
-                    if (isGetClassOfUnresolvedTypeInAnnotation(it)) null
-                    else it.convertToIrVarargElement()
+                    if (isGetClassOfUnresolvedTypeInAnnotation(it)) return@mapNotNull null
+                    val irVarargElement = it.convertToIrVarargElement()
+                    if (irVarargElement is IrExpression) {
+                        with(implicitCastInserter) {
+                            @OptIn(NoConversionsExpected::class)
+                            irVarargElement.insertSpecialCast(
+                                it,
+                                it.resolvedType,
+                                varargArgumentsExpression.coneElementTypeOrNull ?: it.resolvedType.lowerBoundIfFlexible()
+                            )
+                        }
+                    } else {
+                        irVarargElement
+                    }
                 }
             )
         }
@@ -1235,7 +1250,7 @@ class Fir2IrVisitor(
             builtins.unitType
         else
             (lastOrNull() as? FirExpression)?.resolvedType?.toIrType(c) ?: builtins.unitType
-        return source.convertWithOffsets { startOffset, endOffset ->
+        return source.convertWithOffsets(keywordTokens = null) { startOffset, endOffset ->
             if (origin == IrStatementOrigin.DO_WHILE_LOOP) {
                 IrCompositeImpl(
                     startOffset, endOffset, type, null,

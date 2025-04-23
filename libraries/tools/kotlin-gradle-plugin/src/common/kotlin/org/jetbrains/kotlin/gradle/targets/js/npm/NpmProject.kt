@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.
 import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinPackageJsonTask
 import org.jetbrains.kotlin.gradle.targets.js.webTargetVariant
 import org.jetbrains.kotlin.gradle.utils.getFile
-import java.io.File
 import java.io.Serializable
 import org.jetbrains.kotlin.gradle.targets.wasm.nodejs.WasmNodeJsPlugin.Companion.kotlinNodeJsEnvSpec as wasmKotlinNodeJsEnvSpec
 import org.jetbrains.kotlin.gradle.targets.wasm.nodejs.WasmNodeJsRootPlugin.Companion.kotlinNodeJsRootExtension as wasmKotlinNodeJsRootExtension
@@ -71,8 +70,7 @@ open class NpmProject(@Transient val compilation: KotlinJsIrCompilation) : Seria
     val project: Project
         get() = target.project
 
-    val nodeModulesDir
-        get() = dir.map { it.dir(NODE_MODULES) }
+    val nodeModulesDir: Provider<Directory> = nodeJsRoot.rootPackageDirectory.map { it.dir(NODE_MODULES) }
 
     val packageJsonFile: Provider<RegularFile>
         get() = dir.map { it.file(PACKAGE_JSON) }
@@ -100,10 +98,11 @@ open class NpmProject(@Transient val compilation: KotlinJsIrCompilation) : Seria
         NpmProjectModules(dir.getFile())
     }
 
-    private val nodeExecutable by lazy {
+    internal val nodeExecutable by lazy {
         nodeJs.executable.get()
     }
 
+    @Deprecated("Internal KGP utility. Scheduled for removal in Kotlin 2.4.")
     fun useTool(
         exec: ExecSpec,
         tool: String,
@@ -112,22 +111,18 @@ open class NpmProject(@Transient val compilation: KotlinJsIrCompilation) : Seria
     ) {
         exec.workingDir(dir)
         exec.executable(nodeExecutable)
+        @Suppress("DEPRECATION")
         exec.args = nodeArgs + require(tool) + args
     }
 
     /**
      * Require [request] nodejs module and return canonical path to it's main js file.
      */
+    @Deprecated("Internal KGP utility. Scheduled for removal in Kotlin 2.4.")
     fun require(request: String): String {
 //        nodeJs.npmResolutionManager.requireAlreadyInstalled(project)
         return modules.require(request)
     }
-
-    /**
-     * Find node module according to https://nodejs.org/api/modules.html#modules_all_together,
-     * with exception that instead of traversing parent folders, we are traversing parent projects
-     */
-    internal fun resolve(name: String): File? = modules.resolve(name)
 
     override fun toString() = "NpmProject(${name.get()})"
 

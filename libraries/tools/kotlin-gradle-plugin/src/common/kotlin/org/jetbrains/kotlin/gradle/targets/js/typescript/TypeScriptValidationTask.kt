@@ -19,10 +19,12 @@ import org.jetbrains.kotlin.gradle.targets.js.NpmVersions
 import org.jetbrains.kotlin.gradle.targets.js.RequiredKotlinJsDependency
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinIrJsGeneratedTSValidationStrategy
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrCompilation
+import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProjectModules
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject
 import org.jetbrains.kotlin.gradle.targets.js.npm.RequiresNpmDependencies
 import org.jetbrains.kotlin.gradle.targets.js.npm.npmProject
 import org.jetbrains.kotlin.gradle.utils.getExecOperations
+import org.jetbrains.kotlin.gradle.utils.getFile
 import javax.inject.Inject
 
 @DisableCachingByDefault
@@ -75,9 +77,15 @@ internal constructor(
 
         val files = generatedDts.map { it.absolutePath }
 
+        val npmProjectDir = npmProject.dir
+
+        val modules = NpmProjectModules(npmProjectDir.getFile())
+
         val progressLogger = objects.newBuildOpLogger()
         val result = execWithProgress(progressLogger, "typescript", execOps) {
-            npmProject.useTool(it, "typescript/bin/tsc", listOf(), listOf("--noEmit") + files)
+            it.workingDir(npmProjectDir)
+            it.executable(npmProject.nodeExecutable)
+            it.args = listOf(modules.require("typescript/bin/tsc")) + "--noEmit" + files
         }
 
         if (result.exitValue == 0) return

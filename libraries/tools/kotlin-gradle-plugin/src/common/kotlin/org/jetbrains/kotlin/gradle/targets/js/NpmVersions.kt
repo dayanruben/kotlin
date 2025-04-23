@@ -12,20 +12,22 @@ import java.io.Serializable
  */
 // DO NOT MODIFY DIRECTLY! Use org.jetbrains.kotlin.generators.gradle.targets.js.MainKt
 class NpmVersions : Serializable {
-    val webpackDevServer = NpmPackageVersion("webpack-dev-server", "4.15.2")
-    val webpack = NpmPackageVersion("webpack", "5.94.0")
-    val webpackCli = NpmPackageVersion("webpack-cli", "5.1.4")
+    val webpack = NpmPackageVersion("webpack", "5.98.0")
+    val webpackCli = NpmPackageVersion("webpack-cli", "6.0.1")
+    val webpackDevServer = NpmPackageVersion("webpack-dev-server", "5.2.0")
     val sourceMapLoader = NpmPackageVersion("source-map-loader", "5.0.0")
     val sourceMapSupport = NpmPackageVersion("source-map-support", "0.5.21")
     val cssLoader = NpmPackageVersion("css-loader", "7.1.2")
     val styleLoader = NpmPackageVersion("style-loader", "4.0.0")
-    val sassLoader = NpmPackageVersion("sass-loader", "16.0.1")
-    val sass = NpmPackageVersion("sass", "1.78.0")
+    val sassLoader = NpmPackageVersion("sass-loader", "16.0.5")
+    val sass = NpmPackageVersion("sass", "1.85.1")
     val toStringLoader = NpmPackageVersion("to-string-loader", "1.2.0")
-    val miniCssExtractPlugin = NpmPackageVersion("mini-css-extract-plugin", "2.9.1")
-    val mocha = NpmPackageVersion("mocha", "10.7.3")
+    val miniCssExtractPlugin = NpmPackageVersion("mini-css-extract-plugin", "2.9.2")
+    val mocha = NpmPackageVersion("mocha", "11.1.0")
     val karma = NpmPackageVersion("karma", "6.4.4")
     val karmaChromeLauncher = NpmPackageVersion("karma-chrome-launcher", "3.2.0")
+
+    @Deprecated("Phantom JS is deprecated and will be removed soon")
     val karmaPhantomjsLauncher = NpmPackageVersion("karma-phantomjs-launcher", "1.0.4")
     val karmaFirefoxLauncher = NpmPackageVersion("karma-firefox-launcher", "2.1.3")
     val karmaOperaLauncher = NpmPackageVersion("karma-opera-launcher", "1.0.0")
@@ -34,6 +36,32 @@ class NpmVersions : Serializable {
     val karmaMocha = NpmPackageVersion("karma-mocha", "2.0.1")
     val karmaWebpack = NpmPackageVersion("karma-webpack", "5.0.1")
     val karmaSourcemapLoader = NpmPackageVersion("karma-sourcemap-loader", "0.4.0")
-    val typescript = NpmPackageVersion("typescript", "5.5.4")
+    val typescript = NpmPackageVersion("typescript", "5.7.3")
     val kotlinWebHelpers = NpmPackageVersion("kotlin-web-helpers", "2.0.0")
+
+    val allDependencies = listOf(
+        webpack,
+        webpackCli,
+        webpackDevServer,
+        sourceMapLoader,
+        sourceMapSupport,
+        cssLoader,
+        styleLoader,
+        sassLoader,
+        sass,
+        toStringLoader,
+        miniCssExtractPlugin,
+        mocha,
+        karma,
+        karmaChromeLauncher,
+        karmaFirefoxLauncher,
+        karmaOperaLauncher,
+        karmaIeLauncher,
+        karmaSafariLauncher,
+        karmaMocha,
+        karmaWebpack,
+        karmaSourcemapLoader,
+        typescript,
+        kotlinWebHelpers,
+    )
 }

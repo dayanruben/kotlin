@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.constructors
 import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.utils.addToStdlib.assignFrom
 import org.jetbrains.kotlinx.atomicfu.compiler.backend.AtomicHandlerType
 import org.jetbrains.kotlinx.atomicfu.compiler.backend.atomicfuRender
 import org.jetbrains.kotlinx.atomicfu.compiler.backend.common.AbstractAtomicfuIrBuilder
@@ -35,20 +36,20 @@ class JvmAtomicfuIrBuilder(
 
     override fun irCallFunction(
         symbol: IrSimpleFunctionSymbol,
-        dispatchReceiver: IrExpression?,
-        extensionReceiver: IrExpression?,
-        valueArguments: List<IrExpression?>,
+        arguments: List<IrExpression?>,
         valueType: IrType
     ): IrCall {
-        val irCall = irCall(symbol).apply {
-            this.dispatchReceiver = dispatchReceiver
-            this.extensionReceiver = extensionReceiver
-            valueArguments.forEachIndexed { i, arg ->
-                putValueArgument(i, arg?.let {
-                    val expectedParameterType = symbol.owner.valueParameters[i].type
-                    if (valueType.isBoolean() && !arg.type.isInt() && expectedParameterType.isInt()) toInt(it) else it
-                })
+        val castedArgs = arguments.mapIndexed { i, arg ->
+            val p = symbol.owner.parameters[i]
+            if (p.kind == IrParameterKind.Regular && arg != null &&
+                valueType.isBoolean() && !arg.type.isInt() && p.type.isInt()) {
+                toInt(arg)
+            } else {
+                arg
             }
+        }
+        val irCall = irCall(symbol).apply {
+            this.arguments.assignFrom(castedArgs)
         }
         return if (valueType.isBoolean() && symbol.owner.returnType.isInt()) toBoolean(irCall) else irCall
     }
@@ -102,7 +103,7 @@ class JvmAtomicfuIrBuilder(
                 origin = AbstractAtomicSymbols.ATOMICFU_GENERATED_FIELD
             }.apply {
                 this.initializer = context.irFactory.createExpressionBody(
-                    newJavaBoxedAtomic(atomicBoxType, initValue, (atomicFactoryCall as IrFunctionAccessExpression).dispatchReceiver)
+                    newJavaBoxedAtomic(atomicBoxType, listOf(initValue))
                 )
                 this.annotations = annotations
                 this.parent = parentContainer
@@ -132,11 +133,9 @@ class JvmAtomicfuIrBuilder(
 
     private fun newJavaBoxedAtomic(
         atomicBoxType: IrClassSymbol,
-        initValue: IrExpression,
-        dispatchReceiver: IrExpression?
+        arguments: List<IrExpression?>
     ) : IrFunctionAccessExpression = irCall(atomicBoxType.constructors.first()).apply {
-        putValueArgument(0, initValue)
-        this.dispatchReceiver = dispatchReceiver
+        this.arguments.assignFrom(arguments)
     }
 
     // val a$FU = j.u.c.a.AtomicIntegerFieldUpdater.newUpdater(A::class, "a")
@@ -146,12 +145,12 @@ class JvmAtomicfuIrBuilder(
         valueType: IrType,
         fieldName: String
     ) = irCall(atomicfuSymbols.newUpdater(fieldUpdaterClass)).apply {
-        putValueArgument(0, atomicfuSymbols.javaClassReference(parentClass.symbol.starProjectedType)) // tclass
+        arguments[0] = atomicfuSymbols.javaClassReference(parentClass.symbol.starProjectedType) // tclass
         if (fieldUpdaterClass == atomicfuSymbols.javaAtomicRefFieldUpdaterClass) {
-            putValueArgument(1, atomicfuSymbols.javaClassReference(valueType)) // vclass
-            putValueArgument(2, irString(fieldName)) // fieldName
+            arguments[1] = atomicfuSymbols.javaClassReference(valueType) // vclass
+            arguments[2] = irString(fieldName) // fieldName
         } else {
-            putValueArgument(1, irString(fieldName)) // fieldName
+            arguments[1] = irString(fieldName) // fieldName
         }
     }
 
@@ -160,6 +159,6 @@ class JvmAtomicfuIrBuilder(
         size: IrExpression,
         valueType: IrType,
         dispatchReceiver: IrExpression?
-    ) = callArraySizeConstructor(atomicArrayClass, size, dispatchReceiver)
+    ) = callArraySizeConstructor(atomicArrayClass, size)
         ?: error("Failed to find a constructor for the the given atomic array type ${atomicArrayClass.defaultType.render()}.")
 }

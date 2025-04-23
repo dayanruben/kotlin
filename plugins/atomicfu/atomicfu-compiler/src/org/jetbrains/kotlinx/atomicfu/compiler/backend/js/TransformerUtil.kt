@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.ir.types.impl.*
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.utils.addToStdlib.assignFrom
 
 private const val KOTLIN = "kotlin"
 private const val GET = "get"
@@ -38,7 +39,7 @@ internal fun buildCall(
     type: IrType? = null,
     origin: IrStatementOrigin? = null,
     typeArguments: List<IrType> = emptyList(),
-    valueArguments: List<IrExpression?> = emptyList()
+    arguments: List<IrExpression?> = emptyList()
 ): IrCall =
     IrCallImpl(
         startOffset,
@@ -48,14 +49,8 @@ internal fun buildCall(
         typeArguments.size,
         origin
     ).apply {
-        typeArguments.let {
-            it.withIndex().forEach { (i, t) ->
-                this.typeArguments[i] = t
-            }
-        }
-        valueArguments.let {
-            it.withIndex().forEach { (i, arg) -> putValueArgument(i, arg) }
-        }
+        this.typeArguments.assignFrom(typeArguments)
+        this.arguments.assignFrom(arguments)
     }
 
 internal fun IrFactory.buildBlockBody(statements: List<IrStatement>) =
@@ -122,11 +117,6 @@ internal fun IrExpression.isConstNull() = this is IrConst && this.kind.asString 
 internal fun IrField.getterName() = "<get-${name.asString()}>"
 internal fun IrField.setterName() = "<set-${name.asString()}>"
 
-internal fun IrFunctionAccessExpression.getValueArguments() =
-    (0 until valueArgumentsCount).map { i ->
-        getValueArgument(i)
-    }
-
 internal fun IrValueParameter.capture() = buildGetValue(UNDEFINED_OFFSET, UNDEFINED_OFFSET, symbol)
 
 internal fun IrPluginContext.buildGetterType(valueType: IrType): IrSimpleType =
@@ -180,7 +170,7 @@ internal fun IrPluginContext.buildArrayElementAccessor(
     val name = if (isSetter) arrayField.setterName() else arrayField.getterName()
     val accessorFunction = buildDefaultPropertyAccessor(name).apply {
         val valueParameter = buildValueParameter(this, name, valueType)
-        this.valueParameters = if (isSetter) listOf(valueParameter) else emptyList()
+        this.parameters = if (isSetter) listOf(valueParameter) else emptyList()
         body = irFactory.buildBlockBody(
             listOf(
                 if (isSetter) {
@@ -190,10 +180,8 @@ internal fun IrPluginContext.buildArrayElementAccessor(
                         target = setSymbol,
                         type = irBuiltIns.unitType,
                         origin = IrStatementOrigin.LAMBDA,
-                        valueArguments = listOf(index, valueParameter.capture())
-                    ).apply {
-                        this.dispatchReceiver = arrayGetter
-                    }
+                        arguments = listOf(arrayGetter, index, valueParameter.capture())
+                    )
                 } else {
                     val getField = buildGetField(arrayField, arrayGetter.dispatchReceiver)
                     val getSymbol = referenceFunction(referenceArrayClass(arrayField.type as IrSimpleType), GET)
@@ -202,10 +190,8 @@ internal fun IrPluginContext.buildArrayElementAccessor(
                         target = getSymbol,
                         type = valueType,
                         origin = IrStatementOrigin.LAMBDA,
-                        valueArguments = listOf(index)
-                    ).apply {
-                        dispatchReceiver = getField
-                    }
+                        arguments = listOf(getField, index)
+                    )
                 }
             )
         )
@@ -230,7 +216,7 @@ internal fun IrPluginContext.buildFieldAccessor(
     val name = if (isSetter) field.setterName() else field.getterName()
     val accessorFunction = buildDefaultPropertyAccessor(name).apply {
         val valueParameter = buildValueParameter(this, name, valueType)
-        valueParameters = if (isSetter) listOf(valueParameter) else emptyList()
+        if (isSetter) parameters += valueParameter
         body = irFactory.buildBlockBody(
             listOf(
                 if (isSetter) {

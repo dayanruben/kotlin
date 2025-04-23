@@ -58,6 +58,7 @@ internal class MissingDeclarationStubGenerator(private val builtIns: IrBuiltIns)
             is IrEnumEntrySymbol -> generateEnumEntry(symbol)
             is IrTypeAliasSymbol -> generateTypeAlias(symbol)
             is IrTypeParameterSymbol -> generateTypeParameter(symbol)
+            is IrFieldSymbol -> generateIrField(symbol)
             else -> throw NotImplementedError("Generation of stubs for ${symbol::class.java} is not supported yet")
         }
     }
@@ -165,6 +166,21 @@ internal class MissingDeclarationStubGenerator(private val builtIns: IrBuiltIns)
             variance = Variance.INVARIANT,
             index = 0,
             isReified = false,
+        )
+    }
+
+    private fun generateIrField(symbol: IrFieldSymbol): IrField {
+        return builtIns.irFactory.createField(
+            startOffset = UNDEFINED_OFFSET,
+            endOffset = UNDEFINED_OFFSET,
+            origin = PartiallyLinkedDeclarationOrigin.MISSING_DECLARATION,
+            name = symbol.guessName(),
+            visibility = DescriptorVisibilities.PRIVATE,
+            symbol = symbol,
+            type = builtIns.nothingType,
+            isFinal = false,
+            isStatic = false,
+            isExternal = false
         )
     }
 

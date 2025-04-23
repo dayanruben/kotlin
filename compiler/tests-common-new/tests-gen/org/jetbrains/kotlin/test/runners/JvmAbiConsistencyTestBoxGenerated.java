@@ -36066,6 +36066,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
     }
 
     @Test
+    @TestMetadata("primitiveSyntheticPropertyBoxedSetterType.kt")
+    public void testPrimitiveSyntheticPropertyBoxedSetterType() {
+      runTest("compiler/testData/codegen/box/javaInterop/primitiveSyntheticPropertyBoxedSetterType.kt");
+    }
+
+    @Test
     @TestMetadata("protectedField.kt")
     public void testProtectedField() {
       runTest("compiler/testData/codegen/box/javaInterop/protectedField.kt");
@@ -60205,6 +60211,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
     @TestMetadata("iterateOverListOfBoxedUnsignedValues.kt")
     public void testIterateOverListOfBoxedUnsignedValues() {
       runTest("compiler/testData/codegen/box/unsignedTypes/iterateOverListOfBoxedUnsignedValues.kt");
+    }
+
+    @Test
+    @TestMetadata("javaWrapperOverUByte.kt")
+    public void testJavaWrapperOverUByte() {
+      runTest("compiler/testData/codegen/box/unsignedTypes/javaWrapperOverUByte.kt");
     }
 
     @Test
