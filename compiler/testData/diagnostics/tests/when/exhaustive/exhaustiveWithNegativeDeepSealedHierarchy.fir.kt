@@ -1,0 +1,19 @@
+// RUN_PIPELINE_TILL: BACKEND
+
+sealed interface Variants {
+    data object A : Variants
+
+    sealed interface Subvariants : Variants {
+        data object B : Subvariants
+    }
+}
+
+fun foo(v: Variants): String {
+    if (v is Variants.Subvariants) {
+        return "B"
+    }
+
+    return when (v) {
+        is Variants.A -> "A"
+    }
+}

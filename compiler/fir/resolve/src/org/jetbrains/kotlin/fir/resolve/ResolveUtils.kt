@@ -55,7 +55,6 @@ import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.SmartcastStability
 import org.jetbrains.kotlin.types.model.safeSubstitute
 import org.jetbrains.kotlin.utils.addIfNotNull
-import org.jetbrains.kotlin.utils.addToStdlib.applyIf
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -526,31 +525,41 @@ private val ConeKotlinType.isKindOfNothing
     get() = lowerBoundIfFlexible().let { it.isNothing || it.isNullableNothing }
 
 fun BodyResolveComponents.transformExpressionUsingSmartcastInfo(expression: FirExpression): FirExpression {
-    val (stability, typesFromSmartCast) = dataFlowAnalyzer.getTypeUsingSmartcastInfo(expression) ?: return expression
+    val smartcastStatement = dataFlowAnalyzer.getTypeUsingSmartcastInfo(expression) ?: return expression
 
     val originalTypeWithAliases = expression.resolvedType
     val originalType = originalTypeWithAliases.fullyExpandedType(session)
 
-    val allTypes = if (originalType !is ConeStubType) typesFromSmartCast + originalType else typesFromSmartCast
-    if (allTypes.all { it is ConeDynamicType }) return expression
+    val allUpperTypes = if (originalType !is ConeStubType) smartcastStatement.upperTypes + originalType else smartcastStatement.upperTypes
 
-    val intersectedType = ConeTypeIntersector.intersectTypes(session.typeContext, allTypes)
-    if (intersectedType == originalType && intersectedType !is ConeDynamicType) return expression
+    val intersectedUpperType = when {
+        allUpperTypes.any { it !is ConeDynamicType } -> ConeTypeIntersector.intersectTypes(session.typeContext, allUpperTypes)
+        else -> null
+    }.takeUnless {
+        it == originalType && it !is ConeDynamicType
+    }
+
+    if (
+        smartcastStatement.lowerTypes.isEmpty() &&
+        (intersectedUpperType == null || intersectedUpperType == originalType && intersectedUpperType !is ConeDynamicType)
+    ) {
+        return expression
+    }
 
     return buildSmartCastExpression {
         originalExpression = expression
-        smartcastStability = stability
+        smartcastStability = smartcastStatement.upperTypesStability
         smartcastType = buildResolvedTypeRef {
             source = expression.source?.fakeElement(KtFakeSourceElementKind.SmartCastedTypeRef)
-            coneType = intersectedType
+            coneType = intersectedUpperType ?: originalType
         }
         // Example (1): if (x is String) { ... }, where x: dynamic
         //   the dynamic type will "consume" all other, erasing information.
         // Example (2): if (x == null) { ... },
         //   we need to track the type without `Nothing?` so that resolution with this as receiver can go through properly.
-        val nonNothingTypes = allTypes.filter { !it.isKindOfNothing }
+        val nonNothingTypes = allUpperTypes.filter { !it.isKindOfNothing }
         if (
-            intersectedType.isKindOfNothing &&
+            intersectedUpperType?.isKindOfNothing == true &&
             !originalType.isNullableNothing &&
             !originalType.isNothing &&
             originalType !is ConeStubType &&
@@ -561,8 +570,18 @@ fun BodyResolveComponents.transformExpressionUsingSmartcastInfo(expression: FirE
                 coneType = ConeTypeIntersector.intersectTypes(session.typeContext, nonNothingTypes)
             }
         }
-        this.typesFromSmartCast = typesFromSmartCast
-        coneTypeOrNull = if (stability == SmartcastStability.STABLE_VALUE) intersectedType else originalTypeWithAliases
+        this.upperTypesFromSmartCast = smartcastStatement.upperTypes
+        coneTypeOrNull = when {
+            smartcastStatement.upperTypesStability == SmartcastStability.STABLE_VALUE && intersectedUpperType != null -> intersectedUpperType
+            else -> originalTypeWithAliases
+        }
+        // We don't have an analogue of `coneTypeOrNull` for non-types because we can't denote a union,
+        // and `commonSuperClass()` would not be correct.
+        // Imagine a `sealed class S` with variants `A : S()`, `B : S()`, `C : S()`.
+        // If `x: ¬(A | B)`, this doesn't yet mean that `x: ¬S`.
+        this.lowerTypesFromSmartCast = smartcastStatement.lowerTypes
+            .takeIf { smartcastStatement.lowerTypesStability == SmartcastStability.STABLE_VALUE }
+            .orEmpty()
     }
 }
 
@@ -780,9 +799,6 @@ fun FirNamedReferenceWithCandidate.toErrorReference(diagnostic: ConeDiagnostic):
 
 val FirTypeParameterSymbol.defaultType: ConeTypeParameterType
     get() = ConeTypeParameterTypeImpl(toLookupTag(), isMarkedNullable = false)
-
-fun ConeClassLikeLookupTag.isRealOwnerOf(declarationSymbol: FirCallableSymbol<*>): Boolean =
-    this == declarationSymbol.dispatchReceiverClassLookupTagOrNull()
 
 val FirUserTypeRef.shortName: Name get() = qualifier.last().name
 

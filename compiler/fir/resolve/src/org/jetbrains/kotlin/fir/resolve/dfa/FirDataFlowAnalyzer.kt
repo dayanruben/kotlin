@@ -5,11 +5,12 @@
 
 package org.jetbrains.kotlin.fir.resolve.dfa
 
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentSet
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.contracts.description.LogicOperationKind
 import org.jetbrains.kotlin.contracts.description.canBeRevisited
-import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.isObject
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.contracts.description.ConeConditionalEffectDeclaration
 import org.jetbrains.kotlin.fir.contracts.description.ConeReturnsEffectDeclaration
@@ -18,29 +19,31 @@ import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.references.FirControlFlowGraphReference
 import org.jetbrains.kotlin.fir.references.symbol
+import org.jetbrains.kotlin.fir.references.toResolvedBaseSymbol
 import org.jetbrains.kotlin.fir.references.toResolvedPropertySymbol
-import org.jetbrains.kotlin.fir.resolve.*
+import org.jetbrains.kotlin.fir.resolve.ImplicitValueStorage
 import org.jetbrains.kotlin.fir.resolve.calls.ImplicitValue
 import org.jetbrains.kotlin.fir.resolve.calls.candidate.candidate
+import org.jetbrains.kotlin.fir.resolve.codeFragmentContext
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.*
+import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.chain
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
+import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.unwrapAnonymousFunctionExpression
 import org.jetbrains.kotlin.fir.resolve.transformers.unwrapAtoms
-import org.jetbrains.kotlin.fir.scopes.getFunctions
 import org.jetbrains.kotlin.fir.scopes.impl.toConeType
-import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
-import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
+import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirEnumEntrySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
 import org.jetbrains.kotlin.fir.types.*
-import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.SmartcastStability
-import org.jetbrains.kotlin.util.OperatorNameConventions
 
 class DataFlowAnalyzerContext(private val session: FirSession) {
     val graphBuilder: ControlFlowGraphBuilder = ControlFlowGraphBuilder()
@@ -166,13 +169,36 @@ abstract class FirDataFlowAnalyzer(
      *
      * @param expression The variable access expression.
      */
-    open fun getTypeUsingSmartcastInfo(expression: FirExpression): Pair<SmartcastStability, Set<ConeKotlinType>>? {
+    open fun getTypeUsingSmartcastInfo(expression: FirExpression): SmartCastStatement? {
         val flow = currentSmartCastPosition ?: return null
         // Can have an unstable alias to a stable variable, so don't resolve aliases here.
         val variable = flow.getRealVariableWithoutUnwrappingAlias(expression) ?: return null
-        val types = flow.getTypeStatement(variable)?.exactType?.ifEmpty { null } ?: return null
-        return variable.getStability(flow, types) to types
+        val typeStatement = flow.getTypeStatement(variable)?.takeIf { it.isNotEmpty }
+        val upperTypes = typeStatement?.upperTypes
+        val upperTypesStability = when {
+            upperTypes != null -> variable.getStability(flow, targetTypes = upperTypes)
+            else -> SmartcastStability.STABLE_VALUE
+        }
+        // If there are any assignments to local variables, we can no longer guarantee
+        // that the lower type bound is correct.
+        val stabilityWithNoTargetTypes = variable.getStability(flow, targetTypes = null)
+        val lowerTypes = typeStatement?.lowerTypes
+        return if (upperTypes?.isNotEmpty() == true || lowerTypes?.isNotEmpty() == true) {
+            SmartCastStatement(
+                upperTypes.orEmpty(), upperTypesStability,
+                lowerTypes.orEmpty(), stabilityWithNoTargetTypes,
+            )
+        } else {
+            null
+        }
     }
+
+    data class SmartCastStatement(
+        val upperTypes: Set<ConeKotlinType>,
+        val upperTypesStability: SmartcastStability,
+        val lowerTypes: Set<DfaType>,
+        val lowerTypesStability: SmartcastStability,
+    )
 
     fun returnExpressionsOfAnonymousFunction(function: FirAnonymousFunction): Collection<FirAnonymousFunctionReturnExpressionInfo> =
         graphBuilder.returnExpressionsOfAnonymousFunction(function) ?: error("anonymous function ${function.render()} not analyzed")
@@ -291,7 +317,13 @@ abstract class FirDataFlowAnalyzer(
         graphBuilder.enterCodeFragment(codeFragment).mergeIncomingFlow { _, flow ->
             val smartCasts = codeFragment.codeFragmentContext?.smartCasts.orEmpty()
             for ((realVariable, exactTypes) in smartCasts) {
-                flow.addTypeStatement(PersistentTypeStatement(variableStorage.remember(realVariable), exactTypes.toPersistentSet()))
+                flow.addTypeStatement(
+                    PersistentTypeStatement(
+                        variableStorage.remember(realVariable),
+                        upperTypes = exactTypes.toPersistentSet(),
+                        lowerTypes = persistentSetOf(),
+                    )
+                )
             }
         }
     }
@@ -402,6 +434,7 @@ abstract class FirDataFlowAnalyzer(
                         val expressionVariable = SyntheticVariable(typeOperatorCall)
                         if (operandVariable.isReal()) {
                             flow.addImplication((expressionVariable eq isType) implies (operandVariable typeEq type))
+                            flow.addImplication((expressionVariable eq !isType) implies (operandVariable typeNotEq type))
                         }
                         if (!type.canBeNull(components.session)) {
                             // x is (T & Any) => x != null
@@ -509,6 +542,10 @@ abstract class FirDataFlowAnalyzer(
             if (operand.resolvedType.isBoolean) {
                 flow.addImplication((expressionVariable eq !isEq) implies (operandVariable eq !expected))
             }
+
+            if (operandVariable is RealVariable) {
+                flow.addImplication((expressionVariable eq !isEq) implies (operandVariable valueNotEq expected))
+            }
         } else {
             // expression == non-null const -> expression != null
             flow.addImplication((expressionVariable eq isEq) implies (operandVariable notEq null))
@@ -565,76 +602,34 @@ abstract class FirDataFlowAnalyzer(
 
         if (leftOperandVariable !is RealVariable && rightOperandVariable !is RealVariable) return
 
-        if (operation == FirOperation.EQ || operation == FirOperation.NOT_EQ) {
-            if (hasOverriddenEquals(leftOperandType)) return
+        val equalsContract = when {
+            operation != FirOperation.EQ && operation != FirOperation.NOT_EQ -> EqualsOverrideContract.SAFE_FOR_SMART_CAST
+            else -> computeEqualsOverrideContract(leftOperandType, components.session, components.scopeSession, trustExpectClasses = false)
         }
 
-        if (leftOperandVariable is RealVariable) {
-            flow.addImplication((expressionVariable eq isEq) implies (leftOperandVariable typeEq rightOperandType))
-        }
-        if (rightOperandVariable is RealVariable) {
-            flow.addImplication((expressionVariable eq isEq) implies (rightOperandVariable typeEq leftOperandType))
-        }
-    }
+        fun FirBasedSymbol<*>.isSingleton(): Boolean = this is FirEnumEntrySymbol
+                // If the object has a problematic `equals()`, it will be reported during `when` exhaustiveness analysis.
+                || this is FirRegularClassSymbol && classKind.isObject
 
-    private fun hasOverriddenEquals(type: ConeKotlinType): Boolean {
-        val session = components.session
-        val symbolsForType = collectSymbolsForType(type, session)
-        if (symbolsForType.any { it.hasEqualsOverride(session, checkModality = true) }) return true
+        fun addEqualityImplications(variable: DataFlowVariable?, otherOperand: FirExpression) {
+            if (variable !is RealVariable) return
 
-        val superTypes = lookupSuperTypes(
-            symbolsForType,
-            lookupInterfaces = false,
-            deep = true,
-            session,
-            substituteTypes = false
-        )
-        val superClassSymbols = superTypes.mapNotNull {
-            it.fullyExpandedType(session).toRegularClassSymbol(session)
+            if (equalsContract == EqualsOverrideContract.SAFE_FOR_SMART_CAST) {
+                flow.addImplication((expressionVariable eq isEq) implies (variable typeEq otherOperand.resolvedType))
+            }
+
+            val symbol = when (otherOperand) {
+                is FirPropertyAccessExpression -> otherOperand.calleeReference.toResolvedBaseSymbol()?.takeIf { it.isSingleton() }
+                is FirResolvedQualifier -> otherOperand.symbol?.takeIf { it.isSingleton() }
+                else -> null
+            }
+            if (symbol != null) {
+                flow.addImplication((expressionVariable eq !isEq) implies (variable valueNotEq symbol))
+            }
         }
 
-        return superClassSymbols.any { it.hasEqualsOverride(session, checkModality = false) }
-    }
-
-    private fun FirClassSymbol<*>.hasEqualsOverride(session: FirSession, checkModality: Boolean): Boolean {
-        val status = resolvedStatus
-        if (checkModality && status.modality != Modality.FINAL) return true
-        if (status.isExpect) return true
-        if (isSmartcastPrimitive(classId)) return false
-        when (classId) {
-            StandardClassIds.Any -> return false
-            // Float and Double effectively had non-trivial `equals` semantics while they don't have explicit overrides (see KT-50535)
-            StandardClassIds.Float, StandardClassIds.Double -> return true
-        }
-
-        // When the class belongs to a different module, "equals" contract might be changed without re-compilation
-        // But since we had such behavior in FE1.0, it might be too strict to prohibit it now, especially once there's a lot of cases
-        // when different modules belong to a single project, so they're totally safe (see KT-50534)
-        // if (moduleData != session.moduleData) {
-        //     return true
-        // }
-
-        val ownerTag = this.toLookupTag()
-        return this.unsubstitutedScope(
-            session, components.scopeSession, withForcedTypeCalculator = false, memberRequiredPhase = FirResolvePhase.STATUS
-        ).getFunctions(OperatorNameConventions.EQUALS).any {
-            !it.isSubstitutionOrIntersectionOverride && it.isEquals(session) && ownerTag.isRealOwnerOf(it)
-        }
-    }
-
-    /**
-     * Determines if type smart-casting to the specified [ClassId] can be performed when values are
-     * compared via equality. Because this is determined using the ClassId, only standard built-in
-     * types are considered.
-     */
-    private fun isSmartcastPrimitive(classId: ClassId?): Boolean {
-        return when (classId) {
-            // Support other primitives as well: KT-62246.
-            StandardClassIds.String,
-            -> true
-
-            else -> false
-        }
+        addEqualityImplications(leftOperandVariable, rightOperand)
+        addEqualityImplications(rightOperandVariable, leftOperand)
     }
 
     // ----------------------------------- Jump -----------------------------------

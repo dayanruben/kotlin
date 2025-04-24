@@ -2193,6 +2193,12 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
         }
 
         @Test
+        @TestMetadata("ambigousContext.kt")
+        public void testAmbigousContext() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/ambigousContext.kt");
+        }
+
+        @Test
         @TestMetadata("anonymousFunctionsWithModifiers.kt")
         public void testAnonymousFunctionsWithModifiers() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/anonymousFunctionsWithModifiers.kt");
@@ -2621,6 +2627,18 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
         }
 
         @Test
+        @TestMetadata("equalityOperatorOnBoundedEnumTypeParameter.kt")
+        public void testEqualityOperatorOnBoundedEnumTypeParameter() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextSensitiveResolutionUsingExpectedType/otherExpectedTypePositions/equalityOperatorOnBoundedEnumTypeParameter.kt");
+        }
+
+        @Test
+        @TestMetadata("equalityOperatorOnBoundedSealedTypeParameter.kt")
+        public void testEqualityOperatorOnBoundedSealedTypeParameter() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextSensitiveResolutionUsingExpectedType/otherExpectedTypePositions/equalityOperatorOnBoundedSealedTypeParameter.kt");
+        }
+
+        @Test
         @TestMetadata("lambdasReturnStatements.kt")
         public void testLambdasReturnStatements() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextSensitiveResolutionUsingExpectedType/otherExpectedTypePositions/lambdasReturnStatements.kt");
@@ -2630,6 +2648,12 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
         @TestMetadata("lambdasReturnStatementsWithResolvedQualifiers.kt")
         public void testLambdasReturnStatementsWithResolvedQualifiers() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextSensitiveResolutionUsingExpectedType/otherExpectedTypePositions/lambdasReturnStatementsWithResolvedQualifiers.kt");
+        }
+
+        @Test
+        @TestMetadata("sameNamedEnumEntry.kt")
+        public void testSameNamedEnumEntry() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextSensitiveResolutionUsingExpectedType/otherExpectedTypePositions/sameNamedEnumEntry.kt");
         }
 
         @Test

@@ -1,9 +1,9 @@
 /*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.resolve.jvm.diagnostics
+package org.jetbrains.kotlin.backend.jvm
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactoryToRendererMap
@@ -12,18 +12,15 @@ import org.jetbrains.kotlin.diagnostics.error0
 import org.jetbrains.kotlin.diagnostics.error1
 import org.jetbrains.kotlin.diagnostics.error2
 import org.jetbrains.kotlin.diagnostics.rendering.BaseDiagnosticRendererFactory
-import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers
 import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers.NAME
 import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers.STRING
-import org.jetbrains.kotlin.diagnostics.rendering.Renderers
 import org.jetbrains.kotlin.diagnostics.rendering.RootDiagnosticRendererFactory
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.resolve.MemberComparator
 
 object JvmBackendErrors {
-    val CONFLICTING_JVM_DECLARATIONS by error1<PsiElement, ConflictingJvmDeclarationsData>(DECLARATION_SIGNATURE_OR_DEFAULT)
-    val CONFLICTING_INHERITED_JVM_DECLARATIONS by error1<PsiElement, ConflictingJvmDeclarationsData>(DECLARATION_SIGNATURE_OR_DEFAULT)
-    val ACCIDENTAL_OVERRIDE by error1<PsiElement, ConflictingJvmDeclarationsData>(DECLARATION_SIGNATURE_OR_DEFAULT)
+    val CONFLICTING_JVM_DECLARATIONS by error1<PsiElement, String>(DECLARATION_SIGNATURE_OR_DEFAULT)
+    val CONFLICTING_INHERITED_JVM_DECLARATIONS by error1<PsiElement, String>(DECLARATION_SIGNATURE_OR_DEFAULT)
+    val ACCIDENTAL_OVERRIDE by error1<PsiElement, String>(DECLARATION_SIGNATURE_OR_DEFAULT)
 
     val TYPEOF_SUSPEND_TYPE by error0<PsiElement>()
     val TYPEOF_NON_REIFIED_TYPE_PARAMETER_WITH_RECURSIVE_BOUND by error1<PsiElement, String>()
@@ -48,23 +45,10 @@ object JvmBackendErrors {
 }
 
 object KtDefaultJvmErrorMessages : BaseDiagnosticRendererFactory() {
-
-    @JvmField
-    val CONFLICTING_JVM_DECLARATIONS_DATA = CommonRenderers.renderConflictingSignatureData(
-        signatureKind = "JVM",
-        sortUsing = MemberComparator.INSTANCE,
-        declarationRenderer = Renderers.WITHOUT_MODIFIERS,
-        renderSignature = {
-            append(it.signature.name)
-            append(it.signature.desc)
-        },
-        declarations = ConflictingJvmDeclarationsData::signatureDescriptors,
-    )
-
     override val MAP = KtDiagnosticFactoryToRendererMap("KT").also { map ->
-        map.put(JvmBackendErrors.CONFLICTING_JVM_DECLARATIONS, "Platform declaration clash: {0}", CONFLICTING_JVM_DECLARATIONS_DATA)
-        map.put(JvmBackendErrors.ACCIDENTAL_OVERRIDE, "Accidental override: {0}", CONFLICTING_JVM_DECLARATIONS_DATA)
-        map.put(JvmBackendErrors.CONFLICTING_INHERITED_JVM_DECLARATIONS, "Inherited platform declarations clash: {0}", CONFLICTING_JVM_DECLARATIONS_DATA)
+        map.put(JvmBackendErrors.CONFLICTING_JVM_DECLARATIONS, "Platform declaration clash: {0}", STRING)
+        map.put(JvmBackendErrors.ACCIDENTAL_OVERRIDE, "Accidental override: {0}", STRING)
+        map.put(JvmBackendErrors.CONFLICTING_INHERITED_JVM_DECLARATIONS, "Inherited platform declarations clash: {0}", STRING)
         map.put(JvmBackendErrors.TYPEOF_SUSPEND_TYPE, "Suspend functional types are not supported in typeOf")
         map.put(JvmBackendErrors.TYPEOF_NON_REIFIED_TYPE_PARAMETER_WITH_RECURSIVE_BOUND, "Non-reified type parameters with recursive bounds are not supported yet: {0}", STRING)
         map.put(JvmBackendErrors.SUSPENSION_POINT_INSIDE_MONITOR, "A suspension point at {0} is inside a critical section", STRING)
