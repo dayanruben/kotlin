@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.compile.CodeFragmentCapturedValue
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLResolutionFacade
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.resolveToFirSymbol
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.containingKtFileIfAny
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.errorWithFirSpecificEntries
@@ -56,9 +56,9 @@ data class CodeFragmentCapturedId(val symbol: FirBasedSymbol<*>)
 
 @KaImplementationDetail
 object CodeFragmentCapturedValueAnalyzer {
-    fun analyze(resolveSession: LLFirResolveSession, codeFragment: FirCodeFragment): CodeFragmentCapturedValueData {
+    fun analyze(resolutionFacade: LLResolutionFacade, codeFragment: FirCodeFragment): CodeFragmentCapturedValueData {
         val selfSymbols = CodeFragmentDeclarationCollector().apply { codeFragment.accept(this) }.symbols.toSet()
-        val capturedVisitor = CodeFragmentCapturedValueVisitor(resolveSession, selfSymbols)
+        val capturedVisitor = CodeFragmentCapturedValueVisitor(resolutionFacade, selfSymbols)
         codeFragment.accept(capturedVisitor)
         return CodeFragmentCapturedValueData(capturedVisitor.values, capturedVisitor.files, capturedVisitor.reifiedTypeParameters)
     }
@@ -87,7 +87,7 @@ private class CodeFragmentDeclarationCollector : FirDefaultVisitorVoid() {
 }
 
 private class CodeFragmentCapturedValueVisitor(
-    private val resolveSession: LLFirResolveSession,
+    private val resolutionFacade: LLResolutionFacade,
     private val selfSymbols: Set<FirBasedSymbol<*>>,
 ) : FirDefaultVisitorVoid() {
     private val collectedMappings = LinkedHashMap<CodeFragmentCapturedId, CodeFragmentCapturedSymbol>()
@@ -106,7 +106,7 @@ private class CodeFragmentCapturedValueVisitor(
         get() = collectedReifiedTypeParameters.toSet()
 
     private val session: FirSession
-        get() = resolveSession.useSiteFirSession
+        get() = resolutionFacade.useSiteFirSession
 
     override fun visitElement(element: FirElement) {
         processElement(element)
@@ -346,7 +346,7 @@ private class CodeFragmentCapturedValueVisitor(
             }
 
             if (elementInBetween is KtFunction) {
-                val symbolInBetween = elementInBetween.resolveToFirSymbol(resolveSession)
+                val symbolInBetween = elementInBetween.resolveToFirSymbol(resolutionFacade)
                 if (symbolInBetween is FirCallableSymbol<*> && !symbolInBetween.isInline) {
                     return true
                 }

@@ -6,7 +6,7 @@
 package org.jetbrains.kotlin.analysis.low.level.api.fir
 
 import org.jetbrains.kotlin.analysis.low.level.api.fir.AbstractFirLazyDeclarationResolveTestCase.Directives.LAZY_MODE
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLResolutionFacade
 import org.jetbrains.kotlin.analysis.low.level.api.fir.test.configurators.AnalysisApiFirCustomScriptDefinitionTestConfigurator
 import org.jetbrains.kotlin.analysis.low.level.api.fir.test.configurators.AnalysisApiFirOutOfContentRootTestConfigurator
 import org.jetbrains.kotlin.analysis.low.level.api.fir.test.configurators.AnalysisApiFirScriptTestConfigurator
@@ -20,13 +20,13 @@ import org.jetbrains.kotlin.test.directives.JvmEnvironmentConfigurationDirective
 import org.jetbrains.kotlin.test.services.TestServices
 
 abstract class AbstractFirLazyDeclarationResolveTest : AbstractFirLazyDeclarationResolveOverAllPhasesTest() {
-    override fun checkSession(firSession: LLFirResolveSession) {
-        require(firSession.isSourceSession)
+    override fun checkResolutionFacade(resolutionFacade: LLResolutionFacade) {
+        require(resolutionFacade.isSourceSession)
     }
 
     override fun doTestByMainFile(mainFile: KtFile, mainModule: KtTestModule, testServices: TestServices) {
-        doLazyResolveTest(mainFile, testServices, outputRenderingMode = OutputRenderingMode.ALL_FILES_FROM_ALL_MODULES) { firResolveSession ->
-            findFirDeclarationToResolve(mainFile, testServices, firResolveSession)
+        doLazyResolveTest(mainFile, testServices, OutputRenderingMode.ALL_FILES_FROM_ALL_MODULES) { resolutionFacade ->
+            findFirDeclarationToResolve(mainFile, testServices, resolutionFacade)
         }
     }
 

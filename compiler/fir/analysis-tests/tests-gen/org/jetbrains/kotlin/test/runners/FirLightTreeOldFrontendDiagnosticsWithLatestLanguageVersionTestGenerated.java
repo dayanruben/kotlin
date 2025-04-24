@@ -1264,6 +1264,24 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
     }
 
     @Test
+    @TestMetadata("missingAbstractSuperCall.kt")
+    public void testMissingAbstractSuperCall() {
+      runTest("compiler/testData/diagnostics/tests/missingAbstractSuperCall.kt");
+    }
+
+    @Test
+    @TestMetadata("missingAbstractSuperCallWithClass.kt")
+    public void testMissingAbstractSuperCallWithClass() {
+      runTest("compiler/testData/diagnostics/tests/missingAbstractSuperCallWithClass.kt");
+    }
+
+    @Test
+    @TestMetadata("missingAbstractSuperCallWithObject.kt")
+    public void testMissingAbstractSuperCallWithObject() {
+      runTest("compiler/testData/diagnostics/tests/missingAbstractSuperCallWithObject.kt");
+    }
+
+    @Test
     @TestMetadata("missingConflictingOverloads.kt")
     public void testMissingConflictingOverloads() {
       runTest("compiler/testData/diagnostics/tests/missingConflictingOverloads.kt");
@@ -1795,6 +1813,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
     @TestMetadata("restrictsSuspensionDifference.kt")
     public void testRestrictsSuspensionDifference() {
       runTest("compiler/testData/diagnostics/tests/restrictsSuspensionDifference.kt");
+    }
+
+    @Test
+    @TestMetadata("resuiresOptInConstantExpression.kt")
+    public void testResuiresOptInConstantExpression() {
+      runTest("compiler/testData/diagnostics/tests/resuiresOptInConstantExpression.kt");
     }
 
     @Test

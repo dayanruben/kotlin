@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.fir.resolve.dfa.RealVariable
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.CFGNode
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.ClassExitNode
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.ControlFlowGraph
-import org.jetbrains.kotlin.fir.resolve.dfa.cfg.MergePostponedLambdaExitsNode
 import org.jetbrains.kotlin.fir.resolve.dfa.controlFlowGraph
 import org.jetbrains.kotlin.fir.resolve.dfa.smartCastedType
 import org.jetbrains.kotlin.fir.resolve.transformers.ReturnTypeCalculatorForFullBodyResolve
@@ -381,14 +380,7 @@ private class ContextCollectorVisitor(
         return null
     }
 
-    private fun isAcceptedControlFlowNode(node: CFGNode<*>): Boolean = when {
-        node is ClassExitNode -> false
-
-        // TODO Remove as soon as KT-61728 is fixed
-        node is MergePostponedLambdaExitsNode && !node.flowInitialized -> false
-
-        else -> true
-    }
+    private fun isAcceptedControlFlowNode(node: CFGNode<*>): Boolean = node !is ClassExitNode
 
     override fun visitScript(script: FirScript) = withProcessor(script) {
         dumpContext(script, ContextKind.SELF)
@@ -531,6 +523,24 @@ private class ContextCollectorVisitor(
 
         if (regularClass.isLocal) {
             context.storeClassIfNotNested(regularClass, regularClass.moduleData.session)
+        }
+    }
+
+    override fun visitDoWhileLoop(doWhileLoop: FirDoWhileLoop) = withProcessor(doWhileLoop) {
+        dumpContext(doWhileLoop, ContextKind.SELF)
+
+        onActiveBody {
+            dumpContext(doWhileLoop, ContextKind.BODY)
+
+            context.forBlock(bodyHolder.session) {
+                process(doWhileLoop.block) { block ->
+                    doVisitBlock(block, isolateBlock = false)
+                }
+
+                process(doWhileLoop.condition)
+            }
+
+            processChildren(doWhileLoop)
         }
     }
 
@@ -902,16 +912,30 @@ private class ContextCollectorVisitor(
         }
     }
 
-    override fun visitBlock(block: FirBlock) = withProcessor(block) {
+    override fun visitBlock(block: FirBlock) {
+        doVisitBlock(block)
+    }
+
+    /**
+     * @param isolateBlock whether to wrap the block into a [BodyResolveContext.forBlock]
+     */
+    private fun doVisitBlock(block: FirBlock, isolateBlock: Boolean = true) = withProcessor(block) {
         dumpContext(block, ContextKind.SELF)
 
         onActiveBody {
-            context.forBlock(bodyHolder.session) {
-                processChildren(block)
-
-                dumpContext(block, ContextKind.BODY)
+            if (isolateBlock) {
+                context.forBlock(bodyHolder.session) {
+                    processBlockBody(block)
+                }
+            } else {
+                processBlockBody(block)
             }
         }
+    }
+
+    private fun Processor.processBlockBody(block: FirBlock) {
+        processChildren(block)
+        dumpContext(block, ContextKind.BODY)
     }
 
     /**
@@ -959,6 +983,14 @@ private class ContextCollectorVisitor(
         fun process(element: FirElement?) {
             if (element != null) {
                 element.accept(delegate)
+                elementsToSkip += element
+            }
+        }
+
+        @ContextCollectorDsl
+        fun <T : FirElement?> process(element: T?, customVisit: (T & Any) -> Unit) {
+            if (element != null) {
+                customVisit(element)
                 elementsToSkip += element
             }
         }

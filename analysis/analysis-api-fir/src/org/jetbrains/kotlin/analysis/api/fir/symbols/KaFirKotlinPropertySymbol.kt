@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirSyntheticPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.isExtension
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirSymbolEntry
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
@@ -337,7 +336,7 @@ private class KaFirKotlinPropertyKtParameterBasedSymbol : KaFirKotlinPropertySym
     constructor(declaration: KtParameter, session: KaFirSession) : super(
         backingPsi = declaration,
         lazyFirSymbol = lazyPub<FirPropertySymbol> {
-            val parameterSymbol = declaration.resolveToFirSymbolOfType<FirValueParameterSymbol>(session.firResolveSession)
+            val parameterSymbol = declaration.resolveToFirSymbolOfType<FirValueParameterSymbol>(session.resolutionFacade)
             val propertySymbol = parameterSymbol.fir.correspondingProperty?.symbol
             requireWithAttachment(
                 propertySymbol != null,

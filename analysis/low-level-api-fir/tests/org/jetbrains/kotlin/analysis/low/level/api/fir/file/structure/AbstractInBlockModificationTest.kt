@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.KaElementModifica
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEvent
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventListener
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleOutOfBlockModificationEvent
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLResolutionFacade
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirFile
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirOfType
 import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.getNonLocalContainingOrThisDeclaration
@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.lazyResolveRenderer
 import org.jetbrains.kotlin.analysis.low.level.api.fir.test.configurators.AnalysisApiFirOutOfContentRootTestConfigurator
 import org.jetbrains.kotlin.analysis.low.level.api.fir.test.configurators.AnalysisApiFirScriptTestConfigurator
 import org.jetbrains.kotlin.analysis.low.level.api.fir.test.configurators.AnalysisApiFirSourceTestConfigurator
-import org.jetbrains.kotlin.analysis.low.level.api.fir.withResolveSession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.withResolutionFacade
 import org.jetbrains.kotlin.analysis.test.framework.base.AbstractAnalysisApiBasedTest
 import org.jetbrains.kotlin.analysis.test.framework.projectStructure.KtTestModule
 import org.jetbrains.kotlin.analysis.test.framework.services.expressionMarkerProvider
@@ -73,10 +73,10 @@ internal fun testInBlockModification(
     elementToModify: PsiElement,
     testServices: TestServices,
     dumpFirFile: Boolean,
-): String = withResolveSession(file) { firSession ->
+): String = withResolutionFacade(file) { resolutionFacade ->
     // We are trying to invoke a test case twice inside one session to be sure that sequent modifications are work
-    val firstAttempt = doTestInBlockModification(file, elementToModify, testServices, dumpFirFile, firSession)
-    val secondAttempt = doTestInBlockModification(file, elementToModify, testServices, dumpFirFile, firSession)
+    val firstAttempt = doTestInBlockModification(file, elementToModify, testServices, dumpFirFile, resolutionFacade)
+    val secondAttempt = doTestInBlockModification(file, elementToModify, testServices, dumpFirFile, resolutionFacade)
     testServices.assertions.assertEquals(firstAttempt, secondAttempt) { "Invocations must be the same" }
 
     firstAttempt
@@ -87,12 +87,12 @@ private fun doTestInBlockModification(
     elementToModify: PsiElement,
     testServices: TestServices,
     dumpFirFile: Boolean,
-    firSession: LLFirResolveSession,
+    resolutionFacade: LLResolutionFacade,
 ): String {
     val declaration = elementToModify.getNonLocalContainingOrThisDeclaration() ?: file
-    val firDeclarationBefore = declaration.getOrBuildFirOfType<FirDeclaration>(firSession)
+    val firDeclarationBefore = declaration.getOrBuildFirOfType<FirDeclaration>(resolutionFacade)
     val declarationToRender = if (dumpFirFile) {
-        file.getOrBuildFirFile(firSession).also { it.lazyResolveToPhaseRecursively(FirResolvePhase.BODY_RESOLVE) }
+        file.getOrBuildFirFile(resolutionFacade).also { it.lazyResolveToPhaseRecursively(FirResolvePhase.BODY_RESOLVE) }
     } else {
         firDeclarationBefore
     }
@@ -133,11 +133,11 @@ private fun doTestInBlockModification(
         declarationToRender.lazyResolveToPhaseRecursively(FirResolvePhase.BODY_RESOLVE)
         declarationToRender.render()
     } else {
-        declaration.getOrBuildFirOfType<FirDeclaration>(firSession)
+        declaration.getOrBuildFirOfType<FirDeclaration>(resolutionFacade)
         declarationToRender.render()
     }
 
-    val firDeclarationAfter = declaration.getOrBuildFirOfType<FirDeclaration>(firSession)
+    val firDeclarationAfter = declaration.getOrBuildFirOfType<FirDeclaration>(resolutionFacade)
     testServices.assertions.assertEquals(firDeclarationBefore, firDeclarationAfter) {
         "The declaration before and after must be the same"
     }

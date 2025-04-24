@@ -8,6 +8,8 @@ package org.jetbrains.kotlin.fir
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.FirMemberDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.expressions.FirExpression
@@ -570,22 +572,37 @@ private fun FirClassLikeDeclaration.containingNonLocalClass(session: FirSession)
     }
 }
 
-/**
- * The returned fir can be passed to the visibility checker, but don't
- * use it for anything else.
- */
-val <D, S : FirBasedSymbol<D>> S.firForVisibilityChecker: D
-    get() = fir.also {
-        lazyResolveToPhase(FirResolvePhase.STATUS)
-    }
-
 fun FirVisibilityChecker.isVisible(
-    symbol: FirCallableSymbol<*>,
+    symbol: FirBasedSymbol<*>,
     session: FirSession,
-    useSiteFile: FirFile,
-    containingDeclarations: List<FirDeclaration>,
+    useSiteFileSymbol: FirFileSymbol,
+    containingDeclarations: List<FirBasedSymbol<*>>,
     dispatchReceiver: FirExpression?,
+    skipCheckForContainingClassVisibility: Boolean = false,
 ): Boolean {
     symbol.lazyResolveToPhase(FirResolvePhase.STATUS)
-    return isVisible(symbol.fir, session, useSiteFile, containingDeclarations, dispatchReceiver)
+    val declaration = symbol.fir as? FirMemberDeclaration ?: error("Not a member declaration: $symbol")
+    return isVisible(
+        declaration = declaration,
+        session,
+        useSiteFile = useSiteFileSymbol.fir,
+        containingDeclarations.map { it.fir },
+        dispatchReceiver,
+        skipCheckForContainingClassVisibility = skipCheckForContainingClassVisibility,
+    )
+}
+
+fun FirVisibilityChecker.isClassLikeVisible(
+    symbol: FirClassLikeSymbol<*>,
+    session: FirSession,
+    useSiteFileSymbol: FirFileSymbol,
+    containingDeclarations: List<FirBasedSymbol<*>>,
+): Boolean {
+    symbol.lazyResolveToPhase(FirResolvePhase.STATUS)
+    return isClassLikeVisible(
+        declaration = symbol.fir,
+        session,
+        useSiteFileSymbol.fir,
+        containingDeclarations.map { it.fir },
+    )
 }

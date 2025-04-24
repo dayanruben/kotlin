@@ -6,13 +6,13 @@
 package org.jetbrains.kotlin.analysis.low.level.api.fir
 
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLResolutionFacade
 import org.jetbrains.kotlin.analysis.low.level.api.fir.test.configurators.AnalysisApiFirStdlibSourceTestConfigurator
 import org.jetbrains.kotlin.analysis.utils.errors.requireIsInstance
 
 abstract class AbstractStdLibSourcesLazyDeclarationResolveTest : AbstractByQualifiedNameLazyDeclarationResolveTest() {
-    override fun checkSession(firSession: LLFirResolveSession) {
-        requireIsInstance<KaLibrarySourceModule>(firSession.useSiteKtModule)
+    override fun checkResolutionFacade(resolutionFacade: LLResolutionFacade) {
+        requireIsInstance<KaLibrarySourceModule>(resolutionFacade.useSiteModule)
     }
 
     override val configurator get() = AnalysisApiFirStdlibSourceTestConfigurator

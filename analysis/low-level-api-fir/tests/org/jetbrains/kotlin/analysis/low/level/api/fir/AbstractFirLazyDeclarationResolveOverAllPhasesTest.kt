@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir
 
 import org.jetbrains.kotlin.analysis.low.level.api.fir.AbstractFirLazyDeclarationResolveOverAllPhasesTest.Directives.PRE_RESOLVED_PHASE
 import org.jetbrains.kotlin.analysis.low.level.api.fir.AbstractFirLazyDeclarationResolveOverAllPhasesTest.OutputRenderingMode.*
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLResolutionFacade
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.resolveToFirSymbol
 import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.LLFirResolveDesignationCollector
 import org.jetbrains.kotlin.analysis.test.framework.projectStructure.ktTestModuleStructure
@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.test.services.moduleStructure
  * This test iterates over all [FirResolvePhase] for the selected declaration and dump output after each phase
  */
 abstract class AbstractFirLazyDeclarationResolveOverAllPhasesTest : AbstractFirLazyDeclarationResolveTestCase() {
-    abstract fun checkSession(firSession: LLFirResolveSession)
+    abstract fun checkResolutionFacade(resolutionFacade: LLResolutionFacade)
 
     protected open val outputExtension: String get() = ".txt"
 
@@ -51,13 +51,13 @@ abstract class AbstractFirLazyDeclarationResolveOverAllPhasesTest : AbstractFirL
         ktFile: KtFile,
         testServices: TestServices,
         outputRenderingMode: OutputRenderingMode,
-        resolverProvider: (LLFirResolveSession) -> Pair<FirElementWithResolveState, ((FirResolvePhase) -> Unit)>,
+        resolverProvider: (LLResolutionFacade) -> Pair<FirElementWithResolveState, ((FirResolvePhase) -> Unit)>,
     ) {
         val resultBuilder = StringBuilder()
         val renderer = lazyResolveRenderer(resultBuilder)
 
-        withResolveSession(ktFile) { firResolveSession ->
-            checkSession(firResolveSession)
+        withResolutionFacade(ktFile) { resolutionFacade ->
+            checkResolutionFacade(resolutionFacade)
             val allKtFiles = testServices.ktTestModuleStructure.allMainKtFiles
 
             val preresolvedElementCarets = testServices.expressionMarkerProvider.getBottommostElementsOfTypeAtCarets<KtDeclaration>(
@@ -71,16 +71,16 @@ abstract class AbstractFirLazyDeclarationResolveOverAllPhasesTest : AbstractFirL
             }
 
             preresolvedElementCarets.forEach { (declaration, _) ->
-                declaration.resolveToFirSymbol(firResolveSession, phase ?: FirResolvePhase.BODY_RESOLVE)
+                declaration.resolveToFirSymbol(resolutionFacade, phase ?: FirResolvePhase.BODY_RESOLVE)
             }
 
-            val (elementToResolve, resolver) = resolverProvider(firResolveSession)
+            val (elementToResolve, resolver) = resolverProvider(resolutionFacade)
             val filesToRender = when (outputRenderingMode) {
                 OutputRenderingMode.ALL_FILES_FROM_ALL_MODULES -> {
-                    allKtFiles.map(firResolveSession::getOrBuildFirFile)
+                    allKtFiles.map(resolutionFacade::getOrBuildFirFile)
                 }
                 OutputRenderingMode.USE_SITE_AND_DESIGNATION_FILES -> {
-                    val firFile = firResolveSession.getOrBuildFirFile(ktFile)
+                    val firFile = resolutionFacade.getOrBuildFirFile(ktFile)
                     val designation = LLFirResolveDesignationCollector.getDesignationToResolve(elementToResolve)
                     listOfNotNull(firFile, designation?.firFile).distinct()
                 }
@@ -112,9 +112,9 @@ abstract class AbstractFirLazyDeclarationResolveOverAllPhasesTest : AbstractFirL
 
         clearCaches(ktFile.project)
 
-        withResolveSession(ktFile) { llSession ->
-            checkSession(llSession)
-            val firFile = llSession.getOrBuildFirFile(ktFile)
+        withResolutionFacade(ktFile) { resolutionFacade ->
+            checkResolutionFacade(resolutionFacade)
+            val firFile = resolutionFacade.getOrBuildFirFile(ktFile)
             firFile.lazyResolveToPhaseRecursively(FirResolvePhase.BODY_RESOLVE)
             if (resultBuilder.isNotEmpty()) {
                 resultBuilder.appendLine()

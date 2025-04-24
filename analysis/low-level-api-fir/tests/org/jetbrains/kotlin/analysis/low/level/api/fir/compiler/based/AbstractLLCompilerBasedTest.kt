@@ -9,7 +9,7 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir.compiler.based
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService
+import org.jetbrains.kotlin.analysis.low.level.api.fir.LLResolutionFacadeService
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirTestSuppressor
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.DiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirFile
@@ -139,12 +139,12 @@ abstract class AbstractLLCompilerBasedTest : AbstractKotlinCompilerTest() {
             val ktModule = ktTestModule.ktModule as KtModuleByCompilerConfiguration
 
             val project = ktModule.project
-            val firResolveSession = LLFirResolveSessionService.getInstance(project).getFirResolveSession(ktModule as KaModule)
+            val resolutionFacade = LLResolutionFacadeService.getInstance(project).getResolutionFacade(ktModule as KaModule)
 
             val allFirFiles = module.files.filter { it.isKtFile }.zip(
                 ktModule.psiFiles
                     .filterIsInstance<KtFile>()
-                    .map { psiFile -> psiFile.getOrBuildFirFile(firResolveSession) }
+                    .map { psiFile -> psiFile.getOrBuildFirFile(resolutionFacade) }
             )
 
             val diagnosticCheckerFilter = DiagnosticCheckerFilter(
@@ -153,10 +153,10 @@ abstract class AbstractLLCompilerBasedTest : AbstractKotlinCompilerTest() {
                 runExperimentalCheckers = FirDiagnosticsDirectives.WITH_EXPERIMENTAL_CHECKERS in module.directives,
             )
 
-            val analyzerFacade = facadeFactory.createFirFacade(firResolveSession, allFirFiles.toMap(), diagnosticCheckerFilter)
+            val analyzerFacade = facadeFactory.createFirFacade(resolutionFacade, allFirFiles.toMap(), diagnosticCheckerFilter)
             return FirOutputPartForDependsOnModule(
                 module,
-                firResolveSession.useSiteFirSession,
+                resolutionFacade.useSiteFirSession,
                 analyzerFacade.scopeSession,
                 analyzerFacade,
                 analyzerFacade.allFirFiles

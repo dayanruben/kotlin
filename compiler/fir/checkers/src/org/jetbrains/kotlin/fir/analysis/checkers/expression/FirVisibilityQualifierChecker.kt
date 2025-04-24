@@ -16,11 +16,12 @@ import org.jetbrains.kotlin.fir.declarations.FirCodeFragment
 import org.jetbrains.kotlin.fir.declarations.fullyExpandedClass
 import org.jetbrains.kotlin.fir.expressions.FirErrorResolvedQualifier
 import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
-import org.jetbrains.kotlin.fir.firForVisibilityChecker
 import org.jetbrains.kotlin.fir.getOwnerLookupTag
+import org.jetbrains.kotlin.fir.isClassLikeVisible
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeVisibilityError
 import org.jetbrains.kotlin.fir.resolve.toClassLikeSymbol
 import org.jetbrains.kotlin.fir.resolve.toSymbol
+import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeAliasSymbol
@@ -39,19 +40,21 @@ object FirVisibilityQualifierChecker : FirResolvedQualifierChecker(MppCheckerKin
         context: CheckerContext,
         reporter: DiagnosticReporter,
     ) {
-        val firFile = context.containingFile ?: return
+        val containingFileSymbol = context.containingFileSymbol ?: return
 
         // Note: errors on implicit receiver are already reported in coneDiagnosticToFirDiagnostic
         // See e.g. diagnostics/tests/visibility/packagePrivateStaticViaInternal.fir.kt
         if (expression.source?.kind != KtFakeSourceElementKind.ImplicitReceiver &&
             !context.session.visibilityChecker.isClassLikeVisible(
-                symbol.firForVisibilityChecker,
-                context.session, firFile, context.containingDeclarations,
+                symbol,
+                context.session,
+                containingFileSymbol,
+                context.containingDeclarations,
             )
         ) {
             if (expression !is FirErrorResolvedQualifier || expression.diagnostic !is ConeVisibilityError) {
-                @OptIn(DirectDeclarationsAccess::class)
-                if (context.containingFile?.declarations?.singleOrNull() !is FirCodeFragment) {
+                @OptIn(DirectDeclarationsAccess::class, SymbolInternals::class)
+                if (context.containingFileSymbol?.fir?.declarations?.singleOrNull() !is FirCodeFragment) {
                     reporter.report(symbol.toInvisibleReferenceDiagnostic(expression.source, context.session), context)
                 }
             }
@@ -65,8 +68,8 @@ object FirVisibilityQualifierChecker : FirResolvedQualifierChecker(MppCheckerKin
             val invisibleCompanion = expression.symbol?.fullyExpandedClass(context.session)?.toInvisibleCompanion(context)
             if (invisibleCompanion != null) {
                 if (expression !is FirErrorResolvedQualifier || expression.diagnostic !is ConeVisibilityError) {
-                    @OptIn(DirectDeclarationsAccess::class)
-                    if (context.containingFile?.declarations?.singleOrNull() !is FirCodeFragment) {
+                    @OptIn(DirectDeclarationsAccess::class, SymbolInternals::class)
+                    if (context.containingFileSymbol?.fir?.declarations?.singleOrNull() !is FirCodeFragment) {
                         reporter.report(invisibleCompanion.toInvisibleReferenceDiagnostic(expression.source, context.session), context)
                     }
                 }
@@ -87,10 +90,10 @@ object FirVisibilityQualifierChecker : FirResolvedQualifierChecker(MppCheckerKin
     }
 
     private fun FirRegularClassSymbol.toInvisibleCompanion(context: CheckerContext): FirRegularClassSymbol? {
-        val firFile = context.containingFile ?: return null
+        val firFile = context.containingFileSymbol ?: return null
         return resolvedCompanionObjectSymbol?.takeIf {
             !context.session.visibilityChecker.isClassLikeVisible(
-                it.firForVisibilityChecker, context.session, firFile, context.containingDeclarations,
+                it, context.session, firFile, context.containingDeclarations,
             )
         }
     }

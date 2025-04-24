@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirPropertyChecker
 import org.jetbrains.kotlin.fir.declarations.FirProperty
-import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.declaredProperties
 import org.jetbrains.kotlin.fir.declarations.primaryConstructorIfAny
 import org.jetbrains.kotlin.fir.declarations.utils.fromPrimaryConstructor
@@ -23,13 +22,13 @@ import org.jetbrains.kotlin.fir.declarations.utils.hasBackingField
 import org.jetbrains.kotlin.fir.declarations.utils.isCompanion
 import org.jetbrains.kotlin.fir.declarations.utils.isData
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
+import org.jetbrains.kotlin.fir.isVisible
 import org.jetbrains.kotlin.fir.java.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.fir.resolve.fqName
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.lookupSuperTypes
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.resolve.toRegularClassSymbol
-import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.*
@@ -63,8 +62,8 @@ class FirParcelizePropertyChecker(private val parcelizeAnnotations: List<ClassId
         }
 
         if (declaration.name == CREATOR_NAME && containingClassSymbol.isCompanion && declaration.hasJvmFieldAnnotation(session)) {
-            val outerClass = context.containingDeclarations.asReversed().getOrNull(1) as? FirRegularClass
-            if (outerClass != null && outerClass.symbol.isParcelize(session, parcelizeAnnotations)) {
+            val outerClass = context.containingDeclarations.asReversed().getOrNull(1) as? FirRegularClassSymbol
+            if (outerClass != null && outerClass.isParcelize(session, parcelizeAnnotations)) {
                 reporter.reportOn(declaration.source, KtErrorsParcelize.CREATOR_DEFINITION_IS_NOT_ALLOWED)
             }
         }
@@ -172,12 +171,11 @@ class FirParcelizePropertyChecker(private val parcelizeAnnotations: List<ClassId
     private fun ConeKotlinType.anySuperTypeConstructor(session: FirSession, predicate: (ConeKotlinType) -> Boolean): Boolean =
         with(session.typeContext) { anySuperTypeConstructor { it is ConeKotlinType && predicate(it) } }
 
-    @OptIn(SymbolInternals::class)
     private fun FirCallableSymbol<*>.isVisible(context: CheckerContext): Boolean {
         return context.session.visibilityChecker.isVisible(
-            fir,
+            this,
             context.session,
-            context.containingFile ?: return true,
+            context.containingFileSymbol ?: return true,
             context.containingDeclarations,
             dispatchReceiver = null
         )

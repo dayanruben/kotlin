@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.fir.packageFqName
 import org.jetbrains.kotlin.fir.references.isError
 import org.jetbrains.kotlin.fir.references.resolved
 import org.jetbrains.kotlin.fir.references.toResolvedConstructorSymbol
+import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirConstructorSymbol
 import org.jetbrains.kotlin.util.PrivateForInline
 
@@ -37,16 +38,16 @@ object FirProtectedConstructorNotInSuperCallChecker : FirFunctionCallChecker(Mpp
             symbol.visibility.normalize() == Visibilities.Protected &&
             // Prevent reporting for already invisible references
             !reference.isError() &&
-            context.containingDeclarations.none { it.symbol == constructedClass }
+            context.containingDeclarations.none { it == constructedClass }
         ) {
             reporter.reportOn(expression.calleeReference.source, FirErrors.PROTECTED_CONSTRUCTOR_NOT_IN_SUPER_CALL, symbol)
         }
     }
 
-    @OptIn(PrivateForInline::class, DirectDeclarationsAccess::class)
+    @OptIn(PrivateForInline::class, DirectDeclarationsAccess::class, SymbolInternals::class)
     private fun shouldAllowSuchCallNonetheless(symbol: FirConstructorSymbol, context: CheckerContext): Boolean {
-        val containingFile = context.containingFile ?: return false
-        if (containingFile.declarations.singleOrNull() is FirCodeFragment) return true
+        val containingFile = context.containingFileSymbol ?: return false
+        if (containingFile.fir.declarations.singleOrNull() is FirCodeFragment) return true
         val original = symbol.originalIfFakeOverride() ?: symbol
         return original.origin.isJavaOrEnhancement && original.callableId.packageName == containingFile.packageFqName
     }

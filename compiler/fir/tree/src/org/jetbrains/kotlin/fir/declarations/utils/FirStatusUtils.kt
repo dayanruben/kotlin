@@ -7,6 +7,8 @@ package org.jetbrains.kotlin.fir.declarations.utils
 
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 
 inline val FirMemberDeclaration.modality: Modality? get() = status.modality
 inline val FirMemberDeclaration.isAbstract: Boolean get() = status.modality == Modality.ABSTRACT
@@ -60,6 +62,7 @@ inline val FirMemberDeclaration.hasStableParameterNames: Boolean get() = status.
 
 inline val FirClassLikeDeclaration.isLocal: Boolean get() = symbol.classId.isLocal
 inline val FirClassLikeDeclaration.isLocalInFunction: Boolean get() = symbol.classId.isLocal && isReplSnippetDeclaration != true
+inline val FirClassLikeSymbol<*>.isLocalInFunction: Boolean get() = fir.isLocalInFunction
 
 inline val FirProperty.isLocalInFunction: Boolean get() = isLocal && isReplSnippetDeclaration != true
 
@@ -73,6 +76,9 @@ inline val FirRegularClass.isSealed: Boolean get() = status.modality == Modality
 
 inline val FirRegularClass.canHaveAbstractDeclaration: Boolean
     get() = isInterface || isAbstract || isSealed || isEnumClass
+
+inline val FirRegularClassSymbol.canHaveAbstractDeclaration: Boolean
+    get() = fir.canHaveAbstractDeclaration
 
 inline val FirRegularClass.isCompanion: Boolean get() = status.isCompanion
 inline val FirRegularClass.isData: Boolean get() = status.isData

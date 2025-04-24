@@ -462,6 +462,36 @@ public class SourceGetOrBuildFirTestGenerated extends AbstractSourceGetOrBuildFi
     }
 
     @Test
+    @TestMetadata("contextParameterSubstitutionFunction.kt")
+    public void testContextParameterSubstitutionFunction() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/calls/contextParameterSubstitutionFunction.kt");
+    }
+
+    @Test
+    @TestMetadata("contextParameterSubstitutionProperty.kt")
+    public void testContextParameterSubstitutionProperty() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/calls/contextParameterSubstitutionProperty.kt");
+    }
+
+    @Test
+    @TestMetadata("contextParameterTypeSubstitutionFunction.kt")
+    public void testContextParameterTypeSubstitutionFunction() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/calls/contextParameterTypeSubstitutionFunction.kt");
+    }
+
+    @Test
+    @TestMetadata("contextReceiverSubstitutionFunction.kt")
+    public void testContextReceiverSubstitutionFunction() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/calls/contextReceiverSubstitutionFunction.kt");
+    }
+
+    @Test
+    @TestMetadata("contextReceiverSubstitutionProperty.kt")
+    public void testContextReceiverSubstitutionProperty() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/calls/contextReceiverSubstitutionProperty.kt");
+    }
+
+    @Test
     @TestMetadata("functionCallArgumentList.kt")
     public void testFunctionCallArgumentList() {
       runTest("analysis/low-level-api-fir/testData/getOrBuildFir/calls/functionCallArgumentList.kt");
@@ -655,6 +685,12 @@ public class SourceGetOrBuildFirTestGenerated extends AbstractSourceGetOrBuildFi
     @TestMetadata("constructorProperty.kt")
     public void testConstructorProperty() {
       runTest("analysis/low-level-api-fir/testData/getOrBuildFir/declarations/constructorProperty.kt");
+    }
+
+    @Test
+    @TestMetadata("contextParametersInTypes.kt")
+    public void testContextParametersInTypes() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/declarations/contextParametersInTypes.kt");
     }
 
     @Test

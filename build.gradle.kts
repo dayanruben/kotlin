@@ -583,6 +583,8 @@ allprojects {
     if (kotlinBuildProperties.isInIdeaSync) {
         afterEvaluate {
             configurations.all {
+                // Remove kotlin-compiler-embeddable during IDEA import KTI-2278
+                exclude("org.jetbrains.kotlin", "kotlin-compiler-embeddable")
                 // Remove kotlin-compiler from dependencies during Idea import. KTI-1598
                 if (dependencies.removeIf { (it as? ProjectDependency)?.path == ":kotlin-compiler" }) {
                     logger.warn("Removed :kotlin-compiler project dependency from $this")
@@ -853,6 +855,7 @@ tasks {
         dependsOn(":native:analysis-api-klib-reader:check")
         dependsOn(":native:native.tests:test")
         dependsOn(":native:native.tests:cli-tests:check")
+        dependsOn(":native:native.tests:codegen-box:check")
         dependsOn(":native:native.tests:driver:check")
         dependsOn(":native:native.tests:stress:check")
         dependsOn(":native:native.tests:klib-compatibility:check")

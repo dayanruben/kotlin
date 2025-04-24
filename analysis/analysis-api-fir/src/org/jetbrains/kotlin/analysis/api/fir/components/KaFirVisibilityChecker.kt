@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFileSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLResolutionFacade
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirSafe
 import org.jetbrains.kotlin.analysis.low.level.api.fir.projectStructure.llFirModuleData
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.collectUseSiteContainers
@@ -52,17 +52,17 @@ internal class KaFirVisibilityChecker(
     ): KaUseSiteVisibilityChecker = withValidityAssertion {
         require(useSiteFile is KaFirFileSymbol)
 
-        val dispatchReceiver = receiverExpression?.getOrBuildFirSafe<FirExpression>(analysisSession.firResolveSession)
+        val dispatchReceiver = receiverExpression?.getOrBuildFirSafe<FirExpression>(analysisSession.resolutionFacade)
 
-        val positionModule = firResolveSession.moduleProvider.getModule(position)
-        val effectiveContainers = collectUseSiteContainers(position, firResolveSession).orEmpty()
+        val positionModule = resolutionFacade.moduleProvider.getModule(position)
+        val effectiveContainers = collectUseSiteContainers(position, resolutionFacade).orEmpty()
 
         KaFirUseSiteVisibilityChecker(
             positionModule,
             effectiveContainers,
             dispatchReceiver,
             useSiteFile,
-            firResolveSession,
+            resolutionFacade,
             token,
         )
     }
@@ -105,7 +105,7 @@ private class KaFirUseSiteVisibilityChecker(
     private val effectiveContainers: List<FirDeclaration>,
     private val dispatchReceiver: FirExpression?,
     private val useSiteFile: KaFirFileSymbol,
-    private val firResolveSession: LLFirResolveSession,
+    private val resolutionFacade: LLResolutionFacade,
     override val token: KaLifetimeToken,
 ) : KaUseSiteVisibilityChecker {
     override fun isVisible(candidateSymbol: KaDeclarationSymbol): Boolean = withValidityAssertion {
@@ -125,9 +125,9 @@ private class KaFirUseSiteVisibilityChecker(
         val effectiveSession = if (positionModule is KaDanglingFileModule && candidateModule != positionModule) {
             @Suppress("USELESS_CAST") // Smart cast is only available in K2
             val contextModule = (positionModule as KaDanglingFileModule).contextModule
-            firResolveSession.getSessionFor(contextModule)
+            resolutionFacade.getSessionFor(contextModule)
         } else {
-            firResolveSession.getSessionFor(positionModule)
+            resolutionFacade.getSessionFor(positionModule)
         }
 
         return effectiveSession.visibilityChecker.isVisible(

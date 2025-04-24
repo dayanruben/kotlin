@@ -6,17 +6,17 @@
 package org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostic.compiler.based.facades
 
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.DiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLResolutionFacade
 import org.jetbrains.kotlin.analysis.low.level.api.fir.compiler.based.LowLevelFirAnalyzerFacade
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.test.model.TestFile
 
 object LLFirAnalyzerFacadeFactoryWithoutPreresolve : LLFirAnalyzerFacadeFactory() {
     override fun createFirFacade(
-        firResolveSession: LLFirResolveSession,
+        resolutionFacade: LLResolutionFacade,
         allFirFiles: Map<TestFile, FirFile>,
         diagnosticCheckerFilter: DiagnosticCheckerFilter
     ): LowLevelFirAnalyzerFacade {
-        return LowLevelFirAnalyzerFacade(firResolveSession, allFirFiles, diagnosticCheckerFilter)
+        return LowLevelFirAnalyzerFacade(resolutionFacade, allFirFiles, diagnosticCheckerFilter)
     }
 }
