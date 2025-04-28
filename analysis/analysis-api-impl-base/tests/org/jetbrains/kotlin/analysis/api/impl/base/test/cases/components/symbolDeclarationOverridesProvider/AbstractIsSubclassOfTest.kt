@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.symbolDeclarationOverridesProvider
 
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.test.framework.base.AbstractAnalysisApiBasedTest
 import org.jetbrains.kotlin.analysis.test.framework.projectStructure.KtTestModule
 import org.jetbrains.kotlin.analysis.test.framework.services.expressionMarkerProvider
@@ -16,11 +17,20 @@ import org.jetbrains.kotlin.test.services.assertions
 
 abstract class AbstractIsSubclassOfTest : AbstractAnalysisApiBasedTest() {
     override fun doTestByMainFile(mainFile: KtFile, mainModule: KtTestModule, testServices: TestServices) {
-        val subClass = testServices.expressionMarkerProvider.getBottommostElementOfTypeAtCaret<KtClassOrObject>(mainFile, "sub")
-        val superClass = testServices.expressionMarkerProvider.getBottommostElementOfTypeAtCaret<KtClassOrObject>(mainFile, "super")
-
         val actual = executeOnPooledThreadInReadAction {
-            analyseForTest(subClass) {
+            // Since we're analyzing a whole type hierarchy in the main file, we should use `PREFER_SELF` for copy-aware analysis.
+            // `IGNORE_SELF` is too narrow. For example, if we have a type chain `A -> B -> C` and we try to get from `A` (subclass) to
+            // `C` (superclass), `IGNORE_SELF` would resolve `B` from the original file instead of the copied file.
+            copyAwareAnalyzeForTest(
+                mainFile,
+                danglingFileResolutionMode = KaDanglingFileResolutionMode.PREFER_SELF,
+            ) { contextFile ->
+                val subClass = testServices.expressionMarkerProvider
+                    .getBottommostElementOfTypeAtCaret<KtClassOrObject>(contextFile, "sub")
+
+                val superClass = testServices.expressionMarkerProvider
+                    .getBottommostElementOfTypeAtCaret<KtClassOrObject>(contextFile, "super")
+
                 val subClassSymbol = subClass.classSymbol!!
                 val superClassSymbol = superClass.classSymbol!!
 

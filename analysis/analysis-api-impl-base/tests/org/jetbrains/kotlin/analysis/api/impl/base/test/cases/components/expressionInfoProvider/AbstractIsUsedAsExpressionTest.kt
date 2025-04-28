@@ -23,10 +23,10 @@ abstract class AbstractIsUsedAsExpressionTest : AbstractAnalysisApiBasedTest() {
         }
         val actual = StringBuilder()
 
-        analyseForTest(expression) {
-            actual.appendLine("expression: $expression")
-            actual.appendLine("text: ${expression.text}")
-            actual.appendLine("isUsedAsExpression: ${expression.isUsedAsExpression}")
+        copyAwareAnalyzeForTest(expression) { contextExpression ->
+            actual.appendLine("expression: $contextExpression")
+            actual.appendLine("text: ${contextExpression.text}")
+            actual.appendLine("isUsedAsExpression: ${contextExpression.isUsedAsExpression}")
         }
 
         testServices.assertions.assertEqualsToTestOutputFile(actual.toString())

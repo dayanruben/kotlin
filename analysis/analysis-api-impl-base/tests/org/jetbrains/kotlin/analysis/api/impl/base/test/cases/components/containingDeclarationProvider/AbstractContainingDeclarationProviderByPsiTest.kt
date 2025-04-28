@@ -21,11 +21,17 @@ abstract class AbstractContainingDeclarationProviderByPsiTest : AbstractAnalysis
         val currentPath = mutableListOf<KtDeclaration>()
         val ktClasses = mutableListOf<KtClassOrObject>()
 
-        analyseForTest(mainFile) { contextFile ->
+        copyAwareAnalyzeForTest(mainFile) { contextFile ->
             val expectedFileSymbol = contextFile.symbol
             contextFile.accept(object : KtVisitorVoid() {
                 override fun visitElement(element: PsiElement) {
                     element.acceptChildren(this)
+                }
+
+                override fun visitLambdaExpression(lambdaExpression: KtLambdaExpression) {
+                    // Due to a PSI quirk, `KtFunctionLiteral` can't be reached by `visitDeclaration` directly,
+                    // but we need to visit it to match it with `KaFirAnonymousFunctionSymbol`
+                    visitDeclaration(lambdaExpression.functionLiteral)
                 }
 
                 override fun visitDeclaration(dcl: KtDeclaration) {

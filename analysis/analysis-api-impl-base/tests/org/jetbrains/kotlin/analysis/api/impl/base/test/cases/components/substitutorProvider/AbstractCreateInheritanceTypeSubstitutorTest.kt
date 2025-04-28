@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.substitutorProvider
 
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.stringRepresentation
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -22,13 +23,25 @@ abstract class AbstractCreateInheritanceTypeSubstitutorTest : AbstractAnalysisAp
         val baseClass = testServices.expressionMarkerProvider
             .getBottommostElementsOfTypeAtCarets<KtClassOrObject>(testServices, "base")
             .single().first
+
         val superClass = testServices.expressionMarkerProvider
             .getBottommostElementsOfTypeAtCarets<KtClassOrObject>(testServices, "super")
             .single().first
 
-        val substitutorRendered = analyseForTest(baseClass) {
-            val superClassSymbol = superClass.classSymbol!!
-            val substitutor = createInheritanceTypeSubstitutor(baseClass.classSymbol!!, superClassSymbol)
+        // Since we're analyzing a whole type hierarchy in the main file, we should use `PREFER_SELF` for copy-aware analysis. `IGNORE_SELF`
+        // is too narrow. For example, if we have a type chain `A -> B -> C` and we try to get from `A` (base class) to `C` (superclass),
+        // `IGNORE_SELF` would resolve `B` from the original file instead of the copied file.
+        val substitutorRendered = copyAwareAnalyzeForTest(
+            baseClass.containingKtFile,
+            danglingFileResolutionMode = KaDanglingFileResolutionMode.PREFER_SELF,
+        ) { contextFile ->
+            val contextBaseClass = getDependentElementFromFile(baseClass, contextFile)
+            val contextSuperClass = getDependentElementFromFile(superClass, contextFile)
+
+            val baseClassSymbol = contextBaseClass.classSymbol!!
+            val superClassSymbol = contextSuperClass.classSymbol!!
+
+            val substitutor = createInheritanceTypeSubstitutor(baseClassSymbol, superClassSymbol)
             prettyPrint {
                 appendLine("Substitutor: ${stringRepresentation(substitutor)}")
                 if (substitutor != null) {

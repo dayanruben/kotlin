@@ -18,14 +18,16 @@ import org.jetbrains.kotlin.test.services.assertions
 abstract class AbstractCanBeOperatorTest : AbstractAnalysisApiBasedTest() {
     override fun doTestByMainFile(mainFile: KtFile, mainModule: KtTestModule, testServices: TestServices) {
         val function = testServices.expressionMarkerProvider.getBottommostElementOfTypeAtCaretOrNull<KtNamedFunction>(mainFile)
+            ?: error("No function at caret found. Please add a caret to a function declaration.")
         val symbolRenderer = DebugSymbolRenderer(renderExtra = true, renderTypeByProperties = true, renderExpandedTypes = true)
-        val actual = analyseForTest(mainFile) {
-            val functionSymbol = function?.symbol as? KaNamedFunctionSymbol ?: error("NO NAMED FUNCTION UNDER CARET")
+
+        val actual = copyAwareAnalyzeForTest(function) { contextFunction ->
+            val functionSymbol = contextFunction.symbol as? KaNamedFunctionSymbol ?: error("No named function symbol found at the caret.")
             val canBeOperator = functionSymbol.canBeOperator
 
             buildString {
                 appendLine("FUNCTION:")
-                appendLine("  ${symbolRenderer.render(this@analyseForTest, functionSymbol)}")
+                appendLine("  ${symbolRenderer.render(this@copyAwareAnalyzeForTest, functionSymbol)}")
                 appendLine("CAN_BE_OPERATOR:")
                 appendLine("  $canBeOperator")
             }

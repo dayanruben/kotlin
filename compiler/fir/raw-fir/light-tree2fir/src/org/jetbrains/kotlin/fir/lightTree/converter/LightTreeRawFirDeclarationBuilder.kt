@@ -103,7 +103,7 @@ class LightTreeRawFirDeclarationBuilder(
                 OBJECT_DECLARATION -> firDeclarationList += convertClass(child)
                 DESTRUCTURING_DECLARATION -> {
                     val initializer = buildFirDestructuringDeclarationInitializer(child)
-                    firDeclarationList += buildErrorTopLevelDestructuringDeclaration(child.toFirSourceElement(), initializer)
+                    firDeclarationList += buildErrorNonLocalDestructuringDeclaration(child.toFirSourceElement(), initializer)
                 }
                 SCRIPT -> {
                     // TODO: scripts aren't supported yet
@@ -113,7 +113,7 @@ class LightTreeRawFirDeclarationBuilder(
         }
 
         modifierList.forEach {
-            firDeclarationList += buildErrorTopLevelDeclarationForDanglingModifierList(it)
+            firDeclarationList += buildErrorNonLocalDeclarationForDanglingModifierList(it)
         }
 
         return buildFile {
@@ -402,7 +402,7 @@ class LightTreeRawFirDeclarationBuilder(
         unescapedAnnotation: LighterASTNode,
         defaultAnnotationUseSiteTarget: AnnotationUseSiteTarget? = null,
         diagnostic: ConeDiagnostic? = null,
-    ): FirAnnotationCall {
+    ): FirAnnotationCall = withForcedLocalContext {
         var annotationUseSiteTarget: AnnotationUseSiteTarget? = null
         lateinit var constructorCalleePair: Pair<FirTypeRef, List<FirExpression>>
         unescapedAnnotation.forEachChildren {
@@ -422,7 +422,8 @@ class LightTreeRawFirDeclarationBuilder(
                 ?.toFirSourceElement()
             this.name = name
         }
-        return if (diagnostic == null) {
+
+        if (diagnostic == null) {
             buildAnnotationCall {
                 source = unescapedAnnotation.toFirSourceElement()
                 useSiteTarget = annotationUseSiteTarget ?: defaultAnnotationUseSiteTarget
@@ -923,13 +924,13 @@ class LightTreeRawFirDeclarationBuilder(
                 MODIFIER_LIST -> modifierLists += node
                 DESTRUCTURING_DECLARATION -> {
                     val initializer = buildFirDestructuringDeclarationInitializer(node)
-                    container += buildErrorTopLevelDestructuringDeclaration(node.toFirSourceElement(), initializer)
+                    container += buildErrorNonLocalDestructuringDeclaration(node.toFirSourceElement(), initializer)
                 }
             }
         }
 
         for (node in modifierLists) {
-            firDeclarations += buildErrorTopLevelDeclarationForDanglingModifierList(node).apply {
+            firDeclarations += buildErrorNonLocalDeclarationForDanglingModifierList(node).apply {
                 containingClassAttr = currentDispatchReceiverType()?.lookupTag
             }
         }
@@ -945,7 +946,7 @@ class LightTreeRawFirDeclarationBuilder(
         )
     }
 
-    private fun buildErrorTopLevelDeclarationForDanglingModifierList(node: LighterASTNode) = buildDanglingModifierList {
+    private fun buildErrorNonLocalDeclarationForDanglingModifierList(node: LighterASTNode) = buildDanglingModifierList {
         this.source = node.toFirSourceElement(KtFakeSourceElementKind.DanglingModifierList)
         moduleData = baseModuleData
         origin = FirDeclarationOrigin.Source

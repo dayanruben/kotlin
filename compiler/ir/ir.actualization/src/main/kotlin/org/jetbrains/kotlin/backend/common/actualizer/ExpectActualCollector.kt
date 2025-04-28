@@ -49,13 +49,14 @@ internal class ExpectActualCollector(
     private val diagnosticsReporter: IrDiagnosticReporter,
     private val expectActualTracker: ExpectActualTracker?,
     private val extraActualDeclarationExtractors: List<IrExtraActualDeclarationExtractor>,
-    private val missingActualProvider: IrMissingActualDeclarationProvider?
+    private val missingActualProvider: IrMissingActualDeclarationProvider?,
+    private val actualizerMapContributor: IrActualizerMapContributor?,
 ) {
     fun collectClassActualizationInfo(): ClassActualizationInfo {
         val expectTopLevelDeclarations = ExpectTopLevelDeclarationCollector.collect(dependentFragments)
         val fragmentsWithActuals = dependentFragments.drop(1) + mainFragment
         return ActualDeclarationsCollector.collectActuals(
-            fragmentsWithActuals, expectTopLevelDeclarations, extraActualDeclarationExtractors
+            fragmentsWithActuals, expectTopLevelDeclarations, extraActualDeclarationExtractors, actualizerMapContributor
         )
     }
 
@@ -76,7 +77,7 @@ internal class ExpectActualCollector(
 
         // We can't add generated actuals to their parents' list of declarations during visiting because it would lead to CME.
         if (missingActualProvider != null) {
-            for (symbol in linkCollectorContext.expectActualMap.expectToActual.values) {
+            for (symbol in linkCollectorContext.expectActualMap.symbolMap.values) {
                 val declaration = symbol.owner as IrDeclaration
                 if (declaration.origin == IrDeclarationOrigin.STUB_FOR_LENIENT && !declaration.isPropertyAccessor) {
                     (declaration.parent as IrDeclarationContainer).declarations.add(declaration)
@@ -84,7 +85,11 @@ internal class ExpectActualCollector(
             }
         }
 
-        return linkCollectorContext.expectActualMap
+        val expectActualMap = linkCollectorContext.expectActualMap
+        if (actualizerMapContributor != null) {
+            expectActualMap.fillAdditionalMapping(actualizerMapContributor, linkCollectorContext)
+        }
+        return expectActualMap
     }
 }
 
@@ -108,7 +113,11 @@ data class ClassActualizationInfo(
         operator fun get(classId: ClassId?): IrClassSymbol? {
             val actualized = actualClasses[classId] ?: return null
             if (actualized.owner.isExpect) {
-                return get(actualized.owner.classIdOrFail)
+                val actualizedClassId = actualized.owner.classIdOrFail
+                if (actualizedClassId == classId) {
+                    error("Expect class registered as actual class: $actualized")
+                }
+                return get(actualizedClassId)
             }
             return actualized
         }
@@ -151,14 +160,18 @@ private class ExpectTopLevelDeclarationCollector {
     }
 }
 
-private class ActualDeclarationsCollector(private val expectTopLevelDeclarations: ExpectTopLevelDeclarations) {
+private class ActualDeclarationsCollector(
+    private val expectTopLevelDeclarations: ExpectTopLevelDeclarations,
+    actualizerMapContributor: IrActualizerMapContributor?
+) {
     companion object {
         fun collectActuals(
             fragments: List<IrModuleFragment>,
             expectTopLevelDeclarations: ExpectTopLevelDeclarations,
             extraActualDeclarationExtractors: List<IrExtraActualDeclarationExtractor>,
+            actualizerMapContributor: IrActualizerMapContributor?
         ): ClassActualizationInfo {
-            val collector = ActualDeclarationsCollector(expectTopLevelDeclarations)
+            val collector = ActualDeclarationsCollector(expectTopLevelDeclarations, actualizerMapContributor)
             for (fragment in fragments) {
                 collector.collect(fragment)
             }
@@ -174,8 +187,18 @@ private class ActualDeclarationsCollector(private val expectTopLevelDeclarations
         }
     }
 
-    private val actualClasses: MutableMap<ClassId, IrClassSymbol> = mutableMapOf()
-    private val actualTypeAliasesWithoutExpansion: MutableMap<ClassId, IrTypeAliasSymbol> = mutableMapOf()
+    private val actualClasses: MutableMap<ClassId, IrClassSymbol>
+    private val actualTypeAliasesWithoutExpansion: MutableMap<ClassId, IrTypeAliasSymbol>
+
+    init {
+        val knownClassMapping = actualizerMapContributor?.collectClassesMap()
+            ?: IrActualizerMapContributor.ActualClassInfo(emptyMap(), emptyMap())
+        actualClasses = knownClassMapping.classMapping.entries.associateTo(mutableMapOf()) { (expectClassSymbol, actualClassSymbol) ->
+            expectClassSymbol.owner.classId!! to actualClassSymbol
+        }
+        actualTypeAliasesWithoutExpansion = knownClassMapping.actualTypeAliases.toMutableMap()
+    }
+
     private val actualTopLevels: MutableMap<CallableId, MutableList<IrSymbol>> = mutableMapOf()
     private val actualSymbolsToFile: MutableMap<IrSymbol, IrFile?> = mutableMapOf()
 
@@ -315,7 +338,7 @@ private class ActualDeclarationsCollector(private val expectTopLevelDeclarations
     }
 }
 
-private class ExpectActualLinkCollector {
+internal class ExpectActualLinkCollector {
     fun collectAndCheckMapping(declaration: IrModuleFragment, data: MatchingContext) {
         ExpectActualLinkCollectorVisitor.visitModuleFragment(declaration, data)
     }
@@ -355,7 +378,7 @@ private class ExpectActualLinkCollector {
             matchAndCheckExpectTopLevelDeclaration(expectClassSymbol, listOfNotNull(actualClassLikeSymbol), data)
         }
 
-        private fun matchAndCheckExpectTopLevelDeclaration(
+        fun matchAndCheckExpectTopLevelDeclaration(
             expectSymbol: IrSymbol,
             actualSymbols: List<IrSymbol>,
             context: MatchingContext,
@@ -384,7 +407,7 @@ private class ExpectActualLinkCollector {
         typeSystemContext: IrTypeSystemContext,
         private val diagnosticsReporter: IrDiagnosticReporter,
         private val expectActualTracker: ExpectActualTracker?,
-        internal val classActualizationInfo: ClassActualizationInfo,
+        val classActualizationInfo: ClassActualizationInfo,
         private val missingActualProvider: IrMissingActualDeclarationProvider?,
         val expectActualMap: IrExpectActualMap,
         private val currentExpectFile: IrFile?,
@@ -408,7 +431,7 @@ private class ExpectActualLinkCollector {
 
         private val currentExpectIoFile by lazy(LazyThreadSafetyMode.PUBLICATION) { currentExpectFile?.toIoFile() }
 
-        internal val languageVersionSettings: LanguageVersionSettings get() = diagnosticsReporter.languageVersionSettings
+        val languageVersionSettings: LanguageVersionSettings get() = diagnosticsReporter.languageVersionSettings
 
         fun withNewCurrentFile(newCurrentFile: IrFile) =
             MatchingContext(

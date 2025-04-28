@@ -33,8 +33,8 @@ abstract class AbstractTypeRelationTest : AbstractAnalysisApiBasedTest() {
             .singleValue(resultDirective)
             .toBooleanStrict()
 
-        analyseForTest(mainFile) {
-            checkExpectedResult(expectedResult, mainFile, testServices)
+        copyAwareAnalyzeForTest(mainFile) { contextFile ->
+            checkExpectedResult(expectedResult, contextFile, testServices)
         }
     }
 

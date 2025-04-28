@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.symbolDeclarationOverridesProvider
 
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.test.framework.base.AbstractAnalysisApiBasedTest
@@ -25,16 +26,22 @@ import org.jetbrains.kotlin.types.Variance
 abstract class AbstractOverriddenDeclarationProviderTest : AbstractAnalysisApiBasedTest() {
     override fun doTestByMainFile(mainFile: KtFile, mainModule: KtTestModule, testServices: TestServices) {
         val actual = executeOnPooledThreadInReadAction {
-            analyseForTest(mainFile) {
-                val symbol = getCallableSymbol(mainFile, mainModule, testServices)
+            // Since analyzing overrides requires checking multiple declarations, we should use `PREFER_SELF` for copy-aware analysis.
+            // Otherwise, supertypes might not be properly resolved.
+            copyAwareAnalyzeForTest(
+                mainFile,
+                danglingFileResolutionMode = KaDanglingFileResolutionMode.PREFER_SELF,
+            ) { contextFile ->
+                val symbol = getCallableSymbol(contextFile, mainModule, testServices)
                 val allOverriddenSymbols = symbol.allOverriddenSymbols.map { renderSignature(it) }
                 val directlyOverriddenSymbols = symbol.directlyOverriddenSymbols.map { renderSignature(it) }
 
                 // K1 doesn't support this
-                val intersectionOverriddenSymbols = if (configurator.frontendKind == FrontendKind.Fe10)
+                val intersectionOverriddenSymbols = if (configurator.frontendKind == FrontendKind.Fe10) {
                     emptyList()
-                else
+                } else {
                     symbol.intersectionOverriddenSymbols.map { renderSignature(it) }
+                }
 
                 buildString {
                     appendLine("ALL:")

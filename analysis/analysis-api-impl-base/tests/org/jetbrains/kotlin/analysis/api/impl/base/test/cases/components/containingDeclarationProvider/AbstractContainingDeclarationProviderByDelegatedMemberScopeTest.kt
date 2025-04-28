@@ -18,8 +18,8 @@ abstract class AbstractContainingDeclarationProviderByDelegatedMemberScopeTest :
     override fun doTestByMainFile(mainFile: KtFile, mainModule: KtTestModule, testServices: TestServices) {
         val declaration = testServices.expressionMarkerProvider.getBottommostElementOfTypeAtCaret<KtClassOrObject>(mainFile)
 
-        val memberToContainingClass = analyseForTest(declaration) {
-            val symbol = declaration.classSymbol!!
+        val memberToContainingClass = copyAwareAnalyzeForTest(declaration) { contextDeclaration ->
+            val symbol = contextDeclaration.classSymbol!!
             renderScopeWithParentDeclarations(symbol.delegatedMemberScope)
         }
 

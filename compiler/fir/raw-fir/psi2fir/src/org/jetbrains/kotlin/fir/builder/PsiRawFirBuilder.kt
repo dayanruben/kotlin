@@ -418,7 +418,7 @@ open class PsiRawFirBuilder(
                 }
                 is KtDestructuringDeclaration -> {
                     val initializer = toInitializerExpression()
-                    buildErrorTopLevelDestructuringDeclaration(toFirSourceElement(), initializer)
+                    buildErrorNonLocalDestructuringDeclaration(toFirSourceElement(), initializer)
                 }
                 is KtClassInitializer -> {
                     buildAnonymousInitializer(this, ownerClassBuilder.ownerRegularOrAnonymousObjectSymbol)
@@ -1280,14 +1280,14 @@ open class PsiRawFirBuilder(
                             is KtScript -> convertScriptOrSnippets(declaration, this@buildFile)
                             is KtDestructuringDeclaration -> {
                                 val initializer = declaration.toInitializerExpression()
-                                buildErrorTopLevelDestructuringDeclaration(declaration.toFirSourceElement(), initializer)
+                                buildErrorNonLocalDestructuringDeclaration(declaration.toFirSourceElement(), initializer)
                             }
                             else -> declaration.convert()
                         }
                     }
 
                     for (danglingModifierList in file.danglingModifierLists) {
-                        declarations += buildErrorTopLevelDeclarationForDanglingModifierList(danglingModifierList)
+                        declarations += buildErrorNonLocalDeclarationForDanglingModifierList(danglingModifierList)
                     }
                 }
             }
@@ -1680,7 +1680,7 @@ open class PsiRawFirBuilder(
                                         }
 
                                         for (danglingModifier in ktEnumEntry.body?.danglingModifierLists.orEmpty()) {
-                                            declarations += buildErrorTopLevelDeclarationForDanglingModifierList(danglingModifier).apply {
+                                            declarations += buildErrorNonLocalDeclarationForDanglingModifierList(danglingModifier).apply {
                                                 containingClassAttr = currentDispatchReceiverType()?.lookupTag
                                             }
                                         }
@@ -1827,7 +1827,7 @@ open class PsiRawFirBuilder(
                             }
                             for (danglingModifier in classOrObject.body?.danglingModifierLists ?: emptyList()) {
                                 addDeclaration(
-                                    buildErrorTopLevelDeclarationForDanglingModifierList(danglingModifier).apply {
+                                    buildErrorNonLocalDeclarationForDanglingModifierList(danglingModifier).apply {
                                         containingClassAttr = currentDispatchReceiverType()?.lookupTag
                                     }
                                 )
@@ -1934,7 +1934,7 @@ open class PsiRawFirBuilder(
                         }
 
                         for (danglingModifier in objectDeclaration.body?.danglingModifierLists ?: emptyList()) {
-                            declarations += buildErrorTopLevelDeclarationForDanglingModifierList(danglingModifier).apply {
+                            declarations += buildErrorNonLocalDeclarationForDanglingModifierList(danglingModifier).apply {
                                 containingClassAttr = currentDispatchReceiverType()?.lookupTag
                             }
                         }
@@ -2692,10 +2692,11 @@ open class PsiRawFirBuilder(
             }
         }
 
-        override fun visitAnnotationEntry(annotationEntry: KtAnnotationEntry, data: FirElement?): FirElement {
+        override fun visitAnnotationEntry(annotationEntry: KtAnnotationEntry, data: FirElement?): FirElement = withForcedLocalContext {
             val annotationUseSiteTarget = annotationEntry.useSiteTarget?.getAnnotationUseSiteTarget()
+
             if (annotationUseSiteTarget == ALL && annotationEntry.parent is KtAnnotation) {
-                return buildErrorAnnotationCall {
+                buildErrorAnnotationCall {
                     // Intentionally forbidden @all:[A1 A2] case
                     source = annotationEntry.toFirSourceElement()
                     useSiteTarget = annotationUseSiteTarget
@@ -2713,19 +2714,20 @@ open class PsiRawFirBuilder(
                         DiagnosticKind.MultipleAnnotationWithAllTarget
                     )
                 }
-            }
-            return buildAnnotationCall {
-                source = annotationEntry.toFirSourceElement()
-                useSiteTarget = annotationUseSiteTarget
-                annotationTypeRef = annotationEntry.typeReference.toFirOrErrorType()
-                annotationEntry.extractArgumentsTo(this)
-                val name = (annotationTypeRef as? FirUserTypeRef)?.qualifier?.last()?.name ?: Name.special("<no-annotation-name>")
-                calleeReference = buildSimpleNamedReference {
-                    source = (annotationEntry.typeReference?.typeElement as? KtUserType)?.referenceExpression?.toFirSourceElement()
-                    this.name = name
+            } else {
+                buildAnnotationCall {
+                    source = annotationEntry.toFirSourceElement()
+                    useSiteTarget = annotationUseSiteTarget
+                    annotationTypeRef = annotationEntry.typeReference.toFirOrErrorType()
+                    annotationEntry.extractArgumentsTo(this)
+                    val name = (annotationTypeRef as? FirUserTypeRef)?.qualifier?.last()?.name ?: Name.special("<no-annotation-name>")
+                    calleeReference = buildSimpleNamedReference {
+                        source = (annotationEntry.typeReference?.typeElement as? KtUserType)?.referenceExpression?.toFirSourceElement()
+                        this.name = name
+                    }
+                    typeArguments.appendTypeArguments(annotationEntry.typeArguments)
+                    containingDeclarationSymbol = context.containerSymbol
                 }
-                typeArguments.appendTypeArguments(annotationEntry.typeArguments)
-                containingDeclarationSymbol = context.containerSymbol
             }
         }
 
@@ -3609,7 +3611,7 @@ open class PsiRawFirBuilder(
             }
         }
 
-        private fun buildErrorTopLevelDeclarationForDanglingModifierList(modifierList: KtModifierList) = buildDanglingModifierList {
+        private fun buildErrorNonLocalDeclarationForDanglingModifierList(modifierList: KtModifierList) = buildDanglingModifierList {
             this.source = modifierList.toFirSourceElement(KtFakeSourceElementKind.DanglingModifierList)
             moduleData = baseModuleData
             origin = FirDeclarationOrigin.Source

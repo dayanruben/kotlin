@@ -28927,6 +28927,23 @@ public class NativeUnboundIrSerializationTestGenerated extends AbstractNativeUnb
         @TestDataPath("$PROJECT_ROOT")
         @Tag("klib")
         public class Hmpp {
+          @Test
+          @TestMetadata("inheritanceFromLibraryExpectClass.kt")
+          public void testInheritanceFromLibraryExpectClass() {
+            runTest("compiler/testData/codegen/box/multiplatform/k2/hmpp/inheritanceFromLibraryExpectClass.kt");
+          }
+
+          @Test
+          @TestMetadata("sameLibraryInTwoEdgesOfDiamond.kt")
+          public void testSameLibraryInTwoEdgesOfDiamond() {
+            runTest("compiler/testData/codegen/box/multiplatform/k2/hmpp/sameLibraryInTwoEdgesOfDiamond.kt");
+          }
+
+          @Test
+          @TestMetadata("simple.kt")
+          public void testSimple() {
+            runTest("compiler/testData/codegen/box/multiplatform/k2/hmpp/simple.kt");
+          }
         }
 
         @Nested
@@ -45010,6 +45027,18 @@ public class NativeUnboundIrSerializationTestGenerated extends AbstractNativeUnb
       @TestMetadata("lambdaInLambdaCapturesAnotherFun.kt")
       public void testLambdaInLambdaCapturesAnotherFun() {
         runTest("compiler/testData/codegen/boxInline/localFunInLambda/lambdaInLambdaCapturesAnotherFun.kt");
+      }
+
+      @Test
+      @TestMetadata("localDelegatedProperty.kt")
+      public void testLocalDelegatedProperty() {
+        runTest("compiler/testData/codegen/boxInline/localFunInLambda/localDelegatedProperty.kt");
+      }
+
+      @Test
+      @TestMetadata("localDelegatedPropertyWithInlinedFunInKlib.kt")
+      public void testLocalDelegatedPropertyWithInlinedFunInKlib() {
+        runTest("compiler/testData/codegen/boxInline/localFunInLambda/localDelegatedPropertyWithInlinedFunInKlib.kt");
       }
 
       @Test

@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.fir.resolve.providers.impl.*
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.scopes.FirKotlinScopeProvider
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.utils.addToStdlib.plusIfNotNull
+import org.jetbrains.kotlin.utils.addIfNotNull
 
 /**
  * This is the base class for factories, which create various sessions for compilation.
@@ -195,6 +195,7 @@ abstract class FirAbstractSessionFactory<LIBRARY_CONTEXT, SOURCE_CONTEXT> {
         sessionProvider: FirProjectSessionProvider,
         extensionRegistrars: List<FirExtensionRegistrar>,
         configuration: CompilerConfiguration,
+        isForLeafHmppModule: Boolean,
         init: FirSessionConfigurator.() -> Unit,
         createProviders: (
             FirSession, FirKotlinScopeProvider, FirSymbolProvider,
@@ -235,7 +236,12 @@ abstract class FirAbstractSessionFactory<LIBRARY_CONTEXT, SOURCE_CONTEXT> {
             }.configure()
             registerCommonComponentsAfterExtensionsAreConfigured()
 
-            val structuredDependencyProvidersWithoutSource = computeDependencyProviderList(moduleData)
+            val structuredDependencyProvidersWithoutSource = computeDependencyProviderList(
+                this,
+                moduleData,
+                languageVersionSettings,
+                isForLeafHmppModule,
+            )
             val generatedSymbolsProvider = FirSwitchableExtensionDeclarationsSymbolProvider.createIfNeeded(this)
 
             val (sourceProviders, additionalOptionalAnnotationsProvider) = createProviders(
@@ -245,9 +251,20 @@ abstract class FirAbstractSessionFactory<LIBRARY_CONTEXT, SOURCE_CONTEXT> {
                 generatedSymbolsProvider,
             )
 
+            val allLibrariesProviders = buildList {
+                addAll(structuredDependencyProvidersWithoutSource.librariesProviders)
+                // metadata klibs for specific source sets contain declarations only from exactly this source set
+                // so to see declarations from previous source sets (e.g. common, if we are in jvmAndJs module) we need to
+                // propagate binary dependencies from our source dependsOn modules
+                if (!isForLeafHmppModule) {
+                    moduleData.dependsOnDependencies.flatMapTo(this) { it.session.structuredProviders.librariesProviders }
+                }
+                addIfNotNull(additionalOptionalAnnotationsProvider)
+            }
+
             val structuredProvidersForModule = StructuredProviders(
                 sourceProviders = sourceProviders,
-                librariesProviders = structuredDependencyProvidersWithoutSource.librariesProviders.plusIfNotNull(additionalOptionalAnnotationsProvider),
+                librariesProviders = allLibrariesProviders,
                 sharedProvider = structuredDependencyProvidersWithoutSource.sharedProvider,
             ).also {
                 register(StructuredProviders::class, it)
@@ -293,7 +310,12 @@ abstract class FirAbstractSessionFactory<LIBRARY_CONTEXT, SOURCE_CONTEXT> {
 
     // ==================================== Utilities ====================================
 
-    private fun computeDependencyProviderList(moduleData: FirModuleData): StructuredProviders {
+    private fun computeDependencyProviderList(
+        session: FirSession,
+        moduleData: FirModuleData,
+        languageVersionSettings: LanguageVersionSettings,
+        isForLeafHmppModule: Boolean,
+    ): StructuredProviders {
         // dependsOnDependencies can actualize declarations from their dependencies. Because actual declarations can be more specific
         // (e.g. have additional supertypes), the modules must be ordered from most specific (i.e. actual) to most generic (i.e. expect)
         // to prevent false positive resolution errors (see KT-57369 for an example).
@@ -302,14 +324,58 @@ abstract class FirAbstractSessionFactory<LIBRARY_CONTEXT, SOURCE_CONTEXT> {
             .sortedBy { it.session.kind }
             .map { it to it.session.structuredProviders }
 
-        val dependencyProviders = providersFromDependencies.flatMap { (dependencyModuleData, providers) ->
-            when (dependencyModuleData.session.kind) {
-                FirSession.Kind.Library -> providers.librariesProviders.also { check(providers.sourceProviders.isEmpty()) }
+        val dependencyProviders =
+            when {
+                languageVersionSettings.getFlag(AnalysisFlags.hierarchicalMultiplatformCompilation) && isForLeafHmppModule -> {
+                    /**
+                     * For leaf platform module in HMPP compilation the order of providers is following:
+                     * - source providers of all common modules
+                     * - deduplicating provider for platform binary dependencies and all common binary dependencies
+                     * - shared providers
+                     *
+                     * For more information see KDoc for [FirMppDeduplicatingSymbolProvider]
+                     */
+                    val binaryProvidersFromCommonModules = mutableListOf<FirSymbolProvider>()
+                    val binaryProvidersFromPlatformModule = mutableListOf<FirSymbolProvider>()
+                    val sourceProvidersFromCommonModules = mutableListOf<FirSymbolProvider>()
+                    for ((dependencyModuleData, providers) in providersFromDependencies) {
+                        when (dependencyModuleData.session.kind) {
+                            FirSession.Kind.Library -> {
+                                binaryProvidersFromPlatformModule += providers.librariesProviders
+                                    .also { check(providers.sourceProviders.isEmpty()) }
+                            }
 
-                // Dependency providers for common and platform modules are basically the same, so there is no need in duplicating them.
-                FirSession.Kind.Source -> providers.sourceProviders
+                            // we don't want provide transitive dependencies from source dependencies
+                            FirSession.Kind.Source -> {
+                                sourceProvidersFromCommonModules += providers.sourceProviders
+                                // for intermediate module, there might be a source provider of the common module in the list of
+                                // dependency providers, so it's necessary to leave only actual binary providers
+                                binaryProvidersFromCommonModules += providers.librariesProviders.filter { it.session.kind == FirSession.Kind.Library }
+                            }
+                        }
+                    }
+
+                    val deduplicatingProvider = FirMppDeduplicatingSymbolProvider(
+                        session,
+                        commonSymbolProvider = createCachingCompositeProviderIfNeeded(session, binaryProvidersFromCommonModules.distinct()),
+                        platformSymbolProvider = createCachingCompositeProviderIfNeeded(session, binaryProvidersFromPlatformModule)
+                    )
+                    buildList {
+                        addAll(sourceProvidersFromCommonModules)
+                        add(deduplicatingProvider)
+                    }
+                }
+
+                else -> {
+                    providersFromDependencies.flatMap { (dependencyModuleData, providers) ->
+                        when (dependencyModuleData.session.kind) {
+                            FirSession.Kind.Library -> providers.librariesProviders.also { check(providers.sourceProviders.isEmpty()) }
+                            // Dependency providers for common and platform modules are basically the same, so there is no need in duplicating them.
+                            FirSession.Kind.Source -> providers.sourceProviders
+                        }
+                    }
+                }
             }
-        }
 
         // Here we are looking for the first binary dependency to support source-source dependency between
         // regular modules.
@@ -354,5 +420,13 @@ abstract class FirAbstractSessionFactory<LIBRARY_CONTEXT, SOURCE_CONTEXT> {
         collectProviders()
 
         return result
+    }
+
+    private fun createCachingCompositeProviderIfNeeded(session: FirSession, providers: List<FirSymbolProvider>): FirSymbolProvider {
+        return when (providers.size) {
+            0 -> FirEmptySymbolProvider(session)
+            1 -> providers.single()
+            else -> FirCachingCompositeSymbolProvider(session, providers)
+        }
     }
 }
