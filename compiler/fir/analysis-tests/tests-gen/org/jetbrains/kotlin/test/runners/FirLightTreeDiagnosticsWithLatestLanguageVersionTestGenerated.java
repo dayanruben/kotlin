@@ -495,6 +495,12 @@ public class FirLightTreeDiagnosticsWithLatestLanguageVersionTestGenerated exten
     }
 
     @Test
+    @TestMetadata("multipleDefaultsAnonymousObject.kt")
+    public void testMultipleDefaultsAnonymousObject() {
+      runTest("compiler/fir/analysis-tests/testData/resolve/multipleDefaultsAnonymousObject.kt");
+    }
+
+    @Test
     @TestMetadata("nestedAnnotationConstExprArguments.kt")
     public void testNestedAnnotationConstExprArguments() {
       runTest("compiler/fir/analysis-tests/testData/resolve/nestedAnnotationConstExprArguments.kt");
@@ -6922,6 +6928,12 @@ public class FirLightTreeDiagnosticsWithLatestLanguageVersionTestGenerated exten
     @TestMetadata("contextParametersFunctions.kt")
     public void testContextParametersFunctions() {
       runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/contextParametersFunctions.kt");
+    }
+
+    @Test
+    @TestMetadata("delegationTypeMismatchAnonymous.kt")
+    public void testDelegationTypeMismatchAnonymous() {
+      runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/delegationTypeMismatchAnonymous.kt");
     }
 
     @Test

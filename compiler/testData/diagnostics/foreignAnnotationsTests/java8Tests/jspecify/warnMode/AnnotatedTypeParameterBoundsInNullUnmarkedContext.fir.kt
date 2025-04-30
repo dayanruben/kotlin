@@ -45,23 +45,17 @@ fun <T> accept(arg: T) {}
 
 fun test() {
     accept<String>(NullMarkedType.TargetType.TYPE_ARGUMENT().produce())
-    // jspecify_nullness_mismatch
-    NullMarkedType.TargetType.TYPE_ARGUMENT().consume(<!NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS!>null<!>)
+    NullMarkedType.TargetType.TYPE_ARGUMENT().consume(null)
 
     accept<Any>(NullMarkedType.TargetType.UNBOUNDED_WILDCARD().produce())
-    // jspecify_nullness_mismatch
-    NullMarkedType.TargetType.UNBOUNDED_WILDCARD().consume(<!NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS!>null<!>)
+    NullMarkedType.TargetType.UNBOUNDED_WILDCARD().consume(null)
 
     accept<String>(NullMarkedType.TargetType.UPPER_BOUNDED_WILDCARD().produce())
-    // jspecify_nullness_mismatch
-    NullMarkedType.TargetType.UPPER_BOUNDED_WILDCARD().consume(<!NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS!>null<!>)
+    NullMarkedType.TargetType.UPPER_BOUNDED_WILDCARD().consume(null)
 
     accept<Any>(NullMarkedType.TargetType.LOWER_BOUNDED_WILDCARD().produce())
-    // jspecify_nullness_mismatch
-    NullMarkedType.TargetType.LOWER_BOUNDED_WILDCARD().consume(<!NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS!>null<!>)
+    NullMarkedType.TargetType.LOWER_BOUNDED_WILDCARD().consume(null)
 
-    // jspecify_nullness_mismatch
     accept<Any>(<!NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS!>NullMarkedType.TargetType.RAW().produce()<!>)
-    // jspecify_nullness_mismatch
-    NullMarkedType.TargetType.RAW().consume(<!NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS!>null<!>)
+    NullMarkedType.TargetType.RAW().consume(null)
 }

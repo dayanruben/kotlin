@@ -1,3 +1,4 @@
+// LANGUAGE: -IrInlinerBeforeKlibSerialization
 package foo
 
 // CHECK_CONTAINS_NO_CALLS: capturedInLambda except=Unit_getInstance

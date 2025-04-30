@@ -1248,6 +1248,18 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
     }
 
     @Test
+    @TestMetadata("localNestedEnumCapturesOuterTypeParameters.kt")
+    public void testLocalNestedEnumCapturesOuterTypeParameters() {
+      runTest("compiler/testData/diagnostics/tests/localNestedEnumCapturesOuterTypeParameters.kt");
+    }
+
+    @Test
+    @TestMetadata("localNestedObjectCapturesOuterTypeParameters.kt")
+    public void testLocalNestedObjectCapturesOuterTypeParameters() {
+      runTest("compiler/testData/diagnostics/tests/localNestedObjectCapturesOuterTypeParameters.kt");
+    }
+
+    @Test
     @TestMetadata("makeSureCastNeverSucceedsRequiresDfaWarningsFeature_Off.kt")
     public void testMakeSureCastNeverSucceedsRequiresDfaWarningsFeature_Off() {
       runTest("compiler/testData/diagnostics/tests/makeSureCastNeverSucceedsRequiresDfaWarningsFeature_Off.kt");
@@ -1269,6 +1281,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
     @TestMetadata("missingAbstractSuperCall.kt")
     public void testMissingAbstractSuperCall() {
       runTest("compiler/testData/diagnostics/tests/missingAbstractSuperCall.kt");
+    }
+
+    @Test
+    @TestMetadata("missingAbstractSuperCallExtra.kt")
+    public void testMissingAbstractSuperCallExtra() {
+      runTest("compiler/testData/diagnostics/tests/missingAbstractSuperCallExtra.kt");
     }
 
     @Test
@@ -50998,6 +51016,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
     }
 
     @Test
+    @TestMetadata("multipleDefaultsAnonymousObject.kt")
+    public void testMultipleDefaultsAnonymousObject() {
+      runTest("compiler/fir/analysis-tests/testData/resolve/multipleDefaultsAnonymousObject.kt");
+    }
+
+    @Test
     @TestMetadata("nestedAnnotationConstExprArguments.kt")
     public void testNestedAnnotationConstExprArguments() {
       runTest("compiler/fir/analysis-tests/testData/resolve/nestedAnnotationConstExprArguments.kt");
@@ -57016,6 +57040,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
     @TestMetadata("contextParametersFunctions.kt")
     public void testContextParametersFunctions() {
       runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/contextParametersFunctions.kt");
+    }
+
+    @Test
+    @TestMetadata("delegationTypeMismatchAnonymous.kt")
+    public void testDelegationTypeMismatchAnonymous() {
+      runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/delegationTypeMismatchAnonymous.kt");
     }
 
     @Test

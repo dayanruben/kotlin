@@ -831,9 +831,21 @@ public class ForeignAnnotationsSourceJavaTestGenerated extends AbstractForeignAn
         }
 
         @Test
+        @TestMetadata("FakeOverride.kt")
+        public void testFakeOverride() {
+          runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode/FakeOverride.kt");
+        }
+
+        @Test
         @TestMetadata("IgnoreAnnotations.kt")
         public void testIgnoreAnnotations() {
           runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode/IgnoreAnnotations.kt");
+        }
+
+        @Test
+        @TestMetadata("IncorrectAnnotationPlacement.kt")
+        public void testIncorrectAnnotationPlacement() {
+          runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode/IncorrectAnnotationPlacement.kt");
         }
 
         @Test
@@ -1032,6 +1044,12 @@ public class ForeignAnnotationsSourceJavaTestGenerated extends AbstractForeignAn
         @TestMetadata("TypeParameterBounds.kt")
         public void testTypeParameterBounds() {
           runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode/TypeParameterBounds.kt");
+        }
+
+        @Test
+        @TestMetadata("TypeParameterUseSite.kt")
+        public void testTypeParameterUseSite() {
+          runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode/TypeParameterUseSite.kt");
         }
 
         @Test
