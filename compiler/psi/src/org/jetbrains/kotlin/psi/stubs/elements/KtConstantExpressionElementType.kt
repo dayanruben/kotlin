@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.stubs.ConstantValueKind
 import org.jetbrains.kotlin.psi.stubs.KotlinConstantExpressionStub
+import org.jetbrains.kotlin.psi.stubs.StubUtils
 import org.jetbrains.kotlin.psi.stubs.impl.KotlinConstantExpressionStubImpl
 
 class KtConstantExpressionElementType(@NonNls debugName: String) :
@@ -24,8 +25,9 @@ class KtConstantExpressionElementType(@NonNls debugName: String) :
     ) {
 
     override fun shouldCreateStub(node: ASTNode): Boolean {
-        val parent = node.treeParent ?: return false
-        if (parent.elementType != KtStubElementTypes.VALUE_ARGUMENT) return false
+        if (!StubUtils.isDeclaredInsideValueArgument(node)) {
+            return false
+        }
 
         return super.shouldCreateStub(node)
     }
@@ -34,7 +36,7 @@ class KtConstantExpressionElementType(@NonNls debugName: String) :
         val elementType = psi.node.elementType as? KtConstantExpressionElementType
             ?: throw IllegalStateException("Stub element type is expected for constant")
 
-        val value = psi.text ?: ""
+        val value = psi.text
 
         return KotlinConstantExpressionStubImpl(
             parentStub,
@@ -45,12 +47,12 @@ class KtConstantExpressionElementType(@NonNls debugName: String) :
     }
 
     override fun serialize(stub: KotlinConstantExpressionStub, dataStream: StubOutputStream) {
-        dataStream.writeInt(stub.kind().ordinal)
+        dataStream.writeVarInt(stub.kind().ordinal)
         dataStream.writeName(stub.value())
     }
 
     override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): KotlinConstantExpressionStub {
-        val kindOrdinal = dataStream.readInt()
+        val kindOrdinal = dataStream.readVarInt()
         val value = dataStream.readName() ?: StringRef.fromString("")
 
         val valueKind = ConstantValueKind.entries[kindOrdinal]

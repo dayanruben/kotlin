@@ -165,7 +165,11 @@ PsiJetFileStubImpl[package=]
               REFERENCE_EXPRESSION[referencedName=Anno]
         VALUE_ARGUMENT_LIST
           VALUE_ARGUMENT[isSpread=false]
-            COLLECTION_LITERAL_EXPRESSION
+            COLLECTION_LITERAL_EXPRESSION[innerExpressionCount=4]
+              INTEGER_CONSTANT[kind=INTEGER_CONSTANT, value=1]
+              INTEGER_CONSTANT[kind=INTEGER_CONSTANT, value=2]
+              INTEGER_CONSTANT[kind=INTEGER_CONSTANT, value=3]
+              INTEGER_CONSTANT[kind=INTEGER_CONSTANT, value=4]
     VALUE_PARAMETER_LIST
   FUN[fqName=main, hasBlockBody=true, hasBody=true, hasTypeParameterListBeforeFunctionName=false, isExtension=false, isTopLevel=true, mayHaveContract=false, name=main]
     VALUE_PARAMETER_LIST

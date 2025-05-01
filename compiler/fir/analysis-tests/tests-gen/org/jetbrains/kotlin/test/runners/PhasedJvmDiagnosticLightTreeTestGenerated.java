@@ -50680,6 +50680,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
     }
 
     @Test
+    @TestMetadata("dataClassWithInheritedComponent.kt")
+    public void testDataClassWithInheritedComponent() {
+      runTest("compiler/fir/analysis-tests/testData/resolve/dataClassWithInheritedComponent.kt");
+    }
+
+    @Test
     @TestMetadata("defaultJavaImportHiding.kt")
     public void testDefaultJavaImportHiding() {
       runTest("compiler/fir/analysis-tests/testData/resolve/defaultJavaImportHiding.kt");
@@ -58705,6 +58711,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("definitelyNotNullCast.kt")
       public void testDefinitelyNotNullCast() {
         runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/definitelyNotNullCast.kt");
+      }
+
+      @Test
+      @TestMetadata("dynamicVsNothingInIf.kt")
+      public void testDynamicVsNothingInIf() {
+        runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/dynamicVsNothingInIf.kt");
       }
 
       @Test

@@ -27,7 +27,13 @@ Spread.kt:
                 REFERENCE_EXPRESSION[referencedName=VarArg]
           VALUE_ARGUMENT_LIST
             VALUE_ARGUMENT[isSpread=true]
-              COLLECTION_LITERAL_EXPRESSION
+              COLLECTION_LITERAL_EXPRESSION[innerExpressionCount=4]
+                INTEGER_CONSTANT[kind=INTEGER_CONSTANT, value=1]
+                INTEGER_CONSTANT[kind=INTEGER_CONSTANT, value=2]
+                DOT_QUALIFIED_EXPRESSION
+                  REFERENCE_EXPRESSION[referencedName=VarArg]
+                  REFERENCE_EXPRESSION[referencedName=CONSTANT]
+                INTEGER_CONSTANT[kind=INTEGER_CONSTANT, value=4]
 
 
 Three.kt:

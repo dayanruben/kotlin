@@ -349,13 +349,11 @@ psi/KtCodeFragment.kt:KtCodeFragment:importsAsImportList()
 psi/KtCodeFragment.kt:abstract KtCodeFragment
 psi/KtCodeFragment.kt:fun KotlinCodeFragmentImportModificationListener
 psi/KtCodeFragmentBase.kt:KtCodeFragmentBase
-psi/KtCollectionLiteralExpression.java:KtCollectionLiteralExpression
 psi/KtCollectionLiteralExpression.java:KtCollectionLiteralExpression:@Nullable getLeftBracket()
 psi/KtCollectionLiteralExpression.java:KtCollectionLiteralExpression:@Nullable getRightBracket()
 psi/KtCollectionLiteralExpression.java:KtCollectionLiteralExpression:@Nullable getTrailingComma()
 psi/KtCollectionLiteralExpression.java:KtCollectionLiteralExpression:KtCollectionLiteralExpression(ASTNode)
 psi/KtCollectionLiteralExpression.java:KtCollectionLiteralExpression:KtCollectionLiteralExpression(KotlinCollectionLiteralExpressionStub)
-psi/KtCollectionLiteralExpression.java:KtCollectionLiteralExpression:getInnerExpressions()
 psi/KtCommonFile.kt:KtCommonFile:@Deprecated("Use 'isScript()' instead", ReplaceWith("isScript()")) isScriptByTree
 psi/KtCommonFile.kt:KtCommonFile:@Deprecated("Use 'packageFqName' property instead", ReplaceWith("packageFqName")) packageFqNameByTree
 psi/KtCommonFile.kt:KtCommonFile:@Suppress("unused") shouldChangeModificationCount(PsiElement)
@@ -2165,15 +2163,14 @@ psi/stubs/impl/KotlinConstantValue.kt:KotlinConstantValueKind:UBYTE
 psi/stubs/impl/KotlinConstantValue.kt:KotlinConstantValueKind:UINT
 psi/stubs/impl/KotlinConstantValue.kt:KotlinConstantValueKind:ULONG
 psi/stubs/impl/KotlinConstantValue.kt:KotlinConstantValueKind:USHORT
-psi/stubs/impl/KotlinConstantValue.kt:KotlinConstantValueSerializationVisitor
 psi/stubs/impl/KotlinConstantValue.kt:createConstantValue(Any?)
 psi/stubs/impl/KotlinConstantValue.kt:createConstantValue(ProtoBuf.Annotation.Argument.Value, NameResolver)
-psi/stubs/impl/KotlinConstantValue.kt:createConstantValue(StubInputStream)
 psi/stubs/impl/KotlinConstantValue.kt:data AnnotationData
 psi/stubs/impl/KotlinConstantValue.kt:data EnumData
 psi/stubs/impl/KotlinConstantValue.kt:data KClassData
+psi/stubs/impl/KotlinConstantValue.kt:deserializeConstantValue(StubInputStream)
 psi/stubs/impl/KotlinConstantValue.kt:enum KotlinConstantValueKind
-psi/stubs/impl/KotlinConstantValue.kt:serialize(ConstantValue<*>, StubOutputStream)
+psi/stubs/impl/KotlinConstantValue.kt:serializeConstantValue(ConstantValue<*>?, StubOutputStream)
 psi/stubs/impl/KotlinConstructorStubImpl.kt:KotlinConstructorStubImpl
 psi/stubs/impl/KotlinContextReceiverStubImpl.kt:KotlinContextReceiverStubImpl
 psi/stubs/impl/KotlinContractEffectStubImpl.kt:Companion:const IGNORE_REFERENCE_PARAMETER_NAME
