@@ -8,13 +8,45 @@ package org.jetbrains.kotlin.fir.backend.utils
 import org.jetbrains.kotlin.fir.backend.Fir2IrComponents
 import org.jetbrains.kotlin.fir.backend.Fir2IrImplicitCastInserter
 import org.jetbrains.kotlin.fir.expressions.FirExpression
+import org.jetbrains.kotlin.fir.expressions.FirVarargArgumentsExpression
+import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
+import org.jetbrains.kotlin.fir.types.resolvedType
 import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.IrStatementContainer
+import org.jetbrains.kotlin.ir.expressions.IrVararg
+import org.jetbrains.kotlin.ir.util.render
+
+context(c: Fir2IrComponents)
+fun IrExpression.prepareForExpectedTypeAndHandleSmartCasts(
+    expression: FirExpression,
+    valueType: ConeKotlinType = expression.resolvedType.fullyExpandedType(c.session),
+    expectedType: ConeKotlinType,
+    // In most cases, it should be the same as `expectedType`.
+    // Currently, it's only used for a case of a call argument to a generic function or for a call argument of a vararg parameter.
+    // In that case, we need to preserve the original parameter type to generate proper nullability checks/assertions.
+    // But generally for conversions/casts one should use `substitutedExpectedType`.
+    substitutedParameterType: ConeKotlinType = expectedType,
+): IrExpression {
+    return with(c.implicitCastInserter) {
+        // here we should use a substituted parameter type to properly choose the component of an intersection type
+        // to provide a proper cast to the smartcasted type
+        insertCastForSmartcastWithIntersection(valueType, substitutedParameterType)
+            // here we should pass an unsubstituted parameter type to properly infer if the original type accepts null or not
+            // to properly insert nullability check
+            .prepareExpressionForGivenExpectedType(
+                expression = expression,
+                valueType = valueType,
+                expectedType = expectedType,
+                substitutedExpectedType = substitutedParameterType
+            )
+    }
+}
 
 context(c: Fir2IrComponents)
 fun IrExpression.prepareExpressionForGivenExpectedType(
     expression: FirExpression,
-    valueType: ConeKotlinType,
+    valueType: ConeKotlinType = expression.resolvedType.fullyExpandedType(c.session),
     expectedType: ConeKotlinType,
     // In most cases, it should be the same as `expectedType`.
     // Currently, it's only used for a case of a call argument to a generic function or for a call argument of a vararg parameter.
@@ -22,6 +54,12 @@ fun IrExpression.prepareExpressionForGivenExpectedType(
     // But generally for conversions/casts one should use `substitutedExpectedType`.
     substitutedExpectedType: ConeKotlinType = expectedType,
 ): IrExpression {
+    if (this is IrVararg) {
+        return applyConversionOnVararg(expression) {
+            prepareExpressionForGivenExpectedType(expression = it, expectedType = substitutedExpectedType)
+        }
+    }
+
     val expressionWithCast = with(c.implicitCastInserter) {
         // The conversions happen later in the function
         @OptIn(Fir2IrImplicitCastInserter.NoConversionsExpected::class)
@@ -32,5 +70,33 @@ fun IrExpression.prepareExpressionForGivenExpectedType(
         val samFunctionType = getFunctionTypeForPossibleSamType(substitutedExpectedType) ?: substitutedExpectedType
         expressionWithCast.applySuspendConversionIfNeeded(expression, samFunctionType)
             .applySamConversionIfNeeded(expression)
+    }
+}
+
+
+private inline fun IrVararg.applyConversionOnVararg(
+    argument: FirExpression,
+    crossinline conversion: IrExpression.(FirExpression) -> IrExpression,
+): IrVararg {
+    if (argument !is FirVarargArgumentsExpression || argument.arguments.size != elements.size) {
+        return this
+    }
+    val argumentMapping = elements.zip(argument.arguments).toMap()
+    // [IrTransformer] is not preferred, since it's hard to visit vararg elements only.
+    elements.replaceAll { irVarargElement ->
+        if (irVarargElement is IrExpression) {
+            val firVarargArgument =
+                argumentMapping[irVarargElement] ?: error("Can't find the original FirExpression for ${irVarargElement.render()}")
+            irVarargElement.conversion(firVarargArgument)
+        } else
+            irVarargElement
+    }
+    return this
+}
+
+context(c: Fir2IrComponents)
+fun IrStatementContainer.coerceStatementsToUnit(coerceLastExpressionToUnit: Boolean = false) {
+    with(c.implicitCastInserter) {
+        coerceStatementsToUnit(coerceLastExpressionToUnit)
     }
 }

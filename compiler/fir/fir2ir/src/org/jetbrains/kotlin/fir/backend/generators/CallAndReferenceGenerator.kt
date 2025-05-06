@@ -758,16 +758,17 @@ class CallAndReferenceGenerator(
             irRhs.type = variableAssignment.lValue.resolvedType.toIrType()
         }
 
-        val irRhsWithCast =
-            wrapWithImplicitCastForAssignment(variableAssignment, irRhs)
-                .prepareExpressionForGivenExpectedType(
-                    expression = variableAssignment.rValue,
-                    valueType = variableAssignment.rValue.resolvedType,
-                    // Use the setter parameter as expected type because it can differ from the property type in synthetic properties.
-                    // See KT-76805.
-                    expectedType = (variableAssignment.lValue.toResolvedCallableSymbol(session) as? FirPropertySymbol)?.setterSymbol?.valueParameterSymbols?.firstOrNull()?.resolvedReturnType
-                        ?: variableAssignment.lValue.resolvedType
-                )
+        // Use the setter parameter as expected type because it can differ from the property type in synthetic properties.
+        // See KT-76805.
+        val expectedType =
+            (variableAssignment.lValue.toResolvedCallableSymbol(session) as? FirPropertySymbol)
+                ?.setterSymbol?.valueParameterSymbols?.firstOrNull()?.resolvedReturnType
+                ?: variableAssignment.lValue.resolvedType
+
+        val irRhsWithCast = irRhs.prepareForExpectedTypeAndHandleSmartCasts(
+            expression = variableAssignment.rValue,
+            expectedType = expectedType
+        )
 
         injectSetValueCall(variableAssignment, calleeReference, irRhsWithCast)?.let { return it }
 
@@ -865,22 +866,6 @@ class CallAndReferenceGenerator(
             .applyTypeArguments(lValue)
             .applyReceiversAndArguments(lValue, firSymbol, explicitReceiverExpression, irAssignmentRhs = irRhsWithCast)
     }
-
-    /** Wrap an assignment - as needed - with an implicit cast to the left-hand side type. */
-    private fun wrapWithImplicitCastForAssignment(assignment: FirVariableAssignment, value: IrExpression): IrExpression {
-        if (value is IrTypeOperatorCall) return value // Value is already cast.
-
-        val rValue = assignment.rValue
-        if (rValue !is FirSmartCastExpression) return value // Value was not smartcast.
-
-        // Convert the original type to not-null, as an implicit cast is not needed in this case.
-        val originalType = rValue.originalExpression.resolvedType.withNullability(nullable = false, session.typeContext)
-        val assignmentType = assignment.lValue.resolvedType
-        if (originalType.isSubtypeOf(assignmentType, session)) return value // Cast is not needed.
-
-        return implicitCast(value, assignmentType.toIrType(), IrTypeOperator.IMPLICIT_CAST)
-    }
-
 
     /**
      * If we have assignment like `this.x = ...` and this `this` is a dispatch this of some class, then we should unwrap
@@ -1081,24 +1066,11 @@ class CallAndReferenceGenerator(
                     else -> unsubstitutedParameterType
                 }
             )
-            val argumentType = argument.resolvedType.fullyExpandedType(session)
 
-            with(visitor.implicitCastInserter) {
-                fun insertCastToArgument(argument: FirExpression): IrExpression = when (argument) {
-                    is FirSmartCastExpression -> {
-                        // here we should use a substituted parameter type to properly choose the component of an intersection type
-                        //  to provide a proper cast to the smartcasted type
-                        irArgument.insertCastForSmartcastWithIntersection(argumentType, substitutedParameterType)
-                    }
-                    else -> irArgument
-                }
-                irArgument = insertCastToArgument(argument)
-            }
-
-            // here we should pass an unsubstituted parameter type to properly infer if the original type accepts null or not
-            // to properly insert nullability check
-            irArgument = irArgument.prepareExpressionForGivenExpectedType(
-                argument, argumentType, unsubstitutedParameterType, substitutedParameterType
+            irArgument = irArgument.prepareForExpectedTypeAndHandleSmartCasts(
+                expression = argument,
+                expectedType = unsubstitutedParameterType,
+                substitutedParameterType = substitutedParameterType
             )
         }
 
@@ -1439,9 +1411,8 @@ class CallAndReferenceGenerator(
                                 val extensionReceiver = statement.extensionReceiver!!
                                 val substitutor = statement.buildSubstitutorByCalledCallable(c)
                                 it.prepareExpressionForGivenExpectedType(
-                                    extensionReceiver,
-                                    extensionReceiver.resolvedType,
-                                    substitutor.substituteOrSelf(receiverType.coneType),
+                                    expression = extensionReceiver,
+                                    expectedType = substitutor.substituteOrSelf(receiverType.coneType),
                                 )
                             } ?: it
                         }

@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContext
 import org.jetbrains.kotlin.ir.types.classOrFail
 import org.jetbrains.kotlin.ir.util.SymbolRemapper
+import org.jetbrains.kotlin.ir.util.classId
 import org.jetbrains.kotlin.ir.util.classIdOrFail
 
 data class IrActualizedResult(
@@ -35,7 +36,8 @@ class IrActualizer(
     val dependentFragments: List<IrModuleFragment>,
     extraActualClassExtractors: List<IrExtraActualDeclarationExtractor> = emptyList(),
     private val missingActualProvider: IrMissingActualDeclarationProvider?,
-    actualizerMapContributor: IrActualizerMapContributor?
+    actualizerMapContributor: IrActualizerMapContributor?,
+    private val hmppSchemeEnabled: Boolean,
 ) {
     private val collector = ExpectActualCollector(
         mainFragment,
@@ -53,9 +55,9 @@ class IrActualizer(
     fun actualizeClassifiers() {
         val classSymbolRemapper = object : SymbolRemapper.Empty() {
             override fun getReferencedClass(symbol: IrClassSymbol): IrClassSymbol {
-                if (!symbol.owner.isExpect) return symbol
+                if (!hmppSchemeEnabled && !symbol.owner.isExpect) return symbol
                 if (symbol.owner.containsOptionalExpectation()) return symbol
-                val classId = symbol.owner.classIdOrFail
+                val classId = symbol.owner.classId ?: return symbol
                 classActualizationInfo.actualTypeAliases[classId]?.let { return it.owner.expandedType.classOrFail }
                 classActualizationInfo.actualClasses[classId]?.let { return it }
                 // Can't happen normally, but possible on incorrect code.
@@ -78,7 +80,6 @@ class IrActualizer(
         // 3. Actualize expect calls in dependent fragments using info obtained in the previous steps
         val actualizerVisitor = ActualizerVisitor(symbolRemapper)
         dependentFragments.forEach { it.transform(actualizerVisitor, data = null) }
-        mainFragment.transform(actualizerVisitor, data = null) // TODO(KT-77031): remove this line if deduplicating provider will return platform symbols
 
         // 4. Actualize property accessors actualized by java fields
         if (expectActualMap.propertyAccessorsActualizedByFields.isNotEmpty()) {

@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.isObject
 import org.jetbrains.kotlin.diagnostics.findChildByType
 import org.jetbrains.kotlin.fir.*
-import org.jetbrains.kotlin.fir.backend.Fir2IrImplicitCastInserter.NoConversionsExpected
 import org.jetbrains.kotlin.fir.backend.generators.ClassMemberGenerator
 import org.jetbrains.kotlin.fir.backend.generators.OperatorExpressionGenerator
 import org.jetbrains.kotlin.fir.backend.utils.*
@@ -262,7 +261,11 @@ class Fir2IrVisitor(
                     if (statement !is FirAnonymousInitializer) {
                         val irStatement = when {
                             statement is FirProperty && statement.name == SpecialNames.UNDERSCORE_FOR_UNUSED_VAR -> {
-                                continue
+                                val convertedInitializer = when {
+                                    statement.isUnnamedLocalVariable -> statement.initializer?.accept(this@Fir2IrVisitor, null)
+                                    else -> null
+                                }
+                                convertedInitializer as? IrStatement ?: continue
                             }
                             statement is FirProperty && statement.origin == FirDeclarationOrigin.ScriptCustomization.ResultProperty -> {
                                 // Generating the result property only for expressions with a meaningful result type
@@ -528,7 +531,7 @@ class Fir2IrVisitor(
         )
         if (initializer != null) {
             val convertedInitializer = convertToIrExpression(initializer)
-                .prepareExpressionForGivenExpectedType(initializer, initializer.resolvedType, variable.returnTypeRef.coneType)
+                .prepareExpressionForGivenExpectedType(expression = initializer, expectedType = variable.returnTypeRef.coneType)
             // In FIR smart-casted types from initializers of variables are not saved to the types of the variables themselves.
             // Ensuring the IrVariable's type of an implicit when-subject is as narrow as that of the initializer is important,
             // for example, for `ieee754` comparisons of `Double`s.
@@ -567,9 +570,11 @@ class Fir2IrVisitor(
         return returnExpression.convertWithOffsets { startOffset, endOffset ->
             // For implicit returns, use the expression endOffset to generate the expected line number for debugging.
             val returnStartOffset = if (returnExpression.source?.kind is KtFakeSourceElementKind.ImplicitReturn) endOffset else startOffset
-            IrReturnImpl(returnStartOffset, endOffset, builtins.nothingType, irTarget, convertToIrExpression(result))
-        }.let {
-            returnExpression.accept(implicitCastInserter, it)
+            val value = convertToIrExpression(result).prepareExpressionForGivenExpectedType(
+                expression = returnExpression.result,
+                expectedType = returnExpression.target.labeledElement.returnTypeRef.coneType
+            )
+            IrReturnImpl(returnStartOffset, endOffset, builtins.nothingType, irTarget, value)
         }
     }
 
@@ -591,20 +596,8 @@ class Fir2IrVisitor(
                 varargArgumentsExpression.coneElementTypeOrNull?.toIrType(c)
                     ?: error("Vararg expression has incorrect type"),
                 varargArgumentsExpression.arguments.mapNotNull {
-                    if (isGetClassOfUnresolvedTypeInAnnotation(it)) return@mapNotNull null
-                    val irVarargElement = it.convertToIrVarargElement()
-                    if (irVarargElement is IrExpression) {
-                        with(implicitCastInserter) {
-                            @OptIn(NoConversionsExpected::class)
-                            irVarargElement.insertSpecialCast(
-                                it,
-                                it.resolvedType,
-                                varargArgumentsExpression.coneElementTypeOrNull ?: it.resolvedType.lowerBoundIfFlexible()
-                            )
-                        }
-                    } else {
-                        irVarargElement
-                    }
+                    if (isGetClassOfUnresolvedTypeInAnnotation(it)) null
+                    else it.convertToIrVarargElement()
                 }
             )
         }
@@ -929,7 +922,7 @@ class Fir2IrVisitor(
     override fun visitSmartCastExpression(smartCastExpression: FirSmartCastExpression, data: Any?): IrElement {
         // Generate the expression with the original type and then cast it to the smart cast type.
         val value = convertToIrExpression(smartCastExpression.originalExpression)
-        return implicitCastInserter.visitSmartCastExpression(smartCastExpression, value)
+        return implicitCastInserter.handleSmartCastExpression(smartCastExpression, value)
     }
 
     override fun visitCallableReferenceAccess(callableReferenceAccess: FirCallableReferenceAccess, data: Any?): IrElement {
@@ -938,7 +931,7 @@ class Fir2IrVisitor(
         }
     }
 
-    private fun convertCallableReferenceAccess(callableReferenceAccess: FirCallableReferenceAccess, isDelegate: Boolean): IrElement {
+    private fun convertCallableReferenceAccess(callableReferenceAccess: FirCallableReferenceAccess, isDelegate: Boolean): IrExpression {
         val explicitReceiverExpression = convertToIrReceiverExpression(
             callableReferenceAccess.explicitReceiver, callableReferenceAccess
         )
@@ -1025,12 +1018,6 @@ class Fir2IrVisitor(
                     else -> expression.accept(this, null) as IrExpression
                 }
             }
-        }.let {
-            // If the expression is a smartcast, we already inserted the proper implicit cast during it's transformation to IR
-            when (expression) {
-                is FirSmartCastExpression -> it
-                else -> expression.accept(implicitCastInserter, it)
-            } as IrExpression
         }
     }
 
@@ -1120,9 +1107,7 @@ class Fir2IrVisitor(
                     emptyList()
                 }
             ).also {
-                with(implicitCastInserter) {
-                    it.insertImplicitCasts()
-                }
+                it.coerceStatementsToUnit(coerceLastExpressionToUnit = true)
             }
         }
     }
@@ -1300,8 +1285,6 @@ class Fir2IrVisitor(
             fun irGetLhsValue(): IrGetValue =
                 IrGetValueImpl(startOffset, endOffset, irLhsVariable.type, irLhsVariable.symbol)
 
-            val originalType = elvisExpression.lhs.resolvedType
-            val notNullType = originalType.withNullability(nullable = false, session.typeContext)
             val irBranches = listOf(
                 IrBranchImpl(
                     startOffset, endOffset,
@@ -1320,8 +1303,11 @@ class Fir2IrVisitor(
                         arguments[0] = irGetLhsValue()
                         arguments[1] = IrConstImpl.constNull(startOffset, endOffset, builtins.nothingNType)
                     },
-                    convertToIrExpression(elvisExpression.rhs)
-                        .prepareExpressionForGivenExpectedType(elvisExpression, elvisExpression.rhs.resolvedType, elvisExpression.resolvedType)
+                    convertToIrExpression(elvisExpression.rhs).prepareExpressionForGivenExpectedType(
+                        expression = elvisExpression,
+                        valueType = elvisExpression.rhs.resolvedType,
+                        expectedType = elvisExpression.resolvedType
+                    )
                 ),
                 IrElseBranchImpl(
                     IrConstImpl.boolean(startOffset, endOffset, builtins.booleanType, true),
@@ -1380,7 +1366,7 @@ class Fir2IrVisitor(
                 generateWhen(startOffset, endOffset, origin, subjectVariable, irBranches, whenExpressionType.toIrType(c))
             }
         }.also {
-            whenExpression.accept(implicitCastInserter, it)
+            implicitCastInserter.handleWhenExpression(it)
         }
     }
 
@@ -1471,7 +1457,10 @@ class Fir2IrVisitor(
     private fun FirWhenBranch.toIrWhenBranch(whenExpressionType: ConeKotlinType): IrBranch {
         return convertWithOffsets { startOffset, endOffset ->
             val condition = condition
-            val irResult = convertToIrExpression(result).prepareExpressionForGivenExpectedType(result, result.resolvedType, whenExpressionType)
+            val irResult = convertToIrExpression(result).prepareExpressionForGivenExpectedType(
+                expression = result,
+                expectedType = whenExpressionType
+            )
             if (condition is FirElseIfTrueCondition) {
                 IrElseBranchImpl(IrConstImpl.boolean(irResult.startOffset, irResult.endOffset, builtins.booleanType, true), irResult)
             } else {
@@ -1512,7 +1501,7 @@ class Fir2IrVisitor(
                 loopMap.remove(doWhileLoop)
             }
         }.also {
-            doWhileLoop.accept(implicitCastInserter, it)
+            (it.body as? IrContainerExpression)?.coerceStatementsToUnit(coerceLastExpressionToUnit = true)
         }
         return IrBlockImpl(irLoop.startOffset, irLoop.endOffset, builtins.unitType).apply {
             statements.add(irLoop)
@@ -1567,7 +1556,9 @@ class Fir2IrVisitor(
                                 addIfNotNull(convertedForLoopVar)
                                 destructuredLoopVariables.forEach { addIfNotNull(it.toIrStatement()) }
                                 if (firExpression !is FirEmptyExpressionBlock) {
-                                    add(convertToIrExpression(firExpression))
+                                    add(convertToIrExpression(firExpression).also {
+                                        (it as? IrContainerExpression)?.coerceStatementsToUnit()
+                                    })
                                 }
                             }
 
@@ -1589,7 +1580,7 @@ class Fir2IrVisitor(
                 loopMap.remove(whileLoop)
             }
         }.also {
-            whileLoop.accept(implicitCastInserter, it)
+            (it.body as? IrContainerExpression)?.coerceStatementsToUnit(coerceLastExpressionToUnit = true)
         }
     }
 
@@ -1641,12 +1632,20 @@ class Fir2IrVisitor(
         return tryExpression.convertWithOffsets { startOffset, endOffset ->
             IrTryImpl(
                 startOffset, endOffset, tryExpression.resolvedType.toIrType(c),
-                tryExpression.tryBlock.convertToIrBlock(forceUnitType = false),
-                tryExpression.catches.map { it.accept(this, data) as IrCatch },
-                tryExpression.finallyBlock?.convertToIrBlock(forceUnitType = true)
+                tryExpression.tryBlock
+                    .convertToIrBlock(forceUnitType = false)
+                    .prepareExpressionForGivenExpectedType(expression = tryExpression.tryBlock, expectedType = tryExpression.resolvedType),
+                tryExpression.catches.map { firCatch ->
+                    (firCatch.accept(this, data) as IrCatch).also {
+                        it.result.prepareExpressionForGivenExpectedType(
+                            expression = firCatch.block, expectedType = tryExpression.resolvedType
+                        )
+                    }
+                },
+                tryExpression.finallyBlock?.convertToIrBlock(forceUnitType = true).also {
+                    (it as? IrContainerExpression)?.coerceStatementsToUnit(coerceLastExpressionToUnit = true)
+                }
             )
-        }.also {
-            tryExpression.accept(implicitCastInserter, it)
         }
     }
 

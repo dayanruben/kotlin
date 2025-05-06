@@ -140,7 +140,6 @@ class K2ReplCompiler(
                 sessionProvider = sessionProvider,
                 projectEnvironment = projectEnvironment,
                 extensionRegistrars = extensionRegistrars,
-                scope = projectFileSearchScope,
                 packagePartProvider = packagePartProvider,
                 languageVersionSettings = languageVersionSettings,
                 predefinedJavaComponents = predefinedJavaComponents,
@@ -205,6 +204,9 @@ class ReplModuleDataProvider(baseLibraryPaths: List<Path>) : ModuleDataProvider(
 
     override val allModuleData: Collection<FirModuleData>
         get() = moduleDataHistory
+
+    override val regularDependenciesModuleData: FirModuleData
+        get() = baseDependenciesModuleData
 
     override fun getModuleData(path: Path?): FirModuleData? {
         val normalizedPath = path?.normalize() ?: return null
