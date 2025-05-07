@@ -655,7 +655,7 @@ class ComposePluginRegistrar : CompilerPluginRegistrar() {
             val liveLiteralsV2Enabled = configuration.getBoolean(
                 ComposeConfiguration.LIVE_LITERALS_V2_ENABLED_KEY,
             )
-            val generateFunctionKeyMetaAnnotations = configuration.getBoolean(
+            val generateFunctionKeyMetaAnnotations = configuration.get(
                 ComposeConfiguration.GENERATE_FUNCTION_KEY_META_ANNOTATION_KEY,
             )
             val sourceInformationEnabled = configuration.getBoolean(

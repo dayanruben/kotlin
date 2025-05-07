@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.config.LanguageFeature.ForbidAnnotationsWithUseSiteT
 import org.jetbrains.kotlin.config.LanguageFeature.ForbidCompanionInLocalInnerClass
 import org.jetbrains.kotlin.config.LanguageFeature.ForbidEnumEntryNamedEntries
 import org.jetbrains.kotlin.config.LanguageFeature.ForbidExposingLessVisibleTypesInInline
-import org.jetbrains.kotlin.config.LanguageFeature.ForbidExposingTypesInPrimaryConstructorProperties
 import org.jetbrains.kotlin.config.LanguageFeature.ForbidInferOfInvisibleTypeAsReifiedOrVararg
 import org.jetbrains.kotlin.config.LanguageFeature.ForbidInferringTypeVariablesIntoEmptyIntersection
 import org.jetbrains.kotlin.config.LanguageFeature.ForbidParenthesizedLhsInAssignments
@@ -123,7 +122,6 @@ import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtReturnExpression
-import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.psi.KtTypeAlias
@@ -245,7 +243,6 @@ object FirErrors : FirDiagnosticsContainer() {
     val NOT_A_SUPERTYPE: KtDiagnosticFactory0 = KtDiagnosticFactory0("NOT_A_SUPERTYPE", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
     val TYPE_ARGUMENTS_REDUNDANT_IN_SUPER_QUALIFIER: KtDiagnosticFactory0 = KtDiagnosticFactory0("TYPE_ARGUMENTS_REDUNDANT_IN_SUPER_QUALIFIER", WARNING, SourceElementPositioningStrategies.DEFAULT, KtElement::class)
     val SUPERCLASS_NOT_ACCESSIBLE_FROM_INTERFACE: KtDiagnosticFactory0 = KtDiagnosticFactory0("SUPERCLASS_NOT_ACCESSIBLE_FROM_INTERFACE", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
-    val QUALIFIED_SUPERTYPE_EXTENDED_BY_OTHER_SUPERTYPE: KtDiagnosticFactory1<FirBasedSymbol<*>> = KtDiagnosticFactory1("QUALIFIED_SUPERTYPE_EXTENDED_BY_OTHER_SUPERTYPE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class)
     val SUPERTYPE_INITIALIZED_IN_INTERFACE: KtDiagnosticFactory0 = KtDiagnosticFactory0("SUPERTYPE_INITIALIZED_IN_INTERFACE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class)
     val INTERFACE_WITH_SUPERCLASS: KtDiagnosticFactory0 = KtDiagnosticFactory0("INTERFACE_WITH_SUPERCLASS", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class)
     val FINAL_SUPERTYPE: KtDiagnosticFactory0 = KtDiagnosticFactory0("FINAL_SUPERTYPE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class)
@@ -364,7 +361,6 @@ object FirErrors : FirDiagnosticsContainer() {
     val OPT_IN_TO_INHERITANCE_ERROR: KtDiagnosticFactory2<ClassId, String> = KtDiagnosticFactory2("OPT_IN_TO_INHERITANCE_ERROR", ERROR, SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED, PsiElement::class)
     val OPT_IN_OVERRIDE: KtDiagnosticFactory2<ClassId, String> = KtDiagnosticFactory2("OPT_IN_OVERRIDE", WARNING, SourceElementPositioningStrategies.DECLARATION_NAME, PsiElement::class)
     val OPT_IN_OVERRIDE_ERROR: KtDiagnosticFactory2<ClassId, String> = KtDiagnosticFactory2("OPT_IN_OVERRIDE_ERROR", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, PsiElement::class)
-    val OPT_IN_IS_NOT_ENABLED: KtDiagnosticFactory0 = KtDiagnosticFactory0("OPT_IN_IS_NOT_ENABLED", WARNING, SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED, KtAnnotationEntry::class)
     val OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION: KtDiagnosticFactory0 = KtDiagnosticFactory0("OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
     val OPT_IN_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_OPT_IN: KtDiagnosticFactory0 = KtDiagnosticFactory0("OPT_IN_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_OPT_IN", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class)
     val OPT_IN_WITHOUT_ARGUMENTS: KtDiagnosticFactory0 = KtDiagnosticFactory0("OPT_IN_WITHOUT_ARGUMENTS", WARNING, SourceElementPositioningStrategies.DEFAULT, KtAnnotationEntry::class)
@@ -382,7 +378,7 @@ object FirErrors : FirDiagnosticsContainer() {
     val EXPOSED_FUNCTION_RETURN_TYPE: KtDiagnosticFactory4<EffectiveVisibility, FirClassLikeSymbol<*>, RelationToType, EffectiveVisibility> = KtDiagnosticFactory4("EXPOSED_FUNCTION_RETURN_TYPE", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtNamedDeclaration::class)
     val EXPOSED_RECEIVER_TYPE: KtDiagnosticFactory4<EffectiveVisibility, FirClassLikeSymbol<*>, RelationToType, EffectiveVisibility> = KtDiagnosticFactory4("EXPOSED_RECEIVER_TYPE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class)
     val EXPOSED_PROPERTY_TYPE: KtDiagnosticFactory4<EffectiveVisibility, FirClassLikeSymbol<*>, RelationToType, EffectiveVisibility> = KtDiagnosticFactory4("EXPOSED_PROPERTY_TYPE", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtNamedDeclaration::class)
-    val EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR: KtDiagnosticFactoryForDeprecation4<EffectiveVisibility, FirClassLikeSymbol<*>, RelationToType, EffectiveVisibility> = KtDiagnosticFactoryForDeprecation4("EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR", ForbidExposingTypesInPrimaryConstructorProperties, SourceElementPositioningStrategies.DECLARATION_NAME, KtNamedDeclaration::class)
+    val EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR_ERROR: KtDiagnosticFactory4<EffectiveVisibility, FirClassLikeSymbol<*>, RelationToType, EffectiveVisibility> = KtDiagnosticFactory4("EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR_ERROR", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtNamedDeclaration::class)
     val EXPOSED_PARAMETER_TYPE: KtDiagnosticFactory4<EffectiveVisibility, FirClassLikeSymbol<*>, RelationToType, EffectiveVisibility> = KtDiagnosticFactory4("EXPOSED_PARAMETER_TYPE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtParameter::class)
     val EXPOSED_SUPER_INTERFACE: KtDiagnosticFactory4<EffectiveVisibility, FirClassLikeSymbol<*>, RelationToType, EffectiveVisibility> = KtDiagnosticFactory4("EXPOSED_SUPER_INTERFACE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class)
     val EXPOSED_SUPER_CLASS: KtDiagnosticFactory4<EffectiveVisibility, FirClassLikeSymbol<*>, RelationToType, EffectiveVisibility> = KtDiagnosticFactory4("EXPOSED_SUPER_CLASS", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class)
@@ -664,7 +660,6 @@ object FirErrors : FirDiagnosticsContainer() {
     val DEFAULT_VALUE_NOT_ALLOWED_IN_OVERRIDE: KtDiagnosticFactory0 = KtDiagnosticFactory0("DEFAULT_VALUE_NOT_ALLOWED_IN_OVERRIDE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class)
 
     // Fun interfaces
-    val FUN_INTERFACE_CONSTRUCTOR_REFERENCE: KtDiagnosticFactory0 = KtDiagnosticFactory0("FUN_INTERFACE_CONSTRUCTOR_REFERENCE", ERROR, SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED, KtExpression::class)
     val FUN_INTERFACE_WRONG_COUNT_OF_ABSTRACT_MEMBERS: KtDiagnosticFactory0 = KtDiagnosticFactory0("FUN_INTERFACE_WRONG_COUNT_OF_ABSTRACT_MEMBERS", ERROR, SourceElementPositioningStrategies.FUN_MODIFIER, KtClass::class)
     val FUN_INTERFACE_CANNOT_HAVE_ABSTRACT_PROPERTIES: KtDiagnosticFactory0 = KtDiagnosticFactory0("FUN_INTERFACE_CANNOT_HAVE_ABSTRACT_PROPERTIES", ERROR, SourceElementPositioningStrategies.FUN_INTERFACE, KtDeclaration::class)
     val FUN_INTERFACE_ABSTRACT_METHOD_WITH_TYPE_PARAMETERS: KtDiagnosticFactory0 = KtDiagnosticFactory0("FUN_INTERFACE_ABSTRACT_METHOD_WITH_TYPE_PARAMETERS", ERROR, SourceElementPositioningStrategies.FUN_INTERFACE, KtDeclaration::class)
@@ -813,7 +808,6 @@ object FirErrors : FirDiagnosticsContainer() {
     val UNSAFE_OPERATOR_CALL: KtDiagnosticFactory4<ConeKotlinType, FirExpression, String, FirExpression?> = KtDiagnosticFactory4("UNSAFE_OPERATOR_CALL", ERROR, SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED, KtExpression::class)
     val ITERATOR_ON_NULLABLE: KtDiagnosticFactory0 = KtDiagnosticFactory0("ITERATOR_ON_NULLABLE", ERROR, SourceElementPositioningStrategies.DEFAULT, KtExpression::class)
     val UNNECESSARY_SAFE_CALL: KtDiagnosticFactory1<ConeKotlinType> = KtDiagnosticFactory1("UNNECESSARY_SAFE_CALL", WARNING, SourceElementPositioningStrategies.SAFE_ACCESS, PsiElement::class)
-    val SAFE_CALL_WILL_CHANGE_NULLABILITY: KtDiagnosticFactory0 = KtDiagnosticFactory0("SAFE_CALL_WILL_CHANGE_NULLABILITY", WARNING, SourceElementPositioningStrategies.CALL_ELEMENT_WITH_DOT, KtSafeQualifiedExpression::class)
     val UNEXPECTED_SAFE_CALL: KtDiagnosticFactory0 = KtDiagnosticFactory0("UNEXPECTED_SAFE_CALL", ERROR, SourceElementPositioningStrategies.SAFE_ACCESS, PsiElement::class)
     val UNNECESSARY_NOT_NULL_ASSERTION: KtDiagnosticFactory1<ConeKotlinType> = KtDiagnosticFactory1("UNNECESSARY_NOT_NULL_ASSERTION", WARNING, SourceElementPositioningStrategies.OPERATOR, KtExpression::class)
     val NOT_NULL_ASSERTION_ON_LAMBDA_EXPRESSION: KtDiagnosticFactory0 = KtDiagnosticFactory0("NOT_NULL_ASSERTION_ON_LAMBDA_EXPRESSION", WARNING, SourceElementPositioningStrategies.OPERATOR, KtExpression::class)
@@ -834,7 +828,6 @@ object FirErrors : FirDiagnosticsContainer() {
     // When expressions
     val EXPECTED_CONDITION: KtDiagnosticFactory0 = KtDiagnosticFactory0("EXPECTED_CONDITION", ERROR, SourceElementPositioningStrategies.DEFAULT, KtWhenCondition::class)
     val NO_ELSE_IN_WHEN: KtDiagnosticFactory2<List<WhenMissingCase>, String> = KtDiagnosticFactory2("NO_ELSE_IN_WHEN", ERROR, SourceElementPositioningStrategies.WHEN_EXPRESSION, KtWhenExpression::class)
-    val NON_EXHAUSTIVE_WHEN_STATEMENT: KtDiagnosticFactory2<String, List<WhenMissingCase>> = KtDiagnosticFactory2("NON_EXHAUSTIVE_WHEN_STATEMENT", WARNING, SourceElementPositioningStrategies.WHEN_EXPRESSION, KtWhenExpression::class)
     val INVALID_IF_AS_EXPRESSION: KtDiagnosticFactory0 = KtDiagnosticFactory0("INVALID_IF_AS_EXPRESSION", ERROR, SourceElementPositioningStrategies.IF_EXPRESSION, KtIfExpression::class)
     val ELSE_MISPLACED_IN_WHEN: KtDiagnosticFactory0 = KtDiagnosticFactory0("ELSE_MISPLACED_IN_WHEN", ERROR, SourceElementPositioningStrategies.ELSE_ENTRY, KtWhenEntry::class)
     val REDUNDANT_ELSE_IN_WHEN: KtDiagnosticFactory0 = KtDiagnosticFactory0("REDUNDANT_ELSE_IN_WHEN", WARNING, SourceElementPositioningStrategies.ELSE_ENTRY, KtWhenEntry::class)

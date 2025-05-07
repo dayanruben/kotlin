@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.test.Fir2IrNativeResultsConverter
 import org.jetbrains.kotlin.konan.test.FirNativeKlibSerializerFacade
-import org.jetbrains.kotlin.konan.test.converters.NativeInliningFacade
+import org.jetbrains.kotlin.konan.test.converters.NativePreSerializationLoweringFacade
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.test.Constructor
 import org.jetbrains.kotlin.test.FirParser
@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.test.backend.handlers.KlibBackendDiagnosticsHandler
 import org.jetbrains.kotlin.test.backend.ir.IrDiagnosticsHandler
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.builders.classicFrontendHandlersStep
-import org.jetbrains.kotlin.test.builders.inlinedIrHandlersStep
+import org.jetbrains.kotlin.test.builders.loweredIrHandlersStep
 import org.jetbrains.kotlin.test.builders.klibArtifactsHandlersStep
 import org.jetbrains.kotlin.test.directives.*
 import org.jetbrains.kotlin.test.directives.NativeEnvironmentConfigurationDirectives.WITH_PLATFORM_LIBS
@@ -124,8 +124,8 @@ abstract class AbstractFirNativeDiagnosticsWithBackendTestBase(parser: FirParser
         useAdditionalService(::LibraryProvider)
 
         facadeStep(::Fir2IrNativeResultsConverter)
-        facadeStep(::NativeInliningFacade)
-        inlinedIrHandlersStep { useHandlers(::IrDiagnosticsHandler) }
+        facadeStep(::NativePreSerializationLoweringFacade)
+        loweredIrHandlersStep { useHandlers(::IrDiagnosticsHandler) }
         facadeStep(::FirNativeKlibSerializerFacade)
 
         klibArtifactsHandlersStep {

@@ -31,7 +31,7 @@ abstract class AbstractNonJvmIrTextTest<FrontendOutput : ResultingArtifact.Front
     abstract val frontend: FrontendKind<*>
     abstract val frontendFacade: Constructor<FrontendFacade<FrontendOutput>>
     abstract val converter: Constructor<Frontend2BackendConverter<FrontendOutput, IrBackendInput>>
-    abstract val preSerializerFacade: Constructor<IrInliningFacade<IrBackendInput>>
+    abstract val preSerializerFacade: Constructor<IrPreSerializationLoweringFacade<IrBackendInput>>
 
     /**
      * Facades for serialization and deserialization to/from klibs.
@@ -89,10 +89,10 @@ abstract class AbstractNonJvmIrTextTest<FrontendOutput : ResultingArtifact.Front
         }
 
         facadeStep(preSerializerFacade)
-        inlinedIrHandlersStep { useHandlers(::IrDiagnosticsHandler) }
+        loweredIrHandlersStep { useHandlers(::IrDiagnosticsHandler) }
 
         klibFacades?.let {klibFacades ->
-            inlinedIrHandlersStep {
+            loweredIrHandlersStep {
                 useHandlers({ SerializedIrDumpHandler(it, isAfterDeserialization = false) })
             }
 

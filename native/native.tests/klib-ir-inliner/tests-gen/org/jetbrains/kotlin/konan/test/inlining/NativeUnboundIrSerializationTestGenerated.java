@@ -7307,6 +7307,12 @@ public class NativeUnboundIrSerializationTestGenerated extends AbstractNativeUnb
       }
 
       @Test
+      @TestMetadata("inlineContextualReceiverLambda.kt")
+      public void testInlineContextualReceiverLambda() {
+        runTest("compiler/testData/codegen/box/contextParameters/inlineContextualReceiverLambda.kt");
+      }
+
+      @Test
       @TestMetadata("propertyWithContextAndWithout.kt")
       public void testPropertyWithContextAndWithout() {
         runTest("compiler/testData/codegen/box/contextParameters/propertyWithContextAndWithout.kt");
@@ -13094,6 +13100,12 @@ public class NativeUnboundIrSerializationTestGenerated extends AbstractNativeUnb
       @TestDataPath("$PROJECT_ROOT")
       @Tag("klib")
       public class Private {
+        @Test
+        @TestMetadata("clashingNames.kt")
+        public void testClashingNames() {
+          runTest("compiler/testData/codegen/box/defaultArguments/private/clashingNames.kt");
+        }
+
         @Test
         @TestMetadata("memberExtensionFunction.kt")
         public void testMemberExtensionFunction() {

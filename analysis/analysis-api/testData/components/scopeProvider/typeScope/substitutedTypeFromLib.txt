@@ -250,7 +250,7 @@ KaNamedFunctionSymbol:
   isInfix: false
   isInline: false
   isOperator: true
-  isOverride: false
+  isOverride: true
   isStatic: false
   isSuspend: false
   isTailRec: false
@@ -308,7 +308,7 @@ KaNamedFunctionSymbol:
   isInfix: false
   isInline: false
   isOperator: false
-  isOverride: false
+  isOverride: true
   isStatic: false
   isSuspend: false
   isTailRec: false
@@ -340,7 +340,7 @@ KaNamedFunctionSymbol:
   isInfix: false
   isInline: false
   isOperator: false
-  isOverride: false
+  isOverride: true
   isStatic: false
   isSuspend: false
   isTailRec: false
@@ -388,10 +388,10 @@ KaKotlinPropertySymbol:
     contextReceivers: []
     hasStableParameterNames: true
     isActual: false
-    isCustom: false
     isExpect: false
     isExtension: false
     isInline: false
+    isNotDefault: false
     isOverride: false
     location: PROPERTY
     modality: FINAL
@@ -460,10 +460,10 @@ KaKotlinPropertySymbol:
     contextReceivers: []
     hasStableParameterNames: true
     isActual: false
-    isCustom: false
     isExpect: false
     isExtension: false
     isInline: false
+    isNotDefault: false
     isOverride: false
     location: PROPERTY
     modality: FINAL

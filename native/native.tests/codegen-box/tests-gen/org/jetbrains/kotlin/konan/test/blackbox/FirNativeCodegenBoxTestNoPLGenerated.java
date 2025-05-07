@@ -7862,6 +7862,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
       }
 
       @Test
+      @TestMetadata("inlineContextualReceiverLambda.kt")
+      public void testInlineContextualReceiverLambda() {
+        runTest("compiler/testData/codegen/box/contextParameters/inlineContextualReceiverLambda.kt");
+      }
+
+      @Test
       @TestMetadata("propertyWithContextAndWithout.kt")
       public void testPropertyWithContextAndWithout() {
         runTest("compiler/testData/codegen/box/contextParameters/propertyWithContextAndWithout.kt");
@@ -14119,6 +14125,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
         @Test
         public void testAllFilesPresentInPrivate() {
           KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/defaultArguments/private"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+        }
+
+        @Test
+        @TestMetadata("clashingNames.kt")
+        public void testClashingNames() {
+          runTest("compiler/testData/codegen/box/defaultArguments/private/clashingNames.kt");
         }
 
         @Test

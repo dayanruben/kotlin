@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.fir.analysis.jvm.checkers.declaration
 
 import org.jetbrains.kotlin.KtSourceElement
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
@@ -21,7 +20,6 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.classId
 import org.jetbrains.kotlin.fir.expressions.*
-import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.resolve.defaultType
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
@@ -61,20 +59,16 @@ object FirRepeatableAnnotationChecker : FirBasicDeclarationChecker(MppCheckerKin
                 session.annotationPlatformSupport.symbolContainsRepeatableAnnotation(annotationClass, session) &&
                 annotationClass.getAnnotationRetention(session) != AnnotationRetention.SOURCE
             ) {
-                if (session.languageVersionSettings.supportsFeature(LanguageFeature.RepeatableAnnotations)) {
-                    // It's not allowed to have both a repeated annotation (applied more than once) and its container
-                    // on the same element. See https://docs.oracle.com/javase/specs/jls/se16/html/jls-9.html#jls-9.7.5.
-                    val explicitContainer = annotationClass.resolveContainerAnnotation(session)
-                    if (explicitContainer != null && annotations.any { it.toAnnotationClassId(session) == explicitContainer }) {
-                        reporter.reportOn(
-                            annotation.source,
-                            FirJvmErrors.REPEATED_ANNOTATION_WITH_CONTAINER,
-                            unexpandedClassId,
-                            explicitContainer
-                        )
-                    }
-                } else {
-                    reporter.reportOn(annotation.source, FirJvmErrors.NON_SOURCE_REPEATED_ANNOTATION)
+                // It's not allowed to have both a repeated annotation (applied more than once) and its container
+                // on the same element. See https://docs.oracle.com/javase/specs/jls/se16/html/jls-9.html#jls-9.7.5.
+                val explicitContainer = annotationClass.resolveContainerAnnotation(session)
+                if (explicitContainer != null && annotations.any { it.toAnnotationClassId(session) == explicitContainer }) {
+                    reporter.reportOn(
+                        annotation.source,
+                        FirJvmErrors.REPEATED_ANNOTATION_WITH_CONTAINER,
+                        unexpandedClassId,
+                        explicitContainer
+                    )
                 }
             }
 
@@ -134,7 +128,7 @@ object FirRepeatableAnnotationChecker : FirBasicDeclarationChecker(MppCheckerKin
     ) {
         val unsubsitutedScope = declaration.unsubstitutedScope(context)
         if (unsubsitutedScope.getSingleClassifier(REPEATABLE_ANNOTATION_CONTAINER_NAME) != null) {
-            reporter.reportOn(kotlinRepeatable.source, FirJvmErrors.REPEATABLE_ANNOTATION_HAS_NESTED_CLASS_NAMED_CONTAINER, context)
+            reporter.reportOn(kotlinRepeatable.source, FirJvmErrors.REPEATABLE_ANNOTATION_HAS_NESTED_CLASS_NAMED_CONTAINER_ERROR, context)
         }
     }
 
@@ -170,7 +164,7 @@ object FirRepeatableAnnotationChecker : FirBasicDeclarationChecker(MppCheckerKin
         ) {
             reporter.reportOn(
                 annotationSource,
-                FirJvmErrors.REPEATABLE_CONTAINER_MUST_HAVE_VALUE_ARRAY,
+                FirJvmErrors.REPEATABLE_CONTAINER_MUST_HAVE_VALUE_ARRAY_ERROR,
                 containerClass.classId,
                 annotationClass.classId,
                 context
@@ -182,7 +176,7 @@ object FirRepeatableAnnotationChecker : FirBasicDeclarationChecker(MppCheckerKin
         if (otherNonDefault != null) {
             reporter.reportOn(
                 annotationSource,
-                FirJvmErrors.REPEATABLE_CONTAINER_HAS_NON_DEFAULT_PARAMETER,
+                FirJvmErrors.REPEATABLE_CONTAINER_HAS_NON_DEFAULT_PARAMETER_ERROR,
                 containerClass.classId,
                 otherNonDefault.name,
                 context
@@ -203,7 +197,7 @@ object FirRepeatableAnnotationChecker : FirBasicDeclarationChecker(MppCheckerKin
         if (containerRetention < annotationRetention) {
             reporter.reportOn(
                 annotationSource,
-                FirJvmErrors.REPEATABLE_CONTAINER_HAS_SHORTER_RETENTION,
+                FirJvmErrors.REPEATABLE_CONTAINER_HAS_SHORTER_RETENTION_ERROR,
                 containerClass.classId,
                 containerRetention.name,
                 annotationClass.classId,
@@ -241,7 +235,7 @@ object FirRepeatableAnnotationChecker : FirBasicDeclarationChecker(MppCheckerKin
             if (!ok) {
                 reporter.reportOn(
                     annotationSource,
-                    FirJvmErrors.REPEATABLE_CONTAINER_TARGET_SET_NOT_A_SUBSET,
+                    FirJvmErrors.REPEATABLE_CONTAINER_TARGET_SET_NOT_A_SUBSET_ERROR,
                     containerClass.classId,
                     annotationClass.classId,
                     context

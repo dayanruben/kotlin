@@ -76,7 +76,7 @@ class Fir2IrImplicitCastInserter(private val c: Fir2IrComponents) : Fir2IrCompon
             }
             expandedValueType is ConeDynamicType -> {
                 if (expandedExpectedType !is ConeDynamicType && !expandedExpectedType.isNullableAny) {
-                    generateImplicitCast(this, expandedExpectedType.toIrType(c, ConversionTypeOrigin.DEFAULT))
+                    generateImplicitCast(this, expandedExpectedType.toIrType(ConversionTypeOrigin.DEFAULT))
                 } else {
                     this
                 }
@@ -130,7 +130,7 @@ class Fir2IrImplicitCastInserter(private val c: Fir2IrComponents) : Fir2IrCompon
         // We don't want an implicit cast to Nothing?. This expression just encompasses nullability after null check.
         return if (smartCastExpression.isStable && smartCastExpression.smartcastTypeWithoutNullableNothing == null) {
             val smartcastedType = smartCastExpression.resolvedType
-            val approximatedType = smartcastedType.approximateForIrOrNull(c)
+            val approximatedType = smartcastedType.approximateForIrOrNull()
             if (approximatedType != null) {
                 val originalType = smartCastExpression.originalExpression.resolvedType
                 val originalNotNullType = originalType.withNullability(nullable = false, session.typeContext)
@@ -149,11 +149,11 @@ class Fir2IrImplicitCastInserter(private val c: Fir2IrComponents) : Fir2IrCompon
         expectedType: ConeKotlinType
     ): IrExpression {
         if (argumentType !is ConeIntersectionType) return this
-        val approximatedArgumentType = argumentType.approximateForIrOrNull(c) ?: argumentType
+        val approximatedArgumentType = argumentType.approximateForIrOrNull() ?: argumentType
         if (approximatedArgumentType.isSubtypeOf(expectedType, session)) return this
 
         return findComponentOfIntersectionForExpectedType(argumentType, expectedType)?.let {
-            generateImplicitCast(this, it.toIrType(c))
+            generateImplicitCast(this, it.toIrType())
         } ?: this
     }
 
@@ -218,7 +218,7 @@ class Fir2IrImplicitCastInserter(private val c: Fir2IrComponents) : Fir2IrCompon
     private fun implicitCastOrExpression(
         original: IrExpression, castType: ConeKotlinType, typeOrigin: ConversionTypeOrigin = ConversionTypeOrigin.DEFAULT
     ): IrExpression {
-        return implicitCastOrExpression(original, castType.toIrType(c, typeOrigin))
+        return implicitCastOrExpression(original, castType.toIrType(typeOrigin))
     }
 
     companion object {

@@ -1866,12 +1866,6 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
     }
 
     @Test
-    @TestMetadata("SafeCallNonNullReceiver.kt")
-    public void testSafeCallNonNullReceiver() {
-      runTest("compiler/testData/diagnostics/tests/SafeCallNonNullReceiver.kt");
-    }
-
-    @Test
     @TestMetadata("SafeCallNonNullReceiver2.kt")
     public void testSafeCallNonNullReceiver2() {
       runTest("compiler/testData/diagnostics/tests/SafeCallNonNullReceiver2.kt");
@@ -2557,12 +2551,6 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       @TestMetadata("constantFromOuterScopeAsAnnotaionParameter.kt")
       public void testConstantFromOuterScopeAsAnnotaionParameter() {
         runTest("compiler/testData/diagnostics/tests/annotations/constantFromOuterScopeAsAnnotaionParameter.kt");
-      }
-
-      @Test
-      @TestMetadata("ConstructorCall.kt")
-      public void testConstructorCall() {
-        runTest("compiler/testData/diagnostics/tests/annotations/ConstructorCall.kt");
       }
 
       @Test
@@ -3937,33 +3925,15 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       @TestDataPath("$PROJECT_ROOT")
       public class Repeatable {
         @Test
-        @TestMetadata("containerAndAnnotationAreBothApplied_1_5.kt")
-        public void testContainerAndAnnotationAreBothApplied_1_5() {
-          runTest("compiler/testData/diagnostics/tests/annotations/repeatable/containerAndAnnotationAreBothApplied_1_5.kt");
-        }
-
-        @Test
         @TestMetadata("containerAndAnnotationAreBothApplied_1_6.kt")
         public void testContainerAndAnnotationAreBothApplied_1_6() {
           runTest("compiler/testData/diagnostics/tests/annotations/repeatable/containerAndAnnotationAreBothApplied_1_6.kt");
         }
 
         @Test
-        @TestMetadata("containerArguments_1_5.kt")
-        public void testContainerArguments_1_5() {
-          runTest("compiler/testData/diagnostics/tests/annotations/repeatable/containerArguments_1_5.kt");
-        }
-
-        @Test
         @TestMetadata("containerArguments_1_6.kt")
         public void testContainerArguments_1_6() {
           runTest("compiler/testData/diagnostics/tests/annotations/repeatable/containerArguments_1_6.kt");
-        }
-
-        @Test
-        @TestMetadata("containerRetention_1_5.kt")
-        public void testContainerRetention_1_5() {
-          runTest("compiler/testData/diagnostics/tests/annotations/repeatable/containerRetention_1_5.kt");
         }
 
         @Test
@@ -3985,21 +3955,9 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
         }
 
         @Test
-        @TestMetadata("javaRepeatable_1_5.kt")
-        public void testJavaRepeatable_1_5() {
-          runTest("compiler/testData/diagnostics/tests/annotations/repeatable/javaRepeatable_1_5.kt");
-        }
-
-        @Test
         @TestMetadata("javaRepeatable_1_6.kt")
         public void testJavaRepeatable_1_6() {
           runTest("compiler/testData/diagnostics/tests/annotations/repeatable/javaRepeatable_1_6.kt");
-        }
-
-        @Test
-        @TestMetadata("javaUnrepeatable_1_5.kt")
-        public void testJavaUnrepeatable_1_5() {
-          runTest("compiler/testData/diagnostics/tests/annotations/repeatable/javaUnrepeatable_1_5.kt");
         }
 
         @Test
@@ -4009,21 +3967,9 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
         }
 
         @Test
-        @TestMetadata("kotlinRepeatable_1_5.kt")
-        public void testKotlinRepeatable_1_5() {
-          runTest("compiler/testData/diagnostics/tests/annotations/repeatable/kotlinRepeatable_1_5.kt");
-        }
-
-        @Test
         @TestMetadata("kotlinRepeatable_1_6.kt")
         public void testKotlinRepeatable_1_6() {
           runTest("compiler/testData/diagnostics/tests/annotations/repeatable/kotlinRepeatable_1_6.kt");
-        }
-
-        @Test
-        @TestMetadata("nestedClassContainer_1_5.kt")
-        public void testNestedClassContainer_1_5() {
-          runTest("compiler/testData/diagnostics/tests/annotations/repeatable/nestedClassContainer_1_5.kt");
         }
 
         @Test
@@ -6986,12 +6932,6 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       }
 
       @Test
-      @TestMetadata("selfCallsInCompanionSuperConstructor_warning.kt")
-      public void testSelfCallsInCompanionSuperConstructor_warning() {
-        runTest("compiler/testData/diagnostics/tests/classObjects/selfCallsInCompanionSuperConstructor_warning.kt");
-      }
-
-      @Test
       @TestMetadata("typeParametersInAnnonymousObject_after.kt")
       public void testTypeParametersInAnnonymousObject_after() {
         runTest("compiler/testData/diagnostics/tests/classObjects/typeParametersInAnnonymousObject_after.kt");
@@ -8310,12 +8250,6 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       @TestMetadata("smartcastOnThisInInitializationSection.kt")
       public void testSmartcastOnThisInInitializationSection() {
         runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/smartcastOnThisInInitializationSection.kt");
-      }
-
-      @Test
-      @TestMetadata("throwInLambda.kt")
-      public void testThrowInLambda() {
-        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/throwInLambda.kt");
       }
 
       @Test
@@ -9805,6 +9739,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       @TestMetadata("innerOuterDataClass.kt")
       public void testInnerOuterDataClass() {
         runTest("compiler/testData/diagnostics/tests/dataClasses/innerOuterDataClass.kt");
+      }
+
+      @Test
+      @TestMetadata("missingDependencyInSupertype.kt")
+      public void testMissingDependencyInSupertype() {
+        runTest("compiler/testData/diagnostics/tests/dataClasses/missingDependencyInSupertype.kt");
       }
 
       @Test
@@ -13473,12 +13413,6 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       }
 
       @Test
-      @TestMetadata("propertyInPrivateConstructor.kt")
-      public void testPropertyInPrivateConstructor() {
-        runTest("compiler/testData/diagnostics/tests/exposed/propertyInPrivateConstructor.kt");
-      }
-
-      @Test
       @TestMetadata("propertyInPrivateConstructorError.kt")
       public void testPropertyInPrivateConstructorError() {
         runTest("compiler/testData/diagnostics/tests/exposed/propertyInPrivateConstructorError.kt");
@@ -14123,12 +14057,6 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       @TestMetadata("funInterfaceConstructorReferences_after.kt")
       public void testFunInterfaceConstructorReferences_after() {
         runTest("compiler/testData/diagnostics/tests/funInterface/funInterfaceConstructorReferences_after.kt");
-      }
-
-      @Test
-      @TestMetadata("funInterfaceConstructorReferences_before.kt")
-      public void testFunInterfaceConstructorReferences_before() {
-        runTest("compiler/testData/diagnostics/tests/funInterface/funInterfaceConstructorReferences_before.kt");
       }
 
       @Test
@@ -30669,12 +30597,6 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       }
 
       @Test
-      @TestMetadata("safeCallOnNotNullableType.kt")
-      public void testSafeCallOnNotNullableType() {
-        runTest("compiler/testData/diagnostics/tests/nullableTypes/safeCallOnNotNullableType.kt");
-      }
-
-      @Test
       @TestMetadata("safeCallOnTypeWithNullableUpperBound.kt")
       public void testSafeCallOnTypeWithNullableUpperBound() {
         runTest("compiler/testData/diagnostics/tests/nullableTypes/safeCallOnTypeWithNullableUpperBound.kt");
@@ -45033,12 +44955,6 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       }
 
       @Test
-      @TestMetadata("kt48653_before.kt")
-      public void testKt48653_before() {
-        runTest("compiler/testData/diagnostics/tests/when/kt48653_before.kt");
-      }
-
-      @Test
       @TestMetadata("kt49702.kt")
       public void testKt49702() {
         runTest("compiler/testData/diagnostics/tests/when/kt49702.kt");
@@ -45150,18 +45066,6 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       @TestMetadata("NonExhaustiveWarningNull.kt")
       public void testNonExhaustiveWarningNull() {
         runTest("compiler/testData/diagnostics/tests/when/NonExhaustiveWarningNull.kt");
-      }
-
-      @Test
-      @TestMetadata("nonExhaustiveWhenStatement_1_5.kt")
-      public void testNonExhaustiveWhenStatement_1_5() {
-        runTest("compiler/testData/diagnostics/tests/when/nonExhaustiveWhenStatement_1_5.kt");
-      }
-
-      @Test
-      @TestMetadata("nonExhaustiveWhenStatement_1_6.kt")
-      public void testNonExhaustiveWhenStatement_1_6() {
-        runTest("compiler/testData/diagnostics/tests/when/nonExhaustiveWhenStatement_1_6.kt");
       }
 
       @Test
@@ -53913,12 +53817,6 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       @TestMetadata("propertyTypeMismatchOnOverride.kt")
       public void testPropertyTypeMismatchOnOverride() {
         runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/propertyTypeMismatchOnOverride.kt");
-      }
-
-      @Test
-      @TestMetadata("qualifiedSupertypeExtendedByOtherSupertype.kt")
-      public void testQualifiedSupertypeExtendedByOtherSupertype() {
-        runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/qualifiedSupertypeExtendedByOtherSupertype.kt");
       }
 
       @Test

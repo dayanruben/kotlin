@@ -273,9 +273,6 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val NOT_A_SUPERTYPE by error<PsiElement>()
         val TYPE_ARGUMENTS_REDUNDANT_IN_SUPER_QUALIFIER by warning<KtElement>()
         val SUPERCLASS_NOT_ACCESSIBLE_FROM_INTERFACE by error<PsiElement>()
-        val QUALIFIED_SUPERTYPE_EXTENDED_BY_OTHER_SUPERTYPE by error<KtElement> {
-            parameter<Symbol>("otherSuperType")
-        }
         val SUPERTYPE_INITIALIZED_IN_INTERFACE by error<KtElement>()
         val INTERFACE_WITH_SUPERCLASS by error<KtElement>()
         val FINAL_SUPERTYPE by error<KtElement>()
@@ -501,7 +498,6 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             isSuppressible = true
         }
 
-        val OPT_IN_IS_NOT_ENABLED by warning<KtAnnotationEntry>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
         val OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION by error<PsiElement>()
         val OPT_IN_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_OPT_IN by error<PsiElement>()
 
@@ -533,9 +529,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val EXPOSED_FUNCTION_RETURN_TYPE by exposedVisibilityError<KtNamedDeclaration>(PositioningStrategy.DECLARATION_NAME)
         val EXPOSED_RECEIVER_TYPE by exposedVisibilityError<KtElement>()
         val EXPOSED_PROPERTY_TYPE by exposedVisibilityError<KtNamedDeclaration>(PositioningStrategy.DECLARATION_NAME)
-        val EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR by exposedVisibilityDeprecationError<KtNamedDeclaration>(
-            LanguageFeature.ForbidExposingTypesInPrimaryConstructorProperties, PositioningStrategy.DECLARATION_NAME
-        )
+        val EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR_ERROR by exposedVisibilityError<KtNamedDeclaration>(PositioningStrategy.DECLARATION_NAME)
         val EXPOSED_PARAMETER_TYPE by exposedVisibilityError<KtParameter>(/* // NB: for parameter FE 1.0 reports not on a name for some reason */)
         val EXPOSED_SUPER_INTERFACE by exposedVisibilityError<KtElement>()
         val EXPOSED_SUPER_CLASS by exposedVisibilityError<KtElement>()
@@ -1336,7 +1330,6 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
     }
 
     val FUN_INTERFACES by object : DiagnosticGroup("Fun interfaces") {
-        val FUN_INTERFACE_CONSTRUCTOR_REFERENCE by error<KtExpression>(PositioningStrategy.REFERENCE_BY_QUALIFIED)
         val FUN_INTERFACE_WRONG_COUNT_OF_ABSTRACT_MEMBERS by error<KtClass>(PositioningStrategy.FUN_MODIFIER)
         val FUN_INTERFACE_CANNOT_HAVE_ABSTRACT_PROPERTIES by error<KtDeclaration>(PositioningStrategy.FUN_INTERFACE)
         val FUN_INTERFACE_ABSTRACT_METHOD_WITH_TYPE_PARAMETERS by error<KtDeclaration>(PositioningStrategy.FUN_INTERFACE)
@@ -1632,7 +1625,6 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val UNNECESSARY_SAFE_CALL by warning<PsiElement>(PositioningStrategy.SAFE_ACCESS) {
             parameter<ConeKotlinType>("receiverType")
         }
-        val SAFE_CALL_WILL_CHANGE_NULLABILITY by warning<KtSafeQualifiedExpression>(PositioningStrategy.CALL_ELEMENT_WITH_DOT)
         val UNEXPECTED_SAFE_CALL by error<PsiElement>(PositioningStrategy.SAFE_ACCESS)
         val UNNECESSARY_NOT_NULL_ASSERTION by warning<KtExpression>(PositioningStrategy.OPERATOR) {
             parameter<ConeKotlinType>("receiverType")
@@ -1668,10 +1660,6 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val NO_ELSE_IN_WHEN by error<KtWhenExpression>(PositioningStrategy.WHEN_EXPRESSION) {
             parameter<List<WhenMissingCase>>("missingWhenCases")
             parameter<String>("description")
-        }
-        val NON_EXHAUSTIVE_WHEN_STATEMENT by warning<KtWhenExpression>(PositioningStrategy.WHEN_EXPRESSION) {
-            parameter<String>("type")
-            parameter<List<WhenMissingCase>>("missingWhenCases")
         }
         val INVALID_IF_AS_EXPRESSION by error<KtIfExpression>(PositioningStrategy.IF_EXPRESSION)
         val ELSE_MISPLACED_IN_WHEN by error<KtWhenEntry>(PositioningStrategy.ELSE_ENTRY)

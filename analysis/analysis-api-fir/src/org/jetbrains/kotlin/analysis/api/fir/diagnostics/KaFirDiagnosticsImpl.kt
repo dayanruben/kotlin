@@ -76,7 +76,6 @@ import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtReturnExpression
-import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.psi.KtTypeAlias
@@ -616,12 +615,6 @@ internal class SuperclassNotAccessibleFromInterfaceImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.SuperclassNotAccessibleFromInterface
-
-internal class QualifiedSupertypeExtendedByOtherSupertypeImpl(
-    override val otherSuperType: KaSymbol,
-    firDiagnostic: KtPsiDiagnostic,
-    token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.QualifiedSupertypeExtendedByOtherSupertype
 
 internal class SupertypeInitializedInInterfaceImpl(
     firDiagnostic: KtPsiDiagnostic,
@@ -1403,11 +1396,6 @@ internal class OptInOverrideErrorImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.OptInOverrideError
 
-internal class OptInIsNotEnabledImpl(
-    firDiagnostic: KtPsiDiagnostic,
-    token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.OptInIsNotEnabled
-
 internal class OptInCanOnlyBeUsedAsAnnotationImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
@@ -1512,15 +1500,6 @@ internal class ExposedPropertyTypeInConstructorErrorImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtNamedDeclaration>(firDiagnostic, token), KaFirDiagnostic.ExposedPropertyTypeInConstructorError
-
-internal class ExposedPropertyTypeInConstructorWarningImpl(
-    override val elementVisibility: EffectiveVisibility,
-    override val restrictingDeclaration: KaClassLikeSymbol,
-    override val relationToType: RelationToType,
-    override val restrictingVisibility: EffectiveVisibility,
-    firDiagnostic: KtPsiDiagnostic,
-    token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<KtNamedDeclaration>(firDiagnostic, token), KaFirDiagnostic.ExposedPropertyTypeInConstructorWarning
 
 internal class ExposedParameterTypeImpl(
     override val elementVisibility: EffectiveVisibility,
@@ -3146,11 +3125,6 @@ internal class DefaultValueNotAllowedInOverrideImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.DefaultValueNotAllowedInOverride
 
-internal class FunInterfaceConstructorReferenceImpl(
-    firDiagnostic: KtPsiDiagnostic,
-    token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<KtExpression>(firDiagnostic, token), KaFirDiagnostic.FunInterfaceConstructorReference
-
 internal class FunInterfaceWrongCountOfAbstractMembersImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
@@ -3915,11 +3889,6 @@ internal class UnnecessarySafeCallImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.UnnecessarySafeCall
 
-internal class SafeCallWillChangeNullabilityImpl(
-    firDiagnostic: KtPsiDiagnostic,
-    token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<KtSafeQualifiedExpression>(firDiagnostic, token), KaFirDiagnostic.SafeCallWillChangeNullability
-
 internal class UnexpectedSafeCallImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
@@ -4007,13 +3976,6 @@ internal class NoElseInWhenImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtWhenExpression>(firDiagnostic, token), KaFirDiagnostic.NoElseInWhen
-
-internal class NonExhaustiveWhenStatementImpl(
-    override val type: String,
-    override val missingWhenCases: List<WhenMissingCase>,
-    firDiagnostic: KtPsiDiagnostic,
-    token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<KtWhenExpression>(firDiagnostic, token), KaFirDiagnostic.NonExhaustiveWhenStatement
 
 internal class InvalidIfAsExpressionImpl(
     firDiagnostic: KtPsiDiagnostic,
@@ -5326,26 +5288,12 @@ internal class RepeatableContainerMustHaveValueArrayErrorImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.RepeatableContainerMustHaveValueArrayError
 
-internal class RepeatableContainerMustHaveValueArrayWarningImpl(
-    override val container: ClassId,
-    override val annotation: ClassId,
-    firDiagnostic: KtPsiDiagnostic,
-    token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.RepeatableContainerMustHaveValueArrayWarning
-
 internal class RepeatableContainerHasNonDefaultParameterErrorImpl(
     override val container: ClassId,
     override val nonDefault: Name,
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.RepeatableContainerHasNonDefaultParameterError
-
-internal class RepeatableContainerHasNonDefaultParameterWarningImpl(
-    override val container: ClassId,
-    override val nonDefault: Name,
-    firDiagnostic: KtPsiDiagnostic,
-    token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.RepeatableContainerHasNonDefaultParameterWarning
 
 internal class RepeatableContainerHasShorterRetentionErrorImpl(
     override val container: ClassId,
@@ -5356,15 +5304,6 @@ internal class RepeatableContainerHasShorterRetentionErrorImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.RepeatableContainerHasShorterRetentionError
 
-internal class RepeatableContainerHasShorterRetentionWarningImpl(
-    override val container: ClassId,
-    override val retention: String,
-    override val annotation: ClassId,
-    override val annotationRetention: String,
-    firDiagnostic: KtPsiDiagnostic,
-    token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.RepeatableContainerHasShorterRetentionWarning
-
 internal class RepeatableContainerTargetSetNotASubsetErrorImpl(
     override val container: ClassId,
     override val annotation: ClassId,
@@ -5372,22 +5311,10 @@ internal class RepeatableContainerTargetSetNotASubsetErrorImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.RepeatableContainerTargetSetNotASubsetError
 
-internal class RepeatableContainerTargetSetNotASubsetWarningImpl(
-    override val container: ClassId,
-    override val annotation: ClassId,
-    firDiagnostic: KtPsiDiagnostic,
-    token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.RepeatableContainerTargetSetNotASubsetWarning
-
 internal class RepeatableAnnotationHasNestedClassNamedContainerErrorImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.RepeatableAnnotationHasNestedClassNamedContainerError
-
-internal class RepeatableAnnotationHasNestedClassNamedContainerWarningImpl(
-    firDiagnostic: KtPsiDiagnostic,
-    token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.RepeatableAnnotationHasNestedClassNamedContainerWarning
 
 internal class SuspensionPointInsideCriticalSectionImpl(
     override val function: KaCallableSymbol,
@@ -5625,11 +5552,6 @@ internal class JsStaticOnConstImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.JsStaticOnConst
-
-internal class JsStaticOnOverrideImpl(
-    firDiagnostic: KtPsiDiagnostic,
-    token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.JsStaticOnOverride
 
 internal class SyntaxImpl(
     override val message: String,

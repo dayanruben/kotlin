@@ -7,11 +7,10 @@ package org.jetbrains.kotlin.test.builders
 
 import org.jetbrains.kotlin.test.HandlersStepBuilder
 import org.jetbrains.kotlin.test.backend.ir.IrBackendInput
-import org.jetbrains.kotlin.test.backend.ir.JvmIrBackendFacade
 import org.jetbrains.kotlin.test.builders.CompilerStepsNames.CLASSIC_FRONTEND_HANDLERS_STEP_NAME
 import org.jetbrains.kotlin.test.builders.CompilerStepsNames.DESERIALIZED_IR_HANDLERS_STEP_NAME
 import org.jetbrains.kotlin.test.builders.CompilerStepsNames.FIR_HANDLERS_STEP_NAME
-import org.jetbrains.kotlin.test.builders.CompilerStepsNames.INLINED_IR_HANDLERS_STEP_NAME
+import org.jetbrains.kotlin.test.builders.CompilerStepsNames.LOWERED_IR_HANDLERS_STEP_NAME
 import org.jetbrains.kotlin.test.builders.CompilerStepsNames.JS_ARTIFACTS_HANDLERS_STEP_NAME
 import org.jetbrains.kotlin.test.builders.CompilerStepsNames.JVM_ARTIFACTS_HANDLERS_STEP_NAME
 import org.jetbrains.kotlin.test.builders.CompilerStepsNames.JVM_FROM_K1_AND_K2_ARTIFACTS_HANDLERS_STEP_NAME
@@ -21,8 +20,6 @@ import org.jetbrains.kotlin.test.builders.CompilerStepsNames.WASM_ARTIFACTS_HAND
 import org.jetbrains.kotlin.test.frontend.classic.ClassicFrontend2IrConverter
 import org.jetbrains.kotlin.test.frontend.classic.ClassicFrontendFacade
 import org.jetbrains.kotlin.test.frontend.classic.ClassicFrontendOutputArtifact
-import org.jetbrains.kotlin.test.frontend.fir.Fir2IrResultsConverter
-import org.jetbrains.kotlin.test.frontend.fir.FirFrontendFacade
 import org.jetbrains.kotlin.test.frontend.fir.FirOutputArtifact
 import org.jetbrains.kotlin.test.model.ArtifactKinds
 import org.jetbrains.kotlin.test.model.BackendKinds
@@ -40,7 +37,7 @@ object CompilerStepsNames {
     const val RAW_IR_HANDLERS_STEP_NAME = "raw IR handlers"
 
     /** The IR that is the outcome of the "common lowerings prefix" at the "first stage" of compilation. */
-    const val INLINED_IR_HANDLERS_STEP_NAME = "inlined IR handlers"
+    const val LOWERED_IR_HANDLERS_STEP_NAME = "lowered IR handlers"
 
     /** The IR that is the outcome of KLIB deserializer. */
     const val DESERIALIZED_IR_HANDLERS_STEP_NAME = "deserialized IR handlers"
@@ -85,10 +82,10 @@ inline fun TestConfigurationBuilder.irHandlersStep(
     namedHandlersStep(RAW_IR_HANDLERS_STEP_NAME, BackendKinds.IrBackend, init)
 }
 
-inline fun TestConfigurationBuilder.inlinedIrHandlersStep(
+inline fun TestConfigurationBuilder.loweredIrHandlersStep(
     init: HandlersStepBuilder<IrBackendInput, BackendKinds.IrBackend>.() -> Unit = {}
 ) {
-    namedHandlersStep(INLINED_IR_HANDLERS_STEP_NAME, BackendKinds.IrBackend, init)
+    namedHandlersStep(LOWERED_IR_HANDLERS_STEP_NAME, BackendKinds.IrBackend, init)
 }
 
 inline fun TestConfigurationBuilder.deserializedIrHandlersStep(
@@ -146,10 +143,10 @@ inline fun TestConfigurationBuilder.configureIrHandlersStep(
     configureNamedHandlersStep(RAW_IR_HANDLERS_STEP_NAME, BackendKinds.IrBackend, init)
 }
 
-inline fun TestConfigurationBuilder.configureInlinedIrHandlersStep(
+inline fun TestConfigurationBuilder.configureLoweredIrHandlersStep(
     init: HandlersStepBuilder<IrBackendInput, BackendKinds.IrBackend>.() -> Unit = {}
 ) {
-    configureNamedHandlersStep(INLINED_IR_HANDLERS_STEP_NAME, BackendKinds.IrBackend, init)
+    configureNamedHandlersStep(LOWERED_IR_HANDLERS_STEP_NAME, BackendKinds.IrBackend, init)
 }
 
 inline fun TestConfigurationBuilder.configureDeserializedIrHandlersStep(

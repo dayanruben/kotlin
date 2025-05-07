@@ -278,7 +278,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPLICIT_TYPE_ARG
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPOSED_FUNCTION_RETURN_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPOSED_PARAMETER_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPOSED_PROPERTY_TYPE
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR_ERROR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPOSED_RECEIVER_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPOSED_SUPER_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPOSED_SUPER_INTERFACE
@@ -307,7 +307,6 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.FUNCTION_EXPECTED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.FUN_INTERFACE_ABSTRACT_METHOD_WITH_DEFAULT_VALUE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.FUN_INTERFACE_ABSTRACT_METHOD_WITH_TYPE_PARAMETERS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.FUN_INTERFACE_CANNOT_HAVE_ABSTRACT_PROPERTIES
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.FUN_INTERFACE_CONSTRUCTOR_REFERENCE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.FUN_INTERFACE_WITH_SUSPEND_FUNCTION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.FUN_INTERFACE_WRONG_COUNT_OF_ABSTRACT_MEMBERS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.GENERIC_THROWABLE_SUBCLASS
@@ -467,7 +466,6 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NEXT_NONE_APPLICA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NONE_APPLICABLE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_ABSTRACT_FUNCTION_WITH_NO_BODY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_CONST_VAL_USED_IN_CONSTANT_EXPRESSION
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_EXHAUSTIVE_WHEN_STATEMENT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_FINAL_MEMBER_IN_FINAL_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_FINAL_MEMBER_IN_OBJECT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_INTERNAL_PUBLISHED_API
@@ -529,7 +527,6 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPTIONAL_DECLARAT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPTIONAL_EXPECTATION_NOT_ON_EXPECTED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPT_IN_ARGUMENT_IS_NOT_MARKER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPT_IN_IS_NOT_ENABLED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPT_IN_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_OPT_IN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPT_IN_MARKER_ON_OVERRIDE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPT_IN_MARKER_ON_OVERRIDE_WARNING
@@ -580,7 +577,6 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PROPERTY_WITH_NO_
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PROTECTED_CALL_FROM_PUBLIC_INLINE_ERROR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PROTECTED_CONSTRUCTOR_CALL_FROM_PUBLIC_INLINE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PROTECTED_CONSTRUCTOR_NOT_IN_SUPER_CALL
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.QUALIFIED_SUPERTYPE_EXTENDED_BY_OTHER_SUPERTYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RECURSION_IN_IMPLICIT_TYPES
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RECURSION_IN_INLINE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RECURSIVE_TYPEALIAS_EXPANSION
@@ -628,7 +624,6 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RETURN_TYPE_MISMA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RETURN_TYPE_MISMATCH_ON_INHERITANCE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RETURN_TYPE_MISMATCH_ON_OVERRIDE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SAFE_CALLABLE_REFERENCE_CALL
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SAFE_CALL_WILL_CHANGE_NULLABILITY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SEALED_CLASS_CONSTRUCTOR_CALL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SEALED_INHERITOR_IN_DIFFERENT_MODULE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SEALED_INHERITOR_IN_DIFFERENT_PACKAGE
@@ -1017,11 +1012,6 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(NOT_A_SUPERTYPE, "Not an immediate supertype.")
         map.put(TYPE_ARGUMENTS_REDUNDANT_IN_SUPER_QUALIFIER, "Type arguments do not need to be specified in a 'super' qualifier.")
         map.put(SUPERCLASS_NOT_ACCESSIBLE_FROM_INTERFACE, "Superclass is not accessible from interface.")
-        map.put(
-            QUALIFIED_SUPERTYPE_EXTENDED_BY_OTHER_SUPERTYPE,
-            "Explicitly qualified supertype is extended by supertype ''{0}''.",
-            SYMBOL
-        )
         map.put(SUPERTYPE_INITIALIZED_IN_INTERFACE, "Interfaces cannot initialize supertypes.")
         map.put(INTERFACE_WITH_SUPERCLASS, "An interface cannot extend a class.")
         map.put(FINAL_SUPERTYPE, "This type is final, so it cannot be extended.")
@@ -1271,7 +1261,6 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(OPT_IN_OVERRIDE, "{1}", CLASS_ID, STRING)
         map.put(OPT_IN_OVERRIDE_ERROR, "{1}", CLASS_ID, STRING)
 
-        map.put(OPT_IN_IS_NOT_ENABLED, "This annotation must be used with the compiler argument '-opt-in=kotlin.RequiresOptIn'.")
         map.put(OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION, "This class can only be used as an annotation.")
         map.put(
             OPT_IN_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_OPT_IN,
@@ -1371,7 +1360,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             TO_STRING,
         )
         map.put(
-            EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR,
+            EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR_ERROR,
             "''{0}'' property exposes its ''{3}'' type{2} ''{1}''.",
             TO_STRING,
             DECLARATION_NAME,
@@ -2316,9 +2305,6 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         // Parameter default values
         map.put(DEFAULT_VALUE_NOT_ALLOWED_IN_OVERRIDE, "An overriding function is not allowed to specify default values for its parameters.")
 
-        // Fun interfaces
-        map.put(FUN_INTERFACE_CONSTRUCTOR_REFERENCE, "Functional interface constructor references are prohibited.")
-
         // Properties & accessors
         map.put(
             ABSTRACT_PROPERTY_IN_NON_ABSTRACT_CLASS,
@@ -2688,13 +2674,6 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(NOT_NULL_ASSERTION_ON_LAMBDA_EXPRESSION, "Non-null assertion (!!) called on a lambda expression.")
         map.put(NOT_NULL_ASSERTION_ON_CALLABLE_REFERENCE, "Non-null assertion (!!) called on a callable reference expression.")
         map.put(UNNECESSARY_SAFE_CALL, "Unnecessary safe call on a non-null receiver of type ''{0}''.", RENDER_TYPE)
-        map.put(
-            SAFE_CALL_WILL_CHANGE_NULLABILITY,
-            """
-                |Safe call on a non-null receiver will have nullable type in future releases.
-                |Safe call on non-nullable receiver has a non-null type: SomeType.
-                |In future releases all safe calls will have nullable type: SomeType?""".trimMargin()
-        )
         map.put(UNEXPECTED_SAFE_CALL, "Safe call is prohibited here.")
         map.put(USELESS_ELVIS, "Elvis operator (?:) always returns the left operand of non-nullable type ''{0}''.", RENDER_TYPE)
         map.put(USELESS_ELVIS_RIGHT_IS_NULL, "Right operand of elvis operator (?:) is useless if it is null.")
@@ -2713,12 +2692,6 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(EXPECTED_CONDITION, "Condition of type 'Boolean' expected.")
         map.put(NO_ELSE_IN_WHEN, "''when'' expression must be exhaustive. Add {0}{1}.", WHEN_MISSING_CASES, STRING)
         map.put(INVALID_IF_AS_EXPRESSION, "'if' must have both main and 'else' branches when used as an expression.")
-        map.put(
-            NON_EXHAUSTIVE_WHEN_STATEMENT,
-            "Non-exhaustive ''when'' statements on ''{0}'' will be prohibited in 1.7. Add {1}.",
-            TO_STRING,
-            WHEN_MISSING_CASES
-        )
         map.put(ELSE_MISPLACED_IN_WHEN, "'else' entry must be the last one in a 'when' expression.")
         map.put(REDUNDANT_ELSE_IN_WHEN, "'when' is exhaustive so 'else' is redundant here.")
         map.put(

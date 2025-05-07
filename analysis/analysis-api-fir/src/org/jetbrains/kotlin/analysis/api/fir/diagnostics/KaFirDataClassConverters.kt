@@ -55,7 +55,6 @@ import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtReturnExpression
-import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.psi.KtTypeAlias
@@ -683,13 +682,6 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.SUPERCLASS_NOT_ACCESSIBLE_FROM_INTERFACE) { firDiagnostic ->
         SuperclassNotAccessibleFromInterfaceImpl(
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
-    add(FirErrors.QUALIFIED_SUPERTYPE_EXTENDED_BY_OTHER_SUPERTYPE) { firDiagnostic ->
-        QualifiedSupertypeExtendedByOtherSupertypeImpl(
-            firSymbolBuilder.buildSymbol(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -1636,12 +1628,6 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.OPT_IN_IS_NOT_ENABLED) { firDiagnostic ->
-        OptInIsNotEnabledImpl(
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
     add(FirErrors.OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION) { firDiagnostic ->
         OptInCanOnlyBeUsedAsAnnotationImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -1753,18 +1739,8 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR.errorFactory) { firDiagnostic ->
+    add(FirErrors.EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR_ERROR) { firDiagnostic ->
         ExposedPropertyTypeInConstructorErrorImpl(
-            firDiagnostic.a,
-            firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firDiagnostic.b),
-            firDiagnostic.c,
-            firDiagnostic.d,
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
-    add(FirErrors.EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR.warningFactory) { firDiagnostic ->
-        ExposedPropertyTypeInConstructorWarningImpl(
             firDiagnostic.a,
             firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firDiagnostic.b),
             firDiagnostic.c,
@@ -3728,12 +3704,6 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.FUN_INTERFACE_CONSTRUCTOR_REFERENCE) { firDiagnostic ->
-        FunInterfaceConstructorReferenceImpl(
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
     add(FirErrors.FUN_INTERFACE_WRONG_COUNT_OF_ABSTRACT_MEMBERS) { firDiagnostic ->
         FunInterfaceWrongCountOfAbstractMembersImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -4663,12 +4633,6 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.SAFE_CALL_WILL_CHANGE_NULLABILITY) { firDiagnostic ->
-        SafeCallWillChangeNullabilityImpl(
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
     add(FirErrors.UNEXPECTED_SAFE_CALL) { firDiagnostic ->
         UnexpectedSafeCallImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -4771,16 +4735,6 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
                 whenMissingCase
             },
             firDiagnostic.b,
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
-    add(FirErrors.NON_EXHAUSTIVE_WHEN_STATEMENT) { firDiagnostic ->
-        NonExhaustiveWhenStatementImpl(
-            firDiagnostic.a,
-            firDiagnostic.b.map { whenMissingCase ->
-                whenMissingCase
-            },
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -6338,7 +6292,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirJvmErrors.REPEATABLE_CONTAINER_MUST_HAVE_VALUE_ARRAY.errorFactory) { firDiagnostic ->
+    add(FirJvmErrors.REPEATABLE_CONTAINER_MUST_HAVE_VALUE_ARRAY_ERROR) { firDiagnostic ->
         RepeatableContainerMustHaveValueArrayErrorImpl(
             firDiagnostic.a,
             firDiagnostic.b,
@@ -6346,15 +6300,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirJvmErrors.REPEATABLE_CONTAINER_MUST_HAVE_VALUE_ARRAY.warningFactory) { firDiagnostic ->
-        RepeatableContainerMustHaveValueArrayWarningImpl(
-            firDiagnostic.a,
-            firDiagnostic.b,
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
-    add(FirJvmErrors.REPEATABLE_CONTAINER_HAS_NON_DEFAULT_PARAMETER.errorFactory) { firDiagnostic ->
+    add(FirJvmErrors.REPEATABLE_CONTAINER_HAS_NON_DEFAULT_PARAMETER_ERROR) { firDiagnostic ->
         RepeatableContainerHasNonDefaultParameterErrorImpl(
             firDiagnostic.a,
             firDiagnostic.b,
@@ -6362,15 +6308,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirJvmErrors.REPEATABLE_CONTAINER_HAS_NON_DEFAULT_PARAMETER.warningFactory) { firDiagnostic ->
-        RepeatableContainerHasNonDefaultParameterWarningImpl(
-            firDiagnostic.a,
-            firDiagnostic.b,
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
-    add(FirJvmErrors.REPEATABLE_CONTAINER_HAS_SHORTER_RETENTION.errorFactory) { firDiagnostic ->
+    add(FirJvmErrors.REPEATABLE_CONTAINER_HAS_SHORTER_RETENTION_ERROR) { firDiagnostic ->
         RepeatableContainerHasShorterRetentionErrorImpl(
             firDiagnostic.a,
             firDiagnostic.b,
@@ -6380,17 +6318,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirJvmErrors.REPEATABLE_CONTAINER_HAS_SHORTER_RETENTION.warningFactory) { firDiagnostic ->
-        RepeatableContainerHasShorterRetentionWarningImpl(
-            firDiagnostic.a,
-            firDiagnostic.b,
-            firDiagnostic.c,
-            firDiagnostic.d,
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
-    add(FirJvmErrors.REPEATABLE_CONTAINER_TARGET_SET_NOT_A_SUBSET.errorFactory) { firDiagnostic ->
+    add(FirJvmErrors.REPEATABLE_CONTAINER_TARGET_SET_NOT_A_SUBSET_ERROR) { firDiagnostic ->
         RepeatableContainerTargetSetNotASubsetErrorImpl(
             firDiagnostic.a,
             firDiagnostic.b,
@@ -6398,22 +6326,8 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirJvmErrors.REPEATABLE_CONTAINER_TARGET_SET_NOT_A_SUBSET.warningFactory) { firDiagnostic ->
-        RepeatableContainerTargetSetNotASubsetWarningImpl(
-            firDiagnostic.a,
-            firDiagnostic.b,
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
-    add(FirJvmErrors.REPEATABLE_ANNOTATION_HAS_NESTED_CLASS_NAMED_CONTAINER.errorFactory) { firDiagnostic ->
+    add(FirJvmErrors.REPEATABLE_ANNOTATION_HAS_NESTED_CLASS_NAMED_CONTAINER_ERROR) { firDiagnostic ->
         RepeatableAnnotationHasNestedClassNamedContainerErrorImpl(
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
-    add(FirJvmErrors.REPEATABLE_ANNOTATION_HAS_NESTED_CLASS_NAMED_CONTAINER.warningFactory) { firDiagnostic ->
-        RepeatableAnnotationHasNestedClassNamedContainerWarningImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -6694,12 +6608,6 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirJsErrors.JS_STATIC_ON_CONST) { firDiagnostic ->
         JsStaticOnConstImpl(
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
-    add(FirJsErrors.JS_STATIC_ON_OVERRIDE) { firDiagnostic ->
-        JsStaticOnOverrideImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

@@ -96,7 +96,7 @@ internal sealed class KaFirKotlinPropertySymbol<P : KtCallableDeclaration>(
 
     override val isOverride: Boolean
         get() = withValidityAssertion {
-            ifSource { backingPsi }?.hasModifier(KtTokens.OVERRIDE_KEYWORD) ?: firSymbol.isOverride
+            isOverrideWithWorkaround
         }
 
     override val isConst: Boolean
@@ -326,7 +326,24 @@ private class KaFirKotlinPropertyKtPropertyBasedSymbol : KaFirKotlinPropertySymb
 
     // NB: `field` in accessors indicates the property should have a backing field. To see that, though, we need BODY_RESOLVE.
     override val hasBackingField: Boolean
-        get() = withValidityAssertion { firSymbol.hasBackingField }
+        get() = withValidityAssertion {
+            if (backingPsi != null) {
+                val fastAnswer = when {
+                    backingPsi.isExpectDeclaration() -> false
+                    backingPsi.hasModifier(KtTokens.ABSTRACT_KEYWORD) -> false
+                    backingPsi.hasDelegate() -> false
+                    backingPsi.fieldDeclaration != null -> true
+                    !backingPsi.hasModifier(KtTokens.FINAL_KEYWORD) && (backingPsi.containingClassOrObject as? KtClass)?.isInterface() == true -> false
+                    !backingPsi.hasRegularGetter -> true
+                    backingPsi.isVar && !backingPsi.hasRegularSetter -> true
+                    else -> null
+                }
+
+                fastAnswer?.let { return it }
+            }
+
+            firSymbol.hasBackingField
+        }
 }
 
 /**
@@ -471,6 +488,9 @@ private class KaFirKotlinPropertyKtDestructuringDeclarationEntryBasedSymbol : Ka
             else
                 firSymbol.isVal
         }
+
+    override val isOverride: Boolean
+        get() = withValidityAssertion { false }
 
     override val hasGetter: Boolean
         get() = withValidityAssertion { true }

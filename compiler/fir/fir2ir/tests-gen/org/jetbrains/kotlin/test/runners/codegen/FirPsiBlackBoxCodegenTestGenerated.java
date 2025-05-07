@@ -10458,6 +10458,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
     }
 
     @Test
+    @TestMetadata("inlineContextualReceiverLambda.kt")
+    public void testInlineContextualReceiverLambda() {
+      runTest("compiler/testData/codegen/box/contextParameters/inlineContextualReceiverLambda.kt");
+    }
+
+    @Test
     @TestMetadata("propertyWithContextAndWithout.kt")
     public void testPropertyWithContextAndWithout() {
       runTest("compiler/testData/codegen/box/contextParameters/propertyWithContextAndWithout.kt");
@@ -17408,6 +17414,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
       @Test
       public void testAllFilesPresentInPrivate() {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/defaultArguments/private"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+      }
+
+      @Test
+      @TestMetadata("clashingNames.kt")
+      public void testClashingNames() {
+        runTest("compiler/testData/codegen/box/defaultArguments/private/clashingNames.kt");
       }
 
       @Test
@@ -38322,30 +38334,6 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
     }
 
     @Test
-    @TestMetadata("kt47328.kt")
-    public void testKt47328() {
-      runTest("compiler/testData/codegen/box/jvmField/kt47328.kt");
-    }
-
-    @Test
-    @TestMetadata("kt47328_inherited.kt")
-    public void testKt47328_inherited() {
-      runTest("compiler/testData/codegen/box/jvmField/kt47328_inherited.kt");
-    }
-
-    @Test
-    @TestMetadata("kt47328_super.kt")
-    public void testKt47328_super() {
-      runTest("compiler/testData/codegen/box/jvmField/kt47328_super.kt");
-    }
-
-    @Test
-    @TestMetadata("kt47328_var.kt")
-    public void testKt47328_var() {
-      runTest("compiler/testData/codegen/box/jvmField/kt47328_var.kt");
-    }
-
-    @Test
     @TestMetadata("kt47739.kt")
     public void testKt47739() {
       runTest("compiler/testData/codegen/box/jvmField/kt47739.kt");
@@ -52414,6 +52402,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
           @TestMetadata("suspendFunction.kt")
           public void testSuspendFunction() {
             runTest("compiler/testData/codegen/box/reflection/call/inlineClasses/primitive/suspendFunction.kt");
+          }
+
+          @Test
+          @TestMetadata("suspendFunctionGenericSubstitutedByPrimitive.kt")
+          public void testSuspendFunctionGenericSubstitutedByPrimitive() {
+            runTest("compiler/testData/codegen/box/reflection/call/inlineClasses/primitive/suspendFunctionGenericSubstitutedByPrimitive.kt");
           }
         }
       }

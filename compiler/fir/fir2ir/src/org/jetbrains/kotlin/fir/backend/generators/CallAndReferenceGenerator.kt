@@ -58,9 +58,9 @@ class CallAndReferenceGenerator(
     private val conversionScope: Fir2IrConversionScope,
 ) : Fir2IrComponents by c {
 
-    private fun FirTypeRef.toIrType(): IrType = toIrType(c, conversionScope.defaultConversionTypeOrigin())
+    private fun FirTypeRef.toIrType(): IrType = toIrType(conversionScope.defaultConversionTypeOrigin())
 
-    private fun ConeKotlinType.toIrType(): IrType = toIrType(c, conversionScope.defaultConversionTypeOrigin())
+    private fun ConeKotlinType.toIrType(): IrType = toIrType(conversionScope.defaultConversionTypeOrigin())
 
     fun convertToIrCallableReference(
         callableReferenceAccess: FirCallableReferenceAccess,
@@ -232,7 +232,7 @@ class CallAndReferenceGenerator(
         return kotlinType.withArguments(Array(typeArguments.size) { i ->
             val projection = typeArguments[i]
             if (i < typeArguments.lastIndex) {
-                projection.type?.approximateForIrOrNull(this)?.toTypeProjection(projection.kind) ?: projection
+                projection.type?.approximateForIrOrNull()?.toTypeProjection(projection.kind) ?: projection
             } else {
                 projection
             }
@@ -666,7 +666,7 @@ class CallAndReferenceGenerator(
                     IrGetValueImpl(
                         startOffset, endOffset,
                         // Note: there is a case with componentN function when IR type of variable differs from FIR type
-                        variable.irTypeForPotentiallyComponentCall(c, predefinedType = irType),
+                        variable.irTypeForPotentiallyComponentCall(predefinedType = irType),
                         irSymbol,
                         origin = if (variableAsFunctionMode) IrStatementOrigin.VARIABLE_AS_FUNCTION
                         else incOrDecSourceKindToIrStatementOrigin[qualifiedAccess.source?.kind] ?: calleeReference.statementOrigin()
