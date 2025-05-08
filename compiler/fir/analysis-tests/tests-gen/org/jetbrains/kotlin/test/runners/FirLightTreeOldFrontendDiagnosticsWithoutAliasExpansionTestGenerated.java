@@ -214,6 +214,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithoutAliasExpansionTestGenerate
     @TestDataPath("$PROJECT_ROOT")
     public class Annotations {
       @Test
+      @TestMetadata("annotationArgumentScopeForNestedTypeAlias.kt")
+      public void testAnnotationArgumentScopeForNestedTypeAlias() {
+        runTest("compiler/testData/diagnostics/tests/annotations/annotationArgumentScopeForNestedTypeAlias.kt");
+      }
+
+      @Test
       @TestMetadata("annotationOnParameterInFunctionType.kt")
       public void testAnnotationOnParameterInFunctionType() {
         runTest("compiler/testData/diagnostics/tests/annotations/annotationOnParameterInFunctionType.kt");
@@ -393,6 +399,17 @@ public class FirLightTreeOldFrontendDiagnosticsWithoutAliasExpansionTestGenerate
       @TestMetadata("compiler/testData/diagnostics/tests/coroutines/suspendFunctionAsSupertype")
       @TestDataPath("$PROJECT_ROOT")
       public class SuspendFunctionAsSupertype {
+      }
+    }
+
+    @Nested
+    @TestMetadata("compiler/testData/diagnostics/tests/crv")
+    @TestDataPath("$PROJECT_ROOT")
+    public class Crv {
+      @Test
+      @TestMetadata("ignorabilityOnClassMembers.kt")
+      public void testIgnorabilityOnClassMembers() {
+        runTest("compiler/testData/diagnostics/tests/crv/ignorabilityOnClassMembers.kt");
       }
     }
 

@@ -421,16 +421,14 @@ private class ContextCollectorVisitor(
     }
 
     override fun visitAnnotationCall(annotationCall: FirAnnotationCall) {
-        context.forAnnotation {
-            dumpContext(annotationCall, ContextKind.SELF)
+        dumpContext(annotationCall, ContextKind.SELF)
 
-            onActiveBody {
-                dumpContext(annotationCall, ContextKind.BODY)
+        onActiveBody {
+            dumpContext(annotationCall, ContextKind.BODY)
 
-                // Technically, annotation arguments might contain arbitrary expressions.
-                // However, such cases are very rare, as it's currently forbidden in Kotlin.
-                // Here we ignore declarations that might be inside such expressions, avoiding unnecessary tree traversal.
-            }
+            // Technically, annotation arguments might contain arbitrary expressions.
+            // However, such cases are very rare, as it's currently forbidden in Kotlin.
+            // Here we ignore declarations that might be inside such expressions, avoiding unnecessary tree traversal.
         }
     }
 
@@ -501,7 +499,7 @@ private class ContextCollectorVisitor(
 
                 val holder = getSessionHolder(regularClass)
 
-                context.withRegularClass(regularClass, holder) {
+                context.forRegularClassBody(regularClass, holder) {
                     dumpContext(regularClass, ContextKind.BODY)
 
                     onActive {
@@ -515,6 +513,12 @@ private class ContextCollectorVisitor(
 
         if (regularClass.isLocal) {
             context.storeClassIfNotNested(regularClass, regularClass.moduleData.session)
+        }
+    }
+
+    override fun visitTypeAlias(typeAlias: FirTypeAlias) {
+        context.forTypeAlias(typeAlias) {
+            super.visitTypeAlias(typeAlias)
         }
     }
 
@@ -576,13 +580,13 @@ private class ContextCollectorVisitor(
     override fun visitConstructor(constructor: FirConstructor) = withProcessor(constructor) {
         dumpContext(constructor, ContextKind.SELF)
 
-        // no need to wrap with the constructor as it should be treated as a class header
-        processRawAnnotations(constructor)
+        context.forConstructor(constructor) {
+            processRawAnnotations(constructor)
 
-        onActiveBody {
-            constructor.lazyResolveToPhase(FirResolvePhase.BODY_RESOLVE)
+            onActiveBody {
+                constructor.lazyResolveToPhase(FirResolvePhase.BODY_RESOLVE)
 
-            context.withConstructor(constructor) {
+
                 val holder = getSessionHolder(constructor)
                 val containingClass = context.containerIfAny as? FirRegularClass
 
@@ -601,7 +605,7 @@ private class ContextCollectorVisitor(
                 }
 
                 onActive {
-                    context.forDelegatedConstructorCall(constructor, owningClass = null, holder) {
+                    context.forDelegatedConstructorCallChildren(constructor, owningClass = null, holder) {
                         process(constructor.delegatedConstructor)
                     }
 

@@ -803,7 +803,7 @@ open class FirDeclarationsResolveTransformer(
                 }
             }
 
-            doTransformRegularClass(regularClass, data)
+            doTransformRegularClassContent(regularClass, data)
         }
     }
 
@@ -862,7 +862,7 @@ open class FirDeclarationsResolveTransformer(
         }
 
         @OptIn(PrivateForInline::class)
-        context.withContainer(typeAlias) {
+        context.forTypeAlias(typeAlias) {
             doTransformTypeParameters(typeAlias)
             typeAlias.transformAnnotations(transformer, data)
             typeAlias.transformExpandedTypeRef(transformer, data)
@@ -899,19 +899,19 @@ open class FirDeclarationsResolveTransformer(
         return result
     }
 
-    protected fun doTransformRegularClass(
+    protected fun doTransformRegularClassContent(
         regularClass: FirRegularClass,
         data: ResolutionMode
-    ): FirRegularClass = withRegularClass(regularClass) {
+    ): FirRegularClass = forRegularClassBody(regularClass) {
         transformDeclarationContent(regularClass, data) as FirRegularClass
     }
 
-    open fun withRegularClass(
+    open fun forRegularClassBody(
         regularClass: FirRegularClass,
         action: () -> FirRegularClass
     ): FirRegularClass {
         dataFlowAnalyzer.enterClass(regularClass, buildGraph = transformer.preserveCFGForClasses)
-        val result = context.withRegularClass(regularClass, components) {
+        val result = context.forRegularClassBody(regularClass, components) {
             action()
         }
 
@@ -1085,7 +1085,7 @@ open class FirDeclarationsResolveTransformer(
 
         dataFlowAnalyzer.enterFunction(constructor)
 
-        context.withConstructor(constructor) {
+        context.forConstructor(constructor) {
             constructor.transformTypeParameters(transformer, data)
                 .transformAnnotations(transformer, data)
                 .transformReceiverParameter(transformer, data)

@@ -21,9 +21,9 @@ import org.jetbrains.kotlin.fir.java.FirProjectSessionProvider
 import org.jetbrains.kotlin.fir.resolve.providers.impl.FirBuiltinSyntheticFunctionInterfaceProvider
 import org.jetbrains.kotlin.fir.resolve.providers.impl.syntheticFunctionInterfacesSymbolProvider
 import org.jetbrains.kotlin.fir.session.*
+import org.jetbrains.kotlin.fir.session.FirMetadataSessionFactory.JarMetadataProviderComponents
 import org.jetbrains.kotlin.fir.session.environment.AbstractProjectFileSearchScope
 import org.jetbrains.kotlin.library.KotlinLibrary
-import org.jetbrains.kotlin.library.metadata.resolver.KotlinResolvedLibrary
 import org.jetbrains.kotlin.load.kotlin.PackageAndMetadataPartProvider
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.CommonPlatforms
@@ -212,7 +212,15 @@ private fun <F> prepareKlibSessions(
             )
         },
         librarySessionForHmppCommonModuleProducer = { sessionProvider, sharedLibrarySession, librariesList, libraryList ->
-            TODO("Not supported yet. KT-77030")
+            FirMetadataSessionFactory.createLibrarySession(
+                sessionProvider,
+                sharedLibrarySession,
+                librariesList.moduleDataProvider,
+                extensionRegistrars,
+                jarMetadataProviderComponents = null,
+                libraryList,
+                configuration.languageVersionSettings,
+            )
         },
         createSourceSession = { _, moduleData, isForLeafHmppModule, sessionProvider, sessionConfigurator ->
             sessionFactory.createSourceSession(
@@ -241,7 +249,7 @@ fun <F> prepareMetadataSessions(
     extensionRegistrars: List<FirExtensionRegistrar>,
     librariesScope: AbstractProjectFileSearchScope,
     libraryList: DependencyListForCliModule,
-    resolvedLibraries: List<KotlinResolvedLibrary>,
+    resolvedLibraries: List<KotlinLibrary>,
     isCommonSource: (F) -> Boolean,
     fileBelongsToModule: (F, String) -> Boolean,
     createProviderAndScopeForIncrementalCompilation: (List<F>) -> IncrementalCompilationContext?,
@@ -264,11 +272,13 @@ fun <F> prepareMetadataSessions(
                 sessionProvider,
                 sharedLibrarySession,
                 libraryList.moduleDataProvider,
-                projectEnvironment,
                 extensionRegistrars,
-                librariesScope,
+                JarMetadataProviderComponents(
+                    packagePartProvider,
+                    librariesScope,
+                    projectEnvironment,
+                ),
                 resolvedLibraries,
-                packagePartProvider,
                 languageVersionSettings,
             )
         },
@@ -277,11 +287,13 @@ fun <F> prepareMetadataSessions(
                 sessionProvider,
                 sharedLibrarySession,
                 commonModuleLibraryList.moduleDataProvider,
-                projectEnvironment,
                 extensionRegistrars,
-                librariesScope,
+                JarMetadataProviderComponents(
+                    packagePartProvider,
+                    librariesScope,
+                    projectEnvironment,
+                ),
                 resolvedLibraries,
-                packagePartProvider,
                 languageVersionSettings,
             )
         },
@@ -321,7 +333,7 @@ fun interface FirCommonLibrarySessionForHmppProducer {
         sessionProvider: FirProjectSessionProvider,
         sharedLibrarySession: FirSession,
         moduleDataListOfCurrentModule: DependencyListForCliModule,
-        klibDependencies: List<KotlinResolvedLibrary>,
+        klibDependencies: List<KotlinLibrary>,
     ): FirSession
 }
 

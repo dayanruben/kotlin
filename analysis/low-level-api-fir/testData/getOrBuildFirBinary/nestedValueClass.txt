@@ -2,7 +2,7 @@ KT element: KtClass
 KT element text:
 public final class LibraryClass public constructor() {
     @kotlin.jvm.JvmInline public final value class LibraryNestedValueClass public constructor(value: pack.LibraryClass) {
-        public final val value: pack.LibraryClass /* compiled code */
+        public final val value: pack.LibraryClass /* compiled code */ /* hasBackingField: true */
 
         public open operator fun equals(other: kotlin.Any?): kotlin.Boolean { /* compiled code */ }
 
@@ -23,7 +23,7 @@ public final [ResolvedTo(BODY_RESOLVE)] [IsNewPlaceForBodyGeneration=false] clas
 
         public open [ResolvedTo(BODY_RESOLVE)] fun toString(): R|kotlin/String|
 
-        public final [ResolvedTo(BODY_RESOLVE)] val value: R|pack/LibraryClass|
+        public final [ResolvedTo(BODY_RESOLVE)] [HasBackingFieldKey=true] val value: R|pack/LibraryClass|
             public [ResolvedTo(BODY_RESOLVE)] get(): R|pack/LibraryClass|
 
         public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=LibraryNestedValueClass] constructor([ResolvedTo(BODY_RESOLVE)] value: R|pack/LibraryClass|): R|pack/LibraryClass.LibraryNestedValueClass|

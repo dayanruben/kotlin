@@ -98,21 +98,10 @@ class BodyResolveContext(
         }
     }
 
-    /**
-     * This is required to avoid changing current mode into [FirTowerDataMode.CLASS_HEADER_ANNOTATIONS].
-     * E.g., we can visit the same annotation in two ways – during a class visiting and outside of this class
-     */
-    @set:PrivateForInline
-    var insideClassHeader: Boolean = false
-
     @OptIn(PrivateForInline::class)
     inline fun withClassHeader(clazz: FirRegularClass, action: () -> Unit) {
-        val old = insideClassHeader
-        insideClassHeader = true
-        try {
+        withSwitchedTowerDataModeForStaticNestedClass(clazz) {
             withContainer(clazz, action)
-        } finally {
-            insideClassHeader = old
         }
     }
 
@@ -455,12 +444,28 @@ class BodyResolveContext(
     }
 
     @OptIn(PrivateForInline::class)
-    fun <T> withRegularClass(
+    fun <T> forRegularClassBody(
         regularClass: FirRegularClass,
         holder: SessionHolder,
         f: () -> T
     ): T {
         storeClassIfNotNested(regularClass, holder.session)
+        return withSwitchedTowerDataModeForStaticNestedClass(regularClass) {
+            withScopesForClass(regularClass, holder) {
+                withContainerRegularClass(regularClass, f)
+            }
+        }
+    }
+
+    /**
+     * It only changes the current base scope for static nested classes/objects,
+     * so it wouldn't contain dispatch receiver and members, but only other statically accessible things
+     */
+    @PrivateForInline
+    inline fun <T> withSwitchedTowerDataModeForStaticNestedClass(
+        regularClass: FirRegularClass,
+        f: () -> T
+    ): T {
         return withTowerDataModeCleanup {
             if (!regularClass.isInner && containerIfAny is FirRegularClass) {
                 towerDataMode = if (regularClass.isCompanion) {
@@ -470,8 +475,23 @@ class BodyResolveContext(
                 }
             }
 
-            withScopesForClass(regularClass, holder) {
-                withContainerRegularClass(regularClass, f)
+            f()
+        }
+    }
+
+    @OptIn(PrivateForInline::class)
+    inline fun <T> forTypeAlias(typeAlias: FirTypeAlias, f: () -> T): T {
+        val isInsideAClass = containerIfAny is FirRegularClass
+        return withContainer(typeAlias) {
+            if (!isInsideAClass) return@withContainer f()
+            return withTowerDataModeCleanup {
+                // Though inner type aliases are not supported, we may randomly choose to stick to the same behavior as for inner classes:
+                // namely, leaving member scope available
+                if (!typeAlias.isInner) {
+                    towerDataMode = FirTowerDataMode.NESTED_CLASS
+                }
+
+                f()
             }
         }
     }
@@ -562,7 +582,6 @@ class BodyResolveContext(
 
         val newContexts = FirRegularTowerDataContexts(
             regular = forMembersResolution,
-            forClassHeaderAnnotations = base,
             forNestedClasses = newTowerDataContextForStaticNestedClasses,
             forCompanionObject = statics,
             forConstructorHeaders = forConstructorHeader,
@@ -608,7 +627,6 @@ class BodyResolveContext(
 
         val newContexts = FirRegularTowerDataContexts(
             regular = forMembersResolution,
-            forClassHeaderAnnotations = base,
             forNestedClasses = forMembersResolution,
             forCompanionObject = statics,
             forConstructorHeaders = null,
@@ -676,7 +694,6 @@ class BodyResolveContext(
 
         val newContext = FirRegularTowerDataContexts(
             regular = baseWithLocalScope,
-            forClassHeaderAnnotations = baseWithLocalScope,
             forNestedClasses = baseWithLocalScope,
             forCompanionObject = baseWithLocalScope,
             forConstructorHeaders = null,
@@ -770,22 +787,25 @@ class BodyResolveContext(
         session: FirSession,
         f: () -> T
     ): T {
+        // `forConstructorBody` is only allowed inside a `forConstructor` lambda which sets FirTowerDataMode.CONSTRUCTOR_HEADER
+        require(towerDataMode == FirTowerDataMode.CONSTRUCTOR_HEADER)
         return if (constructor.isPrimary) {
             /*
-             * Primary constructor may have body only if class delegates implementation to some property
-             *   In it's body we don't have this receiver for building class, so we need to use
-             *   special towerDataContext
+             * Primary constructor may have body only if the class delegates implementation to some property.
+             * In its body we don't have `this` receiver for building class, so we just use the same tower data mode
+             * as set for the constructor header
              */
-            withTowerDataMode(FirTowerDataMode.CONSTRUCTOR_HEADER) {
+            withTowerDataCleanup {
+                addLocalScope(buildConstructorParametersScope(constructor, session))
+                f()
+            }
+        } else {
+            // In the secondary constructor's body, everything including containing class' receiver should be available
+            withTowerDataMode(FirTowerDataMode.REGULAR) {
                 withTowerDataCleanup {
                     addLocalScope(buildConstructorParametersScope(constructor, session))
                     f()
                 }
-            }
-        } else {
-            withTowerDataCleanup {
-                addLocalScope(buildConstructorParametersScope(constructor, session))
-                f()
             }
         }
     }
@@ -844,16 +864,6 @@ class BodyResolveContext(
         f: () -> T
     ): T = withTowerDataMode(FirTowerDataMode.ENUM_ENTRY) {
         withContainer(enumEntry, f)
-    }
-
-    @OptIn(PrivateForInline::class)
-    inline fun <T> forAnnotation(
-        f: () -> T
-    ): T {
-        return when {
-            containerIfAny is FirRegularClass && !insideClassHeader -> withTowerDataMode(FirTowerDataMode.CLASS_HEADER_ANNOTATIONS, f)
-            else -> f()
-        }
     }
 
     @OptIn(PrivateForInline::class)
@@ -958,8 +968,10 @@ class BodyResolveContext(
     }
 
     @OptIn(PrivateForInline::class)
-    inline fun <T> withConstructor(constructor: FirConstructor, f: () -> T): T =
-        withContainer(constructor, f)
+    inline fun <T> forConstructor(constructor: FirConstructor, f: () -> T): T =
+        withTowerDataMode(FirTowerDataMode.CONSTRUCTOR_HEADER) {
+            withContainer(constructor, f)
+        }
 
     @OptIn(PrivateForInline::class)
     inline fun <T> forConstructorParameters(
@@ -971,34 +983,47 @@ class BodyResolveContext(
         // Default values of constructor can't access members of constructing class
         // But, let them get resolved, then [FirFunctionParameterChecker] will detect and report an error
         // if an uninitialized parameter is accessed by a preceding parameter.
-        return forConstructorParametersOrDelegatedConstructorCall(constructor, owningClass, holder, f)
+        return forConstructorParametersOrDelegatedConstructorCallChildren(constructor, owningClass, holder, f)
     }
 
     @OptIn(PrivateForInline::class)
-    inline fun <T> forDelegatedConstructorCall(
+    inline fun <T> forDelegatedConstructorCallChildren(
         constructor: FirConstructor,
         owningClass: FirRegularClass?,
         holder: SessionHolder,
         f: () -> T
     ): T {
-        return forConstructorParametersOrDelegatedConstructorCall(constructor, owningClass, holder, f)
+        return forConstructorParametersOrDelegatedConstructorCallChildren(constructor, owningClass, holder, f)
     }
 
     @OptIn(PrivateForInline::class)
-    inline fun <T> forConstructorParametersOrDelegatedConstructorCall(
+    inline fun <T> forDelegatedConstructorCallResolution(
+        f: () -> T
+    ): T {
+        // Arguments of a delegated call should be resolved without an implicit receiver of the containing class,
+        // i.e., via CONSTRUCTOR_HEADER slice
+        require(towerDataMode == FirTowerDataMode.CONSTRUCTOR_HEADER)
+
+        // While having the implicit receiver for the delegation call itself is crucial for inner super class calls
+        return withTowerDataMode(FirTowerDataMode.REGULAR) {
+            f()
+        }
+    }
+
+    @OptIn(PrivateForInline::class)
+    inline fun <T> forConstructorParametersOrDelegatedConstructorCallChildren(
         constructor: FirConstructor,
         owningClass: FirRegularClass?,
         holder: SessionHolder,
         f: () -> T
     ): T {
-        return withTowerDataMode(FirTowerDataMode.CONSTRUCTOR_HEADER) {
-            withTowerDataCleanup {
-                if (!constructor.isPrimary) {
-                    addInaccessibleImplicitReceiverValue(owningClass, holder)
-                }
-                addLocalScope(buildConstructorParametersScope(constructor, holder.session))
-                f()
+        require(towerDataMode == FirTowerDataMode.CONSTRUCTOR_HEADER)
+        return withTowerDataCleanup {
+            if (!constructor.isPrimary) {
+                addInaccessibleImplicitReceiverValue(owningClass, holder)
             }
+            addLocalScope(buildConstructorParametersScope(constructor, holder.session))
+            f()
         }
     }
 

@@ -1501,16 +1501,14 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
         if (annotationCall.resolved) return annotationCall
         annotationCall.transformAnnotationTypeRef(transformer, ResolutionMode.ContextIndependent)
         annotationCall.replaceAnnotationResolvePhase(FirAnnotationResolvePhase.Types)
-        return context.forAnnotation {
-            withFirArrayOfCallTransformer {
-                dataFlowAnalyzer.enterAnnotation()
-                val result = callResolver.resolveAnnotationCall(annotationCall)
-                dataFlowAnalyzer.exitAnnotation()
-                if (result == null) return annotationCall
-                callCompleter.completeCall(result, ResolutionMode.ContextIndependent)
-                (result.argumentList as FirResolvedArgumentList).let { annotationCall.replaceArgumentMapping((it).toAnnotationArgumentMapping()) }
-                annotationCall
-            }
+        return withFirArrayOfCallTransformer {
+            dataFlowAnalyzer.enterAnnotation()
+            val result = callResolver.resolveAnnotationCall(annotationCall)
+            dataFlowAnalyzer.exitAnnotation()
+            if (result == null) return annotationCall
+            callCompleter.completeCall(result, ResolutionMode.ContextIndependent)
+            (result.argumentList as FirResolvedArgumentList).let { annotationCall.replaceArgumentMapping((it).toAnnotationArgumentMapping()) }
+            annotationCall
         }
     }
 
@@ -1555,15 +1553,14 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
         }
 
         dataFlowAnalyzer.enterCallArguments(delegatedConstructorCall, delegatedConstructorCall.arguments)
-        val lastDispatchReceiver = implicitValueStorage.lastDispatchReceiver()
-        context.forDelegatedConstructorCall(containingConstructor, containingClass as? FirRegularClass, components) {
+        context.forDelegatedConstructorCallChildren(containingConstructor, containingClass as? FirRegularClass, components) {
             delegatedConstructorCall.transformChildren(transformer, ResolutionMode.ContextDependent)
         }
         dataFlowAnalyzer.exitCallArguments()
 
         val reference = delegatedConstructorCall.calleeReference
         val constructorType: ConeClassLikeType? = when (reference) {
-            is FirThisReference -> lastDispatchReceiver?.type as? ConeClassLikeType
+            is FirThisReference -> containingClass.defaultType()
             is FirSuperReference -> reference.superTypeRef
                 .coneTypeSafe<ConeClassLikeType>()
                 ?.takeIf { it !is ConeErrorType }
@@ -1571,8 +1568,9 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
             else -> null
         }
 
-        val resolvedCall = callResolver
-            .resolveDelegatingConstructorCall(delegatedConstructorCall, constructorType, containingClass.symbol.toLookupTag())
+        val resolvedCall = context.forDelegatedConstructorCallResolution {
+            callResolver.resolveDelegatingConstructorCall(delegatedConstructorCall, constructorType, containingClass.symbol.toLookupTag())
+        }
 
         if (reference is FirThisReference && reference.boundSymbol == null) {
             resolvedCall.dispatchReceiver?.resolvedType?.classLikeLookupTagIfAny?.toSymbol(session)?.let {

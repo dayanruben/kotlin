@@ -192,13 +192,13 @@ private class FirDeclarationsResolveTransformerForAnnotationArguments(
             }
         }
 
-        doTransformRegularClass(regularClass, data)
+        doTransformRegularClassContent(regularClass, data)
         return regularClass
     }
 
-    override fun withRegularClass(regularClass: FirRegularClass, action: () -> FirRegularClass): FirRegularClass {
+    override fun forRegularClassBody(regularClass: FirRegularClass, action: () -> FirRegularClass): FirRegularClass {
         return context.withContainingClass(regularClass) {
-            context.withRegularClass(regularClass, components) {
+            context.forRegularClassBody(regularClass, components) {
                 action()
             }
         }
@@ -243,7 +243,7 @@ private class FirDeclarationsResolveTransformerForAnnotationArguments(
 
     override fun transformConstructor(constructor: FirConstructor, data: ResolutionMode): FirConstructor {
         val containingClass = context.containerIfAny as? FirRegularClass
-        context.withConstructor(constructor) {
+        context.forConstructor(constructor) {
             constructor
                 .transformTypeParameters(transformer, data)
                 .transformAnnotations(transformer, data)

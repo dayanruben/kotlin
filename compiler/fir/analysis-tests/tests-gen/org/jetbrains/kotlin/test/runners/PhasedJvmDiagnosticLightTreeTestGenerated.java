@@ -576,6 +576,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
     }
 
     @Test
+    @TestMetadata("errorProneAtomicReferenceNullable.kt")
+    public void testErrorProneAtomicReferenceNullable() {
+      runTest("compiler/testData/diagnostics/tests/errorProneAtomicReferenceNullable.kt");
+    }
+
+    @Test
     @TestMetadata("errorProneAtomicReferencePrimitives.kt")
     public void testErrorProneAtomicReferencePrimitives() {
       runTest("compiler/testData/diagnostics/tests/errorProneAtomicReferencePrimitives.kt");
@@ -2383,6 +2389,30 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("AnnotatedTryCatch.kt")
       public void testAnnotatedTryCatch() {
         runTest("compiler/testData/diagnostics/tests/annotations/AnnotatedTryCatch.kt");
+      }
+
+      @Test
+      @TestMetadata("annotationArgumentOnCompanionResolvesToInner.kt")
+      public void testAnnotationArgumentOnCompanionResolvesToInner() {
+        runTest("compiler/testData/diagnostics/tests/annotations/annotationArgumentOnCompanionResolvesToInner.kt");
+      }
+
+      @Test
+      @TestMetadata("annotationArgumentScopeForConstructorHeader.kt")
+      public void testAnnotationArgumentScopeForConstructorHeader() {
+        runTest("compiler/testData/diagnostics/tests/annotations/annotationArgumentScopeForConstructorHeader.kt");
+      }
+
+      @Test
+      @TestMetadata("annotationArgumentScopeForNestedClass.kt")
+      public void testAnnotationArgumentScopeForNestedClass() {
+        runTest("compiler/testData/diagnostics/tests/annotations/annotationArgumentScopeForNestedClass.kt");
+      }
+
+      @Test
+      @TestMetadata("annotationArgumentScopeForNestedTypeAlias.kt")
+      public void testAnnotationArgumentScopeForNestedTypeAlias() {
+        runTest("compiler/testData/diagnostics/tests/annotations/annotationArgumentScopeForNestedTypeAlias.kt");
       }
 
       @Test
@@ -9249,6 +9279,18 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
+      @TestMetadata("ignorabilityOnClassMembers.kt")
+      public void testIgnorabilityOnClassMembers() {
+        runTest("compiler/testData/diagnostics/tests/crv/ignorabilityOnClassMembers.kt");
+      }
+
+      @Test
+      @TestMetadata("ignorabilityOnOverride.kt")
+      public void testIgnorabilityOnOverride() {
+        runTest("compiler/testData/diagnostics/tests/crv/ignorabilityOnOverride.kt");
+      }
+
+      @Test
       @TestMetadata("lambdas.kt")
       public void testLambdas() {
         runTest("compiler/testData/diagnostics/tests/crv/lambdas.kt");
@@ -9261,15 +9303,45 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
+      @TestMetadata("mustUseReturnValueOnAnonimObject.kt")
+      public void testMustUseReturnValueOnAnonimObject() {
+        runTest("compiler/testData/diagnostics/tests/crv/mustUseReturnValueOnAnonimObject.kt");
+      }
+
+      @Test
+      @TestMetadata("nestedScopesInsideClass.kt")
+      public void testNestedScopesInsideClass() {
+        runTest("compiler/testData/diagnostics/tests/crv/nestedScopesInsideClass.kt");
+      }
+
+      @Test
+      @TestMetadata("nestedScopesInsideFile.kt")
+      public void testNestedScopesInsideFile() {
+        runTest("compiler/testData/diagnostics/tests/crv/nestedScopesInsideFile.kt");
+      }
+
+      @Test
       @TestMetadata("nullability.kt")
       public void testNullability() {
         runTest("compiler/testData/diagnostics/tests/crv/nullability.kt");
       }
 
       @Test
+      @TestMetadata("receiverInFunctionalCall.kt")
+      public void testReceiverInFunctionalCall() {
+        runTest("compiler/testData/diagnostics/tests/crv/receiverInFunctionalCall.kt");
+      }
+
+      @Test
       @TestMetadata("scopes.kt")
       public void testScopes() {
         runTest("compiler/testData/diagnostics/tests/crv/scopes.kt");
+      }
+
+      @Test
+      @TestMetadata("usageInFunctionCall.kt")
+      public void testUsageInFunctionCall() {
+        runTest("compiler/testData/diagnostics/tests/crv/usageInFunctionCall.kt");
       }
     }
 
@@ -58843,6 +58915,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("EnumMapGet.kt")
       public void testEnumMapGet() {
         runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/EnumMapGet.kt");
+      }
+
+      @Test
+      @TestMetadata("enumMapWithPair.nkt")
+      public void testEnumMapWithPair() {
+        runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/enumMapWithPair.nkt");
       }
 
       @Test

@@ -932,7 +932,7 @@ fun FirDeclaration.hasAnnotationOrInsideAnnotatedClass(classId: ClassId, session
     symbol.hasAnnotationOrInsideAnnotatedClass(classId, session)
 
 fun FirBasedSymbol<*>.getAnnotationFirstArgument(classId: ClassId, session: FirSession): FirExpression? {
-    val annotation = getAnnotationByClassId(classId, session)
+    val annotation = getAnnotationWithResolvedArgumentsByClassId(classId, session)
     return annotation?.argumentMapping?.mapping?.values?.firstOrNull()
 }
 
@@ -1058,9 +1058,9 @@ fun reportAtomicToPrimitiveProblematicAccess(
     reporter: DiagnosticReporter,
 ) {
     val expanded = type.fullyExpandedType(context.session)
-    val argument = expanded.typeArguments.firstOrNull()?.type ?: return
+    val argument = expanded.typeArguments.firstOrNull()?.type?.unwrapToSimpleTypeUsingLowerBound() ?: return
 
-    if (argument.isPrimitive || argument.isValueClass(context.session)) {
+    if (argument.isPrimitiveOrNullablePrimitive || argument.isValueClass(context.session)) {
         val candidate = appropriateCandidatesForArgument[argument.classId]
         reporter.reportOn(source, FirErrors.ATOMIC_REF_WITHOUT_CONSISTENT_IDENTITY, atomicReferenceClassId, argument, candidate, context)
     }
