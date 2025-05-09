@@ -1384,6 +1384,12 @@ public class FirOutOfContentRootLazyDeclarationResolveTestGenerated extends Abst
     }
 
     @Test
+    @TestMetadata("annotatedJavaClass.kt")
+    public void testAnnotatedJavaClass() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/annotatedJavaClass.kt");
+    }
+
+    @Test
     @TestMetadata("classpathSubstitution.kt")
     public void testClasspathSubstitution() {
       runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/classpathSubstitution.kt");
@@ -1453,6 +1459,18 @@ public class FirOutOfContentRootLazyDeclarationResolveTestGenerated extends Abst
     @TestMetadata("functionWithTypeParameters.kt")
     public void testFunctionWithTypeParameters() {
       runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/functionWithTypeParameters.kt");
+    }
+
+    @Test
+    @TestMetadata("hiddenJavaClass.kt")
+    public void testHiddenJavaClass() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/hiddenJavaClass.kt");
+    }
+
+    @Test
+    @TestMetadata("hiddenJavaClassFromLibrary.kt")
+    public void testHiddenJavaClassFromLibrary() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/functions/hiddenJavaClassFromLibrary.kt");
     }
 
     @Test

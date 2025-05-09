@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.analysis.checkers.declaration
 
 import org.jetbrains.kotlin.KtRealSourceElementKind
 import org.jetbrains.kotlin.KtSourceElement
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.contracts.description.*
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
 import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
 import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
+import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 
 object FirContractChecker : FirFunctionChecker(MppCheckerKind.Common) {
@@ -110,14 +112,16 @@ object FirContractChecker : FirFunctionChecker(MppCheckerKind.Common) {
         context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
-        val erasedCastChecker = ErasedCastChecker(declaration, context)
+        val erasedCastChecker =
+            if (context.languageVersionSettings.supportsFeature(LanguageFeature.AllowCheckForErasedTypesInContracts)) null
+            else ErasedCastChecker(declaration, context)
         // Any statements that [ConeEffectExtractor] cannot extract effects will be in `unresolvedEffects`.
         for (unresolvedEffect in contractDescription.unresolvedEffects) {
             // We only check for erased casts if we cannot find an existing diagnostic, since they will sometimes be caught by the
             // cone effect extractor already.
             val diagnostic =
                 unresolvedEffect.effect.accept(DiagnosticExtractor, null)
-                    ?: unresolvedEffect.effect.accept(erasedCastChecker, null)
+                    ?: erasedCastChecker?.let { unresolvedEffect.effect.accept(it, null) }
                     ?: continue
 
             // TODO, KT-59806: report on fine-grained locations, e.g., ... implies unresolved => report on unresolved, not the entire statement.
@@ -125,9 +129,11 @@ object FirContractChecker : FirFunctionChecker(MppCheckerKind.Common) {
             reporter.reportOn(unresolvedEffect.source, FirErrors.ERROR_IN_CONTRACT_DESCRIPTION, diagnostic.reason, context)
         }
 
-        for (resolvedEffect in contractDescription.effects) {
-            val diagnostic = resolvedEffect.effect.accept(erasedCastChecker, null) ?: continue
-            reporter.reportOn(resolvedEffect.source, FirErrors.ERROR_IN_CONTRACT_DESCRIPTION, diagnostic.reason, context)
+        if (erasedCastChecker != null) {
+            for (resolvedEffect in contractDescription.effects) {
+                val diagnostic = resolvedEffect.effect.accept(erasedCastChecker, null) ?: continue
+                reporter.reportOn(resolvedEffect.source, FirErrors.ERROR_IN_CONTRACT_DESCRIPTION, diagnostic.reason, context)
+            }
         }
     }
 
@@ -142,12 +148,57 @@ object FirContractChecker : FirFunctionChecker(MppCheckerKind.Common) {
 
         fun contractNotAllowed(message: String) = reporter.reportOn(source, FirErrors.CONTRACT_NOT_ALLOWED, message, context)
 
-        if (declaration is FirPropertyAccessor || declaration is FirAnonymousFunction) contractNotAllowed("Contracts are only allowed for functions.")
-        else if (declaration.isAbstract || declaration.isOpen || declaration.isOverride) contractNotAllowed("Contracts are not allowed for open or override functions.")
-        else if (declaration.isOperator) contractNotAllowed("Contracts are not allowed for operator functions.")
-        else if (declaration.symbol.callableId.isLocal || declaration.visibility == Visibilities.Local) contractNotAllowed("Contracts are not allowed for local functions.")
-        else return false
+        when {
+            declaration is FirPropertyAccessor || declaration is FirAnonymousFunction -> {
+                if (context.languageVersionSettings.supportsFeature(LanguageFeature.AllowContractsOnPropertyAccessors)) {
+                    if (declaration is FirAnonymousFunction) contractNotAllowed("Contracts are not allowed for anonymous functions.")
+                } else {
+                    contractNotAllowed("Contracts are only allowed for functions.")
+                }
+            }
+            declaration.isAbstract || declaration.isOpen || declaration.isOverride -> {
+                contractNotAllowed("Contracts are not allowed for open or override functions.")
+            }
+            declaration.isOperator -> {
+                if (context.languageVersionSettings.supportsFeature(LanguageFeature.AllowContractsOnSomeOperators)) {
+                    if (declaration.isContractOnOperatorForbidden())
+                        contractNotAllowed("Contracts are not allowed for operator ${declaration.nameOrSpecialName}.")
+                } else {
+                    contractNotAllowed("Contracts are not allowed for operator functions.")
+                }
+            }
+            declaration.symbol.callableId.isLocal || declaration.visibility == Visibilities.Local -> {
+                contractNotAllowed("Contracts are not allowed for local functions.")
+            }
+            else -> return false
+        }
         return true
+    }
+
+    private fun FirFunction.isContractOnOperatorForbidden(): Boolean = when (nameOrSpecialName) {
+        // according to KT-73742, KT-73313 and discussions linked to them
+        OperatorNameConventions.EQUALS,
+        OperatorNameConventions.COMPARE_TO,
+        OperatorNameConventions.GET_VALUE,
+        OperatorNameConventions.SET_VALUE,
+        OperatorNameConventions.PROVIDE_DELEGATE,
+            -> true
+        // Operators related to augmented assignment desugaring
+        // TODO: enable in the future (KT-77175)
+        OperatorNameConventions.GET,
+        OperatorNameConventions.SET,
+        OperatorNameConventions.PLUS,
+        OperatorNameConventions.MINUS,
+        OperatorNameConventions.TIMES,
+        OperatorNameConventions.DIV,
+        OperatorNameConventions.REM,
+        OperatorNameConventions.PLUS_ASSIGN,
+        OperatorNameConventions.MINUS_ASSIGN,
+        OperatorNameConventions.TIMES_ASSIGN,
+        OperatorNameConventions.DIV_ASSIGN,
+        OperatorNameConventions.REM_ASSIGN,
+            -> true
+        else -> false
     }
 
     private fun checkDuplicateCallsInPlace(
@@ -190,7 +241,8 @@ object FirContractChecker : FirFunctionChecker(MppCheckerKind.Common) {
         reporter: DiagnosticReporter
     ) {
         when (diagnostic) {
-            ConeContractMayNotHaveLabel -> reporter.reportOn(source, FirErrors.ERROR_IN_CONTRACT_DESCRIPTION, ConeContractMayNotHaveLabel.reason, context)
+            ConeContractMayNotHaveLabel ->
+                reporter.reportOn(source, FirErrors.ERROR_IN_CONTRACT_DESCRIPTION, ConeContractMayNotHaveLabel.reason, context)
         }
     }
 
@@ -264,7 +316,9 @@ object FirContractChecker : FirFunctionChecker(MppCheckerKind.Common) {
             return valueParameterReference.diagnostic
         }
 
-        override fun visitErroneousElement(element: KtErroneousContractElement<ConeKotlinType, ConeDiagnostic>, data: Nothing?): ConeDiagnostic {
+        override fun visitErroneousElement(
+            element: KtErroneousContractElement<ConeKotlinType, ConeDiagnostic>, data: Nothing?
+        ): ConeDiagnostic {
             return element.diagnostic
         }
     }

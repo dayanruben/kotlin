@@ -282,6 +282,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
     }
 
     @Test
+    @TestMetadata("classVsClassIsCheck.kt")
+    public void testClassVsClassIsCheck() {
+      runTest("compiler/testData/diagnostics/tests/classVsClassIsCheck.kt");
+    }
+
+    @Test
     @TestMetadata("companionObjectInEnumAccess.kt")
     public void testCompanionObjectInEnumAccess() {
       runTest("compiler/testData/diagnostics/tests/companionObjectInEnumAccess.kt");
@@ -7523,6 +7529,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
     @TestMetadata("compiler/testData/diagnostics/tests/contracts")
     @TestDataPath("$PROJECT_ROOT")
     public class Contracts {
+      @Test
+      @TestMetadata("checkForErased.kt")
+      public void testCheckForErased() {
+        runTest("compiler/testData/diagnostics/tests/contracts/checkForErased.kt");
+      }
+
       @Test
       @TestMetadata("contractInDiagnosticRendering.kt")
       public void testContractInDiagnosticRendering() {
@@ -46812,6 +46824,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestDataPath("$PROJECT_ROOT")
       public class Dsl {
         @Test
+        @TestMetadata("accessorsAllowedInK2.kt")
+        public void testAccessorsAllowedInK2() {
+          runTest("compiler/testData/diagnostics/testsWithStdLib/contracts/dsl/accessorsAllowedInK2.kt");
+        }
+
+        @Test
         @TestMetadata("callUsualContractFunction.kt")
         public void testCallUsualContractFunction() {
           runTest("compiler/testData/diagnostics/testsWithStdLib/contracts/dsl/callUsualContractFunction.kt");
@@ -46821,6 +46839,24 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
         @TestMetadata("fqnContractFunction.kt")
         public void testFqnContractFunction() {
           runTest("compiler/testData/diagnostics/testsWithStdLib/contracts/dsl/fqnContractFunction.kt");
+        }
+
+        @Test
+        @TestMetadata("operatorsAllowedInK2.kt")
+        public void testOperatorsAllowedInK2() {
+          runTest("compiler/testData/diagnostics/testsWithStdLib/contracts/dsl/operatorsAllowedInK2.kt");
+        }
+
+        @Test
+        @TestMetadata("operatorsForAugmentedAssignsK2.kt")
+        public void testOperatorsForAugmentedAssignsK2() {
+          runTest("compiler/testData/diagnostics/testsWithStdLib/contracts/dsl/operatorsForAugmentedAssignsK2.kt");
+        }
+
+        @Test
+        @TestMetadata("operatorsForbiddenInK2.kt")
+        public void testOperatorsForbiddenInK2() {
+          runTest("compiler/testData/diagnostics/testsWithStdLib/contracts/dsl/operatorsForbiddenInK2.kt");
         }
 
         @Test
@@ -48349,6 +48385,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("delegatedConstructorCall.kt")
       public void testDelegatedConstructorCall() {
         runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/delegatedConstructorCall.kt");
+      }
+
+      @Test
+      @TestMetadata("delegatedConstructorCalls.kt")
+      public void testDelegatedConstructorCalls() {
+        runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/delegatedConstructorCalls.kt");
       }
 
       @Test
@@ -52332,6 +52374,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("contextLambda.kt")
       public void testContextLambda() {
         runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/contextLambda.kt");
+      }
+
+      @Test
+      @TestMetadata("contextualFunctionTypeInSignatureWithoutLF.kt")
+      public void testContextualFunctionTypeInSignatureWithoutLF() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/contextualFunctionTypeInSignatureWithoutLF.kt");
       }
 
       @Test

@@ -1,7 +1,4 @@
 pluginManagement {
-    apply(from = "../scripts/cache-redirector.settings.gradle.kts")
-    apply(from = "../scripts/kotlin-bootstrap.settings.gradle.kts")
-
     includeBuild("../gradle-settings-conventions")
 
     repositories {
@@ -13,9 +10,11 @@ pluginManagement {
 }
 
 plugins {
+    id("kotlin-bootstrap")
     id("develocity")
     id("jvm-toolchain-provisioning")
     id("kotlin-daemon-config")
+    id("cache-redirector")
 }
 
 dependencyResolutionManagement {

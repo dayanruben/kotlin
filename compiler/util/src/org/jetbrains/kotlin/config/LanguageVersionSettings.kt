@@ -425,6 +425,10 @@ enum class LanguageFeature(
     ForbidAnnotationsWithUseSiteTargetOnExpressions(KOTLIN_2_3, enabledInProgressiveMode = true, "KT-75242"),
     ProhibitNullableTypeThroughTypealias(KOTLIN_2_3, enabledInProgressiveMode = true, "KTLC-279"),
 
+    AllowCheckForErasedTypesInContracts(KOTLIN_2_3, "KT-45683"),
+    AllowContractsOnSomeOperators(KOTLIN_2_3, "KT-32313"),
+    AllowContractsOnPropertyAccessors(KOTLIN_2_3, "KT-27090"),
+
     // 2.4 TODO set sinceVersion to 2.4 when it becomes available
 
     ForbidExposingLessVisibleTypesInInline(sinceVersion = null, enabledInProgressiveMode = true, "KTLC-283"),

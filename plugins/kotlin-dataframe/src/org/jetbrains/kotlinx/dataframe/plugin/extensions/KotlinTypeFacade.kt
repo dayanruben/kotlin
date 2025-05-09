@@ -1,12 +1,7 @@
 package org.jetbrains.kotlinx.dataframe.plugin.extensions
 
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.types.ConeClassLikeType
-import org.jetbrains.kotlin.fir.types.ConeFlexibleType
-import org.jetbrains.kotlin.fir.types.ConeKotlinType
-import org.jetbrains.kotlin.fir.types.isMarkedNullable
-import org.jetbrains.kotlin.fir.types.typeContext
-import org.jetbrains.kotlin.fir.types.withNullability
+import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -27,7 +22,7 @@ interface KotlinTypeFacade : SessionContext {
     fun Marker.typeArgument(): Marker {
         val argument = when (val argument = type.typeArguments[0]) {
             is ConeKotlinType -> argument
-            else -> error("${argument::class} ${argument}")
+            else -> error("${argument::class} $argument")
         }
         return Marker(argument)
     }
@@ -52,7 +47,7 @@ private fun String.collectionsId() = ClassId(StandardClassIds.BASE_COLLECTIONS_P
 
 class KotlinTypeFacadeImpl(
     override val session: FirSession,
-    override val isTest: Boolean
+    override val isTest: Boolean,
 ) : KotlinTypeFacade
 
 class Marker private constructor(internal val type: ConeKotlinType) {
