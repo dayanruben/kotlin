@@ -341,22 +341,31 @@ internal abstract class ScriptLikeToClassTransformer(
         for (i in expression.typeArguments.indices) {
             expression.typeArguments[i] = expression.typeArguments[i]?.remapType()
         }
-        if (expression.dispatchReceiver == null && (expression.symbol.owner as? IrDeclaration)?.needsScriptReceiver() == true) {
+
+        val callsCapturingClassConstructor = expression is IrConstructorCall && capturingClassesConstructors.keys.any { it.symbol == expression.symbol }
+        if (callsCapturingClassConstructor || (expression.symbol.owner as? IrDeclaration)?.needsScriptReceiver() == true) {
             val memberAccessTargetReceiverType = when (val callee = expression.symbol.owner) {
-                is IrFunction -> callee.dispatchReceiverParameter?.type
+                is IrSimpleFunction -> callee.dispatchReceiverParameter?.type
                 is IrProperty -> callee.getter?.dispatchReceiverParameter?.type
+                // the first part of the expression triggers if the ctor itself is transformed before call,
+                // but the second part is not enough by itself if capturing class is defined in an earlier snippet (we are not keeping
+                // capturing classes from earlier snippets)
+                is IrConstructor -> callee.dispatchReceiverParameter?.type
+                    ?: if (callsCapturingClassConstructor) targetClassReceiver.type else null
                 else -> null
             }
-            val dispatchReceiver =
-                if (memberAccessTargetReceiverType != null && memberAccessTargetReceiverType != targetClassReceiver.type)
-                    accessCallsGenerator.getAccessCallForImplicitReceiver(
-                        data, expression, memberAccessTargetReceiverType, expression.origin, originalReceiverParameter = null
-                    )
-                else
-                    accessCallsGenerator.getAccessCallForSelf(
-                        data, expression.startOffset, expression.endOffset, expression.origin, originalReceiverParameter = null
-                    )
-            expression.insertDispatchReceiver(dispatchReceiver)
+            val dispatchReceiver = when {
+                memberAccessTargetReceiverType != null && expression is IrConstructorCall -> accessCallsGenerator.getDispatchReceiverExpression(
+                    data, expression, memberAccessTargetReceiverType, expression.origin, originalReceiverParameter = null
+                )
+                memberAccessTargetReceiverType != null && memberAccessTargetReceiverType != targetClassReceiver.type -> accessCallsGenerator.getAccessCallForImplicitReceiver(
+                    data, expression, memberAccessTargetReceiverType, expression.origin, originalReceiverParameter = null
+                )
+                else -> accessCallsGenerator.getAccessCallForSelf(
+                    data, expression.startOffset, expression.endOffset, expression.origin, originalReceiverParameter = null
+                )
+            }
+            expression.arguments.add(0, dispatchReceiver)
         }
         return super.visitMemberAccess(expression, data) as IrExpression
     }
@@ -369,24 +378,6 @@ internal abstract class ScriptLikeToClassTransformer(
                 )
         }
         return super.visitFieldAccess(expression, data)
-    }
-
-    override fun visitConstructorCall(expression: IrConstructorCall, data: ScriptLikeToClassTransformerContext): IrExpression {
-        if (expression.dispatchReceiver == null) {
-            // the first part of the expression triggers if the ctor itself is transformed before call,
-            // but the second part is not enough by itself if capturing class is defined in an earlier snippet (we are not keeping
-            // capturing classes from earlier snippets)
-            val ctorDispatchReceiverType = expression.symbol.owner.dispatchReceiverParameter?.type
-                ?: if (capturingClassesConstructors.keys.any { it.symbol == expression.symbol }) targetClassReceiver.type else null
-            if (ctorDispatchReceiverType != null) {
-                accessCallsGenerator.getDispatchReceiverExpression(
-                    data, expression, ctorDispatchReceiverType, expression.origin, null
-                )?.let {
-                    expression.insertDispatchReceiver(it)
-                }
-            }
-        }
-        return super.visitConstructorCall(expression, data) as IrExpression
     }
 
     override fun visitGetValue(expression: IrGetValue, data: ScriptLikeToClassTransformerContext): IrExpression {
@@ -416,13 +407,7 @@ internal abstract class ScriptLikeToClassTransformer(
     private fun IrDeclaration.needsScriptReceiver() =
         when (this) {
             is IrFunction -> this.dispatchReceiverParameter
-            is IrProperty -> {
-                this.getter?.takeIf {
-                    // without this exception, the PropertyReferenceLowering generates `clinit` with an attempt to use script as receiver
-                    // TODO: find whether it is a valid exception and maybe how to make it more obvious (KT-72942)
-                    it.origin != IrDeclarationOrigin.DELEGATED_PROPERTY_ACCESSOR
-                }?.dispatchReceiverParameter
-            }
+            is IrProperty -> this.getter?.dispatchReceiverParameter
             else -> null
         }?.origin == IrDeclarationOrigin.SCRIPT_THIS_RECEIVER
 }

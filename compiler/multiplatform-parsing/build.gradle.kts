@@ -28,6 +28,7 @@ kotlin {
             dependencies {
                 api(kotlinStdlib())
                 implementation(libs.org.jetbrains.syntax.api)
+                implementation(libs.org.jetbrains.annotations)
             }
             kotlin {
                 srcDir("common/src")
@@ -39,7 +40,9 @@ kotlin {
                 implementation(commonDependency("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm"))
                 implementation(intellijCore())
                 runtimeOnly(libs.intellij.fastutil)
+                runtimeOnly(commonDependency("com.fasterxml:aalto-xml"))
                 implementation(project(":compiler:test-infrastructure-utils"))
+                implementation(project(":compiler:cli"))
                 implementation(libs.junit.jupiter.api)
                 runtimeOnly(libs.junit.jupiter.engine)
                 api(kotlinTest("junit"))
@@ -59,6 +62,9 @@ tasks.withType<Test> {
         project(":compiler:tests-spec").isolated.projectDirectory.dir("testData")
     ).joinToString(File.pathSeparator)
     systemProperty("test.data.dirs", testDataDirs)
+
+    dependsOn(":createIdeaHomeForTests")
+    systemProperty("idea.home.path", ideaHomePathForTests().get().asFile.canonicalPath)
 }
 
 val flexGeneratorClasspath: Configuration by configurations.creating

@@ -8,8 +8,10 @@ package org.jetbrains.kotlin.kmp.lexer
 import fleet.com.intellij.platform.syntax.SyntaxElementType
 import fleet.com.intellij.platform.syntax.element.SyntaxTokenTypes
 import fleet.com.intellij.platform.syntax.util.lexer.FlexLexer
+import org.jetbrains.annotations.ApiStatus
 import kotlin.jvm.JvmStatic // Not needed on JVM, but needed when compiling other targets
 
+@ApiStatus.Experimental
 %%
 
 %unicode
@@ -43,12 +45,10 @@ import kotlin.jvm.JvmStatic // Not needed on JVM, but needed when compiling othe
 %state INDENTED_CODE_BLOCK
 
 WHITE_SPACE_CHAR    =[\ \t\f\n]
-NOT_WHITE_SPACE_CHAR=[^\ \t\f\n]
 
 DIGIT=[0-9]
 ALPHA=[:jletter:]
 TAG_NAME={ALPHA}({ALPHA}|{DIGIT})*
-IDENTIFIER={ALPHA}({ALPHA}|{DIGIT}|".")*
 QUALIFIED_NAME_START={ALPHA}
 QUALIFIED_NAME_CHAR={ALPHA}|{DIGIT}|[\.]
 QUALIFIED_NAME={QUALIFIED_NAME_START}{QUALIFIED_NAME_CHAR}*

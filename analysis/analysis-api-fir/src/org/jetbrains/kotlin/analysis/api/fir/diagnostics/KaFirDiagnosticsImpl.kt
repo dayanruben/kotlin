@@ -431,6 +431,11 @@ internal class UnresolvedImportImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.UnresolvedImport
 
+internal class PlaceholderProjectionInQualifierImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.PlaceholderProjectionInQualifier
+
 internal class DuplicateParameterNameInFunctionTypeImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
@@ -2562,6 +2567,20 @@ internal class InferredInvisibleVarargTypeArgumentWarningImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.InferredInvisibleVarargTypeArgumentWarning
 
+internal class InferredInvisibleReturnTypeErrorImpl(
+    override val calleeSymbol: KaSymbol,
+    override val returnType: KaType,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.InferredInvisibleReturnTypeError
+
+internal class InferredInvisibleReturnTypeWarningImpl(
+    override val calleeSymbol: KaSymbol,
+    override val returnType: KaType,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.InferredInvisibleReturnTypeWarning
+
 internal class GenericQualifierOnConstructorCallErrorImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
@@ -2815,6 +2834,20 @@ internal class AbstractMemberNotImplementedImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtClassOrObject>(firDiagnostic, token), KaFirDiagnostic.AbstractMemberNotImplemented
+
+internal class AbstractMemberIncorrectlyDelegatedErrorImpl(
+    override val classOrObject: KaClassLikeSymbol,
+    override val missingDeclarations: List<KaCallableSymbol>,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtClassOrObject>(firDiagnostic, token), KaFirDiagnostic.AbstractMemberIncorrectlyDelegatedError
+
+internal class AbstractMemberIncorrectlyDelegatedWarningImpl(
+    override val classOrObject: KaClassLikeSymbol,
+    override val missingDeclarations: List<KaCallableSymbol>,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtClassOrObject>(firDiagnostic, token), KaFirDiagnostic.AbstractMemberIncorrectlyDelegatedWarning
 
 internal class AbstractMemberNotImplementedByEnumEntryImpl(
     override val enumEntry: KaSymbol,
@@ -4032,6 +4065,20 @@ internal class WhenGuardWithoutSubjectImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.WhenGuardWithoutSubject
+
+internal class InferredInvisibleWhenTypeErrorImpl(
+    override val whenType: KaType,
+    override val syntaxConstructionName: String,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.InferredInvisibleWhenTypeError
+
+internal class InferredInvisibleWhenTypeWarningImpl(
+    override val whenType: KaType,
+    override val syntaxConstructionName: String,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.InferredInvisibleWhenTypeWarning
 
 internal class TypeParameterIsNotAnExpressionImpl(
     override val typeParameter: KaTypeParameterSymbol,

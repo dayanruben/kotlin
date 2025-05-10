@@ -1596,6 +1596,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
     }
 
     @Test
+    @TestMetadata("placeholderProjectionInCallables.kt")
+    public void testPlaceholderProjectionInCallables() {
+      runTest("compiler/testData/diagnostics/tests/placeholderProjectionInCallables.kt");
+    }
+
+    @Test
     @TestMetadata("plusAssignVsPrivateSetter.kt")
     public void testPlusAssignVsPrivateSetter() {
       runTest("compiler/testData/diagnostics/tests/plusAssignVsPrivateSetter.kt");
@@ -52198,6 +52204,30 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("contextReceiversSubtyping.kt")
       public void testContextReceiversSubtyping() {
         runTest("compiler/fir/analysis-tests/testData/resolve/checkers/contextReceiversSubtyping.kt");
+      }
+
+      @Test
+      @TestMetadata("delegationToItself.kt")
+      public void testDelegationToItself() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/checkers/delegationToItself.kt");
+      }
+
+      @Test
+      @TestMetadata("delegationToItself2.kt")
+      public void testDelegationToItself2() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/checkers/delegationToItself2.kt");
+      }
+
+      @Test
+      @TestMetadata("delegationToItself3.kt")
+      public void testDelegationToItself3() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/checkers/delegationToItself3.kt");
+      }
+
+      @Test
+      @TestMetadata("delegationToItselfEnabled.kt")
+      public void testDelegationToItselfEnabled() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/checkers/delegationToItselfEnabled.kt");
       }
 
       @Test
