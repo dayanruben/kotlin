@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.arguments.dsl.types
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.arguments.dsl.base.KotlinReleaseVersion
 import org.jetbrains.kotlin.arguments.dsl.base.ReleaseDependent
-import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.config.ReturnValueCheckerMode
 
 sealed interface KotlinArgumentValueType<T : Any> {
@@ -88,12 +87,12 @@ class StringArrayType(
 }
 
 @Serializable
-class ExplicitApiModeType(
+class KotlinExplicitApiModeType(
     override val isNullable: ReleaseDependent<Boolean> = ReleaseDependent(false),
-    override val defaultValue: ReleaseDependent<ExplicitApiMode?> = ReleaseDependent(ExplicitApiMode.DISABLED),
+    override val defaultValue: ReleaseDependent<ExplicitApiMode?> = ReleaseDependent(ExplicitApiMode.disable),
 ) : KotlinArgumentValueType<ExplicitApiMode> {
     override fun stringRepresentation(value: ExplicitApiMode?): String {
-        return value?.state.valueOrNullStringLiteral
+        return value?.modeName.valueOrNullStringLiteral
     }
 }
 

@@ -20106,6 +20106,12 @@ public class JsIrDeserializationCodegenBoxTestGenerated extends AbstractJsIrDese
       }
 
       @Test
+      @TestMetadata("crossModuleTypeOf.kt")
+      public void testCrossModuleTypeOf() {
+        runTest("compiler/testData/codegen/box/inline/crossModuleTypeOf.kt");
+      }
+
+      @Test
       @TestMetadata("crossinlineLambdaAllocation.kt")
       public void testCrossinlineLambdaAllocation() {
         runTest("compiler/testData/codegen/box/inline/crossinlineLambdaAllocation.kt");
@@ -20439,12 +20445,6 @@ public class JsIrDeserializationCodegenBoxTestGenerated extends AbstractJsIrDese
       @TestMetadata("typeParameterSymbolIsUnbound.kt")
       public void testTypeParameterSymbolIsUnbound() {
         runTest("compiler/testData/codegen/box/inline/typeParameterSymbolIsUnbound.kt");
-      }
-
-      @Test
-      @TestMetadata("typeParameterSymbolIsUnboundWithInlinedFunInKlib.kt")
-      public void testTypeParameterSymbolIsUnboundWithInlinedFunInKlib() {
-        runTest("compiler/testData/codegen/box/inline/typeParameterSymbolIsUnboundWithInlinedFunInKlib.kt");
       }
 
       @Test
@@ -39180,6 +39180,12 @@ public class JsIrDeserializationCodegenBoxTestGenerated extends AbstractJsIrDese
         @TestMetadata("intersectionType.kt")
         public void testIntersectionType() {
           runTest("compiler/testData/codegen/box/reflection/typeOf/intersectionType.kt");
+        }
+
+        @Test
+        @TestMetadata("localClass.kt")
+        public void testLocalClass() {
+          runTest("compiler/testData/codegen/box/reflection/typeOf/localClass.kt");
         }
 
         @Test

@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.backend.common.serialization
 
-import org.jetbrains.kotlin.backend.common.linkage.issues.IrDisallowedErrorNode
 import org.jetbrains.kotlin.backend.common.linkage.issues.IrSymbolTypeMismatchException
 import org.jetbrains.kotlin.backend.common.serialization.IrDeserializationSettings.DeserializeFunctionBodies
 import org.jetbrains.kotlin.backend.common.serialization.encodings.*
@@ -24,7 +23,6 @@ import org.jetbrains.kotlin.ir.declarations.impl.IrVariableImpl
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrCompositeImpl
 import org.jetbrains.kotlin.ir.symbols.*
-import org.jetbrains.kotlin.ir.symbols.impl.IrTypeParameterSymbolImpl
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.types.impl.*
 import org.jetbrains.kotlin.ir.util.*
@@ -194,7 +192,7 @@ class IrDeclarationDeserializer(
         }
 
     internal fun deserializeIrSymbol(code: Long): IrSymbol {
-        return symbolDeserializer.deserializeIrSymbol(code)
+        return symbolDeserializer.deserializeSymbolWithOwnerMaybeInOtherFile(code)
     }
 
     private var isEffectivelyExternal = false
@@ -214,7 +212,7 @@ class IrDeclarationDeserializer(
         setParent: Boolean = true,
         block: (IrSymbol, IdSignature, Int, Int, IrDeclarationOrigin, Long) -> T,
     ): T where T : IrDeclaration, T : IrSymbolOwner {
-        val (s, uid) = symbolDeserializer.deserializeIrSymbolToDeclare(proto.symbol)
+        val (s, uid) = symbolDeserializer.deserializeSymbolToDeclareInCurrentFile(proto.symbol)
         val coordinates = BinaryCoordinates.decode(proto.coordinates)
         val result = block(
             s,
@@ -230,13 +228,27 @@ class IrDeclarationDeserializer(
         return result
     }
 
-    private fun deserializeIrTypeParameter(proto: ProtoTypeParameter, index: Int, isGlobal: Boolean, setParent: Boolean = true):
-            IrTypeParameter {
+    private fun deserializeIrTypeParameter(
+        proto: ProtoTypeParameter,
+        index: Int,
+        isGlobal: Boolean,
+        setParent: Boolean = true,
+    ): IrTypeParameter {
+
         val name = deserializeName(proto.name)
         val coordinates = BinaryCoordinates.decode(proto.base.coordinates)
         val flags = TypeParameterFlags.decode(proto.base.flags)
 
-        val factory = { symbol: IrTypeParameterSymbol ->
+        val signature: IdSignature = symbolDeserializer.deserializeIdSignature(
+            symbolDeserializer.parseSymbolData(proto.base.symbol).signatureId
+        )
+
+        val symbolFactory: () -> IrTypeParameterSymbol = {
+            symbolDeserializer.deserializeSymbolWithOwnerInCurrentFile(signature, TYPE_PARAMETER_SYMBOL)
+                .checkSymbolType(TYPE_PARAMETER_SYMBOL)
+        }
+
+        val typeParameterFactory: (IrTypeParameterSymbol) -> IrTypeParameter = { symbol: IrTypeParameterSymbol ->
             createIfUnbound(symbol) {
                 irFactory.createTypeParameter(
                     startOffset = coordinates.startOffset,
@@ -251,34 +263,23 @@ class IrDeclarationDeserializer(
             }
         }
 
-        val sig: IdSignature
-        val result = symbolTable.run {
-            if (isGlobal) {
-                val p = symbolDeserializer.deserializeIrSymbolToDeclare(proto.base.symbol)
-                val symbol: IrTypeParameterSymbol = p.first.checkSymbolType(TYPE_PARAMETER_SYMBOL)
-                sig = p.second
-                declareGlobalTypeParameter(sig, { symbol }, factory)
-            } else {
-                val symbolData = BinarySymbolData.decode(proto.base.symbol)
-                sig = symbolDeserializer.deserializeIdSignature(symbolData.signatureId)
-                declareScopedTypeParameter(
-                    sig,
-                    {
-                        if (it.isPubliclyVisible)
-                            symbolDeserializer.deserializeIrSymbol(sig, TYPE_PARAMETER_SYMBOL).checkSymbolType(TYPE_PARAMETER_SYMBOL)
-                        else
-                            IrTypeParameterSymbolImpl()
-                    },
-                    factory
-                )
-            }
+        val typeParameter: IrTypeParameter = if (isGlobal) {
+            symbolTable.declareGlobalTypeParameter(
+                signature = signature,
+                symbolFactory = symbolFactory,
+                typeParameterFactory = typeParameterFactory
+            )
+        } else {
+            symbolTable.declareScopedTypeParameter(
+                signature = signature,
+                symbolFactory = { symbolFactory() },
+                typeParameterFactory = typeParameterFactory
+            )
         }
 
-        // make sure this symbol is known to linker
-        symbolDeserializer.referenceLocalIrSymbol(result.symbol, sig)
-        result.annotations = deserializeAnnotations(proto.base.annotationList)
-        if (setParent) result.parent = currentParent
-        return result
+        typeParameter.annotations = deserializeAnnotations(proto.base.annotationList)
+        if (setParent) typeParameter.parent = currentParent
+        return typeParameter
     }
 
     private fun deserializeIrValueParameter(proto: ProtoValueParameter, kind: IrParameterKind, setParent: Boolean = true): IrValueParameter =
@@ -804,8 +805,8 @@ class IrDeclarationDeserializer(
         if (needToDeserializeFakeOverrides(parent)) return false
 
         val symbol = when (fakeOverrideProto.declaratorCase!!) {
-            IR_FUNCTION -> symbolDeserializer.deserializeIrSymbol(fakeOverrideProto.irFunction.base.base.symbol)
-            IR_PROPERTY -> symbolDeserializer.deserializeIrSymbol(fakeOverrideProto.irProperty.base.symbol)
+            IR_FUNCTION -> symbolDeserializer.deserializeSymbolToDeclareInCurrentFile(fakeOverrideProto.irFunction.base.base.symbol).first
+            IR_PROPERTY -> symbolDeserializer.deserializeSymbolToDeclareInCurrentFile(fakeOverrideProto.irProperty.base.symbol).first
             // Don't consider IR_FIELDS here.
             else -> return false
         }

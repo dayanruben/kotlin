@@ -26625,6 +26625,12 @@ public class LLBlackBoxTestGenerated extends AbstractLLBlackBoxTest {
     }
 
     @Test
+    @TestMetadata("crossModuleTypeOf.kt")
+    public void testCrossModuleTypeOf() {
+      runTest("compiler/testData/codegen/box/inline/crossModuleTypeOf.kt");
+    }
+
+    @Test
     @TestMetadata("crossinlineLambdaAllocation.kt")
     public void testCrossinlineLambdaAllocation() {
       runTest("compiler/testData/codegen/box/inline/crossinlineLambdaAllocation.kt");
@@ -26958,12 +26964,6 @@ public class LLBlackBoxTestGenerated extends AbstractLLBlackBoxTest {
     @TestMetadata("typeParameterSymbolIsUnbound.kt")
     public void testTypeParameterSymbolIsUnbound() {
       runTest("compiler/testData/codegen/box/inline/typeParameterSymbolIsUnbound.kt");
-    }
-
-    @Test
-    @TestMetadata("typeParameterSymbolIsUnboundWithInlinedFunInKlib.kt")
-    public void testTypeParameterSymbolIsUnboundWithInlinedFunInKlib() {
-      runTest("compiler/testData/codegen/box/inline/typeParameterSymbolIsUnboundWithInlinedFunInKlib.kt");
     }
 
     @Test
@@ -28362,6 +28362,12 @@ public class LLBlackBoxTestGenerated extends AbstractLLBlackBoxTest {
     @TestMetadata("inlineToString.kt")
     public void testInlineToString() {
       runTest("compiler/testData/codegen/box/inlineClasses/inlineToString.kt");
+    }
+
+    @Test
+    @TestMetadata("internalConstructorWithDefaultParam.kt")
+    public void testInternalConstructorWithDefaultParam() {
+      runTest("compiler/testData/codegen/box/inlineClasses/internalConstructorWithDefaultParam.kt");
     }
 
     @Test
@@ -55765,6 +55771,12 @@ public class LLBlackBoxTestGenerated extends AbstractLLBlackBoxTest {
       @TestMetadata("intersectionType.kt")
       public void testIntersectionType() {
         runTest("compiler/testData/codegen/box/reflection/typeOf/intersectionType.kt");
+      }
+
+      @Test
+      @TestMetadata("localClass.kt")
+      public void testLocalClass() {
+        runTest("compiler/testData/codegen/box/reflection/typeOf/localClass.kt");
       }
 
       @Test
