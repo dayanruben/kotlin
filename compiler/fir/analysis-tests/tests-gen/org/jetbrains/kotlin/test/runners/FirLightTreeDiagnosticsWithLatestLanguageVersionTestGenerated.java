@@ -1714,6 +1714,18 @@ public class FirLightTreeDiagnosticsWithLatestLanguageVersionTestGenerated exten
       }
 
       @Test
+      @TestMetadata("delegationToItself4.kt")
+      public void testDelegationToItself4() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/checkers/delegationToItself4.kt");
+      }
+
+      @Test
+      @TestMetadata("delegationToItself5.kt")
+      public void testDelegationToItself5() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/checkers/delegationToItself5.kt");
+      }
+
+      @Test
       @TestMetadata("delegationToItselfEnabled.kt")
       public void testDelegationToItselfEnabled() {
         runTest("compiler/fir/analysis-tests/testData/resolve/checkers/delegationToItselfEnabled.kt");
@@ -2268,6 +2280,18 @@ public class FirLightTreeDiagnosticsWithLatestLanguageVersionTestGenerated exten
         @TestMetadata("contextParameterSyntaxWithoutLanguageFeature.kt")
         public void testContextParameterSyntaxWithoutLanguageFeature() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/contextParameterSyntaxWithoutLanguageFeature.kt");
+        }
+
+        @Test
+        @TestMetadata("danglingContextParameter.kt")
+        public void testDanglingContextParameter() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/danglingContextParameter.kt");
+        }
+
+        @Test
+        @TestMetadata("danglingContextParameterAndAnnotations.kt")
+        public void testDanglingContextParameterAndAnnotations() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/danglingContextParameterAndAnnotations.kt");
         }
 
         @Test

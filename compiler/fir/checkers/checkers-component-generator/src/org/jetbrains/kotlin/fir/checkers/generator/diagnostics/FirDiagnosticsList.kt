@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.ForbiddenNamedArgumentsTarget
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualAnnotationsIncompatibilityType
-import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility
+import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualMatchingCompatibility
 import org.jetbrains.kotlin.serialization.deserialization.IncompatibleVersionErrorData
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.PrivateForInline
@@ -1491,7 +1491,58 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
 
         val ACTUAL_WITHOUT_EXPECT by error<KtNamedDeclaration>(PositioningStrategy.DECLARATION_NAME_ONLY) {
             parameter<Symbol>("declaration")
-            parameter<Map<out ExpectActualCompatibility<Symbol>, Collection<Symbol>>>("compatibility")
+            parameter<Map<out ExpectActualMatchingCompatibility, Collection<Symbol>>>("compatibility")
+        }
+
+        val expectActualIncompatibilityError = error<KtNamedDeclaration>(PositioningStrategy.DECLARATION_NAME_ONLY) {
+            parameter<Symbol>("expectDeclaration")
+            parameter<Symbol>("actualDeclaration")
+            parameter<String>("reason")
+        }
+
+        val EXPECT_ACTUAL_INCOMPATIBLE_CLASS_TYPE_PARAMETER_COUNT by expectActualIncompatibilityError
+
+        // Callables
+        val EXPECT_ACTUAL_INCOMPATIBLE_RETURN_TYPE by expectActualIncompatibilityError
+        val EXPECT_ACTUAL_INCOMPATIBLE_PARAMETER_NAMES by expectActualIncompatibilityError
+        val EXPECT_ACTUAL_INCOMPATIBLE_CONTEXT_PARAMETER_NAMES by expectActualIncompatibilityError
+        val EXPECT_ACTUAL_INCOMPATIBLE_TYPE_PARAMETER_NAMES by expectActualIncompatibilityError
+        val EXPECT_ACTUAL_INCOMPATIBLE_VALUE_PARAMETER_VARARG by expectActualIncompatibilityError
+        val EXPECT_ACTUAL_INCOMPATIBLE_VALUE_PARAMETER_NOINLINE by expectActualIncompatibilityError
+        val EXPECT_ACTUAL_INCOMPATIBLE_VALUE_PARAMETER_CROSSINLINE by expectActualIncompatibilityError
+
+        // Functions
+        val EXPECT_ACTUAL_INCOMPATIBLE_FUNCTION_MODIFIERS_DIFFERENT by expectActualIncompatibilityError
+        val EXPECT_ACTUAL_INCOMPATIBLE_FUNCTION_MODIFIERS_NOT_SUBSET by expectActualIncompatibilityError
+        val EXPECT_ACTUAL_INCOMPATIBLE_PARAMETERS_WITH_DEFAULT_VALUES_IN_EXPECT_ACTUALIZED_BY_FAKE_OVERRIDE by expectActualIncompatibilityError
+
+        // Properties
+        val EXPECT_ACTUAL_INCOMPATIBLE_PROPERTY_KIND by expectActualIncompatibilityError
+        val EXPECT_ACTUAL_INCOMPATIBLE_PROPERTY_LATEINIT_MODIFIER by expectActualIncompatibilityError
+        val EXPECT_ACTUAL_INCOMPATIBLE_PROPERTY_CONST_MODIFIER by expectActualIncompatibilityError
+        val EXPECT_ACTUAL_INCOMPATIBLE_PROPERTY_SETTER_VISIBILITY by expectActualIncompatibilityError
+
+        // Classifiers
+        val EXPECT_ACTUAL_INCOMPATIBLE_CLASS_KIND by expectActualIncompatibilityError
+        val EXPECT_ACTUAL_INCOMPATIBLE_CLASS_MODIFIERS by expectActualIncompatibilityError
+        val EXPECT_ACTUAL_INCOMPATIBLE_FUN_INTERFACE_MODIFIER by expectActualIncompatibilityError
+        val EXPECT_ACTUAL_INCOMPATIBLE_SUPERTYPES by expectActualIncompatibilityError
+        val EXPECT_ACTUAL_INCOMPATIBLE_NESTED_TYPE_ALIAS by expectActualIncompatibilityError
+        val EXPECT_ACTUAL_INCOMPATIBLE_ENUM_ENTRIES by expectActualIncompatibilityError
+        val EXPECT_ACTUAL_INCOMPATIBLE_ILLEGAL_REQUIRES_OPT_IN by expectActualIncompatibilityError
+
+        // Common
+        val EXPECT_ACTUAL_INCOMPATIBLE_MODALITY by expectActualIncompatibilityError
+        val EXPECT_ACTUAL_INCOMPATIBLE_VISIBILITY by expectActualIncompatibilityError
+        val EXPECT_ACTUAL_INCOMPATIBLE_CLASS_TYPE_PARAMETER_UPPER_BOUNDS by expectActualIncompatibilityError
+        val EXPECT_ACTUAL_INCOMPATIBLE_TYPE_PARAMETER_VARIANCE by expectActualIncompatibilityError
+        val EXPECT_ACTUAL_INCOMPATIBLE_TYPE_PARAMETER_REIFIED by expectActualIncompatibilityError
+
+        val EXPECT_ACTUAL_INCOMPATIBLE_CLASS_SCOPE by error<KtNamedDeclaration>(PositioningStrategy.ACTUAL_DECLARATION_NAME) {
+            parameter<Symbol>("actualClass")
+            parameter<Symbol>("expectMemberDeclaration")
+            parameter<Symbol>("actualMemberDeclaration")
+            parameter<String>("reason")
         }
 
         val EXPECT_REFINEMENT_ANNOTATION_WRONG_TARGET by error<KtNamedDeclaration>(
@@ -1505,7 +1556,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
 
         val NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS by error<KtNamedDeclaration>(PositioningStrategy.ACTUAL_DECLARATION_NAME) {
             parameter<Symbol>("declaration")
-            parameter<List<Pair<Symbol, Map<out ExpectActualCompatibility.MismatchOrIncompatible<Symbol>, Collection<Symbol>>>>>("members")
+            parameter<List<Pair<Symbol, Map<out ExpectActualMatchingCompatibility.Mismatch, Collection<Symbol>>>>>("members")
         }
 
         val ACTUAL_MISSING by error<KtNamedDeclaration>(PositioningStrategy.ACTUAL_DECLARATION_NAME)

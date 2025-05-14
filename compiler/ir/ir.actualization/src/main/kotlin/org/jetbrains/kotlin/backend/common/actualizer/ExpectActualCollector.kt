@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.resolve.calls.mpp.AbstractExpectActualChecker
 import org.jetbrains.kotlin.resolve.calls.mpp.AbstractExpectActualMatcher
-import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCheckingCompatibility
+import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualIncompatibility
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualMatchingCompatibility
 import java.io.File
 
@@ -451,17 +451,14 @@ internal class ExpectActualLinkCollector {
 
         override fun onIncompatibleMembersFromClassScope(
             expectSymbol: DeclarationSymbolMarker,
-            actualSymbolsByIncompatibility: Map<ExpectActualCheckingCompatibility.Incompatible<*>, List<DeclarationSymbolMarker>>,
+            actualSymbol: DeclarationSymbolMarker,
+            incompatibility: ExpectActualIncompatibility<*>,
             containingExpectClassSymbol: RegularClassSymbolMarker?,
-            containingActualClassSymbol: RegularClassSymbolMarker?
+            containingActualClassSymbol: RegularClassSymbolMarker?,
         ) {
             require(expectSymbol is IrSymbol)
-            for ((incompatibility, actualMemberSymbols) in actualSymbolsByIncompatibility) {
-                for (actualSymbol in actualMemberSymbols) {
-                    require(actualSymbol is IrSymbol)
-                    diagnosticsReporter.reportExpectActualIncompatibility(expectSymbol, actualSymbol, incompatibility)
-                }
-            }
+            require(actualSymbol is IrSymbol)
+            diagnosticsReporter.reportExpectActualIrIncompatibility(expectSymbol, actualSymbol, incompatibility)
         }
 
         override fun onMismatchedMembersFromClassScope(
@@ -491,7 +488,7 @@ internal class ExpectActualLinkCollector {
             for ((incompatibility, actualMemberSymbols) in actualSymbolsByIncompatibility) {
                 for (actualSymbol in actualMemberSymbols) {
                     require(actualSymbol is IrSymbol)
-                    diagnosticsReporter.reportExpectActualMismatch(expectSymbol, actualSymbol, incompatibility)
+                    diagnosticsReporter.reportExpectActualIrMismatch(expectSymbol, actualSymbol, incompatibility)
                 }
             }
         }
