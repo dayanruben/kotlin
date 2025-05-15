@@ -49,7 +49,7 @@ object ErrorListDiagnosticListRenderer : DiagnosticListRenderer() {
 
     private fun SmartPrinter.printErrorsObject(diagnosticList: DiagnosticList) {
         println("""@Suppress("IncorrectFormatting")""")
-        printBlock("object ${diagnosticList.objectName} : FirDiagnosticsContainer()") {
+        printBlock("object ${diagnosticList.objectName} : KtDiagnosticsContainer()") {
             for (group in diagnosticList.groups) {
                 printDiagnosticGroup(group.name, group.diagnostics)
                 println()
@@ -81,7 +81,14 @@ object ErrorListDiagnosticListRenderer : DiagnosticListRenderer() {
         print("val ${diagnostic.name}: $type")
         diagnostic.parameters.map { it.type }.ifNotEmpty { printTypeArguments(this) }
         print(" = $type(")
-        printSeparatedWithComma(listOf(escapedName, severityOrFeatureForError, positioningStrategy, psiTypeClass)) { print(it) }
+        val arguments = listOf(
+            escapedName,
+            severityOrFeatureForError,
+            positioningStrategy,
+            psiTypeClass,
+            "getRendererFactory()"
+        )
+        printSeparatedWithComma(arguments) { print(it) }
         print(")")
         println()
     }
@@ -142,8 +149,7 @@ object ErrorListDiagnosticListRenderer : DiagnosticListRenderer() {
             }
             add(PositioningStrategy.importToAdd)
             add("org.jetbrains.kotlin.diagnostics.rendering.BaseDiagnosticRendererFactory")
-            add("org.jetbrains.kotlin.diagnostics.rendering.RootDiagnosticRendererFactory")
-            add("org.jetbrains.kotlin.fir.diagnostics.FirDiagnosticsContainer")
+            add("org.jetbrains.kotlin.diagnostics.KtDiagnosticsContainer")
         }
 
         printImports(
