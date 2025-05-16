@@ -717,8 +717,8 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.SUPERTYPE_IS_EXTENSION_FUNCTION_TYPE) { firDiagnostic ->
-        SupertypeIsExtensionFunctionTypeImpl(
+    add(FirErrors.SUPERTYPE_IS_EXTENSION_OR_CONTEXT_FUNCTION_TYPE) { firDiagnostic ->
+        SupertypeIsExtensionOrContextFunctionTypeImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -2674,8 +2674,8 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.UPPER_BOUND_IS_EXTENSION_FUNCTION_TYPE) { firDiagnostic ->
-        UpperBoundIsExtensionFunctionTypeImpl(
+    add(FirErrors.UPPER_BOUND_IS_EXTENSION_OR_CONTEXT_FUNCTION_TYPE) { firDiagnostic ->
+        UpperBoundIsExtensionOrContextFunctionTypeImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

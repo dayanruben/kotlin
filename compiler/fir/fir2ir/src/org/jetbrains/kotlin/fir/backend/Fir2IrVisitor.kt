@@ -67,7 +67,9 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.applyIf
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.addToStdlib.runUnless
+import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
 import org.jetbrains.kotlin.utils.findIsInstanceAnd
 
 class Fir2IrVisitor(
@@ -81,6 +83,8 @@ class Fir2IrVisitor(
     private var _annotationMode: Boolean = false
     val annotationMode: Boolean
         get() = _annotationMode
+
+    private val unitType: ConeClassLikeType = session.builtinTypes.unitType.coneType
 
     internal inline fun <T> withAnnotationMode(enableAnnotationMode: Boolean = true, block: () -> T): T {
         val oldAnnotationMode = _annotationMode
@@ -352,7 +356,7 @@ class Fir2IrVisitor(
             irFunction.body = if (configuration.skipBodies) {
                 IrFactoryImpl.createExpressionBody(IrConstImpl.defaultValueForType(UNDEFINED_OFFSET, UNDEFINED_OFFSET, irFunction.returnType))
             } else {
-                val irBlock = codeFragment.block.convertToIrBlock(origin = null, forceUnitType = false)
+                val irBlock = codeFragment.block.convertToIrBlock(origin = null, expectedType = null)
                 IrFactoryImpl.createExpressionBody(irBlock)
             }
         }
@@ -538,8 +542,7 @@ class Fir2IrVisitor(
             }
         )
         if (initializer != null) {
-            val convertedInitializer = convertToIrExpression(initializer)
-                .prepareExpressionForGivenExpectedType(expression = initializer, expectedType = variable.returnTypeRef.coneType)
+            val convertedInitializer = convertToIrExpression(initializer, expectedType = variable.returnTypeRef.coneType)
             // In FIR smart-casted types from initializers of variables are not saved to the types of the variables themselves.
             // Ensuring the IrVariable's type of an implicit when-subject is as narrow as that of the initializer is important,
             // for example, for `ieee754` comparisons of `Double`s.
@@ -578,10 +581,7 @@ class Fir2IrVisitor(
         return returnExpression.convertWithOffsets { startOffset, endOffset ->
             // For implicit returns, use the expression endOffset to generate the expected line number for debugging.
             val returnStartOffset = if (returnExpression.source?.kind is KtFakeSourceElementKind.ImplicitReturn) endOffset else startOffset
-            val value = convertToIrExpression(result).prepareExpressionForGivenExpectedType(
-                expression = returnExpression.result,
-                expectedType = returnExpression.target.labeledElement.returnTypeRef.coneType
-            )
+            val value = convertToIrExpression(result, expectedType = returnExpression.target.labeledElement.returnTypeRef.coneType)
             IrReturnImpl(returnStartOffset, endOffset, builtins.nothingType, irTarget, value)
         }
     }
@@ -999,11 +999,7 @@ class Fir2IrVisitor(
     internal fun convertToIrExpression(
         expression: FirExpression,
         isDelegate: Boolean = false,
-        // This argument is used for a corner case with deserialized empty array literals
-        // These array literals normally have a type of Array<Any>,
-        // so FIR2IR should instead use a type of corresponding property
-        // See also KT-62598
-        expectedTypeForAnnotationArgument: ConeKotlinType? = null,
+        expectedType: ConeKotlinType? = null,
     ): IrExpression {
         return when (expression) {
             is FirBlock -> {
@@ -1014,7 +1010,12 @@ class Fir2IrVisitor(
                     is KtFakeSourceElementKind.DesugaredIncrementOrDecrement -> incOrDecSourceKindToIrStatementOrigin[expression.source?.kind]
                     else -> null
                 }
-                expression.convertToIrExpressionOrBlock(origin)
+                expression.convertToIrExpressionOrBlock(
+                    origin,
+                    // We only pass the expected type if it's Unit to trigger coercion to Unit.
+                    // In all other cases, the block should have the type of the last statement, not the expected type.
+                    expectedType = if (origin == IrStatementOrigin.FOR_LOOP || expectedType?.isUnit == true) unitType else null
+                )
             }
             is FirUnitExpression -> expression.convertWithOffsets { _, endOffset ->
                 IrGetObjectValueImpl(
@@ -1024,9 +1025,15 @@ class Fir2IrVisitor(
             else -> {
                 when (val unwrappedExpression = expression.unwrapArgument()) {
                     is FirCallableReferenceAccess -> convertCallableReferenceAccess(unwrappedExpression, isDelegate)
-                    is FirArrayLiteral -> convertToArrayLiteral(unwrappedExpression, expectedTypeForAnnotationArgument)
+                    is FirArrayLiteral -> convertToArrayLiteral(unwrappedExpression, expectedType)
                     else -> expression.accept(this, null) as IrExpression
                 }
+            }
+        }.let {
+            if (expectedType != null) {
+                it.prepareExpressionForGivenExpectedType(expression, expectedType = expectedType)
+            } else {
+                it
             }
         }
     }
@@ -1078,11 +1085,6 @@ class Fir2IrVisitor(
             }
         }
     }
-
-    private val IrStatementOrigin.isLoop: Boolean
-        get() {
-            return this == IrStatementOrigin.DO_WHILE_LOOP || this == IrStatementOrigin.WHILE_LOOP || this == IrStatementOrigin.FOR_LOOP
-        }
 
     private fun extractOperationFromDynamicSetCall(functionCall: FirFunctionCall) =
         functionCall.dynamicVarargArguments?.lastOrNull() as? FirFunctionCall
@@ -1154,62 +1156,66 @@ class Fir2IrVisitor(
         )
     }
 
-    private fun FirBlock.convertToIrExpressionOrBlock(origin: IrStatementOrigin? = null): IrExpression {
+    private fun FirBlock.convertToIrExpressionOrBlock(
+        origin: IrStatementOrigin?,
+        expectedType: ConeKotlinType?,
+    ): IrExpression {
+        val coerceToUnit = expectedType?.isUnit == true
+
         if (this.source?.kind is KtFakeSourceElementKind.DesugaredIncrementOrDecrement) {
             tryConvertDynamicIncrementOrDecrementToIr()?.let {
-                return it
+                return it.applyIf(coerceToUnit) {
+                    coerceToUnitHandlingSpecialBlocks()
+                }
             }
         }
 
         if (this is FirSingleExpressionBlock) {
             when (val stmt = statement) {
-                is FirExpression -> return convertToIrExpression(stmt)
-                !is FirDeclaration -> return stmt.accept(this@Fir2IrVisitor, null) as IrExpression
+                is FirExpression -> return convertToIrExpression(stmt).applyIf(coerceToUnit) {
+                    coerceToUnitHandlingSpecialBlocks()
+                }
+                !is FirDeclaration -> return (stmt.accept(this@Fir2IrVisitor, null) as IrExpression).applyIf(coerceToUnit) {
+                    coerceToUnitHandlingSpecialBlocks()
+                }
             }
         }
 
         if (source?.kind !is KtRealSourceElementKind) {
             val firStatement = statements.singleOrNull()
             if (firStatement is FirExpression && firStatement !is FirBlock) {
-                return convertToIrExpression(firStatement)
+                return convertToIrExpression(firStatement).applyIf(coerceToUnit) {
+                    coerceToUnitHandlingSpecialBlocks()
+                }
             }
         }
 
-        val forceUnitType = origin?.isLoop == true || run {
-            val lastStatement = statements.lastOrNull() as? FirExpression
-            lastStatement?.resolvedType?.fullyExpandedType(session)?.isNothing == true
-        }
-
-        return convertToIrBlock(origin, forceUnitType)
+        return convertToIrBlock(origin, expectedType)
     }
 
     private fun FirBlock.convertToIrBlock(
         origin: IrStatementOrigin?,
-        forceUnitType: Boolean,
+        expectedType: ConeKotlinType?,
     ): IrExpression {
-        val type = if (forceUnitType) {
-            builtins.unitType
-        } else {
-            (statements.lastOrNull() as? FirExpression)?.resolvedType?.toIrType() ?: builtins.unitType
-        }
+        val irExpectedType = expectedType?.toIrType()
+            ?: (statements.lastOrNull() as? FirExpression)?.resolvedType?.takeUnless { it.isNothing }?.toIrType()
+            ?: builtins.unitType
+
         return source.convertWithOffsets(keywordTokens = null) { startOffset, endOffset ->
             if (origin == IrStatementOrigin.DO_WHILE_LOOP) {
                 IrCompositeImpl(
-                    startOffset, endOffset, type, null,
+                    startOffset, endOffset, irExpectedType, null,
                     statements.mapNotNull { it.toIrStatement() }
                 )
             } else {
                 val irStatements = statements.mapNotNull { it.toIrStatement() }
                 val singleStatement = irStatements.singleOrNull()
-                if (singleStatement is IrBlock) {
-                    singleStatement
-                } else {
-                    val blockOrigin = if (forceUnitType && origin != IrStatementOrigin.FOR_LOOP) null else origin
-                    IrBlockImpl(startOffset, endOffset, type, blockOrigin, irStatements)
-                }
+                singleStatement as? IrBlock ?: IrBlockImpl(startOffset, endOffset, irExpectedType, origin, irStatements)
             }
         }.also {
             it.coerceStatementsToUnit(coerceLastExpressionToUnit = false)
+        }.applyIf(irExpectedType.isUnit()) {
+            coerceToUnitHandlingSpecialBlocks()
         }
     }
 
@@ -1260,11 +1266,7 @@ class Fir2IrVisitor(
                         arguments[0] = irGetLhsValue()
                         arguments[1] = IrConstImpl.constNull(startOffset, endOffset, builtins.nothingNType)
                     },
-                    convertToIrExpression(elvisExpression.rhs).prepareExpressionForGivenExpectedType(
-                        expression = elvisExpression,
-                        valueType = elvisExpression.rhs.resolvedType,
-                        expectedType = elvisExpression.resolvedType
-                    )
+                    convertToIrExpression(elvisExpression.rhs, expectedType = elvisExpression.resolvedType)
                 ),
                 IrElseBranchImpl(
                     IrConstImpl.boolean(startOffset, endOffset, builtins.booleanType, true),
@@ -1300,7 +1302,7 @@ class Fir2IrVisitor(
                 }
                 val isProperlyExhaustive = whenExpression.isDeeplyProperlyExhaustive()
                 val whenExpressionType =
-                    if (isProperlyExhaustive) whenExpression.resolvedType else session.builtinTypes.unitType.coneType
+                    if (isProperlyExhaustive) whenExpression.resolvedType else unitType
                 val irBranches = whenExpression.convertWhenBranchesTo(
                     mutableListOf(),
                     whenExpressionType,
@@ -1401,6 +1403,9 @@ class Fir2IrVisitor(
             subjectExpression != null ->
                 conversionScope.scope().createTemporaryVariable(
                     irExpression = with(implicitCastInserter) {
+                        // We can't pass the expected type to convertToIrExpression because it will break
+                        // compiler/testData/codegen/box/when/stringOptimization/enhancedNullability.kt
+                        // See KT-47398.
                         convertToIrExpression(subjectExpression).insertCastForSmartcastWithIntersection(subjectExpression.resolvedType, subjectVariable.returnTypeRef.coneType)
                     },
                     nameHint = "subject",
@@ -1412,10 +1417,7 @@ class Fir2IrVisitor(
     private fun FirWhenBranch.toIrWhenBranch(whenExpressionType: ConeKotlinType): IrBranch {
         return convertWithOffsets { startOffset, endOffset ->
             val condition = condition
-            val irResult = convertToIrExpression(result).prepareExpressionForGivenExpectedType(
-                expression = result,
-                expectedType = whenExpressionType
-            )
+            val irResult = convertToIrExpression(result, expectedType = whenExpressionType)
             if (condition is FirElseIfTrueCondition) {
                 IrElseBranchImpl(IrConstImpl.boolean(irResult.startOffset, irResult.endOffset, builtins.booleanType, true), irResult)
             } else {
@@ -1447,7 +1449,7 @@ class Fir2IrVisitor(
                 loopMap[doWhileLoop] = this
                 label = doWhileLoop.label?.name
                 body = runUnless(doWhileLoop.block is FirEmptyExpressionBlock) {
-                    doWhileLoop.block.convertToIrExpressionOrBlock(origin).coerceToUnitHandlingSpecialBlocks()
+                    doWhileLoop.block.convertToIrExpressionOrBlock(origin, expectedType = unitType)
                 }
                 condition = convertToIrExpression(doWhileLoop.condition)
                 loopMap.remove(doWhileLoop)
@@ -1490,7 +1492,7 @@ class Fir2IrVisitor(
                             val (destructuredLoopVariables, realStatements) = loopBodyStatements.drop(1).partition {
                                 it is FirProperty && it.initializer is FirComponentCall
                             }
-                            val firExpression = realStatements.singleOrNull() as? FirExpression
+                            val firBlock = realStatements.singleOrNull() as? FirBlock
                                 ?: error("Unexpected shape of for loop body: must be single real loop statement, but got ${realStatements.size}")
 
                             val irStatements = buildList {
@@ -1505,11 +1507,8 @@ class Fir2IrVisitor(
                                 }
                                 addIfNotNull(convertedForLoopVar)
                                 destructuredLoopVariables.forEach { addIfNotNull(it.toIrStatement()) }
-                                if (firExpression !is FirEmptyExpressionBlock) {
-                                    add(convertToIrExpression(firExpression).coerceToUnitHandlingSpecialBlocks().also {
-                                        // TODO(KT-63348) type should be propagated instead of overwriting it here
-                                        (it as? IrContainerExpression)?.type = builtins.unitType
-                                    })
+                                if (firBlock !is FirEmptyExpressionBlock) {
+                                    add(firBlock.convertToIrExpressionOrBlock(origin = null, unitType))
                                 }
                             }
 
@@ -1522,7 +1521,7 @@ class Fir2IrVisitor(
                             )
                         }
                     } else {
-                        firLoopBody.convertToIrExpressionOrBlock(origin).coerceToUnitHandlingSpecialBlocks()
+                        firLoopBody.convertToIrExpressionOrBlock(null, unitType)
                     }
                 }
                 loopMap.remove(whileLoop)
@@ -1531,7 +1530,7 @@ class Fir2IrVisitor(
     }
 
     private fun FirJump<FirLoop>.convertJumpWithOffsets(
-        f: (startOffset: Int, endOffset: Int, irLoop: IrLoop, label: String?) -> IrBreakContinue
+        f: (startOffset: Int, endOffset: Int, irLoop: IrLoop, label: String?) -> IrBreakContinue,
     ): IrExpression {
         return convertWithOffsets { startOffset, endOffset ->
             val firLoop = target.labeledElement
@@ -1562,12 +1561,8 @@ class Fir2IrVisitor(
 
     override fun visitThrowExpression(throwExpression: FirThrowExpression, data: Any?): IrElement {
         return throwExpression.convertWithOffsets { startOffset, endOffset ->
-            val expression = convertToIrExpression(throwExpression.exception)
-            val expressionWithCast = expression.applyIf(!expression.type.isSubtypeOfClass(builtins.throwableClass)) {
-                Fir2IrImplicitCastInserter.implicitCastOrExpression(this, builtins.throwableType)
-            }
-
-            IrThrowImpl(startOffset, endOffset, builtins.nothingType, expressionWithCast)
+            val expression = convertToIrExpression(throwExpression.exception, expectedType = session.builtinTypes.throwableType.coneType)
+            IrThrowImpl(startOffset, endOffset, builtins.nothingType, expression)
         }
     }
 
@@ -1579,29 +1574,29 @@ class Fir2IrVisitor(
             IrTryImpl(
                 startOffset, endOffset, tryExpression.resolvedType.toIrType(),
                 tryExpression.tryBlock
-                    .convertToIrBlock(origin = null, forceUnitType = false)
+                    .convertToIrBlock(origin = null, expectedType = tryExpression.tryBlock.resolvedType)
                     .prepareExpressionForGivenExpectedType(expression = tryExpression.tryBlock, expectedType = tryExpression.resolvedType),
-                tryExpression.catches.map { firCatch ->
-                    (firCatch.accept(this, data) as IrCatch).also {
-                        it.result = it.result.prepareExpressionForGivenExpectedType(
-                            expression = firCatch.block, expectedType = tryExpression.resolvedType
-                        )
-                    }
-                },
-                tryExpression.finallyBlock?.convertToIrBlock(origin = null, forceUnitType = true)
-                    ?.coerceToUnitHandlingSpecialBlocks()
+                tryExpression.catches.map { convertCatch(it, tryExpression.resolvedType) },
+                tryExpression.finallyBlock?.convertToIrBlock(origin = null, expectedType = unitType)
             )
         }
     }
 
-    override fun visitCatch(catch: FirCatch, data: Any?): IrElement {
-        return catch.convertWithOffsets { startOffset, endOffset ->
+    private fun convertCatch(firCatch: FirCatch, expectedType: ConeKotlinType): IrCatch {
+        return firCatch.convertWithOffsets { startOffset, endOffset ->
             val catchParameter = declarationStorage.createAndCacheIrVariable(
-                catch.parameter, conversionScope.parentFromStack(), IrDeclarationOrigin.CATCH_PARAMETER
+                firCatch.parameter, conversionScope.parentFromStack(), IrDeclarationOrigin.CATCH_PARAMETER
             )
-            IrCatchImpl(startOffset, endOffset, catchParameter, catch.block.convertToIrBlock(origin = null, forceUnitType = false))
+            IrCatchImpl(
+                startOffset, endOffset, catchParameter,
+                firCatch.block
+                    .convertToIrBlock(origin = null, expectedType = firCatch.block.resolvedType)
+                    .prepareExpressionForGivenExpectedType(expression = firCatch.block, expectedType = expectedType)
+            )
         }
     }
+
+    override fun visitCatch(catch: FirCatch, data: Any?): IrElement = shouldNotBeCalled()
 
     override fun visitComparisonExpression(comparisonExpression: FirComparisonExpression, data: Any?): IrElement =
         operatorGenerator.convertComparisonExpression(comparisonExpression)
@@ -1739,7 +1734,10 @@ class Fir2IrVisitor(
 
     private fun convertToArrayLiteral(
         arrayLiteral: FirArrayLiteral,
-        // See comment to convertToIrExpression
+        // This argument is used for a corner case with deserialized empty array literals
+        // These array literals normally have a type of Array<Any>,
+        // so FIR2IR should instead use a type of corresponding property
+        // See also KT-62598
         expectedType: ConeKotlinType?,
     ): IrVararg {
         return arrayLiteral.convertWithOffsets { startOffset, endOffset ->

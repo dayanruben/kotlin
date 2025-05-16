@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.backend.*
 import org.jetbrains.kotlin.fir.backend.utils.convertWithOffsets
-import org.jetbrains.kotlin.fir.backend.utils.prepareExpressionForGivenExpectedType
 import org.jetbrains.kotlin.fir.backend.utils.unwrapCallRepresentative
 import org.jetbrains.kotlin.fir.containingClassLookupTag
 import org.jetbrains.kotlin.fir.declarations.*
@@ -45,6 +44,7 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.resolve.DataClassResolver
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 internal class ClassMemberGenerator(
     private val c: Fir2IrComponents,
@@ -280,15 +280,12 @@ internal class ClassMemberGenerator(
                 if (initializer == null && initializerExpression != null) {
                     initializer = IrFactoryImpl.createExpressionBody(
                         run {
-                            val irExpression = visitor.convertToIrExpression(initializerExpression, isDelegate = property.delegate != null)
-                            if (property.delegate == null) {
-                                irExpression.prepareExpressionForGivenExpectedType(
-                                    expression = initializerExpression,
-                                    expectedType = property.returnTypeRef.coneType
-                                )
-                            } else {
-                                irExpression
-                            }
+                            val isDelegate = property.delegate != null
+                            visitor.convertToIrExpression(
+                                initializerExpression,
+                                isDelegate = isDelegate,
+                                expectedType = runIf(!isDelegate) { property.returnTypeRef.coneType }
+                            )
                         }
                     )
                 }
@@ -438,10 +435,7 @@ internal class ClassMemberGenerator(
                     )
                 else ->
                     factory.createExpressionBody(
-                        visitor.convertToIrExpression(firDefaultValue).prepareExpressionForGivenExpectedType(
-                            expression = firDefaultValue,
-                            expectedType = firValueParameter.returnTypeRef.coneType,
-                        )
+                        visitor.convertToIrExpression(firDefaultValue, expectedType = firValueParameter.returnTypeRef.coneType)
                     )
             }
         }

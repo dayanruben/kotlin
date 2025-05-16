@@ -11,24 +11,28 @@ import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 
 /**
- * A scope used for resolving files inside [useSiteModule].
- * This resulting scope is a union of [useSiteModule]'s content scope and content scopes of modules [useSiteModule] depends on.
+ * The resolution scope for a [KaModule]. It determines the PSI elements that can be resolved in the context of an analysis session.
+ *
+ * A resolution scope is mainly built from its use-site module's [KaModule.contentScope] and its dependencies' content scopes.
  */
-@KaImplementationDetail
 public abstract class KaResolutionScope : GlobalSearchScope() {
     /**
-     * Checks whether a [PsiElement] is contained in the resolution scope,
-     * i.e., the containing file is present in the resolution scope.
+     * Checks whether a [PsiElement] is contained in the resolution scope, i.e., the containing file is present in the resolution scope.
      *
-     * In contrast to [GlobalSearchScope.contains],
-     * this method provides an additional support for [PsiElement]s contained
-     * in dangling files that do not have backing virtual files.
+     * In contrast to [GlobalSearchScope.contains], this method provides additional support for [PsiElement]s contained in dangling files
+     * that do not have backing virtual files.
      */
     public abstract fun contains(element: PsiElement): Boolean
 
+    /**
+     * The underlying [GlobalSearchScope] that covers all physical files contained in the resolution scope. **Only intended for test
+     * purposes.**
+     */
+    @KaImplementationDetail
+    public abstract val underlyingSearchScope: GlobalSearchScope
+
     public companion object {
-        public fun forModule(useSiteModule: KaModule): KaResolutionScope {
-            return KaResolutionScopeProvider.getInstance(useSiteModule.project).getResolutionScope(useSiteModule)
-        }
+        public fun forModule(useSiteModule: KaModule): KaResolutionScope =
+            KaResolutionScopeProvider.getInstance(useSiteModule.project).getResolutionScope(useSiteModule)
     }
 }

@@ -281,7 +281,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val CLASS_CANNOT_BE_EXTENDED_DIRECTLY by error<KtElement> {
             parameter<FirRegularClassSymbol>("classSymbol")
         }
-        val SUPERTYPE_IS_EXTENSION_FUNCTION_TYPE by error<KtElement>()
+        val SUPERTYPE_IS_EXTENSION_OR_CONTEXT_FUNCTION_TYPE by error<KtElement>()
         val SINGLETON_IN_SUPERTYPE by error<KtElement>()
         val NULLABLE_SUPERTYPE by error<KtElement>(PositioningStrategy.QUESTION_MARK_BY_TYPE)
         val NULLABLE_SUPERTYPE_THROUGH_TYPEALIAS by deprecationError<KtElement>(LanguageFeature.ProhibitNullableTypeThroughTypealias)
@@ -868,7 +868,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<ConeKotlinType>("type")
         }
 
-        val UPPER_BOUND_IS_EXTENSION_FUNCTION_TYPE by error<KtElement>()
+        val UPPER_BOUND_IS_EXTENSION_OR_CONTEXT_FUNCTION_TYPE by error<KtElement>()
 
         val BOUNDS_NOT_ALLOWED_IF_BOUNDED_BY_TYPE_PARAMETER by error<KtElement>()
 

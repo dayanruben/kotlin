@@ -12,11 +12,19 @@ object TestGeneratorUtil {
     @Language("RegExp") const val KT_OR_KTS = """^(.+)\.(kt|kts)$"""
     @Language("RegExp") const val KT = """^(.+)\.(kt)$"""
     @Language("RegExp") const val KTS = """^(.+)\.(kts)$"""
-    @Language("RegExp") const val KT_OR_KTS_WITHOUT_DOTS_IN_NAME = """^([^.]+)\.(kt|kts)$"""
 
+    @Language("RegExp") const val KT_OR_KTS_WITHOUT_DOTS_IN_NAME = """^([^.]+)\.(kt|kts)$"""
     @Language("RegExp") const val KT_WITHOUT_DOTS_IN_NAME = """^([^.]+)\.kt$"""
-    @Language("RegExp") const val KT_WITHOUT_FIR_PREFIX = """^(.+)(?<!\.fir)\.kt$"""
-    @Language("RegExp") const val KT_OR_KTS_WITH_FIR_PREFIX = "^(.+)\\.fir\\.kts?\$"
+
+    @Language("RegExp") const val KT_OR_KTS_WITH_FIR_PREFIX = """^(.+)\.fir\.kts?$"""
+
+    // about the .can-freeze-ide test data extension:
+    // in some cases, IDE analysis of problematic code can freeze older IDEA versions,
+    // so we temporarily mark them with a special fake file extension to avoid IDE analysis
+    @JvmStatic
+    val String.canFreezeIDE: String
+        @Language("RegExp")
+        get() = """${substringBeforeLast('$')}(\.can-freeze-ide)?$"""
 
     @JvmStatic
     fun escapeForJavaIdentifier(fileName: String): String {

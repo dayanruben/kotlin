@@ -9442,6 +9442,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       public void testOverrides() {
         runTest("compiler/testData/diagnostics/tests/crvFull/overrides.kt");
       }
+
+      @Test
+      @TestMetadata("voidOverrides.kt")
+      public void testVoidOverrides() {
+        runTest("compiler/testData/diagnostics/tests/crvFull/voidOverrides.kt");
+      }
     }
 
     @Nested
@@ -39899,6 +39905,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
         }
 
         @Test
+        @TestMetadata("loopInInitBlock.kt")
+        public void testLoopInInitBlock() {
+          runTest("compiler/testData/diagnostics/tests/smartCasts/loops/loopInInitBlock.kt");
+        }
+
+        @Test
         @TestMetadata("nestedDoWhile.kt")
         public void testNestedDoWhile() {
           runTest("compiler/testData/diagnostics/tests/smartCasts/loops/nestedDoWhile.kt");
@@ -51193,6 +51205,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
     }
 
     @Test
+    @TestMetadata("javaNullability.kt.can-freeze-ide")
+    public void testJavaNullability() {
+      runTest("compiler/fir/analysis-tests/testData/resolve/javaNullability.kt.can-freeze-ide");
+    }
+
+    @Test
     @TestMetadata("javaStaticScopeInheritance.kt")
     public void testJavaStaticScopeInheritance() {
       runTest("compiler/fir/analysis-tests/testData/resolve/javaStaticScopeInheritance.kt");
@@ -52644,6 +52662,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       }
 
       @Test
+      @TestMetadata("contextualLambdaWithExplicitParameterType.kt")
+      public void testContextualLambdaWithExplicitParameterType() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/contextualLambdaWithExplicitParameterType.kt");
+      }
+
+      @Test
       @TestMetadata("contextualLateinit.kt")
       public void testContextualLateinit() {
         runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/contextualLateinit.kt");
@@ -52765,6 +52789,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
         @TestMetadata("contextualAnonymousFunction.kt")
         public void testContextualAnonymousFunction() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/declarationAndUsages/contextualAnonymousFunction.kt");
+        }
+
+        @Test
+        @TestMetadata("dslMarkerKt77301.kt")
+        public void testDslMarkerKt77301() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/declarationAndUsages/dslMarkerKt77301.kt");
         }
 
         @Test
@@ -53035,6 +53065,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
         public void testUnsupportedContextParameters() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/unsupportedContextParameters.kt");
         }
+
+        @Test
+        @TestMetadata("varianceConflict.kt")
+        public void testVarianceConflict() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/varianceConflict.kt");
+        }
       }
 
       @Nested
@@ -53231,9 +53267,9 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       @TestDataPath("$PROJECT_ROOT")
       public class Parsing {
         @Test
-        @TestMetadata("propertyInContext.nkt")
+        @TestMetadata("propertyInContext.kt.can-freeze-ide")
         public void testPropertyInContext() {
-          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/parsing/propertyInContext.nkt");
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/parsing/propertyInContext.kt.can-freeze-ide");
         }
       }
 
@@ -55722,6 +55758,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       }
 
       @Test
+      @TestMetadata("uninferredTypeVariableTypeInInferenceFromSelfUpperBound.kt.can-freeze-ide")
+      public void testUninferredTypeVariableTypeInInferenceFromSelfUpperBound() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/inference/uninferredTypeVariableTypeInInferenceFromSelfUpperBound.kt.can-freeze-ide");
+      }
+
+      @Test
       @TestMetadata("unitUpperBound.kt")
       public void testUnitUpperBound() {
         runTest("compiler/fir/analysis-tests/testData/resolve/inference/unitUpperBound.kt");
@@ -55769,6 +55811,24 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
         @TestMetadata("ifInBuildMap.kt")
         public void testIfInBuildMap() {
           runTest("compiler/fir/analysis-tests/testData/resolve/inference/pcla/ifInBuildMap.kt");
+        }
+
+        @Test
+        @TestMetadata("kt73771Original.kt.can-freeze-ide")
+        public void testKt73771Original() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/inference/pcla/kt73771Original.kt.can-freeze-ide");
+        }
+
+        @Test
+        @TestMetadata("kt73771Simple.kt.can-freeze-ide")
+        public void testKt73771Simple() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/inference/pcla/kt73771Simple.kt.can-freeze-ide");
+        }
+
+        @Test
+        @TestMetadata("manyDelegateInsidePCLA.kt.can-freeze-ide")
+        public void testManyDelegateInsidePCLA() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/inference/pcla/manyDelegateInsidePCLA.kt.can-freeze-ide");
         }
       }
     }
@@ -57282,6 +57342,18 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       @TestMetadata("kt38288.kt")
       public void testKt38288() {
         runTest("compiler/fir/analysis-tests/testData/resolve/typeParameters/kt38288.kt");
+      }
+
+      @Test
+      @TestMetadata("kt69995.kt.can-freeze-ide")
+      public void testKt69995() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/typeParameters/kt69995.kt.can-freeze-ide");
+      }
+
+      @Test
+      @TestMetadata("manyCapturedTypes.kt.can-freeze-ide")
+      public void testManyCapturedTypes() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/typeParameters/manyCapturedTypes.kt.can-freeze-ide");
       }
 
       @Test
@@ -59280,9 +59352,9 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       }
 
       @Test
-      @TestMetadata("enumMapWithPair.nkt")
+      @TestMetadata("enumMapWithPair.kt.can-freeze-ide")
       public void testEnumMapWithPair() {
-        runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/enumMapWithPair.nkt");
+        runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/enumMapWithPair.kt.can-freeze-ide");
       }
 
       @Test
@@ -59591,63 +59663,6 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       @TestMetadata("tryWithLambdaInside.kt")
       public void testTryWithLambdaInside() {
         runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/smartcasts/tryWithLambdaInside.kt");
-      }
-    }
-  }
-
-  @Nested
-  @TestMetadata("compiler/fir/analysis-tests/testData/resolveFreezesIDE")
-  @TestDataPath("$PROJECT_ROOT")
-  public class ResolveFreezesIDE {
-    @Test
-    @TestMetadata("javaNullability.nkt")
-    public void testJavaNullability() {
-      runTest("compiler/fir/analysis-tests/testData/resolveFreezesIDE/javaNullability.nkt");
-    }
-
-    @Test
-    @TestMetadata("kt69995.nkt")
-    public void testKt69995() {
-      runTest("compiler/fir/analysis-tests/testData/resolveFreezesIDE/kt69995.nkt");
-    }
-
-    @Test
-    @TestMetadata("manyCapturedTypes.nkt")
-    public void testManyCapturedTypes() {
-      runTest("compiler/fir/analysis-tests/testData/resolveFreezesIDE/manyCapturedTypes.nkt");
-    }
-
-    @Test
-    @TestMetadata("uninferredTypeVariableTypeInInferenceFromSelfUpperBound.nkt")
-    public void testUninferredTypeVariableTypeInInferenceFromSelfUpperBound() {
-      runTest("compiler/fir/analysis-tests/testData/resolveFreezesIDE/uninferredTypeVariableTypeInInferenceFromSelfUpperBound.nkt");
-    }
-
-    @Nested
-    @TestMetadata("compiler/fir/analysis-tests/testData/resolveFreezesIDE/pcla")
-    @TestDataPath("$PROJECT_ROOT")
-    public class Pcla {
-      @Nested
-      @TestMetadata("compiler/fir/analysis-tests/testData/resolveFreezesIDE/pcla/issues")
-      @TestDataPath("$PROJECT_ROOT")
-      public class Issues {
-        @Test
-        @TestMetadata("kt73771Original.nkt")
-        public void testKt73771Original() {
-          runTest("compiler/fir/analysis-tests/testData/resolveFreezesIDE/pcla/issues/kt73771Original.nkt");
-        }
-
-        @Test
-        @TestMetadata("kt73771Simple.nkt")
-        public void testKt73771Simple() {
-          runTest("compiler/fir/analysis-tests/testData/resolveFreezesIDE/pcla/issues/kt73771Simple.nkt");
-        }
-
-        @Test
-        @TestMetadata("manyDelegateInsidePCLA.nkt")
-        public void testManyDelegateInsidePCLA() {
-          runTest("compiler/fir/analysis-tests/testData/resolveFreezesIDE/pcla/issues/manyDelegateInsidePCLA.nkt");
-        }
       }
     }
   }
