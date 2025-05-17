@@ -36,11 +36,7 @@ import org.jetbrains.kotlin.ir.symbols.impl.*
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.types.impl.IrDynamicTypeImpl
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
-import org.jetbrains.kotlin.ir.util.NaiveSourceBasedFileEntryImpl
-import org.jetbrains.kotlin.ir.util.addChild
-import org.jetbrains.kotlin.ir.util.addFile
-import org.jetbrains.kotlin.ir.util.createThisReceiverParameter
-import org.jetbrains.kotlin.ir.util.defaultType
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
@@ -164,6 +160,7 @@ class IrValidatorTest {
                         checkAllKotlinFieldsArePrivate = true,
                         checkVisibilities = true,
                         checkVarargTypes = true,
+                        checkUnboundSymbols = true,
                         checkInlineFunctionUseSites = { it.symbol.owner.name.toString() != "inlineFunctionUseSiteNotPermitted" }
                     )
                 )
@@ -190,18 +187,6 @@ class IrValidatorTest {
                 Message(
                     WARNING,
                     $$"""
-                    [IR VALIDATION] IrValidatorTest: unexpected type: expected kotlin.String, got kotlin.Any
-                    STRING_CONCATENATION type=kotlin.Any
-                      inside CALL 'public final fun foo ($receiver: kotlin.String, p0: kotlin.Any): kotlin.Any declared in <no parent>' type=kotlin.Any origin=null
-                        inside BLOCK_BODY
-                          inside FUN name:bar visibility:public modality:FINAL <> () returnType:kotlin.Any
-                            inside FILE fqName:org.sample fileName:test.kt
-                    """.trimIndent(),
-                    CompilerMessageLocation.create("test.kt", 0, 0, null),
-                ),
-                Message(
-                    WARNING,
-                    $$"""
                     [IR VALIDATION] IrValidatorTest: Duplicate IR node: STRING_CONCATENATION type=kotlin.Any
                     STRING_CONCATENATION type=kotlin.Any
                       inside CALL 'public final fun foo ($receiver: kotlin.String, p0: kotlin.Any): kotlin.Any declared in <no parent>' type=kotlin.Any origin=null
@@ -209,7 +194,7 @@ class IrValidatorTest {
                           inside FUN name:bar visibility:public modality:FINAL <> () returnType:kotlin.Any
                             inside FILE fqName:org.sample fileName:test.kt
                     """.trimIndent(),
-                    CompilerMessageLocation.create("test.kt", 0, 0, null),
+                    CompilerMessageLocation.create(null, 0, 0, null),
                 ),
             ),
         )
@@ -224,18 +209,6 @@ class IrValidatorTest {
                 Message(
                     WARNING,
                     $$"""
-                    [IR VALIDATION] IrValidatorTest: unexpected type: expected kotlin.String, got kotlin.Any
-                    STRING_CONCATENATION type=kotlin.Any
-                      inside CALL 'public final fun foo ($receiver: kotlin.String, p0: kotlin.Any): kotlin.Unit declared in org.sample' type=kotlin.Any origin=null
-                        inside BLOCK_BODY
-                          inside FUN name:foo visibility:public modality:FINAL <> ($receiver:kotlin.String, p0:kotlin.Any) returnType:kotlin.Unit
-                            inside FILE fqName:org.sample fileName:test.kt
-                    """.trimIndent(),
-                    CompilerMessageLocation.create("test.kt", 1, 10, null),
-                ),
-                Message(
-                    WARNING,
-                    $$"""
                     [IR VALIDATION] IrValidatorTest: Duplicate IR node: STRING_CONCATENATION type=kotlin.Any
                     STRING_CONCATENATION type=kotlin.Any
                       inside CALL 'public final fun foo ($receiver: kotlin.String, p0: kotlin.Any): kotlin.Unit declared in org.sample' type=kotlin.Any origin=null
@@ -243,7 +216,7 @@ class IrValidatorTest {
                           inside FUN name:foo visibility:public modality:FINAL <> ($receiver:kotlin.String, p0:kotlin.Any) returnType:kotlin.Unit
                             inside FILE fqName:org.sample fileName:test.kt
                     """.trimIndent(),
-                    CompilerMessageLocation.create("test.kt", 1, 10, null),
+                    CompilerMessageLocation.create(null, 1, 10, null),
                 ),
             ),
         )
@@ -258,18 +231,6 @@ class IrValidatorTest {
                 Message(
                     ERROR,
                     $$"""
-                    [IR VALIDATION] IrValidatorTest: unexpected type: expected kotlin.String, got kotlin.Any
-                    STRING_CONCATENATION type=kotlin.Any
-                      inside CALL 'public final fun foo ($receiver: kotlin.String, p0: kotlin.Any): kotlin.Any declared in <no parent>' type=kotlin.Any origin=null
-                        inside BLOCK_BODY
-                          inside FUN name:bar visibility:public modality:FINAL <> () returnType:kotlin.Any
-                            inside FILE fqName:org.sample fileName:test.kt
-                    """.trimIndent(),
-                    CompilerMessageLocation.create("test.kt", 0, 0, null),
-                ),
-                Message(
-                    ERROR,
-                    $$"""
                     [IR VALIDATION] IrValidatorTest: Duplicate IR node: STRING_CONCATENATION type=kotlin.Any
                     STRING_CONCATENATION type=kotlin.Any
                       inside CALL 'public final fun foo ($receiver: kotlin.String, p0: kotlin.Any): kotlin.Any declared in <no parent>' type=kotlin.Any origin=null
@@ -277,7 +238,7 @@ class IrValidatorTest {
                           inside FUN name:bar visibility:public modality:FINAL <> () returnType:kotlin.Any
                             inside FILE fqName:org.sample fileName:test.kt
                     """.trimIndent(),
-                    CompilerMessageLocation.create("test.kt", 0, 0, null),
+                    CompilerMessageLocation.create(null, 0, 0, null),
                 ),
             ),
         )
@@ -292,18 +253,6 @@ class IrValidatorTest {
                 Message(
                     ERROR,
                     $$"""
-                    [IR VALIDATION] IrValidatorTest: unexpected type: expected kotlin.String, got kotlin.Any
-                    STRING_CONCATENATION type=kotlin.Any
-                      inside CALL 'public final fun foo ($receiver: kotlin.String, p0: kotlin.Any): kotlin.Unit declared in org.sample' type=kotlin.Any origin=null
-                        inside BLOCK_BODY
-                          inside FUN name:foo visibility:public modality:FINAL <> ($receiver:kotlin.String, p0:kotlin.Any) returnType:kotlin.Unit
-                            inside FILE fqName:org.sample fileName:test.kt
-                    """.trimIndent(),
-                    CompilerMessageLocation.create("test.kt", 1, 10, null),
-                ),
-                Message(
-                    ERROR,
-                    $$"""
                     [IR VALIDATION] IrValidatorTest: Duplicate IR node: STRING_CONCATENATION type=kotlin.Any
                     STRING_CONCATENATION type=kotlin.Any
                       inside CALL 'public final fun foo ($receiver: kotlin.String, p0: kotlin.Any): kotlin.Unit declared in org.sample' type=kotlin.Any origin=null
@@ -311,7 +260,7 @@ class IrValidatorTest {
                           inside FUN name:foo visibility:public modality:FINAL <> ($receiver:kotlin.String, p0:kotlin.Any) returnType:kotlin.Unit
                             inside FILE fqName:org.sample fileName:test.kt
                     """.trimIndent(),
-                    CompilerMessageLocation.create("test.kt", 1, 10, null),
+                    CompilerMessageLocation.create(null, 1, 10, null),
                 ),
             ),
         )
@@ -336,7 +285,7 @@ class IrValidatorTest {
                     CLASS CLASS name:MyClass modality:FINAL visibility:public superTypes:[]
                       inside CLASS CLASS name:MyClass modality:FINAL visibility:public superTypes:[]
                     """.trimIndent(),
-                    CompilerMessageLocation.create("test.kt", 0, 0, null),
+                    CompilerMessageLocation.create(null, 0, 0, null),
                 )
             )
         )
@@ -362,13 +311,14 @@ class IrValidatorTest {
                 Message(
                     WARNING,
                     """
-                    [IR VALIDATION] IrValidatorTest: Declarations with wrong parent: 1
+                    [IR VALIDATION] IrValidatorTest: Declaration with wrong parent:
                     declaration: FUN name:foo visibility:public modality:FINAL <> () returnType:kotlin.Unit
                     expectedParent: FUN name:foo visibility:public modality:FINAL <> () returnType:kotlin.Unit
                     actualParent: CLASS CLASS name:MyClass modality:FINAL visibility:public superTypes:[]
-                    Expected parents:
                     
-                    CLASS CLASS name:MyClass modality:FINAL visibility:public superTypes:[]""".trimIndent(),
+                    FUN name:foo visibility:public modality:FINAL <> () returnType:kotlin.Unit
+                      inside FUN name:foo visibility:public modality:FINAL <> () returnType:kotlin.Unit
+                        inside CLASS CLASS name:MyClass modality:FINAL visibility:public superTypes:[]""".trimIndent(),
                     null,
                 )
             ),
@@ -2439,6 +2389,7 @@ class IrValidatorTest {
 
         body.statements.addAll(listOf(incorrectInstanceInitializerCall, correctInstanceInitializerCall))
         function.body = body
+        file.addChild(myClass)
         file.addChild(function)
         testValidation(
             IrVerificationMode.WARNING,
@@ -2639,6 +2590,100 @@ class IrValidatorTest {
                     """.trimIndent(),
                     CompilerMessageLocation.create("test.kt", 0, 0, null),
                 )
+            ),
+        )
+    }
+
+    @Test
+    fun `unbound symbols are reported`() {
+        val file = createIrFile("test.kt")
+
+        val klass = IrFactoryImpl.buildClass {
+            name = Name.identifier("MyClass")
+        }.apply {
+            sealedSubclasses = listOf(IrClassSymbolImpl())
+        }
+
+        val function1 = IrFactoryImpl.buildFun {
+            name = Name.identifier("foo")
+            returnType = TestIrBuiltins.unitType
+        }.apply {
+            overriddenSymbols = listOf(IrSimpleFunctionSymbolImpl())
+        }
+
+        val function2 = IrFactoryImpl.buildFun {
+            name = Name.identifier("bar")
+            returnType = TestIrBuiltins.unitType
+        }.apply {
+            correspondingPropertySymbol = IrPropertySymbolImpl()
+        }
+
+        val function3 = IrFactoryImpl.buildFun {
+            name = Name.identifier("baz")
+            returnType = IrSimpleTypeImpl(IrClassSymbolImpl(), SimpleTypeNullability.NOT_SPECIFIED, emptyList(), emptyList())
+        }
+
+        val property = IrFactoryImpl.buildProperty {
+            name = Name.identifier("p")
+        }.apply {
+            overriddenSymbols = listOf(IrPropertySymbolImpl())
+        }
+
+        file.addChild(klass)
+        file.addChild(function1)
+        file.addChild(function2)
+        file.addChild(function3)
+        file.addChild(property)
+
+        testValidation(
+            IrVerificationMode.WARNING,
+            file,
+            listOf(
+                Message(
+                    WARNING,
+                    """
+                    [IR VALIDATION] IrValidatorTest: Unexpected unbound symbol
+                    CLASS CLASS name:MyClass modality:FINAL visibility:public superTypes:[]
+                      inside FILE fqName:org.sample fileName:test.kt
+                    """.trimIndent(),
+                    CompilerMessageLocation.create(null, 0, 0, null),
+                ),
+                Message(
+                    WARNING,
+                    """
+                    [IR VALIDATION] IrValidatorTest: Unexpected unbound symbol
+                    FUN name:foo visibility:public modality:FINAL <> () returnType:kotlin.Unit
+                      inside FILE fqName:org.sample fileName:test.kt
+                    """.trimIndent(),
+                    CompilerMessageLocation.create(null, 0, 0, null),
+                ),
+                Message(
+                    WARNING,
+                    """
+                    [IR VALIDATION] IrValidatorTest: Unexpected unbound symbol
+                    FUN name:bar visibility:public modality:FINAL <> () returnType:kotlin.Unit
+                      inside FILE fqName:org.sample fileName:test.kt
+                    """.trimIndent(),
+                    CompilerMessageLocation.create(null, 0, 0, null),
+                ),
+                Message(
+                    WARNING,
+                    """
+                    [IR VALIDATION] IrValidatorTest: Unexpected unbound symbol
+                    FUN name:baz visibility:public modality:FINAL <> () returnType:<unbound IrClassSymbolImpl>
+                      inside FILE fqName:org.sample fileName:test.kt
+                    """.trimIndent(),
+                    CompilerMessageLocation.create(null, 0, 0, null),
+                ),
+                Message(
+                    WARNING,
+                    """
+                    [IR VALIDATION] IrValidatorTest: Unexpected unbound symbol
+                    PROPERTY name:p visibility:public modality:FINAL [val]
+                      inside FILE fqName:org.sample fileName:test.kt
+                    """.trimIndent(),
+                    CompilerMessageLocation.create(null, 0, 0, null),
+                ),
             ),
         )
     }

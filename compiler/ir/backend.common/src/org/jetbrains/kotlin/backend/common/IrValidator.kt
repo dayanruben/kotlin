@@ -8,7 +8,9 @@ package org.jetbrains.kotlin.backend.common
 import org.jetbrains.kotlin.backend.common.checkers.context.*
 import org.jetbrains.kotlin.backend.common.checkers.declaration.*
 import org.jetbrains.kotlin.backend.common.checkers.expression.*
-import org.jetbrains.kotlin.backend.common.checkers.type.IrSimpleTypeVisibilityChecker
+import org.jetbrains.kotlin.backend.common.checkers.symbol.IrSymbolChecker
+import org.jetbrains.kotlin.backend.common.checkers.symbol.IrVisibilityChecker
+import org.jetbrains.kotlin.backend.common.checkers.symbol.check
 import org.jetbrains.kotlin.backend.common.checkers.type.IrTypeChecker
 import org.jetbrains.kotlin.backend.common.checkers.type.IrTypeParameterScopeChecker
 import org.jetbrains.kotlin.backend.common.checkers.type.check
@@ -20,12 +22,11 @@ import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
+import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.util.DeclarationParentsVisitor
-import org.jetbrains.kotlin.ir.util.dump
+import org.jetbrains.kotlin.ir.util.IrTreeSymbolsVisitor
 import org.jetbrains.kotlin.ir.util.file
 import org.jetbrains.kotlin.ir.util.render
-import org.jetbrains.kotlin.ir.visitors.IrTypeVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
@@ -43,6 +44,7 @@ data class IrValidatorConfig(
     val checkVisibilities: Boolean = false,
     val checkVarargTypes: Boolean = false,
     val checkFunctionBody: Boolean = true,
+    val checkUnboundSymbols: Boolean = false,
     val checkInlineFunctionUseSites: InlineFunctionUseSiteChecker? = null,
 )
 
@@ -87,16 +89,15 @@ private class IrValidator(
 }
 
 private class IrFileValidator(
-    private val config: IrValidatorConfig,
+    config: IrValidatorConfig,
     private val context: CheckerContext
-) : IrTypeVisitorVoid() {
-    private val visitedElements = hashSetOf<IrElement>()
-
+) : IrTreeSymbolsVisitor() {
     private val contextUpdaters: MutableList<ContextUpdater> = mutableListOf(ParentChainUpdater)
 
     private val fieldCheckers: MutableList<IrFieldChecker> = mutableListOf()
     private val fieldAccessExpressionCheckers: MutableList<IrFieldAccessChecker> = mutableListOf()
     private val typeCheckers: MutableList<IrTypeChecker> = mutableListOf()
+    private val symbolCheckers: MutableList<IrSymbolChecker> = mutableListOf()
     private val declarationReferenceCheckers: MutableList<IrDeclarationReferenceChecker> = mutableListOf()
     private val varargCheckers: MutableList<IrVarargChecker> = mutableListOf()
     private val valueParameterCheckers: MutableList<IrValueParameterChecker> = mutableListOf()
@@ -146,8 +147,7 @@ private class IrFileValidator(
             fieldAccessExpressionCheckers.add(IrCrossFileFieldUsageChecker)
         }
         if (config.checkVisibilities) {
-            typeCheckers.add(IrSimpleTypeVisibilityChecker)
-            declarationReferenceCheckers.add(IrDeclarationReferenceVisibilityChecker)
+            symbolCheckers.add(IrVisibilityChecker)
         }
         if (config.checkVarargTypes) {
             varargCheckers.add(IrVarargTypesChecker)
@@ -183,7 +183,6 @@ private class IrFileValidator(
     }
 
     override fun visitElement(element: IrElement) {
-        checkTreeConsistency(element)
         var block = { element.acceptChildrenVoid(this) }
         for (contextUpdater in contextUpdaters) {
             val currentBlock = block
@@ -290,7 +289,12 @@ private class IrFileValidator(
     }
 
     override fun visitType(container: IrElement, type: IrType) {
+        super.visitType(container, type)
         typeCheckers.check(type, container, context)
+    }
+
+    override fun visitSymbol(container: IrElement, symbol: IrSymbol) {
+        symbolCheckers.check(symbol, container, context)
     }
 
     override fun visitDeclarationReference(expression: IrDeclarationReference) {
@@ -342,69 +346,94 @@ private class IrFileValidator(
         super.visitProperty(declaration)
         propertyCheckers.check(declaration, context)
     }
+}
 
-    private fun checkTreeConsistency(element: IrElement) {
-        if (config.checkTreeConsistency && !visitedElements.add(element)) {
-            val renderString = if (element is IrTypeParameter) element.render() + " of " + element.parent.render() else element.render()
-            context.error(element, "Duplicate IR node: $renderString")
+private fun IrElement.checkTreeConsistency(reportError: ReportIrValidationError, config: IrValidatorConfig) {
+    val checker = CheckTreeConsistencyVisitor(reportError, config)
+    accept(checker, null)
+    if (checker.hasInconsistency) throw TreeConsistencyError(this)
+}
 
-            // The IR tree is completely messed up if it includes one element twice. It may not be a tree at all, there may be cycles.
-            // Give up early to avoid stack overflow.
-            throw DuplicateIrNodeError(element)
+private class CheckTreeConsistencyVisitor(val reportError: ReportIrValidationError, val config: IrValidatorConfig) :
+    IrTreeSymbolsVisitor() {
+    var hasInconsistency = false
+
+    private val visitedElements = hashSetOf<IrElement>()
+    private val parentChain: MutableList<IrElement> = mutableListOf()
+    private var currentActualParent: IrDeclarationParent? = null
+
+    override fun visitElement(element: IrElement) {
+        checkDuplicateNode(element)
+        parentChain.temporarilyPushing(element) {
+            element.acceptChildrenVoid(this)
         }
     }
-}
 
-private fun IrElement.checkDeclarationParents(reportError: ReportIrValidationError) {
-    val checker = CheckDeclarationParentsVisitor()
-    accept(checker, null)
-    if (checker.errors.isNotEmpty()) {
-        val expectedParents = LinkedHashSet<IrDeclarationParent>()
-        reportError(
-            null,
-            this,
-            buildString {
-                append("Declarations with wrong parent: ")
-                append(checker.errors.size)
-                append("\n")
-                checker.errors.forEach {
-                    append("declaration: ")
-                    append(it.declaration.render())
-                    append("\nexpectedParent: ")
-                    append(it.expectedParent.render())
-                    append("\nactualParent: ")
-                    append(it.actualParent?.render())
-                }
-                append("\nExpected parents:\n")
-                expectedParents.forEach {
-                    append(it.dump())
-                }
-            },
-            emptyList(),
-        )
+    override fun visitDeclaration(declaration: IrDeclarationBase) {
+        checkDuplicateNode(declaration)
+        parentChain.temporarilyPushing(declaration) {
+            handleParent(declaration, currentActualParent)
+            val previousActualParent = currentActualParent
+            currentActualParent = declaration as? IrDeclarationParent ?: currentActualParent
+            declaration.acceptChildrenVoid(this)
+            currentActualParent = previousActualParent
+        }
     }
-}
 
-private class CheckDeclarationParentsVisitor : DeclarationParentsVisitor() {
-    class Error(val declaration: IrDeclaration, val expectedParent: IrDeclarationParent, val actualParent: IrDeclarationParent?)
+    override fun visitPackageFragment(declaration: IrPackageFragment) {
+        currentActualParent = declaration
+        visitElement(declaration)
+    }
 
-    val errors = ArrayList<Error>()
+    override fun visitSymbol(container: IrElement, symbol: IrSymbol) {
+        if (config.checkUnboundSymbols && !symbol.isBound) {
+            hasInconsistency = true
+            reportError(null, container, "Unexpected unbound symbol", parentChain)
+        }
+    }
 
-    override fun handleParent(declaration: IrDeclaration, actualParent: IrDeclarationParent) {
+    private fun handleParent(declaration: IrDeclaration, actualParent: IrDeclarationParent?) {
+        if (actualParent == null) return
         try {
             val assignedParent = declaration.parent
             if (assignedParent != actualParent) {
-                errors.add(Error(declaration, assignedParent, actualParent))
+                reportWrongParent(declaration, assignedParent, actualParent)
             }
-        } catch (e: Exception) {
-            errors.add(Error(declaration, actualParent, null))
+        } catch (_: Exception) {
+            reportWrongParent(declaration, null, actualParent)
+        }
+    }
+
+    private fun reportWrongParent(declaration: IrDeclaration, expectedParent: IrDeclarationParent?, actualParent: IrDeclarationParent) {
+        hasInconsistency = true
+        reportError(
+            null,
+            declaration,
+            buildString {
+                appendLine("Declaration with wrong parent:")
+                appendLine("declaration: ${declaration.render()}")
+                appendLine("expectedParent: ${expectedParent?.render()}")
+                appendLine("actualParent: ${actualParent.render()}")
+            },
+            parentChain,
+        )
+    }
+
+    private fun checkDuplicateNode(element: IrElement) {
+        if (!visitedElements.add(element)) {
+            val renderString = if (element is IrTypeParameter) element.render() + " of " + element.parent.render() else element.render()
+            reportError(null, element, "Duplicate IR node: $renderString", parentChain)
+
+            // The IR tree is completely messed up if it includes one element twice. It may not be a tree at all, there may be cycles.
+            // Give up early to avoid stack overflow.
+            throw TreeConsistencyError(element)
         }
     }
 }
 
 open class IrValidationError(message: String? = null, cause: Throwable? = null) : IllegalStateException(message, cause)
 
-class DuplicateIrNodeError(element: IrElement) : IrValidationError(element.render())
+class TreeConsistencyError(element: IrElement) : IrValidationError(element.render())
 
 /**
  * Verifies common IR invariants that should hold in all the backends.
@@ -415,16 +444,19 @@ private fun performBasicIrValidation(
     validatorConfig: IrValidatorConfig,
     reportError: ReportIrValidationError,
 ) {
-    val validator = IrValidator(validatorConfig, irBuiltIns, reportError)
-    try {
-        element.acceptVoid(validator)
-    } catch (e: DuplicateIrNodeError) {
-        // Performing other checks may cause e.g. infinite recursion.
-        return
-    }
+    // Phase 1: Traverse the IR tree to check for structural consistency.
+    // If any issues are detected, validation stops here to avoid problems like infinite recursion during the next phase.
     if (validatorConfig.checkTreeConsistency) {
-        element.checkDeclarationParents(reportError)
+        try {
+            element.checkTreeConsistency(reportError, validatorConfig)
+        } catch (_: TreeConsistencyError) {
+            return
+        }
     }
+
+    // Phase 2: Traverse the IR tree again to run additional checks based on the validator configuration.
+    val validator = IrValidator(validatorConfig, irBuiltIns, reportError)
+    element.acceptVoid(validator)
 }
 
 /**
