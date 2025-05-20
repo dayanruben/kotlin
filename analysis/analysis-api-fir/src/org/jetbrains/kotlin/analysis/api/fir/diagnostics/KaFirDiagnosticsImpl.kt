@@ -1931,12 +1931,6 @@ internal class ManyLambdaExpressionArgumentsImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtLambdaExpression>(firDiagnostic, token), KaFirDiagnostic.ManyLambdaExpressionArguments
 
-internal class NewInferenceNoInformationForParameterImpl(
-    override val name: String,
-    firDiagnostic: KtPsiDiagnostic,
-    token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.NewInferenceNoInformationForParameter
-
 internal class SpreadOfNullableImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
@@ -3123,9 +3117,26 @@ internal class ValueParameterWithoutExplicitTypeImpl(
 ) : KaAbstractFirDiagnostic<KtParameter>(firDiagnostic, token), KaFirDiagnostic.ValueParameterWithoutExplicitType
 
 internal class CannotInferParameterTypeImpl(
+    override val parameter: KaTypeParameterSymbol,
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.CannotInferParameterType
+
+internal class CannotInferValueParameterTypeImpl(
+    override val parameter: KaSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.CannotInferValueParameterType
+
+internal class CannotInferItParameterTypeImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.CannotInferItParameterType
+
+internal class CannotInferReceiverParameterTypeImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.CannotInferReceiverParameterType
 
 internal class NoTailCallsFoundImpl(
     firDiagnostic: KtPsiDiagnostic,

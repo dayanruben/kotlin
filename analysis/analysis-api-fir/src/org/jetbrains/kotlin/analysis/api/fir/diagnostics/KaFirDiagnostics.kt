@@ -1610,11 +1610,6 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = ManyLambdaExpressionArguments::class
     }
 
-    interface NewInferenceNoInformationForParameter : KaFirDiagnostic<KtElement> {
-        override val diagnosticClass get() = NewInferenceNoInformationForParameter::class
-        val name: String
-    }
-
     interface SpreadOfNullable : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = SpreadOfNullable::class
     }
@@ -2609,6 +2604,20 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface CannotInferParameterType : KaFirDiagnostic<KtElement> {
         override val diagnosticClass get() = CannotInferParameterType::class
+        val parameter: KaTypeParameterSymbol
+    }
+
+    interface CannotInferValueParameterType : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = CannotInferValueParameterType::class
+        val parameter: KaSymbol
+    }
+
+    interface CannotInferItParameterType : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = CannotInferItParameterType::class
+    }
+
+    interface CannotInferReceiverParameterType : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = CannotInferReceiverParameterType::class
     }
 
     interface NoTailCallsFound : KaFirDiagnostic<KtNamedFunction> {

@@ -25,13 +25,4 @@
     <developerConnection>scm:git:https://github.com/JetBrains/kotlin.git</developerConnection>
     <url>https://github.com/JetBrains/kotlin</url>
   </scm>
-  <dependencies>
-    <dependency>
-      <groupId>org.jetbrains.kotlinx.dataframe</groupId>
-      <artifactId>dataframe-compiler-plugin-core</artifactId>
-      <version>1.0.0-dev-7077</version>
-      <classifier>all</classifier>
-      <scope>runtime</scope>
-    </dependency>
-  </dependencies>
 </project>

@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.fir.analysis.checkers.type.FirDynamicUnsupportedChec
 import org.jetbrains.kotlin.fir.analysis.getChild
 import org.jetbrains.kotlin.fir.builder.FirSyntaxErrors
 import org.jetbrains.kotlin.fir.declarations.FirAnonymousFunction
+import org.jetbrains.kotlin.fir.declarations.FirValueParameter
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.diagnostics.*
 import org.jetbrains.kotlin.fir.expressions.*
@@ -28,7 +29,6 @@ import org.jetbrains.kotlin.fir.resolve.calls.*
 import org.jetbrains.kotlin.fir.resolve.diagnostics.*
 import org.jetbrains.kotlin.fir.resolve.inference.AnonymousFunctionBasedMultiLambdaBuilderInferenceRestriction
 import org.jetbrains.kotlin.fir.resolve.inference.ConeTypeParameterBasedTypeVariable
-import org.jetbrains.kotlin.fir.resolve.inference.ConeTypeVariableForLambdaReturnType
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeArgumentConstraintPosition
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeExpectedTypeConstraintPosition
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeLambdaArgumentConstraintPosition
@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.fir.symbols.ConeTypeParameterLookupTag
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirConstructorSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
@@ -59,6 +60,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
 
 private fun ConeDiagnostic.toKtDiagnostic(
     source: KtSourceElement?,
+    valueParameter: FirValueParameter?,
     callOrAssignmentSource: KtSourceElement?,
     session: FirSession,
 ): KtDiagnostic? = when (this) {
@@ -188,12 +190,17 @@ private fun ConeDiagnostic.toKtDiagnostic(
     }
 
     is ConeDestructuringDeclarationsOnTopLevel -> null // TODO Currently a parsing error. Would be better to report here instead KT-58563
-    is ConeCannotInferTypeParameterType -> FirErrors.CANNOT_INFER_PARAMETER_TYPE.createOn(source, session)
+    is ConeCannotInferTypeParameterType -> FirErrors.CANNOT_INFER_PARAMETER_TYPE.createOn(source, this.typeParameter, session)
     is ConeCannotInferValueParameterType -> when {
         isTopLevelLambda -> FirErrors.VALUE_PARAMETER_WITHOUT_EXPLICIT_TYPE.createOn(source, session)
-        else -> FirErrors.CANNOT_INFER_PARAMETER_TYPE.createOn(source, session)
+        source?.elementType == KtNodeTypes.THIS_EXPRESSION -> FirErrors.CANNOT_INFER_RECEIVER_PARAMETER_TYPE.createOn(source, session)
+        else -> (this.valueParameter ?: valueParameter?.symbol)?.takeIf { !it.name.isSpecial }?.let { valueParameterSymbol ->
+            FirErrors.CANNOT_INFER_VALUE_PARAMETER_TYPE.createOn(
+                source, valueParameterSymbol, session
+            )
+        } ?: FirErrors.CANNOT_INFER_IT_PARAMETER_TYPE.createOn(source, session)
     }
-    is ConeCannotInferReceiverParameterType -> FirErrors.CANNOT_INFER_PARAMETER_TYPE.createOn(source, session)
+    is ConeCannotInferReceiverParameterType -> FirErrors.CANNOT_INFER_RECEIVER_PARAMETER_TYPE.createOn(source, session)
     is ConeTypeVariableTypeIsNotInferred -> FirErrors.INFERENCE_ERROR.createOn(callOrAssignmentSource ?: source, session)
     is ConeInstanceAccessBeforeSuperCall -> FirErrors.INSTANCE_ACCESS_BEFORE_SUPER_CALL.createOn(source, this.target, session)
     is ConeUnreportedDuplicateDiagnostic -> null // Unreported because we always report something different
@@ -262,12 +269,13 @@ fun FirBasedSymbol<*>.toInvisibleReferenceDiagnostic(source: KtSourceElement?, s
 fun ConeDiagnostic.toFirDiagnostics(
     session: FirSession,
     source: KtSourceElement?,
-    callOrAssignmentSource: KtSourceElement?
+    callOrAssignmentSource: KtSourceElement?,
+    valueParameter: FirValueParameter? = null,
 ): List<KtDiagnostic> {
     return when (this) {
         is ConeInapplicableCandidateError -> mapInapplicableCandidateError(session, this, source, callOrAssignmentSource)
         is ConeConstraintSystemHasContradiction -> mapSystemHasContradictionError(session, this, source, callOrAssignmentSource)
-        else -> listOfNotNull(toKtDiagnostic(source, callOrAssignmentSource, session))
+        else -> listOfNotNull(toKtDiagnostic(source, valueParameter, callOrAssignmentSource, session))
     }
 }
 
@@ -630,8 +638,9 @@ private fun mapSystemHasContradictionError(
     source: KtSourceElement?,
     qualifiedAccessSource: KtSourceElement?,
 ): List<KtDiagnostic> {
+    val errors = diagnostic.candidate.errors
     return buildList {
-        for (error in diagnostic.candidate.errors) {
+        for (error in errors) {
             addIfNotNull(
                 error.toDiagnostic(
                     source,
@@ -642,18 +651,32 @@ private fun mapSystemHasContradictionError(
             )
         }
     }.ifEmpty {
+        // Check if we already have some other reported error
+        if (errors.any {
+                when (it) {
+                    // Error should be reported on the error type itself
+                    is ConstrainingTypeIsError -> true
+                    // In this case we will have an error type with a reported error either as:
+                    // - return type of some synthetic call (if/try/!!/?:)
+                    // - type argument of some qualified access
+                    // ...or, we have a delegated constructor call with an error reported separately,
+                    // see ConstraintSystemError.toDiagnostic, branch isNotEnoughInformationForTypeParameter
+                    is NotEnoughInformationForTypeParameter<*> -> it.typeVariable is ConeTypeParameterBasedTypeVariable ||
+                            // ... or, we will report a diagnostic on this type inside ErrorNodeDiagnosticCollectorComponent
+                            (it.resolvedAtom as? FirAnonymousFunction)?.containsErrorType() == true
+                    else -> false
+                }
+            }
+        ) return emptyList()
         listOfNotNull(
-            diagnostic.candidate.errors.firstNotNullOfOrNull {
+            errors.firstNotNullOfOrNull {
                 val message = when (it) {
                     is NewConstraintError -> "NewConstraintError at ${it.position}: ${it.lowerType} <!: ${it.upperType}"
-                    // Error should be reported on the error type itself
-                    is ConstrainingTypeIsError -> return@firstNotNullOfOrNull null
-                    is NotEnoughInformationForTypeParameter<*> -> return@firstNotNullOfOrNull null
                     else -> "Inference error: ${it::class.simpleName}"
                 }
 
                 if (it is NewConstraintError && it.position.from is FixVariableConstraintPosition<*>) {
-                    val morePreciseDiagnosticExists = diagnostic.candidate.errors.any { other ->
+                    val morePreciseDiagnosticExists = errors.any { other ->
                         other is NewConstraintError && other.position.from !is FixVariableConstraintPosition<*>
                     }
                     if (morePreciseDiagnosticExists) return@firstNotNullOfOrNull null
@@ -664,6 +687,11 @@ private fun mapSystemHasContradictionError(
         )
     }
 }
+
+private fun FirAnonymousFunction.containsErrorType(): Boolean =
+    returnTypeRef is FirErrorTypeRef || receiverType is ConeErrorType ||
+            valueParameters.any { it.returnTypeRef is FirErrorTypeRef } ||
+            contextParameters.any { it.returnTypeRef is FirErrorTypeRef }
 
 private fun ConstraintSystemError.toDiagnostic(
     source: KtSourceElement?,
@@ -726,28 +754,16 @@ private fun ConstraintSystemError.toDiagnostic(
             }
         }
 
-        is NotEnoughInformationForTypeParameter<*> -> {
-            val isDiagnosticRedundant = candidate.errors.any { otherError ->
-                (otherError is ConstrainingTypeIsError && otherError.typeVariable == this.typeVariable)
-                        || otherError is NewConstraintError
-            }
-
-            if (isDiagnosticRedundant) return null
-
-            val typeVariableName = when (val typeVariable = this.typeVariable) {
-                is ConeTypeParameterBasedTypeVariable -> typeVariable.typeParameterSymbol.name.asString()
-                is ConeTypeVariableForLambdaReturnType -> "return type of lambda"
-                else -> error("Unsupported type variable: $typeVariable")
-            }
-
-            FirErrors.NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER.createOn(
-                (resolvedAtom as? FirResolvable)?.calleeReference?.source
-                    ?: candidate.sourceOfCallToSymbolWith(this.typeVariable as ConeTypeVariable)
-                    ?: source,
-                typeVariableName,
-                session,
+        // Always reported as CANNOT_INFER_PARAMETER_TYPE except (!) delegated constructor calls
+        is NotEnoughInformationForTypeParameter<*> -> if (candidate.symbol is FirConstructorSymbol &&
+            candidate.callInfo.callSite is FirDelegatedConstructorCall
+        ) {
+            FirErrors.CANNOT_INFER_PARAMETER_TYPE.createOn(
+                source,
+                ((this.typeVariable as ConeTypeVariable).typeConstructor.originalTypeParameter as ConeTypeParameterLookupTag).typeParameterSymbol,
+                session
             )
-        }
+        } else null
 
         is InferredEmptyIntersection -> {
             val typeVariable = typeVariable as ConeTypeVariable
@@ -879,7 +895,6 @@ private fun ConeSimpleDiagnostic.getFactory(source: KtSourceElement?): KtDiagnos
         DiagnosticKind.NotLoopLabel -> FirErrors.NOT_A_LOOP_LABEL
         DiagnosticKind.VariableExpected -> FirErrors.VARIABLE_EXPECTED
         DiagnosticKind.ValueParameterWithNoTypeAnnotation -> FirErrors.VALUE_PARAMETER_WITHOUT_EXPLICIT_TYPE
-        DiagnosticKind.CannotInferParameterType -> FirErrors.CANNOT_INFER_PARAMETER_TYPE
         DiagnosticKind.IllegalProjectionUsage -> FirErrors.ILLEGAL_PROJECTION_USAGE
         DiagnosticKind.MissingStdlibClass -> FirErrors.MISSING_STDLIB_CLASS
         DiagnosticKind.IntLiteralOutOfRange -> FirErrors.INT_LITERAL_OUT_OF_RANGE

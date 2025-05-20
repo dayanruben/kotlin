@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.sourcePsiSafe
 import org.jetbrains.kotlin.asJava.builder.LightMemberOriginForDeclaration
 import org.jetbrains.kotlin.asJava.classes.METHOD_INDEX_BASE
@@ -86,7 +87,7 @@ internal class SymbolLightConstructor private constructor(
             GranularModifiersBox.VISIBILITY_MODIFIERS_MAP.with(PsiModifier.PRIVATE)
 
         else -> withFunctionSymbol { symbol ->
-            val visibility = if (hasTypeForValueClassInSignature(symbol)) {
+            val visibility = if (hasTypeForValueClassInSignature(symbol, argumentsSkipMask = argumentsSkipMask)) {
                 PsiModifier.PRIVATE
             } else {
                 symbol.toPsiVisibilityForMember()
@@ -117,16 +118,12 @@ internal class SymbolLightConstructor private constructor(
 
                 if (isHiddenOrSynthetic(constructor)) continue
 
-                result.add(
-                    SymbolLightConstructor(
-                        ktAnalysisSession = this@createConstructors,
-                        constructorSymbol = constructor,
-                        containingClass = lightClass,
-                        methodIndex = METHOD_INDEX_BASE
-                    )
-                )
-
-                createJvmOverloadsIfNeeded(constructor, result) { methodIndex, argumentSkipMask ->
+                createMethodsJvmOverloadsAware(
+                    declaration = constructor,
+                    result = result,
+                    skipValueClassParameters = false,
+                    methodIndexBase = METHOD_INDEX_BASE,
+                ) { methodIndex, argumentSkipMask ->
                     SymbolLightConstructor(
                         ktAnalysisSession = this@createConstructors,
                         constructorSymbol = constructor,
@@ -142,7 +139,8 @@ internal class SymbolLightConstructor private constructor(
                     lightClass.noArgConstructor(
                         primaryConstructor.compilerVisibility.externalDisplayName,
                         primaryConstructor.sourcePsiSafe(),
-                        METHOD_INDEX_FOR_NO_ARG_OVERLOAD_CTOR
+                        METHOD_INDEX_FOR_NO_ARG_OVERLOAD_CTOR,
+                        primaryConstructor.createPointer(),
                     )
                 )
             }
@@ -172,13 +170,19 @@ internal class SymbolLightConstructor private constructor(
                 else -> PsiModifier.PUBLIC
             }
 
-            return noArgConstructor(visibility, classOrObject, METHOD_INDEX_FOR_DEFAULT_CTOR)
+            return noArgConstructor(
+                visibility,
+                classOrObject,
+                METHOD_INDEX_FOR_DEFAULT_CTOR,
+                functionSymbolPointer = null,
+            )
         }
 
         private fun SymbolLightClassBase.noArgConstructor(
             visibility: String,
             declaration: KtDeclaration?,
             methodIndex: Int,
+            functionSymbolPointer: KaSymbolPointer<KaConstructorSymbol>?,
         ): KtLightMethod = SymbolLightNoArgConstructor(
             declaration?.let {
                 LightMemberOriginForDeclaration(
@@ -189,6 +193,7 @@ internal class SymbolLightConstructor private constructor(
             this,
             visibility,
             methodIndex,
+            functionSymbolPointer,
         )
     }
 }

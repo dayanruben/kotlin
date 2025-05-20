@@ -1,6 +1,5 @@
 // RUN_PIPELINE_TILL: FRONTEND
 // DIAGNOSTICS: -NOTHING_TO_INLINE, -UNREACHABLE_CODE
-// WITH_EXTRA_CHECKERS
 // LANGUAGE: -ForbidExposingLessVisibleTypesInInline
 
 private interface Private
@@ -18,6 +17,7 @@ fun <T> ignore() {}
 
 inline fun internal() {
     ignore<Private>() // should be an error
+    Private::class
 }
 
 private class Private2 {

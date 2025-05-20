@@ -722,10 +722,6 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
 
         val MANY_LAMBDA_EXPRESSION_ARGUMENTS by error<KtLambdaExpression>()
 
-        val NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER by error<KtElement> {
-            parameter<String>("name")
-        }
-
         val SPREAD_OF_NULLABLE by error<PsiElement>(PositioningStrategy.SPREAD_OPERATOR)
 
         val ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION by deprecationError<KtExpression>(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm) {
@@ -1330,8 +1326,14 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         }
         val VALUE_PARAMETER_WITHOUT_EXPLICIT_TYPE by error<KtParameter>()
 
-        // TODO: replace with KtParameter
-        val CANNOT_INFER_PARAMETER_TYPE by error<KtElement>()
+        val CANNOT_INFER_PARAMETER_TYPE by error<KtElement> {
+            parameter<FirTypeParameterSymbol>("parameter")
+        }
+        val CANNOT_INFER_VALUE_PARAMETER_TYPE by error<KtElement> {
+            parameter<FirValueParameterSymbol>("parameter")
+        }
+        val CANNOT_INFER_IT_PARAMETER_TYPE by error<KtElement>()
+        val CANNOT_INFER_RECEIVER_PARAMETER_TYPE by error<KtElement>()
 
         val NO_TAIL_CALLS_FOUND by warning<KtNamedFunction>(PositioningStrategy.TAILREC_MODIFIER)
         val TAILREC_ON_VIRTUAL_MEMBER_ERROR by error<KtNamedFunction>(PositioningStrategy.TAILREC_MODIFIER)
