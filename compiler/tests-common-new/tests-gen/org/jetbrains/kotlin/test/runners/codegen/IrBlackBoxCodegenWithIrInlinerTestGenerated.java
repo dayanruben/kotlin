@@ -22272,6 +22272,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
     }
 
     @Test
+    @TestMetadata("arrayOfAnyWithNull.kt")
+    public void testArrayOfAnyWithNull() {
+      runTest("compiler/testData/codegen/box/fir/arrayOfAnyWithNull.kt");
+    }
+
+    @Test
     @TestMetadata("assertEqualsFakeOverride.kt")
     public void testAssertEqualsFakeOverride() {
       runTest("compiler/testData/codegen/box/fir/assertEqualsFakeOverride.kt");
@@ -51312,7 +51318,7 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         @Test
         @TestMetadata("secondaryConstructorVisibilies.kt")
         public void testSecondaryConstructorVisibilies() {
-          runTest("compiler/testData/codegen/box/reflection/call/inlineClasses/secondaryConstructorVisibilies.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+          runTest("compiler/testData/codegen/box/reflection/call/inlineClasses/secondaryConstructorVisibilies.kt");
         }
 
         @Test
@@ -52240,6 +52246,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
       @TestMetadata("localClassSimpleName.kt")
       public void testLocalClassSimpleName() {
         runTest("compiler/testData/codegen/box/reflection/classes/localClassSimpleName.kt");
+      }
+
+      @Test
+      @TestMetadata("multiplatformKClassCreation.kt")
+      public void testMultiplatformKClassCreation() {
+        runTest("compiler/testData/codegen/box/reflection/classes/multiplatformKClassCreation.kt");
       }
 
       @Test
@@ -53794,6 +53806,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
       @TestMetadata("boundReferences.kt")
       public void testBoundReferences() {
         runTest("compiler/testData/codegen/box/reflection/parameters/boundReferences.kt");
+      }
+
+      @Test
+      @TestMetadata("contextParameters.kt")
+      public void testContextParameters() {
+        runTest("compiler/testData/codegen/box/reflection/parameters/contextParameters.kt");
       }
 
       @Test
