@@ -1235,12 +1235,6 @@ public class FirPsiNativeIrTextTestGenerated extends AbstractFirPsiNativeIrTextT
     public void testSuppressedNonPublicCall() {
       runTest("compiler/testData/ir/irText/errors/suppressedNonPublicCall.kt");
     }
-
-    @Test
-    @TestMetadata("unresolvedReference.kt")
-    public void testUnresolvedReference() {
-      runTest("compiler/testData/ir/irText/errors/unresolvedReference.kt");
-    }
   }
 
   @Nested
@@ -1287,6 +1281,12 @@ public class FirPsiNativeIrTextTestGenerated extends AbstractFirPsiNativeIrTextT
     @TestMetadata("assignments.kt")
     public void testAssignments() {
       runTest("compiler/testData/ir/irText/expressions/assignments.kt");
+    }
+
+    @Test
+    @TestMetadata("atomicFuUncheckedCast.kt")
+    public void testAtomicFuUncheckedCast() {
+      runTest("compiler/testData/ir/irText/expressions/atomicFuUncheckedCast.kt");
     }
 
     @Test

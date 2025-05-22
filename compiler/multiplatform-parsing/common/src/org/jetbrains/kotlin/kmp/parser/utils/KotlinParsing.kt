@@ -5,12 +5,12 @@
 
 package org.jetbrains.kotlin.kmp.parser.utils
 
-import fleet.com.intellij.platform.syntax.SyntaxElementType
-import fleet.com.intellij.platform.syntax.SyntaxElementTypeSet
-import fleet.com.intellij.platform.syntax.emptySyntaxElementTypeSet
-import fleet.com.intellij.platform.syntax.parser.SyntaxTreeBuilder
-import fleet.com.intellij.platform.syntax.parser.WhitespacesBinders
-import fleet.com.intellij.platform.syntax.syntaxElementTypeSetOf
+import com.intellij.platform.syntax.syntaxElementTypeSetOf
+import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.SyntaxElementTypeSet
+import com.intellij.platform.syntax.emptySyntaxElementTypeSet
+import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
+import com.intellij.platform.syntax.parser.WhitespacesBinders
 import org.jetbrains.annotations.Contract
 import org.jetbrains.kotlin.kmp.lexer.KtTokens
 import org.jetbrains.kotlin.kmp.lexer.KtTokens.CONTRACT_MODIFIER
@@ -51,9 +51,7 @@ internal class KotlinParsing private constructor(builder: SemanticWhitespaceAwar
             syntaxElementTypeSetOf(KtTokens.COLON, KtTokens.COMMA, KtTokens.LBRACE, KtTokens.RBRACE) + TYPE_REF_FIRST
         private val RECEIVER_TYPE_TERMINATORS = syntaxElementTypeSetOf(KtTokens.DOT, KtTokens.SAFE_ACCESS)
 
-        // Syntax lib doesn't support set operations except `+`
-        // Create an intermediate set that equivalent to `MODIFIERS - FUN_MODIFIER`
-        private val MODIFIER_WITHOUT_FUN = KtTokens.MODIFIERS.toMutableSet().also { it.remove(KtTokens.FUN_MODIFIER) }.toSet()
+        private val MODIFIER_WITHOUT_FUN = KtTokens.MODIFIERS - KtTokens.FUN_MODIFIER
         private val VALUE_PARAMETER_FIRST =
             syntaxElementTypeSetOf(KtTokens.IDENTIFIER, KtTokens.LBRACKET, KtTokens.VAL_KEYWORD, KtTokens.VAR_KEYWORD) +
                     MODIFIER_WITHOUT_FUN

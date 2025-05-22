@@ -10,6 +10,8 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.backend.common.linkage.issues.UserVisibleIrModulesSupport
 import org.jetbrains.kotlin.backend.common.linkage.partial.partialLinkageConfig
 import org.jetbrains.kotlin.backend.konan.ir.BridgesPolicy
+import org.jetbrains.kotlin.backend.konan.llvm.runtime.RuntimeModule
+import org.jetbrains.kotlin.backend.konan.llvm.runtime.RuntimeModulesConfig
 import org.jetbrains.kotlin.backend.konan.objcexport.ObjCEntryPoints
 import org.jetbrains.kotlin.backend.konan.objcexport.readObjCEntryPoints
 import org.jetbrains.kotlin.backend.konan.serialization.KonanUserVisibleIrModulesSupport
@@ -401,75 +403,11 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
         } ?: false
     }
 
-    internal val runtimeNativeLibraries: List<String> = mutableListOf<String>().apply {
-        if (debug) add("debug.bc")
-        add("runtime.bc")
-        add("mm.bc")
-        add("common_alloc.bc")
-        add("common_gc.bc")
-        add("common_gcScheduler.bc")
-        when (gcSchedulerType) {
-            GCSchedulerType.MANUAL -> {
-                add("manual_gcScheduler.bc")
-            }
-            GCSchedulerType.ADAPTIVE -> {
-                add("adaptive_gcScheduler.bc")
-            }
-            GCSchedulerType.AGGRESSIVE -> {
-                add("aggressive_gcScheduler.bc")
-            }
-            GCSchedulerType.DISABLED, GCSchedulerType.WITH_TIMER, GCSchedulerType.ON_SAFE_POINTS -> {
-                throw IllegalStateException("Deprecated options must have already been handled")
-            }
-        }
-        when (gc) {
-            GC.STOP_THE_WORLD_MARK_AND_SWEEP -> add("same_thread_ms_gc.bc")
-            GC.NOOP -> add("noop_gc.bc")
-            GC.PARALLEL_MARK_CONCURRENT_SWEEP -> add("pmcs_gc.bc")
-            GC.CONCURRENT_MARK_AND_SWEEP -> add("concurrent_ms_gc.bc")
-        }
-        if (target.supportsCoreSymbolication()) {
-            add("source_info_core_symbolication.bc")
-        }
-        if (target.supportsLibBacktrace()) {
-            add("source_info_libbacktrace.bc")
-            add("libbacktrace.bc")
-        }
-        when (allocationMode) {
-            AllocationMode.STD -> {
-                add("legacy_alloc.bc")
-                add("std_alloc.bc")
-            }
-            AllocationMode.CUSTOM -> {
-                add("custom_alloc.bc")
-            }
-        }
-        when (checkStateAtExternalCalls) {
-            true -> add("impl_externalCallsChecker.bc")
-            false -> add("noop_externalCallsChecker.bc")
-        }
-    }.map {
-        File(distribution.defaultNatives(target)).child(it).absolutePath
-    }
-
     internal val runtimeLinkageStrategy: RuntimeLinkageStrategy by lazy {
         // Intentionally optimize in debug mode only. See `RuntimeLinkageStrategy`.
         val defaultStrategy = if (debug) RuntimeLinkageStrategy.Optimize else RuntimeLinkageStrategy.Raw
         configuration.get(BinaryOptions.linkRuntime) ?: defaultStrategy
     }
-
-    internal val launcherNativeLibraries: List<String> = distribution.launcherFiles.map {
-        File(distribution.defaultNatives(target)).child(it).absolutePath
-    }
-
-    internal val objCNativeLibrary: String =
-            File(distribution.defaultNatives(target)).child("objc.bc").absolutePath
-
-    internal val xcTestLauncherNativeLibrary: String =
-            File(distribution.defaultNatives(target)).child("xctest_launcher.bc").absolutePath
-
-    internal val exceptionsSupportNativeLibrary: String =
-            File(distribution.defaultNatives(target)).child("exceptionsSupport.bc").absolutePath
 
     internal val nativeLibraries: List<String> =
             configuration.getList(KonanConfigKeys.NATIVE_LIBRARY_FILES)

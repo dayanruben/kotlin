@@ -5,11 +5,11 @@
 
 package org.jetbrains.kotlin.kmp.parser.utils
 
-import fleet.com.intellij.platform.syntax.SyntaxElementType
-import fleet.com.intellij.platform.syntax.SyntaxElementTypeSet
-import fleet.com.intellij.platform.syntax.emptySyntaxElementTypeSet
-import fleet.com.intellij.platform.syntax.parser.SyntaxTreeBuilder
-import fleet.com.intellij.platform.syntax.syntaxElementTypeSetOf
+import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.SyntaxElementTypeSet
+import com.intellij.platform.syntax.emptySyntaxElementTypeSet
+import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
+import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import org.jetbrains.kotlin.kmp.lexer.KtTokens
 import org.jetbrains.kotlin.kmp.lexer.KtTokens.AS_KEYWORD
 import org.jetbrains.kotlin.kmp.lexer.KtTokens.AS_SAFE
@@ -204,38 +204,8 @@ internal open class KotlinExpressionParsing(
                 ) +
                 KtTokens.MODIFIERS
 
-        // It's the result of
-        //
-        // ```
-        // (STATEMENT_FIRST && (KEYWORDS - IN_KEYWORD)) || EOL_OR_SEMICOLON
-        // ```
-        //
-        // a Syntax library supports only union set operation
-        private val STATEMENT_NEW_LINE_QUICK_RECOVERY_SET: SyntaxElementTypeSet = syntaxElementTypeSetOf(
-            TYPE_ALIAS_KEYWORD,
-            CLASS_KEYWORD,
-            THIS_KEYWORD,
-            SUPER_KEYWORD,
-            VAL_KEYWORD,
-            VAR_KEYWORD,
-            FUN_MODIFIER,
-            FOR_KEYWORD,
-            NULL_KEYWORD,
-            TRUE_KEYWORD,
-            FALSE_KEYWORD,
-            THROW_KEYWORD,
-            RETURN_KEYWORD,
-            BREAK_KEYWORD,
-            CONTINUE_KEYWORD,
-            OBJECT_KEYWORD,
-            IF_KEYWORD,
-            TRY_KEYWORD,
-            WHILE_KEYWORD,
-            DO_KEYWORD,
-            WHEN_KEYWORD,
-            INTERFACE_KEYWORD,
-            KtTokens.EOL_OR_SEMICOLON,
-        )
+        private val STATEMENT_NEW_LINE_QUICK_RECOVERY_SET: SyntaxElementTypeSet =
+            STATEMENT_FIRST.intersect(KtTokens.HARD_KEYWORDS_AND_MODIFIERS - IN_MODIFIER) + KtTokens.EOL_OR_SEMICOLON
 
         val EXPRESSION_FOLLOW: SyntaxElementTypeSet = syntaxElementTypeSetOf(
             KtTokens.EOL_OR_SEMICOLON, KtTokens.ARROW, KtTokens.COMMA, KtTokens.RBRACE, KtTokens.RPAR, KtTokens.RBRACKET

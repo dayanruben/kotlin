@@ -389,7 +389,7 @@ class CallAndReferenceGenerator(
                 kind is KtFakeSourceElementKind.ArrayAccessNameReference || isOperationOnArray -> when (calleeReference.resolved?.name) {
                     OperatorNameConventions.SET -> IrDynamicOperator.EQ
                     OperatorNameConventions.GET -> IrDynamicOperator.ARRAY_ACCESS
-                    else -> error("Unexpected name")
+                    else -> error("Unexpected name: ${render()}")
                 }
 
                 kind is KtFakeSourceElementKind.DesugaredPrefixInc -> IrDynamicOperator.PREFIX_INCREMENT
@@ -400,7 +400,7 @@ class CallAndReferenceGenerator(
                 kind is KtFakeSourceElementKind.DesugaredAugmentedAssign -> when (calleeReference.resolved?.name) {
                     OperatorNameConventions.SET -> IrDynamicOperator.EQ
                     OperatorNameConventions.GET -> IrDynamicOperator.ARRAY_ACCESS
-                    else -> error("Unexpected name")
+                    else -> error("Unexpected name: ${render()}")
                 }
 
                 else -> null
@@ -422,7 +422,7 @@ class CallAndReferenceGenerator(
             when (symbol) {
                 is FirFunctionSymbol<*> -> {
                     val name = calleeReference.resolved?.name
-                        ?: error("Must have a name")
+                        ?: error("Callee reference must have a name: ${qualifiedAccess.render()}")
                     val operator = dynamicOperator
                         ?: name.dynamicOperator
                         ?: qualifiedAccess.dynamicOperator
@@ -445,7 +445,7 @@ class CallAndReferenceGenerator(
                         if (valueParameters == null || argumentMapping == null || !visitor.annotationMode && argumentMapping.isEmpty()) return@apply
 
                         val dynamicCallVarargArgument = argumentMapping.keys.firstOrNull() as? FirVarargArgumentsExpression
-                            ?: error("Dynamic call must have a single vararg argument")
+                            ?: error("Dynamic call must have a single vararg argument: ${qualifiedAccess.render()}")
                         for (argument in dynamicCallVarargArgument.arguments) {
                             val irArgument = convertArgument(argument, null, substitutor)
                             arguments.add(irArgument)
@@ -454,7 +454,7 @@ class CallAndReferenceGenerator(
                 }
 
                 is FirPropertySymbol -> {
-                    val name = calleeReference.resolved?.name ?: error("There must be a name")
+                    val name = calleeReference.resolved?.name ?: error("Property access must have a name: ${qualifiedAccess.render()}")
                     IrDynamicMemberExpressionImpl(startOffset, endOffset, type, name.identifier, selectedReceiver)
                 }
 
@@ -534,7 +534,7 @@ class CallAndReferenceGenerator(
                 val callableDeclaration = calleeReference.toResolvedCallableSymbol()?.fir
                 val targetType = callableDeclaration?.dispatchReceiverType?.toIrType()
                     ?: callableDeclaration?.receiverParameter?.typeRef?.toIrType()
-                    ?: error("Couldn't get the proper receiver")
+                    ?: error("Couldn't get the proper receiver for call ${qualifiedAccess.render()}")
                 IrTypeOperatorCallImpl(
                     startOffset, endOffset, targetType,
                     IrTypeOperator.IMPLICIT_DYNAMIC_CAST,
@@ -698,13 +698,13 @@ class CallAndReferenceGenerator(
         symbol: FirBasedSymbol<*>,
         assignedValue: IrExpression,
     ): IrExpression {
-        val selectedReceiver =
-            (variableAssignment.unwrapLValue() ?: error("Assignment has no lValue")).findIrDynamicReceiver(explicitReceiverExpression)
+        val selectedReceiver = variableAssignment.unwrapLValue()?.findIrDynamicReceiver(explicitReceiverExpression)
+            ?: error("Assignment has no lValue: ${variableAssignment.render()}")
 
         return variableAssignment.convertWithOffsets { startOffset, endOffset ->
             when (symbol) {
                 is FirPropertySymbol -> {
-                    val name = calleeReference.resolved?.name ?: error("There must be a name")
+                    val name = calleeReference.resolved?.name ?: error("There must be a name: ${variableAssignment.render()}")
                     IrDynamicOperatorExpressionImpl(startOffset, endOffset, type, IrDynamicOperator.EQ).apply {
                         receiver = IrDynamicMemberExpressionImpl(
                             startOffset, endOffset, type, name.identifier, selectedReceiver
@@ -726,7 +726,7 @@ class CallAndReferenceGenerator(
     ): IrExpression {
         return explicitReceiverExpression
             ?: (dispatchReceiver as? FirThisReceiverExpression)?.let(visitor::convertToIrExpression)
-            ?: error("No receiver for dynamic call")
+            ?: error("No receiver for dynamic call: ${render()}")
     }
 
     private fun injectSetValueCall(element: FirElement, calleeReference: FirReference, assignedValue: IrExpression): IrExpression? {
@@ -749,7 +749,7 @@ class CallAndReferenceGenerator(
         explicitReceiverExpression: IrExpression?,
     ): IrExpression = convertCatching(variableAssignment, conversionScope) {
         val type = builtins.unitType
-        val calleeReference = variableAssignment.calleeReference ?: error("Reference not resolvable")
+        val calleeReference = variableAssignment.calleeReference ?: error("Reference not resolvable: ${variableAssignment.render()}")
 
         // Use the setter parameter as expected type because it can differ from the property type in synthetic properties.
         // See KT-76805.
@@ -788,7 +788,7 @@ class CallAndReferenceGenerator(
         )
         val origin = variableAssignment.getIrAssignmentOrigin()
 
-        val lValue = variableAssignment.unwrapLValue() ?: error("Assignment lValue unwrapped to null")
+        val lValue = variableAssignment.unwrapLValue() ?: error("Assignment lValue unwrapped to null: ${variableAssignment.render()}")
         return variableAssignment.convertWithOffsets(calleeReference) { startOffset, endOffset ->
             when (symbol) {
                 is IrFieldSymbol -> IrSetFieldImpl(
@@ -1067,7 +1067,8 @@ class CallAndReferenceGenerator(
             irArgument = irArgument.prepareExpressionForGivenExpectedType(
                 expression = argument,
                 expectedType = unsubstitutedParameterType,
-                substitutedExpectedType = substitutedParameterType
+                substitutedExpectedType = substitutedParameterType,
+                forReceiver = false,
             )
         }
 
@@ -1362,15 +1363,11 @@ class CallAndReferenceGenerator(
                     // Although type alias constructors with inner RHS work as extension functions
                     // (https://github.com/Kotlin/KEEP/blob/master/proposals/type-aliases.md#type-alias-constructors-for-inner-classes),
                     // They should work as real constructors with initialized `dispatchReceiver` instead of `extensionReceiver` on IR level.
-                    val isConstructorOnTypealiasWithInnerRhs =
-                        (statement.calleeReference.symbol as? FirConstructorSymbol)?.let {
-                            it.origin == FirDeclarationOrigin.Synthetic.TypeAliasConstructor && it.receiverParameterSymbol != null
-                        } == true
                     val baseDispatchReceiver = when {
                         // This logic is used by `js-plain-object` plugin.
                         // It could be removed only after "static members" will be available in the language
                         !declarationSiteSymbol.shouldHaveReceiver(session) -> null.toIrConst(builtins.nothingNType)
-                        !isConstructorOnTypealiasWithInnerRhs -> statement.findIrDispatchReceiver(explicitReceiverExpression)
+                        !statement.isConstructorCallOnTypealiasWithInnerRhs() -> statement.findIrDispatchReceiver(explicitReceiverExpression)
                         else -> statement.findIrExtensionReceiver(explicitReceiverExpression)
                     }
                     var firDispatchReceiver = statement.dispatchReceiver
@@ -1400,19 +1397,7 @@ class CallAndReferenceGenerator(
                 if (declarationSiteSymbol?.receiverParameterSymbol != null && declarationSiteSymbol !is FirConstructorSymbol) {
                     val contextArgumentCount = (statement as? FirContextArgumentListOwner)?.contextArguments?.size ?: 0
                     val extensionReceiverIndex = (if (hasDispatchReceiver) 1 else 0) + contextArgumentCount
-                    arguments[extensionReceiverIndex] =
-                        statement.findIrExtensionReceiver(explicitReceiverExpression)?.let {
-                            val symbol = statement.calleeReference.toResolvedCallableSymbol()
-                                ?: error("Symbol for call ${statement.render()} not found")
-                            symbol.fir.receiverParameter?.typeRef?.let { receiverType ->
-                                val extensionReceiver = statement.extensionReceiver!!
-                                val substitutor = statement.buildSubstitutorByCalledCallable(c)
-                                it.prepareExpressionForGivenExpectedType(
-                                    expression = extensionReceiver,
-                                    expectedType = substitutor.substituteOrSelf(receiverType.coneType),
-                                )
-                            } ?: it
-                        }
+                    arguments[extensionReceiverIndex] = statement.findIrExtensionReceiver(explicitReceiverExpression)
                     hasExtensionReceiver = true
                 }
             }

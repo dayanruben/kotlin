@@ -21942,6 +21942,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
     }
 
     @Test
+    @TestMetadata("intersectionOverrideDispatchReceiver.kt")
+    public void testIntersectionOverrideDispatchReceiver() {
+      runTest("compiler/testData/codegen/box/fakeOverride/intersectionOverrideDispatchReceiver.kt");
+    }
+
+    @Test
     @TestMetadata("javaInheritsKotlinIntersectionOverride.kt")
     public void testJavaInheritsKotlinIntersectionOverride() {
       runTest("compiler/testData/codegen/box/fakeOverride/javaInheritsKotlinIntersectionOverride.kt");
@@ -58655,6 +58661,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
     @TestMetadata("multipleSmartCast.kt")
     public void testMultipleSmartCast() {
       runTest("compiler/testData/codegen/box/smartCasts/multipleSmartCast.kt");
+    }
+
+    @Test
+    @TestMetadata("negativesmartCastAugmentedAssignment.kt")
+    public void testNegativesmartCastAugmentedAssignment() {
+      runTest("compiler/testData/codegen/box/smartCasts/negativesmartCastAugmentedAssignment.kt");
     }
 
     @Test
