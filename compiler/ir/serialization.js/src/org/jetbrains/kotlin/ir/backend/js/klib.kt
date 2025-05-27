@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.ir.backend.js
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.KtPsiSourceFile
 import org.jetbrains.kotlin.KtSourceFile
+import org.jetbrains.kotlin.backend.common.IrModuleDependencies
 import org.jetbrains.kotlin.backend.common.IrModuleInfo
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
@@ -110,23 +111,44 @@ fun generateKLib(
     )
 }
 
+/**
+ * Note: This function returns the list of the deserialized [IrModuleFragment]s that has exactly the same
+ * order as the libraries in [sortedDependencies].
+ */
 fun deserializeDependencies(
     sortedDependencies: Collection<KotlinLibrary>,
     irLinker: JsIrLinker,
     mainModuleLib: KotlinLibrary?,
     filesToLoad: Set<String>?,
     mapping: (KotlinLibrary) -> ModuleDescriptor
-): Map<IrModuleFragment, KotlinLibrary> {
-    return sortedDependencies.associateBy { klib ->
-        val descriptor = mapping(klib)
-        when {
+): IrModuleDependencies {
+    val all: MutableList<IrModuleFragment> = mutableListOf()
+    var stdlib: IrModuleFragment? = null
+    var included: IrModuleFragment? = null
+
+    sortedDependencies.forEach { klib: KotlinLibrary ->
+        val descriptor: ModuleDescriptor = mapping(klib)
+        val module: IrModuleFragment = when {
             mainModuleLib == null -> irLinker.deserializeIrModuleHeader(descriptor, klib, { DeserializationStrategy.EXPLICITLY_EXPORTED })
             filesToLoad != null && klib == mainModuleLib -> irLinker.deserializeDirtyFiles(descriptor, klib, filesToLoad)
             filesToLoad != null && klib != mainModuleLib -> irLinker.deserializeHeadersWithInlineBodies(descriptor, klib)
             klib == mainModuleLib -> irLinker.deserializeIrModuleHeader(descriptor, klib, { DeserializationStrategy.ALL })
             else -> irLinker.deserializeIrModuleHeader(descriptor, klib, { DeserializationStrategy.EXPLICITLY_EXPORTED })
         }
+
+        all += module
+        when {
+            klib.isAnyPlatformStdlib -> stdlib = module
+            klib == mainModuleLib -> included = module
+        }
     }
+
+    return IrModuleDependencies(
+        all = all,
+        stdlib = stdlib,
+        included = included,
+        fragmentNames = all.getUniqueNameForEachFragment(),
+    )
 }
 
 fun loadIr(
@@ -216,37 +238,34 @@ fun getIrModuleInfoForKlib(
         friendModules = friendModules
     )
 
-    val deserializedModuleFragmentsToLib = deserializeDependencies(
+    // Deserialize module fragments preserving the order of libraries in `sortedDependencies`.
+    val moduleDependencies: IrModuleDependencies = deserializeDependencies(
         sortedDependencies = sortedDependencies,
         irLinker = irLinker,
         mainModuleLib = mainModuleLib,
         filesToLoad = filesToLoad,
         mapping = mapping
     )
-    val deserializedModuleFragments = deserializedModuleFragmentsToLib.keys.toList()
     irBuiltIns.functionFactory = IrDescriptorBasedFunctionFactory(
         irBuiltIns,
         symbolTable,
         typeTranslator,
         loadFunctionInterfacesIntoStdlib.ifTrue {
-            FunctionTypeInterfacePackages().makePackageAccessor(deserializedModuleFragments.first())
+            moduleDependencies.stdlib?.let { stdlibModule -> FunctionTypeInterfacePackages().makePackageAccessor(stdlibModule) }
         },
         true
     )
-
-    val moduleFragment = deserializedModuleFragments.last()
 
     irLinker.init(null)
     ExternalDependenciesGenerator(symbolTable, listOf(irLinker)).generateUnboundSymbolsAsDependencies()
     irLinker.postProcess(inOrAfterLinkageStep = true)
 
     return IrModuleInfo(
-        moduleFragment,
-        deserializedModuleFragments,
-        irBuiltIns,
-        symbolTable,
-        irLinker,
-        deserializedModuleFragmentsToLib.getUniqueNameForEachFragment()
+        module = moduleDependencies.included!!,
+        dependencies = moduleDependencies,
+        bultins = irBuiltIns,
+        symbolTable = symbolTable,
+        deserializer = irLinker,
     )
 }
 
@@ -277,21 +296,22 @@ fun getIrModuleInfoForSourceFiles(
         icData = null,
         friendModules = friendModules,
     )
-    val deserializedModuleFragmentsToLib = deserializeDependencies(
+
+    // Deserialize module fragments preserving the order of libraries in `sortedDependencies`.
+    val moduleDependencies: IrModuleDependencies = deserializeDependencies(
         sortedDependencies = allSortedDependencies,
         irLinker = irLinker,
         mainModuleLib = null,
         filesToLoad = null,
         mapping = mapping
     )
-    val deserializedModuleFragments = deserializedModuleFragmentsToLib.keys.toList()
     (irBuiltIns as IrBuiltInsOverDescriptors).functionFactory =
         IrDescriptorBasedFunctionFactory(
             irBuiltIns,
             symbolTable,
             psi2IrContext.typeTranslator,
             loadFunctionInterfacesIntoStdlib.ifTrue {
-                FunctionTypeInterfacePackages().makePackageAccessor(deserializedModuleFragments.first())
+                moduleDependencies.stdlib?.let { stdlibModule -> FunctionTypeInterfacePackages().makePackageAccessor(stdlibModule) }
             },
             true
         )
@@ -304,12 +324,11 @@ fun getIrModuleInfoForSourceFiles(
     }
 
     return IrModuleInfo(
-        moduleFragment,
-        deserializedModuleFragments,
-        irBuiltIns,
-        symbolTable,
-        irLinker,
-        deserializedModuleFragmentsToLib.getUniqueNameForEachFragment()
+        module = moduleFragment,
+        dependencies = moduleDependencies,
+        bultins = irBuiltIns,
+        symbolTable = symbolTable,
+        deserializer = irLinker,
     )
 }
 
@@ -531,9 +550,9 @@ fun <SourceFile> shouldGoToNextIcRound(
     return nextRoundChecker.shouldGoToNextRound()
 }
 
-private fun Map<IrModuleFragment, KotlinLibrary>.getUniqueNameForEachFragment(): Map<IrModuleFragment, String> {
-    return this.entries.mapNotNull { (moduleFragment, klib) ->
-        klib.jsOutputName?.let { moduleFragment to it }
+private fun List<IrModuleFragment>.getUniqueNameForEachFragment(): Map<IrModuleFragment, String> {
+    return this.mapNotNull { moduleFragment ->
+        moduleFragment.kotlinLibrary?.jsOutputName?.let { moduleFragment to it }
     }.toMap()
 }
 

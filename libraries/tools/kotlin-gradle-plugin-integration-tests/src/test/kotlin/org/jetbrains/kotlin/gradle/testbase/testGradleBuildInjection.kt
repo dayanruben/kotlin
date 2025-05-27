@@ -23,6 +23,7 @@ import org.gradle.plugin.use.PluginDependenciesSpec
 import org.gradle.plugin.use.PluginDependencySpec
 import org.gradle.plugin.use.PluginId
 import org.gradle.plugins.signing.SigningExtension
+import org.gradle.testkit.runner.BuildResult
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.plugin.cocoapods.CocoapodsExtension
@@ -346,6 +347,18 @@ class ReturnFromBuildScriptAfterExecution<T>(
                 forwardBuildOutput = false,
             )
         }
+
+        fun buildWithAssertions(
+            buildAssertions: BuildResult.() -> Unit = {},
+        ): BuildAction = { args, options ->
+            build(
+                buildArguments = args,
+                buildOptions = options,
+                forwardBuildOutput = false,
+                assertions = buildAssertions,
+            )
+        }
+
         val buildAndFail: BuildAction = { args, options ->
             buildAndFail(
                 buildArguments = args,
@@ -566,23 +579,35 @@ fun TestProject.plugins(build: PluginDependenciesSpec.() -> Unit) {
     transferPluginRepositoriesIntoBuildScript()
     transferPluginDependencyConstraintsIntoBuildscriptClasspathDependencyConstraints()
     buildScriptBuildscriptBlockInjection {
-        spec.plugins.filter {
-            // filter out Gradle's embedded plugins
-            !it.id.startsWith("org.gradle")
-        }.forEach {
-            val pluginPointer = buildscript.dependencies.create(
-                group = it.id,
-                name = "${it.id}.gradle.plugin",
-                version = it.version,
-            )
-            buildscript.configurations.getByName("classpath").dependencies.add(pluginPointer)
-        }
+        spec.plugins
+            .filter {
+                // filter out Gradle's embedded plugins
+                !it.id.startsWith("org.gradle")
+            }
+            .supportGradleBuiltInPlugins()
+            .forEach {
+                val pluginPointer = buildscript.dependencies.create(
+                    group = it.id,
+                    name = "${it.id}.gradle.plugin",
+                    version = it.version,
+                )
+                buildscript.configurations.getByName("classpath").dependencies.add(pluginPointer)
+            }
     }
     buildScriptInjection {
-        spec.plugins.filter { it.shouldBeApplied }.forEach {
-            project.plugins.apply(it.id)
-        }
+        spec.plugins
+            .filter { it.shouldBeApplied }
+            .supportGradleBuiltInPlugins()
+            .forEach {
+                project.plugins.apply(it.id)
+            }
     }
+}
+
+private fun List<TestPluginDependencySpec>.supportGradleBuiltInPlugins() = map { spec ->
+    if (spec.id == "kotlin-dsl") {
+        TestPluginDependencySpec("org.gradle.kotlin.kotlin-dsl")
+    } else spec
 }
 
 private class TestPluginDependencySpec(
