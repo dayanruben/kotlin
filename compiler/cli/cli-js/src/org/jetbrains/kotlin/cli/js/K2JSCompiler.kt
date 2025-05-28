@@ -119,8 +119,6 @@ class K2JSCompiler : CLICompiler<K2JSCompilerArguments>() {
         if (pluginLoadResult != OK) return pluginLoadResult
 
         CommonWebConfigurationUpdater.initializeCommonConfiguration(compilerImpl.configuration, arguments)
-        val libraries = configuration.libraries
-        val friendLibraries = configuration.friendLibraries
 
         val targetEnvironment = compilerImpl.tryInitializeCompiler(rootDisposable) ?: return COMPILATION_ERROR
 
@@ -136,14 +134,17 @@ class K2JSCompiler : CLICompiler<K2JSCompilerArguments>() {
             reportCompiledSourcesList(messageCollector, sourcesFiles)
         }
 
-        // Produce KLIBs and get module (run analysis if main module is sources)
+        // Produce KLIBs and get module (run analysis if main module is sources).
+        // Make it lazy to avoid loading KLIBs twice in the case of IC, because the IC engine itself will load KLIBs.
+        val klibs: LoadedKlibs by lazy { loadWebKlibsInProductionPipeline(configuration, configuration.platformChecker) }
+
         var sourceModule: ModulesStructure? = null
         val includes = configuration.includes
         if (includes == null) {
             val outputKlibPath =
                 if (arguments.irProduceKlibFile) outputDir.resolve("$outputName.klib").normalize().absolutePath
                 else outputDirPath
-            sourceModule = produceSourceModule(targetEnvironment, libraries, friendLibraries, arguments, outputKlibPath)
+            sourceModule = produceSourceModule(targetEnvironment, klibs, arguments, outputKlibPath)
 
             if (configuration.get(CommonConfigurationKeys.USE_FIR) != true && !sourceModule.jsFrontEndResult.jsAnalysisResult.shouldGenerateCode)
                 return OK
@@ -208,19 +209,16 @@ class K2JSCompiler : CLICompiler<K2JSCompilerArguments>() {
             if (sourcesFiles.isNotEmpty()) {
                 messageCollector.report(ERROR, "Source files are not supported when -Xinclude is present")
             }
-            val includesPath = File(includes).canonicalPath
-            val mainLibPath = libraries.find { File(it).canonicalPath == includesPath }
-                ?: error("No library with name $includes ($includesPath) found")
+
+            val mainLibPath = klibs.included?.libraryFile?.path
+                ?: error("No library with name $includes found")
             val kLib = MainModule.Klib(mainLibPath)
             ModulesStructure(
                 project = targetEnvironment.project,
                 mainModule = kLib,
                 compilerConfiguration = targetEnvironment.configuration,
-                libraryPaths = libraries,
-                friendDependenciesPaths = friendLibraries
-            ).also {
-                runStandardLibrarySpecialCompatibilityChecks(it.allDependencies, isWasm = arguments.wasm, messageCollector)
-            }
+                klibs = klibs
+            )
         } else {
             sourceModule!!
         }
@@ -230,8 +228,7 @@ class K2JSCompiler : CLICompiler<K2JSCompilerArguments>() {
 
     private fun produceSourceModule(
         environmentForJS: KotlinCoreEnvironment,
-        libraries: List<String>,
-        friendLibraries: List<String>,
+        klibs: LoadedKlibs,
         arguments: K2JSCompilerArguments,
         outputKlibPath: String,
     ): ModulesStructure {
@@ -249,8 +246,7 @@ class K2JSCompiler : CLICompiler<K2JSCompilerArguments>() {
                     environmentForJS.project,
                     environmentForJS.getSourceFiles(),
                     environmentForJS.configuration,
-                    libraries,
-                    friendLibraries,
+                    klibs,
                     AnalyzerWithCompilerReport(environmentForJS.configuration),
                     analyzerFacade = analyzerFacade
                 )
@@ -270,7 +266,7 @@ class K2JSCompiler : CLICompiler<K2JSCompilerArguments>() {
                 files = moduleSourceFiles,
                 configuration = environmentForJS.configuration,
                 analysisResult = sourceModule.jsFrontEndResult.jsAnalysisResult,
-                sortedDependencies = sourceModule.allDependencies,
+                klibs = sourceModule.klibs,
                 icData = icData,
                 irFactory = IrFactoryImpl,
             ) {
