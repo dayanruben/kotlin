@@ -444,17 +444,15 @@ internal class KaFirCompilerFacility(
              * Create a new multi-file dangling file module, containing copies of [files], with the specified [contextModule].
              */
             fun appendDanglingChunk(spec: ChunkSpec, files: List<KtFile>) {
-                val (codeFragments, ordinaryFiles) = files.partition { it is KtCodeFragment }
-                val newOrdinaryFiles = ordinaryFiles.map { createFileCopy(it, emptyMap()) }
+                val ordinaryFileToNewFile = files.filter { it !is KtCodeFragment }.associateWith { createFileCopy(it, emptyMap()) }
 
-                val newCodeFragments = if (codeFragments.isNotEmpty()) {
-                    val ordinaryFileSubstitutions = ordinaryFiles.zip(newOrdinaryFiles).toMap()
-                    codeFragments.map { createFileCopy(it, ordinaryFileSubstitutions) }
-                } else {
-                    emptyList()
+                val newFiles = files.map {
+                    if (it is KtCodeFragment) {
+                        createFileCopy(it, ordinaryFileToNewFile)
+                    } else {
+                        ordinaryFileToNewFile[it]!!
+                    }
                 }
-
-                val newFiles = newOrdinaryFiles + newCodeFragments
 
                 val mainFile = if (spec.isMain) {
                     val mainFileIndex = files.indexOf(originalMainFile)
@@ -469,7 +467,7 @@ internal class KaFirCompilerFacility(
 
                 result[newModule] = ChunkToCompile(
                     mainFile = mainFile,
-                    hasCodeFragments = codeFragments.isNotEmpty(),
+                    hasCodeFragments = newFiles.any { it is KtCodeFragment },
                     attachPrecompiledBinaries = spec.attachPrecompiledBinaries,
                     files = createFilesToCompile(newFiles)
                 )
@@ -1298,7 +1296,7 @@ internal class KaFirCompilerFacility(
             val irFile = irModuleFragment.files.single { (it.fileEntry as? PsiIrFileEntry)?.psiFile is KtCodeFragment }
             val irClass = irFile.declarations.single { it is IrClass && it.metadata is FirMetadataSource.CodeFragment } as IrClass
             val irFunction = irClass.declarations.single { it is IrFunction && it !is IrConstructor } as IrFunction
-            EvaluatorFragmentInfo(irClass.descriptor, irFunction.descriptor, irFunction, emptyList(), typeArgumentsMap)
+            EvaluatorFragmentInfo(irClass.descriptor, irFunction.descriptor, emptyList(), typeArgumentsMap)
         }
 
         return JvmIrCodegenFactory(

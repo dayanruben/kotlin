@@ -5,7 +5,9 @@
 
 package org.jetbrains.kotlin.fir.resolve.transformers.body.resolve
 
-import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.FirClassLikeDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirRegularClass
+import org.jetbrains.kotlin.fir.declarations.FirResolvedDeclarationStatus
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.createCurrentScopeList
 import org.jetbrains.kotlin.fir.resolve.transformers.plugin.runCompanionGenerationPhaseForLocalClass
@@ -14,6 +16,7 @@ import org.jetbrains.kotlin.fir.resolve.transformers.runStatusResolveForLocalCla
 import org.jetbrains.kotlin.fir.resolve.transformers.runSupertypeResolvePhaseForLocalClass
 import org.jetbrains.kotlin.fir.resolve.transformers.runTypeResolvePhaseForLocalClass
 
+/** @see org.jetbrains.kotlin.fir.resolve.transformers.FirJumpingPhaseComputationSessionForLocalClassesProvider */
 fun <F : FirClassLikeDeclaration> F.runAllPhasesForLocalClass(
     components: FirAbstractBodyResolveTransformer.BodyResolveTransformerComponents,
     resolutionMode: ResolutionMode,
@@ -56,7 +59,6 @@ fun <F : FirClassLikeDeclaration> F.runAllPhasesForLocalClass(
     runStatusResolveForLocalClass(
         components.session,
         components.scopeSession,
-        components.createCurrentScopeList(),
         localClassesNavigationInfo
     )
     runContractAndBodiesResolutionForLocalClass(
