@@ -2289,6 +2289,12 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
         }
 
         @Test
+        @TestMetadata("contextParameterOnPackage.kt")
+        public void testContextParameterOnPackage() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/contextParameterOnPackage.kt");
+        }
+
+        @Test
         @TestMetadata("contextParameterSyntaxWithReceiversLanguageFeature.kt")
         public void testContextParameterSyntaxWithReceiversLanguageFeature() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/contextParameterSyntaxWithReceiversLanguageFeature.kt");
@@ -2310,6 +2316,12 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
         @TestMetadata("danglingContextParameterAndAnnotations.kt")
         public void testDanglingContextParameterAndAnnotations() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/danglingContextParameterAndAnnotations.kt");
+        }
+
+        @Test
+        @TestMetadata("extensionShadowedWithContextParameters.kt")
+        public void testExtensionShadowedWithContextParameters() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/extensionShadowedWithContextParameters.kt");
         }
 
         @Test
