@@ -45,25 +45,109 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.SmartcastStability
 
-class DataFlowAnalyzerContext(private val session: FirSession) {
-    val graphBuilder: ControlFlowGraphBuilder = ControlFlowGraphBuilder()
-    internal val variableAssignmentAnalyzer: FirLocalVariableAssignmentAnalyzer = FirLocalVariableAssignmentAnalyzer()
+class DataFlowAnalyzerContext private constructor(
+    private val session: FirSession,
+    graphBuilder: ControlFlowGraphBuilder,
+    variableAssignmentAnalyzer: FirLocalVariableAssignmentAnalyzer,
+    variableStorage: VariableStorage,
+    private var assignmentCounter: Int
+) {
+    constructor(session: FirSession) : this(
+        session,
+        graphBuilder = ControlFlowGraphBuilder(),
+        variableAssignmentAnalyzer = FirLocalVariableAssignmentAnalyzer(),
+        variableStorage = VariableStorage(session),
+        assignmentCounter = 0
+    )
 
-    var variableStorage: VariableStorage = VariableStorage(session)
-        private set
+    /**
+     * Builds a deep independent copy of this [DataFlowAnalyzerContext].
+     * The copy is not affected by changes in this context.
+     *
+     * @param [firMapper] A mapper to be applied on all [FirElement]s and [FirBasedSymbol]s referenced in the snapshot.
+     */
+    @OptIn(CfgInternals::class)
+    fun createSnapshot(firMapper: SnapshotFirMapper): DataFlowAnalyzerContextSnapshot {
+        val copier = ControlFlowGraphCopier()
 
-    private var assignmentCounter = 0
+        val snapshotContext = DataFlowAnalyzerContext(
+            session,
+            graphBuilder = graphBuilder.createSnapshot(copier),
+            variableAssignmentAnalyzer = variableAssignmentAnalyzer.createSnapshot(firMapper),
+            variableStorage = variableStorage.createSnapshot(),
+            assignmentCounter = assignmentCounter
+        )
 
-    fun newAssignmentIndex(): Int {
-        return assignmentCounter++
+        copier.finish()
+
+        return DataFlowAnalyzerContextSnapshot(snapshotContext, copier.graphMapping)
     }
 
+    /**
+     * Replaces all state of this [DataFlowAnalyzerContext] with those from [source].
+     *
+     * The method does not perform any deep copying, so the [source] context will be affected by changes in this one.
+     * If you need to avoid this, call [createSnapshot] first.
+     */
+    fun resetFrom(source: DataFlowAnalyzerContext) {
+        reset()
+
+        graphBuilder = source.graphBuilder
+        variableAssignmentAnalyzer = source.variableAssignmentAnalyzer
+        variableStorage = source.variableStorage
+        assignmentCounter = source.assignmentCounter
+    }
+
+    /**
+     * Clears all intermediate state of this [DataFlowAnalyzerContext].
+     * Are calling [reset], the context is identical to the newly created one.
+     */
     fun reset() {
         graphBuilder.reset()
         variableAssignmentAnalyzer.reset()
         variableStorage = VariableStorage(session)
     }
+
+    @CfgInternals
+    val currentGraph: ControlFlowGraph
+        get() = graphBuilder.currentGraph
+
+    internal var graphBuilder: ControlFlowGraphBuilder = graphBuilder
+        private set
+
+    internal var variableAssignmentAnalyzer: FirLocalVariableAssignmentAnalyzer = variableAssignmentAnalyzer
+        private set
+
+    internal var variableStorage: VariableStorage = variableStorage
+        private set
+
+    fun newAssignmentIndex(): Int {
+        return assignmentCounter++
+    }
 }
+
+/**
+ * A mapper for elements and symbols referenced in the control flow graph snapshot.
+ *
+ * Once created, the snapshot may be applied to a different tree of [FirElement]s.
+ * The mapper allows patching references to corresponding elements in the new tree.
+ */
+@CfgInternals
+interface SnapshotFirMapper {
+    fun <T : FirBasedSymbol<*>> mapSymbol(symbol: T): T
+    fun <T : FirElement> mapElement(element: T): T
+}
+
+/**
+ * A deep independent snapshot of the DataFlowAnalyzerContext.
+ *
+ * @param context The snapshot itself.
+ * @param graphMapping A mapping between graphs in the original context and in the snapshot.
+ */
+class DataFlowAnalyzerContextSnapshot(
+    val context: DataFlowAnalyzerContext,
+    val graphMapping: Map<ControlFlowGraph, ControlFlowGraph>
+)
 
 @OptIn(DfaInternals::class)
 abstract class FirDataFlowAnalyzer(
@@ -1546,7 +1630,7 @@ abstract class FirDataFlowAnalyzer(
     // state to a previously created node, so none of the nodes it returned are `lastNode` and `mergeIncomingFlow`
     // will not ensure the smart cast position is auto-advanced. In that case an explicit call to `resetSmartCastPosition`
     // is needed to roll back to that previously created node's state.
-    private fun resetSmartCastPosition() {
+    fun resetSmartCastPosition() {
         resetSmartCastPositionTo(graphBuilder.lastNodeOrNull?.flow)
     }
 

@@ -89,8 +89,10 @@ class VariableFixationFinder(
         // READY_FOR_FIXATION_CAPTURED_UPPER is in use
         READY_FOR_FIXATION_DECLARED_UPPER_BOUND_WITH_SELF_TYPES,
 
+        // After 2.2, `WITH_COMPLEX_DEPENDENCY` means the variable only contains non-proper constraints or constraints with ILT.
         WITH_COMPLEX_DEPENDENCY, // if type variable T has constraint with non fixed type variable inside (non-top-level): T <: Foo<S>
-        WITH_COMPLEX_DEPENDENCY_BUT_PROPER_EQUALITY_CONSTRAINT, // Same as before but also has a constraint T = ... not dependent on others
+        WITH_COMPLEX_DEPENDENCY_AND_PROPER_NON_ILT, // Same as before but also has a constraint to types like `Long`, `Int`, etc.
+        WITH_COMPLEX_DEPENDENCY_AND_PROPER_NON_ILT_EQUALITY, // Same as WITH_COMPLEX_DEPENDENCY but also has a constraint T = ... not dependent on others
         ALL_CONSTRAINTS_TRIVIAL_OR_NON_PROPER, // proper trivial constraint from arguments, Nothing <: T
         RELATED_TO_ANY_OUTPUT_TYPE,
         FROM_INCORPORATION_OF_DECLARED_UPPER_BOUND,
@@ -339,16 +341,26 @@ class VariableFixationFinder(
     }
 
     private fun Context.computeReadinessForVariableWithDependencies(typeVariable: TypeConstructorMarker): TypeVariableFixationReadiness {
-        return if (!fixationEnhancementsIn22 || !hasProperArgumentConstraint(typeVariable)) {
-            TypeVariableFixationReadiness.WITH_COMPLEX_DEPENDENCY
-        } else {
-            TypeVariableFixationReadiness.WITH_COMPLEX_DEPENDENCY_BUT_PROPER_EQUALITY_CONSTRAINT
-        }
-    }
+        val constraints = notFixedTypeVariables[typeVariable]?.constraints
+        if (!fixationEnhancementsIn22 || constraints == null) return TypeVariableFixationReadiness.WITH_COMPLEX_DEPENDENCY
 
-    private fun Context.hasProperArgumentConstraint(typeVariable: TypeConstructorMarker): Boolean {
-        val constraints = notFixedTypeVariables[typeVariable]?.constraints ?: return false
-        return constraints.any { it.kind == ConstraintKind.EQUALITY && isProperArgumentConstraint(it) }
+        var hasProperNonIltEqualityConstraint = false
+        var hasProperNonIltConstraint = false
+
+        for (it in constraints) {
+            val isProper = isProperArgumentConstraint(it)
+            val containsIlt = it.type.contains { it.typeConstructor().isIntegerLiteralTypeConstructor() }
+            val isProperNonIlt = isProper && !containsIlt
+
+            hasProperNonIltEqualityConstraint = hasProperNonIltEqualityConstraint || isProperNonIlt && it.kind == ConstraintKind.EQUALITY
+            hasProperNonIltConstraint = hasProperNonIltConstraint || isProperNonIlt
+        }
+
+        return when {
+            hasProperNonIltEqualityConstraint -> TypeVariableFixationReadiness.WITH_COMPLEX_DEPENDENCY_AND_PROPER_NON_ILT_EQUALITY
+            hasProperNonIltConstraint -> TypeVariableFixationReadiness.WITH_COMPLEX_DEPENDENCY_AND_PROPER_NON_ILT
+            else -> TypeVariableFixationReadiness.WITH_COMPLEX_DEPENDENCY
+        }
     }
 
     private fun Context.variableHasProperArgumentConstraints(variable: TypeConstructorMarker): Boolean {

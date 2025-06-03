@@ -252,6 +252,14 @@ internal fun TestGroupSuite.generateFirLowLevelApiTests() {
             model("getOrBuildFir", pattern = TestGeneratorUtil.KTS)
         }
 
+        testClass<AbstractInterruptingSourceGetOrBuildFirTest> {
+            model("getOrBuildFirWithInterruption", pattern = TestGeneratorUtil.KT)
+        }
+
+        testClass<AbstractInterruptingScriptGetOrBuildFirTest> {
+            model("getOrBuildFirWithInterruption", pattern = TestGeneratorUtil.KTS)
+        }
+
         testClass<AbstractLibraryGetOrBuildFirTest> {
             model("getOrBuildFirBinary")
         }
@@ -347,18 +355,28 @@ internal fun TestGroupSuite.generateFirLowLevelApiTests() {
         testClass<AbstractLLReversedDiagnosticsTest>(suiteTestClassName = "LLReversedDiagnosticsFirTestGenerated") {
             modelInit()
         }
+
+        testClass<AbstractLLPartialDiagnosticsTest>(suiteTestClassName = "LLPartialDiagnosticsFirTestGenerated") {
+            modelInit()
+        }
     }
     testGroup(
         "analysis/low-level-api-fir/tests-gen",
         "analysis/low-level-api-fir/testData",
     ) {
-        testClass<AbstractLLDiagnosticsTest> {
-            model("compilerLikeAnalysis", pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME)
-        }
-        testClass<AbstractLLReversedDiagnosticsTest> {
+        fun TestGroup.TestClass.modelInit() {
             model("compilerLikeAnalysis", pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME)
         }
 
+        testClass<AbstractLLDiagnosticsTest> {
+            modelInit()
+        }
+        testClass<AbstractLLReversedDiagnosticsTest> {
+            modelInit()
+        }
+        testClass<AbstractLLPartialDiagnosticsTest> {
+            modelInit()
+        }
     }
 
     testGroup(
@@ -425,6 +443,10 @@ internal fun TestGroupSuite.generateFirLowLevelApiTests() {
         }
 
         testClass<AbstractLLReversedDiagnosticsTest>(suiteTestClassName = "LLReversedDiagnosticsFe10TestGenerated") {
+            modelInit()
+        }
+
+        testClass<AbstractLLPartialDiagnosticsTest>(suiteTestClassName = "LLPartialDiagnosticsFe10TestGenerated") {
             modelInit()
         }
 

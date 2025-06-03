@@ -17,8 +17,9 @@ import org.jetbrains.kotlin.analysis.test.framework.services.expressionMarkerPro
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisApiTestConfigurator
 import org.jetbrains.kotlin.fir.declarations.FirResolvedImport
 import org.jetbrains.kotlin.fir.declarations.FirTowerDataContext
+import org.jetbrains.kotlin.fir.renderer.FirDeclarationRendererWithAttributes
 import org.jetbrains.kotlin.fir.renderer.FirRenderer
-import org.jetbrains.kotlin.fir.resolve.SessionHolderImpl
+import org.jetbrains.kotlin.fir.renderer.FirResolvePhaseRenderer
 import org.jetbrains.kotlin.fir.resolve.dfa.RealVariable
 import org.jetbrains.kotlin.fir.scopes.*
 import org.jetbrains.kotlin.fir.scopes.impl.*
@@ -61,20 +62,17 @@ abstract class AbstractContextCollectorTest : AbstractAnalysisApiBasedTest() {
         useBodyElement: Boolean
     ) {
         val resolutionFacade = mainModule.ktModule.getResolutionFacade(mainFile.project)
-        val session = resolutionFacade.useSiteFirSession
-        val sessionHolder = SessionHolderImpl(session, session.getScopeSession())
-
         val firFile = mainFile.getOrBuildFirFile(resolutionFacade)
-
         val targetElement = testServices.expressionMarkerProvider
             .getBottommostSelectedElementOfType(mainFile, KtElement::class)
 
-        val bodyElement = if (useBodyElement) targetElement else null
-
-        val elementContext = ContextCollector.process(firFile, sessionHolder, targetElement, bodyElement)
+        val elementContext = ContextCollector.process(resolutionFacade, firFile, targetElement, useBodyElement)
             ?: error("Context not found for element $targetElement")
 
-        val firRenderer = FirRenderer.withResolvePhase()
+        val firRenderer = FirRenderer(
+            resolvePhaseRenderer = FirResolvePhaseRenderer(),
+            declarationRenderer = FirDeclarationRendererWithPartialBodyResolveState()
+        )
 
         val actualText = buildString {
             ElementContextRenderer.render(elementContext, this)
@@ -83,6 +81,12 @@ abstract class AbstractContextCollectorTest : AbstractAnalysisApiBasedTest() {
         }
 
         testServices.assertions.assertEqualsToTestOutputFile(actualText, testPrefixes = testPrefixes)
+    }
+}
+
+private class FirDeclarationRendererWithPartialBodyResolveState : FirDeclarationRendererWithAttributes() {
+    override fun attributeTypesToIds(): List<Pair<String, Int>> {
+        return super.attributeTypesToIds().filter { it.first == "PartialBodyAnalysisStateKey" }
     }
 }
 
