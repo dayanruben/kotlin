@@ -846,6 +846,12 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
       }
 
       @Test
+      @TestMetadata("annotatedLocalContextParameterWithAnnotatedType.kt")
+      public void testAnnotatedLocalContextParameterWithAnnotatedType() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/annotations/annotatedLocalContextParameterWithAnnotatedType.kt");
+      }
+
+      @Test
       @TestMetadata("danglingModifierInsideEnumEntry.kt")
       public void testDanglingModifierInsideEnumEntry() {
         runTest("compiler/fir/analysis-tests/testData/resolve/annotations/danglingModifierInsideEnumEntry.kt");
@@ -3341,6 +3347,12 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
       @TestMetadata("constructorInInterface.kt")
       public void testConstructorInInterface() {
         runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/constructorInInterface.kt");
+      }
+
+      @Test
+      @TestMetadata("contextParameterOnPrimaryConstructor.kt")
+      public void testContextParameterOnPrimaryConstructor() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/contextParameterOnPrimaryConstructor.kt");
       }
 
       @Test

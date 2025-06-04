@@ -3846,8 +3846,8 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = RedundantCallOfConversionMethod::class
     }
 
-    interface ArrayEqualityOperatorCanBeReplacedWithEquals : KaFirDiagnostic<KtExpression> {
-        override val diagnosticClass get() = ArrayEqualityOperatorCanBeReplacedWithEquals::class
+    interface ArrayEqualityOperatorCanBeReplacedWithContentEquals : KaFirDiagnostic<KtExpression> {
+        override val diagnosticClass get() = ArrayEqualityOperatorCanBeReplacedWithContentEquals::class
     }
 
     interface EmptyRange : KaFirDiagnostic<PsiElement> {
@@ -4098,6 +4098,20 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val symbol: KaSymbol
         val visibility: EffectiveVisibility
         val containingClass: KaClassLikeSymbol
+        val inlineVisibility: EffectiveVisibility
+    }
+
+    interface CallableReferenceToLessVisibleDeclarationInInlineError : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = CallableReferenceToLessVisibleDeclarationInInlineError::class
+        val symbol: KaSymbol
+        val visibility: EffectiveVisibility
+        val inlineVisibility: EffectiveVisibility
+    }
+
+    interface CallableReferenceToLessVisibleDeclarationInInlineWarning : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = CallableReferenceToLessVisibleDeclarationInInlineWarning::class
+        val symbol: KaSymbol
+        val visibility: EffectiveVisibility
         val inlineVisibility: EffectiveVisibility
     }
 

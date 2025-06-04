@@ -13822,6 +13822,12 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
       }
 
       @Test
+      @TestMetadata("nextLineNumber.kt")
+      public void testNextLineNumber() {
+        runTest("compiler/testData/codegen/box/coroutines/debug/nextLineNumber.kt");
+      }
+
+      @Test
       @TestMetadata("runtimeDebugMetadata.kt")
       public void testRuntimeDebugMetadata() {
         runTest("compiler/testData/codegen/box/coroutines/debug/runtimeDebugMetadata.kt");
@@ -39178,6 +39184,18 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
     @TestMetadata("inline.kt")
     public void testInline() {
       runTest("compiler/testData/codegen/box/jvmStatic/inline.kt");
+    }
+
+    @Test
+    @TestMetadata("inlinePrivateStatic1.kt")
+    public void testInlinePrivateStatic1() {
+      runTest("compiler/testData/codegen/box/jvmStatic/inlinePrivateStatic1.kt");
+    }
+
+    @Test
+    @TestMetadata("inlinePrivateStatic2.kt")
+    public void testInlinePrivateStatic2() {
+      runTest("compiler/testData/codegen/box/jvmStatic/inlinePrivateStatic2.kt");
     }
 
     @Test

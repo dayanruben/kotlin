@@ -36,9 +36,20 @@ internal class KaFirTypeInformationProvider(
             (this as KaFirType).coneType.functionTypeKind(analysisSession.firSession)
         }
 
-    override val KaType.canBeNull: Boolean
+    override val KaType.isNullable: Boolean
         get() = withValidityAssertion {
             (this as KaFirType).coneType.canBeNull(analysisSession.firSession)
+        }
+
+    override val KaType.isMarkedNullable: Boolean
+        get() = withValidityAssertion {
+            (this as KaFirType).coneType.isMarkedNullable
+        }
+
+    override val KaType.hasFlexibleNullability: Boolean
+        get() = withValidityAssertion {
+            val coneType = this.coneType
+            coneType.hasFlexibleMarkedNullability || coneType is ConeErrorType && coneType.nullable == null
         }
 
     override val KaType.isDenotable: Boolean

@@ -40,6 +40,18 @@ public class SourceGetOrBuildFirTestGenerated extends AbstractSourceGetOrBuildFi
     }
 
     @Test
+    @TestMetadata("annotatedLocalContextParameterWithAnnotatedTypeOnFunction.kt")
+    public void testAnnotatedLocalContextParameterWithAnnotatedTypeOnFunction() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/annotations/annotatedLocalContextParameterWithAnnotatedTypeOnFunction.kt");
+    }
+
+    @Test
+    @TestMetadata("annotatedLocalContextParameterWithAnnotatedTypeOnProperty.kt")
+    public void testAnnotatedLocalContextParameterWithAnnotatedTypeOnProperty() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/annotations/annotatedLocalContextParameterWithAnnotatedTypeOnProperty.kt");
+    }
+
+    @Test
     @TestMetadata("annotationApplicationArgument.kt")
     public void testAnnotationApplicationArgument() {
       runTest("analysis/low-level-api-fir/testData/getOrBuildFir/annotations/annotationApplicationArgument.kt");
@@ -1447,6 +1459,12 @@ public class SourceGetOrBuildFirTestGenerated extends AbstractSourceGetOrBuildFi
     @Test
     public void testAllFilesPresentInInvalidCode() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/low-level-api-fir/testData/getOrBuildFir/invalidCode"), Pattern.compile("^(.+)\\.(kt)$"), null, true);
+    }
+
+    @Test
+    @TestMetadata("contextParameterOnErrorPrimaryConstructor.kt")
+    public void testContextParameterOnErrorPrimaryConstructor() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/invalidCode/contextParameterOnErrorPrimaryConstructor.kt");
     }
 
     @Test

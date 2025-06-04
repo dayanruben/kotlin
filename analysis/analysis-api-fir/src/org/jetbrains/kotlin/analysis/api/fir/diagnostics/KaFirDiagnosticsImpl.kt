@@ -4617,10 +4617,10 @@ internal class RedundantCallOfConversionMethodImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.RedundantCallOfConversionMethod
 
-internal class ArrayEqualityOperatorCanBeReplacedWithEqualsImpl(
+internal class ArrayEqualityOperatorCanBeReplacedWithContentEqualsImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<KtExpression>(firDiagnostic, token), KaFirDiagnostic.ArrayEqualityOperatorCanBeReplacedWithEquals
+) : KaAbstractFirDiagnostic<KtExpression>(firDiagnostic, token), KaFirDiagnostic.ArrayEqualityOperatorCanBeReplacedWithContentEquals
 
 internal class EmptyRangeImpl(
     firDiagnostic: KtPsiDiagnostic,
@@ -4923,6 +4923,22 @@ internal class LessVisibleContainingClassInInlineWarningImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.LessVisibleContainingClassInInlineWarning
+
+internal class CallableReferenceToLessVisibleDeclarationInInlineErrorImpl(
+    override val symbol: KaSymbol,
+    override val visibility: EffectiveVisibility,
+    override val inlineVisibility: EffectiveVisibility,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.CallableReferenceToLessVisibleDeclarationInInlineError
+
+internal class CallableReferenceToLessVisibleDeclarationInInlineWarningImpl(
+    override val symbol: KaSymbol,
+    override val visibility: EffectiveVisibility,
+    override val inlineVisibility: EffectiveVisibility,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.CallableReferenceToLessVisibleDeclarationInInlineWarning
 
 internal class InlineFromHigherPlatformImpl(
     override val inlinedBytecodeVersion: String,

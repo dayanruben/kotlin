@@ -22588,6 +22588,36 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
+      @TestMetadata("exposingObjects.kt")
+      public void testExposingObjects() {
+        runTest("compiler/testData/diagnostics/tests/inline/exposingObjects.kt");
+      }
+
+      @Test
+      @TestMetadata("exposingObjectsAfter.kt")
+      public void testExposingObjectsAfter() {
+        runTest("compiler/testData/diagnostics/tests/inline/exposingObjectsAfter.kt");
+      }
+
+      @Test
+      @TestMetadata("exposingPrivateCallableReferenceInInternal.kt")
+      public void testExposingPrivateCallableReferenceInInternal() {
+        runTest("compiler/testData/diagnostics/tests/inline/exposingPrivateCallableReferenceInInternal.kt");
+      }
+
+      @Test
+      @TestMetadata("exposingPrivateCallableReferenceInInternalAfter.kt")
+      public void testExposingPrivateCallableReferenceInInternalAfter() {
+        runTest("compiler/testData/diagnostics/tests/inline/exposingPrivateCallableReferenceInInternalAfter.kt");
+      }
+
+      @Test
+      @TestMetadata("exposingPrivateCallableReferenceInPublic.kt")
+      public void testExposingPrivateCallableReferenceInPublic() {
+        runTest("compiler/testData/diagnostics/tests/inline/exposingPrivateCallableReferenceInPublic.kt");
+      }
+
+      @Test
       @TestMetadata("exposingPrivateTypeInInternal.kt")
       public void testExposingPrivateTypeInInternal() {
         runTest("compiler/testData/diagnostics/tests/inline/exposingPrivateTypeInInternal.kt");
@@ -51492,6 +51522,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
     @TestDataPath("$PROJECT_ROOT")
     public class Annotations {
       @Test
+      @TestMetadata("annotatedLocalContextParameterWithAnnotatedType.kt")
+      public void testAnnotatedLocalContextParameterWithAnnotatedType() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/annotations/annotatedLocalContextParameterWithAnnotatedType.kt");
+      }
+
+      @Test
       @TestMetadata("danglingModifierInsideEnumEntry.kt")
       public void testDanglingModifierInsideEnumEntry() {
         runTest("compiler/fir/analysis-tests/testData/resolve/annotations/danglingModifierInsideEnumEntry.kt");
@@ -53857,6 +53893,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("constructorInInterface.kt")
       public void testConstructorInInterface() {
         runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/constructorInInterface.kt");
+      }
+
+      @Test
+      @TestMetadata("contextParameterOnPrimaryConstructor.kt")
+      public void testContextParameterOnPrimaryConstructor() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/contextParameterOnPrimaryConstructor.kt");
       }
 
       @Test

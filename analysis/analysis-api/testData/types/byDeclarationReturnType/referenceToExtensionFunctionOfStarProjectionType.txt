@@ -8,13 +8,11 @@ KaFunctionType:
   hasReceiver: true
   isReflectType: true
   isSuspend: false
-  nullability: NON_NULLABLE
   parameterTypes: [
     KaUsualClassType:
       abbreviation: null
       annotations: []
       classId: kotlin/Nothing
-      nullability: NON_NULLABLE
       qualifiers: [
         KaResolvedClassTypeQualifier:
           name: Nothing
@@ -23,6 +21,9 @@ KaFunctionType:
       ]
       symbol: KaNamedClassSymbol(kotlin/Nothing)
       typeArguments: []
+      isMarkedNullable: false
+      isNullable: false
+      hasFlexibleNullability: false
   ]
   parameters: [
     KaBaseFunctionValueParameter [name: null, type: kotlin/Nothing]
@@ -36,7 +37,6 @@ KaFunctionType:
           abbreviation: null
           annotations: []
           classId: A
-          nullability: NON_NULLABLE
           qualifiers: [
             KaResolvedClassTypeQualifier:
               name: A
@@ -49,11 +49,13 @@ KaFunctionType:
           typeArguments: [
             *
           ]
+          isMarkedNullable: false
+          isNullable: false
+          hasFlexibleNullability: false
         KaUsualClassType:
           abbreviation: null
           annotations: []
           classId: kotlin/Nothing
-          nullability: NON_NULLABLE
           qualifiers: [
             KaResolvedClassTypeQualifier:
               name: Nothing
@@ -62,11 +64,13 @@ KaFunctionType:
           ]
           symbol: KaNamedClassSymbol(kotlin/Nothing)
           typeArguments: []
+          isMarkedNullable: false
+          isNullable: false
+          hasFlexibleNullability: false
         KaUsualClassType:
           abbreviation: null
           annotations: []
           classId: kotlin/Unit
-          nullability: NON_NULLABLE
           qualifiers: [
             KaResolvedClassTypeQualifier:
               name: Unit
@@ -75,13 +79,15 @@ KaFunctionType:
           ]
           symbol: KaNamedClassSymbol(kotlin/Unit)
           typeArguments: []
+          isMarkedNullable: false
+          isNullable: false
+          hasFlexibleNullability: false
       ]
   ]
   receiverType: KaUsualClassType:
     abbreviation: null
     annotations: []
     classId: A
-    nullability: NON_NULLABLE
     qualifiers: [
       KaResolvedClassTypeQualifier:
         name: A
@@ -94,11 +100,13 @@ KaFunctionType:
     typeArguments: [
       *
     ]
+    isMarkedNullable: false
+    isNullable: false
+    hasFlexibleNullability: false
   returnType: KaUsualClassType:
     abbreviation: null
     annotations: []
     classId: kotlin/Unit
-    nullability: NON_NULLABLE
     qualifiers: [
       KaResolvedClassTypeQualifier:
         name: Unit
@@ -107,13 +115,15 @@ KaFunctionType:
     ]
     symbol: KaNamedClassSymbol(kotlin/Unit)
     typeArguments: []
+    isMarkedNullable: false
+    isNullable: false
+    hasFlexibleNullability: false
   symbol: KaNamedClassSymbol(kotlin/reflect/KFunction2)
   typeArguments: [
     KaUsualClassType:
       abbreviation: null
       annotations: []
       classId: A
-      nullability: NON_NULLABLE
       qualifiers: [
         KaResolvedClassTypeQualifier:
           name: A
@@ -126,11 +136,13 @@ KaFunctionType:
       typeArguments: [
         *
       ]
+      isMarkedNullable: false
+      isNullable: false
+      hasFlexibleNullability: false
     KaUsualClassType:
       abbreviation: null
       annotations: []
       classId: kotlin/Nothing
-      nullability: NON_NULLABLE
       qualifiers: [
         KaResolvedClassTypeQualifier:
           name: Nothing
@@ -139,11 +151,13 @@ KaFunctionType:
       ]
       symbol: KaNamedClassSymbol(kotlin/Nothing)
       typeArguments: []
+      isMarkedNullable: false
+      isNullable: false
+      hasFlexibleNullability: false
     KaUsualClassType:
       abbreviation: null
       annotations: []
       classId: kotlin/Unit
-      nullability: NON_NULLABLE
       qualifiers: [
         KaResolvedClassTypeQualifier:
           name: Unit
@@ -152,7 +166,13 @@ KaFunctionType:
       ]
       symbol: KaNamedClassSymbol(kotlin/Unit)
       typeArguments: []
+      isMarkedNullable: false
+      isNullable: false
+      hasFlexibleNullability: false
   ]
+  isMarkedNullable: false
+  isNullable: false
+  hasFlexibleNullability: false
 
 Rendered type:
 kotlin.reflect.KFunction2<A<*>, kotlin.Nothing, kotlin.Unit>

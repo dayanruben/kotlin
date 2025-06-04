@@ -5493,8 +5493,8 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.ARRAY_EQUALITY_OPERATOR_CAN_BE_REPLACED_WITH_EQUALS) { firDiagnostic ->
-        ArrayEqualityOperatorCanBeReplacedWithEqualsImpl(
+    add(FirErrors.ARRAY_EQUALITY_OPERATOR_CAN_BE_REPLACED_WITH_CONTENT_EQUALS) { firDiagnostic ->
+        ArrayEqualityOperatorCanBeReplacedWithContentEqualsImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -5848,6 +5848,24 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             firDiagnostic.b,
             firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firDiagnostic.c),
             firDiagnostic.d,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.CALLABLE_REFERENCE_TO_LESS_VISIBLE_DECLARATION_IN_INLINE.errorFactory) { firDiagnostic ->
+        CallableReferenceToLessVisibleDeclarationInInlineErrorImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a),
+            firDiagnostic.b,
+            firDiagnostic.c,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.CALLABLE_REFERENCE_TO_LESS_VISIBLE_DECLARATION_IN_INLINE.warningFactory) { firDiagnostic ->
+        CallableReferenceToLessVisibleDeclarationInInlineWarningImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a),
+            firDiagnostic.b,
+            firDiagnostic.c,
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

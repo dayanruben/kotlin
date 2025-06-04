@@ -10,9 +10,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.name.ClassId
@@ -76,20 +74,51 @@ public interface KaTypeInformationProvider : KaSessionComponent {
      * A public value of type `T : Any?` can potentially be `null`. But one cannot assign `null` to such a variable because the instantiated
      * type may not be nullable.
      */
+    @Deprecated("Use `isNullable` instead", ReplaceWith("this.isNullable"))
     public val KaType.canBeNull: Boolean
+        get() = isNullable
 
     /**
-     * Whether the [KaType] is explicitly marked as nullable. This means it is safe to assign `null` to a variable with this type.
-     * */
+     * Whether a public value of the [KaType] can potentially be `null`.
+     *
+     * If a type can be `null`, it means that this type is not a subtype of [Any]. However, it does not mean one can assign `null` to a
+     * variable of this type. It may be unknown whether this type can accept `null`.
+     *
+     * #### Example
+     *
+     * A public value of type `T : Any?` can potentially be `null`. But one cannot assign `null` to such a variable because the instantiated
+     * type may not be nullable.
+     */
+    public val KaType.isNullable: Boolean
+
+    /**
+     * Whether the [KaType] is explicitly marked as nullable, i.e., is represented as `T?`.
+     *
+     * Note that this property just reflects the presence of nullability in the type signature,
+     * and sometimes [isMarkedNullable] being false doesn't imply that the given type cannot hold `null` or be assigned with it.
+     *
+     * For example, [isMarkedNullable] doesn't expand type aliases to check the nullability of their underlying type:
+     * ```kotlin
+     * typealias NonMarkedNullableAlias = String?
+     *
+     * fun main() {
+     *     val x: NonMarkedNullableAlias = null
+     * }
+     * ```
+     * The type of `x` is `NonMarkedNullableAlias`, which is not marked as nullable. However, it still represents a nullable type and can hold `null` and can be assigned with that.
+     *
+     * To explicitly check whether a type can potentially hold `null`, use [isNullable].
+     */
     public val KaType.isMarkedNullable: Boolean
-        get() = withValidityAssertion { this.nullability == KaTypeNullability.NULLABLE }
 
     /**
-     * Whether the [KaType] is a [flexible type](https://kotlinlang.org/spec/type-system.html#flexible-types), and both safe and ordinary
-     * calls are valid on it.
+     * Whether the [KaType] is a [org.jetbrains.kotlin.analysis.api.types.KaFlexibleType] / [org.jetbrains.kotlin.analysis.api.types.KaDynamicType] with flexible nullability or [org.jetbrains.kotlin.analysis.api.types.KaErrorType] with unknown nullability.
+     * Both safe and ordinary calls are valid on such types.
+     *
+     * Note that a flexible / dynamic type has a flexible nullability when the lower bound is non-nullable and the upper bound is nullable.
+     * E.g. `T!` has `T` as the lower bound and `T?` as the upper bound, hence it has a flexible nullability.
      */
     public val KaType.hasFlexibleNullability: Boolean
-        get() = withValidityAssertion { this is KaFlexibleType && this.upperBound.isMarkedNullable != this.lowerBound.isMarkedNullable }
 
     /**
      * Whether the [KaType] is a [Unit] type.

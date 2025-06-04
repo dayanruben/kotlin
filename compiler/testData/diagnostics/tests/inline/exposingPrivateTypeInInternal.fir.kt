@@ -57,7 +57,7 @@ private class A {
 }
 
 internal inline fun internal4() {
-    A.B.<!LESS_VISIBLE_CONTAINING_CLASS_IN_INLINE_WARNING!>foo<!>()// should be an error
+    A.<!LESS_VISIBLE_TYPE_ACCESS_IN_INLINE_WARNING!>B<!>.<!LESS_VISIBLE_CONTAINING_CLASS_IN_INLINE_WARNING!>foo<!>()// should be an error
 }
 
 class C2 {
@@ -81,3 +81,16 @@ class C3 {
         <!LESS_VISIBLE_CONTAINING_CLASS_IN_INLINE_WARNING, PRIVATE_CLASS_MEMBER_FROM_INLINE!>foo<!>() // already an error, should be an error
     }
 }
+
+internal inline fun withAnonymousObject() {
+    object {
+        private inner class Inner {}
+        fun foo(x: Any) {
+            Inner()
+            x is Inner
+        }
+    }.foo("")
+}
+
+private fun foo() = object { fun bar() {} }
+internal inline fun test() = <!LESS_VISIBLE_TYPE_IN_INLINE_ACCESSED_SIGNATURE_WARNING!>foo<!>().bar()

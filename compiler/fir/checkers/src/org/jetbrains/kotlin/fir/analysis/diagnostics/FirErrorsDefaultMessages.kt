@@ -116,7 +116,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ANONYMOUS_SUSPEND
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.API_NOT_AVAILABLE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ARGUMENT_PASSED_TWICE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ARGUMENT_TYPE_MISMATCH
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ARRAY_EQUALITY_OPERATOR_CAN_BE_REPLACED_WITH_EQUALS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ARRAY_EQUALITY_OPERATOR_CAN_BE_REPLACED_WITH_CONTENT_EQUALS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ASSIGNED_VALUE_IS_NEVER_READ
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_ANNOTATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION
@@ -136,6 +136,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.BUILDER_INFERENCE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CALLABLE_REFERENCE_LHS_NOT_A_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CALLABLE_REFERENCE_TO_ANNOTATION_CONSTRUCTOR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CALLABLE_REFERENCE_TO_CONTEXTUAL_DECLARATION
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CALLABLE_REFERENCE_TO_LESS_VISIBLE_DECLARATION_IN_INLINE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_ALL_UNDER_IMPORT_FROM_SINGLETON
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_BE_IMPORTED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_CHANGE_ACCESS_PRIVILEGE
@@ -2303,6 +2304,13 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             DECLARATION_NAME,
             TO_STRING,
         )
+        map.put(
+            CALLABLE_REFERENCE_TO_LESS_VISIBLE_DECLARATION_IN_INLINE,
+            "Callable reference to ''{1}'' declaration ''{0}'' inside ''{2}'' inline declaration.",
+            DECLARATION_NAME,
+            TO_STRING,
+            TO_STRING,
+        )
 
         // Redeclarations
         map.put(MANY_COMPANION_OBJECTS, "Only one companion object is allowed per class.")
@@ -3181,7 +3189,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(CAN_BE_VAL_DELAYED_INITIALIZATION, "This 'var' property is not written to more than once, it can be declared as 'val'.")
         map.put(CAN_BE_REPLACED_WITH_OPERATOR_ASSIGNMENT, "Assignment can be replaced with operator assignment.")
         map.put(REDUNDANT_CALL_OF_CONVERSION_METHOD, "Redundant call of conversion method.")
-        map.put(ARRAY_EQUALITY_OPERATOR_CAN_BE_REPLACED_WITH_EQUALS, "'==' compares only references. Replace '==' with 'contentEquals' to compare the arrays' contents.")
+        map.put(ARRAY_EQUALITY_OPERATOR_CAN_BE_REPLACED_WITH_CONTENT_EQUALS, "'==' on arrays compares only references. Replace '==' with 'contentEquals' to compare the arrays' contents or use `===` to remove the warning.")
         map.put(EMPTY_RANGE, "Range is empty.")
         map.put(REDUNDANT_SETTER_PARAMETER_TYPE, "Redundant setter parameter type.")
         map.put(UNUSED_VARIABLE, "Variable is unused.")
