@@ -178,8 +178,6 @@ interface TypeSystemInferenceExtensionContextDelegate : TypeSystemInferenceExten
 interface TypeSystemInferenceExtensionContext : TypeSystemContext, TypeSystemBuiltInsContext, TypeSystemCommonSuperTypesContext {
     fun KotlinTypeMarker.contains(predicate: (KotlinTypeMarker) -> Boolean): Boolean
 
-    fun TypeConstructorMarker.isUnitTypeConstructor(): Boolean
-
     fun TypeConstructorMarker.getApproximatedIntegerLiteralType(expectedType: KotlinTypeMarker?): KotlinTypeMarker
 
     fun TypeConstructorMarker.isCapturedTypeConstructor(): Boolean
@@ -373,7 +371,7 @@ interface TypeSystemInferenceExtensionContext : TypeSystemContext, TypeSystemBui
     fun createSubstitutorForSuperTypes(baseType: KotlinTypeMarker): TypeSubstitutorMarker?
 
     fun computeEmptyIntersectionTypeKind(types: Collection<KotlinTypeMarker>): EmptyIntersectionTypeInfo? =
-        EmptyIntersectionTypeChecker.computeEmptyIntersectionEmptiness(this, types)
+        EmptyIntersectionTypeChecker.computeEmptyIntersectionEmptiness(types)
 
     val isK2: Boolean
 

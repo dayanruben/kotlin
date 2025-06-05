@@ -73,8 +73,7 @@ abstract class KotlinIrLinker(
     open val returnUnboundSymbolsIfSignatureNotFound: Boolean
         get() = partialLinkageSupport.isEnabled
 
-    // TODO: This is a temporary measure that should be removed in the future (KT-77244).
-    open val moduleDependencyTracker: IrModuleDependencyTracker? get() = null
+    open val moduleDependencyTracker: IrModuleDependencyTracker get() = IrModuleDependencyTracker.DISABLED
 
     protected open val userVisibleIrModulesSupport: UserVisibleIrModulesSupport get() = UserVisibleIrModulesSupport.DEFAULT
 

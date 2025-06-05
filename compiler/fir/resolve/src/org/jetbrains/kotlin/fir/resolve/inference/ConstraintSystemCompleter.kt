@@ -108,7 +108,6 @@ class ConstraintSystemCompleter(components: BodyResolveComponents) {
 
             // Stage 2: collect parameter types for postponed arguments
             val wasBuiltNewExpectedTypeForSomeArgument = postponedArgumentsInputTypesResolver.collectParameterTypesAndBuildNewExpectedTypes(
-                this,
                 postponedArgumentsWithRevisableType,
                 completionMode,
                 dependencyProvider,
@@ -124,7 +123,6 @@ class ConstraintSystemCompleter(components: BodyResolveComponents) {
                 // Stage 3: fix variables for parameter types of all postponed arguments
                 for (argument in postponedAtomsDependingOnFunctionType) {
                     val variableWasFixed = postponedArgumentsInputTypesResolver.fixNextReadyVariableForParameterTypeIfNeeded(
-                        this,
                         argument,
                         postponedArguments,
                         topLevelType,
@@ -209,7 +207,6 @@ class ConstraintSystemCompleter(components: BodyResolveComponents) {
     ): VariableFixationFinder.VariableForFixation? {
         val allTypeVariables = getOrderedAllTypeVariables(topLevelAtoms)
         return variableFixationFinder.findFirstVariableForFixation(
-            this,
             allTypeVariables,
             postponedArguments,
             completionMode,
@@ -388,11 +385,12 @@ class ConstraintSystemCompleter(components: BodyResolveComponents) {
         c: ConstraintSystemCompletionContext,
         variableWithConstraints: VariableWithConstraints,
     ) {
-        val resultType = inferenceComponents.resultTypeResolver.findResultType(
-            c,
-            variableWithConstraints,
-            TypeVariableDirectionCalculator.ResolveDirection.UNKNOWN
-        )
+        val resultType = with(c) {
+            inferenceComponents.resultTypeResolver.findResultType(
+                variableWithConstraints,
+                TypeVariableDirectionCalculator.ResolveDirection.UNKNOWN
+            )
+        }
 
         val variable = variableWithConstraints.typeVariable
         c.fixVariable(variable, resultType, ConeFixVariableConstraintPosition(variable))

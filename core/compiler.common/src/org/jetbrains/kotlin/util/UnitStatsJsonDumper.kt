@@ -26,6 +26,9 @@ object UnitStatsJsonDumper {
                     initStats?.let { appendTime(::initStats, it, indent = 1, trailingComma = true) }
                     analysisStats?.let { appendTime(::analysisStats, it, indent = 1, trailingComma = true) }
                     translationToIrStats?.let { appendTime(::translationToIrStats, it, indent = 1, trailingComma = true) }
+                    irPreLoweringStats?.let { appendTime(::irPreLoweringStats, it, indent = 1, trailingComma = true) }
+                    irSerializationStats?.let { appendTime(::irSerializationStats, it, indent = 1, trailingComma = true) }
+                    klibWritingStats?.let { appendTime(::klibWritingStats, it, indent = 1, trailingComma = true) }
                     irLoweringStats?.let { appendTime(::irLoweringStats, it, indent = 1, trailingComma = true) }
                     backendStats?.let { appendTime(::backendStats, it, indent = 1, trailingComma = true) }
 
