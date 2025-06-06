@@ -1081,7 +1081,7 @@ tasks {
             environment("JDK_1_8", getToolchainJdkHomeFor(JdkMajorVersion.JDK_1_8).get())
         }
     }
-    register<Exec>("mvnPublish") {
+    val mvnPublishTask = register<Exec>("mvnPublish") {
         group = "publishing"
         workingDir = rootProject.projectDir.resolve("libraries")
         commandLine = getMvnwCmd() + listOf(
@@ -1090,8 +1090,18 @@ tasks {
             "-Ddeploy-snapshot-repo=local",
             "-Ddeploy-snapshot-url=file://${rootProject.projectDir.resolve("build/repo")}"
         )
+
+        val jdkToolchain1_8 = getToolchainJdkHomeFor(JdkMajorVersion.JDK_1_8)
         doFirst {
-            environment("JDK_1_8", getToolchainJdkHomeFor(JdkMajorVersion.JDK_1_8).get())
+            environment("JDK_1_8", jdkToolchain1_8.get())
+        }
+    }
+
+    // 'mvnPublish' is required for local bootstrap
+    if (!kotlinBuildProperties.isTeamcityBuild) {
+        register("publish") {
+            group = "publishing"
+            dependsOn(mvnPublishTask)
         }
     }
 
