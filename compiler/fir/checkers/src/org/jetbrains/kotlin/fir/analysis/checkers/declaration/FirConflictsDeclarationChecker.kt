@@ -41,20 +41,14 @@ interface PlatformConflictDeclarationsDiagnosticDispatcher : FirSessionComponent
         override fun getDiagnostic(
             conflictingDeclaration: FirBasedSymbol<*>,
             symbols: SmartSet<FirBasedSymbol<*>>,
-            context: CheckerContext
+            context: CheckerContext,
         ): KtDiagnosticFactory1<Collection<FirBasedSymbol<*>>> {
-            return when {
-                conflictingDeclaration is FirNamedFunctionSymbol || conflictingDeclaration is FirConstructorSymbol -> {
-                    FirErrors.CONFLICTING_OVERLOADS
-                }
-                conflictingDeclaration is FirClassLikeSymbol<*> &&
-                        conflictingDeclaration.getContainingClassSymbol() == null &&
-                        symbols.any { it is FirClassLikeSymbol<*> } -> {
-                    FirErrors.CLASSIFIER_REDECLARATION
-                }
-                else -> {
-                    FirErrors.REDECLARATION
-                }
+            return when (conflictingDeclaration) {
+                is FirNamedFunctionSymbol, is FirConstructorSymbol -> FirErrors.CONFLICTING_OVERLOADS
+                is FirClassLikeSymbol<*>
+                    if conflictingDeclaration.getContainingClassSymbol() == null && symbols.any { it is FirClassLikeSymbol<*> }
+                    -> FirErrors.CLASSIFIER_REDECLARATION
+                else -> FirErrors.REDECLARATION
             }
         }
     }
@@ -69,7 +63,7 @@ object FirConflictsDeclarationChecker : FirBasicDeclarationChecker(MppCheckerKin
             is FirFile -> {
                 val inspector = FirDeclarationCollector<FirBasedSymbol<*>>(context)
                 checkFile(declaration, inspector, context)
-                reportConflicts(reporter, context, inspector.declarationConflictingSymbols, declaration)
+                reportConflicts(reporter, context, inspector.declarationConflictingSymbols, inspector.declarationShadowedViaContextParameters, declaration)
             }
             is FirClass -> {
                 if (declaration.source?.kind !is KtFakeSourceElementKind) {
@@ -77,7 +71,7 @@ object FirConflictsDeclarationChecker : FirBasicDeclarationChecker(MppCheckerKin
                 }
                 val inspector = FirDeclarationCollector<FirBasedSymbol<*>>(context)
                 inspector.collectClassMembers(declaration.symbol)
-                reportConflicts(reporter, context, inspector.declarationConflictingSymbols, declaration)
+                reportConflicts(reporter, context, inspector.declarationConflictingSymbols, inspector.declarationShadowedViaContextParameters, declaration)
             }
             else -> {
                 if (declaration.source?.kind !is KtFakeSourceElementKind && declaration is FirTypeParameterRefsOwner) {
@@ -117,6 +111,7 @@ object FirConflictsDeclarationChecker : FirBasicDeclarationChecker(MppCheckerKin
         reporter: DiagnosticReporter,
         context: CheckerContext,
         declarationConflictingSymbols: Map<FirBasedSymbol<*>, SmartSet<FirBasedSymbol<*>>>,
+        declarationShadowedViaContextParameters: Map<FirBasedSymbol<*>, SmartSet<FirBasedSymbol<*>>>,
         container: FirDeclaration,
     ) {
         declarationConflictingSymbols.forEach { (conflictingDeclaration, symbols) ->
@@ -148,6 +143,12 @@ object FirConflictsDeclarationChecker : FirBasicDeclarationChecker(MppCheckerKin
 
             if (factory != null) {
                 reporter.reportOn(source, factory, symbols, context)
+            }
+        }
+
+        declarationShadowedViaContextParameters.forEach { (conflictingDeclaration, symbols) ->
+            if (symbols.isNotEmpty()) {
+                reporter.reportOn(conflictingDeclaration.source, FirErrors.CONTEXTUAL_OVERLOAD_SHADOWED, symbols, context)
             }
         }
     }

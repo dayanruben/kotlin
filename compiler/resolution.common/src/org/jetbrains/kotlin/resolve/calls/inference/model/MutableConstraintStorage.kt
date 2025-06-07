@@ -144,7 +144,8 @@ class MutableVariableWithConstraints private constructor(
                                 ?: previousConstraint.position,
                             constraint.typeHashCode,
                             derivedFrom = constraint.derivedFrom,
-                            isNullabilityConstraint = false
+                            isNullabilityConstraint = false,
+                            isNoInfer = constraint.isNoInfer && previousConstraint.isNoInfer,
                         )
                     } else constraint
                     mutableConstraints.add(actualConstraint)
@@ -216,6 +217,10 @@ class MutableVariableWithConstraints private constructor(
          */
         if (old.position.from is ExpectedTypeConstraintPosition<*> && new.position.from !is ExpectedTypeConstraintPosition<*> && old.kind.isUpper() && new.kind.isUpper())
             return false
+
+        if (old.isNoInfer && !new.isNoInfer) {
+            return false
+        }
 
         return when (old.kind) {
             ConstraintKind.EQUALITY -> true

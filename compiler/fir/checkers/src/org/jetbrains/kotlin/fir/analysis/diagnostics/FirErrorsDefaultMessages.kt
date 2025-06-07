@@ -212,6 +212,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DATA_OBJECT_CUSTO
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DECLARATION_CANT_BE_INLINED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DECLARATION_CANT_BE_INLINED_DEPRECATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DECLARATION_OF_ENUM_ENTRY_ENTRIES
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONTEXTUAL_OVERLOAD_SHADOWED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEFAULT_ARGUMENTS_IN_EXPECT_ACTUALIZED_BY_FAKE_OVERRIDE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEFAULT_ARGUMENTS_IN_EXPECT_WITH_ACTUAL_TYPEALIAS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEFAULT_VALUE_NOT_ALLOWED_IN_OVERRIDE
@@ -1638,8 +1639,8 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
                     Contextual classes and constructors are deprecated and will not be supported when context parameters are enabled. Consider migrating to regular parameters.
                     
                     See the context parameters proposal for more details: https://kotl.in/context-parameters
-                    This warning will become an error in future releases.
-                    """.trimIndent()
+                    
+                    """.trimIndent().toDeprecationWarningMessage(LanguageFeature.ContextParameters)
         )
         map.put(CONTEXT_PARAMETER_WITHOUT_NAME, "Context parameters must be named. Use '_' to declare an anonymous context parameter.")
         map.put(CONTEXT_PARAMETER_WITH_DEFAULT, "Context parameters cannot have default values.")
@@ -1677,6 +1678,11 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(
             NAMED_CONTEXT_PARAMETER_IN_FUNCTION_TYPE,
             "Named context parameters in function types are unsupported. Use syntax 'context(Type)' instead.",
+        )
+        map.put(
+            CONTEXTUAL_OVERLOAD_SHADOWED,
+            "Contextual declaration is shadowed by the following overloads:{0}",
+            SYMBOLS_ON_NEXT_LINES,
         )
         map.put(
             SELF_CALL_IN_NESTED_OBJECT_CONSTRUCTOR_ERROR,
@@ -1830,8 +1836,8 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
         map.put(
             DEPRECATED_SMARTCAST_ON_DELEGATED_PROPERTY,
-            "Smart cast to ''{0}'' is impossible, because ''{1}'' is a property inherited by class delegation. " +
-                    "This warning will become an error in future releases. See https://youtrack.jetbrains.com/issue/KT-57417.",
+            "Smart cast to ''{0}'' is impossible, because ''{1}'' is a property inherited by class delegation."
+                .toDeprecationWarningMessage(LanguageFeature.UnstableSmartcastOnDelegatedProperties),
             RENDER_TYPE, DECLARATION_NAME,
         )
 
@@ -2443,13 +2449,29 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(RETURN_VALUE_NOT_USED, "Unused return value.")
 
         map.put(MUST_BE_INITIALIZED, "Property must be initialized.")
-        map.put(MUST_BE_INITIALIZED_WARNING, "Property must be initialized. This warning will become an error in future releases.")
+        map.put(
+            MUST_BE_INITIALIZED_WARNING,
+            "Property must be initialized"
+                .toDeprecationWarningMessage(LanguageFeature.ProhibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor)
+        )
         map.put(MUST_BE_INITIALIZED_OR_BE_FINAL, "Property must be initialized or be final.")
-        map.put(MUST_BE_INITIALIZED_OR_BE_FINAL_WARNING, "Property must be initialized or be final. This warning will become an error in future releases.")
+        map.put(
+            MUST_BE_INITIALIZED_OR_BE_FINAL_WARNING,
+            "Property must be initialized or be final"
+                .toDeprecationWarningMessage(LanguageFeature.ProhibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor)
+        )
         map.put(MUST_BE_INITIALIZED_OR_BE_ABSTRACT, "Property must be initialized or be abstract.")
-        map.put(MUST_BE_INITIALIZED_OR_BE_ABSTRACT_WARNING, "Property must be initialized or be abstract. This warning will become an error in future releases.")
+        map.put(
+            MUST_BE_INITIALIZED_OR_BE_ABSTRACT_WARNING,
+            "Property must be initialized or be abstract"
+                .toDeprecationWarningMessage(LanguageFeature.ProhibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor)
+        )
         map.put(MUST_BE_INITIALIZED_OR_FINAL_OR_ABSTRACT, "Property must be initialized, be final, or be abstract.")
-        map.put(MUST_BE_INITIALIZED_OR_FINAL_OR_ABSTRACT_WARNING, "Property must be initialized, be final, or be abstract. This warning will become an error in future releases.")
+        map.put(
+            MUST_BE_INITIALIZED_OR_FINAL_OR_ABSTRACT_WARNING,
+            "Property must be initialized, be final, or be abstract"
+                .toDeprecationWarningMessage(LanguageFeature.ProhibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor)
+        )
 
         map.put(EXTENSION_PROPERTY_MUST_HAVE_ACCESSORS_OR_BE_ABSTRACT, "Extension property must have accessors or be abstract.")
         map.put(UNNECESSARY_LATEINIT, "'lateinit' is unnecessary: definitely initialized in constructors.")
