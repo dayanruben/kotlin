@@ -35663,6 +35663,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
         }
 
         @Test
+        @TestMetadata("dslMarkerNamedArgumentLambda.kt")
+        public void testDslMarkerNamedArgumentLambda() {
+          runTest("compiler/testData/diagnostics/tests/resolve/dslMarker/dslMarkerNamedArgumentLambda.kt");
+        }
+
+        @Test
         @TestMetadata("dslMarkerOnExpectedTypeForInvokeExtensionCall.kt")
         public void testDslMarkerOnExpectedTypeForInvokeExtensionCall() {
           runTest("compiler/testData/diagnostics/tests/resolve/dslMarker/dslMarkerOnExpectedTypeForInvokeExtensionCall.kt");
@@ -55365,6 +55371,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
         @TestMetadata("lambda.kt")
         public void testLambda() {
           runTest("compiler/fir/analysis-tests/testData/resolve/extraCheckers/unused/lambda.kt");
+        }
+
+        @Test
+        @TestMetadata("LocalFunction.kt")
+        public void testLocalFunction() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/extraCheckers/unused/LocalFunction.kt");
         }
 
         @Test
