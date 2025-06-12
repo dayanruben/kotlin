@@ -351,6 +351,7 @@ abstract class AbstractDiagnosticsTest : BaseDiagnosticsTest() {
         // only supports creating two modules, whereas there can be more than two in multi-module diagnostic tests
         // TODO: always use separate module mode, once analyzeFilesWithJavaIntegration can create multiple modules
         if (separateModules) {
+            @Suppress("DEPRECATION")
             return TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(
                 moduleContext.project,
                 files,
@@ -412,6 +413,7 @@ abstract class AbstractDiagnosticsTest : BaseDiagnosticsTest() {
             )
         )
 
+        @Suppress("DEPRECATION")
         container.get<LazyTopDownAnalyzer>().analyzeDeclarations(TopDownAnalysisMode.TopLevelDeclarations, files)
 
         return AnalysisResult.success(moduleTrace.bindingContext, moduleDescriptor)
