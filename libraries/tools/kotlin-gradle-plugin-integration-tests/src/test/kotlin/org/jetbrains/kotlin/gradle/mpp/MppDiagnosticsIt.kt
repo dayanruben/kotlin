@@ -26,7 +26,13 @@ class MppDiagnosticsIt : KGPBaseTest() {
     fun testDiagnosticsRenderingSmoke(gradleVersion: GradleVersion) {
         project("diagnosticsRenderingSmoke", gradleVersion) {
             build {
-                assertEqualsToFile(expectedOutputFile(), extractProjectsAndTheirDiagnostics())
+                // with isolated projects enabled, the order of diagnostics blocks is non-deterministic
+                // and depends on the subproject evaluation order, so the easiest way to assert that all diagnostics blocks are present
+                // is to compare blocks ignoring the order
+                assertBlocksEqual(
+                    expectedOutputFile().extractBlocksFromExpectedOutput(),
+                    extractProjectsAndTheirDiagnosticsInBlocks(),
+                )
             }
         }
     }
@@ -118,7 +124,12 @@ class MppDiagnosticsIt : KGPBaseTest() {
 
     @GradleTest
     fun testKt64121(gradleVersion: GradleVersion) {
-        project("kt64121", gradleVersion) {
+        project(
+            "kt64121",
+            gradleVersion,
+            // KT-75899 Support Gradle Project Isolation in KGP JS & Wasm
+            buildOptions = defaultBuildOptions.disableIsolatedProjects(),
+        ) {
             build("assemble")
         }
     }

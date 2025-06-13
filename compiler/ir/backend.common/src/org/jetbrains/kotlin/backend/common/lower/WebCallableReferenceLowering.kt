@@ -1,72 +1,58 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.ir.backend.js.lower
+package org.jetbrains.kotlin.backend.common.lower
 
+import org.jetbrains.kotlin.backend.common.CommonBackendContext
 import org.jetbrains.kotlin.backend.common.compilationException
-import org.jetbrains.kotlin.backend.common.lower.AbstractFunctionReferenceLowering
 import org.jetbrains.kotlin.backend.common.reflectedNameAccessor
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
-import org.jetbrains.kotlin.ir.backend.js.JsCommonBackendContext
-import org.jetbrains.kotlin.ir.backend.js.JsStatementOrigins
-import org.jetbrains.kotlin.ir.backend.js.utils.compileSuspendAsJsGenerator
 import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
 import org.jetbrains.kotlin.ir.builders.declarations.addGetter
 import org.jetbrains.kotlin.ir.builders.declarations.addProperty
-import org.jetbrains.kotlin.ir.builders.declarations.buildValueParameter
-import org.jetbrains.kotlin.ir.builders.irDelegatingConstructorCall
 import org.jetbrains.kotlin.ir.builders.irNull
-import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.expressions.IrDelegatingConstructorCall
+import org.jetbrains.kotlin.ir.declarations.IrAnonymousInitializer
+import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrDeclaration
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationOriginImpl
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationWithName
+import org.jetbrains.kotlin.ir.declarations.IrPackageFragment
+import org.jetbrains.kotlin.ir.declarations.IrProperty
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter
+import org.jetbrains.kotlin.ir.declarations.createBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrRichFunctionReference
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrReturnImpl
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classOrFail
 import org.jetbrains.kotlin.ir.types.typeWithArguments
-import org.jetbrains.kotlin.ir.util.*
+import org.jetbrains.kotlin.ir.util.createDispatchReceiverParameterWithClassParent
+import org.jetbrains.kotlin.ir.util.invokeFun
+import org.jetbrains.kotlin.ir.util.isKFunction
+import org.jetbrains.kotlin.ir.util.isKSuspendFunction
+import org.jetbrains.kotlin.ir.util.isLambda
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.utils.memoryOptimizedPlus
+import kotlin.collections.plus
 
-class CallableReferenceLowering(context: JsCommonBackendContext) : AbstractFunctionReferenceLowering<JsCommonBackendContext>(context) {
-    private val IrRichFunctionReference.isLambda: Boolean
+abstract class WebCallableReferenceLowering(context: CommonBackendContext) :
+    AbstractFunctionReferenceLowering<CommonBackendContext>(context) {
+
+    protected val IrRichFunctionReference.isLambda: Boolean
         get() = origin.isLambda
 
-    private val IrRichFunctionReference.shouldAddContinuation: Boolean
-        get() = isLambda && invokeFunction.isSuspend && !context.compileSuspendAsJsGenerator
-
-    private val IrRichFunctionReference.isKReference: Boolean
+    protected val IrRichFunctionReference.isKReference: Boolean
         get() = type.let { it.isKFunction() || it.isKSuspendFunction() }
 
     private val nothingType = context.irBuiltIns.nothingType
     private val stringType = context.irBuiltIns.stringType
-
-    override fun IrBuilderWithScope.generateSuperClassConstructorCall(
-        constructor: IrConstructor,
-        superClassType: IrType,
-        functionReference: IrRichFunctionReference,
-    ): IrDelegatingConstructorCall {
-        val superConstructor = superClassType.classOrFail.owner.primaryConstructor
-            ?: compilationException("Missing primary constructor", superClassType.classOrFail.owner)
-        return irDelegatingConstructorCall(superConstructor).apply {
-            if (functionReference.shouldAddContinuation) {
-                val continuation = constructor.parameters.single { it.origin == IrDeclarationOrigin.CONTINUATION }
-                arguments[0] = IrGetValueImpl(
-                    startOffset = UNDEFINED_OFFSET,
-                    endOffset = UNDEFINED_OFFSET,
-                    type = continuation.type,
-                    symbol = continuation.symbol,
-                    origin = JsStatementOrigins.CALLABLE_REFERENCE_INVOKE,
-                )
-            }
-        }
-    }
 
     private val IrRichFunctionReference.secondFunctionInterface: IrClass?
         get() =
@@ -115,14 +101,6 @@ class CallableReferenceLowering(context: JsCommonBackendContext) : AbstractFunct
         return Name.identifier(sb.toString())
     }
 
-    override fun getSuperClassType(reference: IrRichFunctionReference): IrType {
-        return if (reference.shouldAddContinuation) {
-            context.symbols.coroutineImpl.owner.defaultType
-        } else {
-            context.irBuiltIns.anyType
-        }
-    }
-
     override fun getAdditionalInterfaces(reference: IrRichFunctionReference): List<IrType> =
         listOfNotNull(reference.secondFunctionInterface?.symbol?.typeWithArguments((reference.type.removeProjections() as IrSimpleType).arguments))
 
@@ -136,23 +114,6 @@ class CallableReferenceLowering(context: JsCommonBackendContext) : AbstractFunct
         reference: IrRichFunctionReference,
     ) = irNull()
 
-    override fun getExtraConstructorParameters(constructor: IrConstructor, reference: IrRichFunctionReference): List<IrValueParameter> {
-        if (!reference.shouldAddContinuation) return emptyList()
-        return listOf(
-            buildValueParameter(constructor) {
-                val superContinuation = context.symbols.coroutineImpl.owner.primaryConstructor!!.parameters.single()
-                name = superContinuation.name
-                type = superContinuation.type
-                origin = IrDeclarationOrigin.CONTINUATION
-                kind = IrParameterKind.Regular
-            }
-        )
-    }
-
-    override fun getClassOrigin(reference: IrRichFunctionReference): IrDeclarationOrigin {
-        return if (reference.isKReference || !reference.isLambda) FUNCTION_REFERENCE_IMPL else LAMBDA_IMPL
-    }
-
     override fun getConstructorOrigin(reference: IrRichFunctionReference): IrDeclarationOrigin {
         return GENERATED_MEMBER_IN_CALLABLE_REFERENCE
     }
@@ -160,8 +121,6 @@ class CallableReferenceLowering(context: JsCommonBackendContext) : AbstractFunct
     override fun getInvokeMethodOrigin(reference: IrRichFunctionReference): IrDeclarationOrigin {
         return IrDeclarationOrigin.DEFINED
     }
-
-    override fun getConstructorCallOrigin(reference: IrRichFunctionReference) = JsStatementOrigins.CALLABLE_REFERENCE_CREATE
 
     private fun createNameProperty(clazz: IrClass, reference: IrRichFunctionReference) {
         // TODO(KT-76093): Support partial linkage for names of function references

@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.fir.analysis.checkers
 
 import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory2
 import org.jetbrains.kotlin.diagnostics.reportOn
@@ -28,21 +27,19 @@ import kotlin.reflect.KClass
 /**
  * Recursively analyzes type parameters and reports the diagnostic on the given source calculated using typeRef
  */
+context(context: CheckerContext, reporter: DiagnosticReporter)
 fun checkUpperBoundViolated(
     typeRef: FirTypeRef?,
-    context: CheckerContext,
-    reporter: DiagnosticReporter,
     isIgnoreTypeParameters: Boolean = false
 ) {
     val type = typeRef?.coneType?.lowerBoundIfFlexible() as? ConeClassLikeType ?: return
-    checkUpperBoundViolated(typeRef, type, context, reporter, isIgnoreTypeParameters, typeRef.source)
+    checkUpperBoundViolated(typeRef, type, isIgnoreTypeParameters, typeRef.source)
 }
 
+context(context: CheckerContext, reporter: DiagnosticReporter)
 private fun checkUpperBoundViolated(
     typeRef: FirTypeRef?,
     notExpandedType: ConeClassLikeType,
-    context: CheckerContext,
-    reporter: DiagnosticReporter,
     isIgnoreTypeParameters: Boolean = false,
     fallbackSource: KtSourceElement?,
 ) {
@@ -54,7 +51,7 @@ private fun checkUpperBoundViolated(
             ?.withArguments { it.withSource(FirTypeRefSource(null, typeRef.source)) }
             ?: return
     } else {
-        notExpandedType.fullyExpandedType(context.session)
+        notExpandedType.fullyExpandedType()
     }
 
     if (type.typeArguments.isEmpty()) return
@@ -71,8 +68,7 @@ private fun checkUpperBoundViolated(
     val substitutor = FE10LikeConeSubstitutor(substitution, context.session)
 
     return checkUpperBoundViolated(
-        context, reporter, typeParameterSymbols, type.typeArguments.toList(), substitutor,
-        isReportExpansionError = true, isIgnoreTypeParameters, fallbackSource,
+        typeParameterSymbols, type.typeArguments.toList(), substitutor, isReportExpansionError = true, isIgnoreTypeParameters, fallbackSource,
     )
 }
 
@@ -95,9 +91,8 @@ fun createSubstitutorForUpperBoundViolationCheck(
     )
 }
 
+context(context: CheckerContext, reporter: DiagnosticReporter)
 fun checkUpperBoundViolated(
-    context: CheckerContext,
-    reporter: DiagnosticReporter,
     typeParameters: List<FirTypeParameterSymbol>,
     typeArguments: List<ConeTypeProjection>,
     substitutor: ConeSubstitutor,
@@ -139,13 +134,14 @@ fun checkUpperBoundViolated(
                 ) {
                     if (isReportExpansionError && argumentTypeRef == null) {
                         reporter.reportOn(
-                            argumentSource ?: fallbackSource, typealiasDiagnostic, upperBound, argumentType, context
+                            argumentSource ?: fallbackSource, typealiasDiagnostic, upperBound, argumentType
                         )
                     } else {
-                        val extraMessage = if (upperBound.unwrapToSimpleTypeUsingLowerBound() is ConeCapturedType) "Consider removing the explicit type arguments" else ""
+                        val extraMessage =
+                            if (upperBound.unwrapToSimpleTypeUsingLowerBound() is ConeCapturedType) "Consider removing the explicit type arguments" else ""
                         reporter.reportOn(
                             argumentSource ?: fallbackSource, regularDiagnostic,
-                            upperBound, argumentType, extraMessage, context
+                            upperBound, argumentType, extraMessage
                         )
                     }
                 } else {
@@ -154,9 +150,7 @@ fun checkUpperBoundViolated(
                         additionalUpperBoundsProvider,
                         argumentType,
                         upperBound,
-                        context,
                         typeSystemContext,
-                        reporter,
                         isReportExpansionError,
                         argumentTypeRef,
                         argumentSource ?: fallbackSource
@@ -165,19 +159,18 @@ fun checkUpperBoundViolated(
             }
 
             if (argumentType is ConeClassLikeType) {
-                checkUpperBoundViolated(argumentTypeRef, argumentType, context, reporter, isIgnoreTypeParameters, fallbackSource)
+                checkUpperBoundViolated(argumentTypeRef, argumentType, isIgnoreTypeParameters, fallbackSource)
             }
         }
     }
 }
 
+context(context: CheckerContext, reporter: DiagnosticReporter)
 private fun reportUpperBoundViolationWarningIfNecessary(
     additionalUpperBoundsProvider: FirPlatformUpperBoundsProvider?,
     argumentType: ConeKotlinType,
     upperBound: ConeKotlinType,
-    context: CheckerContext,
     typeSystemContext: ConeInferenceContext,
-    reporter: DiagnosticReporter,
     isReportExpansionError: Boolean,
     argumentTypeRef: FirTypeRef?,
     argumentSource: KtSourceElement?,
@@ -202,7 +195,7 @@ private fun reportUpperBoundViolationWarningIfNecessary(
             isReportExpansionError && argumentTypeRef == null -> additionalUpperBoundsProvider.diagnosticForTypeAlias
             else -> additionalUpperBoundsProvider.diagnostic
         }
-        reporter.reportOn(argumentSource, factory, upperBound, properArgumentType, context)
+        reporter.reportOn(argumentSource, factory, upperBound, properArgumentType)
     }
 }
 

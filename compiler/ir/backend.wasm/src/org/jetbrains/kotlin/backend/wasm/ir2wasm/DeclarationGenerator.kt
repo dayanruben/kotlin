@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
-import org.jetbrains.kotlin.ir.backend.js.lower.CallableReferenceLowering
+import org.jetbrains.kotlin.backend.common.lower.WebCallableReferenceLowering
 import org.jetbrains.kotlin.ir.backend.js.lower.originalFqName
 import org.jetbrains.kotlin.ir.backend.js.utils.*
 import org.jetbrains.kotlin.ir.declarations.*
@@ -29,6 +29,9 @@ import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.wasm.ir.*
 import org.jetbrains.kotlin.wasm.ir.source.location.SourceLocation
 
+private const val TYPE_INFO_FLAG_ANONYMOUS_CLASS = 1
+private const val TYPE_INFO_FLAG_LOCAL_CLASS = 2
+
 class DeclarationGenerator(
     private val backendContext: WasmBackendContext,
     private val wasmFileCodegenContext: WasmFileCodegenContext,
@@ -37,7 +40,6 @@ class DeclarationGenerator(
     private val allowIncompleteImplementations: Boolean,
     private val skipCommentInstructions: Boolean,
 ) : IrVisitorVoid() {
-
     // Shortcuts
     private val irBuiltIns: IrBuiltIns = backendContext.irBuiltIns
 
@@ -391,6 +393,10 @@ class DeclarationGenerator(
 
             buildConstI64(wasmFileCodegenContext.referenceTypeId(symbol), location)
 
+            val isAnonymousFlag = if (klass.isAnonymousObject) TYPE_INFO_FLAG_ANONYMOUS_CLASS else 0
+            val isLocalFlag = if (klass.isOriginallyLocalClass) TYPE_INFO_FLAG_LOCAL_CLASS else 0
+            buildConstI32(isAnonymousFlag or isLocalFlag, location)
+
             buildStructNew(wasmFileCodegenContext.rttiType, location)
         }
 
@@ -654,7 +660,7 @@ val IrFunction.locationTarget: IrElement
         IrDeclarationOrigin.FUNCTION_FOR_DEFAULT_PARAMETER -> this
         IrDeclarationOrigin.LOCAL_FUNCTION_FOR_LAMBDA -> this
         else -> when (parentClassOrNull?.origin) {
-            CallableReferenceLowering.LAMBDA_IMPL,
+            WebCallableReferenceLowering.FUNCTION_REFERENCE_IMPL,
             IrDeclarationOrigin.LOCAL_FUNCTION_FOR_LAMBDA -> this
             else -> body ?: this
         }

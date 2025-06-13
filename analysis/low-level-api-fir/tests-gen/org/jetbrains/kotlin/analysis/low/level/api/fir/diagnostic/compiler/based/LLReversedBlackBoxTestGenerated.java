@@ -6403,6 +6403,12 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
     }
 
     @Test
+    @TestMetadata("asToNothing.kt")
+    public void testAsToNothing() {
+      runTest("compiler/testData/codegen/box/casts/asToNothing.kt");
+    }
+
+    @Test
     @TestMetadata("asUnit.kt")
     public void testAsUnit() {
       runTest("compiler/testData/codegen/box/casts/asUnit.kt");
@@ -6622,6 +6628,12 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
     @TestMetadata("unitNullableCast.kt")
     public void testUnitNullableCast() {
       runTest("compiler/testData/codegen/box/casts/unitNullableCast.kt");
+    }
+
+    @Test
+    @TestMetadata("wasmCastMessages.kt")
+    public void testWasmCastMessages() {
+      runTest("compiler/testData/codegen/box/casts/wasmCastMessages.kt");
     }
 
     @Nested
@@ -23342,6 +23354,12 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
     @TestMetadata("kt49384_getSame.kt")
     public void testKt49384_getSame() {
       runTest("compiler/testData/codegen/box/funInterface/kt49384_getSame.kt");
+    }
+
+    @Test
+    @TestMetadata("kt77685.kt")
+    public void testKt77685() {
+      runTest("compiler/testData/codegen/box/funInterface/kt77685.kt");
     }
 
     @Test

@@ -789,7 +789,6 @@ tasks {
     }
 
     register("jvmCompilerTest") {
-        dependsOn("dist")
         dependsOn(
             ":compiler:tests-common-new:test",
             ":compiler:container:test",
@@ -1043,6 +1042,12 @@ tasks {
 
     named("check") {
         dependsOn("test")
+    }
+
+    register("dependenciesAll") {
+        subprojects.forEach {
+            dependsOn(it.tasks.named("dependencies"))
+        }
     }
 
     named("checkBuild") {

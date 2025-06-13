@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.fir.resolve.calls.stages.shouldHaveLowPriorityDueToS
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.inference.ConeTypeParameterBasedTypeVariable
 import org.jetbrains.kotlin.fir.resolve.inference.InferenceComponents
+import org.jetbrains.kotlin.fir.resolve.inference.inferenceLogger
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.scopes.*
 import org.jetbrains.kotlin.fir.scopes.impl.overrides
@@ -49,6 +50,7 @@ import org.jetbrains.kotlin.name.StandardClassIds.UByte
 import org.jetbrains.kotlin.name.StandardClassIds.UInt
 import org.jetbrains.kotlin.name.StandardClassIds.ULong
 import org.jetbrains.kotlin.name.StandardClassIds.UShort
+import org.jetbrains.kotlin.resolve.calls.inference.components.ConstraintSystemMarker
 import org.jetbrains.kotlin.resolve.calls.inference.model.NewConstraintSystemImpl
 import org.jetbrains.kotlin.resolve.calls.inference.model.SimpleConstraintSystemConstraintPosition
 import org.jetbrains.kotlin.resolve.calls.results.*
@@ -397,7 +399,9 @@ class ConeOverloadConflictResolver(
             if (call1.contextReceiverCount < call2.contextReceiverCount) return false
         }
 
-        return createEmptyConstraintSystem().isSignatureEquallyOrMoreSpecific(
+        return createEmptyConstraintSystem().also {
+            inferenceComponents.session.inferenceLogger?.logStage("Some compareCallsByUsedArguments() call", it.constraintSystemMarker)
+        }.isSignatureEquallyOrMoreSpecific(
             call1,
             call2,
             SpecificityComparisonWithNumerics,
@@ -648,4 +652,6 @@ class ConeSimpleConstraintSystemImpl(val system: NewConstraintSystemImpl, val se
     override val context: TypeSystemInferenceExtensionContext
         get() = system
 
+    override val constraintSystemMarker: ConstraintSystemMarker
+        get() = system
 }

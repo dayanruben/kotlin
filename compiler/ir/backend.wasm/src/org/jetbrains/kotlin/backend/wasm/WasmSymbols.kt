@@ -59,6 +59,8 @@ class WasmSymbols(
         val isSupportedInterface = getInternalFunction("isSupportedInterface")
         val getInterfaceVTable = getInternalFunction("getInterfaceVTable")
         val wasmGetInterfaceVTableBodyImpl = getInternalFunction("wasmGetInterfaceVTableBodyImpl")
+        val kFunctionImpl: IrClassSymbol = getInternalClass("KFunctionImpl")
+        val kFunctionErrorImpl: IrClassSymbol = getInternalClass("KFunctionErrorImpl")
     }
 
     internal val reflectionSymbols: WasmReflectionSymbols = WasmReflectionSymbols()
@@ -76,6 +78,7 @@ class WasmSymbols(
     override val throwNullPointerException = getInternalFunction("THROW_NPE")
     override val throwISE = getInternalFunction("THROW_ISE")
     override val throwTypeCastException = getInternalFunction("THROW_CCE")
+    val throwTypeCastWithInfoException = getInternalFunction("THROW_CCE_WITH_INFO")
     override val throwIAE = getInternalFunction("THROW_IAE")
     val throwNoBranchMatchedException =
         getInternalFunction("throwNoBranchMatchedException")

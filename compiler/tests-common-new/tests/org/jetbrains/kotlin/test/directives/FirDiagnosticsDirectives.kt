@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.test.directives
 
+import org.jetbrains.kotlin.config.InferenceLogsFormat
 import org.jetbrains.kotlin.test.FirParser
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives.FIR_PARSER
@@ -91,6 +92,10 @@ object FirDiagnosticsDirectives : SimpleDirectivesContainer() {
         description = "Enable experimental checkers"
     )
 
+    val DUMP_INFERENCE_LOGS by enumDirective<InferenceLogsFormat>(
+        description = "Render the inference constraints dump file"
+    )
+
     val DISABLE_JAVA_FACADE by directive(
         description = "Disables javac for diagnostic tests containing incorrect Java code. Such tests must be fixed, but until they are, use this directive"
     )
@@ -138,12 +143,6 @@ object FirDiagnosticsDirectives : SimpleDirectivesContainer() {
 
     val DISABLE_DOUBLE_CHECKING_COMMON_DIAGNOSTICS by directive(
         description = "Disables additional run of platform checkers in common environment"
-    )
-
-    val FIXATION_LOGS by directive(
-        description = """
-            Enables collection of fixation logs for K2 diagnostics tests
-        """
     )
 }
 

@@ -75,8 +75,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.mapToIndex
 
 class FirElementSerializer private constructor(
-    private val session: FirSession,
-    private val scopeSession: ScopeSession,
+    override val session: FirSession,
+    override val scopeSession: ScopeSession,
     private val currentDeclaration: FirDeclaration?,
     private val typeParameters: Interner<FirTypeParameter>,
     private val extension: FirSerializerExtension,
@@ -86,7 +86,7 @@ class FirElementSerializer private constructor(
     private val typeApproximator: AbstractTypeApproximator,
     private val languageVersionSettings: LanguageVersionSettings,
     private val produceHeaderKlib: Boolean,
-) {
+) : SessionAndScopeSessionHolder {
     private val contractSerializer = FirContractSerializer()
     private val providedDeclarationsService = session.providedDeclarationsForMetadataService
     private val stdLibCompilation = languageVersionSettings.getFlag(AnalysisFlags.stdlibCompilation)
@@ -637,7 +637,7 @@ class FirElementSerializer private constructor(
         }
 
         val hasConstant = property.isConst || (!property.isVar
-                && property.returnTypeRef.coneType.fullyExpandedType(session).canBeUsedForConstVal()
+                && property.returnTypeRef.coneType.fullyExpandedType().canBeUsedForConstVal()
                 && property.symbol.resolvedInitializer.hasConstantValue(session))
         val flags = Flags.getPropertyFlags(
             hasAnnotations,
@@ -854,7 +854,7 @@ class FirElementSerializer private constructor(
             builder.setUnderlyingType(local.typeProto(underlyingType, abbreviationOnly = true))
         }
 
-        val expandedType = underlyingType.fullyExpandedType(session)
+        val expandedType = underlyingType.fullyExpandedType()
         if (useTypeTable()) {
             builder.expandedTypeId = local.typeId(expandedType)
         } else {
@@ -1046,7 +1046,7 @@ class FirElementSerializer private constructor(
         // `type` we'll see here will be fully expanded with the declaration
         // site session, but [FirElementSerializer] will be run with a use site one,
         // so it must be expanded twice.
-        val useSiteSessionExpandedType = type.fullyExpandedType(session)
+        val useSiteSessionExpandedType = type.fullyExpandedType()
         val abbreviation = type.abbreviatedTypeOrSelf
         val mainType = if (!abbreviationOnly) useSiteSessionExpandedType else abbreviation
         val mainTypeProto = typeOrTypealiasProto(

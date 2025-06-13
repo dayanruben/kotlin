@@ -23,8 +23,8 @@ kotlinx-metadataJvm = "0.9.0"
 kotlinx-bcv = "0.17.0"
 gson = "2.11.0"
 jetbrains-ideaExt = "1.0.1"
-jackson = "2.18.1"
-jgit = "7.0.0.202409031743-r"
+jackson = "2.19.0"
+jgit = "7.2.1.202505142326-r"
 jsoup = "1.17.2"
 junit4 = "4.13.2"
 junit5 = "5.10.1"
@@ -58,6 +58,7 @@ woodstox-core = "7.1.0"
 http-client = "4.5.14"
 json = "20231013"
 dataframe = "0.14.1"
+commons-beanutils = "1.11.0"
 commons-compress = "1.27.1"
 commons-io = "2.18.0"
 dataframe-dev = "1.0.0-dev-7243"
@@ -90,6 +91,7 @@ dataframe-compiler-plugin-core = { module = "org.jetbrains.kotlinx.dataframe:dat
 dataframe-core-dev = { module = "org.jetbrains.kotlinx:dataframe-core", version.ref = "dataframe-dev" }
 dataframe-csv-dev = { module = "org.jetbrains.kotlinx:dataframe-csv", version.ref = "dataframe-dev" }
 
+apache-commons-beanutils = { module = "commons-beanutils:commons-beanutils", version.ref = "commons-beanutils" }
 apache-commons-compress = { module = "org.apache.commons:commons-compress", version.ref = "commons-compress" }
 apache-commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
 

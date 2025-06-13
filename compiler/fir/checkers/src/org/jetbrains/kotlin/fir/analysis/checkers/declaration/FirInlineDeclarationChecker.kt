@@ -48,7 +48,7 @@ object FirInlineDeclarationChecker : FirFunctionChecker(MppCheckerKind.Common) {
             checkParametersInNotInline(declaration)
             return
         }
-        if (context.session.inlineCheckerExtension?.isGenerallyOk(declaration, context, reporter) == false) return
+        if (context.session.inlineCheckerExtension?.isGenerallyOk(declaration) == false) return
         if (declaration !is FirPropertyAccessor && declaration !is FirSimpleFunction) return
 
         checkCallableDeclaration(declaration)
@@ -403,7 +403,7 @@ object FirInlineDeclarationChecker : FirFunctionChecker(MppCheckerKind.Common) {
         overriddenSymbols: List<FirCallableSymbol<FirCallableDeclaration>>,
     ) {
         for (param in function.valueParameters) {
-            val coneType = param.returnTypeRef.coneType.fullyExpandedType(context.session)
+            val coneType = param.returnTypeRef.coneType.fullyExpandedType()
             val functionKind = coneType.functionTypeKind(context.session)
             val isFunctionalType = functionKind != null
             val isSuspendFunctionType = functionKind?.isSuspendOrKSuspendFunction == true
@@ -416,7 +416,7 @@ object FirInlineDeclarationChecker : FirFunctionChecker(MppCheckerKind.Common) {
             if (param.isNoinline) continue
 
             if (function.isSuspend && defaultValue != null && isSuspendFunctionType) {
-                context.session.inlineCheckerExtension?.checkSuspendFunctionalParameterWithDefaultValue(param, context, reporter)
+                context.session.inlineCheckerExtension?.checkSuspendFunctionalParameterWithDefaultValue(param)
             }
 
             if (isSuspendFunctionType && !param.isCrossinline && !function.isSuspend) {
@@ -451,7 +451,7 @@ object FirInlineDeclarationChecker : FirFunctionChecker(MppCheckerKind.Common) {
 
         //check for inherited default values
         context.session.inlineCheckerExtension?.checkFunctionalParametersWithInheritedDefaultValues(
-            function, context, reporter, overriddenSymbols
+            function, overriddenSymbols
         )
     }
 
@@ -504,7 +504,7 @@ object FirInlineDeclarationChecker : FirFunctionChecker(MppCheckerKind.Common) {
     context(context: CheckerContext, reporter: DiagnosticReporter)
     fun checkCallableDeclaration(declaration: FirCallableDeclaration) {
         if (declaration is FirPropertyAccessor) return
-        val directOverriddenSymbols = declaration.symbol.directOverriddenSymbolsSafe(context)
+        val directOverriddenSymbols = declaration.symbol.directOverriddenSymbolsSafe()
         if (declaration is FirSimpleFunction) {
             checkParameters(declaration, directOverriddenSymbols)
             checkNothingToInline(declaration)
