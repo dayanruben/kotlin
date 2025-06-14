@@ -863,7 +863,7 @@ public class KotlinParsing extends AbstractKotlinParsing {
             return true;
         }
 
-        KtKeywordToken targetKeyword = atTargetKeyword();
+        @Nullable KtKeywordToken targetKeyword = atSet(ANNOTATION_TARGETS) ? (KtKeywordToken)myBuilder.getTokenType() : null;
         if (mode == FILE_ANNOTATIONS_WHEN_PACKAGE_OMITTED && !(targetKeyword == FILE_KEYWORD && lookahead(1) == COLON)) {
             return false;
         }
@@ -886,26 +886,23 @@ public class KotlinParsing extends AbstractKotlinParsing {
     }
 
     private void parseAnnotationTarget(KtKeywordToken keyword) {
-        String message = "Expecting \"" + keyword.getValue() + COLON.getValue() + "\" prefix for " + keyword.getValue() + " annotations";
-
         PsiBuilder.Marker marker = mark();
 
-        if (!expect(keyword, message)) {
+        if (!expect(keyword)) {
+            error(generateAnnotationTargetErrorMessage(keyword));
             marker.drop();
         }
         else {
             marker.done(ANNOTATION_TARGET);
         }
 
-        expect(COLON, message, IDENTIFIER_RBRACKET_LBRACKET_SET);
+        if (!expect(KtTokens.COLON)) {
+            errorWithRecovery(generateAnnotationTargetErrorMessage(keyword), IDENTIFIER_RBRACKET_LBRACKET_SET);
+        }
     }
 
-    @Nullable
-    private KtKeywordToken atTargetKeyword() {
-        for (IElementType target : ANNOTATION_TARGETS.getTypes()) {
-            if (at(target)) return (KtKeywordToken) target;
-        }
-        return null;
+    private static String generateAnnotationTargetErrorMessage(KtKeywordToken keyword) {
+        return "Expecting \"" + keyword + KtTokens.COLON.getValue() + "\" prefix for " + keyword + " annotations";
     }
 
     /*
@@ -2324,8 +2321,7 @@ public class KotlinParsing extends AbstractKotlinParsing {
         while (true) {
             recoverOnParenthesizedWordForPlatformTypes(0, "Mutable", true);
 
-            if (expect(IDENTIFIER, "Expecting type name",
-                       TokenSet.orSet(KotlinExpressionParsing.EXPRESSION_FIRST, KotlinExpressionParsing.EXPRESSION_FOLLOW, DECLARATION_FIRST))) {
+            if (expect(IDENTIFIER, "Expecting type name", USER_TYPE_NAME_RECOVERY_SET)) {
                 reference.done(REFERENCE_EXPRESSION);
             }
             else {
@@ -2472,6 +2468,58 @@ public class KotlinParsing extends AbstractKotlinParsing {
     }
 
     private static final TokenSet NO_MODIFIER_BEFORE_FOR_VALUE_PARAMETER = TokenSet.create(COMMA, COLON, EQ, RPAR);
+
+    /*package*/ static final TokenSet EXPRESSION_FIRST = TokenSet.create(
+            // Prefix
+            MINUS, PLUS, MINUSMINUS, PLUSPLUS,
+            EXCL, EXCLEXCL, // Joining complex tokens makes it necessary to put EXCLEXCL here
+            // Atomic
+
+            COLONCOLON, // callable reference
+
+            LPAR, // parenthesized
+
+            // literal constant
+            TRUE_KEYWORD, FALSE_KEYWORD,
+            INTERPOLATION_PREFIX, OPEN_QUOTE,
+            INTEGER_LITERAL, CHARACTER_LITERAL, FLOAT_LITERAL,
+            NULL_KEYWORD,
+
+            LBRACE, // functionLiteral
+            FUN_KEYWORD, // expression function
+
+            THIS_KEYWORD, // this
+            SUPER_KEYWORD, // super
+
+            IF_KEYWORD, // if
+            WHEN_KEYWORD, // when
+            TRY_KEYWORD, // try
+            OBJECT_KEYWORD, // object
+
+            // jump
+            THROW_KEYWORD,
+            RETURN_KEYWORD,
+            CONTINUE_KEYWORD,
+            BREAK_KEYWORD,
+
+            // loop
+            FOR_KEYWORD,
+            WHILE_KEYWORD,
+            DO_KEYWORD,
+
+            IDENTIFIER, // SimpleName
+
+            AT, // Just for better recovery and maybe for annotations
+
+            LBRACKET // Collection literal expression
+    );
+
+    /*package*/ static final TokenSet EXPRESSION_FOLLOW = TokenSet.create(
+            EOL_OR_SEMICOLON, ARROW, COMMA, RBRACE, RPAR, RBRACKET
+    );
+
+    private static final TokenSet USER_TYPE_NAME_RECOVERY_SET =
+        TokenSet.orSet(EXPRESSION_FIRST, EXPRESSION_FOLLOW, DECLARATION_FIRST);
 
     /*
      * functionParameters
