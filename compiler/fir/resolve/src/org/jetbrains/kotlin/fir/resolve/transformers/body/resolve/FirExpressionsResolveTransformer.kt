@@ -42,7 +42,7 @@ import org.jetbrains.kotlin.fir.resolve.calls.findTypesForSuperCandidates
 import org.jetbrains.kotlin.fir.resolve.calls.stages.mapArguments
 import org.jetbrains.kotlin.fir.resolve.diagnostics.*
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
-import org.jetbrains.kotlin.fir.resolve.transformers.replaceLambdaArgumentInvocationKinds
+import org.jetbrains.kotlin.fir.resolve.transformers.replaceLambdaArgumentEffects
 import org.jetbrains.kotlin.fir.resolve.transformers.unwrapAtoms
 import org.jetbrains.kotlin.fir.scopes.impl.isWrappedIntegerOperator
 import org.jetbrains.kotlin.fir.scopes.impl.isWrappedIntegerOperatorForUnsignedType
@@ -218,12 +218,16 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
             }
         }
 
+        return result.addSmartcastIfNeeded(data)
+    }
+
+    private fun FirExpression.addSmartcastIfNeeded(resolutionMode: ResolutionMode): FirExpression {
         // If we're resolving the LHS of an assignment, skip DFA to prevent the access being treated as a variable read and
         // smart-casts being applied.
-        if (data !is ResolutionMode.AssignmentLValue) {
-            return transformExpressionUsingSmartcastInfo(result)
+        if (resolutionMode !is ResolutionMode.AssignmentLValue) {
+            return transformExpressionUsingSmartcastInfo(this)
         }
-        return result
+        return this
     }
 
     private fun transformExpressionUsingSmartcastInfo(original: FirExpression): FirExpression {
@@ -291,6 +295,12 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
                 this, resolutionMode, isUsedAsReceiver = true, isUsedAsGetClassReceiver = isUsedAsGetClassReceiver
             )
             else -> transformSingle(this@FirExpressionsResolveTransformer, resolutionMode)
+        }.let {
+            // TODO: consider calling [addSmartcastIfNeeded] unconditionally (KT-77487)
+            if (it is FirFunctionCall &&
+                ((it.calleeReference as? FirResolvedNamedReference)?.resolvedSymbol?.fir as? FirContractDescriptionOwner)?.contractDescription != null) {
+                it.addSmartcastIfNeeded(resolutionMode)
+            } else it
         }
     }
 
@@ -532,7 +542,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
                 return functionCall
             }
             functionCall.transformAnnotations(transformer, data)
-            functionCall.replaceLambdaArgumentInvocationKinds(session)
+            functionCall.replaceLambdaArgumentEffects(session)
             functionCall.transformTypeArguments(transformer, ResolutionMode.ContextIndependent)
             val choosingOptionForAugmentedAssignment = callResolutionMode == CallResolutionMode.OPTION_FOR_AUGMENTED_ASSIGNMENT
             val withTransformedArguments = if (!choosingOptionForAugmentedAssignment) {

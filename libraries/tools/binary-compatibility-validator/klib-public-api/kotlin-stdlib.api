@@ -37,6 +37,10 @@ open annotation class kotlin.contracts/ExperimentalContracts : kotlin/Annotation
     constructor <init>() // kotlin.contracts/ExperimentalContracts.<init>|<init>(){}[0]
 }
 
+open annotation class kotlin.contracts/ExperimentalExtendedContracts : kotlin/Annotation { // kotlin.contracts/ExperimentalExtendedContracts|null[0]
+    constructor <init>() // kotlin.contracts/ExperimentalExtendedContracts.<init>|<init>(){}[0]
+}
+
 open annotation class kotlin.coroutines/RestrictsSuspension : kotlin/Annotation { // kotlin.coroutines/RestrictsSuspension|null[0]
     constructor <init>() // kotlin.coroutines/RestrictsSuspension.<init>|<init>(){}[0]
 }
@@ -797,6 +801,8 @@ abstract interface kotlin.contracts/CallsInPlace : kotlin.contracts/Effect // ko
 abstract interface kotlin.contracts/ConditionalEffect : kotlin.contracts/Effect // kotlin.contracts/ConditionalEffect|null[0]
 
 abstract interface kotlin.contracts/ContractBuilder { // kotlin.contracts/ContractBuilder|null[0]
+    abstract fun (kotlin/Boolean).implies(kotlin.contracts/ReturnsNotNull) // kotlin.contracts/ContractBuilder.implies|implies@kotlin.Boolean(kotlin.contracts.ReturnsNotNull){}[0]
+    abstract fun <#A1: kotlin/Any?> (kotlin/Boolean).holdsIn(kotlin/Function<#A1>): kotlin.contracts/HoldsIn // kotlin.contracts/ContractBuilder.holdsIn|holdsIn@kotlin.Boolean(kotlin.Function<0:0>){0§<kotlin.Any?>}[0]
     abstract fun <#A1: kotlin/Any?> callsInPlace(kotlin/Function<#A1>, kotlin.contracts/InvocationKind = ...): kotlin.contracts/CallsInPlace // kotlin.contracts/ContractBuilder.callsInPlace|callsInPlace(kotlin.Function<0:0>;kotlin.contracts.InvocationKind){0§<kotlin.Any?>}[0]
     abstract fun returns(): kotlin.contracts/Returns // kotlin.contracts/ContractBuilder.returns|returns(){}[0]
     abstract fun returns(kotlin/Any?): kotlin.contracts/Returns // kotlin.contracts/ContractBuilder.returns|returns(kotlin.Any?){}[0]
@@ -804,6 +810,8 @@ abstract interface kotlin.contracts/ContractBuilder { // kotlin.contracts/Contra
 }
 
 abstract interface kotlin.contracts/Effect // kotlin.contracts/Effect|null[0]
+
+abstract interface kotlin.contracts/HoldsIn : kotlin.contracts/Effect // kotlin.contracts/HoldsIn|null[0]
 
 abstract interface kotlin.contracts/Returns : kotlin.contracts/SimpleEffect // kotlin.contracts/Returns|null[0]
 
@@ -10738,15 +10746,6 @@ final class <#A: kotlin/Any?> kotlin.native.internal/KMutableProperty0Impl : kot
 }
 
 // Targets: [native]
-final class <#A: kotlin/Any?> kotlin.native.internal/Ref { // kotlin.native.internal/Ref|null[0]
-    constructor <init>() // kotlin.native.internal/Ref.<init>|<init>(){}[0]
-
-    final var element // kotlin.native.internal/Ref.element|{}element[0]
-        final fun <get-element>(): #A // kotlin.native.internal/Ref.element.<get-element>|<get-element>(){}[0]
-        final fun <set-element>(#A) // kotlin.native.internal/Ref.element.<set-element>|<set-element>(1:0){}[0]
-}
-
-// Targets: [native]
 final class <#A: kotlin/Any?> kotlinx.cinterop/ObjCNotImplementedVar : kotlinx.cinterop/CVariable { // kotlinx.cinterop/ObjCNotImplementedVar|null[0]
     constructor <init>(kotlin.native.internal/NativePtr) // kotlinx.cinterop/ObjCNotImplementedVar.<init>|<init>(kotlin.native.internal.NativePtr){}[0]
 
@@ -12754,9 +12753,6 @@ final fun kotlin.native.internal/ThrowClassCastException(kotlin/Any, kotlin.nati
 
 // Targets: [native]
 final fun kotlin.native.internal/ThrowInvalidReceiverTypeException(kotlin.reflect/KClass<*>): kotlin/Nothing // kotlin.native.internal/ThrowInvalidReceiverTypeException|ThrowInvalidReceiverTypeException(kotlin.reflect.KClass<*>){}[0]
-
-// Targets: [native]
-final fun kotlin.native.internal/ThrowIrLinkageError(kotlin/String?): kotlin/Nothing // kotlin.native.internal/ThrowIrLinkageError|ThrowIrLinkageError(kotlin.String?){}[0]
 
 // Targets: [native]
 final fun kotlin.native.internal/ThrowKotlinNothingValueException(): kotlin/Nothing // kotlin.native.internal/ThrowKotlinNothingValueException|ThrowKotlinNothingValueException(){}[0]

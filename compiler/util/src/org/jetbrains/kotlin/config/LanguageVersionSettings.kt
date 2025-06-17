@@ -430,6 +430,8 @@ enum class LanguageFeature(
     AllowCheckForErasedTypesInContracts(KOTLIN_2_3, "KT-45683"),
     AllowContractsOnSomeOperators(KOTLIN_2_3, "KT-32313"),
     AllowContractsOnPropertyAccessors(KOTLIN_2_3, "KT-27090"),
+    ConditionImpliesReturnsContracts(KOTLIN_2_3, "KT-8889"),
+    HoldsInContracts(KOTLIN_2_3, "KT-32993"),
 
     // 2.4
 

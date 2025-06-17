@@ -89,6 +89,30 @@ class ConeEffectExtractor(
                 }
             }
 
+            FirContractsDslNames.IMPLIES_BUILDER -> {
+                if (session.languageVersionSettings.supportsFeature(LanguageFeature.ConditionImpliesReturnsContracts)) {
+                    val condition = functionCall.explicitReceiver?.asContractElement() as? ConeBooleanExpression ?: noReceiver(resolvedId)
+                    when (val argument = functionCall.arguments.getOrNull(0)) {
+                        null -> noArgument(resolvedId)
+                        else -> (argument.asContractElement() as? ConeEffectDeclaration)?.let {
+                            ConeConditionalReturnsDeclaration(condition, it)
+                        } ?: ConeContractDescriptionError.IllegalElement(argument).asElement()
+                    }
+                } else {
+                    ConeContractDescriptionError.NotContractDsl(resolvedId).asElement()
+                }
+            }
+
+            FirContractsDslNames.HOLDS_IN -> {
+                if (session.languageVersionSettings.supportsFeature(LanguageFeature.HoldsInContracts)) {
+                    val condition = functionCall.explicitReceiver?.asContractElement() as? ConeBooleanExpression ?: noReceiver(resolvedId)
+                    val reference = functionCall.arguments[0].asContractValueExpression()
+                    ConeHoldsInEffectDeclaration(condition, reference)
+                } else {
+                    ConeContractDescriptionError.NotContractDsl(resolvedId).asElement()
+                }
+            }
+
             BOOLEAN_AND, BOOLEAN_OR -> {
                 val left = functionCall.explicitReceiver?.asContractBooleanExpression() ?: noReceiver(resolvedId)
                 val right = functionCall.arguments.firstOrNull()?.asContractBooleanExpression() ?: noArgument(resolvedId)

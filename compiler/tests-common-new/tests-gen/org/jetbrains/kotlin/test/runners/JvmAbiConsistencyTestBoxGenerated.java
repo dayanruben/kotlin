@@ -52001,6 +52001,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
       }
 
       @Test
+      @TestMetadata("deprecatedDefaultType.kt")
+      public void testDeprecatedDefaultType() {
+        runTest("compiler/testData/codegen/box/reflection/classes/deprecatedDefaultType.kt");
+      }
+
+      @Test
       @TestMetadata("javaVoid.kt")
       public void testJavaVoid() {
         runTest("compiler/testData/codegen/box/reflection/classes/javaVoid.kt");
@@ -54201,6 +54207,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
       }
 
       @Test
+      @TestMetadata("flexibleTypesSubstitution.kt")
+      public void testFlexibleTypesSubstitution() {
+        runTest("compiler/testData/codegen/box/reflection/supertypes/flexibleTypesSubstitution.kt");
+      }
+
+      @Test
       @TestMetadata("genericSubstitution.kt")
       public void testGenericSubstitution() {
         runTest("compiler/testData/codegen/box/reflection/supertypes/genericSubstitution.kt");
@@ -54210,6 +54222,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
       @TestMetadata("isSubclassOfIsSuperclassOf.kt")
       public void testIsSubclassOfIsSuperclassOf() {
         runTest("compiler/testData/codegen/box/reflection/supertypes/isSubclassOfIsSuperclassOf.kt");
+      }
+
+      @Test
+      @TestMetadata("nullablilitySubstitution.kt")
+      public void testNullablilitySubstitution() {
+        runTest("compiler/testData/codegen/box/reflection/supertypes/nullablilitySubstitution.kt");
       }
 
       @Test
@@ -54272,6 +54290,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
       @TestMetadata("classes.kt")
       public void testClasses() {
         runTest("compiler/testData/codegen/box/reflection/typeOf/classes.kt");
+      }
+
+      @Test
+      @TestMetadata("definitelyNotNullType.kt")
+      public void testDefinitelyNotNullType() {
+        runTest("compiler/testData/codegen/box/reflection/typeOf/definitelyNotNullType.kt");
       }
 
       @Test
@@ -54356,6 +54380,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
       @TestMetadata("reifiedAsNestedArgument.kt")
       public void testReifiedAsNestedArgument() {
         runTest("compiler/testData/codegen/box/reflection/typeOf/reifiedAsNestedArgument.kt");
+      }
+
+      @Test
+      @TestMetadata("typeAliasedType.kt")
+      public void testTypeAliasedType() {
+        runTest("compiler/testData/codegen/box/reflection/typeOf/typeAliasedType.kt");
       }
 
       @Test
@@ -54728,6 +54758,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
       @TestMetadata("platformTypeToString.kt")
       public void testPlatformTypeToString() {
         runTest("compiler/testData/codegen/box/reflection/types/platformTypeToString.kt");
+      }
+
+      @Test
+      @TestMetadata("typeAliasedType.kt")
+      public void testTypeAliasedType() {
+        runTest("compiler/testData/codegen/box/reflection/types/typeAliasedType.kt");
       }
 
       @Test
@@ -58730,12 +58766,6 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
     }
 
     @Test
-    @TestMetadata("defaultValues.kt")
-    public void testDefaultValues() {
-      runTest("compiler/testData/codegen/box/syntheticAccessors/defaultValues.kt");
-    }
-
-    @Test
     @TestMetadata("inline.kt")
     public void testInline() {
       runTest("compiler/testData/codegen/box/syntheticAccessors/inline.kt");
@@ -58871,6 +58901,112 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
     @TestMetadata("syntheticAccessorNames.kt")
     public void testSyntheticAccessorNames() {
       runTest("compiler/testData/codegen/box/syntheticAccessors/syntheticAccessorNames.kt");
+    }
+
+    @Nested
+    @TestMetadata("compiler/testData/codegen/box/syntheticAccessors/functionsWithDefaultValues")
+    @TestDataPath("$PROJECT_ROOT")
+    public class FunctionsWithDefaultValues {
+      @Test
+      public void testAllFilesPresentInFunctionsWithDefaultValues() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/syntheticAccessors/functionsWithDefaultValues"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+      }
+
+      @Test
+      @TestMetadata("extensionFunction.kt")
+      public void testExtensionFunction() {
+        runTest("compiler/testData/codegen/box/syntheticAccessors/functionsWithDefaultValues/extensionFunction.kt");
+      }
+
+      @Test
+      @TestMetadata("extensionFunctionCrossModuleCase.kt")
+      public void testExtensionFunctionCrossModuleCase() {
+        runTest("compiler/testData/codegen/box/syntheticAccessors/functionsWithDefaultValues/extensionFunctionCrossModuleCase.kt");
+      }
+
+      @Test
+      @TestMetadata("extensionFunctionCrossModuleTransitiveCase.kt")
+      public void testExtensionFunctionCrossModuleTransitiveCase() {
+        runTest("compiler/testData/codegen/box/syntheticAccessors/functionsWithDefaultValues/extensionFunctionCrossModuleTransitiveCase.kt");
+      }
+
+      @Test
+      @TestMetadata("extensionFunctionTransitiveCase.kt")
+      public void testExtensionFunctionTransitiveCase() {
+        runTest("compiler/testData/codegen/box/syntheticAccessors/functionsWithDefaultValues/extensionFunctionTransitiveCase.kt");
+      }
+
+      @Test
+      @TestMetadata("memberFunction.kt")
+      public void testMemberFunction() {
+        runTest("compiler/testData/codegen/box/syntheticAccessors/functionsWithDefaultValues/memberFunction.kt");
+      }
+
+      @Test
+      @TestMetadata("memberFunctionCrossModuleCase.kt")
+      public void testMemberFunctionCrossModuleCase() {
+        runTest("compiler/testData/codegen/box/syntheticAccessors/functionsWithDefaultValues/memberFunctionCrossModuleCase.kt");
+      }
+
+      @Test
+      @TestMetadata("memberFunctionCrossModuleTransitiveCase.kt")
+      public void testMemberFunctionCrossModuleTransitiveCase() {
+        runTest("compiler/testData/codegen/box/syntheticAccessors/functionsWithDefaultValues/memberFunctionCrossModuleTransitiveCase.kt");
+      }
+
+      @Test
+      @TestMetadata("memberFunctionTransitiveCase.kt")
+      public void testMemberFunctionTransitiveCase() {
+        runTest("compiler/testData/codegen/box/syntheticAccessors/functionsWithDefaultValues/memberFunctionTransitiveCase.kt");
+      }
+
+      @Test
+      @TestMetadata("severalDefaultValues.kt")
+      public void testSeveralDefaultValues() {
+        runTest("compiler/testData/codegen/box/syntheticAccessors/functionsWithDefaultValues/severalDefaultValues.kt");
+      }
+
+      @Test
+      @TestMetadata("severalDefaultValuesCrossModuleCase.kt")
+      public void testSeveralDefaultValuesCrossModuleCase() {
+        runTest("compiler/testData/codegen/box/syntheticAccessors/functionsWithDefaultValues/severalDefaultValuesCrossModuleCase.kt");
+      }
+
+      @Test
+      @TestMetadata("severalDefaultValuesCrossModuleTransitiveCase.kt")
+      public void testSeveralDefaultValuesCrossModuleTransitiveCase() {
+        runTest("compiler/testData/codegen/box/syntheticAccessors/functionsWithDefaultValues/severalDefaultValuesCrossModuleTransitiveCase.kt");
+      }
+
+      @Test
+      @TestMetadata("severalDefaultValuesTransitiveCase.kt")
+      public void testSeveralDefaultValuesTransitiveCase() {
+        runTest("compiler/testData/codegen/box/syntheticAccessors/functionsWithDefaultValues/severalDefaultValuesTransitiveCase.kt");
+      }
+
+      @Test
+      @TestMetadata("topLevelFunction.kt")
+      public void testTopLevelFunction() {
+        runTest("compiler/testData/codegen/box/syntheticAccessors/functionsWithDefaultValues/topLevelFunction.kt");
+      }
+
+      @Test
+      @TestMetadata("topLevelFunctionCrossModuleCase.kt")
+      public void testTopLevelFunctionCrossModuleCase() {
+        runTest("compiler/testData/codegen/box/syntheticAccessors/functionsWithDefaultValues/topLevelFunctionCrossModuleCase.kt");
+      }
+
+      @Test
+      @TestMetadata("topLevelFunctionCrossModuleTransitiveCase.kt")
+      public void testTopLevelFunctionCrossModuleTransitiveCase() {
+        runTest("compiler/testData/codegen/box/syntheticAccessors/functionsWithDefaultValues/topLevelFunctionCrossModuleTransitiveCase.kt");
+      }
+
+      @Test
+      @TestMetadata("topLevelFunctionTransitiveCase.kt")
+      public void testTopLevelFunctionTransitiveCase() {
+        runTest("compiler/testData/codegen/box/syntheticAccessors/functionsWithDefaultValues/topLevelFunctionTransitiveCase.kt");
+      }
     }
 
     @Nested
