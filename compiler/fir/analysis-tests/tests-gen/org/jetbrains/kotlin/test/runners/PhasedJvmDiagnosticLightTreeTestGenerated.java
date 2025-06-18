@@ -52990,12 +52990,6 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
         }
 
         @Test
-        @TestMetadata("conflictingOverloads.kt")
-        public void testConflictingOverloads() {
-          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/conflictingOverloads.kt");
-        }
-
-        @Test
         @TestMetadata("contextParameterNameChanged.kt")
         public void testContextParameterNameChanged() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/contextParameterNameChanged.kt");
@@ -53192,6 +53186,65 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
         @TestMetadata("invokeOnTypeWithContext.kt")
         public void testInvokeOnTypeWithContext() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/operators/invokeOnTypeWithContext.kt");
+        }
+      }
+
+      @Nested
+      @TestMetadata("compiler/fir/analysis-tests/testData/resolve/contextParameters/overloads")
+      @TestDataPath("$PROJECT_ROOT")
+      public class Overloads {
+        @Test
+        @TestMetadata("IdenticalDeclarations.kt")
+        public void testIdenticalDeclarations() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/overloads/IdenticalDeclarations.kt");
+        }
+
+        @Test
+        @TestMetadata("OverloadingByName.kt")
+        public void testOverloadingByName() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/overloads/OverloadingByName.kt");
+        }
+
+        @Test
+        @TestMetadata("OverloadingByNumber.kt")
+        public void testOverloadingByNumber() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/overloads/OverloadingByNumber.kt");
+        }
+
+        @Test
+        @TestMetadata("OverloadingByOrder.kt")
+        public void testOverloadingByOrder() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/overloads/OverloadingByOrder.kt");
+        }
+
+        @Test
+        @TestMetadata("OverloadingByPresence.kt")
+        public void testOverloadingByPresence() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/overloads/OverloadingByPresence.kt");
+        }
+
+        @Test
+        @TestMetadata("OverloadingBySubType.kt")
+        public void testOverloadingBySubType() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/overloads/OverloadingBySubType.kt");
+        }
+
+        @Test
+        @TestMetadata("OverloadingBySubset.kt")
+        public void testOverloadingBySubset() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/overloads/OverloadingBySubset.kt");
+        }
+
+        @Test
+        @TestMetadata("OverloadingByTypeAlias.kt")
+        public void testOverloadingByTypeAlias() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/overloads/OverloadingByTypeAlias.kt");
+        }
+
+        @Test
+        @TestMetadata("OverloadingByUnrelatedType.kt")
+        public void testOverloadingByUnrelatedType() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/overloads/OverloadingByUnrelatedType.kt");
         }
       }
 
@@ -54275,6 +54328,18 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("typeParametersInObject.kt")
       public void testTypeParametersInObject() {
         runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/typeParametersInObject.kt");
+      }
+
+      @Test
+      @TestMetadata("unresolvedCodeInsideSuperInitializer.kt")
+      public void testUnresolvedCodeInsideSuperInitializer() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/unresolvedCodeInsideSuperInitializer.kt");
+      }
+
+      @Test
+      @TestMetadata("unresolvedCodeInsideSuperInitializer2.kt")
+      public void testUnresolvedCodeInsideSuperInitializer2() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/unresolvedCodeInsideSuperInitializer2.kt");
       }
 
       @Test

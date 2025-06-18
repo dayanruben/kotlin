@@ -7,7 +7,10 @@ package org.jetbrains.kotlin.backend.common.lower
 
 import org.jetbrains.kotlin.backend.common.CommonBackendContext
 import org.jetbrains.kotlin.backend.common.compilationException
-import org.jetbrains.kotlin.backend.common.reflectedNameAccessor
+import org.jetbrains.kotlin.backend.common.functionReferenceLinkageError
+import org.jetbrains.kotlin.backend.common.functionReferenceReflectedName
+import org.jetbrains.kotlin.backend.common.linkage.partial.PartialLinkageSources
+import org.jetbrains.kotlin.backend.common.linkage.partial.reflectionTargetLinkageError
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
@@ -123,7 +126,6 @@ abstract class WebCallableReferenceLowering(context: CommonBackendContext) :
     }
 
     private fun createNameProperty(clazz: IrClass, reference: IrRichFunctionReference) {
-        // TODO(KT-76093): Support partial linkage for names of function references
         val reflectionTargetSymbol = reference.reflectionTargetSymbol ?: return
         val superProperty = reference
             .type
@@ -139,7 +141,7 @@ abstract class WebCallableReferenceLowering(context: CommonBackendContext) :
                 superProperty
             )
 
-        val nameProperty = clazz.addProperty() {
+        val nameProperty = clazz.addProperty {
             visibility = superProperty.visibility
             name = superProperty.name
             origin = GENERATED_MEMBER_IN_CALLABLE_REFERENCE
@@ -147,24 +149,42 @@ abstract class WebCallableReferenceLowering(context: CommonBackendContext) :
 
         nameProperty.overriddenSymbols = listOf(superProperty.symbol)
 
-        val getter = nameProperty.addGetter() {
+        val getter = nameProperty.addGetter {
             returnType = stringType
         }
         getter.overriddenSymbols = listOf(supperGetter.symbol)
         getter.parameters += getter.createDispatchReceiverParameterWithClassParent()
 
         // TODO: What name should be in case of constructor? <init> or class name?
-        getter.body = context.irFactory.createBlockBody(
-            UNDEFINED_OFFSET, UNDEFINED_OFFSET, listOf(
-                IrReturnImpl(
-                    UNDEFINED_OFFSET, UNDEFINED_OFFSET, nothingType, getter.symbol, IrConstImpl.string(
-                        UNDEFINED_OFFSET, UNDEFINED_OFFSET, stringType, reflectionTargetSymbol.owner.name.asString()
-                    )
+        val functionReferenceReflectedName = reflectionTargetSymbol.owner.name.asString()
+
+        val linkageError = reference.reflectionTargetLinkageError
+        val statement = if (linkageError != null) {
+            val file = PartialLinkageSources.File.determineFileFor(reference.invokeFunction)
+            clazz.functionReferenceLinkageError = context.partialLinkageSupport.prepareLinkageError(
+                doNotLog = true,
+                linkageError,
+                reference,
+                file,
+            )
+            context.partialLinkageSupport.throwLinkageError(
+                linkageError,
+                reference,
+                file,
+                doNotLog = true
+            )
+        } else {
+            IrReturnImpl(
+                UNDEFINED_OFFSET, UNDEFINED_OFFSET, nothingType, getter.symbol, IrConstImpl.string(
+                    UNDEFINED_OFFSET, UNDEFINED_OFFSET, stringType, functionReferenceReflectedName
                 )
             )
+        }
+        getter.body = context.irFactory.createBlockBody(
+            UNDEFINED_OFFSET, UNDEFINED_OFFSET, listOf(statement)
         )
 
-        clazz.reflectedNameAccessor = getter
+        clazz.functionReferenceReflectedName = functionReferenceReflectedName
     }
 
     override fun generateExtraMethods(functionReferenceClass: IrClass, reference: IrRichFunctionReference) {
