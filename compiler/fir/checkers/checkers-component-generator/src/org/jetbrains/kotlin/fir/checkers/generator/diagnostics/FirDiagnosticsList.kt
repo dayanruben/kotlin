@@ -469,6 +469,8 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val ANNOTATIONS_ON_BLOCK_LEVEL_EXPRESSION_ON_THE_SAME_LINE by warning<PsiElement>()
 
         val IGNORABILITY_ANNOTATIONS_WITH_CHECKER_DISABLED by error<KtAnnotationEntry>()
+
+        val DSL_MARKER_PROPAGATES_TO_MANY by warning<KtAnnotationEntry>()
     }
 
     val OPT_IN by object : DiagnosticGroup("OptIn") {
@@ -846,7 +848,6 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val VARIANCE_ON_TYPE_PARAMETER_NOT_ALLOWED by error<KtTypeParameter>(PositioningStrategy.VARIANCE_MODIFIER)
 
         val CATCH_PARAMETER_WITH_DEFAULT_VALUE by error<PsiElement>()
-        val REIFIED_TYPE_IN_CATCH_CLAUSE by error<PsiElement>()
         val TYPE_PARAMETER_IN_CATCH_CLAUSE by error<PsiElement>()
         val GENERIC_THROWABLE_SUBCLASS by error<KtTypeParameter>()
         val INNER_CLASS_OF_GENERIC_THROWABLE_SUBCLASS by error<KtClassOrObject>(PositioningStrategy.DECLARATION_NAME)

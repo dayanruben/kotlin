@@ -8782,6 +8782,18 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
+      @TestMetadata("catchReifiedTypeAllowed.kt")
+      public void testCatchReifiedTypeAllowed() {
+        runTest("compiler/testData/diagnostics/tests/controlStructures/catchReifiedTypeAllowed.kt");
+      }
+
+      @Test
+      @TestMetadata("catchReifiedTypeForbidden.kt")
+      public void testCatchReifiedTypeForbidden() {
+        runTest("compiler/testData/diagnostics/tests/controlStructures/catchReifiedTypeForbidden.kt");
+      }
+
+      @Test
       @TestMetadata("catchWithDefault.kt")
       public void testCatchWithDefault() {
         runTest("compiler/testData/diagnostics/tests/controlStructures/catchWithDefault.kt");
@@ -51603,6 +51615,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("danglingModifierInsideEnumEntry.kt")
       public void testDanglingModifierInsideEnumEntry() {
         runTest("compiler/fir/analysis-tests/testData/resolve/annotations/danglingModifierInsideEnumEntry.kt");
+      }
+
+      @Test
+      @TestMetadata("dslMarkerPropagation.kt")
+      public void testDslMarkerPropagation() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/annotations/dslMarkerPropagation.kt");
       }
 
       @Test

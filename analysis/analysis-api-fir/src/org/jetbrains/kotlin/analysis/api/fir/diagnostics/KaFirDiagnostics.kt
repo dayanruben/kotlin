@@ -1016,6 +1016,10 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = IgnorabilityAnnotationsWithCheckerDisabled::class
     }
 
+    interface DslMarkerPropagatesToMany : KaFirDiagnostic<KtAnnotationEntry> {
+        override val diagnosticClass get() = DslMarkerPropagatesToMany::class
+    }
+
     interface JsModuleProhibitedOnVar : KaFirDiagnostic<KtElement> {
         override val diagnosticClass get() = JsModuleProhibitedOnVar::class
     }
@@ -1847,10 +1851,6 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface CatchParameterWithDefaultValue : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = CatchParameterWithDefaultValue::class
-    }
-
-    interface ReifiedTypeInCatchClause : KaFirDiagnostic<PsiElement> {
-        override val diagnosticClass get() = ReifiedTypeInCatchClause::class
     }
 
     interface TypeParameterInCatchClause : KaFirDiagnostic<PsiElement> {

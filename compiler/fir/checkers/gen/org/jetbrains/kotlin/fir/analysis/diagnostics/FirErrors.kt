@@ -355,6 +355,7 @@ object FirErrors : KtDiagnosticsContainer() {
     val ANNOTATION_WILL_BE_APPLIED_ALSO_TO_PROPERTY_OR_FIELD: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("ANNOTATION_WILL_BE_APPLIED_ALSO_TO_PROPERTY_OR_FIELD", WARNING, SourceElementPositioningStrategies.DEFAULT, KtAnnotationEntry::class, getRendererFactory())
     val ANNOTATIONS_ON_BLOCK_LEVEL_EXPRESSION_ON_THE_SAME_LINE: KtDiagnosticFactory0 = KtDiagnosticFactory0("ANNOTATIONS_ON_BLOCK_LEVEL_EXPRESSION_ON_THE_SAME_LINE", WARNING, SourceElementPositioningStrategies.DEFAULT, PsiElement::class, getRendererFactory())
     val IGNORABILITY_ANNOTATIONS_WITH_CHECKER_DISABLED: KtDiagnosticFactory0 = KtDiagnosticFactory0("IGNORABILITY_ANNOTATIONS_WITH_CHECKER_DISABLED", ERROR, SourceElementPositioningStrategies.DEFAULT, KtAnnotationEntry::class, getRendererFactory())
+    val DSL_MARKER_PROPAGATES_TO_MANY: KtDiagnosticFactory0 = KtDiagnosticFactory0("DSL_MARKER_PROPAGATES_TO_MANY", WARNING, SourceElementPositioningStrategies.DEFAULT, KtAnnotationEntry::class, getRendererFactory())
 
     // OptIn
     val OPT_IN_USAGE: KtDiagnosticFactory2<ClassId, String> = KtDiagnosticFactory2("OPT_IN_USAGE", WARNING, SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED, PsiElement::class, getRendererFactory())
@@ -512,7 +513,6 @@ object FirErrors : KtDiagnosticsContainer() {
     val REDUNDANT_PROJECTION: KtDiagnosticFactory1<ConeKotlinType> = KtDiagnosticFactory1("REDUNDANT_PROJECTION", WARNING, SourceElementPositioningStrategies.VARIANCE_MODIFIER, KtTypeProjection::class, getRendererFactory())
     val VARIANCE_ON_TYPE_PARAMETER_NOT_ALLOWED: KtDiagnosticFactory0 = KtDiagnosticFactory0("VARIANCE_ON_TYPE_PARAMETER_NOT_ALLOWED", ERROR, SourceElementPositioningStrategies.VARIANCE_MODIFIER, KtTypeParameter::class, getRendererFactory())
     val CATCH_PARAMETER_WITH_DEFAULT_VALUE: KtDiagnosticFactory0 = KtDiagnosticFactory0("CATCH_PARAMETER_WITH_DEFAULT_VALUE", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class, getRendererFactory())
-    val REIFIED_TYPE_IN_CATCH_CLAUSE: KtDiagnosticFactory0 = KtDiagnosticFactory0("REIFIED_TYPE_IN_CATCH_CLAUSE", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class, getRendererFactory())
     val TYPE_PARAMETER_IN_CATCH_CLAUSE: KtDiagnosticFactory0 = KtDiagnosticFactory0("TYPE_PARAMETER_IN_CATCH_CLAUSE", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class, getRendererFactory())
     val GENERIC_THROWABLE_SUBCLASS: KtDiagnosticFactory0 = KtDiagnosticFactory0("GENERIC_THROWABLE_SUBCLASS", ERROR, SourceElementPositioningStrategies.DEFAULT, KtTypeParameter::class, getRendererFactory())
     val INNER_CLASS_OF_GENERIC_THROWABLE_SUBCLASS: KtDiagnosticFactory0 = KtDiagnosticFactory0("INNER_CLASS_OF_GENERIC_THROWABLE_SUBCLASS", ERROR, SourceElementPositioningStrategies.DECLARATION_NAME, KtClassOrObject::class, getRendererFactory())
