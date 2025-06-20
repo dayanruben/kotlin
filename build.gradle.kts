@@ -148,7 +148,11 @@ val irCompilerModulesForIDE = arrayOf(
 ).also { extra["irCompilerModulesForIDE"] = it }
 
 val commonCompilerModules = arrayOf(
-    ":compiler:psi",
+    ":compiler:psi:psi-api",
+    ":compiler:psi:psi-impl",
+    ":compiler:psi:psi-utils",
+    ":compiler:psi:psi-frontend-utils",
+    ":compiler:psi:parser",
     ":compiler:frontend.common-psi",
     ":compiler:frontend.common",
     ":compiler:util",
