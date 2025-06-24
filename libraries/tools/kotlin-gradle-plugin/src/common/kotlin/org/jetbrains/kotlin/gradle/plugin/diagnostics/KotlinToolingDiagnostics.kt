@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.kotlin.utils.addToStdlib.flatGroupBy
 import java.io.File
 import java.net.URI
+import java.security.MessageDigest
 
 internal object KotlinToolingDiagnostics {
     /**
@@ -1252,7 +1253,7 @@ internal object KotlinToolingDiagnostics {
     }
 
     object ExperimentalFeatureWarning : ToolingDiagnosticFactory(WARNING, DiagnosticGroup.Kgp.Experimental) {
-        operator fun invoke(featureName: String, youtrackUrl: String, extraSolution: String? = null) = build {
+        operator fun invoke(featureName: String, youtrackUrl: String, extraSolution: String? = null) = build(featureName.toIdSuffix()) {
             title("Experimental Feature Notice")
                 .description {
                     "$featureName is an experimental feature and subject to change in any future releases."
@@ -1654,6 +1655,37 @@ internal object KotlinToolingDiagnostics {
                 .solution("Please remove 'kapt.use.k2' Gradle property from 'gradle.properties' file.")
         }
     }
+
+    internal object PomMisconfigured : ToolingDiagnosticFactory(FATAL, DiagnosticGroup.Kgp.Misconfiguration) {
+        operator fun invoke(description: String, solution: String, link: String? = null) = build {
+            title("There was a problem with the Maven POM file configuration.")
+                .description(description)
+                .solution(solution)
+                .apply {
+                    link?.let { documentationLink(URI(it)) }
+                }
+        }
+    }
+
+    internal object SigningMisconfigured : ToolingDiagnosticFactory(FATAL, DiagnosticGroup.Kgp.Misconfiguration) {
+        operator fun invoke(description: String, solution: String, link: String? = null) = build {
+            title("There was a problem with the artifact signing configuration.")
+                .description(description)
+                .solution(solution)
+                .apply {
+                    link?.let { documentationLink(URI(it)) }
+                }
+        }
+    }
+
+    object SomePublicationsNotSigned : ToolingDiagnosticFactory(WARNING, DiagnosticGroup.Kgp.Misconfiguration) {
+        operator fun invoke(publications: List<String>) = build {
+            title("Signing is not enabled for some publications.")
+                .description("Publishing unsigned publications to Maven Central will fail validation.")
+                .solution("Configure signing for the following publications if you plan to publish them to Maven Central: ${publications.joinToString()}")
+                .documentationLink(URI("https://kotl.in/9l92c3"))
+        }
+    }
 }
 
 private fun String.indentLines(nSpaces: Int = 4, skipFirstLine: Boolean = true): String {
@@ -1665,4 +1697,19 @@ private fun String.indentLines(nSpaces: Int = 4, skipFirstLine: Boolean = true):
             if (skipFirstLine && index == 0) return@joinToString line
             if (line.isNotBlank()) "$spaces$line" else line
         }
+}
+
+private fun String.toIdSuffix(): String {
+    return when {
+        // Use original name if it's short and alphanumeric
+        length <= 20 && matches(Regex("[a-zA-Z0-9_-]+")) -> this
+        // Otherwise use truncated hash
+        else -> md5().take(8)
+    }
+}
+
+private fun String.md5(): String {
+    val digest = MessageDigest.getInstance("MD5")
+    val hashBytes = digest.digest(this.toByteArray())
+    return hashBytes.joinToString("") { "%02x".format(it) }
 }

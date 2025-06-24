@@ -13934,6 +13934,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
       }
 
       @Test
+      @TestMetadata("kt59326.kt")
+      public void testKt59326() {
+        runTest("compiler/testData/codegen/box/defaultArguments/kt59326.kt");
+      }
+
+      @Test
       @TestMetadata("kt6382.kt")
       public void testKt6382() {
         runTest("compiler/testData/codegen/box/defaultArguments/kt6382.kt");
@@ -49076,6 +49082,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
       @TestMetadata("capturedLocalFunRef.kt")
       public void testCapturedLocalFunRef() {
         runTest("compiler/testData/codegen/boxInline/anonymousObject/capturedLocalFunRef.kt");
+      }
+
+      @Test
+      @TestMetadata("capturedLocalFunReflection.kt")
+      public void testCapturedLocalFunReflection() {
+        runTest("compiler/testData/codegen/boxInline/anonymousObject/capturedLocalFunReflection.kt");
       }
 
       @Test
