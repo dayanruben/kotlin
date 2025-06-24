@@ -85,7 +85,7 @@ fun BinaryArtifactHandler<*>.checkFullDiagnosticRender() {
                     }
                     is FirDiagnosticCodeMetaInfo -> metaInfo.diagnostic.let {
                         val message = it.renderMessage()
-                        val position = finder.findNextPosition(DiagnosticUtils.firstRange(it.textRanges).startOffset, false)
+                        val position = finder.findNextPosition(it.firstRange.startOffset, false)
                         renderDiagnosticMessage(testFile.relativePath, it.severity, message, position.line, position.column)
                     }
                     else -> continue

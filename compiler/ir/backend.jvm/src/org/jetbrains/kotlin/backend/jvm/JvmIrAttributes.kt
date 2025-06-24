@@ -52,6 +52,8 @@ var IrClass.isPublicAbi: Boolean by irFlag(copyByDefault = false)
 var IrClass.classNameOverride: JvmClassName? by irAttribute(copyByDefault = false)
 
 var IrFunction.viewOfOriginalSuspendFunction: IrSimpleFunction? by irAttribute(copyByDefault = false)
+var IrFunction.originalOfSuspendForInline: IrSimpleFunction? by irAttribute(copyByDefault = false)
+var IrFunction.staticSuspendImplMethod: IrSimpleFunction? by irAttribute(copyByDefault = false)
 
 var IrSimpleFunction.staticDefaultStub: IrSimpleFunction? by irAttribute(copyByDefault = false)
 

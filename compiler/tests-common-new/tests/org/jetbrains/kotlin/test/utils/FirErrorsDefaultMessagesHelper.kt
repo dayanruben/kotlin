@@ -15,7 +15,7 @@ fun KtDiagnosticFactoryToRendererMap.verifyMessages(objectWithErrors: Any) {
     val errors = mutableListOf<String>()
     for (property in objectWithErrors::class.memberProperties) {
         when (val factory = property.getter.call(objectWithErrors)) {
-            is AbstractKtDiagnosticFactory -> {
+            is KtDiagnosticFactoryN -> {
                 errors += verifyMessageForFactory(factory, property)
             }
             is KtDiagnosticFactoryForDeprecation<*> -> {
@@ -41,7 +41,7 @@ private val lastCharExclusions = listOf(
     FirErrors.NOT_A_MULTIPLATFORM_COMPILATION.name,
 )
 
-fun KtDiagnosticFactoryToRendererMap.verifyMessageForFactory(factory: AbstractKtDiagnosticFactory, property: KProperty<*>) = buildList {
+fun KtDiagnosticFactoryToRendererMap.verifyMessageForFactory(factory: KtDiagnosticFactoryN, property: KProperty<*>) = buildList {
     if (!containsKey(factory)) {
         add("No default diagnostic renderer is provided for ${property.name}")
         return@buildList
@@ -54,7 +54,8 @@ fun KtDiagnosticFactoryToRendererMap.verifyMessageForFactory(factory: AbstractKt
         is KtDiagnosticWithParameters3Renderer<*, *, *> -> 3
         is KtDiagnosticWithParameters2Renderer<*, *> -> 2
         is KtDiagnosticWithParameters1Renderer<*> -> 1
-        else -> 0
+        is KtSourcelessDiagnosticRenderer -> 1
+        is SimpleKtDiagnosticRenderer -> 0
     }
 
     val message = renderer.message
