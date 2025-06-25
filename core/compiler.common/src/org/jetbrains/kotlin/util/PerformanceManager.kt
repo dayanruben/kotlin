@@ -8,11 +8,15 @@ package org.jetbrains.kotlin.util
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.isJs
+import org.jetbrains.kotlin.stats.MarkdownReportRenderer
+import org.jetbrains.kotlin.stats.SingleReportsData
+import org.jetbrains.kotlin.stats.StatsCalculator
 import java.io.File
 import java.lang.management.CompilationMXBean
 import java.lang.management.GarbageCollectorMXBean
 import java.lang.management.ManagementFactory
 import java.lang.management.ThreadMXBean
+import java.text.SimpleDateFormat
 import java.util.*
 
 /**
@@ -104,6 +108,7 @@ abstract class PerformanceManager(val targetPlatform: TargetPlatform, val presen
 
         UnitStats(
             targetDescription,
+            System.currentTimeMillis(),
             targetPlatform.getPlatformEnumValue(),
             compilerType,
             hasErrors,
@@ -287,17 +292,61 @@ abstract class PerformanceManager(val targetPlatform: TargetPlatform, val presen
         }
     }
 
-    fun dumpPerformanceReport(destination: File) {
-        destination.writeBytes(createPerformanceReport(destination.extension == "json").toByteArray())
+    fun dumpPerformanceReport(destFileNameOrPlaceholder: String) {
+        val refinedFileName: String = if (File(destFileNameOrPlaceholder).isDirectory) {
+            // We can't use `Paths.get` because of its absence in earlier Android SDKs
+            val separator = if (destFileNameOrPlaceholder.lastOrNull().let { it == null || it == File.separatorChar }) {
+                ""
+            } else {
+                File.separatorChar
+            }
+            destFileNameOrPlaceholder + separator + generateFileName() + ".json"
+        } else {
+            val lastSlashIndex = destFileNameOrPlaceholder.indexOfLast { it == File.separatorChar }
+            val extensionDotIndex =
+                destFileNameOrPlaceholder.indexOf('.', lastSlashIndex).let { if (it == -1) destFileNameOrPlaceholder.length else it }
+            // It's ok if `lastSlashIndex` == -1
+            val fileNameOrPlaceholder = destFileNameOrPlaceholder.substring(lastSlashIndex + 1, extensionDotIndex)
+            if (fileNameOrPlaceholder == "*") {
+                val pathString = if (lastSlashIndex != -1) destFileNameOrPlaceholder.take(lastSlashIndex + 1) else ""
+                val fileName = generateFileName()
+                val extension = destFileNameOrPlaceholder.substring(extensionDotIndex)
+                pathString + fileName + extension
+            } else {
+                destFileNameOrPlaceholder
+            }
+        }
+
+        val destinationFile = File(refinedFileName)
+        val dumpFormat = DumpFormat.entries.firstOrNull { it.extension == destinationFile.extension } ?: DumpFormat.PlainText
+        destinationFile.writeBytes(createPerformanceReport(dumpFormat).toByteArray())
     }
 
-    fun createPerformanceReport(isJson: Boolean): String = if (isJson) {
-        UnitStatsJsonDumper.dump(unitStats)
-    } else {
-        buildString {
+    /**
+     * Generate a unique name to avoid files overwriting.
+     * Use the current date-time stamp with millis precision as a part of the unique name.
+     */
+    private fun generateFileName(): String {
+        return "${unitStats.name}_${dateFormatterForFileName.format(unitStats.timeStampMs)}"
+    }
+
+    private val dateFormatterForFileName by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        SimpleDateFormat("yyyy-MM-dd-HH-mm-ss")
+    }
+
+    enum class DumpFormat(val extension: String) {
+        PlainText("log"),
+        Json("json"),
+        Markdown("md"),
+    }
+
+    fun createPerformanceReport(dumpFormat: DumpFormat): String = when (dumpFormat) {
+        DumpFormat.PlainText -> buildString {
             append("$presentableName performance report\n")
             unitStats.forEachStringMeasurement { appendLine(it) }
         }
+        DumpFormat.Json -> UnitStatsJsonDumper.dump(unitStats)
+        DumpFormat.Markdown -> MarkdownReportRenderer(StatsCalculator(SingleReportsData(unitStats))).render()
     }
 
     private fun ensureNotFinalizedAndSameThread() {
