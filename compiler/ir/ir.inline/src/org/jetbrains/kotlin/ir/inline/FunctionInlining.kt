@@ -138,7 +138,7 @@ private class CallInlining(
     private val elementsWithLocationToPatch = hashSetOf<IrGetValue>()
 
     fun inline(callSite: IrFunctionAccessExpression) =
-        inlineFunction(callSite, callee, callee.originalFunction).patchDeclarationParents(parent)
+        inlineFunction(callSite, callee, callee).patchDeclarationParents(parent)
 
     private fun inlineFunction(
         callSite: IrFunctionAccessExpression,
@@ -180,8 +180,7 @@ private class CallInlining(
                     inlinedFunctionStartOffset = callee.startOffset,
                     inlinedFunctionEndOffset = callee.endOffset,
                     resultType = returnType,
-                    // TODO Investigate if it is possible to get rid of `originalFunction` call here KT-76512
-                    inlinedFunctionSymbol = callee.originalFunction.symbol.takeIf { originalInlinedElement is IrFunction },
+                    inlinedFunctionSymbol = (callee.originalOfErasedTopLevelCopy ?: callee).symbol.takeIf { originalInlinedElement is IrFunction },
                     inlinedFunctionFileEntry = callee.fileEntry,
                     origin = null,
                 ) {
@@ -307,7 +306,7 @@ private class CallInlining(
                     inlineFunctionExpression(asCallOf(functionArgument.function, emptyList()), functionArgument.function, functionArgument)
 
                 functionArgument is IrRichCallableReference<*> ->
-                    inlineFunctionExpression(asCallOf(functionArgument.invokeFunction, functionArgument.boundValues), functionArgument.invokeFunction, functionArgument.attributeOwnerId)
+                    inlineFunctionExpression(asCallOf(functionArgument.invokeFunction, functionArgument.boundValues), functionArgument.invokeFunction, functionArgument)
 
                 else ->
                     super.visitCall(expression)
