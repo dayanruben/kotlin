@@ -83,11 +83,8 @@
 /compiler/light-classes/ @JetBrains/kotlin-analysis-api
 /compiler/plugin-api/ @JetBrains/kotlin-frontend
 /compiler/preloader/ @JetBrains/kotlin-frontend
+/compiler/psi/ @JetBrains/kotlin-analysis-api
 /compiler/psi/parser/ @JetBrains/kotlin-frontend
-/compiler/psi/psi-api/ @JetBrains/kotlin-analysis-api
-/compiler/psi/psi-impl/ @JetBrains/kotlin-analysis-api
-/compiler/psi/psi-utils/ @JetBrains/kotlin-analysis-api
-/compiler/psi/psi-frontend-utils/ @JetBrains/kotlin-analysis-api
 /compiler/multiplatform-parsing/ @JetBrains/kotlin-frontend
 /compiler/resolution/ @JetBrains/kotlin-frontend
 /compiler/resolution.common/ @JetBrains/kotlin-frontend
@@ -160,9 +157,8 @@
 /compiler/testData/modules.xml/ @JetBrains/kotlin-frontend
 /compiler/testData/multiModule/ @JetBrains/kotlin-frontend
 /compiler/testData/parseCodeFragment/ @JetBrains/kotlin-frontend
-/compiler/testData/psi/ @JetBrains/kotlin-frontend
-/compiler/testData/psiUtil/ @JetBrains/kotlin-frontend
-/compiler/testData/psiKdocCoverage/ @JetBrains/kotlin-analysis-api
+/compiler/testData/psi/ @JetBrains/kotlin-analysis-api
+/compiler/testData/psiUtil/ @JetBrains/kotlin-analysis-api
 /compiler/testData/recursiveProcessor/ @JetBrains/kotlin-frontend
 /compiler/testData/reflection/ @JetBrains/kotlin-libraries alexander.udalov@jetbrains.com
 /compiler/testData/repl/ @JetBrains/kotlin-frontend
@@ -181,8 +177,6 @@
 /compiler/testData/type-checker-test.kt @JetBrains/kotlin-frontend
 /compiler/testData/type-substitutor.kt @JetBrains/kotlin-frontend
 /compiler/tests/ @JetBrains/kotlin-frontend @JetBrains/kotlin-jvm @JetBrains/kotlin-native @JetBrains/kotlin-wasm @JetBrains/kotlin-common-backend @JetBrains/kotlin-js
-/compiler/tests/org/jetbrains/kotlin/psi/PsiKDocCoverageTest.kt @JetBrains/kotlin-analysis-api
-/compiler/tests/org/jetbrains/kotlin/util/KDocCoverageTest.kt @JetBrains/kotlin-analysis-api
 /compiler/tests-against-klib/ @JetBrains/kotlin-jvm
 /compiler/tests-common/ @JetBrains/kotlin-frontend @JetBrains/kotlin-jvm @JetBrains/kotlin-native @JetBrains/kotlin-wasm @JetBrains/kotlin-common-backend @JetBrains/kotlin-js
 /compiler/tests-common/tests/org/jetbrains/kotlin/asJava/ @JetBrains/kotlin-analysis-api
