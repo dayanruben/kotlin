@@ -2331,6 +2331,13 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.ILLEGAL_TYPE_ARGUMENT_FOR_VARARG_PARAMETER_WARNING) { firDiagnostic ->
+        IllegalTypeArgumentForVarargParameterWarningImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.OVERLOAD_RESOLUTION_AMBIGUITY) { firDiagnostic ->
         OverloadResolutionAmbiguityImpl(
             firDiagnostic.a.map { firBasedSymbol ->
@@ -3139,6 +3146,13 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.MUTABLE_PROPERTY_WITH_CAPTURED_TYPE) { firDiagnostic ->
         MutablePropertyWithCapturedTypeImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirWebCommonErrors.UNSUPPORTED_REFLECTION_API) { firDiagnostic ->
+        UnsupportedReflectionApiImpl(
+            firDiagnostic.a,
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

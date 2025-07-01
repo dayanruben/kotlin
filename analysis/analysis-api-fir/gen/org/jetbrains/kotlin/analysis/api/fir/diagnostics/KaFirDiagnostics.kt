@@ -1664,6 +1664,11 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val actualType: KaType
     }
 
+    interface IllegalTypeArgumentForVarargParameterWarning : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = IllegalTypeArgumentForVarargParameterWarning::class
+        val type: KaType
+    }
+
     interface OverloadResolutionAmbiguity : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = OverloadResolutionAmbiguity::class
         val candidates: List<KaSymbol>
@@ -2218,6 +2223,11 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface MutablePropertyWithCapturedType : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = MutablePropertyWithCapturedType::class
+    }
+
+    interface UnsupportedReflectionApi : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = UnsupportedReflectionApi::class
+        val unsupportedReflectionAPI: String
     }
 
     interface NothingToOverride : KaFirDiagnostic<KtModifierListOwner> {

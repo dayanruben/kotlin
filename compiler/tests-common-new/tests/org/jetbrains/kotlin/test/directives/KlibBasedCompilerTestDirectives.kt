@@ -11,14 +11,6 @@ import org.jetbrains.kotlin.test.backend.handlers.SerializedIrDumpHandler
 import org.jetbrains.kotlin.test.directives.model.SimpleDirectivesContainer
 
 object KlibBasedCompilerTestDirectives : SimpleDirectivesContainer() {
-    val DUMP_KLIB_SYNTHETIC_ACCESSORS by directive(
-        """
-            Enable dumping synthetic accessors and their use-sites immediately generation.
-            This directive makes sense only for KLIB-based backends.
-            Equivalent to passing the '-Xdump-synthetic-accessors-to=<tempDir>/synthetic-accessors' CLI flag.
-        """.trimIndent()
-    )
-
     val IGNORE_KLIB_SYNTHETIC_ACCESSORS_CHECKS by enumDirective<TargetBackend>(
         "Ignore failures in checking synthetic accessors for the specified backend"
     )
@@ -27,16 +19,6 @@ object KlibBasedCompilerTestDirectives : SimpleDirectivesContainer() {
         description = """
         Skips generating KLIB when running tests
         """
-    )
-
-    val SKIP_UNBOUND_IR_SERIALIZATION by directive(
-        """
-            This is a directive to skip some test data files in unbound IR serialization tests
-            (see `AbstractNativeUnboundIrSerializationTest` and generated subclasses).
-
-            Some tests use exposure of private types from internal inline functions. This is already a compiler
-            warning in 2.1.0 (KT-69681), but soon will become a compiler error (KT-70916).
-        """.trimIndent()
     )
 
     val SKIP_IR_DESERIALIZATION_CHECKS by directive(

@@ -1072,6 +1072,18 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
       }
 
       @Test
+      @TestMetadata("genericVarargInferredToNothing.kt")
+      public void testGenericVarargInferredToNothing() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/arguments/genericVarargInferredToNothing.kt");
+      }
+
+      @Test
+      @TestMetadata("genericVarargInferredToNullableNothing.kt")
+      public void testGenericVarargInferredToNullableNothing() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/arguments/genericVarargInferredToNullableNothing.kt");
+      }
+
+      @Test
       @TestMetadata("incorrectFunctionalType.kt")
       public void testIncorrectFunctionalType() {
         runTest("compiler/fir/analysis-tests/testData/resolve/arguments/incorrectFunctionalType.kt");
@@ -9633,6 +9645,34 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
       @TestMetadata("constructorVarWrite.kt")
       public void testConstructorVarWrite() {
         runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/reinitializations/constructorVarWrite.kt");
+      }
+    }
+
+    @Nested
+    @TestMetadata("compiler/fir/analysis-tests/testData/resolveWithStdlib/restrictSuspension")
+    @TestDataPath("$PROJECT_ROOT")
+    public class RestrictSuspension {
+      @Test
+      public void testAllFilesPresentInRestrictSuspension() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolveWithStdlib/restrictSuspension"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+      }
+
+      @Test
+      @TestMetadata("contextParameters.kt")
+      public void testContextParameters() {
+        runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/restrictSuspension/contextParameters.kt");
+      }
+
+      @Test
+      @TestMetadata("invoke.kt")
+      public void testInvoke() {
+        runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/restrictSuspension/invoke.kt");
+      }
+
+      @Test
+      @TestMetadata("region.kt")
+      public void testRegion() {
+        runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/restrictSuspension/region.kt");
       }
     }
 

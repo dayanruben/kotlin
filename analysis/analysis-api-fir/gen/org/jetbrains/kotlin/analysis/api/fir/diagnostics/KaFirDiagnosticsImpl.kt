@@ -1997,6 +1997,12 @@ internal class HasNextFunctionTypeMismatchImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtExpression>(firDiagnostic, token), KaFirDiagnostic.HasNextFunctionTypeMismatch
 
+internal class IllegalTypeArgumentForVarargParameterWarningImpl(
+    override val type: KaType,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.IllegalTypeArgumentForVarargParameterWarning
+
 internal class OverloadResolutionAmbiguityImpl(
     override val candidates: List<KaSymbol>,
     firDiagnostic: KtPsiDiagnostic,
@@ -2665,6 +2671,12 @@ internal class MutablePropertyWithCapturedTypeImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.MutablePropertyWithCapturedType
+
+internal class UnsupportedReflectionApiImpl(
+    override val unsupportedReflectionAPI: String,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.UnsupportedReflectionApi
 
 internal class NothingToOverrideImpl(
     override val declaration: KaCallableSymbol,

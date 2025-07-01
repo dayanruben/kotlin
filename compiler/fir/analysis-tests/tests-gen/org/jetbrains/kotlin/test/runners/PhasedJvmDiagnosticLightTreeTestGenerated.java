@@ -45613,6 +45613,59 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
   }
 
   @Nested
+  @TestMetadata("compiler/testData/diagnostics/testsWithAnyBackend")
+  @TestDataPath("$PROJECT_ROOT")
+  public class TestsWithAnyBackend {
+    @Test
+    @TestMetadata("defaultValuesCycle.kt")
+    public void testDefaultValuesCycle() {
+      runTest("compiler/testData/diagnostics/testsWithAnyBackend/defaultValuesCycle.kt");
+    }
+
+    @Test
+    @TestMetadata("indirectInlineCycle.kt")
+    public void testIndirectInlineCycle() {
+      runTest("compiler/testData/diagnostics/testsWithAnyBackend/indirectInlineCycle.kt");
+    }
+
+    @Test
+    @TestMetadata("localInlineFunctionCycle.kt")
+    public void testLocalInlineFunctionCycle() {
+      runTest("compiler/testData/diagnostics/testsWithAnyBackend/localInlineFunctionCycle.kt");
+    }
+
+    @Test
+    @TestMetadata("propertyInlineCycle.kt")
+    public void testPropertyInlineCycle() {
+      runTest("compiler/testData/diagnostics/testsWithAnyBackend/propertyInlineCycle.kt");
+    }
+
+    @Test
+    @TestMetadata("recursionCycleLambda.kt")
+    public void testRecursionCycleLambda() {
+      runTest("compiler/testData/diagnostics/testsWithAnyBackend/recursionCycleLambda.kt");
+    }
+
+    @Test
+    @TestMetadata("recursionCycleWithStdlibCall.kt")
+    public void testRecursionCycleWithStdlibCall() {
+      runTest("compiler/testData/diagnostics/testsWithAnyBackend/recursionCycleWithStdlibCall.kt");
+    }
+
+    @Test
+    @TestMetadata("suspendInlineCycle.kt")
+    public void testSuspendInlineCycle() {
+      runTest("compiler/testData/diagnostics/testsWithAnyBackend/suspendInlineCycle.kt");
+    }
+
+    @Test
+    @TestMetadata("transitiveInlineCycle.kt")
+    public void testTransitiveInlineCycle() {
+      runTest("compiler/testData/diagnostics/testsWithAnyBackend/transitiveInlineCycle.kt");
+    }
+  }
+
+  @Nested
   @TestMetadata("compiler/testData/diagnostics/testsWithStdLib")
   @TestDataPath("$PROJECT_ROOT")
   public class TestsWithStdLib {
@@ -51848,6 +51901,18 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("fieldPlusAssign.kt")
       public void testFieldPlusAssign() {
         runTest("compiler/fir/analysis-tests/testData/resolve/arguments/fieldPlusAssign.kt");
+      }
+
+      @Test
+      @TestMetadata("genericVarargInferredToNothing.kt")
+      public void testGenericVarargInferredToNothing() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/arguments/genericVarargInferredToNothing.kt");
+      }
+
+      @Test
+      @TestMetadata("genericVarargInferredToNullableNothing.kt")
+      public void testGenericVarargInferredToNullableNothing() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/arguments/genericVarargInferredToNullableNothing.kt");
       }
 
       @Test
@@ -59842,6 +59907,29 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("constructorVarWrite.kt")
       public void testConstructorVarWrite() {
         runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/reinitializations/constructorVarWrite.kt");
+      }
+    }
+
+    @Nested
+    @TestMetadata("compiler/fir/analysis-tests/testData/resolveWithStdlib/restrictSuspension")
+    @TestDataPath("$PROJECT_ROOT")
+    public class RestrictSuspension {
+      @Test
+      @TestMetadata("contextParameters.kt")
+      public void testContextParameters() {
+        runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/restrictSuspension/contextParameters.kt");
+      }
+
+      @Test
+      @TestMetadata("invoke.kt")
+      public void testInvoke() {
+        runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/restrictSuspension/invoke.kt");
+      }
+
+      @Test
+      @TestMetadata("region.kt")
+      public void testRegion() {
+        runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/restrictSuspension/region.kt");
       }
     }
 

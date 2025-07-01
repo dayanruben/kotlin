@@ -4950,11 +4950,11 @@
                                 "valueType": {
                                     "type": "org.jetbrains.kotlin.arguments.dsl.types.BooleanType",
                                     "isNullable": {
-                                        "current": false,
+                                        "current": true,
                                         "valueInVersions": []
                                     },
                                     "defaultValue": {
-                                        "current": false,
+                                        "current": null,
                                         "valueInVersions": []
                                     }
                                 },
@@ -10590,37 +10590,6 @@
                                             },
                                             "isNullable": {
                                                 "current": true,
-                                                "valueInVersions": []
-                                            }
-                                        },
-                                        "valueDescription": {
-                                            "current": null,
-                                            "valueInVersions": []
-                                        },
-                                        "releaseVersionsMetadata": {
-                                            "introducedVersion": "1.4.0",
-                                            "stabilizedVersion": "1.4.0",
-                                            "deprecatedVersion": null,
-                                            "removedVersion": null
-                                        }
-                                    },
-                                    {
-                                        "name": "Xdump-synthetic-accessors-to",
-                                        "shortName": null,
-                                        "deprecatedName": null,
-                                        "description": {
-                                            "current": "Path to a directory to dump synthetic accessors and their use sites.",
-                                            "valueInVersions": []
-                                        },
-                                        "delimiter": null,
-                                        "valueType": {
-                                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringType",
-                                            "isNullable": {
-                                                "current": true,
-                                                "valueInVersions": []
-                                            },
-                                            "defaultValue": {
-                                                "current": null,
                                                 "valueInVersions": []
                                             }
                                         },

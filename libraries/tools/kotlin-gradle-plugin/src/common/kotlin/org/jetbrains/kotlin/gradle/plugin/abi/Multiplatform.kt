@@ -70,7 +70,8 @@ private fun Project.processJvmKindTargets(
             abiValidationTaskSet.addJvmTarget(target.targetName, classfiles)
 
             target.compilations.all { compilation ->
-                if (!compilation.androidVariant.isTestVariant) {
+                @Suppress("DEPRECATION")
+                if (compilation.androidVariant?.isTestVariant != true) {
                     classfiles.from(compilation.output.classesDirs)
                 }
             }
