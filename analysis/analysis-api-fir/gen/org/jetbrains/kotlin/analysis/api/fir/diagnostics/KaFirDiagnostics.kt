@@ -1356,7 +1356,6 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
     interface OperatorModifierRequired : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = OperatorModifierRequired::class
         val functionSymbol: KaFunctionSymbol
-        val name: String
     }
 
     interface OperatorCallOnConstructor : KaFirDiagnostic<PsiElement> {
@@ -4428,6 +4427,13 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface NullabilityMismatchBasedOnJavaAnnotations : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = NullabilityMismatchBasedOnJavaAnnotations::class
+        val actualType: KaType
+        val expectedType: KaType
+        val messageSuffix: String
+    }
+
+    interface NullabilityMismatchBasedOnExplicitTypeArgumentsForJava : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = NullabilityMismatchBasedOnExplicitTypeArgumentsForJava::class
         val actualType: KaType
         val expectedType: KaType
         val messageSuffix: String

@@ -1622,7 +1622,6 @@ internal class WrongModifierTargetImpl(
 
 internal class OperatorModifierRequiredImpl(
     override val functionSymbol: KaFunctionSymbol,
-    override val name: String,
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.OperatorModifierRequired
@@ -5324,6 +5323,14 @@ internal class NullabilityMismatchBasedOnJavaAnnotationsImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.NullabilityMismatchBasedOnJavaAnnotations
+
+internal class NullabilityMismatchBasedOnExplicitTypeArgumentsForJavaImpl(
+    override val actualType: KaType,
+    override val expectedType: KaType,
+    override val messageSuffix: String,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.NullabilityMismatchBasedOnExplicitTypeArgumentsForJava
 
 internal class TypeMismatchWhenFlexibilityChangesImpl(
     override val actualType: KaType,
