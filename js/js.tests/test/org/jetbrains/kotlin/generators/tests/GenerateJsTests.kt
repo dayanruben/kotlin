@@ -192,6 +192,9 @@ fun main(args: Array<String>) {
             testClass<AbstractFirJsLineNumberTest> {
                 model()
             }
+            testClass<AbstractFirJsLineNumberWithInlinedFunInKlibTest> {
+                model()
+            }
         }
 
         testGroup("js/js.tests/tests-gen", "compiler/testData/codegen", testRunnerMethodName = "runTest0") {
@@ -229,6 +232,10 @@ fun main(args: Array<String>) {
             }
 
             testClass<AbstractFirJsCodegenInlineTest> {
+                model("boxInline")
+            }
+
+            testClass<AbstractFirJsCodegenInlineWithInlinedFunInKlibTest> {
                 model("boxInline")
             }
 

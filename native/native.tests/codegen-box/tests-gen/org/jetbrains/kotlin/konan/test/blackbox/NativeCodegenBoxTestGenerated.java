@@ -43089,6 +43089,18 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
       }
 
       @Test
+      @TestMetadata("overrideResolution.kt")
+      public void testOverrideResolution() {
+        runTest("compiler/testData/codegen/box/reified/overrideResolution.kt");
+      }
+
+      @Test
+      @TestMetadata("overrideResolutionWithInlinedFunInKlib.kt")
+      public void testOverrideResolutionWithInlinedFunInKlib() {
+        runTest("compiler/testData/codegen/box/reified/overrideResolutionWithInlinedFunInKlib.kt");
+      }
+
+      @Test
       @TestMetadata("recursiveNewArray.kt")
       public void testRecursiveNewArray() {
         runTest("compiler/testData/codegen/box/reified/recursiveNewArray.kt");
@@ -43577,6 +43589,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
       @TestMetadata("differingNumberOfGenericTypeParameters.kt")
       public void testDifferingNumberOfGenericTypeParameters() {
         runTest("compiler/testData/codegen/box/sameFileInSourceAndDependencies/differingNumberOfGenericTypeParameters.kt");
+      }
+
+      @Test
+      @TestMetadata("propertyDeclaration.kt")
+      public void testPropertyDeclaration() {
+        runTest("compiler/testData/codegen/box/sameFileInSourceAndDependencies/propertyDeclaration.kt");
       }
     }
 
@@ -47756,12 +47774,6 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
       @TestMetadata("fakeOverrideInDefaultMultiModule.kt")
       public void testFakeOverrideInDefaultMultiModule() {
         runTest("compiler/testData/codegen/boxInline/anonymousObject/fakeOverrideInDefaultMultiModule.kt");
-      }
-
-      @Test
-      @TestMetadata("fakeOverrideLocalGenericBase.kt")
-      public void testFakeOverrideLocalGenericBase() {
-        runTest("compiler/testData/codegen/boxInline/anonymousObject/fakeOverrideLocalGenericBase.kt");
       }
 
       @Test

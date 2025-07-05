@@ -32673,6 +32673,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
           runTest("compiler/testData/codegen/box/multiplatform/k2/starImportOfExpectEnumWithActualTypeAlias.kt");
         }
 
+        @Test
+        @TestMetadata("unsignedArrayForLoop.kt")
+        public void testUnsignedArrayForLoop() {
+          runTest("compiler/testData/codegen/box/multiplatform/k2/unsignedArrayForLoop.kt");
+        }
+
         @Nested
         @TestMetadata("compiler/testData/codegen/box/multiplatform/k2/annotations")
         @TestDataPath("$PROJECT_ROOT")
@@ -44445,6 +44451,18 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
       }
 
       @Test
+      @TestMetadata("overrideResolution.kt")
+      public void testOverrideResolution() {
+        runTest("compiler/testData/codegen/box/reified/overrideResolution.kt");
+      }
+
+      @Test
+      @TestMetadata("overrideResolutionWithInlinedFunInKlib.kt")
+      public void testOverrideResolutionWithInlinedFunInKlib() {
+        runTest("compiler/testData/codegen/box/reified/overrideResolutionWithInlinedFunInKlib.kt");
+      }
+
+      @Test
       @TestMetadata("recursiveNewArray.kt")
       public void testRecursiveNewArray() {
         runTest("compiler/testData/codegen/box/reified/recursiveNewArray.kt");
@@ -44944,6 +44962,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
       @TestMetadata("differingNumberOfGenericTypeParameters.kt")
       public void testDifferingNumberOfGenericTypeParameters() {
         runTest("compiler/testData/codegen/box/sameFileInSourceAndDependencies/differingNumberOfGenericTypeParameters.kt");
+      }
+
+      @Test
+      @TestMetadata("propertyDeclaration.kt")
+      public void testPropertyDeclaration() {
+        runTest("compiler/testData/codegen/box/sameFileInSourceAndDependencies/propertyDeclaration.kt");
       }
     }
 
@@ -49174,12 +49198,6 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
       @TestMetadata("fakeOverrideInDefaultMultiModule.kt")
       public void testFakeOverrideInDefaultMultiModule() {
         runTest("compiler/testData/codegen/boxInline/anonymousObject/fakeOverrideInDefaultMultiModule.kt");
-      }
-
-      @Test
-      @TestMetadata("fakeOverrideLocalGenericBase.kt")
-      public void testFakeOverrideLocalGenericBase() {
-        runTest("compiler/testData/codegen/boxInline/anonymousObject/fakeOverrideLocalGenericBase.kt");
       }
 
       @Test
