@@ -56,6 +56,10 @@ private class ConeClassLikeTypePointer(coneType: ConeClassLikeType, builder: KaS
     private val isNullable = coneType.isMarkedNullable
     private val abbreviatedTypePointer = coneType.abbreviatedType?.createPointer(builder)
 
+    // function types-specific attributes
+    private val hasReceiverType = coneType.receiverType(builder.rootSession) != null
+    private val contextParameterNumber = coneType.contextParameterNumberForFunctionType
+
     override fun restore(session: KaFirSession): ConeClassLikeTypeImpl? {
         val typeArguments = typeArgumentPointers.map { it.restore(session) ?: return null }
         val abbreviatedType = abbreviatedTypePointer?.let { it.restore(session) ?: return null }
@@ -63,6 +67,12 @@ private class ConeClassLikeTypePointer(coneType: ConeClassLikeType, builder: KaS
         val attributes = buildList {
             if (abbreviatedType != null) {
                 add(AbbreviatedTypeAttribute(abbreviatedType))
+            }
+            if (hasReceiverType) {
+                add(CompilerConeAttributes.ExtensionFunctionType)
+            }
+            if (contextParameterNumber != 0) {
+                add(CompilerConeAttributes.ContextFunctionTypeParams(contextParameterNumber))
             }
         }
 
@@ -243,15 +253,13 @@ private class ConeIntegerConstantOperatorTypePointer(
     private val isUnsigned = coneType.isUnsigned
     private val isMarkedNullable = coneType.isMarkedNullable
 
-    override fun restore(session: KaFirSession): ConeIntegerConstantOperatorType? {
+    override fun restore(session: KaFirSession): ConeIntegerConstantOperatorType {
         return ConeIntegerConstantOperatorTypeImpl(isUnsigned, isMarkedNullable)
     }
 }
 
 private class ConeErrorTypePointer(coneType: ConeErrorType, builder: KaSymbolByFirBuilder) : ConeTypePointer<ConeErrorType> {
-    @Suppress("SpellCheckingInspection")
     private val isUninferredParameter = coneType.isUninferredParameter
-
     private val coneDiagnosticPointer = ConeDiagnosticPointer.create(coneType.diagnostic, builder)
     private val delegatedTypePointer = coneType.delegatedType?.createPointer(builder)
     private val typeArgumentPointers = coneType.typeArguments.map { ConeTypeProjectionPointer(it, builder) }
@@ -273,7 +281,7 @@ private class ConeErrorTypePointer(coneType: ConeErrorType, builder: KaSymbolByF
 }
 
 private object ConeDynamicTypePointer : ConeTypePointer<ConeDynamicType> {
-    override fun restore(session: KaFirSession): ConeDynamicType? {
+    override fun restore(session: KaFirSession): ConeDynamicType {
         return ConeDynamicType.create(session.firSession)
     }
 }

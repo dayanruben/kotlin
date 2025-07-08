@@ -52,6 +52,7 @@ abstract class PerformanceManager(val targetPlatform: TargetPlatform, val presen
         private set
 
     var targetDescription: String? = null
+    var outputKind: String? = null
     var files: Int = 0
         private set
     var lines: Int = 0
@@ -62,7 +63,7 @@ abstract class PerformanceManager(val targetPlatform: TargetPlatform, val presen
         get() = phaseStartTime != null
 
     fun getTargetInfo(): String =
-        "$targetDescription, $files files ($lines lines)"
+        listOfNotNull(targetDescription, outputKind).joinToString("-") + " $files files ($lines lines)"
 
     fun initializeCurrentThread() {
         thread = Thread.currentThread()
@@ -108,6 +109,7 @@ abstract class PerformanceManager(val targetPlatform: TargetPlatform, val presen
 
         UnitStats(
             targetDescription,
+            outputKind,
             System.currentTimeMillis(),
             targetPlatform.getPlatformEnumValue(),
             compilerType,
@@ -205,10 +207,10 @@ abstract class PerformanceManager(val targetPlatform: TargetPlatform, val presen
     fun notifyPhaseStarted(newPhaseType: PhaseType) {
         assert(phaseStartTime == null) { "The measurement for phase $currentPhaseType must have been finished before starting $newPhaseType" }
 
-        // Ideally, all phases always should be executed sequentially.
-        // However, some pipelines are written in a way where `BackendGeneration` executed before `Analysis` or `IrLowering` (Web).
-        // TODO: KT-75227 Consider using multiple `PerformanceManager` for measuring times per each unit
-        // or fixing a time measurement bug where `BackendGeneration` is executed before `Analysis` or `IrLowering`
+        // All phases should always be executed sequentially.
+        // TODO KT-75227 However, some Web pipelines are written in a way where `BackendGeneration` executed before `Analysis` or `IrLowering`.
+        //   Consider using multiple `PerformanceManager` for measuring times per each unit
+        //   or fix a time measurement bug where `BackendGeneration` is measured before `Analysis` or `IrLowering`
         if (!targetPlatform.isJs()) {
             assert(newPhaseType >= currentPhaseType) { "The measurement for phase $newPhaseType must be performed before $currentPhaseType" }
         }

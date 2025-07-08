@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.analysis.firstFunctionCallInBlockHasLambdaArgumentWithLabel
 import org.jetbrains.kotlin.fir.analysis.isCallTheFirstStatement
 import org.jetbrains.kotlin.fir.contracts.FirContractDescription
+import org.jetbrains.kotlin.fir.contracts.builder.buildLazyContractDescription
 import org.jetbrains.kotlin.fir.contracts.builder.buildRawContractDescription
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.*
@@ -457,32 +458,46 @@ open class PsiRawFirBuilder(
                 }
             }
 
-        private fun KtDeclarationWithBody.buildFirBody(): Pair<FirBlock?, FirContractDescription?> =
-            if (hasBody()) {
-                buildOrLazyBlock {
-                    if (hasBlockBody()) {
-                        val block = bodyBlockExpression?.accept(this@Visitor, null) as? FirBlock
-                        val contractDescription = when {
-                            !hasContractEffectList() -> block?.let {
-                                val blockSourcePsi = it.source?.psi
-                                val diagnostic = when {
-                                    blockSourcePsi == null || !isCallTheFirstStatement(blockSourcePsi) -> ConeContractShouldBeFirstStatement
-                                    functionCallHasLabel(blockSourcePsi) -> ConeContractMayNotHaveLabel
-                                    else -> null
-                                }
-                                processLegacyContractDescription(block, diagnostic)
-                            }
-                            else -> null
-                        }
-                        return@buildFirBody block to contractDescription
-                    } else {
-                        val result = { bodyExpression }.toFirExpression("Function has no body (but should)", this)
-                        FirSingleExpressionBlock(result.toReturn(baseSource = result.source))
-                    }
-                } to null
-            } else {
-                null to null
+        private fun KtDeclarationWithBody.buildFirBody(): Pair<FirBlock?, FirContractDescription?> = when {
+            // No psi body -> no fir body
+            !hasBody() -> null to null
+
+            // No block body -> expression body and no contract
+            !hasBlockBody() -> {
+                val block = buildOrLazyBlock {
+                    val result = { bodyExpression }.toFirExpression("Function has no body (but should)", this)
+                    FirSingleExpressionBlock(result.toReturn(baseSource = result.source))
+                }
+
+                block to null
             }
+
+            else -> {
+                val block = buildOrLazyBlock {
+                    bodyBlockExpression?.accept(this@Visitor, null) as? FirBlock ?: return null to null
+                }
+
+                val contractDescription = if (!hasContractEffectList() && mayHaveContract()) {
+                    buildOrLazy(
+                        build = {
+                            val blockSourcePsi = block.source?.psi
+                            val diagnostic = when {
+                                blockSourcePsi == null || !isCallTheFirstStatement(blockSourcePsi) -> ConeContractShouldBeFirstStatement
+                                functionCallHasLabel(blockSourcePsi) -> ConeContractMayNotHaveLabel
+                                else -> null
+                            }
+
+                            processLegacyContractDescription(block, diagnostic)
+                        },
+                        lazy = ::buildLazyContractDescription,
+                    )
+                } else {
+                    null
+                }
+
+                block to contractDescription
+            }
+        }
 
         private fun isCallTheFirstStatement(psi: PsiElement): Boolean =
             isCallTheFirstStatement(psi, { it.elementType }, { it.allChildren.toList() })
@@ -3357,6 +3372,24 @@ open class PsiRawFirBuilder(
 
         // In non-erroneous code, it's either `f()` (without explicit receiver) or `(expr)()` which is transformed to `expr.invoke()`
         override fun visitCallExpression(expression: KtCallExpression, data: FirElement?): FirElement {
+            // TODO(KT-22765) drop workaround when suspend modifier for lambdas is implemented
+            if (imitateLambdaSuspendModifier &&
+                expression.calleeExpression.let { it is KtNameReferenceExpression && it.getReferencedNameElement().text == StandardClassIds.Callables.suspend.callableName.identifier } &&
+                !expression.parent.let { it.selectorExpression == expression && it.receiverExpression != null } &&
+                expression.valueArgumentList == null &&
+                expression.lambdaArguments.size == 1 &&
+                expression.typeArgumentList == null
+            ) {
+                expression.lambdaArguments.single().let {
+                    return buildOrLazyExpression(it.toFirSourceElement()) {
+                        it.toFirExpression().apply {
+                            require(this is FirAnonymousFunctionExpression)
+                            anonymousFunction.replaceStatus(anonymousFunction.status.copy(isSuspend = true))
+                        }
+                    }
+                }
+            }
+
             val source = expression.toFirSourceElement()
             val (calleeReference, receiverForInvoke) = splitToCalleeAndReceiver(expression.calleeExpression, source)
 

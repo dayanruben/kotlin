@@ -5827,6 +5827,28 @@ public class FirLightTreeDiagnosticsWithLatestLanguageVersionTestGenerated exten
     }
 
     @Nested
+    @TestMetadata("compiler/fir/analysis-tests/testData/resolve/overloadResolution")
+    @TestDataPath("$PROJECT_ROOT")
+    public class OverloadResolution {
+      @Test
+      public void testAllFilesPresentInOverloadResolution() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/overloadResolution"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+      }
+
+      @Test
+      @TestMetadata("discriminateSuspendFunctionTypeAfter.kt")
+      public void testDiscriminateSuspendFunctionTypeAfter() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/overloadResolution/discriminateSuspendFunctionTypeAfter.kt");
+      }
+
+      @Test
+      @TestMetadata("discriminateSuspendFunctionTypeBefore.kt")
+      public void testDiscriminateSuspendFunctionTypeBefore() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/overloadResolution/discriminateSuspendFunctionTypeBefore.kt");
+      }
+    }
+
+    @Nested
     @TestMetadata("compiler/fir/analysis-tests/testData/resolve/overrides")
     @TestDataPath("$PROJECT_ROOT")
     public class Overrides {
@@ -6275,6 +6297,40 @@ public class FirLightTreeDiagnosticsWithLatestLanguageVersionTestGenerated exten
       @TestMetadata("unresovledReferenceInFinally.kt")
       public void testUnresovledReferenceInFinally() {
         runTest("compiler/fir/analysis-tests/testData/resolve/references/unresovledReferenceInFinally.kt");
+      }
+    }
+
+    @Nested
+    @TestMetadata("compiler/fir/analysis-tests/testData/resolve/returnInExpressionBodies")
+    @TestDataPath("$PROJECT_ROOT")
+    public class ReturnInExpressionBodies {
+      @Test
+      public void testAllFilesPresentInReturnInExpressionBodies() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/returnInExpressionBodies"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+      }
+
+      @Test
+      @TestMetadata("returnInExpressionBodyBefore.kt")
+      public void testReturnInExpressionBodyBefore() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/returnInExpressionBodies/returnInExpressionBodyBefore.kt");
+      }
+
+      @Test
+      @TestMetadata("returnInExpressionBodyPhase1.kt")
+      public void testReturnInExpressionBodyPhase1() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/returnInExpressionBodies/returnInExpressionBodyPhase1.kt");
+      }
+
+      @Test
+      @TestMetadata("returnInExpressionBodyPhase2.kt")
+      public void testReturnInExpressionBodyPhase2() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/returnInExpressionBodies/returnInExpressionBodyPhase2.kt");
+      }
+
+      @Test
+      @TestMetadata("returnInExpressionBodyProgressiveMode.kt")
+      public void testReturnInExpressionBodyProgressiveMode() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/returnInExpressionBodies/returnInExpressionBodyProgressiveMode.kt");
       }
     }
 

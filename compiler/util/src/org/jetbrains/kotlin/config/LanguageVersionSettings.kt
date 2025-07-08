@@ -432,6 +432,9 @@ enum class LanguageFeature(
     HoldsInContracts(KOTLIN_2_3, "KT-32993"),
 
     InferenceEnhancementsIn23(KOTLIN_2_3, "KT-76826"),
+    AllowReturnInExpressionBodyWithExplicitType(KOTLIN_2_3, "KT-76926"),
+    ParseLambdaWithSuspendModifier(KOTLIN_2_3, "KT-22765"),
+    DiscriminateSuspendInOverloadResolution(KOTLIN_2_3, "KT-23610"),
 
     // 2.4
 
@@ -440,6 +443,7 @@ enum class LanguageFeature(
     ForbidInitializationBeforeDeclarationInAnonymous(KOTLIN_2_4, enabledInProgressiveMode = true, "KT-77156"),
     AllowReifiedTypeInCatchClause(KOTLIN_2_4, issue = "KT-54363"),
     ForbidGetSetValueWithTooManyParameters(KOTLIN_2_4, issue = "KT-77131"),
+    ForbidReturnInExpressionBodyWithoutExplicitTypeEdgeCases(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-288"),
 
     // End of 2.* language features --------------------------------------------------
 

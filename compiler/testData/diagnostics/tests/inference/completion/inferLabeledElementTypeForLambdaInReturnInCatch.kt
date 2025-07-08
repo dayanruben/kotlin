@@ -1,6 +1,7 @@
 // RUN_PIPELINE_TILL: BACKEND
 // FIR_IDENTICAL
 // ISSUE: KT-51009
+// LATEST_LV_DIFFERENCE
 
 fun test(b: Boolean, f: () -> String?): () -> String {
     val foo = try {

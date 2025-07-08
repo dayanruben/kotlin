@@ -790,8 +790,12 @@ class BuildReportsIT : KGPBaseTest() {
                 val compilerMetrics = GradleBuildTime.COMPILER_PERFORMANCE.allChildrenMetrics()
                 val reportedCompilerMetrics = jsonReport.aggregatedMetrics.buildTimes.asMapMs().keys.filter { it in compilerMetrics }
 
-                //After KT-76477 is fixed, all compiler metrics are expected
-                assertEquals(listOf(GradleBuildTime.COMPILER_INITIALIZATION), reportedCompilerMetrics)
+                // Recursively (only two levels) gather leaves of subtree under COMPILER_PERFORMANCE, excluding nodes like CODE_GENERATION
+                val expected = GradleBuildTime.COMPILER_PERFORMANCE.children()?.flatMap { it.children() ?: listOf(it) }
+                assertEquals(
+                    expected,
+                    reportedCompilerMetrics.sorted()
+                )
             }
         }
     }
