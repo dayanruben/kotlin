@@ -48,7 +48,7 @@ internal class LLFirProvider(
 
     fun getFirClassifierByDeclaration(classLikeDeclaration: KtClassLikeDeclaration): FirClassLikeDeclaration? {
         val classId = classLikeDeclaration.getClassId() ?: return null
-        return symbolProvider.getClassLikeSymbolByClassId(classId, classLikeDeclaration)?.fir
+        return symbolProvider.getClassLikeSymbolByPsi(classId, classLikeDeclaration)?.fir
     }
 
     override fun getFirClassifierContainerFile(fqName: ClassId): FirFile {
