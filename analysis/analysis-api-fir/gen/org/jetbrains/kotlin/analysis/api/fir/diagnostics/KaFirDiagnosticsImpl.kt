@@ -1555,6 +1555,15 @@ internal class ExposedTypeParameterBoundDeprecationWarningImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.ExposedTypeParameterBoundDeprecationWarning
 
+internal class ExposedPackagePrivateTypeFromInternalWarningImpl(
+    override val elementVisibility: EffectiveVisibility,
+    override val restrictingDeclaration: KaClassLikeSymbol,
+    override val relationToType: RelationToType,
+    override val restrictingVisibility: EffectiveVisibility,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.ExposedPackagePrivateTypeFromInternalWarning
+
 internal class InapplicableInfixModifierImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
@@ -4734,6 +4743,11 @@ internal class NoReturnInFunctionWithBlockBodyImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtDeclarationWithBody>(firDiagnostic, token), KaFirDiagnostic.NoReturnInFunctionWithBlockBody
+
+internal class RedundantReturnImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtReturnExpression>(firDiagnostic, token), KaFirDiagnostic.RedundantReturn
 
 internal class AnonymousInitializerInInterfaceImpl(
     firDiagnostic: KtPsiDiagnostic,

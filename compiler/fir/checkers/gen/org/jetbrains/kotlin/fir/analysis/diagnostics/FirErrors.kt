@@ -387,6 +387,7 @@ object FirErrors : KtDiagnosticsContainer() {
     val EXPOSED_SUPER_CLASS: KtDiagnosticFactory4<EffectiveVisibility, FirClassLikeSymbol<*>, RelationToType, EffectiveVisibility> = KtDiagnosticFactory4("EXPOSED_SUPER_CLASS", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
     val EXPOSED_TYPE_PARAMETER_BOUND: KtDiagnosticFactory4<EffectiveVisibility, FirClassLikeSymbol<*>, RelationToType, EffectiveVisibility> = KtDiagnosticFactory4("EXPOSED_TYPE_PARAMETER_BOUND", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
     val EXPOSED_TYPE_PARAMETER_BOUND_DEPRECATION_WARNING: KtDiagnosticFactory4<EffectiveVisibility, FirClassLikeSymbol<*>, RelationToType, EffectiveVisibility> = KtDiagnosticFactory4("EXPOSED_TYPE_PARAMETER_BOUND_DEPRECATION_WARNING", WARNING, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
+    val EXPOSED_PACKAGE_PRIVATE_TYPE_FROM_INTERNAL_WARNING: KtDiagnosticFactory4<EffectiveVisibility, FirClassLikeSymbol<*>, RelationToType, EffectiveVisibility> = KtDiagnosticFactory4("EXPOSED_PACKAGE_PRIVATE_TYPE_FROM_INTERNAL_WARNING", WARNING, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
 
     // Modifiers
     val INAPPLICABLE_INFIX_MODIFIER: KtDiagnosticFactory0 = KtDiagnosticFactory0("INAPPLICABLE_INFIX_MODIFIER", ERROR, SourceElementPositioningStrategies.INFIX_MODIFIER, PsiElement::class, getRendererFactory())
@@ -955,6 +956,7 @@ object FirErrors : KtDiagnosticsContainer() {
     val RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY_WARNING: KtDiagnosticFactory0 = KtDiagnosticFactory0("RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY_WARNING", WARNING, SourceElementPositioningStrategies.RETURN_WITH_LABEL, KtReturnExpression::class, getRendererFactory())
     val RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY_AND_IMPLICIT_TYPE: KtDiagnosticFactory0 = KtDiagnosticFactory0("RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY_AND_IMPLICIT_TYPE", ERROR, SourceElementPositioningStrategies.RETURN_WITH_LABEL, KtReturnExpression::class, getRendererFactory())
     val NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY: KtDiagnosticFactory0 = KtDiagnosticFactory0("NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY", ERROR, SourceElementPositioningStrategies.DECLARATION_WITH_BODY, KtDeclarationWithBody::class, getRendererFactory())
+    val REDUNDANT_RETURN: KtDiagnosticFactory0 = KtDiagnosticFactory0("REDUNDANT_RETURN", WARNING, SourceElementPositioningStrategies.RETURN_WITH_LABEL, KtReturnExpression::class, getRendererFactory())
     val ANONYMOUS_INITIALIZER_IN_INTERFACE: KtDiagnosticFactory0 = KtDiagnosticFactory0("ANONYMOUS_INITIALIZER_IN_INTERFACE", ERROR, SourceElementPositioningStrategies.DECLARATION_SIGNATURE, KtAnonymousInitializer::class, getRendererFactory())
 
     // Inline

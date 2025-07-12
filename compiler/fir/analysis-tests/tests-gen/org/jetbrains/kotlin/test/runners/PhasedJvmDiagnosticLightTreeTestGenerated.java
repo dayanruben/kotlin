@@ -2962,6 +2962,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
+      @TestMetadata("localAnnotationWithTarget.kt")
+      public void testLocalAnnotationWithTarget() {
+        runTest("compiler/testData/diagnostics/tests/annotations/localAnnotationWithTarget.kt");
+      }
+
+      @Test
       @TestMetadata("localImplicitTypeUnavailable.kt")
       public void testLocalImplicitTypeUnavailable() {
         runTest("compiler/testData/diagnostics/tests/annotations/localImplicitTypeUnavailable.kt");
@@ -9417,6 +9423,18 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
+      @TestMetadata("otherAnnotations.kt")
+      public void testOtherAnnotations() {
+        runTest("compiler/testData/diagnostics/tests/crv/otherAnnotations.kt");
+      }
+
+      @Test
+      @TestMetadata("packageInfoJava.kt")
+      public void testPackageInfoJava() {
+        runTest("compiler/testData/diagnostics/tests/crv/packageInfoJava.kt");
+      }
+
+      @Test
       @TestMetadata("receiverInFunctionalCall.kt")
       public void testReceiverInFunctionalCall() {
         runTest("compiler/testData/diagnostics/tests/crv/receiverInFunctionalCall.kt");
@@ -9477,6 +9495,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("basic.kt")
       public void testBasic() {
         runTest("compiler/testData/diagnostics/tests/crvFull/basic.kt");
+      }
+
+      @Test
+      @TestMetadata("jInterop.kt")
+      public void testJInterop() {
+        runTest("compiler/testData/diagnostics/tests/crvFull/jInterop.kt");
       }
 
       @Test
@@ -13492,6 +13516,18 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("exceptionOnFakeInvisible.kt")
       public void testExceptionOnFakeInvisible() {
         runTest("compiler/testData/diagnostics/tests/exposed/exceptionOnFakeInvisible.kt");
+      }
+
+      @Test
+      @TestMetadata("exposingPackagePrivateInInternal.kt")
+      public void testExposingPackagePrivateInInternal() {
+        runTest("compiler/testData/diagnostics/tests/exposed/exposingPackagePrivateInInternal.kt");
+      }
+
+      @Test
+      @TestMetadata("exposingPackagePrivateInInternalAfter.kt")
+      public void testExposingPackagePrivateInInternalAfter() {
+        runTest("compiler/testData/diagnostics/tests/exposed/exposingPackagePrivateInInternalAfter.kt");
       }
 
       @Test
@@ -22594,6 +22630,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
     @TestDataPath("$PROJECT_ROOT")
     public class Inline {
       @Test
+      @TestMetadata("accessingLessVisibleInAnnotation.kt")
+      public void testAccessingLessVisibleInAnnotation() {
+        runTest("compiler/testData/diagnostics/tests/inline/accessingLessVisibleInAnnotation.kt");
+      }
+
+      @Test
       @TestMetadata("anonymousObjects.kt")
       public void testAnonymousObjects() {
         runTest("compiler/testData/diagnostics/tests/inline/anonymousObjects.kt");
@@ -22669,6 +22711,18 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("exposingObjectsAfter.kt")
       public void testExposingObjectsAfter() {
         runTest("compiler/testData/diagnostics/tests/inline/exposingObjectsAfter.kt");
+      }
+
+      @Test
+      @TestMetadata("exposingPackagePrivateTypeInInternal.kt")
+      public void testExposingPackagePrivateTypeInInternal() {
+        runTest("compiler/testData/diagnostics/tests/inline/exposingPackagePrivateTypeInInternal.kt");
+      }
+
+      @Test
+      @TestMetadata("exposingPackagePrivateTypeInInternalAfter.kt")
+      public void testExposingPackagePrivateTypeInInternalAfter() {
+        runTest("compiler/testData/diagnostics/tests/inline/exposingPackagePrivateTypeInInternalAfter.kt");
       }
 
       @Test
@@ -27715,6 +27769,30 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("collections.kt")
       public void testCollections() {
         runTest("compiler/testData/diagnostics/tests/multiplatform/collections.kt");
+      }
+
+      @Test
+      @TestMetadata("commonObjectWithBackingField.kt")
+      public void testCommonObjectWithBackingField() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/commonObjectWithBackingField.kt");
+      }
+
+      @Test
+      @TestMetadata("commonObjectWithDelegate.kt")
+      public void testCommonObjectWithDelegate() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/commonObjectWithDelegate.kt");
+      }
+
+      @Test
+      @TestMetadata("commonObjectWithWhenInAnnotation.kt")
+      public void testCommonObjectWithWhenInAnnotation() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/commonObjectWithWhenInAnnotation.kt");
+      }
+
+      @Test
+      @TestMetadata("commonObjectWithWhenInSupertype.kt")
+      public void testCommonObjectWithWhenInSupertype() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/commonObjectWithWhenInSupertype.kt");
       }
 
       @Test
@@ -35704,6 +35782,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("resolveWithoutGenerics.kt")
       public void testResolveWithoutGenerics() {
         runTest("compiler/testData/diagnostics/tests/resolve/resolveWithoutGenerics.kt");
+      }
+
+      @Test
+      @TestMetadata("sealedCompanionFunctionSameNameAsInheritor.kt")
+      public void testSealedCompanionFunctionSameNameAsInheritor() {
+        runTest("compiler/testData/diagnostics/tests/resolve/sealedCompanionFunctionSameNameAsInheritor.kt");
       }
 
       @Test
@@ -48874,6 +48958,18 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("enumCompanion.kt")
       public void testEnumCompanion() {
         runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/enumCompanion.kt");
+      }
+
+      @Test
+      @TestMetadata("enumConstructor.kt")
+      public void testEnumConstructor() {
+        runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/enumConstructor.kt");
+      }
+
+      @Test
+      @TestMetadata("enumConstructorStrictCheck.kt")
+      public void testEnumConstructorStrictCheck() {
+        runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/enumConstructorStrictCheck.kt");
       }
 
       @Test

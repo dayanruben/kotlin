@@ -438,13 +438,18 @@ enum class LanguageFeature(
 
     // 2.4
 
-    ErrorAboutDataClassCopyVisibilityChange(KOTLIN_2_4, enabledInProgressiveMode = true, "KT-11914"), // KT-11914. Deprecation phase 2
     ForbidExposingLessVisibleTypesInInline(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-283"),
     ForbidCaptureInlinableLambdasInJsCode(KOTLIN_2_4, enabledInProgressiveMode = true, "KT-69297"),
     ForbidInitializationBeforeDeclarationInAnonymous(KOTLIN_2_4, enabledInProgressiveMode = true, "KT-77156"),
     AllowReifiedTypeInCatchClause(KOTLIN_2_4, issue = "KT-54363"),
     ForbidGetSetValueWithTooManyParameters(KOTLIN_2_4, issue = "KT-77131"),
     ForbidReturnInExpressionBodyWithoutExplicitTypeEdgeCases(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-288"),
+    CheckOptInOnPureEnumEntries(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-359"),
+    ForbidExposingPackagePrivateInInternal(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-271"),
+
+    // 2.5
+
+    ErrorAboutDataClassCopyVisibilityChange(KOTLIN_2_5, enabledInProgressiveMode = true, "KT-11914"), // KT-11914. Deprecation phase 2
 
     // End of 2.* language features --------------------------------------------------
 
@@ -595,6 +600,7 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware, L
     KOTLIN_2_2(2, 2),
     KOTLIN_2_3(2, 3),
     KOTLIN_2_4(2, 4),
+    KOTLIN_2_5(2, 5),
     ;
 
     override val isStable: Boolean
@@ -622,7 +628,7 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware, L
             str.split(".", "-").let { if (it.size >= 2) fromVersionString("${it[0]}.${it[1]}") else null }
 
         // Version status
-        //            1.0..1.7        1.8..1.9           2.0..2.2    2.3..2.4
+        //            1.0..1.7        1.8..1.9           2.0..2.2    2.3..2.5
         // Language:  UNSUPPORTED --> DEPRECATED ------> STABLE ---> EXPERIMENTAL
         // API:       UNSUPPORTED --> DEPRECATED ------> STABLE ---> EXPERIMENTAL
 

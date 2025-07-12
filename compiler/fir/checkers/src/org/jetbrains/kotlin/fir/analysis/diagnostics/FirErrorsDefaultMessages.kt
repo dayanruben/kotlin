@@ -324,6 +324,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPLICIT_BACKING_
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPLICIT_DELEGATION_CALL_REQUIRED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPLICIT_TYPE_ARGUMENTS_IN_PROPERTY_ACCESS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPOSED_FUNCTION_RETURN_TYPE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPOSED_PACKAGE_PRIVATE_TYPE_FROM_INTERNAL_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPOSED_PARAMETER_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPOSED_PROPERTY_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR_ERROR
@@ -654,6 +655,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_MODIFIE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_NULLABLE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_OPEN_IN_INTERFACE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_PROJECTION
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_RETURN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_RETURN_UNIT_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_SETTER_PARAMETER_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_SINGLE_EXPRESSION_STRING_TEMPLATE
@@ -1462,6 +1464,15 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             TO_STRING,
             TO_STRING,
         )
+        map.put(
+            EXPOSED_PACKAGE_PRIVATE_TYPE_FROM_INTERNAL_WARNING,
+            "''{0}'' declaration exposes ''{3}'' type{2} ''{1}''."
+                .toDeprecationWarningMessage(LanguageFeature.ForbidExposingPackagePrivateInInternal),
+            TO_STRING,
+            DECLARATION_NAME,
+            TO_STRING,
+            TO_STRING,
+        )
 
         // Modifiers
         map.put(INAPPLICABLE_INFIX_MODIFIER, "'infix' modifier is inapplicable to this function.")
@@ -1903,6 +1914,8 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(TYPE_PARAMETER_OF_PROPERTY_NOT_USED_IN_RECEIVER, "Type parameter of a property must be used in its receiver type.")
 
         map.put(NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY, "Missing return statement.")
+
+        map.put(REDUNDANT_RETURN, "Return is redundant when used as expression body.")
 
         map.put(
             RETURN_TYPE_MISMATCH,
