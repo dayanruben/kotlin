@@ -9779,6 +9779,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       }
 
       @Test
+      @TestMetadata("noConflictOnMultipleMainDeclarations.kt")
+      public void testNoConflictOnMultipleMainDeclarations() {
+        runTest("compiler/testData/diagnostics/tests/crvFull/noConflictOnMultipleMainDeclarations.kt");
+      }
+
+      @Test
       @TestMetadata("nonCompilerAnnotations.kt")
       public void testNonCompilerAnnotations() {
         runTest("compiler/testData/diagnostics/tests/crvFull/nonCompilerAnnotations.kt");
@@ -23758,6 +23764,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       @TestMetadata("nullableFunction.kt")
       public void testNullableFunction() {
         runTest("compiler/testData/diagnostics/tests/inline/nullableFunction.kt");
+      }
+
+      @Test
+      @TestMetadata("override.kt")
+      public void testOverride() {
+        runTest("compiler/testData/diagnostics/tests/inline/override.kt");
       }
 
       @Test

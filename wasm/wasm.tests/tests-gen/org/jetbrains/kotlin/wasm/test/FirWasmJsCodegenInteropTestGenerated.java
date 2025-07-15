@@ -110,6 +110,12 @@ public class FirWasmJsCodegenInteropTestGenerated extends AbstractFirWasmJsCodeg
   }
 
   @Test
+  @TestMetadata("genericReturnsExternal.kt")
+  public void testGenericReturnsExternal() {
+    runTest("compiler/testData/codegen/boxWasmJsInterop/genericReturnsExternal.kt");
+  }
+
+  @Test
   @TestMetadata("imperativeWrapperInitialised.kt")
   public void testImperativeWrapperInitialised() {
     runTest("compiler/testData/codegen/boxWasmJsInterop/imperativeWrapperInitialised.kt");
@@ -131,6 +137,12 @@ public class FirWasmJsCodegenInteropTestGenerated extends AbstractFirWasmJsCodeg
   @TestMetadata("jsCode.kt")
   public void testJsCode() {
     runTest("compiler/testData/codegen/boxWasmJsInterop/jsCode.kt");
+  }
+
+  @Test
+  @TestMetadata("jsDirectQualifierReference.kt")
+  public void testJsDirectQualifierReference() {
+    runTest("compiler/testData/codegen/boxWasmJsInterop/jsDirectQualifierReference.kt");
   }
 
   @Test
@@ -221,6 +233,12 @@ public class FirWasmJsCodegenInteropTestGenerated extends AbstractFirWasmJsCodeg
   @TestMetadata("jsExportParameterWithDefaultValue.kt")
   public void testJsExportParameterWithDefaultValue() {
     runTest("compiler/testData/codegen/boxWasmJsInterop/jsExportParameterWithDefaultValue.kt");
+  }
+
+  @Test
+  @TestMetadata("jsExternalLibrariesImport.kt")
+  public void testJsExternalLibrariesImport() {
+    runTest("compiler/testData/codegen/boxWasmJsInterop/jsExternalLibrariesImport.kt");
   }
 
   @Test
