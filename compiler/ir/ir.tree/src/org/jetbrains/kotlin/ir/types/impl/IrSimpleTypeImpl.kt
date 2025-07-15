@@ -44,8 +44,6 @@ abstract class IrDelegatedSimpleType : IrSimpleType() {
         get() = delegate.nullability
     override val arguments: List<IrTypeArgument>
         get() = delegate.arguments
-    override val abbreviation: IrTypeAbbreviation?
-        get() = delegate.abbreviation
     override val annotations: List<IrConstructorCall>
         get() = delegate.annotations
 
@@ -61,7 +59,6 @@ private class IrSimpleTypeImpl(
     override val arguments: List<IrTypeArgument>,
     override val annotations: List<IrConstructorCall>,
 ) : IrAbstractSimpleType(classifier, nullability) {
-    override val abbreviation: IrTypeAbbreviation? = null
 }
 
 private class IrSimpleTypeOnlyClassifierImpl(
@@ -69,7 +66,6 @@ private class IrSimpleTypeOnlyClassifierImpl(
     nullability: SimpleTypeNullability,
 ) : IrAbstractSimpleType(classifier, nullability) {
     override val annotations: List<IrConstructorCall> get() = emptyList()
-    override val abbreviation: IrTypeAbbreviation? get() = null
     override val arguments: List<IrTypeArgument> get() = emptyList()
 }
 
@@ -79,7 +75,6 @@ private class IrSimpleTypeFullImpl(
     override val arguments: List<IrTypeArgument>,
     override val annotations: List<IrConstructorCall>,
     override val originalKotlinType: KotlinType?,
-    override val abbreviation: IrTypeAbbreviation? = null,
 ) : IrAbstractSimpleType(classifier, nullability)
 
 
@@ -87,10 +82,9 @@ fun IrSimpleTypeImpl(
     classifier: IrClassifierSymbol,
     hasQuestionMark: Boolean,
     arguments: List<IrTypeArgument>,
-    annotations: List<IrConstructorCall>,
-    abbreviation: IrTypeAbbreviation? = null
+    annotations: List<IrConstructorCall>
 ): IrSimpleType = IrSimpleTypeImpl(
-    classifier, SimpleTypeNullability.fromHasQuestionMark(hasQuestionMark), arguments, annotations, abbreviation
+    classifier, SimpleTypeNullability.fromHasQuestionMark(hasQuestionMark), arguments, annotations
 )
 
 fun IrSimpleTypeImpl(
@@ -98,7 +92,6 @@ fun IrSimpleTypeImpl(
     nullability: SimpleTypeNullability,
     arguments: List<IrTypeArgument>,
     annotations: List<IrConstructorCall>,
-    abbreviation: IrTypeAbbreviation? = null,
     originalKotlinType: KotlinType? = null,
 ): IrSimpleType {
     val realNullability = if (classifier !is IrTypeParameterSymbol && nullability == SimpleTypeNullability.NOT_SPECIFIED)
@@ -106,14 +99,13 @@ fun IrSimpleTypeImpl(
     else
         nullability
     return when {
-        originalKotlinType != null || abbreviation != null -> {
+        originalKotlinType != null -> {
             IrSimpleTypeFullImpl(
                 classifier,
                 realNullability,
                 arguments.compactIfPossible(),
                 annotations.compactIfPossible(),
                 originalKotlinType,
-                abbreviation,
             )
         }
         annotations.isEmpty() && arguments.isEmpty() -> {
@@ -140,7 +132,6 @@ class IrSimpleTypeBuilder {
     var nullability = SimpleTypeNullability.NOT_SPECIFIED
     var arguments: List<IrTypeArgument> = emptyList()
     var annotations: List<IrConstructorCall> = emptyList()
-    var abbreviation: IrTypeAbbreviation? = null
 
     var captureStatus: CaptureStatus? = null
     var capturedLowerType: IrType? = null
@@ -160,7 +151,6 @@ fun IrSimpleType.toBuilder(): IrSimpleTypeBuilder =
         b.nullability = nullability
         b.arguments = arguments
         b.annotations = annotations
-        b.abbreviation = abbreviation
     }
 
 fun IrSimpleTypeBuilder.buildSimpleType(): IrSimpleType =
@@ -178,7 +168,6 @@ fun IrSimpleTypeBuilder.buildSimpleType(): IrSimpleType =
             capturedTypeConstructor!!.typeParameter,
             nullability,
             annotations.compactIfPossible(),
-            abbreviation,
         ).apply {
             constructor.initSuperTypes(capturedTypeConstructor!!.superTypes)
         }
@@ -195,7 +184,6 @@ fun IrSimpleTypeBuilder.buildSimpleType(): IrSimpleType =
             nullability,
             arguments,
             annotations,
-            abbreviation,
             originalKotlinType = kotlinType
         )
     }

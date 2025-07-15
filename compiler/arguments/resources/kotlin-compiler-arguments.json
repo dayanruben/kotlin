@@ -210,6 +210,12 @@
             "major": 2,
             "minor": 2,
             "patch": 20
+        },
+        {
+            "name": "2.3.0",
+            "major": 2,
+            "minor": 3,
+            "patch": 0
         }
     ],
     "types": {
@@ -311,7 +317,7 @@
                     "releaseVersionsMetadata": {
                         "introducedVersion": "1.9.0",
                         "stabilizedVersion": "2.0.0",
-                        "deprecatedVersion": null,
+                        "deprecatedVersion": "2.3.0",
                         "removedVersion": null
                     }
                 },
@@ -337,7 +343,7 @@
                     "name": "2.3",
                     "releaseVersionsMetadata": {
                         "introducedVersion": "2.2.0",
-                        "stabilizedVersion": null,
+                        "stabilizedVersion": "2.3.0",
                         "deprecatedVersion": null,
                         "removedVersion": null
                     }
@@ -7842,6 +7848,37 @@
                                                 "releaseVersionsMetadata": {
                                                     "introducedVersion": "1.4.0",
                                                     "stabilizedVersion": "1.4.0",
+                                                    "deprecatedVersion": null,
+                                                    "removedVersion": null
+                                                }
+                                            },
+                                            {
+                                                "name": "Xes-long-as-bigint",
+                                                "shortName": null,
+                                                "deprecatedName": null,
+                                                "description": {
+                                                    "current": "Compile Long values as ES2015 bigint instead of object. Enabled by default in case of ES2015 target usage",
+                                                    "valueInVersions": []
+                                                },
+                                                "delimiter": null,
+                                                "valueType": {
+                                                    "type": "org.jetbrains.kotlin.arguments.dsl.types.BooleanType",
+                                                    "isNullable": {
+                                                        "current": true,
+                                                        "valueInVersions": []
+                                                    },
+                                                    "defaultValue": {
+                                                        "current": null,
+                                                        "valueInVersions": []
+                                                    }
+                                                },
+                                                "valueDescription": {
+                                                    "current": null,
+                                                    "valueInVersions": []
+                                                },
+                                                "releaseVersionsMetadata": {
+                                                    "introducedVersion": "2.2.20",
+                                                    "stabilizedVersion": null,
                                                     "deprecatedVersion": null,
                                                     "removedVersion": null
                                                 }

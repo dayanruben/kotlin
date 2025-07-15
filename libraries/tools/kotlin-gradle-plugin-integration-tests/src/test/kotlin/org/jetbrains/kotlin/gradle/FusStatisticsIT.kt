@@ -9,17 +9,20 @@ import org.gradle.api.logging.LogLevel
 import org.gradle.api.logging.configuration.WarningMode
 import org.gradle.kotlin.dsl.kotlin
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.build.report.metrics.GradleBuildTime
 import org.jetbrains.kotlin.gradle.report.BuildReportType
 import org.jetbrains.kotlin.gradle.testbase.*
 import org.jetbrains.kotlin.gradle.testbase.BuildOptions.IsolatedProjectsMode
 import org.jetbrains.kotlin.gradle.uklibs.applyMultiplatform
+import org.jetbrains.kotlin.gradle.util.filterBackwardCompatibilityKotlinFusFiles
+import org.jetbrains.kotlin.gradle.util.filterKotlinFusFiles
 import org.jetbrains.kotlin.gradle.util.replaceText
 import org.jetbrains.kotlin.gradle.util.swiftExportEmbedAndSignEnvVariables
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.appendText
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.writeText
@@ -40,10 +43,7 @@ class FusStatisticsIT : KGPBaseTest() {
         "KOTLIN_COMPILER_VERSION",
     )
 
-    private val GradleProject.fusStatisticsPath: Path
-        get() = baseFusStatisticsDirectory.getSingleFileInDir()
-
-    private val GradleProject.baseFusStatisticsDirectory: Path
+    private val GradleProject.fusStatisticsDirectory: Path
         get() = projectPath.resolve("kotlin-profile")
 
     @JvmGradlePluginTests
@@ -61,8 +61,7 @@ class FusStatisticsIT : KGPBaseTest() {
         ) {
             applyDokka(TestVersions.ThirdPartyDependencies.DOKKA)
             build("compileKotlin", "dokkaHtml", "-Pkotlin.session.logger.root.path=$projectPath") {
-                assertFileContains(
-                    fusStatisticsPath,
+                fusStatisticsDirectory.assertFusReportContains(
                     "ENABLED_DOKKA",
                     "ENABLED_DOKKA_HTML"
                 )
@@ -136,10 +135,7 @@ class FusStatisticsIT : KGPBaseTest() {
                 "-Pkotlin.session.logger.root.path=$projectPath",
             ) {
                 assertConfigurationCacheStored()
-                assertFileContains(
-                    fusStatisticsPath,
-                    *expectedDokkaFusMetrics
-                )
+                fusStatisticsDirectory.assertFusReportContains(*expectedDokkaFusMetrics)
             }
 
             projectPath.resolve("kotlin-profile").deleteRecursively()
@@ -152,10 +148,7 @@ class FusStatisticsIT : KGPBaseTest() {
                 "-Pkotlin.session.logger.root.path=$projectPath"
             ) {
                 assertConfigurationCacheReused()
-                assertFileContains(
-                    fusStatisticsPath,
-                    *expectedDokkaFusMetrics
-                )
+                fusStatisticsDirectory.assertFusReportContains(*expectedDokkaFusMetrics)
             }
         }
     }
@@ -169,7 +162,7 @@ class FusStatisticsIT : KGPBaseTest() {
     fun testMetricCollectingOfApplyingCocoapodsPlugin(gradleVersion: GradleVersion) {
         project("native-cocoapods-template", gradleVersion) {
             build("assemble", "-Pkotlin.session.logger.root.path=$projectPath") {
-                assertFileContains(fusStatisticsPath, "COCOAPODS_PLUGIN_ENABLED=true", "ENABLED_HMPP=true", "MPP_PLATFORMS")
+                fusStatisticsDirectory.assertFusReportContains("COCOAPODS_PLUGIN_ENABLED=true", "ENABLED_HMPP=true", "MPP_PLATFORMS")
             }
         }
     }
@@ -189,10 +182,7 @@ class FusStatisticsIT : KGPBaseTest() {
             )
         ) {
             build("linkDebugExecutableHost", "-Pkotlin.session.logger.root.path=$projectPath") {
-                assertFileContains(
-                    fusStatisticsPath,
-                    "KOTLIN_INCREMENTAL_NATIVE_ENABLED=true",
-                )
+                fusStatisticsDirectory.assertFusReportContains("KOTLIN_INCREMENTAL_NATIVE_ENABLED=true")
             }
         }
     }
@@ -211,7 +201,7 @@ class FusStatisticsIT : KGPBaseTest() {
             buildOptions = defaultBuildOptions.copy(isolatedProjects = IsolatedProjectsMode.DISABLED),
         ) {
             build("assemble", "-Pkotlin.session.logger.root.path=$projectPath") {
-                assertFileContains(fusStatisticsPath, "KOTLIN_JS_PLUGIN_ENABLED=true")
+                fusStatisticsDirectory.assertFusReportContains("KOTLIN_JS_PLUGIN_ENABLED=true")
             }
         }
     }
@@ -226,16 +216,9 @@ class FusStatisticsIT : KGPBaseTest() {
     fun testAppliedPluginsMetricsAreNotCollectedInSimpleProject(gradleVersion: GradleVersion) {
         project("simpleProject", gradleVersion) {
             build("assemble", "-Pkotlin.session.logger.root.path=$projectPath") {
-                val fusStatisticsPath = fusStatisticsPath
-                assertFileContains(
-                    fusStatisticsPath,
-                    *expectedMetrics,
-                )
-                assertFileDoesNotContain(
-                    fusStatisticsPath,
-                    "ENABLED_DOKKA_HTML"
-                ) // asserts that we do not put DOKKA metrics everywhere just in case
-                assertFileDoesNotContain(fusStatisticsPath, "KOTLIN_JS_PLUGIN_ENABLED")
+                fusStatisticsDirectory.assertFusReportContains(*expectedMetrics)
+                // asserts that we do not put DOKKA metrics everywhere just in case
+                fusStatisticsDirectory.assertFusReportDoesNotContain("ENABLED_DOKKA_HTML", "KOTLIN_JS_PLUGIN_ENABLED")
             }
         }
     }
@@ -274,18 +257,14 @@ class FusStatisticsIT : KGPBaseTest() {
 
         project("instantExecutionWithIncludedBuildPlugin", gradleVersion) {
             build("compileKotlin", "-Pkotlin.session.logger.root.path=$projectPath") {
-                projectPath.resolve("kotlin-profile").listDirectoryEntries().forEach {
-                    assertFileContains(it, *expectedMetrics)
-                }
+                fusStatisticsDirectory.assertAllFusReportContains(*expectedMetrics)
             }
-            projectPath.resolve("kotlin-profile").listDirectoryEntries().forEach {
+            fusStatisticsDirectory.listDirectoryEntries().forEach {
                 assertTrue(it.deleteIfExists())
             }
 
             build("compileKotlin", "-Pkotlin.session.logger.root.path=$projectPath") {
-                projectPath.resolve("kotlin-profile").listDirectoryEntries().forEach {
-                    assertFileContains(it, *expectedMetrics)
-                }
+                fusStatisticsDirectory.assertAllFusReportContains(*expectedMetrics)
             }
         }
     }
@@ -305,8 +284,7 @@ class FusStatisticsIT : KGPBaseTest() {
                 it.replace("java.util.ArrayList", "")
             }
             buildAndFail("compileKotlin", "-Pkotlin.session.logger.root.path=$projectPath") {
-                assertFileContains(
-                    fusStatisticsPath,
+                fusStatisticsDirectory.assertFusReportContains(
                     "BUILD_FAILED=true",
                     "OS_TYPE",
                     "EXECUTED_FROM_IDEA=false",
@@ -338,8 +316,7 @@ class FusStatisticsIT : KGPBaseTest() {
                     // this behavior is tested in [org.jetbrains.kotlin.gradle.FusPluginIT.withConfigurationCacheAndProjectIsolation]
                     .disableIsolatedProjects(),
             ) {
-                assertFileContains(
-                    fusStatisticsPath,
+                fusStatisticsDirectory.assertFusReportContains(
                     "CONFIGURATION_IMPLEMENTATION_COUNT=2",
                     "NUMBER_OF_SUBPROJECTS=2",
                     "COMPILATIONS_COUNT=2"
@@ -382,8 +359,7 @@ class FusStatisticsIT : KGPBaseTest() {
                 "-Pkotlin.session.logger.root.path=$projectPath",
             ) {
                 assertConfigurationCacheStored()
-                assertFileContains(
-                    fusStatisticsPath,
+                fusStatisticsDirectory.assertFusReportContains(
                     *expectedMetrics,
                     "CONFIGURATION_IMPLEMENTATION_COUNT=1",
                     "NUMBER_OF_SUBPROJECTS=1",
@@ -393,7 +369,9 @@ class FusStatisticsIT : KGPBaseTest() {
                 )
             }
 
-            assertTrue(fusStatisticsPath.deleteIfExists())
+            fusStatisticsDirectory.listDirectoryEntries()
+                .forEach { assertTrue(it.deleteIfExists(), "Can't delete file ${it.absolutePathString()}") }
+
             build("clean", buildOptions = buildOptions)
 
             build(
@@ -401,8 +379,7 @@ class FusStatisticsIT : KGPBaseTest() {
                 "-Pkotlin.session.logger.root.path=$projectPath",
             ) {
                 assertConfigurationCacheReused()
-                assertFileContains(
-                    fusStatisticsPath,
+                fusStatisticsDirectory.assertFusReportContains(
                     *expectedMetrics,
                     "CONFIGURATION_IMPLEMENTATION_COUNT=1",
                     "NUMBER_OF_SUBPROJECTS=1",
@@ -424,8 +401,7 @@ class FusStatisticsIT : KGPBaseTest() {
                 "compileKotlin",
                 "-Pkotlin.session.logger.root.path=$projectPath",
             ) {
-                assertFileContains(
-                    fusStatisticsPath,
+                fusStatisticsDirectory.assertFusReportContains(
                     "CONFIGURATION_COMPILE_ONLY_COUNT=1",
                     "CONFIGURATION_API_COUNT=1",
                     "CONFIGURATION_IMPLEMENTATION_COUNT=1",
@@ -440,8 +416,7 @@ class FusStatisticsIT : KGPBaseTest() {
     fun testFusMetricsCanBeDisabled(gradleVersion: GradleVersion) {
         project("simpleProject", gradleVersion) {
             build("assemble", "-Pkotlin.internal.collectFUSMetrics=false") {
-                val fusStatisticsPath = baseFusStatisticsDirectory
-                assertFileNotExists(fusStatisticsPath)
+                assertFileNotExists(fusStatisticsDirectory)
             }
         }
     }
@@ -449,6 +424,7 @@ class FusStatisticsIT : KGPBaseTest() {
     @JvmGradlePluginTests
     @GradleTest
     @GradleTestVersions(additionalVersions = [TestVersions.Gradle.G_8_1, TestVersions.Gradle.G_8_2])
+    @Disabled("KT-78390: Requires an updated AtomicFU that would use a newer kotlin-metadata-jvm")
     fun testKotlinxPlugins(gradleVersion: GradleVersion) {
         project(
             "simpleProject", gradleVersion,
@@ -469,8 +445,7 @@ class FusStatisticsIT : KGPBaseTest() {
                     """.trimIndent()
             )
             build("assemble", "-Pkotlin.session.logger.root.path=$projectPath") {
-                assertFileContains(
-                    fusStatisticsPath,
+                fusStatisticsDirectory.assertFusReportContains(
                     "KOTLINX_KOVER_GRADLE_PLUGIN_ENABLED=true",
                     "KOTLINX_SERIALIZATION_GRADLE_PLUGIN_ENABLED=true",
                     "KOTLINX_ATOMICFU_GRADLE_PLUGIN_ENABLED=true",
@@ -502,10 +477,7 @@ class FusStatisticsIT : KGPBaseTest() {
 
             build("compileDevelopmentExecutableKotlinWasmJs", "-Pkotlin.session.logger.root.path=$projectPath") {
                 assertTasksExecuted(":compileDevelopmentExecutableKotlinWasmJs")
-                assertFileContains(
-                    fusStatisticsPath,
-                    "WASM_IR_INCREMENTAL=true",
-                )
+                fusStatisticsDirectory.assertFusReportContains("WASM_IR_INCREMENTAL=true")
             }
         }
     }
@@ -532,10 +504,7 @@ class FusStatisticsIT : KGPBaseTest() {
             )
 
             build("linkDebugExecutableHost", "-Pkotlin.session.logger.root.path=$projectPath") {
-                assertFileContains(
-                    fusStatisticsPath,
-                    "ENABLED_NOOP_GC=true",
-                )
+                fusStatisticsDirectory.assertFusReportContains("ENABLED_NOOP_GC=true")
             }
         }
     }
@@ -565,10 +534,7 @@ class FusStatisticsIT : KGPBaseTest() {
                 "-Pkotlin.session.logger.root.path=$projectPath",
                 environmentVariables = swiftExportEmbedAndSignEnvVariables(testBuildDir),
             ) {
-                assertFileContains(
-                    fusStatisticsPath,
-                    "ENABLED_SWIFT_EXPORT=true",
-                )
+                fusStatisticsDirectory.assertFusReportContains("ENABLED_SWIFT_EXPORT=true")
             }
         }
     }
@@ -598,8 +564,7 @@ class FusStatisticsIT : KGPBaseTest() {
 
             // Check that we do not generate ENABLED_SWIFT_EXPORT=true when building other Native targets.
             build(":linkDebugFrameworkIosArm64", "-Pkotlin.session.logger.root.path=$projectPath") {
-                assertFileDoesNotContain(
-                    fusStatisticsPath,
+                fusStatisticsDirectory.assertFusReportDoesNotContain(
                     "ENABLED_SWIFT_EXPORT=true",
                 )
             }
@@ -648,16 +613,13 @@ class FusStatisticsIT : KGPBaseTest() {
                 build("clean", buildOptions = buildOptions)
             }
 
-            val fusReports = baseFusStatisticsDirectory.listDirectoryEntries()
-            assertEquals(getExpectedFusFilesCount(gradleVersion, rounds), fusReports.size)
+            assertEquals(getExpectedFusFilesCount(gradleVersion, rounds), fusStatisticsDirectory.filterKotlinFusFiles().size)
 
-            fusReports.forEach { path ->
-                assertFileContains(
-                    path,
-                    "CONFIGURATION_IMPLEMENTATION_COUNT",
-                    "NUMBER_OF_SUBPROJECTS",
-                )
-            }
+            fusStatisticsDirectory.assertFusReportContains(
+                "CONFIGURATION_IMPLEMENTATION_COUNT",
+                "NUMBER_OF_SUBPROJECTS",
+            )
+
         }
     }
 
@@ -698,4 +660,21 @@ class FusStatisticsIT : KGPBaseTest() {
         )
     }
 
+}
+
+private fun Path.assertFusReportContains(vararg expectedMetrics: String) {
+    assertFilesCombinedContains(filterKotlinFusFiles(), *expectedMetrics)
+    assertFilesCombinedContains(filterBackwardCompatibilityKotlinFusFiles(), *expectedMetrics)
+}
+
+private fun Path.assertAllFusReportContains(vararg expectedMetrics: String) {
+    listDirectoryEntries().filter { it.endsWith(".finish-profile") }.forEach {
+        assertFileContains(it, *expectedMetrics)
+    }
+}
+
+private fun Path.assertFusReportDoesNotContain(vararg expectedMetrics: String) {
+    listDirectoryEntries().forEach {
+        assertFileDoesNotContain(it, *expectedMetrics)
+    }
 }
