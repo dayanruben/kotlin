@@ -1,4 +1,4 @@
-FILE: [ResolvedTo(BODY_RESOLVE)] danglingContextParameter.kt
+FILE: [ResolvedTo(BODY_RESOLVE)] danglingContextParameterAndAnnotations.kt
     @R|kotlin/annotation/Target|[Types](allowedTargets = vararg(Q|kotlin/annotation/AnnotationTarget|.R|kotlin/annotation/AnnotationTarget.TYPE|, Q|kotlin/annotation/AnnotationTarget|.R|kotlin/annotation/AnnotationTarget.VALUE_PARAMETER|)) public final [ResolvedTo(BODY_RESOLVE)] annotation class Anno : R|kotlin/Annotation| {
         public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=Anno] constructor([ResolvedTo(BODY_RESOLVE)] [CorrespondingProperty=/Anno.position] position: R|kotlin/String|): R|Anno| {
             super<R|kotlin/Any|>()
@@ -13,9 +13,9 @@ FILE: [ResolvedTo(BODY_RESOLVE)] danglingContextParameter.kt
             super<R|kotlin/Any|>()
         }
 
-        [ResolvedTo(CONSTANT_EVALUATION)] [ContainingClassKey=Foo] context([ResolvedTo(CONSTANT_EVALUATION)] @R|Anno|[Types](String(param)) parameter1: @R|Anno|[Unresolved](LAZY_EXPRESSION) <ERROR TYPE REF: Symbol not found for Unresolved>, [ResolvedTo(CONSTANT_EVALUATION)] parameter2: R|kotlin/collections/List<@R|Anno|(LAZY_EXPRESSION)  ERROR CLASS: Symbol not found for Unresolved>|)
+        [ResolvedTo(CONSTANT_EVALUATION)] [ContainingClassKey=Foo] @R|Anno|[Types](LAZY_EXPRESSION) context([ResolvedTo(CONSTANT_EVALUATION)] @R|Anno|[Types](LAZY_EXPRESSION) parameter1: @R|Anno|[Unresolved](LAZY_EXPRESSION) <ERROR TYPE REF: Symbol not found for Unresolved>, [ResolvedTo(CONSTANT_EVALUATION)] parameter2: R|kotlin/collections/List<@R|Anno|(LAZY_EXPRESSION)  ERROR CLASS: Symbol not found for Unresolved>|)
         <DANGLING MODIFIER: Top level declaration expected>
     }
     public final [ResolvedTo(ANNOTATION_ARGUMENTS)] fun foo(): R|kotlin/Unit| { LAZY_BLOCK }
-    [ResolvedTo(CONSTANT_EVALUATION)] context([ResolvedTo(CONSTANT_EVALUATION)] @R|Anno|[Types](String(param)) parameter1: @R|Anno|[Unresolved](LAZY_EXPRESSION) <ERROR TYPE REF: Symbol not found for Unresolved>, [ResolvedTo(CONSTANT_EVALUATION)] parameter2: R|kotlin/collections/List<@R|Anno|(LAZY_EXPRESSION)  ERROR CLASS: Symbol not found for Unresolved>|)
+    [ResolvedTo(CONSTANT_EVALUATION)] @R|Anno|[Types](LAZY_EXPRESSION) context([ResolvedTo(CONSTANT_EVALUATION)] @R|Anno|[Types](LAZY_EXPRESSION) parameter1: @R|Anno|[Unresolved](LAZY_EXPRESSION) <ERROR TYPE REF: Symbol not found for Unresolved>, [ResolvedTo(CONSTANT_EVALUATION)] parameter2: R|kotlin/collections/List<@R|Anno|(LAZY_EXPRESSION)  ERROR CLASS: Symbol not found for Unresolved>|)
     <DANGLING MODIFIER: Top level declaration expected>

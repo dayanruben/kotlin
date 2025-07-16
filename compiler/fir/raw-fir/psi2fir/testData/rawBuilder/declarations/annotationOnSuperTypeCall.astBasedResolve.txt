@@ -8,8 +8,8 @@ FILE: [ResolvedTo(ANNOTATION_ARGUMENTS)] annotationOnSuperTypeCall.kt
             public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=Anno] get(): R|kotlin/String|
 
     }
-    public final const [ResolvedTo(CONTRACTS)] val prop: <implicit> = LAZY_EXPRESSION
-        public [ResolvedTo(CONTRACTS)] get(): <implicit>
+    public final const [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] val prop: R|kotlin/String| = String(str)
+        public [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] get(): R|kotlin/String|
     public abstract [ResolvedTo(BODY_RESOLVE)] class AbstractClass<[ResolvedTo(BODY_RESOLVE)] T> : R|kotlin/Any| {
         public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=AbstractClass] constructor<[ResolvedTo(BODY_RESOLVE)] T>(): R|util/AbstractClass<T>| {
             super<R|kotlin/Any|>()
