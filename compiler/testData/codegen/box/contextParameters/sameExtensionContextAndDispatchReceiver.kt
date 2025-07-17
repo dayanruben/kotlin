@@ -52,7 +52,7 @@ fun usageWithExtensionAndContextOutsideClass(): String {
     var temp = ""
     with(A("d ")) {
         context(A("c ")) {
-            temp =  A("e ").funMember() + A("e ").propertyMember
+            temp = (@Suppress("RECEIVER_SHADOWED_BY_CONTEXT_PARAMETER") A("e ").funMember()) + (@Suppress("RECEIVER_SHADOWED_BY_CONTEXT_PARAMETER") A("e ").propertyMember)
         }
     }
     return temp

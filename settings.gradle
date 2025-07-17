@@ -266,6 +266,7 @@ include ":kotlin-script-runtime",
         ":kotlin-compiler",
         ":kotlin-compiler-embeddable",
         ":kotlin-compiler-client-embeddable",
+        ":kotlin-klib-abi-reader",
         ":kotlin-reflect",
         ":kotlin-ant",
         ":compiler:tests-java8",
@@ -510,7 +511,9 @@ if (!buildProperties.inJpsBuildIdeaSync) {
 include ":compiler:build-tools:kotlin-build-tools-api",
         ":compiler:build-tools:kotlin-build-tools-impl",
         ":compiler:build-tools:kotlin-build-tools-api-tests",
-        ":compiler:build-tools:kotlin-build-tools-jdk-utils"
+        ":compiler:build-tools:kotlin-build-tools-jdk-utils",
+        ":compiler:build-tools:kotlin-build-tools-options-generator",
+        ":compiler:build-tools:util-kotlinpoet"
 
 if (!buildProperties.inJpsBuildIdeaSync) {
     include ":plugins:compose-compiler-plugin",
@@ -783,6 +786,7 @@ project(':kotlinx-metadata-klib').projectDir = "$rootDir/libraries/kotlinx-metad
 project(':kotlin-compiler').projectDir = "$rootDir/prepare/compiler" as File
 project(':kotlin-compiler-embeddable').projectDir = "$rootDir/prepare/compiler-embeddable" as File
 project(':kotlin-compiler-client-embeddable').projectDir = "$rootDir/prepare/compiler-client-embeddable" as File
+project(':kotlin-klib-abi-reader').projectDir = "$rootDir/libraries/tools/klib-abi-reader" as File
 project(':kotlin-preloader').projectDir = "$rootDir/compiler/preloader" as File
 project(':kotlin-build-common').projectDir = "$rootDir/build-common" as File
 project(':compiler:cli-common').projectDir = "$rootDir/compiler/cli/cli-common" as File

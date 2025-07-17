@@ -43252,6 +43252,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
     }
 
     @Test
+    @TestMetadata("kt52230.kt")
+    public void testKt52230() {
+      runTest("compiler/testData/codegen/box/primitiveTypes/kt52230.kt");
+    }
+
+    @Test
     @TestMetadata("kt6590_identityEquals.kt")
     public void testKt6590_identityEquals() {
       runTest("compiler/testData/codegen/box/primitiveTypes/kt6590_identityEquals.kt");
@@ -43393,6 +43399,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
     @TestMetadata("unboxComparable.kt")
     public void testUnboxComparable() {
       runTest("compiler/testData/codegen/box/primitiveTypes/unboxComparable.kt");
+    }
+
+    @Test
+    @TestMetadata("virtualCallToCustomNumber.kt")
+    public void testVirtualCallToCustomNumber() {
+      runTest("compiler/testData/codegen/box/primitiveTypes/virtualCallToCustomNumber.kt");
     }
 
     @Nested

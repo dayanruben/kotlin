@@ -1164,12 +1164,6 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
     }
 
     @Test
-    @TestMetadata("kt56665.kt")
-    public void testKt56665() {
-      runTest("compiler/testData/diagnostics/tests/kt56665.kt");
-    }
-
-    @Test
     @TestMetadata("kt56723.kt")
     public void testKt56723() {
       runTest("compiler/testData/diagnostics/tests/kt56723.kt");
@@ -9626,6 +9620,24 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("twoClassesWithNestedCycle.kt")
       public void testTwoClassesWithNestedCycle() {
         runTest("compiler/testData/diagnostics/tests/cyclicHierarchy/twoClassesWithNestedCycle.kt");
+      }
+
+      @Test
+      @TestMetadata("withTypeAlias.kt")
+      public void testWithTypeAlias() {
+        runTest("compiler/testData/diagnostics/tests/cyclicHierarchy/withTypeAlias.kt");
+      }
+
+      @Test
+      @TestMetadata("withTypeAlias0.kt")
+      public void testWithTypeAlias0() {
+        runTest("compiler/testData/diagnostics/tests/cyclicHierarchy/withTypeAlias0.kt");
+      }
+
+      @Test
+      @TestMetadata("withTypeAlias2.kt")
+      public void testWithTypeAlias2() {
+        runTest("compiler/testData/diagnostics/tests/cyclicHierarchy/withTypeAlias2.kt");
       }
 
       @Nested
@@ -21867,6 +21879,30 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
         @TestMetadata("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes")
         @TestDataPath("$PROJECT_ROOT")
         public class SelfTypes {
+          @Test
+          @TestMetadata("recursiveTypeWithComplexDependency1After.kt")
+          public void testRecursiveTypeWithComplexDependency1After() {
+            runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes/recursiveTypeWithComplexDependency1After.kt");
+          }
+
+          @Test
+          @TestMetadata("recursiveTypeWithComplexDependency1Before.kt")
+          public void testRecursiveTypeWithComplexDependency1Before() {
+            runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes/recursiveTypeWithComplexDependency1Before.kt");
+          }
+
+          @Test
+          @TestMetadata("recursiveTypeWithComplexDependency2After.kt")
+          public void testRecursiveTypeWithComplexDependency2After() {
+            runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes/recursiveTypeWithComplexDependency2After.kt");
+          }
+
+          @Test
+          @TestMetadata("recursiveTypeWithComplexDependency2Before.kt")
+          public void testRecursiveTypeWithComplexDependency2Before() {
+            runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes/recursiveTypeWithComplexDependency2Before.kt");
+          }
+
           @Nested
           @TestMetadata("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes/enabledInferenceOnSelfTypes")
           @TestDataPath("$PROJECT_ROOT")
@@ -24340,12 +24376,6 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
-      @TestMetadata("flexibleTypeVariablePositionDnnRepresentation.kt")
-      public void testFlexibleTypeVariablePositionDnnRepresentation() {
-        runTest("compiler/testData/diagnostics/tests/j+k/flexibleTypeVariablePositionDnnRepresentation.kt");
-      }
-
-      @Test
       @TestMetadata("flexibleTypeVariablePositionPreciseLowerConstraints.kt")
       public void testFlexibleTypeVariablePositionPreciseLowerConstraints() {
         runTest("compiler/testData/diagnostics/tests/j+k/flexibleTypeVariablePositionPreciseLowerConstraints.kt");
@@ -24355,12 +24385,6 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("futureGet.kt")
       public void testFutureGet() {
         runTest("compiler/testData/diagnostics/tests/j+k/futureGet.kt");
-      }
-
-      @Test
-      @TestMetadata("futureGetDnnRepresentation.kt")
-      public void testFutureGetDnnRepresentation() {
-        runTest("compiler/testData/diagnostics/tests/j+k/futureGetDnnRepresentation.kt");
       }
 
       @Test
@@ -24724,12 +24748,6 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
-      @TestMetadata("nullableLinkedListToQueueDnnRepresentation.kt")
-      public void testNullableLinkedListToQueueDnnRepresentation() {
-        runTest("compiler/testData/diagnostics/tests/j+k/nullableLinkedListToQueueDnnRepresentation.kt");
-      }
-
-      @Test
       @TestMetadata("nullableRawTypeWithFlexibleArguments.kt")
       public void testNullableRawTypeWithFlexibleArguments() {
         runTest("compiler/testData/diagnostics/tests/j+k/nullableRawTypeWithFlexibleArguments.kt");
@@ -24784,12 +24802,6 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
-      @TestMetadata("overrideWithTypeParameterAfter.kt")
-      public void testOverrideWithTypeParameterAfter() {
-        runTest("compiler/testData/diagnostics/tests/j+k/overrideWithTypeParameterAfter.kt");
-      }
-
-      @Test
       @TestMetadata("overrideWithTypeParameterNoFlexible.kt")
       public void testOverrideWithTypeParameterNoFlexible() {
         runTest("compiler/testData/diagnostics/tests/j+k/overrideWithTypeParameterNoFlexible.kt");
@@ -24799,12 +24811,6 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("overrideWithTypeParameterReverse.kt")
       public void testOverrideWithTypeParameterReverse() {
         runTest("compiler/testData/diagnostics/tests/j+k/overrideWithTypeParameterReverse.kt");
-      }
-
-      @Test
-      @TestMetadata("overrideWithTypeParameterReverseAfter.kt")
-      public void testOverrideWithTypeParameterReverseAfter() {
-        runTest("compiler/testData/diagnostics/tests/j+k/overrideWithTypeParameterReverseAfter.kt");
       }
 
       @Test
@@ -25072,12 +25078,6 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
-      @TestMetadata("typeFromGenericFunWithAnnotationDnnRepresentation.kt")
-      public void testTypeFromGenericFunWithAnnotationDnnRepresentation() {
-        runTest("compiler/testData/diagnostics/tests/j+k/typeFromGenericFunWithAnnotationDnnRepresentation.kt");
-      }
-
-      @Test
       @TestMetadata("typeFromGenericFunWithAnnotationWithoutWrtHack.kt")
       public void testTypeFromGenericFunWithAnnotationWithoutWrtHack() {
         runTest("compiler/testData/diagnostics/tests/j+k/typeFromGenericFunWithAnnotationWithoutWrtHack.kt");
@@ -25087,12 +25087,6 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("typeFromGenericWithAnnotation.kt")
       public void testTypeFromGenericWithAnnotation() {
         runTest("compiler/testData/diagnostics/tests/j+k/typeFromGenericWithAnnotation.kt");
-      }
-
-      @Test
-      @TestMetadata("typeFromGenericWithAnnotationDnnRepresentation.kt")
-      public void testTypeFromGenericWithAnnotationDnnRepresentation() {
-        runTest("compiler/testData/diagnostics/tests/j+k/typeFromGenericWithAnnotationDnnRepresentation.kt");
       }
 
       @Test
@@ -25108,21 +25102,9 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
-      @TestMetadata("typeFromJavaGenericDnnRepresentation.kt")
-      public void testTypeFromJavaGenericDnnRepresentation() {
-        runTest("compiler/testData/diagnostics/tests/j+k/typeFromJavaGenericDnnRepresentation.kt");
-      }
-
-      @Test
       @TestMetadata("typeFromJavaGenericFun.kt")
       public void testTypeFromJavaGenericFun() {
         runTest("compiler/testData/diagnostics/tests/j+k/typeFromJavaGenericFun.kt");
-      }
-
-      @Test
-      @TestMetadata("typeFromJavaGenericFunDnnRepresentation.kt")
-      public void testTypeFromJavaGenericFunDnnRepresentation() {
-        runTest("compiler/testData/diagnostics/tests/j+k/typeFromJavaGenericFunDnnRepresentation.kt");
       }
 
       @Test
@@ -25752,21 +25734,9 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
         }
 
         @Test
-        @TestMetadata("lambdaParameterRemainFlexibleRegularConstructorWithDnnRepresentation.kt")
-        public void testLambdaParameterRemainFlexibleRegularConstructorWithDnnRepresentation() {
-          runTest("compiler/testData/diagnostics/tests/j+k/sam/lambdaParameterRemainFlexibleRegularConstructorWithDnnRepresentation.kt");
-        }
-
-        @Test
         @TestMetadata("lambdaParameterRemainFlexibleRegularConstructorWithoutWrtHack.kt")
         public void testLambdaParameterRemainFlexibleRegularConstructorWithoutWrtHack() {
           runTest("compiler/testData/diagnostics/tests/j+k/sam/lambdaParameterRemainFlexibleRegularConstructorWithoutWrtHack.kt");
-        }
-
-        @Test
-        @TestMetadata("lambdaParameterRemainFlexibleWithDnnRepresentation.kt")
-        public void testLambdaParameterRemainFlexibleWithDnnRepresentation() {
-          runTest("compiler/testData/diagnostics/tests/j+k/sam/lambdaParameterRemainFlexibleWithDnnRepresentation.kt");
         }
 
         @Test
@@ -25973,12 +25943,6 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
         @TestMetadata("notNullTypeParameterWithKotlinNullable.kt")
         public void testNotNullTypeParameterWithKotlinNullable() {
           runTest("compiler/testData/diagnostics/tests/j+k/types/notNullTypeParameterWithKotlinNullable.kt");
-        }
-
-        @Test
-        @TestMetadata("notNullTypeParameterWithKotlinNullableDnnRepresentation.kt")
-        public void testNotNullTypeParameterWithKotlinNullableDnnRepresentation() {
-          runTest("compiler/testData/diagnostics/tests/j+k/types/notNullTypeParameterWithKotlinNullableDnnRepresentation.kt");
         }
 
         @Test
@@ -32062,12 +32026,6 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
-      @TestMetadata("dnnOverridesFlexibleDnnRepresentation.kt")
-      public void testDnnOverridesFlexibleDnnRepresentation() {
-        runTest("compiler/testData/diagnostics/tests/override/dnnOverridesFlexibleDnnRepresentation.kt");
-      }
-
-      @Test
       @TestMetadata("dnnOverridesFlexibleOff.kt")
       public void testDnnOverridesFlexibleOff() {
         runTest("compiler/testData/diagnostics/tests/override/dnnOverridesFlexibleOff.kt");
@@ -32353,6 +32311,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("overrideMemberFromFinalClass.kt")
       public void testOverrideMemberFromFinalClass() {
         runTest("compiler/testData/diagnostics/tests/override/overrideMemberFromFinalClass.kt");
+      }
+
+      @Test
+      @TestMetadata("overrideOfBadSuperType.kt")
+      public void testOverrideOfBadSuperType() {
+        runTest("compiler/testData/diagnostics/tests/override/overrideOfBadSuperType.kt");
       }
 
       @Test
@@ -32806,12 +32770,6 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
-      @TestMetadata("comparingWithWrongNullabilityDnnRepresentation.kt")
-      public void testComparingWithWrongNullabilityDnnRepresentation() {
-        runTest("compiler/testData/diagnostics/tests/platformTypes/comparingWithWrongNullabilityDnnRepresentation.kt");
-      }
-
-      @Test
       @TestMetadata("comparingWithWrongNullabilityWithoutWrtHack.kt")
       public void testComparingWithWrongNullabilityWithoutWrtHack() {
         runTest("compiler/testData/diagnostics/tests/platformTypes/comparingWithWrongNullabilityWithoutWrtHack.kt");
@@ -33219,12 +33177,6 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
         @TestMetadata("singleton.kt")
         public void testSingleton() {
           runTest("compiler/testData/diagnostics/tests/platformTypes/methodCall/singleton.kt");
-        }
-
-        @Test
-        @TestMetadata("singletonDnnRepresentation.kt")
-        public void testSingletonDnnRepresentation() {
-          runTest("compiler/testData/diagnostics/tests/platformTypes/methodCall/singletonDnnRepresentation.kt");
         }
 
         @Test
@@ -36819,12 +36771,6 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
-      @TestMetadata("samConversionToGenericWrongNullabilityDnnRepresentation.kt")
-      public void testSamConversionToGenericWrongNullabilityDnnRepresentation() {
-        runTest("compiler/testData/diagnostics/tests/samConversions/samConversionToGenericWrongNullabilityDnnRepresentation.kt");
-      }
-
-      @Test
       @TestMetadata("samConversionToGenericWrongNullabilityForbidden.kt")
       public void testSamConversionToGenericWrongNullabilityForbidden() {
         runTest("compiler/testData/diagnostics/tests/samConversions/samConversionToGenericWrongNullabilityForbidden.kt");
@@ -36840,12 +36786,6 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("samConversionWithCallableReference.kt")
       public void testSamConversionWithCallableReference() {
         runTest("compiler/testData/diagnostics/tests/samConversions/samConversionWithCallableReference.kt");
-      }
-
-      @Test
-      @TestMetadata("samConversionWithCallableReferenceDnnRepresentation.kt")
-      public void testSamConversionWithCallableReferenceDnnRepresentation() {
-        runTest("compiler/testData/diagnostics/tests/samConversions/samConversionWithCallableReferenceDnnRepresentation.kt");
       }
 
       @Test
@@ -36870,12 +36810,6 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("samConversionWithJavaFlexibleType.kt")
       public void testSamConversionWithJavaFlexibleType() {
         runTest("compiler/testData/diagnostics/tests/samConversions/samConversionWithJavaFlexibleType.kt");
-      }
-
-      @Test
-      @TestMetadata("samConversionWithJavaFlexibleTypeDnnRepresentation.kt")
-      public void testSamConversionWithJavaFlexibleTypeDnnRepresentation() {
-        runTest("compiler/testData/diagnostics/tests/samConversions/samConversionWithJavaFlexibleTypeDnnRepresentation.kt");
       }
 
       @Test
@@ -36927,12 +36861,6 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
-      @TestMetadata("samWithLambdaDnnRepresentation.kt")
-      public void testSamWithLambdaDnnRepresentation() {
-        runTest("compiler/testData/diagnostics/tests/samConversions/samWithLambdaDnnRepresentation.kt");
-      }
-
-      @Test
       @TestMetadata("samWithLambdaNoFlexible.kt")
       public void testSamWithLambdaNoFlexible() {
         runTest("compiler/testData/diagnostics/tests/samConversions/samWithLambdaNoFlexible.kt");
@@ -36942,12 +36870,6 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("sameCandidatesFromKotlinAndJavaInOneScope.kt")
       public void testSameCandidatesFromKotlinAndJavaInOneScope() {
         runTest("compiler/testData/diagnostics/tests/samConversions/sameCandidatesFromKotlinAndJavaInOneScope.kt");
-      }
-
-      @Test
-      @TestMetadata("sameConversionToGenericWrongNullabilityDnnRepresentation.kt")
-      public void testSameConversionToGenericWrongNullabilityDnnRepresentation() {
-        runTest("compiler/testData/diagnostics/tests/samConversions/sameConversionToGenericWrongNullabilityDnnRepresentation.kt");
       }
 
       @Test
@@ -53112,6 +53034,24 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
+      @TestMetadata("receiverShadowed.kt")
+      public void testReceiverShadowed() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/receiverShadowed.kt");
+      }
+
+      @Test
+      @TestMetadata("receiverShadowed2.kt")
+      public void testReceiverShadowed2() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/receiverShadowed2.kt");
+      }
+
+      @Test
+      @TestMetadata("receiverShadowedSubtype.kt")
+      public void testReceiverShadowedSubtype() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/receiverShadowedSubtype.kt");
+      }
+
+      @Test
       @TestMetadata("smoke.kt")
       public void testSmoke() {
         runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/smoke.kt");
@@ -56285,12 +56225,6 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("onlyInputTypesCapturedTypeWithRecursiveBounds.kt")
       public void testOnlyInputTypesCapturedTypeWithRecursiveBounds() {
         runTest("compiler/fir/analysis-tests/testData/resolve/inference/onlyInputTypesCapturedTypeWithRecursiveBounds.kt");
-      }
-
-      @Test
-      @TestMetadata("onlyInputTypesCapturedTypeWithRecursiveBoundsAfter.kt")
-      public void testOnlyInputTypesCapturedTypeWithRecursiveBoundsAfter() {
-        runTest("compiler/fir/analysis-tests/testData/resolve/inference/onlyInputTypesCapturedTypeWithRecursiveBoundsAfter.kt");
       }
 
       @Test
