@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.backend.common.serialization
 import org.jetbrains.kotlin.backend.common.serialization.encodings.*
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrSimpleTypeNullability
 import org.jetbrains.kotlin.config.KlibAbiCompatibilityLevel
-import org.jetbrains.kotlin.config.KlibAbiCompatibilityLevel.ABI_LEVEL_2_2
+import org.jetbrains.kotlin.config.KlibAbiCompatibilityLevel.ABI_LEVEL_2_3
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities.INTERNAL
 import org.jetbrains.kotlin.ir.IrElement
@@ -225,13 +225,6 @@ open class IrFileSerializer(
             return
         }
 
-        if (IrStatementOrigin.IMPLICIT_ARGUMENT == origin && settings.abiCompatibilityLevel == KlibAbiCompatibilityLevel.ABI_LEVEL_2_1) {
-            // Kotlin compiler version 2.1.x fails in an attempt to deserialize unknown statement origins.
-            // So, as a workaround, we try to avoid serializing such statements when exporting to KLIB ABI level 2.1.
-            // For details, see KT-76131, KT-75624, KT-75393.
-            return
-        }
-
         val originIndex = serializeString(origin.debugName)
         saveOriginIndex(originIndex)
     }
@@ -314,7 +307,7 @@ open class IrFileSerializer(
                         recordInSignatureClashDetector = isDeclared
                     )
 
-                    symbolOwner is IrReturnableBlock && settings.abiCompatibilityLevel.isAtLeast(ABI_LEVEL_2_2) ->
+                    symbolOwner is IrReturnableBlock && settings.abiCompatibilityLevel.isAtLeast(ABI_LEVEL_2_3) ->
                         declarationTable.signatureByReturnableBlock(symbolOwner)
 
                     else -> error("Expected symbol owner: ${symbolOwner.render()}")
@@ -494,7 +487,7 @@ open class IrFileSerializer(
     }
 
     private fun serializeReturnableBlock(returnableBlock: IrReturnableBlock): ProtoReturnableBlock {
-        requireAbiAtLeast(ABI_LEVEL_2_2) { returnableBlock }
+        requireAbiAtLeast(ABI_LEVEL_2_3) { returnableBlock }
 
         val proto = ProtoReturnableBlock.newBuilder()
         proto.symbol = serializeIrSymbol(returnableBlock.symbol)
@@ -503,7 +496,7 @@ open class IrFileSerializer(
     }
 
     private fun serializeInlinedFunctionBlock(inlinedFunctionBlock: IrInlinedFunctionBlock): ProtoInlinedFunctionBlock {
-        requireAbiAtLeast(ABI_LEVEL_2_2) { inlinedFunctionBlock }
+        requireAbiAtLeast(ABI_LEVEL_2_3) { inlinedFunctionBlock }
 
         val proto = ProtoInlinedFunctionBlock.newBuilder()
         inlinedFunctionBlock.inlinedFunctionSymbol?.let { proto.setInlinedFunctionSymbol(serializeIrSymbol(it)) }
@@ -582,22 +575,8 @@ open class IrFileSerializer(
 
         val proto = ProtoMemberAccessCommon.newBuilder()
 
-        if (settings.abiCompatibilityLevel.isAtLeast(ABI_LEVEL_2_2)) {
-            for (arg in call.arguments) {
-                proto.addArgument(buildProtoNullableIrExpression(arg))
-            }
-        } else { // KLIB ABI 2.1:
-            val callableSymbol = call.symbol
-            require(callableSymbol.isBound) { callableSymbol }
-
-            for ((parameter, arg) in call.getAllArgumentsWithIr()) {
-                when (parameter.kind) {
-                    IrParameterKind.DispatchReceiver -> if (arg != null) proto.dispatchReceiver = serializeExpression(arg)
-                    IrParameterKind.ExtensionReceiver -> if (arg != null) proto.extensionReceiver = serializeExpression(arg)
-                    IrParameterKind.Context -> serializationNotSupportedAtCurrentAbiLevel({ "Context parameter" }) { callableSymbol.owner }
-                    IrParameterKind.Regular -> proto.addRegularArgument(buildProtoNullableIrExpression(arg))
-                }
-            }
+        for (arg in call.arguments) {
+            proto.addArgument(buildProtoNullableIrExpression(arg))
         }
 
         for (typeArg in call.typeArguments) {
@@ -647,7 +626,7 @@ open class IrFileSerializer(
     }
 
     private fun serializeRichFunctionReference(callable: IrRichFunctionReference): ProtoRichFunctionReference {
-        requireAbiAtLeast(ABI_LEVEL_2_2) { callable }
+        requireAbiAtLeast(ABI_LEVEL_2_3) { callable }
 
         return ProtoRichFunctionReference.newBuilder().apply {
             callable.reflectionTargetSymbol?.let { reflectionTargetSymbol = serializeIrSymbol(it) }
@@ -662,7 +641,7 @@ open class IrFileSerializer(
     }
 
     private fun serializeRichPropertyReference(callable: IrRichPropertyReference): ProtoRichPropertyReference {
-        requireAbiAtLeast(ABI_LEVEL_2_2) { callable }
+        requireAbiAtLeast(ABI_LEVEL_2_3) { callable }
 
         return ProtoRichPropertyReference.newBuilder().apply {
             callable.reflectionTargetSymbol?.let { reflectionTargetSymbol = serializeIrSymbol(it) }
@@ -1166,7 +1145,7 @@ open class IrFileSerializer(
 
     private fun serializeIrValueParameter(parameter: IrValueParameter): ProtoValueParameter {
         if (parameter.kind == IrParameterKind.Context) {
-            requireAbiAtLeast(ABI_LEVEL_2_2, { "Context parameter" }) { parameter.parent }
+            requireAbiAtLeast(ABI_LEVEL_2_3, { "Context parameter" }) { parameter.parent }
         }
 
         val proto = ProtoValueParameter.newBuilder()
@@ -1576,12 +1555,7 @@ open class IrFileSerializer(
             }
 
         val includeLineStartOffsets = !settings.publicAbiOnly || fileContainsInline
-        if (settings.abiCompatibilityLevel.isAtLeast(ABI_LEVEL_2_2)) {
-            // KLIBs with ABI version >= 2.2.0 have `fileEntries.knf` file with `file entries` table.
-            proto.setFileEntryId(serializeFileEntryId(file.fileEntry, includeLineStartOffsets = includeLineStartOffsets))
-        } else {
-            proto.setFileEntry(serializeFileEntry(file.fileEntry, includeLineStartOffsets = includeLineStartOffsets))
-        }
+        proto.setFileEntryId(serializeFileEntryId(file.fileEntry, includeLineStartOffsets = includeLineStartOffsets))
 
         // TODO: is it Konan specific?
 
@@ -1609,7 +1583,6 @@ open class IrFileSerializer(
             backendSpecificMetadata = backendSpecificMetadata(file)?.toByteArray(),
             fileEntries = with(protoIrFileEntryArray) {
                 if (isNotEmpty()) {
-                    requireAbiAtLeast(ABI_LEVEL_2_2, { "IR file entries table" }) { file }
                     IrArrayWriter(protoIrFileEntryArray.map { it.toByteArray() }).writeIntoMemory()
                 } else {
                     null
