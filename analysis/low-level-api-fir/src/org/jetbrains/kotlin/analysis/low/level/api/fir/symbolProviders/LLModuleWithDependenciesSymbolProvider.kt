@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.analysis.low.level.api.fir.symbolProviders
 
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.low.level.api.fir.providers.jvmClassNameIfDeserialized
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
 import org.jetbrains.kotlin.analysis.utils.collections.buildSmartList
@@ -19,7 +20,6 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.utils.SmartSet
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -81,12 +81,12 @@ internal class LLModuleWithDependenciesSymbolProvider(
     fun getClassLikeSymbolByClassIdWithoutDependencies(classId: ClassId): FirClassLikeSymbol<*>? =
         providers.firstNotNullOfOrNull { it.getClassLikeSymbolByClassId(classId) }
 
-    @ModuleSpecificSymbolProviderAccess
+    @LLModuleSpecificSymbolProviderAccess
     fun getClassLikeSymbolByPsiWithoutDependencies(
         classId: ClassId,
-        classLikeDeclaration: KtClassLikeDeclaration,
+        declaration: PsiElement,
     ): FirClassLikeSymbol<*>? =
-        providers.firstNotNullOfOrNull { it.getClassLikeSymbolMatchingPsi(classId, classLikeDeclaration) }
+        providers.firstNotNullOfOrNull { it.getClassLikeSymbolMatchingPsi(classId, declaration) }
 
     @FirSymbolProviderInternals
     override fun getTopLevelCallableSymbolsTo(destination: MutableList<FirCallableSymbol<*>>, packageFqName: FqName, name: Name) {
@@ -235,10 +235,3 @@ internal class LLDependenciesSymbolProvider(
         facades += newFacades
     }
 }
-
-
-/**
- * Every [LLFirSession] has [LLModuleWithDependenciesSymbolProvider] as a symbol provider
- */
-internal val LLFirSession.symbolProvider: LLModuleWithDependenciesSymbolProvider
-    get() = (this as FirSession).symbolProvider as LLModuleWithDependenciesSymbolProvider

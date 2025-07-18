@@ -204,9 +204,9 @@ fun FirDeclarationCollector<FirBasedSymbol<*>>.collectClassMembers(klass: FirCla
         }
     }
 
-    fun processClassifier(it: FirClassifierSymbol<*>) {
+    fun processClassifier(it: FirClassifierSymbol<*>, isDeclared: Boolean) {
         when {
-            !it.isCollectable() || !it.isVisibleInClass(klass) -> return
+            !it.isCollectable() || !isDeclared && !it.isVisibleInClass(klass) -> return
             it is FirRegularClassSymbol -> collect(it, FirRedeclarationPresenter.represent(it), otherDeclarations)
             it is FirTypeAliasSymbol -> collect(it, FirRedeclarationPresenter.represent(it), otherDeclarations)
             else -> {}
@@ -239,11 +239,11 @@ fun FirDeclarationCollector<FirBasedSymbol<*>>.collectClassMembers(klass: FirCla
     @OptIn(DirectDeclarationsAccess::class)
     for (declaredClassifier in klass.declarationSymbols) {
         if (declaredClassifier is FirClassifierSymbol<*>) {
-            processClassifier(declaredClassifier)
+            processClassifier(declaredClassifier, isDeclared = true)
 
             unsubstitutedScope.processClassifiersByName(declaredClassifier.name) { anotherClassifier ->
                 if (anotherClassifier != declaredClassifier) {
-                    processClassifier(anotherClassifier)
+                    processClassifier(anotherClassifier, isDeclared = false)
                 }
             }
         }
@@ -259,13 +259,13 @@ private val FirClassifierSymbol<*>.name: Name
 context(context: CheckerContext)
 fun collectConflictingLocalFunctionsFrom(
     block: FirBlock
-): Map<FirFunctionSymbol<*>, Set<FirBasedSymbol<*>>> {
+): FirDeclarationCollector<FirFunctionSymbol<*>>? {
     val collectables =
         block.statements.filter {
             (it is FirSimpleFunction || it is FirRegularClass) && (it as FirDeclaration).symbol.isCollectable()
         }
 
-    if (collectables.isEmpty()) return emptyMap()
+    if (collectables.isEmpty()) return null
 
     val inspector = FirDeclarationCollector<FirFunctionSymbol<*>>(context)
     val functionDeclarations = mutableMapOf<String, MutableSet<FirFunctionSymbol<*>>>()
@@ -285,7 +285,7 @@ fun collectConflictingLocalFunctionsFrom(
         }
     }
 
-    return inspector.declarationConflictingSymbols
+    return inspector
 }
 
 private fun <D : FirBasedSymbol<*>, S : D> FirDeclarationCollector<D>.collect(

@@ -34277,6 +34277,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
+      @TestMetadata("privateNestedClasses.kt")
+      public void testPrivateNestedClasses() {
+        runTest("compiler/testData/diagnostics/tests/redeclarations/privateNestedClasses.kt");
+      }
+
+      @Test
       @TestMetadata("PropertyAndFunInClass.kt")
       public void testPropertyAndFunInClass() {
         runTest("compiler/testData/diagnostics/tests/redeclarations/PropertyAndFunInClass.kt");
@@ -39633,9 +39639,21 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
         }
 
         @Test
-        @TestMetadata("unneededUnstableSmartcast.kt")
-        public void testUnneededUnstableSmartcast() {
-          runTest("compiler/testData/diagnostics/tests/smartCasts/inference/unneededUnstableSmartcast.kt");
+        @TestMetadata("unstableSmartCastUnneededForConcreteProperty.kt")
+        public void testUnstableSmartCastUnneededForConcreteProperty() {
+          runTest("compiler/testData/diagnostics/tests/smartCasts/inference/unstableSmartCastUnneededForConcreteProperty.kt");
+        }
+
+        @Test
+        @TestMetadata("unstableSmartCastUnneededForGenericPropertyA.kt")
+        public void testUnstableSmartCastUnneededForGenericPropertyA() {
+          runTest("compiler/testData/diagnostics/tests/smartCasts/inference/unstableSmartCastUnneededForGenericPropertyA.kt");
+        }
+
+        @Test
+        @TestMetadata("unstableSmartCastUnneededForGenericPropertyB.kt")
+        public void testUnstableSmartCastUnneededForGenericPropertyB() {
+          runTest("compiler/testData/diagnostics/tests/smartCasts/inference/unstableSmartCastUnneededForGenericPropertyB.kt");
         }
       }
 
@@ -55885,6 +55903,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
         @TestMetadata("lambda.kt")
         public void testLambda() {
           runTest("compiler/fir/analysis-tests/testData/resolve/extraCheckers/unused/lambda.kt");
+        }
+
+        @Test
+        @TestMetadata("LocalDelegate.kt")
+        public void testLocalDelegate() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/extraCheckers/unused/LocalDelegate.kt");
         }
 
         @Test

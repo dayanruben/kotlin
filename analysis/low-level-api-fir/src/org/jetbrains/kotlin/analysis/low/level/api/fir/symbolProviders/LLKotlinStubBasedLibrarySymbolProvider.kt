@@ -45,9 +45,9 @@ typealias DeserializedTypeAliasPostProcessor = (FirTypeAliasSymbol) -> Unit
  * [LLKotlinStubBasedLibrarySymbolProvider] deserializes FIR symbols from existing stubs, retrieving them by [ClassId]/[CallableId] from a
  * [KotlinDeclarationProvider][org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProvider].
  *
- * The symbol provider is currently only enabled in IDE mode. The Standalone mode uses
- * [JvmClassFileBasedSymbolProvider][org.jetbrains.kotlin.fir.java.deserialization.JvmClassFileBasedSymbolProvider], which is also used by
- * the compiler.
+ * The symbol provider is currently only enabled in IDE mode. The Standalone mode uses [LLJvmClassFileBasedSymbolProvider] whose base class
+ * [JvmClassFileBasedSymbolProvider][org.jetbrains.kotlin.fir.java.deserialization.JvmClassFileBasedSymbolProvider] is also used by the
+ * compiler.
  *
  * Because the symbol provider uses existing stubs, there is no need to keep a huge protobuf in memory, which would be the case for
  * metadata-based deserialization ([JvmClassFileBasedSymbolProvider][org.jetbrains.kotlin.fir.java.deserialization.JvmClassFileBasedSymbolProvider]).
@@ -248,7 +248,7 @@ internal open class LLKotlinStubBasedLibrarySymbolProvider(
                     propertyOrigin = getDeclarationOriginFor(property.containingKtFile),
                     deserializedContainerSourceProvider = deserializedContainerSourceProvider,
                     session = session,
-                ) ?: continue
+                )
                 add(symbol)
             }
         }
@@ -268,7 +268,7 @@ internal open class LLKotlinStubBasedLibrarySymbolProvider(
 
         // We can assume that the outer class is in the scope since we're deserializing it with this symbol provider. Since the nested class
         // is in the same file as its outer class, it's definitely also in the scope of the symbol provider.
-        @OptIn(ModuleSpecificSymbolProviderAccess::class)
+        @OptIn(LLModuleSpecificSymbolProviderAccess::class)
         return classCache.getSymbolByPsi(classId, declaration, parentContext)
     }
 
@@ -354,16 +354,16 @@ internal open class LLKotlinStubBasedLibrarySymbolProvider(
     }
 
     private fun getClass(classId: ClassId): FirRegularClassSymbol? {
-        @OptIn(ModuleSpecificSymbolProviderAccess::class)
+        @OptIn(LLModuleSpecificSymbolProviderAccess::class)
         return classCache.getSymbolByClassId(classId, context = null)
     }
 
     private fun getTypeAlias(classId: ClassId): FirTypeAliasSymbol? {
-        @OptIn(ModuleSpecificSymbolProviderAccess::class)
+        @OptIn(LLModuleSpecificSymbolProviderAccess::class)
         return typeAliasCache.getSymbolByClassId(classId, context = null)
     }
 
-    @ModuleSpecificSymbolProviderAccess
+    @LLModuleSpecificSymbolProviderAccess
     override fun getClassLikeSymbolByClassId(classId: ClassId, classLikeDeclaration: KtClassLikeDeclaration): FirClassLikeSymbol<*>? {
         val cache = if (classLikeDeclaration is KtClassOrObject) classCache else typeAliasCache
         cache.getCachedSymbolByClassId(classId)?.let { return it }
@@ -380,7 +380,7 @@ internal open class LLKotlinStubBasedLibrarySymbolProvider(
         return cache.getSymbolByClassId(classId, createClassLikeDeserializationContext(classId, classLikeDeclaration))
     }
 
-    @ModuleSpecificSymbolProviderAccess
+    @LLModuleSpecificSymbolProviderAccess
     override fun getClassLikeSymbolByPsi(classId: ClassId, declaration: PsiElement): FirClassLikeSymbol<*>? {
         if (declaration !is KtClassLikeDeclaration) return null
 
@@ -462,7 +462,7 @@ internal open class LLKotlinStubBasedLibrarySymbolProvider(
             propertyOrigin: FirDeclarationOrigin,
             deserializedContainerSourceProvider: DeserializedContainerSourceProvider,
             session: FirSession,
-        ): FirPropertySymbol? {
+        ): FirPropertySymbol {
             val propertyStub = property.stub as? KotlinPropertyStubImpl ?: loadStubByElement(property)
             val propertyFile = property.containingKtFile
             val containerSource = deserializedContainerSourceProvider.getFacadeContainerSource(

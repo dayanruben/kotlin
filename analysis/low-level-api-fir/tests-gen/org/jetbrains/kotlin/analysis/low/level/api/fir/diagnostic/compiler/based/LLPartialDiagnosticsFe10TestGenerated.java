@@ -35649,6 +35649,12 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
       }
 
       @Test
+      @TestMetadata("privateNestedClasses.kt")
+      public void testPrivateNestedClasses() {
+        runTest("compiler/testData/diagnostics/tests/redeclarations/privateNestedClasses.kt");
+      }
+
+      @Test
       @TestMetadata("PropertyAndFunInClass.kt")
       public void testPropertyAndFunInClass() {
         runTest("compiler/testData/diagnostics/tests/redeclarations/PropertyAndFunInClass.kt");
@@ -41308,9 +41314,21 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
         }
 
         @Test
-        @TestMetadata("unneededUnstableSmartcast.kt")
-        public void testUnneededUnstableSmartcast() {
-          runTest("compiler/testData/diagnostics/tests/smartCasts/inference/unneededUnstableSmartcast.kt");
+        @TestMetadata("unstableSmartCastUnneededForConcreteProperty.kt")
+        public void testUnstableSmartCastUnneededForConcreteProperty() {
+          runTest("compiler/testData/diagnostics/tests/smartCasts/inference/unstableSmartCastUnneededForConcreteProperty.kt");
+        }
+
+        @Test
+        @TestMetadata("unstableSmartCastUnneededForGenericPropertyA.kt")
+        public void testUnstableSmartCastUnneededForGenericPropertyA() {
+          runTest("compiler/testData/diagnostics/tests/smartCasts/inference/unstableSmartCastUnneededForGenericPropertyA.kt");
+        }
+
+        @Test
+        @TestMetadata("unstableSmartCastUnneededForGenericPropertyB.kt")
+        public void testUnstableSmartCastUnneededForGenericPropertyB() {
+          runTest("compiler/testData/diagnostics/tests/smartCasts/inference/unstableSmartCastUnneededForGenericPropertyB.kt");
         }
       }
 
