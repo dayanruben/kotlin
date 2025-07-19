@@ -56,12 +56,14 @@ class WasmBackendContext(
     // Place to store declarations excluded from code generation
     private val excludedDeclarations = mutableMapOf<FqName, IrPackageFragment>()
 
-    fun getExcludedPackageFragment(fqName: FqName): IrPackageFragment = excludedDeclarations.getOrPut(fqName) {
+    fun getExcludedPackageFragmentOrCreate(fqName: FqName): IrPackageFragment = excludedDeclarations.getOrPut(fqName) {
         IrExternalPackageFragmentImpl(
             DescriptorlessExternalPackageFragmentSymbol(),
             fqName
         )
     }
+
+    fun getExcludedPackageFragment(fqName: FqName): IrPackageFragment? = excludedDeclarations.get(fqName)
 
     class CrossFileContext {
         var mainFunctionWrapper: IrSimpleFunction? = null
