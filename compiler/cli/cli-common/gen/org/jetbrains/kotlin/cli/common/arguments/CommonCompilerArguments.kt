@@ -858,6 +858,11 @@ The argument should be used only if the new compilation scheme is enabled with -
 -Xannotation-default-target=param-property:  use '@param:' target if applicable, and also use the first of either '@property:' or '@field:';
 default: 'first-only-warn' in language version 2.2+, 'first-only' in version 2.1 and before.""",
     )
+    @Disables(LanguageFeature.AnnotationDefaultTargetMigrationWarning, "first-only")
+    @Enables(LanguageFeature.AnnotationDefaultTargetMigrationWarning, "first-only-warn")
+    @Disables(LanguageFeature.PropertyParamAnnotationDefaultTargetMode, "first-only")
+    @Disables(LanguageFeature.PropertyParamAnnotationDefaultTargetMode, "first-only-warn")
+    @Enables(LanguageFeature.PropertyParamAnnotationDefaultTargetMode, "param-property")
     var annotationDefaultTarget: String? = null
         set(value) {
             checkFrozen()
@@ -939,6 +944,26 @@ default: 'first-only-warn' in language version 2.2+, 'first-only' in version 2.1
         set(value) {
             checkFrozen()
             field = value
+        }
+
+    @Argument(
+        value = "-Xname-based-destructuring",
+        valueDescription = "only-syntax|name-mismatch|complete",
+        description = """Enables the following destructuring features:
+-Xname-based-destructuring=only-syntax:   Enables syntax for positional destructuring with square brackets and the full form of name-based destructuring with parentheses;
+-Xname-based-destructuring=name-mismatch: Reports warnings when short form positional destructuring of data classes uses names that don't match the property names;
+-Xname-based-destructuring=complete:      Enables short-form name-based destructuring with parentheses;""",
+    )
+    @Enables(LanguageFeature.NameBasedDestructuring, "only-syntax")
+    @Enables(LanguageFeature.NameBasedDestructuring, "name-mismatch")
+    @Enables(LanguageFeature.NameBasedDestructuring, "complete")
+    @Enables(LanguageFeature.DeprecateNameMismatchInShortDestructuringWithParentheses, "name-mismatch")
+    @Enables(LanguageFeature.DeprecateNameMismatchInShortDestructuringWithParentheses, "complete")
+    @Enables(LanguageFeature.EnableNameBasedDestructuringShortForm, "complete")
+    var nameBasedDestructuring: String? = null
+        set(value) {
+            checkFrozen()
+            field = if (value.isNullOrEmpty()) null else value
         }
 
     @get:Transient

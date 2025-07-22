@@ -5,16 +5,40 @@
 
 package org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.diagnosticProvider
 
-import org.jetbrains.kotlin.analysis.test.framework.projectStructure.KtTestModule
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
+import org.jetbrains.kotlin.analysis.api.projectStructure.contextModule
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.test.directives.model.DirectivesContainer
+import org.jetbrains.kotlin.test.directives.model.SimpleDirectivesContainer
 import org.jetbrains.kotlin.test.services.TestServices
+import org.jetbrains.kotlin.test.services.moduleStructure
 
 abstract class AbstractDanglingFileCollectDiagnosticsTest : AbstractCollectDiagnosticsTest() {
-    override fun doTestByMainFile(mainFile: KtFile, mainModule: KtTestModule, testServices: TestServices) {
-        val ktPsiFactory = KtPsiFactory.contextual(mainFile, markGenerated = true, eventSystemEnabled = false)
-        val fakeKtFile = ktPsiFactory.createFile("fake.kt", mainFile.text)
+    override val additionalDirectives: List<DirectivesContainer>
+        get() = super.additionalDirectives + Directives
 
-        doTestByKtFile(fakeKtFile, testServices)
+    private object Directives : SimpleDirectivesContainer() {
+        val IGNORE_DANGLING_FILES by stringDirective("Ignore dangling file diagnostic tests.")
+    }
+
+    override fun doTest(testServices: TestServices) {
+        testServices.moduleStructure.allDirectives.suppressIf(
+            suppressionDirective = Directives.IGNORE_DANGLING_FILES,
+            filter = { it is AssertionError },
+            action = {
+                super.doTest(testServices)
+            }
+        )
+    }
+
+    override fun prepareKtFile(ktFile: KtFile, testServices: TestServices): PreparedFile {
+        val contextModule = KotlinProjectStructureProvider.getModule(ktFile.project, ktFile, useSiteModule = null)
+        val ktPsiFactory = KtPsiFactory.contextual(ktFile, markGenerated = true, eventSystemEnabled = false)
+
+        val fakeFile = ktPsiFactory.createFile("fake.kt", ktFile.text).also { ktFile ->
+            ktFile.contextModule = contextModule
+        }
+        return PreparedFile(fakeFile, ktFile.name)
     }
 }

@@ -70,6 +70,18 @@ internal fun MutableMap<LanguageFeature, LanguageFeature.State>.configureCommonL
         put(LanguageFeature.NestedTypeAliases, LanguageFeature.State.ENABLED)
     }
 
+    if (arguments.annotationDefaultTarget == "first-only-warn") {
+        put(LanguageFeature.AnnotationDefaultTargetMigrationWarning, LanguageFeature.State.ENABLED)
+        put(LanguageFeature.PropertyParamAnnotationDefaultTargetMode, LanguageFeature.State.DISABLED)
+    }
+    if (arguments.annotationDefaultTarget == "param-property") {
+        put(LanguageFeature.PropertyParamAnnotationDefaultTargetMode, LanguageFeature.State.ENABLED)
+    }
+    if (arguments.annotationDefaultTarget == "first-only") {
+        put(LanguageFeature.AnnotationDefaultTargetMigrationWarning, LanguageFeature.State.DISABLED)
+        put(LanguageFeature.PropertyParamAnnotationDefaultTargetMode, LanguageFeature.State.DISABLED)
+    }
+
     if (arguments.annotationTargetAll) {
         put(LanguageFeature.AnnotationAllUseSiteTarget, LanguageFeature.State.ENABLED)
     }
@@ -90,5 +102,18 @@ internal fun MutableMap<LanguageFeature, LanguageFeature.State>.configureCommonL
 
     if (arguments.allowHoldsinContract) {
         put(LanguageFeature.HoldsInContracts, LanguageFeature.State.ENABLED)
+    }
+
+    if (arguments.nameBasedDestructuring == "only-syntax") {
+        put(LanguageFeature.NameBasedDestructuring, LanguageFeature.State.ENABLED)
+    }
+    if (arguments.nameBasedDestructuring == "name-mismatch") {
+        put(LanguageFeature.NameBasedDestructuring, LanguageFeature.State.ENABLED)
+        put(LanguageFeature.DeprecateNameMismatchInShortDestructuringWithParentheses, LanguageFeature.State.ENABLED)
+    }
+    if (arguments.nameBasedDestructuring == "complete") {
+        put(LanguageFeature.NameBasedDestructuring, LanguageFeature.State.ENABLED)
+        put(LanguageFeature.DeprecateNameMismatchInShortDestructuringWithParentheses, LanguageFeature.State.ENABLED)
+        put(LanguageFeature.EnableNameBasedDestructuringShortForm, LanguageFeature.State.ENABLED)
     }
 }

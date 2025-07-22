@@ -7,40 +7,15 @@ package org.jetbrains.kotlin.test.runners.codegen
 
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.configuration.useInlineHandlers
-import org.jetbrains.kotlin.test.configuration.useIrInliner
 
-open class AbstractIrBlackBoxInlineCodegenWithBytecodeInlinerTest : AbstractIrBlackBoxCodegenTest() {
+open class AbstractIrBlackBoxInlineCodegenTest : AbstractIrBlackBoxCodegenTest() {
     override fun configure(builder: TestConfigurationBuilder) {
         super.configure(builder)
         builder.useInlineHandlers()
     }
 }
 
-open class AbstractIrBlackBoxInlineCodegenWithIrInlinerTest : AbstractIrBlackBoxCodegenTest() {
-    override fun configure(builder: TestConfigurationBuilder) {
-        super.configure(builder)
-        builder.useInlineHandlers()
-        builder.useIrInliner()
-    }
-}
-
-open class AbstractFirLightTreeBlackBoxInlineCodegenWithBytecodeInlinerTest : AbstractFirLightTreeBlackBoxCodegenTest() {
-    override fun configure(builder: TestConfigurationBuilder) {
-        super.configure(builder)
-        builder.useInlineHandlers()
-    }
-}
-
-open class AbstractFirLightTreeBlackBoxInlineCodegenWithIrInlinerTest : AbstractFirLightTreeBlackBoxCodegenTest() {
-    override fun configure(builder: TestConfigurationBuilder) {
-        super.configure(builder)
-        builder.useInlineHandlers()
-        builder.useIrInliner()
-    }
-}
-
-@FirPsiCodegenTest
-open class AbstractFirPsiBlackBoxInlineCodegenWithBytecodeInlinerTest : AbstractFirPsiBlackBoxCodegenTest() {
+open class AbstractFirLightTreeBlackBoxInlineCodegenTest : AbstractFirLightTreeBlackBoxCodegenTest() {
     override fun configure(builder: TestConfigurationBuilder) {
         super.configure(builder)
         builder.useInlineHandlers()
@@ -48,10 +23,9 @@ open class AbstractFirPsiBlackBoxInlineCodegenWithBytecodeInlinerTest : Abstract
 }
 
 @FirPsiCodegenTest
-open class AbstractFirPsiBlackBoxInlineCodegenWithIrInlinerTest : AbstractFirPsiBlackBoxCodegenTest() {
+open class AbstractFirPsiBlackBoxInlineCodegenTest : AbstractFirPsiBlackBoxCodegenTest() {
     override fun configure(builder: TestConfigurationBuilder) {
         super.configure(builder)
         builder.useInlineHandlers()
-        builder.useIrInliner()
     }
 }

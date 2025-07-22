@@ -258,6 +258,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
     }
 
     @Test
+    @TestMetadata("castToNullableParameter.kt")
+    public void testCastToNullableParameter() {
+      runTest("compiler/testData/diagnostics/tests/castToNullableParameter.kt");
+    }
+
+    @Test
     @TestMetadata("castingMutableListVariance.kt")
     public void testCastingMutableListVariance() {
       runTest("compiler/testData/diagnostics/tests/castingMutableListVariance.kt");
@@ -24394,6 +24400,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
+      @TestMetadata("genericFunAndClassNullabilityInconsistency.kt")
+      public void testGenericFunAndClassNullabilityInconsistency() {
+        runTest("compiler/testData/diagnostics/tests/j+k/genericFunAndClassNullabilityInconsistency.kt");
+      }
+
+      @Test
       @TestMetadata("GenericsInSupertypes.kt")
       public void testGenericsInSupertypes() {
         runTest("compiler/testData/diagnostics/tests/j+k/GenericsInSupertypes.kt");
@@ -34237,6 +34249,42 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("interfaceTypeParameters.kt")
       public void testInterfaceTypeParameters() {
         runTest("compiler/testData/diagnostics/tests/redeclarations/interfaceTypeParameters.kt");
+      }
+
+      @Test
+      @TestMetadata("kotlinClassJavaClassNestedRedeclaration.kt")
+      public void testKotlinClassJavaClassNestedRedeclaration() {
+        runTest("compiler/testData/diagnostics/tests/redeclarations/kotlinClassJavaClassNestedRedeclaration.kt");
+      }
+
+      @Test
+      @TestMetadata("kotlinClassJavaClassRedeclaration.kt")
+      public void testKotlinClassJavaClassRedeclaration() {
+        runTest("compiler/testData/diagnostics/tests/redeclarations/kotlinClassJavaClassRedeclaration.kt");
+      }
+
+      @Test
+      @TestMetadata("kotlinEnumJavaEnumRedeclaration.kt")
+      public void testKotlinEnumJavaEnumRedeclaration() {
+        runTest("compiler/testData/diagnostics/tests/redeclarations/kotlinEnumJavaEnumRedeclaration.kt");
+      }
+
+      @Test
+      @TestMetadata("kotlinInterfaceJavaInterfaceRedeclaration.kt")
+      public void testKotlinInterfaceJavaInterfaceRedeclaration() {
+        runTest("compiler/testData/diagnostics/tests/redeclarations/kotlinInterfaceJavaInterfaceRedeclaration.kt");
+      }
+
+      @Test
+      @TestMetadata("kotlinObjectJavaClassNestedRedeclaration.kt")
+      public void testKotlinObjectJavaClassNestedRedeclaration() {
+        runTest("compiler/testData/diagnostics/tests/redeclarations/kotlinObjectJavaClassNestedRedeclaration.kt");
+      }
+
+      @Test
+      @TestMetadata("kotlinObjectJavaClassRedeclaration.kt")
+      public void testKotlinObjectJavaClassRedeclaration() {
+        runTest("compiler/testData/diagnostics/tests/redeclarations/kotlinObjectJavaClassRedeclaration.kt");
       }
 
       @Test

@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.test.Constructor
 import org.jetbrains.kotlin.test.HandlersStepBuilder
 import org.jetbrains.kotlin.test.TestJdkKind
-import org.jetbrains.kotlin.test.backend.BlackBoxInlinerCodegenSuppressor
 import org.jetbrains.kotlin.test.backend.handlers.*
 import org.jetbrains.kotlin.test.backend.ir.IrBackendInput
 import org.jetbrains.kotlin.test.builders.*
@@ -111,15 +110,6 @@ fun TestConfigurationBuilder.useInlineHandlers() {
         defaultDirectives {
             +DUMP_SMAP
         }
-    }
-}
-
-/**
- * Enables IR inliner for JVM backend
- */
-fun TestConfigurationBuilder.useIrInliner() {
-    defaultDirectives {
-        +LanguageSettingsDirectives.ENABLE_JVM_IR_INLINER
     }
 }
 
@@ -257,10 +247,6 @@ fun TestConfigurationBuilder.configureJvmBoxCodegenSettings(includeAllDumpHandle
             ::BytecodeTextHandler.bind(true)
         )
     }
-
-    useAfterAnalysisCheckers(
-        ::BlackBoxInlinerCodegenSuppressor,
-    )
 
     defaultDirectives {
         +REPORT_ONLY_EXPLICITLY_DEFINED_DEBUG_INFO

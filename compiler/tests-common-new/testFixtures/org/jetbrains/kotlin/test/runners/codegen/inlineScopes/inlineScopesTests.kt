@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.test.runners.codegen.inlineScopes
 
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.configuration.useInlineScopesNumbers
-import org.jetbrains.kotlin.test.configuration.useIrInliner
 import org.jetbrains.kotlin.test.runners.codegen.*
 
 /*
@@ -15,24 +14,8 @@ import org.jetbrains.kotlin.test.runners.codegen.*
  * in the JVM backend and their execution result shouldn't be affected by the parser.
  */
 
-open class AbstractFirBlackBoxInlineCodegenWithBytecodeInlinerTestWithInlineScopes :
-    AbstractFirLightTreeBlackBoxInlineCodegenWithBytecodeInlinerTest() {
-    override fun configure(builder: TestConfigurationBuilder) {
-        super.configure(builder)
-        builder.useInlineScopesNumbers()
-    }
-}
-
-open class AbstractFirBlackBoxInlineCodegenWithIrInlinerTestWithInlineScopes : AbstractFirLightTreeBlackBoxInlineCodegenWithIrInlinerTest() {
-    override fun configure(builder: TestConfigurationBuilder) {
-        super.configure(builder)
-        builder.useInlineScopesNumbers()
-    }
-}
-
-// Adding this test will result in test failures.
-// TODO: Decide what to do with this test
-open class AbstractFirAsmLikeInstructionListingTestWithInlineScopes : AbstractFirLightTreeAsmLikeInstructionListingTest() {
+open class AbstractFirBlackBoxInlineCodegenTestWithInlineScopes :
+    AbstractFirLightTreeBlackBoxInlineCodegenTest() {
     override fun configure(builder: TestConfigurationBuilder) {
         super.configure(builder)
         builder.useInlineScopesNumbers()
@@ -46,16 +29,6 @@ open class AbstractFirBlackBoxCodegenTestWithInlineScopes : AbstractFirLightTree
     }
 }
 
-// Adding this test will result in test failures.
-// TODO: Add or remove when the fate of the IR inliner is decided.
-open class AbstractFirBlackBoxCodegenWithIrInlinerTestWithInlineScopes : AbstractFirLightTreeBlackBoxCodegenTest() {
-    override fun configure(builder: TestConfigurationBuilder) {
-        super.configure(builder)
-        builder.useInlineScopesNumbers()
-        builder.useIrInliner()
-    }
-}
-
 open class AbstractFirBytecodeTextTestWithInlineScopes : AbstractFirLightTreeBytecodeTextTest() {
     override fun configure(builder: TestConfigurationBuilder) {
         super.configure(builder)
@@ -63,18 +36,10 @@ open class AbstractFirBytecodeTextTestWithInlineScopes : AbstractFirLightTreeByt
     }
 }
 
-open class AbstractFirLocalVariableBytecodeInlinerTestWithInlineScopes : AbstractFirLightTreeLocalVariableTest() {
+open class AbstractFirLocalVariableTestWithInlineScopes : AbstractFirLightTreeLocalVariableTest() {
     override fun configure(builder: TestConfigurationBuilder) {
         super.configure(builder)
         builder.useInlineScopesNumbers()
-    }
-}
-
-open class AbstractFirLocalVariableIrInlinerTestWithInlineScopes : AbstractFirLightTreeLocalVariableTest() {
-    override fun configure(builder: TestConfigurationBuilder) {
-        super.configure(builder)
-        builder.useInlineScopesNumbers()
-        builder.useIrInliner()
     }
 }
 
@@ -86,17 +51,9 @@ open class AbstractFirSerializeCompileKotlinAgainstInlineKotlinTestWithInlineSco
     }
 }
 
-open class AbstractFirSteppingWithBytecodeInlinerTestWithInlineScopes : AbstractFirLightTreeSteppingTest() {
+open class AbstractFirSteppingTestWithInlineScopes : AbstractFirLightTreeSteppingTest() {
     override fun configure(builder: TestConfigurationBuilder) {
         super.configure(builder)
         builder.useInlineScopesNumbers()
-    }
-}
-
-open class AbstractFirSteppingWithIrInlinerTestWithInlineScopes : AbstractFirLightTreeSteppingTest() {
-    override fun configure(builder: TestConfigurationBuilder) {
-        super.configure(builder)
-        builder.useInlineScopesNumbers()
-        builder.useIrInliner()
     }
 }

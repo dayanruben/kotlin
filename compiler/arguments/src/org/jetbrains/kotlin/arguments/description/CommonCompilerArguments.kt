@@ -1015,6 +1015,15 @@ The argument should be used only if the new compilation scheme is enabled with -
 default: 'first-only-warn' in language version 2.2+, 'first-only' in version 2.1 and before.""".asReleaseDependent()
         valueDescription = "first-only|first-only-warn|param-property".asReleaseDependent()
         valueType = StringType.defaultNull
+        additionalAnnotations(
+            Disables(LanguageFeature.AnnotationDefaultTargetMigrationWarning, "first-only"),
+            Enables(LanguageFeature.AnnotationDefaultTargetMigrationWarning, "first-only-warn"),
+
+            Disables(LanguageFeature.PropertyParamAnnotationDefaultTargetMode, "first-only"),
+            Disables(LanguageFeature.PropertyParamAnnotationDefaultTargetMode, "first-only-warn"),
+
+            Enables(LanguageFeature.PropertyParamAnnotationDefaultTargetMode, "param-property"),
+        )
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v2_1_20,
@@ -1105,6 +1114,28 @@ default: 'first-only-warn' in language version 2.2+, 'first-only' in version 2.1
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v2_2_20
+        )
+    }
+
+    compilerArgument {
+        name = "Xname-based-destructuring"
+        description = """Enables the following destructuring features:
+-Xname-based-destructuring=only-syntax:   Enables syntax for positional destructuring with square brackets and the full form of name-based destructuring with parentheses;
+-Xname-based-destructuring=name-mismatch: Reports warnings when short form positional destructuring of data classes uses names that don't match the property names;
+-Xname-based-destructuring=complete:      Enables short-form name-based destructuring with parentheses;""".asReleaseDependent()
+        valueDescription = "only-syntax|name-mismatch|complete".asReleaseDependent()
+        valueType = StringType.defaultNull
+        additionalAnnotations(
+            Enables(LanguageFeature.NameBasedDestructuring, "only-syntax"),
+            Enables(LanguageFeature.NameBasedDestructuring, "name-mismatch"),
+            Enables(LanguageFeature.NameBasedDestructuring, "complete"),
+            Enables(LanguageFeature.DeprecateNameMismatchInShortDestructuringWithParentheses, "name-mismatch"),
+            Enables(LanguageFeature.DeprecateNameMismatchInShortDestructuringWithParentheses, "complete"),
+            Enables(LanguageFeature.EnableNameBasedDestructuringShortForm, "complete"),
+        )
+
+        lifecycle(
+            introducedVersion = KotlinReleaseVersion.v2_3_0
         )
     }
 }
