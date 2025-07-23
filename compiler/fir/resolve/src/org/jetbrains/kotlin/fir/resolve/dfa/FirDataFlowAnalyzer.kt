@@ -267,9 +267,12 @@ abstract class FirDataFlowAnalyzer(
      */
     open fun getTypeUsingSmartcastInfo(expression: FirExpression): SmartCastStatement? {
         val flow = currentSmartCastPosition ?: return null
-        // Can have an unstable alias to a stable variable, so don't resolve aliases here.
-        val variable = flow.getVariableWithoutUnwrappingAlias(expression, createReal = false) ?: return null
-        val typeStatement = flow.getTypeStatement(variable)?.takeIf { it.isNotEmpty }
+        var variable: DataFlowVariable = SyntheticVariable(expression)
+        val typeStatement = flow.getTypeStatement(variable)?.takeIf { it.isNotEmpty } ?: run {
+            // Can have an unstable alias to a stable variable, so don't resolve aliases here.
+            variable = flow.getVariableWithoutUnwrappingAlias(expression, createReal = false) ?: return null
+            flow.getTypeStatement(variable)?.takeIf { it.isNotEmpty }
+        }
         val upperTypes = typeStatement?.upperTypes
         val upperTypesStability = when {
             upperTypes != null -> variable.getStability(flow, targetTypes = upperTypes)
@@ -1247,8 +1250,7 @@ abstract class FirDataFlowAnalyzer(
                     statements?.forEach { (variable, statement) ->
                         val approved = logicSystem.approveTypeStatement(flow, statement)
                         if (approved) {
-                            val functionCallVariable = flow.getOrCreateVariable(qualifiedAccess) ?: continue
-                            val functionReturnCondition = OperationStatement(functionCallVariable, Operation.NotEqNull)
+                            val functionReturnCondition = OperationStatement(SyntheticVariable(qualifiedAccess), Operation.NotEqNull)
                             val functionReturnStatements =
                                 logicSystem.approveOperationStatement(flow, functionReturnCondition, removeApprovedOrImpossible = true)
                             flow.addAllStatements(functionReturnStatements)
@@ -1330,6 +1332,7 @@ abstract class FirDataFlowAnalyzer(
         if (isAssignment) {
             logicSystem.recordNewAssignment(flow, propertyVariable, context.newAssignmentIndex())
         }
+        var needToAddInitializerStatement = isAssignment
 
         val stability = propertyVariable.getStability(flow, components.session)
         if (stability == SmartcastStability.STABLE_VALUE || stability == SmartcastStability.CAPTURED_VARIABLE) {
@@ -1360,10 +1363,15 @@ abstract class FirDataFlowAnalyzer(
                 logicSystem.translateVariableFromConditionInStatements(flow, initializerVariable, propertyVariable) {
                     it.takeIf { translateAll || it.condition.operation == Operation.EqNull || it.condition.operation == Operation.NotEqNull }
                 }
+            } else {
+                // required for "reverse" implies - returns contracts, see KT-79220
+                needToAddInitializerStatement = needToAddInitializerStatement ||
+                        (initializer is FirSmartCastExpression &&
+                                flow.unwrapVariable(propertyVariable).originalType != initializer.resolvedType)
             }
         }
 
-        if (isAssignment) {
+        if (needToAddInitializerStatement) {
             // `propertyVariable` can be an alias to `initializerVariable`, in which case this will add
             // a redundant type statement which is fine...probably
             flow.addTypeStatement(flow.unwrapVariable(propertyVariable) typeEq initializer.resolvedType)

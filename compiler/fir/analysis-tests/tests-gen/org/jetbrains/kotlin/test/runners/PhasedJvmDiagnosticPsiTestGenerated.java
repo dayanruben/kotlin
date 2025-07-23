@@ -9516,6 +9516,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       }
 
       @Test
+      @TestMetadata("delegates.kt")
+      public void testDelegates() {
+        runTest("compiler/testData/diagnostics/tests/crvFull/delegates.kt");
+      }
+
+      @Test
       @TestMetadata("jInterop.kt")
       public void testJInterop() {
         runTest("compiler/testData/diagnostics/tests/crvFull/jInterop.kt");
@@ -18215,6 +18221,18 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
         @TestMetadata("memberScopeOfCaptured.kt")
         public void testMemberScopeOfCaptured() {
           runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/memberScopeOfCaptured.kt");
+        }
+
+        @Test
+        @TestMetadata("nestedCaptureTypeCaseFromIj.kt")
+        public void testNestedCaptureTypeCaseFromIj() {
+          runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/nestedCaptureTypeCaseFromIj.kt");
+        }
+
+        @Test
+        @TestMetadata("nestedCaptureTypeCaseFromIjSimplified.kt")
+        public void testNestedCaptureTypeCaseFromIjSimplified() {
+          runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/nestedCaptureTypeCaseFromIjSimplified.kt");
         }
 
         @Test
@@ -34384,9 +34402,21 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       }
 
       @Test
+      @TestMetadata("privateClasses.kt")
+      public void testPrivateClasses() {
+        runTest("compiler/testData/diagnostics/tests/redeclarations/privateClasses.kt");
+      }
+
+      @Test
       @TestMetadata("privateNestedClasses.kt")
       public void testPrivateNestedClasses() {
         runTest("compiler/testData/diagnostics/tests/redeclarations/privateNestedClasses.kt");
+      }
+
+      @Test
+      @TestMetadata("privateTypeAliases.kt")
+      public void testPrivateTypeAliases() {
+        runTest("compiler/testData/diagnostics/tests/redeclarations/privateTypeAliases.kt");
       }
 
       @Test
@@ -47545,6 +47575,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
         }
 
         @Test
+        @TestMetadata("reverseImpliesReturns2.kt")
+        public void testReverseImpliesReturns2() {
+          runTest("compiler/testData/diagnostics/testsWithStdLib/contracts/dsl/reverseImpliesReturns2.kt");
+        }
+
+        @Test
         @TestMetadata("reverseImpliesReturns_forbidden.kt")
         public void testReverseImpliesReturns_forbidden() {
           runTest("compiler/testData/diagnostics/testsWithStdLib/contracts/dsl/reverseImpliesReturns_forbidden.kt");
@@ -56571,6 +56607,17 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
       @TestMetadata("unitUpperBound.kt")
       public void testUnitUpperBound() {
         runTest("compiler/fir/analysis-tests/testData/resolve/inference/unitUpperBound.kt");
+      }
+
+      @Nested
+      @TestMetadata("compiler/fir/analysis-tests/testData/resolve/inference/capturedTypes")
+      @TestDataPath("$PROJECT_ROOT")
+      public class CapturedTypes {
+        @Test
+        @TestMetadata("hugeMixedCapturedType.kt")
+        public void testHugeMixedCapturedType() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/inference/capturedTypes/hugeMixedCapturedType.kt");
+        }
       }
 
       @Nested

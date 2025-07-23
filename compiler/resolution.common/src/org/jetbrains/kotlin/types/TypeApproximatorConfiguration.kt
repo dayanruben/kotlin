@@ -14,6 +14,8 @@ abstract class TypeApproximatorConfiguration {
         ALLOWED,
         TO_FIRST,
         TO_COMMON_SUPERTYPE,
+
+        @AllowedToUsedOnlyInK1
         TO_UPPER_BOUND_IF_SUPERTYPE
     }
 
@@ -77,7 +79,7 @@ abstract class TypeApproximatorConfiguration {
         override fun shouldApproximateTypeVariableBasedType(marker: TypeVariableTypeConstructorMarker, isK2: Boolean): Boolean = !isK2
     }
 
-    open class PublicDeclaration(
+    abstract class PublicDeclaration(
         override val approximateLocalTypes: Boolean,
         override val approximateAnonymous: Boolean,
     ) : TypeApproximatorConfiguration() {
@@ -109,7 +111,21 @@ abstract class TypeApproximatorConfiguration {
         override fun shouldApproximateTypeVariableBasedType(marker: TypeVariableTypeConstructorMarker, isK2: Boolean): Boolean = false
     }
 
-    object IncorporationConfiguration : AbstractCapturedTypesAndILTApproximation(CaptureStatus.FOR_INCORPORATION)
+    object IncorporationConfiguration : AbstractCapturedTypesAndILTApproximation(CaptureStatus.FOR_INCORPORATION) {
+        override fun shouldApproximateCapturedType(
+            ctx: TypeSystemInferenceExtensionContext,
+            type: CapturedTypeMarker,
+        ): Boolean {
+            if (super.shouldApproximateCapturedType(ctx, type)) return true
+
+            if (!ctx.isK2) return false
+
+            return with(ctx) {
+                type.contains { nested -> nested is CapturedTypeMarker && super.shouldApproximateCapturedType(ctx, nested) }
+            }
+        }
+    }
+
     object SubtypeCapturedTypesApproximation : AbstractCapturedTypesAndILTApproximation(CaptureStatus.FOR_SUBTYPING)
 
     class TopLevelIntegerLiteralTypeApproximationWithExpectedType(
@@ -170,6 +186,7 @@ abstract class TypeApproximatorConfiguration {
         override fun shouldApproximateCapturedType(ctx: TypeSystemInferenceExtensionContext, type: CapturedTypeMarker): Boolean = false
     }
 
+    @AllowedToUsedOnlyInK1
     object UpperBoundAwareIntersectionTypeApproximator : TypeApproximatorConfiguration() {
         override val approximateAllFlexible: Boolean get() = false
         override val intersectionStrategy: IntersectionStrategy get() = IntersectionStrategy.TO_UPPER_BOUND_IF_SUPERTYPE

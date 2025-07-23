@@ -17774,6 +17774,24 @@ public class NativeIrDeserializationWithInlinedFunInKlibTestGenerated extends Ab
       }
 
       @Test
+      @TestMetadata("kt77685-sam.kt")
+      public void testKt77685_sam() {
+        runTest("compiler/testData/codegen/box/funInterface/kt77685-sam.kt");
+      }
+
+      @Test
+      @TestMetadata("kt79092.kt")
+      public void testKt79092() {
+        runTest("compiler/testData/codegen/box/funInterface/kt79092.kt");
+      }
+
+      @Test
+      @TestMetadata("kt79092-sam.kt")
+      public void testKt79092_sam() {
+        runTest("compiler/testData/codegen/box/funInterface/kt79092-sam.kt");
+      }
+
+      @Test
       @TestMetadata("multimodule.kt")
       public void testMultimodule() {
         runTest("compiler/testData/codegen/box/funInterface/multimodule.kt");
@@ -45133,7 +45151,7 @@ public class NativeIrDeserializationWithInlinedFunInKlibTestGenerated extends Ab
   public class BoxInline {
     @Test
     public void testAllFilesPresentInBoxInline() {
-      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/boxInline"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true, "multiplatform/k1");
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/boxInline"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
     }
 
     @Nested
@@ -47998,7 +48016,7 @@ public class NativeIrDeserializationWithInlinedFunInKlibTestGenerated extends Ab
     public class Multiplatform {
       @Test
       public void testAllFilesPresentInMultiplatform() {
-        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/boxInline/multiplatform"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true, "k1");
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/boxInline/multiplatform"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
       }
 
       @Nested
