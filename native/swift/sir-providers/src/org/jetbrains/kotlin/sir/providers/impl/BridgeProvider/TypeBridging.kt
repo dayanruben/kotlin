@@ -124,7 +124,7 @@ internal data class BridgeParameter(
     val name: String,
     val bridge: Bridge,
 ) {
-    var isRenderable: Boolean = bridge !is Bridge.AsOptionalNothing
+    var isRenderable: Boolean = bridge !is Bridge.AsOptionalNothing && (bridge !is Bridge.AsIs || bridge.cType != CType.Void)
 }
 
 internal val SirType.isChar: Boolean
@@ -200,7 +200,7 @@ internal sealed class Bridge(
                 "kotlin.native.internal.ref.dereferenceExternalRCRef($valueExpression) as ${
                     typeNamer.kotlinFqName(
                         swiftType,
-                        SirTypeNamer.KotlinNameType.FQN
+                        SirTypeNamer.KotlinNameType.PARAMETRIZED
                     )
                 }"
 
