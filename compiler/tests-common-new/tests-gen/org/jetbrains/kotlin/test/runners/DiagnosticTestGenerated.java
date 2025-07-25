@@ -952,6 +952,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
     }
 
     @Test
+    @TestMetadata("inlineEnumEntries.kt")
+    public void testInlineEnumEntries() {
+      runTest("compiler/testData/diagnostics/tests/inlineEnumEntries.kt");
+    }
+
+    @Test
     @TestMetadata("inlineFunctionContextBug.kt")
     public void testInlineFunctionContextBug() {
       runTest("compiler/testData/diagnostics/tests/inlineFunctionContextBug.kt");
@@ -18553,6 +18559,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("approximateContravariantCapturedTypes.kt")
         public void testApproximateContravariantCapturedTypes() {
           runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/approximateContravariantCapturedTypes.kt");
+        }
+
+        @Test
+        @TestMetadata("approximationForCollectionAsserter.kt")
+        public void testApproximationForCollectionAsserter() {
+          runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/approximationForCollectionAsserter.kt");
         }
 
         @Test
@@ -38475,6 +38487,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
       }
 
       @Test
+      @TestMetadata("starProjectedTypesAndExplicitLambdaParameters.kt")
+      public void testStarProjectedTypesAndExplicitLambdaParameters() {
+        runTest("compiler/testData/diagnostics/tests/samConversions/starProjectedTypesAndExplicitLambdaParameters.kt");
+      }
+
+      @Test
       @TestMetadata("typeMismatchOnGenericSam.kt")
       public void testTypeMismatchOnGenericSam() {
         runTest("compiler/testData/diagnostics/tests/samConversions/typeMismatchOnGenericSam.kt");
@@ -39741,6 +39759,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("simpleSealedInterface.kt")
         public void testSimpleSealedInterface() {
           runTest("compiler/testData/diagnostics/tests/sealed/interfaces/simpleSealedInterface.kt");
+        }
+
+        @Test
+        @TestMetadata("triangleHierarchy.kt")
+        public void testTriangleHierarchy() {
+          runTest("compiler/testData/diagnostics/tests/sealed/interfaces/triangleHierarchy.kt");
         }
       }
     }
