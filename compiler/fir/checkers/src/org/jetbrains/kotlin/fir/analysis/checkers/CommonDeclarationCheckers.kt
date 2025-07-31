@@ -18,7 +18,6 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
         FirConflictsDeclarationChecker,
         FirTypeConstraintsChecker,
         FirReservedUnderscoreDeclarationChecker,
-        FirUpperBoundViolatedDeclarationChecker,
         FirExposedVisibilityDeclarationChecker,
         FirCyclicTypeBoundsChecker,
         FirExpectActualDeclarationChecker,
@@ -208,6 +207,7 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
     override val valueParameterCheckers: Set<FirValueParameterChecker> = setOf(
         FirValueParameterDefaultValueTypeMismatchChecker,
         FirMissingDependencyClassForParameterChecker,
+        FirDestructuringParameterChecker,
     )
 
     override val enumEntryCheckers: Set<FirEnumEntryChecker> = setOf(

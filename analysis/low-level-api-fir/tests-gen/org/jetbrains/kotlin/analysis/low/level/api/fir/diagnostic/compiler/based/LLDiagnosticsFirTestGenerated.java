@@ -3462,6 +3462,24 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
       }
 
       @Test
+      @TestMetadata("deprecationOfParensShortFormOfMapEntry.kt")
+      public void testDeprecationOfParensShortFormOfMapEntry() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/deprecationOfParensShortFormOfMapEntry.kt");
+      }
+
+      @Test
+      @TestMetadata("deprecationOfParensShortFormOfNonDataClass.kt")
+      public void testDeprecationOfParensShortFormOfNonDataClass() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/deprecationOfParensShortFormOfNonDataClass.kt");
+      }
+
+      @Test
+      @TestMetadata("deprecationOfParensShortFormWithNameMismatch.kt")
+      public void testDeprecationOfParensShortFormWithNameMismatch() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/deprecationOfParensShortFormWithNameMismatch.kt");
+      }
+
+      @Test
       @TestMetadata("nameBasedDestructuringFullForm.kt")
       public void testNameBasedDestructuringFullForm() {
         runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/nameBasedDestructuringFullForm.kt");
@@ -3483,6 +3501,42 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
       @TestMetadata("nameBasedDestructuringShortFormErrorsAfter.kt")
       public void testNameBasedDestructuringShortFormErrorsAfter() {
         runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/nameBasedDestructuringShortFormErrorsAfter.kt");
+      }
+
+      @Test
+      @TestMetadata("newDestructuringSyntaxWithoutLf.kt")
+      public void testNewDestructuringSyntaxWithoutLf() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/newDestructuringSyntaxWithoutLf.kt");
+      }
+
+      @Test
+      @TestMetadata("parensShortFormWithInitializerWithoutLf.kt")
+      public void testParensShortFormWithInitializerWithoutLf() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/parensShortFormWithInitializerWithoutLf.kt");
+      }
+
+      @Test
+      @TestMetadata("positionalDestructuringFullForm.kt")
+      public void testPositionalDestructuringFullForm() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/positionalDestructuringFullForm.kt");
+      }
+
+      @Test
+      @TestMetadata("positionalDestructuringFullFormErrors.kt")
+      public void testPositionalDestructuringFullFormErrors() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/positionalDestructuringFullFormErrors.kt");
+      }
+
+      @Test
+      @TestMetadata("positionalDestructuringShortForm.kt")
+      public void testPositionalDestructuringShortForm() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/positionalDestructuringShortForm.kt");
+      }
+
+      @Test
+      @TestMetadata("positionalDestructuringShortFormErrors.kt")
+      public void testPositionalDestructuringShortFormErrors() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/positionalDestructuringShortFormErrors.kt");
       }
     }
 

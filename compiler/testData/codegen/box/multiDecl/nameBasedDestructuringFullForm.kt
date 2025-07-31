@@ -1,10 +1,11 @@
 // IGNORE_BACKEND_K1: ANY
+// LANGUAGE: +NameBasedDestructuring
 
 class Tuple(val first: String, val second: Int)
 
 fun test1(x: Tuple): Boolean {
-    (val first, val second) = x
-    return first == "OK" && second == 1
+    (val a = first, val b = second) = x
+    return a == "OK" && b == 1
 }
 
 fun test2(x: Tuple): Boolean {

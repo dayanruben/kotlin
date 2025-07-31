@@ -1813,7 +1813,7 @@ internal class AnnotationOnIllegalMultiFieldValueClassTypedTargetImpl(
 ) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.AnnotationOnIllegalMultiFieldValueClassTypedTarget
 
 internal class NoneApplicableImpl(
-    override val candidates: List<KaSymbol>,
+    override val candidates: List<Pair<KaSymbol, List<String>>>,
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.NoneApplicable
@@ -2218,6 +2218,22 @@ internal class UpperBoundViolatedDeprecationWarningImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.UpperBoundViolatedDeprecationWarning
+
+internal class UpperBoundViolatedInTypeOperatorOrParameterBoundsErrorImpl(
+    override val expectedUpperBound: KaType,
+    override val actualUpperBound: KaType,
+    override val extraMessage: String,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.UpperBoundViolatedInTypeOperatorOrParameterBoundsError
+
+internal class UpperBoundViolatedInTypeOperatorOrParameterBoundsWarningImpl(
+    override val expectedUpperBound: KaType,
+    override val actualUpperBound: KaType,
+    override val extraMessage: String,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.UpperBoundViolatedInTypeOperatorOrParameterBoundsWarning
 
 internal class UpperBoundViolatedInTypealiasExpansionImpl(
     override val expectedUpperBound: KaType,
@@ -3492,12 +3508,6 @@ internal class DelegateUsesExtensionPropertyTypeParameterErrorImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtProperty>(firDiagnostic, token), KaFirDiagnostic.DelegateUsesExtensionPropertyTypeParameterError
 
-internal class DelegateUsesExtensionPropertyTypeParameterWarningImpl(
-    override val usedTypeParameter: KaTypeParameterSymbol,
-    firDiagnostic: KtPsiDiagnostic,
-    token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<KtProperty>(firDiagnostic, token), KaFirDiagnostic.DelegateUsesExtensionPropertyTypeParameterWarning
-
 internal class GetterVisibilityDiffersFromPropertyVisibilityImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
@@ -3653,6 +3663,30 @@ internal class UnnamedDelegatedPropertyImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.UnnamedDelegatedProperty
+
+internal class DestructuringShortFormNameMismatchImpl(
+    override val destructuredName: Name,
+    override val propertyName: Name,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.DestructuringShortFormNameMismatch
+
+internal class DestructuringShortFormOfNonDataClassImpl(
+    override val rhsType: KaType,
+    override val destructuredName: Name,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.DestructuringShortFormOfNonDataClass
+
+internal class DestructuringShortFormUnderscoreImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.DestructuringShortFormUnderscore
+
+internal class NameBasedDestructuringUnderscoreWithoutRenamingImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.NameBasedDestructuringUnderscoreWithoutRenaming
 
 internal class ExpectedDeclarationWithBodyImpl(
     firDiagnostic: KtPsiDiagnostic,

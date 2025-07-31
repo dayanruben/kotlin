@@ -654,7 +654,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
 
     val APPLICABILITY by object : DiagnosticGroup("Applicability") {
         val NONE_APPLICABLE by error<PsiElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
-            parameter<Collection<Symbol>>("candidates")
+            parameter<Collection<Pair<Symbol, List<String>>>>("candidates")
         }
 
         val INAPPLICABLE_CANDIDATE by error<PsiElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
@@ -858,6 +858,13 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<String>("extraMessage")
         }
         val UPPER_BOUND_VIOLATED_DEPRECATION_WARNING by warning<PsiElement> {
+            parameter<ConeKotlinType>("expectedUpperBound")
+            parameter<ConeKotlinType>("actualUpperBound")
+            parameter<String>("extraMessage")
+        }
+        val UPPER_BOUND_VIOLATED_IN_TYPE_OPERATOR_OR_PARAMETER_BOUNDS by deprecationError<PsiElement>(
+            LanguageFeature.ForbidUpperBoundsViolationOnTypeOperatorAndParameterBounds,
+        ) {
             parameter<ConeKotlinType>("expectedUpperBound")
             parameter<ConeKotlinType>("actualUpperBound")
             parameter<String>("extraMessage")
@@ -1471,10 +1478,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         }
         val CONST_VAL_WITHOUT_INITIALIZER by error<KtProperty>(PositioningStrategy.CONST_MODIFIER)
         val CONST_VAL_WITH_NON_CONST_INITIALIZER by error<KtExpression>()
-        val DELEGATE_USES_EXTENSION_PROPERTY_TYPE_PARAMETER by deprecationError<KtProperty>(
-            LanguageFeature.ForbidUsingExtensionPropertyTypeParameterInDelegate,
-            PositioningStrategy.PROPERTY_DELEGATE
-        ) {
+        val DELEGATE_USES_EXTENSION_PROPERTY_TYPE_PARAMETER_ERROR by error<KtProperty>(PositioningStrategy.PROPERTY_DELEGATE) {
             parameter<FirTypeParameterSymbol>("usedTypeParameter")
         }
         val GETTER_VISIBILITY_DIFFERS_FROM_PROPERTY_VISIBILITY by error<KtModifierListOwner>(PositioningStrategy.VISIBILITY_MODIFIER)
@@ -1520,6 +1524,17 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
 
         val UNNAMED_VAR_PROPERTY by error<PsiElement>(PositioningStrategy.VAL_OR_VAR_NODE)
         val UNNAMED_DELEGATED_PROPERTY by error<PsiElement>(PositioningStrategy.PROPERTY_DELEGATE_BY_KEYWORD)
+
+        val DESTRUCTURING_SHORT_FORM_NAME_MISMATCH by warning<KtElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED) {
+            parameter<Name>("destructuredName")
+            parameter<Name>("propertyName")
+        }
+        val DESTRUCTURING_SHORT_FORM_OF_NON_DATA_CLASS by warning<KtElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED) {
+            parameter<ConeKotlinType>("rhsType")
+            parameter<Name>("destructuredName")
+        }
+        val DESTRUCTURING_SHORT_FORM_UNDERSCORE by warning<KtElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
+        val NAME_BASED_DESTRUCTURING_UNDERSCORE_WITHOUT_RENAMING by error<KtElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
     }
 
     val MPP_PROJECTS by object : DiagnosticGroup("Multi-platform projects") {

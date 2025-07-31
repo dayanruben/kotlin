@@ -2136,6 +2136,18 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
     }
 
     @Test
+    @TestMetadata("typeArgumentNotWithinBoundsExplicitCast.kt")
+    public void testTypeArgumentNotWithinBoundsExplicitCast() {
+      runTest("compiler/testData/diagnostics/tests/typeArgumentNotWithinBoundsExplicitCast.kt");
+    }
+
+    @Test
+    @TestMetadata("typeArgumentNotWithinBoundsExplicitCastWithBareTypes.kt")
+    public void testTypeArgumentNotWithinBoundsExplicitCastWithBareTypes() {
+      runTest("compiler/testData/diagnostics/tests/typeArgumentNotWithinBoundsExplicitCastWithBareTypes.kt");
+    }
+
+    @Test
     @TestMetadata("typeExposureAsABound.kt")
     public void testTypeExposureAsABound() {
       runTest("compiler/testData/diagnostics/tests/typeExposureAsABound.kt");
@@ -11330,12 +11342,6 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
-      @TestMetadata("useTypeParameterOfExtensionProperty_Disabled.kt")
-      public void testUseTypeParameterOfExtensionProperty_Disabled() {
-        runTest("compiler/testData/diagnostics/tests/delegatedProperty/useTypeParameterOfExtensionProperty_Disabled.kt");
-      }
-
-      @Test
       @TestMetadata("withInvokes.kt")
       public void testWithInvokes() {
         runTest("compiler/testData/diagnostics/tests/delegatedProperty/withInvokes.kt");
@@ -12469,6 +12475,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("destructuringInWhenSubject.kt")
       public void testDestructuringInWhenSubject() {
         runTest("compiler/testData/diagnostics/tests/destructuring/destructuringInWhenSubject.kt");
+      }
+
+      @Test
+      @TestMetadata("newDestructuringSyntax.kt")
+      public void testNewDestructuringSyntax() {
+        runTest("compiler/testData/diagnostics/tests/destructuring/newDestructuringSyntax.kt");
       }
     }
 
@@ -26143,12 +26155,6 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
-      @TestMetadata("abstractBaseClassMemberNotImplemented_15.kt")
-      public void testAbstractBaseClassMemberNotImplemented_15() {
-        runTest("compiler/testData/diagnostics/tests/java8Overrides/abstractBaseClassMemberNotImplemented_15.kt");
-      }
-
-      @Test
       @TestMetadata("abstractFakeOverrideSuperCall.kt")
       public void testAbstractFakeOverrideSuperCall() {
         runTest("compiler/testData/diagnostics/tests/java8Overrides/abstractFakeOverrideSuperCall.kt");
@@ -35745,6 +35751,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("complexOrderAndImplicitTypes.kt")
       public void testComplexOrderAndImplicitTypes() {
         runTest("compiler/testData/diagnostics/tests/resolve/complexOrderAndImplicitTypes.kt");
+      }
+
+      @Test
+      @TestMetadata("confusingNoneApplicable.kt")
+      public void testConfusingNoneApplicable() {
+        runTest("compiler/testData/diagnostics/tests/resolve/confusingNoneApplicable.kt");
       }
 
       @Test
@@ -54758,6 +54770,24 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
     @TestDataPath("$PROJECT_ROOT")
     public class Destructuring {
       @Test
+      @TestMetadata("deprecationOfParensShortFormOfMapEntry.kt")
+      public void testDeprecationOfParensShortFormOfMapEntry() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/deprecationOfParensShortFormOfMapEntry.kt");
+      }
+
+      @Test
+      @TestMetadata("deprecationOfParensShortFormOfNonDataClass.kt")
+      public void testDeprecationOfParensShortFormOfNonDataClass() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/deprecationOfParensShortFormOfNonDataClass.kt");
+      }
+
+      @Test
+      @TestMetadata("deprecationOfParensShortFormWithNameMismatch.kt")
+      public void testDeprecationOfParensShortFormWithNameMismatch() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/deprecationOfParensShortFormWithNameMismatch.kt");
+      }
+
+      @Test
       @TestMetadata("nameBasedDestructuringFullForm.kt")
       public void testNameBasedDestructuringFullForm() {
         runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/nameBasedDestructuringFullForm.kt");
@@ -54779,6 +54809,42 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("nameBasedDestructuringShortFormErrorsAfter.kt")
       public void testNameBasedDestructuringShortFormErrorsAfter() {
         runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/nameBasedDestructuringShortFormErrorsAfter.kt");
+      }
+
+      @Test
+      @TestMetadata("newDestructuringSyntaxWithoutLf.kt")
+      public void testNewDestructuringSyntaxWithoutLf() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/newDestructuringSyntaxWithoutLf.kt");
+      }
+
+      @Test
+      @TestMetadata("parensShortFormWithInitializerWithoutLf.kt")
+      public void testParensShortFormWithInitializerWithoutLf() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/parensShortFormWithInitializerWithoutLf.kt");
+      }
+
+      @Test
+      @TestMetadata("positionalDestructuringFullForm.kt")
+      public void testPositionalDestructuringFullForm() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/positionalDestructuringFullForm.kt");
+      }
+
+      @Test
+      @TestMetadata("positionalDestructuringFullFormErrors.kt")
+      public void testPositionalDestructuringFullFormErrors() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/positionalDestructuringFullFormErrors.kt");
+      }
+
+      @Test
+      @TestMetadata("positionalDestructuringShortForm.kt")
+      public void testPositionalDestructuringShortForm() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/positionalDestructuringShortForm.kt");
+      }
+
+      @Test
+      @TestMetadata("positionalDestructuringShortFormErrors.kt")
+      public void testPositionalDestructuringShortFormErrors() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/positionalDestructuringShortFormErrors.kt");
       }
     }
 

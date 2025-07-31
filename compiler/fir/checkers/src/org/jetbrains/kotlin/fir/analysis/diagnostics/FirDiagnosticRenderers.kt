@@ -37,13 +37,13 @@ import java.text.MessageFormat
 
 @Suppress("NO_EXPLICIT_RETURN_TYPE_IN_API_MODE_WARNING")
 object FirDiagnosticRenderers {
-    val SYMBOL = symbolRenderer(modifierRenderer = FirPartialModifierRenderer())
+    val SYMBOL = symbolRenderer(modifierRenderer = ::FirPartialModifierRenderer)
 
     val SYMBOL_WITH_ALL_MODIFIERS = symbolRenderer()
 
     @OptIn(SymbolInternals::class)
     private fun symbolRenderer(
-        modifierRenderer: FirModifierRenderer? = FirAllModifierRenderer(),
+        modifierRenderer: () -> FirModifierRenderer? = ::FirAllModifierRenderer,
     ) = Renderer { symbol: FirBasedSymbol<*> ->
         when (symbol) {
             is FirClassLikeSymbol, is FirCallableSymbol -> FirRenderer(
@@ -53,7 +53,7 @@ object FirDiagnosticRenderers {
                 bodyRenderer = null,
                 propertyAccessorRenderer = null,
                 callArgumentsRenderer = FirCallNoArgumentsRenderer(),
-                modifierRenderer = modifierRenderer,
+                modifierRenderer = modifierRenderer(),
                 callableSignatureRenderer = FirCallableSignatureRendererForReadability(),
                 declarationRenderer = FirDeclarationRenderer("local "),
                 contractRenderer = null,
@@ -420,6 +420,27 @@ object FirDiagnosticRenderers {
             0 -> "no targets"
             1 -> "target $quotedTargets"
             else -> "targets $quotedTargets"
+        }
+    }
+
+    val CANDIDATES_WITH_DIAGNOSTIC_MESSAGES = Renderer { list: Collection<Pair<FirBasedSymbol<*>, List<String>>> ->
+        buildString {
+            for ((symbol, diagnostics) in list) {
+                append(SYMBOL.render(symbol))
+
+                if (diagnostics.isEmpty()) {
+                    continue
+                }
+
+                appendLine(":")
+
+                diagnostics.forEach {
+                    append("  ")
+                    appendLine(it)
+                }
+
+                appendLine()
+            }
         }
     }
 }

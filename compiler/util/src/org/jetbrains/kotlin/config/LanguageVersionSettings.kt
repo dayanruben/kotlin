@@ -405,6 +405,7 @@ enum class LanguageFeature(
     ForbidCrossFileIrFieldAccessInKlibs(KOTLIN_2_2, enabledInProgressiveMode = true, "KT-71138"),
     AllowExpectDeclarationsInJsExport(KOTLIN_2_2, "KT-64951"),
     DoNotRunSuspendConversionForLambdaReturnStatements(KOTLIN_2_2, enabledInProgressiveMode = true, "KT-74932"),
+    JvmNullOutSpilledCoroutineLocals(KOTLIN_2_2, ApiVersion.KOTLIN_2_2, "KT-63720"),
 
     // It's not a fully blown LF, but mostly a way to manage potential unexpected semantic changes.
     // We enable it for already released 2.2 because it's a bug fix, and we'd like to make it work in the IDE as fast as possible.
@@ -449,6 +450,7 @@ enum class LanguageFeature(
     ForbidExposingLessVisibleTypesInInline(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-283"),
     ForbidCaptureInlinableLambdasInJsCode(KOTLIN_2_4, enabledInProgressiveMode = true, "KT-69297"),
     ForbidInitializationBeforeDeclarationInAnonymous(KOTLIN_2_4, enabledInProgressiveMode = true, "KT-77156"),
+    ForbidUpperBoundsViolationOnTypeOperatorAndParameterBounds(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-358"),
     AllowReifiedTypeInCatchClause(KOTLIN_2_4, issue = "KT-54363"),
     ForbidGetSetValueWithTooManyParameters(KOTLIN_2_4, issue = "KT-77131"),
     ForbidReturnInExpressionBodyWithoutExplicitTypeEdgeCases(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-288"),
@@ -640,15 +642,15 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware, L
             str.split(".", "-").let { if (it.size >= 2) fromVersionString("${it[0]}.${it[1]}") else null }
 
         // Version status
-        //            1.0..1.7        1.8..2.0           2.1..2.3    2.5
+        //            1.0..1.8        1.9..2.0           2.1..2.3    2.4..2.5
         // Language:  UNSUPPORTED --> DEPRECATED ------> STABLE ---> EXPERIMENTAL
         // API:       UNSUPPORTED --> DEPRECATED ------> STABLE ---> EXPERIMENTAL
 
         @JvmField
-        val FIRST_API_SUPPORTED = KOTLIN_1_8
+        val FIRST_API_SUPPORTED = KOTLIN_1_9
 
         @JvmField
-        val FIRST_SUPPORTED = KOTLIN_1_8
+        val FIRST_SUPPORTED = KOTLIN_1_9
 
         @JvmField
         val FIRST_NON_DEPRECATED = KOTLIN_2_1

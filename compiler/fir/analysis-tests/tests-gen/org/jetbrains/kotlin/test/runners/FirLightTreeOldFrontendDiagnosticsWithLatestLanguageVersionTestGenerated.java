@@ -2140,6 +2140,18 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
     }
 
     @Test
+    @TestMetadata("typeArgumentNotWithinBoundsExplicitCast.kt")
+    public void testTypeArgumentNotWithinBoundsExplicitCast() {
+      runTest("compiler/testData/diagnostics/tests/typeArgumentNotWithinBoundsExplicitCast.kt");
+    }
+
+    @Test
+    @TestMetadata("typeArgumentNotWithinBoundsExplicitCastWithBareTypes.kt")
+    public void testTypeArgumentNotWithinBoundsExplicitCastWithBareTypes() {
+      runTest("compiler/testData/diagnostics/tests/typeArgumentNotWithinBoundsExplicitCastWithBareTypes.kt");
+    }
+
+    @Test
     @TestMetadata("typeExposureAsABound.kt")
     public void testTypeExposureAsABound() {
       runTest("compiler/testData/diagnostics/tests/typeExposureAsABound.kt");
@@ -11679,12 +11691,6 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       }
 
       @Test
-      @TestMetadata("useTypeParameterOfExtensionProperty_Disabled.kt")
-      public void testUseTypeParameterOfExtensionProperty_Disabled() {
-        runTest("compiler/testData/diagnostics/tests/delegatedProperty/useTypeParameterOfExtensionProperty_Disabled.kt");
-      }
-
-      @Test
       @TestMetadata("withInvokes.kt")
       public void testWithInvokes() {
         runTest("compiler/testData/diagnostics/tests/delegatedProperty/withInvokes.kt");
@@ -12868,6 +12874,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       @TestMetadata("destructuringInWhenSubject.kt")
       public void testDestructuringInWhenSubject() {
         runTest("compiler/testData/diagnostics/tests/destructuring/destructuringInWhenSubject.kt");
+      }
+
+      @Test
+      @TestMetadata("newDestructuringSyntax.kt")
+      public void testNewDestructuringSyntax() {
+        runTest("compiler/testData/diagnostics/tests/destructuring/newDestructuringSyntax.kt");
       }
     }
 
@@ -27092,12 +27104,6 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       }
 
       @Test
-      @TestMetadata("abstractBaseClassMemberNotImplemented_15.kt")
-      public void testAbstractBaseClassMemberNotImplemented_15() {
-        runTest("compiler/testData/diagnostics/tests/java8Overrides/abstractBaseClassMemberNotImplemented_15.kt");
-      }
-
-      @Test
       @TestMetadata("abstractFakeOverrideSuperCall.kt")
       public void testAbstractFakeOverrideSuperCall() {
         runTest("compiler/testData/diagnostics/tests/java8Overrides/abstractFakeOverrideSuperCall.kt");
@@ -34142,6 +34148,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       @TestMetadata("complexOrderAndImplicitTypes.kt")
       public void testComplexOrderAndImplicitTypes() {
         runTest("compiler/testData/diagnostics/tests/resolve/complexOrderAndImplicitTypes.kt");
+      }
+
+      @Test
+      @TestMetadata("confusingNoneApplicable.kt")
+      public void testConfusingNoneApplicable() {
+        runTest("compiler/testData/diagnostics/tests/resolve/confusingNoneApplicable.kt");
       }
 
       @Test

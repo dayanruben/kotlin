@@ -1512,7 +1512,7 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface NoneApplicable : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = NoneApplicable::class
-        val candidates: List<KaSymbol>
+        val candidates: List<Pair<KaSymbol, List<String>>>
     }
 
     interface InapplicableCandidate : KaFirDiagnostic<PsiElement> {
@@ -1845,6 +1845,20 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface UpperBoundViolatedDeprecationWarning : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = UpperBoundViolatedDeprecationWarning::class
+        val expectedUpperBound: KaType
+        val actualUpperBound: KaType
+        val extraMessage: String
+    }
+
+    interface UpperBoundViolatedInTypeOperatorOrParameterBoundsError : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = UpperBoundViolatedInTypeOperatorOrParameterBoundsError::class
+        val expectedUpperBound: KaType
+        val actualUpperBound: KaType
+        val extraMessage: String
+    }
+
+    interface UpperBoundViolatedInTypeOperatorOrParameterBoundsWarning : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = UpperBoundViolatedInTypeOperatorOrParameterBoundsWarning::class
         val expectedUpperBound: KaType
         val actualUpperBound: KaType
         val extraMessage: String
@@ -2911,11 +2925,6 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val usedTypeParameter: KaTypeParameterSymbol
     }
 
-    interface DelegateUsesExtensionPropertyTypeParameterWarning : KaFirDiagnostic<KtProperty> {
-        override val diagnosticClass get() = DelegateUsesExtensionPropertyTypeParameterWarning::class
-        val usedTypeParameter: KaTypeParameterSymbol
-    }
-
     interface GetterVisibilityDiffersFromPropertyVisibility : KaFirDiagnostic<KtModifierListOwner> {
         override val diagnosticClass get() = GetterVisibilityDiffersFromPropertyVisibility::class
     }
@@ -3040,6 +3049,26 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface UnnamedDelegatedProperty : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = UnnamedDelegatedProperty::class
+    }
+
+    interface DestructuringShortFormNameMismatch : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = DestructuringShortFormNameMismatch::class
+        val destructuredName: Name
+        val propertyName: Name
+    }
+
+    interface DestructuringShortFormOfNonDataClass : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = DestructuringShortFormOfNonDataClass::class
+        val rhsType: KaType
+        val destructuredName: Name
+    }
+
+    interface DestructuringShortFormUnderscore : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = DestructuringShortFormUnderscore::class
+    }
+
+    interface NameBasedDestructuringUnderscoreWithoutRenaming : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = NameBasedDestructuringUnderscoreWithoutRenaming::class
     }
 
     interface ExpectedDeclarationWithBody : KaFirDiagnostic<KtDeclaration> {

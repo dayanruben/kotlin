@@ -2115,8 +2115,10 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.NONE_APPLICABLE) { firDiagnostic ->
         NoneApplicableImpl(
-            firDiagnostic.a.map { firBasedSymbol ->
-                firSymbolBuilder.buildSymbol(firBasedSymbol)
+            firDiagnostic.a.map { pair ->
+                firSymbolBuilder.buildSymbol(pair.first) to pair.second.map { string ->
+                                    string
+                                }
             },
             firDiagnostic as KtPsiDiagnostic,
             token,
@@ -2606,6 +2608,24 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.UPPER_BOUND_VIOLATED_DEPRECATION_WARNING) { firDiagnostic ->
         UpperBoundViolatedDeprecationWarningImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
+            firDiagnostic.c,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.UPPER_BOUND_VIOLATED_IN_TYPE_OPERATOR_OR_PARAMETER_BOUNDS.errorFactory) { firDiagnostic ->
+        UpperBoundViolatedInTypeOperatorOrParameterBoundsErrorImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
+            firDiagnostic.c,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.UPPER_BOUND_VIOLATED_IN_TYPE_OPERATOR_OR_PARAMETER_BOUNDS.warningFactory) { firDiagnostic ->
+        UpperBoundViolatedInTypeOperatorOrParameterBoundsWarningImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
             firDiagnostic.c,
@@ -4145,15 +4165,8 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.DELEGATE_USES_EXTENSION_PROPERTY_TYPE_PARAMETER.errorFactory) { firDiagnostic ->
+    add(FirErrors.DELEGATE_USES_EXTENSION_PROPERTY_TYPE_PARAMETER_ERROR) { firDiagnostic ->
         DelegateUsesExtensionPropertyTypeParameterErrorImpl(
-            firSymbolBuilder.classifierBuilder.buildTypeParameterSymbol(firDiagnostic.a),
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
-    add(FirErrors.DELEGATE_USES_EXTENSION_PROPERTY_TYPE_PARAMETER.warningFactory) { firDiagnostic ->
-        DelegateUsesExtensionPropertyTypeParameterWarningImpl(
             firSymbolBuilder.classifierBuilder.buildTypeParameterSymbol(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
@@ -4341,6 +4354,34 @@ internal val KT_DIAGNOSTIC_CONVERTER = KaDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.UNNAMED_DELEGATED_PROPERTY) { firDiagnostic ->
         UnnamedDelegatedPropertyImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.DESTRUCTURING_SHORT_FORM_NAME_MISMATCH) { firDiagnostic ->
+        DestructuringShortFormNameMismatchImpl(
+            firDiagnostic.a,
+            firDiagnostic.b,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.DESTRUCTURING_SHORT_FORM_OF_NON_DATA_CLASS) { firDiagnostic ->
+        DestructuringShortFormOfNonDataClassImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic.b,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.DESTRUCTURING_SHORT_FORM_UNDERSCORE) { firDiagnostic ->
+        DestructuringShortFormUnderscoreImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.NAME_BASED_DESTRUCTURING_UNDERSCORE_WITHOUT_RENAMING) { firDiagnostic ->
+        NameBasedDestructuringUnderscoreWithoutRenamingImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

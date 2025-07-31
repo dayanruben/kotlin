@@ -25,9 +25,11 @@ import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers.STRING
 import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers.commaSeparated
 import org.jetbrains.kotlin.diagnostics.rendering.LanguageFeatureMessageRenderer
 import org.jetbrains.kotlin.diagnostics.rendering.Renderer
+import org.jetbrains.kotlin.diagnostics.rendering.appendVersion
 import org.jetbrains.kotlin.diagnostics.rendering.toDeprecationWarningMessage
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.CALLABLES_FQ_NAMES
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.CALLEE_NAME
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.CANDIDATES_WITH_DIAGNOSTIC_MESSAGES
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.DECLARATION_FQ_NAME
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.DECLARATION_NAME
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.FOR_OPTIONAL_OPERATOR
@@ -224,7 +226,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DELEGATE_SPECIAL_
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DELEGATE_SPECIAL_FUNCTION_MISSING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DELEGATE_SPECIAL_FUNCTION_RETURN_TYPE_MISMATCH
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DELEGATE_USES_EXTENSION_PROPERTY_TYPE_PARAMETER
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DELEGATE_USES_EXTENSION_PROPERTY_TYPE_PARAMETER_ERROR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DELEGATION_IN_INTERFACE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DELEGATION_NOT_TO_INTERFACE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DELEGATION_SUPER_CALL_IN_ENUM_CONSTRUCTOR
@@ -248,6 +250,9 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATED_TYPE_P
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATION_ERROR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DESERIALIZATION_ERROR
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DESTRUCTURING_SHORT_FORM_NAME_MISMATCH
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DESTRUCTURING_SHORT_FORM_OF_NON_DATA_CLASS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DESTRUCTURING_SHORT_FORM_UNDERSCORE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DIFFERENT_NAMES_FOR_THE_SAME_PARAMETER_IN_SUPERTYPES
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DIVISION_BY_ZERO
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DSL_MARKER_PROPAGATES_TO_MANY
@@ -751,6 +756,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_PARAMETER_AS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_PARAMETER_IN_CATCH_CLAUSE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_PARAMETER_IS_NOT_AN_EXPRESSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INCORRECT_TYPE_PARAMETER_OF_PROPERTY
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NAME_BASED_DESTRUCTURING_UNDERSCORE_WITHOUT_RENAMING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OVERRIDING_IGNORABLE_WITH_MUST_USE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_PARAMETER_ON_LHS_OF_DOT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_VARIANCE_CONFLICT_ERROR
@@ -796,6 +802,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UPPER_BOUND_VIOLA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UPPER_BOUND_VIOLATED_DEPRECATION_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UPPER_BOUND_VIOLATED_IN_TYPEALIAS_EXPANSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UPPER_BOUND_VIOLATED_IN_TYPEALIAS_EXPANSION_DEPRECATION_WARNING
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UPPER_BOUND_VIOLATED_IN_TYPE_OPERATOR_OR_PARAMETER_BOUNDS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.USAGE_IS_NOT_INLINABLE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.USELESS_CALL_ON_NOT_NULL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.USELESS_CAST
@@ -1546,7 +1553,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(SUPERTYPE_NOT_INITIALIZED, "This type has a constructor, so it must be initialized here.")
 
         // Applicability
-        map.put(NONE_APPLICABLE, "None of the following candidates is applicable:{0}", SYMBOLS_ON_NEXT_LINES)
+        map.put(NONE_APPLICABLE, "None of the following candidates is applicable:\n\n{0}", CANDIDATES_WITH_DIAGNOSTIC_MESSAGES)
         map.put(INAPPLICABLE_CANDIDATE, "Inapplicable candidate(s): {0}", SYMBOL)
         map.put(HAS_NEXT_FUNCTION_NONE_APPLICABLE, "None of the ''hasNext()'' functions is applicable for this expression. Candidates are:{0}", SYMBOLS_ON_NEXT_LINES)
         map.put(NEXT_NONE_APPLICABLE, "None of the ''next()'' functions is applicable for this expression. Candidates are:{0}", SYMBOLS_ON_NEXT_LINES)
@@ -1814,6 +1821,13 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(
             UPPER_BOUND_VIOLATED_DEPRECATION_WARNING,
             "Type argument is not within its bounds: must be subtype of ''{0}''. This will become an error in future releases.{2}",
+            RENDER_TYPE,
+            RENDER_TYPE,
+            OPTIONAL_SENTENCE,
+        )
+        map.put(
+            UPPER_BOUND_VIOLATED_IN_TYPE_OPERATOR_OR_PARAMETER_BOUNDS,
+            "Type argument is not within its bounds: must be subtype of ''{0}''.{2}",
             RENDER_TYPE,
             RENDER_TYPE,
             OPTIONAL_SENTENCE,
@@ -2643,7 +2657,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(PRIVATE_SETTER_FOR_OPEN_PROPERTY, "Private setters for open properties are prohibited.")
         map.put(VAL_WITH_SETTER, "A 'val' property cannot have a setter.")
         map.put(
-            DELEGATE_USES_EXTENSION_PROPERTY_TYPE_PARAMETER,
+            DELEGATE_USES_EXTENSION_PROPERTY_TYPE_PARAMETER_ERROR,
             "Extension property type parameter ''{0}'' cannot be used in delegates. See https://youtrack.jetbrains.com/issue/KT-24643",
             SYMBOL
         )
@@ -2732,6 +2746,42 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
 
         map.put(UNNAMED_VAR_PROPERTY, "'var' properties require a name.")
         map.put(UNNAMED_DELEGATED_PROPERTY, "Delegated properties require a name.")
+
+        map.put(
+            DESTRUCTURING_SHORT_FORM_NAME_MISMATCH,
+            buildString {
+                append("Variable name ''{0}'' differs from accessed property name ''{1}''. This syntax will be used for name-based destructuring ")
+                appendVersion(LanguageFeature.EnableNameBasedDestructuringShortForm)
+                appendLine(", and this code will change its meaning.")
+                appendLine("Use the full name-based destructuring syntax ''(val {0} = {1}, ...)'', the new positional destructuring syntax ''[{0}, ...]'', or align the names to prepare for the transition.")
+                append("See https://kotl.in/name-based-destructuring for more information.")
+            },
+            NAME,
+            NAME,
+        )
+        map.put(
+            DESTRUCTURING_SHORT_FORM_OF_NON_DATA_CLASS,
+            buildString {
+                append("This syntax will be used for name-based destructuring ")
+                appendVersion(LanguageFeature.EnableNameBasedDestructuringShortForm)
+                appendLine(" which will stop compiling or change its meaning for non-data class ''{0}''.")
+                appendLine("Use the new positional destructuring syntax ''[{1}, ...]'' to prepare for the transition.")
+                append("See https://kotl.in/name-based-destructuring for more information.")
+            },
+            RENDER_TYPE,
+            NAME
+        )
+        map.put(
+            DESTRUCTURING_SHORT_FORM_UNDERSCORE,
+            buildString {
+                append("This syntax will be used for name-based destructuring ")
+                appendVersion(LanguageFeature.EnableNameBasedDestructuringShortForm)
+                appendLine(", and an underscore without renaming will become an error.")
+                appendLine("Use name-based destructuring syntax '(val x, ...)' and drop the unused entry, or use the new positional destructuring syntax '[_, ...]'.")
+                append("See https://kotl.in/name-based-destructuring for more information.")
+            },
+        )
+        map.put(NAME_BASED_DESTRUCTURING_UNDERSCORE_WITHOUT_RENAMING, "Underscore in name-based destructuring without renaming is forbidden.")
 
         map.put(CONST_VAL_NOT_TOP_LEVEL_OR_OBJECT, "Const 'val' is only allowed on top level, in named objects, or in companion objects.")
         map.put(CONST_VAL_WITH_GETTER, "Const 'val' cannot have a getter.")
