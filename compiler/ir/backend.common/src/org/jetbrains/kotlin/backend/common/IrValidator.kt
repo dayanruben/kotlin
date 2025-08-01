@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
-import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
@@ -38,14 +37,13 @@ typealias ReportIrValidationError = (IrFile?, IrElement, String, List<IrElement>
 data class IrValidatorConfig(
     val checkTreeConsistency: Boolean = true,
     val checkTypes: Boolean = false,
-    val checkProperties: Boolean = false,
     val checkValueScopes: Boolean = false,
     val checkTypeParameterScopes: Boolean = false,
     val checkCrossFileFieldUsage: Boolean = false,
     val checkAllKotlinFieldsArePrivate: Boolean = false,
     val checkVisibilities: Boolean = false,
     val checkVarargTypes: Boolean = false,
-    val checkFunctionBody: Boolean = true,
+    val checkIrExpressionBodyInFunction: Boolean = true,
     val checkUnboundSymbols: Boolean = false,
     val checkInlineFunctionUseSites: InlineFunctionUseSiteChecker? = null,
 )
@@ -64,7 +62,7 @@ fun interface InlineFunctionUseSiteChecker {
      *   return `false` (== not permitted). However, there are a few exceptions that are temporarily permitted.
      *   For example, `inline external` intrinsics in Native (KT-66734).
      */
-    fun isPermitted(inlineFunctionUseSite: IrMemberAccessExpression<IrFunctionSymbol>): Boolean
+    fun isPermitted(inlineFunctionUseSite: IrFunctionAccessExpression): Boolean
 }
 
 private class IrValidator(
@@ -105,8 +103,7 @@ private class IrFileValidator(
     private val valueParameterCheckers: MutableList<IrValueParameterChecker> = mutableListOf()
     private val valueAccessCheckers: MutableList<IrValueAccessChecker> = mutableListOf()
     private val functionAccessCheckers: MutableList<IrFunctionAccessChecker> = mutableListOf(IrNoInlineUseSitesChecker)
-    private val functionReferenceCheckers: MutableList<IrFunctionReferenceChecker> =
-        mutableListOf(IrFunctionReferenceFunctionDispatchReceiverChecker, IrNoInlineUseSitesChecker)
+    private val functionReferenceCheckers: MutableList<IrFunctionReferenceChecker> = mutableListOf()
     private val constCheckers: MutableList<IrConstChecker> = mutableListOf()
     private val stringConcatenationCheckers: MutableList<IrStringConcatenationChecker> = mutableListOf()
     private val getObjectValueCheckers: MutableList<IrGetObjectValueChecker> = mutableListOf()
@@ -120,18 +117,18 @@ private class IrFileValidator(
     private val breakContinueCheckers: MutableList<IrBreakContinueChecker> = mutableListOf()
     private val returnCheckers: MutableList<IrReturnChecker> = mutableListOf()
     private val throwCheckers: MutableList<IrThrowChecker> = mutableListOf()
-    private val functionCheckers: MutableList<IrFunctionChecker> =
-        mutableListOf(IrFunctionDispatchReceiverChecker, IrFunctionParametersChecker, IrConstructorReceiverChecker)
+    private val functionCheckers: MutableList<IrFunctionChecker> = mutableListOf(
+        IrFunctionDispatchReceiverChecker, IrFunctionParametersChecker, IrConstructorReceiverChecker, IrFunctionPropertiesChecker
+    )
     private val declarationBaseCheckers: MutableList<IrDeclarationChecker<IrDeclaration>> =
         mutableListOf(IrPrivateDeclarationOverrideChecker)
     private val propertyReferenceCheckers: MutableList<IrPropertyReferenceChecker> = mutableListOf()
     private val localDelegatedPropertyReferenceCheckers: MutableList<IrLocalDelegatedPropertyReferenceChecker> = mutableListOf()
     private val expressionCheckers: MutableList<IrExpressionChecker<IrExpression>> = mutableListOf()
     private val typeOperatorCheckers: MutableList<IrTypeOperatorChecker> = mutableListOf(IrTypeOperatorTypeOperandChecker)
-    private val propertyCheckers: MutableList<IrPropertyChecker> = mutableListOf()
+    private val propertyCheckers: MutableList<IrPropertyChecker> = mutableListOf(IrPropertyAccessorsChecker)
 
-    // TODO: Why don't we check parameters as well?
-    private val callCheckers: MutableList<IrCallChecker> = mutableListOf(IrCallFunctionDispatchReceiverChecker)
+    private val callCheckers: MutableList<IrCallChecker> = mutableListOf()
 
     init {
         if (config.checkValueScopes) {
@@ -173,17 +170,8 @@ private class IrFileValidator(
             throwCheckers.add(IrNothingTypeExpressionChecker)
             fieldAccessExpressionCheckers.add(IrDynamicTypeFieldAccessChecker)
         }
-        if (config.checkProperties) {
-            callCheckers.add(IrCallFunctionPropertiesChecker)
-            functionCheckers.add(IrFunctionPropertiesChecker)
-            functionReferenceCheckers.add(IrFunctionReferenceFunctionPropertiesChecker)
-            propertyCheckers.add(IrPropertyAccessorsChecker)
-        }
-        if (config.checkFunctionBody) {
-            functionCheckers.add(IrFunctionBodyChecker)
-        }
-        if (config.checkUnboundSymbols) {
-            expressionCheckers.add(IrExpressionTypeChecker)
+        if (config.checkIrExpressionBodyInFunction) {
+            functionCheckers.add(IrExpressionBodyInFunctionChecker)
         }
     }
 

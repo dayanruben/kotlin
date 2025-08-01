@@ -153,7 +153,6 @@ class IrValidatorTest {
                     phaseName = "IrValidatorTest",
                     IrValidatorConfig(
                         checkTypes = true,
-                        checkProperties = true,
                         checkValueScopes = true,
                         checkTypeParameterScopes = true,
                         checkCrossFileFieldUsage = true,
@@ -1197,63 +1196,6 @@ class IrValidatorTest {
     }
 
     @Test
-    fun `references to not permitted inline function use site are reported`() {
-        val function1 = IrFactoryImpl.buildFun {
-            name = Name.identifier("inlineFunctionUseSiteNotPermitted")
-            returnType = TestIrBuiltins.anyType
-            isInline = true
-        }
-        val function2 = IrFactoryImpl.buildFun {
-            name = Name.identifier("inlineFunctionUseSitePermitted")
-            returnType = TestIrBuiltins.anyType
-            isInline = true
-        }
-        val function3 = IrFactoryImpl.buildFun {
-            name = Name.identifier("foo")
-            returnType = TestIrBuiltins.anyType
-        }
-        val functionReference1 = IrFunctionReferenceImpl(
-            startOffset = UNDEFINED_OFFSET,
-            endOffset = UNDEFINED_OFFSET,
-            type = TestIrBuiltins.anyType,
-            symbol = function1.symbol,
-            typeArgumentsCount = 0
-        )
-        val functionReference2 = IrFunctionReferenceImpl(
-            startOffset = UNDEFINED_OFFSET,
-            endOffset = UNDEFINED_OFFSET,
-            type = TestIrBuiltins.anyType,
-            symbol = function2.symbol,
-            typeArgumentsCount = 0
-        )
-        val body = IrFactoryImpl.createBlockBody(UNDEFINED_OFFSET, UNDEFINED_OFFSET)
-        body.statements.add(functionReference1)
-        body.statements.add(functionReference2)
-        function3.body = body
-        val file = createIrFile()
-        file.addChild(function1)
-        file.addChild(function2)
-        file.addChild(function3)
-        testValidation(
-            IrVerificationMode.ERROR,
-            file,
-            listOf(
-                Message(
-                    ERROR,
-                    """
-                    [IR VALIDATION] IrValidatorTest: The following element references public inline function inlineFunctionUseSiteNotPermitted
-                    FUNCTION_REFERENCE 'public final fun inlineFunctionUseSiteNotPermitted (): kotlin.Any [inline] declared in org.sample' type=kotlin.Any origin=null reflectionTarget=<same>
-                      inside BLOCK_BODY
-                        inside FUN name:foo visibility:public modality:FINAL <> () returnType:kotlin.Any
-                          inside FILE fqName:org.sample fileName:test.kt
-                    """.trimIndent(),
-                    CompilerMessageLocation.create("test.kt", 0, 0, null)
-                )
-            )
-        )
-    }
-
-    @Test
     fun `dispatch receivers with dynamic type are reported`() {
         val file = createIrFile()
         val dynamicType: IrDynamicType = IrDynamicTypeImpl(
@@ -1294,28 +1236,6 @@ class IrValidatorTest {
             IrVerificationMode.WARNING,
             file,
             listOf(
-                Message(
-                    WARNING,
-                    """
-                    [IR VALIDATION] IrValidatorTest: Dispatch receivers with 'dynamic' type are not allowed
-                    FUNCTION_REFERENCE 'public final fun foo (): kotlin.Unit declared in org.sample' type=kotlin.Any origin=null reflectionTarget=<same>
-                      inside BLOCK_BODY
-                        inside FUN name:foo visibility:public modality:FINAL <> (<this>:dynamic) returnType:kotlin.Unit
-                          inside FILE fqName:org.sample fileName:test.kt
-                    """.trimIndent(),
-                    CompilerMessageLocation.create("test.kt", 0, 0, null),
-                ),
-                Message(
-                    WARNING,
-                    """
-                    [IR VALIDATION] IrValidatorTest: Dispatch receivers with 'dynamic' type are not allowed
-                    CALL 'public final fun foo (): kotlin.Unit declared in org.sample' type=kotlin.Unit origin=null
-                      inside BLOCK_BODY
-                        inside FUN name:foo visibility:public modality:FINAL <> (<this>:dynamic) returnType:kotlin.Unit
-                          inside FILE fqName:org.sample fileName:test.kt
-                    """.trimIndent(),
-                    CompilerMessageLocation.create("test.kt", 0, 0, null),
-                ),
                 Message(
                     WARNING,
                     """
@@ -1524,28 +1444,6 @@ class IrValidatorTest {
             IrVerificationMode.WARNING,
             file,
             listOf(
-                Message(
-                    WARNING,
-                    """
-                    [IR VALIDATION] IrValidatorTest: Orphaned property getter/setter FUN name:foo visibility:public modality:FINAL <> () returnType:kotlin.Any
-                    CALL 'public final fun foo (): kotlin.Any declared in org.sample' type=kotlin.Any origin=null
-                      inside BLOCK_BODY
-                        inside FUN name:foo visibility:public modality:FINAL <> () returnType:kotlin.Any
-                          inside FILE fqName:org.sample fileName:test.kt
-                    """.trimIndent(),
-                    CompilerMessageLocation.create("test.kt", 0, 0, null)
-                ),
-                Message(
-                    WARNING,
-                    """
-                    [IR VALIDATION] IrValidatorTest: Orphaned property getter/setter FUN name:foo visibility:public modality:FINAL <> () returnType:kotlin.Any
-                    FUNCTION_REFERENCE 'public final fun foo (): kotlin.Any declared in org.sample' type=kotlin.Any origin=null reflectionTarget=<same>
-                      inside BLOCK_BODY
-                        inside FUN name:foo visibility:public modality:FINAL <> () returnType:kotlin.Any
-                          inside FILE fqName:org.sample fileName:test.kt
-                    """.trimIndent(),
-                    CompilerMessageLocation.create("test.kt", 0, 0, null)
-                ),
                 Message(
                     WARNING,
                     """

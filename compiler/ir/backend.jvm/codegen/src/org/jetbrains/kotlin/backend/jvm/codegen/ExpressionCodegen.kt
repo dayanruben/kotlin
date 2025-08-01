@@ -721,10 +721,10 @@ class ExpressionCodegen(
         val irValueDeclaration = expression.symbol.owner
         val realType = irValueDeclaration.realType
         val kotlinType = if (eraseType) realType.upperBound.withNullability(realType.isNullable()) else realType
-        StackValue.Local(variableIndex, asmType, kotlinType.toIrBasedKotlinType())
+        StackValue.Local(variableIndex, asmType, kotlinType)
     } else {
         gen(expression, type, parameterType, data)
-        StackValue.OnStack(type, parameterType.toIrBasedKotlinType())
+        StackValue.OnStack(type, parameterType)
     }
 
     // We do not mangle functions if Result is the only parameter of the function. This means that if a function
@@ -1417,7 +1417,7 @@ class ExpressionCodegen(
         assert(context.config.runtimeStringConcat.isDynamic) {
             "IrStringConcatenation expression should be presented only with dynamic concatenation: ${expression.dump()}"
         }
-        val generator = StringConcatGenerator(context.config.runtimeStringConcat, mv)
+        val generator = StringConcatGenerator(context.config.runtimeStringConcat, mv, typeMapper)
         expression.arguments.forEach { arg ->
             if (arg is IrConst) {
                 val type = when (arg.kind) {

@@ -27,10 +27,9 @@ internal class JvmIrValidationBeforeLoweringPhase(
 ) : IrValidationBeforeLoweringPhase<JvmBackendContext>(context) {
     override val defaultValidationConfig: IrValidatorConfig
         get() = super.defaultValidationConfig.copy(
-            checkProperties = true,
             checkCrossFileFieldUsage = false,
             checkAllKotlinFieldsArePrivate = false,
-            checkFunctionBody = false,
+            checkIrExpressionBodyInFunction = false,
         )
 }
 
@@ -40,10 +39,9 @@ internal class JvmIrValidationAfterLoweringPhase(
 ) : IrValidationAfterLoweringPhase<JvmBackendContext>(context) {
     override val defaultValidationConfig: IrValidatorConfig
         get() = super.defaultValidationConfig.copy(
-            checkProperties = true,
             checkCrossFileFieldUsage = false,
             checkAllKotlinFieldsArePrivate = false,
-            checkFunctionBody = false,
+            checkIrExpressionBodyInFunction = false,
         )
 
     override fun IrValidationContext.additionalValidation(irModule: IrModuleFragment, phaseName: String) {

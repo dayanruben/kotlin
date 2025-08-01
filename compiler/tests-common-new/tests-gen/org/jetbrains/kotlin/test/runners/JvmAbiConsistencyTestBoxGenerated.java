@@ -8874,6 +8874,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
     }
 
     @Test
+    @TestMetadata("kt72039.kt")
+    public void testKt72039() {
+      runTest("compiler/testData/codegen/box/collections/kt72039.kt");
+    }
+
+    @Test
     @TestMetadata("mutableList.kt")
     public void testMutableList() {
       runTest("compiler/testData/codegen/box/collections/mutableList.kt");
@@ -60225,6 +60231,12 @@ public class JvmAbiConsistencyTestBoxGenerated extends AbstractJvmAbiConsistency
     @TestMetadata("genericTypeAliasConstructor_implicitTypeArguments.kt")
     public void testGenericTypeAliasConstructor_implicitTypeArguments() {
       runTest("compiler/testData/codegen/box/typealias/genericTypeAliasConstructor_implicitTypeArguments.kt");
+    }
+
+    @Test
+    @TestMetadata("importNestedTypealiasFromAnotherModule.kt")
+    public void testImportNestedTypealiasFromAnotherModule() {
+      runTest("compiler/testData/codegen/box/typealias/importNestedTypealiasFromAnotherModule.kt");
     }
 
     @Test

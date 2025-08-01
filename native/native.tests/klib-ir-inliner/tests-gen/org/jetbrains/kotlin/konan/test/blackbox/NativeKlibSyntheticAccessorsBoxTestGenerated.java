@@ -1138,6 +1138,12 @@ public class NativeKlibSyntheticAccessorsBoxTestGenerated extends AbstractNative
       }
 
       @Test
+      @TestMetadata("usePrivateMethodFromInternalInlineGenericFakeOverride.kt")
+      public void testUsePrivateMethodFromInternalInlineGenericFakeOverride() {
+        runTest("compiler/testData/klib/syntheticAccessors/privateMember/singleFile/usePrivateMethodFromInternalInlineGenericFakeOverride.kt");
+      }
+
+      @Test
       @TestMetadata("usePrivateMethodFromLocalObjectInsideInternalInline.kt")
       public void testUsePrivateMethodFromLocalObjectInsideInternalInline() {
         runTest("compiler/testData/klib/syntheticAccessors/privateMember/singleFile/usePrivateMethodFromLocalObjectInsideInternalInline.kt");
@@ -1231,6 +1237,30 @@ public class NativeKlibSyntheticAccessorsBoxTestGenerated extends AbstractNative
       @Test
       public void testAllFilesPresentInCrossFilePrivateLeak() {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossFilePrivateLeak"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+      }
+
+      @Test
+      @TestMetadata("contextSensitiveResolutionCallArgumentPositionWithCopyOfDefaultValue.kt")
+      public void testContextSensitiveResolutionCallArgumentPositionWithCopyOfDefaultValue() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossFilePrivateLeak/contextSensitiveResolutionCallArgumentPositionWithCopyOfDefaultValue.kt");
+      }
+
+      @Test
+      @TestMetadata("contextSensitiveResolutionTypePosition.kt")
+      public void testContextSensitiveResolutionTypePosition() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossFilePrivateLeak/contextSensitiveResolutionTypePosition.kt");
+      }
+
+      @Test
+      @TestMetadata("contextSensitiveResolutionTypePositionWithCopyOfDefaultValue.kt")
+      public void testContextSensitiveResolutionTypePositionWithCopyOfDefaultValue() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossFilePrivateLeak/contextSensitiveResolutionTypePositionWithCopyOfDefaultValue.kt");
+      }
+
+      @Test
+      @TestMetadata("contextSensitiveResolutionСallArgumentPosition.kt")
+      public void testContextSensitiveResolutionСallArgumentPosition() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossFilePrivateLeak/contextSensitiveResolutionСallArgumentPosition.kt");
       }
 
       @Test
@@ -1424,6 +1454,60 @@ public class NativeKlibSyntheticAccessorsBoxTestGenerated extends AbstractNative
       public void testUsePrivateTopLevelConstValFromInternalInline() {
         runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossFilePrivateLeak/usePrivateTopLevelConstValFromInternalInline.kt");
       }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunFromAnonymousFunAsDefaultArgument.kt")
+      public void testUsePrivateTopLevelFunFromAnonymousFunAsDefaultArgument() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossFilePrivateLeak/usePrivateTopLevelFunFromAnonymousFunAsDefaultArgument.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunFromInternalInlineFunAsDefaultArgument.kt")
+      public void testUsePrivateTopLevelFunFromInternalInlineFunAsDefaultArgument() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossFilePrivateLeak/usePrivateTopLevelFunFromInternalInlineFunAsDefaultArgument.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunFromReferenceAsDefaultArgument.kt")
+      public void testUsePrivateTopLevelFunFromReferenceAsDefaultArgument() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossFilePrivateLeak/usePrivateTopLevelFunFromReferenceAsDefaultArgument.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunFromVararg.kt")
+      public void testUsePrivateTopLevelFunFromVararg() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossFilePrivateLeak/usePrivateTopLevelFunFromVararg.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunFromVarargAndDefaultArgument.kt")
+      public void testUsePrivateTopLevelFunFromVarargAndDefaultArgument() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossFilePrivateLeak/usePrivateTopLevelFunFromVarargAndDefaultArgument.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunWithAnonymousFunDefaultValueThroughInternalInlineFun.kt")
+      public void testUsePrivateTopLevelFunWithAnonymousFunDefaultValueThroughInternalInlineFun() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossFilePrivateLeak/usePrivateTopLevelFunWithAnonymousFunDefaultValueThroughInternalInlineFun.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunWithLambdaDefaultValueThroughInternalInlineFun.kt")
+      public void testUsePrivateTopLevelFunWithLambdaDefaultValueThroughInternalInlineFun() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossFilePrivateLeak/usePrivateTopLevelFunWithLambdaDefaultValueThroughInternalInlineFun.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunWithReferenceDefaultValueThroughInternalInlineFun.kt")
+      public void testUsePrivateTopLevelFunWithReferenceDefaultValueThroughInternalInlineFun() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossFilePrivateLeak/usePrivateTopLevelFunWithReferenceDefaultValueThroughInternalInlineFun.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunWithVarargThroughInternalInlineFun.kt")
+      public void testUsePrivateTopLevelFunWithVarargThroughInternalInlineFun() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossFilePrivateLeak/usePrivateTopLevelFunWithVarargThroughInternalInlineFun.kt");
+      }
     }
 
     @Nested
@@ -1435,6 +1519,30 @@ public class NativeKlibSyntheticAccessorsBoxTestGenerated extends AbstractNative
       @Test
       public void testAllFilesPresentInCrossModulePrivateLeak() {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossModulePrivateLeak"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+      }
+
+      @Test
+      @TestMetadata("contextSensitiveResolutionCallArgumentPositionWithCopyOfDefaultValue.kt")
+      public void testContextSensitiveResolutionCallArgumentPositionWithCopyOfDefaultValue() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossModulePrivateLeak/contextSensitiveResolutionCallArgumentPositionWithCopyOfDefaultValue.kt");
+      }
+
+      @Test
+      @TestMetadata("contextSensitiveResolutionTypePosition.kt")
+      public void testContextSensitiveResolutionTypePosition() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossModulePrivateLeak/contextSensitiveResolutionTypePosition.kt");
+      }
+
+      @Test
+      @TestMetadata("contextSensitiveResolutionTypePositionWithCopyOfDefaultValue.kt")
+      public void testContextSensitiveResolutionTypePositionWithCopyOfDefaultValue() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossModulePrivateLeak/contextSensitiveResolutionTypePositionWithCopyOfDefaultValue.kt");
+      }
+
+      @Test
+      @TestMetadata("contextSensitiveResolutionСallArgumentPosition.kt")
+      public void testContextSensitiveResolutionСallArgumentPosition() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossModulePrivateLeak/contextSensitiveResolutionСallArgumentPosition.kt");
       }
 
       @Test
@@ -1624,9 +1732,75 @@ public class NativeKlibSyntheticAccessorsBoxTestGenerated extends AbstractNative
       }
 
       @Test
+      @TestMetadata("syntheticAccessorDefaultValues.kt")
+      public void testSyntheticAccessorDefaultValues() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossModulePrivateLeak/syntheticAccessorDefaultValues.kt");
+      }
+
+      @Test
+      @TestMetadata("syntheticAccessorTypeParameters.kt")
+      public void testSyntheticAccessorTypeParameters() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossModulePrivateLeak/syntheticAccessorTypeParameters.kt");
+      }
+
+      @Test
       @TestMetadata("usePrivateTopLevelConstValFromInternalInline.kt")
       public void testUsePrivateTopLevelConstValFromInternalInline() {
         runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossModulePrivateLeak/usePrivateTopLevelConstValFromInternalInline.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunFromAnonymousFunAsDefaultArgument.kt")
+      public void testUsePrivateTopLevelFunFromAnonymousFunAsDefaultArgument() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossModulePrivateLeak/usePrivateTopLevelFunFromAnonymousFunAsDefaultArgument.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunFromInternalInlineFunAsDefaultArgument.kt")
+      public void testUsePrivateTopLevelFunFromInternalInlineFunAsDefaultArgument() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossModulePrivateLeak/usePrivateTopLevelFunFromInternalInlineFunAsDefaultArgument.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunFromReferenceAsDefaultArgument.kt")
+      public void testUsePrivateTopLevelFunFromReferenceAsDefaultArgument() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossModulePrivateLeak/usePrivateTopLevelFunFromReferenceAsDefaultArgument.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunFromVararg.kt")
+      public void testUsePrivateTopLevelFunFromVararg() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossModulePrivateLeak/usePrivateTopLevelFunFromVararg.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunFromVarargAndDefaultArgument.kt")
+      public void testUsePrivateTopLevelFunFromVarargAndDefaultArgument() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossModulePrivateLeak/usePrivateTopLevelFunFromVarargAndDefaultArgument.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunWithAnonymousFunDefaultValueThroughInternalInlineFun.kt")
+      public void testUsePrivateTopLevelFunWithAnonymousFunDefaultValueThroughInternalInlineFun() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossModulePrivateLeak/usePrivateTopLevelFunWithAnonymousFunDefaultValueThroughInternalInlineFun.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunWithLambdaDefaultValueThroughInternalInlineFun.kt")
+      public void testUsePrivateTopLevelFunWithLambdaDefaultValueThroughInternalInlineFun() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossModulePrivateLeak/usePrivateTopLevelFunWithLambdaDefaultValueThroughInternalInlineFun.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunWithReferenceDefaultValueThroughInternalInlineFun.kt")
+      public void testUsePrivateTopLevelFunWithReferenceDefaultValueThroughInternalInlineFun() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossModulePrivateLeak/usePrivateTopLevelFunWithReferenceDefaultValueThroughInternalInlineFun.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunWithVarargThroughInternalInlineFun.kt")
+      public void testUsePrivateTopLevelFunWithVarargThroughInternalInlineFun() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/crossModulePrivateLeak/usePrivateTopLevelFunWithVarargThroughInternalInlineFun.kt");
       }
     }
 
@@ -1639,6 +1813,30 @@ public class NativeKlibSyntheticAccessorsBoxTestGenerated extends AbstractNative
       @Test
       public void testAllFilesPresentInSingleFile() {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+      }
+
+      @Test
+      @TestMetadata("contextSensitiveResolutionCallArgumentPositionWithCopyOfDefaultValue.kt")
+      public void testContextSensitiveResolutionCallArgumentPositionWithCopyOfDefaultValue() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile/contextSensitiveResolutionCallArgumentPositionWithCopyOfDefaultValue.kt");
+      }
+
+      @Test
+      @TestMetadata("contextSensitiveResolutionTypePosition.kt")
+      public void testContextSensitiveResolutionTypePosition() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile/contextSensitiveResolutionTypePosition.kt");
+      }
+
+      @Test
+      @TestMetadata("contextSensitiveResolutionTypePositionWithCopyOfDefaultValue.kt")
+      public void testContextSensitiveResolutionTypePositionWithCopyOfDefaultValue() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile/contextSensitiveResolutionTypePositionWithCopyOfDefaultValue.kt");
+      }
+
+      @Test
+      @TestMetadata("contextSensitiveResolutionСallArgumentPosition.kt")
+      public void testContextSensitiveResolutionСallArgumentPosition() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile/contextSensitiveResolutionСallArgumentPosition.kt");
       }
 
       @Test
@@ -1678,6 +1876,18 @@ public class NativeKlibSyntheticAccessorsBoxTestGenerated extends AbstractNative
       }
 
       @Test
+      @TestMetadata("syntheticAccessorDefaultValues.kt")
+      public void testSyntheticAccessorDefaultValues() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile/syntheticAccessorDefaultValues.kt");
+      }
+
+      @Test
+      @TestMetadata("syntheticAccessorTypeParameters.kt")
+      public void testSyntheticAccessorTypeParameters() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile/syntheticAccessorTypeParameters.kt");
+      }
+
+      @Test
       @TestMetadata("useLateinitIsInitializedFromInternalInline.kt")
       public void testUseLateinitIsInitializedFromInternalInline() {
         runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile/useLateinitIsInitializedFromInternalInline.kt");
@@ -1687,6 +1897,12 @@ public class NativeKlibSyntheticAccessorsBoxTestGenerated extends AbstractNative
       @TestMetadata("usePrivateTopLevelExtensionFunFromInternalInline.kt")
       public void testUsePrivateTopLevelExtensionFunFromInternalInline() {
         runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile/usePrivateTopLevelExtensionFunFromInternalInline.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunFromAnonymousFunAsDefaultArgument.kt")
+      public void testUsePrivateTopLevelFunFromAnonymousFunAsDefaultArgument() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile/usePrivateTopLevelFunFromAnonymousFunAsDefaultArgument.kt");
       }
 
       @Test
@@ -1702,6 +1918,12 @@ public class NativeKlibSyntheticAccessorsBoxTestGenerated extends AbstractNative
       }
 
       @Test
+      @TestMetadata("usePrivateTopLevelFunFromInternalInlineFunAsDefaultArgument.kt")
+      public void testUsePrivateTopLevelFunFromInternalInlineFunAsDefaultArgument() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile/usePrivateTopLevelFunFromInternalInlineFunAsDefaultArgument.kt");
+      }
+
+      @Test
       @TestMetadata("usePrivateTopLevelFunFromLambdaInsideInternalInline.kt")
       public void testUsePrivateTopLevelFunFromLambdaInsideInternalInline() {
         runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile/usePrivateTopLevelFunFromLambdaInsideInternalInline.kt");
@@ -1711,6 +1933,24 @@ public class NativeKlibSyntheticAccessorsBoxTestGenerated extends AbstractNative
       @TestMetadata("usePrivateTopLevelFunFromLambdaInsidePublicInline.kt")
       public void testUsePrivateTopLevelFunFromLambdaInsidePublicInline() {
         runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile/usePrivateTopLevelFunFromLambdaInsidePublicInline.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunFromReferenceAsDefaultArgument.kt")
+      public void testUsePrivateTopLevelFunFromReferenceAsDefaultArgument() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile/usePrivateTopLevelFunFromReferenceAsDefaultArgument.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunFromVararg.kt")
+      public void testUsePrivateTopLevelFunFromVararg() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile/usePrivateTopLevelFunFromVararg.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunFromVarargAndDefaultArgument.kt")
+      public void testUsePrivateTopLevelFunFromVarargAndDefaultArgument() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile/usePrivateTopLevelFunFromVarargAndDefaultArgument.kt");
       }
 
       @Test
@@ -1726,9 +1966,33 @@ public class NativeKlibSyntheticAccessorsBoxTestGenerated extends AbstractNative
       }
 
       @Test
+      @TestMetadata("usePrivateTopLevelFunWithAnonymousFunDefaultValueThroughInternalInlineFun.kt")
+      public void testUsePrivateTopLevelFunWithAnonymousFunDefaultValueThroughInternalInlineFun() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile/usePrivateTopLevelFunWithAnonymousFunDefaultValueThroughInternalInlineFun.kt");
+      }
+
+      @Test
       @TestMetadata("usePrivateTopLevelFunWithDifferentVisibility.kt")
       public void testUsePrivateTopLevelFunWithDifferentVisibility() {
         runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile/usePrivateTopLevelFunWithDifferentVisibility.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunWithLambdaDefaultValueThroughInternalInlineFun.kt")
+      public void testUsePrivateTopLevelFunWithLambdaDefaultValueThroughInternalInlineFun() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile/usePrivateTopLevelFunWithLambdaDefaultValueThroughInternalInlineFun.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunWithReferenceDefaultValueThroughInternalInlineFun.kt")
+      public void testUsePrivateTopLevelFunWithReferenceDefaultValueThroughInternalInlineFun() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile/usePrivateTopLevelFunWithReferenceDefaultValueThroughInternalInlineFun.kt");
+      }
+
+      @Test
+      @TestMetadata("usePrivateTopLevelFunWithVarargThroughInternalInlineFun.kt")
+      public void testUsePrivateTopLevelFunWithVarargThroughInternalInlineFun() {
+        runTest("compiler/testData/klib/syntheticAccessors/topLevelPrivate/singleFile/usePrivateTopLevelFunWithVarargThroughInternalInlineFun.kt");
       }
 
       @Test

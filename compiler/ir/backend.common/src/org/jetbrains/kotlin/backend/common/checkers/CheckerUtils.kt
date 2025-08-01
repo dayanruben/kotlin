@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.descriptors.toEffectiveVisibilityOrNull
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.IrFunctionAccessExpression
 import org.jetbrains.kotlin.ir.expressions.IrMemberAccessExpression
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
@@ -178,7 +179,7 @@ internal fun checkVisibility(
 }
 
 internal fun checkFunctionUseSite(
-    expression: IrMemberAccessExpression<IrFunctionSymbol>,
+    expression: IrFunctionAccessExpression,
     inlineFunctionUseSiteChecker: InlineFunctionUseSiteChecker,
     context: CheckerContext,
 ) {
@@ -201,20 +202,5 @@ internal fun checkFunctionUseSite(
 internal fun IrExpression.ensureTypeIs(expectedType: IrType, context: CheckerContext) {
     if (type != expectedType) {
         context.error(this, "unexpected type: expected ${expectedType.render()}, got ${type.render()}")
-    }
-}
-
-internal fun IrElement.checkFunctionProperties(function: IrFunction, context: CheckerContext) {
-    if (function is IrSimpleFunction) {
-        val property = function.correspondingPropertySymbol?.owner
-        if (property != null && property.getter != function && property.setter != function) {
-            context.error(this, "Orphaned property getter/setter ${function.render()}")
-        }
-    }
-}
-
-internal fun IrElement.checkFunctionDispatchReceiver(function: IrFunction, context: CheckerContext) {
-    if (function.dispatchReceiverParameter?.type is IrDynamicType) {
-        context.error(this, "Dispatch receivers with 'dynamic' type are not allowed")
     }
 }
