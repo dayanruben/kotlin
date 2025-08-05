@@ -31,6 +31,8 @@ import org.jetbrains.kotlin.wasm.ir.source.location.SourceLocation
 
 private const val TYPE_INFO_FLAG_ANONYMOUS_CLASS = 1
 private const val TYPE_INFO_FLAG_LOCAL_CLASS = 2
+private const val TYPE_INFO_FLAG_FITS_LATIN1_QUALIFIER = 4
+private const val TYPE_INFO_FLAG_FITS_LATIN1_SIMPLE_NAME = 8
 
 class DeclarationGenerator(
     private val backendContext: WasmBackendContext,
@@ -373,8 +375,8 @@ class DeclarationGenerator(
                 ""
             }
         val simpleName = klass.name.asString()
-        val (packageNameAddress, packageNamePoolId) = wasmFileCodegenContext.referenceStringLiteralAddressAndId(qualifier)
-        val (simpleNameAddress, simpleNamePoolId) = wasmFileCodegenContext.referenceStringLiteralAddressAndId(simpleName)
+        val (_, packageNamePoolId) = wasmFileCodegenContext.referenceStringLiteralAddressAndId(qualifier)
+        val (_, simpleNamePoolId) = wasmFileCodegenContext.referenceStringLiteralAddressAndId(simpleName)
 
         val location = SourceLocation.NoLocation("Create instance of rtti struct")
         val initRttiGlobal = buildWasmExpression {
@@ -385,19 +387,22 @@ class DeclarationGenerator(
                 buildRefNull(WasmHeapType.Simple.None, location)
             }
 
-            buildConstI32Symbol(packageNameAddress, location)
-            buildConstI32(qualifier.length, location)
             buildConstI32Symbol(packageNamePoolId, location)
-
-            buildConstI32Symbol(simpleNameAddress, location)
-            buildConstI32(simpleName.length, location)
             buildConstI32Symbol(simpleNamePoolId, location)
+
+            // TODO remove after bootstrap
+            buildConstI32(0, location)
+            buildConstI32(0, location)
+            buildConstI32(0, location)
+            buildConstI32(0, location)
 
             buildConstI64(wasmFileCodegenContext.referenceTypeId(symbol), location)
 
             val isAnonymousFlag = if (klass.isAnonymousObject) TYPE_INFO_FLAG_ANONYMOUS_CLASS else 0
             val isLocalFlag = if (klass.isOriginallyLocalClass) TYPE_INFO_FLAG_LOCAL_CLASS else 0
-            buildConstI32(isAnonymousFlag or isLocalFlag, location)
+            val fitsLatin1Qualifier = if (qualifier.fitsLatin1) TYPE_INFO_FLAG_FITS_LATIN1_QUALIFIER else 0
+            val fitsLatin1SimpleName = if (simpleName.fitsLatin1) TYPE_INFO_FLAG_FITS_LATIN1_SIMPLE_NAME else 0
+            buildConstI32(isAnonymousFlag or isLocalFlag or fitsLatin1Qualifier or fitsLatin1SimpleName, location)
 
             buildStructNew(wasmFileCodegenContext.rttiType, location)
         }
@@ -622,12 +627,14 @@ fun generateConstExpression(
         is IrConstKind.Double -> body.buildConstF64(expression.value as Double, location)
         is IrConstKind.String -> {
             val stringValue = expression.value as String
-            val (literalAddress, literalPoolId) = context.referenceStringLiteralAddressAndId(stringValue)
+            val (_, literalPoolId) = context.referenceStringLiteralAddressAndId(stringValue)
             body.commentGroupStart { "const string: \"$stringValue\"" }
             body.buildConstI32Symbol(literalPoolId, location)
-            body.buildConstI32Symbol(literalAddress, location)
-            body.buildConstI32(stringValue.length, location)
-            body.buildCall(context.referenceFunction(backendContext.wasmSymbols.stringGetLiteral), location)
+            if (stringValue.fitsLatin1) {
+                body.buildCall(context.referenceFunction(backendContext.wasmSymbols.stringGetLiteralLatin1), location)
+            } else {
+                body.buildCall(context.referenceFunction(backendContext.wasmSymbols.stringGetLiteralUtf16), location)
+            }
             body.commentGroupEnd()
         }
     }

@@ -1141,11 +1141,25 @@ class BodyGenerator(
                 body.buildConstI32Symbol(wasmFileCodegenContext.stringPoolSize, location)
             }
 
+            wasmSymbols.getWasmAbiVersion -> {
+                body.buildConstI32Symbol(wasmAbiVersion, location)
+            }
+
             wasmSymbols.wasmArrayNewData0 -> {
                 val arrayGcType = WasmImmediate.GcType(
                     wasmFileCodegenContext.referenceGcType(call.typeArguments[0]!!.getRuntimeClass(irBuiltIns).symbol)
                 )
                 body.buildInstr(WasmOp.ARRAY_NEW_DATA, location, arrayGcType, WasmImmediate.DataIdx(0))
+            }
+
+            wasmSymbols.wasmArrayNewData -> {
+                val arrayGcType = WasmImmediate.GcType(
+                    wasmFileCodegenContext.referenceGcType(call.typeArguments[0]!!.getRuntimeClass(irBuiltIns).symbol)
+                )
+                val dataIdx = (call.arguments[2] as? IrConst)?.value as? Int
+                    ?: error("An argument for dataIdx should be a compile time const with type Int")
+                body.buildDrop(location)
+                body.buildInstr(WasmOp.ARRAY_NEW_DATA, location, arrayGcType, WasmImmediate.DataIdx(dataIdx))
             }
 
             wasmSymbols.wasmArrayNewData0CharArray -> {
@@ -1542,6 +1556,7 @@ class BodyGenerator(
     }
 
     companion object {
+        val wasmAbiVersion = WasmSymbol(1)
         val anyVtableFieldId = WasmSymbol(0)
         val anyITableFieldId = WasmSymbol(1)
         val anyRttiFieldId = WasmSymbol(2)

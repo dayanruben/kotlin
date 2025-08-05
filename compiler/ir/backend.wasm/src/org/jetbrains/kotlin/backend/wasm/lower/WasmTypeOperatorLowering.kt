@@ -328,6 +328,9 @@ class WasmBaseTypeOperatorTransformer(val context: WasmBackendContext) : IrEleme
             is IrCall -> {
                 val function = expression.symbol.owner
 
+                // TODO: remove after bootstrap
+                if (function.symbol == context.wasmSymbols.wasmArrayNewData) return false
+
                 val packageFragment = function.getPackageFragment()
                 if (context.getExcludedPackageFragment(packageFragment.packageFqName) == packageFragment) return false
 

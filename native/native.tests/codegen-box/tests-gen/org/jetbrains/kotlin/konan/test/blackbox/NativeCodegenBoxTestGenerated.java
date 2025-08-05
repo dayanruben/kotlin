@@ -1744,6 +1744,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
       }
 
       @Test
+      @TestMetadata("boxBoolean.kt")
+      public void testBoxBoolean() {
+        runTest("compiler/testData/codegen/box/boxing/boxBoolean.kt");
+      }
+
+      @Test
       @TestMetadata("box_cache0.kt")
       public void testBox_cache0() {
         runTest("compiler/testData/codegen/box/boxing/box_cache0.kt");
@@ -12674,6 +12680,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
         @TestMetadata("onInlineArgument.kt")
         public void testOnInlineArgument() {
           runTest("compiler/testData/codegen/box/coroutines/suspendConversion/onInlineArgument.kt");
+        }
+
+        @Test
+        @TestMetadata("onNullableArgument.kt")
+        public void testOnNullableArgument() {
+          runTest("compiler/testData/codegen/box/coroutines/suspendConversion/onNullableArgument.kt");
         }
 
         @Test

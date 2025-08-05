@@ -27,7 +27,7 @@ private fun addressToString(address: Int): String =
 class ConstantDataCharField(val value: WasmSymbol<Char>) : ConstantDataElement() {
     constructor(value: Char) : this(WasmSymbol(value))
 
-    override fun toBytes(): ByteArray = ByteArray(2).apply { value.owner.toLittleEndianBytes(this, 0) }
+    override fun toBytes(): ByteArray = ByteArray(2).apply { value.owner.toLittleEndianBytes(this, 0, false) }
 
     override fun dump(indent: String, startAddress: Int): String {
         return "${addressToString(startAddress)}: $indent i32   : ${value.owner}    ;;\n"
@@ -82,21 +82,24 @@ class ConstantDataIntArray(val value: List<WasmSymbol<Int>>) : ConstantDataEleme
     override val sizeInBytes: Int = value.size * INT_SIZE_BYTES
 }
 
-class ConstantDataCharArray(val value: List<WasmSymbol<Char>>) : ConstantDataElement() {
-    constructor(value: CharArray) : this(value.map { WasmSymbol(it) })
+class ConstantDataCharArray(val value: List<WasmSymbol<Char>>, val fitsLatin1: Boolean) : ConstantDataElement() {
+    constructor(value: CharArray, fitsLatin1: Boolean) : this(value.map { WasmSymbol(it) }, fitsLatin1)
 
     override fun toBytes(): ByteArray {
-        return ByteArray(value.size * 2).apply {
-            value.forEachIndexed { index, symbol -> symbol.owner.toLittleEndianBytes(this, index * 2) }
+        return ByteArray(value.size * bytesPerChar).apply {
+            value.forEachIndexed { index, symbol -> symbol.owner.toLittleEndianBytes(this, index * bytesPerChar, fitsLatin1) }
         }
     }
 
     override fun dump(indent: String, startAddress: Int): String {
         if (value.isEmpty()) return ""
-        return "${addressToString(startAddress)}: $indent i16[] : ${value.map { it.owner }.toCharArray().contentToString()}   ;;\n"
+        return "${addressToString(startAddress)}: $indent i${8 * sizeInBytes}[] : ${value.map { it.owner }.toCharArray().contentToString()}   ;;\n"
     }
 
-    override val sizeInBytes: Int = value.size * CHAR_SIZE_BYTES
+    private val bytesPerChar = if (fitsLatin1) BYTE_SIZE_BYTES else CHAR_SIZE_BYTES
+
+    override val sizeInBytes: Int = value.size * bytesPerChar
+
 }
 
 class ConstantDataStruct(val elements: List<ConstantDataElement>) : ConstantDataElement() {
@@ -131,6 +134,7 @@ fun Long.toLittleEndianBytesTo(to: ByteArray, offset: Int, size: Int) {
     }
 }
 
+
 fun Int.toLittleEndianBytes(to: ByteArray, offset: Int) {
     to[offset] = this.toByte()
     to[offset + 1] = (this ushr 8).toByte()
@@ -138,7 +142,9 @@ fun Int.toLittleEndianBytes(to: ByteArray, offset: Int) {
     to[offset + 3] = (this ushr 24).toByte()
 }
 
-fun Char.toLittleEndianBytes(to: ByteArray, offset: Int) {
-    to[offset] = (this.code and 0xFF).toByte()
-    to[offset + 1] = (this.code ushr Byte.SIZE_BITS).toByte()
+fun Char.toLittleEndianBytes(to: ByteArray, offset: Int, fitsLatin1: Boolean) {
+    to[offset] = this.code.toByte()
+    if (!fitsLatin1) {
+        to[offset + 1] = (this.code ushr Byte.SIZE_BITS).toByte()
+    }
 }

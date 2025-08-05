@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.backend.common.compilationException
 import org.jetbrains.kotlin.backend.common.serialization.Hash128Bits
 import org.jetbrains.kotlin.backend.wasm.WasmBackendContext
 import org.jetbrains.kotlin.backend.wasm.ir2wasm.WasmCompiledModuleFragment.*
+import org.jetbrains.kotlin.backend.wasm.utils.fitsLatin1
 import org.jetbrains.kotlin.ir.backend.js.ic.IrICProgramFragment
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationWithName
 import org.jetbrains.kotlin.ir.declarations.IrExternalPackageFragment
@@ -73,6 +74,7 @@ class WasmCompiledFileFragment(
 
     val objectInstanceFieldInitializers: MutableList<IdSignature> = mutableListOf(),
     var stringPoolFieldInitializer: IdSignature? = null,
+    var stringAddressesAndLengthsInitializer: IdSignature? = null,
     val nonConstantFieldInitializers: MutableList<IdSignature> = mutableListOf(),
 ) : IrICProgramFragment()
 
@@ -232,12 +234,15 @@ class WasmCompiledModuleFragment(
             fields = listOf(
                 WasmStructFieldDeclaration("implementedIFaceIds", WasmRefNullType(WasmHeapType.Type(WasmSymbol(wasmLongArray))), false),
                 WasmStructFieldDeclaration("superClassRtti", WasmRefNullType(WasmHeapType.Type(rttiTypeDeclarationSymbol)), false),
-                WasmStructFieldDeclaration("packageNameAddress", WasmI32, false),
-                WasmStructFieldDeclaration("packageNameLength", WasmI32, false),
                 WasmStructFieldDeclaration("packageNamePoolId", WasmI32, false),
-                WasmStructFieldDeclaration("simpleNameAddress", WasmI32, false),
-                WasmStructFieldDeclaration("simpleNameLength", WasmI32, false),
                 WasmStructFieldDeclaration("simpleNamePoolId", WasmI32, false),
+
+                // TODO remove after bootstrap
+                WasmStructFieldDeclaration("dummy0", WasmI32, false),
+                WasmStructFieldDeclaration("dummy1", WasmI32, false),
+                WasmStructFieldDeclaration("dummy2", WasmI32, false),
+                WasmStructFieldDeclaration("dummy3", WasmI32, false),
+
                 WasmStructFieldDeclaration("klassId", WasmI64, false),
                 WasmStructFieldDeclaration("typeInfoFlag", WasmI32, false),
             ),
@@ -463,9 +468,12 @@ class WasmCompiledModuleFragment(
         val fieldInitializerFunction = WasmFunction.Defined("_fieldInitialize", WasmSymbol(parameterlessNoReturnFunctionType))
         with(WasmExpressionBuilder(fieldInitializerFunction.instructions)) {
             var stringPoolInitializer: WasmSymbol<WasmFunction>? = null
+            var stringAddressesAndLengthsInitializer: WasmSymbol<WasmFunction>? = null
             wasmCompiledFileFragments.forEach { fragment ->
                 stringPoolInitializer = stringPoolInitializer
                     ?: fragment.stringPoolFieldInitializer?.let { WasmSymbol(fragment.functions.defined[it]) }
+                stringAddressesAndLengthsInitializer = stringAddressesAndLengthsInitializer
+                    ?: fragment.stringAddressesAndLengthsInitializer?.let { WasmSymbol(fragment.functions.defined[it]) }
 
                 fragment.objectInstanceFieldInitializers.forEach { objectInitializer ->
                     val functionSymbol = WasmSymbol(fragment.functions.defined[objectInitializer]!!)
@@ -483,6 +491,11 @@ class WasmCompiledModuleFragment(
                 }
             }
 
+            stringAddressesAndLengthsInitializer ?: compilationException("stringAddressesAndLengths initializer not found!", type = null)
+            expression.add(
+                0,
+                WasmInstrWithoutLocation(WasmOp.CALL, listOf(WasmImmediate.FuncIdx(stringAddressesAndLengthsInitializer)))
+            )
             stringPoolInitializer ?: compilationException("stringPool initializer not found!", type = null)
             expression.add(
                 0,
@@ -543,6 +556,7 @@ class WasmCompiledModuleFragment(
         val stringDataSectionBytes = mutableListOf<Byte>()
         var stringDataSectionStart = 0
         val stringAddressAndId = mutableMapOf<String, Pair<Int, Int>>()
+        val addressesAndLengths = mutableListOf<Long>()
         wasmCompiledFileFragments.forEach { fragment ->
             for ((string, literalAddressSymbol) in fragment.stringLiteralAddress.unbound) {
                 val currentStringAddress: Int
@@ -552,8 +566,9 @@ class WasmCompiledModuleFragment(
                     currentStringAddress = stringDataSectionStart
                     currentStringId = stringAddressAndId.size
                     stringAddressAndId[string] = currentStringAddress to currentStringId
+                    addressesAndLengths.add(currentStringAddress.toLong() or (string.length.toLong() shl 32))
 
-                    val constData = ConstantDataCharArray(string.toCharArray())
+                    val constData = ConstantDataCharArray(string.toCharArray(), string.fitsLatin1)
                     stringDataSectionBytes += constData.toBytes().toList()
                     stringDataSectionStart += constData.sizeInBytes
                 } else {
@@ -573,6 +588,8 @@ class WasmCompiledModuleFragment(
         }
 
         data.add(WasmData(WasmDataMode.Passive, stringDataSectionBytes.toByteArray()))
+        val constDataAddressesAndLengths = ConstantDataIntegerArray(addressesAndLengths, LONG_SIZE_BYTES)
+        data.add(WasmData(WasmDataMode.Passive, constDataAddressesAndLengths.toBytes()))
     }
 
     private fun bindConstantArrayDataSegmentIds(data: MutableList<WasmData>) {

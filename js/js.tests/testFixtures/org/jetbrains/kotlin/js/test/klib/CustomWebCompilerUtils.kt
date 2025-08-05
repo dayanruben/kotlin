@@ -22,6 +22,20 @@ val customJsCompilerSettings: CustomWebCompilerSettings by lazy {
         artifactsDirPropertyName = "kotlin.internal.js.test.compat.customCompilerArtifactsDir",
         versionPropertyName = "kotlin.internal.js.test.compat.customCompilerVersion",
         stdlibArtifactName = "kotlin-stdlib-js",
+        kotlinTestArtifactName = "kotlin-test-js",
+    )
+}
+
+/**
+ * An accessor to "custom" (alternative) Kotlin/Wasm compiler and the relevant artifacts (stdlib, kotlin-test)
+ * which are used in KLIB backward/forward compatibility tests.
+ */
+val customWasmJsCompilerSettings: CustomWebCompilerSettings by lazy {
+    createCustomWebCompilerSettings(
+        artifactsDirPropertyName = "kotlin.internal.wasm.test.compat.customCompilerArtifactsDir",
+        versionPropertyName = "kotlin.internal.wasm.test.compat.customCompilerVersion",
+        stdlibArtifactName = "kotlin-stdlib-wasm-js",
+        kotlinTestArtifactName = "kotlin-test-wasm-js",
     )
 }
 
@@ -32,6 +46,7 @@ val customJsCompilerSettings: CustomWebCompilerSettings by lazy {
 interface CustomWebCompilerSettings {
     val version: String
     val stdlib: File
+    val kotlinTest: File
     val customCompiler: CustomWebCompiler
 }
 
@@ -43,6 +58,7 @@ private fun createCustomWebCompilerSettings(
     artifactsDirPropertyName: String,
     versionPropertyName: String,
     stdlibArtifactName: String,
+    kotlinTestArtifactName: String,
 ): CustomWebCompilerSettings = object : CustomWebCompilerSettings {
     private val artifacts: CustomWebCompilerArtifacts by lazy {
         CustomWebCompilerArtifacts.create(artifactsDirPropertyName, versionPropertyName)
@@ -50,6 +66,11 @@ private fun createCustomWebCompilerSettings(
 
     override val version: String get() = artifacts.version
     override val stdlib: File by lazy { artifacts.resolve(stdlibArtifactName, "klib") }
+
+    override val kotlinTest: File by lazy {
+        // Older versions of Kotlin/JS 'kotlin-test' had KLIBs with *.jar file extension.
+        artifacts.resolve(kotlinTestArtifactName, "klib", "jar")
+    }
 
     override val customCompiler: CustomWebCompiler by lazy {
         CustomWebCompiler(

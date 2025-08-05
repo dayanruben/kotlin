@@ -223,7 +223,7 @@ class WasmSerializer(outputStream: OutputStream) {
     private fun serializeWasmStructFieldDeclaration(structFieldDecl: WasmStructFieldDeclaration) {
         serializeString(structFieldDecl.name)
         serializeWasmType(structFieldDecl.type)
-        b.writeByte(structFieldDecl.isMutable.toByte())
+        serializeBoolean(structFieldDecl.isMutable)
     }
 
     private fun serializeWasmType(type: WasmType) =
@@ -267,7 +267,7 @@ class WasmSerializer(outputStream: OutputStream) {
         b.writeUInt32(local.id.toUInt())
         serializeString(local.name)
         serializeWasmType(local.type)
-        b.writeByte(local.isParameter.toByte())
+        serializeBoolean(local.isParameter)
     }
 
     private fun serializeWasmInstr(instr: WasmInstr) {
@@ -515,6 +515,7 @@ class WasmSerializer(outputStream: OutputStream) {
 
     private fun serializeConstantDataCharArray(constantDataCharArray: ConstantDataCharArray) {
         serializeList(constantDataCharArray.value) { serializeWasmSymbolReadOnly(it) { b.writeUInt32(it.code.toUInt()) } }
+        serializeBoolean(constantDataCharArray.fitsLatin1)
     }
 
     private fun serializeConstantDataCharField(constantDataCharField: ConstantDataCharField) {
@@ -577,6 +578,10 @@ class WasmSerializer(outputStream: OutputStream) {
         b.writeUInt32(int.toUInt())
     }
 
+    private fun serializeBoolean(bool: Boolean) {
+        b.writeUByte(bool.toByte().toUByte())
+    }
+
     private fun serializeLong(long: Long) {
         b.writeUInt64(long.toULong())
     }
@@ -632,6 +637,7 @@ class WasmSerializer(outputStream: OutputStream) {
             serializeNullable(rttiElements, ::serializeRttiElements)
             serializeList(objectInstanceFieldInitializers, ::serializeIdSignature)
             serializeNullable(stringPoolFieldInitializer, ::serializeIdSignature)
+            serializeNullable(stringAddressesAndLengthsInitializer, ::serializeIdSignature)
             serializeList(nonConstantFieldInitializers, ::serializeIdSignature)
         }
 

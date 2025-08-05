@@ -120,9 +120,18 @@ internal fun consumeFloatIntoVoid(a: Float): Void =
 internal fun consumeDoubleIntoVoid(a: Double): Void =
     implementedAsIntrinsic
 
+// TODO make intrinsic after bootstrap
+internal fun getWasmAbiVersion(): Int = 0
+
 @ExcludedFromCodegen
 internal fun stringGetPoolSize(): Int =
     implementedAsIntrinsic
+
+@Suppress("DEPRECATION")
+@OptIn(ExperimentalStdlibApi::class)
+@EagerInitialization
+internal val stringAddressesAndLengths: WasmLongArray =
+    array_new_data<WasmLongArray>(0, stringGetPoolSize(), 1)
 
 // This initializer is a special case in FieldInitializersLowering
 @Suppress("DEPRECATION")

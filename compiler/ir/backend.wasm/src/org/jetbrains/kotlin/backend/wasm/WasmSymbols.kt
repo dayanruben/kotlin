@@ -212,6 +212,7 @@ class WasmSymbols(
     val refCastNull = getInternalFunction("wasm_ref_cast_null")
     val wasmArrayCopy = getInternalFunction("wasm_array_copy")
     val wasmArrayNewData0 = getInternalFunction("array_new_data0")
+    val wasmArrayNewData = getInternalFunction("array_new_data")
     val wasmArrayNewData0CharArray = maybeGetFunction("array_new_data0_char_array", wasmInternalFqName)
 
     val intToLong = getInternalFunction("wasm_i64_extend_i32_s")
@@ -223,8 +224,11 @@ class WasmSymbols(
     val boxIntrinsic: IrSimpleFunctionSymbol = getInternalFunction("boxIntrinsic")
     val unboxIntrinsic: IrSimpleFunctionSymbol = getInternalFunction("unboxIntrinsic")
 
-    val stringGetLiteral = getFunction("stringLiteral", StandardNames.BUILT_INS_PACKAGE_FQ_NAME)
+    val stringGetLiteralUtf16 = getFunction("stringLiteralUtf16", StandardNames.BUILT_INS_PACKAGE_FQ_NAME)
+    val stringGetLiteralLatin1 = getFunction("stringLiteralLatin1", StandardNames.BUILT_INS_PACKAGE_FQ_NAME)
     val stringGetPoolSize = getInternalFunction("stringGetPoolSize")
+
+    val getWasmAbiVersion = getInternalFunction("getWasmAbiVersion")
 
     val testFun = maybeGetFunction("test", kotlinTestPackageFqName)
     val suiteFun = maybeGetFunction("suite", kotlinTestPackageFqName)
