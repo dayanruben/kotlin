@@ -2083,7 +2083,6 @@ org.jetbrains.kotlin.psi.stubs.elements.KtDotQualifiedExpressionElementType
 org.jetbrains.kotlin.psi.stubs.elements.KtDotQualifiedExpressionElementType:constructor(String)
 org.jetbrains.kotlin.psi.stubs.elements.KtEnumEntrySuperClassReferenceExpressionElementType
 org.jetbrains.kotlin.psi.stubs.elements.KtFileElementType
-org.jetbrains.kotlin.psi.stubs.elements.KtFileElementType:INSTANCE
 org.jetbrains.kotlin.psi.stubs.elements.KtFileStubBuilder
 org.jetbrains.kotlin.psi.stubs.elements.KtFunctionElementType
 org.jetbrains.kotlin.psi.stubs.elements.KtFunctionElementType:constructor(String)
@@ -2209,8 +2208,6 @@ org.jetbrains.kotlin.psi.stubs.elements.KtValueArgumentListElementType
 org.jetbrains.kotlin.psi.stubs.elements.KtValueArgumentListElementType:constructor(String)
 org.jetbrains.kotlin.psi.stubs.elements.StubIndexService
 org.jetbrains.kotlin.psi.stubs.elements.StubIndexService.Companion.getInstance()
-org.jetbrains.kotlin.psi.stubs.elements.StubIndexService.createFileStub(KtFile)
-org.jetbrains.kotlin.psi.stubs.elements.StubIndexService.deserializeFileStub(StubInputStream)
 org.jetbrains.kotlin.psi.stubs.elements.StubIndexService.indexAnnotation(KotlinAnnotationEntryStub, IndexSink)
 org.jetbrains.kotlin.psi.stubs.elements.StubIndexService.indexClass(KotlinClassStub, IndexSink)
 org.jetbrains.kotlin.psi.stubs.elements.StubIndexService.indexFile(KotlinFileStub, IndexSink)
@@ -2220,7 +2217,6 @@ org.jetbrains.kotlin.psi.stubs.elements.StubIndexService.indexParameter(KotlinPa
 org.jetbrains.kotlin.psi.stubs.elements.StubIndexService.indexProperty(KotlinPropertyStub, IndexSink)
 org.jetbrains.kotlin.psi.stubs.elements.StubIndexService.indexScript(KotlinScriptStub, IndexSink)
 org.jetbrains.kotlin.psi.stubs.elements.StubIndexService.indexTypeAlias(KotlinTypeAliasStub, IndexSink)
-org.jetbrains.kotlin.psi.stubs.elements.StubIndexService.serializeFileStub(KotlinFileStub, StubOutputStream)
 org.jetbrains.kotlin.psi.stubs.impl.AnnotationData
 org.jetbrains.kotlin.psi.stubs.impl.EnumData
 org.jetbrains.kotlin.psi.stubs.impl.KClassData
@@ -2276,12 +2272,14 @@ org.jetbrains.kotlin.psi.stubs.impl.KotlinContractEffectType.deserialize(StubInp
 org.jetbrains.kotlin.psi.stubs.impl.KotlinContractSerializationVisitor
 org.jetbrains.kotlin.psi.stubs.impl.KotlinEnumEntrySuperclassReferenceExpressionStubImpl
 org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl
-org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl.Companion.forFile(FqName, Boolean)
-org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl.Companion.forFileFacadeStub(FqName)
-org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl.Companion.forMultifileClassStub(FqName, FqName, List<String>?)
+org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl.Companion.forFacade(FqName, FqName)
+org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl.Companion.forFile(FqName)
+org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl.Companion.forInvalid(String)
+org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl.Companion.forMultifileClass(FqName, FqName, List<String>)
+org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl.Companion.forScript(FqName)
 org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl.facadeFqName
-org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl.partFqName
-org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl:constructor(KtFile?, String, Boolean)
+org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl.facadePartSimpleNames
+org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl.partSimpleName
 org.jetbrains.kotlin.psi.stubs.impl.KotlinFlexibleTypeBean
 org.jetbrains.kotlin.psi.stubs.impl.KotlinFunctionStubImpl
 org.jetbrains.kotlin.psi.stubs.impl.KotlinFunctionStubImpl.Companion.deserializeContract(StubInputStream)

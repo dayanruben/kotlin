@@ -2,6 +2,7 @@
 
 /* Contract information is stored for .proto-based stubs, but not for source stubs */
 // KNM_K2_IGNORE
+// KNM_FE10_IGNORE
 
 package test
 
