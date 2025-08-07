@@ -32,7 +32,7 @@ where advanced options include:
                              JS expression that will be executed in runtime and be put as an Array<String> parameter of the main function
   -Xes-generators            Enable ES2015 generator functions usage inside the compiled code. Enabled by default in case of ES2015 target usage
   -Xes-arrow-functions       Use ES2015 arrow functions in the JavaScript code generated for Kotlin lambdas. Enabled by default in case of ES2015 target usage
-  -Xes-long-as-bigint        Compile Long values as ES2015 bigint instead of object. Enabled by default in case of ES2015 target usage
+  -Xes-long-as-bigint        Compile Long values as ES2020 bigint instead of object.
   -Xfriend-modules-disabled  Disable internal declaration export.
   -Xfriend-modules=<path>    Paths to friend modules.
   -Xenable-extension-functions-in-externals
@@ -143,6 +143,8 @@ where advanced options include:
   -Xcontext-parameters       Enable experimental context parameters.
   -Xcontext-sensitive-resolution Enable experimental context-sensitive resolution.
   -Xnon-local-break-continue Enable experimental non-local break and continue.
+  -Xdata-flow-based-exhaustiveness
+                             Enable `when` exhaustiveness improvements that rely on data-flow analysis.
   -Xdirect-java-actualization Enable experimental direct Java actualization support.
   -Xmulti-dollar-interpolation Enable experimental multi-dollar interpolation.
   -Xenable-incremental-compilation

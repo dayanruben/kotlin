@@ -3,9 +3,14 @@ import java.io.IOException
 import java.util.HashSet
 import org.gradle.internal.os.OperatingSystem
 
+dependencies {
+    "testImplementation"(project(":compiler:test-security-manager"))
+}
+
 val disableInputsCheck = project.providers.gradleProperty("kotlin.test.instrumentation.disable.inputs.check").orNull?.toBoolean() == true
 tasks.withType<Test>().names.forEach { taskName ->
     tasks.named<Test>(taskName) {
+        ignoreFailures = false
         val testInputsCheck = extensions.create<TestInputsCheckExtension>("testInputsCheck")
         val toolchainPath = testInputsCheck.isNative
             .filter { it }
@@ -40,6 +45,7 @@ tasks.withType<Test>().names.forEach { taskName ->
                 if (!permissionsTemplateFile.exists()) {
                     throw GradleException("Security policy template file not found at: ${permissionsTemplateFile.absolutePath}")
                 }
+                val addedDirs = HashSet<File>()
 
                 fun File.parents(): Sequence<File> {
                     return sequence {
@@ -52,8 +58,8 @@ tasks.withType<Test>().names.forEach { taskName ->
                 }
 
                 fun parentsReadPermission(file: File): List<String> {
-                    return file.parents().map { parent ->
-                        """permission java.io.FilePermission "${parent.absolutePath}", "read";"""
+                    return file.parents().mapNotNull { parent ->
+                        """permission java.io.FilePermission "${parent.absolutePath}", "read";""".takeIf { addedDirs.add(parent) }
                     }.toList()
                 }
 
@@ -75,9 +81,20 @@ tasks.withType<Test>().names.forEach { taskName ->
                 val javaLibraryPaths = System.getProperty("java.library.path", "")
                     .split(File.pathSeparatorChar)
                     .filterNot { it.isBlank() }
-                    .map { """permission java.io.FilePermission "$it/-", "read";""" }
+                    .flatMap {
+                        listOf(
+                            """permission java.io.FilePermission "$it/libcallbacks.dylib", "read";""",
+                            """permission java.io.FilePermission "$it/libcallbacks.so", "read";""",
+                            """permission java.io.FilePermission "$it/libcallbacks.dll", "read";""",
+                            """permission java.io.FilePermission "$it/libclangstubs.dylib", "read";""",
+                            """permission java.io.FilePermission "$it/libclangstubs.so", "read";""",
+                            """permission java.io.FilePermission "$it/libclangstubs.dll", "read";""",
+                            """permission java.io.FilePermission "$it/libllvmstubs.dylib", "read";""",
+                            """permission java.io.FilePermission "$it/libllvmstubs.so", "read";""",
+                            """permission java.io.FilePermission "$it/libllvmstubs.dll", "read";""",
+                        )
+                    }
 
-                val addedDirs = HashSet<File>()
                 val inputPermissions: Set<String> = inputs.files.flatMapTo(HashSet<String>()) { file ->
                     if (file.isDirectory) {
                         addedDirs.add(file)
@@ -140,7 +157,12 @@ tasks.withType<Test>().names.forEach { taskName ->
                                         """permission java.io.FilePermission "$konanDataDir/-", "read,write,delete,execute";""",
                                         """permission java.io.FilePermission "$konanDataDir", "read";""",
                                         """permission java.io.FilePermission "/bin/sh", "execute";""",
+                                        """permission java.io.FilePermission "/bin/tar", "execute";""",
+                                        """permission java.io.FilePermission "/usr/bin/tar", "execute";""",
                                         """permission java.io.FilePermission "${nativeHome.getOrElse(nativeHomeDefault.get().asFile.absolutePath)}/-" , "read,write,delete";""",
+                                        """permission java.io.FilePermission "<<ALL FILES>>", "execute";""", // DependencyExtractor.kt to untar calls `tar` directly, and the system needs to find it
+                                        """permission java.net.SocketPermission "download.jetbrains.com:443", "connect,resolve";""", // DependencyDownloader.kt
+                                        """permission java.net.SocketPermission "download-cdn.jetbrains.com:443", "connect,resolve";""", // DependencyDownloader.kt
                                     )
                                     if (nativeHome.isPresent) {
                                         konanPermissions.add("""permission java.io.FilePermission "${nativeHome.get()}/-" , "read,write,delete";""")
@@ -152,6 +174,7 @@ tasks.withType<Test>().names.forEach { taskName ->
                                             listOf(
                                                 """permission java.io.FilePermission "/bin/bash", "execute";""",
                                                 """permission java.io.FilePermission "/usr/bin/xcrun", "execute";""",
+                                                """permission java.io.FilePermission "/usr/bin/codesign", "execute";""", // CompilationToolCall.kt:274
                                                 """permission java.io.FilePermission "${toolchainPath.get()}/-", "read,execute";""",
                                             )
                                         )
@@ -169,7 +192,7 @@ tasks.withType<Test>().names.forEach { taskName ->
                             )
                             .replace(
                                 "{{jdk}}",
-                                ((defineJDKEnvVariables + javaVersion.get()).map { version ->
+                                ((defineJDKEnvVariables + javaVersion.get()).distinct().map { version ->
                                     """permission java.io.FilePermission "${getJDKFromToolchain(service, version)}/-", "read,execute";"""
                                 }).joinToString("\n    ")
                             )
@@ -193,7 +216,7 @@ tasks.withType<Test>().names.forEach { taskName ->
             jvmArgs(
                 "-Djava.security.policy=${policyFileProvider.get().asFile.absolutePath}",
                 "-Djava.security.debug=failure",
-                "-Djava.security.manager=java.lang.SecurityManager",
+                "-Djava.security.manager=org.jetbrains.kotlin.security.KotlinSecurityManager",
             )
         }
     }

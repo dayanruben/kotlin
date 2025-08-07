@@ -12,6 +12,9 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.js.config.SourceMapSourceEmbedding
+import org.jetbrains.kotlin.js.config.friendLibraries
+import org.jetbrains.kotlin.js.config.libraries
+import org.jetbrains.kotlin.js.config.outputDir
 import org.jetbrains.kotlin.platform.wasm.WasmTarget
 import org.jetbrains.kotlin.serialization.js.ModuleKind
 import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives.INFER_MAIN_MODULE
@@ -30,21 +33,14 @@ import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.*
 import org.jetbrains.kotlin.wasm.config.WasmConfigurationKeys
 
-class WasmEnvironmentConfiguratorJs(testServices: TestServices) : WasmEnvironmentConfigurator(testServices) {
-    override fun configureCompilerConfiguration(configuration: CompilerConfiguration, module: TestModule) {
-        super.configureCompilerConfiguration(configuration, module)
-        configuration.put(WasmConfigurationKeys.WASM_TARGET, WasmTarget.JS)
-    }
-}
+class WasmEnvironmentConfiguratorJs(testServices: TestServices) : WasmEnvironmentConfigurator(testServices, WasmTarget.JS)
+class WasmEnvironmentConfiguratorWasi(testServices: TestServices) : WasmEnvironmentConfigurator(testServices, WasmTarget.WASI)
 
-class WasmEnvironmentConfiguratorWasi(testServices: TestServices) : WasmEnvironmentConfigurator(testServices) {
-    override fun configureCompilerConfiguration(configuration: CompilerConfiguration, module: TestModule) {
-        super.configureCompilerConfiguration(configuration, module)
-        configuration.put(WasmConfigurationKeys.WASM_TARGET, WasmTarget.WASI)
-    }
-}
+abstract class WasmEnvironmentConfigurator(
+    testServices: TestServices,
+    private val wasmTarget: WasmTarget,
+) : EnvironmentConfigurator(testServices) {
 
-abstract class WasmEnvironmentConfigurator(testServices: TestServices) : EnvironmentConfigurator(testServices) {
     override val directiveContainers: List<DirectivesContainer>
         get() = listOf(WasmEnvironmentConfigurationDirectives)
 
@@ -104,5 +100,16 @@ abstract class WasmEnvironmentConfigurator(testServices: TestServices) : Environ
         configuration.put(WasmConfigurationKeys.WASM_USE_NEW_EXCEPTION_PROPOSAL, USE_NEW_EXCEPTION_HANDLING_PROPOSAL in registeredDirectives)
         configuration.put(WasmConfigurationKeys.WASM_NO_JS_TAG, WASM_NO_JS_TAG in registeredDirectives)
         configuration.put(WasmConfigurationKeys.WASM_FORCE_DEBUG_FRIENDLY_COMPILATION, FORCE_DEBUG_FRIENDLY_COMPILATION in registeredDirectives)
+
+        configuration.put(WasmConfigurationKeys.WASM_TARGET, wasmTarget)
+
+        configuration.outputDir = getKlibArtifactFile(testServices, module.name)
+
+        val dependencies = module.regularDependencies.map { getKlibArtifactFile(testServices, it.dependencyModule.name).absolutePath }
+        val friends = module.friendDependencies.map { getKlibArtifactFile(testServices, it.dependencyModule.name).absolutePath }
+        val libraries = getRuntimePathsForModule(wasmTarget) + dependencies + friends
+
+        configuration.libraries = libraries
+        configuration.friendLibraries = friends
     }
 }

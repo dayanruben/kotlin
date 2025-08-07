@@ -29271,6 +29271,12 @@ public class JsIrDeserializationCodegenBoxTestGenerated extends AbstractJsIrDese
         }
 
         @Test
+        @TestMetadata("internalSetterInCommon.kt")
+        public void testInternalSetterInCommon() {
+          runTest("compiler/testData/codegen/box/multiplatform/k2/internalSetterInCommon.kt");
+        }
+
+        @Test
         @TestMetadata("kt57391.kt")
         public void testKt57391() {
           runTest("compiler/testData/codegen/box/multiplatform/k2/kt57391.kt");
@@ -47750,9 +47756,15 @@ public class JsIrDeserializationCodegenBoxTestGenerated extends AbstractJsIrDese
       }
 
       @Test
-      @TestMetadata("localDelegatedPropertyWithInlinedFunInKlib.kt")
-      public void testLocalDelegatedPropertyWithInlinedFunInKlib() {
-        runTest("compiler/testData/codegen/boxInline/localFunInLambda/localDelegatedPropertyWithInlinedFunInKlib.kt");
+      @TestMetadata("localDelegatedPropertyUsedInsideAnonymousObject.kt")
+      public void testLocalDelegatedPropertyUsedInsideAnonymousObject() {
+        runTest("compiler/testData/codegen/boxInline/localFunInLambda/localDelegatedPropertyUsedInsideAnonymousObject.kt");
+      }
+
+      @Test
+      @TestMetadata("localDelegatedPropertyUsedInsideAnonymousObjectWithInlinedFunInKlib.kt")
+      public void testLocalDelegatedPropertyUsedInsideAnonymousObjectWithInlinedFunInKlib() {
+        runTest("compiler/testData/codegen/boxInline/localFunInLambda/localDelegatedPropertyUsedInsideAnonymousObjectWithInlinedFunInKlib.kt");
       }
 
       @Test

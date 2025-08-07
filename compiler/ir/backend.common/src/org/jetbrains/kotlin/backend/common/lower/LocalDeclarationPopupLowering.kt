@@ -11,30 +11,40 @@ import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrBody
 import org.jetbrains.kotlin.ir.expressions.IrStatementContainer
 import org.jetbrains.kotlin.ir.expressions.impl.IrCompositeImpl
+import org.jetbrains.kotlin.ir.transformStatement
 import org.jetbrains.kotlin.ir.util.addChild
-import org.jetbrains.kotlin.ir.util.isOriginallyLocalClass
+import org.jetbrains.kotlin.ir.util.isOriginallyLocalDeclaration
 import org.jetbrains.kotlin.ir.util.setDeclarationsParent
 
 /**
- * Moves local classes into nearest declaration container.
+ * Moves local declarations into nearest declaration container.
  */
-open class LocalClassPopupLowering(
+open class LocalDeclarationPopupLowering(
     val context: LoweringContext,
 ) : BodyLoweringPass {
     override fun lower(irFile: IrFile) {
         runOnFilePostfix(irFile, withLocalDeclarations = true)
     }
 
-    private data class ExtractedLocalClass(
-        val local: IrClass, val newContainer: IrDeclarationParent, val extractedUnder: IrStatement?
+    private data class ExtractedLocalDeclaration(
+        val local: IrDeclaration, val newContainer: IrDeclarationParent, val extractedUnder: IrStatement?,
     )
 
     override fun lower(irBody: IrBody, container: IrDeclaration) {
-        val extractedLocalClasses = arrayListOf<ExtractedLocalClass>()
+        val extractedLocalDeclarations = arrayListOf<ExtractedLocalDeclaration>()
 
         irBody.transform(object : IrElementTransformerVoidWithContext() {
+            override fun visitLocalDelegatedProperty(declaration: IrLocalDelegatedProperty): IrStatement {
+                declaration.getter.transformStatement(this)
+                declaration.setter?.transformStatement(this)
+                return declaration.delegate.transformStatement(this)
+            }
 
-            override fun visitClassNew(declaration: IrClass): IrStatement {
+            override fun visitClassNew(declaration: IrClass): IrStatement = visitClassOrFunction(declaration)
+
+            override fun visitSimpleFunction(declaration: IrSimpleFunction): IrStatement = visitClassOrFunction(declaration)
+
+            private fun visitClassOrFunction(declaration: IrDeclaration): IrStatement {
                 val currentScope =
                     if (allScopes.size > 1) allScopes[allScopes.lastIndex - 1] else createScope(container as IrSymbolOwner)
                 if (!shouldPopUp(declaration, currentScope)) return declaration
@@ -53,17 +63,20 @@ open class LocalClassPopupLowering(
                                 .takeIf { it > 0 && it < newContainer.statements.size }
                                 ?.let { newContainer.statements[it] }
                         }
-                        extractedLocalClasses.add(ExtractedLocalClass(declaration, newContainer, extractedUnder))
+                        extractedLocalDeclarations += ExtractedLocalDeclaration(declaration, newContainer, extractedUnder)
                     }
-                    is IrDeclarationContainer -> extractedLocalClasses.add(ExtractedLocalClass(declaration, newContainer, extractedUnder))
-                    else -> error("Inexpected container type $newContainer")
+
+                    is IrDeclarationContainer ->
+                        extractedLocalDeclarations += ExtractedLocalDeclaration(declaration, newContainer, extractedUnder)
+
+                    else -> error("Unexpected container type $newContainer")
                 }
 
                 return IrCompositeImpl(declaration.startOffset, declaration.endOffset, context.irBuiltIns.unitType)
             }
         }, null)
 
-        for ((local, newContainer, extractedUnder) in extractedLocalClasses) {
+        for ((local, newContainer, extractedUnder) in extractedLocalDeclarations) {
             when (newContainer) {
                 is IrStatementContainer -> {
                     val insertIndex = extractedUnder?.let { newContainer.statements.indexOf(it) } ?: -1
@@ -77,11 +90,12 @@ open class LocalClassPopupLowering(
                 is IrDeclarationContainer -> {
                     newContainer.addChild(local)
                 }
-                else -> error("Inexpected container type $newContainer")
+                else -> error("Unexpected container type $newContainer")
             }
         }
     }
 
-    protected open fun shouldPopUp(klass: IrClass, currentScope: ScopeWithIr?): Boolean =
-        klass.isLocalNotInner() || klass.isOriginallyLocalClass
+    protected open fun shouldPopUp(declaration: IrDeclaration, currentScope: ScopeWithIr?): Boolean =
+        declaration.isOriginallyLocalDeclaration || (declaration as? IrClass)?.isLocalNotInner() == true
+
 }
