@@ -6,22 +6,19 @@
 package org.jetbrains.kotlin.backend.common.checkers.declaration
 
 import org.jetbrains.kotlin.backend.common.checkers.context.CheckerContext
+import org.jetbrains.kotlin.backend.common.checkers.IrElementChecker
 import org.jetbrains.kotlin.ir.declarations.IrConstructor
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrParameterKind
 import org.jetbrains.kotlin.ir.util.constructedClass
 
-internal object IrConstructorReceiverChecker : IrFunctionChecker {
-    override fun check(
-        declaration: IrFunction,
-        context: CheckerContext,
-    ) {
-        if (declaration !is IrConstructor) return
-        if (!declaration.constructedClass.isInner && declaration.dispatchReceiverParameter != null) {
-            context.error(declaration, "Constructors of non-inner classes can't have dispatch receiver parameters")
+object IrConstructorReceiverChecker : IrElementChecker<IrConstructor>(IrConstructor::class) {
+    override fun check(element: IrConstructor, context: CheckerContext) {
+        if (!element.constructedClass.isInner && element.dispatchReceiverParameter != null) {
+            context.error(element, "Constructors of non-inner classes can't have dispatch receiver parameters")
         }
-        if (declaration.parameters.any { it.kind == IrParameterKind.ExtensionReceiver }) {
-            context.error(declaration, "Constructors can't have extension receiver parameters")
+        if (element.parameters.any { it.kind == IrParameterKind.ExtensionReceiver }) {
+            context.error(element, "Constructors can't have extension receiver parameters")
         }
     }
 }

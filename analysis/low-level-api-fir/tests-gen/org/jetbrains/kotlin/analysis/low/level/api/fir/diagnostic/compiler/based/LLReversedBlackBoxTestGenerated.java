@@ -2035,6 +2035,12 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
     }
 
     @Test
+    @TestMetadata("k42000_crossmodule.kt")
+    public void testK42000_crossmodule() {
+      runTest("compiler/testData/codegen/box/basics/k42000_crossmodule.kt");
+    }
+
+    @Test
     @TestMetadata("kt75483.kt")
     public void testKt75483() {
       runTest("compiler/testData/codegen/box/basics/kt75483.kt");
@@ -57666,6 +57672,12 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
     @TestMetadata("kt789.kt")
     public void testKt789() {
       runTest("compiler/testData/codegen/box/regressions/kt789.kt");
+    }
+
+    @Test
+    @TestMetadata("kt79516.kt")
+    public void testKt79516() {
+      runTest("compiler/testData/codegen/box/regressions/kt79516.kt");
     }
 
     @Test

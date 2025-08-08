@@ -1160,6 +1160,12 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
     }
 
     @Test
+    @TestMetadata("k42000_crossmodule.kt")
+    public void testK42000_crossmodule() {
+      runTest("compiler/testData/codegen/box/basics/k42000_crossmodule.kt");
+    }
+
+    @Test
     @TestMetadata("kt75483.kt")
     public void testKt75483() {
       runTest("compiler/testData/codegen/box/basics/kt75483.kt");
@@ -8838,6 +8844,12 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
       @Test
       public void testAllFilesPresentInSlowDsl() {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/controlStructures/slowDsl"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR, true);
+      }
+
+      @Test
+      @TestMetadata("slowHtmlLikeDsl.kt")
+      public void testSlowHtmlLikeDsl() {
+        runTest("compiler/testData/codegen/box/controlStructures/slowDsl/slowHtmlLikeDsl.kt");
       }
     }
 
@@ -40729,6 +40741,12 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
     @TestMetadata("kt789.kt")
     public void testKt789() {
       runTest("compiler/testData/codegen/box/regressions/kt789.kt");
+    }
+
+    @Test
+    @TestMetadata("kt79516.kt")
+    public void testKt79516() {
+      runTest("compiler/testData/codegen/box/regressions/kt79516.kt");
     }
 
     @Test

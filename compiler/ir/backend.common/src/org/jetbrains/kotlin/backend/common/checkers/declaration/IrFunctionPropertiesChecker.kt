@@ -6,20 +6,16 @@
 package org.jetbrains.kotlin.backend.common.checkers.declaration
 
 import org.jetbrains.kotlin.backend.common.checkers.context.CheckerContext
+import org.jetbrains.kotlin.backend.common.checkers.IrElementChecker
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.util.render
 
-internal object IrFunctionPropertiesChecker : IrFunctionChecker {
-    override fun check(
-        declaration: IrFunction,
-        context: CheckerContext,
-    ) {
-        if (declaration is IrSimpleFunction) {
-            val property = declaration.correspondingPropertySymbol?.owner
-            if (property != null && property.getter != declaration && property.setter != declaration) {
-                context.error(declaration, "Orphaned property getter/setter ${declaration.render()}")
-            }
+object IrFunctionPropertiesChecker : IrElementChecker<IrSimpleFunction>(IrSimpleFunction::class) {
+    override fun check(element: IrSimpleFunction, context: CheckerContext) {
+        val property = element.correspondingPropertySymbol?.owner
+        if (property != null && property.getter != element && property.setter != element) {
+            context.error(element, "Orphaned property getter/setter ${element.render()}")
         }
     }
 }
