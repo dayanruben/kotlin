@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.sir.providers.source.KotlinRuntimeElement
 import org.jetbrains.kotlin.sir.providers.source.KotlinSource
 import org.jetbrains.kotlin.sir.providers.toSir
 import org.jetbrains.kotlin.sir.providers.utils.KotlinRuntimeModule
+import org.jetbrains.kotlin.sir.providers.utils.KotlinRuntimeSupportModule
 import org.jetbrains.kotlin.sir.providers.withSessions
 import org.jetbrains.kotlin.sir.util.SirSwiftModule
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
@@ -59,7 +60,11 @@ public class SirTypeProviderImpl(
         val reportErrorType: (String) -> Nothing,
         val reportUnsupportedType: () -> Nothing,
         val processTypeImports: (List<SirImport>) -> Unit,
-    )
+        val requiresHashableAsAny: Boolean,
+    ) {
+        fun anyRepresentativeType(): SirType =
+            if (requiresHashableAsAny) SirType.anyHashable else KotlinRuntimeSupportModule.kotlinBridgeableType
+    }
 
     override fun KaType.translateType(
         ktAnalysisSession: KaSession,
@@ -73,6 +78,7 @@ public class SirTypeProviderImpl(
             reportErrorType = reportErrorType,
             reportUnsupportedType = reportUnsupportedType,
             processTypeImports = processTypeImports,
+            requiresHashableAsAny = false,
         )
     )
 
@@ -112,8 +118,8 @@ public class SirTypeProviderImpl(
         }
 
         fun buildRegularType(kaType: KaType): SirType = sirSession.withSessions {
-            fun KaTypeProjection.sirType(): SirType = when (this) {
-                is KaStarTypeProjection -> SirNominalType(KotlinRuntimeModule.kotlinBase)
+            fun KaTypeProjection.sirType(ctx: TypeTranslationCtx): SirType = when (this) {
+                is KaStarTypeProjection -> ctx.anyRepresentativeType()
                 is KaTypeArgumentWithVariance -> buildSirType(type, ctx)
             }
 
@@ -125,25 +131,25 @@ public class SirTypeProviderImpl(
                     when {
                         kaType.isNothingType -> SirNominalType(SirSwiftModule.never)
                         kaType.isStringType -> SirNominalType(SirSwiftModule.string)
-                        kaType.isAnyType -> SirNominalType(KotlinRuntimeModule.kotlinBase)
+                        kaType.isAnyType -> ctx.anyRepresentativeType()
 
                         kaType.isClassType(StandardClassIds.List) -> {
                             SirArrayType(
-                                kaType.typeArguments.single().sirType(),
+                                kaType.typeArguments.single().sirType(ctx),
                             )
                         }
 
                         kaType.isClassType(StandardClassIds.Set) -> {
                             SirNominalType(
                                 SirSwiftModule.set,
-                                listOf(kaType.typeArguments.single().sirType()),
+                                listOf(kaType.typeArguments.single().sirType(ctx.copy(requiresHashableAsAny = true)))
                             )
                         }
 
                         kaType.isClassType(StandardClassIds.Map) -> {
                             SirDictionaryType(
-                                kaType.typeArguments.first().sirType(),
-                                kaType.typeArguments.last().sirType(),
+                                kaType.typeArguments.first().sirType(ctx.copy(requiresHashableAsAny = true)),
+                                kaType.typeArguments.last().sirType(ctx),
                             )
                         }
 
@@ -195,7 +201,7 @@ public class SirTypeProviderImpl(
         val fallbackType = SirUnsupportedType
         if (symbol.isReified) return@withSessions fallbackType
         return@withSessions when (symbol.upperBounds.size) {
-            0 -> SirNominalType(KotlinRuntimeModule.kotlinBase).optional()
+            0 -> anyRepresentativeType().optional()
             1 -> {
                 val upperBound = symbol.upperBounds.single().translateType(this@translateTypeParameterType)
                 if (type.isMarkedNullable) {
