@@ -42632,6 +42632,12 @@ public class FirSerializeCompileKotlinAgainstInlineKotlinTestWithInlineScopesGen
           }
 
           @Test
+          @TestMetadata("expectOfActualTypeAliasNotReferenced.kt")
+          public void testExpectOfActualTypeAliasNotReferenced() {
+            runTest("compiler/testData/codegen/box/multiplatform/k2/hmpp/expectOfActualTypeAliasNotReferenced.kt");
+          }
+
+          @Test
           @TestMetadata("expectRefinement.kt")
           public void testExpectRefinement() {
             runTest("compiler/testData/codegen/box/multiplatform/k2/hmpp/expectRefinement.kt");
@@ -42713,6 +42719,12 @@ public class FirSerializeCompileKotlinAgainstInlineKotlinTestWithInlineScopesGen
           @TestMetadata("simple.kt")
           public void testSimple() {
             runTest("compiler/testData/codegen/box/multiplatform/k2/hmpp/simple.kt");
+          }
+
+          @Test
+          @TestMetadata("stdlibRegressions.kt")
+          public void testStdlibRegressions() {
+            runTest("compiler/testData/codegen/box/multiplatform/k2/hmpp/stdlibRegressions.kt");
           }
 
           @Test
@@ -45015,6 +45027,12 @@ public class FirSerializeCompileKotlinAgainstInlineKotlinTestWithInlineScopesGen
       @TestMetadata("kt79977.kt")
       public void testKt79977() {
         runTest("compiler/testData/codegen/box/primitiveTypes/kt79977.kt");
+      }
+
+      @Test
+      @TestMetadata("kt79977_withIncrementalCompilation.kt")
+      public void testKt79977_withIncrementalCompilation() {
+        runTest("compiler/testData/codegen/box/primitiveTypes/kt79977_withIncrementalCompilation.kt");
       }
 
       @Test

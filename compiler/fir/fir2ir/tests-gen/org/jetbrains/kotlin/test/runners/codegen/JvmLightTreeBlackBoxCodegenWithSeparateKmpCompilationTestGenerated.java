@@ -1103,6 +1103,12 @@ public class JvmLightTreeBlackBoxCodegenWithSeparateKmpCompilationTestGenerated 
     }
 
     @Test
+    @TestMetadata("expectOfActualTypeAliasNotReferenced.kt")
+    public void testExpectOfActualTypeAliasNotReferenced() {
+      runTest("compiler/testData/codegen/box/multiplatform/k2/hmpp/expectOfActualTypeAliasNotReferenced.kt");
+    }
+
+    @Test
     @TestMetadata("expectRefinement.kt")
     public void testExpectRefinement() {
       runTest("compiler/testData/codegen/box/multiplatform/k2/hmpp/expectRefinement.kt");
@@ -1184,6 +1190,12 @@ public class JvmLightTreeBlackBoxCodegenWithSeparateKmpCompilationTestGenerated 
     @TestMetadata("simple.kt")
     public void testSimple() {
       runTest("compiler/testData/codegen/box/multiplatform/k2/hmpp/simple.kt");
+    }
+
+    @Test
+    @TestMetadata("stdlibRegressions.kt")
+    public void testStdlibRegressions() {
+      runTest("compiler/testData/codegen/box/multiplatform/k2/hmpp/stdlibRegressions.kt");
     }
 
     @Test

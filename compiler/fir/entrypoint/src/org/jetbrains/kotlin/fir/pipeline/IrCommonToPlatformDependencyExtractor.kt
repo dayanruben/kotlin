@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.fir.session.structuredProviders
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.symbols.IrPropertySymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.symbols.IrTypeAliasSymbol
 import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
@@ -111,7 +112,9 @@ class IrCommonToPlatformDependencyActualizerMapContributor(
             processPairOfClasses(fromShared, fromPlatform)
         }
 
-        for ((commonFirClassSymbol, platformFirClassSymbol) in platformMappingProvider.classMapping.values) {
+        // TODO(KT-80002) why do we get a CME here without the copy?
+        val platformClassMapping = platformMappingProvider.classMapping.toMap()
+        for ((commonFirClassSymbol, platformFirClassSymbol) in platformClassMapping.values) {
             if (commonFirClassSymbol is FirTypeAliasSymbol) {
                 check(platformFirClassSymbol is FirTypeAliasSymbol) {
                     buildString {
@@ -130,7 +133,7 @@ class IrCommonToPlatformDependencyActualizerMapContributor(
 
         for (commonMappingProvider in commonMappingProviders) {
             for ((commonFirClassSymbol, _) in commonMappingProvider.classMapping.values) {
-                val platformFirClassSymbol = platformMappingProvider.classMapping.getValue(commonFirClassSymbol.classId).platformClass
+                val platformFirClassSymbol = platformMappingProvider.getClassLikeSymbolByClassId(commonFirClassSymbol.classId)!!
                 processPairOfClasses(commonFirClassSymbol, platformFirClassSymbol)
             }
         }
@@ -144,17 +147,42 @@ class IrCommonToPlatformDependencyActualizerMapContributor(
         return classesMap
     }
 
+    @OptIn(UnsafeDuringIrConstructionAPI::class)
     private val topLevelCallablesMap by lazy {
-        platformMappingProvider.commonCallableToPlatformCallableMap.entries.associate { (commonFirSymbol, platformFirSymbol) ->
-            val commonIrSymbol = commonFirSymbol.toIrSymbol()
-            val platformIrSymbol = platformFirSymbol.toIrSymbol()
-            commonIrSymbol to platformIrSymbol
+        buildMap {
+            for ((commonFirSymbol, platformFirSymbol) in platformMappingProvider.commonCallableToPlatformCallableMap) {
+                val commonIrSymbol = commonFirSymbol.toIrSymbol()
+                val platformIrSymbol = platformFirSymbol.toIrSymbol()
+                put(commonIrSymbol, platformIrSymbol)
+
+                if (commonIrSymbol is IrPropertySymbol && platformIrSymbol is IrPropertySymbol) {
+                    val commonIrGetterSymbol = commonIrSymbol.owner.getter?.symbol
+                    val platformIrGetterSymbol = platformIrSymbol.owner.getter?.symbol
+
+                    if (commonIrGetterSymbol != null && platformIrGetterSymbol != null) {
+                        put(commonIrGetterSymbol, platformIrGetterSymbol)
+                    }
+
+                    val commonIrSetterSymbol = commonIrSymbol.owner.setter?.symbol
+                    val platformIrSetterSymbol = platformIrSymbol.owner.setter?.symbol
+
+                    if (commonIrSetterSymbol != null && platformIrSetterSymbol != null) {
+                        put(commonIrSetterSymbol, platformIrSetterSymbol)
+                    }
+                }
+            }
         }
     }
 
 
     override fun collectTopLevelCallablesMap(): Map<IrSymbol, IrSymbol> {
         return topLevelCallablesMap
+    }
+
+    override fun actualizeClass(classId: ClassId): IrClassSymbol? {
+        val symbol = platformMappingProvider.getClassLikeSymbolByClassId(classId) ?: return null
+        val fullyExpandedClass = symbol.fullyExpandedClass(platformMappingProvider.session) ?: return null
+        return fullyExpandedClass.toIrSymbol() as? IrClassSymbol
     }
 
     private fun FirBasedSymbol<*>.properComponents(): Fir2IrComponents {
