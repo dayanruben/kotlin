@@ -2853,6 +2853,10 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = MustBeInitializedOrFinalOrAbstractWarning::class
     }
 
+    interface ExplicitFieldMustBeInitialized : KaFirDiagnostic<KtBackingField> {
+        override val diagnosticClass get() = ExplicitFieldMustBeInitialized::class
+    }
+
     interface ExtensionPropertyMustHaveAccessorsOrBeAbstract : KaFirDiagnostic<KtProperty> {
         override val diagnosticClass get() = ExtensionPropertyMustHaveAccessorsOrBeAbstract::class
     }
@@ -2983,12 +2987,24 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = BackingFieldForDelegatedProperty::class
     }
 
-    interface PropertyMustHaveGetter : KaFirDiagnostic<KtProperty> {
-        override val diagnosticClass get() = PropertyMustHaveGetter::class
+    interface VarPropertyWithExplicitBackingField : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = VarPropertyWithExplicitBackingField::class
     }
 
-    interface PropertyMustHaveSetter : KaFirDiagnostic<KtProperty> {
-        override val diagnosticClass get() = PropertyMustHaveSetter::class
+    interface NonFinalPropertyWithExplicitBackingField : KaFirDiagnostic<KtBackingField> {
+        override val diagnosticClass get() = NonFinalPropertyWithExplicitBackingField::class
+    }
+
+    interface ExpectPropertyWithExplicitBackingField : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = ExpectPropertyWithExplicitBackingField::class
+    }
+
+    interface InconsistentBackingFieldType : KaFirDiagnostic<KtProperty> {
+        override val diagnosticClass get() = InconsistentBackingFieldType::class
+    }
+
+    interface PropertyWithExplicitFieldAndAccessors : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = PropertyWithExplicitFieldAndAccessors::class
     }
 
     interface ExplicitBackingFieldInInterface : KaFirDiagnostic<KtBackingField> {
