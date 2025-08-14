@@ -31154,6 +31154,12 @@ public class FirJsCodegenSplittingInlineWithInlinedFunInKlibTestGenerated extend
           }
 
           @Test
+          @TestMetadata("arrayDeque.kt")
+          public void testArrayDeque() {
+            runTest("compiler/testData/codegen/box/multiplatform/k2/hmpp/arrayDeque.kt");
+          }
+
+          @Test
           @TestMetadata("expectActualChain2-2.kt")
           public void testExpectActualChain2_2() {
             runTest("compiler/testData/codegen/box/multiplatform/k2/hmpp/expectActualChain2-2.kt");
@@ -31199,6 +31205,12 @@ public class FirJsCodegenSplittingInlineWithInlinedFunInKlibTestGenerated extend
           @TestMetadata("expectRefinement.kt")
           public void testExpectRefinement() {
             runTest("compiler/testData/codegen/box/multiplatform/k2/hmpp/expectRefinement.kt");
+          }
+
+          @Test
+          @TestMetadata("fakeOverrideExpectSuperType.kt")
+          public void testFakeOverrideExpectSuperType() {
+            runTest("compiler/testData/codegen/box/multiplatform/k2/hmpp/fakeOverrideExpectSuperType.kt");
           }
 
           @Test
