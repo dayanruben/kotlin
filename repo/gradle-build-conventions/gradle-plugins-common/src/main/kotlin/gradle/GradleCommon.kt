@@ -20,6 +20,7 @@ import org.gradle.api.attributes.java.TargetJvmVersion
 import org.gradle.api.attributes.plugin.GradlePluginApiVersion
 import org.gradle.api.component.AdhocComponentWithVariants
 import org.gradle.api.file.SourceDirectorySet
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaLibraryPlugin
 import org.gradle.api.plugins.JavaPlugin
@@ -41,7 +42,6 @@ import org.gradle.plugin.devel.PluginDeclaration
 import org.gradle.plugin.devel.plugins.JavaGradlePluginPlugin
 import org.gradle.plugin.devel.tasks.ValidatePlugins
 import org.gradle.plugin.use.resolve.internal.ArtifactRepositoriesPluginResolver.PLUGIN_MARKER_SUFFIX
-import org.gradle.process.CommandLineArgumentProvider
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
@@ -111,8 +111,8 @@ fun Project.configureCommonPublicationSettingsForGradle(
                     }
                 }
         }
+        configureDefaultPublishing(signingRequired)
     }
-    configureDefaultPublishing(signingRequired)
 }
 
 /**
@@ -180,17 +180,35 @@ fun Project.createGradleCommonSourceSet(): SourceSet {
 
         dependencies {
             compileOnlyConfigurationName("org.jetbrains.kotlin:kotlin-stdlib:${GradlePluginVariant.GRADLE_MIN.bundledKotlinVersion}.0")
-            "commonGradleApiCompileOnly"("org.gradle.experimental:gradle-public-api:8.14") {
+            "commonGradleApiCompileOnly"("org.gradle.experimental:gradle-public-api:${GradlePluginVariant.GRADLE_COMMON_COMPILE_API_VERSION}") {
                 capabilities {
                     requireCapability("org.gradle.experimental:gradle-public-api-internal")
                 }
             }
             if (this@createGradleCommonSourceSet.name !in testPlugins) {
-                compileOnlyConfigurationName(project(":kotlin-gradle-plugin-api")) {
-                    capabilities {
-                        requireCapability("org.jetbrains.kotlin:kotlin-gradle-plugin-api-common")
-                    }
-                }
+                compileOnlyConfigurationName(project(":kotlin-gradle-plugin-api"))
+            }
+        }
+    }
+
+    afterEvaluate {
+        // The common source set compilation artifacts are never intended for runtime consumption
+        configurations.getByName(commonSourceSet.runtimeElementsConfigurationName).isCanBeConsumed = false
+
+        listOf(
+            /**
+             * Common source set outgoing variants should be a superset of attributes relative to [FIXED_CONFIGURATION_SUFFIX]. These
+             * variants are not published, but they are used to resolve interproject dependencies
+             */
+            commonSourceSet.apiElementsConfigurationName,
+        ).forEach {
+            val outgoingVariant = configurations.getByName(it)
+            commonVariantAttributes().execute(outgoingVariant)
+            outgoingVariant.attributes {
+                attribute(
+                    GradlePluginApiVersion.GRADLE_PLUGIN_API_VERSION_ATTRIBUTE,
+                    objects.named(GradlePluginVariant.GRADLE_COMMON_COMPILE_API_VERSION),
+                )
             }
         }
     }
@@ -199,6 +217,7 @@ fun Project.createGradleCommonSourceSet(): SourceSet {
         this@createGradleCommonSourceSet.extensions.configure<JavaPluginExtension> {
             registerFeature(commonSourceSet.name) {
                 usingSourceSet(commonSourceSet)
+                capability(project.group.toString(), project.name, project.version.toString())
                 disablePublication()
             }
         }
@@ -454,6 +473,16 @@ fun Project.reconfigureMainSourcesSetForGradlePlugin(
                     }
                 }
             }
+
+        listOf(
+            compileClasspathConfigurationName,
+            runtimeClasspathConfigurationName,
+        ).forEach {
+            configurations.getByName(it).useDependenciesCompiledForGradle(
+                GradlePluginVariant.GRADLE_MIN,
+                objects,
+            )
+        }
     }
 
     val kotlinJvmTarget = (extensions.getByName("kotlin") as KotlinSingleJavaTargetExtension).target
@@ -477,10 +506,10 @@ fun Project.reconfigureMainSourcesSetForGradlePlugin(
 /**
  * Adding plugin variants: https://docs.gradle.org/current/userguide/implementing_gradle_plugins.html#plugin-with-variants
  */
-fun Project.createGradlePluginVariant(
+private fun Project.createGradlePluginVariant(
     variant: GradlePluginVariant,
     commonSourceSet: SourceSet,
-    isGradlePlugin: Boolean = true,
+    publishShadowedJar: Boolean,
 ): SourceSet {
     val variantSourceSet = sourceSets.create(variant.sourceSetName) {
         excludeGradleCommonDependencies(this)
@@ -491,9 +520,7 @@ fun Project.createGradlePluginVariant(
         extensions.configure<JavaPluginExtension> {
             registerFeature(variantSourceSet.name) {
                 usingSourceSet(variantSourceSet)
-                if (isGradlePlugin) {
-                    capability(project.group.toString(), project.name, project.version.toString())
-                }
+                capability(project.group.toString(), project.name, project.version.toString())
 
                 if (kotlinBuildProperties.publishGradlePluginsJavadoc) {
                     withJavadocJar()
@@ -530,12 +557,10 @@ fun Project.createGradlePluginVariant(
 
     configurations.configureEach {
         if (this@configureEach.name.startsWith(variantSourceSet.name) && (isCanBeResolved || isCanBeConsumed)) {
-            attributes {
-                attribute(
-                    GradlePluginApiVersion.GRADLE_PLUGIN_API_VERSION_ATTRIBUTE,
-                    objects.named(variant.minimalSupportedGradleVersion)
-                )
-            }
+            useDependenciesCompiledForGradle(
+                variant,
+                objects,
+            )
         }
     }
 
@@ -557,15 +582,15 @@ fun Project.createGradlePluginVariant(
             variantSourceSet.compileOnlyConfigurationName("dev.gradleplugins:gradle-api:${variant.gradleApiVersion}")
         }
         if (this@createGradlePluginVariant.name !in testPlugins) {
-            variantSourceSet.apiConfigurationName(project(":kotlin-gradle-plugin-api")) {
-                capabilities {
-                    requireCapability("org.jetbrains.kotlin:kotlin-gradle-plugin-api-${variant.sourceSetName}")
-                }
-            }
+            variantSourceSet.apiConfigurationName(project(":kotlin-gradle-plugin-api"))
         }
     }
 
     registerValidatePluginTasks(variantSourceSet)
+
+    if (publishShadowedJar) {
+        publishShadowedJar(variantSourceSet, commonSourceSet)
+    }
 
     return variantSourceSet
 }
@@ -643,6 +668,7 @@ private fun KotlinCompile.configureRunViaKotlinBuildToolsApi() {
  */
 @OptIn(ExperimentalBuildToolsApi::class, ExperimentalKotlinGradlePluginApi::class)
 fun Project.configureBuildToolsApiVersionForGradleCompatibility() {
+    if (extra.properties["avoidSettingCompilerVersionForBTA"].toString().toBoolean()) return
     val catalogs = extensions.getByType<VersionCatalogsExtension>()
     val libsCatalog = catalogs.named("libs")
     val kgpCompilerVersion = libsCatalog.findVersion("kotlin.for.gradle.plugins.compilation").get().requiredVersion
@@ -825,6 +851,7 @@ fun Project.disableCoroutinesStacktraceRecoveryInTestsIfGradleEmbeddedStdlibIsIn
                 listOf("-Dkotlinx.coroutines.stacktrace.recovery=false")
             } else {
                 emptyList()
+
             }
         }
     }
@@ -842,3 +869,41 @@ fun Project.excludeGradleEmbeddedStdlibFromTestTasksRuntimeClasspath() {
 }
 
 private fun Project.gradleEmbeddedStdlib(): File = (dependencies.gradleApi() as FileCollectionDependency).files.single { it.name.startsWith("kotlin-stdlib") }
+
+fun Project.createGradlePluginVariants(
+    commonSourceSet: SourceSet,
+    publishShadowedJar: Boolean,
+) {
+    listOf(
+        GradlePluginVariant.GRADLE_80,
+        GradlePluginVariant.GRADLE_81,
+        GradlePluginVariant.GRADLE_82,
+        GradlePluginVariant.GRADLE_85,
+        GradlePluginVariant.GRADLE_86,
+        GradlePluginVariant.GRADLE_88,
+        GradlePluginVariant.GRADLE_811,
+        GradlePluginVariant.GRADLE_813,
+    ).forEach { variant ->
+        createGradlePluginVariant(
+            variant = variant,
+            commonSourceSet = commonSourceSet,
+            publishShadowedJar = publishShadowedJar,
+        )
+    }
+}
+
+fun Configuration.useDependenciesCompiledForGradle(
+    variant: GradlePluginVariant,
+    objects: ObjectFactory,
+) = useDependenciesCompiledForGradle(
+    variant.minimalSupportedGradleVersion,
+    objects,
+)
+
+fun Configuration.useDependenciesCompiledForGradle(
+    version: String,
+    objects: ObjectFactory,
+) = attributes.attribute(
+    GradlePluginApiVersion.GRADLE_PLUGIN_API_VERSION_ATTRIBUTE,
+    objects.named(version),
+)
