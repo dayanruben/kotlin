@@ -37,6 +37,7 @@
 /compiler/build-tools/ @JetBrains/kotlin-build-tools
 /compiler/build-tools/kotlin-build-tools-api/gen/ @JetBrains/kotlin
 /compiler/build-tools/kotlin-build-tools-impl/gen/ @JetBrains/kotlin
+/compiler/build-tools/kotlin-build-tools-compat/gen/ @JetBrains/kotlin
 /compiler/build-tools/kotlin-build-tools-api/api/kotlin-build-tools-api.api @JetBrains/kotlin
 /compiler/cli/ @JetBrains/kotlin-frontend
 /compiler/cli/cli-js/ @JetBrains/kotlin-js @JetBrains/kotlin-wasm
@@ -321,7 +322,6 @@
 /libraries/tools/kotlin-gradle-plugin-integration-tests/src/test/resources/testProject/js-*/ @JetBrains/kotlin-build-tools @JetBrains/kotlin-js
 /libraries/tools/kotlin-gradle-plugin-integration-tests/src/test/resources/testProject/kotlin-js-*/ @JetBrains/kotlin-build-tools @JetBrains/kotlin-js
 /libraries/tools/kotlin-gradle-plugin-integration-tests/src/test/resources/testProject/new-mpp-js-*/ @JetBrains/kotlin-build-tools @JetBrains/kotlin-js
-/libraries/tools/kotlin-gradle-plugin-model/ @JetBrains/kotlin-build-tools
 /libraries/tools/kotlin-gradle-plugin-npm-versions-codegen/ ilya.goncharov@jetbrains.com
 /libraries/tools/kotlin-gradle-plugin-test-utils-embeddable/ @JetBrains/kotlin-build-tools
 /libraries/tools/kotlin-gradle-plugin-tcs-android/ @JetBrains/kotlin-build-tools

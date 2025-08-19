@@ -10,7 +10,9 @@ import kotlin.Boolean
 import kotlin.OptIn
 import kotlin.String
 import kotlin.Suppress
+import kotlin.collections.List
 import kotlin.collections.MutableMap
+import kotlin.collections.mutableListOf
 import kotlin.collections.mutableMapOf
 import org.jetbrains.kotlin.buildtools.`internal`.UseFromImplModuleRestricted
 import org.jetbrains.kotlin.buildtools.api.arguments.CommonToolArguments.Companion.NOWARN
@@ -19,6 +21,7 @@ import org.jetbrains.kotlin.buildtools.api.arguments.CommonToolArguments.Compani
 import org.jetbrains.kotlin.buildtools.api.arguments.CommonToolArguments.Companion.WERROR
 import org.jetbrains.kotlin.buildtools.api.arguments.CommonToolArguments.Companion.WEXTRA
 import org.jetbrains.kotlin.buildtools.api.arguments.ExperimentalCompilerArgument
+import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.buildtools.api.arguments.CommonToolArguments as ArgumentsCommonToolArguments
 import org.jetbrains.kotlin.cli.common.arguments.CommonToolArguments as CommonToolArguments
 
@@ -33,6 +36,8 @@ internal open class CommonToolArgumentsImpl : ArgumentsCommonToolArguments {
   override operator fun <V> `set`(key: ArgumentsCommonToolArguments.CommonToolArgument<V>, `value`: V) {
     optionsMap[key.id] = `value`
   }
+
+  override operator fun contains(key: ArgumentsCommonToolArguments.CommonToolArgument<*>): Boolean = key.id in optionsMap
 
   @Suppress("UNCHECKED_CAST")
   public operator fun <V> `get`(key: CommonToolArgument<V>): V = optionsMap[key.id] as V
@@ -53,12 +58,32 @@ internal open class CommonToolArgumentsImpl : ArgumentsCommonToolArguments {
     return arguments
   }
 
-  /**
-   * Base class for [ArgumentsCommonToolArguments] options.
-   *
-   * @see get
-   * @see set    
-   */
+  open override fun applyArgumentStrings(arguments: List<String>) {
+    val compilerArgs: CommonToolArguments = parseCommandLineArguments(arguments)
+    applyCompilerArguments(compilerArgs)
+  }
+
+  @Suppress("DEPRECATION")
+  @OptIn(ExperimentalCompilerArgument::class)
+  open override fun toArgumentStrings(): List<String> {
+    val arguments = mutableListOf<String>()
+    if ("VERSION" in optionsMap) { arguments.add("-version=" + get(VERSION)) }
+    if ("VERBOSE" in optionsMap) { arguments.add("-verbose=" + get(VERBOSE)) }
+    if ("NOWARN" in optionsMap) { arguments.add("-nowarn=" + get(NOWARN)) }
+    if ("WERROR" in optionsMap) { arguments.add("-Werror=" + get(WERROR)) }
+    if ("WEXTRA" in optionsMap) { arguments.add("-Wextra=" + get(WEXTRA)) }
+    return arguments
+  }
+
+  @Suppress("DEPRECATION")
+  public fun applyCompilerArguments(arguments: CommonToolArguments) {
+    this[VERSION] = arguments.version
+    this[VERBOSE] = arguments.verbose
+    this[NOWARN] = arguments.suppressWarnings
+    this[WERROR] = arguments.allWarningsAsErrors
+    this[WEXTRA] = arguments.extraWarnings
+  }
+
   public class CommonToolArgument<V>(
     public val id: String,
   )
