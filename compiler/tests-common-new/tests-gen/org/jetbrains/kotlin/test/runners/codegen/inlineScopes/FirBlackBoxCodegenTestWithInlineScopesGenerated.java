@@ -144,6 +144,12 @@ public class FirBlackBoxCodegenTestWithInlineScopesGenerated extends AbstractFir
     }
 
     @Test
+    @TestMetadata("checkReturnValue.kt")
+    public void testCheckReturnValue() {
+      runTest("compiler/testData/codegen/box/annotations/checkReturnValue.kt");
+    }
+
+    @Test
     @TestMetadata("constValInAnnotation.kt")
     public void testConstValInAnnotation() {
       runTest("compiler/testData/codegen/box/annotations/constValInAnnotation.kt");
@@ -42383,6 +42389,12 @@ public class FirBlackBoxCodegenTestWithInlineScopesGenerated extends AbstractFir
         @TestMetadata("fakeOverrideExpectSuperType.kt")
         public void testFakeOverrideExpectSuperType() {
           runTest("compiler/testData/codegen/box/multiplatform/k2/hmpp/fakeOverrideExpectSuperType.kt");
+        }
+
+        @Test
+        @TestMetadata("fakeOverrideExpectSuperTypeFromLib.kt")
+        public void testFakeOverrideExpectSuperTypeFromLib() {
+          runTest("compiler/testData/codegen/box/multiplatform/k2/hmpp/fakeOverrideExpectSuperTypeFromLib.kt");
         }
 
         @Test

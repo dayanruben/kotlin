@@ -9331,6 +9331,12 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
       }
 
       @Test
+      @TestMetadata("loopFunctionAmbiguity.kt")
+      public void testLoopFunctionAmbiguity() {
+        runTest("compiler/testData/diagnostics/tests/controlStructures/loopFunctionAmbiguity.kt");
+      }
+
+      @Test
       @TestMetadata("nestedLoopsWithMultipleLabels.kt")
       public void testNestedLoopsWithMultipleLabels() {
         runTest("compiler/testData/diagnostics/tests/controlStructures/nestedLoopsWithMultipleLabels.kt");
@@ -23852,6 +23858,12 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
       @TestMetadata("functions.kt")
       public void testFunctions() {
         runTest("compiler/testData/diagnostics/tests/inline/functions.kt");
+      }
+
+      @Test
+      @TestMetadata("illegalUsageOfCrossInline.kt")
+      public void testIllegalUsageOfCrossInline() {
+        runTest("compiler/testData/diagnostics/tests/inline/illegalUsageOfCrossInline.kt");
       }
 
       @Test

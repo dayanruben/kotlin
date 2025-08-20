@@ -9094,6 +9094,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
+      @TestMetadata("loopFunctionAmbiguity.kt")
+      public void testLoopFunctionAmbiguity() {
+        runTest("compiler/testData/diagnostics/tests/controlStructures/loopFunctionAmbiguity.kt");
+      }
+
+      @Test
       @TestMetadata("nestedLoopsWithMultipleLabels.kt")
       public void testNestedLoopsWithMultipleLabels() {
         runTest("compiler/testData/diagnostics/tests/controlStructures/nestedLoopsWithMultipleLabels.kt");
@@ -23010,6 +23016,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("functions.kt")
       public void testFunctions() {
         runTest("compiler/testData/diagnostics/tests/inline/functions.kt");
+      }
+
+      @Test
+      @TestMetadata("illegalUsageOfCrossInline.kt")
+      public void testIllegalUsageOfCrossInline() {
+        runTest("compiler/testData/diagnostics/tests/inline/illegalUsageOfCrossInline.kt");
       }
 
       @Test
@@ -53924,6 +53936,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
         @TestMetadata("extensionShadowedWithContextParameters.kt")
         public void testExtensionShadowedWithContextParameters() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/extensionShadowedWithContextParameters.kt");
+        }
+
+        @Test
+        @TestMetadata("inapplicableModifier.kt")
+        public void testInapplicableModifier() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/inapplicableModifier.kt");
         }
 
         @Test
