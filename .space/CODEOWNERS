@@ -158,7 +158,6 @@
 /compiler/testData/codegen/composeLike/ "Kotlin JVM"
 /compiler/testData/codegen/composeLikeBytecodeText/ "Kotlin JVM"
 /compiler/testData/codegen/customScript/ "Kotlin Frontend"
-/compiler/testData/codegen/helpers/ "Kotlin JVM"
 /compiler/testData/codegen/innerClassInfo/ "Kotlin JVM"
 /compiler/testData/codegen/notNullAssertions/ "Kotlin JVM"
 /compiler/testData/codegen/outerClassInfo/ "Kotlin JVM"
@@ -326,6 +325,7 @@
 /libraries/stdlib/wasm/js/internal "Kotlin Wasm"
 
 /libraries/tools/abi-comparator "Kotlin JVM"
+/libraries/tools/analysis-api-based-klib-reader/ "Kotlin Native" "Kotlin JS"
 /libraries/tools/atomicfu/ "Kotlin Libraries"
 /libraries/tools/binary-compatibility-validator/ "Kotlin Libraries"
 /libraries/tools/abi-validation/ "Kotlin Libraries"
@@ -410,7 +410,6 @@
 /license/ "Kotlin Build Infrastructure"
 
 /native/ "Kotlin Native"
-/native/analysis-api-klib-reader/ "Kotlin Native"
 /native/commonizer/ "Kotlin Frontend"
 /native/commonizer-api/ "Kotlin Frontend"
 /native/commonizer-embeddable/ "Kotlin Frontend"
