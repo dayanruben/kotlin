@@ -6,17 +6,8 @@ export declare interface KtList<E> /* extends Collection<E> */ {
         readonly "kotlin.collections.KtList": unique symbol;
     };
 }
-export declare abstract class KtList<E> extends KtSingleton<KtList.$metadata$.constructor>() {
-    private constructor();
-}
 export declare namespace KtList {
-    /** @deprecated $metadata$ is used for internal purposes, please don't use it in your code, because it can be removed at any moment */
-    namespace $metadata$ {
-        abstract class constructor {
-            fromJsArray<E>(array: ReadonlyArray<E>): KtList<E>;
-            private constructor();
-        }
-    }
+    function fromJsArray<E>(array: ReadonlyArray<E>): KtList<E>;
 }
 export declare const value: { get(): number; };
 export declare const variable: { get(): number; set(value: number): void; };
@@ -72,6 +63,25 @@ export declare namespace Parent {
         abstract class constructor {
             get value(): number;
             private constructor();
+        }
+    }
+}
+export declare interface AnInterfaceWithCompanion {
+    readonly __doNotUseOrImplementIt: {
+        readonly "foo.AnInterfaceWithCompanion": unique symbol;
+    };
+}
+export declare namespace AnInterfaceWithCompanion {
+    abstract class Companion extends KtSingleton<Companion.$metadata$.constructor>() {
+        private constructor();
+    }
+    namespace Companion {
+        /** @deprecated $metadata$ is used for internal purposes, please don't use it in your code, because it can be removed at any moment */
+        namespace $metadata$ {
+            abstract class constructor {
+                get someValue(): string;
+                private constructor();
+            }
         }
     }
 }

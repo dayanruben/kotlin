@@ -8,6 +8,7 @@ plugins {
     id("kotlin-git.gradle-build-conventions.binary-compatibility-extended")
     id("android-sdk-provisioner")
     id("asm-deprecating-transformer")
+    id("project-tests-convention")
     `java-test-fixtures`
 }
 
@@ -124,11 +125,26 @@ dependencies {
     commonCompileOnly(project(":kotlin-gradle-statistics"))
     commonCompileOnly(project(":kotlin-gradle-build-metrics"))
     commonCompileOnly(project(":compiler:build-tools:kotlin-build-tools-jdk-utils"))
-    commonCompileOnly(libs.android.gradle.plugin.gradle.api) { isTransitive = false }
-    commonCompileOnly(libs.android.gradle.plugin.gradle) { isTransitive = false }
-    commonCompileOnly(libs.android.gradle.plugin.builder) { isTransitive = false }
-    commonCompileOnly(libs.android.gradle.plugin.builder.model) { isTransitive = false }
-    commonCompileOnly(libs.android.tools.common) { isTransitive = false }
+    commonCompileOnly(libs.android.gradle.plugin.gradle.api) {
+        overrideTargetJvmVersion(11)
+        isTransitive = false
+    }
+    commonCompileOnly(libs.android.gradle.plugin.gradle) {
+        overrideTargetJvmVersion(11)
+        isTransitive = false
+    }
+    commonCompileOnly(libs.android.gradle.plugin.builder) {
+        overrideTargetJvmVersion(11)
+        isTransitive = false
+    }
+    commonCompileOnly(libs.android.gradle.plugin.builder.model) {
+        overrideTargetJvmVersion(11)
+        isTransitive = false
+    }
+    commonCompileOnly(libs.android.tools.common) {
+        overrideTargetJvmVersion(11)
+        isTransitive = false
+    }
     commonCompileOnly(commonDependency("org.jetbrains.teamcity:serviceMessages"))
     commonCompileOnly(libs.develocity.gradlePlugin)
     commonCompileOnly(commonDependency("com.google.code.gson:gson"))
@@ -398,8 +414,10 @@ tasks.named("validatePlugins") {
     enabled = false
 }
 
-projectTest {
-    workingDir = rootDir
+projectTests {
+    testTask(jUnitMode = JUnitMode.JUnit4) {
+        workingDir = rootDir
+    }
 }
 
 gradlePlugin {
