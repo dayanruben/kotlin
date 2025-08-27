@@ -4,28 +4,7 @@
 @file:MustUseReturnValue
 
 fun stringF(): String = ""
-fun nsf(): String? = "null"
 fun unitF(): Unit = Unit
-
-fun coll(m: MutableList<String>) {
-    m.add("")
-    <!RETURN_VALUE_NOT_USED!>m.isEmpty()<!>
-}
-
-fun nullable(m: MutableList<String>?) {
-    m?.add("x")
-    <!RETURN_VALUE_NOT_USED!>m?.isEmpty()<!>
-}
-
-fun lhs(s: LinkedHashSet<String>) {
-    s.add("x")
-    <!RETURN_VALUE_NOT_USED!>s.isEmpty()<!>
-}
-
-fun javaType(m: java.util.ArrayList<String>) {
-    m.add("x")
-    <!RETURN_VALUE_NOT_USED!>m.isEmpty()<!>
-}
 
 fun exlusionPropagation(cond: Boolean, m: MutableList<String>) {
     if (cond) m.add("x") else throw IllegalStateException()

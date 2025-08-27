@@ -171,47 +171,9 @@ private fun ConeKotlinType.isIgnorable(): Boolean {
 private fun FirCallableSymbol<*>.isExcluded(session: FirSession): Boolean = session.mustUseReturnValueStatusComponent.hasIgnorableLikeAnnotation(resolvedAnnotationClassIds)
 
 private fun FirCallableSymbol<*>.isSubjectToCheck(): Boolean {
-    // TODO KT-71195 : FunctionN seems to be a synthetic class, even recompiling stdlib in FULL mode
-    //  does not make it checked. Need to investigate another approach.
-    if (this.callableId?.packageName?.asString() == "kotlin") return this.origin !is FirDeclarationOrigin.Enhancement
-    callableId?.ifTypealiasedJvmCollection { return it }
-
-
     // TBD: Do we want to report them unconditionally? Or only in FULL mode?
     // If latter, metadata flag should be added for them too.
     if (this is FirEnumEntrySymbol) return true
 
     return resolvedStatus.returnValueStatus == ReturnValueStatus.MustUse
-}
-
-private inline fun CallableId.ifTypealiasedJvmCollection(nonIgnorableCollectionMethod: (Boolean) -> Unit) {
-    val packageName = packageName.asString()
-    if (packageName != "kotlin.collections" && packageName != "java.util") return
-    val className = className?.asString() ?: return
-    if (className !in setOf( // libraries/stdlib/jvm/src/kotlin/collections/TypeAliases.kt
-            "ArrayList",
-            "HashSet",
-            "LinkedHashSet",
-            "HashMap",
-            "LinkedHashMap",
-        )
-    ) return
-    nonIgnorableCollectionMethod(
-        callableName.asString() !in setOf(
-            "add",
-            "addAll",
-            "remove",
-            "removeAt",
-            "removeAll",
-            "removeIf",
-            "set",
-            "put",
-            "putIfAbsent",
-            "merge",
-            "compute",
-            "computeIfAbsent",
-            "retainAll",
-            "removeLast"
-        )
-    )
 }

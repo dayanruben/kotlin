@@ -9743,6 +9743,12 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
       }
 
       @Test
+      @TestMetadata("collectionsAndJavaTypes.kt")
+      public void testCollectionsAndJavaTypes() {
+        runTest("compiler/testData/diagnostics/tests/crv/collectionsAndJavaTypes.kt");
+      }
+
+      @Test
       @TestMetadata("controlFlow.kt")
       public void testControlFlow() {
         runTest("compiler/testData/diagnostics/tests/crv/controlFlow.kt");
@@ -9782,6 +9788,12 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
       @TestMetadata("javaAnnotationsOverride.kt")
       public void testJavaAnnotationsOverride() {
         runTest("compiler/testData/diagnostics/tests/crv/javaAnnotationsOverride.kt");
+      }
+
+      @Test
+      @TestMetadata("kotlinJavaKotlin.kt")
+      public void testKotlinJavaKotlin() {
+        runTest("compiler/testData/diagnostics/tests/crv/kotlinJavaKotlin.kt");
       }
 
       @Test
