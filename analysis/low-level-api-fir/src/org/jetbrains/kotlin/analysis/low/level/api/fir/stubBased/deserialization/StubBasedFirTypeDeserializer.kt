@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
 import org.jetbrains.kotlin.fir.types.impl.ConeTypeParameterTypeImpl
-import org.jetbrains.kotlin.fir.types.toLookupTag
 import org.jetbrains.kotlin.fir.utils.exceptions.withConeTypeEntry
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
@@ -119,9 +118,9 @@ internal class StubBasedFirTypeDeserializer(
             StubBasedAnnotationDeserializer.TYPE_ANNOTATIONS_FILTER,
         ).toMutableList()
 
-        val parent = (typeReference.stub ?: loadStubByElement(typeReference))?.parentStub
-        if (parent is KotlinParameterStubImpl) {
-            parent.functionTypeParameterName?.let { paramName ->
+        val parentStub = typeReference.compiledStub.parentStub
+        if (parentStub is KotlinParameterStubImpl) {
+            parentStub.functionTypeParameterName?.let { paramName ->
                 annotations += buildAnnotation {
                     annotationTypeRef = buildResolvedTypeRef {
                         coneType = StandardNames.FqNames.parameterNameClassId.toLookupTag()
@@ -208,15 +207,15 @@ internal class StubBasedFirTypeDeserializer(
     }
 
     private fun deserializeFunctionType(typeReference: KtTypeReference, type: KtFunctionType, attributes: ConeAttributes): ConeKotlinType {
-        val stub = (type.stub ?: loadStubByElement(type)) as? KotlinFunctionTypeStubImpl
-        return simpleTypeOrError(typeReference, attributes.withAbbreviation(stub?.abbreviatedType))
+        val functionTypeStub: KotlinFunctionTypeStubImpl = type.compiledStub
+        return simpleTypeOrError(typeReference, attributes.withAbbreviation(functionTypeStub.abbreviatedType))
     }
 
     private fun deserializeUserType(typeReference: KtTypeReference, type: KtUserType, attributes: ConeAttributes): ConeKotlinType {
-        val stub = (type.stub ?: loadStubByElement(type)) as? KotlinUserTypeStubImpl
-        val coneType = simpleTypeOrError(typeReference, attributes.withAbbreviation(stub?.abbreviatedType))
+        val userTypeStub: KotlinUserTypeStubImpl = type.compiledStub
+        val coneType = simpleTypeOrError(typeReference, attributes.withAbbreviation(userTypeStub.abbreviatedType))
 
-        val upperBoundTypeBean = stub?.upperBound
+        val upperBoundTypeBean = userTypeStub.upperBound
         return if (upperBoundTypeBean != null) {
             val upperBoundType = type(upperBoundTypeBean)
 
@@ -387,15 +386,13 @@ internal fun KtUserType.classId(): ClassId {
     val classFragments = mutableListOf<String>()
 
     fun collectFragments(type: KtUserType) {
-        val userType = type.getStubOrPsiChild(KtStubElementTypes.USER_TYPE)
-        if (userType != null) {
-            collectFragments(userType)
-        }
+        type.qualifier?.let(::collectFragments)
+
         val referenceExpression = type.referenceExpression as? KtNameReferenceExpression
         if (referenceExpression != null) {
             val referencedName = referenceExpression.getReferencedName()
-            val stub = referenceExpression.stub ?: loadStubByElement(referenceExpression)
-            if (stub is KotlinNameReferenceExpressionStubImpl && stub.isClassRef) {
+            val referenceExpressionStub: KotlinNameReferenceExpressionStubImpl = referenceExpression.compiledStub
+            if (referenceExpressionStub.isClassRef) {
                 classFragments.add(referencedName)
             } else {
                 packageFragments.add(referencedName)

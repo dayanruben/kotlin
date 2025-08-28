@@ -2403,6 +2403,12 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
         }
 
         @Test
+        @TestMetadata("multipleMissingContextArguments.kt")
+        public void testMultipleMissingContextArguments() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/multipleMissingContextArguments.kt");
+        }
+
+        @Test
         @TestMetadata("noContextArgument.kt")
         public void testNoContextArgument() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/noContextArgument.kt");
@@ -5136,6 +5142,12 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
         @TestMetadata("invokeOverload2.kt")
         public void testInvokeOverload2() {
           runTest("compiler/fir/analysis-tests/testData/resolve/extraCheckers/unused/invokeOverload2.kt");
+        }
+
+        @Test
+        @TestMetadata("invokeSmartcast.kt")
+        public void testInvokeSmartcast() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/extraCheckers/unused/invokeSmartcast.kt");
         }
 
         @Test

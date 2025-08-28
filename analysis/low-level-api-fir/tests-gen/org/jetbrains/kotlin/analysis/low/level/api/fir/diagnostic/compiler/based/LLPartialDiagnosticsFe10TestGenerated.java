@@ -1870,6 +1870,12 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
     }
 
     @Test
+    @TestMetadata("reportErrorsForImpossibleTypeChecks.kt")
+    public void testReportErrorsForImpossibleTypeChecks() {
+      runTest("compiler/testData/diagnostics/tests/reportErrorsForImpossibleTypeChecks.kt");
+    }
+
+    @Test
     @TestMetadata("ReserveYield.kt")
     public void testReserveYield() {
       runTest("compiler/testData/diagnostics/tests/ReserveYield.kt");
@@ -2371,6 +2377,12 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
     @TestMetadata("UnusedVariables.kt")
     public void testUnusedVariables() {
       runTest("compiler/testData/diagnostics/tests/UnusedVariables.kt");
+    }
+
+    @Test
+    @TestMetadata("upcastThatCancelsSmartcast.kt")
+    public void testUpcastThatCancelsSmartcast() {
+      runTest("compiler/testData/diagnostics/tests/upcastThatCancelsSmartcast.kt");
     }
 
     @Test
@@ -37989,6 +38001,18 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
         @TestMetadata("callableReferences.kt")
         public void testCallableReferences() {
           runTest("compiler/testData/diagnostics/tests/resolve/dslMarker/callableReferences.kt");
+        }
+
+        @Test
+        @TestMetadata("dslLambdaAssignment.kt")
+        public void testDslLambdaAssignment() {
+          runTest("compiler/testData/diagnostics/tests/resolve/dslMarker/dslLambdaAssignment.kt");
+        }
+
+        @Test
+        @TestMetadata("dslLambdaAssignmentBefore.kt")
+        public void testDslLambdaAssignmentBefore() {
+          runTest("compiler/testData/diagnostics/tests/resolve/dslMarker/dslLambdaAssignmentBefore.kt");
         }
 
         @Test

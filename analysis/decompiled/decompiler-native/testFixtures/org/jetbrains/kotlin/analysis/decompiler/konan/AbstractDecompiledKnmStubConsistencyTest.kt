@@ -15,7 +15,6 @@ import com.intellij.psi.impl.compiled.ClassFileStubBuilder
 import com.intellij.psi.stubs.BinaryFileStubBuilders
 import com.intellij.util.indexing.FileContentImpl
 import org.jetbrains.kotlin.analysis.decompiler.stub.files.serializeToString
-import org.jetbrains.kotlin.psi.stubs.elements.KtFileStubBuilder
 import org.junit.Assert
 import java.nio.file.Path
 
@@ -53,18 +52,15 @@ abstract class AbstractDecompiledKnmStubConsistencyTest : AbstractDecompiledKnmF
     private fun checkKnmStubConsistency(knmFile: VirtualFile) {
         val decompiler = knmTestSupport.createDecompiler()
         val stubTreeBinaryFile = decompiler.stubBuilder.buildFileStub(FileContentImpl.createByFile(knmFile, environment.project))!!
-        // FIXME (KT-79973): decompiled stubs text does not have MustUseReturnValue flag.
-        val expectedText = stubTreeBinaryFile.serializeToString().replace(" MustUseReturnValue", "")
+        val expectedText = stubTreeBinaryFile.serializeToString()
 
         val fileViewProviderForDecompiledFile = decompiler.createFileViewProvider(
             knmFile, PsiManager.getInstance(project), physical = false,
         )
 
-        val stubTreeForDecompiledFile = KtFileStubBuilder().buildStubTree(
-            KlibDecompiledFile(fileViewProviderForDecompiledFile) { virtualFile ->
-                decompiler.buildDecompiledTextForTests(virtualFile)
-            }
-        )
+        val stubTreeForDecompiledFile = KlibDecompiledFile(fileViewProviderForDecompiledFile) { virtualFile ->
+            decompiler.buildDecompiledTextForTests(virtualFile)
+        }.calcStubTree().root
 
         Assert.assertEquals(
             "PSI and deserialized stubs don't match",

@@ -1866,6 +1866,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
     }
 
     @Test
+    @TestMetadata("reportErrorsForImpossibleTypeChecks.kt")
+    public void testReportErrorsForImpossibleTypeChecks() {
+      runTest("compiler/testData/diagnostics/tests/reportErrorsForImpossibleTypeChecks.kt");
+    }
+
+    @Test
     @TestMetadata("ReserveYield.kt")
     public void testReserveYield() {
       runTest("compiler/testData/diagnostics/tests/ReserveYield.kt");
@@ -2367,6 +2373,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
     @TestMetadata("UnusedVariables.kt")
     public void testUnusedVariables() {
       runTest("compiler/testData/diagnostics/tests/UnusedVariables.kt");
+    }
+
+    @Test
+    @TestMetadata("upcastThatCancelsSmartcast.kt")
+    public void testUpcastThatCancelsSmartcast() {
+      runTest("compiler/testData/diagnostics/tests/upcastThatCancelsSmartcast.kt");
     }
 
     @Test
@@ -36603,6 +36615,18 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
         }
 
         @Test
+        @TestMetadata("dslLambdaAssignment.kt")
+        public void testDslLambdaAssignment() {
+          runTest("compiler/testData/diagnostics/tests/resolve/dslMarker/dslLambdaAssignment.kt");
+        }
+
+        @Test
+        @TestMetadata("dslLambdaAssignmentBefore.kt")
+        public void testDslLambdaAssignmentBefore() {
+          runTest("compiler/testData/diagnostics/tests/resolve/dslMarker/dslLambdaAssignmentBefore.kt");
+        }
+
+        @Test
         @TestMetadata("dslMarkerNamedArgumentLambda.kt")
         public void testDslMarkerNamedArgumentLambda() {
           runTest("compiler/testData/diagnostics/tests/resolve/dslMarker/dslMarkerNamedArgumentLambda.kt");
@@ -54610,6 +54634,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
         }
 
         @Test
+        @TestMetadata("multipleMissingContextArguments.kt")
+        public void testMultipleMissingContextArguments() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/multipleMissingContextArguments.kt");
+        }
+
+        @Test
         @TestMetadata("noContextArgument.kt")
         public void testNoContextArgument() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/diagnostics/noContextArgument.kt");
@@ -57193,6 +57223,12 @@ public class PhasedJvmDiagnosticPsiTestGenerated extends AbstractPhasedJvmDiagno
         @TestMetadata("invokeOverload2.kt")
         public void testInvokeOverload2() {
           runTest("compiler/fir/analysis-tests/testData/resolve/extraCheckers/unused/invokeOverload2.kt");
+        }
+
+        @Test
+        @TestMetadata("invokeSmartcast.kt")
+        public void testInvokeSmartcast() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/extraCheckers/unused/invokeSmartcast.kt");
         }
 
         @Test
