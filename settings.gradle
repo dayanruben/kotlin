@@ -168,6 +168,8 @@ include ":benchmarks",
         ":js:js.translator",
         ":js:js.tests",
         ":js:js.tests:klib-compatibility",
+        ":js:typescript-export-model",
+        ":js:typescript-printer",
         ":native:kotlin-native-utils",
         ":native:frontend.native",
         ":native:kotlin-klib-commonizer",
@@ -542,6 +544,7 @@ include ":native:swift:sir",
         ":native:swift:swift-export-standalone-integration-tests",
         ":native:swift:swift-export-standalone-integration-tests:simple",
         ":native:swift:swift-export-standalone-integration-tests:external",
+        ":native:swift:swift-export-standalone-integration-tests:coroutines",
         ":generators:sir-tests-generator"
 
 if (!buildProperties.inJpsBuildIdeaSync) {
