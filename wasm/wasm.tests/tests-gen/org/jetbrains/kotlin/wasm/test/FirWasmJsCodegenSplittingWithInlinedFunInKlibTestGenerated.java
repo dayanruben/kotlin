@@ -15374,6 +15374,12 @@ public class FirWasmJsCodegenSplittingWithInlinedFunInKlibTestGenerated extends 
       }
 
       @Test
+      @TestMetadata("elvisToCommonType.kt")
+      public void testElvisToCommonType() {
+        runTest("compiler/testData/codegen/box/elvis/elvisToCommonType.kt");
+      }
+
+      @Test
       @TestMetadata("genericElvisWithMoreSpecificLHS.kt")
       public void testGenericElvisWithMoreSpecificLHS() {
         runTest("compiler/testData/codegen/box/elvis/genericElvisWithMoreSpecificLHS.kt");
@@ -30337,6 +30343,12 @@ public class FirWasmJsCodegenSplittingWithInlinedFunInKlibTestGenerated extends 
           @TestMetadata("fakeOverrideExpectSuperTypeFromLib.kt")
           public void testFakeOverrideExpectSuperTypeFromLib() {
             runTest("compiler/testData/codegen/box/multiplatform/k2/hmpp/fakeOverrideExpectSuperTypeFromLib.kt");
+          }
+
+          @Test
+          @TestMetadata("friendDependency.kt")
+          public void testFriendDependency() {
+            runTest("compiler/testData/codegen/box/multiplatform/k2/hmpp/friendDependency.kt");
           }
 
           @Test
