@@ -174,8 +174,6 @@ open class IrFileSerializer(
     protected val protoDebugInfoMap = hashMapOf<String, Int>()
     protected val protoDebugInfoArray = arrayListOf<String>()
 
-    private val preprocessedToOriginalInlineFunctions = mutableMapOf<IrSimpleFunction, IrSimpleFunction>()
-
     private var isInsideInline: Boolean = false
     private var fileContainsInline = false
 
@@ -297,14 +295,21 @@ open class IrFileSerializer(
                 ?: error("Given symbol is unbound and have no signature: $symbol")
             symbol is IrFileSymbol -> IdSignature.FileSignature(symbol) // TODO: special signature for files?
             else -> {
-                val symbolOwner = symbol.owner
+                var symbolOwner = symbol.owner
+
+                // Prefer a real inline function over its prepared copy - the latter is only used store inlinable body,
+                // and only the former has the correct declaration shape (such as parameters) allowing to compute
+                // a valid signature of the function.
+                (symbolOwner as? IrSimpleFunction)?.originalOfPreparedInlineFunctionCopy?.let {
+                    symbolOwner = it
+                }
 
                 // Compute the signature:
                 when {
                     symbolOwner is IrDeclaration -> declarationTable.signatureByDeclaration(
                         declaration = symbolOwner,
                         compatibleMode = false,
-                        recordInSignatureClashDetector = isDeclared
+                        recordInSignatureClashDetector = isDeclared,
                     )
 
                     symbolOwner is IrReturnableBlock && settings.abiCompatibilityLevel.isAtLeast(ABI_LEVEL_2_3) ->
@@ -1125,10 +1130,7 @@ open class IrFileSerializer(
 
     private fun serializeIrDeclarationBase(declaration: IrDeclaration, flags: Long?): ProtoDeclarationBase {
         return with(ProtoDeclarationBase.newBuilder()) {
-            symbol = serializeIrSymbol(
-                (declaration as IrSymbolOwner).symbol,
-                isDeclared = declaration !in preprocessedToOriginalInlineFunctions
-            )
+            symbol = serializeIrSymbol((declaration as IrSymbolOwner).symbol, isDeclared = true)
             coordinates = serializeCoordinates(declaration.startOffset, declaration.endOffset)
             addAllAnnotation(serializeAnnotations(declaration.annotations))
             flags?.let { setFlags(it) }
@@ -1214,13 +1216,14 @@ open class IrFileSerializer(
             .build()
 
     private fun serializeIrFunction(declaration: IrSimpleFunction): ProtoFunction {
-        declaration.erasedTopLevelCopy?.let { preprocessedToOriginalInlineFunctions[it] = declaration }
-
         val proto = ProtoFunction.newBuilder()
             .setBase(serializeIrFunctionBase(declaration, FunctionFlags.encode(declaration)))
 
         declaration.overriddenSymbols.forEach {
             proto.addOverridden(serializeIrSymbol(it))
+        }
+        declaration.originalOfPreparedInlineFunctionCopy?.let { original ->
+            proto.preparedInlineFunctionFileEntryId = serializeFileEntryId(original.fileEntry)
         }
 
         return proto.build()
@@ -1542,21 +1545,6 @@ open class IrFileSerializer(
             proto.addDeclarationId(serializedDeclaration.id)
         }
 
-        val preprocessedInlineFunctions =
-            preprocessedToOriginalInlineFunctions.map { (preprocessedInlineFunction, originalInlineFunction) ->
-                val originalIdSignature = declarationTable.signatureByDeclaration(
-                    originalInlineFunction,
-                    compatibleMode = false,
-                    recordInSignatureClashDetector = false
-                )
-                val originalSigIndex = protoIdSignatureMap[originalIdSignature]
-                    ?: error("Not found ID for $originalIdSignature (${originalInlineFunction.render()})")
-                proto.addPreprocessedInlineFunctions(originalSigIndex)
-
-                val serializedPreprocessedInlineFunction = serializeTopLevelDeclaration(preprocessedInlineFunction)
-                SerializedDeclaration(originalSigIndex, serializedPreprocessedInlineFunction.bytes)
-            }
-
         val includeLineStartOffsets = !settings.publicAbiOnly || fileContainsInline
         proto.setFileEntryId(serializeFileEntryId(file.fileEntry, includeLineStartOffsets = includeLineStartOffsets))
 
@@ -1581,7 +1569,6 @@ open class IrFileSerializer(
             strings = IrStringWriter(protoStringArray).writeIntoMemory(),
             bodies = IrArrayWriter(protoBodyArray.map { it.toByteArray() }).writeIntoMemory(),
             declarations = IrDeclarationWriter(topLevelDeclarations).writeIntoMemory(),
-            inlineDeclarations = IrDeclarationWriter(preprocessedInlineFunctions).writeIntoMemory(),
             debugInfo = IrStringWriter(protoDebugInfoArray).writeIntoMemory(),
             backendSpecificMetadata = backendSpecificMetadata(file)?.toByteArray(),
             fileEntries = with(protoIrFileEntryArray) {
@@ -1591,6 +1578,34 @@ open class IrFileSerializer(
                     null
                 }
             },
+        )
+    }
+
+    fun serializeIrFileWithPreparedInlineFunctions(preparedFunctions: List<IrSimpleFunction>): SerializedIrFile {
+        val topLevelDeclarations = preparedFunctions.map { function ->
+            val byteArray = serializeDeclaration(function).toByteArray()
+            val idSig = declarationTable.signatureByDeclaration(
+                function.originalOfPreparedInlineFunctionCopy!!,
+                compatibleMode = false,
+                recordInSignatureClashDetector = false
+            )
+            val sigIndex = idSignatureSerializer.protoIdSignature(idSig)
+
+            SerializedDeclaration(sigIndex, byteArray)
+        }
+
+        return SerializedIrFile(
+            fileData = ByteArray(0),
+            fqName = "",
+            path = "",
+            types = IrArrayWriter(protoTypeArray.byteArrays).writeIntoMemory(),
+            signatures = IrArrayWriter(protoIdSignatureArray.map { it.toByteArray() }).writeIntoMemory(),
+            strings = IrStringWriter(protoStringArray).writeIntoMemory(),
+            bodies = IrArrayWriter(protoBodyArray.map { it.toByteArray() }).writeIntoMemory(),
+            declarations = IrDeclarationWriter(topLevelDeclarations).writeIntoMemory(),
+            debugInfo = IrStringWriter(protoDebugInfoArray).writeIntoMemory(),
+            backendSpecificMetadata = null,
+            fileEntries = IrArrayWriter(protoIrFileEntryArray.map { it.toByteArray() }).writeIntoMemory(),
         )
     }
 

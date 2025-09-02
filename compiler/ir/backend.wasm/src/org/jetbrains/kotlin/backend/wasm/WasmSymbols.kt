@@ -25,9 +25,12 @@ import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.util.isNullable
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.name.StandardClassIds.BASE_KOTLIN_PACKAGE
 import org.jetbrains.kotlin.platform.wasm.WasmTarget
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.wasm.config.wasmTarget
@@ -38,6 +41,7 @@ class WasmSymbols(
     configuration: CompilerConfiguration,
 ) : PreSerializationWasmSymbols by PreSerializationWasmSymbols.Impl(irBuiltIns), JsCommonSymbols(irBuiltIns) {
 
+    private val enumsInternalPackageFqName = FqName("kotlin.enums")
     private val kotlinJsPackageFqName = FqName("kotlin.js")
     private val kotlinTestPackageFqName = FqName("kotlin.test")
 
@@ -78,6 +82,8 @@ class WasmSymbols(
 
     internal val wasmLongImmutableArray = getInternalWasmClass("WasmLongImmutableArray")
 
+    val asserts: Iterable<IrSimpleFunctionSymbol> =
+        CallableId(BASE_KOTLIN_PACKAGE, Name.identifier("assert")).functionSymbols()
     override val throwNullPointerException = getInternalWasmFunction("THROW_NPE")
     override val throwISE = getInternalWasmFunction("THROW_ISE")
     override val throwTypeCastException = getInternalWasmFunction("THROW_CCE")
@@ -203,7 +209,7 @@ class WasmSymbols(
     val wasmArrayCopy = getInternalWasmFunction("wasm_array_copy")
     val wasmArrayNewData0 = getInternalWasmFunction("array_new_data0")
     val wasmArrayNewData = getInternalWasmFunction("array_new_data")
-    val wasmArrayNewData0CharArray = maybeGetFunction("array_new_data0_char_array", wasmInternalFqName)
+    val wasmArrayNewData0CharArray = maybeGetFunction("array_new_data0_char_array", PreSerializationWasmSymbols.Impl.wasmInternalFqName)
 
     val intToLong = getInternalWasmFunction("wasm_i64_extend_i32_s")
 
@@ -378,4 +384,33 @@ class WasmSymbols(
         }
 
     val invokeOnExportedFunctionExit get() = invokeOnExportedFunctionExitIfWasi ?: error("Cannot access to wasi related std in js mode")
+
+    private fun getFunction(name: String, ownerPackage: FqName): IrSimpleFunctionSymbol {
+        val callableId = CallableId(ownerPackage, Name.identifier(name))
+        return callableId.functionSymbol()
+    }
+
+    private fun maybeGetFunction(name: String, ownerPackage: FqName): IrSimpleFunctionSymbol? {
+        val callableId = CallableId(ownerPackage, Name.identifier(name))
+        return callableId.functionSymbols().singleOrNull()
+    }
+
+    private fun getInternalWasmFunction(name: String): IrSimpleFunctionSymbol {
+        val callableId = CallableId(PreSerializationWasmSymbols.Impl.wasmInternalFqName, Name.identifier(name))
+        return callableId.functionSymbol()
+    }
+
+    private fun getEnumsFunction(name: String): IrSimpleFunctionSymbol {
+        val callableId = CallableId(enumsInternalPackageFqName, Name.identifier(name))
+        return callableId.functionSymbol()
+    }
+
+    private fun getIrClass(fqName: FqName): IrClassSymbol {
+        val classId = ClassId(fqName.parent(), fqName.shortName())
+        return classId.classSymbol()
+    }
+
+    private fun getIrType(fqName: String): IrType = getIrClass(FqName(fqName)).defaultType
+    private fun getInternalWasmClass(name: String): IrClassSymbol = getIrClass(PreSerializationWasmSymbols.Impl.wasmInternalFqName.child(Name.identifier(name)))
+
 }

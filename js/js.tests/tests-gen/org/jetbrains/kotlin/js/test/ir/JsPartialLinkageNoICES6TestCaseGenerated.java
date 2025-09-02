@@ -70,6 +70,12 @@ public class JsPartialLinkageNoICES6TestCaseGenerated extends AbstractJsPartialL
   }
 
   @Test
+  @TestMetadata("crossModuleInlining")
+  public void testCrossModuleInlining() {
+    runTest("compiler/testData/klib/partial-linkage/crossModuleInlining/");
+  }
+
+  @Test
   @TestMetadata("externalDeclarations")
   public void testExternalDeclarations() {
     runTest("compiler/testData/klib/partial-linkage/externalDeclarations/");
@@ -121,6 +127,12 @@ public class JsPartialLinkageNoICES6TestCaseGenerated extends AbstractJsPartialL
   @TestMetadata("interop-changedFunction")
   public void testInterop_changedFunction() {
     runTest("compiler/testData/klib/partial-linkage/interop-changedFunction/");
+  }
+
+  @Test
+  @TestMetadata("intraModuleInlining")
+  public void testIntraModuleInlining() {
+    runTest("compiler/testData/klib/partial-linkage/intraModuleInlining/");
   }
 
   @Test
