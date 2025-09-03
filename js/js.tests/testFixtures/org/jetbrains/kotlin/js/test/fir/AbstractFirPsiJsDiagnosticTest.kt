@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.test.backend.handlers.NoFirCompilationErrorsHandler
 import org.jetbrains.kotlin.test.backend.ir.IrDiagnosticsHandler
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.builders.configureFirHandlersStep
+import org.jetbrains.kotlin.test.builders.configureIrHandlersStep
 import org.jetbrains.kotlin.test.builders.configureLoweredIrHandlersStep
 import org.jetbrains.kotlin.test.builders.klibArtifactsHandlersStep
 import org.jetbrains.kotlin.test.configuration.configurationForClassicAndFirTestsAlongside
@@ -54,6 +55,12 @@ abstract class AbstractFirJsDiagnosticTestBase(val parser: FirParser) : Abstract
             setupHandlersForDiagnosticTest()
             useHandlers(::NoFirCompilationErrorsHandler)
         }
+        configureIrHandlersStep {
+            useHandlers(::IrDiagnosticsHandler)
+        }
+        configureLoweredIrHandlersStep {
+            useHandlers(::IrDiagnosticsHandler)
+        }
 
         useAfterAnalysisCheckers(
             ::PhasedPipelineChecker.bind(TestPhase.FRONTEND),
@@ -77,11 +84,6 @@ abstract class AbstractFirJsDiagnosticTestWithoutBackendTestBase(parser: FirPars
 abstract class AbstractFirJsDiagnosticWithBackendTestBase(parser: FirParser) : AbstractFirJsDiagnosticTestBase(parser) {
     override fun configure(builder: TestConfigurationBuilder) = with(builder) {
         super.configure(builder)
-        configureLoweredIrHandlersStep {
-            useHandlers(
-                ::IrDiagnosticsHandler
-            )
-        }
         klibArtifactsHandlersStep {
             useHandlers(::KlibBackendDiagnosticsHandler)
         }
@@ -110,12 +112,6 @@ abstract class AbstractFirJsDiagnosticWithIrInlinerTestBase(parser: FirParser) :
             LANGUAGE with listOf(
                 "+${LanguageFeature.IrIntraModuleInlinerBeforeKlibSerialization.name}",
                 "+${LanguageFeature.IrCrossModuleInlinerBeforeKlibSerialization.name}"
-            )
-        }
-
-        configureLoweredIrHandlersStep {
-            useHandlers(
-                ::IrDiagnosticsHandler
             )
         }
     }

@@ -11228,6 +11228,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
       }
 
       @Test
+      @TestMetadata("unsafeTransform.kt")
+      public void testUnsafeTransform() {
+        runTest("compiler/testData/codegen/box/coroutines/unsafeTransform.kt");
+      }
+
+      @Test
       @TestMetadata("varCaptuedInCoroutineIntrinsic.kt")
       public void testVarCaptuedInCoroutineIntrinsic() {
         runTest("compiler/testData/codegen/box/coroutines/varCaptuedInCoroutineIntrinsic.kt");
@@ -20013,6 +20019,18 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
         @TestMetadata("kt4989.kt")
         public void testKt4989() {
           runTest("compiler/testData/codegen/box/functions/localFunctions/kt4989.kt");
+        }
+
+        @Test
+        @TestMetadata("liftThroughFunObjectLambda.kt")
+        public void testLiftThroughFunObjectLambda() {
+          runTest("compiler/testData/codegen/box/functions/localFunctions/liftThroughFunObjectLambda.kt");
+        }
+
+        @Test
+        @TestMetadata("liftThroughFunObjectLambdaWithInlinedFunInKlib.kt")
+        public void testLiftThroughFunObjectLambdaWithInlinedFunInKlib() {
+          runTest("compiler/testData/codegen/box/functions/localFunctions/liftThroughFunObjectLambdaWithInlinedFunInKlib.kt");
         }
 
         @Test

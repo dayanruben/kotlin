@@ -6,14 +6,12 @@
 package org.jetbrains.kotlin.backend.common.serialization
 
 import org.jetbrains.kotlin.backend.common.serialization.IrDeserializationSettings.DeserializeFunctionBodies
-import org.jetbrains.kotlin.backend.common.serialization.encodings.BinarySymbolData
 import org.jetbrains.kotlin.backend.common.serialization.signature.PublicIdSignatureComputer
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrFileEntry
 import org.jetbrains.kotlin.ir.LineAndColumn
 import org.jetbrains.kotlin.ir.SourceRangeInfo
 import org.jetbrains.kotlin.ir.declarations.IrFile
-import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.IrPackageFragment
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
@@ -24,17 +22,18 @@ import org.jetbrains.kotlin.ir.symbols.impl.IrFileSymbolImpl
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.library.IrLibrary
 import org.jetbrains.kotlin.library.KotlinLibrary
-import org.jetbrains.kotlin.library.impl.IrArrayReader
 import org.jetbrains.kotlin.library.metadata.KlibDeserializedContainerSource
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.protobuf.ExtensionRegistryLite
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
+import org.jetbrains.kotlin.backend.common.serialization.proto.IrFile as ProtoFile
 
 class NonLinkingIrInlineFunctionDeserializer(
     private val irBuiltIns: IrBuiltIns,
     private val signatureComputer: PublicIdSignatureComputer,
 ) {
     private val irInterner = IrInterningService()
-    private val irFactory get() = irBuiltIns.irFactory
 
     /**
      * This is a separate symbol table ("detached") from the symbol table ("main") that is used in IR linker.
@@ -43,7 +42,7 @@ class NonLinkingIrInlineFunctionDeserializer(
      * and the process of partial deserialization of inline functions, which should produce some amount of unbound symbols
      * that are not supposed to be linked and therefore should not be tracked in the main symbol table.
      */
-    private val detachedSymbolTable = SymbolTable(signaturer = null, irFactory)
+    private val detachedSymbolTable = SymbolTable(signaturer = null, irBuiltIns.irFactory)
 
     private val moduleDeserializers = hashMapOf<KotlinLibrary, ModuleDeserializer?>()
     private val modules = hashMapOf<KotlinLibrary, IrModuleFragment>()
@@ -64,7 +63,14 @@ class NonLinkingIrInlineFunctionDeserializer(
 
         val library = deserializedContainerSource.klib
         val moduleDeserializer = moduleDeserializers.getOrPut(library) {
-            if (library.hasIrOfInlineableFuns) ModuleDeserializer(library) else null
+            runIf(library.hasIrOfInlineableFuns) {
+                ModuleDeserializer(
+                    library = library,
+                    detachedSymbolTable = detachedSymbolTable,
+                    irInterner = irInterner,
+                    irBuiltIns = irBuiltIns,
+                )
+            }
         } ?: return null
 
         val functionSignature: IdSignature = signatureComputer.computeSignature(function)
@@ -76,10 +82,12 @@ class NonLinkingIrInlineFunctionDeserializer(
         return deserializedFunction
     }
 
-    private fun referencePublicSymbol(signature: IdSignature, symbolKind: BinarySymbolData.SymbolKind) =
-        referenceDeserializedSymbol(detachedSymbolTable, fileSymbol = null, symbolKind, signature)
-
-    private inner class ModuleDeserializer(library: KotlinLibrary) {
+    class ModuleDeserializer(
+        library: KotlinLibrary,
+        detachedSymbolTable: SymbolTable,
+        irInterner: IrInterningService,
+        irBuiltIns: IrBuiltIns,
+    ) {
         private val fileReader = IrLibraryFileFromBytes(InlinableFunsFileIrKlibBytesSource(library))
 
         private val dummyFileSymbol = IrFileImpl(
@@ -103,13 +111,20 @@ class NonLinkingIrInlineFunctionDeserializer(
             dummyFileSymbol,
             enqueueLocalTopLevelDeclaration = {},
             irInterner,
-            deserializePublicSymbolWithOwnerInUnknownFile = ::referencePublicSymbol
+            deserializePublicSymbolWithOwnerInUnknownFile = { signature, symbolKind ->
+                referenceDeserializedSymbol(
+                    detachedSymbolTable,
+                    fileSymbol = null,
+                    symbolKind,
+                    signature
+                )
+            }
         )
 
         private val declarationDeserializer = IrDeclarationDeserializer(
             builtIns = irBuiltIns,
             symbolTable = detachedSymbolTable,
-            irFactory = irFactory,
+            irFactory = irBuiltIns.irFactory,
             libraryFile = fileReader,
             parent = dummyFileSymbol.owner,
             settings = IrDeserializationSettings(
@@ -127,10 +142,12 @@ class NonLinkingIrInlineFunctionDeserializer(
          * Deserialize declarations only on demand. Cache top-level declarations to avoid repetitive deserialization
          * if the declaration happens to have multiple inline functions.
          */
-        private val reversedSignatureIndex: Map<IdSignature, Int> = run {
-            val maxSignatureIndex = IrArrayReader(library.signaturesOfInlineableFuns()).entryCount() - 1
-            (0..maxSignatureIndex).associateBy { symbolDeserializer.deserializeIdSignature(it) }
+        val reversedSignatureIndex: Map<IdSignature, Int> = run {
+            val fileStream = library.irFileOfInlineableFuns().codedInputStream
+            val fileProto = ProtoFile.parseFrom(fileStream, ExtensionRegistryLite.newInstance())
+            fileProto.declarationIdList.associateBy { symbolDeserializer.deserializeIdSignature(it) }
         }
+
         private val deserializedFunctionCache = mutableMapOf<IdSignature, IrSimpleFunction?>()
 
         fun deserializeInlineFunction(signature: IdSignature, originalFunctionPackage: IrPackageFragment): IrSimpleFunction? =
@@ -142,7 +159,7 @@ class NonLinkingIrInlineFunctionDeserializer(
                 val fileEntryProto = fileReader.fileEntry(functionProto.irFunction.preparedInlineFunctionFileEntryId)!!
                 val fileEntry = deserializeFileEntry(fileEntryProto)
                 val file = IrFileImpl(
-                    symbol = IrFileSymbolImpl(originalFunctionPackage.symbol.descriptor),
+                    symbol = IrFileSymbolImpl(with(originalFunctionPackage.symbol) { runIf(hasDescriptor) { descriptor } }),
                     packageFqName = originalFunctionPackage.packageFqName,
                     fileEntry = fileEntry,
                 )
