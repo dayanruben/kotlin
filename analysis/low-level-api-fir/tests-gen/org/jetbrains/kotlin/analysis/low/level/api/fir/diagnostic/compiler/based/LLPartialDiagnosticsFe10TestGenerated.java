@@ -9743,6 +9743,12 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
       }
 
       @Test
+      @TestMetadata("callableReferences.kt")
+      public void testCallableReferences() {
+        runTest("compiler/testData/diagnostics/tests/crv/callableReferences.kt");
+      }
+
+      @Test
       @TestMetadata("casts.kt")
       public void testCasts() {
         runTest("compiler/testData/diagnostics/tests/crv/casts.kt");
@@ -9854,6 +9860,12 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
       @TestMetadata("scopes.kt")
       public void testScopes() {
         runTest("compiler/testData/diagnostics/tests/crv/scopes.kt");
+      }
+
+      @Test
+      @TestMetadata("syntheticMembers.kt")
+      public void testSyntheticMembers() {
+        runTest("compiler/testData/diagnostics/tests/crv/syntheticMembers.kt");
       }
 
       @Test
@@ -10032,6 +10044,12 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
       @TestMetadata("overrides.kt")
       public void testOverrides() {
         runTest("compiler/testData/diagnostics/tests/crvFull/overrides.kt");
+      }
+
+      @Test
+      @TestMetadata("syntheticMembers.kt")
+      public void testSyntheticMembers() {
+        runTest("compiler/testData/diagnostics/tests/crvFull/syntheticMembers.kt");
       }
 
       @Test

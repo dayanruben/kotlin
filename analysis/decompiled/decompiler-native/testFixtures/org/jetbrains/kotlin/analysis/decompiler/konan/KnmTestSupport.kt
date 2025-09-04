@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -19,7 +19,7 @@ import kotlin.io.path.absolutePathString
 
 interface KnmTestSupport {
     val ignoreDirective: SimpleDirective
-    fun createDecompiler(): KlibMetadataDecompiler<*>
+    fun createDecompiler(): KotlinKlibMetadataDecompiler
     fun compileCommonMetadata(inputKtFiles: List<Path>, compilationOutputPath: Path, additionalArguments: List<String>): OutputType
 }
 
@@ -34,9 +34,7 @@ object Fe10KnmTestSupport : KnmTestSupport {
     override val ignoreDirective: SimpleDirective
         get() = Directives.KNM_FE10_IGNORE
 
-    override fun createDecompiler(): KlibMetadataDecompiler<*> {
-        return KotlinNativeMetadataDecompiler()
-    }
+    override fun createDecompiler(): KotlinKlibMetadataDecompiler = KotlinKlibMetadataDecompiler()
 
     override fun compileCommonMetadata(
         inputKtFiles: List<Path>,
@@ -65,9 +63,7 @@ object K2KnmTestSupport : KnmTestSupport {
     override val ignoreDirective: SimpleDirective
         get() = Directives.KNM_K2_IGNORE
 
-    override fun createDecompiler(): KlibMetadataDecompiler<*> {
-        return K2KotlinNativeMetadataDecompiler()
-    }
+    override fun createDecompiler(): KotlinKlibMetadataDecompiler = KotlinKlibMetadataDecompiler()
 
     override fun compileCommonMetadata(
         inputKtFiles: List<Path>,
