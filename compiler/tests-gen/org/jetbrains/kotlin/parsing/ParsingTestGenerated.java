@@ -2554,6 +2554,11 @@ public class ParsingTestGenerated extends AbstractParsingTest {
         runTest("compiler/testData/psi/kdoc/HttpLink.kt");
       }
 
+      @TestMetadata("IdentifiersWithBackticks.kt")
+      public void testIdentifiersWithBackticks() {
+        runTest("compiler/testData/psi/kdoc/IdentifiersWithBackticks.kt");
+      }
+
       @TestMetadata("Incomplete.kt")
       public void testIncomplete() {
         runTest("compiler/testData/psi/kdoc/Incomplete.kt");
@@ -2612,6 +2617,11 @@ public class ParsingTestGenerated extends AbstractParsingTest {
       @TestMetadata("Simple.kt")
       public void testSimple() {
         runTest("compiler/testData/psi/kdoc/Simple.kt");
+      }
+
+      @TestMetadata("StartCodeBlockAfterTwoOrMoreLineBreaks.kt")
+      public void testStartCodeBlockAfterTwoOrMoreLineBreaks() {
+        runTest("compiler/testData/psi/kdoc/StartCodeBlockAfterTwoOrMoreLineBreaks.kt");
       }
 
       @TestMetadata("TextLinkWithNewLine.kt")

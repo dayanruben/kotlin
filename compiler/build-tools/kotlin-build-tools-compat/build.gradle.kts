@@ -45,9 +45,11 @@ generatedSourcesTask(
     argsProvider = { generationRoot ->
         listOf(
             generationRoot.toString(),
+            "2.2.20",
             "impl",
             "jvmCompilerArguments",
-            "org.jetbrains.kotlin.buildtools.internal.compat.arguments"
+            "org.jetbrains.kotlin.buildtools.internal.compat.arguments",
+            "compat",
         )
     }
 )

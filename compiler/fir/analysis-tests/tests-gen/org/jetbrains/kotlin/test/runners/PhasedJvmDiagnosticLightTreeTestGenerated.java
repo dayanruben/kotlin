@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.test.runners;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TargetBackend;
-import org.jetbrains.kotlin.test.utils.TransformersFunctions;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -9609,6 +9608,59 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Nested
+      @TestMetadata("compiler/testData/diagnostics/tests/crv/expectActual")
+      @TestDataPath("$PROJECT_ROOT")
+      public class ExpectActual {
+        @Test
+        @TestMetadata("actualizeInheritance.kt")
+        public void testActualizeInheritance() {
+          runTest("compiler/testData/diagnostics/tests/crv/expectActual/actualizeInheritance.kt");
+        }
+
+        @Test
+        @TestMetadata("actualizeInheritanceUnspecified.kt")
+        public void testActualizeInheritanceUnspecified() {
+          runTest("compiler/testData/diagnostics/tests/crv/expectActual/actualizeInheritanceUnspecified.kt");
+        }
+
+        @Test
+        @TestMetadata("actualizeSpecified.kt")
+        public void testActualizeSpecified() {
+          runTest("compiler/testData/diagnostics/tests/crv/expectActual/actualizeSpecified.kt");
+        }
+
+        @Test
+        @TestMetadata("actualizeTypealias.kt")
+        public void testActualizeTypealias() {
+          runTest("compiler/testData/diagnostics/tests/crv/expectActual/actualizeTypealias.kt");
+        }
+
+        @Test
+        @TestMetadata("actualizeTypealiasToUnspecified.kt")
+        public void testActualizeTypealiasToUnspecified() {
+          runTest("compiler/testData/diagnostics/tests/crv/expectActual/actualizeTypealiasToUnspecified.kt");
+        }
+
+        @Test
+        @TestMetadata("actualizeUnspecified.kt")
+        public void testActualizeUnspecified() {
+          runTest("compiler/testData/diagnostics/tests/crv/expectActual/actualizeUnspecified.kt");
+        }
+
+        @Test
+        @TestMetadata("inheritanceInCommon.kt")
+        public void testInheritanceInCommon() {
+          runTest("compiler/testData/diagnostics/tests/crv/expectActual/inheritanceInCommon.kt");
+        }
+
+        @Test
+        @TestMetadata("noMemberInExpect.kt")
+        public void testNoMemberInExpect() {
+          runTest("compiler/testData/diagnostics/tests/crv/expectActual/noMemberInExpect.kt");
+        }
+      }
+
+      @Nested
       @TestMetadata("compiler/testData/diagnostics/tests/crv/otherAnnotations")
       @TestDataPath("$PROJECT_ROOT")
       public class OtherAnnotations {
@@ -11560,6 +11612,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("nonDefaultAccessors.kt")
       public void testNonDefaultAccessors() {
         runTest("compiler/testData/diagnostics/tests/delegatedProperty/nonDefaultAccessors.kt");
+      }
+
+      @Test
+      @TestMetadata("privateFinalSetterOnOpenDelegatedVar.kt")
+      public void testPrivateFinalSetterOnOpenDelegatedVar() {
+        runTest("compiler/testData/diagnostics/tests/delegatedProperty/privateFinalSetterOnOpenDelegatedVar.kt");
       }
 
       @Test
@@ -14446,7 +14504,7 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
         @Test
         @TestMetadata("noContextReceiversOnValueClasses.kt")
         public void testNoContextReceiversOnValueClasses() {
-          runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/noContextReceiversOnValueClasses.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+          runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/noContextReceiversOnValueClasses.kt");
         }
 
         @Test
@@ -44907,7 +44965,7 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @Test
       @TestMetadata("annotations.kt")
       public void testAnnotations() {
-        runTest("compiler/testData/diagnostics/tests/valueClasses/annotations.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+        runTest("compiler/testData/diagnostics/tests/valueClasses/annotations.kt");
       }
 
       @Test
@@ -44925,7 +44983,7 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @Test
       @TestMetadata("defaultParameters.kt")
       public void testDefaultParameters() {
-        runTest("compiler/testData/diagnostics/tests/valueClasses/defaultParameters.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+        runTest("compiler/testData/diagnostics/tests/valueClasses/defaultParameters.kt");
       }
 
       @Test
@@ -46538,6 +46596,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
   @TestMetadata("compiler/testData/diagnostics/testsWithAnyBackend")
   @TestDataPath("$PROJECT_ROOT")
   public class TestsWithAnyBackend {
+    @Test
+    @TestMetadata("crossFileInlineCycle.kt")
+    public void testCrossFileInlineCycle() {
+      runTest("compiler/testData/diagnostics/testsWithAnyBackend/crossFileInlineCycle.kt");
+    }
+
     @Test
     @TestMetadata("defaultValuesCycle.kt")
     public void testDefaultValuesCycle() {

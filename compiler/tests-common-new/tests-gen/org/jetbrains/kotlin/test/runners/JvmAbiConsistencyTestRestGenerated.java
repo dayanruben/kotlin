@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.test.runners;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TargetBackend;
-import org.jetbrains.kotlin.test.utils.TransformersFunctions;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -190,6 +189,12 @@ public class JvmAbiConsistencyTestRestGenerated extends AbstractJvmAbiConsistenc
       @TestMetadata("fakeOverrideInDefaultMultiModule.kt")
       public void testFakeOverrideInDefaultMultiModule() {
         runTest("compiler/testData/codegen/boxInline/anonymousObject/fakeOverrideInDefaultMultiModule.kt");
+      }
+
+      @Test
+      @TestMetadata("fakeOverrideLocalGenericBase.kt")
+      public void testFakeOverrideLocalGenericBase() {
+        runTest("compiler/testData/codegen/boxInline/anonymousObject/fakeOverrideLocalGenericBase.kt");
       }
 
       @Test
@@ -3243,12 +3248,6 @@ public class JvmAbiConsistencyTestRestGenerated extends AbstractJvmAbiConsistenc
       }
 
       @Test
-      @TestMetadata("localDelegatedPropertyUsedInsideAnonymousObjectWithInlinedFunInKlib.kt")
-      public void testLocalDelegatedPropertyUsedInsideAnonymousObjectWithInlinedFunInKlib() {
-        runTest("compiler/testData/codegen/boxInline/localFunInLambda/localDelegatedPropertyUsedInsideAnonymousObjectWithInlinedFunInKlib.kt");
-      }
-
-      @Test
       @TestMetadata("localFunInLambda.kt")
       public void testLocalFunInLambda() {
         runTest("compiler/testData/codegen/boxInline/localFunInLambda/localFunInLambda.kt");
@@ -6232,6 +6231,30 @@ public class JvmAbiConsistencyTestRestGenerated extends AbstractJvmAbiConsistenc
       @Test
       public void testAllFilesPresentInWasm_new_exception_handling() {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/boxInline/wasm-new-exception-handling"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+      }
+
+      @Test
+      @TestMetadata("kt5863.kt")
+      public void testKt5863() {
+        runTest("compiler/testData/codegen/boxInline/wasm-new-exception-handling/kt5863.kt");
+      }
+
+      @Test
+      @TestMetadata("tryCatch.kt")
+      public void testTryCatch() {
+        runTest("compiler/testData/codegen/boxInline/wasm-new-exception-handling/tryCatch.kt");
+      }
+
+      @Test
+      @TestMetadata("tryCatch2.kt")
+      public void testTryCatch2() {
+        runTest("compiler/testData/codegen/boxInline/wasm-new-exception-handling/tryCatch2.kt");
+      }
+
+      @Test
+      @TestMetadata("tryCatchFinally.kt")
+      public void testTryCatchFinally() {
+        runTest("compiler/testData/codegen/boxInline/wasm-new-exception-handling/tryCatchFinally.kt");
       }
     }
   }
@@ -15091,25 +15114,25 @@ public class JvmAbiConsistencyTestRestGenerated extends AbstractJvmAbiConsistenc
       @Test
       @TestMetadata("substitutedTypeParameterArray.kt")
       public void testSubstitutedTypeParameterArray() {
-        runTest("compiler/testData/codegen/bytecodeListing/inlineClasses/substitutedTypeParameterArray.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+        runTest("compiler/testData/codegen/bytecodeListing/inlineClasses/substitutedTypeParameterArray.kt");
       }
 
       @Test
       @TestMetadata("substitutedTypeParameterNullableWrapper.kt")
       public void testSubstitutedTypeParameterNullableWrapper() {
-        runTest("compiler/testData/codegen/bytecodeListing/inlineClasses/substitutedTypeParameterNullableWrapper.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+        runTest("compiler/testData/codegen/bytecodeListing/inlineClasses/substitutedTypeParameterNullableWrapper.kt");
       }
 
       @Test
       @TestMetadata("substitutedTypeParameterUpperBound.kt")
       public void testSubstitutedTypeParameterUpperBound() {
-        runTest("compiler/testData/codegen/bytecodeListing/inlineClasses/substitutedTypeParameterUpperBound.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+        runTest("compiler/testData/codegen/bytecodeListing/inlineClasses/substitutedTypeParameterUpperBound.kt");
       }
 
       @Test
       @TestMetadata("substitutedTypeParameterWrapper.kt")
       public void testSubstitutedTypeParameterWrapper() {
-        runTest("compiler/testData/codegen/bytecodeListing/inlineClasses/substitutedTypeParameterWrapper.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+        runTest("compiler/testData/codegen/bytecodeListing/inlineClasses/substitutedTypeParameterWrapper.kt");
       }
 
       @Nested

@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.references.toResolvedNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.references.toResolvedPropertySymbol
 import org.jetbrains.kotlin.fir.resolve.*
+import org.jetbrains.kotlin.fir.resolve.toClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.resolvedType
@@ -532,7 +533,9 @@ class Fir2IrVisitor(
         val delegate = variable.delegate
         if (delegate != null) {
             val irProperty = declarationStorage.createAndCacheIrLocalDelegatedProperty(variable, conversionScope.parentFromStack())
-            irProperty.delegate.initializer = convertToIrExpression(delegate, isDelegate = true)
+            val irDelegate = irProperty.delegate
+            requireNotNull(irDelegate) { "Local delegated property ${irProperty.render()} has no delegate" }
+            irDelegate.initializer = convertToIrExpression(delegate, isDelegate = true)
             conversionScope.withFunction(irProperty.getter) {
                 memberGenerator.convertFunctionContent(irProperty.getter, variable.getter, null)
             }
@@ -1809,7 +1812,7 @@ class Fir2IrVisitor(
     }
 
     private fun ConeClassLikeType?.toIrClassSymbol(): IrClassSymbol? {
-        return this?.lookupTag?.toClassSymbol(session)?.let {
+        return this?.lookupTag?.toClassSymbol()?.let {
             classifierStorage.getIrClassSymbol(it)
         }
     }

@@ -2868,6 +2868,12 @@ public class SourceStubsTestGenerated extends AbstractSourceStubsTest {
     }
 
     @Test
+    @TestMetadata("IdentifiersWithBackticks.kt")
+    public void testIdentifiersWithBackticks() {
+      runTest("compiler/testData/psi/kdoc/IdentifiersWithBackticks.kt");
+    }
+
+    @Test
     @TestMetadata("Incomplete.kt")
     public void testIncomplete() {
       runTest("compiler/testData/psi/kdoc/Incomplete.kt");
@@ -2937,6 +2943,12 @@ public class SourceStubsTestGenerated extends AbstractSourceStubsTest {
     @TestMetadata("Simple.kt")
     public void testSimple() {
       runTest("compiler/testData/psi/kdoc/Simple.kt");
+    }
+
+    @Test
+    @TestMetadata("StartCodeBlockAfterTwoOrMoreLineBreaks.kt")
+    public void testStartCodeBlockAfterTwoOrMoreLineBreaks() {
+      runTest("compiler/testData/psi/kdoc/StartCodeBlockAfterTwoOrMoreLineBreaks.kt");
     }
 
     @Test

@@ -1,27 +1,18 @@
 public abstract interface Interface /* pack.Interface*/ {
-  @kotlin.jvm.JvmExposeBoxed()
-  @org.jetbrains.annotations.NotNull()
-  public abstract @org.jetbrains.annotations.NotNull() pack.ValueClassImpl getPropertyWithValueClass();//  getPropertyWithValueClass()
-
-  @kotlin.jvm.JvmExposeBoxed()
-  public abstract void functionWithValueParam(@org.jetbrains.annotations.NotNull() pack.ValueClassImpl);//  functionWithValueParam(@org.jetbrains.annotations.NotNull() pack.ValueClassImpl)
-
   public abstract int getRegularVariable();//  getRegularVariable()
 
   public abstract void regularFunction();//  regularFunction()
 
   public abstract void setRegularVariable(int);//  setRegularVariable(int)
 
-  class DefaultImpls ...
+  public static final class DefaultImpls /* pack.Interface.DefaultImpls*/ {
+    public static void regularFunction(@org.jetbrains.annotations.NotNull() @org.jetbrains.annotations.NotNull() pack.Interface);//  regularFunction(@org.jetbrains.annotations.NotNull() pack.Interface)
+  }
 }
 
 @<error>()
 public final class ValueClass /* pack.ValueClass*/ implements pack.Interface {
   private final int value;
-
-  @java.lang.Override()
-  @kotlin.jvm.JvmExposeBoxed()
-  public void functionWithValueParam(@org.jetbrains.annotations.NotNull() pack.ValueClassImpl);//  functionWithValueParam(@org.jetbrains.annotations.NotNull() pack.ValueClassImpl)
 
   @java.lang.Override()
   public void regularFunction();//  regularFunction()
@@ -44,15 +35,6 @@ public final class ValueClass /* pack.ValueClass*/ implements pack.Interface {
 @<error>()
 public final class ValueClassImpl /* pack.ValueClassImpl*/ implements pack.Interface {
   private final int int;
-
-  @java.lang.Override()
-  @kotlin.jvm.JvmExposeBoxed()
-  @org.jetbrains.annotations.NotNull()
-  public @org.jetbrains.annotations.NotNull() pack.ValueClassImpl getPropertyWithValueClass();//  getPropertyWithValueClass()
-
-  @java.lang.Override()
-  @kotlin.jvm.JvmExposeBoxed()
-  public void functionWithValueParam(@org.jetbrains.annotations.NotNull() pack.ValueClassImpl);//  functionWithValueParam(@org.jetbrains.annotations.NotNull() pack.ValueClassImpl)
 
   @java.lang.Override()
   @org.jetbrains.annotations.NotNull()
