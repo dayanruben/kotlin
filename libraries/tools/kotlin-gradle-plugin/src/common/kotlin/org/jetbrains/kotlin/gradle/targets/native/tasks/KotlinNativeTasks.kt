@@ -1088,27 +1088,8 @@ abstract class CInteropProcess @Inject internal constructor(params: Params) :
     @get:Internal
     abstract val destinationDirectory: DirectoryProperty
 
-    @Deprecated(
-        message = "This property is scheduled for removal in Kotlin 2.3. Please, use `destinationDirectory` instead",
-        replaceWith = ReplaceWith("destinationDirectory"),
-        DeprecationLevel.ERROR,
-    )
-    @Internal // Taken into account in the outputFileProvider property
-    var destinationDir: Provider<File> = destinationDirectory.map { it.asFile }
-        set(value) {
-            destinationDirectory.fileProvider(value)
-        }
-
     @get:Input
     val konanTarget: KonanTarget = params.konanTarget
-
-    @Deprecated(
-        message = "This property is scheduled for removal in Kotlin 2.3. " +
-                "Please, don't use it in your builds.",
-        level = DeprecationLevel.ERROR,
-    )
-    @get:Internal
-    val konanVersion: String = project.nativeProperties.kotlinNativeVersion.get()
 
     @Suppress("unused")
     @get:Input

@@ -1499,6 +1499,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
     }
 
     @Test
+    @TestMetadata("noneApplicableMessage.kt")
+    public void testNoneApplicableMessage() {
+      runTest("compiler/testData/diagnostics/tests/noneApplicableMessage.kt");
+    }
+
+    @Test
     @TestMetadata("nothingBound.kt")
     public void testNothingBound() {
       runTest("compiler/testData/diagnostics/tests/nothingBound.kt");
@@ -9786,6 +9792,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("nestedClasses.kt")
       public void testNestedClasses() {
         runTest("compiler/testData/diagnostics/tests/crvFull/nestedClasses.kt");
+      }
+
+      @Test
+      @TestMetadata("nestedScopesInsideFile.kt")
+      public void testNestedScopesInsideFile() {
+        runTest("compiler/testData/diagnostics/tests/crvFull/nestedScopesInsideFile.kt");
       }
 
       @Test

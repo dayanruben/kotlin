@@ -25,7 +25,11 @@ import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.CompilationOutputs
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.dtsExtension
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.jsExtension
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
+import org.jetbrains.kotlin.js.engine.ScriptExecutionException
+import org.jetbrains.kotlin.js.test.ir.AbstractJsCompilerInvocationTest
+import org.jetbrains.kotlin.js.test.ir.JsCompilerInvocationTestConfiguration
 import org.jetbrains.kotlin.js.testOld.V8JsTestChecker
+import org.jetbrains.kotlin.klib.KlibCompilerInvocationTestUtils
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.serialization.js.ModuleKind
 import org.jetbrains.kotlin.test.DebugMode
@@ -65,6 +69,9 @@ abstract class JsAbstractInvalidationTest(
 
     override val environment: KotlinCoreEnvironment =
         KotlinCoreEnvironment.createForParallelTests(rootDisposable, CompilerConfiguration(), EnvironmentConfigFiles.JS_CONFIG_FILES)
+
+    override fun testConfiguration(buildDir: File): KlibCompilerInvocationTestUtils.TestConfiguration =
+        JsCompilerInvocationTestConfiguration(buildDir, AbstractJsCompilerInvocationTest.CompilerType.WITH_IC)
 
     override fun createConfiguration(
         moduleName: String,
@@ -200,6 +207,8 @@ abstract class JsAbstractInvalidationTest(
                 throw ComparisonFailure("Mismatched box out at step $stepId", e.expected, e.actual)
             } catch (e: IllegalStateException) {
                 throw IllegalStateException("Something goes wrong (bad JS code?) at step $stepId\n${e.message}")
+            } catch (e: ScriptExecutionException) {
+                throw IllegalStateException("Something goes wrong (bad JS script?) at step $stepId\n${e.message}")
             }
         }
 
