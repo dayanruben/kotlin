@@ -27,6 +27,12 @@ public class DataFrameBlackBoxCodegenTestGenerated extends AbstractDataFrameBlac
   }
 
   @Test
+  @TestMetadata("addDsl_into.kt")
+  public void testAddDsl_into() {
+    runTest("plugins/kotlin-dataframe/testData/box/addDsl_into.kt");
+  }
+
+  @Test
   @TestMetadata("addId.kt")
   public void testAddId() {
     runTest("plugins/kotlin-dataframe/testData/box/addId.kt");
@@ -215,6 +221,18 @@ public class DataFrameBlackBoxCodegenTestGenerated extends AbstractDataFrameBlac
   @TestMetadata("duplicatedSignature1.kt")
   public void testDuplicatedSignature1() {
     runTest("plugins/kotlin-dataframe/testData/box/duplicatedSignature1.kt");
+  }
+
+  @Test
+  @TestMetadata("emptyColumnGroup.kt")
+  public void testEmptyColumnGroup() {
+    runTest("plugins/kotlin-dataframe/testData/box/emptyColumnGroup.kt");
+  }
+
+  @Test
+  @TestMetadata("emptyFrameColumn.kt")
+  public void testEmptyFrameColumn() {
+    runTest("plugins/kotlin-dataframe/testData/box/emptyFrameColumn.kt");
   }
 
   @Test
