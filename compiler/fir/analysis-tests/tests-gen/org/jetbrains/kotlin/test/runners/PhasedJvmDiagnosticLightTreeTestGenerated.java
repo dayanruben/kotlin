@@ -24634,6 +24634,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
+      @TestMetadata("noTypeArgumentsOnInner.kt")
+      public void testNoTypeArgumentsOnInner() {
+        runTest("compiler/testData/diagnostics/tests/inner/noTypeArgumentsOnInner.kt");
+      }
+
+      @Test
       @TestMetadata("outerGenericParam.kt")
       public void testOuterGenericParam() {
         runTest("compiler/testData/diagnostics/tests/inner/outerGenericParam.kt");
@@ -61405,6 +61411,24 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
         }
 
         @Test
+        @TestMetadata("explicitFieldWithFunctionType.kt")
+        public void testExplicitFieldWithFunctionType() {
+          runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/explicitFieldWithFunctionType.kt");
+        }
+
+        @Test
+        @TestMetadata("explicitFieldWithFunctionTypeAndEarlySmartcast.kt")
+        public void testExplicitFieldWithFunctionTypeAndEarlySmartcast() {
+          runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/explicitFieldWithFunctionTypeAndEarlySmartcast.kt");
+        }
+
+        @Test
+        @TestMetadata("explicitFieldsInitializerTypeMismatch.kt")
+        public void testExplicitFieldsInitializerTypeMismatch() {
+          runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/explicitFieldsInitializerTypeMismatch.kt");
+        }
+
+        @Test
         @TestMetadata("filePrivateBackingFieldAccess.kt")
         public void testFilePrivateBackingFieldAccess() {
           runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/filePrivateBackingFieldAccess.kt");
@@ -61426,6 +61450,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
         @TestMetadata("overriddenPropertiesWithExplicitBackingFields.kt")
         public void testOverriddenPropertiesWithExplicitBackingFields() {
           runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/overriddenPropertiesWithExplicitBackingFields.kt");
+        }
+
+        @Test
+        @TestMetadata("privatePropertyWithExplicitField.kt")
+        public void testPrivatePropertyWithExplicitField() {
+          runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/privatePropertyWithExplicitField.kt");
         }
 
         @Test

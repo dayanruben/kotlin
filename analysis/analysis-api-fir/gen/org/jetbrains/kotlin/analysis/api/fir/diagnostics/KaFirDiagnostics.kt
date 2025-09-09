@@ -1682,6 +1682,13 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val isMismatchDueToNullability: Boolean
     }
 
+    interface FieldInitializerTypeMismatch : KaFirDiagnostic<KtBackingField> {
+        override val diagnosticClass get() = FieldInitializerTypeMismatch::class
+        val expectedType: KaType
+        val actualType: KaType
+        val isMismatchDueToNullability: Boolean
+    }
+
     interface AssignmentTypeMismatch : KaFirDiagnostic<KtExpression> {
         override val diagnosticClass get() = AssignmentTypeMismatch::class
         val expectedType: KaType
@@ -3018,6 +3025,10 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface InconsistentBackingFieldType : KaFirDiagnostic<KtProperty> {
         override val diagnosticClass get() = InconsistentBackingFieldType::class
+    }
+
+    interface ExplicitFieldVisibilityMustBeLessPermissive : KaFirDiagnostic<KtProperty> {
+        override val diagnosticClass get() = ExplicitFieldVisibilityMustBeLessPermissive::class
     }
 
     interface PropertyWithExplicitFieldAndAccessors : KaFirDiagnostic<PsiElement> {

@@ -574,12 +574,13 @@ class AppleFrameworkIT : KGPBaseTest() {
     }
 
     @DisplayName("Smoke test with apple gradle plugin")
+    // AppleGradle plugin is not supported by Gradle 9.0+ due to Project.exec use
+    @GradleTestVersions(maxVersion = TestVersions.Gradle.G_8_14)
     @GradleTest
     fun smokeTestWithAppleGradlePlugin(gradleVersion: GradleVersion) {
         nativeProject(
             "appleGradlePluginConsumesAppleFrameworks",
             gradleVersion,
-            buildJdk = jdk11Info.javaHome,
             buildOptions = defaultBuildOptions.copy(
                 // Apple plugin doesn't support configuration cache
                 configurationCache = BuildOptions.ConfigurationCacheValue.DISABLED,
@@ -609,7 +610,7 @@ class AppleFrameworkIT : KGPBaseTest() {
             }
 
             build(*dependencyInsight("iosAppIosX64ReleaseImplementation0"), "-PmultipleFrameworks") {
-                assertOutputDoesNotContain("mainStaticReleaseFrameworkIos")
+                assertOutputContains("Could not resolve project :iosLib")
             }
         }
     }

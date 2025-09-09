@@ -2018,6 +2018,14 @@ internal class InitializerTypeMismatchImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtNamedDeclaration>(firDiagnostic, token), KaFirDiagnostic.InitializerTypeMismatch
 
+internal class FieldInitializerTypeMismatchImpl(
+    override val expectedType: KaType,
+    override val actualType: KaType,
+    override val isMismatchDueToNullability: Boolean,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtBackingField>(firDiagnostic, token), KaFirDiagnostic.FieldInitializerTypeMismatch
+
 internal class AssignmentTypeMismatchImpl(
     override val expectedType: KaType,
     override val actualType: KaType,
@@ -3623,6 +3631,11 @@ internal class InconsistentBackingFieldTypeImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtProperty>(firDiagnostic, token), KaFirDiagnostic.InconsistentBackingFieldType
+
+internal class ExplicitFieldVisibilityMustBeLessPermissiveImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtProperty>(firDiagnostic, token), KaFirDiagnostic.ExplicitFieldVisibilityMustBeLessPermissive
 
 internal class PropertyWithExplicitFieldAndAccessorsImpl(
     firDiagnostic: KtPsiDiagnostic,
