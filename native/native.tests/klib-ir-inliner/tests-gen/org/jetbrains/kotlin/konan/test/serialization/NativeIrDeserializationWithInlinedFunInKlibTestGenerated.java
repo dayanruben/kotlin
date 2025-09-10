@@ -55585,6 +55585,12 @@ public class NativeIrDeserializationWithInlinedFunInKlibTestGenerated extends Ab
           }
 
           @Test
+          @TestMetadata("genericArrayElementTypeInSupertype.kt")
+          public void testGenericArrayElementTypeInSupertype() {
+            runTest("compiler/testData/codegen/box/reflection/mapping/types/genericArrayElementTypeInSupertype.kt");
+          }
+
+          @Test
           @TestMetadata("inlineClassInSignature.kt")
           public void testInlineClassInSignature() {
             runTest("compiler/testData/codegen/box/reflection/mapping/types/inlineClassInSignature.kt");
@@ -56710,6 +56716,12 @@ public class NativeIrDeserializationWithInlinedFunInKlibTestGenerated extends Ab
         }
 
         @Test
+        @TestMetadata("arrayClassifier.kt")
+        public void testArrayClassifier() {
+          runTest("compiler/testData/codegen/box/reflection/supertypes/arrayClassifier.kt");
+        }
+
+        @Test
         @TestMetadata("builtInClassSupertypes.kt")
         public void testBuiltInClassSupertypes() {
           runTest("compiler/testData/codegen/box/reflection/supertypes/builtInClassSupertypes.kt");
@@ -56734,6 +56746,12 @@ public class NativeIrDeserializationWithInlinedFunInKlibTestGenerated extends Ab
         }
 
         @Test
+        @TestMetadata("javaArrayType.kt")
+        public void testJavaArrayType() {
+          runTest("compiler/testData/codegen/box/reflection/supertypes/javaArrayType.kt");
+        }
+
+        @Test
         @TestMetadata("nullablilitySubstitution.kt")
         public void testNullablilitySubstitution() {
           runTest("compiler/testData/codegen/box/reflection/supertypes/nullablilitySubstitution.kt");
@@ -56743,6 +56761,12 @@ public class NativeIrDeserializationWithInlinedFunInKlibTestGenerated extends Ab
         @TestMetadata("primitives.kt")
         public void testPrimitives() {
           runTest("compiler/testData/codegen/box/reflection/supertypes/primitives.kt");
+        }
+
+        @Test
+        @TestMetadata("rawSupertypes.kt")
+        public void testRawSupertypes() {
+          runTest("compiler/testData/codegen/box/reflection/supertypes/rawSupertypes.kt");
         }
 
         @Test
@@ -57342,6 +57366,12 @@ public class NativeIrDeserializationWithInlinedFunInKlibTestGenerated extends Ab
         }
 
         @Test
+        @TestMetadata("typeAliasedTypeInSupertype.kt")
+        public void testTypeAliasedTypeInSupertype() {
+          runTest("compiler/testData/codegen/box/reflection/types/typeAliasedTypeInSupertype.kt");
+        }
+
+        @Test
         @TestMetadata("typeArguments.kt")
         public void testTypeArguments() {
           runTest("compiler/testData/codegen/box/reflection/types/typeArguments.kt");
@@ -57366,6 +57396,12 @@ public class NativeIrDeserializationWithInlinedFunInKlibTestGenerated extends Ab
           @Test
           public void testAllFilesPresentInCreateType() {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/reflection/types/createType"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+          }
+
+          @Test
+          @TestMetadata("annotations.kt")
+          public void testAnnotations() {
+            runTest("compiler/testData/codegen/box/reflection/types/createType/annotations.kt");
           }
 
           @Test
@@ -57409,9 +57445,39 @@ public class NativeIrDeserializationWithInlinedFunInKlibTestGenerated extends Ab
           }
 
           @Test
+          @TestMetadata("collections.kt")
+          public void testCollections() {
+            runTest("compiler/testData/codegen/box/reflection/types/subtyping/collections.kt");
+          }
+
+          @Test
+          @TestMetadata("flexibleArrayElementVariance.kt")
+          public void testFlexibleArrayElementVariance() {
+            runTest("compiler/testData/codegen/box/reflection/types/subtyping/flexibleArrayElementVariance.kt");
+          }
+
+          @Test
+          @TestMetadata("innerGenericCapturedType.kt")
+          public void testInnerGenericCapturedType() {
+            runTest("compiler/testData/codegen/box/reflection/types/subtyping/innerGenericCapturedType.kt");
+          }
+
+          @Test
+          @TestMetadata("nestedGenericCapturedType.kt")
+          public void testNestedGenericCapturedType() {
+            runTest("compiler/testData/codegen/box/reflection/types/subtyping/nestedGenericCapturedType.kt");
+          }
+
+          @Test
           @TestMetadata("platformType.kt")
           public void testPlatformType() {
             runTest("compiler/testData/codegen/box/reflection/types/subtyping/platformType.kt");
+          }
+
+          @Test
+          @TestMetadata("rawType.kt")
+          public void testRawType() {
+            runTest("compiler/testData/codegen/box/reflection/types/subtyping/rawType.kt");
           }
 
           @Test
@@ -57430,6 +57496,12 @@ public class NativeIrDeserializationWithInlinedFunInKlibTestGenerated extends Ab
           @TestMetadata("typeProjection.kt")
           public void testTypeProjection() {
             runTest("compiler/testData/codegen/box/reflection/types/subtyping/typeProjection.kt");
+          }
+
+          @Test
+          @TestMetadata("variance.kt")
+          public void testVariance() {
+            runTest("compiler/testData/codegen/box/reflection/types/subtyping/variance.kt");
           }
         }
       }

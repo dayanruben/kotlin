@@ -35,12 +35,12 @@ import org.jetbrains.kotlin.metadata.deserialization.getExtensionOrNull
 import org.jetbrains.kotlin.metadata.jvm.JvmProtoBuf
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.scopes.GivenFunctionsMemberScope
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedClassDescriptor
+import org.jetbrains.kotlin.types.model.TypeConstructorMarker
 import org.jetbrains.kotlin.utils.compact
+import java.io.Serializable
 import java.lang.reflect.Modifier
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 import kotlin.jvm.internal.TypeIntrinsics
@@ -51,12 +51,13 @@ import kotlin.metadata.internal.toKmClass
 import kotlin.reflect.*
 import kotlin.reflect.jvm.internal.KDeclarationContainerImpl.MemberBelonginess.DECLARED
 import kotlin.reflect.jvm.internal.KDeclarationContainerImpl.MemberBelonginess.INHERITED
+import kotlin.reflect.jvm.internal.types.DescriptorKType
 import org.jetbrains.kotlin.descriptors.ClassKind as DescriptorClassKind
 import org.jetbrains.kotlin.descriptors.Modality as DescriptorModality
 
 internal class KClassImpl<T : Any>(
     override val jClass: Class<T>,
-) : KDeclarationContainerImpl(), KClass<T>, KClassifierImpl, KTypeParameterOwnerImpl {
+) : KDeclarationContainerImpl(), KClass<T>, KTypeParameterOwnerImpl, TypeConstructorMarker {
     inner class Data : KDeclarationContainerImpl.Data() {
         val kmClass: KmClass? by lazy(PUBLICATION) {
             (descriptor as? DeserializedClassDescriptor)?.let { descriptor ->
@@ -159,33 +160,102 @@ internal class KClassImpl<T : Any>(
             descriptor.declaredTypeParameters.map { descriptor -> KTypeParameterImpl(this@KClassImpl, descriptor) }
         }
 
+        private val typeParameterTable: TypeParameterTable by ReflectProperties.lazySoft {
+            if (kmClass == null)
+                TypeParameterTable.EMPTY
+            else
+                TypeParameterTable(
+                    kmClass!!.typeParameters.withIndex().associate { (index, km) -> km.id to typeParameters[index] },
+                    (jClass.enclosingClass?.takeIf { kmClass!!.isInner }?.kotlin as? KClassImpl<*>)?.data?.value?.typeParameterTable,
+                )
+        }
+
         val supertypes: List<KType> by ReflectProperties.lazySoft {
+            if (jClass == Any::class.java) return@lazySoft emptyList()
+
+            if (useK1Implementation) {
+                return@lazySoft computeLegacySupertypes()
+            }
+
+            val result = ArrayList<KType>()
+            val kmTypes = kmClass?.supertypes
+            if (kmTypes != null) {
+                kmTypes.mapTo(result) { kmType ->
+                    val superClassId = (kmType.classifier as? KmClassifier.Class)?.name?.toClassId()
+                        ?: throw KotlinReflectionInternalError("Supertype of ${this@KClassImpl} not a class: ${kmType.classifier}")
+
+                    val superJavaClass = jClass.safeClassLoader.loadClass(superClassId)
+                        ?: throw KotlinReflectionInternalError("Unsupported superclass of ${this@KClassImpl}: $superClassId")
+
+                    kmType.toKType(jClass.safeClassLoader, typeParameterTable) {
+                        if (jClass.superclass == superJavaClass) {
+                            jClass.genericSuperclass
+                        } else {
+                            val index = jClass.interfaces.indexOf(superJavaClass)
+                            if (index < 0) throw KotlinReflectionInternalError(
+                                "No superclass of ${this@KClassImpl} in Java reflection for $superClassId"
+                            )
+                            jClass.genericInterfaces[index]
+                        }
+                    }
+                }
+
+                // Compiler adds Cloneable and Serializable supertypes for some builtin classes, see `JvmBuiltInsCustomizer.getSupertypes`.
+                if (jClass.isArray) {
+                    result += StandardKTypes.CLONEABLE
+                }
+                if (Serializable::class.java.isAssignableFrom(jClass) && StandardKTypes.SERIALIZABLE !in result &&
+                    qualifiedName?.startsWith("kotlin.") == true
+                ) {
+                    result += StandardKTypes.SERIALIZABLE
+                }
+            } else {
+                jClass.genericSuperclass?.takeUnless { it == Any::class.java }?.let {
+                    result += it.toKType(nullability = TypeNullability.NOT_NULL)
+                }
+                jClass.genericInterfaces.mapTo(result) {
+                    it.toKType(nullability = TypeNullability.NOT_NULL)
+                }
+            }
+
+            if (result.all {
+                    val klass = it.classifier as? KClassImpl<*>
+                    klass != null && (klass.classKind == ClassKind.INTERFACE || klass.classKind == ClassKind.ANNOTATION_CLASS)
+                }) {
+                result += StandardKTypes.ANY
+            }
+            result.compact()
+        }
+
+        private fun computeLegacySupertypes(): List<KType> {
             val kotlinTypes = descriptor.typeConstructor.supertypes
-            val result = ArrayList<KTypeImpl>(kotlinTypes.size)
+            val result = ArrayList<KType>(kotlinTypes.size)
             kotlinTypes.mapTo(result) { kotlinType ->
-                KTypeImpl(kotlinType) {
+                DescriptorKType(kotlinType) {
                     val superClass = kotlinType.constructor.declarationDescriptor
                     if (superClass !is ClassDescriptor) throw KotlinReflectionInternalError("Supertype not a class: $superClass")
 
                     val superJavaClass = superClass.toJavaClass()
-                        ?: throw KotlinReflectionInternalError("Unsupported superclass of $this: $superClass")
+                        ?: throw KotlinReflectionInternalError("Unsupported superclass of ${this@KClassImpl}: $superClass")
 
                     if (jClass.superclass == superJavaClass) {
                         jClass.genericSuperclass
                     } else {
                         val index = jClass.interfaces.indexOf(superJavaClass)
-                        if (index < 0) throw KotlinReflectionInternalError("No superclass of $this in Java reflection for $superClass")
+                        if (index < 0) throw KotlinReflectionInternalError(
+                            "No superclass of ${this@KClassImpl} in Java reflection for $superClass"
+                        )
                         jClass.genericInterfaces[index]
                     }
                 }
             }
             if (!KotlinBuiltIns.isSpecialClassWithNoSupertypes(descriptor) && result.all {
-                    val classKind = DescriptorUtils.getClassDescriptorForType(it.type).kind
-                    classKind == DescriptorClassKind.INTERFACE || classKind == DescriptorClassKind.ANNOTATION_CLASS
+                    val klass = it.classifier as? KClassImpl<*>
+                    klass != null && (klass.classKind == ClassKind.INTERFACE || klass.classKind == ClassKind.ANNOTATION_CLASS)
                 }) {
-                result += KTypeImpl(descriptor.builtIns.anyType) { Any::class.java }
+                result += StandardKTypes.ANY
             }
-            result.compact()
+            return result.compact()
         }
 
         val sealedSubclasses: List<KClass<out T>> by ReflectProperties.lazySoft {
@@ -223,7 +293,7 @@ internal class KClassImpl<T : Any>(
 
     val data = lazy(PUBLICATION) { Data() }
 
-    override val descriptor: ClassDescriptor get() = data.value.descriptor
+    val descriptor: ClassDescriptor get() = data.value.descriptor
 
     private val kmClass: KmClass? get() = data.value.kmClass
 

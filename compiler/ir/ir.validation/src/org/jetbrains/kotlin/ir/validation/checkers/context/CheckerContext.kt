@@ -14,13 +14,14 @@ import org.jetbrains.kotlin.ir.declarations.IrScript
 import org.jetbrains.kotlin.ir.declarations.IrTypeParametersContainer
 import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
-import org.jetbrains.kotlin.ir.validation.ReportIrValidationError
+import org.jetbrains.kotlin.ir.validation.IrValidationError
 import org.jetbrains.kotlin.ir.validation.ScopeStack
+import org.jetbrains.kotlin.ir.validation.checkers.IrChecker
 
 class CheckerContext(
     val irBuiltIns: IrBuiltIns,
     val file: IrFile,
-    private val reportError: ReportIrValidationError,
+    private val reportError: (IrValidationError) -> Unit,
 ) {
     val parentChain: MutableList<IrElement> = mutableListOf()
     val typeParameterScopeStack = ScopeStack<IrTypeParameterSymbol>()
@@ -29,7 +30,20 @@ class CheckerContext(
     var withinAnnotationUsageSubTree: Boolean = false
         private set
 
-    fun error(element: IrElement, message: String) = reportError(file, element, message, parentChain)
+    // Some checks are (temporarily) disabled for scriping related IR, because it happens to violate many of the rules of IR.
+    //  At the same time:
+    //  1. Kotlin scripting is supported only in JVM - so the possibly invalid IR won't be stored anywhere, as in the case of Klibs.
+    //  2. The compiled code is executed immediately - so even if the generated code is invalid, you'll see the result right away.
+    //  3. It somehow worked before those checks were added.
+    //  This means the severity of invalid IR inside scripts is not that critical.
+    var withinScripOrScriptClass: Boolean = false
+        private set
+
+    fun error(element: IrElement, cause: IrValidationError.Cause, message: String) =
+        reportError(IrValidationError(file, element, cause, message, parentChain))
+
+    context(checker: IrChecker)
+    fun error(element: IrElement, message: String) = error(element, checker, message)
 
     fun withTypeParametersInScope(container: IrTypeParametersContainer, block: () -> Unit) {
         typeParameterScopeStack.withNewScope(
@@ -55,6 +69,16 @@ class CheckerContext(
             withinAnnotationUsageSubTree = true
             block()
             withinAnnotationUsageSubTree = false
+        }
+    }
+
+    fun withinScripOrScriptClass(block: () -> Unit) {
+        if (withinScripOrScriptClass) {
+            block()
+        } else {
+            withinScripOrScriptClass = true
+            block()
+            withinScripOrScriptClass = false
         }
     }
 }

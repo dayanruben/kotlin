@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.types.impl.IrDynamicTypeImpl
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.util.*
-import org.jetbrains.kotlin.ir.validation.checkers.IrValidationError
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
@@ -142,7 +141,7 @@ class IrValidatorTest {
 
     private inline fun runValidationAndAssert(mode: IrVerificationMode, block: () -> Unit) {
         if (mode == IrVerificationMode.ERROR) {
-            assertFailsWith<IrValidationError>(block = block)
+            assertFailsWith<IrValidationException>(block = block)
         } else {
             block()
         }
@@ -155,15 +154,15 @@ class IrValidatorTest {
         config: IrValidatorConfig = defaultValidationConfig,
     ) {
         runValidationAndAssert(mode) {
-            validateIr(messageCollector, mode) {
-                performBasicIrValidation(
-                    tree,
-                    TestIrBuiltins,
-                    phaseName = "IrValidatorTest",
-                    config
-                )
-                assertEquals(expectedMessages, messageCollector.messages)
-            }
+            validateIr(
+                tree,
+                TestIrBuiltins,
+                config,
+                messageCollector,
+                mode,
+                phaseName = "IrValidatorTest",
+            )
+            assertEquals(expectedMessages, messageCollector.messages)
         }
     }
 

@@ -21,17 +21,17 @@ import org.jetbrains.kotlin.utils.addToStdlib.applyIf
 abstract class IrValidationPhase<Context : LoweringContext>(val context: Context) : ModuleLoweringPass {
     protected abstract val defaultValidationConfig: IrValidatorConfig
 
-    final override fun lower(irModule: IrModuleFragment) {
+    override fun lower(irModule: IrModuleFragment) {
         val verificationMode = context.configuration.get(CommonConfigurationKeys.VERIFY_IR, IrVerificationMode.NONE)
         val phaseName = this.javaClass.simpleName
-        validateIr(context.configuration.messageCollector, verificationMode) {
-            performBasicIrValidation(
-                irModule,
-                context.irBuiltIns,
-                phaseName,
-                defaultValidationConfig,
-            )
-        }
+        validateIr(
+            irModule,
+            context.irBuiltIns,
+            defaultValidationConfig,
+            context.configuration.messageCollector,
+            verificationMode,
+            phaseName,
+        )
     }
 }
 
