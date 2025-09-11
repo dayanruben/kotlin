@@ -5,12 +5,10 @@
 
 package org.jetbrains.kotlin.generators.tests
 
-import org.jetbrains.kotlin.generators.generateTestGroupSuiteWithJUnit5
+import org.jetbrains.kotlin.generators.dsl.junit5.generateTestGroupSuiteWithJUnit5
 import org.jetbrains.kotlin.generators.util.TestGeneratorUtil
 import org.jetbrains.kotlin.incremental.AbstractFirWasmInvalidationTest
 import org.jetbrains.kotlin.incremental.AbstractFirWasmInvalidationWithPLTest
-import org.jetbrains.kotlin.wasm.test.AbstractWasmPartialLinkageWithICTestCase
-import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.wasm.test.*
 import org.jetbrains.kotlin.wasm.test.diagnostics.*
 
@@ -36,13 +34,13 @@ fun main(args: Array<String>) {
     generateTestGroupSuiteWithJUnit5(args) {
         testGroup("wasm/wasm.tests/tests-gen", "compiler/testData") {
             testClass<AbstractWasmPartialLinkageNoICTestCase> {
-                model("klib/partial-linkage/", pattern = "^([^_](.+))$", targetBackend = TargetBackend.WASM, recursive = false)
+                model("klib/partial-linkage/", pattern = "^([^_](.+))$", recursive = false)
             }
         }
 
         testGroup("wasm/wasm.tests/tests-gen", "compiler/testData") {
             testClass<AbstractWasmPartialLinkageWithICTestCase> {
-                model("klib/partial-linkage/", pattern = "^([^_](.+))$", targetBackend = TargetBackend.WASM, recursive = false)
+                model("klib/partial-linkage/", pattern = "^([^_](.+))$", recursive = false)
             }
         }
 
@@ -51,7 +49,6 @@ fun main(args: Array<String>) {
                 model(
                     "incremental/invalidation/",
                     pattern = "^([^_](.+))$",
-                    targetBackend = TargetBackend.WASM,
                     recursive = false,
                 )
             }
@@ -59,7 +56,6 @@ fun main(args: Array<String>) {
                 model(
                     "incremental/invalidationWithPL/",
                     pattern = "^([^_](.+))$",
-                    targetBackend = TargetBackend.WASM,
                     recursive = false,
                 )
             }

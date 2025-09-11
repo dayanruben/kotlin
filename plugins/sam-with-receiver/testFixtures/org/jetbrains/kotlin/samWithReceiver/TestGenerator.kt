@@ -5,12 +5,12 @@
 
 package org.jetbrains.kotlin.samWithReceiver
 
-import org.jetbrains.kotlin.generators.generateTestGroupSuiteWithJUnit5
-import org.jetbrains.kotlin.generators.impl.generateTestGroupSuite
+import org.jetbrains.kotlin.generators.dsl.junit4.generateTestGroupSuiteWithJUnit4
+import org.jetbrains.kotlin.generators.dsl.junit5.generateTestGroupSuiteWithJUnit5
 import org.jetbrains.kotlin.generators.util.TestGeneratorUtil
 
 fun main(args: Array<String>) {
-    generateTestGroupSuite(args) {
+    generateTestGroupSuiteWithJUnit4(args) {
         testGroup("plugins/sam-with-receiver/tests-gen", "plugins/sam-with-receiver/testData") {
             testClass<AbstractSamWithReceiverScriptTest> {
                 model("script", extension = "kts")

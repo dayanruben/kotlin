@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.wasm.test;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.util.KtTestUtil;
-import org.jetbrains.kotlin.test.TargetBackend;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.jupiter.api.Test;
 
@@ -33,7 +32,7 @@ public class WasmPartialLinkageWithICTestCaseGenerated extends AbstractWasmParti
 
   @Test
   public void testAllFilesPresentInPartial_linkage() {
-    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/klib/partial-linkage"), Pattern.compile("^([^_](.+))$"), null, TargetBackend.WASM, false);
+    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/klib/partial-linkage"), Pattern.compile("^([^_](.+))$"), null, false);
   }
 
   @Test
@@ -73,6 +72,12 @@ public class WasmPartialLinkageWithICTestCaseGenerated extends AbstractWasmParti
   }
 
   @Test
+  @TestMetadata("crossModuleInliningInPreprocessedFunctions")
+  public void testCrossModuleInliningInPreprocessedFunctions() {
+    runTest("compiler/testData/klib/partial-linkage/crossModuleInliningInPreprocessedFunctions/");
+  }
+
+  @Test
   @TestMetadata("externalDeclarations")
   public void testExternalDeclarations() {
     runTest("compiler/testData/klib/partial-linkage/externalDeclarations/");
@@ -88,6 +93,12 @@ public class WasmPartialLinkageWithICTestCaseGenerated extends AbstractWasmParti
   @TestMetadata("fakeOverridesUnboundClassifiers")
   public void testFakeOverridesUnboundClassifiers() {
     runTest("compiler/testData/klib/partial-linkage/fakeOverridesUnboundClassifiers/");
+  }
+
+  @Test
+  @TestMetadata("functionExcludedFromFirstStageInlining")
+  public void testFunctionExcludedFromFirstStageInlining() {
+    runTest("compiler/testData/klib/partial-linkage/functionExcludedFromFirstStageInlining/");
   }
 
   @Test

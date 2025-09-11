@@ -27642,6 +27642,12 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
     }
 
     @Test
+    @TestMetadata("defaultArgsLoweringWithIntraModuleInliner.kt")
+    public void testDefaultArgsLoweringWithIntraModuleInliner() {
+      runTest("compiler/testData/codegen/box/inline/defaultArgsLoweringWithIntraModuleInliner.kt");
+    }
+
+    @Test
     @TestMetadata("defaultArgsMultipleModules.kt")
     public void testDefaultArgsMultipleModules() {
       runTest("compiler/testData/codegen/box/inline/defaultArgsMultipleModules.kt");
@@ -46826,6 +46832,12 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
       @TestMetadata("explicitBackingFieldInAnonymous.kt")
       public void testExplicitBackingFieldInAnonymous() {
         runTest("compiler/testData/codegen/box/properties/backingField/explicitBackingFieldInAnonymous.kt");
+      }
+
+      @Test
+      @TestMetadata("explicitFieldCallableReference.kt")
+      public void testExplicitFieldCallableReference() {
+        runTest("compiler/testData/codegen/box/properties/backingField/explicitFieldCallableReference.kt");
       }
 
       @Test

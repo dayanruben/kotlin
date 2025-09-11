@@ -72,6 +72,12 @@ public class NativePartialLinkageTestGenerated extends AbstractNativePartialLink
   }
 
   @Test
+  @TestMetadata("crossModuleInliningInPreprocessedFunctions")
+  public void testCrossModuleInliningInPreprocessedFunctions() {
+    runTest("compiler/testData/klib/partial-linkage/crossModuleInliningInPreprocessedFunctions/");
+  }
+
+  @Test
   @TestMetadata("externalDeclarations")
   public void testExternalDeclarations() {
     runTest("compiler/testData/klib/partial-linkage/externalDeclarations/");
@@ -87,6 +93,12 @@ public class NativePartialLinkageTestGenerated extends AbstractNativePartialLink
   @TestMetadata("fakeOverridesUnboundClassifiers")
   public void testFakeOverridesUnboundClassifiers() {
     runTest("compiler/testData/klib/partial-linkage/fakeOverridesUnboundClassifiers/");
+  }
+
+  @Test
+  @TestMetadata("functionExcludedFromFirstStageInlining")
+  public void testFunctionExcludedFromFirstStageInlining() {
+    runTest("compiler/testData/klib/partial-linkage/functionExcludedFromFirstStageInlining/");
   }
 
   @Test

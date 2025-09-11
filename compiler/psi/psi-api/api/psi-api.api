@@ -4008,13 +4008,12 @@ public abstract interface class org/jetbrains/kotlin/psi/stubs/KotlinClassLitera
 
 public abstract interface class org/jetbrains/kotlin/psi/stubs/KotlinClassOrObjectStub : org/jetbrains/kotlin/psi/stubs/KotlinClassifierStub, org/jetbrains/kotlin/psi/stubs/KotlinStubWithFqName {
 	public abstract fun getSuperNames ()Ljava/util/List;
-	public abstract fun isLocal ()Z
+	public fun isLocal ()Z
 	public abstract fun isTopLevel ()Z
 }
 
 public abstract interface class org/jetbrains/kotlin/psi/stubs/KotlinClassStub : org/jetbrains/kotlin/psi/stubs/KotlinClassOrObjectStub {
 	public abstract fun isClsStubCompiledToJvmDefaultImplementation ()Z
-	public abstract fun isEnumEntry ()Z
 	public abstract fun isInterface ()Z
 }
 

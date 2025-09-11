@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.test.runners;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.util.KtTestUtil;
-import org.jetbrains.kotlin.test.TargetBackend;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -22,7 +21,7 @@ import java.util.regex.Pattern;
 public class ClassicDiagnosticsTestWithConverterGenerated extends AbstractClassicDiagnosticsTestWithConverter {
   @Test
   public void testAllFilesPresentInTestsWithConverter() {
-    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/testsWithConverter"), Pattern.compile("^(.+)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|partialBody|fir|ll|latestLV)\\.kts?$"), TargetBackend.JVM_IR, true);
+    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/testsWithConverter"), Pattern.compile("^(.+)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|partialBody|fir|ll|latestLV)\\.kts?$"), true);
   }
 
   @Nested
@@ -31,7 +30,7 @@ public class ClassicDiagnosticsTestWithConverterGenerated extends AbstractClassi
   public class Scripts {
     @Test
     public void testAllFilesPresentInScripts() {
-      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/testsWithConverter/scripts"), Pattern.compile("^(.+)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|partialBody|fir|ll|latestLV)\\.kts?$"), TargetBackend.JVM_IR, true);
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/testsWithConverter/scripts"), Pattern.compile("^(.+)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|partialBody|fir|ll|latestLV)\\.kts?$"), true);
     }
 
     @Test

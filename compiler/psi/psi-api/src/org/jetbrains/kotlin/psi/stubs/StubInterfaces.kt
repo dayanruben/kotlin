@@ -59,7 +59,7 @@ interface KotlinTypeAliasStub : KotlinClassifierStub<KtTypeAlias>, KotlinStubWit
 
 @SubclassOptInRequired(KtImplementationDetail::class)
 interface KotlinClassOrObjectStub<T : KtClassOrObject> : KotlinClassifierStub<T>, KotlinStubWithFqName<T> {
-    val isLocal: Boolean
+    val isLocal: Boolean get() = classId == null
     val superNames: List<String>
     val isTopLevel: Boolean
 }
@@ -67,7 +67,6 @@ interface KotlinClassOrObjectStub<T : KtClassOrObject> : KotlinClassifierStub<T>
 @SubclassOptInRequired(KtImplementationDetail::class)
 interface KotlinClassStub : KotlinClassOrObjectStub<KtClass> {
     val isInterface: Boolean
-    val isEnumEntry: Boolean
 
     /**
      * When we build [KotlinClassStub] for source stubs, this function always returns `false`. For binary stubs, it returns whether

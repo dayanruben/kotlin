@@ -4,6 +4,7 @@
  */
 // IGNORE_NATIVE: optimizationMode=DEBUG
 // IGNORE_NATIVE: optimizationMode=NO
+// LANGUAGE: -IrCrossModuleInlinerBeforeKlibSerialization
 
 import kotlin.test.*
 import kotlin.native.internal.*

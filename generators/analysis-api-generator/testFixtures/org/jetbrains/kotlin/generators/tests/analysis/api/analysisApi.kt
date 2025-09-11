@@ -72,7 +72,7 @@ import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.session.*
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.symbols.*
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.types.*
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.*
-import org.jetbrains.kotlin.generators.TestGroup
+import org.jetbrains.kotlin.generators.dsl.TestGroup
 import org.jetbrains.kotlin.generators.tests.analysis.api.dsl.*
 import org.jetbrains.kotlin.generators.util.TestGeneratorUtil
 
@@ -650,6 +650,10 @@ private fun AnalysisApiTestGroup.generateAnalysisApiComponentsTests() {
 
         test<AbstractLenientClassSymbolSubtypingTypeRelationTest> {
             model(it, "subtypingAndEquality")
+        }
+
+        test<AbstractCanBeCalledAsExtensionOnTest>(filter = frontendIs(FrontendKind.Fir)) {
+            model(it, "canBeCalledAsExtensionOn")
         }
     }
 

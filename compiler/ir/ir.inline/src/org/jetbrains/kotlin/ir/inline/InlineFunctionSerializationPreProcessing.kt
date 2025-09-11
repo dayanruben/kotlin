@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.ir.inline
 
-import org.jetbrains.kotlin.backend.common.LoweringContext
 import org.jetbrains.kotlin.backend.common.ModuleLoweringPass
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.IrElement
@@ -20,7 +19,9 @@ import org.jetbrains.kotlin.ir.util.originalOfPreparedInlineFunctionCopy
 import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 
-class InlineFunctionSerializationPreProcessing(private val context: LoweringContext) : IrVisitorVoid(), ModuleLoweringPass {
+class InlineFunctionSerializationPreProcessing(
+    private val crossModuleFunctionInliner: FunctionInlining?,
+) : IrVisitorVoid(), ModuleLoweringPass {
     private val preprocessedFunctions = mutableListOf<IrSimpleFunction>()
 
     override fun lower(irModule: IrModuleFragment) {
@@ -34,7 +35,13 @@ class InlineFunctionSerializationPreProcessing(private val context: LoweringCont
 
     override fun visitSimpleFunction(declaration: IrSimpleFunction) {
         if (!declaration.isInline || declaration.body == null || declaration.symbol.isConsideredAsPrivateForInlining()) return
-        val preprocessed = declaration.copyAndEraseTypeParameters().convertToPublicTopLevel().erasePrivateSymbols()
+
+        val preprocessed = declaration
+            .copyAndEraseTypeParameters()
+            .convertToPublicTopLevel()
+            .erasePrivateSymbols()
+            .applyCrossModuleFunctionInlining()
+
         declaration.preparedInlineFunctionCopy = preprocessed
         preprocessed.originalOfPreparedInlineFunctionCopy = declaration
         preprocessedFunctions += preprocessed
@@ -72,5 +79,10 @@ class InlineFunctionSerializationPreProcessing(private val context: LoweringCont
 
     private fun IrInlinedFunctionBlock.isEffectivelyPrivate(): Boolean {
         return inlinedFunctionSymbol?.isConsideredAsPrivateAndNotLocalForInlining() == true
+    }
+
+    private fun IrSimpleFunction.applyCrossModuleFunctionInlining(): IrSimpleFunction {
+        crossModuleFunctionInliner?.lower(body!!, this)
+        return this
     }
 }

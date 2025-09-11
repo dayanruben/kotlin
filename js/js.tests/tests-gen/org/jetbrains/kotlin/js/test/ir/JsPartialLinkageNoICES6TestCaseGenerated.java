@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.js.test.ir;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.junit.jupiter.api.Tag;
-import org.jetbrains.kotlin.test.TargetBackend;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.jupiter.api.Test;
 
@@ -36,7 +35,7 @@ public class JsPartialLinkageNoICES6TestCaseGenerated extends AbstractJsPartialL
 
   @Test
   public void testAllFilesPresentInPartial_linkage() {
-    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/klib/partial-linkage"), Pattern.compile("^([^_](.+))$"), null, TargetBackend.JS_IR_ES6, false);
+    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/klib/partial-linkage"), Pattern.compile("^([^_](.+))$"), null, false);
   }
 
   @Test
@@ -76,6 +75,12 @@ public class JsPartialLinkageNoICES6TestCaseGenerated extends AbstractJsPartialL
   }
 
   @Test
+  @TestMetadata("crossModuleInliningInPreprocessedFunctions")
+  public void testCrossModuleInliningInPreprocessedFunctions() {
+    runTest("compiler/testData/klib/partial-linkage/crossModuleInliningInPreprocessedFunctions/");
+  }
+
+  @Test
   @TestMetadata("externalDeclarations")
   public void testExternalDeclarations() {
     runTest("compiler/testData/klib/partial-linkage/externalDeclarations/");
@@ -91,6 +96,12 @@ public class JsPartialLinkageNoICES6TestCaseGenerated extends AbstractJsPartialL
   @TestMetadata("fakeOverridesUnboundClassifiers")
   public void testFakeOverridesUnboundClassifiers() {
     runTest("compiler/testData/klib/partial-linkage/fakeOverridesUnboundClassifiers/");
+  }
+
+  @Test
+  @TestMetadata("functionExcludedFromFirstStageInlining")
+  public void testFunctionExcludedFromFirstStageInlining() {
+    runTest("compiler/testData/klib/partial-linkage/functionExcludedFromFirstStageInlining/");
   }
 
   @Test

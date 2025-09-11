@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.test.runners;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.util.KtTestUtil;
-import org.jetbrains.kotlin.test.TargetBackend;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -61420,6 +61419,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
         @TestMetadata("explicitBackingFieldsWithKMP.kt")
         public void testExplicitBackingFieldsWithKMP() {
           runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/explicitBackingFieldsWithKMP.kt");
+        }
+
+        @Test
+        @TestMetadata("explicitFieldAndBodylessAccessor.kt")
+        public void testExplicitFieldAndBodylessAccessor() {
+          runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/explicitFieldAndBodylessAccessor.kt");
         }
 
         @Test
