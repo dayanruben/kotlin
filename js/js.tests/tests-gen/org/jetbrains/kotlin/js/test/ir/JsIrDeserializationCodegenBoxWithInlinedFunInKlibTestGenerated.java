@@ -7043,6 +7043,12 @@ public class JsIrDeserializationCodegenBoxWithInlinedFunInKlibTestGenerated exte
       }
 
       @Test
+      @TestMetadata("kt80795.kt")
+      public void testKt80795() {
+        runTest("compiler/testData/codegen/box/casts/kt80795.kt");
+      }
+
+      @Test
       @TestMetadata("lambdaToUnitCast.kt")
       public void testLambdaToUnitCast() {
         runTest("compiler/testData/codegen/box/casts/lambdaToUnitCast.kt");
@@ -63865,6 +63871,12 @@ public class JsIrDeserializationCodegenBoxWithInlinedFunInKlibTestGenerated exte
       }
 
       @Test
+      @TestMetadata("capturedLocalFunReflectionCrossModule.kt")
+      public void testCapturedLocalFunReflectionCrossModule() {
+        runTest("compiler/testData/codegen/boxInline/anonymousObject/capturedLocalFunReflectionCrossModule.kt");
+      }
+
+      @Test
       @TestMetadata("capturedLocalFunTwice.kt")
       public void testCapturedLocalFunTwice() {
         runTest("compiler/testData/codegen/boxInline/anonymousObject/capturedLocalFunTwice.kt");
@@ -64942,12 +64954,6 @@ public class JsIrDeserializationCodegenBoxWithInlinedFunInKlibTestGenerated exte
       @TestMetadata("kt69470.kt")
       public void testKt69470() {
         runTest("compiler/testData/codegen/boxInline/callableReference/kt69470.kt");
-      }
-
-      @Test
-      @TestMetadata("kt78537.kt")
-      public void testKt78537() {
-        runTest("compiler/testData/codegen/boxInline/callableReference/kt78537.kt");
       }
 
       @Test

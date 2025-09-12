@@ -153,7 +153,7 @@ public sealed interface SirTranslationResult {
     public val primaryDeclaration: SirDeclaration?
 
     public sealed interface TypeDeclaration : SirTranslationResult {
-        public val declaration: SirNamedDeclaration
+        public val declaration: SirScopeDefiningDeclaration
         override val primaryDeclaration: SirDeclaration? get() = declaration
     }
 
@@ -168,6 +168,15 @@ public sealed interface SirTranslationResult {
 
     public data class TypeAlias(public override val declaration: SirTypealias) : TypeDeclaration {
         override val allDeclarations: List<SirDeclaration> = listOf(declaration)
+    }
+
+    public data class Enum(public override val declaration: SirEnum) : TypeDeclaration {
+        override val allDeclarations: List<SirDeclaration> = listOf(declaration)
+    }
+
+    public data class EnumCase(public val declaration: SirEnumCase) : SirTranslationResult {
+        override val allDeclarations: List<SirDeclaration> = listOf(declaration)
+        override val primaryDeclaration: SirDeclaration get() = declaration
     }
 
     public data class Constructor(public val declaration: SirInit) : SirTranslationResult {

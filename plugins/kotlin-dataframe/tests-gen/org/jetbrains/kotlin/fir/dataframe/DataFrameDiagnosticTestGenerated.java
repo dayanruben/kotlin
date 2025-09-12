@@ -25,6 +25,12 @@ public class DataFrameDiagnosticTestGenerated extends AbstractDataFrameDiagnosti
   }
 
   @Test
+  @TestMetadata("dataSchemaVisibility.kt")
+  public void testDataSchemaVisibility() {
+    runTest("plugins/kotlin-dataframe/testData/diagnostics/dataSchemaVisibility.kt");
+  }
+
+  @Test
   @TestMetadata("disableInterpretation.kt")
   public void testDisableInterpretation() {
     runTest("plugins/kotlin-dataframe/testData/diagnostics/disableInterpretation.kt");
@@ -76,9 +82,21 @@ public class DataFrameDiagnosticTestGenerated extends AbstractDataFrameDiagnosti
     }
 
     @Test
+    @TestMetadata("cast.kt")
+    public void testCast() {
+      runTest("plugins/kotlin-dataframe/testData/diagnostics/importedSchema/cast.kt");
+    }
+
+    @Test
     @TestMetadata("conflictingCompanionObject.kt")
     public void testConflictingCompanionObject() {
       runTest("plugins/kotlin-dataframe/testData/diagnostics/importedSchema/conflictingCompanionObject.kt");
+    }
+
+    @Test
+    @TestMetadata("importedSchemaVisibility.kt")
+    public void testImportedSchemaVisibility() {
+      runTest("plugins/kotlin-dataframe/testData/diagnostics/importedSchema/importedSchemaVisibility.kt");
     }
 
     @Test

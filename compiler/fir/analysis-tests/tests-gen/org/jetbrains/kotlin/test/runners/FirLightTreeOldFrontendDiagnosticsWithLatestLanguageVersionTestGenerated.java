@@ -8248,6 +8248,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       }
 
       @Test
+      @TestMetadata("javaFieldAssigned.kt")
+      public void testJavaFieldAssigned() {
+        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/javaFieldAssigned.kt");
+      }
+
+      @Test
       @TestMetadata("kt1001.kt")
       public void testKt1001() {
         runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/kt1001.kt");
@@ -9727,6 +9733,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
       @TestMetadata("basicJInterop.kt")
       public void testBasicJInterop() {
         runTest("compiler/testData/diagnostics/tests/crv/basicJInterop.kt");
+      }
+
+      @Test
+      @TestMetadata("booleanShortcut.kt")
+      public void testBooleanShortcut() {
+        runTest("compiler/testData/diagnostics/tests/crv/booleanShortcut.kt");
       }
 
       @Test

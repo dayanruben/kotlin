@@ -230,7 +230,7 @@ private class SirRelocatedFunction(
     override val extensionReceiverParameter: SirParameter? get() = source.extensionReceiverParameter
     override val parameters: List<SirParameter> get() = source.parameters
     override val errorType: SirType get() = source.errorType
-
+    override val isAsync: Boolean get() = source.isAsync
     override val bridges: List<SirBridge> get() {
             val result = source.bridges
             return result
@@ -384,7 +384,7 @@ internal class SirAuxiliaryProtocolDeclarationsFromKtSymbol(
     override val declarations: MutableList<SirDeclaration> by lazyWithSessions {
         ktSymbol.combinedDeclaredMemberScope
             .extractDeclarations()
-            .filterIsInstance<SirNamedDeclaration>()
+            .filterIsInstance<SirScopeDefiningDeclaration>()
             .filter { it.visibility == SirVisibility.PUBLIC }
             .map { declaration ->
                 buildTypealias {

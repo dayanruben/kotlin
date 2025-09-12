@@ -12,6 +12,7 @@ import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.internal.tasks.testing.TestResultProcessor
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.internal.logging.progress.ProgressLogger
@@ -42,7 +43,6 @@ import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 import org.jetbrains.kotlin.gradle.targets.wasm.nodejs.WasmNodeJsRootExtension
 import org.jetbrains.kotlin.gradle.targets.web.nodejs.BaseNodeJsEnvSpec
 import org.jetbrains.kotlin.gradle.targets.web.nodejs.BaseNodeJsRootExtension
-import org.jetbrains.kotlin.gradle.tasks.KotlinTest
 import org.jetbrains.kotlin.gradle.utils.appendLine
 import org.jetbrains.kotlin.gradle.utils.getFile
 import org.jetbrains.kotlin.gradle.utils.getValue
@@ -138,6 +138,17 @@ class KotlinKarma internal constructor(
             { (nodeJsRoot as WasmNodeJsRootExtension).npmTooling.map { it.dir } },
         )
     )
+
+    /**
+     * Used by IntelliJ IDEA to determine which Karma URL should be opened in a browser when starting a debug session.
+     *
+     * Historically, debugging opened the dedicated Karma debug page "/debug.html". We now default to the main page "/".
+     * If you prefer the previous behavior, you can override this property to "/debug.html" (or any other valid Karma page).
+     *
+     * Note: This property is read by IntelliJ IDEA on debugging; changing it affects which page IDEA opens for Karma WASM/JS tests in debug case.
+     */
+    @Suppress("unused")
+    val debugPath: Property<String> = project.objects.property<String>().convention("/")
 
     val webpackConfig = KotlinWebpackConfig(
         npmProjectDir = npmProjectDir.map { it.asFile },
@@ -693,11 +704,23 @@ internal fun writeConfig(
 
     config.files.add(modules.require("kotlin-web-helpers/dist/kotlin-test-karma-runner.js"))
 
-    if (debug) {
-        config.singleRun = false
-        config.autoWatch = true
+    val newConfJsWriters = confJsWriters.toMutableList()
 
+    if (debug) {
         config.browsers.clear()
+
+        newConfJsWriters.add {
+            //language=ES6
+            it.appendLine(
+                """
+                        config.plugins = config.plugins || [];
+                        
+                        config.plugins.push('kotlin-web-helpers/dist/karma-kotlin-debug-plugin.js');
+                    """.trimIndent()
+            )
+        }
+
+        config.frameworks.add("karma-kotlin-debug")
     }
 
     if (platformType != KotlinPlatformType.wasm) {
@@ -748,7 +771,7 @@ internal fun writeConfig(
             .toJson(config, confWriter)
         confWriter.println(");")
 
-        confJsWriters.forEach { it(confWriter) }
+        newConfJsWriters.forEach { it(confWriter) }
 
         writerAction(confWriter)
 

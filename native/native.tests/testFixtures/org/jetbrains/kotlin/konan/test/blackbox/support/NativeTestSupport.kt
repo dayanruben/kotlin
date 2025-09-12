@@ -233,7 +233,6 @@ object NativeTestSupport {
         output += computeForcedNoopTestRunner(enforcedProperties)
         output += computeSharedExecutionTestRunner(enforcedProperties)
         // Parse annotations of current class, since there's no way to put annotations to upper-level enclosing class
-        output += computePipelineType(enforcedProperties, testClass.get())
         output += computeUsedPartialLinkageConfig(enclosingTestClass)
         output += computeCompilerOutputInterceptor(enforcedProperties)
         output += computeBinaryLibraryKind(enforcedProperties)
@@ -572,18 +571,6 @@ object NativeTestSupport {
             testBinariesDir = testBinariesDir,
             lazySharedBinariesDir = { testBinariesDir.resolve(SHARED_MODULES_DIR_NAME).ensureExistsAndIsEmptyDirectory() },
             lazyGivenBinariesDir = { testBinariesDir.resolve(GIVEN_MODULES_DIR_NAME).ensureExistsAndIsEmptyDirectory() }
-        )
-    }
-
-    private fun computePipelineType(enforcedProperties: EnforcedProperties, testClass: Class<*>): PipelineType {
-        val pipelineTypeFromPipelineAnnotation = if (testClass.annotations.any { it is ClassicPipeline })
-            PipelineType.K1
-        else PipelineType.K2
-
-        return ClassLevelProperty.PIPELINE_TYPE.readValue(
-            enforcedProperties,
-            PipelineType.entries.toTypedArray(),
-            default = pipelineTypeFromPipelineAnnotation
         )
     }
 

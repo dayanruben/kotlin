@@ -12,14 +12,11 @@ import org.jetbrains.kotlin.konan.target.Family
 import org.jetbrains.kotlin.konan.test.blackbox.support.*
 import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.*
 import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.TestCompilationResult.Companion.assertSuccess
-import org.jetbrains.kotlin.konan.test.blackbox.support.group.ClassicPipeline
 import org.jetbrains.kotlin.konan.test.blackbox.support.runner.TestExecutable
 import org.jetbrains.kotlin.konan.test.blackbox.support.runner.TestRunCheck
 import org.jetbrains.kotlin.konan.test.blackbox.support.runner.TestRunChecks
 import org.jetbrains.kotlin.konan.test.blackbox.support.settings.*
 import org.jetbrains.kotlin.konan.test.blackbox.support.util.createTestProvider
-import org.jetbrains.kotlin.native.executors.RunProcessException
-import org.jetbrains.kotlin.native.executors.runProcess
 import org.jetbrains.kotlin.test.KotlinTestUtils.assertEqualsToFile
 import org.jetbrains.kotlin.test.KtAssert.fail
 import org.jetbrains.kotlin.test.services.JUnit5Assertions.assertTrue
@@ -28,14 +25,8 @@ import org.junit.jupiter.api.Test
 import java.io.File
 import kotlin.time.Duration
 
-@ClassicPipeline()
 @TestDataPath("\$PROJECT_ROOT")
-class ClassicFrameworkTest : FrameworkTestBase()
-
-@TestDataPath("\$PROJECT_ROOT")
-class FirFrameworkTest : FrameworkTestBase()
-
-abstract class FrameworkTestBase : AbstractNativeSimpleTest() {
+class FrameworkTest : AbstractNativeSimpleTest() {
     private val testSuiteDir = File("native/native.tests/testData/framework")
     private val extras = TestCase.NoTestRunnerExtras("There's no entrypoint in Swift program")
     private val testCompilationFactory = TestCompilationFactory()
@@ -391,37 +382,37 @@ abstract class FrameworkTestBase : AbstractNativeSimpleTest() {
 
     @Test
     fun objCExportTest() {
-        objCExportTestImpl("", emptyList(), emptyList(), false, true)
+        objCExportTestImpl("", emptyList(), emptyList(), false)
     }
 
     @Test
     fun objCExportTestNoGenerics() {
         objCExportTestImpl("NoGenerics", listOf("-Xno-objc-generics"),
-                           listOf("-D", "NO_GENERICS"), false, true)
+                           listOf("-D", "NO_GENERICS"), false)
     }
 
     @Test
     fun objCExportTestLegacySuspendUnit() {
         objCExportTestImpl("LegacySuspendUnit", listOf("-Xbinary=unitSuspendFunctionObjCExport=legacy"),
-                           listOf("-D", "LEGACY_SUSPEND_UNIT_FUNCTION_EXPORT"), false, true)
+                           listOf("-D", "LEGACY_SUSPEND_UNIT_FUNCTION_EXPORT"), false)
     }
 
     @Test
     fun objCExportTestNoSwiftMemberNameMangling() {
         objCExportTestImpl("NoSwiftMemberNameMangling", listOf("-Xbinary=objcExportDisableSwiftMemberNameMangling=true"),
-                           listOf("-D", "DISABLE_MEMBER_NAME_MANGLING"), false, false)
+                           listOf("-D", "DISABLE_MEMBER_NAME_MANGLING"), false)
     }
 
     @Test
     fun objCExportTestNoInterfaceMemberNameMangling() {
         objCExportTestImpl("NoInterfaceMemberNameMangling", listOf("-Xbinary=objcExportIgnoreInterfaceMethodCollisions=true"),
-                           listOf("-D", "DISABLE_INTERFACE_METHOD_NAME_MANGLING"), false, false)
+                           listOf("-D", "DISABLE_INTERFACE_METHOD_NAME_MANGLING"), false)
     }
 
     @Test
     fun objCExportTestStatic() {
         objCExportTestImpl("Static", listOf("-Xbinary=objcExportSuspendFunctionLaunchThreadRestriction=main"),
-                           listOf("-D", "DISALLOW_SUSPEND_ANY_THREAD"), true, false)
+                           listOf("-D", "DISALLOW_SUSPEND_ANY_THREAD"), true)
     }
 
     @Test
@@ -467,11 +458,8 @@ abstract class FrameworkTestBase : AbstractNativeSimpleTest() {
         frameworkOpts: List<String>,
         swiftOpts: List<String>,
         isStaticFramework: Boolean,
-        needLazyHeaderCheck: Boolean,
     ) {
         Assumptions.assumeTrue(targets.testTarget.family.isAppleFamily)
-        val doLazyHeaderCheck = needLazyHeaderCheck && testRunSettings.get<PipelineType>() == PipelineType.K1
-        val lazyHeader: File = buildDir.resolve("lazy-$suffix.h").also { it.delete() } // Clean up lazy header after previous runs
 
         // Compile a couple of KLIBs
         val library = compileToLibrary(
@@ -507,7 +495,6 @@ abstract class FrameworkTestBase : AbstractNativeSimpleTest() {
                     "-Xexport-kdoc",
                     "-Xbinary=bundleId=foo.bar",
                     "-module-name", frameworkName,
-                    "-Xemit-lazy-objc-header=${lazyHeader.absolutePath}".takeIf { doLazyHeaderCheck },
                 )
             ),
             givenDependencies = setOf(TestModule.Given(library.klibFile), TestModule.Given(noEnumEntries.klibFile)),
@@ -545,19 +532,6 @@ abstract class FrameworkTestBase : AbstractNativeSimpleTest() {
         val infoPlistContents = infoPlist.readText()
         assertTrue(infoPlistContents.contains(Regex("<key>CFBundleIdentifier</key>\\s*<string>foo.bar</string>"))) {
             "${infoPlist.absolutePath} does not contain expected pattern with `foo.bar`:\n$infoPlistContents"
-        }
-
-        if (doLazyHeaderCheck) {
-            val expectedLazyHeaderName = "expectedLazy/expectedLazy${suffix}.h"
-            val expectedLazyHeader = objcExportTestSuiteDir.resolve(expectedLazyHeaderName)
-            if (!expectedLazyHeader.exists() || expectedLazyHeader.readLines() != lazyHeader.readLines()) {
-                try {
-                    runProcess("diff", "-u", expectedLazyHeader.absolutePath, lazyHeader.absolutePath)
-                } catch (_: RunProcessException) {
-                    lazyHeader.copyTo(expectedLazyHeader, overwrite = true)
-                    fail("$expectedLazyHeader file patched;\nPlease review this change and commit the patch, if change is correct")
-                }
-            }
         }
     }
 

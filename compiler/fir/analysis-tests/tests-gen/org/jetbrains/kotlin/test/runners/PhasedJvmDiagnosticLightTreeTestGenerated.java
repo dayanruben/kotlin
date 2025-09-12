@@ -8053,6 +8053,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
+      @TestMetadata("javaFieldAssigned.kt")
+      public void testJavaFieldAssigned() {
+        runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/javaFieldAssigned.kt");
+      }
+
+      @Test
       @TestMetadata("kt1001.kt")
       public void testKt1001() {
         runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/kt1001.kt");
@@ -9472,6 +9478,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("basicJInterop.kt")
       public void testBasicJInterop() {
         runTest("compiler/testData/diagnostics/tests/crv/basicJInterop.kt");
+      }
+
+      @Test
+      @TestMetadata("booleanShortcut.kt")
+      public void testBooleanShortcut() {
+        runTest("compiler/testData/diagnostics/tests/crv/booleanShortcut.kt");
       }
 
       @Test
@@ -56864,6 +56876,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("RedundantVisibilityModifierCheckerWithExplicitApiMode.kt")
       public void testRedundantVisibilityModifierCheckerWithExplicitApiMode() {
         runTest("compiler/fir/analysis-tests/testData/resolve/extraCheckers/RedundantVisibilityModifierCheckerWithExplicitApiMode.kt");
+      }
+
+      @Test
+      @TestMetadata("RedundantVisibilityOfProtectedOverride.kt")
+      public void testRedundantVisibilityOfProtectedOverride() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/extraCheckers/RedundantVisibilityOfProtectedOverride.kt");
       }
 
       @Nested
