@@ -1,0 +1,5 @@
+KtNameReferenceExpression(84,90): 'Nested'
+  KtSimpleNameReference:
+    isImplicitReferenceToCompanion: true
+    symbols:
+      (in AA.Nested) companion object

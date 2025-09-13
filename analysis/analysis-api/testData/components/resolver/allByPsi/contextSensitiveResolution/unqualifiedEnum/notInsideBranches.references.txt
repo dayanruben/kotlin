@@ -1,0 +1,35 @@
+KtNameReferenceExpression(113,117): 'Some'
+  KtSimpleNameReference:
+    isImplicitReferenceToCompanion: false
+    symbols:
+      (in ROOT) enum class Some
+
+KtNameReferenceExpression(127,128): 's'
+  KtSimpleNameReference:
+    isImplicitReferenceToCompanion: false
+    symbols:
+      s: Some
+
+KtNameReferenceExpression(136,141): 'FIRST'
+  KtSimpleNameReference:
+    isImplicitReferenceToCompanion: false
+    symbols:
+      (in Some) FIRST
+
+KtNameReferenceExpression(145,151): 'SECOND'
+  KtSimpleNameReference:
+    isImplicitReferenceToCompanion: false
+    symbols:
+      Nothing (Unresolved reference)
+
+KtNameReferenceExpression(156,162): 'SECOND'
+  KtSimpleNameReference:
+    isImplicitReferenceToCompanion: false
+    symbols:
+      (in Some) SECOND
+
+KtNameReferenceExpression(166,171): 'FIRST'
+  KtSimpleNameReference:
+    isImplicitReferenceToCompanion: false
+    symbols:
+      Nothing (Unresolved reference)

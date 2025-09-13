@@ -103,7 +103,7 @@ tasks.withType<Test>().names.forEach { taskName ->
                             """permission java.io.FilePermission "${file.absolutePath}/", "read";""",
                             """permission java.io.FilePermission "${file.absolutePath}/-", "read${
                                 // We write to the testData folder from tests...
-                                if (file.canonicalPath.contains("/testData")) ",write"
+                                if (file.canonicalPath.contains("/testData")) ",write,delete"
                                 else ""
                             }";""",
                         )
@@ -123,6 +123,11 @@ tasks.withType<Test>().names.forEach { taskName ->
                         // (even if you don't modify the file, potentially, you could)
                         listOf(
                             """permission java.io.FilePermission "${file.absolutePath}", "read,write";""",
+                        )
+                    } else if (file.parentFile.name == "ideaHomeForTests") {
+                        listOf(
+                            """permission java.io.FilePermission "${file.parentFile.absolutePath}/-", "read,write";""",
+                            """permission java.io.FilePermission "${file.parentFile.absolutePath}", "read";""",
                         )
                     } else if (file != null) {
                         val parents = parentsReadPermission(file)
