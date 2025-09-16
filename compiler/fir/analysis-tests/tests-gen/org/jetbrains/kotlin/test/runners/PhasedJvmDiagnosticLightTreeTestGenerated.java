@@ -172,6 +172,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
     }
 
     @Test
+    @TestMetadata("avoidInferringNothingUnnecessarily.kt")
+    public void testAvoidInferringNothingUnnecessarily() {
+      runTest("compiler/testData/diagnostics/tests/avoidInferringNothingUnnecessarily.kt");
+    }
+
+    @Test
     @TestMetadata("BacktickNames.kt")
     public void testBacktickNames() {
       runTest("compiler/testData/diagnostics/tests/BacktickNames.kt");
@@ -48212,6 +48218,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
           }
 
           @Test
+          @TestMetadata("missingArgumentsInEffectDeclarations.kt")
+          public void testMissingArgumentsInEffectDeclarations() {
+            runTest("compiler/testData/diagnostics/testsWithStdLib/contracts/dsl/errors/missingArgumentsInEffectDeclarations.kt");
+          }
+
+          @Test
           @TestMetadata("nestedConditionalEffects.kt")
           public void testNestedConditionalEffects() {
             runTest("compiler/testData/diagnostics/testsWithStdLib/contracts/dsl/errors/nestedConditionalEffects.kt");
@@ -61455,6 +61467,18 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
         @TestMetadata("explicitFieldAndBodylessAccessor.kt")
         public void testExplicitFieldAndBodylessAccessor() {
           runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/explicitFieldAndBodylessAccessor.kt");
+        }
+
+        @Test
+        @TestMetadata("explicitFieldControlFlowGraph.kt")
+        public void testExplicitFieldControlFlowGraph() {
+          runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/explicitFieldControlFlowGraph.kt");
+        }
+
+        @Test
+        @TestMetadata("explicitFieldRefersToThePropertyInTheInitializer.kt")
+        public void testExplicitFieldRefersToThePropertyInTheInitializer() {
+          runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/explicitFieldRefersToThePropertyInTheInitializer.kt");
         }
 
         @Test

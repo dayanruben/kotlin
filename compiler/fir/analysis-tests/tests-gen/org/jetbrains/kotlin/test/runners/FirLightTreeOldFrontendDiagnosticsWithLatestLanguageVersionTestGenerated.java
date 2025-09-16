@@ -177,6 +177,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
     }
 
     @Test
+    @TestMetadata("avoidInferringNothingUnnecessarily.kt")
+    public void testAvoidInferringNothingUnnecessarily() {
+      runTest("compiler/testData/diagnostics/tests/avoidInferringNothingUnnecessarily.kt");
+    }
+
+    @Test
     @TestMetadata("BacktickNames.kt")
     public void testBacktickNames() {
       runTest("compiler/testData/diagnostics/tests/BacktickNames.kt");
@@ -47123,6 +47129,12 @@ public class FirLightTreeOldFrontendDiagnosticsWithLatestLanguageVersionTestGene
           @TestMetadata("illegalEqualsCondition.kt")
           public void testIllegalEqualsCondition() {
             runTest("compiler/testData/diagnostics/testsWithStdLib/contracts/dsl/errors/illegalEqualsCondition.kt");
+          }
+
+          @Test
+          @TestMetadata("missingArgumentsInEffectDeclarations.kt")
+          public void testMissingArgumentsInEffectDeclarations() {
+            runTest("compiler/testData/diagnostics/testsWithStdLib/contracts/dsl/errors/missingArgumentsInEffectDeclarations.kt");
           }
 
           @Test

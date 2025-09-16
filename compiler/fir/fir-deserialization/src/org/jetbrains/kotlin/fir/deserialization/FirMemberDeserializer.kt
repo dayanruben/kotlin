@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyGetter
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertySetter
 import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusWithLazyEffectiveVisibility
 import org.jetbrains.kotlin.fir.declarations.utils.*
+import org.jetbrains.kotlin.fir.deserialization.AnnotationDeserializer.CallableKind
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.builder.buildExpressionStub
@@ -45,7 +46,7 @@ class FirDeserializationContext(
     val packageFqName: FqName,
     val relativeClassName: FqName?,
     val typeDeserializer: FirTypeDeserializer,
-    val annotationDeserializer: AbstractAnnotationDeserializer,
+    val annotationDeserializer: AnnotationDeserializer,
     val constDeserializer: FirConstDeserializer,
     val containerSource: DeserializedContainerSource?,
     val outerClassSymbol: FirRegularClassSymbol?,
@@ -64,7 +65,7 @@ class FirDeserializationContext(
         relativeClassName: FqName? = this.relativeClassName,
         containerSource: DeserializedContainerSource? = this.containerSource,
         outerClassSymbol: FirRegularClassSymbol? = this.outerClassSymbol,
-        annotationDeserializer: AbstractAnnotationDeserializer = this.annotationDeserializer,
+        annotationDeserializer: AnnotationDeserializer = this.annotationDeserializer,
         constDeserializer: FirConstDeserializer = this.constDeserializer,
         capturesTypeParameters: Boolean = true,
     ): FirDeserializationContext = FirDeserializationContext(
@@ -94,7 +95,7 @@ class FirDeserializationContext(
             packageProto: ProtoBuf.Package,
             nameResolver: NameResolver,
             moduleData: FirModuleData,
-            annotationDeserializer: AbstractAnnotationDeserializer,
+            annotationDeserializer: AnnotationDeserializer,
             flexibleTypeFactory: FirTypeDeserializer.FlexibleTypeFactory,
             constDeserializer: FirConstDeserializer,
             containerSource: DeserializedContainerSource?
@@ -120,7 +121,7 @@ class FirDeserializationContext(
             classProto: ProtoBuf.Class,
             nameResolver: NameResolver,
             moduleData: FirModuleData,
-            annotationDeserializer: AbstractAnnotationDeserializer,
+            annotationDeserializer: AnnotationDeserializer,
             flexibleTypeFactory: FirTypeDeserializer.FlexibleTypeFactory,
             constDeserializer: FirConstDeserializer,
             containerSource: DeserializedContainerSource?,
@@ -148,7 +149,7 @@ class FirDeserializationContext(
             typeTable: TypeTable,
             moduleData: FirModuleData,
             versionRequirementTable: VersionRequirementTable,
-            annotationDeserializer: AbstractAnnotationDeserializer,
+            annotationDeserializer: AnnotationDeserializer,
             flexibleTypeFactory: FirTypeDeserializer.FlexibleTypeFactory,
             constDeserializer: FirConstDeserializer,
             packageFqName: FqName,
@@ -323,7 +324,7 @@ class FirMemberDeserializer(private val c: FirDeserializationContext) {
                     listOf(proto.setterValueParameter),
                     symbol,
                     proto,
-                    AbstractAnnotationDeserializer.CallableKind.PROPERTY_SETTER,
+                    CallableKind.PROPERTY_SETTER,
                     classProto,
                     kind = FirValueParameterKind.Regular,
                     destination = valueParameters,
@@ -377,7 +378,7 @@ class FirMemberDeserializer(private val c: FirDeserializationContext) {
         val hasGetter = Flags.HAS_GETTER.get(flags)
         val receiverAnnotations = if (hasGetter && proto.hasReceiver()) {
             c.annotationDeserializer.loadExtensionReceiverParameterAnnotations(
-                c.containerSource, proto, local.nameResolver, local.typeTable, AbstractAnnotationDeserializer.CallableKind.PROPERTY_GETTER
+                c.containerSource, proto, local.nameResolver, local.typeTable, CallableKind.PROPERTY_GETTER
             )
         } else {
             emptyList()
@@ -496,7 +497,7 @@ class FirMemberDeserializer(private val c: FirDeserializationContext) {
                 proto.contextReceiverTypes(c.typeTable),
                 symbol,
                 proto,
-                callableKind = AbstractAnnotationDeserializer.CallableKind.PROPERTY_GETTER,
+                callableKind = CallableKind.PROPERTY_GETTER,
                 classProto,
                 deserializationOrigin = FirDeclarationOrigin.Library,
                 destination = contextParameters,
@@ -548,7 +549,7 @@ class FirMemberDeserializer(private val c: FirDeserializationContext) {
         legacyContextReceiverTypes: List<ProtoBuf.Type>,
         symbol: FirBasedSymbol<*>,
         proto: MessageLite,
-        callableKind: AbstractAnnotationDeserializer.CallableKind,
+        callableKind: CallableKind,
         classProto: ProtoBuf.Class?,
         deserializationOrigin: FirDeclarationOrigin,
         destination: MutableList<FirValueParameter>,
@@ -606,7 +607,7 @@ class FirMemberDeserializer(private val c: FirDeserializationContext) {
 
         val receiverAnnotations = if (proto.hasReceiver()) {
             c.annotationDeserializer.loadExtensionReceiverParameterAnnotations(
-                c.containerSource, proto, c.nameResolver, c.typeTable, AbstractAnnotationDeserializer.CallableKind.OTHERS
+                c.containerSource, proto, c.nameResolver, c.typeTable, CallableKind.OTHERS
             )
         } else {
             emptyList()
@@ -660,7 +661,7 @@ class FirMemberDeserializer(private val c: FirDeserializationContext) {
                 proto.valueParameterList,
                 symbol,
                 proto,
-                AbstractAnnotationDeserializer.CallableKind.OTHERS,
+                CallableKind.OTHERS,
                 classProto,
                 kind = FirValueParameterKind.Regular,
                 destination = valueParameters,
@@ -675,7 +676,7 @@ class FirMemberDeserializer(private val c: FirDeserializationContext) {
                 proto.contextReceiverTypes(c.typeTable),
                 symbol,
                 proto,
-                callableKind = AbstractAnnotationDeserializer.CallableKind.OTHERS,
+                callableKind = CallableKind.OTHERS,
                 classProto,
                 deserializationOrigin,
                 destination = contextParameters,
@@ -755,7 +756,7 @@ class FirMemberDeserializer(private val c: FirDeserializationContext) {
                 proto.valueParameterList,
                 symbol,
                 proto,
-                AbstractAnnotationDeserializer.CallableKind.OTHERS,
+                CallableKind.OTHERS,
                 classProto,
                 kind = FirValueParameterKind.Regular,
                 addDefaultValue = classBuilder.symbol.classId == StandardClassIds.Enum,
@@ -786,7 +787,7 @@ class FirMemberDeserializer(private val c: FirDeserializationContext) {
         valueParameters: List<ProtoBuf.ValueParameter>,
         containingDeclarationSymbol: FirBasedSymbol<*>,
         callableProto: MessageLite,
-        callableKind: AbstractAnnotationDeserializer.CallableKind,
+        callableKind: CallableKind,
         classProto: ProtoBuf.Class?,
         kind: FirValueParameterKind,
         addDefaultValue: Boolean = false,
