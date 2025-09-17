@@ -247,8 +247,8 @@ open annotation class kotlin/IgnorableReturnValue : kotlin/Annotation { // kotli
     constructor <init>() // kotlin/IgnorableReturnValue.<init>|<init>(){}[0]
 }
 
-open annotation class kotlin/MustUseReturnValue : kotlin/Annotation { // kotlin/MustUseReturnValue|null[0]
-    constructor <init>() // kotlin/MustUseReturnValue.<init>|<init>(){}[0]
+open annotation class kotlin/MustUseReturnValues : kotlin/Annotation { // kotlin/MustUseReturnValues|null[0]
+    constructor <init>() // kotlin/MustUseReturnValues.<init>|<init>(){}[0]
 }
 
 open annotation class kotlin/OptIn : kotlin/Annotation { // kotlin/OptIn|null[0]
@@ -2110,6 +2110,8 @@ final class kotlin.uuid/Uuid : kotlin.io/Serializable, kotlin/Comparable<kotlin.
         final fun fromLongs(kotlin/Long, kotlin/Long): kotlin.uuid/Uuid // kotlin.uuid/Uuid.Companion.fromLongs|fromLongs(kotlin.Long;kotlin.Long){}[0]
         final fun fromUByteArray(kotlin/UByteArray): kotlin.uuid/Uuid // kotlin.uuid/Uuid.Companion.fromUByteArray|fromUByteArray(kotlin.UByteArray){}[0]
         final fun fromULongs(kotlin/ULong, kotlin/ULong): kotlin.uuid/Uuid // kotlin.uuid/Uuid.Companion.fromULongs|fromULongs(kotlin.ULong;kotlin.ULong){}[0]
+        final fun generateV4(): kotlin.uuid/Uuid // kotlin.uuid/Uuid.Companion.generateV4|generateV4(){}[0]
+        final fun generateV7(): kotlin.uuid/Uuid // kotlin.uuid/Uuid.Companion.generateV7|generateV7(){}[0]
         final fun parse(kotlin/String): kotlin.uuid/Uuid // kotlin.uuid/Uuid.Companion.parse|parse(kotlin.String){}[0]
         final fun parseHex(kotlin/String): kotlin.uuid/Uuid // kotlin.uuid/Uuid.Companion.parseHex|parseHex(kotlin.String){}[0]
         final fun parseHexDash(kotlin/String): kotlin.uuid/Uuid // kotlin.uuid/Uuid.Companion.parseHexDash|parseHexDash(kotlin.String){}[0]
@@ -14102,12 +14104,6 @@ final fun <#A: kotlin/Enum<#A>> kotlin.wasm.internal/enumValuesIntrinsic(): kotl
 final fun kotlin.wasm.internal/findAssociatedObject(kotlin.reflect/KClass<*>, kotlin.reflect/KClass<*>): kotlin/Any? // kotlin.wasm.internal/findAssociatedObject|findAssociatedObject(kotlin.reflect.KClass<*>;kotlin.reflect.KClass<*>){}[0]
 
 // Targets: [wasmJs, wasmWasi]
-final fun kotlin.wasm.internal/throwUninitializedPropertyAccessException(kotlin/String): kotlin/Nothing // kotlin.wasm.internal/throwUninitializedPropertyAccessException|throwUninitializedPropertyAccessException(kotlin.String){}[0]
-
-// Targets: [wasmJs, wasmWasi]
-final fun kotlin.wasm.internal/throwUnsupportedOperationException(kotlin/String): kotlin/Nothing // kotlin.wasm.internal/throwUnsupportedOperationException|throwUnsupportedOperationException(kotlin.String){}[0]
-
-// Targets: [wasmJs, wasmWasi]
 final fun kotlin.wasm.internal/wasm_i64_ctz(kotlin/Long): kotlin/Long // kotlin.wasm.internal/wasm_i64_ctz|wasm_i64_ctz(kotlin.Long){}[0]
 
 // Targets: [wasmJs, wasmWasi]
@@ -14865,12 +14861,6 @@ final fun kotlin.js/parseInt(kotlin/String, kotlin/Int = ...): kotlin/Int // kot
 
 // Targets: [js]
 final fun kotlin/throwKotlinNothingValueException(): kotlin/Nothing // kotlin/throwKotlinNothingValueException|throwKotlinNothingValueException(){}[0]
-
-// Targets: [js]
-final fun kotlin/throwUninitializedPropertyAccessException(kotlin/String): kotlin/Nothing // kotlin/throwUninitializedPropertyAccessException|throwUninitializedPropertyAccessException(kotlin.String){}[0]
-
-// Targets: [js]
-final fun kotlin/throwUnsupportedOperationException(kotlin/String): kotlin/Nothing // kotlin/throwUnsupportedOperationException|throwUnsupportedOperationException(kotlin.String){}[0]
 
 // Targets: [js]
 final inline fun (kotlin.js/RegExpMatch).kotlin.js/asArray(): kotlin/Array<out kotlin/String?> // kotlin.js/asArray|asArray@kotlin.js.RegExpMatch(){}[0]

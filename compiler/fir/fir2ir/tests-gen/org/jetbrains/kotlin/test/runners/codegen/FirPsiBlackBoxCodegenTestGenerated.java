@@ -36406,6 +36406,24 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
     }
 
     @Test
+    @TestMetadata("ubyteOperations.kt")
+    public void testUbyteOperations() {
+      runTest("compiler/testData/codegen/box/involvesIrInterpreter/ubyteOperations.kt");
+    }
+
+    @Test
+    @TestMetadata("uintOperations.kt")
+    public void testUintOperations() {
+      runTest("compiler/testData/codegen/box/involvesIrInterpreter/uintOperations.kt");
+    }
+
+    @Test
+    @TestMetadata("ulongOperations.kt")
+    public void testUlongOperations() {
+      runTest("compiler/testData/codegen/box/involvesIrInterpreter/ulongOperations.kt");
+    }
+
+    @Test
     @TestMetadata("unsignedConst.kt")
     public void testUnsignedConst() {
       runTest("compiler/testData/codegen/box/involvesIrInterpreter/unsignedConst.kt");
@@ -36415,6 +36433,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
     @TestMetadata("useCorrectToString.kt")
     public void testUseCorrectToString() {
       runTest("compiler/testData/codegen/box/involvesIrInterpreter/useCorrectToString.kt");
+    }
+
+    @Test
+    @TestMetadata("ushortOperations.kt")
+    public void testUshortOperations() {
+      runTest("compiler/testData/codegen/box/involvesIrInterpreter/ushortOperations.kt");
     }
 
     @Nested
@@ -56877,6 +56901,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
       }
 
       @Test
+      @TestMetadata("rawRecursiveType.kt")
+      public void testRawRecursiveType() {
+        runTest("compiler/testData/codegen/box/reflection/typeOf/rawRecursiveType.kt");
+      }
+
+      @Test
       @TestMetadata("rawTypes.kt")
       public void testRawTypes() {
         runTest("compiler/testData/codegen/box/reflection/typeOf/rawTypes.kt");
@@ -59374,6 +59404,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
       @TestMetadata("kt19251_child.kt")
       public void testKt19251_child() {
         runTest("compiler/testData/codegen/box/sam/constructors/kt19251_child.kt");
+      }
+
+      @Test
+      @TestMetadata("missingSuperinterface.kt")
+      public void testMissingSuperinterface() {
+        runTest("compiler/testData/codegen/box/sam/constructors/missingSuperinterface.kt");
       }
 
       @Test

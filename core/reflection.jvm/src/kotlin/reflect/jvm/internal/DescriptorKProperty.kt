@@ -25,15 +25,15 @@ import kotlin.reflect.jvm.internal.JvmPropertySignature.*
 import kotlin.reflect.jvm.internal.calls.*
 import kotlin.reflect.jvm.isAccessible
 
-internal abstract class KPropertyImpl<out V> private constructor(
+internal abstract class DescriptorKProperty<out V> private constructor(
     override val container: KDeclarationContainerImpl,
     override val name: String,
-    val signature: String,
+    override val signature: String,
     descriptorInitialValue: PropertyDescriptor?,
-    private val rawBoundReceiver: Any?
-) : KCallableImpl<V>(), KProperty<V> {
+    override val rawBoundReceiver: Any?,
+) : DescriptorKCallable<V>(), ReflectKProperty<V> {
     constructor(container: KDeclarationContainerImpl, name: String, signature: String, boundReceiver: Any?) : this(
-        container, name, signature, null, boundReceiver
+        container, name, signature, null, boundReceiver,
     )
 
     constructor(container: KDeclarationContainerImpl, descriptor: PropertyDescriptor) : this(
@@ -41,13 +41,11 @@ internal abstract class KPropertyImpl<out V> private constructor(
         descriptor.name.asString(),
         RuntimeTypeMapper.mapPropertySignature(descriptor).asString(),
         descriptor,
-        CallableReference.NO_RECEIVER
+        CallableReference.NO_RECEIVER,
     )
 
-    val boundReceiver
+    val boundReceiver: Any?
         get() = rawBoundReceiver.coerceToExpectedReceiverType(descriptor)
-
-    override val isBound: Boolean get() = rawBoundReceiver !== CallableReference.NO_RECEIVER
 
     private val _javaField = lazy(PUBLICATION) {
         when (val jvmSignature = RuntimeTypeMapper.mapPropertySignature(descriptor)) {
@@ -65,7 +63,7 @@ internal abstract class KPropertyImpl<out V> private constructor(
 
                     try {
                         owner?.getDeclaredField(it.name)
-                    } catch (e: NoSuchFieldException) {
+                    } catch (_: NoSuchFieldException) {
                         null
                     }
                 }
@@ -76,7 +74,7 @@ internal abstract class KPropertyImpl<out V> private constructor(
         }
     }
 
-    val javaField: Field? get() = _javaField.value
+    override val javaField: Field? get() = _javaField.value
 
     protected fun computeDelegateSource(): Member? {
         if (!descriptor.isDelegated) return null
@@ -139,7 +137,7 @@ internal abstract class KPropertyImpl<out V> private constructor(
     override val isSuspend: Boolean get() = false
 
     override fun equals(other: Any?): Boolean {
-        val that = other.asKPropertyImpl() ?: return false
+        val that = other.asReflectProperty() ?: return false
         return container == that.container && name == that.name && signature == that.signature && rawBoundReceiver == that.rawBoundReceiver
     }
 
@@ -150,8 +148,8 @@ internal abstract class KPropertyImpl<out V> private constructor(
         ReflectionObjectRenderer.renderProperty(this)
 
     abstract class Accessor<out PropertyType, out ReturnType> :
-        KCallableImpl<ReturnType>(), KProperty.Accessor<PropertyType>, KFunction<ReturnType> {
-        abstract override val property: KPropertyImpl<PropertyType>
+        DescriptorKCallable<ReturnType>(), KProperty.Accessor<PropertyType>, KFunction<ReturnType> {
+        abstract override val property: DescriptorKProperty<PropertyType>
 
         abstract override val descriptor: PropertyAccessorDescriptor
 
@@ -159,7 +157,7 @@ internal abstract class KPropertyImpl<out V> private constructor(
 
         override val defaultCaller: Caller<*>? get() = null
 
-        override val isBound: Boolean get() = property.isBound
+        override val rawBoundReceiver: Any? get() = property.rawBoundReceiver
 
         override val isInline: Boolean get() = descriptor.isInline
         override val isExternal: Boolean get() = descriptor.isExternal
@@ -215,10 +213,10 @@ internal abstract class KPropertyImpl<out V> private constructor(
     }
 }
 
-internal val KPropertyImpl.Accessor<*, *>.boundReceiver
+internal val DescriptorKProperty.Accessor<*, *>.boundReceiver: Any?
     get() = property.boundReceiver
 
-private fun KPropertyImpl.Accessor<*, *>.computeCallerForAccessor(isGetter: Boolean): Caller<*> {
+private fun DescriptorKProperty.Accessor<*, *>.computeCallerForAccessor(isGetter: Boolean): Caller<*> {
     if (KDeclarationContainerImpl.LOCAL_PROPERTY_SIGNATURE.matches(property.signature)) {
         return ThrowingCaller
     }

@@ -10062,6 +10062,12 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
       public void testDisabledChecker() {
         runTest("compiler/testData/diagnostics/tests/crvDisabled/disabledChecker.kt");
       }
+
+      @Test
+      @TestMetadata("oldMustUse.kt")
+      public void testOldMustUse() {
+        runTest("compiler/testData/diagnostics/tests/crvDisabled/oldMustUse.kt");
+      }
     }
 
     @Nested
@@ -24554,9 +24560,21 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
       }
 
       @Test
+      @TestMetadata("publishedApiSpecialCases.kt")
+      public void testPublishedApiSpecialCases() {
+        runTest("compiler/testData/diagnostics/tests/inline/publishedApiSpecialCases.kt");
+      }
+
+      @Test
       @TestMetadata("publishedApiSubstitutionOverride.kt")
       public void testPublishedApiSubstitutionOverride() {
         runTest("compiler/testData/diagnostics/tests/inline/publishedApiSubstitutionOverride.kt");
+      }
+
+      @Test
+      @TestMetadata("publishedFunInterface.kt")
+      public void testPublishedFunInterface() {
+        runTest("compiler/testData/diagnostics/tests/inline/publishedFunInterface.kt");
       }
 
       @Test
@@ -53127,6 +53145,12 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
       @TestMetadata("functionN.kt")
       public void testFunctionN() {
         runTest("compiler/testData/diagnostics/testsWithStdLib/java/functionN.kt");
+      }
+
+      @Test
+      @TestMetadata("implementationWithBoundedTypeParameters.kt")
+      public void testImplementationWithBoundedTypeParameters() {
+        runTest("compiler/testData/diagnostics/testsWithStdLib/java/implementationWithBoundedTypeParameters.kt");
       }
 
       @Test

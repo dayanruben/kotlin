@@ -20,25 +20,14 @@ import java.lang.reflect.Type
 import java.lang.reflect.WildcardType
 import kotlin.coroutines.Continuation
 import kotlin.reflect.*
-import kotlin.reflect.jvm.internal.calls.Caller
 import kotlin.reflect.jvm.internal.calls.getMfvcUnboxMethods
 import kotlin.reflect.jvm.internal.types.DescriptorKType
 import kotlin.reflect.jvm.javaType
 import kotlin.reflect.jvm.jvmErasure
 import java.lang.reflect.Array as ReflectArray
 
-internal abstract class KCallableImpl<out R> : KCallable<R>, KTypeParameterOwnerImpl {
+internal abstract class DescriptorKCallable<out R> : ReflectKCallable<R>, KTypeParameterOwnerImpl {
     abstract val descriptor: CallableMemberDescriptor
-
-    // The instance which is used to perform a positional call, i.e. `call`
-    abstract val caller: Caller<*>
-
-    // The instance which is used to perform a call "by name", i.e. `callBy`
-    abstract val defaultCaller: Caller<*>?
-
-    abstract val container: KDeclarationContainerImpl
-
-    abstract val isBound: Boolean
 
     private val _annotations = ReflectProperties.lazySoft { descriptor.computeAnnotations() }
 
@@ -48,23 +37,23 @@ internal abstract class KCallableImpl<out R> : KCallable<R>, KTypeParameterOwner
         val result = ArrayList<KParameter>()
         val instanceReceiver = descriptor.instanceReceiverParameter
         if (instanceReceiver != null) {
-            result.add(KParameterImpl(this, result.size, KParameter.Kind.INSTANCE) { instanceReceiver })
+            result.add(DescriptorKParameter(this, result.size, KParameter.Kind.INSTANCE) { instanceReceiver })
         }
 
         val contextParameters = descriptor.computeContextParameters()
         for (i in contextParameters.indices) {
             @OptIn(ExperimentalContextParameters::class)
-            result.add(KParameterImpl(this, result.size, KParameter.Kind.CONTEXT) { contextParameters[i] })
+            result.add(DescriptorKParameter(this, result.size, KParameter.Kind.CONTEXT) { contextParameters[i] })
         }
 
         val extensionReceiver = descriptor.extensionReceiverParameter
         if (extensionReceiver != null) {
-            result.add(KParameterImpl(this, result.size, KParameter.Kind.EXTENSION_RECEIVER) { extensionReceiver })
+            result.add(DescriptorKParameter(this, result.size, KParameter.Kind.EXTENSION_RECEIVER) { extensionReceiver })
         }
         result
     }
 
-    val receiverParameters: List<KParameter> get() = _receiverParameters()
+    override val receiverParameters: List<KParameter> get() = _receiverParameters()
 
     private val _parameters = ReflectProperties.lazySoft {
         val descriptor = descriptor
@@ -75,7 +64,7 @@ internal abstract class KCallableImpl<out R> : KCallable<R>, KTypeParameterOwner
         }
 
         for (i in descriptor.valueParameters.indices) {
-            result.add(KParameterImpl(this, result.size, KParameter.Kind.VALUE) { descriptor.valueParameters[i] })
+            result.add(DescriptorKParameter(this, result.size, KParameter.Kind.VALUE) { descriptor.valueParameters[i] })
         }
 
         // Constructor parameters of Java annotations are not ordered in any way, we order them by name here to be more stable.
@@ -193,7 +182,7 @@ internal abstract class KCallableImpl<out R> : KCallable<R>, KTypeParameterOwner
     private fun getAbsentArguments(): Array<Any?> = _absentArguments().clone()
 
     // See ArgumentGenerator#generate
-    internal fun callDefaultMethod(args: Map<KParameter, Any?>, continuationArgument: Continuation<*>?): R {
+    override fun callDefaultMethod(args: Map<KParameter, Any?>, continuationArgument: Continuation<*>?): R {
         val parameters = parameters
 
         // Optimization for functions without value/receiver parameters.

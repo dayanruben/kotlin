@@ -55454,6 +55454,12 @@ public class JsIrDeserializationCodegenBoxWithInlinedFunInKlibTestGenerated exte
         }
 
         @Test
+        @TestMetadata("rawRecursiveType.kt")
+        public void testRawRecursiveType() {
+          runTest("compiler/testData/codegen/box/reflection/typeOf/rawRecursiveType.kt");
+        }
+
+        @Test
         @TestMetadata("rawTypes.kt")
         public void testRawTypes() {
           runTest("compiler/testData/codegen/box/reflection/typeOf/rawTypes.kt");
@@ -57951,6 +57957,12 @@ public class JsIrDeserializationCodegenBoxWithInlinedFunInKlibTestGenerated exte
         @TestMetadata("kt19251_child.kt")
         public void testKt19251_child() {
           runTest("compiler/testData/codegen/box/sam/constructors/kt19251_child.kt");
+        }
+
+        @Test
+        @TestMetadata("missingSuperinterface.kt")
+        public void testMissingSuperinterface() {
+          runTest("compiler/testData/codegen/box/sam/constructors/missingSuperinterface.kt");
         }
 
         @Test

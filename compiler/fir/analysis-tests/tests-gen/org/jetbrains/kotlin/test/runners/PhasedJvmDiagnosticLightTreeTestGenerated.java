@@ -9769,6 +9769,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       public void testDisabledChecker() {
         runTest("compiler/testData/diagnostics/tests/crvDisabled/disabledChecker.kt");
       }
+
+      @Test
+      @TestMetadata("oldMustUse.kt")
+      public void testOldMustUse() {
+        runTest("compiler/testData/diagnostics/tests/crvDisabled/oldMustUse.kt");
+      }
     }
 
     @Nested
@@ -23706,9 +23712,21 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
+      @TestMetadata("publishedApiSpecialCases.kt")
+      public void testPublishedApiSpecialCases() {
+        runTest("compiler/testData/diagnostics/tests/inline/publishedApiSpecialCases.kt");
+      }
+
+      @Test
       @TestMetadata("publishedApiSubstitutionOverride.kt")
       public void testPublishedApiSubstitutionOverride() {
         runTest("compiler/testData/diagnostics/tests/inline/publishedApiSubstitutionOverride.kt");
+      }
+
+      @Test
+      @TestMetadata("publishedFunInterface.kt")
+      public void testPublishedFunInterface() {
+        runTest("compiler/testData/diagnostics/tests/inline/publishedFunInterface.kt");
       }
 
       @Test
@@ -50897,6 +50915,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       }
 
       @Test
+      @TestMetadata("implementationWithBoundedTypeParameters.kt")
+      public void testImplementationWithBoundedTypeParameters() {
+        runTest("compiler/testData/diagnostics/testsWithStdLib/java/implementationWithBoundedTypeParameters.kt");
+      }
+
+      @Test
       @TestMetadata("inheritedFunctionN.kt")
       public void testInheritedFunctionN() {
         runTest("compiler/testData/diagnostics/testsWithStdLib/java/inheritedFunctionN.kt");
@@ -61017,6 +61041,12 @@ public class PhasedJvmDiagnosticLightTreeTestGenerated extends AbstractPhasedJvm
       @TestMetadata("RawType.kt")
       public void testRawType() {
         runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/j+k/RawType.kt");
+      }
+
+      @Test
+      @TestMetadata("recursiveTypeParameterInJava.kt")
+      public void testRecursiveTypeParameterInJava() {
+        runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/j+k/recursiveTypeParameterInJava.kt");
       }
 
       @Test
