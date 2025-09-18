@@ -1798,6 +1798,37 @@
                         }
                     },
                     {
+                        "name": "XXdump-model",
+                        "shortName": null,
+                        "deprecatedName": null,
+                        "description": {
+                            "current": "Dump compilation model to specified directory for use in modularized tests.",
+                            "valueInVersions": []
+                        },
+                        "delimiter": null,
+                        "valueType": {
+                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringType",
+                            "isNullable": {
+                                "current": true,
+                                "valueInVersions": []
+                            },
+                            "defaultValue": {
+                                "current": null,
+                                "valueInVersions": []
+                            }
+                        },
+                        "valueDescription": {
+                            "current": "<dir>",
+                            "valueInVersions": []
+                        },
+                        "releaseVersionsMetadata": {
+                            "introducedVersion": "1.7.0",
+                            "stabilizedVersion": null,
+                            "deprecatedVersion": null,
+                            "removedVersion": null
+                        }
+                    },
+                    {
                         "name": "Xmetadata-version",
                         "shortName": null,
                         "deprecatedName": null,

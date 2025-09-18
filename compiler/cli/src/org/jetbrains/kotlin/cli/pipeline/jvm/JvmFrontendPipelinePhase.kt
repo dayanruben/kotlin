@@ -9,9 +9,18 @@ package org.jetbrains.kotlin.cli.pipeline.jvm
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
+import com.intellij.util.xmlb.XmlSerializer
+import org.jdom.Attribute
+import org.jdom.Document
+import org.jdom.Element
+import org.jdom.output.Format
+import org.jdom.output.XMLOutputter
 import org.jetbrains.kotlin.KtPsiSourceFile
 import org.jetbrains.kotlin.KtSourceFile
 import org.jetbrains.kotlin.cli.common.*
+import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys.CONTENT_ROOTS
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
@@ -22,6 +31,8 @@ import org.jetbrains.kotlin.cli.jvm.compiler.createLibraryListForJvm
 import org.jetbrains.kotlin.cli.jvm.compiler.legacy.pipeline.createContextForIncrementalCompilation
 import org.jetbrains.kotlin.cli.jvm.compiler.legacy.pipeline.createIncrementalCompilationScope
 import org.jetbrains.kotlin.cli.jvm.compiler.legacy.pipeline.createProjectEnvironment
+import org.jetbrains.kotlin.cli.jvm.config.JvmClasspathRoot
+import org.jetbrains.kotlin.cli.jvm.config.JvmModulePathRoot
 import org.jetbrains.kotlin.cli.jvm.targetDescription
 import org.jetbrains.kotlin.cli.pipeline.*
 import org.jetbrains.kotlin.cli.pipeline.jvm.JvmFrontendPipelinePhase.createEnvironmentAndSources
@@ -35,6 +46,7 @@ import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.pipeline.*
 import org.jetbrains.kotlin.fir.session.*
 import org.jetbrains.kotlin.fir.session.environment.AbstractProjectFileSearchScope
+import org.jetbrains.kotlin.modules.Module
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtFile
@@ -48,6 +60,91 @@ object JvmFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, J
     name = "JvmFrontendPipelinePhase",
     postActions = setOf(PerformanceNotifications.AnalysisFinished, CheckCompilationErrors.CheckDiagnosticCollector)
 ) {
+    fun dumpModel(
+        dir: String,
+        chunk: List<Module>,
+        configuration: CompilerConfiguration,
+        arguments: CommonCompilerArguments,
+    ) {
+        val modules = Element("modules").apply {
+            // Just write out all compiler arguments as is
+            addContent(
+                Element("compilerArguments").apply {
+                    val skipDefaultsFilter = SkipDefaultsSerializationFilter()
+                    val element = XmlSerializer.serialize(arguments, skipDefaultsFilter)
+                    addContent(element)
+                }
+            )
+            for (module in chunk) {
+                addContent(Element("module").apply {
+                    attributes.add(
+                        Attribute("timestamp", System.currentTimeMillis().toString())
+                    )
+
+                    attributes.add(
+                        Attribute("name", module.getModuleName())
+                    )
+                    attributes.add(
+                        Attribute("type", module.getModuleType())
+                    )
+                    attributes.add(
+                        Attribute("outputDir", module.getOutputDirectory())
+                    )
+
+                    for (friendDir in module.getFriendPaths()) {
+                        addContent(Element("friendDir").setAttribute("path", friendDir))
+                    }
+                    for (source in module.getSourceFiles()) {
+                        addContent(Element("sources").setAttribute("path", source))
+                    }
+                    for (javaSourceRoots in module.getJavaSourceRoots()) {
+                        addContent(
+                            Element("javaSourceRoots").apply {
+                                setAttribute("path", javaSourceRoots.path)
+                                javaSourceRoots.packagePrefix?.let { setAttribute("packagePrefix", it) }
+                            }
+                        )
+                    }
+                    for (classpath in configuration.get(CONTENT_ROOTS).orEmpty()) {
+                        if (classpath is JvmClasspathRoot) {
+                            addContent(Element("classpath").setAttribute("path", classpath.file.absolutePath))
+                        } else if (classpath is JvmModulePathRoot) {
+                            addContent(Element("modulepath").setAttribute("path", classpath.file.absolutePath))
+                        }
+                    }
+                    for (commonSources in module.getCommonSourceFiles()) {
+                        addContent(Element("commonSources").setAttribute("path", commonSources))
+                    }
+                    module.modularJdkRoot?.let {
+                        addContent(Element("modularJdkRoot").setAttribute("path", module.modularJdkRoot))
+                    }
+                })
+            }
+        }
+        val document = Document(modules)
+        val outputter = XMLOutputter(Format.getPrettyFormat())
+        val dirFile = File(dir)
+        if (!dirFile.exists()) {
+            dirFile.mkdirs()
+        }
+        val fileName = "model-${chunk.first().getModuleName()}"
+        var counter = 0
+        fun file(): File {
+            val postfix = if (counter != 0) ".$counter" else ""
+            return File(dirFile, "$fileName$postfix.xml")
+        }
+
+        var outputFile: File
+        do {
+            outputFile = file()
+            counter++
+        } while (outputFile.exists())
+        outputFile.bufferedWriter().use {
+            outputter.output(document, it)
+        }
+
+    }
+
     override fun executePhase(input: ConfigurationPipelineArtifact): JvmFrontendPipelineArtifact? {
         val (configuration, diagnosticsCollector, rootDisposable) = input
         val messageCollector = configuration.messageCollector

@@ -327,6 +327,18 @@ val actualCommonCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLev
         )
     }
 
+    compilerArgument {
+        name = "XXdump-model"
+        compilerName = "dumpArgumentsDir"
+        description = "Dump compilation model to specified directory for use in modularized tests.".asReleaseDependent()
+        valueDescription = "<dir>".asReleaseDependent()
+        valueType = StringType.defaultNull
+
+        lifecycle(
+            introducedVersion = KotlinReleaseVersion.v1_7_0,
+        )
+    }
+
 
     compilerArgument {
         name = "Xmetadata-version"
