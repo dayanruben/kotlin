@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.gradle.tasks.locateOrRegisterTask
 import org.jetbrains.kotlin.gradle.tasks.locateTask
 import org.jetbrains.kotlin.gradle.utils.createConsumable
 import org.jetbrains.kotlin.gradle.utils.maybeCreateConsumable
-import org.jetbrains.kotlin.gradle.utils.maybeCreateResolvable
 
 internal const val UKLIB_API_ELEMENTS_NAME = "uklibApiElements"
 internal const val UKLIB_RUNTIME_ELEMENTS_NAME = "uklibRuntimeElements"
@@ -58,14 +57,16 @@ internal suspend fun Project.createUklibOutgoingVariantsAndPublication(): List<D
     return uklibUsages
 }
 
-internal fun Project.locateOrRegisterUklibManifestSerializationForIde(): TaskProvider<SerializeMetadataFragmentsOnlyUklibManifest>? {
+internal fun Project.locateOrRegisterUklibManifestSerializationWithoutCompilationDependency(): TaskProvider<SerializeMetadataFragmentsOnlyUklibManifest>? {
     return when (project.kotlinPropertiesProvider.kmpPublicationStrategy) {
         KmpPublicationStrategy.UklibPublicationInASingleComponentWithKMPPublication -> project.locateOrRegisterTask<SerializeMetadataFragmentsOnlyUklibManifest>(
-            "serializeUklibManifestForIde"
+            "serializeUklibManifestWithoutCompilationDependency"
         )
         KmpPublicationStrategy.StandardKMPPublication -> null
     }
 }
+
+internal fun Project.maybeCreateUklibApiElements() = configurations.maybeCreateConsumable(UKLIB_API_ELEMENTS_NAME)
 
 private suspend fun Project.createOutgoingUklibConfigurationsAndUsages(
     archiveTask: TaskProvider<ArchiveUklibTask>,
@@ -74,7 +75,7 @@ private suspend fun Project.createOutgoingUklibConfigurationsAndUsages(
     /**
      * FIXME: We can still enter the transforms for interproject dependencies with missing files.
      */
-    val uklibApiElements = configurations.maybeCreateConsumable(UKLIB_API_ELEMENTS_NAME).apply {
+    val uklibApiElements = maybeCreateUklibApiElements().apply {
         attributes.apply {
             attribute(Usage.USAGE_ATTRIBUTE, project.usageByName(KotlinUsages.KOTLIN_UKLIB_API))
             attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
@@ -84,32 +85,31 @@ private suspend fun Project.createOutgoingUklibConfigurationsAndUsages(
     }
 
     val metadataCompilations = publishedCompilations.filter { it.compilation.platformType == KotlinPlatformType.common }
-    val serializeUklibManifest = project.locateOrRegisterTask<SerializeMetadataFragmentsOnlyUklibManifestWithCompilationDependencies>(
-        "serializeUklibManifest"
-    ) { task ->
-        metadataCompilations.forEach {
-            task.metadataFragments.add(it.fragment)
-        }
-    }
-    val serializeUklibManifestForIde = locateOrRegisterUklibManifestSerializationForIde() ?: error("...")
-    serializeUklibManifestForIde.configure { task ->
-        metadataCompilations.forEach {
-            task.metadataFragments.add(it.fragment)
-        }
-    }
-    uklibApiElements.outgoing.variants.create("uklibIdeMetadata") {
-        it.attributes.attribute(uklibStateAttribute, uklibStateDecompressed)
-        it.attributes.attribute(uklibViewAttribute, uklibViewAttributeIdeMetadata)
-        it.artifact(serializeUklibManifestForIde) {
-            it.extension = uklibManifestArtifactType
-        }
-    }
+    val serializeUklibManifestWithoutMetadataCompilationDependencies = locateOrRegisterUklibManifestSerializationWithoutCompilationDependency()
+            ?: error("serializeUklibManifestWithoutCompilationDependency task must be available")
 
+    serializeUklibManifestWithoutMetadataCompilationDependencies.configure { task ->
+        metadataCompilations.forEach {
+            task.metadataFragments.add(it.fragment)
+        }
+    }
     uklibApiElements.outgoing.variants.create("uklibInterprojectMetadata") {
         it.attributes.attribute(uklibStateAttribute, uklibStateDecompressed)
         it.attributes.attribute(uklibViewAttribute, uklibViewAttributeWholeUklib)
-        it.artifact(serializeUklibManifest) {
+        it.artifact(serializeUklibManifestWithoutMetadataCompilationDependencies) {
             it.extension = uklibManifestArtifactType
+        }
+    }
+    /**
+     * This outgoing configuration is used to inject interproject metadata compilation output dependencies in uklibs. See
+     * [org.jetbrains.kotlin.gradle.plugin.mpp.MetadataDependencyTransformationTaskInputs.interprojectUklibMetadataCompilationOutputsView]
+     */
+    uklibApiElements.outgoing.variants.create("uklibInterprojectMetadataCompilationOutputs") {
+        it.attributes.attribute(uklibStateAttribute, uklibStateDecompressed)
+        it.attributes.attribute(uklibViewAttribute, uklibViewAttributeMetadataCompilationOutputs)
+        // This artifact is never actually created or read
+        it.artifact(layout.buildDirectory.file("kotlin/uklibMetadataCompilationOutputs")) {
+            it.builtBy(metadataCompilations.map { it.fragment })
         }
     }
 

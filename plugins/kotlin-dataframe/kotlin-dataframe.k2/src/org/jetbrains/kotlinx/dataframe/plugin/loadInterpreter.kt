@@ -104,6 +104,7 @@ import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ColumnOfPairs
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ColumnRange
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ConcatWithKeys
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ConvertAsColumn
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ConvertNotNull
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameBuilderInvoke0
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameOf0
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameOf3
@@ -117,6 +118,7 @@ import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DropLast0
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DropLast1
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DropLast2
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DropNa0
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DropNa1
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DropNulls1
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ExcludeJoin
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ExcludeJoinWith
@@ -237,6 +239,7 @@ import org.jetbrains.kotlinx.dataframe.plugin.impl.api.Reorder
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ReorderColumnsByName
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.RightJoin
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.RightJoinWith
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.SelectString
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.Single0
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.Single1
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.Single2
@@ -270,6 +273,10 @@ import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ToSpecificType
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ToSpecificTypePattern
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ToSpecificTypeZone
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.UpdateAt
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.UpdatePerColLambda
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.UpdatePerColMap
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.UpdatePerColRow
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.UpdatePerRowCol
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.UpdateWhere
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ValueCols0
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ValueCols1
@@ -359,7 +366,12 @@ internal inline fun <reified T : Interpreter<*>> String.load(isTest: Boolean): T
         "ToSpecificTypePattern" -> ToSpecificTypePattern()
         "With0" -> With0()
         "ConvertAsColumn" -> ConvertAsColumn()
+        "ConvertNotNull" -> ConvertNotNull()
         "PerRowCol" -> PerRowCol()
+        "UpdatePerCol" -> UpdatePerColLambda()
+        "UpdatePerColRow" -> UpdatePerColRow()
+        "UpdatePerColMap" -> UpdatePerColMap()
+        "UpdatePerRowCol" -> UpdatePerRowCol()
         "Explode0" -> Explode0()
         "Implode" -> Implode()
         "ImplodeDefault" -> ImplodeDefault()
@@ -388,6 +400,7 @@ internal inline fun <reified T : Interpreter<*>> String.load(isTest: Boolean): T
         "Rename" -> Rename()
         "RenameMapping" -> RenameMapping()
         "Select0" -> Select0()
+        "SelectString" -> SelectString()
         "Distinct0" -> Select0()
         "NestedSelect" -> NestedSelect()
         "Expr0" -> Expr0()
@@ -399,6 +412,7 @@ internal inline fun <reified T : Interpreter<*>> String.load(isTest: Boolean): T
         "DropNulls0" -> DropNulls0()
         "DropNulls1" -> DropNulls1()
         "DropNa0" -> DropNa0()
+        "DropNa1" -> DropNa1()
         "Properties0" -> Properties0()
         "Preserve0" -> Preserve0()
         "Preserve1" -> Preserve1()

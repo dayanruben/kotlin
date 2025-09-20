@@ -1,24 +1,38 @@
 package org.jetbrains.kotlin.gradle.unitTests.uklibs
 
+import org.gradle.api.DefaultTask
 import org.gradle.api.Project
+import org.gradle.api.artifacts.result.UnresolvedArtifactResult
 import org.gradle.kotlin.dsl.dependencies
+import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.invoke
+import org.gradle.language.jvm.tasks.ProcessResources
+import org.jetbrains.kotlin.gradle.dependencyResolutionTests.tcs.dependsOnDependency
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.multiplatformExtension
+import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinBinaryDependency
+import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinProjectArtifactDependency
+import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinSourceDependency
+import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinUnresolvedBinaryDependency
+import org.jetbrains.kotlin.gradle.idea.testFixtures.tcs.FilePathRegex
+import org.jetbrains.kotlin.gradle.idea.testFixtures.tcs.assertMatches
+import org.jetbrains.kotlin.gradle.idea.testFixtures.tcs.binaryCoordinates
+import org.jetbrains.kotlin.gradle.idea.testFixtures.tcs.dependsOnDependency
+import org.jetbrains.kotlin.gradle.idea.testFixtures.tcs.projectArtifactDependency
 import org.jetbrains.kotlin.gradle.internal.dsl.KotlinMultiplatformSourceSetConventionsImpl.commonMain
 import org.jetbrains.kotlin.gradle.internal.dsl.KotlinMultiplatformSourceSetConventionsImpl.iosMain
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
+import org.jetbrains.kotlin.gradle.plugin.ide.dependencyResolvers.IdeBinaryDependencyResolver
+import org.jetbrains.kotlin.gradle.plugin.ide.kotlinIdeMultiplatformImport
 import org.jetbrains.kotlin.gradle.plugin.mpp.resolvableMetadataConfiguration
 import org.jetbrains.kotlin.gradle.plugin.mpp.uklibs.consumption.KmpResolutionStrategy
 import org.jetbrains.kotlin.gradle.plugin.sources.internal
-import org.jetbrains.kotlin.gradle.testing.ComponentPath
-import org.jetbrains.kotlin.gradle.testing.ResolvedComponentWithArtifacts
-import org.jetbrains.kotlin.gradle.testing.compilationResolution
-import org.jetbrains.kotlin.gradle.testing.prettyPrinted
-import org.jetbrains.kotlin.gradle.testing.resolveProjectDependencyComponentsWithArtifacts
+import org.jetbrains.kotlin.gradle.testing.*
 import org.jetbrains.kotlin.gradle.util.*
+import org.jetbrains.kotlin.tooling.core.closure
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 class UklibInterprojectResolutionTests {
 
@@ -84,11 +98,11 @@ class UklibInterprojectResolutionTests {
                 ":directJavaConsumer" to ResolvedComponentWithArtifacts(
                     artifacts = mutableListOf(
                         mutableMapOf(
-                            "artifactType" to "java-classes-directory",
+                            "artifactType" to "jar",
                             "org.gradle.category" to "library",
                             "org.gradle.dependency.bundling" to "external",
                             "org.gradle.jvm.version" to "17",
-                            "org.gradle.libraryelements" to "classes",
+                            "org.gradle.libraryelements" to "jar",
                             "org.gradle.usage" to "java-api",
                         ),
                     ),
@@ -117,11 +131,11 @@ class UklibInterprojectResolutionTests {
                 ":directJavaConsumer" to ResolvedComponentWithArtifacts(
                     artifacts = mutableListOf(
                         mutableMapOf(
-                            "artifactType" to "java-classes-directory",
+                            "artifactType" to "jar",
                             "org.gradle.category" to "library",
                             "org.gradle.dependency.bundling" to "external",
                             "org.gradle.jvm.version" to "17",
-                            "org.gradle.libraryelements" to "classes",
+                            "org.gradle.libraryelements" to "jar",
                             "org.gradle.usage" to "java-api",
                         ),
                     ),
@@ -134,7 +148,6 @@ class UklibInterprojectResolutionTests {
                             "org.gradle.category" to "library",
                             "org.gradle.libraryelements" to "jar",
                             "org.gradle.usage" to "kotlin-uklib-api",
-                            "org.jetbrains.kotlin.isMetadataJar" to "not-a-metadata-jar",
                             "org.jetbrains.kotlin.uklib" to "true",
                             "org.jetbrains.kotlin.uklibState" to "decompressed",
                             "org.jetbrains.kotlin.uklibView" to "jvm",
@@ -160,7 +173,6 @@ class UklibInterprojectResolutionTests {
                                 "org.gradle.jvm.version" to "17",
                                 "org.gradle.libraryelements" to "jar",
                                 "org.gradle.usage" to "java-api",
-                                "org.jetbrains.kotlin.isMetadataJar" to "unknown",
                             ),
                         ),
                         configuration = "apiElements",
@@ -238,7 +250,6 @@ class UklibInterprojectResolutionTests {
                             "org.gradle.category" to "library",
                             "org.gradle.libraryelements" to "jar",
                             "org.gradle.usage" to "kotlin-uklib-api",
-                            "org.jetbrains.kotlin.isMetadataJar" to "not-a-metadata-jar",
                             "org.jetbrains.kotlin.uklib" to "true",
                             "org.jetbrains.kotlin.uklibState" to "decompressed",
                             "org.jetbrains.kotlin.uklibView" to "jvm",
@@ -426,7 +437,6 @@ class UklibInterprojectResolutionTests {
                             "org.gradle.category" to "library",
                             "org.gradle.libraryelements" to "jar",
                             "org.gradle.usage" to "kotlin-uklib-api",
-                            "org.jetbrains.kotlin.isMetadataJar" to "not-a-metadata-jar",
                             "org.jetbrains.kotlin.uklib" to "true",
                             "org.jetbrains.kotlin.uklibState" to "decompressed",
                             "org.jetbrains.kotlin.uklibView" to "jvm",
@@ -441,7 +451,6 @@ class UklibInterprojectResolutionTests {
                             "org.gradle.category" to "library",
                             "org.gradle.libraryelements" to "jar",
                             "org.gradle.usage" to "kotlin-uklib-api",
-                            "org.jetbrains.kotlin.isMetadataJar" to "not-a-metadata-jar",
                             "org.jetbrains.kotlin.uklib" to "true",
                             "org.jetbrains.kotlin.uklibState" to "decompressed",
                             "org.jetbrains.kotlin.uklibView" to "jvm",
@@ -516,9 +525,259 @@ class UklibInterprojectResolutionTests {
         }
     }
 
+    @Test
+    fun `interproject uklib resolution - task dependencies`() = testInterprojectTaskDependenciesWithUklibs(
+        enableCInteropCommonization = false,
+        resolveIdeDependencies = mutableSetOf(
+            "consumer:commonizeNativeDistribution",
+            "producer:serializeUklibManifestWithoutCompilationDependency",
+        ),
+        compileCommonMainKotlinMetadata = mutableSetOf(
+            "consumer:transformCommonMainDependenciesMetadata",
+            "producer:commonizeNativeDistribution",
+            "producer:compileCommonMainKotlinMetadata",
+            "producer:compileLinuxMainKotlinMetadata",
+            "producer:compileNativeMainKotlinMetadata",
+            "producer:serializeUklibManifestWithoutCompilationDependency",
+            "producer:transformCommonMainDependenciesMetadata",
+            "producer:transformLinuxMainDependenciesMetadata",
+            "producer:transformNativeMainDependenciesMetadata",
+        ),
+        compileKotlinJvm = mutableSetOf(
+            "producer:compileJvmMainJava",
+            "producer:compileKotlinJvm",
+            "producer:jvmJar",
+        ),
+        compileKotlinLinuxX64 = mutableSetOf(
+            "producer:compileKotlinLinuxX64",
+        ),
+        compileKotlinJs = mutableSetOf(
+            "producer:compileKotlinJs",
+            "producer:jsJar",
+        ),
+        transformLinuxMainCInteropDependenciesMetadata = null,
+    )
+
+    @Test
+    fun `interproject uklib resolution - task dependencies - with commonizer`() = testInterprojectTaskDependenciesWithUklibs(
+        enableCInteropCommonization = true,
+        resolveIdeDependencies = mutableSetOf(
+            "consumer:cinteropConsumerLinuxArm64",
+            "consumer:cinteropConsumerLinuxX64",
+            "consumer:commonizeCInterop",
+            "consumer:commonizeNativeDistribution",
+            "consumer:copyCommonizeCInteropForIde",
+            "consumer:linuxArm64Cinterop-consumerKlib",
+            "consumer:linuxX64Cinterop-consumerKlib",
+            "consumer:transformLinuxMainCInteropDependenciesMetadataForIde",
+            "consumer:transformLinuxTestCInteropDependenciesMetadataForIde",
+            "consumer:transformNativeMainCInteropDependenciesMetadataForIde",
+            "consumer:transformNativeTestCInteropDependenciesMetadataForIde",
+            // FIXME: KT-81139: Why is :producer:commonizeCInterop missing here?
+            "producer:cinteropProducerLinuxArm64",
+            "producer:cinteropProducerLinuxX64",
+            "producer:serializeUklibManifestWithoutCompilationDependency",
+        ),
+        compileCommonMainKotlinMetadata = mutableSetOf(
+            "consumer:transformCommonMainDependenciesMetadata",
+            "producer:cinteropProducerLinuxArm64",
+            "producer:cinteropProducerLinuxX64",
+            "producer:commonizeCInterop",
+            "producer:commonizeNativeDistribution",
+            "producer:compileCommonMainKotlinMetadata",
+            "producer:compileLinuxMainKotlinMetadata",
+            "producer:compileNativeMainKotlinMetadata",
+            "producer:serializeUklibManifestWithoutCompilationDependency",
+            "producer:transformLinuxMainCInteropDependenciesMetadata",
+            "producer:transformLinuxMainDependenciesMetadata",
+            "producer:transformCommonMainDependenciesMetadata",
+            "producer:transformNativeMainCInteropDependenciesMetadata",
+            "producer:transformNativeMainDependenciesMetadata",
+        ),
+        compileKotlinJvm = mutableSetOf(
+            "producer:compileJvmMainJava",
+            "producer:compileKotlinJvm",
+            "producer:jvmJar",
+        ),
+        compileKotlinLinuxX64 = mutableSetOf(
+            "consumer:cinteropConsumerLinuxX64",
+            "producer:cinteropProducerLinuxX64",
+            "producer:compileKotlinLinuxX64",
+        ),
+        compileKotlinJs = mutableSetOf(
+            "producer:compileKotlinJs",
+            "producer:jsJar",
+        ),
+        transformLinuxMainCInteropDependenciesMetadata = mutableSetOf(
+            "producer:serializeUklibManifestWithoutCompilationDependency",
+        )
+    )
+
+    fun testInterprojectTaskDependenciesWithUklibs(
+        enableCInteropCommonization: Boolean,
+        resolveIdeDependencies: MutableSet<String>,
+        transformLinuxMainCInteropDependenciesMetadata: MutableSet<String>?,
+        compileCommonMainKotlinMetadata: MutableSet<String>,
+        compileKotlinJvm: MutableSet<String>,
+        compileKotlinLinuxX64: MutableSet<String>,
+        compileKotlinJs: MutableSet<String>,
+    ) {
+        val targets: KotlinMultiplatformExtension.() -> Unit = {
+            val nativeTargets = listOf(
+                linuxArm64(),
+                linuxX64(),
+            )
+            if (enableCInteropCommonization) {
+                nativeTargets.forEach { target ->
+                    target.compilations.getByName("main").cinterops.create(target.project.name) {
+                        it.definitionFile.set(target.project.layout.projectDirectory.file("${target.project}.def"))
+                    }
+                }
+            }
+            jvm()
+            js()
+        }
+        val root = buildProject()
+        val producer = projectWithUklibs(
+            root,
+            "producer",
+            preApplyCode = {
+                enableCInteropCommonization(enableCInteropCommonization)
+            }
+        ) {
+            kotlin { targets() }
+        }.evaluate()
+
+        val consumer = projectWithUklibs(
+            root,
+            "consumer",
+            preApplyCode = {
+                enableCInteropCommonization(enableCInteropCommonization)
+            }
+        ) {
+            kotlin {
+                targets()
+                sourceSets.commonMain.dependencies {
+                    implementation(project(":producer"))
+                }
+            }
+        }.evaluate()
+
+        fun assertTaskDependenciesEqual(
+            expectedTaskDependencies: Set<String>,
+            consumerTaskName: String,
+        ) = assertEquals(
+            expectedTaskDependencies.prettyPrinted,
+            consumer.tasks.getByName(consumerTaskName).closure {
+                it.taskDependencies.getDependencies(null)
+            }.filter { task ->
+                return@filter !listOf(
+                    // isLifecycleTask
+                    { task.javaClass.superclass == DefaultTask::class.java },
+                    // isIrrelevantProcessResourcesTask
+                    { task is ProcessResources },
+                    // checkers
+                    { task.name in setOf("checkKotlinGradlePluginConfigurationErrors", "kmpPartiallyResolvedDependenciesChecker") }
+                ).any { it() }
+            }.map {
+                "${it.project.name}:${it.name}"
+            }.toSet().prettyPrinted,
+            message = consumerTaskName,
+        )
+
+        assertTaskDependenciesEqual(
+            resolveIdeDependencies,
+            "resolveIdeDependencies"
+        )
+
+        assertTaskDependenciesEqual(
+            compileCommonMainKotlinMetadata,
+            "compileCommonMainKotlinMetadata"
+        )
+
+        val linuxCinteropTransform = "transformLinuxMainCInteropDependenciesMetadata"
+        transformLinuxMainCInteropDependenciesMetadata?.let {
+            assertTaskDependenciesEqual(
+                transformLinuxMainCInteropDependenciesMetadata,
+                linuxCinteropTransform
+            )
+        } ?: assert(linuxCinteropTransform !in consumer.tasks.names)
+
+        assertTaskDependenciesEqual(
+            compileKotlinJvm,
+            "compileKotlinJvm"
+        )
+
+        assertTaskDependenciesEqual(
+            compileKotlinLinuxX64,
+            "compileKotlinLinuxX64"
+        )
+
+        assertTaskDependenciesEqual(
+            compileKotlinJs,
+            "compileKotlinJs"
+        )
+    }
+
+    @Test
+    fun `KT-77389 - java runtime classpath resolution - doesn't fail with resolution ambiguity`() {
+        val root = buildProject { }
+        buildProject(projectBuilder = {
+            withParent(root)
+            withName("producer")
+        }) {
+            plugins.apply("java-library")
+        }.evaluate()
+
+        val consumer = projectWithUklibs(root, "consumer") {
+            kotlin {
+                jvm()
+                dependencies {
+                    implementation(project(":producer"))
+                }
+            }
+        }.evaluate()
+
+        val files = consumer.configurations.getByName("jvmRuntimeClasspath").incoming.artifacts.map { it.file }
+        val jar = assertNotNull(files.singleOrNull(), files.toString())
+        assert(jar.path.endsWith("producer.jar")) { jar }
+    }
+
+    @Test
+    fun `KT-77367 - IDE resolution - doesn't fail due to transforms for interproject dependencies in a clean state`() {
+        val root = buildProject { }
+        buildProjectWithJvm(
+            projectBuilder = {
+                withParent(root)
+                withName("producer")
+            },
+            preApplyCode = {
+                enableDefaultStdlibDependency(false)
+            }
+        ).evaluate()
+
+        val consumer = projectWithUklibs(root, "consumer") {
+            kotlin {
+                jvm()
+                dependencies {
+                    implementation(project(":producer"))
+                }
+            }
+        }.evaluate()
+
+        val dependencies = consumer.kotlinIdeMultiplatformImport.resolveDependencies(
+            consumer.multiplatformExtension.sourceSets.getByName("jvmMain")
+        )
+        dependencies.assertMatches(
+            projectArtifactDependency(IdeaKotlinSourceDependency.Type.Regular, ":producer", FilePathRegex(".*/producer/build/libs/producer.jar")),
+            dependsOnDependency(":consumer/commonMain"),
+        )
+    }
+
     private fun projectWithUklibs(
         root: Project,
         name: String,
+        preApplyCode: Project.() -> Unit = {},
         code: Project.() -> Unit
     ) = buildProjectWithMPP(
         projectBuilder = {
@@ -526,6 +785,7 @@ class UklibInterprojectResolutionTests {
             withParent(root)
         },
         preApplyCode = {
+            preApplyCode()
             setUklibPublicationStrategy()
             setUklibResolutionStrategy(KmpResolutionStrategy.InterlibraryUklibAndPSMResolution_PreferUklibs)
             enableDefaultStdlibDependency(false)

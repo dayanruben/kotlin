@@ -187,7 +187,6 @@ class UklibInterprojectConsumptionIT : KGPBaseTest() {
                                 "org.gradle.category" to "library",
                                 "org.gradle.libraryelements" to "jar",
                                 "org.gradle.usage" to "kotlin-uklib-api",
-                                "org.jetbrains.kotlin.isMetadataJar" to "not-a-metadata-jar",
                                 "org.jetbrains.kotlin.uklib" to "true",
                                 "org.jetbrains.kotlin.uklibState" to "decompressed",
                                 "org.jetbrains.kotlin.uklibView" to "jvm",
@@ -208,7 +207,6 @@ class UklibInterprojectConsumptionIT : KGPBaseTest() {
                                 "org.gradle.jvm.environment" to "standard-jvm",
                                 "org.gradle.libraryelements" to "jar",
                                 "org.gradle.usage" to "java-api",
-                                "org.jetbrains.kotlin.isMetadataJar" to "not-a-metadata-jar",
                                 "org.jetbrains.kotlin.platform.type" to "jvm",
                             ),
                         ),
@@ -221,7 +219,6 @@ class UklibInterprojectConsumptionIT : KGPBaseTest() {
                                 "org.gradle.category" to "library",
                                 "org.gradle.libraryelements" to "jar",
                                 "org.gradle.usage" to "java-api",
-                                "org.jetbrains.kotlin.isMetadataJar" to "not-a-metadata-jar",
                             ),
                         ),
                         configuration = "compile",
@@ -315,6 +312,58 @@ class UklibInterprojectConsumptionIT : KGPBaseTest() {
                     dependsOnDependency(":consumer/webMain"),
                     projectArtifactDependency(Regular, ":producer", FilePathRegex(".*/producer-js.klib")),
                 )
+            }
+        }
+    }
+
+    @GradleTest
+    @GradleTestVersions
+    fun `interproject ide resolution - dependency with symmetric targets - with commonization`(gradleVersion: GradleVersion) {
+        val targets: KotlinMultiplatformExtension.() -> Unit = {
+            iosArm64()
+            iosX64()
+            sourceSets.commonMain.get().compileSource("class Common")
+        }
+        project(
+            "empty",
+            gradleVersion,
+            buildOptions = defaultBuildOptions.disableIsolatedProjects()
+        ) {
+            plugins {
+                kotlin("multiplatform").apply(false)
+            }
+            val producer = project("empty", gradleVersion) {
+                buildScriptInjection {
+                    project.enableCinteropCommonization()
+                    project.setUklibResolutionStrategy()
+                    project.setUklibPublicationStrategy()
+                    project.applyMultiplatform {
+                        targets()
+                    }
+                }
+            }
+
+            val consumer = project("empty", gradleVersion) {
+                buildScriptInjection {
+                    project.enableCinteropCommonization()
+                    project.setUklibPublicationStrategy()
+                    project.setUklibResolutionStrategy()
+                    project.applyMultiplatform {
+                        targets()
+                        sourceSets.commonMain.get().dependencies {
+                            implementation(project(":producer"))
+                        }
+                    }
+                }
+            }
+
+            include(producer, "producer")
+            include(consumer, "consumer")
+
+            build("assemble")
+            build("clean")
+            resolveIdeDependencies("consumer") {
+                assertNoCompileTasksGotExecuted()
             }
         }
     }
