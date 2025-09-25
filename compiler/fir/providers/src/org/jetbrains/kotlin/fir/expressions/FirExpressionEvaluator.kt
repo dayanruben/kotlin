@@ -100,8 +100,7 @@ object FirExpressionEvaluator {
     }
 
     private fun FirExpression?.canBeEvaluated(session: FirSession): Boolean {
-        val intrinsicConstEvaluation = session.languageVersionSettings.supportsFeature(LanguageFeature.IntrinsicConstEvaluation)
-        if (this == null || intrinsicConstEvaluation || this is FirLazyExpression || !isResolved) return false
+        if (this == null  || this is FirLazyExpression || !isResolved) return false
         return canBeEvaluatedAtCompileTime(this, session, allowErrors = false, calledOnCheckerStage = false)
     }
 
@@ -428,6 +427,10 @@ private fun ConstantValueKind.toCompileTimeType(): CompileTimeType {
         ConstantValueKind.Short -> CompileTimeType.SHORT
         ConstantValueKind.Int -> CompileTimeType.INT
         ConstantValueKind.Long -> CompileTimeType.LONG
+        ConstantValueKind.UnsignedByte -> CompileTimeType.UBYTE
+        ConstantValueKind.UnsignedShort -> CompileTimeType.USHORT
+        ConstantValueKind.UnsignedInt -> CompileTimeType.UINT
+        ConstantValueKind.UnsignedLong -> CompileTimeType.ULONG
         ConstantValueKind.Double -> CompileTimeType.DOUBLE
         ConstantValueKind.Float -> CompileTimeType.FLOAT
         ConstantValueKind.Char -> CompileTimeType.CHAR

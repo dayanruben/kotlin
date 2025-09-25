@@ -7561,6 +7561,54 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
         }
 
         @Test
+        @TestMetadata("uByteOperations_after.kt")
+        public void testUByteOperations_after() {
+          runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/uByteOperations_after.kt");
+        }
+
+        @Test
+        @TestMetadata("uByteOperations_before.kt")
+        public void testUByteOperations_before() {
+          runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/uByteOperations_before.kt");
+        }
+
+        @Test
+        @TestMetadata("uIntOperations_after.kt")
+        public void testUIntOperations_after() {
+          runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/uIntOperations_after.kt");
+        }
+
+        @Test
+        @TestMetadata("uIntOperations_before.kt")
+        public void testUIntOperations_before() {
+          runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/uIntOperations_before.kt");
+        }
+
+        @Test
+        @TestMetadata("uLongOperations_after.kt")
+        public void testULongOperations_after() {
+          runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/uLongOperations_after.kt");
+        }
+
+        @Test
+        @TestMetadata("uLongOperations_before.kt")
+        public void testULongOperations_before() {
+          runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/uLongOperations_before.kt");
+        }
+
+        @Test
+        @TestMetadata("uShortOperations_after.kt")
+        public void testUShortOperations_after() {
+          runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/uShortOperations_after.kt");
+        }
+
+        @Test
+        @TestMetadata("uShortOperations_before.kt")
+        public void testUShortOperations_before() {
+          runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/uShortOperations_before.kt");
+        }
+
+        @Test
         @TestMetadata("unaryMinusIndepWoExpType.kt")
         public void testUnaryMinusIndepWoExpType() {
           runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/unaryMinusIndepWoExpType.kt");
@@ -18748,6 +18796,12 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
       }
 
       @Test
+      @TestMetadata("lambdasWithExplicitParametersViaReceivers.kt")
+      public void testLambdasWithExplicitParametersViaReceivers() {
+        runTest("compiler/testData/diagnostics/tests/inference/lambdasWithExplicitParametersViaReceivers.kt");
+      }
+
+      @Test
       @TestMetadata("listConstructor.kt")
       public void testListConstructor() {
         runTest("compiler/testData/diagnostics/tests/inference/listConstructor.kt");
@@ -28777,15 +28831,9 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
         }
 
         @Test
-        @TestMetadata("ifConstVal_after.kt")
-        public void testIfConstVal_after() {
-          runTest("compiler/testData/diagnostics/tests/modifiers/const/ifConstVal_after.kt");
-        }
-
-        @Test
-        @TestMetadata("ifConstVal_before.kt")
-        public void testIfConstVal_before() {
-          runTest("compiler/testData/diagnostics/tests/modifiers/const/ifConstVal_before.kt");
+        @TestMetadata("ifConstVal.kt")
+        public void testIfConstVal() {
+          runTest("compiler/testData/diagnostics/tests/modifiers/const/ifConstVal.kt");
         }
 
         @Test
