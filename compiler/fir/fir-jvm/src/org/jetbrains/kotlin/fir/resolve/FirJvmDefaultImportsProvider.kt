@@ -8,17 +8,18 @@ package org.jetbrains.kotlin.fir.resolve
 import org.jetbrains.kotlin.fir.resolve.providers.impl.FirFallbackBuiltinSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.impl.getTopLevelClassifierNamesInPackage
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.resolve.DefaultImportProvider
+import org.jetbrains.kotlin.resolve.DefaultImportsProvider
 import org.jetbrains.kotlin.resolve.ImportPath
-import org.jetbrains.kotlin.storage.StorageManager
 
-object FirJvmDefaultImportProvider : DefaultImportProvider() {
-    override fun computePlatformSpecificDefaultImports(storageManager: StorageManager, result: MutableList<ImportPath>) {
-        result.add(ImportPath.fromString("kotlin.jvm.*"))
+object FirJvmDefaultImportsProvider : DefaultImportsProvider() {
+    override val platformSpecificDefaultImports: List<ImportPath> by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        buildList {
+            add(ImportPath.fromString("kotlin.jvm.*"))
 
-        for (builtInsPackage in StandardClassIds.builtInsPackagesWithDefaultNamedImport) {
-            getTopLevelClassifierNamesInPackage(FirFallbackBuiltinSymbolProvider.builtInsPackageFragments, builtInsPackage).forEach {
-                result.add(ImportPath(builtInsPackage.child(it), false))
+            for (builtInsPackage in StandardClassIds.builtInsPackagesWithDefaultNamedImport) {
+                getTopLevelClassifierNamesInPackage(FirFallbackBuiltinSymbolProvider.builtInsPackageFragments, builtInsPackage).forEach {
+                    add(ImportPath(builtInsPackage.child(it), false))
+                }
             }
         }
     }
