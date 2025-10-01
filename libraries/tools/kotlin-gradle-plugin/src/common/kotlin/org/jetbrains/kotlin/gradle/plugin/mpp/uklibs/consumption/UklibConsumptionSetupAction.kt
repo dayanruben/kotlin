@@ -9,9 +9,11 @@ import org.gradle.api.NamedDomainObjectCollection
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.VariantMetadata
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.attributes.*
 import org.gradle.api.attributes.Usage.*
+import org.gradle.api.attributes.java.TargetJvmEnvironment
 import org.jetbrains.kotlin.gradle.plugin.mpp.uklibs.uklibFragmentPlatformAttribute
 import org.jetbrains.kotlin.gradle.dsl.multiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.*
@@ -35,6 +37,7 @@ import org.jetbrains.kotlin.gradle.plugin.sources.internal
 import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 import org.jetbrains.kotlin.gradle.targets.native.resolvableApiConfiguration
 import org.jetbrains.kotlin.gradle.utils.javaSourceSets
+import org.jetbrains.kotlin.gradle.utils.named
 import org.jetbrains.kotlin.gradle.utils.registerTransformForArtifactType
 
 internal val UklibConsumptionSetupAction = KotlinProjectSetupAction {
@@ -59,6 +62,7 @@ private fun Project.setupUklibConsumption() {
     allowMetadataConfigurationsToResolveUnzippedUklib(sourceSets)
     allowPSMBasedKMPToResolveLenientlyAndSelectBestMatchingVariant()
     allowPlatformCompilationsToResolvePlatformCompilationArtifactFromUklib(targets)
+    workaroundLegacySkikoResolutionKT77539()
 }
 
 private fun Project.allowPlatformCompilationsToResolvePlatformCompilationArtifactFromUklib(
@@ -224,6 +228,33 @@ private fun Project.allowPSMBasedKMPToResolveLenientlyAndSelectBestMatchingVaria
     }
 }
 
+/**
+ * KT-77539: Skiko used to publish with a hacky Android variant which was actually a jvm("android") target. The artifacts weren't actually
+ * published to Maven central. In the future Skiko should start publishing with proper androidTarget() attributes, and this hack will no
+ * longer be necessary
+ */
+private fun Project.workaroundLegacySkikoResolutionKT77539() {
+    dependencies.components.withModule("org.jetbrains.skiko:skiko") {
+        val configureAndroidEnvironment: (VariantMetadata) -> Unit = {
+            it.attributes.attribute(
+                TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
+                project.objects.named(TargetJvmEnvironment.ANDROID),
+            )
+        }
+        it.withVariant("androidApiElements-published") { configureAndroidEnvironment(it) }
+        it.withVariant("androidRuntimeElements-published") { configureAndroidEnvironment(it) }
+
+        val configureJvmEnvironment: (VariantMetadata) -> Unit = {
+            it.attributes.attribute(
+                TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
+                project.objects.named(TargetJvmEnvironment.STANDARD_JVM),
+            )
+        }
+        it.withVariant("awtApiElements-published") { configureJvmEnvironment(it) }
+        it.withVariant("awtRuntimeElements-published") { configureJvmEnvironment(it) }
+    }
+}
+
 private class AllowPlatformConfigurationsToFallBackToMetadataForLenientKmpResolution : AttributeCompatibilityRule<KotlinPlatformType> {
     override fun execute(details: CompatibilityCheckDetails<KotlinPlatformType>) = with(details) {
         consumerValue?.name ?: return@with
@@ -261,8 +292,6 @@ internal class AllowPlatformConfigurationsToFallBackToMetadataForLenientKmpResol
                      * when platform configurations resolved into metadata jar.
                      *
                      * KotlinPlatformType platform -> common compatibility is enabled by [AllowPlatformConfigurationsToFallBackToMetadataForLenientKmpResolution]
-                     *
-                     * FIXME: Not clear what to do with runtime?
                      */
                     KOTLIN_METADATA
                 ),
@@ -276,11 +305,21 @@ internal class AllowPlatformConfigurationsToFallBackToMetadataForLenientKmpResol
                     KOTLIN_RUNTIME,
                     /**
                      * Compatibility with all the Maven POM-only and Gradle JVM producers
+                     *
+                     * FIXME: This compatibility rule is wrong: KT-81349
                      */
                     JAVA_RUNTIME,
                     JAVA_API,
-                    // FIXME: KOTLIN_API compatibility is incorrect, right?
-                    // KOTLIN_API,
+                    /**
+                     * Same as above. Fallback to metadata variant to resolve and inherit dependencies
+                     */
+                     KOTLIN_METADATA,
+                    /**
+                     * Handle pre-HMPP metadata and specifically dom-api-compat
+                     *
+                     * FIXME: Remove this case in KT-81350
+                     */
+                     KOTLIN_API,
                 ),
                 /**
                  * KOTLIN_UKLIB_METADATA is requested in per source set resolvableMetadataConfigurations. This Usage isn't published.
@@ -306,7 +345,7 @@ internal class AllowPlatformConfigurationsToFallBackToMetadataForLenientKmpResol
                     /**
                      * Handle pre-HMPP metadata and specifically dom-api-compat
                      *
-                     * FIXME: Test against exact pre-HMPP publication metadata instead of dom-api-compat
+                     * FIXME: Remove this case in KT-81350
                      */
                     KOTLIN_API,
                     /**
@@ -351,11 +390,24 @@ internal class SelectBestMatchingVariantForKmpResolutionUsage : AttributeDisambi
                 KOTLIN_METADATA
             ),
             KOTLIN_UKLIB_RUNTIME to listOf(
+                /**
+                 * Prefer UKlib runtime
+                 */
                 KOTLIN_UKLIB_RUNTIME,
+                /**
+                 * If we are looking at a pre-UKlib component, select the respective runtime
+                 */
                 KOTLIN_RUNTIME,
+                /**
+                 * If we are looking at a JVM component also take the runtime
+                 */
                 JAVA_RUNTIME,
+                // FIXME: Remove in KT-81349
                 JAVA_API,
-                KOTLIN_METADATA
+                /**
+                 * Fallback to metadata if the platform is not available
+                 */
+                KOTLIN_METADATA,
             ),
             KOTLIN_UKLIB_METADATA to listOf(
                 /**
