@@ -840,4 +840,13 @@ class KotlinGradleIT : KGPBaseTest() {
         }
     }
 
+    @DisplayName("KT-73090: BTA does not break Gradle convention plugins compilation")
+    @GradleTest
+    fun testConventionPlugins(gradleVersion: GradleVersion) {
+        project("convention-plugin", gradleVersion, buildOptions = defaultBuildOptions.copy(runViaBuildToolsApi = true)) {
+            build("help") {
+                assertOutputContains("my-plugin applied")
+            }
+        }
+    }
 }
