@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -365,19 +365,13 @@ fun main(args: Array<String>) {
         }
 
         testGroup("js/js.tests/tests-gen", "compiler/testData/ir/irText", testRunnerMethodName = "runTest0") {
-            testClass<AbstractClassicJsIrTextTest>(annotations = listOf(*legacyFrontend())) {
-                model(
-                    excludeDirs = listOf("declarations/multiplatform/k2")
-                )
-            }
-
-            testClass<AbstractFirLightTreeJsIrTextTest> {
+            testClass<AbstractLightTreeJsIrTextTest> {
                 model(
                     excludeDirs = listOf("declarations/multiplatform/k1")
                 )
             }
 
-            testClass<AbstractFirPsiJsIrTextTest> {
+            testClass<AbstractPsiJsIrTextTest> {
                 model(
                     excludeDirs = listOf("declarations/multiplatform/k1")
                 )
