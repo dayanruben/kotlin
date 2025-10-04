@@ -64,7 +64,7 @@ internal object KotlinToolingDiagnostics {
         }
     }
 
-    object UklibFragmentFromUnexpectedTarget : ToolingDiagnosticFactory(ERROR, DiagnosticGroup.Kgp.Misconfiguration) {
+    object UklibFragmentFromUnexpectedTarget : ToolingDiagnosticFactory(WARNING, DiagnosticGroup.Kgp.Misconfiguration) {
         operator fun invoke(target: String) = build {
             title("Uklib Publication With Unsupported Target")
                 .description("Publication of ${Uklib.UKLIB_NAME} with target '$target' is currently not supported")
@@ -81,15 +81,7 @@ internal object KotlinToolingDiagnostics {
         }
     }
 
-    object UklibPublicationWithCinterops : ToolingDiagnosticFactory(ERROR, DiagnosticGroup.Kgp.Misconfiguration) {
-        operator fun invoke(target: String, interopName: String) = build {
-            title("Uklib Publication With Cinterops")
-                .description("Publication of ${Uklib.UKLIB_NAME} with cinterops is not yet supported. Target '$target' declares cinterop '$interopName'")
-                .solution("Cinterop publication is not yet supported (https://kotl.in/uklib-with-cinterops). Please disable ${Uklib.UKLIB_NAME} publication in projects with cinterops")
-        }
-    }
-
-    object UklibSourceSetStructureUnderRefinementViolation : ToolingDiagnosticFactory(ERROR, DiagnosticGroup.Kgp.Misconfiguration) {
+    object UklibSourceSetStructureUnderRefinementViolation : ToolingDiagnosticFactory(WARNING, DiagnosticGroup.Kgp.Misconfiguration) {
         operator fun invoke(sourceSet: KotlinSourceSet, missingRefinements: List<KotlinSourceSet>) = build {
             title("Uklib Incompatible Source Set Structure")
                 .description(
@@ -1971,6 +1963,21 @@ internal object KotlinToolingDiagnostics {
                     )
                     .documentationLink(URI("https://kotl.in/gradle/kotlin-dsl-version-compatibility"))
             }
+        }
+    }
+
+    internal object UsingOutOfProcessDisablesBuildToolsApi : ToolingDiagnosticFactory(WARNING, DiagnosticGroup.Kgp.Deprecation) {
+        operator fun invoke() = build {
+            title("Using out-of-process Kotlin compilation disables Build Tools API.")
+                .description(
+                    """
+                    By default, the Kotlin Gradle Plugin runs the compiler via the Build Tools API (BTA). 
+                    BTA doesn’t support out‑of‑process compilation, so the selected compilation mode disables BTA for this build. 
+                    This warning will become an error in a future release of KGP.
+                """.trimIndent()
+                )
+                .solution("Select the daemon or in-process compilation modes to allow KGP to run compilation through BTA.")
+                .documentationLink(URI("https://kotl.in/build-tools-api"))
         }
     }
 }

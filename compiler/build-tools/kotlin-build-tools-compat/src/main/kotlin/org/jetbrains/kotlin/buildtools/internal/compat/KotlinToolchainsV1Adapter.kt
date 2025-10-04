@@ -31,7 +31,7 @@ import kotlin.time.Duration
 import kotlin.time.toJavaDuration
 
 public class KotlinToolchainsV1Adapter(
-    private val compilationService: CompilationService,
+    @Suppress("DEPRECATION") private val compilationService: CompilationService,
 ) : KotlinToolchains {
     private val jvm: JvmPlatformToolchain by lazy {
         object : JvmPlatformToolchain {
@@ -73,7 +73,10 @@ public class KotlinToolchainsV1Adapter(
     }
 }
 
-private class JvmClasspathSnapshottingOperationV1Adapter(val compilationService: CompilationService, val classpathEntry: Path) :
+private class JvmClasspathSnapshottingOperationV1Adapter(
+    @Suppress("DEPRECATION") val compilationService: CompilationService,
+    val classpathEntry: Path,
+) :
     BuildOperationImpl<ClasspathEntrySnapshot>(), JvmClasspathSnapshottingOperation {
     private val options: Options = Options(JvmClasspathSnapshottingOperation::class)
 
@@ -113,7 +116,7 @@ private class JvmClasspathSnapshottingOperationV1Adapter(val compilationService:
 }
 
 private class JvmCompilationOperationV1Adapter(
-    val compilationService: CompilationService,
+    @Suppress("DEPRECATION") val compilationService: CompilationService,
     val kotlinSources: List<Path>,
     val destinationDirectory: Path,
     override val compilerArguments: JvmCompilerArgumentsImpl,
@@ -199,6 +202,7 @@ private class JvmCompilationOperationV1Adapter(
     /**
      * It's better to avoid arguments duplication for the versions that contain the fix
      */
+    @Suppress("DEPRECATION")
     private fun CompilationService.treatsJavaSourcesProperly(): Boolean = try {
         val kotlinCompilerVersion = KotlinToolingVersion(getCompilerVersion())
         kotlinCompilerVersion >= KotlinToolingVersion(2, 2, 21, null)
@@ -279,14 +283,17 @@ internal fun List<String>.fixForFirCheck(): List<String> {
 }
 
 private interface ExecutionPolicyV1Adapter {
+    @Suppress("DEPRECATION")
     val strategyConfiguration: CompilerExecutionStrategyConfiguration
 
-    class InProcess(override val strategyConfiguration: CompilerExecutionStrategyConfiguration) : ExecutionPolicyV1Adapter,
+    class InProcess(@Suppress("DEPRECATION") override val strategyConfiguration: CompilerExecutionStrategyConfiguration) :
+        ExecutionPolicyV1Adapter,
         ExecutionPolicy.InProcess
 
-    class WithDaemon(private val compilationService: CompilationService) : ExecutionPolicyV1Adapter,
+    class WithDaemon(@Suppress("DEPRECATION") private val compilationService: CompilationService) : ExecutionPolicyV1Adapter,
         ExecutionPolicy.WithDaemon {
 
+        @Suppress("DEPRECATION")
         override val strategyConfiguration: CompilerExecutionStrategyConfiguration
             get() {
                 val jvmArguments = get(JVM_ARGUMENTS) ?: emptyList()
@@ -335,7 +342,7 @@ private interface ExecutionPolicyV1Adapter {
 private class BuildSessionV1Adapter(
     override val kotlinToolchains: KotlinToolchains,
     override val projectId: ProjectId,
-    private val compilationService: CompilationService,
+    @Suppress("DEPRECATION") private val compilationService: CompilationService,
 ) : KotlinToolchains.BuildSession {
     override fun <R> executeOperation(operation: BuildOperation<R>): R {
         return executeOperation(operation, logger = null)
@@ -363,6 +370,7 @@ private class BuildSessionV1Adapter(
     }
 }
 
+@Suppress("DEPRECATION")
 public fun CompilationService.asKotlinToolchains(): KotlinToolchains = KotlinToolchainsV1Adapter(this)
 
 private abstract class BuildOperationImpl<R> : BuildOperation<R> {
