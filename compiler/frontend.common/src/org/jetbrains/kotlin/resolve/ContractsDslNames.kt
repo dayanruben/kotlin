@@ -1,17 +1,25 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.fir.resolve.transformers.contracts
+package org.jetbrains.kotlin.resolve
 
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
-object FirContractsDslNames {
+object ContractsDslNames {
+    // Internal marker-annotation for distinguishing our API
+    val CONTRACTS_DSL_ANNOTATION_FQN = FqName("kotlin.internal.ContractsDsl")
+
     // Types
     val SIMPLE_EFFECT: CallableId = id("SimpleEffect")
+    val EFFECT = id("Effect")
+    val CONDITIONAL_EFFECT = id("ConditionalEffect")
+    val RETURNS_EFFECT = id("Returns")
+    val RETURNS_NOT_NULL_EFFECT = id("ReturnsNotNull")
+    val CALLS_IN_PLACE_EFFECT = id("CallsInPlace")
 
     // Structure-defining calls
     val CONTRACT: CallableId = id("contract")
@@ -38,7 +46,7 @@ object FirContractsDslNames {
     private fun simpleEffect(name: String): CallableId = id(CONTRACT_PACKAGE, SIMPLE_EFFECT.callableName.asString(), name)
     private fun id(name: String): CallableId = id(CONTRACT_PACKAGE, name)
     private fun id(packageName: String, name: String): CallableId = id(packageName, className = null, name)
-    internal fun id(packageName: String, className: String?, name: String): CallableId {
+    fun id(packageName: String, className: String?, name: String): CallableId {
         return CallableId(
             FqName(packageName),
             className?.let { FqName(it) },
