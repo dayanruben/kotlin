@@ -171,12 +171,18 @@ fun Project.createGradleCommonSourceSet(): SourceSet {
         }
 
         // Adding Gradle API to separate configuration, so version will not leak into variants
-        val commonGradleApiConfiguration = configurations.create("commonGradleApiCompileOnly") {
-            isVisible = false
-            isCanBeConsumed = false
-            isCanBeResolved = true
+        val commonGradleApiConfiguration = configurations.dependencyScope("commonGradleApiCompileOnly")
+
+        configurations.named(compileClasspathConfigurationName) {
+            extendsFrom(commonGradleApiConfiguration.get())
+            // Overriding current project Gradle version to the version common sources compiled against
+            attributes {
+                attribute(
+                    GradlePluginApiVersion.GRADLE_PLUGIN_API_VERSION_ATTRIBUTE,
+                    objects.named(GradlePluginVariant.GRADLE_COMMON_COMPILE_API_VERSION),
+                )
+            }
         }
-        configurations[compileClasspathConfigurationName].extendsFrom(commonGradleApiConfiguration)
 
         dependencies {
             compileOnlyConfigurationName("org.jetbrains.kotlin:kotlin-stdlib:${GradlePluginVariant.GRADLE_MIN.bundledKotlinVersion}.0")
@@ -228,6 +234,8 @@ fun Project.createGradleCommonSourceSet(): SourceSet {
         // Common outputs will also produce '${project.name}.kotlin_module' file, so we need to avoid
         // files clash
         compilerOptions.moduleName.set("${this@createGradleCommonSourceSet.name}_${commonSourceSet.name}")
+        // Workaround for https://youtrack.jetbrains.com/issue/KT-80750
+        compilerOptions.freeCompilerArgs.add("-Xjspecify-annotations=ignore")
         configureGradleCompatibility()
     }
 
@@ -823,7 +831,7 @@ fun Project.registerKotlinSourceForVersionRange(
             (sourceSet.extensions.getByName("kotlin") as SourceDirectorySet).srcDir(sourcesDirectory)
             val kotlinJvmTarget = (extensions.getByName("kotlin") as KotlinSingleJavaTargetExtension).target
             val compilation = kotlinJvmTarget.compilations.getByName(sourceSet.name)
-            tasks.named<KotlinCompile>(compilation.compileKotlinTaskName).configure {
+            compilation.compileJavaTaskProvider.configure {
                 doFirst {
                     if (sourcesDirectory.asFileTree.isEmpty) {
                         error("Ranged Gradle version sources directory\n$sourcesDirectory\nis empty. Remove ranged version or add sources to the directory")
