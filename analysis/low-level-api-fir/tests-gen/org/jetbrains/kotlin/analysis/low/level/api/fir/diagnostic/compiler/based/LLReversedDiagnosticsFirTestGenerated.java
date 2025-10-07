@@ -117,6 +117,12 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
     }
 
     @Test
+    @TestMetadata("collectionLiteralInLambdaReturningAnnotation.kt")
+    public void testCollectionLiteralInLambdaReturningAnnotation() {
+      runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiteralInLambdaReturningAnnotation.kt");
+    }
+
+    @Test
     @TestMetadata("companion.kt")
     public void testCompanion() {
       runTest("compiler/fir/analysis-tests/testData/resolve/companion.kt");
@@ -6054,6 +6060,12 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
       }
 
       @Test
+      @TestMetadata("localTypeAliasesDisabled.kt")
+      public void testLocalTypeAliasesDisabled() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/nestedTypeAliases/localTypeAliasesDisabled.kt");
+      }
+
+      @Test
       @TestMetadata("overrides.kt")
       public void testOverrides() {
         runTest("compiler/fir/analysis-tests/testData/resolve/nestedTypeAliases/overrides.kt");
@@ -9930,6 +9942,18 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
         @TestMetadata("explicitBackingFieldWithJvmField.kt")
         public void testExplicitBackingFieldWithJvmField() {
           runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/explicitBackingFieldWithJvmField.kt");
+        }
+
+        @Test
+        @TestMetadata("explicitBackingFieldsInEffectivelyPrivateInline.kt")
+        public void testExplicitBackingFieldsInEffectivelyPrivateInline() {
+          runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/explicitBackingFieldsInEffectivelyPrivateInline.kt");
+        }
+
+        @Test
+        @TestMetadata("explicitBackingFieldsInInlineAccessors.kt")
+        public void testExplicitBackingFieldsInInlineAccessors() {
+          runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/explicitBackingFieldsInInlineAccessors.kt");
         }
 
         @Test

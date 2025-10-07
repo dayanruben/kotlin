@@ -228,8 +228,28 @@ open class IrFileSerializer(
         saveOriginIndex(originIndex)
     }
 
-    private fun serializeCoordinates(start: Int, end: Int): Long =
-        if (settings.publicAbiOnly && !isInsideInline) 0 else BinaryCoordinates.encode(start, end)
+    private fun serializeCoordinates(start: Int, end: Int): Long {
+        if (settings.publicAbiOnly && !isInsideInline) {
+            return 0
+        }
+
+        return if (start > end) {
+            // Kotlin < 2.3 does not support deserializing coordinates where start < end. Such coordinates are generally invalid, but
+            // so far we don't have a mechanism to ensure they are not created. So they might occur (especially in the case of
+            // compiler plugins) and we need to "fix" them somehow. See also KT-80910.
+            if (end >= 0) {
+                // We simply flip start with end, which still encompasses the same span, and is likely what was intended by the creator
+                // of this IR element.
+                BinaryCoordinates.encode(end, start)
+            } else {
+                // Here, endOffset is one of the special "unknown" offset values. It is quite fair to make the entire coordinates "unknown"
+                // in the same way.
+                BinaryCoordinates.encode(end, end)
+            }
+        } else {
+            BinaryCoordinates.encode(start, end)
+        }
+    }
 
     /* ------- Strings ---------------------------------------------------------- */
 
@@ -1096,8 +1116,10 @@ open class IrFileSerializer(
     }
 
     private fun serializeStatement(statement: IrElement): ProtoStatement {
-
-        val coordinates = serializeCoordinates(statement.startOffset, statement.endOffset)
+        val coordinates =
+            // Both IrExpression and IrDeclaration have their own coordinate fields, the one on ProtoStatement is ignored for them.
+            if (statement is IrExpression || statement is IrDeclaration) 0
+            else serializeCoordinates(statement.startOffset, statement.endOffset)
         val proto = ProtoStatement.newBuilder()
             .setCoordinates(coordinates)
 

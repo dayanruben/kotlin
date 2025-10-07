@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages.KOTLIN_UKLIB_JAVA_API
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages.KOTLIN_UKLIB_RUNTIME
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages.KOTLIN_UKLIB_JAVA_RUNTIME
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages.KOTLIN_UKLIB_METADATA
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages.KOTLIN_UKLIB_FALLBACK_VARIANT
 import org.jetbrains.kotlin.gradle.plugin.mpp.resolvableMetadataConfiguration
 import org.jetbrains.kotlin.gradle.plugin.mpp.uklibs.Uklib
 import org.jetbrains.kotlin.gradle.plugin.mpp.uklibs.UklibFragmentPlatformAttribute
@@ -69,6 +70,7 @@ private fun Project.setupUklibConsumption() {
     allowPlatformCompilationsToResolvePlatformCompilationArtifactFromUklib(targets)
     workaroundLegacySkikoResolutionKT77539()
     workaroundKotlinTestJsResolutionKT81387()
+    registerGenericFallbackVariantInAllComponentsKT81412()
 }
 
 private fun Project.allowPlatformCompilationsToResolvePlatformCompilationArtifactFromUklib(
@@ -249,15 +251,15 @@ private fun Project.allowPSMBasedKMPToResolveLenientlyAndSelectBestMatchingVaria
  * longer be necessary
  */
 private fun Project.workaroundLegacySkikoResolutionKT77539() {
-    dependencies.components.withModule("org.jetbrains.skiko:skiko") {
+    dependencies.components.withModule("org.jetbrains.skiko:skiko") { skikoModule ->
         val configureAndroidEnvironment: (VariantMetadata) -> Unit = {
             it.attributes.attribute(
                 TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
                 project.objects.named(TargetJvmEnvironment.ANDROID),
             )
         }
-        it.withVariant("androidApiElements-published") { configureAndroidEnvironment(it) }
-        it.withVariant("androidRuntimeElements-published") { configureAndroidEnvironment(it) }
+        skikoModule.withVariant("androidApiElements-published") { configureAndroidEnvironment(it) }
+        skikoModule.withVariant("androidRuntimeElements-published") { configureAndroidEnvironment(it) }
 
         val configureJvmEnvironment: (VariantMetadata) -> Unit = {
             it.attributes.attribute(
@@ -265,8 +267,55 @@ private fun Project.workaroundLegacySkikoResolutionKT77539() {
                 project.objects.named(TargetJvmEnvironment.STANDARD_JVM),
             )
         }
-        it.withVariant("awtApiElements-published") { configureJvmEnvironment(it) }
-        it.withVariant("awtRuntimeElements-published") { configureJvmEnvironment(it) }
+        skikoModule.withVariant("awtApiElements-published") { configureJvmEnvironment(it) }
+        skikoModule.withVariant("awtRuntimeElements-published") { configureJvmEnvironment(it) }
+
+        // Workaround for KT-81459
+        listOf(
+            "metadataApiElements",
+            "metadataSourcesElements",
+            "iosArm64ApiElements-published",
+            "iosArm64SourcesElements-published",
+            "iosArm64MetadataElements-published",
+            "iosSimulatorArm64ApiElements-published",
+            "iosSimulatorArm64SourcesElements-published",
+            "iosSimulatorArm64MetadataElements-published",
+            "iosX64ApiElements-published",
+            "iosX64SourcesElements-published",
+            "iosX64MetadataElements-published",
+            "jsApiElements-published",
+            "jsRuntimeElements-published",
+            "jsSourcesElements-published",
+            "linuxArm64ApiElements-published",
+            "linuxArm64SourcesElements-published",
+            "linuxX64ApiElements-published",
+            "linuxX64SourcesElements-published",
+            "macosArm64ApiElements-published",
+            "macosArm64SourcesElements-published",
+            "macosArm64MetadataElements-published",
+            "macosX64ApiElements-published",
+            "macosX64SourcesElements-published",
+            "macosX64MetadataElements-published",
+            "tvosArm64ApiElements-published",
+            "tvosArm64SourcesElements-published",
+            "tvosArm64MetadataElements-published",
+            "tvosSimulatorArm64ApiElements-published",
+            "tvosSimulatorArm64SourcesElements-published",
+            "tvosSimulatorArm64MetadataElements-published",
+            "tvosX64ApiElements-published",
+            "tvosX64SourcesElements-published",
+            "tvosX64MetadataElements-published",
+            "wasmJsApiElements-published",
+            "wasmJsRuntimeElements-published",
+            "wasmJsSourcesElements-published",
+        ).forEach { variantName ->
+            skikoModule.withVariant(variantName) {
+                it.attributes.attribute(
+                    TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
+                    project.objects.named(NON_JVM_ENVIRONMENT),
+                )
+            }
+        }
     }
 }
 
@@ -284,6 +333,21 @@ private fun Project.workaroundKotlinTestJsResolutionKT81387() {
             it.attributes.attribute(
                 KotlinPlatformType.attribute,
                 common,
+            )
+        }
+    }
+}
+
+private fun Project.registerGenericFallbackVariantInAllComponentsKT81412() {
+    dependencies.components.all {
+        it.addVariant("fallbackVariant_KT-81412") {
+            it.attributes.attribute(
+                USAGE_ATTRIBUTE,
+                project.objects.named(KOTLIN_UKLIB_FALLBACK_VARIANT),
+            )
+            it.attributes.attribute(
+                Category.CATEGORY_ATTRIBUTE,
+                project.categoryByName(Category.LIBRARY),
             )
         }
     }
@@ -331,13 +395,18 @@ internal class AllowPlatformConfigurationsToFallBackToMetadataForLenientKmpResol
              */
             JAVA_API,
             /**
+             * Classified JVM POM dependencies are synthesized as "java-runtime": KT-81467
+             */
+            JAVA_RUNTIME,
+            /**
              * Fallback to metadata variant to inherit dependencies for lenient interlibrary dependencies. Platform configurations
              * throw away metadata jars in [ThrowAwayMetadataJarsTransform]. GMT now always resolves and special-handles the case
              * when platform configurations resolved into metadata jar.
              *
              * KotlinPlatformType platform -> common compatibility is enabled by [AllowPlatformConfigurationsToFallBackToMetadataAndJvmForLenientKmpResolution]
              */
-            KOTLIN_METADATA
+            KOTLIN_METADATA,
+            KOTLIN_UKLIB_FALLBACK_VARIANT,
         )
         val runtimeElements = setOf(
             /**
@@ -360,6 +429,7 @@ internal class AllowPlatformConfigurationsToFallBackToMetadataForLenientKmpResol
              * FIXME: Remove this case in KT-81350
              */
             KOTLIN_API,
+            KOTLIN_UKLIB_FALLBACK_VARIANT,
         )
         if (
             mapOf(
@@ -404,6 +474,11 @@ internal class AllowPlatformConfigurationsToFallBackToMetadataForLenientKmpResol
                      * Compatibility with all the Maven POM-only and Gradle JVM producers for dependency inheritance
                      */
                     JAVA_API,
+                    /**
+                     * Classified JVM POM dependencies are synthesized as "java-runtime": KT-81467
+                     */
+                    JAVA_RUNTIME,
+                    KOTLIN_UKLIB_FALLBACK_VARIANT,
                 ),
             )[consumerUsage]?.contains(producerUsage) == true
         ) compatible()
@@ -421,7 +496,7 @@ internal class SelectBestMatchingVariantForKmpResolutionUsage : AttributeDisambi
          *
          * To make sure our rule is in control, we can try to reshuffle rules in [setAttributeDisambiguationPrecedence]
          */
-        val apiElements = listOf(
+        val nonJvmApiElements = listOf(
             KOTLIN_UKLIB_API,
             /**
              * Prefer platform apiElements if it is available when consuming standard KMP publication for compilation
@@ -429,6 +504,9 @@ internal class SelectBestMatchingVariantForKmpResolutionUsage : AttributeDisambi
              * FIXME: Is this also a compatibility for dom-api-compat
              */
             KOTLIN_API,
+        )
+        val jvmApiElements = listOf(
+            KOTLIN_UKLIB_API,
         )
         val runtimeElements = listOf(
             /**
@@ -441,8 +519,8 @@ internal class SelectBestMatchingVariantForKmpResolutionUsage : AttributeDisambi
             KOTLIN_RUNTIME,
         )
         mapOf(
-            KOTLIN_UKLIB_JAVA_API to apiElements,
-            KOTLIN_UKLIB_API to apiElements,
+            KOTLIN_UKLIB_JAVA_API to jvmApiElements,
+            KOTLIN_UKLIB_API to nonJvmApiElements,
             KOTLIN_UKLIB_JAVA_RUNTIME to runtimeElements,
             KOTLIN_UKLIB_RUNTIME to runtimeElements,
             KOTLIN_UKLIB_METADATA to listOf(
@@ -454,16 +532,19 @@ internal class SelectBestMatchingVariantForKmpResolutionUsage : AttributeDisambi
                  * Otherwise select PSM jar
                  */
                 KOTLIN_METADATA,
-                /**
-                 * FIXME: Java case probably doesn't need disambiguation?
-                 */
+                JAVA_API,
+                JAVA_RUNTIME,
             ),
         )[consumerUsage]?.let {
-            closestMatchToFirstAppropriateCandidate(it)
-            return@run
+            if (closestMatchToFirstAppropriateCandidate(it)) {
+                return@run
+            }
         }
 
-        val isRootKmpComponentWithJvm = details.candidateValues.map { it.name }.containsAll(listOf(JAVA_API, KOTLIN_METADATA))
+        val candidateValuesSet = details.candidateValues.map { it.name }.toSet()
+        val isRootKmpComponentWithJvm =
+            candidateValuesSet.containsAll(listOf(JAVA_API, KOTLIN_METADATA))
+                    || candidateValuesSet.containsAll(listOf(JAVA_RUNTIME, KOTLIN_METADATA))
         if (isRootKmpComponentWithJvm) {
             when (consumerUsage) {
                 KOTLIN_UKLIB_API, KOTLIN_UKLIB_RUNTIME -> {
@@ -481,7 +562,8 @@ internal class SelectBestMatchingVariantForKmpResolutionUsage : AttributeDisambi
             }
         }
 
-        val isJvmOnlyComponent = details.candidateValues.map { it.name }.contains(JAVA_API)
+        val isJvmOnlyComponent = candidateValuesSet.containsAll(listOf(JAVA_API))
+                || candidateValuesSet.containsAll(listOf(JAVA_RUNTIME))
         if (isJvmOnlyComponent) {
             when (consumerUsage) {
                 KOTLIN_UKLIB_API, KOTLIN_UKLIB_JAVA_API -> {
@@ -495,12 +577,22 @@ internal class SelectBestMatchingVariantForKmpResolutionUsage : AttributeDisambi
             }
         }
 
+        if (details.candidateValues.map { it.name }.toSet().containsAll(listOf(KOTLIN_METADATA))) {
+            details.closestMatchToFirstAppropriateCandidate(listOf(KOTLIN_METADATA))
+            return@run
+        }
+
+        if (details.candidateValues.map { it.name }.toSet().containsAll(listOf(KOTLIN_UKLIB_FALLBACK_VARIANT))) {
+            details.closestMatchToFirstAppropriateCandidate(listOf(KOTLIN_UKLIB_FALLBACK_VARIANT))
+            return@run
+        }
+
         return@run
     }
 
-    private fun MultipleCandidatesDetails<Usage>.closestMatchToFirstAppropriateCandidate(acceptedProducerValues: List<String>) {
+    private fun MultipleCandidatesDetails<Usage>.closestMatchToFirstAppropriateCandidate(acceptedProducerValues: List<String>): Boolean {
         val candidatesMap = candidateValues.associateBy { it.name }
-        acceptedProducerValues.firstOrNull { it in candidatesMap }?.let { closestMatch(candidatesMap.getValue(it)) }
+        return acceptedProducerValues.firstOrNull { it in candidatesMap }?.let { closestMatch(candidatesMap.getValue(it)); true } ?: false
     }
 }
 
