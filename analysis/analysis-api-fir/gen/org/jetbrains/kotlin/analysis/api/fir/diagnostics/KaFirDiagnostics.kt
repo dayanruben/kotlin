@@ -286,6 +286,11 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val candidates: List<KaSymbol>
     }
 
+    interface InaccessibleOuterClassReceiver : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = InaccessibleOuterClassReceiver::class
+        val symbol: KaSymbol
+    }
+
     interface UnresolvedImport : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = UnresolvedImport::class
         val reference: String
@@ -408,6 +413,10 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface NoConstructor : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = NoConstructor::class
+    }
+
+    interface NoImplicitDefaultConstructorOnExpectClass : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = NoImplicitDefaultConstructorOnExpectClass::class
     }
 
     interface FunctionCallExpected : KaFirDiagnostic<PsiElement> {
@@ -2317,6 +2326,11 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface ExpressionOfNullableTypeInClassLiteralLhs : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = ExpressionOfNullableTypeInClassLiteralLhs::class
+        val lhsType: KaType
+    }
+
+    interface ExpressionOfNullableTypeInClassLiteralLhsWarning : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = ExpressionOfNullableTypeInClassLiteralLhsWarning::class
         val lhsType: KaType
     }
 

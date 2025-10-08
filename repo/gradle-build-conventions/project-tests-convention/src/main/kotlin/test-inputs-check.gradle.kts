@@ -184,6 +184,7 @@ tasks.withType<Test>().configureEach {
                                     """permission java.io.FilePermission "<<ALL FILES>>", "execute";""", // DependencyExtractor.kt to untar calls `tar` directly, and the system needs to find it
                                     """permission java.net.SocketPermission "download.jetbrains.com:443", "connect,resolve";""", // DependencyDownloader.kt
                                     """permission java.net.SocketPermission "download-cdn.jetbrains.com:443", "connect,resolve";""", // DependencyDownloader.kt
+                                    """permission java.net.SocketPermission "repo.labs.intellij.net:443", "connect,resolve";""", // DependencyDownloader.kt
                                 )
                                 if (nativeHome.isPresent) {
                                     konanPermissions.add("""permission java.io.FilePermission "${nativeHome.get()}/-" , "read,write,delete";""")
@@ -237,7 +238,6 @@ tasks.withType<Test>().configureEach {
         logger.info("Security policy for test inputs generated to ${policyFileProvider.get().asFile.absolutePath}")
         jvmArgs(
             "-Djava.security.policy=${policyFileProvider.get().asFile.absolutePath}",
-            "-Djava.security.debug=failure",
             "-Djava.security.manager=org.jetbrains.kotlin.security.KotlinSecurityManager",
         )
     }

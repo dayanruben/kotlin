@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.copyAsImplicitInvokeCall
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.declarations.utils.isInner
 import org.jetbrains.kotlin.fir.declarations.utils.isInterface
 import org.jetbrains.kotlin.fir.declarations.utils.isReferredViaField
@@ -639,17 +640,23 @@ class FirCallResolver(
 
             val callInfo = toCallInfo(annotation, reference)
 
-            val resolutionResult = constructorSymbol
-                ?.let { runResolutionForGivenSymbol(callInfo, it) }
-                ?: ResolutionResult(callInfo, CandidateApplicability.HIDDEN, emptyList())
-            createResolvedNamedReference(
-                reference,
-                reference.name,
-                callInfo,
-                resolutionResult.candidates,
-                resolutionResult.applicability,
-                explicitReceiver = null
-            )
+            if (constructorSymbol != null) {
+                val resolutionResult = runResolutionForGivenSymbol(callInfo, constructorSymbol)
+                createResolvedNamedReference(
+                    reference,
+                    reference.name,
+                    callInfo,
+                    resolutionResult.candidates,
+                    resolutionResult.applicability,
+                    explicitReceiver = null
+                )
+            } else {
+                buildReferenceWithErrorCandidate(
+                    callInfo,
+                    if (annotationClassSymbol.isExpect) ConeNoImplicitDefaultConstructorOnExpectClass else ConeNoConstructorError,
+                    reference.source
+                )
+            }
         } else {
             annotation.replaceArgumentList(annotation.argumentList.transform(transformer, ResolutionMode.ContextDependent))
 
@@ -837,8 +844,14 @@ class FirCallResolver(
                             explicitReceiver.value?.toString() ?: "",
                             explicitReceiver.resolvedType,
                         )
-                    reference is FirSuperReference && (reference.superTypeRef.firClassLike(session) as? FirClass)?.isInterface == true -> ConeNoConstructorError
-                    else -> ConeUnresolvedNameError(name, operatorToken, explicitReceiver?.resolvedType)
+                    else -> {
+                        val classLikeBySuperRef = (reference as? FirSuperReference)?.superTypeRef?.firClassLike(session) as? FirClass
+                        when {
+                            classLikeBySuperRef?.isInterface == true -> ConeNoConstructorError
+                            classLikeBySuperRef?.isExpect == true -> ConeNoImplicitDefaultConstructorOnExpectClass
+                            else -> ConeUnresolvedNameError(name, operatorToken, explicitReceiver?.resolvedType)
+                        }
+                    }
                 }
             }
 

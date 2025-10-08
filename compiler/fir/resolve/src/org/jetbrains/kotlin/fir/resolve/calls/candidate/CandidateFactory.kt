@@ -152,6 +152,18 @@ class CandidateFactory private constructor(
                 result.addDiagnostic(LowerPriorityToPreserveCompatibilityDiagnostic)
             }
         }
+
+        if (dispatchReceiver.isInaccessibleFromStaticNestedClass()) {
+            result.addDiagnostic(dispatchReceiver.toInaccessibleReceiverDiagnostic())
+        }
+
+        for (receiver in givenExtensionReceiverOptions) {
+            if (receiver.isInaccessibleFromStaticNestedClass()) {
+                result.addDiagnostic(receiver.toInaccessibleReceiverDiagnostic())
+                break
+            }
+        }
+
         return result
     }
 
@@ -300,7 +312,7 @@ fun PostponedArgumentsAnalyzerContext.addSubsystemFromAtom(atom: ConeResolutionA
 
 internal fun FirResolvable.candidate(): Candidate? {
     return when (val callee = this.calleeReference) {
-        is FirNamedReferenceWithCandidate -> return callee.candidate
+        is FirNamedReferenceWithCandidate -> callee.candidate
         else -> null
     }
 }
