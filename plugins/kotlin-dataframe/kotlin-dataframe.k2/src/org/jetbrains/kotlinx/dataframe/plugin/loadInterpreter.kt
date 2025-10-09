@@ -106,6 +106,8 @@ import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ConcatWithKeys
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ConvertAsColumn
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ConvertNotNull
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameBuilderInvoke0
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameCumSum
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameCumSum0
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameOf0
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameOf3
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameOfPairs
@@ -145,6 +147,8 @@ import org.jetbrains.kotlinx.dataframe.plugin.impl.api.GatherValuesInto
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.GatherWhere
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.GroupByAdd
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.GroupByCount0
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.GroupByCumSum
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.GroupByCumSum0
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.GroupByInto
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.GroupByMax0
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.GroupByMax1
@@ -573,6 +577,8 @@ internal inline fun <reified T : Interpreter<*>> String.load(isTest: Boolean): T
         "Max1" -> Max1()
         "Percentile0" -> Percentile0()
         "Percentile1" -> Percentile1()
+        "DataFrameCumSum" -> DataFrameCumSum()
+        "DataFrameCumSum0" -> DataFrameCumSum0()
         "GroupByCount0" -> GroupByCount0()
         "GroupByMean0" -> GroupByMean0()
         "GroupByMean1" -> GroupByMean1()
@@ -595,6 +601,8 @@ internal inline fun <reified T : Interpreter<*>> String.load(isTest: Boolean): T
         "GroupByStd0" -> GroupByStd0()
         "GroupByStd1" -> GroupByStd1()
         "GroupByStdOf" -> GroupByStdOf()
+        "GroupByCumSum0" -> GroupByCumSum0()
+        "GroupByCumSum" -> GroupByCumSum()
         "DataFrameXs" -> DataFrameXs()
         "GroupByXs" -> GroupByXs()
         "Gather0" -> Gather0()

@@ -404,3 +404,38 @@ class ConcatWithKeys : AbstractSchemaModificationInterpreter() {
             originalColumns + receiver.keys.columns().filter { it.name !in originalColumns.map { it.name } })
     }
 }
+
+/**
+ * Handling `df.groupBy { ... }.cumSum(skipNA) { cols }`
+ */
+class GroupByCumSum : AbstractInterpreter<GroupBy>() {
+    val Arguments.receiver by groupBy()
+    val Arguments.skipNA: Boolean by arg(defaultValue = Present(defaultCumSumSkipNA))
+    val Arguments.columns: ColumnsResolver by arg()
+
+    override fun Arguments.interpret(): GroupBy =
+        GroupBy(
+            keys = receiver.keys,
+            groups = getSchemaAfterCumSum(
+                dataSchema = receiver.groups,
+                selectedColumns = columns,
+            ),
+        )
+}
+
+/**
+ * Handling `df.groupBy { ... }.cumSum(skipNA)`
+ */
+class GroupByCumSum0 : AbstractInterpreter<GroupBy>() {
+    val Arguments.receiver by groupBy()
+    val Arguments.skipNA: Boolean by arg(defaultValue = Present(defaultCumSumSkipNA))
+
+    override fun Arguments.interpret(): GroupBy =
+        GroupBy(
+            keys = receiver.keys,
+            groups = getSchemaAfterCumSum(
+                dataSchema = receiver.groups,
+                selectedColumns = cumSumDefaultColumns,
+            ),
+        )
+}

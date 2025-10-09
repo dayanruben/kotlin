@@ -3861,6 +3861,18 @@ public class IrJsES6CodegenBoxTestGenerated extends AbstractIrJsES6CodegenBoxTes
       runTest("compiler/testData/codegen/box/bridges/typeParameterInExtensionReceiver.kt");
     }
 
+    @Test
+    @TestMetadata("varargBridge1.kt")
+    public void testVarargBridge1() {
+      runTest("compiler/testData/codegen/box/bridges/varargBridge1.kt");
+    }
+
+    @Test
+    @TestMetadata("varargBridge2.kt")
+    public void testVarargBridge2() {
+      runTest("compiler/testData/codegen/box/bridges/varargBridge2.kt");
+    }
+
     @Nested
     @TestMetadata("compiler/testData/codegen/box/bridges/declarationDifferentSignature")
     @TestDataPath("$PROJECT_ROOT")
@@ -45543,6 +45555,12 @@ public class IrJsES6CodegenBoxTestGenerated extends AbstractIrJsES6CodegenBoxTes
       }
 
       @Test
+      @TestMetadata("backingFieldAndPropertyWithTheSameName.kt")
+      public void testBackingFieldAndPropertyWithTheSameName() {
+        runTest("compiler/testData/codegen/box/properties/backingField/backingFieldAndPropertyWithTheSameName.kt");
+      }
+
+      @Test
       @TestMetadata("backingFieldInitializedInInit.kt")
       public void testBackingFieldInitializedInInit() {
         runTest("compiler/testData/codegen/box/properties/backingField/backingFieldInitializedInInit.kt");
@@ -45624,6 +45642,18 @@ public class IrJsES6CodegenBoxTestGenerated extends AbstractIrJsES6CodegenBoxTes
       @TestMetadata("overriddenPropertiesWithExplicitBackingFields.kt")
       public void testOverriddenPropertiesWithExplicitBackingFields() {
         runTest("compiler/testData/codegen/box/properties/backingField/overriddenPropertiesWithExplicitBackingFields.kt");
+      }
+
+      @Test
+      @TestMetadata("overrideWithExplicitBackingField.kt")
+      public void testOverrideWithExplicitBackingField() {
+        runTest("compiler/testData/codegen/box/properties/backingField/overrideWithExplicitBackingField.kt");
+      }
+
+      @Test
+      @TestMetadata("propertyWithBackingFieldAndWithContext.kt")
+      public void testPropertyWithBackingFieldAndWithContext() {
+        runTest("compiler/testData/codegen/box/properties/backingField/propertyWithBackingFieldAndWithContext.kt");
       }
     }
 
