@@ -473,6 +473,10 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = SelfCallInNestedObjectConstructorError::class
     }
 
+    interface UnsupportedCollectionLiteralType : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = UnsupportedCollectionLiteralType::class
+    }
+
     interface SuperIsNotAnExpression : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = SuperIsNotAnExpression::class
     }
@@ -1045,6 +1049,12 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface DslMarkerPropagatesToMany : KaFirDiagnostic<KtAnnotationEntry> {
         override val diagnosticClass get() = DslMarkerPropagatesToMany::class
+    }
+
+    interface DslMarkerAppliedToWrongTarget : KaFirDiagnostic<KtAnnotationEntry> {
+        override val diagnosticClass get() = DslMarkerAppliedToWrongTarget::class
+        val dslMarkerSymbol: KaClassLikeSymbol
+        val actualTarget: String
     }
 
     interface JsModuleProhibitedOnVar : KaFirDiagnostic<KtElement> {

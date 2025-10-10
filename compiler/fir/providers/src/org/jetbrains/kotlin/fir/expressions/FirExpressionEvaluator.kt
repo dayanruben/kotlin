@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.fir.expressions
 
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.contracts.description.LogicOperationKind
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.*
@@ -186,12 +185,12 @@ object FirExpressionEvaluator {
         }
 
         @OptIn(UnresolvedExpressionTypeAccess::class)
-        override fun visitArrayLiteral(arrayLiteral: FirArrayLiteral, data: Nothing?): FirEvaluatorResult {
-            return buildArrayLiteral {
-                source = arrayLiteral.source
-                coneTypeOrNull = arrayLiteral.coneTypeOrNull
-                annotations.addAll(arrayLiteral.annotations)
-                argumentList = visitArgumentList(arrayLiteral.argumentList, data).unwrapOr { return it } ?: return NotEvaluated
+        override fun visitCollectionLiteral(collectionLiteral: FirCollectionLiteral, data: Nothing?): FirEvaluatorResult {
+            return buildCollectionLiteral {
+                source = collectionLiteral.source
+                coneTypeOrNull = collectionLiteral.coneTypeOrNull
+                annotations.addAll(collectionLiteral.annotations)
+                argumentList = visitArgumentList(collectionLiteral.argumentList, data).unwrapOr { return it } ?: return NotEvaluated
             }.wrap()
         }
 

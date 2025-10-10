@@ -3607,13 +3607,14 @@ open class PsiRawFirBuilder(
         }
 
         override fun visitCollectionLiteralExpression(expression: KtCollectionLiteralExpression, data: FirElement?): FirElement {
-            return buildArrayLiteral {
-                source = expression.toFirSourceElement()
-                argumentList = buildArgumentList {
-                    for (innerExpression in expression.getInnerExpressions()) {
-                        arguments += innerExpression.toFirExpression("Incorrect collection literal argument")
-                    }
+            val arguments = buildArgumentList {
+                for (innerExpression in expression.getInnerExpressions()) {
+                    arguments += innerExpression.toFirExpression("Incorrect collection literal argument")
                 }
+            }
+            return buildCollectionLiteral {
+                source = expression.toFirSourceElement()
+                argumentList = arguments
             }
         }
 

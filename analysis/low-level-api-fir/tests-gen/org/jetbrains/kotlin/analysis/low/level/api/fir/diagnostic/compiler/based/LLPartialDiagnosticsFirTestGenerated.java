@@ -1018,6 +1018,12 @@ public class LLPartialDiagnosticsFirTestGenerated extends AbstractLLPartialDiagn
       public void testRequiredAnnotationWithTypealiasedImportedArgument() {
         runTest("compiler/fir/analysis-tests/testData/resolve/annotations/requiredAnnotationWithTypealiasedImportedArgument.kt");
       }
+
+      @Test
+      @TestMetadata("wrongDslMarkerTargets.kt")
+      public void testWrongDslMarkerTargets() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/annotations/wrongDslMarkerTargets.kt");
+      }
     }
 
     @Nested
@@ -1913,6 +1919,334 @@ public class LLPartialDiagnosticsFirTestGenerated extends AbstractLLPartialDiagn
       @TestMetadata("localClasspathSubstitution.kt")
       public void testLocalClasspathSubstitution() {
         runTest("compiler/fir/analysis-tests/testData/resolve/classpathSubstitution/localClasspathSubstitution.kt");
+      }
+    }
+
+    @Nested
+    @TestMetadata("compiler/fir/analysis-tests/testData/resolve/collectionLiterals")
+    @TestDataPath("$PROJECT_ROOT")
+    public class CollectionLiterals {
+      @Test
+      public void testAllFilesPresentInCollectionLiterals() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/collectionLiterals"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+      }
+
+      @Test
+      @TestMetadata("collectionLiteralAsReceiver.kt")
+      public void testCollectionLiteralAsReceiver() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/collectionLiteralAsReceiver.kt");
+      }
+
+      @Nested
+      @TestMetadata("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/collectionLiteralsDisabled")
+      @TestDataPath("$PROJECT_ROOT")
+      public class CollectionLiteralsDisabled {
+        @Test
+        public void testAllFilesPresentInCollectionLiteralsDisabled() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/collectionLiteralsDisabled"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("inAnnotations.kt")
+        public void testInAnnotations() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/collectionLiteralsDisabled/inAnnotations.kt");
+        }
+
+        @Test
+        @TestMetadata("inArgumentPositions.kt")
+        public void testInArgumentPositions() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/collectionLiteralsDisabled/inArgumentPositions.kt");
+        }
+
+        @Test
+        @TestMetadata("inAssignments.kt")
+        public void testInAssignments() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/collectionLiteralsDisabled/inAssignments.kt");
+        }
+
+        @Test
+        @TestMetadata("inFreePositions.kt")
+        public void testInFreePositions() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/collectionLiteralsDisabled/inFreePositions.kt");
+        }
+
+        @Test
+        @TestMetadata("inInterfaceDelegations.kt")
+        public void testInInterfaceDelegations() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/collectionLiteralsDisabled/inInterfaceDelegations.kt");
+        }
+
+        @Test
+        @TestMetadata("inPropertyDelegations.kt")
+        public void testInPropertyDelegations() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/collectionLiteralsDisabled/inPropertyDelegations.kt");
+        }
+
+        @Test
+        @TestMetadata("inReceiverPositions.kt")
+        public void testInReceiverPositions() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/collectionLiteralsDisabled/inReceiverPositions.kt");
+        }
+
+        @Test
+        @TestMetadata("inReturns.kt")
+        public void testInReturns() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/collectionLiteralsDisabled/inReturns.kt");
+        }
+
+        @Test
+        @TestMetadata("inWhenConditions.kt")
+        public void testInWhenConditions() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/collectionLiteralsDisabled/inWhenConditions.kt");
+        }
+      }
+
+      @Nested
+      @TestMetadata("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/formerArrayLiterals")
+      @TestDataPath("$PROJECT_ROOT")
+      public class FormerArrayLiterals {
+        @Test
+        public void testAllFilesPresentInFormerArrayLiterals() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/formerArrayLiterals"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("inAnnotationCallsOutsideOfAnnotations.kt")
+        public void testInAnnotationCallsOutsideOfAnnotations() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/formerArrayLiterals/inAnnotationCallsOutsideOfAnnotations.kt");
+        }
+
+        @Test
+        @TestMetadata("inAnnotations.kt")
+        public void testInAnnotations() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/formerArrayLiterals/inAnnotations.kt");
+        }
+
+        @Test
+        @TestMetadata("inNestedAnnotations.kt")
+        public void testInNestedAnnotations() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/formerArrayLiterals/inNestedAnnotations.kt");
+        }
+
+        @Test
+        @TestMetadata("inVarargsInAnnotations.kt")
+        public void testInVarargsInAnnotations() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/formerArrayLiterals/inVarargsInAnnotations.kt");
+        }
+      }
+
+      @Nested
+      @TestMetadata("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/multipleOverloads")
+      @TestDataPath("$PROJECT_ROOT")
+      public class MultipleOverloads {
+        @Test
+        public void testAllFilesPresentInMultipleOverloads() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/multipleOverloads"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("overloadsByDifferentCollections.kt")
+        public void testOverloadsByDifferentCollections() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/multipleOverloads/overloadsByDifferentCollections.kt");
+        }
+
+        @Test
+        @TestMetadata("overloadsByDifferentCollectionsAndTypeParameter.kt")
+        public void testOverloadsByDifferentCollectionsAndTypeParameter() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/multipleOverloads/overloadsByDifferentCollectionsAndTypeParameter.kt");
+        }
+
+        @Test
+        @TestMetadata("overloadsByTypeParameter.kt")
+        public void testOverloadsByTypeParameter() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/multipleOverloads/overloadsByTypeParameter.kt");
+        }
+
+        @Test
+        @TestMetadata("overloadsByTypeParameterWithElementTypeArgument.kt")
+        public void testOverloadsByTypeParameterWithElementTypeArgument() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/multipleOverloads/overloadsByTypeParameterWithElementTypeArgument.kt");
+        }
+
+        @Test
+        @TestMetadata("overloadsWithDifferentParameterNames.kt")
+        public void testOverloadsWithDifferentParameterNames() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/multipleOverloads/overloadsWithDifferentParameterNames.kt");
+        }
+      }
+
+      @Nested
+      @TestMetadata("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/nestedCollectionLiterals")
+      @TestDataPath("$PROJECT_ROOT")
+      public class NestedCollectionLiterals {
+        @Test
+        public void testAllFilesPresentInNestedCollectionLiterals() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/nestedCollectionLiterals"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("genericMatrix.kt")
+        public void testGenericMatrix() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/nestedCollectionLiterals/genericMatrix.kt");
+        }
+
+        @Test
+        @TestMetadata("listsOfLists.kt")
+        public void testListsOfLists() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/nestedCollectionLiterals/listsOfLists.kt");
+        }
+
+        @Test
+        @TestMetadata("matrix.kt")
+        public void testMatrix() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/nestedCollectionLiterals/matrix.kt");
+        }
+      }
+
+      @Nested
+      @TestMetadata("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/noOperatorOf")
+      @TestDataPath("$PROJECT_ROOT")
+      public class NoOperatorOf {
+        @Test
+        public void testAllFilesPresentInNoOperatorOf() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/noOperatorOf"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("incorrectReturnTypeInVarargOverload.kt")
+        public void testIncorrectReturnTypeInVarargOverload() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/noOperatorOf/incorrectReturnTypeInVarargOverload.kt");
+        }
+
+        @Test
+        @TestMetadata("noCompanionObject.kt")
+        public void testNoCompanionObject() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/noOperatorOf/noCompanionObject.kt");
+        }
+
+        @Test
+        @TestMetadata("noOf.kt")
+        public void testNoOf() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/noOperatorOf/noOf.kt");
+        }
+
+        @Test
+        @TestMetadata("noOperator.kt")
+        public void testNoOperator() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/noOperatorOf/noOperator.kt");
+        }
+
+        @Test
+        @TestMetadata("noVarargOverload.kt")
+        public void testNoVarargOverload() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/noOperatorOf/noVarargOverload.kt");
+        }
+      }
+
+      @Nested
+      @TestMetadata("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/userTypes")
+      @TestDataPath("$PROJECT_ROOT")
+      public class UserTypes {
+        @Test
+        public void testAllFilesPresentInUserTypes() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/userTypes"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("collectionLiteralsAndSmartcasts.kt")
+        public void testCollectionLiteralsAndSmartcasts() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/userTypes/collectionLiteralsAndSmartcasts.kt");
+        }
+
+        @Test
+        @TestMetadata("collectionLiteralsWithNestedExpressionsInside.kt")
+        public void testCollectionLiteralsWithNestedExpressionsInside() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/userTypes/collectionLiteralsWithNestedExpressionsInside.kt");
+        }
+
+        @Test
+        @TestMetadata("genericCollection.kt")
+        public void testGenericCollection() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/userTypes/genericCollection.kt");
+        }
+
+        @Test
+        @TestMetadata("genericCollectionAssignments.kt")
+        public void testGenericCollectionAssignments() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/userTypes/genericCollectionAssignments.kt");
+        }
+
+        @Test
+        @TestMetadata("genericCollectionWithNonGenericElementType.kt")
+        public void testGenericCollectionWithNonGenericElementType() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/userTypes/genericCollectionWithNonGenericElementType.kt");
+        }
+
+        @Test
+        @TestMetadata("genericCollectionWithNonGenericElementTypeAssignments.kt")
+        public void testGenericCollectionWithNonGenericElementTypeAssignments() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/userTypes/genericCollectionWithNonGenericElementTypeAssignments.kt");
+        }
+
+        @Test
+        @TestMetadata("inDefaultValues.kt")
+        public void testInDefaultValues() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/userTypes/inDefaultValues.kt");
+        }
+
+        @Test
+        @TestMetadata("inReturnPositions.kt")
+        public void testInReturnPositions() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/userTypes/inReturnPositions.kt");
+        }
+
+        @Test
+        @TestMetadata("interfaceDelegationByCollectionLiteral.kt")
+        public void testInterfaceDelegationByCollectionLiteral() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/userTypes/interfaceDelegationByCollectionLiteral.kt");
+        }
+
+        @Test
+        @TestMetadata("noExplicitReturnTypeRecursion.kt")
+        public void testNoExplicitReturnTypeRecursion() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/userTypes/noExplicitReturnTypeRecursion.kt");
+        }
+
+        @Test
+        @TestMetadata("nonGenericCollection.kt")
+        public void testNonGenericCollection() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/userTypes/nonGenericCollection.kt");
+        }
+
+        @Test
+        @TestMetadata("nonGenericCollectionAssignments.kt")
+        public void testNonGenericCollectionAssignments() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/userTypes/nonGenericCollectionAssignments.kt");
+        }
+
+        @Test
+        @TestMetadata("nonGenericCollectionWithGenericElementType.kt")
+        public void testNonGenericCollectionWithGenericElementType() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/userTypes/nonGenericCollectionWithGenericElementType.kt");
+        }
+
+        @Test
+        @TestMetadata("nonGenericCollectionWithGenericElementTypeAssignments.kt")
+        public void testNonGenericCollectionWithGenericElementTypeAssignments() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/userTypes/nonGenericCollectionWithGenericElementTypeAssignments.kt");
+        }
+
+        @Test
+        @TestMetadata("plusOperator.kt")
+        public void testPlusOperator() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/userTypes/plusOperator.kt");
+        }
+
+        @Test
+        @TestMetadata("typealiasAsOperatorOfReturnType.kt")
+        public void testTypealiasAsOperatorOfReturnType() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/userTypes/typealiasAsOperatorOfReturnType.kt");
+        }
       }
     }
 

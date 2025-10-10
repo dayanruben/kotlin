@@ -64,11 +64,17 @@ class ConeUnresolvedReferenceError(val name: Name) : ConeUnresolvedError {
 class ConeUnresolvedSymbolError(val classId: ClassId) : ConeUnresolvedError {
     override val qualifier: String get() = classId.asSingleFqName().asString()
     override val reason: String get() = "Symbol not found for $classId"
+
+    override val readableDescriptionAsTypeConstructor: String
+        get() = "Unresolved symbol: $classId"
 }
 
 class ConeUnresolvedTypeQualifierError(val qualifiers: List<FirQualifierPart>) : ConeUnresolvedError {
     override val qualifier: String get() = qualifiers.joinToString(separator = ".") { it.name.asString() }
     override val reason: String get() = "Symbol not found for $qualifier"
+
+    override val readableDescriptionAsTypeConstructor: String
+        get() = "Unresolved qualified name: $qualifier"
 }
 
 class ConeUnresolvedNameError(
@@ -326,10 +332,6 @@ class ConeInaccessibleOuterClass(val symbol: FirClassSymbol<*>) : ConeDiagnostic
     override val reason: String get() = "Cannot access outer class ''${symbol.classId}'' of non-inner class"
 }
 
-class ConeUnsupportedCallableReferenceTarget(override val candidate: AbstractCallCandidate<*>) : ConeDiagnosticWithSingleCandidate {
-    override val reason: String get() = "Unsupported declaration for callable reference: ${candidate.symbol.fir.render()}"
-}
-
 class ConeTypeParameterSupertype(val symbol: FirTypeParameterSymbol) : ConeDiagnostic {
     override val reason: String get() = "Type parameter ${symbol.fir.name} cannot be a supertype"
 }
@@ -380,8 +382,9 @@ class ConeNotFunctionAsOperator(val symbol: FirBasedSymbol<*>) : ConeDiagnostic 
     override val reason: String get() = "Cannot use not function as an operator"
 }
 
-class ConeUnknownLambdaParameterTypeDiagnostic : ConeDiagnostic {
-    override val reason: String get() = "Unknown return lambda parameter type"
+class ConeUnknownLambdaParameterTypeDiagnostic(val isReturnType: Boolean) : ConeDiagnostic {
+    override val reason: String
+        get() = if (isReturnType) "Unknown lambda return type" else "Unknown lambda parameter type"
 }
 
 private fun describeSymbol(symbol: FirBasedSymbol<*>): String {

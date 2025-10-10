@@ -123,7 +123,7 @@ private fun ConeDiagnostic.toKtDiagnostic(
     }
     is ConeNoCompanionObject -> FirErrors.NO_COMPANION_OBJECT.createOn(source, this.candidateSymbol as FirClassLikeSymbol<*>, session)
     is ConeAmbiguityError -> @OptIn(ApplicabilityDetail::class) when {
-        // Don't report ambiguity when some non-lambda, non-callable-reference argument has an error type
+        // Don't report ambiguity when some non-lambda, non-callable-reference, non-collection-literal argument has an error type
         candidates.all {
             if (it !is AbstractCallCandidate<*>) return@all false
             // Ambiguous candidates may be not fully processed, so argument mapping may be not initialized
@@ -250,6 +250,7 @@ private fun ConeDiagnostic.toKtDiagnostic(
     is ConeDynamicUnsupported -> FirErrors.UNSUPPORTED.createOn(source, FirDynamicUnsupportedChecker.MESSAGE, session)
     is ConeContextParameterWithDefaultValue -> FirErrors.CONTEXT_PARAMETER_WITH_DEFAULT.createOn(source, session)
     is ConeCyclicTypeBound -> null // reported in FirCyclicTypeBoundsChecker
+    is ConeUnsupportedCollectionLiteralType -> FirErrors.UNSUPPORTED_COLLECTION_LITERAL_TYPE.createOn(source, session)
     else -> throw IllegalArgumentException("Unsupported diagnostic type: ${this.javaClass}")
 }
 
@@ -264,8 +265,10 @@ private fun ConeAmbiguityError.candidatesWithDiagnosticMessages(
 }
 
 private fun AbstractConeResolutionAtom.containsErrorTypeForSuppressingAmbiguityError(): Boolean {
-    val arg = expression
-    return arg.resolvedType.hasError() && arg !is FirAnonymousFunctionExpression && arg !is FirCallableReferenceAccess
+    return when (expression) {
+        is FirCollectionLiteral, is FirCallableReferenceAccess, is FirAnonymousFunctionExpression -> false
+        else -> expression.resolvedType.hasError()
+    }
 }
 
 /**

@@ -424,13 +424,13 @@ abstract class FirAbstractBodyResolveTransformerDispatcher(
         FirExpressionsResolveTransformer::transformCheckedSafeCallSubject,
     )
 
-    override fun transformArrayLiteral(
-        arrayLiteral: FirArrayLiteral,
+    override fun transformCollectionLiteral(
+        collectionLiteral: FirCollectionLiteral,
         data: ResolutionMode,
     ): FirStatement = expressionTransformation(
-        arrayLiteral,
+        collectionLiteral,
         data,
-        FirExpressionsResolveTransformer::transformArrayLiteral,
+        FirExpressionsResolveTransformer::transformCollectionLiteral,
     )
 
     override fun transformSmartCastExpression(

@@ -62,6 +62,8 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.AddDslAddGroup
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.AddDslAddGroupInto
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.AddDslNamedGroup
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.AddDslStringInvoke
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.AddId
@@ -182,6 +184,7 @@ import org.jetbrains.kotlinx.dataframe.plugin.impl.api.Implode
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ImplodeDefault
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.InnerJoinWith
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.InsertAt
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.IntoStringLambda
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.JoinWith
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.LeftJoinWith
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.MapToFrame
@@ -225,6 +228,7 @@ import org.jetbrains.kotlinx.dataframe.plugin.impl.api.PairToConstructor
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.PerRowCol
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.Percentile0
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.Percentile1
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.RenameIntoLambda
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.RenameMapping
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ToDataFrame
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ToDataFrameColumn
@@ -281,7 +285,11 @@ import org.jetbrains.kotlinx.dataframe.plugin.impl.api.UpdatePerColLambda
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.UpdatePerColMap
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.UpdatePerColRow
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.UpdatePerRowCol
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.UpdateNotNull
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.UpdateNotNullWith
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.UpdateWhere
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.UpdateWithNull
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.UpdateWithZero
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ValueCols0
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ValueCols1
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.WithoutNulls0
@@ -412,6 +420,7 @@ internal inline fun <reified T : Interpreter<*>> String.load(isTest: Boolean): T
         "Remove0" -> Remove0()
         "Group0" -> Group0()
         "Into0" -> Into0()
+        "IntoStringLambda" -> IntoStringLambda()
         "Ungroup0" -> Ungroup0()
         "DropNulls0" -> DropNulls0()
         "DropNulls1" -> DropNulls1()
@@ -423,6 +432,7 @@ internal inline fun <reified T : Interpreter<*>> String.load(isTest: Boolean): T
         "Exclude0" -> Exclude0()
         "Exclude1" -> Exclude1()
         "RenameInto" -> RenameInto()
+        "RenameIntoLambda" -> RenameIntoLambda()
         "DataFrameGroupBy" -> DataFrameGroupBy()
         "AsGroupBy" -> AsGroupBy()
         "AsGroupByDefault" -> AsGroupByDefault()
@@ -529,11 +539,17 @@ internal inline fun <reified T : Interpreter<*>> String.load(isTest: Boolean): T
         "ToDataFrameColumn" -> ToDataFrameColumn()
         "FillNulls0" -> FillNulls0()
         "UpdateWith0" -> UpdateWith0()
+        "UpdateNotNull" -> UpdateNotNullWith()
+        "UpdateNotNullDefault" -> UpdateNotNull()
+        "UpdateWithNull" -> UpdateWithNull()
+        "UpdateWithZero" -> UpdateWithZero()
         "Flatten0" -> Flatten0()
         "FlattenDefault" -> FlattenDefault()
         "AddId" -> AddId()
         "AddDslStringInvoke" -> AddDslStringInvoke()
         "AddDslNamedGroup" -> AddDslNamedGroup()
+        "AddDslAddGroup" -> AddDslAddGroup()
+        "AddDslAddGroupInto" -> AddDslAddGroupInto()
         "MapToFrame" -> MapToFrame()
         "Move0" -> Move0()
         "ToTop" -> ToTop()

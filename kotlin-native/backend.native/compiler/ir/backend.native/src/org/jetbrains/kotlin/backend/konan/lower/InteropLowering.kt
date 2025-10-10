@@ -53,6 +53,21 @@ internal class InteropLowering(val context: Context, val fileLowerState: FileLow
         InteropLoweringPart1(context, fileLowerState).lower(irBody, container)
         InteropLoweringPart2(context, fileLowerState).lower(irBody, container)
     }
+
+    companion object {
+        /**
+         * InteropLowering uses this character to designate name placeholders in generated C stubs,
+         * so that InteropBridgesNameInventor replaces the placeholders with real names.
+         *
+         * So, ideally, this character should never be found in valid C code.
+         * Otherwise, something that is not a placeholder can be parsed as one (see e.g. KT-81538).
+         *
+         * It seems that the only reliable choice then is to use the null character.
+         * Which is not great because it is not normally displayed, making potential problems
+         * harder to diagnose.
+         */
+        const val NAME_PLACEHOLDER_QUOTE = '\u0000'
+    }
 }
 
 private class NameCounter {
@@ -129,7 +144,10 @@ private abstract class BaseInteropIrTransformer(
                 addKotlin(declaration)
             }
 
-            override fun getUniqueCName(prefix: String) = "\$$prefix${nameCounter.getNext()}\$"
+            override fun getUniqueCName(prefix: String): String {
+                val quote = InteropLowering.NAME_PLACEHOLDER_QUOTE
+                return "$quote$prefix${nameCounter.getNext()}$quote"
+            }
 
             override fun getUniqueKotlinFunctionReferenceClassName(prefix: String) =
                     fileLowerState.getFunctionReferenceImplUniqueName(prefix)

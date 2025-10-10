@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
 import org.jetbrains.kotlin.fir.declarations.utils.isInline
 import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
+import org.jetbrains.kotlin.fir.diagnostics.ConeUnsupportedCollectionLiteralType
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildSamConversionExpression
 import org.jetbrains.kotlin.fir.expressions.builder.buildSpreadArgumentExpression
@@ -81,6 +82,10 @@ class FirCallCompletionResultsWriterTransformer(
     private val samResolver: FirSamResolver,
     private val context: BodyResolveContext,
     private val mode: Mode = Mode.Normal,
+    // TODO: this is a temporary solution.
+    //  The way we deal with collection literals inside annotations (annotation constructors) and in usual calls should be unified.
+    //  For now, however, they are intentionally separated. Related issue: KT-81110.
+    private var insideAnnotationContext: Boolean = false,
 ) : FirAbstractTreeTransformer<ExpectedArgumentType?>(phase = FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE) {
 
     private fun finallySubstituteOrNull(
@@ -106,14 +111,25 @@ class FirCallCompletionResultsWriterTransformer(
         Normal, DelegatedPropertyCompletion
     }
 
-    private inline fun <T> withFirArrayOfCallTransformer(block: () -> T): T {
-        enableArrayOfCallTransformation = true
+    private inline fun <T> withCollectionLiteralInAnnotationResolution(block: () -> T): T {
+        val savedInsideAnnotationContext = insideAnnotationContext
+        insideAnnotationContext = true
         return try {
             block()
         } finally {
-            enableArrayOfCallTransformation = false
+            insideAnnotationContext = savedInsideAnnotationContext
         }
     }
+
+    private inline fun <T> withFirArrayOfCallTransformer(block: () -> T): T =
+        withCollectionLiteralInAnnotationResolution {
+            enableArrayOfCallTransformation = true
+            return try {
+                block()
+            } finally {
+                enableArrayOfCallTransformation = false
+            }
+        }
 
     private fun <T : FirQualifiedAccessExpression> prepareQualifiedTransform(
         qualifiedAccessExpression: T, calleeReference: FirNamedReferenceWithCandidate,
@@ -353,10 +369,47 @@ class FirCallCompletionResultsWriterTransformer(
         propertyAccessExpression: FirPropertyAccessExpression,
         data: ExpectedArgumentType?,
     ): FirStatement {
-        data?.contextSensitiveResolutionReplacements?.get(propertyAccessExpression)?.let { replacement ->
+        data?.argumentReplacements?.get(propertyAccessExpression)?.let { replacement ->
             return replacement.transformSingle(this, data)
         }
         return transformQualifiedAccessExpression(propertyAccessExpression, data)
+    }
+
+    private fun transformArrayLiteralInAnnotation(arrayLiteral: FirCollectionLiteral, data: ExpectedArgumentType?): FirStatement {
+        if (arrayLiteral.isResolved) return arrayLiteral
+        val expectedArrayType = data?.getExpectedType(arrayLiteral)
+        val expectedArrayElementType = expectedArrayType?.arrayElementType()
+        arrayLiteral.transformChildren(this, expectedArrayElementType?.toExpectedType(data.argumentReplacements))
+        val arrayElementType =
+            session.typeContext.commonSuperTypeOrNull(arrayLiteral.arguments.map { it.resolvedType })?.let {
+                typeApproximator.approximateToSuperType(
+                    it,
+                    TypeApproximatorConfiguration.IntermediateApproximationToSupertypeAfterCompletionInK2
+                )
+                    ?: it
+            } ?: expectedArrayElementType ?: session.builtinTypes.nullableAnyType.coneType
+        arrayLiteral.resultType =
+            arrayElementType.createArrayType(createPrimitiveArrayTypeIfPossible = expectedArrayType?.fullyExpandedType()?.isPrimitiveArray == true)
+        return arrayLiteral
+    }
+
+    override fun transformCollectionLiteral(
+        collectionLiteral: FirCollectionLiteral,
+        data: ExpectedArgumentType?
+    ): FirStatement {
+        if (!session.languageVersionSettings.supportsFeature(LanguageFeature.CollectionLiterals) ||
+            insideAnnotationContext
+        ) {
+            return transformArrayLiteralInAnnotation(collectionLiteral, data)
+        }
+
+        data?.argumentReplacements?.get(collectionLiteral)?.let { replacement ->
+            return replacement.transform(this, data)
+        }
+
+        collectionLiteral.transformChildren(this, null)
+        collectionLiteral.replaceConeTypeOrNull(ConeErrorType(ConeUnsupportedCollectionLiteralType))
+        return collectionLiteral
     }
 
     override fun transformFunctionCall(functionCall: FirFunctionCall, data: ExpectedArgumentType?): FirStatement {
@@ -491,7 +544,7 @@ class FirCallCompletionResultsWriterTransformer(
                 // Once we encounter the first "real" expression, we delegate to the outer transformer.
                 val transformed =
                     element.transformSingle(this@FirCallCompletionResultsWriterTransformer, expectedArgumentsTypeMapping).let {
-                        expectedArgumentsTypeMapping?.contextSensitiveResolutionReplacements?.get(it) ?: it
+                        expectedArgumentsTypeMapping?.argumentReplacements?.get(it) ?: it
                     }
 
                 if (transformed is FirExpression) {
@@ -582,7 +635,9 @@ class FirCallCompletionResultsWriterTransformer(
             }
         }
 
-        annotationCall.transformArgumentList(expectedArgumentsTypeMapping = null)
+        withCollectionLiteralInAnnotationResolution {
+            annotationCall.transformArgumentList(expectedArgumentsTypeMapping = null)
+        }
         return annotationCall
     }
 
@@ -676,7 +731,7 @@ class FirCallCompletionResultsWriterTransformer(
             this,
             data?.getExpectedType(
                 safeCallExpression
-            )?.toExpectedType(data.contextSensitiveResolutionReplacements)
+            )?.toExpectedType(data.argumentReplacements)
         )
 
         safeCallExpression.propagateTypeFromQualifiedAccessAfterNullCheck(session, context.file)
@@ -808,16 +863,16 @@ class FirCallCompletionResultsWriterTransformer(
             }
         }.toMap()
 
-        val contextSensitiveResolutionReplacements = this@createArgumentsMapping.contextSensitiveResolutionReplacements
+        val argumentReplacements = this@createArgumentsMapping.argumentReplacements
 
-        if (lambdasReturnType.isEmpty() && arguments.isEmpty() && contextSensitiveResolutionReplacements.isNullOrEmpty()) return null
+        if (lambdasReturnType.isEmpty() && arguments.isEmpty() && argumentReplacements.isNullOrEmpty()) return null
         return ExpectedArgumentType.ArgumentsMap(
             map = arguments,
             lambdasReturnTypes = lambdasReturnType,
             samConversions = samConversions ?: emptyMap(),
             argumentsWithFunctionKindConversion = argumentsWithFunctionKindConversion ?: emptySet(),
             forErrorReference = forErrorReference,
-            contextSensitiveResolutionReplacements,
+            argumentReplacements,
         )
     }
 
@@ -1004,7 +1059,7 @@ class FirCallCompletionResultsWriterTransformer(
             ?: (expectedType as? ConeClassLikeType)?.returnType(session) as? ConeClassLikeType
             ?: runUnless(containingCallIsError) { (data as? ExpectedArgumentType.ArgumentsMap)?.lambdasReturnTypes?.get(anonymousFunction) }
 
-        val newData = expectedReturnType?.toExpectedType(data?.contextSensitiveResolutionReplacements)
+        val newData = expectedReturnType?.toExpectedType(data?.argumentReplacements)
         for ((expression, _) in returnExpressions) {
             expression.transformSingle(this, newData)
         }
@@ -1057,7 +1112,7 @@ class FirCallCompletionResultsWriterTransformer(
         data: ExpectedArgumentType?,
     ): Collection<FirAnonymousFunctionReturnExpressionInfo> {
 
-        val replacements = data?.contextSensitiveResolutionReplacements ?: return this
+        val replacements = data?.argumentReplacements ?: return this
 
         return map { returnInfo ->
             val replacement = replacements[returnInfo.expression] ?: return@map returnInfo
@@ -1116,7 +1171,7 @@ class FirCallCompletionResultsWriterTransformer(
         }
 
         val newData =
-            labeledElement.returnTypeRef.coneTypeSafe<ConeKotlinType>()?.toExpectedType(data?.contextSensitiveResolutionReplacements)
+            labeledElement.returnTypeRef.coneTypeSafe<ConeKotlinType>()?.toExpectedType(data?.argumentReplacements)
         return super.transformReturnExpression(returnExpression, newData)
     }
 
@@ -1273,7 +1328,7 @@ class FirCallCompletionResultsWriterTransformer(
         data: ExpectedArgumentType?,
     ) where D : FirResolvable, D : FirExpression {
         val newExpectedType = data?.getExpectedType(syntheticCall) ?: syntheticCall.resolvedType
-        val newData = newExpectedType.toExpectedType(syntheticCall.candidate()?.contextSensitiveResolutionReplacements)
+        val newData = newExpectedType.toExpectedType(syntheticCall.candidate()?.argumentReplacements)
 
         if (syntheticCall is FirTryExpression) {
             syntheticCall.transformCalleeReference(this, newData)
@@ -1310,30 +1365,12 @@ class FirCallCompletionResultsWriterTransformer(
         return integerLiteralOperatorCall.transformSingle(integerOperatorApproximator, expectedType)
     }
 
-    override fun transformArrayLiteral(arrayLiteral: FirArrayLiteral, data: ExpectedArgumentType?): FirStatement {
-        if (arrayLiteral.isResolved) return arrayLiteral
-        val expectedArrayType = data?.getExpectedType(arrayLiteral)
-        val expectedArrayElementType = expectedArrayType?.arrayElementType()
-        arrayLiteral.transformChildren(this, expectedArrayElementType?.toExpectedType(data.contextSensitiveResolutionReplacements))
-        val arrayElementType =
-            session.typeContext.commonSuperTypeOrNull(arrayLiteral.arguments.map { it.resolvedType })?.let {
-                typeApproximator.approximateToSuperType(
-                    it,
-                    TypeApproximatorConfiguration.IntermediateApproximationToSupertypeAfterCompletionInK2
-                )
-                    ?: it
-            } ?: expectedArrayElementType ?: session.builtinTypes.nullableAnyType.coneType
-        arrayLiteral.resultType =
-            arrayElementType.createArrayType(createPrimitiveArrayTypeIfPossible = expectedArrayType?.fullyExpandedType()?.isPrimitiveArray == true)
-        return arrayLiteral
-    }
-
     override fun transformVarargArgumentsExpression(
         varargArgumentsExpression: FirVarargArgumentsExpression,
         data: ExpectedArgumentType?,
     ): FirStatement {
         val expectedType = data?.getExpectedType(varargArgumentsExpression)
-            ?.let { ExpectedArgumentType.ExpectedType(it, data.contextSensitiveResolutionReplacements) }
+            ?.let { ExpectedArgumentType.ExpectedType(it, data.argumentReplacements) }
         varargArgumentsExpression.transformChildren(this, expectedType)
         return varargArgumentsExpression
     }
@@ -1396,7 +1433,7 @@ class FirCallCompletionResultsWriterTransformer(
 }
 
 sealed class ExpectedArgumentType(
-    val contextSensitiveResolutionReplacements: Map<FirElement, FirExpression>?,
+    val argumentReplacements: Map<FirElement, FirExpression>?,
 ) {
     class ArgumentsMap(
         val map: Map<FirElement, ConeKotlinType>,
@@ -1404,13 +1441,13 @@ sealed class ExpectedArgumentType(
         val samConversions: Map<FirElement, FirSamResolver.SamConversionInfo>,
         val argumentsWithFunctionKindConversion: Set<FirExpression>,
         val forErrorReference: Boolean,
-        contextSensitiveResolutionReplacements: Map<FirElement, FirExpression>?,
-    ) : ExpectedArgumentType(contextSensitiveResolutionReplacements)
+        argumentReplacements: Map<FirElement, FirExpression>?,
+    ) : ExpectedArgumentType(argumentReplacements)
 
     class ExpectedType(
         val type: ConeKotlinType,
-        contextSensitiveResolutionReplacements: Map<FirElement, FirExpression>?,
-    ) : ExpectedArgumentType(contextSensitiveResolutionReplacements)
+        argumentReplacements: Map<FirElement, FirExpression>?,
+    ) : ExpectedArgumentType(argumentReplacements)
 }
 
 private fun ExpectedArgumentType.getExpectedType(argument: FirElement): ConeKotlinType? = when (this) {
@@ -1419,8 +1456,8 @@ private fun ExpectedArgumentType.getExpectedType(argument: FirElement): ConeKotl
 }
 
 fun ConeKotlinType.toExpectedType(
-    contextSensitiveResolutionReplacements: Map<FirElement, FirExpression>?,
-): ExpectedArgumentType = ExpectedArgumentType.ExpectedType(this, contextSensitiveResolutionReplacements)
+    argumentReplacements: Map<FirElement, FirExpression>?,
+): ExpectedArgumentType = ExpectedArgumentType.ExpectedType(this, argumentReplacements)
 
 internal fun Candidate.doesResolutionResultOverrideOtherToPreserveCompatibility(): Boolean =
     ResolutionResultOverridesOtherToPreserveCompatibility in diagnostics

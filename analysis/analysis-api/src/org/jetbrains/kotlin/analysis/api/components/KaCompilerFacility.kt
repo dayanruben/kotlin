@@ -7,10 +7,7 @@ package org.jetbrains.kotlin.analysis.api.components
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
-import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.compile.CodeFragmentCapturedValue
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
@@ -21,19 +18,9 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 @KaExperimentalApi
-@SubclassOptInRequired(KaImplementationDetail::class)
+@KaSessionComponentImplementationDetail
+@SubclassOptInRequired(KaSessionComponentImplementationDetail::class)
 public interface KaCompilerFacility : KaSessionComponent {
-    @KaExperimentalApi
-    public companion object {
-        /** Simple class name for the code fragment facade class. */
-        public val CODE_FRAGMENT_CLASS_NAME: CompilerConfigurationKey<String> =
-            CompilerConfigurationKey<String>("code fragment class name")
-
-        /** Entry point method name for the code fragment. */
-        public val CODE_FRAGMENT_METHOD_NAME: CompilerConfigurationKey<String> =
-            CompilerConfigurationKey<String>("code fragment method name")
-    }
-
     /**
      * Compiles the given [file] in-memory (without dumping the compiled binaries to the disk).
      *
@@ -61,6 +48,14 @@ public interface KaCompilerFacility : KaSessionComponent {
         allowedErrorFilter: (KaDiagnostic) -> Boolean,
     ): KaCompilationResult
 }
+
+/** Simple class name for the code fragment facade class. */
+@KaExperimentalApi
+public val CODE_FRAGMENT_CLASS_NAME: CompilerConfigurationKey<String> = CompilerConfigurationKey("code fragment class name")
+
+/** Entry point method name for the code fragment. */
+@KaExperimentalApi
+public val CODE_FRAGMENT_METHOD_NAME: CompilerConfigurationKey<String> = CompilerConfigurationKey("code fragment method name")
 
 /**
  * An in-memory compilation result returned from [KaCompilerFacility].
@@ -164,6 +159,7 @@ public sealed class KaCompilerTarget {
  *
  * @see KaCompilerTarget.Jvm
  */
+@KaExtensibleApi
 @KaExperimentalApi
 public fun interface KaCompiledClassHandler {
     /**
