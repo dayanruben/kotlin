@@ -7076,6 +7076,12 @@ public class LLBlackBoxTestGenerated extends AbstractLLBlackBoxTest {
     }
 
     @Test
+    @TestMetadata("kt81617.kt")
+    public void testKt81617() {
+      runTest("compiler/testData/codegen/box/casts/kt81617.kt");
+    }
+
+    @Test
     @TestMetadata("lambdaToUnitCast.kt")
     public void testLambdaToUnitCast() {
       runTest("compiler/testData/codegen/box/casts/lambdaToUnitCast.kt");
@@ -12267,6 +12273,12 @@ public class LLBlackBoxTestGenerated extends AbstractLLBlackBoxTest {
       }
 
       @Test
+      @TestMetadata("forInArrayWithIndexNameBasedDestructuringShortForm.kt")
+      public void testForInArrayWithIndexNameBasedDestructuringShortForm() {
+        runTest("compiler/testData/codegen/box/controlStructures/forInArrayWithIndex/forInArrayWithIndexNameBasedDestructuringShortForm.kt");
+      }
+
+      @Test
       @TestMetadata("forInArrayWithIndexNoElementVar.kt")
       public void testForInArrayWithIndexNoElementVar() {
         runTest("compiler/testData/codegen/box/controlStructures/forInArrayWithIndex/forInArrayWithIndexNoElementVar.kt");
@@ -12403,6 +12415,12 @@ public class LLBlackBoxTestGenerated extends AbstractLLBlackBoxTest {
       }
 
       @Test
+      @TestMetadata("forInCharSequenceWithIndexNameBasedDestructuringShortForm.kt")
+      public void testForInCharSequenceWithIndexNameBasedDestructuringShortForm() {
+        runTest("compiler/testData/codegen/box/controlStructures/forInCharSequenceWithIndex/forInCharSequenceWithIndexNameBasedDestructuringShortForm.kt");
+      }
+
+      @Test
       @TestMetadata("forInCharSequenceWithIndexNoElementVarCheckSideEffects.kt")
       public void testForInCharSequenceWithIndexNoElementVarCheckSideEffects() {
         runTest("compiler/testData/codegen/box/controlStructures/forInCharSequenceWithIndex/forInCharSequenceWithIndexNoElementVarCheckSideEffects.kt");
@@ -12424,6 +12442,12 @@ public class LLBlackBoxTestGenerated extends AbstractLLBlackBoxTest {
       @TestMetadata("forInStringWithIndex.kt")
       public void testForInStringWithIndex() {
         runTest("compiler/testData/codegen/box/controlStructures/forInCharSequenceWithIndex/forInStringWithIndex.kt");
+      }
+
+      @Test
+      @TestMetadata("forInStringWithIndexNameBasedDestructuringShortForm.kt")
+      public void testForInStringWithIndexNameBasedDestructuringShortForm() {
+        runTest("compiler/testData/codegen/box/controlStructures/forInCharSequenceWithIndex/forInStringWithIndexNameBasedDestructuringShortForm.kt");
       }
 
       @Test
@@ -12622,6 +12646,12 @@ public class LLBlackBoxTestGenerated extends AbstractLLBlackBoxTest {
       @TestMetadata("forInSequenceWithIndexCheckSideEffects.kt")
       public void testForInSequenceWithIndexCheckSideEffects() {
         runTest("compiler/testData/codegen/box/controlStructures/forInSequenceWithIndex/forInSequenceWithIndexCheckSideEffects.kt");
+      }
+
+      @Test
+      @TestMetadata("forInSequenceWithIndexNameBasedDestructuringShortForm.kt")
+      public void testForInSequenceWithIndexNameBasedDestructuringShortForm() {
+        runTest("compiler/testData/codegen/box/controlStructures/forInSequenceWithIndex/forInSequenceWithIndexNameBasedDestructuringShortForm.kt");
       }
 
       @Test
