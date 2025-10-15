@@ -420,7 +420,6 @@ enum class LanguageFeature(
     ForbidJvmSerializableLambdaOnInlinedFunctionLiterals(KOTLIN_2_3, enabledInProgressiveMode = true, "KT-71906"),
     ReportExposedTypeForInternalTypeParameterBounds(KOTLIN_2_3, enabledInProgressiveMode = true, "KTLC-275"),
     EnableDfaWarningsInK2(KOTLIN_2_3, "KT-50965"),
-    ForbidParenthesizedLhsInAssignments(KOTLIN_2_3, enabledInProgressiveMode = true, "KT-70507"),
     DontMakeExplicitJavaTypeArgumentsFlexible(KOTLIN_2_3, "KTLC-284"),
     PreciseSimplificationToFlexibleLowerConstraint(KOTLIN_2_3, "KT-78621"),
     DontIgnoreUpperBoundViolatedOnImplicitArguments(KOTLIN_2_3, "KT-67146"),
@@ -430,7 +429,6 @@ enum class LanguageFeature(
     ForbidAnnotationsWithUseSiteTargetOnExpressions(KOTLIN_2_3, enabledInProgressiveMode = true, "KT-75242"),
     ProhibitNullableTypeThroughTypealias(KOTLIN_2_3, enabledInProgressiveMode = true, "KTLC-279"),
     ForbidObjectDelegationToItself(KOTLIN_2_3, enabledInProgressiveMode = true, "KT-17417"),
-    TurnTypeCheckWarningsIntoErrors(KOTLIN_2_3, enabledInProgressiveMode = true, "KTLC-365"),
     JvmIndyAllowLambdasWithAnnotations(KOTLIN_2_3, "KT-76606"),
     NestedTypeAliases(KOTLIN_2_3, forcesPreReleaseBinaries = true, issue = "KT-45285"),
     ProhibitIntersectionReifiedTypeParameter(KOTLIN_2_3, enabledInProgressiveMode = true, "KTLC-13"),
@@ -468,12 +466,14 @@ enum class LanguageFeature(
     ForbidGetSetValueWithTooManyParameters(KOTLIN_2_4, issue = "KT-77131"),
     ForbidReturnInExpressionBodyWithoutExplicitTypeEdgeCases(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-288"),
     ForbidInlineEnumEntries(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-361"),
+    TurnTypeCheckWarningsIntoErrors(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-365"),
     CheckOptInOnPureEnumEntries(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-359"),
     ForbidExposingPackagePrivateInInternal(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-271"),
     CheckPackageInfoNullnessAnnotations(KOTLIN_2_4, enabledInProgressiveMode = true, "KT-77729"),
     ForbidTypeAliasWithMissingDependencyType(KOTLIN_2_4, enabledInProgressiveMode = true, "KT-79781"),
     ForbidImplicitTypeAnnotationWithMissingDependency(KOTLIN_2_4, enabledInProgressiveMode = true, "KT-80247"),
     ProperExhaustivenessCheckForJavaOpenSealedClass(sinceVersion = KOTLIN_2_4, enabledInProgressiveMode = true,"KT-78879"),
+    DisableMaxTypeDepthFromInitialConstraints(sinceVersion = KOTLIN_2_4, enabledInProgressiveMode = true, "KT-81441"),
     JsAllowExportingSuspendFunctions(sinceVersion = KOTLIN_2_4, "KT-56281"),
     ForbidTypeAliasToCompilerRequiredAnnotation(KOTLIN_2_4, enabledInProgressiveMode = true, "KT-79369"),
     ForbidArrayLiteralsInNonAnnotationContexts(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-369"),
@@ -488,6 +488,10 @@ enum class LanguageFeature(
     ExpectActualClasses(sinceVersion = null, "KT-62885"),
 
     DataClassCopyRespectsConstructorVisibility(sinceVersion = null, "KT-11914"), // KT-11914 Deprecation phase 3
+
+    // Disabled for an indefinite time as we've moved it forward a version twice already, and
+    // it's probably better to go the other way around, and only enable it once we're ready.
+    ForbidParenthesizedLhsInAssignments(null, enabledInProgressiveMode = true, "KT-70507"),
 
     DirectJavaActualization(sinceVersion = null, "KT-67202"),
 

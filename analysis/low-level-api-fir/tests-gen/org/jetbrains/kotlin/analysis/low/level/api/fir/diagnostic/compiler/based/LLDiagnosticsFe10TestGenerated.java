@@ -7962,6 +7962,12 @@ public class LLDiagnosticsFe10TestGenerated extends AbstractLLDiagnosticsTest {
       }
 
       @Test
+      @TestMetadata("localDeclsDisambiguation.kt")
+      public void testLocalDeclsDisambiguation() {
+        runTest("compiler/testData/diagnostics/tests/contextParameters/localDeclsDisambiguation.kt");
+      }
+
+      @Test
       @TestMetadata("overloadAmbiguity.kt")
       public void testOverloadAmbiguity() {
         runTest("compiler/testData/diagnostics/tests/contextParameters/overloadAmbiguity.kt");
@@ -20710,6 +20716,12 @@ public class LLDiagnosticsFe10TestGenerated extends AbstractLLDiagnosticsTest {
         @TestMetadata("allowBigIncorporatedConstraints.kt")
         public void testAllowBigIncorporatedConstraints() {
           runTest("compiler/testData/diagnostics/tests/inference/incorporation/allowBigIncorporatedConstraints.kt");
+        }
+
+        @Test
+        @TestMetadata("incorporationOfDeepSuperType.kt")
+        public void testIncorporationOfDeepSuperType() {
+          runTest("compiler/testData/diagnostics/tests/inference/incorporation/incorporationOfDeepSuperType.kt");
         }
       }
 
@@ -40179,6 +40191,12 @@ public class LLDiagnosticsFe10TestGenerated extends AbstractLLDiagnosticsTest {
       @TestMetadata("ComplexScript.kts")
       public void testComplexScript() {
         runTest("compiler/testData/diagnostics/tests/script/ComplexScript.kts");
+      }
+
+      @Test
+      @TestMetadata("contextParamsAndLocalDeclsDisambiguation.kts")
+      public void testContextParamsAndLocalDeclsDisambiguation() {
+        runTest("compiler/testData/diagnostics/tests/script/contextParamsAndLocalDeclsDisambiguation.kts");
       }
 
       @Test

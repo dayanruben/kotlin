@@ -5,15 +5,13 @@
 
 package org.jetbrains.kotlinx.dataframe.plugin.impl.api
 
-import org.jetbrains.kotlin.fir.types.isSubtypeOf
-import org.jetbrains.kotlin.fir.types.typeContext
-import org.jetbrains.kotlin.fir.types.withNullability
 import org.jetbrains.kotlin.utils.mapToSetOrEmpty
 import org.jetbrains.kotlinx.dataframe.api.single
 import org.jetbrains.kotlinx.dataframe.math.cumSumTypeConversion
 import org.jetbrains.kotlinx.dataframe.plugin.extensions.Marker
 import org.jetbrains.kotlinx.dataframe.plugin.extensions.wrap
 import org.jetbrains.kotlinx.dataframe.plugin.impl.*
+import org.jetbrains.kotlinx.dataframe.plugin.utils.isPrimitiveOrMixedNumber
 
 internal val defaultCumSumSkipNA: Boolean = true
 
@@ -41,10 +39,7 @@ class DataFrameCumSum0 : AbstractSchemaModificationInterpreter() {
 internal val Arguments.cumSumDefaultColumns: ColumnsResolver
     get() = columnsResolver {
         colsAtAnyDepth().valueCols().cols {
-            (it.single() as Marker).type.isSubtypeOf(
-                superType = session.builtinTypes.numberType.coneType.withNullability(true, session.typeContext),
-                session = session,
-            )
+            (it.single() as Marker).type.isPrimitiveOrMixedNumber(session)
         }
     }
 
@@ -54,7 +49,7 @@ internal fun Arguments.getSchemaAfterCumSum(dataSchema: PluginDataFrameSchema, s
         when (col) {
             is SimpleDataColumn -> {
                 val oldConeType = col.type.type()
-                val oldKType = oldConeType.toKType() ?: return@map col
+                val oldKType = oldConeType.asPrimitiveToKTypeOrNull() ?: return@map col
                 val newKType = cumSumTypeConversion(oldKType, true)
                 val newConeType = newKType.toConeKotlinType() ?: return@map col
                 col.changeType(newConeType.wrap())
