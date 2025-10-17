@@ -38504,6 +38504,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
       }
 
       @Test
+      @TestMetadata("attemptToEvaluateConstantFromJava.kt")
+      public void testAttemptToEvaluateConstantFromJava() {
+        runTest("compiler/testData/codegen/box/javaInterop/attemptToEvaluateConstantFromJava.kt");
+      }
+
+      @Test
       @TestMetadata("conflictingOverloadsForThrowableInheritors.kt")
       public void testConflictingOverloadsForThrowableInheritors() {
         runTest("compiler/testData/codegen/box/javaInterop/conflictingOverloadsForThrowableInheritors.kt");
@@ -58978,9 +58984,21 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
           }
 
           @Test
-          @TestMetadata("defaultImpls.kt")
-          public void testDefaultImpls() {
-            runTest("compiler/testData/codegen/box/reflection/properties/localDelegated/defaultImpls.kt");
+          @TestMetadata("equals.kt")
+          public void testEquals() {
+            runTest("compiler/testData/codegen/box/reflection/properties/localDelegated/equals.kt");
+          }
+
+          @Test
+          @TestMetadata("inInterface.kt")
+          public void testInInterface() {
+            runTest("compiler/testData/codegen/box/reflection/properties/localDelegated/inInterface.kt");
+          }
+
+          @Test
+          @TestMetadata("inInterfaceDefaultImpls.kt")
+          public void testInInterfaceDefaultImpls() {
+            runTest("compiler/testData/codegen/box/reflection/properties/localDelegated/inInterfaceDefaultImpls.kt");
           }
 
           @Test
@@ -59937,6 +59955,18 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
       @TestMetadata("commonSupertypeContravariant2.kt")
       public void testCommonSupertypeContravariant2() {
         runTest("compiler/testData/codegen/box/regressions/commonSupertypeContravariant2.kt");
+      }
+
+      @Test
+      @TestMetadata("dataClassInInlineFunctionWithTypeParameters.kt")
+      public void testDataClassInInlineFunctionWithTypeParameters() {
+        runTest("compiler/testData/codegen/box/regressions/dataClassInInlineFunctionWithTypeParameters.kt");
+      }
+
+      @Test
+      @TestMetadata("dataClassInRegularFunctionWithTypeParameters.kt")
+      public void testDataClassInRegularFunctionWithTypeParameters() {
+        runTest("compiler/testData/codegen/box/regressions/dataClassInRegularFunctionWithTypeParameters.kt");
       }
 
       @Test

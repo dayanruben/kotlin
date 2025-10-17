@@ -42,7 +42,6 @@ import org.jetbrains.kotlin.types.model.TypeConstructorMarker
 import org.jetbrains.kotlin.utils.compact
 import java.io.Serializable
 import java.lang.reflect.Modifier
-import java.lang.reflect.TypeVariable
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 import kotlin.jvm.internal.TypeIntrinsics
 import kotlin.metadata.*
@@ -50,6 +49,7 @@ import kotlin.metadata.ClassKind
 import kotlin.metadata.Modality
 import kotlin.metadata.internal.toKmClass
 import kotlin.metadata.jvm.KotlinClassMetadata
+import kotlin.metadata.jvm.localDelegatedProperties
 import kotlin.reflect.*
 import kotlin.reflect.jvm.internal.KClassImpl.MemberBelonginess.DECLARED
 import kotlin.reflect.jvm.internal.KClassImpl.MemberBelonginess.INHERITED
@@ -373,16 +373,7 @@ internal class KClassImpl<T : Any>(
         memberScope.getContributedFunctions(name, NoLookupLocation.FROM_REFLECTION) +
                 staticScope.getContributedFunctions(name, NoLookupLocation.FROM_REFLECTION)
 
-    override fun getLocalProperty(index: Int): PropertyDescriptor? {
-        // TODO: also check that this is a synthetic class (Metadata.k == 3)
-        if (jClass.simpleName == JvmAbi.DEFAULT_IMPLS_CLASS_NAME) {
-            jClass.declaringClass?.let { interfaceClass ->
-                if (interfaceClass.isInterface) {
-                    return (interfaceClass.kotlin as KClassImpl<*>).getLocalProperty(index)
-                }
-            }
-        }
-
+    override fun getLocalPropertyDescriptor(index: Int): PropertyDescriptor? {
         return (descriptor as? DeserializedClassDescriptor)?.let { descriptor ->
             descriptor.classProto.getExtensionOrNull(JvmProtoBuf.classLocalVariable, index)?.let { proto ->
                 deserializeToDescriptor(
@@ -391,6 +382,9 @@ internal class KClassImpl<T : Any>(
             }
         }
     }
+
+    override fun getLocalPropertyMetadata(index: Int): KmProperty? =
+        kmClass?.localDelegatedProperties?.getOrNull(index)
 
     override val simpleName: String? get() = data.value.simpleName
 

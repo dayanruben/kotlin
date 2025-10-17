@@ -672,7 +672,8 @@ open class KotlinJpsBuildTest : KotlinJpsBuildTestBase() {
         initProject(JVM_MOCK_RUNTIME)
         buildAllModules().assertSuccessful()
 
-        val storageRoot = BuildDataPathsImpl(myDataStorageRoot).dataStorageRoot
+        @Suppress("UnstableApiUsage") // KT-81463
+        val storageRoot = BuildDataPathsImpl(myDataStorageRoot.toPath()).dataStorageDir.toFile()
         assertFalse(File(storageRoot, "targets/java-test/kotlinProject/kotlin").exists())
         assertFalse(File(storageRoot, "targets/java-production/kotlinProject/kotlin").exists())
     }
@@ -689,7 +690,8 @@ open class KotlinJpsBuildTest : KotlinJpsBuildTestBase() {
             checkWhen(createTouchAction("src/utils.kt"), null, allClasses.toTypedArray())
         }
 
-        val storageRoot = BuildDataPathsImpl(myDataStorageRoot).dataStorageRoot
+        @Suppress("UnstableApiUsage") // KT-81463
+        val storageRoot = BuildDataPathsImpl(myDataStorageRoot.toPath()).dataStorageDir.toFile()
         assertFalse(File(storageRoot, "targets/java-production/kotlinProject/kotlin").exists())
         assertFalse(File(storageRoot, "targets/java-production/module2/kotlin").exists())
     }
