@@ -56438,6 +56438,12 @@ public class FirJsES6CodegenBoxTestGenerated extends AbstractFirJsES6CodegenBoxT
       }
 
       @Test
+      @TestMetadata("functionSupertype.kt")
+      public void testFunctionSupertype() {
+        runTest("compiler/testData/codegen/box/reflection/supertypes/functionSupertype.kt");
+      }
+
+      @Test
       @TestMetadata("genericSubstitution.kt")
       public void testGenericSubstitution() {
         runTest("compiler/testData/codegen/box/reflection/supertypes/genericSubstitution.kt");
@@ -56477,6 +56483,12 @@ public class FirJsES6CodegenBoxTestGenerated extends AbstractFirJsES6CodegenBoxT
       @TestMetadata("simpleSupertypes.kt")
       public void testSimpleSupertypes() {
         runTest("compiler/testData/codegen/box/reflection/supertypes/simpleSupertypes.kt");
+      }
+
+      @Test
+      @TestMetadata("suspendFunctionSupertype.kt")
+      public void testSuspendFunctionSupertype() {
+        runTest("compiler/testData/codegen/box/reflection/supertypes/suspendFunctionSupertype.kt");
       }
     }
 
@@ -56974,6 +56986,12 @@ public class FirJsES6CodegenBoxTestGenerated extends AbstractFirJsES6CodegenBoxT
       @TestMetadata("declarationSiteVariance.kt")
       public void testDeclarationSiteVariance() {
         runTest("compiler/testData/codegen/box/reflection/typeParameters/declarationSiteVariance.kt");
+      }
+
+      @Test
+      @TestMetadata("functionClasses.kt")
+      public void testFunctionClasses() {
+        runTest("compiler/testData/codegen/box/reflection/typeParameters/functionClasses.kt");
       }
 
       @Test
