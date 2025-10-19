@@ -53017,6 +53017,12 @@ public class FirWasmWasiCodegenBoxTestGenerated extends AbstractFirWasmWasiCodeg
           }
 
           @Test
+          @TestMetadata("contextPropertyWithSameNameAsPrimary.kt")
+          public void testContextPropertyWithSameNameAsPrimary() {
+            runTest("compiler/testData/codegen/box/reflection/call/inlineClasses/contextPropertyWithSameNameAsPrimary.kt");
+          }
+
+          @Test
           @TestMetadata("inlineClassConstructor.kt")
           public void testInlineClassConstructor() {
             runTest("compiler/testData/codegen/box/reflection/call/inlineClasses/inlineClassConstructor.kt");
@@ -53065,6 +53071,12 @@ public class FirWasmWasiCodegenBoxTestGenerated extends AbstractFirWasmWasiCodeg
             @TestMetadata("constructorWithInlineClassParameters.kt")
             public void testConstructorWithInlineClassParameters() {
               runTest("compiler/testData/codegen/box/reflection/call/inlineClasses/nonNullObject/constructorWithInlineClassParameters.kt");
+            }
+
+            @Test
+            @TestMetadata("contextParameters.kt")
+            public void testContextParameters() {
+              runTest("compiler/testData/codegen/box/reflection/call/inlineClasses/nonNullObject/contextParameters.kt");
             }
 
             @Test
@@ -53144,6 +53156,12 @@ public class FirWasmWasiCodegenBoxTestGenerated extends AbstractFirWasmWasiCodeg
             }
 
             @Test
+            @TestMetadata("contextParameters.kt")
+            public void testContextParameters() {
+              runTest("compiler/testData/codegen/box/reflection/call/inlineClasses/nullableObject/contextParameters.kt");
+            }
+
+            @Test
             @TestMetadata("fieldAccessors.kt")
             public void testFieldAccessors() {
               runTest("compiler/testData/codegen/box/reflection/call/inlineClasses/nullableObject/fieldAccessors.kt");
@@ -53217,6 +53235,12 @@ public class FirWasmWasiCodegenBoxTestGenerated extends AbstractFirWasmWasiCodeg
             @TestMetadata("constructorWithInlineClassParameters.kt")
             public void testConstructorWithInlineClassParameters() {
               runTest("compiler/testData/codegen/box/reflection/call/inlineClasses/primitive/constructorWithInlineClassParameters.kt");
+            }
+
+            @Test
+            @TestMetadata("contextParameters.kt")
+            public void testContextParameters() {
+              runTest("compiler/testData/codegen/box/reflection/call/inlineClasses/primitive/contextParameters.kt");
             }
 
             @Test
