@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm")
     id("jps-compatible")
+    id("project-tests-convention")
     id("java-test-fixtures")
 }
 
@@ -15,9 +16,11 @@ dependencies {
 
     embedded(project(":core:metadata")) { isTransitive = false }
 
-    testImplementation(libs.junit4)
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
 
     testFixturesApi("org.jetbrains.kotlin:kotlin-stdlib:$coreDepsVersion")
+    testFixturesApi(libs.junit.jupiter.api)
 }
 
 sourceSets {
@@ -27,6 +30,10 @@ sourceSets {
 }
 
 configureKotlinCompileTasksGradleCompatibility()
+
+projectTests {
+    testTask(jUnitMode = JUnitMode.JUnit5)
+}
 
 publish()
 
