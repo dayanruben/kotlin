@@ -685,6 +685,18 @@ public class JsSteppingSplitTestGenerated extends AbstractJsSteppingSplitTest {
   }
 
   @Test
+  @TestMetadata("suspendClosingBrace2.kt")
+  public void testSuspendClosingBrace2() {
+    runTest("compiler/testData/debug/stepping/suspendClosingBrace2.kt");
+  }
+
+  @Test
+  @TestMetadata("suspendClosingBrace3.kt")
+  public void testSuspendClosingBrace3() {
+    runTest("compiler/testData/debug/stepping/suspendClosingBrace3.kt");
+  }
+
+  @Test
   @TestMetadata("suspendFunWithLambdaParameter.kt")
   public void testSuspendFunWithLambdaParameter() {
     runTest("compiler/testData/debug/stepping/suspendFunWithLambdaParameter.kt");
