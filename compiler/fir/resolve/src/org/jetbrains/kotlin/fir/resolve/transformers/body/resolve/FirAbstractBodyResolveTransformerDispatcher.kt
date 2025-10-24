@@ -570,13 +570,13 @@ abstract class FirAbstractBodyResolveTransformerDispatcher(
         FirExpressionsResolveTransformer::transformAnonymousObjectExpression,
     )
 
-    override fun transformSimpleFunction(
-        simpleFunction: FirSimpleFunction,
+    override fun transformNamedFunction(
+        namedFunction: FirNamedFunction,
         data: ResolutionMode,
-    ): FirSimpleFunction = declarationTransformation(
-        simpleFunction,
+    ): FirNamedFunction = declarationTransformation(
+        namedFunction,
         data,
-        FirDeclarationsResolveTransformer::transformSimpleFunction,
+        FirDeclarationsResolveTransformer::transformNamedFunction,
     )
 
     override fun transformFunction(

@@ -5,20 +5,25 @@
 
 package org.jetbrains.kotlin.fir.analysis.checkers
 
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
+import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.FirComposableSessionComponent
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.SessionConfiguration
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
-import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
+import org.jetbrains.kotlin.fir.declarations.FirNamedFunction
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
+import org.jetbrains.kotlin.fir.isEnabled
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirFunctionSymbol
 
 abstract class FirInlineCheckerPlatformSpecificComponent : FirComposableSessionComponent<FirInlineCheckerPlatformSpecificComponent> {
     context(context: CheckerContext, reporter: DiagnosticReporter)
-    open fun isGenerallyOk(declaration: FirDeclaration, ): Boolean = true
+    open fun isGenerallyOk(declaration: FirDeclaration): Boolean = true
 
     context(context: CheckerContext, reporter: DiagnosticReporter)
     open fun checkSuspendFunctionalParameterWithDefaultValue(
@@ -27,31 +32,72 @@ abstract class FirInlineCheckerPlatformSpecificComponent : FirComposableSessionC
     }
 
     context(context: CheckerContext, reporter: DiagnosticReporter)
-    open fun checkFunctionalParametersWithInheritedDefaultValues(
-        function: FirSimpleFunction,
+    open fun checkParametersWithInheritedDefaultValues(
+        function: FirNamedFunction,
         overriddenSymbols: List<FirCallableSymbol<FirCallableDeclaration>>,
     ) {
+        val paramHasDefault = BooleanArray(function.valueParameters.size)
+        overriddenSymbols.forEach {
+            if (it !is FirFunctionSymbol<*>) return@forEach
+            it.valueParameterSymbols.forEachIndexed { idx, param ->
+                if (param.hasDefaultValue && idx < paramHasDefault.size) {
+                    paramHasDefault[idx] = true
+                }
+            }
+        }
+        val shouldReportError = shouldReportRegularOverridesWithDefaultParameters()
+        function.valueParameters.forEachIndexed { idx, param ->
+            if (param.defaultValue == null && paramHasDefault[idx]) {
+                if (shouldReportError) {
+                    reporter.reportOn(
+                        param.source,
+                        FirErrors.NOT_YET_SUPPORTED_IN_INLINE,
+                        "Parameters with inherited default values"
+                    )
+                } else {
+                    reporter.reportOn(
+                        param.source,
+                        FirErrors.NOT_YET_SUPPORTED_IN_INLINE_WARNING
+                    )
+                }
+            }
+        }
     }
+
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    open fun shouldReportRegularOverridesWithDefaultParameters(): Boolean =
+        LanguageFeature.ForbidOverriddenDefaultParametersInInline.isEnabled()
+
+    /**
+     * Default component for inline checking, currently used for all non-JVM platforms
+     *
+     * Any other component overrides this one: either JVM- or another platform-specific (if any of such appears later).
+     * See [Composed.nonDuplicatingComponents]
+     */
+    object NonJvmDefault : FirInlineCheckerPlatformSpecificComponent()
 
     class Composed(
         override val components: List<FirInlineCheckerPlatformSpecificComponent>
     ) : FirInlineCheckerPlatformSpecificComponent(), FirComposableSessionComponent.Composed<FirInlineCheckerPlatformSpecificComponent> {
+        private val nonDuplicatingComponents: List<FirInlineCheckerPlatformSpecificComponent> =
+            if (components.size == 1) components else components.filter { it !== NonJvmDefault }
+
         context(context: CheckerContext, reporter: DiagnosticReporter)
         override fun isGenerallyOk(declaration: FirDeclaration): Boolean {
-            return components.all { it.isGenerallyOk(declaration) }
+            return nonDuplicatingComponents.all { it.isGenerallyOk(declaration) }
         }
 
         context(context: CheckerContext, reporter: DiagnosticReporter)
         override fun checkSuspendFunctionalParameterWithDefaultValue(param: FirValueParameter) {
-            components.forEach { it.checkSuspendFunctionalParameterWithDefaultValue(param) }
+            nonDuplicatingComponents.forEach { it.checkSuspendFunctionalParameterWithDefaultValue(param) }
         }
 
         context(context: CheckerContext, reporter: DiagnosticReporter)
-        override fun checkFunctionalParametersWithInheritedDefaultValues(
-            function: FirSimpleFunction,
+        override fun checkParametersWithInheritedDefaultValues(
+            function: FirNamedFunction,
             overriddenSymbols: List<FirCallableSymbol<FirCallableDeclaration>>,
         ) {
-            components.forEach { it.checkFunctionalParametersWithInheritedDefaultValues(function, overriddenSymbols) }
+            nonDuplicatingComponents.forEach { it.checkParametersWithInheritedDefaultValues(function, overriddenSymbols) }
         }
     }
 
@@ -61,4 +107,4 @@ abstract class FirInlineCheckerPlatformSpecificComponent : FirComposableSessionC
     }
 }
 
-val FirSession.inlineCheckerExtension: FirInlineCheckerPlatformSpecificComponent? by FirSession.nullableSessionComponentAccessor<FirInlineCheckerPlatformSpecificComponent>()
+val FirSession.inlineCheckerExtension: FirInlineCheckerPlatformSpecificComponent by FirSession.sessionComponentAccessor<FirInlineCheckerPlatformSpecificComponent>()

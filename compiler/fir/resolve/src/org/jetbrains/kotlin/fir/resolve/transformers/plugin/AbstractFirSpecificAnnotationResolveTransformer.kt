@@ -616,10 +616,10 @@ abstract class AbstractFirSpecificAnnotationResolveTransformer(
         backingField?.replaceAnnotations(newPosition.backingFieldAnnotations)
     }
 
-    override fun transformSimpleFunction(
-        simpleFunction: FirSimpleFunction,
+    override fun transformNamedFunction(
+        namedFunction: FirNamedFunction,
         data: Nothing?
-    ): FirSimpleFunction = transformFunctionDeclarationForDeprecations(simpleFunction, data)
+    ): FirNamedFunction = transformFunctionDeclarationForDeprecations(namedFunction, data)
 
     override fun transformConstructor(
         constructor: FirConstructor,

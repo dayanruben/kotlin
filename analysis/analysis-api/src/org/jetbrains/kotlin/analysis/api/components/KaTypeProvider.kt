@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.psi.KtDoubleColonExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -144,29 +145,30 @@ public interface KaTypeProvider : KaSessionComponent {
     }
 
     /**
-     * A [KaType] derived from the given type by taking warning-level nullability annotations into account to determine the type's
-     * nullability. If the derived type doesn't differ from the original type, the result is `null`.
+     * A [KaType] derived from the given type by enforcing warning-level nullability annotations.
+     * If the derived type doesn't differ from the original type, the original type is returned.
      *
      * In general, Java type enhancement allows the Kotlin compiler to infer a more specific nullability for a Java type based on its
-     * [nullability annotations](https://kotlinlang.org/docs/java-interop.html#nullability-annotations). Normally, only [strict][org.jetbrains.kotlin.load.java.ReportLevel.STRICT]
+     * [nullability annotations](https://kotlinlang.org/docs/java-interop.html#nullability-annotations). Normally,
+     * only [strict][org.jetbrains.kotlin.load.java.ReportLevel.STRICT]
      * nullability annotations have an impact on a resolved type's nullability.
+     * These annotations are already taken into account in [KaType].
      *
-     * However, there are also [warning-level][org.jetbrains.kotlin.load.java.ReportLevel.WARN] nullability annotations (by default), such
-     * as Android's `RecentlyNullable` and `RecentlyNonNull`. These don't affect a resolved type's nullability. [enhancedType] can be used
-     * to obtain a [KaType] which takes warning-level nullability annotations into account for its nullability.
+     * However, there are also [warning-level][org.jetbrains.kotlin.load.java.ReportLevel.WARN] nullability annotations,
+     * such as Android's `RecentlyNullable` and `RecentlyNonNull`.
+     * These annotations have weaker constraints and don't affect a resolved type's nullability.
+     * [augmentedByWarningLevelAnnotations] returns a [KaType] with weak annotations treated as strict ones.
      *
-     * See also [NULLABILITY_ANNOTATION_SETTINGS][org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATION_SETTINGS], which is a list of
-     * default report levels for different nullability annotations.
+     * See the list of default report levels for different nullability annotations in
+     * [NULLABILITY_ANNOTATION_SETTINGS][org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATION_SETTINGS]
+     *
+     * ### Examples
+     *
+     * - For `@androidx.annotation.RecentlyNullable X!` [augmentedByWarningLevelAnnotations] returns `X?`.
+     * - For `@androidx.annotation.RecentlyNonNull X!` [augmentedByWarningLevelAnnotations] returns `X`.
      */
     @KaExperimentalApi
-    public val KaType.enhancedType: KaType?
-
-    /**
-     * @see enhancedType
-     */
-    @KaExperimentalApi
-    public val KaType.enhancedTypeOrSelf: KaType?
-        get() = withValidityAssertion { enhancedType ?: this }
+    public val KaType.augmentedByWarningLevelAnnotations: KaType
 
     /**
      * Returns the representation of [this] in terms of [KaType].
@@ -176,6 +178,16 @@ public interface KaTypeProvider : KaSessionComponent {
      * @see KaTypeCreator
      */
     public val KaClassifierSymbol.defaultType: KaType
+
+    /**
+     * Returns the representation of [this] in terms of [KaType].
+     *
+     * Type parameters are substituted with [KaStarTypeProjection], e.g. `List<*>` for the `List` class.
+     *
+     * @see KaTypeCreator
+     */
+    @KaExperimentalApi
+    public val KaClassifierSymbol.defaultTypeWithStarProjections: KaType
 
     /**
      * If [this] is a [vararg](https://kotlinlang.org/docs/functions.html#variable-number-of-arguments-varargs) parameter,
@@ -581,36 +593,34 @@ public fun KaType.approximateToDenotableSupertypeOrSelf(position: KtElement): Ka
 }
 
 /**
- * A [KaType] derived from the given type by taking warning-level nullability annotations into account to determine the type's
- * nullability. If the derived type doesn't differ from the original type, the result is `null`.
+ * A [KaType] derived from the given type by enforcing warning-level nullability annotations.
+ * If the derived type doesn't differ from the original type, the original type is returned.
  *
  * In general, Java type enhancement allows the Kotlin compiler to infer a more specific nullability for a Java type based on its
- * [nullability annotations](https://kotlinlang.org/docs/java-interop.html#nullability-annotations). Normally, only [strict][org.jetbrains.kotlin.load.java.ReportLevel.STRICT]
+ * [nullability annotations](https://kotlinlang.org/docs/java-interop.html#nullability-annotations). Normally,
+ * only [strict][org.jetbrains.kotlin.load.java.ReportLevel.STRICT]
  * nullability annotations have an impact on a resolved type's nullability.
+ * These annotations are already taken into account in [KaType].
  *
- * However, there are also [warning-level][org.jetbrains.kotlin.load.java.ReportLevel.WARN] nullability annotations (by default), such
- * as Android's `RecentlyNullable` and `RecentlyNonNull`. These don't affect a resolved type's nullability. [enhancedType] can be used
- * to obtain a [KaType] which takes warning-level nullability annotations into account for its nullability.
+ * However, there are also [warning-level][org.jetbrains.kotlin.load.java.ReportLevel.WARN] nullability annotations,
+ * such as Android's `RecentlyNullable` and `RecentlyNonNull`.
+ * These annotations have weaker constraints and don't affect a resolved type's nullability.
+ * [augmentedByWarningLevelAnnotations] returns a [KaType] with weak annotations treated as strict ones.
  *
- * See also [NULLABILITY_ANNOTATION_SETTINGS][org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATION_SETTINGS], which is a list of
- * default report levels for different nullability annotations.
+ * See the list of default report levels for different nullability annotations in
+ * [NULLABILITY_ANNOTATION_SETTINGS][org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATION_SETTINGS]
+ *
+ * ### Examples
+ *
+ * - For `@androidx.annotation.RecentlyNullable X!` [augmentedByWarningLevelAnnotations] returns `X?`.
+ * - For `@androidx.annotation.RecentlyNonNull X!` [augmentedByWarningLevelAnnotations] returns `X`.
  */
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
 context(s: KaSession)
-public val KaType.enhancedType: KaType?
-    get() = with(s) { enhancedType }
-
-/**
- * @see enhancedType
- */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
-@KaExperimentalApi
-@KaContextParameterApi
-context(s: KaSession)
-public val KaType.enhancedTypeOrSelf: KaType?
-    get() = with(s) { enhancedTypeOrSelf }
+public val KaType.augmentedByWarningLevelAnnotations: KaType
+    get() = with(s) { augmentedByWarningLevelAnnotations }
 
 /**
  * Returns the representation of [this] in terms of [KaType].
@@ -624,6 +634,20 @@ public val KaType.enhancedTypeOrSelf: KaType?
 context(s: KaSession)
 public val KaClassifierSymbol.defaultType: KaType
     get() = with(s) { defaultType }
+
+/**
+ * Returns the representation of [this] in terms of [KaType].
+ *
+ * Type parameters are substituted with [KaStarTypeProjection], e.g. `List<*>` for the `List` class.
+ *
+ * @see KaTypeCreator
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public val KaClassifierSymbol.defaultTypeWithStarProjections: KaType
+    get() = with(s) { defaultTypeWithStarProjections }
 
 /**
  * If [this] is a [vararg](https://kotlinlang.org/docs/functions.html#variable-number-of-arguments-varargs) parameter,

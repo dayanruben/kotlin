@@ -53,7 +53,7 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
 
     @Test
     public void testAllFilesPresentInResolve() {
-      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true, "headerMode");
     }
 
     @Test
@@ -2349,6 +2349,18 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
       @TestMetadata("contextualLateinit.kt")
       public void testContextualLateinit() {
         runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/contextualLateinit.kt");
+      }
+
+      @Test
+      @TestMetadata("deeplyGenericTypeCheckWithMaxTypeDepth.kt")
+      public void testDeeplyGenericTypeCheckWithMaxTypeDepth() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/deeplyGenericTypeCheckWithMaxTypeDepth.kt");
+      }
+
+      @Test
+      @TestMetadata("deeplyGenericTypeCheckWithoutMaxTypeDepth.kt")
+      public void testDeeplyGenericTypeCheckWithoutMaxTypeDepth() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/deeplyGenericTypeCheckWithoutMaxTypeDepth.kt");
       }
 
       @Test

@@ -290,7 +290,7 @@ class FirRenderer(
                 print(".")
             }
             when (callableDeclaration) {
-                is FirSimpleFunction -> {
+                is FirNamedFunction -> {
                     idRenderer.renderCallableId(callableDeclaration.symbol.callableId)
                 }
                 is FirVariable -> {
@@ -410,8 +410,8 @@ class FirRenderer(
             receiverParameter.typeRef.accept(this)
         }
 
-        override fun visitSimpleFunction(simpleFunction: FirSimpleFunction) {
-            visitFunction(simpleFunction)
+        override fun visitNamedFunction(namedFunction: FirNamedFunction) {
+            visitFunction(namedFunction)
         }
 
         override fun visitConstructor(constructor: FirConstructor) {
@@ -572,7 +572,7 @@ class FirRenderer(
             print("^")
             val target = returnExpression.target
             val labeledElement = target.labeledElement
-            if (labeledElement is FirSimpleFunction) {
+            if (labeledElement is FirNamedFunction) {
                 print("${labeledElement.name}")
             } else {
                 val labelName = target.labelName

@@ -1561,6 +1561,11 @@ public class CliTestGenerated extends AbstractCliTest {
       runTest("compiler/testData/cli/jvm/globalWarningSuppression_incorrect.args");
     }
 
+    @TestMetadata("headerMode.args")
+    public void testHeaderMode() {
+      runTest("compiler/testData/cli/jvm/headerMode.args");
+    }
+
     @TestMetadata("help.args")
     public void testHelp() {
       runTest("compiler/testData/cli/jvm/help.args");
@@ -1942,6 +1947,11 @@ public class CliTestGenerated extends AbstractCliTest {
     @TestMetadata("compilationWarningPublicAccessorExplicitAPIMode.args")
     public void testCompilationWarningPublicAccessorExplicitAPIMode() {
       runTest("compiler/testData/cli/js/compilationWarningPublicAccessorExplicitAPIMode.args");
+    }
+
+    @TestMetadata("compilationWarningPublicAccessorExplicitAPIMode2ndStage.args")
+    public void testCompilationWarningPublicAccessorExplicitAPIMode2ndStage() {
+      runTest("compiler/testData/cli/js/compilationWarningPublicAccessorExplicitAPIMode2ndStage.args");
     }
 
     @TestMetadata("createMetadata.args")

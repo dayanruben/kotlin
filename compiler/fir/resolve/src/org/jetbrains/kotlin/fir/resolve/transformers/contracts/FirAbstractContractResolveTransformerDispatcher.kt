@@ -78,15 +78,15 @@ abstract class FirAbstractContractResolveTransformerDispatcher(
 
     protected open inner class FirDeclarationsContractResolveTransformer :
         FirDeclarationsResolveTransformer(this@FirAbstractContractResolveTransformerDispatcher) {
-        override fun transformSimpleFunction(
-            simpleFunction: FirSimpleFunction,
+        override fun transformNamedFunction(
+            namedFunction: FirNamedFunction,
             data: ResolutionMode
-        ): FirSimpleFunction {
-            if (!simpleFunction.hasContractToResolve) return simpleFunction
+        ): FirNamedFunction {
+            if (!namedFunction.hasContractToResolve) return namedFunction
 
-            return context.withSimpleFunction(simpleFunction, session) {
-                context.forFunctionBody(simpleFunction, components) {
-                    transformContractDescriptionOwner(simpleFunction)
+            return context.withNamedFunction(namedFunction, session) {
+                context.forFunctionBody(namedFunction, components) {
+                    transformContractDescriptionOwner(namedFunction)
                 }
             }
         }
@@ -108,7 +108,7 @@ abstract class FirAbstractContractResolveTransformerDispatcher(
                 return property
             }
             if (property is FirSyntheticProperty) {
-                transformSimpleFunction(property.getter.delegate, data)
+                transformNamedFunction(property.getter.delegate, data)
                 return property
             }
             context.withProperty(property) {

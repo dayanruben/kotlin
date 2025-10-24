@@ -285,7 +285,7 @@ class BodyResolveContext(
     }
 
     @PrivateForInline
-    fun storeFunction(function: FirSimpleFunction, session: FirSession) {
+    fun storeFunction(function: FirNamedFunction, session: FirSession) {
         updateLastScope { storeFunction(function, session) }
     }
 
@@ -783,18 +783,18 @@ class BodyResolveContext(
     }
 
     @OptIn(PrivateForInline::class)
-    inline fun <T> withSimpleFunction(
-        simpleFunction: FirSimpleFunction,
+    inline fun <T> withNamedFunction(
+        namedFunction: FirNamedFunction,
         session: FirSession,
         f: () -> T
     ): T {
         if (containerIfAny !is FirClass) {
-            storeFunction(simpleFunction, session)
+            storeFunction(namedFunction, session)
         }
 
-        return withTypeParametersOf(simpleFunction) {
-            withInlineFunctionIfApplicable(simpleFunction) {
-                withContainer(simpleFunction, f)
+        return withTypeParametersOf(namedFunction) {
+            withInlineFunctionIfApplicable(namedFunction) {
+                withContainer(namedFunction, f)
             }
         }
     }
@@ -831,7 +831,7 @@ class BodyResolveContext(
         holder: SessionAndScopeSessionHolder,
         f: () -> T
     ): T = withTowerDataCleanup {
-        if (function is FirSimpleFunction) {
+        if (function is FirNamedFunction) {
             withParameters(function, holder, f)
         } else {
             addLocalScope(FirLocalScope(holder.session))

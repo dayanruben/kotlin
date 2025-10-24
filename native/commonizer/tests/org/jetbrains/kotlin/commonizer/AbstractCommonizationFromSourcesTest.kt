@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.commonizer.konan.NativeManifestDataProvider
 import org.jetbrains.kotlin.commonizer.utils.*
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.copy
-import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
+import org.jetbrains.kotlin.fir.declarations.FirNamedFunction
 import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
 import org.jetbrains.kotlin.library.SerializedMetadata
 import org.jetbrains.kotlin.psi
@@ -330,21 +330,21 @@ private object TestPatchingFirVisitor : FirVisitorVoid() {
         element.acceptChildren(this)
     }
 
-    override fun visitSimpleFunction(simpleFunction: FirSimpleFunction) {
-        val comment = simpleFunction.source.psi?.text?.lineSequence()?.firstOrNull()?.takeIf { it.startsWith("//") }
+    override fun visitNamedFunction(namedFunction: FirNamedFunction) {
+        val comment = namedFunction.source.psi?.text?.lineSequence()?.firstOrNull()?.takeIf { it.startsWith("//") }
             ?: return
         val (key, value) = comment.substringAfter("//").split('=', limit = 2).takeIf { it.size == 2 }?.map { it.trim() }
             ?: return
 
         when (key) {
             "hasStableParameterNames" -> when {
-                !value.toBoolean() -> simpleFunction.replaceStatus(simpleFunction.status.copy(hasStableParameterNames = false))
+                !value.toBoolean() -> namedFunction.replaceStatus(namedFunction.status.copy(hasStableParameterNames = false))
             }
             else -> {
                 // more custom actions may be added here in the future
             }
         }
 
-        simpleFunction.acceptChildren(this)
+        namedFunction.acceptChildren(this)
     }
 }

@@ -13,19 +13,21 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.SourceElementPositioningStrategies
 import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.analysis.checkers.FirTypeRefSource
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirClassChecker
-import org.jetbrains.kotlin.fir.analysis.checkers.extractArgumentsTypeRefAndSource
 import org.jetbrains.kotlin.fir.analysis.checkers.isSingleFieldValueClass
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.moduleData
+import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.defaultType
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.isRealOwnerOf
 import org.jetbrains.kotlin.fir.resolve.toRegularClassSymbol
+import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.name.ClassId
@@ -617,13 +619,50 @@ object FirSerializationPluginClassChecker : FirClassChecker(MppCheckerKind.Commo
     private fun CheckerContext.checkTypeArguments(
         typeRef: FirTypeRef,
         fallbackSource: KtSourceElement?,
-        reporter: DiagnosticReporter
+        reporter: DiagnosticReporter,
+        skipStarProjections: Boolean = false,
     ) {
-        val argsRefs = extractArgumentsTypeRefAndSource(typeRef) ?: return
+        val argsRefs = extractArgumentsTypeRefAndSource(typeRef, skipStarProjections) ?: return
         for (typeArgument in argsRefs) {
             val argTypeRef = typeArgument.typeRef ?: continue
             checkType(argTypeRef, typeArgument.source ?: fallbackSource, reporter)
         }
+    }
+
+    /**
+     * Greatly simplified version of FirHelpers.extractArgumentsTypeRefAndSource:
+     *
+     * - Does not handle nested classes with type parameters (serialization does not support them)
+     * - Does not handle anything other than FirUserTypeRef
+     * - Replaces star projections with declaration-site upper bound if requested
+     *      (K1 behavior that was adopted in serialization, see IrSimpleType.argumentTypesOrUpperBounds()/StarProjectionImpl.getType())
+     *      Replacement not needed if we do not want to check them in [checkTypeArguments]
+     */
+    fun CheckerContext.extractArgumentsTypeRefAndSource(typeRef: FirTypeRef, skipStarProjections: Boolean): List<FirTypeRefSource>? {
+        if (typeRef !is FirResolvedTypeRef) error("TypeRef should be already resolved in checker: ${typeRef.render()}")
+        val result = mutableListOf<FirTypeRefSource>()
+        when (val delegatedTypeRef = typeRef.delegatedTypeRef) {
+            is FirUserTypeRef -> {
+                val qualifier = delegatedTypeRef.qualifier.last()
+
+                for ((index, typeArgument) in qualifier.typeArgumentList.typeArguments.withIndex()) {
+                    val ref = when (typeArgument) {
+                        is FirTypeProjectionWithVariance -> typeArgument.typeRef
+                        is FirStarProjection -> {
+                            if (skipStarProjections) continue
+                            val declarationClass =
+                                typeRef.coneType.classSymbolOrUpperBound(session) ?: error("Not a class typeRef: ${typeRef.render()}")
+                            declarationClass.typeParameterSymbols[index].resolvedBounds.first()
+                        }
+                        is FirPlaceholderProjection -> error("Should not be encountered in the property type")
+                    }
+                    result.add(FirTypeRefSource(ref, typeArgument.source))
+                }
+            }
+            else -> return null
+        }
+
+        return result
     }
 
     private fun CheckerContext.canSupportInlineClasses(): Boolean {
@@ -659,8 +698,10 @@ object FirSerializationPluginClassChecker : FirClassChecker(MppCheckerKind.Commo
                 checkCustomSerializerNotAbstract(classSymbol, annotationElement, customSerializerType, reporter)
                 checkSerializerNullability(type, customSerializerType, typeSource, reporter)
             } else {
+                val allowStarProjections =
+                    serializer.classId == SerializersClassIds.sealedSerializerId || serializer.classId == SerializersClassIds.polymorphicSerializerId
                 // For custom serializers, this check is performed in checkCustomSerializerParameters
-                checkTypeArguments(typeRef, typeSource, reporter)
+                checkTypeArguments(typeRef, typeSource, reporter, allowStarProjections)
             }
         } else {
             if (type.classSymbolOrUpperBound(session)?.isEnumClass != true) {
@@ -778,8 +819,7 @@ object FirSerializationPluginClassChecker : FirClassChecker(MppCheckerKind.Commo
         serializerType: ConeKotlinType,
         reporter: DiagnosticReporter
     ) {
-        val serializerClassId = serializerType.classId ?: return
-        if (serializerClassId.isLocal) {
+        if (serializerType.classLikeLookupTagIfAny?.toSymbol()?.isLocal == true) {
             reporter.reportOn(
                 source ?: classSymbol.serializableOrMetaAnnotationSource(session),
                 FirSerializationErrors.LOCAL_SERIALIZER_USAGE,
