@@ -1,8 +1,14 @@
-package org.jetbrains.kotlin.backend.konan
+/*
+ * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+
+package org.jetbrains.kotlin.native
 
 import org.jetbrains.kotlin.KtSourceFile
+import org.jetbrains.kotlin.backend.konan.KonanCompilationException
+import org.jetbrains.kotlin.backend.konan.KonanConfigKeys
 import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
-import org.jetbrains.kotlin.backend.konan.driver.phases.FirOutput
 import org.jetbrains.kotlin.cli.common.*
 import org.jetbrains.kotlin.cli.common.fir.FirDiagnosticsCompilerResultsReporter
 import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
@@ -19,7 +25,7 @@ import org.jetbrains.kotlin.library.metadata.isCInteropLibrary
 import org.jetbrains.kotlin.name.Name
 
 @OptIn(SessionConfiguration::class)
-internal inline fun <F> PhaseContext.firFrontend(
+private inline fun <F> PhaseContext.firFrontend(
         input: KotlinCoreEnvironment,
         files: List<F>,
         fileHasSyntaxErrors: (F) -> Boolean,
@@ -68,7 +74,7 @@ internal inline fun <F> PhaseContext.firFrontend(
 
     val outputs = sessionsWithSources.map { (session, sources) ->
         buildResolveAndCheckFir(session, sources, diagnosticsReporter).also {
-            if (config.configuration.getBoolean(KonanConfigKeys.PRINT_FILES)) {
+            if (config.configuration.getBoolean(KonanConfigKeys.Companion.PRINT_FILES)) {
                 it.fir.forEach { file -> println(file.render()) }
             }
         }
@@ -84,7 +90,7 @@ internal inline fun <F> PhaseContext.firFrontend(
     }
 }
 
-internal fun PhaseContext.firFrontendWithPsi(input: KotlinCoreEnvironment): FirOutput {
+fun PhaseContext.firFrontendWithPsi(input: KotlinCoreEnvironment): FirOutput {
     val configuration = input.configuration
     val messageCollector = configuration.getNotNull(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY)
     // FIR
@@ -104,7 +110,7 @@ internal fun PhaseContext.firFrontendWithPsi(input: KotlinCoreEnvironment): FirO
     )
 }
 
-internal fun PhaseContext.firFrontendWithLightTree(input: KotlinCoreEnvironment): FirOutput {
+fun PhaseContext.firFrontendWithLightTree(input: KotlinCoreEnvironment): FirOutput {
     val configuration = input.configuration
     val messageCollector = configuration.getNotNull(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY)
     // FIR
