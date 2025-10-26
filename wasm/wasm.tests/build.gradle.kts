@@ -419,6 +419,7 @@ projectTests {
             taskName = taskName,
             jUnitMode = JUnitMode.JUnit5,
             skipInLocalBuild = skipInLocalBuild,
+            maxHeapSizeMb = 6144
         ) {
             with(d8KotlinBuild) {
                 setupV8()
@@ -434,10 +435,9 @@ projectTests {
             setupJsc()
             useJUnitPlatform()
             setupGradlePropertiesForwarding()
-            val buildDirectory = layout.buildDirectory.map { "${it.asFile}/" }
-            jvmArgumentProviders += objects.newInstance<SystemPropertyClasspathProvider>().apply {
-                classpath.from(buildDirectory)
+            jvmArgumentProviders += objects.newInstance<AbsolutePathArgumentProvider>().apply {
                 property.set("kotlin.wasm.test.root.out.dir")
+                buildDirectory.set(layout.buildDirectory)
             }
             body()
         }
