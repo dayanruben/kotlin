@@ -25,7 +25,10 @@ import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.util.defaultTargetSubstitutions
 import org.jetbrains.kotlin.konan.util.substitute
 import org.jetbrains.kotlin.library.*
+import org.jetbrains.kotlin.library.components.KlibIrComponent
+import org.jetbrains.kotlin.library.components.KlibIrComponentLayout
 import org.jetbrains.kotlin.library.components.KlibMetadataComponent
+import org.jetbrains.kotlin.library.components.KlibMetadataComponentLayout
 import org.jetbrains.kotlin.library.impl.*
 import java.nio.file.Paths
 
@@ -76,15 +79,26 @@ class KonanLibraryImpl(
     IrLibrary by ir,
     BitcodeLibrary by bitcode {
 
-    private val components: Map<KlibComponent.ID<*>, KlibComponent> = run {
-        val layoutReaderFactory = KlibLayoutReaderFactory(location, ir.access.klibZipAccessor)
-        mapOf(KlibMetadataComponent.ID to KlibMetadataComponentImpl(layoutReaderFactory))
+    private val components: Map<KlibComponent.Kind<*>, KlibComponent> = KlibComponentsBuilder(
+        layoutReaderFactory = KlibLayoutReaderFactory(
+            klibFile = location,
+            zipFileSystemAccessor = ir.access.klibZipAccessor
+        )
+    )
+        .withMandatory(KlibMetadataComponent.Kind, ::KlibMetadataComponentLayout, ::KlibMetadataComponentImpl)
+        .withOptional(KlibIrComponent.Kind.Main, KlibIrComponentLayout::createForMainIr, ::KlibIrComponentImpl)
+        .withOptional(KlibIrComponent.Kind.InlinableFunctions, KlibIrComponentLayout::createForInlinableFunctionsIr, ::KlibIrComponentImpl)
+        .build()
+
+    override fun <KC : KlibMandatoryComponent> getComponent(kind: KlibMandatoryComponent.Kind<KC>): KC {
+        @Suppress("UNCHECKED_CAST")
+        val component = components[kind] as KC?
+        return component ?: error("Unregistered component $kind")
     }
 
-    override fun <KC : KlibComponent> getComponent(id: KlibComponent.ID<KC>): KC {
+    override fun <KC : KlibOptionalComponent> getComponent(kind: KlibOptionalComponent.Kind<KC, *>): KC? {
         @Suppress("UNCHECKED_CAST")
-        val component = components[id] as KC?
-        return component ?: error("Unknown component $id")
+        return components[kind] as KC?
     }
 
     override val linkerOpts: List<String>

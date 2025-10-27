@@ -21,7 +21,10 @@ import org.jetbrains.kotlin.konan.file.ZipFileSystemAccessor
 import org.jetbrains.kotlin.konan.properties.Properties
 import org.jetbrains.kotlin.konan.properties.loadProperties
 import org.jetbrains.kotlin.library.*
+import org.jetbrains.kotlin.library.components.KlibIrComponent
+import org.jetbrains.kotlin.library.components.KlibIrComponentLayout
 import org.jetbrains.kotlin.library.components.KlibMetadataComponent
+import org.jetbrains.kotlin.library.components.KlibMetadataComponentLayout
 import org.jetbrains.kotlin.util.DummyLogger
 import org.jetbrains.kotlin.util.Logger
 
@@ -162,15 +165,26 @@ class KotlinLibraryImpl(
     BaseKotlinLibrary by base,
     IrLibrary by ir {
 
-    private val components: Map<KlibComponent.ID<*>, KlibComponent> = run {
-        val layoutReaderFactory = KlibLayoutReaderFactory(location, ir.access.klibZipAccessor)
-        mapOf(KlibMetadataComponent.ID to KlibMetadataComponentImpl(layoutReaderFactory))
+    private val components: Map<KlibComponent.Kind<*>, KlibComponent> = KlibComponentsBuilder(
+        layoutReaderFactory = KlibLayoutReaderFactory(
+            klibFile = location,
+            zipFileSystemAccessor = ir.access.klibZipAccessor
+        )
+    )
+        .withMandatory(KlibMetadataComponent.Kind, ::KlibMetadataComponentLayout, ::KlibMetadataComponentImpl)
+        .withOptional(KlibIrComponent.Kind.Main, KlibIrComponentLayout::createForMainIr, ::KlibIrComponentImpl)
+        .withOptional(KlibIrComponent.Kind.InlinableFunctions, KlibIrComponentLayout::createForInlinableFunctionsIr, ::KlibIrComponentImpl)
+        .build()
+
+    override fun <KC : KlibMandatoryComponent> getComponent(kind: KlibMandatoryComponent.Kind<KC>): KC {
+        @Suppress("UNCHECKED_CAST")
+        val component = components[kind] as KC?
+        return component ?: error("Unregistered component $kind")
     }
 
-    override fun <KC : KlibComponent> getComponent(id: KlibComponent.ID<KC>): KC {
+    override fun <KC : KlibOptionalComponent> getComponent(kind: KlibOptionalComponent.Kind<KC, *>): KC? {
         @Suppress("UNCHECKED_CAST")
-        val component = components[id] as KC?
-        return component ?: error("Unknown component $id")
+        return components[kind] as KC?
     }
 
     override fun toString(): String = buildString {
