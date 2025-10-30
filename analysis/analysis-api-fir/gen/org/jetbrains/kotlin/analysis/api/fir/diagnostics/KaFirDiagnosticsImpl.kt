@@ -559,6 +559,12 @@ internal class UnsupportedCollectionLiteralTypeImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.UnsupportedCollectionLiteralType
 
+internal class ImplicitPropertyTypeMakesBehaviorOrderDependantImpl(
+    override val property: KaVariableSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtExpression>(firDiagnostic, token), KaFirDiagnostic.ImplicitPropertyTypeMakesBehaviorOrderDependant
+
 internal class SuperIsNotAnExpressionImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
@@ -5205,6 +5211,20 @@ internal class ConflictingImportImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtImportDirective>(firDiagnostic, token), KaFirDiagnostic.ConflictingImport
+
+internal class FunctionTypeOfTooLargeArityImpl(
+    override val classId: ClassId,
+    override val maxArity: Int,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.FunctionTypeOfTooLargeArity
+
+internal class KSuspendFunctionTypeOfDangerouslyLargeArityImpl(
+    override val classId: ClassId,
+    override val maxArity: Int,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.KSuspendFunctionTypeOfDangerouslyLargeArity
 
 internal class OperatorRenamedOnImportImpl(
     firDiagnostic: KtPsiDiagnostic,

@@ -597,6 +597,12 @@ public class LLPartialDiagnosticsFirTestGenerated extends AbstractLLPartialDiagn
     }
 
     @Test
+    @TestMetadata("prohibitHugeFunctionN.kt.can-freeze-ide")
+    public void testProhibitHugeFunctionN() {
+      runTest("compiler/fir/analysis-tests/testData/resolve/prohibitHugeFunctionN.kt.can-freeze-ide");
+    }
+
+    @Test
     @TestMetadata("properLocalPackages.kt")
     public void testProperLocalPackages() {
       runTest("compiler/fir/analysis-tests/testData/resolve/properLocalPackages.kt");
@@ -714,6 +720,12 @@ public class LLPartialDiagnosticsFirTestGenerated extends AbstractLLPartialDiagn
     @TestMetadata("throwableSubclass.kt")
     public void testThrowableSubclass() {
       runTest("compiler/fir/analysis-tests/testData/resolve/throwableSubclass.kt");
+    }
+
+    @Test
+    @TestMetadata("tooLargeFunctionNThroughACallableReference.kt")
+    public void testTooLargeFunctionNThroughACallableReference() {
+      runTest("compiler/fir/analysis-tests/testData/resolve/tooLargeFunctionNThroughACallableReference.kt");
     }
 
     @Test
@@ -6178,24 +6190,6 @@ public class LLPartialDiagnosticsFirTestGenerated extends AbstractLLPartialDiagn
       }
 
       @Test
-      @TestMetadata("callableReferenceOnInstance.kt")
-      public void testCallableReferenceOnInstance() {
-        runTest("compiler/fir/analysis-tests/testData/resolve/inference/callableReferenceOnInstance.kt");
-      }
-
-      @Test
-      @TestMetadata("callableReferenceToLocalClass.kt")
-      public void testCallableReferenceToLocalClass() {
-        runTest("compiler/fir/analysis-tests/testData/resolve/inference/callableReferenceToLocalClass.kt");
-      }
-
-      @Test
-      @TestMetadata("callableReferencesAndDefaultParameters.kt")
-      public void testCallableReferencesAndDefaultParameters() {
-        runTest("compiler/fir/analysis-tests/testData/resolve/inference/callableReferencesAndDefaultParameters.kt");
-      }
-
-      @Test
       @TestMetadata("capturedTypeForJavaTypeParameter.kt")
       public void testCapturedTypeForJavaTypeParameter() {
         runTest("compiler/fir/analysis-tests/testData/resolve/inference/capturedTypeForJavaTypeParameter.kt");
@@ -6451,6 +6445,68 @@ public class LLPartialDiagnosticsFirTestGenerated extends AbstractLLPartialDiagn
       @TestMetadata("unitUpperBound.kt")
       public void testUnitUpperBound() {
         runTest("compiler/fir/analysis-tests/testData/resolve/inference/unitUpperBound.kt");
+      }
+
+      @Nested
+      @TestMetadata("compiler/fir/analysis-tests/testData/resolve/inference/callableReferences")
+      @TestDataPath("$PROJECT_ROOT")
+      public class CallableReferences {
+        @Test
+        public void testAllFilesPresentInCallableReferences() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/inference/callableReferences"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("callableReferenceOnInstance.kt")
+        public void testCallableReferenceOnInstance() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/inference/callableReferences/callableReferenceOnInstance.kt");
+        }
+
+        @Test
+        @TestMetadata("callableReferenceToLocalClass.kt")
+        public void testCallableReferenceToLocalClass() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/inference/callableReferences/callableReferenceToLocalClass.kt");
+        }
+
+        @Test
+        @TestMetadata("callableReferencesAndDefaultParameters.kt")
+        public void testCallableReferencesAndDefaultParameters() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/inference/callableReferences/callableReferencesAndDefaultParameters.kt");
+        }
+
+        @Nested
+        @TestMetadata("compiler/fir/analysis-tests/testData/resolve/inference/callableReferences/adaptation")
+        @TestDataPath("$PROJECT_ROOT")
+        public class Adaptation {
+          @Test
+          public void testAllFilesPresentInAdaptation() {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/inference/callableReferences/adaptation"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+          }
+
+          @Test
+          @TestMetadata("kt39697.kt")
+          public void testKt39697() {
+            runTest("compiler/fir/analysis-tests/testData/resolve/inference/callableReferences/adaptation/kt39697.kt");
+          }
+
+          @Test
+          @TestMetadata("kt81841.kt")
+          public void testKt81841() {
+            runTest("compiler/fir/analysis-tests/testData/resolve/inference/callableReferences/adaptation/kt81841.kt");
+          }
+
+          @Test
+          @TestMetadata("kt81913.kt")
+          public void testKt81913() {
+            runTest("compiler/fir/analysis-tests/testData/resolve/inference/callableReferences/adaptation/kt81913.kt");
+          }
+
+          @Test
+          @TestMetadata("varargAdaptationWithTypeVariables.kt")
+          public void testVarargAdaptationWithTypeVariables() {
+            runTest("compiler/fir/analysis-tests/testData/resolve/inference/callableReferences/adaptation/varargAdaptationWithTypeVariables.kt");
+          }
+        }
       }
 
       @Nested

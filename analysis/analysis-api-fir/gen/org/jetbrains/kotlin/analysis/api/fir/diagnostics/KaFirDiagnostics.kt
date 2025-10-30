@@ -477,6 +477,11 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = UnsupportedCollectionLiteralType::class
     }
 
+    interface ImplicitPropertyTypeMakesBehaviorOrderDependant : KaFirDiagnostic<KtExpression> {
+        override val diagnosticClass get() = ImplicitPropertyTypeMakesBehaviorOrderDependant::class
+        val property: KaVariableSymbol
+    }
+
     interface SuperIsNotAnExpression : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = SuperIsNotAnExpression::class
     }
@@ -4336,6 +4341,18 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
     interface ConflictingImport : KaFirDiagnostic<KtImportDirective> {
         override val diagnosticClass get() = ConflictingImport::class
         val name: Name
+    }
+
+    interface FunctionTypeOfTooLargeArity : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = FunctionTypeOfTooLargeArity::class
+        val classId: ClassId
+        val maxArity: Int
+    }
+
+    interface KSuspendFunctionTypeOfDangerouslyLargeArity : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = KSuspendFunctionTypeOfDangerouslyLargeArity::class
+        val classId: ClassId
+        val maxArity: Int
     }
 
     interface OperatorRenamedOnImport : KaFirDiagnostic<KtImportDirective> {

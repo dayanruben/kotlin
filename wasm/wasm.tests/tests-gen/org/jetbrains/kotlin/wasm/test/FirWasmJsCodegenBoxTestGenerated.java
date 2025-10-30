@@ -4931,6 +4931,24 @@ public class FirWasmJsCodegenBoxTestGenerated extends AbstractFirWasmJsCodegenBo
       }
 
       @Test
+      @TestMetadata("adaptedSecondArgArray.kt")
+      public void testAdaptedSecondArgArray() {
+        runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/adaptedSecondArgArray.kt");
+      }
+
+      @Test
+      @TestMetadata("adaptedSecondArgTypeVariable.kt")
+      public void testAdaptedSecondArgTypeVariable() {
+        runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/adaptedSecondArgTypeVariable.kt");
+      }
+
+      @Test
+      @TestMetadata("adaptedVarargArrayAgainstTypeVariable.kt")
+      public void testAdaptedVarargArrayAgainstTypeVariable() {
+        runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/adaptedVarargArrayAgainstTypeVariable.kt");
+      }
+
+      @Test
       @TestMetadata("adaptedVarargFunImportedFromObject.kt")
       public void testAdaptedVarargFunImportedFromObject() {
         runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/adaptedVarargFunImportedFromObject.kt");
@@ -53232,6 +53250,12 @@ public class FirWasmJsCodegenBoxTestGenerated extends AbstractFirWasmJsCodegenBo
           runTest("compiler/testData/codegen/box/reflection/call/inlineClasses/simpleConstructorWithInlineClassParameter.kt");
         }
 
+        @Test
+        @TestMetadata("unboxBothContextAndExtensionParameter.kt")
+        public void testUnboxBothContextAndExtensionParameter() {
+          runTest("compiler/testData/codegen/box/reflection/call/inlineClasses/unboxBothContextAndExtensionParameter.kt");
+        }
+
         @Nested
         @TestMetadata("compiler/testData/codegen/box/reflection/call/inlineClasses/nonNullObject")
         @TestDataPath("$PROJECT_ROOT")
@@ -53511,6 +53535,18 @@ public class FirWasmJsCodegenBoxTestGenerated extends AbstractFirWasmJsCodegenBo
       @TestMetadata("boundJvmStaticInObject.kt")
       public void testBoundJvmStaticInObject() {
         runTest("compiler/testData/codegen/box/reflection/callBy/boundJvmStaticInObject.kt");
+      }
+
+      @Test
+      @TestMetadata("brokenDefaultParametersFromDifferentFunctions.kt")
+      public void testBrokenDefaultParametersFromDifferentFunctions() {
+        runTest("compiler/testData/codegen/box/reflection/callBy/brokenDefaultParametersFromDifferentFunctions.kt");
+      }
+
+      @Test
+      @TestMetadata("brokenDefaultParametersFromDifferentFunctionsJvmDefault.kt")
+      public void testBrokenDefaultParametersFromDifferentFunctionsJvmDefault() {
+        runTest("compiler/testData/codegen/box/reflection/callBy/brokenDefaultParametersFromDifferentFunctionsJvmDefault.kt");
       }
 
       @Test
@@ -55302,12 +55338,6 @@ public class FirWasmJsCodegenBoxTestGenerated extends AbstractFirWasmJsCodegenBo
       }
 
       @Test
-      @TestMetadata("boundInnerClassConstructor.kt")
-      public void testBoundInnerClassConstructor() {
-        runTest("compiler/testData/codegen/box/reflection/parameters/boundInnerClassConstructor.kt");
-      }
-
-      @Test
       @TestMetadata("boundObjectMemberReferences.kt")
       public void testBoundObjectMemberReferences() {
         runTest("compiler/testData/codegen/box/reflection/parameters/boundObjectMemberReferences.kt");
@@ -55335,6 +55365,12 @@ public class FirWasmJsCodegenBoxTestGenerated extends AbstractFirWasmJsCodegenBo
       @TestMetadata("functionParameterNameAndIndex.kt")
       public void testFunctionParameterNameAndIndex() {
         runTest("compiler/testData/codegen/box/reflection/parameters/functionParameterNameAndIndex.kt");
+      }
+
+      @Test
+      @TestMetadata("innerClassConstructor.kt")
+      public void testInnerClassConstructor() {
+        runTest("compiler/testData/codegen/box/reflection/parameters/innerClassConstructor.kt");
       }
 
       @Test
@@ -55624,6 +55660,12 @@ public class FirWasmJsCodegenBoxTestGenerated extends AbstractFirWasmJsCodegenBo
         @TestMetadata("extensionPropertyAccessors.kt")
         public void testExtensionPropertyAccessors() {
           runTest("compiler/testData/codegen/box/reflection/properties/accessors/extensionPropertyAccessors.kt");
+        }
+
+        @Test
+        @TestMetadata("javaFieldAccessors.kt")
+        public void testJavaFieldAccessors() {
+          runTest("compiler/testData/codegen/box/reflection/properties/accessors/javaFieldAccessors.kt");
         }
 
         @Test
@@ -56704,6 +56746,12 @@ public class FirWasmJsCodegenBoxTestGenerated extends AbstractFirWasmJsCodegenBo
         @TestMetadata("innerGenericCapturedType.kt")
         public void testInnerGenericCapturedType() {
           runTest("compiler/testData/codegen/box/reflection/types/subtyping/innerGenericCapturedType.kt");
+        }
+
+        @Test
+        @TestMetadata("javaTypeProjection.kt")
+        public void testJavaTypeProjection() {
+          runTest("compiler/testData/codegen/box/reflection/types/subtyping/javaTypeProjection.kt");
         }
 
         @Test
