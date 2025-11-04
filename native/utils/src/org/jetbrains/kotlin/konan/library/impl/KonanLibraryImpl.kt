@@ -49,31 +49,15 @@ open class TargetedLibraryImpl(
         target?.let { substitute(properties, defaultTargetSubstitutions(it)) }
         properties
     }
-
-    override val includedPaths: List<String>
-        get() = access.realFiles {
-            it.includedDir.listFilesOrEmpty.map { it.absolutePath }
-        }
-}
-
-open class BitcodeLibraryImpl(
-    private val access: BitcodeLibraryAccess<BitcodeKotlinLibraryLayout>,
-    targeted: TargetedLibrary
-) : BitcodeLibrary, TargetedLibrary by targeted {
-    override val bitcodePaths: List<String>
-        get() = access.realFiles {
-            it.nativeDir.listFilesOrEmpty.map { it.absolutePath }
-        }
 }
 
 class KonanLibraryImpl(
     override val location: File,
     zipFileSystemAccessor: ZipFileSystemAccessor,
     targeted: TargetedLibraryImpl,
-    bitcode: BitcodeLibraryImpl
 ) : KonanLibrary,
     BaseKotlinLibrary by targeted,
-    BitcodeLibrary by bitcode {
+    TargetedLibrary by targeted {
 
     private val components = KlibComponentsCache(
         layoutReaderFactory = KlibLayoutReaderFactory(
@@ -102,13 +86,11 @@ fun createKonanLibrary(
     val libraryFile = Paths.get(libraryFilePossiblyDenormalized.absolutePath).normalize().File()
     val baseAccess = BaseLibraryAccess<KotlinLibraryLayout>(libraryFile, component, nonNullZipFileSystemAccessor)
     val targetedAccess = TargetedLibraryAccess<TargetedKotlinLibraryLayout>(libraryFile, component, target, nonNullZipFileSystemAccessor)
-    val bitcodeAccess = BitcodeLibraryAccess<BitcodeKotlinLibraryLayout>(libraryFile, component, target, nonNullZipFileSystemAccessor)
 
     val base = BaseKotlinLibraryImpl(baseAccess, isDefault)
     val targeted = TargetedLibraryImpl(targetedAccess, base)
-    val bitcode = BitcodeLibraryImpl(bitcodeAccess, targeted)
 
-    return KonanLibraryImpl(libraryFile, nonNullZipFileSystemAccessor, targeted, bitcode)
+    return KonanLibraryImpl(libraryFile, nonNullZipFileSystemAccessor, targeted)
 }
 
 fun createKonanLibraryComponents(
