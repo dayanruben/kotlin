@@ -1,18 +1,4 @@
 public final class Foo /* Foo*/ {
-  @kotlin.jvm.JvmExposeBoxed()
-  @org.jetbrains.annotations.NotNull()
-  public final StringWrapper getFoo1();//  getFoo1()
-
-  @kotlin.jvm.JvmExposeBoxed()
-  @org.jetbrains.annotations.NotNull()
-  public final StringWrapper getFoo4(int);//  getFoo4(int)
-
-  @kotlin.jvm.JvmExposeBoxed()
-  public final void setFoo2(@org.jetbrains.annotations.NotNull() StringWrapper);//  setFoo2(StringWrapper)
-
-  @kotlin.jvm.JvmExposeBoxed()
-  public final void setFoo3(int, @org.jetbrains.annotations.NotNull() StringWrapper);//  setFoo3(int, StringWrapper)
-
   @kotlin.jvm.JvmExposeBoxed(jvmName = "fooGetter22")
   @org.jetbrains.annotations.NotNull()
   public final StringWrapper fooGetter22();//  fooGetter22()
@@ -20,6 +6,12 @@ public final class Foo /* Foo*/ {
   @kotlin.jvm.JvmExposeBoxed(jvmName = "fooGetter32")
   @org.jetbrains.annotations.NotNull()
   public final StringWrapper fooGetter32(int);//  fooGetter32(int)
+
+  @kotlin.jvm.JvmExposeBoxed(jvmName = "fooSetter21")
+  public final void fooSetter21(@org.jetbrains.annotations.NotNull() StringWrapper);//  fooSetter21(StringWrapper)
+
+  @kotlin.jvm.JvmExposeBoxed(jvmName = "fooSetter31")
+  public final void fooSetter31(int, @org.jetbrains.annotations.NotNull() StringWrapper);//  fooSetter31(int, StringWrapper)
 
   @kotlin.jvm.JvmName(name = "foo11")
   @org.jetbrains.annotations.NotNull()

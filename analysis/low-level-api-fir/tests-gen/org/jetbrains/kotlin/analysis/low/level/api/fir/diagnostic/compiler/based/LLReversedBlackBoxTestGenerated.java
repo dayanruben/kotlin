@@ -28292,6 +28292,12 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
     }
 
     @Test
+    @TestMetadata("kt82065.kt")
+    public void testKt82065() {
+      runTest("compiler/testData/codegen/box/inline/kt82065.kt");
+    }
+
+    @Test
     @TestMetadata("lambdaAsAny.kt")
     public void testLambdaAsAny() {
       runTest("compiler/testData/codegen/box/inline/lambdaAsAny.kt");
@@ -33752,6 +33758,12 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
       @TestMetadata("noArg2.kt")
       public void testNoArg2() {
         runTest("compiler/testData/codegen/box/inlineClasses/jvmExposeBoxed/noArg2.kt");
+      }
+
+      @Test
+      @TestMetadata("propagatedWithJvmName.kt")
+      public void testPropagatedWithJvmName() {
+        runTest("compiler/testData/codegen/box/inlineClasses/jvmExposeBoxed/propagatedWithJvmName.kt");
       }
 
       @Test

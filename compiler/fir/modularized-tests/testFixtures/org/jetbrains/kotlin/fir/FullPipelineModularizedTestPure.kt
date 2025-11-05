@@ -19,11 +19,10 @@ internal val LANGUAGE_VERSION_K2: String = when (val versionMacro = System.getPr
     else -> versionMacro
 }
 
-class FullPipelineModularizedTest : AbstractFullPipelineModularizedTest() {
+class FullPipelineModularizedTestPure(config: ModularizedTestConfig) : AbstractFullPipelineModularizedTest(config) {
 
     override fun configureArguments(args: K2JVMCompilerArguments, moduleData: ModuleData) {
         args.languageVersion = LANGUAGE_VERSION_K2
-        args.debugLevelCompilerChecks = ENABLE_SLOW_ASSERTIONS
 
         // TODO: Remove when support for old modularized tests is removed
         if (moduleData.arguments == null) {
@@ -38,21 +37,25 @@ class FullPipelineModularizedTest : AbstractFullPipelineModularizedTest() {
             args.noReflect = true
         }
 
-        val apiVersion = LanguageVersion.fromVersionString(args.apiVersion)
-        if (apiVersion != null && apiVersion.isUnsupported) {
-            args.apiVersion = LanguageVersion.FIRST_SUPPORTED.versionString
-        }
-
-        require(LanguageVersion.fromVersionString(args.languageVersion)!! >= LanguageVersion.KOTLIN_2_0) {
-            "Language version misconfiguration for K2 FP: ${args.languageVersion} < 2.0"
-        }
+        configureCompatibleApiVersion(args)
     }
 
-    fun testTotalKotlin() {
+    override fun testTotalKotlin() {
         pinCurrentThreadToIsolatedCpu()
         for (i in 0 until PASSES) {
             println("Pass $i")
             runTestOnce(i)
         }
+    }
+}
+
+internal fun configureCompatibleApiVersion(args: K2JVMCompilerArguments) {
+    val apiVersion = LanguageVersion.fromVersionString(args.apiVersion)
+    if (apiVersion != null && apiVersion.isUnsupported) {
+        args.apiVersion = LanguageVersion.FIRST_SUPPORTED.versionString
+    }
+
+    require(LanguageVersion.fromVersionString(args.languageVersion)!! >= LanguageVersion.KOTLIN_2_0) {
+        "Language version misconfiguration for K2 FP: ${args.languageVersion} < 2.0"
     }
 }

@@ -34,10 +34,12 @@ import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.defaultsProvider
 import org.jetbrains.kotlin.test.services.independentSourceDirectoryPath
 import org.jetbrains.kotlin.test.services.moduleStructure
+import org.jetbrains.kotlin.test.services.transitiveDependsOnDependencies
 import org.jetbrains.kotlin.test.utils.MultiModuleInfoDumper
 import org.jetbrains.kotlin.test.utils.withExtension
 import org.jetbrains.kotlin.test.utils.withSuffixAndExtension
 import org.jetbrains.kotlin.utils.addToStdlib.applyIf
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import java.io.File
 
 class IrTextDumpHandler(
@@ -45,6 +47,7 @@ class IrTextDumpHandler(
     artifactKind: BackendKind<IrBackendInput>,
     val customExtension: String? = null,
     val directive: SimpleDirective = DUMP_IR,
+    val showOffsets: Boolean = false,
 ) : AbstractIrHandler(testServices, artifactKind) {
     companion object {
         const val DUMP_EXTENSION = "ir.txt"
@@ -114,6 +117,8 @@ class IrTextDumpHandler(
     override val additionalAfterAnalysisCheckers: List<Constructor<AfterAnalysisChecker>>
         get() = listOf(::FirIrDumpIdenticalChecker)
 
+    private val pathRelativizer = IrFileEntryPathRelativizer(testServices)
+
     private val baseDumper = MultiModuleInfoDumper()
     private val buildersForSeparateFileDumps: MutableMap<File, StringBuilder> = mutableMapOf()
 
@@ -124,7 +129,8 @@ class IrTextDumpHandler(
 
         if (directive !in module.directives) return
 
-        val testFileToIrFile = info.irModuleFragment.files.groupWithTestFiles(testServices, ordered = true)
+        pathRelativizer.addModule(module)
+
         val dumpOptions = DumpIrTreeOptions(
             normalizeNames = true,
             printFacadeClassInFqNames = false,
@@ -135,13 +141,14 @@ class IrTextDumpHandler(
             },
             isHiddenDeclaration = { isHiddenDeclaration(it, info.irBuiltIns) },
             stableOrder = true,
-            filePathRenderer = { irFileEntry, fullPath ->
-                renderFilePathForIrFile(testFileToIrFile, testServices, irFileEntry, fullPath)
-            }
+            filePathRenderer = { _, fullPath ->
+                pathRelativizer.getRelativePath(fullPath)
+            },
+            printSourceOffsets = showOffsets,
         )
         val builder = baseDumper.builderForModule(module.name)
 
-        for ((moduleAndFile, irFile) in testFileToIrFile) {
+        for ((moduleAndFile, irFile) in info.irModuleFragment.files.groupWithTestFiles(testServices, ordered = true)) {
             if (moduleAndFile?.second?.directives?.contains(EXTERNAL_FILE) == true) continue
             val actualDump = irFile.dumpTreesFromLineNumber(lineNumber = 0, dumpOptions)
             builder.append(actualDump)
@@ -205,3 +212,19 @@ class IrTextDumpHandler(
     }
 }
 
+private class IrFileEntryPathRelativizer(private val testServices: TestServices) {
+    private val absolutePathPrefixes = linkedSetOf<String>()
+    private val relativizedPathsCache = mutableMapOf<String, String>()
+
+    fun addModule(module: TestModule) {
+        module.transitiveDependsOnDependencies(includeSelf = true).forEach {
+            absolutePathPrefixes += it.independentSourceDirectoryPath(testServices)
+        }
+    }
+
+    fun getRelativePath(fullPath: String): String = relativizedPathsCache.getOrPut(fullPath) {
+        absolutePathPrefixes.firstNotNullOfOrNull { absolutePathPrefix ->
+            runIf(fullPath.startsWith(absolutePathPrefix)) { fullPath.removePrefix(absolutePathPrefix) }
+        } ?: fullPath
+    }
+}

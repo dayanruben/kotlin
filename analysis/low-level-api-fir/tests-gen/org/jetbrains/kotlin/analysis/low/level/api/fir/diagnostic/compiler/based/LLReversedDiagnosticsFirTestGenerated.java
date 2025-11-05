@@ -4636,6 +4636,12 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
       }
 
       @Test
+      @TestMetadata("outerClassArgumentsRequiredFromSuper.kt")
+      public void testOuterClassArgumentsRequiredFromSuper() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/outerClassArgumentsRequiredFromSuper.kt");
+      }
+
+      @Test
       @TestMetadata("primaryConstructorParametersInSecondaryConstructor.kt")
       public void testPrimaryConstructorParametersInSecondaryConstructor() {
         runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/primaryConstructorParametersInSecondaryConstructor.kt");
@@ -7363,6 +7369,28 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
       @TestMetadata("propertyFieldShadow.kt")
       public void testPropertyFieldShadow() {
         runTest("compiler/fir/analysis-tests/testData/resolve/propertyVsField/propertyFieldShadow.kt");
+      }
+    }
+
+    @Nested
+    @TestMetadata("compiler/fir/analysis-tests/testData/resolve/qualifiers")
+    @TestDataPath("$PROJECT_ROOT")
+    public class Qualifiers {
+      @Test
+      public void testAllFilesPresentInQualifiers() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/qualifiers"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+      }
+
+      @Test
+      @TestMetadata("noRootIdePackageInCli.kt")
+      public void testNoRootIdePackageInCli() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/qualifiers/noRootIdePackageInCli.kt");
+      }
+
+      @Test
+      @TestMetadata("noRootIdePackageInCliDisabled.kt")
+      public void testNoRootIdePackageInCliDisabled() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/qualifiers/noRootIdePackageInCliDisabled.kt");
       }
     }
 
