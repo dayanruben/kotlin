@@ -615,6 +615,12 @@ public class LibraryGetOrBuildFirTestGenerated extends AbstractLibraryGetOrBuild
   @TestDataPath("$PROJECT_ROOT")
   public class Contracts {
     @Test
+    @TestMetadata("accessorsAllowed.kt")
+    public void testAccessorsAllowed() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFirBinary/contracts/accessorsAllowed.kt");
+    }
+
+    @Test
     public void testAllFilesPresentInContracts() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/low-level-api-fir/testData/getOrBuildFirBinary/contracts"), Pattern.compile("^(.+)\\.kt$"), null, true);
     }
@@ -650,6 +656,12 @@ public class LibraryGetOrBuildFirTestGenerated extends AbstractLibraryGetOrBuild
     }
 
     @Test
+    @TestMetadata("holdsInWithContextParameters.kt")
+    public void testHoldsInWithContextParameters() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFirBinary/contracts/holdsInWithContextParameters.kt");
+    }
+
+    @Test
     @TestMetadata("nonKotlinContractCall2.kt")
     public void testNonKotlinContractCall2() {
       runTest("analysis/low-level-api-fir/testData/getOrBuildFirBinary/contracts/nonKotlinContractCall2.kt");
@@ -665,6 +677,12 @@ public class LibraryGetOrBuildFirTestGenerated extends AbstractLibraryGetOrBuild
     @TestMetadata("SimpleFunctionWithContract.kt")
     public void testSimpleFunctionWithContract() {
       runTest("analysis/low-level-api-fir/testData/getOrBuildFirBinary/contracts/SimpleFunctionWithContract.kt");
+    }
+
+    @Test
+    @TestMetadata("withContextParameters.kt")
+    public void testWithContextParameters() {
+      runTest("analysis/low-level-api-fir/testData/getOrBuildFirBinary/contracts/withContextParameters.kt");
     }
 
     @Nested
@@ -762,6 +780,12 @@ public class LibraryGetOrBuildFirTestGenerated extends AbstractLibraryGetOrBuild
         }
 
         @Test
+        @TestMetadata("baseConditions.kt")
+        public void testBaseConditions() {
+          runTest("analysis/low-level-api-fir/testData/getOrBuildFirBinary/contracts/good/returnsImplies/baseConditions.kt");
+        }
+
+        @Test
         @TestMetadata("booleanOperators.kt")
         public void testBooleanOperators() {
           runTest("analysis/low-level-api-fir/testData/getOrBuildFirBinary/contracts/good/returnsImplies/booleanOperators.kt");
@@ -819,6 +843,18 @@ public class LibraryGetOrBuildFirTestGenerated extends AbstractLibraryGetOrBuild
         @TestMetadata("trickyCases.kt")
         public void testTrickyCases() {
           runTest("analysis/low-level-api-fir/testData/getOrBuildFirBinary/contracts/good/returnsImplies/trickyCases.kt");
+        }
+
+        @Test
+        @TestMetadata("typeParameterFunction.kt")
+        public void testTypeParameterFunction() {
+          runTest("analysis/low-level-api-fir/testData/getOrBuildFirBinary/contracts/good/returnsImplies/typeParameterFunction.kt");
+        }
+
+        @Test
+        @TestMetadata("typeParameterProperty.kt")
+        public void testTypeParameterProperty() {
+          runTest("analysis/low-level-api-fir/testData/getOrBuildFirBinary/contracts/good/returnsImplies/typeParameterProperty.kt");
         }
 
         @Test

@@ -2080,8 +2080,6 @@ org.jetbrains.kotlin.psi.stubs.elements.KtPlaceHolderStubElementType
 org.jetbrains.kotlin.psi.stubs.elements.KtPlaceHolderStubElementType:constructor(String, Class<T>)
 org.jetbrains.kotlin.psi.stubs.elements.KtPlaceHolderWithTextStubElementType
 org.jetbrains.kotlin.psi.stubs.elements.KtPrimaryConstructorElementType
-org.jetbrains.kotlin.psi.stubs.elements.KtPropertyAccessorElementType
-org.jetbrains.kotlin.psi.stubs.elements.KtPropertyAccessorElementType:constructor(String)
 org.jetbrains.kotlin.psi.stubs.elements.KtPropertyElementType
 org.jetbrains.kotlin.psi.stubs.elements.KtPropertyElementType:constructor(String)
 org.jetbrains.kotlin.psi.stubs.elements.KtScriptElementType
@@ -2239,8 +2237,10 @@ org.jetbrains.kotlin.psi.stubs.impl.KotlinContractEffectType.BOOLEAN_LOGIC
 org.jetbrains.kotlin.psi.stubs.impl.KotlinContractEffectType.BOOLEAN_PARAMETER_REFERENCE
 org.jetbrains.kotlin.psi.stubs.impl.KotlinContractEffectType.CALLS
 org.jetbrains.kotlin.psi.stubs.impl.KotlinContractEffectType.CONDITIONAL
+org.jetbrains.kotlin.psi.stubs.impl.KotlinContractEffectType.CONDITIONAL_RETURNS
 org.jetbrains.kotlin.psi.stubs.impl.KotlinContractEffectType.CONSTANT
 org.jetbrains.kotlin.psi.stubs.impl.KotlinContractEffectType.Companion.IGNORE_REFERENCE_PARAMETER_NAME
+org.jetbrains.kotlin.psi.stubs.impl.KotlinContractEffectType.HOLDS_IN
 org.jetbrains.kotlin.psi.stubs.impl.KotlinContractEffectType.IS_INSTANCE
 org.jetbrains.kotlin.psi.stubs.impl.KotlinContractEffectType.IS_NULL
 org.jetbrains.kotlin.psi.stubs.impl.KotlinContractEffectType.NOT
@@ -2261,8 +2261,6 @@ org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl.facadePartSimpleNames
 org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl.partSimpleName
 org.jetbrains.kotlin.psi.stubs.impl.KotlinFlexibleTypeBean
 org.jetbrains.kotlin.psi.stubs.impl.KotlinFunctionStubImpl
-org.jetbrains.kotlin.psi.stubs.impl.KotlinFunctionStubImpl.Companion.deserializeContract(StubInputStream)
-org.jetbrains.kotlin.psi.stubs.impl.KotlinFunctionStubImpl.serializeContract(StubOutputStream)
 org.jetbrains.kotlin.psi.stubs.impl.KotlinImportAliasStubImpl
 org.jetbrains.kotlin.psi.stubs.impl.KotlinImportDirectiveStubImpl
 org.jetbrains.kotlin.psi.stubs.impl.KotlinModifierListStubImpl
@@ -2279,7 +2277,6 @@ org.jetbrains.kotlin.psi.stubs.impl.KotlinPlaceHolderStubImpl:constructor(StubEl
 org.jetbrains.kotlin.psi.stubs.impl.KotlinPlaceHolderWithTextStubImpl
 org.jetbrains.kotlin.psi.stubs.impl.KotlinPrimaryConstructorStubImpl
 org.jetbrains.kotlin.psi.stubs.impl.KotlinPropertyAccessorStubImpl
-org.jetbrains.kotlin.psi.stubs.impl.KotlinPropertyAccessorStubImpl:constructor(StubElement<?>, boolean, boolean, boolean, boolean)
 org.jetbrains.kotlin.psi.stubs.impl.KotlinPropertyStubImpl
 org.jetbrains.kotlin.psi.stubs.impl.KotlinScriptStubImpl
 org.jetbrains.kotlin.psi.stubs.impl.KotlinSecondaryConstructorStubImpl

@@ -201,6 +201,12 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
     }
 
     @Test
+    @TestMetadata("delegatedSuperTypeByExpression.kt")
+    public void testDelegatedSuperTypeByExpression() {
+      runTest("compiler/fir/analysis-tests/testData/resolve/delegatedSuperTypeByExpression.kt");
+    }
+
+    @Test
     @TestMetadata("delegatingConstructorCall.kt")
     public void testDelegatingConstructorCall() {
       runTest("compiler/fir/analysis-tests/testData/resolve/delegatingConstructorCall.kt");
@@ -3962,6 +3968,12 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
       }
 
       @Test
+      @TestMetadata("delegatedPropertyInsideLocalClass.kt")
+      public void testDelegatedPropertyInsideLocalClass() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/delegates/delegatedPropertyInsideLocalClass.kt");
+      }
+
+      @Test
       @TestMetadata("extensionGenericGetValue.kt")
       public void testExtensionGenericGetValue() {
         runTest("compiler/fir/analysis-tests/testData/resolve/delegates/extensionGenericGetValue.kt");
@@ -6721,6 +6733,34 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
       @TestMetadata("simple.kt")
       public void testSimple() {
         runTest("compiler/fir/analysis-tests/testData/resolve/innerClasses/simple.kt");
+      }
+    }
+
+    @Nested
+    @TestMetadata("compiler/fir/analysis-tests/testData/resolve/j+k")
+    @TestDataPath("$PROJECT_ROOT")
+    public class J_k {
+      @Test
+      public void testAllFilesPresentInJ_k() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/j+k"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+      }
+
+      @Test
+      @TestMetadata("asListOfToArrayJDKBased.kt")
+      public void testAsListOfToArrayJDKBased() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/j+k/asListOfToArrayJDKBased.kt");
+      }
+
+      @Test
+      @TestMetadata("asListOfToArraySimplified.kt")
+      public void testAsListOfToArraySimplified() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/j+k/asListOfToArraySimplified.kt");
+      }
+
+      @Test
+      @TestMetadata("usingNullableValueAsLowerBoundLeadsToNullableResult.kt")
+      public void testUsingNullableValueAsLowerBoundLeadsToNullableResult() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/j+k/usingNullableValueAsLowerBoundLeadsToNullableResult.kt");
       }
     }
 

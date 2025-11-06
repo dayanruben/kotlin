@@ -50,6 +50,7 @@ import org.jetbrains.kotlin.fir.resolve.transformers.contracts.runContractResolv
 import org.jetbrains.kotlin.fir.resolve.transformers.transformVarargTypeToArrayType
 import org.jetbrains.kotlin.fir.symbols.impl.FirConstructorSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirLocalPropertySymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirRegularPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildErrorTypeRef
@@ -378,7 +379,7 @@ open class FirDeclarationsResolveTransformer(
         // First, resolve delegate expression in dependent context withing existing (possibly Default) inference session
         val delegateExpression =
             // Resolve delegate expression; after that, delegate will contain either expr.provideDelegate or expr
-            if (property.isLocal) {
+            if (property.isLocalVariableOrParameter) {
                 transformDelegateExpression(delegateContainer)
             } else {
                 // TODO: the [skipCleanup] hack should be reverted on fixing KT-79107
@@ -498,7 +499,7 @@ open class FirDeclarationsResolveTransformer(
                     typeRef.approximateDeclarationType(
                         session,
                         property.visibilityForApproximation(),
-                        property.isLocal
+                        property.isLocalVariableOrParameter
                     )
                 )
 
@@ -642,7 +643,7 @@ open class FirDeclarationsResolveTransformer(
     }
 
     private fun transformLocalVariable(variable: FirProperty): FirProperty = whileAnalysing(session, variable) {
-        assert(variable.isLocal)
+        assert(variable.isLocalVariableOrParameter)
         val delegate = variable.delegate
 
         val hadExplicitType = variable.returnTypeRef !is FirImplicitTypeRef
@@ -704,6 +705,18 @@ open class FirDeclarationsResolveTransformer(
         }
 
         resolveSetter(mayResolveSetterBody, shouldResolveEverything)
+
+        /*
+         * We need the getter body in the `storeVariableReturnType`, so we remove bodies
+         * for accessors when they both are resolved
+         */
+        if (
+            session.languageVersionSettings.getFlag(AnalysisFlags.headerMode) &&
+            !this.isLocal && !this.isInline
+        ) {
+            getter?.replaceBody(newBody = null)
+            setter?.replaceBody(newBody = null)
+        }
     }
 
     private fun FirProperty.resolveGetter(shouldResolveEverything: Boolean) {
@@ -1039,7 +1052,12 @@ open class FirDeclarationsResolveTransformer(
                 }
             result.transformReturnTypeRef(transformer, ResolutionMode.UpdateImplicitTypeRef(returnTypeRef))
         }
-        if (session.languageVersionSettings.getFlag(AnalysisFlags.headerMode) && !function.isInline) {
+        if (
+            session.languageVersionSettings.getFlag(AnalysisFlags.headerMode) &&
+            function !is FirPropertyAccessor && // property accessors are processed in `resolveAccessors`
+            !function.isInline &&
+            !function.isLocal
+        ) {
             // Header mode: once the return type for non-inline function is known, the body can be removed.
             result.replaceBody(null)
         }

@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // LANGUAGE: +DontMakeExplicitJavaTypeArgumentsFlexible +PreciseSimplificationToFlexibleLowerConstraint
 // RUN_PIPELINE_TILL: BACKEND
 // ISSUE: KT-78621
@@ -15,8 +14,8 @@ public class JavaClass {
 fun takeN(n: Number?): Int = 1
 
 fun <T : CharSequence?> bar(n: T?, nn: T) {
-    JavaClass.simpleId(n).length
-    JavaClass.simpleId(nn).length
+    JavaClass.simpleId(n)<!UNSAFE_CALL!>.<!>length
+    JavaClass.simpleId(nn)<!UNSAFE_CALL!>.<!>length
 }
 
 /* GENERATED_FIR_TAGS: functionDeclaration, nullableType, typeConstraint, typeParameter */
