@@ -89,7 +89,7 @@ abstract class FirAbstractSessionFactory<CONTEXT> {
         extensionRegistrars: List<FirExtensionRegistrar>
     ): FirSession {
         return FirCliSession(FirSession.Kind.Library).apply session@{
-            registerCliCompilerAndCommonComponents(languageVersionSettings)
+            registerCliCompilerAndCommonComponents(languageVersionSettings, isFactoryForMetadataCompilation)
             registerLibrarySessionComponents(context)
 
             val kotlinScopeProvider = createKotlinScopeProviderForLibrarySession()
@@ -156,7 +156,7 @@ abstract class FirAbstractSessionFactory<CONTEXT> {
                 it.bindSession(this)
             }
 
-            registerCliCompilerAndCommonComponents(languageVersionSettings)
+            registerCliCompilerAndCommonComponents(languageVersionSettings, isFactoryForMetadataCompilation)
             registerLibrarySessionComponents(context)
             register(FirBuiltinSyntheticFunctionInterfaceProvider::class, sharedLibrarySession.syntheticFunctionInterfacesSymbolProvider)
 
@@ -210,7 +210,7 @@ abstract class FirAbstractSessionFactory<CONTEXT> {
     }
 
     protected abstract fun createKotlinScopeProviderForLibrarySession(): FirKotlinScopeProvider
-    protected abstract fun FirSession.registerLibrarySessionComponents(c: CONTEXT)
+    abstract fun FirSession.registerLibrarySessionComponents(c: CONTEXT)
 
     // ==================================== Platform session ====================================
 
@@ -236,7 +236,7 @@ abstract class FirAbstractSessionFactory<CONTEXT> {
             moduleData.bindSession(this@session)
             registerModuleData(moduleData)
             if (configuration.dumpInferenceLogs) register(FirInferenceLogger::class, FirInferenceLogger())
-            registerCliCompilerAndCommonComponents(languageVersionSettings)
+            registerCliCompilerAndCommonComponents(languageVersionSettings, isFactoryForMetadataCompilation)
             registerResolveComponents(
                 configuration.lookupTracker,
                 configuration.enumWhenTracker,
@@ -333,11 +333,12 @@ abstract class FirAbstractSessionFactory<CONTEXT> {
         moduleData: FirModuleData, languageVersionSettings: LanguageVersionSettings
     ): FirKotlinScopeProvider
 
-    protected abstract fun FirSessionConfigurator.registerPlatformCheckers()
-    protected abstract fun FirSessionConfigurator.registerExtraPlatformCheckers()
-    protected abstract fun FirSession.registerSourceSessionComponents(c: CONTEXT)
+    abstract fun FirSessionConfigurator.registerPlatformCheckers()
+    abstract fun FirSessionConfigurator.registerExtraPlatformCheckers()
+    abstract fun FirSession.registerSourceSessionComponents(c: CONTEXT)
 
     protected abstract val requiresSpecialSetupOfSourceProvidersInHmppCompilation: Boolean
+    protected abstract val isFactoryForMetadataCompilation: Boolean
 
     // ==================================== Common parts ====================================
 

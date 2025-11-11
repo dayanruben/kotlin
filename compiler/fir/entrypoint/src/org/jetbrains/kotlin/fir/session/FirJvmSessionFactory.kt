@@ -122,7 +122,11 @@ object FirJvmSessionFactory : FirAbstractSessionFactory<FirJvmSessionFactory.Con
     }
 
     override fun FirSession.registerLibrarySessionComponents(c: Context) {
-        registerJavaComponents(c.projectEnvironment.getJavaModuleResolver(), c.predefinedJavaComponents)
+        registerJavaComponents(
+            javaModuleResolver = c.projectEnvironment.getJavaModuleResolver(),
+            predefinedComponents = c.predefinedJavaComponents,
+            registerJvmDeserializationExtension = c.registerJvmDeserializationExtension,
+        )
     }
 
     // ==================================== Platform session ====================================
@@ -202,12 +206,15 @@ object FirJvmSessionFactory : FirAbstractSessionFactory<FirJvmSessionFactory.Con
     }
 
     override fun FirSession.registerSourceSessionComponents(c: Context) {
-        registerJavaComponents(c.projectEnvironment.getJavaModuleResolver(), c.predefinedJavaComponents)
+        registerLibrarySessionComponents(c)
         register(FirJvmTargetProvider::class, FirJvmTargetProvider(c.jvmTarget))
     }
 
     override val requiresSpecialSetupOfSourceProvidersInHmppCompilation: Boolean
         get() = true
+
+    override val isFactoryForMetadataCompilation: Boolean
+        get() = false
 
     // ==================================== Common parts ====================================
 
@@ -217,15 +224,18 @@ object FirJvmSessionFactory : FirAbstractSessionFactory<FirJvmSessionFactory.Con
         val jvmTarget: JvmTarget,
         val projectEnvironment: AbstractProjectEnvironment,
         val librariesScope: AbstractProjectFileSearchScope,
+        val registerJvmDeserializationExtension: Boolean
     ) {
         constructor(
             configuration: CompilerConfiguration,
             projectEnvironment: AbstractProjectEnvironment,
             librariesScope: AbstractProjectFileSearchScope,
+            registerJvmDeserializationExtension: Boolean = true,
         ) : this(
             jvmTarget = configuration.jvmTarget ?: JvmTarget.DEFAULT,
             projectEnvironment,
             librariesScope,
+            registerJvmDeserializationExtension = registerJvmDeserializationExtension,
         )
 
         val packagePartProviderForLibraries: PackagePartProvider = projectEnvironment.getPackagePartProvider(librariesScope)

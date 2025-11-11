@@ -58,7 +58,6 @@
 /compiler/fir/checkers/checkers.native/src/org/jetbrains/kotlin/fir/analysis/diagnostics/native/FirNativeErrorsDefaultMessages.kt alejandro.serrano.mena@jetbrains.com brian.norman@jetbrains.com ilya.chernikov@jetbrains.com kirill.rakhman@jetbrains.com
 /compiler/fir/checkers/checkers.wasm/src/org/jetbrains/kotlin/fir/analysis/diagnostics/wasm/FirWasmErrorsDefaultMessages.kt alejandro.serrano.mena@jetbrains.com brian.norman@jetbrains.com ilya.chernikov@jetbrains.com kirill.rakhman@jetbrains.com
 /compiler/fir/raw-fir/raw-fir.common/src/org/jetbrains/kotlin/fir/builder/FirSyntaxErrorsDefaultMessages.kt alejandro.serrano.mena@jetbrains.com brian.norman@jetbrains.com ilya.chernikov@jetbrains.com kirill.rakhman@jetbrains.com
-/compiler/fir/fir2ir/tests-gen/ @JetBrains/kotlin-compiler
 /compiler/frontend/ @JetBrains/kotlin-frontend
 /compiler/frontend.common/ @JetBrains/kotlin-frontend
 /compiler/frontend.common.jvm/ @JetBrains/kotlin-frontend
@@ -96,6 +95,7 @@
 /compiler/serialization/ @JetBrains/kotlin-frontend
 /compiler/test-infrastructure/ @JetBrains/kotlin-frontend
 /compiler/test-infrastructure-utils/ @JetBrains/kotlin-frontend
+/compiler/test-infrastructure-utils.common/ @JetBrains/kotlin-frontend
 
 /compiler/testData/asJava/findClasses/ @JetBrains/kotlin-frontend
 /compiler/testData/asJava/lightClasses/ @JetBrains/kotlin-analysis-api
@@ -360,7 +360,7 @@
 /libraries/pom.xml @JetBrains/kotlin-build-infrastructure
 /libraries/mvnw @JetBrains/kotlin-build-infrastructure
 /libraries/mvnw.cmd @JetBrains/kotlin-build-infrastructure
-/libraries/.mvn/wrapper/maven-wrapper.properties @JetBrains/kotlin-build-infrastructure
+/libraries/.mvn/ @JetBrains/kotlin-build-infrastructure
 /libraries/ReadMe.md vsevolod.tolstopyatov@jetbrains.com ilya.gorbunov@jetbrains.com filipp.zhinkin@jetbrains.com dmitry.nekrasov@jetbrains.com
 
 /license/ @JetBrains/kotlin-build-infrastructure

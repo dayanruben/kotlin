@@ -8,9 +8,11 @@ package kotlin.reflect.jvm.internal
 import kotlin.coroutines.Continuation
 import kotlin.jvm.internal.CallableReference
 import kotlin.reflect.KCallable
+import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
 import kotlin.reflect.KType
+import kotlin.reflect.full.valueParameters
 import kotlin.reflect.jvm.internal.calls.Caller
 import kotlin.reflect.jvm.javaType
 import kotlin.reflect.jvm.jvmErasure
@@ -59,6 +61,8 @@ internal interface ReflectKCallable<out R> : KCallable<R>, KTypeParameterOwnerIm
 
 internal interface ReflectKFunction : ReflectKCallable<Any?>, KFunction<Any?> {
     val signature: String
+
+    val overridden: Collection<ReflectKFunction>
 }
 
 internal val ReflectKCallable<*>.isBound: Boolean
@@ -67,8 +71,10 @@ internal val ReflectKCallable<*>.isBound: Boolean
 internal fun ReflectKCallable<*>.computeAbsentArguments(): Array<Any?> {
     val parameters = parameters
     val parameterSize = parameters.size + (if (isSuspend) 1 else 0)
-    val valueParameterCount = parameters.count { it.kind == KParameter.Kind.VALUE }
-    val maskSize = (valueParameterCount + Integer.SIZE - 1) / Integer.SIZE
+
+    @OptIn(ExperimentalContextParameters::class)
+    val parametersWithAllocatedBitInMask = parameters.count { it.kind == KParameter.Kind.VALUE || it.kind == KParameter.Kind.CONTEXT }
+    val maskSize = (parametersWithAllocatedBitInMask + Integer.SIZE - 1) / Integer.SIZE
 
     // Array containing the actual function arguments, masks, and +1 for DefaultConstructorMarker or MethodHandle.
     val arguments = arrayOfNulls<Any?>(parameterSize + maskSize + 1)
@@ -128,8 +134,8 @@ internal fun <R> ReflectKCallable<R>.callDefaultMethod(args: Map<KParameter, Any
                 throw IllegalArgumentException("No argument provided for a required parameter: $parameter")
             }
         }
-
-        if (parameter.kind == KParameter.Kind.VALUE) {
+        @OptIn(ExperimentalContextParameters::class)
+        if (parameter.kind == KParameter.Kind.VALUE || parameter.kind == KParameter.Kind.CONTEXT) {
             valueParameterIndex++
         }
     }
@@ -182,3 +188,39 @@ internal val ReflectKCallable<*>.isConstructor: Boolean
 
 internal val ReflectKCallable<*>.isAnnotationConstructor: Boolean
     get() = isConstructor && container.jClass.isAnnotation
+
+private const val DefaultConstructorMarkerDescriptor = "Lkotlin/jvm/internal/DefaultConstructorMarker;"
+
+class DescriptorPatchingResult(val newDescriptor: String, val boxedIndices: Set<Int>)
+
+// The compiler excessively boxes type of parameter, such that it has inline type and its underlying type is nullable
+// Fixing it would break binary backward compatibility, so we mimic compiler behavior here
+// See KT-57357
+internal fun patchJvmDescriptorByExtraBoxing(function: ReflectKFunction, jvmDescriptor: String): DescriptorPatchingResult {
+
+    val parsedDescriptor = parseJvmDescriptor(jvmDescriptor)
+    val hasDefaultMarker = parsedDescriptor.parameters.lastOrNull() == DefaultConstructorMarkerDescriptor
+    val valueParamCount = function.valueParameters.size + if (hasDefaultMarker) 1 else 0
+
+    val boxedIndices = mutableSetOf<Int>()
+    val newParameters = mutableListOf<String>()
+
+    newParameters.addAll(parsedDescriptor.parameters.take(parsedDescriptor.parameters.size - valueParamCount))
+    function.valueParameters.zip(parsedDescriptor.parameters.takeLast(valueParamCount))
+        .forEach { (param, paramJvmDescriptor) ->
+            if (param.isAlwaysBoxedByCompiler) {
+                boxedIndices.add(newParameters.size)
+                newParameters.add((param.type.classifier as KClass<*>).toJvmDescriptor())
+            } else {
+                newParameters.add(paramJvmDescriptor)
+            }
+        }
+
+    if (hasDefaultMarker) {
+        newParameters.add(DefaultConstructorMarkerDescriptor)
+    }
+
+    if (boxedIndices.isEmpty()) return DescriptorPatchingResult(jvmDescriptor, emptySet())
+    val patchedDescriptor = newParameters.joinToString("", "(", ")") + parsedDescriptor.returnType
+    return DescriptorPatchingResult(patchedDescriptor, boxedIndices)
+}

@@ -89,7 +89,6 @@
 /compiler/fir/checkers/checkers.native/src/org/jetbrains/kotlin/fir/analysis/diagnostics/native/FirNativeErrorsDefaultMessages.kt alejandro.serrano.mena@jetbrains.com brian.norman@jetbrains.com ilya.chernikov@jetbrains.com kirill.rakhman@jetbrains.com
 /compiler/fir/checkers/checkers.wasm/src/org/jetbrains/kotlin/fir/analysis/diagnostics/wasm/FirWasmErrorsDefaultMessages.kt alejandro.serrano.mena@jetbrains.com brian.norman@jetbrains.com ilya.chernikov@jetbrains.com kirill.rakhman@jetbrains.com
 /compiler/fir/raw-fir/raw-fir.common/src/org/jetbrains/kotlin/fir/builder/FirSyntaxErrorsDefaultMessages.kt alejandro.serrano.mena@jetbrains.com brian.norman@jetbrains.com ilya.chernikov@jetbrains.com kirill.rakhman@jetbrains.com
-/compiler/fir/fir2ir/tests-gen/ "Kotlin Compiler"
 /compiler/frontend/ "Kotlin Frontend"
 /compiler/frontend.common/ "Kotlin Frontend"
 /compiler/frontend.common.jvm/ "Kotlin Frontend"
@@ -127,6 +126,7 @@
 /compiler/serialization/ "Kotlin Frontend"
 /compiler/test-infrastructure/ "Kotlin Frontend"
 /compiler/test-infrastructure-utils/ "Kotlin Frontend"
+/compiler/test-infrastructure-utils.common/ "Kotlin Frontend"
 
 /compiler/testData/asJava/findClasses/ "Kotlin Frontend"
 /compiler/testData/asJava/lightClasses/ "Kotlin Analysis API"
@@ -398,7 +398,7 @@
 /libraries/pom.xml "Kotlin Build Infrastructure"
 /libraries/mvnw "Kotlin Build Infrastructure"
 /libraries/mvnw.cmd "Kotlin Build Infrastructure"
-/libraries/.mvn/wrapper/maven-wrapper.properties "Kotlin Build Infrastructure"
+/libraries/.mvn/ "Kotlin Build Infrastructure"
 /libraries/ReadMe.md vsevolod.tolstopyatov@jetbrains.com ilya.gorbunov@jetbrains.com filipp.zhinkin@jetbrains.com dmitry.nekrasov@jetbrains.com
 
 /license/ "Kotlin Build Infrastructure"

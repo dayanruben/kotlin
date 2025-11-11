@@ -56861,6 +56861,18 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
         }
 
         @Test
+        @TestMetadata("inlineClassInterfaceJvmDefaultOverReferenceType.kt")
+        public void testInlineClassInterfaceJvmDefaultOverReferenceType() {
+          runTest("compiler/testData/codegen/box/reflection/callBy/inlineClassInterfaceJvmDefaultOverReferenceType.kt");
+        }
+
+        @Test
+        @TestMetadata("inlineClassInterfaceOverReferenceType.kt")
+        public void testInlineClassInterfaceOverReferenceType() {
+          runTest("compiler/testData/codegen/box/reflection/callBy/inlineClassInterfaceOverReferenceType.kt");
+        }
+
+        @Test
         @TestMetadata("inlineClassMembers.kt")
         public void testInlineClassMembers() {
           runTest("compiler/testData/codegen/box/reflection/callBy/inlineClassMembers.kt");
@@ -56915,6 +56927,24 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
         }
 
         @Test
+        @TestMetadata("memberExtensionFunWithDefaultAndContextParams.kt")
+        public void testMemberExtensionFunWithDefaultAndContextParams() {
+          runTest("compiler/testData/codegen/box/reflection/callBy/memberExtensionFunWithDefaultAndContextParams.kt");
+        }
+
+        @Test
+        @TestMetadata("memberExtensionFunWithDefaultParams.kt")
+        public void testMemberExtensionFunWithDefaultParams() {
+          runTest("compiler/testData/codegen/box/reflection/callBy/memberExtensionFunWithDefaultParams.kt");
+        }
+
+        @Test
+        @TestMetadata("membersWithDefaultValuesAndContextParams.kt")
+        public void testMembersWithDefaultValuesAndContextParams() {
+          runTest("compiler/testData/codegen/box/reflection/callBy/membersWithDefaultValuesAndContextParams.kt");
+        }
+
+        @Test
         @TestMetadata("nonDefaultParameterOmitted.kt")
         public void testNonDefaultParameterOmitted() {
           runTest("compiler/testData/codegen/box/reflection/callBy/nonDefaultParameterOmitted.kt");
@@ -56962,6 +56992,24 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
           runTest("compiler/testData/codegen/box/reflection/callBy/simpleTopLevelFunction.kt");
         }
 
+        @Test
+        @TestMetadata("topLevelExtensionFunWithDefaultAndContextParams.kt")
+        public void testTopLevelExtensionFunWithDefaultAndContextParams() {
+          runTest("compiler/testData/codegen/box/reflection/callBy/topLevelExtensionFunWithDefaultAndContextParams.kt");
+        }
+
+        @Test
+        @TestMetadata("topLevelExtensionFunWithDefaultParams.kt")
+        public void testTopLevelExtensionFunWithDefaultParams() {
+          runTest("compiler/testData/codegen/box/reflection/callBy/topLevelExtensionFunWithDefaultParams.kt");
+        }
+
+        @Test
+        @TestMetadata("topLevelsWithDefaultValuesAndContextParams.kt")
+        public void testTopLevelsWithDefaultValuesAndContextParams() {
+          runTest("compiler/testData/codegen/box/reflection/callBy/topLevelsWithDefaultValuesAndContextParams.kt");
+        }
+
         @Nested
         @TestMetadata("compiler/testData/codegen/box/reflection/callBy/inlineClasses")
         @TestDataPath("$PROJECT_ROOT")
@@ -57002,6 +57050,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
               }
 
               @Test
+              @TestMetadata("constructorManyDefaultParameters.kt")
+              public void testConstructorManyDefaultParameters() {
+                runTest("compiler/testData/codegen/box/reflection/callBy/inlineClasses/nonNullObject/defaultArguments/constructorManyDefaultParameters.kt");
+              }
+
+              @Test
               @TestMetadata("constructorWithInlineClassParameters.kt")
               public void testConstructorWithInlineClassParameters() {
                 runTest("compiler/testData/codegen/box/reflection/callBy/inlineClasses/nonNullObject/defaultArguments/constructorWithInlineClassParameters.kt");
@@ -57011,6 +57065,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
               @TestMetadata("extensionFunctionsWithInlineClassParameters.kt")
               public void testExtensionFunctionsWithInlineClassParameters() {
                 runTest("compiler/testData/codegen/box/reflection/callBy/inlineClasses/nonNullObject/defaultArguments/extensionFunctionsWithInlineClassParameters.kt");
+              }
+
+              @Test
+              @TestMetadata("extensionFunctionsWithManyDefaultParameters.kt")
+              public void testExtensionFunctionsWithManyDefaultParameters() {
+                runTest("compiler/testData/codegen/box/reflection/callBy/inlineClasses/nonNullObject/defaultArguments/extensionFunctionsWithManyDefaultParameters.kt");
               }
 
               @Test
@@ -57078,6 +57138,18 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
               }
 
               @Test
+              @TestMetadata("classNameMapping.kt")
+              public void testClassNameMapping() {
+                runTest("compiler/testData/codegen/box/reflection/callBy/inlineClasses/nullableObject/defaultArguments/classNameMapping.kt");
+              }
+
+              @Test
+              @TestMetadata("constructorManyDefaultParameters.kt")
+              public void testConstructorManyDefaultParameters() {
+                runTest("compiler/testData/codegen/box/reflection/callBy/inlineClasses/nullableObject/defaultArguments/constructorManyDefaultParameters.kt");
+              }
+
+              @Test
               @TestMetadata("constructorWithInlineClassParameters.kt")
               public void testConstructorWithInlineClassParameters() {
                 runTest("compiler/testData/codegen/box/reflection/callBy/inlineClasses/nullableObject/defaultArguments/constructorWithInlineClassParameters.kt");
@@ -57087,6 +57159,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
               @TestMetadata("extensionFunctionsWithInlineClassParameters.kt")
               public void testExtensionFunctionsWithInlineClassParameters() {
                 runTest("compiler/testData/codegen/box/reflection/callBy/inlineClasses/nullableObject/defaultArguments/extensionFunctionsWithInlineClassParameters.kt");
+              }
+
+              @Test
+              @TestMetadata("extensionFunctionsWithManyDefaultParameters.kt")
+              public void testExtensionFunctionsWithManyDefaultParameters() {
+                runTest("compiler/testData/codegen/box/reflection/callBy/inlineClasses/nullableObject/defaultArguments/extensionFunctionsWithManyDefaultParameters.kt");
               }
 
               @Test
@@ -57154,6 +57232,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
               }
 
               @Test
+              @TestMetadata("constructorManyDefaultParameters.kt")
+              public void testConstructorManyDefaultParameters() {
+                runTest("compiler/testData/codegen/box/reflection/callBy/inlineClasses/primitive/defaultArguments/constructorManyDefaultParameters.kt");
+              }
+
+              @Test
               @TestMetadata("constructorWithInlineClassParameters.kt")
               public void testConstructorWithInlineClassParameters() {
                 runTest("compiler/testData/codegen/box/reflection/callBy/inlineClasses/primitive/defaultArguments/constructorWithInlineClassParameters.kt");
@@ -57163,6 +57247,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
               @TestMetadata("extensionFunctionsWithInlineClassParameters.kt")
               public void testExtensionFunctionsWithInlineClassParameters() {
                 runTest("compiler/testData/codegen/box/reflection/callBy/inlineClasses/primitive/defaultArguments/extensionFunctionsWithInlineClassParameters.kt");
+              }
+
+              @Test
+              @TestMetadata("extensionFunctionsWithManyDefaultParameters.kt")
+              public void testExtensionFunctionsWithManyDefaultParameters() {
+                runTest("compiler/testData/codegen/box/reflection/callBy/inlineClasses/primitive/defaultArguments/extensionFunctionsWithManyDefaultParameters.kt");
               }
 
               @Test
