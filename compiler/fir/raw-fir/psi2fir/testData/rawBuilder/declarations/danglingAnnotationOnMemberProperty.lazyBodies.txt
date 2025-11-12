@@ -10,5 +10,6 @@ FILE: danglingAnnotationOnMemberProperty.kt
             LAZY_super<R|kotlin/Any|>
         }
 
-        @Ann(LAZY_EXPRESSION) <DANGLING MODIFIER: Top level declaration expected>
+        public final val <error property>: <ERROR TYPE REF: Destructuring declarations are only allowed for local variables/values> = ERROR_EXPR(Initializer required for destructuring declaration)
+
     }

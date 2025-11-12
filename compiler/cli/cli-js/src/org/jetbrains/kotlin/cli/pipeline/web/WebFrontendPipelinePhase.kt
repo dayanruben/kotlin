@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -16,19 +16,12 @@ import org.jetbrains.kotlin.cli.pipeline.CheckCompilationErrors
 import org.jetbrains.kotlin.cli.pipeline.ConfigurationPipelineArtifact
 import org.jetbrains.kotlin.cli.pipeline.PerformanceNotifications
 import org.jetbrains.kotlin.cli.pipeline.PipelinePhase
-import org.jetbrains.kotlin.config.CommonConfigurationKeys
-import org.jetbrains.kotlin.config.lookupTracker
-import org.jetbrains.kotlin.config.messageCollector
-import org.jetbrains.kotlin.config.perfManager
-import org.jetbrains.kotlin.config.useLightTree
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
 import org.jetbrains.kotlin.fir.DependencyListForCliModule
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
-import org.jetbrains.kotlin.fir.pipeline.ModuleCompilerAnalyzedOutput
-import org.jetbrains.kotlin.fir.pipeline.buildResolveAndCheckFirFromKtFiles
-import org.jetbrains.kotlin.fir.pipeline.buildResolveAndCheckFirViaLightTree
-import org.jetbrains.kotlin.fir.pipeline.runPlatformCheckers
+import org.jetbrains.kotlin.fir.pipeline.*
 import org.jetbrains.kotlin.fir.session.KlibIcData
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.incremental.js.IncrementalDataProvider
@@ -102,7 +95,7 @@ object WebFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, W
                 lookupTracker = lookupTracker,
                 useWasmPlatform = isWasm,
             ).also {
-                kotlinPackageUsageIsFine = it.output.all { checkKotlinPackageUsageForLightTree(configuration, it.fir) }
+                kotlinPackageUsageIsFine = it.outputs.all { checkKotlinPackageUsageForLightTree(configuration, it.fir) }
             }
         } else {
             val sourceFiles = environmentForJS.getSourceFiles()
@@ -141,7 +134,7 @@ object WebFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, W
         )
     }
 
-    fun compileModuleToAnalyzedFirWithPsi(
+    private fun compileModuleToAnalyzedFirWithPsi(
         moduleStructure: ModulesStructure,
         ktFiles: List<KtFile>,
         libraries: List<String>,
@@ -150,7 +143,7 @@ object WebFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, W
         incrementalDataProvider: IncrementalDataProvider?,
         lookupTracker: LookupTracker?,
         useWasmPlatform: Boolean,
-    ): AnalyzedFirWithPsiOutput {
+    ): FirResult {
         for (ktFile in ktFiles) {
             AnalyzerWithCompilerReport.reportSyntaxErrors(ktFile, diagnosticsReporter)
         }
@@ -169,10 +162,10 @@ object WebFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, W
             useWasmPlatform = useWasmPlatform,
         )
         output.runPlatformCheckers(diagnosticsReporter)
-        return AnalyzedFirWithPsiOutput(output, ktFiles)
+        return FirResult(output)
     }
 
-    fun compileModulesToAnalyzedFirWithLightTree(
+    private fun compileModulesToAnalyzedFirWithLightTree(
         moduleStructure: ModulesStructure,
         groupedSources: GroupedKtSources,
         ktSourceFiles: List<KtSourceFile>,
@@ -183,7 +176,7 @@ object WebFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, W
         incrementalDataProvider: IncrementalDataProvider?,
         lookupTracker: LookupTracker?,
         useWasmPlatform: Boolean,
-    ): AnalyzedFirOutput {
+    ): FirResult {
         val output = compileModuleToAnalyzedFir(
             moduleStructure,
             ktSourceFiles,
@@ -199,7 +192,7 @@ object WebFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, W
             useWasmPlatform = useWasmPlatform,
         )
         output.runPlatformCheckers(diagnosticsReporter)
-        return AnalyzedFirOutput(output)
+        return FirResult(output)
     }
 
     private inline fun <F> compileModuleToAnalyzedFir(

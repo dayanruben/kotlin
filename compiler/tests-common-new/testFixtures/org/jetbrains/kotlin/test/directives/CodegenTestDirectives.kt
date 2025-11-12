@@ -47,14 +47,6 @@ object CodegenTestDirectives : SimpleDirectivesContainer() {
 
     val IGNORE_ANALYSIS_API_BASED_TYPESCRIPT_EXPORT by enumDirective<TargetBackend>("Ignore failures of the new AA-based TypeScript Export")
 
-    val USE_JAVAC_BASED_ON_JVM_TARGET by directive(
-        description = """
-            Determine version of javac for compilation of java files based
-              on JvmTarget of module. If not enabled then javac from
-              current runtime will be used
-        """.trimIndent()
-    )
-
     val JAVAC_OPTIONS by stringDirective(
         description = "Specify javac options to compile java files"
     )
@@ -235,16 +227,6 @@ object CodegenTestDirectives : SimpleDirectivesContainer() {
         description = """
             Ignore exceptions in AbstractFirLoadK2CompiledKotlin tests
         """.trimIndent()
-    )
-
-    val JVM_ABI_K1_K2_DIFF by stringDirective(
-        description = "Expect difference in JVM ABI between K1 and K2",
-        applicability = Global
-    )
-
-    val IGNORE_JVM_ABI_K1_K2 by stringDirective(
-        description = "Ignore failures when running pipelines when computing difference in JVM ABI between K1 and K2",
-        applicability = Global
     )
 
     // TODO: Drop this directive and make the offset validation enabled by default when KT-81475 is fixed.

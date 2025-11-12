@@ -1408,6 +1408,12 @@ public class SourceStubsTestGenerated extends AbstractSourceStubsTest {
     }
 
     @Test
+    @TestMetadata("annotatedWhenExpression.kt")
+    public void testAnnotatedWhenExpression() {
+      runTest("compiler/testData/psi/annotation/annotatedWhenExpression.kt");
+    }
+
+    @Test
     @TestMetadata("Annotations.kt")
     public void testAnnotations() {
       runTest("compiler/testData/psi/annotation/Annotations.kt");
@@ -2565,6 +2571,24 @@ public class SourceStubsTestGenerated extends AbstractSourceStubsTest {
     @Test
     public void testAllFilesPresentInDestructuring() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/psi/destructuring"), Pattern.compile("^([^.]+)\\.(kt|kts)$"), null, true);
+    }
+
+    @Test
+    @TestMetadata("annotationOnFullNameBasedDestructuring.kt")
+    public void testAnnotationOnFullNameBasedDestructuring() {
+      runTest("compiler/testData/psi/destructuring/annotationOnFullNameBasedDestructuring.kt");
+    }
+
+    @Test
+    @TestMetadata("annotationOnFullNameBasedDestructuringScript.kts")
+    public void testAnnotationOnFullNameBasedDestructuringScript() {
+      runTest("compiler/testData/psi/destructuring/annotationOnFullNameBasedDestructuringScript.kts");
+    }
+
+    @Test
+    @TestMetadata("danglingAnnotation.kt")
+    public void testDanglingAnnotation() {
+      runTest("compiler/testData/psi/destructuring/danglingAnnotation.kt");
     }
 
     @Test

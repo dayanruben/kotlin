@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.phaseConfig
 import org.jetbrains.kotlin.config.phaser.PhaseConfig
 import org.jetbrains.kotlin.config.phaser.PhaseSet
+import org.jetbrains.kotlin.config.targetPlatform
 import org.jetbrains.kotlin.ir.backend.js.JsICContext
 import org.jetbrains.kotlin.ir.backend.js.SourceMapsInfo
 import org.jetbrains.kotlin.ir.backend.js.ic.CacheUpdater
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.js.test.ir.JsCompilerInvocationTestConfiguration
 import org.jetbrains.kotlin.js.testOld.V8JsTestChecker
 import org.jetbrains.kotlin.klib.KlibCompilerInvocationTestUtils
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.test.DebugMode
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.util.JUnit4Assertions
@@ -86,6 +88,7 @@ abstract class JsAbstractInvalidationTest(
         )
         copy.put(JSConfigurationKeys.USE_ES6_CLASSES, targetBackend == TargetBackend.JS_IR_ES6)
         copy.put(JSConfigurationKeys.COMPILE_SUSPEND_AS_JS_GENERATOR, targetBackend == TargetBackend.JS_IR_ES6)
+        copy.targetPlatform = JsPlatforms.defaultJsPlatform
         return copy
     }
 
@@ -139,7 +142,7 @@ abstract class JsAbstractInvalidationTest(
                     else -> projStep.dirtyJsModules
                 }
 
-                configuration.phaseConfig = getPhaseConfig(projStep.id)
+                configuration.phaseConfig = createPhaseConfig(projStep.id, buildDir)
                 val icContext = JsICContext(
                     mainArguments,
                     granularity,
@@ -230,17 +233,6 @@ abstract class JsAbstractInvalidationTest(
             }
         }
 
-        private fun getPhaseConfig(stepId: Int): PhaseConfig {
-            if (DebugMode.fromSystemProperty("kotlin.js.debugMode") < DebugMode.SUPER_DEBUG) {
-                return PhaseConfig()
-            }
-
-            return PhaseConfig(
-                toDumpStateAfter = PhaseSet.All,
-                dumpToDirectory = buildDir.resolve("irdump").resolve("step-$stepId").path
-            )
-        }
-
         private fun writeJsCode(
             stepId: Int,
             mainModuleName: String,
@@ -273,5 +265,16 @@ abstract class JsAbstractInvalidationTest(
 
             return compiledJsFiles.mapTo(prepareExternalJsFiles()) { it.absolutePath }
         }
+    }
+
+    override fun createPhaseConfig(stepId: Int, buildDir: File): PhaseConfig {
+        if (DebugMode.fromSystemProperty("kotlin.js.debugMode") < DebugMode.SUPER_DEBUG) {
+            return PhaseConfig()
+        }
+
+        return PhaseConfig(
+            toDumpStateAfter = PhaseSet.All,
+            dumpToDirectory = buildDir.resolve("irdump").resolve("step-$stepId").path
+        )
     }
 }

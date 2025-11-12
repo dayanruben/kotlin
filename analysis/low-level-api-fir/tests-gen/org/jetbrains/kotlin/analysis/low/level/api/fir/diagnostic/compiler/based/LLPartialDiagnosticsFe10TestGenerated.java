@@ -1899,6 +1899,12 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
     }
 
     @Test
+    @TestMetadata("RedundantInterpolationPrefixCornerCases.kt")
+    public void testRedundantInterpolationPrefixCornerCases() {
+      runTest("compiler/testData/diagnostics/tests/RedundantInterpolationPrefixCornerCases.kt");
+    }
+
+    @Test
     @TestMetadata("referenceToParameterizedFun.kt")
     public void testReferenceToParameterizedFun() {
       runTest("compiler/testData/diagnostics/tests/referenceToParameterizedFun.kt");
@@ -2577,6 +2583,12 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
       @TestMetadata("AnnotatedTryCatch.kt")
       public void testAnnotatedTryCatch() {
         runTest("compiler/testData/diagnostics/tests/annotations/AnnotatedTryCatch.kt");
+      }
+
+      @Test
+      @TestMetadata("annotatedWhenExpression.kt")
+      public void testAnnotatedWhenExpression() {
+        runTest("compiler/testData/diagnostics/tests/annotations/annotatedWhenExpression.kt");
       }
 
       @Test
