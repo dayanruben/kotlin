@@ -60,7 +60,7 @@ object WebFir2IrPipelinePhase : PipelinePhase<WebFrontendPipelineArtifact, JsFir
 
     private fun transformFirToIr(
         moduleStructure: ModulesStructure,
-        firOutputs: List<ModuleCompilerAnalyzedOutput>,
+        firOutputs: List<SingleModuleFrontendOutput>,
         diagnosticsReporter: BaseDiagnosticsCollector,
     ): Fir2IrActualizedResult {
         val fir2IrExtensions = Fir2IrExtensions.Default
@@ -88,7 +88,7 @@ object WebFir2IrPipelinePhase : PipelinePhase<WebFrontendPipelineArtifact, JsFir
             moduleDescriptor
         }
 
-        val firResult = FirResult(firOutputs)
+        val firResult = AllModulesFrontendOutput(firOutputs)
         return firResult.convertToIrAndActualize(
             fir2IrExtensions,
             Fir2IrConfiguration.forKlibCompilation(moduleStructure.compilerConfiguration, diagnosticsReporter),
@@ -109,7 +109,7 @@ object WebFir2IrPipelinePhase : PipelinePhase<WebFrontendPipelineArtifact, JsFir
 private fun runJsKlibCallCheckers(
     diagnosticReporter: BaseDiagnosticsCollector,
     configuration: CompilerConfiguration,
-    firOutputs: List<ModuleCompilerAnalyzedOutput>,
+    firOutputs: List<SingleModuleFrontendOutput>,
     fir2IrActualizedResult: Fir2IrActualizedResult,
 ) {
     val irDiagnosticReporter =

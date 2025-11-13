@@ -729,6 +729,18 @@ public class LLDiagnosticsFe10TestGenerated extends AbstractLLDiagnosticsTest {
     }
 
     @Test
+    @TestMetadata("falseNegativeUpperBoundViolated.kt")
+    public void testFalseNegativeUpperBoundViolated() {
+      runTest("compiler/testData/diagnostics/tests/falseNegativeUpperBoundViolated.kt");
+    }
+
+    @Test
+    @TestMetadata("falseNegativeUpperBoundViolated_WithPlaceholderAndOuterFunction.kt")
+    public void testFalseNegativeUpperBoundViolated_WithPlaceholderAndOuterFunction() {
+      runTest("compiler/testData/diagnostics/tests/falseNegativeUpperBoundViolated_WithPlaceholderAndOuterFunction.kt");
+    }
+
+    @Test
     @TestMetadata("falsePositiveRedundantVisibility.kt")
     public void testFalsePositiveRedundantVisibility() {
       runTest("compiler/testData/diagnostics/tests/falsePositiveRedundantVisibility.kt");
@@ -1875,6 +1887,12 @@ public class LLDiagnosticsFe10TestGenerated extends AbstractLLDiagnosticsTest {
     }
 
     @Test
+    @TestMetadata("receiverResolutionInDelegatedConstructorAfter.kt")
+    public void testReceiverResolutionInDelegatedConstructorAfter() {
+      runTest("compiler/testData/diagnostics/tests/receiverResolutionInDelegatedConstructorAfter.kt");
+    }
+
+    @Test
     @TestMetadata("RecursiveResolve.kt")
     public void testRecursiveResolve() {
       runTest("compiler/testData/diagnostics/tests/RecursiveResolve.kt");
@@ -2607,6 +2625,12 @@ public class LLDiagnosticsFe10TestGenerated extends AbstractLLDiagnosticsTest {
       @TestMetadata("annotationArgumentScopeForConstructorHeader.kt")
       public void testAnnotationArgumentScopeForConstructorHeader() {
         runTest("compiler/testData/diagnostics/tests/annotations/annotationArgumentScopeForConstructorHeader.kt");
+      }
+
+      @Test
+      @TestMetadata("annotationArgumentScopeForConstructorHeaderAfter.kt")
+      public void testAnnotationArgumentScopeForConstructorHeaderAfter() {
+        runTest("compiler/testData/diagnostics/tests/annotations/annotationArgumentScopeForConstructorHeaderAfter.kt");
       }
 
       @Test
@@ -38082,15 +38106,15 @@ public class LLDiagnosticsFe10TestGenerated extends AbstractLLDiagnosticsTest {
       }
 
       @Test
-      @TestMetadata("implicitPropertyTypeThatMakesBehaviorOrderDependantAAResolve.kt")
-      public void testImplicitPropertyTypeThatMakesBehaviorOrderDependantAAResolve() {
-        runTest("compiler/testData/diagnostics/tests/resolve/implicitPropertyTypeThatMakesBehaviorOrderDependantAAResolve.kt");
-      }
-
-      @Test
       @TestMetadata("implicitPropertyTypeThatMakesBehaviorOrderDependantComplexLoops.kt")
       public void testImplicitPropertyTypeThatMakesBehaviorOrderDependantComplexLoops() {
         runTest("compiler/testData/diagnostics/tests/resolve/implicitPropertyTypeThatMakesBehaviorOrderDependantComplexLoops.kt");
+      }
+
+      @Test
+      @TestMetadata("implicitPropertyTypeThatMakesBehaviorOrderDependantIdeMode.kt")
+      public void testImplicitPropertyTypeThatMakesBehaviorOrderDependantIdeMode() {
+        runTest("compiler/testData/diagnostics/tests/resolve/implicitPropertyTypeThatMakesBehaviorOrderDependantIdeMode.kt");
       }
 
       @Test
@@ -38271,6 +38295,12 @@ public class LLDiagnosticsFe10TestGenerated extends AbstractLLDiagnosticsTest {
       @TestMetadata("resolveWithoutGenerics.kt")
       public void testResolveWithoutGenerics() {
         runTest("compiler/testData/diagnostics/tests/resolve/resolveWithoutGenerics.kt");
+      }
+
+      @Test
+      @TestMetadata("resolvingToClassMembersInHeader.kt")
+      public void testResolvingToClassMembersInHeader() {
+        runTest("compiler/testData/diagnostics/tests/resolve/resolvingToClassMembersInHeader.kt");
       }
 
       @Test
@@ -41074,9 +41104,21 @@ public class LLDiagnosticsFe10TestGenerated extends AbstractLLDiagnosticsTest {
         }
 
         @Test
+        @TestMetadata("accessBaseGenericFromInnerExtendingSameBase2After.kt")
+        public void testAccessBaseGenericFromInnerExtendingSameBase2After() {
+          runTest("compiler/testData/diagnostics/tests/secondaryConstructors/headerCallChecker/accessBaseGenericFromInnerExtendingSameBase2After.kt");
+        }
+
+        @Test
         @TestMetadata("accessBaseWithSameExtension.kt")
         public void testAccessBaseWithSameExtension() {
           runTest("compiler/testData/diagnostics/tests/secondaryConstructors/headerCallChecker/accessBaseWithSameExtension.kt");
+        }
+
+        @Test
+        @TestMetadata("accessBaseWithSameExtensionAfter.kt")
+        public void testAccessBaseWithSameExtensionAfter() {
+          runTest("compiler/testData/diagnostics/tests/secondaryConstructors/headerCallChecker/accessBaseWithSameExtensionAfter.kt");
         }
 
         @Test
@@ -41130,6 +41172,12 @@ public class LLDiagnosticsFe10TestGenerated extends AbstractLLDiagnosticsTest {
         @TestMetadata("passingInstance.kt")
         public void testPassingInstance() {
           runTest("compiler/testData/diagnostics/tests/secondaryConstructors/headerCallChecker/passingInstance.kt");
+        }
+
+        @Test
+        @TestMetadata("primaryVsSecondaryConstructor.kt")
+        public void testPrimaryVsSecondaryConstructor() {
+          runTest("compiler/testData/diagnostics/tests/secondaryConstructors/headerCallChecker/primaryVsSecondaryConstructor.kt");
         }
 
         @Test
@@ -54723,6 +54771,12 @@ public class LLDiagnosticsFe10TestGenerated extends AbstractLLDiagnosticsTest {
       @TestMetadata("upperBoundViolated2.kt")
       public void testUpperBoundViolated2() {
         runTest("compiler/testData/diagnostics/testsWithStdLib/typealias/upperBoundViolated2.kt");
+      }
+
+      @Test
+      @TestMetadata("upperBoundViolated3.kt")
+      public void testUpperBoundViolated3() {
+        runTest("compiler/testData/diagnostics/testsWithStdLib/typealias/upperBoundViolated3.kt");
       }
     }
 

@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.cli.pipeline.PipelinePhase
 import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporterFactory
 import org.jetbrains.kotlin.fir.moduleData
-import org.jetbrains.kotlin.fir.pipeline.ModuleCompilerAnalyzedOutput
+import org.jetbrains.kotlin.fir.pipeline.SingleModuleFrontendOutput
 import org.jetbrains.kotlin.test.cli.CliDirectives.CHECK_COMPILER_OUTPUT
 import org.jetbrains.kotlin.test.frontend.fir.FirFrontendFacade.Companion.shouldRunFirFrontendFacade
 import org.jetbrains.kotlin.test.model.FrontendFacade
@@ -46,14 +46,14 @@ abstract class FirCliFacade<Phase, OutputPipelineArtifact>(
         val output = phase.executePhase(input)
             ?: return processErrorFromCliPhase(configuration.messageCollector, testServices)
 
-        val firOutputs = output.result.outputs
+        val firOutputs = output.frontendOutput.outputs
         val testFirOutputs = getPartsForDependsOnModules(module, firOutputs)
         return FirCliBasedOutputArtifact(output, testFirOutputs)
     }
 
     open fun getPartsForDependsOnModules(
         module: TestModule,
-        firOutputs: List<ModuleCompilerAnalyzedOutput>,
+        firOutputs: List<SingleModuleFrontendOutput>,
     ): List<FirOutputPartForDependsOnModule> {
         val modulesFromTheSameStructure = module.transitiveDependsOnDependencies(includeSelf = true, reverseOrder = true)
             .associateBy { "<${it.name}>"}
@@ -69,7 +69,7 @@ class FirCliBasedOutputArtifact<A : FrontendPipelineArtifact>(
     partsForDependsOnModules: List<FirOutputPartForDependsOnModule>,
 ) : FirOutputArtifact(partsForDependsOnModules)
 
-fun ModuleCompilerAnalyzedOutput.toTestOutputPart(
+fun SingleModuleFrontendOutput.toTestOutputPart(
     correspondingModule: TestModule,
     testServices: TestServices,
 ): FirOutputPartForDependsOnModule {
@@ -86,7 +86,7 @@ fun ModuleCompilerAnalyzedOutput.toTestOutputPart(
         session = session,
         scopeSession = scopeSession,
         firAnalyzerFacade = null,
-        firFiles = testFilePerFirFile.toMap()
+        firFilesByTestFile = testFilePerFirFile.toMap()
     )
 }
 

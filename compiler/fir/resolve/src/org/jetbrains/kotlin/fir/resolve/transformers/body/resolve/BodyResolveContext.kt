@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.resolve.transformers.body.resolve
 
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
@@ -337,12 +338,14 @@ class BodyResolveContext(
     fun buildConstructorParametersScope(constructor: FirConstructor, session: FirSession): FirLocalScope =
         constructor.valueParameters.fold(FirLocalScope(session)) { acc, param -> acc.storeVariable(param, session) }
 
+    @OptIn(OnlyForDefaultLanguageFeatureDisabled::class)
     @PrivateForInline
     fun addInaccessibleImplicitReceiverValue(
         owningClass: FirRegularClass?,
         holder: SessionAndScopeSessionHolder,
     ) {
         if (owningClass == null) return
+        if (with(holder) { LanguageFeature.ImprovedResolutionInSecondaryConstructors.isEnabled() }) return
         addReceiver(
             name = owningClass.name,
             implicitReceiverValue = InaccessibleImplicitReceiverValue(
@@ -583,10 +586,10 @@ class BodyResolveContext(
         // Type parameters must be inserted before all of staticsAndCompanion.
         // Optimization: Only rebuild all of staticsAndCompanion that's below type parameters if there are any type parameters.
         // Otherwise, reuse staticsAndCompanion.
-        val forConstructorHeader = if (typeParameterScope != null) {
+        val withTypeParameters = if (typeParameterScope != null) {
             towerDataContext
                 .addNonLocalTowerDataElements(towerElementsForClass.superClassesStaticsAndCompanionReceivers)
-                .run { towerElementsForClass.companionReceiver?.let { addReceiver(null, it) } ?: this }
+                .addReceiverIfNotNull(null, towerElementsForClass.companionReceiver)
                 .addNonLocalScopesIfNotNull(towerElementsForClass.companionStaticScope, towerElementsForClass.staticScope)
                 // Note: scopes here are in reverse order, so type parameter scope is the most prioritized
                 .addNonLocalScope(typeParameterScope)
@@ -594,7 +597,7 @@ class BodyResolveContext(
             staticsAndCompanion
         }
 
-        val forMembersResolution = forConstructorHeader
+        val forMembersResolution = withTypeParameters
             .addReceiver(labelName, towerElementsForClass.thisReceiver)
 
         /*
@@ -605,7 +608,7 @@ class BodyResolveContext(
          */
 
         @Suppress("UnnecessaryVariable")
-        val scopeForEnumEntries = forConstructorHeader
+        val scopeForEnumEntries = withTypeParameters
 
         val newTowerDataContextForStaticNestedClasses =
             if ((owner as? FirRegularClass)?.classKind?.isSingleton == true) {
@@ -634,6 +637,28 @@ class BodyResolveContext(
             } else {
                 null to null
             }
+
+        val forConstructorHeader = if (!isContextCollectorMode) {
+            // Same as withTypeParameters, but with the InaccessibleImplicitReceiverValue at the top (i.e., furthest away)
+            // For performance reasons, we want to query the "real" elements first before falling back to the
+            // InaccessibleImplicitReceiverValue.
+            val inaccessibleThisInHeader = InaccessibleImplicitReceiverValue(
+                owner.symbol,
+                type,
+                InaccessibleReceiverKind.ClassHeader,
+                holder.session,
+                holder.scopeSession,
+            )
+
+            towerDataContext
+                .addReceiver(labelName, inaccessibleThisInHeader)
+                .addNonLocalTowerDataElements(towerElementsForClass.superClassesStaticsAndCompanionReceivers)
+                .addReceiverIfNotNull(null, towerElementsForClass.companionReceiver)
+                .addNonLocalScopesIfNotNull(towerElementsForClass.companionStaticScope, towerElementsForClass.staticScope)
+                .addNonLocalScopeIfNotNull(typeParameterScope)
+        } else {
+            withTypeParameters
+        }
 
         val newContexts = FirRegularTowerDataContexts(
             regular = forMembersResolution,

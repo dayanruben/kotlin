@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.compilerRunner.isKonanIncrementalCompilationEnabled
 import org.jetbrains.kotlin.config.JvmDefaultMode
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinNativeCompilerOptions
+import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinPluginLifecycle
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
@@ -387,6 +388,80 @@ internal object KotlinCrossCompilationMetrics : FusMetrics {
                 project.addConfigurationMetrics {
                     it.put(BooleanMetrics.KOTLIN_CROSS_COMPILATION_NOT_SUPPORTED, true)
                 }
+            }
+        }
+    }
+}
+
+internal object KotlinCompilerRefIndexMetrics : FusMetrics {
+    internal fun collectMetrics(enabled: Boolean, metricsConsumer: StatisticsValuesConsumer) {
+        metricsConsumer.report(BooleanMetrics.ENABLED_COMPILER_REFERENCE_INDEX, enabled)
+    }
+}
+
+internal object KotlinSourceSetMetrics : FusMetrics {
+    internal fun collectMetrics(project: Project) {
+        project.launchInStage(KotlinPluginLifecycle.Stage.AfterFinaliseDsl) {
+            project.reportGeneratedSourcesUsage()
+            project.reportSourceSetSourcesUsage(
+                mapOf(
+                    "webMain" to BooleanMetrics.KOTLIN_WEB_MAIN_SOURCES_USED,
+                    "webTest" to BooleanMetrics.KOTLIN_WEB_TEST_SOURCES_USED,
+                )
+            )
+            project.reportSourceSetDependenciesUsage(
+                mapOf(
+                    "webMain" to BooleanMetrics.KOTLIN_WEB_MAIN_DEPENDENCIES_PRESENT,
+                    "webTest" to BooleanMetrics.KOTLIN_WEB_TEST_DEPENDENCIES_PRESENT,
+                )
+            )
+        }
+    }
+
+    private suspend fun Project.reportGeneratedSourcesUsage() {
+        project.kotlinExtension.awaitSourceSets().configureEach {
+            if (it.generatedKotlin.srcDirs.isNotEmpty()) {
+                project.addConfigurationMetrics {
+                    it.put(BooleanMetrics.KOTLIN_GENERATED_SOURCES_USED, true)
+                }
+            }
+        }
+    }
+
+    private suspend fun Project.reportSourceSetSourcesUsage(
+        sourceSetNameToMetricMap: Map<String, BooleanMetrics>
+    ) {
+        project.kotlinExtension.awaitSourceSets().configureEach { sourceSet ->
+            val metric = sourceSetNameToMetricMap[sourceSet.name]
+            if (metric != null) {
+                if (!sourceSet.allKotlinSources.isEmpty) {
+                    project.addConfigurationMetrics { metricsContainer ->
+                        metricsContainer.put(metric, true)
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun Project.reportSourceSetDependenciesUsage(
+        sourceSetNameToMetricMap: Map<String, BooleanMetrics>
+    ) {
+        project.kotlinExtension.awaitSourceSets().configureEach { sourceSet ->
+            val metric = sourceSetNameToMetricMap[sourceSet.name]
+            if (metric != null) {
+                listOf(
+                    sourceSet.apiConfigurationName,
+                    sourceSet.implementationConfigurationName,
+                    sourceSet.compileOnlyConfigurationName,
+                    sourceSet.runtimeOnlyConfigurationName,
+                ).map { project.configurations.getByName(it) }
+                    .forEach { configuration ->
+                        if (configuration.dependencies.isNotEmpty()) {
+                            project.addConfigurationMetrics { metricsContainer ->
+                                metricsContainer.put(metric, true)
+                            }
+                        }
+                    }
             }
         }
     }

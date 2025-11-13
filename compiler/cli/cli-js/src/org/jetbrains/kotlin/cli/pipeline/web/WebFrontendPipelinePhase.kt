@@ -143,7 +143,7 @@ object WebFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, W
         incrementalDataProvider: IncrementalDataProvider?,
         lookupTracker: LookupTracker?,
         useWasmPlatform: Boolean,
-    ): FirResult {
+    ): AllModulesFrontendOutput {
         for (ktFile in ktFiles) {
             AnalyzerWithCompilerReport.reportSyntaxErrors(ktFile, diagnosticsReporter)
         }
@@ -162,7 +162,7 @@ object WebFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, W
             useWasmPlatform = useWasmPlatform,
         )
         output.runPlatformCheckers(diagnosticsReporter)
-        return FirResult(output)
+        return AllModulesFrontendOutput(output)
     }
 
     private fun compileModulesToAnalyzedFirWithLightTree(
@@ -176,7 +176,7 @@ object WebFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, W
         incrementalDataProvider: IncrementalDataProvider?,
         lookupTracker: LookupTracker?,
         useWasmPlatform: Boolean,
-    ): FirResult {
+    ): AllModulesFrontendOutput {
         val output = compileModuleToAnalyzedFir(
             moduleStructure,
             ktSourceFiles,
@@ -192,7 +192,7 @@ object WebFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, W
             useWasmPlatform = useWasmPlatform,
         )
         output.runPlatformCheckers(diagnosticsReporter)
-        return FirResult(output)
+        return AllModulesFrontendOutput(output)
     }
 
     private inline fun <F> compileModuleToAnalyzedFir(
@@ -204,9 +204,9 @@ object WebFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, W
         lookupTracker: LookupTracker?,
         noinline isCommonSource: (F) -> Boolean,
         noinline fileBelongsToModule: (F, String) -> Boolean,
-        buildResolveAndCheckFir: (FirSession, List<F>) -> ModuleCompilerAnalyzedOutput,
+        buildResolveAndCheckFir: (FirSession, List<F>) -> SingleModuleFrontendOutput,
         useWasmPlatform: Boolean,
-    ): List<ModuleCompilerAnalyzedOutput> {
+    ): List<SingleModuleFrontendOutput> {
         // FIR
         val extensionRegistrars = FirExtensionRegistrar.getInstances(moduleStructure.project)
 
