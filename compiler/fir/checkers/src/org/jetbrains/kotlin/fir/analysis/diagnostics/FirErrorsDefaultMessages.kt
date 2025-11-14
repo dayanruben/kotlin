@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.analysis.diagnostics
 
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.diagnostics.DiagnosticBaseContext
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactoryToRendererMap
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticRenderers.CLASS_ID
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticRenderers.CLASS_ID_RELATIVE_NAME_ONLY
@@ -455,6 +456,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INSTANCE_ACCESS_B
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INTERFACE_AS_FUNCTION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INTERFACE_WITH_SUPERCLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INT_LITERAL_OUT_OF_RANGE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INT_LITERAL_WITH_LEADING_ZEROS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INVALID_CHARACTERS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INVALID_DEFAULT_FUNCTIONAL_PARAMETER_FOR_INLINE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INVALID_DEFAULT_VALUE_DEPENDENCY
@@ -954,6 +956,10 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(TOO_MANY_CHARACTERS_IN_CHARACTER_LITERAL, "Too many characters in a character literal.")
         map.put(ILLEGAL_ESCAPE, "Unsupported escape sequence.")
         map.put(INT_LITERAL_OUT_OF_RANGE, "Value out of range.")
+        map.put(
+            INT_LITERAL_WITH_LEADING_ZEROS,
+            "Leading zeros are not allowed in integer literals."
+        )
         map.put(FLOAT_LITERAL_OUT_OF_RANGE, "Value out of range.")
         map.put(WRONG_LONG_SUFFIX, "Use 'L' instead of 'l'.")
         map.put(
@@ -3357,7 +3363,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             object : DiagnosticParameterRenderer<Boolean> {
                 val contextParametersKey: RenderingContext.Key<List<String>> =
                     object : RenderingContext.Key<List<String>>("contextParameters") {
-                        override fun compute(objectsToRender: Collection<Any?>): List<String> {
+                        override fun compute(objectsToRender: Collection<Any?>, diagnosticContext: DiagnosticBaseContext): List<String> {
                             @Suppress("UNCHECKED_CAST")
                             val symbols = objectsToRender.last() as? List<FirValueParameterSymbol> ?: return emptyList()
 

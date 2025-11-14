@@ -139,6 +139,9 @@ fun main(args: Array<String>) {
             testClass<AbstractFirWasmJsSteppingTest> {
                 model("debug/stepping")
             }
+            testClass<AbstractFirWasmJsSteppingSingleFileTest> {
+                model("debug/stepping")
+            }
             testClass<AbstractFirWasmJsSteppingWithInlinedFunInKlibTest> {
                 model("debug/stepping")
             }
@@ -151,6 +154,11 @@ fun main(args: Array<String>) {
         }
         testGroup("wasm/wasm.tests/tests-gen", "js/js.translator/testData", testRunnerMethodName = "runTest0") {
             testClass<AbstractFirWasmTypeScriptExportTest> {
+                model("typescript-export/wasm/")
+            }
+        }
+        testGroup("wasm/wasm.tests/tests-gen", "js/js.translator/testData", testRunnerMethodName = "runTest0") {
+            testClass<AbstractFirWasmTypeScriptExportSingleModuleTest> {
                 model("typescript-export/wasm/")
             }
         }
