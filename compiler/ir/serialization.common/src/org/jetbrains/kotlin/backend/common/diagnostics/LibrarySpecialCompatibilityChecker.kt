@@ -5,16 +5,19 @@
 
 package org.jetbrains.kotlin.backend.common.diagnostics
 
+import org.jetbrains.kotlin.backend.common.diagnostics.LibrarySpecialCompatibilityChecker.Companion.KLIB_JAR_MANIFEST_FILE
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.MavenComparableVersion
+import org.jetbrains.kotlin.library.KlibComponent
+import org.jetbrains.kotlin.library.KlibComponentLayout
+import org.jetbrains.kotlin.library.KlibLayoutReader
 import org.jetbrains.kotlin.library.KotlinLibrary
-import org.jetbrains.kotlin.library.impl.KotlinLibraryImpl
 import java.io.ByteArrayInputStream
-import java.io.IOException
 import java.util.jar.Manifest
+import org.jetbrains.kotlin.konan.file.File as KlibFile
 
 /** See KT-68322 for details. */
 abstract class LibrarySpecialCompatibilityChecker {
@@ -41,7 +44,7 @@ abstract class LibrarySpecialCompatibilityChecker {
                     // We use `substringBefore('-')` to cut off irrelevant part of the version string.
                     // Ex: 2.0.255-SNAPSHOT -> 2.0.255, 2.0.20-dev-12345 -> 2.0.20
                     MavenComparableVersion(rawVersion.substringBefore('-'))
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     return null
                 }
 
@@ -57,36 +60,37 @@ abstract class LibrarySpecialCompatibilityChecker {
         val compilerVersion = Version.parseVersion(getRawCompilerVersion()) ?: return
 
         for (library in libraries) {
-            if (shouldCheckLibrary(library)) {
-                val jarManifest = library.getJarManifest() ?: continue
-                val libraryVersion = Version.parseVersion(jarManifest.mainAttributes.getValue(KLIB_JAR_LIBRARY_VERSION)) ?: continue
+            val checkedLibrary = library.toCheckedLibrary() ?: continue
 
-                val messageToReport = getMessageToReport(compilerVersion, libraryVersion, library)
-                if (messageToReport != null) {
-                    messageCollector.report(CompilerMessageSeverity.ERROR, messageToReport)
-                }
+            val jarManifest = library.getComponent(JarManifestComponent.Kind)?.jarManifest ?: continue
+            val libraryVersion = Version.parseVersion(jarManifest.mainAttributes.getValue(KLIB_JAR_LIBRARY_VERSION)) ?: continue
+
+            val rootCause = when {
+                libraryVersion < compilerVersion ->
+                    "The ${checkedLibrary.platformDisplayName} ${checkedLibrary.libraryDisplayName} library has an older version ($libraryVersion) than the compiler ($compilerVersion). Such a configuration is not supported."
+
+                !libraryVersion.hasSameLanguageVersion(compilerVersion) ->
+                    "The ${checkedLibrary.platformDisplayName} ${checkedLibrary.libraryDisplayName} library has a more recent version ($libraryVersion) than the compiler supports. The compiler version is $compilerVersion."
+
+                else -> continue
             }
+
+            messageCollector.report(
+                CompilerMessageSeverity.ERROR,
+                "$rootCause\nPlease, make sure that the ${checkedLibrary.libraryDisplayName} library has the version in the range " +
+                        "[${compilerVersion.toComparableVersionString()} .. ${compilerVersion.toLanguageVersionString()}.${KotlinVersion.MAX_COMPONENT_VALUE}]. " +
+                        "Adjust your project's settings if necessary."
+            )
         }
     }
-
-    private fun KotlinLibrary.getJarManifest(): Manifest? =
-        (this as KotlinLibraryImpl).base.access.inPlace { layout ->
-            val jarManifestFile = layout.libFile.child(KLIB_JAR_MANIFEST_FILE)
-            if (!jarManifestFile.isFile) return@inPlace null
-
-            try {
-                ByteArrayInputStream(jarManifestFile.readBytes()).use { Manifest(it) }
-            } catch (_: IOException) {
-                null
-            }
-        }
 
     private fun getRawCompilerVersion(): String? {
         return customCompilerVersionForTest?.let { return it.version } ?: KotlinCompilerVersion.getVersion()
     }
 
-    protected abstract fun shouldCheckLibrary(library: KotlinLibrary): Boolean
-    protected abstract fun getMessageToReport(compilerVersion: Version, libraryVersion: Version, library: KotlinLibrary): String?
+    protected class CheckedLibrary(val libraryDisplayName: String, val platformDisplayName: String)
+
+    protected abstract fun KotlinLibrary.toCheckedLibrary(): CheckedLibrary?
 
     companion object {
         private class CustomCompilerVersionForTest(val version: String?)
@@ -106,4 +110,25 @@ abstract class LibrarySpecialCompatibilityChecker {
         const val KLIB_JAR_MANIFEST_FILE = "META-INF/MANIFEST.MF"
         const val KLIB_JAR_LIBRARY_VERSION = "Implementation-Version"
     }
+}
+
+private class JarManifestComponent(
+    private val layoutReader: KlibLayoutReader<JarManifestComponentLayout>
+) : KlibComponent {
+    val jarManifest: Manifest?
+        get() = layoutReader.readInPlaceOrFallback(null) {
+            ByteArrayInputStream(it.jarManifestFile.readBytes()).use(::Manifest)
+        }
+
+    object Kind : KlibComponent.Kind<JarManifestComponent, JarManifestComponentLayout> {
+        override fun createLayout(root: KlibFile) = JarManifestComponentLayout(root)
+
+        override fun createComponentIfDataInKlibIsAvailable(layoutReader: KlibLayoutReader<JarManifestComponentLayout>) =
+            if (layoutReader.readInPlaceOrFallback(false) { it.jarManifestFile.isFile }) JarManifestComponent(layoutReader) else null
+    }
+}
+
+private class JarManifestComponentLayout(root: KlibFile) : KlibComponentLayout(root) {
+    val jarManifestFile: KlibFile
+        get() = root.child(KLIB_JAR_MANIFEST_FILE)
 }

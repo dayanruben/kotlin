@@ -16,13 +16,14 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.ir.backend.js.tsexport.ExportedParameter
 import org.jetbrains.kotlin.ir.backend.js.tsexport.ExportedType
 import org.jetbrains.kotlin.ir.backend.js.tsexport.ExportedType.*
 import org.jetbrains.kotlin.ir.backend.js.tsexport.ExportedType.Array
 import org.jetbrains.kotlin.ir.backend.js.tsexport.ExportedType.Function
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.types.Variance
-import org.jetbrains.kotlin.utils.compactIfPossible
 import org.jetbrains.kotlin.utils.memoryOptimizedMap
 
 internal class TypeExporter(private val config: TypeScriptExportConfig) {
@@ -56,7 +57,7 @@ internal class TypeExporter(private val config: TypeScriptExportConfig) {
     }
 
     context(_: KaSession)
-    internal fun exportArrayWithElementType(type: KaType): ExportedType = with(type) {
+    internal fun exportSpecializedArrayWithElementType(type: KaType): ExportedType = with(type) {
         when {
             isMarkedNullable -> Array(exportType(type))
             isByteType -> Primitive.ByteArray
@@ -88,19 +89,40 @@ internal class TypeExporter(private val config: TypeScriptExportConfig) {
         if (type.isNothingType)
             return Primitive.Nothing
         type.arrayElementType?.let {
-            return exportArrayWithElementType(it)
+            return if (type.isClassType(StandardClassIds.Array)) {
+                Array(exportType(it))
+            } else {
+                exportSpecializedArrayWithElementType(it)
+            }
         }
         if (type.isClassType(StandardClassIds.Throwable))
             return Primitive.Throwable
-        if (type is KaFunctionType) {
+        if (type is KaFunctionType && !type.isKFunctionType && !type.isKSuspendFunctionType) {
             return if (type.isSuspend) {
-                ErrorType("Suspend function types are not supported")
+                ErrorType("Suspend functions are not supported")
             } else {
                 Function(
-                    parameterTypes = buildList {
-                        type.contextReceivers.mapTo(this) { exportType(it.type) }
-                        type.receiverType?.let { add(exportType(it)) }
-                        type.parameterTypes.mapTo(this) { exportType(it) }
+                    parameters = buildList {
+                        type.contextReceivers.mapTo(this) {
+                            ExportedParameter(
+                                name = it.label?.asString(),
+                                type = exportType(it.type),
+                            )
+                        }
+                        type.receiverType?.let {
+                            add(
+                                ExportedParameter(
+                                    name = SpecialNames.THIS.asString(),
+                                    type = exportType(it),
+                                )
+                            )
+                        }
+                        type.parameters.mapTo(this) {
+                            ExportedParameter(
+                                name = it.name?.asString(),
+                                type = exportType(it.type),
+                            )
+                        }
                     },
                     returnType = exportType(type.returnType),
                 )
@@ -109,7 +131,7 @@ internal class TypeExporter(private val config: TypeScriptExportConfig) {
         if (type is KaTypeParameterType) {
             return TypeParameter(type.name.identifier)
         }
-        if (type is KaUsualClassType) {
+        if (type is KaClassType) {
             val symbol = type.symbol
             val isExported = shouldDeclarationBeExportedImplicitlyOrExplicitly(symbol)
             return when (symbol) {
