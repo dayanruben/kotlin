@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.incremental.dirtyFiles.DirtyFilesContainer
 import org.jetbrains.kotlin.incremental.dirtyFiles.DirtyFilesProvider
 import org.jetbrains.kotlin.incremental.storage.BasicFileToPathConverter
 import org.jetbrains.kotlin.incremental.storage.FileLocations
+import org.jetbrains.kotlin.incremental.storage.FileToPathConverter
 import org.jetbrains.kotlin.incremental.util.ExceptionLocation
 import org.jetbrains.kotlin.incremental.util.reportException
 import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
@@ -45,7 +46,7 @@ abstract class IncrementalCompilerRunner<
         Args : CommonCompilerArguments,
         CacheManager : IncrementalCachesManager<*>,
         >(
-    private val workingDir: File,
+    protected val workingDir: File,
     cacheDirName: String,
     protected val reporter: BuildReporter<BuildTimeMetric, BuildPerformanceMetric>,
     protected val buildHistoryFile: File?,
@@ -553,6 +554,10 @@ abstract class IncrementalCompilerRunner<
                 }
                 updateCaches(services, caches, generatedFiles, changesCollector)
             }
+
+            // TODO KT-82167 Add BuildTimeMetric for the CRI data generation
+            generateCompilerRefIndexIfNeeded(services, icContext.pathConverterForSourceFiles, compilationMode)
+
             if (compilationMode is CompilationMode.Rebuild) {
                 if (icFeatures.withAbiSnapshot) {
                     abiSnapshotData!!.snapshot.protos.putAll(changesCollector.protoDataChanges())
@@ -622,6 +627,12 @@ abstract class IncrementalCompilerRunner<
 
         return exitCode
     }
+
+    protected open fun generateCompilerRefIndexIfNeeded(
+        services: Services,
+        sourceFilesPathConverter: FileToPathConverter,
+        compilationMode: CompilationMode,
+    ): Unit = Unit
 
     open fun getLookupTrackerDelegate(): LookupTracker = LookupTracker.DO_NOTHING
 
