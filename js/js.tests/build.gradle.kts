@@ -8,7 +8,6 @@ import java.util.*
 plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
-    id("jps-compatible")
     alias(libs.plugins.gradle.node)
     id("d8-configuration")
     id("java-test-fixtures")
@@ -73,9 +72,7 @@ dependencies {
 
     testRuntimeOnly(kotlinStdlib())
     testJsRuntime(kotlinStdlib())
-    if (!kotlinBuildProperties.isInJpsBuildIdeaSync) {
-        testJsRuntime(kotlinTest("js")) // to be sure that kotlin-test-js built before tests run
-    }
+    testJsRuntime(kotlinTest("js")) // to be sure that kotlin-test-js built before tests run
     testRuntimeOnly(project(":kotlin-preloader")) // it's required for ant tests
     testRuntimeOnly(project(":compiler:ir.backend.common"))
     testRuntimeOnly(project(":kotlin-util-klib-abi"))

@@ -69,3 +69,16 @@ class DefaultBox<T>(t: T): Box<T>(t)
 class TripleBox: Box<Box<Box<Int>>>(DefaultBox(DefaultBox(5)))
 
 class GenericWithComparableUpperBound<T: Comparable<T>>(val t: T)
+
+// Minimal repro for KT-79105: having Array<T> in the API surface must not crash Swift export.
+
+class ArrayBox() {
+    val ints: Array<Int> = emptyArray()
+}
+
+class Holder<T>(val xs: Array<T>) {
+    fun headOrNull(): T? = if (xs.isNotEmpty()) xs[0] else null
+}
+
+// Make sure arrays appear in both public signatures and bodies.
+fun takeAndReturn(a: Array<String>): Array<String> = a

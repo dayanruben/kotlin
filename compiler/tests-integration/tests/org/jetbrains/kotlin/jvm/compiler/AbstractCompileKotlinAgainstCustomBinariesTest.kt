@@ -143,7 +143,7 @@ abstract class AbstractCompileKotlinAgainstCustomBinariesTest : AbstractKotlinCo
     // ------------------------------------------------------------------------------
 
     // KT-62900 K2: Expected expression to be resolved during Fir2Ir
-    fun testMissingEnumReferencedInAnnotationArgument() = muteForK2 {
+    fun testMissingEnumReferencedInAnnotationArgument() {
         doTestBrokenLibrary("library", "a/E.class")
     }
 
@@ -690,6 +690,25 @@ abstract class AbstractCompileKotlinAgainstCustomBinariesTest : AbstractKotlinCo
         compileKotlin(
             "source.kt", tmpdir, listOf(library),
             additionalOptions = listOf(CommonCompilerArguments::languageVersion.cliArgument, LanguageVersion.KOTLIN_2_2.versionString)
+        )
+    }
+
+    fun testUsageOfNestedTypeAliasesWhenTheyAreEnabled() {
+        val library = compileLibrary(
+            "library",
+            additionalOptions = listOf(
+                CommonCompilerArguments::languageVersion.cliArgument,
+                LanguageVersion.KOTLIN_2_2.versionString,
+                CommonCompilerArguments::nestedTypeAliases.cliArgument,
+            )
+        )
+        compileKotlin(
+            "source.kt", tmpdir, listOf(library),
+            additionalOptions = listOf(
+                CommonCompilerArguments::languageVersion.cliArgument,
+                LanguageVersion.KOTLIN_2_2.versionString,
+                CommonCompilerArguments::nestedTypeAliases.cliArgument,
+            )
         )
     }
 

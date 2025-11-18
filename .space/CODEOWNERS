@@ -221,6 +221,7 @@
 /compiler/tests-common/ "Kotlin Compiler"
 /compiler/tests-common/testFixtures/org/jetbrains/kotlin/asJava/ "Kotlin Analysis API"
 /compiler/tests-common-new/ "Kotlin Frontend"
+/compiler/tests-common-new/testFixtures/org/jetbrains/kotlin/test/klib/ "Kotlin Common Backend"
 /compiler/tests-common-new/testFixtures/org/jetbrains/kotlin/test/directives/WasmEnvironmentConfigurationDirectives.kt "Kotlin Wasm"
 /compiler/tests-common-new/testFixtures/org/jetbrains/kotlin/test/services/configuration/WasmEnvironmentConfigurator.kt "Kotlin Wasm"
 /compiler/tests-common-new/testFixtures/org/jetbrains/kotlin/test/directives/JsEnvironmentConfigurationDirectives.kt "Kotlin JS"
@@ -433,7 +434,6 @@
 /plugins/lombok/ "Kotlin Frontend"
 /plugins/noarg/ "Kotlin Frontend"
 /plugins/parcelize/ "Parcelize"
-/plugins/pill/ yan.zhulanow@jetbrains.com "Kotlin Build Infrastructure"
 /plugins/power-assert/ brian.norman@jetbrains.com "Kotlin Common Backend" sergej.jaskiewicz@jetbrains.com
 /plugins/sam-with-receiver/ "Kotlin Frontend"
 /plugins/scripting/ "Kotlin Frontend"

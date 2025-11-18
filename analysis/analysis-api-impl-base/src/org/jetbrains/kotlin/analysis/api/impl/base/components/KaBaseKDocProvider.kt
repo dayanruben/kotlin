@@ -7,45 +7,31 @@ package org.jetbrains.kotlin.analysis.api.impl.base.components
 
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
-import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaKDocProvider
-import org.jetbrains.kotlin.analysis.api.components.KtDocCommentDescriptor
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.kdoc.parser.KDocKnownTag
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
+import org.jetbrains.kotlin.kdoc.psi.api.KDocCommentDescriptor
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocCommentDescriptorImpl
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocTag
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtConstructor
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtDeclarationWithBody
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtPrimaryConstructor
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtTypeParameter
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 
-@KaNonPublicApi
 @KaImplementationDetail
-internal class KtDocCommentDescriptorImpl(
-    override val primaryTag: KDocTag,
-    override val additionalSections: List<KDocSection>,
-) : KtDocCommentDescriptor
-
-@KaImplementationDetail
+@OptIn(KtNonPublicApi::class, KtImplementationDetail::class)
 abstract class KaBaseKDocProvider<T : KaSession> : KaBaseSessionComponent<T>(), KaKDocProvider {
-    override fun KtDeclaration.findKDoc(): KtDocCommentDescriptor? = this.lookupOwnedKDoc() ?: this.lookupKDocInParent()
+    override fun KtDeclaration.findKDoc(): KDocCommentDescriptor? = this.lookupOwnedKDoc() ?: this.lookupKDocInParent()
 
-    override fun KaDeclarationSymbol.findKDoc(): KtDocCommentDescriptor? = with(analysisSession) {
+    override fun KaDeclarationSymbol.findKDoc(): KDocCommentDescriptor? = with(analysisSession) {
         val ktElement = psi?.navigationElement as? KtDeclaration
         ktElement?.findKDoc()?.let { return it }
 
@@ -77,7 +63,7 @@ abstract class KaBaseKDocProvider<T : KaSession> : KaBaseSessionComponent<T>(), 
         return null
     }
 
-    private fun KtElement.lookupOwnedKDoc(): KtDocCommentDescriptor? {
+    private fun KtElement.lookupOwnedKDoc(): KDocCommentDescriptor? {
         // KDoc for the primary constructor is located inside its class KDoc
         val psiDeclaration = when (this) {
             is KtPrimaryConstructor -> getContainingClassOrObject()
@@ -96,10 +82,10 @@ abstract class KaBaseKDocProvider<T : KaSession> : KaBaseSessionComponent<T>(), 
                         // that contain @param tags (if any), as the most relatable ones
                         // practical example: val foo = Fo<caret>o("argument") -- show @constructor and @param content
                         val paramSections = kdoc.findSectionsContainingTag(KDocKnownTag.PARAM)
-                        return KtDocCommentDescriptorImpl(constructorSection, paramSections)
+                        return KDocCommentDescriptorImpl(constructorSection, paramSections)
                     }
                 }
-                return KtDocCommentDescriptorImpl(kdoc.getDefaultSection(), kdoc.getAllSections())
+                return KDocCommentDescriptorImpl(kdoc.getDefaultSection(), kdoc.getAllSections())
             }
         }
         return null
@@ -114,7 +100,7 @@ abstract class KaBaseKDocProvider<T : KaSession> : KaBaseSessionComponent<T>(), 
             .filter { it.findTagByName(tag.name.toLowerCaseAsciiOnly()) != null }
     }
 
-    private fun KtDeclaration.lookupKDocInParent(): KtDocCommentDescriptor? {
+    private fun KtDeclaration.lookupKDocInParent(): KDocCommentDescriptor? {
         val subjectName = name
         val containingDeclaration = PsiTreeUtil.findFirstParent(this, true) {
             (it is KtDeclarationWithBody && it !is KtPrimaryConstructor) || it is KtClassOrObject
@@ -142,7 +128,7 @@ abstract class KaBaseKDocProvider<T : KaSession> : KaBaseSessionComponent<T>(), 
         return primaryContent?.let {
             // makes little sense to include any other sections, since we found
             // documentation for a very specific element, like a property/param
-            KtDocCommentDescriptorImpl(it, additionalSections = emptyList())
+            KDocCommentDescriptorImpl(it, additionalSections = emptyList())
         }
     }
 }

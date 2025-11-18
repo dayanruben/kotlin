@@ -1250,7 +1250,7 @@ open class PsiRawFirBuilder(
                     symbol = constructorSymbol
                     delegatedConstructor = firDelegatedCall
                     typeParameters += constructorTypeParametersFromConstructedClass(ownerTypeParameters)
-                    this@toFirConstructor?.modifierList?.contextReceiverLists?.let {
+                    this@toFirConstructor?.modifierList?.contextParameterLists?.let {
                         this.contextParameters.addContextParameters(it, constructorSymbol)
                     }
 
@@ -1688,11 +1688,11 @@ open class PsiRawFirBuilder(
         }
 
         private fun MutableList<FirValueParameter>.addContextParameters(
-            contextLists: List<KtContextReceiverList>,
+            contextLists: List<KtContextParameterList>,
             containingDeclarationSymbol: FirBasedSymbol<*>,
         ) {
             for (contextList in contextLists) {
-                contextList.contextParameters().mapTo(this) { contextParameterElement ->
+                contextList.contextParameters.mapTo(this) { contextParameterElement ->
                     contextParameterElement.toFirValueParameter(
                         defaultTypeRef = null,
                         containingDeclarationSymbol = containingDeclarationSymbol,
@@ -1865,7 +1865,7 @@ open class PsiRawFirBuilder(
 
                             initCompanionObjectSymbolAttr()
 
-                            contextParameters.addContextParameters(classOrObject.contextReceiverLists, classSymbol)
+                            contextParameters.addContextParameters(classOrObject.modifierList?.contextParameterLists.orEmpty(), classSymbol)
                         }.also {
                             it.delegateFieldsMap = delegatedFieldsMap
                         }
@@ -2061,7 +2061,7 @@ open class PsiRawFirBuilder(
                     function.extractAnnotationsTo(this)
 
                     function.extractTypeParametersTo(this, functionSymbol)
-                    contextParameters.addContextParameters(function.contextReceiverLists, functionSymbol)
+                    contextParameters.addContextParameters(function.modifierList?.contextParameterLists.orEmpty(), functionSymbol)
                     for (valueParameter in function.valueParameters) {
                         valueParameters += valueParameter.toFirValueParameter(
                             null,
@@ -2245,7 +2245,7 @@ open class PsiRawFirBuilder(
                     }
                     isLocal = this@PsiRawFirBuilder.context.inLocalContext
                     dispatchReceiverType = owner.obtainDispatchReceiverForConstructor()
-                    contextParameters.addContextParameters(this@toFirConstructor.modifierList?.contextReceiverLists.orEmpty(), symbol)
+                    contextParameters.addContextParameters(this@toFirConstructor.modifierList?.contextParameterLists.orEmpty(), symbol)
                     if (!owner.hasModifier(EXTERNAL_KEYWORD) && !status.isExpect || isExplicitDelegationCall()) {
                         delegatedConstructor = buildOrLazyDelegatedConstructorCall(
                             isThis = isDelegatedCallToThis(),
@@ -2485,7 +2485,7 @@ open class PsiRawFirBuilder(
                         else -> propertyAnnotations.filterStandalonePropertyRelevantAnnotations(isVar)
                     }
 
-                    contextParameters.addContextParameters(this@toFirProperty.contextReceiverLists, propertySymbol)
+                    contextParameters.addContextParameters(this@toFirProperty.modifierList?.contextParameterLists.orEmpty(), propertySymbol)
                 }.also {
                     if (!isLocal) {
                         fillDanglingConstraintsTo(it)
@@ -2621,11 +2621,11 @@ open class PsiRawFirBuilder(
                             }
                         }
 
-                        val contextReceiverList = unwrappedElement.contextReceiverList
+                        val contextReceiverList = unwrappedElement.contextParameterList
                         contextReceiverList?.contextReceivers()?.mapNotNullTo(contextParameterTypeRefs) {
                             it.typeReference()?.toFirType()
                         }
-                        contextReceiverList?.contextParameters()?.mapNotNullTo(contextParameterTypeRefs) {
+                        contextReceiverList?.contextParameters?.mapNotNullTo(contextParameterTypeRefs) {
                             it.typeReference?.toFirType()
                         }
                     }
@@ -3641,7 +3641,7 @@ open class PsiRawFirBuilder(
                     annotations += annotationEntry.convert<FirAnnotation>()
                 }
 
-                contextParameters.addContextParameters(modifierList.contextReceiverLists, symbol)
+                contextParameters.addContextParameters(modifierList.contextParameterLists, symbol)
             }
         }
     }

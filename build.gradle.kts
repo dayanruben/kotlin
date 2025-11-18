@@ -58,7 +58,6 @@ plugins {
     id("org.jetbrains.gradle.plugin.idea-ext") version "1.0.1" // this version should be in sync with repo/buildsrc-compat/build.gradle.kts
     id("build-time-report")
     id("java-instrumentation")
-    id("jps")
     id("modularized-test-configurations")
     id("resolve-dependencies")
     id("org.gradle.crypto.checksum") version "1.4.0"
@@ -799,7 +798,7 @@ tasks {
         "coreLibsTest", "check",
         coreLibsBuildable + listOfNotNull(
             ":kotlin-stdlib:samples",
-            ":kotlin-test:kotlin-test-js-it".takeIf { !kotlinBuildProperties.isInJpsBuildIdeaSync },
+            ":kotlin-test:kotlin-test-js-it",
             ":tools:binary-compatibility-validator",
             ":tools:jdk-api-validator",
         )

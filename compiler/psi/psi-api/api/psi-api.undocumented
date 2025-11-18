@@ -20,7 +20,7 @@ org.jetbrains.kotlin.KotlinElementTypeProvider.classLiteralExpressionType
 org.jetbrains.kotlin.KotlinElementTypeProvider.classType
 org.jetbrains.kotlin.KotlinElementTypeProvider.collectionLiteralExpressionType
 org.jetbrains.kotlin.KotlinElementTypeProvider.constructorCalleeType
-org.jetbrains.kotlin.KotlinElementTypeProvider.contextReceiverListType
+org.jetbrains.kotlin.KotlinElementTypeProvider.contextParameterListType
 org.jetbrains.kotlin.KotlinElementTypeProvider.contextReceiverType
 org.jetbrains.kotlin.KotlinElementTypeProvider.contractEffectListType
 org.jetbrains.kotlin.KotlinElementTypeProvider.contractEffectType
@@ -114,8 +114,8 @@ org.jetbrains.kotlin.KtNodeTypes:CONDITION
 org.jetbrains.kotlin.KtNodeTypes:CONSTRUCTOR_CALLEE
 org.jetbrains.kotlin.KtNodeTypes:CONSTRUCTOR_DELEGATION_CALL
 org.jetbrains.kotlin.KtNodeTypes:CONSTRUCTOR_DELEGATION_REFERENCE
+org.jetbrains.kotlin.KtNodeTypes:CONTEXT_PARAMETER_LIST
 org.jetbrains.kotlin.KtNodeTypes:CONTEXT_RECEIVER
-org.jetbrains.kotlin.KtNodeTypes:CONTEXT_RECEIVER_LIST
 org.jetbrains.kotlin.KtNodeTypes:CONTINUE
 org.jetbrains.kotlin.KtNodeTypes:CONTRACT_EFFECT
 org.jetbrains.kotlin.KtNodeTypes:CONTRACT_EFFECT_LIST
@@ -237,6 +237,7 @@ org.jetbrains.kotlin.kdoc.psi.api.KDoc.findSectionByTag(KDocKnownTag, String)
 org.jetbrains.kotlin.kdoc.psi.api.KDoc.getAllSections()
 org.jetbrains.kotlin.kdoc.psi.api.KDoc.getDefaultSection()
 org.jetbrains.kotlin.kdoc.psi.api.KDocElement
+org.jetbrains.kotlin.kdoc.psi.impl.KDocCommentDescriptorImpl
 org.jetbrains.kotlin.kdoc.psi.impl.KDocElementImpl
 org.jetbrains.kotlin.kdoc.psi.impl.KDocElementImpl:constructor(ASTNode)
 org.jetbrains.kotlin.kdoc.psi.impl.KDocImpl
@@ -497,6 +498,8 @@ org.jetbrains.kotlin.psi.KtContainerNode
 org.jetbrains.kotlin.psi.KtContainerNode:constructor(ASTNode)
 org.jetbrains.kotlin.psi.KtContainerNodeForControlStructureBody
 org.jetbrains.kotlin.psi.KtContainerNodeForControlStructureBody.expression
+org.jetbrains.kotlin.psi.KtContextParameterList:constructor(ASTNode)
+org.jetbrains.kotlin.psi.KtContextParameterList:constructor(KotlinPlaceHolderStub<KtContextParameterList>)
 org.jetbrains.kotlin.psi.KtContextReceiver.labelName()
 org.jetbrains.kotlin.psi.KtContextReceiver.labelNameAsName()
 org.jetbrains.kotlin.psi.KtContextReceiver.name()
@@ -504,12 +507,8 @@ org.jetbrains.kotlin.psi.KtContextReceiver.targetLabel()
 org.jetbrains.kotlin.psi.KtContextReceiver.typeReference()
 org.jetbrains.kotlin.psi.KtContextReceiver:constructor(ASTNode)
 org.jetbrains.kotlin.psi.KtContextReceiver:constructor(KotlinContextReceiverStub)
-org.jetbrains.kotlin.psi.KtContextReceiverList
-org.jetbrains.kotlin.psi.KtContextReceiverList.contextParameters()
-org.jetbrains.kotlin.psi.KtContextReceiverList.contextReceivers()
-org.jetbrains.kotlin.psi.KtContextReceiverList.typeReferences()
 org.jetbrains.kotlin.psi.KtContextReceiverList:constructor(ASTNode)
-org.jetbrains.kotlin.psi.KtContextReceiverList:constructor(KotlinPlaceHolderStub<KtContextReceiverList>)
+org.jetbrains.kotlin.psi.KtContextReceiverList:constructor(KotlinPlaceHolderStub<KtContextParameterList>)
 org.jetbrains.kotlin.psi.KtContinueExpression
 org.jetbrains.kotlin.psi.KtContinueExpression:constructor(ASTNode)
 org.jetbrains.kotlin.psi.KtContractEffect
@@ -645,7 +644,6 @@ org.jetbrains.kotlin.psi.KtFunctionType
 org.jetbrains.kotlin.psi.KtFunctionType:RETURN_TYPE_SEPARATOR
 org.jetbrains.kotlin.psi.KtFunctionType:constructor(ASTNode)
 org.jetbrains.kotlin.psi.KtFunctionType:constructor(KotlinFunctionTypeStub)
-org.jetbrains.kotlin.psi.KtFunctionType:getContextReceiverList()
 org.jetbrains.kotlin.psi.KtFunctionType:getContextReceiversTypeReferences()
 org.jetbrains.kotlin.psi.KtFunctionType:getParameterList()
 org.jetbrains.kotlin.psi.KtFunctionType:getParameters()
@@ -1262,7 +1260,6 @@ org.jetbrains.kotlin.psi.KtTypeParameterListOwner:getTypeParameters()
 org.jetbrains.kotlin.psi.KtTypeParameterListOwnerStub
 org.jetbrains.kotlin.psi.KtTypeParameterListOwnerStub:constructor(ASTNode)
 org.jetbrains.kotlin.psi.KtTypeParameterListOwnerStub:constructor(T, IStubElementType)
-org.jetbrains.kotlin.psi.KtTypeParameterListOwnerStub:getContextReceiverList()
 org.jetbrains.kotlin.psi.KtTypeProjection
 org.jetbrains.kotlin.psi.KtTypeProjection:constructor(ASTNode)
 org.jetbrains.kotlin.psi.KtTypeProjection:constructor(KotlinTypeProjectionStub)
@@ -1338,8 +1335,8 @@ org.jetbrains.kotlin.psi.KtVisitor:visitConstantExpression(KtConstantExpression,
 org.jetbrains.kotlin.psi.KtVisitor:visitConstructor(KtConstructor<?>, D)
 org.jetbrains.kotlin.psi.KtVisitor:visitConstructorCalleeExpression(KtConstructorCalleeExpression, D)
 org.jetbrains.kotlin.psi.KtVisitor:visitConstructorDelegationCall(KtConstructorDelegationCall, D)
+org.jetbrains.kotlin.psi.KtVisitor:visitContextParameterList(KtContextParameterList, D)
 org.jetbrains.kotlin.psi.KtVisitor:visitContextReceiver(KtContextReceiver, D)
-org.jetbrains.kotlin.psi.KtVisitor:visitContextReceiverList(KtContextReceiverList, D)
 org.jetbrains.kotlin.psi.KtVisitor:visitContinueExpression(KtContinueExpression, D)
 org.jetbrains.kotlin.psi.KtVisitor:visitDeclaration(KtDeclaration, D)
 org.jetbrains.kotlin.psi.KtVisitor:visitDelegatedSuperTypeEntry(KtDelegatedSuperTypeEntry, D)
@@ -1449,8 +1446,8 @@ org.jetbrains.kotlin.psi.KtVisitorVoid:visitConstantExpression(KtConstantExpress
 org.jetbrains.kotlin.psi.KtVisitorVoid:visitConstructor(KtConstructor<?>)
 org.jetbrains.kotlin.psi.KtVisitorVoid:visitConstructorCalleeExpression(KtConstructorCalleeExpression)
 org.jetbrains.kotlin.psi.KtVisitorVoid:visitConstructorDelegationCall(KtConstructorDelegationCall)
+org.jetbrains.kotlin.psi.KtVisitorVoid:visitContextParameterList(KtContextParameterList)
 org.jetbrains.kotlin.psi.KtVisitorVoid:visitContextReceiver(KtContextReceiver)
-org.jetbrains.kotlin.psi.KtVisitorVoid:visitContextReceiverList(KtContextReceiverList)
 org.jetbrains.kotlin.psi.KtVisitorVoid:visitContinueExpression(KtContinueExpression)
 org.jetbrains.kotlin.psi.KtVisitorVoid:visitDeclaration(KtDeclaration)
 org.jetbrains.kotlin.psi.KtVisitorVoid:visitDelegatedSuperTypeEntry(KtDelegatedSuperTypeEntry)
@@ -2106,8 +2103,8 @@ org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes:CLASS_INITIALIZER
 org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes:CLASS_LITERAL_EXPRESSION
 org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes:COLLECTION_LITERAL_EXPRESSION
 org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes:CONSTRUCTOR_CALLEE
+org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes:CONTEXT_PARAMETER_LIST
 org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes:CONTEXT_RECEIVER
-org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes:CONTEXT_RECEIVER_LIST
 org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes:CONTRACT_EFFECT
 org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes:CONTRACT_EFFECT_LIST
 org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes:DELEGATED_SUPER_TYPE_ENTRY
