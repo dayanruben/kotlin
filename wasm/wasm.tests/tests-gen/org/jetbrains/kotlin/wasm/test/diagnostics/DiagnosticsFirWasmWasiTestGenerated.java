@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 public class DiagnosticsFirWasmWasiTestGenerated extends AbstractDiagnosticsFirWasmWasiTest {
   @Test
   public void testAllFilesPresentInWasmWasiTests() {
-    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/wasmWasiTests"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/wasmWasiTests"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|partialBody|fir|ll|latestLV)\\.kts?$"), true);
   }
 
   @Test

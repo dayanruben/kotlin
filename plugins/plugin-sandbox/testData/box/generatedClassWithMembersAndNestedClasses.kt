@@ -1,5 +1,5 @@
-// IGNORE_BACKEND: JS_IR
-// IGNORE_HMPP: JS_IR
+// IGNORE_NATIVE: mode=ONE_STAGE_MULTI_MODULE
+//  ^Reason: KT-82482
 // DUMP_IR
 package bar
 

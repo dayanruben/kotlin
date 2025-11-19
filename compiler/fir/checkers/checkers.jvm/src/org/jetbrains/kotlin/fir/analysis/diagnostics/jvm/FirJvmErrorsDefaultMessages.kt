@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.analysis.diagnostics.jvm
 
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactoryToRendererMap
+import org.jetbrains.kotlin.diagnostics.KtDiagnosticRenderers.CLASS_ID
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticRenderers.NOT_RENDERED
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticRenderers.TO_STRING
 import org.jetbrains.kotlin.diagnostics.rendering.BaseDiagnosticRendererFactory
@@ -88,7 +89,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.NON_SOURCE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.NOT_YET_SUPPORTED_LOCAL_INLINE_FUNCTION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.NO_REFLECTION_IN_CLASS_PATH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.NULLABILITY_MISMATCH_BASED_ON_EXPLICIT_TYPE_ARGUMENTS_FOR_JAVA
-import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.TYPE_MISMATCH_BASED_ON_JAVA_ANNOTATIONS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.OVERLOADS_ABSTRACT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.OVERLOADS_ANNOTATION_CLASS_CONSTRUCTOR_ERROR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.OVERLOADS_INTERFACE
@@ -98,6 +99,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.OVERLOADS_
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.OVERRIDE_CANNOT_BE_STATIC
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.POSITIONED_VALUE_ARGUMENT_FOR_JAVA_ANNOTATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.PROPERTY_HIDES_JAVA_FIELD
+import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.RECEIVER_MUTABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.REDUNDANT_REPEATABLE_ANNOTATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.REPEATABLE_ANNOTATION_HAS_NESTED_CLASS_NAMED_CONTAINER_ERROR
@@ -126,7 +128,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.UPPER_BOUN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.UPPER_BOUND_VIOLATED_IN_TYPEALIAS_EXPANSION_BASED_ON_JAVA_ANNOTATIONS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.USELESS_JVM_EXPOSE_BOXED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION
-import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.WRONG_NULLABILITY_FOR_JAVA_OVERRIDE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors.WRONG_TYPE_FOR_JAVA_OVERRIDE
 
 object FirJvmErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
 
@@ -146,7 +148,13 @@ object FirJvmErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             OPTIONAL_SENTENCE,
         )
         map.put(
-            NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS,
+            RECEIVER_MUTABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS,
+            "Java type mismatch: inferred receiver type is ''{0}'', but a member from ''{1}'' is called on it.",
+            RENDER_TYPE,
+            CLASS_ID,
+        )
+        map.put(
+            TYPE_MISMATCH_BASED_ON_JAVA_ANNOTATIONS,
             "Java type mismatch: inferred type is ''{0}'', but ''{1}'' was expected.{2}",
             RENDER_TYPE,
             RENDER_TYPE,
@@ -176,8 +184,8 @@ object FirJvmErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
 
         map.put(
-            WRONG_NULLABILITY_FOR_JAVA_OVERRIDE,
-            "Override ''{0}'' has incorrect nullability in its signature compared to the overridden declaration ''{1}''.",
+            WRONG_TYPE_FOR_JAVA_OVERRIDE,
+            "Override ''{0}'' has incorrect nullability/mutability in its signature compared to the overridden declaration ''{1}''.",
             SYMBOL,
             SYMBOL,
         )

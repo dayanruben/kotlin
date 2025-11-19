@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 public class DiagnosticsFirWasmTestGenerated extends AbstractDiagnosticsFirWasmTest {
   @Test
   public void testAllFilesPresentInWasmTests() {
-    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/wasmTests"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/wasmTests"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|partialBody|fir|ll|latestLV)\\.kts?$"), true);
   }
 
   @Test
@@ -42,7 +42,7 @@ public class DiagnosticsFirWasmTestGenerated extends AbstractDiagnosticsFirWasmT
   public class JsInterop {
     @Test
     public void testAllFilesPresentInJsInterop() {
-      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/wasmTests/jsInterop"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/wasmTests/jsInterop"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|partialBody|fir|ll|latestLV)\\.kts?$"), true);
     }
 
     @Test
@@ -183,7 +183,7 @@ public class DiagnosticsFirWasmTestGenerated extends AbstractDiagnosticsFirWasmT
     public class Module {
       @Test
       public void testAllFilesPresentInModule() {
-        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/wasmTests/jsInterop/module"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/wasmTests/jsInterop/module"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|partialBody|fir|ll|latestLV)\\.kts?$"), true);
       }
 
       @Test
@@ -217,7 +217,7 @@ public class DiagnosticsFirWasmTestGenerated extends AbstractDiagnosticsFirWasmT
     public class NativeInvoke {
       @Test
       public void testAllFilesPresentInNativeInvoke() {
-        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/wasmTests/jsInterop/nativeInvoke"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/wasmTests/jsInterop/nativeInvoke"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|partialBody|fir|ll|latestLV)\\.kts?$"), true);
       }
 
       @Test
@@ -269,7 +269,7 @@ public class DiagnosticsFirWasmTestGenerated extends AbstractDiagnosticsFirWasmT
     public class Qualifier {
       @Test
       public void testAllFilesPresentInQualifier() {
-        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/wasmTests/jsInterop/qualifier"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/wasmTests/jsInterop/qualifier"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|partialBody|fir|ll|latestLV)\\.kts?$"), true);
       }
 
       @Test
@@ -285,7 +285,7 @@ public class DiagnosticsFirWasmTestGenerated extends AbstractDiagnosticsFirWasmT
     public class Rtti {
       @Test
       public void testAllFilesPresentInRtti() {
-        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/wasmTests/jsInterop/rtti"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/wasmTests/jsInterop/rtti"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|partialBody|fir|ll|latestLV)\\.kts?$"), true);
       }
 
       @Test
@@ -332,7 +332,7 @@ public class DiagnosticsFirWasmTestGenerated extends AbstractDiagnosticsFirWasmT
 
     @Test
     public void testAllFilesPresentInMultiplatform() {
-      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/wasmTests/multiplatform"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/wasmTests/multiplatform"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|partialBody|fir|ll|latestLV)\\.kts?$"), true);
     }
   }
 
@@ -342,7 +342,7 @@ public class DiagnosticsFirWasmTestGenerated extends AbstractDiagnosticsFirWasmT
   public class WasmInterop {
     @Test
     public void testAllFilesPresentInWasmInterop() {
-      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/wasmTests/wasmInterop"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/wasmTests/wasmInterop"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|partialBody|fir|ll|latestLV)\\.kts?$"), true);
     }
 
     @Test
