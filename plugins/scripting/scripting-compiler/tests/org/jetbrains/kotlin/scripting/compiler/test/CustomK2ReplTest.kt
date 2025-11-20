@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.scripting.compiler.plugin.impl.K2ReplCompiler
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.K2ReplEvaluator
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.SCRIPT_BASE_COMPILER_ARGUMENTS_PROPERTY
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.withMessageCollectorAndDisposable
+import org.junit.jupiter.api.Assumptions.abort
 import org.junit.jupiter.api.Test
 import java.io.File
 import kotlin.reflect.full.declaredMemberFunctions
@@ -22,11 +23,7 @@ import kotlin.script.experimental.dependencies.FileSystemDependenciesResolver
 import kotlin.script.experimental.dependencies.maven.MavenDependenciesResolver
 import kotlin.script.experimental.host.toScriptSource
 import kotlin.script.experimental.impl.internalScriptingRunSuspend
-import kotlin.script.experimental.jvm.JvmDependency
-import kotlin.script.experimental.jvm.KJvmEvaluatedSnippet
-import kotlin.script.experimental.jvm.baseClassLoader
-import kotlin.script.experimental.jvm.jvm
-import kotlin.script.experimental.jvm.updateClasspath
+import kotlin.script.experimental.jvm.*
 import kotlin.script.experimental.util.LinkedSnippet
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -284,11 +281,7 @@ class CustomK2ReplTest {
         )
     }
 
-    @Test
-    fun testKotlinCoroutines() {
-        if (!isK2) return
-        val coroutinesCoreClasspath = System.getProperty("kotlin.script.test.kotlinx.coroutines.core.classpath")!!
-            .split(File.pathSeparator).map { File(it) }
+    fun doTestKotlinCoroutinesWithProvidedClasspath(coroutinesCoreClasspath: List<File>) {
         evalAndCheckSnippetsResultVals(
             sequenceOf(
                 """
@@ -316,6 +309,23 @@ class CustomK2ReplTest {
     }
 
     @Test
+    fun testKotlinCoroutines() {
+        if (!isK2) return
+        val coroutinesCoreClasspath = System.getProperty("kotlin.script.test.kotlinx.coroutines.core.classpath")!!
+            .split(File.pathSeparator).map(::File)
+        doTestKotlinCoroutinesWithProvidedClasspath(coroutinesCoreClasspath)
+    }
+
+    @Test
+    fun testKotlinCoroutinesWithRelativeClasspath() {
+        if (!isK2) return
+        val currentDir = File(".").absoluteFile
+        val coroutinesCoreClasspath = System.getProperty("kotlin.script.test.kotlinx.coroutines.core.classpath")!!
+            .split(File.pathSeparator).map { File(it).relativeToOrNull(currentDir) ?: abort("Cannot relativize $it to $currentDir") }
+        doTestKotlinCoroutinesWithProvidedClasspath(coroutinesCoreClasspath)
+    }
+
+    @Test
     fun testPropertyTypesCanBeRedeclared() {
         evalAndCheckSnippetsWithReplReceiver1(
             sequenceOf(
@@ -339,6 +349,47 @@ class CustomK2ReplTest {
             ),
             sequenceOf(null, 42, null, true),
         )
+    }
+
+    @Test
+    fun testKotlinxSerializationWithSeparateConfiguration() {
+        if (!isK2) return
+        val results = withMessageCollectorAndDisposable { messageCollector, disposable ->
+            val serializationPluginClasspath = System.getProperty("kotlin.script.test.kotlinx.serialization.plugin.classpath")!!
+            val baseCompilationConfiguration = baseCompilationConfiguration.with {
+                compilerOptions("-Xplugin=$serializationPluginClasspath")
+            }
+
+            val compiler = K2ReplCompiler(K2ReplCompiler.createCompilationState(messageCollector, disposable, baseCompilationConfiguration))
+            val evaluator = K2ReplEvaluator()
+
+            val snippetCompilationConfiguration = baseCompilationConfiguration.with {
+                updateClasspath(
+                    runBlocking {
+                        dependenciesResolver.resolve("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+                    }.valueOrThrow()
+                )
+            }
+
+            @Suppress("DEPRECATION_ERROR")
+            internalScriptingRunSuspend {
+                var i = 1
+                listOf(
+                    """
+                    import kotlinx.serialization.*
+                    import kotlinx.serialization.json.*
+                    
+                    @Serializable class Test(val x: Int)
+                """
+                ).mapSuccess { snippet ->
+                    compiler.compile(snippet.toScriptSource("s${i++}.repl.kts"), snippetCompilationConfiguration).onSuccess {
+                        evaluator.eval(it, baseEvaluationConfiguration)
+                    }
+                }
+            }
+        }
+
+        checkEvaluatedSnippetsResultVals(sequenceOf(null), results)
     }
 }
 
@@ -380,13 +431,7 @@ private fun checkEvaluatedSnippetsResultVals(
     evaluationResults: ResultWithDiagnostics<List<LinkedSnippet<KJvmEvaluatedSnippet>>>
 ) {
     val expectedIter = expectedResultVals.iterator()
-    val successResults = evaluationResults.valueOr { failure ->
-        fail(
-            "Evaluation failed:\n  ${failure.reports.joinToString("\n  ") {
-                    it.exception?.toString() ?: it.message
-                }}"
-        )
-    }
+    val successResults = evaluationResults.valueOrThrow()
     for (res in successResults) {
         if (!expectedIter.hasNext()) break
         val expectedVal = expectedIter.next()

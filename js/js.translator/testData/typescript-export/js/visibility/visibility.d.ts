@@ -59,8 +59,7 @@ declare namespace JS_TESTS {
             }
         }
         class classWithProtectedConstructors {
-            protected constructor();
-            protected static createWithString(arg: string): Class.classWithProtectedConstructors;
+            private constructor();
         }
         namespace classWithProtectedConstructors {
             /** @deprecated $metadata$ is used for internal purposes, please don't use it in your code, because it can be removed at any moment */
@@ -76,6 +75,44 @@ declare namespace JS_TESTS {
             namespace $metadata$ {
                 const constructor: abstract new () => publicClass;
             }
+        }
+    }
+    class FinalClass {
+        private constructor();
+    }
+    namespace FinalClass {
+        /** @deprecated $metadata$ is used for internal purposes, please don't use it in your code, because it can be removed at any moment */
+        namespace $metadata$ {
+            const constructor: abstract new () => FinalClass;
+        }
+    }
+    class FinalClassWithPublicPrimaryProtectedSecondaryCtor {
+        constructor(s: string);
+    }
+    namespace FinalClassWithPublicPrimaryProtectedSecondaryCtor {
+        /** @deprecated $metadata$ is used for internal purposes, please don't use it in your code, because it can be removed at any moment */
+        namespace $metadata$ {
+            const constructor: abstract new () => FinalClassWithPublicPrimaryProtectedSecondaryCtor;
+        }
+    }
+    class FinalClassWithProtectedPrimaryPublicSecondaryCtor {
+        private constructor();
+        static fromInt(n: number): FinalClassWithProtectedPrimaryPublicSecondaryCtor;
+    }
+    namespace FinalClassWithProtectedPrimaryPublicSecondaryCtor {
+        /** @deprecated $metadata$ is used for internal purposes, please don't use it in your code, because it can be removed at any moment */
+        namespace $metadata$ {
+            const constructor: abstract new () => FinalClassWithProtectedPrimaryPublicSecondaryCtor;
+        }
+    }
+    class FinalClassWithOnlySecondaryCtorsMixedVisibility {
+        private constructor();
+        static fromString(s: string): FinalClassWithOnlySecondaryCtorsMixedVisibility;
+    }
+    namespace FinalClassWithOnlySecondaryCtorsMixedVisibility {
+        /** @deprecated $metadata$ is used for internal purposes, please don't use it in your code, because it can be removed at any moment */
+        namespace $metadata$ {
+            const constructor: abstract new () => FinalClassWithOnlySecondaryCtorsMixedVisibility;
         }
     }
     abstract class EnumClass {
