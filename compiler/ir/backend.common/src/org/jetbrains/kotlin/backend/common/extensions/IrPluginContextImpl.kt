@@ -5,9 +5,6 @@
 
 package org.jetbrains.kotlin.backend.common.extensions
 
-import org.jetbrains.kotlin.backend.common.ir.Symbols
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -58,10 +55,6 @@ open class IrPluginContextImpl(
     override val messageCollector: MessageCollector,
     diagnosticReporter: DiagnosticReporter = DiagnosticReporterFactory.createReporter(messageCollector),
 ) : IrPluginContext {
-    @Deprecated("This API is deprecated. Use `irBuiltIns` instead.", level = DeprecationLevel.ERROR)
-    override val symbols: Symbols
-        get() = error("`symbols` are deprecated")
-
     override val afterK2: Boolean = false
 
     override val platform: TargetPlatform? = module.platform
@@ -100,19 +93,6 @@ open class IrPluginContextImpl(
         return symbol
     }
 
-    @Deprecated("Use messageCollector or diagnosticReporter properties instead", level = DeprecationLevel.ERROR)
-    override fun createDiagnosticReporter(pluginId: String): MessageCollector {
-        return object : MessageCollector by messageCollector {
-            override fun report(
-                severity: CompilerMessageSeverity,
-                message: String,
-                location: CompilerMessageSourceLocation?
-            ) {
-                messageCollector.report(severity, "[Plugin $pluginId] $message", location)
-            }
-        }
-    }
-
     override val diagnosticReporter: IrDiagnosticReporter =
         KtDiagnosticReporterWithImplicitIrBasedContext(diagnosticReporter, languageVersionSettings)
 
@@ -126,6 +106,26 @@ open class IrPluginContextImpl(
         linker.postProcess(inOrAfterLinkageStep = false)
 
         return symbols
+    }
+
+    override fun referenceClass(classId: ClassId, fromFile: IrFile): IrClassSymbol? {
+        return referenceClass(classId)
+    }
+
+    override fun referenceConstructors(classId: ClassId, fromFile: IrFile): Collection<IrConstructorSymbol> {
+        return referenceConstructors(classId)
+    }
+
+    override fun referenceFunctions(callableId: CallableId, fromFile: IrFile): Collection<IrSimpleFunctionSymbol> {
+        return referenceFunctions(callableId)
+    }
+
+    override fun referenceProperties(callableId: CallableId, fromFile: IrFile): Collection<IrPropertySymbol> {
+        return referenceProperties(callableId)
+    }
+
+    override fun referenceClassifier(classId: ClassId, fromFile: IrFile): IrSymbol? {
+        return referenceClassifier(classId)
     }
 
     @Deprecated("This API is deprecated. It will be removed after the 2.3 release", level = DeprecationLevel.WARNING)
@@ -179,22 +179,43 @@ open class IrPluginContextImpl(
         }
     }
 
+    @IrPluginContext.LookupWithoutUseSiteFile
+    @OptIn(ObsoleteDescriptorBasedAPI::class)
     override fun referenceClass(classId: ClassId): IrClassSymbol? {
-        return referenceClass(classId.asSingleFqName())
+        val fqName = classId.asSingleFqName()
+        return resolveSymbol(fqName.parent()) l@{ scope ->
+            when (val descriptor = scope.getContributedClassifier(fqName.shortName(), NoLookupLocation.FROM_BACKEND)) {
+                is TypeAliasDescriptor -> st.descriptorExtension.referenceClass(descriptor.classDescriptor ?: return@l null)
+                is ClassDescriptor -> st.descriptorExtension.referenceClass(descriptor)
+                else -> null
+            }
+        }
     }
 
-    override fun referenceTypeAlias(classId: ClassId): IrTypeAliasSymbol? {
-        return referenceTypeAlias(classId.asSingleFqName())
+    @IrPluginContext.LookupWithoutUseSiteFile
+    @OptIn(ObsoleteDescriptorBasedAPI::class)
+    override fun referenceClassifier(classId: ClassId): IrSymbol? {
+        val fqName = classId.asSingleFqName()
+        return resolveSymbol(fqName.parent()) { scope ->
+            when (val descriptor = scope.getContributedClassifier(fqName.shortName(), NoLookupLocation.FROM_BACKEND)) {
+                is TypeAliasDescriptor -> st.descriptorExtension.referenceTypeAlias(descriptor)
+                is ClassDescriptor -> st.descriptorExtension.referenceClass(descriptor)
+                else -> null
+            }
+        }
     }
 
+    @IrPluginContext.LookupWithoutUseSiteFile
     override fun referenceConstructors(classId: ClassId): Collection<IrConstructorSymbol> {
         return referenceConstructors(classId.asSingleFqName())
     }
 
+    @IrPluginContext.LookupWithoutUseSiteFile
     override fun referenceFunctions(callableId: CallableId): Collection<IrSimpleFunctionSymbol> {
         return referenceFunctions(callableId.asSingleFqName())
     }
 
+    @IrPluginContext.LookupWithoutUseSiteFile
     override fun referenceProperties(callableId: CallableId): Collection<IrPropertySymbol> {
         return referenceProperties(callableId.asSingleFqName())
     }

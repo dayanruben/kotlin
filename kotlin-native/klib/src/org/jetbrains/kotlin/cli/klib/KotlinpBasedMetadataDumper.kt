@@ -96,7 +96,7 @@ internal class KotlinpBasedMetadataDumper(
         metadataVersion = originalModuleMetadata.metadataVersion,
     )
 
-    private fun loadModuleMetadata(library: KotlinLibrary) = KlibModuleMetadata.read(
+    private fun loadModuleMetadata(library: KotlinLibrary) = KlibModuleMetadata.readLenient(
         object : KlibModuleMetadata.MetadataLibraryProvider {
             private val metadata = library.metadata
             override val moduleHeaderData get() = metadata.moduleHeaderData
@@ -110,7 +110,7 @@ internal class KotlinpBasedMetadataDumper(
     private fun prepareSignatureComputer(library: KotlinLibrary, moduleMetadata: KlibModuleMetadata): ExternalSignatureComputer? {
         val signatureCollector = SignaturesCollector(signatureRenderer ?: return null)
 
-        val moduleDescriptor = ModuleDescriptorLoader(output).load(library)
+        val moduleDescriptor = ModuleDescriptorLoader(output).load(library) ?: return null
         moduleDescriptor.accept(signatureCollector, Unit)
 
         return ExternalSignatureComputer(moduleMetadata, signatureCollector.signatures::get)

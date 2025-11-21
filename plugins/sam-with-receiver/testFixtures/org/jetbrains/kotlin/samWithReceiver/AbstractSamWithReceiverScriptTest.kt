@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
 import org.jetbrains.kotlin.scripting.configuration.ScriptingConfigurationKeys
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
+import org.jetbrains.kotlin.scripting.definitions.ScriptEvaluationConfigurationFromHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.extensions.SamWithReceiverAnnotations
 import kotlin.script.templates.ScriptTemplateDefinition
@@ -20,9 +20,16 @@ import kotlin.script.templates.ScriptTemplateDefinition
 abstract class AbstractSamWithReceiverScriptTest : AbstractDiagnosticsTest() {
 
     override fun setupEnvironment(environment: KotlinCoreEnvironment) {
-        val def = ScriptDefinition.FromLegacy(
+        @Suppress("DEPRECATION")
+        val def = ScriptDefinition.FromConfigurations(
             defaultJvmScriptingHostConfiguration,
-            KotlinScriptDefinitionFromAnnotatedTemplate(ScriptForSamWithReceivers::class, emptyMap())
+            org.jetbrains.kotlin.scripting.definitions.ScriptCompilationConfigurationFromLegacyTemplate(
+                defaultJvmScriptingHostConfiguration,
+                ScriptForSamWithReceivers::class
+            ),
+            ScriptEvaluationConfigurationFromHostConfiguration(
+                defaultJvmScriptingHostConfiguration
+            )
         )
         environment.configuration.add(ScriptingConfigurationKeys.SCRIPT_DEFINITIONS, def)
         val anns = def.annotationsForSamWithReceivers

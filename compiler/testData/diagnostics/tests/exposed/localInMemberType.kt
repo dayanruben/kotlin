@@ -1,5 +1,6 @@
 // RUN_PIPELINE_TILL: FRONTEND
 // FIR_IDENTICAL
+// LATEST_LV_DIFFERENCE
 class Something {
     public val publicVal1 = object { override fun toString() = "!" }
     protected val protectedVal1 = object { override fun toString() = "!" }

@@ -3,6 +3,7 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+
 package org.jetbrains.kotlin.analysis.low.level.api.fir.sessions
 
 import com.intellij.openapi.project.Project
@@ -10,10 +11,9 @@ import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.scripting.compiler.plugin.services.FirScriptConfiguratorExtensionImpl
 import org.jetbrains.kotlin.scripting.compiler.plugin.services.FirScriptDefinitionProviderService
 import org.jetbrains.kotlin.scripting.compiler.plugin.services.FirScriptResolutionConfigurationExtensionImpl
+import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
-import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 
 /**
@@ -24,8 +24,9 @@ import kotlin.script.experimental.host.ScriptingHostConfiguration
 internal class FirScriptingCompilerExtensionIdeRegistrar(
     private val project: Project,
     private val hostConfiguration: ScriptingHostConfiguration,
-    private val scriptDefinitionSources: List<ScriptDefinitionsSource>,
-    private val scriptDefinitions: List<ScriptDefinition>
+    @Suppress("DEPRECATION") //KT-82551
+    private val scriptDefinitionSources: List<org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource>,
+    private val scriptDefinitions: List<ScriptDefinition>,
 ) : FirExtensionRegistrar() {
 
     override fun ExtensionRegistrarContext.configurePlugin() {

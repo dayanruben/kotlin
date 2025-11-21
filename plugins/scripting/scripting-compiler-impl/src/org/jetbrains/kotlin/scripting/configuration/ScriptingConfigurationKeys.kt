@@ -7,15 +7,15 @@ package org.jetbrains.kotlin.scripting.configuration
 
 import org.jetbrains.kotlin.config.CompilerConfigurationKey
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import java.io.File
 
 object ScriptingConfigurationKeys {
 
     val SCRIPT_DEFINITIONS = CompilerConfigurationKey.create<List<ScriptDefinition>>("script definitions")
 
+    @Suppress("DEPRECATION") //KT-82551
     val SCRIPT_DEFINITIONS_SOURCES =
-        CompilerConfigurationKey.create<List<ScriptDefinitionsSource>>("script definitions sources")
+        CompilerConfigurationKey.create<List<org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource>>("script definitions sources")
 
     val DISABLE_SCRIPTING_PLUGIN_OPTION: CompilerConfigurationKey<Boolean> =
         CompilerConfigurationKey.create("Disable scripting plugin")

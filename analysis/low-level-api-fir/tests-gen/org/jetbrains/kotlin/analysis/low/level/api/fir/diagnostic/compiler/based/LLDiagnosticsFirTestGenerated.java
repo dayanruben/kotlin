@@ -1834,6 +1834,12 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
       }
 
       @Test
+      @TestMetadata("delegationWithReturn.kt")
+      public void testDelegationWithReturn() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/checkers/delegationWithReturn.kt");
+      }
+
+      @Test
       @TestMetadata("dnnTypeWithAdditionalNullableBound.kt")
       public void testDnnTypeWithAdditionalNullableBound() {
         runTest("compiler/fir/analysis-tests/testData/resolve/checkers/dnnTypeWithAdditionalNullableBound.kt");
@@ -5823,6 +5829,12 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
         runTest("compiler/fir/analysis-tests/testData/resolve/extraCheckers/RedundantVisibilityOfProtectedOverride.kt");
       }
 
+      @Test
+      @TestMetadata("RedundantVisibilityPrivateVsProtected.kt")
+      public void testRedundantVisibilityPrivateVsProtected() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/extraCheckers/RedundantVisibilityPrivateVsProtected.kt");
+      }
+
       @Nested
       @TestMetadata("compiler/fir/analysis-tests/testData/resolve/extraCheckers/emptyRangeChecker")
       @TestDataPath("$PROJECT_ROOT")
@@ -6837,6 +6849,12 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
       @TestMetadata("lambdaWithAnonymousObject.kt")
       public void testLambdaWithAnonymousObject() {
         runTest("compiler/fir/analysis-tests/testData/resolve/localClasses/lambdaWithAnonymousObject.kt");
+      }
+
+      @Test
+      @TestMetadata("localClassApproximationAfter.kt")
+      public void testLocalClassApproximationAfter() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/localClasses/localClassApproximationAfter.kt");
       }
 
       @Test

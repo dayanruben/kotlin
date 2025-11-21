@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.scripting.compiler.plugin.definitions
 
 import org.jetbrains.kotlin.scripting.definitions.LazyScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -34,7 +33,8 @@ open class CliScriptDefinitionProvider : LazyScriptDefinitionProvider() {
         }
     }
 
-    fun setScriptDefinitionsSources(newSources: List<ScriptDefinitionsSource>) {
+    @Suppress("DEPRECATION") //KT-82551
+    fun setScriptDefinitionsSources(newSources: List<org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource>) {
         definitionsLock.withLock {
             definitionsFromSources.clear()
             for (it in newSources) {
