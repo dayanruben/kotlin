@@ -606,8 +606,10 @@ internal class JsAstMapperVisitor(
         return visitNode<JsObjectLiteral>(ctx.objectLiteral())
     }
 
-    override fun visitMetaExpression(ctx: JavaScriptParser.MetaExpressionContext): JsNode? {
-        reportError("Meta expressions are not supported yet", ctx)
+    override fun visitMetaExpression(ctx: JavaScriptParser.MetaExpressionContext): JsNameRef {
+        return makeRefNode(ctx.Target().text).apply {
+            qualifier = makeRefNode(ctx.New().text).applyLocation(ctx.New())
+        }.applyLocation(ctx.Target())
     }
 
     override fun visitInExpression(ctx: JavaScriptParser.InExpressionContext): JsBinaryOperation {
@@ -1071,28 +1073,34 @@ internal class JsAstMapperVisitor(
     }
 
     override fun visitNumericLiteral(ctx: JavaScriptParser.NumericLiteralContext): JsNumberLiteral {
-        ctx.BinaryIntegerLiteral()?.run {
-            reportError("Binary integer literals are not supported yet", ctx)
+        if ('_' in ctx.text)
+            reportError("Numeric separators are not supported yet", ctx)
+
+        ctx.BinaryIntegerLiteral()?.let { binaryLiteral ->
+            return binaryLiteral.text.toBinaryLiteral().applyLocation(ctx)
         }
 
-        ctx.OctalIntegerLiteral()?.let {
-            val value = it.text.removePrefix("0")
-
+        ctx.OctalIntegerLiteral()?.let { octalLiteral ->
             // In a non-strict mode invalid old octal literals, such are containing 8 and 9 (like 0888 or 0999)
             // are treated like decimal literals (888 and 999 correspondingly).
             // To embrace compatibility, we emit a warning here like the old GWT parser did.
-            value.forEach { digit ->
+            octalLiteral.text.forEach { digit ->
                 if (digit !in '0'..'7') {
-                    reportWarning("illegal octal value '$value'; interpreting it as a decimal value", it.startPosition, it.stopPosition)
-                    return value.toDecimalLiteral().applyLocation(ctx)
+                    val decimalPart = octalLiteral.text.removePrefix("0")
+                    reportWarning(
+                        "illegal octal value '$decimalPart'; interpreting it as a decimal value",
+                        octalLiteral.startPosition,
+                        octalLiteral.stopPosition
+                    )
+                    return decimalPart.toDecimalLiteral().applyLocation(ctx)
                 }
             }
 
-            return value.toOctalLiteral().applyLocation(ctx)
+            return octalLiteral.text.toOctalLiteral().applyLocation(ctx)
         }
 
-        ctx.OctalIntegerLiteral2()?.run {
-            reportError("Octal integer literals are not supported yet", ctx)
+        ctx.OctalIntegerLiteral2()?.let { newOctalLiteral ->
+            return newOctalLiteral.text.toOctalLiteral().applyLocation(ctx)
         }
 
         ctx.DecimalLiteral()?.let { decimalTerminal ->

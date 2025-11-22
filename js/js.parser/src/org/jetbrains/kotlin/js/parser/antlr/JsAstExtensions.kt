@@ -81,7 +81,8 @@ internal fun String.toHexLiteral(): JsNumberLiteral {
 }
 
 internal fun String.toOctalLiteral(): JsNumberLiteral {
-    val longValue = removePrefix("0").toLong(8)
+    val longValue = removePrefix("0").removePrefix("O").removePrefix("o")
+        .toLong(8)
 
     return if (longValue in Int.MIN_VALUE..Int.MAX_VALUE)
         JsIntLiteral(longValue.toInt())
@@ -96,6 +97,16 @@ internal fun JavaScriptParser.VarModifierContext.toVarVariant(): JsVars.Variant?
         Const() != null -> JsVars.Variant.Const
         else -> null
     }
+
+internal fun String.toBinaryLiteral(): JsNumberLiteral {
+    val longValue = removePrefix("0b").removePrefix("0B")
+        .toLong(2)
+
+    return if (longValue in Int.MIN_VALUE..Int.MAX_VALUE)
+        JsIntLiteral(longValue.toInt())
+    else
+        JsDoubleLiteral(longValue.toDouble())
+}
 
 internal fun String.unescapeString(ctx: ParserRuleContext): String {
     val chars = this.toCharArray()
