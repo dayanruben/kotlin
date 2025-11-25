@@ -14,6 +14,7 @@ import org.jetbrains.kotlinx.dataframe.api.asColumn
 import org.jetbrains.kotlinx.dataframe.api.convert
 import org.jetbrains.kotlinx.dataframe.api.pathOf
 import org.jetbrains.kotlinx.dataframe.columns.toColumnSet
+import org.jetbrains.kotlinx.dataframe.plugin.extensions.ColumnType
 import org.jetbrains.kotlinx.dataframe.plugin.extensions.wrap
 import org.jetbrains.kotlinx.dataframe.plugin.impl.*
 import org.jetbrains.kotlinx.dataframe.plugin.impl.convert
@@ -47,7 +48,7 @@ internal class Convert6 : AbstractInterpreter<PluginDataFrameSchema>() {
     val Arguments.firstCol: String by arg()
     val Arguments.cols: List<String> by arg(defaultValue = Present(emptyList()))
     val Arguments.infer by ignore()
-    val Arguments.expression: TypeApproximation by type()
+    val Arguments.expression: ColumnType by type()
     val Arguments.receiver: PluginDataFrameSchema by dataFrame()
     override val Arguments.startingSchema get() = receiver
 
@@ -56,7 +57,7 @@ internal class Convert6 : AbstractInterpreter<PluginDataFrameSchema>() {
         val topLevelNames = receiver.columns().mapToSetOrEmpty { it.name }
         val assumedColumns = columns
             .filter { it !in topLevelNames }
-            .map { simpleColumnOf(it, expression.type) }
+            .map { simpleColumnOf(it, expression.coneType) }
         val df = PluginDataFrameSchema(receiver.columns() + assumedColumns)
         return df.convert(columnsResolver { columns.map { pathOf(it) }.toColumnSet() }) {
             expression
@@ -67,7 +68,7 @@ internal class Convert6 : AbstractInterpreter<PluginDataFrameSchema>() {
 class With0 : AbstractSchemaModificationInterpreter() {
     val Arguments.receiver: ConvertApproximation by arg()
     val Arguments.infer by ignore()
-    val Arguments.type: TypeApproximation by type(name("rowConverter"))
+    val Arguments.type: ColumnType by type(name("rowConverter"))
 
     override fun Arguments.interpret(): PluginDataFrameSchema {
         return receiver.schema.convert(receiver.columns) {
@@ -78,14 +79,14 @@ class With0 : AbstractSchemaModificationInterpreter() {
 
 class ConvertNotNull : AbstractSchemaModificationInterpreter() {
     val Arguments.receiver: ConvertApproximation by arg()
-    val Arguments.type: TypeApproximation by type(name("expression"))
+    val Arguments.type: ColumnType by type(name("expression"))
 
     override fun Arguments.interpret(): PluginDataFrameSchema {
         return receiver.schema.convertAsColumn(receiver.columns) {
             if (it is SimpleDataColumn) {
-                simpleColumnOf(it.name, type.type.withNullabilityOf(it.type.type, session.typeContext))
+                simpleColumnOf(it.name, type.coneType.withNullabilityOf(it.type.coneType, session.typeContext))
             } else {
-                simpleColumnOf(it.name, type.type)
+                simpleColumnOf(it.name, type.coneType)
             }
         }
     }
@@ -94,7 +95,7 @@ class ConvertNotNull : AbstractSchemaModificationInterpreter() {
 class PerRowCol : AbstractSchemaModificationInterpreter() {
     val Arguments.receiver: ConvertApproximation by arg()
     val Arguments.infer by ignore()
-    val Arguments.type: TypeApproximation by type(name("expression"))
+    val Arguments.type: ColumnType by type(name("expression"))
 
     override fun Arguments.interpret(): PluginDataFrameSchema {
         return receiver.schema.convert(receiver.columns) {
@@ -152,7 +153,7 @@ internal fun SimpleFrameColumn.map(transform: ColumnMapper, selected: ColumnsSet
 
 internal class To0 : AbstractInterpreter<PluginDataFrameSchema>() {
     val Arguments.receiver: ConvertApproximation by arg()
-    val Arguments.typeArg0: TypeApproximation by arg()
+    val Arguments.typeArg0: ColumnType by arg()
     override val Arguments.startingSchema get() = receiver.schema
 
     override fun Arguments.interpret(): PluginDataFrameSchema {
@@ -164,13 +165,13 @@ internal class To0 : AbstractInterpreter<PluginDataFrameSchema>() {
 
 internal class ConvertAsColumn : AbstractSchemaModificationInterpreter() {
     val Arguments.receiver: ConvertApproximation by arg()
-    val Arguments.typeArg2: TypeApproximation by arg()
-    val Arguments.type: TypeApproximation by type(name("columnConverter"))
+    val Arguments.typeArg2: ColumnType by arg()
+    val Arguments.type: ColumnType by type(name("columnConverter"))
 
     override fun Arguments.interpret(): PluginDataFrameSchema {
         return receiver.schema.asDataFrame()
             .convert { receiver.columns }
-            .asColumn { simpleColumnOf("", typeArg2.type).asDataColumn() }
+            .asColumn { simpleColumnOf("", typeArg2.coneType).asDataColumn() }
             .toPluginDataFrameSchema()
     }
 }

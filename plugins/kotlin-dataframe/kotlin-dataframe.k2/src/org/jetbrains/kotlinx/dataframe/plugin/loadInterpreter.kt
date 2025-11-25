@@ -294,6 +294,7 @@ import org.jetbrains.kotlinx.dataframe.plugin.impl.api.TakeLast2
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ToSpecificType
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ToSpecificTypePattern
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ToSpecificTypeZone
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.TrimIndent
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.UpdateAt
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.UpdatePerColLambda
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.UpdatePerColMap
@@ -324,7 +325,7 @@ private object Stdlib {
         register(Names.TO, Names.PAIR, PairToConstructor())
         register(Names.PAIR_CONSTRUCTOR, Names.PAIR, PairConstructor())
         register(Names.TRIM_MARGIN, StandardClassIds.String, TrimMargin())
-        register(Names.TRIM_INDENT, StandardClassIds.String, TrimMargin())
+        register(Names.TRIM_INDENT, StandardClassIds.String, TrimIndent())
     }
 
     @OptIn(UnresolvedExpressionTypeAccess::class)
@@ -356,7 +357,8 @@ internal fun FirFunctionCall.interpreterName(session: FirSession): String? {
         }
 }
 
-internal val KotlinTypeFacade.loadInterpreter: FirFunctionCall.() -> Interpreter<*>? get() = { this.loadInterpreter(session, isTest) }
+context(facade: KotlinTypeFacade)
+fun FirFunctionCall.loadInterpreter(): Interpreter<*>? = this.loadInterpreter(facade.session, facade.isTest)
 
 internal val FirGetClassCall.classId: ClassId?
     get() {
@@ -367,16 +369,11 @@ internal val FirGetClassCall.classId: ClassId?
         }
     }
 
-internal inline fun <reified T> ClassId.load(): T {
-    val constructor = Class.forName(asFqNameString())
-        .constructors
-        .firstOrNull { constructor -> constructor.parameterCount == 0 }
-        ?: error("Interpreter $this must have an empty constructor")
-
-    return constructor.newInstance() as T
+internal inline fun <reified T : Interpreter<*>> String.load(isTest: Boolean): T? {
+    return loadImpl(isTest) as T?
 }
 
-internal inline fun <reified T : Interpreter<*>> String.load(isTest: Boolean): T? {
+private fun String.loadImpl(isTest: Boolean): Interpreter<*>? {
     return when (this) {
         "Add" -> Add()
         "From" -> From()
@@ -660,5 +657,5 @@ internal inline fun <reified T : Interpreter<*>> String.load(isTest: Boolean): T
         "ConcatWithKeys" -> ConcatWithKeys()
         "DataFrameUnfold" -> DataFrameUnfold()
         else -> if (isTest) error(this) else null
-    } as T?
+    }
 }

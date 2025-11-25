@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.name.StandardClassIds.List
 import org.jetbrains.kotlinx.dataframe.codeGen.FieldKind
 import org.jetbrains.kotlinx.dataframe.plugin.classId
+import org.jetbrains.kotlinx.dataframe.plugin.extensions.ColumnType
 import org.jetbrains.kotlinx.dataframe.plugin.extensions.KotlinTypeFacade
 import org.jetbrains.kotlinx.dataframe.plugin.extensions.wrap
 import org.jetbrains.kotlinx.dataframe.plugin.impl.*
@@ -77,7 +78,7 @@ class ToDataFrameColumn : AbstractSchemaModificationInterpreter() {
     val Arguments.columnName: String by arg()
 
     override fun Arguments.interpret(): PluginDataFrameSchema {
-        return PluginDataFrameSchema(listOf(simpleColumnOf(columnName, typeArg0.type)))
+        return PluginDataFrameSchema(listOf(simpleColumnOf(columnName, typeArg0.coneType)))
     }
 }
 
@@ -173,7 +174,7 @@ internal fun KotlinTypeFacade.toDataFrame(
         traverseConfiguration.preserveProperties.mapNotNullTo(mutableSetOf()) { it.calleeReference.toResolvedPropertySymbol() }
 
     fun convert(classLike: ConeKotlinType, depth: Int, makeNullable: Boolean): List<SimpleCol> {
-        val symbol = classLike.toRegularClassSymbol(session) ?: return emptyList()
+        val symbol = classLike.toRegularClassSymbol() ?: return emptyList()
         val scope = symbol.unsubstitutedScope(session, ScopeSession(), false, FirResolvePhase.STATUS)
         val declarations = if (symbol.fir is FirJavaClass) {
             scope
@@ -238,7 +239,7 @@ internal fun KotlinTypeFacade.toDataFrame(
                 if (keepSubtree || returnType.isValueType(session) || returnType.classId in preserveClasses || it in preserveProperties) {
                     SimpleDataColumn(
                         name,
-                        TypeApproximation(
+                        ColumnType(
                             returnType.withNullability(
                                 makeNullable,
                                 session.typeContext
@@ -372,8 +373,8 @@ class CreateDataFrameDslImplApproximation {
 class ToDataFrameFrom : AbstractInterpreter<Unit>() {
     val Arguments.dsl: CreateDataFrameDslImplApproximation by arg()
     val Arguments.receiver: String by arg()
-    val Arguments.expression: TypeApproximation by type()
+    val Arguments.expression: ColumnType by type()
     override fun Arguments.interpret() {
-        dsl.columns += simpleColumnOf(receiver, expression.type)
+        dsl.columns += simpleColumnOf(receiver, expression.coneType)
     }
 }

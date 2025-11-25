@@ -9,6 +9,7 @@ import org.jetbrains.kotlinx.dataframe.api.asColumnGroup
 import org.jetbrains.kotlinx.dataframe.api.select
 import org.jetbrains.kotlinx.dataframe.columns.toColumnSet
 import org.jetbrains.kotlinx.dataframe.impl.columns.ColumnsList
+import org.jetbrains.kotlinx.dataframe.plugin.extensions.ColumnType
 import org.jetbrains.kotlinx.dataframe.plugin.impl.*
 import org.jetbrains.kotlinx.dataframe.plugin.impl.data.ColumnPathApproximation
 import org.jetbrains.kotlinx.dataframe.plugin.impl.data.ColumnWithPathApproximation
@@ -40,7 +41,7 @@ internal class Expr0 : AbstractInterpreter<ColumnsResolver>() {
     val Arguments.receiver by ignore()
     val Arguments.name: String by arg(defaultValue = Present("untitled"))
     val Arguments.infer by ignore()
-    val Arguments.expression: TypeApproximation by type()
+    val Arguments.expression: ColumnType by type()
 
     override fun Arguments.interpret(): ColumnsResolver {
         return SingleColumnApproximation(
@@ -198,7 +199,7 @@ internal class AllFrom2 : AbstractInterpreter<ColumnsResolver>() {
 
 internal class ColsOf0 : AbstractInterpreter<ColumnsResolver>() {
     val Arguments.receiver by ignore()
-    val Arguments.typeArg0: TypeApproximation by arg()
+    val Arguments.typeArg0: ColumnType by arg()
 
     override fun Arguments.interpret(): ColumnsResolver {
         return object : ColumnsResolver {
@@ -207,7 +208,7 @@ internal class ColsOf0 : AbstractInterpreter<ColumnsResolver>() {
                     val path = ColumnPathApproximation(listOf(it.name))
                     ColumnWithPathApproximation(path, it)
                 }
-                return colsOf(cols, typeArg0.type)
+                return colsOf(cols, typeArg0.coneType)
             }
         }
     }
@@ -222,7 +223,7 @@ private fun Arguments.colsOf(cols: List<ColumnWithPathApproximation>, type: Cone
 
 fun SimpleCol.isColOf(type: ConeKotlinType, session: FirSession): Boolean {
     val columnType = when (this) {
-        is SimpleDataColumn -> this.type.type
+        is SimpleDataColumn -> this.type.coneType
         is SimpleColumnGroup -> Names.DATA_ROW_CLASS_ID.constructClassLikeType(
             typeArguments = arrayOf(session.builtinTypes.anyType.coneType)
         )
@@ -259,12 +260,12 @@ internal class ColsAtAnyDepth2 : AbstractInterpreter<ColumnsResolver>() {
 
 internal class ColsOf1 : AbstractInterpreter<ColumnsResolver>() {
     val Arguments.receiver: ColumnsResolver by arg()
-    val Arguments.typeArg0: TypeApproximation by arg()
+    val Arguments.typeArg0: ColumnType by arg()
 
     override fun Arguments.interpret(): ColumnsResolver {
         return object : ColumnsResolver {
             override fun resolve(df: PluginDataFrameSchema): List<ColumnWithPathApproximation> {
-                return colsOf(receiver.resolve(df), typeArg0.type)
+                return colsOf(receiver.resolve(df), typeArg0.coneType)
             }
         }
     }
@@ -272,11 +273,11 @@ internal class ColsOf1 : AbstractInterpreter<ColumnsResolver>() {
 
 internal class ColsOf2 : AbstractInterpreter<ColumnsResolver>() {
     val Arguments.receiver: SingleColumnApproximation by arg()
-    val Arguments.typeArg0: TypeApproximation by arg()
+    val Arguments.typeArg0: ColumnType by arg()
 
     override fun Arguments.interpret(): ColumnsResolver {
         return columnsResolver {
-            receiver.all().filter { it.asSimpleColumn().isColOf(typeArg0.type, session) }
+            receiver.all().filter { it.asSimpleColumn().isColOf(typeArg0.coneType, session) }
         }
     }
 }
@@ -295,7 +296,7 @@ internal class WithoutNulls0 : AbstractInterpreter<ColumnsResolver>() {
     }
 }
 
-private fun withoutNulls(col: SimpleCol): Boolean = col !is SimpleDataColumn || !col.type.type.isMarkedNullable
+private fun withoutNulls(col: SimpleCol): Boolean = col !is SimpleDataColumn || !col.type.coneType.isMarkedNullable
 
 internal class WithoutNulls1 : AbstractInterpreter<ColumnsResolver>() {
     val Arguments.receiver by ignore()

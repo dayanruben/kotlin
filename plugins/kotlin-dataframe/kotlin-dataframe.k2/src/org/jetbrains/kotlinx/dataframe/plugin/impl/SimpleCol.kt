@@ -7,11 +7,12 @@ import org.jetbrains.kotlin.fir.types.isMarkedNullable
 import org.jetbrains.kotlin.fir.types.isNullableNothing
 import org.jetbrains.kotlin.fir.types.isSubtypeOf
 import org.jetbrains.kotlin.fir.types.renderReadable
+import org.jetbrains.kotlinx.dataframe.plugin.extensions.ColumnType
 import org.jetbrains.kotlinx.dataframe.plugin.extensions.KotlinTypeFacade
+import org.jetbrains.kotlinx.dataframe.plugin.extensions.changeNullability
 import org.jetbrains.kotlinx.dataframe.plugin.extensions.wrap
 import org.jetbrains.kotlinx.dataframe.plugin.findSchemaArgument
 import org.jetbrains.kotlinx.dataframe.plugin.getSchema
-import org.jetbrains.kotlinx.dataframe.plugin.impl.api.TypeApproximation
 import org.jetbrains.kotlinx.dataframe.plugin.utils.Names
 
 data class PluginDataFrameSchema(
@@ -31,7 +32,7 @@ data class PluginDataFrameSchema(
 }
 
 fun PluginDataFrameSchema.add(name: String, type: ConeKotlinType, context: KotlinTypeFacade): PluginDataFrameSchema {
-    return PluginDataFrameSchema(columns() + context.simpleColumnOf(name, type))
+    return PluginDataFrameSchema(columns() + context(context) { simpleColumnOf(name, type) })
 }
 
 private fun List<SimpleCol>.asString(indent: String = ""): String {
@@ -47,7 +48,7 @@ private fun List<SimpleCol>.asString(indent: String = ""): String {
             }
 
             is SimpleDataColumn -> {
-                "${it.name}: ${it.type.type.renderReadable()}"
+                "${it.name}: ${it.type.coneType.renderReadable()}"
             }
         }
         "$indent$col"
@@ -66,7 +67,7 @@ sealed interface SimpleCol {
 
 data class SimpleDataColumn(
     override val name: String,
-    val type: TypeApproximation,
+    val type: ColumnType,
 ) : SimpleCol {
 
     override fun name(): String {
@@ -77,7 +78,7 @@ data class SimpleDataColumn(
         return SimpleDataColumn(s, type)
     }
 
-    fun changeType(type: TypeApproximation): SimpleDataColumn {
+    fun changeType(type: ColumnType): SimpleDataColumn {
         return SimpleDataColumn(name, type)
     }
 
@@ -110,15 +111,17 @@ data class SimpleColumnGroup(
     }
 }
 
-fun KotlinTypeFacade.simpleColumnOf(name: String, type: ConeKotlinType ): SimpleCol {
+context(facade: KotlinTypeFacade)
+fun simpleColumnOf(name: String, type: ConeKotlinType): SimpleCol {
     fun extractSchema(): PluginDataFrameSchema {
-        val objectWithSchema = context(session) { type.findSchemaArgument(isTest) } ?: error("Cannot extract DataFrame schema from type: $type")
+        val objectWithSchema = type.findSchemaArgument(facade.isTest) ?: error("Cannot extract DataFrame schema from type: $type")
         val schema = objectWithSchema.getSchema()
         return schema
     }
 
     val nullableDataRow = Names.DATA_ROW_CLASS_ID.constructClassLikeType(arrayOf(ConeStarProjection), isMarkedNullable = true)
-    return if (!type.isNullableNothing && type.isSubtypeOf(nullableDataRow, session)) {
+    val dataFrame = Names.DF_CLASS_ID.constructClassLikeType(arrayOf(ConeStarProjection))
+    return if (!type.isNullableNothing && type.isSubtypeOf(nullableDataRow, facade.session)) {
         val schema = extractSchema()
         val group = SimpleColumnGroup(name, schema.columns())
         val column = if (type.isMarkedNullable) {
@@ -127,7 +130,7 @@ fun KotlinTypeFacade.simpleColumnOf(name: String, type: ConeKotlinType ): Simple
             group
         }
         column
-    } else if (!type.isMarkedNullable && type.isSubtypeOf(Names.DF_CLASS_ID.constructClassLikeType(arrayOf(ConeStarProjection)), session)) {
+    } else if (!type.isMarkedNullable && type.isSubtypeOf(dataFrame, facade.session)) {
         val schema = extractSchema()
         SimpleFrameColumn(name, schema.columns())
     } else {
@@ -135,7 +138,8 @@ fun KotlinTypeFacade.simpleColumnOf(name: String, type: ConeKotlinType ): Simple
     }
 }
 
-internal fun KotlinTypeFacade.makeNullable(column: SimpleCol): SimpleCol {
+context(facade: KotlinTypeFacade)
+internal fun makeNullable(column: SimpleCol): SimpleCol {
     return when (column) {
         is SimpleColumnGroup -> {
             SimpleColumnGroup(column.name, column.columns().map { makeNullable(it) })
