@@ -35,7 +35,6 @@ dependencies {
     compileOnly(project(":compiler:frontend"))
     compileOnly(project(":compiler:frontend.java"))
     compileOnly(project(":compiler:plugin-api"))
-    compileOnly(project(":kotlin-build-common"))
 
     // Include kotlin.metadata for metadata stripping.
     // Note that kotlin-metadata-jvm already includes kotlin-metadata, core:metadata, core:metadata.jvm,
