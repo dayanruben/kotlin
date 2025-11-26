@@ -55177,6 +55177,12 @@ public class FirWasmWasiCodegenBoxTestGenerated extends AbstractFirWasmWasiCodeg
           }
 
           @Test
+          @TestMetadata("contextParameters.kt")
+          public void testContextParameters() {
+            runTest("compiler/testData/codegen/box/reflection/mapping/types/contextParameters.kt");
+          }
+
+          @Test
           @TestMetadata("createType.kt")
           public void testCreateType() {
             runTest("compiler/testData/codegen/box/reflection/mapping/types/createType.kt");
@@ -56260,6 +56266,12 @@ public class FirWasmWasiCodegenBoxTestGenerated extends AbstractFirWasmWasiCodeg
           @TestMetadata("inlineFun.kt")
           public void testInlineFun() {
             runTest("compiler/testData/codegen/box/reflection/properties/localDelegated/inlineFun.kt");
+          }
+
+          @Test
+          @TestMetadata("javaType.kt")
+          public void testJavaType() {
+            runTest("compiler/testData/codegen/box/reflection/properties/localDelegated/javaType.kt");
           }
 
           @Test
