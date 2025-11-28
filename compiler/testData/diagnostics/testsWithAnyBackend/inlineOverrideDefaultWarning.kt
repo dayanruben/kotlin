@@ -1,9 +1,10 @@
 // ISSUE: KT-82017
-// RUN_PIPELINE_TILL: FRONTEND
+// RUN_PIPELINE_TILL: BACKEND
+// LANGUAGE: -IrIntraModuleInlinerBeforeKlibSerialization -IrCrossModuleInlinerBeforeKlibSerialization
 // DIAGNOSTICS: -NOTHING_TO_INLINE
 // LANGUAGE: -ForbidOverriddenDefaultParametersInInline
 // FIR_IDENTICAL
-// TARGET_BACKEND: NATIVE, JS_IR
+// TARGET_BACKEND: NATIVE, JS_IR, WASM
 // ^^^ K/JVM legitimately raises not a warning, but error `NOT_YET_SUPPORTED_IN_INLINE`, irrelevant to ForbidOverriddenDefaultParametersInInline setting
 
 interface I {

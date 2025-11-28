@@ -4,6 +4,9 @@ import java.net.URI
 plugins {
     kotlin("multiplatform")
     id("generated-sources")
+    id("binaryen-configuration")
+    id("nodejs-configuration")
+    id("d8-configuration")
 }
 
 kotlin {

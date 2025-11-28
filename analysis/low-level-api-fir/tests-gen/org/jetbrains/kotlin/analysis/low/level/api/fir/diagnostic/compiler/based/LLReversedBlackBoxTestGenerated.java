@@ -10174,6 +10174,18 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
     }
 
     @Test
+    @TestMetadata("privateSuperType2.kt")
+    public void testPrivateSuperType2() {
+      runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/privateSuperType2.kt");
+    }
+
+    @Test
+    @TestMetadata("privateSuperTypeDefaults.kt")
+    public void testPrivateSuperTypeDefaults() {
+      runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/privateSuperTypeDefaults.kt");
+    }
+
+    @Test
     @TestMetadata("propertyReference.kt")
     public void testPropertyReference() {
       runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/propertyReference.kt");
@@ -46345,6 +46357,12 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
     @TestMetadata("reassignDestructured.kt")
     public void testReassignDestructured() {
       runTest("compiler/testData/codegen/box/primitiveTypes/reassignDestructured.kt");
+    }
+
+    @Test
+    @TestMetadata("smartCastOnNullableDoubleIdentityEquals.kt")
+    public void testSmartCastOnNullableDoubleIdentityEquals() {
+      runTest("compiler/testData/codegen/box/primitiveTypes/smartCastOnNullableDoubleIdentityEquals.kt");
     }
 
     @Test
