@@ -3340,6 +3340,46 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/smartcast/withImpliesContract.kt");
         }
       }
+
+      @Nested
+      @TestMetadata("compiler/fir/analysis-tests/testData/resolve/contextParameters/specificity")
+      @TestDataPath("$PROJECT_ROOT")
+      public class Specificity {
+        @Test
+        public void testAllFilesPresentInSpecificity() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/contextParameters/specificity"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("generics.kt")
+        public void testGenerics() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/specificity/generics.kt");
+        }
+
+        @Test
+        @TestMetadata("intVsLongWithContext.kt")
+        public void testIntVsLongWithContext() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/specificity/intVsLongWithContext.kt");
+        }
+
+        @Test
+        @TestMetadata("newSpecificity.kt")
+        public void testNewSpecificity() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/specificity/newSpecificity.kt");
+        }
+
+        @Test
+        @TestMetadata("three.kt")
+        public void testThree() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/specificity/three.kt");
+        }
+
+        @Test
+        @TestMetadata("transaction.kt")
+        public void testTransaction() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/specificity/transaction.kt");
+        }
+      }
     }
 
     @Nested
@@ -6588,6 +6628,18 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
         @Test
         public void testAllFilesPresentInCapturedTypes() {
           KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/inference/capturedTypes"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("elvisWithDeepGeneric.kt.can-freeze-ide")
+        public void testElvisWithDeepGeneric() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/inference/capturedTypes/elvisWithDeepGeneric.kt.can-freeze-ide");
+        }
+
+        @Test
+        @TestMetadata("elvisWithDeepGeneric2.kt.can-freeze-ide")
+        public void testElvisWithDeepGeneric2() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/inference/capturedTypes/elvisWithDeepGeneric2.kt.can-freeze-ide");
         }
 
         @Test
@@ -10425,6 +10477,12 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
       @TestMetadata("genericGetterForSyntheticProperty.kt")
       public void testGenericGetterForSyntheticProperty() {
         runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/j+k/genericGetterForSyntheticProperty.kt");
+      }
+
+      @Test
+      @TestMetadata("importJavaMapped.kt")
+      public void testImportJavaMapped() {
+        runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/j+k/importJavaMapped.kt");
       }
 
       @Test

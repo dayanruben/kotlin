@@ -47,10 +47,10 @@ private val jvmFilePhases = createFilePhases(
     ::DirectInvokeLowering,
     ::FunctionReferenceLowering,
 
+    ::JvmUpgradeCallableReferences,
     ::SuspendLambdaLowering,
     ::PropertyReferenceDelegationLowering,
     ::SingletonOrConstantDelegationLowering,
-    ::JvmUpgradeCallableReferences,
     ::PropertyReferenceLowering,
     ::ArrayConstructorLowering,
 

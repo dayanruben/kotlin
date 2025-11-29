@@ -10189,6 +10189,12 @@ public class JsCodegenSplittingInlineWithInlinedFunInKlibTestGenerated extends A
       }
 
       @Test
+      @TestMetadata("privateSuperTypeDefaults2.kt")
+      public void testPrivateSuperTypeDefaults2() {
+        runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/privateSuperTypeDefaults2.kt");
+      }
+
+      @Test
       @TestMetadata("propertyReference.kt")
       public void testPropertyReference() {
         runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/propertyReference.kt");
@@ -47781,12 +47787,6 @@ public class JsCodegenSplittingInlineWithInlinedFunInKlibTestGenerated extends A
         @TestMetadata("overrideWithExplicitBackingField.kt")
         public void testOverrideWithExplicitBackingField() {
           runTest("compiler/testData/codegen/box/properties/backingField/overrideWithExplicitBackingField.kt");
-        }
-
-        @Test
-        @TestMetadata("propertyWithBackingFieldAndWithContext.kt")
-        public void testPropertyWithBackingFieldAndWithContext() {
-          runTest("compiler/testData/codegen/box/properties/backingField/propertyWithBackingFieldAndWithContext.kt");
         }
       }
 

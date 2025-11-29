@@ -53,8 +53,9 @@ open class SExpressionBuilder {
 
 class WasmIrToText(
     private val debugInformationGenerator: DebugInformationGenerator? = null,
-    private val optimizeInstructionFlow: Boolean = true,
 ) : SExpressionBuilder(), DebugInformationConsumer {
+    private var currentFunction: WasmFunction.Defined? = null
+
     override fun consumeDebugInformation(debugInformation: DebugInformation) {
         debugInformation.forEach {
             newLine()
@@ -81,12 +82,8 @@ class WasmIrToText(
     }
 
     private fun appendInstrList(instr: List<WasmInstr>) {
-        if (optimizeInstructionFlow) {
-            for (instruction in processInstructionsFlow(instr.asSequence())) {
-                appendInstr(instruction)
-            }
-        } else {
-            instr.forEach(::appendInstr)
+        instr.forEach {
+            appendInstr(it)
         }
     }
 
@@ -103,8 +100,11 @@ class WasmIrToText(
         val op = wasmInstr.operator
 
         if (op.opcode == WASM_OP_PSEUDO_OPCODE) {
-            fun commentText() =
-                (wasmInstr.immediates.single() as WasmImmediate.ConstString).value
+            fun commentText(): String {
+                val comment = (wasmInstr.firstImmediateOrNull() as? WasmImmediate.ConstString?)?.value
+                check(comment != null)
+                return comment
+            }
 
             when (op) {
                 WasmOp.PSEUDO_COMMENT_PREVIOUS_INSTR -> {
@@ -149,13 +149,16 @@ class WasmIrToText(
             indent++
 
         if (wasmInstr.operator in setOf(WasmOp.CALL_INDIRECT, WasmOp.TABLE_INIT)) {
-            wasmInstr.immediates.reversed().forEach {
+            val reversed = mutableListOf<WasmImmediate>()
+            wasmInstr.forEachImmediates(reversed::add)
+            reversed.reverse()
+            reversed.forEach {
                 appendImmediate(it)
             }
             stringBuilder.append(wasmInstr.operator.tailMnemonic)
             return
         }
-        wasmInstr.immediates.forEach {
+        wasmInstr.forEachImmediates {
             appendImmediate(it)
         }
         stringBuilder.append(wasmInstr.operator.tailMnemonic)
@@ -175,7 +178,7 @@ class WasmIrToText(
             }
             is WasmImmediate.BlockType -> appendBlockType(x)
             is WasmImmediate.FuncIdx -> appendModuleFieldReference(x.value.owner)
-            is WasmImmediate.LocalIdx -> appendLocalReference(x.value.owner)
+            is WasmImmediate.LocalIdx -> appendLocalReference(x.value)
             is WasmImmediate.GlobalIdx -> appendModuleFieldReference(x.value.owner)
             is WasmImmediate.TypeIdx -> sameLineList("type") { appendModuleFieldReference(x.value.owner) }
             is WasmImmediate.MemoryIdx -> appendIdxIfNotZero(x.value)
@@ -191,7 +194,7 @@ class WasmIrToText(
             is WasmImmediate.ValTypeVector -> sameLineList("result") { x.value.forEach { appendType(it) } }
 
             is WasmImmediate.GcType -> appendModuleFieldReference(x.value.owner)
-            is WasmImmediate.StructFieldIdx -> appendElement(x.value.owner.toString())
+            is WasmImmediate.StructFieldIdx -> appendElement(x.value.toString())
             is WasmImmediate.HeapType -> {
                 appendHeapType(x.value)
             }
@@ -405,7 +408,9 @@ class WasmIrToText(
                 }
             }
             function.locals.forEach { if (!it.isParameter) appendLocal(it) }
+            currentFunction = function
             appendInstrList(function.instructions)
+            currentFunction = null
         }
     }
 
@@ -592,6 +597,10 @@ class WasmIrToText(
 
     fun appendLocalReference(local: WasmLocal) {
         appendElement("$${local.id}_${sanitizeWatIdentifier(local.name)}")
+    }
+
+    fun appendLocalReference(local: Int) {
+        appendLocalReference(currentFunction!!.locals[local])
     }
 
     fun appendIdxIfNotZero(id: Int) {

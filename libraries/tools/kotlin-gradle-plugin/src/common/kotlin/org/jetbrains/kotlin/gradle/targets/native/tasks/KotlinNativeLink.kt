@@ -238,24 +238,8 @@ constructor(
     internal val externalDependenciesBuildCompilerArgs: ListProperty<String> = objectFactory.listProperty<String>().empty()
 
     private val gradleUserHomeDir = project.gradle.gradleUserHomeDir
-    private val cacheBuilderSettings by lazy {
-        CacheBuilder.Settings(
-            konanHome = kotlinNativeProvider.flatMap { it.bundleDirectory }.map { File(it) },
-            konanCacheKind = konanCacheKind,
-            gradleUserHomeDir = gradleUserHomeDir,
-            konanTarget = konanTarget,
-            toolOptions = toolOptions,
-            externalDependenciesArgs = externalDependenciesBuildCompilerArgs.get(),
-            debuggable = binary.debuggable,
-            optimized = binary.optimized,
-            konanDataDir = kotlinNativeProvider.flatMap { it.konanDataDir.map { File(it) } },
-            kotlinCompilerArgumentsLogLevel = kotlinCompilerArgumentsLogLevel,
-            forceDisableRunningInProcess = forceDisableRunningInProcess,
-        )
-    }
 
     private class CacheSettings(
-        val orchestration: NativeCacheOrchestration,
         val icEnabled: Boolean,
         val threads: Int,
         val gradleUserHomeDir: File,
@@ -263,7 +247,6 @@ constructor(
     )
 
     private val cacheSettings = CacheSettings(
-        project.getKonanCacheOrchestration(),
         project.isKonanIncrementalCompilationEnabled(),
         project.getKonanParallelThreads(),
         project.gradle.gradleUserHomeDir,
@@ -461,36 +444,19 @@ constructor(
 
             val additionalOptions = mutableListOf<String>().apply {
                 addAll(externalDependenciesBuildCompilerArgs.get())
-                when (cacheSettings.orchestration) {
-                    NativeCacheOrchestration.Compiler -> {
-                        if (konanCacheKind.get() != NativeCacheKind.NONE
-                            && !optimized
-                            && konanPropertiesService.get().cacheWorksFor(konanTarget)
-                        ) {
-                            add("-Xauto-cache-from=${cacheSettings.gradleUserHomeDir}")
-                            add("-Xbackend-threads=${cacheSettings.threads}")
-                            if (cacheSettings.icEnabled) {
-                                val icCacheDir = cacheSettings.gradleBuildDir
-                                    .resolve("kotlin-native-ic-cache")
-                                    .resolve(binaryName)
-                                icCacheDir.mkdirs()
-                                add("-Xenable-incremental-compilation")
-                                add("-Xic-cache-dir=$icCacheDir")
-                            }
-                        }
-                    }
-                    NativeCacheOrchestration.Gradle -> {
-                        if (cacheSettings.icEnabled) {
-                            logger.warn(
-                                "K/N incremental compilation only works in conjunction with kotlin.native.cacheOrchestration=compiler"
-                            )
-                        }
-                        val cacheBuilder = CacheBuilder(
-                            settings = cacheBuilderSettings,
-                            konanPropertiesService = konanPropertiesService.get(),
-                            nativeCompilerRunner = nativeCompilerRunner,
-                        )
-                        addAll(cacheBuilder.buildCompilerArgs(resolvedConfiguration))
+                if (konanCacheKind.get() != NativeCacheKind.NONE
+                    && !optimized
+                    && konanPropertiesService.get().cacheWorksFor(konanTarget)
+                ) {
+                    add("-Xauto-cache-from=${cacheSettings.gradleUserHomeDir}")
+                    add("-Xbackend-threads=${cacheSettings.threads}")
+                    if (cacheSettings.icEnabled) {
+                        val icCacheDir = cacheSettings.gradleBuildDir
+                            .resolve("kotlin-native-ic-cache")
+                            .resolve(binaryName)
+                        icCacheDir.mkdirs()
+                        add("-Xenable-incremental-compilation")
+                        add("-Xic-cache-dir=$icCacheDir")
                     }
                 }
             }

@@ -39,12 +39,15 @@ class DeclarationGenerator(
     private val wasmModuleMetadataCache: WasmModuleMetadataCache,
     private val allowIncompleteImplementations: Boolean,
     private val skipCommentInstructions: Boolean,
+    skipLocations: Boolean,
 ) : IrVisitorVoid() {
     // Shortcuts
     private val irBuiltIns: IrBuiltIns = backendContext.irBuiltIns
 
     private val unitGetInstanceFunction: IrSimpleFunction by lazy { backendContext.findUnitGetInstanceFunction() }
     private val unitPrimaryConstructor: IrConstructor? by lazy { backendContext.irBuiltIns.unitClass.owner.primaryConstructor }
+
+    private val locationProvider = if (skipLocations) LocationProviderStub else LocationProviderImpl
 
     override fun visitElement(element: IrElement) {
         error("Unexpected element of type ${element::class}")
@@ -141,12 +144,15 @@ class DeclarationGenerator(
 
         val sourceFile = declaration.getSourceFile()!!
         val locationTarget = declaration.locationTarget
-        val functionStartLocation = locationTarget.getSourceLocation(declaration.symbol, sourceFile)
-        val functionEndLocation = locationTarget.getSourceLocation(declaration.symbol, sourceFile, LocationType.END)
+        val functionStartLocation = locationProvider.getSourceLocation(locationTarget, declaration.symbol, sourceFile)
+        val functionEndLocation = locationProvider.getSourceEndLocation(locationTarget, declaration.symbol, sourceFile)
+
+        val expressionBuilder = WasmExpressionBuilderWithOptimizer(skipCommentInstructions)
 
         val function = WasmFunction.Defined(
             watName,
             functionTypeSymbol,
+            instructions = expressionBuilder.expression,
             startLocation = functionStartLocation,
             endLocation = functionEndLocation
         )
@@ -157,20 +163,20 @@ class DeclarationGenerator(
             wasmFileCodegenContext,
             wasmModuleTypeTransformer,
             sourceFile,
-            skipCommentInstructions
         )
 
         for (irParameter in irParameters) {
             functionCodegenContext.defineLocal(irParameter.symbol)
         }
 
-        val exprGen = functionCodegenContext.bodyGen
         val bodyBuilder = BodyGenerator(
             backendContext,
             wasmFileCodegenContext,
             functionCodegenContext,
             wasmModuleMetadataCache,
             wasmModuleTypeTransformer,
+            locationProvider,
+            expressionBuilder,
         )
 
         val declarationBody = declaration.body
@@ -186,15 +192,17 @@ class DeclarationGenerator(
         // variables on constructor call sites.
         // TODO: Redesign construction scheme.
         if (declaration is IrConstructor) {
-            exprGen.buildGetLocal(/*implicit this*/ function.locals[0], SourceLocation.NoLocation("Get implicit dispatch receiver"))
-            exprGen.buildInstr(WasmOp.RETURN, SourceLocation.NoLocation("Implicit return from constructor"))
+            expressionBuilder.buildGetLocal(/*implicit this*/ function.locals[0], SourceLocation.NoLocation("Get implicit dispatch receiver"))
+            expressionBuilder.buildInstr(WasmOp.RETURN, SourceLocation.NoLocation("Implicit return from constructor"))
         }
 
         // Add unreachable if function returns something but not as a last instruction.
         // We can do a separate lowering which adds explicit returns everywhere instead.
         if (wasmFunctionType.resultTypes.isNotEmpty()) {
-            exprGen.buildUnreachableForVerifier()
+            expressionBuilder.buildUnreachableForVerifier()
         }
+
+        expressionBuilder.complete()
 
         wasmFileCodegenContext.defineFunction(declaration.symbol, function)
 
@@ -576,17 +584,21 @@ class DeclarationGenerator(
         val wasmType = wasmModuleTypeTransformer.transformType(declaration.type)
 
         val initBody = mutableListOf<WasmInstr>()
-        val wasmExpressionGenerator = WasmExpressionBuilder(initBody, skipCommentInstructions = skipCommentInstructions)
+        val wasmExpressionGenerator = WasmExpressionBuilder(
+            expression = initBody,
+            skipCommentInstructions = skipCommentInstructions,
+        )
 
         val initValue: IrExpression? = declaration.initializer?.expression
         if (initValue is IrConst && initValue.kind !is IrConstKind.String) {
             val sourceFile = declaration.getSourceFile()!!
+            val location = locationProvider.getSourceLocation(initValue, declaration.symbol, sourceFile)
             generateConstExpression(
                 initValue,
                 wasmExpressionGenerator,
                 wasmFileCodegenContext,
                 backendContext,
-                initValue.getSourceLocation(declaration.symbol, sourceFile)
+                location
             )
         } else {
             generateDefaultInitializerForType(wasmType, wasmExpressionGenerator)

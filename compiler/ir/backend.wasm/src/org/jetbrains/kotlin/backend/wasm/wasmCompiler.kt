@@ -39,11 +39,13 @@ import org.jetbrains.kotlin.util.tryMeasurePhaseTime
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.wasm.config.WasmConfigurationKeys
+import org.jetbrains.kotlin.wasm.ir.ByteWriterWithOffsetWrite
+import org.jetbrains.kotlin.wasm.ir.WasmBinaryData
+import org.jetbrains.kotlin.wasm.ir.WasmBinaryData.Companion.writeTo
 import org.jetbrains.kotlin.wasm.ir.WasmExport
 import org.jetbrains.kotlin.wasm.ir.convertors.WasmIrToBinary
 import org.jetbrains.kotlin.wasm.ir.convertors.WasmIrToText
 import org.jetbrains.kotlin.wasm.ir.debug.DebugInformationGeneratorImpl
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -57,7 +59,7 @@ data class DynamicJsModule(
 class WasmCompilerResult(
     val wat: String?,
     val jsWrapper: String,
-    val wasm: ByteArray,
+    val wasm: WasmBinaryData,
     val debugInformation: DebugInformation?,
     val dts: String?,
     val useDebuggerCustomFormatters: Boolean,
@@ -210,11 +212,11 @@ fun compileWasm(
         null
     }
 
-    val os = ByteArrayOutputStream()
+    val writer = ByteWriterWithOffsetWrite()
 
     val wasmIrToBinary =
         WasmIrToBinary(
-            os,
+            writer,
             linkedModule,
             moduleName,
             emitNameSection,
@@ -226,7 +228,6 @@ fun compileWasm(
 
     wasmIrToBinary.appendWasmModule()
 
-    val byteArray = os.toByteArray()
     val jsWrapper: String
     val dynamicJsModules = mutableListOf<DynamicJsModule>()
 
@@ -299,7 +300,7 @@ fun compileWasm(
     return WasmCompilerResult(
         wat = wat,
         jsWrapper = jsWrapper.normalizeEmptyLines(),
-        wasm = byteArray,
+        wasm = writer.getBinaryData(),
         debugInformation = DebugInformation(
             sourceMapGeneratorForBinary?.generate(),
             sourceMapGeneratorForText?.generate(),
@@ -645,7 +646,7 @@ fun writeCompilationResult(
     if (result.wat != null) {
         File(dir, "$fileNameBase.wat").writeText(result.wat)
     }
-    File(dir, "$fileNameBase.wasm").writeBytes(result.wasm)
+    result.wasm.writeTo(File(dir, "$fileNameBase.wasm"))
 
     File(dir, "$fileNameBase.mjs").writeText(result.jsWrapper)
 

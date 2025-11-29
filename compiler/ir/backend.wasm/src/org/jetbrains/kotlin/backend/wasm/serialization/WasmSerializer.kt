@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.backend.wasm.serialization
 import org.jetbrains.kotlin.backend.wasm.ir2wasm.*
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.wasm.ir.*
-import org.jetbrains.kotlin.wasm.ir.convertors.ByteWriter
+import org.jetbrains.kotlin.wasm.ir.ByteWriter
 import org.jetbrains.kotlin.wasm.ir.source.location.SourceLocation
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
@@ -97,7 +97,7 @@ class WasmSerializer(outputStream: OutputStream) {
      *  need to defer writing the body until the reference table is created and written.
      */
     private val bodyBuffer = ByteArrayOutputStream()
-    private val body = ByteWriter.OutputStream(bodyBuffer)
+    private val body = ByteWriter(bodyBuffer)
 
     /**
      * Temporary buffer, mainly used to store content that is prepended by its size, but the
@@ -108,7 +108,7 @@ class WasmSerializer(outputStream: OutputStream) {
      *  reset its content manually.
      */
     private val tempBuffer = ByteArrayOutputStream()
-    private val temp = ByteWriter.OutputStream(tempBuffer)
+    private val temp = ByteWriter(tempBuffer)
 
     /**
      * The current serialization target. This can be set to differently according to the current
@@ -118,7 +118,7 @@ class WasmSerializer(outputStream: OutputStream) {
      */
     private var b: ByteWriter = body
 
-    private val out = ByteWriter.OutputStream(outputStream)
+    private val out = ByteWriter(outputStream)
 
     fun serialize(compiledFileFragment: WasmCompiledFileFragment) {
         // Step 1: process non-deferred serializations (put into bodyBuffer temporarily)
@@ -281,14 +281,37 @@ class WasmSerializer(outputStream: OutputStream) {
                 else -> error("Unknown pseudo-opcode: $instr")
             }
         }
-        if (instr.operator == WasmOp.CALL_PURE) {
-            opcode = 0xFFFF - 3
-        }
 
         b.writeUInt16(opcode.toUShort())
-        when (instr) {
-            is WasmInstrWithLocation -> withTag(InstructionTags.WITH_LOCATION) { serializeList(instr.immediates, ::serializeWasmImmediate); serializeSourceLocation(instr.location) }
-            is WasmInstrWithoutLocation -> withTag(InstructionTags.WITHOUT_LOCATION) { serializeList(instr.immediates, ::serializeWasmImmediate); }
+
+        val location = instr.location
+
+        val tag = if (location != null) {
+            when (instr.immediatesCount) {
+                0 -> InstructionTags.LOCATED0
+                1 -> InstructionTags.LOCATED1
+                2 -> InstructionTags.LOCATED2
+                3 -> InstructionTags.LOCATED3
+                4 -> InstructionTags.LOCATED4
+                else -> error("Invalid instruction with immediates count ${instr.immediatesCount}")
+            }
+        } else {
+            when (instr.immediatesCount) {
+                0 -> InstructionTags.NOT_LOCATED0
+                1 -> InstructionTags.NOT_LOCATED1
+                2 -> InstructionTags.NOT_LOCATED2
+                3 -> InstructionTags.NOT_LOCATED3
+                4 -> InstructionTags.NOT_LOCATED4
+                else -> error("Invalid instruction with immediates count ${instr.immediatesCount}")
+            }
+        }
+        withTag(tag) {
+            if (location != null) {
+                serializeSourceLocation(location)
+            }
+            instr.forEachImmediates {
+                serializeWasmImmediate(it)
+            }
         }
     }
 
@@ -299,25 +322,25 @@ class WasmSerializer(outputStream: OutputStream) {
             is WasmImmediate.Catch -> withTag(ImmediateTags.CATCH) { serializeCatchImmediate(i) }
             is WasmImmediate.ConstF32 -> withTag(ImmediateTags.CONST_F32) { b.writeUInt32(i.rawBits) }
             is WasmImmediate.ConstF64 -> withTag(ImmediateTags.CONST_F64) { b.writeUInt64(i.rawBits) }
-            is WasmImmediate.ConstI32 -> withTag(ImmediateTags.CONST_I32) { b.writeUInt32(i.value.toUInt()) }
-            is WasmImmediate.ConstI64 -> withTag(ImmediateTags.CONST_I64) { b.writeUInt64(i.value.toULong()) }
+            is WasmImmediate.ConstI32 -> withTag(ImmediateTags.CONST_I32) { serializeInt(i.value) }
+            is WasmImmediate.ConstI64 -> withTag(ImmediateTags.CONST_I64) { serializeLong(i.value) }
             is WasmImmediate.ConstString -> withTag(ImmediateTags.CONST_STRING) { serializeString(i.value) }
             is WasmImmediate.ConstU8 -> withTag(ImmediateTags.CONST_U8) { b.writeUByte(i.value) }
-            is WasmImmediate.DataIdx -> withTag(ImmediateTags.DATA_INDEX) { serializeWasmSymbolReadOnly(i.value) { b.writeUInt32(it.toUInt()) } }
+            is WasmImmediate.DataIdx -> withTag(ImmediateTags.DATA_INDEX) { serializeWasmSymbolReadOnly(i.value) { serializeInt(it) } }
             is WasmImmediate.ElemIdx -> withTag(ImmediateTags.ELEMENT_INDEX) { serializeWasmElement(i.value) }
             is WasmImmediate.FuncIdx -> withTag(ImmediateTags.FUNC_INDEX) { serializeWasmSymbolReadOnly(i.value) { serializeWasmFunction(it) } }
             is WasmImmediate.GcType -> withTag(ImmediateTags.GC_TYPE) { serializeWasmSymbolReadOnly(i.value) { serializeWasmTypeDeclaration(it) } }
             is WasmImmediate.GlobalIdx -> withTag(ImmediateTags.GLOBAL_INDEX) { serializeWasmSymbolReadOnly(i.value) { serializeWasmGlobal(it) } }
             is WasmImmediate.HeapType -> withTag(ImmediateTags.HEAP_TYPE) { serializeWasmHeapType(i.value) }
-            is WasmImmediate.LabelIdx -> withTag(ImmediateTags.LABEL_INDEX) { b.writeUInt32(i.value.toUInt()) }
-            is WasmImmediate.LabelIdxVector -> withTag(ImmediateTags.LABEL_INDEX_VECTOR) { serializeList(i.value) { b.writeUInt32(it.toUInt()) } }
-            is WasmImmediate.LocalIdx -> withTag(ImmediateTags.LOCAL_INDEX) { serializeWasmSymbolReadOnly(i.value) { serializeWasmLocal(it) } }
+            is WasmImmediate.LabelIdx -> withTag(ImmediateTags.LABEL_INDEX) { serializeInt(i.value) }
+            is WasmImmediate.LabelIdxVector -> withTag(ImmediateTags.LABEL_INDEX_VECTOR) { serializeList(i.value) { serializeInt(it) } }
+            is WasmImmediate.LocalIdx -> withTag(ImmediateTags.LOCAL_INDEX) { serializeInt(i.value) }
             is WasmImmediate.MemArg -> withTag(ImmediateTags.MEM_ARG) { b.writeUInt32(i.align); b.writeUInt32(i.offset) }
-            is WasmImmediate.MemoryIdx -> withTag(ImmediateTags.MEMORY_INDEX) { b.writeUInt32(i.value.toUInt()) }
-            is WasmImmediate.StructFieldIdx -> withTag(ImmediateTags.STRUCT_FIELD_INDEX) { serializeWasmSymbolReadOnly(i.value) { b.writeUInt32(it.toUInt()) } }
-            is WasmImmediate.SymbolI32 -> withTag(ImmediateTags.SYMBOL_I32) { serializeWasmSymbolReadOnly(i.value) { b.writeUInt32(it.toUInt()) } }
-            is WasmImmediate.TableIdx -> withTag(ImmediateTags.TABLE_INDEX) { serializeWasmSymbolReadOnly(i.value) { b.writeUInt32(it.toUInt()) } }
-            is WasmImmediate.TagIdx -> withTag(ImmediateTags.TAG_INDEX) { serializeWasmSymbolReadOnly(i.value) { b.writeUInt32(it.toUInt()) } }
+            is WasmImmediate.MemoryIdx -> withTag(ImmediateTags.MEMORY_INDEX) { serializeInt(i.value) }
+            is WasmImmediate.StructFieldIdx -> withTag(ImmediateTags.STRUCT_FIELD_INDEX) { serializeInt(i.value) }
+            is WasmImmediate.SymbolI32 -> withTag(ImmediateTags.SYMBOL_I32) { serializeWasmSymbolReadOnly(i.value) { serializeInt(it) } }
+            is WasmImmediate.TableIdx -> withTag(ImmediateTags.TABLE_INDEX) { serializeWasmSymbolReadOnly(i.value) { serializeInt(it) } }
+            is WasmImmediate.TagIdx -> withTag(ImmediateTags.TAG_INDEX) { serializeWasmSymbolReadOnly(i.value) { serializeInt(it) } }
             is WasmImmediate.TypeIdx -> withTag(ImmediateTags.TYPE_INDEX) { serializeWasmSymbolReadOnly(i.value) { serializeWasmTypeDeclaration(it) } }
             is WasmImmediate.ValTypeVector -> withTag(ImmediateTags.VALUE_TYPE_VECTOR) { serializeList(i.value, ::serializeWasmType) }
         }
@@ -397,17 +420,17 @@ class WasmSerializer(outputStream: OutputStream) {
     }
 
     private fun <T> serializeList(list: List<T>, serializeFunc: (T) -> Unit) {
-        b.writeUInt32(list.size.toUInt())
+        serializeInt(list.size)
         list.forEach { serializeFunc(it) }
     }
 
     private fun <T> serializeSet(set: Set<T>, serializeFunc: (T) -> Unit) {
-        b.writeUInt32(set.size.toUInt())
+        serializeInt(set.size)
         set.forEach { serializeFunc(it) }
     }
 
     private fun <K, V> serializeMap(map: Map<K, V>, serializeKeyFunc: (K) -> Unit, serializeValueFunc: (V) -> Unit) {
-        b.writeUInt32(map.size.toUInt())
+        serializeInt(map.size)
         map.forEach { (key, value) ->
             serializeKeyFunc(key)
             serializeValueFunc(value)
@@ -459,8 +482,8 @@ class WasmSerializer(outputStream: OutputStream) {
             withFlags(id == null, description == null) {
                 serializeString(packageFqName)
                 serializeString(declarationFqName)
-                id?.let { b.writeUInt64(it.toULong()) }
-                b.writeUInt64(mask.toULong())
+                id?.let { serializeLong(it) }
+                serializeLong(mask)
                 description?.let { serializeString(it) }
             }
         }
@@ -477,7 +500,7 @@ class WasmSerializer(outputStream: OutputStream) {
         with(fileLocal) {
             withFlags {
                 serializeIdSignature(container)
-                b.writeUInt64(id.toULong())
+                serializeLong(id)
             }
         }
     }
@@ -486,7 +509,7 @@ class WasmSerializer(outputStream: OutputStream) {
         with(local) {
             withFlags(hashSig == null) {
                 serializeString(localFqn)
-                hashSig?.let { b.writeUInt64(it.toULong()) }
+                hashSig?.let { serializeLong(it) }
             }
         }
     }
@@ -494,15 +517,15 @@ class WasmSerializer(outputStream: OutputStream) {
     private fun serializeLoweredDeclarationSignature(loweredDeclaration: IdSignature.LoweredDeclarationSignature) {
         with(loweredDeclaration) {
             serializeIdSignature(original)
-            b.writeUInt32(stage.toUInt())
-            b.writeUInt32(index.toUInt())
+            serializeInt(stage)
+            serializeInt(index)
         }
     }
 
     private fun serializeScopeLocalDeclaration(scopeLocal: IdSignature.ScopeLocalDeclaration) {
         with(scopeLocal) {
             withFlags {
-                b.writeUInt32(id.toUInt())
+                serializeInt(id)
             }
         }
     }
@@ -519,16 +542,16 @@ class WasmSerializer(outputStream: OutputStream) {
     }
 
     private fun serializeConstantDataCharArray(constantDataCharArray: ConstantDataCharArray) {
-        serializeList(constantDataCharArray.value) { serializeWasmSymbolReadOnly(it) { b.writeUInt32(it.code.toUInt()) } }
+        serializeList(constantDataCharArray.value) { serializeWasmSymbolReadOnly(it) { serializeInt(it.code) } }
         serializeBoolean(constantDataCharArray.fitsLatin1)
     }
 
     private fun serializeConstantDataCharField(constantDataCharField: ConstantDataCharField) {
-        serializeWasmSymbolReadOnly(constantDataCharField.value) { b.writeUInt32(it.code.toUInt()) }
+        serializeWasmSymbolReadOnly(constantDataCharField.value) { serializeInt(it.code) }
     }
 
     private fun serializeConstantDataIntArray(constantDataIntArray: ConstantDataIntArray) {
-        serializeList(constantDataIntArray.value) { serializeWasmSymbolReadOnly(it) { b.writeUInt32(it.toUInt()) } }
+        serializeList(constantDataIntArray.value) { serializeWasmSymbolReadOnly(it) { serializeInt(it) } }
     }
 
     private fun serializeConstantDataIntField(constantDataIntField: ConstantDataIntField) {
@@ -536,7 +559,7 @@ class WasmSerializer(outputStream: OutputStream) {
     }
 
     private fun serializeConstantDataIntegerArray(constantDataIntegerArray: ConstantDataIntegerArray) {
-        serializeList(constantDataIntegerArray.value) { b.writeUInt64(it.toULong()) }
+        serializeList(constantDataIntegerArray.value) { serializeLong(it) }
         b.writeUInt32(constantDataIntegerArray.integerSize.toUInt())
     }
 
@@ -552,7 +575,7 @@ class WasmSerializer(outputStream: OutputStream) {
 
 
     private fun serializeByteArray(bytes: ByteArray) {
-        b.writeUInt32(bytes.size.toUInt())
+        serializeInt(bytes.size)
         b.writeBytes(bytes)
     }
 
