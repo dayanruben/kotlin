@@ -13508,6 +13508,340 @@ public class LLDiagnosticsFe10TestGenerated extends AbstractLLDiagnosticsTest {
           runTest("compiler/testData/diagnostics/tests/deprecated/deprecatedSinceKotlin/warning.kt");
         }
       }
+
+      @Nested
+      @TestMetadata("compiler/testData/diagnostics/tests/deprecated/kt82555")
+      @TestDataPath("$PROJECT_ROOT")
+      public class Kt82555 {
+        @Test
+        public void testAllFilesPresentInKt82555() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/deprecated/kt82555"), Pattern.compile("^(.+)\\.(kt|kts)$"), Pattern.compile("^(.+)\\.(reversed|partialBody|fir|ll|latestLV)\\.kts?$"), true);
+        }
+
+        @Test
+        @TestMetadata("callableReferencesWithDeprecatedCompanion_after.kt")
+        public void testCallableReferencesWithDeprecatedCompanion_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/callableReferencesWithDeprecatedCompanion_after.kt");
+        }
+
+        @Test
+        @TestMetadata("callableReferencesWithDeprecatedCompanion_before.kt")
+        public void testCallableReferencesWithDeprecatedCompanion_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/callableReferencesWithDeprecatedCompanion_before.kt");
+        }
+
+        @Test
+        @TestMetadata("chooseCloserNestedChainWithDeprecatedCompanion_after.kt")
+        public void testChooseCloserNestedChainWithDeprecatedCompanion_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/chooseCloserNestedChainWithDeprecatedCompanion_after.kt");
+        }
+
+        @Test
+        @TestMetadata("chooseCloserNestedChainWithDeprecatedCompanion_before.kt")
+        public void testChooseCloserNestedChainWithDeprecatedCompanion_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/chooseCloserNestedChainWithDeprecatedCompanion_before.kt");
+        }
+
+        @Test
+        @TestMetadata("chooseCloserQualifierWithDeprecatedCompanionForCallableReferenceLHS_after.kt")
+        public void testChooseCloserQualifierWithDeprecatedCompanionForCallableReferenceLHS_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/chooseCloserQualifierWithDeprecatedCompanionForCallableReferenceLHS_after.kt");
+        }
+
+        @Test
+        @TestMetadata("chooseCloserQualifierWithDeprecatedCompanionForCallableReferenceLHS_before.kt")
+        public void testChooseCloserQualifierWithDeprecatedCompanionForCallableReferenceLHS_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/chooseCloserQualifierWithDeprecatedCompanionForCallableReferenceLHS_before.kt");
+        }
+
+        @Test
+        @TestMetadata("chooseCloserQualifierWithDeprecatedCompanionForGetClassLHS_after.kt")
+        public void testChooseCloserQualifierWithDeprecatedCompanionForGetClassLHS_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/chooseCloserQualifierWithDeprecatedCompanionForGetClassLHS_after.kt");
+        }
+
+        @Test
+        @TestMetadata("chooseCloserQualifierWithDeprecatedCompanionForGetClassLHS_before.kt")
+        public void testChooseCloserQualifierWithDeprecatedCompanionForGetClassLHS_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/chooseCloserQualifierWithDeprecatedCompanionForGetClassLHS_before.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenCallableReferenceLHS_after.kt")
+        public void testDeprecatedHiddenCallableReferenceLHS_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenCallableReferenceLHS_after.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenCallableReferenceLHS_before.kt")
+        public void testDeprecatedHiddenCallableReferenceLHS_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenCallableReferenceLHS_before.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenCompanionObjectReferencedByTypealias_after.kt")
+        public void testDeprecatedHiddenCompanionObjectReferencedByTypealias_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenCompanionObjectReferencedByTypealias_after.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenCompanionObjectReferencedByTypealias_before.kt")
+        public void testDeprecatedHiddenCompanionObjectReferencedByTypealias_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenCompanionObjectReferencedByTypealias_before.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenCompanionObject_after.kt")
+        public void testDeprecatedHiddenCompanionObject_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenCompanionObject_after.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenCompanionObject_before.kt")
+        public void testDeprecatedHiddenCompanionObject_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenCompanionObject_before.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenGetClassLHS_after.kt")
+        public void testDeprecatedHiddenGetClassLHS_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenGetClassLHS_after.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenGetClassLHS_before.kt")
+        public void testDeprecatedHiddenGetClassLHS_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenGetClassLHS_before.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenObjectVsContextProperty_after.kt")
+        public void testDeprecatedHiddenObjectVsContextProperty_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenObjectVsContextProperty_after.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenObjectVsContextProperty_before.kt")
+        public void testDeprecatedHiddenObjectVsContextProperty_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenObjectVsContextProperty_before.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenObjectVsExtensionProperty_after.kt")
+        public void testDeprecatedHiddenObjectVsExtensionProperty_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenObjectVsExtensionProperty_after.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenObjectVsExtensionProperty_before.kt")
+        public void testDeprecatedHiddenObjectVsExtensionProperty_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenObjectVsExtensionProperty_before.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenObjectVsImported_after.kt")
+        public void testDeprecatedHiddenObjectVsImported_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenObjectVsImported_after.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenObjectVsImported_before.kt")
+        public void testDeprecatedHiddenObjectVsImported_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenObjectVsImported_before.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenObjectVsStarImported_after.kt")
+        public void testDeprecatedHiddenObjectVsStarImported_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenObjectVsStarImported_after.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenObjectVsStarImported_before.kt")
+        public void testDeprecatedHiddenObjectVsStarImported_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenObjectVsStarImported_before.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenTypealiasUsedAsQualifier_after.kt")
+        public void testDeprecatedHiddenTypealiasUsedAsQualifier_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenTypealiasUsedAsQualifier_after.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenTypealiasUsedAsQualifier_before.kt")
+        public void testDeprecatedHiddenTypealiasUsedAsQualifier_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenTypealiasUsedAsQualifier_before.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenTypealiasedUsedAsQualifier_after.kt")
+        public void testDeprecatedHiddenTypealiasedUsedAsQualifier_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenTypealiasedUsedAsQualifier_after.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenTypealiasedUsedAsQualifier_before.kt")
+        public void testDeprecatedHiddenTypealiasedUsedAsQualifier_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenTypealiasedUsedAsQualifier_before.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenUsedAsQualifier_after.kt")
+        public void testDeprecatedHiddenUsedAsQualifier_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenUsedAsQualifier_after.kt");
+        }
+
+        @Test
+        @TestMetadata("deprecatedHiddenUsedAsQualifier_before.kt")
+        public void testDeprecatedHiddenUsedAsQualifier_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/deprecatedHiddenUsedAsQualifier_before.kt");
+        }
+
+        @Test
+        @TestMetadata("enumClassWithDeprecatedHiddenCompanionAndValueOfCall_after.kt")
+        public void testEnumClassWithDeprecatedHiddenCompanionAndValueOfCall_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/enumClassWithDeprecatedHiddenCompanionAndValueOfCall_after.kt");
+        }
+
+        @Test
+        @TestMetadata("enumClassWithDeprecatedHiddenCompanionAndValueOfCall_before.kt")
+        public void testEnumClassWithDeprecatedHiddenCompanionAndValueOfCall_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/enumClassWithDeprecatedHiddenCompanionAndValueOfCall_before.kt");
+        }
+
+        @Test
+        @TestMetadata("getClassWithDeprecatedCompanion_after.kt")
+        public void testGetClassWithDeprecatedCompanion_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/getClassWithDeprecatedCompanion_after.kt");
+        }
+
+        @Test
+        @TestMetadata("getClassWithDeprecatedCompanion_before.kt")
+        public void testGetClassWithDeprecatedCompanion_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/getClassWithDeprecatedCompanion_before.kt");
+        }
+
+        @Test
+        @TestMetadata("hiddenCompanionInClassVsContextProperty_after.kt")
+        public void testHiddenCompanionInClassVsContextProperty_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/hiddenCompanionInClassVsContextProperty_after.kt");
+        }
+
+        @Test
+        @TestMetadata("hiddenCompanionInClassVsContextProperty_before.kt")
+        public void testHiddenCompanionInClassVsContextProperty_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/hiddenCompanionInClassVsContextProperty_before.kt");
+        }
+
+        @Test
+        @TestMetadata("nestedClassesChainWithDeprecatedCompanion_after.kt")
+        public void testNestedClassesChainWithDeprecatedCompanion_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/nestedClassesChainWithDeprecatedCompanion_after.kt");
+        }
+
+        @Test
+        @TestMetadata("nestedClassesChainWithDeprecatedCompanion_before.kt")
+        public void testNestedClassesChainWithDeprecatedCompanion_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/nestedClassesChainWithDeprecatedCompanion_before.kt");
+        }
+
+        @Test
+        @TestMetadata("nestedWithSinceKotlinCompanionVsTopLevel_after.kt")
+        public void testNestedWithSinceKotlinCompanionVsTopLevel_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/nestedWithSinceKotlinCompanionVsTopLevel_after.kt");
+        }
+
+        @Test
+        @TestMetadata("nestedWithSinceKotlinCompanionVsTopLevel_before.kt")
+        public void testNestedWithSinceKotlinCompanionVsTopLevel_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/nestedWithSinceKotlinCompanionVsTopLevel_before.kt");
+        }
+
+        @Test
+        @TestMetadata("propertyInCompanionVsDeprecatedClassWithHiddenCompanion_after.kt")
+        public void testPropertyInCompanionVsDeprecatedClassWithHiddenCompanion_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/propertyInCompanionVsDeprecatedClassWithHiddenCompanion_after.kt");
+        }
+
+        @Test
+        @TestMetadata("propertyInCompanionVsDeprecatedClassWithHiddenCompanion_before.kt")
+        public void testPropertyInCompanionVsDeprecatedClassWithHiddenCompanion_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/propertyInCompanionVsDeprecatedClassWithHiddenCompanion_before.kt");
+        }
+
+        @Test
+        @TestMetadata("propertyInCompanionVsDeprecatedHiddenObject_after.kt")
+        public void testPropertyInCompanionVsDeprecatedHiddenObject_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/propertyInCompanionVsDeprecatedHiddenObject_after.kt");
+        }
+
+        @Test
+        @TestMetadata("propertyInCompanionVsDeprecatedHiddenObject_before.kt")
+        public void testPropertyInCompanionVsDeprecatedHiddenObject_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/propertyInCompanionVsDeprecatedHiddenObject_before.kt");
+        }
+
+        @Test
+        @TestMetadata("resolveToDeprecatedHiddenCompanion_after.kt")
+        public void testResolveToDeprecatedHiddenCompanion_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/resolveToDeprecatedHiddenCompanion_after.kt");
+        }
+
+        @Test
+        @TestMetadata("resolveToDeprecatedHiddenCompanion_before.kt")
+        public void testResolveToDeprecatedHiddenCompanion_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/resolveToDeprecatedHiddenCompanion_before.kt");
+        }
+
+        @Test
+        @TestMetadata("resolveToSinceKotlinHiddenCompanion_after.kt")
+        public void testResolveToSinceKotlinHiddenCompanion_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/resolveToSinceKotlinHiddenCompanion_after.kt");
+        }
+
+        @Test
+        @TestMetadata("resolveToSinceKotlinHiddenCompanion_before.kt")
+        public void testResolveToSinceKotlinHiddenCompanion_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/resolveToSinceKotlinHiddenCompanion_before.kt");
+        }
+
+        @Test
+        @TestMetadata("sinceKotlinNestedVsTopLevel_after.kt")
+        public void testSinceKotlinNestedVsTopLevel_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/sinceKotlinNestedVsTopLevel_after.kt");
+        }
+
+        @Test
+        @TestMetadata("sinceKotlinNestedVsTopLevel_before.kt")
+        public void testSinceKotlinNestedVsTopLevel_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/sinceKotlinNestedVsTopLevel_before.kt");
+        }
+
+        @Test
+        @TestMetadata("starImportedEnumVsImportedWithHiddenCompanion_after.kt")
+        public void testStarImportedEnumVsImportedWithHiddenCompanion_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/starImportedEnumVsImportedWithHiddenCompanion_after.kt");
+        }
+
+        @Test
+        @TestMetadata("starImportedEnumVsImportedWithHiddenCompanion_before.kt")
+        public void testStarImportedEnumVsImportedWithHiddenCompanion_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/starImportedEnumVsImportedWithHiddenCompanion_before.kt");
+        }
+
+        @Test
+        @TestMetadata("starImportedSealedVsImportedWithHiddenCompanion_after.kt")
+        public void testStarImportedSealedVsImportedWithHiddenCompanion_after() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/starImportedSealedVsImportedWithHiddenCompanion_after.kt");
+        }
+
+        @Test
+        @TestMetadata("starImportedSealedVsImportedWithHiddenCompanion_before.kt")
+        public void testStarImportedSealedVsImportedWithHiddenCompanion_before() {
+          runTest("compiler/testData/diagnostics/tests/deprecated/kt82555/starImportedSealedVsImportedWithHiddenCompanion_before.kt");
+        }
+      }
     }
 
     @Nested

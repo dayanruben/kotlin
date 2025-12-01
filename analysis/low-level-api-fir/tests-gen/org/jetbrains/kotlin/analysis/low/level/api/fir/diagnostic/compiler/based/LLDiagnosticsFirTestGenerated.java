@@ -411,6 +411,12 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
     }
 
     @Test
+    @TestMetadata("initializerTypeMismatchWithLambdaAndOuterTvInPCLA.kt")
+    public void testInitializerTypeMismatchWithLambdaAndOuterTvInPCLA() {
+      runTest("compiler/fir/analysis-tests/testData/resolve/initializerTypeMismatchWithLambdaAndOuterTvInPCLA.kt");
+    }
+
+    @Test
     @TestMetadata("intersectionScope.kt")
     public void testIntersectionScope() {
       runTest("compiler/fir/analysis-tests/testData/resolve/intersectionScope.kt");
@@ -822,6 +828,24 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
     @TestMetadata("typesInLocalFunctions.kt")
     public void testTypesInLocalFunctions() {
       runTest("compiler/fir/analysis-tests/testData/resolve/typesInLocalFunctions.kt");
+    }
+
+    @Test
+    @TestMetadata("uninferredTypeParamInArgumentLambda.kt")
+    public void testUninferredTypeParamInArgumentLambda() {
+      runTest("compiler/fir/analysis-tests/testData/resolve/uninferredTypeParamInArgumentLambda.kt");
+    }
+
+    @Test
+    @TestMetadata("uninferredTypeParamInLambdaInPCLA.kt")
+    public void testUninferredTypeParamInLambdaInPCLA() {
+      runTest("compiler/fir/analysis-tests/testData/resolve/uninferredTypeParamInLambdaInPCLA.kt");
+    }
+
+    @Test
+    @TestMetadata("uninferredTypeParamInTopLevelLambda.kt")
+    public void testUninferredTypeParamInTopLevelLambda() {
+      runTest("compiler/fir/analysis-tests/testData/resolve/uninferredTypeParamInTopLevelLambda.kt");
     }
 
     @Test

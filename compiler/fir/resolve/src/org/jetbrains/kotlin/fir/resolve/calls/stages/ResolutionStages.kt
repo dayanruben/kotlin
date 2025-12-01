@@ -950,7 +950,14 @@ internal object CheckCallModifiers : ResolutionStage() {
 internal object CheckHiddenDeclaration : ResolutionStage() {
     context(sink: CheckerSink, context: ResolutionContext)
     override suspend fun check(candidate: Candidate) {
-        val symbol = candidate.symbol as? FirCallableSymbol<*> ?: return
+        val symbol = candidate.symbol
+
+        if (symbol !is FirCallableSymbol<*>) {
+            if (symbol.isDeprecatedHidden(candidate.callInfo) && LanguageFeature.SkipHiddenObjectsInResolution.isEnabled()) {
+                sink.reportDiagnostic(HiddenCandidate)
+            }
+            return
+        }
 
         if (symbol.isDeprecatedHidden(candidate.callInfo) ||
             (symbol is FirConstructorSymbol && symbol.typeAliasConstructorInfo?.typeAliasSymbol?.isDeprecatedHidden(candidate.callInfo) == true) ||
