@@ -65,7 +65,6 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     private static final Map<Character, Integer> TEMPLATE_ESCAPE_MAPPING = createTemplateEscapeMapping();
     private static Map<Character, Integer> createCommonEscapeMapping() {
         Map<Character, Integer> mapping = new HashMap<>();
-        mapping.put('\0', (int) '0');
         mapping.put('\b', (int) 'b');
         mapping.put('\f', (int) 'f');
         mapping.put('\n', (int) 'n');
@@ -76,14 +75,10 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     }
     private static Map<Character, Integer> createStringEscapeMapping() {
         Map<Character, Integer> mapping = new HashMap<>(COMMON_ESCAPE_MAPPING);
-        mapping.put('"', (int) '"');
-        mapping.put('\'', (int) '\'');
-        mapping.put('\\', (int) '\\');
         return mapping;
     }
     private static Map<Character, Integer> createTemplateEscapeMapping() {
         Map<Character, Integer> mapping = new HashMap<>(COMMON_ESCAPE_MAPPING);
-        mapping.put('`', (int) '`');
         mapping.put('$', (int) '$');
         return mapping;
     }
@@ -134,7 +129,13 @@ public class JsToStringGenerationVisitor extends JsVisitor {
         for (int i = 0; i < chars.length(); i++) {
             char c = chars.charAt(i);
 
-            if (' ' <= c && c <= '~' && c != quoteChar && c != '\\' && !escapeMapping.containsKey(c)) {
+            if (c == quoteChar) {
+                result.append('\\');
+                result.append(quoteChar);
+                continue;
+            }
+
+            if (' ' <= c && c <= '~' && c != '\\' && !escapeMapping.containsKey(c)) {
                 // an ordinary print character (like C isprint())
                 result.append(c);
                 continue;
@@ -146,24 +147,24 @@ public class JsToStringGenerationVisitor extends JsVisitor {
                 // an \escaped sort of character
                 result.append('\\');
                 result.append((char) escape.intValue());
+                continue;
+            }
+
+            int hexSize;
+            if (c < 256) {
+                // 2-digit hex
+                result.append("\\x");
+                hexSize = 2;
             }
             else {
-                int hexSize;
-                if (c < 256) {
-                    // 2-digit hex
-                    result.append("\\x");
-                    hexSize = 2;
-                }
-                else {
-                    // Unicode.
-                    result.append("\\u");
-                    hexSize = 4;
-                }
-                // append hexadecimal form of ch left-padded with 0
-                for (int shift = (hexSize - 1) * 4; shift >= 0; shift -= 4) {
-                    int digit = 0xf & (c >> shift);
-                    result.append(HEX_DIGITS[digit]);
-                }
+                // Unicode.
+                result.append("\\u");
+                hexSize = 4;
+            }
+            // append hexadecimal form of ch left-padded with 0
+            for (int shift = (hexSize - 1) * 4; shift >= 0; shift -= 4) {
+                int digit = 0xf & (c >> shift);
+                result.append(HEX_DIGITS[digit]);
             }
         }
     }

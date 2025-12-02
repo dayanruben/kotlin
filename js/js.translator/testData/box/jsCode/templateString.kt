@@ -10,10 +10,13 @@ inline fun assertRegularTemplates() {
 `"""), "Newline character as an line break in the source code")
     assertEquals(js("'\\t'"), js("`\\t`"), "Tab character as an escape sequence")
     assertEquals(js("'\\t'"), js("`\t`"), "Tab character as an actual tab character")
+    assertEquals(js("'ab'"), js("`a\\\nb`"), "Backslash allows splitting the literal")
 
     assertEquals(js("'$'"), js("`\\\$`"), "Escape regular dollar sign")
     assertEquals(js("'\${}'"), js("`\\\${}`"), "Escape dollar sign with interpolation")
     assertEquals(js("'aaa'"), js("`\\a\\a\\a`"), "Escape any regular character")
+    assertEquals(js(""" '"' """), js(""" `"` """), "Do not escape double qoute")
+    assertEquals(js(""" "'" """), js(""" `'` """), "Do not escape single qoute")
 }
 
 inline fun assertTaggedTemplates() {
