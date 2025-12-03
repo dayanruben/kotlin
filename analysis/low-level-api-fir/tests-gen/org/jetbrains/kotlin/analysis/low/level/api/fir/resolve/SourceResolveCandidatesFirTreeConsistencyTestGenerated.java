@@ -3500,6 +3500,100 @@ public class SourceResolveCandidatesFirTreeConsistencyTestGenerated extends Abst
     }
 
     @Nested
+    @TestMetadata("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/blockTags")
+    @TestDataPath("$PROJECT_ROOT")
+    public class BlockTags {
+      @Test
+      public void testAllFilesPresentInBlockTags() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/blockTags"), Pattern.compile("^(.+)\\.(kt)$"), null, true);
+      }
+
+      @Test
+      @TestMetadata("allTagSectionsRequiringSubjects.kt")
+      public void testAllTagSectionsRequiringSubjects() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/blockTags/allTagSectionsRequiringSubjects.kt");
+      }
+
+      @Test
+      @TestMetadata("constructorBlockTag.kt")
+      public void testConstructorBlockTag() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/blockTags/constructorBlockTag.kt");
+      }
+
+      @Test
+      @TestMetadata("constructorParameterInDifferentPlaces.kt")
+      public void testConstructorParameterInDifferentPlaces() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/blockTags/constructorParameterInDifferentPlaces.kt");
+      }
+
+      @Test
+      @TestMetadata("deprecatedProperties.kt")
+      public void testDeprecatedProperties() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/blockTags/deprecatedProperties.kt");
+      }
+
+      @Test
+      @TestMetadata("longNameInTagSections.kt")
+      public void testLongNameInTagSections() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/blockTags/longNameInTagSections.kt");
+      }
+
+      @Test
+      @TestMetadata("overridePropertyInPrimaryConstructor.kt")
+      public void testOverridePropertyInPrimaryConstructor() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/blockTags/overridePropertyInPrimaryConstructor.kt");
+      }
+
+      @Test
+      @TestMetadata("paramBlockOnFunction.kt")
+      public void testParamBlockOnFunction() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/blockTags/paramBlockOnFunction.kt");
+      }
+
+      @Test
+      @TestMetadata("paramBlockTag.kt")
+      public void testParamBlockTag() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/blockTags/paramBlockTag.kt");
+      }
+
+      @Test
+      @TestMetadata("paramTagWithRegularParameter.kt")
+      public void testParamTagWithRegularParameter() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/blockTags/paramTagWithRegularParameter.kt");
+      }
+
+      @Test
+      @TestMetadata("prioritiesWithSameNames.kt")
+      public void testPrioritiesWithSameNames() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/blockTags/prioritiesWithSameNames.kt");
+      }
+
+      @Test
+      @TestMetadata("receiverReferenceAsSubject.kt")
+      public void testReceiverReferenceAsSubject() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/blockTags/receiverReferenceAsSubject.kt");
+      }
+
+      @Test
+      @TestMetadata("throwsAndException.kt")
+      public void testThrowsAndException() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/blockTags/throwsAndException.kt");
+      }
+
+      @Test
+      @TestMetadata("throwsTag.kt")
+      public void testThrowsTag() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/blockTags/throwsTag.kt");
+      }
+
+      @Test
+      @TestMetadata("typeParameters.kt")
+      public void testTypeParameters() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/blockTags/typeParameters.kt");
+      }
+    }
+
+    @Nested
     @TestMetadata("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/companionObject")
     @TestDataPath("$PROJECT_ROOT")
     public class CompanionObject {
@@ -3591,6 +3685,18 @@ public class SourceResolveCandidatesFirTreeConsistencyTestGenerated extends Abst
       }
 
       @Test
+      @TestMetadata("deprecatedExtensions.kt")
+      public void testDeprecatedExtensions() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/extensions/deprecatedExtensions.kt");
+      }
+
+      @Test
+      @TestMetadata("extensionFromOuterClass.kt")
+      public void testExtensionFromOuterClass() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/extensions/extensionFromOuterClass.kt");
+      }
+
+      @Test
       @TestMetadata("fromBaseClass.kt")
       public void testFromBaseClass() {
         runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/extensions/fromBaseClass.kt");
@@ -3618,6 +3724,12 @@ public class SourceResolveCandidatesFirTreeConsistencyTestGenerated extends Abst
       @TestMetadata("qualifiers.kt")
       public void testQualifiers() {
         runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/extensions/qualifiers.kt");
+      }
+
+      @Test
+      @TestMetadata("receiverFromOuterClass.kt")
+      public void testReceiverFromOuterClass() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/extensions/receiverFromOuterClass.kt");
       }
 
       @Test
@@ -3873,6 +3985,18 @@ public class SourceResolveCandidatesFirTreeConsistencyTestGenerated extends Abst
       }
 
       @Test
+      @TestMetadata("GetLikeJavaMethodWithArguments.kt")
+      public void testGetLikeJavaMethodWithArguments() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/javaDeclarations/GetLikeJavaMethodWithArguments.kt");
+      }
+
+      @Test
+      @TestMetadata("inheritedJavaMembersVsMembersOfOuterClass.kt")
+      public void testInheritedJavaMembersVsMembersOfOuterClass() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/javaDeclarations/inheritedJavaMembersVsMembersOfOuterClass.kt");
+      }
+
+      @Test
       @TestMetadata("KT-69128.kt")
       public void testKT_69128() {
         runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/javaDeclarations/KT-69128.kt");
@@ -3955,6 +4079,48 @@ public class SourceResolveCandidatesFirTreeConsistencyTestGenerated extends Abst
       }
 
       @Test
+      @TestMetadata("classPropertyVsOuterClass.kt")
+      public void testClassPropertyVsOuterClass() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/localContext/classPropertyVsOuterClass.kt");
+      }
+
+      @Test
+      @TestMetadata("classTypeParameterVsOuterClassProperty.kt")
+      public void testClassTypeParameterVsOuterClassProperty() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/localContext/classTypeParameterVsOuterClassProperty.kt");
+      }
+
+      @Test
+      @TestMetadata("danglingReference.kt")
+      public void testDanglingReference() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/localContext/danglingReference.kt");
+      }
+
+      @Test
+      @TestMetadata("deprecatedContextDeclarations.kt")
+      public void testDeprecatedContextDeclarations() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/localContext/deprecatedContextDeclarations.kt");
+      }
+
+      @Test
+      @TestMetadata("deprecatedDeclarations.kt")
+      public void testDeprecatedDeclarations() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/localContext/deprecatedDeclarations.kt");
+      }
+
+      @Test
+      @TestMetadata("functionAndLocalPropertyWithSameName.kt")
+      public void testFunctionAndLocalPropertyWithSameName() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/localContext/functionAndLocalPropertyWithSameName.kt");
+      }
+
+      @Test
+      @TestMetadata("localFunctionVariableVsOuterProperty.kt")
+      public void testLocalFunctionVariableVsOuterProperty() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/localContext/localFunctionVariableVsOuterProperty.kt");
+      }
+
+      @Test
       @TestMetadata("LocalSemiFullQualifiedCallableName.kt")
       public void testLocalSemiFullQualifiedCallableName() {
         runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/localContext/LocalSemiFullQualifiedCallableName.kt");
@@ -3967,6 +4133,12 @@ public class SourceResolveCandidatesFirTreeConsistencyTestGenerated extends Abst
       }
 
       @Test
+      @TestMetadata("nestedClasses.kt")
+      public void testNestedClasses() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/localContext/nestedClasses.kt");
+      }
+
+      @Test
       @TestMetadata("NonLocalSemiFullQualifiedCallableName.kt")
       public void testNonLocalSemiFullQualifiedCallableName() {
         runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/localContext/NonLocalSemiFullQualifiedCallableName.kt");
@@ -3976,6 +4148,30 @@ public class SourceResolveCandidatesFirTreeConsistencyTestGenerated extends Abst
       @TestMetadata("NonLocalSemiFullQualifiedClassName.kt")
       public void testNonLocalSemiFullQualifiedClassName() {
         runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/localContext/NonLocalSemiFullQualifiedClassName.kt");
+      }
+
+      @Test
+      @TestMetadata("overloadedCallablesPriorities.kt")
+      public void testOverloadedCallablesPriorities() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/localContext/overloadedCallablesPriorities.kt");
+      }
+
+      @Test
+      @TestMetadata("referenceToMemberFromParameter.kt")
+      public void testReferenceToMemberFromParameter() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/localContext/referenceToMemberFromParameter.kt");
+      }
+
+      @Test
+      @TestMetadata("referencesToEnumValuesFromEnumClass.kt")
+      public void testReferencesToEnumValuesFromEnumClass() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/localContext/referencesToEnumValuesFromEnumClass.kt");
+      }
+
+      @Test
+      @TestMetadata("referencesToMembersOfOuterClass.kt")
+      public void testReferencesToMembersOfOuterClass() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/localContext/referencesToMembersOfOuterClass.kt");
       }
 
       @Test
@@ -4015,6 +4211,12 @@ public class SourceResolveCandidatesFirTreeConsistencyTestGenerated extends Abst
       }
 
       @Test
+      @TestMetadata("shortNamesPriorities.kt")
+      public void testShortNamesPriorities() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/localContext/shortNamesPriorities.kt");
+      }
+
+      @Test
       @TestMetadata("SiblingLocalMethod.kt")
       public void testSiblingLocalMethod() {
         runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/localContext/SiblingLocalMethod.kt");
@@ -4030,6 +4232,12 @@ public class SourceResolveCandidatesFirTreeConsistencyTestGenerated extends Abst
       @TestMetadata("SiblingNonLocalProperty.kt")
       public void testSiblingNonLocalProperty() {
         runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/localContext/SiblingNonLocalProperty.kt");
+      }
+
+      @Test
+      @TestMetadata("typeParameterOfOuterClass.kt")
+      public void testTypeParameterOfOuterClass() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/localContext/typeParameterOfOuterClass.kt");
       }
     }
 
@@ -4120,6 +4328,24 @@ public class SourceResolveCandidatesFirTreeConsistencyTestGenerated extends Abst
       @TestMetadata("backtickedIdentifiers.kt")
       public void testBacktickedIdentifiers() {
         runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/qualified/backtickedIdentifiers.kt");
+      }
+
+      @Test
+      @TestMetadata("fqnPriorities.kt")
+      public void testFqnPriorities() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/qualified/fqnPriorities.kt");
+      }
+
+      @Test
+      @TestMetadata("multiSegmentWithMoreLocalConflictingClass.kt")
+      public void testMultiSegmentWithMoreLocalConflictingClass() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/qualified/multiSegmentWithMoreLocalConflictingClass.kt");
+      }
+
+      @Test
+      @TestMetadata("multiSegmentWithMoreLocalConflictingProperty.kt")
+      public void testMultiSegmentWithMoreLocalConflictingProperty() {
+        runTest("analysis/analysis-api/testData/components/resolver/singleByPsi/kDoc/qualified/multiSegmentWithMoreLocalConflictingProperty.kt");
       }
 
       @Nested

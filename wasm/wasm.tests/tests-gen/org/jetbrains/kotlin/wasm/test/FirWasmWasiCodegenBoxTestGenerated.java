@@ -7125,6 +7125,12 @@ public class FirWasmWasiCodegenBoxTestGenerated extends AbstractFirWasmWasiCodeg
       }
 
       @Test
+      @TestMetadata("kt82732.kt")
+      public void testKt82732() {
+        runTest("compiler/testData/codegen/box/casts/kt82732.kt");
+      }
+
+      @Test
       @TestMetadata("lambdaToUnitCast.kt")
       public void testLambdaToUnitCast() {
         runTest("compiler/testData/codegen/box/casts/lambdaToUnitCast.kt");
@@ -9396,6 +9402,12 @@ public class FirWasmWasiCodegenBoxTestGenerated extends AbstractFirWasmWasiCodeg
       @TestMetadata("nonGenericCollection.kt")
       public void testNonGenericCollection() {
         runTest("compiler/testData/codegen/box/collectionLiterals/nonGenericCollection.kt");
+      }
+
+      @Test
+      @TestMetadata("resolvesToOperator.kt")
+      public void testResolvesToOperator() {
+        runTest("compiler/testData/codegen/box/collectionLiterals/resolvesToOperator.kt");
       }
     }
 

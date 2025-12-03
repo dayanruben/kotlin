@@ -550,17 +550,19 @@ class AdapterGenerator(
             return this
         }
 
-        val argumentTypeWithoutSamConversion = ((argument as? FirSamConversionExpression)?.expression ?: argument).resolvedType.fullyExpandedType()
-        // No conversion should happen if an argument already satisfies the expected type requirements
-        // NB: It's not just a fast path, but sometimes the presence adapter generation is incorrect (see KT-82590)
-        if (argumentTypeWithoutSamConversion.isSubtypeOf(expectedType, session)) return this
-
         val unwrappedExpectedType = getFunctionTypeForPossibleSamType(expectedType) ?: expectedType
 
         // Expect the expected type to be a suspend functional type.
         if (!unwrappedExpectedType.isSuspendOrKSuspendFunctionType(session)) {
             return this
         }
+
+        val argumentTypeWithoutSamConversion =
+            ((argument as? FirSamConversionExpression)?.expression ?: argument).resolvedType.fullyExpandedType()
+        // No conversion should happen if an argument already satisfies the expected type requirements
+        // NB: It's not just a fast path, but sometimes the presence adapter generation is incorrect (see KT-82590)
+        if (argumentTypeWithoutSamConversion.isSubtypeOf(expectedType, session)) return this
+
         val expectedFunctionalType = unwrappedExpectedType.customFunctionTypeToSimpleFunctionType(session)
 
         val invokeSymbol = findInvokeSymbol(expectedFunctionalType, argumentTypeWithoutSamConversion) ?: return this
@@ -597,10 +599,10 @@ class AdapterGenerator(
         }
 
         return if (expectedFunctionalType.isSomeFunctionType(session)) {
-            expectedFunctionalType.findBaseInvokeSymbol(session, scopeSession)
+            expectedFunctionalType.findBaseInvokeSymbol()
         } else {
             expectedFunctionalType.findContributedInvokeSymbol(
-                session, scopeSession, expectedFunctionalType, shouldCalculateReturnTypesOfFakeOverrides = true
+                expectedFunctionalType, shouldCalculateReturnTypesOfFakeOverrides = true
             )
         }?.let {
             declarationStorage.getIrFunctionSymbol(it) as? IrSimpleFunctionSymbol
