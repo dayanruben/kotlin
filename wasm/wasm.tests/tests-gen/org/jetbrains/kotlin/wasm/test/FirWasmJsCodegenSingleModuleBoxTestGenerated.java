@@ -37873,6 +37873,12 @@ public class FirWasmJsCodegenSingleModuleBoxTestGenerated extends AbstractFirWas
     }
 
     @Test
+    @TestMetadata("nestedClassInheritsFromExternalClass.kt")
+    public void testNestedClassInheritsFromExternalClass() {
+      runTest("compiler/testData/codegen/box/js/nestedClassInheritsFromExternalClass.kt");
+    }
+
+    @Test
     @TestMetadata("trailingLambdaOnDynamic.kt")
     public void testTrailingLambdaOnDynamic() {
       runTest("compiler/testData/codegen/box/js/trailingLambdaOnDynamic.kt");
@@ -55222,6 +55228,12 @@ public class FirWasmJsCodegenSingleModuleBoxTestGenerated extends AbstractFirWas
         @TestMetadata("memberFunctions.kt")
         public void testMemberFunctions() {
           runTest("compiler/testData/codegen/box/reflection/mapping/types/memberFunctions.kt");
+        }
+
+        @Test
+        @TestMetadata("oldReflectWithoutKTypeParameterBase.kt")
+        public void testOldReflectWithoutKTypeParameterBase() {
+          runTest("compiler/testData/codegen/box/reflection/mapping/types/oldReflectWithoutKTypeParameterBase.kt");
         }
 
         @Test

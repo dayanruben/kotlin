@@ -273,9 +273,19 @@ private val finallyBlocksPhase = createFileLoweringPhase(
         prerequisite = setOf(initializersPhase, localFunctionsPhase, tailrecPhase)
 )
 
-private val testProcessorPhase = createFileLoweringPhase(
+internal val testProcessorModulePhase = makeIrModulePhase(
         lowering = ::TestProcessor,
         name = "TestProcessor",
+)
+
+private val testProcessorPhase = createFileLoweringPhase(
+        lowering = { context: Context -> TestProcessor(context, context.sourcesModules) },
+        name = "TestProcessor",
+)
+
+private val initTestsPhase = createFileLoweringPhase(
+        lowering = ::TestsInitializer,
+        name = "TestsInitializer",
 )
 
 private val dumpTestsPhase = createFileLoweringPhase(
@@ -597,6 +607,7 @@ internal fun KonanConfig.getLoweringsAfterInlining(): LoweringList = listOfNotNu
         specializeSharedVariableBoxes,
         interopPhase,
         specialInteropIntrinsicsPhase,
+        initTestsPhase,
         dumpTestsPhase.takeIf { this.configuration.getNotNull(KonanConfigKeys.GENERATE_TEST_RUNNER) != TestRunnerKind.NONE },
         removeExpectDeclarationsPhase,
         stripTypeAliasDeclarationsPhase,

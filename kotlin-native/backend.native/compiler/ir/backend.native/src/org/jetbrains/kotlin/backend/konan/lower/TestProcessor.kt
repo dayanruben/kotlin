@@ -6,10 +6,13 @@
 package org.jetbrains.kotlin.backend.konan.lower
 
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
+import org.jetbrains.kotlin.backend.common.LoweringContext
+import org.jetbrains.kotlin.backend.common.ir.PreSerializationNativeSymbols
 import org.jetbrains.kotlin.backend.common.ir.wrapWithLambdaCall
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.common.reportWarning
 import org.jetbrains.kotlin.backend.konan.Context
+import org.jetbrains.kotlin.backend.konan.NativePreSerializationLoweringContext
 import org.jetbrains.kotlin.backend.konan.descriptors.synthesizedName
 import org.jetbrains.kotlin.backend.konan.ir.buildSimpleAnnotation
 import org.jetbrains.kotlin.backend.konan.ir.isAbstract
@@ -17,10 +20,11 @@ import org.jetbrains.kotlin.backend.konan.reportCompilationError
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.*
-import org.jetbrains.kotlin.ir.builders.declarations.buildField
+import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.*
@@ -39,7 +43,10 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
-internal class TestProcessor(private val context: Context) : FileLoweringPass {
+internal class TestProcessor(
+        private val context: LoweringContext,
+        private val sourcesModules: Set<ModuleDescriptor>? = null,
+) : FileLoweringPass {
     companion object {
         val TEST_SUITE_CLASS by IrDeclarationOriginImpl.Regular
         val TEST_SUITE_GENERATED_MEMBER by IrDeclarationOriginImpl.Regular
@@ -50,9 +57,38 @@ internal class TestProcessor(private val context: Context) : FileLoweringPass {
         val IGNORE_FQ_NAME = FqName.fromSegments(listOf("kotlin", "test" , "Ignore"))
     }
 
-    private val symbols = context.symbols
+    private enum class TestProcessorFunctionKind(annotationNameString: String, val runtimeKindString: String) {
+        TEST("kotlin.test.Test", ""),
+        BEFORE_TEST("kotlin.test.BeforeTest", "BEFORE_TEST"),
+        AFTER_TEST("kotlin.test.AfterTest", "AFTER_TEST"),
+        BEFORE_CLASS("kotlin.test.BeforeClass", "BEFORE_CLASS"),
+        AFTER_CLASS("kotlin.test.AfterClass", "AFTER_CLASS");
+
+        val annotationFqName = FqName(annotationNameString)
+
+        companion object {
+            val INSTANCE_KINDS = listOf(TEST, BEFORE_TEST, AFTER_TEST)
+            val COMPANION_KINDS = listOf(BEFORE_CLASS, AFTER_CLASS)
+        }
+    }
+
+    private val symbols = context.symbols as PreSerializationNativeSymbols
 
     private val baseClassSuite = symbols.baseClassSuite.owner
+
+    private val testFunctionKindCache by lazy {
+        TestProcessorFunctionKind.entries.associateWith { kind ->
+            if (kind.runtimeKindString.isEmpty())
+                null
+            else
+                symbols.testFunctionKind.owner.declarations
+                        .filterIsInstance<IrEnumEntry>()
+                        .single { it.name == Name.identifier(kind.runtimeKindString) }
+                        .symbol
+        }
+    }
+
+    private fun getTestFunctionKind(kind: TestProcessorFunctionKind) = testFunctionKindCache[kind]!!
 
     private val topLevelSuiteNames = mutableSetOf<String>()
 
@@ -114,7 +150,7 @@ internal class TestProcessor(private val context: Context) : FileLoweringPass {
 
     // region Classes for annotation collection.
     private val TestProcessorFunctionKind.runtimeKind: IrEnumEntrySymbol
-        get() = symbols.getTestFunctionKind(this)
+        get() = getTestFunctionKind(this)
 
     private fun IrType.isTestFunctionKind() = classifierOrNull == symbols.testFunctionKind
 
@@ -493,7 +529,7 @@ internal class TestProcessor(private val context: Context) : FileLoweringPass {
             companionGetter?.let { declarations += it }
 
             superTypes += symbols.baseClassSuite.typeWith(listOf(testClassType, testCompanionType))
-            addFakeOverrides(context.typeSystem)
+            addFakeOverrides((context as? NativePreSerializationLoweringContext)?.typeSystem ?: (context as Context).typeSystem)
         }
     }
     //endregion
@@ -585,38 +621,54 @@ internal class TestProcessor(private val context: Context) : FileLoweringPass {
         }
 
         if (statements.isNotEmpty()) {
-            context.irFactory.buildField {
+            // This function would be replaced by a top-level field during second stage (see TestsInitializer.kt).
+            // Creating fields right away won't work as it triggers a validation during IR serialization - something about
+            // conflicting signatures for these fields (even though they are private). This validation can be circumvented by
+            // placing the field into a property but then the second phase (TestsInitializer) would still be needed as it is
+            // incorrect to mark these properties with @EagerInitialization (it is what the second pass does), as this forces
+            // their deserialization which then leads to some tests from the dependencies being run which is incorrect
+            // (and there are some tests on that:
+            //   CompilerTestRunnerTest.testWithLibrary
+            //   InfrastructureDumpedTestListingTest.testListingCompiledFromIncludedLibrary
+            //   InfrastructureDumpedTestListingTest.testListingCompiledFromSources
+            // ).
+            context.irFactory.buildFun {
                 startOffset = SYNTHETIC_OFFSET
                 endOffset = SYNTHETIC_OFFSET
                 name = "createTestSuites".synthesizedName
                 visibility = DescriptorVisibilities.PRIVATE
-                isFinal = true
-                isStatic = true
-                type = context.irBuiltIns.unitType
+                returnType = context.irBuiltIns.unitType
             }.apply {
                 parent = irFile
                 irFile.declarations.add(this)
-                annotations += buildSimpleAnnotation(context.irBuiltIns, startOffset, endOffset, context.symbols.eagerInitialization.owner)
-                annotations += buildSimpleAnnotation(context.irBuiltIns, startOffset, endOffset, context.symbols.threadLocal.owner)
-                statements.forEach { it.accept(SetDeclarationsParentVisitor, this) }
-                initializer = context.irFactory.createExpressionBody(SYNTHETIC_OFFSET, SYNTHETIC_OFFSET,
-                        IrCompositeImpl(SYNTHETIC_OFFSET, SYNTHETIC_OFFSET, context.irBuiltIns.unitType, null, statements)
-                )
+                annotations += buildSimpleAnnotation(context.irBuiltIns, startOffset, endOffset, symbols.testInitializer.owner)
+                body = context.createIrBuilder(symbol, SYNTHETIC_OFFSET, SYNTHETIC_OFFSET).irBlockBody {
+                    statements.forEach {
+                        it.accept(SetDeclarationsParentVisitor, this@apply)
+                        +it
+                    }
+                }
             }
+        }
+
+        if (annotationCollector.testClasses.isNotEmpty() || annotationCollector.topLevelFunctions.isNotEmpty()) {
+            irFile.annotations += buildSimpleAnnotation(
+                    context.irBuiltIns, SYNTHETIC_OFFSET, SYNTHETIC_OFFSET, symbols.testsProcessed.owner
+            )
         }
     }
     // endregion
 
-    private fun shouldProcessFile(irFile: IrFile): Boolean = irFile.moduleDescriptor.let {
-        // Process test annotations in source libraries too.
-        it in context.sourcesModules
-    }
+    private fun shouldSkipFile(irFile: IrFile): Boolean =
+            irFile.hasAnnotation(symbols.testsProcessed)
+                    || irFile.moduleDescriptor.let {
+                // Process test annotations in source libraries too.
+                sourcesModules != null && it !in sourcesModules
+            }
 
     override fun lower(irFile: IrFile) {
         // TODO: uses descriptors.
-        if (!shouldProcessFile(irFile)) {
-            return
-        }
+        if (shouldSkipFile(irFile)) return
 
         val annotationCollector = AnnotationCollector(irFile)
         irFile.acceptChildrenVoid(annotationCollector)

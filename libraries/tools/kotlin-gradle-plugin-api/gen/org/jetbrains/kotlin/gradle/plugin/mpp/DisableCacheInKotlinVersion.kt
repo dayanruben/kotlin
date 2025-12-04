@@ -3,6 +3,7 @@
 
 package org.jetbrains.kotlin.gradle.plugin.mpp
 
+import java.io.Serializable
 import kotlin.Comparable
 import kotlin.Int
 import kotlin.String
@@ -40,7 +41,8 @@ public sealed class DisableCacheInKotlinVersion private constructor(
    * The patch version number.
    */
   public val patch: Int,
-) : Comparable<DisableCacheInKotlinVersion> {
+) : Comparable<DisableCacheInKotlinVersion>,
+    Serializable {
   /**
    * Returns the string representation of this version (e.g., 'v2_3_0').
    */
@@ -55,9 +57,4 @@ public sealed class DisableCacheInKotlinVersion private constructor(
    * Represents the Kotlin version constant for 2.3.20.
    */
   public object `2_3_20` : DisableCacheInKotlinVersion(2, 3, 20)
-
-  /**
-   * Represents the Kotlin version constant for 2.3.255.
-   */
-  public object `2_3_255` : DisableCacheInKotlinVersion(2, 3, 255)
 }

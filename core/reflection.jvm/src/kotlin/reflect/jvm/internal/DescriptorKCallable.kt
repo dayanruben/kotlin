@@ -5,24 +5,22 @@
 
 package kotlin.reflect.jvm.internal
 
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.PropertyAccessorDescriptor
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl
 import org.jetbrains.kotlin.load.java.descriptors.JavaCallableMemberDescriptor
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.resolve.descriptorUtil.classId
-import org.jetbrains.kotlin.resolve.isInlineClass
-import org.jetbrains.kotlin.resolve.isUnderlyingPropertyOfInlineClass
-import org.jetbrains.kotlin.resolve.unsubstitutedUnderlyingType
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedPropertyDescriptor
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedSimpleFunctionDescriptor
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.TypeUtils
-import kotlin.reflect.*
-import kotlin.reflect.jvm.internal.calls.getInlineClassUnboxMethod
+import kotlin.reflect.KParameter
+import kotlin.reflect.KType
+import kotlin.reflect.KTypeParameter
+import kotlin.reflect.KVisibility
 import kotlin.reflect.jvm.internal.types.DescriptorKType
 
-internal abstract class DescriptorKCallable<out R> : ReflectKCallable<R> {
+internal abstract class DescriptorKCallable<out R> : ReflectKCallableImpl<R>() {
     abstract val descriptor: CallableMemberDescriptor
 
     protected abstract fun computeReturnType(): DescriptorKType
@@ -52,7 +50,6 @@ internal abstract class DescriptorKCallable<out R> : ReflectKCallable<R> {
 
             val contextParameters = descriptor.computeContextParameters()
             for (i in contextParameters.indices) {
-                @OptIn(ExperimentalContextParameters::class)
                 result.add(DescriptorKParameter(this, result.size, KParameter.Kind.CONTEXT) { contextParameters[i] })
             }
 
@@ -124,46 +121,4 @@ internal abstract class DescriptorKCallable<out R> : ReflectKCallable<R> {
 
     override val isAbstract: Boolean
         get() = descriptor.modality == Modality.ABSTRACT
-
-    private val _absentArguments = ReflectProperties.lazySoft(::computeAbsentArguments)
-
-    override fun getAbsentArguments(): Array<Any?> = _absentArguments().clone()
-}
-
-private fun KotlinType.toInlineClass(): Class<*>? {
-    // See computeExpandedTypeForInlineClass.
-    val klass = constructor.declarationDescriptor.toInlineClass() ?: return null
-    if (!TypeUtils.isNullableType(this)) return klass
-
-    val expandedUnderlyingType = unsubstitutedUnderlyingType() ?: return null
-    if (!TypeUtils.isNullableType(expandedUnderlyingType) && !KotlinBuiltIns.isPrimitiveType(expandedUnderlyingType)) return klass
-
-    return null
-}
-
-internal fun DeclarationDescriptor?.toInlineClass(): Class<*>? =
-    if (this is ClassDescriptor && isInlineClass())
-        toJavaClass() ?: throw KotlinReflectionInternalError("Class object for the class $name cannot be found (classId=$classId)")
-    else
-        null
-
-private val CallableMemberDescriptor.expectedReceiverType: KotlinType?
-    get() {
-        val extensionReceiver = extensionReceiverParameter
-        val dispatchReceiver = dispatchReceiverParameter
-        return when {
-            extensionReceiver != null -> extensionReceiver.type
-            dispatchReceiver == null -> null
-            this is ConstructorDescriptor -> dispatchReceiver.type
-            else -> (containingDeclaration as? ClassDescriptor)?.defaultType
-        }
-    }
-
-internal fun Any?.coerceToExpectedReceiverType(callable: ReflectKCallable<*>, descriptor: CallableMemberDescriptor): Any? {
-    if (descriptor is PropertyDescriptor && descriptor.isUnderlyingPropertyOfInlineClass()) return this
-
-    val expectedReceiverType = descriptor.expectedReceiverType
-    val unboxMethod = expectedReceiverType?.toInlineClass()?.getInlineClassUnboxMethod(callable) ?: return this
-
-    return unboxMethod.invoke(this)
 }

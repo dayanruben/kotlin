@@ -41024,6 +41024,12 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
       }
 
       @Test
+      @TestMetadata("nonExhaustiveByNegation.kt")
+      public void testNonExhaustiveByNegation() {
+        runTest("compiler/testData/diagnostics/tests/sealed/nonExhaustiveByNegation.kt");
+      }
+
+      @Test
       @TestMetadata("NonExhaustiveWhen.kt")
       public void testNonExhaustiveWhen() {
         runTest("compiler/testData/diagnostics/tests/sealed/NonExhaustiveWhen.kt");
@@ -45097,6 +45103,18 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
       @TestMetadata("suspendFunctionExpectedTypeAndWhen.kt")
       public void testSuspendFunctionExpectedTypeAndWhen() {
         runTest("compiler/testData/diagnostics/tests/suspendConversion/suspendFunctionExpectedTypeAndWhen.kt");
+      }
+
+      @Test
+      @TestMetadata("suspendVsNonSuspendGeneric.kt")
+      public void testSuspendVsNonSuspendGeneric() {
+        runTest("compiler/testData/diagnostics/tests/suspendConversion/suspendVsNonSuspendGeneric.kt");
+      }
+
+      @Test
+      @TestMetadata("suspendVsNonSuspendSam.kt")
+      public void testSuspendVsNonSuspendSam() {
+        runTest("compiler/testData/diagnostics/tests/suspendConversion/suspendVsNonSuspendSam.kt");
       }
     }
 

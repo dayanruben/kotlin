@@ -8,12 +8,12 @@ package kotlin.reflect.jvm.internal
 import kotlin.coroutines.Continuation
 import kotlin.jvm.internal.CallableReference
 import kotlin.reflect.KCallable
-import kotlin.reflect.KClass
-import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
 import kotlin.reflect.KType
-import kotlin.reflect.full.valueParameters
 import kotlin.reflect.jvm.internal.calls.Caller
+import kotlin.reflect.jvm.internal.calls.getInlineClassUnboxMethod
+import kotlin.reflect.jvm.internal.calls.isUnderlyingPropertyOfValueClass
+import kotlin.reflect.jvm.internal.calls.toInlineClass
 import kotlin.reflect.jvm.javaType
 import kotlin.reflect.jvm.jvmErasure
 import java.lang.reflect.Array as ReflectArray
@@ -59,20 +59,28 @@ internal interface ReflectKCallable<out R> : KCallable<R>, KTypeParameterOwnerIm
     }
 }
 
-internal interface ReflectKFunction : ReflectKCallable<Any?>, KFunction<Any?> {
-    val signature: String
-
-    val overridden: Collection<ReflectKFunction>
-}
-
 internal val ReflectKCallable<*>.isBound: Boolean
     get() = rawBoundReceiver !== CallableReference.NO_RECEIVER
+
+/**
+ * Same as [ReflectKCallable.rawBoundReceiver], except for when the receiver is an inline class value, in which case it's unboxed.
+ */
+internal val ReflectKCallable<*>.boundReceiver: Any?
+    get() = rawBoundReceiver.coerceToExpectedReceiverType(this)
+
+private fun Any?.coerceToExpectedReceiverType(callable: ReflectKCallable<*>): Any? {
+    if (callable is ReflectKProperty<*> && callable.isUnderlyingPropertyOfValueClass()) return this
+
+    val expectedReceiverType = callable.allParameters.singleOrNull { it.kind != KParameter.Kind.VALUE }?.type
+    val unboxMethod = expectedReceiverType?.toInlineClass()?.getInlineClassUnboxMethod(callable) ?: return this
+
+    return unboxMethod.invoke(this)
+}
 
 internal fun ReflectKCallable<*>.computeAbsentArguments(): Array<Any?> {
     val parameters = parameters
     val parameterSize = parameters.size + (if (isSuspend) 1 else 0)
 
-    @OptIn(ExperimentalContextParameters::class)
     val parametersWithAllocatedBitInMask = parameters.count { it.kind == KParameter.Kind.VALUE || it.kind == KParameter.Kind.CONTEXT }
     val maskSize = (parametersWithAllocatedBitInMask + Integer.SIZE - 1) / Integer.SIZE
 
@@ -134,7 +142,6 @@ internal fun <R> ReflectKCallable<R>.callDefaultMethod(args: Map<KParameter, Any
                 throw IllegalArgumentException("No argument provided for a required parameter: $parameter")
             }
         }
-        @OptIn(ExperimentalContextParameters::class)
         if (parameter.kind == KParameter.Kind.VALUE || parameter.kind == KParameter.Kind.CONTEXT) {
             valueParameterIndex++
         }
@@ -188,39 +195,3 @@ internal val ReflectKCallable<*>.isConstructor: Boolean
 
 internal val ReflectKCallable<*>.isAnnotationConstructor: Boolean
     get() = isConstructor && container.jClass.isAnnotation
-
-private const val DefaultConstructorMarkerDescriptor = "Lkotlin/jvm/internal/DefaultConstructorMarker;"
-
-class DescriptorPatchingResult(val newDescriptor: String, val boxedIndices: Set<Int>)
-
-// The compiler excessively boxes type of parameter, such that it has inline type and its underlying type is nullable
-// Fixing it would break binary backward compatibility, so we mimic compiler behavior here
-// See KT-57357
-internal fun patchJvmDescriptorByExtraBoxing(function: ReflectKFunction, jvmDescriptor: String): DescriptorPatchingResult {
-
-    val parsedDescriptor = parseJvmDescriptor(jvmDescriptor)
-    val hasDefaultMarker = parsedDescriptor.parameters.lastOrNull() == DefaultConstructorMarkerDescriptor
-    val valueParamCount = function.valueParameters.size + if (hasDefaultMarker) 1 else 0
-
-    val boxedIndices = mutableSetOf<Int>()
-    val newParameters = mutableListOf<String>()
-
-    newParameters.addAll(parsedDescriptor.parameters.take(parsedDescriptor.parameters.size - valueParamCount))
-    function.valueParameters.zip(parsedDescriptor.parameters.takeLast(valueParamCount))
-        .forEach { (param, paramJvmDescriptor) ->
-            if (param.isAlwaysBoxedByCompiler) {
-                boxedIndices.add(newParameters.size)
-                newParameters.add((param.type.classifier as KClass<*>).toJvmDescriptor())
-            } else {
-                newParameters.add(paramJvmDescriptor)
-            }
-        }
-
-    if (hasDefaultMarker) {
-        newParameters.add(DefaultConstructorMarkerDescriptor)
-    }
-
-    if (boxedIndices.isEmpty()) return DescriptorPatchingResult(jvmDescriptor, emptySet())
-    val patchedDescriptor = newParameters.joinToString("", "(", ")") + parsedDescriptor.returnType
-    return DescriptorPatchingResult(patchedDescriptor, boxedIndices)
-}

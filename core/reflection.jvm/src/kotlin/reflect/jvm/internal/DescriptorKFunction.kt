@@ -20,9 +20,11 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.resolve.isInlineClassType
 import org.jetbrains.kotlin.resolve.jvm.shouldHideConstructorDueToValueClassTypeValueParameters
-import java.lang.reflect.*
+import java.lang.reflect.Constructor
+import java.lang.reflect.Member
+import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 import kotlin.LazyThreadSafetyMode.PUBLICATION
-import kotlin.coroutines.Continuation
 import kotlin.jvm.internal.CallableReference
 import kotlin.jvm.internal.FunctionBase
 import kotlin.jvm.internal.Reflection
@@ -177,9 +179,6 @@ internal class DescriptorKFunction private constructor(
         return null
     }
 
-    private val boundReceiver: Any?
-        get() = rawBoundReceiver.coerceToExpectedReceiverType(this, descriptor)
-
     // boundReceiver is unboxed receiver when the receiver is inline class.
     // However, when the expected dispatch receiver type is an interface,
     // the member belongs to the interface/DefaultImpls, so the receiver should not be unboxed.
@@ -219,21 +218,6 @@ internal class DescriptorKFunction private constructor(
         DescriptorKType(descriptor.returnType!!) {
             extractContinuationArgument() ?: caller.returnType
         }
-
-    private fun extractContinuationArgument(): Type? {
-        if (isSuspend) {
-            // kotlin.coroutines.Continuation<? super java.lang.String>
-            val continuationType = caller.parameterTypes.lastOrNull() as? ParameterizedType
-            if (continuationType?.rawType == Continuation::class.java) {
-                // ? super java.lang.String
-                val wildcard = continuationType.actualTypeArguments.single() as? WildcardType
-                // java.lang.String
-                return wildcard?.lowerBounds?.first()
-            }
-        }
-
-        return null
-    }
 
     override val arity: Int get() = caller.arity
 
