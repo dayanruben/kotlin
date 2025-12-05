@@ -71,7 +71,11 @@ class DispatchReceiverMemberScopeTowerLevel(
         output: TowerLevelProcessor,
         processScopeMembers: FirScope.(processor: (T) -> Unit) -> Unit,
     ): ProcessResult {
-        val scope = dispatchReceiverValue.scope() ?: return ProcessResult.SCOPE_EMPTY
+        val scope = when (dispatchReceiverValue) {
+            is ExpressionReceiverValue if LanguageFeature.CacheLocalVariableScopes.isEnabled() ->
+                dispatchReceiverValue.cachedScopeIfAvailable()
+            else -> dispatchReceiverValue.scope()
+        } ?: return ProcessResult.SCOPE_EMPTY
 
         val receiverTypeWithoutSmartCast = getOriginalReceiverExpressionIfStableSmartCast()?.resolvedType
         val scopeWithoutSmartcast = receiverTypeWithoutSmartCast?.scope(
@@ -165,6 +169,23 @@ class DispatchReceiverMemberScopeTowerLevel(
             }
         }
         return processResult
+    }
+
+    private fun ExpressionReceiverValue.cachedScopeIfAvailable(): FirTypeScope? {
+        fun FirThisReceiverExpression.implicitReceiverScope(): FirTypeScope? {
+            return calleeReference.boundSymbol
+                ?.let { bodyResolveComponents.implicitValueStorage.getBySymbol(it) as? ReceiverValue }
+                ?.scope()
+        }
+
+        fun ExpressionReceiverValue.cachedLocalVariableScopeIfAvailable(): FirTypeScope? {
+            return bodyResolveComponents.towerDataContext.localVariableScopeStorage.getScope(this) {
+                bodyResolveComponents.dataFlowAnalyzer.getOrCreateVariable(receiverExpression)
+            }
+        }
+
+        return (receiverExpression as? FirThisReceiverExpression)?.implicitReceiverScope()
+            ?: cachedLocalVariableScopeIfAvailable()
     }
 
     /**

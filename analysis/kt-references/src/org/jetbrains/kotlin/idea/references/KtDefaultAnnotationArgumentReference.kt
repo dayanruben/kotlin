@@ -11,11 +11,10 @@ import com.intellij.psi.impl.source.resolve.ResolveCache
 import com.intellij.psi.util.MethodSignatureUtil
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtAnnotationEntry
-import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtPrimaryConstructor
-import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.references.KotlinPsiReferenceProviderContributor
 
 /**
  * A reference pointing to a single argument in annotation's constructor call.
@@ -31,6 +30,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
  * @Foo(name = "bar") // no reference, named argument is used
  * ```
  */
+@OptIn(KtImplementationDetail::class)
 class KtDefaultAnnotationArgumentReference(element: KtValueArgument) : AbstractKtReference<KtValueArgument>(element) {
     override val resolver: ResolveCache.PolyVariantResolver<KtReference>
         get() = Resolver
@@ -79,5 +79,21 @@ class KtDefaultAnnotationArgumentReference(element: KtValueArgument) : AbstractK
                 ?.mainReference
                 ?.resolve()
 
+    }
+
+    class Provider : KotlinPsiReferenceProviderContributor<KtValueArgument> {
+        override val elementClass: Class<KtValueArgument>
+            get() = KtValueArgument::class.java
+
+        override val referenceProvider: KotlinPsiReferenceProviderContributor.ReferenceProvider<KtValueArgument>
+            get() = { element ->
+                val reference = when {
+                    element.isNamed() -> null
+                    element.getParentOfTypeAndBranch<KtAnnotationEntry> { valueArgumentList }?.valueArguments?.size != 1 -> null
+                    else -> KtDefaultAnnotationArgumentReference(element)
+                }
+
+                listOfNotNull(reference)
+            }
     }
 }
