@@ -16,6 +16,13 @@ dependencies {
     api(project(":kotlin-tooling-core"))
     api(project(":native:base"))
 
+    if (kotlinBuildProperties.isKotlinNativeEnabled) {
+        testImplementation(project(":kotlin-native:Interop:Indexer"))
+        testImplementation(project(":native:kotlin-native-utils"))
+        testImplementation(project(":kotlin-native:Interop:StubGenerator"))
+        testImplementation(testFixtures(project(":native:native.tests")))
+    }
+
     testImplementation(project(":native:external-projects-test-utils"))
     testRuntimeOnly(project(":native:analysis-api-based-test-utils"))
     testImplementation(libs.junit.jupiter.api)
@@ -55,16 +62,27 @@ tasks.test.configure {
 projectTests {
     objCExportHeaderGeneratorTestTask("testK1", testDisplayNameTag = "K1") {
         classpath += k1TestRuntimeClasspath
+        exclude("**/ObjCExportIntegrationTest.class")
     }
 
     objCExportHeaderGeneratorTestTask("testAnalysisApi", testDisplayNameTag = "AA") {
         classpath += analysisApiRuntimeClasspath
+        exclude("**/ObjCExportIntegrationTest.class")
+    }
+}
+
+projectTests {
+    objCExportHeaderGeneratorTestTask("testIntegration") {
+        classpath += k1TestRuntimeClasspath
+        classpath += analysisApiRuntimeClasspath
+        include("**/ObjCExportIntegrationTest.class")
     }
 }
 
 tasks.check.configure {
     dependsOn("testK1")
     dependsOn("testAnalysisApi")
+    dependsOn("testIntegration")
     dependsOn(":native:objcexport-header-generator-k1:check")
     dependsOn(":native:objcexport-header-generator-analysis-api:check")
 }

@@ -21,8 +21,14 @@ Primary constructor
 ----------a: kotlin.String------------------------------------------------------
 <primary tag="property" subject="a">
 my property
+----------<getter>(<dispatch receiver>: Foo): kotlin.String---------------------
+<primary tag="property" subject="a">
+my property
 
 ----------b: kotlin.Int---------------------------------------------------------
+<primary tag="property" subject="b">
+my property
+----------<getter>(<dispatch receiver>: Foo): kotlin.Int------------------------
 <primary tag="property" subject="b">
 my property
 
@@ -53,8 +59,13 @@ Primary constructor
 ----------a: kotlin.String------------------------------------------------------
 <primary tag="param" subject="a">
 my property
+----------<getter>(<dispatch receiver>: Bar): kotlin.String---------------------
+<primary tag="param" subject="a">
+my property
 
 ----------b: kotlin.Int---------------------------------------------------------
 <primary tag="param" subject="b">
 my property
-
+----------<getter>(<dispatch receiver>: Bar): kotlin.Int------------------------
+<primary tag="param" subject="b">
+my property

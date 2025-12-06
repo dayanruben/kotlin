@@ -32,6 +32,8 @@ import org.jetbrains.kotlin.wasm.ir.source.location.SourceLocation
 private const val TYPE_INFO_FLAG_ANONYMOUS_CLASS = 1
 private const val TYPE_INFO_FLAG_LOCAL_CLASS = 2
 
+private const val MAX_WASM_IMPORT_NAME_LENGTH = 100_000
+
 class DeclarationGenerator(
     private val backendContext: WasmBackendContext,
     private val wasmFileCodegenContext: WasmFileCodegenContext,
@@ -393,8 +395,24 @@ class DeclarationGenerator(
                 ""
             }
         val simpleName = klass.name.asString()
-        val packageNameStringLiteralId = wasmFileCodegenContext.referenceStringLiteralId(qualifier)
-        val simpleNameStringLiteralId = wasmFileCodegenContext.referenceStringLiteralId(simpleName)
+        val packageNameStringLiteralId: WasmSymbol<Int>
+        val simpleNameStringLiteralId: WasmSymbol<Int>
+        val packageNameGlobalReference: WasmSymbol<WasmGlobal>?
+        val simpleNameGlobalReference: WasmSymbol<WasmGlobal>?
+
+        if (backendContext.isWasmJsTarget) {
+            val packageNameReferenceAndId = wasmFileCodegenContext.referenceGlobalString(qualifier)
+            packageNameGlobalReference = packageNameReferenceAndId.first
+            packageNameStringLiteralId = packageNameReferenceAndId.second
+            val simpleNameReferenceAndId = wasmFileCodegenContext.referenceGlobalString(simpleName)
+            simpleNameGlobalReference = simpleNameReferenceAndId.first
+            simpleNameStringLiteralId = simpleNameReferenceAndId.second
+        } else {
+            packageNameStringLiteralId = wasmFileCodegenContext.referenceStringLiteralId(qualifier)
+            simpleNameStringLiteralId = wasmFileCodegenContext.referenceStringLiteralId(simpleName)
+            packageNameGlobalReference = null
+            simpleNameGlobalReference = null
+        }
 
         val location = SourceLocation.NoLocation("Create instance of rtti struct")
         val initRttiGlobal = buildWasmExpression {
@@ -415,7 +433,9 @@ class DeclarationGenerator(
             buildConstI32(isAnonymousFlag or isLocalFlag, location)
 
             val qualifierStringLoaderRef =
-                if (qualifier.fitsLatin1)
+                if (backendContext.isWasmJsTarget)
+                    wasmFileCodegenContext.wasmStringsElements.createStringLiteralJsString
+                else if (qualifier.fitsLatin1)
                     wasmFileCodegenContext.wasmStringsElements.createStringLiteralLatin1
                 else
                     wasmFileCodegenContext.wasmStringsElements.createStringLiteralUtf16
@@ -427,7 +447,9 @@ class DeclarationGenerator(
             )
 
             val simpleNameStringLoaderRef =
-                if (simpleName.fitsLatin1)
+                if (backendContext.isWasmJsTarget)
+                    wasmFileCodegenContext.wasmStringsElements.createStringLiteralJsString
+                else if (simpleName.fitsLatin1)
                     wasmFileCodegenContext.wasmStringsElements.createStringLiteralLatin1
                 else
                     wasmFileCodegenContext.wasmStringsElements.createStringLiteralUtf16
@@ -437,6 +459,11 @@ class DeclarationGenerator(
                 location,
                 WasmImmediate.FuncIdx(simpleNameStringLoaderRef),
             )
+
+            if (backendContext.isWasmJsTarget) {
+                buildGetGlobal(packageNameGlobalReference!!, location)
+                buildGetGlobal(simpleNameGlobalReference!!, location)
+            }
 
             buildStructNew(wasmFileCodegenContext.rttiType, location)
         }
@@ -668,13 +695,33 @@ fun generateConstExpression(
         is IrConstKind.Double -> body.buildConstF64(expression.value as Double, location)
         is IrConstKind.String -> {
             val stringValue = expression.value as String
-            val literalId = context.referenceStringLiteralId(stringValue)
             body.commentGroupStart { "const string: \"$stringValue\"" }
-            body.buildConstI32Symbol(literalId, location)
-            if (stringValue.fitsLatin1) {
-                body.buildCall(context.wasmStringsElements.createStringLiteralLatin1, location)
+
+            if (backendContext.isWasmJsTarget && !stringValue.hasUnpairedSurrogates) {
+                val stringValueSplits = stringValue.chunked(MAX_WASM_IMPORT_NAME_LENGTH).ifEmpty { listOf("") }
+                val jsConcat: WasmSymbol<WasmFunction> =
+                    context.referenceFunction(backendContext.wasmSymbols.jsRelatedSymbols.jsConcat)
+
+                val (globalReferenceFirst, literalIdToStore) = context.referenceGlobalString(stringValueSplits.first(), stringValue)
+                body.buildConstI32Symbol(literalIdToStore, location)
+                body.buildGetGlobal(globalReferenceFirst, location)
+
+                for (stringValueSplit in stringValueSplits.drop(1)) {
+                    val (globalReference, _) = context.referenceGlobalString(stringValueSplit)
+                    body.buildGetGlobal(globalReference, location)
+                    body.buildCall(jsConcat, location)
+                }
+
+                body.buildCall(context.wasmStringsElements.createStringLiteralJsString, location)
             } else {
-                body.buildCall(context.wasmStringsElements.createStringLiteralUtf16, location)
+                val literalId = context.referenceStringLiteralId(stringValue)
+                body.buildConstI32Symbol(literalId, location)
+
+                if (stringValue.fitsLatin1) {
+                    body.buildCall(context.wasmStringsElements.createStringLiteralLatin1, location)
+                } else {
+                    body.buildCall(context.wasmStringsElements.createStringLiteralUtf16, location)
+                }
             }
             body.commentGroupEnd()
         }

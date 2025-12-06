@@ -29,8 +29,14 @@ property
 ----------a: kotlin.String------------------------------------------------------
 <primary tag="property" subject="a">
 property
+----------<getter>(<dispatch receiver>: Foo): kotlin.String---------------------
+<primary tag="property" subject="a">
+property
 
 ----------val b: kotlin.String--------------------------------------------------
+<primary tag="property" subject="b">
+property
+----------<getter>(<dispatch receiver>: Foo): kotlin.String---------------------
 <primary tag="property" subject="b">
 property
 
@@ -57,7 +63,16 @@ Bar KDoc
 ----------a: kotlin.String------------------------------------------------------
 <primary tag="param" subject="a">
 property
+----------<getter>(<dispatch receiver>: Bar): kotlin.String---------------------
+<primary tag="param" subject="a">
+property
+----------<setter>(<dispatch receiver>: Bar, value: kotlin.String): kotlin.Unit-
+<primary tag="param" subject="a">
+property
 
-----------val b: kotlin.String--------------------------------------------------
+----------var b: kotlin.String--------------------------------------------------
 null
-
+----------<getter>(<dispatch receiver>: Bar): kotlin.String---------------------
+null
+----------<setter>(<dispatch receiver>: Bar, value: kotlin.String): kotlin.Unit-
+null

@@ -15,6 +15,8 @@
  */
 
 #include <cassert>
+#include <cstdlib>
+#include <cstring>
 
 #include <clang/AST/Attr.h>
 #include <clang/AST/DeclObjC.h>
@@ -189,6 +191,20 @@ extern "C" {
     }
 #endif
     return 0;
+  }
+
+  const char* clang_Cursor_getSwiftName(CXCursor cursor) {
+#if LIBCLANGEXT_ENABLE
+    if (clang_isDeclaration(cursor.kind)) {
+      const Decl *decl = getCursorDecl(cursor);
+      if (decl) {
+        if (const auto *attr = decl->getAttr<SwiftNameAttr>()) {
+          return strdup(attr->getName().str().c_str());
+        }
+      }
+    }
+#endif
+    return nullptr;
   }
 
 }
