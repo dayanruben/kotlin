@@ -112,6 +112,16 @@ val installTsDependencies by task<NpmTask> {
     npmCommand.set(listOf("ci"))
 }
 
+configurations.consumable("installedTSDependencies") {
+    attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named("npmrc"))
+    }
+
+    outgoing.artifact(
+        installTsDependencies.map { it.outputs.files.singleFile }
+    )
+}
+
 fun generateTypeScriptTestFor(dir: String): TaskProvider<NpmTask> = tasks.register<NpmTask>("generate-ts-for-$dir") {
     val baseDir = jsTestsDir.resolve(dir)
     val mainTsFile = fileTree(baseDir).files.find {
@@ -139,9 +149,7 @@ fun generateTypeScriptTestFor(dir: String): TaskProvider<NpmTask> = tasks.regist
 val generateTypeScriptTests = parallel(
     beforeAll = installTsDependencies,
     tasksToRun = jsTestsDir.listFiles { it: File ->
-        it.isDirectory &&
-                !it.path.endsWith("module-systems") &&
-                !it.path.endsWith("module-systems-in-exported-file")
+        it.isDirectory && !it.path.endsWith("module-systems")
     }
         .map { generateTypeScriptTestFor(it.name) }
 )
