@@ -26,6 +26,9 @@ import java.io.File
 import java.lang.ref.SoftReference
 import java.net.URL
 import java.net.URLClassLoader
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 interface KotlinStandardLibrariesPathProvider : TestService {
     companion object {
@@ -34,6 +37,9 @@ interface KotlinStandardLibrariesPathProvider : TestService {
 
         @Volatile
         private var reflectJarClassLoader: SoftReference<ClassLoader?> = SoftReference(null)
+
+        @Volatile
+        private var k1ReflectJarClassLoader: SoftReference<ClassLoader?> = SoftReference(null)
 
         private fun createClassLoader(vararg files: File): ClassLoader {
             val urls: MutableList<URL> = ArrayList(2)
@@ -109,31 +115,60 @@ interface KotlinStandardLibrariesPathProvider : TestService {
      */
     abstract fun scriptingPluginFilesForTests(): Collection<File>
 
-    fun getRuntimeJarClassLoader(): ClassLoader = synchronized(this) {
-        var loader = runtimeJarClassLoader.get()
-        if (loader == null) {
-            loader = createClassLoader(
+    fun getRuntimeJarClassLoader(): ClassLoader {
+        runtimeJarClassLoader.get()?.let { return it }
+        synchronized(this) {
+            runtimeJarClassLoader.get()?.let { return it }
+            return createClassLoader(
                 runtimeJarForTests(),
                 scriptRuntimeJarForTests(),
                 kotlinTestJarForTests()
-            )
-            runtimeJarClassLoader = SoftReference(loader)
+            ).also { loader ->
+                runtimeJarClassLoader = SoftReference(loader)
+            }
         }
-        loader
     }
 
-    fun getRuntimeAndReflectJarClassLoader(): ClassLoader = synchronized(this) {
-        var loader = reflectJarClassLoader.get()
-        if (loader == null) {
-            loader = createClassLoader(
+    fun getRuntimeAndReflectJarClassLoader(): ClassLoader {
+        reflectJarClassLoader.get()?.let { return it }
+        synchronized(this) {
+            reflectJarClassLoader.get()?.let { return it }
+            return createClassLoader(
                 runtimeJarForTests(),
                 reflectJarForTests(),
                 scriptRuntimeJarForTests(),
                 kotlinTestJarForTests()
-            )
-            reflectJarClassLoader = SoftReference(loader)
+            ).also { loader ->
+                reflectJarClassLoader = SoftReference(loader)
+                val useK1 = loader.loadClass("kotlin.reflect.jvm.internal.SystemPropertiesKt")
+                    .getMethod("getUseK1Implementation")
+                    .invoke(null)
+                check(useK1 == false)
+            }
         }
-        loader
+    }
+
+    fun getRuntimeAndK1ReflectJarClassLoader(): ClassLoader {
+        k1ReflectJarClassLoader.get()?.let { return it }
+        synchronized(this) {
+            k1ReflectJarClassLoader.get()?.let { return it }
+            withSystemProperty("kotlin.reflect.jvm.useK1Implementation", "true") {
+                return createClassLoader(
+                    runtimeJarForTests(),
+                    reflectJarForTests(),
+                    scriptRuntimeJarForTests(),
+                    kotlinTestJarForTests()
+                ).also { loader ->
+                    k1ReflectJarClassLoader = SoftReference(loader)
+                    // Calling getUseK1Implementation has the intentional side effect of caching
+                    // 'kotlin.reflect.jvm.useK1Implementation' value
+                    val useK1 = loader.loadClass("kotlin.reflect.jvm.internal.SystemPropertiesKt")
+                        .getMethod("getUseK1Implementation")
+                        .invoke(null)
+                    check(useK1 == true)
+                }
+            }
+        }
     }
 }
 
@@ -266,4 +301,20 @@ fun CompilerConfiguration.configureStandardLibs(
         KotlinStandardLibrariesPathProvider::reflectJarForTests,
         arguments
     )
+}
+
+@OptIn(ExperimentalContracts::class)
+private inline fun <T> withSystemProperty(key: String, value: String, body: () -> T): T {
+    contract { callsInPlace(body, InvocationKind.EXACTLY_ONCE) }
+    val old = System.getProperty(key)
+    System.setProperty(key, value)
+    try {
+        return body()
+    } finally {
+        if (old == null) {
+            System.clearProperty(key)
+        } else {
+            System.setProperty(key, old)
+        }
+    }
 }
