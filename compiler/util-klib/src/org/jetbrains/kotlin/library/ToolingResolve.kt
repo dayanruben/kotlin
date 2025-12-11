@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.library
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.konan.properties.Properties
 import org.jetbrains.kotlin.library.ToolingSingleFileKlibResolveStrategy.resolve
-import org.jetbrains.kotlin.library.impl.KLIB_DEFAULT_COMPONENT_NAME
 import org.jetbrains.kotlin.library.loader.KlibLoader
 import org.jetbrains.kotlin.util.Logger
 
@@ -36,6 +35,8 @@ object ToolingSingleFileKlibResolveStrategy : SingleFileKlibResolveStrategy {
     }
 
     private fun fakeLibrary(libraryFile: File): KotlinLibrary = object : KotlinLibrary {
+        override fun toString() = "[non-existent library] $location"
+
         override val location = libraryFile
         override val attributes = KlibAttributes()
         override val versions = KotlinLibraryVersioning(null, null, null)
@@ -45,6 +46,5 @@ object ToolingSingleFileKlibResolveStrategy : SingleFileKlibResolveStrategy {
 
         override val libraryName get() = location.path
         override val libraryFile get() = location
-        override val componentList get() = listOf(KLIB_DEFAULT_COMPONENT_NAME)
     }
 }

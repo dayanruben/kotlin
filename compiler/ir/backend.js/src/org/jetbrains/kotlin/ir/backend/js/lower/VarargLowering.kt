@@ -89,13 +89,13 @@ private class VarargTransformer(
         val arrayLiteral =
             segments.toArrayLiteral(
                 context,
-                IrSimpleTypeImpl(context.symbols.array, false, emptyList(), emptyList()), // TODO: Substitution
+                IrSimpleTypeImpl(context.irBuiltIns.arrayClass, false, emptyList(), emptyList()), // TODO: Substitution
                 context.irBuiltIns.anyType,
                 expression.startOffset,
                 expression.endOffset,
             )
 
-        val concatFun = if (arrayInfo.primitiveArrayType.classifierOrNull in context.symbols.primitiveArrays.keys) {
+        val concatFun = if (arrayInfo.primitiveArrayType.classifierOrNull in context.irBuiltIns.primitiveArraysToPrimitiveTypes.keys) {
             context.symbols.primitiveArrayConcat
         } else {
             context.symbols.arrayConcat
@@ -182,8 +182,7 @@ private fun List<IrExpression>.toArrayLiteral(
     endOffset: Int,
 ): IrExpression {
 
-    // TODO: Use symbols when builtins symbol table is fixes
-    val primitiveType = context.symbols.primitiveArrays.mapKeys { it.key }[type.classifierOrNull]
+    val primitiveType = context.irBuiltIns.primitiveArraysToPrimitiveTypes.mapKeys { it.key }[type.classifierOrNull]
 
     val intrinsic =
         if (primitiveType != null)

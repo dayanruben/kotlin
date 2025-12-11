@@ -25,15 +25,11 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.util.OperatorNameConventions
 import kotlin.getValue
 
 @OptIn(InternalSymbolFinderAPI::class)
 abstract class Symbols(irBuiltIns: IrBuiltIns) : PreSerializationSymbols.Impl(irBuiltIns) {
-    val iterator: IrClassSymbol = irBuiltIns.iteratorClass
-
-    val charSequence: IrClassSymbol = irBuiltIns.charSequenceClass
-    val string: IrClassSymbol = irBuiltIns.stringClass
-
     val primitiveIteratorsByType = mapOf(
         PrimitiveType.BOOLEAN to irBuiltIns.booleanIterator,
         PrimitiveType.CHAR to irBuiltIns.charIterator,
@@ -48,10 +44,6 @@ abstract class Symbols(irBuiltIns: IrBuiltIns) : PreSerializationSymbols.Impl(ir
     // The "...OrNull" variants are used for the classes below because the minimal stdlib used in tests do not include those classes.
     // It was not feasible to add them to the JS reduced runtime because all its transitive dependencies also need to be
     // added, which would include a lot of the full stdlib.
-    val uByte: IrClassSymbol? = irBuiltIns.ubyteClass
-    val uShort: IrClassSymbol? = irBuiltIns.ushortClass
-    val uInt: IrClassSymbol? = irBuiltIns.uintClass
-    val uLong: IrClassSymbol? = irBuiltIns.ulongClass
     val uIntProgression: IrClassSymbol? = ClassIds.UIntProgression.classSymbolOrNull()
     val uLongProgression: IrClassSymbol? = ClassIds.ULongProgression.classSymbolOrNull()
     val uIntRange: IrClassSymbol? = ClassIds.UIntRange.classSymbolOrNull()
@@ -82,101 +74,30 @@ abstract class Symbols(irBuiltIns: IrBuiltIns) : PreSerializationSymbols.Impl(ir
             ?: error("Expected extension receiver for ${it.render()}")
     }
 
-    val any get() = irBuiltIns.anyClass
-    val unit get() = irBuiltIns.unitClass
-
-    val char get() = irBuiltIns.charClass
-
-    val byte get() = irBuiltIns.byteClass
-    val short get() = irBuiltIns.shortClass
-    val int get() = irBuiltIns.intClass
-    val long get() = irBuiltIns.longClass
-    val float get() = irBuiltIns.floatClass
-    val double get() = irBuiltIns.doubleClass
-
-    val integerClasses = listOf(byte, short, int, long)
+    val integerClasses = listOf(irBuiltIns.byteClass, irBuiltIns.shortClass, irBuiltIns.intClass, irBuiltIns.longClass)
 
     val progressionElementTypes: Collection<IrType> by lazy {
-        listOfNotNull(byte, short, int, long, char, uByte, uShort, uInt, uLong).map { it.defaultType }
+        listOfNotNull(
+            irBuiltIns.byteClass, irBuiltIns.shortClass, irBuiltIns.intClass, irBuiltIns.longClass, irBuiltIns.charClass,
+            irBuiltIns.ubyteClass, irBuiltIns.ushortClass, irBuiltIns.uintClass, irBuiltIns.ulongClass
+        ).map { it.defaultType }
     }
-
-    val arrayOf: IrSimpleFunctionSymbol get() = irBuiltIns.arrayOf
-    val arrayOfNulls: IrSimpleFunctionSymbol get() = irBuiltIns.arrayOfNulls
-
-    val array get() = irBuiltIns.arrayClass
-
-    val byteArray get() = irBuiltIns.byteArray
-    val charArray get() = irBuiltIns.charArray
-    val shortArray get() = irBuiltIns.shortArray
-    val intArray get() = irBuiltIns.intArray
-    val longArray get() = irBuiltIns.longArray
-    val floatArray get() = irBuiltIns.floatArray
-    val doubleArray get() = irBuiltIns.doubleArray
-    val booleanArray get() = irBuiltIns.booleanArray
-
-    val byteArrayType get() = byteArray.owner.defaultType
-    val charArrayType get() = charArray.owner.defaultType
-    val shortArrayType get() = shortArray.owner.defaultType
-    val intArrayType get() = intArray.owner.defaultType
-    val longArrayType get() = longArray.owner.defaultType
-    val floatArrayType get() = floatArray.owner.defaultType
-    val doubleArrayType get() = doubleArray.owner.defaultType
-    val booleanArrayType get() = booleanArray.owner.defaultType
-
-    val primitiveTypesToPrimitiveArrays get() = irBuiltIns.primitiveTypesToPrimitiveArrays
-    val primitiveArraysToPrimitiveTypes get() = irBuiltIns.primitiveArraysToPrimitiveTypes
-    val unsignedTypesToUnsignedArrays get() = irBuiltIns.unsignedTypesToUnsignedArrays
-
-    val collection get() = irBuiltIns.collectionClass
-    val set get() = irBuiltIns.setClass
-    val list get() = irBuiltIns.listClass
-    val map get() = irBuiltIns.mapClass
-    val mapEntry get() = irBuiltIns.mapEntryClass
-    val iterable get() = irBuiltIns.iterableClass
-    val listIterator get() = irBuiltIns.listIteratorClass
-    val mutableCollection get() = irBuiltIns.mutableCollectionClass
-    val mutableSet get() = irBuiltIns.mutableSetClass
-    val mutableList get() = irBuiltIns.mutableListClass
-    val mutableMap get() = irBuiltIns.mutableMapClass
-    val mutableMapEntry get() = irBuiltIns.mutableMapEntryClass
-    val mutableIterable get() = irBuiltIns.mutableIterableClass
-    val mutableIterator get() = irBuiltIns.mutableIteratorClass
-    val mutableListIterator get() = irBuiltIns.mutableListIteratorClass
-    val comparable get() = irBuiltIns.comparableClass
 
     open fun functionN(n: Int): IrClassSymbol = irBuiltIns.functionN(n).symbol
     open fun suspendFunctionN(n: Int): IrClassSymbol = irBuiltIns.suspendFunctionN(n).symbol
 
-    fun kproperty0(): IrClassSymbol = irBuiltIns.kProperty0Class
-    fun kproperty1(): IrClassSymbol = irBuiltIns.kProperty1Class
-    fun kproperty2(): IrClassSymbol = irBuiltIns.kProperty2Class
-
-    fun kmutableproperty0(): IrClassSymbol = irBuiltIns.kMutableProperty0Class
-    fun kmutableproperty1(): IrClassSymbol = irBuiltIns.kMutableProperty1Class
-    fun kmutableproperty2(): IrClassSymbol = irBuiltIns.kMutableProperty2Class
-
-    val extensionToString: IrSimpleFunctionSymbol get() = irBuiltIns.extensionToString
-    val memberToString: IrSimpleFunctionSymbol get() = irBuiltIns.memberToString
-    val extensionStringPlus: IrSimpleFunctionSymbol get() = irBuiltIns.extensionStringPlus
-    val memberStringPlus: IrSimpleFunctionSymbol get() = irBuiltIns.memberStringPlus
-
-    fun isStringPlus(functionSymbol: IrFunctionSymbol): Boolean {
-        val plusSymbol = when {
-            functionSymbol.owner.hasShape(
-                dispatchReceiver = true,
-                regularParameters = 1,
-                parameterTypes = listOf(irBuiltIns.stringType, null)
-            ) -> memberStringPlus
-            functionSymbol.owner.hasShape(
-                extensionReceiver = true,
-                regularParameters = 1,
-                parameterTypes = listOf(irBuiltIns.stringType.makeNullable(), null)
-            ) -> extensionStringPlus
-            else -> return false
-        }
-
-        return functionSymbol == plusSymbol
+    val extensionToString: IrSimpleFunctionSymbol by CallableIds.extensionToString.functionSymbol {
+        it.hasShape(extensionReceiver = true, parameterTypes = listOf(irBuiltIns.anyNType))
     }
+    val memberToString: IrSimpleFunctionSymbol = CallableIds.memberToString.functionSymbol()
+    val extensionStringPlus: IrSimpleFunctionSymbol by CallableIds.extensionStringPlus.functionSymbol {
+        it.hasShape(
+            extensionReceiver = true,
+            regularParameters = 1,
+            parameterTypes = listOf(irBuiltIns.stringType.makeNullable(), irBuiltIns.anyNType)
+        )
+    }
+    val memberStringPlus: IrSimpleFunctionSymbol = CallableIds.memberPlus.functionSymbol()
 
     abstract val throwNullPointerException: IrSimpleFunctionSymbol
     abstract val throwTypeCastException: IrSimpleFunctionSymbol
@@ -267,4 +188,9 @@ private object CallableIds {
     private val String.baseCallableId get() = CallableId(StandardNames.BUILT_INS_PACKAGE_FQ_NAME, Name.identifier(this))
     val toUIntExtension = "toUInt".baseCallableId
     val toULongExtension = "toULong".baseCallableId
+
+    val extensionToString = OperatorNameConventions.TO_STRING.toString().baseCallableId
+    val extensionStringPlus = OperatorNameConventions.PLUS.toString().baseCallableId
+    val memberToString = CallableId(StandardClassIds.Any, Name.identifier(OperatorNameConventions.TO_STRING.toString()))
+    val memberPlus = CallableId(StandardClassIds.String, Name.identifier(OperatorNameConventions.PLUS.toString()))
 }

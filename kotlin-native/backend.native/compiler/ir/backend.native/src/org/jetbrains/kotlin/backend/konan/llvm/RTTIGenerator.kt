@@ -33,8 +33,8 @@ internal class RTTIGenerator(
             context.irBuiltIns.byteClass, context.irBuiltIns.shortClass, context.irBuiltIns.intClass,
             context.irBuiltIns.longClass,
             context.irBuiltIns.floatClass, context.irBuiltIns.doubleClass) +
-            context.symbols.primitiveTypesToPrimitiveArrays.values +
-            context.symbols.unsignedTypesToUnsignedArrays.values
+            context.irBuiltIns.primitiveTypesToPrimitiveArrays.values +
+            context.irBuiltIns.unsignedTypesToUnsignedArrays.values
 
     // TODO: extend logic here by taking into account final acyclic classes.
     private fun checkAcyclicFieldType(type: IrType): Boolean = acyclicCache.getOrPut(type) {
@@ -49,7 +49,7 @@ internal class RTTIGenerator(
     }
 
     private fun checkAcyclicClass(irClass: IrClass): Boolean = when {
-        irClass.symbol == context.symbols.array -> false
+        irClass.symbol == context.irBuiltIns.arrayClass -> false
         irClass.isArray -> true
         context.getLayoutBuilder(irClass).getFields(llvm).all { checkAcyclicFieldType(it.type) } -> true
         else -> false
@@ -208,9 +208,9 @@ internal class RTTIGenerator(
 
         val superType = when {
             irClass.isAny() -> NullPointer(runtime.typeInfoType)
-            irClass.isKotlinObjCClass() -> context.symbols.any.owner.typeInfoPtr
+            irClass.isKotlinObjCClass() -> context.irBuiltIns.anyClass.owner.typeInfoPtr
             else -> {
-                val superTypeOrAny = irClass.getSuperClassNotAny() ?: context.symbols.any.owner
+                val superTypeOrAny = irClass.getSuperClassNotAny() ?: context.irBuiltIns.anyClass.owner
                 superTypeOrAny.typeInfoPtr
             }
         }
@@ -257,7 +257,7 @@ internal class RTTIGenerator(
                 llvmDeclarations.writableTypeInfoGlobal,
                 associatedObjects = genAssociatedObjects(irClass),
                 processObjectInMark = when {
-                    irClass.symbol == context.symbols.array -> llvm.Kotlin_processArrayInMark.toConstPointer()
+                    irClass.symbol == context.irBuiltIns.arrayClass -> llvm.Kotlin_processArrayInMark.toConstPointer()
                     else -> genProcessObjectInMark(llvmDeclarations.bodyType)
                 },
                 requiredAlignment = llvmDeclarations.alignment
@@ -506,7 +506,7 @@ internal class RTTIGenerator(
 
         val size = LLVMStoreSizeOfType(llvmTargetData, bodyType.llvmBodyType).toInt()
 
-        val superClass = context.symbols.any.owner
+        val superClass = context.irBuiltIns.anyClass.owner
 
         assert(superClass.implementedInterfaces.isEmpty())
         val interfaces = (listOf(irClass) + irClass.implementedInterfaces)

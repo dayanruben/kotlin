@@ -199,6 +199,7 @@ internal fun ObjCExportFunctionGenerationContext.callAndMaybeRetainAutoreleased(
 }
 
 internal open class ObjCExportCodeGeneratorBase(codegen: CodeGenerator) : ObjCCodeGenerator(codegen) {
+    val irBuiltIns get() = context.irBuiltIns
     val symbols get() = context.symbols
     val runtime get() = codegen.runtime
     val staticData get() = codegen.staticData
@@ -523,11 +524,11 @@ internal class ObjCExportCodeGenerator(
     // TODO: consider including this into ObjCExportCodeSpec.
     private val objCClassForAny = ObjCClassForKotlinClass(
             namer.kotlinAnyName.binaryName,
-            symbols.any,
+            irBuiltIns.anyClass,
             methods = listOf("equals", "hashCode", "toString").map { nameString ->
                 val name = Name.identifier(nameString)
 
-                val irFunction = symbols.any.owner.simpleFunctions().single { it.name == name }
+                val irFunction = irBuiltIns.anyClass.owner.simpleFunctions().single { it.name == name }
 
                 val descriptor = context.builtIns.any.unsubstitutedMemberScope
                         .getContributedFunctions(name, NoLookupLocation.FROM_BACKEND).single()
@@ -585,10 +586,10 @@ private fun ObjCExportCodeGenerator.emitBoxConverters() {
     emitBoxConverter(irBuiltIns.shortClass, ObjCValueType.SHORT, "initWithShort:")
     emitBoxConverter(irBuiltIns.intClass, ObjCValueType.INT, "initWithInt:")
     emitBoxConverter(irBuiltIns.longClass, ObjCValueType.LONG_LONG, "initWithLongLong:")
-    emitBoxConverter(symbols.uByte!!, ObjCValueType.UNSIGNED_CHAR, "initWithUnsignedChar:")
-    emitBoxConverter(symbols.uShort!!, ObjCValueType.UNSIGNED_SHORT, "initWithUnsignedShort:")
-    emitBoxConverter(symbols.uInt!!, ObjCValueType.UNSIGNED_INT, "initWithUnsignedInt:")
-    emitBoxConverter(symbols.uLong!!, ObjCValueType.UNSIGNED_LONG_LONG, "initWithUnsignedLongLong:")
+    emitBoxConverter(irBuiltIns.ubyteClass!!, ObjCValueType.UNSIGNED_CHAR, "initWithUnsignedChar:")
+    emitBoxConverter(irBuiltIns.ushortClass!!, ObjCValueType.UNSIGNED_SHORT, "initWithUnsignedShort:")
+    emitBoxConverter(irBuiltIns.uintClass!!, ObjCValueType.UNSIGNED_INT, "initWithUnsignedInt:")
+    emitBoxConverter(irBuiltIns.ulongClass!!, ObjCValueType.UNSIGNED_LONG_LONG, "initWithUnsignedLongLong:")
     emitBoxConverter(irBuiltIns.floatClass, ObjCValueType.FLOAT, "initWithFloat:")
     emitBoxConverter(irBuiltIns.doubleClass, ObjCValueType.DOUBLE, "initWithDouble:")
 }
@@ -704,7 +705,7 @@ private fun ObjCExportBlockCodeGenerator.emitBlockToKotlinFunctionConverters() {
 
 private fun ObjCExportCodeGenerator.emitSpecialClassesConvertions() {
     bindObjCExportConvertToRetained(
-            symbols.string.owner,
+            irBuiltIns.stringClass.owner,
             llvm.Kotlin_ObjCExport_CreateRetainedNSStringFromKString.toConstPointer()
     )
 
@@ -719,32 +720,32 @@ private fun ObjCExportCodeGenerator.emitCollectionConverters() {
             llvm.externalNativeRuntimeFunction(name, kotlinToObjCFunctionType).toConstPointer()
 
     bindObjCExportConvertToRetained(
-            symbols.list.owner,
+            irBuiltIns.listClass.owner,
             importConverter("Kotlin_Interop_CreateRetainedNSArrayFromKList")
     )
 
     bindObjCExportConvertToRetained(
-            symbols.mutableList.owner,
+            irBuiltIns.mutableListClass.owner,
             importConverter("Kotlin_Interop_CreateRetainedNSMutableArrayFromKList")
     )
 
     bindObjCExportConvertToRetained(
-            symbols.set.owner,
+            irBuiltIns.setClass.owner,
             importConverter("Kotlin_Interop_CreateRetainedNSSetFromKSet")
     )
 
     bindObjCExportConvertToRetained(
-            symbols.mutableSet.owner,
+            irBuiltIns.mutableSetClass.owner,
             importConverter("Kotlin_Interop_CreateRetainedKotlinMutableSetFromKSet")
     )
 
     bindObjCExportConvertToRetained(
-            symbols.map.owner,
+            irBuiltIns.mapClass.owner,
             importConverter("Kotlin_Interop_CreateRetainedNSDictionaryFromKMap")
     )
 
     bindObjCExportConvertToRetained(
-            symbols.mutableMap.owner,
+            irBuiltIns.mutableMapClass.owner,
             importConverter("Kotlin_Interop_CreateRetainedKotlinMutableDictionaryFromKMap")
     )
 }

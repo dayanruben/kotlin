@@ -215,7 +215,7 @@ class JvmSymbols(
     override val stringBuilder: IrClassSymbol = createClass(FqName("java.lang.StringBuilder")) { klass ->
         klass.addConstructor()
         klass.addFunction("toString", irBuiltIns.stringType).apply {
-            overriddenSymbols = overriddenSymbols + any.functionByName("toString")
+            overriddenSymbols = overriddenSymbols + irBuiltIns.anyClass.functionByName("toString")
         }
 
         val appendTypes = with(irBuiltIns) {
@@ -591,8 +591,8 @@ class JvmSymbols(
 
     private val progressionUtilClasses by lazy(LazyThreadSafetyMode.PUBLICATION) {
         listOf(
-            "kotlin.internal.ProgressionUtilKt" to listOf(int, long),
-            "kotlin.internal.UProgressionUtilKt" to listOfNotNull(uInt, uLong)
+            "kotlin.internal.ProgressionUtilKt" to listOf(irBuiltIns.intClass, irBuiltIns.longClass),
+            "kotlin.internal.UProgressionUtilKt" to listOfNotNull(irBuiltIns.uintClass, irBuiltIns.ulongClass)
         ).map { (fqn, types) ->
             createClass(FqName(fqn)) { klass ->
                 for (type in types) {
@@ -603,8 +603,8 @@ class JvmSymbols(
                         addValueParameter(
                             "st",
                             when (type) {
-                                uInt -> int.owner.defaultType
-                                uLong -> long.owner.defaultType
+                                irBuiltIns.uintClass -> irBuiltIns.intClass.defaultType
+                                irBuiltIns.ulongClass -> irBuiltIns.longClass.defaultType
                                 else -> type.owner.defaultType
                             }
                         )
@@ -937,14 +937,14 @@ class JvmSymbols(
     val arraysClass: IrClassSymbol =
         createClass(FqName("java.util.Arrays")) { irClass ->
             for (type in listOf(
-                booleanArrayType,
-                byteArrayType,
-                charArrayType,
-                shortArrayType,
-                intArrayType,
-                longArrayType,
-                floatArrayType,
-                doubleArrayType,
+                irBuiltIns.booleanArray.defaultType,
+                irBuiltIns.byteArray.defaultType,
+                irBuiltIns.charArray.defaultType,
+                irBuiltIns.shortArray.defaultType,
+                irBuiltIns.intArray.defaultType,
+                irBuiltIns.longArray.defaultType,
+                irBuiltIns.floatArray.defaultType,
+                irBuiltIns.doubleArray.defaultType,
                 arrayOfAnyNType
             )) {
                 irClass.addArraysCopyOfFunction(type)

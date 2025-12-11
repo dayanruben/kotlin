@@ -349,9 +349,8 @@ internal object EscapeAnalysis {
             val lifetimes: MutableMap<IrElement, Lifetime>,
             val propagateExiledToHeapObjects: Boolean
     ) {
-
-        private val symbols = context.symbols
-        private val throwable = symbols.throwable.owner
+        private val irBuiltIns = context.irBuiltIns
+        private val throwable = irBuiltIns.throwableClass.owner
 
         val escapeAnalysisResults = mutableMapOf<DataFlowIR.FunctionSymbol.Declared, FunctionEscapeAnalysisResult>()
 
@@ -642,15 +641,15 @@ internal object EscapeAnalysis {
         private val pointerSize = generationState.runtime.pointerSize
 
         private fun arrayItemSizeOf(irClass: IrClass): Int? = when (irClass.symbol) {
-            symbols.array -> pointerSize
-            symbols.booleanArray -> 1
-            symbols.byteArray -> 1
-            symbols.charArray -> 2
-            symbols.shortArray -> 2
-            symbols.intArray -> 4
-            symbols.floatArray -> 4
-            symbols.longArray -> 8
-            symbols.doubleArray -> 8
+            irBuiltIns.arrayClass -> pointerSize
+            irBuiltIns.booleanArray -> 1
+            irBuiltIns.byteArray -> 1
+            irBuiltIns.charArray -> 2
+            irBuiltIns.shortArray -> 2
+            irBuiltIns.intArray -> 4
+            irBuiltIns.floatArray -> 4
+            irBuiltIns.longArray -> 8
+            irBuiltIns.doubleArray -> 8
             else -> null
         }
 
@@ -897,7 +896,7 @@ internal object EscapeAnalysis {
                     }
                 }
 
-                val nothing = moduleDFG.symbolTable.mapClassReferenceType(context.symbols.nothing.owner)
+                val nothing = moduleDFG.symbolTable.mapClassReferenceType(context.irBuiltIns.nothingClass.owner)
                 body.forEachNonScopeNode { node ->
                     when (node) {
                         is DataFlowIR.Node.FieldWrite -> {
@@ -1700,7 +1699,7 @@ internal object EscapeAnalysis {
                     } else {
                         remainedToAlloc = 0
                         // Do not exile primitive arrays - they ain't reference no object.
-                        if (irClass.symbol == symbols.array && propagateExiledToHeapObjects) {
+                        if (irClass.symbol == irBuiltIns.arrayClass && propagateExiledToHeapObjects) {
                             context.log { "Forcing node ${nodeToString(ptgNode.node!!)} to escape" }
                             escapeOrigins += ptgNode
                             propagateEscapeOrigin(ptgNode)

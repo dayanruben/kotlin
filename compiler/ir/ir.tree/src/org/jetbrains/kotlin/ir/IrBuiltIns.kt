@@ -146,6 +146,9 @@ abstract class IrBuiltIns {
     abstract val primitiveArrayElementTypes: Map<IrClassSymbol, IrType?>
     abstract val primitiveArrayForType: Map<IrType?, IrClassSymbol>
 
+    val arrays: List<IrClassSymbol>
+        get() = primitiveTypesToPrimitiveArrays.values + unsignedTypesToUnsignedArrays.values + arrayClass
+
     abstract val unsignedTypesToUnsignedArrays: Map<UnsignedType, IrClassSymbol>
     abstract val unsignedArraysElementTypes: Map<IrClassSymbol, IrType?>
 
@@ -172,12 +175,6 @@ abstract class IrBuiltIns {
     abstract val intTimesSymbol: IrSimpleFunctionSymbol
     abstract val intXorSymbol: IrSimpleFunctionSymbol
     abstract val intAndSymbol: IrSimpleFunctionSymbol
-
-    abstract val extensionToString: IrSimpleFunctionSymbol
-    abstract val memberToString: IrSimpleFunctionSymbol
-
-    abstract val extensionStringPlus: IrSimpleFunctionSymbol
-    abstract val memberStringPlus: IrSimpleFunctionSymbol
 
     abstract val arrayOf: IrSimpleFunctionSymbol
     abstract val arrayOfNulls: IrSimpleFunctionSymbol

@@ -82,6 +82,7 @@ private class KotlinToCCallBuilder(
     val cBridgeName = stubs.getUniqueCName("knbridge")
 
     val symbols: KonanSymbols get() = stubs.symbols
+    val irBuiltIns: IrBuiltIns get() = stubs.irBuiltIns
 
     val bridgeCallBuilder = KotlinCallBuilder(irBuilder, symbols)
     val bridgeBuilder = KotlinCBridgeBuilder(irBuilder.startOffset, irBuilder.endOffset, cBridgeName, stubs, isKotlinToC = true, foreignExceptionMode)
@@ -389,7 +390,7 @@ private fun KotlinToCCallBuilder.addVariadicArguments(
         with(irBuilder) {
             val argumentTypes = unwrapVariadicArguments(elements).map { it.type }
             argumentTypes.forEachIndexed { index, type ->
-                val argument = irCall(symbols.arrayGet[symbols.array]!!, symbols.any.defaultType.makeNullable()).apply {
+                val argument = irCall(symbols.arrayGet[irBuiltIns.arrayClass]!!, irBuiltIns.anyClass.defaultType.makeNullable()).apply {
                     arguments[0] = irGet(variable)
                     arguments[1] = irInt(index)
                 }.implicitCastIfNeededTo(type)
@@ -406,7 +407,7 @@ private fun KotlinToCCallBuilder.unwrapVariadicArguments(
         is IrExpression -> listOf(it)
         is IrSpreadElement -> {
             val expression = it.expression
-            require(expression is IrCall && expression.symbol == symbols.arrayOf) { stubs.renderCompilerError(it) }
+            require(expression is IrCall && expression.symbol == irBuiltIns.arrayOf) { stubs.renderCompilerError(it) }
             handleArgumentForVarargParameter(expression.arguments[0]) { _, elements ->
                 unwrapVariadicArguments(elements)
             }
@@ -834,12 +835,12 @@ private fun KotlinToCCallBuilder.mapCalleeFunctionParameter(
         classifier?.isClassWithFqName(InteropFqNames.cValues.toUnsafe()) == true || // Note: this should not be accepted, but is required for compatibility
                 classifier?.isClassWithFqName(InteropFqNames.cValuesRef.toUnsafe()) == true -> CValuesRefArgumentPassing(type)
 
-        classifier == symbols.string && (variadic || parameter?.isCStringParameter() == true) -> {
+        classifier == irBuiltIns.stringClass && (variadic || parameter?.isCStringParameter() == true) -> {
             require(!variadic || !isObjCMethod) { stubs.renderCompilerError(argument) }
             CStringArgumentPassing()
         }
 
-        classifier == symbols.string && parameter?.isWCStringParameter() == true ->
+        classifier == irBuiltIns.stringClass && parameter?.isWCStringParameter() == true ->
             WCStringArgumentPassing()
 
         else -> state.mapFunctionParameterType(
@@ -1417,7 +1418,7 @@ private class ObjCBlockPointerValuePassing(
         constructorParameter.parent = constructor
 
         constructor.body = irBuiltIns.createIrBuilder(constructor.symbol).irBlockBody(startOffset, endOffset) {
-            +irDelegatingConstructorCall(symbols.any.owner.constructors.single())
+            +irDelegatingConstructorCall(irBuiltIns.anyClass.owner.constructors.single())
             +irSetField(irGet(irClass.thisReceiver!!), blockHolderField,
                     irCall(symbols.interopCreateObjCObjectHolder.owner).apply {
                         arguments[0] = irGet(constructorParameter)

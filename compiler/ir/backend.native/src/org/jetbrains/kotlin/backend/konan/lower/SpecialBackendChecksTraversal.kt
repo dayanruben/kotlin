@@ -265,7 +265,7 @@ private class BackendChecker(
         if (!hasObjCClassSupertype)
             reportError(irClass, "Kotlin implementation of Objective-C protocol must have Objective-C superclass (e.g. NSObject)")
 
-        val methodsOfAny = symbols.any.owner.declarations.filterIsInstance<IrSimpleFunction>().toSet()
+        val methodsOfAny = irBuiltIns.anyClass.owner.declarations.filterIsInstance<IrSimpleFunction>().toSet()
 
         irClass.declarations.filterIsInstance<IrSimpleFunction>().filter { it.isReal }.forEach { method ->
             val overriddenMethodOfAny = method.allOverriddenFunctions.firstOrNull {
@@ -651,7 +651,7 @@ private fun BackendChecker.checkCanUnwrapVariadicArguments(elements: List<IrVara
             checkCanMapCalleeFunctionParameter(element.type, isObjCMethod, variadic = true, parameter = null, argument = element)
         is IrSpreadElement -> {
             val expression = element.expression
-            if (expression is IrCall && expression.symbol == symbols.arrayOf)
+            if (expression is IrCall && expression.symbol == irBuiltIns.arrayOf)
                 checkCanHandleArgumentForVarargParameter(expression.arguments[0], isObjCMethod)
             else
                 reportError(element, "When calling variadic " +
@@ -744,7 +744,7 @@ private fun BackendChecker.checkCanMapCalleeFunctionParameter(
         classifier?.isClassWithFqName(InteropFqNames.cValues.toUnsafe()) == true || // Note: this should not be accepted, but is required for compatibility
                 classifier?.isClassWithFqName(InteropFqNames.cValuesRef.toUnsafe()) == true -> return
 
-        classifier == symbols.string && (variadic || parameter?.isCStringParameter() == true) -> {
+        classifier == irBuiltIns.stringClass && (variadic || parameter?.isCStringParameter() == true) -> {
             if (variadic && isObjCMethod) {
                 reportError(argument, "Passing String as variadic Objective-C argument is ambiguous; " +
                         "cast it to NSString or pass with '.cstr' as C string")
@@ -752,7 +752,7 @@ private fun BackendChecker.checkCanMapCalleeFunctionParameter(
             }
         }
 
-        classifier == symbols.string && parameter?.isWCStringParameter() == true -> return
+        classifier == irBuiltIns.stringClass && parameter?.isWCStringParameter() == true -> return
 
         else -> checkCanMapFunctionParameterType(type, variadic = variadic, location = TypeLocation.FunctionArgument(argument))
     }

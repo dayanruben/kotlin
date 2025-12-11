@@ -12,12 +12,15 @@ import kotlin.Boolean
 import kotlin.OptIn
 import kotlin.String
 import kotlin.Suppress
+import kotlin.collections.List
 import kotlin.collections.MutableMap
 import kotlin.collections.MutableSet
+import kotlin.collections.emptyList
 import kotlin.collections.mutableMapOf
 import kotlin.collections.mutableSetOf
 import org.jetbrains.kotlin.buildtools.`internal`.UseFromImplModuleRestricted
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.CommonCompilerArgumentsImpl.Companion.API_VERSION
+import org.jetbrains.kotlin.buildtools.`internal`.arguments.CommonCompilerArgumentsImpl.Companion.COMPILER_PLUGINS
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.CommonCompilerArgumentsImpl.Companion.KOTLIN_HOME
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.CommonCompilerArgumentsImpl.Companion.LANGUAGE_VERSION
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.CommonCompilerArgumentsImpl.Companion.OPT_IN
@@ -114,6 +117,7 @@ import org.jetbrains.kotlin.buildtools.`internal`.arguments.CommonCompilerArgume
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.CommonCompilerArgumentsImpl.Companion.X_WHEN_GUARDS
 import org.jetbrains.kotlin.buildtools.api.CompilerArgumentsParseException
 import org.jetbrains.kotlin.buildtools.api.KotlinReleaseVersion
+import org.jetbrains.kotlin.buildtools.api.arguments.CompilerPlugin
 import org.jetbrains.kotlin.buildtools.api.arguments.ExperimentalCompilerArgument
 import org.jetbrains.kotlin.buildtools.api.arguments.enums.ExplicitApiMode
 import org.jetbrains.kotlin.buildtools.api.arguments.enums.KotlinVersion
@@ -126,6 +130,10 @@ import org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION as KC_VERSION
 internal abstract class CommonCompilerArgumentsImpl : CommonToolArgumentsImpl(),
     ArgumentsCommonCompilerArguments {
   private val optionsMap: MutableMap<String, Any?> = mutableMapOf()
+
+  init {
+    optionsMap["COMPILER_PLUGINS"] = emptyList<CompilerPlugin>()
+  }
 
   @Suppress("UNCHECKED_CAST")
   @UseFromImplModuleRestricted
@@ -252,6 +260,7 @@ internal abstract class CommonCompilerArgumentsImpl : CommonToolArgumentsImpl(),
     if (OPT_IN in this) { arguments.optIn = get(OPT_IN)}
     if (PROGRESSIVE in this) { arguments.progressiveMode = get(PROGRESSIVE)}
     if (SCRIPT in this) { arguments.script = get(SCRIPT)}
+    if (COMPILER_PLUGINS in this) { arguments.applyCompilerPlugins(get(COMPILER_PLUGINS))}
     return arguments
   }
 
@@ -353,6 +362,7 @@ internal abstract class CommonCompilerArgumentsImpl : CommonToolArgumentsImpl(),
     try { this[OPT_IN] = arguments.optIn } catch (_: NoSuchMethodError) {  }
     try { this[PROGRESSIVE] = arguments.progressiveMode } catch (_: NoSuchMethodError) {  }
     try { this[SCRIPT] = arguments.script } catch (_: NoSuchMethodError) {  }
+    try { this[COMPILER_PLUGINS] = applyCompilerPlugins(this[COMPILER_PLUGINS], arguments) } catch (_: NoSuchMethodError) {  }
     internalArguments.addAll(arguments.internalArguments.map { it.stringRepresentation })
   }
 
@@ -640,5 +650,8 @@ internal abstract class CommonCompilerArgumentsImpl : CommonToolArgumentsImpl(),
     public val PROGRESSIVE: CommonCompilerArgument<Boolean> = CommonCompilerArgument("PROGRESSIVE")
 
     public val SCRIPT: CommonCompilerArgument<Boolean> = CommonCompilerArgument("SCRIPT")
+
+    public val COMPILER_PLUGINS: CommonCompilerArgument<List<CompilerPlugin>> =
+        CommonCompilerArgument("COMPILER_PLUGINS")
   }
 }

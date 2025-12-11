@@ -298,9 +298,6 @@ class KonanSymbols(
         }
     }
 
-    val nothing get() = irBuiltIns.nothingClass
-    val throwable get() = irBuiltIns.throwableClass
-    val enum get() = irBuiltIns.enumClass
     private val nativePtr = ClassIds.nativePtr.classSymbol()
     val nativePointed = ClassIds.nativePointed.classSymbol()
     val nativePtrType = nativePtr.typeWith(arguments = emptyList())
@@ -308,17 +305,17 @@ class KonanSymbols(
     val immutableBlobOf = CallableIds.immutableBlobOf.functionSymbol()
     val immutableBlobOfImpl = CallableIds.immutableBlobOfImpl.functionSymbol()
 
-    val signedIntegerClasses = setOf(byte, short, int, long)
-    val unsignedIntegerClasses = setOf(uByte!!, uShort!!, uInt!!, uLong!!)
+    val signedIntegerClasses = setOf(irBuiltIns.byteClass, irBuiltIns.shortClass, irBuiltIns.intClass, irBuiltIns.longClass)
+    val unsignedIntegerClasses = setOf(irBuiltIns.ubyteClass!!, irBuiltIns.ushortClass!!, irBuiltIns.uintClass!!, irBuiltIns.ulongClass!!)
 
     val allIntegerClasses = signedIntegerClasses + unsignedIntegerClasses
 
     val unsignedToSignedOfSameBitWidth = unsignedIntegerClasses.associateWith {
         when (it) {
-            uByte -> byte
-            uShort -> short
-            uInt -> int
-            uLong -> long
+            irBuiltIns.ubyteClass -> irBuiltIns.byteClass
+            irBuiltIns.ushortClass -> irBuiltIns.shortClass
+            irBuiltIns.uintClass -> irBuiltIns.intClass
+            irBuiltIns.ulongClass -> irBuiltIns.longClass
             else -> error(it.toString())
         }
     }
@@ -375,8 +372,8 @@ class KonanSymbols(
     val interopCPointer = ClassIds.interopCPointer.classSymbol()
     val interopCPointed = ClassIds.interopCPointed.classSymbol()
     val interopCVariable = ClassIds.interopCVariable.classSymbol()
-    val interopCstr by CallableIds.cstrProperty.getterSymbol(extensionReceiverClass = string)
-    val interopWcstr by CallableIds.wcstrProperty.getterSymbol(extensionReceiverClass = string)
+    val interopCstr by CallableIds.cstrProperty.getterSymbol(extensionReceiverClass = irBuiltIns.stringClass)
+    val interopWcstr by CallableIds.wcstrProperty.getterSymbol(extensionReceiverClass = irBuiltIns.stringClass)
     val interopMemScope = ClassIds.interopMemScope.classSymbol()
     val interopCValue = ClassIds.interopCValue.classSymbol()
     val interopCValues = ClassIds.interopCValues.classSymbol()
@@ -521,6 +518,7 @@ class KonanSymbols(
 
     override val stringBuilder = ClassIds.stringBuilder.classSymbol()
 
+    private val arrays = irBuiltIns.arrays
     private fun arrayToExtensionSymbolMap(callableId: CallableId, condition: (IrFunction) -> Boolean = { true }): Lazy<Map<IrClassSymbol, IrSimpleFunctionSymbol>> {
         val allSymbols = callableId.functionSymbols()
         return lazy {
@@ -559,7 +557,7 @@ class KonanSymbols(
     val valueOfForEnum = CallableIds.valueOfForEnum.functionSymbol()
 
     val createEnumEntries by CallableIds.enumEntries.functionSymbol {
-        it.hasShape(regularParameters = 1) && it.parameters[0].type.classOrNull == array
+        it.hasShape(regularParameters = 1) && it.parameters[0].type.classOrNull == irBuiltIns.arrayClass
     }
 
     val enumEntriesInterface = ClassIds.enumEntries.classSymbol()

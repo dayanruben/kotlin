@@ -1079,7 +1079,7 @@ internal class CodeGeneratorVisitor(
          */
         private val handler by lazy {
             using(outerContext) {
-                continuationBlock(context.symbols.throwable.owner.defaultType, endLocationInfoFromScope()) {
+                continuationBlock(context.irBuiltIns.throwableClass.owner.defaultType, endLocationInfoFromScope()) {
                     genHandler(it.value)
                 }
             }
@@ -1538,7 +1538,7 @@ internal class CodeGeneratorVisitor(
         val type     = value.typeOperand
         return genInstanceOf(
                 value,
-                type.getClass() ?: context.symbols.any.owner,
+                type.getClass() ?: context.irBuiltIns.anyClass.owner,
                 resultSlot = null,
                 onSuperClassCast = { arg ->
                     if (type.isNullable())
@@ -1919,7 +1919,7 @@ internal class CodeGeneratorVisitor(
             }
             is IrConstantArray -> {
                 val clazz = value.type.getClass()!!
-                require(clazz.symbol == symbols.array || clazz.symbol in symbols.primitiveTypesToPrimitiveArrays.values) {
+                require(clazz.symbol == context.irBuiltIns.arrayClass || clazz.symbol in context.irBuiltIns.primitiveTypesToPrimitiveArrays.values) {
                     "Statically initialized array should have array type"
                 }
                 codegen.staticData.createConstKotlinArray(
