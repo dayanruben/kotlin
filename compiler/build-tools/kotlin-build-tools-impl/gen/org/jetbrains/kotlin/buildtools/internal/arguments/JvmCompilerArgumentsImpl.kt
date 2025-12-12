@@ -108,12 +108,18 @@ import org.jetbrains.kotlin.cli.common.arguments.validateArguments
 import org.jetbrains.kotlin.compilerRunner.toArgumentStrings as compilerToArgumentStrings
 import org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION as KC_VERSION
 
-internal class JvmCompilerArgumentsImpl : CommonCompilerArgumentsImpl(), JvmCompilerArguments {
+internal class JvmCompilerArgumentsImpl() : CommonCompilerArgumentsImpl(), JvmCompilerArguments {
   private val optionsMap: MutableMap<String, Any?> = mutableMapOf()
+  init {
+    applyCompilerArguments(K2JVMCompilerArguments())
+  }
 
   @Suppress("UNCHECKED_CAST")
   @UseFromImplModuleRestricted
-  override operator fun <V> `get`(key: JvmCompilerArguments.JvmCompilerArgument<V>): V = optionsMap[key.id] as V
+  override operator fun <V> `get`(key: JvmCompilerArguments.JvmCompilerArgument<V>): V {
+    check(key.id in optionsMap) { "Argument ${key.id} is not set and has no default value" }
+    return optionsMap[key.id] as V
+  }
 
   @UseFromImplModuleRestricted
   override operator fun <V> `set`(key: JvmCompilerArguments.JvmCompilerArgument<V>, `value`: V) {

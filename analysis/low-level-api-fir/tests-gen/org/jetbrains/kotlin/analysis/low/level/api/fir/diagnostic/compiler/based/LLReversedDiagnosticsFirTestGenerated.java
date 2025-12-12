@@ -1997,6 +1997,24 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
         runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/collectionLiteralAsReceiver.kt");
       }
 
+      @Test
+      @TestMetadata("kt82684.kt")
+      public void testKt82684() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/kt82684.kt");
+      }
+
+      @Test
+      @TestMetadata("kt82684withArrayOf.kt")
+      public void testKt82684withArrayOf() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/kt82684withArrayOf.kt");
+      }
+
+      @Test
+      @TestMetadata("kt82964.kt")
+      public void testKt82964() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/kt82964.kt");
+      }
+
       @Nested
       @TestMetadata("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/collectionLiteralsDisabled")
       @TestDataPath("$PROJECT_ROOT")
@@ -2059,6 +2077,12 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
         public void testInWhenConditions() {
           runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/collectionLiteralsDisabled/inWhenConditions.kt");
         }
+
+        @Test
+        @TestMetadata("outerTypeVariableInExpectedType.kt")
+        public void testOuterTypeVariableInExpectedType() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/collectionLiteralsDisabled/outerTypeVariableInExpectedType.kt");
+        }
       }
 
       @Nested
@@ -2092,6 +2116,46 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
         @TestMetadata("inVarargsInAnnotations.kt")
         public void testInVarargsInAnnotations() {
           runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/formerArrayLiterals/inVarargsInAnnotations.kt");
+        }
+      }
+
+      @Nested
+      @TestMetadata("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/kt81777")
+      @TestDataPath("$PROJECT_ROOT")
+      public class Kt81777 {
+        @Test
+        public void testAllFilesPresentInKt81777() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/kt81777"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("enabledNestedCL.kt")
+        public void testEnabledNestedCL() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/kt81777/enabledNestedCL.kt");
+        }
+
+        @Test
+        @TestMetadata("inAnnotationDefaults.kt")
+        public void testInAnnotationDefaults() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/kt81777/inAnnotationDefaults.kt");
+        }
+
+        @Test
+        @TestMetadata("inAnnotations.kt")
+        public void testInAnnotations() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/kt81777/inAnnotations.kt");
+        }
+
+        @Test
+        @TestMetadata("withDisabledCL.kt")
+        public void testWithDisabledCL() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/kt81777/withDisabledCL.kt");
+        }
+
+        @Test
+        @TestMetadata("withEnabledCL.kt")
+        public void testWithEnabledCL() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/kt81777/withEnabledCL.kt");
         }
       }
 
@@ -4701,6 +4765,18 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
       @TestMetadata("explicitDelegationCallRequired.kt")
       public void testExplicitDelegationCallRequired() {
         runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/explicitDelegationCallRequired.kt");
+      }
+
+      @Test
+      @TestMetadata("implicitNestedClassFromSuperClass.kt")
+      public void testImplicitNestedClassFromSuperClass() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/implicitNestedClassFromSuperClass.kt");
+      }
+
+      @Test
+      @TestMetadata("implicitNestedClassFromSuperInterface.kt")
+      public void testImplicitNestedClassFromSuperInterface() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/implicitNestedClassFromSuperInterface.kt");
       }
 
       @Test

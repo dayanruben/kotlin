@@ -15,9 +15,9 @@ repositories {
     mavenCentral()
 }
 
-val kotlinNativeEmbedded by configurations.creating {
-    isCanBeConsumed = false
-    isCanBeResolved = true
+val kotlinNativeEmbedded = configurations.dependencyScope("kotlinNativeEmbedded")
+val kotlinNativeEmbeddedClasspath = configurations.resolvable("kotlinNativeEmbeddableClasspath") {
+    extendsFrom(kotlinNativeEmbedded.get())
 }
 
 val kotlinNativeSources by configurations.creating {
@@ -51,7 +51,6 @@ dependencies {
     kotlinNativeEmbedded(project(":kotlin-native:klib"))
     kotlinNativeEmbedded(project(":native:cli-native"))
     kotlinNativeEmbedded(project(":kotlin-native:endorsedLibraries:kotlinx.cli", "jvmRuntimeElements"))
-    kotlinNativeEmbedded(project(":kotlin-compiler")) { isTransitive = false }
 
     kotlinNativeSources(project(":kotlin-native:backend.native"))
     kotlinNativeSources(project(":native:cli-native"))
@@ -63,14 +62,17 @@ dependencies {
 }
 
 val compiler = embeddableCompiler("kotlin-native-compiler-embeddable") {
-    configurations.set(setOf(kotlinNativeEmbedded))
-    mergeServiceFiles()
-}
-
-val runtimeJar = runtimeJar(compiler) {
+    configurations.add(kotlinNativeEmbeddedClasspath)
     exclude("com/sun/jna/**")
     mergeServiceFiles()
+    // Shadow uses by default 'DuplicatesStrategy.EXCLUDE' which prevents duplicate service files from being processed,
+    // see https://gradleup.com/shadow/configuration/merging/#handling-duplicates-strategy
+    filesMatching("META-INF/services/**") {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
 }
+
+val runtimeJar = runtimeJar(compiler)
 
 val archiveZipper = serviceOf<ArchiveOperations>()::zipTree
 

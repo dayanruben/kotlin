@@ -10,7 +10,6 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import org.jetbrains.kotlin.arguments.dsl.base.KotlinCompilerArgumentsLevel
 import org.jetbrains.kotlin.arguments.dsl.base.KotlinReleaseVersion
 import org.jetbrains.kotlin.arguments.dsl.types.IntType
-import org.jetbrains.kotlin.arguments.dsl.types.KotlinArgumentValueType
 import org.jetbrains.kotlin.cli.arguments.generator.levelToClassNameMap
 import org.jetbrains.kotlin.generators.kotlinpoet.annotation
 import org.jetbrains.kotlin.generators.kotlinpoet.function
@@ -20,7 +19,6 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.reflect.KClass
-import kotlin.reflect.full.isSubclassOf
 
 internal class BtaImplGenerator(
     private val targetPackage: String,
@@ -101,6 +99,10 @@ internal class BtaImplGenerator(
                             MemberName("org.jetbrains.kotlin.cli.common.arguments", "parseCommandLineArguments"),
                             level.getCompilerArgumentsClassName()
                         )
+
+                        primaryConstructor(FunSpec.constructorBuilder().apply {
+                            addStatement("applyCompilerArguments(%T())", level.getCompilerArgumentsClassName())
+                        }.build())
                     }
                     toCompilerConverterFun.addStatement("return arguments")
                     addFunction(toCompilerConverterFun.build())
@@ -119,7 +121,7 @@ internal class BtaImplGenerator(
     }
 
     private fun TypeSpec.Builder.generateOptions(
-        arguments: Collection<BtaCompilerArgument>,
+        arguments: Collection<BtaCompilerArgument<*>>,
         implClassName: String,
         argumentTypeName: ClassName,
         applyCompilerArgumentsFun: FunSpec.Builder,
@@ -150,13 +152,11 @@ internal class BtaImplGenerator(
             val argumentTypeParameter = when (argument.valueType) {
                 is BtaCompilerArgumentValueType.SSoTCompilerArgumentValueType -> {
                     val type = argument.valueType.kType
-                    when (val classifier = type.classifier) {
-                        is KClass<*> if classifier.isSubclassOf(Enum::class) && classifier in enumNameAccessors -> {
-                            ClassName("$API_ARGUMENTS_PACKAGE.enums", classifier.simpleName!!)
-                        }
-                        else -> {
-                            type.asTypeName()
-                        }
+                    if (type.isCompilerEnum) {
+                        val classifier = type.classifier as KClass<*>
+                        classifier.toBtaEnumClassName()
+                    } else {
+                        type.asTypeName()
                     }
                 }
                 is BtaCompilerArgumentValueType.CustomArgumentValueType -> argument.valueType.type
@@ -241,7 +241,6 @@ internal class BtaImplGenerator(
         applyCompilerArgumentsFun: FunSpec.Builder,
         argumentTypeParameter: TypeName,
     ) {
-        require(argument.valueType is BtaCompilerArgumentValueType.SSoTCompilerArgumentValueType)
         // add argument to the converter functions
         val member = MemberName(ClassName(targetPackage, implClassName, "Companion"), name)
         CodeBlock.builder().apply {
@@ -250,7 +249,7 @@ internal class BtaImplGenerator(
                 add("get(%M)", member)
                 add(
                     when {
-                        (type as? ClassName)?.simpleName in enumNameAccessors.map { it.key.simpleName } -> maybeGetNullabilitySign(
+                        type.isCompilerEnum -> maybeGetNullabilitySign(
                             argument
                         ) + ".stringValue"
                         argument.valueType.origin is IntType -> maybeGetNullabilitySign(argument) + ".toString()"
@@ -289,7 +288,7 @@ internal class BtaImplGenerator(
             }
 
             when {
-                (type as? ClassName)?.simpleName in enumNameAccessors.map { it.key.simpleName } -> {
+                type.isCompilerEnum -> {
                     add(maybeGetNullabilitySign(argument))
                     add(
                         $$".let { %T.entries.firstOrNull { entry -> entry.stringValue == it } ?: throw %M(\"Unknown -$${argument.name} value: $it\") }",
@@ -326,6 +325,7 @@ internal class BtaImplGenerator(
             addModifiers(KModifier.OVERRIDE, KModifier.OPERATOR)
             addTypeVariable(typeParameter)
             addParameter("key", parameter.parameterizedBy(typeParameter))
+            addStatement($$"check(key.id in optionsMap) { \"Argument ${key.id} is not set and has no default value\" }")
             addStatement("return %N[key.id] as %T", mapProperty, typeParameter)
         }
         function("set") {
@@ -337,14 +337,26 @@ internal class BtaImplGenerator(
             addTypeVariable(typeParameter)
             addParameter("key", parameter.parameterizedBy(typeParameter))
             addParameter("value", typeParameter)
+            val currentKotlinVersion = if (generateCompatLayer) {
+                addStatement(
+                    "val currentKotlinVersion = %T(KC_VERSION)",
+                    ClassName("org.jetbrains.kotlin.tooling.core", "KotlinToolingVersion")
+                )
+                CodeBlock.of("(currentKotlinVersion.major, currentKotlinVersion.minor, currentKotlinVersion.patch)")
+            } else {
+                CodeBlock.of(
+                    "(%L, %L, %L)",
+                    kotlinVersion.major,
+                    kotlinVersion.minor,
+                    kotlinVersion.patch
+                )
+            }
             addCode(
                 CodeBlock.builder()
                     .beginControlFlow(
-                        "if (key.availableSinceVersion > %T(%L, %L, %L))",
+                        "if (key.availableSinceVersion > %T%L)",
                         kotlinVersionType,
-                        kotlinVersion.major,
-                        kotlinVersion.minor,
-                        kotlinVersion.patch
+                        currentKotlinVersion
                     )
                     .addStatement(
                         $$"throw %T(\"${key.id} is available only since ${key.availableSinceVersion}\")",
@@ -396,7 +408,7 @@ internal fun FunSpec.Builder.addSafeSetStatement(
     wasIntroducedRecently: Boolean,
     wasRemoved: Boolean,
     name: String,
-    argument: BtaCompilerArgument,
+    argument: BtaCompilerArgument<*>,
     setStatement: CodeBlock,
     generateCompatLayer: Boolean,
 ) {
@@ -422,7 +434,7 @@ internal fun FunSpec.Builder.addSafeSetStatement(
     }
 }
 
-private fun maybeGetNullabilitySign(argument: BtaCompilerArgument): String = (if (argument.valueType.isNullable) "?" else "")
+private fun maybeGetNullabilitySign(argument: BtaCompilerArgument<*>): String = (if (argument.valueType.isNullable) "?" else "")
 
 private fun TypeSpec.Builder.maybeAddToArgumentsStringFun(level: KotlinCompilerArgumentsLevel, parentClass: TypeName?) {
     if (!level.isLeaf()) {
