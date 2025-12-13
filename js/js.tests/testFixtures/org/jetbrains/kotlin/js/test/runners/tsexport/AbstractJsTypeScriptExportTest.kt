@@ -17,7 +17,7 @@ abstract class AbstractJsTypeScriptExportTest(
     testGroupOutputDirPrefix: String = "typescript-export/es5",
     private val isWholeFileJsExport: Boolean = false,
 ) : AbstractJsTest(
-    pathToTestDir = "${JsEnvironmentConfigurator.Companion.TEST_DATA_DIR_PATH}/typescript-export/",
+    pathToTestDir = "${JsEnvironmentConfigurator.TEST_DATA_DIR_PATH}/typescript-export/js/",
     testGroupOutputDirPrefix = testGroupOutputDirPrefix
 ) {
     override fun configure(builder: TestConfigurationBuilder) {
@@ -31,7 +31,7 @@ abstract class AbstractJsTypeScriptWholeFileExportTest : AbstractJsTypeScriptExp
     isWholeFileJsExport = true,
 )
 
-open class AbstractJsTypeScriptExportWithInlinedFunInKlibTest : AbstractJsTypeScriptExportTest(
+abstract class AbstractJsTypeScriptExportWithInlinedFunInKlibTest : AbstractJsTypeScriptExportTest(
     testGroupOutputDirPrefix = "typescript-export/es5-withInlinedFunInKlib"
 ) {
     override fun configure(builder: TestConfigurationBuilder) {
@@ -47,11 +47,11 @@ open class AbstractJsTypeScriptExportWithInlinedFunInKlibTest : AbstractJsTypeSc
     }
 }
 
-open class AbstractJsES6TypeScriptExportTest(
+abstract class AbstractJsES6TypeScriptExportTest(
     testGroupOutputDirPrefix: String = "typescript-export/es6",
     private val isWholeFileJsExport: Boolean = false,
 ) : AbstractJsES6Test(
-    pathToTestDir = "${JsEnvironmentConfigurator.Companion.TEST_DATA_DIR_PATH}/typescript-export/",
+    pathToTestDir = "${JsEnvironmentConfigurator.TEST_DATA_DIR_PATH}/typescript-export/js/",
     testGroupOutputDirPrefix = testGroupOutputDirPrefix
 ) {
     override fun configure(builder: TestConfigurationBuilder) {
