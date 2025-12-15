@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.backend.wasm
 
 import org.jetbrains.kotlin.backend.common.LoweringContext
+import org.jetbrains.kotlin.backend.common.ModuleLoweringPass
 import org.jetbrains.kotlin.backend.common.ir.PreSerializationSymbols
 import org.jetbrains.kotlin.backend.common.lower.*
 import org.jetbrains.kotlin.backend.common.lower.coroutines.AddContinuationToNonLocalSuspendFunctionsLowering
@@ -169,7 +170,7 @@ private val redundantCastsRemoverPhase = makeIrModulePhase(
 )
 
 private val removeInlineDeclarationsWithReifiedTypeParametersLoweringPhase = makeIrModulePhase(
-    { RemoveInlineDeclarationsWithReifiedTypeParametersLowering() },
+    ::RemoveInlineDeclarationsWithReifiedTypeParametersLowering,
     name = "RemoveInlineFunctionsWithReifiedTypeParametersLowering",
     prerequisite = setOf(inlineAllFunctionsPhase)
 )
@@ -264,6 +265,16 @@ private val enumEntryRemovalLoweringPhase = makeIrModulePhase(
     name = "EnumEntryRemovalLowering",
     prerequisite = setOf(enumUsageLoweringPhase)
 )
+
+private fun createUpgradeCallableReferences(context: LoweringContext): UpgradeCallableReferences {
+    return UpgradeCallableReferences(
+        context,
+        upgradeFunctionReferencesAndLambdas = true,
+        upgradePropertyReferences = true,
+        upgradeLocalDelegatedPropertyReferences = true,
+        upgradeSamConversions = false,
+    )
+}
 
 private val upgradeCallableReferences = makeIrModulePhase(
     { ctx: LoweringContext ->
@@ -395,7 +406,7 @@ private val defaultParameterCleanerPhase = makeIrModulePhase(
 )
 
 private val propertiesLoweringPhase = makeIrModulePhase<WasmBackendContext>(
-    { PropertiesLowering() },
+    ::PropertiesLowering,
     name = "PropertiesLowering",
 )
 
@@ -439,12 +450,12 @@ private val bridgesConstructionPhase = makeIrModulePhase(
 )
 
 private val inlineClassDeclarationLoweringPhase = makeIrModulePhase<WasmBackendContext>(
-    { InlineClassLowering(it).inlineClassDeclarationLowering },
+    ::InlineClassDeclarationLowering,
     name = "InlineClassDeclarationLowering",
 )
 
 private val inlineClassUsageLoweringPhase = makeIrModulePhase<WasmBackendContext>(
-    { InlineClassLowering(it).inlineClassUsageLowering },
+    ::InlineClassUsageLowering,
     name = "InlineClassUsageLowering",
 )
 
@@ -597,11 +608,14 @@ val constEvaluationPhase = makeIrModulePhase(
 
 fun wasmLoweringsOfTheFirstPhase(
     languageVersionSettings: LanguageVersionSettings,
-): List<NamedCompilerPhase<WasmPreSerializationLoweringContext, IrModuleFragment, IrModuleFragment>> = buildList {
-    if (languageVersionSettings.supportsFeature(LanguageFeature.IrRichCallableReferencesInKlibs)) {
-        this += upgradeCallableReferences
+): List<NamedCompilerPhase<WasmPreSerializationLoweringContext, IrModuleFragment, IrModuleFragment>> {
+    val phases = buildList<(WasmPreSerializationLoweringContext) -> ModuleLoweringPass> {
+        if (languageVersionSettings.supportsFeature(LanguageFeature.IrRichCallableReferencesInKlibs)) {
+            this += ::createUpgradeCallableReferences
+        }
+        this += loweringsOfTheFirstPhase(languageVersionSettings)
     }
-    this += loweringsOfTheFirstPhase(languageVersionSettings)
+    return createModulePhases(*phases.toTypedArray())
 }
 
 fun getWasmLowerings(
