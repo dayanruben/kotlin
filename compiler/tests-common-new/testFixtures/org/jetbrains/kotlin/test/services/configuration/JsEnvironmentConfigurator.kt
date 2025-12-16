@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.codegen.forTestCompile.TestCompilePaths.KOTLIN_JS_ST
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.config.AnalysisFlags.allowFullyQualifiedNameInKClass
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.TranslationMode
+import org.jetbrains.kotlin.js.config.JsGenerationGranularity
 import org.jetbrains.kotlin.js.config.ModuleKind
 import org.jetbrains.kotlin.js.config.moduleKind
 import org.jetbrains.kotlin.platform.wasm.WasmTarget
@@ -121,6 +122,39 @@ abstract class JsEnvironmentConfigurator(testServices: TestServices) : Environme
             return JsEnvironmentConfigurationDirectives.SKIP_IR_INCREMENTAL_CHECKS !in testServices.moduleStructure.allDirectives &&
                     testServices.moduleStructure.modules.any { it.hasFilesToRecompile() }
         }
+
+        fun getModuleKind(testServices: TestServices, module: TestModule): ModuleKind {
+            val registeredDirectives = module.directives
+            val moduleKinds = registeredDirectives[JS_MODULE_KIND]
+            val moduleKind = when (moduleKinds.size) {
+                0 -> testServices.moduleStructure.allDirectives[JS_MODULE_KIND].singleOrNull()
+                    ?: if (JsEnvironmentConfigurationDirectives.ES_MODULES in registeredDirectives) ModuleKind.ES else ModuleKind.PLAIN
+                1 -> moduleKinds.single()
+                else -> error("Too many module kinds passed ${moduleKinds.joinToArrayString()}")
+            }
+            return moduleKind
+        }
+
+        fun getTranslationModesForTest(testServices: TestServices, module: TestModule): Set<TranslationMode> {
+            val runIrDce = JsEnvironmentConfigurationDirectives.RUN_IR_DCE in module.directives
+            val onlyIrDce = JsEnvironmentConfigurationDirectives.ONLY_IR_DCE in module.directives
+            val perModuleOnly = JsEnvironmentConfigurationDirectives.SPLIT_PER_MODULE in module.directives
+            val perFileOnly = JsEnvironmentConfigurationDirectives.SPLIT_PER_FILE in module.directives
+            val isEsModules = getModuleKind(testServices, module) == ModuleKind.ES
+            // If runIrDce then include DCE results
+            // If perModuleOnly then skip whole program
+            // (it.dce => runIrDce) && (perModuleOnly => it.perModule)
+            return TranslationMode.entries
+                .filter {
+                    (it.production || !onlyIrDce) &&
+                            (!it.production || runIrDce) &&
+                            (!perModuleOnly || it.granularity == JsGenerationGranularity.PER_MODULE) &&
+                            (!perFileOnly || it.granularity == JsGenerationGranularity.PER_FILE)
+                }
+                .filter { it.production == it.minimizedMemberNames }
+                .filter { isEsModules || it.granularity != JsGenerationGranularity.PER_FILE }
+                .toSet()
+        }
     }
 
     override fun provideAdditionalAnalysisFlags(
@@ -135,15 +169,7 @@ abstract class JsEnvironmentConfigurator(testServices: TestServices) : Environme
     override fun configureCompilerConfiguration(configuration: CompilerConfiguration, module: TestModule) {
         configuration.phaseConfig = createJsTestPhaseConfig(testServices, module)
 
-        val registeredDirectives = module.directives
-        val moduleKinds = registeredDirectives[JS_MODULE_KIND]
-        val moduleKind = when (moduleKinds.size) {
-            0 -> testServices.moduleStructure.allDirectives[JS_MODULE_KIND].singleOrNull()
-                ?: if (JsEnvironmentConfigurationDirectives.ES_MODULES in registeredDirectives) ModuleKind.ES else ModuleKind.PLAIN
-            1 -> moduleKinds.single()
-            else -> error("Too many module kinds passed ${moduleKinds.joinToArrayString()}")
-        }
-        configuration.moduleKind = moduleKind
+        configuration.moduleKind = getModuleKind(testServices, module)
         configuration.moduleName = module.name.removeSuffix(OLD_MODULE_SUFFIX)
     }
 }
