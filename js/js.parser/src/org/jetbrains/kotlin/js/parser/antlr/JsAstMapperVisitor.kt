@@ -522,7 +522,7 @@ internal class JsAstMapperVisitor(
         }
 
         ctx.StringLiteral()?.let {
-            return it.text.unescapeString().toStringLiteral().applyLocation(ctx)
+            return it.text.unescapeString(ctx).toStringLiteral().applyLocation(ctx)
         }
 
         ctx.numericLiteral()?.let {
@@ -1052,7 +1052,7 @@ internal class JsAstMapperVisitor(
         }
 
         ctx.StringLiteral()?.let {
-            return it.text.unescapeString().toStringLiteral().applyLocation(ctx)
+            return it.text.unescapeString(ctx).toStringLiteral().applyLocation(ctx)
         }
 
         ctx.RegularExpressionLiteral()?.run {
@@ -1080,7 +1080,7 @@ internal class JsAstMapperVisitor(
 
     override fun visitTemplateStringAtom(ctx: JavaScriptParser.TemplateStringAtomContext): JsTemplateStringLiteral.Segment {
         ctx.TemplateStringAtom()?.let { stringElement ->
-            return JsTemplateStringLiteral.Segment.StringLiteral(stringElement.text.unescapeTemplateString(stringElement))
+            return JsTemplateStringLiteral.Segment.StringLiteral(stringElement.text.unescapeString(ctx))
                 .applyLocation(ctx)
         }
 
@@ -1279,7 +1279,7 @@ internal class JsAstMapperVisitor(
         return this
     }
 
-    private fun String.unescapeString(): String {
+    private fun String.unescapeString(ctx: ParserRuleContext): String {
         val chars = this.toCharArray()
 
         return buildString(this.length) {
@@ -1297,11 +1297,28 @@ internal class JsAstMapperVisitor(
                         't' -> { append('\t'); i += 2 }
                         'v' -> { append('\u000B'); i += 2 }
                         '\\' -> { append("\\"); i += 2 }
+                        'u' if chars.getOrNull(i + 2) == '{' -> {
+                            i += 3 // skip '\u{'
+                            val start = i
+
+                            while (i < chars.size && chars[i] != '}' && i - start - 1 <= 6)
+                                i++
+
+                            if (i >= chars.size || chars[i] != '}')
+                                reportError("Unterminated codepoint escape sequence", ctx)
+
+                            val end = i
+                            val codePoint = String(chars, start, end - start).toIntOrNull(16)
+                                ?: reportError("Can't process codepoint escape sequence", ctx)
+                            appendCodePoint(codePoint)
+                            i++ // skip '}'
+                        }
                         'u' if i + 5 < chars.size -> {
                             val hex = String(chars, i + 2, 4)
                             append(hex.toInt(16).toChar())
                             i += 6
                         }
+                        'u' -> reportError("Invalid unicode escape sequence", ctx)
                         'x' if i + 3 < chars.size -> {
                             val hex = String(chars, i + 2, 2)
                             append(hex.toInt(16).toChar())
@@ -1322,57 +1339,6 @@ internal class JsAstMapperVisitor(
                             }
                             append(octalVal.toChar())
                         }
-                        '\n' -> { i += 2 }
-                        '\r' -> {
-                            i += 2
-                            if (chars.getOrNull(i) == '\n') i++
-                        }
-                        else -> { append(char); i += 2 }
-                    }
-                } else {
-                    append(char)
-                    i++
-                }
-            }
-        }
-    }
-
-    private fun String.unescapeTemplateString(terminal: TerminalNode): String {
-        val chars = this.toCharArray()
-
-        return buildString(this.length) {
-            var i = 0
-
-            while (i < chars.size) {
-                var char = chars[i]
-                if (char == '\\' && i + 1 < chars.size) {
-                    char = chars[i + 1]
-                    when (char) {
-                        'b' -> { append('\b'); i += 2 }
-                        'f' -> { append('\u000C'); i += 2 }
-                        'n' -> { append('\n'); i += 2 }
-                        'r' -> { append('\r'); i += 2 }
-                        't' -> { append('\t'); i += 2 }
-                        'v' -> { append('\u000B'); i += 2 }
-                        '\\' -> { append("\\"); i += 2 }
-                        'u' if i + 5 < chars.size -> {
-                            val hex = String(chars, i + 2, 4)
-                            append(hex.toInt(16).toChar())
-                            i += 6
-                        }
-                        'u' -> reportError("Invalid Unicode escape sequence", terminal)
-                        'x' if i + 3 < chars.size -> {
-                            val hex = String(chars, i + 2, 2)
-                            append(hex.toInt(16).toChar())
-                            i += 4
-                        }
-                        'x' ->
-                            reportError("Invalid hexadecimal escape sequence", terminal)
-                        '0' -> { append('\u0000'); i += 2 }
-                        in '1'..'7' ->
-                            reportError("Octal escape sequences are not allowed in template strings", terminal)
-                        in '8'..'9' ->
-                            reportError("\\8 and \\9 are not allowed in template strings", terminal)
                         '\n' -> { i += 2 }
                         '\r' -> {
                             i += 2
