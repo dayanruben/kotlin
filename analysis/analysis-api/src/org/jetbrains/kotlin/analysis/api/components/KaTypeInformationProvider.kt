@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.StandardClassIds
 
 @KaSessionComponentImplementationDetail
 @SubclassOptInRequired(KaSessionComponentImplementationDetail::class)
@@ -129,67 +130,67 @@ public interface KaTypeInformationProvider : KaSessionComponent {
     /**
      * Whether the [KaType] is a [Unit] type.
      */
-    public val KaType.isUnitType: Boolean get() = withValidityAssertion { isClassType(DefaultTypeClassIds.UNIT) }
+    public val KaType.isUnitType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.UNIT) }
 
     /**
      * Whether the [KaType] is an [Int] type.
      */
-    public val KaType.isIntType: Boolean get() = withValidityAssertion { isClassType(DefaultTypeClassIds.INT) }
+    public val KaType.isIntType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.INT) }
 
     /**
      * Whether the [KaType] is a [Long] type.
      */
-    public val KaType.isLongType: Boolean get() = withValidityAssertion { isClassType(DefaultTypeClassIds.LONG) }
+    public val KaType.isLongType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.LONG) }
 
     /**
      * Whether the [KaType] is a [Short] type.
      */
-    public val KaType.isShortType: Boolean get() = withValidityAssertion { isClassType(DefaultTypeClassIds.SHORT) }
+    public val KaType.isShortType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.SHORT) }
 
     /**
      * Whether the [KaType] is a [Byte] type.
      */
-    public val KaType.isByteType: Boolean get() = withValidityAssertion { isClassType(DefaultTypeClassIds.BYTE) }
+    public val KaType.isByteType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.BYTE) }
 
     /**
      * Whether the [KaType] is a [Float] type.
      */
-    public val KaType.isFloatType: Boolean get() = withValidityAssertion { isClassType(DefaultTypeClassIds.FLOAT) }
+    public val KaType.isFloatType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.FLOAT) }
 
     /**
      * Whether the [KaType] is a [Double] type.
      */
-    public val KaType.isDoubleType: Boolean get() = withValidityAssertion { isClassType(DefaultTypeClassIds.DOUBLE) }
+    public val KaType.isDoubleType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.DOUBLE) }
 
     /**
      * Whether the [KaType] is a [Char] type.
      */
-    public val KaType.isCharType: Boolean get() = withValidityAssertion { isClassType(DefaultTypeClassIds.CHAR) }
+    public val KaType.isCharType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.CHAR) }
 
     /**
      * Whether the [KaType] is a [Boolean] type.
      */
-    public val KaType.isBooleanType: Boolean get() = withValidityAssertion { isClassType(DefaultTypeClassIds.BOOLEAN) }
+    public val KaType.isBooleanType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.BOOLEAN) }
 
     /**
      * Whether the [KaType] is a [String] type.
      */
-    public val KaType.isStringType: Boolean get() = withValidityAssertion { isClassType(DefaultTypeClassIds.STRING) }
+    public val KaType.isStringType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.STRING) }
 
     /**
      * Whether the [KaType] is a [CharSequence] type.
      */
-    public val KaType.isCharSequenceType: Boolean get() = withValidityAssertion { isClassType(DefaultTypeClassIds.CHAR_SEQUENCE) }
+    public val KaType.isCharSequenceType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.CHAR_SEQUENCE) }
 
     /**
      * Whether the [KaType] is an [Any] type.
      */
-    public val KaType.isAnyType: Boolean get() = withValidityAssertion { isClassType(DefaultTypeClassIds.ANY) }
+    public val KaType.isAnyType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.ANY) }
 
     /**
      * Whether the [KaType] is a [Nothing] type.
      */
-    public val KaType.isNothingType: Boolean get() = withValidityAssertion { isClassType(DefaultTypeClassIds.NOTHING) }
+    public val KaType.isNothingType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.NOTHING) }
 
     /**
      * Whether the [KaType] is a [UInt] type.
@@ -273,7 +274,7 @@ public interface KaTypeInformationProvider : KaSessionComponent {
     public val KaType.isPrimitive: Boolean
         get() = withValidityAssertion {
             if (this !is KaClassType) return false
-            return this.classId in DefaultTypeClassIds.PRIMITIVES
+            return this.classId in KaStandardTypeClassIds.PRIMITIVES
         }
 
     /**
@@ -300,48 +301,96 @@ public interface KaTypeInformationProvider : KaSessionComponent {
         }
 }
 
-public object DefaultTypeClassIds {
+/**
+ * The object contains [ClassId]s of well known Kotlin types.
+ */
+public object KaStandardTypeClassIds {
     /** The [Unit] class ID. */
-    public val UNIT: ClassId = ClassId.topLevel(StandardNames.FqNames.unit.toSafe())
+    public val UNIT: ClassId get() = StandardClassIds.Unit
 
     /** The [Int] class ID. */
-    public val INT: ClassId = ClassId.topLevel(StandardNames.FqNames._int.toSafe())
+    public val INT: ClassId get() = StandardClassIds.Int
 
     /** The [Long] class ID. */
-    public val LONG: ClassId = ClassId.topLevel(StandardNames.FqNames._long.toSafe())
+    public val LONG: ClassId get() = StandardClassIds.Long
 
     /** The [Short] class ID. */
-    public val SHORT: ClassId = ClassId.topLevel(StandardNames.FqNames._short.toSafe())
+    public val SHORT: ClassId get() = StandardClassIds.Short
 
     /** The [Byte] class ID. */
-    public val BYTE: ClassId = ClassId.topLevel(StandardNames.FqNames._byte.toSafe())
+    public val BYTE: ClassId get() = StandardClassIds.Byte
 
     /** The [Float] class ID. */
-    public val FLOAT: ClassId = ClassId.topLevel(StandardNames.FqNames._float.toSafe())
+    public val FLOAT: ClassId get() = StandardClassIds.Float
 
     /** The [Double] class ID. */
-    public val DOUBLE: ClassId = ClassId.topLevel(StandardNames.FqNames._double.toSafe())
+    public val DOUBLE: ClassId get() = StandardClassIds.Double
 
     /** The [Char] class ID. */
-    public val CHAR: ClassId = ClassId.topLevel(StandardNames.FqNames._char.toSafe())
+    public val CHAR: ClassId get() = StandardClassIds.Char
 
     /** The [Boolean] class ID. */
-    public val BOOLEAN: ClassId = ClassId.topLevel(StandardNames.FqNames._boolean.toSafe())
+    public val BOOLEAN: ClassId get() = StandardClassIds.Boolean
 
     /** The [String] class ID. */
-    public val STRING: ClassId = ClassId.topLevel(StandardNames.FqNames.string.toSafe())
+    public val STRING: ClassId get() = StandardClassIds.String
 
     /** The [CharSequence] class ID. */
-    public val CHAR_SEQUENCE: ClassId = ClassId.topLevel(StandardNames.FqNames.charSequence.toSafe())
+    public val CHAR_SEQUENCE: ClassId get() = StandardClassIds.CharSequence
 
     /** The [Any] class ID. */
-    public val ANY: ClassId = ClassId.topLevel(StandardNames.FqNames.any.toSafe())
+    public val ANY: ClassId get() = StandardClassIds.Any
 
     /** The [Nothing] class ID. */
-    public val NOTHING: ClassId = ClassId.topLevel(StandardNames.FqNames.nothing.toSafe())
+    public val NOTHING: ClassId get() = StandardClassIds.Nothing
 
     /** A set of primitive class IDs. */
     public val PRIMITIVES: Set<ClassId> = setOf(INT, LONG, SHORT, BYTE, FLOAT, DOUBLE, CHAR, BOOLEAN)
+}
+
+@Deprecated("Use `KaStandardTypeClassIds` instead", ReplaceWith("KaStandardTypeClassIds"))
+public object DefaultTypeClassIds {
+    /** The [Unit] class ID. */
+    public val UNIT: ClassId get() = KaStandardTypeClassIds.UNIT
+
+    /** The [Int] class ID. */
+    public val INT: ClassId get() = KaStandardTypeClassIds.INT
+
+    /** The [Long] class ID. */
+    public val LONG: ClassId get() = KaStandardTypeClassIds.LONG
+
+    /** The [Short] class ID. */
+    public val SHORT: ClassId get() = KaStandardTypeClassIds.SHORT
+
+    /** The [Byte] class ID. */
+    public val BYTE: ClassId get() = KaStandardTypeClassIds.BYTE
+
+    /** The [Float] class ID. */
+    public val FLOAT: ClassId get() = KaStandardTypeClassIds.FLOAT
+
+    /** The [Double] class ID. */
+    public val DOUBLE: ClassId get() = KaStandardTypeClassIds.DOUBLE
+
+    /** The [Char] class ID. */
+    public val CHAR: ClassId get() = KaStandardTypeClassIds.CHAR
+
+    /** The [Boolean] class ID. */
+    public val BOOLEAN: ClassId get() = KaStandardTypeClassIds.BOOLEAN
+
+    /** The [String] class ID. */
+    public val STRING: ClassId get() = KaStandardTypeClassIds.STRING
+
+    /** The [CharSequence] class ID. */
+    public val CHAR_SEQUENCE: ClassId get() = KaStandardTypeClassIds.CHAR_SEQUENCE
+
+    /** The [Any] class ID. */
+    public val ANY: ClassId get() = KaStandardTypeClassIds.ANY
+
+    /** The [Nothing] class ID. */
+    public val NOTHING: ClassId get() = KaStandardTypeClassIds.NOTHING
+
+    /** A set of primitive class IDs. */
+    public val PRIMITIVES: Set<ClassId> get() = KaStandardTypeClassIds.PRIMITIVES
 }
 
 /**

@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
+ * The entry point is deprecated. Use [KaAdditionalKDocResolutionProvider] instead.
+ *
  * An extension point to provide additional symbols for a KDoc reference. KDoc link resolution will use symbols returned by this extension
  * point only if the real resolution was unsuccessful.
  *
@@ -39,6 +41,7 @@ import org.jetbrains.kotlin.psi.KtElement
  * }
  * ```
  */
+@Deprecated("Use `KaAdditionalKDocResolutionProvider` instead")
 @KaExtensibleApi
 public interface AdditionalKDocResolutionProvider {
     /**
@@ -47,8 +50,9 @@ public interface AdditionalKDocResolutionProvider {
     public fun resolveKdocFqName(analysisSession: KaSession, fqName: FqName, contextElement: KtElement): Collection<KaSymbol>
 
     public companion object {
+        @Suppress("DEPRECATION")
         public val EP_NAME: ExtensionPointName<AdditionalKDocResolutionProvider> =
-            ExtensionPointName<AdditionalKDocResolutionProvider>("org.jetbrains.kotlin.analysis.additionalKDocResolutionProvider")
+            ExtensionPointName("org.jetbrains.kotlin.analysis.additionalKDocResolutionProvider")
 
         public fun resolveKdocFqName(analysisSession: KaSession, fqName: FqName, contextElement: KtElement): Collection<KaSymbol> =
             EP_NAME.extensions.flatMap { it.resolveKdocFqName(analysisSession, fqName, contextElement) }

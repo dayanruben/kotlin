@@ -219,6 +219,18 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
     }
 
     @Test
+    @TestMetadata("dependentContext.kt")
+    public void testDependentContext() {
+      runTest("compiler/fir/analysis-tests/testData/resolve/dependentContext.kt");
+    }
+
+    @Test
+    @TestMetadata("dependentContextLegacy.kt")
+    public void testDependentContextLegacy() {
+      runTest("compiler/fir/analysis-tests/testData/resolve/dependentContextLegacy.kt");
+    }
+
+    @Test
     @TestMetadata("derivedClass.kt")
     public void testDerivedClass() {
       runTest("compiler/fir/analysis-tests/testData/resolve/derivedClass.kt");
@@ -2197,6 +2209,18 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
         public void testOverloadsWithDifferentParameterNames() {
           runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/multipleOverloads/overloadsWithDifferentParameterNames.kt");
         }
+
+        @Test
+        @TestMetadata("overloadsWithPrimitiveArrays.kt")
+        public void testOverloadsWithPrimitiveArrays() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/multipleOverloads/overloadsWithPrimitiveArrays.kt");
+        }
+
+        @Test
+        @TestMetadata("overloadsWithStdlibSet.kt")
+        public void testOverloadsWithStdlibSet() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/multipleOverloads/overloadsWithStdlibSet.kt");
+        }
       }
 
       @Nested
@@ -2304,6 +2328,88 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
         @TestMetadata("varargNonOperatorOfWithMoreNarrowTypeInCompanion.kt")
         public void testVarargNonOperatorOfWithMoreNarrowTypeInCompanion() {
           runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/ofOverloads/varargNonOperatorOfWithMoreNarrowTypeInCompanion.kt");
+        }
+      }
+
+      @Nested
+      @TestMetadata("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/stdlibTypes")
+      @TestDataPath("$PROJECT_ROOT")
+      public class StdlibTypes {
+        @Test
+        @TestMetadata("acceptSet.kt")
+        public void testAcceptSet() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/stdlibTypes/acceptSet.kt");
+        }
+
+        @Test
+        public void testAllFilesPresentInStdlibTypes() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/stdlibTypes"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("arrayOperatorOf.kt")
+        public void testArrayOperatorOf() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/stdlibTypes/arrayOperatorOf.kt");
+        }
+
+        @Test
+        @TestMetadata("collectionLiteralsAsGenericVarargArgument.kt")
+        public void testCollectionLiteralsAsGenericVarargArgument() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/stdlibTypes/collectionLiteralsAsGenericVarargArgument.kt");
+        }
+
+        @Test
+        @TestMetadata("collectionLiteralsAsVarargArgument.kt")
+        public void testCollectionLiteralsAsVarargArgument() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/stdlibTypes/collectionLiteralsAsVarargArgument.kt");
+        }
+
+        @Test
+        @TestMetadata("incorrectCollections.kt")
+        public void testIncorrectCollections() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/stdlibTypes/incorrectCollections.kt");
+        }
+
+        @Test
+        @TestMetadata("listOperatorOf.kt")
+        public void testListOperatorOf() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/stdlibTypes/listOperatorOf.kt");
+        }
+
+        @Test
+        @TestMetadata("mutableListOperatorOf.kt")
+        public void testMutableListOperatorOf() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/stdlibTypes/mutableListOperatorOf.kt");
+        }
+
+        @Test
+        @TestMetadata("mutableSetOperatorOf.kt")
+        public void testMutableSetOperatorOf() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/stdlibTypes/mutableSetOperatorOf.kt");
+        }
+
+        @Test
+        @TestMetadata("nullableExpectedTypes.kt")
+        public void testNullableExpectedTypes() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/stdlibTypes/nullableExpectedTypes.kt");
+        }
+
+        @Test
+        @TestMetadata("primitiveArraysOperatorOf.kt")
+        public void testPrimitiveArraysOperatorOf() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/stdlibTypes/primitiveArraysOperatorOf.kt");
+        }
+
+        @Test
+        @TestMetadata("sequenceOperatorOf.kt")
+        public void testSequenceOperatorOf() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/stdlibTypes/sequenceOperatorOf.kt");
+        }
+
+        @Test
+        @TestMetadata("setOperatorOf.kt")
+        public void testSetOperatorOf() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/stdlibTypes/setOperatorOf.kt");
         }
       }
 
@@ -6472,9 +6578,33 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
       }
 
       @Test
+      @TestMetadata("elvisAndLongIlt.kt")
+      public void testElvisAndLongIlt() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/inference/elvisAndLongIlt.kt");
+      }
+
+      @Test
+      @TestMetadata("elvisAndLongIltLegacy.kt")
+      public void testElvisAndLongIltLegacy() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/inference/elvisAndLongIltLegacy.kt");
+      }
+
+      @Test
       @TestMetadata("elvisAndUnit.kt")
       public void testElvisAndUnit() {
         runTest("compiler/fir/analysis-tests/testData/resolve/inference/elvisAndUnit.kt");
+      }
+
+      @Test
+      @TestMetadata("elvisWithMaterialize.kt")
+      public void testElvisWithMaterialize() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/inference/elvisWithMaterialize.kt");
+      }
+
+      @Test
+      @TestMetadata("equalityRhsInDependentContext.kt")
+      public void testEqualityRhsInDependentContext() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/inference/equalityRhsInDependentContext.kt");
       }
 
       @Test
@@ -6637,6 +6767,12 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
       @TestMetadata("noEnhancementOnFinalStaticConstFields.kt")
       public void testNoEnhancementOnFinalStaticConstFields() {
         runTest("compiler/fir/analysis-tests/testData/resolve/inference/noEnhancementOnFinalStaticConstFields.kt");
+      }
+
+      @Test
+      @TestMetadata("noInferUnit.kt")
+      public void testNoInferUnit() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/inference/noInferUnit.kt");
       }
 
       @Test

@@ -16,6 +16,19 @@
         area="IDEA_PROJECT"
         dynamic="true"
     />
+
+    <!--suppress DeprecatedClassUsageInspection -->
+    <extensionPoint
+        qualifiedName="org.jetbrains.kotlin.analysis.additionalKDocResolutionProvider"
+        interface="org.jetbrains.kotlin.analysis.api.symbols.AdditionalKDocResolutionProvider"
+        dynamic="true"
+    />
+
+    <extensionPoint
+        qualifiedName="org.jetbrains.kotlin.kaAdditionalKDocResolutionProvider"
+        interface="org.jetbrains.kotlin.analysis.api.symbols.KaAdditionalKDocResolutionProvider"
+        dynamic="true"
+    />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

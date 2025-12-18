@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.fir.resolve.transformers
 
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.KtSourceElement
-import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.Modality
@@ -77,6 +76,8 @@ class FirSyntheticCallGenerator(
     private val idFunction: FirNamedFunction = generateSyntheticSelectFunction(SyntheticCallableId.ID)
     private val checkNotNullFunction: FirNamedFunction = generateSyntheticCheckNotNullFunction()
     private val elvisFunction: FirNamedFunction = generateSyntheticElvisFunction()
+    private val equalityFunction: FirNamedFunction = generateSyntheticEqualityFunction()
+
     private val arrayOfSymbolCache: FirCache<Name, FirNamedFunctionSymbol?, Nothing?> =
         session.firCachesFactory.createCache(::getArrayOfSymbol)
 
@@ -195,12 +196,32 @@ class FirSyntheticCallGenerator(
             elvisExpression,
             elvisFunction,
             argumentList,
-            SyntheticCallableId.ELVIS_NOT_NULL.callableName,
+            SyntheticCallableId.ELVIS.callableName,
             context = context,
             resolutionMode = resolutionMode,
         )
 
         return elvisExpression.transformCalleeReference(UpdateReference, reference)
+    }
+
+    fun generateCalleeForEqualityOperatorCall(
+        equalityOperatorCall: FirEqualityOperatorCall,
+        context: ResolutionContext,
+        resolutionMode: ResolutionMode,
+    ): FirEqualityOperatorCall {
+        assertSyntheticResolvableReferenceIsNotResolved(equalityOperatorCall)
+
+        val argumentList = equalityOperatorCall.argumentList
+        val reference = generateCalleeReferenceWithCandidate(
+            equalityOperatorCall,
+            equalityFunction,
+            argumentList,
+            SyntheticCallableId.EQUALITY.callableName,
+            context = context,
+            resolutionMode = resolutionMode,
+        )
+
+        return equalityOperatorCall.transformCalleeReference(UpdateReference, reference)
     }
 
     fun generateSyntheticIdCall(arrayLiteral: FirExpression, context: ResolutionContext, resolutionMode: ResolutionMode): FirFunctionCall {
@@ -218,6 +239,11 @@ class FirSyntheticCallGenerator(
                 resolutionMode = resolutionMode,
             )
         }
+    }
+
+    private fun calculateArrayOfSymbol(expectedType: ConeKotlinType): FirNamedFunctionSymbol? {
+        val arrayCallName = toArrayOfFactoryName(expectedType, session, eagerlyReturnNonPrimitive = true)
+        return arrayCallName?.let { arrayOfSymbolCache.getValue(it) }
     }
 
     fun generateSyntheticArrayOfCall(
@@ -253,24 +279,6 @@ class FirSyntheticCallGenerator(
         }
     }
 
-    private fun calculateArrayOfSymbol(expectedType: ConeKotlinType): FirNamedFunctionSymbol? {
-        val coneType = expectedType.fullyExpandedType(session)
-        val arrayCallName = when {
-            coneType.isPrimitiveArray -> {
-                val arrayElementClassId = coneType.arrayElementType()!!.classId
-                val primitiveType = PrimitiveType.getByShortName(arrayElementClassId!!.shortClassName.asString())
-                ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY[primitiveType]!!
-            }
-            coneType.isUnsignedArray -> {
-                val arrayElementClassId = coneType.arrayElementType()!!.classId
-                ArrayFqNames.UNSIGNED_TYPE_TO_ARRAY[arrayElementClassId!!.asSingleFqName()]!!
-            }
-            else -> {
-                ArrayFqNames.ARRAY_OF_FUNCTION
-            }
-        }
-        return arrayOfSymbolCache.getValue(arrayCallName)
-    }
 
     private fun getArrayOfSymbol(arrayOfName: Name): FirNamedFunctionSymbol? {
         return session.symbolProvider
@@ -717,12 +725,12 @@ class FirSyntheticCallGenerator(
 
     private fun generateSyntheticElvisFunction(): FirNamedFunction {
         // Synthetic function signature:
-        //   fun <K> checkNotNull(x: K?, y: K): @Exact K
+        //   fun <K> elvis(x: K?, y: K): @Exact K
         //
         // Note: The upper bound of `K` cannot be `Any` because of the following case:
         //   fun <X> test(a: X, b: X) = a ?: b
         // `X` is not a subtype of `Any` and hence cannot satisfy `K` if it had an upper bound of `Any`.
-        val functionSymbol = FirSyntheticFunctionSymbol(SyntheticCallableId.ELVIS_NOT_NULL)
+        val functionSymbol = FirSyntheticFunctionSymbol(SyntheticCallableId.ELVIS)
         val (typeParameter, rightArgumentType) = generateSyntheticSelectTypeParameter(functionSymbol)
 
         val returnType = rightArgumentType
@@ -736,7 +744,7 @@ class FirSyntheticCallGenerator(
 
         return generateMemberFunction(
             functionSymbol,
-            SyntheticCallableId.ELVIS_NOT_NULL.callableName,
+            SyntheticCallableId.ELVIS.callableName,
             typeArgument.typeRef
         ).apply {
             typeParameters += typeParameter
@@ -744,6 +752,22 @@ class FirSyntheticCallGenerator(
                 .withNullability(nullable = true, session.typeContext)
                 .toValueParameter("x", functionSymbol)
             valueParameters += rightArgumentType
+                .toValueParameter("y", functionSymbol)
+        }.build()
+    }
+
+    private fun generateSyntheticEqualityFunction(): FirNamedFunction {
+        // Synthetic function signature:
+        //   fun equals(x: Any?, y: Any?): Boolean
+        val functionSymbol = FirSyntheticFunctionSymbol(SyntheticCallableId.EQUALITY)
+        return generateMemberFunction(
+            functionSymbol,
+            SyntheticCallableId.EQUALITY.callableName,
+            session.builtinTypes.booleanType
+        ).apply {
+            valueParameters += session.builtinTypes.nullableAnyType.coneType
+                .toValueParameter("x", functionSymbol)
+            valueParameters += session.builtinTypes.nullableAnyType.coneType
                 .toValueParameter("y", functionSymbol)
         }.build()
     }

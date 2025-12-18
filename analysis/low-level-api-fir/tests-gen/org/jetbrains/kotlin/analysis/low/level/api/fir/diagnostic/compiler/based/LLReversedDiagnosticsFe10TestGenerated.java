@@ -9958,6 +9958,12 @@ public class LLReversedDiagnosticsFe10TestGenerated extends AbstractLLReversedDi
       }
 
       @Test
+      @TestMetadata("coercions.kt")
+      public void testCoercions() {
+        runTest("compiler/testData/diagnostics/tests/crv/coercions.kt");
+      }
+
+      @Test
       @TestMetadata("collectionsAndJavaTypes.kt")
       public void testCollectionsAndJavaTypes() {
         runTest("compiler/testData/diagnostics/tests/crv/collectionsAndJavaTypes.kt");
@@ -30340,6 +30346,12 @@ public class LLReversedDiagnosticsFe10TestGenerated extends AbstractLLReversedDi
       }
 
       @Test
+      @TestMetadata("expectInlineProperty.kt")
+      public void testExpectInlineProperty() {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/expectInlineProperty.kt");
+      }
+
+      @Test
       @TestMetadata("expectInterfaceApplicability.kt")
       public void testExpectInterfaceApplicability() {
         runTest("compiler/testData/diagnostics/tests/multiplatform/expectInterfaceApplicability.kt");
@@ -47808,12 +47820,6 @@ public class LLReversedDiagnosticsFe10TestGenerated extends AbstractLLReversedDi
       }
 
       @Test
-      @TestMetadata("valueClassWithGenericUnderlyingTypeNoFeature.kt")
-      public void testValueClassWithGenericUnderlyingTypeNoFeature() {
-        runTest("compiler/testData/diagnostics/tests/valueClasses/valueClassWithGenericUnderlyingTypeNoFeature.kt");
-      }
-
-      @Test
       @TestMetadata("valueClassesInsideAnnotations.kt")
       public void testValueClassesInsideAnnotations() {
         runTest("compiler/testData/diagnostics/tests/valueClasses/valueClassesInsideAnnotations.kt");
@@ -48511,12 +48517,6 @@ public class LLReversedDiagnosticsFe10TestGenerated extends AbstractLLReversedDi
       @TestMetadata("deprecatedSyntaxInConditions_after.kt")
       public void testDeprecatedSyntaxInConditions_after() {
         runTest("compiler/testData/diagnostics/tests/when/deprecatedSyntaxInConditions_after.kt");
-      }
-
-      @Test
-      @TestMetadata("deprecatedSyntaxInConditions_before.kt")
-      public void testDeprecatedSyntaxInConditions_before() {
-        runTest("compiler/testData/diagnostics/tests/when/deprecatedSyntaxInConditions_before.kt");
       }
 
       @Test

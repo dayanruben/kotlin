@@ -491,6 +491,7 @@ enum class LanguageFeature(
     SkipHiddenObjectsInResolution(KOTLIN_2_4, issue = "KT-82555"),
     JvmEnhancedBridges(KOTLIN_2_4, "KT-82900"),
     DiscriminateNothingAsNullabilityConstraintInInference(KOTLIN_2_4, "KT-81948"),
+    ResolveEqualsRhsInDependentContextWithCompletion(KOTLIN_2_4, "KT-81763"),
 
     // 2.5
 
@@ -829,5 +830,5 @@ fun LanguageVersionSettings.getCustomizedEffectivelyDisabledLanguageFeatures(): 
     }
 }
 
-private fun LanguageVersionSettings.isEnabledByDefault(languageFeature: LanguageFeature): Boolean =
+fun LanguageVersionSettings.isEnabledByDefault(languageFeature: LanguageFeature): Boolean =
     languageFeature.sinceVersion != null && languageVersion >= languageFeature.sinceVersion && apiVersion >= languageFeature.sinceApiVersion
