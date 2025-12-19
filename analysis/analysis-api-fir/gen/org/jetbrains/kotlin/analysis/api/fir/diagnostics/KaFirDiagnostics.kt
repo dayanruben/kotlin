@@ -1475,6 +1475,53 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val reason: String
     }
 
+    interface PotentiallyNullableReturnTypeOfOperatorOf : KaFirDiagnostic<KtNamedFunction> {
+        override val diagnosticClass get() = PotentiallyNullableReturnTypeOfOperatorOf::class
+    }
+
+    interface NullableReturnTypeOfOperatorOf : KaFirDiagnostic<KtNamedFunction> {
+        override val diagnosticClass get() = NullableReturnTypeOfOperatorOf::class
+    }
+
+    interface ReturnTypeMismatchOfOperatorOf : KaFirDiagnostic<KtNamedFunction> {
+        override val diagnosticClass get() = ReturnTypeMismatchOfOperatorOf::class
+        val outerClass: KaClassLikeSymbol
+    }
+
+    interface NoVarargOverloadOfOperatorOf : KaFirDiagnostic<KtNamedFunction> {
+        override val diagnosticClass get() = NoVarargOverloadOfOperatorOf::class
+    }
+
+    interface MultipleVarargOverloadsOfOperatorOf : KaFirDiagnostic<KtNamedFunction> {
+        override val diagnosticClass get() = MultipleVarargOverloadsOfOperatorOf::class
+    }
+
+    interface InconsistentReturnTypesInOfOverloads : KaFirDiagnostic<KtNamedFunction> {
+        override val diagnosticClass get() = InconsistentReturnTypesInOfOverloads::class
+        val mainOverloadType: KaType
+    }
+
+    interface InconsistentParameterTypesInOfOverloads : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = InconsistentParameterTypesInOfOverloads::class
+        val mainParameterType: KaType
+    }
+
+    interface InconsistentVisibilityInOfOverloads : KaFirDiagnostic<KtNamedFunction> {
+        override val diagnosticClass get() = InconsistentVisibilityInOfOverloads::class
+        val mainVisibility: Visibility
+    }
+
+    interface InconsistentSuspendInOfOverloads : KaFirDiagnostic<KtNamedFunction> {
+        override val diagnosticClass get() = InconsistentSuspendInOfOverloads::class
+        val overloadSuspendability: String
+        val mainOverloadSuspendability: String
+    }
+
+    interface InconsistentTypeParametersInOfOverloads : KaFirDiagnostic<KtNamedFunction> {
+        override val diagnosticClass get() = InconsistentTypeParametersInOfOverloads::class
+        val mainOverload: KaFunctionSymbol
+    }
+
     interface RedundantOpenInInterface : KaFirDiagnostic<KtModifierListOwner> {
         override val diagnosticClass get() = RedundantOpenInInterface::class
     }

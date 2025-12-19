@@ -2332,6 +2332,184 @@ public class LLPartialDiagnosticsFirTestGenerated extends AbstractLLPartialDiagn
       }
 
       @Nested
+      @TestMetadata("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks")
+      @TestDataPath("$PROJECT_ROOT")
+      public class OperatorOfChecks {
+        @Test
+        public void testAllFilesPresentInOperatorOfChecks() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("classWithTheSameNameAsReturn.kt")
+        public void testClassWithTheSameNameAsReturn() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/classWithTheSameNameAsReturn.kt");
+        }
+
+        @Test
+        @TestMetadata("contexts.kt")
+        public void testContexts() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/contexts.kt");
+        }
+
+        @Test
+        @TestMetadata("contractsOnOfs.kt")
+        public void testContractsOnOfs() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/contractsOnOfs.kt");
+        }
+
+        @Test
+        @TestMetadata("defaultValuesForParameters.kt")
+        public void testDefaultValuesForParameters() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/defaultValuesForParameters.kt");
+        }
+
+        @Test
+        @TestMetadata("errorParameterTypes.kt")
+        public void testErrorParameterTypes() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/errorParameterTypes.kt");
+        }
+
+        @Test
+        @TestMetadata("errorReturnTypes.kt")
+        public void testErrorReturnTypes() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/errorReturnTypes.kt");
+        }
+
+        @Test
+        @TestMetadata("extensions.kt")
+        public void testExtensions() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/extensions.kt");
+        }
+
+        @Test
+        @TestMetadata("extraParametersInVarargOverload.kt")
+        public void testExtraParametersInVarargOverload() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/extraParametersInVarargOverload.kt");
+        }
+
+        @Test
+        @TestMetadata("flexibleReturnType.kt")
+        public void testFlexibleReturnType() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/flexibleReturnType.kt");
+        }
+
+        @Test
+        @TestMetadata("flexibleTypeArgumentInReturnType.kt")
+        public void testFlexibleTypeArgumentInReturnType() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/flexibleTypeArgumentInReturnType.kt");
+        }
+
+        @Test
+        @TestMetadata("inconsistentFunctionalParameterTypes.kt")
+        public void testInconsistentFunctionalParameterTypes() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/inconsistentFunctionalParameterTypes.kt");
+        }
+
+        @Test
+        @TestMetadata("inconsistentParameterTypes.kt")
+        public void testInconsistentParameterTypes() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/inconsistentParameterTypes.kt");
+        }
+
+        @Test
+        @TestMetadata("inconsistentReturnTypes.kt")
+        public void testInconsistentReturnTypes() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/inconsistentReturnTypes.kt");
+        }
+
+        @Test
+        @TestMetadata("infixOperatorOf.kt")
+        public void testInfixOperatorOf() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/infixOperatorOf.kt");
+        }
+
+        @Test
+        @TestMetadata("inlineMismatches.kt")
+        public void testInlineMismatches() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/inlineMismatches.kt");
+        }
+
+        @Test
+        @TestMetadata("intersectionReturnType.kt")
+        public void testIntersectionReturnType() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/intersectionReturnType.kt");
+        }
+
+        @Test
+        @TestMetadata("irrelevantReturnType.kt")
+        public void testIrrelevantReturnType() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/irrelevantReturnType.kt");
+        }
+
+        @Test
+        @TestMetadata("localTypeApproximation.kt")
+        public void testLocalTypeApproximation() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/localTypeApproximation.kt");
+        }
+
+        @Test
+        @TestMetadata("nonCompanionMember.kt")
+        public void testNonCompanionMember() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/nonCompanionMember.kt");
+        }
+
+        @Test
+        @TestMetadata("nullableReturnType.kt")
+        public void testNullableReturnType() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/nullableReturnType.kt");
+        }
+
+        @Test
+        @TestMetadata("reifiednessMismatches.kt")
+        public void testReifiednessMismatches() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/reifiednessMismatches.kt");
+        }
+
+        @Test
+        @TestMetadata("suspendMismatches.kt")
+        public void testSuspendMismatches() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/suspendMismatches.kt");
+        }
+
+        @Test
+        @TestMetadata("tailrecMismatches.kt")
+        public void testTailrecMismatches() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/tailrecMismatches.kt");
+        }
+
+        @Test
+        @TestMetadata("topLevel.kt")
+        public void testTopLevel() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/topLevel.kt");
+        }
+
+        @Test
+        @TestMetadata("typeParameterMismatches.kt")
+        public void testTypeParameterMismatches() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/typeParameterMismatches.kt");
+        }
+
+        @Test
+        @TestMetadata("typealiasInReturnType.kt")
+        public void testTypealiasInReturnType() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/typealiasInReturnType.kt");
+        }
+
+        @Test
+        @TestMetadata("visibilityMismatches.kt")
+        public void testVisibilityMismatches() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/visibilityMismatches.kt");
+        }
+
+        @Test
+        @TestMetadata("wrongNumberOfVarargOverloads.kt")
+        public void testWrongNumberOfVarargOverloads() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorOfChecks/wrongNumberOfVarargOverloads.kt");
+        }
+      }
+
+      @Nested
       @TestMetadata("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/stdlibTypes")
       @TestDataPath("$PROJECT_ROOT")
       public class StdlibTypes {

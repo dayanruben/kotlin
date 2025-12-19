@@ -647,6 +647,32 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<String>("reason")
         }
 
+        val POTENTIALLY_NULLABLE_RETURN_TYPE_OF_OPERATOR_OF by error<KtNamedFunction>(PositioningStrategy.DECLARATION_NAME)
+        val NULLABLE_RETURN_TYPE_OF_OPERATOR_OF by error<KtNamedFunction>(PositioningStrategy.DECLARATION_RETURN_TYPE)
+        val RETURN_TYPE_MISMATCH_OF_OPERATOR_OF by error<KtNamedFunction>(PositioningStrategy.DECLARATION_RETURN_TYPE) {
+            parameter<FirRegularClassSymbol>("outerClass")
+        }
+
+        val NO_VARARG_OVERLOAD_OF_OPERATOR_OF by error<KtNamedFunction>(PositioningStrategy.DECLARATION_SIGNATURE_OR_DEFAULT)
+        val MULTIPLE_VARARG_OVERLOADS_OF_OPERATOR_OF by error<KtNamedFunction>(PositioningStrategy.DECLARATION_SIGNATURE_OR_DEFAULT)
+
+        val INCONSISTENT_RETURN_TYPES_IN_OF_OVERLOADS by error<KtNamedFunction>(PositioningStrategy.DECLARATION_RETURN_TYPE) {
+            parameter<ConeKotlinType>("mainOverloadType")
+        }
+        val INCONSISTENT_PARAMETER_TYPES_IN_OF_OVERLOADS by error<KtElement>(PositioningStrategy.DECLARATION_SIGNATURE_OR_DEFAULT) {
+            parameter<ConeKotlinType>("mainParameterType")
+        }
+        val INCONSISTENT_VISIBILITY_IN_OF_OVERLOADS by error<KtNamedFunction>(PositioningStrategy.VISIBILITY_MODIFIER) {
+            parameter<Visibility>("mainVisibility")
+        }
+        val INCONSISTENT_SUSPEND_IN_OF_OVERLOADS by error<KtNamedFunction>(PositioningStrategy.SUSPEND_MODIFIER) {
+            parameter<String>("overloadSuspendability")
+            parameter<String>("mainOverloadSuspendability")
+        }
+        val INCONSISTENT_TYPE_PARAMETERS_IN_OF_OVERLOADS by error<KtNamedFunction>(PositioningStrategy.TYPE_PARAMETERS_LIST) {
+            parameter<FirNamedFunctionSymbol>("mainOverload")
+        }
+
         val REDUNDANT_OPEN_IN_INTERFACE by warning<KtModifierListOwner>(PositioningStrategy.OPEN_MODIFIER)
         val OPERATOR_CALL_ON_CONSTRUCTOR by error<PsiElement> {
             parameter<String>("name")

@@ -1766,6 +1766,63 @@ internal class InapplicableLateinitModifierImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtModifierListOwner>(firDiagnostic, token), KaFirDiagnostic.InapplicableLateinitModifier
 
+internal class PotentiallyNullableReturnTypeOfOperatorOfImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtNamedFunction>(firDiagnostic, token), KaFirDiagnostic.PotentiallyNullableReturnTypeOfOperatorOf
+
+internal class NullableReturnTypeOfOperatorOfImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtNamedFunction>(firDiagnostic, token), KaFirDiagnostic.NullableReturnTypeOfOperatorOf
+
+internal class ReturnTypeMismatchOfOperatorOfImpl(
+    override val outerClass: KaClassLikeSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtNamedFunction>(firDiagnostic, token), KaFirDiagnostic.ReturnTypeMismatchOfOperatorOf
+
+internal class NoVarargOverloadOfOperatorOfImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtNamedFunction>(firDiagnostic, token), KaFirDiagnostic.NoVarargOverloadOfOperatorOf
+
+internal class MultipleVarargOverloadsOfOperatorOfImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtNamedFunction>(firDiagnostic, token), KaFirDiagnostic.MultipleVarargOverloadsOfOperatorOf
+
+internal class InconsistentReturnTypesInOfOverloadsImpl(
+    override val mainOverloadType: KaType,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtNamedFunction>(firDiagnostic, token), KaFirDiagnostic.InconsistentReturnTypesInOfOverloads
+
+internal class InconsistentParameterTypesInOfOverloadsImpl(
+    override val mainParameterType: KaType,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.InconsistentParameterTypesInOfOverloads
+
+internal class InconsistentVisibilityInOfOverloadsImpl(
+    override val mainVisibility: Visibility,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtNamedFunction>(firDiagnostic, token), KaFirDiagnostic.InconsistentVisibilityInOfOverloads
+
+internal class InconsistentSuspendInOfOverloadsImpl(
+    override val overloadSuspendability: String,
+    override val mainOverloadSuspendability: String,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtNamedFunction>(firDiagnostic, token), KaFirDiagnostic.InconsistentSuspendInOfOverloads
+
+internal class InconsistentTypeParametersInOfOverloadsImpl(
+    override val mainOverload: KaFunctionSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtNamedFunction>(firDiagnostic, token), KaFirDiagnostic.InconsistentTypeParametersInOfOverloads
+
 internal class RedundantOpenInInterfaceImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,

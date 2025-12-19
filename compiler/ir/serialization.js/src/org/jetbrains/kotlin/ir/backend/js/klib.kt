@@ -28,8 +28,6 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
-import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.incremental.js.IncrementalDataProvider
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrDiagnosticReporter
@@ -45,7 +43,6 @@ import org.jetbrains.kotlin.ir.util.ExternalDependenciesGenerator
 import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.konan.properties.Properties
-import org.jetbrains.kotlin.konan.properties.propertyList
 import org.jetbrains.kotlin.library.*
 import org.jetbrains.kotlin.library.impl.BuiltInsPlatform
 import org.jetbrains.kotlin.library.impl.buildKotlinLibrary
@@ -57,7 +54,6 @@ import org.jetbrains.kotlin.psi2ir.Psi2IrTranslator
 import org.jetbrains.kotlin.psi2ir.descriptors.IrBuiltInsOverDescriptors
 import org.jetbrains.kotlin.psi2ir.generators.GeneratorContext
 import org.jetbrains.kotlin.psi2ir.generators.TypeTranslatorImpl
-import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.storage.StorageManager
 import org.jetbrains.kotlin.util.PerformanceManager
 import org.jetbrains.kotlin.util.PhaseType
@@ -102,7 +98,6 @@ fun generateKLib(
         diagnosticReporter = diagnosticReporter,
         metadataSerializer = KlibMetadataIncrementalSerializer(modulesStructure, moduleFragment),
         klibPath = outputKlibPath,
-        dependencies = modulesStructure.klibs.all,
         moduleFragment = moduleFragment,
         irBuiltIns = irBuiltIns,
         cleanFiles = icData,
@@ -482,24 +477,7 @@ fun GeneratorContext.generateModuleFragmentWithPlugins(
 }
 
 private fun createBuiltIns(storageManager: StorageManager) = object : KotlinBuiltIns(storageManager) {}
-public val JsFactories = KlibMetadataFactories(::createBuiltIns, DynamicTypeDeserializer)
-
-fun getModuleDescriptorByLibrary(current: KotlinLibrary, mapping: Map<String, ModuleDescriptorImpl>): ModuleDescriptorImpl {
-    val md = JsFactories.DefaultDeserializedDescriptorFactory.createDescriptorOptionalBuiltIns(
-        current,
-        LanguageVersionSettingsImpl.DEFAULT,
-        LockBasedStorageManager.NO_LOCKS,
-        null,
-        packageAccessHandler = null, // TODO: This is a speed optimization used by Native. Don't bother for now.
-        lookupTracker = LookupTracker.DO_NOTHING
-    )
-//    if (isBuiltIns) runtimeModule = md
-
-    val dependencies = current.manifestProperties.propertyList(KLIB_PROPERTY_DEPENDS, escapeInQuotes = true).map { mapping.getValue(it) }
-
-    md.setDependencies(listOf(md) + dependencies)
-    return md
-}
+val JsFactories = KlibMetadataFactories(::createBuiltIns, DynamicTypeDeserializer)
 
 private const val FILE_FINGERPRINTS_SEPARATOR = " "
 
@@ -517,7 +495,6 @@ fun serializeModuleIntoKlib(
     diagnosticReporter: IrDiagnosticReporter,
     metadataSerializer: KlibSingleFileMetadataSerializer<*>,
     klibPath: String,
-    dependencies: List<KotlinLibrary>,
     moduleFragment: IrModuleFragment,
     irBuiltIns: IrBuiltIns,
     cleanFiles: List<KotlinFileSerializedData>,
@@ -537,7 +514,7 @@ fun serializeModuleIntoKlib(
             configuration = configuration,
             diagnosticReporter = diagnosticReporter,
             cleanFiles = cleanFiles,
-            dependencies = dependencies,
+            dependencies = emptyList(),
             createModuleSerializer = { irDiagnosticReporter ->
                 JsIrModuleSerializer(
                     settings = IrSerializationSettings(configuration),
@@ -622,7 +599,6 @@ fun serializeModuleIntoKlib(
 
     performanceManager.tryMeasurePhaseTime(PhaseType.KlibWriting) {
         buildKotlinLibrary(
-            linkDependencies = serializerOutput.neededLibraries,
             ir = fullSerializedIr,
             metadata = serializerOutput.serializedMetadata ?: error("expected serialized metadata"),
             manifestProperties = properties,
