@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.declarations.IrTypeParametersContainer
 import org.jetbrains.kotlin.ir.descriptors.IrBasedTypeParameterDescriptor
-import org.jetbrains.kotlin.ir.expressions.IrAnnotation
+import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.types.impl.*
@@ -237,9 +237,9 @@ abstract class TypeTranslator(
                 approximateCapturedTypes(ktType).upper
         }
 
-    private fun translateTypeAnnotations(kotlinType: KotlinType, flexibleType: KotlinType = kotlinType): List<IrAnnotation> {
+    private fun translateTypeAnnotations(kotlinType: KotlinType, flexibleType: KotlinType = kotlinType): List<IrConstructorCall> {
         val annotations = kotlinType.annotations
-        val irAnnotations = ArrayList<IrAnnotation>()
+        val irAnnotations = ArrayList<IrConstructorCall>()
 
         annotations.mapNotNullTo(irAnnotations) {
             constantValueGenerator.generateAnnotationCall(it)
@@ -248,18 +248,18 @@ abstract class TypeTranslator(
         // EnhancedNullability annotation is not present in 'annotations', see 'EnhancedTypeAnnotations::iterator()'.
         // Also, EnhancedTypeAnnotationDescriptor is not a "real" annotation descriptor, there's no corresponding ClassDescriptor, etc.
         if (extensions.enhancedNullability.hasEnhancedNullability(kotlinType)) {
-            irAnnotations.addIfNotNull(extensions.generateEnhancedNullabilityAnnotation())
+            irAnnotations.addIfNotNull(extensions.generateEnhancedNullabilityAnnotationCall())
         }
 
         if (flexibleType.isNullabilityFlexible()) {
-            irAnnotations.addIfNotNull(extensions.generateFlexibleNullabilityAnnotation())
+            irAnnotations.addIfNotNull(extensions.generateFlexibleNullabilityAnnotationCall())
         }
         if (flexibleType.isMutabilityFlexible()) {
-            irAnnotations.addIfNotNull(extensions.generateFlexibleMutabilityAnnotation())
+            irAnnotations.addIfNotNull(extensions.generateFlexibleMutabilityAnnotationCall())
         }
 
         if (flexibleType is RawType) {
-            irAnnotations.addIfNotNull(extensions.generateRawTypeAnnotation())
+            irAnnotations.addIfNotNull(extensions.generateRawTypeAnnotationCall())
         }
 
         return irAnnotations

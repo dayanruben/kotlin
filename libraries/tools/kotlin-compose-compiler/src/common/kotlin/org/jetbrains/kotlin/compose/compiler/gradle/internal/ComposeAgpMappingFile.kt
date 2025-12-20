@@ -14,12 +14,11 @@ import com.android.build.api.variant.ApplicationAndroidComponentsExtension
 import com.android.build.api.variant.ScopedArtifacts
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
-import org.gradle.api.file.ConfigurableFileCollection
-import org.gradle.api.file.Directory
-import org.gradle.api.file.RegularFile
-import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.file.*
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
 import org.gradle.kotlin.dsl.findByType
 import org.gradle.kotlin.dsl.register
@@ -28,6 +27,7 @@ import org.gradle.workers.WorkAction
 import org.gradle.workers.WorkParameters
 import org.gradle.workers.WorkerExecutor
 import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
+import java.io.File
 import java.security.MessageDigest
 import java.util.Locale.getDefault
 import java.util.zip.ZipFile
@@ -100,16 +100,22 @@ private fun String.capitalize(): String =
     replaceFirstChar { if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString() }
 
 @CacheableTask
-internal abstract class ProduceMappingFileTask : DefaultTask() {
+internal abstract class ProduceMappingFileTask @Inject constructor(
+    objects: ObjectFactory
+) : DefaultTask() {
     @get:OutputFile
     abstract val outputFile: RegularFileProperty
 
     @get:OutputFile
     abstract val errorFile: RegularFileProperty
 
+    @get:Internal
+    abstract val projectDirectories: ListProperty<Directory>
+
     @get:InputFiles
     @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val projectDirectories: ListProperty<Directory>
+    val projectClasses: FileTree =
+        objects.fileCollection().from(projectDirectories).asFileTree.matching { it.include("**/*.class") }
 
     @get:Classpath
     abstract val projectJars: ListProperty<RegularFile>
@@ -130,7 +136,7 @@ internal abstract class ProduceMappingFileTask : DefaultTask() {
         }
 
         workQueue.submit(Action::class.java) {
-            it.projectFiles.from(projectDirectories.get())
+            it.projectFiles.from(projectClasses)
             it.projectJars.from(projectJars.get())
             it.output.set(outputFile)
             it.errorOutput.set(errorFile)
@@ -168,10 +174,8 @@ internal abstract class ProduceMappingFileTask : DefaultTask() {
 
 
             parameters.projectFiles.forEach { file ->
-                if (file.name.endsWith(".class")) {
-                    val bytes = file.readBytes()
-                    mapping.append(bytes)
-                }
+                val bytes = file.readBytes()
+                mapping.append(bytes)
             }
 
             parameters.output.get().asFile.apply {
@@ -216,11 +220,17 @@ internal abstract class ReportMappingErrorsTask : DefaultTask() {
 
 
 @CacheableTask
-internal abstract class MergeMappingFileTask : DefaultTask() {
+internal abstract class MergeMappingFileTask @Inject constructor(objects: ObjectFactory) : DefaultTask() {
 
     @get:InputFile
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val originalFile: RegularFileProperty
+
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    val r8Outputs: FileCollection = objects.fileCollection()
+        .from(originalFile.asFile.map { it.parentFile })
+        .asFileTree
 
     @get:InputFile
     @get:PathSensitive(PathSensitivity.RELATIVE)
@@ -229,6 +239,9 @@ internal abstract class MergeMappingFileTask : DefaultTask() {
     @get:OutputFile
     abstract val output: RegularFileProperty
 
+    @get:OutputFiles
+    val outputDir: Provider<File> = output.asFile.map { it.parentFile }
+
     @TaskAction
     fun taskAction() {
         /*
@@ -236,14 +249,16 @@ internal abstract class MergeMappingFileTask : DefaultTask() {
          */
         val newHeader = buildHeader()
 
+        val originalFile = originalFile.get().asFile
+
         val outputFile = output.get().asFile
-        outputFile.parentFile.mkdirs()
+        val outputDir = outputDir.get()
+        outputDir.mkdirs()
 
         outputFile.bufferedWriter().use { writer ->
             writer.append(newHeader)
 
             var skippingHeader = true
-            val originalFile = originalFile.get().asFile
             originalFile.forEachLine {
                 if (skippingHeader && it.startsWith("#")) {
                     return@forEachLine
@@ -257,6 +272,11 @@ internal abstract class MergeMappingFileTask : DefaultTask() {
             composeMapping.forEachLine {
                 writer.appendLine(it)
             }
+        }
+
+        r8Outputs.forEach {
+            if (it == originalFile) return@forEach
+            it.copyTo(File(outputDir, it.name))
         }
     }
 
