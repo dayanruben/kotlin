@@ -1,0 +1,3 @@
+KtCallExpression(54,58): 'y(1)'
+  KaSingleSymbolResolutionSuccess:
+    symbol = /A.y(<dispatch receiver>: A, a: kotlin.Int): kotlin.Unit

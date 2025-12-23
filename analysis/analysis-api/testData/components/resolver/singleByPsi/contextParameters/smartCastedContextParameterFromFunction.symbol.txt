@@ -1,0 +1,3 @@
+KtCallExpression(96,101): 'foo()'
+  KaSingleSymbolResolutionSuccess:
+    symbol = /A.foo(<dispatch receiver>: A): kotlin.Unit

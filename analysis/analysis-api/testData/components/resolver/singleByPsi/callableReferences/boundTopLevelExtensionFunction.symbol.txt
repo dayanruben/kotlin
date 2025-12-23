@@ -1,0 +1,3 @@
+KtCallableReferenceExpression(72,80): 'obj::foo'
+  KaSingleSymbolResolutionSuccess:
+    symbol = /foo(<extension receiver>: Foo, a: kotlin.Int): kotlin.Unit

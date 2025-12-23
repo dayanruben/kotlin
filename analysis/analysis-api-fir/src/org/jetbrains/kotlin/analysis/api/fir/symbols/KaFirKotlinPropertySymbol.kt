@@ -80,7 +80,10 @@ internal sealed class KaFirKotlinPropertySymbol<P : KtCallableDeclaration>(
             createKaTypeParameters() ?: firSymbol.createKtTypeParameters(builder)
         }
 
-    abstract val compilerVisibilityByPsi: Visibility?
+    open val compilerVisibilityByPsi: Visibility?
+        get() = withValidityAssertion {
+            backingPsi?.psiBasedVisibility(::isOverride)
+        }
 
     override val compilerVisibility: Visibility
         get() = withValidityAssertion { compilerVisibilityByPsi ?: firSymbol.visibility }
@@ -295,10 +298,23 @@ private class KaFirKotlinPropertyKtPropertyBasedSymbol : KaFirKotlinPropertySymb
         }
 
     override val modalityByPsi: KaSymbolModality?
-        get() = withValidityAssertion { backingPsi?.kaSymbolModality }
+        get() = withValidityAssertion {
+            backingPsi?.run {
+                val modalityByModifiers = kaSymbolModalityByModifiers
+                when {
+                    modalityByModifiers != null -> when {
+                        // KT-80178: interface members with no body have implicit ABSTRACT modality
+                        modalityByModifiers.isOpenFromInterface && !hasBody() -> KaSymbolModality.ABSTRACT
+                        else -> modalityByModifiers
+                    }
 
-    override val compilerVisibilityByPsi: Visibility?
-        get() = withValidityAssertion { backingPsi?.visibility }
+                    // Green code cannot have those modifiers with other modalities
+                    hasModifier(KtTokens.CONST_KEYWORD) -> KaSymbolModality.FINAL
+
+                    else -> psiBasedDefaultKaModality(::isOverride)
+                }
+            }
+        }
 
     override val callableId: CallableId?
         get() = withValidityAssertion {
@@ -422,10 +438,11 @@ private class KaFirKotlinPropertyKtParameterBasedSymbol : KaFirKotlinPropertySym
         }
 
     override val modalityByPsi: KaSymbolModality?
-        get() = withValidityAssertion { backingPsi?.kaSymbolModalityByModifiers }
-
-    override val compilerVisibilityByPsi: Visibility?
-        get() = withValidityAssertion { backingPsi?.visibilityByModifiers }
+        get() = withValidityAssertion {
+            backingPsi?.run {
+                kaSymbolModalityByModifiers ?: psiBasedDefaultKaModality(::isOverride)
+            }
+        }
 
     override val callableId: CallableId?
         get() = withValidityAssertion {
@@ -518,10 +535,10 @@ private class KaFirKotlinPropertyKtDestructuringDeclarationEntryBasedSymbol : Ka
                 null
         }
 
-    override val modalityByPsi: KaSymbolModality?
+    override val modalityByPsi: KaSymbolModality
         get() = withValidityAssertion { KaSymbolModality.FINAL }
 
-    override val compilerVisibilityByPsi: Visibility?
+    override val compilerVisibilityByPsi: Visibility
         get() = withValidityAssertion { Visibilities.Public }
 
     override val callableId: CallableId?

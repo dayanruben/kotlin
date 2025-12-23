@@ -311,7 +311,6 @@ org.jetbrains.kotlin.psi.KtAnnotation:constructor(KotlinPlaceHolderStub<KtAnnota
 org.jetbrains.kotlin.psi.KtAnnotation:getEntries()
 org.jetbrains.kotlin.psi.KtAnnotation:getUseSiteTarget()
 org.jetbrains.kotlin.psi.KtAnnotation:removeEntry(KtAnnotationEntry)
-org.jetbrains.kotlin.psi.KtAnnotationEntry
 org.jetbrains.kotlin.psi.KtAnnotationEntry:constructor(ASTNode)
 org.jetbrains.kotlin.psi.KtAnnotationEntry:constructor(KotlinAnnotationEntryStub)
 org.jetbrains.kotlin.psi.KtAnnotationEntry:getAtSymbol()
@@ -325,7 +324,6 @@ org.jetbrains.kotlin.psi.KtAnnotationUseSiteTarget:constructor(KotlinAnnotationU
 org.jetbrains.kotlin.psi.KtAnonymousInitializer
 org.jetbrains.kotlin.psi.KtAnonymousInitializer.body
 org.jetbrains.kotlin.psi.KtAnonymousInitializer.containingDeclaration
-org.jetbrains.kotlin.psi.KtArrayAccessExpression
 org.jetbrains.kotlin.psi.KtArrayAccessExpression:constructor(ASTNode)
 org.jetbrains.kotlin.psi.KtArrayAccessExpression:getArrayExpression()
 org.jetbrains.kotlin.psi.KtArrayAccessExpression:getBracketRanges()
@@ -382,7 +380,6 @@ org.jetbrains.kotlin.psi.KtCallableDeclaration:getReceiverTypeReference()
 org.jetbrains.kotlin.psi.KtCallableDeclaration:getValueParameterList()
 org.jetbrains.kotlin.psi.KtCallableDeclaration:getValueParameters()
 org.jetbrains.kotlin.psi.KtCallableDeclaration:setTypeReference(KtTypeReference)
-org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 org.jetbrains.kotlin.psi.KtCallableReferenceExpression:constructor(ASTNode)
 org.jetbrains.kotlin.psi.KtCallableReferenceExpression:getCallableReference()
 org.jetbrains.kotlin.psi.KtCatchClause
@@ -488,10 +485,8 @@ org.jetbrains.kotlin.psi.KtConstructorCalleeExpression:constructor(ASTNode)
 org.jetbrains.kotlin.psi.KtConstructorCalleeExpression:constructor(KotlinPlaceHolderStub<KtConstructorCalleeExpression>)
 org.jetbrains.kotlin.psi.KtConstructorCalleeExpression:getConstructorReferenceExpression()
 org.jetbrains.kotlin.psi.KtConstructorCalleeExpression:getTypeReference()
-org.jetbrains.kotlin.psi.KtConstructorDelegationCall
 org.jetbrains.kotlin.psi.KtConstructorDelegationCall:constructor(ASTNode)
 org.jetbrains.kotlin.psi.KtConstructorDelegationCall:isCallToThis()
-org.jetbrains.kotlin.psi.KtConstructorDelegationReferenceExpression
 org.jetbrains.kotlin.psi.KtConstructorDelegationReferenceExpression:constructor(ASTNode)
 org.jetbrains.kotlin.psi.KtConstructorDelegationReferenceExpression:isThis()
 org.jetbrains.kotlin.psi.KtContainerNode
@@ -589,7 +584,6 @@ org.jetbrains.kotlin.psi.KtEnumEntry:constructor(ASTNode)
 org.jetbrains.kotlin.psi.KtEnumEntry:constructor(KotlinClassStub)
 org.jetbrains.kotlin.psi.KtEnumEntry:getInitializerList()
 org.jetbrains.kotlin.psi.KtEnumEntry:hasInitializer()
-org.jetbrains.kotlin.psi.KtEnumEntrySuperclassReferenceExpression
 org.jetbrains.kotlin.psi.KtEnumEntrySuperclassReferenceExpression:constructor(ASTNode)
 org.jetbrains.kotlin.psi.KtEnumEntrySuperclassReferenceExpression:constructor(KotlinEnumEntrySuperclassReferenceExpressionStub)
 org.jetbrains.kotlin.psi.KtEscapeStringTemplateEntry
@@ -707,7 +701,6 @@ org.jetbrains.kotlin.psi.KtIsExpression:constructor(ASTNode)
 org.jetbrains.kotlin.psi.KtIsExpression:getLeftHandSide()
 org.jetbrains.kotlin.psi.KtIsExpression:getTypeReference()
 org.jetbrains.kotlin.psi.KtIsExpression:isNegated()
-org.jetbrains.kotlin.psi.KtLabelReferenceExpression
 org.jetbrains.kotlin.psi.KtLabeledExpression
 org.jetbrains.kotlin.psi.KtLabeledExpression.baseExpression
 org.jetbrains.kotlin.psi.KtLambdaArgument
@@ -1123,7 +1116,6 @@ org.jetbrains.kotlin.psi.KtQualifiedExpression.operationTokenNode
 org.jetbrains.kotlin.psi.KtQualifiedExpression.receiverExpression
 org.jetbrains.kotlin.psi.KtQualifiedExpression.selectorExpression
 org.jetbrains.kotlin.psi.KtReferenceExpression
-org.jetbrains.kotlin.psi.KtReturnExpression
 org.jetbrains.kotlin.psi.KtReturnExpression:constructor(ASTNode)
 org.jetbrains.kotlin.psi.KtReturnExpression:getLabeledExpression()
 org.jetbrains.kotlin.psi.KtReturnExpression:getReturnKeyword()
@@ -1179,7 +1171,6 @@ org.jetbrains.kotlin.psi.KtStubbedPsiUtil:getPsiOrStubParent(PsiElement, Class<T
 org.jetbrains.kotlin.psi.KtStubbedPsiUtil:getStubOrPsiChild(KtElementImplStub<?>, TokenSet, ArrayFactory<T>)
 org.jetbrains.kotlin.psi.KtSuperExpression
 org.jetbrains.kotlin.psi.KtSuperExpression:constructor(ASTNode)
-org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 org.jetbrains.kotlin.psi.KtSuperTypeCallEntry:constructor(ASTNode)
 org.jetbrains.kotlin.psi.KtSuperTypeCallEntry:constructor(KotlinPlaceHolderStub<? extends KtSuperTypeListEntry>)
 org.jetbrains.kotlin.psi.KtSuperTypeEntry
@@ -1633,7 +1624,6 @@ org.jetbrains.kotlin.psi.KtVisitorVoidWithParameter:visitWhenExpressionVoid(KtWh
 org.jetbrains.kotlin.psi.KtVisitorVoidWithParameter:visitWhileExpressionVoid(KtWhileExpression, P)
 org.jetbrains.kotlin.psi.KtWhenCondition
 org.jetbrains.kotlin.psi.KtWhenCondition:constructor(ASTNode)
-org.jetbrains.kotlin.psi.KtWhenConditionInRange
 org.jetbrains.kotlin.psi.KtWhenConditionInRange:constructor(ASTNode)
 org.jetbrains.kotlin.psi.KtWhenConditionInRange:getOperationReference()
 org.jetbrains.kotlin.psi.KtWhenConditionInRange:getRangeExpression()

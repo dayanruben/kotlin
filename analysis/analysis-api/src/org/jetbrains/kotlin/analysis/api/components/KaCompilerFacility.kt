@@ -159,7 +159,7 @@ public sealed class KaCompilerTarget {
  *
  * @see KaCompilerTarget.Jvm
  */
-@KaExtensibleApi
+@KaSpi
 @KaExperimentalApi
 public fun interface KaCompiledClassHandler {
     /**
@@ -169,6 +169,7 @@ public fun interface KaCompiledClassHandler {
      *  for example if it's an anonymous object from another module, regenerated during inlining.
      * @param className The name of the class in the JVM's internal name format, for example `"java/lang/Object"`.
      */
+    @KaSpiExtensionPoint
     public fun handleClassDefinition(file: PsiFile?, className: String)
 }
 

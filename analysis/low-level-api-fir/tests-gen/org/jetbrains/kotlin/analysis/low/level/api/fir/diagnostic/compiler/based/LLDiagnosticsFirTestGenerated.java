@@ -2714,6 +2714,18 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
       }
 
       @Test
+      @TestMetadata("constSignedVsUnsignedDeserialized.kt")
+      public void testConstSignedVsUnsignedDeserialized() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/constVal/constSignedVsUnsignedDeserialized.kt");
+      }
+
+      @Test
+      @TestMetadata("constValFromUintCompanion.kt")
+      public void testConstValFromUintCompanion() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/constVal/constValFromUintCompanion.kt");
+      }
+
+      @Test
       @TestMetadata("constValNotTopLevelOrObject.kt")
       public void testConstValNotTopLevelOrObject() {
         runTest("compiler/fir/analysis-tests/testData/resolve/constVal/constValNotTopLevelOrObject.kt");

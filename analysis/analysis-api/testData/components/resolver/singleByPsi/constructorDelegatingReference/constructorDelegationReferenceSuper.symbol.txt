@@ -1,0 +1,3 @@
+KtConstructorDelegationReferenceExpression(145,150): 'super'
+  KaSingleSymbolResolutionSuccess:
+    symbol = <constructor>(i: kotlin.Int): r.BaseClass

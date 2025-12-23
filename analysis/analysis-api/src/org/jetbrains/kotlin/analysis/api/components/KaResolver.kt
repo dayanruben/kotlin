@@ -6,16 +6,708 @@
 package org.jetbrains.kotlin.analysis.api.components
 
 import org.jetbrains.kotlin.analysis.api.*
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidateInfo
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.*
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.references.KDocReference
 import org.jetbrains.kotlin.idea.references.KtReference
-import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolution.KtResolvable
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 
 @KaSessionComponentImplementationDetail
 @SubclassOptInRequired(KaSessionComponentImplementationDetail::class)
 public interface KaResolver : KaSessionComponent {
+    /**
+     * Attempts to resolve a symbol for the given [KtResolvable].
+     *
+     * Returns a [KaSymbolResolutionAttempt] that describes either success ([KaSymbolResolutionSuccess])
+     * or failure ([KaSymbolResolutionError]), or `null` if no result is available
+     *
+     * @see KaSymbolResolutionSuccess
+     * @see KaSymbolResolutionError
+     */
+    @KaExperimentalApi
+    @OptIn(KtExperimentalApi::class)
+    public fun KtResolvable.tryResolveSymbol(): KaSymbolResolutionAttempt?
+
+    /**
+     * Resolves symbols for the given [KtResolvable].
+     *
+     * Returns all resolved [KaSymbol]s if successful; otherwise, an empty list. Might contain multiple symbols
+     * for a multiple result ([KaMultiSymbolResolutionSuccess])
+     *
+     * @see tryResolveSymbol
+     * @see resolveSymbol
+     * @see KaSingleSymbolResolutionSuccess
+     * @see KaMultiSymbolResolutionSuccess
+     */
+    @KaExperimentalApi
+    @OptIn(KtExperimentalApi::class)
+    public fun KtResolvable.resolveSymbols(): Collection<KaSymbol>
+
+    /**
+     * Resolves a single symbol for the given [KtResolvable].
+     *
+     * Returns the [KaSymbol] if there is exactly one target ([KaSingleSymbolResolutionSuccess]); otherwise, `null`
+     *
+     * @see tryResolveSymbol
+     * @see resolveSymbols
+     * @see KaSingleSymbolResolutionSuccess
+     */
+    @KaExperimentalApi
+    @OptIn(KtExperimentalApi::class)
+    public fun KtResolvable.resolveSymbol(): KaSymbol?
+
+    /**
+     * Resolves the constructor symbol of the annotation referenced by the given [KtAnnotationEntry].
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * annotation class Anno(val x: Int)
+     *
+     * @Anno(42)
+     * fun foo() {}
+     * ```
+     *
+     * Calling `resolveSymbol()` on the [KtAnnotationEntry] (`@Anno(42)`) returns the [KaConstructorSymbol] of `Anno`'s
+     * annotation constructor if resolution succeeds; otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on annotation entries
+     *
+     * @see tryResolveSymbol
+     * @see KtResolvable.resolveSymbol
+     */
+    @KaExperimentalApi
+    public fun KtAnnotationEntry.resolveSymbol(): KaConstructorSymbol?
+
+    /**
+     * Resolves the constructor symbol by the given [KtSuperTypeCallEntry].
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * open class Base(i: Int)
+     *
+     * class Derived : Base(1)
+     * //              ^^^^^^^
+     * ```
+     *
+     * Calling `resolveSymbol()` on the [KtSuperTypeCallEntry] (`Base(1)`) returns the [KaConstructorSymbol] of `Base`'s
+     * constructor if resolution succeeds; otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on supertype constructor calls
+     *
+     * @see tryResolveSymbol
+     * @see KtResolvable.resolveSymbol
+     */
+    @KaExperimentalApi
+    public fun KtSuperTypeCallEntry.resolveSymbol(): KaConstructorSymbol?
+
+    /**
+     * Resolves the constructor symbol referenced by the given [KtConstructorDelegationCall].
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * open class Base(val i: Int)
+     *
+     * class Derived : Base {
+     *     constructor() : this(0)
+     *     //              ^^^^^^^
+     *
+     *     constructor(x: Int) : super(x)
+     *     //                    ^^^^^^^^
+     * }
+     * ```
+     *
+     * Calling `resolveSymbol()` on a [KtConstructorDelegationCall] (either `this(...)` or `super(...)`) returns the
+     * [KaConstructorSymbol] of the target constructor if resolution succeeds; otherwise, it returns `null`
+     * (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on constructor delegation calls
+     *
+     * @see tryResolveSymbol
+     * @see KtResolvable.resolveSymbol
+     */
+    @KaExperimentalApi
+    public fun KtConstructorDelegationCall.resolveSymbol(): KaConstructorSymbol?
+
+    /**
+     * Resolves the constructor symbol referenced by the given [KtConstructorDelegationReferenceExpression].
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * open class Base(val i: Int)
+     *
+     * class Derived : Base {
+     *     constructor() : this(0)
+     *     //              ^^^^
+     *
+     *     constructor(x: Int) : super(x)
+     *     //                    ^^^^^
+     * }
+     * ```
+     *
+     * Calling `resolveSymbol()` on a [KtConstructorDelegationReferenceExpression] (either `this` or `super`) returns the
+     * [KaConstructorSymbol] of the target constructor if resolution succeeds; otherwise, it returns `null`
+     * (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on constructor delegation calls
+     *
+     * @see tryResolveSymbol
+     * @see KtResolvable.resolveSymbol
+     */
+    @KaExperimentalApi
+    public fun KtConstructorDelegationReferenceExpression.resolveSymbol(): KaConstructorSymbol?
+
+    /**
+     * Resolves the callable symbol targeted by the given [KtCallElement].
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * fun foo(x: Int) {}
+     *
+     * fun test() {
+     *     foo(42)
+     * //  ^^^^^^^
+     * }
+     * ```
+     *
+     * Calling `resolveSymbol()` on the [KtCallElement] (`foo(42)`) returns the [KaCallableSymbol] of `foo`
+     * if resolution succeeds; otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on call elements
+     *
+     * @see tryResolveSymbol
+     * @see KtResolvable.resolveSymbol
+     */
+    @KaExperimentalApi
+    public fun KtCallElement.resolveSymbol(): KaCallableSymbol?
+
+    /**
+     * Resolves the callable symbol targeted by the given [KtCallableReferenceExpression].
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * fun foo(x: Int) {}
+     *
+     * val ref = ::foo
+     * //        ^^^^^
+     * ```
+     *
+     * Calling `resolveSymbol()` on the [KtCallableReferenceExpression] (`::foo`) returns the [KaCallableSymbol] of `foo`
+     * if resolution succeeds; otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on callable reference expressions
+     *
+     * @see tryResolveSymbol
+     * @see KtResolvable.resolveSymbol
+     */
+    @KaExperimentalApi
+    public fun KtCallableReferenceExpression.resolveSymbol(): KaCallableSymbol?
+
+    /**
+     * Resolves the operator function symbol targeted by the given [KtArrayAccessExpression].
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * class A {
+     *     operator fun get(i: Int): Int = i
+     *     operator fun set(i: Int, value: Int) {}
+     * }
+     *
+     * fun test(a: A) {
+     *     a[0]
+     * //  ^^^^  resolves to `get`
+     *     a[0] = 1
+     * //  ^^^^ resolves to `set`
+     * }
+     * ```
+     *
+     * Calling `resolveSymbol()` on a [KtArrayAccessExpression] (`a[0]`) returns the [KaNamedFunctionSymbol] of the corresponding
+     * `get`/`set` operator if resolution succeeds; otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on array access operations.
+     *
+     * **Note**: the `get` call is prefered in the case of a compound assignent
+     *
+     * ```kotlin
+     * fun test(m: MyMap<String, Int>) {
+     *     m["a"] += 1
+     * //  ^^^^^^
+     * }
+     * ```
+     *
+     * @see tryResolveSymbol
+     * @see KtResolvable.resolveSymbol
+     */
+    @KaExperimentalApi
+    public fun KtArrayAccessExpression.resolveSymbol(): KaNamedFunctionSymbol?
+
+    /**
+     * Resolves the function symbol targeted by the given [KtCollectionLiteralExpression].
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * annotation class Anno(val arr: IntArray)
+     *
+     * @Anno([1, 2, 3])
+     * //    ^^^^^^^^^ resolves to the `intArrayOf` function
+     * fun use() {}
+     * ```
+     *
+     * Calling `resolveSymbol()` on a [KtCollectionLiteralExpression] (`[1, 2, 3]`) returns the [KaNamedFunctionSymbol]
+     * of the corresponding array factory (e.g., `arrayOf`, `intArrayOf`) if resolution succeeds; otherwise, it returns `null`
+     * (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on collection literal expressions
+     *
+     * @see tryResolveSymbol
+     * @see KtResolvable.resolveSymbol
+     */
+    @KaExperimentalApi
+    public fun KtCollectionLiteralExpression.resolveSymbol(): KaNamedFunctionSymbol?
+
+    /**
+     * Resolves the constructor symbol referenced by the given [KtEnumEntrySuperclassReferenceExpression].
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * enum class EnumWithConstructor(val x: Int) {
+     *     Entry(1)
+     * //      ^ resolves to the constructor of `EnumWithConstructor`
+     * }
+     * ```
+     *
+     * Calling `resolveSymbol()` on a [KtEnumEntrySuperclassReferenceExpression] (``) returns the
+     * [KaConstructorSymbol] of the enum class constructor if resolution succeeds; otherwise, it returns `null`
+     * (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on enum entry superclass constructor calls
+     *
+     * @see tryResolveSymbol
+     * @see KtResolvable.resolveSymbol
+     */
+    @KaExperimentalApi
+    public fun KtEnumEntrySuperclassReferenceExpression.resolveSymbol(): KaConstructorSymbol?
+
+    /**
+     * Resolves the declaration symbol targeted by the given [KtLabelReferenceExpression].
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * fun myAction(action: () -> Unit) {
+     *     action {
+     *         return@action // resolves to the anonymous function
+     * //            ^^^^^^^
+     *     }
+     *
+     *     return@main
+     * //        ^^^^^
+     * }
+     * ```
+     *
+     * Calling `resolveSymbol()` on a [KtLabelReferenceExpression] (`@action` and `@main`) returns the corresponding [KaDeclarationSymbol]
+     * of the labeled declaration if resolution succeeds; otherwise, it returns `null` (e.g., when unresolved or
+     * ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on label references
+     *
+     * @see tryResolveSymbol
+     * @see KtResolvable.resolveSymbol
+     */
+    @KaExperimentalApi
+    public fun KtLabelReferenceExpression.resolveSymbol(): KaDeclarationSymbol?
+
+    /**
+     * Resolves the function symbol targeted by the given [KtReturnExpression].
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * fun foo() {
+     *     return
+     * //  ^^^^^^ resolves to `foo`
+     * }
+     *
+     * fun main() {
+     *     listOf(1).forEach label@{
+     *         if (it == 0) return@label
+     * //                   ^^^^^^^^^^^^ resolves to the anonymous function of this lambda
+     *     }
+     * }
+     * ```
+     *
+     * Calling `resolveSymbol()` on a [KtReturnExpression] (`return` or `return@label`) returns the [KaFunctionSymbol] of the enclosing function
+     * (for unlabeled returns) or of the labeled target (for `return@label`) if resolution succeeds; otherwise, it returns
+     * `null` (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on return expressions
+     *
+     * @see tryResolveSymbol
+     * @see KtResolvable.resolveSymbol
+     */
+    @KaExperimentalApi
+    public fun KtReturnExpression.resolveSymbol(): KaFunctionSymbol?
+
+    /**
+     * Resolves the operator function symbol targeted by the given [KtWhenConditionInRange].
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * fun test(x: Int) {
+     *     when (x) {
+     *         in 1..10 -> {}
+     * //      ^^^^^^^^ resolves to a call of `IntRange.contains`
+     *
+     *         !in setOf(1, 2, 3) -> {}
+     * //      ^^^^^^^^^^^^^^^^^^ resolves to a call of `Set<Int>.contains`
+     *     }
+     * }
+     * ```
+     *
+     * Calling `resolveSymbol()` on a [KtWhenConditionInRange] (`in 1..10` or `!in setOf(1, 2, 3)`) returns the [KaNamedFunctionSymbol]
+     * of the labeled declaration if resolution succeeds; otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on `in`/`!in`
+     * range conditions inside `when` entries
+     *
+     * @see tryResolveSymbol
+     * @see KtResolvable.resolveSymbol
+     */
+    @KaExperimentalApi
+    public fun KtWhenConditionInRange.resolveSymbol(): KaNamedFunctionSymbol?
+
+    /**
+     * Attempts to resolve the call for the given [KtResolvableCall].
+     *
+     * ### Usage Example:
+     * ```kotlin
+     * fun KaSession.findResolutionDiagnostic(expression: KtCallExpression): KaDiagnostic? {
+     *   val attempt = expression.tryResolveCall() ?: return null
+     *   val error = attempt as? KaCallResolutionError ?: return null
+     *   return error.diagnostic
+     * }
+     * ```
+     *
+     * Returns a [KaCallResolutionAttempt], or `null` if no result is available
+     *
+     * @see resolveCall
+     */
+    @KaExperimentalApi
+    @OptIn(KtExperimentalApi::class)
+    public fun KtResolvableCall.tryResolveCall(): KaCallResolutionAttempt?
+
+    /**
+     * Resolves the call for the given [KtResolvableCall].
+     *
+     * ### Usage Example:
+     * ```kotlin
+     * fun KaSession.resolveSymbol(expression: KtCallExpression): KaSymbol? {
+     *   val successfulCall = expression.resolveCall() ?: return null
+     *   val callableCall = successfulCall as? KaCallableMemberCall ?: return null
+     *   return callableCall.symbol
+     * }
+     * ```
+     *
+     * Returns the resolved [KaCall] on success; otherwise, `null`
+     *
+     * @see tryResolveCall
+     * @see collectCallCandidates
+     */
+    @KaExperimentalApi
+    @OptIn(KtExperimentalApi::class)
+    public fun KtResolvableCall.resolveCall(): KaCall?
+
+    /**
+     * Resolves the given [KtAnnotationEntry] to an annotation constructor call.
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * annotation class Anno(val x: Int)
+     *
+     * @Anno(42)
+     * fun foo() {}
+     * ```
+     *
+     * Returns the corresponding [KaAnnotationCall] if resolution succeeds; otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on annotation entries.
+     * Use [collectCallCandidates] to inspect all candidates considered during overload resolution
+     *
+     * @see tryResolveCall
+     * @see KtResolvableCall.resolveCall
+     */
+    @KaExperimentalApi
+    public fun KtAnnotationEntry.resolveCall(): KaAnnotationCall?
+
+    /**
+     * Resolves the given [KtSuperTypeCallEntry] to a constructor call of the referenced supertype.
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * open class Base(i: Int)
+     *
+     * class Derived : Base(1)
+     * //              ^^^^^^^
+     * ```
+     *
+     * Returns the corresponding [KaFunctionCall] if resolution succeeds;
+     * otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on supertype constructor calls
+     *
+     * @see tryResolveCall
+     * @see KtResolvableCall.resolveCall
+     */
+    @KaExperimentalApi
+    public fun KtSuperTypeCallEntry.resolveCall(): KaFunctionCall<KaConstructorSymbol>?
+
+    /**
+     * Resolves the given [KtConstructorDelegationCall] to a delegated constructor call.
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * open class Base(val i: Int)
+     *
+     * class Derived : Base {
+     *     constructor() : this(0)
+     *     //              ^^^^^^^
+     *
+     *     constructor(x: Int) : super(x)
+     *     //                    ^^^^^^^^
+     * }
+     * ```
+     *
+     * Returns the corresponding [KaDelegatedConstructorCall] if resolution succeeds;
+     * otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on constructor delegation calls
+     *
+     * @see tryResolveCall
+     * @see KtResolvableCall.resolveCall
+     */
+    @KaExperimentalApi
+    public fun KtConstructorDelegationCall.resolveCall(): KaDelegatedConstructorCall?
+
+    /**
+     * Resolves the given [KtConstructorDelegationReferenceExpression] to a delegated constructor call.
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * open class Base(val i: Int)
+     *
+     * class Derived : Base {
+     *     constructor() : this(0)
+     *     //              ^^^^
+     *
+     *     constructor(x: Int) : super(x)
+     *     //                    ^^^^^
+     * }
+     * ```
+     *
+     * Returns the corresponding [KaDelegatedConstructorCall] if resolution succeeds;
+     * otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on constructor delegation calls
+     *
+     * @see tryResolveCall
+     * @see KtResolvableCall.resolveCall
+     */
+    @KaExperimentalApi
+    public fun KtConstructorDelegationReferenceExpression.resolveCall(): KaDelegatedConstructorCall?
+
+    /**
+     * Resolves the given [KtCallElement] to a callable member call.
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * fun foo(x: Int) {}
+     *
+     * fun test() {
+     *     foo(42)
+     * //  ^^^^^^^
+     * }
+     * ```
+     *
+     * Returns the corresponding [KaCallableMemberCall] if resolution succeeds;
+     * otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on call elements
+     *
+     * @see tryResolveCall
+     * @see KtResolvableCall.resolveCall
+     */
+    @KaExperimentalApi
+    public fun KtCallElement.resolveCall(): KaCallableMemberCall<*, *>?
+
+    /**
+     * Resolves the given [KtCallableReferenceExpression] to a callable member call.
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * class A { fun foo() {} }
+     *
+     * val ref = A::foo
+     * //        ^^^^^^
+     * ```
+     *
+     * Returns the corresponding [KaCallableMemberCall] if resolution succeeds;
+     * otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on callable reference expressions
+     *
+     * @see tryResolveCall
+     * @see KtResolvableCall.resolveCall
+     */
+    @KaExperimentalApi
+    public fun KtCallableReferenceExpression.resolveCall(): KaCallableMemberCall<*, *>?
+
+    /**
+     * Resolves the given [KtArrayAccessExpression] to a simple function call representing `get`/`set` operator invocation.
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * class A {
+     *     operator fun get(i: Int): Int = i
+     *     operator fun set(i: Int, value: Int) {}
+     * }
+     *
+     * fun test(a: A) {
+     *     a[0]
+     * //  ^^^^  resolves to `get`
+     *     a[0] = 1
+     * //  ^^^^ resolves to `set`
+     * }
+     * ```
+     *
+     * Returns the corresponding [KaSimpleFunctionCall] if resolution succeeds; otherwise, it returns `null`
+     * (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on array access operations.
+     *
+     * **Note**: the `get` call is prefered in the case of a compound assignent
+     *
+     * ```kotlin
+     * fun test(m: MyMap<String, Int>) {
+     *     m["a"] += 1
+     * //  ^^^^^^
+     * }
+     * ```
+     *
+     * @see tryResolveCall
+     * @see KtResolvableCall.resolveCall
+     */
+    @KaExperimentalApi
+    public fun KtArrayAccessExpression.resolveCall(): KaSimpleFunctionCall?
+
+    /**
+     * Resolves the given [KtCollectionLiteralExpression] to a simple function call representing the corresponding
+     * array factory invocation.
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * annotation class Anno(val arr: IntArray)
+     *
+     * @Anno([1, 2, 3])
+     * //    ^^^^^^^^^ resolves to a call of `intArrayOf`
+     * fun use() {}
+     * ```
+     *
+     * Returns the corresponding [KaSimpleFunctionCall] if resolution succeeds; otherwise, it returns `null`
+     * (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on collection literal expressions
+     *
+     * @see tryResolveCall
+     * @see KtResolvableCall.resolveCall
+     */
+    @KaExperimentalApi
+    public fun KtCollectionLiteralExpression.resolveCall(): KaSimpleFunctionCall?
+
+    /**
+     * Resolves the given [KtEnumEntrySuperclassReferenceExpression] to a delegated constructor call.
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * enum class EnumWithConstructor(val x: Int) {
+     *     Entry(1)
+     * //      ^ resolves to the constructor of `EnumWithConstructor`
+     * }
+     * ```
+     *
+     * Returns the corresponding [KaDelegatedConstructorCall] if resolution succeeds;
+     * otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on enum entry superclass constructor calls
+     *
+     * @see tryResolveCall
+     * @see KtResolvableCall.resolveCall
+     */
+    @KaExperimentalApi
+    public fun KtEnumEntrySuperclassReferenceExpression.resolveCall(): KaDelegatedConstructorCall?
+
+    /**
+     * Resolves the given [KtWhenConditionInRange] to a simple function call representing the corresponding
+     * `contains` operator invocation used by the `in`/`!in` branch condition.
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * fun test(x: Int) {
+     *     when (x) {
+     *         in 1..10 -> {}
+     * //      ^^^^^^^^ resolves to a call of `IntRange.contains`
+     *
+     *         !in setOf(1, 2, 3) -> {}
+     * //      ^^^^^^^^^^^^^^^^^^ resolves to a call of `Set<Int>.contains`
+     *     }
+     * }
+     * ```
+     *
+     * Returns the corresponding [KaSimpleFunctionCall] if resolution succeeds; otherwise, it returns `null`
+     * (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on `in`/`!in`
+     * range conditions inside `when` entries
+     *
+     * @see tryResolveCall
+     * @see KtResolvableCall.resolveCall
+     */
+    @KaExperimentalApi
+    public fun KtWhenConditionInRange.resolveCall(): KaSimpleFunctionCall?
+
+    /**
+     * Returns all candidates considered during [overload resolution](https://kotlinlang.org/spec/overload-resolution.html)
+     * for the call corresponding to the given [KtResolvableCall].
+     *
+     * In contrast, [resolveCall] returns only the final result, i.e., the most specific callable that passes all
+     * compatibility checks
+     *
+     * @see resolveCall
+     */
+    @KaExperimentalApi
+    @OptIn(KtExperimentalApi::class)
+    public fun KtResolvableCall.collectCallCandidates(): List<KaCallCandidateInfo>
+
     /**
      * Resolves the given [KtReference] to symbols.
      *
@@ -90,6 +782,893 @@ public interface KaResolver : KaSessionComponent {
     @KaNonPublicApi
     @KaK1Unsupported
     public fun KDocReference.resolveToSymbolWithClassicKDocResolver(): KaSymbol?
+}
+
+/**
+ * Attempts to resolve a symbol for the given [KtResolvable].
+ *
+ * Returns a [KaSymbolResolutionAttempt] that describes either success ([KaSymbolResolutionSuccess])
+ * or failure ([KaSymbolResolutionError]), or `null` if no result is available
+ *
+ * @see KaSymbolResolutionSuccess
+ * @see KaSymbolResolutionError
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@OptIn(KtExperimentalApi::class)
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtResolvable.tryResolveSymbol(): KaSymbolResolutionAttempt? {
+    return with(s) {
+        tryResolveSymbol()
+    }
+}
+
+/**
+ * Resolves symbols for the given [KtResolvable].
+ *
+ * Returns all resolved [KaSymbol]s if successful; otherwise, an empty list. Might contain multiple symbols
+ * for a multiple result ([KaMultiSymbolResolutionSuccess])
+ *
+ * @see tryResolveSymbol
+ * @see resolveSymbol
+ * @see KaSingleSymbolResolutionSuccess
+ * @see KaMultiSymbolResolutionSuccess
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@OptIn(KtExperimentalApi::class)
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtResolvable.resolveSymbols(): Collection<KaSymbol> {
+    return with(s) {
+        resolveSymbols()
+    }
+}
+
+/**
+ * Resolves a single symbol for the given [KtResolvable].
+ *
+ * Returns the [KaSymbol] if there is exactly one target ([KaSingleSymbolResolutionSuccess]); otherwise, `null`
+ *
+ * @see tryResolveSymbol
+ * @see resolveSymbols
+ * @see KaSingleSymbolResolutionSuccess
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@OptIn(KtExperimentalApi::class)
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtResolvable.resolveSymbol(): KaSymbol? {
+    return with(s) {
+        resolveSymbol()
+    }
+}
+
+/**
+ * Resolves the constructor symbol of the annotation referenced by the given [KtAnnotationEntry].
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * annotation class Anno(val x: Int)
+ *
+ * @Anno(42)
+ * fun foo() {}
+ * ```
+ *
+ * Calling `resolveSymbol()` on the [KtAnnotationEntry] (`@Anno(42)`) returns the [KaConstructorSymbol] of `Anno`'s
+ * annotation constructor if resolution succeeds; otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on annotation entries
+ *
+ * @see tryResolveSymbol
+ * @see KtResolvable.resolveSymbol
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtAnnotationEntry.resolveSymbol(): KaConstructorSymbol? {
+    return with(s) {
+        resolveSymbol()
+    }
+}
+
+/**
+ * Resolves the constructor symbol by the given [KtSuperTypeCallEntry].
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * open class Base(i: Int)
+ *
+ * class Derived : Base(1)
+ * //              ^^^^^^^
+ * ```
+ *
+ * Calling `resolveSymbol()` on the [KtSuperTypeCallEntry] (`Base(1)`) returns the [KaConstructorSymbol] of `Base`'s
+ * constructor if resolution succeeds; otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on supertype constructor calls
+ *
+ * @see tryResolveSymbol
+ * @see KtResolvable.resolveSymbol
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtSuperTypeCallEntry.resolveSymbol(): KaConstructorSymbol? {
+    return with(s) {
+        resolveSymbol()
+    }
+}
+
+/**
+ * Resolves the constructor symbol referenced by the given [KtConstructorDelegationCall].
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * open class Base(val i: Int)
+ *
+ * class Derived : Base {
+ *     constructor() : this(0)
+ *     //              ^^^^^^^
+ *
+ *     constructor(x: Int) : super(x)
+ *     //                    ^^^^^^^^
+ * }
+ * ```
+ *
+ * Calling `resolveSymbol()` on a [KtConstructorDelegationCall] (either `this(...)` or `super(...)`) returns the
+ * [KaConstructorSymbol] of the target constructor if resolution succeeds; otherwise, it returns `null`
+ * (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on constructor delegation calls
+ *
+ * @see tryResolveSymbol
+ * @see KtResolvable.resolveSymbol
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtConstructorDelegationCall.resolveSymbol(): KaConstructorSymbol? {
+    return with(s) {
+        resolveSymbol()
+    }
+}
+
+/**
+ * Resolves the constructor symbol referenced by the given [KtConstructorDelegationReferenceExpression].
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * open class Base(val i: Int)
+ *
+ * class Derived : Base {
+ *     constructor() : this(0)
+ *     //              ^^^^
+ *
+ *     constructor(x: Int) : super(x)
+ *     //                    ^^^^^
+ * }
+ * ```
+ *
+ * Calling `resolveSymbol()` on a [KtConstructorDelegationReferenceExpression] (either `this` or `super`) returns the
+ * [KaConstructorSymbol] of the target constructor if resolution succeeds; otherwise, it returns `null`
+ * (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on constructor delegation calls
+ *
+ * @see tryResolveSymbol
+ * @see KtResolvable.resolveSymbol
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtConstructorDelegationReferenceExpression.resolveSymbol(): KaConstructorSymbol? {
+    return with(s) {
+        resolveSymbol()
+    }
+}
+
+/**
+ * Resolves the callable symbol targeted by the given [KtCallElement].
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * fun foo(x: Int) {}
+ *
+ * fun test() {
+ *     foo(42)
+ * //  ^^^^^^^
+ * }
+ * ```
+ *
+ * Calling `resolveSymbol()` on the [KtCallElement] (`foo(42)`) returns the [KaCallableSymbol] of `foo`
+ * if resolution succeeds; otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on call elements
+ *
+ * @see tryResolveSymbol
+ * @see KtResolvable.resolveSymbol
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtCallElement.resolveSymbol(): KaCallableSymbol? {
+    return with(s) {
+        resolveSymbol()
+    }
+}
+
+/**
+ * Resolves the callable symbol targeted by the given [KtCallableReferenceExpression].
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * fun foo(x: Int) {}
+ *
+ * val ref = ::foo
+ * //        ^^^^^
+ * ```
+ *
+ * Calling `resolveSymbol()` on the [KtCallableReferenceExpression] (`::foo`) returns the [KaCallableSymbol] of `foo`
+ * if resolution succeeds; otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on callable reference expressions
+ *
+ * @see tryResolveSymbol
+ * @see KtResolvable.resolveSymbol
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtCallableReferenceExpression.resolveSymbol(): KaCallableSymbol? {
+    return with(s) {
+        resolveSymbol()
+    }
+}
+
+/**
+ * Resolves the operator function symbol targeted by the given [KtArrayAccessExpression].
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * class A {
+ *     operator fun get(i: Int): Int = i
+ *     operator fun set(i: Int, value: Int) {}
+ * }
+ *
+ * fun test(a: A) {
+ *     a[0]
+ * //  ^^^^  resolves to `get`
+ *     a[0] = 1
+ * //  ^^^^ resolves to `set`
+ * }
+ * ```
+ *
+ * Calling `resolveSymbol()` on a [KtArrayAccessExpression] (`a[0]`) returns the [KaNamedFunctionSymbol] of the corresponding
+ * `get`/`set` operator if resolution succeeds; otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on array access operations.
+ *
+ * **Note**: the `get` call is prefered in the case of a compound assignent
+ *
+ * ```kotlin
+ * fun test(m: MyMap<String, Int>) {
+ *     m["a"] += 1
+ * //  ^^^^^^
+ * }
+ * ```
+ *
+ * @see tryResolveSymbol
+ * @see KtResolvable.resolveSymbol
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtArrayAccessExpression.resolveSymbol(): KaNamedFunctionSymbol? {
+    return with(s) {
+        resolveSymbol()
+    }
+}
+
+/**
+ * Resolves the function symbol targeted by the given [KtCollectionLiteralExpression].
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * annotation class Anno(val arr: IntArray)
+ *
+ * @Anno([1, 2, 3])
+ * //    ^^^^^^^^^ resolves to the `intArrayOf` function
+ * fun use() {}
+ * ```
+ *
+ * Calling `resolveSymbol()` on a [KtCollectionLiteralExpression] (`[1, 2, 3]`) returns the [KaNamedFunctionSymbol]
+ * of the corresponding array factory (e.g., `arrayOf`, `intArrayOf`) if resolution succeeds; otherwise, it returns `null`
+ * (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on collection literal expressions
+ *
+ * @see tryResolveSymbol
+ * @see KtResolvable.resolveSymbol
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtCollectionLiteralExpression.resolveSymbol(): KaNamedFunctionSymbol? {
+    return with(s) {
+        resolveSymbol()
+    }
+}
+
+/**
+ * Resolves the constructor symbol referenced by the given [KtEnumEntrySuperclassReferenceExpression].
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * enum class EnumWithConstructor(val x: Int) {
+ *     Entry(1)
+ * //      ^ resolves to the constructor of `EnumWithConstructor`
+ * }
+ * ```
+ *
+ * Calling `resolveSymbol()` on a [KtEnumEntrySuperclassReferenceExpression] (``) returns the
+ * [KaConstructorSymbol] of the enum class constructor if resolution succeeds; otherwise, it returns `null`
+ * (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on enum entry superclass constructor calls
+ *
+ * @see tryResolveSymbol
+ * @see KtResolvable.resolveSymbol
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtEnumEntrySuperclassReferenceExpression.resolveSymbol(): KaConstructorSymbol? {
+    return with(s) {
+        resolveSymbol()
+    }
+}
+
+/**
+ * Resolves the declaration symbol targeted by the given [KtLabelReferenceExpression].
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * fun myAction(action: () -> Unit) {
+ *     action {
+ *         return@action // resolves to the anonymous function
+ * //            ^^^^^^^
+ *     }
+ *
+ *     return@main
+ * //        ^^^^^
+ * }
+ * ```
+ *
+ * Calling `resolveSymbol()` on a [KtLabelReferenceExpression] (`@action` and `@main`) returns the corresponding [KaDeclarationSymbol]
+ * of the labeled declaration if resolution succeeds; otherwise, it returns `null` (e.g., when unresolved or
+ * ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on label references
+ *
+ * @see tryResolveSymbol
+ * @see KtResolvable.resolveSymbol
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtLabelReferenceExpression.resolveSymbol(): KaDeclarationSymbol? {
+    return with(s) {
+        resolveSymbol()
+    }
+}
+
+/**
+ * Resolves the function symbol targeted by the given [KtReturnExpression].
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * fun foo() {
+ *     return
+ * //  ^^^^^^ resolves to `foo`
+ * }
+ *
+ * fun main() {
+ *     listOf(1).forEach label@{
+ *         if (it == 0) return@label
+ * //                   ^^^^^^^^^^^^ resolves to the anonymous function of this lambda
+ *     }
+ * }
+ * ```
+ *
+ * Calling `resolveSymbol()` on a [KtReturnExpression] (`return` or `return@label`) returns the [KaFunctionSymbol] of the enclosing function
+ * (for unlabeled returns) or of the labeled target (for `return@label`) if resolution succeeds; otherwise, it returns
+ * `null` (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on return expressions
+ *
+ * @see tryResolveSymbol
+ * @see KtResolvable.resolveSymbol
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtReturnExpression.resolveSymbol(): KaFunctionSymbol? {
+    return with(s) {
+        resolveSymbol()
+    }
+}
+
+/**
+ * Resolves the operator function symbol targeted by the given [KtWhenConditionInRange].
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * fun test(x: Int) {
+ *     when (x) {
+ *         in 1..10 -> {}
+ * //      ^^^^^^^^ resolves to a call of `IntRange.contains`
+ *
+ *         !in setOf(1, 2, 3) -> {}
+ * //      ^^^^^^^^^^^^^^^^^^ resolves to a call of `Set<Int>.contains`
+ *     }
+ * }
+ * ```
+ *
+ * Calling `resolveSymbol()` on a [KtWhenConditionInRange] (`in 1..10` or `!in setOf(1, 2, 3)`) returns the [KaNamedFunctionSymbol]
+ * of the labeled declaration if resolution succeeds; otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on `in`/`!in`
+ * range conditions inside `when` entries
+ *
+ * @see tryResolveSymbol
+ * @see KtResolvable.resolveSymbol
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtWhenConditionInRange.resolveSymbol(): KaNamedFunctionSymbol? {
+    return with(s) {
+        resolveSymbol()
+    }
+}
+
+/**
+ * Attempts to resolve the call for the given [KtResolvableCall].
+ *
+ * ### Usage Example:
+ * ```kotlin
+ * fun KaSession.findResolutionDiagnostic(expression: KtCallExpression): KaDiagnostic? {
+ *   val attempt = expression.tryResolveCall() ?: return null
+ *   val error = attempt as? KaCallResolutionError ?: return null
+ *   return error.diagnostic
+ * }
+ * ```
+ *
+ * Returns a [KaCallResolutionAttempt], or `null` if no result is available
+ *
+ * @see resolveCall
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@OptIn(KtExperimentalApi::class)
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtResolvableCall.tryResolveCall(): KaCallResolutionAttempt? {
+    return with(s) {
+        tryResolveCall()
+    }
+}
+
+/**
+ * Resolves the call for the given [KtResolvableCall].
+ *
+ * ### Usage Example:
+ * ```kotlin
+ * fun KaSession.resolveSymbol(expression: KtCallExpression): KaSymbol? {
+ *   val successfulCall = expression.resolveCall() ?: return null
+ *   val callableCall = successfulCall as? KaCallableMemberCall ?: return null
+ *   return callableCall.symbol
+ * }
+ * ```
+ *
+ * Returns the resolved [KaCall] on success; otherwise, `null`
+ *
+ * @see tryResolveCall
+ * @see collectCallCandidates
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@OptIn(KtExperimentalApi::class)
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtResolvableCall.resolveCall(): KaCall? {
+    return with(s) {
+        resolveCall()
+    }
+}
+
+/**
+ * Resolves the given [KtAnnotationEntry] to an annotation constructor call.
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * annotation class Anno(val x: Int)
+ *
+ * @Anno(42)
+ * fun foo() {}
+ * ```
+ *
+ * Returns the corresponding [KaAnnotationCall] if resolution succeeds; otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on annotation entries.
+ * Use [collectCallCandidates] to inspect all candidates considered during overload resolution
+ *
+ * @see tryResolveCall
+ * @see KtResolvableCall.resolveCall
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtAnnotationEntry.resolveCall(): KaAnnotationCall? {
+    return with(s) {
+        resolveCall()
+    }
+}
+
+/**
+ * Resolves the given [KtSuperTypeCallEntry] to a constructor call of the referenced supertype.
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * open class Base(i: Int)
+ *
+ * class Derived : Base(1)
+ * //              ^^^^^^^
+ * ```
+ *
+ * Returns the corresponding [KaFunctionCall] if resolution succeeds;
+ * otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on supertype constructor calls
+ *
+ * @see tryResolveCall
+ * @see KtResolvableCall.resolveCall
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtSuperTypeCallEntry.resolveCall(): KaFunctionCall<KaConstructorSymbol>? {
+    return with(s) {
+        resolveCall()
+    }
+}
+
+/**
+ * Resolves the given [KtConstructorDelegationCall] to a delegated constructor call.
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * open class Base(val i: Int)
+ *
+ * class Derived : Base {
+ *     constructor() : this(0)
+ *     //              ^^^^^^^
+ *
+ *     constructor(x: Int) : super(x)
+ *     //                    ^^^^^^^^
+ * }
+ * ```
+ *
+ * Returns the corresponding [KaDelegatedConstructorCall] if resolution succeeds;
+ * otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on constructor delegation calls
+ *
+ * @see tryResolveCall
+ * @see KtResolvableCall.resolveCall
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtConstructorDelegationCall.resolveCall(): KaDelegatedConstructorCall? {
+    return with(s) {
+        resolveCall()
+    }
+}
+
+/**
+ * Resolves the given [KtConstructorDelegationReferenceExpression] to a delegated constructor call.
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * open class Base(val i: Int)
+ *
+ * class Derived : Base {
+ *     constructor() : this(0)
+ *     //              ^^^^
+ *
+ *     constructor(x: Int) : super(x)
+ *     //                    ^^^^^
+ * }
+ * ```
+ *
+ * Returns the corresponding [KaDelegatedConstructorCall] if resolution succeeds;
+ * otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on constructor delegation calls
+ *
+ * @see tryResolveCall
+ * @see KtResolvableCall.resolveCall
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtConstructorDelegationReferenceExpression.resolveCall(): KaDelegatedConstructorCall? {
+    return with(s) {
+        resolveCall()
+    }
+}
+
+/**
+ * Resolves the given [KtCallElement] to a callable member call.
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * fun foo(x: Int) {}
+ *
+ * fun test() {
+ *     foo(42)
+ * //  ^^^^^^^
+ * }
+ * ```
+ *
+ * Returns the corresponding [KaCallableMemberCall] if resolution succeeds;
+ * otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on call elements
+ *
+ * @see tryResolveCall
+ * @see KtResolvableCall.resolveCall
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtCallElement.resolveCall(): KaCallableMemberCall<*, *>? {
+    return with(s) {
+        resolveCall()
+    }
+}
+
+/**
+ * Resolves the given [KtCallableReferenceExpression] to a callable member call.
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * class A { fun foo() {} }
+ *
+ * val ref = A::foo
+ * //        ^^^^^^
+ * ```
+ *
+ * Returns the corresponding [KaCallableMemberCall] if resolution succeeds;
+ * otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on callable reference expressions
+ *
+ * @see tryResolveCall
+ * @see KtResolvableCall.resolveCall
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtCallableReferenceExpression.resolveCall(): KaCallableMemberCall<*, *>? {
+    return with(s) {
+        resolveCall()
+    }
+}
+
+/**
+ * Resolves the given [KtArrayAccessExpression] to a simple function call representing `get`/`set` operator invocation.
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * class A {
+ *     operator fun get(i: Int): Int = i
+ *     operator fun set(i: Int, value: Int) {}
+ * }
+ *
+ * fun test(a: A) {
+ *     a[0]
+ * //  ^^^^  resolves to `get`
+ *     a[0] = 1
+ * //  ^^^^ resolves to `set`
+ * }
+ * ```
+ *
+ * Returns the corresponding [KaSimpleFunctionCall] if resolution succeeds; otherwise, it returns `null`
+ * (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on array access operations.
+ *
+ * **Note**: the `get` call is prefered in the case of a compound assignent
+ *
+ * ```kotlin
+ * fun test(m: MyMap<String, Int>) {
+ *     m["a"] += 1
+ * //  ^^^^^^
+ * }
+ * ```
+ *
+ * @see tryResolveCall
+ * @see KtResolvableCall.resolveCall
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtArrayAccessExpression.resolveCall(): KaSimpleFunctionCall? {
+    return with(s) {
+        resolveCall()
+    }
+}
+
+/**
+ * Resolves the given [KtCollectionLiteralExpression] to a simple function call representing the corresponding
+ * array factory invocation.
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * annotation class Anno(val arr: IntArray)
+ *
+ * @Anno([1, 2, 3])
+ * //    ^^^^^^^^^ resolves to a call of `intArrayOf`
+ * fun use() {}
+ * ```
+ *
+ * Returns the corresponding [KaSimpleFunctionCall] if resolution succeeds; otherwise, it returns `null`
+ * (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on collection literal expressions
+ *
+ * @see tryResolveCall
+ * @see KtResolvableCall.resolveCall
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtCollectionLiteralExpression.resolveCall(): KaSimpleFunctionCall? {
+    return with(s) {
+        resolveCall()
+    }
+}
+
+/**
+ * Resolves the given [KtEnumEntrySuperclassReferenceExpression] to a delegated constructor call.
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * enum class EnumWithConstructor(val x: Int) {
+ *     Entry(1)
+ * //      ^ resolves to the constructor of `EnumWithConstructor`
+ * }
+ * ```
+ *
+ * Returns the corresponding [KaDelegatedConstructorCall] if resolution succeeds;
+ * otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on enum entry superclass constructor calls
+ *
+ * @see tryResolveCall
+ * @see KtResolvableCall.resolveCall
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtEnumEntrySuperclassReferenceExpression.resolveCall(): KaDelegatedConstructorCall? {
+    return with(s) {
+        resolveCall()
+    }
+}
+
+/**
+ * Resolves the given [KtWhenConditionInRange] to a simple function call representing the corresponding
+ * `contains` operator invocation used by the `in`/`!in` branch condition.
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * fun test(x: Int) {
+ *     when (x) {
+ *         in 1..10 -> {}
+ * //      ^^^^^^^^ resolves to a call of `IntRange.contains`
+ *
+ *         !in setOf(1, 2, 3) -> {}
+ * //      ^^^^^^^^^^^^^^^^^^ resolves to a call of `Set<Int>.contains`
+ *     }
+ * }
+ * ```
+ *
+ * Returns the corresponding [KaSimpleFunctionCall] if resolution succeeds; otherwise, it returns `null`
+ * (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on `in`/`!in`
+ * range conditions inside `when` entries
+ *
+ * @see tryResolveCall
+ * @see KtResolvableCall.resolveCall
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtWhenConditionInRange.resolveCall(): KaSimpleFunctionCall? {
+    return with(s) {
+        resolveCall()
+    }
+}
+
+/**
+ * Returns all candidates considered during [overload resolution](https://kotlinlang.org/spec/overload-resolution.html)
+ * for the call corresponding to the given [KtResolvableCall].
+ *
+ * In contrast, [resolveCall] returns only the final result, i.e., the most specific callable that passes all
+ * compatibility checks
+ *
+ * @see resolveCall
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@OptIn(KtExperimentalApi::class)
+@KaContextParameterApi
+context(s: KaSession)
+public fun KtResolvableCall.collectCallCandidates(): List<KaCallCandidateInfo> {
+    return with(s) {
+        collectCallCandidates()
+    }
 }
 
 /**
