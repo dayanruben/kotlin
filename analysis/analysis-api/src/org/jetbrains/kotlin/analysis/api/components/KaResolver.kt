@@ -28,18 +28,17 @@ public interface KaResolver : KaSessionComponent {
      */
     @KaExperimentalApi
     @OptIn(KtExperimentalApi::class)
-    public fun KtResolvable.tryResolveSymbol(): KaSymbolResolutionAttempt?
+    public fun KtResolvable.tryResolveSymbols(): KaSymbolResolutionAttempt?
 
     /**
      * Resolves symbols for the given [KtResolvable].
      *
      * Returns all resolved [KaSymbol]s if successful; otherwise, an empty list. Might contain multiple symbols
-     * for a multiple result ([KaMultiSymbolResolutionSuccess])
+     * for a compound case
      *
-     * @see tryResolveSymbol
+     * @see tryResolveSymbols
      * @see resolveSymbol
-     * @see KaSingleSymbolResolutionSuccess
-     * @see KaMultiSymbolResolutionSuccess
+     * @see KaSymbolResolutionSuccess
      */
     @KaExperimentalApi
     @OptIn(KtExperimentalApi::class)
@@ -48,11 +47,11 @@ public interface KaResolver : KaSessionComponent {
     /**
      * Resolves a single symbol for the given [KtResolvable].
      *
-     * Returns the [KaSymbol] if there is exactly one target ([KaSingleSymbolResolutionSuccess]); otherwise, `null`
+     * Returns the [KaSymbol] if there is exactly one target; otherwise, `null`
      *
-     * @see tryResolveSymbol
+     * @see tryResolveSymbols
      * @see resolveSymbols
-     * @see KaSingleSymbolResolutionSuccess
+     * @see KaSymbolResolutionSuccess
      */
     @KaExperimentalApi
     @OptIn(KtExperimentalApi::class)
@@ -75,7 +74,7 @@ public interface KaResolver : KaSessionComponent {
      *
      * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on annotation entries
      *
-     * @see tryResolveSymbol
+     * @see tryResolveSymbols
      * @see KtResolvable.resolveSymbol
      */
     @KaExperimentalApi
@@ -98,7 +97,7 @@ public interface KaResolver : KaSessionComponent {
      *
      * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on supertype constructor calls
      *
-     * @see tryResolveSymbol
+     * @see tryResolveSymbols
      * @see KtResolvable.resolveSymbol
      */
     @KaExperimentalApi
@@ -127,7 +126,7 @@ public interface KaResolver : KaSessionComponent {
      *
      * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on constructor delegation calls
      *
-     * @see tryResolveSymbol
+     * @see tryResolveSymbols
      * @see KtResolvable.resolveSymbol
      */
     @KaExperimentalApi
@@ -156,7 +155,7 @@ public interface KaResolver : KaSessionComponent {
      *
      * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on constructor delegation calls
      *
-     * @see tryResolveSymbol
+     * @see tryResolveSymbols
      * @see KtResolvable.resolveSymbol
      */
     @KaExperimentalApi
@@ -181,7 +180,7 @@ public interface KaResolver : KaSessionComponent {
      *
      * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on call elements
      *
-     * @see tryResolveSymbol
+     * @see tryResolveSymbols
      * @see KtResolvable.resolveSymbol
      */
     @KaExperimentalApi
@@ -204,7 +203,7 @@ public interface KaResolver : KaSessionComponent {
      *
      * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on callable reference expressions
      *
-     * @see tryResolveSymbol
+     * @see tryResolveSymbols
      * @see KtResolvable.resolveSymbol
      */
     @KaExperimentalApi
@@ -243,7 +242,7 @@ public interface KaResolver : KaSessionComponent {
      * }
      * ```
      *
-     * @see tryResolveSymbol
+     * @see tryResolveSymbols
      * @see KtResolvable.resolveSymbol
      */
     @KaExperimentalApi
@@ -268,7 +267,7 @@ public interface KaResolver : KaSessionComponent {
      *
      * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on collection literal expressions
      *
-     * @see tryResolveSymbol
+     * @see tryResolveSymbols
      * @see KtResolvable.resolveSymbol
      */
     @KaExperimentalApi
@@ -292,7 +291,7 @@ public interface KaResolver : KaSessionComponent {
      *
      * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on enum entry superclass constructor calls
      *
-     * @see tryResolveSymbol
+     * @see tryResolveSymbols
      * @see KtResolvable.resolveSymbol
      */
     @KaExperimentalApi
@@ -321,7 +320,7 @@ public interface KaResolver : KaSessionComponent {
      *
      * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on label references
      *
-     * @see tryResolveSymbol
+     * @see tryResolveSymbols
      * @see KtResolvable.resolveSymbol
      */
     @KaExperimentalApi
@@ -352,7 +351,7 @@ public interface KaResolver : KaSessionComponent {
      *
      * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on return expressions
      *
-     * @see tryResolveSymbol
+     * @see tryResolveSymbols
      * @see KtResolvable.resolveSymbol
      */
     @KaExperimentalApi
@@ -381,7 +380,7 @@ public interface KaResolver : KaSessionComponent {
      * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on `in`/`!in`
      * range conditions inside `when` entries
      *
-     * @see tryResolveSymbol
+     * @see tryResolveSymbols
      * @see KtResolvable.resolveSymbol
      */
     @KaExperimentalApi
@@ -798,9 +797,9 @@ public interface KaResolver : KaSessionComponent {
 @OptIn(KtExperimentalApi::class)
 @KaContextParameterApi
 context(s: KaSession)
-public fun KtResolvable.tryResolveSymbol(): KaSymbolResolutionAttempt? {
+public fun KtResolvable.tryResolveSymbols(): KaSymbolResolutionAttempt? {
     return with(s) {
-        tryResolveSymbol()
+        tryResolveSymbols()
     }
 }
 
@@ -808,12 +807,11 @@ public fun KtResolvable.tryResolveSymbol(): KaSymbolResolutionAttempt? {
  * Resolves symbols for the given [KtResolvable].
  *
  * Returns all resolved [KaSymbol]s if successful; otherwise, an empty list. Might contain multiple symbols
- * for a multiple result ([KaMultiSymbolResolutionSuccess])
+ * for a compound case
  *
- * @see tryResolveSymbol
+ * @see tryResolveSymbols
  * @see resolveSymbol
- * @see KaSingleSymbolResolutionSuccess
- * @see KaMultiSymbolResolutionSuccess
+ * @see KaSymbolResolutionSuccess
  */
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
@@ -829,11 +827,11 @@ public fun KtResolvable.resolveSymbols(): Collection<KaSymbol> {
 /**
  * Resolves a single symbol for the given [KtResolvable].
  *
- * Returns the [KaSymbol] if there is exactly one target ([KaSingleSymbolResolutionSuccess]); otherwise, `null`
+ * Returns the [KaSymbol] if there is exactly one target; otherwise, `null`
  *
- * @see tryResolveSymbol
+ * @see tryResolveSymbols
  * @see resolveSymbols
- * @see KaSingleSymbolResolutionSuccess
+ * @see KaSymbolResolutionSuccess
  */
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
@@ -863,7 +861,7 @@ public fun KtResolvable.resolveSymbol(): KaSymbol? {
  *
  * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on annotation entries
  *
- * @see tryResolveSymbol
+ * @see tryResolveSymbols
  * @see KtResolvable.resolveSymbol
  */
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
@@ -893,7 +891,7 @@ public fun KtAnnotationEntry.resolveSymbol(): KaConstructorSymbol? {
  *
  * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on supertype constructor calls
  *
- * @see tryResolveSymbol
+ * @see tryResolveSymbols
  * @see KtResolvable.resolveSymbol
  */
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
@@ -929,7 +927,7 @@ public fun KtSuperTypeCallEntry.resolveSymbol(): KaConstructorSymbol? {
  *
  * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on constructor delegation calls
  *
- * @see tryResolveSymbol
+ * @see tryResolveSymbols
  * @see KtResolvable.resolveSymbol
  */
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
@@ -965,7 +963,7 @@ public fun KtConstructorDelegationCall.resolveSymbol(): KaConstructorSymbol? {
  *
  * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on constructor delegation calls
  *
- * @see tryResolveSymbol
+ * @see tryResolveSymbols
  * @see KtResolvable.resolveSymbol
  */
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
@@ -997,7 +995,7 @@ public fun KtConstructorDelegationReferenceExpression.resolveSymbol(): KaConstru
  *
  * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on call elements
  *
- * @see tryResolveSymbol
+ * @see tryResolveSymbols
  * @see KtResolvable.resolveSymbol
  */
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
@@ -1027,7 +1025,7 @@ public fun KtCallElement.resolveSymbol(): KaCallableSymbol? {
  *
  * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on callable reference expressions
  *
- * @see tryResolveSymbol
+ * @see tryResolveSymbols
  * @see KtResolvable.resolveSymbol
  */
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
@@ -1073,7 +1071,7 @@ public fun KtCallableReferenceExpression.resolveSymbol(): KaCallableSymbol? {
  * }
  * ```
  *
- * @see tryResolveSymbol
+ * @see tryResolveSymbols
  * @see KtResolvable.resolveSymbol
  */
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
@@ -1105,7 +1103,7 @@ public fun KtArrayAccessExpression.resolveSymbol(): KaNamedFunctionSymbol? {
  *
  * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on collection literal expressions
  *
- * @see tryResolveSymbol
+ * @see tryResolveSymbols
  * @see KtResolvable.resolveSymbol
  */
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
@@ -1136,7 +1134,7 @@ public fun KtCollectionLiteralExpression.resolveSymbol(): KaNamedFunctionSymbol?
  *
  * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on enum entry superclass constructor calls
  *
- * @see tryResolveSymbol
+ * @see tryResolveSymbols
  * @see KtResolvable.resolveSymbol
  */
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
@@ -1172,7 +1170,7 @@ public fun KtEnumEntrySuperclassReferenceExpression.resolveSymbol(): KaConstruct
  *
  * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on label references
  *
- * @see tryResolveSymbol
+ * @see tryResolveSymbols
  * @see KtResolvable.resolveSymbol
  */
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
@@ -1210,7 +1208,7 @@ public fun KtLabelReferenceExpression.resolveSymbol(): KaDeclarationSymbol? {
  *
  * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on return expressions
  *
- * @see tryResolveSymbol
+ * @see tryResolveSymbols
  * @see KtResolvable.resolveSymbol
  */
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
@@ -1246,7 +1244,7 @@ public fun KtReturnExpression.resolveSymbol(): KaFunctionSymbol? {
  * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on `in`/`!in`
  * range conditions inside `when` entries
  *
- * @see tryResolveSymbol
+ * @see tryResolveSymbols
  * @see KtResolvable.resolveSymbol
  */
 // Auto-generated bridge. DO NOT EDIT MANUALLY!

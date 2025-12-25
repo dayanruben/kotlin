@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.resolution.KtResolvableCall
 abstract class KaBaseResolver<T : KaSession> : KaBaseSessionComponent<T>(), KaResolver {
     protected abstract fun performSymbolResolution(psi: KtElement): KaSymbolResolutionAttempt?
 
-    final override fun KtResolvable.tryResolveSymbol(): KaSymbolResolutionAttempt? = withValidityAssertion {
+    final override fun KtResolvable.tryResolveSymbols(): KaSymbolResolutionAttempt? = withValidityAssertion {
         if (this is KtElement) {
             checkValidity()
             performSymbolResolution(this)
@@ -41,18 +41,14 @@ abstract class KaBaseResolver<T : KaSession> : KaBaseSessionComponent<T>(), KaRe
     }
 
     final override fun KtResolvable.resolveSymbols(): Collection<KaSymbol> = withValidityAssertion {
-        when (val attempt = tryResolveSymbol()) {
-            is KaSingleSymbolResolutionSuccess -> listOf(attempt.symbol)
-            is KaMultiSymbolResolutionSuccess -> attempt.symbols
-            else -> emptyList()
+        when (val attempt = tryResolveSymbols()) {
+            is KaSymbolResolutionSuccess -> attempt.symbols
+            is KaSymbolResolutionError, null -> emptyList()
         }
     }
 
     final override fun KtResolvable.resolveSymbol(): KaSymbol? = withValidityAssertion {
-        when (val attempt = tryResolveSymbol()) {
-            is KaSingleSymbolResolutionSuccess -> attempt.symbol
-            else -> null
-        }
+        resolveSymbols().singleOrNull()
     }
 
     private inline fun <reified R : KaSymbol> KtResolvable.resolveSymbolSafe(): R? = resolveSymbol() as? R
