@@ -490,14 +490,17 @@ internal class JsAstMapperVisitor(
     }
 
     override fun visitPropertyExpressionAssignment(ctx: JavaScriptParser.PropertyExpressionAssignmentContext): JsPropertyInitializer {
-        val jsLabelExpr = visitNode<JsExpression>(ctx.propertyName())
-        val jsValue = visitNode<JsExpression>(ctx.singleExpression())
-
-        return JsPropertyInitializer(jsLabelExpr, jsValue).applyLocation(ctx)
+        return JsPropertyInitializer.KeyValue(
+            visitNode<JsExpression>(ctx.propertyName()),
+            visitNode<JsExpression>(ctx.singleExpression())
+        ).applyLocation(ctx)
     }
 
     override fun visitComputedPropertyExpressionAssignment(ctx: JavaScriptParser.ComputedPropertyExpressionAssignmentContext): JsNode? {
-        reportError("Computed property names are not supported yet", ctx)
+        return JsPropertyInitializer.KeyValue(
+            visitNode<JsExpression>(ctx.label),
+            visitNode<JsExpression>(ctx.value)
+        ).applyLocation(ctx)
     }
 
     override fun visitFunctionProperty(ctx: JavaScriptParser.FunctionPropertyContext): JsNode? {
@@ -512,8 +515,17 @@ internal class JsAstMapperVisitor(
         reportError("Property setters are not supported yet", ctx)
     }
 
-    override fun visitPropertyShorthand(ctx: JavaScriptParser.PropertyShorthandContext): JsNode? {
-        reportError("Property shorthands are not supported yet", ctx)
+    override fun visitSpreadProperty(ctx: JavaScriptParser.SpreadPropertyContext): JsNode? {
+        return JsPropertyInitializer.Spread(
+            visitNode<JsExpression>(ctx.singleExpression())
+        ).applyLocation(ctx)
+    }
+
+    override fun visitPropertyShorthand(ctx: JavaScriptParser.PropertyShorthandContext): JsPropertyInitializer {
+        return JsPropertyInitializer.KeyValue(
+            JsStringLiteral(ctx.text),
+            makeRefNode(ctx.text)
+        ).applyLocation(ctx)
     }
 
     override fun visitPropertyName(ctx: JavaScriptParser.PropertyNameContext): JsExpression {
@@ -530,7 +542,7 @@ internal class JsAstMapperVisitor(
         }
 
         ctx.singleExpression()?.let {
-            reportError("Computed property names are not supported yet", ctx)
+            return visitNode<JsExpression>(it)
         }
 
         raiseParserException("Invalid property name: ${ctx.text}", ctx)

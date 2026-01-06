@@ -4938,6 +4938,12 @@ public class LLPartialDiagnosticsFirTestGenerated extends AbstractLLPartialDiagn
       public void testSuppressOnNameBasedDestructuring() {
         runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/suppressOnNameBasedDestructuring.kt");
       }
+
+      @Test
+      @TestMetadata("topLevelWithLambda.kt")
+      public void testTopLevelWithLambda() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/destructuring/topLevelWithLambda.kt");
+      }
     }
 
     @Nested
@@ -10681,6 +10687,12 @@ public class LLPartialDiagnosticsFirTestGenerated extends AbstractLLPartialDiagn
       @TestMetadata("ifElvisReturn.kt")
       public void testIfElvisReturn() {
         runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/inference/ifElvisReturn.kt");
+      }
+
+      @Test
+      @TestMetadata("inapplicableWhen.kt")
+      public void testInapplicableWhen() {
+        runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/inference/inapplicableWhen.kt");
       }
 
       @Test
