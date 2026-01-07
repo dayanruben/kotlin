@@ -747,6 +747,12 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
     }
 
     @Test
+    @TestMetadata("falsePositiveSenselessNullInWhen.kt")
+    public void testFalsePositiveSenselessNullInWhen() {
+      runTest("compiler/testData/diagnostics/tests/falsePositiveSenselessNullInWhen.kt");
+    }
+
+    @Test
     @TestMetadata("falsePropertyAmongEnums.kt")
     public void testFalsePropertyAmongEnums() {
       runTest("compiler/testData/diagnostics/tests/falsePropertyAmongEnums.kt");
@@ -3195,6 +3201,18 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
       @TestMetadata("kt1886annotationBody_before.kt")
       public void testKt1886annotationBody_before() {
         runTest("compiler/testData/diagnostics/tests/annotations/kt1886annotationBody_before.kt");
+      }
+
+      @Test
+      @TestMetadata("LoadAnnotationsOnAnnotationProperties_after.kt")
+      public void testLoadAnnotationsOnAnnotationProperties_after() {
+        runTest("compiler/testData/diagnostics/tests/annotations/LoadAnnotationsOnAnnotationProperties_after.kt");
+      }
+
+      @Test
+      @TestMetadata("LoadAnnotationsOnAnnotationProperties_before.kt")
+      public void testLoadAnnotationsOnAnnotationProperties_before() {
+        runTest("compiler/testData/diagnostics/tests/annotations/LoadAnnotationsOnAnnotationProperties_before.kt");
       }
 
       @Test
@@ -9154,6 +9172,12 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
         @TestMetadata("smartCastAfterDeadCode.kt")
         public void testSmartCastAfterDeadCode() {
           runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/deadCode/smartCastAfterDeadCode.kt");
+        }
+
+        @Test
+        @TestMetadata("uninitializedMemberAfterUnreachableFunction.kt")
+        public void testUninitializedMemberAfterUnreachableFunction() {
+          runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/deadCode/uninitializedMemberAfterUnreachableFunction.kt");
         }
       }
 

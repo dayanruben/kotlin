@@ -52,7 +52,7 @@ class CancellationCompatibilitySmokeTest : BaseCompilationTest() {
         project(kotlinToolchains, kotlinToolchains.createInProcessExecutionPolicy()) {
             val module1 = module("jvm-module-1")
             assumeTrue(hasCancellationSupport)
-            module1.compileAndThrow(compilationConfigAction = { operation ->
+            module1.compileAndThrow(compilationAction = { operation ->
                 operation.cancel()
             }) { ex: Throwable ->
                 assertLogContainsSubstringExactlyTimes(
@@ -70,23 +70,23 @@ class CancellationCompatibilitySmokeTest : BaseCompilationTest() {
     fun daemonWithCancellation() {
         val kotlinToolchains = KotlinToolchains.loadImplementation(BaseCompilationTest::class.java.classLoader)
         val hasCancellationSupport = KotlinToolingVersion(kotlinToolchains.getCompilerVersion()) > KotlinToolingVersion(2, 3, 0, null)
-        val daemonPolicy = kotlinToolchains.createDaemonExecutionPolicy()
-        assumeTrue(hasCancellationSupport)
-
         val daemonRunPath: Path = createTempDirectory("test-daemon-files")
-        daemonPolicy[ExecutionPolicy.WithDaemon.JVM_ARGUMENTS] = listOf(
-            "Dkotlin.daemon.wait.before.compilation.for.tests=true"
-        )
-        @OptIn(DelicateBuildToolsApi::class)
-        daemonPolicy[ExecutionPolicy.WithDaemon.DAEMON_RUN_DIR_PATH] = daemonRunPath
-        daemonPolicy[ExecutionPolicy.WithDaemon.SHUTDOWN_DELAY_MILLIS] = 0
+        assumeTrue(hasCancellationSupport)
+        val daemonPolicy = kotlinToolchains.daemonExecutionPolicyBuilder().apply {
+            this[ExecutionPolicy.WithDaemon.JVM_ARGUMENTS] = listOf(
+                "Dkotlin.daemon.wait.before.compilation.for.tests=true"
+            )
+            @OptIn(DelicateBuildToolsApi::class)
+            this[ExecutionPolicy.WithDaemon.DAEMON_RUN_DIR_PATH] = daemonRunPath
+            this[ExecutionPolicy.WithDaemon.SHUTDOWN_DELAY_MILLIS] = 0
+        }.build()
 
         project(kotlinToolchains, daemonPolicy) {
             val module1 = module("jvm-module-1") as JvmModule
             val operationWasCancelled = AtomicBoolean(false)
             with(module1) {
                 val allowedExtensions = setOf("kt", "kts", "java")
-                val compilationOperation = kotlinToolchain.jvm.createJvmCompilationOperation(
+                val compilationOperation = kotlinToolchain.jvm.jvmCompilationOperationBuilder(
                     sourcesDirectory.walk().filter { path -> path.pathString.run { allowedExtensions.any { endsWith(".$it") } } }.toList(),
                     outputDirectory
                 )
@@ -96,14 +96,15 @@ class CancellationCompatibilitySmokeTest : BaseCompilationTest() {
                 compilationOperation.compilerArguments[CLASSPATH] = compileClasspath
                 compilationOperation.compilerArguments[MODULE_NAME] = moduleName
                 val logger = TestKotlinLogger()
+                val operation = compilationOperation.build()
                 val thread = thread {
                     try {
-                        buildSession.executeOperation(compilationOperation, daemonPolicy, logger)
+                        buildSession.executeOperation(operation, daemonPolicy, logger)
                     } catch (_: OperationCancelledException) {
                         operationWasCancelled.store(true)
                     }
                 }
-                compilationOperation.cancel()
+                operation.cancel()
                 daemonRunPath.resolve("daemon-test-start").createFile().toFile().deleteOnExit()
                 thread.join()
                 assertTrue { operationWasCancelled.load() }
@@ -148,7 +149,7 @@ class CancellationCompatibilitySmokeTest : BaseCompilationTest() {
             val module1 = module("jvm-module-1")
             assumeTrue(hasCancellationSupport)
             assertThrows<OperationCancelledException> {
-                module1.compileIncrementally(SourcesChanges.Unknown, compilationConfigAction = { operation ->
+                module1.compileIncrementally(SourcesChanges.Unknown, compilationAction = { operation ->
                     operation.cancel()
                 })
             }
@@ -165,7 +166,7 @@ class CancellationCompatibilitySmokeTest : BaseCompilationTest() {
             val module1 = module("jvm-module-1")
             assumeFalse(hasCancellationSupport)
             val exception = assertThrows<IllegalStateException> {
-                module1.compile(compilationConfigAction = { operation ->
+                module1.compile(compilationAction = { operation ->
                     operation.cancel()
                 })
             }

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.buildtools.api.arguments
 
 import kotlin.Array
 import kotlin.Boolean
+import kotlin.Deprecated
 import kotlin.Int
 import kotlin.String
 import kotlin.jvm.JvmField
@@ -28,6 +29,7 @@ public interface JvmCompilerArguments : CommonCompilerArguments {
   /**
    * Set the [value] for option specified by [key], overriding any previous value for that option.
    */
+  @Deprecated(message = "Compiler argument classes will become immutable in an upcoming release. Use a Builder instance to create and modify compiler arguments.")
   public operator fun <V> `set`(key: JvmCompilerArgument<V>, `value`: V)
 
   /**
@@ -40,7 +42,7 @@ public interface JvmCompilerArguments : CommonCompilerArguments {
   public operator fun contains(key: JvmCompilerArgument<*>): Boolean
 
   /**
-   * Base class for [JvmCompilerArguments] options.
+   * An option for configuring [JvmCompilerArguments].
    *
    * @see get
    * @see set    
@@ -49,6 +51,40 @@ public interface JvmCompilerArguments : CommonCompilerArguments {
     public val id: String,
     public val availableSinceVersion: KotlinReleaseVersion,
   )
+
+  /**
+   * A builder for [JvmCompilerArguments].
+   *
+   * @since 2.3.20
+   */
+  public interface Builder : CommonCompilerArguments.Builder {
+    /**
+     * Get the value for option specified by [key] if it was previously [set] or if it has a default value.
+     *
+     * @return the previously set value for an option
+     * @throws IllegalStateException if the option was not set and has no default value
+     */
+    public operator fun <V> `get`(key: JvmCompilerArgument<V>): V
+
+    /**
+     * Set the [value] for option specified by [key], overriding any previous value for that option.
+     */
+    public operator fun <V> `set`(key: JvmCompilerArgument<V>, `value`: V)
+
+    /**
+     * Check if an option specified by [key] has a value set.
+     *
+     * Note: trying to read an option (by using [get]) that has not been set will result in an exception.
+     *
+     * @return true if the option has a value set, false otherwise
+     */
+    public operator fun contains(key: JvmCompilerArgument<*>): Boolean
+
+    /**
+     * Constructs a new immutable [JvmCompilerArguments] instance with the options set in this builder.
+     */
+    public fun build(): JvmCompilerArguments
+  }
 
   public companion object {
     /**
