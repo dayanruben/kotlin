@@ -5,30 +5,33 @@
 
 package org.jetbrains.kotlin.scripting.compiler.plugin.services
 
-import com.intellij.openapi.diagnostic.Logger
-import org.jetbrains.kotlin.*
+import org.jetbrains.kotlin.KtFakeSourceElementKind
+import org.jetbrains.kotlin.KtSourceElement
+import org.jetbrains.kotlin.KtSourceFile
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.fakeElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.builder.Context
 import org.jetbrains.kotlin.fir.builder.FirScriptConfiguratorExtension
 import org.jetbrains.kotlin.fir.declarations.FirAnonymousInitializer
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
-import org.jetbrains.kotlin.fir.declarations.builder.FirFileBuilder
-import org.jetbrains.kotlin.fir.declarations.builder.FirScriptBuilder
-import org.jetbrains.kotlin.fir.declarations.builder.buildProperty
-import org.jetbrains.kotlin.fir.declarations.builder.buildScriptReceiverParameter
+import org.jetbrains.kotlin.fir.declarations.builder.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyGetter
 import org.jetbrains.kotlin.fir.declarations.primaryConstructorIfAny
+import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.expressions.*
+import org.jetbrains.kotlin.fir.expressions.builder.buildErrorExpression
 import org.jetbrains.kotlin.fir.expressions.impl.FirSingleExpressionBlock
+import org.jetbrains.kotlin.fir.expressions.impl.buildSingleExpressionBlock
 import org.jetbrains.kotlin.fir.moduleData
 import org.jetbrains.kotlin.fir.resolve.providers.dependenciesSymbolProvider
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
+import org.jetbrains.kotlin.fir.symbols.impl.FirAnonymousInitializerSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirLocalPropertySymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirRegularPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirReceiverParameterSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirRegularPropertySymbol
 import org.jetbrains.kotlin.fir.toFirResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.FirTypeRef
@@ -43,7 +46,8 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtScript
+import org.jetbrains.kotlin.scripting.compiler.plugin.definitions.getRefinedOrBaseCompilationConfiguration
+import org.jetbrains.kotlin.scripting.compiler.plugin.fir.scriptCompilationComponent
 import org.jetbrains.kotlin.scripting.definitions.annotationsForSamWithReceivers
 import org.jetbrains.kotlin.scripting.resolve.toSourceCode
 import kotlin.script.experimental.api.*
@@ -61,15 +65,36 @@ class FirScriptConfiguratorExtensionImpl(
 
     // TODO: find out some way to differentiate detection form REPL snippets, to allow reporting conflicts on FIR building
     override fun accepts(sourceFile: KtSourceFile?, scriptSource: KtSourceElement): Boolean =
-        sourceFile != null && // this implementation requires a file to find definition (this could be relaxed eventually)
-                (scriptSource is KtPsiSourceElement && scriptSource.psi is KtScript) // workd only with PSI so far
+        sourceFile != null
 
     @OptIn(SymbolInternals::class)
     override fun FirScriptBuilder.configure(sourceFile: KtSourceFile?, context: Context<*>) {
-        val configuration = getOrLoadConfiguration(session, sourceFile!!) ?: run {
-            log.warn("Configuration for ${sourceFile.asString()} wasn't found. FirScriptBuilder wasn't configured.")
-            return
+        fun addErrorElement(message: String) {
+            declarations.add(
+                0,
+                buildAnonymousInitializer {
+                    symbol = FirAnonymousInitializerSymbol()
+                    source = this@configure.source
+                    moduleData = this@configure.moduleData
+                    origin = FirDeclarationOrigin.ScriptCustomization.Default
+                    body = buildSingleExpressionBlock(
+                        buildErrorExpression {
+                            source = this@configure.source
+                            diagnostic = ConeSimpleDiagnostic(message)
+                        }
+                    )
+                }
+            )
         }
+
+        val configuration =
+            getOrLoadConfiguration(session, sourceFile!!)?.valueOr {
+                addErrorElement("Unable to get script compilation configuration: ${it.reports.joinToString("; ") { it.message}}")
+                return
+            } ?: run {
+                addErrorElement("Unable to get script compilation configuration. Scripting is not configured.")
+                return
+            }
 
         configuration.getNoDefault(ScriptCompilationConfiguration.baseClass)?.let { baseClass ->
             val baseClassTypeRef =
@@ -200,8 +225,6 @@ class FirScriptConfiguratorExtensionImpl(
         }
     }
 
-    private fun KtSourceFile.asString() = path ?: name
-
     private fun FirScriptBuilder.tryResolveOrBuildParameterTypeRefFromKotlinType(
         kotlinType: KotlinType,
         sourceElement: KtSourceElement = source.fakeElement(KtFakeSourceElementKind.ScriptParameter),
@@ -237,27 +260,22 @@ class FirScriptConfiguratorExtensionImpl(
         get() = _knownAnnotationsForSamWithReceiver
 
     companion object {
-        private val log: Logger get() = Logger.getInstance(FirScriptConfiguratorExtensionImpl::class.java)
-
         fun getFactory(hostConfiguration: ScriptingHostConfiguration): Factory {
             return Factory { session -> FirScriptConfiguratorExtensionImpl(session, hostConfiguration) }
         }
     }
 }
 
-private fun FirScriptDefinitionProviderService.configurationFor(sourceCode: SourceCode): ScriptCompilationConfiguration? =
-    configurationProvider?.getScriptCompilationConfiguration(sourceCode)?.valueOrNull()?.configuration
-
-private fun FirScriptDefinitionProviderService.defaultConfiguration(): ScriptCompilationConfiguration? =
-    definitionProvider?.getDefaultDefinition()?.compilationConfiguration
-
-internal fun getOrLoadConfiguration(session: FirSession, file: KtSourceFile): ScriptCompilationConfiguration? {
-    val service = checkNotNull(session.scriptDefinitionProviderService)
+internal fun getOrLoadConfiguration(session: FirSession, file: KtSourceFile): ResultWithDiagnostics<ScriptCompilationConfiguration>? {
     val sourceCode = file.toSourceCode()
-    val configuration = with(service) {
-        sourceCode?.let { asSourceCode -> configurationFor(asSourceCode) }
-            ?: defaultConfiguration()
+    val hostConfiguration = session.scriptCompilationComponent?.hostConfiguration
+    return if (hostConfiguration != null) {
+        hostConfiguration.getRefinedOrBaseCompilationConfiguration(sourceCode)
+    } else {
+        session.scriptDefinitionProviderService?.let {
+            it.getRefinedConfiguration(sourceCode)
+                ?: it.getBaseConfiguration(sourceCode)
+        }
     }
-    return configuration
 }
 

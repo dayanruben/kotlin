@@ -16,11 +16,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightVirtualFile
-import org.jetbrains.kotlin.KtInMemoryTextSourceFile
-import org.jetbrains.kotlin.KtIoFileSourceFile
-import org.jetbrains.kotlin.KtPsiSourceFile
-import org.jetbrains.kotlin.KtSourceFile
-import org.jetbrains.kotlin.KtVirtualFileSourceFile
+import org.jetbrains.kotlin.*
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtFile
@@ -88,15 +84,38 @@ class ScriptLightVirtualFile(name: String, private val _path: String?, text: Str
     override fun getCanonicalPath() = path
 }
 
-fun KtSourceFile.toSourceCode(): SourceCode? = when (this) {
+class GenericKtSourceFileScriptSource(val ktSourceFile: KtSourceFile) : SourceCode {
+    override val text: String by lazy { ktSourceFile.getContentsAsStream().reader().readText() }
+    override val name: String get() = ktSourceFile.name
+    override val locationId: String? get() = ktSourceFile.path
+}
+
+open class LazyTextScriptSource(
+    override val name: String? = null,
+    locationId: String? = null,
+    getSource: () -> String,
+) : SourceCode {
+
+    override val text: String by lazy { getSource() }
+
+    override val locationId: String? = locationId ?: name ?: "\$${System.identityHashCode(this).toHexString()}.kts"
+
+    override fun equals(other: Any?): Boolean =
+        this === other || (other as? StringScriptSource)?.let { name == it.name && locationId == it.locationId } == true
+
+    override fun hashCode(): Int = name.hashCode() * 17 + locationId.hashCode() * 23
+}
+
+
+fun KtSourceFile.toSourceCode(): SourceCode = when (this) {
     is KtPsiSourceFile -> {
         val originalFile = psiFile.originalFile
         (originalFile as? KtFile)?.let(::KtFileScriptSource) ?: VirtualFileScriptSource(originalFile.virtualFile)
     }
     is KtVirtualFileSourceFile -> VirtualFileScriptSource(virtualFile)
     is KtIoFileSourceFile -> FileScriptSource(file)
-    is KtInMemoryTextSourceFile -> StringScriptSource(text.toString(), name)
-    else -> null
+    is KtInMemoryTextSourceFile -> LazyTextScriptSource(name, path) { text.toString() }
+    else -> LazyTextScriptSource(name, path) { getContentsAsStream().reader().readText() }
 }
 
 @Deprecated("Use APIs that return ScriptCompilationConfiguration or ResultWithDiagnostics<ScriptCompilationConfiguration> instead")
@@ -134,6 +153,7 @@ class ScriptCompilationConfigurationWrapper(
 @Deprecated("Use APIs that return ScriptCompilationConfiguration or ResultWithDiagnostics<ScriptCompilationConfiguration> instead")
 typealias ScriptCompilationConfigurationResult = ResultWithDiagnostics<ScriptCompilationConfigurationWrapper>
 
+// TODO consider dropping and using disambiguation of the sources collection (KT-83502)
 val ScriptCompilationConfigurationKeys.resolvedImportScripts by PropertiesCollection.key<List<SourceCode>>(isTransient = true)
 
 // left for binary compatibility with Kotlin Notebook plugin
@@ -283,12 +303,7 @@ fun getScriptCollectedData(
         scriptFile.viewProvider.document,
         scriptFile.virtualFilePath
     )
-    return ScriptCollectedData(
-        mapOf(
-            ScriptCollectedData.collectedAnnotations to annotations,
-            ScriptCollectedData.foundAnnotations to annotations.map { it.annotation }
-        )
-    )
+    return ScriptCollectedData(mapOf(ScriptCollectedData.collectedAnnotations to annotations))
 }
 
 private fun Iterable<KtAnnotationEntry>.construct(

@@ -108,7 +108,9 @@ class CompilerHost {
 
     private val evaluationConfiguration = ScriptEvaluationConfiguration()
 
-    private val compiler = JvmScriptCompiler(myHostConfiguration)
+    private val compiler =
+        if (isRunningTestOnK2) JvmScriptCompiler(myHostConfiguration)
+        else JvmScriptCompiler.createLegacy(myHostConfiguration)
 
     private fun getImplicitsClasses(): List<KClass<*>> = implicits
 

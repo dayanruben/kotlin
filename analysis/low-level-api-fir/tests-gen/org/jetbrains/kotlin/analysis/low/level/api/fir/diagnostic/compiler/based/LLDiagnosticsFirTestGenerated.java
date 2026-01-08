@@ -1556,6 +1556,12 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
       }
 
       @Test
+      @TestMetadata("comparisonWithChangingTryBlock.kt")
+      public void testComparisonWithChangingTryBlock() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/cfa/comparisonWithChangingTryBlock.kt");
+      }
+
+      @Test
       @TestMetadata("initializationInTry.kt")
       public void testInitializationInTry() {
         runTest("compiler/fir/analysis-tests/testData/resolve/cfa/initializationInTry.kt");
@@ -6825,6 +6831,12 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
       @TestMetadata("genericWithExpectedAny.kt")
       public void testGenericWithExpectedAny() {
         runTest("compiler/fir/analysis-tests/testData/resolve/inference/genericWithExpectedAny.kt");
+      }
+
+      @Test
+      @TestMetadata("inVarianceVsParameterBound.kt")
+      public void testInVarianceVsParameterBound() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/inference/inVarianceVsParameterBound.kt");
       }
 
       @Test
