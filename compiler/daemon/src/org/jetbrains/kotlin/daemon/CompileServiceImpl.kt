@@ -10,11 +10,15 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.impl.ZipHandler
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem
 import org.jetbrains.kotlin.build.DEFAULT_KOTLIN_SOURCE_FILES_EXTENSIONS
+import org.jetbrains.kotlin.build.report.DoNothingBuildReporter
 import org.jetbrains.kotlin.build.report.RemoteBuildReporter
+import org.jetbrains.kotlin.build.report.RemoteReporter
 import org.jetbrains.kotlin.build.report.metrics.BuildPerformanceMetric
 import org.jetbrains.kotlin.build.report.metrics.BuildTimeMetric
+import org.jetbrains.kotlin.build.report.metrics.COMPILE_ITERATION
 import org.jetbrains.kotlin.build.report.metrics.endMeasureGc
 import org.jetbrains.kotlin.build.report.metrics.startMeasureGc
+import org.jetbrains.kotlin.build.report.reportPerformanceData
 import org.jetbrains.kotlin.buildtools.api.SourcesChanges
 import org.jetbrains.kotlin.cli.common.*
 import org.jetbrains.kotlin.cli.common.arguments.*
@@ -346,7 +350,7 @@ abstract class CompileServiceImplBase(
         createMessageCollector: (ServicesFacadeT, CompilationOptions) -> MessageCollector,
         createReporter: (ServicesFacadeT, CompilationOptions) -> DaemonMessageReporter,
         createServices: (JpsServicesFacadeT, EventManager, Profiler) -> Services,
-        getICReporter: (ServicesFacadeT, CompilationResultsT?, IncrementalCompilationOptions) -> RemoteBuildReporter<BuildTimeMetric, BuildPerformanceMetric>,
+        getICReporter: (ServicesFacadeT, CompilationResultsT & Any, CompilationOptions) -> RemoteBuildReporter<BuildTimeMetric, BuildPerformanceMetric>,
         compilationId: Int? = null,
     ) = kotlin.run {
         maybeWaitForTestStart()
@@ -392,22 +396,36 @@ abstract class CompileServiceImplBase(
                 }
             }
             CompilerMode.NON_INCREMENTAL_COMPILER -> {
-                doCompile(sessionId, daemonReporter, tracer = null, compilationId = compilationId) { _, _, compilationCanceled ->
-                    val exitCode = compiler.exec(
-                        messageCollector,
-                        compilationCanceled?.let { Services.Builder().register(CompilationCanceledStatus::class.java, it).build() }
-                            ?: Services.EMPTY,
-                        k2PlatformArgs
-                    )
-                    val perfString = compiler.defaultPerformanceManager.createPerformanceReport(dumpFormat = DumpFormat.PlainText)
-                    compilationResults?.also {
-                        (it as CompilationResults).add(
-                            CompilationResultCategory.BUILD_REPORT_LINES.code,
-                            arrayListOf(perfString)
-                        )
+                doCompile(sessionId, daemonReporter, tracer = null, compilationId) { _, _, compilationCanceled ->
+                    val icReporter = if (compilationResults != null) {
+                        getICReporter(servicesFacade, compilationResults, compilationOptions)
+                    } else {
+                        DoNothingBuildReporter
                     }
-
-                    exitCode
+                    try {
+                        icReporter.startMeasureGc()
+                        val exitCode = compiler.exec(
+                            messageCollector,
+                            compilationCanceled?.let { Services.Builder().register(CompilationCanceledStatus::class.java, it).build() }
+                                ?: Services.EMPTY,
+                            k2PlatformArgs
+                        )
+                        icReporter.reportPerformanceData(compiler.defaultPerformanceManager.unitStats)
+                        val perfString = compiler.defaultPerformanceManager.createPerformanceReport(dumpFormat = DumpFormat.PlainText)
+                        compilationResults?.also {
+                            (it as CompilationResults).add(
+                                CompilationResultCategory.BUILD_REPORT_LINES.code,
+                                arrayListOf(perfString)
+                            )
+                        }
+                        icReporter.addMetric(COMPILE_ITERATION, 1) // in non-IC case there's always 1 iteration
+                        icReporter.endMeasureGc()
+                        exitCode
+                    } finally {
+                        if (icReporter is RemoteReporter) {
+                            icReporter.flush()
+                        }
+                    }
                 }
             }
             CompilerMode.INCREMENTAL_COMPILER -> {
@@ -889,7 +907,7 @@ class CompileServiceImpl(
             createMessageCollector = ::CompileServicesFacadeMessageCollector,
             createReporter = ::DaemonMessageReporter,
             createServices = this::createCompileServices,
-            getICReporter = { a, b, c -> getBuildReporter(a, b!!, c) },
+            getICReporter = { a, b, c -> getBuildReporter(a, b, c) },
             compilationId,
         )
     }

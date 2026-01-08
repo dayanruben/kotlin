@@ -465,7 +465,6 @@ enum class LanguageFeature(
     ApproximateLocalTypesInPublicDeclarations(KOTLIN_2_4, issue = "KT-82454"),
     LocalVariableTargetedAnnotationOnDestructuring(KOTLIN_2_4, "KT-81408"),
     ForbidGetSetValueWithTooManyParameters(KOTLIN_2_4, enabledInProgressiveMode = true, issue = "KTLC-289"),
-    ForbidReturnInExpressionBodyWithoutExplicitTypeEdgeCases(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-288"),
     ForbidInlineEnumEntries(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-361"),
     TurnTypeCheckWarningsIntoErrors(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-365"),
     ProhibitExtendingAnnotationClasses(KOTLIN_2_4, enabledInProgressiveMode = true, "KTLC-374"),
@@ -498,6 +497,7 @@ enum class LanguageFeature(
 
     ErrorAboutDataClassCopyVisibilityChange(KOTLIN_2_5, enabledInProgressiveMode = true, "KT-11914"), // KT-11914. Deprecation phase 2
     KlibAnnotationsInMetadata(sinceVersion = KOTLIN_2_5, "KT-81466"),
+    ForbidReturnInExpressionBodyWithoutExplicitTypeEdgeCases(sinceVersion = KOTLIN_2_5, "KTLC-288"),
 
     // End of 2.* language features --------------------------------------------------
 
@@ -569,6 +569,9 @@ enum class LanguageFeature(
     DeprecateNameMismatchInShortDestructuringWithParentheses(sinceVersion = null, "KT-19627"),
     EnableNameBasedDestructuringShortForm(sinceVersion = null, "KT-19627"),
     LocalTypeAliases(sinceVersion = null, forcesPreReleaseBinaries = true, issue = "KT-81404"),
+
+    // We don't want to turn it on by default (so to show an error instead of a warning) until there will be a possibility to export declarations from libraries
+    JsExposedNotExportedSuperInterfaceApiByExportedOne(sinceVersion = null, issue = "KT-83009"),
 
     // K1 support only. We keep it, as we may want to support it also in K2
     UnitConversionsOnArbitraryExpressions(sinceVersion = null, NO_ISSUE_SPECIFIED),

@@ -2794,6 +2794,12 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
       }
 
       @Test
+      @TestMetadata("callableReferenceCompatibility.kt")
+      public void testCallableReferenceCompatibility() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/callableReferenceCompatibility.kt");
+      }
+
+      @Test
       @TestMetadata("contextLambda.kt")
       public void testContextLambda() {
         runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/contextLambda.kt");
@@ -11658,6 +11664,12 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
         @TestMetadata("explicitBackingFieldOptIns.kt")
         public void testExplicitBackingFieldOptIns() {
           runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/explicitBackingFieldOptIns.kt");
+        }
+
+        @Test
+        @TestMetadata("explicitBackingFieldPrivateToThis.kt")
+        public void testExplicitBackingFieldPrivateToThis() {
+          runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/explicitBackingFieldPrivateToThis.kt");
         }
 
         @Test
