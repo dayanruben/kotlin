@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.ir.visitors.acceptVoid
 
 class ModuleReferencedDeclarations {
     val referencedFunction = mutableSetOf<IdSignature>()
-    val referencedGlobalField = mutableSetOf<IdSignature>()
     val referencedGlobalVTable = mutableSetOf<IdSignature>()
     val referencedGlobalClassITable = mutableSetOf<IdSignature>()
     val referencedRttiGlobal = mutableSetOf<IdSignature>()
@@ -44,11 +43,11 @@ class WasmModuleFragmentGenerator(
         irModuleFragment: IrModuleFragment,
         moduleName: String,
         referencedDeclarations: ModuleReferencedDeclarations,
-    ): WasmCompiledFileFragment {
+    ): Pair<WasmCompiledFileFragment, Boolean> {
         val wasmFileFragment = WasmCompiledFileFragment(fragmentTag = null)
         val wasmFileCodegenContext = WasmFileCodegenContextWithImport(wasmFileFragment, idSignatureRetriever, moduleName, referencedDeclarations)
         generate(irModuleFragment, wasmFileCodegenContext)
-        return wasmFileFragment
+        return wasmFileFragment to wasmFileCodegenContext.declarationImported
     }
 
     fun generateModuleAsSingleFileFragmentWithModuleExport(

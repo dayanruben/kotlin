@@ -7,8 +7,8 @@ package org.jetbrains.kotlin.backend.wasm.ir2wasm
 
 import org.jetbrains.kotlin.ir.declarations.IdSignatureRetriever
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
-import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.wasm.ir.*
 
@@ -18,6 +18,10 @@ class WasmFileCodegenContextWithImport(
     private val moduleName: String,
     private val moduleReferencedDeclarations: ModuleReferencedDeclarations,
 ) : WasmFileCodegenContext(wasmFileFragment, idSignatureRetriever) {
+
+    var declarationImported: Boolean = false
+        private set
+
     override fun handleFunctionWithImport(declaration: IrFunctionSymbol): Boolean {
         val signature = idSignatureRetriever.declarationSignature(declaration.owner)
         if (signature !in moduleReferencedDeclarations.referencedFunction) return true
@@ -30,6 +34,7 @@ class WasmFileCodegenContextWithImport(
                 importPair = WasmImportDescriptor(moduleName, WasmSymbol("${WasmServiceImportExportKind.FUNC.prefix}$signature"))
             )
         )
+        declarationImported = true
         return true
     }
 
@@ -44,6 +49,7 @@ class WasmFileCodegenContextWithImport(
             importPair = WasmImportDescriptor(moduleName, WasmSymbol("${WasmServiceImportExportKind.VTABLE.prefix}$signature"))
         )
         defineGlobalVTable(irClass = declaration, wasmGlobal = global)
+        declarationImported = true
         return true
     }
 
@@ -58,6 +64,7 @@ class WasmFileCodegenContextWithImport(
             importPair = WasmImportDescriptor(moduleName, WasmSymbol("${WasmServiceImportExportKind.ITABLE.prefix}$signature"))
         )
         defineGlobalClassITable(irClass = declaration, wasmGlobal = global)
+        declarationImported = true
         return true
     }
 
@@ -72,6 +79,30 @@ class WasmFileCodegenContextWithImport(
             importPair = WasmImportDescriptor(moduleName, WasmSymbol("${WasmServiceImportExportKind.RTTI.prefix}$signature"))
         )
         defineRttiGlobal(global = rttiGlobal, irClass = declaration, irSuperClass = superType)
+        declarationImported = true
         return true
+    }
+
+    override fun handleGlobalField(declaration: IrFieldSymbol): Boolean = true
+
+    override fun addObjectInstanceFieldInitializer(initializer: IrFunctionSymbol) {
+    }
+
+    override fun addNonConstantFieldInitializers(initializer: IrFunctionSymbol) {
+    }
+
+    override fun addMainFunctionWrapper(mainFunctionWrapper: IrFunctionSymbol) {
+    }
+
+    override fun addTestFunDeclarator(testFunctionDeclarator: IrFunctionSymbol) {
+    }
+
+    override fun addEquivalentFunction(key: String, function: IrFunctionSymbol) {
+    }
+
+    override fun addClassAssociatedObjects(klass: IrClassSymbol, associatedObjectsGetters: List<AssociatedObjectBySymbols>) {
+    }
+
+    override fun addJsModuleAndQualifierReferences(reference: JsModuleAndQualifierReference) {
     }
 }

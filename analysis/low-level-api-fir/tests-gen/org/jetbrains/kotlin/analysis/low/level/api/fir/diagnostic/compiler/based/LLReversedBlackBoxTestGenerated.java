@@ -34182,6 +34182,12 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
         }
 
         @Test
+        @TestMetadata("suspendLambdaInConstructor.kt")
+        public void testSuspendLambdaInConstructor() {
+          runTest("compiler/testData/codegen/box/inlineClasses/jvmExposeBoxed/directive/suspendLambdaInConstructor.kt");
+        }
+
+        @Test
         @TestMetadata("synthetic.kt")
         public void testSynthetic() {
           runTest("compiler/testData/codegen/box/inlineClasses/jvmExposeBoxed/directive/synthetic.kt");
@@ -38009,6 +38015,12 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
     @TestMetadata("kt65482.kt")
     public void testKt65482() {
       runTest("compiler/testData/codegen/box/javaInterop/kt65482.kt");
+    }
+
+    @Test
+    @TestMetadata("kt83402.kt")
+    public void testKt83402() {
+      runTest("compiler/testData/codegen/box/javaInterop/kt83402.kt");
     }
 
     @Test
