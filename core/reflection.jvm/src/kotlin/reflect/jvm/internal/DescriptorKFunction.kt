@@ -44,16 +44,24 @@ internal class DescriptorKFunction private constructor(
     override val signature: String,
     descriptorInitialValue: FunctionDescriptor?,
     override val rawBoundReceiver: Any?,
-) : DescriptorKCallable<Any?>(), ReflectKFunction, FunctionBase<Any?>, FunctionWithAllInvokes {
-    constructor(container: KDeclarationContainerImpl, name: String, signature: String, boundReceiver: Any?)
-            : this(container, name, signature, null, boundReceiver)
+    overriddenStorage: KCallableOverriddenStorage,
+) : DescriptorKCallable<Any?>(overriddenStorage), ReflectKFunction,
+    FunctionBase<Any?>, FunctionWithAllInvokes {
 
-    constructor(container: KDeclarationContainerImpl, descriptor: FunctionDescriptor) : this(
+    constructor(container: KDeclarationContainerImpl, name: String, signature: String, boundReceiver: Any?)
+            : this(container, name, signature, null, boundReceiver, KCallableOverriddenStorage.EMPTY)
+
+    constructor(
+        container: KDeclarationContainerImpl,
+        descriptor: FunctionDescriptor,
+        overriddenStorage: KCallableOverriddenStorage = KCallableOverriddenStorage.EMPTY,
+    ) : this(
         container,
         descriptor.name.asString(),
         RuntimeTypeMapper.mapSignature(descriptor).asString(),
         descriptor,
         CallableReference.NO_RECEIVER,
+        overriddenStorage
     )
 
     override val descriptor: FunctionDescriptor by ReflectProperties.lazySoft(descriptorInitialValue) {
@@ -165,6 +173,9 @@ internal class DescriptorKFunction private constructor(
             DescriptorKFunction(containerClass.kotlin as KClassImpl<*>, it)
         }
 
+    override fun shallowCopy(overriddenStorage: KCallableOverriddenStorage): DescriptorKFunction =
+        DescriptorKFunction(container, descriptor, overriddenStorage)
+
     private fun getFunctionWithDefaultParametersForValueClassOverride(function: ReflectKFunction): ReflectKFunction? {
         if (
             function.valueParameters.none { (it as? ReflectKParameter)?.declaresDefaultValue == true } &&
@@ -222,16 +233,16 @@ internal class DescriptorKFunction private constructor(
     override val arity: Int get() = caller.arity
 
     override val isInline: Boolean
-        get() = descriptor.isInline
+        get() = overriddenStorage.forceIsInline || descriptor.isInline
 
     override val isExternal: Boolean
-        get() = descriptor.isExternal
+        get() = overriddenStorage.forceIsExternal || descriptor.isExternal
 
     override val isOperator: Boolean
-        get() = descriptor.isOperator
+        get() = overriddenStorage.forceIsOperator || descriptor.isOperator
 
     override val isInfix: Boolean
-        get() = descriptor.isInfix
+        get() = overriddenStorage.forceIsInfix || descriptor.isInfix
 
     override val isSuspend: Boolean
         get() = descriptor.isSuspend

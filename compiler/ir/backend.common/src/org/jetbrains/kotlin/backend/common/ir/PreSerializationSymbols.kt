@@ -137,10 +137,10 @@ abstract class BaseSymbolsImpl(protected val irBuiltIns: IrBuiltIns) {
 }
 
 interface PreSerializationSymbols {
-    val throwUninitializedPropertyAccessException: IrSimpleFunctionSymbol
-    val throwUnsupportedOperationException: IrSimpleFunctionSymbol
+    val throwUninitializedPropertyAccessException: IrSimpleFunctionSymbol? // KT-83151 Restore non-nullability of symbols available since 2.3
+    val throwUnsupportedOperationException: IrSimpleFunctionSymbol? // KT-83151 Restore non-nullability of symbols available since 2.3
 
-    val syntheticConstructorMarker: IrClassSymbol
+    val syntheticConstructorMarker: IrClassSymbol? // KT-83151 Restore non-nullability of symbols available since 2.3
     val coroutineContextGetter: IrSimpleFunctionSymbol
     val suspendCoroutineUninterceptedOrReturn: IrSimpleFunctionSymbol
     val coroutineGetContext: IrSimpleFunctionSymbol
@@ -175,12 +175,11 @@ interface PreSerializationKlibSymbols : PreSerializationSymbols {
 
     abstract class Impl(irBuiltIns: IrBuiltIns) : PreSerializationKlibSymbols, PreSerializationSymbols.Impl(irBuiltIns) {
         override val genericSharedVariableBox: SharedVariableBoxClassInfo = findSharedVariableBoxClass(null)
-        override val syntheticConstructorMarker: IrClassSymbol =
-            ClassId(StandardNames.KOTLIN_INTERNAL_FQ_NAME, Name.identifier("SyntheticConstructorMarker")).classSymbol()
-        override val throwUninitializedPropertyAccessException: IrSimpleFunctionSymbol =
-            THROW_UNINITIALIZED_PROPERTY_ACCESS_NAME.internalCallableId.functionSymbol()
-        override val throwUnsupportedOperationException: IrSimpleFunctionSymbol =
-            THROW_UNSUPPORTED_OPERATION_NAME.internalCallableId.functionSymbol()
+        override val syntheticConstructorMarker: IrClassSymbol? = ClassIds.SyntheticConstructorMarker.classSymbolOrNull()
+        override val throwUninitializedPropertyAccessException: IrSimpleFunctionSymbol? =
+            CallableIds.throwUninitializedPropertyAccessException.functionSymbolOrNull()
+        override val throwUnsupportedOperationException: IrSimpleFunctionSymbol? =
+            CallableIds.throwUnsupportedOperationException.functionSymbolOrNull()
     }
 
     companion object {
@@ -192,6 +191,15 @@ interface PreSerializationKlibSymbols : PreSerializationSymbols {
         private val kotlinInternalPackageFqn = FqName.fromSegments(listOf("kotlin", "internal"))
         private val String.internalCallableId: CallableId
             get() = CallableId(kotlinInternalPackageFqn, Name.identifier(this))
+
+        private object ClassIds {
+            val SyntheticConstructorMarker = ClassId(StandardNames.KOTLIN_INTERNAL_FQ_NAME, Name.identifier("SyntheticConstructorMarker"))
+        }
+
+        private object CallableIds {
+            val throwUninitializedPropertyAccessException = THROW_UNINITIALIZED_PROPERTY_ACCESS_NAME.internalCallableId
+            val throwUnsupportedOperationException = THROW_UNSUPPORTED_OPERATION_NAME.internalCallableId
+        }
     }
 }
 
@@ -268,8 +276,8 @@ interface PreSerializationNativeSymbols : PreSerializationKlibSymbols {
     val asserts: Iterable<IrSimpleFunctionSymbol>
     val isAssertionArgumentEvaluationEnabled: IrSimpleFunctionSymbol
 
-    val testInitializer: IrClassSymbol
-    val testsProcessed: IrClassSymbol
+    val testInitializer: IrClassSymbol? // KT-83151 Restore non-nullability of symbols available since 2.3
+    val testsProcessed: IrClassSymbol? // KT-83151 Restore non-nullability of symbols available since 2.3
 
     val topLevelSuite: IrClassSymbol
     val baseClassSuite: IrClassSymbol
@@ -281,8 +289,8 @@ interface PreSerializationNativeSymbols : PreSerializationKlibSymbols {
         override val isAssertionArgumentEvaluationEnabled: IrSimpleFunctionSymbol =
             CallableIds.isAssertionArgumentEvaluationEnabled.functionSymbol()
 
-        override val testInitializer = ClassIds.testInitializer.classSymbol()
-        override val testsProcessed = ClassIds.testsProcessed.classSymbol()
+        override val testInitializer = ClassIds.testInitializer.classSymbolOrNull()
+        override val testsProcessed = ClassIds.testsProcessed.classSymbolOrNull()
 
         override val topLevelSuite = ClassIds.topLevelSuite.classSymbol()
         override val baseClassSuite = ClassIds.baseClassSuite.classSymbol()

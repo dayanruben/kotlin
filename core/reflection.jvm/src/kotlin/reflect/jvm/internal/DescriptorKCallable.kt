@@ -5,11 +5,9 @@
 
 package kotlin.reflect.jvm.internal
 
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
-import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.descriptors.PropertyAccessorDescriptor
-import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl
+import org.jetbrains.kotlin.load.java.JavaDescriptorVisibilities
 import org.jetbrains.kotlin.load.java.descriptors.JavaCallableMemberDescriptor
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedPropertyDescriptor
@@ -19,11 +17,16 @@ import kotlin.reflect.KType
 import kotlin.reflect.KTypeParameter
 import kotlin.reflect.KVisibility
 import kotlin.reflect.jvm.internal.types.DescriptorKType
+import kotlin.reflect.jvm.internal.types.KTypeSubstitutor
 
-internal abstract class DescriptorKCallable<out R> : ReflectKCallableImpl<R>() {
+internal abstract class DescriptorKCallable<out R>(
+    internal val overriddenStorage: KCallableOverriddenStorage,
+) : ReflectKCallableImpl<R>() {
     abstract val descriptor: CallableMemberDescriptor
 
     protected abstract fun computeReturnType(): DescriptorKType
+
+    internal abstract fun shallowCopy(overriddenStorage: KCallableOverriddenStorage): DescriptorKCallable<R>
 
     private val _annotations = ReflectProperties.lazySoft { descriptor.computeAnnotations() }
 
@@ -43,7 +46,7 @@ internal abstract class DescriptorKCallable<out R> : ReflectKCallableImpl<R>() {
         val descriptor = descriptor
         val result = ArrayList<KParameter>()
         if (includeReceivers) {
-            val instanceReceiver = descriptor.instanceReceiverParameter
+            val instanceReceiver = instanceReceiverParameter
             if (instanceReceiver != null) {
                 result.add(DescriptorKParameter(this, result.size, KParameter.Kind.INSTANCE) { instanceReceiver })
             }
@@ -98,13 +101,19 @@ internal abstract class DescriptorKCallable<out R> : ReflectKCallableImpl<R>() {
         }
     }
 
-    private val _returnType = ReflectProperties.lazySoft { computeReturnType() }
+    private val _returnType = ReflectProperties.lazySoft {
+        val type = computeReturnType()
+        overriddenStorage.typeSubstitutor.substitute(type).type
+            ?: starProjectionInTopLevelTypeIsNotNotPossible(containerForDebug = name)
+    }
 
     override val returnType: KType
         get() = _returnType()
 
     private val _typeParameters = ReflectProperties.lazySoft {
-        descriptor.typeParameters.map { descriptor -> KTypeParameterImpl(this, descriptor) }
+        descriptor.typeParameters.map { descriptor ->
+            KTypeParameterImpl(this, descriptor, overriddenStorage.typeSubstitutor)
+        }
     }
 
     override val typeParameters: List<KTypeParameter>
@@ -113,12 +122,43 @@ internal abstract class DescriptorKCallable<out R> : ReflectKCallableImpl<R>() {
     override val visibility: KVisibility?
         get() = descriptor.visibility.toKVisibility()
 
-    override val isFinal: Boolean
-        get() = descriptor.modality == Modality.FINAL
+    internal val modality: Modality
+        get() = overriddenStorage.modality ?: descriptor.modality
 
-    override val isOpen: Boolean
-        get() = descriptor.modality == Modality.OPEN
+    internal val isPackagePrivate: Boolean
+        get() = descriptor.visibility == JavaDescriptorVisibilities.PACKAGE_VISIBILITY
 
-    override val isAbstract: Boolean
-        get() = descriptor.modality == Modality.ABSTRACT
+    final override val isFinal: Boolean
+        get() = modality == Modality.FINAL
+
+    final override val isOpen: Boolean
+        get() = modality == Modality.OPEN
+
+    final override val isAbstract: Boolean
+        get() = modality == Modality.ABSTRACT
+}
+
+internal data class KCallableOverriddenStorage(
+    val instanceReceiverParameter: ReceiverParameterDescriptor?,
+    val typeSubstitutor: KTypeSubstitutor,
+    val modality: Modality?,
+    val isFakeOverride: Boolean,
+
+    val forceIsExternal: Boolean,
+    val forceIsOperator: Boolean,
+    val forceIsInfix: Boolean,
+    val forceIsInline: Boolean,
+) {
+    companion object {
+        val EMPTY = KCallableOverriddenStorage(
+            null,
+            KTypeSubstitutor.EMPTY,
+            null,
+            isFakeOverride = false,
+            forceIsExternal = false,
+            forceIsOperator = false,
+            forceIsInfix = false,
+            forceIsInline = false,
+        )
+    }
 }

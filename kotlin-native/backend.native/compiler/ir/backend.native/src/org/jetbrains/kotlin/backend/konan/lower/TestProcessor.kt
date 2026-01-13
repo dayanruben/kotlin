@@ -641,7 +641,9 @@ internal class TestProcessor(
             }.apply {
                 parent = irFile
                 irFile.declarations.add(this)
-                annotations += buildSimpleAnnotation(context.irBuiltIns, startOffset, endOffset, symbols.testInitializer.owner)
+                symbols.testInitializer?.let { testInitializerSymbol ->
+                    annotations += buildSimpleAnnotation(context.irBuiltIns, startOffset, endOffset, testInitializerSymbol.owner)
+                }
                 body = context.createIrBuilder(symbol, SYNTHETIC_OFFSET, SYNTHETIC_OFFSET).irBlockBody {
                     statements.forEach {
                         it.accept(SetDeclarationsParentVisitor, this@apply)
@@ -653,20 +655,24 @@ internal class TestProcessor(
 
         if (annotationCollector.testClasses.isNotEmpty() || annotationCollector.topLevelFunctions.isNotEmpty()) {
             irFile.annotations += buildSimpleAnnotation(
-                    context.irBuiltIns, SYNTHETIC_OFFSET, SYNTHETIC_OFFSET, symbols.testsProcessed.owner
+                    context.irBuiltIns, SYNTHETIC_OFFSET, SYNTHETIC_OFFSET, symbols.testsProcessed!!.owner
             )
         }
     }
     // endregion
 
     private fun shouldSkipFile(irFile: IrFile): Boolean =
-            irFile.hasAnnotation(symbols.testsProcessed)
+            irFile.hasAnnotation(symbols.testsProcessed!!)
                     || irFile.moduleDescriptor.let {
                 // Process test annotations in source libraries too.
                 sourcesModules != null && it !in sourcesModules
             }
 
     override fun lower(irFile: IrFile) {
+        // This can happen when exporting a klib to an older ABI version. (KT-82530)
+        // In this scenario the symbol cannot be found in the stdlib during the 1st stage, and the lowering is postponed to the 2nd stage.
+        if (symbols.testsProcessed == null) return // KT-83151 Restore non-nullability of symbols available since 2.3
+
         // TODO: uses descriptors.
         if (shouldSkipFile(irFile)) return
 

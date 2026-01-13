@@ -97,7 +97,6 @@ class JvmNewKotlinReflectCompatibilityCheck(testServices: TestServices) : JvmBin
     }
 
     override fun processAfterAllModules(someAssertionWasFailed: Boolean) {
-        if (skipAsserts) return
         val k1ReflectDump = k1ReflectStringBuilder.toString()
         val newReflectDump = newReflectStringBuilder.toString()
         val kotlinReflectDumpMismatch =
@@ -107,6 +106,11 @@ class JvmNewKotlinReflectCompatibilityCheck(testServices: TestServices) : JvmBin
         val newReflectFile =
             testServices.moduleStructure.originalTestDataFiles.first().withExtension(".reflect-new.txt")
         if (kotlinReflectDumpMismatch) {
+            assertions.assertFalse(skipAsserts) {
+                "Cannot use both directives: " +
+                        "SKIP_NEW_KOTLIN_REFLECT_COMPATIBILITY_CHECK and KOTLIN_REFLECT_DUMP_MISMATCH. " +
+                        "Pick one"
+            }
             val a = runCatching { assertions.assertEqualsToFile(k1ReflectFile, k1ReflectDump) }
             val b = runCatching { assertions.assertEqualsToFile(newReflectFile, newReflectDump) }
             a.getOrThrow()
@@ -118,9 +122,12 @@ class JvmNewKotlinReflectCompatibilityCheck(testServices: TestServices) : JvmBin
         } else {
             k1ReflectFile.delete()
             newReflectFile.delete()
+            if (skipAsserts) return
             if (k1ReflectDump != newReflectDump) {
-                val k1ReflectHeader = "// K1 kotlin-reflect dump\n"
-                val newReflectHeader = "// New kotlin-reflect dump\n"
+                val tip =
+                    "// Tip: you can use KOTLIN_REFLECT_DUMP_MISMATCH / SKIP_NEW_KOTLIN_REFLECT_COMPATIBILITY_CHECK directives to suppress the test\n"
+                val k1ReflectHeader = "$tip// K1 kotlin-reflect dump\n"
+                val newReflectHeader = "$tip// New kotlin-reflect dump\n"
                 assertions.assertEquals(k1ReflectHeader + k1ReflectDump, newReflectHeader + newReflectDump)
             }
         }
@@ -143,7 +150,7 @@ class JvmNewKotlinReflectCompatibilityCheck(testServices: TestServices) : JvmBin
         private fun getNewKotlinReflectDumper(testServices: TestServices): AlienInstance {
             newKotlinReflectDumper.get()?.let { return it }
             return RunInAlienClassLoader::class.java
-                .newInstanceInNewClassloader(testServices.standardLibrariesPathProvider.getRuntimeAndReflectJarClassLoader())
+                .newInstanceInNewClassloader(testServices.standardLibrariesPathProvider.getRuntimeAndReflectWithNewFakeOverrridesJarClassLoader())
                 .also { newKotlinReflectDumper = SoftReference(it) }
         }
     }
@@ -220,11 +227,11 @@ class RunInAlienClassLoader {
         kCallables.map { kCallable ->
             val str = kCallable.toString()
             str to buildString {
+                kCallable.visibility?.let { append("${it.toString().lowercase()} ") }
                 if (kCallable.isOpen) append("open ")
                 if (kCallable.isAbstract) append("abstract ")
                 if (kCallable.isFinal) append("final ")
                 if (kCallable.isSuspend) append("suspend ")
-                kCallable.visibility?.let { append("$it ") }
                 if (kCallable is KFunction) {
                     if (kCallable.isOperator) append("operator ")
                     if (kCallable.isInfix) append("infix ")
