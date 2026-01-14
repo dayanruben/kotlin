@@ -100,6 +100,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val WRONG_LONG_SUFFIX by error<KtElement>(PositioningStrategy.LONG_LITERAL_SUFFIX)
         val UNSIGNED_LITERAL_WITHOUT_DECLARATIONS_ON_CLASSPATH by error<KtElement>()
         val DIVISION_BY_ZERO by warning<KtExpression>()
+        val TRIM_MARGIN_BLANK_PREFIX by warning<KtExpression>()
         val VAL_OR_VAR_ON_LOOP_PARAMETER by error<KtParameter>(PositioningStrategy.VAL_OR_VAR_NODE) {
             parameter<KtKeywordToken>("valOrVar")
         }
@@ -1180,6 +1181,9 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<ClassId>("atomicRef")
             parameter<ConeKotlinType>("argumentType")
             parameter<ClassId?>("suggestedType")
+        }
+        val ATOMIC_REF_CALL_ARGUMENT_WITHOUT_CONSISTENT_IDENTITY by warning<PsiElement> {
+            parameter<ConeKotlinType>("argumentType")
         }
     }
 

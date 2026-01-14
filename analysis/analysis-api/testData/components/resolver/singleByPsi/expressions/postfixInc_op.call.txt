@@ -3,7 +3,8 @@ KtOperationReferenceExpression(146,148): '++'
     call = KaCompoundVariableAccessCall:
       compoundOperation = KaCompoundUnaryOperation:
         kind = INC
-        operationPartiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+        operationCall = KaSimpleFunctionCall:
+          argumentMapping = {}
           contextArguments = []
           dispatchReceiver = KaExplicitReceiverValue:
             expression = variable
@@ -17,11 +18,14 @@ KtOperationReferenceExpression(146,148): '++'
             valueParameters = []
             contextParameters = []
             callableId = /MyClass.inc
+          typeArgumentsMapping = {}
         precedence = POSTFIX
-      variablePartiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+      variableCall = KaSimpleVariableAccessCall:
         contextArguments = []
         dispatchReceiver = null
         extensionReceiver = null
+        isContextSensitive = false
+        kind = Read
         signature = KaVariableSignature:
           name = variable
           receiverType = null
@@ -29,3 +33,4 @@ KtOperationReferenceExpression(146,148): '++'
           symbol = var variable: MyClass
           contextParameters = []
           callableId = /variable
+        typeArgumentsMapping = {}

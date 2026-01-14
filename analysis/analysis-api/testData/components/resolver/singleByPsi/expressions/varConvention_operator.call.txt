@@ -4,7 +4,16 @@ KtOperationReferenceExpression(33,35): '+='
       compoundOperation = KaCompoundAssignOperation:
         kind = PLUS_ASSIGN
         operand = 1
-        operationPartiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+        operationCall = KaSimpleFunctionCall:
+          argumentMapping = {
+            i -> (KaVariableSignature:
+              name = other
+              receiverType = null
+              returnType = kotlin.Int
+              symbol = other: kotlin.Int
+              contextParameters = []
+              callableId = null)
+          }
           contextArguments = []
           dispatchReceiver = KaExplicitReceiverValue:
             expression = i
@@ -26,10 +35,13 @@ KtOperationReferenceExpression(33,35): '+='
             ]
             contextParameters = []
             callableId = kotlin/Int.plus
-      variablePartiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+          typeArgumentsMapping = {}
+      variableCall = KaSimpleVariableAccessCall:
         contextArguments = []
         dispatchReceiver = null
         extensionReceiver = null
+        isContextSensitive = false
+        kind = Read
         signature = KaVariableSignature:
           name = i
           receiverType = null
@@ -37,3 +49,4 @@ KtOperationReferenceExpression(33,35): '+='
           symbol = var i: kotlin.Int
           contextParameters = []
           callableId = null
+        typeArgumentsMapping = {}

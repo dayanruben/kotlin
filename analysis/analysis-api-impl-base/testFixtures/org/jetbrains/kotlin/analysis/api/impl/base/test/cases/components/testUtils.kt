@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -129,8 +129,14 @@ internal fun stringRepresentation(any: Any?): String = with(any) {
 
             val klass = this@with::class
             klass.memberProperties
-                .filter {
-                    it.name != "token" && it.visibility == KVisibility.PUBLIC && !it.hasAnnotation<Deprecated>()
+                .filter { property ->
+                    property.visibility == KVisibility.PUBLIC &&
+                            !property.hasAnnotation<Deprecated>() &&
+                            property.name != "token" &&
+                            // The multi-call already renders all calls via other properties
+                            !(klass.isSubclassOf(KaMultiCall::class) && property.name == KaMultiCall::calls.name) &&
+                            /** The call is already covered as a part of [KaCompoundOperation.operationCall] */
+                            !(klass.isSubclassOf(KaCompoundAccessCall::class) && property.name == KaCompoundAccessCall::operationCall.name)
                 }.ifNotEmpty {
                     joinTo(this@buildString, separator = "\n  ", prefix = ":\n  ") { property ->
                         val name = property.name
@@ -142,7 +148,7 @@ internal fun stringRepresentation(any: Any?): String = with(any) {
                                     sortedCalls(value as Collection<KaCall>)
                                 }
 
-                                KaSymbolResolutionError::class.isSuperclassOf(klass) && name == "candidateSymbols" -> {
+                                KaSymbolResolutionError::class.isSuperclassOf(klass) && name == KaSymbolResolutionError::candidateSymbols.name -> {
                                     sortedSymbols(value as Collection<KaSymbol>)
                                 }
 
@@ -243,14 +249,14 @@ internal fun sortedCalls(collection: Collection<KaCall>): Collection<KaCall> = c
 
 internal fun KaCall.symbols(): List<KaSymbol> = when (this) {
     is KaCompoundVariableAccessCall -> listOfNotNull(
-        variablePartiallyAppliedSymbol.symbol,
-        compoundOperation.operationPartiallyAppliedSymbol.symbol,
+        variableCall.symbol,
+        operationCall.symbol,
     )
 
     is KaCompoundArrayAccessCall -> listOfNotNull(
-        getPartiallyAppliedSymbol.symbol,
-        setPartiallyAppliedSymbol.symbol,
-        compoundOperation.operationPartiallyAppliedSymbol.symbol,
+        getterCall.symbol,
+        setterCall.symbol,
+        operationCall.symbol,
     )
 
     is KaCallableMemberCall<*, *> -> listOf(symbol)
@@ -428,6 +434,19 @@ internal fun assertConsistency(testServices: TestServices, call: KaCall) {
     val assertions = testServices.assertions
     val typeArgumentsMapping = call.typeArgumentsMapping
     val symbol = call.symbol
+
+    if (call is KaSingleCall<*, *>) {
+        val partiallyAppliedSymbol = call.partiallyAppliedSymbol
+        assertions.assertEquals(call.signature, partiallyAppliedSymbol.signature)
+        assertions.assertEquals(call.dispatchReceiver, partiallyAppliedSymbol.dispatchReceiver)
+        assertions.assertEquals(call.extensionReceiver, partiallyAppliedSymbol.extensionReceiver)
+        assertions.assertEquals(call.contextArguments, partiallyAppliedSymbol.contextArguments)
+    }
+
+    @Suppress("DEPRECATION")
+    if (call is KaSimpleFunctionCall) {
+        assertions.assertEquals(call is KaImplicitInvokeCall, call.isImplicitInvoke)
+    }
 
     val typeParameters = symbol.typeParameters
     for (parameterSymbol in typeParameters) {

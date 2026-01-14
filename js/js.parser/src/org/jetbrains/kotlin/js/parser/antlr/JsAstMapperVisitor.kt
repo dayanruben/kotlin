@@ -402,13 +402,15 @@ internal class JsAstMapperVisitor(
         val paramList = ctx.formalParameterList()
         val restParam = paramList?.restParameterArg()
         val formalParams = paramList?.formalParameterArg() ?: emptyList()
-        check(restParam == null) { "Rest parameters are not supported yet" }
 
         return scopeContext.enterFunction().apply {
             this.name = scopeContext.localNameFor(id.text)
             if (isGenerator) modifiers.add(Modifier.GENERATOR)
             formalParams.mapTo(parameters) {
                 visitNode<JsParameter>(it).applyLocation(it)
+            }
+            restParam?.let {
+                parameters.add(visitNode<JsParameter>(it).applyLocation(it))
             }
             body = visitNode<JsBlock>(ctx.functionBody())
             scopeContext.exitFunction()
@@ -457,8 +459,14 @@ internal class JsAstMapperVisitor(
             .applyComments(ctx)
     }
 
-    override fun visitRestParameterArg(ctx: JavaScriptParser.RestParameterArgContext?): JsNode? {
-        raiseParserException("Rest parameters are not supported yet", ctx)
+    override fun visitRestParameterArg(ctx: JavaScriptParser.RestParameterArgContext): JsParameter {
+        val identifier = ctx.singleExpression().singleExpressionImpl() as? JavaScriptParser.IdentifierExpressionContext
+            ?: reportError("Only identifier rest parameters are supported yet", ctx)
+        val paramName = scopeContext.localNameFor(identifier.text)
+
+        return JsParameter(paramName, isRest = true)
+            .applyLocation(ctx)
+            .applyComments(ctx)
     }
 
     override fun visitFunctionBody(ctx: JavaScriptParser.FunctionBodyContext): JsBlock {
@@ -475,7 +483,15 @@ internal class JsAstMapperVisitor(
 
     override fun visitArrayLiteral(ctx: JavaScriptParser.ArrayLiteralContext): JsArrayLiteral {
         return JsArrayLiteral().apply {
-            expressions.addAll(visitAll<JsExpression>(ctx.elementList().arrayElement()))
+            var elements = ctx.elementList()?.arrayElement() ?: emptyList()
+            // If an array contains a trailing comma (like [1,]) it doesn't introduce an array hole,
+            // but parser treats it as a hole anyway.
+            // Since it's quite tricky to tweak the grammar and keep it not too complex,
+            // such a trailing hole removal post-processing is needed here.
+            if (elements.size > 1 && elements.lastOrNull()?.text == "")
+                elements = elements.dropLast(1)
+
+            expressions.addAll(visitAll<JsExpression>(elements))
         }.applyLocation(ctx)
     }
 
@@ -484,9 +500,14 @@ internal class JsAstMapperVisitor(
     }
 
     override fun visitArrayElement(ctx: JavaScriptParser.ArrayElementContext): JsExpression {
-        check(ctx.Ellipsis() == null) { "Spread operator is not supported yet" }
+        if (ctx.singleExpression() == null)
+            return makeRefNode("undefined").applyLocation(ctx)
 
-        return visitNode<JsExpression>(ctx.singleExpression())
+        val expression = visitNode<JsExpression>(ctx.singleExpression())
+        ctx.Ellipsis()?.let {
+            return JsSpread(expression).applyLocation(it)
+        }
+        return expression
     }
 
     override fun visitPropertyExpressionAssignment(ctx: JavaScriptParser.PropertyExpressionAssignmentContext): JsPropertyInitializer {
@@ -503,8 +524,29 @@ internal class JsAstMapperVisitor(
         ).applyLocation(ctx)
     }
 
-    override fun visitFunctionProperty(ctx: JavaScriptParser.FunctionPropertyContext): JsNode? {
-        reportError("Function properties are not supported yet", ctx)
+    override fun visitFunctionProperty(ctx: JavaScriptParser.FunctionPropertyContext): JsPropertyInitializer {
+        check(ctx.Async() == null) { "Async concise methods are not supported yet" }
+
+        val isGenerator = ctx.Multiply() != null
+        val paramList = ctx.formalParameterList()
+        val restParam = paramList?.restParameterArg()
+        val formalParams = paramList?.formalParameterArg() ?: emptyList()
+
+        return JsPropertyInitializer.KeyValue(
+            visitNode<JsExpression>(ctx.propertyName()),
+            scopeContext.enterFunction().apply {
+                name = null
+                if (isGenerator) modifiers.add(Modifier.GENERATOR)
+                formalParams.mapTo(parameters) {
+                    visitNode<JsParameter>(it).applyLocation(it)
+                }
+                restParam?.let {
+                    parameters.add(visitNode<JsParameter>(it).applyLocation(it))
+                }
+                body = visitNode<JsBlock>(ctx.functionBody())
+                scopeContext.exitFunction()
+            }.applyLocation(ctx.OpenParen())
+        ).applyLocation(ctx)
     }
 
     override fun visitPropertyGetter(ctx: JavaScriptParser.PropertyGetterContext): JsNode? {
@@ -554,17 +596,16 @@ internal class JsAstMapperVisitor(
     }
 
     override fun visitArgument(ctx: JavaScriptParser.ArgumentContext): JsExpression {
-        check(ctx.Ellipsis() == null) { "Spread operator is not supported yet" }
-
-        ctx.singleExpression()?.let {
-            return visitNode<JsExpression>(it)
+        val expression = when {
+            ctx.singleExpression() != null -> visitNode<JsExpression>(ctx.singleExpression())
+            ctx.identifier() != null -> visitNode<JsNameRef>(ctx.identifier())
+            else -> raiseParserException("Invalid argument: ${ctx.text}", ctx)
         }
 
-        ctx.identifier()?.let {
-            return visitNode<JsNameRef>(it)
+        return when {
+            ctx.Ellipsis() != null -> JsSpread(expression).applyLocation(ctx.Ellipsis())
+            else -> expression
         }
-
-        raiseParserException("Invalid argument: ${ctx.text}", ctx)
     }
 
     override fun visitExpressionSequence(ctx: JavaScriptParser.ExpressionSequenceContext): JsExpression {
@@ -981,13 +1022,15 @@ internal class JsAstMapperVisitor(
         val paramList = ctx.formalParameterList()
         val restParam = paramList?.restParameterArg()
         val formalParams = paramList?.formalParameterArg() ?: emptyList()
-        check(restParam == null) { "Rest parameters are not supported yet" }
 
         return scopeContext.enterFunction().apply {
             this.name = null
             if (isGenerator) modifiers.add(Modifier.GENERATOR)
             formalParams.mapTo(parameters) {
                 visitNode<JsParameter>(it).applyLocation(it)
+            }
+            restParam?.let {
+                parameters.add(visitNode<JsParameter>(it).applyLocation(it))
             }
             body = visitNode<JsBlock>(ctx.functionBody())
             scopeContext.exitFunction()
@@ -999,22 +1042,25 @@ internal class JsAstMapperVisitor(
             val params = ctx.arrowFunctionParameters()
             val parenthesizedParamList = params.formalParameterList()
             val restParam = parenthesizedParamList?.restParameterArg()
-            check(restParam == null) { "Rest parameters are not supported yet" }
 
-            params?.identifierName()?.let { singleIdentifier ->
-                return JsParameter(scopeContext.localNameFor(singleIdentifier.text))
-                    .applyLocation(singleIdentifier)
-                    .applyComments(singleIdentifier)
-                    .let(::listOf)
-            }
+            return buildList {
+                params?.identifierName()?.let { singleIdentifier ->
+                    JsParameter(scopeContext.localNameFor(singleIdentifier.text))
+                        .applyLocation(singleIdentifier)
+                        .applyComments(singleIdentifier)
+                        .let { add(it) }
+                }
 
-            parenthesizedParamList?.formalParameterArg()?.let { formalParams ->
-                return formalParams.map { param ->
-                    visitNode<JsParameter>(param).applyLocation(param)
+                parenthesizedParamList?.formalParameterArg()?.let { formalParams ->
+                    formalParams.forEach { param ->
+                        add(visitNode<JsParameter>(param).applyLocation(param))
+                    }
+                }
+
+                restParam?.let {
+                    add(visitNode<JsParameter>(it).applyLocation(it))
                 }
             }
-
-            return emptyList()
         }
 
         return scopeContext.enterFunction().apply {

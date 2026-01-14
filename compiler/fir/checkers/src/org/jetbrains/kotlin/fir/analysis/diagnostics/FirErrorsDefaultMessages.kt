@@ -129,6 +129,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ASSIGNMENT_IN_EXP
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ASSIGNMENT_OPERATOR_SHOULD_RETURN_UNIT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ASSIGNMENT_TYPE_MISMATCH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ASSIGN_OPERATOR_AMBIGUITY
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ATOMIC_REF_CALL_ARGUMENT_WITHOUT_CONSISTENT_IDENTITY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ATOMIC_REF_WITHOUT_CONSISTENT_IDENTITY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.BACKING_FIELD_FOR_DELEGATED_PROPERTY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.BACKING_FIELD_IN_INTERFACE
@@ -780,6 +781,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TAIL_RECURSION_IN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.THROWABLE_TYPE_MISMATCH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TOO_MANY_ARGUMENTS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TOO_MANY_CHARACTERS_IN_CHARACTER_LITERAL
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TRIM_MARGIN_BLANK_PREFIX
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPEALIAS_AS_CALLABLE_QUALIFIER_IN_IMPORT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPEALIAS_EXPANDS_TO_ARRAY_OF_NOTHINGS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPEALIAS_EXPANDS_TO_COMPILER_REQUIRED_ANNOTATION
@@ -980,6 +982,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             "Type of constant expression cannot be resolved. Make sure you have the required dependencies for unsigned types in the classpath."
         )
         map.put(DIVISION_BY_ZERO, "Division by zero.")
+        map.put(TRIM_MARGIN_BLANK_PREFIX, "Prefix for trimMargin cannot be blank.")
         map.put(VAL_OR_VAR_ON_LOOP_PARAMETER, "''{0}'' on loop parameter is prohibited.", TO_STRING)
         map.put(VAL_OR_VAR_ON_FUN_PARAMETER, "''{0}'' on function parameter is prohibited.", TO_STRING)
         map.put(VAL_OR_VAR_ON_CATCH_PARAMETER, "''{0}'' on catch parameter is prohibited.", TO_STRING)
@@ -2249,6 +2252,11 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             CLASS_ID_RELATIVE_NAME_ONLY,
             RENDER_TYPE,
             suggestIfNotNull(" Consider using ''{0}'' instead.", CLASS_ID_RELATIVE_NAME_ONLY),
+        )
+        map.put(
+            ATOMIC_REF_CALL_ARGUMENT_WITHOUT_CONSISTENT_IDENTITY,
+            "This call may have inconsistent results because the type of this argument, ''{0}'', does not have a consistent identity.",
+            RENDER_TYPE,
         )
 
         // Reflection

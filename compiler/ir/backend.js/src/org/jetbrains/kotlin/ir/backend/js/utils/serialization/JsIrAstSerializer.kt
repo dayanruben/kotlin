@@ -583,6 +583,11 @@ private class JsIrAstSerializer {
                 writeByte(ExpressionIds.YIELD_STAR)
                 ifNotNull(x.expression) { writeExpression(it) }
             }
+
+            override fun visitSpread(spread: JsSpread) {
+                writeByte(ExpressionIds.SPREAD)
+                writeExpression(spread.expression)
+            }
         }
 
         withComments(expression) {
@@ -630,6 +635,7 @@ private class JsIrAstSerializer {
 
     private fun DataWriter.writeParameter(parameter: JsParameter) {
         writeInt(internalizeName(parameter.name))
+        writeBoolean(parameter.isRest)
         writeBoolean(parameter.hasDefaultValue)
     }
 

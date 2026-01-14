@@ -252,6 +252,11 @@ internal class DivisionByZeroImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtExpression>(firDiagnostic, token), KaFirDiagnostic.DivisionByZero
 
+internal class TrimMarginBlankPrefixImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtExpression>(firDiagnostic, token), KaFirDiagnostic.TrimMarginBlankPrefix
+
 internal class ValOrVarOnLoopParameterImpl(
     override val valOrVar: KtKeywordToken,
     firDiagnostic: KtPsiDiagnostic,
@@ -2872,6 +2877,12 @@ internal class AtomicRefWithoutConsistentIdentityImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.AtomicRefWithoutConsistentIdentity
+
+internal class AtomicRefCallArgumentWithoutConsistentIdentityImpl(
+    override val argumentType: KaType,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.AtomicRefCallArgumentWithoutConsistentIdentity
 
 internal class ExtensionInClassReferenceNotAllowedImpl(
     override val referencedDeclaration: KaCallableSymbol,

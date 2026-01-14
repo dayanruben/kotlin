@@ -10,26 +10,24 @@ KtNameReferenceExpression(78,85): 'suspend'
           contextParameters = []
           callableId = null)
       }
-      isImplicitInvoke = false
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = null
-        extensionReceiver = null
-        signature = KaFunctionSignature:
-          receiverType = null
-          returnType = suspend () -> kotlin.Unit
-          symbol = kotlin/suspend(block: suspend () -> R): suspend () -> R
-          valueParameters = [
-            KaVariableSignature:
-              name = block
-              receiverType = null
-              returnType = suspend () -> kotlin.Unit
-              symbol = block: suspend () -> R
-              contextParameters = []
-              callableId = null
-          ]
-          contextParameters = []
-          callableId = kotlin/suspend
+      contextArguments = []
+      dispatchReceiver = null
+      extensionReceiver = null
+      signature = KaFunctionSignature:
+        receiverType = null
+        returnType = suspend () -> kotlin.Unit
+        symbol = kotlin/suspend(block: suspend () -> R): suspend () -> R
+        valueParameters = [
+          KaVariableSignature:
+            name = block
+            receiverType = null
+            returnType = suspend () -> kotlin.Unit
+            symbol = block: suspend () -> R
+            contextParameters = []
+            callableId = null
+        ]
+        contextParameters = []
+        callableId = kotlin/suspend
       typeArgumentsMapping = {
         R -> (kotlin.Unit)
       }

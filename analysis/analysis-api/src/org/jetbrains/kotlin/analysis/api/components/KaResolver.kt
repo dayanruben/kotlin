@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -162,7 +162,7 @@ public interface KaResolver : KaSessionComponent {
     public fun KtConstructorDelegationReferenceExpression.resolveSymbol(): KaConstructorSymbol?
 
     /**
-     * Resolves the callable symbol targeted by the given [KtCallElement].
+     * Resolves the function symbol targeted by the given [KtCallElement].
      *
      * #### Example
      *
@@ -175,7 +175,7 @@ public interface KaResolver : KaSessionComponent {
      * }
      * ```
      *
-     * Calling `resolveSymbol()` on the [KtCallElement] (`foo(42)`) returns the [KaCallableSymbol] of `foo`
+     * Calling `resolveSymbol()` on the [KtCallElement] (`foo(42)`) returns the [KaFunctionSymbol] of `foo`
      * if resolution succeeds; otherwise, it returns `null` (e.g., when unresolved or ambiguous).
      *
      * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on call elements
@@ -184,7 +184,7 @@ public interface KaResolver : KaSessionComponent {
      * @see KtResolvable.resolveSymbol
      */
     @KaExperimentalApi
-    public fun KtCallElement.resolveSymbol(): KaCallableSymbol?
+    public fun KtCallElement.resolveSymbol(): KaFunctionSymbol?
 
     /**
      * Resolves the callable symbol targeted by the given [KtCallableReferenceExpression].
@@ -413,19 +413,19 @@ public interface KaResolver : KaSessionComponent {
      * ```kotlin
      * fun KaSession.resolveSymbol(expression: KtCallExpression): KaSymbol? {
      *   val successfulCall = expression.resolveCall() ?: return null
-     *   val callableCall = successfulCall as? KaCallableMemberCall ?: return null
+     *   val callableCall = successfulCall as? KaSingleCall<*, *> ?: return null
      *   return callableCall.symbol
      * }
      * ```
      *
-     * Returns the resolved [KaCall] on success; otherwise, `null`
+     * Returns the resolved [KaCallResolutionSuccess] on success; otherwise, `null`
      *
      * @see tryResolveCall
      * @see collectCallCandidates
      */
     @KaExperimentalApi
     @OptIn(KtExperimentalApi::class)
-    public fun KtResolvableCall.resolveCall(): KaCall?
+    public fun KtResolvableCall.resolveCall(): KaCallResolutionSuccess?
 
     /**
      * Resolves the given [KtAnnotationEntry] to an annotation constructor call.
@@ -530,7 +530,7 @@ public interface KaResolver : KaSessionComponent {
     public fun KtConstructorDelegationReferenceExpression.resolveCall(): KaDelegatedConstructorCall?
 
     /**
-     * Resolves the given [KtCallElement] to a callable member call.
+     * Resolves the given [KtCallElement] to a function call.
      *
      * #### Example
      *
@@ -543,7 +543,7 @@ public interface KaResolver : KaSessionComponent {
      * }
      * ```
      *
-     * Returns the corresponding [KaCallableMemberCall] if resolution succeeds;
+     * Returns the corresponding [KaSingleCall] if resolution succeeds;
      * otherwise, it returns `null` (e.g., when unresolved or ambiguous).
      *
      * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on call elements
@@ -552,7 +552,7 @@ public interface KaResolver : KaSessionComponent {
      * @see KtResolvableCall.resolveCall
      */
     @KaExperimentalApi
-    public fun KtCallElement.resolveCall(): KaCallableMemberCall<*, *>?
+    public fun KtCallElement.resolveCall(): KaFunctionCall<*>?
 
     /**
      * Resolves the given [KtCallableReferenceExpression] to a callable member call.
@@ -566,7 +566,7 @@ public interface KaResolver : KaSessionComponent {
      * //        ^^^^^^
      * ```
      *
-     * Returns the corresponding [KaCallableMemberCall] if resolution succeeds;
+     * Returns the corresponding [KaSingleCall] if resolution succeeds;
      * otherwise, it returns `null` (e.g., when unresolved or ambiguous).
      *
      * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on callable reference expressions
@@ -575,7 +575,7 @@ public interface KaResolver : KaSessionComponent {
      * @see KtResolvableCall.resolveCall
      */
     @KaExperimentalApi
-    public fun KtCallableReferenceExpression.resolveCall(): KaCallableMemberCall<*, *>?
+    public fun KtCallableReferenceExpression.resolveCall(): KaSingleCall<*, *>?
 
     /**
      * Resolves the given [KtArrayAccessExpression] to a simple function call representing `get`/`set` operator invocation.
@@ -614,7 +614,7 @@ public interface KaResolver : KaSessionComponent {
      * @see KtResolvableCall.resolveCall
      */
     @KaExperimentalApi
-    public fun KtArrayAccessExpression.resolveCall(): KaSimpleFunctionCall?
+    public fun KtArrayAccessExpression.resolveCall(): KaFunctionCall<KaNamedFunctionSymbol>?
 
     /**
      * Resolves the given [KtCollectionLiteralExpression] to a simple function call representing the corresponding
@@ -639,7 +639,7 @@ public interface KaResolver : KaSessionComponent {
      * @see KtResolvableCall.resolveCall
      */
     @KaExperimentalApi
-    public fun KtCollectionLiteralExpression.resolveCall(): KaSimpleFunctionCall?
+    public fun KtCollectionLiteralExpression.resolveCall(): KaFunctionCall<KaNamedFunctionSymbol>?
 
     /**
      * Resolves the given [KtEnumEntrySuperclassReferenceExpression] to a delegated constructor call.
@@ -692,7 +692,7 @@ public interface KaResolver : KaSessionComponent {
      * @see KtResolvableCall.resolveCall
      */
     @KaExperimentalApi
-    public fun KtWhenConditionInRange.resolveCall(): KaSimpleFunctionCall?
+    public fun KtWhenConditionInRange.resolveCall(): KaFunctionCall<KaNamedFunctionSymbol>?
 
     /**
      * Returns all candidates considered during [overload resolution](https://kotlinlang.org/spec/overload-resolution.html)
@@ -796,9 +796,9 @@ public interface KaResolver : KaSessionComponent {
 @KaExperimentalApi
 @OptIn(KtExperimentalApi::class)
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtResolvable.tryResolveSymbols(): KaSymbolResolutionAttempt? {
-    return with(s) {
+    return with(session) {
         tryResolveSymbols()
     }
 }
@@ -817,9 +817,9 @@ public fun KtResolvable.tryResolveSymbols(): KaSymbolResolutionAttempt? {
 @KaExperimentalApi
 @OptIn(KtExperimentalApi::class)
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtResolvable.resolveSymbols(): Collection<KaSymbol> {
-    return with(s) {
+    return with(session) {
         resolveSymbols()
     }
 }
@@ -837,9 +837,9 @@ public fun KtResolvable.resolveSymbols(): Collection<KaSymbol> {
 @KaExperimentalApi
 @OptIn(KtExperimentalApi::class)
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtResolvable.resolveSymbol(): KaSymbol? {
-    return with(s) {
+    return with(session) {
         resolveSymbol()
     }
 }
@@ -867,9 +867,9 @@ public fun KtResolvable.resolveSymbol(): KaSymbol? {
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtAnnotationEntry.resolveSymbol(): KaConstructorSymbol? {
-    return with(s) {
+    return with(session) {
         resolveSymbol()
     }
 }
@@ -897,9 +897,9 @@ public fun KtAnnotationEntry.resolveSymbol(): KaConstructorSymbol? {
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtSuperTypeCallEntry.resolveSymbol(): KaConstructorSymbol? {
-    return with(s) {
+    return with(session) {
         resolveSymbol()
     }
 }
@@ -933,9 +933,9 @@ public fun KtSuperTypeCallEntry.resolveSymbol(): KaConstructorSymbol? {
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtConstructorDelegationCall.resolveSymbol(): KaConstructorSymbol? {
-    return with(s) {
+    return with(session) {
         resolveSymbol()
     }
 }
@@ -969,15 +969,15 @@ public fun KtConstructorDelegationCall.resolveSymbol(): KaConstructorSymbol? {
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtConstructorDelegationReferenceExpression.resolveSymbol(): KaConstructorSymbol? {
-    return with(s) {
+    return with(session) {
         resolveSymbol()
     }
 }
 
 /**
- * Resolves the callable symbol targeted by the given [KtCallElement].
+ * Resolves the function symbol targeted by the given [KtCallElement].
  *
  * #### Example
  *
@@ -990,7 +990,7 @@ public fun KtConstructorDelegationReferenceExpression.resolveSymbol(): KaConstru
  * }
  * ```
  *
- * Calling `resolveSymbol()` on the [KtCallElement] (`foo(42)`) returns the [KaCallableSymbol] of `foo`
+ * Calling `resolveSymbol()` on the [KtCallElement] (`foo(42)`) returns the [KaFunctionSymbol] of `foo`
  * if resolution succeeds; otherwise, it returns `null` (e.g., when unresolved or ambiguous).
  *
  * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on call elements
@@ -1001,9 +1001,9 @@ public fun KtConstructorDelegationReferenceExpression.resolveSymbol(): KaConstru
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
-public fun KtCallElement.resolveSymbol(): KaCallableSymbol? {
-    return with(s) {
+context(session: KaSession)
+public fun KtCallElement.resolveSymbol(): KaFunctionSymbol? {
+    return with(session) {
         resolveSymbol()
     }
 }
@@ -1031,9 +1031,9 @@ public fun KtCallElement.resolveSymbol(): KaCallableSymbol? {
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtCallableReferenceExpression.resolveSymbol(): KaCallableSymbol? {
-    return with(s) {
+    return with(session) {
         resolveSymbol()
     }
 }
@@ -1077,9 +1077,9 @@ public fun KtCallableReferenceExpression.resolveSymbol(): KaCallableSymbol? {
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtArrayAccessExpression.resolveSymbol(): KaNamedFunctionSymbol? {
-    return with(s) {
+    return with(session) {
         resolveSymbol()
     }
 }
@@ -1109,9 +1109,9 @@ public fun KtArrayAccessExpression.resolveSymbol(): KaNamedFunctionSymbol? {
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtCollectionLiteralExpression.resolveSymbol(): KaNamedFunctionSymbol? {
-    return with(s) {
+    return with(session) {
         resolveSymbol()
     }
 }
@@ -1140,9 +1140,9 @@ public fun KtCollectionLiteralExpression.resolveSymbol(): KaNamedFunctionSymbol?
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtEnumEntrySuperclassReferenceExpression.resolveSymbol(): KaConstructorSymbol? {
-    return with(s) {
+    return with(session) {
         resolveSymbol()
     }
 }
@@ -1176,9 +1176,9 @@ public fun KtEnumEntrySuperclassReferenceExpression.resolveSymbol(): KaConstruct
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtLabelReferenceExpression.resolveSymbol(): KaDeclarationSymbol? {
-    return with(s) {
+    return with(session) {
         resolveSymbol()
     }
 }
@@ -1214,9 +1214,9 @@ public fun KtLabelReferenceExpression.resolveSymbol(): KaDeclarationSymbol? {
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtReturnExpression.resolveSymbol(): KaFunctionSymbol? {
-    return with(s) {
+    return with(session) {
         resolveSymbol()
     }
 }
@@ -1250,9 +1250,9 @@ public fun KtReturnExpression.resolveSymbol(): KaFunctionSymbol? {
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtWhenConditionInRange.resolveSymbol(): KaNamedFunctionSymbol? {
-    return with(s) {
+    return with(session) {
         resolveSymbol()
     }
 }
@@ -1277,9 +1277,9 @@ public fun KtWhenConditionInRange.resolveSymbol(): KaNamedFunctionSymbol? {
 @KaExperimentalApi
 @OptIn(KtExperimentalApi::class)
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtResolvableCall.tryResolveCall(): KaCallResolutionAttempt? {
-    return with(s) {
+    return with(session) {
         tryResolveCall()
     }
 }
@@ -1291,12 +1291,12 @@ public fun KtResolvableCall.tryResolveCall(): KaCallResolutionAttempt? {
  * ```kotlin
  * fun KaSession.resolveSymbol(expression: KtCallExpression): KaSymbol? {
  *   val successfulCall = expression.resolveCall() ?: return null
- *   val callableCall = successfulCall as? KaCallableMemberCall ?: return null
+ *   val callableCall = successfulCall as? KaSingleCall<*, *> ?: return null
  *   return callableCall.symbol
  * }
  * ```
  *
- * Returns the resolved [KaCall] on success; otherwise, `null`
+ * Returns the resolved [KaCallResolutionSuccess] on success; otherwise, `null`
  *
  * @see tryResolveCall
  * @see collectCallCandidates
@@ -1305,9 +1305,9 @@ public fun KtResolvableCall.tryResolveCall(): KaCallResolutionAttempt? {
 @KaExperimentalApi
 @OptIn(KtExperimentalApi::class)
 @KaContextParameterApi
-context(s: KaSession)
-public fun KtResolvableCall.resolveCall(): KaCall? {
-    return with(s) {
+context(session: KaSession)
+public fun KtResolvableCall.resolveCall(): KaCallResolutionSuccess? {
+    return with(session) {
         resolveCall()
     }
 }
@@ -1335,9 +1335,9 @@ public fun KtResolvableCall.resolveCall(): KaCall? {
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtAnnotationEntry.resolveCall(): KaAnnotationCall? {
-    return with(s) {
+    return with(session) {
         resolveCall()
     }
 }
@@ -1365,9 +1365,9 @@ public fun KtAnnotationEntry.resolveCall(): KaAnnotationCall? {
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtSuperTypeCallEntry.resolveCall(): KaFunctionCall<KaConstructorSymbol>? {
-    return with(s) {
+    return with(session) {
         resolveCall()
     }
 }
@@ -1400,9 +1400,9 @@ public fun KtSuperTypeCallEntry.resolveCall(): KaFunctionCall<KaConstructorSymbo
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtConstructorDelegationCall.resolveCall(): KaDelegatedConstructorCall? {
-    return with(s) {
+    return with(session) {
         resolveCall()
     }
 }
@@ -1435,15 +1435,15 @@ public fun KtConstructorDelegationCall.resolveCall(): KaDelegatedConstructorCall
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtConstructorDelegationReferenceExpression.resolveCall(): KaDelegatedConstructorCall? {
-    return with(s) {
+    return with(session) {
         resolveCall()
     }
 }
 
 /**
- * Resolves the given [KtCallElement] to a callable member call.
+ * Resolves the given [KtCallElement] to a function call.
  *
  * #### Example
  *
@@ -1456,7 +1456,7 @@ public fun KtConstructorDelegationReferenceExpression.resolveCall(): KaDelegated
  * }
  * ```
  *
- * Returns the corresponding [KaCallableMemberCall] if resolution succeeds;
+ * Returns the corresponding [KaSingleCall] if resolution succeeds;
  * otherwise, it returns `null` (e.g., when unresolved or ambiguous).
  *
  * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on call elements
@@ -1467,9 +1467,9 @@ public fun KtConstructorDelegationReferenceExpression.resolveCall(): KaDelegated
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
-public fun KtCallElement.resolveCall(): KaCallableMemberCall<*, *>? {
-    return with(s) {
+context(session: KaSession)
+public fun KtCallElement.resolveCall(): KaFunctionCall<*>? {
+    return with(session) {
         resolveCall()
     }
 }
@@ -1486,7 +1486,7 @@ public fun KtCallElement.resolveCall(): KaCallableMemberCall<*, *>? {
  * //        ^^^^^^
  * ```
  *
- * Returns the corresponding [KaCallableMemberCall] if resolution succeeds;
+ * Returns the corresponding [KaSingleCall] if resolution succeeds;
  * otherwise, it returns `null` (e.g., when unresolved or ambiguous).
  *
  * This is a specialized counterpart of [KtResolvableCall.resolveCall] focused specifically on callable reference expressions
@@ -1497,9 +1497,9 @@ public fun KtCallElement.resolveCall(): KaCallableMemberCall<*, *>? {
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
-public fun KtCallableReferenceExpression.resolveCall(): KaCallableMemberCall<*, *>? {
-    return with(s) {
+context(session: KaSession)
+public fun KtCallableReferenceExpression.resolveCall(): KaSingleCall<*, *>? {
+    return with(session) {
         resolveCall()
     }
 }
@@ -1543,9 +1543,9 @@ public fun KtCallableReferenceExpression.resolveCall(): KaCallableMemberCall<*, 
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
-public fun KtArrayAccessExpression.resolveCall(): KaSimpleFunctionCall? {
-    return with(s) {
+context(session: KaSession)
+public fun KtArrayAccessExpression.resolveCall(): KaFunctionCall<KaNamedFunctionSymbol>? {
+    return with(session) {
         resolveCall()
     }
 }
@@ -1575,9 +1575,9 @@ public fun KtArrayAccessExpression.resolveCall(): KaSimpleFunctionCall? {
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
-public fun KtCollectionLiteralExpression.resolveCall(): KaSimpleFunctionCall? {
-    return with(s) {
+context(session: KaSession)
+public fun KtCollectionLiteralExpression.resolveCall(): KaFunctionCall<KaNamedFunctionSymbol>? {
+    return with(session) {
         resolveCall()
     }
 }
@@ -1605,9 +1605,9 @@ public fun KtCollectionLiteralExpression.resolveCall(): KaSimpleFunctionCall? {
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtEnumEntrySuperclassReferenceExpression.resolveCall(): KaDelegatedConstructorCall? {
-    return with(s) {
+    return with(session) {
         resolveCall()
     }
 }
@@ -1642,9 +1642,9 @@ public fun KtEnumEntrySuperclassReferenceExpression.resolveCall(): KaDelegatedCo
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
-public fun KtWhenConditionInRange.resolveCall(): KaSimpleFunctionCall? {
-    return with(s) {
+context(session: KaSession)
+public fun KtWhenConditionInRange.resolveCall(): KaFunctionCall<KaNamedFunctionSymbol>? {
+    return with(session) {
         resolveCall()
     }
 }
@@ -1662,9 +1662,9 @@ public fun KtWhenConditionInRange.resolveCall(): KaSimpleFunctionCall? {
 @KaExperimentalApi
 @OptIn(KtExperimentalApi::class)
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtResolvableCall.collectCallCandidates(): List<KaCallCandidateInfo> {
-    return with(s) {
+    return with(session) {
         collectCallCandidates()
     }
 }
@@ -1676,9 +1676,9 @@ public fun KtResolvableCall.collectCallCandidates(): List<KaCallCandidateInfo> {
  */
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtReference.resolveToSymbols(): Collection<KaSymbol> {
-    return with(s) {
+    return with(session) {
         resolveToSymbols()
     }
 }
@@ -1690,9 +1690,9 @@ public fun KtReference.resolveToSymbols(): Collection<KaSymbol> {
  */
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtReference.resolveToSymbol(): KaSymbol? {
-    return with(s) {
+    return with(session) {
         resolveToSymbol()
     }
 }
@@ -1714,9 +1714,9 @@ public fun KtReference.resolveToSymbol(): KaSymbol? {
  */
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtReference.isImplicitReferenceToCompanion(): Boolean {
-    return with(s) {
+    return with(session) {
         isImplicitReferenceToCompanion()
     }
 }
@@ -1741,9 +1741,9 @@ public fun KtReference.isImplicitReferenceToCompanion(): Boolean {
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public val KtReference.usesContextSensitiveResolution: Boolean
-    get() = with(s) { usesContextSensitiveResolution }
+    get() = with(session) { usesContextSensitiveResolution }
 
 /**
  * Resolves the given [KtElement] to a [KaCallInfo] object. [KaCallInfo] either contains a successfully resolved call or an error with
@@ -1753,9 +1753,9 @@ public val KtReference.usesContextSensitiveResolution: Boolean
  */
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtElement.resolveToCall(): KaCallInfo? {
-    return with(s) {
+    return with(session) {
         resolveToCall()
     }
 }
@@ -1769,9 +1769,9 @@ public fun KtElement.resolveToCall(): KaCallInfo? {
  */
 // Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KtElement.resolveToCallCandidates(): List<KaCallCandidateInfo> {
-    return with(s) {
+    return with(session) {
         resolveToCallCandidates()
     }
 }
@@ -1783,9 +1783,9 @@ public fun KtElement.resolveToCallCandidates(): List<KaCallCandidateInfo> {
 @KaNonPublicApi
 @KaK1Unsupported
 @KaContextParameterApi
-context(s: KaSession)
+context(session: KaSession)
 public fun KDocReference.resolveToSymbolWithClassicKDocResolver(): KaSymbol? {
-    return with(s) {
+    return with(session) {
         resolveToSymbolWithClassicKDocResolver()
     }
 }

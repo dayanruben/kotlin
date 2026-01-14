@@ -305,18 +305,16 @@ KtDotQualifiedExpression(403,418): 'JavaClass.foo()'
   KaApplicableCallCandidateInfo:
     candidate = KaSimpleFunctionCall:
       argumentMapping = {}
-      isImplicitInvoke = false
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = null
-        extensionReceiver = null
-        signature = KaFunctionSignature:
-          receiverType = null
-          returnType = MySealed!
-          symbol = /JavaClass.foo(): MySealed!
-          valueParameters = []
-          contextParameters = []
-          callableId = /JavaClass.foo
+      contextArguments = []
+      dispatchReceiver = null
+      extensionReceiver = null
+      signature = KaFunctionSignature:
+        receiverType = null
+        returnType = MySealed!
+        symbol = /JavaClass.foo(): MySealed!
+        valueParameters = []
+        contextParameters = []
+        callableId = /JavaClass.foo
       typeArgumentsMapping = {}
     isInBestCandidates = true
 
@@ -327,18 +325,16 @@ KtCallExpression(413,418): 'foo()'
   KaApplicableCallCandidateInfo:
     candidate = KaSimpleFunctionCall:
       argumentMapping = {}
-      isImplicitInvoke = false
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = null
-        extensionReceiver = null
-        signature = KaFunctionSignature:
-          receiverType = null
-          returnType = MySealed!
-          symbol = /JavaClass.foo(): MySealed!
-          valueParameters = []
-          contextParameters = []
-          callableId = /JavaClass.foo
+      contextArguments = []
+      dispatchReceiver = null
+      extensionReceiver = null
+      signature = KaFunctionSignature:
+        receiverType = null
+        returnType = MySealed!
+        symbol = /JavaClass.foo(): MySealed!
+        valueParameters = []
+        contextParameters = []
+        callableId = /JavaClass.foo
       typeArgumentsMapping = {}
     isInBestCandidates = true
 
@@ -346,18 +342,16 @@ KtNameReferenceExpression(413,416): 'foo'
   KaApplicableCallCandidateInfo:
     candidate = KaSimpleFunctionCall:
       argumentMapping = {}
-      isImplicitInvoke = false
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = null
-        extensionReceiver = null
-        signature = KaFunctionSignature:
-          receiverType = null
-          returnType = MySealed!
-          symbol = /JavaClass.foo(): MySealed!
-          valueParameters = []
-          contextParameters = []
-          callableId = /JavaClass.foo
+      contextArguments = []
+      dispatchReceiver = null
+      extensionReceiver = null
+      signature = KaFunctionSignature:
+        receiverType = null
+        returnType = MySealed!
+        symbol = /JavaClass.foo(): MySealed!
+        valueParameters = []
+        contextParameters = []
+        callableId = /JavaClass.foo
       typeArgumentsMapping = {}
     isInBestCandidates = true
 
@@ -383,61 +377,56 @@ KtDotQualifiedExpression(441,446): 'foo.x'
   KaApplicableCallCandidateInfo:
     candidate = KaSimpleFunctionCall:
       argumentMapping = {}
-      isImplicitInvoke = false
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = KaExplicitReceiverValue:
-          expression = foo
-          isSafeNavigation = false
-          type = MySealed!
-        extensionReceiver = null
-        signature = KaFunctionSignature:
-          receiverType = null
-          returnType = ERROR_TYPE
-          symbol = /<Error class: unknown class>.<Error function>(): ERROR_TYPE
-          valueParameters = []
-          contextParameters = []
-          callableId = /<Error class: unknown class>.<Error function>
+      contextArguments = []
+      dispatchReceiver = KaExplicitReceiverValue:
+        expression = foo
+        isSafeNavigation = false
+        type = MySealed!
+      extensionReceiver = null
+      signature = KaFunctionSignature:
+        receiverType = null
+        returnType = ERROR_TYPE
+        symbol = /<Error class: unknown class>.<Error function>(): ERROR_TYPE
+        valueParameters = []
+        contextParameters = []
+        callableId = /<Error class: unknown class>.<Error function>
       typeArgumentsMapping = {}
     isInBestCandidates = false
 
   KaApplicableCallCandidateInfo:
-    candidate = KaSimpleFunctionCall:
+    candidate = KaImplicitInvokeCall:
       argumentMapping = {}
-      isImplicitInvoke = true
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = KaExplicitReceiverValue:
-          expression = x
-          isSafeNavigation = false
-          type = ERROR_TYPE
-        extensionReceiver = null
-        signature = KaFunctionSignature:
-          receiverType = null
-          returnType = ERROR_TYPE
-          symbol = /<Error class: unknown class>.<Error function>(): ERROR_TYPE
-          valueParameters = []
-          contextParameters = []
-          callableId = /<Error class: unknown class>.<Error function>
+      contextArguments = []
+      dispatchReceiver = KaExplicitReceiverValue:
+        expression = x
+        isSafeNavigation = false
+        type = ERROR_TYPE
+      extensionReceiver = null
+      signature = KaFunctionSignature:
+        receiverType = null
+        returnType = ERROR_TYPE
+        symbol = /<Error class: unknown class>.<Error function>(): ERROR_TYPE
+        valueParameters = []
+        contextParameters = []
+        callableId = /<Error class: unknown class>.<Error function>
       typeArgumentsMapping = {}
     isInBestCandidates = false
 
 KtNameReferenceExpression(441,444): 'foo'
   KaApplicableCallCandidateInfo:
     candidate = KaSimpleVariableAccessCall:
+      contextArguments = []
+      dispatchReceiver = null
+      extensionReceiver = null
       isContextSensitive = false
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = null
-        extensionReceiver = null
-        signature = KaVariableSignature:
-          name = foo
-          receiverType = null
-          returnType = MySealed!
-          symbol = val foo: MySealed!
-          contextParameters = []
-          callableId = null
-      simpleAccess = Read
+      kind = Read
+      signature = KaVariableSignature:
+        name = foo
+        receiverType = null
+        returnType = MySealed!
+        symbol = val foo: MySealed!
+        contextParameters = []
+        callableId = null
       typeArgumentsMapping = {}
     isInBestCandidates = true
 
@@ -445,42 +434,39 @@ KtNameReferenceExpression(445,446): 'x'
   KaApplicableCallCandidateInfo:
     candidate = KaSimpleFunctionCall:
       argumentMapping = {}
-      isImplicitInvoke = false
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = KaExplicitReceiverValue:
-          expression = foo
-          isSafeNavigation = false
-          type = MySealed!
-        extensionReceiver = null
-        signature = KaFunctionSignature:
-          receiverType = null
-          returnType = ERROR_TYPE
-          symbol = /<Error class: unknown class>.<Error function>(): ERROR_TYPE
-          valueParameters = []
-          contextParameters = []
-          callableId = /<Error class: unknown class>.<Error function>
+      contextArguments = []
+      dispatchReceiver = KaExplicitReceiverValue:
+        expression = foo
+        isSafeNavigation = false
+        type = MySealed!
+      extensionReceiver = null
+      signature = KaFunctionSignature:
+        receiverType = null
+        returnType = ERROR_TYPE
+        symbol = /<Error class: unknown class>.<Error function>(): ERROR_TYPE
+        valueParameters = []
+        contextParameters = []
+        callableId = /<Error class: unknown class>.<Error function>
       typeArgumentsMapping = {}
     isInBestCandidates = false
 
   KaApplicableCallCandidateInfo:
     candidate = KaSimpleVariableAccessCall:
+      contextArguments = []
+      dispatchReceiver = KaExplicitReceiverValue:
+        expression = foo
+        isSafeNavigation = false
+        type = MySealed!
+      extensionReceiver = null
       isContextSensitive = false
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = KaExplicitReceiverValue:
-          expression = foo
-          isSafeNavigation = false
-          type = MySealed!
-        extensionReceiver = null
-        signature = KaVariableSignature:
-          name = <Error property>
-          receiverType = null
-          returnType = ERROR_TYPE
-          symbol = var <Error property>: ERROR_TYPE
-          contextParameters = []
-          callableId = /<Error class: unknown class>.<Error property>
-      simpleAccess = Read
+      kind = Read
+      signature = KaVariableSignature:
+        name = <Error property>
+        receiverType = null
+        returnType = ERROR_TYPE
+        symbol = var <Error property>: ERROR_TYPE
+        contextParameters = []
+        callableId = /<Error class: unknown class>.<Error property>
       typeArgumentsMapping = {}
     isInBestCandidates = false
 
@@ -503,61 +489,56 @@ KtDotQualifiedExpression(467,472): 'foo.y'
   KaApplicableCallCandidateInfo:
     candidate = KaSimpleFunctionCall:
       argumentMapping = {}
-      isImplicitInvoke = false
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = KaExplicitReceiverValue:
-          expression = foo
-          isSafeNavigation = false
-          type = MySealed!
-        extensionReceiver = null
-        signature = KaFunctionSignature:
-          receiverType = null
-          returnType = ERROR_TYPE
-          symbol = /<Error class: unknown class>.<Error function>(): ERROR_TYPE
-          valueParameters = []
-          contextParameters = []
-          callableId = /<Error class: unknown class>.<Error function>
+      contextArguments = []
+      dispatchReceiver = KaExplicitReceiverValue:
+        expression = foo
+        isSafeNavigation = false
+        type = MySealed!
+      extensionReceiver = null
+      signature = KaFunctionSignature:
+        receiverType = null
+        returnType = ERROR_TYPE
+        symbol = /<Error class: unknown class>.<Error function>(): ERROR_TYPE
+        valueParameters = []
+        contextParameters = []
+        callableId = /<Error class: unknown class>.<Error function>
       typeArgumentsMapping = {}
     isInBestCandidates = false
 
   KaApplicableCallCandidateInfo:
-    candidate = KaSimpleFunctionCall:
+    candidate = KaImplicitInvokeCall:
       argumentMapping = {}
-      isImplicitInvoke = true
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = KaExplicitReceiverValue:
-          expression = y
-          isSafeNavigation = false
-          type = ERROR_TYPE
-        extensionReceiver = null
-        signature = KaFunctionSignature:
-          receiverType = null
-          returnType = ERROR_TYPE
-          symbol = /<Error class: unknown class>.<Error function>(): ERROR_TYPE
-          valueParameters = []
-          contextParameters = []
-          callableId = /<Error class: unknown class>.<Error function>
+      contextArguments = []
+      dispatchReceiver = KaExplicitReceiverValue:
+        expression = y
+        isSafeNavigation = false
+        type = ERROR_TYPE
+      extensionReceiver = null
+      signature = KaFunctionSignature:
+        receiverType = null
+        returnType = ERROR_TYPE
+        symbol = /<Error class: unknown class>.<Error function>(): ERROR_TYPE
+        valueParameters = []
+        contextParameters = []
+        callableId = /<Error class: unknown class>.<Error function>
       typeArgumentsMapping = {}
     isInBestCandidates = false
 
 KtNameReferenceExpression(467,470): 'foo'
   KaApplicableCallCandidateInfo:
     candidate = KaSimpleVariableAccessCall:
+      contextArguments = []
+      dispatchReceiver = null
+      extensionReceiver = null
       isContextSensitive = false
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = null
-        extensionReceiver = null
-        signature = KaVariableSignature:
-          name = foo
-          receiverType = null
-          returnType = MySealed!
-          symbol = val foo: MySealed!
-          contextParameters = []
-          callableId = null
-      simpleAccess = Read
+      kind = Read
+      signature = KaVariableSignature:
+        name = foo
+        receiverType = null
+        returnType = MySealed!
+        symbol = val foo: MySealed!
+        contextParameters = []
+        callableId = null
       typeArgumentsMapping = {}
     isInBestCandidates = true
 
@@ -565,42 +546,39 @@ KtNameReferenceExpression(471,472): 'y'
   KaApplicableCallCandidateInfo:
     candidate = KaSimpleFunctionCall:
       argumentMapping = {}
-      isImplicitInvoke = false
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = KaExplicitReceiverValue:
-          expression = foo
-          isSafeNavigation = false
-          type = MySealed!
-        extensionReceiver = null
-        signature = KaFunctionSignature:
-          receiverType = null
-          returnType = ERROR_TYPE
-          symbol = /<Error class: unknown class>.<Error function>(): ERROR_TYPE
-          valueParameters = []
-          contextParameters = []
-          callableId = /<Error class: unknown class>.<Error function>
+      contextArguments = []
+      dispatchReceiver = KaExplicitReceiverValue:
+        expression = foo
+        isSafeNavigation = false
+        type = MySealed!
+      extensionReceiver = null
+      signature = KaFunctionSignature:
+        receiverType = null
+        returnType = ERROR_TYPE
+        symbol = /<Error class: unknown class>.<Error function>(): ERROR_TYPE
+        valueParameters = []
+        contextParameters = []
+        callableId = /<Error class: unknown class>.<Error function>
       typeArgumentsMapping = {}
     isInBestCandidates = false
 
   KaApplicableCallCandidateInfo:
     candidate = KaSimpleVariableAccessCall:
+      contextArguments = []
+      dispatchReceiver = KaExplicitReceiverValue:
+        expression = foo
+        isSafeNavigation = false
+        type = MySealed!
+      extensionReceiver = null
       isContextSensitive = false
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = KaExplicitReceiverValue:
-          expression = foo
-          isSafeNavigation = false
-          type = MySealed!
-        extensionReceiver = null
-        signature = KaVariableSignature:
-          name = <Error property>
-          receiverType = null
-          returnType = ERROR_TYPE
-          symbol = var <Error property>: ERROR_TYPE
-          contextParameters = []
-          callableId = /<Error class: unknown class>.<Error property>
-      simpleAccess = Read
+      kind = Read
+      signature = KaVariableSignature:
+        name = <Error property>
+        receiverType = null
+        returnType = ERROR_TYPE
+        symbol = var <Error property>: ERROR_TYPE
+        contextParameters = []
+        callableId = /<Error class: unknown class>.<Error property>
       typeArgumentsMapping = {}
     isInBestCandidates = false
 
@@ -610,19 +588,18 @@ KtBinaryExpressionWithTypeRHS(583,612): 'mg as MyGenericSealed<String>'
 KtNameReferenceExpression(583,585): 'mg'
   KaApplicableCallCandidateInfo:
     candidate = KaSimpleVariableAccessCall:
+      contextArguments = []
+      dispatchReceiver = null
+      extensionReceiver = null
       isContextSensitive = false
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = null
-        extensionReceiver = null
-        signature = KaVariableSignature:
-          name = mg
-          receiverType = null
-          returnType = MyGeneric<kotlin.Any>
-          symbol = mg: MyGeneric<kotlin.Any>
-          contextParameters = []
-          callableId = null
-      simpleAccess = Read
+      kind = Read
+      signature = KaVariableSignature:
+        name = mg
+        receiverType = null
+        returnType = MyGeneric<kotlin.Any>
+        symbol = mg: MyGeneric<kotlin.Any>
+        contextParameters = []
+        callableId = null
       typeArgumentsMapping = {}
     isInBestCandidates = true
 
@@ -659,19 +636,18 @@ KtWhenExpression(617,683): 'when (mg) {'
 KtNameReferenceExpression(623,625): 'mg'
   KaApplicableCallCandidateInfo:
     candidate = KaSimpleVariableAccessCall:
+      contextArguments = []
+      dispatchReceiver = null
+      extensionReceiver = null
       isContextSensitive = false
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = null
-        extensionReceiver = null
-        signature = KaVariableSignature:
-          name = mg
-          receiverType = null
-          returnType = MyGeneric<kotlin.Any>
-          symbol = mg: MyGeneric<kotlin.Any>
-          contextParameters = []
-          callableId = null
-      simpleAccess = Read
+      kind = Read
+      signature = KaVariableSignature:
+        name = mg
+        receiverType = null
+        returnType = MyGeneric<kotlin.Any>
+        symbol = mg: MyGeneric<kotlin.Any>
+        contextParameters = []
+        callableId = null
       typeArgumentsMapping = {}
     isInBestCandidates = true
 
@@ -696,19 +672,18 @@ KtDotQualifiedExpression(648,652): 'mg.x'
 KtNameReferenceExpression(648,650): 'mg'
   KaApplicableCallCandidateInfo:
     candidate = KaSimpleVariableAccessCall:
+      contextArguments = []
+      dispatchReceiver = null
+      extensionReceiver = null
       isContextSensitive = false
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = null
-        extensionReceiver = null
-        signature = KaVariableSignature:
-          name = mg
-          receiverType = null
-          returnType = MyGeneric<kotlin.Any>
-          symbol = mg: MyGeneric<kotlin.Any>
-          contextParameters = []
-          callableId = null
-      simpleAccess = Read
+      kind = Read
+      signature = KaVariableSignature:
+        name = mg
+        receiverType = null
+        returnType = MyGeneric<kotlin.Any>
+        symbol = mg: MyGeneric<kotlin.Any>
+        contextParameters = []
+        callableId = null
       typeArgumentsMapping = {}
     isInBestCandidates = true
 
@@ -736,19 +711,18 @@ KtDotQualifiedExpression(673,677): 'mg.y'
 KtNameReferenceExpression(673,675): 'mg'
   KaApplicableCallCandidateInfo:
     candidate = KaSimpleVariableAccessCall:
+      contextArguments = []
+      dispatchReceiver = null
+      extensionReceiver = null
       isContextSensitive = false
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = null
-        extensionReceiver = null
-        signature = KaVariableSignature:
-          name = mg
-          receiverType = null
-          returnType = MyGeneric<kotlin.Any>
-          symbol = mg: MyGeneric<kotlin.Any>
-          contextParameters = []
-          callableId = null
-      simpleAccess = Read
+      kind = Read
+      signature = KaVariableSignature:
+        name = mg
+        receiverType = null
+        returnType = MyGeneric<kotlin.Any>
+        symbol = mg: MyGeneric<kotlin.Any>
+        contextParameters = []
+        callableId = null
       typeArgumentsMapping = {}
     isInBestCandidates = true
 
@@ -761,19 +735,18 @@ KtBinaryExpressionWithTypeRHS(804,833): 'cs as MyGenericSealed<String>'
 KtNameReferenceExpression(804,806): 'cs'
   KaApplicableCallCandidateInfo:
     candidate = KaSimpleVariableAccessCall:
+      contextArguments = []
+      dispatchReceiver = null
+      extensionReceiver = null
       isContextSensitive = false
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = null
-        extensionReceiver = null
-        signature = KaVariableSignature:
-          name = cs
-          receiverType = null
-          returnType = kotlin.CharSequence
-          symbol = cs: kotlin.CharSequence
-          contextParameters = []
-          callableId = null
-      simpleAccess = Read
+      kind = Read
+      signature = KaVariableSignature:
+        name = cs
+        receiverType = null
+        returnType = kotlin.CharSequence
+        symbol = cs: kotlin.CharSequence
+        contextParameters = []
+        callableId = null
       typeArgumentsMapping = {}
     isInBestCandidates = true
 
@@ -810,19 +783,18 @@ KtWhenExpression(838,904): 'when (cs) {'
 KtNameReferenceExpression(844,846): 'cs'
   KaApplicableCallCandidateInfo:
     candidate = KaSimpleVariableAccessCall:
+      contextArguments = []
+      dispatchReceiver = null
+      extensionReceiver = null
       isContextSensitive = false
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = null
-        extensionReceiver = null
-        signature = KaVariableSignature:
-          name = cs
-          receiverType = null
-          returnType = kotlin.CharSequence
-          symbol = cs: kotlin.CharSequence
-          contextParameters = []
-          callableId = null
-      simpleAccess = Read
+      kind = Read
+      signature = KaVariableSignature:
+        name = cs
+        receiverType = null
+        returnType = kotlin.CharSequence
+        symbol = cs: kotlin.CharSequence
+        contextParameters = []
+        callableId = null
       typeArgumentsMapping = {}
     isInBestCandidates = true
 
@@ -847,19 +819,18 @@ KtDotQualifiedExpression(869,873): 'cs.x'
 KtNameReferenceExpression(869,871): 'cs'
   KaApplicableCallCandidateInfo:
     candidate = KaSimpleVariableAccessCall:
+      contextArguments = []
+      dispatchReceiver = null
+      extensionReceiver = null
       isContextSensitive = false
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = null
-        extensionReceiver = null
-        signature = KaVariableSignature:
-          name = cs
-          receiverType = null
-          returnType = kotlin.CharSequence
-          symbol = cs: kotlin.CharSequence
-          contextParameters = []
-          callableId = null
-      simpleAccess = Read
+      kind = Read
+      signature = KaVariableSignature:
+        name = cs
+        receiverType = null
+        returnType = kotlin.CharSequence
+        symbol = cs: kotlin.CharSequence
+        contextParameters = []
+        callableId = null
       typeArgumentsMapping = {}
     isInBestCandidates = true
 
@@ -887,19 +858,18 @@ KtDotQualifiedExpression(894,898): 'cs.y'
 KtNameReferenceExpression(894,896): 'cs'
   KaApplicableCallCandidateInfo:
     candidate = KaSimpleVariableAccessCall:
+      contextArguments = []
+      dispatchReceiver = null
+      extensionReceiver = null
       isContextSensitive = false
-      partiallyAppliedSymbol = KaPartiallyAppliedSymbol:
-        contextArguments = []
-        dispatchReceiver = null
-        extensionReceiver = null
-        signature = KaVariableSignature:
-          name = cs
-          receiverType = null
-          returnType = kotlin.CharSequence
-          symbol = cs: kotlin.CharSequence
-          contextParameters = []
-          callableId = null
-      simpleAccess = Read
+      kind = Read
+      signature = KaVariableSignature:
+        name = cs
+        receiverType = null
+        returnType = kotlin.CharSequence
+        symbol = cs: kotlin.CharSequence
+        contextParameters = []
+        callableId = null
       typeArgumentsMapping = {}
     isInBestCandidates = true
 

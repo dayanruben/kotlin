@@ -4,7 +4,16 @@ KtOperationReferenceExpression(57,59): '+='
       compoundOperation = KaCompoundAssignOperation:
         kind = PLUS_ASSIGN
         operand = 1
-        operationPartiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+        operationCall = KaSimpleFunctionCall:
+          argumentMapping = {
+            l[0] -> (KaVariableSignature:
+              name = other
+              receiverType = null
+              returnType = kotlin.Int
+              symbol = other: kotlin.Int
+              contextParameters = []
+              callableId = null)
+          }
           contextArguments = []
           dispatchReceiver = KaExplicitReceiverValue:
             expression = l[0]
@@ -26,7 +35,17 @@ KtOperationReferenceExpression(57,59): '+='
             ]
             contextParameters = []
             callableId = kotlin/Int.plus
-      getPartiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+          typeArgumentsMapping = {}
+      getterCall = KaSimpleFunctionCall:
+        argumentMapping = {
+          0 -> (KaVariableSignature:
+            name = index
+            receiverType = null
+            returnType = kotlin.Int
+            symbol = index: kotlin.Int
+            contextParameters = []
+            callableId = null)
+        }
         contextArguments = []
         dispatchReceiver = KaExplicitReceiverValue:
           expression = l
@@ -48,10 +67,20 @@ KtOperationReferenceExpression(57,59): '+='
           ]
           contextParameters = []
           callableId = kotlin/collections/MutableList.get
+        typeArgumentsMapping = {}
       indexArguments = [
         0
       ]
-      setPartiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+      setterCall = KaSimpleFunctionCall:
+        argumentMapping = {
+          0 -> (KaVariableSignature:
+            name = element
+            receiverType = null
+            returnType = kotlin.Int
+            symbol = element: E
+            contextParameters = []
+            callableId = null)
+        }
         contextArguments = []
         dispatchReceiver = KaExplicitReceiverValue:
           expression = l
@@ -80,3 +109,4 @@ KtOperationReferenceExpression(57,59): '+='
           ]
           contextParameters = []
           callableId = kotlin/collections/MutableList.set
+        typeArgumentsMapping = {}

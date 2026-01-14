@@ -70,6 +70,7 @@ import org.jetbrains.kotlin.types.typeUtil.contains
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.checkWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.requireWithAttachment
 
 internal class KaFe10Resolver(
     override val analysisSessionProvider: () -> KaFe10Session,
@@ -308,10 +309,17 @@ internal class KaFe10Resolver(
 
     private fun KaCallResolutionAttempt?.toKaCallCandidateInfos(): List<KaCallCandidateInfo> = when (this) {
         null -> emptyList()
-        is KaCall -> listOf(KaBaseApplicableCallCandidateInfo(backingCandidate = this, isInBestCandidates = true))
+
+        is KaCall, is KaSingleCall<*, *>, is KaMultiCall -> listOf(
+            KaBaseApplicableCallCandidateInfo(
+                backingCandidate = this as KaCall,
+                isInBestCandidates = true,
+            )
+        )
+
         is KaCallResolutionError -> candidateCalls.map {
             KaBaseInapplicableCallCandidateInfo(
-                backingCandidate = it,
+                backingCandidate = it as KaCall,
                 isInBestCandidates = true,
                 diagnostic = diagnostic,
             )
@@ -323,7 +331,7 @@ internal class KaFe10Resolver(
         // TODO: We should prefer to compare symbols instead of descriptors, but we can't do so while symbols are not cached.
         fun KaCall.isInBestCandidates(): Boolean {
             val descriptor = this.safeAs<KaCallableMemberCall<*, *>>()?.descriptor as? CallableDescriptor
-            return descriptor != null && bestCandidateDescriptors.any { it ->
+            return descriptor != null && bestCandidateDescriptors.any {
                 DescriptorEquivalenceForOverrides.areCallableDescriptorsEquivalent(
                     it,
                     descriptor,
@@ -334,16 +342,16 @@ internal class KaFe10Resolver(
         }
 
         return when (this) {
-            is KaCall -> listOf(
+            is KaCall, is KaSingleCall<*, *>, is KaMultiCall -> listOf(
                 KaBaseApplicableCallCandidateInfo(
-                    backingCandidate = this,
+                    backingCandidate = this as KaCall,
                     isInBestCandidates = this.isInBestCandidates(),
                 ),
             )
 
             is KaCallResolutionError -> candidateCalls.map {
                 KaBaseInapplicableCallCandidateInfo(
-                    backingCandidate = it,
+                    backingCandidate = it as KaCall,
                     isInBestCandidates = it.isInBestCandidates(),
                     diagnostic = diagnostic,
                 )
@@ -361,15 +369,15 @@ internal class KaFe10Resolver(
             KtTokens.EQ -> {
                 val resolvedCall = left.getResolvedCall(context) ?: return null
                 resolvedCalls += resolvedCall
-                val partiallyAppliedSymbol =
-                    resolvedCall.toPartiallyAppliedVariableSymbol(context) ?: return null
+                val partiallyAppliedSymbol = resolvedCall.toPartiallyAppliedVariableSymbol(context) ?: return null
                 KaBaseSimpleVariableAccessCall(
-                    partiallyAppliedSymbol,
-                    resolvedCall.toTypeArgumentsMapping(partiallyAppliedSymbol),
-                    KaBaseSimpleVariableWriteAccess(right),
-                    isContextSensitive = false,
+                    backingPartiallyAppliedSymbol = partiallyAppliedSymbol,
+                    backingTypeArgumentsMapping = resolvedCall.toTypeArgumentsMapping(partiallyAppliedSymbol),
+                    backingKind = KaBaseVariableWriteAccess(right),
+                    backingIsContextSensitive = false,
                 )
             }
+
             in KtTokens.AUGMENTED_ASSIGNMENTS -> {
                 if (right == null) return null
                 val operatorCall = binaryExpression.getResolvedCall(context) ?: return null
@@ -381,7 +389,7 @@ internal class KaFe10Resolver(
                     operatorCall.toPartiallyAppliedFunctionSymbol<KaNamedFunctionSymbol>(context) ?: return null
 
                 val compoundAccess = KaBaseCompoundAssignOperation(
-                    operatorPartiallyAppliedSymbol,
+                    operatorPartiallyAppliedSymbol.asSimpleFunctionCall,
                     binaryExpression.getCompoundAssignKind(),
                     right
                 )
@@ -392,12 +400,33 @@ internal class KaFe10Resolver(
                     val resolvedCall = left.getResolvedCall(context) ?: return null
                     resolvedCalls += resolvedCall
                     val variableAppliedSymbol = resolvedCall.toPartiallyAppliedVariableSymbol(context) ?: return null
-                    KaBaseCompoundVariableAccessCall(variableAppliedSymbol, compoundAccess)
+                    KaBaseCompoundVariableAccessCall(variableAppliedSymbol.asVariableAccessCall, compoundAccess)
                 }
             }
+
             else -> null
         }?.let { createCallInfo(context, binaryExpression, it, resolvedCalls) }
     }
+
+    private val KaPartiallyAppliedFunctionSymbol<KaNamedFunctionSymbol>.asSimpleFunctionCall: KaFunctionCall<KaNamedFunctionSymbol>
+        get() {
+            val functionCall = KaBaseSimpleFunctionCall(
+                backingPartiallyAppliedSymbol = this,
+                backingArgumentMapping = emptyMap(),
+                backingTypeArgumentsMapping = emptyMap(),
+            )
+
+            @Suppress("UNCHECKED_CAST")
+            return functionCall as KaFunctionCall<KaNamedFunctionSymbol>
+        }
+
+    private val KaPartiallyAppliedVariableSymbol<KaVariableSymbol>.asVariableAccessCall: KaVariableAccessCall
+        get() = KaBaseSimpleVariableAccessCall(
+            backingPartiallyAppliedSymbol = this,
+            backingTypeArgumentsMapping = emptyMap(),
+            backingKind = KaBaseVariableReadAccess,
+            backingIsContextSensitive = false,
+        )
 
     private fun handleAsIncOrDecOperator(context: BindingContext, unaryExpression: KtUnaryExpression): KaCallResolutionAttempt? {
         if (unaryExpression.operationToken !in KtTokens.INCREMENT_AND_DECREMENT) return null
@@ -412,13 +441,13 @@ internal class KaFe10Resolver(
             else -> error("unexpected KtUnaryExpression $unaryExpression")
         }
 
-        val compoundAccess = KaBaseCompoundUnaryOperation(operatorPartiallyAppliedSymbol, kind, precedence)
+        val compoundAccess = KaBaseCompoundUnaryOperation(operatorPartiallyAppliedSymbol.asSimpleFunctionCall, kind, precedence)
         return if (baseExpression is KtArrayAccessExpression) {
             createCompoundArrayAccessCall(context, baseExpression, compoundAccess, resolvedCalls)
         } else {
             val resolvedCall = baseExpression.getResolvedCall(context)
             val variableAppliedSymbol = resolvedCall?.toPartiallyAppliedVariableSymbol(context) ?: return null
-            KaBaseCompoundVariableAccessCall(variableAppliedSymbol, compoundAccess)
+            KaBaseCompoundVariableAccessCall(variableAppliedSymbol.asVariableAccessCall, compoundAccess)
         }?.let { createCallInfo(context, unaryExpression, it, resolvedCalls) }
     }
 
@@ -437,8 +466,8 @@ internal class KaFe10Resolver(
         return KaBaseCompoundArrayAccessCall(
             compoundAccess,
             arrayAccessExpression.indexExpressions,
-            getPartiallyAppliedSymbol,
-            setPartiallyAppliedSymbol
+            getPartiallyAppliedSymbol.asSimpleFunctionCall,
+            setPartiallyAppliedSymbol.asSimpleFunctionCall,
         )
     }
 
@@ -474,16 +503,17 @@ internal class KaFe10Resolver(
     private fun ResolvedCall<*>.toPropertyRead(context: BindingContext): KaVariableAccessCall? {
         val partiallyAppliedSymbol = toPartiallyAppliedVariableSymbol(context) ?: return null
         return KaBaseSimpleVariableAccessCall(
-            partiallyAppliedSymbol,
-            toTypeArgumentsMapping(partiallyAppliedSymbol),
-            KaBaseSimpleVariableReadAccess,
-            isContextSensitive = false,
+            backingPartiallyAppliedSymbol = partiallyAppliedSymbol,
+            backingTypeArgumentsMapping = toTypeArgumentsMapping(partiallyAppliedSymbol),
+            backingKind = KaBaseVariableReadAccess,
+            backingIsContextSensitive = false,
         )
     }
 
     private fun ResolvedCall<*>.toFunctionKtCall(context: BindingContext): KaFunctionCall<*>? {
         val partiallyAppliedSymbol = toPartiallyAppliedFunctionSymbol<KaFunctionSymbol>(context) ?: return null
         val argumentMapping = createArgumentMapping(partiallyAppliedSymbol.signature)
+        val typeArgumentsMapping = toTypeArgumentsMapping(partiallyAppliedSymbol)
         if (partiallyAppliedSymbol.signature.symbol is KaConstructorSymbol) {
             @Suppress("UNCHECKED_CAST")
             val partiallyAppliedConstructorSymbol = partiallyAppliedSymbol as KaPartiallyAppliedFunctionSymbol<KaConstructorSymbol>
@@ -493,23 +523,37 @@ internal class KaFe10Resolver(
                     partiallyAppliedConstructorSymbol,
                     if (callElement.isCallToThis) KaDelegatedConstructorCall.Kind.THIS_CALL else KaDelegatedConstructorCall.Kind.SUPER_CALL,
                     argumentMapping,
-                    toTypeArgumentsMapping(partiallyAppliedSymbol)
+                    typeArgumentsMapping
                 )
                 is KtSuperTypeCallEntry -> return KaBaseDelegatedConstructorCall(
                     partiallyAppliedConstructorSymbol,
                     KaDelegatedConstructorCall.Kind.SUPER_CALL,
                     argumentMapping,
-                    toTypeArgumentsMapping(partiallyAppliedSymbol)
+                    typeArgumentsMapping
                 )
             }
         }
 
-        return KaBaseSimpleFunctionCall(
-            partiallyAppliedSymbol,
-            argumentMapping,
-            toTypeArgumentsMapping(partiallyAppliedSymbol),
-            call.callType == Call.CallType.INVOKE
-        )
+        return if (call.callType == Call.CallType.INVOKE) {
+            val functionSymbol = partiallyAppliedSymbol.symbol
+            requireWithAttachment(
+                functionSymbol is KaNamedFunctionSymbol,
+                { "Expected ${KaNamedFunctionSymbol::class.simpleName}, but got ${functionSymbol::class.simpleName}" },
+            )
+
+            @Suppress("UNCHECKED_CAST")
+            KaBaseImplicitInvokeCall(
+                backingPartiallyAppliedSymbol = partiallyAppliedSymbol as KaPartiallyAppliedFunctionSymbol<KaNamedFunctionSymbol>,
+                backingArgumentMapping = argumentMapping,
+                backingTypeArgumentsMapping = typeArgumentsMapping,
+            )
+        } else {
+            KaBaseSimpleFunctionCall(
+                backingPartiallyAppliedSymbol = partiallyAppliedSymbol,
+                backingArgumentMapping = argumentMapping,
+                backingTypeArgumentsMapping = typeArgumentsMapping,
+            )
+        }
     }
 
     private fun ResolvedCall<*>.toPartiallyAppliedVariableSymbol(context: BindingContext): KaPartiallyAppliedVariableSymbol<KaVariableSymbol>? {
@@ -680,6 +724,7 @@ internal class KaFe10Resolver(
         resolvedCalls: List<ResolvedCall<*>>,
         diagnostics: Diagnostics = context.diagnostics,
     ): KaCallResolutionAttempt {
+        kaCall as KaCallResolutionAttempt
         val failedResolveCall = resolvedCalls.firstOrNull { !it.status.isSuccess } ?: return kaCall
 
         val diagnostic = getDiagnosticToReport(context, psi, kaCall, diagnostics)?.let { KaFe10Diagnostic(it, token) }
@@ -687,7 +732,7 @@ internal class KaFe10Resolver(
 
         return KaBaseCallResolutionError(
             backedDiagnostic = diagnostic,
-            backingCandidateCalls = listOf(kaCall)
+            backingCandidateCalls = kaCall.calls
         )
     }
 
@@ -769,7 +814,7 @@ internal class KaFe10Resolver(
                     reportedPsi is KtLambdaExpression || reportedPsi is KtLambdaArgument -> true
             // errors on value to set using array access convention
             isCallArgError &&
-                    kaCall is KaSimpleFunctionCall && (reportedPsiParent as? KtBinaryExpression)?.right == reportedPsi -> true
+                    kaCall is KaFunctionCall<*> && (reportedPsiParent as? KtBinaryExpression)?.right == reportedPsi -> true
             else -> false
         }
     }

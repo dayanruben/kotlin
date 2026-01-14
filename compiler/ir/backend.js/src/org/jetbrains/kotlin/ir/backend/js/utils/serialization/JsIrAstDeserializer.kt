@@ -443,6 +443,9 @@ private class JsIrAstDeserializer(private val source: ByteArray) {
                         YIELD_STAR -> {
                             JsYieldStar(ifTrue { readExpression() })
                         }
+                        SPREAD -> {
+                            JsSpread(readExpression())
+                        }
                         else -> error("Unknown expression id: $id")
                     }
                 }
@@ -474,7 +477,7 @@ private class JsIrAstDeserializer(private val source: ByteArray) {
     }
 
     private fun readParameter(): JsParameter {
-        return JsParameter(nameTable[readInt()]).apply {
+        return JsParameter(nameTable[readInt()], readBoolean()).apply {
             hasDefaultValue = readBoolean()
         }
     }

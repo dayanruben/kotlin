@@ -4,7 +4,16 @@ KtBinaryExpression(128,139): 'm["a"] += 1'
       compoundOperation = KaCompoundAssignOperation:
         kind = PLUS_ASSIGN
         operand = 1
-        operationPartiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+        operationCall = KaSimpleFunctionCall:
+          argumentMapping = {
+            m["a"] -> (KaVariableSignature:
+              name = other
+              receiverType = null
+              returnType = kotlin.Int
+              symbol = other: kotlin.Int
+              contextParameters = []
+              callableId = null)
+          }
           contextArguments = []
           dispatchReceiver = KaExplicitReceiverValue:
             expression = m["a"]
@@ -26,7 +35,17 @@ KtBinaryExpression(128,139): 'm["a"] += 1'
             ]
             contextParameters = []
             callableId = kotlin/Int.plus
-      getPartiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+          typeArgumentsMapping = {}
+      getterCall = KaSimpleFunctionCall:
+        argumentMapping = {
+          "a" -> (KaVariableSignature:
+            name = k
+            receiverType = null
+            returnType = kotlin.String
+            symbol = k: K
+            contextParameters = []
+            callableId = null)
+        }
         contextArguments = []
         dispatchReceiver = KaExplicitReceiverValue:
           expression = m
@@ -48,10 +67,20 @@ KtBinaryExpression(128,139): 'm["a"] += 1'
           ]
           contextParameters = []
           callableId = /MyMap.get
+        typeArgumentsMapping = {}
       indexArguments = [
         "a"
       ]
-      setPartiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+      setterCall = KaSimpleFunctionCall:
+        argumentMapping = {
+          "a" -> (KaVariableSignature:
+            name = v
+            receiverType = null
+            returnType = kotlin.Int
+            symbol = v: V
+            contextParameters = []
+            callableId = null)
+        }
         contextArguments = []
         dispatchReceiver = KaExplicitReceiverValue:
           expression = m
@@ -80,3 +109,4 @@ KtBinaryExpression(128,139): 'm["a"] += 1'
           ]
           contextParameters = []
           callableId = /MyMap.set
+        typeArgumentsMapping = {}

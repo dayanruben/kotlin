@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.expressions
 
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.contracts.description.LogicOperationKind
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.*
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.fir.declarations.utils.evaluatedInitializer
 import org.jetbrains.kotlin.fir.declarations.utils.isConst
 import org.jetbrains.kotlin.fir.expressions.builder.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirResolvedArgumentList
+import org.jetbrains.kotlin.fir.references.FirResolvedCallableReference
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.references.resolved
 import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
@@ -25,6 +27,7 @@ import org.jetbrains.kotlin.fir.visitors.FirVisitor
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.resolve.constants.evaluate.CompileTimeType
 import org.jetbrains.kotlin.resolve.constants.evaluate.evalBinaryOp
@@ -248,6 +251,28 @@ object FirExpressionEvaluator {
                                     .adjustTypeAndConvertToLiteral(propertyAccessExpression)
                             }
                         }
+
+                        // The `name` property will be evaluated only for `Enum` and `KCallable` objects.
+                        // All other objects receive the default treatment.
+                        propertySymbol.callableId?.callableName == StandardNames.NAME -> {
+                            evaluate(propertyAccessExpression.explicitReceiver).let { receiver ->
+                                if (receiver !is Evaluated) return receiver
+                                return when (val result = receiver.result) {
+                                    is FirPropertyAccessExpression -> {
+                                        val name = result.calleeReference.name.asString()
+                                        name.adjustTypeAndConvertToLiteral(propertyAccessExpression)
+                                    }
+                                    is FirResolvedCallableReference -> {
+                                        val name = when (result.resolvedSymbol) {
+                                            is FirConstructorSymbol -> SpecialNames.INIT.asString()
+                                            else -> result.name.asString()
+                                        }
+                                        name.adjustTypeAndConvertToLiteral(propertyAccessExpression)
+                                    }
+                                    else -> evaluateWithSourceCopy(propertySymbol.fir.initializer)
+                                }
+                            }
+                        }
                         else -> evaluateWithSourceCopy(propertySymbol.fir.initializer)
                     }
                 }
@@ -274,17 +299,15 @@ object FirExpressionEvaluator {
                 evaluate(it).unwrapOr<FirLiteralExpression> { return it } ?: return NotEvaluated
             }
 
-            val opr1 = evaluatedArgs.getOrNull(0) ?: return NotEvaluated
-            evaluateUnary(opr1, symbol.callableId)
-                ?.adjustTypeAndConvertToLiteral(functionCall)
-                ?.let { return it }
-
-            val opr2 = evaluatedArgs.getOrNull(1) ?: return NotEvaluated
-            evaluateBinary(opr1, symbol.callableId, opr2)
-                ?.adjustTypeAndConvertToLiteral(functionCall)
-                ?.let { return it }
-
-            return NotEvaluated
+            return when (evaluatedArgs.size) {
+                1 -> evaluateUnary(evaluatedArgs.first(), symbol.callableId)
+                    ?.adjustTypeAndConvertToLiteral(functionCall)
+                    ?: NotEvaluated
+                2 -> evaluateBinary(evaluatedArgs.first(), symbol.callableId, evaluatedArgs.get(1))
+                    ?.adjustTypeAndConvertToLiteral(functionCall)
+                    ?: NotEvaluated
+                else -> NotEvaluated
+            }
         }
 
         @OptIn(UnresolvedExpressionTypeAccess::class)
@@ -465,7 +488,7 @@ private fun evaluateBinary(
     if (arg2 !is FirLiteralExpression || arg2.value == null) return null
     // NB: some utils accept very general types, and due to the way operation map works, we should up-cast rhs type.
     val rightType = when {
-        callableId.isStringEquals -> CompileTimeType.ANY
+        callableId.isEquals -> CompileTimeType.ANY
         callableId.isStringPlus -> CompileTimeType.ANY
         else -> arg2.kind.toCompileTimeType()
     }
@@ -481,6 +504,11 @@ private fun evaluateBinary(
             // If expression is division by zero, then return the original expression as a result. We will handle on later steps.
             return DivisionByZero
         }
+    }
+
+    // Check for trimMargin invalid argument
+    if (functionName == "trimMargin" && (opr2 as? String)?.isBlank() == true) {
+        return TrimMarginBlankPrefix
     }
 
     return evalBinaryOp(
@@ -504,8 +532,8 @@ private fun Any?.adjustTypeAndConvertToLiteral(original: FirExpression): FirEval
 private val CallableId.isStringLength: Boolean
     get() = classId == StandardClassIds.String && callableName.identifierOrNullIfSpecial == "length"
 
-private val CallableId.isStringEquals: Boolean
-    get() = classId == StandardClassIds.String && callableName == OperatorNameConventions.EQUALS
+private val CallableId.isEquals: Boolean
+    get() = callableName == OperatorNameConventions.EQUALS
 
 private val CallableId.isStringPlus: Boolean
     get() = classId == StandardClassIds.String && callableName == OperatorNameConventions.PLUS

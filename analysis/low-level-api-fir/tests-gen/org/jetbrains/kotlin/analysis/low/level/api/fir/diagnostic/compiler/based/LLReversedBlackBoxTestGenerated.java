@@ -37217,15 +37217,9 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
       }
 
       @Test
-      @TestMetadata("constTrimIndent.kt")
-      public void testConstTrimIndent() {
-        runTest("compiler/testData/codegen/box/involvesIrInterpreter/intrinsicConst/constTrimIndent.kt");
-      }
-
-      @Test
-      @TestMetadata("constTrimMargin.kt")
-      public void testConstTrimMargin() {
-        runTest("compiler/testData/codegen/box/involvesIrInterpreter/intrinsicConst/constTrimMargin.kt");
+      @TestMetadata("constTrim.kt")
+      public void testConstTrim() {
+        runTest("compiler/testData/codegen/box/involvesIrInterpreter/intrinsicConst/constTrim.kt");
       }
 
       @Test
@@ -54826,6 +54820,12 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
       @TestMetadata("enumNameOrdinal.kt")
       public void testEnumNameOrdinal() {
         runTest("compiler/testData/codegen/box/reflection/builtins/enumNameOrdinal.kt");
+      }
+
+      @Test
+      @TestMetadata("functionClassMembers.kt")
+      public void testFunctionClassMembers() {
+        runTest("compiler/testData/codegen/box/reflection/builtins/functionClassMembers.kt");
       }
 
       @Test

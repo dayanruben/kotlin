@@ -3,7 +3,8 @@ KtOperationReferenceExpression(138,140): '--'
     call = KaCompoundVariableAccessCall:
       compoundOperation = KaCompoundUnaryOperation:
         kind = DEC
-        operationPartiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+        operationCall = KaSimpleFunctionCall:
+          argumentMapping = {}
           contextArguments = []
           dispatchReceiver = KaExplicitReceiverValue:
             expression = variable
@@ -17,11 +18,14 @@ KtOperationReferenceExpression(138,140): '--'
             valueParameters = []
             contextParameters = []
             callableId = /MyClass.dec
+          typeArgumentsMapping = {}
         precedence = PREFIX
-      variablePartiallyAppliedSymbol = KaPartiallyAppliedSymbol:
+      variableCall = KaSimpleVariableAccessCall:
         contextArguments = []
         dispatchReceiver = null
         extensionReceiver = null
+        isContextSensitive = false
+        kind = Read
         signature = KaVariableSignature:
           name = variable
           receiverType = null
@@ -29,3 +33,4 @@ KtOperationReferenceExpression(138,140): '--'
           symbol = var variable: MyClass
           contextParameters = []
           callableId = /variable
+        typeArgumentsMapping = {}

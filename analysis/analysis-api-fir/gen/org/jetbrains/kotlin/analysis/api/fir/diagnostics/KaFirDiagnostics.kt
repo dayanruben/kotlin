@@ -223,6 +223,10 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = DivisionByZero::class
     }
 
+    interface TrimMarginBlankPrefix : KaFirDiagnostic<KtExpression> {
+        override val diagnosticClass get() = TrimMarginBlankPrefix::class
+    }
+
     interface ValOrVarOnLoopParameter : KaFirDiagnostic<KtParameter> {
         override val diagnosticClass get() = ValOrVarOnLoopParameter::class
         val valOrVar: KtKeywordToken
@@ -2394,6 +2398,11 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val atomicRef: ClassId
         val argumentType: KaType
         val suggestedType: ClassId?
+    }
+
+    interface AtomicRefCallArgumentWithoutConsistentIdentity : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = AtomicRefCallArgumentWithoutConsistentIdentity::class
+        val argumentType: KaType
     }
 
     interface ExtensionInClassReferenceNotAllowed : KaFirDiagnostic<KtExpression> {
