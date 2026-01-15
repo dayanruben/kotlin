@@ -55,6 +55,30 @@ public class FirPsiDiagnosticTestForLombokGenerated extends AbstractFirPsiDiagno
   }
 
   @Test
+  @TestMetadata("classWithValueAnnIsNotFinal.kt")
+  public void testClassWithValueAnnIsNotFinal() {
+    runTest("plugins/lombok/testData/diagnostics/classWithValueAnnIsNotFinal.kt");
+  }
+
+  @Test
+  @TestMetadata("getterSetterIfClassIsAnnotated.kt")
+  public void testGetterSetterIfClassIsAnnotated() {
+    runTest("plugins/lombok/testData/diagnostics/getterSetterIfClassIsAnnotated.kt");
+  }
+
+  @Test
+  @TestMetadata("noExplicitCtorOverridingWithDataAndValueAnns.kt")
+  public void testNoExplicitCtorOverridingWithDataAndValueAnns() {
+    runTest("plugins/lombok/testData/diagnostics/noExplicitCtorOverridingWithDataAndValueAnns.kt");
+  }
+
+  @Test
+  @TestMetadata("setterForNonFinalFieldsWhenValueAndDataAndSetterAreUsed.kt")
+  public void testSetterForNonFinalFieldsWhenValueAndDataAndSetterAreUsed() {
+    runTest("plugins/lombok/testData/diagnostics/setterForNonFinalFieldsWhenValueAndDataAndSetterAreUsed.kt");
+  }
+
+  @Test
   @TestMetadata("superBuilderAccessTypeParameterBoundsSafely.kt")
   public void testSuperBuilderAccessTypeParameterBoundsSafely() {
     runTest("plugins/lombok/testData/diagnostics/superBuilderAccessTypeParameterBoundsSafely.kt");
@@ -88,6 +112,12 @@ public class FirPsiDiagnosticTestForLombokGenerated extends AbstractFirPsiDiagno
   @TestMetadata("superBuilderSingular.kt")
   public void testSuperBuilderSingular() {
     runTest("plugins/lombok/testData/diagnostics/superBuilderSingular.kt");
+  }
+
+  @Test
+  @TestMetadata("withStaticField.kt")
+  public void testWithStaticField() {
+    runTest("plugins/lombok/testData/diagnostics/withStaticField.kt");
   }
 
   @Nested
@@ -151,12 +181,6 @@ public class FirPsiDiagnosticTestForLombokGenerated extends AbstractFirPsiDiagno
     @TestMetadata("gettersClassLevel.kt")
     public void testGettersClassLevel() {
       runTest("plugins/lombok/testData/diagnostics/k1+k2/gettersClassLevel.kt");
-    }
-
-    @Test
-    @TestMetadata("gettersClassLevel.fir.kt")
-    public void testGettersClassLevel_fir() {
-      runTest("plugins/lombok/testData/diagnostics/k1+k2/gettersClassLevel.fir.kt");
     }
 
     @Test

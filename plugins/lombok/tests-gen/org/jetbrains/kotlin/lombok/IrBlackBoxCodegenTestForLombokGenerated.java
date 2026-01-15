@@ -102,6 +102,12 @@ public class IrBlackBoxCodegenTestForLombokGenerated extends AbstractIrBlackBoxC
   }
 
   @Test
+  @TestMetadata("canEqualInClassWithDataAnn.kt")
+  public void testCanEqualInClassWithDataAnn() {
+    runTest("plugins/lombok/testData/box/canEqualInClassWithDataAnn.kt");
+  }
+
+  @Test
   @TestMetadata("configAccessors.kt")
   public void testConfigAccessors() {
     runTest("plugins/lombok/testData/box/configAccessors.kt");
@@ -129,6 +135,12 @@ public class IrBlackBoxCodegenTestForLombokGenerated extends AbstractIrBlackBoxC
   @TestMetadata("conflictingGetter.kt")
   public void testConflictingGetter() {
     runTest("plugins/lombok/testData/box/conflictingGetter.kt");
+  }
+
+  @Test
+  @TestMetadata("constructorFromValueAndInitializingFields.kt")
+  public void testConstructorFromValueAndInitializingFields() {
+    runTest("plugins/lombok/testData/box/constructorFromValueAndInitializingFields.kt");
   }
 
   @Test
@@ -165,6 +177,18 @@ public class IrBlackBoxCodegenTestForLombokGenerated extends AbstractIrBlackBoxC
   @TestMetadata("genericsConstructorsStatic.kt")
   public void testGenericsConstructorsStatic() {
     runTest("plugins/lombok/testData/box/genericsConstructorsStatic.kt");
+  }
+
+  @Test
+  @TestMetadata("getterAndSetterOnJavaStaticFields.kt")
+  public void testGetterAndSetterOnJavaStaticFields() {
+    runTest("plugins/lombok/testData/box/getterAndSetterOnJavaStaticFields.kt");
+  }
+
+  @Test
+  @TestMetadata("getterSetterVisibility.kt")
+  public void testGetterSetterVisibility() {
+    runTest("plugins/lombok/testData/box/getterSetterVisibility.kt");
   }
 
   @Test

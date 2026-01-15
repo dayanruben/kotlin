@@ -11320,6 +11320,12 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
     }
 
     @Test
+    @TestMetadata("inlineContextParameter.kt")
+    public void testInlineContextParameter() {
+      runTest("compiler/testData/codegen/box/contextParameters/inlineContextParameter.kt");
+    }
+
+    @Test
     @TestMetadata("inlineContextualReceiverLambda.kt")
     public void testInlineContextualReceiverLambda() {
       runTest("compiler/testData/codegen/box/contextParameters/inlineContextualReceiverLambda.kt");
@@ -11503,6 +11509,12 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
     @TestMetadata("simple.kt")
     public void testSimple() {
       runTest("compiler/testData/codegen/box/contextParameters/simple.kt");
+    }
+
+    @Test
+    @TestMetadata("specificity.kt")
+    public void testSpecificity() {
+      runTest("compiler/testData/codegen/box/contextParameters/specificity.kt");
     }
 
     @Test

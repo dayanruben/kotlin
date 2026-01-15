@@ -2318,6 +2318,7 @@ org.jetbrains.kotlin.resolve.StatementFilter.Companion.NONE
 org.jetbrains.kotlin.resolve.StatementFilter.filter
 org.jetbrains.kotlin.resolve.TargetAllowedPredicate
 org.jetbrains.kotlin.resolve.TargetAllowedPredicate.isAllowed(KotlinTarget, LanguageVersionSettings)
+org.jetbrains.kotlin.resolve.allowedInContextParameters
 org.jetbrains.kotlin.resolve.always(KotlinTarget, KotlinTarget)
 org.jetbrains.kotlin.resolve.compatibility(KtKeywordToken, KtKeywordToken)
 org.jetbrains.kotlin.resolve.compatibilityTypeMap
@@ -2337,7 +2338,6 @@ org.jetbrains.kotlin.resolve.source.PsiSourceElement
 org.jetbrains.kotlin.resolve.source.PsiSourceElement.psi
 org.jetbrains.kotlin.resolve.source.PsiSourceFile
 org.jetbrains.kotlin.resolve.source.getPsi()
-org.jetbrains.kotlin.types.expressions.OperatorConventions
 org.jetbrains.kotlin.types.expressions.OperatorConventions:ASSIGNMENT_OPERATIONS
 org.jetbrains.kotlin.types.expressions.OperatorConventions:ASSIGNMENT_OPERATION_COUNTERPARTS
 org.jetbrains.kotlin.types.expressions.OperatorConventions:ASSIGN_METHOD

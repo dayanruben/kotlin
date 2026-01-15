@@ -2033,6 +2033,12 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
         runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/kt82964.kt");
       }
 
+      @Test
+      @TestMetadata("operatorRenamedOnImport.kt")
+      public void testOperatorRenamedOnImport() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/operatorRenamedOnImport.kt");
+      }
+
       @Nested
       @TestMetadata("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/collectionLiteralsDisabled")
       @TestDataPath("$PROJECT_ROOT")
@@ -2094,6 +2100,12 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
         @TestMetadata("inWhenConditions.kt")
         public void testInWhenConditions() {
           runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/collectionLiteralsDisabled/inWhenConditions.kt");
+        }
+
+        @Test
+        @TestMetadata("operatorRenamedOnImport.kt")
+        public void testOperatorRenamedOnImport() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/collectionLiterals/collectionLiteralsDisabled/operatorRenamedOnImport.kt");
         }
 
         @Test
@@ -2911,6 +2923,12 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
       @TestMetadata("inferringContextOfType.kt")
       public void testInferringContextOfType() {
         runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/inferringContextOfType.kt");
+      }
+
+      @Test
+      @TestMetadata("inline.kt")
+      public void testInline() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/inline.kt");
       }
 
       @Test
@@ -3835,9 +3853,27 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
         }
 
         @Test
+        @TestMetadata("baseSpecificity.kt")
+        public void testBaseSpecificity() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/specificity/baseSpecificity.kt");
+        }
+
+        @Test
+        @TestMetadata("callableReference.kt")
+        public void testCallableReference() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/specificity/callableReference.kt");
+        }
+
+        @Test
         @TestMetadata("generics.kt")
         public void testGenerics() {
           runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/specificity/generics.kt");
+        }
+
+        @Test
+        @TestMetadata("implicitInvokeCall.kt")
+        public void testImplicitInvokeCall() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/specificity/implicitInvokeCall.kt");
         }
 
         @Test
@@ -3847,15 +3883,21 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
         }
 
         @Test
-        @TestMetadata("newSpecificity.kt")
-        public void testNewSpecificity() {
-          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/specificity/newSpecificity.kt");
+        @TestMetadata("overrides.kt")
+        public void testOverrides() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/specificity/overrides.kt");
         }
 
         @Test
-        @TestMetadata("three.kt")
-        public void testThree() {
-          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/specificity/three.kt");
+        @TestMetadata("specificityInExpectAndActual.kt")
+        public void testSpecificityInExpectAndActual() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/specificity/specificityInExpectAndActual.kt");
+        }
+
+        @Test
+        @TestMetadata("subtyping.kt")
+        public void testSubtyping() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/contextParameters/specificity/subtyping.kt");
         }
 
         @Test
@@ -5235,6 +5277,18 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
       @TestMetadata("notASupertype.kt")
       public void testNotASupertype() {
         runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/notASupertype.kt");
+      }
+
+      @Test
+      @TestMetadata("operatorRenamedOnImportProvideDelegate.kt")
+      public void testOperatorRenamedOnImportProvideDelegate() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/operatorRenamedOnImportProvideDelegate.kt");
+      }
+
+      @Test
+      @TestMetadata("operatorRenamedOnImportProvideDelegateWithFlag.kt")
+      public void testOperatorRenamedOnImportProvideDelegateWithFlag() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/diagnostics/operatorRenamedOnImportProvideDelegateWithFlag.kt");
       }
 
       @Test
@@ -11721,6 +11775,12 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
         }
 
         @Test
+        @TestMetadata("explicitBackingFieldIntersectionOverrides.kt")
+        public void testExplicitBackingFieldIntersectionOverrides() {
+          runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/explicitBackingFieldIntersectionOverrides.kt");
+        }
+
+        @Test
         @TestMetadata("explicitBackingFieldOptIns.kt")
         public void testExplicitBackingFieldOptIns() {
           runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/explicitBackingFieldOptIns.kt");
@@ -11730,6 +11790,12 @@ public class LLDiagnosticsFirTestGenerated extends AbstractLLDiagnosticsTest {
         @TestMetadata("explicitBackingFieldPrivateToThis.kt")
         public void testExplicitBackingFieldPrivateToThis() {
           runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/explicitBackingFieldPrivateToThis.kt");
+        }
+
+        @Test
+        @TestMetadata("explicitBackingFieldSubclassSOAccess.kt")
+        public void testExplicitBackingFieldSubclassSOAccess() {
+          runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/explicitBackingFieldSubclassSOAccess.kt");
         }
 
         @Test
