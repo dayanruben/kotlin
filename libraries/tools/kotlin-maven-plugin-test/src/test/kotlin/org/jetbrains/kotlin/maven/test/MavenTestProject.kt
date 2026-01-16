@@ -9,42 +9,42 @@ import bsh.Interpreter
 import groovy.lang.Binding
 import groovy.util.GroovyScriptEngine
 import org.apache.maven.shared.verifier.Verifier
-import org.jetbrains.kotlin.maven.test.checkOrWriteKotlinMavenTestSettingsXml
-import org.junit.jupiter.api.AfterEach
+import org.jetbrains.kotlin.maven.test.MavenBuildOptions
+import org.jetbrains.kotlin.maven.test.isTeamCityRun
+import org.jetbrains.kotlin.maven.test.printLog
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.TestInstance
-import org.junit.jupiter.api.condition.EnabledOnOs
-import org.junit.jupiter.api.condition.OS
-import org.junit.jupiter.api.io.TempDir
 import java.io.ByteArrayOutputStream
-import java.io.File
 import java.io.PrintStream
 import java.io.StringReader
 import java.nio.file.Path
-import java.util.*
 import kotlin.io.path.*
-
-class MavenDistribution(val mavenHome: Path)
 
 class MavenTestProject(
     val name: String,
     val context: MavenTestExecutionContext,
-    val mavenDistribution: MavenDistribution,
     val workDir: Path,
     val settingsFile: Path,
     val buildOptions: MavenBuildOptions,
 ) {
-    fun build(vararg args: String, expectedToFail: Boolean = false, buildOptions: MavenBuildOptions = this.buildOptions): Verifier {
+    fun build(
+        vararg args: String,
+        environmentVariables: Map<String, String> = emptyMap(),
+        expectedToFail: Boolean = false,
+        buildOptions: MavenBuildOptions = this.buildOptions,
+        code: (Verifier.() -> Unit)? = null,
+    ): Verifier {
         val verifier = Verifier(
             workDir.absolutePathString(),
             null, // settingsFile is used only to extract local repo from there, but we pass it explicitly below
             false,
-            mavenDistribution.mavenHome.absolutePathString(),
         )
 
         val javaHome = context.javaHomeProvider(buildOptions.javaVersion).absolutePathString()
         verifier.setEnvironmentVariable("JAVA_HOME", javaHome)
+
+        for ((key, value) in environmentVariables) {
+            verifier.setEnvironmentVariable(key, value)
+        }
 
         verifier.setLocalRepo(context.sharedMavenLocal.absolutePathString())
 
@@ -61,31 +61,26 @@ class MavenTestProject(
             verifier.execute()
         }
 
-        fun printLog() {
-            println("====LOG BEGIN====")
-            val logFile = verifier.basedir.let(::File).resolve(verifier.logFileName)
-            logFile.bufferedReader().use { reader ->
-                reader.lineSequence().forEach { line ->
-                    println(line)
-                }
-            }
-            println("====LOG END====")
-        }
-
         if (expectedToFail) {
             if (res.isSuccess) {
                 println("Maven build succeeded unexpectedly")
-                printLog()
+                verifier.printLog()
                 throw AssertionError("Maven build succeeded unexpectedly")
             }
         } else {
             if (res.isFailure) {
                 println("Maven build failed with error: ${res.exceptionOrNull()?.message}")
-                printLog()
+                verifier.printLog()
                 throw res.exceptionOrNull()!!
             }
         }
 
+        try {
+            code?.invoke(verifier)
+        } catch (e: AssertionError) {
+            verifier.printLog()
+            throw e
+        }
         return verifier
     }
 
@@ -123,84 +118,15 @@ class MavenTestProject(
             assertTrue(res) { "verify.groovy returned false" }
         }
     }
-}
 
-data class MavenBuildOptions(
-    val javaVersion: String = "17",
-    val useKotlinDaemon: Boolean? = null
-) {
-    fun asCliArgs(): List<String> = buildList {
-        useKotlinDaemon?.let { add("-Dkotlin.compiler.daemon=$it") }
-    }
-}
-
-@TestInstance(TestInstance.Lifecycle.PER_METHOD)
-abstract class KotlinMavenTestBase {
-
-    @TempDir
-    lateinit var tmpDir: Path
-
-    lateinit var context: MavenTestExecutionContext
-    open val buildOptions: MavenBuildOptions = MavenBuildOptions()
-
-    @BeforeEach
-    fun setup() {
-        context = createMavenTestExecutionContextFromEnvironment(tmpDir)
-    }
-
-    @AfterEach
-    @EnabledOnOs(OS.WINDOWS)
-    fun cleanup() {
-        try {
-            @OptIn(kotlin.io.path.ExperimentalPathApi::class)
-            tmpDir.deleteRecursively()
-            return
-        } catch (_: Throwable) {
-            System.gc();
-        }
-
-        // try again, and fail otherwise
-        @OptIn(kotlin.io.path.ExperimentalPathApi::class)
-        tmpDir.deleteRecursively()
-    }
-
-    fun testProject(
-        projectDir: String,
-        mavenVersion: String,
-        buildOptions: MavenBuildOptions = this.buildOptions,
-        code: (MavenTestProject.() -> Unit)? = null,
-    ): MavenTestProject {
-        val workDir = copyProjectDir(projectDir, mavenVersion)
-
-        context.verifyCommonBshLocation.copyTo(workDir.resolve("verify-common.bsh"))
-
-        val settingsXml = workDir.resolve("settings.xml")
-        settingsXml.checkOrWriteKotlinMavenTestSettingsXml(context.kotlinBuildRepo)
-
-        val mavenDistribution = context.mavenDistributionProvider(mavenVersion)
-        val project = MavenTestProject(
-            name = projectDir,
-            context = context,
-            mavenDistribution = mavenDistribution,
-            workDir = workDir,
-            settingsFile = settingsXml,
-            buildOptions = buildOptions
-        )
-
-        if (code != null) code(project)
-        return project
-    }
-
-    private fun copyProjectDir(projectDir: String, mavenVersion: String): Path {
-        val originalProjectDir = context.testProjectsDir.resolve(projectDir)
-        if (!originalProjectDir.exists()) error("Project dir $originalProjectDir does not exist")
-
-        val copyTo = context.testWorkDir.resolve(projectDir).resolve(mavenVersion)
-        copyTo.createDirectories()
+    @Suppress("unused")
+    fun makeSnapshotTo(base: String) {
+        check(!isTeamCityRun) { "Please remove `makeSnapshotTo()` call from test. It is utility for local debugging only!" }
+        val newWorkDir = Path(base).resolve(name)
+        newWorkDir.createDirectories()
 
         @OptIn(ExperimentalPathApi::class)
-        originalProjectDir.copyToRecursively(copyTo, overwrite = false, followLinks = true)
-
-        return copyTo
+        workDir.copyToRecursively(newWorkDir, overwrite = true, followLinks = true)
     }
 }
+

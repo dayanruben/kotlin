@@ -5,12 +5,13 @@
 
 package org.jetbrains.kotlin.maven.plugin.test
 
+import org.jetbrains.kotlin.maven.test.JdkProvider
+import org.jetbrains.kotlin.maven.test.TestVersions
 import java.nio.file.Path
 import kotlin.io.path.Path
 
 class MavenTestExecutionContext(
-    val javaHomeProvider: (version: String) -> Path,
-    val mavenDistributionProvider: (version: String) -> MavenDistribution,
+    val javaHomeProvider: (version: TestVersions.Java) -> Path,
     val testProjectsDir: Path,
     val testWorkDir: Path,
     val sharedMavenLocal: Path,
@@ -22,18 +23,9 @@ class MavenTestExecutionContext(
 fun createMavenTestExecutionContextFromEnvironment(
     tmpDir: Path,
 ): MavenTestExecutionContext {
-    // FIXME: KT-83111 Add JavaVersion argument resolver for kotlin-maven-plugin-test
-    val javaHomeProvider = { _: String ->
-        // prefer JDK 17, fallback to java home
-        val jdk17 = System.getProperty("jdk17Home")
-        val javaHome = jdk17 ?: System.getProperty("java.home")
-        Path(javaHome)
-    }
-
-    // FIXME: KT-83112 Add MavenVersion argument resolver for kotlin-maven-plugin-test
-    val mavenDistributionProvider = { _: String ->
-        val mavenHome = System.getProperty("maven.home") ?: error("maven.home system property is not set")
-        MavenDistribution(Path(mavenHome))
+    val jdkProvider = JdkProvider()
+    val javaHomeProvider = { version: TestVersions.Java ->
+        jdkProvider.jdkHome(version) ?: Path(System.getProperty("java.home"))
     }
 
     val testProjectsDir = System.getProperty("kotlin.it.testDirs")
@@ -54,7 +46,6 @@ fun createMavenTestExecutionContextFromEnvironment(
 
     return MavenTestExecutionContext(
         javaHomeProvider = javaHomeProvider,
-        mavenDistributionProvider = mavenDistributionProvider,
         testProjectsDir = Path(testProjectsDir),
         testWorkDir = tmpDir.resolve("maven-test-work"),
         sharedMavenLocal = Path(mavenRepoLocal),
