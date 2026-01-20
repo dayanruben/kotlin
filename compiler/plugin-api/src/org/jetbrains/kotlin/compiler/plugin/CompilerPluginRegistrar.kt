@@ -5,12 +5,9 @@
 
 package org.jetbrains.kotlin.compiler.plugin
 
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.CompilerConfigurationKey
-import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
+import org.jetbrains.kotlin.extensions.ExtensionPointDescriptor
 
 @ExperimentalCompilerApi
 abstract class CompilerPluginRegistrar {
@@ -28,15 +25,15 @@ abstract class CompilerPluginRegistrar {
     abstract fun ExtensionStorage.registerExtensions(configuration: CompilerConfiguration)
 
     class ExtensionStorage {
-        private val _registeredExtensions = mutableMapOf<ProjectExtensionDescriptor<*>, MutableList<Any>>()
-        val registeredExtensions: Map<ProjectExtensionDescriptor<*>, List<Any>>
+        private val _registeredExtensions = mutableMapOf<ExtensionPointDescriptor<*>, MutableList<Any>>()
+        val registeredExtensions: Map<ExtensionPointDescriptor<*>, List<Any>>
             get() = _registeredExtensions
 
         private val _disposables = mutableListOf<PluginDisposable>()
         val disposables: List<PluginDisposable>
             get() = _disposables
 
-        fun <T : Any> ProjectExtensionDescriptor<T>.registerExtension(extension: T) {
+        fun <T : Any> ExtensionPointDescriptor<T>.registerExtension(extension: T) {
             _registeredExtensions.getOrPut(this, ::mutableListOf).add(extension)
         }
 
@@ -59,47 +56,3 @@ abstract class CompilerPluginRegistrar {
 
     abstract val supportsK2: Boolean
 }
-
-fun CompilerPluginRegistrar.ExtensionStorage.registerInProject(
-    project: Project,
-    errorMessage: (Any) -> String = { "Error while registering ${it.javaClass.name} "}
-) {
-    for ((extensionPoint, extensions) in registeredExtensions) {
-        for (extension in extensions) {
-            @Suppress("UNCHECKED_CAST")
-            try {
-                (extensionPoint as ProjectExtensionDescriptor<Any>).registerExtensionUnsafe(project, extension)
-            } catch (e: AbstractMethodError) {
-                throw IllegalStateException(errorMessage(extension), e)
-            }
-        }
-    }
-    for (disposable in disposables) {
-        Disposer.register(project) { disposable.dispose() }
-    }
-}
-
-private fun ProjectExtensionDescriptor<Any>.registerExtensionUnsafe(project: Project, extension: Any) {
-    this.registerExtension(project, extension)
-}
-
-@TestOnly
-fun registerExtensionsForTest(
-    project: Project,
-    configuration: CompilerConfiguration,
-    register: CompilerPluginRegistrar.ExtensionStorage.(CompilerConfiguration) -> Unit
-) {
-    val extensionStorage = CompilerPluginRegistrar.ExtensionStorage().apply {
-        register(configuration)
-    }
-    extensionStorage.registerInProject(project)
-}
-
-/**
- * This configuration key is used to provide a way to programmatically register compiler plugins
- * in the [org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment.registerExtensionsFromPlugins].
- *
- * This key is allowed to be used ONLY in tests
- */
-val TEST_ONLY_PLUGIN_REGISTRATION_CALLBACK: CompilerConfigurationKey<(Project) -> Unit> =
-    CompilerConfigurationKey.create("Compiler plugin registrars for tests")

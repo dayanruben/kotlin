@@ -56,6 +56,7 @@ import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.*
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.diagnosticFactoriesStorage
+import org.jetbrains.kotlin.cli.extensionsStorage
 import org.jetbrains.kotlin.cli.initializeDiagnosticFactoriesStorageForCli
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment.Companion.resetApplicationManager
 import org.jetbrains.kotlin.cli.jvm.config.*
@@ -67,6 +68,7 @@ import org.jetbrains.kotlin.codegen.extensions.ClassFileFactoryFinalizerExtensio
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
 import org.jetbrains.kotlin.compiler.plugin.TEST_ONLY_PLUGIN_REGISTRATION_CALLBACK
+import org.jetbrains.kotlin.compiler.plugin.TEST_ONLY_PROJECT_CONFIGURATION_CALLBACK
 import org.jetbrains.kotlin.compiler.plugin.registerInProject
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.extensions.*
@@ -683,13 +685,17 @@ class KotlinCoreEnvironment private constructor(
                 .apply { isAccessible = true }
                 .setInt(null, FileUtilRt.LARGE_FOR_CONTENT_LOADING)
 
-            registerExtensionsFromPlugins(configuration)
-            // otherwise consider that project environment is properly configured before passing to the environment
-            // TODO: consider some asserts to check important extension points
-
             if (configuration.diagnosticFactoriesStorage == null) {
                 configuration.initializeDiagnosticFactoriesStorageForCli()
             }
+
+            if (configuration.extensionsStorage == null) {
+                configuration.extensionsStorage = CompilerPluginRegistrar.ExtensionStorage()
+            }
+
+            registerExtensionsFromPlugins(configuration)
+            // otherwise consider that project environment is properly configured before passing to the environment
+            // TODO: consider some asserts to check important extension points
 
             val isJvm = configFiles == EnvironmentConfigFiles.JVM_CONFIG_FILES
             project.registerService(ModuleVisibilityManager::class.java, CliModuleVisibilityManagerImpl(isJvm))
@@ -750,32 +756,38 @@ class KotlinCoreEnvironment private constructor(
         @Suppress("MemberVisibilityCanPrivate") // made public for CLI Android Lint
         @K1Deprecation
         fun registerPluginExtensionPoints(project: MockProject) {
+            // K1 extensions
             SyntheticResolveExtension.registerExtensionPoint(project)
             SyntheticJavaResolveExtension.registerExtensionPoint(project)
-            @Suppress("DEPRECATION_ERROR")
-            org.jetbrains.kotlin.codegen.extensions.ClassBuilderInterceptorExtension.registerExtensionPoint(project)
-            ClassGeneratorExtension.registerExtensionPoint(project)
-            ClassFileFactoryFinalizerExtension.registerExtensionPoint(project)
             AnalysisHandlerExtension.registerExtensionPoint(project)
             PackageFragmentProviderExtension.registerExtensionPoint(project)
             StorageComponentContainerContributor.registerExtensionPoint(project)
             DeclarationAttributeAltererExtension.registerExtensionPoint(project)
+            TypeResolutionInterceptor.registerExtensionPoint(project)
+            CandidateInterceptor.registerExtensionPoint(project)
+            DescriptorSerializerPlugin.registerExtensionPoint(project)
+            TypeAttributeTranslatorExtension.registerExtensionPoint(project)
+            AssignResolutionAltererExtension.registerExtensionPoint(project)
+            DiagnosticSuppressor.registerExtensionPoint(project)
+
+            // K1 extensions for removal
+            @Suppress("DEPRECATION_ERROR")
             PreprocessedVirtualFileFactoryExtension.registerExtensionPoint(project)
+
+            // K1 extensions for scripting
             CompilerConfigurationExtension.registerExtensionPoint(project)
             CollectAdditionalSourcesExtension.registerExtensionPoint(project)
             ProcessSourcesBeforeCompilingExtension.registerExtensionPoint(project)
             ExtraImportsProviderExtension.registerExtensionPoint(project)
-            IrGenerationExtension.registerExtensionPoint(project)
             ScriptEvaluationExtension.registerExtensionPoint(project)
             ShellExtension.registerExtensionPoint(project)
-            TypeResolutionInterceptor.registerExtensionPoint(project)
-            CandidateInterceptor.registerExtensionPoint(project)
-            DescriptorSerializerPlugin.registerExtensionPoint(project)
+
+            // K2 extensions
             FirExtensionRegistrarAdapter.registerExtensionPoint(project)
-            TypeAttributeTranslatorExtension.registerExtensionPoint(project)
-            AssignResolutionAltererExtension.registerExtensionPoint(project)
             FirAnalysisHandlerExtension.registerExtensionPoint(project)
-            DiagnosticSuppressor.registerExtensionPoint(project)
+            IrGenerationExtension.registerExtensionPoint(project)
+            ClassGeneratorExtension.registerExtensionPoint(project)
+            ClassFileFactoryFinalizerExtension.registerExtensionPoint(project)
         }
 
         internal fun registerExtensionsFromPlugins(project: MockProject, configuration: CompilerConfiguration) {
@@ -802,12 +814,13 @@ class KotlinCoreEnvironment private constructor(
                 }
             }
 
-            val extensionStorage = CompilerPluginRegistrar.ExtensionStorage()
+            val extensionStorage = configuration.extensionsStorage ?: error("Extensions storage is not registered")
             for (registrar in configuration.getList(CompilerPluginRegistrar.COMPILER_PLUGIN_REGISTRARS)) {
                 with(registrar) { extensionStorage.registerExtensions(configuration) }
             }
+            configuration[TEST_ONLY_PLUGIN_REGISTRATION_CALLBACK]?.invoke(extensionStorage)
+            configuration[TEST_ONLY_PROJECT_CONFIGURATION_CALLBACK]?.invoke(project)
             extensionStorage.registerInProject(project) { createErrorMessage(it) }
-            configuration[TEST_ONLY_PLUGIN_REGISTRATION_CALLBACK]?.invoke(project)
         }
 
         private fun registerApplicationServicesForCLI(applicationEnvironment: KotlinCoreApplicationEnvironment) {
