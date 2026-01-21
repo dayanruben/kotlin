@@ -1,6 +1,5 @@
 package org.jetbrains.kotlin.benchmark
 
-import groovy.lang.Closure
 import org.gradle.api.*
 import org.gradle.api.tasks.Delete
 import org.gradle.api.tasks.Exec
@@ -19,9 +18,6 @@ class BuildStep (private val _name: String): Named  {
 class BuildStepContainer(val project: Project): NamedDomainObjectContainer<BuildStep> by project.container(BuildStep::class.java) {
     fun step(name: String, configure: Action<BuildStep>) =
         maybeCreate(name).apply { configure.execute(this) }
-    
-    fun step(name: String, configure: Closure<Unit>) =
-        step(name, { project.configure(this, configure) })
 }
 
 open class CompileBenchmarkExtension @Inject constructor(val project: Project) {
@@ -31,7 +27,6 @@ open class CompileBenchmarkExtension @Inject constructor(val project: Project) {
     var compilerOpts: List<String> = emptyList()
 
     fun buildSteps(configure: Action<BuildStepContainer>): Unit = buildSteps.let { configure.execute(it) }
-    fun buildSteps(configure: Closure<Unit>): Unit = buildSteps { project.configure(this, configure) }
 }
 
 open class CompileBenchmarkingPlugin : Plugin<Project> {
@@ -108,21 +103,6 @@ open class CompileBenchmarkingPlugin : Plugin<Project> {
 
     private fun getCompilerFlags(benchmarkExtension: CompileBenchmarkExtension) =
             benchmarkExtension.compilerOpts
-
-    private fun Project.configureJvmRun() {
-        val jvmRun = tasks.create("jvmRun") {
-            group = BenchmarkingPlugin.BENCHMARKING_GROUP
-            description = "Runs the compile only benchmark for Kotlin/JVM."
-            doLast { println("JVM run isn't supported") }
-        }
-
-        tasks.create("jvmJsonReport") {
-            group = BenchmarkingPlugin.BENCHMARKING_GROUP
-            description = "Builds the benchmarking report for Kotlin/Native."
-            doLast { println("JVM run isn't supported") }
-            jvmRun.finalizedBy(this)
-        }
-    }
     
     override fun apply(target: Project): Unit = with(target) {
         addTimeListener(this)
@@ -136,7 +116,6 @@ open class CompileBenchmarkingPlugin : Plugin<Project> {
         // Create tasks.
         configureUtilityTasks()
         configureKonanRun(benchmarkExtension)
-        configureJvmRun()
     }
 
     companion object {

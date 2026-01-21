@@ -35446,6 +35446,12 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
     public void testInterface0() {
       runTest("compiler/testData/codegen/box/interfaceCallsNCasts/interface0.kt");
     }
+
+    @Test
+    @TestMetadata("kt83308.kt")
+    public void testKt83308() {
+      runTest("compiler/testData/codegen/box/interfaceCallsNCasts/kt83308.kt");
+    }
   }
 
   @Nested
@@ -60443,6 +60449,18 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
     @TestMetadata("samWithAbstractToString.kt")
     public void testSamWithAbstractToString() {
       runTest("compiler/testData/codegen/box/sam/samWithAbstractToString.kt");
+    }
+
+    @Test
+    @TestMetadata("samWithAbstractToString2.kt")
+    public void testSamWithAbstractToString2() {
+      runTest("compiler/testData/codegen/box/sam/samWithAbstractToString2.kt");
+    }
+
+    @Test
+    @TestMetadata("samWithAbstractToString3.kt")
+    public void testSamWithAbstractToString3() {
+      runTest("compiler/testData/codegen/box/sam/samWithAbstractToString3.kt");
     }
 
     @Test

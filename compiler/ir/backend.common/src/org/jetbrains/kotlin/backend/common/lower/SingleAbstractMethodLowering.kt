@@ -225,7 +225,12 @@ abstract class SingleAbstractMethodLowering(val context: CommonBackendContext) :
             isSuspend = originalSuperMethod.isSuspend
             setSourceRange(createFor)
         }.apply {
-            overriddenSymbols = listOf(originalSuperMethod.symbol)
+            val overriddenMethodOfAny = originalSuperMethod.findOverriddenMethodOfAny()
+            overriddenSymbols = if (overriddenMethodOfAny == null)
+                listOf(originalSuperMethod.symbol)
+            else subclass.superTypes.mapNotNull { superType ->
+                superType.classOrFail.owner.functions.firstOrNull { it.overrides(overriddenMethodOfAny) }?.symbol
+            }
             parameters = (listOf(subclass.thisReceiver!!) + originalSuperMethod.nonDispatchParameters)
                 .memoryOptimizedMap { it.copyTo(this) }
             body = context.createIrBuilder(symbol).irBlockBody {
