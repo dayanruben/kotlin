@@ -913,6 +913,8 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_LONG_SUFFIX
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_MODIFIER_CONTAINING_DECLARATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_MODIFIER_TARGET
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_NUMBER_OF_TYPE_ARGUMENTS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_NUMBER_OF_TYPE_ARGUMENTS_IN_LOCAL_CLASS_IN_LHS_WARNING
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_NUMBER_OF_TYPE_ARGUMENTS_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_SETTER_PARAMETER_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_SETTER_RETURN_TYPE
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
@@ -2018,6 +2020,21 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(
             WRONG_NUMBER_OF_TYPE_ARGUMENTS,
             "$wrongNumberOfTypeArguments for ''{1}''.",
+            null,
+            SYMBOL,
+        )
+        map.put(
+            WRONG_NUMBER_OF_TYPE_ARGUMENTS_WARNING,
+            "$wrongNumberOfTypeArguments for ''{1}''. Use the full type ''{2}'' instead."
+                .toDeprecationWarningMessage(LanguageFeature.ProperSupportOfInnerClassesInCallableReferenceLHS),
+            null,
+            SYMBOL,
+            RENDER_TYPE,
+        )
+        map.put(
+            WRONG_NUMBER_OF_TYPE_ARGUMENTS_IN_LOCAL_CLASS_IN_LHS_WARNING,
+            "$wrongNumberOfTypeArguments for ''{1}''. Try to use a lambda expression instead."
+                .toDeprecationWarningMessage(LanguageFeature.ProperSupportOfInnerClassesInCallableReferenceLHS),
             null,
             SYMBOL,
         )

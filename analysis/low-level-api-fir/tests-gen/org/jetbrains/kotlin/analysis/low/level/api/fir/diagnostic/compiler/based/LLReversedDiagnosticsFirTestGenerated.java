@@ -573,6 +573,12 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
     }
 
     @Test
+    @TestMetadata("nestedObjectWithTypeArgumentsInCallableReferenceLHS.kt")
+    public void testNestedObjectWithTypeArgumentsInCallableReferenceLHS() {
+      runTest("compiler/fir/analysis-tests/testData/resolve/nestedObjectWithTypeArgumentsInCallableReferenceLHS.kt");
+    }
+
+    @Test
     @TestMetadata("NestedOfAliasedType.kt")
     public void testNestedOfAliasedType() {
       runTest("compiler/fir/analysis-tests/testData/resolve/NestedOfAliasedType.kt");
@@ -7516,6 +7522,76 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
       public void testSimple() {
         runTest("compiler/fir/analysis-tests/testData/resolve/innerClasses/simple.kt");
       }
+
+      @Nested
+      @TestMetadata("compiler/fir/analysis-tests/testData/resolve/innerClasses/inCallableReferenceLHS")
+      @TestDataPath("$PROJECT_ROOT")
+      public class InCallableReferenceLHS {
+        @Test
+        public void testAllFilesPresentInInCallableReferenceLHS() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/innerClasses/inCallableReferenceLHS"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("fromSuperclass.kt")
+        public void testFromSuperclass() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/innerClasses/inCallableReferenceLHS/fromSuperclass.kt");
+        }
+
+        @Test
+        @TestMetadata("innerLocalClasses.kt")
+        public void testInnerLocalClasses() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/innerClasses/inCallableReferenceLHS/innerLocalClasses.kt");
+        }
+
+        @Test
+        @TestMetadata("javaInner.kt")
+        public void testJavaInner() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/innerClasses/inCallableReferenceLHS/javaInner.kt");
+        }
+
+        @Test
+        @TestMetadata("misplacedArgumentsInChain.kt")
+        public void testMisplacedArgumentsInChain() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/innerClasses/inCallableReferenceLHS/misplacedArgumentsInChain.kt");
+        }
+
+        @Test
+        @TestMetadata("misplacedArgumentsInChainWithNested.kt")
+        public void testMisplacedArgumentsInChainWithNested() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/innerClasses/inCallableReferenceLHS/misplacedArgumentsInChainWithNested.kt");
+        }
+
+        @Test
+        @TestMetadata("misplacedArgumentsInInnerOnly.kt")
+        public void testMisplacedArgumentsInInnerOnly() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/innerClasses/inCallableReferenceLHS/misplacedArgumentsInInnerOnly.kt");
+        }
+
+        @Test
+        @TestMetadata("nullable.kt")
+        public void testNullable() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/innerClasses/inCallableReferenceLHS/nullable.kt");
+        }
+
+        @Test
+        @TestMetadata("simple.kt")
+        public void testSimple() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/innerClasses/inCallableReferenceLHS/simple.kt");
+        }
+
+        @Test
+        @TestMetadata("upperBoundViolated.kt")
+        public void testUpperBoundViolated() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/innerClasses/inCallableReferenceLHS/upperBoundViolated.kt");
+        }
+
+        @Test
+        @TestMetadata("withProjections.kt")
+        public void testWithProjections() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/innerClasses/inCallableReferenceLHS/withProjections.kt");
+        }
+      }
     }
 
     @Nested
@@ -7601,6 +7677,28 @@ public class LLReversedDiagnosticsFirTestGenerated extends AbstractLLReversedDia
       @TestMetadata("typesFromSuperClasses.kt")
       public void testTypesFromSuperClasses() {
         runTest("compiler/fir/analysis-tests/testData/resolve/localClasses/typesFromSuperClasses.kt");
+      }
+
+      @Nested
+      @TestMetadata("compiler/fir/analysis-tests/testData/resolve/localClasses/inCallableReferenceLHS")
+      @TestDataPath("$PROJECT_ROOT")
+      public class InCallableReferenceLHS {
+        @Test
+        public void testAllFilesPresentInInCallableReferenceLHS() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/localClasses/inCallableReferenceLHS"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("insideGenericClass.kt")
+        public void testInsideGenericClass() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/localClasses/inCallableReferenceLHS/insideGenericClass.kt");
+        }
+
+        @Test
+        @TestMetadata("outerNestedFuncLocalInner.kt")
+        public void testOuterNestedFuncLocalInner() {
+          runTest("compiler/fir/analysis-tests/testData/resolve/localClasses/inCallableReferenceLHS/outerNestedFuncLocalInner.kt");
+        }
       }
     }
 

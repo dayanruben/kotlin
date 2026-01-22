@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.resolve.calls.inference.components
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.resolve.calls.inference.components.VariableFixationFinder.Context
 import org.jetbrains.kotlin.resolve.calls.inference.components.VariableFixationFinder.VariableForFixation
+import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintKind
 import org.jetbrains.kotlin.types.model.*
 import org.jetbrains.kotlin.resolve.calls.inference.components.VariableReadinessCalculator.TypeVariableFixationReadinessQuality as Q
 
@@ -50,13 +51,6 @@ class VariableReadinessCalculator(
         HAS_PROPER_NON_TRIVIAL_CONSTRAINTS,
         HAS_PROPER_NON_TRIVIAL_CONSTRAINTS_OTHER_THAN_INCORPORATED_FROM_DECLARED_UPPER_BOUND,
 
-        // K1 used this for reified type parameters, mainly to get `discriminateNothingForReifiedParameter.kt` working.
-        // KT-55691 lessens the need for this readiness kind in K2, however it still needs it for, e.g., `reifiedToNothing.kt`.
-        // TODO: consider deprioritizing Nothing in relation systems like `Nothing <: T <: SomeType` (see KT-76443)
-        //  and not using anymore this readiness kind in K2.
-        //  Related issues: KT-32358 (especially kt32358_3.kt test)
-        REIFIED,
-
         // *** "ready for fixation" kinds ***
         // Prefer `LOWER` `T :> SomeRegularType` to `UPPER` `T <: SomeRegularType` for KT-41934.
         // Prefer `LOWER` constraint also to `EQUALS` `T = SomeRegularType` because of the test
@@ -69,6 +63,14 @@ class VariableReadinessCalculator(
         // ILT type = Integer literal type = yet unknown choice from Byte/Short/Int/Long (at least two of them)
         // Any proper constraint can be here which isn't bound to ILT type
         HAS_PROPER_NON_ILT_CONSTRAINT,
+
+        // Explicit lower `Nothing` constraints tend to always fix to `Nothing`
+        // (if there's an explicit one, then the user wrote it on purpose somewhere),
+        // which may "poison" other type variables depending on the current one.
+        // This entry de-prioritizes variables that have `:> Nothing(?)` constraints
+        // (both nullable and not null).
+        // See: `reifiedToNothing.kt` (KT-76443)
+        HAS_NO_EXPLICIT_LOWER_NOTHING_CONSTRAINT,
         ;
 
         init {
@@ -120,14 +122,21 @@ class VariableReadinessCalculator(
         readiness[Q.HAS_PROPER_NON_TRIVIAL_CONSTRAINTS_OTHER_THAN_INCORPORATED_FROM_DECLARED_UPPER_BOUND] =
             !hasOnlyIncorporatedConstraintsFromDeclaredUpperBound()
 
-        readiness[Q.REIFIED] = isReified()
         readiness[Q.HAS_PROPER_NON_NOTHING_NON_ILT_LOWER_CONSTRAINT] = hasLowerNonNothingNonIltProperConstraint()
 
         val (_, hasProperNonIltConstraint) = computeIltConstraintsRelatedFlags()
         readiness[Q.HAS_PROPER_NON_ILT_CONSTRAINT] = hasProperNonIltConstraint
 
+        readiness[Q.HAS_NO_EXPLICIT_LOWER_NOTHING_CONSTRAINT] = hasNoExplicitLowerNothingConstraint()
+
         return readiness
     }
+
+    context(c: Context)
+    private fun TypeConstructorMarker.hasNoExplicitLowerNothingConstraint(): Boolean =
+        c.notFixedTypeVariables[this]?.constraints
+            ?.none { it.kind.isLower() && it.type.typeConstructor().isNothingConstructor() }
+            ?: true
 
     context(c: Context)
     private fun TypeConstructorMarker.hasLowerNonNothingNonIltProperConstraint(): Boolean {

@@ -10846,12 +10846,6 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
       }
 
       @Test
-      @TestMetadata("dataObjectDisabled.kt")
-      public void testDataObjectDisabled() {
-        runTest("compiler/testData/diagnostics/tests/dataClasses/dataObjectDisabled.kt");
-      }
-
-      @Test
       @TestMetadata("dataObjectEnabled.kt")
       public void testDataObjectEnabled() {
         runTest("compiler/testData/diagnostics/tests/dataClasses/dataObjectEnabled.kt");
@@ -15911,6 +15905,18 @@ public class LLPartialDiagnosticsFe10TestGenerated extends AbstractLLPartialDiag
       @Test
       public void testAllFilesPresentInExternal() {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/external"), Pattern.compile("^(.+)\\.(kt|kts)$"), Pattern.compile("^(.+)\\.(reversed|partialBody|fir|ll|latestLV)\\.kts?$"), true);
+      }
+
+      @Test
+      @TestMetadata("constructorParameter.kt")
+      public void testConstructorParameter() {
+        runTest("compiler/testData/diagnostics/tests/external/constructorParameter.kt");
+      }
+
+      @Test
+      @TestMetadata("enumEntry.kt")
+      public void testEnumEntry() {
+        runTest("compiler/testData/diagnostics/tests/external/enumEntry.kt");
       }
 
       @Test

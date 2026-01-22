@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.konan.test.blackbox.support.runner.TestRunCheck
 import org.jetbrains.kotlin.konan.test.blackbox.support.runner.TestRunCheck.OutputDataFile
 import org.jetbrains.kotlin.konan.test.blackbox.support.settings.Settings
 import org.jetbrains.kotlin.konan.test.blackbox.support.settings.withPlatformLibs
-import org.jetbrains.kotlin.konan.test.blackbox.support.util.LLDBSessionSpec
+import org.jetbrains.kotlin.konan.test.blackbox.support.util.ReplLLDBSessionSpec
 import org.jetbrains.kotlin.test.directives.model.*
 import org.jetbrains.kotlin.test.services.JUnit5Assertions.assertTrue
 import org.jetbrains.kotlin.test.services.JUnit5Assertions.fail
@@ -35,7 +35,7 @@ import kotlin.time.Duration
 object TestDirectives : SimpleDirectivesContainer() {
     val KIND by enumDirective<TestKind>(
         description = """
-            Usage: // KIND: [REGULAR, STANDALONE, STANDALONE_NO_TR, STANDALONE_LLDB]
+            Usage: // KIND: [REGULAR, STANDALONE, STANDALONE_NO_TR, STANDALONE_LLDB, STANDALONE_STEPPING]
             Declares the kind of the test:
 
             - REGULAR (the default) - include this test into the shared test binary.
@@ -47,7 +47,9 @@ object TestDirectives : SimpleDirectivesContainer() {
             - STANDALONE_NO_TR - compile the test to a separate binary that is supposed to have main entry point.
               The entry point can be customized Note that @kotlin.Test annotations are ignored.
 
-            - STANDALONE_LLDB - compile the test to a separate binary and debug with LLDB.
+            - STANDALONE_LLDB - compile the test to a separate binary and debug with LLDB, by executing specific LLDB commands.
+            
+            - STANDALONE_STEPPING - compile the test to a separate binary and debug with LLDB, by stepping through the entire program.
         """.trimIndent()
     )
 
@@ -211,7 +213,8 @@ enum class TestKind {
     REGULAR,
     STANDALONE,
     STANDALONE_NO_TR,
-    STANDALONE_LLDB;
+    STANDALONE_LLDB,
+    STANDALONE_STEPPING;
 }
 
 enum class TestRunnerType {
@@ -320,12 +323,12 @@ internal fun parseEntryPoint(registeredDirectives: RegisteredDirectives, locatio
     return entryPoint
 }
 
-internal fun parseLLDBSpec(testDataFile: File): LLDBSessionSpec {
+internal fun parseReplLLDBSpec(testDataFile: File): ReplLLDBSessionSpec {
     val specFilePathWithoutExtension = testDataFile.absolutePath.removeSuffix(testDataFile.extension)
     val specFileLocation = "${specFilePathWithoutExtension}txt"
     val specFile = File(specFileLocation)
     return try {
-        LLDBSessionSpec.parse(specFile.readText())
+        ReplLLDBSessionSpec.parse(specFile.readText())
     } catch (e: Exception) {
         Assertions.fail<Nothing>("${testDataFile.absolutePath}: Cannot parse LLDB session specification: " + e.message, e)
     }
