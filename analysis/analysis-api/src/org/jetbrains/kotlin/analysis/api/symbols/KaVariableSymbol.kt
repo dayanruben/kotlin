@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.analysis.api.symbols
 
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaInitializerValue
@@ -57,10 +56,28 @@ public abstract class KaBackingFieldSymbol : KaVariableSymbol() {
      */
     public abstract val owningProperty: KaKotlinPropertySymbol
 
+    /**
+     * Whether the backing field [is not default](https://github.com/Kotlin/KEEP/blob/main/proposals/KEEP-0430-explicit-backing-fields.md#declaration-site).
+     *
+     * #### Example
+     *
+     * The following property has an implicitly defined, default backing field:
+     *
+     * ```kotlin
+     * var names: Int = 10
+     * ```
+     *
+     * This property has an explicit, non-default backing field:
+     *
+     * ```kotlin
+     * val names: List<String>
+     *     field: MutableList<String> = mutableListOf()
+     * ```
+     */
+    public abstract val isNotDefault: Boolean
+
     final override val name: Name get() = withValidityAssertion { StandardNames.BACKING_FIELD }
 
-    /** PSI may be not-null in the case of explicit backing field ([KEEP-278](https://github.com/Kotlin/KEEP/issues/278)) */
-    final override val psi: PsiElement? get() = withValidityAssertion { null }
     final override val location: KaSymbolLocation get() = withValidityAssertion { KaSymbolLocation.PROPERTY }
     override val origin: KaSymbolOrigin get() = withValidityAssertion { KaSymbolOrigin.PROPERTY_BACKING_FIELD }
     final override val callableId: CallableId? get() = withValidityAssertion { null }

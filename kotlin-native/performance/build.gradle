@@ -64,12 +64,12 @@ subprojects { proj ->
 }
 
 tasks.register("buildAnalyzer") {
-    dependsOn(":benchmarksAnalyzer:${getAnalyzerTargetName()}Binaries".toString())
+    dependsOn(":benchmarksAnalyzer:${getHostAsTargetName()}Binaries".toString())
 }
 
 task konanRun {
     subprojects.each {
-        if (it.name != "benchmarksAnalyzer") {
+        if (it.name != "benchmarksAnalyzer" && it.name != "benchmarksLauncher") {
             dependsOn "${it.path}:konanRun"
         }
     }
@@ -86,7 +86,7 @@ task clean {
 
 defaultTasks 'konanRun'
 
-private static String getAnalyzerTargetName() {
+private static String getHostAsTargetName() {
     String target = System.getProperty("os.name")
     if (target == 'Linux') return 'linuxX64'
     if (target.startsWith('Windows')) return 'mingwX64'
@@ -114,11 +114,16 @@ task mergeNativeReports {
 }
 
 subprojects.each {
-    if (it.name != "benchmarksAnalyzer") {
+    if (it.name != "benchmarksAnalyzer" && it.name != "benchmarksLauncher") {
         it.afterEvaluate {
             it.konanJsonReport.finalizedBy mergeNativeReports
         }
     }
+}
+
+// CI calls this task to check that compilation is not broken in Aggregate
+task compileKotlinNative {
+    dependsOn getTasksByName("compileKotlin${getHostAsTargetName().capitalize()}", true)
 }
 
 task cinterop {

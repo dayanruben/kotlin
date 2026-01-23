@@ -1,59 +1,38 @@
 package org.jetbrains.kotlin.benchmark
 
-import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
-import org.gradle.api.Task
-import org.jetbrains.kotlin.*
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
-import org.jetbrains.kotlin.gradle.plugin.mpp.Executable
+import org.gradle.api.tasks.TaskProvider
+import org.gradle.kotlin.dsl.create
+import org.jetbrains.kotlin.JsonReportTask
+import org.jetbrains.kotlin.RunKotlinNativeTask
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
-import org.jetbrains.kotlin.konan.target.HostManager
-import javax.inject.Inject
-import kotlin.reflect.KClass
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
+import org.jetbrains.kotlin.hostKotlinNativeTarget
 
-open class KotlinNativeBenchmarkExtension @Inject constructor(project: Project) : BenchmarkExtension(project) {
-    var mingwSrcDirs: Collection<Any> = emptyList()
-    var posixSrcDirs: Collection<Any> = emptyList()
-}
+private const val NATIVE_EXECUTABLE_NAME = "benchmark"
 
 /**
  * A plugin configuring a benchmark Kotlin/Native project.
  */
 open class KotlinNativeBenchmarkingPlugin: BenchmarkingPlugin() {
+    private val Project.linkTaskProvider: TaskProvider<out KotlinNativeLink>
+        get() = hostKotlinNativeTarget.binaries.getExecutable(NATIVE_EXECUTABLE_NAME, project.buildType).linkTaskProvider
 
-    override val benchmarkExtensionClass: KClass<*>
-        get() = KotlinNativeBenchmarkExtension::class
-
-    override val Project.benchmark: KotlinNativeBenchmarkExtension
-        get() = extensions.getByName(benchmarkExtensionName) as KotlinNativeBenchmarkExtension
-
-    override val benchmarkExtensionName: String = "benchmark"
-
-    private val Project.nativeBinary: Executable
-        get() = (kotlin.targets.getByName(NATIVE_TARGET_NAME) as KotlinNativeTarget)
-            .binaries.getExecutable(NATIVE_EXECUTABLE_NAME, benchmark.buildType)
-
-    override val Project.nativeExecutable: String
-        get() = nativeBinary.outputFile.absolutePath
-
-    override val Project.nativeLinkTask: Task
-        get() = nativeBinary.linkTaskProvider.get()
-
-    override fun getCompilerFlags(project: Project, nativeTarget: KotlinNativeTarget) =
-            super.getCompilerFlags(project, nativeTarget) + project.nativeBinary.freeCompilerArgs.map { "\"$it\"" }
-
-    override fun NamedDomainObjectContainer<KotlinSourceSet>.configureSources(project: Project) {
-        project.benchmark.let {
-            commonMain.kotlin.srcDirs(*it.commonSrcDirs.toTypedArray())
-            if (HostManager.hostIsMingw) {
-                nativeMain.kotlin.srcDirs(*(it.nativeSrcDirs + it.mingwSrcDirs).toTypedArray())
-            } else {
-                nativeMain.kotlin.srcDirs(*(it.nativeSrcDirs + it.posixSrcDirs).toTypedArray())
+    override fun Project.createNativeBinary(target: KotlinNativeTarget) {
+        target.binaries.executable(NATIVE_EXECUTABLE_NAME, listOf(project.buildType)) {
+            this.runTaskProvider?.configure {
+                group = ""
+                enabled = false
             }
         }
     }
 
-    companion object {
-        const val BENCHMARK_EXTENSION_NAME = "benchmark"
+    override fun RunKotlinNativeTask.configureKonanRunTask() {
+        executable.fileProvider(project.linkTaskProvider.map { it.outputFile.get() })
+    }
+
+    override fun JsonReportTask.configureKonanJsonReportTask() {
+        codeSizeBinary.fileProvider(project.linkTaskProvider.map { it.outputFile.get() })
+        compilerFlags.addAll(project.linkTaskProvider.map { it.toolOptions.freeCompilerArgs.get() })
     }
 }
