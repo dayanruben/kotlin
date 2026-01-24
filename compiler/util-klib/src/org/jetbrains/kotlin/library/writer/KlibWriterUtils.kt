@@ -11,14 +11,16 @@ import org.jetbrains.kotlin.library.impl.KlibIrComponentWriterImpl
 import org.jetbrains.kotlin.library.impl.KlibMetadataComponentWriterImpl
 
 /**
- * An adapter to convert [SerializedMetadata] to [KlibComponentWriter].
+ * A [KlibWriter] DSL extension to include [SerializedMetadata] to the created library.
  */
-fun SerializedMetadata.asComponentWriter(): KlibComponentWriter = KlibMetadataComponentWriterImpl(this)
+fun KlibWriterSpec.includeMetadata(metadata: SerializedMetadata) {
+    include(KlibMetadataComponentWriterImpl(metadata))
+}
 
 /**
- * An adapter to convert [SerializedIrModule] to [KlibComponentWriter]s.
+ * A [KlibWriter] DSL extension to include [SerializedIrModule] to the created library.
  */
-fun SerializedIrModule.asComponentWriters(): Collection<KlibComponentWriter> = listOfNotNull(
-    KlibIrComponentWriterImpl.ForMainIr(files),
-    fileWithPreparedInlinableFunctions?.let(KlibIrComponentWriterImpl::ForInlinableFunctionsIr),
-)
+fun KlibWriterSpec.includeIr(irModule: SerializedIrModule?) {
+    irModule?.files?.let { include(KlibIrComponentWriterImpl.ForMainIr(it)) }
+    irModule?.fileWithPreparedInlinableFunctions?.let { include(KlibIrComponentWriterImpl.ForInlinableFunctionsIr(it)) }
+}
