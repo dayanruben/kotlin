@@ -52,7 +52,7 @@ KtSuperTypeList(161,174): 'SealedClass()'
 KtSuperTypeCallEntry(161,174): 'SealedClass()'
   KaApplicableCallCandidate:
     candidate = KaDelegatedConstructorCall:
-      argumentMapping = {}
+      contextArgumentMapping = {}
       contextArguments = []
       dispatchReceiver = null
       extensionReceiver = null
@@ -65,12 +65,13 @@ KtSuperTypeCallEntry(161,174): 'SealedClass()'
         contextParameters = []
         callableId = null
       typeArgumentsMapping = {}
+      valueArgumentMapping = {}
     isInBestCandidates = true
 
 KtConstructorCalleeExpression(161,172): 'SealedClass'
   KaApplicableCallCandidateInfo:
     candidate = KaDelegatedConstructorCall:
-      argumentMapping = {}
+      contextArgumentMapping = {}
       contextArguments = []
       dispatchReceiver = null
       extensionReceiver = null
@@ -83,6 +84,7 @@ KtConstructorCalleeExpression(161,172): 'SealedClass'
         contextParameters = []
         callableId = null
       typeArgumentsMapping = {}
+      valueArgumentMapping = {}
     isInBestCandidates = true
 
 KtTypeReference(161,172): 'SealedClass'
@@ -106,7 +108,7 @@ KtSuperTypeList(210,227): 'SealedInheritor()'
 KtSuperTypeCallEntry(210,227): 'SealedInheritor()'
   KaApplicableCallCandidate:
     candidate = KaDelegatedConstructorCall:
-      argumentMapping = {}
+      contextArgumentMapping = {}
       contextArguments = []
       dispatchReceiver = null
       extensionReceiver = null
@@ -127,12 +129,13 @@ KtSuperTypeCallEntry(210,227): 'SealedInheritor()'
         contextParameters = []
         callableId = null
       typeArgumentsMapping = {}
+      valueArgumentMapping = {}
     isInBestCandidates = true
 
 KtConstructorCalleeExpression(210,225): 'SealedInheritor'
   KaApplicableCallCandidateInfo:
     candidate = KaDelegatedConstructorCall:
-      argumentMapping = {}
+      contextArgumentMapping = {}
       contextArguments = []
       dispatchReceiver = null
       extensionReceiver = null
@@ -153,6 +156,7 @@ KtConstructorCalleeExpression(210,225): 'SealedInheritor'
         contextParameters = []
         callableId = null
       typeArgumentsMapping = {}
+      valueArgumentMapping = {}
     isInBestCandidates = true
 
 KtTypeReference(210,225): 'SealedInheritor'
@@ -390,7 +394,7 @@ KtSuperTypeList(530,541): 'OpenClass()'
 KtSuperTypeCallEntry(530,541): 'OpenClass()'
   KaApplicableCallCandidate:
     candidate = KaDelegatedConstructorCall:
-      argumentMapping = {}
+      contextArgumentMapping = {}
       contextArguments = []
       dispatchReceiver = null
       extensionReceiver = null
@@ -403,12 +407,13 @@ KtSuperTypeCallEntry(530,541): 'OpenClass()'
         contextParameters = []
         callableId = null
       typeArgumentsMapping = {}
+      valueArgumentMapping = {}
     isInBestCandidates = true
 
 KtConstructorCalleeExpression(530,539): 'OpenClass'
   KaApplicableCallCandidateInfo:
     candidate = KaDelegatedConstructorCall:
-      argumentMapping = {}
+      contextArgumentMapping = {}
       contextArguments = []
       dispatchReceiver = null
       extensionReceiver = null
@@ -421,6 +426,7 @@ KtConstructorCalleeExpression(530,539): 'OpenClass'
         contextParameters = []
         callableId = null
       typeArgumentsMapping = {}
+      valueArgumentMapping = {}
     isInBestCandidates = true
 
 KtTypeReference(530,539): 'OpenClass'
@@ -444,7 +450,7 @@ KtSuperTypeList(588,616): 'SealedInheritorOfOpenClass()'
 KtSuperTypeCallEntry(588,616): 'SealedInheritorOfOpenClass()'
   KaApplicableCallCandidate:
     candidate = KaDelegatedConstructorCall:
-      argumentMapping = {}
+      contextArgumentMapping = {}
       contextArguments = []
       dispatchReceiver = null
       extensionReceiver = null
@@ -465,12 +471,13 @@ KtSuperTypeCallEntry(588,616): 'SealedInheritorOfOpenClass()'
         contextParameters = []
         callableId = null
       typeArgumentsMapping = {}
+      valueArgumentMapping = {}
     isInBestCandidates = true
 
 KtConstructorCalleeExpression(588,614): 'SealedInheritorOfOpenClass'
   KaApplicableCallCandidateInfo:
     candidate = KaDelegatedConstructorCall:
-      argumentMapping = {}
+      contextArgumentMapping = {}
       contextArguments = []
       dispatchReceiver = null
       extensionReceiver = null
@@ -491,6 +498,7 @@ KtConstructorCalleeExpression(588,614): 'SealedInheritorOfOpenClass'
         contextParameters = []
         callableId = null
       typeArgumentsMapping = {}
+      valueArgumentMapping = {}
     isInBestCandidates = true
 
 KtTypeReference(588,614): 'SealedInheritorOfOpenClass'

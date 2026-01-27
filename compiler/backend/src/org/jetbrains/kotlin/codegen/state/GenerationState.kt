@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.codegen.inline.GlobalInlineContext
 import org.jetbrains.kotlin.codegen.inline.InlineCache
 import org.jetbrains.kotlin.codegen.optimization.OptimizationClassBuilderFactory
 import org.jetbrains.kotlin.codegen.serialization.JvmSerializationBindings
+import org.jetbrains.kotlin.compiler.plugin.getCompilerExtensions
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.incrementalCompilationComponents
 import org.jetbrains.kotlin.config.moduleName
@@ -92,7 +93,7 @@ class GenerationState(
                 extension.interceptClassBuilderFactory(classBuilderFactory)
             }
         },
-        ClassFileFactoryFinalizerExtension.getInstances(project),
+        configuration.getCompilerExtensions(ClassFileFactoryFinalizerExtension),
     )
 
     val globalSerializationBindings = JvmSerializationBindings()
@@ -116,8 +117,8 @@ class GenerationState(
         val adapted = try {
             // Using Class.forName here because we're in the old JVM backend, and we need to load extensions declared in the JVM IR backend.
             Class.forName("org.jetbrains.kotlin.backend.jvm.extensions.ClassBuilderExtensionAdapter")
-                .getDeclaredMethod("getExtensions", Project::class.java)
-                .invoke(null, project) as List<org.jetbrains.kotlin.codegen.extensions.ClassGeneratorExtensionAdapter>
+                .getDeclaredMethod("getExtensions", CompilerConfiguration::class.java)
+                .invoke(null, configuration) as List<ClassGeneratorExtensionAdapter>
         } catch (e: InvocationTargetException) {
             // Unwrap and rethrow any exception that happens. It's important e.g. in case of ProcessCanceledException.
             throw e.targetException

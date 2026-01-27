@@ -28,6 +28,8 @@ import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.utils.exceptions.ExceptionAttachmentBuilder
 import org.jetbrains.kotlin.utils.exceptions.checkWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 @KaImplementationDetail
 @OptIn(KtExperimentalApi::class)
@@ -89,9 +91,9 @@ abstract class KaBaseResolver<T : KaSession> : KaBaseSessionComponent<T>(), KaRe
         }
     }
 
-    final override fun KtResolvableCall.resolveCall(): KaCallResolutionSuccess? = tryResolveCall() as? KaCallResolutionSuccess
+    final override fun KtResolvableCall.resolveCall(): KaSingleOrMultiCall? = (tryResolveCall() as? KaCallResolutionSuccess)?.call
 
-    private inline fun <reified R : KaCallResolutionSuccess> KtResolvableCall.resolveCallSafe(): R? = resolveCall() as? R
+    private inline fun <reified R : KaSingleOrMultiCall> KtResolvableCall.resolveCallSafe(): R? = resolveCall() as? R
 
     private inline fun <reified S : KaCallableSymbol, C : KaCallableSignature<S>, reified R : KaSingleCall<S, C>> KtResolvableCall.resolveSingleCallSafe(): R? {
         val call = resolveCall() ?: return null
@@ -141,34 +143,45 @@ abstract class KaBaseResolver<T : KaSession> : KaBaseSessionComponent<T>(), KaRe
 
     final override fun KtElement.resolveToCall(): KaCallInfo? = withPsiValidityAssertion {
         when (val attempt = tryResolveCallImpl()) {
-            is KaCallResolutionError -> KaBaseErrorCallInfo(attempt.candidateCalls.map { it.asKaCall }, attempt.diagnostic)
-            is KaCallResolutionSuccess -> KaBaseSuccessCallInfo(attempt.asKaCall)
+            is KaCallResolutionError -> KaBaseErrorCallInfo(attempt.candidateCalls.map { it.asKaCall() }, attempt.diagnostic)
+            is KaCallResolutionSuccess -> KaBaseSuccessCallInfo(attempt.kaCall)
             null -> null
         }
     }
 
-    private val KaCallResolutionSuccess.asKaCall: KaCall
-        // All implementations are the same, just the top of the hierarchy is different
-        get() = this as KaCall
+    /**
+     * All implementations of KaSingleOrMultiCall are also KaCall
+     * */
+    @OptIn(ExperimentalContracts::class)
+    protected fun KaSingleOrMultiCall.asKaCall(): KaCall {
+        contract {
+            returns() implies (this@asKaCall is KaCall)
+        }
 
-    private fun KtElement.collectCallCandidatesImpl(): List<KaCallCandidateInfo> {
+        return this as KaCall
+    }
+
+    protected inline val KaCallResolutionSuccess.kaCall: KaCall
+        get() = call.asKaCall()
+
+    private fun KtElement.collectCallCandidatesImpl(): List<KaCallCandidate> {
         val unwrappedElement = unwrapResolvableCall()
         return unwrappedElement?.let(::performCallCandidatesCollection).orEmpty()
     }
 
-    protected abstract fun performCallCandidatesCollection(psi: KtElement): List<KaCallCandidateInfo>
+    protected abstract fun performCallCandidatesCollection(psi: KtElement): List<KaCallCandidate>
 
     final override fun KtResolvableCall.collectCallCandidates(): List<KaCallCandidate> = withValidityAssertion {
         if (this is KtElement) {
             checkValidity()
-            collectCallCandidatesImpl().flatMap(KaCallCandidateInfo::asKaCallCandidates)
+            collectCallCandidatesImpl()
         } else {
             emptyList()
         }
     }
 
     final override fun KtElement.resolveToCallCandidates(): List<KaCallCandidateInfo> = withPsiValidityAssertion {
-        collectCallCandidatesImpl()
+        collectCallCandidatesImpl().map(KaCallCandidate::asKaCallCandidateInfo)
     }
 
     // TODO: remove this workaround after KT-68499
@@ -236,22 +249,36 @@ abstract class KaBaseResolver<T : KaSession> : KaBaseSessionComponent<T>(), KaRe
     }
 }
 
-internal fun KaCallCandidateInfo.asKaCallCandidates(): List<KaCallCandidate> {
-    val candidateBuilder: (KaSingleCall<*, *>) -> KaCallCandidate = when (this) {
-        is KaApplicableCallCandidateInfo -> fun(singleCall): KaCallCandidate = KaBaseApplicableCallCandidate(
-            backingCandidate = singleCall,
+internal fun KaCallCandidateInfo.asKaCallCandidate(): KaCallCandidate {
+    val call = candidate as KaSingleOrMultiCall
+    return when (this) {
+        is KaApplicableCallCandidateInfo -> KaBaseApplicableCallCandidate(
+            backingCandidate = call,
             backingIsInBestCandidates = isInBestCandidates,
         )
 
-        is KaInapplicableCallCandidateInfo -> fun(singleCall): KaCallCandidate = KaBaseInapplicableCallCandidate(
-            backingCandidate = singleCall,
+        is KaInapplicableCallCandidateInfo -> KaBaseInapplicableCallCandidate(
+            backingCandidate = call,
             backingIsInBestCandidates = isInBestCandidates,
             backingDiagnostic = diagnostic,
         )
     }
+}
 
-    val singleCalls = (candidate as KaCallResolutionAttempt).calls
-    return singleCalls.map(candidateBuilder)
+internal fun KaCallCandidate.asKaCallCandidateInfo(): KaCallCandidateInfo {
+    val call = candidate as KaCall
+    return when (this) {
+        is KaApplicableCallCandidate -> KaBaseApplicableCallCandidateInfo(
+            backingCandidate = call,
+            isInBestCandidates = isInBestCandidates,
+        )
+
+        is KaInapplicableCallCandidate -> KaBaseInapplicableCallCandidateInfo(
+            backingCandidate = call,
+            isInBestCandidates = isInBestCandidates,
+            diagnostic = diagnostic,
+        )
+    }
 }
 
 @OptIn(KtExperimentalApi::class)

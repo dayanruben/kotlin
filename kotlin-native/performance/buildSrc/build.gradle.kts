@@ -54,7 +54,7 @@ tasks.withType<KotlinJvmCompile>().configureEach {
 
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-build-gradle-plugin:${kotlinBuildProperties.buildGradlePluginVersion}")
+    implementation("org.jetbrains.kotlin:kotlin-build-gradle-plugin:${kotlinBuildProperties.buildGradlePluginVersion.get()}")
     compileOnly(gradleApi())
     val kotlinVersion = project.bootstrapKotlinVersion
     val slackApiVersion = "1.2.0"
@@ -79,10 +79,6 @@ gradlePlugin {
         create("benchmarkPlugin") {
             id = "benchmarking"
             implementationClass = "org.jetbrains.kotlin.benchmark.KotlinNativeBenchmarkingPlugin"
-        }
-        create("compileBenchmarking") {
-            id = "compile-benchmarking"
-            implementationClass = "org.jetbrains.kotlin.benchmark.CompileBenchmarkingPlugin"
         }
         create("swiftBenchmarking") {
             id = "swift-benchmarking"

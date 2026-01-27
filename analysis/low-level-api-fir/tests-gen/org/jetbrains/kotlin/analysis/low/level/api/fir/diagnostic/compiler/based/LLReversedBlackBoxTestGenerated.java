@@ -28552,18 +28552,6 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
     }
 
     @Test
-    @TestMetadata("inlineFunctionOverridesAbstractMethodWithDefaultValueWithIrInlinerBeforeKlibSerializationDisabled.kt")
-    public void testInlineFunctionOverridesAbstractMethodWithDefaultValueWithIrInlinerBeforeKlibSerializationDisabled() {
-      runTest("compiler/testData/codegen/box/inline/inlineFunctionOverridesAbstractMethodWithDefaultValueWithIrInlinerBeforeKlibSerializationDisabled.kt");
-    }
-
-    @Test
-    @TestMetadata("inlineFunctionOverridesAbstractMethodWithDefaultValueWithIrInlinerBeforeKlibSerializationEnabled.kt")
-    public void testInlineFunctionOverridesAbstractMethodWithDefaultValueWithIrInlinerBeforeKlibSerializationEnabled() {
-      runTest("compiler/testData/codegen/box/inline/inlineFunctionOverridesAbstractMethodWithDefaultValueWithIrInlinerBeforeKlibSerializationEnabled.kt");
-    }
-
-    @Test
     @TestMetadata("inlinedLambdaWithErasedParamType.kt")
     public void testInlinedLambdaWithErasedParamType() {
       runTest("compiler/testData/codegen/box/inline/inlinedLambdaWithErasedParamType.kt");
@@ -36235,15 +36223,33 @@ public class LLReversedBlackBoxTestGenerated extends AbstractLLReversedBlackBoxT
         }
 
         @Test
+        @TestMetadata("adaptedFunRefWithCoercionToUnitClassSam.kt")
+        public void testAdaptedFunRefWithCoercionToUnitClassSam() {
+          runTest("compiler/testData/codegen/box/invokedynamic/sam/functionRefToJavaInterface/adaptedFunRefWithCoercionToUnitClassSam.kt");
+        }
+
+        @Test
         @TestMetadata("adaptedFunRefWithDefaultParameters.kt")
         public void testAdaptedFunRefWithDefaultParameters() {
           runTest("compiler/testData/codegen/box/invokedynamic/sam/functionRefToJavaInterface/adaptedFunRefWithDefaultParameters.kt");
         }
 
         @Test
+        @TestMetadata("adaptedFunRefWithDefaultParametersClassSam.kt")
+        public void testAdaptedFunRefWithDefaultParametersClassSam() {
+          runTest("compiler/testData/codegen/box/invokedynamic/sam/functionRefToJavaInterface/adaptedFunRefWithDefaultParametersClassSam.kt");
+        }
+
+        @Test
         @TestMetadata("adaptedFunRefWithVararg.kt")
         public void testAdaptedFunRefWithVararg() {
           runTest("compiler/testData/codegen/box/invokedynamic/sam/functionRefToJavaInterface/adaptedFunRefWithVararg.kt");
+        }
+
+        @Test
+        @TestMetadata("adaptedFunRefWithVarargClassSam.kt")
+        public void testAdaptedFunRefWithVarargClassSam() {
+          runTest("compiler/testData/codegen/box/invokedynamic/sam/functionRefToJavaInterface/adaptedFunRefWithVarargClassSam.kt");
         }
 
         @Test

@@ -412,20 +412,20 @@ public interface KaResolver : KaSessionComponent {
      * ### Usage Example:
      * ```kotlin
      * fun KaSession.resolveSymbol(expression: KtCallExpression): KaSymbol? {
-     *   val successfulCall = expression.resolveCall() ?: return null
-     *   val callableCall = successfulCall as? KaSingleCall<*, *> ?: return null
+     *   val call = expression.resolveCall() ?: return null
+     *   val callableCall = call as? KaSingleCall<*, *> ?: return null
      *   return callableCall.symbol
      * }
      * ```
      *
-     * Returns the resolved [KaCallResolutionSuccess] on success; otherwise, `null`
+     * Returns the resolved [KaSingleOrMultiCall] on success; otherwise, `null`
      *
      * @see tryResolveCall
      * @see collectCallCandidates
      */
     @KaExperimentalApi
     @OptIn(KtExperimentalApi::class)
-    public fun KtResolvableCall.resolveCall(): KaCallResolutionSuccess?
+    public fun KtResolvableCall.resolveCall(): KaSingleOrMultiCall?
 
     /**
      * Resolves the given [KtAnnotationEntry] to an annotation constructor call.
@@ -697,8 +697,6 @@ public interface KaResolver : KaSessionComponent {
     /**
      * Returns all candidates considered during [overload resolution](https://kotlinlang.org/spec/overload-resolution.html)
      * for the call corresponding to the given [KtResolvableCall].
-     *
-     * Note: candidates are represented as [KaSingleCall]s only, so all [KaMultiCall]s are flattened.
      *
      * In contrast, [resolveCall] returns only the final result, i.e., the most specific callable that passes all
      * compatibility checks.
@@ -1292,13 +1290,13 @@ public fun KtResolvableCall.tryResolveCall(): KaCallResolutionAttempt? {
  * ### Usage Example:
  * ```kotlin
  * fun KaSession.resolveSymbol(expression: KtCallExpression): KaSymbol? {
- *   val successfulCall = expression.resolveCall() ?: return null
- *   val callableCall = successfulCall as? KaSingleCall<*, *> ?: return null
+ *   val call = expression.resolveCall() ?: return null
+ *   val callableCall = call as? KaSingleCall<*, *> ?: return null
  *   return callableCall.symbol
  * }
  * ```
  *
- * Returns the resolved [KaCallResolutionSuccess] on success; otherwise, `null`
+ * Returns the resolved [KaSingleOrMultiCall] on success; otherwise, `null`
  *
  * @see tryResolveCall
  * @see collectCallCandidates
@@ -1308,7 +1306,7 @@ public fun KtResolvableCall.tryResolveCall(): KaCallResolutionAttempt? {
 @OptIn(KtExperimentalApi::class)
 @KaContextParameterApi
 context(session: KaSession)
-public fun KtResolvableCall.resolveCall(): KaCallResolutionSuccess? {
+public fun KtResolvableCall.resolveCall(): KaSingleOrMultiCall? {
     return with(session) {
         resolveCall()
     }
@@ -1654,8 +1652,6 @@ public fun KtWhenConditionInRange.resolveCall(): KaFunctionCall<KaNamedFunctionS
 /**
  * Returns all candidates considered during [overload resolution](https://kotlinlang.org/spec/overload-resolution.html)
  * for the call corresponding to the given [KtResolvableCall].
- *
- * Note: candidates are represented as [KaSingleCall]s only, so all [KaMultiCall]s are flattened.
  *
  * In contrast, [resolveCall] returns only the final result, i.e., the most specific callable that passes all
  * compatibility checks.
