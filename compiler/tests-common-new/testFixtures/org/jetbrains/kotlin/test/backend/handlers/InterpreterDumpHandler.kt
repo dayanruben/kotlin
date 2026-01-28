@@ -163,14 +163,14 @@ class FirInterpreterDumpHandler(testServices: TestServices) : FirAnalysisHandler
         val results = buildMap {
             info.partsForDependsOnModules.forEach {
                 it.firFilesByTestFile.forEach { (testFile, firFile) ->
-                    putAll(processFile(testFile, firFile, it.session))
+                    putAll(processFile(testFile, firFile))
                 }
             }
         }
         testServices.firInterpreterResultsStorage[module] = results
     }
 
-    private fun processFile(testFile: TestFile, firFile: FirFile, session: FirSession): Map<TestFile, List<ParsedCodeMetaInfo>> {
+    private fun processFile(testFile: TestFile, firFile: FirFile): Map<TestFile, List<ParsedCodeMetaInfo>> {
         val resultMap = mutableMapOf<TestFile, MutableList<ParsedCodeMetaInfo>>()
         val rangesThatAreNotSupposedToBeRendered = testFile.extractRangesWithoutRender()
 
@@ -226,8 +226,8 @@ class FirInterpreterDumpHandler(testServices: TestServices) : FirAnalysisHandler
                 visitedElements.add(annotationCall)
 
                 super.visitAnnotationCall(annotationCall, data)
-                FirExpressionEvaluator.evaluateAnnotationArguments(annotationCall, session)?.values?.forEach { evaluated ->
-                    evaluated.unwrapOr<FirExpression> { }?.accept(this, data.copy(renderLiterals = true))
+                annotationCall.argumentMapping.mapping.values.forEach { evaluated ->
+                    evaluated.accept(this, data.copy(renderLiterals = true))
                 }
             }
 
