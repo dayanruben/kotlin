@@ -50,7 +50,7 @@ fun main(args: Array<String>) {
                 suiteTestClassName = "FirInfrastructureTestGenerated",
                 annotations = listOf(
                     infrastructure(),
-                    provider<UseStandardTestCaseGroupProvider>()
+                    provider<UseExtTestCaseGroupProvider>()
                 )
             ) {
                 model("samples")
@@ -120,7 +120,7 @@ fun main(args: Array<String>) {
                 suiteTestClassName = "NativeLldbTestGenerated",
                 annotations = listOf(
                     debugger(),
-                    provider<UseStandardTestCaseGroupProvider>(),
+                    provider<UseExtTestCaseGroupProvider>(),
                     forceDebugMode(),
                     forceHostTarget(),
                 )
@@ -135,7 +135,7 @@ fun main(args: Array<String>) {
                 annotations = listOf(
                     debugger(),
                     stepping(),
-                    provider<UseStandardTestCaseGroupProvider>(),
+                    provider<UseExtTestCaseGroupProvider>(),
                     forceDebugMode(),
                     forceHostTarget(),
                 )
@@ -150,7 +150,7 @@ fun main(args: Array<String>) {
                 annotations = listOf(
                     debugger(),
                     stepping(),
-                    provider<UseStandardTestCaseGroupProvider>(),
+                    provider<UseExtTestCaseGroupProvider>(),
                     forceDebugMode(),
                     forceHostTarget(),
                     klibIrInliner(),
@@ -173,8 +173,8 @@ fun main(args: Array<String>) {
             testClass<AbstractNativeBlackBoxTest>(
                 suiteTestClassName = "FirNativeStandaloneTestGenerated",
                 annotations = listOf(
-                    *standalone(),
-                    provider<UseStandardTestCaseGroupProvider>(),
+                    *standaloneNoTR(),
+                    provider<UseExtTestCaseGroupProvider>(),
                 )
             ) {
                 model()
@@ -182,8 +182,8 @@ fun main(args: Array<String>) {
             testClass<AbstractNativeBlackBoxTest>(
                 suiteTestClassName = "FirNativeStandaloneTestWithInlinedFunInKlibGenerated",
                 annotations = listOf(
-                    *standalone(),
-                    provider<UseStandardTestCaseGroupProvider>(),
+                    *standaloneNoTR(),
+                    provider<UseExtTestCaseGroupProvider>(),
                     klibIrInliner(),
                 )
             ) {
@@ -226,7 +226,7 @@ fun main(args: Array<String>) {
                 suiteTestClassName = "FirNativeGCTestGenerated",
                 annotations = listOf(
                     *gc(),
-                    provider<UseStandardTestCaseGroupProvider>(),
+                    provider<UseExtTestCaseGroupProvider>(),
                 )
             ) {
                 model()
@@ -261,7 +261,12 @@ private fun TestGroup.disabledInOneStageMode(vararg unexpandedPaths: String): An
 
 private fun debugger() = annotation(Tag::class.java, "debugger")
 private fun infrastructure() = annotation(Tag::class.java, "infrastructure")
-fun standalone() = arrayOf(
+fun standalone() = annotation(
+    EnforcedProperty::class.java,
+    "property" to ClassLevelProperty.TEST_KIND,
+    "propertyValue" to "STANDALONE"
+)
+fun standaloneNoTR() = arrayOf(
     annotation(Tag::class.java, "standalone"),
     annotation(
         EnforcedProperty::class.java,
