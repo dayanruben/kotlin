@@ -4,15 +4,18 @@ plugins {
 }
 
 val buildProperties = settings.kotlinBuildProperties
-val buildScanServer = buildProperties.buildScanServer.orNull
 
-if (!buildScanServer.isNullOrEmpty()) {
+if (buildProperties.buildScanServer.isPresent) {
     plugins.apply("com.gradle.common-custom-user-data-gradle-plugin")
 }
 
 develocity {
-    server.set(buildProperties.buildScanServer)
+    val buildScanServer = buildProperties.buildScanServer
+    server.set(buildScanServer)
     buildScan {
+        publishing {
+            onlyIf { buildScanServer.isPresent }
+        }
         val isTeamcityBuild = buildProperties.isTeamcityBuild
         val overriddenUsername = buildProperties.stringProperty("kotlin.build.scan.username").map { it.trim() }
         val overriddenHostname = buildProperties.stringProperty("kotlin.build.scan.hostname").map { it.trim() }
@@ -44,15 +47,16 @@ buildCache {
         }
     }
     if (develocity.server.isPresent) {
+        val remoteBuildCacheUrl = buildProperties.buildCacheUrl.orNull?.trim()
         if (System.getenv("TC_K8S_CLOUD_PROFILE_ID") == "kotlindev-kotlin-k8s") {
             remote(develocity.buildCache) {
                 isPush = buildProperties.pushToBuildCache.get()
+                isEnabled = remoteBuildCacheUrl != "" // explicit "" disables it
                 server = "https://kotlin-cache.eqx.k8s.intellij.net"
             }
         } else {
             remote(develocity.buildCache) {
                 isPush = buildProperties.pushToBuildCache.get()
-                val remoteBuildCacheUrl = buildProperties.buildCacheUrl.orNull?.trim()
                 isEnabled = remoteBuildCacheUrl != "" // explicit "" disables it
                 if (!remoteBuildCacheUrl.isNullOrEmpty()) {
                     server = remoteBuildCacheUrl.removeSuffix("/cache/")

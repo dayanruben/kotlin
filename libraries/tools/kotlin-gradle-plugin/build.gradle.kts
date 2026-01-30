@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.ShadowBasePlugin.Companion.shadow
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import gradle.GradlePluginVariant
 import org.jetbrains.kotlin.build.androidsdkprovisioner.ProvisioningType
@@ -51,7 +52,7 @@ registerKotlinSourceForVersionRange(
 )
 
 tasks.test {
-    useJUnit {
+    useJUnitPlatform {
         exclude("**/*LincheckTest.class")
     }
     val jdk8Provider = project.getToolchainJdkHomeFor(JdkMajorVersion.JDK_1_8)
@@ -67,12 +68,16 @@ tasks.withType<Test>().configureEach {
 }
 
 tasks.register<Test>("lincheckTest") {
+    classpath = sourceSets.test.get().runtimeClasspath
+    testClassesDirs = sourceSets.test.get().output.classesDirs
     jvmArgs(
         "--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED",
         "--add-exports", "java.base/jdk.internal.util=ALL-UNNAMED",
         "--add-exports", "java.base/sun.security.action=ALL-UNNAMED"
     )
-    filter { include("**/*LincheckTest.class") }
+    useJUnitPlatform {
+        include("**/*LincheckTest.class")
+    }
 }
 
 binaryCompatibilityValidator {
@@ -379,6 +384,11 @@ tasks {
                 exclusions.forEach { exclude(it) }
             }
         }
+
+        /*
+        Disable Kotlin Module remapping to allow our own 'KotlinModuleMetadataVersionBasedSkippingTransformer' to run
+         */
+        enableKotlinModuleRemapping = false
         transform(KotlinModuleMetadataVersionBasedSkippingTransformer::class.java) {
             /*
              * This excludes .kotlin_module files for compiler modules from the fat jars.

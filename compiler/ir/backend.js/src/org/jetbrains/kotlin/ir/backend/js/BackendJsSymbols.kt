@@ -35,7 +35,7 @@ abstract class BackendWebSymbols(
     abstract val throwISE: IrSimpleFunctionSymbol
     abstract val throwIAE: IrSimpleFunctionSymbol
 
-    override val coroutineImpl: IrClassSymbol = ClassIds.coroutineImpl.classSymbol()
+    val coroutineImpl: IrClassSymbol = ClassIds.coroutineImpl.classSymbol()
     override val continuationClass = ClassIds.continuation.classSymbol()
     override val coroutineSuspendedGetter by CallableIds.coroutineSuspended.getterSymbol()
 
@@ -73,8 +73,9 @@ class BackendJsSymbols(
 
     override val throwIAE: IrSimpleFunctionSymbol = CallableIds.throwIae.functionSymbol()
 
-    override val stringBuilder
-        get() = TODO("not implemented")
+    private val _stringBuilder = ClassIds.StringBuilder.classSymbolOrNull()
+    override val stringBuilder: IrClassSymbol
+        get() = _stringBuilder ?: TODO("Not implemented")
 
     override val getContinuation = CallableIds.getContinuation.functionSymbol()
 
@@ -510,6 +511,7 @@ private object ClassIds {
     // Other
     val PrimitiveClasses = ClassId(JsStandardClassIds.BASE_REFLECT_JS_INTERNAL_PACKAGE, Name.identifier("PrimitiveClasses"))
     val EnumEntries = ClassId(StandardClassIds.BASE_ENUMS_PACKAGE, Name.identifier("EnumEntries"))
+    val StringBuilder = ClassId(StandardClassIds.BASE_TEXT_PACKAGE, Name.identifier("StringBuilder"))
 }
 
 private val String.jsCallableId get() = CallableId(JsStandardClassIds.BASE_JS_PACKAGE, Name.identifier(this))

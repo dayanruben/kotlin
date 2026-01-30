@@ -185,7 +185,7 @@ fun Test.applyKotlinNativeConfiguration() {
     }
 
     val kotlinNativeVersionForTestRuns = project.kotlinBuildProperties.stringProperty("kotlinNativeVersionForGradleIT").orNull
-        // FIXME: Remove reading system property once the TC build script starts passing the gradle property
+    // FIXME: Remove reading system property once the TC build script starts passing the gradle property
         ?: System.getProperty("kotlinNativeVersionForGradleIT")
     // This version is passed by TC build for runs with snapshot KN
     kotlinNativeVersionForTestRuns?.let {
@@ -255,6 +255,8 @@ if (project.kotlinBuildProperties.isTeamcityBuild.get()) {
                 description = "Runs all tests for Kotlin Gradle plugins against Gradle $gradleVersion"
                 maxParallelForks = maxParallelTestForks
 
+                classpath = sourceSets["test"].runtimeClasspath
+                testClassesDirs = sourceSets["test"].output.classesDirs
                 systemProperty("gradle.integration.tests.gradle.version.filter", gradleVersion)
                 systemProperty("junit.jupiter.extensions.autodetection.enabled", "true")
 
@@ -277,6 +279,8 @@ tasks.register<Test>("kgpAllParallelTests") {
     description = "Runs all tests for Kotlin Gradle plugins except daemon ones"
     maxParallelForks = maxParallelTestForks
 
+    classpath = sourceSets["test"].runtimeClasspath
+    testClassesDirs = sourceSets["test"].output.classesDirs
     useJUnitPlatform {
         excludeTags(JunitTag.DaemonsKGP.name)
     }
@@ -383,6 +387,9 @@ tasks.withType<Test>().configureEach {
 
     val noTestProperty = project.providers.gradleProperty("noTest")
     onlyIf { !noTestProperty.isPresent }
+
+    classpath = sourceSets["test"].runtimeClasspath
+    testClassesDirs = sourceSets["test"].output.classesDirs
 
     /**
      * Gradle needs these opens to serialize CC and adds them implicitly:

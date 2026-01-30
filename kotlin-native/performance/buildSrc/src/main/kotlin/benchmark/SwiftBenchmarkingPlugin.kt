@@ -21,6 +21,7 @@ open class SwiftBenchmarkExtension @Inject constructor(project: Project) : Bench
      * for details.
      */
     val swiftToolsVersion: Property<String> = project.objects.property(String::class.java)
+
     /**
      * Directory where to place `Package.swift` for the Kotlin-generated XCFramework
      */
@@ -66,9 +67,11 @@ open class SwiftBenchmarkingPlugin : BenchmarkingPlugin() {
         benchmark.konanRun.configure {
             executable.set(project.benchmark.buildSwift.map { it.outputFile.get() })
         }
-        val linkTaskProvider = hostKotlinNativeTarget.binaries.getFramework(NATIVE_FRAMEWORK_NAME, project.buildType).linkTaskProvider
-        benchmark.konanJsonReport.configure {
+        val linkTaskProvider = kotlin.hostTarget().binaries.getFramework(NATIVE_FRAMEWORK_NAME, project.buildType).linkTaskProvider
+        benchmark.getCodeSize.configure {
             codeSizeBinary.fileProvider(linkTaskProvider.map { it.outputFile.get().resolve(NATIVE_FRAMEWORK_NAME) })
+        }
+        benchmark.konanJsonReport.configure {
             compilerFlags.addAll(linkTaskProvider.map { it.toolOptions.freeCompilerArgs.get() })
         }
     }

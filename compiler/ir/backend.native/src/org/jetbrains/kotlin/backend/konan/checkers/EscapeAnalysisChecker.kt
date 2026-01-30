@@ -8,13 +8,13 @@ package org.jetbrains.kotlin.backend.konan.checkers
 import org.jetbrains.kotlin.backend.common.report
 import org.jetbrains.kotlin.backend.konan.BinaryType
 import org.jetbrains.kotlin.backend.konan.computeBinaryType
-import org.jetbrains.kotlin.backend.konan.ir.BackendNativeSymbols
 import org.jetbrains.kotlin.backend.konan.ir.annotations.escapes
 import org.jetbrains.kotlin.backend.konan.ir.annotations.pointsTo
 import org.jetbrains.kotlin.backend.konan.IntrinsicType
 import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
 import org.jetbrains.kotlin.backend.konan.ir.tryGetIntrinsicType
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
+import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrFunction
@@ -34,9 +34,9 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.NativeRuntimeNames
 
 class EscapeAnalysisChecker(
-        private val context: PhaseContext,
-        symbols: BackendNativeSymbols,
-        private val irFile: IrFile,
+    private val context: PhaseContext,
+    private val irBuiltIns: IrBuiltIns,
+    private val irFile: IrFile,
 ) : IrVisitorVoid() {
     private fun reportWarning(location: IrElement, message: String) {
         context.report(CompilerMessageSeverity.STRONG_WARNING, location, irFile, message)
@@ -45,14 +45,6 @@ class EscapeAnalysisChecker(
     private fun reportNonFatalError(location: IrElement, message: String) {
         context.report(CompilerMessageSeverity.ERROR, location, irFile, message)
     }
-
-    // From DFGBuilder.kt
-    private val symbolsHandledByDFG: Set<IrSymbol> = with(symbols) {
-        setOf(createUninitializedInstance, createUninitializedArray, createEmptyString, reinterpret, initInstance)
-    }
-
-    private val IrSymbol.handledByDFG: Boolean
-        get() = this in symbolsHandledByDFG
 
     private val IntrinsicType.mustBeLowered: Boolean
         get() = when (this) {
@@ -77,7 +69,12 @@ class EscapeAnalysisChecker(
             IntrinsicType.COMPARE_AND_SET_FIELD,
             IntrinsicType.COMPARE_AND_EXCHANGE_FIELD,
             IntrinsicType.GET_AND_SET_FIELD,
-            IntrinsicType.GET_AND_ADD_FIELD -> true
+            IntrinsicType.GET_AND_ADD_FIELD,
+            IntrinsicType.CREATE_UNINITIALIZED_INSTANCE,
+            IntrinsicType.CREATE_UNINITIALIZED_ARRAY,
+            IntrinsicType.CREATE_EMPTY_STRING,
+            IntrinsicType.IDENTITY,
+            IntrinsicType.INIT_INSTANCE -> true
             else -> false
         }
 
@@ -188,9 +185,9 @@ class EscapeAnalysisChecker(
             return null
         }
 
+        if (declaration.symbol == irBuiltIns.arrayOf) return // TODO KT-83985 drop after bootstrap update
         warnUnusedIf(!declaration.isExternal) { "non-external function" } ?: return
         warnUnusedIf(!declaration.parent.fqNameForIrSerialization.isSupportedPackageByEA) { "package outside EA annotation checks" } ?: return
-        warnUnusedIf(declaration.symbol.handledByDFG) { "function handled manually in DFGBuilder" } ?: return
         warnUnusedIf(declaration.isLoweredIntrinsic) { "function is lowered in the compiler" } ?: return
 
         val signatureElements = declaration.signatureElements
