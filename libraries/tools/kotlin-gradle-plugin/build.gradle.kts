@@ -117,7 +117,7 @@ binaryCompatibilityValidator {
 val unpublishedCompilerRuntimeDependencies = listOf(
     // TODO: remove in KT-70247
     ":compiler:cli", // for MessageRenderer, related to MessageCollector usage
-    ":compiler:cli-common", // for compiler arguments setup, for logging via MessageCollector, CompilerSystemProperties, ExitCode
+    ":compiler:cli-base", // for compiler arguments setup, for logging via MessageCollector, CompilerSystemProperties, ExitCode
     ":compiler:arguments.common", // for compiler arguments parser setup (using `@Enables`, `@Disables` and other annotations)
     ":compiler:compiler.version", // for user projects buildscripts, `loadCompilerVersion`
     ":compiler:config", // for CommonCompilerArguments initialization
@@ -655,9 +655,9 @@ dependencies {
     val implementation = project.configurations.getByName(functionalTestSourceSet.implementationConfigurationName)
     val compileOnly = project.configurations.getByName(functionalTestSourceSet.compileOnlyConfigurationName)
 
-    implementation("com.android.tools.build:gradle:8.8.1")
-    implementation("com.android.tools.build:gradle-api:8.8.1")
-    compileOnly("com.android.tools:common:31.7.2")
+    implementation(libs.android.gradle.plugin.gradle)
+    implementation(libs.android.gradle.plugin.gradle.api)
+    compileOnly(libs.android.tools.common)
     implementation(gradleKotlinDsl())
     implementation(project(":kotlin-gradle-plugin-tcs-android"))
     implementation(project(":kotlin-tooling-metadata"))

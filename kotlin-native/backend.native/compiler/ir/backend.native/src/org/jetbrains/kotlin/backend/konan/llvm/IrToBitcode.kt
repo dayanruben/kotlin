@@ -1562,8 +1562,7 @@ internal class CodeGeneratorVisitor(
         val srcArg = evaluateExpression(value.argument, resultSlot)
         require(srcArg.type == llvm.pointerType) { "Expected ObjHeader but was ${llvmtype2string(srcArg.type)} for ${value.argument.dump()}" }
         val srcType = value.argument.type
-        val isSuperClassCast = dstClass.isAny() || (srcType.classifierOrNull !is IrTypeParameterSymbol // Due to unsafe casts, see unchecked_cast8.kt as an example.
-                && srcType.isSubtypeOfClass(dstClass.symbol))
+        val isSuperClassCast = srcType.isSuperClassCastTo(dstClass)
 
         if (isSuperClassCast) {
             onSuperClassCast(srcArg)?.let { return it }
@@ -2303,8 +2302,9 @@ internal class CodeGeneratorVisitor(
             val nodebug = f.originalConstructor != null && f.parentAsClass.isSubclassOf(context.irBuiltIns.throwableClass.owner)
             if (functionLlvmValue != null) {
                 subprograms.getOrPut(functionLlvmValue) {
-                    // Also enable transparent stepping if this function is a bridge:
-                    val isTransparentStepping = generationState.config.enableDebugTransparentStepping && f.bridgeTarget != null
+                    // Also enable transparent stepping if this function marked with @TransparentForDebugger:
+                    val isTransparentStepping = generationState.config.enableDebugTransparentStepping
+                            && f.hasAnnotation(KonanFqNames.transparentForDebugger)
 
                     diFunctionScope(fileEntry(), functionLlvmValue.name!!, startLine, nodebug, isTransparentStepping).also {
                         if (!this@scope.isInline)

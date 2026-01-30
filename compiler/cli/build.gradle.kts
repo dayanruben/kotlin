@@ -29,6 +29,7 @@ dependencies {
     api(project(":compiler:fir:fir-serialization"))
     api(project(":kotlin-util-io"))
     implementation(project(":kotlin-build-common"))
+    implementation(project(":native:native.config"))
 
     compileOnly(toolsJarApi())
     compileOnly(intellijCore())
@@ -38,10 +39,7 @@ dependencies {
 }
 
 sourceSets {
-    "main" {
-        projectDefault()
-        java.srcDirs("../builtins-serializer/src")
-    }
+    "main" { projectDefault() }
 }
 
 optInToExperimentalCompilerApi()

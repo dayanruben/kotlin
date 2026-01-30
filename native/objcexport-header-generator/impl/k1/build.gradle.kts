@@ -41,7 +41,6 @@ dependencies {
     implementation(project(":kotlin-util-klib"))
     implementation(project(":kotlin-util-klib-metadata"))
     testImplementation(project(":compiler:cli"))
-    testImplementation(project(":compiler:cli-common"))
     testImplementation(project(":compiler:compiler.version"))
     testImplementation(project(":compiler:config"))
     testImplementation(project(":compiler:config.jvm"))
@@ -50,6 +49,7 @@ dependencies {
     testImplementation(project(":compiler:util"))
     testImplementation(project(":core:deserialization"))
     testImplementation(project(":kotlin-test"))
+    testImplementation(project(":native:native.config"))
     testImplementation(testFixtures(project(":compiler:test-infrastructure-utils")))
     testImplementation(testFixtures(project(":compiler:tests-compiler-utils")))
 }
