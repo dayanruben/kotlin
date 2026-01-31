@@ -46,8 +46,6 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.scripting.compiler.plugin.definitions.getRefinedOrBaseCompilationConfiguration
-import org.jetbrains.kotlin.scripting.compiler.plugin.fir.scriptCompilationComponent
 import org.jetbrains.kotlin.scripting.definitions.annotationsForSamWithReceivers
 import org.jetbrains.kotlin.scripting.resolve.toSourceCode
 import kotlin.script.experimental.api.*
@@ -56,8 +54,6 @@ import kotlin.script.experimental.host.ScriptingHostConfiguration
 
 class FirScriptConfiguratorExtensionImpl(
     session: FirSession,
-    // TODO: left here because it seems it will be needed soon, remove suppression if used or remove the param if it is not the case
-    @Suppress("UNUSED_PARAMETER", "unused") hostConfiguration: ScriptingHostConfiguration,
 ) : FirScriptConfiguratorExtension(session) {
 
     override fun FirScriptBuilder.configureContainingFile(fileBuilder: FirFileBuilder) {
@@ -83,6 +79,7 @@ class FirScriptConfiguratorExtensionImpl(
                             diagnostic = ConeSimpleDiagnostic(message)
                         }
                     )
+                    containingDeclarationSymbol = symbol
                 }
             )
         }
@@ -260,22 +257,22 @@ class FirScriptConfiguratorExtensionImpl(
         get() = _knownAnnotationsForSamWithReceiver
 
     companion object {
+        fun getFactory(): Factory {
+            return Factory { session -> FirScriptConfiguratorExtensionImpl(session) }
+        }
+
+        @Deprecated("Use other getFactory methods. This one left only for transitional compatibility (KT-83969)")
         fun getFactory(hostConfiguration: ScriptingHostConfiguration): Factory {
-            return Factory { session -> FirScriptConfiguratorExtensionImpl(session, hostConfiguration) }
+            return Factory { session -> FirScriptConfiguratorExtensionImpl(session) }
         }
     }
 }
 
 internal fun getOrLoadConfiguration(session: FirSession, file: KtSourceFile): ResultWithDiagnostics<ScriptCompilationConfiguration>? {
     val sourceCode = file.toSourceCode()
-    val hostConfiguration = session.scriptCompilationComponent?.hostConfiguration
-    return if (hostConfiguration != null) {
-        hostConfiguration.getRefinedOrBaseCompilationConfiguration(sourceCode)
-    } else {
-        session.scriptDefinitionProviderService?.let {
-            it.getRefinedConfiguration(sourceCode)
-                ?: it.getBaseConfiguration(sourceCode)
-        }
+    return session.scriptDefinitionProviderService?.let {
+        it.getRefinedConfiguration(sourceCode)
+            ?: it.getBaseConfiguration(sourceCode)
     }
 }
 

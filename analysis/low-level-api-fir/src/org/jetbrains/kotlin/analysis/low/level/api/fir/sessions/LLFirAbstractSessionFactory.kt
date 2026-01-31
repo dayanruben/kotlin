@@ -65,8 +65,6 @@ import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.requireWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 import org.jetbrains.kotlin.utils.exceptions.withVirtualFileEntry
-import kotlin.script.experimental.host.ScriptingHostConfiguration
-import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
 @OptIn(PrivateSessionConstructor::class, SessionConfiguration::class)
 internal abstract class LLFirAbstractSessionFactory(protected val project: Project) {
@@ -170,11 +168,11 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
 
     @OptIn(ExperimentalCompilerApi::class)
     private fun FirSessionConfigurator.registerScriptExtensions(file: KtFile) {
-        val hostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {}
         val scriptDefinition = file.findScriptDefinition()
             ?: errorWithAttachment("Cannot load script definition") {
                 withVirtualFileEntry("file", file.virtualFile)
             }
+        val hostConfiguration = scriptDefinition.hostConfiguration
 
         val compilerArguments = makeScriptCompilerArguments(scriptDefinition.compilerOptions.toList())
         val commandLineProcessors = listOf(AssignmentCommandLineProcessor())
@@ -376,13 +374,13 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
         components.session = session
 
         val moduleData = createModuleData(session)
-        val resolutionScope = resolutionScopeProvider.getResolutionScope(module)
+        val binaryContentScope = binaryModule.contentScope
 
         return session.apply {
             registerModuleData(moduleData)
             register(FirKotlinScopeProvider::class, scopeProvider)
 
-            registerAllCommonComponents(languageVersionSettings, module, resolutionScope)
+            registerAllCommonComponents(languageVersionSettings, module, binaryContentScope)
             registerCommonComponentsAfterExtensionsAreConfigured()
 
             val firProvider = LLFirProvider(
@@ -397,10 +395,8 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
 
             register(FirLazyDeclarationResolver::class, LLFirLazyDeclarationResolver())
 
-            val contentScope = binaryModule.contentScope
-
             // We need FirRegisteredPluginAnnotations during extensions' registration process
-            val annotationsResolver = project.createAnnotationResolver(contentScope)
+            val annotationsResolver = project.createAnnotationResolver(binaryContentScope)
             register(FirRegisteredPluginAnnotations::class, LLFirIdeRegisteredPluginAnnotations(this, annotationsResolver))
             register(FirPredicateBasedProvider::class, FirEmptyPredicateBasedProvider)
 
@@ -429,7 +425,7 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
 
             register(DEPENDENCIES_SYMBOL_PROVIDER_QUALIFIED_KEY, dependencyProvider)
 
-            val context = LibrarySessionCreationContext(contentScope, firProvider, dependencyProvider)
+            val context = LibrarySessionCreationContext(binaryContentScope, firProvider, dependencyProvider)
             additionalSessionConfiguration(context)
 
             LLFirSessionConfigurator.configure(this)
@@ -453,11 +449,12 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
         val session = LLFirLibrarySession(module, builtinsSession.builtinTypes)
 
         val moduleData = createModuleData(session)
+        val contentScope = module.contentScope
 
         return session.apply {
             val languageVersionSettings = KotlinProjectStructureProvider.getInstance(project).libraryLanguageVersionSettings
             registerModuleData(moduleData)
-            registerIdeComponents(project, languageVersionSettings, resolutionScopeProvider.getResolutionScope(module))
+            registerIdeComponents(project, languageVersionSettings, contentScope)
             register(FirLazyDeclarationResolver::class, FirDummyCompilerLazyDeclarationResolver)
             registerCommonComponents(languageVersionSettings, isMetadataCompilation = false)
             registerCommonComponentsAfterExtensionsAreConfigured()
@@ -471,7 +468,7 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
 
             val symbolProvider = LLModuleWithDependenciesSymbolProvider(
                 this,
-                providers = createProjectLibraryProvidersForScope(this, module.contentScope),
+                providers = createProjectLibraryProvidersForScope(this, contentScope),
                 LLDependenciesSymbolProvider(this) {
                     // A binary library session should not have any dependencies (apart from fallback builtins), as library module
                     // dependencies only apply to *resolvable* sessions, including fallback dependencies.
@@ -718,9 +715,9 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
     private fun LLFirSession.registerAllCommonComponents(
         languageVersionSettings: LanguageVersionSettings,
         module: KaModule,
-        resolutionScope: GlobalSearchScope,
+        annotationSearchScope: GlobalSearchScope,
     ) {
-        registerIdeComponents(project, languageVersionSettings, resolutionScope)
+        registerIdeComponents(project, languageVersionSettings, annotationSearchScope)
         registerCommonComponents(languageVersionSettings, isMetadataCompilation = false)
         registerResolveComponents(KtRegisteredDiagnosticFactoriesStorage())
     }

@@ -105,7 +105,7 @@ internal object KDocReferenceResolver {
         with(analysisSession) {
             if (KotlinKDocResolutionStrategyProviderService
                     .getService(useSiteModule.project)
-                    ?.shouldUseExperimentalStrategy() != true
+                    ?.shouldUseExperimentalStrategy() == false
             ) {
                 return ClassicKDocReferenceResolver.resolveKdocFqName(
                     analysisSession,
@@ -208,7 +208,7 @@ internal object KDocReferenceResolver {
      */
     private fun KtElement.getContextElementOrSelf(): KtElement {
         return PsiTreeUtil.findFirstContext(this, false) { context ->
-            context !is KDocElement && context !is KDocName && context !is KDocLink
+            context !is KDocElement && context !is KDocName && context !is KDocLink && context !is KtFile
         } as? KtElement ?: this
     }
 

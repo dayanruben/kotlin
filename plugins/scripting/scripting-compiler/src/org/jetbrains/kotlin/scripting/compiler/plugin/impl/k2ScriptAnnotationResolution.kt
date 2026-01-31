@@ -9,11 +9,11 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.cli.common.fir.reportToMessageCollector
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporterFactory
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
-import org.jetbrains.kotlin.fir.FirElement
-import org.jetbrains.kotlin.fir.FirEvaluatorResult
-import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.*
+import org.jetbrains.kotlin.fir.declarations.DirectDeclarationsAccess
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
+import org.jetbrains.kotlin.fir.declarations.FirScript
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
@@ -22,62 +22,92 @@ import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirDeclaration
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirExpressionsResolveTransformer
 import org.jetbrains.kotlin.fir.scopes.createImportingScopes
 import org.jetbrains.kotlin.fir.types.*
-import org.jetbrains.kotlin.fir.withFileAnalysisExceptionWrapping
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.scripting.compiler.plugin.definitions.scriptRefinedCompilationConfigurationsCache
+import org.jetbrains.kotlin.scripting.compiler.plugin.fir.FirScriptCompilationComponent
+import org.jetbrains.kotlin.scripting.compiler.plugin.fir.scriptCompilationConfiguration
 import org.jetbrains.kotlin.utils.tryCreateCallableMappingFromNamedArgs
 import kotlin.reflect.KClass
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.host.getScriptingClass
+import kotlin.script.experimental.host.with
+import kotlin.script.experimental.host.withDefaultsFrom
 import kotlin.script.experimental.jvm.GetScriptingClassByClassLoader
 import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvm.util.toSourceCodePosition
 
+@OptIn(SessionConfiguration::class, DirectDeclarationsAccess::class)
 internal fun collectAndResolveScriptAnnotationsViaFir(
     script: SourceCode,
     compilationConfiguration: ScriptCompilationConfiguration,
-    hostConfiguration: ScriptingHostConfiguration,
-    getSessionForAnnotationResolution: () -> FirSession,
+    baseHostConfiguration: ScriptingHostConfiguration,
+    getSessionForAnnotationResolution: (SourceCode, ScriptCompilationConfiguration) -> FirSession,
     convertToFir: SourceCode.(FirSession, BaseDiagnosticsCollector) -> FirFile,
 ): ResultWithDiagnostics<ScriptCollectedData> {
+    val hostConfiguration =
+        compilationConfiguration[ScriptCompilationConfiguration.hostConfiguration].withDefaultsFrom(baseHostConfiguration)
     val contextClassLoader = hostConfiguration[ScriptingHostConfiguration.jvm.baseClassLoader]
     val getScriptingClass = hostConfiguration[ScriptingHostConfiguration.getScriptingClass]
     val jvmGetScriptingClass = (getScriptingClass as? GetScriptingClassByClassLoader)
-        ?: throw IllegalArgumentException("Expecting class implementing GetScriptingClassByClassLoader in the hostConfiguration[getScriptingClass], got $getScriptingClass")
+        ?: error("Expecting class implementing GetScriptingClassByClassLoader in the hostConfiguration[getScriptingClass], got $getScriptingClass")
+    val messageCollector = ScriptDiagnosticsMessageCollector(null)
     val acceptedAnnotations =
-        compilationConfiguration[ScriptCompilationConfiguration.refineConfigurationOnAnnotations]?.flatMap {
+        compilationConfiguration[ScriptCompilationConfiguration.refineConfigurationOnAnnotations]?.flatMapTo(LinkedHashSet()) {
             it.annotations.mapNotNull { ann ->
-                @Suppress("UNCHECKED_CAST")
-                jvmGetScriptingClass(ann, contextClassLoader, hostConfiguration) as? KClass<Annotation> // TODO errors
+                try {
+                    @Suppress("UNCHECKED_CAST")
+                    jvmGetScriptingClass(ann, contextClassLoader, hostConfiguration) as? KClass<Annotation>
+                } catch (e: Throwable) {
+                    messageCollector.report(e.asDiagnostics(customMessage = "Failed to load annotation class ${ann.typeName}"))
+                    null
+                }
             }
         }?.takeIf { it.isNotEmpty() } ?: return ScriptCollectedData(emptyMap()).asSuccess()
+
+    if (messageCollector.hasErrors()) return failure(messageCollector)
+
+    val sessionForAnnotationResolution = getSessionForAnnotationResolution(script, compilationConfiguration)
+    sessionForAnnotationResolution.register(
+        FirScriptCompilationComponent::class,
+        FirScriptCompilationComponent(
+            hostConfiguration.with {
+                reset(scriptRefinedCompilationConfigurationsCache)
+            } ,
+            getSessionForAnnotationResolution = { _, _ -> error("recursive refinement attempted") }
+        )
+    )
+
     // separate reporter for refinement to avoid double raw fir warnings reporting
     val diagnosticsCollector = DiagnosticReporterFactory.createPendingReporter()
-
-    val dummySession = getSessionForAnnotationResolution()
-
-    val firFile = script.convertToFir(dummySession, diagnosticsCollector)
+    val firFile = script.convertToFir(sessionForAnnotationResolution, diagnosticsCollector)
+    firFile.declarations.forEach {
+        if (it is FirScript) {
+            it.scriptCompilationConfiguration = compilationConfiguration
+        }
+    }
     if (diagnosticsCollector.hasErrors) {
-        val messageCollector = ScriptDiagnosticsMessageCollector(parentMessageCollector = null)
         diagnosticsCollector.reportToMessageCollector(messageCollector, renderDiagnosticName = false)
         return failure(messageCollector)
     }
 
     fun loadAnnotation(firAnnotation: FirAnnotation): ResultWithDiagnostics<ScriptSourceAnnotation<Annotation>?> =
-        (firAnnotation as? FirAnnotationCall)?.toAnnotationObjectIfMatches(acceptedAnnotations, dummySession, firFile)?.onSuccess {
-            val location = script.locationId
-            val startPosition = firAnnotation.source?.startOffset?.toSourceCodePosition(script)
-            val endPosition = firAnnotation.source?.endOffset?.toSourceCodePosition(script)
-            ScriptSourceAnnotation(
-                it,
-                if (location != null && startPosition != null)
-                    SourceCode.LocationWithId(
-                        location, SourceCode.Location(startPosition, endPosition)
-                    )
-                else null
-            ).asSuccess()
-        } ?: ResultWithDiagnostics.Success(null)
+        (firAnnotation as? FirAnnotationCall)
+            ?.toAnnotationObjectIfMatches(acceptedAnnotations.toList(), sessionForAnnotationResolution, firFile)
+            ?.onSuccess {
+                val location = script.locationId
+                val startPosition = firAnnotation.source?.startOffset?.toSourceCodePosition(script)
+                val endPosition = firAnnotation.source?.endOffset?.toSourceCodePosition(script)
+                ScriptSourceAnnotation(
+                    it,
+                    if (location != null && startPosition != null)
+                        SourceCode.LocationWithId(
+                            location, SourceCode.Location(startPosition, endPosition)
+                        )
+                    else null
+                ).asSuccess()
+            } ?: ResultWithDiagnostics.Success(null)
 
     return firFile.annotations.mapNotNullSuccess(::loadAnnotation).onSuccess { annotations ->
         ScriptCollectedData(mapOf(ScriptCollectedData.collectedAnnotations to annotations)).asSuccess()
@@ -142,6 +172,10 @@ internal fun FirAnnotationCall.toAnnotationObjectIfMatches(
                 null
             }
         }
+    }
+
+    (this.annotationTypeRef as? FirErrorTypeRef)?.let {
+        return makeFailureResult(it.diagnostic.reason) // TODO: precise error with location (KT-83947)
     }
 
     val mapping =

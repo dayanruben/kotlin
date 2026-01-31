@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.scripting.compiler.plugin.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.psi.search.ProjectScope
+import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.PsiBasedProjectFileSearchScope
 import org.jetbrains.kotlin.cli.jvm.compiler.VfsBasedProjectEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.toVfsBasedProjectEnvironment
@@ -14,13 +15,16 @@ import org.jetbrains.kotlin.cli.jvm.config.JvmClasspathRoot
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.getCompilerExtensions
 import org.jetbrains.kotlin.compiler.plugin.registerInProject
+import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.disableStandardScriptDefinition
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.config.scriptingHostConfiguration
 import org.jetbrains.kotlin.fir.FirBinaryDependenciesModuleData
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.FirSourceModuleData
+import org.jetbrains.kotlin.fir.deserialization.LibraryPathFilter
 import org.jetbrains.kotlin.fir.deserialization.ModuleDataProvider
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.session.FirJvmSessionFactory
@@ -81,13 +85,10 @@ open class ScriptingModuleDataProvider(private val baseName: String, baseLibrary
 
     private fun makeLibraryModuleData(name: Name): FirModuleData = FirBinaryDependenciesModuleData(name)
 
-    protected val pathToModuleData: MutableMap<Path, FirModuleData> = mutableMapOf()
-    protected val moduleDataHistory: MutableList<FirModuleData> = mutableListOf()
+    protected val moduleDataWithFilters: MutableMap<FirModuleData, LibraryPathFilter> =
+        mutableMapOf(baseDependenciesModuleData to LibraryPathFilter.LibraryList(baseLibraryPaths.toSet()))
 
-    init {
-        baseLibraryPaths.associateWithTo(pathToModuleData) { baseDependenciesModuleData }
-        moduleDataHistory.add(baseDependenciesModuleData)
-    }
+    protected val moduleDataHistory: MutableList<FirModuleData> = mutableListOf(baseDependenciesModuleData)
 
     override val allModuleData: Collection<FirModuleData>
         get() = moduleDataHistory
@@ -96,22 +97,23 @@ open class ScriptingModuleDataProvider(private val baseName: String, baseLibrary
         get() = baseDependenciesModuleData
 
     override fun getModuleDataPaths(moduleData: FirModuleData): Set<Path>? =
-        pathToModuleData.entries.mapNotNullTo(mutableSetOf()) { if (it.value == moduleData) it.key else null }.takeIf { it.isNotEmpty() }
+        (moduleDataWithFilters[moduleData] as? LibraryPathFilter.LibraryList)?.libs
 
     override fun getModuleData(path: Path?): FirModuleData? {
-        val normalizedPath = path?.normalize() ?: return null
-        pathToModuleData[normalizedPath]?.let { return it }
-        for ((libPath, moduleData) in pathToModuleData) {
-            if (normalizedPath.startsWith(libPath)) return moduleData
+        val normalizedPath = path?.normalize()
+        for ((moduleData, filter) in moduleDataWithFilters.entries) {
+            if (filter.accepts(normalizedPath)) {
+                return moduleData
+            }
         }
         return null
     }
 
     fun addNewLibraryModuleDataIfNeeded(libraryPaths: List<Path>): Pair<FirModuleData?, List<Path>> {
-        val newLibraryPaths = libraryPaths.filter { it !in pathToModuleData }
+        val newLibraryPaths = libraryPaths.filter { getModuleData(it) == null }
         if (newLibraryPaths.isEmpty()) return null to emptyList()
         val newDependenciesModuleData = makeLibraryModuleData(Name.special("<$baseName-lib-${moduleDataHistory.size + 1}>"))
-        newLibraryPaths.associateWithTo(pathToModuleData) { newDependenciesModuleData }
+        moduleDataWithFilters[newDependenciesModuleData] = LibraryPathFilter.LibraryList(newLibraryPaths.toSet())
         moduleDataHistory.add(newDependenciesModuleData)
         return newDependenciesModuleData to newLibraryPaths
     }
@@ -126,17 +128,13 @@ open class ScriptingModuleDataProvider(private val baseName: String, baseLibrary
         ).also { moduleDataHistory.add(it) }
 }
 
-fun createCompilerState(
-    moduleName: Name,
+fun createIsolatedCompilerState(
     messageCollector: ScriptDiagnosticsMessageCollector,
     rootDisposable: Disposable,
     baseScriptCompilationConfiguration: ScriptCompilationConfiguration,
     hostConfiguration: ScriptingHostConfiguration,
     configureCompiler: CompilerConfiguration.() -> Unit = {},
-    createModuleDataProvider: (List<Path>) -> ScriptingModuleDataProvider =
-        { ScriptingModuleDataProvider(moduleName.asStringStripSpecialMarkers(), it) },
 ): K2ScriptingCompilerEnvironment {
-
     val compilerContext = createIsolatedCompilationContext(
         baseScriptCompilationConfiguration,
         hostConfiguration,
@@ -144,9 +142,29 @@ fun createCompilerState(
         rootDisposable,
         configureCompiler
     )
+    return createCompilerState(compilerContext, messageCollector, hostConfiguration)
+}
+
+fun createCompilerStateFromEnvironment(
+    environment: KotlinCoreEnvironment,
+    messageCollector: ScriptDiagnosticsMessageCollector,
+    baseScriptCompilationConfiguration: ScriptCompilationConfiguration,
+    hostConfiguration: ScriptingHostConfiguration,
+): K2ScriptingCompilerEnvironment {
+    val compilerContext = createCompilationContextFromEnvironment(baseScriptCompilationConfiguration, environment, messageCollector)
+    return createCompilerState(compilerContext, messageCollector, hostConfiguration)
+}
+
+fun createCompilerState(
+    compilerContext: SharedScriptCompilationContext,
+    messageCollector: ScriptDiagnosticsMessageCollector,
+    hostConfiguration: ScriptingHostConfiguration,
+): K2ScriptingCompilerEnvironment {
     val project = compilerContext.environment.project
     val compilerConfiguration = compilerContext.environment.configuration
     val languageVersionSettings = compilerConfiguration.languageVersionSettings
+    val moduleName = (compilerConfiguration.get(CommonConfigurationKeys.MODULE_NAME)?.let { Name.guessByFirstCharacter(it) }
+        ?: Name.special("<script-module>"))
 
     val extensionStorage = CompilerPluginRegistrar.ExtensionStorage()
 
@@ -159,7 +177,9 @@ fun createCompilerState(
 
     val definitionSources = compilerConfiguration.getList(ScriptingConfigurationKeys.SCRIPT_DEFINITIONS_SOURCES)
     val definitions = compilerConfiguration.getList(ScriptingConfigurationKeys.SCRIPT_DEFINITIONS)
-    val scriptDefinitionProvider = CliScriptDefinitionProvider().also {
+    val scriptDefinitionProvider = CliScriptDefinitionProvider(
+        compilerConfiguration.disableStandardScriptDefinition
+    ).also {
         it.setScriptDefinitionsSources(definitionSources)
         it.setScriptDefinitions(definitions)
     }
@@ -184,7 +204,7 @@ fun createCompilerState(
     val packagePartProvider = projectEnvironment.getPackagePartProvider(projectFileSearchScope)
     val predefinedJavaComponents = FirSharableJavaComponents(firCachesFactoryForCliMode)
 
-    val moduleDataProvider = createModuleDataProvider(classpath.map(File::toPath))
+    val moduleDataProvider = ScriptingModuleDataProvider(moduleName.asStringStripSpecialMarkers(), classpath.map(File::toPath))
 
     val sessionFactoryContext = FirJvmSessionFactory.Context(
         configuration = compilerConfiguration,
