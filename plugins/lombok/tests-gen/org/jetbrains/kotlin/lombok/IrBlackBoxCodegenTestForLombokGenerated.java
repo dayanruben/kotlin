@@ -60,6 +60,24 @@ public class IrBlackBoxCodegenTestForLombokGenerated extends AbstractIrBlackBoxC
   }
 
   @Test
+  @TestMetadata("builderAndSingularAnnOnRecordField.kt")
+  public void testBuilderAndSingularAnnOnRecordField() {
+    runTest("plugins/lombok/testData/box/builderAndSingularAnnOnRecordField.kt");
+  }
+
+  @Test
+  @TestMetadata("builderAnnotationArguments.kt")
+  public void testBuilderAnnotationArguments() {
+    runTest("plugins/lombok/testData/box/builderAnnotationArguments.kt");
+  }
+
+  @Test
+  @TestMetadata("builderConfig.kt")
+  public void testBuilderConfig() {
+    runTest("plugins/lombok/testData/box/builderConfig.kt");
+  }
+
+  @Test
   @TestMetadata("builderCtorWithParams.kt")
   public void testBuilderCtorWithParams() {
     runTest("plugins/lombok/testData/box/builderCtorWithParams.kt");
@@ -75,6 +93,12 @@ public class IrBlackBoxCodegenTestForLombokGenerated extends AbstractIrBlackBoxC
   @TestMetadata("builderOnConstructor.kt")
   public void testBuilderOnConstructor() {
     runTest("plugins/lombok/testData/box/builderOnConstructor.kt");
+  }
+
+  @Test
+  @TestMetadata("builderOnGenericMethod.kt")
+  public void testBuilderOnGenericMethod() {
+    runTest("plugins/lombok/testData/box/builderOnGenericMethod.kt");
   }
 
   @Test
@@ -117,6 +141,12 @@ public class IrBlackBoxCodegenTestForLombokGenerated extends AbstractIrBlackBoxC
   @TestMetadata("buildersOnGenericClasses.kt")
   public void testBuildersOnGenericClasses() {
     runTest("plugins/lombok/testData/box/buildersOnGenericClasses.kt");
+  }
+
+  @Test
+  @TestMetadata("bulderOnRecord.kt")
+  public void testBulderOnRecord() {
+    runTest("plugins/lombok/testData/box/bulderOnRecord.kt");
   }
 
   @Test
@@ -210,6 +240,12 @@ public class IrBlackBoxCodegenTestForLombokGenerated extends AbstractIrBlackBoxC
   }
 
   @Test
+  @TestMetadata("gettersClassLevel.kt")
+  public void testGettersClassLevel() {
+    runTest("plugins/lombok/testData/box/gettersClassLevel.kt");
+  }
+
+  @Test
   @TestMetadata("gettersFluent.kt")
   public void testGettersFluent() {
     runTest("plugins/lombok/testData/box/gettersFluent.kt");
@@ -231,6 +267,12 @@ public class IrBlackBoxCodegenTestForLombokGenerated extends AbstractIrBlackBoxC
   @TestMetadata("nullability.kt")
   public void testNullability() {
     runTest("plugins/lombok/testData/box/nullability.kt");
+  }
+
+  @Test
+  @TestMetadata("overriddenAccessors.kt")
+  public void testOverriddenAccessors() {
+    runTest("plugins/lombok/testData/box/overriddenAccessors.kt");
   }
 
   @Test
@@ -267,6 +309,24 @@ public class IrBlackBoxCodegenTestForLombokGenerated extends AbstractIrBlackBoxC
   @TestMetadata("superBuilder.kt")
   public void testSuperBuilder() {
     runTest("plugins/lombok/testData/box/superBuilder.kt");
+  }
+
+  @Test
+  @TestMetadata("superBuilderAnnotationArguments.kt")
+  public void testSuperBuilderAnnotationArguments() {
+    runTest("plugins/lombok/testData/box/superBuilderAnnotationArguments.kt");
+  }
+
+  @Test
+  @TestMetadata("superBuilderComplexHierarchy.kt")
+  public void testSuperBuilderComplexHierarchy() {
+    runTest("plugins/lombok/testData/box/superBuilderComplexHierarchy.kt");
+  }
+
+  @Test
+  @TestMetadata("superBuilderConfig.kt")
+  public void testSuperBuilderConfig() {
+    runTest("plugins/lombok/testData/box/superBuilderConfig.kt");
   }
 
   @Test

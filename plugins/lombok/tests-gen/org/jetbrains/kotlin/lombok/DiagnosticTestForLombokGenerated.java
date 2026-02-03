@@ -36,18 +36,6 @@ public class DiagnosticTestForLombokGenerated extends AbstractDiagnosticTestForL
   }
 
   @Test
-  @TestMetadata("builderAnnotationArguments.kt")
-  public void testBuilderAnnotationArguments() {
-    runTest("plugins/lombok/testData/diagnostics/k1+k2/builderAnnotationArguments.kt");
-  }
-
-  @Test
-  @TestMetadata("builderConfig.kt")
-  public void testBuilderConfig() {
-    runTest("plugins/lombok/testData/diagnostics/k1+k2/builderConfig.kt");
-  }
-
-  @Test
   @TestMetadata("builderSingularNullability.kt")
   public void testBuilderSingularNullability() {
     runTest("plugins/lombok/testData/diagnostics/k1+k2/builderSingularNullability.kt");
@@ -66,15 +54,15 @@ public class DiagnosticTestForLombokGenerated extends AbstractDiagnosticTestForL
   }
 
   @Test
-  @TestMetadata("gettersClassLevel.kt")
-  public void testGettersClassLevel() {
-    runTest("plugins/lombok/testData/diagnostics/k1+k2/gettersClassLevel.kt");
-  }
-
-  @Test
   @TestMetadata("incorrectAnnotationArguments.kt")
   public void testIncorrectAnnotationArguments() {
     runTest("plugins/lombok/testData/diagnostics/k1+k2/incorrectAnnotationArguments.kt");
+  }
+
+  @Test
+  @TestMetadata("prefixes.kt")
+  public void testPrefixes() {
+    runTest("plugins/lombok/testData/diagnostics/k1+k2/prefixes.kt");
   }
 
   @Test

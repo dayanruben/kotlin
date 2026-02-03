@@ -1,10 +1,7 @@
 package org.jetbrains.kotlin
 
 import org.gradle.api.Project
-import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.options.Option
+import org.gradle.internal.extensions.core.extra
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 import java.io.File
 import java.util.*
@@ -28,6 +25,15 @@ val Project.attempts: Int
     get() = (property("attempts") as String).toInt()
 
 /**
+ * When set, the benchmarks won't be executed, but everything will be built.
+ *
+ * This can be used prior to running many benchmarks to make sure no building task
+ * interferes with the benchmarks execution
+ */
+val Project.dryRun: Boolean
+    get() = (findProperty("dryRun") as String?)?.let { it.isEmpty() || it == "true" } ?: false
+
+/**
  * Space-separated additional compiler arguments for each benchmark
  */
 val Project.compilerArgs: List<String>
@@ -48,6 +54,24 @@ val Project.filter: String?
  */
 val Project.filterRegex: String?
     get() = project.findProperty("filterRegex") as String?
+
+/**
+ * List of all known benchmark groups.
+ */
+@Suppress("UNCHECKED_CAST")
+val Project.knownGroups: List<String>
+    get() = extra["knownGroups"] as List<String>
+
+/**
+ * List of benchmark groups to include.
+ */
+val Project.groups: List<String>
+    get() = (project.findProperty("groups") as String?)
+            ?.split(",")
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
+            ?.takeIf { it.isNotEmpty() }
+            ?: knownGroups
 
 /**
  * Compiler version to store in the generated reports.

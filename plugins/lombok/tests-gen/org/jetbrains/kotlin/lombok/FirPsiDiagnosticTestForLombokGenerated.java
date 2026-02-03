@@ -55,18 +55,6 @@ public class FirPsiDiagnosticTestForLombokGenerated extends AbstractFirPsiDiagno
   }
 
   @Test
-  @TestMetadata("builderWithGenerics.kt")
-  public void testBuilderWithGenerics() {
-    runTest("plugins/lombok/testData/diagnostics/builderWithGenerics.kt");
-  }
-
-  @Test
-  @TestMetadata("bulderOnRecord.kt")
-  public void testBulderOnRecord() {
-    runTest("plugins/lombok/testData/diagnostics/bulderOnRecord.kt");
-  }
-
-  @Test
   @TestMetadata("classWithValueAnnIsNotFinal.kt")
   public void testClassWithValueAnnIsNotFinal() {
     runTest("plugins/lombok/testData/diagnostics/classWithValueAnnIsNotFinal.kt");
@@ -103,33 +91,9 @@ public class FirPsiDiagnosticTestForLombokGenerated extends AbstractFirPsiDiagno
   }
 
   @Test
-  @TestMetadata("superBuilderAnnotationArguments.kt")
-  public void testSuperBuilderAnnotationArguments() {
-    runTest("plugins/lombok/testData/diagnostics/superBuilderAnnotationArguments.kt");
-  }
-
-  @Test
-  @TestMetadata("superBuilderComplexHierarchy.kt")
-  public void testSuperBuilderComplexHierarchy() {
-    runTest("plugins/lombok/testData/diagnostics/superBuilderComplexHierarchy.kt");
-  }
-
-  @Test
-  @TestMetadata("superBuilderConfig.kt")
-  public void testSuperBuilderConfig() {
-    runTest("plugins/lombok/testData/diagnostics/superBuilderConfig.kt");
-  }
-
-  @Test
   @TestMetadata("superBuilderOnConstructor.kt")
   public void testSuperBuilderOnConstructor() {
     runTest("plugins/lombok/testData/diagnostics/superBuilderOnConstructor.kt");
-  }
-
-  @Test
-  @TestMetadata("superBuilderSingular.kt")
-  public void testSuperBuilderSingular() {
-    runTest("plugins/lombok/testData/diagnostics/superBuilderSingular.kt");
   }
 
   @Test
@@ -149,6 +113,12 @@ public class FirPsiDiagnosticTestForLombokGenerated extends AbstractFirPsiDiagno
     }
 
     @Test
+    @TestMetadata("accessorsStripPrefixCombined.fir.kt")
+    public void testAccessorsStripPrefixCombined_fir() {
+      runTest("plugins/lombok/testData/diagnostics/k1+k2/accessorsStripPrefixCombined.fir.kt");
+    }
+
+    @Test
     public void testAllFilesPresentInK1_k2() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("plugins/lombok/testData/diagnostics/k1+k2"), Pattern.compile("^(.+)\\.kt$"), null, true);
     }
@@ -157,18 +127,6 @@ public class FirPsiDiagnosticTestForLombokGenerated extends AbstractFirPsiDiagno
     @TestMetadata("annotationTypes.kt")
     public void testAnnotationTypes() {
       runTest("plugins/lombok/testData/diagnostics/k1+k2/annotationTypes.kt");
-    }
-
-    @Test
-    @TestMetadata("builderAnnotationArguments.kt")
-    public void testBuilderAnnotationArguments() {
-      runTest("plugins/lombok/testData/diagnostics/k1+k2/builderAnnotationArguments.kt");
-    }
-
-    @Test
-    @TestMetadata("builderConfig.kt")
-    public void testBuilderConfig() {
-      runTest("plugins/lombok/testData/diagnostics/k1+k2/builderConfig.kt");
     }
 
     @Test
@@ -196,12 +154,6 @@ public class FirPsiDiagnosticTestForLombokGenerated extends AbstractFirPsiDiagno
     }
 
     @Test
-    @TestMetadata("gettersClassLevel.kt")
-    public void testGettersClassLevel() {
-      runTest("plugins/lombok/testData/diagnostics/k1+k2/gettersClassLevel.kt");
-    }
-
-    @Test
     @TestMetadata("getters.fir.kt")
     public void testGetters_fir() {
       runTest("plugins/lombok/testData/diagnostics/k1+k2/getters.fir.kt");
@@ -211,6 +163,18 @@ public class FirPsiDiagnosticTestForLombokGenerated extends AbstractFirPsiDiagno
     @TestMetadata("incorrectAnnotationArguments.kt")
     public void testIncorrectAnnotationArguments() {
       runTest("plugins/lombok/testData/diagnostics/k1+k2/incorrectAnnotationArguments.kt");
+    }
+
+    @Test
+    @TestMetadata("prefixes.kt")
+    public void testPrefixes() {
+      runTest("plugins/lombok/testData/diagnostics/k1+k2/prefixes.kt");
+    }
+
+    @Test
+    @TestMetadata("prefixes.fir.kt")
+    public void testPrefixes_fir() {
+      runTest("plugins/lombok/testData/diagnostics/k1+k2/prefixes.fir.kt");
     }
 
     @Test

@@ -31,13 +31,7 @@ public abstract class KotlinProjectStructureProviderBase : KotlinProjectStructur
             }
         }
 
-        val virtualFile = file.virtualFile
-        if (virtualFile != null) {
-            val contextModule = virtualFile.analysisContextModule
-            if (contextModule != null) {
-                return contextModule
-            }
-        }
+        file.virtualFile?.resolveExtensionFileModule?.let { return it }
 
         if (file is KtFile && file.isDangling) {
             val contextModule = computeContextModule(file)
@@ -60,6 +54,8 @@ public abstract class KotlinProjectStructureProviderBase : KotlinProjectStructur
     @OptIn(KaImplementationDetail::class, KaExperimentalApi::class)
     private fun computeContextModule(file: KtFile): KaModule {
         val originalFile = file.copyOrigin
+
+        @Suppress("DEPRECATION")
         originalFile?.virtualFile?.analysisContextModule?.let { return it }
 
         file.contextModule?.let { return it }
