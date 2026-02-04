@@ -126,7 +126,7 @@ if (!project.hasProperty("versions.kotlin-native")) {
     } else if (kotlinBuildProperties.isKotlinNativeEnabled.get()) {
         kotlinBuildProperties.defaultSnapshotVersion.get()
     } else {
-        "2.4.0-dev-169"
+        "2.4.0-dev-1942"
     }
 }
 
@@ -446,6 +446,7 @@ extra["kotlinJpsPluginEmbeddedDependencies"] = listOf(
     ":compiler:compiler.version",
     ":compiler:build-tools:kotlin-build-statistics",
     ":kotlin-build-common",
+    ":compiler:arguments.common",
 )
 
 extra["kotlinJpsPluginMavenDependencies"] = listOf(
