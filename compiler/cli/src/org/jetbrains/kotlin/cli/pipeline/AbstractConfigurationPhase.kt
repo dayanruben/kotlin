@@ -14,8 +14,7 @@ import org.jetbrains.kotlin.cli.common.CLICompiler.Companion.SCRIPT_PLUGIN_REGIS
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.INFO
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.LOGGING
-import org.jetbrains.kotlin.cli.extensionsStorage
-import org.jetbrains.kotlin.cli.initializeDiagnosticFactoriesStorageForCli
+import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser
 import org.jetbrains.kotlin.cli.plugins.extractPluginClasspathAndOptions
 import org.jetbrains.kotlin.cli.plugins.processCompilerPluginsOptions
@@ -46,7 +45,7 @@ abstract class AbstractConfigurationPhase<A : CommonCompilerArguments>(
     val configurationUpdaters: List<ConfigurationUpdater<A>>
 ) : PipelinePhase<ArgumentsPipelineArtifact<A>, ConfigurationPipelineArtifact>(name, preActions, postActions) {
     override fun executePhase(input: ArgumentsPipelineArtifact<A>): ConfigurationPipelineArtifact? {
-        val configuration = CompilerConfiguration()
+        val configuration = CompilerConfiguration.create()
         configuration.setupCommonConfiguration(input)
 
         for (filler in configurationUpdaters) {
@@ -66,8 +65,6 @@ abstract class AbstractConfigurationPhase<A : CommonCompilerArguments>(
     private fun CompilerConfiguration.setupCommonConfiguration(input: ArgumentsPipelineArtifact<A>) {
         val (arguments, _, _, messageCollector, performanceManager) = input
         this.messageCollector = messageCollector
-        initializeDiagnosticFactoriesStorageForCli()
-        registerExtensionStorage()
         perfManager = performanceManager
         printVersion = arguments.version
         // TODO(KT-73711): move script-related configuration to JVM CLI
@@ -171,6 +168,3 @@ abstract class AbstractConfigurationPhase<A : CommonCompilerArguments>(
     }
 }
 
-fun CompilerConfiguration.registerExtensionStorage() {
-    extensionsStorage = CompilerPluginRegistrar.ExtensionStorage()
-}

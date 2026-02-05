@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.analyzer.AnalysisResult;
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns;
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
 import org.jetbrains.kotlin.checkers.CompilerTestLanguageVersionSettingsKt;
-import org.jetbrains.kotlin.cli.CliDiagnosticsKt;
+import org.jetbrains.kotlin.cli.CompilerConfigurationCreationKt;
 import org.jetbrains.kotlin.cli.common.config.ContentRootsKt;
 import org.jetbrains.kotlin.cli.common.config.KotlinSourceRoot;
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity;
@@ -33,7 +33,6 @@ import org.jetbrains.kotlin.cli.common.messages.MessageCollector;
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles;
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment;
 import org.jetbrains.kotlin.cli.jvm.config.JvmContentRootsKt;
-import org.jetbrains.kotlin.cli.pipeline.AbstractConfigurationPhaseKt;
 import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime;
 import org.jetbrains.kotlin.config.CommonConfigurationKeys;
 import org.jetbrains.kotlin.config.CompilerConfiguration;
@@ -123,9 +122,7 @@ public class KotlinTestUtils {
 
     @NotNull
     public static CompilerConfiguration newConfiguration() {
-        CompilerConfiguration configuration = new CompilerConfiguration();
-        CliDiagnosticsKt.initializeDiagnosticFactoriesStorageForCli(configuration);
-        AbstractConfigurationPhaseKt.registerExtensionStorage(configuration);
+        CompilerConfiguration configuration = CompilerConfigurationCreationKt.create(CompilerConfiguration.Companion);;
         configuration.put(CommonConfigurationKeys.MODULE_NAME, TEST_MODULE_NAME);
         configuration.put(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY, new MessageCollector() {
             @Override

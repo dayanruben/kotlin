@@ -9,13 +9,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.cli.common.setupKlibAbiCompatibilityLevel
+import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.cli.extensionsStorage
-import org.jetbrains.kotlin.cli.initializeDiagnosticFactoriesStorageForCli
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.JvmPackagePartProvider
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.javac.registerJavac
-import org.jetbrains.kotlin.cli.pipeline.registerExtensionStorage
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.TEST_ONLY_PLUGIN_REGISTRATION_CALLBACK
 import org.jetbrains.kotlin.compiler.plugin.TEST_ONLY_PROJECT_CONFIGURATION_CALLBACK
@@ -122,7 +121,7 @@ open class CompilerConfigurationProviderImpl(
         val configFiles = platform.platformToEnvironmentConfigFiles()
         val applicationEnvironment = KotlinCoreEnvironment.getOrCreateApplicationEnvironmentForTests(
             testRootDisposable,
-            CompilerConfiguration()
+            CompilerConfiguration.create()
         )
         val configuration = getCompilerConfiguration(module, CompilationStage.FIRST)
         val projectEnv = KotlinCoreEnvironment.ProjectEnvironment(testRootDisposable, applicationEnvironment, configuration)
@@ -177,7 +176,7 @@ fun createCompilerConfiguration(
     configurators: List<AbstractEnvironmentConfigurator>,
     compilationStage: CompilationStage,
 ): CompilerConfiguration {
-    val configuration = CompilerConfiguration()
+    val configuration = CompilerConfiguration.create()
     configuration[CommonConfigurationKeys.MODULE_NAME] = module.name
 
     if (JsEnvironmentConfigurationDirectives.GENERATE_STRICT_IMPLICIT_EXPORT in module.directives) {
@@ -208,9 +207,7 @@ fun createCompilerConfiguration(
 
     val messageCollector = MessageCollectorForCompilerTests(System.err, CompilerTestMessageRenderer(module))
     configuration.messageCollector = messageCollector
-    configuration.initializeDiagnosticFactoriesStorageForCli()
     configuration.languageVersionSettings = module.languageVersionSettings
-    configuration.registerExtensionStorage()
     configuration.targetPlatform = module.targetPlatform(testServices)
     configuration.setupKlibAbiCompatibilityLevel()
 

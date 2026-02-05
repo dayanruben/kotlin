@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.cli.pipeline.jvm.JvmBackendPipelinePhase
 import org.jetbrains.kotlin.cli.pipeline.jvm.JvmFir2IrPipelinePhase
 import org.jetbrains.kotlin.cli.pipeline.jvm.JvmFrontendPipelineArtifact
 import org.jetbrains.kotlin.cli.pipeline.jvm.JvmFrontendPipelinePhase
-import org.jetbrains.kotlin.cli.pipeline.registerExtensionStorage
+import org.jetbrains.kotlin.cli.registerExtensionStorage
 import org.jetbrains.kotlin.codegen.ClassBuilderMode
 import org.jetbrains.kotlin.codegen.OriginCollectingClassBuilderFactory
 import org.jetbrains.kotlin.config.*
@@ -97,6 +97,12 @@ open class FirKaptAnalysisHandlerExtension(
                 this.messageCollector = messageCollector
                 skipBodies = true
                 useLightTree = false
+
+                /*
+                 * Later the KAPT pipeline registers extensions once again, so the extensions storage
+                 * should be reset. Otherwise the extensions would be duplicated.
+                 */
+                @OptIn(CompilerConfiguration.Internals::class)
                 registerExtensionStorage()
             }
             val disposable = Disposer.newDisposable("K2KaptSession.project")
