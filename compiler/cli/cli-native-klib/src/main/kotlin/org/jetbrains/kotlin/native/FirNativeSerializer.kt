@@ -1,14 +1,14 @@
 /*
- * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.native
 
+import org.jetbrains.kotlin.analyzer.CompilationErrorException
 import org.jetbrains.kotlin.backend.common.serialization.IrSerializationSettings
 import org.jetbrains.kotlin.backend.common.serialization.SerializerOutput
 import org.jetbrains.kotlin.backend.common.serialization.serializeModuleIntoKlib
-import org.jetbrains.kotlin.backend.konan.KonanCompilationException
 import org.jetbrains.kotlin.backend.konan.KonanConfigKeys
 import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
 import org.jetbrains.kotlin.backend.konan.serialization.KonanIrModuleSerializer
@@ -24,16 +24,7 @@ import org.jetbrains.kotlin.fir.pipeline.Fir2KlibMetadataSerializer
 import org.jetbrains.kotlin.ir.KtDiagnosticReporterWithImplicitIrBasedContext
 import org.jetbrains.kotlin.library.metadata.resolver.TopologicalLibraryOrder
 
-fun PhaseContext.firSerializer(input: FirOutput): SerializerOutput? = when (input) {
-    !is FirOutput.Full -> null
-    else -> firSerializerBase(input.firResult, null)
-}
-
-fun PhaseContext.fir2IrSerializer(input: FirSerializerInput): SerializerOutput {
-    return firSerializerBase(input.firToIrOutput.frontendOutput, input.firToIrOutput, produceHeaderKlib = input.produceHeaderKlib)
-}
-
-private fun PhaseContext.firSerializerBase(
+internal fun PhaseContext.firSerializerBase(
         firResult: AllModulesFrontendOutput,
         fir2IrOutput: Fir2IrOutput?,
         produceHeaderKlib: Boolean = false,
@@ -77,7 +68,7 @@ private fun PhaseContext.firSerializerBase(
     val messageCollector = configuration.getNotNull(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY)
     diagnosticReporter.reportToMessageCollector(messageCollector, renderDiagnosticNames)
     if (diagnosticReporter.hasErrors) {
-        throw KonanCompilationException("Compilation failed: there were errors during module serialization")
+        throw CompilationErrorException("Compilation failed: there were errors during module serialization")
     }
     return serializerOutput
 }

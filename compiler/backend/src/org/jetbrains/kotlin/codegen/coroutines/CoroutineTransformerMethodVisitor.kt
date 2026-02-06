@@ -755,7 +755,7 @@ class CoroutineTransformerMethodVisitor(
     private fun dropSuspensionMarkers(methodNode: MethodNode) {
         // Drop markers, including ones, which we ignored in recognizing phase
         fun isSuspensionMarkerToRemove(insn: AbstractInsnNode) =
-            isBeforeSuspendMarker(insn) || isAfterSuspendMarker(insn) || isBeforeSuspendUnitCallMarker(insn)
+            isBeforeSuspendMarker(insn) || isAfterSuspendMarker(insn) || isBeforeSuspendUnitCallMarker(insn) || isBeforeSuspendGenericCallMarker(insn)
         for (marker in methodNode.instructions.asSequence().filter { isSuspensionMarkerToRemove(it) }.toList()) {
             methodNode.instructions.removeAll(listOf(marker.previous, marker))
         }
@@ -1125,6 +1125,9 @@ class CoroutineTransformerMethodVisitor(
             if (slot == continuationIndex || slot == dataIndex) continue
             // Do not spill $completion
             if (isForNamedFunction && slot == completionSlot) continue
+            // Do not spill fake inliner variables - they are always zero, initialized for each state by initializeFakeInlinerVariables()
+            if (methodNode.isFakeInlinerVariable(slot, suspensionCallBeginIndex)) continue
+
             val value = frame.getLocal(slot)
             if (value.type == null) continue
             val visibleByDebugger = methodNode.localVariables.any {
@@ -1160,6 +1163,17 @@ class CoroutineTransformerMethodVisitor(
             )
         }
         return variablesToSpill
+    }
+
+    private fun MethodNode.isFakeInlinerVariable(slot: Int, suspensionCallBeginIndex: Int): Boolean {
+        for (record in this.localVariables.filter { it.index == slot }) {
+            if (instructions.indexOf(record.start) <= suspensionCallBeginIndex &&
+                suspensionCallBeginIndex < instructions.indexOf(record.end)
+            ) {
+                return JvmAbi.isFakeLocalVariableForInline(record.name)
+            }
+        }
+        return false
     }
 
     // When suspension point is inside finally block, its LVT record is split, but there is no store for the second half

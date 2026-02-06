@@ -274,11 +274,6 @@ private val finallyBlocksPhase = createFileLoweringPhase(
         prerequisite = setOf(initializersPhase, localFunctionsPhase, tailrecPhase)
 )
 
-internal val testProcessorModulePhase = makeIrModulePhase(
-        lowering = ::TestProcessor,
-        name = "TestProcessor",
-)
-
 private val testProcessorPhase = createFileLoweringPhase(
         lowering = { context: Context -> TestProcessor(context, context.sourcesModules) },
         name = "TestProcessor",
@@ -341,6 +336,11 @@ private val singleAbstractMethodPhase = createFileLoweringPhase(
         ::NativeSingleAbstractMethodLowering,
         name = "SingleAbstractMethod",
         prerequisite = setOf(functionReferencePhase)
+)
+
+private val removeCastsFromNothing = createFileLoweringPhase(
+        ::RemoveCastsFromNothingLowering,
+        name = "RemoveCastsFromNothing",
 )
 
 private val builtinOperatorPhase = createFileLoweringPhase(
@@ -662,6 +662,7 @@ internal fun KonanConfig.getLoweringsAfterInlining(): LoweringList = listOfNotNu
         objectClassesPhase,
         staticInitializersPhase,
         computeTypesPhase,
+        removeCastsFromNothing,
         optimizeCastsPhase.takeIf { this.genericSafeCasts },
         typeOperatorPhase,
         builtinOperatorPhase,

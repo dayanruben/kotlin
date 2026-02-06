@@ -71,6 +71,16 @@ val actualWasmArguments by compilerArgumentsLevel(CompilerArgumentsLevelNames.wa
     }
 
     compilerArgument {
+        name = "Xwasm-generate-closed-world-multimodule"
+        description = "Compile modules in multi-module closed-world mode using module passed in `-include` argument as main module".asReleaseDependent()
+        valueType = BooleanType.defaultFalse
+
+        lifecycle(
+            introducedVersion = KotlinReleaseVersion.v2_4_0,
+        )
+    }
+
+    compilerArgument {
         name = "Xwasm-generate-wat"
         description = "Generate a .wat file.".asReleaseDependent()
         valueType = BooleanType.defaultFalse
