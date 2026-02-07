@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analyzer.CompilationErrorException
 import org.jetbrains.kotlin.backend.common.phaser.PhaseEngine
 import org.jetbrains.kotlin.backend.common.phaser.makeIrModulePhase
 import org.jetbrains.kotlin.backend.konan.NativePreSerializationLoweringContext
-import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
+import org.jetbrains.kotlin.backend.konan.driver.NativePhaseContext
 import org.jetbrains.kotlin.backend.konan.lower.TestProcessor
 import org.jetbrains.kotlin.cli.common.fir.FirDiagnosticsCompilerResultsReporter
 import org.jetbrains.kotlin.cli.common.renderDiagnosticInternalName
@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.cli.common.runPreSerializationLoweringPhases
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.config.messageCollector
-import org.jetbrains.kotlin.diagnostics.DiagnosticReporterFactory
+import org.jetbrains.kotlin.diagnostics.impl.DiagnosticsCollectorImpl
 import org.jetbrains.kotlin.ir.KtDiagnosticReporterWithImplicitIrBasedContext
 import org.jetbrains.kotlin.ir.inline.konan.nativeLoweringsOfTheFirstPhase
 
@@ -26,8 +26,8 @@ internal val testProcessorModulePhase = makeIrModulePhase(
     name = "TestProcessor",
 )
 
-public fun <T : PhaseContext> PhaseEngine<T>.runPreSerializationLowerings(fir2IrOutput: Fir2IrOutput, environment: KotlinCoreEnvironment): Fir2IrOutput {
-    val diagnosticReporter = DiagnosticReporterFactory.createReporter()
+public fun <T : NativePhaseContext> PhaseEngine<T>.runPreSerializationLowerings(fir2IrOutput: Fir2IrOutput, environment: KotlinCoreEnvironment): Fir2IrOutput {
+    val diagnosticReporter = DiagnosticsCollectorImpl()
     val irDiagnosticReporter = KtDiagnosticReporterWithImplicitIrBasedContext(
         diagnosticReporter,
         environment.configuration.languageVersionSettings

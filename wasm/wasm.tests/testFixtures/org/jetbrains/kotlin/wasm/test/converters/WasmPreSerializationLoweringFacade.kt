@@ -14,8 +14,7 @@ import org.jetbrains.kotlin.cli.pipeline.web.WebKlibInliningPipelinePhase
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.config.phaser.PhaserState
-import org.jetbrains.kotlin.diagnostics.DiagnosticReporterFactory
-import org.jetbrains.kotlin.diagnostics.impl.deduplicating
+import org.jetbrains.kotlin.diagnostics.impl.DiagnosticsCollectorImpl
 import org.jetbrains.kotlin.ir.IrDiagnosticReporter
 import org.jetbrains.kotlin.ir.KtDiagnosticReporterWithImplicitIrBasedContext
 import org.jetbrains.kotlin.ir.backend.js.wasm.WasmKlibCheckers
@@ -41,7 +40,7 @@ class WasmPreSerializationLoweringFacade(
         require(module.languageVersionSettings.languageVersion.usesK2)
 
         val configuration = testServices.compilerConfigurationProvider.getCompilerConfiguration(module)
-        val diagnosticReporter = DiagnosticReporterFactory.createReporter()
+        val diagnosticReporter = DiagnosticsCollectorImpl()
 
         when (inputArtifact) {
             is Fir2IrCliBasedOutputArtifact<*> -> {
@@ -66,8 +65,10 @@ class WasmPreSerializationLoweringFacade(
             }
             is IrBackendInput.WasmAfterFrontendBackendInput -> {
                 // TODO: When KT-74671 would be implemented, the following code would be never used and is subject to be deleted
-                val irDiagnosticReporter =
-                    KtDiagnosticReporterWithImplicitIrBasedContext(diagnosticReporter.deduplicating(), configuration.languageVersionSettings)
+                val irDiagnosticReporter = KtDiagnosticReporterWithImplicitIrBasedContext(
+                    diagnosticReporter,
+                    configuration.languageVersionSettings
+                )
                 runKlibCheckers(irDiagnosticReporter, configuration, inputArtifact.irModuleFragment)
                 val phaseConfig = createJsTestPhaseConfig(testServices, module)
                 if (diagnosticReporter.hasErrors) {

@@ -43,7 +43,7 @@ object NativeConfigurationKeys {
 
     // Fully qualified main() name.
     @JvmField
-    val ENTRY = CompilerConfigurationKey.create<String>("ENTRY")
+    val KONAN_ENTRY_POINT = CompilerConfigurationKey.create<String>("KONAN_ENTRY_POINT")
 
     // Libraries included into produced framework API.
     @JvmField
@@ -54,7 +54,7 @@ object NativeConfigurationKeys {
     val FULL_EXPORTED_NAME_PREFIX = CompilerConfigurationKey.create<String>("FULL_EXPORTED_NAME_PREFIX")
 
     @JvmField
-    val LIBRARY_TO_ADD_TO_CACHE = CompilerConfigurationKey.create<String>("LIBRARY_TO_ADD_TO_CACHE")
+    val KONAN_LIBRARY_TO_ADD_TO_CACHE = CompilerConfigurationKey.create<String>("KONAN_LIBRARY_TO_ADD_TO_CACHE")
 
     @JvmField
     val CACHE_DIRECTORIES = CompilerConfigurationKey.create<List<String>>("CACHE_DIRECTORIES")
@@ -86,22 +86,22 @@ object NativeConfigurationKeys {
     val FRAMEWORK_IMPORT_HEADERS = CompilerConfigurationKey.create<List<String>>("FRAMEWORK_IMPORT_HEADERS")
 
     @JvmField
-    val FRIEND_MODULES = CompilerConfigurationKey.create<List<String>>("FRIEND_MODULES")
+    val KONAN_FRIEND_LIBRARIES = CompilerConfigurationKey.create<List<String>>("KONAN_FRIEND_LIBRARIES")
 
     @JvmField
-    val REFINES_MODULES = CompilerConfigurationKey.create<List<String>>("REFINES_MODULES")
+    val KONAN_REFINES_MODULES = CompilerConfigurationKey.create<List<String>>("KONAN_REFINES_MODULES")
 
     @JvmField
     val GENERATE_TEST_RUNNER = CompilerConfigurationKey.create<TestRunnerKind>("GENERATE_TEST_RUNNER")
 
     @JvmField
-    val INCLUDED_BINARY_FILES = CompilerConfigurationKey.create<List<String>>("INCLUDED_BINARY_FILES")
+    val KONAN_INCLUDED_BINARIES = CompilerConfigurationKey.create<List<String>>("KONAN_INCLUDED_BINARIES")
 
     @JvmField
     val KONAN_HOME = CompilerConfigurationKey.create<String>("KONAN_HOME")
 
     @JvmField
-    val LIBRARY_FILES = CompilerConfigurationKey.create<List<String>>("LIBRARY_FILES")
+    val KONAN_LIBRARIES = CompilerConfigurationKey.create<List<String>>("KONAN_LIBRARIES")
 
     @JvmField
     val LIGHT_DEBUG = CompilerConfigurationKey.create<Boolean>("LIGHT_DEBUG")
@@ -117,22 +117,22 @@ object NativeConfigurationKeys {
     val LIST_TARGETS = CompilerConfigurationKey.create<Boolean>("LIST_TARGETS")
 
     @JvmField
-    val MANIFEST_FILE = CompilerConfigurationKey.create<String>("MANIFEST_FILE")
+    val KONAN_MANIFEST_ADDEND = CompilerConfigurationKey.create<String>("KONAN_MANIFEST_ADDEND")
 
     // Path to file where header klib should be produced.
     @JvmField
-    val HEADER_KLIB = CompilerConfigurationKey.create<String>("HEADER_KLIB")
+    val KONAN_GENERATED_HEADER_KLIB_PATH = CompilerConfigurationKey.create<String>("KONAN_GENERATED_HEADER_KLIB_PATH")
 
     @JvmField
-    val NATIVE_LIBRARY_FILES = CompilerConfigurationKey.create<List<String>>("NATIVE_LIBRARY_FILES")
+    val KONAN_NATIVE_LIBRARIES = CompilerConfigurationKey.create<List<String>>("KONAN_NATIVE_LIBRARIES")
 
     // Don't link with the default libraries.
     @JvmField
-    val NODEFAULTLIBS = CompilerConfigurationKey.create<Boolean>("NODEFAULTLIBS")
+    val KONAN_NO_DEFAULT_LIBS = CompilerConfigurationKey.create<Boolean>("KONAN_NO_DEFAULT_LIBS")
 
     // Don't link with the endorsed libraries.
     @JvmField
-    val NOENDORSEDLIBS = CompilerConfigurationKey.create<Boolean>("NOENDORSEDLIBS")
+    val KONAN_NO_ENDORSED_LIBS = CompilerConfigurationKey.create<Boolean>("KONAN_NO_ENDORSED_LIBS")
 
     // Assume 'main' entry point to be provided by external libraries.
     @JvmField
@@ -140,17 +140,17 @@ object NativeConfigurationKeys {
 
     // Don't link with stdlib.
     @JvmField
-    val NOSTDLIB = CompilerConfigurationKey.create<Boolean>("NOSTDLIB")
+    val KONAN_NO_STDLIB = CompilerConfigurationKey.create<Boolean>("KONAN_NO_STDLIB")
 
     // Don't pack the library into a klib file.
     @JvmField
-    val NOPACK = CompilerConfigurationKey.create<Boolean>("NOPACK")
+    val KONAN_DONT_COMPRESS_KLIB = CompilerConfigurationKey.create<Boolean>("KONAN_DONT_COMPRESS_KLIB")
 
     @JvmField
     val OPTIMIZATION = CompilerConfigurationKey.create<Boolean>("OPTIMIZATION")
 
     @JvmField
-    val OUTPUT = CompilerConfigurationKey.create<String>("OUTPUT")
+    val KONAN_OUTPUT_PATH = CompilerConfigurationKey.create<String>("KONAN_OUTPUT_PATH")
 
     @JvmField
     val OVERRIDE_CLANG_OPTIONS = CompilerConfigurationKey.create<List<String>>("OVERRIDE_CLANG_OPTIONS")
@@ -160,40 +160,40 @@ object NativeConfigurationKeys {
 
     // Export KDoc into klib and framework.
     @JvmField
-    val EXPORT_KDOC = CompilerConfigurationKey.create<Boolean>("EXPORT_KDOC")
+    val KONAN_EXPORT_KDOC = CompilerConfigurationKey.create<Boolean>("KONAN_EXPORT_KDOC")
 
     @JvmField
-    val PRINT_BITCODE = CompilerConfigurationKey.create<Boolean>("PRINT_BITCODE")
+    val KONAN_PRINT_BITCODE = CompilerConfigurationKey.create<Boolean>("KONAN_PRINT_BITCODE")
 
     @JvmField
-    val PRINT_IR = CompilerConfigurationKey.create<Boolean>("PRINT_IR")
+    val KONAN_PRINT_IR = CompilerConfigurationKey.create<Boolean>("KONAN_PRINT_IR")
 
     @JvmField
-    val PRINT_FILES = CompilerConfigurationKey.create<Boolean>("PRINT_FILES")
+    val KONAN_PRINT_FILES = CompilerConfigurationKey.create<Boolean>("KONAN_PRINT_FILES")
 
     @JvmField
-    val PRODUCE = CompilerConfigurationKey.create<CompilerOutputKind>("PRODUCE")
+    val KONAN_PRODUCED_ARTIFACT_KIND = CompilerConfigurationKey.create<CompilerOutputKind>("KONAN_PRODUCED_ARTIFACT_KIND")
 
     @JvmField
-    val PURGE_USER_LIBS = CompilerConfigurationKey.create<Boolean>("PURGE_USER_LIBS")
+    val KONAN_PURGE_USER_LIBS = CompilerConfigurationKey.create<Boolean>("KONAN_PURGE_USER_LIBS")
 
     @JvmField
     val RUNTIME_FILE = CompilerConfigurationKey.create<String>("RUNTIME_FILE")
 
     // Klibs processed in the same manner as source files.
     @JvmField
-    val INCLUDED_LIBRARIES = CompilerConfigurationKey.create<List<String>>("INCLUDED_LIBRARIES")
+    val KONAN_INCLUDED_LIBRARIES = CompilerConfigurationKey.create<List<String>>("KONAN_INCLUDED_LIBRARIES")
 
     // Short module name for IDE and export.
     @JvmField
-    val SHORT_MODULE_NAME = CompilerConfigurationKey.create<String>("SHORT_MODULE_NAME")
+    val KONAN_SHORT_MODULE_NAME = CompilerConfigurationKey.create<String>("KONAN_SHORT_MODULE_NAME")
 
     // Produce a static library for a framework.
     @JvmField
     val STATIC_FRAMEWORK = CompilerConfigurationKey.create<Boolean>("STATIC_FRAMEWORK")
 
     @JvmField
-    val TARGET = CompilerConfigurationKey.create<String>("TARGET")
+    val KONAN_TARGET = CompilerConfigurationKey.create<String>("KONAN_TARGET")
 
     @JvmField
     val TEMPORARY_FILES_DIR = CompilerConfigurationKey.create<String>("TEMPORARY_FILES_DIR")
@@ -208,7 +208,7 @@ object NativeConfigurationKeys {
     val VERIFY_COMPILER = CompilerConfigurationKey.create<Boolean>("VERIFY_COMPILER")
 
     @JvmField
-    val WRITE_DEPENDENCIES_OF_PRODUCED_KLIB_TO = CompilerConfigurationKey.create<String>("WRITE_DEPENDENCIES_OF_PRODUCED_KLIB_TO")
+    val KONAN_WRITE_DEPENDENCIES_OF_PRODUCED_KLIB_TO = CompilerConfigurationKey.create<String>("KONAN_WRITE_DEPENDENCIES_OF_PRODUCED_KLIB_TO")
 
     @JvmField
     val DEBUG_INFO_VERSION = CompilerConfigurationKey.create<Int>("DEBUG_INFO_VERSION")
@@ -272,7 +272,7 @@ object NativeConfigurationKeys {
 
     // Value of native_targets property to write in manifest.
     @JvmField
-    val MANIFEST_NATIVE_TARGETS = CompilerConfigurationKey.create<List<KonanTarget>>("MANIFEST_NATIVE_TARGETS")
+    val KONAN_MANIFEST_NATIVE_TARGETS = CompilerConfigurationKey.create<List<KonanTarget>>("KONAN_MANIFEST_NATIVE_TARGETS")
 
     // LLVM passes to run instead of module optimization pipeline.
     @JvmField
@@ -308,9 +308,9 @@ var CompilerConfiguration.enableAssertions: Boolean
     get() = getBoolean(NativeConfigurationKeys.ENABLE_ASSERTIONS)
     set(value) { put(NativeConfigurationKeys.ENABLE_ASSERTIONS, value) }
 
-var CompilerConfiguration.entry: String?
-    get() = get(NativeConfigurationKeys.ENTRY)
-    set(value) { put(NativeConfigurationKeys.ENTRY, requireNotNull(value) { "nullable values are not allowed" }) }
+var CompilerConfiguration.konanEntryPoint: String?
+    get() = get(NativeConfigurationKeys.KONAN_ENTRY_POINT)
+    set(value) { put(NativeConfigurationKeys.KONAN_ENTRY_POINT, requireNotNull(value) { "nullable values are not allowed" }) }
 
 var CompilerConfiguration.exportedLibraries: List<String>
     get() = getList(NativeConfigurationKeys.EXPORTED_LIBRARIES)
@@ -320,9 +320,9 @@ var CompilerConfiguration.fullExportedNamePrefix: String?
     get() = get(NativeConfigurationKeys.FULL_EXPORTED_NAME_PREFIX)
     set(value) { put(NativeConfigurationKeys.FULL_EXPORTED_NAME_PREFIX, requireNotNull(value) { "nullable values are not allowed" }) }
 
-var CompilerConfiguration.libraryToAddToCache: String?
-    get() = get(NativeConfigurationKeys.LIBRARY_TO_ADD_TO_CACHE)
-    set(value) { put(NativeConfigurationKeys.LIBRARY_TO_ADD_TO_CACHE, requireNotNull(value) { "nullable values are not allowed" }) }
+var CompilerConfiguration.konanLibraryToAddToCache: String?
+    get() = get(NativeConfigurationKeys.KONAN_LIBRARY_TO_ADD_TO_CACHE)
+    set(value) { put(NativeConfigurationKeys.KONAN_LIBRARY_TO_ADD_TO_CACHE, requireNotNull(value) { "nullable values are not allowed" }) }
 
 var CompilerConfiguration.cacheDirectories: List<String>
     get() = getList(NativeConfigurationKeys.CACHE_DIRECTORIES)
@@ -356,29 +356,29 @@ var CompilerConfiguration.frameworkImportHeaders: List<String>
     get() = getList(NativeConfigurationKeys.FRAMEWORK_IMPORT_HEADERS)
     set(value) { put(NativeConfigurationKeys.FRAMEWORK_IMPORT_HEADERS, value) }
 
-var CompilerConfiguration.friendModules: List<String>
-    get() = getList(NativeConfigurationKeys.FRIEND_MODULES)
-    set(value) { put(NativeConfigurationKeys.FRIEND_MODULES, value) }
+var CompilerConfiguration.konanFriendLibraries: List<String>
+    get() = getList(NativeConfigurationKeys.KONAN_FRIEND_LIBRARIES)
+    set(value) { put(NativeConfigurationKeys.KONAN_FRIEND_LIBRARIES, value) }
 
-var CompilerConfiguration.refinesModules: List<String>
-    get() = getList(NativeConfigurationKeys.REFINES_MODULES)
-    set(value) { put(NativeConfigurationKeys.REFINES_MODULES, value) }
+var CompilerConfiguration.konanRefinesModules: List<String>
+    get() = getList(NativeConfigurationKeys.KONAN_REFINES_MODULES)
+    set(value) { put(NativeConfigurationKeys.KONAN_REFINES_MODULES, value) }
 
 var CompilerConfiguration.generateTestRunner: TestRunnerKind?
     get() = get(NativeConfigurationKeys.GENERATE_TEST_RUNNER)
     set(value) { put(NativeConfigurationKeys.GENERATE_TEST_RUNNER, requireNotNull(value) { "nullable values are not allowed" }) }
 
-var CompilerConfiguration.includedBinaryFiles: List<String>
-    get() = getList(NativeConfigurationKeys.INCLUDED_BINARY_FILES)
-    set(value) { put(NativeConfigurationKeys.INCLUDED_BINARY_FILES, value) }
+var CompilerConfiguration.konanIncludedBinaries: List<String>
+    get() = getList(NativeConfigurationKeys.KONAN_INCLUDED_BINARIES)
+    set(value) { put(NativeConfigurationKeys.KONAN_INCLUDED_BINARIES, value) }
 
 var CompilerConfiguration.konanHome: String?
     get() = get(NativeConfigurationKeys.KONAN_HOME)
     set(value) { put(NativeConfigurationKeys.KONAN_HOME, requireNotNull(value) { "nullable values are not allowed" }) }
 
-var CompilerConfiguration.libraryFiles: List<String>
-    get() = getList(NativeConfigurationKeys.LIBRARY_FILES)
-    set(value) { put(NativeConfigurationKeys.LIBRARY_FILES, value) }
+var CompilerConfiguration.konanLibraries: List<String>
+    get() = getList(NativeConfigurationKeys.KONAN_LIBRARIES)
+    set(value) { put(NativeConfigurationKeys.KONAN_LIBRARIES, value) }
 
 var CompilerConfiguration.lightDebug: Boolean
     get() = getBoolean(NativeConfigurationKeys.LIGHT_DEBUG)
@@ -396,45 +396,45 @@ var CompilerConfiguration.listTargets: Boolean
     get() = getBoolean(NativeConfigurationKeys.LIST_TARGETS)
     set(value) { put(NativeConfigurationKeys.LIST_TARGETS, value) }
 
-var CompilerConfiguration.manifestFile: String?
-    get() = get(NativeConfigurationKeys.MANIFEST_FILE)
-    set(value) { put(NativeConfigurationKeys.MANIFEST_FILE, requireNotNull(value) { "nullable values are not allowed" }) }
+var CompilerConfiguration.konanManifestAddend: String?
+    get() = get(NativeConfigurationKeys.KONAN_MANIFEST_ADDEND)
+    set(value) { put(NativeConfigurationKeys.KONAN_MANIFEST_ADDEND, requireNotNull(value) { "nullable values are not allowed" }) }
 
-var CompilerConfiguration.headerKlib: String?
-    get() = get(NativeConfigurationKeys.HEADER_KLIB)
-    set(value) { put(NativeConfigurationKeys.HEADER_KLIB, requireNotNull(value) { "nullable values are not allowed" }) }
+var CompilerConfiguration.konanGeneratedHeaderKlibPath: String?
+    get() = get(NativeConfigurationKeys.KONAN_GENERATED_HEADER_KLIB_PATH)
+    set(value) { put(NativeConfigurationKeys.KONAN_GENERATED_HEADER_KLIB_PATH, requireNotNull(value) { "nullable values are not allowed" }) }
 
-var CompilerConfiguration.nativeLibraryFiles: List<String>
-    get() = getList(NativeConfigurationKeys.NATIVE_LIBRARY_FILES)
-    set(value) { put(NativeConfigurationKeys.NATIVE_LIBRARY_FILES, value) }
+var CompilerConfiguration.konanNativeLibraries: List<String>
+    get() = getList(NativeConfigurationKeys.KONAN_NATIVE_LIBRARIES)
+    set(value) { put(NativeConfigurationKeys.KONAN_NATIVE_LIBRARIES, value) }
 
-var CompilerConfiguration.nodefaultlibs: Boolean
-    get() = getBoolean(NativeConfigurationKeys.NODEFAULTLIBS)
-    set(value) { put(NativeConfigurationKeys.NODEFAULTLIBS, value) }
+var CompilerConfiguration.konanNoDefaultLibs: Boolean
+    get() = getBoolean(NativeConfigurationKeys.KONAN_NO_DEFAULT_LIBS)
+    set(value) { put(NativeConfigurationKeys.KONAN_NO_DEFAULT_LIBS, value) }
 
-var CompilerConfiguration.noendorsedlibs: Boolean
-    get() = getBoolean(NativeConfigurationKeys.NOENDORSEDLIBS)
-    set(value) { put(NativeConfigurationKeys.NOENDORSEDLIBS, value) }
+var CompilerConfiguration.konanNoEndorsedLibs: Boolean
+    get() = getBoolean(NativeConfigurationKeys.KONAN_NO_ENDORSED_LIBS)
+    set(value) { put(NativeConfigurationKeys.KONAN_NO_ENDORSED_LIBS, value) }
 
 var CompilerConfiguration.nomain: Boolean
     get() = getBoolean(NativeConfigurationKeys.NOMAIN)
     set(value) { put(NativeConfigurationKeys.NOMAIN, value) }
 
-var CompilerConfiguration.nostdlib: Boolean
-    get() = getBoolean(NativeConfigurationKeys.NOSTDLIB)
-    set(value) { put(NativeConfigurationKeys.NOSTDLIB, value) }
+var CompilerConfiguration.konanNoStdlib: Boolean
+    get() = getBoolean(NativeConfigurationKeys.KONAN_NO_STDLIB)
+    set(value) { put(NativeConfigurationKeys.KONAN_NO_STDLIB, value) }
 
-var CompilerConfiguration.nopack: Boolean
-    get() = getBoolean(NativeConfigurationKeys.NOPACK)
-    set(value) { put(NativeConfigurationKeys.NOPACK, value) }
+var CompilerConfiguration.konanDontCompressKlib: Boolean
+    get() = getBoolean(NativeConfigurationKeys.KONAN_DONT_COMPRESS_KLIB)
+    set(value) { put(NativeConfigurationKeys.KONAN_DONT_COMPRESS_KLIB, value) }
 
 var CompilerConfiguration.optimization: Boolean
     get() = getBoolean(NativeConfigurationKeys.OPTIMIZATION)
     set(value) { put(NativeConfigurationKeys.OPTIMIZATION, value) }
 
-var CompilerConfiguration.output: String?
-    get() = get(NativeConfigurationKeys.OUTPUT)
-    set(value) { put(NativeConfigurationKeys.OUTPUT, requireNotNull(value) { "nullable values are not allowed" }) }
+var CompilerConfiguration.konanOutputPath: String?
+    get() = get(NativeConfigurationKeys.KONAN_OUTPUT_PATH)
+    set(value) { put(NativeConfigurationKeys.KONAN_OUTPUT_PATH, requireNotNull(value) { "nullable values are not allowed" }) }
 
 var CompilerConfiguration.overrideClangOptions: List<String>
     get() = getList(NativeConfigurationKeys.OVERRIDE_CLANG_OPTIONS)
@@ -444,49 +444,49 @@ var CompilerConfiguration.allocationMode: AllocationMode?
     get() = get(NativeConfigurationKeys.ALLOCATION_MODE)
     set(value) { put(NativeConfigurationKeys.ALLOCATION_MODE, requireNotNull(value) { "nullable values are not allowed" }) }
 
-var CompilerConfiguration.exportKdoc: Boolean
-    get() = getBoolean(NativeConfigurationKeys.EXPORT_KDOC)
-    set(value) { put(NativeConfigurationKeys.EXPORT_KDOC, value) }
+var CompilerConfiguration.konanExportKdoc: Boolean
+    get() = getBoolean(NativeConfigurationKeys.KONAN_EXPORT_KDOC)
+    set(value) { put(NativeConfigurationKeys.KONAN_EXPORT_KDOC, value) }
 
-var CompilerConfiguration.printBitcode: Boolean
-    get() = getBoolean(NativeConfigurationKeys.PRINT_BITCODE)
-    set(value) { put(NativeConfigurationKeys.PRINT_BITCODE, value) }
+var CompilerConfiguration.konanPrintBitcode: Boolean
+    get() = getBoolean(NativeConfigurationKeys.KONAN_PRINT_BITCODE)
+    set(value) { put(NativeConfigurationKeys.KONAN_PRINT_BITCODE, value) }
 
-var CompilerConfiguration.printIr: Boolean
-    get() = getBoolean(NativeConfigurationKeys.PRINT_IR)
-    set(value) { put(NativeConfigurationKeys.PRINT_IR, value) }
+var CompilerConfiguration.konanPrintIr: Boolean
+    get() = getBoolean(NativeConfigurationKeys.KONAN_PRINT_IR)
+    set(value) { put(NativeConfigurationKeys.KONAN_PRINT_IR, value) }
 
-var CompilerConfiguration.printFiles: Boolean
-    get() = getBoolean(NativeConfigurationKeys.PRINT_FILES)
-    set(value) { put(NativeConfigurationKeys.PRINT_FILES, value) }
+var CompilerConfiguration.konanPrintFiles: Boolean
+    get() = getBoolean(NativeConfigurationKeys.KONAN_PRINT_FILES)
+    set(value) { put(NativeConfigurationKeys.KONAN_PRINT_FILES, value) }
 
-var CompilerConfiguration.produce: CompilerOutputKind?
-    get() = get(NativeConfigurationKeys.PRODUCE)
-    set(value) { put(NativeConfigurationKeys.PRODUCE, requireNotNull(value) { "nullable values are not allowed" }) }
+var CompilerConfiguration.konanProducedArtifactKind: CompilerOutputKind?
+    get() = get(NativeConfigurationKeys.KONAN_PRODUCED_ARTIFACT_KIND)
+    set(value) { put(NativeConfigurationKeys.KONAN_PRODUCED_ARTIFACT_KIND, requireNotNull(value) { "nullable values are not allowed" }) }
 
-var CompilerConfiguration.purgeUserLibs: Boolean
-    get() = getBoolean(NativeConfigurationKeys.PURGE_USER_LIBS)
-    set(value) { put(NativeConfigurationKeys.PURGE_USER_LIBS, value) }
+var CompilerConfiguration.konanPurgeUserLibs: Boolean
+    get() = getBoolean(NativeConfigurationKeys.KONAN_PURGE_USER_LIBS)
+    set(value) { put(NativeConfigurationKeys.KONAN_PURGE_USER_LIBS, value) }
 
 var CompilerConfiguration.runtimeFile: String?
     get() = get(NativeConfigurationKeys.RUNTIME_FILE)
     set(value) { put(NativeConfigurationKeys.RUNTIME_FILE, requireNotNull(value) { "nullable values are not allowed" }) }
 
-var CompilerConfiguration.includedLibraries: List<String>
-    get() = getList(NativeConfigurationKeys.INCLUDED_LIBRARIES)
-    set(value) { put(NativeConfigurationKeys.INCLUDED_LIBRARIES, value) }
+var CompilerConfiguration.konanIncludedLibraries: List<String>
+    get() = getList(NativeConfigurationKeys.KONAN_INCLUDED_LIBRARIES)
+    set(value) { put(NativeConfigurationKeys.KONAN_INCLUDED_LIBRARIES, value) }
 
-var CompilerConfiguration.shortModuleName: String?
-    get() = get(NativeConfigurationKeys.SHORT_MODULE_NAME)
-    set(value) { put(NativeConfigurationKeys.SHORT_MODULE_NAME, requireNotNull(value) { "nullable values are not allowed" }) }
+var CompilerConfiguration.konanShortModuleName: String?
+    get() = get(NativeConfigurationKeys.KONAN_SHORT_MODULE_NAME)
+    set(value) { put(NativeConfigurationKeys.KONAN_SHORT_MODULE_NAME, requireNotNull(value) { "nullable values are not allowed" }) }
 
 var CompilerConfiguration.staticFramework: Boolean
     get() = getBoolean(NativeConfigurationKeys.STATIC_FRAMEWORK)
     set(value) { put(NativeConfigurationKeys.STATIC_FRAMEWORK, value) }
 
-var CompilerConfiguration.target: String?
-    get() = get(NativeConfigurationKeys.TARGET)
-    set(value) { put(NativeConfigurationKeys.TARGET, requireNotNull(value) { "nullable values are not allowed" }) }
+var CompilerConfiguration.konanTarget: String?
+    get() = get(NativeConfigurationKeys.KONAN_TARGET)
+    set(value) { put(NativeConfigurationKeys.KONAN_TARGET, requireNotNull(value) { "nullable values are not allowed" }) }
 
 var CompilerConfiguration.temporaryFilesDir: String?
     get() = get(NativeConfigurationKeys.TEMPORARY_FILES_DIR)
@@ -504,9 +504,9 @@ var CompilerConfiguration.verifyCompiler: Boolean
     get() = getBoolean(NativeConfigurationKeys.VERIFY_COMPILER)
     set(value) { put(NativeConfigurationKeys.VERIFY_COMPILER, value) }
 
-var CompilerConfiguration.writeDependenciesOfProducedKlibTo: String?
-    get() = get(NativeConfigurationKeys.WRITE_DEPENDENCIES_OF_PRODUCED_KLIB_TO)
-    set(value) { put(NativeConfigurationKeys.WRITE_DEPENDENCIES_OF_PRODUCED_KLIB_TO, requireNotNull(value) { "nullable values are not allowed" }) }
+var CompilerConfiguration.konanWriteDependenciesOfProducedKlibTo: String?
+    get() = get(NativeConfigurationKeys.KONAN_WRITE_DEPENDENCIES_OF_PRODUCED_KLIB_TO)
+    set(value) { put(NativeConfigurationKeys.KONAN_WRITE_DEPENDENCIES_OF_PRODUCED_KLIB_TO, requireNotNull(value) { "nullable values are not allowed" }) }
 
 var CompilerConfiguration.debugInfoVersion: Int?
     get() = get(NativeConfigurationKeys.DEBUG_INFO_VERSION)
@@ -572,9 +572,9 @@ var CompilerConfiguration.konanDataDir: String?
     get() = get(NativeConfigurationKeys.KONAN_DATA_DIR)
     set(value) { put(NativeConfigurationKeys.KONAN_DATA_DIR, requireNotNull(value) { "nullable values are not allowed" }) }
 
-var CompilerConfiguration.manifestNativeTargets: List<KonanTarget>
-    get() = getList(NativeConfigurationKeys.MANIFEST_NATIVE_TARGETS)
-    set(value) { put(NativeConfigurationKeys.MANIFEST_NATIVE_TARGETS, value) }
+var CompilerConfiguration.konanManifestNativeTargets: List<KonanTarget>
+    get() = getList(NativeConfigurationKeys.KONAN_MANIFEST_NATIVE_TARGETS)
+    set(value) { put(NativeConfigurationKeys.KONAN_MANIFEST_NATIVE_TARGETS, value) }
 
 var CompilerConfiguration.llvmModulePasses: String?
     get() = get(NativeConfigurationKeys.LLVM_MODULE_PASSES)

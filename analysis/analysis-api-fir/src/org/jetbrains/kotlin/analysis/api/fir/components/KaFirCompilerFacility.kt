@@ -50,8 +50,7 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.diagnostics.*
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
-import org.jetbrains.kotlin.diagnostics.impl.PendingDiagnosticsCollectorWithSuppress
-import org.jetbrains.kotlin.diagnostics.impl.SimpleDiagnosticsCollector
+import org.jetbrains.kotlin.diagnostics.impl.DiagnosticsCollectorImpl
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.analysis.diagnostics.toFirDiagnostics
@@ -344,7 +343,7 @@ internal class KaFirCompilerFacility(
     }
 
     private fun detectNonLocalReturnsInEvaluatingLambdas(inlineStackData: InlineStackData): List<KaDiagnostic> {
-        val reporter = SimpleDiagnosticsCollector()
+        val reporter = DiagnosticsCollectorImpl()
         inlineStackData.inlineLambdaParameterMapping.values.forEach {
 
             val lambda = it.expr as? FirAnonymousFunctionExpression ?: return@forEach
@@ -871,7 +870,7 @@ internal class KaFirCompilerFacility(
         codeFragmentMappings: CodeFragmentMappings?,
         codegenFactory: JvmIrCodegenFactory,
         generateClassFilter: GenerationState.GenerateClassFilter,
-        diagnosticReporter: PendingDiagnosticsCollectorWithSuppress,
+        diagnosticsCollector: BaseDiagnosticsCollector,
         jvmGeneratorExtensions: JvmGeneratorExtensions,
         compiledCodeProvider: CompiledCodeProvider,
     ): KaCompilationResult {
@@ -898,7 +897,7 @@ internal class KaFirCompilerFacility(
             configuration,
             classBuilderFactory,
             generateDeclaredClassFilter = generateClassFilter,
-            diagnosticReporter = diagnosticReporter,
+            diagnosticReporter = diagnosticsCollector,
             compiledCodeProvider = compiledCodeProvider
         )
 
@@ -998,7 +997,7 @@ internal class KaFirCompilerFacility(
             else -> baseFir2IrExtensions
         }
 
-        val diagnosticReporter = DiagnosticReporterFactory.createPendingReporter()
+        val diagnosticsCollector = DiagnosticsCollectorImpl()
 
         val commonMemberStorage = contextDeclarationCache?.customCommonMemberStorage ?: Fir2IrCommonMemberStorage()
 
@@ -1008,7 +1007,7 @@ internal class KaFirCompilerFacility(
             session = session,
             firFiles = chunk.files.map { it.firFile },
             fir2IrExtensions = fir2IrExtensions,
-            diagnosticReporter = diagnosticReporter,
+            diagnosticReporter = diagnosticsCollector,
             effectiveConfiguration = configuration,
             irGeneratorExtensions = irGeneratorExtensions,
             commonMemberStorage = commonMemberStorage
@@ -1019,8 +1018,8 @@ internal class KaFirCompilerFacility(
             irTypeParam to with(fir2IrResult.components) { coneType.toIrType() }
         }
 
-        if (diagnosticReporter.hasErrors) {
-            val errors = computeErrors(diagnosticReporter.diagnostics.filterIsInstance<KtDiagnosticWithSource>(), allowedErrorFilter)
+        if (diagnosticsCollector.hasErrors) {
+            val errors = computeErrors(diagnosticsCollector.diagnostics.filterIsInstance<KtDiagnosticWithSource>(), allowedErrorFilter)
             if (errors.isNotEmpty()) {
                 return KaCompilationResult.Failure(errors)
             }
@@ -1061,13 +1060,13 @@ internal class KaFirCompilerFacility(
             codeFragmentMappings,
             codegenFactory,
             generateClassFilter,
-            diagnosticReporter,
+            diagnosticsCollector,
             baseFir2IrExtensions,
             compiledCodeProvider
         )
 
-        if (diagnosticReporter.hasErrors) {
-            val errors = computeErrors(diagnosticReporter.diagnostics.filterIsInstance<KtDiagnosticWithSource>(), allowedErrorFilter)
+        if (diagnosticsCollector.hasErrors) {
+            val errors = computeErrors(diagnosticsCollector.diagnostics.filterIsInstance<KtDiagnosticWithSource>(), allowedErrorFilter)
             if (errors.isNotEmpty()) {
                 return KaCompilationResult.Failure(errors)
             }

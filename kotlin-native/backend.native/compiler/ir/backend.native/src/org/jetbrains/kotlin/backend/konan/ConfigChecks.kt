@@ -5,6 +5,11 @@
 
 package org.jetbrains.kotlin.backend.konan
 
+import org.jetbrains.kotlin.konan.config.konanExportKdoc
+import org.jetbrains.kotlin.konan.config.konanPrintBitcode
+import org.jetbrains.kotlin.konan.config.konanPrintFiles
+import org.jetbrains.kotlin.konan.config.verifyBitcode
+
 /**
  * Convenient methods to check compilation parameters.
  */
@@ -12,13 +17,13 @@ interface ConfigChecks {
 
     val config: KonanConfig
 
-    fun shouldExportKDoc() = config.configuration.getBoolean(KonanConfigKeys.EXPORT_KDOC)
+    fun shouldExportKDoc() = config.configuration.konanExportKdoc
 
-    fun shouldVerifyBitCode() = config.configuration.getBoolean(KonanConfigKeys.VERIFY_BITCODE)
+    fun shouldVerifyBitCode() = config.configuration.verifyBitcode
 
-    fun shouldPrintBitCode() = config.configuration.getBoolean(KonanConfigKeys.PRINT_BITCODE)
+    fun shouldPrintBitCode() = config.configuration.konanPrintBitcode
 
-    fun shouldPrintFiles() = config.configuration.getBoolean(KonanConfigKeys.PRINT_FILES)
+    fun shouldPrintFiles() = config.configuration.konanPrintFiles
 
     fun shouldContainDebugInfo() = config.debug
 

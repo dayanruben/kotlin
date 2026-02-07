@@ -16,6 +16,8 @@ import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageUtil
 import org.jetbrains.kotlin.config.nativeBinaryOptions.BinaryOptions
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.konan.config.NativeConfigurationKeys
+import org.jetbrains.kotlin.konan.config.objcGenerics
 import org.jetbrains.kotlin.konan.exec.Command
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.konan.file.createTempFile
@@ -54,7 +56,7 @@ internal fun produceObjCExportInterface(
             unitSuspendFunctionExport = unitSuspendFunctionExport,
             entryPoints = entryPoints)
     val moduleDescriptors = listOf(moduleDescriptor) + moduleDescriptor.getExportedDependencies(config)
-    val objcGenerics = config.configuration.getBoolean(KonanConfigKeys.OBJC_GENERICS)
+    val objcGenerics = config.configuration.objcGenerics
     val disableSwiftMemberNameMangling = config.configuration.getBoolean(BinaryOptions.objcExportDisableSwiftMemberNameMangling)
     val ignoreInterfaceMethodCollisions = config.configuration.getBoolean(BinaryOptions.objcExportIgnoreInterfaceMethodCollisions)
     val reportNameCollisions = config.configuration.getBoolean(BinaryOptions.objcExportReportNameCollisions)
@@ -82,7 +84,7 @@ internal fun produceObjCExportInterface(
             explicitMethodFamily = explicitMethodFamily,
     )
     val shouldExportKDoc = context.shouldExportKDoc()
-    val additionalImports = context.config.configuration.getNotNull(KonanConfigKeys.FRAMEWORK_IMPORT_HEADERS)
+    val additionalImports = context.config.configuration.getNotNull(NativeConfigurationKeys.FRAMEWORK_IMPORT_HEADERS)
     val headerGenerator = ObjCExportHeaderGenerator.createInstance(
             moduleDescriptors, mapper, namer, problemCollector, objcGenerics, objcExportBlockExplicitParameterNames, shouldExportKDoc = shouldExportKDoc,
             additionalImports = additionalImports)

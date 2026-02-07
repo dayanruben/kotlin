@@ -6,10 +6,9 @@
 package org.jetbrains.kotlin.native
 
 import org.jetbrains.kotlin.analyzer.CompilationErrorException
-import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
+import org.jetbrains.kotlin.backend.konan.driver.NativePhaseContext
 import org.jetbrains.kotlin.backend.konan.ir.BackendNativeSymbols
 import org.jetbrains.kotlin.backend.konan.serialization.KonanManglerIr
-import org.jetbrains.kotlin.diagnostics.DiagnosticReporterFactory
 import org.jetbrains.kotlin.fir.backend.DelicateDeclarationStorageApi
 import org.jetbrains.kotlin.name.NativeForwardDeclarationKind
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
@@ -18,6 +17,7 @@ import org.jetbrains.kotlin.cli.common.fir.FirDiagnosticsCompilerResultsReporter
 import org.jetbrains.kotlin.cli.common.renderDiagnosticInternalName
 import org.jetbrains.kotlin.compiler.plugin.getCompilerExtensions
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
+import org.jetbrains.kotlin.diagnostics.impl.DiagnosticsCollectorImpl
 import org.jetbrains.kotlin.fir.backend.Fir2IrConfiguration
 import org.jetbrains.kotlin.fir.backend.Fir2IrVisibilityConverter
 import org.jetbrains.kotlin.fir.pipeline.AllModulesFrontendOutput
@@ -35,13 +35,13 @@ import org.jetbrains.kotlin.library.components.metadata
 import org.jetbrains.kotlin.library.isNativeStdlib
 import org.jetbrains.kotlin.library.metadata.parseModuleHeader
 
-fun PhaseContext.fir2Ir(
+fun NativeFirstStagePhaseContext.fir2Ir(
         input: AllModulesFrontendOutput,
 ): Fir2IrOutput {
     val resolvedLibraries = config.resolvedLibraries.getFullResolvedList()
     val configuration = config.configuration
     val messageCollector = configuration.getNotNull(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY)
-    val diagnosticsReporter = DiagnosticReporterFactory.createPendingReporter()
+    val diagnosticsReporter = DiagnosticsCollectorImpl()
 
     val fir2IrConfiguration = Fir2IrConfiguration.forKlibCompilation(configuration, diagnosticsReporter)
     val actualizedResult = input.convertToIrAndActualize(
@@ -117,7 +117,7 @@ fun PhaseContext.fir2Ir(
     return Fir2IrOutput(input, symbols, actualizedResult, usedLibraries)
 }
 
-private fun PhaseContext.createKonanSymbols(
+private fun NativePhaseContext.createKonanSymbols(
         irBuiltIns: IrBuiltIns,
 ): BackendNativeSymbols {
     return BackendNativeSymbols(this, irBuiltIns, this.config.configuration)

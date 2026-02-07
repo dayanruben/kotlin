@@ -5,16 +5,16 @@
 
 package org.jetbrains.kotlin.native
 
-import org.jetbrains.kotlin.backend.konan.KonanConfigKeys
 import org.jetbrains.kotlin.backend.konan.NativeKlibCompilationConfig
-import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
+import org.jetbrains.kotlin.backend.konan.driver.NativePhaseContext
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.config.moduleName
 import org.jetbrains.kotlin.config.perfManager
 import org.jetbrains.kotlin.konan.config.konanDataDir
-import org.jetbrains.kotlin.konan.config.manifestFile
+import org.jetbrains.kotlin.konan.config.konanManifestAddend
+import org.jetbrains.kotlin.konan.config.konanTarget
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.konan.properties.Properties
 import org.jetbrains.kotlin.konan.properties.loadProperties
@@ -36,14 +36,14 @@ class NativeKlibConfig(
         get() = configuration.moduleName ?: File(outputPath).name
 
     override val manifestProperties: Properties?
-        get() = configuration.manifestFile?.let {
+        get() = configuration.konanManifestAddend?.let {
             File(it).loadProperties()
         }
 }
 
-class NativePhaseContext(
+class NativeFirstStagePhaseContext(
     override val config: NativeKlibConfig,
-) : PhaseContext {
+) : NativePhaseContext {
     override var inVerbosePhase: Boolean = false
 
     override val messageCollector: MessageCollector
@@ -56,7 +56,7 @@ class NativePhaseContext(
 }
 
 internal fun createNativeKlibConfig(configuration: CompilerConfiguration): NativeKlibConfig {
-    val targetName = configuration.get(KonanConfigKeys.TARGET)
+    val targetName = configuration.konanTarget
     val target = if (targetName != null) {
         KonanTarget.predefinedTargets[targetName]
             ?: error("Unknown target: $targetName")

@@ -66,55 +66,55 @@ object NativeKlibConfigurationUpdater : ConfigurationUpdater<K2NativeCompilerArg
             configuration.addKotlinSourceRoot(path, normalizedPath in commonSources, hmppModuleStructure?.getModuleNameForSource(path))
         }
 
-        configuration.produce = CompilerOutputKind.LIBRARY
+        configuration.konanProducedArtifactKind = CompilerOutputKind.LIBRARY
         arguments.moduleName?.let { configuration.moduleName = it }
-        arguments.target?.let { configuration.target = it }
-        configuration.targetPlatform = configuration.target?.let {
+        arguments.target?.let { configuration.konanTarget = it }
+        configuration.targetPlatform = configuration.konanTarget?.let {
             NativePlatforms.nativePlatformByTargetNames(listOf(it))
         } ?: NativePlatforms.unspecifiedNativePlatform
 
-        configuration.libraryFiles = arguments.libraries?.toList().orEmpty()
-        configuration.nostdlib = arguments.nostdlib
-        configuration.nodefaultlibs = arguments.nodefaultlibs
+        configuration.konanLibraries = arguments.libraries?.toList().orEmpty()
+        configuration.konanNoStdlib = arguments.nostdlib
+        configuration.konanNoDefaultLibs = arguments.nodefaultlibs
 
         @Suppress("DEPRECATION")
-        configuration.noendorsedlibs = arguments.noendorsedlibs
-        configuration.nopack = arguments.nopack
+        configuration.konanNoEndorsedLibs = arguments.noendorsedlibs
+        configuration.konanDontCompressKlib = arguments.nopack
 
-        arguments.outputName?.let { configuration.output = it }
+        arguments.outputName?.let { configuration.konanOutputPath = it }
         arguments.friendModules?.let {
-            configuration.friendModules = it.split(File.pathSeparator).filterNot(String::isEmpty)
+            configuration.konanFriendLibraries = it.split(File.pathSeparator).filterNot(String::isEmpty)
         }
         arguments.refinesPaths?.let {
-            configuration.refinesModules = it.filterNot(String::isEmpty)
+            configuration.konanRefinesModules = it.filterNot(String::isEmpty)
         }
 
-        configuration.includedBinaryFiles = arguments.includeBinaries?.toList().orEmpty()
+        configuration.konanIncludedBinaries = arguments.includeBinaries?.toList().orEmpty()
 
-        arguments.manifestFile?.let { configuration.manifestFile = it }
-        arguments.headerKlibPath?.let { configuration.headerKlib = it }
-        arguments.shortModuleName?.let { configuration.shortModuleName = it }
+        arguments.manifestFile?.let { configuration.konanManifestAddend = it }
+        arguments.headerKlibPath?.let { configuration.konanGeneratedHeaderKlibPath = it }
+        arguments.shortModuleName?.let { configuration.konanShortModuleName = it }
         arguments.includes?.let {
-            configuration.includedLibraries = it.toList()
+            configuration.konanIncludedLibraries = it.toList()
         }
 
-        configuration.printIr = arguments.printIr
-        configuration.printFiles = arguments.printFiles
+        configuration.konanPrintIr = arguments.printIr
+        configuration.konanPrintFiles = arguments.printFiles
         arguments.verifyCompiler?.let {
             configuration.verifyCompiler = it == "true"
         }
         configuration.fakeOverrideValidator = arguments.fakeOverrideValidator
-        arguments.konanDataDir?.let { configuration.put(KonanConfigKeys.KONAN_DATA_DIR, it) }
+        arguments.konanDataDir?.let { configuration.konanDataDir = it }
 
         configuration.checkDependencies = arguments.checkDependencies
         arguments.writeDependenciesOfProducedKlibTo?.let {
-            configuration.writeDependenciesOfProducedKlibTo = it
+            configuration.konanWriteDependenciesOfProducedKlibTo = it
         }
         arguments.manifestNativeTargets?.let {
-            configuration.manifestNativeTargets = parseManifestNativeTargets(it, configuration)
+            configuration.konanManifestNativeTargets = parseManifestNativeTargets(it, configuration)
         }
 
-        configuration.exportKdoc = arguments.exportKDoc
+        configuration.konanExportKdoc = arguments.exportKDoc
 
         configuration.setupPartialLinkageConfig(
             mode = arguments.partialLinkageMode,

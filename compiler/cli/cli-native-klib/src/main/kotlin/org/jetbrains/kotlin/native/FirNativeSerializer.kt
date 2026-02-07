@@ -9,22 +9,21 @@ import org.jetbrains.kotlin.analyzer.CompilationErrorException
 import org.jetbrains.kotlin.backend.common.serialization.IrSerializationSettings
 import org.jetbrains.kotlin.backend.common.serialization.SerializerOutput
 import org.jetbrains.kotlin.backend.common.serialization.serializeModuleIntoKlib
-import org.jetbrains.kotlin.backend.konan.KonanConfigKeys
-import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
 import org.jetbrains.kotlin.backend.konan.serialization.KonanIrModuleSerializer
 import org.jetbrains.kotlin.cli.common.fir.reportToMessageCollector
 import org.jetbrains.kotlin.cli.common.renderDiagnosticInternalName
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.languageVersionSettings
-import org.jetbrains.kotlin.diagnostics.DiagnosticReporterFactory
-import org.jetbrains.kotlin.diagnostics.impl.deduplicating
+import org.jetbrains.kotlin.diagnostics.impl.DiagnosticsCollectorImpl
 import org.jetbrains.kotlin.fir.moduleData
 import org.jetbrains.kotlin.fir.pipeline.AllModulesFrontendOutput
 import org.jetbrains.kotlin.fir.pipeline.Fir2KlibMetadataSerializer
 import org.jetbrains.kotlin.ir.KtDiagnosticReporterWithImplicitIrBasedContext
+import org.jetbrains.kotlin.konan.config.konanExportKdoc
+import org.jetbrains.kotlin.konan.config.konanPurgeUserLibs
 import org.jetbrains.kotlin.library.metadata.resolver.TopologicalLibraryOrder
 
-internal fun PhaseContext.firSerializerBase(
+internal fun NativeFirstStagePhaseContext.firSerializerBase(
         firResult: AllModulesFrontendOutput,
         fir2IrOutput: Fir2IrOutput?,
         produceHeaderKlib: Boolean = false,
@@ -32,13 +31,13 @@ internal fun PhaseContext.firSerializerBase(
     val configuration = config.configuration
     val usedResolvedLibraries = fir2IrOutput?.let {
         config.resolvedLibraries.getFullResolvedList(TopologicalLibraryOrder).filter {
-            (!it.isDefault && !configuration.getBoolean(KonanConfigKeys.PURGE_USER_LIBS)) || it in fir2IrOutput.usedLibraries
+            (!it.isDefault && !configuration.konanPurgeUserLibs) || it in fir2IrOutput.usedLibraries
         }
     }
 
     val irModuleFragment = fir2IrOutput?.fir2irActualizedResult?.irModuleFragment
-    val diagnosticReporter = DiagnosticReporterFactory.createPendingReporter()
-    val irDiagnosticReporter = KtDiagnosticReporterWithImplicitIrBasedContext(diagnosticReporter.deduplicating(), configuration.languageVersionSettings)
+    val diagnosticReporter = DiagnosticsCollectorImpl()
+    val irDiagnosticReporter = KtDiagnosticReporterWithImplicitIrBasedContext(diagnosticReporter, configuration.languageVersionSettings)
     val serializerOutput = serializeModuleIntoKlib(
             moduleName = irModuleFragment?.name?.asString() ?: firResult.outputs.last().session.moduleData.name.asString(),
             irModuleFragment = irModuleFragment,
@@ -48,7 +47,7 @@ internal fun PhaseContext.firSerializerBase(
                 configuration,
                 firResult.outputs,
                 fir2IrOutput?.fir2irActualizedResult,
-                exportKDoc = config.configuration.getBoolean(KonanConfigKeys.EXPORT_KDOC),
+                exportKDoc = config.configuration.konanExportKdoc,
                 produceHeaderKlib = produceHeaderKlib,
             ),
             cleanFiles = emptyList(),

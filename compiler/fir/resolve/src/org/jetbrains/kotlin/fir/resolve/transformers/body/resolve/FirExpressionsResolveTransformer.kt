@@ -11,18 +11,18 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isExternal
+import org.jetbrains.kotlin.fir.declarations.utils.isReplSnippetDeclaration
 import org.jetbrains.kotlin.fir.diagnostics.*
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.FirOperation.*
-import org.jetbrains.kotlin.fir.expressions.InaccessibleReceiverKind.ClassHeader
-import org.jetbrains.kotlin.fir.expressions.InaccessibleReceiverKind.OuterClassOfNonInner
-import org.jetbrains.kotlin.fir.expressions.InaccessibleReceiverKind.SecondaryConstructor
+import org.jetbrains.kotlin.fir.expressions.InaccessibleReceiverKind.*
 import org.jetbrains.kotlin.fir.expressions.builder.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirContractCallBlock
 import org.jetbrains.kotlin.fir.expressions.impl.FirResolvedArgumentList
 import org.jetbrains.kotlin.fir.expressions.impl.toAnnotationArgumentMapping
 import org.jetbrains.kotlin.fir.extensions.*
 import org.jetbrains.kotlin.fir.references.*
+import org.jetbrains.kotlin.fir.references.builder.buildErrorNamedReference
 import org.jetbrains.kotlin.fir.references.builder.buildErrorSuperReference
 import org.jetbrains.kotlin.fir.references.builder.buildExplicitSuperReference
 import org.jetbrains.kotlin.fir.references.builder.buildResolvedNamedReference
@@ -63,7 +63,6 @@ import org.jetbrains.kotlin.resolve.calls.tower.isSuccess
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.TypeApproximatorConfiguration
-import org.jetbrains.kotlin.types.model.isError
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.PrivateForInline
 import org.jetbrains.kotlin.utils.addToStdlib.applyIf
@@ -186,7 +185,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
             }
             is FirDelegateFieldReference -> {
                 val delegateFieldSymbol = callee.resolvedSymbol
-                qualifiedAccessExpression.resultType = delegateFieldSymbol.fir.delegate!!.resolvedType
+                qualifiedAccessExpression.resultType = delegateFieldSymbol.fir.delegate!!.unwrapReplExpressionRef().resolvedType
                 qualifiedAccessExpression
             }
             is FirResolvedNamedReference, is FirErrorNamedReference -> {
@@ -1967,7 +1966,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
             }
             calleeReference = lhsGetCall.calleeReference
             var i = 0
-            val newMapping = (lhsGetCall.argumentList as FirResolvedArgumentList).mapping.mapKeysTo(LinkedHashMap()) { (argument) ->
+            argumentList = lhsGetCall.argumentList.mapArguments { argument ->
                 if (argument is FirVarargArgumentsExpression) {
                     buildVarargArgumentsExpression {
                         val varargSize = argument.arguments.size
@@ -1981,10 +1980,6 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
                     indicesQualifiedAccessForGet[i++]
                 }
             }
-            argumentList = buildResolvedArgumentList(
-                lhsGetCall.argumentList,
-                newMapping,
-            )
             origin = FirFunctionCallOrigin.Operator
             coneTypeOrNull = lhsGetCall.resolvedType
         }
@@ -2027,6 +2022,17 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
                 returns(true) implies (this@forCollectionLiteralInAnnotationResolution is ResolutionMode.WithExpectedType)
             }
             return (this as? ResolutionMode.WithExpectedType)?.arrayLiteralPosition != null
+        }
+
+    private inline fun FirArgumentList.mapArguments(transform: (FirExpression) -> FirExpression): FirArgumentList =
+        when (this) {
+            is FirResolvedArgumentList -> buildResolvedArgumentList(
+                this,
+                mapping = mapping.mapKeysTo(LinkedHashMap()) { transform(it.key) },
+            )
+            else -> buildArgumentList {
+                arguments.mapTo(this@buildArgumentList.arguments) { transform(it) }
+            }
         }
 
     override fun transformCollectionLiteral(collectionLiteral: FirCollectionLiteral, data: ResolutionMode): FirStatement =
@@ -2122,13 +2128,65 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
     ): FirStatement {
         whileAnalysing(session, replDeclarationReference) {
             val symbol = replDeclarationReference.symbol
-            val classSymbol = symbol.getContainingClassSymbol()!!.fir as FirClass
-            // TODO(KT-82554): withScopesForClass may cause problems for FirFunctionCallRefinementExtension
-            context.withScopesForClass(classSymbol, components) {
-                symbol.fir.transformSingle(transformer, data)
-            }
+            symbol.fir.transformSingle(transformer, data)
         }
         return replDeclarationReference
+    }
+
+    override fun transformReplExpressionReference(
+        replExpressionReference: FirReplExpressionReference,
+        data: ResolutionMode,
+    ): FirStatement {
+        // Do nothing.
+        return replExpressionReference
+    }
+
+    override fun transformReplPropertyInitializer(
+        replPropertyInitializer: FirReplPropertyInitializer,
+        data: ResolutionMode,
+    ): FirStatement {
+        whileAnalysing(session, replPropertyInitializer) {
+            val property = replPropertyInitializer.propertySymbol.fir
+            transformer.declarationsTransformer?.transformMemberPropertyInternal(
+                property = property,
+                data = data,
+                transformInitializer = {
+                    val resolutionMode = withExpectedType(property.returnTypeRef)
+                    replPropertyInitializer.transformInitializer(transformer, resolutionMode)
+
+                    // Update REPL expression reference in case initializer expression was replaced.
+                    (property.initializer as? FirReplExpressionReference)?.expressionRef?.bind(replPropertyInitializer.initializer)
+                },
+                transformDelegate = { _, _ -> },
+            )
+        }
+        return replPropertyInitializer
+    }
+
+    override fun transformReplPropertyDelegate(
+        replPropertyDelegate: FirReplPropertyDelegate,
+        data: ResolutionMode,
+    ): FirStatement {
+        whileAnalysing(session, replPropertyDelegate) {
+            val property = replPropertyDelegate.propertySymbol.fir
+            transformer.declarationsTransformer?.transformMemberPropertyInternal(
+                property = property,
+                data = data,
+                transformInitializer = {},
+                transformDelegate = { _, shouldResolveEverything ->
+                    transformer.declarationsTransformer?.transformPropertyAccessorsWithDelegate(
+                        property = property,
+                        delegateContainer = replPropertyDelegate.delegate,
+                        shouldResolveEverything = shouldResolveEverything,
+                        replaceDelegate = replPropertyDelegate::replaceDelegate,
+                    )
+
+                    // Update REPL expression reference in case delegate expression was replaced.
+                    (property.delegate as? FirReplExpressionReference)?.expressionRef?.bind(replPropertyDelegate.delegate)
+                }
+            )
+        }
+        return replPropertyDelegate
     }
 
     // ------------------------------------------------------------------------------------------------
@@ -2155,13 +2213,30 @@ private fun FirFunctionCall.setIndexedAccessAugmentedAssignSource(fakeSourceElem
     val newSource = source?.fakeElement(fakeSourceElementKind)
     @OptIn(FirImplementationDetail::class)
     replaceSource(newSource)
-    val oldCalleeReference = calleeReference as? FirResolvedNamedReference
-        ?: error("${FirResolvedNamedReference::class.simpleName} expected, got ${calleeReference.render()}")
-    replaceCalleeReference(buildResolvedNamedReference {
-        this.name = oldCalleeReference.name
-        this.source = newSource
-        this.resolvedSymbol = oldCalleeReference.resolvedSymbol
-    })
+    replaceCalleeReference(calleeReference.createCopyWithNewSource(newSource))
+}
+
+private fun FirNamedReference.createCopyWithNewSource(newSource: KtSourceElement?): FirNamedReference {
+    return when (val oldCalleeReference = this) {
+        is FirResolvedNamedReference -> buildResolvedNamedReference {
+            name = oldCalleeReference.name
+            source = newSource
+            resolvedSymbol = oldCalleeReference.resolvedSymbol
+        }
+        is FirNamedReferenceWithCandidate -> FirNamedReferenceWithCandidate(
+            newSource, oldCalleeReference.name, candidate = oldCalleeReference.candidate,
+        )
+        is FirSimpleNamedReference -> buildSimpleNamedReference {
+            source = newSource
+            name = oldCalleeReference.name
+        }
+        is FirErrorNamedReference -> buildErrorNamedReference {
+            source = newSource
+            name = oldCalleeReference.name
+            diagnostic = oldCalleeReference.diagnostic
+        }
+        else -> error("Unexpected type of callee reference: ${render()}")
+    }
 }
 
 /**

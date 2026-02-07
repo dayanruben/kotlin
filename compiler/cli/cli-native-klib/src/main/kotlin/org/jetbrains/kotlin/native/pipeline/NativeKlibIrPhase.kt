@@ -6,14 +6,14 @@
 package org.jetbrains.kotlin.native.pipeline
 
 import org.jetbrains.kotlin.backend.common.serialization.SerializerOutput
-import org.jetbrains.kotlin.backend.konan.KonanConfigKeys
-import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
 import org.jetbrains.kotlin.cli.pipeline.CheckCompilationErrors
 import org.jetbrains.kotlin.cli.pipeline.PerformanceNotifications
 import org.jetbrains.kotlin.cli.pipeline.PipelinePhase
+import org.jetbrains.kotlin.konan.config.konanGeneratedHeaderKlibPath
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.native.FirSerializerInput
 import org.jetbrains.kotlin.native.KlibWriterInput
+import org.jetbrains.kotlin.native.NativeFirstStagePhaseContext
 import org.jetbrains.kotlin.native.firSerializerBase
 import org.jetbrains.kotlin.native.writeKlib
 
@@ -29,7 +29,7 @@ object NativeIrSerializationPhase : PipelinePhase<NativeFir2IrArtifact, NativeSe
 ) {
     override fun executePhase(input: NativeFir2IrArtifact): NativeSerializationArtifact? {
         val (fir2IrOutput, configuration, _, diagnosticCollector, phaseContext) = input
-        val headerKlibPath = configuration.get(KonanConfigKeys.HEADER_KLIB)?.removeSuffix(".klib")
+        val headerKlibPath = configuration.konanGeneratedHeaderKlibPath?.removeSuffix(".klib")
         val outputKlibPath = phaseContext.config.outputPath
         if (!headerKlibPath.isNullOrEmpty()) {
             val headerKlib = phaseContext.fir2IrSerializer(
@@ -55,7 +55,7 @@ object NativeIrSerializationPhase : PipelinePhase<NativeFir2IrArtifact, NativeSe
         )
     }
 
-    private fun PhaseContext.fir2IrSerializer(input: FirSerializerInput): SerializerOutput {
+    private fun NativeFirstStagePhaseContext.fir2IrSerializer(input: FirSerializerInput): SerializerOutput {
         return firSerializerBase(input.firToIrOutput.frontendOutput, input.firToIrOutput, produceHeaderKlib = input.produceHeaderKlib)
     }
 }
@@ -65,7 +65,7 @@ object NativeKlibWritingPhase : PipelinePhase<NativeSerializationArtifact, Nativ
     preActions = setOf(PerformanceNotifications.KlibWritingStarted),
     postActions = setOf(PerformanceNotifications.KlibWritingFinished, CheckCompilationErrors.CheckDiagnosticCollector)
 ) {
-    override fun executePhase(input: NativeSerializationArtifact): NativeKlibSerializedArtifact? {
+    override fun executePhase(input: NativeSerializationArtifact): NativeKlibSerializedArtifact {
         val (serializerOutput, configuration, diagnosticCollector, phaseContext) = input
         val outputKlibPath = phaseContext.config.outputPath
         phaseContext.writeKlib(

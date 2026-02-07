@@ -19,6 +19,9 @@ import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
+import org.jetbrains.kotlin.konan.config.generateTestRunner
+import org.jetbrains.kotlin.konan.config.konanEntryPoint
+import org.jetbrains.kotlin.konan.config.konanProducedArtifactKind
 import org.jetbrains.kotlin.konan.target.CompilerOutputKind
 import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -243,13 +246,13 @@ private object CallableIds {
     val interopCallMarker = "interopCallMarker".internalInteropCallableId
 }
 
-private fun CompilerConfiguration.getMainCallableId() : CallableId? {
-    if (get(KonanConfigKeys.PRODUCE) != CompilerOutputKind.PROGRAM) return null
-    get(KonanConfigKeys.ENTRY)?.let {
+private fun CompilerConfiguration.getMainCallableId(): CallableId? {
+    if (konanProducedArtifactKind != CompilerOutputKind.PROGRAM) return null
+    konanEntryPoint?.let {
         val entryPointFqName = FqName(it)
         return CallableId(entryPointFqName.parent(), entryPointFqName.shortName())
     }
-    return when (get(KonanConfigKeys.GENERATE_TEST_RUNNER)) {
+    return when (generateTestRunner) {
         TestRunnerKind.MAIN_THREAD -> CallableId(RuntimeNames.kotlinNativeInternalTestPackageName, StandardNames.MAIN)
         TestRunnerKind.WORKER -> CallableId(RuntimeNames.kotlinNativeInternalTestPackageName, Name.identifier("worker"))
         TestRunnerKind.MAIN_THREAD_NO_EXIT -> CallableId(RuntimeNames.kotlinNativeInternalTestPackageName, Name.identifier("mainNoExit"))

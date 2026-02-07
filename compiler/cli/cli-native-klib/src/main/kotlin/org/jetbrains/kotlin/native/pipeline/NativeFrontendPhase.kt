@@ -7,17 +7,9 @@ package org.jetbrains.kotlin.native.pipeline
 
 import org.jetbrains.kotlin.KtSourceFile
 import org.jetbrains.kotlin.analyzer.CompilationErrorException
-import org.jetbrains.kotlin.backend.konan.KonanConfigKeys
-import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
-import org.jetbrains.kotlin.cli.common.collectSources
-import org.jetbrains.kotlin.cli.common.fileBelongsToModuleForLt
-import org.jetbrains.kotlin.cli.common.fileBelongsToModuleForPsi
+import org.jetbrains.kotlin.cli.common.*
 import org.jetbrains.kotlin.cli.common.fir.FirDiagnosticsCompilerResultsReporter
-import org.jetbrains.kotlin.cli.common.isCommonSourceForLt
-import org.jetbrains.kotlin.cli.common.isCommonSourceForPsi
 import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
-import org.jetbrains.kotlin.cli.common.prepareNativeSessions
-import org.jetbrains.kotlin.cli.common.renderDiagnosticInternalName
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.toVfsBasedProjectEnvironment
 import org.jetbrains.kotlin.cli.pipeline.CheckCompilationErrors
@@ -27,24 +19,16 @@ import org.jetbrains.kotlin.cli.pipeline.PipelinePhase
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.compiler.plugin.getCompilerExtensions
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
-import org.jetbrains.kotlin.diagnostics.DiagnosticReporterFactory
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
-import org.jetbrains.kotlin.fir.DependencyListForCliModule
-import org.jetbrains.kotlin.fir.FirBinaryDependenciesModuleData
-import org.jetbrains.kotlin.fir.FirModuleCapabilities
-import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.SessionConfiguration
+import org.jetbrains.kotlin.diagnostics.impl.DiagnosticsCollectorImpl
+import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
-import org.jetbrains.kotlin.fir.pipeline.AllModulesFrontendOutput
-import org.jetbrains.kotlin.fir.pipeline.SingleModuleFrontendOutput
-import org.jetbrains.kotlin.fir.pipeline.buildResolveAndCheckFirFromKtFiles
-import org.jetbrains.kotlin.fir.pipeline.buildResolveAndCheckFirViaLightTree
-import org.jetbrains.kotlin.fir.pipeline.runPlatformCheckers
-import org.jetbrains.kotlin.fir.render
+import org.jetbrains.kotlin.fir.pipeline.*
 import org.jetbrains.kotlin.fir.resolve.ImplicitIntegerCoercionModuleCapability
+import org.jetbrains.kotlin.konan.config.konanPrintFiles
 import org.jetbrains.kotlin.library.metadata.isCInteropLibrary
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.native.NativePhaseContext
+import org.jetbrains.kotlin.native.NativeFirstStagePhaseContext
 import org.jetbrains.kotlin.native.createNativeKlibConfig
 
 object NativeFrontendPhase : PipelinePhase<NativeConfigurationArtifact, NativeFrontendArtifact>(
@@ -52,10 +36,10 @@ object NativeFrontendPhase : PipelinePhase<NativeConfigurationArtifact, NativeFr
     preActions = setOf(PerformanceNotifications.AnalysisStarted),
     postActions = setOf(PerformanceNotifications.AnalysisFinished, CheckCompilationErrors.CheckDiagnosticCollector)
 ) {
-    override fun executePhase(input: NativeConfigurationArtifact): NativeFrontendArtifact? {
+    override fun executePhase(input: NativeConfigurationArtifact): NativeFrontendArtifact {
         val (configuration, environment, diagnosticCollector) = input
         val config = createNativeKlibConfig(configuration)
-        val phaseContext = NativePhaseContext(config)
+        val phaseContext = NativeFirstStagePhaseContext(config)
         val firOutput = phaseContext.firFrontend(environment)
         return NativeFrontendArtifact(
             firOutput,
@@ -67,7 +51,7 @@ object NativeFrontendPhase : PipelinePhase<NativeConfigurationArtifact, NativeFr
     }
 
     @OptIn(SessionConfiguration::class, ExperimentalCompilerApi::class)
-    private inline fun <F> PhaseContext.firFrontend(
+    private inline fun <F> NativeFirstStagePhaseContext.firFrontend(
         input: KotlinCoreEnvironment,
         files: List<F>,
         fileHasSyntaxErrors: (F) -> Boolean,
@@ -77,7 +61,7 @@ object NativeFrontendPhase : PipelinePhase<NativeConfigurationArtifact, NativeFr
     ): AllModulesFrontendOutput {
         val configuration = input.configuration
         val extensionRegistrars = configuration.getCompilerExtensions(FirExtensionRegistrar)
-        val diagnosticsReporter = DiagnosticReporterFactory.createPendingReporter()
+        val diagnosticsReporter = DiagnosticsCollectorImpl()
         val renderDiagnosticNames = configuration.renderDiagnosticInternalName
 
         // FIR
@@ -115,7 +99,7 @@ object NativeFrontendPhase : PipelinePhase<NativeConfigurationArtifact, NativeFr
 
         val outputs = sessionsWithSources.map { (session, sources) ->
             buildResolveAndCheckFir(session, sources, diagnosticsReporter).also {
-                if (config.configuration.getBoolean(KonanConfigKeys.PRINT_FILES)) {
+                if (config.configuration.konanPrintFiles) {
                     it.fir.forEach { file -> println(file.render()) }
                 }
             }
@@ -131,7 +115,7 @@ object NativeFrontendPhase : PipelinePhase<NativeConfigurationArtifact, NativeFr
         }
     }
 
-    private fun PhaseContext.firFrontendWithPsi(input: KotlinCoreEnvironment): AllModulesFrontendOutput {
+    private fun NativeFirstStagePhaseContext.firFrontendWithPsi(input: KotlinCoreEnvironment): AllModulesFrontendOutput {
         val configuration = input.configuration
         val messageCollector = configuration.getNotNull(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY)
         // FIR
@@ -151,7 +135,7 @@ object NativeFrontendPhase : PipelinePhase<NativeConfigurationArtifact, NativeFr
         )
     }
 
-    private fun PhaseContext.firFrontendWithLightTree(input: KotlinCoreEnvironment): AllModulesFrontendOutput {
+    private fun NativeFirstStagePhaseContext.firFrontendWithLightTree(input: KotlinCoreEnvironment): AllModulesFrontendOutput {
         val configuration = input.configuration
         val messageCollector = configuration.getNotNull(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY)
         // FIR
@@ -179,7 +163,7 @@ object NativeFrontendPhase : PipelinePhase<NativeConfigurationArtifact, NativeFr
         )
     }
 
-    private fun PhaseContext.firFrontend(input: KotlinCoreEnvironment): AllModulesFrontendOutput {
+    private fun NativeFirstStagePhaseContext.firFrontend(input: KotlinCoreEnvironment): AllModulesFrontendOutput {
         var output = if (input.configuration.getBoolean(CommonConfigurationKeys.USE_LIGHT_TREE)) {
             firFrontendWithLightTree(input)
         } else {
