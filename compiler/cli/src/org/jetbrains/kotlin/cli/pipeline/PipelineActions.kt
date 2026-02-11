@@ -5,41 +5,24 @@
 
 package org.jetbrains.kotlin.cli.pipeline
 
+import org.jetbrains.kotlin.cli.common.diagnosticsCollector
 import org.jetbrains.kotlin.cli.common.fir.FirDiagnosticsCompilerResultsReporter
+import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.config.phaser.Action
 import org.jetbrains.kotlin.config.phaser.ActionState
 import org.jetbrains.kotlin.util.PhaseType
 
 abstract class CheckCompilationErrors : Action<PipelineArtifact, PipelineContext> {
-    object CheckMessageCollector : CheckCompilationErrors() {
-        override fun invoke(
-            state: ActionState,
-            output: PipelineArtifact,
-            c: PipelineContext,
-        ) {
-            if (c.messageCollector.hasErrors()) {
-                throw PipelineStepException()
-            }
-        }
-    }
-
     object CheckDiagnosticCollector : CheckCompilationErrors() {
         override fun invoke(
             state: ActionState,
             output: PipelineArtifact,
             c: PipelineContext,
         ) {
-            if (c.kaptMode) return
-            if (c.diagnosticCollector.hasErrors || c.messageCollector.hasErrors()) {
+            val configuration = output.configuration
+            if (configuration.diagnosticsCollector.hasErrors || configuration.messageCollector.hasErrors()) {
                 throw PipelineStepException()
             }
-        }
-
-        fun reportDiagnosticsToMessageCollector(c: PipelineContext) {
-            FirDiagnosticsCompilerResultsReporter.reportToMessageCollector(
-                c.diagnosticCollector, c.messageCollector,
-                c.renderDiagnosticInternalName
-            )
         }
     }
 }
@@ -47,6 +30,7 @@ abstract class CheckCompilationErrors : Action<PipelineArtifact, PipelineContext
 object PerformanceNotifications {
     object InitializationStarted : AbstractNotification(PhaseType.Initialization, start = true)
     object InitializationFinished : AbstractNotification(PhaseType.Initialization, start = false)
+
     // frontend
     object AnalysisStarted : AbstractNotification(PhaseType.Analysis, start = true)
     object AnalysisFinished : AbstractNotification(PhaseType.Analysis, start = false)

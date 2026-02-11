@@ -436,13 +436,10 @@ abstract class AbstractInvalidationTest(
             klibSerializationCompoundPhase.invokeToplevel(
                 phaseConfig,
                 context = PipelineContext(
-                    configuration.messageCollector,
-                    diagnosticCollector,
                     performanceManager,
-                    renderDiagnosticInternalName = true,
                     kaptMode = false,
                 ),
-                input = ConfigurationPipelineArtifact(configuration, diagnosticCollector, rootDisposable),
+                input = ConfigurationPipelineArtifact(configuration, rootDisposable),
             )
         } catch (_: PipelineStepException) {
             // Some pipeline step did not produce any output because of an error.

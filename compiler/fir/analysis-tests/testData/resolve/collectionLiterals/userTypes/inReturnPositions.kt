@@ -37,12 +37,12 @@ val <F> F.genericProperty: MyList<F> get() = []
 val <G> G.genericPropertyWithStrings: MyList<G> get() = <!RETURN_TYPE_MISMATCH!>["1", "2", "3"]<!>
 
 fun returnIfElse(): MyList<Any> = if (returnBoolean()) [1, 2, 3] else ["1", "2", "3"]
-fun returnIfElseWithWrongExpectedType(): MyList<Int> = <!RETURN_TYPE_MISMATCH!>if (returnBoolean()) [1, 2, 3] else ["1", "2", "3"]<!>
+fun returnIfElseWithWrongExpectedType(): MyList<Int> = if (returnBoolean()) [1, 2, 3] else <!ARGUMENT_TYPE_MISMATCH!>["1", "2", "3"]<!>
 fun <H> returnIfElseWithGenericExpectedType(h: H): MyList<H> = if (returnBoolean()) [] else [h]
 fun returnIfElseWithRunLike(): MyList<Int> = if (returnBoolean()) runLike { [1, 2, 3] } else runLikeListInt { [] }
 
 fun returnInElvis(): MyList<Int> = myNullableList() ?: []
-fun returnInElvisNoExpectedType() = <!CANNOT_INFER_PARAMETER_TYPE!>myNullableList<!>() ?: <!UNSUPPORTED_COLLECTION_LITERAL_TYPE!>[]<!>
+fun returnInElvisNoExpectedType() = <!CANNOT_INFER_PARAMETER_TYPE!>myNullableList<!>() ?: <!CANNOT_INFER_PARAMETER_TYPE!>[]<!>
 fun returnInElvisListInt() = myNullableListInt() ?: []
 
 /* GENERATED_FIR_TAGS: classDeclaration, companionObject, elvisExpression, functionDeclaration, functionalType, getter,

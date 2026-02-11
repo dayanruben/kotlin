@@ -14092,6 +14092,18 @@ public class LLBlackBoxTestGenerated extends AbstractLLBlackBoxTest {
     }
 
     @Test
+    @TestMetadata("kt82803.kt")
+    public void testKt82803() {
+      runTest("compiler/testData/codegen/box/coroutines/kt82803.kt");
+    }
+
+    @Test
+    @TestMetadata("kt83728.kt")
+    public void testKt83728() {
+      runTest("compiler/testData/codegen/box/coroutines/kt83728.kt");
+    }
+
+    @Test
     @TestMetadata("lastExpressionIsLoop.kt")
     public void testLastExpressionIsLoop() {
       runTest("compiler/testData/codegen/box/coroutines/lastExpressionIsLoop.kt");
@@ -20769,6 +20781,12 @@ public class LLBlackBoxTestGenerated extends AbstractLLBlackBoxTest {
     @TestMetadata("nestedLambdas.kt")
     public void testNestedLambdas() {
       runTest("compiler/testData/codegen/box/directInvokeOptimization/nestedLambdas.kt");
+    }
+
+    @Test
+    @TestMetadata("samConversion.kt")
+    public void testSamConversion() {
+      runTest("compiler/testData/codegen/box/directInvokeOptimization/samConversion.kt");
     }
 
     @Test
@@ -58206,6 +58224,18 @@ public class LLBlackBoxTestGenerated extends AbstractLLBlackBoxTest {
       @TestMetadata("javaArrayType.kt")
       public void testJavaArrayType() {
         runTest("compiler/testData/codegen/box/reflection/supertypes/javaArrayType.kt");
+      }
+
+      @Test
+      @TestMetadata("javaMutableCollections.kt")
+      public void testJavaMutableCollections() {
+        runTest("compiler/testData/codegen/box/reflection/supertypes/javaMutableCollections.kt");
+      }
+
+      @Test
+      @TestMetadata("javaWildcards.kt")
+      public void testJavaWildcards() {
+        runTest("compiler/testData/codegen/box/reflection/supertypes/javaWildcards.kt");
       }
 
       @Test

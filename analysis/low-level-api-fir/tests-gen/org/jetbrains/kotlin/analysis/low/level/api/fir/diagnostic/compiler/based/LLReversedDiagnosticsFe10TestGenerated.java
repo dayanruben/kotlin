@@ -1335,6 +1335,12 @@ public class LLReversedDiagnosticsFe10TestGenerated extends AbstractLLReversedDi
     }
 
     @Test
+    @TestMetadata("kt83829.kt")
+    public void testKt83829() {
+      runTest("compiler/testData/diagnostics/tests/kt83829.kt");
+    }
+
+    @Test
     @TestMetadata("LValueAssignment.kt")
     public void testLValueAssignment() {
       runTest("compiler/testData/diagnostics/tests/LValueAssignment.kt");
@@ -3273,6 +3279,12 @@ public class LLReversedDiagnosticsFe10TestGenerated extends AbstractLLReversedDi
       @TestMetadata("MutuallyRecursivelyAnnotatedGlobalFunction.kt")
       public void testMutuallyRecursivelyAnnotatedGlobalFunction() {
         runTest("compiler/testData/diagnostics/tests/annotations/MutuallyRecursivelyAnnotatedGlobalFunction.kt");
+      }
+
+      @Test
+      @TestMetadata("NamedAndArrayLiteralOptInArgument.kt")
+      public void testNamedAndArrayLiteralOptInArgument() {
+        runTest("compiler/testData/diagnostics/tests/annotations/NamedAndArrayLiteralOptInArgument.kt");
       }
 
       @Test
@@ -26830,6 +26842,12 @@ public class LLReversedDiagnosticsFe10TestGenerated extends AbstractLLReversedDi
       }
 
       @Test
+      @TestMetadata("jSpecifyWithVarargs.kt")
+      public void testJSpecifyWithVarargs() {
+        runTest("compiler/testData/diagnostics/tests/j+k/jSpecifyWithVarargs.kt");
+      }
+
+      @Test
       @TestMetadata("javaField.kt")
       public void testJavaField() {
         runTest("compiler/testData/diagnostics/tests/j+k/javaField.kt");
@@ -30992,6 +31010,12 @@ public class LLReversedDiagnosticsFe10TestGenerated extends AbstractLLReversedDi
         @TestMetadata("floatNumbersComparison.kt")
         public void testFloatNumbersComparison() {
           runTest("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect/floatNumbersComparison.kt");
+        }
+
+        @Test
+        @TestMetadata("functionTypeContext.kt")
+        public void testFunctionTypeContext() {
+          runTest("compiler/testData/diagnostics/tests/multiplatform/actualAnnotationsNotMatchExpect/functionTypeContext.kt");
         }
 
         @Test
