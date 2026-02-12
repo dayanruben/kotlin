@@ -693,6 +693,18 @@ public class LLReversedDiagnosticsFe10TestGenerated extends AbstractLLReversedDi
     }
 
     @Test
+    @TestMetadata("extensionShadowedByMemberExtensionFalsePositive.kt")
+    public void testExtensionShadowedByMemberExtensionFalsePositive() {
+      runTest("compiler/testData/diagnostics/tests/extensionShadowedByMemberExtensionFalsePositive.kt");
+    }
+
+    @Test
+    @TestMetadata("extensionShadowedByMemberExtensionFalsePositiveContext.kt")
+    public void testExtensionShadowedByMemberExtensionFalsePositiveContext() {
+      runTest("compiler/testData/diagnostics/tests/extensionShadowedByMemberExtensionFalsePositiveContext.kt");
+    }
+
+    @Test
     @TestMetadata("extensionShadowedByMemberOverride.kt")
     public void testExtensionShadowedByMemberOverride() {
       runTest("compiler/testData/diagnostics/tests/extensionShadowedByMemberOverride.kt");
@@ -10364,6 +10376,12 @@ public class LLReversedDiagnosticsFe10TestGenerated extends AbstractLLReversedDi
       }
 
       @Test
+      @TestMetadata("contractDisabledErrorMessage.kt")
+      public void testContractDisabledErrorMessage() {
+        runTest("compiler/testData/diagnostics/tests/crvDisabled/contractDisabledErrorMessage.kt");
+      }
+
+      @Test
       @TestMetadata("disabledChecker.kt")
       public void testDisabledChecker() {
         runTest("compiler/testData/diagnostics/tests/crvDisabled/disabledChecker.kt");
@@ -10455,6 +10473,28 @@ public class LLReversedDiagnosticsFe10TestGenerated extends AbstractLLReversedDi
       @TestMetadata("voidOverrides.kt")
       public void testVoidOverrides() {
         runTest("compiler/testData/diagnostics/tests/crvFull/voidOverrides.kt");
+      }
+
+      @Nested
+      @TestMetadata("compiler/testData/diagnostics/tests/crvFull/contracts")
+      @TestDataPath("$PROJECT_ROOT")
+      public class Contracts {
+        @Test
+        public void testAllFilesPresentInContracts() {
+          KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/crvFull/contracts"), Pattern.compile("^(.+)\\.(kt|kts)$"), Pattern.compile("^(.+)\\.(reversed|partialBody|fir|ll|latestLV)\\.kts?$"), true);
+        }
+
+        @Test
+        @TestMetadata("returnsResultOf.kt")
+        public void testReturnsResultOf() {
+          runTest("compiler/testData/diagnostics/tests/crvFull/contracts/returnsResultOf.kt");
+        }
+
+        @Test
+        @TestMetadata("returnsResultOfLib.kt")
+        public void testReturnsResultOfLib() {
+          runTest("compiler/testData/diagnostics/tests/crvFull/contracts/returnsResultOfLib.kt");
+        }
       }
     }
 
@@ -37180,6 +37220,12 @@ public class LLReversedDiagnosticsFe10TestGenerated extends AbstractLLReversedDi
       }
 
       @Test
+      @TestMetadata("forInStringWithIndexNameBasedDestructuringFullForm.kt")
+      public void testForInStringWithIndexNameBasedDestructuringFullForm() {
+        runTest("compiler/testData/diagnostics/tests/redeclarations/forInStringWithIndexNameBasedDestructuringFullForm.kt");
+      }
+
+      @Test
       @TestMetadata("FunVsCtorInDifferentFiles.kt")
       public void testFunVsCtorInDifferentFiles() {
         runTest("compiler/testData/diagnostics/tests/redeclarations/FunVsCtorInDifferentFiles.kt");
@@ -45363,6 +45409,12 @@ public class LLReversedDiagnosticsFe10TestGenerated extends AbstractLLReversedDi
       @TestMetadata("complicatedLTGTE.kt")
       public void testComplicatedLTGTE() {
         runTest("compiler/testData/diagnostics/tests/syntax/complicatedLTGTE.kt");
+      }
+
+      @Test
+      @TestMetadata("forInStringWithIndexNameBasedDestructuringFullForm.kt")
+      public void testForInStringWithIndexNameBasedDestructuringFullForm() {
+        runTest("compiler/testData/diagnostics/tests/syntax/forInStringWithIndexNameBasedDestructuringFullForm.kt");
       }
 
       @Test

@@ -23,10 +23,10 @@ import org.jetbrains.kotlin.konan.test.services.FileCheckTestSkipper
 import org.jetbrains.kotlin.konan.test.services.sourceProviders.NativeLauncherAdditionalSourceProvider
 import org.jetbrains.kotlin.konan.test.suppressors.NativeTestsSuppressor
 import org.jetbrains.kotlin.test.FirParser
-import org.jetbrains.kotlin.test.backend.handlers.FirInterpreterDumpHandler
-import org.jetbrains.kotlin.test.backend.handlers.NativeKlibInterpreterDumpHandler
 import org.jetbrains.kotlin.test.builders.*
 import org.jetbrains.kotlin.test.directives.DiagnosticsDirectives.DIAGNOSTICS
+import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives.FIR_DUMP
+import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives.RENDER_FIR_DECLARATION_ATTRIBUTES
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.LANGUAGE
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.OPT_IN
@@ -102,12 +102,10 @@ abstract class AbstractNativeCodegenBoxCoreTest : AbstractNativeCoreTest() {
             }
         }
 
-        forTestsMatching("compiler/testData/codegen/box/involvesIrInterpreter/*") {
-            configureFirHandlersStep {
-                useHandlers(::FirInterpreterDumpHandler)
-            }
-            configureKlibArtifactsHandlersStep {
-                useHandlers(::NativeKlibInterpreterDumpHandler)
+        forTestsMatching("compiler/testData/codegen/box/evaluate/*") {
+            defaultDirectives {
+                +FIR_DUMP
+                +RENDER_FIR_DECLARATION_ATTRIBUTES
             }
         }
     }

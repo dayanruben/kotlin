@@ -980,6 +980,12 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
     }
 
     @Test
+    @TestMetadata("classpathSubstitutionAlreadyResolvedSupertype.kt")
+    public void testClasspathSubstitutionAlreadyResolvedSupertype() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/classpathSubstitutionAlreadyResolvedSupertype.kt");
+    }
+
+    @Test
     @TestMetadata("compilerRequiredAnnotationConflict.kt")
     public void testCompilerRequiredAnnotationConflict() {
       runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/compilerRequiredAnnotationConflict.kt");
@@ -1193,6 +1199,12 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
     @TestMetadata("nonEmptyInterfaceWithSuper.kt")
     public void testNonEmptyInterfaceWithSuper() {
       runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/nonEmptyInterfaceWithSuper.kt");
+    }
+
+    @Test
+    @TestMetadata("outerClassAsSuper.kt")
+    public void testOuterClassAsSuper() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/classes/outerClassAsSuper.kt");
     }
 
     @Test
@@ -2486,6 +2498,18 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
   @TestMetadata("analysis/low-level-api-fir/testData/lazyResolve/typeAliases")
   @TestDataPath("$PROJECT_ROOT")
   public class TypeAliases {
+    @Test
+    @TestMetadata("actualizationViaTypeAlias.kt")
+    public void testActualizationViaTypeAlias() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/typeAliases/actualizationViaTypeAlias.kt");
+    }
+
+    @Test
+    @TestMetadata("actualizationViaTypeAliasWithPreresolve.kt")
+    public void testActualizationViaTypeAliasWithPreresolve() {
+      runTest("analysis/low-level-api-fir/testData/lazyResolve/typeAliases/actualizationViaTypeAliasWithPreresolve.kt");
+    }
+
     @Test
     public void testAllFilesPresentInTypeAliases() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/low-level-api-fir/testData/lazyResolve/typeAliases"), Pattern.compile("^(.+)\\.(kt)$"), null, true);
