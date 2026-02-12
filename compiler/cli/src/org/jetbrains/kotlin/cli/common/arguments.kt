@@ -126,35 +126,32 @@ private fun CompilerConfiguration.checkRedundantArguments(arguments: CommonCompi
 
     propertiesLoop@ for ((explicitArgument, values) in arguments.explicitArguments) {
         if (!explicitArgument.changesLanguageFeatures) continue@propertiesLoop
+        val effectivePropertyValue = values.lastOrNull() ?: continue@propertiesLoop
 
-        for (actualPropertyValue in values) {
-            fun checkNecessity(feature: LanguageFeature, ifValueIs: String, state: LanguageFeature.State): Boolean {
-                // At first, check if the annotation is relevant. Only Boolean and String types are allowed
-                when {
-                    // Language features can't be disabled, so it's expected if the value is changed, it's always `true`
-                    ifValueIs.isEmpty() -> require(actualPropertyValue as Boolean)
-                    else -> if (actualPropertyValue as String != ifValueIs) return false
-                }
-
-                // At second check the necessity
-                return (state == LanguageFeature.State.ENABLED) != languageVersionSettings.isEnabledByDefault(feature)
+        fun checkNecessity(feature: LanguageFeature, ifValueIs: String, state: LanguageFeature.State): Boolean {
+            // At first, check if the annotation is relevant. Only Boolean and String types are allowed
+            when {
+                // Language features can't be disabled, so it's expected if the value is changed, it's always `true`
+                ifValueIs.isEmpty() -> require(effectivePropertyValue as Boolean)
+                else -> if (effectivePropertyValue as String != ifValueIs) return false
             }
 
-            explicitArgument.enablesAnnotations.forEach {
-                if (checkNecessity(it.feature, it.ifValueIs, LanguageFeature.State.ENABLED)) continue@propertiesLoop
-            }
-            explicitArgument.disablesAnnotations.forEach {
-                if (checkNecessity(it.feature, it.ifValueIs, LanguageFeature.State.DISABLED)) continue@propertiesLoop
-            }
-
-            val argValue = if (actualPropertyValue is String) "=$actualPropertyValue" else ""
-            reportDiagnostic(
-                CliDiagnostics.REDUNDANT_CLI_ARG,
-                "The argument '${explicitArgument.argument.value}${argValue}' is redundant for the current language version $languageVersion.",
-            )
-
-            continue@propertiesLoop
+            // At second check the necessity
+            return (state == LanguageFeature.State.ENABLED) != languageVersionSettings.isEnabledByDefault(feature)
         }
+
+        explicitArgument.enablesAnnotations.forEach {
+            if (checkNecessity(it.feature, it.ifValueIs, LanguageFeature.State.ENABLED)) continue@propertiesLoop
+        }
+        explicitArgument.disablesAnnotations.forEach {
+            if (checkNecessity(it.feature, it.ifValueIs, LanguageFeature.State.DISABLED)) continue@propertiesLoop
+        }
+
+        val argValue = if (effectivePropertyValue is String) "=$effectivePropertyValue" else ""
+        reportDiagnostic(
+            CliDiagnostics.REDUNDANT_CLI_ARG,
+            "The argument '${explicitArgument.argument.value}${argValue}' is redundant for the current language version $languageVersion.",
+        )
     }
 }
 
@@ -182,12 +179,12 @@ fun computeKotlinPaths(messageCollector: MessageCollector, arguments: CommonComp
 
 fun MessageCollector.reportArgumentParseProblems(arguments: CommonToolArguments) {
     for ((key, values) in arguments.explicitArguments) {
-        if (values.size > 1) {
-            val argName = key.argument.value
-            val valuesString = values.joinToString("', '")
-            val message = "Argument '$argName' is passed multiple times: '$valuesString'. The last value will be used."
-            report(CompilerMessageSeverity.STRONG_WARNING, message)
-        }
+        if (values.size <= 1 || values.distinct().size == 1) continue
+
+        val argName = key.argument.value
+        val valuesString = values.joinToString("', '")
+        val message = "Argument '$argName' is passed multiple times: '$valuesString'. The last value will be used."
+        report(CompilerMessageSeverity.STRONG_WARNING, message)
     }
 
     val errors = arguments.errors ?: return

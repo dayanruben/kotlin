@@ -1558,10 +1558,6 @@ public abstract class org/jetbrains/kotlin/gradle/plugin/mpp/apple/swiftexport/S
 	public static synthetic fun linkTask$default (Lorg/jetbrains/kotlin/gradle/plugin/mpp/apple/swiftexport/SwiftExportExtension;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
-public final class org/jetbrains/kotlin/gradle/plugin/mpp/apple/swiftexport/SwiftExportExtensionKt {
-	public static final field SWIFT_EXPORT_COROUTINES_SUPPORT_TURNED_ON Ljava/lang/String;
-}
-
 public abstract interface class org/jetbrains/kotlin/gradle/plugin/mpp/apple/swiftexport/SwiftExportedModuleMetadata {
 	public abstract fun getFlattenPackage ()Lorg/gradle/api/provider/Property;
 	public abstract fun getModuleName ()Lorg/gradle/api/provider/Property;
@@ -6011,6 +6007,8 @@ public abstract class org/jetbrains/kotlin/gradle/tasks/GradleCompileTaskProvide
 	public final fun getPath ()Lorg/gradle/api/provider/Provider;
 	public final fun getProjectDir ()Lorg/gradle/api/provider/Provider;
 	public final fun getProjectName ()Lorg/gradle/api/provider/Provider;
+	public final fun getProjectPath ()Lorg/gradle/api/provider/Provider;
+	public final fun getRootProjectName ()Lorg/gradle/api/provider/Provider;
 	public final fun getSessionsDir ()Lorg/gradle/api/provider/Provider;
 }
 

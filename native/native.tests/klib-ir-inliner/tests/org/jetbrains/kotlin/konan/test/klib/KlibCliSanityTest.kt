@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.konan.test.blackbox.buildDir
 import org.jetbrains.kotlin.konan.test.blackbox.support.LoggedData
 import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.CompilationToolException
 import org.jetbrains.kotlin.konan.test.blackbox.support.compilation.TestCompilationArtifact.KLIB
+import org.jetbrains.kotlin.konan.test.blackbox.support.settings.KotlinNativeHome
+import org.jetbrains.kotlin.konan.test.blackbox.support.settings.KotlinNativeTargets
 import org.jetbrains.kotlin.library.KLIB_PROPERTY_DEPENDS
 import org.jetbrains.kotlin.library.KLIB_PROPERTY_IR_PROVIDER
 import org.jetbrains.kotlin.test.services.JUnit5Assertions
@@ -21,15 +23,17 @@ import org.jetbrains.kotlin.test.utils.assertCompilerOutputHasKlibResolverIncomp
 import org.jetbrains.kotlin.test.utils.patchManifestAsMap
 import org.jetbrains.kotlin.test.utils.patchManifestToBumpAbiVersion
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
+import java.io.File
 import kotlin.collections.set
 import kotlin.text.contains
 
 @Tag("klib")
 class KlibCliSanityTest : AbstractNativeSimpleTest() {
     @Test
-    fun `Compiler consumes unpacked KLIBs passed via CLI arguments`() {
+    fun `Compiler consumes unpacked KLIBs passed by absolute paths via CLI arguments`() {
         val modules = newSourceModules {
             addRegularModule("a")
             addRegularModule("b") { dependsOn("a") }
@@ -41,7 +45,7 @@ class KlibCliSanityTest : AbstractNativeSimpleTest() {
     }
 
     @Test
-    fun `Compiler consumes packed KLIBs passed via CLI arguments`() {
+    fun `Compiler consumes packed KLIBs passed by absolute paths via CLI arguments`() {
         val modules = newSourceModules {
             addRegularModule("a")
             addRegularModule("b") { dependsOn("a") }
@@ -50,6 +54,60 @@ class KlibCliSanityTest : AbstractNativeSimpleTest() {
         }
 
         modules.compileToKlibsViaCli(produceUnpackedKlibs = false)
+    }
+
+    @Test
+    fun `Compiler consumes unpacked KLIBs passed by relative paths via CLI arguments`() {
+        doTestCompilerConsumesKlibPassedByRelativePath(produceUnpackedKlibs = true)
+    }
+
+    @Test
+    fun `Compiler consumes packed KLIBs passed by relative paths via CLI arguments`() {
+        doTestCompilerConsumesKlibPassedByRelativePath(produceUnpackedKlibs = false)
+    }
+
+    private fun doTestCompilerConsumesKlibPassedByRelativePath(produceUnpackedKlibs: Boolean) {
+        var moduleAKlibFile: File? = null
+
+        newSourceModules {
+            addRegularModule("a")
+        }.compileToKlibsViaCli(produceUnpackedKlibs = produceUnpackedKlibs) { _, successKlib ->
+            moduleAKlibFile = successKlib.resultingArtifact.klibFile
+        }
+        checkNotNull(moduleAKlibFile)
+
+        val moduleAKlibRelativePath: String = moduleAKlibFile.relativeTo(File(System.getProperty("user.dir"))).path
+        assertNotEquals(moduleAKlibRelativePath, moduleAKlibFile.path)
+
+        newSourceModules {
+            addRegularModule("b") {
+                sourceFileAddend("fun foo() = a.a(0)") // call a real function from "a"
+            }
+        }.compileToKlibsViaCli(extraCliArgs = listOf("-library", moduleAKlibRelativePath))
+    }
+
+    @Test
+    fun `Compiler rejects non-existent KLIB passed via CLI arguments`() {
+        val modules = newSourceModules { addRegularModule("a") }
+
+        listOf(
+            "non-existent-klib",
+            "non-existent-klib.klib",
+            "non-existent-dir/non-existent-klib",
+            "non-existent-dir/non-existent-klib.klib",
+            modules.modules[0].sourceFile.parentFile.resolve("non-existent-klib").absolutePath,
+            modules.modules[0].sourceFile.parentFile.resolve("non-existent-klib.klib").absolutePath,
+        ).forEach { libraryPath ->
+            try {
+                modules.compileToKlibsViaCli(
+                    extraCliArgs = listOf("-library", libraryPath, "-friend-modules", libraryPath)
+                )
+
+                fail { "Normally unreachable code" }
+            } catch (cte: CompilationToolException) {
+                assertTrue(cte.reason.contains("KLIB resolver: Could not find \"$libraryPath\""))
+            }
+        }
     }
 
     @Test
@@ -179,4 +237,37 @@ class KlibCliSanityTest : AbstractNativeSimpleTest() {
         }
     }
 
+    @Test
+    fun `Compiler loads libraries bundled in Kotlin Native distribution`() {
+        doTestLoadingBundledLibraries(noStdlib = false, noDefaultLibs = false)
+        doTestLoadingBundledLibraries(noStdlib = true, noDefaultLibs = false)
+        doTestLoadingBundledLibraries(noStdlib = false, noDefaultLibs = true)
+        doTestLoadingBundledLibraries(noStdlib = true, noDefaultLibs = true)
+    }
+
+    private fun doTestLoadingBundledLibraries(noStdlib: Boolean, noDefaultLibs: Boolean) {
+        val librariesDir = testRunSettings.get<KotlinNativeHome>().librariesDir
+        val target = testRunSettings.get<KotlinNativeTargets>().testTarget
+
+        val stdlibPath = librariesDir.resolve("common/stdlib").absolutePath
+        val posixPath = librariesDir.resolve("platform/${target.name}/org.jetbrains.kotlin.native.platform.posix").absolutePath
+
+        newSourceModules {
+            addRegularModule("a") {
+                sourceFileAddend(
+                    """
+                        fun callStdlib() = buildList<String> { this += "hello" }
+                        
+                        @kotlinx.cinterop.ExperimentalForeignApi
+                        fun callPosix() = platform.posix.fopen("test.txt", "r")
+                    """.trimIndent()
+                )
+            }
+        }.compileToKlibsViaCli(
+            extraCliArgs = buildList {
+                if (noStdlib) this += listOf("-nostdlib", "-l", stdlibPath)
+                if (noDefaultLibs) this += listOf("-no-default-libs", "-l", posixPath)
+            }
+        )
+    }
 }
