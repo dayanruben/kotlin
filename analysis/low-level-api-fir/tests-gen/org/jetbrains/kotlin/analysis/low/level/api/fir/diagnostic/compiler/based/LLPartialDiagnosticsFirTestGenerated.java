@@ -9561,6 +9561,40 @@ public class LLPartialDiagnosticsFirTestGenerated extends AbstractLLPartialDiagn
     }
 
     @Nested
+    @TestMetadata("compiler/fir/analysis-tests/testData/resolve/typeArguments")
+    @TestDataPath("$PROJECT_ROOT")
+    public class TypeArguments {
+      @Test
+      public void testAllFilesPresentInTypeArguments() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/typeArguments"), Pattern.compile("^([^.]+)\\.kt(\\.can-freeze-ide)?$"), null, true);
+      }
+
+      @Test
+      @TestMetadata("inAnnotationsInPackages.kt")
+      public void testInAnnotationsInPackages() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/typeArguments/inAnnotationsInPackages.kt");
+      }
+
+      @Test
+      @TestMetadata("inQualifiersInPackages.kt")
+      public void testInQualifiersInPackages() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/typeArguments/inQualifiersInPackages.kt");
+      }
+
+      @Test
+      @TestMetadata("inTypeRefsInPackages.kt")
+      public void testInTypeRefsInPackages() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/typeArguments/inTypeRefsInPackages.kt");
+      }
+
+      @Test
+      @TestMetadata("inTypeRefsInPackagesInternalError.kt")
+      public void testInTypeRefsInPackagesInternalError() {
+        runTest("compiler/fir/analysis-tests/testData/resolve/typeArguments/inTypeRefsInPackagesInternalError.kt");
+      }
+    }
+
+    @Nested
     @TestMetadata("compiler/fir/analysis-tests/testData/resolve/typeParameters")
     @TestDataPath("$PROJECT_ROOT")
     public class TypeParameters {
