@@ -3088,6 +3088,12 @@ public class CompiledCommonStubsTestGenerated extends AbstractCompiledCommonStub
     }
 
     @Test
+    @TestMetadata("Escapes.kt")
+    public void testEscapes() {
+      runTest("compiler/testData/psi/kdoc/Escapes.kt");
+    }
+
+    @Test
     @TestMetadata("HttpLink.kt")
     public void testHttpLink() {
       runTest("compiler/testData/psi/kdoc/HttpLink.kt");
@@ -3133,6 +3139,12 @@ public class CompiledCommonStubsTestGenerated extends AbstractCompiledCommonStub
     @TestMetadata("Markdown.kt")
     public void testMarkdown() {
       runTest("compiler/testData/psi/kdoc/Markdown.kt");
+    }
+
+    @Test
+    @TestMetadata("MarkdownCodeBlocks.kt")
+    public void testMarkdownCodeBlocks() {
+      runTest("compiler/testData/psi/kdoc/MarkdownCodeBlocks.kt");
     }
 
     @Test

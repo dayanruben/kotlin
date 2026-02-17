@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.backend.jvm.JvmSymbols
 import org.jetbrains.kotlin.backend.jvm.overrides.IrJavaIncompatibilityRulesOverridabilityCondition
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
-import org.jetbrains.kotlin.config.JvmSerializeIrMode
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibility
@@ -95,9 +94,6 @@ class JvmFir2IrExtensions(
     }
 
     override fun findInjectedInlineLambdaArgument(parameter: FirValueParameterSymbol): FirExpression? = null
-
-    override val irNeedsDeserialization: Boolean =
-        configuration.get(JVMConfigurationKeys.SERIALIZE_IR, JvmSerializeIrMode.NONE) != JvmSerializeIrMode.NONE
 
     override fun deserializeToplevelClass(irClass: IrClass, components: Fir2IrComponents): Boolean {
         val builtIns = irBuiltIns ?: error("BuiltIns are not initialized")
