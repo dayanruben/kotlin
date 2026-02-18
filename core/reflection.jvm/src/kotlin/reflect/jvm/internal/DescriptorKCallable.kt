@@ -26,7 +26,10 @@ internal abstract class DescriptorKCallable<out R>(
 
     protected abstract fun computeReturnType(): DescriptorKType
 
-    internal abstract fun shallowCopy(overriddenStorage: KCallableOverriddenStorage): DescriptorKCallable<R>
+    internal abstract fun shallowCopy(
+        container: KDeclarationContainerImpl,
+        overriddenStorage: KCallableOverriddenStorage,
+    ): DescriptorKCallable<R>
 
     private val _annotations = ReflectProperties.lazySoft { descriptor.computeAnnotations() }
 
@@ -40,7 +43,7 @@ internal abstract class DescriptorKCallable<out R>(
         if (isBound) computeParameters(includeReceivers = false) else allParameters
     }
 
-    override val parameters: List<KParameter> get() = _parameters()
+    final override val parameters: List<KParameter> get() = _parameters()
 
     private fun computeParameters(includeReceivers: Boolean): List<KParameter> {
         val descriptor = descriptor
@@ -103,22 +106,23 @@ internal abstract class DescriptorKCallable<out R>(
 
     private val _returnType = ReflectProperties.lazySoft {
         val type = computeReturnType()
-        overriddenStorage.typeSubstitutor.substitute(type).type
+        overriddenStorage.getTypeSubstitutor(typeParameters, memberNameForDebug = name).substitute(type).type
             ?: starProjectionInTopLevelTypeIsNotPossible(containerForDebug = name)
     }
 
-    override val returnType: KType
+    final override val returnType: KType
         get() = _returnType()
 
     private val _typeParameters = ReflectProperties.lazySoft {
-        descriptor.typeParameters.map { descriptor ->
-            KTypeParameterImpl(this, descriptor)
-        }.onEach { typeParameter ->
-            typeParameter.upperBounds = typeParameter.upperBounds.map {
-                overriddenStorage.typeSubstitutor.substitute(it).type
-                    ?: starProjectionInTopLevelTypeIsNotPossible(containerForDebug = name)
+        val typeParametersWithNotYetSubstitutedUpperBounds =
+            descriptor.typeParameters.map { descriptor -> KTypeParameterImpl(this, descriptor) }
+        val substitutor = overriddenStorage.getTypeSubstitutor(typeParametersWithNotYetSubstitutedUpperBounds, memberNameForDebug = name)
+        for (typeParameter in typeParametersWithNotYetSubstitutedUpperBounds) {
+            typeParameter.upperBounds = typeParameter.upperBounds.map { type ->
+                substitutor.substitute(type).type ?: starProjectionInTopLevelTypeIsNotPossible(containerForDebug = container)
             }
         }
+        typeParametersWithNotYetSubstitutedUpperBounds
     }
 
     override val typeParameters: List<KTypeParameter>
@@ -145,9 +149,10 @@ internal abstract class DescriptorKCallable<out R>(
 
 internal data class KCallableOverriddenStorage(
     val instanceReceiverParameter: ReceiverParameterDescriptor?,
-    val typeSubstitutor: KTypeSubstitutor,
+    private val classTypeParametersSubstitutor: KTypeSubstitutor,
     val modality: Modality?,
-    val isFakeOverride: Boolean,
+    val originalContainerIfFakeOverride: KDeclarationContainerImpl?,
+    private val originalCallableTypeParameters: List<KTypeParameter>,
 
     val forceIsExternal: Boolean,
     val forceIsOperator: Boolean,
@@ -159,11 +164,22 @@ internal data class KCallableOverriddenStorage(
             null,
             KTypeSubstitutor.EMPTY,
             null,
-            isFakeOverride = false,
+            originalContainerIfFakeOverride = null,
+            originalCallableTypeParameters = emptyList(),
             forceIsExternal = false,
             forceIsOperator = false,
             forceIsInfix = false,
             forceIsInline = false,
         )
     }
+
+    val isFakeOverride: Boolean get() = originalContainerIfFakeOverride != null
+
+    fun withChainedClassTypeParametersSubstitutor(substitutor: KTypeSubstitutor): KCallableOverriddenStorage =
+        copy(classTypeParametersSubstitutor = classTypeParametersSubstitutor.chainedWith(substitutor))
+
+    fun getTypeSubstitutor(callableTypeParameters: List<KTypeParameter>, memberNameForDebug: String): KTypeSubstitutor =
+        originalCallableTypeParameters.substitutedWith(callableTypeParameters)
+            ?.disjointSumWith(classTypeParametersSubstitutor, memberNameForDebug)
+            ?: classTypeParametersSubstitutor
 }

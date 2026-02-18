@@ -37,36 +37,11 @@ internal fun getAllMembers(kClass: KClassImpl<*>): Collection<DescriptorKCallabl
             )
         ) { (_, member) ->
             doNeedToFilterOutStatics && member.isStatic ||
-                    member.isPackagePrivate && member.container.jClass.`package` != kClass.java.`package`
+                    member.isPackagePrivate && member.originalContainer.jClass.`package` != kClass.java.`package`
         }
         false -> HashMap(fakeOverrideMembers.members)
     }
-    // Privates don't override anything, so it's fine to collect them in a separate map
-    val kotlinDeclaredPrivates: MutableMembersKotlinSignatureMap = HashMap()
-    // Populating the 'members' list with things which are not inherited but appear in the 'members' list
-    for (declaredMember in kClass.declaredDescriptorKCallableMembers) {
-        when {
-            // static members are not inherited,
-            // but the immediate statics in interfaces must appear in the 'members' list
-            declaredMember.isStaticMethodInInterface(kClass) -> {
-                check(!isKotlin) { "Kotlin doesn't have statics. '${declaredMember.name}' appears to be declared static member in '${kClass.simpleName}'" }
-                val signature = declaredMember.toEquatableCallableSignature(EqualityMode.JavaSignature)
-                membersMutable[signature] = declaredMember
-            }
-
-            // private members are not inherited, but immediate private members must appear in the 'members' list
-            declaredMember.visibility == KVisibility.PRIVATE -> {
-                if (isKotlin) {
-                    val signature = declaredMember.toEquatableCallableSignature(EqualityMode.KotlinSignature)
-                    kotlinDeclaredPrivates[signature] = declaredMember
-                } else {
-                    val signature = declaredMember.toEquatableCallableSignature(EqualityMode.JavaSignature)
-                    membersMutable[signature] = declaredMember
-                }
-            }
-        }
-    }
-    return membersMutable.values + kotlinDeclaredPrivates.values
+    return membersMutable.values + kClass.declaredDescriptorKCallableMembers.filter { isNonTransitiveMember(kClass, it) }
 }
 
 internal fun starProjectionInTopLevelTypeIsNotPossible(containerForDebug: Any): Nothing =
@@ -123,7 +98,10 @@ internal data class FakeOverrideMembers(
 private fun DescriptorKCallable<*>.isStaticMethodInInterface(kClass: KClassImpl<*>): Boolean =
     isStatic && kClass.classKind == ClassKind.INTERFACE && !isJavaField
 
-private fun skipDeclaredMember(kClass: KClassImpl<*>, member: DescriptorKCallable<*>): Boolean =
+/**
+ * Non-transitive members don't inherit transitively but appear in the 'members' list of the immediate KClass
+ */
+private fun isNonTransitiveMember(kClass: KClassImpl<*>, member: DescriptorKCallable<*>): Boolean =
     member.visibility == KVisibility.PRIVATE ||
             // static methods (but not fields) in interfaces are never inherited (neither in Java nor in Kotlin)
             member.isStaticMethodInInterface(kClass)
@@ -137,7 +115,7 @@ internal fun computeFakeOverrideMembers(kClass: KClassImpl<*>): FakeOverrideMemb
     val declaredKotlinMembers: MutableMembersKotlinSignatureMap = HashMap()
     if (isKotlin) {
         for (member in kClass.declaredDescriptorKCallableMembers) {
-            if (skipDeclaredMember(kClass, member)) continue
+            if (isNonTransitiveMember(kClass, member)) continue
             declaredKotlinMembers[member.toEquatableCallableSignature(EqualityMode.KotlinSignature)] = member
         }
     }
@@ -152,19 +130,22 @@ internal fun computeFakeOverrideMembers(kClass: KClassImpl<*>): FakeOverrideMemb
         containsInheritedStatics = containsInheritedStatics || supertypeMembers.containsInheritedStatics
         containsPackagePrivate = containsPackagePrivate || supertypeMembers.containsPackagePrivate
         for ((_, notSubstitutedMember) in supertypeMembers.members) {
-            val overriddenStorage = notSubstitutedMember.overriddenStorage.copy(
-                instanceReceiverParameter = if (notSubstitutedMember.isStatic) null else thisReceiver,
-                typeSubstitutor = notSubstitutedMember.overriddenStorage.typeSubstitutor.combinedWith(substitutor),
-                isFakeOverride = true,
-            )
-            val member = notSubstitutedMember.shallowCopy(overriddenStorage)
+            val overriddenStorage = notSubstitutedMember.overriddenStorage
+                .withChainedClassTypeParametersSubstitutor(substitutor)
+                .copy(
+                    instanceReceiverParameter = if (notSubstitutedMember.isStatic) null else thisReceiver,
+                    originalContainerIfFakeOverride = notSubstitutedMember.originalContainer,
+                    originalCallableTypeParameters = notSubstitutedMember.typeParameters,
+                )
+            val member = notSubstitutedMember.shallowCopy(kClass, overriddenStorage)
             val kotlinSignature = member.toEquatableCallableSignature(EqualityMode.KotlinSignature)
             if (declaredKotlinMembers.contains(kotlinSignature)) continue
-            // Inherited signatures are always compared by JvmSignatures. Even for kotlin classes.
+            // Inherited signatures are always compared by the JvmSignatures. Even for kotlin classes.
             javaSignaturesMap.mergeWith(kotlinSignature.withEqualityMode(EqualityMode.JavaSignature), member) { a, b ->
                 val c = minOf(a, b, CovariantOverrideComparator)
                 when (a is KFunction<*> && b is KFunction<*>) {
                     true -> c.shallowCopy(
+                        c.container,
                         c.overriddenStorage.copy(
                             forceIsOperator = a.isOperator || b.isOperator,
                             forceIsInfix = a.isInfix || b.isInfix,
@@ -185,7 +166,7 @@ internal fun computeFakeOverrideMembers(kClass: KClassImpl<*>): FakeOverrideMemb
     }
     if (!isKotlin) {
         for (member in kClass.declaredDescriptorKCallableMembers) {
-            if (skipDeclaredMember(kClass, member)) continue
+            if (isNonTransitiveMember(kClass, member)) continue
             containsInheritedStatics = containsInheritedStatics || member.isStatic
             containsPackagePrivate = containsPackagePrivate || member.isPackagePrivate
             javaSignaturesMap[member.toEquatableCallableSignature(EqualityMode.JavaSignature)] = member
@@ -204,11 +185,14 @@ private inline fun <K, V : Any> MutableMap<K, V>.mergeWith(key: K, value: V, rem
 
 private val modalityIntersectionOverrideComparator: Comparator<DescriptorKCallable<*>> = compareBy(
     // Deprioritize interfaces, prioritize classes
-    { (it.container as? KClass<*>)?.java?.isInterface == true },
+    { (it.originalContainer as? KClass<*>)?.java?.isInterface == true },
     // If there are multiple superclasses (not interfaces), deprioritize kotlin.Any.
     // For instance, equals/hashCode/toString which come from interfaces have kotlin.Any container.
-    { it.container == Any::class },
+    { it.originalContainer == Any::class },
 )
+
+private val DescriptorKCallable<*>.originalContainer: KDeclarationContainerImpl
+    get() = overriddenStorage.originalContainerIfFakeOverride ?: container
 
 internal val DescriptorKCallable<*>.isStatic: Boolean
     get() = instanceReceiverParameter == null
@@ -255,9 +239,9 @@ internal val Class<*>.isKotlin: Boolean
 private val KClass<*>.declaredDescriptorKCallableMembers: Collection<DescriptorKCallable<*>>
     get() = declaredMembers as Collection<DescriptorKCallable<*>>
 
-private fun List<KTypeParameter>.substitutedWith(arguments: List<KTypeParameter>): KTypeSubstitutor? {
+internal fun List<KTypeParameter>.substitutedWith(arguments: List<KTypeParameter>): KTypeSubstitutor? {
     if (size != arguments.size) return null
-    if (arguments.isEmpty() || isEmpty()) return KTypeSubstitutor.EMPTY
+    if (isEmpty()) return KTypeSubstitutor.EMPTY
     val substitutionMap = zip(arguments).associate { (x, y) -> Pair(x, KTypeProjection.invariant(y.createType())) }
     return KTypeSubstitutor(substitutionMap)
 }

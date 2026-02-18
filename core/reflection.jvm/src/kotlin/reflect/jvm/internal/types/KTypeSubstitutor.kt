@@ -66,7 +66,7 @@ internal class KTypeSubstitutor(private val substitution: Map<KTypeParameter, KT
         return result
     }
 
-    fun combinedWith(other: KTypeSubstitutor): KTypeSubstitutor {
+    fun chainedWith(other: KTypeSubstitutor): KTypeSubstitutor {
         // Optimizations
         if (this.substitution.isEmpty()) return other
         if (other.substitution.isEmpty()) return this
@@ -80,6 +80,19 @@ internal class KTypeSubstitutor(private val substitution: Map<KTypeParameter, KT
             }
         }
         return KTypeSubstitutor(map)
+    }
+
+    fun disjointSumWith(other: KTypeSubstitutor, memberNameForDebug: String): KTypeSubstitutor {
+        // Optimizations
+        if (this.substitution.isEmpty()) return other
+        if (other.substitution.isEmpty()) return this
+
+        val intersection = substitution.keys.intersect(other.substitution.keys)
+        check(intersection.isEmpty()) {
+            "Substitutors must not have intersecting keys: ${intersection.joinToString()}. Member: $memberNameForDebug"
+        }
+
+        return KTypeSubstitutor(substitution + other.substitution)
     }
 
     // TODO (KT-77700): also keep annotations of 'other'

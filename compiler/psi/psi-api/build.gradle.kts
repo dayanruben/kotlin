@@ -6,6 +6,7 @@ plugins {
     id("kotlin-git.gradle-build-conventions.foreign-class-usage-checker")
     id("java-test-fixtures")
     id("project-tests-convention")
+    id("test-inputs-check")
 }
 
 dependencies {
@@ -55,12 +56,24 @@ kotlin {
 testsJar()
 
 projectTests {
-    testTask(jUnitMode = JUnitMode.JUnit5) {
-        workingDir = rootDir
-    }
+    testTask(jUnitMode = JUnitMode.JUnit5)
+
+    /** The 'test' task inputs cannot depend on [checkForeignClassUsage] outputs. */
+    testData(project.isolated, "api/psi-api.api")
+    testData(project.isolated, "api/psi-api.undocumented")
+
+    testData(project.isolated, "src")
 }
 
 val checkForeignClassUsage by tasks.registering(CheckForeignClassUsageTask::class) {
     outputFile = file("api/psi-api.foreign")
     nonPublicMarkers.addAll(stableNonPublicMarkers)
+}
+
+tasks.named("checkKotlinAbi").configure {
+    /**
+     * The ABI task depends on the whole 'api/' directory which contains output of the [checkForeignClassUsage] task.
+     * Gradle requires having an explicit task dependency when inputs of a certain task contain outputs of another.
+     */
+    dependsOn(checkForeignClassUsage)
 }
