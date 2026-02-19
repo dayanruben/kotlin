@@ -357,6 +357,12 @@ public class FirIdeNormalAnalysisLibrarySourceModuleResolveSymbolTestGenerated e
   }
 
   @Test
+  @TestMetadata("defaultJavaAnnotationArgument.kt")
+  public void testDefaultJavaAnnotationArgument() {
+    run("defaultJavaAnnotationArgument.kt");
+  }
+
+  @Test
   @TestMetadata("DefaultObjectAsExtensionReceiverForFunction.kt")
   public void testDefaultObjectAsExtensionReceiverForFunction() {
     run("DefaultObjectAsExtensionReceiverForFunction.kt");
@@ -2637,6 +2643,24 @@ public class FirIdeNormalAnalysisLibrarySourceModuleResolveSymbolTestGenerated e
       }
 
       @Test
+      @TestMetadata("genericDelegate.kt")
+      public void testGenericDelegate() {
+        run("genericDelegate.kt");
+      }
+
+      @Test
+      @TestMetadata("genericDelegateReadOnly.kt")
+      public void testGenericDelegateReadOnly() {
+        run("genericDelegateReadOnly.kt");
+      }
+
+      @Test
+      @TestMetadata("genericDelegateViaProvider.kt")
+      public void testGenericDelegateViaProvider() {
+        run("genericDelegateViaProvider.kt");
+      }
+
+      @Test
       @TestMetadata("getExtension.kt")
       public void testGetExtension() {
         run("getExtension.kt");
@@ -2658,6 +2682,18 @@ public class FirIdeNormalAnalysisLibrarySourceModuleResolveSymbolTestGenerated e
       @TestMetadata("getOneFakeOverride.kt")
       public void testGetOneFakeOverride() {
         run("getOneFakeOverride.kt");
+      }
+
+      @Test
+      @TestMetadata("importedFromObject.kt")
+      public void testImportedFromObject() {
+        run("importedFromObject.kt");
+      }
+
+      @Test
+      @TestMetadata("nonGenericDelegate.kt")
+      public void testNonGenericDelegate() {
+        run("nonGenericDelegate.kt");
       }
 
       @Test
@@ -2729,6 +2765,12 @@ public class FirIdeNormalAnalysisLibrarySourceModuleResolveSymbolTestGenerated e
     @TestMetadata("namedFull.kt")
     public void testNamedFull() {
       run("namedFull.kt");
+    }
+
+    @Test
+    @TestMetadata("namedFullWithGeneric.kt")
+    public void testNamedFullWithGeneric() {
+      run("namedFullWithGeneric.kt");
     }
 
     @Test
@@ -3051,6 +3093,24 @@ public class FirIdeNormalAnalysisLibrarySourceModuleResolveSymbolTestGenerated e
       public void testAllMembers() {
         run("allMembers.kt");
       }
+
+      @Test
+      @TestMetadata("importedFromObject.kt")
+      public void testImportedFromObject() {
+        run("importedFromObject.kt");
+      }
+
+      @Test
+      @TestMetadata("withGenericIterator.kt")
+      public void testWithGenericIterator() {
+        run("withGenericIterator.kt");
+      }
+
+      @Test
+      @TestMetadata("withGenericOperators.kt")
+      public void testWithGenericOperators() {
+        run("withGenericOperators.kt");
+      }
     }
   }
 
@@ -3091,6 +3151,54 @@ public class FirIdeNormalAnalysisLibrarySourceModuleResolveSymbolTestGenerated e
     @Test
     public void testAllFilesPresentInInvoke() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/components/resolver/singleByPsi/invoke"), Pattern.compile("^(.+)\\.kt$"), null, true, "withTestCompilerPluginEnabled", "withErrors", "missingDependency", "cloneable");
+    }
+
+    @Test
+    @TestMetadata("contextArgumentToContextualType.kt")
+    public void testContextArgumentToContextualType() {
+      run("contextArgumentToContextualType.kt");
+    }
+
+    @Test
+    @TestMetadata("contextArgumentToContextualTypeWithAllAsParameters.kt")
+    public void testContextArgumentToContextualTypeWithAllAsParameters() {
+      run("contextArgumentToContextualTypeWithAllAsParameters.kt");
+    }
+
+    @Test
+    @TestMetadata("contextArgumentToContextualTypeWithArgument.kt")
+    public void testContextArgumentToContextualTypeWithArgument() {
+      run("contextArgumentToContextualTypeWithArgument.kt");
+    }
+
+    @Test
+    @TestMetadata("contextArgumentToContextualTypeWithImplicitReceiver.kt")
+    public void testContextArgumentToContextualTypeWithImplicitReceiver() {
+      run("contextArgumentToContextualTypeWithImplicitReceiver.kt");
+    }
+
+    @Test
+    @TestMetadata("contextArgumentToContextualTypeWithImplicitReceiverAndParameter.kt")
+    public void testContextArgumentToContextualTypeWithImplicitReceiverAndParameter() {
+      run("contextArgumentToContextualTypeWithImplicitReceiverAndParameter.kt");
+    }
+
+    @Test
+    @TestMetadata("contextArgumentToContextualTypeWithReceiver.kt")
+    public void testContextArgumentToContextualTypeWithReceiver() {
+      run("contextArgumentToContextualTypeWithReceiver.kt");
+    }
+
+    @Test
+    @TestMetadata("contextArgumentToContextualTypeWithReceiverAsParameter.kt")
+    public void testContextArgumentToContextualTypeWithReceiverAsParameter() {
+      run("contextArgumentToContextualTypeWithReceiverAsParameter.kt");
+    }
+
+    @Test
+    @TestMetadata("contextArgumentToContextualTypeWithReceiverAsParameterAndParameter.kt")
+    public void testContextArgumentToContextualTypeWithReceiverAsParameterAndParameter() {
+      run("contextArgumentToContextualTypeWithReceiverAsParameterAndParameter.kt");
     }
 
     @Test
