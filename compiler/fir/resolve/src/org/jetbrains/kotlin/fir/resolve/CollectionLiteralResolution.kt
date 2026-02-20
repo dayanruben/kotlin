@@ -6,51 +6,118 @@
 package org.jetbrains.kotlin.fir.resolve
 
 import org.jetbrains.kotlin.KtFakeSourceElementKind
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.fakeElement
 import org.jetbrains.kotlin.fir.declarations.processAllDeclaredCallables
 import org.jetbrains.kotlin.fir.declarations.utils.isOperator
+import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.expressions.*
-import org.jetbrains.kotlin.fir.expressions.builder.buildArgumentList
 import org.jetbrains.kotlin.fir.expressions.builder.buildFunctionCall
-import org.jetbrains.kotlin.fir.expressions.builder.buildResolvedQualifier
 import org.jetbrains.kotlin.fir.references.builder.buildSimpleNamedReference
 import org.jetbrains.kotlin.fir.resolve.calls.ConeAtomWithCandidate
 import org.jetbrains.kotlin.fir.resolve.calls.ConeCollectionLiteralAtom
 import org.jetbrains.kotlin.fir.resolve.calls.ResolutionContext
+import org.jetbrains.kotlin.fir.resolve.calls.candidate.CallInfo
+import org.jetbrains.kotlin.fir.resolve.calls.candidate.CallKind
 import org.jetbrains.kotlin.fir.resolve.calls.candidate.Candidate
 import org.jetbrains.kotlin.fir.resolve.calls.candidate.FirNamedReferenceWithCandidate
+import org.jetbrains.kotlin.fir.resolve.calls.candidate.ImplicitInvokeMode
+import org.jetbrains.kotlin.fir.resolve.calls.candidate.createErrorReferenceWithErrorCandidate
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
+import org.jetbrains.kotlin.resolve.CollectionNames
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
+
+context(context: ResolutionContext)
+fun resolveCollectionLiteralToPreparedCall(
+    preparedCall: FirFunctionCall,
+    collectionLiteralAtom: ConeCollectionLiteralAtom,
+    topLevelCandidate: Candidate,
+): FirFunctionCall {
+    var call = preparedCall
+    call =
+        context.bodyResolveComponents.callResolver.resolveCallAndSelectCandidate(call, ResolutionMode.ContextDependent, topLevelCandidate)
+    call = context.bodyResolveComponents.callCompleter.completeCall(call, ResolutionMode.ContextDependent)
+
+    return call.also {
+        postprocessCollectionLiteralCall(it, topLevelCandidate, collectionLiteralAtom)
+    }
+}
+
+context(context: ResolutionContext)
+fun resolveCollectionLiteralToErrorCall(
+    diagnostic: ConeDiagnostic,
+    collectionLiteralAtom: ConeCollectionLiteralAtom,
+    topLevelCandidate: Candidate,
+): FirFunctionCall {
+    val components = context.bodyResolveComponents
+    val collectionLiteral = collectionLiteralAtom.expression
+    val callInfo = CallInfo(
+        collectionLiteral,
+        CallKind.Function,
+        OperatorNameConventions.OF,
+        explicitReceiver = null,
+        argumentList = collectionLiteral.argumentList,
+        isUsedAsGetClassReceiver = false,
+        typeArguments = emptyList(),
+        session = context.session,
+        containingFile = components.file,
+        containingDeclarations = components.containingDeclarations,
+        resolutionMode = ResolutionMode.ContextDependent,
+        origin = FirFunctionCallOrigin.Operator,
+        implicitInvokeMode = ImplicitInvokeMode.None,
+        containingCandidateForCollectionLiteral = topLevelCandidate,
+    )
+
+    val errorReference = createErrorReferenceWithErrorCandidate(
+        callInfo = callInfo,
+        diagnostic = diagnostic,
+        source = collectionLiteralAtom.expression.source?.fakeElement(KtFakeSourceElementKind.CalleeReferenceForOperatorOfCall),
+        resolutionContext = context,
+        resolutionStageRunner = components.resolutionStageRunner,
+    )
+
+    var call = buildFunctionCall {
+        source = collectionLiteral.source
+        argumentList = collectionLiteral.argumentList
+        calleeReference = errorReference
+        origin = FirFunctionCallOrigin.Operator
+    }
+
+    call = components.callCompleter.completeCall(call, ResolutionMode.ContextDependent)
+
+    return call.also {
+        postprocessCollectionLiteralCall(it, topLevelCandidate, collectionLiteralAtom)
+    }
+}
+
+private fun postprocessCollectionLiteralCall(
+    replacementForCL: FirFunctionCall,
+    topLevelCandidate: Candidate,
+    collectionLiteralAtom: ConeCollectionLiteralAtom,
+) {
+    val calleeReference = replacementForCL.calleeReference as? FirNamedReferenceWithCandidate
+        ?: error("Collection literal is expected to be resolved to a call with named candidate.")
+    topLevelCandidate.system.replaceContentWith(calleeReference.candidate.system.currentStorage())
+    collectionLiteralAtom.subAtom = ConeAtomWithCandidate(collectionLiteralAtom.expression, calleeReference.candidate)
+}
+
+context(context: ResolutionContext)
+fun prepareFunctionCallForFallback(collectionLiteral: FirCollectionLiteral): FirFunctionCall {
+    val packageName = StandardNames.COLLECTIONS_PACKAGE_FQ_NAME
+    val functionName = CollectionNames.Factories.LIST_OF
+
+    return context.bodyResolveComponents.buildCollectionLiteralCallForStdlibType(packageName, functionName, collectionLiteral)
+}
 
 abstract class CollectionLiteralResolutionStrategy(protected val context: ResolutionContext) {
     protected val components: BodyResolveComponents get() = context.bodyResolveComponents
 
-    fun resolveCollectionLiteral(
-        collectionLiteralAtom: ConeCollectionLiteralAtom,
-        topLevelCandidate: Candidate,
-        expectedType: FirRegularClassSymbol?,
-    ): FirFunctionCall? {
-        var call = prepareRawCall(collectionLiteralAtom.expression, topLevelCandidate, expectedType) ?: return null
-        call = components.callResolver.resolveCallAndSelectCandidate(call, ResolutionMode.ContextDependent, topLevelCandidate)
-        call = context.bodyResolveComponents.callCompleter.completeCall(call, ResolutionMode.ContextDependent)
-
-        return when (val calleeRef = call.calleeReference) {
-            is FirNamedReferenceWithCandidate -> {
-                topLevelCandidate.system.replaceContentWith(calleeRef.candidate.system.currentStorage())
-                collectionLiteralAtom.subAtom = ConeAtomWithCandidate(collectionLiteralAtom.expression, calleeRef.candidate)
-                call
-            }
-            else -> call
-        }
-    }
-
     internal abstract fun declaresOperatorOf(expectedType: FirRegularClassSymbol): Boolean
 
-    protected abstract fun prepareRawCall(
+    abstract fun prepareRawCall(
         collectionLiteral: FirCollectionLiteral,
-        topLevelCandidate: Candidate,
         expectedClass: FirRegularClassSymbol?
     ): FirFunctionCall?
 }
@@ -90,7 +157,6 @@ private class CollectionLiteralResolutionStrategyThroughCompanion(context: Resol
 
     override fun prepareRawCall(
         collectionLiteral: FirCollectionLiteral,
-        topLevelCandidate: Candidate,
         expectedClass: FirRegularClassSymbol?
     ): FirFunctionCall? {
         val companion = expectedClass?.companionObjectIfDefinedOperatorOf ?: return null
@@ -121,105 +187,17 @@ private class CollectionLiteralResolutionStrategyForStdlibType(context: Resoluti
 
     override fun prepareRawCall(
         collectionLiteral: FirCollectionLiteral,
-        topLevelCandidate: Candidate,
         expectedClass: FirRegularClassSymbol?,
     ): FirFunctionCall? {
         if (expectedClass == null) return null
         val (packageName, functionName) = toCollectionOfFactoryPackageAndName(expectedClass, context.session) ?: return null
 
-        return buildFunctionCall {
-            explicitReceiver = buildResolvedQualifier {
-                packageFqName = packageName
-                source = collectionLiteral.source?.fakeElement(KtFakeSourceElementKind.DesugaredReceiverForOperatorOfCall)
-                resolvedToCompanionObject = false
-            }.apply {
-                setTypeOfQualifier(components)
-            }
-            source = collectionLiteral.source
-            calleeReference = buildSimpleNamedReference {
-                source = collectionLiteral.source?.fakeElement(KtFakeSourceElementKind.CalleeReferenceForOperatorOfCall)
-                name = functionName
-            }
-            argumentList = collectionLiteral.argumentList
-        }
+        return components.buildCollectionLiteralCallForStdlibType(packageName, functionName, collectionLiteral)
     }
-
 }
 
 context(context: ResolutionContext)
 fun <T : Any> tryAllCLResolutionStrategies(attempt: CollectionLiteralResolutionStrategy.() -> T?): T? {
     CollectionLiteralResolutionStrategyThroughCompanion(context).attempt()?.let { return it }
     return CollectionLiteralResolutionStrategyForStdlibType(context).attempt()
-}
-
-fun ResolutionContext.runResolutionForDanglingCollectionLiteral(collectionLiteral: FirCollectionLiteral) {
-    // If there are any diagnostics on the call that we miss, even better: we report `UNSUPPORTED_COLLECTION_LITERAL_TYPE` anyway.
-    val fakeCall = bodyResolveComponents.syntheticCallGenerator
-        .generateFakeCallForDanglingCollectionLiteral(collectionLiteral, this)
-    val completedCall = bodyResolveComponents.callCompleter.completeCall(fakeCall, ResolutionMode.ContextIndependent)
-
-    val newArgumentList = buildArgumentList {
-        for (argument in completedCall.arguments) {
-            check(argument is FirVarargArgumentsExpression) { "Arguments should me mapped to vararg" }
-            arguments += argument.arguments
-        }
-    }
-
-    collectionLiteral.replaceArgumentList(newArgumentList)
-}
-
-context(resolutionContext: ResolutionContext)
-fun ConeKotlinType.getClassRepresentativeForCollectionLiteralResolution(): FirRegularClassSymbol? {
-    return when (this) {
-        is ConeFlexibleType -> lowerBound.getClassRepresentativeForCollectionLiteralResolution()
-        is ConeCapturedType -> constructor.lowerType?.getClassRepresentativeForCollectionLiteralResolution()
-        is ConeDefinitelyNotNullType -> {
-            // very rarely, but still needed, because there might be an expected type of form `Captured(in SomeCollection?) & Any`
-            original.getClassRepresentativeForCollectionLiteralResolution()
-        }
-        is ConeDynamicType,
-        is ConeIntersectionType,
-        is ConeStubType,
-        is ConeTypeVariableType,
-        is ConeIntegerLiteralType,
-            -> null
-        is ConeLookupTagBasedType ->
-            when (val symbol = lookupTag.toSymbol()) {
-                is FirTypeParameterSymbol, is FirAnonymousObjectSymbol, null -> null
-                is FirRegularClassSymbol -> symbol
-                is FirTypeAliasSymbol -> fullyExpandedType().getClassRepresentativeForCollectionLiteralResolution()
-            }
-    }
-}
-
-/**
- * For Kotlin class:
- *  There is a companion && in this companion at least one operator `of` is declared.
- *  If all the `of` operators are deprecated with `level=HIDDEN`, the class must be considered as not-having `of` operator
- *   ([KT-83165](https://youtrack.jetbrains.com/issue/KT-83165)).
- *  If the overloads of `of` are not visible from the call-site, the class must be considered as not-having `of` operator
- *   ([KT-84072](https://youtrack.jetbrains.com/issue/KT-84072)).
- *
- * For Java class:
- *  Static `of` with vararg is declared which fulfills all the restrictions on `of` (KT-80494).
- *
- * Additionally:
- *  `List`, `Set`, `MutableList`, `MutableSet`, `Sequence`, `Array`, primitive arrays, and unsigned arrays all declare operator `of`.
- *  ([KT-81722](https://youtrack.jetbrains.com/issue/KT-81722) for stdlib support).
- */
-context(resolutionContext: ResolutionContext)
-fun FirRegularClassSymbol.declaresOperatorOf(): Boolean {
-    return tryAllCLResolutionStrategies {
-        if (declaresOperatorOf(this@declaresOperatorOf)) true
-        else null
-    } ?: false
-}
-
-context(context: ResolutionContext)
-fun Collection<FirRegularClassSymbol>.chooseSingleClassFromIntersectionComponents(): FirRegularClassSymbol? {
-    return firstOrNull { candidate ->
-        all { other ->
-            candidate.fir.isSubclassOf(other.toLookupTag(), context.session, isStrict = false)
-        }
-    }
 }

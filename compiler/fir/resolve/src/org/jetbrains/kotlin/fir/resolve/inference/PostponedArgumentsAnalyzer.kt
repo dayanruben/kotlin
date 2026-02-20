@@ -26,9 +26,12 @@ import org.jetbrains.kotlin.fir.resolve.getClassRepresentativeForCollectionLiter
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeLambdaArgumentConstraintPositionWithCoercionToUnit
 import org.jetbrains.kotlin.fir.resolve.isImplicitUnitForEmptyLambda
 import org.jetbrains.kotlin.fir.resolve.lambdaWithExplicitEmptyReturns
+import org.jetbrains.kotlin.fir.resolve.prepareFunctionCallForFallback
+import org.jetbrains.kotlin.fir.resolve.resolveCollectionLiteralToErrorCall
+import org.jetbrains.kotlin.fir.resolve.resolveCollectionLiteralToPreparedCall
 import org.jetbrains.kotlin.fir.resolve.runContextSensitiveResolutionForPropertyAccess
 import org.jetbrains.kotlin.fir.resolve.substitution.asCone
-import org.jetbrains.kotlin.fir.resolve.runResolutionForDanglingCollectionLiteral
+import org.jetbrains.kotlin.fir.resolve.toConeDiagnostic
 import org.jetbrains.kotlin.fir.resolve.tryAllCLResolutionStrategies
 import org.jetbrains.kotlin.fir.resolvedTypeFromPrototype
 import org.jetbrains.kotlin.fir.types.*
@@ -226,7 +229,7 @@ class PostponedArgumentsAnalyzer(
     ) {
         val originalExpression = atom.expression
 
-        val newExpression: FirFunctionCall? = context(resolutionContext) {
+        val newExpression: FirFunctionCall = context(resolutionContext) {
             val classForResolution = when (precalculatedBounds) {
                 is CollectionLiteralBounds.SingleBound -> precalculatedBounds.bound
                 is CollectionLiteralBounds.NonTvExpected -> precalculatedBounds.bound
@@ -235,16 +238,25 @@ class PostponedArgumentsAnalyzer(
                 else -> null
             }
 
-            tryAllCLResolutionStrategies {
-                resolveCollectionLiteral(atom, topLevelCandidate, classForResolution)
+            val resolvedThroughRegularStrategies = tryAllCLResolutionStrategies {
+                val preparedCall = prepareRawCall(originalExpression, classForResolution) ?: return@tryAllCLResolutionStrategies null
+                resolveCollectionLiteralToPreparedCall(preparedCall, atom, topLevelCandidate)
             }
-        }
 
-        if (newExpression == null) {
-            // There may be callable references/lambdas inside collection literal. We need to resolve them somehow.
-            // When fallback is implemented, this part likely will become obsolete.
-            resolutionContext.runResolutionForDanglingCollectionLiteral(originalExpression)
-            return
+            when {
+                resolvedThroughRegularStrategies != null -> resolvedThroughRegularStrategies
+                precalculatedBounds is CollectionLiteralBounds.Ambiguity -> {
+                    resolveCollectionLiteralToErrorCall(
+                        precalculatedBounds.toConeDiagnostic(),
+                        atom,
+                        topLevelCandidate,
+                    )
+                }
+                else -> {
+                    val preparedCall = prepareFunctionCallForFallback(originalExpression)
+                    resolveCollectionLiteralToPreparedCall(preparedCall, atom, topLevelCandidate)
+                }
+            }
         }
 
         atom.containingCallCandidate.setUpdatedCollectionLiteral(originalExpression, newExpression)
