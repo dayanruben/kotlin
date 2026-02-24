@@ -11,7 +11,8 @@ import org.jetbrains.kotlin.backend.common.serialization.encodings.BinarySymbolD
 import org.jetbrains.kotlin.backend.common.serialization.encodings.BinarySymbolData.SymbolKind.*
 import org.jetbrains.kotlin.backend.common.serialization.proto.FileEntry
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrConst.ValueCase.*
-import org.jetbrains.kotlin.backend.common.serialization.proto.IrOperation.OperationCase.*
+import org.jetbrains.kotlin.backend.common.serialization.proto.IrExpression.OperationCase.*
+import org.jetbrains.kotlin.backend.common.serialization.proto.IrOperationPre_2_4_0.OperationCase.*
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrStatement.StatementCase
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrVarargElement.VarargElementCase
 import org.jetbrains.kotlin.descriptors.SourceElement
@@ -59,7 +60,7 @@ import org.jetbrains.kotlin.backend.common.serialization.proto.IrGetObject as Pr
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrGetValue as ProtoGetValue
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrInstanceInitializerCall as ProtoInstanceInitializerCall
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrLocalDelegatedPropertyReference as ProtoLocalDelegatedPropertyReference
-import org.jetbrains.kotlin.backend.common.serialization.proto.IrOperation as ProtoOperation
+import org.jetbrains.kotlin.backend.common.serialization.proto.IrOperationPre_2_4_0 as ProtoOperationPre2_4_0
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrPropertyReference as ProtoPropertyReference
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrReturn as ProtoReturn
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrSetField as ProtoSetField
@@ -78,7 +79,7 @@ import org.jetbrains.kotlin.backend.common.serialization.proto.IrVarargElement a
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrWhen as ProtoWhen
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrWhile as ProtoWhile
 import org.jetbrains.kotlin.backend.common.serialization.proto.Loop as ProtoLoop
-import org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon as ProtoMemberAccessCommon
+import org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0 as ProtoMemberAccessCommonPre_2_4_0
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrRichFunctionReference as ProtoRichFunctionReference
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrRichPropertyReference as ProtoRichPropertyReference
 
@@ -206,7 +207,11 @@ class IrBodyDeserializer(
         return block(origin, statements)
     }
 
-    private fun deserializeMemberAccessCommon(access: IrMemberAccessExpression<*>, proto: ProtoMemberAccessCommon) {
+    private fun deserializeMemberAccessCommonPre_2_4_0(access: IrMemberAccessExpression<*>, proto: ProtoMemberAccessCommonPre_2_4_0?) {
+        if (proto == null) {
+            return
+        }
+
         if (proto.hasDispatchReceiver() || proto.hasExtensionReceiver() || proto.regularArgumentCount > 0) {
             // Pre 2.2.0 scheme: arguments are separated by their kind.
             if (proto.hasDispatchReceiver()) {
@@ -219,15 +224,21 @@ class IrBodyDeserializer(
                 access.arguments += if (arg.hasExpression()) deserializeExpression(arg.expression) else null
             }
         } else {
-            // Post 2.2.0 scheme: all arguments are in a single list.
-            access.arguments.assignFrom(proto.argumentList) {
+            // Post 2.2.0 scheme: all arguments are in a single list, wrapped in a NullableIrExpression.
+            access.arguments.assignFrom(proto.argumentPre240List) {
                 if (it.hasExpression()) deserializeExpression(it.expression) else null
             }
         }
 
-        access.typeArguments.assignFrom(proto.typeArgumentList) {
-            declarationDeserializer.deserializeNullableIrType(it)
-        }
+        access.typeArguments.assignFrom(deserializeTypeArguments(proto.typeArgumentList))
+    }
+
+    private fun deserializeArguments(rawArgumentList: List<ProtoExpression>): List<IrExpression?> {
+        return rawArgumentList.map { deserializeNullableExpression(it) }
+    }
+
+    private fun deserializeTypeArguments(rawTypeArgumentList: List<Int>): List<IrType?> {
+        return rawTypeArgumentList.map { declarationDeserializer.deserializeNullableIrType(it) }
     }
 
     private fun deserializeClassReference(
@@ -318,7 +329,9 @@ class IrBodyDeserializer(
             deserializeIrStatementOrigin(proto.hasOriginName()) { proto.originName },
             SourceElement.NO_SOURCE,
         ).also {
-            deserializeMemberAccessCommon(it, proto.memberAccess)
+            deserializeMemberAccessCommonPre_2_4_0(it, proto.memberAccessPre240)
+            it.arguments.addAll(deserializeArguments(proto.argumentList))
+            it.typeArguments.addAll(deserializeTypeArguments(proto.typeArgumentList))
         }
     }
 
@@ -331,7 +344,9 @@ class IrBodyDeserializer(
             deserializeIrStatementOrigin(proto.hasOriginName()) { proto.originName },
             SourceElement.NO_SOURCE,
         ).also {
-            deserializeMemberAccessCommon(it, proto.memberAccess)
+            deserializeMemberAccessCommonPre_2_4_0(it, proto.memberAccessPre240)
+            it.arguments.addAll(deserializeArguments(proto.argumentList))
+            it.typeArguments.addAll(deserializeTypeArguments(proto.typeArgumentList))
         }
     }
 
@@ -346,7 +361,9 @@ class IrBodyDeserializer(
             origin,
             superSymbol
         )
-        deserializeMemberAccessCommon(call, proto.memberAccess)
+        deserializeMemberAccessCommonPre_2_4_0(call, proto.memberAccessPre240)
+        call.arguments.addAll(deserializeArguments(proto.argumentList))
+        call.typeArguments.addAll(deserializeTypeArguments(proto.typeArgumentList))
         return call
     }
 
@@ -374,7 +391,9 @@ class IrBodyDeserializer(
             symbol,
             null,
         )
-        deserializeMemberAccessCommon(call, proto.memberAccess)
+        deserializeMemberAccessCommonPre_2_4_0(call, proto.memberAccessPre240)
+        call.arguments.addAll(deserializeArguments(proto.argumentList))
+        call.typeArguments.addAll(deserializeTypeArguments(proto.typeArgumentList))
         return call
     }
 
@@ -392,7 +411,9 @@ class IrBodyDeserializer(
             symbol,
             null,
         )
-        deserializeMemberAccessCommon(call, proto.memberAccess)
+        deserializeMemberAccessCommonPre_2_4_0(call, proto.memberAccessPre240)
+        call.arguments.addAll(deserializeArguments(proto.argumentList))
+        call.typeArguments.addAll(deserializeTypeArguments(proto.typeArgumentList))
         return call
     }
 
@@ -505,8 +526,9 @@ class IrBodyDeserializer(
             reflectionTarget,
             origin,
         )
-        deserializeMemberAccessCommon(callable, proto.memberAccess)
-
+        deserializeMemberAccessCommonPre_2_4_0(callable, proto.memberAccessPre240)
+        callable.arguments.addAll(deserializeArguments(proto.argumentList))
+        callable.typeArguments.addAll(deserializeTypeArguments(proto.typeArgumentList))
         return callable
     }
 
@@ -603,7 +625,9 @@ class IrBodyDeserializer(
             setter,
             origin,
         )
-        deserializeMemberAccessCommon(callable, proto.memberAccess)
+        deserializeMemberAccessCommonPre_2_4_0(callable, proto.memberAccessPre240)
+        callable.arguments.addAll(deserializeArguments(proto.argumentList))
+        callable.typeArguments.addAll(deserializeTypeArguments(proto.typeArgumentList))
         return callable
     }
 
@@ -879,7 +903,53 @@ class IrBodyDeserializer(
             -> error("Const deserialization error: ${proto.valueCase} ")
         }
 
-    private fun deserializeOperation(proto: ProtoOperation, start: Int, end: Int, type: IrType): IrExpression =
+    private fun deserializeOperation(proto: ProtoExpression, start: Int, end: Int, type: IrType): IrExpression? =
+        when (proto.operationCase!!) {
+            OP_BLOCK -> deserializeBlock(proto.opBlock, start, end, type)
+            OP_RETURNABLE_BLOCK -> deserializeReturnableBlock(proto.opReturnableBlock, start, end, type)
+            OP_INLINED_FUNCTION_BLOCK -> deserializeInlinedFunctionBlock(proto.opInlinedFunctionBlock, start, end, type)
+            OP_BREAK -> deserializeBreak(proto.opBreak, start, end, type)
+            OP_CLASS_REFERENCE -> deserializeClassReference(proto.opClassReference, start, end, type)
+            OP_CALL -> deserializeCall(proto.opCall, start, end, type)
+            OP_COMPOSITE -> deserializeComposite(proto.opComposite, start, end, type)
+            OP_CONST -> deserializeConst(proto.opConst, start, end, type)
+            OP_CONTINUE -> deserializeContinue(proto.opContinue, start, end, type)
+            OP_DELEGATING_CONSTRUCTOR_CALL -> deserializeDelegatingConstructorCall(proto.opDelegatingConstructorCall, start, end)
+            OP_DO_WHILE -> deserializeDoWhile(proto.opDoWhile, start, end, type)
+            OP_ENUM_CONSTRUCTOR_CALL -> deserializeEnumConstructorCall(proto.opEnumConstructorCall, start, end)
+            OP_FUNCTION_REFERENCE -> deserializeFunctionReference(proto.opFunctionReference, start, end, type)
+            OP_GET_ENUM_VALUE -> deserializeGetEnumValue(proto.opGetEnumValue, start, end, type)
+            OP_GET_CLASS -> deserializeGetClass(proto.opGetClass, start, end, type)
+            OP_GET_FIELD -> deserializeGetField(proto.opGetField, start, end, type)
+            OP_GET_OBJECT -> deserializeGetObject(proto.opGetObject, start, end, type)
+            OP_GET_VALUE -> deserializeGetValue(proto.opGetValue, start, end, type)
+            OP_LOCAL_DELEGATED_PROPERTY_REFERENCE ->
+                deserializeIrLocalDelegatedPropertyReference(proto.opLocalDelegatedPropertyReference, start, end, type)
+            OP_INSTANCE_INITIALIZER_CALL -> deserializeInstanceInitializerCall(proto.opInstanceInitializerCall, start, end)
+            OP_PROPERTY_REFERENCE -> deserializePropertyReference(proto.opPropertyReference, start, end, type)
+            OP_RETURN -> deserializeReturn(proto.opReturn, start, end)
+            OP_SET_FIELD -> deserializeSetField(proto.opSetField, start, end)
+            OP_SET_VALUE -> deserializeSetValue(proto.opSetValue, start, end)
+            OP_STRING_CONCAT -> deserializeStringConcat(proto.opStringConcat, start, end, type)
+            OP_THROW -> deserializeThrow(proto.opThrow, start, end)
+            OP_TRY -> deserializeTry(proto.opTry, start, end, type)
+            OP_TYPE_OP -> deserializeTypeOp(proto.opTypeOp, start, end, type)
+            OP_VARARG -> deserializeVararg(proto.opVararg, start, end, type)
+            OP_WHEN -> deserializeWhen(proto.opWhen, start, end, type)
+            OP_WHILE -> deserializeWhile(proto.opWhile, start, end, type)
+            OP_DYNAMIC_MEMBER -> deserializeDynamicMemberExpression(proto.opDynamicMember, start, end, type)
+            OP_DYNAMIC_OPERATOR -> deserializeDynamicOperatorExpression(proto.opDynamicOperator, start, end, type)
+            OP_CONSTRUCTOR_CALL -> deserializeConstructorCall(proto.opConstructorCall, start, end, type)
+            OP_FUNCTION_EXPRESSION -> deserializeFunctionExpression(proto.opFunctionExpression, start, end, type)
+            OP_RICH_FUNCTION_REFERENCE -> deserializeRichFunctionReference(proto.opRichFunctionReference, start, end, type)
+            OP_RICH_PROPERTY_REFERENCE -> deserializeRichPropertyReference(proto.opRichPropertyReference, start, end, type)
+            OP_ERROR_EXPRESSION -> deserializeErrorExpression(proto.opErrorExpression, start, end, type)
+            OP_ERROR_CALL_EXPRESSION -> deserializeErrorCallExpression(proto.opErrorCallExpression, start, end, type)
+            OP_MISSING_EXPRESSION -> null
+            ProtoExpression.OperationCase.OPERATION_NOT_SET -> error("Expression deserialization not implemented: ${proto.operationCase}")
+        }
+
+    private fun deserializeOperationPre240(proto: ProtoOperationPre2_4_0, start: Int, end: Int, type: IrType): IrExpression =
         when (proto.operationCase!!) {
             BLOCK -> deserializeBlock(proto.block, start, end, type)
             RETURNABLE_BLOCK -> deserializeReturnableBlock(proto.returnableBlock, start, end, type)
@@ -899,12 +969,8 @@ class IrBodyDeserializer(
             GET_FIELD -> deserializeGetField(proto.getField, start, end, type)
             GET_OBJECT -> deserializeGetObject(proto.getObject, start, end, type)
             GET_VALUE -> deserializeGetValue(proto.getValue, start, end, type)
-            LOCAL_DELEGATED_PROPERTY_REFERENCE -> deserializeIrLocalDelegatedPropertyReference(
-                proto.localDelegatedPropertyReference,
-                start,
-                end,
-                type
-            )
+            LOCAL_DELEGATED_PROPERTY_REFERENCE ->
+                deserializeIrLocalDelegatedPropertyReference(proto.localDelegatedPropertyReference, start, end, type)
             INSTANCE_INITIALIZER_CALL -> deserializeInstanceInitializerCall(proto.instanceInitializerCall, start, end)
             PROPERTY_REFERENCE -> deserializePropertyReference(proto.propertyReference, start, end, type)
             RETURN -> deserializeReturn(proto.`return`, start, end)
@@ -925,19 +991,26 @@ class IrBodyDeserializer(
             RICH_PROPERTY_REFERENCE -> deserializeRichPropertyReference(proto.richPropertyReference, start, end, type)
             ERROR_EXPRESSION -> deserializeErrorExpression(proto.errorExpression, start, end, type)
             ERROR_CALL_EXPRESSION -> deserializeErrorCallExpression(proto.errorCallExpression, start, end, type)
-            OPERATION_NOT_SET -> error("Expression deserialization not implemented: ${proto.operationCase}")
+            ProtoOperationPre2_4_0.OperationCase.OPERATION_NOT_SET -> error("Expression deserialization not implemented: ${proto.operationCase}")
         }
 
-    fun deserializeExpression(proto: ProtoExpression): IrExpression {
+    fun deserializeNullableExpression(proto: ProtoExpression): IrExpression? {
         val coordinates = BinaryCoordinates.decode(proto.coordinates)
         val start = coordinates.startOffset
         val end = coordinates.endOffset
         val type = declarationDeserializer.deserializeIrType(proto.type)
-        val operation = proto.operation
-        val expression = deserializeOperation(operation, start, end, type)
+
+        val expression = if (proto.operationCase != ProtoExpression.OperationCase.OPERATION_NOT_SET) {
+            deserializeOperation(proto, start, end, type)
+        } else {
+            deserializeOperationPre240(proto.operationPre240, start, end, type)
+        }
 
         return expression
     }
+
+    fun deserializeExpression(proto: ProtoExpression): IrExpression =
+        deserializeNullableExpression(proto) ?: error("Expected non-null expression, got: ${proto.operationCase}")
 
     private fun deserializeIrStatementOrigin(protoName: Int): IrStatementOrigin {
         val originName = libraryFile.string(protoName)

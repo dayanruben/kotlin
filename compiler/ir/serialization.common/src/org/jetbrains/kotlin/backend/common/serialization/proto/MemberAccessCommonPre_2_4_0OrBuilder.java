@@ -3,35 +3,35 @@
 
 package org.jetbrains.kotlin.backend.common.serialization.proto;
 
-public interface MemberAccessCommonOrBuilder extends
-    // @@protoc_insertion_point(interface_extends:org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon)
+public interface MemberAccessCommonPre_2_4_0OrBuilder extends
+    // @@protoc_insertion_point(interface_extends:org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0)
     org.jetbrains.kotlin.protobuf.MessageLiteOrBuilder {
 
   /**
-   * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument = 6;</code>
+   * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument_pre_2_4_0 = 6;</code>
    *
    * <pre>
-   * Value argument serialization scheme after 2.2.0
+   * Value argument serialization scheme before 2.4.0
    * </pre>
    */
   java.util.List<org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression> 
-      getArgumentList();
+      getArgumentPre240List();
   /**
-   * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument = 6;</code>
+   * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument_pre_2_4_0 = 6;</code>
    *
    * <pre>
-   * Value argument serialization scheme after 2.2.0
+   * Value argument serialization scheme before 2.4.0
    * </pre>
    */
-  org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression getArgument(int index);
+  org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression getArgumentPre240(int index);
   /**
-   * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument = 6;</code>
+   * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument_pre_2_4_0 = 6;</code>
    *
    * <pre>
-   * Value argument serialization scheme after 2.2.0
+   * Value argument serialization scheme before 2.4.0
    * </pre>
    */
-  int getArgumentCount();
+  int getArgumentPre240Count();
 
   /**
    * <code>optional .org.jetbrains.kotlin.backend.common.serialization.proto.IrExpression dispatch_receiver = 1;</code>

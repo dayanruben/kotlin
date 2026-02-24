@@ -4,30 +4,30 @@
 package org.jetbrains.kotlin.backend.common.serialization.proto;
 
 /**
- * Protobuf type {@code org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon}
+ * Protobuf type {@code org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0}
  */
-public final class MemberAccessCommon extends
+public final class MemberAccessCommonPre_2_4_0 extends
     org.jetbrains.kotlin.protobuf.GeneratedMessageLite implements
-    // @@protoc_insertion_point(message_implements:org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon)
-    MemberAccessCommonOrBuilder {
-  // Use MemberAccessCommon.newBuilder() to construct.
-  private MemberAccessCommon(org.jetbrains.kotlin.protobuf.GeneratedMessageLite.Builder builder) {
+    // @@protoc_insertion_point(message_implements:org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0)
+    MemberAccessCommonPre_2_4_0OrBuilder {
+  // Use MemberAccessCommonPre_2_4_0.newBuilder() to construct.
+  private MemberAccessCommonPre_2_4_0(org.jetbrains.kotlin.protobuf.GeneratedMessageLite.Builder builder) {
     super(builder);
     this.unknownFields = builder.getUnknownFields();
   }
-  private MemberAccessCommon(boolean noInit) { this.unknownFields = org.jetbrains.kotlin.protobuf.ByteString.EMPTY;}
+  private MemberAccessCommonPre_2_4_0(boolean noInit) { this.unknownFields = org.jetbrains.kotlin.protobuf.ByteString.EMPTY;}
 
-  private static final MemberAccessCommon defaultInstance;
-  public static MemberAccessCommon getDefaultInstance() {
+  private static final MemberAccessCommonPre_2_4_0 defaultInstance;
+  public static MemberAccessCommonPre_2_4_0 getDefaultInstance() {
     return defaultInstance;
   }
 
-  public MemberAccessCommon getDefaultInstanceForType() {
+  public MemberAccessCommonPre_2_4_0 getDefaultInstanceForType() {
     return defaultInstance;
   }
 
   private final org.jetbrains.kotlin.protobuf.ByteString unknownFields;
-  private MemberAccessCommon(
+  private MemberAccessCommonPre_2_4_0(
       org.jetbrains.kotlin.protobuf.CodedInputStream input,
       org.jetbrains.kotlin.protobuf.ExtensionRegistryLite extensionRegistry)
       throws org.jetbrains.kotlin.protobuf.InvalidProtocolBufferException {
@@ -110,10 +110,10 @@ public final class MemberAccessCommon extends
           }
           case 50: {
             if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-              argument_ = new java.util.ArrayList<org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression>();
+              argumentPre240_ = new java.util.ArrayList<org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression>();
               mutable_bitField0_ |= 0x00000001;
             }
-            argument_.add(input.readMessage(org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression.PARSER, extensionRegistry));
+            argumentPre240_.add(input.readMessage(org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression.PARSER, extensionRegistry));
             break;
           }
         }
@@ -131,7 +131,7 @@ public final class MemberAccessCommon extends
         typeArgument_ = java.util.Collections.unmodifiableList(typeArgument_);
       }
       if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-        argument_ = java.util.Collections.unmodifiableList(argument_);
+        argumentPre240_ = java.util.Collections.unmodifiableList(argumentPre240_);
       }
       try {
         unknownFieldsCodedOutput.flush();
@@ -143,75 +143,75 @@ public final class MemberAccessCommon extends
       makeExtensionsImmutable();
     }
   }
-  public static org.jetbrains.kotlin.protobuf.Parser<MemberAccessCommon> PARSER =
-      new org.jetbrains.kotlin.protobuf.AbstractParser<MemberAccessCommon>() {
-    public MemberAccessCommon parsePartialFrom(
+  public static org.jetbrains.kotlin.protobuf.Parser<MemberAccessCommonPre_2_4_0> PARSER =
+      new org.jetbrains.kotlin.protobuf.AbstractParser<MemberAccessCommonPre_2_4_0>() {
+    public MemberAccessCommonPre_2_4_0 parsePartialFrom(
         org.jetbrains.kotlin.protobuf.CodedInputStream input,
         org.jetbrains.kotlin.protobuf.ExtensionRegistryLite extensionRegistry)
         throws org.jetbrains.kotlin.protobuf.InvalidProtocolBufferException {
-      return new MemberAccessCommon(input, extensionRegistry);
+      return new MemberAccessCommonPre_2_4_0(input, extensionRegistry);
     }
   };
 
   @java.lang.Override
-  public org.jetbrains.kotlin.protobuf.Parser<MemberAccessCommon> getParserForType() {
+  public org.jetbrains.kotlin.protobuf.Parser<MemberAccessCommonPre_2_4_0> getParserForType() {
     return PARSER;
   }
 
   private int bitField0_;
-  public static final int ARGUMENT_FIELD_NUMBER = 6;
-  private java.util.List<org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression> argument_;
+  public static final int ARGUMENT_PRE_2_4_0_FIELD_NUMBER = 6;
+  private java.util.List<org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression> argumentPre240_;
   /**
-   * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument = 6;</code>
+   * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument_pre_2_4_0 = 6;</code>
    *
    * <pre>
-   * Value argument serialization scheme after 2.2.0
+   * Value argument serialization scheme before 2.4.0
    * </pre>
    */
-  public java.util.List<org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression> getArgumentList() {
-    return argument_;
+  public java.util.List<org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression> getArgumentPre240List() {
+    return argumentPre240_;
   }
   /**
-   * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument = 6;</code>
+   * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument_pre_2_4_0 = 6;</code>
    *
    * <pre>
-   * Value argument serialization scheme after 2.2.0
+   * Value argument serialization scheme before 2.4.0
    * </pre>
    */
   public java.util.List<? extends org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpressionOrBuilder> 
-      getArgumentOrBuilderList() {
-    return argument_;
+      getArgumentPre240OrBuilderList() {
+    return argumentPre240_;
   }
   /**
-   * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument = 6;</code>
+   * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument_pre_2_4_0 = 6;</code>
    *
    * <pre>
-   * Value argument serialization scheme after 2.2.0
+   * Value argument serialization scheme before 2.4.0
    * </pre>
    */
-  public int getArgumentCount() {
-    return argument_.size();
+  public int getArgumentPre240Count() {
+    return argumentPre240_.size();
   }
   /**
-   * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument = 6;</code>
+   * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument_pre_2_4_0 = 6;</code>
    *
    * <pre>
-   * Value argument serialization scheme after 2.2.0
+   * Value argument serialization scheme before 2.4.0
    * </pre>
    */
-  public org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression getArgument(int index) {
-    return argument_.get(index);
+  public org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression getArgumentPre240(int index) {
+    return argumentPre240_.get(index);
   }
   /**
-   * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument = 6;</code>
+   * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument_pre_2_4_0 = 6;</code>
    *
    * <pre>
-   * Value argument serialization scheme after 2.2.0
+   * Value argument serialization scheme before 2.4.0
    * </pre>
    */
-  public org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpressionOrBuilder getArgumentOrBuilder(
+  public org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpressionOrBuilder getArgumentPre240OrBuilder(
       int index) {
-    return argument_.get(index);
+    return argumentPre240_.get(index);
   }
 
   public static final int DISPATCH_RECEIVER_FIELD_NUMBER = 1;
@@ -311,7 +311,7 @@ public final class MemberAccessCommon extends
   private int typeArgumentMemoizedSerializedSize = -1;
 
   private void initFields() {
-    argument_ = java.util.Collections.emptyList();
+    argumentPre240_ = java.util.Collections.emptyList();
     dispatchReceiver_ = org.jetbrains.kotlin.backend.common.serialization.proto.IrExpression.getDefaultInstance();
     extensionReceiver_ = org.jetbrains.kotlin.backend.common.serialization.proto.IrExpression.getDefaultInstance();
     regularArgument_ = java.util.Collections.emptyList();
@@ -323,8 +323,8 @@ public final class MemberAccessCommon extends
     if (isInitialized == 1) return true;
     if (isInitialized == 0) return false;
 
-    for (int i = 0; i < getArgumentCount(); i++) {
-      if (!getArgument(i).isInitialized()) {
+    for (int i = 0; i < getArgumentPre240Count(); i++) {
+      if (!getArgumentPre240(i).isInitialized()) {
         memoizedIsInitialized = 0;
         return false;
       }
@@ -370,8 +370,8 @@ public final class MemberAccessCommon extends
     for (int i = 0; i < typeArgument_.size(); i++) {
       output.writeInt32NoTag(typeArgument_.get(i));
     }
-    for (int i = 0; i < argument_.size(); i++) {
-      output.writeMessage(6, argument_.get(i));
+    for (int i = 0; i < argumentPre240_.size(); i++) {
+      output.writeMessage(6, argumentPre240_.get(i));
     }
     output.writeRawBytes(unknownFields);
   }
@@ -408,9 +408,9 @@ public final class MemberAccessCommon extends
       }
       typeArgumentMemoizedSerializedSize = dataSize;
     }
-    for (int i = 0; i < argument_.size(); i++) {
+    for (int i = 0; i < argumentPre240_.size(); i++) {
       size += org.jetbrains.kotlin.protobuf.CodedOutputStream
-        .computeMessageSize(6, argument_.get(i));
+        .computeMessageSize(6, argumentPre240_.get(i));
     }
     size += unknownFields.size();
     memoizedSerializedSize = size;
@@ -424,53 +424,53 @@ public final class MemberAccessCommon extends
     return super.writeReplace();
   }
 
-  public static org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon parseFrom(
+  public static org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0 parseFrom(
       org.jetbrains.kotlin.protobuf.ByteString data)
       throws org.jetbrains.kotlin.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon parseFrom(
+  public static org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0 parseFrom(
       org.jetbrains.kotlin.protobuf.ByteString data,
       org.jetbrains.kotlin.protobuf.ExtensionRegistryLite extensionRegistry)
       throws org.jetbrains.kotlin.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon parseFrom(byte[] data)
+  public static org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0 parseFrom(byte[] data)
       throws org.jetbrains.kotlin.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon parseFrom(
+  public static org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0 parseFrom(
       byte[] data,
       org.jetbrains.kotlin.protobuf.ExtensionRegistryLite extensionRegistry)
       throws org.jetbrains.kotlin.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon parseFrom(java.io.InputStream input)
+  public static org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0 parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return PARSER.parseFrom(input);
   }
-  public static org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon parseFrom(
+  public static org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0 parseFrom(
       java.io.InputStream input,
       org.jetbrains.kotlin.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return PARSER.parseFrom(input, extensionRegistry);
   }
-  public static org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon parseDelimitedFrom(java.io.InputStream input)
+  public static org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0 parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return PARSER.parseDelimitedFrom(input);
   }
-  public static org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon parseDelimitedFrom(
+  public static org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0 parseDelimitedFrom(
       java.io.InputStream input,
       org.jetbrains.kotlin.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return PARSER.parseDelimitedFrom(input, extensionRegistry);
   }
-  public static org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon parseFrom(
+  public static org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0 parseFrom(
       org.jetbrains.kotlin.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return PARSER.parseFrom(input);
   }
-  public static org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon parseFrom(
+  public static org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0 parseFrom(
       org.jetbrains.kotlin.protobuf.CodedInputStream input,
       org.jetbrains.kotlin.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -479,21 +479,21 @@ public final class MemberAccessCommon extends
 
   public static Builder newBuilder() { return Builder.create(); }
   public Builder newBuilderForType() { return newBuilder(); }
-  public static Builder newBuilder(org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon prototype) {
+  public static Builder newBuilder(org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0 prototype) {
     return newBuilder().mergeFrom(prototype);
   }
   public Builder toBuilder() { return newBuilder(this); }
 
   /**
-   * Protobuf type {@code org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon}
+   * Protobuf type {@code org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0}
    */
   public static final class Builder extends
       org.jetbrains.kotlin.protobuf.GeneratedMessageLite.Builder<
-        org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon, Builder>
+        org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0, Builder>
       implements
-      // @@protoc_insertion_point(builder_implements:org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon)
-      org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonOrBuilder {
-    // Construct using org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon.newBuilder()
+      // @@protoc_insertion_point(builder_implements:org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0)
+      org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0OrBuilder {
+    // Construct using org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0.newBuilder()
     private Builder() {
       maybeForceBuilderInitialization();
     }
@@ -506,7 +506,7 @@ public final class MemberAccessCommon extends
 
     public Builder clear() {
       super.clear();
-      argument_ = java.util.Collections.emptyList();
+      argumentPre240_ = java.util.Collections.emptyList();
       bitField0_ = (bitField0_ & ~0x00000001);
       dispatchReceiver_ = org.jetbrains.kotlin.backend.common.serialization.proto.IrExpression.getDefaultInstance();
       bitField0_ = (bitField0_ & ~0x00000002);
@@ -523,27 +523,27 @@ public final class MemberAccessCommon extends
       return create().mergeFrom(buildPartial());
     }
 
-    public org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon getDefaultInstanceForType() {
-      return org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon.getDefaultInstance();
+    public org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0 getDefaultInstanceForType() {
+      return org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0.getDefaultInstance();
     }
 
-    public org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon build() {
-      org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon result = buildPartial();
+    public org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0 build() {
+      org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0 result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
       return result;
     }
 
-    public org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon buildPartial() {
-      org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon result = new org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon(this);
+    public org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0 buildPartial() {
+      org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0 result = new org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0(this);
       int from_bitField0_ = bitField0_;
       int to_bitField0_ = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        argument_ = java.util.Collections.unmodifiableList(argument_);
+        argumentPre240_ = java.util.Collections.unmodifiableList(argumentPre240_);
         bitField0_ = (bitField0_ & ~0x00000001);
       }
-      result.argument_ = argument_;
+      result.argumentPre240_ = argumentPre240_;
       if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
         to_bitField0_ |= 0x00000001;
       }
@@ -566,15 +566,15 @@ public final class MemberAccessCommon extends
       return result;
     }
 
-    public Builder mergeFrom(org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon other) {
-      if (other == org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon.getDefaultInstance()) return this;
-      if (!other.argument_.isEmpty()) {
-        if (argument_.isEmpty()) {
-          argument_ = other.argument_;
+    public Builder mergeFrom(org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0 other) {
+      if (other == org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0.getDefaultInstance()) return this;
+      if (!other.argumentPre240_.isEmpty()) {
+        if (argumentPre240_.isEmpty()) {
+          argumentPre240_ = other.argumentPre240_;
           bitField0_ = (bitField0_ & ~0x00000001);
         } else {
-          ensureArgumentIsMutable();
-          argument_.addAll(other.argument_);
+          ensureArgumentPre240IsMutable();
+          argumentPre240_.addAll(other.argumentPre240_);
         }
         
       }
@@ -610,8 +610,8 @@ public final class MemberAccessCommon extends
     }
 
     public final boolean isInitialized() {
-      for (int i = 0; i < getArgumentCount(); i++) {
-        if (!getArgument(i).isInitialized()) {
+      for (int i = 0; i < getArgumentPre240Count(); i++) {
+        if (!getArgumentPre240(i).isInitialized()) {
           
           return false;
         }
@@ -641,11 +641,11 @@ public final class MemberAccessCommon extends
         org.jetbrains.kotlin.protobuf.CodedInputStream input,
         org.jetbrains.kotlin.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon parsedMessage = null;
+      org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0 parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (org.jetbrains.kotlin.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon) e.getUnfinishedMessage();
+        parsedMessage = (org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0) e.getUnfinishedMessage();
         throw e;
       } finally {
         if (parsedMessage != null) {
@@ -656,175 +656,175 @@ public final class MemberAccessCommon extends
     }
     private int bitField0_;
 
-    private java.util.List<org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression> argument_ =
+    private java.util.List<org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression> argumentPre240_ =
       java.util.Collections.emptyList();
-    private void ensureArgumentIsMutable() {
+    private void ensureArgumentPre240IsMutable() {
       if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-        argument_ = new java.util.ArrayList<org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression>(argument_);
+        argumentPre240_ = new java.util.ArrayList<org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression>(argumentPre240_);
         bitField0_ |= 0x00000001;
        }
     }
 
     /**
-     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument = 6;</code>
+     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument_pre_2_4_0 = 6;</code>
      *
      * <pre>
-     * Value argument serialization scheme after 2.2.0
+     * Value argument serialization scheme before 2.4.0
      * </pre>
      */
-    public java.util.List<org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression> getArgumentList() {
-      return java.util.Collections.unmodifiableList(argument_);
+    public java.util.List<org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression> getArgumentPre240List() {
+      return java.util.Collections.unmodifiableList(argumentPre240_);
     }
     /**
-     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument = 6;</code>
+     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument_pre_2_4_0 = 6;</code>
      *
      * <pre>
-     * Value argument serialization scheme after 2.2.0
+     * Value argument serialization scheme before 2.4.0
      * </pre>
      */
-    public int getArgumentCount() {
-      return argument_.size();
+    public int getArgumentPre240Count() {
+      return argumentPre240_.size();
     }
     /**
-     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument = 6;</code>
+     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument_pre_2_4_0 = 6;</code>
      *
      * <pre>
-     * Value argument serialization scheme after 2.2.0
+     * Value argument serialization scheme before 2.4.0
      * </pre>
      */
-    public org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression getArgument(int index) {
-      return argument_.get(index);
+    public org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression getArgumentPre240(int index) {
+      return argumentPre240_.get(index);
     }
     /**
-     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument = 6;</code>
+     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument_pre_2_4_0 = 6;</code>
      *
      * <pre>
-     * Value argument serialization scheme after 2.2.0
+     * Value argument serialization scheme before 2.4.0
      * </pre>
      */
-    public Builder setArgument(
+    public Builder setArgumentPre240(
         int index, org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression value) {
       if (value == null) {
         throw new NullPointerException();
       }
-      ensureArgumentIsMutable();
-      argument_.set(index, value);
+      ensureArgumentPre240IsMutable();
+      argumentPre240_.set(index, value);
 
       return this;
     }
     /**
-     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument = 6;</code>
+     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument_pre_2_4_0 = 6;</code>
      *
      * <pre>
-     * Value argument serialization scheme after 2.2.0
+     * Value argument serialization scheme before 2.4.0
      * </pre>
      */
-    public Builder setArgument(
+    public Builder setArgumentPre240(
         int index, org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression.Builder builderForValue) {
-      ensureArgumentIsMutable();
-      argument_.set(index, builderForValue.build());
+      ensureArgumentPre240IsMutable();
+      argumentPre240_.set(index, builderForValue.build());
 
       return this;
     }
     /**
-     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument = 6;</code>
+     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument_pre_2_4_0 = 6;</code>
      *
      * <pre>
-     * Value argument serialization scheme after 2.2.0
+     * Value argument serialization scheme before 2.4.0
      * </pre>
      */
-    public Builder addArgument(org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression value) {
+    public Builder addArgumentPre240(org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression value) {
       if (value == null) {
         throw new NullPointerException();
       }
-      ensureArgumentIsMutable();
-      argument_.add(value);
+      ensureArgumentPre240IsMutable();
+      argumentPre240_.add(value);
 
       return this;
     }
     /**
-     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument = 6;</code>
+     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument_pre_2_4_0 = 6;</code>
      *
      * <pre>
-     * Value argument serialization scheme after 2.2.0
+     * Value argument serialization scheme before 2.4.0
      * </pre>
      */
-    public Builder addArgument(
+    public Builder addArgumentPre240(
         int index, org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression value) {
       if (value == null) {
         throw new NullPointerException();
       }
-      ensureArgumentIsMutable();
-      argument_.add(index, value);
+      ensureArgumentPre240IsMutable();
+      argumentPre240_.add(index, value);
 
       return this;
     }
     /**
-     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument = 6;</code>
+     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument_pre_2_4_0 = 6;</code>
      *
      * <pre>
-     * Value argument serialization scheme after 2.2.0
+     * Value argument serialization scheme before 2.4.0
      * </pre>
      */
-    public Builder addArgument(
+    public Builder addArgumentPre240(
         org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression.Builder builderForValue) {
-      ensureArgumentIsMutable();
-      argument_.add(builderForValue.build());
+      ensureArgumentPre240IsMutable();
+      argumentPre240_.add(builderForValue.build());
 
       return this;
     }
     /**
-     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument = 6;</code>
+     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument_pre_2_4_0 = 6;</code>
      *
      * <pre>
-     * Value argument serialization scheme after 2.2.0
+     * Value argument serialization scheme before 2.4.0
      * </pre>
      */
-    public Builder addArgument(
+    public Builder addArgumentPre240(
         int index, org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression.Builder builderForValue) {
-      ensureArgumentIsMutable();
-      argument_.add(index, builderForValue.build());
+      ensureArgumentPre240IsMutable();
+      argumentPre240_.add(index, builderForValue.build());
 
       return this;
     }
     /**
-     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument = 6;</code>
+     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument_pre_2_4_0 = 6;</code>
      *
      * <pre>
-     * Value argument serialization scheme after 2.2.0
+     * Value argument serialization scheme before 2.4.0
      * </pre>
      */
-    public Builder addAllArgument(
+    public Builder addAllArgumentPre240(
         java.lang.Iterable<? extends org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression> values) {
-      ensureArgumentIsMutable();
+      ensureArgumentPre240IsMutable();
       org.jetbrains.kotlin.protobuf.AbstractMessageLite.Builder.addAll(
-          values, argument_);
+          values, argumentPre240_);
 
       return this;
     }
     /**
-     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument = 6;</code>
+     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument_pre_2_4_0 = 6;</code>
      *
      * <pre>
-     * Value argument serialization scheme after 2.2.0
+     * Value argument serialization scheme before 2.4.0
      * </pre>
      */
-    public Builder clearArgument() {
-      argument_ = java.util.Collections.emptyList();
+    public Builder clearArgumentPre240() {
+      argumentPre240_ = java.util.Collections.emptyList();
       bitField0_ = (bitField0_ & ~0x00000001);
 
       return this;
     }
     /**
-     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument = 6;</code>
+     * <code>repeated .org.jetbrains.kotlin.backend.common.serialization.proto.NullableIrExpression argument_pre_2_4_0 = 6;</code>
      *
      * <pre>
-     * Value argument serialization scheme after 2.2.0
+     * Value argument serialization scheme before 2.4.0
      * </pre>
      */
-    public Builder removeArgument(int index) {
-      ensureArgumentIsMutable();
-      argument_.remove(index);
+    public Builder removeArgumentPre240(int index) {
+      ensureArgumentPre240IsMutable();
+      argumentPre240_.remove(index);
 
       return this;
     }
@@ -1164,13 +1164,13 @@ public final class MemberAccessCommon extends
       return this;
     }
 
-    // @@protoc_insertion_point(builder_scope:org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon)
+    // @@protoc_insertion_point(builder_scope:org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0)
   }
 
   static {
-    defaultInstance = new MemberAccessCommon(true);
+    defaultInstance = new MemberAccessCommonPre_2_4_0(true);
     defaultInstance.initFields();
   }
 
-  // @@protoc_insertion_point(class_scope:org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommon)
+  // @@protoc_insertion_point(class_scope:org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0)
 }
