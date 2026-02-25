@@ -1,11 +1,10 @@
-import org.gradle.kotlin.dsl.invoke
-import org.gradle.kotlin.dsl.project
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 
 plugins {
     kotlin("jvm")
     `jvm-test-suite`
     id("test-symlink-transformation")
+    id("project-tests-convention")
 }
 
 val noArgCompilerPlugin = configurations.dependencyScope("noArgCompilerPlugin")
@@ -63,6 +62,7 @@ val compatibilityTestsVersions = listOf(
     BuildToolsVersion(KotlinToolingVersion(2, 0, 21, null)),
     BuildToolsVersion(KotlinToolingVersion(2, 3, 0, null)),
     BuildToolsVersion(KotlinToolingVersion(2, 3, 10, null)),
+    BuildToolsVersion(KotlinToolingVersion(2, 3, 20, "RC")),
 )
 
 class BuildToolsVersion(val version: KotlinToolingVersion, val isCurrent: Boolean = false) {
@@ -174,9 +174,11 @@ testing {
                     addSpecificBuildToolsImpl(implVersion.toString())
                 }
                 targets.all {
-                    testTask.configure {
-                        ensureExecutedAgainstExpectedBuildToolsImplVersion(implVersion)
-                        systemProperty("kotlin.build-tools-api.log.level", "DEBUG")
+                    projectTests {
+                        testTask(taskName = testTask.name, jUnitMode = JUnitMode.JUnit5, skipInLocalBuild = false) {
+                            ensureExecutedAgainstExpectedBuildToolsImplVersion(implVersion)
+                            systemProperty("kotlin.build-tools-api.log.level", "DEBUG")
+                        }
                     }
                 }
             }
@@ -187,7 +189,6 @@ testing {
             val isRegular = this@configureSuit.name in businessLogicTestSuits
             dependencies {
                 useJUnitJupiter(libs.versions.junit5.get())
-                runtimeOnly(libs.junit.platform.launcher)
 
                 implementation(project())
                 implementation(project(":kotlin-tooling-core"))
@@ -199,8 +200,10 @@ testing {
 
             targets.all {
                 if (businessLogicTestSuits.any { testTask.name.startsWith(it) }) {
-                    testTask.configure {
-                        systemProperty("kotlin.build-tools-api.log.level", "DEBUG")
+                    projectTests {
+                        testTask(taskName = testTask.name, jUnitMode = JUnitMode.JUnit5, skipInLocalBuild = false) {
+                            systemProperty("kotlin.build-tools-api.log.level", "DEBUG")
+                        }
                     }
                 }
             }

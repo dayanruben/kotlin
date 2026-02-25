@@ -5,31 +5,29 @@
 
 package kotlin.reflect.jvm.internal
 
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyAccessorDescriptor
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl
 import org.jetbrains.kotlin.load.java.JavaDescriptorVisibilities
 import org.jetbrains.kotlin.load.java.descriptors.JavaCallableMemberDescriptor
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedPropertyDescriptor
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedSimpleFunctionDescriptor
+import kotlin.metadata.Modality
 import kotlin.reflect.KParameter
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeParameter
 import kotlin.reflect.KVisibility
 import kotlin.reflect.jvm.internal.types.DescriptorKType
-import kotlin.reflect.jvm.internal.types.KTypeSubstitutor
+import org.jetbrains.kotlin.descriptors.Modality as DescriptorModality
 
 internal abstract class DescriptorKCallable<out R>(
-    internal val overriddenStorage: KCallableOverriddenStorage,
-) : ReflectKCallableImpl<R>() {
+    overriddenStorage: KCallableOverriddenStorage,
+) : ReflectKCallableImpl<R>(overriddenStorage) {
     abstract val descriptor: CallableMemberDescriptor
 
     protected abstract fun computeReturnType(): DescriptorKType
-
-    internal abstract fun shallowCopy(
-        container: KDeclarationContainerImpl,
-        overriddenStorage: KCallableOverriddenStorage,
-    ): DescriptorKCallable<R>
 
     private val _annotations = ReflectProperties.lazySoft { descriptor.computeAnnotations() }
 
@@ -131,55 +129,16 @@ internal abstract class DescriptorKCallable<out R>(
     override val visibility: KVisibility?
         get() = descriptor.visibility.toKVisibility()
 
-    internal val modality: Modality
-        get() = overriddenStorage.modality ?: descriptor.modality
+    final override val modality: Modality
+        get() = overriddenStorage.modality ?: descriptor.modality.toMetadataModality()
 
-    internal val isPackagePrivate: Boolean
+    final override val isPackagePrivate: Boolean
         get() = descriptor.visibility == JavaDescriptorVisibilities.PACKAGE_VISIBILITY
-
-    final override val isFinal: Boolean
-        get() = modality == Modality.FINAL
-
-    final override val isOpen: Boolean
-        get() = modality == Modality.OPEN
-
-    final override val isAbstract: Boolean
-        get() = modality == Modality.ABSTRACT
 }
 
-internal data class KCallableOverriddenStorage(
-    val instanceReceiverParameter: ReceiverParameterDescriptor?,
-    private val classTypeParametersSubstitutor: KTypeSubstitutor,
-    val modality: Modality?,
-    val originalContainerIfFakeOverride: KDeclarationContainerImpl?,
-    private val originalCallableTypeParameters: List<KTypeParameter>,
-
-    val forceIsExternal: Boolean,
-    val forceIsOperator: Boolean,
-    val forceIsInfix: Boolean,
-    val forceIsInline: Boolean,
-) {
-    companion object {
-        val EMPTY = KCallableOverriddenStorage(
-            null,
-            KTypeSubstitutor.EMPTY,
-            null,
-            originalContainerIfFakeOverride = null,
-            originalCallableTypeParameters = emptyList(),
-            forceIsExternal = false,
-            forceIsOperator = false,
-            forceIsInfix = false,
-            forceIsInline = false,
-        )
-    }
-
-    val isFakeOverride: Boolean get() = originalContainerIfFakeOverride != null
-
-    fun withChainedClassTypeParametersSubstitutor(substitutor: KTypeSubstitutor): KCallableOverriddenStorage =
-        copy(classTypeParametersSubstitutor = classTypeParametersSubstitutor.chainedWith(substitutor))
-
-    fun getTypeSubstitutor(callableTypeParameters: List<KTypeParameter>, memberNameForDebug: String): KTypeSubstitutor =
-        originalCallableTypeParameters.substitutedWith(callableTypeParameters)
-            ?.disjointSumWith(classTypeParametersSubstitutor, memberNameForDebug)
-            ?: classTypeParametersSubstitutor
+private fun DescriptorModality.toMetadataModality(): Modality = when (this) {
+    DescriptorModality.FINAL -> Modality.FINAL
+    DescriptorModality.OPEN -> Modality.OPEN
+    DescriptorModality.ABSTRACT -> Modality.ABSTRACT
+    DescriptorModality.SEALED -> Modality.SEALED
 }

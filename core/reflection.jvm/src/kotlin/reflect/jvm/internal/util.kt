@@ -51,10 +51,10 @@ import org.jetbrains.kotlin.serialization.deserialization.MemberDeserializer
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerAbiStability
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.PreReleaseInfo
-import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
 import java.lang.annotation.Inherited
 import java.lang.reflect.Field
 import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 import java.lang.reflect.Type
 import kotlin.jvm.internal.CallableReference
 import kotlin.jvm.internal.FunctionReference
@@ -309,9 +309,10 @@ internal fun Any?.asReflectCallable(): ReflectKCallable<*>? = when (this) {
 
 internal val DescriptorKCallable<*>.instanceReceiverParameter: ReceiverParameterDescriptor?
     get() {
-        overriddenStorage.instanceReceiverParameter?.let { return it }
         val descriptor = descriptor
         return when {
+            overriddenStorage.isFakeOverride && isStatic -> null
+            overriddenStorage.isFakeOverride && !isStatic -> (this.container as? KClassImpl<*>)?.descriptor?.thisAsReceiverParameter
             descriptor is ConstructorDescriptor -> descriptor.dispatchReceiverParameter
             descriptor.dispatchReceiverParameter != null -> (descriptor.containingDeclaration as ClassDescriptor).thisAsReceiverParameter
             else -> null
@@ -496,3 +497,6 @@ private fun ClassLoader.parseAndLoadType(desc: String, begin: Int = 0, end: Int 
         'D' -> Double::class.java
         else -> throw KotlinReflectionInternalError("Unknown type prefix in the method signature: $desc")
     }
+
+internal val Int.isPackagePrivate: Boolean
+    get() = !Modifier.isPublic(this) && !Modifier.isProtected(this) && !Modifier.isPrivate(this)
