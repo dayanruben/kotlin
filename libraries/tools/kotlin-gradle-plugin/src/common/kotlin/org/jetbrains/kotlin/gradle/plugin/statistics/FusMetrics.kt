@@ -14,6 +14,8 @@ import org.gradle.tooling.events.FinishEvent
 import org.gradle.tooling.events.task.TaskFinishEvent
 import org.jetbrains.kotlin.build.report.metrics.*
 import org.jetbrains.kotlin.cli.common.arguments.*
+import org.jetbrains.kotlin.cli.common.arguments.K2JsArgumentConstants.ES_2015
+import org.jetbrains.kotlin.cli.common.arguments.K2JsArgumentConstants.MODULE_ES
 import org.jetbrains.kotlin.compilerRunner.ArgumentUtils
 import org.jetbrains.kotlin.compilerRunner.isKonanIncrementalCompilationEnabled
 import org.jetbrains.kotlin.config.JvmDefaultMode
@@ -125,6 +127,10 @@ internal object CompilerArgumentMetrics : FusMetrics {
                 if (args.irProduceJs) {
                     metricsConsumer.report(BooleanMetrics.JS_SOURCE_MAP, args.sourceMap)
                     metricsConsumer.report(StringMetrics.JS_PROPERTY_LAZY_INITIALIZATION, args.irPropertyLazyInitialization.toString())
+
+                    metricsConsumer.report(BooleanMetrics.JS_GENERATE_DTS, args.generateDts)
+                    metricsConsumer.report(StringMetrics.JS_ES_TARGET, args.target ?: "default")
+                    metricsConsumer.report(StringMetrics.JS_MODULE_SYSTEM, args.moduleKind ?: "default")
                 }
             }
         }
@@ -370,7 +376,7 @@ internal object KotlinJsIrTargetMetrics : FusMetrics {
 
 internal object MultiplatformTargetMetrics : FusMetrics {
     internal fun collectMetrics(target: KotlinTarget, project: Project) {
-        /* Report the platform to tbe build stats service */
+        /* Report the platform to the build stats service */
         val targetName = if (target is KotlinNativeTarget) target.konanTarget.name
         else target.platformType.name
         project.addConfigurationMetrics {

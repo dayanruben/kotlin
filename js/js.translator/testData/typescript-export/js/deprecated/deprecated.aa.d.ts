@@ -3,8 +3,11 @@ declare namespace JS_TESTS {
     function KtSingleton<T>(): T & (abstract new() => any);
 
     namespace foo {
+        /** @deprecated message 2 */
         const bar: string;
+        /** @deprecated message 1 */
         function funktion(): void;
+        /** @deprecated message 3 */
         class TestClass {
             constructor();
         }
@@ -15,23 +18,60 @@ declare namespace JS_TESTS {
             }
         }
         class AnotherClass {
+            /** @deprecated message 4 */
             constructor(value: string);
+            /** @deprecated message 5 */
             static fromNothing(): foo.AnotherClass;
             static fromInt(value: number): foo.AnotherClass;
+            /** @deprecated message 6 */
             foo(): void;
             baz(): void;
             get value(): string;
-            get bar(): string;
+            /** @deprecated deprecated read-only property */
+            get readOnlyProperty(): string;
+            /** @deprecated deprecated read-write property */
+            get readWriteProperty(): string;
+            /** @deprecated deprecated read-write property */
+            set readWriteProperty(value: string);
+            /** @deprecated this getter is deprecated */
+            get deprecatedGetter(): string;
+            set deprecatedGetter(value: string);
+            get deprecatedSetter(): string;
+            /** @deprecated this setter is deprecated */
+            set deprecatedSetter(value: string);
+            /** @deprecated deprecated property */
+            /** @deprecated deprecated getter */
+            get mixedDeprecated(): string;
+            /** @deprecated deprecated property */
+            /** @deprecated deprecated setter */
+            set mixedDeprecated(value: string);
+            get Inner(): {
+                /** @deprecated deprecated inner class primary constructor */
+                new(value: string): foo.AnotherClass.Inner;
+                /** @deprecated deprecated inner class secondary constructor */
+                fromNothing(): foo.AnotherClass.Inner;
+            };
         }
         namespace AnotherClass {
             /** @deprecated $metadata$ is used for internal purposes, please don't use it in your code, because it can be removed at any moment */
             namespace $metadata$ {
                 const constructor: abstract new () => AnotherClass;
             }
+            class Inner {
+                private constructor();
+            }
+            namespace Inner {
+                /** @deprecated $metadata$ is used for internal purposes, please don't use it in your code, because it can be removed at any moment */
+                namespace $metadata$ {
+                    const constructor: abstract new () => Inner;
+                }
+            }
         }
         interface TestInterface {
+            /** @deprecated message 8 */
             foo(): void;
             bar(): void;
+            /** @deprecated message 9 */
             readonly baz: string;
             readonly __doNotUseOrImplementIt: {
                 readonly "foo.TestInterface": unique symbol;
@@ -44,15 +84,19 @@ declare namespace JS_TESTS {
             /** @deprecated $metadata$ is used for internal purposes, please don't use it in your code, because it can be removed at any moment */
             namespace $metadata$ {
                 abstract class constructor {
+                    /** @deprecated message 10 */
                     foo(): void;
                     bar(): void;
+                    /** @deprecated message 11 */
                     get baz(): string;
                     private constructor();
                 }
             }
         }
+        /** @deprecated Whole enum */
         abstract class TestEnum {
             private constructor();
+            /** @deprecated Only first entry */
             static get A(): foo.TestEnum & {
                 get name(): "A";
                 get ordinal(): 0;

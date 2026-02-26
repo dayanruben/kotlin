@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.cli.jvm.compiler.legacy.pipeline.*
 import org.jetbrains.kotlin.cli.jvm.compiler.writeOutputsIfNeeded
 import org.jetbrains.kotlin.cli.jvm.config.*
 import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser
+import org.jetbrains.kotlin.cli.pipeline.CheckCompilationErrors.CheckDiagnosticCollector
 import org.jetbrains.kotlin.compiler.plugin.getCompilerExtensions
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.diagnostics.impl.DiagnosticsCollectorImpl
@@ -139,8 +140,10 @@ open class IncrementalFirJvmCompilerRunner(
                 setupJvmSpecificArguments(args)
             }
 
-            val paths = computeKotlinPaths(collector, args)
-            if (collector.hasErrors()) return ExitCode.COMPILATION_ERROR to emptyList()
+            val paths = computeKotlinPaths(configuration, args)
+            if (CheckDiagnosticCollector.checkHasErrorsAndReportToMessageCollector(configuration)) {
+                return ExitCode.COMPILATION_ERROR to emptyList()
+            }
 
             // -- plugins
             val pluginClasspaths = args.pluginClasspaths?.toList() ?: emptyList()
@@ -183,8 +186,11 @@ open class IncrementalFirJvmCompilerRunner(
             setIdeaIoUseFallback()
 
             // -AbstractProjectEnvironment-
-            val projectEnvironment =
-                createProjectEnvironment(configuration, rootDisposable, EnvironmentConfigFiles.JVM_CONFIG_FILES, messageCollector)
+            val projectEnvironment = createProjectEnvironment(
+                configuration,
+                rootDisposable,
+                EnvironmentConfigFiles.JVM_CONFIG_FILES
+            )
 
             // -sources
             val allPlatformSourceFiles = linkedSetOf<KtSourceFile>() // TODO: get from caller

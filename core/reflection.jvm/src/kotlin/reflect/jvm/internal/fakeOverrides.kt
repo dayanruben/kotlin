@@ -27,7 +27,7 @@ internal fun getAllMembers(kClass: KClassImpl<*>): Collection<ReflectKCallable<*
     val doNeedToFilterOutStatics =
         fakeOverrideMembers.containsInheritedStatics && kClass.classKind != ClassKind.ENUM_CLASS && isKotlin
     val doNeedToShrinkMembers = fakeOverrideMembers.containsPackagePrivate || doNeedToFilterOutStatics
-    val membersMutable = when (doNeedToShrinkMembers) {
+    val members = when (doNeedToShrinkMembers) {
         true -> fakeOverrideMembers.members.filterNotTo(
             newHashMapWithExpectedSize(
                 // We expect that all non-transitive operations below (like filtering out statics or adding privates)
@@ -39,15 +39,15 @@ internal fun getAllMembers(kClass: KClassImpl<*>): Collection<ReflectKCallable<*
             doNeedToFilterOutStatics && member.isStatic ||
                     member.isPackagePrivate && member.originalContainer.jClass.`package` != kClass.java.`package`
         }
-        false -> HashMap(fakeOverrideMembers.members)
+        false -> fakeOverrideMembers.members
     }
-    return membersMutable.values + kClass.declaredReflectKCallableMembers.filter { isNonTransitiveMember(kClass, it) }
+    return members.values + kClass.declaredReflectKCallableMembers.filter { isNonTransitiveMember(kClass, it) }
 }
 
-internal fun starProjectionInTopLevelTypeIsNotPossible(containerForDebug: Any): Nothing =
+internal fun starProjectionInTopLevelTypeIsNotPossible(containerNameForDebug: String): Nothing =
     error(
         "Star projection in top level type is not possible. " +
-                "Star projection appeared in the following container: '$containerForDebug'"
+                "Star projection appeared in the following container: '$containerNameForDebug'"
     )
 
 private object CovariantOverrideComparator : Comparator<ReflectKCallable<*>> {
@@ -60,7 +60,7 @@ private object CovariantOverrideComparator : Comparator<ReflectKCallable<*>> {
             )
         val aReturnType =
             typeParametersEliminator.substitute(a.returnType).type
-                ?: starProjectionInTopLevelTypeIsNotPossible(containerForDebug = a.name)
+                ?: starProjectionInTopLevelTypeIsNotPossible(containerNameForDebug = a.name)
         val bReturnType = b.returnType
 
         val aIsSubtypeOfB = aReturnType.isSubtypeOf(bReturnType)
@@ -111,11 +111,11 @@ internal fun computeFakeOverrideMembers(kClass: KClassImpl<*>): FakeOverrideMemb
     var containsInheritedStatics = false
     var containsPackagePrivate = false
     val isKotlin = kClass.java.isKotlin
-    val declaredKotlinMembers: MutableMembersKotlinSignatureMap = HashMap()
+    val declaredTransitiveKotlinMembers: MutableMembersKotlinSignatureMap = HashMap()
     if (isKotlin) {
         for (member in kClass.declaredReflectKCallableMembers) {
             if (isNonTransitiveMember(kClass, member)) continue
-            declaredKotlinMembers[member.toEquatableCallableSignature(EqualityMode.KotlinSignature)] = member
+            declaredTransitiveKotlinMembers[member.toEquatableCallableSignature(EqualityMode.KotlinSignature)] = member
         }
     }
     for (supertype in kClass.supertypes) {
@@ -138,7 +138,7 @@ internal fun computeFakeOverrideMembers(kClass: KClassImpl<*>): FakeOverrideMemb
                 )
             val member = notSubstitutedMember.replaceContainerForFakeOverride(kClass, overriddenStorage)
             val kotlinSignature = member.toEquatableCallableSignature(EqualityMode.KotlinSignature)
-            if (declaredKotlinMembers.contains(kotlinSignature)) continue
+            if (declaredTransitiveKotlinMembers.contains(kotlinSignature)) continue
             // Inherited signatures are always compared by the JvmSignatures. Even for kotlin classes.
             javaSignaturesMap.mergeWith(kotlinSignature.withEqualityMode(EqualityMode.JavaSignature), member) { a, b ->
                 val c = minOf(a, b, CovariantOverrideComparator)
@@ -158,7 +158,7 @@ internal fun computeFakeOverrideMembers(kClass: KClassImpl<*>): FakeOverrideMemb
             }
         }
     }
-    for ((kotlinSignature, member) in declaredKotlinMembers) {
+    for ((kotlinSignature, member) in declaredTransitiveKotlinMembers) {
         containsInheritedStatics = containsInheritedStatics || member.isStatic
         containsPackagePrivate = containsPackagePrivate || member.isPackagePrivate
         javaSignaturesMap[kotlinSignature.withEqualityMode(EqualityMode.JavaSignature)] = member
@@ -373,7 +373,7 @@ internal data class EquatableCallableSignature<T : EqualityMode>(
                 val equalUpperBounds = typeParameterA.upperBounds
                     .map {
                         functionTypeParametersEliminator.substitute(it).type
-                            ?: starProjectionInTopLevelTypeIsNotPossible(containerForDebug = name)
+                            ?: starProjectionInTopLevelTypeIsNotPossible(containerNameForDebug = name)
                     }
                     .sortedUpperBounds(memberNameForDebug = name)
                     .zip(typeParameterB.upperBounds.sortedUpperBounds(memberNameForDebug = other.name))
@@ -382,7 +382,7 @@ internal data class EquatableCallableSignature<T : EqualityMode>(
             }
             for (i in kotlinParameterTypes.indices) {
                 val a = functionTypeParametersEliminator.substitute(kotlinParameterTypes[i]).type
-                    ?: starProjectionInTopLevelTypeIsNotPossible(containerForDebug = name)
+                    ?: starProjectionInTopLevelTypeIsNotPossible(containerNameForDebug = name)
                 val b = other.kotlinParameterTypes[i]
                 if (!areEqualKTypes(a, b)) return false
             }

@@ -308,7 +308,6 @@ fun Project.configureTests() {
             ":compiler:android-tests",
             ":compiler:arguments",
             ":compiler:build-tools:kotlin-build-tools-api",
-            ":compiler:build-tools:kotlin-build-tools-api-tests",
             ":compiler:build-tools:kotlin-build-tools-compat",
             ":compiler:build-tools:kotlin-build-tools-options-generator",
             ":compiler:fir:modularized-tests",
@@ -432,6 +431,18 @@ fun Project.configureTests() {
         }
     }
 
+    tasks.withType<AbstractTestTask>().configureEach {
+        val disableVerificationTasks: Provider<Boolean> = providers.gradleProperty("kotlin.build.disable.verification.tasks")
+            .map { it.toBoolean() }
+            .orElse(false)
+        inputs.property("kotlin.build.disable.verification.tasks", disableVerificationTasks)
+        doFirst {
+            if (disableVerificationTasks.get()) {
+                logger.warn("Task $path is disabled because `kotlin.build.disable.verification.tasks` is true")
+                throw StopExecutionException("Verification tasks are disabled.")
+            }
+        }
+    }
     // Aggregate task for build related checks
     tasks.register("checkBuild")
     val mppProjects: List<String> by rootProject.extra

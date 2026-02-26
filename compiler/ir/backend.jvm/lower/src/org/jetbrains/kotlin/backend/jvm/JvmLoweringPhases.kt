@@ -27,10 +27,10 @@ private val jvmModulePhases1 = createModulePhases(
 )
 
 private val jvmFilePhases = createFilePhases(
-    ::TypeAliasAnnotationMethodsLowering,
-    ::ProvisionalFunctionExpressionLowering,
-
     ::JvmUpgradeCallableReferences,
+    ::TypeAliasAnnotationMethodsLowering,
+
+    ::PatchLambdaOffsetsLowering,
 
     ::JvmVersionOverloadsLowering,
     ::JvmOverloadsAnnotationLowering,
