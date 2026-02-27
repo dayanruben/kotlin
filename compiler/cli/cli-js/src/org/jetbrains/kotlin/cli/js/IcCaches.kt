@@ -5,8 +5,14 @@
 
 package org.jetbrains.kotlin.cli.js
 
-import org.jetbrains.kotlin.backend.wasm.ic.WasmICContext
+import org.jetbrains.kotlin.backend.wasm.ic.WasmICContextMultimodule
+import org.jetbrains.kotlin.backend.wasm.ic.WasmICContextSingleModule
+import org.jetbrains.kotlin.backend.wasm.ic.WasmICContextWholeWorld
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.LOGGING
+import org.jetbrains.kotlin.cli.common.messages.MessageCollector
+import org.jetbrains.kotlin.cli.pipeline.web.wasm.WasmCompilationMode
+import org.jetbrains.kotlin.cli.pipeline.web.wasm.WasmCompilationMode.Companion.wasmCompilationMode
 import org.jetbrains.kotlin.cli.reportLog
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.ir.backend.js.JsICContext
@@ -24,9 +30,9 @@ sealed class IcCachesConfigurationData {
 
     data class Wasm(
         val wasmDebug: Boolean,
-        val preserveIcOrder: Boolean,
         val generateWat: Boolean,
         val generateDebugInformation: Boolean,
+        val mode: WasmCompilationMode,
     ) : IcCachesConfigurationData()
 }
 
@@ -36,14 +42,13 @@ internal fun prepareIcCaches(
     outputDir: File,
     targetConfiguration: CompilerConfiguration,
     mainCallArguments: List<String>?,
-    icCacheReadOnly: Boolean,
 ): IcCachesArtifacts {
     val data = when {
         arguments.wasm -> IcCachesConfigurationData.Wasm(
             wasmDebug = arguments.wasmDebug,
-            preserveIcOrder = arguments.preserveIcOrder,
             generateWat = arguments.wasmGenerateWat,
-            generateDebugInformation = arguments.sourceMap || arguments.generateDwarf
+            generateDebugInformation = arguments.sourceMap || arguments.generateDwarf,
+            mode = targetConfiguration.wasmCompilationMode(),
         )
         else -> IcCachesConfigurationData.Js(
             arguments.granularity
@@ -55,7 +60,6 @@ internal fun prepareIcCaches(
         outputDir,
         targetConfiguration,
         mainCallArguments,
-        icCacheReadOnly
     )
 }
 
@@ -65,7 +69,6 @@ internal fun prepareIcCaches(
     outputDir: File,
     targetConfiguration: CompilerConfiguration,
     mainCallArguments: List<String>?,
-    icCacheReadOnly: Boolean,
 ): IcCachesArtifacts {
 
     targetConfiguration.reportLog("")
@@ -76,25 +79,36 @@ internal fun prepareIcCaches(
 
     val start = System.currentTimeMillis()
 
+    val loadBodiesOnlyForMainModule: Boolean
     val icContext = when (icConfigurationData) {
-        is IcCachesConfigurationData.Js -> JsICContext(
-            mainCallArguments,
-            icConfigurationData.granularity,
-        )
-        is IcCachesConfigurationData.Wasm -> WasmICContext(
-            allowIncompleteImplementations = false,
-            skipLocalNames = !icConfigurationData.wasmDebug,
-            safeFragmentTags = icConfigurationData.preserveIcOrder,
-            skipCommentInstructions = !icConfigurationData.generateWat,
-            skipLocations = !icConfigurationData.generateDebugInformation
-        )
+        is IcCachesConfigurationData.Js -> {
+            loadBodiesOnlyForMainModule = false
+            JsICContext(
+                mainCallArguments,
+                icConfigurationData.granularity,
+            )
+        }
+        is IcCachesConfigurationData.Wasm -> {
+            loadBodiesOnlyForMainModule = icConfigurationData.mode == WasmCompilationMode.SINGLE_MODULE
+            val contextConstructor = when (icConfigurationData.mode) {
+                WasmCompilationMode.REGULAR -> ::WasmICContextWholeWorld
+                WasmCompilationMode.MULTI_MODULE -> ::WasmICContextMultimodule
+                WasmCompilationMode.SINGLE_MODULE -> ::WasmICContextSingleModule
+            }
+            contextConstructor(
+                false,
+                !icConfigurationData.wasmDebug,
+                !icConfigurationData.generateWat,
+                !icConfigurationData.generateDebugInformation,
+            )
+        }
     }
     val cacheUpdater = CacheUpdater(
         cacheDir = cacheDirectory,
         compilerConfiguration = targetConfiguration,
         icContext = icContext,
         checkForClassStructuralChanges = icConfigurationData is IcCachesConfigurationData.Wasm,
-        commitIncrementalCache = !icCacheReadOnly,
+        loadBodiesOnlyForMainModule = loadBodiesOnlyForMainModule,
     )
 
     val artifacts = cacheUpdater.actualizeCaches()

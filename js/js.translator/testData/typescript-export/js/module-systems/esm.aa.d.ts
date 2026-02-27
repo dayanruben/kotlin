@@ -5,14 +5,15 @@ declare function KtSingleton<T>(): T & (abstract new() => any);
 export declare const value: {
     get(): number;
 };
-export declare let variable: {
+export declare const variable: {
     get(): number;
     set(value: number): void;
 };
 export declare function box(): string;
 export declare function asyncList(): Promise<any/* List<number> */>;
 export declare function arrayOfLists(): Array<any/* List<number> */>;
-export declare function justSomeDefaultExport(): string;
+declare function justSomeDefaultExport(): string;
+export default justSomeDefaultExport;
 export declare class C {
     constructor(x: number);
     doubleX(): number;

@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.ir.backend.js.tsexport.*
 import org.jetbrains.kotlin.js.common.makeValidES5Identifier
 import org.jetbrains.kotlin.js.common.safeModuleName
+import org.jetbrains.kotlin.js.config.ModuleKind
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -303,10 +304,6 @@ internal class ExportModelGenerator(private val config: TypeScriptExportConfig) 
             return emptyList()
         }
 
-        if (property.exportedVisibility(parent) == ExportedVisibility.PRIVATE) {
-            return emptyList()
-        }
-
         val parentClass = parent as? KaClassSymbol
         val isAbstract = parentClass?.classKind != KaClassKind.INTERFACE && property.modality == KaSymbolModality.ABSTRACT
         val isStatic = property.isStatic || property.isJsStatic()
@@ -350,7 +347,7 @@ internal class ExportModelGenerator(private val config: TypeScriptExportConfig) 
         val isMember = parentClass != null
         val isObjectGetter = false  // TODO: Should be true for getInstance functions of objects
         val isOptional = property.isExternal && isMember && property.returnType.isNullable
-        val shouldBeExportedAsObjectWithAccessorsInside = !config.generateNamespacesForPackages && !isMember && !isStatic
+        val shouldBeExportedAsObjectWithAccessorsInside = config.artifactConfiguration.moduleKind == ModuleKind.ES && !isMember && !isStatic
 
         val propertyType = when {
             !shouldBeExportedAsObjectWithAccessorsInside -> exportType(property.returnType, classTypeParameterScope)
@@ -398,7 +395,7 @@ internal class ExportModelGenerator(private val config: TypeScriptExportConfig) 
                 ExportedField(
                     name = name,
                     type = propertyType,
-                    mutable = !property.isVal,
+                    mutable = !property.isVal && !shouldBeExportedAsObjectWithAccessorsInside,
                     isMember = isMember,
                     isStatic = isStatic,
                     isAbstract = isAbstract,
@@ -680,10 +677,6 @@ internal class ExportModelGenerator(private val config: TypeScriptExportConfig) 
     private fun functionExportability(function: KaNamedFunctionSymbol, parent: KaDeclarationSymbol?): Exportability {
         if (function.isInline && function.typeParameters.any { it.isReified })
             return Exportability.Prohibited("Inline reified function")
-
-        if (function.exportedVisibility(parent) == ExportedVisibility.PRIVATE) {
-            return Exportability.NotNeeded
-        }
 
         val parentClass = parent as? KaClassSymbol
 

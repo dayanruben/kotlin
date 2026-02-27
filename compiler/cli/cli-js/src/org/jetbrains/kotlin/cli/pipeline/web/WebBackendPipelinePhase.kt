@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.cli.pipeline.PipelinePhase
 import org.jetbrains.kotlin.cli.report
 import org.jetbrains.kotlin.cli.reportInfo
 import org.jetbrains.kotlin.cli.reportLog
+import org.jetbrains.kotlin.cli.pipeline.web.wasm.WasmCompilationMode.Companion.wasmCompilationMode
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.perfManager
 import org.jetbrains.kotlin.ir.backend.js.MainModule
@@ -51,9 +52,8 @@ abstract class WebBackendPipelinePhase<Output : WebBackendPipelineArtifact, Inte
         val mainCallArguments = if (configuration.callMainMode == K2JsArgumentConstants.NO_CALL) null else emptyList<String>()
 
         if (cacheDirectory != null) {
-            val icCacheReadOnly = configuration.wasmCompilation && configuration.icCacheReadOnly
-            val cacheGuard = IncrementalCacheGuard(cacheDirectory, icCacheReadOnly)
-            val backendIr = compileToBackendIrIncrementally(cacheDirectory, cacheGuard, icCacheReadOnly, configuration, mainCallArguments)
+            val cacheGuard = IncrementalCacheGuard(cacheDirectory)
+            val backendIr = compileToBackendIrIncrementally(cacheDirectory, cacheGuard, configuration, mainCallArguments)
             return cacheGuard.tryAcquireAndRelease {
                 backendIr?.let { compileIntermediate(it, configuration) }
             }
@@ -66,7 +66,6 @@ abstract class WebBackendPipelinePhase<Output : WebBackendPipelineArtifact, Inte
     private fun compileToBackendIrIncrementally(
         cacheDirectory: String,
         cacheGuard: IncrementalCacheGuard,
-        icCacheReadOnly: Boolean,
         configuration: CompilerConfiguration,
         mainCallArguments: List<String>?,
     ): IntermediateOutput? {
@@ -87,13 +86,15 @@ abstract class WebBackendPipelinePhase<Output : WebBackendPipelineArtifact, Inte
             prepareIcCaches(
                 cacheDirectory = cacheDirectory,
                 icConfigurationData = when {
-                    configuration.wasmCompilation -> IcCachesConfigurationData.Wasm(
-                        wasmDebug = configuration.getBoolean(WasmConfigurationKeys.WASM_DEBUG),
-                        preserveIcOrder = configuration.preserveIcOrder,
-                        generateWat = configuration.getBoolean(WasmConfigurationKeys.WASM_GENERATE_WAT),
-                        generateDebugInformation =
-                            configuration.getBoolean(WasmConfigurationKeys.WASM_GENERATE_DWARF) || configuration.sourceMap,
-                    )
+                    configuration.wasmCompilation -> {
+                        IcCachesConfigurationData.Wasm(
+                            wasmDebug = configuration.getBoolean(WasmConfigurationKeys.WASM_DEBUG),
+                            generateWat = configuration.getBoolean(WasmConfigurationKeys.WASM_GENERATE_WAT),
+                            generateDebugInformation =
+                                configuration.getBoolean(WasmConfigurationKeys.WASM_GENERATE_DWARF) || configuration.sourceMap,
+                            mode = configuration.wasmCompilationMode()
+                        )
+                    }
                     else -> IcCachesConfigurationData.Js(
                         granularity = configuration.artifactConfiguration!!.granularity
                     )
@@ -101,7 +102,6 @@ abstract class WebBackendPipelinePhase<Output : WebBackendPipelineArtifact, Inte
                 outputDir = configuration.outputDir!!,
                 targetConfiguration = configuration,
                 mainCallArguments = mainCallArguments,
-                icCacheReadOnly = icCacheReadOnly,
             )
         }
         configuration.perfManager?.notifyPhaseFinished(PhaseType.Initialization)
