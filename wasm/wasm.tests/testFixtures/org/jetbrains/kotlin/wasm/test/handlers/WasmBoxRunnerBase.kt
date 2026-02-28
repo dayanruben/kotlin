@@ -37,7 +37,7 @@ abstract class WasmBoxRunnerBase(
 
         val testJs = """
                     ${if (isNoJsTag) "import './tag.mjs'" else ""}
-                    import * as jsModule from './index.mjs'
+                    import * as jsModule from './$WASM_BASE_FILE_NAME.mjs'
                     if (globalThis.console == null) {
                         globalThis.console = {};
                     }
@@ -160,7 +160,7 @@ internal fun WasmVM.runWithCaughtExceptions(
         if (debugMode >= DebugMode.DEBUG) {
             println(" ------ Run in $vmName" + if (shortName in failsIn) " (expected to fail)" else "")
         }
-        run(
+        val str = run(
             "./${entryFile}",
             jsFilePaths,
             workingDirectory = workingDirectory,

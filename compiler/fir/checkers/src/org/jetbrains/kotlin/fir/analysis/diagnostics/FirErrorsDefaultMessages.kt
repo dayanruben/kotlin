@@ -170,6 +170,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CLASS_CANNOT_BE_E
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CLASS_INHERITS_JAVA_SEALED_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CLASS_IN_SUPERTYPE_FOR_ENUM
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CLASS_LITERAL_LHS_NOT_A_CLASS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CLASS_LITERAL_LHS_NOT_A_CLASS_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMMA_IN_WHEN_CONDITION_WITH_WHEN_GUARD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMPARE_TO_TYPE_MISMATCH
@@ -338,6 +339,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPLICIT_DELEGATI
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPLICIT_FIELD_MUST_BE_INITIALIZED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPLICIT_FIELD_VISIBILITY_MUST_BE_LESS_PERMISSIVE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPLICIT_TYPE_ARGUMENTS_IN_PROPERTY_ACCESS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPLICIT_TYPE_ARGUMENTS_IN_PROPERTY_ACCESS_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPOSED_FUNCTION_RETURN_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPOSED_PACKAGE_PRIVATE_TYPE_FROM_INTERNAL_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPOSED_PARAMETER_TYPE
@@ -912,6 +914,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_LONG_SUFFIX
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_MODIFIER_CONTAINING_DECLARATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_MODIFIER_TARGET
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_NUMBER_OF_TYPE_ARGUMENTS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_NUMBER_OF_TYPE_ARGUMENTS_IN_GET_CLASS_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_NUMBER_OF_TYPE_ARGUMENTS_IN_LOCAL_CLASS_IN_LHS_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_NUMBER_OF_TYPE_ARGUMENTS_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_SETTER_PARAMETER_TYPE
@@ -2045,6 +2048,12 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             SYMBOL,
         )
         map.put(
+            WRONG_NUMBER_OF_TYPE_ARGUMENTS_IN_GET_CLASS_WARNING,
+            "$wrongNumberOfTypeArguments for ''{1}''.".toDeprecationWarningMessage(LanguageFeature.ForbidUselessTypeArgumentsIn25),
+            null,
+            SYMBOL,
+        )
+        map.put(
             NO_TYPE_ARGUMENTS_ON_RHS,
             "$wrongNumberOfTypeArguments. Use ''{1}'' if you do not intend to pass type arguments.",
             null,
@@ -2297,6 +2306,11 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
 
         map.put(CLASS_LITERAL_LHS_NOT_A_CLASS, "Only classes are allowed on the left-hand side of a class literal.")
+        map.put(
+            CLASS_LITERAL_LHS_NOT_A_CLASS_WARNING,
+            "Only classes are allowed on the left-hand side of a class literal."
+                .toDeprecationWarningMessage(LanguageFeature.ForbidUselessTypeArgumentsIn25)
+        )
         map.put(NULLABLE_TYPE_IN_CLASS_LITERAL_LHS, "Type in a class literal cannot be nullable.")
         map.put(
             EXPRESSION_OF_NULLABLE_TYPE_IN_CLASS_LITERAL_LHS,
@@ -2946,6 +2960,11 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(LOCAL_VARIABLE_WITH_TYPE_PARAMETERS_WARNING, "Type parameters for local variables are deprecated.")
         map.put(LOCAL_VARIABLE_WITH_TYPE_PARAMETERS, "Local variables cannot have type parameters.")
         map.put(EXPLICIT_TYPE_ARGUMENTS_IN_PROPERTY_ACCESS, "{0} access cannot have explicit type arguments.", STRING)
+        map.put(
+            EXPLICIT_TYPE_ARGUMENTS_IN_PROPERTY_ACCESS_WARNING,
+            "{0} access cannot have explicit type arguments.".toDeprecationWarningMessage(LanguageFeature.ForbidUselessTypeArgumentsIn25),
+            STRING,
+        )
         map.put(SAFE_CALLABLE_REFERENCE_CALL, "This syntax is reserved for future releases.")
 
         map.put(LATEINIT_INTRINSIC_CALL_ON_NON_LITERAL, "This declaration can only be called on a property literal (e.g. 'Foo::bar').")
