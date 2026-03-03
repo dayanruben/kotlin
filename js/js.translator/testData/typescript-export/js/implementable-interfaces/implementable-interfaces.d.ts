@@ -2,7 +2,7 @@ declare namespace JS_TESTS {
     type Nullable<T> = T | null | undefined
     function KtSingleton<T>(): T & (abstract new() => any);
     namespace kotlin.collections {
-        interface KtList<E> /* extends kotlin.collections.Collection<E> */ {
+        interface KtList<out E> /* extends kotlin.collections.Collection<E> */ {
             asJsReadonlyArrayView(): ReadonlyArray<E>;
             readonly __doNotUseOrImplementIt: {
                 readonly "kotlin.collections.KtList": unique symbol;
@@ -166,8 +166,39 @@ declare namespace JS_TESTS {
         namespace MidNormal {
             const Symbol: unique symbol;
         }
+        interface WithSuspendOnly {
+            mid(): Promise<string>;
+            readonly [foo.WithSuspendOnly.Symbol]: true;
+        }
+        namespace WithSuspendOnly {
+            const Symbol: unique symbol;
+        }
+        interface WithSuspendOnlyButIgnored {
+            readonly __doNotUseOrImplementIt: {
+                readonly "foo.WithSuspendOnlyButIgnored": unique symbol;
+            };
+        }
+        interface ImplementableChildOfSuspendOnlyButIgnored extends foo.WithSuspendOnlyButIgnored {
+            another(): Promise<number>;
+            readonly [foo.ImplementableChildOfSuspendOnlyButIgnored.Symbol]: true;
+            readonly __doNotUseOrImplementIt: foo.WithSuspendOnlyButIgnored["__doNotUseOrImplementIt"];
+        }
+        namespace ImplementableChildOfSuspendOnlyButIgnored {
+            const Symbol: unique symbol;
+        }
+        interface NotImplementableChildOfSuspendOnlyButIgnored extends foo.WithSuspendOnlyButIgnored {
+            readonly __doNotUseOrImplementIt: {
+                readonly "foo.NotImplementableChildOfSuspendOnlyButIgnored": unique symbol;
+            } & foo.WithSuspendOnlyButIgnored["__doNotUseOrImplementIt"];
+        }
         interface NoRuntimeLeaf extends foo.MidNormal {
             leaf(): string;
+        }
+        interface ShouldBeNotImplementable {
+            leaf(): string;
+            readonly __doNotUseOrImplementIt: {
+                readonly "foo.ShouldBeNotImplementable": unique symbol;
+            };
         }
     }
 }
