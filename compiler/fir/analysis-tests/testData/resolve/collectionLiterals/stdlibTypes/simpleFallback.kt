@@ -30,7 +30,7 @@ fun couldFallback() {
     val _: Collection<Int> = []
     val _: Collection<Int> = [1, 2, 3]
     val _: Collection<Long> = [1, 2, 3]
-    val _: Collection<String> <!INITIALIZER_TYPE_MISMATCH!>=<!> [1, 2, 3]
+    val _: Collection<String> = [<!ARGUMENT_TYPE_MISMATCH!>1<!>, <!ARGUMENT_TYPE_MISMATCH!>2<!>, <!ARGUMENT_TYPE_MISMATCH!>3<!>]
 
     val _: Iterable<*> = [1, 2, 3]
     val _: Iterable<Number> = []
@@ -43,7 +43,7 @@ fun couldFallback() {
     takeAny([1, 2, 3])
     <!CANNOT_INFER_PARAMETER_TYPE!>takeIterable<!>(<!CANNOT_INFER_PARAMETER_TYPE!>[]<!>)
     takeIterable<Int>([])
-    takeIterable<String>(<!ARGUMENT_TYPE_MISMATCH!>[1, 2, 3]<!>)
+    takeIterable<String>([<!ARGUMENT_TYPE_MISMATCH!>1<!>, <!ARGUMENT_TYPE_MISMATCH!>2<!>, <!ARGUMENT_TYPE_MISMATCH!>3<!>])
     takeIterable([1, 2, 3])
     takeIterable([1, 2L, 3])
     <!CANNOT_INFER_PARAMETER_TYPE!>takeNullableCollection<!>(<!CANNOT_INFER_PARAMETER_TYPE!>[]<!>)
@@ -52,8 +52,8 @@ fun couldFallback() {
     Utils.takeAny(<!CANNOT_INFER_PARAMETER_TYPE!>[]<!>)
     Utils.takeAny([1, 2, 3])
 
-    <!OVERLOAD_RESOLUTION_AMBIGUITY!>println<!>(<!CANNOT_INFER_PARAMETER_TYPE!>[]<!>)
-    <!OVERLOAD_RESOLUTION_AMBIGUITY!>println<!>([1, 2, 3])
+    println([])
+    println([1, 2, 3])
 
     mutableListOf(1, 2, 3).addAll([4, 5, 6])
 }
