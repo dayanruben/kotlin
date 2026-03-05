@@ -68,6 +68,7 @@ internal class BtaImplGenerator(
                     generateArgumentType(apiClassName, includeSinceVersion = false, registerAsKnownArgument = true)
                 val argumentTypeName = ClassName(API_ARGUMENTS_PACKAGE, apiClassName, argumentTypeNameString)
                 val argumentImplTypeName = ClassName(targetPackage, implClassName, argumentTypeNameString)
+                val constructorSpecBuilder = constructorSpecBuilder(argumentTypeName)
 
                 generateGetPutFunctions(argumentTypeName, argumentImplTypeName)
 
@@ -97,7 +98,7 @@ internal class BtaImplGenerator(
                         addModifiers(KModifier.OVERRIDE)
                         returns(ClassName(targetPackage, implClassName))
                         addStatement(
-                            "return %T().also { newArgs -> newArgs.applyArgumentStrings(toArgumentStrings()) }",
+                            "return %T(adapter).also { newArgs -> newArgs.applyArgumentStrings(toArgumentStrings()) }",
                             ClassName(targetPackage, implClassName)
                         )
                     }
@@ -117,10 +118,11 @@ internal class BtaImplGenerator(
                         level.getCompilerArgumentsClassName()
                     )
 
-                    primaryConstructor(FunSpec.constructorBuilder().apply {
-                        addStatement("applyCompilerArguments(%T())", level.getCompilerArgumentsClassName())
-                    }.build())
+                    constructorSpecBuilder.addStatement("applyCompilerArguments(%T())", level.getCompilerArgumentsClassName())
                 }
+
+                primaryConstructor(constructorSpecBuilder.build())
+
                 toCompilerConverterFun.addStatement("return arguments")
                 addFunction(toCompilerConverterFun.build())
 
@@ -134,6 +136,27 @@ internal class BtaImplGenerator(
         mainFile.writeTo(mainFileAppendable)
         outputs += Path(mainFile.relativePath) to mainFileAppendable.toString()
         return GeneratorOutputs(ClassName(targetPackage, implClassName), outputs)
+    }
+
+    private fun TypeSpec.Builder.constructorSpecBuilder(
+        argumentTypeName: ClassName,
+    ): FunSpec.Builder = FunSpec.constructorBuilder().apply {
+        val adapterType = ClassName(targetPackage, "CompilerArgumentValueAdapter")
+            .parameterizedBy(argumentTypeName.parameterizedBy(STAR))
+            .copy(nullable = true)
+
+        addParameter(
+            ParameterSpec.builder("adapter", adapterType)
+                .defaultValue("null")
+                .build()
+        )
+
+        addProperty(
+            PropertySpec.builder("adapter", adapterType)
+                .addModifiers(KModifier.PRIVATE)
+                .initializer("adapter")
+                .build()
+        )
     }
 
     private fun TypeSpec.Builder.generateOptions(
@@ -202,22 +225,6 @@ internal class BtaImplGenerator(
                         wasIntroducedRecently,
                         applyCompilerArgumentsFun,
                         argumentTypeParameter
-                    )
-                }
-
-                is BtaCompilerArgument.SSoTCompilerArgumentCompat -> {
-                    generateCompatArgumentsPropagators(
-                        implClassName,
-                        name,
-                        argumentTypeParameter,
-                        argument,
-                        wasRemoved,
-                        argument.effectiveCompilerName,
-                        toCompilerConverterFun,
-                        wasIntroducedRecently,
-                        applyCompilerArgumentsFun,
-                        argumentTypeParameter,
-                        argument.applierSimpleName
                     )
                 }
 
@@ -309,57 +316,6 @@ internal class BtaImplGenerator(
             member, type, argument, effectiveCompilerName, wasRemoved, argumentTypeParameter
         )
         applyCompilerArgumentsFun.addSafeMethodAccessStatement(compilerToBtaStatement, failOnNoSuchMethod = false)
-    }
-
-    /**
-     * Generates code for compat arguments with ClassCastException handling
-     */
-    private fun generateCompatArgumentsPropagators(
-        implClassName: String,
-        name: String,
-        type: TypeName,
-        argument: BtaCompilerArgument.SSoTCompilerArgumentCompat,
-        wasRemoved: Boolean,
-        effectiveCompilerName: String,
-        toCompilerConverterFun: FunSpec.Builder,
-        wasIntroducedRecently: Boolean,
-        applyCompilerArgumentsFun: FunSpec.Builder,
-        argumentTypeParameter: TypeName,
-        applierSimpleName: String,
-    ) {
-        val member = MemberName(ClassName(targetPackage, implClassName, "Companion"), name)
-        val applier = MemberName(targetPackage, applierSimpleName)
-
-        // BTA → Compiler conversion with ClassCastException handling
-        CodeBlock.builder().apply {
-            add("if (%M in this) { ", member)
-            val valueToAssign = buildBtaToCompilerValueTransform(member, type, argument)
-            val assignment = buildCompilerAssignment(effectiveCompilerName, wasRemoved, valueToAssign)
-            add("try { %L } catch(e: ClassCastException) { arguments.%M(get(%M)) }", assignment, applier, member)
-            add("}")
-        }.build().also { setStatement ->
-            toCompilerConverterFun.addSafeSetStatement(
-                wasIntroducedRecently,
-                wasRemoved,
-                name,
-                argument,
-                setStatement,
-                generateCompatLayer,
-            )
-        }
-
-        // Compiler → BTA conversion with ClassCastException handling
-        val compilerToBtaStatement = buildCompilerToBtaValueTransform(
-            member, type, argument, effectiveCompilerName, wasRemoved, argumentTypeParameter
-        )
-        val wrappedStatement = CodeBlock.of(
-            "try { %L } catch (e: ClassCastException) { %M(this[%M], arguments) }",
-            compilerToBtaStatement,
-            applier,
-            member
-        )
-
-        applyCompilerArgumentsFun.addSafeMethodAccessStatement(wrappedStatement, failOnNoSuchMethod = false)
     }
 
     /**
@@ -492,7 +448,7 @@ internal class BtaImplGenerator(
             addTypeVariable(typeParameter)
             addParameter("key", parameter.parameterizedBy(typeParameter))
             addStatement($$"check(key.id in optionsMap) { \"Argument ${key.id} is not set and has no default value\" }")
-            addStatement("return %N[key.id] as %T", mapProperty, typeParameter)
+            addStatement("return adapter?.mapFrom(%N[key.id], key) ?: %N[key.id] as %T", mapProperty, mapProperty, typeParameter)
         }
         function("set") {
             if (targetPackage == IMPL_ARGUMENTS_PACKAGE) {
@@ -503,6 +459,7 @@ internal class BtaImplGenerator(
             addTypeVariable(typeParameter)
             addParameter("key", parameter.parameterizedBy(typeParameter))
             addParameter("value", typeParameter)
+
             val currentKotlinVersion = if (generateCompatLayer) {
                 addStatement(
                     "val currentKotlinVersion = %T(KC_VERSION)",
@@ -531,7 +488,7 @@ internal class BtaImplGenerator(
                     .endControlFlow()
                     .build()
             )
-            addStatement("%N[key.id] = %N", mapProperty, "value")
+            addStatement("%N[key.id] = adapter?.mapTo(%N, key) ?: %N", mapProperty, "value", "value")
         }
 
         function("contains") {
