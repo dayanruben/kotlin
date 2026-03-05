@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.backend.common.serialization
 
 import org.jetbrains.kotlin.backend.common.linkage.issues.IrSymbolTypeMismatchException
-import org.jetbrains.kotlin.backend.common.serialization.encodings.BinaryCoordinates
 import org.jetbrains.kotlin.backend.common.serialization.encodings.BinarySymbolData.SymbolKind
 import org.jetbrains.kotlin.backend.common.serialization.encodings.BinarySymbolData.SymbolKind.*
 import org.jetbrains.kotlin.backend.common.serialization.encodings.RichFunctionReferenceFlags
@@ -19,6 +18,7 @@ import org.jetbrains.kotlin.descriptors.SourceElement
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
+import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.IrFactory
 import org.jetbrains.kotlin.ir.declarations.IrValueDeclaration
 import org.jetbrains.kotlin.ir.declarations.createBlockBody
@@ -35,9 +35,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.assignFrom
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.memoryOptimizedMap
 import kotlin.reflect.full.declaredMemberProperties
+import org.jetbrains.kotlin.backend.common.serialization.proto.IrAnnotation as ProtoAnnotation
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrBlock as ProtoBlock
-import org.jetbrains.kotlin.backend.common.serialization.proto.IrReturnableBlock as ProtoReturnableBlock
-import org.jetbrains.kotlin.backend.common.serialization.proto.IrInlinedFunctionBlock as ProtoInlinedFunctionBlock
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrBlockBody as ProtoBlockBody
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrBranch as ProtoBranch
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrBreak as ProtoBreak
@@ -63,11 +62,15 @@ import org.jetbrains.kotlin.backend.common.serialization.proto.IrGetEnumValue as
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrGetField as ProtoGetField
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrGetObject as ProtoGetObject
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrGetValue as ProtoGetValue
+import org.jetbrains.kotlin.backend.common.serialization.proto.IrInlinedFunctionBlock as ProtoInlinedFunctionBlock
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrInstanceInitializerCall as ProtoInstanceInitializerCall
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrLocalDelegatedPropertyReference as ProtoLocalDelegatedPropertyReference
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrOperationPre_2_4_0 as ProtoOperationPre2_4_0
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrPropertyReference as ProtoPropertyReference
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrReturn as ProtoReturn
+import org.jetbrains.kotlin.backend.common.serialization.proto.IrReturnableBlock as ProtoReturnableBlock
+import org.jetbrains.kotlin.backend.common.serialization.proto.IrRichFunctionReference as ProtoRichFunctionReference
+import org.jetbrains.kotlin.backend.common.serialization.proto.IrRichPropertyReference as ProtoRichPropertyReference
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrSetField as ProtoSetField
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrSetValue as ProtoSetValue
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrSpreadElement as ProtoSpreadElement
@@ -85,8 +88,6 @@ import org.jetbrains.kotlin.backend.common.serialization.proto.IrWhen as ProtoWh
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrWhile as ProtoWhile
 import org.jetbrains.kotlin.backend.common.serialization.proto.Loop as ProtoLoop
 import org.jetbrains.kotlin.backend.common.serialization.proto.MemberAccessCommonPre_2_4_0 as ProtoMemberAccessCommonPre_2_4_0
-import org.jetbrains.kotlin.backend.common.serialization.proto.IrRichFunctionReference as ProtoRichFunctionReference
-import org.jetbrains.kotlin.backend.common.serialization.proto.IrRichPropertyReference as ProtoRichPropertyReference
 
 class IrBodyDeserializer(
     private val builtIns: IrBuiltIns,
@@ -107,21 +108,21 @@ class IrBodyDeserializer(
         proto: ProtoBlockBody,
         start: Int, end: Int
     ): IrBlockBody {
-        val statements = proto.statementList.memoryOptimizedMap { deserializeStatement(it) as IrStatement }
+        val statements = proto.statementList.memoryOptimizedMap { deserializeStatement(it, start) as IrStatement }
         return irFactory.createBlockBody(start, end, statements)
     }
 
     private fun deserializeBranch(proto: ProtoBranch, start: Int, end: Int): IrBranch {
 
-        val condition = deserializeExpression(proto.condition)
-        val result = deserializeExpression(proto.result)
+        val condition = deserializeExpression(proto.condition, start)
+        val result = deserializeExpression(proto.result, start)
 
         return IrBranchImpl(start, end, condition, result)
     }
 
     private fun deserializeCatch(proto: ProtoCatch, start: Int, end: Int): IrCatch {
-        val catchParameter = declarationDeserializer.deserializeIrVariable(proto.catchParameter)
-        val result = deserializeExpression(proto.result)
+        val catchParameter = declarationDeserializer.deserializeIrVariable(proto.catchParameter, start)
+        val result = deserializeExpression(proto.result, start)
 
         return IrCatchImpl(start, end, catchParameter, result)
     }
@@ -135,23 +136,23 @@ class IrBodyDeserializer(
         return IrSyntheticBodyImpl(start, end, kind)
     }
 
-    internal fun deserializeStatement(proto: ProtoStatement): IrElement {
-        val coordinates = BinaryCoordinates.decode(proto.coordinates)
-        val start = coordinates.startOffset
-        val end = coordinates.endOffset
+    internal fun deserializeStatement(proto: ProtoStatement, parentStart: Int?): IrElement {
+        val coords = declarationDeserializer.deserializeCoordinates(
+            proto.hasGlobalCoordinates(), proto.globalCoordinates, proto.localCoordinates, parentStart
+        )
         val element = when (proto.statementCase) {
             StatementCase.BLOCK_BODY //proto.hasBlockBody()
-            -> deserializeBlockBody(proto.blockBody, start, end)
+            -> deserializeBlockBody(proto.blockBody, coords.startOffset, coords.endOffset)
             StatementCase.BRANCH //proto.hasBranch()
-            -> deserializeBranch(proto.branch, start, end)
+            -> deserializeBranch(proto.branch, coords.startOffset, coords.endOffset)
             StatementCase.CATCH //proto.hasCatch()
-            -> deserializeCatch(proto.catch, start, end)
+            -> deserializeCatch(proto.catch, coords.startOffset, coords.endOffset)
             StatementCase.DECLARATION // proto.hasDeclaration()
-            -> declarationDeserializer.deserializeDeclaration(proto.declaration)
+            -> declarationDeserializer.deserializeDeclaration(proto.declaration, parentStart)
             StatementCase.EXPRESSION // proto.hasExpression()
-            -> deserializeExpression(proto.expression)
+            -> deserializeExpression(proto.expression, parentStart)
             StatementCase.SYNTHETIC_BODY // proto.hasSyntheticBody()
-            -> deserializeSyntheticBody(proto.syntheticBody, start, end)
+            -> deserializeSyntheticBody(proto.syntheticBody, coords.startOffset, coords.endOffset)
             else
             -> TODO("Statement deserialization not implemented: ${proto.statementCase}")
         }
@@ -160,14 +161,14 @@ class IrBodyDeserializer(
     }
 
     private fun deserializeBlock(proto: ProtoBlock, start: Int, end: Int, type: IrType): IrBlock {
-        return withDeserializedBlock(proto) { origin, statements ->
+        return withDeserializedBlock(proto, start) { origin, statements ->
             IrBlockImpl(start, end, type, origin, statements)
         }
     }
 
     private fun deserializeReturnableBlock(proto: ProtoReturnableBlock, start: Int, end: Int, type: IrType): IrReturnableBlock {
         val symbol = deserializeTypedSymbol<IrReturnableBlockSymbol>(proto.symbol, fallbackSymbolKind = null)
-        return withDeserializedBlock(proto.base) { origin, statements ->
+        return withDeserializedBlock(proto.base, start) { origin, statements ->
             IrReturnableBlockImpl(start, end, type, symbol, origin, statements)
         }
     }
@@ -182,7 +183,7 @@ class IrBodyDeserializer(
             deserializeTypedSymbol<IrFunctionSymbol>(proto.inlinedFunctionSymbol, FUNCTION_SYMBOL)
         }
         val inlinedFunctionFileEntry = fileEntryDeserializer.fileEntry(libraryFile, proto)
-        return withDeserializedBlock(proto.base) { origin, statements ->
+        return withDeserializedBlock(proto.base, start) { origin, statements ->
             IrInlinedFunctionBlockImpl(
                 start, end,
                 type,
@@ -196,9 +197,9 @@ class IrBodyDeserializer(
         }
     }
 
-    private inline fun <T> withDeserializedBlock(proto: ProtoBlock, block: (IrStatementOrigin?, List<IrStatement>) -> T): T {
+    private inline fun <T> withDeserializedBlock(proto: ProtoBlock, start: Int, block: (IrStatementOrigin?, List<IrStatement>) -> T): T {
         val origin = deserializeIrStatementOrigin(proto.hasOriginName()) { proto.originName }
-        val statements = proto.statementList.map { deserializeStatement(it) as IrStatement }
+        val statements = proto.statementList.map { deserializeStatement(it, start) as IrStatement }
 
         return block(origin, statements)
     }
@@ -211,26 +212,27 @@ class IrBodyDeserializer(
         if (proto.hasDispatchReceiver() || proto.hasExtensionReceiver() || proto.regularArgumentCount > 0) {
             // Pre 2.2.0 scheme: arguments are separated by their kind.
             if (proto.hasDispatchReceiver()) {
-                access.arguments += deserializeExpression(proto.dispatchReceiver)
+                // Here and below: Technically, the [parentStart] argument is not needed as it is only used when reading >= 2.4.0 Klibs.
+                access.arguments += deserializeExpression(proto.dispatchReceiver, access.startOffset)
             }
             if (proto.hasExtensionReceiver()) {
-                access.arguments += deserializeExpression(proto.extensionReceiver)
+                access.arguments += deserializeExpression(proto.extensionReceiver, access.startOffset)
             }
             for (arg in proto.regularArgumentList) {
-                access.arguments += if (arg.hasExpression()) deserializeExpression(arg.expression) else null
+                access.arguments += if (arg.hasExpression()) deserializeExpression(arg.expression, access.startOffset) else null
             }
         } else {
             // Post 2.2.0 scheme: all arguments are in a single list, wrapped in a NullableIrExpression.
             access.arguments.assignFrom(proto.argumentPre240List) {
-                if (it.hasExpression()) deserializeExpression(it.expression) else null
+                if (it.hasExpression()) deserializeExpression(it.expression, access.startOffset) else null
             }
         }
 
         access.typeArguments.assignFrom(deserializeTypeArguments(proto.typeArgumentList))
     }
 
-    private fun deserializeArguments(rawArgumentList: List<ProtoExpression>): List<IrExpression?> {
-        return rawArgumentList.map { deserializeNullableExpression(it) }
+    private fun deserializeArguments(rawArgumentList: List<ProtoExpression>, parentStart: Int?): List<IrExpression?> {
+        return rawArgumentList.map { deserializeNullableExpression(it, parentStart) }
     }
 
     private fun deserializeTypeArguments(rawTypeArgumentList: List<Int>): List<IrType?> {
@@ -301,24 +303,21 @@ class IrBodyDeserializer(
         }
     }
 
-    fun deserializeAnnotation(proto: ProtoConstructorCall): IrAnnotation {
-        // TODO: use real coordinates
-        val startOffset = 0
-        val endOffset = 0
-
+    fun deserializeAnnotation(proto: ProtoAnnotation, parentStart: Int?): IrAnnotation {
         return if (settings.useNullableAnyAsAnnotationConstructorCallType)
-            deserializeAnnotation(proto, startOffset, endOffset, builtIns.anyNType)
+            deserializeAnnotation(proto, builtIns.anyNType, parentStart)
         else {
             val irType = IrAnnotationType()
-            deserializeAnnotation(proto, startOffset, endOffset, irType).also { irType.irConstructorCall = it }
+            deserializeAnnotation(proto, irType, parentStart).also { irType.irConstructorCall = it }
         }
     }
 
-    private fun deserializeAnnotation(proto: ProtoConstructorCall, start: Int, end: Int, type: IrType): IrAnnotation {
+    private fun deserializeAnnotation(proto: ProtoAnnotation, type: IrType, parentStart: Int?): IrAnnotation {
+        val coords = declarationDeserializer.deserializeCoordinates(false, 0, proto.localCoordinates, parentStart)
         val symbol = deserializeTypedSymbol<IrConstructorSymbol>(proto.symbol, CONSTRUCTOR_SYMBOL)
         return IrAnnotationImplRaw(
-            start,
-            end,
+            coords.startOffset,
+            coords.endOffset,
             type,
             symbol,
             proto.constructorTypeArgumentsCount,
@@ -326,7 +325,7 @@ class IrBodyDeserializer(
             SourceElement.NO_SOURCE,
         ).also {
             deserializeMemberAccessCommonPre_2_4_0(it, proto.memberAccessPre240)
-            it.arguments.addAll(deserializeArguments(proto.argumentList))
+            it.arguments.addAll(deserializeArguments(proto.argumentList, coords.startOffset))
             it.typeArguments.addAll(deserializeTypeArguments(proto.typeArgumentList))
         }
     }
@@ -341,7 +340,7 @@ class IrBodyDeserializer(
             SourceElement.NO_SOURCE,
         ).also {
             deserializeMemberAccessCommonPre_2_4_0(it, proto.memberAccessPre240)
-            it.arguments.addAll(deserializeArguments(proto.argumentList))
+            it.arguments.addAll(deserializeArguments(proto.argumentList, start))
             it.typeArguments.addAll(deserializeTypeArguments(proto.typeArgumentList))
         }
     }
@@ -358,7 +357,7 @@ class IrBodyDeserializer(
             superSymbol
         )
         deserializeMemberAccessCommonPre_2_4_0(call, proto.memberAccessPre240)
-        call.arguments.addAll(deserializeArguments(proto.argumentList))
+        call.arguments.addAll(deserializeArguments(proto.argumentList, start))
         call.typeArguments.addAll(deserializeTypeArguments(proto.typeArgumentList))
         return call
     }
@@ -369,7 +368,7 @@ class IrBodyDeserializer(
         val origin = deserializeIrStatementOrigin(proto.hasOriginName()) { proto.originName }
 
         statementProtos.forEach {
-            statements.add(deserializeStatement(it) as IrStatement)
+            statements.add(deserializeStatement(it, start) as IrStatement)
         }
         return IrCompositeImpl(start, end, type, origin, statements)
     }
@@ -388,7 +387,7 @@ class IrBodyDeserializer(
             null,
         )
         deserializeMemberAccessCommonPre_2_4_0(call, proto.memberAccessPre240)
-        call.arguments.addAll(deserializeArguments(proto.argumentList))
+        call.arguments.addAll(deserializeArguments(proto.argumentList, start))
         call.typeArguments.addAll(deserializeTypeArguments(proto.typeArgumentList))
         return call
     }
@@ -408,7 +407,7 @@ class IrBodyDeserializer(
             null,
         )
         deserializeMemberAccessCommonPre_2_4_0(call, proto.memberAccessPre240)
-        call.arguments.addAll(deserializeArguments(proto.argumentList))
+        call.arguments.addAll(deserializeArguments(proto.argumentList, start))
         call.typeArguments.addAll(deserializeTypeArguments(proto.typeArgumentList))
         return call
     }
@@ -421,7 +420,7 @@ class IrBodyDeserializer(
     ) =
         IrFunctionExpressionImpl(
             start, end, type,
-            declarationDeserializer.deserializeIrFunction(functionExpression.function),
+            declarationDeserializer.deserializeIrFunction(functionExpression.function, start),
             deserializeIrStatementOrigin(functionExpression.originName)
         )
 
@@ -444,14 +443,14 @@ class IrBodyDeserializer(
                 richFunctionReference.overriddenFunctionSymbol,
                 FUNCTION_SYMBOL
             ),
-            invokeFunction = declarationDeserializer.deserializeIrFunction(richFunctionReference.invokeFunction),
+            invokeFunction = declarationDeserializer.deserializeIrFunction(richFunctionReference.invokeFunction, start),
             origin = deserializeIrStatementOrigin(richFunctionReference.hasOriginName()) { richFunctionReference.originName },
             hasUnitConversion = flags.hasUnitConversion,
             hasSuspendConversion = flags.hasSuspendConversion,
             hasVarargConversion = flags.hasVarargConversion,
             isRestrictedSuspension = flags.isRestrictedSuspension
         ).apply {
-            boundValues.addAll(richFunctionReference.boundValuesList.map { deserializeExpression(it) })
+            boundValues.addAll(richFunctionReference.boundValuesList.map { deserializeExpression(it, start) })
         }
     }
 
@@ -465,11 +464,11 @@ class IrBodyDeserializer(
         endOffset = end,
         type = type,
         reflectionTargetSymbol = deserializeTypedSymbolWhen<IrDeclarationWithAccessorsSymbol>(richPropertyReference.hasReflectionTargetSymbol(), PROPERTY_SYMBOL) { richPropertyReference.reflectionTargetSymbol },
-        getterFunction = declarationDeserializer.deserializeIrFunction(richPropertyReference.getterFunction),
-        setterFunction = if (richPropertyReference.hasSetterFunction()) declarationDeserializer.deserializeIrFunction(richPropertyReference.setterFunction) else null,
+        getterFunction = declarationDeserializer.deserializeIrFunction(richPropertyReference.getterFunction, start),
+        setterFunction = if (richPropertyReference.hasSetterFunction()) declarationDeserializer.deserializeIrFunction(richPropertyReference.setterFunction, start) else null,
         origin = deserializeIrStatementOrigin(richPropertyReference.hasOriginName()) { richPropertyReference.originName },
     ).apply {
-        boundValues.addAll(richPropertyReference.boundValuesList.map { deserializeExpression(it) })
+        boundValues.addAll(richPropertyReference.boundValuesList.map { deserializeExpression(it, start) })
     }
 
     private fun deserializeErrorExpression(
@@ -491,10 +490,10 @@ class IrBodyDeserializer(
         }
         return IrErrorCallExpressionImpl(start, end, type, libraryFile.string(proto.description)).apply {
             if (proto.hasReceiver()) {
-                explicitReceiver = deserializeExpression(proto.receiver)
+                explicitReceiver = deserializeExpression(proto.receiver, start)
             }
             proto.valueArgumentList.forEach {
-                arguments.add(deserializeExpression(it))
+                arguments.add(deserializeExpression(it, start))
             }
         }
 
@@ -523,13 +522,13 @@ class IrBodyDeserializer(
             origin,
         )
         deserializeMemberAccessCommonPre_2_4_0(callable, proto.memberAccessPre240)
-        callable.arguments.addAll(deserializeArguments(proto.argumentList))
+        callable.arguments.addAll(deserializeArguments(proto.argumentList, start))
         callable.typeArguments.addAll(deserializeTypeArguments(proto.typeArgumentList))
         return callable
     }
 
     private fun deserializeGetClass(proto: ProtoGetClass, start: Int, end: Int, type: IrType): IrGetClass {
-        val argument = deserializeExpression(proto.argument)
+        val argument = deserializeExpression(proto.argument, start)
         return IrGetClassImpl(start, end, type, argument)
     }
 
@@ -539,7 +538,7 @@ class IrBodyDeserializer(
         val origin = deserializeIrStatementOrigin(proto.hasOriginName()) { proto.originName }
         val superQualifier = deserializeTypedSymbolWhen<IrClassSymbol>(access.hasSuper(), CLASS_SYMBOL) { access.`super` }
         val receiver = if (access.hasReceiver()) {
-            deserializeExpression(access.receiver)
+            deserializeExpression(access.receiver, start)
         } else null
 
         return IrGetFieldImpl(start, end, symbol, type, receiver, origin, superQualifier)
@@ -622,7 +621,7 @@ class IrBodyDeserializer(
             origin,
         )
         deserializeMemberAccessCommonPre_2_4_0(callable, proto.memberAccessPre240)
-        callable.arguments.addAll(deserializeArguments(proto.argumentList))
+        callable.arguments.addAll(deserializeArguments(proto.argumentList, start))
         callable.typeArguments.addAll(deserializeTypeArguments(proto.typeArgumentList))
         return callable
     }
@@ -632,7 +631,7 @@ class IrBodyDeserializer(
             proto.returnTarget,
             fallbackSymbolKind = /* just the first possible option */ FUNCTION_SYMBOL
         )
-        val value = deserializeExpression(proto.value)
+        val value = deserializeExpression(proto.value, start)
         return IrReturnImpl(start, end, builtIns.nothingType, symbol, value)
     }
 
@@ -641,9 +640,9 @@ class IrBodyDeserializer(
         val symbol = deserializeTypedSymbol<IrFieldSymbol>(access.symbol, FIELD_SYMBOL)
         val superQualifier = deserializeTypedSymbolWhen<IrClassSymbol>(access.hasSuper(), CLASS_SYMBOL) { access.`super` }
         val receiver = if (access.hasReceiver()) {
-            deserializeExpression(access.receiver)
+            deserializeExpression(access.receiver, start)
         } else null
-        val value = deserializeExpression(proto.value)
+        val value = deserializeExpression(proto.value, start)
         val origin = deserializeIrStatementOrigin(proto.hasOriginName()) { proto.originName }
 
         return IrSetFieldImpl(start, end, symbol, receiver, value, builtIns.unitType, origin, superQualifier)
@@ -651,15 +650,17 @@ class IrBodyDeserializer(
 
     private fun deserializeSetValue(proto: ProtoSetValue, start: Int, end: Int): IrSetValue {
         val symbol = deserializeTypedSymbol<IrValueSymbol>(proto.symbol, fallbackSymbolKind = null)
-        val value = deserializeExpression(proto.value)
+        val value = deserializeExpression(proto.value, start)
         val origin = deserializeIrStatementOrigin(proto.hasOriginName()) { proto.originName }
         return IrSetValueImpl(start, end, builtIns.unitType, symbol, value, origin)
     }
 
-    private fun deserializeSpreadElement(proto: ProtoSpreadElement): IrSpreadElement {
-        val expression = deserializeExpression(proto.expression)
-        val coordinates = BinaryCoordinates.decode(proto.coordinates)
-        return IrSpreadElementImpl(coordinates.startOffset, coordinates.endOffset, expression)
+    private fun deserializeSpreadElement(proto: ProtoSpreadElement, parentStart: Int): IrSpreadElement {
+        val coords = declarationDeserializer.deserializeCoordinates(
+            proto.hasGlobalCoordinates(), proto.globalCoordinates, proto.localCoordinates, parentStart
+        )
+        val expression = deserializeExpression(proto.expression, coords.startOffset)
+        return IrSpreadElementImpl(coords.startOffset, coords.endOffset, expression)
     }
 
     private fun deserializeStringConcat(proto: ProtoStringConcat, start: Int, end: Int, type: IrType): IrStringConcatenation {
@@ -667,22 +668,22 @@ class IrBodyDeserializer(
         val arguments = mutableListOf<IrExpression>()
 
         argumentProtos.forEach {
-            arguments.add(deserializeExpression(it))
+            arguments.add(deserializeExpression(it, start))
         }
         return IrStringConcatenationImpl(start, end, type, arguments)
     }
 
     private fun deserializeThrow(proto: ProtoThrow, start: Int, end: Int): IrThrowImpl {
-        return IrThrowImpl(start, end, builtIns.nothingType, deserializeExpression(proto.value))
+        return IrThrowImpl(start, end, builtIns.nothingType, deserializeExpression(proto.value, start))
     }
 
     private fun deserializeTry(proto: ProtoTry, start: Int, end: Int, type: IrType): IrTryImpl {
-        val result = deserializeExpression(proto.result)
+        val result = deserializeExpression(proto.result, start)
         val catches = mutableListOf<IrCatch>()
         proto.catchList.forEach {
-            catches.add(deserializeStatement(it) as IrCatch)
+            catches.add(deserializeStatement(it, start) as IrCatch)
         }
-        val finallyExpression = if (proto.hasFinally()) deserializeExpression(proto.finally) else null
+        val finallyExpression = if (proto.hasFinally()) deserializeExpression(proto.finally, start) else null
         return IrTryImpl(start, end, type, result, catches, finallyExpression)
     }
 
@@ -714,7 +715,7 @@ class IrBodyDeserializer(
     private fun deserializeTypeOp(proto: ProtoTypeOp, start: Int, end: Int, type: IrType): IrTypeOperatorCall {
         val operator = deserializeTypeOperator(proto.operator)
         val operand = declarationDeserializer.deserializeIrType(proto.operand)//.brokenIr
-        val argument = deserializeExpression(proto.argument)
+        val argument = deserializeExpression(proto.argument, start)
         return IrTypeOperatorCallImpl(start, end, type, operator, operand, argument)
     }
 
@@ -723,17 +724,17 @@ class IrBodyDeserializer(
 
         val elements = mutableListOf<IrVarargElement>()
         proto.elementList.forEach {
-            elements.add(deserializeVarargElement(it))
+            elements.add(deserializeVarargElement(it, start))
         }
         return IrVarargImpl(start, end, type, elementType, elements)
     }
 
-    private fun deserializeVarargElement(element: ProtoVarargElement): IrVarargElement {
+    private fun deserializeVarargElement(element: ProtoVarargElement, parentStart: Int): IrVarargElement {
         return when (element.varargElementCase) {
             VarargElementCase.EXPRESSION
-            -> deserializeExpression(element.expression)
+            -> deserializeExpression(element.expression, parentStart)
             VarargElementCase.SPREAD_ELEMENT
-            -> deserializeSpreadElement(element.spreadElement)
+            -> deserializeSpreadElement(element.spreadElement, parentStart)
             else
             -> TODO("Unexpected vararg element")
         }
@@ -744,7 +745,7 @@ class IrBodyDeserializer(
         val origin = deserializeIrStatementOrigin(proto.hasOriginName()) { proto.originName }
 
         proto.branchList.forEach {
-            branches.add(deserializeStatement(it) as IrBranch)
+            branches.add(deserializeStatement(it, start) as IrBranch)
         }
 
         // TODO: provide some origin!
@@ -753,8 +754,8 @@ class IrBodyDeserializer(
 
     private fun deserializeLoop(proto: ProtoLoop, loop: IrLoop): IrLoop {
         val label = if (proto.hasLabel()) libraryFile.string(proto.label) else null
-        val body = if (proto.hasBody()) deserializeExpression(proto.body) else null
-        val condition = deserializeExpression(proto.condition)
+        val body = if (proto.hasBody()) deserializeExpression(proto.body, loop.startOffset) else null
+        val condition = deserializeExpression(proto.condition, loop.startOffset)
 
         loop.label = label
         loop.condition = condition
@@ -794,7 +795,7 @@ class IrBodyDeserializer(
             end,
             type,
             libraryFile.string(proto.memberName),
-            deserializeExpression(proto.receiver)
+            deserializeExpression(proto.receiver, start)
         )
 
     private fun deserializeDynamicOperatorExpression(
@@ -804,8 +805,8 @@ class IrBodyDeserializer(
         type: IrType
     ) =
         IrDynamicOperatorExpressionImpl(start, end, type, deserializeDynamicOperator(proto.operator)).apply {
-            receiver = deserializeExpression(proto.receiver)
-            proto.argumentList.mapTo(arguments) { deserializeExpression(it) }
+            receiver = deserializeExpression(proto.receiver, start)
+            proto.argumentList.mapTo(arguments) { deserializeExpression(it, start) }
         }
 
     private fun deserializeDynamicOperator(operator: ProtoDynamicOperatorExpression.IrDynamicOperator) =
@@ -899,7 +900,7 @@ class IrBodyDeserializer(
             -> error("Const deserialization error: ${proto.valueCase} ")
         }
 
-    private fun deserializeOperation(proto: ProtoExpression, start: Int, end: Int, type: IrType): IrExpression? =
+    private fun deserializeOperation(proto: ProtoExpression, start: Int, end: Int, type: IrType): IrExpression =
         when (proto.operationCase!!) {
             OP_BLOCK -> deserializeBlock(proto.opBlock, start, end, type)
             OP_RETURNABLE_BLOCK -> deserializeReturnableBlock(proto.opReturnableBlock, start, end, type)
@@ -941,8 +942,8 @@ class IrBodyDeserializer(
             OP_RICH_PROPERTY_REFERENCE -> deserializeRichPropertyReference(proto.opRichPropertyReference, start, end, type)
             OP_ERROR_EXPRESSION -> deserializeErrorExpression(proto.opErrorExpression, start, end, type)
             OP_ERROR_CALL_EXPRESSION -> deserializeErrorCallExpression(proto.opErrorCallExpression, start, end, type)
-            OP_MISSING_EXPRESSION -> null
-            ProtoExpression.OperationCase.OPERATION_NOT_SET -> error("Expression deserialization not implemented: ${proto.operationCase}")
+            ProtoExpression.OperationCase.OPERATION_NOT_SET, OP_MISSING_EXPRESSION ->
+                error("Expression deserialization not implemented: ${proto.operationCase}")
         }
 
     private fun deserializeOperationPre240(proto: ProtoOperationPre2_4_0, start: Int, end: Int, type: IrType): IrExpression =
@@ -990,23 +991,27 @@ class IrBodyDeserializer(
             ProtoOperationPre2_4_0.OperationCase.OPERATION_NOT_SET -> error("Expression deserialization not implemented: ${proto.operationCase}")
         }
 
-    fun deserializeNullableExpression(proto: ProtoExpression): IrExpression? {
-        val coordinates = BinaryCoordinates.decode(proto.coordinates)
-        val start = coordinates.startOffset
-        val end = coordinates.endOffset
+    fun deserializeNullableExpression(proto: ProtoExpression, parentStart: Int?): IrExpression? {
+        if (proto.operationCase == OP_MISSING_EXPRESSION) {
+            return null
+        }
+
+        val coords = declarationDeserializer.deserializeCoordinates(
+            proto.hasGlobalCoordinates(), proto.globalCoordinates, proto.localCoordinates, parentStart
+        )
         val type = declarationDeserializer.deserializeIrType(proto.type)
 
         val expression = if (proto.operationCase != ProtoExpression.OperationCase.OPERATION_NOT_SET) {
-            deserializeOperation(proto, start, end, type)
+            deserializeOperation(proto, coords.startOffset, coords.endOffset, type)
         } else {
-            deserializeOperationPre240(proto.operationPre240, start, end, type)
+            deserializeOperationPre240(proto.operationPre240, coords.startOffset, coords.endOffset, type)
         }
 
         return expression
     }
 
-    fun deserializeExpression(proto: ProtoExpression): IrExpression =
-        deserializeNullableExpression(proto) ?: error("Expected non-null expression, got: ${proto.operationCase}")
+    fun deserializeExpression(proto: ProtoExpression, parentStart: Int?): IrExpression =
+        deserializeNullableExpression(proto, parentStart) ?: error("Expected non-null expression, got: ${proto.operationCase}")
 
     private fun deserializeIrStatementOrigin(protoName: Int): IrStatementOrigin {
         val originName = libraryFile.string(protoName)

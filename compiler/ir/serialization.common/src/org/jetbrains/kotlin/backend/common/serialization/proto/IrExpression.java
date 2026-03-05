@@ -74,7 +74,12 @@ public final class IrExpression extends
           }
           case 24: {
             bitField1_ |= 0x00000400;
-            coordinates_ = input.readInt64();
+            globalCoordinates_ = input.readInt64();
+            break;
+          }
+          case 32: {
+            bitField1_ |= 0x00000800;
+            localCoordinates_ = input.readInt64();
             break;
           }
           case 42: {
@@ -1461,37 +1466,85 @@ public final class IrExpression extends
   public static final int TYPE_FIELD_NUMBER = 2;
   private int type_;
   /**
-   * <code>required int32 type = 2;</code>
+   * <code>optional int32 type = 2 [default = -1];</code>
+   *
+   * <pre>
+   * Was required before 2.4.0.
+   * The default value of -1 is set because this field won't ever be assigned to -1 (it's an index inta a table, so always non-negative).
+   * It means that at all times when this field is set, Protobuf won't elide it to its default value (which would be 0 if not specified),
+   * and will serialize it to the wire. This is important, because it may be read by a 2.3.0 compiler, and at that version
+   * this field was `required`. Protobuf in proto2 format expects `required` fields to always be present, both when serializing and
+   * deserializing, otherwise it would fail.
+   * This hack can be dropped along with support of serialization to 2.3.0 ABI version.
+   * </pre>
    */
   public boolean hasType() {
     return ((bitField1_ & 0x00000200) == 0x00000200);
   }
   /**
-   * <code>required int32 type = 2;</code>
+   * <code>optional int32 type = 2 [default = -1];</code>
+   *
+   * <pre>
+   * Was required before 2.4.0.
+   * The default value of -1 is set because this field won't ever be assigned to -1 (it's an index inta a table, so always non-negative).
+   * It means that at all times when this field is set, Protobuf won't elide it to its default value (which would be 0 if not specified),
+   * and will serialize it to the wire. This is important, because it may be read by a 2.3.0 compiler, and at that version
+   * this field was `required`. Protobuf in proto2 format expects `required` fields to always be present, both when serializing and
+   * deserializing, otherwise it would fail.
+   * This hack can be dropped along with support of serialization to 2.3.0 ABI version.
+   * </pre>
    */
   public int getType() {
     return type_;
   }
 
-  public static final int COORDINATES_FIELD_NUMBER = 3;
-  private long coordinates_;
+  public static final int GLOBAL_COORDINATES_FIELD_NUMBER = 3;
+  private long globalCoordinates_;
   /**
-   * <code>required int64 coordinates = 3;</code>
+   * <code>optional int64 global_coordinates = 3 [default = 6148914691236517201];</code>
+   *
+   * <pre>
+   * Was required before 2.4.0.
+   * The bizarre default value is an encoded form of coordinates [-3, -3]. Such coordinates will never be set (it's enforced),
+   * so, in turn, this field will always be serialized. For why does it matter see the explanation of field `type` above.
+   * </pre>
    */
-  public boolean hasCoordinates() {
+  public boolean hasGlobalCoordinates() {
     return ((bitField1_ & 0x00000400) == 0x00000400);
   }
   /**
-   * <code>required int64 coordinates = 3;</code>
+   * <code>optional int64 global_coordinates = 3 [default = 6148914691236517201];</code>
+   *
+   * <pre>
+   * Was required before 2.4.0.
+   * The bizarre default value is an encoded form of coordinates [-3, -3]. Such coordinates will never be set (it's enforced),
+   * so, in turn, this field will always be serialized. For why does it matter see the explanation of field `type` above.
+   * </pre>
    */
-  public long getCoordinates() {
-    return coordinates_;
+  public long getGlobalCoordinates() {
+    return globalCoordinates_;
+  }
+
+  public static final int LOCAL_COORDINATES_FIELD_NUMBER = 4;
+  private long localCoordinates_;
+  /**
+   * <code>optional int64 local_coordinates = 4;</code>
+   */
+  public boolean hasLocalCoordinates() {
+    return ((bitField1_ & 0x00000800) == 0x00000800);
+  }
+  /**
+   * <code>optional int64 local_coordinates = 4;</code>
+   */
+  public long getLocalCoordinates() {
+    return localCoordinates_;
   }
 
   private void initFields() {
     operationPre240_ = org.jetbrains.kotlin.backend.common.serialization.proto.IrOperationPre_2_4_0.getDefaultInstance();
-    type_ = 0;
-    coordinates_ = 0L;
+    type_ = -1;
+    globalCoordinates_ = 6148914691236517201L;
+    localCoordinates_ = 0L;
   }
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
@@ -1499,14 +1552,6 @@ public final class IrExpression extends
     if (isInitialized == 1) return true;
     if (isInitialized == 0) return false;
 
-    if (!hasType()) {
-      memoizedIsInitialized = 0;
-      return false;
-    }
-    if (!hasCoordinates()) {
-      memoizedIsInitialized = 0;
-      return false;
-    }
     if (hasOpGetValue()) {
       if (!getOpGetValue().isInitialized()) {
         memoizedIsInitialized = 0;
@@ -1755,7 +1800,10 @@ public final class IrExpression extends
       output.writeInt32(2, type_);
     }
     if (((bitField1_ & 0x00000400) == 0x00000400)) {
-      output.writeInt64(3, coordinates_);
+      output.writeInt64(3, globalCoordinates_);
+    }
+    if (((bitField1_ & 0x00000800) == 0x00000800)) {
+      output.writeInt64(4, localCoordinates_);
     }
     if (operationCase_ == 5) {
       output.writeMessage(5, (org.jetbrains.kotlin.backend.common.serialization.proto.IrConst) operation_);
@@ -1896,7 +1944,11 @@ public final class IrExpression extends
     }
     if (((bitField1_ & 0x00000400) == 0x00000400)) {
       size += org.jetbrains.kotlin.protobuf.CodedOutputStream
-        .computeInt64Size(3, coordinates_);
+        .computeInt64Size(3, globalCoordinates_);
+    }
+    if (((bitField1_ & 0x00000800) == 0x00000800)) {
+      size += org.jetbrains.kotlin.protobuf.CodedOutputStream
+        .computeInt64Size(4, localCoordinates_);
     }
     if (operationCase_ == 5) {
       size += org.jetbrains.kotlin.protobuf.CodedOutputStream
@@ -2154,10 +2206,12 @@ public final class IrExpression extends
       super.clear();
       operationPre240_ = org.jetbrains.kotlin.backend.common.serialization.proto.IrOperationPre_2_4_0.getDefaultInstance();
       bitField1_ = (bitField1_ & ~0x00000100);
-      type_ = 0;
+      type_ = -1;
       bitField1_ = (bitField1_ & ~0x00000200);
-      coordinates_ = 0L;
+      globalCoordinates_ = 6148914691236517201L;
       bitField1_ = (bitField1_ & ~0x00000400);
+      localCoordinates_ = 0L;
+      bitField1_ = (bitField1_ & ~0x00000800);
       operationCase_ = 0;
       operation_ = null;
       return this;
@@ -2316,7 +2370,11 @@ public final class IrExpression extends
       if (((from_bitField1_ & 0x00000400) == 0x00000400)) {
         to_bitField1_ |= 0x00000400;
       }
-      result.coordinates_ = coordinates_;
+      result.globalCoordinates_ = globalCoordinates_;
+      if (((from_bitField1_ & 0x00000800) == 0x00000800)) {
+        to_bitField1_ |= 0x00000800;
+      }
+      result.localCoordinates_ = localCoordinates_;
       result.bitField0_ = to_bitField0_;
       result.bitField1_ = to_bitField1_;
       result.operationCase_ = operationCase_;
@@ -2331,8 +2389,11 @@ public final class IrExpression extends
       if (other.hasType()) {
         setType(other.getType());
       }
-      if (other.hasCoordinates()) {
-        setCoordinates(other.getCoordinates());
+      if (other.hasGlobalCoordinates()) {
+        setGlobalCoordinates(other.getGlobalCoordinates());
+      }
+      if (other.hasLocalCoordinates()) {
+        setLocalCoordinates(other.getLocalCoordinates());
       }
       switch (other.getOperationCase()) {
         case OP_CONST: {
@@ -2505,14 +2566,6 @@ public final class IrExpression extends
     }
 
     public final boolean isInitialized() {
-      if (!hasType()) {
-        
-        return false;
-      }
-      if (!hasCoordinates()) {
-        
-        return false;
-      }
       if (hasOpGetValue()) {
         if (!getOpGetValue().isInitialized()) {
           
@@ -5476,21 +5529,51 @@ public final class IrExpression extends
       return this;
     }
 
-    private int type_ ;
+    private int type_ = -1;
     /**
-     * <code>required int32 type = 2;</code>
+     * <code>optional int32 type = 2 [default = -1];</code>
+     *
+     * <pre>
+     * Was required before 2.4.0.
+     * The default value of -1 is set because this field won't ever be assigned to -1 (it's an index inta a table, so always non-negative).
+     * It means that at all times when this field is set, Protobuf won't elide it to its default value (which would be 0 if not specified),
+     * and will serialize it to the wire. This is important, because it may be read by a 2.3.0 compiler, and at that version
+     * this field was `required`. Protobuf in proto2 format expects `required` fields to always be present, both when serializing and
+     * deserializing, otherwise it would fail.
+     * This hack can be dropped along with support of serialization to 2.3.0 ABI version.
+     * </pre>
      */
     public boolean hasType() {
       return ((bitField1_ & 0x00000200) == 0x00000200);
     }
     /**
-     * <code>required int32 type = 2;</code>
+     * <code>optional int32 type = 2 [default = -1];</code>
+     *
+     * <pre>
+     * Was required before 2.4.0.
+     * The default value of -1 is set because this field won't ever be assigned to -1 (it's an index inta a table, so always non-negative).
+     * It means that at all times when this field is set, Protobuf won't elide it to its default value (which would be 0 if not specified),
+     * and will serialize it to the wire. This is important, because it may be read by a 2.3.0 compiler, and at that version
+     * this field was `required`. Protobuf in proto2 format expects `required` fields to always be present, both when serializing and
+     * deserializing, otherwise it would fail.
+     * This hack can be dropped along with support of serialization to 2.3.0 ABI version.
+     * </pre>
      */
     public int getType() {
       return type_;
     }
     /**
-     * <code>required int32 type = 2;</code>
+     * <code>optional int32 type = 2 [default = -1];</code>
+     *
+     * <pre>
+     * Was required before 2.4.0.
+     * The default value of -1 is set because this field won't ever be assigned to -1 (it's an index inta a table, so always non-negative).
+     * It means that at all times when this field is set, Protobuf won't elide it to its default value (which would be 0 if not specified),
+     * and will serialize it to the wire. This is important, because it may be read by a 2.3.0 compiler, and at that version
+     * this field was `required`. Protobuf in proto2 format expects `required` fields to always be present, both when serializing and
+     * deserializing, otherwise it would fail.
+     * This hack can be dropped along with support of serialization to 2.3.0 ABI version.
+     * </pre>
      */
     public Builder setType(int value) {
       bitField1_ |= 0x00000200;
@@ -5499,43 +5582,109 @@ public final class IrExpression extends
       return this;
     }
     /**
-     * <code>required int32 type = 2;</code>
+     * <code>optional int32 type = 2 [default = -1];</code>
+     *
+     * <pre>
+     * Was required before 2.4.0.
+     * The default value of -1 is set because this field won't ever be assigned to -1 (it's an index inta a table, so always non-negative).
+     * It means that at all times when this field is set, Protobuf won't elide it to its default value (which would be 0 if not specified),
+     * and will serialize it to the wire. This is important, because it may be read by a 2.3.0 compiler, and at that version
+     * this field was `required`. Protobuf in proto2 format expects `required` fields to always be present, both when serializing and
+     * deserializing, otherwise it would fail.
+     * This hack can be dropped along with support of serialization to 2.3.0 ABI version.
+     * </pre>
      */
     public Builder clearType() {
       bitField1_ = (bitField1_ & ~0x00000200);
-      type_ = 0;
+      type_ = -1;
       
       return this;
     }
 
-    private long coordinates_ ;
+    private long globalCoordinates_ = 6148914691236517201L;
     /**
-     * <code>required int64 coordinates = 3;</code>
+     * <code>optional int64 global_coordinates = 3 [default = 6148914691236517201];</code>
+     *
+     * <pre>
+     * Was required before 2.4.0.
+     * The bizarre default value is an encoded form of coordinates [-3, -3]. Such coordinates will never be set (it's enforced),
+     * so, in turn, this field will always be serialized. For why does it matter see the explanation of field `type` above.
+     * </pre>
      */
-    public boolean hasCoordinates() {
+    public boolean hasGlobalCoordinates() {
       return ((bitField1_ & 0x00000400) == 0x00000400);
     }
     /**
-     * <code>required int64 coordinates = 3;</code>
+     * <code>optional int64 global_coordinates = 3 [default = 6148914691236517201];</code>
+     *
+     * <pre>
+     * Was required before 2.4.0.
+     * The bizarre default value is an encoded form of coordinates [-3, -3]. Such coordinates will never be set (it's enforced),
+     * so, in turn, this field will always be serialized. For why does it matter see the explanation of field `type` above.
+     * </pre>
      */
-    public long getCoordinates() {
-      return coordinates_;
+    public long getGlobalCoordinates() {
+      return globalCoordinates_;
     }
     /**
-     * <code>required int64 coordinates = 3;</code>
+     * <code>optional int64 global_coordinates = 3 [default = 6148914691236517201];</code>
+     *
+     * <pre>
+     * Was required before 2.4.0.
+     * The bizarre default value is an encoded form of coordinates [-3, -3]. Such coordinates will never be set (it's enforced),
+     * so, in turn, this field will always be serialized. For why does it matter see the explanation of field `type` above.
+     * </pre>
      */
-    public Builder setCoordinates(long value) {
+    public Builder setGlobalCoordinates(long value) {
       bitField1_ |= 0x00000400;
-      coordinates_ = value;
+      globalCoordinates_ = value;
       
       return this;
     }
     /**
-     * <code>required int64 coordinates = 3;</code>
+     * <code>optional int64 global_coordinates = 3 [default = 6148914691236517201];</code>
+     *
+     * <pre>
+     * Was required before 2.4.0.
+     * The bizarre default value is an encoded form of coordinates [-3, -3]. Such coordinates will never be set (it's enforced),
+     * so, in turn, this field will always be serialized. For why does it matter see the explanation of field `type` above.
+     * </pre>
      */
-    public Builder clearCoordinates() {
+    public Builder clearGlobalCoordinates() {
       bitField1_ = (bitField1_ & ~0x00000400);
-      coordinates_ = 0L;
+      globalCoordinates_ = 6148914691236517201L;
+      
+      return this;
+    }
+
+    private long localCoordinates_ ;
+    /**
+     * <code>optional int64 local_coordinates = 4;</code>
+     */
+    public boolean hasLocalCoordinates() {
+      return ((bitField1_ & 0x00000800) == 0x00000800);
+    }
+    /**
+     * <code>optional int64 local_coordinates = 4;</code>
+     */
+    public long getLocalCoordinates() {
+      return localCoordinates_;
+    }
+    /**
+     * <code>optional int64 local_coordinates = 4;</code>
+     */
+    public Builder setLocalCoordinates(long value) {
+      bitField1_ |= 0x00000800;
+      localCoordinates_ = value;
+      
+      return this;
+    }
+    /**
+     * <code>optional int64 local_coordinates = 4;</code>
+     */
+    public Builder clearLocalCoordinates() {
+      bitField1_ = (bitField1_ & ~0x00000800);
+      localCoordinates_ = 0L;
       
       return this;
     }

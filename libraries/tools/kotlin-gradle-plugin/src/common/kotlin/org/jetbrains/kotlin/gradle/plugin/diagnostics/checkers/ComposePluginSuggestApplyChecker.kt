@@ -25,7 +25,7 @@ internal object ComposePluginSuggestApplyChecker : KotlinGradleProjectChecker {
             project.isAgpComposeEnabled &&
             !project.plugins.hasKotlinComposePlugin()
         ) {
-            collector.reportSuggestion(project)
+            collector.reportSuggestion(diagnosticsContext)
         } else if (
         // KMP project without Jetbrains Compose plugin
             project.plugins.hasKotlinMultiplatformPlugin() &&
@@ -33,15 +33,15 @@ internal object ComposePluginSuggestApplyChecker : KotlinGradleProjectChecker {
             project.isAgpComposeEnabled &&
             !project.plugins.hasKotlinComposePlugin()
         ) {
-            collector.reportSuggestion(project)
+            collector.reportSuggestion(diagnosticsContext)
         }
     }
 
     private fun KotlinToolingDiagnosticsCollector.reportSuggestion(
-        project: Project
+        context: ToolingDiagnosticsContext,
     ) {
         reportOncePerGradleProject(
-            project,
+            context,
             KotlinToolingDiagnostics.NoComposeCompilerPluginAppliedWarning(),
         )
     }

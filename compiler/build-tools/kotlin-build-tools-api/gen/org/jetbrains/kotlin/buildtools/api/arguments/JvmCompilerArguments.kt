@@ -13,7 +13,16 @@ import kotlin.jvm.JvmField
 import org.jetbrains.kotlin.buildtools.api.DeprecatedCompilerArgument
 import org.jetbrains.kotlin.buildtools.api.KotlinReleaseVersion
 import org.jetbrains.kotlin.buildtools.api.RemovedCompilerArgument
+import org.jetbrains.kotlin.buildtools.api.arguments.enums.AbiStabilityMode
+import org.jetbrains.kotlin.buildtools.api.arguments.enums.AssertionsMode
+import org.jetbrains.kotlin.buildtools.api.arguments.enums.CompatqualAnnotationsMode
+import org.jetbrains.kotlin.buildtools.api.arguments.enums.JspecifyAnnotationsMode
+import org.jetbrains.kotlin.buildtools.api.arguments.enums.JvmDefaultMode
 import org.jetbrains.kotlin.buildtools.api.arguments.enums.JvmTarget
+import org.jetbrains.kotlin.buildtools.api.arguments.enums.LambdasMode
+import org.jetbrains.kotlin.buildtools.api.arguments.enums.SamConversionsMode
+import org.jetbrains.kotlin.buildtools.api.arguments.enums.StringConcatMode
+import org.jetbrains.kotlin.buildtools.api.arguments.enums.WhenExpressionsMode
 import org.jetbrains.kotlin.buildtools.api.arguments.types.ProfileCompilerCommand
 
 /**
@@ -99,7 +108,7 @@ public interface JvmCompilerArguments : CommonCompilerArguments {
      */
     @JvmField
     @ExperimentalCompilerArgument
-    public val X_ABI_STABILITY: JvmCompilerArgument<String?> =
+    public val X_ABI_STABILITY: JvmCompilerArgument<AbiStabilityMode?> =
         JvmCompilerArgument("X_ABI_STABILITY", KotlinReleaseVersion(1, 4, 30))
 
     /**
@@ -154,7 +163,7 @@ public interface JvmCompilerArguments : CommonCompilerArguments {
      */
     @JvmField
     @ExperimentalCompilerArgument
-    public val X_ASSERTIONS: JvmCompilerArgument<String?> =
+    public val X_ASSERTIONS: JvmCompilerArgument<AssertionsMode?> =
         JvmCompilerArgument("X_ASSERTIONS", KotlinReleaseVersion(1, 2, 60))
 
     /**
@@ -348,7 +357,7 @@ public interface JvmCompilerArguments : CommonCompilerArguments {
      */
     @JvmField
     @ExperimentalCompilerArgument
-    public val X_JSPECIFY_ANNOTATIONS: JvmCompilerArgument<String?> =
+    public val X_JSPECIFY_ANNOTATIONS: JvmCompilerArgument<JspecifyAnnotationsMode?> =
         JvmCompilerArgument("X_JSPECIFY_ANNOTATIONS", KotlinReleaseVersion(1, 4, 30))
 
     /**
@@ -426,7 +435,7 @@ public interface JvmCompilerArguments : CommonCompilerArguments {
      */
     @JvmField
     @ExperimentalCompilerArgument
-    public val X_LAMBDAS: JvmCompilerArgument<String?> =
+    public val X_LAMBDAS: JvmCompilerArgument<LambdasMode?> =
         JvmCompilerArgument("X_LAMBDAS", KotlinReleaseVersion(1, 5, 0))
 
     /**
@@ -594,7 +603,7 @@ public interface JvmCompilerArguments : CommonCompilerArguments {
      */
     @JvmField
     @ExperimentalCompilerArgument
-    public val X_SAM_CONVERSIONS: JvmCompilerArgument<String?> =
+    public val X_SAM_CONVERSIONS: JvmCompilerArgument<SamConversionsMode?> =
         JvmCompilerArgument("X_SAM_CONVERSIONS", KotlinReleaseVersion(1, 5, 0))
 
     /**
@@ -643,7 +652,7 @@ public interface JvmCompilerArguments : CommonCompilerArguments {
      */
     @JvmField
     @ExperimentalCompilerArgument
-    public val X_STRING_CONCAT: JvmCompilerArgument<String?> =
+    public val X_STRING_CONCAT: JvmCompilerArgument<StringConcatMode?> =
         JvmCompilerArgument("X_STRING_CONCAT", KotlinReleaseVersion(1, 4, 20))
 
     /**
@@ -654,7 +663,8 @@ public interface JvmCompilerArguments : CommonCompilerArguments {
      */
     @JvmField
     @ExperimentalCompilerArgument
-    public val X_SUPPORT_COMPATQUAL_CHECKER_FRAMEWORK_ANNOTATIONS: JvmCompilerArgument<String?> =
+    public val X_SUPPORT_COMPATQUAL_CHECKER_FRAMEWORK_ANNOTATIONS:
+        JvmCompilerArgument<CompatqualAnnotationsMode?> =
         JvmCompilerArgument("X_SUPPORT_COMPATQUAL_CHECKER_FRAMEWORK_ANNOTATIONS", KotlinReleaseVersion(1, 2, 20))
 
     /**
@@ -785,7 +795,7 @@ public interface JvmCompilerArguments : CommonCompilerArguments {
      */
     @JvmField
     @ExperimentalCompilerArgument
-    public val X_WHEN_EXPRESSIONS: JvmCompilerArgument<String?> =
+    public val X_WHEN_EXPRESSIONS: JvmCompilerArgument<WhenExpressionsMode?> =
         JvmCompilerArgument("X_WHEN_EXPRESSIONS", KotlinReleaseVersion(2, 2, 20))
 
     /**
@@ -818,7 +828,7 @@ public interface JvmCompilerArguments : CommonCompilerArguments {
      * -jvm-default=disable             Do not generate JVM default methods. This is the default behavior up to language version 2.1.
      */
     @JvmField
-    public val JVM_DEFAULT: JvmCompilerArgument<String?> =
+    public val JVM_DEFAULT: JvmCompilerArgument<JvmDefaultMode?> =
         JvmCompilerArgument("JVM_DEFAULT", KotlinReleaseVersion(2, 2, 0))
 
     /**

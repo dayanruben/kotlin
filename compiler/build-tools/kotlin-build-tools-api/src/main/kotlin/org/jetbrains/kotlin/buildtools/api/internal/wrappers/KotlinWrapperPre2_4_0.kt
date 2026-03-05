@@ -10,6 +10,7 @@ package org.jetbrains.kotlin.buildtools.api.internal.wrappers
 import org.jetbrains.kotlin.buildtools.api.*
 import org.jetbrains.kotlin.buildtools.api.arguments.ExperimentalCompilerArgument
 import org.jetbrains.kotlin.buildtools.api.arguments.JvmCompilerArguments
+import org.jetbrains.kotlin.buildtools.api.arguments.enums.*
 import org.jetbrains.kotlin.buildtools.api.arguments.types.ProfileCompilerCommand
 import org.jetbrains.kotlin.buildtools.api.jvm.JvmPlatformToolchain
 import org.jetbrains.kotlin.buildtools.api.jvm.JvmSnapshotBasedIncrementalCompilationConfiguration
@@ -171,6 +172,69 @@ internal class KotlinWrapperPre2_4_0(
                     Path(stringValue) as V
                 }
 
+                JvmCompilerArguments.JVM_DEFAULT -> {
+                    if (delegate[key] == null) return null as V
+
+                    val stringValue = delegate[key] as String
+                    JvmDefaultMode.values().first { it.stringValue == stringValue } as V
+                }
+
+                JvmCompilerArguments.X_ABI_STABILITY -> {
+                    if (delegate[key] == null) return null as V
+
+                    val stringValue = delegate[key] as String
+                    AbiStabilityMode.values().first { it.stringValue == stringValue } as V
+                }
+
+                JvmCompilerArguments.X_ASSERTIONS -> {
+                    if (delegate[key] == null) return null as V
+
+                    val stringValue = delegate[key] as String
+                    AssertionsMode.values().first { it.stringValue == stringValue } as V
+                }
+
+                JvmCompilerArguments.X_JSPECIFY_ANNOTATIONS -> {
+                    if (delegate[key] == null) return null as V
+
+                    val stringValue = delegate[key] as String
+                    JspecifyAnnotationsMode.values().first { it.stringValue == stringValue } as V
+                }
+
+                JvmCompilerArguments.X_LAMBDAS -> {
+                    if (delegate[key] == null) return null as V
+
+                    val stringValue = delegate[key] as String
+                    LambdasMode.values().first { it.stringValue == stringValue } as V
+                }
+
+                JvmCompilerArguments.X_SAM_CONVERSIONS -> {
+                    if (delegate[key] == null) return null as V
+
+                    val stringValue = delegate[key] as String
+                    SamConversionsMode.values().first { it.stringValue == stringValue } as V
+                }
+
+                JvmCompilerArguments.X_STRING_CONCAT -> {
+                    if (delegate[key] == null) return null as V
+
+                    val stringValue = delegate[key] as String
+                    StringConcatMode.values().first { it.stringValue == stringValue } as V
+                }
+
+                JvmCompilerArguments.X_SUPPORT_COMPATQUAL_CHECKER_FRAMEWORK_ANNOTATIONS -> {
+                    if (delegate[key] == null) return null as V
+
+                    val stringValue = delegate[key] as String
+                    CompatqualAnnotationsMode.values().first { it.stringValue == stringValue } as V
+                }
+
+                JvmCompilerArguments.X_WHEN_EXPRESSIONS -> {
+                    if (delegate[key] == null) return null as V
+
+                    val stringValue = delegate[key] as String
+                    WhenExpressionsMode.values().first { it.stringValue == stringValue } as V
+                }
+
                 else -> delegate[key]
             }
         }
@@ -190,6 +254,78 @@ internal class KotlinWrapperPre2_4_0(
                 JvmCompilerArguments.JDK_HOME -> {
                     val pathValue = value as Path?
                     val stringValue = pathValue?.toFile()?.absolutePath
+                    val stringKey = JvmCompilerArguments.JvmCompilerArgument<String?>(key.id, key.availableSinceVersion)
+
+                    delegate[stringKey] = stringValue
+                }
+
+                JvmCompilerArguments.JVM_DEFAULT -> {
+                    val mode = value as JvmDefaultMode?
+                    val stringValue = mode?.stringValue
+                    val stringKey = JvmCompilerArguments.JvmCompilerArgument<String?>(key.id, key.availableSinceVersion)
+
+                    delegate[stringKey] = stringValue
+                }
+
+                JvmCompilerArguments.X_ABI_STABILITY -> {
+                    val mode = value as AbiStabilityMode?
+                    val stringValue = mode?.stringValue
+                    val stringKey = JvmCompilerArguments.JvmCompilerArgument<String?>(key.id, key.availableSinceVersion)
+
+                    delegate[stringKey] = stringValue
+                }
+
+                JvmCompilerArguments.X_ASSERTIONS -> {
+                    val mode = value as AssertionsMode?
+                    val stringValue = mode?.stringValue
+                    val stringKey = JvmCompilerArguments.JvmCompilerArgument<String?>(key.id, key.availableSinceVersion)
+
+                    delegate[stringKey] = stringValue
+                }
+
+                JvmCompilerArguments.X_JSPECIFY_ANNOTATIONS -> {
+                    val mode = value as JspecifyAnnotationsMode?
+                    val stringValue = mode?.stringValue
+                    val stringKey = JvmCompilerArguments.JvmCompilerArgument<String?>(key.id, key.availableSinceVersion)
+
+                    delegate[stringKey] = stringValue
+                }
+
+                JvmCompilerArguments.X_LAMBDAS -> {
+                    val mode = value as LambdasMode?
+                    val stringValue = mode?.stringValue
+                    val stringKey = JvmCompilerArguments.JvmCompilerArgument<String?>(key.id, key.availableSinceVersion)
+
+                    delegate[stringKey] = stringValue
+                }
+
+                JvmCompilerArguments.X_SAM_CONVERSIONS -> {
+                    val mode = value as SamConversionsMode?
+                    val stringValue = mode?.stringValue
+                    val stringKey = JvmCompilerArguments.JvmCompilerArgument<String?>(key.id, key.availableSinceVersion)
+
+                    delegate[stringKey] = stringValue
+                }
+
+                JvmCompilerArguments.X_STRING_CONCAT -> {
+                    val mode = value as StringConcatMode?
+                    val stringValue = mode?.stringValue
+                    val stringKey = JvmCompilerArguments.JvmCompilerArgument<String?>(key.id, key.availableSinceVersion)
+
+                    delegate[stringKey] = stringValue
+                }
+
+                JvmCompilerArguments.X_SUPPORT_COMPATQUAL_CHECKER_FRAMEWORK_ANNOTATIONS -> {
+                    val mode = value as CompatqualAnnotationsMode?
+                    val stringValue = mode?.stringValue
+                    val stringKey = JvmCompilerArguments.JvmCompilerArgument<String?>(key.id, key.availableSinceVersion)
+
+                    delegate[stringKey] = stringValue
+                }
+
+                JvmCompilerArguments.X_WHEN_EXPRESSIONS -> {
+                    val mode = value as WhenExpressionsMode?
+                    val stringValue = mode?.stringValue
                     val stringKey = JvmCompilerArguments.JvmCompilerArgument<String?>(key.id, key.availableSinceVersion)
 
                     delegate[stringKey] = stringValue

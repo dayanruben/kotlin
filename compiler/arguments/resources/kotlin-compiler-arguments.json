@@ -1,5 +1,5 @@
 {
-    "schemaVersion": 7,
+    "schemaVersion": 9,
     "releases": [
         {
             "name": "1.0.0",
@@ -811,6 +811,258 @@
                     "releaseVersionsMetadata": {
                         "introducedVersion": "2.3.0",
                         "stabilizedVersion": null,
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                }
+            ]
+        },
+        "jvmDefaultMode": {
+            "type": "org.jetbrains.kotlin.arguments.dsl.types.JvmDefaultModeType",
+            "values": [
+                {
+                    "name": "enable",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "2.2.0",
+                        "stabilizedVersion": "2.2.0",
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                },
+                {
+                    "name": "no-compatibility",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "2.2.0",
+                        "stabilizedVersion": "2.2.0",
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                },
+                {
+                    "name": "disable",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "2.2.0",
+                        "stabilizedVersion": "2.2.0",
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                }
+            ]
+        },
+        "abiStabilityMode": {
+            "type": "org.jetbrains.kotlin.arguments.dsl.types.AbiStabilityModeType",
+            "values": [
+                {
+                    "name": "stable",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "1.4.30",
+                        "stabilizedVersion": null,
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                },
+                {
+                    "name": "unstable",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "1.4.30",
+                        "stabilizedVersion": null,
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                }
+            ]
+        },
+        "assertionsMode": {
+            "type": "org.jetbrains.kotlin.arguments.dsl.types.AssertionsModeType",
+            "values": [
+                {
+                    "name": "always-enable",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "1.2.60",
+                        "stabilizedVersion": null,
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                },
+                {
+                    "name": "always-disable",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "1.2.60",
+                        "stabilizedVersion": null,
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                },
+                {
+                    "name": "jvm",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "1.2.60",
+                        "stabilizedVersion": null,
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                },
+                {
+                    "name": "legacy",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "1.2.60",
+                        "stabilizedVersion": null,
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                }
+            ]
+        },
+        "jspecifyAnnotationsMode": {
+            "type": "org.jetbrains.kotlin.arguments.dsl.types.JspecifyAnnotationsModeType",
+            "values": [
+                {
+                    "name": "ignore",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "1.4.30",
+                        "stabilizedVersion": null,
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                },
+                {
+                    "name": "strict",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "1.4.30",
+                        "stabilizedVersion": null,
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                },
+                {
+                    "name": "warn",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "1.4.30",
+                        "stabilizedVersion": null,
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                }
+            ]
+        },
+        "lambdasMode": {
+            "type": "org.jetbrains.kotlin.arguments.dsl.types.LambdasModeType",
+            "values": [
+                {
+                    "name": "class",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "1.5.0",
+                        "stabilizedVersion": "1.5.0",
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                },
+                {
+                    "name": "indy",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "1.5.0",
+                        "stabilizedVersion": "1.5.0",
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                }
+            ]
+        },
+        "samConversionsMode": {
+            "type": "org.jetbrains.kotlin.arguments.dsl.types.SamConversionsModeType",
+            "values": [
+                {
+                    "name": "class",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "1.5.0",
+                        "stabilizedVersion": "1.5.0",
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                },
+                {
+                    "name": "indy",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "1.5.0",
+                        "stabilizedVersion": "1.5.0",
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                }
+            ]
+        },
+        "stringConcatMode": {
+            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringConcatModeType",
+            "values": [
+                {
+                    "name": "indy-with-constants",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "1.4.20",
+                        "stabilizedVersion": "1.4.20",
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                },
+                {
+                    "name": "indy",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "1.4.20",
+                        "stabilizedVersion": "1.4.20",
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                },
+                {
+                    "name": "inline",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "1.4.20",
+                        "stabilizedVersion": "1.4.20",
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                }
+            ]
+        },
+        "compatqualAnnotationsMode": {
+            "type": "org.jetbrains.kotlin.arguments.dsl.types.CompatqualAnnotationsModeType",
+            "values": [
+                {
+                    "name": "enable",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "1.2.20",
+                        "stabilizedVersion": "1.2.20",
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                },
+                {
+                    "name": "disable",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "1.2.20",
+                        "stabilizedVersion": "1.2.20",
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                }
+            ]
+        },
+        "whenExpressionsMode": {
+            "type": "org.jetbrains.kotlin.arguments.dsl.types.WhenExpressionsModeType",
+            "values": [
+                {
+                    "name": "indy",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "2.2.20",
+                        "stabilizedVersion": "2.2.20",
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                },
+                {
+                    "name": "inline",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "2.2.20",
+                        "stabilizedVersion": "2.2.20",
                         "deprecatedVersion": null,
                         "removedVersion": null
                     }
@@ -5272,7 +5524,7 @@
                                     "removedVersion": null
                                 },
                                 "argumentType": {
-                                    "type": "org.jetbrains.kotlin.arguments.dsl.types.StringType",
+                                    "type": "org.jetbrains.kotlin.arguments.dsl.types.AbiStabilityModeType",
                                     "isNullable": {
                                         "current": true,
                                         "valueInVersions": []
@@ -5482,7 +5734,7 @@
                                     "removedVersion": null
                                 },
                                 "argumentType": {
-                                    "type": "org.jetbrains.kotlin.arguments.dsl.types.StringType",
+                                    "type": "org.jetbrains.kotlin.arguments.dsl.types.AssertionsModeType",
                                     "isNullable": {
                                         "current": true,
                                         "valueInVersions": []
@@ -6376,7 +6628,7 @@
                                     "removedVersion": null
                                 },
                                 "argumentType": {
-                                    "type": "org.jetbrains.kotlin.arguments.dsl.types.StringType",
+                                    "type": "org.jetbrains.kotlin.arguments.dsl.types.JspecifyAnnotationsModeType",
                                     "isNullable": {
                                         "current": true,
                                         "valueInVersions": []
@@ -6628,7 +6880,7 @@
                                     "removedVersion": null
                                 },
                                 "argumentType": {
-                                    "type": "org.jetbrains.kotlin.arguments.dsl.types.StringType",
+                                    "type": "org.jetbrains.kotlin.arguments.dsl.types.LambdasModeType",
                                     "isNullable": {
                                         "current": true,
                                         "valueInVersions": []
@@ -7256,7 +7508,7 @@
                                     "removedVersion": null
                                 },
                                 "argumentType": {
-                                    "type": "org.jetbrains.kotlin.arguments.dsl.types.StringType",
+                                    "type": "org.jetbrains.kotlin.arguments.dsl.types.SamConversionsModeType",
                                     "isNullable": {
                                         "current": true,
                                         "valueInVersions": []
@@ -7424,7 +7676,7 @@
                                     "removedVersion": null
                                 },
                                 "argumentType": {
-                                    "type": "org.jetbrains.kotlin.arguments.dsl.types.StringType",
+                                    "type": "org.jetbrains.kotlin.arguments.dsl.types.StringConcatModeType",
                                     "isNullable": {
                                         "current": true,
                                         "valueInVersions": []
@@ -7466,7 +7718,7 @@
                                     "removedVersion": null
                                 },
                                 "argumentType": {
-                                    "type": "org.jetbrains.kotlin.arguments.dsl.types.StringType",
+                                    "type": "org.jetbrains.kotlin.arguments.dsl.types.CompatqualAnnotationsModeType",
                                     "isNullable": {
                                         "current": true,
                                         "valueInVersions": []
@@ -8012,7 +8264,7 @@
                                     "removedVersion": null
                                 },
                                 "argumentType": {
-                                    "type": "org.jetbrains.kotlin.arguments.dsl.types.StringType",
+                                    "type": "org.jetbrains.kotlin.arguments.dsl.types.WhenExpressionsModeType",
                                     "isNullable": {
                                         "current": true,
                                         "valueInVersions": []
@@ -8306,7 +8558,7 @@
                                     "removedVersion": null
                                 },
                                 "argumentType": {
-                                    "type": "org.jetbrains.kotlin.arguments.dsl.types.StringType",
+                                    "type": "org.jetbrains.kotlin.arguments.dsl.types.JvmDefaultModeType",
                                     "isNullable": {
                                         "current": true,
                                         "valueInVersions": []

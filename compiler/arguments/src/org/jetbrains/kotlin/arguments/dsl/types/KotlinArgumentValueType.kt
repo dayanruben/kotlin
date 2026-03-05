@@ -195,6 +195,78 @@ object ProfileCompilerCommandType : KotlinArgumentValueType<ProfileCompilerComma
     }
 }
 
+/**
+ * A value which accepts [JvmDefaultMode] type.
+ */
+@Serializable
+class JvmDefaultModeType : EnumType<JvmDefaultMode>(ReleaseDependent(true)) {
+    override val defaultValue: ReleaseDependent<JvmDefaultMode?> = ReleaseDependent(null)
+}
+
+/**
+ * A value which accepts [AbiStabilityMode] type.
+ */
+@Serializable
+class AbiStabilityModeType : EnumType<AbiStabilityMode>(ReleaseDependent(true)) {
+    override val defaultValue: ReleaseDependent<AbiStabilityMode?> = ReleaseDependent(null)
+}
+
+/**
+ * A value which accepts [AssertionsMode] type.
+ */
+@Serializable
+class AssertionsModeType : EnumType<AssertionsMode>(ReleaseDependent(true)) {
+    override val defaultValue: ReleaseDependent<AssertionsMode?> = ReleaseDependent(AssertionsMode.LEGACY)
+}
+
+/**
+ * A value which accepts [JspecifyAnnotationsMode] type.
+ */
+@Serializable
+class JspecifyAnnotationsModeType : EnumType<JspecifyAnnotationsMode>(ReleaseDependent(true)) {
+    override val defaultValue: ReleaseDependent<JspecifyAnnotationsMode?> = ReleaseDependent(null)
+}
+
+/**
+ * A value which accepts [LambdasMode] type.
+ */
+@Serializable
+class LambdasModeType : EnumType<LambdasMode>(ReleaseDependent(true)) {
+    override val defaultValue: ReleaseDependent<LambdasMode?> = ReleaseDependent(null)
+}
+
+/**
+ * A value which accepts [SamConversionsMode] type.
+ */
+@Serializable
+class SamConversionsModeType : EnumType<SamConversionsMode>(ReleaseDependent(true)) {
+    override val defaultValue: ReleaseDependent<SamConversionsMode?> = ReleaseDependent(null)
+}
+
+/**
+ * A value which accepts [StringConcatMode] type.
+ */
+@Serializable
+class StringConcatModeType : EnumType<StringConcatMode>(ReleaseDependent(true)) {
+    override val defaultValue: ReleaseDependent<StringConcatMode?> = ReleaseDependent(null)
+}
+
+/**
+ * A value which accepts [CompatqualAnnotationsMode] type.
+ */
+@Serializable
+class CompatqualAnnotationsModeType : EnumType<CompatqualAnnotationsMode>(ReleaseDependent(true)) {
+    override val defaultValue: ReleaseDependent<CompatqualAnnotationsMode?> = ReleaseDependent(null)
+}
+
+/**
+ * A value which accepts [WhenExpressionsMode] type.
+ */
+@Serializable
+class WhenExpressionsModeType : EnumType<WhenExpressionsMode>(ReleaseDependent(true)) {
+    override val defaultValue: ReleaseDependent<WhenExpressionsMode?> = ReleaseDependent(null)
+}
+
 private val String?.valueOrNullStringLiteral: String
     get() = "\"${this}\""
 

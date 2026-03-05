@@ -171,6 +171,7 @@ val actualJvmCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLevelN
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "jvm-default"
         compilerName = "jvmDefaultStable"
@@ -182,6 +183,7 @@ val actualJvmCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLevelN
 -jvm-default=disable             Do not generate JVM default methods. This is the default behavior up to language version 2.1.""".asReleaseDependent()
         valueType = StringType.defaultNull
         valueDescription = "{enable|no-compatibility|disable}".asReleaseDependent()
+        argumentType = JvmDefaultModeType()
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v2_2_0,
@@ -202,6 +204,7 @@ val actualJvmCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLevelN
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xabi-stability"
         description = """When using unstable compiler features such as FIR, use 'stable' to mark generated class files as stable
@@ -210,6 +213,7 @@ When using the JVM IR backend, conversely, use 'unstable' to mark generated clas
 to force diagnostics to be reported.""".asReleaseDependent()
         valueType = StringType.defaultNull
         valueDescription = "{stable|unstable}".asReleaseDependent()
+        argumentType = AbiStabilityModeType()
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_4_30,
@@ -305,6 +309,7 @@ The default value is 1.""".asReleaseDependent()
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xassertions"
         compilerName = "assertionsMode"
@@ -317,6 +322,7 @@ default: legacy""".asReleaseDependent()
         // TODO: change to JVMAssertionsMode type
         valueType = StringType(defaultValue = "legacy".asReleaseDependent())
         valueDescription = "{always-enable|always-disable|jvm|legacy}".asReleaseDependent()
+        argumentType = AssertionsModeType()
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_2_60,
@@ -458,18 +464,21 @@ Modes:
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xsupport-compatqual-checker-framework-annotations"
         description = """Specify the behavior for Checker Framework 'compatqual' annotations ('NullableDecl'/'NonNullDecl').
 The default value is 'enable'.""".asReleaseDependent()
         valueType = StringType.defaultNull
         valueDescription = "enable|disable".asReleaseDependent()
+        argumentType = CompatqualAnnotationsModeType()
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_2_20,
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xjspecify-annotations"
         description = ReleaseDependent(
@@ -483,6 +492,7 @@ The default value is 'enable'.""".asReleaseDependent()
         )
         valueType = StringType.defaultNull
         valueDescription = "ignore|strict|warn".asReleaseDependent()
+        argumentType = JspecifyAnnotationsModeType()
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_4_30,
@@ -595,6 +605,7 @@ problems with parentheses in identifiers on certain platforms.""".asReleaseDepen
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xstring-concat"
         description = """Select the code generation scheme for string concatenation:
@@ -604,6 +615,7 @@ problems with parentheses in identifiers on certain platforms.""".asReleaseDepen
 default: 'indy-with-constants' for JVM targets 9 or greater, 'inline' otherwise.""".asReleaseDependent()
         valueType = StringType.defaultNull
         valueDescription = "{indy-with-constants|indy|inline}".asReleaseDependent()
+        argumentType = StringConcatModeType()
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_4_20,
@@ -631,6 +643,7 @@ This also sets the value of '-jvm-target' to be equal to the selected JDK versio
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xsam-conversions"
         description = """Select the code generation scheme for SAM conversions.
@@ -639,12 +652,14 @@ This also sets the value of '-jvm-target' to be equal to the selected JDK versio
 The default value is 'indy'.""".asReleaseDependent()
         valueType = StringType.defaultNull
         valueDescription = "{class|indy}".asReleaseDependent()
+        argumentType = SamConversionsModeType()
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_5_0,
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xlambdas"
         description = """Select the code generation scheme for lambdas.
@@ -654,6 +669,7 @@ The default value is 'indy'.""".asReleaseDependent()
 The default value is 'indy' if language version is 2.0+, and 'class' otherwise.""".asReleaseDependent()
         valueType = StringType.defaultNull
         valueDescription = "{class|indy}".asReleaseDependent()
+        argumentType = LambdasModeType()
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_5_0,
@@ -916,6 +932,7 @@ inside suspend functions and lambdas to distinguish them from user code by debug
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xwhen-expressions"
         compilerName = "whenExpressionsGeneration"
@@ -926,6 +943,7 @@ inside suspend functions and lambdas to distinguish them from user code by debug
 The default value is 'inline'.""".asReleaseDependent()
         valueType = StringType.defaultNull
         valueDescription = "{indy|inline}".asReleaseDependent()
+        argumentType = WhenExpressionsModeType()
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v2_2_20

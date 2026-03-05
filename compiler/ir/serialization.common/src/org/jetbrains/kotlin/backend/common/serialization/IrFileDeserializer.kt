@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.protobuf.ExtensionRegistryLite
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.backend.common.serialization.proto.IdSignature as ProtoIdSignature
-import org.jetbrains.kotlin.backend.common.serialization.proto.IrConstructorCall as ProtoConstructorCall
+import org.jetbrains.kotlin.backend.common.serialization.proto.IrAnnotation as ProtoAnnotation
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrDeclaration as ProtoDeclaration
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrExpression as ProtoExpression
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrFile as ProtoFile
@@ -39,10 +39,10 @@ class IrFileDeserializer(
     val reversedSignatureIndex = fileProto.declarationIdList.associateBy { symbolDeserializer.deserializeIdSignature(it) }
 
     /** Once deserialized this property is set to `null`. */
-    private var protoAnnotationsPendingDeserialization: List<ProtoConstructorCall>? = fileProto.annotationList
+    private var protoAnnotationsPendingDeserialization: List<ProtoAnnotation>? = fileProto.annotationList
 
     fun deserializeDeclaration(idSig: IdSignature): IrDeclaration {
-        return declarationDeserializer.deserializeDeclaration(loadTopLevelDeclarationProto(idSig)).also {
+        return declarationDeserializer.deserializeDeclaration(loadTopLevelDeclarationProto(idSig), file.startOffset).also {
             file.declarations += it
         }
     }
@@ -62,7 +62,7 @@ class IrFileDeserializer(
      */
     fun deserializeFileImplicitDataIfFirstUse(): Boolean {
         protoAnnotationsPendingDeserialization?.let {
-            file.annotations += declarationDeserializer.deserializeAnnotations(it)
+            file.annotations += declarationDeserializer.deserializeAnnotations(it, file.startOffset)
             protoAnnotationsPendingDeserialization = null
 
             return true
