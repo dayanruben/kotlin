@@ -149,6 +149,16 @@ class CasesPublicAPITest {
         snapshotAPIAndCompare(testName.methodName, excludedClasses = setOf("cases.file.FileFacade1Kt"))
     }
 
+    @Test
+    fun jvmOverloads() {
+        snapshotAPIAndCompare(testName.methodName)
+    }
+
+    @Test
+    fun consts() {
+        snapshotAPIAndCompare(testName.methodName)
+    }
+
     private fun snapshotAPIAndCompareRoot(
         testClassRelativePath: String,
         includedClasses: Set<String> = emptySet(),
