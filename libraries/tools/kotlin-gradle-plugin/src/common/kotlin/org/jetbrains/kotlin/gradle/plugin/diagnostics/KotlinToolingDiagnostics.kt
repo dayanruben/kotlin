@@ -412,6 +412,20 @@ internal object KotlinToolingDiagnostics {
         )
     }
 
+    object DeprecatedNativeHostDiagnostic : ToolingDiagnosticFactory(WARNING, DiagnosticGroup.Kgp.Deprecation) {
+        operator fun invoke(hostName: String) = build {
+            title("Deprecated Kotlin/Native Host")
+                .description {
+                    "The current host platform '$hostName' is deprecated and will be removed in a future Kotlin release. " +
+                            "The Kotlin/Native compiler will no longer be distributed for this host."
+                }
+                .solution("Migrate your build to a non-deprecated supported host platform for Kotlin/Native.")
+                .documentationLink(URI("https://kotl.in/native-targets-tiers")) { url ->
+                    "Learn more about Kotlin/Native target support and migration: $url"
+                }
+        }
+    }
+
     object CommonMainOrTestWithDependsOnDiagnostic : ToolingDiagnosticFactory(ERROR, DiagnosticGroup.Kgp.Misconfiguration) {
         operator fun invoke(suffix: String) = buildDiagnostic(
             title = "Invalid `dependsOn` Configuration in Common Source Set",
@@ -1889,22 +1903,6 @@ internal object KotlinToolingDiagnostics {
         }
     }
 
-    object AndroidExtensionPluginRemoval : ToolingDiagnosticFactory(ERROR, DiagnosticGroup.Kgp.Deprecation) {
-        operator fun invoke(): ToolingDiagnostic = build {
-            title("Removed 'kotlin-android-extensions' Gradle Plugin")
-                .description {
-                    """
-                    The 'kotlin-android-extensions' Gradle plugin is no longer supported and was removed.
-                    Please use this migration guide (https://goo.gle/kotlin-android-extensions-deprecation) to start
-                    working with View Binding (https://developer.android.com/topic/libraries/view-binding)
-                    and the 'kotlin-parcelize' plugin.
-                    """.trimIndent()
-                }
-                .solution {
-                    "Please remove the 'kotlin-android-extensions' Gradle plugin from your build script."
-                }
-        }
-    }
 
     internal object KotlinScriptingMisconfiguration : ToolingDiagnosticFactory(
         predefinedSeverity = WARNING,
