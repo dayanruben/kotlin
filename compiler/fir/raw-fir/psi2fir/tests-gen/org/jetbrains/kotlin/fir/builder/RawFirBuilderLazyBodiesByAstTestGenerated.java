@@ -126,6 +126,16 @@ public class RawFirBuilderLazyBodiesByAstTestGenerated extends AbstractRawFirBui
       runTest("compiler/fir/raw-fir/psi2fir/testData/rawBuilder/declarations/classWithWrongSuperCall.kt");
     }
 
+    @TestMetadata("companionBlocks.kt")
+    public void testCompanionBlocks() {
+      runTest("compiler/fir/raw-fir/psi2fir/testData/rawBuilder/declarations/companionBlocks.kt");
+    }
+
+    @TestMetadata("companionExtensions.kt")
+    public void testCompanionExtensions() {
+      runTest("compiler/fir/raw-fir/psi2fir/testData/rawBuilder/declarations/companionExtensions.kt");
+    }
+
     @TestMetadata("complexTypes.kt")
     public void testComplexTypes() {
       runTest("compiler/fir/raw-fir/psi2fir/testData/rawBuilder/declarations/complexTypes.kt");

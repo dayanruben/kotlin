@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.buildtools.`internal`.compat.arguments
 
+import java.io.File
 import java.lang.IllegalStateException
 import kotlin.Any
 import kotlin.Array
@@ -16,9 +17,13 @@ import kotlin.Suppress
 import kotlin.collections.List
 import kotlin.collections.MutableMap
 import kotlin.collections.MutableSet
+import kotlin.collections.joinToString
+import kotlin.collections.map
 import kotlin.collections.mutableMapOf
 import kotlin.collections.mutableSetOf
+import kotlin.collections.toTypedArray
 import kotlin.io.path.Path
+import kotlin.text.split
 import org.jetbrains.kotlin.buildtools.`internal`.compat.DeepCopyable
 import org.jetbrains.kotlin.buildtools.`internal`.compat.arguments.JvmCompilerArgumentsImpl.Companion.CLASSPATH
 import org.jetbrains.kotlin.buildtools.`internal`.compat.arguments.JvmCompilerArgumentsImpl.Companion.D
@@ -170,7 +175,7 @@ internal class JvmCompilerArgumentsImpl(
       throw IllegalStateException("Unknown arguments: ${unknownArgs.joinToString()}")
     }
     if (X_ABI_STABILITY in this) { arguments.abiStability = get(X_ABI_STABILITY)?.stringValue}
-    if (X_ADD_MODULES in this) { arguments.additionalJavaModules = get(X_ADD_MODULES) ?: emptyArray()}
+    if (X_ADD_MODULES in this) { arguments.additionalJavaModules = get(X_ADD_MODULES).toTypedArray()}
     if (X_ALLOW_NO_SOURCE_FILES in this) { arguments.allowNoSourceFiles = get(X_ALLOW_NO_SOURCE_FILES)}
     if (X_ALLOW_UNSTABLE_DEPENDENCIES in this) { arguments.allowUnstableDependencies = get(X_ALLOW_UNSTABLE_DEPENDENCIES)}
     try { if (X_ANNOTATIONS_IN_METADATA in this) { arguments.annotationsInMetadata = get(X_ANNOTATIONS_IN_METADATA)} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_ANNOTATIONS_IN_METADATA. Current compiler version is: $KC_VERSION, but the argument was introduced in 2.2.0""").initCause(e) }
@@ -185,13 +190,13 @@ internal class JvmCompilerArgumentsImpl(
     if (X_EMIT_JVM_TYPE_ANNOTATIONS in this) { arguments.emitJvmTypeAnnotations = get(X_EMIT_JVM_TYPE_ANNOTATIONS)}
     if (X_ENHANCE_TYPE_PARAMETER_TYPES_TO_DEF_NOT_NULL in this) { arguments.enhanceTypeParameterTypesToDefNotNull = get(X_ENHANCE_TYPE_PARAMETER_TYPES_TO_DEF_NOT_NULL)}
     try { if (X_ENHANCED_COROUTINES_DEBUGGING in this) { arguments.enhancedCoroutinesDebugging = get(X_ENHANCED_COROUTINES_DEBUGGING)} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_ENHANCED_COROUTINES_DEBUGGING. Current compiler version is: $KC_VERSION, but the argument was introduced in 2.2.0""").initCause(e) }
-    if (X_FRIEND_PATHS in this) { arguments.friendPaths = get(X_FRIEND_PATHS) ?: emptyArray()}
+    if (X_FRIEND_PATHS in this) { arguments.friendPaths = get(X_FRIEND_PATHS).map { it.absolutePathStringOrThrow() }.toTypedArray()}
     if (X_GENERATE_STRICT_METADATA_VERSION in this) { arguments.strictMetadataVersionSemantics = get(X_GENERATE_STRICT_METADATA_VERSION)}
     try { if (X_INDY_ALLOW_ANNOTATED_LAMBDAS in this) { arguments.indyAllowAnnotatedLambdas = get(X_INDY_ALLOW_ANNOTATED_LAMBDAS)} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_INDY_ALLOW_ANNOTATED_LAMBDAS. Current compiler version is: $KC_VERSION, but the argument was introduced in 2.2.0""").initCause(e) }
     if (X_IR_DO_NOT_CLEAR_BINDING_CONTEXT in this) { arguments.doNotClearBindingContext = get(X_IR_DO_NOT_CLEAR_BINDING_CONTEXT)}
     try { if (X_IR_INLINER in this) { arguments.setUsingReflection("enableIrInliner", get(X_IR_INLINER))} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_IR_INLINER. Current compiler version is: $KC_VERSION, but the argument was removed in 2.3.0""").initCause(e) }
     if (X_JAVA_PACKAGE_PREFIX in this) { arguments.javaPackagePrefix = get(X_JAVA_PACKAGE_PREFIX)}
-    if (X_JAVA_SOURCE_ROOTS in this) { arguments.javaSourceRoots = get(X_JAVA_SOURCE_ROOTS) ?: emptyArray()}
+    if (X_JAVA_SOURCE_ROOTS in this) { arguments.javaSourceRoots = get(X_JAVA_SOURCE_ROOTS).map { it.absolutePathStringOrThrow() }.toTypedArray()}
     try { if (X_JAVAC_ARGUMENTS in this) { arguments.setUsingReflection("javacArguments", get(X_JAVAC_ARGUMENTS) ?: emptyArray())} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_JAVAC_ARGUMENTS. Current compiler version is: $KC_VERSION, but the argument was removed in 2.4.0""").initCause(e) }
     if (X_JDK_RELEASE in this) { arguments.jdkRelease = get(X_JDK_RELEASE)?.stringValue}
     if (X_JSPECIFY_ANNOTATIONS in this) { arguments.jspecifyAnnotations = get(X_JSPECIFY_ANNOTATIONS)?.stringValue}
@@ -199,10 +204,10 @@ internal class JvmCompilerArgumentsImpl(
     if (X_JVM_DEFAULT in this) { arguments.jvmDefault = get(X_JVM_DEFAULT)}
     if (X_JVM_ENABLE_PREVIEW in this) { arguments.enableJvmPreview = get(X_JVM_ENABLE_PREVIEW)}
     try { if (X_JVM_EXPOSE_BOXED in this) { arguments.jvmExposeBoxed = get(X_JVM_EXPOSE_BOXED)} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_JVM_EXPOSE_BOXED. Current compiler version is: $KC_VERSION, but the argument was introduced in 2.2.0""").initCause(e) }
-    if (X_KLIB in this) { arguments.klibLibraries = get(X_KLIB)}
+    if (X_KLIB in this) { arguments.klibLibraries = get(X_KLIB)?.joinToString(File.pathSeparator)}
     if (X_LAMBDAS in this) { arguments.lambdas = get(X_LAMBDAS)?.stringValue}
     if (X_LINK_VIA_SIGNATURES in this) { arguments.linkViaSignatures = get(X_LINK_VIA_SIGNATURES)}
-    if (X_MODULE_PATH in this) { arguments.javaModulePath = get(X_MODULE_PATH)}
+    if (X_MODULE_PATH in this) { arguments.javaModulePath = get(X_MODULE_PATH)?.joinToString(File.pathSeparator)}
     if (X_MULTIFILE_PARTS_INHERIT in this) { arguments.inheritMultifileParts = get(X_MULTIFILE_PARTS_INHERIT)}
     if (X_NO_CALL_ASSERTIONS in this) { arguments.noCallAssertions = get(X_NO_CALL_ASSERTIONS)}
     if (X_NO_NEW_JAVA_ANNOTATION_TARGETS in this) { arguments.noNewJavaAnnotationTargets = get(X_NO_NEW_JAVA_ANNOTATION_TARGETS)}
@@ -234,7 +239,7 @@ internal class JvmCompilerArgumentsImpl(
     if (X_VALIDATE_BYTECODE in this) { arguments.validateBytecode = get(X_VALIDATE_BYTECODE)}
     if (X_VALUE_CLASSES in this) { arguments.valueClasses = get(X_VALUE_CLASSES)}
     try { if (X_WHEN_EXPRESSIONS in this) { arguments.whenExpressionsGeneration = get(X_WHEN_EXPRESSIONS)?.stringValue} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_WHEN_EXPRESSIONS. Current compiler version is: $KC_VERSION, but the argument was introduced in 2.2.20""").initCause(e) }
-    if (CLASSPATH in this) { arguments.classpath = get(CLASSPATH)}
+    if (CLASSPATH in this) { arguments.classpath = get(CLASSPATH)?.joinToString(File.pathSeparator)}
     if (D in this) { arguments.destination = get(D)}
     if (EXPRESSION in this) { arguments.expression = get(EXPRESSION)}
     if (INCLUDE_RUNTIME in this) { arguments.includeRuntime = get(INCLUDE_RUNTIME)}
@@ -255,7 +260,7 @@ internal class JvmCompilerArgumentsImpl(
   public fun applyCompilerArguments(arguments: K2JVMCompilerArguments) {
     super.applyCompilerArguments(arguments)
     try { this[X_ABI_STABILITY] = arguments.abiStability?.let { AbiStabilityMode.entries.firstOrNull { entry -> entry.stringValue == it } ?: throw CompilerArgumentsParseException("Unknown -Xabi-stability value: $it") } } catch (_: NoSuchMethodError) {  }
-    try { this[X_ADD_MODULES] = arguments.additionalJavaModules } catch (_: NoSuchMethodError) {  }
+    try { this[X_ADD_MODULES] = arguments.additionalJavaModules.toListOrEmpty() } catch (_: NoSuchMethodError) {  }
     try { this[X_ALLOW_NO_SOURCE_FILES] = arguments.allowNoSourceFiles } catch (_: NoSuchMethodError) {  }
     try { this[X_ALLOW_UNSTABLE_DEPENDENCIES] = arguments.allowUnstableDependencies } catch (_: NoSuchMethodError) {  }
     try { this[X_ANNOTATIONS_IN_METADATA] = arguments.annotationsInMetadata } catch (_: NoSuchMethodError) {  }
@@ -270,13 +275,13 @@ internal class JvmCompilerArgumentsImpl(
     try { this[X_EMIT_JVM_TYPE_ANNOTATIONS] = arguments.emitJvmTypeAnnotations } catch (_: NoSuchMethodError) {  }
     try { this[X_ENHANCE_TYPE_PARAMETER_TYPES_TO_DEF_NOT_NULL] = arguments.enhanceTypeParameterTypesToDefNotNull } catch (_: NoSuchMethodError) {  }
     try { this[X_ENHANCED_COROUTINES_DEBUGGING] = arguments.enhancedCoroutinesDebugging } catch (_: NoSuchMethodError) {  }
-    try { this[X_FRIEND_PATHS] = arguments.friendPaths } catch (_: NoSuchMethodError) {  }
+    try { this[X_FRIEND_PATHS] = arguments.friendPaths.mapOrEmpty { Path(it) } } catch (_: NoSuchMethodError) {  }
     try { this[X_GENERATE_STRICT_METADATA_VERSION] = arguments.strictMetadataVersionSemantics } catch (_: NoSuchMethodError) {  }
     try { this[X_INDY_ALLOW_ANNOTATED_LAMBDAS] = arguments.indyAllowAnnotatedLambdas } catch (_: NoSuchMethodError) {  }
     try { this[X_IR_DO_NOT_CLEAR_BINDING_CONTEXT] = arguments.doNotClearBindingContext } catch (_: NoSuchMethodError) {  }
     try { this[X_IR_INLINER] = arguments.getUsingReflection("enableIrInliner") } catch (_: NoSuchMethodError) {  }
     try { this[X_JAVA_PACKAGE_PREFIX] = arguments.javaPackagePrefix } catch (_: NoSuchMethodError) {  }
-    try { this[X_JAVA_SOURCE_ROOTS] = arguments.javaSourceRoots } catch (_: NoSuchMethodError) {  }
+    try { this[X_JAVA_SOURCE_ROOTS] = arguments.javaSourceRoots.mapOrEmpty { Path(it) } } catch (_: NoSuchMethodError) {  }
     try { this[X_JAVAC_ARGUMENTS] = arguments.getUsingReflection("javacArguments") } catch (_: NoSuchMethodError) {  }
     try { this[X_JDK_RELEASE] = arguments.jdkRelease?.let { JdkRelease.entries.firstOrNull { entry -> entry.stringValue == it } ?: throw CompilerArgumentsParseException("Unknown -Xjdk-release value: $it") } } catch (_: NoSuchMethodError) {  }
     try { this[X_JSPECIFY_ANNOTATIONS] = arguments.jspecifyAnnotations?.let { JspecifyAnnotationsMode.entries.firstOrNull { entry -> entry.stringValue == it } ?: throw CompilerArgumentsParseException("Unknown -Xjspecify-annotations value: $it") } } catch (_: NoSuchMethodError) {  }
@@ -284,10 +289,10 @@ internal class JvmCompilerArgumentsImpl(
     try { this[X_JVM_DEFAULT] = arguments.jvmDefault } catch (_: NoSuchMethodError) {  }
     try { this[X_JVM_ENABLE_PREVIEW] = arguments.enableJvmPreview } catch (_: NoSuchMethodError) {  }
     try { this[X_JVM_EXPOSE_BOXED] = arguments.jvmExposeBoxed } catch (_: NoSuchMethodError) {  }
-    try { this[X_KLIB] = arguments.klibLibraries } catch (_: NoSuchMethodError) {  }
+    try { this[X_KLIB] = arguments.klibLibraries?.split(File.pathSeparator)?.map { Path(it) } } catch (_: NoSuchMethodError) {  }
     try { this[X_LAMBDAS] = arguments.lambdas?.let { LambdasMode.entries.firstOrNull { entry -> entry.stringValue == it } ?: throw CompilerArgumentsParseException("Unknown -Xlambdas value: $it") } } catch (_: NoSuchMethodError) {  }
     try { this[X_LINK_VIA_SIGNATURES] = arguments.linkViaSignatures } catch (_: NoSuchMethodError) {  }
-    try { this[X_MODULE_PATH] = arguments.javaModulePath } catch (_: NoSuchMethodError) {  }
+    try { this[X_MODULE_PATH] = arguments.javaModulePath?.split(File.pathSeparator)?.map { Path(it) } } catch (_: NoSuchMethodError) {  }
     try { this[X_MULTIFILE_PARTS_INHERIT] = arguments.inheritMultifileParts } catch (_: NoSuchMethodError) {  }
     try { this[X_NO_CALL_ASSERTIONS] = arguments.noCallAssertions } catch (_: NoSuchMethodError) {  }
     try { this[X_NO_NEW_JAVA_ANNOTATION_TARGETS] = arguments.noNewJavaAnnotationTargets } catch (_: NoSuchMethodError) {  }
@@ -319,7 +324,7 @@ internal class JvmCompilerArgumentsImpl(
     try { this[X_VALIDATE_BYTECODE] = arguments.validateBytecode } catch (_: NoSuchMethodError) {  }
     try { this[X_VALUE_CLASSES] = arguments.valueClasses } catch (_: NoSuchMethodError) {  }
     try { this[X_WHEN_EXPRESSIONS] = arguments.whenExpressionsGeneration?.let { WhenExpressionsMode.entries.firstOrNull { entry -> entry.stringValue == it } ?: throw CompilerArgumentsParseException("Unknown -Xwhen-expressions value: $it") } } catch (_: NoSuchMethodError) {  }
-    try { this[CLASSPATH] = arguments.classpath } catch (_: NoSuchMethodError) {  }
+    try { this[CLASSPATH] = arguments.classpath?.split(File.pathSeparator)?.map { Path(it) } } catch (_: NoSuchMethodError) {  }
     try { this[D] = arguments.destination } catch (_: NoSuchMethodError) {  }
     try { this[EXPRESSION] = arguments.expression } catch (_: NoSuchMethodError) {  }
     try { this[INCLUDE_RUNTIME] = arguments.includeRuntime } catch (_: NoSuchMethodError) {  }
@@ -359,7 +364,7 @@ internal class JvmCompilerArgumentsImpl(
     public val X_ABI_STABILITY: JvmCompilerArgument<AbiStabilityMode?> =
         JvmCompilerArgument("X_ABI_STABILITY")
 
-    public val X_ADD_MODULES: JvmCompilerArgument<Array<String>?> =
+    public val X_ADD_MODULES: JvmCompilerArgument<List<String>> =
         JvmCompilerArgument("X_ADD_MODULES")
 
     public val X_ALLOW_NO_SOURCE_FILES: JvmCompilerArgument<Boolean> =
@@ -401,7 +406,7 @@ internal class JvmCompilerArgumentsImpl(
     public val X_ENHANCED_COROUTINES_DEBUGGING: JvmCompilerArgument<Boolean> =
         JvmCompilerArgument("X_ENHANCED_COROUTINES_DEBUGGING")
 
-    public val X_FRIEND_PATHS: JvmCompilerArgument<Array<String>?> =
+    public val X_FRIEND_PATHS: JvmCompilerArgument<List<java.nio.`file`.Path>> =
         JvmCompilerArgument("X_FRIEND_PATHS")
 
     public val X_GENERATE_STRICT_METADATA_VERSION: JvmCompilerArgument<Boolean> =
@@ -418,7 +423,7 @@ internal class JvmCompilerArgumentsImpl(
     public val X_JAVA_PACKAGE_PREFIX: JvmCompilerArgument<String?> =
         JvmCompilerArgument("X_JAVA_PACKAGE_PREFIX")
 
-    public val X_JAVA_SOURCE_ROOTS: JvmCompilerArgument<Array<String>?> =
+    public val X_JAVA_SOURCE_ROOTS: JvmCompilerArgument<List<java.nio.`file`.Path>> =
         JvmCompilerArgument("X_JAVA_SOURCE_ROOTS")
 
     public val X_JAVAC_ARGUMENTS: JvmCompilerArgument<Array<String>?> =
@@ -440,14 +445,16 @@ internal class JvmCompilerArgumentsImpl(
     public val X_JVM_EXPOSE_BOXED: JvmCompilerArgument<Boolean> =
         JvmCompilerArgument("X_JVM_EXPOSE_BOXED")
 
-    public val X_KLIB: JvmCompilerArgument<String?> = JvmCompilerArgument("X_KLIB")
+    public val X_KLIB: JvmCompilerArgument<List<java.nio.`file`.Path>?> =
+        JvmCompilerArgument("X_KLIB")
 
     public val X_LAMBDAS: JvmCompilerArgument<LambdasMode?> = JvmCompilerArgument("X_LAMBDAS")
 
     public val X_LINK_VIA_SIGNATURES: JvmCompilerArgument<Boolean> =
         JvmCompilerArgument("X_LINK_VIA_SIGNATURES")
 
-    public val X_MODULE_PATH: JvmCompilerArgument<String?> = JvmCompilerArgument("X_MODULE_PATH")
+    public val X_MODULE_PATH: JvmCompilerArgument<List<java.nio.`file`.Path>?> =
+        JvmCompilerArgument("X_MODULE_PATH")
 
     public val X_MULTIFILE_PARTS_INHERIT: JvmCompilerArgument<Boolean> =
         JvmCompilerArgument("X_MULTIFILE_PARTS_INHERIT")
@@ -539,7 +546,8 @@ internal class JvmCompilerArgumentsImpl(
     public val X_WHEN_EXPRESSIONS: JvmCompilerArgument<WhenExpressionsMode?> =
         JvmCompilerArgument("X_WHEN_EXPRESSIONS")
 
-    public val CLASSPATH: JvmCompilerArgument<String?> = JvmCompilerArgument("CLASSPATH")
+    public val CLASSPATH: JvmCompilerArgument<List<java.nio.`file`.Path>?> =
+        JvmCompilerArgument("CLASSPATH")
 
     public val D: JvmCompilerArgument<String?> = JvmCompilerArgument("D")
 

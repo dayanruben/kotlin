@@ -5,10 +5,8 @@
 
 package org.jetbrains.kotlin.arguments.description
 
+import org.jetbrains.kotlin.arguments.dsl.*
 import org.jetbrains.kotlin.arguments.dsl.base.*
-import org.jetbrains.kotlin.arguments.dsl.defaultFalse
-import org.jetbrains.kotlin.arguments.dsl.defaultNull
-import org.jetbrains.kotlin.arguments.dsl.defaultOne
 import org.jetbrains.kotlin.arguments.dsl.types.*
 import org.jetbrains.kotlin.cli.common.arguments.Enables
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -27,12 +25,14 @@ val actualJvmCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLevelN
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "classpath"
         shortName = "cp"
         description = "List of directories and JAR/ZIP archives to search for user class files.".asReleaseDependent()
         valueType = StringType.defaultNull
         valueDescription = "<path>".asReleaseDependent()
+        argumentType = PathListType.defaultSystemPath
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_0_0,
@@ -244,18 +244,21 @@ The default value is 1.""".asReleaseDependent()
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xmodule-path"
         compilerName = "javaModulePath"
         description = "Paths to Java 9+ modules.".asReleaseDependent()
         valueType = StringType.defaultNull
         valueDescription = "<path>".asReleaseDependent()
+        argumentType = PathListType.defaultSystemPath
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_1_4,
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xadd-modules"
         compilerName = "additionalJavaModules"
@@ -263,6 +266,7 @@ The default value is 1.""".asReleaseDependent()
             "Root modules to resolve in addition to the initial modules, or all modules on the module path if <module> is ALL-MODULE-PATH.".asReleaseDependent()
         valueType = StringArrayType.defaultNull
         valueDescription = "<module[,]>".asReleaseDependent()
+        argumentType = StringListType.defaultEmpty
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_1_4,
@@ -408,11 +412,13 @@ This can be used in the event of problems with the new implementation.""".asRele
 
     // Javac options
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xjava-source-roots"
         description = "Paths to directories with Java source files.".asReleaseDependent()
         valueType = StringArrayType.defaultNull
         valueDescription = "<path>".asReleaseDependent()
+        argumentType = PathListType.defaultLiteralPath
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_3_40,
@@ -563,11 +569,13 @@ problems with parentheses in identifiers on certain platforms.""".asReleaseDepen
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xfriend-paths"
         description = "Paths to output directories for friend modules (modules whose internals should be visible).".asReleaseDependent()
         valueType = StringArrayType.defaultNull
         valueDescription = "<path>".asReleaseDependent()
+        argumentType = PathListType.defaultLiteralPath
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_2_70,
@@ -688,12 +696,14 @@ The default value is 'indy' if language version is 2.0+, and 'class' otherwise."
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xklib"
         compilerName = "klibLibraries"
         description = "Paths to cross-platform libraries in the .klib format.".asReleaseDependent()
         valueType = StringType.defaultNull
         valueDescription = "<path>".asReleaseDependent()
+        argumentType = PathListType.defaultSystemPath
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_4_0,

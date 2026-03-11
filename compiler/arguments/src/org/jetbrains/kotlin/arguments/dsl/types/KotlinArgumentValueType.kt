@@ -275,6 +275,67 @@ class JdkReleaseType : EnumType<JdkRelease>(ReleaseDependent(true)) {
     override val defaultValue: ReleaseDependent<JdkRelease?> = ReleaseDependent(null)
 }
 
+/**
+ * A value which accepts a list of [String] type.
+ */
+@Serializable
+class StringListType(
+    override val defaultValue: ReleaseDependent<List<String>?> = ReleaseDependent(emptyList()),
+) : KotlinArgumentValueType<List<String>> {
+
+    override val isNullable: ReleaseDependent<Boolean> = ReleaseDependent(false)
+
+    override fun stringRepresentation(value: List<String>?): String? {
+        if (value == null) return null
+        return value.joinToString { it.valueOrNullStringLiteral }
+    }
+}
+
+/**
+ * A value type that accepts a list of [Path] elements.
+ *
+ * There are two rendering strategies:
+ * - [SystemPathType]: paths joined with OS separator into a single string
+ * - [LiteralPathType]: paths rendered as individual comma-separated literals
+ */
+@Serializable
+sealed class PathListType() : KotlinArgumentValueType<List<Path>>
+
+
+/**
+ * A [PathListType] rendered as a single quoted string using the OS path separator.
+ * Example: `"/usr/bin:/usr/local/bin"` (Unix) or `"C:\bin;D:\bin"` (Windows)
+ */
+@Serializable
+class SystemPathType(
+    override val defaultValue: ReleaseDependent<List<Path>?> = ReleaseDependent(null),
+) : PathListType() {
+    override val isNullable: ReleaseDependent<Boolean> = ReleaseDependent(true)
+
+    override fun stringRepresentation(value: List<Path>?): String? {
+        if (value == null) return null
+
+        return "\"${value.joinToString($$"${File.pathSeparator}") { it.absolutePathStringOrThrow() }}\""
+    }
+}
+
+/**
+ * A [PathListType] rendered as individually quoted paths separated by commas.
+ * Example: `"/usr/bin", "/usr/local/bin"`
+ */
+@Serializable
+class LiteralPathType(
+    override val defaultValue: ReleaseDependent<List<Path>?> = ReleaseDependent(emptyList()),
+) : PathListType() {
+    override val isNullable: ReleaseDependent<Boolean> = ReleaseDependent(false)
+
+    override fun stringRepresentation(value: List<Path>?): String? {
+        if (value == null) return null
+
+        return value.joinToString { it.absolutePathStringOrThrow().valueOrNullStringLiteral }
+    }
+}
+
 private val String?.valueOrNullStringLiteral: String
     get() = "\"${this}\""
 

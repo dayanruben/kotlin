@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.backend.common.linkage.partial.setupPartialLinkageCo
 import org.jetbrains.kotlin.backend.konan.*
 import org.jetbrains.kotlin.cli.common.*
 import org.jetbrains.kotlin.cli.common.arguments.K2NativeCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.isNativeSecondStage
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.ERROR
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
@@ -56,7 +57,7 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
         services: Services,
         basicMessageCollector: MessageCollector,
     ): ExitCode? {
-        if (arguments.produce != "library") {
+        if (arguments.isNativeSecondStage()) {
             return null
         }
         return doExecutePhasedKlibCompilation(arguments, services, basicMessageCollector, isOneStageCompilation = false)
@@ -142,6 +143,8 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
 
                 """.trimMargin())
             throw e
+        } finally {
+            CheckDiagnosticCollector.reportToMessageCollector(configuration)
         }
 
         return ExitCode.OK
@@ -211,6 +214,12 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                         spawnedConfiguration.put(BinaryOptions.checkStateAtExternalCalls, it)
                     }
                     spawnedConfiguration.setupConfiguration()
+
+                    if (CheckDiagnosticCollector.checkHasErrorsAndReportToMessageCollector(spawnedConfiguration)) {
+                        // Some errors during KotlinCoreEnvironment setup.
+                        throw CompilationErrorException()
+                    }
+
                     val spawnedEnvironment = prepareEnvironment(spawnedArguments, spawnedConfiguration, rootDisposable)
                     // KT-71976: Should empty `arguments` be provided, prepareEnvironment() resets the keys for 1st compilation stage
                     // In order to keep them, they should be re-initialized with the second invocation of `setupConfiguration()` lambda below.
