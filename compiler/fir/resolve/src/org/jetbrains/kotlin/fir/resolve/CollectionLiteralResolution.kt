@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.resolve
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.fakeElement
+import org.jetbrains.kotlin.fir.declarations.isDeprecationLevelHidden
 import org.jetbrains.kotlin.fir.declarations.processAllDeclaredCallables
 import org.jetbrains.kotlin.fir.declarations.utils.isOperator
 import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
@@ -17,7 +18,6 @@ import org.jetbrains.kotlin.fir.references.builder.buildSimpleNamedReference
 import org.jetbrains.kotlin.fir.resolve.calls.ConeAtomWithCandidate
 import org.jetbrains.kotlin.fir.resolve.calls.ConeCollectionLiteralAtom
 import org.jetbrains.kotlin.fir.resolve.calls.ResolutionContext
-import org.jetbrains.kotlin.fir.resolve.calls.UnsuccessfulCollectionLiteralArgument
 import org.jetbrains.kotlin.fir.resolve.calls.candidate.CallInfo
 import org.jetbrains.kotlin.fir.resolve.calls.candidate.CallKind
 import org.jetbrains.kotlin.fir.resolve.calls.candidate.CheckerSinkImpl
@@ -27,10 +27,9 @@ import org.jetbrains.kotlin.fir.resolve.calls.candidate.createErrorReferenceWith
 import org.jetbrains.kotlin.fir.resolve.calls.stages.ArgumentCheckingProcessor
 import org.jetbrains.kotlin.fir.resolve.inference.CollectionLiteralBounds
 import org.jetbrains.kotlin.fir.symbols.impl.*
-import org.jetbrains.kotlin.fir.types.*
+import org.jetbrains.kotlin.fir.visibilityChecker
 import org.jetbrains.kotlin.resolve.CollectionNames
 import org.jetbrains.kotlin.util.OperatorNameConventions
-import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 
 context(context: ResolutionContext, outerCandidateContext: CollectionLiteralOuterCandidateContext)
 fun runCollectionLiteralResolution(
@@ -120,6 +119,7 @@ private fun resolveCollectionLiteralToErrorCall(
     )
 
     var call = buildFunctionCall {
+        annotations.addAll(collectionLiteral.annotations)
         source = collectionLiteral.source
         argumentList = collectionLiteral.argumentList
         calleeReference = errorReference
@@ -177,22 +177,21 @@ private fun postprocessCollectionLiteralCall(
         runAdditionalStages = true,
     )
 
-    // 5. All the diagnostics collected for CL candidate (both from additional stages and basic ones)
-    // need to be remapped. Remap preserves the exact applicability.
-    for (resolutionDiagnostic in candidateForCL.diagnostics) {
-        val remappedDiagnostic = when (resolutionDiagnostic) {
-            is UnsuccessfulCollectionLiteralArgument -> resolutionDiagnostic
-            else -> UnsuccessfulCollectionLiteralArgument(resolutionDiagnostic)
-        }
-        outerCandidateContext.checkerSink?.reportDiagnostic(remappedDiagnostic)
+    // 5. Update resolved reference of the candidate with new ConeDiagnostic, if needed.
+    updateCalleeReferenceWithNewErrorsIfNeeded(replacementForCL, candidateForCL)
+
+    // 6. All the diagnostics collected for CL candidate (both from additional stages and basic ones)
+    // need to be remapped. Remap preserves the exact applicability if it `isSuccess`.
+    outerCandidateContext.checkerSink?.let {
+        candidateForCL.remapResolutionDiagnosticsToOuterCandidate(it)
     }
 
-    // 6. Finally, the outer system can be updated.
+    // 7. Finally, the outer system can be updated.
     containingCandidate.system.replaceContentWith(candidateForCL.system.currentStorage())
 }
 
 context(context: ResolutionContext)
-fun prepareFunctionCallForFallback(collectionLiteral: FirCollectionLiteral): FirFunctionCall {
+private fun prepareFunctionCallForFallback(collectionLiteral: FirCollectionLiteral): FirFunctionCall {
     val packageName = StandardNames.COLLECTIONS_PACKAGE_FQ_NAME
     val functionName = CollectionNames.Factories.LIST_OF
 
@@ -213,48 +212,57 @@ abstract class CollectionLiteralResolutionStrategy(protected val context: Resolu
 private class CollectionLiteralResolutionStrategyThroughCompanion(context: ResolutionContext) :
     CollectionLiteralResolutionStrategy(context) {
 
-    private fun FirCallableSymbol<*>.canBeMainOperatorOfOverload(outerClass: FirRegularClassSymbol): Boolean {
-        return when {
-            this !is FirNamedFunctionSymbol -> false
-            !isOperator || name != OperatorNameConventions.OF || valueParameterSymbols.none { it.isVararg } -> false
-            else -> when (val returnType = context.returnTypeCalculator.tryCalculateReturnType(this).coneType) {
-                is ConeClassLikeType if returnType.fullyExpandedType(context.session).lookupTag == outerClass.toLookupTag() -> true
-                is ConeErrorType -> true
-                else -> false
-            }
-        }
+    private fun FirCallableSymbol<*>.isOperatorOf(): Boolean {
+        return this is FirNamedFunctionSymbol && this.isOperator && name == OperatorNameConventions.OF
     }
 
-    /**
-     * @return if there is a suitable operator `of` overload, companion object where it is defined
-     */
-    private val FirRegularClassSymbol.companionObjectIfDefinedOperatorOf: FirRegularClassSymbol?
-        get() {
-            val companionObjectSymbol = resolvedCompanionObjectSymbol ?: return null
-            var overloadFound = false
-            companionObjectSymbol.processAllDeclaredCallables(context.session) { declaration ->
-                if (declaration.canBeMainOperatorOfOverload(this))
-                    overloadFound = true
+    private fun FirCallableSymbol<*>.isVisible(receiver: FirResolvedQualifier): Boolean {
+        return context.session.visibilityChecker.isVisible(
+            fir,
+            context.session,
+            context.bodyResolveComponents.file,
+            context.bodyResolveComponents.containingDeclarations,
+            dispatchReceiver = receiver,
+        )
+    }
+
+    private fun FirRegularClassSymbol.declaresVisibleOf(receiver: FirResolvedQualifier): Boolean {
+        var result: Boolean? = null
+        processAllDeclaredCallables(context.session) { declaration ->
+            if (result != null) return@processAllDeclaredCallables
+            if (declaration.isOperatorOf() && !declaration.isDeprecationLevelHidden(context.session)) {
+                result = declaration.isVisible(receiver)
             }
-            return overloadFound.ifTrue { companionObjectSymbol }
         }
+        return result ?: false
+    }
+
+    private fun buildReceiverIfThereIsVisibleOf(
+        expectedClass: FirRegularClassSymbol?,
+        collectionLiteral: FirCollectionLiteral?,
+    ): FirResolvedQualifier? {
+        val companionObjectSymbol = expectedClass?.resolvedCompanionObjectSymbol ?: return null
+        val companionAsImplicitReceiver = companionObjectSymbol.toImplicitResolvedQualifierReceiver(
+            components,
+            collectionLiteral?.source?.fakeElement(KtFakeSourceElementKind.DesugaredReceiverForOperatorOfCall),
+        )
+
+        return companionAsImplicitReceiver.takeIf { companionObjectSymbol.declaresVisibleOf(it) }
+    }
 
     override fun declaresOperatorOf(expectedType: FirRegularClassSymbol): Boolean {
-        return expectedType.companionObjectIfDefinedOperatorOf != null
+        return buildReceiverIfThereIsVisibleOf(expectedType, null) != null
     }
 
     override fun prepareRawCall(
         collectionLiteral: FirCollectionLiteral,
         expectedClass: FirRegularClassSymbol?
     ): FirFunctionCall? {
-        val companion = expectedClass?.companionObjectIfDefinedOperatorOf ?: return null
+        val companionReceiver = buildReceiverIfThereIsVisibleOf(expectedClass, collectionLiteral) ?: return null
 
         val functionCall = buildFunctionCall {
-            explicitReceiver =
-                companion.toImplicitResolvedQualifierReceiver(
-                    components,
-                    collectionLiteral.source?.fakeElement(KtFakeSourceElementKind.DesugaredReceiverForOperatorOfCall),
-                )
+            annotations.addAll(collectionLiteral.annotations)
+            explicitReceiver = companionReceiver
             source = collectionLiteral.source
             calleeReference = buildSimpleNamedReference {
                 source = collectionLiteral.source?.fakeElement(KtFakeSourceElementKind.CalleeReferenceForOperatorOfCall)

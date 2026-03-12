@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.ERROR
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
-import org.jetbrains.kotlin.native.pipeline.NativeKlibCliPipeline
 import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
@@ -34,9 +33,9 @@ import org.jetbrains.kotlin.konan.config.konanProducedArtifactKind
 import org.jetbrains.kotlin.konan.config.overrideKonanProperties
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
 import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
+import org.jetbrains.kotlin.native.pipeline.NativeKlibCliPipeline
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.util.PerformanceManagerImpl
 import org.jetbrains.kotlin.util.profile
 import org.jetbrains.kotlin.utils.KotlinPaths
@@ -67,43 +66,49 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
         arguments: K2NativeCompilerArguments,
         services: Services,
         basicMessageCollector: MessageCollector,
-        isOneStageCompilation: Boolean
+        isOneStageCompilation: Boolean,
     ): ExitCode {
         // TODO (KT-84069)
         arguments.disableDefaultScriptingPlugin = true
-        return NativeKlibCliPipeline(defaultPerformanceManager, isNativeOneStage = isOneStageCompilation).execute(arguments, services, basicMessageCollector)
+        return NativeKlibCliPipeline(defaultPerformanceManager, isNativeOneStage = isOneStageCompilation).execute(
+            arguments,
+            services,
+            basicMessageCollector
+        )
     }
 
-    override fun doExecute(@NotNull arguments: K2NativeCompilerArguments,
-                           @NotNull configuration: CompilerConfiguration,
-                           @NotNull rootDisposable: Disposable,
-                           @Nullable paths: KotlinPaths?): ExitCode {
+    override fun doExecute(
+        @NotNull arguments: K2NativeCompilerArguments,
+        @NotNull configuration: CompilerConfiguration,
+        @NotNull rootDisposable: Disposable,
+        @Nullable paths: KotlinPaths?,
+    ): ExitCode {
 
         if (arguments.version) {
             println("Kotlin/Native: ${KotlinCompilerVersion.getVersion() ?: "SNAPSHOT"}")
             return ExitCode.OK
         }
 
-        val pluginLoadResult = PluginCliParser.loadPluginsSafe(
-            arguments.pluginClasspaths,
-            arguments.pluginOptions,
-            arguments.pluginConfigurations,
-            arguments.pluginOrderConstraints,
-            configuration,
-            rootDisposable,
-        )
-        if (pluginLoadResult != ExitCode.OK) return pluginLoadResult
-
-        val enoughArguments = arguments.freeArgs.isNotEmpty() || arguments.isUsefulWithoutFreeArgs
-        if (!enoughArguments) {
-            configuration.messageCollector.report(ERROR, "You have not specified any compilation arguments. No output has been produced.")
-        }
-        val environment = prepareEnvironment(arguments, configuration, rootDisposable)
-        if (CheckDiagnosticCollector.checkHasErrorsAndReportToMessageCollector(configuration)) {
-            // Some errors during KotlinCoreEnvironment setup.
-            return ExitCode.COMPILATION_ERROR
-        }
         try {
+            val pluginLoadResult = PluginCliParser.loadPluginsSafe(
+                arguments.pluginClasspaths,
+                arguments.pluginOptions,
+                arguments.pluginConfigurations,
+                arguments.pluginOrderConstraints,
+                configuration,
+                rootDisposable,
+            )
+            if (pluginLoadResult != ExitCode.OK) return pluginLoadResult
+
+            val enoughArguments = arguments.freeArgs.isNotEmpty() || arguments.isUsefulWithoutFreeArgs
+            if (!enoughArguments) {
+                configuration.messageCollector.report(ERROR, "You have not specified any compilation arguments. No output has been produced.")
+            }
+            val environment = prepareEnvironment(arguments, configuration, rootDisposable)
+            if (CheckDiagnosticCollector.checkHasErrorsAndReportToMessageCollector(configuration)) {
+                // Some errors during KotlinCoreEnvironment setup.
+                return ExitCode.COMPILATION_ERROR
+            }
             // K2/Native backend cannot produce binary directly from FIR frontend output, since descriptors, deserialized from KLib, are needed
             // So, such compilation is split to two stages:
             // - source files are compiled to intermediate KLib by FIR frontend
@@ -134,14 +139,15 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                 return ExitCode.COMPILATION_ERROR
             }
 
-            configuration.report(ERROR, """
+            configuration.report(
+                ERROR, """
                 |Compilation failed: ${e.message}
 
-                | * Source files: ${environment.getSourceFiles().joinToString(transform = KtFile::getName)}
                 | * Compiler version: ${KotlinCompilerVersion.getVersion()}
                 | * Output kind: ${configuration.konanProducedArtifactKind}
 
-                """.trimMargin())
+                """.trimMargin()
+            )
             throw e
         } finally {
             CheckDiagnosticCollector.reportToMessageCollector(configuration)
@@ -153,10 +159,12 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
     private fun prepareEnvironment(
         arguments: K2NativeCompilerArguments,
         configuration: CompilerConfiguration,
-        rootDisposable: Disposable
+        rootDisposable: Disposable,
     ): KotlinCoreEnvironment {
-        val environment = KotlinCoreEnvironment.createForProduction(rootDisposable,
-                                                                    configuration, EnvironmentConfigFiles.NATIVE_CONFIG_FILES)
+        val environment = KotlinCoreEnvironment.createForProduction(
+            rootDisposable,
+            configuration, EnvironmentConfigFiles.NATIVE_CONFIG_FILES
+        )
 
         configuration.phaseConfig = createPhaseConfig(arguments)
 
@@ -259,7 +267,7 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
     override fun setupPlatformSpecificArgumentsAndServices(
         configuration: CompilerConfiguration,
         arguments: K2NativeCompilerArguments,
-        services: Services
+        services: Services,
     ) {
         configuration.setupFromArguments(arguments)
     }
@@ -269,13 +277,15 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
     override fun executableScriptFileName() = "kotlinc-native"
 
     companion object {
-        @JvmStatic fun main(args: Array<String>) {
+        @JvmStatic
+        fun main(args: Array<String>) {
             profile("Total compiler main()") {
                 doMain(K2Native(), args)
             }
         }
 
-        @JvmStatic fun mainNoExit(args: Array<String>) {
+        @JvmStatic
+        fun mainNoExit(args: Array<String>) {
             profile("Total compiler main()") {
                 if (doMainNoExit(K2Native(), args) != ExitCode.OK) {
                     throw KonanCompilationException("Compilation finished with errors")
@@ -283,7 +293,8 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
             }
         }
 
-        @JvmStatic fun mainNoExitWithRenderer(args: Array<String>, messageRenderer: MessageRenderer) {
+        @JvmStatic
+        fun mainNoExitWithRenderer(args: Array<String>, messageRenderer: MessageRenderer) {
             profile("Total compiler main()") {
                 if (doMainNoExit(K2Native(), args, messageRenderer) != ExitCode.OK) {
                     throw KonanCompilationException("Compilation finished with errors")

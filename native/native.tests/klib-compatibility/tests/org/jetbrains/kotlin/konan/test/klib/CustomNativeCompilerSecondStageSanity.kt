@@ -16,8 +16,7 @@ private const val testDataRoot = "compiler/testData/klib/klib-compatibility/sani
 @Tag("sanity")
 @UseDummyTestCaseGroupProvider()
 @TestMetadata(testDataRoot)
-@Tag("aggregate")
-@org.junit.jupiter.api.Disabled
+@Tag("aggregate-second-stage")
 class CustomNativeCompilerSecondStageSanity : AbstractCustomNativeCompilerSecondStageTest() {
     @Test
     fun checkPassed() {
