@@ -818,23 +818,6 @@ extension ExportedKotlinPackages.kotlinx.serialization.modules {
     package protocol _SerializersModuleCollector {
     }
     public final class PolymorphicModuleBuilder: KotlinRuntime.KotlinBase {
-        @available(*, deprecated, message: "Deprecated in favor of function with more precise name: defaultDeserializer. Replacement: defaultDeserializer(defaultSerializerProvider)")
-        public func `default`(
-            defaultSerializerProvider: @escaping (Swift.String?) -> (any ExportedKotlinPackages.kotlinx.serialization.DeserializationStrategy)?
-        ) -> Swift.Void {
-            return kotlinx_serialization_modules_PolymorphicModuleBuilder_default__TypesOfArguments__U28Swift_Optional_Swift_String_U29202D_U20Swift_Optional_anyU20ExportedKotlinPackages_kotlinx_serialization_DeserializationStrategy___(self.__externalRCRef(), {
-                let originalBlock = defaultSerializerProvider
-                return { arg0 in return originalBlock(arg0).map { it in it.__externalRCRef() } ?? nil }
-            }())
-        }
-        public func defaultDeserializer(
-            defaultDeserializerProvider: @escaping (Swift.String?) -> (any ExportedKotlinPackages.kotlinx.serialization.DeserializationStrategy)?
-        ) -> Swift.Void {
-            return kotlinx_serialization_modules_PolymorphicModuleBuilder_defaultDeserializer__TypesOfArguments__U28Swift_Optional_Swift_String_U29202D_U20Swift_Optional_anyU20ExportedKotlinPackages_kotlinx_serialization_DeserializationStrategy___(self.__externalRCRef(), {
-                let originalBlock = defaultDeserializerProvider
-                return { arg0 in return originalBlock(arg0).map { it in it.__externalRCRef() } ?? nil }
-            }())
-        }
         package override init(
             __externalRCRefUnsafe: Swift.UnsafeMutableRawPointer?,
             options: KotlinRuntime.KotlinBaseConstructionOptions
@@ -1497,22 +1480,22 @@ extension ExportedKotlinPackages.kotlinx.serialization.builtins {
     public static func serializer(
         _ receiver: ExportedKotlinPackages.kotlin.UByte.Companion
     ) -> any ExportedKotlinPackages.kotlinx.serialization.KSerializer {
-        fatalError()
+        return KotlinRuntime.KotlinBase.__createProtocolWrapper(externalRCRef: kotlinx_serialization_builtins_serializer__TypesOfArguments__ExportedKotlinPackages_kotlin_UByte_Companion__(receiver.__externalRCRef())) as! any ExportedKotlinPackages.kotlinx.serialization.KSerializer
     }
     public static func serializer(
         _ receiver: ExportedKotlinPackages.kotlin.UInt.Companion
     ) -> any ExportedKotlinPackages.kotlinx.serialization.KSerializer {
-        fatalError()
+        return KotlinRuntime.KotlinBase.__createProtocolWrapper(externalRCRef: kotlinx_serialization_builtins_serializer__TypesOfArguments__ExportedKotlinPackages_kotlin_UInt_Companion__(receiver.__externalRCRef())) as! any ExportedKotlinPackages.kotlinx.serialization.KSerializer
     }
     public static func serializer(
         _ receiver: ExportedKotlinPackages.kotlin.ULong.Companion
     ) -> any ExportedKotlinPackages.kotlinx.serialization.KSerializer {
-        fatalError()
+        return KotlinRuntime.KotlinBase.__createProtocolWrapper(externalRCRef: kotlinx_serialization_builtins_serializer__TypesOfArguments__ExportedKotlinPackages_kotlin_ULong_Companion__(receiver.__externalRCRef())) as! any ExportedKotlinPackages.kotlinx.serialization.KSerializer
     }
     public static func serializer(
         _ receiver: ExportedKotlinPackages.kotlin.UShort.Companion
     ) -> any ExportedKotlinPackages.kotlinx.serialization.KSerializer {
-        fatalError()
+        return KotlinRuntime.KotlinBase.__createProtocolWrapper(externalRCRef: kotlinx_serialization_builtins_serializer__TypesOfArguments__ExportedKotlinPackages_kotlin_UShort_Companion__(receiver.__externalRCRef())) as! any ExportedKotlinPackages.kotlinx.serialization.KSerializer
     }
     public static func serializer(
         _ receiver: Swift.Void
@@ -1520,9 +1503,9 @@ extension ExportedKotlinPackages.kotlinx.serialization.builtins {
         return KotlinRuntime.KotlinBase.__createProtocolWrapper(externalRCRef: kotlinx_serialization_builtins_serializer__TypesOfArguments__Swift_Void__()) as! any ExportedKotlinPackages.kotlinx.serialization.KSerializer
     }
     public static func serializer(
-        _ receiver: Swift.Never
+        _ receiver: ExportedKotlinPackages.kotlin.time.Duration.Companion
     ) -> any ExportedKotlinPackages.kotlinx.serialization.KSerializer {
-        fatalError()
+        return KotlinRuntime.KotlinBase.__createProtocolWrapper(externalRCRef: kotlinx_serialization_builtins_serializer__TypesOfArguments__ExportedKotlinPackages_kotlin_time_Duration_Companion__(receiver.__externalRCRef())) as! any ExportedKotlinPackages.kotlinx.serialization.KSerializer
     }
 }
 extension ExportedKotlinPackages.kotlinx.serialization.encoding {

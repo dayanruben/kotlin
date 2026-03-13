@@ -9,14 +9,17 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.asJava.unwrapped
+import com.intellij.psi.util.PsiUtil
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtExperimentalApi
+import org.jetbrains.kotlin.psi.KtImplementationDetail
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.resolution.KtResolvable
 
 /**
- * A reference pointing to a single argument in annotation's constructor call.
+ * A reference pointing to a single argument in the annotation's constructor call.
  * It is created only when the following conditions hold:
  *
  * - Annotation's constructor call has a **single** argument
@@ -28,6 +31,8 @@ import org.jetbrains.kotlin.resolution.KtResolvable
  * @Foo("bar", "baz") // no reference, there are two arguments
  * @Foo(name = "bar") // no reference, named argument is used
  * ```
+ *
+ * **Note**: the reference might be resolved only when the annotation parameter has [PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME] name.
  */
 @OptIn(KtExperimentalApi::class)
 @SubclassOptInRequired(KtImplementationDetail::class)
@@ -35,15 +40,20 @@ abstract class KtDefaultAnnotationArgumentReference(
     element: KtValueArgument,
 ) : AbstractKtReference<KtValueArgument>(element), KtResolvable {
     override val resolvesByNames: Collection<Name>
-        get() = emptyList()
+        get() = listOf(Name.identifier(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME))
 
     override fun getRangeInElement(): TextRange = TextRange.EMPTY_RANGE
 
     override fun getCanonicalText(): String = PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME
 
+    protected val PsiElement.isDefaultAnnotationMethod: Boolean
+        get() = this is PsiMethod &&
+                PsiUtil.isAnnotationMethod(this) &&
+                name == PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME
+                && parameterList.parametersCount == 0
+
     override fun isReferenceTo(candidateTarget: PsiElement): Boolean {
-        val unwrapped = candidateTarget.unwrapped
-        return (unwrapped is PsiMethod || unwrapped is KtParameter) && unwrapped == resolve()
+        return candidateTarget.isDefaultAnnotationMethod && candidateTarget == resolve()
     }
 
     override fun canRename(): Boolean = true

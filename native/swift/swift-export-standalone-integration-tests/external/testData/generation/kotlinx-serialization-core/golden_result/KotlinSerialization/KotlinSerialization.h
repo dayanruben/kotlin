@@ -105,7 +105,17 @@ void * kotlinx_serialization_builtins_serializer__TypesOfArguments__ExportedKotl
 
 void * kotlinx_serialization_builtins_serializer__TypesOfArguments__ExportedKotlinPackages_kotlin_String_Companion__(void * receiver);
 
+void * kotlinx_serialization_builtins_serializer__TypesOfArguments__ExportedKotlinPackages_kotlin_UByte_Companion__(void * receiver);
+
+void * kotlinx_serialization_builtins_serializer__TypesOfArguments__ExportedKotlinPackages_kotlin_UInt_Companion__(void * receiver);
+
+void * kotlinx_serialization_builtins_serializer__TypesOfArguments__ExportedKotlinPackages_kotlin_ULong_Companion__(void * receiver);
+
+void * kotlinx_serialization_builtins_serializer__TypesOfArguments__ExportedKotlinPackages_kotlin_UShort_Companion__(void * receiver);
+
 void * kotlinx_serialization_builtins_serializer__TypesOfArguments__Swift_Void__();
+
+void * kotlinx_serialization_builtins_serializer__TypesOfArguments__ExportedKotlinPackages_kotlin_time_Duration_Companion__(void * receiver);
 
 NSArray<id> * kotlinx_serialization_descriptors_ClassSerialDescriptorBuilder_annotations_get(void * self);
 
@@ -586,10 +596,6 @@ void kotlinx_serialization_internal_throwMissingFieldException__TypesOfArguments
 void * kotlinx_serialization_modules_EmptySerializersModule();
 
 void * kotlinx_serialization_modules_EmptySerializersModule_get();
-
-void kotlinx_serialization_modules_PolymorphicModuleBuilder_default__TypesOfArguments__U28Swift_Optional_Swift_String_U29202D_U20Swift_Optional_anyU20ExportedKotlinPackages_kotlinx_serialization_DeserializationStrategy___(void * self, void * _Nullable (^defaultSerializerProvider)(NSString * _Nullable ));
-
-void kotlinx_serialization_modules_PolymorphicModuleBuilder_defaultDeserializer__TypesOfArguments__U28Swift_Optional_Swift_String_U29202D_U20Swift_Optional_anyU20ExportedKotlinPackages_kotlinx_serialization_DeserializationStrategy___(void * self, void * _Nullable (^defaultDeserializerProvider)(NSString * _Nullable ));
 
 void * kotlinx_serialization_modules_SerializersModule__TypesOfArguments__U28ExportedKotlinPackages_kotlinx_serialization_modules_SerializersModuleBuilderU29202D_U20Swift_Void__(void (^builderAction)(void *));
 

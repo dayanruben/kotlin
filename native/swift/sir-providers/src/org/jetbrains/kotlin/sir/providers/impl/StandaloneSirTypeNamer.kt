@@ -63,7 +63,7 @@ internal object StandaloneSirTypeNamer : SirTypeNamer {
     private fun kotlinFqName(type: SirType): String = when (type) {
         is SirNominalType -> kotlinFqName(type)
         is SirExistentialType -> kotlinFqName(type)
-        is SirFunctionalType -> "${"kotlin.coroutines.Suspend".takeIf { type.isAsync } ?: ""}Function${type.parameterTypes.count()}<${(type.parameterTypes + type.returnType).joinToString { kotlinFqName(it) }}>"
+        is SirFunctionalType -> "${"kotlin.coroutines.Suspend".takeIf { type.isAsync } ?: ""}Function${type.contextTypes.count() + type.parameterTypes.count()}<${(type.contextTypes + type.parameterTypes + type.returnType).joinToString { kotlinFqName(it) }}>"
         is SirErrorType, is SirUnsupportedType, is SirTupleType ->
             error("Type $type can not be named")
     }
@@ -112,8 +112,12 @@ internal object StandaloneSirTypeNamer : SirTypeNamer {
                 }
             }
 
-            else -> declaration.kaSymbolOrNull<KaClassLikeSymbol>()?.classId?.asFqNameString()
-                ?: error("Unnameable declaration $declaration")
+            else -> declaration.kaSymbolOrNull<KaClassLikeSymbol>()?.let { symbol ->
+                val fqName = symbol.classId?.asFqNameString() ?: return@let null
+                // Generics aren't supported yet, so we don't have the actual typeArguments, fallback to the upperbound
+                val typeArgs = symbol.typeParameters.takeIf { it.isNotEmpty() }?.joinToString(prefix = "<", postfix = ">") { "*" } ?: ""
+                "$fqName$typeArgs"
+            } ?: error("Unnameable declaration $declaration")
         }
     }
 
