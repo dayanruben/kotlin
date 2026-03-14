@@ -13,6 +13,7 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
 import org.opentest4j.AssertionFailedError
 import java.nio.file.Path
+import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
@@ -57,6 +58,20 @@ class ManagedTestAssertionsTest {
         assertEquals(expected.trimIndent(), actual)
     }
 
+    private fun assertTrackedPaths(expected: String) {
+        val actual = ManagedTestAssertions.drainUpdatedTestDataPaths()
+            .map { Path(it).fileName.toString() }
+            .sorted()
+            .joinToString("\n")
+
+        assertEquals(expected.trimIndent(), actual)
+    }
+
+    private fun assertTrackedPathsAndFileState(expectedTrackedPaths: String, expectedFileState: String) {
+        assertTrackedPaths(expectedTrackedPaths)
+        assertFileState(expectedFileState)
+    }
+
     private fun setupFiles(vararg files: Pair<String, String>) {
         tempDir.resolve("test.kt").writeText("// test")
         for ((name, content) in files) {
@@ -65,13 +80,14 @@ class ManagedTestAssertionsTest {
     }
 
     private fun runAssertion(
+        testDataFileName: String = "test.kt",
         variantChain: TestVariantChain,
         actual: String,
         mode: TestDataManagerMode = TestDataManagerMode.UPDATE,
         extension: String = ".txt",
     ) {
         ManagedTestAssertions.assertEqualsToTestDataFile(
-            testDataPath = tempDir.resolve("test.kt"),
+            testDataPath = tempDir.resolve(testDataFileName),
             actual = actual,
             variantChain = variantChain,
             extension = extension,
@@ -98,6 +114,19 @@ class ManagedTestAssertionsTest {
         runAssertion(variantChain = emptyList(), actual = "new", mode = TestDataManagerMode.UPDATE)
 
         assertFileState("test.txt: new")
+        // No exception thrown
+    }
+
+    @Test
+    fun `UPDATE mode - mismatch deletes redundant write-target`() {
+        setupFiles(
+            "test.txt" to "golden",
+            "test.js.txt" to "old"
+        )
+
+        runAssertion(variantChain = listOf("js"), actual = "golden", mode = TestDataManagerMode.UPDATE)
+
+        assertFileState("test.txt: golden")  // js.txt deleted after update
         // No exception thrown
     }
 
@@ -587,9 +616,10 @@ class ManagedTestAssertionsTest {
 
         runAssertion(variantChain = emptyList(), actual = "new content", mode = TestDataManagerMode.UPDATE)
 
-        val paths = ManagedTestAssertions.drainUpdatedTestDataPaths()
-        assertEquals(1, paths.size)
-        assertTrue(paths.single().endsWith("test.kt"))
+        assertTrackedPathsAndFileState(
+            expectedTrackedPaths = "test.kt",
+            expectedFileState = "test.txt: new content",
+        )
     }
 
     @Test
@@ -599,9 +629,85 @@ class ManagedTestAssertionsTest {
 
         runAssertion(variantChain = emptyList(), actual = "new", mode = TestDataManagerMode.UPDATE)
 
-        val paths = ManagedTestAssertions.drainUpdatedTestDataPaths()
-        assertEquals(1, paths.size)
-        assertTrue(paths.single().endsWith("test.kt"))
+        assertTrackedPathsAndFileState(
+            expectedTrackedPaths = "test.kt",
+            expectedFileState = "test.txt: new",
+        )
+    }
+
+    @Test
+    fun `UPDATE mode - tracking records multiple test data paths`() {
+        setupFiles("other.kt" to "// other")
+        ManagedTestAssertions.trackUpdatedPaths = true
+
+        runAssertion(
+            testDataFileName = "test.kt",
+            variantChain = emptyList(),
+            actual = "first",
+            mode = TestDataManagerMode.UPDATE,
+        )
+
+        runAssertion(
+            testDataFileName = "test.kt",
+            variantChain = listOf("variant"),
+            actual = "first_variant",
+            mode = TestDataManagerMode.UPDATE,
+        )
+
+        runAssertion(
+            testDataFileName = "other.kt",
+            variantChain = emptyList(),
+            actual = "second",
+            mode = TestDataManagerMode.UPDATE,
+        )
+
+        assertTrackedPaths(
+            """
+                other.kt
+                test.kt
+            """
+        )
+
+        assertFileState(
+            fileNames = listOf("other.txt", "test.txt", "test.variant.txt"),
+            expected = """
+                other.txt: second
+                test.txt: first
+                test.variant.txt: first_variant
+            """,
+        )
+    }
+
+    @Test
+    fun `UPDATE mode - tracking records path on redundant delete`() {
+        setupFiles(
+            "test.txt" to "same",
+            "test.js.txt" to "same"
+        )
+        ManagedTestAssertions.trackUpdatedPaths = true
+
+        runAssertion(variantChain = listOf("js"), actual = "same", mode = TestDataManagerMode.UPDATE)
+
+        assertTrackedPathsAndFileState(
+            expectedTrackedPaths = "test.kt",
+            expectedFileState = "test.txt: same",
+        )
+    }
+
+    @Test
+    fun `UPDATE mode - tracking records path when mismatch deletes redundant write-target`() {
+        setupFiles(
+            "test.txt" to "golden",
+            "test.js.txt" to "old"
+        )
+        ManagedTestAssertions.trackUpdatedPaths = true
+
+        runAssertion(variantChain = listOf("js"), actual = "golden", mode = TestDataManagerMode.UPDATE)
+
+        assertTrackedPathsAndFileState(
+            expectedTrackedPaths = "test.kt",
+            expectedFileState = "test.txt: golden",
+        )
     }
 
     @Test
@@ -611,8 +717,10 @@ class ManagedTestAssertionsTest {
 
         runAssertion(variantChain = emptyList(), actual = "new content", mode = TestDataManagerMode.UPDATE)
 
-        val paths = ManagedTestAssertions.drainUpdatedTestDataPaths()
-        assertTrue(paths.isEmpty())
+        assertTrackedPathsAndFileState(
+            expectedTrackedPaths = "",
+            expectedFileState = "test.txt: new content",
+        )
     }
 
     @Test
@@ -622,8 +730,10 @@ class ManagedTestAssertionsTest {
 
         runAssertion(variantChain = emptyList(), actual = "content", mode = TestDataManagerMode.UPDATE)
 
-        val paths = ManagedTestAssertions.drainUpdatedTestDataPaths()
-        assertTrue(paths.isEmpty())
+        assertTrackedPathsAndFileState(
+            expectedTrackedPaths = "",
+            expectedFileState = "test.txt: content",
+        )
     }
 
     @Test
@@ -633,10 +743,10 @@ class ManagedTestAssertionsTest {
 
         runAssertion(variantChain = emptyList(), actual = "content", mode = TestDataManagerMode.UPDATE)
 
-        val firstDrain = ManagedTestAssertions.drainUpdatedTestDataPaths()
-        assertEquals(1, firstDrain.size)
+        assertTrackedPaths("test.kt")
 
-        val secondDrain = ManagedTestAssertions.drainUpdatedTestDataPaths()
-        assertTrue(secondDrain.isEmpty())
+        // Second drain is expected to have nothing
+        assertTrackedPaths("")
+        assertFileState("test.txt: content")
     }
 }

@@ -477,7 +477,7 @@
                         "introducedVersion": "1.8.0",
                         "stabilizedVersion": "1.9.0",
                         "deprecatedVersion": "2.2.0",
-                        "removedVersion": null
+                        "removedVersion": "2.4.0"
                     }
                 },
                 {
@@ -2749,13 +2749,13 @@
                             "removedVersion": null
                         },
                         "argumentType": {
-                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringArrayType",
+                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringListType",
                             "defaultValue": {
-                                "current": null,
+                                "current": [],
                                 "valueInVersions": []
                             },
                             "isNullable": {
-                                "current": true,
+                                "current": false,
                                 "valueInVersions": []
                             }
                         }
@@ -4135,13 +4135,13 @@
                             "removedVersion": null
                         },
                         "argumentType": {
-                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringArrayType",
+                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringListType",
                             "defaultValue": {
-                                "current": null,
+                                "current": [],
                                 "valueInVersions": []
                             },
                             "isNullable": {
-                                "current": true,
+                                "current": false,
                                 "valueInVersions": []
                             }
                         }
@@ -4177,13 +4177,13 @@
                             "removedVersion": null
                         },
                         "argumentType": {
-                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringArrayType",
+                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringListType",
                             "defaultValue": {
-                                "current": null,
+                                "current": [],
                                 "valueInVersions": []
                             },
                             "isNullable": {
-                                "current": true,
+                                "current": false,
                                 "valueInVersions": []
                             }
                         }
@@ -4219,13 +4219,13 @@
                             "removedVersion": null
                         },
                         "argumentType": {
-                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringArrayType",
+                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringListType",
                             "defaultValue": {
-                                "current": null,
+                                "current": [],
                                 "valueInVersions": []
                             },
                             "isNullable": {
-                                "current": true,
+                                "current": false,
                                 "valueInVersions": []
                             }
                         }
@@ -4261,13 +4261,13 @@
                             "removedVersion": null
                         },
                         "argumentType": {
-                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringArrayType",
+                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringListType",
                             "defaultValue": {
-                                "current": null,
+                                "current": [],
                                 "valueInVersions": []
                             },
                             "isNullable": {
-                                "current": true,
+                                "current": false,
                                 "valueInVersions": []
                             }
                         }
@@ -4303,13 +4303,13 @@
                             "removedVersion": null
                         },
                         "argumentType": {
-                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringArrayType",
+                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringListType",
                             "defaultValue": {
-                                "current": null,
+                                "current": [],
                                 "valueInVersions": []
                             },
                             "isNullable": {
-                                "current": true,
+                                "current": false,
                                 "valueInVersions": []
                             }
                         }
@@ -4345,13 +4345,13 @@
                             "removedVersion": null
                         },
                         "argumentType": {
-                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringArrayType",
+                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringListType",
                             "defaultValue": {
-                                "current": null,
+                                "current": [],
                                 "valueInVersions": []
                             },
                             "isNullable": {
-                                "current": true,
+                                "current": false,
                                 "valueInVersions": []
                             }
                         }
@@ -5017,13 +5017,13 @@
                             "removedVersion": null
                         },
                         "argumentType": {
-                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringArrayType",
+                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringListType",
                             "defaultValue": {
-                                "current": null,
+                                "current": [],
                                 "valueInVersions": []
                             },
                             "isNullable": {
-                                "current": true,
+                                "current": false,
                                 "valueInVersions": []
                             }
                         }
@@ -5269,13 +5269,13 @@
                             "removedVersion": null
                         },
                         "argumentType": {
-                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringArrayType",
+                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringListType",
                             "defaultValue": {
-                                "current": null,
+                                "current": [],
                                 "valueInVersions": []
                             },
                             "isNullable": {
-                                "current": true,
+                                "current": false,
                                 "valueInVersions": []
                             }
                         }
@@ -5647,13 +5647,13 @@
                             "removedVersion": null
                         },
                         "argumentType": {
-                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringArrayType",
+                            "type": "org.jetbrains.kotlin.arguments.dsl.types.StringListType",
                             "defaultValue": {
-                                "current": null,
+                                "current": [],
                                 "valueInVersions": []
                             },
                             "isNullable": {
-                                "current": true,
+                                "current": false,
                                 "valueInVersions": []
                             }
                         }

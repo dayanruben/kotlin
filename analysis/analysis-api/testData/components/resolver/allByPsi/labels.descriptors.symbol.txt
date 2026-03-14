@@ -44,7 +44,10 @@ KtCallExpression(34,42): 'action()'
     ]
 
 KtNameReferenceExpression(34,40): 'action'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      action: kotlin.Function0<kotlin.Unit>
+    ]
 
 KtValueArgumentList(40,42): '()'
   null
@@ -65,7 +68,10 @@ KtCallExpression(64,102): 'foo label@{'
     ]
 
 KtNameReferenceExpression(64,67): 'foo'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /foo(action: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+    ]
 
 KtLambdaArgument(68,102): 'label@{'
   null
@@ -127,13 +133,19 @@ KtContainerNode(125,129): '0..1'
   null
 
 KtBinaryExpression(125,129): '0..1'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int.rangeTo(<dispatch receiver>: kotlin.Int, other: kotlin.Int): kotlin.ranges.IntRange
+    ]
 
 KtConstantExpression(125,126): '0'
   null
 
 KtOperationReferenceExpression(126,128): '..'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int.rangeTo(<dispatch receiver>: kotlin.Int, other: kotlin.Int): kotlin.ranges.IntRange
+    ]
 
 KtConstantExpression(128,129): '1'
   null

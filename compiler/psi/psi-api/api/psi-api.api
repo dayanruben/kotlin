@@ -749,8 +749,6 @@ public final class org/jetbrains/kotlin/psi/CreateByPatternKt {
 	public static synthetic fun createExpressionByPattern$default (Lorg/jetbrains/kotlin/psi/KtPsiFactory;Ljava/lang/String;[Ljava/lang/Object;ZILjava/lang/Object;)Lorg/jetbrains/kotlin/psi/KtExpression;
 	public static final fun createValueArgumentListByPattern (Lorg/jetbrains/kotlin/psi/KtPsiFactory;Ljava/lang/String;[Ljava/lang/Object;Z)Lorg/jetbrains/kotlin/psi/KtValueArgumentList;
 	public static synthetic fun createValueArgumentListByPattern$default (Lorg/jetbrains/kotlin/psi/KtPsiFactory;Ljava/lang/String;[Ljava/lang/Object;ZILjava/lang/Object;)Lorg/jetbrains/kotlin/psi/KtValueArgumentList;
-	public static final fun getCREATE_BY_PATTERN_MAY_NOT_REFORMAT ()Z
-	public static final fun setCREATE_BY_PATTERN_MAY_NOT_REFORMAT (Z)V
 }
 
 public final class org/jetbrains/kotlin/psi/EditCommaSeparatedListHelper {
@@ -891,7 +889,7 @@ public class org/jetbrains/kotlin/psi/KtBackingField : org/jetbrains/kotlin/psi/
 	public fun hasInitializer ()Z
 }
 
-public class org/jetbrains/kotlin/psi/KtBinaryExpression : org/jetbrains/kotlin/psi/KtExpressionImpl, org/jetbrains/kotlin/psi/KtOperationExpression {
+public class org/jetbrains/kotlin/psi/KtBinaryExpression : org/jetbrains/kotlin/psi/KtExpressionImpl, org/jetbrains/kotlin/psi/KtOperationExpression, org/jetbrains/kotlin/resolution/KtResolvableCall {
 	public fun <init> (Lcom/intellij/lang/ASTNode;)V
 	public fun accept (Lorg/jetbrains/kotlin/psi/KtVisitor;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun getLeft ()Lorg/jetbrains/kotlin/psi/KtExpression;
@@ -1244,7 +1242,7 @@ public abstract class org/jetbrains/kotlin/psi/KtConstructor : org/jetbrains/kot
 	public synthetic fun setTypeReference (Lorg/jetbrains/kotlin/psi/KtTypeReference;)Lorg/jetbrains/kotlin/psi/KtTypeReference;
 }
 
-public class org/jetbrains/kotlin/psi/KtConstructorCalleeExpression : org/jetbrains/kotlin/psi/KtExpressionImplStub {
+public class org/jetbrains/kotlin/psi/KtConstructorCalleeExpression : org/jetbrains/kotlin/psi/KtExpressionImplStub, org/jetbrains/kotlin/resolution/KtResolvableCall {
 	public fun <init> (Lcom/intellij/lang/ASTNode;)V
 	public fun <init> (Lorg/jetbrains/kotlin/psi/stubs/KotlinPlaceHolderStub;)V
 	public fun accept (Lorg/jetbrains/kotlin/psi/KtVisitor;Ljava/lang/Object;)Ljava/lang/Object;
@@ -1799,7 +1797,7 @@ public class org/jetbrains/kotlin/psi/KtInitializerList : org/jetbrains/kotlin/p
 	public fun getInitializers ()Ljava/util/List;
 }
 
-public abstract class org/jetbrains/kotlin/psi/KtInstanceExpressionWithLabel : org/jetbrains/kotlin/psi/KtExpressionWithLabel {
+public abstract class org/jetbrains/kotlin/psi/KtInstanceExpressionWithLabel : org/jetbrains/kotlin/psi/KtExpressionWithLabel, org/jetbrains/kotlin/resolution/KtResolvable {
 	public fun <init> (Lcom/intellij/lang/ASTNode;)V
 	public fun getInstanceReference ()Lorg/jetbrains/kotlin/psi/KtReferenceExpression;
 }
@@ -1822,7 +1820,7 @@ public class org/jetbrains/kotlin/psi/KtIsExpression : org/jetbrains/kotlin/psi/
 	public fun isNegated ()Z
 }
 
-public final class org/jetbrains/kotlin/psi/KtLabelReferenceExpression : org/jetbrains/kotlin/psi/KtSimpleNameExpressionImpl, org/jetbrains/kotlin/resolution/KtResolvable {
+public final class org/jetbrains/kotlin/psi/KtLabelReferenceExpression : org/jetbrains/kotlin/psi/KtSimpleNameExpressionImpl {
 	public fun <init> (Lcom/intellij/lang/ASTNode;)V
 	public fun getReferencedNameElement ()Lcom/intellij/psi/PsiElement;
 }
@@ -1913,7 +1911,7 @@ public class org/jetbrains/kotlin/psi/KtModifierListOwnerStub : org/jetbrains/ko
 	public fun removeModifier (Lorg/jetbrains/kotlin/lexer/KtModifierKeywordToken;)V
 }
 
-public final class org/jetbrains/kotlin/psi/KtNameReferenceExpression : org/jetbrains/kotlin/psi/KtExpressionImplStub, org/jetbrains/kotlin/psi/KtSimpleNameExpression {
+public final class org/jetbrains/kotlin/psi/KtNameReferenceExpression : org/jetbrains/kotlin/psi/KtExpressionImplStub, org/jetbrains/kotlin/psi/KtSimpleNameExpression, org/jetbrains/kotlin/resolution/KtResolvableCall {
 	public static final field Companion Lorg/jetbrains/kotlin/psi/KtNameReferenceExpression$Companion;
 	public fun <init> (Lcom/intellij/lang/ASTNode;)V
 	public fun <init> (Lorg/jetbrains/kotlin/psi/stubs/KotlinNameReferenceExpressionStub;)V
@@ -2522,7 +2520,7 @@ public abstract interface class org/jetbrains/kotlin/psi/KtPureElement {
 	public abstract fun getPsiOrParent ()Lorg/jetbrains/kotlin/psi/KtElement;
 }
 
-public abstract interface class org/jetbrains/kotlin/psi/KtQualifiedExpression : org/jetbrains/kotlin/psi/KtExpression {
+public abstract interface class org/jetbrains/kotlin/psi/KtQualifiedExpression : org/jetbrains/kotlin/psi/KtExpression, org/jetbrains/kotlin/resolution/KtResolvableCall {
 	public fun getOperationSign ()Lorg/jetbrains/kotlin/lexer/KtSingleValueToken;
 	public fun getOperationTokenNode ()Lcom/intellij/lang/ASTNode;
 	public fun getReceiverExpression ()Lorg/jetbrains/kotlin/psi/KtExpression;
@@ -2530,7 +2528,7 @@ public abstract interface class org/jetbrains/kotlin/psi/KtQualifiedExpression :
 	public fun getSelectorExpression ()Lorg/jetbrains/kotlin/psi/KtExpression;
 }
 
-public abstract interface class org/jetbrains/kotlin/psi/KtReferenceExpression : org/jetbrains/kotlin/psi/KtExpression {
+public abstract interface class org/jetbrains/kotlin/psi/KtReferenceExpression : org/jetbrains/kotlin/psi/KtExpression, org/jetbrains/kotlin/resolution/KtResolvable {
 }
 
 public class org/jetbrains/kotlin/psi/KtReturnExpression : org/jetbrains/kotlin/psi/KtExpressionWithLabel, org/jetbrains/kotlin/psi/KtStatementExpression, org/jetbrains/kotlin/resolution/KtResolvable {
@@ -2872,7 +2870,7 @@ public final class org/jetbrains/kotlin/psi/KtTypeReference : org/jetbrains/kotl
 	public final fun nameForReceiverLabel ()Ljava/lang/String;
 }
 
-public abstract class org/jetbrains/kotlin/psi/KtUnaryExpression : org/jetbrains/kotlin/psi/KtExpressionImpl, org/jetbrains/kotlin/psi/KtOperationExpression {
+public abstract class org/jetbrains/kotlin/psi/KtUnaryExpression : org/jetbrains/kotlin/psi/KtExpressionImpl, org/jetbrains/kotlin/psi/KtOperationExpression, org/jetbrains/kotlin/resolution/KtResolvableCall {
 	public fun <init> (Lcom/intellij/lang/ASTNode;)V
 	public abstract fun getBaseExpression ()Lorg/jetbrains/kotlin/psi/KtExpression;
 	public fun getOperationReference ()Lorg/jetbrains/kotlin/psi/KtSimpleNameExpression;

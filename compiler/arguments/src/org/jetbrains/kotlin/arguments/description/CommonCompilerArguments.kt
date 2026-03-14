@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.arguments.description
 
 import org.jetbrains.kotlin.arguments.dsl.base.*
+import org.jetbrains.kotlin.arguments.dsl.defaultEmpty
 import org.jetbrains.kotlin.arguments.dsl.defaultFalse
 import org.jetbrains.kotlin.arguments.dsl.defaultNull
 import org.jetbrains.kotlin.arguments.dsl.defaultTrue
@@ -98,6 +99,7 @@ val actualCommonCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLev
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "opt-in"
         deprecatedName = "Xopt-in"
@@ -105,6 +107,7 @@ val actualCommonCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLev
             "Enable API usages that require opt-in with an opt-in requirement marker with the given fully qualified name.".asReleaseDependent()
         valueType = StringArrayType.defaultNull
         valueDescription = "<fq.name>".asReleaseDependent()
+        argumentType = StringListType.defaultEmpty
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_4_0,
@@ -379,10 +382,12 @@ val actualCommonCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLev
     }
 
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xdisable-phases"
         description = "Disable backend phases.".asReleaseDependent()
         valueType = StringArrayType.defaultNull
+        argumentType = StringListType.defaultEmpty
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_3_20,
@@ -390,10 +395,12 @@ val actualCommonCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLev
     }
 
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xverbose-phases"
         description = "Be verbose while performing the given backend phases.".asReleaseDependent()
         valueType = StringArrayType.defaultNull
+        argumentType = StringListType.defaultEmpty
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_3_20,
@@ -401,10 +408,12 @@ val actualCommonCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLev
     }
 
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xphases-to-dump-before"
         description = "Dump the backend's state before these phases.".asReleaseDependent()
         valueType = StringArrayType.defaultNull
+        argumentType = StringListType.defaultEmpty
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_3_20,
@@ -412,10 +421,12 @@ val actualCommonCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLev
     }
 
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xphases-to-dump-after"
         description = "Dump the backend's state after these phases.".asReleaseDependent()
         valueType = StringArrayType.defaultNull
+        argumentType = StringListType.defaultEmpty
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_3_20,
@@ -423,10 +434,12 @@ val actualCommonCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLev
     }
 
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xphases-to-dump"
         description = "Dump the backend's state both before and after these phases.".asReleaseDependent()
         valueType = StringArrayType.defaultNull
+        argumentType = StringListType.defaultEmpty
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_3_20,
@@ -457,10 +470,12 @@ val actualCommonCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLev
     }
 
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xphases-to-validate-before"
         description = "Validate the backend's state before these phases.".asReleaseDependent()
         valueType = StringArrayType.defaultNull
+        argumentType = StringListType.defaultEmpty
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_3_40,
@@ -468,10 +483,12 @@ val actualCommonCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLev
     }
 
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xphases-to-validate-after"
         description = "Validate the backend's state after these phases.".asReleaseDependent()
         valueType = StringArrayType.defaultNull
+        argumentType = StringListType.defaultEmpty
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_3_40,
@@ -479,10 +496,12 @@ val actualCommonCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLev
     }
 
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xphases-to-validate"
         description = "Validate the backend's state both before and after these phases.".asReleaseDependent()
         valueType = StringArrayType.defaultNull
+        argumentType = StringListType.defaultEmpty
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_3_40,
@@ -1045,6 +1064,7 @@ The argument should be used only if the new compilation scheme is enabled with -
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xsuppress-warning"
         compilerName = "suppressedDiagnostics"
@@ -1052,6 +1072,7 @@ The argument should be used only if the new compilation scheme is enabled with -
             "Suppress specified warning module-wide. This option is deprecated in favor of \"-Xwarning-level\" flag".asReleaseDependent()
         valueDescription = "<WARNING_NAME>".asReleaseDependent()
         valueType = StringArrayType.defaultNull
+        argumentType = StringListType.defaultEmpty
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v2_1_0,

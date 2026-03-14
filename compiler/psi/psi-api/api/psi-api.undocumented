@@ -273,7 +273,6 @@ org.jetbrains.kotlin.psi.BuilderByPattern.appendName(Name)
 org.jetbrains.kotlin.psi.BuilderByPattern.appendNonFormattedText(String)
 org.jetbrains.kotlin.psi.BuilderByPattern.appendTypeReference(KtTypeReference?)
 org.jetbrains.kotlin.psi.BuilderByPattern.create((String, Array<out Any>) -> TElement)
-org.jetbrains.kotlin.psi.CREATE_BY_PATTERN_MAY_NOT_REFORMAT
 org.jetbrains.kotlin.psi.EditCommaSeparatedListHelper
 org.jetbrains.kotlin.psi.EditCommaSeparatedListHelper.addItem(KtElement, List<TItem>, TItem, KtToken)
 org.jetbrains.kotlin.psi.EditCommaSeparatedListHelper.addItemAfter(KtElement, List<TItem>, TItem, TItem?, KtToken)
@@ -638,9 +637,7 @@ org.jetbrains.kotlin.psi.KtImportsFactory:createImportDirectivesNotCached(Collec
 org.jetbrains.kotlin.psi.KtInitializerList:constructor(ASTNode)
 org.jetbrains.kotlin.psi.KtInitializerList:constructor(KotlinPlaceHolderStub<KtInitializerList>)
 org.jetbrains.kotlin.psi.KtInitializerList:getInitializers()
-org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
 org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel:constructor(ASTNode)
-org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel:getInstanceReference()
 org.jetbrains.kotlin.psi.KtIntersectionType.getLeftTypeRef()
 org.jetbrains.kotlin.psi.KtIntersectionType.getRightTypeRef()
 org.jetbrains.kotlin.psi.KtIntersectionType:constructor(ASTNode)
@@ -1040,7 +1037,6 @@ org.jetbrains.kotlin.psi.KtPureClassOrObject:hasExplicitPrimaryConstructor()
 org.jetbrains.kotlin.psi.KtPureClassOrObject:hasPrimaryConstructor()
 org.jetbrains.kotlin.psi.KtPureClassOrObject:isLocal()
 org.jetbrains.kotlin.psi.KtPureElement:getContainingKtFile()
-org.jetbrains.kotlin.psi.KtQualifiedExpression
 org.jetbrains.kotlin.psi.KtQualifiedExpression.operationSign
 org.jetbrains.kotlin.psi.KtQualifiedExpression.operationTokenNode
 org.jetbrains.kotlin.psi.KtQualifiedExpression.receiverExpression
@@ -1169,7 +1165,6 @@ org.jetbrains.kotlin.psi.KtTypeReference.nameForReceiverLabel()
 org.jetbrains.kotlin.psi.KtTypeReference.typeElement
 org.jetbrains.kotlin.psi.KtTypeReference:constructor(ASTNode)
 org.jetbrains.kotlin.psi.KtTypeReference:constructor(KotlinPlaceHolderStub<KtTypeReference>)
-org.jetbrains.kotlin.psi.KtUnaryExpression
 org.jetbrains.kotlin.psi.KtUnaryExpression:constructor(ASTNode)
 org.jetbrains.kotlin.psi.KtUnaryExpression:getBaseExpression()
 org.jetbrains.kotlin.psi.KtUnaryExpression:getOperationToken()

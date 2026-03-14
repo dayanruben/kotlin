@@ -271,7 +271,7 @@ public interface CommonCompilerArguments : CommonToolArguments {
      */
     @JvmField
     @ExperimentalCompilerArgument
-    public val X_DISABLE_PHASES: CommonCompilerArgument<Array<String>?> =
+    public val X_DISABLE_PHASES: CommonCompilerArgument<List<String>> =
         CommonCompilerArgument("X_DISABLE_PHASES", KotlinReleaseVersion(1, 3, 20))
 
     /**
@@ -525,7 +525,7 @@ public interface CommonCompilerArguments : CommonToolArguments {
      */
     @JvmField
     @ExperimentalCompilerArgument
-    public val X_PHASES_TO_DUMP: CommonCompilerArgument<Array<String>?> =
+    public val X_PHASES_TO_DUMP: CommonCompilerArgument<List<String>> =
         CommonCompilerArgument("X_PHASES_TO_DUMP", KotlinReleaseVersion(1, 3, 20))
 
     /**
@@ -535,7 +535,7 @@ public interface CommonCompilerArguments : CommonToolArguments {
      */
     @JvmField
     @ExperimentalCompilerArgument
-    public val X_PHASES_TO_DUMP_AFTER: CommonCompilerArgument<Array<String>?> =
+    public val X_PHASES_TO_DUMP_AFTER: CommonCompilerArgument<List<String>> =
         CommonCompilerArgument("X_PHASES_TO_DUMP_AFTER", KotlinReleaseVersion(1, 3, 20))
 
     /**
@@ -545,7 +545,7 @@ public interface CommonCompilerArguments : CommonToolArguments {
      */
     @JvmField
     @ExperimentalCompilerArgument
-    public val X_PHASES_TO_DUMP_BEFORE: CommonCompilerArgument<Array<String>?> =
+    public val X_PHASES_TO_DUMP_BEFORE: CommonCompilerArgument<List<String>> =
         CommonCompilerArgument("X_PHASES_TO_DUMP_BEFORE", KotlinReleaseVersion(1, 3, 20))
 
     /**
@@ -555,7 +555,7 @@ public interface CommonCompilerArguments : CommonToolArguments {
      */
     @JvmField
     @ExperimentalCompilerArgument
-    public val X_PHASES_TO_VALIDATE: CommonCompilerArgument<Array<String>?> =
+    public val X_PHASES_TO_VALIDATE: CommonCompilerArgument<List<String>> =
         CommonCompilerArgument("X_PHASES_TO_VALIDATE", KotlinReleaseVersion(1, 3, 40))
 
     /**
@@ -565,7 +565,7 @@ public interface CommonCompilerArguments : CommonToolArguments {
      */
     @JvmField
     @ExperimentalCompilerArgument
-    public val X_PHASES_TO_VALIDATE_AFTER: CommonCompilerArgument<Array<String>?> =
+    public val X_PHASES_TO_VALIDATE_AFTER: CommonCompilerArgument<List<String>> =
         CommonCompilerArgument("X_PHASES_TO_VALIDATE_AFTER", KotlinReleaseVersion(1, 3, 40))
 
     /**
@@ -575,7 +575,7 @@ public interface CommonCompilerArguments : CommonToolArguments {
      */
     @JvmField
     @ExperimentalCompilerArgument
-    public val X_PHASES_TO_VALIDATE_BEFORE: CommonCompilerArgument<Array<String>?> =
+    public val X_PHASES_TO_VALIDATE_BEFORE: CommonCompilerArgument<List<String>> =
         CommonCompilerArgument("X_PHASES_TO_VALIDATE_BEFORE", KotlinReleaseVersion(1, 3, 40))
 
     /**
@@ -697,7 +697,7 @@ public interface CommonCompilerArguments : CommonToolArguments {
      */
     @JvmField
     @ExperimentalCompilerArgument
-    public val X_SUPPRESS_WARNING: CommonCompilerArgument<Array<String>?> =
+    public val X_SUPPRESS_WARNING: CommonCompilerArgument<List<String>> =
         CommonCompilerArgument("X_SUPPRESS_WARNING", KotlinReleaseVersion(2, 1, 0))
 
     /**
@@ -751,7 +751,7 @@ public interface CommonCompilerArguments : CommonToolArguments {
      */
     @JvmField
     @ExperimentalCompilerArgument
-    public val X_VERBOSE_PHASES: CommonCompilerArgument<Array<String>?> =
+    public val X_VERBOSE_PHASES: CommonCompilerArgument<List<String>> =
         CommonCompilerArgument("X_VERBOSE_PHASES", KotlinReleaseVersion(1, 3, 20))
 
     /**
@@ -832,7 +832,7 @@ public interface CommonCompilerArguments : CommonToolArguments {
      * Enable API usages that require opt-in with an opt-in requirement marker with the given fully qualified name.
      */
     @JvmField
-    public val OPT_IN: CommonCompilerArgument<Array<String>?> =
+    public val OPT_IN: CommonCompilerArgument<List<String>> =
         CommonCompilerArgument("OPT_IN", KotlinReleaseVersion(1, 4, 0))
 
     /**
