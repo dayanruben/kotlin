@@ -7,17 +7,13 @@ package org.jetbrains.kotlin.fir.resolve.calls.overloads
 
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isExpect
-import org.jetbrains.kotlin.fir.declarations.utils.modality
-import org.jetbrains.kotlin.fir.disableCompatibilityModeForNewInference
 import org.jetbrains.kotlin.fir.expressions.FirCallableReferenceAccess
 import org.jetbrains.kotlin.fir.expressions.FirNamedArgumentExpression
 import org.jetbrains.kotlin.fir.expressions.FirSpreadArgumentExpression
 import org.jetbrains.kotlin.fir.expressions.unwrapArgument
-import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.resolve.BodyResolveComponents
 import org.jetbrains.kotlin.fir.resolve.calls.ConeResolutionAtom
 import org.jetbrains.kotlin.fir.resolve.calls.ConeResolvedCallableReferenceAtom
@@ -39,7 +35,6 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.types.*
-import org.jetbrains.kotlin.fir.unwrapSubstitutionOverrides
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -68,7 +63,9 @@ class ConeOverloadConflictResolver(
     private val specificityComparator: TypeSpecificityComparator,
     private val inferenceComponents: InferenceComponents,
     private val transformerComponents: BodyResolveComponents,
-) : ConeCallConflictResolver() {
+) : ConeCallConflictResolver(), SessionHolder {
+    override val session: FirSession
+        get() = transformerComponents.session
 
     override fun chooseMaximallySpecificCandidates(
         candidates: Set<Candidate>,
@@ -84,7 +81,7 @@ class ConeOverloadConflictResolver(
      */
     private fun chooseMaximallySpecificCandidates(
         candidates: Set<Candidate>,
-        // Set to 'false' only for property-for-invoke case
+        // Set to 'false' only for the property-for-invoke case
         discriminateGenerics: Boolean,
     ): Set<Candidate> {
         if (candidates.size == 1) return candidates
@@ -185,7 +182,7 @@ class ConeOverloadConflictResolver(
 
     private fun chooseMaximallySpecificCandidates(
         candidates: Set<Candidate>,
-        discriminationFlags: DiscriminationFlags
+        discriminationFlags: DiscriminationFlags,
     ): Set<Candidate> {
         if (discriminationFlags.lowPrioritySAMs) {
             filterCandidatesByDiscriminationFlag(
@@ -226,8 +223,8 @@ class ConeOverloadConflictResolver(
         }
 
         if (discriminationFlags.byUnwrappedSmartCastOrigin) {
-            // In case of MemberScopeTowerLevel with smart cast dispatch receiver, we may create candidates both from smart cast type and
-            // from the member scope of original expression's type (without smart cast).
+            // In the case of MemberScopeTowerLevel with smart cast dispatch receiver, we may create candidates both from the smart cast type and
+            // from the member scope of the original expression's type (without a smart cast).
             // It might be necessary because the ones from smart cast might be invisible (e.g., because they are protected in other class).
             // open class A {
             //      open protected fun foo(a: Derived) {}
@@ -246,10 +243,10 @@ class ConeOverloadConflictResolver(
             // }
             // If we would just resolve a.foo(d) if a had a type B, then we would choose a public B::foo, because the other
             // one foo is protected in B, so we can't call it outside the B subclasses.
-            // But that resolution result would be less precise result that the one before smart-cast applied (A::foo has more specific parameters),
+            // But that resolution result would be a less precise result than the one before smart-cast applied (A::foo has more specific parameters),
             // so at MemberScopeTowerLevel we create candidates both from A's and B's scopes on the same level.
-            // But in case when there would be successful candidates from both types, we discriminate ones from original type,
-            // thus sticking to the candidates from smart cast type.
+            // But in case when there would be successful candidates from both types, we discriminate ones from the original type,
+            // thus sticking to the candidates from a smart cast type.
             // See more details at KT-51460, KT-55722, KT-56310 and relevant tests
             //    testData/diagnostics/tests/visibility/moreSpecificProtectedSimple.kt
             //    testData/diagnostics/tests/smartCasts/kt51460.kt
@@ -291,7 +288,7 @@ class ConeOverloadConflictResolver(
     private fun findMaximallySpecificCall(
         candidates: Set<Candidate>,
         discriminateGenerics: Boolean,
-        useOriginalSamTypes: Boolean = false
+        useOriginalSamTypes: Boolean = false,
     ): Candidate? {
         if (candidates.size <= 1) return candidates.singleOrNull()
 
@@ -301,7 +298,12 @@ class ConeOverloadConflictResolver(
 
         val bestCandidatesByParameterTypes = candidateSignatures.filter { signature ->
             candidateSignatures.all { other ->
-                signature === other || isEquallyOrMoreSpecificCallWithArgumentMapping(signature, other, discriminateGenerics, useOriginalSamTypes)
+                signature === other || isEquallyOrMoreSpecificCallWithArgumentMapping(
+                    signature,
+                    other,
+                    discriminateGenerics,
+                    useOriginalSamTypes
+                )
             }
         }
 
@@ -315,7 +317,7 @@ class ConeOverloadConflictResolver(
         call1: CandidateSignature,
         call2: CandidateSignature,
         discriminateGenerics: Boolean,
-        useOriginalSamTypes: Boolean = false
+        useOriginalSamTypes: Boolean = false,
     ): Boolean {
         return compareCallsByUsedArguments(call1, call2, discriminateGenerics, useOriginalSamTypes)
     }
@@ -339,7 +341,7 @@ class ConeOverloadConflictResolver(
      */
     private fun checkExpectAndEquallyOrMoreSpecificShape(
         call1: FlatSignature<Candidate>,
-        call2: FlatSignature<Candidate>
+        call2: FlatSignature<Candidate>,
     ): Boolean {
         val hasVarargs1 = call1.hasVarargs
         val hasVarargs2 = call2.hasVarargs
@@ -361,7 +363,7 @@ class ConeOverloadConflictResolver(
         call1: FlatSignature<Candidate>,
         call2: FlatSignature<Candidate>,
         discriminateGenerics: Boolean,
-        useOriginalSamTypes: Boolean
+        useOriginalSamTypes: Boolean,
     ): Boolean {
         if (discriminateGenerics) {
             val isGeneric1 = call1.isGeneric
@@ -520,18 +522,17 @@ class ConeOverloadConflictResolver(
 
     private fun computeSignatureTypes(
         call: Candidate,
-        called: FirCallableDeclaration
+        called: FirCallableDeclaration,
     ): List<TypeWithConversion> {
         return buildList {
-            val session = inferenceComponents.session
-            addIfNotNull(called.receiverParameter?.typeRef?.coneType?.prepareType(session, call)?.let { TypeWithConversion(it) })
+            addIfNotNull(called.receiverParameter?.typeRef?.coneType?.prepareType(call)?.let { TypeWithConversion(it) })
             val typeForCallableReference = call.resultingTypeForCallableReference
             if (typeForCallableReference != null) {
                 // Return type isn't needed here       v
                 typeForCallableReference.typeArguments.dropLast(1)
                     .mapTo(this) {
                         TypeWithConversion(
-                            (it as ConeKotlinType).prepareType(session, call)
+                            (it as ConeKotlinType).prepareType(call)
                                 .removeTypeVariableTypes(session.typeContext, TypeVariableReplacement.TypeParameter)
                         )
                     }
@@ -545,8 +546,12 @@ class ConeOverloadConflictResolver(
         }
     }
 
-    private fun FirValueParameter.toTypeWithConversion(argument: ConeResolutionAtom, session: FirSession, call: Candidate): TypeWithConversion {
-        val argumentType = argumentType(argument).prepareType(session, call)
+    private fun FirValueParameter.toTypeWithConversion(
+        argument: ConeResolutionAtom,
+        session: FirSession,
+        call: Candidate,
+    ): TypeWithConversion {
+        val argumentType = argumentType(argument).prepareType(call)
         val functionTypeForSam = toFunctionTypeForSamOrNull(call)
         return if (functionTypeForSam == null) {
             TypeWithConversion(argumentType)
@@ -555,8 +560,8 @@ class ConeOverloadConflictResolver(
         }
     }
 
-    private fun ConeKotlinType.prepareType(session: FirSession, candidate: Candidate): ConeKotlinType {
-        val expanded = fullyExpandedType(session)
+    private fun ConeKotlinType.prepareType(candidate: Candidate): ConeKotlinType {
+        val expanded = fullyExpandedType()
         if (!candidate.system.usesOuterCs) return expanded
         // For resolving overloads in PCLA of the following form:
         //  fun foo(vararg values: Tv)

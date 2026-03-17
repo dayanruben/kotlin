@@ -492,6 +492,15 @@ public final class org/jetbrains/kotlin/buildtools/api/arguments/enums/AbiStabil
 	public static fun values ()[Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/AbiStabilityMode;
 }
 
+public final class org/jetbrains/kotlin/buildtools/api/arguments/enums/AnnotationDefaultTargetMode : java/lang/Enum {
+	public static final field FIRST_ONLY Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/AnnotationDefaultTargetMode;
+	public static final field FIRST_ONLY_WARN Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/AnnotationDefaultTargetMode;
+	public static final field PARAM_PROPERTY Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/AnnotationDefaultTargetMode;
+	public final fun getStringValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/AnnotationDefaultTargetMode;
+	public static fun values ()[Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/AnnotationDefaultTargetMode;
+}
+
 public final class org/jetbrains/kotlin/buildtools/api/arguments/enums/AssertionsMode : java/lang/Enum {
 	public static final field ALWAYS_DISABLE Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/AssertionsMode;
 	public static final field ALWAYS_ENABLE Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/AssertionsMode;
@@ -629,6 +638,15 @@ public final class org/jetbrains/kotlin/buildtools/api/arguments/enums/LambdasMo
 	public static fun values ()[Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/LambdasMode;
 }
 
+public final class org/jetbrains/kotlin/buildtools/api/arguments/enums/NameBasedDestructuringMode : java/lang/Enum {
+	public static final field COMPLETE Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/NameBasedDestructuringMode;
+	public static final field NAME_MISMATCH Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/NameBasedDestructuringMode;
+	public static final field ONLY_SYNTAX Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/NameBasedDestructuringMode;
+	public final fun getStringValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/NameBasedDestructuringMode;
+	public static fun values ()[Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/NameBasedDestructuringMode;
+}
+
 public final class org/jetbrains/kotlin/buildtools/api/arguments/enums/ReturnValueCheckerMode : java/lang/Enum {
 	public static final field CHECKER Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/ReturnValueCheckerMode;
 	public static final field DISABLED Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/ReturnValueCheckerMode;
@@ -653,6 +671,15 @@ public final class org/jetbrains/kotlin/buildtools/api/arguments/enums/StringCon
 	public final fun getStringValue ()Ljava/lang/String;
 	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/StringConcatMode;
 	public static fun values ()[Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/StringConcatMode;
+}
+
+public final class org/jetbrains/kotlin/buildtools/api/arguments/enums/VerifyIrMode : java/lang/Enum {
+	public static final field ERROR Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/VerifyIrMode;
+	public static final field NONE Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/VerifyIrMode;
+	public static final field WARNING Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/VerifyIrMode;
+	public final fun getStringValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/VerifyIrMode;
+	public static fun values ()[Lorg/jetbrains/kotlin/buildtools/api/arguments/enums/VerifyIrMode;
 }
 
 public final class org/jetbrains/kotlin/buildtools/api/arguments/enums/WhenExpressionsMode : java/lang/Enum {

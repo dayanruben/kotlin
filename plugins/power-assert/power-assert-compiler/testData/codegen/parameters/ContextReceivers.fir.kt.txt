@@ -55,9 +55,11 @@ fun test1() {
     { // BLOCK
       val tmp0_Explain: Asserter = $this$with
       { // BLOCK
-        val tmp1_Explain: Int = "test".<get-length>()
-        val tmp2_Explain: Boolean = EQEQ(arg0 = tmp1_Explain, arg1 = 5)
-        context1Assert(/* $context-Asserter = tmp0_Explain, */ condition = tmp2_Explain, msg = "\ncontext1Assert(\"test\".length == 5)" + "\n                      |      |" + "\n                      |      " + tmp2_Explain + "\n                      " + tmp1_Explain + "\n")
+        val tmp1_Explain: String = "test"
+        val tmp2_Explain: Int = tmp1_Explain.<get-length>()
+        val tmp3_Explain: Int = 5
+        val tmp4_Explain: Boolean = EQEQ(arg0 = tmp2_Explain, arg1 = tmp3_Explain)
+        context1Assert(/* $context-Asserter = tmp0_Explain, */ condition = tmp4_Explain, msg = "\n" + toDefaultMessage(/* <this> = CallExplanation(offset = 540, source = "        context1Assert(\"test\".length == 5)", arguments = listOf<Argument>(elements = [null, Argument(startOffset = 23, endOffset = 41, kind = Kind.VALUE, expressions = listOf<Expression>(elements = [LiteralExpression(startOffset = 23, endOffset = 29, displayOffset = 23, value = tmp1_Explain), ValueExpression(startOffset = 23, endOffset = 36, displayOffset = 30, value = tmp2_Explain), LiteralExpression(startOffset = 40, endOffset = 41, displayOffset = 40, value = tmp3_Explain), EqualityExpression(startOffset = 23, endOffset = 41, displayOffset = 37, value = tmp4_Explain, lhs = tmp2_Explain, rhs = tmp3_Explain)])), null])) */))
       }
     }
   }
@@ -71,9 +73,11 @@ fun test2() {
       { // BLOCK
         val tmp1_Explain: Asserter = $this$with
         { // BLOCK
-          val tmp2_Explain: Int = "test".<get-length>()
-          val tmp3_Explain: Boolean = EQEQ(arg0 = tmp2_Explain, arg1 = 5)
-          context2Assert(/* $context-Asserter#1 = tmp0_Explain, $context-Asserter#2 = tmp1_Explain, */ condition = tmp3_Explain, msg = "\ncontext2Assert(\"test\".length == 5)" + "\n                      |      |" + "\n                      |      " + tmp3_Explain + "\n                      " + tmp2_Explain + "\n")
+          val tmp2_Explain: String = "test"
+          val tmp3_Explain: Int = tmp2_Explain.<get-length>()
+          val tmp4_Explain: Int = 5
+          val tmp5_Explain: Boolean = EQEQ(arg0 = tmp3_Explain, arg1 = tmp4_Explain)
+          context2Assert(/* $context-Asserter#1 = tmp0_Explain, $context-Asserter#2 = tmp1_Explain, */ condition = tmp5_Explain, msg = "\n" + toDefaultMessage(/* <this> = CallExplanation(offset = 627, source = "        context2Assert(\"test\".length == 5)", arguments = listOf<Argument>(elements = [null, null, Argument(startOffset = 23, endOffset = 41, kind = Kind.VALUE, expressions = listOf<Expression>(elements = [LiteralExpression(startOffset = 23, endOffset = 29, displayOffset = 23, value = tmp2_Explain), ValueExpression(startOffset = 23, endOffset = 36, displayOffset = 30, value = tmp3_Explain), LiteralExpression(startOffset = 40, endOffset = 41, displayOffset = 40, value = tmp4_Explain), EqualityExpression(startOffset = 23, endOffset = 41, displayOffset = 37, value = tmp5_Explain, lhs = tmp3_Explain, rhs = tmp4_Explain)])), null])) */))
         }
       }
     }

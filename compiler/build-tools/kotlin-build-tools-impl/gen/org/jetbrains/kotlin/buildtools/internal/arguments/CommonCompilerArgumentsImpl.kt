@@ -125,10 +125,13 @@ import org.jetbrains.kotlin.buildtools.api.CompilerArgumentsParseException
 import org.jetbrains.kotlin.buildtools.api.KotlinReleaseVersion
 import org.jetbrains.kotlin.buildtools.api.arguments.CompilerPlugin
 import org.jetbrains.kotlin.buildtools.api.arguments.ExperimentalCompilerArgument
+import org.jetbrains.kotlin.buildtools.api.arguments.enums.AnnotationDefaultTargetMode
 import org.jetbrains.kotlin.buildtools.api.arguments.enums.ExplicitApiMode
 import org.jetbrains.kotlin.buildtools.api.arguments.enums.HeaderMode
 import org.jetbrains.kotlin.buildtools.api.arguments.enums.KotlinVersion
+import org.jetbrains.kotlin.buildtools.api.arguments.enums.NameBasedDestructuringMode
 import org.jetbrains.kotlin.buildtools.api.arguments.enums.ReturnValueCheckerMode
+import org.jetbrains.kotlin.buildtools.api.arguments.enums.VerifyIrMode
 import org.jetbrains.kotlin.buildtools.api.arguments.CommonCompilerArguments as ArgumentsCommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments as CommonCompilerArguments
 import org.jetbrains.kotlin.compilerRunner.toArgumentStrings as compilerToArgumentStrings
@@ -190,7 +193,7 @@ internal abstract class CommonCompilerArgumentsImpl(
     if (X_ALLOW_HOLDSIN_CONTRACT in this) { arguments.allowHoldsinContract = get(X_ALLOW_HOLDSIN_CONTRACT)}
     if (X_ALLOW_KOTLIN_PACKAGE in this) { arguments.allowKotlinPackage = get(X_ALLOW_KOTLIN_PACKAGE)}
     if (X_ALLOW_REIFIED_TYPE_IN_CATCH in this) { arguments.allowReifiedTypeInCatch = get(X_ALLOW_REIFIED_TYPE_IN_CATCH)}
-    if (X_ANNOTATION_DEFAULT_TARGET in this) { arguments.annotationDefaultTarget = get(X_ANNOTATION_DEFAULT_TARGET)}
+    if (X_ANNOTATION_DEFAULT_TARGET in this) { arguments.annotationDefaultTarget = get(X_ANNOTATION_DEFAULT_TARGET)?.stringValue}
     if (X_ANNOTATION_TARGET_ALL in this) { arguments.annotationTargetAll = get(X_ANNOTATION_TARGET_ALL)}
     if (X_CHECK_PHASE_CONDITIONS in this) { arguments.checkPhaseConditions = get(X_CHECK_PHASE_CONDITIONS)}
     if (X_COLLECTION_LITERALS in this) { arguments.collectionLiterals = get(X_COLLECTION_LITERALS)}
@@ -232,7 +235,7 @@ internal abstract class CommonCompilerArgumentsImpl(
     if (X_METADATA_VERSION in this) { arguments.metadataVersion = get(X_METADATA_VERSION)}
     if (X_MULTI_DOLLAR_INTERPOLATION in this) { arguments.multiDollarInterpolation = get(X_MULTI_DOLLAR_INTERPOLATION)}
     if (X_MULTI_PLATFORM in this) { arguments.multiPlatform = get(X_MULTI_PLATFORM)}
-    if (X_NAME_BASED_DESTRUCTURING in this) { arguments.nameBasedDestructuring = get(X_NAME_BASED_DESTRUCTURING)}
+    if (X_NAME_BASED_DESTRUCTURING in this) { arguments.nameBasedDestructuring = get(X_NAME_BASED_DESTRUCTURING)?.stringValue}
     if (X_NESTED_TYPE_ALIASES in this) { arguments.nestedTypeAliases = get(X_NESTED_TYPE_ALIASES)}
     if (X_NEW_INFERENCE in this) { arguments.newInference = get(X_NEW_INFERENCE)}
     if (X_NO_CHECK_ACTUAL in this) { arguments.noCheckActual = get(X_NO_CHECK_ACTUAL)}
@@ -266,7 +269,7 @@ internal abstract class CommonCompilerArgumentsImpl(
     if (X_USE_FIR_LT in this) { arguments.useFirLT = get(X_USE_FIR_LT)}
     try { if (X_USE_K2 in this) { arguments.setUsingReflection("useK2", get(X_USE_K2))} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_USE_K2. Current compiler version is: $KC_VERSION, but the argument was removed in 2.2.0""").initCause(e) }
     if (X_VERBOSE_PHASES in this) { arguments.verbosePhases = get(X_VERBOSE_PHASES).toTypedArray()}
-    if (X_VERIFY_IR in this) { arguments.verifyIr = get(X_VERIFY_IR)}
+    if (X_VERIFY_IR in this) { arguments.verifyIr = get(X_VERIFY_IR)?.stringValue}
     if (X_VERIFY_IR_NESTED_OFFSETS in this) { arguments.verifyIrNestedOffsets = get(X_VERIFY_IR_NESTED_OFFSETS)}
     if (X_VERIFY_IR_VISIBILITY in this) { arguments.verifyIrVisibility = get(X_VERIFY_IR_VISIBILITY)}
     if (X_WARNING_LEVEL in this) { arguments.warningLevels = get(X_WARNING_LEVEL) ?: emptyArray()}
@@ -296,7 +299,7 @@ internal abstract class CommonCompilerArgumentsImpl(
     try { this[X_ALLOW_HOLDSIN_CONTRACT] = arguments.allowHoldsinContract } catch (_: NoSuchMethodError) {  }
     try { this[X_ALLOW_KOTLIN_PACKAGE] = arguments.allowKotlinPackage } catch (_: NoSuchMethodError) {  }
     try { this[X_ALLOW_REIFIED_TYPE_IN_CATCH] = arguments.allowReifiedTypeInCatch } catch (_: NoSuchMethodError) {  }
-    try { this[X_ANNOTATION_DEFAULT_TARGET] = arguments.annotationDefaultTarget } catch (_: NoSuchMethodError) {  }
+    try { this[X_ANNOTATION_DEFAULT_TARGET] = arguments.annotationDefaultTarget?.let { AnnotationDefaultTargetMode.entries.firstOrNull { entry -> entry.stringValue == it } ?: throw CompilerArgumentsParseException("Unknown -Xannotation-default-target value: $it") } } catch (_: NoSuchMethodError) {  }
     try { this[X_ANNOTATION_TARGET_ALL] = arguments.annotationTargetAll } catch (_: NoSuchMethodError) {  }
     try { this[X_CHECK_PHASE_CONDITIONS] = arguments.checkPhaseConditions } catch (_: NoSuchMethodError) {  }
     try { this[X_COLLECTION_LITERALS] = arguments.collectionLiterals } catch (_: NoSuchMethodError) {  }
@@ -338,7 +341,7 @@ internal abstract class CommonCompilerArgumentsImpl(
     try { this[X_METADATA_VERSION] = arguments.metadataVersion } catch (_: NoSuchMethodError) {  }
     try { this[X_MULTI_DOLLAR_INTERPOLATION] = arguments.multiDollarInterpolation } catch (_: NoSuchMethodError) {  }
     try { this[X_MULTI_PLATFORM] = arguments.multiPlatform } catch (_: NoSuchMethodError) {  }
-    try { this[X_NAME_BASED_DESTRUCTURING] = arguments.nameBasedDestructuring } catch (_: NoSuchMethodError) {  }
+    try { this[X_NAME_BASED_DESTRUCTURING] = arguments.nameBasedDestructuring?.let { NameBasedDestructuringMode.entries.firstOrNull { entry -> entry.stringValue == it } ?: throw CompilerArgumentsParseException("Unknown -Xname-based-destructuring value: $it") } } catch (_: NoSuchMethodError) {  }
     try { this[X_NESTED_TYPE_ALIASES] = arguments.nestedTypeAliases } catch (_: NoSuchMethodError) {  }
     try { this[X_NEW_INFERENCE] = arguments.newInference } catch (_: NoSuchMethodError) {  }
     try { this[X_NO_CHECK_ACTUAL] = arguments.noCheckActual } catch (_: NoSuchMethodError) {  }
@@ -372,7 +375,7 @@ internal abstract class CommonCompilerArgumentsImpl(
     try { this[X_USE_FIR_LT] = arguments.useFirLT } catch (_: NoSuchMethodError) {  }
     try { this[X_USE_K2] = arguments.getUsingReflection("useK2") } catch (_: NoSuchMethodError) {  }
     try { this[X_VERBOSE_PHASES] = arguments.verbosePhases.toListOrEmpty() } catch (_: NoSuchMethodError) {  }
-    try { this[X_VERIFY_IR] = arguments.verifyIr } catch (_: NoSuchMethodError) {  }
+    try { this[X_VERIFY_IR] = arguments.verifyIr?.let { VerifyIrMode.entries.firstOrNull { entry -> entry.stringValue == it } ?: throw CompilerArgumentsParseException("Unknown -Xverify-ir value: $it") } } catch (_: NoSuchMethodError) {  }
     try { this[X_VERIFY_IR_NESTED_OFFSETS] = arguments.verifyIrNestedOffsets } catch (_: NoSuchMethodError) {  }
     try { this[X_VERIFY_IR_VISIBILITY] = arguments.verifyIrVisibility } catch (_: NoSuchMethodError) {  }
     try { this[X_WARNING_LEVEL] = arguments.warningLevels } catch (_: NoSuchMethodError) {  }
@@ -432,7 +435,7 @@ internal abstract class CommonCompilerArgumentsImpl(
     public val X_ALLOW_REIFIED_TYPE_IN_CATCH: CommonCompilerArgument<Boolean> =
         CommonCompilerArgument("X_ALLOW_REIFIED_TYPE_IN_CATCH")
 
-    public val X_ANNOTATION_DEFAULT_TARGET: CommonCompilerArgument<String?> =
+    public val X_ANNOTATION_DEFAULT_TARGET: CommonCompilerArgument<AnnotationDefaultTargetMode?> =
         CommonCompilerArgument("X_ANNOTATION_DEFAULT_TARGET")
 
     public val X_ANNOTATION_TARGET_ALL: CommonCompilerArgument<Boolean> =
@@ -557,7 +560,7 @@ internal abstract class CommonCompilerArgumentsImpl(
     public val X_MULTI_PLATFORM: CommonCompilerArgument<Boolean> =
         CommonCompilerArgument("X_MULTI_PLATFORM")
 
-    public val X_NAME_BASED_DESTRUCTURING: CommonCompilerArgument<String?> =
+    public val X_NAME_BASED_DESTRUCTURING: CommonCompilerArgument<NameBasedDestructuringMode?> =
         CommonCompilerArgument("X_NAME_BASED_DESTRUCTURING")
 
     public val X_NESTED_TYPE_ALIASES: CommonCompilerArgument<Boolean> =
@@ -656,7 +659,8 @@ internal abstract class CommonCompilerArgumentsImpl(
     public val X_VERBOSE_PHASES: CommonCompilerArgument<List<String>> =
         CommonCompilerArgument("X_VERBOSE_PHASES")
 
-    public val X_VERIFY_IR: CommonCompilerArgument<String?> = CommonCompilerArgument("X_VERIFY_IR")
+    public val X_VERIFY_IR: CommonCompilerArgument<VerifyIrMode?> =
+        CommonCompilerArgument("X_VERIFY_IR")
 
     public val X_VERIFY_IR_NESTED_OFFSETS: CommonCompilerArgument<Boolean> =
         CommonCompilerArgument("X_VERIFY_IR_NESTED_OFFSETS")

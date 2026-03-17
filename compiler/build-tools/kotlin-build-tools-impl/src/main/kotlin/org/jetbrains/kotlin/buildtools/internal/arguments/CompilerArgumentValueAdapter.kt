@@ -148,6 +148,25 @@ private abstract class CommonCompilerArgumentPre2_4_0ValueAdapter : CommonToolAr
                 listValue.toTypedArray() as V
             }
 
+            CommonCompilerArguments.X_ANNOTATION_DEFAULT_TARGET -> {
+                if (value == null) return null as V
+
+                val mode = value as AnnotationDefaultTargetMode
+                mode.stringValue as V
+            }
+            CommonCompilerArguments.X_NAME_BASED_DESTRUCTURING -> {
+                if (value == null) return null as V
+
+                val mode = value as NameBasedDestructuringMode
+                mode.stringValue as V
+            }
+            CommonCompilerArguments.X_VERIFY_IR -> {
+                if (value == null) return null as V
+
+                val mode = value as VerifyIrMode
+                mode.stringValue as V
+            }
+
             else -> {
                 value as V
             }
@@ -230,6 +249,28 @@ private abstract class CommonCompilerArgumentPre2_4_0ValueAdapter : CommonToolAr
 
                 val arrayValue = value as Array<String>
                 arrayValue.toList() as T
+            }
+
+            CommonCompilerArguments.X_ANNOTATION_DEFAULT_TARGET -> {
+                if (value == null) return null as T
+
+                val stringValue = value as String
+                AnnotationDefaultTargetMode.entries.firstOrNull { it.stringValue == stringValue } as T
+                    ?: throw CompilerArgumentsParseException("Unknown -Xannotation-default-target value: $stringValue")
+            }
+            CommonCompilerArguments.X_NAME_BASED_DESTRUCTURING -> {
+                if (value == null) return null as T
+
+                val stringValue = value as String
+                NameBasedDestructuringMode.entries.firstOrNull { it.stringValue == stringValue } as T
+                    ?: throw CompilerArgumentsParseException("Unknown -Xname-based-destructuring value: $stringValue")
+            }
+            CommonCompilerArguments.X_VERIFY_IR -> {
+                if (value == null) return null as T
+
+                val stringValue = value as String
+                VerifyIrMode.entries.firstOrNull { it.stringValue == stringValue } as T
+                    ?: throw CompilerArgumentsParseException("Unknown -Xverify-ir value: $stringValue")
             }
 
             else -> {

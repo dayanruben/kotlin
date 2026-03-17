@@ -59,4 +59,13 @@ class AllKotlinArgumentTypes {
     @Serializable(with = AllDetailsJdkReleaseSerializer::class)
     val jdkRelease = JdkRelease.entries.toSet()
 
+    @Serializable(with = AllDetailsAnnotationDefaultTargetModeSerializer::class)
+    val annotationDefaultTarget = AnnotationDefaultTargetMode.entries.toSet()
+
+    @Serializable(with = AllDetailsNameBasedDestructuringModeSerializer::class)
+    val nameBasedDestructuring = NameBasedDestructuringMode.entries.toSet()
+
+    @Serializable(with = AllDetailsVerifyIrModeSerializer::class)
+    val verifyIrMode = VerifyIrMode.entries.toSet()
+
 }

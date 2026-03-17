@@ -5,18 +5,27 @@
 
 package org.jetbrains.kotlin.cli.common.arguments
 
+import org.jetbrains.kotlin.cli.CliDiagnostics
 import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.diagnostics.KtSourcelessDiagnosticFactory
 
 open class CommonCompilerArgumentsConfigurator {
     interface Reporter {
         fun reportWarning(message: String)
         fun reportError(message: String)
+
+        fun report(factory: KtSourcelessDiagnosticFactory, message: String)
+
         fun info(message: String)
+
+        fun withLanguageVersionSettings(languageVersionSettings: LanguageVersionSettings): Reporter
 
         object DoNothing : Reporter {
             override fun reportWarning(message: String) {}
             override fun reportError(message: String) {}
+            override fun report(factory: KtSourcelessDiagnosticFactory, message: String) {}
             override fun info(message: String) {}
+            override fun withLanguageVersionSettings(languageVersionSettings: LanguageVersionSettings): Reporter = this
         }
 
         companion object
@@ -232,9 +241,9 @@ fun CommonCompilerArguments.toLanguageVersionSettings(
         configureLanguageFeatures(reporter)
     )
 
-    checkApiAndLanguageVersion(languageVersion, apiVersion, reporter)
-
-    checkExplicitApiAndExplicitReturnTypesAtTheSameTime(reporter)
+    val reporterWithProperWarningLevels = reporter.withLanguageVersionSettings(languageVersionSettings)
+    checkApiAndLanguageVersion(languageVersion, apiVersion, reporterWithProperWarningLevels)
+    checkExplicitApiAndExplicitReturnTypesAtTheSameTime(reporterWithProperWarningLevels)
 
     return languageVersionSettings
 }
@@ -270,7 +279,8 @@ private fun CommonCompilerArguments.checkApiVersionIsNotGreaterThenLanguageVersi
 
 private fun CommonCompilerArguments.checkLanguageVersionIsStable(languageVersion: LanguageVersion, reporter: CommonCompilerArgumentsConfigurator.Reporter) {
     if (!languageVersion.isStable && !suppressVersionWarnings) {
-        reporter.reportWarning(
+        reporter.report(
+            CliDiagnostics.EXPERIMENTAL_LANGUAGE_VERSION,
             "Language version ${languageVersion.versionString} is experimental, there are no backwards compatibility guarantees for " +
                     "new language and library features. " +
                     "Use the stable version ${LanguageVersion.LATEST_STABLE} instead."
@@ -292,13 +302,15 @@ private fun CommonCompilerArguments.checkOutdatedVersions(
     }
     when {
         version.isUnsupported -> {
-            reporter.reportError(
+            reporter.report(
+                CliDiagnostics.UNSUPPORTED_LANGUAGE_VERSION,
                 "${versionKind.text} version ${version.versionString} is no longer supported; " +
                         "use version ${supportedVersion!!.versionString} or greater instead."
             )
         }
         version.isDeprecated && !suppressVersionWarnings -> {
-            reporter.reportWarning(
+            reporter.report(
+                CliDiagnostics.DEPRECATED_LANGUAGE_VERSION,
                 "${versionKind.text} version ${version.versionString} is deprecated " +
                         "and its support will be removed in a future version of Kotlin. " +
                         "Update the version to $firstNonDeprecated."

@@ -293,13 +293,13 @@ class FirCallCompleter(
         return origin == FirDeclarationOrigin.Synthetic.FakeFunction && (this as? FirCallableSymbol)?.callableId == SyntheticCallableId.ELVIS
     }
 
-    fun <T> runCompletionForCall(
+    fun runCompletionForCall(
         candidate: Candidate,
         completionMode: ConstraintSystemCompletionMode,
-        call: T,
+        call: FirExpression,
         initialType: ConeKotlinType,
         analyzer: PostponedArgumentsAnalyzer? = null,
-    ) where T : FirExpression, T : FirResolvable {
+    ) {
         @Suppress("NAME_SHADOWING")
         val analyzer = analyzer ?: createPostponedArgumentsAnalyzer(transformer.resolutionContext)
         completer.complete(
@@ -317,7 +317,10 @@ class FirCallCompleter(
         atom: ConeResolvedLambdaAtom,
         candidate: Candidate,
     ) {
-        val returnVariable = ConeTypeVariableForLambdaReturnType(atom.anonymousFunction, PostponedArgumentInputTypesResolver.TYPE_VARIABLE_NAME_FOR_LAMBDA_RETURN_TYPE)
+        val returnVariable = ConeTypeVariableForLambdaReturnType(
+            atom.anonymousFunction,
+            PostponedArgumentInputTypesResolver.TYPE_VARIABLE_NAME_FOR_LAMBDA_RETURN_TYPE
+        )
         val csBuilder = candidate.system.getBuilder()
         csBuilder.registerVariable(returnVariable)
         val functionalType = csBuilder.buildCurrentSubstitutor()
