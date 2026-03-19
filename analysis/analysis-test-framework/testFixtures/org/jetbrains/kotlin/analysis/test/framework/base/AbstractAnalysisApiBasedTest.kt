@@ -287,7 +287,13 @@ abstract class AbstractAnalysisApiBasedTest : TestWithDisposable(), ManagedTest 
     }
 
     /**
+     * THE FUNCTION IS OBSOLETE. USE THE ONE WITOUT THE RECEIVER.
+     *
      * Checks whether the [actual] string matches the content of the test output file.
+     *
+     * If [actual] is `null`, asserts that the corresponding test output file does not exist. If the file exists, it will be deleted
+     * (in UPDATE mode or CHECK mode locally) and an assertion error is raised (in CHECK mode). Only the write-target file is checked —
+     * fallback files in the variant chain are not affected.
      *
      * If a non-empty [variantChain] is specified, the function will firstly check whether test output files with any of the
      * specified variants exist. If so, it will check the [actual] content against that file (the last variant has the highest priority).
@@ -312,10 +318,52 @@ abstract class AbstractAnalysisApiBasedTest : TestWithDisposable(), ManagedTest 
      */
     @Suppress("UnusedReceiverParameter")
     protected fun AssertionsService.assertEqualsToTestOutputFile(
-        actual: String,
+        actual: String?,
         extension: String = ".txt",
         subdirectoryName: String? = null,
-        testPrefixes: List<String> = configurator.testPrefixes,
+        testPrefixes: List<String> = variantChain,
+    ) {
+        this@AbstractAnalysisApiBasedTest.assertEqualsToTestOutputFile(
+            actual = actual,
+            extension = extension,
+            subdirectoryName = subdirectoryName,
+            variantChain = testPrefixes,
+        )
+    }
+
+    /**
+     * Checks whether the [actual] string matches the content of the test output file.
+     *
+     * If [actual] is `null`, asserts that the corresponding test output file does not exist. If the file exists, it will be deleted
+     * (in UPDATE mode or CHECK mode locally) and an assertion error is raised (in CHECK mode). Only the write-target file is checked —
+     * fallback files in the variant chain are not affected.
+     *
+     * If a non-empty [variantChain] is specified, the function will firstly check whether test output files with any of the
+     * specified variants exist. If so, it will check the [actual] content against that file (the last variant has the highest priority).
+     * Also, if files with earlier variants or the non-variant file contain the same output, an assertion error is raised.
+     *
+     * If no variants are specified, or if no variant files exist, the function compares [actual] against the non-variant (default)
+     * test output file.
+     *
+     * If none of the test output files exist, the function creates an output file, writes the content of [actual] to it, and throws
+     * an exception.
+     *
+     * If a [subdirectoryName] is specified, the test output file will be resolved in the given subdirectory, instead of as a sibling of the
+     * test data. The purpose of this setting is to allow tests to define multiple sets of output files, e.g. for tests that share the same
+     * test data but have different test output. This is in contrast to [variantChain]: Each variant defines a specialized version of a
+     * test output file that is used when a specific test configuration (e.g. Standalone) deviates from the default (non-variant) test
+     * output.
+     *
+     * In silent update mode ([org.jetbrains.kotlin.analysis.test.data.manager.TestDataManagerMode.UPDATE]), the function will update test data files
+     * instead of throwing assertions:
+     * - For golden tests (empty [variantChain]): writes to the default file
+     * - For secondary tests: writes to a variant file only if different from golden
+     */
+    protected fun assertEqualsToTestOutputFile(
+        actual: String?,
+        extension: String = ".txt",
+        subdirectoryName: String? = null,
+        variantChain: TestVariantChain = this.variantChain,
     ) {
         val resolvedPath = if (subdirectoryName != null) {
             testDataPath.resolveSibling(subdirectoryName).resolve(testDataPath.fileName)
@@ -326,7 +374,7 @@ abstract class AbstractAnalysisApiBasedTest : TestWithDisposable(), ManagedTest 
         ManagedTestAssertions.assertEqualsToTestDataFile(
             testDataPath = resolvedPath,
             actual = actual,
-            variantChain = testPrefixes,
+            variantChain = variantChain,
             extension = extension,
         )
     }
@@ -342,7 +390,7 @@ abstract class AbstractAnalysisApiBasedTest : TestWithDisposable(), ManagedTest 
     protected fun getTestOutputFile(
         extension: String = "txt",
         subdirectoryName: String? = null,
-        testPrefixes: List<String> = configurator.testPrefixes,
+        testPrefixes: List<String> = variantChain,
     ): Path {
         for (variant in testPrefixes) {
             findVariantTestOutputFile(extension, subdirectoryName, variant)?.let { return it }

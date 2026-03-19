@@ -82,7 +82,7 @@ class ManagedTestAssertionsTest {
     private fun runAssertion(
         testDataFileName: String = "test.kt",
         variantChain: TestVariantChain,
-        actual: String,
+        actual: String?,
         mode: TestDataManagerMode = TestDataManagerMode.UPDATE,
         extension: String = ".txt",
     ) {
@@ -144,15 +144,12 @@ class ManagedTestAssertionsTest {
     }
 
     @Test
-    fun `UPDATE mode - secondary test fails when no file exists`() {
+    fun `UPDATE mode - secondary missing creates file silently`() {
         setupFiles()  // No expected files
 
-        val ex = assertThrows<IllegalStateException> {
-            runAssertion(variantChain = listOf("js"), actual = "content", mode = TestDataManagerMode.UPDATE)
-        }
+        runAssertion(variantChain = listOf("js"), actual = "content", mode = TestDataManagerMode.UPDATE)
 
-        assertTrue(ex.message!!.contains("No expected file found"))
-        assertTrue(ex.message!!.contains("[js]"))
+        assertFileState("test.js.txt: content")
     }
 
     // ========== CHECK mode tests ==========
@@ -165,8 +162,22 @@ class ManagedTestAssertionsTest {
             runAssertion(variantChain = emptyList(), actual = "content", mode = TestDataManagerMode.CHECK)
         }
 
-        assertFileState("test.txt: content")  // File was created
+        assertFileState("test.txt: content")
         assertTrue(ex.message!!.startsWith("Expected data file did not exist, created: "))
+    }
+
+    @Test
+    fun `CHECK mode - secondary missing throws without creating`() {
+        setupFiles()  // No expected files
+
+        val ex = assertThrows<AssertionFailedError> {
+            runAssertion(variantChain = listOf("js"), actual = "content", mode = TestDataManagerMode.CHECK)
+        }
+
+        assertFileState("")
+        assertTrue(ex.message!!.contains("No expected file found for secondary test with variant chain [js]."))
+        assertTrue(ex.message!!.contains("Searched: test.js.txt, test.txt"))
+        assertFalse(ex.message!!.contains("created"))
     }
 
     @Test
@@ -236,14 +247,18 @@ class ManagedTestAssertionsTest {
     }
 
     @Test
-    fun `CHECK mode - secondary test fails when no file exists`() {
+    fun `CHECK mode (TeamCity) - secondary missing throws without creating`() {
+        TestDataManagerMode.isUnderTeamCityOverride = true
         setupFiles()  // No expected files
 
-        val ex = assertThrows<IllegalStateException> {
+        val ex = assertThrows<AssertionFailedError> {
             runAssertion(variantChain = listOf("js"), actual = "content", mode = TestDataManagerMode.CHECK)
         }
 
-        assertTrue(ex.message!!.contains("No expected file found"))
+        assertFileState("")
+        assertTrue(ex.message!!.contains("No expected file found for secondary test with variant chain [js]."))
+        assertTrue(ex.message!!.contains("Searched: test.js.txt, test.txt"))
+        assertFalse(ex.message!!.contains("created"))
     }
 
     // ========== Shared behavior tests ==========
@@ -409,6 +424,24 @@ class ManagedTestAssertionsTest {
             expected = "test.pretty.txt: content"
         )
         assertTrue(ex.message!!.contains("did not exist"))
+        assertTrue(ex.message!!.contains("created"))
+    }
+
+    @Test
+    fun `CHECK mode - compound extension - secondary missing throws without creating`() {
+        setupFiles()  // No expected files
+
+        val ex = assertThrows<AssertionFailedError> {
+            runAssertion(variantChain = listOf("js"), actual = "content", extension = ".pretty.txt", mode = TestDataManagerMode.CHECK)
+        }
+
+        assertFileState(
+            fileNames = listOf("test.pretty.txt", "test.js.pretty.txt"),
+            expected = ""
+        )
+        assertTrue(ex.message!!.contains("No expected file found for secondary test with variant chain [js]."))
+        assertTrue(ex.message!!.contains("Searched: test.js.pretty.txt, test.pretty.txt"))
+        assertFalse(ex.message!!.contains("created"))
     }
 
     @Test
@@ -607,6 +640,157 @@ class ManagedTestAssertionsTest {
         )
     }
 
+    // ========== Null actual tests (file should not exist) ==========
+
+    // --- UPDATE mode ---
+
+    @Test
+    fun `UPDATE mode - null actual deletes existing write-target`() {
+        setupFiles("test.txt" to "old content")
+
+        runAssertion(variantChain = emptyList(), actual = null, mode = TestDataManagerMode.UPDATE)
+
+        assertFileState("")  // test.txt deleted
+    }
+
+    @Test
+    fun `UPDATE mode - null actual passes when file missing`() {
+        setupFiles()  // No expected files
+
+        runAssertion(variantChain = emptyList(), actual = null, mode = TestDataManagerMode.UPDATE)
+
+        assertFileState("")  // No exception, no files created
+    }
+
+    @Test
+    fun `UPDATE mode - null actual does not affect fallback files`() {
+        setupFiles("test.txt" to "golden")
+
+        runAssertion(variantChain = listOf("js"), actual = null, mode = TestDataManagerMode.UPDATE)
+
+        assertFileState("test.txt: golden")  // golden untouched, no js.txt to delete
+    }
+
+    @Test
+    fun `UPDATE mode - null actual deletes golden file`() {
+        setupFiles("test.txt" to "old")
+
+        runAssertion(variantChain = emptyList(), actual = null, mode = TestDataManagerMode.UPDATE)
+
+        assertFileState("")  // test.txt deleted
+    }
+
+    @Test
+    fun `UPDATE mode - null actual with variant and golden exists - write-target missing passes`() {
+        // variant ["js"], golden test.txt exists, test.js.txt does not → pass, golden untouched
+        setupFiles("test.txt" to "golden")
+
+        runAssertion(variantChain = listOf("js"), actual = null, mode = TestDataManagerMode.UPDATE)
+
+        assertFileState("test.txt: golden")
+    }
+
+    @Test
+    fun `UPDATE mode - null actual with variant and golden exists - write-target exists deletes it`() {
+        // variant ["js"], both test.txt and test.js.txt exist → delete test.js.txt, golden untouched
+        setupFiles(
+            "test.txt" to "golden",
+            "test.js.txt" to "js content"
+        )
+
+        runAssertion(variantChain = listOf("js"), actual = null, mode = TestDataManagerMode.UPDATE)
+
+        assertFileState("test.txt: golden")  // test.js.txt deleted, golden untouched
+    }
+
+    // --- CHECK mode (local) ---
+
+    @Test
+    fun `CHECK mode - null actual passes when file missing`() {
+        setupFiles()  // No expected files
+
+        runAssertion(variantChain = emptyList(), actual = null, mode = TestDataManagerMode.CHECK)
+
+        assertFileState("")  // No exception
+    }
+
+    @Test
+    fun `CHECK mode - null actual deletes and throws when file exists`() {
+        setupFiles("test.txt" to "unexpected")
+
+        val ex = assertThrows<AssertionFailedError> {
+            runAssertion(variantChain = emptyList(), actual = null, mode = TestDataManagerMode.CHECK)
+        }
+
+        assertFileState("")  // test.txt deleted
+        assertTrue(ex.message!!.contains("File should not exist"))
+        assertTrue(ex.message!!.contains("deleted"))
+    }
+
+    @Test
+    fun `CHECK mode - null actual with variant and golden exists - passes when write-target missing`() {
+        // variant with null actual, only golden exists → pass, golden untouched
+        setupFiles("test.txt" to "golden")
+
+        runAssertion(variantChain = listOf("js"), actual = null, mode = TestDataManagerMode.CHECK)
+
+        assertFileState("test.txt: golden")  // golden untouched, no exception
+    }
+
+    // --- CHECK mode (TeamCity) ---
+
+    @Test
+    fun `CHECK mode (TeamCity) - null actual throws without deleting when file exists`() {
+        TestDataManagerMode.isUnderTeamCityOverride = true
+        setupFiles("test.txt" to "unexpected")
+
+        val ex = assertThrows<AssertionFailedError> {
+            runAssertion(variantChain = emptyList(), actual = null, mode = TestDataManagerMode.CHECK)
+        }
+
+        assertFileState("test.txt: unexpected")  // File NOT deleted on TC
+        assertTrue(ex.message!!.contains("File should not exist"))
+        assertFalse(ex.message!!.contains("deleted"))
+    }
+
+    @Test
+    fun `CHECK mode (TeamCity) - null actual passes when file missing`() {
+        TestDataManagerMode.isUnderTeamCityOverride = true
+        setupFiles()  // No expected files
+
+        runAssertion(variantChain = emptyList(), actual = null, mode = TestDataManagerMode.CHECK)
+
+        assertFileState("")  // No exception
+    }
+
+    // --- Path tracking with null actual ---
+
+    @Test
+    fun `UPDATE mode - null actual tracking records path on deletion`() {
+        setupFiles("test.txt" to "old")
+        ManagedTestAssertions.trackUpdatedPaths = true
+
+        runAssertion(variantChain = emptyList(), actual = null, mode = TestDataManagerMode.UPDATE)
+
+        assertTrackedPathsAndFileState(
+            expectedTrackedPaths = "test.kt",
+            expectedFileState = "",
+        )
+    }
+
+    @Test
+    fun `UPDATE mode - null actual tracking does not record when file already missing`() {
+        setupFiles()  // No expected files
+        ManagedTestAssertions.trackUpdatedPaths = true
+
+        runAssertion(variantChain = emptyList(), actual = null, mode = TestDataManagerMode.UPDATE)
+
+        assertTrackedPathsAndFileState(
+            expectedTrackedPaths = "",
+            expectedFileState = "",
+        )
+    }
+
     // ========== Path tracking tests ==========
 
     @Test
@@ -619,6 +803,19 @@ class ManagedTestAssertionsTest {
         assertTrackedPathsAndFileState(
             expectedTrackedPaths = "test.kt",
             expectedFileState = "test.txt: new content",
+        )
+    }
+
+    @Test
+    fun `UPDATE mode - tracking records path on secondary file create`() {
+        setupFiles()  // No expected files
+        ManagedTestAssertions.trackUpdatedPaths = true
+
+        runAssertion(variantChain = listOf("js"), actual = "new content", mode = TestDataManagerMode.UPDATE)
+
+        assertTrackedPathsAndFileState(
+            expectedTrackedPaths = "test.kt",
+            expectedFileState = "test.js.txt: new content",
         )
     }
 
@@ -746,7 +943,9 @@ class ManagedTestAssertionsTest {
         assertTrackedPaths("test.kt")
 
         // Second drain is expected to have nothing
-        assertTrackedPaths("")
-        assertFileState("test.txt: content")
+        assertTrackedPathsAndFileState(
+            expectedTrackedPaths = "",
+            expectedFileState = "test.txt: content",
+        )
     }
 }
