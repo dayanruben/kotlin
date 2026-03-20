@@ -1,13 +1,15 @@
 // RUN_PIPELINE_TILL: FRONTEND
-// LANGUAGE: +CompanionBlocksAndExtensions, +ForbidUselessTypeArgumentsIn25
+// LANGUAGE: +CompanionBlocksAndExtensions, -ForbidUselessTypeArgumentsIn25
 // COMPARE_WITH_LIGHT_TREE
 // FILE: C.kt
 class C {
     companion {
-        fun foo() {
-        }
-
-        val bar = <!PROPERTY_INITIALIZER_NO_BACKING_FIELD!>1<!>
+        fun foo() {}
+    }
+    companion {
+        val bar = 1
+    }
+    companion {
         val baz get() = 2
     }
 
@@ -33,6 +35,14 @@ fun test() {
     TA2.foo()
     TA2.bar
     TA2.baz
+
+    C<!TYPE_ARGUMENTS_NOT_ALLOWED!><String><!>.foo()
+    C<!TYPE_ARGUMENTS_NOT_ALLOWED!><String><!>.bar
+    C<!TYPE_ARGUMENTS_NOT_ALLOWED!><String><!>.baz
+
+    TA1<!TYPE_ARGUMENTS_NOT_ALLOWED!><String><!>.foo()
+    TA1<!TYPE_ARGUMENTS_NOT_ALLOWED!><String><!>.bar
+    TA1<!TYPE_ARGUMENTS_NOT_ALLOWED!><String><!>.baz
 
     TA2<!TYPE_ARGUMENTS_NOT_ALLOWED!><String><!>.foo()
     TA2<!TYPE_ARGUMENTS_NOT_ALLOWED!><String><!>.bar

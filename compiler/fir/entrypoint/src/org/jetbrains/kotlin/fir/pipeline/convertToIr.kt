@@ -270,7 +270,7 @@ private class Fir2IrPipeline(
 
         checkUnboundSymbols()
 
-        evaluateConstants()
+        inlineConstants()
 
         val actualizationResult = irActualizer?.runChecksAndFinalize(expectActualMap)
 
@@ -370,8 +370,13 @@ private class Fir2IrPipeline(
         )
     }
 
-    private fun Fir2IrConversionResult.evaluateConstants() {
-        Fir2IrConverter.evaluateConstants(mainIrFragment, componentsStorage, irBuiltIns)
+    private fun Fir2IrConversionResult.inlineConstants() {
+        val inlineConstTracker = componentsStorage.configuration.inlineConstTracker
+        val evaluatedConstTracker = componentsStorage.configuration.evaluatedConstTracker
+
+        mainIrFragment.files.forEach { irFile ->
+            irFile.transform(ConstInliner(irFile, inlineConstTracker, evaluatedConstTracker), null)
+        }
     }
 
     // ------------------------------------------------------ f/o building helpers ------------------------------------------------------

@@ -38,6 +38,7 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
         FirContextParametersDeclarationChecker,
         FirUnusedReturnValueChecker,
         FirReturnValueAnnotationsChecker,
+        FirIllegalCompanionBlockMemberChecker,
     )
 
     override val classLikeCheckers: Set<FirClassLikeChecker> = setOf(
@@ -54,6 +55,7 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
         FirImplicitReturnTypeAnnotationMissingDependencyChecker,
         FirCoroutineContextAsContextParameterDeclarationChecker,
         FirCompanionExtensionChecker,
+        FirCompanionBlockMemberChecker,
     )
 
     override val functionCheckers: Set<FirFunctionChecker> = setOf(
@@ -132,6 +134,7 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
         FirMultipleDefaultsInheritedFromSupertypesChecker.Regular,
         FirMultipleDefaultsInheritedFromSupertypesChecker.ForExpectClass,
         FirPropertyInitializationChecker,
+        FirCompanionBlockChecker,
     )
 
     override val regularClassCheckers: Set<FirRegularClassChecker> = setOf(
@@ -160,7 +163,6 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
         FirObjectConstructorChecker,
         FirInlineClassDeclarationChecker,
         FirEnumEntryInitializationChecker,
-        FirCompanionBlockChecker,
     )
 
     override val constructorCheckers: Set<FirConstructorChecker> = setOf(

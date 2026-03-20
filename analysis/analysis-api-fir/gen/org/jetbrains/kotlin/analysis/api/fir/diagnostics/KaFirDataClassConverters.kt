@@ -1893,6 +1893,12 @@ private fun KaDiagnosticConverterBuilder.addConversions38() {
             token,
         )
     }
+    add(FirErrors.COMPANION_EXTENSION_RECEIVER_ANNOTATED) { firDiagnostic ->
+        CompanionExtensionReceiverAnnotatedImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirJvmErrors.JAVA_TYPE_MISMATCH) { firDiagnostic ->
         JavaTypeMismatchImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
@@ -2085,6 +2091,12 @@ private fun KaDiagnosticConverterBuilder.addConversions43() {
     }
     add(FirErrors.EXPECTED_LATEINIT_PROPERTY) { firDiagnostic ->
         ExpectedLateinitPropertyImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.COMPANION_EXTENSION_NULLABLE_RECEIVER) { firDiagnostic ->
+        CompanionExtensionNullableReceiverImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -3575,6 +3587,12 @@ private fun KaDiagnosticConverterBuilder.addConversions80() {
             token,
         )
     }
+    add(FirErrors.COMPANION_BLOCK_NESTED) { firDiagnostic ->
+        CompanionBlockNestedImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirJvmErrors.JVM_SYNTHETIC_ON_DELEGATE) { firDiagnostic ->
         JvmSyntheticOnDelegateImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -3942,6 +3960,13 @@ private fun KaDiagnosticConverterBuilder.addConversions89() {
             firSymbolBuilder.buildSymbol(firDiagnostic.a),
             firSymbolBuilder.buildSymbol(firDiagnostic.b),
             firDiagnostic.c,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.ILLEGAL_COMPANION_BLOCK) { firDiagnostic ->
+        IllegalCompanionBlockImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -4822,6 +4847,13 @@ private fun KaDiagnosticConverterBuilder.addConversions108() {
             token,
         )
     }
+    add(FirErrors.COMPANION_EXTENSION_RECEIVER_WITH_TYPE_ARGUMENTS) { firDiagnostic ->
+        CompanionExtensionReceiverWithTypeArgumentsImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirJvmErrors.SYNCHRONIZED_ON_INLINE) { firDiagnostic ->
         SynchronizedOnInlineImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -5530,6 +5562,12 @@ private fun KaDiagnosticConverterBuilder.addConversions124() {
             token,
         )
     }
+    add(FirErrors.COMPANION_BLOCK_MEMBER_EXTENSION) { firDiagnostic ->
+        CompanionBlockMemberExtensionImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirJvmErrors.JVM_EXPOSE_BOXED_CANNOT_BE_THE_SAME) { firDiagnostic ->
         JvmExposeBoxedCannotBeTheSameImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -5872,6 +5910,13 @@ private fun KaDiagnosticConverterBuilder.addConversions131() {
         BuilderInferenceStubReceiverImpl(
             firDiagnostic.a,
             firDiagnostic.b,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.COMPANION_EXTENSION_RECEIVER_IS_TYPE_PARAMETER) { firDiagnostic ->
+        CompanionExtensionReceiverIsTypeParameterImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -7020,6 +7065,13 @@ private fun KaDiagnosticConverterBuilder.addConversions161() {
             token,
         )
     }
+    add(FirErrors.ILLEGAL_COMPANION_BLOCK_MEMBER) { firDiagnostic ->
+        IllegalCompanionBlockMemberImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirJsErrors.JS_ACTUAL_EXTERNAL_INTERFACE_WHILE_EXPECT_WITHOUT_JS_NO_RUNTIME) { firDiagnostic ->
         JsActualExternalInterfaceWhileExpectWithoutJsNoRuntimeImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -8118,6 +8170,13 @@ private fun KaDiagnosticConverterBuilder.addConversions189() {
     }
     add(FirJsErrors.NATIVE_ANNOTATIONS_ALLOWED_ONLY_ON_MEMBER_OR_EXTENSION_FUN) { firDiagnostic ->
         NativeAnnotationsAllowedOnlyOnMemberOrExtensionFunImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.COMPANION_EXTENSION_RECEIVER_IS_OBJECT) { firDiagnostic ->
+        CompanionExtensionReceiverIsObjectImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,

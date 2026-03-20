@@ -540,6 +540,7 @@ class LightTreeRawFirDeclarationBuilder(
                     currentFirTypeParameters = firTypeParameters,
                 ) {
                     var delegatedFieldsMap: Map<Int, FirFieldSymbol>? = null
+                    val companionBlockCollector = CompanionBlockCollector()
                     buildRegularClass {
                         source = classNode.toFirSourceElement()
                         moduleData = baseModuleData
@@ -603,7 +604,8 @@ class LightTreeRawFirDeclarationBuilder(
                             else secondaryConstructors.isEmpty() || secondaryConstructors.any { !it.hasValueParameters() },
                             delegatedSelfTypeRef = selfType,
                             delegatedSuperTypeRef = delegatedSuperTypeRef ?: FirImplicitTypeRefImplWithoutSource,
-                            delegatedSuperCalls = delegationSpecifiers?.superTypeCalls ?: emptyList()
+                            delegatedSuperCalls = delegationSpecifiers?.superTypeCalls ?: emptyList(),
+                            companionBlockCollector,
                         )
                         //parse primary constructor
                         val primaryConstructorWrapper = convertPrimaryConstructor(
@@ -691,12 +693,9 @@ class LightTreeRawFirDeclarationBuilder(
                         initCompanionObjectSymbolAttr()
 
                         contextParameters.addContextParameters(modifiers?.contextLists, classSymbol)
-                    }.also {
-                        it.delegateFieldsMap = delegatedFieldsMap
-
-                        classBody?.getChildNodeByType(COMPANION_BLOCK)?.toFirSourceElement()?.let { companionBlock ->
-                            it.firstCompanionBlock = companionBlock
-                        }
+                    }.apply {
+                        this.delegateFieldsMap = delegatedFieldsMap
+                        companionBlockCollector.toCompanionBlockInfoOrNull()?.let { companionBlocks = it }
                     }
                 }.also {
                     fillDanglingConstraintsTo(firTypeParameters, typeConstraints, it)
@@ -707,6 +706,9 @@ class LightTreeRawFirDeclarationBuilder(
                 it.initContainingClassForLocalAttr()
             }
             it.initContainingScriptOrReplAttr()
+            if (isDirectlyInsideCompanionBlock) {
+                it.isIllegalCompanionBlockMember = true
+            }
         }
     }
 
@@ -720,8 +722,36 @@ class LightTreeRawFirDeclarationBuilder(
             var delegatedFieldsMap: Map<Int, FirFieldSymbol>? = null
             buildAnonymousObjectExpression {
                 source = objectLiteral.toFirSourceElement()
+
+                val objectDeclaration = objectLiteral.getChildNodesByType(OBJECT_DECLARATION).first()
+                var modifiers: ModifierList? = null
+                var primaryConstructor: LighterASTNode? = null
+                val superTypeRefs = mutableListOf<FirTypeRef>()
+                var delegatedSuperTypeRef: FirTypeRef? = null
+                var classBody: LighterASTNode? = null
+                var delegatedConstructorSource: KtLightSourceElement? = null
+                var delegatedSuperCalls: List<DelegatedConstructorWrapper>? = null
+                var delegateFields: List<FirField>? = null
+
+                objectDeclaration.forEachChildren { child ->
+                    when (child.tokenType) {
+                        MODIFIER_LIST -> {
+                            modifiers = convertModifierList(child)
+                        }
+                        PRIMARY_CONSTRUCTOR -> primaryConstructor = child
+                        SUPER_TYPE_LIST -> convertDelegationSpecifiers(child).let { specifiers ->
+                            delegatedSuperTypeRef = specifiers.superTypeCalls.lastOrNull()?.delegatedSuperTypeRef
+                            superTypeRefs += specifiers.superTypesRef
+                            delegatedConstructorSource = specifiers.superTypeCalls.lastOrNull()?.source
+                            delegateFields = specifiers.delegateFieldsMap.values.map { it.fir }
+                            delegatedFieldsMap = specifiers.delegateFieldsMap.takeIf { it.isNotEmpty() }
+                            delegatedSuperCalls = specifiers.superTypeCalls
+                        }
+                        CLASS_BODY -> classBody = child
+                    }
+                }
+                val companionBlockCollector = CompanionBlockCollector()
                 anonymousObject = buildAnonymousObject {
-                    val objectDeclaration = objectLiteral.getChildNodesByType(OBJECT_DECLARATION).first()
                     source = objectDeclaration.toFirSourceElement()
                     origin = FirDeclarationOrigin.Source
                     moduleData = baseModuleData
@@ -732,33 +762,6 @@ class LightTreeRawFirDeclarationBuilder(
                     context.appendOuterTypeParameters(ignoreLastLevel = false, typeParameters)
                     val delegatedSelfType = objectDeclaration.toDelegatedSelfType(this)
                     registerSelfType(delegatedSelfType)
-
-                    var modifiers: ModifierList? = null
-                    var primaryConstructor: LighterASTNode? = null
-                    val superTypeRefs = mutableListOf<FirTypeRef>()
-                    var delegatedSuperTypeRef: FirTypeRef? = null
-                    var classBody: LighterASTNode? = null
-                    var delegatedConstructorSource: KtLightSourceElement? = null
-                    var delegatedSuperCalls: List<DelegatedConstructorWrapper>? = null
-                    var delegateFields: List<FirField>? = null
-
-                    objectDeclaration.forEachChildren { child ->
-                        when (child.tokenType) {
-                            MODIFIER_LIST -> {
-                                modifiers = convertModifierList(child)
-                            }
-                            PRIMARY_CONSTRUCTOR -> primaryConstructor = child
-                            SUPER_TYPE_LIST -> convertDelegationSpecifiers(child).let { specifiers ->
-                                delegatedSuperTypeRef = specifiers.superTypeCalls.lastOrNull()?.delegatedSuperTypeRef
-                                superTypeRefs += specifiers.superTypesRef
-                                delegatedConstructorSource = specifiers.superTypeCalls.lastOrNull()?.source
-                                delegateFields = specifiers.delegateFieldsMap.values.map { it.fir }
-                                delegatedFieldsMap = specifiers.delegateFieldsMap.takeIf { it.isNotEmpty() }
-                                delegatedSuperCalls = specifiers.superTypeCalls
-                            }
-                            CLASS_BODY -> classBody = child
-                        }
-                    }
 
                     superTypeRefs.ifEmpty {
                         superTypeRefs += implicitAnyType
@@ -778,6 +781,7 @@ class LightTreeRawFirDeclarationBuilder(
                         delegatedSelfTypeRef = delegatedSelfType,
                         delegatedSuperTypeRef = delegatedSuperType,
                         delegatedSuperCalls = delegatedSuperCalls ?: emptyList(),
+                        companionBlockCollector,
                     )
                     //parse primary constructor
                     convertPrimaryConstructor(
@@ -793,8 +797,9 @@ class LightTreeRawFirDeclarationBuilder(
                     classBody?.let {
                         this.declarations += convertClassBody(it, classWrapper)
                     }
-                }.also {
-                    it.delegateFieldsMap = delegatedFieldsMap
+                }.apply {
+                    this.delegateFieldsMap = delegatedFieldsMap
+                    companionBlockCollector.toCompanionBlockInfoOrNull()?.let { companionBlocks = it }
                 }
             }
         }
@@ -853,6 +858,7 @@ class LightTreeRawFirDeclarationBuilder(
                     buildAnonymousObjectExpression {
                         val entrySource = enumEntry.toFirSourceElement(KtFakeSourceElementKind.EnumInitializer)
                         source = entrySource
+                        val companionBlockCollector = CompanionBlockCollector()
                         anonymousObject = buildAnonymousObject {
                             source = entrySource
                             moduleData = baseModuleData
@@ -882,7 +888,8 @@ class LightTreeRawFirDeclarationBuilder(
                                         enumSuperTypeCallEntry,
                                         superTypeCallEntry?.toFirSourceElement(),
                                     )
-                                )
+                                ),
+                                companionBlockCollector,
                             )
                             superTypeRefs += enumClassWrapper.delegatedSuperTypeRef
                             convertPrimaryConstructor(
@@ -899,6 +906,8 @@ class LightTreeRawFirDeclarationBuilder(
                                     declarations += convertClassBody(it, enumClassWrapper)
                                 }
                             }
+                        }.apply {
+                            companionBlockCollector.toCompanionBlockInfoOrNull()?.let { companionBlocks = it }
                         }
                     }
                 }
@@ -960,6 +969,7 @@ class LightTreeRawFirDeclarationBuilder(
                 container += buildErrorNonLocalDestructuringDeclaration(node.toFirSourceElement(), initializer)
             }
             COMPANION_BLOCK -> {
+                classWrapper?.companionBlockCollector?.collect(node.toFirSourceElement(), isNested = isDirectlyInsideCompanionBlock)
                 withCompanionBlock {
                     node.getChildNodeByType(CLASS_BODY)?.let { container.addAll(convertClassBody(it, classWrapper)) }
                 }
@@ -1186,8 +1196,8 @@ class LightTreeRawFirDeclarationBuilder(
         buildBlock: (MutableList<FirAnnotation>) -> FirBlock?
     ): FirAnonymousInitializer {
         val initializerSymbol = FirAnonymousInitializerSymbol()
-        withContainerSymbol(initializerSymbol, isLocal) {
-            return buildAnonymousInitializer {
+        return withContainerSymbol(initializerSymbol, isLocal) {
+             buildAnonymousInitializer {
                 symbol = initializerSymbol
                 source = anonymousInitializer.toFirSourceElement()
                 moduleData = baseModuleData
@@ -1196,6 +1206,10 @@ class LightTreeRawFirDeclarationBuilder(
                     buildBlock(annotations) ?: buildEmptyExpressionBlock()
                 }
                 this.containingDeclarationSymbol = containingDeclarationSymbol
+            }
+        }.apply {
+            if (isDirectlyInsideCompanionBlock) {
+                isIllegalCompanionBlockMember = true
             }
         }
     }
@@ -1210,7 +1224,7 @@ class LightTreeRawFirDeclarationBuilder(
         var block: LighterASTNode? = null
 
         val constructorSymbol = FirConstructorSymbol(callableIdForClassConstructor())
-        withContainerSymbol(constructorSymbol) {
+        return withContainerSymbol(constructorSymbol) {
             var delegatedConstructorNode: LighterASTNode? = null
             secondaryConstructor.forEachChildren {
                 when (it.tokenType) {
@@ -1245,7 +1259,7 @@ class LightTreeRawFirDeclarationBuilder(
             }
 
             val target = FirFunctionTarget(labelName = null, isLambda = false)
-            return buildConstructor {
+            buildConstructor {
                 source = secondaryConstructor.toFirSourceElement()
                 moduleData = baseModuleData
                 origin = FirDeclarationOrigin.Source
@@ -1270,6 +1284,10 @@ class LightTreeRawFirDeclarationBuilder(
             }.also {
                 it.containingClassForStaticMemberAttr = currentDispatchReceiverType()!!.lookupTag
                 target.bind(it)
+            }
+        }.apply {
+            if (isDirectlyInsideCompanionBlock) {
+                isIllegalCompanionBlockMember = true
             }
         }
     }
@@ -1386,6 +1404,9 @@ class LightTreeRawFirDeclarationBuilder(
         }.also {
             if (typeAlias.getParent()?.elementType == KtStubElementTypes.CLASS_BODY) {
                 it.initContainingClassForLocalAttr()
+            }
+            if (isDirectlyInsideCompanionBlock) {
+                it.isIllegalCompanionBlockMember = true
             }
         }
     }

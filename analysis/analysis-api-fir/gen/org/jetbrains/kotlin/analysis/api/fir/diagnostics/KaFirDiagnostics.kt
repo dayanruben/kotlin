@@ -4688,6 +4688,47 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = VersionOverloadsTooComplexExpression::class
     }
 
+    interface CompanionBlockMemberExtension : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = CompanionBlockMemberExtension::class
+    }
+
+    interface IllegalCompanionBlock : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = IllegalCompanionBlock::class
+        val parent: KaSymbol
+    }
+
+    interface CompanionBlockNested : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = CompanionBlockNested::class
+    }
+
+    interface IllegalCompanionBlockMember : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = IllegalCompanionBlockMember::class
+        val symbol: KaSymbol
+    }
+
+    interface CompanionExtensionReceiverWithTypeArguments : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = CompanionExtensionReceiverWithTypeArguments::class
+        val type: KaType
+    }
+
+    interface CompanionExtensionReceiverIsObject : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = CompanionExtensionReceiverIsObject::class
+        val type: KaType
+    }
+
+    interface CompanionExtensionReceiverIsTypeParameter : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = CompanionExtensionReceiverIsTypeParameter::class
+        val type: KaType
+    }
+
+    interface CompanionExtensionReceiverAnnotated : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = CompanionExtensionReceiverAnnotated::class
+    }
+
+    interface CompanionExtensionNullableReceiver : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = CompanionExtensionNullableReceiver::class
+    }
+
     interface OverrideCannotBeStatic : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = OverrideCannotBeStatic::class
     }

@@ -2372,6 +2372,29 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         }
         val VERSION_OVERLOADS_TOO_COMPLEX_EXPRESSION by error<PsiElement>()
     }
+
+    val COMPANION_BLOCKS_AND_EXTENSIONS by object : DiagnosticGroup("Companion Blocks & Extensions") {
+        val COMPANION_BLOCK_MEMBER_EXTENSION by error<PsiElement>()
+        val ILLEGAL_COMPANION_BLOCK by error<PsiElement> {
+            parameter<FirBasedSymbol<*>>("parent")
+        }
+        val COMPANION_BLOCK_NESTED by error<PsiElement>()
+        val ILLEGAL_COMPANION_BLOCK_MEMBER by error<PsiElement>(PositioningStrategy.DECLARATION_SIGNATURE) {
+            parameter<FirBasedSymbol<*>>("symbol")
+        }
+
+        val COMPANION_EXTENSION_RECEIVER_WITH_TYPE_ARGUMENTS by error<PsiElement> {
+            parameter<ConeKotlinType>("type")
+        }
+        val COMPANION_EXTENSION_RECEIVER_IS_OBJECT by error<PsiElement> {
+            parameter<ConeKotlinType>("type")
+        }
+        val COMPANION_EXTENSION_RECEIVER_IS_TYPE_PARAMETER by error<PsiElement> {
+            parameter<ConeKotlinType>("type")
+        }
+        val COMPANION_EXTENSION_RECEIVER_ANNOTATED by error<PsiElement>()
+        val COMPANION_EXTENSION_NULLABLE_RECEIVER by error<PsiElement>()
+    }
 }
 
 private val exposedVisibilityDiagnosticInit: DiagnosticBuilder.() -> Unit = {

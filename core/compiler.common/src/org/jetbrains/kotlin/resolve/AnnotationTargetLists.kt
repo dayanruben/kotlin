@@ -36,27 +36,27 @@ object AnnotationTargetLists {
         }
     }
 
-    fun T_MEMBER_PROPERTY(backingField: Boolean, delegate: Boolean) =
+    fun T_MEMBER_PROPERTY(backingField: Boolean, delegate: Boolean, isCompanionMember: Boolean) =
         targetList(
             when {
                 backingField -> MEMBER_PROPERTY_WITH_BACKING_FIELD
                 delegate -> MEMBER_PROPERTY_WITH_DELEGATE
                 else -> MEMBER_PROPERTY_WITHOUT_FIELD_OR_DELEGATE
-            }, MEMBER_PROPERTY, PROPERTY
+            }, if (isCompanionMember) COMPANION_MEMBER_PROPERTY else MEMBER_PROPERTY, PROPERTY
         ) {
             propertyTargets(backingField, delegate)
         }
 
     @AnnotationTargetListForDeprecation
-    val T_MEMBER_PROPERTY_IN_ANNOTATION = T_MEMBER_PROPERTY(backingField = false, delegate = false)
+    val T_MEMBER_PROPERTY_IN_ANNOTATION = T_MEMBER_PROPERTY(backingField = false, delegate = false, isCompanionMember = false)
 
-    fun T_TOP_LEVEL_PROPERTY(backingField: Boolean, delegate: Boolean) =
+    fun T_TOP_LEVEL_PROPERTY(backingField: Boolean, delegate: Boolean, isCompanionExtension: Boolean) =
         targetList(
             when {
                 backingField -> TOP_LEVEL_PROPERTY_WITH_BACKING_FIELD
                 delegate -> TOP_LEVEL_PROPERTY_WITH_DELEGATE
                 else -> TOP_LEVEL_PROPERTY_WITHOUT_FIELD_OR_DELEGATE
-            }, TOP_LEVEL_PROPERTY, PROPERTY
+            }, if (isCompanionExtension) COMPANION_EXTENSION_PROPERTY else TOP_LEVEL_PROPERTY, PROPERTY
         ) {
             propertyTargets(backingField, delegate)
         }
@@ -86,7 +86,15 @@ object AnnotationTargetLists {
         onlyWithUseSiteTarget(VALUE_PARAMETER)
     }
 
+    val T_COMPANION_MEMBER_FUNCTION = targetList(COMPANION_MEMBER_FUNCTION, FUNCTION) {
+        onlyWithUseSiteTarget(VALUE_PARAMETER)
+    }
+
     val T_TOP_LEVEL_FUNCTION = targetList(TOP_LEVEL_FUNCTION, FUNCTION) {
+        onlyWithUseSiteTarget(VALUE_PARAMETER)
+    }
+
+    val T_COMPANION_EXTENSION_FUNCTION = targetList(COMPANION_EXTENSION_FUNCTION, FUNCTION) {
         onlyWithUseSiteTarget(VALUE_PARAMETER)
     }
 

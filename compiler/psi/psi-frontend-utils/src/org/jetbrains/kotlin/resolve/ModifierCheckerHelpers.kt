@@ -138,9 +138,23 @@ val featureDependenciesTargets = mapOf(
 )
 
 val defaultVisibilityTargetPredicate = always(
-    KotlinTarget.CLASS_ONLY, KotlinTarget.OBJECT, KotlinTarget.INTERFACE, KotlinTarget.ENUM_CLASS, KotlinTarget.ANNOTATION_CLASS,
-    KotlinTarget.MEMBER_FUNCTION, KotlinTarget.TOP_LEVEL_FUNCTION, KotlinTarget.PROPERTY_GETTER, KotlinTarget.PROPERTY_SETTER,
-    KotlinTarget.MEMBER_PROPERTY, KotlinTarget.TOP_LEVEL_PROPERTY, KotlinTarget.CONSTRUCTOR, KotlinTarget.TYPEALIAS,
+    KotlinTarget.CLASS_ONLY,
+    KotlinTarget.OBJECT,
+    KotlinTarget.INTERFACE,
+    KotlinTarget.ENUM_CLASS,
+    KotlinTarget.ANNOTATION_CLASS,
+    KotlinTarget.MEMBER_FUNCTION,
+    KotlinTarget.COMPANION_MEMBER_FUNCTION,
+    KotlinTarget.COMPANION_EXTENSION_FUNCTION,
+    KotlinTarget.TOP_LEVEL_FUNCTION,
+    KotlinTarget.PROPERTY_GETTER,
+    KotlinTarget.PROPERTY_SETTER,
+    KotlinTarget.MEMBER_PROPERTY,
+    KotlinTarget.COMPANION_MEMBER_PROPERTY,
+    KotlinTarget.COMPANION_EXTENSION_PROPERTY,
+    KotlinTarget.TOP_LEVEL_PROPERTY,
+    KotlinTarget.CONSTRUCTOR,
+    KotlinTarget.TYPEALIAS,
 )
 
 val possibleTargetPredicateMap = mapOf(
@@ -180,9 +194,11 @@ val possibleTargetPredicateMap = mapOf(
         KotlinTarget.ENUM_CLASS,
         KotlinTarget.ANNOTATION_CLASS,
         KotlinTarget.MEMBER_FUNCTION,
+        KotlinTarget.COMPANION_MEMBER_FUNCTION,
         KotlinTarget.PROPERTY_GETTER,
         KotlinTarget.PROPERTY_SETTER,
         KotlinTarget.MEMBER_PROPERTY,
+        KotlinTarget.COMPANION_MEMBER_PROPERTY,
         KotlinTarget.CONSTRUCTOR,
         KotlinTarget.TYPEALIAS
     ),
@@ -190,9 +206,11 @@ val possibleTargetPredicateMap = mapOf(
     OUT_KEYWORD to always(KotlinTarget.TYPE_PARAMETER, KotlinTarget.TYPE_PROJECTION),
     REIFIED_KEYWORD to always(KotlinTarget.TYPE_PARAMETER),
     VARARG_KEYWORD to always(KotlinTarget.VALUE_PARAMETER, KotlinTarget.PROPERTY_PARAMETER),
-    COMPANION_KEYWORD to always(KotlinTarget.OBJECT),
+    COMPANION_KEYWORD to always(KotlinTarget.OBJECT, KotlinTarget.COMPANION_EXTENSION_PROPERTY, KotlinTarget.COMPANION_EXTENSION_FUNCTION),
     LATEINIT_KEYWORD to always(
         KotlinTarget.MEMBER_PROPERTY,
+        KotlinTarget.COMPANION_MEMBER_PROPERTY,
+        KotlinTarget.COMPANION_EXTENSION_PROPERTY,
         KotlinTarget.TOP_LEVEL_PROPERTY,
         KotlinTarget.LOCAL_VARIABLE,
     ),
@@ -203,6 +221,7 @@ val possibleTargetPredicateMap = mapOf(
             KotlinTarget.MEMBER_PROPERTY_WITH_DELEGATE,
             KotlinTarget.MEMBER_PROPERTY_WITHOUT_FIELD_OR_DELEGATE,
             KotlinTarget.TOP_LEVEL_PROPERTY,
+            KotlinTarget.COMPANION_EXTENSION_PROPERTY,
             KotlinTarget.PROPERTY_GETTER,
             KotlinTarget.PROPERTY_SETTER,
             KotlinTarget.CLASS_ONLY
@@ -220,6 +239,8 @@ val possibleTargetPredicateMap = mapOf(
     TAILREC_KEYWORD to always(KotlinTarget.FUNCTION),
     SUSPEND_KEYWORD to always(
         KotlinTarget.MEMBER_FUNCTION,
+        KotlinTarget.COMPANION_MEMBER_FUNCTION,
+        KotlinTarget.COMPANION_EXTENSION_FUNCTION,
         KotlinTarget.TOP_LEVEL_FUNCTION,
         KotlinTarget.LOCAL_FUNCTION,
         KotlinTarget.ANONYMOUS_FUNCTION
@@ -231,6 +252,7 @@ val possibleTargetPredicateMap = mapOf(
             KotlinTarget.MEMBER_PROPERTY_WITH_DELEGATE,
             KotlinTarget.MEMBER_PROPERTY_WITHOUT_FIELD_OR_DELEGATE,
             KotlinTarget.TOP_LEVEL_PROPERTY,
+            KotlinTarget.COMPANION_EXTENSION_PROPERTY,
             KotlinTarget.PROPERTY_GETTER,
             KotlinTarget.PROPERTY_SETTER,
             KotlinTarget.CLASS
@@ -243,12 +265,19 @@ val possibleTargetPredicateMap = mapOf(
     ),
     ANNOTATION_KEYWORD to always(KotlinTarget.ANNOTATION_CLASS),
     CROSSINLINE_KEYWORD to always(KotlinTarget.VALUE_PARAMETER),
-    CONST_KEYWORD to always(KotlinTarget.MEMBER_PROPERTY, KotlinTarget.TOP_LEVEL_PROPERTY),
+    CONST_KEYWORD to always(
+        KotlinTarget.MEMBER_PROPERTY,
+        KotlinTarget.COMPANION_MEMBER_PROPERTY,
+        KotlinTarget.COMPANION_EXTENSION_PROPERTY,
+        KotlinTarget.TOP_LEVEL_PROPERTY
+    ),
     OPERATOR_KEYWORD to always(KotlinTarget.FUNCTION),
     INFIX_KEYWORD to always(KotlinTarget.FUNCTION),
     EXPECT_KEYWORD to always(
         KotlinTarget.TOP_LEVEL_FUNCTION,
+        KotlinTarget.COMPANION_EXTENSION_FUNCTION,
         KotlinTarget.TOP_LEVEL_PROPERTY,
+        KotlinTarget.COMPANION_EXTENSION_PROPERTY,
         KotlinTarget.CLASS_ONLY,
         KotlinTarget.OBJECT,
         KotlinTarget.INTERFACE,
@@ -257,9 +286,13 @@ val possibleTargetPredicateMap = mapOf(
     ),
     ACTUAL_KEYWORD to always(
         KotlinTarget.TOP_LEVEL_FUNCTION,
+        KotlinTarget.COMPANION_EXTENSION_FUNCTION,
         KotlinTarget.MEMBER_FUNCTION,
+        KotlinTarget.COMPANION_MEMBER_FUNCTION,
         KotlinTarget.TOP_LEVEL_PROPERTY,
         KotlinTarget.MEMBER_PROPERTY,
+        KotlinTarget.COMPANION_MEMBER_PROPERTY,
+        KotlinTarget.COMPANION_EXTENSION_PROPERTY,
         KotlinTarget.CONSTRUCTOR,
         KotlinTarget.CLASS_ONLY,
         KotlinTarget.OBJECT,
@@ -362,11 +395,17 @@ val possibleParentTargetPredicateMap = mapOf(
         KotlinTarget.ENUM_ENTRY,
         KotlinTarget.FILE
     ),
-    COMPANION_KEYWORD to always(
-        KotlinTarget.CLASS_ONLY,
-        KotlinTarget.INTERFACE,
-        KotlinTarget.ENUM_CLASS,
-        KotlinTarget.ANNOTATION_CLASS
+    COMPANION_KEYWORD to or(
+        always(
+            KotlinTarget.CLASS_ONLY,
+            KotlinTarget.INTERFACE,
+            KotlinTarget.ENUM_CLASS,
+            KotlinTarget.ANNOTATION_CLASS,
+        ),
+        ifSupported(
+            LanguageFeature.CompanionBlocksAndExtensions,
+            KotlinTarget.FILE,
+        )
     ),
     FINAL_KEYWORD to always(
         KotlinTarget.CLASS_ONLY,

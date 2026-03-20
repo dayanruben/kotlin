@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.backend.common.ir.isJvmBuiltin
 import org.jetbrains.kotlin.backend.common.linkage.issues.checkNoUnboundSymbols
 import org.jetbrains.kotlin.backend.common.phaser.PhaseEngine
 import org.jetbrains.kotlin.backend.common.serialization.DescriptorByIdSignatureFinderImpl
+import org.jetbrains.kotlin.backend.common.serialization.KotlinIrLinker
 import org.jetbrains.kotlin.backend.jvm.codegen.ClassCodegen
 import org.jetbrains.kotlin.backend.jvm.codegen.EnumEntriesIntrinsicMappingsCacheImpl
 import org.jetbrains.kotlin.backend.jvm.codegen.JvmIrIntrinsicExtension
@@ -209,15 +210,20 @@ class JvmIrCodegenFactory(
                 DescriptorByIdSignatureFinderImpl(psi2irContext.moduleDescriptor, mangler),
                 jvmGeneratorExtensions
             )
-        val irLinker = JvmIrLinker(
-            psi2irContext.moduleDescriptor,
-            messageCollector,
-            JvmIrTypeSystemContext(psi2irContext.irBuiltIns),
-            symbolTable,
-            stubGenerator,
-            mangler,
-            enableIdSignatures,
-        )
+
+        val irProvider = if (enableIdSignatures) {
+            JvmIrLinker(
+                psi2irContext.moduleDescriptor,
+                messageCollector,
+                JvmIrTypeSystemContext(psi2irContext.irBuiltIns),
+                symbolTable,
+                stubGenerator,
+                mangler,
+                enableIdSignatures = true,
+            )
+        } else {
+            stubGenerator
+        }
 
         SourceDeclarationsPreprocessor(psi2irContext).run(files)
 
@@ -230,7 +236,7 @@ class JvmIrCodegenFactory(
             symbolTable,
             psi2irContext.typeTranslator,
             psi2irContext.irBuiltIns,
-            irLinker,
+            irProvider,
             messageCollector,
             diagnosticReporter
         )
@@ -250,12 +256,12 @@ class JvmIrCodegenFactory(
             }
         }
 
-        val dependencies = if (ideCodegenSettings.doNotLoadDependencyModuleHeaders) {
+        val dependencies = if (ideCodegenSettings.doNotLoadDependencyModuleHeaders || irProvider !is KotlinIrLinker) {
             emptyList()
         } else {
             psi2irContext.moduleDescriptor.collectAllDependencyModulesTransitively().map {
                 val kotlinLibrary = (it.getCapability(KlibModuleOrigin.CAPABILITY) as? DeserializedKlibModuleOrigin)?.library
-                irLinker.deserializeIrModuleHeader(it, kotlinLibrary, _moduleName = it.name.asString())
+                irProvider.deserializeIrModuleHeader(it, kotlinLibrary, _moduleName = it.name.asString())
             }
         }
 
@@ -263,7 +269,7 @@ class JvmIrCodegenFactory(
             listOf(stubGenerator)
         } else {
             val stubGeneratorForMissingClasses = DeclarationStubGeneratorForNotFoundClasses(stubGenerator)
-            listOf(irLinker, stubGeneratorForMissingClasses)
+            listOf(irProvider, stubGeneratorForMissingClasses)
         }
 
         if (ideCodegenSettings.shouldReferenceUndiscoveredExpectSymbols) {
@@ -272,8 +278,10 @@ class JvmIrCodegenFactory(
 
         val irModuleFragment = psi2ir.generateModuleFragment(psi2irContext, files, irProviders, evaluatorFragmentInfoForPsi2Ir)
 
-        irLinker.postProcess(inOrAfterLinkageStep = true)
-        irLinker.clear()
+        if (irProvider is KotlinIrLinker) {
+            irProvider.postProcess(inOrAfterLinkageStep = true)
+            irProvider.clear()
+        }
 
         stubGenerator.unboundSymbolGeneration = true
 

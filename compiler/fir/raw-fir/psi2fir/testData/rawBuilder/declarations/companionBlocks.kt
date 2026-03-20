@@ -33,5 +33,35 @@ class C {
         constructor() {}
 
         init {}
+
+        companion {
+            fun doubleNestedFun() {}
+
+            val doubleNestedProp = 1
+
+            class DoubleNestedNested
+
+            typealias DoubleNestedTA = Int
+
+            constructor(x: Int) {}
+
+            init {}
+        }
+    }
+}
+
+enum class E {
+    Entry {
+        companion {
+            fun foo() {}
+            val bar = 1
+        }
+    }
+}
+
+val o = object {
+    companion {
+        fun foo() {}
+        val bar = 1
     }
 }

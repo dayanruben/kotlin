@@ -173,6 +173,13 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CLASS_LITERAL_LHS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CLASS_LITERAL_LHS_NOT_A_CLASS_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMMA_IN_WHEN_CONDITION_WITH_WHEN_GUARD
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMPANION_BLOCK_MEMBER_EXTENSION
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMPANION_BLOCK_NESTED
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMPANION_EXTENSION_NULLABLE_RECEIVER
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMPANION_EXTENSION_RECEIVER_ANNOTATED
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMPANION_EXTENSION_RECEIVER_IS_OBJECT
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMPANION_EXTENSION_RECEIVER_IS_TYPE_PARAMETER
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMPANION_EXTENSION_RECEIVER_WITH_TYPE_ARGUMENTS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMPARE_TO_TYPE_MISMATCH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMPILER_REQUIRED_ANNOTATION_AMBIGUITY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMPONENT_FUNCTION_AMBIGUITY
@@ -390,6 +397,8 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.HAS_NEXT_FUNCTION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.HAS_NEXT_FUNCTION_TYPE_MISMATCH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.HAS_NEXT_MISSING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.IGNORABILITY_ANNOTATIONS_WITH_CHECKER_DISABLED
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ILLEGAL_COMPANION_BLOCK
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ILLEGAL_COMPANION_BLOCK_MEMBER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ILLEGAL_CONST_EXPRESSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ILLEGAL_DECLARATION_IN_WHEN_SUBJECT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ILLEGAL_ESCAPE
@@ -3033,7 +3042,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
         map.put(NAME_BASED_DESTRUCTURING_UNDERSCORE_WITHOUT_RENAMING, "Underscore in name-based destructuring without renaming is forbidden.")
 
-        map.put(CONST_VAL_NOT_TOP_LEVEL_OR_OBJECT, "Const 'val' is only allowed on top level, in named objects, or in companion objects.")
+        map.put(CONST_VAL_NOT_TOP_LEVEL_OR_OBJECT, "Const 'val' is only allowed on top level, in named objects, in companion objects or companion blocks.")
         map.put(CONST_VAL_WITH_GETTER, "Const 'val' cannot have a getter.")
         map.put(CONST_VAL_WITH_DELEGATE, "Const 'val' cannot have a delegate.")
         map.put(TYPE_CANT_BE_USED_FOR_CONST_VAL, "Const ''val'' has type ''{0}''. Only primitive types and ''String'' are allowed.", RENDER_TYPE)
@@ -3876,6 +3885,48 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(
             VERSION_OVERLOADS_TOO_COMPLEX_EXPRESSION,
             "Not supported in combination with '@IntroducedAt'."
+        )
+
+        map.put(
+            COMPANION_BLOCK_MEMBER_EXTENSION,
+            "Companion block member cannot be an extension."
+        )
+        map.put(
+            ILLEGAL_COMPANION_BLOCK,
+            "Companion block inside {0} is prohibited.",
+            SYMBOL_KIND,
+        )
+        map.put(
+            COMPANION_BLOCK_NESTED,
+            "Companion blocks cannot be nested."
+        )
+        map.put(
+            ILLEGAL_COMPANION_BLOCK_MEMBER,
+            "Illegal {0} inside companion block.",
+            SYMBOL_KIND,
+        )
+        map.put(
+            COMPANION_EXTENSION_RECEIVER_WITH_TYPE_ARGUMENTS,
+            "Companion extension receiver type ''{0}'' cannot have type arguments.",
+            RENDER_TYPE,
+        )
+        map.put(
+            COMPANION_EXTENSION_RECEIVER_IS_OBJECT,
+            "Companion extension receiver type ''{0}'' resolves to an object. Companion extensions can only be declared on classes and interfaces.",
+            RENDER_TYPE,
+        )
+        map.put(
+            COMPANION_EXTENSION_RECEIVER_IS_TYPE_PARAMETER,
+            "Companion extension receiver type ''{0}'' resolves to a type parameter. Companion extensions can only be declared on classes and interfaces.",
+            RENDER_TYPE,
+        )
+        map.put(
+            COMPANION_EXTENSION_RECEIVER_ANNOTATED,
+            "Companion extension receiver cannot be annotated.",
+        )
+        map.put(
+            COMPANION_EXTENSION_NULLABLE_RECEIVER,
+            "Companion extension receiver type cannot be nullable.",
         )
     }
 }
