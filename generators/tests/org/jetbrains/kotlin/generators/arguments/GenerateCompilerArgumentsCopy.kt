@@ -15,11 +15,13 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
+import kotlin.reflect.full.allSuperclasses
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.full.superclasses
 import kotlin.reflect.jvm.kotlinProperty
 
+@Suppress("DEPRECATION")
 private val CLASSES_TO_PROCESS: List<KClass<*>> = listOf(
     JpsPluginSettings::class,
     CompilerSettings::class,
@@ -28,6 +30,7 @@ private val CLASSES_TO_PROCESS: List<KClass<*>> = listOf(
     K2JSCompilerArguments::class,
     K2WasmCompilerArguments::class,
     K2JVMCompilerArguments::class,
+    KotlinWasmCompilerArguments::class,
     K2JKlibCompilerArguments::class,
 )
 
@@ -38,10 +41,12 @@ private val PACKAGE_TO_DIR_MAPPING: Map<Package, File> = mapOf(
 )
 
 fun generateCompilerArgumentsCopy(withPrinterToFile: (targetFile: File, Printer.() -> Unit) -> Unit) {
-    val processed = mutableSetOf<KClass<*>>()
+    val processed = mutableSetOf<Pair<KClass<*>, KClass<*>>>()
     for (klass in CLASSES_TO_PROCESS) {
         generateRec(klass, withPrinterToFile, processed)
     }
+    // special case for migration from combined JS+Wasm arguments class to separate classes
+    generateRec(K2JSCompilerArguments::class, withPrinterToFile, processed, KotlinWasmCompilerArguments::class)
 }
 
 private val GENERATED_FILE_WARNING = """
@@ -51,17 +56,24 @@ private val GENERATED_FILE_WARNING = """
 """.trimIndent()
 
 private fun generateRec(
-    klass: KClass<*>,
+    fromClass: KClass<*>,
     withPrinterToFile: (targetFile: File, Printer.() -> Unit) -> Unit,
-    processed: MutableSet<KClass<*>>,
+    processed: MutableSet<Pair<KClass<*>, KClass<*>>>,
+    toClass: KClass<*> = fromClass,
 ) {
-    if (!processed.add(klass)) return
+    if (!processed.add(fromClass to toClass)) return
 
-    val klassName = klass.simpleName!!
-    val fqn = klass.qualifiedName!!
-    val `package` = klass.java.`package`
+    val fromClassName = fromClass.simpleName!!
+    val toClassName = toClass.simpleName!!
+    val fqn = fromClass.qualifiedName!!
+    val `package` = fromClass.java.`package`
     val destDir = PACKAGE_TO_DIR_MAPPING[`package`]!!.resolve(`package`.name.replace('.', '/'))
-    withPrinterToFile(destDir.resolve(klassName + "CopyGenerated.kt")) {
+    val fileName = if (fromClassName == toClassName) {
+        fromClassName + "CopyGenerated.kt"
+    } else {
+        fromClassName + "To" + toClassName + "CopyGenerated.kt"
+    }
+    withPrinterToFile(destDir.resolve(fileName)) {
         println("@file:Suppress(\"unused\", \"DuplicatedCode\")\n")
         println(GENERATED_FILE_WARNING + "\n")
         println("package ${`package`.name}\n")
@@ -79,14 +91,18 @@ private fun generateRec(
         }
 
         println("@OptIn(org.jetbrains.kotlin.utils.IDEAPluginsCompatibilityAPI::class)")
-        println("fun copy$klassName(from: $klassName, to: $klassName): $klassName {")
+        if (toClass.annotations.any { it.annotationClass == Deprecated::class }) {
+            println("@Suppress(\"DEPRECATION\")")
+        }
+        println("fun copy$fromClassName(from: $fromClassName, to: $toClassName): $toClassName {")
         withIndent {
-            val superClasses: List<KClass<*>> = klass.superclasses.filterNot { it.java.isInterface }
-            check(superClasses.size < 2) {
-                "too many super classes in $klass: ${superClasses.joinToString()}"
+            val superKlass = run {
+                var firstSharedSuperClass: KClass<*>? = fromClass
+                while (firstSharedSuperClass != null && firstSharedSuperClass !in toClass.allSuperclasses) {
+                    firstSharedSuperClass = firstSharedSuperClass.superclasses.filterNot { it.java.isInterface }.singleOrNull()
+                }
+                firstSharedSuperClass
             }
-
-            val superKlass = superClasses.singleOrNull()
             if (superKlass != null && superKlass != Freezable::class) {
                 generateRec(superKlass, withPrinterToFile, processed)
                 if (superKlass.java.`package` != `package`) {
@@ -96,9 +112,9 @@ private fun generateRec(
                 println()
             }
 
-            val properties = collectProperties(klass, false)
+            val properties = collectProperties(toClass, false)
 
-            for (property in properties.filter { klass.declaredMemberProperties.contains(it) }) {
+            for (property in properties.filter { toClass.declaredMemberProperties.contains(it) }) {
                 val type = property.returnType
                 val classifier: KClassifier = type.classifier!!
                 when {
@@ -143,6 +159,7 @@ fun generateConfigureLanguageFeatures(withPrinterToFile: (targetFile: File, Prin
     generateConfigureLanguageFeaturesImpl(CommonCompilerArguments::class.java, "Common", withPrinterToFile)
     generateConfigureLanguageFeaturesImpl(K2JVMCompilerArguments::class.java, "Jvm", withPrinterToFile)
     generateConfigureLanguageFeaturesImpl(K2JSCompilerArguments::class.java, "Js", withPrinterToFile)
+    generateConfigureLanguageFeaturesImpl(KotlinWasmCompilerArguments::class.java, "Wasm", withPrinterToFile)
 }
 
 private fun generateConfigureLanguageFeaturesImpl(

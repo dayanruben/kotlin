@@ -3,19 +3,11 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.maven.plugin.test
+package org.jetbrains.kotlin.maven.test
 
-import bsh.Interpreter
-import groovy.lang.Binding
-import groovy.util.GroovyScriptEngine
 import org.apache.maven.shared.verifier.Verifier
-import org.jetbrains.kotlin.maven.test.MavenBuildOptions
-import org.jetbrains.kotlin.maven.test.isTeamCityRun
-import org.jetbrains.kotlin.maven.test.printLog
 import org.junit.jupiter.api.Assertions.assertTrue
-import java.io.ByteArrayOutputStream
-import java.io.PrintStream
-import java.io.StringReader
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import java.nio.file.Path
 import kotlin.io.path.*
 
@@ -25,6 +17,7 @@ class MavenTestProject(
     val workDir: Path,
     val settingsFile: Path,
     val buildOptions: MavenBuildOptions,
+    val mavenVersion: String,
 ) {
     fun build(
         vararg args: String,
@@ -33,14 +26,24 @@ class MavenTestProject(
         buildOptions: MavenBuildOptions = this.buildOptions,
         code: (Verifier.() -> Unit)? = null,
     ): Verifier {
+        // Maven 4+ requires JDK 17+ as runtime
+        if (mavenVersion.startsWith("4")) {
+            assumeTrue(
+                buildOptions.javaVersion.numericVersion >= 17,
+                "Maven $mavenVersion requires JDK 17+ as runtime, but ${buildOptions.javaVersion} was requested"
+            )
+        }
+
         val verifier = Verifier(
             workDir.absolutePathString(),
             null, // settingsFile is used only to extract local repo from there, but we pass it explicitly below
             false,
         )
 
+        verifier.isAutoclean = false
+
         val javaHome = context.jdkProvider.getJavaHome(buildOptions.javaVersion) ?:
-            throw RuntimeException("Can't find JDK ${buildOptions.javaVersion}")
+            throw RuntimeException("Can't find path for ${buildOptions.javaVersion}")
         verifier.setEnvironmentVariable("JAVA_HOME", javaHome.absolutePathString())
 
         for ((key, value) in environmentVariables) {
@@ -83,41 +86,6 @@ class MavenTestProject(
             throw e
         }
         return verifier
-    }
-
-    fun runVerifyScript() {
-        if (workDir.resolve("verify.bsh").exists()) verifyBsh()
-        if (workDir.resolve("verify.groovy").exists()) verifyGroovy()
-    }
-
-    fun verifyBsh() {
-        val outputBuffer = ByteArrayOutputStream()
-        val printStream = PrintStream(outputBuffer, true)
-        val noReader = StringReader("")
-        try {
-            val bsh = Interpreter(
-                noReader, printStream, printStream, false
-            )
-            bsh.set("basedir", this.workDir.toString())
-            bsh.source(workDir.resolve("verify.bsh").absolutePathString())
-        } catch (e: Exception) {
-            val capturedOutput = outputBuffer.toString()
-            throw RuntimeException("Verification script failed. Output:\n$capturedOutput", e)
-        }
-    }
-
-    fun verifyGroovy() {
-        val groovyScriptEngine = GroovyScriptEngine(arrayOf(workDir.toUri().toURL()))
-        val args = Binding(
-            mapOf(
-                "basedir" to workDir.toFile(),
-                "kotlinVersion" to context.kotlinVersion
-            )
-        )
-        val res = groovyScriptEngine.run("verify.groovy", args)
-        if (res is Boolean) {
-            assertTrue(res) { "verify.groovy returned false" }
-        }
     }
 
     @Suppress("unused")

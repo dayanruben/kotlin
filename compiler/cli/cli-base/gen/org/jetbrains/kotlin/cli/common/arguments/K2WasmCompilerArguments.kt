@@ -8,7 +8,8 @@ package org.jetbrains.kotlin.cli.common.arguments
 // Please declare arguments in compiler/arguments/src/org/jetbrains/kotlin/arguments/description/WasmCompilerArguments.kt
 // DO NOT MODIFY IT MANUALLY.
 
-abstract class K2WasmCompilerArguments : CommonKlibBasedCompilerArguments() {
+@Deprecated("This class was deprecated and will be removed soon.", level = DeprecationLevel.WARNING)
+sealed class K2WasmCompilerArguments : CommonJsAndWasmCompilerArguments() {
     @Argument(
         value = "-Xir-dce-dump-reachability-info-to-file",
         valueDescription = "<path>",
@@ -31,6 +32,7 @@ abstract class K2WasmCompilerArguments : CommonKlibBasedCompilerArguments() {
             field = if (value.isNullOrEmpty()) null else value
         }
 
+    @Deprecated("This flag is deprecated. Use kotlinc-wasm or the KotlinWasmCompiler class instead to compile to WebAssembly.")
     @Argument(
         value = "-Xwasm",
         description = "Use the WebAssembly compiler backend.",

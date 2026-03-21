@@ -92,6 +92,13 @@ internal abstract class CommonToolArgumentsImpl(
     internalArguments.addAll(arguments.internalArguments.map { it.stringRepresentation })
   }
 
+  @Suppress("DEPRECATION")
+  public fun toCompilerArgumentsAffectingOutcome(arguments: CommonToolArguments): CommonToolArguments {
+    if (WERROR in this) { arguments.allWarningsAsErrors = get(WERROR)}
+    if (WEXTRA in this) { arguments.extraWarnings = get(WEXTRA)}
+    return arguments
+  }
+
   public class CommonToolArgument<V>(
     public val id: String,
   ) {

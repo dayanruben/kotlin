@@ -61,6 +61,7 @@ internal class BtaImplGenerator(
                 addSuperinterface(ClassName(API_ARGUMENTS_PACKAGE, level.name.capitalizeAsciiOnly()).nestedClass("Builder"))
 
                 val toCompilerConverterFun = toCompilerConverterFunBuilder(level, parentClass)
+                val toCompilerArgumentsAffectingOutcomeFun = toCompilerArgumentsAffectingOutcomeFunBuilder(level, parentClass)
                 val applyCompilerArgumentsFun = applyCompilerArgumentsFunBuilder(level, parentClass)
                 val defaultsInitializer = CodeBlock.builder()
 
@@ -86,6 +87,7 @@ internal class BtaImplGenerator(
                         argumentTypeName = argumentImplTypeName,
                         applyCompilerArgumentsFun = applyCompilerArgumentsFun,
                         toCompilerConverterFun = toCompilerConverterFun,
+                        toCompilerArgumentsAffectingOutcomeFun = toCompilerArgumentsAffectingOutcomeFun,
                         defaultsInitializer = defaultsInitializer,
                     )
                 }.build())
@@ -129,8 +131,16 @@ internal class BtaImplGenerator(
                 applyCompilerArgumentsFun.addStatement("internalArguments.addAll(arguments.internalArguments.map { it.stringRepresentation })")
                 addFunction(applyCompilerArgumentsFun.build())
 
+                if (!generateCompatLayer) {
+                    toCompilerArgumentsAffectingOutcomeFun.addStatement("return arguments")
+                    addFunction(toCompilerArgumentsAffectingOutcomeFun.build())
+                }
+
                 maybeAddApplyArgumentStringsFun(level, parentClass)
                 maybeAddToArgumentsStringFun(level, parentClass)
+                if (!generateCompatLayer) {
+                    generateToCompilationInputsFun(level, implClassName, parentClass)
+                }
             }
         }.build()
         mainFile.writeTo(mainFileAppendable)
@@ -164,6 +174,7 @@ internal class BtaImplGenerator(
         argumentTypeName: ClassName,
         applyCompilerArgumentsFun: FunSpec.Builder,
         toCompilerConverterFun: FunSpec.Builder,
+        toCompilerArgumentsAffectingOutcomeFun: FunSpec.Builder,
         defaultsInitializer: CodeBlock.Builder,
     ) {
         arguments.forEach { argument ->
@@ -221,6 +232,7 @@ internal class BtaImplGenerator(
                         wasRemoved,
                         argument.effectiveCompilerName,
                         toCompilerConverterFun,
+                        toCompilerArgumentsAffectingOutcomeFun,
                         wasIntroducedRecently,
                         applyCompilerArgumentsFun,
                         argumentTypeParameter
@@ -235,6 +247,7 @@ internal class BtaImplGenerator(
                         argument,
                         wasRemoved,
                         toCompilerConverterFun,
+                        toCompilerArgumentsAffectingOutcomeFun,
                         applyCompilerArgumentsFun,
                         wasIntroducedRecently,
                     )
@@ -249,6 +262,7 @@ internal class BtaImplGenerator(
         argument: BtaCompilerArgument.CustomCompilerArgument,
         wasRemoved: Boolean,
         toCompilerConverterFun: FunSpec.Builder,
+        toCompilerArgumentsAffectingOutcomeFun: FunSpec.Builder,
         applyCompilerArgumentsFun: FunSpec.Builder,
         wasIntroducedRecently: Boolean,
     ) {
@@ -268,6 +282,16 @@ internal class BtaImplGenerator(
                 setStatement,
                 generateCompatLayer,
             )
+            if (argument.affectsCompilationOutcome) {
+                toCompilerArgumentsAffectingOutcomeFun.addSafeSetStatement(
+                    wasIntroducedRecently,
+                    wasRemoved,
+                    name,
+                    argument,
+                    setStatement,
+                    generateCompatLayer,
+                )
+            }
         }
 
         applyCompilerArgumentsFun.addSafeMethodAccessStatement(CodeBlock.builder().apply {
@@ -286,6 +310,7 @@ internal class BtaImplGenerator(
         wasRemoved: Boolean,
         effectiveCompilerName: String,
         toCompilerConverterFun: FunSpec.Builder,
+        toCompilerArgumentsAffectingOutcomeFun: FunSpec.Builder,
         wasIntroducedRecently: Boolean,
         applyCompilerArgumentsFun: FunSpec.Builder,
         argumentTypeParameter: TypeName,
@@ -308,6 +333,16 @@ internal class BtaImplGenerator(
                 setStatement,
                 generateCompatLayer,
             )
+            if (argument.affectsCompilationOutcome) {
+                toCompilerArgumentsAffectingOutcomeFun.addSafeSetStatement(
+                    wasIntroducedRecently,
+                    wasRemoved,
+                    name,
+                    argument,
+                    setStatement,
+                    generateCompatLayer,
+                )
+            }
         }
 
         // Compiler → BTA conversion
@@ -472,6 +507,27 @@ internal class BtaImplGenerator(
         }
     }.build()
 
+    private fun TypeSpec.Builder.generateToCompilationInputsFun(
+        level: KotlinCompilerArgumentsLevel,
+        implClassName: String,
+        parentClass: ClassName?,
+    ) {
+        if (!level.isLeaf()) return
+        function("toCompilationInputs") {
+            addKdoc(
+                """
+                Returns a sorted list of compiler argument strings representing only the arguments
+                that affect the compilation outcome (i.e. those with [affectsCompilationOutcome][org.jetbrains.kotlin.arguments.dsl.base.KotlinCompilerArgument.affectsCompilationOutcome] set to true).
+                Arguments with default values are omitted from the output, because [toCompilerArgumentsAffectingOutcome]
+                only sets arguments that have been explicitly assigned, and [compilerToArgumentStrings][org.jetbrains.kotlin.compilerRunner.toArgumentStrings]
+                skips properties whose value matches the default.
+                """.trimIndent()
+            )
+            returns(listTypeNameOf<String>())
+            addStatement("return toCompilerArgumentsAffectingOutcome().compilerToArgumentStrings().sorted()")
+        }
+    }
+
     fun TypeSpec.Builder.generateGetPutFunctions(parameter: ClassName, implParameter: ClassName) {
         val mapProperty = property(
             "optionsMap",
@@ -617,6 +673,27 @@ private fun TypeSpec.Builder.maybeAddToArgumentsStringFun(level: KotlinCompilerA
         addStatement("val arguments = toCompilerArguments().compilerToArgumentStrings()")
         addStatement("return arguments")
     }
+}
+
+private fun toCompilerArgumentsAffectingOutcomeFunBuilder(
+    level: KotlinCompilerArgumentsLevel,
+    parentClass: TypeName?,
+): FunSpec.Builder = FunSpec.builder("toCompilerArgumentsAffectingOutcome").apply {
+    val compilerArgumentsClass = level.getCompilerArgumentsClassName()
+    addParameter(
+        ParameterSpec.builder("arguments", compilerArgumentsClass).apply {
+            if (level.isLeaf()) {
+                defaultValue("%T()", compilerArgumentsClass)
+            }
+        }.build()
+    )
+    annotation<Suppress> {
+        addMember("%S", "DEPRECATION")
+    }
+    if (parentClass != null) {
+        addStatement("super.toCompilerArgumentsAffectingOutcome(arguments)")
+    }
+    returns(compilerArgumentsClass)
 }
 
 private fun toCompilerConverterFunBuilder(
