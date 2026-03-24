@@ -16,6 +16,8 @@
 
 package org.jetbrains.kotlin.integration;
 
+import com.intellij.mock.MockProject;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.kotlin.cli.AbstractCliTest;
@@ -58,6 +60,13 @@ public class CompilerSmokeTest extends CompilerSmokeTestBase {
 
         assertEquals("compilation failed", 0, runCompiler("hello.compile", "-include-runtime", "hello.kt", "-d", jar));
         run("hello.run", "-cp", jar, "Hello.HelloKt", "O", "K");
+    }
+
+    public void testCompanionExtensionMain() throws Exception {
+        String jar = tmpdir.getAbsolutePath() + File.separator + "hello.jar";
+
+        assertEquals("compilation failed", 0, runCompiler("hello.compile", "-include-runtime", "-XXLanguage:+CompanionBlocksAndExtensions", "hello.kt", "-d", jar));
+        run("hello.run", "-cp", jar, "Hello.HelloKt");
     }
 
     public void testHelloAppContextMain() throws Exception {
@@ -239,5 +248,10 @@ public class CompilerSmokeTest extends CompilerSmokeTestBase {
         javaArgs.addAll(Arrays.asList("Hello.kt", "-d", jar));
 
         runJava(workingDirectory, null, ArrayUtil.toStringArray(javaArgs));
+    }
+
+    public void testMockProject() throws Exception {
+        MockProject project = new MockProject(null, Disposer.newDisposable(""));
+        assertEquals("251.patched", project.getStubVersion());
     }
 }

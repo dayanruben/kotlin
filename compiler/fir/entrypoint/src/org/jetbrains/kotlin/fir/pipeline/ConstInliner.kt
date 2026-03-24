@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.fir.pipeline
 
-import org.jetbrains.kotlin.constant.EvaluatedConstTracker
 import org.jetbrains.kotlin.incremental.components.InlineConstTracker
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
@@ -15,7 +14,6 @@ import org.jetbrains.kotlin.ir.declarations.IrField
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrProperty
-import org.jetbrains.kotlin.ir.declarations.evaluatedConstTrackerKey
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.ir.expressions.IrExpression
@@ -24,19 +22,20 @@ import org.jetbrains.kotlin.ir.expressions.IrGetObjectValue
 import org.jetbrains.kotlin.ir.expressions.IrGetValue
 import org.jetbrains.kotlin.ir.expressions.impl.IrCompositeImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetObjectValueImpl
-import org.jetbrains.kotlin.ir.interpreter.toConstantValue
 import org.jetbrains.kotlin.ir.interpreter.transformer.reportOnIr
+import org.jetbrains.kotlin.ir.irAttribute
 import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.util.shallowCopy
 import org.jetbrains.kotlin.ir.visitors.IrTransformer
 
+var IrConst.wasInlined: Boolean? by irAttribute(copyByDefault = true)
+
 @OptIn(UnsafeDuringIrConstructionAPI::class)
 internal class ConstInliner(
     private val irFile: IrFile,
     private val inlineConstTracker: InlineConstTracker?,
-    private val evaluateConstTracker: EvaluatedConstTracker?,
 ) : IrTransformer<Nothing?>() {
     override fun visitFunction(declaration: IrFunction, data: Nothing?): IrStatement {
         // It is useless to visit default accessor, we probably want to leave code there as it is
@@ -95,13 +94,13 @@ internal class ConstInliner(
         return this.isMarkedAsConst() && initializer is IrConst
     }
 
-    private fun IrField.getInitializerAndReportInlining(original: IrExpression): IrExpression {
+    private fun IrField.getInitializerAndReportInlining(original: IrExpression): IrConst {
         val const = this.initializer?.expression as IrConst
         inlineConstTracker?.reportOnIr(irFile, this, const)
-        evaluateConstTracker?.save(original.startOffset, original.endOffset, irFile.evaluatedConstTrackerKey, const.toConstantValue())
-        return const.shallowCopy().apply {
+        return (const.shallowCopy() as IrConst).apply {
             startOffset = original.startOffset
             endOffset = original.endOffset
+            wasInlined = true
         }
     }
 

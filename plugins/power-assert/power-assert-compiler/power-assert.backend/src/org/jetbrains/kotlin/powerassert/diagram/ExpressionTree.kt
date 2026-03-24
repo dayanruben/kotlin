@@ -19,10 +19,9 @@
 
 package org.jetbrains.kotlin.powerassert.diagram
 
-import org.jetbrains.kotlin.constant.EvaluatedConstTracker
+import org.jetbrains.kotlin.fir.pipeline.wasInlined
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrVariable
-import org.jetbrains.kotlin.ir.declarations.evaluatedConstTrackerKey
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.symbols.IrVariableSymbol
 import org.jetbrains.kotlin.ir.util.dump
@@ -113,13 +112,10 @@ class ElvisNode(
 }
 
 fun <T> buildTree(
-    constTracker: EvaluatedConstTracker?,
-    sourceFile: SourceFile,
     parameter: T,
     expression: IrExpression?,
 ): RootNode<T> {
-    fun IrConst.isEvaluatedConst(): Boolean =
-        constTracker?.load(startOffset, endOffset, sourceFile.irFile.evaluatedConstTrackerKey) != null
+    fun IrConst.isEvaluatedConst(): Boolean = wasInlined == true
 
     val root = RootNode(parameter)
     expression?.accept(
