@@ -24,6 +24,25 @@ func testRegular() async {
 
 @Test
 @MainActor
+func testNullable() async {
+    let expected: [Elem?] = [Element1.shared, nil, Element2.shared, nil, Element3.shared]
+
+    let task = Task<[Elem?], any Error>.detached {
+        var actual: [Elem?] = []
+        for try await element in testNullable().asAsyncSequence() {
+            actual.append(element)
+        }
+        return actual
+    }
+
+    let actual = await task.result
+
+    #expect(!task.isCancelled)
+    #expect(actual == .success(expected))
+}
+
+@Test
+@MainActor
 func testString() async {
     let expected: [String] = ["hello", "any", "world"]
 
@@ -152,7 +171,7 @@ func testDiscarding() async {
 func testStateFlow() async {
     let expected: [Elem] = [Element1.shared, Element2.shared, Element3.shared]
 
-    let subject = CurrentSubject.shared
+    let subject = CurrentSubject()
     #expect(subject.stateFlow.value == expected.first)
 
     let collectTask = Task<[Elem], any Error>.detached {
@@ -167,11 +186,11 @@ func testStateFlow() async {
     }
 
     let emitTask = Task<(), any Error>.detached {
-        try await subject.update(value: Element1.shared)
+        subject.mutableStateFlow.value = Element1.shared
         try await Task.sleep(nanoseconds: 300_000_000)
-        try await subject.update(value: Element2.shared)
+        subject.mutableStateFlow.value = Element2.shared
         try await Task.sleep(nanoseconds: 300_000_000)
-        try await subject.update(value: Element3.shared)
+        subject.mutableStateFlow.value = Element3.shared
     }
 
     let (emitResult, collectResult) = try await (emitTask.result, collectTask.result)
@@ -181,6 +200,67 @@ func testStateFlow() async {
     #expect(emitResult == .success(()))
     #expect(collectResult == .success(expected))
     #expect(subject.stateFlow.value == expected.last)
+}
+
+@Test
+@MainActor
+func testCollectMutableStateFlowInKotlin() async {
+    let expected: [Elem] = [Element1.shared, Element2.shared, Element3.shared]
+
+    let mutableStateFlow = CurrentSubject().mutableStateFlow
+
+    let collectTask = Task<[Elem], any Error>.detached {
+        try await testCollect(flow: mutableStateFlow, count: 3)
+    }
+
+    let emitTask = Task<(), any Error>.detached {
+        testUpdateValue(flow: mutableStateFlow, value: Element1.shared)
+        try await Task.sleep(nanoseconds: 300_000_000)
+        testUpdateValue(flow: mutableStateFlow, value: Element2.shared)
+        try await Task.sleep(nanoseconds: 300_000_000)
+        testUpdateValue(flow: mutableStateFlow, value: Element3.shared)
+    }
+
+    let (emitResult, collectResult) = try await (emitTask.result, collectTask.result)
+
+    #expect(!emitTask.isCancelled)
+    #expect(!collectTask.isCancelled)
+    #expect(emitResult == .success(()))
+    #expect(collectResult == .success(expected))
+}
+
+@Test
+@MainActor
+func testSharedFlow() async {
+    let expected: [Elem] = [Element1.shared, Element2.shared, Element3.shared]
+
+    let subject = CurrentSubject()
+
+    let collectTask = Task<[Elem], any Error>.detached {
+        var actual: [Elem] = []
+        var i = 0;
+        for try await element in subject.sharedFlow.asAsyncSequence() {
+            actual.append(element)
+            i += 1
+            guard i < 3 else { break }
+        }
+        return actual
+    }
+
+    let emitTask = Task<(), any Error>.detached {
+        try await subject.mutableSharedFlow.emit(value: Element1.shared)
+        try await Task.sleep(nanoseconds: 300_000_000)
+        try await subject.mutableSharedFlow.emit(value: Element2.shared)
+        try await Task.sleep(nanoseconds: 300_000_000)
+        try await subject.mutableSharedFlow.emit(value: Element3.shared)
+    }
+
+    let (emitResult, collectResult) = try await (emitTask.result, collectTask.result)
+
+    #expect(!emitTask.isCancelled)
+    #expect(!collectTask.isCancelled)
+    #expect(emitResult == .success(()))
+    #expect(collectResult == .success(expected))
 }
 
 func ==<T>(_ lhs: Result<T, any Error>, _ rhs: Result<T, any Error>) -> Bool where T: Equatable {

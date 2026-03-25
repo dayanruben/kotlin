@@ -37,8 +37,7 @@ kotlin {
 
     @OptIn(ExperimentalAbiValidation::class)
     abiValidation {
-        enabled.set(true)
-        legacyDump.referenceDumpDir = File("api-unstable")
+        referenceDumpDir = File("api-unstable")
 
         filters {
             exclude.annotatedWith.addAll(
@@ -51,32 +50,8 @@ kotlin {
 sourceSets {
     "main" { projectDefault() }
     "test" { none() }
-    "codebaseTest" {
-        java.srcDirs("codebaseTest")
-        compileClasspath += configurations["testCompileClasspath"]
-        runtimeClasspath += configurations["testRuntimeClasspath"]
-    }
 }
 
 projectTests {
-    testTask(taskName = "testCodebase", jUnitMode = JUnitMode.JUnit5, skipInLocalBuild = false) {
-        group = "verification"
-
-        classpath += sourceSets.getByName("codebaseTest").runtimeClasspath
-        testClassesDirs = sourceSets.getByName("codebaseTest").output.classesDirs
-    }
-
-    testData(project.isolated, "src")
-    testData(project.isolated, "api")
-    testData(project.isolated, "api-unstable")
-}
-
-tasks.named("check") {
-    dependsOn("testCodebase")
-}
-
-run /* Workaround for KT-84365 */ {
-    tasks.named("testCodebase").configure {
-        mustRunAfter("updateKotlinAbi")
-    }
+    testCodebaseTask(dumpDirs = listOf("api", "api-unstable"))
 }

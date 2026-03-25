@@ -17,6 +17,8 @@ val flowFoo: Flow<Foo> = TODO()
 
 fun closure_returning_flow(i: (Flow<Foo>) -> Unit): Unit = TODO()
 
+fun consume_flow(flow: Flow<Foo>): Unit = TODO()
+
 fun produce_flow(): Flow<Int> = TODO()
 
 fun produce_function(): suspend (Int) -> Int = TODO()
@@ -54,9 +56,24 @@ open class Foo {
     open val voo: Flow<I1?> get() = TODO()
 }
 
-open class StateFoo: Foo() {
+open class SharedFoo: Foo() {
+    override fun foo(): SharedFlow<I1?> = TODO()
+    override val voo: SharedFlow<I1?> get() = TODO()
+}
+
+open class MutableSharedFoo: SharedFoo() {
+    override fun foo(): MutableSharedFlow<I1?> = TODO()
+    override val voo: MutableSharedFlow<I1?> get() = TODO()
+}
+
+open class StateFoo: SharedFoo() {
     override fun foo(): StateFlow<I1?> = TODO()
     override val voo: StateFlow<I1?> get() = TODO()
+}
+
+open class MutableStateFoo: StateFoo() {
+    override fun foo(): MutableStateFlow<I1?> = TODO()
+    override val voo: MutableStateFlow<I1?> get() = TODO()
 }
 
 open class Bar: Foo() {

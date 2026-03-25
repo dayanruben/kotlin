@@ -1,5 +1,3 @@
-import org.gradle.kotlin.dsl.project
-import org.gradle.kotlin.dsl.testImplementation
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
 plugins {
@@ -44,8 +42,7 @@ kotlin {
 
     @OptIn(ExperimentalAbiValidation::class)
     abiValidation {
-        enabled.set(true)
-        legacyDump.referenceDumpDir = File("api-unstable")
+        referenceDumpDir = File("api-unstable")
 
         filters {
             exclude.annotatedWith.addAll(
@@ -62,11 +59,6 @@ sourceSets {
         generatedTestDir()
     }
     "testFixtures" { projectDefault() }
-    "codebaseTest" {
-        java.srcDirs("codebaseTest")
-        compileClasspath += configurations["testCompileClasspath"]
-        runtimeClasspath += configurations["testRuntimeClasspath"]
-    }
 }
 
 projectTests {
@@ -81,12 +73,7 @@ projectTests {
         }
     }
 
-    testTask(taskName = "testCodebase", jUnitMode = JUnitMode.JUnit5, skipInLocalBuild = false) {
-        group = "verification"
-
-        classpath += sourceSets.getByName("codebaseTest").runtimeClasspath
-        testClassesDirs = sourceSets.getByName("codebaseTest").output.classesDirs
-    }
+    testCodebaseTask(dumpDirs = listOf("api", "api-unstable"))
 
     testGenerator("org.jetbrains.kotlin.analysis.api.standalone.fir.test.TestGeneratorKt")
 
@@ -102,25 +89,9 @@ projectTests {
     @OptIn(KotlinCompilerDistUsage::class)
     withDist()
 
-    testData(project.isolated, "src")
-    testData(project.isolated, "api")
-    testData(project.isolated, "api-unstable")
     testData(project.isolated, "testData")
     testData(project(":analysis:analysis-api").isolated, "testData")
     testData(project(":analysis:low-level-api-fir").isolated, "testData/resolveToFirSymbolPsiClass")
 }
 
-tasks.named("check") {
-    dependsOn("testCodebase")
-}
-
 testsJar()
-
-run /* Workaround for KT-84365 */ {
-    tasks.named("test").configure {
-        mustRunAfter("updateKotlinAbi")
-    }
-    tasks.named("testCodebase").configure {
-        mustRunAfter("updateKotlinAbi")
-    }
-}

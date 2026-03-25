@@ -34,12 +34,9 @@ dependencies {
 
 sourceSets {
     "main" { projectDefault() }
-    "test" { projectDefault() }
+    "test" { none() }
 }
 
 projectTests {
-    testTask(jUnitMode = JUnitMode.JUnit5)
-
-    testData(project.isolated, "src")
-    testData(project.isolated, "api")
+    testCodebaseTask()
 }

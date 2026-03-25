@@ -46,7 +46,6 @@ private val stableNonPublicMarkers = listOf(
 kotlin {
     @OptIn(ExperimentalAbiValidation::class)
     abiValidation {
-        enabled.set(true)
         filters {
             exclude.annotatedWith.addAll(stableNonPublicMarkers)
         }
@@ -58,23 +57,10 @@ testsJar()
 projectTests {
     testTask(jUnitMode = JUnitMode.JUnit5)
 
-    /** The 'test' task inputs cannot depend on [checkForeignClassUsage] outputs. */
-    testData(project.isolated, "api/psi-api.api")
-    testData(project.isolated, "api/psi-api.undocumented")
-
-    testData(project.isolated, "src")
+    testCodebaseTask()
 }
 
 val checkForeignClassUsage by tasks.registering(CheckForeignClassUsageTask::class) {
     outputFile = file("api/psi-api.foreign")
     nonPublicMarkers.addAll(stableNonPublicMarkers)
-}
-
-run /* Workaround for KT-84365 */ {
-    tasks.named("checkKotlinAbi").configure {
-        mustRunAfter(checkForeignClassUsage)
-    }
-    tasks.named("test").configure {
-        mustRunAfter("updateKotlinAbi")
-    }
 }

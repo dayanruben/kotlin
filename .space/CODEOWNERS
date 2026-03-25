@@ -241,8 +241,6 @@
 /compiler/testData/modules.xml/ "Kotlin Frontend"
 /compiler/testData/multiModule/ "Kotlin Frontend"
 # UNKNOWN: /compiler/testData/multiplatform/
-/compiler/testData/parseCodeFragment/ "Kotlin Frontend"
-/compiler/testData/psi/ "Kotlin Analysis API"
 /compiler/testData/psiUtil/ "Kotlin Analysis API"
 /compiler/testData/recursiveProcessor/ "Kotlin Frontend"
 /compiler/testData/reflection/ "Kotlin Libraries" alexander.udalov@jetbrains.com
@@ -262,6 +260,8 @@
 /compiler/testData/type-checker-test.kt "Kotlin Frontend"
 /compiler/testData/type-substitutor.kt "Kotlin Frontend"
 /compiler/tests/ "Kotlin Compiler"
+/compiler/tests/org/jetbrains/kotlin/psi/ "Kotlin Analysis API"
+/compiler/tests/org/jetbrains/kotlin/asJava/ "Kotlin Analysis API"
 /compiler/testFixtures/ "Kotlin Compiler"
 /compiler/tests-against-klib/ "Kotlin JVM"
 /compiler/tests-common/ "Kotlin Compiler"
@@ -479,7 +479,8 @@
 /plugins/lombok/ "Kotlin Frontend"
 /plugins/noarg/ "Kotlin Frontend"
 /plugins/parcelize/ "Parcelize"
-/plugins/power-assert/ brian.norman@jetbrains.com "Kotlin Common Backend" sergej.jaskiewicz@jetbrains.com
+/plugins/power-assert/ brian.norman@jetbrains.com sergej.jaskiewicz@jetbrains.com "Kotlin Common Backend" "Kotlin Frontend"
+/plugins/power-assert/power-assert-compiler/power-assert.common/src/org/jetbrains/kotlin/powerassert/PowerAssertDiagnostics.kt alejandro.serrano.mena@jetbrains.com brian.norman@jetbrains.com ilya.chernikov@jetbrains.com kirill.rakhman@jetbrains.com
 /plugins/sam-with-receiver/ "Kotlin Frontend"
 /plugins/scripting/ "Kotlin Frontend"
 /plugins/plugins-interactions-testing/ "Kotlin Frontend"

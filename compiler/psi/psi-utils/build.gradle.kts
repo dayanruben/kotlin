@@ -36,17 +36,11 @@ dependencies {
 
 sourceSets {
     "main" { projectDefault() }
-    "test" { projectDefault() }
+    "test" { none() }
 }
 
 projectTests {
-    testTask(jUnitMode = JUnitMode.JUnit5)
-
-    /** The 'test' task inputs cannot depend on [checkForeignClassUsage] outputs. */
-    testData(project.isolated, "api/psi-utils-api.api")
-    testData(project.isolated, "api/psi-utils-api.undocumented")
-
-    testData(project.isolated, "src")
+    testCodebaseTask()
 }
 
 private val stableNonPublicMarkers = listOf(

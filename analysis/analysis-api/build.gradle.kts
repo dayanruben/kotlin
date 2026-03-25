@@ -50,8 +50,6 @@ kotlin {
 
     @OptIn(ExperimentalAbiValidation::class)
     abiValidation {
-        enabled.set(true)
-
         filters {
             exclude.annotatedWith.addAll(stableNonPublicMarkers)
         }
@@ -60,31 +58,14 @@ kotlin {
 
 sourceSets {
     "main" { projectDefault() }
-    "test" { projectDefault() }
+    "test" { none() }
 }
 
-testsJar()
-
 projectTests {
-    testTask(jUnitMode = JUnitMode.JUnit5)
-
-    testData(project.isolated, "src")
-
-    /** The 'test' task inputs cannot depend on [checkForeignClassUsage] outputs. */
-    testData(project.isolated, "api/analysis-api.api")
-    testData(project.isolated, "api/analysis-api.undocumented")
+    testCodebaseTask()
 }
 
 val checkForeignClassUsage by tasks.registering(CheckForeignClassUsageTask::class) {
     outputFile = file("api/analysis-api.foreign")
     nonPublicMarkers.addAll(stableNonPublicMarkers)
-}
-
-run /* Workaround for KT-84365 */ {
-    tasks.named("checkKotlinAbi").configure {
-        mustRunAfter(checkForeignClassUsage)
-    }
-    tasks.named("test").configure {
-        mustRunAfter("updateKotlinAbi")
-    }
 }

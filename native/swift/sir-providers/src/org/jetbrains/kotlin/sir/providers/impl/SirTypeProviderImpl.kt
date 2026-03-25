@@ -87,7 +87,7 @@ public class SirTypeProviderImpl(
                             }
 
                             // Intercept Flow<T> for typed generic wrapping in covariant position
-                            if (kaType.classId in FLOW_CLASS_IDS && ctx.currentPosition == SirTypeVariance.COVARIANT) {
+                            if (kaType.classId in FLOW_CLASS_IDS) {
                                 val elementArg = kaType.typeArguments.singleOrNull()
                                 if (elementArg is KaTypeArgumentWithVariance) {
                                     val elementType = elementArg.type
@@ -95,6 +95,8 @@ public class SirTypeProviderImpl(
                                     if (translatedElement !is SirErrorType && translatedElement !is SirUnsupportedType) {
                                         return@withSessions SirTypedFlowType(
                                             typedProtocol = when (kaType.classId) {
+                                                SHARED_FLOW_CLASS_ID -> KotlinCoroutineSupportModule.kotlinTypedSharedFlow
+                                                MUTABLE_SHARED_FLOW_CLASS_ID -> KotlinCoroutineSupportModule.kotlinTypedMutableSharedFlow
                                                 STATE_FLOW_CLASS_ID -> KotlinCoroutineSupportModule.kotlinTypedStateFlow
                                                 MUTABLE_STATE_FLOW_CLASS_ID -> KotlinCoroutineSupportModule.kotlinTypedMutableStateFlow
                                                 else -> KotlinCoroutineSupportModule.kotlinTypedFlow
@@ -263,12 +265,18 @@ public class SirTypeProviderImpl(
     private val SirNominalType.isTypealiasOntoFunctionalType: Boolean
         get() = (typeDeclaration as? SirTypealias)?.let { it.expandedType is SirFunctionalType } == true
 
-    private companion object {
+    internal companion object {
         val FLOW_CLASS_ID = ClassId.fromString("kotlinx/coroutines/flow/Flow")
+        val SHARED_FLOW_CLASS_ID = ClassId.fromString("kotlinx/coroutines/flow/SharedFlow")
+        val MUTABLE_SHARED_FLOW_CLASS_ID = ClassId.fromString("kotlinx/coroutines/flow/MutableSharedFlow")
         val STATE_FLOW_CLASS_ID = ClassId.fromString("kotlinx/coroutines/flow/StateFlow")
         val MUTABLE_STATE_FLOW_CLASS_ID = ClassId.fromString("kotlinx/coroutines/flow/MutableStateFlow")
 
-        val FLOW_CLASS_IDS = listOf(FLOW_CLASS_ID, STATE_FLOW_CLASS_ID, MUTABLE_STATE_FLOW_CLASS_ID)
+        val FLOW_CLASS_IDS = listOf(
+            FLOW_CLASS_ID,
+            SHARED_FLOW_CLASS_ID, MUTABLE_SHARED_FLOW_CLASS_ID,
+            STATE_FLOW_CLASS_ID, MUTABLE_STATE_FLOW_CLASS_ID,
+        )
     }
 }
 
