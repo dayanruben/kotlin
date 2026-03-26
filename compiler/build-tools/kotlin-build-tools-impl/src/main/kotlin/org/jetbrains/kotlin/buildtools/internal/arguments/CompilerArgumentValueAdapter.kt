@@ -78,70 +78,17 @@ private abstract class CommonCompilerArgumentPre2_4_0ValueAdapter : CommonToolAr
                 pathValue.absolutePathStringOrThrow() as V
             }
 
-            CommonCompilerArguments.X_PHASES_TO_DUMP -> {
-                if (value == null) return emptyArray<String>() as V
-
-                val listValue: List<String> = value as List<String>
-                listValue.toTypedArray() as V
-            }
-
-            CommonCompilerArguments.X_PHASES_TO_DUMP_BEFORE -> {
-                if (value == null) return emptyArray<String>() as V
-
-                val listValue: List<String> = value as List<String>
-                listValue.toTypedArray() as V
-            }
-
-            CommonCompilerArguments.X_PHASES_TO_DUMP_AFTER -> {
-                if (value == null) return emptyArray<String>() as V
-
-                val listValue: List<String> = value as List<String>
-                listValue.toTypedArray() as V
-            }
-
-            CommonCompilerArguments.X_PHASES_TO_VALIDATE -> {
-                if (value == null) return emptyArray<String>() as V
-
-                val listValue: List<String> = value as List<String>
-                listValue.toTypedArray() as V
-            }
-
-            CommonCompilerArguments.X_PHASES_TO_VALIDATE_BEFORE -> {
-                if (value == null) return emptyArray<String>() as V
-
-                val listValue: List<String> = value as List<String>
-                listValue.toTypedArray() as V
-            }
-
-            CommonCompilerArguments.X_PHASES_TO_VALIDATE_AFTER -> {
-                if (value == null) return emptyArray<String>() as V
-
-                val listValue: List<String> = value as List<String>
-                listValue.toTypedArray() as V
-            }
-
-            CommonCompilerArguments.X_DISABLE_PHASES -> {
-                if (value == null) return emptyArray<String>() as V
-
-                val listValue: List<String> = value as List<String>
-                listValue.toTypedArray() as V
-            }
-
-            CommonCompilerArguments.X_VERBOSE_PHASES -> {
-                if (value == null) return emptyArray<String>() as V
-
-                val listValue: List<String> = value as List<String>
-                listValue.toTypedArray() as V
-            }
-
-            CommonCompilerArguments.X_SUPPRESS_WARNING -> {
-                if (value == null) return emptyArray<String>() as V
-
-                val listValue: List<String> = value as List<String>
-                listValue.toTypedArray() as V
-            }
-
-            CommonCompilerArguments.OPT_IN -> {
+            CommonCompilerArguments.X_PHASES_TO_DUMP,
+            CommonCompilerArguments.X_PHASES_TO_DUMP_BEFORE,
+            CommonCompilerArguments.X_PHASES_TO_DUMP_AFTER,
+            CommonCompilerArguments.X_PHASES_TO_VALIDATE,
+            CommonCompilerArguments.X_PHASES_TO_VALIDATE_BEFORE,
+            CommonCompilerArguments.X_PHASES_TO_VALIDATE_AFTER,
+            CommonCompilerArguments.X_DISABLE_PHASES,
+            CommonCompilerArguments.X_VERBOSE_PHASES,
+            CommonCompilerArguments.X_SUPPRESS_WARNING,
+            CommonCompilerArguments.OPT_IN,
+                -> {
                 if (value == null) return emptyArray<String>() as V
 
                 val listValue: List<String> = value as List<String>
@@ -181,70 +128,17 @@ private abstract class CommonCompilerArgumentPre2_4_0ValueAdapter : CommonToolAr
                 Path(stringValue) as T
             }
 
-            CommonCompilerArguments.X_PHASES_TO_DUMP -> {
-                if (value == null) return emptyList<String>() as T
-
-                val arrayValue = value as Array<String>
-                arrayValue.toList() as T
-            }
-
-            CommonCompilerArguments.X_PHASES_TO_DUMP_BEFORE -> {
-                if (value == null) return emptyList<String>() as T
-
-                val arrayValue = value as Array<String>
-                arrayValue.toList() as T
-            }
-
-            CommonCompilerArguments.X_PHASES_TO_DUMP_AFTER -> {
-                if (value == null) return emptyList<String>() as T
-
-                val arrayValue = value as Array<String>
-                arrayValue.toList() as T
-            }
-
-            CommonCompilerArguments.X_PHASES_TO_VALIDATE -> {
-                if (value == null) return emptyList<String>() as T
-
-                val arrayValue = value as Array<String>
-                arrayValue.toList() as T
-            }
-
-            CommonCompilerArguments.X_PHASES_TO_VALIDATE_BEFORE -> {
-                if (value == null) return emptyList<String>() as T
-
-                val arrayValue = value as Array<String>
-                arrayValue.toList() as T
-            }
-
-            CommonCompilerArguments.X_DISABLE_PHASES -> {
-                if (value == null) return emptyList<String>() as T
-
-                val arrayValue = value as Array<String>
-                arrayValue.toList() as T
-            }
-
-            CommonCompilerArguments.X_PHASES_TO_VALIDATE_AFTER -> {
-                if (value == null) return emptyList<String>() as T
-
-                val arrayValue = value as Array<String>
-                arrayValue.toList() as T
-            }
-
-            CommonCompilerArguments.X_VERBOSE_PHASES -> {
-                if (value == null) return emptyList<String>() as T
-
-                val arrayValue = value as Array<String>
-                arrayValue.toList() as T
-            }
-
-            CommonCompilerArguments.X_SUPPRESS_WARNING -> {
-                if (value == null) return emptyList<String>() as T
-
-                val arrayValue = value as Array<String>
-                arrayValue.toList() as T
-            }
-
-            CommonCompilerArguments.OPT_IN -> {
+            CommonCompilerArguments.X_PHASES_TO_DUMP,
+            CommonCompilerArguments.X_PHASES_TO_DUMP_BEFORE,
+            CommonCompilerArguments.X_PHASES_TO_DUMP_AFTER,
+            CommonCompilerArguments.X_PHASES_TO_VALIDATE,
+            CommonCompilerArguments.X_PHASES_TO_VALIDATE_BEFORE,
+            CommonCompilerArguments.X_PHASES_TO_VALIDATE_AFTER,
+            CommonCompilerArguments.X_DISABLE_PHASES,
+            CommonCompilerArguments.X_VERBOSE_PHASES,
+            CommonCompilerArguments.X_SUPPRESS_WARNING,
+            CommonCompilerArguments.OPT_IN,
+                -> {
                 if (value == null) return emptyList<String>() as T
 
                 val arrayValue = value as Array<String>
@@ -376,56 +270,29 @@ private object JvmCompilerArgumentPre2_4_0ValueAdapter : CommonCompilerArgumentP
             mode.stringValue as V
         }
 
-        JvmCompilerArguments.X_ADD_MODULES -> {
+        JvmCompilerArguments.CLASSPATH,
+        JvmCompilerArguments.X_KLIB,
+        JvmCompilerArguments.X_MODULE_PATH,
+            -> {
+            if (value == null) return null as V
+
+            val listValue = value as List<Path>
+            listValue.joinToString(File.pathSeparator) { it.absolutePathStringOrThrow() } as V
+        }
+
+        JvmCompilerArguments.X_FRIEND_PATHS,
+        JvmCompilerArguments.X_JAVA_SOURCE_ROOTS,
+            -> {
             if (value == null) return emptyArray<String>() as V
-
-            val listValue: List<String> = value as List<String>
-            listValue.toTypedArray() as V
-        }
-
-        JvmCompilerArguments.CLASSPATH -> {
-            if (value == null) return null as V
-
-            val listValue = value as List<Path>
-            listValue.joinToString(File.pathSeparator) { it.absolutePathStringOrThrow() } as V
-        }
-
-        JvmCompilerArguments.X_KLIB -> {
-            if (value == null) return null as V
-
-            val listValue = value as List<Path>
-            listValue.joinToString(File.pathSeparator) { it.absolutePathStringOrThrow() } as V
-        }
-
-        JvmCompilerArguments.X_MODULE_PATH -> {
-            if (value == null) return null as V
-
-            val listValue = value as List<Path>
-            listValue.joinToString(File.pathSeparator) { it.absolutePathStringOrThrow() } as V
-        }
-
-        JvmCompilerArguments.X_FRIEND_PATHS -> {
-            if (value == null) return emptyArray<Path>() as V
 
             val listValue = value as List<Path>
             listValue.map { it.absolutePathStringOrThrow() }.toTypedArray() as V
         }
 
-        JvmCompilerArguments.X_JAVA_SOURCE_ROOTS -> {
-            if (value == null) return emptyArray<Path>() as V
-
-            val listValue = value as List<Path>
-            listValue.map { it.absolutePathStringOrThrow() }.toTypedArray() as V
-        }
-
-        JvmCompilerArguments.SCRIPT_TEMPLATES -> {
-            if (value == null) return emptyArray<String>() as V
-
-            val listValue = value as List<String>
-            listValue.toTypedArray() as V
-        }
-
-        JvmCompilerArguments.X_SCRIPT_RESOLVER_ENVIRONMENT -> {
+        JvmCompilerArguments.X_ADD_MODULES,
+        JvmCompilerArguments.SCRIPT_TEMPLATES,
+        JvmCompilerArguments.X_SCRIPT_RESOLVER_ENVIRONMENT,
+            -> {
             if (value == null) return emptyArray<String>() as V
 
             val listValue = value as List<String>
@@ -452,7 +319,7 @@ private object JvmCompilerArgumentPre2_4_0ValueAdapter : CommonCompilerArgumentP
 
                 val stringValue = value as String
                 val parts = stringValue.split(File.pathSeparator)
-                require(parts.size == 3) { "Invalid async profiler settings format: $stringValue" }
+                require(parts.size == 3) { "Invalid -Xprofile format: $stringValue" }
                 ProfileCompilerCommand(Path(parts[0]), parts[1], Path(parts[2])) as T
             }
 
@@ -536,56 +403,29 @@ private object JvmCompilerArgumentPre2_4_0ValueAdapter : CommonCompilerArgumentP
                     ?: throw CompilerArgumentsParseException("Unknown -Xjdk-release value: $stringValue")
             }
 
-            JvmCompilerArguments.X_ADD_MODULES -> {
-                if (value == null) return emptyList<String>() as T
-
-                val arrayValue = value as Array<String>
-                arrayValue.toList() as T
-            }
-
-            JvmCompilerArguments.CLASSPATH -> {
+            JvmCompilerArguments.CLASSPATH,
+            JvmCompilerArguments.X_KLIB,
+            JvmCompilerArguments.X_MODULE_PATH,
+                -> {
                 if (value == null) return null as T
 
                 val stringValue = value as String
                 stringValue.split(File.pathSeparator).map { Path(it) } as T
             }
 
-            JvmCompilerArguments.X_KLIB -> {
-                if (value == null) return null as T
-
-                val stringValue = value as String
-                stringValue.split(File.pathSeparator).map { Path(it) } as T
-            }
-
-            JvmCompilerArguments.X_MODULE_PATH -> {
-                if (value == null) return null as T
-
-                val stringValue = value as String
-                stringValue.split(File.pathSeparator).map { Path(it) } as T
-            }
-
-            JvmCompilerArguments.X_FRIEND_PATHS -> {
+            JvmCompilerArguments.X_FRIEND_PATHS,
+            JvmCompilerArguments.X_JAVA_SOURCE_ROOTS,
+                -> {
                 if (value == null) return emptyList<Path>() as T
 
                 val arrayValue = value as Array<String>
                 arrayValue.map { Path(it) } as T
             }
 
-            JvmCompilerArguments.X_JAVA_SOURCE_ROOTS -> {
-                if (value == null) return emptyList<Path>() as T
-
-                val arrayValue = value as Array<String>
-                arrayValue.map { Path(it) } as T
-            }
-
-            JvmCompilerArguments.SCRIPT_TEMPLATES -> {
-                if (value == null) return emptyList<String>() as T
-
-                val arrayValue = value as Array<String>
-                arrayValue.toList() as T
-            }
-
-            JvmCompilerArguments.X_SCRIPT_RESOLVER_ENVIRONMENT -> {
+            JvmCompilerArguments.X_ADD_MODULES,
+            JvmCompilerArguments.SCRIPT_TEMPLATES,
+            JvmCompilerArguments.X_SCRIPT_RESOLVER_ENVIRONMENT,
+                -> {
                 if (value == null) return emptyList<String>() as T
 
                 val arrayValue = value as Array<String>

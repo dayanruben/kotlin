@@ -92,20 +92,43 @@ class ConeOverloadConflictResolver(
                 candidates
 
         // The same logic as at
-        val candidatesWithoutOverrides = filterOverrides(fixedCandidates)
+        var current = filterOverrides(fixedCandidates)
+        // noCompatibilityMode == true in K2 by default
         val noCompatibilityMode = with(transformerComponents) { disableCompatibilityModeForNewInference() }
-        return chooseMaximallySpecificCandidates(
-            candidatesWithoutOverrides,
-            DiscriminationFlags(
-                // (in compatibility mode the next two are already filtered on tower resolver level)
-                lowPrioritySAMs = noCompatibilityMode,
-                adaptationsInPostponedAtoms = noCompatibilityMode,
-                generics = discriminateGenerics,
-                SAMs = true,
-                suspendConversions = true,
-                byUnwrappedSmartCastOrigin = true,
-            )
+        val discriminationFlags = DiscriminationFlags(
+            // (in compatibility mode the next two are already filtered on tower resolver level)
+            lowPrioritySAMs = noCompatibilityMode,
+            adaptationsInPostponedAtoms = noCompatibilityMode,
+            generics = discriminateGenerics,
+
+            SAMs = true,
+            suspendConversions = true,
+            byUnwrappedSmartCastOrigin = true,
+            unitCoercionInLambdas = LanguageFeature.EagerLambdaAnalysis.isEnabled(),
         )
+
+        if (LanguageFeature.EagerLambdaAnalysis.isDisabled()) {
+            return chooseMaximallySpecificCandidates(
+                current,
+                discriminationFlags
+            )
+        }
+
+        while (true) {
+            val reduced =
+                runEagerLambdaAnalysisAndFilterOutInapplicableCandidates(current, components = transformerComponents) ?: current
+
+            // Fast-path
+            if (reduced.size == 1) return reduced
+
+            val next = chooseMaximallySpecificCandidates(
+                reduced,
+                discriminationFlags
+            )
+
+            if (next.size <= 1 || current.size == next.size) return next
+            current = next
+        }
     }
 
     /**
@@ -178,6 +201,7 @@ class ConeOverloadConflictResolver(
         val SAMs: Boolean,
         val suspendConversions: Boolean,
         val byUnwrappedSmartCastOrigin: Boolean,
+        val unitCoercionInLambdas: Boolean,
     )
 
     private fun chooseMaximallySpecificCandidates(
@@ -197,6 +221,14 @@ class ConeOverloadConflictResolver(
                 candidates,
                 { !it.hasPostponedAtomWithAdaptation() },
                 { discriminationFlags.copy(adaptationsInPostponedAtoms = false) },
+            )?.let { return it }
+        }
+
+        if (discriminationFlags.unitCoercionInLambdas) {
+            filterCandidatesByDiscriminationFlag(
+                candidates,
+                { !it.usesCoercionToUnitInLambda },
+                { discriminationFlags.copy(unitCoercionInLambdas = false) },
             )?.let { return it }
         }
 
@@ -601,7 +633,44 @@ class ConeOverloadConflictResolver(
     }
 
     private fun createEmptyConstraintSystem(): SimpleConstraintSystem {
-        return ConeSimpleConstraintSystemImpl(inferenceComponents.createConstraintSystem(), inferenceComponents.session)
+        return ConeSimpleConstraintSystemImpl(
+            inferenceComponents.createConstraintSystem(
+                when {
+                    LanguageFeature.EagerLambdaAnalysis.isEnabled() -> ::customSubtypingForNumerics
+                    else -> null
+                }
+            ),
+            inferenceComponents.session
+        )
+    }
+
+    private fun customSubtypingForNumerics(subtype: KotlinTypeMarker, supertype: KotlinTypeMarker): Boolean? {
+        requireOrDescribe(subtype is ConeKotlinType, subtype)
+        requireOrDescribe(supertype is ConeKotlinType, supertype)
+
+        val subtypeClassId = subtype.classId ?: return null
+        val supertypeClassId = supertype.classId ?: return null
+
+        // Do not assume flexible/nullable Int to be more precise than Long
+        // Int? !<: Long
+        // Int! !<: Long
+        // But for all other cases, it seems right to prefer the Int version
+        // Int <: Long
+        // Int <: Long?
+        // Int <: Long!
+        // Int! <: Long!
+        // Int? <: Long!
+        // Int? <: Long?
+        // Int? <: Long!
+        if (subtype.upperBoundIfFlexible().isMarkedNullable && !supertype.upperBoundIfFlexible().isMarkedNullable) return null
+
+        // Int <: Long
+        if (subtypeClassId == Int && supertypeClassId == Long) return true
+
+        // UInt <: ULong
+        if (subtypeClassId == UInt && supertypeClassId == ULong) return true
+
+        return null
     }
 }
 
