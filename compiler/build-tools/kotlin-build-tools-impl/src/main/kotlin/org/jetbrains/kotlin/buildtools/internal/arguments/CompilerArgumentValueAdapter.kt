@@ -6,13 +6,9 @@
 package org.jetbrains.kotlin.buildtools.internal.arguments
 
 import org.jetbrains.kotlin.buildtools.api.CompilerArgumentsParseException
-import org.jetbrains.kotlin.buildtools.api.arguments.CommonCompilerArguments
+import org.jetbrains.kotlin.buildtools.api.arguments.*
 import org.jetbrains.kotlin.buildtools.api.arguments.CommonCompilerArguments.CommonCompilerArgument
-import org.jetbrains.kotlin.buildtools.api.arguments.CommonToolArguments
-import org.jetbrains.kotlin.buildtools.api.arguments.ExperimentalCompilerArgument
-import org.jetbrains.kotlin.buildtools.api.arguments.JvmCompilerArguments
 import org.jetbrains.kotlin.buildtools.api.arguments.enums.*
-import org.jetbrains.kotlin.buildtools.api.arguments.types.ProfileCompilerCommand
 import org.jetbrains.kotlin.buildtools.api.jvm.JvmPlatformToolchain
 import java.io.File
 import java.nio.file.Path
@@ -71,7 +67,10 @@ private abstract class CommonCompilerArgumentPre2_4_0ValueAdapter : CommonToolAr
     CommonCompilerArgumentValueAdapter {
     override fun <V, T> mapFrom(value: T, key: CommonCompilerArgument<V>): V =
         when (key) {
-            CommonCompilerArguments.KOTLIN_HOME -> {
+            CommonCompilerArguments.KOTLIN_HOME,
+            CommonCompilerArguments.X_DUMP_DIRECTORY,
+            CommonCompilerArguments.X_DUMP_PERF,
+                -> {
                 if (value == null) return null as V
 
                 val pathValue = value as Path
@@ -101,17 +100,26 @@ private abstract class CommonCompilerArgumentPre2_4_0ValueAdapter : CommonToolAr
                 val mode = value as AnnotationDefaultTargetMode
                 mode.stringValue as V
             }
+
             CommonCompilerArguments.X_NAME_BASED_DESTRUCTURING -> {
                 if (value == null) return null as V
 
                 val mode = value as NameBasedDestructuringMode
                 mode.stringValue as V
             }
+
             CommonCompilerArguments.X_VERIFY_IR -> {
                 if (value == null) return null as V
 
                 val mode = value as VerifyIrMode
                 mode.stringValue as V
+            }
+
+            CommonCompilerArguments.X_WARNING_LEVEL -> {
+                if (value == null) return emptyArray<String>() as V
+
+                val listValue: List<WarningLevel> = value as List<WarningLevel>
+                listValue.map { item -> "${item.warningName}:${item.severity.stringValue}" }.toTypedArray() as V
             }
 
             else -> {
@@ -121,7 +129,10 @@ private abstract class CommonCompilerArgumentPre2_4_0ValueAdapter : CommonToolAr
 
     override fun <T, V> mapTo(value: V, key: CommonCompilerArgument<V>): T =
         when (key) {
-            CommonCompilerArguments.KOTLIN_HOME -> {
+            CommonCompilerArguments.KOTLIN_HOME,
+            CommonCompilerArguments.X_DUMP_DIRECTORY,
+            CommonCompilerArguments.X_DUMP_PERF,
+                -> {
                 if (value == null) return null as T
 
                 val stringValue = value as String
@@ -152,6 +163,7 @@ private abstract class CommonCompilerArgumentPre2_4_0ValueAdapter : CommonToolAr
                 AnnotationDefaultTargetMode.entries.firstOrNull { it.stringValue == stringValue } as T
                     ?: throw CompilerArgumentsParseException("Unknown -Xannotation-default-target value: $stringValue")
             }
+
             CommonCompilerArguments.X_NAME_BASED_DESTRUCTURING -> {
                 if (value == null) return null as T
 
@@ -159,12 +171,27 @@ private abstract class CommonCompilerArgumentPre2_4_0ValueAdapter : CommonToolAr
                 NameBasedDestructuringMode.entries.firstOrNull { it.stringValue == stringValue } as T
                     ?: throw CompilerArgumentsParseException("Unknown -Xname-based-destructuring value: $stringValue")
             }
+
             CommonCompilerArguments.X_VERIFY_IR -> {
                 if (value == null) return null as T
 
                 val stringValue = value as String
                 VerifyIrMode.entries.firstOrNull { it.stringValue == stringValue } as T
                     ?: throw CompilerArgumentsParseException("Unknown -Xverify-ir value: $stringValue")
+            }
+
+            CommonCompilerArguments.X_WARNING_LEVEL -> {
+                if (value == null) return emptyList<WarningLevel>() as T
+
+                val arrayValue = value as Array<String>
+                arrayValue.map {
+                    val parts = it.split(":", limit = 2)
+                    require(parts.size == 2) { "Invalid -Xwarning-level format: $it" }
+
+                    val level = WarningLevel.Severity.entries.firstOrNull { entry -> entry.stringValue == parts[1] }
+                        ?: throw CompilerArgumentsParseException("Unknown -Xwarning-level level: $it")
+                    WarningLevel(parts[0], level)
+                } as T
             }
 
             else -> {
@@ -299,6 +326,26 @@ private object JvmCompilerArgumentPre2_4_0ValueAdapter : CommonCompilerArgumentP
             listValue.toTypedArray() as V
         }
 
+        JvmCompilerArguments.X_NULLABILITY_ANNOTATIONS -> {
+            if (value == null) return emptyArray<String>() as V
+
+            val listValue = value as List<NullabilityAnnotation>
+            listValue.map { item -> "${item.annotationFqName}:${item.mode.stringValue}" }.toTypedArray() as V
+        }
+
+        JvmCompilerArguments.X_JSR305 -> {
+            if (value == null) return emptyArray<String>() as V
+
+            val listValue = value as List<Jsr305>
+            listValue.map { item ->
+                when (item) {
+                    is Jsr305.Global -> item.mode.stringValue
+                    is Jsr305.UnderMigration -> "under-migration:${item.mode.stringValue}"
+                    is Jsr305.SpecificAnnotation -> "${item.annotationFqName}:${item.mode.stringValue}"
+                }
+            }.toTypedArray() as V
+        }
+
         else -> value as V
     }
 
@@ -430,6 +477,39 @@ private object JvmCompilerArgumentPre2_4_0ValueAdapter : CommonCompilerArgumentP
 
                 val arrayValue = value as Array<String>
                 arrayValue.toList() as T
+            }
+
+            JvmCompilerArguments.X_NULLABILITY_ANNOTATIONS -> {
+                if (value == null) return emptyList<NullabilityAnnotation>() as T
+
+                val arrayValue = value as Array<String>
+                arrayValue.map {
+                    val parts = it.split(":")
+                    require(parts.size == 2) { "Invalid -Xnullability-annotations format: $this" }
+
+                    val nullabilityAnnotationMode =
+                        NullabilityAnnotation.Mode.values().firstOrNull { entry -> entry.stringValue == parts[1] }
+                            ?: throw CompilerArgumentsParseException("Unknown -Xnullability-annotations mode: $it")
+                    NullabilityAnnotation(parts[0].removePrefix("@"), nullabilityAnnotationMode)
+                } as T
+            }
+
+            JvmCompilerArguments.X_JSR305 -> {
+                if (value == null) return emptyList<Jsr305>() as T
+
+                val arrayValue = value as Array<String>
+                fun jsr305mode(stringValue: String) = Jsr305.Mode.values().firstOrNull { entry -> entry.stringValue == stringValue }
+                    ?: throw CompilerArgumentsParseException("Unknown -Xjsr305 mode: $stringValue")
+
+                arrayValue.map {
+                    val parts = it.split(":")
+                    when (parts.size) {
+                        1 -> Jsr305.Global(jsr305mode(parts[0]))
+                        2 if parts[0] == "under-migration" -> Jsr305.UnderMigration(jsr305mode(parts[1]))
+                        2 -> Jsr305.SpecificAnnotation(parts[0].removePrefix("@"), jsr305mode(parts[1]))
+                        else -> throw CompilerArgumentsParseException("Invalid -Xjsr30 format: $it")
+                    }
+                } as T
             }
 
             else -> value as T

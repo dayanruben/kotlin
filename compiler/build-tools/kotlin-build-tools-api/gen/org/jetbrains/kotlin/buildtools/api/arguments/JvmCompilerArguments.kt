@@ -4,7 +4,6 @@
 package org.jetbrains.kotlin.buildtools.api.arguments
 
 import java.nio.`file`.Path
-import kotlin.Array
 import kotlin.Boolean
 import kotlin.Deprecated
 import kotlin.Int
@@ -25,7 +24,6 @@ import org.jetbrains.kotlin.buildtools.api.arguments.enums.LambdasMode
 import org.jetbrains.kotlin.buildtools.api.arguments.enums.SamConversionsMode
 import org.jetbrains.kotlin.buildtools.api.arguments.enums.StringConcatMode
 import org.jetbrains.kotlin.buildtools.api.arguments.enums.WhenExpressionsMode
-import org.jetbrains.kotlin.buildtools.api.arguments.types.ProfileCompilerCommand
 
 /**
  * @since 2.3.0
@@ -363,23 +361,6 @@ public interface JvmCompilerArguments : CommonCompilerArguments {
         JvmCompilerArgument("X_JSPECIFY_ANNOTATIONS", KotlinReleaseVersion(1, 4, 30))
 
     /**
-     * Specify the behavior of 'JSR-305' nullability annotations:
-     * -Xjsr305={ignore/strict/warn}                   global (all non-@UnderMigration annotations)
-     * -Xjsr305=under-migration:{ignore/strict/warn}   all @UnderMigration annotations
-     * -Xjsr305=@<fq.name>:{ignore/strict/warn}        annotation with the given fully qualified class name
-     * Modes:
-     * * ignore
-     * * strict (experimental; treat like other supported nullability annotations)
-     * * warn (report a warning)
-     *
-     * WARNING: this option is EXPERIMENTAL and it may be changed in the future without notice or may be removed entirely.
-     */
-    @JvmField
-    @ExperimentalCompilerArgument
-    public val X_JSR305: JvmCompilerArgument<Array<String>?> =
-        JvmCompilerArgument("X_JSR305", KotlinReleaseVersion(1, 1, 50))
-
-    /**
      * This option is deprecated. Migrate to -jvm-default as follows:
      * -Xjvm-default=disable            -> -jvm-default=disable
      * -Xjvm-default=all-compatibility  -> -jvm-default=enable
@@ -557,20 +538,6 @@ public interface JvmCompilerArguments : CommonCompilerArguments {
         JvmCompilerArgument("X_NO_UNIFIED_NULL_CHECKS", KotlinReleaseVersion(1, 4, 10))
 
     /**
-     * Specify the behavior for specific Java nullability annotations (provided with fully qualified package name).
-     * Modes:
-     * * ignore
-     * * strict
-     * * warn (report a warning)
-     *
-     * WARNING: this option is EXPERIMENTAL and it may be changed in the future without notice or may be removed entirely.
-     */
-    @JvmField
-    @ExperimentalCompilerArgument
-    public val X_NULLABILITY_ANNOTATIONS: JvmCompilerArgument<Array<String>?> =
-        JvmCompilerArgument("X_NULLABILITY_ANNOTATIONS", KotlinReleaseVersion(1, 5, 30))
-
-    /**
      * Output builtins metadata as .kotlin_builtins files
      *
      * WARNING: this option is EXPERIMENTAL and it may be changed in the future without notice or may be removed entirely.
@@ -579,21 +546,6 @@ public interface JvmCompilerArguments : CommonCompilerArguments {
     @ExperimentalCompilerArgument
     public val X_OUTPUT_BUILTINS_METADATA: JvmCompilerArgument<Boolean> =
         JvmCompilerArgument("X_OUTPUT_BUILTINS_METADATA", KotlinReleaseVersion(2, 1, 20))
-
-    /**
-     * Debug option: Run the compiler with the async profiler and save snapshots to `outputDir`; `command` is passed to the async profiler on start.
-     * `profilerPath` is the path to libasyncProfiler.so; async-profiler.jar should be on the compiler classpath.
-     * If it's not on the classpath, the compiler will attempt to load async-profiler.jar from the containing directory of profilerPath. 
-     * Individual parameter values are separated by the system path separator.
-     * Example (Unix/Linux): -Xprofile=<PATH_TO_ASYNC_PROFILER>/async-profiler/build/libasyncProfiler.so:event=cpu,interval=1ms,threads,start:<SNAPSHOT_DIR_PATH>
-     * Example (Windows): -Xprofile=<PATH_TO_ASYNC_PROFILER>\async-profiler\build\libasyncProfiler.so;event=cpu,interval=1ms,threads,start;<SNAPSHOT_DIR_PATH>
-     *
-     * WARNING: this option is EXPERIMENTAL and it may be changed in the future without notice or may be removed entirely.
-     */
-    @JvmField
-    @ExperimentalCompilerArgument
-    public val X_PROFILE: JvmCompilerArgument<ProfileCompilerCommand?> =
-        JvmCompilerArgument("X_PROFILE", KotlinReleaseVersion(1, 4, 20))
 
     /**
      * Select the code generation scheme for SAM conversions.
@@ -874,5 +826,51 @@ public interface JvmCompilerArguments : CommonCompilerArguments {
     @JvmField
     public val SCRIPT_TEMPLATES: JvmCompilerArgument<List<String>> =
         JvmCompilerArgument("SCRIPT_TEMPLATES", KotlinReleaseVersion(1, 1, 0))
+
+    /**
+     * Debug option: Run the compiler with the async profiler and save snapshots to `outputDir`; `command` is passed to the async profiler on start.
+     * `profilerPath` is the path to libasyncProfiler.so; async-profiler.jar should be on the compiler classpath.
+     * If it's not on the classpath, the compiler will attempt to load async-profiler.jar from the containing directory of profilerPath. 
+     * Individual parameter values are separated by the system path separator.
+     * Example (Unix/Linux): -Xprofile=<PATH_TO_ASYNC_PROFILER>/async-profiler/build/libasyncProfiler.so:event=cpu,interval=1ms,threads,start:<SNAPSHOT_DIR_PATH>
+     * Example (Windows): -Xprofile=<PATH_TO_ASYNC_PROFILER>\async-profiler\build\libasyncProfiler.so;event=cpu,interval=1ms,threads,start;<SNAPSHOT_DIR_PATH>
+     *
+     * WARNING: this option is EXPERIMENTAL and it may be changed in the future without notice or may be removed entirely.
+     */
+    @JvmField
+    @ExperimentalCompilerArgument
+    public val X_PROFILE: JvmCompilerArgument<ProfileCompilerCommand?> =
+        JvmCompilerArgument("X_PROFILE", KotlinReleaseVersion(1, 4, 20))
+
+    /**
+     * Specify the behavior for specific Java nullability annotations (provided with fully qualified package name).
+     * Modes:
+     * * ignore
+     * * strict
+     * * warn (report a warning)
+     *
+     * WARNING: this option is EXPERIMENTAL and it may be changed in the future without notice or may be removed entirely.
+     */
+    @JvmField
+    @ExperimentalCompilerArgument
+    public val X_NULLABILITY_ANNOTATIONS: JvmCompilerArgument<List<NullabilityAnnotation>> =
+        JvmCompilerArgument("X_NULLABILITY_ANNOTATIONS", KotlinReleaseVersion(1, 5, 30))
+
+    /**
+     * Specify the behavior of 'JSR-305' nullability annotations:
+     * -Xjsr305={ignore/strict/warn}                   global (all non-@UnderMigration annotations)
+     * -Xjsr305=under-migration:{ignore/strict/warn}   all @UnderMigration annotations
+     * -Xjsr305=@<fq.name>:{ignore/strict/warn}        annotation with the given fully qualified class name
+     * Modes:
+     * * ignore
+     * * strict (experimental; treat like other supported nullability annotations)
+     * * warn (report a warning)
+     *
+     * WARNING: this option is EXPERIMENTAL and it may be changed in the future without notice or may be removed entirely.
+     */
+    @JvmField
+    @ExperimentalCompilerArgument
+    public val X_JSR305: JvmCompilerArgument<List<Jsr305>> =
+        JvmCompilerArgument("X_JSR305", KotlinReleaseVersion(1, 1, 50))
   }
 }

@@ -321,6 +321,7 @@ val actualCommonCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLev
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xdump-perf"
         description =
@@ -330,6 +331,7 @@ val actualCommonCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLev
         valueDescription = "<path>".asReleaseDependent()
         valueType = StringType.defaultNull
         affectsCompilationOutcome = false
+        argumentType = PathType.defaultNull
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_2_50,
@@ -457,11 +459,13 @@ val actualCommonCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLev
     }
 
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xdump-directory"
         description = "Dump the backend state into this directory.".asReleaseDependent()
         valueType = StringType.defaultNull
         affectsCompilationOutcome = false
+        argumentType = PathType.defaultNull
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_3_50,
@@ -1095,7 +1099,7 @@ The argument should be used only if the new compilation scheme is enabled with -
         )
     }
 
-
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xwarning-level"
         compilerName = "warningLevels"
@@ -1105,6 +1109,7 @@ The argument should be used only if the new compilation scheme is enabled with -
 - `warning` level overrides -nowarn and -Werror for this specific warning (the warning will be reported/won't be considered as an error)""".asReleaseDependent()
         valueDescription = "<WARNING_NAME>:(error|warning|disabled)".asReleaseDependent()
         valueType = StringArrayType.defaultNull
+        argumentType = StringListType.defaultEmpty
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v2_2_0,

@@ -15,6 +15,7 @@ import kotlin.Suppress
 import kotlin.collections.List
 import kotlin.collections.MutableMap
 import kotlin.collections.MutableSet
+import kotlin.collections.emptyList
 import kotlin.collections.mutableMapOf
 import kotlin.collections.mutableSetOf
 import kotlin.collections.toTypedArray
@@ -108,6 +109,7 @@ import org.jetbrains.kotlin.buildtools.`internal`.compat.arguments.CommonCompile
 import org.jetbrains.kotlin.buildtools.api.CompilerArgumentsParseException
 import org.jetbrains.kotlin.buildtools.api.KotlinReleaseVersion
 import org.jetbrains.kotlin.buildtools.api.arguments.ExperimentalCompilerArgument
+import org.jetbrains.kotlin.buildtools.api.arguments.WarningLevel
 import org.jetbrains.kotlin.buildtools.api.arguments.enums.AnnotationDefaultTargetMode
 import org.jetbrains.kotlin.buildtools.api.arguments.enums.ExplicitApiMode
 import org.jetbrains.kotlin.buildtools.api.arguments.enums.KotlinVersion
@@ -184,9 +186,9 @@ internal abstract class CommonCompilerArgumentsImpl(
     if (X_DISABLE_DEFAULT_SCRIPTING_PLUGIN in this) { arguments.disableDefaultScriptingPlugin = get(X_DISABLE_DEFAULT_SCRIPTING_PLUGIN)}
     if (X_DISABLE_PHASES in this) { arguments.disablePhases = get(X_DISABLE_PHASES).toTypedArray()}
     try { if (X_DONT_WARN_ON_ERROR_SUPPRESSION in this) { arguments.dontWarnOnErrorSuppression = get(X_DONT_WARN_ON_ERROR_SUPPRESSION)} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_DONT_WARN_ON_ERROR_SUPPRESSION. Current compiler version is: $KC_VERSION, but the argument was introduced in 2.0.0""").initCause(e) }
-    if (X_DUMP_DIRECTORY in this) { arguments.dumpDirectory = get(X_DUMP_DIRECTORY)}
+    if (X_DUMP_DIRECTORY in this) { arguments.dumpDirectory = get(X_DUMP_DIRECTORY)?.absolutePathStringOrThrow()}
     if (X_DUMP_FQNAME in this) { arguments.dumpOnlyFqName = get(X_DUMP_FQNAME)}
-    if (X_DUMP_PERF in this) { arguments.dumpPerf = get(X_DUMP_PERF)}
+    if (X_DUMP_PERF in this) { arguments.dumpPerf = get(X_DUMP_PERF)?.absolutePathStringOrThrow()}
     if (X_ENABLE_INCREMENTAL_COMPILATION in this) { arguments.incrementalCompilation = get(X_ENABLE_INCREMENTAL_COMPILATION)}
     try { if (X_EXPECT_ACTUAL_CLASSES in this) { arguments.expectActualClasses = get(X_EXPECT_ACTUAL_CLASSES)} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_EXPECT_ACTUAL_CLASSES. Current compiler version is: $KC_VERSION, but the argument was introduced in 1.9.20""").initCause(e) }
     if (X_EXPLICIT_API in this) { arguments.explicitApi = get(X_EXPLICIT_API).stringValue}
@@ -236,7 +238,6 @@ internal abstract class CommonCompilerArgumentsImpl(
     if (X_VERBOSE_PHASES in this) { arguments.verbosePhases = get(X_VERBOSE_PHASES).toTypedArray()}
     try { if (X_VERIFY_IR in this) { arguments.verifyIr = get(X_VERIFY_IR)?.stringValue} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_VERIFY_IR. Current compiler version is: $KC_VERSION, but the argument was introduced in 2.0.20""").initCause(e) }
     try { if (X_VERIFY_IR_VISIBILITY in this) { arguments.verifyIrVisibility = get(X_VERIFY_IR_VISIBILITY)} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_VERIFY_IR_VISIBILITY. Current compiler version is: $KC_VERSION, but the argument was introduced in 2.0.20""").initCause(e) }
-    try { if (X_WARNING_LEVEL in this) { arguments.warningLevels = get(X_WARNING_LEVEL) ?: emptyArray()} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_WARNING_LEVEL. Current compiler version is: $KC_VERSION, but the argument was introduced in 2.2.0""").initCause(e) }
     try { if (X_WHEN_GUARDS in this) { arguments.whenGuards = get(X_WHEN_GUARDS)} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_WHEN_GUARDS. Current compiler version is: $KC_VERSION, but the argument was introduced in 2.0.20""").initCause(e) }
     if (API_VERSION in this) { arguments.apiVersion = get(API_VERSION)?.stringValue}
     if (KOTLIN_HOME in this) { arguments.kotlinHome = get(KOTLIN_HOME)?.absolutePathStringOrThrow()}
@@ -244,6 +245,7 @@ internal abstract class CommonCompilerArgumentsImpl(
     if (OPT_IN in this) { arguments.optIn = get(OPT_IN).toTypedArray()}
     if (PROGRESSIVE in this) { arguments.progressiveMode = get(PROGRESSIVE)}
     if (SCRIPT in this) { arguments.script = get(SCRIPT)}
+    try { if (X_WARNING_LEVEL in this) { arguments.applyWarningLevels(get(X_WARNING_LEVEL))} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_WARNING_LEVEL. Current compiler version is: $KC_VERSION, but the argument was introduced in 2.2.0""").initCause(e) }
     return arguments
   }
 
@@ -276,9 +278,9 @@ internal abstract class CommonCompilerArgumentsImpl(
     try { this[X_DISABLE_DEFAULT_SCRIPTING_PLUGIN] = arguments.disableDefaultScriptingPlugin } catch (_: NoSuchMethodError) {  }
     try { this[X_DISABLE_PHASES] = arguments.disablePhases.toListOrEmpty() } catch (_: NoSuchMethodError) {  }
     try { this[X_DONT_WARN_ON_ERROR_SUPPRESSION] = arguments.dontWarnOnErrorSuppression } catch (_: NoSuchMethodError) {  }
-    try { this[X_DUMP_DIRECTORY] = arguments.dumpDirectory } catch (_: NoSuchMethodError) {  }
+    try { this[X_DUMP_DIRECTORY] = arguments.dumpDirectory?.let { Path(it) } } catch (_: NoSuchMethodError) {  }
     try { this[X_DUMP_FQNAME] = arguments.dumpOnlyFqName } catch (_: NoSuchMethodError) {  }
-    try { this[X_DUMP_PERF] = arguments.dumpPerf } catch (_: NoSuchMethodError) {  }
+    try { this[X_DUMP_PERF] = arguments.dumpPerf?.let { Path(it) } } catch (_: NoSuchMethodError) {  }
     try { this[X_ENABLE_INCREMENTAL_COMPILATION] = arguments.incrementalCompilation } catch (_: NoSuchMethodError) {  }
     try { this[X_EXPECT_ACTUAL_CLASSES] = arguments.expectActualClasses } catch (_: NoSuchMethodError) {  }
     try { this[X_EXPLICIT_API] = arguments.explicitApi.let { ExplicitApiMode.entries.firstOrNull { entry -> entry.stringValue == it } ?: throw CompilerArgumentsParseException("Unknown -Xexplicit-api value: $it") } } catch (_: NoSuchMethodError) {  }
@@ -328,7 +330,6 @@ internal abstract class CommonCompilerArgumentsImpl(
     try { this[X_VERBOSE_PHASES] = arguments.verbosePhases.toListOrEmpty() } catch (_: NoSuchMethodError) {  }
     try { this[X_VERIFY_IR] = arguments.verifyIr?.let { VerifyIrMode.entries.firstOrNull { entry -> entry.stringValue == it } ?: throw CompilerArgumentsParseException("Unknown -Xverify-ir value: $it") } } catch (_: NoSuchMethodError) {  }
     try { this[X_VERIFY_IR_VISIBILITY] = arguments.verifyIrVisibility } catch (_: NoSuchMethodError) {  }
-    try { this[X_WARNING_LEVEL] = arguments.warningLevels } catch (_: NoSuchMethodError) {  }
     try { this[X_WHEN_GUARDS] = arguments.whenGuards } catch (_: NoSuchMethodError) {  }
     try { this[API_VERSION] = arguments.apiVersion?.let { KotlinVersion.entries.firstOrNull { entry -> entry.stringValue == it } ?: throw CompilerArgumentsParseException("Unknown -api-version value: $it") } } catch (_: NoSuchMethodError) {  }
     try { this[KOTLIN_HOME] = arguments.kotlinHome?.let { Path(it) } } catch (_: NoSuchMethodError) {  }
@@ -336,6 +337,7 @@ internal abstract class CommonCompilerArgumentsImpl(
     try { this[OPT_IN] = arguments.optIn.toListOrEmpty() } catch (_: NoSuchMethodError) {  }
     try { this[PROGRESSIVE] = arguments.progressiveMode } catch (_: NoSuchMethodError) {  }
     try { this[SCRIPT] = arguments.script } catch (_: NoSuchMethodError) {  }
+    try { this[X_WARNING_LEVEL] = applyWarningLevels(if(X_WARNING_LEVEL in this) this[X_WARNING_LEVEL] else emptyList<WarningLevel>(), arguments) } catch (_: NoSuchMethodError) {  }
     internalArguments.addAll(arguments.internalArguments.map { it.stringRepresentation })
   }
 
@@ -426,13 +428,14 @@ internal abstract class CommonCompilerArgumentsImpl(
     public val X_DONT_WARN_ON_ERROR_SUPPRESSION: CommonCompilerArgument<Boolean> =
         CommonCompilerArgument("X_DONT_WARN_ON_ERROR_SUPPRESSION")
 
-    public val X_DUMP_DIRECTORY: CommonCompilerArgument<String?> =
+    public val X_DUMP_DIRECTORY: CommonCompilerArgument<java.nio.`file`.Path?> =
         CommonCompilerArgument("X_DUMP_DIRECTORY")
 
     public val X_DUMP_FQNAME: CommonCompilerArgument<String?> =
         CommonCompilerArgument("X_DUMP_FQNAME")
 
-    public val X_DUMP_PERF: CommonCompilerArgument<String?> = CommonCompilerArgument("X_DUMP_PERF")
+    public val X_DUMP_PERF: CommonCompilerArgument<java.nio.`file`.Path?> =
+        CommonCompilerArgument("X_DUMP_PERF")
 
     public val X_ENABLE_INCREMENTAL_COMPILATION: CommonCompilerArgument<Boolean?> =
         CommonCompilerArgument("X_ENABLE_INCREMENTAL_COMPILATION")
@@ -578,9 +581,6 @@ internal abstract class CommonCompilerArgumentsImpl(
     public val X_VERIFY_IR_VISIBILITY: CommonCompilerArgument<Boolean> =
         CommonCompilerArgument("X_VERIFY_IR_VISIBILITY")
 
-    public val X_WARNING_LEVEL: CommonCompilerArgument<Array<String>?> =
-        CommonCompilerArgument("X_WARNING_LEVEL")
-
     public val X_WHEN_GUARDS: CommonCompilerArgument<Boolean> =
         CommonCompilerArgument("X_WHEN_GUARDS")
 
@@ -598,5 +598,8 @@ internal abstract class CommonCompilerArgumentsImpl(
     public val PROGRESSIVE: CommonCompilerArgument<Boolean> = CommonCompilerArgument("PROGRESSIVE")
 
     public val SCRIPT: CommonCompilerArgument<Boolean> = CommonCompilerArgument("SCRIPT")
+
+    public val X_WARNING_LEVEL: CommonCompilerArgument<List<WarningLevel>> =
+        CommonCompilerArgument("X_WARNING_LEVEL")
   }
 }

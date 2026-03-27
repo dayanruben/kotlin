@@ -17,6 +17,7 @@ import kotlin.Suppress
 import kotlin.collections.List
 import kotlin.collections.MutableMap
 import kotlin.collections.MutableSet
+import kotlin.collections.emptyList
 import kotlin.collections.joinToString
 import kotlin.collections.map
 import kotlin.collections.mutableMapOf
@@ -106,7 +107,10 @@ import org.jetbrains.kotlin.buildtools.`internal`.compat.arguments.JvmCompilerAr
 import org.jetbrains.kotlin.buildtools.api.CompilerArgumentsParseException
 import org.jetbrains.kotlin.buildtools.api.KotlinReleaseVersion
 import org.jetbrains.kotlin.buildtools.api.arguments.ExperimentalCompilerArgument
+import org.jetbrains.kotlin.buildtools.api.arguments.Jsr305
 import org.jetbrains.kotlin.buildtools.api.arguments.JvmCompilerArguments
+import org.jetbrains.kotlin.buildtools.api.arguments.NullabilityAnnotation
+import org.jetbrains.kotlin.buildtools.api.arguments.ProfileCompilerCommand
 import org.jetbrains.kotlin.buildtools.api.arguments.enums.AbiStabilityMode
 import org.jetbrains.kotlin.buildtools.api.arguments.enums.AssertionsMode
 import org.jetbrains.kotlin.buildtools.api.arguments.enums.CompatqualAnnotationsMode
@@ -118,7 +122,6 @@ import org.jetbrains.kotlin.buildtools.api.arguments.enums.LambdasMode
 import org.jetbrains.kotlin.buildtools.api.arguments.enums.SamConversionsMode
 import org.jetbrains.kotlin.buildtools.api.arguments.enums.StringConcatMode
 import org.jetbrains.kotlin.buildtools.api.arguments.enums.WhenExpressionsMode
-import org.jetbrains.kotlin.buildtools.api.arguments.types.ProfileCompilerCommand
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.cli.common.arguments.validateArguments
@@ -199,7 +202,6 @@ internal class JvmCompilerArgumentsImpl(
     try { if (X_JAVAC_ARGUMENTS in this) { arguments.setUsingReflection("javacArguments", get(X_JAVAC_ARGUMENTS) ?: emptyArray())} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_JAVAC_ARGUMENTS. Current compiler version is: $KC_VERSION, but the argument was removed in 2.4.0""").initCause(e) }
     if (X_JDK_RELEASE in this) { arguments.jdkRelease = get(X_JDK_RELEASE)?.stringValue}
     if (X_JSPECIFY_ANNOTATIONS in this) { arguments.jspecifyAnnotations = get(X_JSPECIFY_ANNOTATIONS)?.stringValue}
-    if (X_JSR305 in this) { arguments.jsr305 = get(X_JSR305) ?: emptyArray()}
     if (X_JVM_DEFAULT in this) { arguments.jvmDefault = get(X_JVM_DEFAULT)}
     if (X_JVM_ENABLE_PREVIEW in this) { arguments.enableJvmPreview = get(X_JVM_ENABLE_PREVIEW)}
     try { if (X_JVM_EXPOSE_BOXED in this) { arguments.jvmExposeBoxed = get(X_JVM_EXPOSE_BOXED)} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_JVM_EXPOSE_BOXED. Current compiler version is: $KC_VERSION, but the argument was introduced in 2.2.0""").initCause(e) }
@@ -216,9 +218,7 @@ internal class JvmCompilerArgumentsImpl(
     if (X_NO_RESET_JAR_TIMESTAMPS in this) { arguments.noResetJarTimestamps = get(X_NO_RESET_JAR_TIMESTAMPS)}
     if (X_NO_SOURCE_DEBUG_EXTENSION in this) { arguments.noSourceDebugExtension = get(X_NO_SOURCE_DEBUG_EXTENSION)}
     if (X_NO_UNIFIED_NULL_CHECKS in this) { arguments.noUnifiedNullChecks = get(X_NO_UNIFIED_NULL_CHECKS)}
-    if (X_NULLABILITY_ANNOTATIONS in this) { arguments.nullabilityAnnotations = get(X_NULLABILITY_ANNOTATIONS) ?: emptyArray()}
     try { if (X_OUTPUT_BUILTINS_METADATA in this) { arguments.outputBuiltinsMetadata = get(X_OUTPUT_BUILTINS_METADATA)} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_OUTPUT_BUILTINS_METADATA. Current compiler version is: $KC_VERSION, but the argument was introduced in 2.1.20""").initCause(e) }
-    if (X_PROFILE in this) { arguments.profileCompilerCommand = get(X_PROFILE)?.toArgumentString()}
     if (X_SAM_CONVERSIONS in this) { arguments.samConversions = get(X_SAM_CONVERSIONS)?.stringValue}
     if (X_SANITIZE_PARENTHESES in this) { arguments.sanitizeParentheses = get(X_SANITIZE_PARENTHESES)}
     if (X_SCRIPT_RESOLVER_ENVIRONMENT in this) { arguments.scriptResolverEnvironment = get(X_SCRIPT_RESOLVER_ENVIRONMENT).toTypedArray()}
@@ -251,6 +251,9 @@ internal class JvmCompilerArgumentsImpl(
     if (NO_REFLECT in this) { arguments.noReflect = get(NO_REFLECT)}
     if (NO_STDLIB in this) { arguments.noStdlib = get(NO_STDLIB)}
     if (SCRIPT_TEMPLATES in this) { arguments.scriptTemplates = get(SCRIPT_TEMPLATES).toTypedArray()}
+    if (X_PROFILE in this) { arguments.applyProfileCompilerCommand(get(X_PROFILE))}
+    if (X_NULLABILITY_ANNOTATIONS in this) { arguments.applyNullabilityAnnotations(get(X_NULLABILITY_ANNOTATIONS))}
+    if (X_JSR305 in this) { arguments.applyJsr305(get(X_JSR305))}
     arguments.internalArguments = parseCommandLineArguments<K2JVMCompilerArguments>(internalArguments.toList()).internalArguments
     return arguments
   }
@@ -284,7 +287,6 @@ internal class JvmCompilerArgumentsImpl(
     try { this[X_JAVAC_ARGUMENTS] = arguments.getUsingReflection("javacArguments") } catch (_: NoSuchMethodError) {  }
     try { this[X_JDK_RELEASE] = arguments.jdkRelease?.let { JdkRelease.entries.firstOrNull { entry -> entry.stringValue == it } ?: throw CompilerArgumentsParseException("Unknown -Xjdk-release value: $it") } } catch (_: NoSuchMethodError) {  }
     try { this[X_JSPECIFY_ANNOTATIONS] = arguments.jspecifyAnnotations?.let { JspecifyAnnotationsMode.entries.firstOrNull { entry -> entry.stringValue == it } ?: throw CompilerArgumentsParseException("Unknown -Xjspecify-annotations value: $it") } } catch (_: NoSuchMethodError) {  }
-    try { this[X_JSR305] = arguments.jsr305 } catch (_: NoSuchMethodError) {  }
     try { this[X_JVM_DEFAULT] = arguments.jvmDefault } catch (_: NoSuchMethodError) {  }
     try { this[X_JVM_ENABLE_PREVIEW] = arguments.enableJvmPreview } catch (_: NoSuchMethodError) {  }
     try { this[X_JVM_EXPOSE_BOXED] = arguments.jvmExposeBoxed } catch (_: NoSuchMethodError) {  }
@@ -301,9 +303,7 @@ internal class JvmCompilerArgumentsImpl(
     try { this[X_NO_RESET_JAR_TIMESTAMPS] = arguments.noResetJarTimestamps } catch (_: NoSuchMethodError) {  }
     try { this[X_NO_SOURCE_DEBUG_EXTENSION] = arguments.noSourceDebugExtension } catch (_: NoSuchMethodError) {  }
     try { this[X_NO_UNIFIED_NULL_CHECKS] = arguments.noUnifiedNullChecks } catch (_: NoSuchMethodError) {  }
-    try { this[X_NULLABILITY_ANNOTATIONS] = arguments.nullabilityAnnotations } catch (_: NoSuchMethodError) {  }
     try { this[X_OUTPUT_BUILTINS_METADATA] = arguments.outputBuiltinsMetadata } catch (_: NoSuchMethodError) {  }
-    try { this[X_PROFILE] = arguments.profileCompilerCommand?.toXprofile() } catch (_: NoSuchMethodError) {  }
     try { this[X_SAM_CONVERSIONS] = arguments.samConversions?.let { SamConversionsMode.entries.firstOrNull { entry -> entry.stringValue == it } ?: throw CompilerArgumentsParseException("Unknown -Xsam-conversions value: $it") } } catch (_: NoSuchMethodError) {  }
     try { this[X_SANITIZE_PARENTHESES] = arguments.sanitizeParentheses } catch (_: NoSuchMethodError) {  }
     try { this[X_SCRIPT_RESOLVER_ENVIRONMENT] = arguments.scriptResolverEnvironment.toListOrEmpty() } catch (_: NoSuchMethodError) {  }
@@ -336,6 +336,9 @@ internal class JvmCompilerArgumentsImpl(
     try { this[NO_REFLECT] = arguments.noReflect } catch (_: NoSuchMethodError) {  }
     try { this[NO_STDLIB] = arguments.noStdlib } catch (_: NoSuchMethodError) {  }
     try { this[SCRIPT_TEMPLATES] = arguments.scriptTemplates.toListOrEmpty() } catch (_: NoSuchMethodError) {  }
+    try { this[X_PROFILE] = applyProfileCompilerCommand(if(X_PROFILE in this) this[X_PROFILE] else null, arguments) } catch (_: NoSuchMethodError) {  }
+    try { this[X_NULLABILITY_ANNOTATIONS] = applyNullabilityAnnotations(if(X_NULLABILITY_ANNOTATIONS in this) this[X_NULLABILITY_ANNOTATIONS] else emptyList<NullabilityAnnotation>(), arguments) } catch (_: NoSuchMethodError) {  }
+    try { this[X_JSR305] = applyJsr305(if(X_JSR305 in this) this[X_JSR305] else emptyList<Jsr305>(), arguments) } catch (_: NoSuchMethodError) {  }
     internalArguments.addAll(arguments.internalArguments.map { it.stringRepresentation })
   }
 
@@ -434,8 +437,6 @@ internal class JvmCompilerArgumentsImpl(
     public val X_JSPECIFY_ANNOTATIONS: JvmCompilerArgument<JspecifyAnnotationsMode?> =
         JvmCompilerArgument("X_JSPECIFY_ANNOTATIONS")
 
-    public val X_JSR305: JvmCompilerArgument<Array<String>?> = JvmCompilerArgument("X_JSR305")
-
     public val X_JVM_DEFAULT: JvmCompilerArgument<String?> = JvmCompilerArgument("X_JVM_DEFAULT")
 
     public val X_JVM_ENABLE_PREVIEW: JvmCompilerArgument<Boolean> =
@@ -481,14 +482,8 @@ internal class JvmCompilerArgumentsImpl(
     public val X_NO_UNIFIED_NULL_CHECKS: JvmCompilerArgument<Boolean> =
         JvmCompilerArgument("X_NO_UNIFIED_NULL_CHECKS")
 
-    public val X_NULLABILITY_ANNOTATIONS: JvmCompilerArgument<Array<String>?> =
-        JvmCompilerArgument("X_NULLABILITY_ANNOTATIONS")
-
     public val X_OUTPUT_BUILTINS_METADATA: JvmCompilerArgument<Boolean> =
         JvmCompilerArgument("X_OUTPUT_BUILTINS_METADATA")
-
-    public val X_PROFILE: JvmCompilerArgument<ProfileCompilerCommand?> =
-        JvmCompilerArgument("X_PROFILE")
 
     public val X_SAM_CONVERSIONS: JvmCompilerArgument<SamConversionsMode?> =
         JvmCompilerArgument("X_SAM_CONVERSIONS")
@@ -576,5 +571,13 @@ internal class JvmCompilerArgumentsImpl(
 
     public val SCRIPT_TEMPLATES: JvmCompilerArgument<List<String>> =
         JvmCompilerArgument("SCRIPT_TEMPLATES")
+
+    public val X_PROFILE: JvmCompilerArgument<ProfileCompilerCommand?> =
+        JvmCompilerArgument("X_PROFILE")
+
+    public val X_NULLABILITY_ANNOTATIONS: JvmCompilerArgument<List<NullabilityAnnotation>> =
+        JvmCompilerArgument("X_NULLABILITY_ANNOTATIONS")
+
+    public val X_JSR305: JvmCompilerArgument<List<Jsr305>> = JvmCompilerArgument("X_JSR305")
   }
 }

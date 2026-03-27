@@ -66,7 +66,25 @@ sealed class BtaCompilerArgument<T : BtaCompilerArgumentValueType>(
         deprecatedSinceVersion = deprecatedSinceVersion,
         removedSinceVersion = removedSinceVersion,
         affectsCompilationOutcome = affectsCompilationOutcome,
-    )
+    ) {
+        constructor(
+            origin: KotlinCompilerArgument,
+            valueType: BtaCompilerArgumentValueType.CustomArgumentValueType,
+            defaultValue: CodeBlock,
+        ) : this(
+            name = origin.name,
+            description = origin.description.current,
+            valueType = valueType,
+            introducedSinceVersion = origin.releaseVersionsMetadata.introducedVersion,
+            deprecatedSinceVersion = origin.releaseVersionsMetadata.deprecatedVersion,
+            removedSinceVersion = origin.releaseVersionsMetadata.removedVersion,
+            defaultValue = defaultValue,
+            applierSimpleName = "apply${
+                origin.calculateName().replaceFirstChar { it.uppercase() }
+            }",
+            affectsCompilationOutcome = origin.affectsCompilationOutcome,
+        )
+    }
 }
 
 /**
@@ -109,4 +127,52 @@ object CustomCompilerArguments {
             ClassName(API_ARGUMENTS_PACKAGE, "CompilerPlugin")
         ),
     )
+
+    val profileCompilerCommandArgumentFactory = CustomCompilerArgumentFactory(
+        valueType = BtaCompilerArgumentValueType.CustomArgumentValueType(
+            type = ClassName(API_ARGUMENTS_PACKAGE, "ProfileCompilerCommand").copy(nullable = true),
+        ),
+        defaultValue = CodeBlock.of("null"),
+    )
+
+    val nullabilityAnnotationFactory = CustomCompilerArgumentFactory(
+        valueType = BtaCompilerArgumentValueType.CustomArgumentValueType(
+            type = listTypeNameOf(ClassName(API_ARGUMENTS_PACKAGE, "NullabilityAnnotation")),
+        ),
+        defaultValue = CodeBlock.of(
+            "%M<%T>()",
+            MemberName(KOTLIN_COLLECTIONS, "emptyList"),
+            ClassName(API_ARGUMENTS_PACKAGE, "NullabilityAnnotation"),
+        ),
+    )
+
+    val jsr305Factory = CustomCompilerArgumentFactory(
+        valueType = BtaCompilerArgumentValueType.CustomArgumentValueType(
+            type = listTypeNameOf(ClassName(API_ARGUMENTS_PACKAGE, "Jsr305")),
+        ),
+        defaultValue = CodeBlock.of(
+            "%M<%T>()",
+            MemberName(KOTLIN_COLLECTIONS, "emptyList"),
+            ClassName(API_ARGUMENTS_PACKAGE, "Jsr305"),
+        ),
+    )
+
+    val warningLevel = CustomCompilerArgumentFactory(
+        valueType = BtaCompilerArgumentValueType.CustomArgumentValueType(
+            type = listTypeNameOf(ClassName(API_ARGUMENTS_PACKAGE, "WarningLevel")),
+        ),
+        defaultValue = CodeBlock.of(
+            "%M<%T>()",
+            MemberName(KOTLIN_COLLECTIONS, "emptyList"),
+            ClassName(API_ARGUMENTS_PACKAGE, "WarningLevel"),
+        ),
+    )
+}
+
+class CustomCompilerArgumentFactory(
+    private val valueType: BtaCompilerArgumentValueType.CustomArgumentValueType,
+    private val defaultValue: CodeBlock,
+) {
+    fun create(origin: KotlinCompilerArgument): BtaCompilerArgument.CustomCompilerArgument =
+        BtaCompilerArgument.CustomCompilerArgument(origin, valueType, defaultValue)
 }

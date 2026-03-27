@@ -37,6 +37,8 @@ fun testList(): Flow<List<Int>> = flowOf(listOf(1), listOf(2), listOf(3))
 
 fun testPrimitive(): Flow<UInt> = flowOf(1u, 2u, 3u)
 
+fun testUnit(): Flow<Unit?> = flowOf(Unit, null, Unit)
+
 fun testFailing(): Flow<Elem> = flow {
     emit(Element1)
     emit(Element2)
@@ -48,6 +50,18 @@ fun testDiscarding(): Flow<Elem> = flow {
     emit(Element2)
     emit(Element3)
     error("Flow has to be discarded")
+}
+
+class TrackedFlow {
+
+    private val _count = MutableStateFlow(0)
+    public val count: Int get() = _count.value
+
+    public val flow: Flow<Elem> = MutableStateFlow(Element1).onStart {
+        _count.update { it + 1 }
+    }.onCompletion {
+        _count.update { it - 1 }
+    }
 }
 
 suspend fun testCollect(flow: Flow<Elem>, count: Int): List<Elem> = flow.take(count).toList()

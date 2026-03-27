@@ -207,10 +207,6 @@ internal class BtaImplGenerator(
                             val classifier = type.classifier as KClass<*>
                             classifier.toBtaEnumClassName()
                         }
-                        classifier.isCustomType -> {
-                            val classifier = type.classifier as KClass<*>
-                            classifier.toBtaCustomClassName()
-                        }
                         else -> {
                             type.asTypeName()
                         }
@@ -240,7 +236,6 @@ internal class BtaImplGenerator(
                 }
 
                 is BtaCompilerArgument.CustomCompilerArgument -> {
-                    defaultsInitializer.addStatement("optionsMap[%S] = %L", name, argument.defaultValue)
                     generateCustomRepresentation(
                         implClassName,
                         name,
@@ -295,7 +290,7 @@ internal class BtaImplGenerator(
         }
 
         applyCompilerArgumentsFun.addSafeMethodAccessStatement(CodeBlock.builder().apply {
-            add("this[%M] = %M(this[%M], arguments)", member, applier, member)
+            add("this[%M] = %M(if(%M in this) this[%M] else %L, arguments)", member, applier, member, member, argument.defaultValue)
         }.build(), failOnNoSuchMethod = false)
     }
 
@@ -374,16 +369,6 @@ internal class BtaImplGenerator(
                     MemberName(
                         packageName = targetPackage,
                         simpleName = "absolutePathStringOrThrow",
-                        isExtension = true
-                    )
-                )
-            }
-            type.isCustomType -> {
-                add(
-                    maybeGetNullabilitySign(argument) + ".%M()",
-                    MemberName(
-                        packageName = targetPackage,
-                        simpleName = "toArgumentString",
                         isExtension = true
                     )
                 )
@@ -470,16 +455,6 @@ internal class BtaImplGenerator(
             argument.valueType.origin is PathType -> {
                 add(maybeGetNullabilitySign(argument))
                 add(".let { %M(it) }", MemberName(KOTLIN_IO_PATH, "Path"))
-            }
-            type.isCustomType -> {
-                add(
-                    maybeGetNullabilitySign(argument) + ".%M()",
-                    MemberName(
-                        packageName = targetPackage,
-                        simpleName = "to${argument.name.replaceFirstChar { it.uppercase() }}",
-                        isExtension = true
-                    )
-                )
             }
             argument.valueType.origin is StringListType -> {
                 add(

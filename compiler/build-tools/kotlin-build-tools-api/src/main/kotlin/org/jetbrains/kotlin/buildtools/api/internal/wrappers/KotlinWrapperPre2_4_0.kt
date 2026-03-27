@@ -8,11 +8,8 @@
 package org.jetbrains.kotlin.buildtools.api.internal.wrappers
 
 import org.jetbrains.kotlin.buildtools.api.*
-import org.jetbrains.kotlin.buildtools.api.arguments.CommonCompilerArguments
-import org.jetbrains.kotlin.buildtools.api.arguments.ExperimentalCompilerArgument
-import org.jetbrains.kotlin.buildtools.api.arguments.JvmCompilerArguments
+import org.jetbrains.kotlin.buildtools.api.arguments.*
 import org.jetbrains.kotlin.buildtools.api.arguments.enums.*
-import org.jetbrains.kotlin.buildtools.api.arguments.types.ProfileCompilerCommand
 import org.jetbrains.kotlin.buildtools.api.jvm.JvmPlatformToolchain
 import org.jetbrains.kotlin.buildtools.api.jvm.JvmSnapshotBasedIncrementalCompilationConfiguration
 import org.jetbrains.kotlin.buildtools.api.jvm.operations.JvmCompilationOperation
@@ -179,7 +176,10 @@ internal class KotlinWrapperPre2_4_0(
         @Suppress("UNCHECKED_CAST", "CAST_NEVER_SUCCEEDS")
         override fun <V> get(key: CommonCompilerArguments.CommonCompilerArgument<V>): V {
             return when (key) {
-                CommonCompilerArguments.KOTLIN_HOME -> {
+                CommonCompilerArguments.KOTLIN_HOME,
+                CommonCompilerArguments.X_DUMP_DIRECTORY,
+                CommonCompilerArguments.X_DUMP_PERF,
+                    -> {
                     if (delegate[key] == null) return null as V
 
                     val stringValue = delegate[key] as String
@@ -228,6 +228,20 @@ internal class KotlinWrapperPre2_4_0(
                         ?: throw CompilerArgumentsParseException("Unknown -Xverify-ir value: $stringValue")
                 }
 
+                CommonCompilerArguments.X_WARNING_LEVEL -> {
+                    @Suppress("SENSELESS_COMPARISON")
+                    if (delegate[key] == null) return emptyList<WarningLevel>() as V
+
+                    val arrayValue = delegate[key] as Array<String>
+                    arrayValue.map {
+                        val parts = it.split(":", limit = 2)
+                        require(parts.size == 2) { "Invalid -Xwarning-level format: $it" }
+                        val severity = WarningLevel.Severity.values().firstOrNull { entry -> entry.stringValue == parts[1] }
+                            ?: throw CompilerArgumentsParseException("Unknown -Xwarning-level level: $it")
+                        WarningLevel(parts[0], severity)
+                    } as V
+                }
+
                 else -> delegate[key]
             }
         }
@@ -237,7 +251,10 @@ internal class KotlinWrapperPre2_4_0(
             value: V,
         ) {
             when (key) {
-                CommonCompilerArguments.KOTLIN_HOME -> {
+                CommonCompilerArguments.KOTLIN_HOME,
+                CommonCompilerArguments.X_DUMP_DIRECTORY,
+                CommonCompilerArguments.X_DUMP_PERF,
+                    -> {
                     val pathValue = value as Path?
                     val stringValue = pathValue?.toFile()?.absolutePath
                     val stringKey = CommonCompilerArguments.CommonCompilerArgument<String?>(key.id, key.availableSinceVersion)
@@ -286,6 +303,14 @@ internal class KotlinWrapperPre2_4_0(
                     val stringKey = CommonCompilerArguments.CommonCompilerArgument<String?>(key.id, key.availableSinceVersion)
 
                     delegate[stringKey] = stringValue
+                }
+
+                CommonCompilerArguments.X_WARNING_LEVEL -> {
+                    @Suppress("UNCHECKED_CAST")
+                    val listValue = value as List<WarningLevel>
+                    val arrayValue = listValue.map { item -> "${item.warningName}:${item.severity.stringValue}" }.toTypedArray()
+                    val arrayKey = CommonCompilerArguments.CommonCompilerArgument<Array<String>?>(key.id, key.availableSinceVersion)
+                    delegate[arrayKey] = arrayValue
                 }
 
                 else -> {
@@ -426,6 +451,46 @@ internal class KotlinWrapperPre2_4_0(
                     arrayValue.toList() as V
                 }
 
+                JvmCompilerArguments.X_NULLABILITY_ANNOTATIONS -> {
+                    @Suppress("SENSELESS_COMPARISON")
+                    if (delegate[key] == null) return emptyList<NullabilityAnnotation>() as V
+
+                    val arrayValue = delegate[key] as Array<String>
+                    arrayValue.map {
+                        val parts = it.split(":")
+                        require(parts.size == 2) { "Invalid -Xnullability-annotations format: $this" }
+
+                        val nullabilityAnnotationMode =
+                            NullabilityAnnotation.Mode.values().firstOrNull { entry -> entry.stringValue == parts[1] }
+                                ?: throw CompilerArgumentsParseException("Unknown -Xnullability-annotations mode: $it")
+                        NullabilityAnnotation(parts[0].removePrefix("@"), nullabilityAnnotationMode)
+                    } as V
+                }
+
+                JvmCompilerArguments.X_JSR305 -> {
+                    @Suppress("SENSELESS_COMPARISON")
+                    if (delegate[key] == null) return emptyList<Jsr305>() as V
+
+                    val arrayValue = delegate[key] as Array<String>
+                    fun jsr305mode(stringValue: String) = Jsr305.Mode.values().firstOrNull { entry -> entry.stringValue == stringValue }
+                        ?: throw CompilerArgumentsParseException("Unknown -Xjsr305 mode: $stringValue")
+
+                    arrayValue.map {
+                        val parts = it.split(":")
+                        when (parts.size) {
+                            1 -> Jsr305.Global(jsr305mode(parts[0]))
+                            2 -> {
+                                if (parts[0] == "under-migration") {
+                                    Jsr305.UnderMigration(jsr305mode(parts[1]))
+                                } else {
+                                    Jsr305.SpecificAnnotation(parts[0].removePrefix("@"), jsr305mode(parts[1]))
+                                }
+                            }
+                            else -> throw CompilerArgumentsParseException("Invalid -Xjsr30 format: $it")
+                        }
+                    } as V
+                }
+
                 else -> delegate[key]
             }
         }
@@ -561,6 +626,32 @@ internal class KotlinWrapperPre2_4_0(
                     @Suppress("UNCHECKED_CAST")
                     val listValue = value as List<String>
                     val arrayValue = listValue.toTypedArray()
+                    val arrayKey = JvmCompilerArguments.JvmCompilerArgument<Array<String>?>(key.id, key.availableSinceVersion)
+
+                    delegate[arrayKey] = arrayValue
+                }
+
+                JvmCompilerArguments.X_NULLABILITY_ANNOTATIONS -> {
+                    @Suppress("UNCHECKED_CAST")
+                    val listValue: List<NullabilityAnnotation>? =
+                        (value as? List<*>)?.takeIf { it.all { item -> item is NullabilityAnnotation } } as List<NullabilityAnnotation>?
+                    val arrayValue = listValue?.map { item -> "${item.annotationFqName}:${item.mode.stringValue}" }?.toTypedArray()
+                    val arrayKey = JvmCompilerArguments.JvmCompilerArgument<Array<String>?>(key.id, key.availableSinceVersion)
+
+                    delegate[arrayKey] = arrayValue
+                }
+
+                JvmCompilerArguments.X_JSR305 -> {
+                    @Suppress("UNCHECKED_CAST")
+                    val listValue: List<Jsr305>? =
+                        (value as? List<*>)?.takeIf { it.all { item -> item is Jsr305 } } as List<Jsr305>?
+                    val arrayValue = listValue?.map { item ->
+                        when (item) {
+                            is Jsr305.Global -> item.mode.stringValue
+                            is Jsr305.UnderMigration -> "under-migration:${item.mode.stringValue}"
+                            is Jsr305.SpecificAnnotation -> "${item.annotationFqName}:${item.mode.stringValue}"
+                        }
+                    }?.toTypedArray()
                     val arrayKey = JvmCompilerArguments.JvmCompilerArgument<Array<String>?>(key.id, key.availableSinceVersion)
 
                     delegate[arrayKey] = arrayValue

@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.compilerRunner.btapi
 
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileSystemOperations
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.workers.WorkAction
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.buildtools.api.jvm.JvmSnapshotBasedIncrementalCompil
 import org.jetbrains.kotlin.buildtools.api.jvm.JvmSnapshotBasedIncrementalCompilationConfiguration.Companion.USE_FIR_RUNNER
 import org.jetbrains.kotlin.buildtools.api.jvm.operations.JvmCompilationOperation
 import org.jetbrains.kotlin.buildtools.api.jvm.operations.JvmCompilationOperation.Companion.COMPILER_ARGUMENTS_LOG_LEVEL
+import org.jetbrains.kotlin.buildtools.api.jvm.operations.JvmCompilationOperation.Companion.COMPILER_MESSAGE_RENDERER
 import org.jetbrains.kotlin.buildtools.api.jvm.operations.JvmCompilationOperation.Companion.GENERATE_COMPILER_REF_INDEX
 import org.jetbrains.kotlin.buildtools.api.jvm.operations.JvmCompilationOperation.Companion.INCREMENTAL_COMPILATION
 import org.jetbrains.kotlin.buildtools.api.jvm.operations.JvmCompilationOperation.Companion.KOTLINSCRIPT_EXTENSIONS
@@ -42,6 +44,7 @@ import org.jetbrains.kotlin.gradle.internal.ClassLoadersCachingBuildService
 import org.jetbrains.kotlin.gradle.internal.ParentClassLoaderProvider
 import org.jetbrains.kotlin.gradle.logging.*
 import org.jetbrains.kotlin.gradle.plugin.BuildFinishedListenerService
+import org.jetbrains.kotlin.gradle.plugin.diagnostics.CompilerDiagnosticsProblemsReporter
 import org.jetbrains.kotlin.gradle.plugin.internal.BuildIdService
 import org.jetbrains.kotlin.gradle.plugin.internal.state.TaskExecutionResults
 import org.jetbrains.kotlin.gradle.plugin.internal.state.getTaskLogger
@@ -61,6 +64,7 @@ import javax.inject.Inject
 
 internal abstract class BuildToolsApiCompilationWork @Inject constructor(
     private val fileSystemOperations: FileSystemOperations,
+    private val objects: ObjectFactory,
 ) :
     WorkAction<BuildToolsApiCompilationWork.BuildToolsApiCompilationParameters> {
     internal interface BuildToolsApiCompilationParameters : WorkParameters {
@@ -72,6 +76,7 @@ internal abstract class BuildToolsApiCompilationWork @Inject constructor(
         val taskOutputsToRestore: ListProperty<File>
         val snapshotsDir: DirectoryProperty
         val metricsReporter: Property<BuildMetricsReporter<BuildTimeMetric, BuildPerformanceMetric>>
+        val compilerDiagnosticsProblemsReporterFactory: Property<CompilerDiagnosticsProblemsReporter.Factory>
     }
 
     private val workArguments
@@ -80,6 +85,9 @@ internal abstract class BuildToolsApiCompilationWork @Inject constructor(
     private val taskPath
         get() = workArguments.taskPath
 
+    private val compilerDiagnosticsProblemsReporter: CompilerDiagnosticsProblemsReporter
+        get() = parameters.compilerDiagnosticsProblemsReporterFactory.get().getInstance(objects)
+
     private val metrics = if (workArguments.reportingSettings.buildReportOutputs.isNotEmpty()) {
         BuildMetricsReporterImpl()
     } else {
@@ -87,7 +95,11 @@ internal abstract class BuildToolsApiCompilationWork @Inject constructor(
     }
 
     @OptIn(ExperimentalCompilerArgument::class)
-    private fun performCompilation(executionStrategy: KotlinCompilerExecutionStrategy, log: KotlinLogger): CompilationResult {
+    private fun performCompilation(
+        executionStrategy: KotlinCompilerExecutionStrategy,
+        log: KotlinLogger,
+        compilerMessageRenderer: ProblemsApiCompilerMessageRenderer,
+    ): CompilationResult {
         try {
             val buildSession = parameters.buildSessionService.get().getOrCreateBuildSession(
                 parameters.classLoadersCachingService.get(),
@@ -110,6 +122,7 @@ internal abstract class BuildToolsApiCompilationWork @Inject constructor(
                 compilationOperationBuilder[KOTLINSCRIPT_EXTENSIONS] = workArguments.kotlinScriptExtensions
                 compilationOperationBuilder[COMPILER_ARGUMENTS_LOG_LEVEL] =
                     workArguments.compilerArgumentsLogLevel.toBtaCompilerArgumentsLogLevel()
+                compilationOperationBuilder[COMPILER_MESSAGE_RENDERER] = compilerMessageRenderer
                 if (metrics is BuildMetricsReporterImpl) {
                     @Suppress("DEPRECATION_ERROR")
                     compilationOperationBuilder[BuildOperation.createCustomOption("XX_KGP_METRICS_COLLECTOR")] = true
@@ -208,6 +221,7 @@ internal abstract class BuildToolsApiCompilationWork @Inject constructor(
     private fun compileInDaemon(
         log: KotlinLogger,
         tryFallback: Boolean,
+        compilerMessageRenderer: ProblemsApiCompilerMessageRenderer,
     ): Pair<CompilationResult, KotlinCompilerExecutionStrategy> {
         val fallback: (Throwable?) -> Pair<CompilationResult, KotlinCompilerExecutionStrategy> = { t ->
             if (t != null) {
@@ -235,10 +249,18 @@ internal abstract class BuildToolsApiCompilationWork @Inject constructor(
                     |$recommendation
                     """.trimMargin()
             )
-            performCompilation(KotlinCompilerExecutionStrategy.IN_PROCESS, log) to KotlinCompilerExecutionStrategy.IN_PROCESS
+            performCompilation(
+                KotlinCompilerExecutionStrategy.IN_PROCESS,
+                log,
+                compilerMessageRenderer,
+            ) to KotlinCompilerExecutionStrategy.IN_PROCESS
         }
         return try {
-            val daemonCompilationResult = performCompilation(KotlinCompilerExecutionStrategy.DAEMON, log)
+            val daemonCompilationResult = performCompilation(
+                KotlinCompilerExecutionStrategy.DAEMON,
+                log,
+                compilerMessageRenderer,
+            )
             if (daemonCompilationResult != CompilationResult.COMPILER_INTERNAL_ERROR) {
                 daemonCompilationResult to KotlinCompilerExecutionStrategy.DAEMON
             } else {
@@ -264,6 +286,7 @@ internal abstract class BuildToolsApiCompilationWork @Inject constructor(
                 exceptionReportingKotlinLogger,
             )
         )
+        val compilerMessageRenderer = ProblemsApiCompilerMessageRenderer()
         val backup = initializeBackup(log)
         try {
             with(log) {
@@ -279,11 +302,12 @@ internal abstract class BuildToolsApiCompilationWork @Inject constructor(
             val (compilationResult, effectiveExecutionStrategy) = when (executionStrategy) {
                 KotlinCompilerExecutionStrategy.DAEMON -> {
                     val tryFallback = workArguments.compilerExecutionSettings.useDaemonFallbackStrategy
-                    compileInDaemon(log, tryFallback)
+                    compileInDaemon(log, tryFallback, compilerMessageRenderer)
                 }
                 KotlinCompilerExecutionStrategy.IN_PROCESS -> performCompilation(
                     KotlinCompilerExecutionStrategy.IN_PROCESS,
-                    log
+                    log,
+                    compilerMessageRenderer,
                 ) to KotlinCompilerExecutionStrategy.IN_PROCESS
                 else -> error("The \"$executionStrategy\" execution strategy is not supported by the Build Tools API")
             }
@@ -299,6 +323,9 @@ internal abstract class BuildToolsApiCompilationWork @Inject constructor(
             }
             throw e
         } finally {
+            // Replay buffered compiler diagnostics on the worker thread (see ProblemsApiCompilerMessageRenderer).
+            compilerMessageRenderer.replayTo(compilerDiagnosticsProblemsReporter)
+
             val taskInfo = TaskExecutionInfo(
                 kotlinLanguageVersion = workArguments.kotlinLanguageVersion,
                 changedFiles = workArguments.incrementalCompilationEnvironment?.changedFiles,

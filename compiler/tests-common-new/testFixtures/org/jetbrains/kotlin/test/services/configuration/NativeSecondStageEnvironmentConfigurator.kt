@@ -6,22 +6,29 @@
 package org.jetbrains.kotlin.test.services.configuration
 
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.konan.config.konanIncludedLibraries
+import org.jetbrains.kotlin.konan.config.konanLibraries
 import org.jetbrains.kotlin.konan.config.konanProducedArtifactKind
 import org.jetbrains.kotlin.konan.target.CompilerOutputKind
-import org.jetbrains.kotlin.platform.konan.isNative
+import org.jetbrains.kotlin.test.model.ArtifactKinds
 import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.CompilationStage
 import org.jetbrains.kotlin.test.services.TestServices
-import org.jetbrains.kotlin.test.services.targetPlatform
+import org.jetbrains.kotlin.test.services.artifactsProvider
+import kotlin.collections.plus
 
-class NativeSecondStageEnvironmentConfigurator(testServices: TestServices) : NativeEnvironmentConfigurator(testServices) {
+class NativeSecondStageEnvironmentConfigurator(testServices: TestServices) : NativeEnvironmentConfigurator(testServices, customNativeHome = null) {
     override val compilationStage: CompilationStage
         get() = CompilationStage.SECOND
 
     override fun configureCompilerConfiguration(configuration: CompilerConfiguration, module: TestModule) {
-        if (!module.targetPlatform(testServices).isNative()) return
-
         super.configureCompilerConfiguration(configuration, module)
+
         configuration.konanProducedArtifactKind = CompilerOutputKind.PROGRAM
+
+        val includedLibrary = testServices.artifactsProvider.getArtifact(module, ArtifactKinds.KLib).outputFile.absolutePath
+
+        configuration.konanLibraries += includedLibrary
+        configuration.konanIncludedLibraries = listOf(includedLibrary)
     }
 }

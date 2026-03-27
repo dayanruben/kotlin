@@ -444,6 +444,7 @@ This can be used in the event of problems with the new implementation.""".asRele
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xjsr305"
         deprecatedName = "Xjsr305-annotations"
@@ -458,12 +459,14 @@ Modes:
         valueType = StringArrayType.defaultNull
         valueDescription =
             "{ignore/strict/warn}|under-migration:{ignore/strict/warn}|@<fq.name>:{ignore/strict/warn}".asReleaseDependent()
+        argumentType = StringListType.defaultEmpty
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_1_50,
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xnullability-annotations"
         description = """Specify the behavior for specific Java nullability annotations (provided with fully qualified package name).
@@ -473,6 +476,7 @@ Modes:
 * warn (report a warning)""".asReleaseDependent()
         valueType = StringArrayType.defaultNull
         valueDescription = "@<fq.name>:{ignore/strict/warn}".asReleaseDependent()
+        argumentType = StringListType.defaultEmpty
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_5_30,
@@ -755,7 +759,6 @@ The default value is 'indy' if language version is 2.0+, and 'class' otherwise."
         )
     }
 
-    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xprofile"
         compilerName = "profileCompilerCommand"
@@ -781,7 +784,6 @@ The default value is 'indy' if language version is 2.0+, and 'class' otherwise."
             )
         valueType = StringType.defaultNull
         valueDescription = "<profilerPath:command:outputDir>".asReleaseDependent()
-        argumentType = ProfileCompilerCommandType
         affectsCompilationOutcome = false
 
         lifecycle(
