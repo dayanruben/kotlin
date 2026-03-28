@@ -29,8 +29,8 @@ import org.junit.Test
 
 class StaticExpressionDetectionTests(useFir: Boolean) : AbstractIrTransformTest(useFir) {
     @Test
-    fun testUnstableTypesAreNeverStatic() = assertUncertain(
-        expression = "Any()"
+    fun testKnownUnstableTypesAreNeverStatic() = assertUncertain(
+        expression = "Any()",
     )
 
     @Test
@@ -68,7 +68,7 @@ class StaticExpressionDetectionTests(useFir: Boolean) : AbstractIrTransformTest(
     )
 
     @Test
-    fun testObjectReferencesAreStatic() = assertStatic(
+    fun testObjectReferencesInTheSameFileAsTheObjectDeclarationAreStatic() = assertStatic(
         expression = "Singleton",
         extraSrc = """
             object Singleton
@@ -220,6 +220,26 @@ class StaticExpressionDetectionTests(useFir: Boolean) : AbstractIrTransformTest(
         expression = "EmptyCoroutineContext"
     )
 
+    @Test
+    fun testInvokeDefaultGetterOfReadonlyProperty() {
+        // This is a regression test against a bug that was causing incremental compilation to
+        // produce different output than non-incremental compilation of the same source code. The
+        // bug was one of the causes of https://issuetracker.google.com/issues/427530633.
+
+        // A call to a default getter of a read-only property is static if the call is made in the
+        // same file that the property is defined in.
+        assertStatic(
+            expression = "x",
+            extraSrc = "val x = 123"
+        )
+
+        // A call to a default getter of a read-only property is not static if the call is made in a
+        // different file than the one that the property is defined in.
+        assertUncertain(
+            expression = "mapOf<Int, Int>().size"
+        )
+    }
+
     private val uiFoundationImports = """
             import androidx.compose.ui.unit.Dp
             import androidx.compose.ui.unit.dp
@@ -280,6 +300,8 @@ class StaticExpressionDetectionTests(useFir: Boolean) : AbstractIrTransformTest(
             ${if (includeUiImports) uiFoundationImports else ""}
             import kotlin.coroutines.EmptyCoroutineContext
 
+            $extraSrc
+
             @Composable fun Receiver(value: Any?) {}
 
             @Composable fun CompositionContext() {
@@ -288,7 +310,6 @@ class StaticExpressionDetectionTests(useFir: Boolean) : AbstractIrTransformTest(
         """.trimIndent()
 
         val files = listOf(
-            SourceFile("ExtraSrc.kt", extraSrc),
             SourceFile("Test.kt", source),
         )
         val irModule = compileToIr(

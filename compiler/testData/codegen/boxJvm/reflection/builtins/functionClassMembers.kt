@@ -1,6 +1,8 @@
 // TARGET_BACKEND: JVM
 // WITH_REFLECT
 
+package test
+
 import kotlin.reflect.KClass
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -17,7 +19,7 @@ private fun check(expectedInvoke: String, klass: KClass<*>) {
 fun box(): String {
     check("fun () -> R.invoke(): R", Function0::class)
     check("fun (P1) -> R.invoke(P1): R", Function1::class)
-    check("fun FunInterface.invoke(): kotlin.Int", FunInterface::class)
+    check("fun test.FunInterface.invoke(): kotlin.Int", FunInterface::class)
 
     val suspendFun = ::suspendFunction.returnType.classifier
     check("fun (P1) -> R.invoke(P1): R", suspendFun as KClass<*>)

@@ -1,8 +1,8 @@
 // TARGET_BACKEND: JVM
-// IGNORE_BACKEND: ANDROID
 
-// WITH_STDLIB
 // FULL_JDK
+
+package test
 
 class C {
     companion object {
@@ -20,7 +20,8 @@ fun box(): String {
         return "Link error expected"
     }
     catch (e: java.lang.UnsatisfiedLinkError) {
-        if (e.message != "C.foo()V" && e.message != "'void C.foo()'") return "Fail 1: " + e.message
+        if (e.message != "test.C.foo()V" && e.message != "'void test.C.foo()'" &&
+            !e.message!!.contains("No implementation found for void test.C.foo()")) return "Fail 1: " + e.message
     }
 
     return "OK"

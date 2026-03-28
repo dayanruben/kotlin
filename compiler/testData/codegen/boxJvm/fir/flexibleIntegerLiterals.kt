@@ -1,7 +1,6 @@
 // TARGET_BACKEND: JVM
 // WITH_STDLIB
 // JVM_TARGET: 1.8
-// IGNORE_BACKEND: ANDROID
 // FULL_JDK
 
 // This test fails on FE 1.0, but works in production compiler (see KT-49191):

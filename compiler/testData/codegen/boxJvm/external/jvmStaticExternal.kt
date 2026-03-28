@@ -1,7 +1,5 @@
 // TARGET_BACKEND: JVM
-// IGNORE_BACKEND: ANDROID
 
-// WITH_STDLIB
 // FULL_JDK
 
 package foo
@@ -20,12 +18,12 @@ object ObjWithNative {
     @JvmStatic val prop: String external get
 }
 
-fun check(vararg allowed: String, block: () -> Unit) {
+fun check(androidAllowed: String, vararg allowed: String, block: () -> Unit) {
     try {
         block()
         throw AssertionError("UnsatisfiedLinkError expected")
     } catch (e: java.lang.UnsatisfiedLinkError) {
-        if (allowed.none { it == e.message }) {
+        if (!e.message!!.contains(androidAllowed) && allowed.none { it == e.message }) {
             throw AssertionError("fail: ${e.message}")
         }
     }
@@ -33,18 +31,22 @@ fun check(vararg allowed: String, block: () -> Unit) {
 
 fun box(): String {
     check(
+        "No implementation found for double foo.WithNative.bar(long, java.lang.String)",
         "foo.WithNative.bar(JLjava/lang/String;)D",
         "'double foo.WithNative.bar(long, java.lang.String)'"
     ) { WithNative.bar(1, "") }
     check(
+        "No implementation found for double foo.ObjWithNative.bar(long, java.lang.String)",
         "foo.ObjWithNative.bar(JLjava/lang/String;)D",
         "'double foo.ObjWithNative.bar(long, java.lang.String)'"
     ) { ObjWithNative.bar(1, "") }
     check(
+        "No implementation found for java.lang.String foo.WithNative.getProp()",
         "foo.WithNative.getProp()Ljava/lang/String;",
         "'java.lang.String foo.WithNative.getProp()'"
     ) { WithNative.prop }
     check(
+        "No implementation found for java.lang.String foo.ObjWithNative.getProp()",
         "foo.ObjWithNative.getProp()Ljava/lang/String;",
         "'java.lang.String foo.ObjWithNative.getProp()'"
     ) { ObjWithNative.prop }

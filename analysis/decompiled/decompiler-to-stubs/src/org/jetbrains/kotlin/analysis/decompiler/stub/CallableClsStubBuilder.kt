@@ -11,6 +11,7 @@ import com.intellij.psi.stubs.StubElement
 import com.intellij.util.io.StringRef
 import org.jetbrains.kotlin.analysis.decompiler.stub.flags.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
+import org.jetbrains.kotlin.library.metadata.KlibMetadataProtoBuf
 import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.metadata.ProtoBuf.MemberKind
 import org.jetbrains.kotlin.metadata.ProtoBuf.Modality
@@ -265,6 +266,7 @@ private class FunctionClsStubBuilder(
             hasBody = Flags.MODALITY.get(functionProto.flags) != Modality.ABSTRACT,
             hasTypeParameterListBeforeFunctionName = functionProto.typeParameterList.isNotEmpty(),
             mayHaveContract = hasContract,
+            kdocText = functionProto.getExtensionOrNull(KlibMetadataProtoBuf.functionKdoc),
             runIf(hasContract) {
                 ClsContractBuilder(c, typeStubBuilder).loadContract(
                     contractOwner = ClsContractOwner.Function(functionProto),
@@ -353,6 +355,7 @@ private class PropertyClsStubBuilder(
             initializer,
             origin = createStubOrigin(protoContainer),
             hasBackingField = propertyProto.getExtensionOrNull(JvmProtoBuf.propertySignature)?.hasField(),
+            kdocText = propertyProto.getExtensionOrNull(KlibMetadataProtoBuf.propertyKdoc),
         )
     }
 
@@ -565,11 +568,13 @@ private class ConstructorClsStubBuilder(
                 isDelegatedCallToThis = false,
                 isExplicitDelegationCall = false,
                 mayHaveContract = false, // constructors don't have contracts in the metadata yet
+                kdocText = constructorProto.getExtensionOrNull(KlibMetadataProtoBuf.constructorKdoc),
             )
         else
             KotlinPrimaryConstructorStubImpl(
                 parent = parent,
                 containingClassName = name,
+                kdocText = constructorProto.getExtensionOrNull(KlibMetadataProtoBuf.constructorKdoc),
             )
     }
 }

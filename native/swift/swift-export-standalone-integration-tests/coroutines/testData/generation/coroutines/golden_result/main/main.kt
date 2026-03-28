@@ -29,7 +29,7 @@ public fun FunctionalInterfaceWithSuspendFunction_emit(self: kotlin.native.inter
         }
     }
     val __cancellation = kotlin.native.internal.ref.dereferenceExternalRCRef(cancellation) as SwiftJob
-    CoroutineScope(__cancellation + Dispatchers.Default).launch(start = CoroutineStart.UNDISPATCHED) {
+    CoroutineScope(__cancellation + Dispatchers.Default).kotlinx_coroutines_launch(start = CoroutineStart.UNDISPATCHED) {
         try {
             val _result = __self.emit()
             __continuation(_result)
@@ -70,11 +70,11 @@ public fun __root___FunctionalInterfaceWithSuspendFunction__TypesOfArguments__U2
             kotlinx.coroutines.suspendCancellableCoroutine { __cont ->
                 val __cancellationPtr = kotlin.native.internal.ref.createRetainedExternalRCRef(__cancellation)
                 val __continuation: Function1<Unit, Unit> = { _result ->
-                    __cont.resumeWith(kotlin.Result.success(_result))
+                    if (__cont.isActive) __cont.resumeWith(kotlin.Result.success(_result))
                 }
                 val __continuationPtr = kotlin.native.internal.ref.createRetainedExternalRCRef(__continuation)
                 val __exception: Function1<platform.Foundation.NSError, Unit> = { _error ->
-                    __cont.resumeWith(kotlin.Result.failure(SwiftException(_error)))
+                    if (__cont.isActive) __cont.resumeWith(kotlin.Result.failure(SwiftException(_error)))
                 }
                 val __exceptionPtr = kotlin.native.internal.ref.createRetainedExternalRCRef(__exception)
                 originalBlock(__continuationPtr, __exceptionPtr, __cancellationPtr)
@@ -99,11 +99,11 @@ public fun __root___accept_suspend_function_type__TypesOfArguments__U282920async
             kotlinx.coroutines.suspendCancellableCoroutine { __cont ->
                 val __cancellationPtr = kotlin.native.internal.ref.createRetainedExternalRCRef(__cancellation)
                 val __continuation: Function1<Int, Unit> = { _result ->
-                    __cont.resumeWith(kotlin.Result.success(_result))
+                    if (__cont.isActive) __cont.resumeWith(kotlin.Result.success(_result))
                 }
                 val __continuationPtr = kotlin.native.internal.ref.createRetainedExternalRCRef(__continuation)
                 val __exception: Function1<platform.Foundation.NSError, Unit> = { _error ->
-                    __cont.resumeWith(kotlin.Result.failure(SwiftException(_error)))
+                    if (__cont.isActive) __cont.resumeWith(kotlin.Result.failure(SwiftException(_error)))
                 }
                 val __exceptionPtr = kotlin.native.internal.ref.createRetainedExternalRCRef(__exception)
                 originalBlock(__continuationPtr, __exceptionPtr, __cancellationPtr)
@@ -317,7 +317,7 @@ public fun __root___retunsListOfSuspend(continuation: kotlin.native.internal.Nat
         }
     }
     val __cancellation = kotlin.native.internal.ref.dereferenceExternalRCRef(cancellation) as SwiftJob
-    CoroutineScope(__cancellation + Dispatchers.Default).launch(start = CoroutineStart.UNDISPATCHED) {
+    CoroutineScope(__cancellation + Dispatchers.Default).kotlinx_coroutines_launch(start = CoroutineStart.UNDISPATCHED) {
         try {
             val _result = retunsListOfSuspend()
             __continuation(_result)
@@ -385,7 +385,7 @@ public fun __root___returnsList(continuation: kotlin.native.internal.NativePtr, 
         }
     }
     val __cancellation = kotlin.native.internal.ref.dereferenceExternalRCRef(cancellation) as SwiftJob
-    CoroutineScope(__cancellation + Dispatchers.Default).launch(start = CoroutineStart.UNDISPATCHED) {
+    CoroutineScope(__cancellation + Dispatchers.Default).kotlinx_coroutines_launch(start = CoroutineStart.UNDISPATCHED) {
         try {
             val _result = returnsList()
             __continuation(_result)
@@ -416,7 +416,7 @@ public fun __root___returnsListOfSuspendNullables(continuation: kotlin.native.in
         }
     }
     val __cancellation = kotlin.native.internal.ref.dereferenceExternalRCRef(cancellation) as SwiftJob
-    CoroutineScope(__cancellation + Dispatchers.Default).launch(start = CoroutineStart.UNDISPATCHED) {
+    CoroutineScope(__cancellation + Dispatchers.Default).kotlinx_coroutines_launch(start = CoroutineStart.UNDISPATCHED) {
         try {
             val _result = returnsListOfSuspendNullables()
             __continuation(_result)

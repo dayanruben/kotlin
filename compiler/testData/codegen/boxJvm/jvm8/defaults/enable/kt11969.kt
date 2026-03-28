@@ -1,9 +1,9 @@
 // JVM_DEFAULT_MODE: enable
 // TARGET_BACKEND: JVM
-// IGNORE_BACKEND: ANDROID
 // JVM_TARGET: 1.8
-// WITH_STDLIB
 // LAMBDAS: CLASS
+
+package test
 
 interface Z {
     private fun privateFun() = { "OK" }
@@ -51,7 +51,7 @@ fun box(): String {
 
     val nested = Z.Nested::class.java
     val enclosingClass = nested.enclosingClass!!
-    if (enclosingClass.name != "Z") return "fail 9: ${enclosingClass.name}"
+    if (enclosingClass.name != "test.Z") return "fail 9: ${enclosingClass.name}"
 
     return "OK"
 }

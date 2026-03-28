@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.test.framework.test.configurators.TestModul
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.FrontendKind;
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisSessionMode;
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisApiMode;
+import org.jetbrains.kotlin.analysis.test.framework.services.TargetPlatformEnum;
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.kdocProvider.AbstractKDocProviderTest;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.jupiter.api.Test;
@@ -35,7 +36,8 @@ public class FirStandaloneNormalAnalysisSourceModuleKDocProviderTestGenerated ex
         FrontendKind.Fir,
         TestModuleKind.Source,
         AnalysisSessionMode.Normal,
-        AnalysisApiMode.Standalone
+        AnalysisApiMode.Standalone,
+        TargetPlatformEnum.JVM
       )
     );
   }
@@ -71,6 +73,24 @@ public class FirStandaloneNormalAnalysisSourceModuleKDocProviderTestGenerated ex
   @TestMetadata("javadoc.kt")
   public void testJavadoc() {
     run("javadoc.kt");
+  }
+
+  @Test
+  @TestMetadata("libraryBinaryJs.kt")
+  public void testLibraryBinaryJs() {
+    run("libraryBinaryJs.kt");
+  }
+
+  @Test
+  @TestMetadata("libraryBinaryJsExported.kt")
+  public void testLibraryBinaryJsExported() {
+    run("libraryBinaryJsExported.kt");
+  }
+
+  @Test
+  @TestMetadata("libraryBinaryJvm.kt")
+  public void testLibraryBinaryJvm() {
+    run("libraryBinaryJvm.kt");
   }
 
   @Test

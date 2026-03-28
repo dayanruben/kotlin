@@ -1,7 +1,6 @@
 // TARGET_BACKEND: JVM_IR
 // WITH_REFLECT
 // JVM_DEFAULT_MODE: no-compatibility
-// IGNORE_BACKEND: ANDROID
 
 import kotlin.test.assertEquals
 import kotlin.reflect.full.instanceParameter

@@ -1,5 +1,4 @@
 // TARGET_BACKEND: JVM
-// WITH_STDLIB
 // JVM_DEFAULT_MODE: enable
 
 package test

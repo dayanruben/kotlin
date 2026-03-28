@@ -1,6 +1,8 @@
 // TARGET_BACKEND: JVM_IR
 // WITH_REFLECT
 
+package test
+
 import kotlin.reflect.KType
 import kotlin.reflect.full.memberProperties
 
@@ -108,12 +110,18 @@ fun foo7(): String {
 }
 
 fun box(): String {
-    if (A().foo() != "class A\$foo\$Nested\$Inner") return "Fail 1"
-    if (foo3() != "class LocalNestedClassesKt\$foo3\$X\$Y\$prop\$1") return "Fail 4"
-    if (foo4() != "class LocalNestedClassesKt\$foo4\$A\$B\$C\$bar\$D") return "Fail 5"
-    if (foo5() != "class LocalNestedClassesKt\$foo5\$1\$bar\$1\$foo\$A\$B") return "Fail 6"
-    if (foo6() != "class LocalNestedClassesKt\$foo6\$1\$bar\$A\$B\$C") return "Fail 7"
-    if (foo7() != "class LocalNestedClassesKt\$foo7\$x\$1\$y\$1\$z\$1") return "Fail 8"
+    var res = A().foo()
+    if (res != "class test.A\$foo\$Nested\$Inner") return "Fail 1: $res"
+    res = foo3()
+    if (res != "class test.LocalNestedClassesKt\$foo3\$X\$Y\$prop\$1") return "Fail 4: $res"
+    res = foo4()
+    if (res != "class test.LocalNestedClassesKt\$foo4\$A\$B\$C\$bar\$D") return "Fail 5: $res"
+    res = foo5()
+    if (res != "class test.LocalNestedClassesKt\$foo5\$1\$bar\$1\$foo\$A\$B") return "Fail 6: $res"
+    res = foo6()
+    if (res != "class test.LocalNestedClassesKt\$foo6\$1\$bar\$A\$B\$C") return "Fail 7: $res"
+    res = foo7()
+    if (res != "class test.LocalNestedClassesKt\$foo7\$x\$1\$y\$1\$z\$1") return "Fail 8: $res"
 
     return "OK"
 }

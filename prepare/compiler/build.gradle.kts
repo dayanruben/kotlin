@@ -99,7 +99,8 @@ val distLibraryProjects = listOfNotNull(
     ":kotlin-scripting-compiler-impl",
     ":kotlin-scripting-jvm",
     ":libraries:tools:mutability-annotations-compat",
-    ":plugins:jvm-abi-gen"
+    ":plugins:jvm-abi-gen",
+    ":kotlin-jklib-compiler"
 )
 
 val distCompilerPluginProjects = listOf(
@@ -152,6 +153,7 @@ dependencies {
     librariesKotlinTest(kotlinTest("junit"))
     libraries(kotlinStdlib(classifier = "distJsJar"))
     libraries(kotlinStdlib(classifier = "distJsKlib"))
+    libraries(kotlinStdlib(classifier = "distWasmJsKlib"))
 
     librariesStripVersion(libs.kotlinx.coroutines.core) { isTransitive = false }
 

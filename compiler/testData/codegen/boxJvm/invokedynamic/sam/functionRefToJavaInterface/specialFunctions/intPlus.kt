@@ -1,6 +1,4 @@
 // TARGET_BACKEND: JVM
-// IGNORE_BACKEND: ANDROID
-//  ^ uses API not implemented on minSdkVersion 19
 // WITH_STDLIB
 // JVM_TARGET: 1.8
 // FULL_JDK
