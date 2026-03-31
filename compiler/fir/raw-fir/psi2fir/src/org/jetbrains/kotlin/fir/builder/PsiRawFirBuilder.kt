@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.fir.diagnostics.*
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirSingleExpressionBlock
-import org.jetbrains.kotlin.fir.extensions.extensionService
 import org.jetbrains.kotlin.fir.references.buildErrorNamedReferenceWithNoName
 import org.jetbrains.kotlin.fir.references.builder.buildExplicitSuperReference
 import org.jetbrains.kotlin.fir.references.builder.buildExplicitThisReference
@@ -41,11 +40,7 @@ import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.*
-import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
-import org.jetbrains.kotlin.fir.types.impl.FirImplicitTypeRefImplWithoutSource
-import org.jetbrains.kotlin.fir.types.impl.FirQualifierPartImpl
-import org.jetbrains.kotlin.fir.types.impl.FirTypeArgumentListImpl
-import org.jetbrains.kotlin.fir.types.impl.ResolvedImplicitTypeRef
+import org.jetbrains.kotlin.fir.types.impl.*
 import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.psi.*
@@ -189,7 +184,7 @@ open class PsiRawFirBuilder(
     @OptIn(KtExperimentalApi::class)
     override fun isReplSnippet(
         script: PsiElement,
-        fileBuilder: FirFileBuilder,
+        sourceFile: KtSourceFile,
     ): Boolean {
         // TODO(KT-84387): reintroduce call to `FirReplSnippetConfiguratorExtension.isReplSnippetSource`?
         //  The lack of this call is a requirement from AA; make sure they agree with any redesign.
@@ -201,9 +196,12 @@ open class PsiRawFirBuilder(
         scriptSource: KtSourceElement,
         fileName: String,
         setup: FirScriptBuilder.() -> Unit,
-    ): FirScript {
-        return Visitor().convertScript(script as KtScript, scriptSource as KtPsiSourceElement, fileName, setup)
-    }
+    ): FirScript = Visitor().convertScript(
+        script = script as KtScript,
+        scriptSource = scriptSource as KtPsiSourceElement,
+        fileName = fileName,
+        setup = setup,
+    )
 
     override fun convertReplSnippet(
         script: PsiElement,
@@ -212,9 +210,14 @@ open class PsiRawFirBuilder(
         snippetSetup: FirReplSnippetBuilder.() -> Unit,
         functionBodySetup: FirBlockBuilder.() -> Unit,
         statementsSetup: MutableList<FirElement>.() -> Unit,
-    ): FirReplSnippet {
-        return Visitor().convertReplSnippet(script as KtScript, scriptSource as KtPsiSourceElement, fileName, snippetSetup, functionBodySetup, statementsSetup)
-    }
+    ): FirReplSnippet = Visitor().convertReplSnippet(
+        script = script as KtScript,
+        scriptSource = scriptSource as KtPsiSourceElement,
+        fileName = fileName,
+        snippetSetup = snippetSetup,
+        functionBodySetup = functionBodySetup,
+        statementsSetup = statementsSetup,
+    )
 
     protected open inner class Visitor : KtVisitor<FirElement, FirElement?>(), DestructuringContext<KtDestructuringDeclarationEntry> {
 
@@ -1293,12 +1296,14 @@ open class PsiRawFirBuilder(
                 BodyBuildingMode.NORMAL -> file.properPackageFqName
                 BodyBuildingMode.LAZY_BODIES -> file.stub?.getPackageFqName() ?: file.properPackageFqName
             }
+
+            val psiSourceFile = KtPsiSourceFile(file)
             return buildFile {
                 source = file.toFirSourceElement()
                 moduleData = baseModuleData
                 origin = FirDeclarationOrigin.Source
                 name = file.name
-                sourceFile = KtPsiSourceFile(file)
+                sourceFile = psiSourceFile
                 sourceFileLinesMapping = KtPsiSourceFileLinesMapping(file)
                 packageDirective = buildPackageDirective {
                     packageFqName = context.packageFqName
@@ -1328,7 +1333,7 @@ open class PsiRawFirBuilder(
                 } else {
                     for (declaration in file.declarations) {
                         declarations += when (declaration) {
-                            is KtScript -> convertScriptOrSnippets(declaration, this@buildFile)
+                            is KtScript -> convertScriptOrSnippets(declaration, psiSourceFile, this@buildFile)
                             is KtDestructuringDeclaration -> {
                                 val initializer = declaration.toInitializerExpression()
                                 buildErrorNonLocalDestructuringDeclaration(declaration.toFirSourceElement(), initializer)
@@ -1460,21 +1465,22 @@ open class PsiRawFirBuilder(
             functionBodySetup: FirBlockBuilder.() -> Unit,
             statementsSetup: MutableList<FirElement>.() -> Unit,
         ): FirReplSnippet {
-            val snippetName = NameUtils.getSnippetTargetClassName(Name.special("<$fileName>"))
-            val classSymbol = FirRegularClassSymbol(ClassId(FqName.ROOT, snippetName))
+            val snippetName = firSnippetName(fileName)
+            val snippetClassName = NameUtils.getSnippetTargetClassName(snippetName)
+            val classSymbol = FirRegularClassSymbol(ClassId(FqName.ROOT, snippetClassName))
 
             val snippetSymbol = FirReplSnippetSymbol(classSymbol)
 
-            val evalName = Name.identifier("$\$eval")
-
-            val klass = withContainerReplSymbol(snippetSymbol) {
-                withChildClassName(snippetName, isExpect = false) {
+            val evalName = Name.identifier($$$"$$eval")
+            val (klass, evalSymbol) = withContainerReplSymbol(snippetSymbol) {
+                withChildClassName(snippetClassName, isExpect = false) {
                     withContainerSymbol(classSymbol) {
-                        buildRegularClass {
+                        val evalSymbol = FirNamedFunctionSymbol(callableIdForName(evalName))
+                        val klass = buildRegularClass {
                             source = script.toKtPsiSourceElement(KtFakeSourceElementKind.ReplBaseClass)
                             moduleData = baseModuleData
                             origin = FirDeclarationOrigin.Synthetic.ReplContainerClass
-                            name = snippetName
+                            name = snippetClassName
                             status = FirDeclarationStatusImpl(Visibilities.Public, Modality.FINAL)
                             classKind = ClassKind.OBJECT
                             scopeProvider = baseScopeProvider
@@ -1488,7 +1494,6 @@ open class PsiRawFirBuilder(
 
                             val replClassMembers = mutableListOf<FirDeclaration>()
 
-                            val evalSymbol = FirNamedFunctionSymbol(callableIdForName(evalName))
                             val evalFunction = withContainerSymbol(evalSymbol) {
                                 val copiedDelegatedProperties = mutableMapOf<FirPropertySymbol, FirProperty>()
 
@@ -1545,6 +1550,8 @@ open class PsiRawFirBuilder(
 
                             declarations += listOf(constructor, evalFunction) + replClassMembers
                         }
+
+                        klass to evalSymbol
                     }
                 }
             }
@@ -1553,10 +1560,11 @@ open class PsiRawFirBuilder(
                 source = scriptSource
                 moduleData = baseModuleData
                 origin = FirDeclarationOrigin.Source
+                name = snippetName
                 symbol = snippetSymbol
 
                 snippetClass = klass
-                evalFunctionName = evalName
+                evalFunctionSymbol = evalSymbol
 
                 snippetSetup()
             }
@@ -1615,31 +1623,31 @@ open class PsiRawFirBuilder(
                     element.isConst -> element
                     statementDelegate != null -> {
                         element.replaceDelegate(buildReplExpressionReference {
-                            source = element.source
+                            source = statementDelegate.source?.fakeElement(KtFakeSourceElementKind.ReplEvalFunction)
                             expressionRef = FirExpressionRef<FirExpression>().apply { bind(statementDelegate) }
                         })
 
                         buildReplPropertyDelegate {
-                            source = element.source
+                            source = statementDelegate.source
                             propertySymbol = element.symbol
                             delegate = statementDelegate
                         }
                     }
                     statementInitializer != null -> {
                         element.replaceInitializer(buildReplExpressionReference {
-                            source = element.source
+                            source = statementInitializer.source?.fakeElement(KtFakeSourceElementKind.ReplEvalFunction)
                             expressionRef = FirExpressionRef<FirExpression>().apply { bind(statementInitializer) }
                         })
 
                         buildReplPropertyInitializer {
-                            source = element.source
+                            source = statementInitializer.source
                             propertySymbol = element.symbol
                             initializer = statementInitializer
                         }
                     }
                     else -> {
                         buildReplDeclarationReference {
-                            source = element.source
+                            source = element.source?.fakeElement(KtFakeSourceElementKind.ReplEvalFunction)
                             symbol = element.symbol
                         }
                     }
@@ -1651,7 +1659,7 @@ open class PsiRawFirBuilder(
             is FirTypeAlias,
                 -> {
                 buildReplDeclarationReference {
-                    source = element.source
+                    source = element.source?.fakeElement(KtFakeSourceElementKind.ReplEvalFunction)
                     symbol = element.symbol
                 }
             }
@@ -1677,11 +1685,7 @@ open class PsiRawFirBuilder(
                             isLocal = true,
                         )
 
-                        if (initializer.body is FirLazyBlock) {
-                            add(initializer)
-                        } else {
-                            addAll(initializer.body!!.statements)
-                        }
+                        add(initializer)
                     }
                     is KtDestructuringDeclaration -> {
                         val destructuringContainerVar = generateTemporaryVariable(
@@ -1794,22 +1798,6 @@ open class PsiRawFirBuilder(
 
                         body = buildBlock()
                     }
-                }
-            }
-        }
-
-        override fun visitScript(script: KtScript, data: FirElement?): FirElement {
-            val ktFile = script.containingKtFile
-            val fileName = ktFile.name
-            val sourceFile = KtPsiSourceFile((data as? FirScript)?.psi?.containingFile as? KtFile ?: ktFile)
-            val scriptSource = script.toFirSourceElement()
-            val scriptConfigurator =
-                baseSession.extensionService.scriptConfigurators.firstOrNull { it.accepts(sourceFile, scriptSource) }
-            return convertScript(script, scriptSource, fileName) {
-                scriptConfigurator?.run {
-                    // TODO: looks like we may loose the implicit imports here, find out whether and how the file could be configured too (KT-73847)
-//                    configureContainingFile(fileBuilder)
-                    configure(sourceFile, context)
                 }
             }
         }

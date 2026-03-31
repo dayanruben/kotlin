@@ -245,9 +245,27 @@ public class FirStandaloneNormalAnalysisSourceModuleReferenceShortenerTestGenera
   }
 
   @Test
+  @TestMetadata("enumEntryAlreadyImported.kt")
+  public void testEnumEntryAlreadyImported() {
+    run("enumEntryAlreadyImported.kt");
+  }
+
+  @Test
   @TestMetadata("enumEntryConflictsWithCompanionMember.kt")
   public void testEnumEntryConflictsWithCompanionMember() {
     run("enumEntryConflictsWithCompanionMember.kt");
+  }
+
+  @Test
+  @TestMetadata("enumEntryConflictsWithParameter.kt")
+  public void testEnumEntryConflictsWithParameter() {
+    run("enumEntryConflictsWithParameter.kt");
+  }
+
+  @Test
+  @TestMetadata("enumEntryInSameClass.kt")
+  public void testEnumEntryInSameClass() {
+    run("enumEntryInSameClass.kt");
   }
 
   @Test
@@ -260,6 +278,12 @@ public class FirStandaloneNormalAnalysisSourceModuleReferenceShortenerTestGenera
   @TestMetadata("enumEntryInitUsesCompanion2.kt")
   public void testEnumEntryInitUsesCompanion2() {
     run("enumEntryInitUsesCompanion2.kt");
+  }
+
+  @Test
+  @TestMetadata("enumEntryNotImported.kt")
+  public void testEnumEntryNotImported() {
+    run("enumEntryNotImported.kt");
   }
 
   @Test
@@ -815,6 +839,92 @@ public class FirStandaloneNormalAnalysisSourceModuleReferenceShortenerTestGenera
       public void testTypeRef_vs_typeRef() {
         run("typeRef_vs_typeRef.kt");
       }
+    }
+  }
+
+  @Nested
+  @TestMetadata("analysis/analysis-api/testData/components/referenceShortener/shortenRange/contextSensitiveResolution")
+  @TestDataPath("$PROJECT_ROOT")
+  public class ContextSensitiveResolution {
+    private void run(String fileName) {
+      runTest("analysis/analysis-api/testData/components/referenceShortener/shortenRange/contextSensitiveResolution/" + fileName);
+    }
+
+    @Test
+    public void testAllFilesPresentInContextSensitiveResolution() {
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/components/referenceShortener/shortenRange/contextSensitiveResolution"), Pattern.compile("^(.+)\\.kt$"), null, true);
+    }
+
+    @Test
+    @TestMetadata("enumEntry.kt")
+    public void testEnumEntry() {
+      run("enumEntry.kt");
+    }
+
+    @Test
+    @TestMetadata("enumEntryFeatureDisabled.kt")
+    public void testEnumEntryFeatureDisabled() {
+      run("enumEntryFeatureDisabled.kt");
+    }
+
+    @Test
+    @TestMetadata("enumEntryInEquality.kt")
+    public void testEnumEntryInEquality() {
+      run("enumEntryInEquality.kt");
+    }
+
+    @Test
+    @TestMetadata("enumEntryInVariable.kt")
+    public void testEnumEntryInVariable() {
+      run("enumEntryInVariable.kt");
+    }
+
+    @Test
+    @TestMetadata("enumEntryInWhen.kt")
+    public void testEnumEntryInWhen() {
+      run("enumEntryInWhen.kt");
+    }
+
+    @Test
+    @TestMetadata("enumEntryNotApplicable.kt")
+    public void testEnumEntryNotApplicable() {
+      run("enumEntryNotApplicable.kt");
+    }
+
+    @Test
+    @TestMetadata("enumEntryPartialSelection.kt")
+    public void testEnumEntryPartialSelection() {
+      run("enumEntryPartialSelection.kt");
+    }
+
+    @Test
+    @TestMetadata("sealedSubObject.kt")
+    public void testSealedSubObject() {
+      run("sealedSubObject.kt");
+    }
+
+    @Test
+    @TestMetadata("sealedSubObjectFeatureDisabled.kt")
+    public void testSealedSubObjectFeatureDisabled() {
+      run("sealedSubObjectFeatureDisabled.kt");
+    }
+
+    @Test
+    @TestMetadata("sealedSubObjectInVariable.kt")
+    public void testSealedSubObjectInVariable() {
+      run("sealedSubObjectInVariable.kt");
+    }
+
+    @Test
+    @TestMetadata("sealedSubObjectNotApplicable.kt")
+    public void testSealedSubObjectNotApplicable() {
+      run("sealedSubObjectNotApplicable.kt");
+    }
+
+    @Test
+    @TestMetadata("sealedSubObjectPartialSelection.kt")
+    public void testSealedSubObjectPartialSelection() {
+      run("sealedSubObjectPartialSelection.kt");
     }
   }
 

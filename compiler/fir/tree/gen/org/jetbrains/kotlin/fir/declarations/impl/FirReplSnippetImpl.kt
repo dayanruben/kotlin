@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.fir.builder.toMutableOrEmpty
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.references.FirControlFlowGraphReference
+import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirReplSnippetSymbol
 import org.jetbrains.kotlin.fir.visitors.FirTransformer
 import org.jetbrains.kotlin.fir.visitors.FirVisitor
@@ -31,11 +32,12 @@ internal class FirReplSnippetImpl(
     override val moduleData: FirModuleData,
     override val origin: FirDeclarationOrigin,
     override val attributes: FirDeclarationAttributes,
+    override val name: Name,
     override val symbol: FirReplSnippetSymbol,
     override val source: KtSourceElement,
     override var receivers: MutableOrEmptyList<FirScriptReceiverParameter>,
     override var snippetClass: FirRegularClass,
-    override val evalFunctionName: Name,
+    override val evalFunctionSymbol: FirNamedFunctionSymbol,
 ) : FirReplSnippet() {
     override var controlFlowGraphReference: FirControlFlowGraphReference? = null
 

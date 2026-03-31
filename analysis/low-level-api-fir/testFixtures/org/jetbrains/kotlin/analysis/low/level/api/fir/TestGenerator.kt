@@ -276,14 +276,6 @@ fun main(args: Array<String>) {
                 model("classId", pattern = TestGeneratorUtil.KTS)
             }
 
-            testClass<AbstractSourceClassIdConsistencyTest> {
-                model("classId", pattern = TestGeneratorUtil.KT)
-            }
-
-            testClass<AbstractScriptClassIdConsistencyTest> {
-                model("classId", pattern = TestGeneratorUtil.KTS)
-            }
-
             testClass<AbstractCompilationPeerAnalysisTest> {
                 model("compilationPeers")
             }
@@ -338,6 +330,14 @@ fun main(args: Array<String>) {
                 testClass<AbstractLLPartialDiagnosticsTest> {
                     modelInit()
                 }
+            }
+
+            testClass<AbstractSourceDesignationByPsiTest> {
+                model("designationByPsi", pattern = TestGeneratorUtil.KT)
+            }
+
+            testClass<AbstractScriptDesignationByPsiTest> {
+                model("designationByPsi", pattern = TestGeneratorUtil.KTS)
             }
         }
 
