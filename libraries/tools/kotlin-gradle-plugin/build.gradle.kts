@@ -129,6 +129,9 @@ val unpublishedCompilerRuntimeDependencies = listOf(
     ":core:compiler.common.jvm", // for FUS statistics parsing all the compiler arguments
     ":core:descriptors", // for `fromUIntToLong`
     ":core:util.runtime", // for stdlib extensions
+    ":core:language.model", ":core:language.targets", ":core:language.targets.jvm", // For JvmTarget
+    ":core:language.version-settings", // For LanguageFeature
+    ":core:names", // For ClassId
     ":kotlin-build-common", // for incremental compilation setup
     ":js:js.config", // for k/js task
     ":wasm:wasm.config", // for k/js task
@@ -200,8 +203,6 @@ dependencies {
 
     commonImplementation(project(":compiler:build-tools:kotlin-build-statistics"))
     commonImplementation(project(":kotlin-util-klib-metadata")) // TODO: consider removing in KT-70247
-
-    commonImplementation(project(":libraries:tools:abi-validation:abi-tools-api"))
 
     commonRuntimeOnly(project(":kotlin-compiler-runner")) { // TODO: consider removing in KT-70247
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-compiler-embeddable")

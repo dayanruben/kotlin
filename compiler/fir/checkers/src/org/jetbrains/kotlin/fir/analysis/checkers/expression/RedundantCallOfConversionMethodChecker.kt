@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.fullyExpandedClassId
+import org.jetbrains.kotlin.fir.analysis.checkers.hasIntegerLiteralTypeAmbiguity
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.declarations.hasAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirExpression
@@ -36,13 +37,15 @@ object RedundantCallOfConversionMethodChecker : FirFunctionCallChecker(MppChecke
         val functionName = expression.calleeReference.name
         val qualifiedTypeId = targetClassMap[functionName] ?: return
 
-        if (expression.explicitReceiver?.isRedundant(qualifiedTypeId, context.session) == true) {
+        if (expression.dispatchReceiver?.isRedundant(qualifiedTypeId, context.session) == true) {
             reporter.reportOn(expression.source, FirErrors.REDUNDANT_CALL_OF_CONVERSION_METHOD)
         }
     }
 
     context(context: CheckerContext)
     private fun FirExpression.isRedundant(qualifiedClassId: ClassId, session: FirSession): Boolean {
+        if (hasIntegerLiteralTypeAmbiguity()) return false
+
         val thisTypeId = if (this is FirLiteralExpression) {
             resolvedType.classId
         } else {

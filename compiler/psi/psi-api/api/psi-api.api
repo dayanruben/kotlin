@@ -1129,7 +1129,6 @@ public abstract class org/jetbrains/kotlin/psi/KtCodeFragment : org/jetbrains/ko
 
 public final class org/jetbrains/kotlin/psi/KtCodeFragment$Companion {
 	public final fun getFAKE_CONTEXT_FOR_JAVA_FILE ()Lcom/intellij/openapi/util/Key;
-	public final fun getIMPORT_MODIFICATION ()Lcom/intellij/util/messages/Topic;
 }
 
 public abstract interface class org/jetbrains/kotlin/psi/KtCodeFragmentBase : com/intellij/psi/JavaCodeFragment {
@@ -1954,7 +1953,6 @@ public abstract class org/jetbrains/kotlin/psi/KtNamedDeclarationStub : org/jetb
 
 public final class org/jetbrains/kotlin/psi/KtNamedDeclarationUtil {
 	public static fun getParentFqName (Lorg/jetbrains/kotlin/psi/KtNamedDeclaration;)Lorg/jetbrains/kotlin/name/FqName;
-	public static fun getUnsafeFQName (Lorg/jetbrains/kotlin/psi/KtNamedDeclaration;)Lorg/jetbrains/kotlin/name/FqNameUnsafe;
 }
 
 public class org/jetbrains/kotlin/psi/KtNamedFunction : org/jetbrains/kotlin/psi/KtTypeParameterListOwnerStub, org/jetbrains/kotlin/psi/KtDeclarationWithInitializer, org/jetbrains/kotlin/psi/KtFunction {
@@ -3908,7 +3906,6 @@ public final class org/jetbrains/kotlin/psi/psiUtil/PsiUtilsKt {
 	public static final fun createSmartPointer (Lcom/intellij/psi/PsiElement;)Lcom/intellij/psi/SmartPsiElementPointer;
 	public static final fun elementsInRange (Lcom/intellij/psi/PsiFile;Lcom/intellij/openapi/util/TextRange;)Ljava/util/List;
 	public static final fun getAllChildren (Lcom/intellij/psi/PsiElement;)Lorg/jetbrains/kotlin/psi/psiUtil/PsiChildRange;
-	public static final fun getAssignmentLhsIfUnwrappable (Lcom/intellij/lang/LighterASTNode;Lcom/intellij/util/diff/FlyweightCapableTreeStructure;)Lcom/intellij/lang/LighterASTNode;
 	public static final fun getAssignmentLhsIfUnwrappable (Lcom/intellij/psi/PsiElement;)Lcom/intellij/psi/PsiElement;
 	public static final fun getContainingKtFile (Lcom/intellij/psi/impl/source/tree/LazyParseablePsiElement;)Lorg/jetbrains/kotlin/psi/KtFile;
 	public static final fun getElementTextWithContext (Lcom/intellij/psi/PsiElement;)Ljava/lang/String;
@@ -3951,7 +3948,6 @@ public final class org/jetbrains/kotlin/psi/psiUtil/PsiUtilsKt {
 	public static final fun hasFunModifier (Lorg/jetbrains/kotlin/psi/KtModifierList;)Z
 	public static final fun hasInnerModifier (Lorg/jetbrains/kotlin/psi/KtModifierListOwner;)Z
 	public static final fun hasSuspendModifier (Lorg/jetbrains/kotlin/psi/KtModifierList;)Z
-	public static final fun hasUnwrappableAsAssignmentLhs (Lorg/jetbrains/kotlin/KtSourceElement;)Z
 	public static final fun hasValueModifier (Lorg/jetbrains/kotlin/psi/KtModifierList;)Z
 	public static final fun isAncestor (Lcom/intellij/psi/PsiElement;Lcom/intellij/psi/PsiElement;Z)Z
 	public static synthetic fun isAncestor$default (Lcom/intellij/psi/PsiElement;Lcom/intellij/psi/PsiElement;ZILjava/lang/Object;)Z
@@ -4233,6 +4229,28 @@ public final class org/jetbrains/kotlin/psi/utils/ConstantExpressionUtils {
 	public static final fun toConstantValueKind (Lorg/jetbrains/kotlin/psi/stubs/elements/KtStubElementType;)Lorg/jetbrains/kotlin/psi/stubs/ConstantValueKind;
 }
 
+public final class org/jetbrains/kotlin/psi/utils/OperatorTokens {
+	public static final field ASSIGNMENTS_FOR_OPERATIONS Ljava/util/Map;
+	public static final field ASSIGNMENT_OPERATION_NAMES Ljava/util/Map;
+	public static final field ASSIGNMENT_OPERATION_TOKENS Ljava/util/Map;
+	public static final field BINARY_OPERATION_NAMES Ljava/util/Map;
+	public static final field BINARY_OPERATION_TOKENS Ljava/util/Map;
+	public static final field COMPARISON_OPERATIONS Ljava/util/Set;
+	public static final field CONVENTION_NAMES Ljava/util/Set;
+	public static final field EQUALS_OPERATIONS Ljava/util/Set;
+	public static final field IDENTITY_EQUALS_OPERATIONS Ljava/util/Set;
+	public static final field INCREMENT_OPERATIONS Ljava/util/Set;
+	public static final field INSTANCE Lorg/jetbrains/kotlin/psi/utils/OperatorTokens;
+	public static final field IN_OPERATIONS Ljava/util/Set;
+	public static final field OPERATIONS_FOR_ASSIGNMENTS Ljava/util/Map;
+	public static final field UNARY_OPERATION_NAMES Ljava/util/Map;
+	public static final field UNARY_OPERATION_TOKENS Ljava/util/Map;
+	public static final fun isConventionName (Lorg/jetbrains/kotlin/name/Name;)Z
+	public static final fun operationName (Lorg/jetbrains/kotlin/lexer/KtToken;)Lorg/jetbrains/kotlin/name/Name;
+	public static final fun operationName (Lorg/jetbrains/kotlin/lexer/KtToken;ZZ)Lorg/jetbrains/kotlin/name/Name;
+	public static final fun operationToken (Lorg/jetbrains/kotlin/name/Name;)Lorg/jetbrains/kotlin/lexer/KtToken;
+}
+
 public class org/jetbrains/kotlin/resolve/StatementFilter {
 	public static final field Companion Lorg/jetbrains/kotlin/resolve/StatementFilter$Companion;
 	public static final field NONE Lorg/jetbrains/kotlin/resolve/StatementFilter;
@@ -4246,33 +4264,5 @@ public final class org/jetbrains/kotlin/resolve/StatementFilter$Companion {
 public final class org/jetbrains/kotlin/resolve/StatementFilterKt {
 	public static final fun filterStatements (Lorg/jetbrains/kotlin/resolve/StatementFilter;Lorg/jetbrains/kotlin/psi/KtBlockExpression;)Ljava/util/List;
 	public static final fun getLastStatementInABlock (Lorg/jetbrains/kotlin/resolve/StatementFilter;Lorg/jetbrains/kotlin/psi/KtBlockExpression;)Lorg/jetbrains/kotlin/psi/KtExpression;
-}
-
-public class org/jetbrains/kotlin/types/expressions/OperatorConventions {
-	public static final field ASSIGNMENT_OPERATIONS Lcom/google/common/collect/ImmutableBiMap;
-	public static final field ASSIGNMENT_OPERATION_COUNTERPARTS Lcom/google/common/collect/ImmutableBiMap;
-	public static final field ASSIGN_METHOD Lorg/jetbrains/kotlin/name/Name;
-	public static final field BINARY_OPERATION_NAMES Lcom/google/common/collect/ImmutableBiMap;
-	public static final field BOOLEAN_OPERATIONS Lcom/google/common/collect/ImmutableBiMap;
-	public static final field BYTE Lorg/jetbrains/kotlin/name/Name;
-	public static final field CHAR Lorg/jetbrains/kotlin/name/Name;
-	public static final field COMPARISON_OPERATIONS Lcom/google/common/collect/ImmutableSet;
-	public static final field CONVENTION_NAMES Lcom/google/common/collect/ImmutableSet;
-	public static final field DOUBLE Lorg/jetbrains/kotlin/name/Name;
-	public static final field EQUALS_OPERATIONS Lcom/google/common/collect/ImmutableSet;
-	public static final field FLOAT Lorg/jetbrains/kotlin/name/Name;
-	public static final field IDENTITY_EQUALS_OPERATIONS Lcom/google/common/collect/ImmutableSet;
-	public static final field INCREMENT_OPERATIONS Lcom/google/common/collect/ImmutableSet;
-	public static final field INT Lorg/jetbrains/kotlin/name/Name;
-	public static final field IN_OPERATIONS Lcom/google/common/collect/ImmutableSet;
-	public static final field LONG Lorg/jetbrains/kotlin/name/Name;
-	public static final field NOT_OVERLOADABLE Lcom/google/common/collect/ImmutableSet;
-	public static final field NUMBER_CONVERSIONS Lcom/google/common/collect/ImmutableSet;
-	public static final field SHORT Lorg/jetbrains/kotlin/name/Name;
-	public static final field UNARY_OPERATION_NAMES Lcom/google/common/collect/ImmutableBiMap;
-	public static fun getNameForOperationSymbol (Lorg/jetbrains/kotlin/lexer/KtToken;)Lorg/jetbrains/kotlin/name/Name;
-	public static fun getNameForOperationSymbol (Lorg/jetbrains/kotlin/lexer/KtToken;ZZ)Lorg/jetbrains/kotlin/name/Name;
-	public static fun getOperationSymbolForName (Lorg/jetbrains/kotlin/name/Name;)Lorg/jetbrains/kotlin/lexer/KtToken;
-	public static fun isConventionName (Lorg/jetbrains/kotlin/name/Name;)Z
 }
 
