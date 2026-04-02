@@ -229,13 +229,13 @@ object IrTree : AbstractTreeBuilder() {
         +field("type", irTypeType)
     }
     val valueParameter: Element by element(Declaration) {
-        doPrint = false
         needTransformMethod()
 
         parent(declarationBase)
         parent(valueDeclaration)
 
         +descriptor("ParameterDescriptor")
+        +field("kind", type(Packages.declarations, "IrParameterKind"))
         +field("isAssignable", boolean)
         +declaredSymbol(valueParameterSymbol)
         +field("varargElementType", irTypeType, nullable = true)
@@ -275,7 +275,7 @@ object IrTree : AbstractTreeBuilder() {
         addImport(ArbitraryImportable(Packages.declarations, "DelicateIrParameterIndexSetter"))
         generationCallback = {
             println()
-            printPropertyDeclaration("index", int, VariableKind.VAR, initializer = "-1")
+            printPropertyDeclaration("indexInParameters", int, VariableKind.VAR, initializer = "-1")
             println()
             withIndent {
                 println("@DelicateIrParameterIndexSetter")
@@ -715,14 +715,14 @@ object IrTree : AbstractTreeBuilder() {
 
         +referencedSymbol(s, mutable = false)
         +field("origin", statementOriginType, nullable = true)
+        +listField("arguments", expression.copy(nullable = true), mutability = MutableList, isChild = true) {
+            doPrint = false
+        }
         +listField(
             name = "typeArguments",
             baseType = irTypeType.copy(nullable = true),
             mutability = MutableList,
-        ) {
-            deepCopyExcludeFromConstructor = true
-            deepCopyExcludeFromApply = true
-        }
+        )
     }
     val functionAccessExpression: Element by sealedElement(Expression) {
         nameInVisitorMethod = "FunctionAccess"

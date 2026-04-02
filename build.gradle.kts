@@ -429,6 +429,11 @@ extra["kotlinJpsPluginEmbeddedDependencies"] = listOf(
     ":kotlin-build-tools-enum-compat",
     ":kotlin-compiler-runner-unshaded",
     ":daemon-common",
+    ":core:names",
+    ":core:language.model",
+    ":core:language.targets",
+    ":core:language.targets.jvm",
+    ":core:language.version-settings",
     ":core:compiler.common",
     ":core:compiler.common.jvm",
     ":core:compiler.common.js",
@@ -908,6 +913,7 @@ tasks {
     // These are unit tests of Native compiler
     register("nativeCompilerUnitTest") {
         dependsOn(":native:kotlin-native-utils:check")
+        dependsOn(":native:unsafe-mem:check")
         if (kotlinBuildProperties.isKotlinNativeEnabled.get()) {
             dependsOn(":kotlin-native:Interop:Indexer:check")
             dependsOn(":kotlin-native:Interop:StubGenerator:check")

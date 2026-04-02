@@ -5,10 +5,10 @@
 
 package org.jetbrains.kotlin.buildtools.tests.compilation.model
 
-import org.jetbrains.kotlin.buildtools.api.CompilationResult
-import org.jetbrains.kotlin.buildtools.api.ExecutionPolicy
-import org.jetbrains.kotlin.buildtools.api.KotlinToolchains
-import org.jetbrains.kotlin.buildtools.api.SourcesChanges
+import org.jetbrains.kotlin.buildtools.api.*
+import org.jetbrains.kotlin.buildtools.api.BaseIncrementalCompilationConfiguration.Companion.FORCE_RECOMPILATION
+import org.jetbrains.kotlin.buildtools.api.BaseIncrementalCompilationConfiguration.Companion.MODULE_BUILD_DIR
+import org.jetbrains.kotlin.buildtools.api.BaseIncrementalCompilationConfiguration.Companion.ROOT_PROJECT_DIR
 import org.jetbrains.kotlin.buildtools.api.arguments.JvmCompilerArguments.Companion.CLASSPATH
 import org.jetbrains.kotlin.buildtools.api.arguments.JvmCompilerArguments.Companion.MODULE_NAME
 import org.jetbrains.kotlin.buildtools.api.arguments.JvmCompilerArguments.Companion.NO_REFLECT
@@ -16,9 +16,6 @@ import org.jetbrains.kotlin.buildtools.api.arguments.JvmCompilerArguments.Compan
 import org.jetbrains.kotlin.buildtools.api.jvm.AccessibleClassSnapshot
 import org.jetbrains.kotlin.buildtools.api.jvm.JvmPlatformToolchain.Companion.jvm
 import org.jetbrains.kotlin.buildtools.api.jvm.JvmSnapshotBasedIncrementalCompilationConfiguration
-import org.jetbrains.kotlin.buildtools.api.jvm.JvmSnapshotBasedIncrementalCompilationConfiguration.Companion.FORCE_RECOMPILATION
-import org.jetbrains.kotlin.buildtools.api.jvm.JvmSnapshotBasedIncrementalCompilationConfiguration.Companion.MODULE_BUILD_DIR
-import org.jetbrains.kotlin.buildtools.api.jvm.JvmSnapshotBasedIncrementalCompilationConfiguration.Companion.ROOT_PROJECT_DIR
 import org.jetbrains.kotlin.buildtools.api.jvm.classpathSnapshottingOperation
 import org.jetbrains.kotlin.buildtools.api.jvm.jvmCompilationOperation
 import org.jetbrains.kotlin.buildtools.api.jvm.operations.JvmClasspathSnapshottingOperation
@@ -75,12 +72,12 @@ class JvmModule(
                 .toList(),
             outputDirectory
         ) {
-            moduleCompilationConfigAction(this) // apply module-wide configuration
-            compilationConfigAction(this) // apply any overrides for this compilation only
             this.compilerArguments[NO_REFLECT] = true
             this.compilerArguments[NO_STDLIB] = true
             this.compilerArguments[CLASSPATH] = compileClasspath
             this.compilerArguments[MODULE_NAME] = moduleName
+            moduleCompilationConfigAction(this) // apply module-wide configuration
+            compilationConfigAction(this) // apply any overrides for this compilation only
         }
 
         return compilationOperation.let {

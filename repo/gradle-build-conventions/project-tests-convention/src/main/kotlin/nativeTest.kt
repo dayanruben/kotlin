@@ -7,6 +7,7 @@ import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.*
@@ -14,6 +15,7 @@ import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.environment
 import org.gradle.kotlin.dsl.findByType
 import org.gradle.kotlin.dsl.named
+import org.gradle.kotlin.dsl.newInstance
 import org.gradle.kotlin.dsl.project
 import org.gradle.process.CommandLineArgumentProvider
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
@@ -53,6 +55,7 @@ private enum class TestProperty(shortName: String) {
     XCTEST_FRAMEWORK("xctest"),
     TEAMCITY("teamcity"),
     MINIDUMP_ANALYZER("minidumpAnalyzer"),
+    JDK_VERSION("jdkVersion"),
     ;
 
     val fullName = "kotlin.internal.native.test.$shortName"
@@ -282,6 +285,35 @@ private open class NativeArgsProvider @Inject constructor(
     }
 }
 
+private abstract class JdkVersionDependentFlagsProvider : CommandLineArgumentProvider {
+    @get:Input
+    abstract val jdkVersion: Property<JdkMajorVersion>
+
+    @get:Input
+    abstract val allowUnsafe: Property<Boolean>
+
+    override fun asArguments() = buildList {
+        val version = jdkVersion.get().majorVersion
+        if (version >= 24) {
+            // Allow JNI native access on JDK 24+ to suppress warnings (https://openjdk.org/jeps/472).
+            // The same flag is needed for restricted FFM API (https://openjdk.org/jeps/454).
+            add("--enable-native-access=ALL-UNNAMED")
+
+            val unsafeMode = when {
+                // The test task still relies on `sun.misc.Unsafe`.
+                // Allow it to suppress warnings (https://openjdk.org/jeps/498).
+                allowUnsafe.get() -> "allow"
+                // `MemorySegmentMemoryAccess` is not used when running on versions earlier than JDK 25.
+                version < 25 -> "allow"
+                // `MemorySegmentMemoryAccess` is used. The task must not use `sun.misc.Unsafe`.
+                // Deny that to make sure it doesn't.
+                else -> "deny"
+            }
+            add("--sun-misc-unsafe-memory-access=$unsafeMode")
+        }
+    }
+}
+
 private fun ProviderFactory.testProperty(property: TestProperty) =
     gradleProperty(property.fullName).orElse(gradleProperty(property.shortName))
 
@@ -307,6 +339,7 @@ fun ProjectTestsExtension.nativeTestTask(
     allowParallelExecution: Boolean = true,
     customCompilerDist: TaskProvider<Sync>? = null,
     maxMetaspaceSizeMb: Int = 512,
+    allowUnsafe: Boolean = false,
     defineJDKEnvVariables: List<JdkMajorVersion> = emptyList(),
     body: Test.() -> Unit = {},
 ): TaskProvider<Test> = testTask(
@@ -327,7 +360,26 @@ fun ProjectTestsExtension.nativeTestTask(
 
         // Use ARM64 JDK on ARM64 Mac as required by the K/N compiler.
         // See https://youtrack.jetbrains.com/issue/KTI-2421#focus=Comments-27-12231298.0-0.
-        javaLauncher.set(project.getToolchainLauncherFor(JdkMajorVersion.JDK_11_0))
+        val defaultJdkVersion = JdkMajorVersion.JDK_11_0
+
+        val nativeTestJdkVersion = project.providers.testProperty(JDK_VERSION)
+            .map { versionString ->
+                val majorVersion = versionString.toIntOrNull()
+                    ?: error("Invalid JDK version '$versionString'. Expected an integer (e.g., 11, 17, 21).")
+                JdkMajorVersion.entries.find { it.majorVersion == majorVersion }
+                    ?: error(
+                        "Unsupported JDK major version: $majorVersion." +
+                                "Supported versions: ${JdkMajorVersion.entries.joinToString { it.majorVersion.toString() }}"
+                    )
+            }
+            .orElse(defaultJdkVersion)
+
+        javaLauncher.set(nativeTestJdkVersion.flatMap { project.getToolchainLauncherFor(it) })
+
+        jvmArgumentProviders.add(project.objects.newInstance<JdkVersionDependentFlagsProvider>().apply {
+            this.jdkVersion.set(nativeTestJdkVersion)
+            this.allowUnsafe.set(allowUnsafe)
+        })
 
         // Using JDK 11 instead of JDK 8 (project default) makes some tests take 15-25% more time.
         // This seems to be caused by the fact that JDK 11 uses G1 GC by default, while JDK 8 uses Parallel GC.

@@ -83,6 +83,11 @@ internal class KotlinWrapperPre2_4_0(
         private val base: JvmCompilationOperation,
     ) : JvmCompilationOperation by base, BuildOperationWrapper<CompilationResult>(base), CancellableBuildOperation<CompilationResult> {
         override val compilerArguments: JvmCompilerArguments = JvmCompilerArgumentsWrapper(base.compilerArguments)
+
+        override fun <V> get(key: BaseCompilationOperation.Option<V>): V {
+            val jvmOption = JvmCompilationOperation.Option<V>(key.id)
+            return base[jvmOption]
+        }
     }
 
     private class JvmCompilationOperationBuilderWrapper(
@@ -95,16 +100,46 @@ internal class KotlinWrapperPre2_4_0(
             sourcesChanges: SourcesChanges,
             dependenciesSnapshotFiles: List<Path>,
         ): JvmSnapshotBasedIncrementalCompilationConfiguration.Builder {
-            return base.snapshotBasedIcConfigurationBuilder(
-                workingDirectory,
-                sourcesChanges,
-                dependenciesSnapshotFiles,
-                workingDirectory.resolve("shrunk-classpath-snapshot.bin"),
+            return JvmSnapshotBasedIncrementalCompilationConfigurationWrapper(
+                base.snapshotBasedIcConfigurationBuilder(
+                    workingDirectory,
+                    sourcesChanges,
+                    dependenciesSnapshotFiles,
+                    workingDirectory.resolve("shrunk-classpath-snapshot.bin"),
+                )
             )
+        }
+
+        override fun <V> set(key: BaseCompilationOperation.Option<V>, value: V) {
+            val jvmOption = JvmCompilationOperation.Option<V>(key.id)
+            base[jvmOption] = value
+        }
+
+        override fun <V> get(key: BaseCompilationOperation.Option<V>): V {
+            val jvmOption = JvmCompilationOperation.Option<V>(key.id)
+            return base[jvmOption]
         }
 
         override fun build(): JvmCompilationOperation {
             return JvmCompilationOperationWrapper(base.build())
+        }
+
+        private class JvmSnapshotBasedIncrementalCompilationConfigurationWrapper(
+            val base: JvmSnapshotBasedIncrementalCompilationConfiguration.Builder,
+        ) : JvmSnapshotBasedIncrementalCompilationConfiguration.Builder by base {
+            override fun <V> get(key: BaseIncrementalCompilationConfiguration.Option<V>): V {
+                val oldOption = JvmSnapshotBasedIncrementalCompilationConfiguration.Option<V>(key.id)
+                return base[oldOption]
+            }
+
+            override fun <V> set(key: BaseIncrementalCompilationConfiguration.Option<V>, value: V) {
+                val oldOption = JvmSnapshotBasedIncrementalCompilationConfiguration.Option<V>(key.id)
+                base[oldOption] = value
+            }
+
+            override fun build(): JvmSnapshotBasedIncrementalCompilationConfiguration {
+                return base.build()
+            }
         }
     }
 

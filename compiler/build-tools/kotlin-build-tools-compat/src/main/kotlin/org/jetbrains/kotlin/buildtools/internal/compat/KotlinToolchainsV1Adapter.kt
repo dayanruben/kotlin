@@ -200,7 +200,7 @@ private class JvmCompilationOperationV1Adapter private constructor(
     override val sources: List<Path>,
     override val destinationDirectory: Path,
     override val compilerArguments: JvmCompilerArgumentsImpl,
-) : BuildOperationImpl<CompilationResult>(), JvmCompilationOperation, JvmCompilationOperation.Builder,
+) : BaseCompilationOperationImpl(), JvmCompilationOperation, JvmCompilationOperation.Builder,
     DeepCopyable<JvmCompilationOperationV1Adapter> {
     constructor(
         @Suppress("DEPRECATION_ERROR") compilationService: CompilationService,
@@ -387,6 +387,10 @@ private class JvmCompilationOperationV1Adapter private constructor(
             )
         }
 
+        override fun <V> set(key: BaseIncrementalCompilationConfiguration.Option<V>, value: V) {
+            options.options[key] = value
+        }
+
         class Option<V> : BaseOptionWithDefault<V> {
             constructor(id: String) : super(id)
             constructor(id: String, default: V) : super(id, default = default)
@@ -413,6 +417,10 @@ private class JvmCompilationOperationV1Adapter private constructor(
 
         override fun deepCopy(): JvmSnapshotBasedIncrementalCompilationOptionsV1Adapter {
             return JvmSnapshotBasedIncrementalCompilationOptionsV1Adapter(options.deepCopy())
+        }
+
+        override fun <V> get(key: BaseIncrementalCompilationConfiguration.Option<V>): V {
+            return options[key]
         }
 
         class Option<V> : BaseOptionWithDefault<V> {
@@ -445,6 +453,10 @@ private class JvmCompilationOperationV1Adapter private constructor(
     @Deprecated("Use `snapshotBasedIcConfigurationBuilder` instead.")
     override fun createSnapshotBasedIcOptions(): JvmSnapshotBasedIncrementalCompilationOptions {
         return JvmSnapshotBasedIncrementalCompilationOptionsV1Adapter(options.deepCopy())
+    }
+
+    override fun <V> set(key: BaseCompilationOperation.Option<V>, value: V) {
+        options[key.id] = value
     }
 }
 
@@ -584,6 +596,11 @@ private class BuildSessionV1Adapter(
 
 @Suppress("DEPRECATION_ERROR")
 public fun CompilationService.asKotlinToolchains(): KotlinToolchains = KotlinToolchainsV1Adapter(this)
+
+
+private abstract class BaseCompilationOperationImpl : BuildOperationImpl<CompilationResult>(), BaseCompilationOperation {
+    override fun <V> get(key: BaseCompilationOperation.Option<V>): V = options[key.id]
+}
 
 @OptIn(ExperimentalAtomicApi::class)
 private abstract class BuildOperationImpl<R> : BuildOperation<R> {
