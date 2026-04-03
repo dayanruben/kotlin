@@ -86,7 +86,7 @@ class SwiftPMImportXcodeIntegrationIT : KGPBaseTest() {
     }
 
     @GradleTest
-    fun `integrateLinkagePackage sets dynamic synthetic product type for dynamic frameworks`(version: GradleVersion) {
+    fun `integrateLinkagePackage sets dynamic synthetic product type for dynamic frameworks to inferred and creates a dynamic package`(version: GradleVersion) {
         project("emptyxcode", version) {
             val localSwiftPackageRelativePath = "../localSwiftPackage"
             createLocalSwiftPackage(projectPath.resolve(localSwiftPackageRelativePath))
@@ -116,6 +116,7 @@ class SwiftPMImportXcodeIntegrationIT : KGPBaseTest() {
             }
 
             val manifestFile = projectPath.resolve("iosApp/$SYNTHETIC_IMPORT_TARGET_MAGIC_NAME/Package.swift")
+            val promotionManifestFile = projectPath.resolve("iosApp/$SYNTHETIC_IMPORT_TARGET_MAGIC_NAME/subpackages/$SYNTHETIC_IMPORT_DYLIB/Package.swift")
 
             build(
                 "integrateLinkagePackage",
@@ -127,16 +128,21 @@ class SwiftPMImportXcodeIntegrationIT : KGPBaseTest() {
                     manifestFile.exists(),
                     "Synthetic Package.swift should be generated"
                 )
+                val manifest = describeSwiftPackage(manifestFile.parent)
                 assertEquals(
-                    SwiftPackageLibraryType.DYNAMIC,
-                    describeSwiftPackage(manifestFile.parent).products.first().type.library?.first(),
+                    SwiftPackageLibraryType.AUTOMATIC,
+                    manifest.products.single().type.library?.single(),
                     message = "Synthetic package product type should be '.dynamic' when isStatic=false"
                 )
-                // https://youtrack.jetbrains.com/issue/KT-82824/Make-linker-hack-path-relative
                 assertEquals(
-                    "-fuse-ld=${projectPath.toRealPath().absolutePathString()}/iosApp/$SYNTHETIC_IMPORT_TARGET_MAGIC_NAME/linkerHack",
-                    dumpSwiftPackage(manifestFile.parent).getFirstUnsafeFlag(),
-                    message = "Package.swift should have linker hack when isStatic=false"
+                    setOf("kotlinmultiplatformlinkedpackagedylib"),
+                    manifest.dependencies.map { it.identity }.toSet(),
+                )
+
+                val promotionManifest = describeSwiftPackage(promotionManifestFile.parent)
+                assertEquals(
+                    SwiftPackageLibraryType.DYNAMIC,
+                    promotionManifest.products.single().type.library?.single(),
                 )
             }
         }
@@ -285,6 +291,46 @@ class SwiftPMImportXcodeIntegrationIT : KGPBaseTest() {
                 assertContains(manifestContent, "\"1.32.0-range1\"...\"1.32.0-range2\"")
                 assertContains(manifestContent, "branch: \"git-branch\"")
                 assertContains(manifestContent, "revision: \"git-revision\"")
+            }
+        }
+    }
+
+    @GradleTest
+    fun `integrateLinkagePackage passes id repository into synthetic manifest`(version: GradleVersion) {
+        project("emptyxcode", version) {
+            plugins {
+                kotlin("multiplatform")
+            }
+            buildScriptInjection {
+                project.applyMultiplatform {
+                    iosArm64()
+
+                    swiftPMDependencies {
+                        swiftPackage(
+                            repository = id("mona.LinkedList"),
+                            version = from("1.0.0"),
+                            products = listOf(),
+                            packageName = "LinkedList",
+                        )
+                    }
+                }
+            }
+
+            build(
+                "integrateLinkagePackage",
+                environmentVariables = EnvironmentalVariables(
+                    "XCODEPROJ_PATH" to "iosApp/iosApp.xcodeproj",
+                )
+            ) {
+                val manifestFileDir = projectPath.resolve("iosApp/$SYNTHETIC_IMPORT_TARGET_MAGIC_NAME")
+                val dependencies = describeSwiftPackage(manifestFileDir).dependencies
+
+                assertEquals(listOf("registry"), dependencies.map { it.type }, "id-based dependency type should be 'registry'")
+                assertEquals(
+                    listOf("mona.LinkedList"),
+                    dependencies.map { it.identity },
+                    "id-based dependency identity should be 'mona.LinkedList'"
+                )
             }
         }
     }
