@@ -2,8 +2,8 @@
 // LANGUAGE: +IntrinsicConstEvaluation
 // WITH_STDLIB
 
-const val lower1 = <!CONST_VAL_WITH_NON_CONST_INITIALIZER!>"hEllO".lowercase()<!>
-const val upper1 = <!CONST_VAL_WITH_NON_CONST_INITIALIZER!>"World".uppercase()<!>
+const val lower1 = "hEllO".lowercase()
+const val upper1 = "World".uppercase()
 
 /* GENERATED_FIR_TAGS: additiveExpression, const, equalityExpression, integerLiteral, propertyDeclaration,
 unsignedLiteral */

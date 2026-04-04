@@ -22,6 +22,6 @@ public abstract class JavaAbstractMutableList {
 // FILE: jvm.kt
 package kotlin.collections
 
-public actual abstract class <!NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS!>AbstractMutableList<!> actual constructor(): bar.JavaAbstractMutableList()
+public actual abstract class AbstractMutableList actual constructor(): bar.JavaAbstractMutableList()
 
 /* GENERATED_FIR_TAGS: actual, classDeclaration, expect, javaType, primaryConstructor, propertyDeclaration */

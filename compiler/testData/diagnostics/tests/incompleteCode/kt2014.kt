@@ -11,11 +11,11 @@ class Foo {
 
 fun x(f : Foo) {
     f.<!FUNCTION_CALL_EXPECTED!>prop<!>
-    f.<!FUNCTION_CALL_EXPECTED, NO_VALUE_FOR_PARAMETER!>bar<!>
+    f.<!FUNCTION_CALL_EXPECTED!>bar<!>
 
     f.<!FUNCTION_EXPECTED!>a<!>()
     <!UNRESOLVED_REFERENCE!>c<!>()
-    <!FUNCTION_EXPECTED!>R<!>()
+    <!UNRESOLVED_REFERENCE!>R<!>()
 }
 
 object R {}

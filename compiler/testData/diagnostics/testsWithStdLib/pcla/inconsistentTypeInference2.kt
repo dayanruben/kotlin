@@ -5,7 +5,7 @@
 fun bar() {
     buildList {
         add("Boom")
-        println(<!TYPE_MISMATCH!>this<!>.plus(1)[0])
+        println(this.plus(1)[0])
     }
 }
 

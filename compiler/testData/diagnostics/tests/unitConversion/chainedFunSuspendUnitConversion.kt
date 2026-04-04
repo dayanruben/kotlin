@@ -14,8 +14,8 @@ fun bar(): String = ""
 abstract class SubInt : () -> Int
 
 fun test(f: () -> String, s: SubInt) {
-    foo(f)
-    foo(s)
+    foo(<!ARGUMENT_TYPE_MISMATCH!>f<!>)
+    foo(<!ARGUMENT_TYPE_MISMATCH!>s<!>)
     foo(::bar)
 }
 

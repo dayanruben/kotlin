@@ -11,9 +11,9 @@ fun createCall(): () -> Int = TODO()
 fun test(g: () -> String, h: (Float) -> String) {
     foo(::bar)
     foo { "something" }
-    foo(g)
+    foo(<!ARGUMENT_TYPE_MISMATCH!>g<!>)
 
-    <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Float")!>fooGeneric(h)<!>
+    <!CANNOT_INFER_PARAMETER_TYPE!>fooGeneric<!>(<!ARGUMENT_TYPE_MISMATCH!>h<!>)
 }
 
 /* GENERATED_FIR_TAGS: callableReference, functionDeclaration, functionalType, lambdaLiteral, nullableType,

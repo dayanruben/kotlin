@@ -26,13 +26,13 @@ class BoxedDependencyInheritor: Box<Dependency>()
 fun main() {
     dependencyInheritor
 
-    DependencyInheritor()
-    BoxedDependencyInheritor()
+    <!MISSING_DEPENDENCY_SUPERCLASS_WARNING!>DependencyInheritor<!>()
+    <!MISSING_DEPENDENCY_SUPERCLASS_IN_TYPE_ARGUMENT!>BoxedDependencyInheritor<!>()
 
-    dependencyInheritor.<!MISSING_DEPENDENCY_SUPERCLASS!>foo<!>()
+    dependencyInheritor.<!MISSING_DEPENDENCY_SUPERCLASS, UNRESOLVED_REFERENCE!>foo<!>()
     dependencyInheritor.<!MISSING_DEPENDENCY_SUPERCLASS!>bar<!>()
 
-    DependencyInheritor::<!MISSING_DEPENDENCY_SUPERCLASS!>foo<!>
+    DependencyInheritor::<!MISSING_DEPENDENCY_SUPERCLASS, UNRESOLVED_REFERENCE!>foo<!>
 }
 
 /* GENERATED_FIR_TAGS: classDeclaration, functionDeclaration, nullableType, propertyDeclaration, typeParameter */
