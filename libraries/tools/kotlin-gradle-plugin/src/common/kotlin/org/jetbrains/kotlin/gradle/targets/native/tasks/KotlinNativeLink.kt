@@ -87,9 +87,7 @@ constructor(
         }
     }
 
-    @Deprecated("Visibility will be lifted to private in Kotlin 2.3.", level = DeprecationLevel.ERROR)
-    @get:Internal
-    val compilation: KotlinNativeCompilation
+    private val compilation: KotlinNativeCompilation
         get() = binary.compilation
 
     final override val toolOptions: KotlinCommonCompilerToolOptions = objectFactory
@@ -97,7 +95,6 @@ constructor(
 
     override val destinationDirectory: DirectoryProperty = binary.outputDirectoryProperty
 
-    @Suppress("DEPRECATION_ERROR")
     @get:Internal
     internal val konanTarget = compilation.konanTarget
 
@@ -114,7 +111,6 @@ constructor(
     override val libraries: ConfigurableFileCollection = objectFactory.fileCollection().from(
         {
             // Avoid resolving these dependencies during task graph construction when we can't build the target:
-            @Suppress("DEPRECATION_ERROR")
             if (konanTarget.enabledOnCurrentHostForBinariesCompilation) compilation.compileDependencyFiles.exclude(excludeDependencies)
             else objectFactory.fileCollection()
         }
@@ -145,8 +141,10 @@ constructor(
         binary.buildType.name.lowercase(Locale.ROOT).replaceFirstChar { it.titlecase(Locale.ROOT) }
     }
 
-    @Suppress("DEPRECATION_ERROR")
-    @Deprecated("Use toolOptions to configure the task")
+    @Deprecated(
+        message = "Use toolOptions to configure the task",
+        level = DeprecationLevel.ERROR,
+    )
     @get:Internal
     val languageSettings: LanguageSettings = compilation.defaultSourceSet.languageSettings
 
@@ -190,7 +188,8 @@ constructor(
 
     @Suppress("unused", "UNCHECKED_CAST")
     @Deprecated(
-        "Use toolOptions.freeCompilerArgs",
+        message = "Use toolOptions.freeCompilerArgs",
+        level = DeprecationLevel.ERROR,
         replaceWith = ReplaceWith("toolOptions.freeCompilerArgs.get()")
     )
     @get:Internal
@@ -269,7 +268,6 @@ constructor(
         else -> objectFactory.property(false)
     }
 
-    @Suppress("DEPRECATION_ERROR")
     @get:Input
     val target: String = compilation.konanTarget.name
 
@@ -279,8 +277,6 @@ constructor(
 
     @get:Internal
     internal val externalDependenciesBuildCompilerArgs: ListProperty<String> = objectFactory.listProperty<String>().empty()
-
-    private val gradleUserHomeDir = project.gradle.gradleUserHomeDir
 
     private class CacheSettings(
         val icEnabled: Boolean,
@@ -420,14 +416,8 @@ constructor(
         }
     }
 
-    @Suppress("DEPRECATION_ERROR")
     @get:Classpath
     protected val friendModule: FileCollection = objectFactory.fileCollection().from({ compilation.friendPaths })
-
-    @Suppress("DEPRECATION_ERROR")
-    private val resolvedConfiguration = LazyResolvedConfigurationWithArtifacts(
-        project.configurations.getByName(compilation.compileDependencyConfigurationName)
-    )
 
     @get:Internal
     open val outputFile: Provider<File>
@@ -472,12 +462,14 @@ constructor(
 
     @Deprecated(
         message = "This property will be removed in future releases. Don't use it in your code.",
+        level = DeprecationLevel.ERROR,
     )
     @get:Internal
     val konanDataDir: Provider<String?> = kotlinNativeProvider.flatMap { it.konanDataDir }
 
     @Deprecated(
         message = "This property will be removed in future releases. Don't use it in your code.",
+        level = DeprecationLevel.ERROR,
     )
     @get:Internal
     val konanHome: Provider<String> = kotlinNativeProvider.flatMap { it.bundleDirectory }

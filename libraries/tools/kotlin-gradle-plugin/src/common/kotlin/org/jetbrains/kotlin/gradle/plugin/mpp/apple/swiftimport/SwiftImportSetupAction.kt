@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.apple.appleArchitecture
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.applePlatform
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.appleTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.sdk
-import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftimport.ConvertSyntheticSwiftPMImportProjectIntoDefFile.Companion.DUMP_FILE_ARGS_SEPARATOR
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftimport.XcodebuildDefFileUtils.DUMP_FILE_ARGS_SEPARATOR
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftimport.GenerateSyntheticLinkageImportProject.Companion.SYNTHETIC_IMPORT_TARGET_MAGIC_NAME
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftimport.GenerateSyntheticLinkageImportProject.SyntheticProductType
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftimport.SwiftPMDependency.Platform
@@ -34,8 +34,11 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.gradle.tasks.locateOrRegisterTask
 import org.jetbrains.kotlin.gradle.tasks.registerTask
+import org.jetbrains.kotlin.gradle.utils.addConfigurationMetrics
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 import org.jetbrains.kotlin.konan.target.HostManager
+import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
+import org.jetbrains.kotlin.statistics.metrics.NumericalMetrics
 import java.io.File
 import kotlin.io.readLines
 import kotlin.io.resolve
@@ -236,7 +239,7 @@ internal val SwiftImportSetupAction = KotlinProjectSetupAction {
 
         target.binaries.all { binary ->
             binary.linkTaskProvider.configure { linkTask ->
-                // FIXME: KT-84809 Wire this only when we will call ld
+                if (binary is Framework && binary.isStatic) return@configure
                 val isFrameworkBinary = binary is Framework
                 val ldArgDumpPath = defFilesAndLdDumpGenerationTask.map {
                     if (isFrameworkBinary) {
@@ -262,6 +265,13 @@ internal val SwiftImportSetupAction = KotlinProjectSetupAction {
         }
 
         swiftPMImportExtension.swiftPMDependencies.all spmDependency@{ swiftPMDependency ->
+            project.addConfigurationMetrics {
+                it.put(BooleanMetrics.KMP_SWIFT_PM_IMPORT_HAS_DIRECT_DEPENDENCIES, true)
+            }
+            project.addConfigurationMetrics {
+                it.put(NumericalMetrics.KMP_SWIFT_PM_IMPORT_NUMBER_OF_DIRECT_DEPENDENCIES, 1)
+            }
+
             // Auto-enable commonization on 1+ consumed SwiftPM dependencies for IDE and metadata compilation of shared source sets
             kotlinPropertiesProvider.enableCInteropCommonizationSetByExternalPlugin = true
             // Expose declared SwiftPM dependencies in the outgoing variant on 1+ consumed SwiftPM dependencies

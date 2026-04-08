@@ -869,6 +869,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNUSED_VARIABLE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UPPER_BOUND_IS_EXTENSION_OR_CONTEXT_FUNCTION_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UPPER_BOUND_VIOLATED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UPPER_BOUND_VIOLATED_DEPRECATION_WARNING
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UPPER_BOUND_VIOLATED_IN_LHS_OF_CLASS_LITERAL_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UPPER_BOUND_VIOLATED_IN_TYPEALIAS_EXPANSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UPPER_BOUND_VIOLATED_IN_TYPEALIAS_EXPANSION_DEPRECATION_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UPPER_BOUND_VIOLATED_IN_TYPE_OPERATOR_OR_PARAMETER_BOUNDS
@@ -2012,34 +2013,49 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT, "Projections are not allowed on type arguments of functions calls.")
         map.put(
             UPPER_BOUND_VIOLATED,
-            "Type argument is not within its bounds: must be subtype of ''{0}''.{2}",
+            "Type argument is not within its bounds: type parameter ''{2}'' must be subtype of ''{0}'', but actual: ''{1}''.{3}",
+            RENDER_TYPE,
             RENDER_TYPE,
             RENDER_TYPE,
             OPTIONAL_SENTENCE,
         )
         map.put(
             UPPER_BOUND_VIOLATED_DEPRECATION_WARNING,
-            "Type argument is not within its bounds: must be subtype of ''{0}''. This will become an error in future releases.{2}",
+            "Type argument is not within its bounds: type parameter ''{2}'' must be subtype of ''{0}'', but actual: ''{1}''. " +
+                    "This will become an error in future releases.{3}",
+            RENDER_TYPE,
             RENDER_TYPE,
             RENDER_TYPE,
             OPTIONAL_SENTENCE,
         )
         map.put(
             UPPER_BOUND_VIOLATED_IN_TYPE_OPERATOR_OR_PARAMETER_BOUNDS,
-            "Type argument is not within its bounds: must be subtype of ''{0}''.{2}",
+            "Type argument is not within its bounds: type parameter ''{2}'' must be subtype of ''{0}'', but actual: ''{1}''.{3}",
+            RENDER_TYPE,
             RENDER_TYPE,
             RENDER_TYPE,
             OPTIONAL_SENTENCE,
         )
         map.put(
             UPPER_BOUND_VIOLATED_IN_TYPEALIAS_EXPANSION,
-            "Type argument is not within its bounds: must be subtype of ''{0}''.",
+            "Type argument is not within its bounds: type parameter ''{2}'' must be subtype of ''{0}'', but actual: ''{1}''.",
+            RENDER_TYPE,
             RENDER_TYPE,
             RENDER_TYPE,
         )
         map.put(
             UPPER_BOUND_VIOLATED_IN_TYPEALIAS_EXPANSION_DEPRECATION_WARNING,
-            "Type argument is not within its bounds: must be subtype of ''{0}''. This will become an error in future releases.",
+            "Type argument is not within its bounds: type parameter ''{2}'' must be subtype of ''{0}'', but actual: ''{1}''. " +
+                    "This will become an error in future releases.",
+            RENDER_TYPE,
+            RENDER_TYPE,
+            RENDER_TYPE,
+        )
+        map.put(
+            UPPER_BOUND_VIOLATED_IN_LHS_OF_CLASS_LITERAL_WARNING,
+            "Star projected type alias leads to incompatible upper bound: type parameter ''{2}'' must be subtype of ''{0}'', but actual: ''{1}''. " +
+                    "Consider using the expanded class instead.",
+            RENDER_TYPE,
             RENDER_TYPE,
             RENDER_TYPE,
         )

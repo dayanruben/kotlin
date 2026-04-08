@@ -11,7 +11,6 @@ import org.gradle.kotlin.dsl.version
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
-import org.jetbrains.kotlin.gradle.dsl.KotlinJsProjectExtension
 import org.jetbrains.kotlin.gradle.report.BuildReportType
 import org.jetbrains.kotlin.gradle.testbase.*
 import org.jetbrains.kotlin.gradle.testbase.BuildOptions.IsolatedProjectsMode
@@ -202,36 +201,6 @@ class FusStatisticsIT : KGPBaseTest() {
         }
     }
 
-    @JsGradlePluginTests
-    @DisplayName("Verify that the metric for applying the Kotlin JS plugin is being collected")
-    @GradleTest
-    @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_8_2],
-    )
-    fun testMetricCollectingOfApplyingKotlinJsPlugin(gradleVersion: GradleVersion) {
-        project(
-            "empty",
-            gradleVersion,
-            // KT-75899 Support Gradle Project Isolation in KGP JS & Wasm
-            buildOptions = defaultBuildOptions.copy(isolatedProjects = IsolatedProjectsMode.DISABLED),
-        ) {
-            plugins {
-                kotlin("js")
-            }
-            buildScriptInjection {
-                (project.extensions.getByName("kotlin") as KotlinJsProjectExtension).apply {
-                    js()
-                }
-            }
-            assertNoErrorFilesCreated {
-                build("assemble", "-Pkotlin.session.logger.root.path=$projectPath") {
-                    assertOutputDoesNotContainFusErrors()
-                    fusStatisticsDirectory.assertFusReportContains("KOTLIN_JS_PLUGIN_ENABLED=true")
-                }
-            }
-        }
-    }
-
     @JvmGradlePluginTests
     @DisplayName("Ensure that the metric are not collected if plugins were not applied to simple project")
     @GradleTest
@@ -374,7 +343,7 @@ class FusStatisticsIT : KGPBaseTest() {
             build("help", "-Pkotlin.session.logger.root.path=$projectPath") {
                 assertOutputDoesNotContainFusErrors()
                 fusStatisticsDirectory.assertFusReportContains(
-                    "KSP_GRADLE_PLUGIN_VERSION=1.9.22"
+                    "KSP_GRADLE_PLUGIN_VERSION=2.3.6"
                 )
             }
         }

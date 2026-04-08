@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.isMain
 import org.jetbrains.kotlin.gradle.plugin.sources.internal
 import org.jetbrains.kotlin.gradle.plugin.usageByName
 import org.jetbrains.kotlin.gradle.utils.createConsumable
+import org.jetbrains.kotlin.gradle.utils.getAttributeSafely
 import org.jetbrains.kotlin.gradle.utils.maybeCreateResolvable
 
 private const val SWIFTPM_DEPENDENCIES_METADATA_USAGE = "swiftPMDependenciesMetadata"
@@ -36,16 +37,24 @@ private fun swiftPMDependencies(swiftPMDependenciesMetadataClasspath: ArtifactVi
     return swiftPMDependenciesMetadataClasspath
         .artifacts.resolvedArtifacts
         .map { artifacts ->
-            val metadataByDependencyIdentifier = artifacts.associate { resolvedArtifact ->
-                val swiftPMPackageIdentifier = when (val componentId = resolvedArtifact.id.componentIdentifier) {
-                    is ProjectComponentIdentifier -> componentId.projectPath
-                    is ModuleComponentIdentifier -> "${componentId.group}_${componentId.module}_${componentId.version}"
-                    else -> error("Unexpected componentId: $componentId")
-                }.replace(Regex("[^a-zA-Z0-9]"), "_")
-                SwiftPMDependencyIdentifier(swiftPMPackageIdentifier) to resolvedArtifact.file.inputStream().use {
-                    deserializeSwiftPMImportMetadata(it)
+            val metadataByDependencyIdentifier = artifacts
+                .filter {
+                    // Filter out variants that didn't specify Usage and resolved by accident: KT-85517
+                    it.variant.attributes.getAttributeSafely(Usage.USAGE_ATTRIBUTE) == SWIFTPM_DEPENDENCIES_METADATA_USAGE
                 }
-            }
+                .associate { resolvedArtifact ->
+                    val (swiftPMPackageIdentifier, isModular) = when (val componentId = resolvedArtifact.id.componentIdentifier) {
+                        is ProjectComponentIdentifier -> componentId.projectPath to false
+                        is ModuleComponentIdentifier -> "${componentId.group}_${componentId.module}_${componentId.version}" to true
+                        else -> error("Unexpected componentId: $componentId")
+                    }
+                    SwiftPMDependencyIdentifier(
+                        swiftPMPackageIdentifier.replace(Regex("[^a-zA-Z0-9]"), "_"),
+                        isModular = isModular,
+                    ) to resolvedArtifact.file.inputStream().use {
+                        deserializeSwiftPMImportMetadata(it)
+                    }
+                }
             TransitiveSwiftPMDependencies(metadataByDependencyIdentifier)
         }
 }
@@ -100,6 +109,7 @@ internal fun Project.registerSwiftPMDependenciesMetadataApiElements(swiftPMDepen
         attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
         outgoing.artifact(swiftPMDependenciesMetadata) {
             it.classifier = "swiftpm-metadata"
+            it.extension = "json"
         }
     }.get()
 }

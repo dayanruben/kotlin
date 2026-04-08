@@ -1989,41 +1989,54 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
     interface UpperBoundViolated : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = UpperBoundViolated::class
         val expectedUpperBound: KaType
-        val actualUpperBound: KaType
+        val actualType: KaType
+        val onTypeParameter: KaType
         val extraMessage: String
     }
 
     interface UpperBoundViolatedDeprecationWarning : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = UpperBoundViolatedDeprecationWarning::class
         val expectedUpperBound: KaType
-        val actualUpperBound: KaType
+        val actualType: KaType
+        val onTypeParameter: KaType
         val extraMessage: String
     }
 
     interface UpperBoundViolatedInTypeOperatorOrParameterBoundsError : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = UpperBoundViolatedInTypeOperatorOrParameterBoundsError::class
         val expectedUpperBound: KaType
-        val actualUpperBound: KaType
+        val actualType: KaType
+        val onTypeParameter: KaType
         val extraMessage: String
     }
 
     interface UpperBoundViolatedInTypeOperatorOrParameterBoundsWarning : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = UpperBoundViolatedInTypeOperatorOrParameterBoundsWarning::class
         val expectedUpperBound: KaType
-        val actualUpperBound: KaType
+        val actualType: KaType
+        val onTypeParameter: KaType
         val extraMessage: String
     }
 
     interface UpperBoundViolatedInTypealiasExpansion : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = UpperBoundViolatedInTypealiasExpansion::class
         val expectedUpperBound: KaType
-        val actualUpperBound: KaType
+        val actualType: KaType
+        val onTypeParameter: KaType
     }
 
     interface UpperBoundViolatedInTypealiasExpansionDeprecationWarning : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = UpperBoundViolatedInTypealiasExpansionDeprecationWarning::class
         val expectedUpperBound: KaType
-        val actualUpperBound: KaType
+        val actualType: KaType
+        val onTypeParameter: KaType
+    }
+
+    interface UpperBoundViolatedInLhsOfClassLiteralWarning : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = UpperBoundViolatedInLhsOfClassLiteralWarning::class
+        val expectedUpperBound: KaType
+        val actualType: KaType
+        val onTypeParameter: KaType
     }
 
     interface TypeArgumentsNotAllowed : KaFirDiagnostic<PsiElement> {
@@ -4919,13 +4932,15 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
     interface UpperBoundViolatedBasedOnJavaAnnotations : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = UpperBoundViolatedBasedOnJavaAnnotations::class
         val expectedUpperBound: KaType
-        val actualUpperBound: KaType
+        val actualType: KaType
+        val onTypeParameter: KaType
     }
 
     interface UpperBoundViolatedInTypealiasExpansionBasedOnJavaAnnotations : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = UpperBoundViolatedInTypealiasExpansionBasedOnJavaAnnotations::class
         val expectedUpperBound: KaType
-        val actualUpperBound: KaType
+        val actualType: KaType
+        val onTypeParameter: KaType
     }
 
     interface StrictfpOnClass : KaFirDiagnostic<KtAnnotationEntry> {

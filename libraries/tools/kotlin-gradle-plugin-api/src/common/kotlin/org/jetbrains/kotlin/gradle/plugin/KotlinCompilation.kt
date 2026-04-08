@@ -122,16 +122,6 @@ interface KotlinCompilation<UNUSED : KotlinAnyOptionsDeprecated> : Named,
     val allKotlinSourceSets: Set<KotlinSourceSet>
 
     /**
-     * @suppress
-     */
-    @Deprecated(
-        "Use defaultSourceSet.name instead. Scheduled for removal in Kotlin 2.3",
-        ReplaceWith("defaultSourceSet.name"),
-        level = DeprecationLevel.ERROR
-    )
-    val defaultSourceSetName: String get() = defaultSourceSet.name
-
-    /**
      * The [KotlinSourceSet] by default associated with this compilation.
      */
     val defaultSourceSet: KotlinSourceSet
@@ -201,28 +191,6 @@ interface KotlinCompilation<UNUSED : KotlinAnyOptionsDeprecated> : Named,
     )
     @Suppress("DEPRECATION_ERROR")
     val compilerOptions: HasCompilerOptions<*>
-
-    /**
-     * @suppress
-     */
-    @Suppress("DEPRECATION", "TYPEALIAS_EXPANSION_DEPRECATION_ERROR")
-    @Deprecated(
-        message = "Accessing task instance directly is deprecated. Scheduled for removal in Kotlin 2.3.",
-        replaceWith = ReplaceWith("compileTaskProvider"),
-        level = DeprecationLevel.ERROR,
-    )
-    val compileKotlinTask: KotlinCompileDeprecated<KotlinCommonOptionsDeprecated>
-
-    /**
-     * @suppress
-     */
-    @Suppress("DEPRECATION", "TYPEALIAS_EXPANSION_DEPRECATION_ERROR")
-    @Deprecated(
-        message = "Replaced with compileTaskProvider. Scheduled for removal in Kotlin 2.3.",
-        replaceWith = ReplaceWith("compileTaskProvider"),
-        level = DeprecationLevel.ERROR,
-    )
-    val compileKotlinTaskProvider: TaskProvider<out KotlinCompileDeprecated<KotlinCommonOptionsDeprecated>>
 
     /**
      * @suppress

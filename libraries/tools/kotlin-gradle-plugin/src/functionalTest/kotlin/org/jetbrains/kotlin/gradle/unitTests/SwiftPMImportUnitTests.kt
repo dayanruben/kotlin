@@ -16,18 +16,23 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics
 import org.jetbrains.kotlin.gradle.plugin.getExtension
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftimport.ConvertSyntheticSwiftPMImportProjectIntoDefFile
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftimport.ComputeLocalPackageDependencyInputFiles
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftimport.FetchSyntheticImportProjectPackages
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftimport.GenerateSyntheticLinkageImportProject
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftimport.SwiftPMImportExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftimport.SwiftPMDependency
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftimport.SyncPackageResolvedTask
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftimport.transitiveSwiftPMDependenciesProvider
 import org.jetbrains.kotlin.gradle.util.*
 import org.jetbrains.kotlin.konan.target.HostManager
 import kotlin.test.Test
 import java.nio.file.Files
 import org.jetbrains.kotlin.gradle.utils.normalizedAbsoluteFile
 import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
+import java.io.FileNotFoundException
 import kotlin.test.BeforeTest
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -437,6 +442,135 @@ class SwiftPMImportUnitTests {
         syncLockFileToProjectDirectoryTask.assertDependsOn(
             fetchTask
         )
+    }
+
+    @Test
+    fun `ios cinterop depends on ios def task but not macos def task`() {
+        val project = swiftPMImportProject(
+            preApplyCode = {
+                val localPackageDir = project.projectDir.resolve("packageOne")
+                localPackageDir.mkdirs()
+                localPackageDir.resolve("Package.swift").writeText(
+                    """
+                    // swift-tools-version: 5.9
+                    import PackageDescription
+                    let package = Package(name: "packageOne")
+                    """.trimIndent()
+                )
+            },
+            multiplatform = {
+                iosArm64()
+                macosArm64()
+            },
+            swiftPMDependencies = { layout ->
+                localSwiftPackage(
+                    directory = layout.projectDirectory.dir("packageOne"),
+                    products = listOf(
+                        SwiftPMDependency.Product(
+                            name = "packageOne",
+                            platformConstraints = setOf(SwiftPMDependency.Platform.iOS),
+                        )
+                    ),
+                )
+            }
+        )
+        project.evaluate()
+
+        val iosDefTask = project.assertContainsTaskInstance<ConvertSyntheticSwiftPMImportProjectIntoDefFile>(
+            "convertSyntheticImportProjectIntoDefFileIphoneos"
+        )
+        val macosDefTask = project.assertContainsTaskInstance<ConvertSyntheticSwiftPMImportProjectIntoDefFile>(
+            "convertSyntheticImportProjectIntoDefFileMacosx"
+        )
+        val iosCinteropTask = project.assertContainsTaskWithName("cinteropSwiftPMImportIosArm64")
+        val macosCinteropTask = project.assertContainsTaskWithName("cinteropSwiftPMImportMacosArm64")
+
+        iosCinteropTask.assertDependsOn(iosDefTask)
+        iosCinteropTask.assertNotDependsOn(macosDefTask)
+        macosCinteropTask.assertDependsOn(macosDefTask)
+        macosCinteropTask.assertNotDependsOn(iosDefTask)
+    }
+
+    @Test
+    fun `test - only dynamic frameworks depend on SwiftPM import pipeline`() {
+        val linkTaskName = "linkDebugFrameworkIosSimulatorArm64"
+        val staticFramework = swiftPMImportProject(
+            multiplatform = {
+                iosSimulatorArm64().binaries.framework {
+                    isStatic = true
+                }
+            },
+            swiftPMDependencies = { layout ->
+                localSwiftPackage(
+                    directory = layout.projectDirectory.dir("my-custom-pkg"),
+                    products = listOf("ManifestPackage"),
+                )
+            }
+        ).evaluate()
+
+        val staticFrameworkTaskDependencies = staticFramework.tasks.getByName(linkTaskName)
+            .taskDependencies.getDependencies(null)
+            .map { it.name }.toSet()
+
+        val dynamicFramework = swiftPMImportProject(
+            multiplatform = {
+                iosSimulatorArm64().binaries.framework {
+                    isStatic = false
+                }
+            },
+            swiftPMDependencies = { layout ->
+                localSwiftPackage(
+                    directory = layout.projectDirectory.dir("my-custom-pkg"),
+                    products = listOf("ManifestPackage"),
+                )
+            }
+        ).evaluate()
+
+        val dynamicFrameworkTaskDependencies = dynamicFramework.tasks.getByName(linkTaskName)
+            .taskDependencies.getDependencies(null)
+            .map { it.name }.toSet()
+
+        assertEquals(
+            setOf("convertSyntheticImportProjectIntoDefFileIphonesimulator"),
+            dynamicFrameworkTaskDependencies - staticFrameworkTaskDependencies,
+        )
+        assertEquals(
+            setOf(),
+            staticFrameworkTaskDependencies - dynamicFrameworkTaskDependencies,
+        )
+    }
+
+    @Test
+    fun `KT-85517 - swiftPM metadata resolution doesn't fail on accidentally resolve outgoing variants without Usage`() {
+        val rootProject = buildProject {
+            plugins.apply("java-library")
+            project.configurations.create("consumable") {
+                it.outgoing.artifact(file("foo"))
+                it.attributes.attribute(org.gradle.api.attributes.Attribute.of("foo", String::class.java), "bar")
+            }
+        }.evaluate()
+
+        val swiftPMConsumer = swiftPMImportProject(
+            projectBuilder = {
+                withParent(rootProject)
+            },
+            multiplatform = {
+                iosSimulatorArm64()
+                sourceSets.commonMain.dependencies {
+                    implementation(project(":"))
+                }
+            },
+            swiftPMDependencies = { layout ->
+                localSwiftPackage(
+                    directory = layout.projectDirectory.dir("my-custom-pkg"),
+                    products = listOf("ManifestPackage"),
+                )
+            }
+        ).evaluate()
+
+        assertDoesNotThrow {
+            swiftPMConsumer.transitiveSwiftPMDependenciesProvider().get()
+        }
     }
 }
 

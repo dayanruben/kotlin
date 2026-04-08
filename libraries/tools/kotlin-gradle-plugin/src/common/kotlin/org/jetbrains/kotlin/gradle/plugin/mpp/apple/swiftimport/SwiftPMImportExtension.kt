@@ -54,7 +54,7 @@ abstract class SwiftPMImportExtension @Inject constructor(
     val discoverClangModulesImplicitly: Property<Boolean> = objects.property(Boolean::class.java)
         .convention(true)
 
-    abstract val xcodeProjectPathForKmpIJPlugin: RegularFileProperty
+    internal abstract val xcodeProjectPathForKmpIJPlugin: RegularFileProperty
 
     internal abstract val swiftPMDependencies: DomainObjectSet<SwiftPMDependency>
 
@@ -360,6 +360,7 @@ sealed class SwiftPMDependency : Serializable {
 // This is the structure that we serialize into
 @kotlinx.serialization.Serializable
 internal data class SwiftPMImportMetadata(
+    val konanTargets: Set<String>,
     val iosDeploymentVersion: String?,
     val macosDeploymentVersion: String?,
     val watchosDeploymentVersion: String?,

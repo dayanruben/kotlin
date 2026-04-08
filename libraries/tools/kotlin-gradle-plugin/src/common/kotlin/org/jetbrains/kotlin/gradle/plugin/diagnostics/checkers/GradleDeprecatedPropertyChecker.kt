@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.gradle.plugin.diagnostics.checkers
 import org.gradle.api.Project
 import org.jetbrains.kotlin.cli.common.toBooleanLenient
 import org.jetbrains.kotlin.gradle.internal.properties.PropertiesBuildService
-import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
 import org.jetbrains.kotlin.gradle.plugin.KotlinPluginLifecycle
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_DEPRECATED_TEST_PROPERTY
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_MPP_ENABLE_PLATFORM_INTEGER_COMMONIZATION
@@ -44,8 +43,10 @@ internal object GradleDeprecatedPropertyChecker : KotlinGradleProjectChecker {
         DeprecatedProperty("kotlin.build.report.dir"),
         DeprecatedProperty("kotlin.native.ignoreIncorrectDependencies"),
         DeprecatedProperty("kotlin.wasm.stability.nowarn"),
-        DeprecatedProperty(KotlinJsCompilerType.jsCompilerProperty),
-        DeprecatedProperty("${KotlinJsCompilerType.jsCompilerProperty}.nowarn"),
+        @Suppress("DEPRECATION")
+        DeprecatedProperty(org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType.jsCompilerProperty),
+        @Suppress("DEPRECATION")
+        DeprecatedProperty("${org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType.jsCompilerProperty}.nowarn"),
         DeprecatedProperty("kotlin.mpp.androidGradlePluginCompatibility.nowarn"), // Since 2.1.0
         DeprecatedProperty(
             "kotlin.experimental.swift-export.enabled",

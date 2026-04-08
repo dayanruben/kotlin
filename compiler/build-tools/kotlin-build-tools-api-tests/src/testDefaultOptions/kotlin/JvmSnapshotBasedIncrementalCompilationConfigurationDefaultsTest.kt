@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.buildtools.api.SourcesChanges
 import org.jetbrains.kotlin.buildtools.api.arguments.ExperimentalCompilerArgument
 import org.jetbrains.kotlin.buildtools.api.jvm.JvmPlatformToolchain.Companion.jvm
 import org.jetbrains.kotlin.buildtools.api.jvm.JvmSnapshotBasedIncrementalCompilationConfiguration
+import org.jetbrains.kotlin.buildtools.api.jvm.jvmCompilationOperation
 import org.jetbrains.kotlin.buildtools.tests.compilation.util.btaClassloader
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -22,14 +23,6 @@ class JvmSnapshotBasedIncrementalCompilationConfigurationDefaultsTest {
         val kotlinToolchains = KotlinToolchains.loadImplementation(btaClassloader)
         val icConfiguration = kotlinToolchains.jvm.jvmCompilationOperationBuilder(emptyList(), Path("."))
             .snapshotBasedIcConfigurationBuilder(Path("."), SourcesChanges.Unknown, emptyList()).build()
-        testDefaults(icConfiguration.toUnifiedAccessor())
-    }
-
-    @Test
-    fun testDefaultOptionsOnLegacyObject() {
-        val kotlinToolchains = KotlinToolchains.loadImplementation(btaClassloader)
-        @Suppress("DEPRECATION") val icConfiguration = kotlinToolchains.jvm.createJvmCompilationOperation(emptyList(), Path("."))
-            .createSnapshotBasedIcOptions()
         testDefaults(icConfiguration.toUnifiedAccessor())
     }
 
@@ -64,14 +57,6 @@ internal interface HasSnapshotBasedIcOptionsAccessor {
 }
 
 internal fun JvmSnapshotBasedIncrementalCompilationConfiguration.toUnifiedAccessor(): HasSnapshotBasedIcOptionsAccessor {
-    return object : HasSnapshotBasedIcOptionsAccessor {
-        override fun <V> get(key: JvmSnapshotBasedIncrementalCompilationConfiguration.Option<V>): V = this@toUnifiedAccessor[key]
-        override fun <V> get(key: BaseIncrementalCompilationConfiguration.Option<V>): V = this@toUnifiedAccessor[key]
-    }
-}
-
-@Suppress("DEPRECATION")
-internal fun org.jetbrains.kotlin.buildtools.api.jvm.JvmSnapshotBasedIncrementalCompilationOptions.toUnifiedAccessor(): HasSnapshotBasedIcOptionsAccessor {
     return object : HasSnapshotBasedIcOptionsAccessor {
         override fun <V> get(key: JvmSnapshotBasedIncrementalCompilationConfiguration.Option<V>): V = this@toUnifiedAccessor[key]
         override fun <V> get(key: BaseIncrementalCompilationConfiguration.Option<V>): V = this@toUnifiedAccessor[key]
