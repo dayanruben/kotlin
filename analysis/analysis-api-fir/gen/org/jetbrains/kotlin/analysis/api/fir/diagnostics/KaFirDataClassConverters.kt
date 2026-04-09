@@ -1509,6 +1509,12 @@ private fun KaDiagnosticConverterBuilder.addConversions30() {
             token,
         )
     }
+    add(FirErrors.UNNAMED_PROPERTY_WITH_IMPLICIT_UNIT_TYPE) { firDiagnostic ->
+        UnnamedPropertyWithImplicitUnitTypeImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirJvmErrors.JVM_STATIC_ON_NON_PUBLIC_MEMBER) { firDiagnostic ->
         JvmStaticOnNonPublicMemberImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -3887,6 +3893,12 @@ private fun KaDiagnosticConverterBuilder.addConversions87() {
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions88() {
+    add(FirErrors.PARENTHESIZED_PACKAGE_QUALIFIER.errorFactory) { firDiagnostic ->
+        ParenthesizedPackageQualifierErrorImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.INAPPLICABLE_TARGET_PROPERTY_IMMUTABLE) { firDiagnostic ->
         InapplicableTargetPropertyImmutableImpl(
             firDiagnostic.a,
@@ -4102,6 +4114,12 @@ private fun KaDiagnosticConverterBuilder.addConversions91() {
 private fun KaDiagnosticConverterBuilder.addConversions92() {
     add(FirErrors.VARIABLE_EXPECTED) { firDiagnostic ->
         VariableExpectedImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.PARENTHESIZED_PACKAGE_QUALIFIER.warningFactory) { firDiagnostic ->
+        ParenthesizedPackageQualifierWarningImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -4938,6 +4956,12 @@ private fun KaDiagnosticConverterBuilder.addConversions110() {
     add(FirErrors.INCONSISTENT_TYPE_PARAMETERS_IN_OF_OVERLOADS) { firDiagnostic ->
         InconsistentTypeParametersInOfOverloadsImpl(
             firSymbolBuilder.functionBuilder.buildNamedFunctionSymbol(firDiagnostic.a),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.TYPE_ARGUMENTS_NOT_ALLOWED_IN_PACKAGE_QUALIFIER_WARNING) { firDiagnostic ->
+        TypeArgumentsNotAllowedInPackageQualifierWarningImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

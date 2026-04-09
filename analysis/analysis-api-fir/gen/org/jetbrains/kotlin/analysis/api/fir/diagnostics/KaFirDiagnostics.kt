@@ -277,6 +277,14 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = WrappedLhsInAssignmentWarning::class
     }
 
+    interface ParenthesizedPackageQualifierError : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = ParenthesizedPackageQualifierError::class
+    }
+
+    interface ParenthesizedPackageQualifierWarning : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = ParenthesizedPackageQualifierWarning::class
+    }
+
     interface UnsupportedArrayLiteralOutsideOfAnnotationError : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = UnsupportedArrayLiteralOutsideOfAnnotationError::class
     }
@@ -2049,6 +2057,10 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val place: String
     }
 
+    interface TypeArgumentsNotAllowedInPackageQualifierWarning : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = TypeArgumentsNotAllowedInPackageQualifierWarning::class
+    }
+
     interface TypeArgumentsForOuterClassWhenNestedReferenced : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = TypeArgumentsForOuterClassWhenNestedReferenced::class
     }
@@ -3276,6 +3288,10 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface UnnamedDelegatedProperty : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = UnnamedDelegatedProperty::class
+    }
+
+    interface UnnamedPropertyWithImplicitUnitType : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = UnnamedPropertyWithImplicitUnitType::class
     }
 
     interface DestructuringShortFormNameMismatch : KaFirDiagnostic<KtElement> {
