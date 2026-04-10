@@ -386,6 +386,12 @@
             "patch": 0
         },
         {
+            "name": "2.4.20",
+            "major": 2,
+            "minor": 4,
+            "patch": 20
+        },
+        {
             "name": "2.5.0",
             "major": 2,
             "minor": 5,
@@ -9608,7 +9614,7 @@
                                 "releaseVersionsMetadata": {
                                     "introducedVersion": "2.0.20",
                                     "stabilizedVersion": null,
-                                    "deprecatedVersion": null,
+                                    "deprecatedVersion": "2.4.20",
                                     "removedVersion": null
                                 },
                                 "argumentType": {
