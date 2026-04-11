@@ -51,9 +51,15 @@ internal class AllJvmCompilerArgumentsWithBtaVersionsArgumentProvider : Argument
     }
 }
 
-internal class EnumJvmCompilerArgumentsWithBtaVersionsArgumentProvider : ArgumentsProvider {
+internal class InvalidArgumentValueJvmCompilerArgumentsWithBtaVersionsArgumentProvider : ArgumentsProvider {
     override fun provideArguments(context: ExtensionContext): Stream<out Arguments> {
-        return namedArgumentConfiguration { it.runsEnumTest }.map { Arguments.of(it) }.stream()
+        return namedArgumentConfiguration { it.runsInvalidArgumentValueTest }.map { Arguments.of(it) }.stream()
+    }
+}
+
+internal class InvalidRawValueJvmCompilerArgumentsWithBtaVersionsArgumentProvider : ArgumentsProvider {
+    override fun provideArguments(context: ExtensionContext): Stream<out Arguments> {
+        return namedArgumentConfiguration { it.runsInvalidRawValueTest }.map { Arguments.of(it) }.stream()
     }
 }
 
@@ -87,7 +93,7 @@ private val jvmCompilerArguments: List<JvmArgumentTestDescriptor<*>> = listOf(
         argumentName = "Xabi-stability",
         argument = X_ABI_STABILITY,
         argumentValues = AbiStabilityMode.entries.toList(),
-        runsEnumTest = true,
+        invalidRawValues = listOf("non-existent-value"),
         runsNullableTest = true,
         valueString = { value -> value?.stringValue },
         expectedArgumentStringsFor = { value -> listOf("-Xabi-stability=$value") },
@@ -103,7 +109,7 @@ private val jvmCompilerArguments: List<JvmArgumentTestDescriptor<*>> = listOf(
         argumentName = "Xassertions",
         argument = X_ASSERTIONS,
         argumentValues = AssertionsMode.entries.toList(),
-        runsEnumTest = true,
+        invalidRawValues = listOf("non-existent-value"),
         runsNullableTest = true,
         valueString = { value -> value?.stringValue },
         expectedArgumentStringsFor = { value -> listOf("-Xassertions=$value") },
@@ -118,6 +124,7 @@ private val jvmCompilerArguments: List<JvmArgumentTestDescriptor<*>> = listOf(
                 testBaseDir.resolve("path/to/classes"),
             )
         ),
+        invalidArgumentValues = listOf(listOf(testBaseDir.resolve("path/with${File.pathSeparator}separator"))),
         runsNullableTest = true,
         valueString = { value -> value?.joinToString(File.pathSeparator) { it.toFile().absolutePath } },
         expectedArgumentStringsFor = { value -> listOf("-classpath", value) },
@@ -134,7 +141,7 @@ private val jvmCompilerArguments: List<JvmArgumentTestDescriptor<*>> = listOf(
         argumentName = "jvm-default",
         argument = JVM_DEFAULT,
         argumentValues = JvmDefaultMode.entries.toList(),
-        runsEnumTest = true,
+        invalidRawValues = listOf("non-existent-value"),
         runsNullableTest = true,
         valueString = { value -> value?.stringValue },
         expectedArgumentStringsFor = { value -> listOf("-jvm-default", value) },
@@ -156,6 +163,7 @@ private val jvmCompilerArguments: List<JvmArgumentTestDescriptor<*>> = listOf(
                 testBaseDir.resolve("path/to/friend3"),
             )
         ),
+        invalidArgumentValues = listOf(listOf(testBaseDir.resolve("path/with,comma"))),
         valueString = { value -> value?.joinToString(",") { it.toFile().absolutePath } },
         expectedArgumentStringsFor = { value -> listOf("-Xfriend-paths=$value") },
     ),
@@ -163,7 +171,7 @@ private val jvmCompilerArguments: List<JvmArgumentTestDescriptor<*>> = listOf(
         argumentName = "Xjdk-release",
         argument = X_JDK_RELEASE,
         argumentValues = JdkRelease.entries.toList(),
-        runsEnumTest = true,
+        invalidRawValues = listOf("non-existent-value"),
         runsNullableTest = true,
         valueString = { value -> value?.stringValue },
         expectedArgumentStringsFor = { value -> listOf("-Xjdk-release=$value") },
@@ -178,6 +186,7 @@ private val jvmCompilerArguments: List<JvmArgumentTestDescriptor<*>> = listOf(
                 testBaseDir.resolve("path/to/module3"),
             )
         ),
+        invalidArgumentValues = listOf(listOf(testBaseDir.resolve("path/with${File.pathSeparator}separator"))),
         valueString = { value -> value?.joinToString(File.pathSeparator) { it.toFile().absolutePath } },
         expectedArgumentStringsFor = { value -> listOf("-Xmodule-path=$value") },
     ),
@@ -185,7 +194,7 @@ private val jvmCompilerArguments: List<JvmArgumentTestDescriptor<*>> = listOf(
         argumentName = "Xstring-concat",
         argument = X_STRING_CONCAT,
         argumentValues = StringConcatMode.entries.toList(),
-        runsEnumTest = true,
+        invalidRawValues = listOf("non-existent-value"),
         runsNullableTest = true,
         valueString = { value -> value?.stringValue },
         expectedArgumentStringsFor = { value -> listOf("-Xstring-concat=$value") },
@@ -194,7 +203,7 @@ private val jvmCompilerArguments: List<JvmArgumentTestDescriptor<*>> = listOf(
         argumentName = "Xlambdas",
         argument = X_LAMBDAS,
         argumentValues = LambdasMode.entries.toList(),
-        runsEnumTest = true,
+        invalidRawValues = listOf("non-existent-value"),
         valueString = { value -> value?.stringValue },
         expectedArgumentStringsFor = { value -> listOf("-Xlambdas=$value") },
     ),
@@ -202,7 +211,7 @@ private val jvmCompilerArguments: List<JvmArgumentTestDescriptor<*>> = listOf(
         argumentName = "Xwhen-expressions",
         argument = X_WHEN_EXPRESSIONS,
         argumentValues = WhenExpressionsMode.entries.toList(),
-        runsEnumTest = true,
+        invalidRawValues = listOf("non-existent-value"),
         runsNullableTest = true,
         valueString = { value -> value?.stringValue },
         expectedArgumentStringsFor = { value -> listOf("-Xwhen-expressions=$value") },
@@ -211,7 +220,7 @@ private val jvmCompilerArguments: List<JvmArgumentTestDescriptor<*>> = listOf(
         argumentName = "Xsam-conversions",
         argument = X_SAM_CONVERSIONS,
         argumentValues = SamConversionsMode.entries.toList(),
-        runsEnumTest = true,
+        invalidRawValues = listOf("non-existent-value"),
         runsNullableTest = true,
         valueString = { value -> value?.stringValue },
         expectedArgumentStringsFor = { value -> listOf("-Xsam-conversions=$value") },
@@ -220,7 +229,7 @@ private val jvmCompilerArguments: List<JvmArgumentTestDescriptor<*>> = listOf(
         argumentName = "Xjspecify-annotations",
         argument = X_JSPECIFY_ANNOTATIONS,
         argumentValues = JspecifyAnnotationsMode.entries.toList(),
-        runsEnumTest = true,
+        invalidRawValues = listOf("non-existent-value"),
         runsNullableTest = true,
         valueString = { value -> value?.stringValue },
         expectedArgumentStringsFor = { value -> listOf("-Xjspecify-annotations=$value") },
@@ -229,7 +238,7 @@ private val jvmCompilerArguments: List<JvmArgumentTestDescriptor<*>> = listOf(
         argumentName = "Xsupport-compatqual-checker-framework-annotations",
         argument = X_SUPPORT_COMPATQUAL_CHECKER_FRAMEWORK_ANNOTATIONS,
         argumentValues = CompatqualAnnotationsMode.entries.toList(),
-        runsEnumTest = true,
+        invalidRawValues = listOf("non-existent-value"),
         runsNullableTest = true,
         valueString = { value -> value?.stringValue },
         expectedArgumentStringsFor = { value -> listOf("-Xsupport-compatqual-checker-framework-annotations=$value") },
@@ -244,6 +253,7 @@ private val jvmCompilerArguments: List<JvmArgumentTestDescriptor<*>> = listOf(
                 testBaseDir.resolve("path/to/lib3.klib"),
             )
         ),
+        invalidArgumentValues = listOf(listOf(testBaseDir.resolve("path/with${File.pathSeparator}separator"))),
         valueString = { value -> value?.joinToString(File.pathSeparator) { it.toFile().absolutePath } },
         expectedArgumentStringsFor = { value -> listOf("-Xklib=$value") },
     ),
@@ -257,6 +267,7 @@ private val jvmCompilerArguments: List<JvmArgumentTestDescriptor<*>> = listOf(
                 testBaseDir.resolve("path/to/java/src3"),
             )
         ),
+        invalidArgumentValues = listOf(listOf(testBaseDir.resolve("path/with,comma"))),
         valueString = { value -> value?.joinToString(",") { it.toFile().absolutePath } },
         expectedArgumentStringsFor = { value -> listOf("-Xjava-source-roots=$value") },
     ),

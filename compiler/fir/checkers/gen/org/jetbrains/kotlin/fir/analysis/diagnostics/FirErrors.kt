@@ -203,7 +203,7 @@ object FirErrors : KtDiagnosticsContainer() {
 
     // Unresolved
     val UNRESOLVED_REFERENCE: KtDiagnosticFactory2<String, String?> = KtDiagnosticFactory2("UNRESOLVED_REFERENCE", ERROR, SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED, PsiElement::class, getRendererFactory())
-    val UNRESOLVED_REFERENCE_WRONG_RECEIVER: KtDiagnosticFactory1<Collection<FirBasedSymbol<*>>> = KtDiagnosticFactory1("UNRESOLVED_REFERENCE_WRONG_RECEIVER", ERROR, SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED, PsiElement::class, getRendererFactory())
+    val UNRESOLVED_REFERENCE_WRONG_RECEIVER: KtDiagnosticFactory1<FirBasedSymbol<*>> = KtDiagnosticFactory1("UNRESOLVED_REFERENCE_WRONG_RECEIVER", ERROR, SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED, PsiElement::class, getRendererFactory())
     val INACCESSIBLE_OUTER_CLASS_RECEIVER: KtDiagnosticFactory1<FirBasedSymbol<*>> = KtDiagnosticFactory1("INACCESSIBLE_OUTER_CLASS_RECEIVER", ERROR, SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED, PsiElement::class, getRendererFactory())
     val UNRESOLVED_IMPORT: KtDiagnosticFactory1<String> = KtDiagnosticFactory1("UNRESOLVED_IMPORT", ERROR, SourceElementPositioningStrategies.IMPORT_LAST_NAME, PsiElement::class, getRendererFactory())
     val INVISIBLE_REFERENCE: KtDiagnosticFactory3<FirBasedSymbol<*>, Visibility, ClassId?> = KtDiagnosticFactory3("INVISIBLE_REFERENCE", ERROR, SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED, PsiElement::class, getRendererFactory())
@@ -337,6 +337,7 @@ object FirErrors : KtDiagnosticsContainer() {
     val KOTLIN_ACTUAL_ANNOTATION_HAS_NO_EFFECT_IN_KOTLIN: KtDiagnosticFactory0 = KtDiagnosticFactory0("KOTLIN_ACTUAL_ANNOTATION_HAS_NO_EFFECT_IN_KOTLIN", ERROR, SourceElementPositioningStrategies.DEFAULT, KtElement::class, getRendererFactory())
     val DEPRECATION_ERROR: KtDiagnosticFactory2<FirBasedSymbol<*>, String> = KtDiagnosticFactory2("DEPRECATION_ERROR", ERROR, SourceElementPositioningStrategies.DEPRECATION, PsiElement::class, getRendererFactory())
     val DEPRECATION: KtDiagnosticFactory2<FirBasedSymbol<*>, String> = KtDiagnosticFactory2("DEPRECATION", WARNING, SourceElementPositioningStrategies.DEPRECATION, PsiElement::class, getRendererFactory())
+    val DEPRECATION_OF_OUTER_CLASS: KtDiagnosticFactory2<FirBasedSymbol<*>, String> = KtDiagnosticFactory2("DEPRECATION_OF_OUTER_CLASS", WARNING, SourceElementPositioningStrategies.DEPRECATION, PsiElement::class, getRendererFactory())
     val OVERRIDE_DEPRECATION: KtDiagnosticFactory2<FirBasedSymbol<*>, FirDeprecationInfo> = KtDiagnosticFactory2("OVERRIDE_DEPRECATION", WARNING, SourceElementPositioningStrategies.DECLARATION_NAME, KtNamedDeclaration::class, getRendererFactory())
     val EXTENDING_AN_ANNOTATION_CLASS: KtDiagnosticFactoryForDeprecation1<FirRegularClassSymbol> = KtDiagnosticFactoryForDeprecation1("EXTENDING_AN_ANNOTATION_CLASS", ProhibitExtendingAnnotationClasses, SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT, PsiElement::class, getRendererFactory())
     val TYPEALIAS_EXPANSION_DEPRECATION_ERROR: KtDiagnosticFactory3<FirBasedSymbol<*>, FirBasedSymbol<*>, String> = KtDiagnosticFactory3("TYPEALIAS_EXPANSION_DEPRECATION_ERROR", ERROR, SourceElementPositioningStrategies.DEPRECATION, PsiElement::class, getRendererFactory())

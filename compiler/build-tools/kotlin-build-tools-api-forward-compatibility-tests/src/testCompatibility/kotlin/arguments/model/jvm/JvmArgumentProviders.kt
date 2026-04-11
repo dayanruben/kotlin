@@ -44,9 +44,15 @@ internal class AllJvmCompilerArgumentsArgumentProvider : ArgumentsProvider {
     }
 }
 
-internal class InvalidValueJvmCompilerArgumentsArgumentProvider : ArgumentsProvider {
+internal class InvalidArgumentValueJvmCompilerArgumentsArgumentProvider : ArgumentsProvider {
     override fun provideArguments(context: ExtensionContext): Stream<out Arguments> {
         return namedArgumentConfiguration { it.runsInvalidArgumentValueTest }.map { Arguments.of(it) }.stream()
+    }
+}
+
+internal class InvalidRawValueJvmCompilerArgumentsArgumentProvider : ArgumentsProvider {
+    override fun provideArguments(context: ExtensionContext): Stream<out Arguments> {
+        return namedArgumentConfiguration { it.runsInvalidRawValueTest }.map { Arguments.of(it) }.stream()
     }
 }
 
@@ -66,7 +72,8 @@ private val jvmArgumentTestDescriptors: List<JvmArgumentTestDescriptor<*>> = lis
         argumentName = "Xabi-stability",
         argument = X_ABI_STABILITY,
         argumentValues = listOf("stable", "unstable"),
-        invalidArgumentValue = "non-existent-value",
+        invalidArgumentValues = listOf("non-existent-value"),
+        invalidRawValues = listOf("non-existent-value"),
         valueString = { value -> value },
         expectedArgumentStringsFor = { value -> listOf("-Xabi-stability=$value") },
     ),
@@ -81,7 +88,8 @@ private val jvmArgumentTestDescriptors: List<JvmArgumentTestDescriptor<*>> = lis
         argumentName = "Xassertions",
         argument = X_ASSERTIONS,
         argumentValues = listOf("always-enable", "always-disable", "jvm", "legacy"),
-        invalidArgumentValue = "non-existent-value",
+        invalidArgumentValues = listOf("non-existent-value"),
+        invalidRawValues = listOf("non-existent-value"),
         valueString = { value -> value },
         expectedArgumentStringsFor = { value -> listOf("-Xassertions=$value") },
     ),
@@ -109,7 +117,8 @@ private val jvmArgumentTestDescriptors: List<JvmArgumentTestDescriptor<*>> = lis
         argumentName = "jvm-default",
         argument = JVM_DEFAULT,
         argumentValues = listOf("enable", "no-compatibility", "disable"),
-        invalidArgumentValue = "non-existent-value",
+        invalidArgumentValues = listOf("non-existent-value"),
+        invalidRawValues = listOf("non-existent-value"),
         valueString = { value -> value },
         expectedArgumentStringsFor = { value -> listOf("-jvm-default", value) },
     ),
@@ -130,6 +139,7 @@ private val jvmArgumentTestDescriptors: List<JvmArgumentTestDescriptor<*>> = lis
                 testBaseDir.resolve("path/to/friend3").toFile().absolutePath,
             )
         ),
+        invalidArgumentValues = listOf(arrayOf(testBaseDir.resolve("path/with,comma").toFile().absolutePath)),
         valueString = { value -> value?.joinToString(",") },
         expectedArgumentStringsFor = { value -> listOf("-Xfriend-paths=$value") },
     ),
@@ -140,7 +150,8 @@ private val jvmArgumentTestDescriptors: List<JvmArgumentTestDescriptor<*>> = lis
             "1.6", "1.7", "1.8", "8", "9", "10", "11", "12", "13", "14",
             "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25"
         ),
-        invalidArgumentValue = "non-existent-value",
+        invalidArgumentValues = listOf("non-existent-value"),
+        invalidRawValues = listOf("non-existent-value"),
         valueString = { value -> value },
         expectedArgumentStringsFor = { value -> listOf("-Xjdk-release=$value") },
     ),
@@ -161,7 +172,8 @@ private val jvmArgumentTestDescriptors: List<JvmArgumentTestDescriptor<*>> = lis
         argumentName = "Xstring-concat",
         argument = X_STRING_CONCAT,
         argumentValues = listOf("indy-with-constants", "indy", "inline"),
-        invalidArgumentValue = "non-existent-value",
+        invalidArgumentValues = listOf("non-existent-value"),
+        invalidRawValues = listOf("non-existent-value"),
         valueString = { value -> value },
         expectedArgumentStringsFor = { value -> listOf("-Xstring-concat=$value") },
     ),
@@ -169,7 +181,8 @@ private val jvmArgumentTestDescriptors: List<JvmArgumentTestDescriptor<*>> = lis
         argumentName = "Xlambdas",
         argument = X_LAMBDAS,
         argumentValues = listOf("indy", "class"),
-        invalidArgumentValue = "non-existent-value",
+        invalidArgumentValues = listOf("non-existent-value"),
+        invalidRawValues = listOf("non-existent-value"),
         valueString = { value -> value },
         expectedArgumentStringsFor = { value -> listOf("-Xlambdas=$value") },
     ),
@@ -177,7 +190,8 @@ private val jvmArgumentTestDescriptors: List<JvmArgumentTestDescriptor<*>> = lis
         argumentName = "Xwhen-expressions",
         argument = X_WHEN_EXPRESSIONS,
         argumentValues = listOf("indy", "inline"),
-        invalidArgumentValue = "non-existent-value",
+        invalidArgumentValues = listOf("non-existent-value"),
+        invalidRawValues = listOf("non-existent-value"),
         valueString = { value -> value },
         expectedArgumentStringsFor = { value -> listOf("-Xwhen-expressions=$value") },
     ),
@@ -185,7 +199,8 @@ private val jvmArgumentTestDescriptors: List<JvmArgumentTestDescriptor<*>> = lis
         argumentName = "Xsam-conversions",
         argument = X_SAM_CONVERSIONS,
         argumentValues = listOf("class", "indy"),
-        invalidArgumentValue = "non-existent-value",
+        invalidArgumentValues = listOf("non-existent-value"),
+        invalidRawValues = listOf("non-existent-value"),
         valueString = { value -> value },
         expectedArgumentStringsFor = { value -> listOf("-Xsam-conversions=$value") },
     ),
@@ -193,7 +208,8 @@ private val jvmArgumentTestDescriptors: List<JvmArgumentTestDescriptor<*>> = lis
         argumentName = "Xjspecify-annotations",
         argument = X_JSPECIFY_ANNOTATIONS,
         argumentValues = listOf("ignore", "strict", "warn"),
-        invalidArgumentValue = "non-existent-value",
+        invalidArgumentValues = listOf("non-existent-value"),
+        invalidRawValues = listOf("non-existent-value"),
         valueString = { value -> value },
         expectedArgumentStringsFor = { value -> listOf("-Xjspecify-annotations=$value") },
     ),
@@ -201,7 +217,8 @@ private val jvmArgumentTestDescriptors: List<JvmArgumentTestDescriptor<*>> = lis
         argumentName = "Xsupport-compatqual-checker-framework-annotations",
         argument = X_SUPPORT_COMPATQUAL_CHECKER_FRAMEWORK_ANNOTATIONS,
         argumentValues = listOf("enable", "disable"),
-        invalidArgumentValue = "non-existent-value",
+        invalidArgumentValues = listOf("non-existent-value"),
+        invalidRawValues = listOf("non-existent-value"),
         valueString = { value -> value },
         expectedArgumentStringsFor = { value -> listOf("-Xsupport-compatqual-checker-framework-annotations=$value") },
     ),
@@ -228,6 +245,7 @@ private val jvmArgumentTestDescriptors: List<JvmArgumentTestDescriptor<*>> = lis
                 testBaseDir.resolve("path/to/java/src3").toFile().absolutePath,
             )
         ),
+        invalidArgumentValues = listOf(arrayOf(testBaseDir.resolve("path/with,comma").toFile().absolutePath)),
         valueString = { value -> value?.joinToString(",") },
         expectedArgumentStringsFor = { value -> listOf("-Xjava-source-roots=$value") },
     ),

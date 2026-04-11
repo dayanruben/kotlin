@@ -266,6 +266,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATED_SMARTC
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATED_TYPE_PARAMETER_SYNTAX
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATION_ERROR
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATION_OF_OUTER_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DESERIALIZATION_ERROR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DESTRUCTURING_SHORT_FORM_NAME_MISMATCH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DESTRUCTURING_SHORT_FORM_OF_NON_DATA_CLASS
@@ -1042,8 +1043,8 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
         map.put(
             UNRESOLVED_REFERENCE_WRONG_RECEIVER,
-            "Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:{0}",
-            SYMBOLS_ON_NEXT_LINES,
+            "Candidate ''{0}'' is inapplicable because of a receiver type mismatch.",
+            SYMBOL,
         )
         map.put(
             INACCESSIBLE_OUTER_CLASS_RECEIVER,
@@ -1366,6 +1367,12 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
         map.put(DEPRECATION_ERROR, "''{0}'' is deprecated.{1}", SYMBOL, OPTIONAL_SENTENCE)
         map.put(DEPRECATION, "''{0}'' is deprecated.{1}", SYMBOL, OPTIONAL_SENTENCE)
+        map.put(
+            DEPRECATION_OF_OUTER_CLASS,
+            "''{0}'' is deprecated.{1}".toDeprecationWarningMessage(LanguageFeature.ReportDeprecationsOfOuterImportedClasses),
+            SYMBOL,
+            OPTIONAL_SENTENCE
+        )
         map.put(
             OVERRIDE_DEPRECATION,
             "This declaration overrides a deprecated member but is not marked as deprecated itself. Add the ''@Deprecated'' annotation or suppress the diagnostic.",

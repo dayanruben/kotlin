@@ -301,7 +301,7 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface UnresolvedReferenceWrongReceiver : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = UnresolvedReferenceWrongReceiver::class
-        val candidates: List<KaSymbol>
+        val candidate: KaSymbol
     }
 
     interface InaccessibleOuterClassReceiver : KaFirDiagnostic<PsiElement> {
@@ -891,6 +891,12 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface Deprecation : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = Deprecation::class
+        val reference: KaSymbol
+        val message: String
+    }
+
+    interface DeprecationOfOuterClass : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = DeprecationOfOuterClass::class
         val reference: KaSymbol
         val message: String
     }

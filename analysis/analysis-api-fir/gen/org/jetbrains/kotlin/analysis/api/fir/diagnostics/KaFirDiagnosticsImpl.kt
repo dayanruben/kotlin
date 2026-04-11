@@ -346,7 +346,7 @@ internal class UnresolvedReferenceImpl(
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.UnresolvedReference
 
 internal class UnresolvedReferenceWrongReceiverImpl(
-    override val candidates: List<KaSymbol>,
+    override val candidate: KaSymbol,
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.UnresolvedReferenceWrongReceiver
@@ -1073,6 +1073,13 @@ internal class DeprecationImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.Deprecation
+
+internal class DeprecationOfOuterClassImpl(
+    override val reference: KaSymbol,
+    override val message: String,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.DeprecationOfOuterClass
 
 internal class OverrideDeprecationImpl(
     override val overridenSymbol: KaSymbol,

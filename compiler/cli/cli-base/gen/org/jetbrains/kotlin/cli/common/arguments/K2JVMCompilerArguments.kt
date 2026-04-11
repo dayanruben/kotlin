@@ -178,6 +178,7 @@ inside suspend functions and lambdas to distinguish them from user code by debug
         value = "-Xfriend-paths",
         valueDescription = "<path>",
         description = "Paths to output directories for friend modules (modules whose internals should be visible).",
+        delimiter = Argument.Delimiters.default,
     )
     var friendPaths: Array<String> = emptyArray()
         set(value) {
@@ -240,6 +241,7 @@ inside suspend functions and lambdas to distinguish them from user code by debug
         value = "-Xjava-source-roots",
         valueDescription = "<path>",
         description = "Paths to directories with Java source files.",
+        delimiter = Argument.Delimiters.default,
     )
     var javaSourceRoots: Array<String> = emptyArray()
         set(value) {
@@ -331,6 +333,7 @@ This works like '--enable-preview' in Java. All class files are marked as compil
         value = "-Xklib",
         valueDescription = "<path>",
         description = "Paths to cross-platform libraries in the .klib format.",
+        delimiter = Argument.Delimiters.pathSeparator,
     )
     var klibLibraries: String? = null
         set(value) {
@@ -371,6 +374,7 @@ It has no effect when -language-version is 2.0 or higher.""",
         value = "-Xmodule-path",
         valueDescription = "<path>",
         description = "Paths to Java 9+ modules.",
+        delimiter = Argument.Delimiters.pathSeparator,
     )
     var javaModulePath: String? = null
         set(value) {
@@ -699,6 +703,7 @@ The default value is 'inline'.""",
         shortName = "-cp",
         valueDescription = "<path>",
         description = "List of directories and JAR/ZIP archives to search for user class files.",
+        delimiter = Argument.Delimiters.pathSeparator,
     )
     var classpath: String? = null
         set(value) {

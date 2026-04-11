@@ -138,7 +138,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<String?>("operator")
         }
         val UNRESOLVED_REFERENCE_WRONG_RECEIVER by error<PsiElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
-            parameter<Collection<Symbol>>("candidates")
+            parameter<Symbol>("candidate")
         }
         val INACCESSIBLE_OUTER_CLASS_RECEIVER by error<PsiElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
             parameter<FirBasedSymbol<*>>("symbol")
@@ -396,6 +396,11 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             isSuppressible = true
         }
         val DEPRECATION by warning<PsiElement>(PositioningStrategy.DEPRECATION) {
+            parameter<Symbol>("reference")
+            parameter<String>("message")
+        }
+
+        val DEPRECATION_OF_OUTER_CLASS by warning<PsiElement>(PositioningStrategy.DEPRECATION) {
             parameter<Symbol>("reference")
             parameter<String>("message")
         }
