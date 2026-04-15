@@ -22,6 +22,12 @@ enum class Language(val sourceFileExtension: String, val clangLanguageName: Stri
     OBJECTIVE_C("m", "objective-c")
 }
 
+enum class MacroNamesCollectingMode {
+    LEGACY,
+    LIBCLANGEXT,
+    LIBCLANGEXT_PARALLEL,
+}
+
 interface HeaderInclusionPolicy {
     /**
      * Whether unused declarations from given header should be excluded.
@@ -132,7 +138,8 @@ fun buildNativeIndex(
         library: NativeLibrary,
         verbose: Boolean,
         allowPrecompiledHeaders: Boolean = true,
-): IndexerResult = buildNativeIndexImpl(library, verbose, allowPrecompiledHeaders)
+        macroNamesCollectingMode: MacroNamesCollectingMode = MacroNamesCollectingMode.LEGACY,
+): IndexerResult = buildNativeIndexImpl(library, verbose, allowPrecompiledHeaders, macroNamesCollectingMode)
 
 /**
  * This class describes the IR of definitions from C header file(s).
@@ -391,9 +398,12 @@ class TypedefDef(val aliased: Type, val name: String, override val location: Loc
 abstract class MacroDef(val name: String)
 
 abstract class ConstantDef(name: String, val type: Type): MacroDef(name)
-class IntegerConstantDef(name: String, type: Type, val value: Long) : ConstantDef(name, type)
-class FloatingConstantDef(name: String, type: Type, val value: Double) : ConstantDef(name, type)
-class StringConstantDef(name: String, type: Type, val value: String) : ConstantDef(name, type)
+abstract class TypedConstantDef<out V>(name: String, type: Type) : ConstantDef(name, type) {
+    abstract val value: V
+}
+class IntegerConstantDef(name: String, type: Type, override val value: Long) : TypedConstantDef<Long>(name, type)
+class FloatingConstantDef(name: String, type: Type, override val value: Double) : TypedConstantDef<Double>(name, type)
+class StringConstantDef(name: String, type: Type, override val value: String) : TypedConstantDef<String>(name, type)
 
 class WrappedMacroDef(name: String, val type: Type) : MacroDef(name)
 

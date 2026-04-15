@@ -5,16 +5,20 @@
 
 package org.jetbrains.kotlin.arguments.description
 
+import org.jetbrains.kotlin.arguments.dsl.base.ExperimentalArgumentApi
 import org.jetbrains.kotlin.arguments.dsl.base.KotlinReleaseVersion
 import org.jetbrains.kotlin.arguments.dsl.base.ReleaseDependent
 import org.jetbrains.kotlin.arguments.dsl.base.asReleaseDependent
 import org.jetbrains.kotlin.arguments.dsl.base.compilerArgumentsLevel
+import org.jetbrains.kotlin.arguments.dsl.defaultEmpty
 import org.jetbrains.kotlin.arguments.dsl.defaultFalse
 import org.jetbrains.kotlin.arguments.dsl.defaultNull
 import org.jetbrains.kotlin.arguments.dsl.defaultTrue
 import org.jetbrains.kotlin.arguments.dsl.types.*
 
 val actualCommonKlibBasedArguments by compilerArgumentsLevel(CompilerArgumentsLevelNames.commonKlibBasedArguments) {
+
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xklib-relative-path-base"
         compilerName = "relativePathBases"
@@ -26,6 +30,7 @@ Note: The prefixes are applied in the same order as they are passed in this CLI 
                     "Provide a base path to compute the source's relative paths in klib (default is empty)."
         )
         valueType = StringArrayType.defaultNull
+        argumentType = PathListType.defaultEmpty
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v2_0_20,
@@ -60,6 +65,7 @@ Note: The prefixes are applied in the same order as they are passed in this CLI 
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xpartial-linkage"
         compilerName = "partialLinkageMode"
@@ -78,6 +84,7 @@ Note: The prefixes are applied in the same order as they are passed in this CLI 
         valueType = StringType.defaultNull
 
         valueDescription = "{enable|disable}".asReleaseDependent()
+        argumentType = PartialLinkageModeType()
         additionalAnnotations(
             Deprecated("This flag is deprecated")
         )
@@ -88,6 +95,7 @@ Note: The prefixes are applied in the same order as they are passed in this CLI 
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xpartial-linkage-loglevel"
         compilerName = "partialLinkageLogLevel"
@@ -97,18 +105,21 @@ Note: The prefixes are applied in the same order as they are passed in this CLI 
             current = "{silent|info|warning|error}",
             KotlinReleaseVersion.v2_0_20..KotlinReleaseVersion.v2_3_20 to "{info|warning|error}"
         )
+        argumentType = PartialLinkageLogLevelType()
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v2_0_20,
         )
     }
 
+    @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
         name = "Xklib-duplicated-unique-name-strategy"
         compilerName = "duplicatedUniqueNameStrategy"
         description = "Klib dependencies usage strategy when multiple KLIBs has same `unique_name` property value.".asReleaseDependent()
         valueType = StringType.defaultNull
         valueDescription = "{deny|allow-all-with-warning|allow-first-with-warning}".asReleaseDependent()
+        argumentType = DuplicatedUniqueNameStrategyType()
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v2_1_0,

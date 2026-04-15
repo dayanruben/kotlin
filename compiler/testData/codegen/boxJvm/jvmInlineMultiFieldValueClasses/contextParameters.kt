@@ -2,9 +2,10 @@
 // WITH_STDLIB
 // FULL_JDK
 // WORKS_WHEN_VALUE_CLASS
-// IGNORE_BACKEND: ANDROID
 // LANGUAGE: +ContextParameters, +JvmInlineMultiFieldValueClasses
 // PARAMETERS_METADATA
+
+package test
 
 OPTIONAL_JVM_INLINE_ANNOTATION
 value class B(val x: Int, val y: Int) {
@@ -28,13 +29,17 @@ private fun checkMultiFieldValueClass() {
     val sum2 = with(b) { b.g(100) }
     if (sum2 != 114) error(sum2.toString())
 
-    for (methodName in listOf("f-impl", "g-vc4tCeU")) {
-        checkParameters("B", methodName)
-    }
+    checkParameters("test.B", "f-impl")
+    checkParameters("test.B", "g-EW5nZAA", "g-t7jd6Lo") // Android tests relocate package
 }
 
-private fun checkParameters(className: String, methodName: String) {
-    val method = Class.forName(className).declaredMethods.single { it.name == methodName }
+private fun checkParameters(className: String, vararg expectedMethodNames: String) {
+    val methodNames = Class.forName(className).declaredMethods.map { it.name }
+    if (expectedMethodNames.none { it in methodNames }) {
+        error("${expectedMethodNames.toList()} are not found in $methodNames")
+    }
+    val method = Class.forName(className).declaredMethods.single { it.name in expectedMethodNames }
+    val methodName = methodNames.single { it in expectedMethodNames }
     val parameters = method.getParameters()
     for ((index, parameter) in parameters.withIndex()) {
         val isLast = index == parameters.lastIndex

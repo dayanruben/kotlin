@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.symbols.isPublicApi
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.ir.util.SymbolTable
-import org.jetbrains.kotlin.ir.util.file
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.uniqueName
 import org.jetbrains.kotlin.name.Name
@@ -80,12 +79,12 @@ abstract class KotlinIrLinker(
         // Note: The top-level symbol might be gone in newer version of dependency KLIB. Then the KLIB that was compiled against
         // the older version of dependency KLIB will still have a reference to non-existing symbol. And the linker will have to
         // handle such situation appropriately. See KT-41378.
+        //
+        // TODO (KT-84837): The lookup for a IrModuleDeserializer should work through an index.
         val actualModuleDeserializer: IrModuleDeserializer? = if (topLevelSignature in moduleDeserializer) {
             moduleDeserializer
         } else {
-            moduleDeserializer.moduleDescriptor.allDependencyModules
-                .mapNotNull { deserializersForModules[it.name.asString()] }
-                .firstOrNull { topLevelSignature in it }
+            deserializersForModules.values.firstOrNull { topLevelSignature in it }
         }
 
         // Note: It might happen that the top-level symbol still exists in KLIB, but nested symbol has been removed.
@@ -193,16 +192,12 @@ abstract class KotlinIrLinker(
         return resolveModuleDeserializer(file)?.referencePropertyByLocalSignature(file, idSignature)
     }
 
-    protected open fun createCurrentModuleDeserializer(moduleFragment: IrModuleFragment, dependencies: Collection<IrModuleDeserializer>): IrModuleDeserializer =
-        CurrentModuleDeserializer(moduleFragment, dependencies)
+    protected open fun createCurrentModuleDeserializer(moduleFragment: IrModuleFragment): IrModuleDeserializer =
+        CurrentModuleDeserializer(moduleFragment)
 
     override fun init(moduleFragment: IrModuleFragment?) {
         if (moduleFragment != null) {
-            val currentModuleDependencies = moduleFragment.descriptor.allDependencyModules.map {
-                deserializersForModules[it.name.asString()]
-                    ?: NoDeserializerForModule(it.name, null).raiseIssue(messageCollector)
-            }
-            val currentModuleDeserializer = createCurrentModuleDeserializer(moduleFragment, currentModuleDependencies)
+            val currentModuleDeserializer = createCurrentModuleDeserializer(moduleFragment)
             deserializersForModules[moduleFragment.name.asString()] =
                 maybeWrapWithBuiltInAndInit(moduleFragment.descriptor, currentModuleDeserializer)
         }

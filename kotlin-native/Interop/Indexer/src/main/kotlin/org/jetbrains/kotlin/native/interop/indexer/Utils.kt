@@ -322,6 +322,21 @@ fun visitChildren(parent: CValue<CXCursor>, visitor: CursorVisitor) {
 internal fun visitChildren(translationUnit: CXTranslationUnit, visitor: CursorVisitor) =
         visitChildren(clang_getTranslationUnitCursor(translationUnit), visitor)
 
+internal typealias MacroVisitor = (spelling: CPointer<ByteVar>?, location: CValue<CXSourceLocation>, file: ClangFile?) -> Unit
+
+internal fun visitObjectLikeMacroDefinitions(translationUnit: CXTranslationUnit, excludeSystemHeaders: Boolean, visitor: MacroVisitor) {
+    val visitorStableRef = StableRef.create(visitor)
+    try {
+        val clientData = visitorStableRef.asCPointer()
+        clang_visitObjectLikeMacroDefinitions(translationUnit, excludeSystemHeaders, staticCFunction { clientDataIt, spelling, location, file ->
+            val visitorIt = clientDataIt!!.asStableRef<MacroVisitor>().get()
+            visitorIt(spelling, location, file?.asClangFile())
+        }, clientData)
+    } finally {
+        visitorStableRef.dispose()
+    }
+}
+
 internal fun getFields(type: CValue<CXType>): List<CValue<CXCursor>> {
     val result = mutableListOf<CValue<CXCursor>>()
     val resultStableRef = StableRef.create(result)
@@ -843,9 +858,7 @@ class ClangFile(val cxFile: CXFile) {
         return other is ClangFile && (clang_File_isEqual(cxFile, other.cxFile) != 0)
     }
 
-    override fun hashCode(): Int = cValue<CXFileUniqueID> {
-        clang_getFileUniqueID(cxFile, ptr)
-    }.hashCode()
+    override fun hashCode(): Int = clang_getFileUniqueIDHash(cxFile)
 
     override fun toString(): String = path
 }

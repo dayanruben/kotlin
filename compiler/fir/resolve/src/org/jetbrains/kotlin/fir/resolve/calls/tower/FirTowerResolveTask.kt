@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
 import org.jetbrains.kotlin.fir.expressions.builder.buildExpressionStub
 import org.jetbrains.kotlin.fir.isEnabled
 import org.jetbrains.kotlin.fir.resolve.BodyResolveComponents
-import org.jetbrains.kotlin.fir.resolve.DoubleColonLHS
 import org.jetbrains.kotlin.fir.resolve.calls.*
 import org.jetbrains.kotlin.fir.resolve.calls.candidate.*
 import org.jetbrains.kotlin.fir.resolve.toImplicitResolvedQualifierReceiver
@@ -315,10 +314,10 @@ internal open class FirTowerResolveTask(
         }
 
         if (resolvedQualifier.symbol != null) {
-            if (info is CallableReferenceInfo && info.lhs is DoubleColonLHS.Type) {
+            if (info is CallableReferenceInfo && info.lhsAsType != null) {
                 val stubReceiver = buildExpressionStub {
                     source = info.explicitReceiver?.source
-                    this.coneTypeOrNull = info.lhs.type
+                    this.coneTypeOrNull = info.lhsAsType.type
                 }
 
                 val stubReceiverInfo = info.replaceExplicitReceiver(stubReceiver)
