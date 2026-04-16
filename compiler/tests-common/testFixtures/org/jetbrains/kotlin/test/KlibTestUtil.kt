@@ -49,8 +49,8 @@ import org.jetbrains.kotlin.cli.common.renderDiagnosticInternalName
 import org.jetbrains.kotlin.library.loader.KlibLoader
 import org.jetbrains.kotlin.library.writer.KlibWriter
 import org.jetbrains.kotlin.library.writer.includeMetadata
-import org.jetbrains.kotlin.resolve.KlibCompilerDeserializationConfiguration
-import org.jetbrains.kotlin.util.toKlibMetadataVersion
+import org.jetbrains.kotlin.resolve.CommonCompilerDeserializationConfiguration
+import org.jetbrains.kotlin.util.toMetadataVersion
 import java.io.File
 import java.nio.file.Path
 import org.jetbrains.kotlin.library.KlibConstants.KLIB_FILE_EXTENSION
@@ -124,7 +124,7 @@ object KlibTestUtil {
 
         val serializer = KlibMetadataMonolithicSerializer(
             languageVersionSettings = LanguageVersionSettingsImpl.DEFAULT,
-            metadataVersion = LanguageVersionSettingsImpl.DEFAULT.languageVersion.toKlibMetadataVersion(),
+            metadataVersion = LanguageVersionSettingsImpl.DEFAULT.languageVersion.toMetadataVersion(),
             exportKDoc = false,
             skipExpects = false,
             project = null,
@@ -141,7 +141,7 @@ object KlibTestUtil {
                     KotlinLibraryVersioning(
                         compilerVersion = null,
                         abiVersion = null,
-                        metadataVersion = LanguageVersionSettingsImpl.DEFAULT.languageVersion.toKlibMetadataVersion(),
+                        metadataVersion = LanguageVersionSettingsImpl.DEFAULT.languageVersion.toMetadataVersion(),
                     )
                 )
                 platformAndTargets(BuiltInsPlatform.COMMON)
@@ -210,7 +210,7 @@ private fun createAndInitializeKlibBasedStdlibCommonDescriptor(
         customMetadataProtoLoader = null,
         storageManager = projectContext.storageManager,
         moduleDescriptor = stdlibCommonDescriptor,
-        configuration = KlibCompilerDeserializationConfiguration(environment.configuration.languageVersionSettings),
+        configuration = CommonCompilerDeserializationConfiguration(environment.configuration.languageVersionSettings),
         compositePackageFragmentAddend = null,
         lookupTracker = LookupTracker.DO_NOTHING,
     )

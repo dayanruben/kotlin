@@ -23,10 +23,9 @@ import org.jetbrains.kotlin.js.backend.ast.REGULAR_EXTENSION
 import org.jetbrains.kotlin.js.config.*
 import org.jetbrains.kotlin.js.test.handlers.JsBoxRunner
 import org.jetbrains.kotlin.js.test.tools.SwcRunner
-import org.jetbrains.kotlin.js.test.utils.extractTestPackage
 import org.jetbrains.kotlin.js.test.utils.jsIrIncrementalDataProvider
 import org.jetbrains.kotlin.js.test.utils.wrapWithModuleEmulationMarkers
-import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.test.backend.ir.IrBackendInput
 import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives
 import org.jetbrains.kotlin.test.model.*
@@ -35,6 +34,7 @@ import org.jetbrains.kotlin.test.services.compilerConfigurationProvider
 import org.jetbrains.kotlin.test.services.configuration.JsEnvironmentConfigurator
 import org.jetbrains.kotlin.test.services.configuration.JsEnvironmentConfigurator.Companion.getJsModuleArtifactName
 import org.jetbrains.kotlin.test.services.configuration.createJsTestPhaseConfig
+import org.jetbrains.kotlin.test.services.configuration.extractTestPackage
 import org.jetbrains.kotlin.test.services.defaultsProvider
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.fileUtils.withReplacedExtensionOrNull
@@ -75,18 +75,10 @@ class JsIrLoweringFacade(
     ): BinaryArtifacts.Js? {
         val (irModuleFragment, moduleDependencies, irBuiltIns, symbolTable, deserializer) = moduleInfo
 
-        val splitPerModule = JsEnvironmentConfigurationDirectives.SPLIT_PER_MODULE in module.directives
         val splitPerFile = JsEnvironmentConfigurationDirectives.SPLIT_PER_FILE in module.directives
-        val perModule = JsEnvironmentConfigurationDirectives.PER_MODULE in module.directives
         val keep = module.directives[JsEnvironmentConfigurationDirectives.KEEP].toSet()
 
         val moduleKind = JsEnvironmentConfigurator.getModuleKind(testServices, module)
-        val granularity = when {
-            !firstTimeCompilation -> JsGenerationGranularity.WHOLE_PROGRAM
-            splitPerFile || moduleKind == ModuleKind.ES -> JsGenerationGranularity.PER_FILE
-            splitPerModule || perModule -> JsGenerationGranularity.PER_MODULE
-            else -> JsGenerationGranularity.WHOLE_PROGRAM
-        }
 
         val testPackage = extractTestPackage(testServices, ignoreEsModules = false)
         val skipRegularMode = JsEnvironmentConfigurationDirectives.SKIP_REGULAR_MODE in module.directives
@@ -94,11 +86,13 @@ class JsIrLoweringFacade(
         if (skipRegularMode) return null
 
         if (JsEnvironmentConfigurator.incrementalEnabled(testServices)) {
-            val outputFile = if (firstTimeCompilation) {
-                File(JsEnvironmentConfigurator.getJsModuleArtifactPath(testServices, module.name) + moduleKind.jsExtension)
-            } else {
-                File(JsEnvironmentConfigurator.getRecompiledJsModuleArtifactPath(testServices, module.name) + moduleKind.jsExtension)
-            }
+            val outputFile = File(
+                JsEnvironmentConfigurator.getJsModuleArtifactPath(
+                    testServices,
+                    module.name,
+                    firstTimeCompilation = firstTimeCompilation
+                ) + moduleKind.jsExtension
+            )
 
             val compiledModule = CompilerResult(
                 outputs = listOf(TranslationMode.FULL_DEV, TranslationMode.PER_MODULE_DEV).associateWith {
@@ -130,12 +124,11 @@ class JsIrLoweringFacade(
             irBuiltIns = irBuiltIns,
             symbolTable = symbolTable,
             irLinker = deserializer,
-            exportedDeclarations = setOf(FqName.fromSegments(listOfNotNull(testPackage, JsBoxRunner.TEST_FUNCTION))),
+            exportedDeclarations = setOf(testPackage.child(Name.identifier(JsBoxRunner.TEST_FUNCTION))),
             keep = keep,
             dceRuntimeDiagnostic = null,
             safeExternalBoolean = JsEnvironmentConfigurationDirectives.SAFE_EXTERNAL_BOOLEAN in module.directives,
             safeExternalBooleanDiagnostic = module.directives[JsEnvironmentConfigurationDirectives.SAFE_EXTERNAL_BOOLEAN_DIAGNOSTIC].singleOrNull(),
-            granularity = granularity,
         )
 
         return loweredIr2JsArtifact(module, loweredIr, mainArguments != null)
@@ -185,17 +178,10 @@ class JsIrLoweringFacade(
 
         if (dontSkipRegularMode) {
             for ((mode, output) in compilerResult.outputs.entries) {
-                val outputFile = if (firstTimeCompilation) {
-                    File(JsEnvironmentConfigurator.getJsModuleArtifactPath(testServices, module.name, mode).finalizePath(moduleKind))
-                } else {
-                    File(
-                        JsEnvironmentConfigurator.getRecompiledJsModuleArtifactPath(
-                            testServices,
-                            module.name,
-                            mode
-                        ).finalizePath(moduleKind)
-                    )
-                }
+                val outputFile = File(
+                    JsEnvironmentConfigurator.getJsModuleArtifactPath(testServices, module.name, mode, firstTimeCompilation)
+                        .finalizePath(moduleKind)
+                )
 
                 output.writeTo(outputFile, moduleId, moduleKind, mode.granularity)
 

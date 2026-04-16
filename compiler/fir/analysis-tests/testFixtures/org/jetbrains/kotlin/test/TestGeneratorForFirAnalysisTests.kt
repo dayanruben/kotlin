@@ -28,7 +28,7 @@ fun main(args: Array<String>) {
                 val init: TestClass.() -> Unit = {
                     model(
                         "diagnostics/tests", pattern = TestGeneratorUtil.KT,
-                        excludeDirsRecursively = listOf("multiplatform"),
+                        excludeDirsRecursively = listOf("multiplatform", "jvm"),
                         excludedPattern = excludedCustomTestdataPattern,
                     )
                     model(
@@ -108,7 +108,7 @@ fun main(args: Array<String>) {
             testClass<AbstractFirLightTreeDiagnosticsWithoutAliasExpansionTest>(init = init)
 
             testClass<AbstractMetadataDiagnosticTest> {
-                model("metadataDiagnostic")
+                model("metadataDiagnostic", excludedPattern = excludedCustomTestdataPattern)
             }
         }
 
@@ -118,7 +118,6 @@ fun main(args: Array<String>) {
                     "testData/diagnostics/tests",
                     "testData/diagnostics/testsWithAnyBackend",
                     "testData/diagnostics/testsWithStdLib",
-                    "testData/diagnostics/jvmIntegration",
                     "fir/analysis-tests/testData/resolve",
                     "fir/analysis-tests/testData/resolveWithStdlib",
                 )

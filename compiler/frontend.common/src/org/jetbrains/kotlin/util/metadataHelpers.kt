@@ -9,11 +9,12 @@ import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.languageVersionSettings
+import org.jetbrains.kotlin.config.metadataVersion
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
 import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
 import java.util.*
 
-private val LANGUAGE_TO_JVM_METADATA_VERSION = EnumMap<LanguageVersion, MetadataVersion>(LanguageVersion::class.java).apply {
+private val LANGUAGE_TO_METADATA_VERSION = EnumMap<LanguageVersion, MetadataVersion>(LanguageVersion::class.java).apply {
     val oldMetadataVersion = MetadataVersion(1, 1, 18)
     this[LanguageVersion.KOTLIN_1_0] = oldMetadataVersion
     this[LanguageVersion.KOTLIN_1_1] = oldMetadataVersion
@@ -38,12 +39,8 @@ private val LANGUAGE_TO_JVM_METADATA_VERSION = EnumMap<LanguageVersion, Metadata
     }
 }
 
-// TODO KT-76195 Consider renaming to `toMetadataVersion` in version 2.4 here and combine with `toKlibMetadataVersion`
-fun LanguageVersion.toJvmMetadataVersion(): MetadataVersion = LANGUAGE_TO_JVM_METADATA_VERSION.getValue(this)
+fun LanguageVersion.toMetadataVersion(): MetadataVersion = LANGUAGE_TO_METADATA_VERSION.getValue(this)
 
-// TODO KT-76195 Consider renaming to `metadataVersion` in version 2.4 here and combine with `klibMetadataVersionOrDefault`
-fun CompilerConfiguration.jvmMetadataVersion(
-    languageVersion: LanguageVersion = languageVersionSettings.languageVersion
-): BinaryVersion {
-    return get(CommonConfigurationKeys.METADATA_VERSION) ?: languageVersion.toJvmMetadataVersion()
-}
+fun CompilerConfiguration.metadataVersion(
+    languageVersion: LanguageVersion = languageVersionSettings.languageVersion,
+): MetadataVersion = this.metadataVersion as? MetadataVersion ?: languageVersion.toMetadataVersion()

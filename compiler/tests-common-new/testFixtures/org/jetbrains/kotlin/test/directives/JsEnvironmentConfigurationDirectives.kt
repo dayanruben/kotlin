@@ -111,12 +111,6 @@ object JsEnvironmentConfigurationDirectives : SimpleDirectivesContainer() {
         applicability = DirectiveApplicability.Global,
     )
 
-    val MAIN_ARGS by valueDirective(
-        description = "Specify arguments that will be passes to main fun",
-        applicability = DirectiveApplicability.Global,
-        parser = { it.subSequence(1, it.length - 1).split(",") }
-    )
-
     // Next directives are used only inside test system and must not be present in test file
 
     val PATH_TO_TEST_DIR by stringDirective(
@@ -224,11 +218,6 @@ object JsEnvironmentConfigurationDirectives : SimpleDirectivesContainer() {
     val ENTRY_ES_MODULE by directive(
         description = "Specify the entry point that imports other ESM modules",
         applicability = DirectiveApplicability.File
-    )
-
-    val PER_MODULE by directive(
-        description = "",
-        applicability = DirectiveApplicability.Global
     )
 
     val NO_COMMON_FILES by directive(

@@ -241,27 +241,6 @@ fun getBoxFunction(testServices: TestServices): KtNamedFunction? {
     }.singleOrNull()
 }
 
-fun extractTestPackage(testServices: TestServices, ignoreEsModules: Boolean = true): String? {
-    val runPlainBoxFunction = RUN_PLAIN_BOX_FUNCTION in testServices.moduleStructure.allDirectives
-    if (runPlainBoxFunction) return null
-
-    val ktFiles = testServices.moduleStructure.modules.flatMap { module ->
-        module.files
-            .filter { it.isKtFile }
-            .map {
-                val project = testServices.compilerConfigurationProvider.getProject(module)
-                module to testServices.sourceFileProvider.getKtFileForSourceFile(it, project)
-            }
-    }
-
-    val fileWithBoxFunction = ktFiles.find { (module, ktFile) ->
-        (!ignoreEsModules || JsEnvironmentConfigurator.getModuleKind(testServices, module) != ModuleKind.ES) &&
-                ktFile.declarations.find { it is KtNamedFunction && it.name == TEST_FUNCTION } != null
-    } ?: return null
-
-    return fileWithBoxFunction.second.packageFqName.asString().takeIf { it.isNotEmpty() }
-}
-
 fun extractEntryModulePath(
     mode: TranslationMode,
     jsFilePaths: List<String>,

@@ -57,6 +57,14 @@ fun main(args: Array<String>) {
             testClass<AbstractLLPartialDiagnosticsTest>(suiteTestClassName = "LLPartialDiagnosticsFirTestGenerated") {
                 modelInit()
             }
+
+            testClass<AbstractLLMetadataDiagnosticsTest> {
+                model("metadataDiagnostic", pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME.canFreezeIDE)
+            }
+
+            testClass<AbstractLLReversedMetadataDiagnosticsTest> {
+                model("metadataDiagnostic", pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME.canFreezeIDE)
+            }
         }
 
         testGroup(generatedTestRoot, "plugins/scripting/scripting-tests/testData") {
@@ -77,6 +85,25 @@ fun main(args: Array<String>) {
                     scriptDiagnosticsInit()
                 }
             }
+
+            run {
+                fun TestGroup.TestClass.replDiagnosticsInit() {
+                    model(
+                        "diagnostics/repl",
+                        pattern = TestGeneratorUtil.KTS,
+                        excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN,
+                    )
+                }
+
+                testClass<AbstractLLReplDiagnosticsTest> {
+                    replDiagnosticsInit()
+                }
+
+                testClass<AbstractLLReversedReplDiagnosticsTest> {
+                    replDiagnosticsInit()
+                }
+            }
+
 
             this.run {
                 fun TestGroup.TestClass.scriptCustomDefBackBoxInit() {
@@ -147,6 +174,7 @@ fun main(args: Array<String>) {
                     "diagnostics/tests",
                     excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN,
                     pattern = KT_OR_KTS,
+                    excludeDirs = listOf("jvm")
                 )
                 model(
                     "diagnostics/testsWithStdLib",
