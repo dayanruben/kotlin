@@ -7,6 +7,7 @@
 
 package org.jetbrains.kotlin.gradle.unitTests
 
+import org.jetbrains.kotlin.gradle.plugin.mpp.KmpModuleIdentifier
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinMetadataLibrariesIndexFile
 import org.jetbrains.kotlin.gradle.plugin.mpp.TransformedMetadataLibraryRecord
 import org.junit.jupiter.api.io.TempDir
@@ -46,11 +47,48 @@ class KotlinMetadataLibrariesIndexFileTest {
         }
     }
 
+    @Test
+    fun `test - different KmpModuleIdentifier types`() {
+        val index = KotlinMetadataLibrariesIndexFile(temporaryFolder.resolve("index").also { it.createNewFile() })
+        val records = listOf(
+            TransformedMetadataLibraryRecord(
+                moduleId = KmpModuleIdentifier(
+                    groupAndName = KmpModuleIdentifier.GradleGroupAndName("group1", "name1"),
+                    componentId = KmpModuleIdentifier.ModuleComponentId("version1", "classifier1")
+                ),
+                file = "file1.jar",
+                sourceSetName = "sourceSet1"
+            ),
+            TransformedMetadataLibraryRecord(
+                moduleId = KmpModuleIdentifier(
+                    groupAndName = KmpModuleIdentifier.GradleGroupAndName("group2", "name2"),
+                    componentId = KmpModuleIdentifier.ModuleComponentId("version2", "classifier2")
+                ),
+                file = "file2.jar",
+                sourceSetName = "sourceSet2"
+            ),
+            TransformedMetadataLibraryRecord(
+                moduleId = KmpModuleIdentifier(
+                    groupAndName = KmpModuleIdentifier.GradleGroupAndName("group3", "name3"),
+                    componentId = KmpModuleIdentifier.ModuleComponentId("version3", "")
+                ),
+                file = "file3.jar",
+                sourceSetName = "sourceSet3"
+            )
+        )
+        index.write(records)
+        assertEquals(records, index.read())
+    }
+
+
     private fun testWriteRead(files: Iterable<File>) {
         val index = KotlinMetadataLibrariesIndexFile(temporaryFolder.resolve("index").also { it.createNewFile() })
         val records = files.map {
             TransformedMetadataLibraryRecord(
-                moduleId = "a",
+                moduleId = KmpModuleIdentifier(
+                    groupAndName = KmpModuleIdentifier.GradleGroupAndName("a", "b"),
+                    componentId = KmpModuleIdentifier.ModuleComponentId("c", "d")
+                ),
                 file = it.absolutePath,
                 sourceSetName = it.name
             )

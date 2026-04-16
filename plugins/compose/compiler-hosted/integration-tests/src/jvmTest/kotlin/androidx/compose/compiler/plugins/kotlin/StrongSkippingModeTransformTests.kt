@@ -23,29 +23,21 @@ import org.jetbrains.kotlin.ir.util.DumpIrTreeOptions
 import org.jetbrains.kotlin.ir.util.DumpIrTreeVisitor
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.io.File
 
+@RunWith(Parameterized::class)
 class StrongSkippingModeTransformTests(
-    useFir: Boolean,
     private val intrinsicRememberEnabled: Boolean,
-) : AbstractIrTransformTest(useFir) {
+) : AbstractIrTransformTest() {
     companion object {
         @JvmStatic
-        @Parameterized.Parameters(name = "useFir = {0}, intrinsicRemember = {1}")
-        fun data() = if (isCI()) {
-            arrayOf<Any>(
-                arrayOf(true, false),
-                arrayOf(true, true)
-            )
-        } else {
-            arrayOf<Any>(
-                arrayOf(false, false),
-                arrayOf(false, true),
-                arrayOf(true, false),
-                arrayOf(true, true)
-            )
-        }
+        @Parameterized.Parameters(name = "intrinsicRemember = {0}")
+        fun data() = arrayOf<Any>(
+            arrayOf(false),
+            arrayOf(true)
+        )
     }
 
     override fun CompilerConfiguration.updateConfiguration() {

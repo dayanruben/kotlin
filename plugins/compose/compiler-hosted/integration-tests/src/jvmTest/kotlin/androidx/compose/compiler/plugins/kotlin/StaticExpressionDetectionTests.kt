@@ -27,7 +27,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Test
 
-class StaticExpressionDetectionTests(useFir: Boolean) : AbstractIrTransformTest(useFir) {
+class StaticExpressionDetectionTests : AbstractIrTransformTest() {
     @Test
     fun testKnownUnstableTypesAreNeverStatic() = assertUncertain(
         expression = "Any()",
@@ -349,7 +349,7 @@ class StaticExpressionDetectionTests(useFir: Boolean) : AbstractIrTransformTest(
         val compositionContextBody = irModule.files.last().declarations
             .filterIsInstance<IrFunction>()
             .first { it.name.identifier == "CompositionContext" }
-            .dumpSrc(useFir)
+            .dumpSrc(true)
             .replace('$', '%')
 
         assertChangedBits(

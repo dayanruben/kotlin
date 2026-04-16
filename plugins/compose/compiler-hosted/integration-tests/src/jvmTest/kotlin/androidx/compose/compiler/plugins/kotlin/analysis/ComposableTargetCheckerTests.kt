@@ -18,10 +18,9 @@ package androidx.compose.compiler.plugins.kotlin.analysis
 
 import androidx.compose.compiler.plugins.kotlin.AbstractComposeDiagnosticsTest
 import androidx.compose.compiler.plugins.kotlin.Classpath
-import org.junit.Assume.assumeTrue
 import org.junit.Test
 
-class ComposableTargetCheckerTests(useFir: Boolean) : AbstractComposeDiagnosticsTest(useFir) {
+class ComposableTargetCheckerTests : AbstractComposeDiagnosticsTest() {
     @Test
     fun testExplicitTargetAnnotations() = check(
         """
@@ -223,8 +222,8 @@ class ComposableTargetCheckerTests(useFir: Boolean) : AbstractComposeDiagnostics
             W {
                 N()
             }
-            ${psiParStart()}W${psiEnd()} {
-                ${firMisStart()}M${firEnd()}()
+            W {
+                ${"<!COMPOSE_APPLIER_CALL_MISMATCH!>"}M${"<!>"}()
             }
         }
         """
@@ -437,7 +436,7 @@ class ComposableTargetCheckerTests(useFir: Boolean) : AbstractComposeDiagnostics
         }
 
         class Invalid : Base() {
-          ${psiDecStart()}@Composable @ComposableTarget("M") override fun ${firDecStart()}Compose${firEnd()}() { }${psiEnd()}
+          @Composable @ComposableTarget("M") override fun ${"<!COMPOSE_APPLIER_DECLARATION_MISMATCH!>"}Compose${"<!>"}() { }
         }
 
         class Valid : Base () {
@@ -499,7 +498,6 @@ class ComposableTargetCheckerTests(useFir: Boolean) : AbstractComposeDiagnostics
 
     @Test
     fun testDifferentWrapperTypes() {
-        assumeTrue(useFir)
         check(
             """
             import androidx.compose.runtime.*
@@ -539,8 +537,8 @@ class ComposableTargetCheckerTests(useFir: Boolean) : AbstractComposeDiagnostics
              
             @Composable fun T() {
                 MWrapper {
-                    ${firMisStart()}NWrapper${firEnd()} {
-                        ${firMisStart()}N${firEnd()}()
+                    ${"<!COMPOSE_APPLIER_CALL_MISMATCH!>"}NWrapper${"<!>"} {
+                        ${"<!COMPOSE_APPLIER_CALL_MISMATCH!>"}N${"<!>"}()
                     }
                 }
             }
@@ -566,11 +564,4 @@ class ComposableTargetCheckerTests(useFir: Boolean) : AbstractComposeDiagnostics
         }
         """
     )
-
-    private fun firEnd() = if (useFir) "<!>" else ""
-    private fun psiEnd() = if (!useFir) "<!>" else ""
-    private fun firMisStart() = if (useFir) "<!COMPOSE_APPLIER_CALL_MISMATCH!>" else ""
-    private fun psiParStart() = if (!useFir) "<!COMPOSE_APPLIER_PARAMETER_MISMATCH!>" else ""
-    private fun firDecStart() = if (useFir) "<!COMPOSE_APPLIER_DECLARATION_MISMATCH!>" else ""
-    private fun psiDecStart() = if (!useFir) "<!COMPOSE_APPLIER_DECLARATION_MISMATCH!>" else ""
 }

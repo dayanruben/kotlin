@@ -20,7 +20,7 @@ import org.intellij.lang.annotations.Language
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 
-class DefaultParamTransformTests(useFir: Boolean) : AbstractIrTransformTest(useFir) {
+class DefaultParamTransformTests : AbstractIrTransformTest() {
     private fun defaultParams(
         @Language("kotlin")
         unchecked: String,
@@ -29,9 +29,6 @@ class DefaultParamTransformTests(useFir: Boolean) : AbstractIrTransformTest(useF
         supportsK1: Boolean = true,
         dumpTree: Boolean = false,
     ) {
-        if (!supportsK1) {
-            assumeTrue(useFir)
-        }
         verifyGoldenComposeIrTransform(
             """
             import androidx.compose.runtime.*
@@ -425,7 +422,6 @@ class DefaultParamTransformTests(useFir: Boolean) : AbstractIrTransformTest(useF
 
     @Test
     fun testAbstractDefaultParamOnInterface() {
-        assumeTrue(useFir)
         defaultParams(
             unchecked = """""",
             checked = """
@@ -529,7 +525,6 @@ class DefaultParamTransformTests(useFir: Boolean) : AbstractIrTransformTest(useF
 
     @Test
     fun testAbstractDefaultParamOverrideExtensionReceiver() {
-        assumeTrue(useFir)
         defaultParams(
             unchecked = "",
             checked = """
@@ -598,7 +593,6 @@ class DefaultParamTransformTests(useFir: Boolean) : AbstractIrTransformTest(useF
 
     @Test
     fun testAbstractDefaultParamComposableLambda() {
-        assumeTrue(useFir)
         defaultParams(
             unchecked = """
             @Composable fun Text(value: String) {}
@@ -682,7 +676,6 @@ class DefaultParamTransformTests(useFir: Boolean) : AbstractIrTransformTest(useF
 
     @Test
     fun callingOtherMethodWithDefault() {
-        assumeTrue(useFir)
         defaultParams(
             unchecked = "",
             checked = """

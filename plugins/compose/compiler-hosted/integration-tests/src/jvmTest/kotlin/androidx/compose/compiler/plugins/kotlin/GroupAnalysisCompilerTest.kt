@@ -14,20 +14,20 @@ import androidx.compose.compiler.plugins.kotlin.facade.SourceFile
 import androidx.compose.compiler.plugins.kotlin.lower.dumpSrc
 import org.intellij.lang.annotations.Language
 import org.junit.Rule
+import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import kotlin.test.Test
 
+@RunWith(Parameterized::class)
 class GroupAnalysisCompilerTest(
-    useFir: Boolean,
     private val validateMapping: Boolean
-) : AbstractCompilerTest(useFir) {
+) : AbstractCompilerTest() {
     companion object {
         @JvmStatic
-        @Parameterized.Parameters(name = "useFir={0},mapping={1}")
+        @Parameterized.Parameters(name = "mapping={0}")
         fun data() = arrayOf<Any>(
-            arrayOf(true, true),
-            arrayOf(true, false),
-            arrayOf(false, false)
+            arrayOf(true),
+            arrayOf(false),
         )
     }
 

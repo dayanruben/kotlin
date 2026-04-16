@@ -17,29 +17,21 @@
 package androidx.compose.compiler.plugins.kotlin
 
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import kotlin.test.Test
 
+@RunWith(Parameterized::class)
 class ComposePausableCompositionTests(
-    useFir: Boolean,
     private val pausableEnabled: Boolean
-) : AbstractControlFlowTransformTests(useFir) {
+) : AbstractControlFlowTransformTests() {
     companion object {
         @JvmStatic
-        @Parameterized.Parameters(name = "useFir = {0}, pausableEnabled = {1}")
-        fun data() = if (isCI()) {
-            arrayOf<Any>(
-                arrayOf(true, false),
-                arrayOf(true, true)
-            )
-        } else {
-            arrayOf<Any>(
-                arrayOf(false, false),
-                arrayOf(false, true),
-                arrayOf(true, false),
-                arrayOf(true, true)
-            )
-        }
+        @Parameterized.Parameters(name = "pausableEnabled = {0}")
+        fun data() = arrayOf<Any>(
+            arrayOf(false),
+            arrayOf(true),
+        )
     }
 
     override fun CompilerConfiguration.updateConfiguration() {

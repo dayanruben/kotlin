@@ -17,8 +17,6 @@
 package androidx.compose.compiler.plugins.kotlin
 
 import org.jetbrains.kotlin.testFederation.SmokeTest
-import org.junit.Assume.assumeFalse
-import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.experimental.categories.Category
 import kotlin.test.assertEquals
@@ -27,7 +25,7 @@ import kotlin.test.assertTrue
 
 /* ktlint-disable max-line-length */
 @Category(SmokeTest::class)
-class ComposeBytecodeCodegenTest(useFir: Boolean) : AbstractCodegenTest(useFir) {
+class ComposeBytecodeCodegenTest : AbstractCodegenTest() {
 
     @Test
     fun testEmptyComposeFunction() {
@@ -357,25 +355,6 @@ class ComposeBytecodeCodegenTest(useFir: Boolean) : AbstractCodegenTest(useFir) 
     }
 
     @Test
-    fun testLambdaWithArgs() {
-        // FIR does not support named lambda arguments
-        // We will deprecate this in Compose, see b/281677454
-        assumeFalse(useFir)
-        testCompile(
-            """
-        import androidx.compose.runtime.*
-
-        class Test(var content: @Composable (x: Int) -> Unit) {
-            @Composable
-            operator fun invoke() {
-                content(x=123)
-            }
-        }
-        """
-        )
-    }
-
-    @Test
     fun testLocalMethod() {
         testCompile(
             """
@@ -629,7 +608,6 @@ class ComposeBytecodeCodegenTest(useFir: Boolean) : AbstractCodegenTest(useFir) 
 
     @Test
     fun testDefaultParametersInAbstractFunctions() {
-        assumeTrue(useFir)
         validateBytecode(
             """
             import androidx.compose.runtime.*
@@ -660,7 +638,6 @@ class ComposeBytecodeCodegenTest(useFir: Boolean) : AbstractCodegenTest(useFir) 
 
     @Test
     fun testDefaultParametersInOpenFunctions() {
-        assumeTrue(useFir)
         validateBytecode(
             """
             import androidx.compose.runtime.*
@@ -784,15 +761,7 @@ class ComposeBytecodeCodegenTest(useFir: Boolean) : AbstractCodegenTest(useFir) 
                 }
             """,
             validate = { bytecode ->
-                val invokeMethod = if (!useFir) {
-                    val classesRegex = Regex("final class (.*?) \\{[\\S\\s]*?^}", RegexOption.MULTILINE)
-                    val matches = classesRegex.findAll(bytecode)
-                    val lambdaClass = matches
-                        .single { it.groups[1]?.value?.startsWith("test/ComposableSingletons%TestKt%lambda%") == true }
-                        .value
-                    val invokeRegex = Regex("public final invoke([\\s\\S]*?)LOCALVARIABLE")
-                    invokeRegex.find(lambdaClass)?.value ?: error("Could not find invoke method in $lambdaClass")
-                } else {
+                val invokeMethod = run {
                     val staticLambdaFunctionRegex = Regex("private final static lambda.*lambda%0[\\S\\s]*?\\v\\v", RegexOption.MULTILINE)
                     val matches = staticLambdaFunctionRegex.findAll(bytecode)
                     matches.single().value
@@ -980,7 +949,6 @@ class ComposeBytecodeCodegenTest(useFir: Boolean) : AbstractCodegenTest(useFir) 
 
     @Test
     fun testFunctionReferenceInline() {
-        assumeTrue(useFir)
         validateBytecode(
             """
                 import androidx.compose.runtime.*
@@ -1010,7 +978,6 @@ class ComposeBytecodeCodegenTest(useFir: Boolean) : AbstractCodegenTest(useFir) 
 
     @Test
     fun testFunctionReferenceInlineAdapted() {
-        assumeTrue(useFir)
         validateBytecode(
             """
                 import androidx.compose.runtime.*
@@ -1040,7 +1007,6 @@ class ComposeBytecodeCodegenTest(useFir: Boolean) : AbstractCodegenTest(useFir) 
 
     @Test
     fun testNonRestartableFunctionReference() {
-        assumeTrue(useFir)
         testCompile(
             """
                 import androidx.compose.runtime.*
@@ -1159,7 +1125,6 @@ class ComposeBytecodeCodegenTest(useFir: Boolean) : AbstractCodegenTest(useFir) 
 
     @Test
     fun composableLambdaAsTheFunctionReferenceOwner() {
-        assumeTrue(useFir)
         validateBytecode(
             """
                 import androidx.compose.runtime.Composable

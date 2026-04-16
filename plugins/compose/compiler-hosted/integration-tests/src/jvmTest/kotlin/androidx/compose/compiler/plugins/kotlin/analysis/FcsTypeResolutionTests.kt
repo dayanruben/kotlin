@@ -17,10 +17,9 @@
 package androidx.compose.compiler.plugins.kotlin.analysis
 
 import androidx.compose.compiler.plugins.kotlin.AbstractComposeDiagnosticsTest
-import org.junit.Assume.assumeFalse
 import org.junit.Test
 
-class FcsTypeResolutionTests(useFir: Boolean) : AbstractComposeDiagnosticsTest(useFir) {
+class FcsTypeResolutionTests : AbstractComposeDiagnosticsTest() {
     @Test
     fun testImplicitlyPassedReceiverScope1() = check(
         """
@@ -52,7 +51,6 @@ class FcsTypeResolutionTests(useFir: Boolean) : AbstractComposeDiagnosticsTest(u
 
     @Test
     fun testSmartCastsAndPunning() {
-        val typeMismatch = if (useFir) "ARGUMENT_TYPE_MISMATCH" else "TYPE_MISMATCH"
         check(
             """
             import androidx.compose.runtime.*
@@ -62,7 +60,7 @@ class FcsTypeResolutionTests(useFir: Boolean) : AbstractComposeDiagnosticsTest(u
 
             @Composable
             fun test(bar: String?) {
-                Foo(<!$typeMismatch!>bar<!>)
+                Foo(<!${"ARGUMENT_TYPE_MISMATCH"}!>bar<!>)
                 if (bar != null) {
                     Foo(bar)
                     Foo(bar=bar)
@@ -199,41 +197,6 @@ class FcsTypeResolutionTests(useFir: Boolean) : AbstractComposeDiagnosticsTest(u
     )
 
     @Test
-    fun testMissingAttributes() {
-        // Fails on K2 because of KT-57471. We cannot have named composable lambda arguments
-        // until the upstream bug is fixed.
-        assumeFalse(useFir)
-        check(
-            """
-                import androidx.compose.runtime.*
-
-                data class Foo(val value: Int)
-
-                @Composable fun A(x: Foo) { println(x) }
-
-                // NOTE: It's important that the diagnostic be only over the call target, and not the
-                // entire element so that a single error doesn't end up making a huge part of an
-                // otherwise correct file "red".
-                @Composable fun Test(F: @Composable (x: Foo) -> Unit) {
-                    // NOTE: constructor attributes and fn params get a "missing parameter" diagnostic
-                    A<!NO_VALUE_FOR_PARAMETER!>()<!>
-
-                    // local
-                    F<!NO_VALUE_FOR_PARAMETER!>()<!>
-
-                    val x = Foo(123)
-
-                A(x)
-                F(x)
-                A(x=x)
-                F(<!NAMED_ARGUMENTS_NOT_ALLOWED!>x<!>=x)
-            }
-
-            """.trimIndent()
-        )
-    }
-
-    @Test
     fun testDuplicateAttributes() = check(
         """
             import androidx.compose.runtime.*
@@ -289,7 +252,6 @@ class FcsTypeResolutionTests(useFir: Boolean) : AbstractComposeDiagnosticsTest(u
 
     @Test
     fun testGenerics() {
-        val typeMismatch = if (useFir) "ARGUMENT_TYPE_MISMATCH" else "TYPE_MISMATCH"
         check(
             """
                 import androidx.compose.runtime.*
@@ -313,12 +275,12 @@ class FcsTypeResolutionTests(useFir: Boolean) : AbstractComposeDiagnosticsTest(u
                     Bar(
                       x=1,
                       value=A(),
-                      f=<!$typeMismatch!>fb<!>
+                      f=<!${"ARGUMENT_TYPE_MISMATCH"}!>fb<!>
                     )
                     Bar(
                       x=1,
                       value=B(),
-                      f=<!$typeMismatch!>fa<!>
+                      f=<!${"ARGUMENT_TYPE_MISMATCH"}!>fa<!>
                     )
                 }
 
@@ -328,7 +290,6 @@ class FcsTypeResolutionTests(useFir: Boolean) : AbstractComposeDiagnosticsTest(u
 
     @Test
     fun testUnresolvedAttributeValueResolvedTarget() {
-        val typeMismatch = if (useFir) "ARGUMENT_TYPE_MISMATCH" else "TYPE_MISMATCH"
         check(
             """
                 import androidx.compose.runtime.*
@@ -353,8 +314,8 @@ class FcsTypeResolutionTests(useFir: Boolean) : AbstractComposeDiagnosticsTest(u
                     )
 
                     Fam(
-                      bar=<!$typeMismatch!>""<!>,
-                      x=<!$typeMismatch!>""<!>
+                      bar=<!${"ARGUMENT_TYPE_MISMATCH"}!>""<!>,
+                      x=<!${"ARGUMENT_TYPE_MISMATCH"}!>""<!>
                     )
                 }
 
@@ -388,12 +349,6 @@ class FcsTypeResolutionTests(useFir: Boolean) : AbstractComposeDiagnosticsTest(u
 
     @Test
     fun testMismatchedAttributes() {
-        val typeMismatch = if (useFir) "ARGUMENT_TYPE_MISMATCH" else "TYPE_MISMATCH"
-        val constantTypeMismatch = if (useFir) {
-            "ARGUMENT_TYPE_MISMATCH"
-        } else {
-            "CONSTANT_EXPECTED_TYPE_MISMATCH"
-        }
         check(
             """
                 import androidx.compose.runtime.*
@@ -411,7 +366,7 @@ class FcsTypeResolutionTests(useFir: Boolean) : AbstractComposeDiagnosticsTest(u
                     Foo(
                         x=A(),
                         y=A(),
-                        z=<!$typeMismatch!>A()<!>
+                        z=<!${"ARGUMENT_TYPE_MISMATCH"}!>A()<!>
                     )
                     Foo(
                         x=B(),
@@ -419,9 +374,9 @@ class FcsTypeResolutionTests(useFir: Boolean) : AbstractComposeDiagnosticsTest(u
                         z=B()
                     )
                     Foo(
-                        x=<!$constantTypeMismatch!>1<!>,
-                        y=<!$constantTypeMismatch!>1<!>,
-                        z=<!$constantTypeMismatch!>1<!>
+                        x=<!${"ARGUMENT_TYPE_MISMATCH"}!>1<!>,
+                        y=<!${"ARGUMENT_TYPE_MISMATCH"}!>1<!>,
+                        z=<!${"ARGUMENT_TYPE_MISMATCH"}!>1<!>
                     )
                 }
 
@@ -448,11 +403,6 @@ class FcsTypeResolutionTests(useFir: Boolean) : AbstractComposeDiagnosticsTest(u
 
     @Test
     fun testUnresolvedQualifiedTag() {
-        val functionExpected = if (useFir) {
-            "FUNCTION_EXPECTED"
-        } else {
-            "UNRESOLVED_REFERENCE_WRONG_RECEIVER"
-        }
         check(
             """
                 import androidx.compose.runtime.*
@@ -495,7 +445,7 @@ class FcsTypeResolutionTests(useFir: Boolean) : AbstractComposeDiagnosticsTest(u
                     MyNamespace.<!UNRESOLVED_REFERENCE!>Qoo<!> {
                     }
 
-                    MyNamespace.<!$functionExpected!>someString<!> {
+                    MyNamespace.<!${"FUNCTION_EXPECTED"}!>someString<!> {
                     }
 
                     <!UNRESOLVED_REFERENCE!>SomethingThatDoesntExist<!>.Foo {
@@ -529,38 +479,8 @@ class FcsTypeResolutionTests(useFir: Boolean) : AbstractComposeDiagnosticsTest(u
                 @Composable
                 fun MultiChildren(c: @Composable (x: Int, y: Int) -> Unit = { x, y ->println(x + y) }) { c(1,1) }
         """.trimIndent()
-        if (!useFir) {
-            check(
-                """
-                $declarations
-
-                @Composable fun Test() {
-                    ChildrenRequired2 {}
-                    ChildrenRequired2<!NO_VALUE_FOR_PARAMETER!>()<!>
-
-                    ChildrenOptional3 {}
-                    ChildrenOptional3()
-
-                    NoChildren2 <!TOO_MANY_ARGUMENTS!>{}<!>
-                    NoChildren2()
-
-                    <!OVERLOAD_RESOLUTION_AMBIGUITY!>MultiChildren<!> {}
-                    MultiChildren { x ->
-                        println(x)
-                    }
-                    MultiChildren { x, y ->
-                        println(x + y)
-                    }
-                    <!NONE_APPLICABLE!>MultiChildren<!> { <!CANNOT_INFER_PARAMETER_TYPE!>x<!>,
-                    <!CANNOT_INFER_PARAMETER_TYPE!>y<!>, <!CANNOT_INFER_PARAMETER_TYPE!>z<!> ->
-                        println(x + y + z)
-                    }
-                }
-            """.trimIndent()
-            )
-        } else {
-            check(
-                """
+        check(
+            """
                 $declarations
 
                 @Composable fun Test() {
@@ -587,8 +507,7 @@ class FcsTypeResolutionTests(useFir: Boolean) : AbstractComposeDiagnosticsTest(u
                         println(x + y + z)
                     }
                 }
-            """.trimIndent()
-            )
-        }
+        """.trimIndent()
+        )
     }
 }

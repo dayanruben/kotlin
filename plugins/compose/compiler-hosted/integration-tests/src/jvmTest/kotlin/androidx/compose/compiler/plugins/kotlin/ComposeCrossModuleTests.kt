@@ -19,7 +19,6 @@ package androidx.compose.compiler.plugins.kotlin
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -27,14 +26,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import kotlin.test.assertFalse
 
-@RunWith(Parameterized::class)
-class ComposeCrossModuleTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
-    companion object {
-        @JvmStatic
-        @Parameterized.Parameters(name = "useFir = {0}")
-        fun data() = arrayOf<Any>(false, true)
-    }
-
+class ComposeCrossModuleTests : AbstractCodegenTest() {
     @Test
     fun testInlineFunctionDefaultArgument() {
         compile(
@@ -1227,7 +1219,6 @@ class ComposeCrossModuleTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
 
     @Test
     fun defaultParametersInFakeOverrideOpenComposableFunctions() {
-        assumeTrue(useFir)
         compile(
             mapOf(
                 "Base" to mapOf(
@@ -1283,7 +1274,6 @@ class ComposeCrossModuleTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
     // regression test for https://issuetracker.google.com/issues/461766771
     @Test
     fun testLegacyOpenFunctionWithDefaultFalsePositives() {
-        assumeTrue(useFir)
         compile(
             mapOf(
                 "Base" to mapOf(
@@ -1458,7 +1448,6 @@ class ComposeCrossModuleTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
     // Regression test for b/397855145
     @Test
     fun testB397855145() {
-        assumeTrue(useFir)
         compile(
             mapOf(
                 "lib" to mapOf(
@@ -1506,7 +1495,6 @@ class ComposeCrossModuleTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
 
     @Test
     fun testOpenProtected() {
-        assumeTrue(useFir)
         compile(
             mapOf(
                 "lib" to mapOf(
@@ -1583,7 +1571,7 @@ class ComposeCrossModuleTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
                 it.value,
                 listOf(classesDirectory.root),
                 dumpClasses,
-                if (flipLibraryFirSetting) !useFir else useFir
+                !flipLibraryFirSetting
             ).allGeneratedFiles.also { outputFiles ->
                 // Write the files to the class directory so they can be used by the next module
                 // and the application

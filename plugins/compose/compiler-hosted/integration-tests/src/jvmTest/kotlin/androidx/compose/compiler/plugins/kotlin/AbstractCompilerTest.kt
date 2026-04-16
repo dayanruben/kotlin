@@ -40,20 +40,9 @@ import org.junit.runners.Parameterized
 import java.io.File
 import java.net.URLClassLoader
 
-@RunWith(Parameterized::class)
-abstract class AbstractCompilerTest(val useFir: Boolean) {
+abstract class AbstractCompilerTest {
     companion object {
         fun isCI() = env("CI")
-
-        @JvmStatic
-        @Parameterized.Parameters(name = "useFir = {0}")
-        fun data() =
-            if (isCI()) {
-                // todo(b/458234821): K1 tests are disabled because of flaking classpath issues
-                arrayOf(true)
-            } else {
-                arrayOf<Any>(false, true)
-            }
 
         private fun File.applyExistenceCheck(): File = apply {
             if (!exists()) throw NoSuchFileException(this)
@@ -104,13 +93,7 @@ abstract class AbstractCompilerTest(val useFir: Boolean) {
     ) = KotlinCompilerFacade.create(
         testRootDisposable,
         updateConfiguration = {
-            val enableFir = if (forcedFirSetting != null) forcedFirSetting else this@AbstractCompilerTest.useFir
-            val languageVersion =
-                if (enableFir) {
-                    LanguageVersion.LATEST_STABLE
-                } else {
-                    LanguageVersion.KOTLIN_1_9
-                }
+            val languageVersion = LanguageVersion.LATEST_STABLE
             // For tests, allow unstable artifacts compiled with a pre-release compiler
             // as input to stable compilations.
             val analysisFlags: Map<AnalysisFlag<*>, Any?> = mapOf(

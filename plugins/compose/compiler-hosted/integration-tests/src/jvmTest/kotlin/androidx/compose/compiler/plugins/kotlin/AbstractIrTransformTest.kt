@@ -29,7 +29,7 @@ import java.io.File
 
 internal const val TEST_RESOURCES_ROOT = "plugins/compose/compiler-hosted/integration-tests/src/jvmTest/resources"
 
-abstract class AbstractIrTransformTest(useFir: Boolean) : AbstractCodegenTest(useFir) {
+abstract class AbstractIrTransformTest : AbstractCodegenTest() {
     override fun CompilerConfiguration.updateConfiguration() {
         put(ComposeConfiguration.SOURCE_INFORMATION_ENABLED_KEY, true)
         put(
@@ -123,7 +123,7 @@ abstract class AbstractIrTransformTest(useFir: Boolean) : AbstractCodegenTest(us
         val actualTransformed = irModule
             .files[0]
             .validate()
-            .dumpSrc(useFir)
+            .dumpSrc(true)
             .replace('$', '%')
             // replace source keys for start group calls
             .replace(
