@@ -5,36 +5,30 @@
 
 package org.jetbrains.kotlin.js.test.converters
 
-import org.jetbrains.kotlin.backend.common.IrModuleInfo
 import org.jetbrains.kotlin.backend.common.serialization.cityHash64
 import org.jetbrains.kotlin.cli.common.isWindows
+import org.jetbrains.kotlin.cli.pipeline.web.JsLoweredIrPipelineArtifact
+import org.jetbrains.kotlin.cli.pipeline.web.WebLoadedIrPipelineArtifact
+import org.jetbrains.kotlin.cli.pipeline.web.js.JsIrLoweringPipelinePhase
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
-import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.config.phaseConfig
-import org.jetbrains.kotlin.ir.backend.js.*
+import org.jetbrains.kotlin.ir.backend.js.SourceMapsInfo
 import org.jetbrains.kotlin.ir.backend.js.ic.JsExecutableProducer
-import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.CompilationOutputs
-import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.IrModuleToJsTransformer
-import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.TranslationMode
-import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.safeName
+import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.*
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.js.backend.ast.ESM_EXTENSION
 import org.jetbrains.kotlin.js.backend.ast.REGULAR_EXTENSION
 import org.jetbrains.kotlin.js.config.*
-import org.jetbrains.kotlin.js.test.handlers.JsBoxRunner
 import org.jetbrains.kotlin.js.test.tools.SwcRunner
 import org.jetbrains.kotlin.js.test.utils.jsIrIncrementalDataProvider
 import org.jetbrains.kotlin.js.test.utils.wrapWithModuleEmulationMarkers
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.test.backend.ir.IrBackendInput
 import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives
+import org.jetbrains.kotlin.test.frontend.fir.processErrorFromCliPhase
 import org.jetbrains.kotlin.test.model.*
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.compilerConfigurationProvider
 import org.jetbrains.kotlin.test.services.configuration.JsEnvironmentConfigurator
 import org.jetbrains.kotlin.test.services.configuration.JsEnvironmentConfigurator.Companion.getJsModuleArtifactName
-import org.jetbrains.kotlin.test.services.configuration.createJsTestPhaseConfig
-import org.jetbrains.kotlin.test.services.configuration.extractTestPackage
 import org.jetbrains.kotlin.test.services.defaultsProvider
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.fileUtils.withReplacedExtensionOrNull
@@ -59,33 +53,15 @@ class JsIrLoweringFacade(
             "JsIrLoweringFacade expects IrBackendInput.DeserializedFromKlibBackendInput as input"
         }
 
-        return compileIrToJs(
-            module,
-            inputArtifact.moduleInfo,
-            testServices.compilerConfigurationProvider.getCompilerConfiguration(module),
-            inputArtifact.klib,
-        )
-    }
+        val configuration = inputArtifact.cliArtifact.configuration
+        val (irModuleFragment, moduleDependencies, _, _, _) = inputArtifact.cliArtifact.moduleInfo
 
-    private fun compileIrToJs(
-        module: TestModule,
-        moduleInfo: IrModuleInfo,
-        configuration: CompilerConfiguration,
-        klib: File,
-    ): BinaryArtifacts.Js? {
-        val (irModuleFragment, moduleDependencies, irBuiltIns, symbolTable, deserializer) = moduleInfo
-
-        val splitPerFile = JsEnvironmentConfigurationDirectives.SPLIT_PER_FILE in module.directives
-        val keep = module.directives[JsEnvironmentConfigurationDirectives.KEEP].toSet()
-
-        val moduleKind = JsEnvironmentConfigurator.getModuleKind(testServices, module)
-
-        val testPackage = extractTestPackage(testServices, ignoreEsModules = false)
         val skipRegularMode = JsEnvironmentConfigurationDirectives.SKIP_REGULAR_MODE in module.directives
 
         if (skipRegularMode) return null
 
         if (JsEnvironmentConfigurator.incrementalEnabled(testServices)) {
+            val moduleKind = JsEnvironmentConfigurator.getModuleKind(testServices, module)
             val outputFile = File(
                 JsEnvironmentConfigurator.getJsModuleArtifactPath(
                     testServices,
@@ -111,30 +87,21 @@ class JsIrLoweringFacade(
             ).dump(module, firstTimeCompilation)
         }
 
-        configuration.phaseConfig = createJsTestPhaseConfig(testServices, module)
+        irModuleFragment.resolveTestPaths()
+        moduleDependencies.all.forEach { it.resolveTestPaths() }
 
-        val mainArguments = JsEnvironmentConfigurator.getMainCallParametersForModule(module)
+        val cliInputArtifact = inputArtifact.cliArtifact as? WebLoadedIrPipelineArtifact
+            ?: error("JsIrLoweringFacade expects WebLoadedIrPipelineArtifact")
+        val loweredIr = JsIrLoweringPipelinePhase.executePhase(cliInputArtifact)
+            ?: return processErrorFromCliPhase(configuration, testServices)
 
-        val loweredIr = compileIr(
-            moduleFragment = irModuleFragment.apply { resolveTestPaths() },
-            mainModule = MainModule.Klib(klib.absolutePath),
-            mainCallArguments = mainArguments,
-            configuration = configuration,
-            moduleDependencies = moduleDependencies.apply { all.onEach { it.resolveTestPaths() } },
-            irBuiltIns = irBuiltIns,
-            symbolTable = symbolTable,
-            irLinker = deserializer,
-            exportedDeclarations = setOf(testPackage.child(Name.identifier(JsBoxRunner.TEST_FUNCTION))),
-            keep = keep,
-            dceRuntimeDiagnostic = null,
-            safeExternalBoolean = JsEnvironmentConfigurationDirectives.SAFE_EXTERNAL_BOOLEAN in module.directives,
-            safeExternalBooleanDiagnostic = module.directives[JsEnvironmentConfigurationDirectives.SAFE_EXTERNAL_BOOLEAN_DIAGNOSTIC].singleOrNull(),
-        )
-
-        return loweredIr2JsArtifact(module, loweredIr, mainArguments != null)
+        return loweredIr2JsArtifact(module, loweredIr)
     }
 
-    private fun loweredIr2JsArtifact(module: TestModule, loweredIr: LoweredIr, shouldReferMainFunction: Boolean): BinaryArtifacts.Js {
+    private fun loweredIr2JsArtifact(
+        module: TestModule,
+        loweredIr: JsLoweredIrPipelineArtifact,
+    ): BinaryArtifacts.Js {
         val moduleKind = JsEnvironmentConfigurator.getModuleKind(testServices, module)
         val isEsModules = moduleKind == ModuleKind.ES
 
@@ -149,7 +116,6 @@ class JsIrLoweringFacade(
                     "./${getJsModuleArtifactName(testServices, it.safeName)}".minifyIfNeed()
                 }
             } ?: emptyMap(),
-            shouldReferMainFunction,
         )
         val translationModes = JsEnvironmentConfigurator.getTranslationModesForTest(testServices, module)
         val compilationOut = transformer.generateModule(loweredIr.allModules, translationModes, isEsModules)

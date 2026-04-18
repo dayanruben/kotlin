@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.backend.common.CompilationException
 import org.jetbrains.kotlin.cli.common.reportCompilationException
 import org.jetbrains.kotlin.cli.js.IcCachesArtifacts
 import org.jetbrains.kotlin.cli.js.Ir2JsTransformer
+import org.jetbrains.kotlin.cli.pipeline.executePhaseIsolatedWithActions
 import org.jetbrains.kotlin.cli.pipeline.web.JsBackendPipelineArtifact
 import org.jetbrains.kotlin.cli.pipeline.web.WebBackendPipelinePhase
 import org.jetbrains.kotlin.cli.pipeline.web.WebIrLoadingPipelinePhase
@@ -72,13 +73,10 @@ object JsBackendPipelinePhase : WebBackendPipelinePhase<JsBackendPipelineArtifac
         return outputs
     }
 
-    override fun compileNonIncrementally(
-        loadedIrArtifact: WebLoadedIrPipelineArtifact,
-        mainCallArguments: List<String>?
-    ): JsBackendPipelineArtifact? {
+    override fun compileNonIncrementally(loadedIrArtifact: WebLoadedIrPipelineArtifact): JsBackendPipelineArtifact? {
         val configuration = loadedIrArtifact.configuration
         val module = loadedIrArtifact.moduleStructure
-        val ir2JsTransformer = Ir2JsTransformer(configuration, module, configuration.messageCollector, mainCallArguments)
+        val ir2JsTransformer = Ir2JsTransformer(configuration, module, configuration.messageCollector)
         val outputs = compileNonIncrementally(
             loadedIrArtifact,
             ir2JsTransformer,
@@ -99,8 +97,9 @@ object JsBackendPipelinePhase : WebBackendPipelinePhase<JsBackendPipelineArtifac
     ): CompilationOutputs? {
         val configuration = loadedIr.configuration
         val start = System.currentTimeMillis()
+        val loweredIr = JsIrLoweringPipelinePhase.executePhaseIsolatedWithActions(loadedIr) ?: return null
         try {
-            val outputs = ir2JsTransformer.compileAndTransformIrNew(loadedIr)
+            val outputs = ir2JsTransformer.compileAndTransformIrNew(loweredIr)
             configuration.reportLog("Executable production duration: ${System.currentTimeMillis() - start}ms")
             outputs.writeAll(artifactConfiguration)
             return outputs

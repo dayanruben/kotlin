@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.config.CompilerConfigurationKey
 import org.jetbrains.kotlin.incremental.js.IncrementalDataProvider
 import org.jetbrains.kotlin.incremental.js.IncrementalNextRoundChecker
 import org.jetbrains.kotlin.incremental.js.IncrementalResultsConsumer
+import org.jetbrains.kotlin.name.FqName
 
 object JSConfigurationKeys {
     @JvmField
@@ -194,7 +195,7 @@ object JSConfigurationKeys {
 
     // Specify whether the 'main' function should be called upon execution.
     @JvmField
-    val CALL_MAIN_MODE = CompilerConfigurationKey.create<String>("CALL_MAIN_MODE")
+    val CALL_MAIN = CompilerConfigurationKey.create<Boolean>("CALL_MAIN")
 
     @JvmField
     val IC_CACHE_DIRECTORY = CompilerConfigurationKey.create<String>("IC_CACHE_DIRECTORY")
@@ -207,6 +208,9 @@ object JSConfigurationKeys {
 
     @JvmField
     val IC_FILES_TO_LOAD = CompilerConfigurationKey.create<Set<String>>("IC_FILES_TO_LOAD")
+
+    @JvmField
+    val ADDITIONAL_EXPORTED_DECLARATION_NAMES = CompilerConfigurationKey.create<Set<FqName>>("ADDITIONAL_EXPORTED_DECLARATION_NAMES")
 
 }
 
@@ -402,9 +406,9 @@ var CompilerConfiguration.minimizedMemberNames: Boolean
     get() = getBoolean(JSConfigurationKeys.MINIMIZED_MEMBER_NAMES)
     set(value) { put(JSConfigurationKeys.MINIMIZED_MEMBER_NAMES, value) }
 
-var CompilerConfiguration.callMainMode: String?
-    get() = get(JSConfigurationKeys.CALL_MAIN_MODE)
-    set(value) { put(JSConfigurationKeys.CALL_MAIN_MODE, requireNotNull(value) { "nullable values are not allowed" }) }
+var CompilerConfiguration.callMain: Boolean
+    get() = get(JSConfigurationKeys.CALL_MAIN, true)
+    set(value) { put(JSConfigurationKeys.CALL_MAIN, value) }
 
 var CompilerConfiguration.icCacheDirectory: String?
     get() = get(JSConfigurationKeys.IC_CACHE_DIRECTORY)
@@ -421,4 +425,8 @@ var CompilerConfiguration.preserveIcOrder: Boolean
 var CompilerConfiguration.icFilesToLoad: Set<String>
     get() = getSet(JSConfigurationKeys.IC_FILES_TO_LOAD)
     set(value) { put(JSConfigurationKeys.IC_FILES_TO_LOAD, value) }
+
+var CompilerConfiguration.additionalExportedDeclarationNames: Set<FqName>
+    get() = getSet(JSConfigurationKeys.ADDITIONAL_EXPORTED_DECLARATION_NAMES)
+    set(value) { put(JSConfigurationKeys.ADDITIONAL_EXPORTED_DECLARATION_NAMES, value) }
 

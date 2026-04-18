@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.gradle.mpp.smoke
 
 import org.gradle.api.logging.LogLevel
+import org.gradle.testkit.runner.BuildResult
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.mpp.KmpIncrementalITBase
 import org.jetbrains.kotlin.gradle.testbase.*
@@ -39,8 +40,9 @@ open class BasicTestIncrementalCompilationIT : KmpIncrementalITBase() {
             ":app:jvmTest",
             ":lib:jvmTest",
 
-            ":app:nativeTest",
-            ":lib:nativeTest",
+            // for native, we check only recompilation, but not test run, as sometimes after recompilation exactly same binary is produced.
+            ":app:linkDebugTestNative",
+            ":lib:linkDebugTestNative",
         )
     override val gradleTask: String
         get() = "build"
@@ -51,6 +53,11 @@ open class BasicTestIncrementalCompilationIT : KmpIncrementalITBase() {
     fun testAffectingTestDependencies(gradleVersion: GradleVersion): Unit = withProject(gradleVersion) {
         build("build")
 
+        // Unused code shouldn't change native binary and trigger test execution
+        fun BuildResult.assertNativeTestIsUpToDateAfterChanginUnusedCode() {
+            assertTasksUpToDate(":app:nativeTest")
+        }
+
         /**
          * Step 1 - touch lib/common, affect all tests in app and lib
          */
@@ -59,6 +66,8 @@ open class BasicTestIncrementalCompilationIT : KmpIncrementalITBase() {
         checkIncrementalBuild(
             tasksExpectedToExecute = mainCompileTasks,
         ) {
+            assertNativeTestIsUpToDateAfterChanginUnusedCode()
+
             assertIncrementalCompilation(listOf(changedInLibCommon).relativizeTo(projectPath))
         }
 
@@ -75,9 +84,11 @@ open class BasicTestIncrementalCompilationIT : KmpIncrementalITBase() {
                 ":app:compileTestKotlinJs",
                 ":app:jsTest",
                 ":app:jvmTest",
-                ":app:nativeTest",
+                ":app:linkDebugTestNative",
             ),
         ) {
+            assertNativeTestIsUpToDateAfterChanginUnusedCode()
+
             assertIncrementalCompilation(listOf(changedInAppCommon).relativizeTo(projectPath))
         }
 
@@ -117,8 +128,10 @@ open class BasicTestIncrementalCompilationIT : KmpIncrementalITBase() {
         checkIncrementalBuild(
             tasksExpectedToExecute = setOf(
                 ":app:compileTestKotlinNative",
-                ":app:nativeTest",
+                ":app:linkDebugTestNative",
             ),
-        )
+        ) {
+            assertNativeTestIsUpToDateAfterChanginUnusedCode()
+        }
     }
 }

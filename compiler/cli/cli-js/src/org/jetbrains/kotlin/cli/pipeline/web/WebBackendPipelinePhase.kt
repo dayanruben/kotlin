@@ -6,13 +6,13 @@
 package org.jetbrains.kotlin.cli.pipeline.web
 
 import org.jetbrains.kotlin.cli.CliDiagnostics.JS_IC_ERROR
-import org.jetbrains.kotlin.cli.common.arguments.K2JsArgumentConstants
 import org.jetbrains.kotlin.cli.js.IcCachesArtifacts
 import org.jetbrains.kotlin.cli.js.IcCachesConfigurationData
 import org.jetbrains.kotlin.cli.js.prepareIcCaches
 import org.jetbrains.kotlin.cli.pipeline.CheckCompilationErrors
 import org.jetbrains.kotlin.cli.pipeline.ConfigurationPipelineArtifact
 import org.jetbrains.kotlin.cli.pipeline.PipelinePhase
+import org.jetbrains.kotlin.cli.pipeline.executePhaseIsolatedWithActions
 import org.jetbrains.kotlin.cli.pipeline.web.wasm.WasmCompilationMode.Companion.wasmCompilationMode
 import org.jetbrains.kotlin.cli.report
 import org.jetbrains.kotlin.cli.reportInfo
@@ -42,16 +42,16 @@ abstract class WebBackendPipelinePhase<Output : WebBackendPipelineArtifact, Inte
         configuration.reportLog("Produce executable: $outputDirPath")
         configuration.reportLog("Cache directory: $cacheDirectory")
 
-        val mainCallArguments = if (configuration.callMainMode == K2JsArgumentConstants.NO_CALL) null else emptyList<String>()
-
         if (cacheDirectory != null) {
             val cacheGuard = IncrementalCacheGuard(cacheDirectory)
-            val backendIr = compileToBackendIrIncrementally(cacheDirectory, cacheGuard, configuration, mainCallArguments)
+            val backendIr = compileToBackendIrIncrementally(cacheDirectory, cacheGuard, configuration)
             return cacheGuard.tryAcquireAndRelease {
                 backendIr?.let { compileIntermediate(it, configuration) }
             }
         } else {
-            val backendIr = compileToBackendIrNonIncrementally(input, mainCallArguments)
+            configuration.perfManager?.notifyPhaseFinished(PhaseType.Initialization)
+            val loadedKlibArtifact = klibLoadingPhase.executePhaseIsolatedWithActions(input) ?: return null
+            val backendIr = compileNonIncrementally(loadedKlibArtifact)
             return backendIr?.let { compileIntermediate(it, configuration) }
         }
     }
@@ -60,7 +60,6 @@ abstract class WebBackendPipelinePhase<Output : WebBackendPipelineArtifact, Inte
         cacheDirectory: String,
         cacheGuard: IncrementalCacheGuard,
         configuration: CompilerConfiguration,
-        mainCallArguments: List<String>?,
     ): IntermediateOutput? {
         val icCaches = cacheGuard.acquireAndRelease { status ->
             when (status) {
@@ -94,7 +93,6 @@ abstract class WebBackendPipelinePhase<Output : WebBackendPipelineArtifact, Inte
                 },
                 outputDir = configuration.outputDir!!,
                 targetConfiguration = configuration,
-                mainCallArguments = mainCallArguments,
             )
         }
         configuration.perfManager?.notifyPhaseFinished(PhaseType.Initialization)
@@ -110,14 +108,6 @@ abstract class WebBackendPipelinePhase<Output : WebBackendPipelineArtifact, Inte
         }
     }
 
-    private fun compileToBackendIrNonIncrementally(
-        input: ConfigurationPipelineArtifact,
-        mainCallArguments: List<String>?,
-    ): IntermediateOutput? {
-        val loadedKlibArtifact = klibLoadingPhase.executePhase(input)
-        return compileNonIncrementally(loadedKlibArtifact, mainCallArguments)
-    }
-
     protected abstract val klibLoadingPhase: WebIrLoadingPipelinePhase
 
     abstract fun compileIncrementally(
@@ -125,10 +115,7 @@ abstract class WebBackendPipelinePhase<Output : WebBackendPipelineArtifact, Inte
         configuration: CompilerConfiguration,
     ): IntermediateOutput?
 
-    abstract fun compileNonIncrementally(
-        loadedIrArtifact: WebLoadedIrPipelineArtifact,
-        mainCallArguments: List<String>?,
-    ): IntermediateOutput?
+    abstract fun compileNonIncrementally(loadedIrArtifact: WebLoadedIrPipelineArtifact): IntermediateOutput?
 
     abstract fun compileIntermediate(
         intermediateResult: IntermediateOutput,
