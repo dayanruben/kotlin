@@ -615,11 +615,6 @@ internal class AbstractSuperCallImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.AbstractSuperCall
 
-internal class AbstractSuperCallWarningImpl(
-    firDiagnostic: KtPsiDiagnostic,
-    token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.AbstractSuperCallWarning
-
 internal class InstanceAccessBeforeSuperCallImpl(
     override val target: String,
     firDiagnostic: KtPsiDiagnostic,
@@ -973,11 +968,6 @@ internal class CycleInAnnotationParameterErrorImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtParameter>(firDiagnostic, token), KaFirDiagnostic.CycleInAnnotationParameterError
 
-internal class CycleInAnnotationParameterWarningImpl(
-    firDiagnostic: KtPsiDiagnostic,
-    token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<KtParameter>(firDiagnostic, token), KaFirDiagnostic.CycleInAnnotationParameterWarning
-
 internal class AnnotationClassConstructorCallImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
@@ -1256,11 +1246,6 @@ internal class WrongExtensionFunctionTypeImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.WrongExtensionFunctionType
-
-internal class WrongExtensionFunctionTypeWarningImpl(
-    firDiagnostic: KtPsiDiagnostic,
-    token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.WrongExtensionFunctionTypeWarning
 
 internal class AnnotationInWhereClauseErrorImpl(
     firDiagnostic: KtPsiDiagnostic,
@@ -2598,6 +2583,12 @@ internal class TypeParameterAsReifiedImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.TypeParameterAsReified
 
+internal class TypeParameterAsReifiedDeprecationWarningImpl(
+    override val typeParameter: KaTypeParameterSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.TypeParameterAsReifiedDeprecationWarning
+
 internal class TypeParameterAsReifiedArrayErrorImpl(
     override val typeParameter: KaTypeParameterSymbol,
     firDiagnostic: KtPsiDiagnostic,
@@ -2628,6 +2619,13 @@ internal class TypeIntersectionAsReifiedWarningImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.TypeIntersectionAsReifiedWarning
+
+internal class TypeIntersectionAsReifiedDeprecationWarningImpl(
+    override val typeParameter: KaTypeParameterSymbol,
+    override val types: List<KaType>,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.TypeIntersectionAsReifiedDeprecationWarning
 
 internal class FinalUpperBoundImpl(
     override val type: KaType,
@@ -5511,11 +5509,6 @@ internal class ModifierFormForNonBuiltInSuspendFunErrorImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.ModifierFormForNonBuiltInSuspendFunError
 
-internal class ModifierFormForNonBuiltInSuspendFunWarningImpl(
-    firDiagnostic: KtPsiDiagnostic,
-    token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.ModifierFormForNonBuiltInSuspendFunWarning
-
 internal class ReturnForBuiltInSuspendImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
@@ -5999,11 +5992,6 @@ internal class SynchronizedOnSuspendErrorImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.SynchronizedOnSuspendError
-
-internal class SynchronizedOnSuspendWarningImpl(
-    firDiagnostic: KtPsiDiagnostic,
-    token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<KtAnnotationEntry>(firDiagnostic, token), KaFirDiagnostic.SynchronizedOnSuspendWarning
 
 internal class OverloadsWithoutDefaultArgumentsImpl(
     firDiagnostic: KtPsiDiagnostic,

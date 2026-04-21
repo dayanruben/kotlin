@@ -261,7 +261,6 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val SUPER_IS_NOT_AN_EXPRESSION by error<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
         val SUPER_NOT_AVAILABLE by error<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
         val ABSTRACT_SUPER_CALL by error<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
-        val ABSTRACT_SUPER_CALL_WARNING by warning<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
         val INSTANCE_ACCESS_BEFORE_SUPER_CALL by error<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED) {
             parameter<String>("target")
         }
@@ -367,7 +366,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val LOCAL_ANNOTATION_CLASS_ERROR by error<KtClassOrObject>(PositioningStrategy.DECLARATION_NAME)
         val MISSING_VAL_ON_ANNOTATION_PARAMETER by error<KtParameter>()
         val NON_CONST_VAL_USED_IN_CONSTANT_EXPRESSION by error<KtExpression>()
-        val CYCLE_IN_ANNOTATION_PARAMETER by deprecationError<KtParameter>(LanguageFeature.ProhibitCyclesInAnnotations)
+        val CYCLE_IN_ANNOTATION_PARAMETER_ERROR by error<KtParameter>()
         val ANNOTATION_CLASS_CONSTRUCTOR_CALL by error<KtElement>(PositioningStrategy.SELECTOR_BY_QUALIFIED)
         val ENUM_CLASS_CONSTRUCTOR_CALL by error<KtElement>(PositioningStrategy.SELECTOR_BY_QUALIFIED)
         val NOT_AN_ANNOTATION_CLASS by error<PsiElement> {
@@ -493,7 +492,6 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val NOT_A_CLASS by error<PsiElement>()
 
         val WRONG_EXTENSION_FUNCTION_TYPE by error<KtAnnotationEntry>()
-        val WRONG_EXTENSION_FUNCTION_TYPE_WARNING by warning<KtAnnotationEntry>()
         val ANNOTATION_IN_WHERE_CLAUSE_ERROR by error<KtAnnotationEntry>()
         val ANNOTATION_IN_CONTRACT_ERROR by error<KtElement>()
 
@@ -1017,6 +1015,9 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val TYPE_PARAMETER_AS_REIFIED by error<PsiElement> {
             parameter<FirTypeParameterSymbol>("typeParameter")
         }
+        val TYPE_PARAMETER_AS_REIFIED_DEPRECATION_WARNING by warning<PsiElement> {
+            parameter<FirTypeParameterSymbol>("typeParameter")
+        }
 
         val TYPE_PARAMETER_AS_REIFIED_ARRAY_ERROR by error<PsiElement> {
             parameter<FirTypeParameterSymbol>("typeParameter")
@@ -1027,6 +1028,10 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         }
         val DEFINITELY_NON_NULLABLE_AS_REIFIED by error<PsiElement>()
         val TYPE_INTERSECTION_AS_REIFIED by deprecationError<PsiElement>(LanguageFeature.ProhibitIntersectionReifiedTypeParameter) {
+            parameter<FirTypeParameterSymbol>("typeParameter")
+            parameter<Collection<ConeKotlinType>>("types")
+        }
+        val TYPE_INTERSECTION_AS_REIFIED_DEPRECATION_WARNING by warning<PsiElement> {
             parameter<FirTypeParameterSymbol>("typeParameter")
             parameter<Collection<ConeKotlinType>>("types")
         }
@@ -2301,8 +2306,8 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val ILLEGAL_RESTRICTED_SUSPENDING_FUNCTION_CALL by error<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
         val NON_MODIFIER_FORM_FOR_BUILT_IN_SUSPEND by error<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
         val MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND by error<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
-        val MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN by deprecationError<PsiElement>(
-            LanguageFeature.ModifierNonBuiltinSuspendFunError, PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED
+        val MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN_ERROR by error<PsiElement>(
+            PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED
         )
         val RETURN_FOR_BUILT_IN_SUSPEND by error<KtReturnExpression>()
         val MIXING_SUSPEND_AND_NON_SUSPEND_SUPERTYPES by error<PsiElement>(PositioningStrategy.SUPERTYPES_LIST)

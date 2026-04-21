@@ -1152,12 +1152,6 @@ private fun KaDiagnosticConverterBuilder.addConversions21() {
             token,
         )
     }
-    add(FirJvmErrors.SYNCHRONIZED_ON_SUSPEND.warningFactory) { firDiagnostic ->
-        SynchronizedOnSuspendWarningImpl(
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
     add(FirJvmErrors.JVM_RECORD_NOT_LAST_VARARG_PARAMETER) { firDiagnostic ->
         JvmRecordNotLastVarargParameterImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -1377,12 +1371,6 @@ private fun KaDiagnosticConverterBuilder.addConversions27() {
     add(FirJsErrors.WRONG_MULTIPLE_INHERITANCE) { firDiagnostic ->
         WrongMultipleInheritanceImpl(
             firSymbolBuilder.callableBuilder.buildCallableSymbol(firDiagnostic.a),
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
-    add(FirErrors.CYCLE_IN_ANNOTATION_PARAMETER.warningFactory) { firDiagnostic ->
-        CycleInAnnotationParameterWarningImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -2405,12 +2393,6 @@ private fun KaDiagnosticConverterBuilder.addConversions52() {
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions53() {
-    add(FirErrors.ABSTRACT_SUPER_CALL_WARNING) { firDiagnostic ->
-        AbstractSuperCallWarningImpl(
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
     add(FirErrors.VALUE_CLASS_NOT_TOP_LEVEL) { firDiagnostic ->
         ValueClassNotTopLevelImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -3002,12 +2984,6 @@ private fun KaDiagnosticConverterBuilder.addConversions67() {
     }
     add(FirErrors.RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY) { firDiagnostic ->
         ReturnInFunctionWithExpressionBodyImpl(
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
-    add(FirErrors.MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN.warningFactory) { firDiagnostic ->
-        ModifierFormForNonBuiltInSuspendFunWarningImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -4324,7 +4300,7 @@ private fun KaDiagnosticConverterBuilder.addConversions97() {
             token,
         )
     }
-    add(FirErrors.MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN.errorFactory) { firDiagnostic ->
+    add(FirErrors.MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN_ERROR) { firDiagnostic ->
         ModifierFormForNonBuiltInSuspendFunErrorImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
@@ -4604,7 +4580,7 @@ private fun KaDiagnosticConverterBuilder.addConversions103() {
             token,
         )
     }
-    add(FirErrors.CYCLE_IN_ANNOTATION_PARAMETER.errorFactory) { firDiagnostic ->
+    add(FirErrors.CYCLE_IN_ANNOTATION_PARAMETER_ERROR) { firDiagnostic ->
         CycleInAnnotationParameterErrorImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
@@ -5837,6 +5813,13 @@ private fun KaDiagnosticConverterBuilder.addConversions129() {
             token,
         )
     }
+    add(FirErrors.TYPE_PARAMETER_AS_REIFIED_DEPRECATION_WARNING) { firDiagnostic ->
+        TypeParameterAsReifiedDeprecationWarningImpl(
+            firSymbolBuilder.classifierBuilder.buildTypeParameterSymbol(firDiagnostic.a),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.CAPTURED_MEMBER_VAL_INITIALIZATION) { firDiagnostic ->
         CapturedMemberValInitializationImpl(
             firSymbolBuilder.variableBuilder.buildVariableSymbol(firDiagnostic.a),
@@ -6042,6 +6025,16 @@ private fun KaDiagnosticConverterBuilder.addConversions133() {
     add(FirErrors.ANNOTATION_ON_ILLEGAL_MULTI_FIELD_VALUE_CLASS_TYPED_TARGET) { firDiagnostic ->
         AnnotationOnIllegalMultiFieldValueClassTypedTargetImpl(
             firDiagnostic.a,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.TYPE_INTERSECTION_AS_REIFIED_DEPRECATION_WARNING) { firDiagnostic ->
+        TypeIntersectionAsReifiedDeprecationWarningImpl(
+            firSymbolBuilder.classifierBuilder.buildTypeParameterSymbol(firDiagnostic.a),
+            firDiagnostic.b.map { coneKotlinType ->
+                firSymbolBuilder.typeBuilder.buildKtType(coneKotlinType)
+            },
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -6482,12 +6475,6 @@ private fun KaDiagnosticConverterBuilder.addConversions143() {
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions144() {
-    add(FirErrors.WRONG_EXTENSION_FUNCTION_TYPE_WARNING) { firDiagnostic ->
-        WrongExtensionFunctionTypeWarningImpl(
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
     add(FirErrors.OPT_IN_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_OPT_IN) { firDiagnostic ->
         OptInMarkerCanOnlyBeUsedAsAnnotationOrArgumentInOptInImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -8321,7 +8308,7 @@ private fun KaDiagnosticConverterBuilder.addConversions191() {
             token,
         )
     }
-    add(FirJvmErrors.SYNCHRONIZED_ON_SUSPEND.errorFactory) { firDiagnostic ->
+    add(FirJvmErrors.SYNCHRONIZED_ON_SUSPEND_ERROR) { firDiagnostic ->
         SynchronizedOnSuspendErrorImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,

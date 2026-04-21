@@ -523,10 +523,6 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = AbstractSuperCall::class
     }
 
-    interface AbstractSuperCallWarning : KaFirDiagnostic<PsiElement> {
-        override val diagnosticClass get() = AbstractSuperCallWarning::class
-    }
-
     interface InstanceAccessBeforeSuperCall : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = InstanceAccessBeforeSuperCall::class
         val target: String
@@ -813,10 +809,6 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = CycleInAnnotationParameterError::class
     }
 
-    interface CycleInAnnotationParameterWarning : KaFirDiagnostic<KtParameter> {
-        override val diagnosticClass get() = CycleInAnnotationParameterWarning::class
-    }
-
     interface AnnotationClassConstructorCall : KaFirDiagnostic<KtElement> {
         override val diagnosticClass get() = AnnotationClassConstructorCall::class
     }
@@ -1046,10 +1038,6 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface WrongExtensionFunctionType : KaFirDiagnostic<KtAnnotationEntry> {
         override val diagnosticClass get() = WrongExtensionFunctionType::class
-    }
-
-    interface WrongExtensionFunctionTypeWarning : KaFirDiagnostic<KtAnnotationEntry> {
-        override val diagnosticClass get() = WrongExtensionFunctionTypeWarning::class
     }
 
     interface AnnotationInWhereClauseError : KaFirDiagnostic<KtAnnotationEntry> {
@@ -2167,6 +2155,11 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val typeParameter: KaTypeParameterSymbol
     }
 
+    interface TypeParameterAsReifiedDeprecationWarning : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = TypeParameterAsReifiedDeprecationWarning::class
+        val typeParameter: KaTypeParameterSymbol
+    }
+
     interface TypeParameterAsReifiedArrayError : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = TypeParameterAsReifiedArrayError::class
         val typeParameter: KaTypeParameterSymbol
@@ -2189,6 +2182,12 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface TypeIntersectionAsReifiedWarning : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = TypeIntersectionAsReifiedWarning::class
+        val typeParameter: KaTypeParameterSymbol
+        val types: List<KaType>
+    }
+
+    interface TypeIntersectionAsReifiedDeprecationWarning : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = TypeIntersectionAsReifiedDeprecationWarning::class
         val typeParameter: KaTypeParameterSymbol
         val types: List<KaType>
     }
@@ -4593,10 +4592,6 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = ModifierFormForNonBuiltInSuspendFunError::class
     }
 
-    interface ModifierFormForNonBuiltInSuspendFunWarning : KaFirDiagnostic<PsiElement> {
-        override val diagnosticClass get() = ModifierFormForNonBuiltInSuspendFunWarning::class
-    }
-
     interface ReturnForBuiltInSuspend : KaFirDiagnostic<KtReturnExpression> {
         override val diagnosticClass get() = ReturnForBuiltInSuspend::class
     }
@@ -4993,10 +4988,6 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface SynchronizedOnSuspendError : KaFirDiagnostic<KtAnnotationEntry> {
         override val diagnosticClass get() = SynchronizedOnSuspendError::class
-    }
-
-    interface SynchronizedOnSuspendWarning : KaFirDiagnostic<KtAnnotationEntry> {
-        override val diagnosticClass get() = SynchronizedOnSuspendWarning::class
     }
 
     interface OverloadsWithoutDefaultArguments : KaFirDiagnostic<KtAnnotationEntry> {
