@@ -654,25 +654,10 @@ functionalTestCompilation.associateWith(testFixturesCompilation)
 
 tasks.register<Test>("functionalTest") {
     systemProperty("kotlinVersion", rootProject.extra["kotlinVersion"] as String)
-    systemProperty("konanProperties", rootDir.resolve("kotlin-native/konan/konan.properties"))
     useJUnitPlatform()
 
     @OptIn(TemporaryTestFederationApi::class)
     isSmokeTest = true
-}
-
-tasks.register<Test>("functionalUnitTest") {
-    include("**/org/jetbrains/kotlin/gradle/unitTests/**")
-    systemProperty("kotlinVersion", rootProject.extra["kotlinVersion"] as String)
-    systemProperty("konanProperties", rootDir.resolve("kotlin-native/konan/konan.properties"))
-}
-
-tasks.register<Test>("functionalRegressionTest") {
-    include("**/org/jetbrains/kotlin/gradle/regressionTests/**")
-}
-
-tasks.register<Test>("functionalDependencyResolutionTest") {
-    include("**/org/jetbrains/kotlin/gradle/dependencyResolutionTests/**")
 }
 
 val acceptLicensesTask = with(androidSdkProvisioner) {
@@ -699,7 +684,15 @@ tasks.withType<Test>().configureEach {
         events("passed", "skipped", "failed")
     }
 
-    systemProperty("resourcesPath", layout.projectDirectory.dir("src/functionalTest/resources").asFile)
+    addClasspathProperty(
+        project.files(layout.projectDirectory.dir("src/functionalTest/resources")),
+        "resourcesPath"
+    )
+
+    addFileProperty(
+        rootProject.layout.projectDirectory.file("kotlin-native/konan/konan.properties"),
+        "konanProperties"
+    )
 
     //region custom Maven Local directory
     // The Maven Local dir that Gradle uses can be customised via system property `maven.repo.local`.
