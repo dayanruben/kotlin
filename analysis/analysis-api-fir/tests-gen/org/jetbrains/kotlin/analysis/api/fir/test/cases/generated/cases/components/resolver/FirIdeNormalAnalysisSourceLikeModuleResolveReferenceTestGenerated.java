@@ -2264,6 +2264,12 @@ public class FirIdeNormalAnalysisSourceLikeModuleResolveReferenceTestGenerated e
     }
 
     @Test
+    @TestMetadata("companionBlockOf.kt")
+    public void testCompanionBlockOf() {
+      run("companionBlockOf.kt");
+    }
+
+    @Test
     @TestMetadata("customGenericCollection.kt")
     public void testCustomGenericCollection() {
       run("customGenericCollection.kt");
@@ -5411,6 +5417,18 @@ public class FirIdeNormalAnalysisSourceLikeModuleResolveReferenceTestGenerated e
     @Test
     public void testAllFilesPresentInLibraryDependency() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/components/resolver/singleByPsi/libraryDependency"), Pattern.compile("^(.+)\\.(kt|kts)$"), null, true);
+    }
+
+    @Test
+    @TestMetadata("dollarClassName.kt")
+    public void testDollarClassName() {
+      run("dollarClassName.kt");
+    }
+
+    @Test
+    @TestMetadata("dollarClassNameNested.kt")
+    public void testDollarClassNameNested() {
+      run("dollarClassNameNested.kt");
     }
 
     @Test

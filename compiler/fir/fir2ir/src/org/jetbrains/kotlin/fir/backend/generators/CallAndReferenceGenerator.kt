@@ -1130,17 +1130,16 @@ class CallAndReferenceGenerator(
             // while the value parameter doesn't accept nulls.
             // And this is the only use case where the whole Array type is required for vararg, all other implicit coercion/conversion
             // logic needs the element type and substituted type.
-            val substitutedParameterType = substitutor.substituteOrSelf(
-                when {
-                    parameter.isVararg -> unsubstitutedParameterType.arrayElementType()!!
-                    else -> unsubstitutedParameterType
-                }
-            )
+            val unsubstitutedParameterTypeConsideringVararg = when {
+                parameter.isVararg -> unsubstitutedParameterType.arrayElementType()!!
+                else -> unsubstitutedParameterType
+            }
+            val substitutedParameterType = substitutor.substituteOrSelf(unsubstitutedParameterTypeConsideringVararg)
 
             irArgument = irArgument.prepareExpressionForGivenExpectedType(
                 expression = argument,
-                expectedType = unsubstitutedParameterType,
-                substitutedExpectedType = substitutedParameterType,
+                expectedType = substitutedParameterType,
+                unsubstitutedExpectedType = unsubstitutedParameterTypeConsideringVararg,
                 forReceiver = false,
             )
         }

@@ -56,7 +56,6 @@ import org.jetbrains.kotlin.cli.common.extensions.ScriptEvaluationExtension
 import org.jetbrains.kotlin.cli.common.extensions.ShellExtension
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.extensionsStorage
-import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment.Companion.resetApplicationManager
 import org.jetbrains.kotlin.cli.jvm.config.*
 import org.jetbrains.kotlin.cli.jvm.index.*
 import org.jetbrains.kotlin.cli.jvm.modules.CliJavaModuleFinder
@@ -265,7 +264,7 @@ class KotlinCoreEnvironment private constructor(
 
         // REPL and kapt2 update classpath dynamically
         rootsIndex = JvmDependenciesDynamicCompoundIndex(shouldOnlyFindFirstClass = true).apply {
-            addIndex(JvmDependenciesIndexImpl(roots, shouldOnlyFindFirstClass = true))
+            addIndex(JvmDependenciesIndexImpl(roots))
             updateClasspathFromRootsIndex(this)
         }
 
@@ -355,7 +354,11 @@ class KotlinCoreEnvironment private constructor(
         // TODO: add new Java modules to CliJavaModuleResolver
         val newRoots = classpathRootsResolver.convertClasspathRoots(contentRoots).roots - initialRoots
 
-        val newIndex = rootsIndex.addNewIndexForRoots(newRoots) ?: return null
+        val unindexedRoots = rootsIndex.getUnindexedRoots(newRoots)
+        if (unindexedRoots.isEmpty()) return null
+
+        val newIndex = JvmDependenciesIndexImpl(unindexedRoots)
+        rootsIndex.addIndex(newIndex)
         updateClasspathFromRootsIndex(newIndex)
 
         if (packagePartProviders.isEmpty()) {

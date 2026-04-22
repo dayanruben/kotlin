@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.fir.resolve.calls.*
 import org.jetbrains.kotlin.fir.resolve.calls.candidate.*
 import org.jetbrains.kotlin.fir.resolve.calls.stages.TypeArgumentMapping
 import org.jetbrains.kotlin.fir.resolve.dfa.FirDataFlowAnalyzer
+import org.jetbrains.kotlin.fir.resolve.dfa.cfg.CfgInternals
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.FirAnonymousFunctionReturnExpressionInfo
 import org.jetbrains.kotlin.fir.resolve.diagnostics.*
 import org.jetbrains.kotlin.fir.resolve.inference.FirTypeVariablesAfterPCLATransformer
@@ -423,11 +424,21 @@ class FirCallCompletionResultsWriterTransformer(
         }
 
         data?.argumentReplacements?.get(collectionLiteral)?.let { replacement ->
+            handleArgumentReplacementInCfg(collectionLiteral, replacement)
             return if (mode == Mode.TopLevelSyntheticCallInPclaCompletion) replacement
             else replacement.transform(this, data)
         }
 
         return collectionLiteral
+    }
+
+    @OptIn(CfgInternals::class)
+    private fun handleArgumentReplacementInCfg(original: FirExpression, replacement: FirExpression) {
+        if (original !is FirCollectionLiteral) return
+        check(replacement is FirFunctionCall) {
+            "Collection literal replacement must be a ${FirFunctionCall::class.simpleName}"
+        }
+        dataFlowAnalyzer.updateCollectionLiteralNodes(original, replacement)
     }
 
     override fun transformFunctionCall(functionCall: FirFunctionCall, data: ExpectedArgumentType?): FirStatement {
@@ -1196,7 +1207,10 @@ class FirCallCompletionResultsWriterTransformer(
                 override fun <E : FirElement> transformElement(element: E, data: Nothing?): E {
                     @Suppress("UNCHECKED_CAST")
                     return when {
-                        element === returnInfo.expression -> replacement as E
+                        element === returnInfo.expression -> {
+                            handleArgumentReplacementInCfg(returnInfo.expression, replacement)
+                            replacement as E
+                        }
                         else -> element
                     }
                 }
@@ -1392,9 +1406,8 @@ class FirCallCompletionResultsWriterTransformer(
             val diagnostic = resolvedCalleeReference.diagnostic
             if (diagnostic is ConeConstraintSystemHasContradiction) {
                 val candidate = diagnostic.candidate as Candidate
-                val newSyntheticCallType = session.typeContext.commonSuperTypeOrNull(candidate.argumentMapping.keys.unwrapAtoms().map {
-                    it.resolvedType
-                })
+                val argumentTypes = candidate.argumentMapping.keys.unwrapResolvedTypes()
+                val newSyntheticCallType = session.typeContext.commonSuperTypeOrNull(argumentTypes)
                 if (newSyntheticCallType != null && !newSyntheticCallType.hasError()) {
                     syntheticCall.replaceConeTypeOrNull(newSyntheticCallType)
                 }
@@ -1600,7 +1613,7 @@ private fun <K, V : Any> LinkedHashMap<out K, out V?>.filterValuesNotNull(): Lin
 }
 
 fun <V> LinkedHashMap<ConeResolutionAtom, V>.unwrapAtoms(): LinkedHashMap<FirExpression, V> {
-    return mapKeysToLinkedMap { it.unwrapAtom() }
+    return mapKeysToLinkedMap { it.expression }
 }
 
 inline fun <K1, K2, V> LinkedHashMap<K1, V>.mapKeysToLinkedMap(transform: (K1) -> K2): LinkedHashMap<K2, V> {
@@ -1608,13 +1621,16 @@ inline fun <K1, K2, V> LinkedHashMap<K1, V>.mapKeysToLinkedMap(transform: (K1) -
 }
 
 private fun Collection<ConeResolutionAtom>.unwrapAtoms(): List<FirExpression> {
-    return map { it.unwrapAtom() }
+    return map { it.expression }
 }
 
-private fun ConeResolutionAtom.unwrapAtom(): FirExpression {
-    return when (this) {
-        is ConeCollectionLiteralAtom -> subAtom?.unwrapAtom() ?: expression
-        is ConeResolutionAtomWithPostponedChild -> subAtom?.unwrapAtom() ?: expression
-        else -> expression
-    }
+private fun Collection<ConeResolutionAtom>.unwrapResolvedTypes(): List<ConeKotlinType> {
+    fun ConeResolutionAtom.unwrapExpression(): FirExpression =
+        when (this) {
+            is ConeCollectionLiteralAtom -> subAtom?.unwrapExpression() ?: expression
+            is ConeResolutionAtomWithPostponedChild -> subAtom?.unwrapExpression() ?: expression
+            else -> expression
+        }
+
+    return map { it.unwrapExpression().resolvedType }
 }

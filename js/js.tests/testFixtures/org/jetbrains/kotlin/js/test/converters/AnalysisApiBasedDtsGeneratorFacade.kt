@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives
 import org.jetbrains.kotlin.test.model.*
 import org.jetbrains.kotlin.test.services.*
 import org.jetbrains.kotlin.test.services.configuration.JsEnvironmentConfigurator
+import org.jetbrains.kotlin.test.services.configuration.finalizePath
 import java.io.File
 import kotlin.io.path.Path
 
@@ -48,6 +49,8 @@ class AnalysisApiBasedDtsGeneratorFacade(
                 outputName = outputFile.nameWithoutExtension,
                 granularity = JsGenerationGranularity.WHOLE_PROGRAM,
                 tsCompilationStrategy = TsCompilationStrategy.MERGED,
+                production = false, // irrelevant
+                minimizedMemberNames = false, // irrelevant
             ),
             compileLongAsBigInt = JsEnvironmentConfigurationDirectives.ES6_MODE in module.directives,
         )

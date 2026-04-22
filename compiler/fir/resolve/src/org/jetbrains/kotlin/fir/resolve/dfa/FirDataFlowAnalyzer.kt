@@ -1079,18 +1079,26 @@ abstract class FirDataFlowAnalyzer(
         graphBuilder.exitCallExplicitReceiver()
     }
 
-    fun enterFunctionCall(functionCall: FirFunctionCall) {
+    fun enterFunctionCall(functionCall: FirCall) {
         val enterNode = graphBuilder.enterFunctionCall(functionCall)
         enterNode.mergeIncomingFlow()
     }
 
-    fun exitFunctionCall(functionCall: FirFunctionCall, callCompleted: Boolean) {
+    fun exitFunctionCall(functionCall: FirCall, callCompleted: Boolean) {
         context.variableAssignmentAnalyzer.exitFunctionCall(callCompleted)
         val node = graphBuilder.exitFunctionCall(functionCall, callCompleted)
         node.mergeIncomingFlow { _, flow ->
             val callArgsExit = node.previousNodes.singleOrNull { it is FunctionCallEnterNode }
             processConditionalContract(flow, functionCall, callArgsExit?.flow)
         }
+    }
+
+    @CfgInternals
+    fun updateCollectionLiteralNodes(
+        collectionLiteral: FirCollectionLiteral,
+        updatedFir: FirFunctionCall,
+    ) {
+        graphBuilder.updateCollectionLiteralNodes(collectionLiteral, updatedFir)
     }
 
     fun exitDelegatedConstructorCall(call: FirDelegatedConstructorCall, callCompleted: Boolean) {
@@ -1293,7 +1301,10 @@ abstract class FirDataFlowAnalyzer(
         qualifiedAccess: FirStatement,
         originalFunction: FirFunction?,
     ): ConeSubstitutor {
-        val typeParameters = callee.typeParameters
+        val typeParameters = when {
+            callee is FirPropertyAccessor -> callee.propertySymbol.fir.typeParameters
+            else -> callee.typeParameters
+        }
         val typeArgumentsSubstitutor = if (typeParameters.isNotEmpty() && qualifiedAccess is FirQualifiedAccessExpression) {
             @Suppress("UNCHECKED_CAST")
             val substitutionFromArguments = typeParameters.zip(qualifiedAccess.typeArguments).map { (typeParameterRef, typeArgument) ->

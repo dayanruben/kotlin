@@ -8,19 +8,15 @@ package org.jetbrains.kotlin.konan.test.suppressors
 import org.jetbrains.kotlin.konan.test.blackbox.support.group.isIgnoredTarget
 import org.jetbrains.kotlin.konan.test.blackbox.testRunSettings
 import org.jetbrains.kotlin.test.WrappedException
-import org.jetbrains.kotlin.test.model.AfterAnalysisChecker
+import org.jetbrains.kotlin.test.model.TestFailureSuppressor
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.moduleStructure
 import org.junit.jupiter.api.Assumptions
 
 class NativeTestsSuppressor(
     testServices: TestServices,
-) : AfterAnalysisChecker(testServices) {
+) : TestFailureSuppressor(testServices) {
     override fun suppressIfNeeded(failedAssertions: List<WrappedException>): List<WrappedException> {
-        if (failedAssertions.isEmpty()) {
-            return listOfNotNull(testServices.createUnmutingErrorIfNeeded()?.wrap())
-        }
-
         val newFailedAssertions = failedAssertions.mapNotNull { wrappedException ->
             testServices.processException(wrappedException)
         }
@@ -30,6 +26,12 @@ class NativeTestsSuppressor(
             throw Assumptions.abort<Nothing>()
         } else {
             return newFailedAssertions
+        }
+    }
+
+    override fun checkIfTestShouldBeUnmuted() {
+        if (testServices.testRunSettings.isIgnoredTarget(testServices.moduleStructure.allDirectives)) {
+            throw AssertionError("Looks like this test can be unmuted. Adjust/remove a relevant test directive IGNORE_BACKEND or IGNORE_NATIVE")
         }
     }
 }
@@ -45,9 +47,4 @@ private fun TestServices.processException(wrappedException: WrappedException): W
     ) return null
 
     return wrappedException
-
 }
-
-private fun TestServices.createUnmutingErrorIfNeeded(): Throwable? =
-    takeIf { testRunSettings.isIgnoredTarget(moduleStructure.allDirectives) }
-        ?.run { AssertionError("Looks like this test can be unmuted. Adjust/remove a relevant test directive IGNORE_BACKEND or IGNORE_NATIVE") }

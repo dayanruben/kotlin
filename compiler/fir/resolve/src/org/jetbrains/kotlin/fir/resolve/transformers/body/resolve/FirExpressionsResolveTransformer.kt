@@ -41,7 +41,6 @@ import org.jetbrains.kotlin.fir.resolve.calls.stages.mapArguments
 import org.jetbrains.kotlin.fir.resolve.diagnostics.*
 import org.jetbrains.kotlin.fir.resolve.substitution.asCone
 import org.jetbrains.kotlin.fir.resolve.transformers.ReturnTypeCalculator
-import org.jetbrains.kotlin.fir.resolve.transformers.replaceLambdaArgumentEffects
 import org.jetbrains.kotlin.fir.resolve.transformers.unwrapAtoms
 import org.jetbrains.kotlin.fir.scopes.impl.isWrappedIntegerOperator
 import org.jetbrains.kotlin.fir.scopes.impl.isWrappedIntegerOperatorForUnsignedType
@@ -668,7 +667,6 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
                 return functionCall
             }
             functionCall.transformAnnotations(transformer, data)
-            functionCall.replaceLambdaArgumentEffects(transformer)
             functionCall.transformTypeArguments(transformer, ContextIndependent)
             val choosingOptionForAugmentedAssignment = callResolutionMode == CallResolutionMode.OPTION_FOR_AUGMENTED_ASSIGNMENT
             val withTransformedArguments = if (!choosingOptionForAugmentedAssignment) {
@@ -2221,13 +2219,18 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
                 }
                 else -> {
                     collectionLiteral.transformAnnotations(transformer, data)
-                    collectionLiteral.transformChildren(transformer, ResolutionMode.ContextDependent)
+                    dataFlowAnalyzer.enterCallArguments(collectionLiteral, collectionLiteral.arguments)
+                    collectionLiteral.replaceArgumentList(collectionLiteral.argumentList.transform(this, ResolutionMode.ContextDependent))
+                    dataFlowAnalyzer.exitCallArguments() // collectionLiteral
                     if (data != ResolutionMode.ContextDependent) {
                         components.syntheticCallGenerator.resolveCollectionLiteralExpressionWithSyntheticOuterCall(
-                            collectionLiteral, data as? ResolutionMode.WithExpectedType, resolutionContext
+                            collectionLiteral, data as? ResolutionMode.WithExpectedType, resolutionContext,
                         )
                     } else {
-                        collectionLiteral
+                        collectionLiteral.also {
+                            dataFlowAnalyzer.enterFunctionCall(it)
+                            dataFlowAnalyzer.exitFunctionCall(it, callCompleted = false)
+                        }
                     }
                 }
             }

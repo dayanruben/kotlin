@@ -5,12 +5,11 @@
 
 package org.jetbrains.kotlin.js.test.converters
 
-import org.jetbrains.kotlin.backend.common.serialization.cityHash64
-import org.jetbrains.kotlin.cli.common.isWindows
 import org.jetbrains.kotlin.cli.pipeline.web.JsLoweredIrPipelineArtifact
 import org.jetbrains.kotlin.cli.pipeline.web.WebLoadedIrPipelineArtifact
 import org.jetbrains.kotlin.cli.pipeline.web.js.JsIrLoweringPipelinePhase
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
+import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.ir.backend.js.SourceMapsInfo
 import org.jetbrains.kotlin.ir.backend.js.ic.JsExecutableProducer
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.*
@@ -29,6 +28,8 @@ import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.compilerConfigurationProvider
 import org.jetbrains.kotlin.test.services.configuration.JsEnvironmentConfigurator
 import org.jetbrains.kotlin.test.services.configuration.JsEnvironmentConfigurator.Companion.getJsModuleArtifactName
+import org.jetbrains.kotlin.test.services.configuration.finalizePath
+import org.jetbrains.kotlin.test.services.configuration.minifyPathForWindowsIfNeeded
 import org.jetbrains.kotlin.test.services.defaultsProvider
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.fileUtils.withReplacedExtensionOrNull
@@ -71,15 +72,14 @@ class JsIrLoweringFacade(
             )
 
             val compiledModule = CompilerResult(
-                outputs = listOf(TranslationMode.FULL_DEV, TranslationMode.PER_MODULE_DEV).associateWith {
+                outputs = listOf(TranslationMode.FULL_DEV, TranslationMode.PER_MODULE_DEV).associateWith { mode ->
                     val jsExecutableProducer = JsExecutableProducer(
-                        mainModuleName = configuration.getNotNull(CommonConfigurationKeys.MODULE_NAME),
-                        moduleKind = configuration.get(JSConfigurationKeys.MODULE_KIND, ModuleKind.PLAIN),
+                        artifactConfiguration = createArtifactConfiguration(configuration, mode, module),
                         sourceMapsInfo = SourceMapsInfo.from(configuration),
                         caches = testServices.jsIrIncrementalDataProvider.getCaches(),
                         relativeRequirePath = false
                     )
-                    jsExecutableProducer.buildExecutable(it.granularity, true).compilationOut
+                    jsExecutableProducer.buildExecutable(true).compilationOut
                 }
             )
             return BinaryArtifacts.Js.JsIrArtifact(
@@ -98,6 +98,33 @@ class JsIrLoweringFacade(
         return loweredIr2JsArtifact(module, loweredIr)
     }
 
+    private fun createArtifactConfiguration(
+        configuration: CompilerConfiguration,
+        mode: TranslationMode,
+        module: TestModule,
+    ): WebArtifactConfiguration {
+        val outputFile = File(
+            JsEnvironmentConfigurator.getJsModuleArtifactPath(testServices, module.name, mode, firstTimeCompilation)
+                .finalizePath(JsEnvironmentConfigurator.getModuleKind(testServices, module))
+        )
+        val rootDir = outputFile.parentFile
+
+        // CompilationOutputs keeps the `outputDir` clean by removing all outdated JS and other unknown files.
+        // To ensure that useful files around `outputFile`, such as irdump, are not removed, use `tmpBuildDir` instead.
+        val tmpBuildDir = rootDir.resolve("tmp-build")
+
+        return WebArtifactConfiguration(
+            moduleName = configuration.getNotNull(CommonConfigurationKeys.MODULE_NAME),
+            moduleKind = configuration.moduleKind ?: ModuleKind.PLAIN,
+            outputDirectory = tmpBuildDir,
+            outputName = outputFile.nameWithoutExtension,
+            granularity = mode.granularity,
+            tsCompilationStrategy = TsCompilationStrategy.NONE,
+            production = mode.production,
+            minimizedMemberNames = mode.minimizedMemberNames,
+        )
+    }
+
     private fun loweredIr2JsArtifact(
         module: TestModule,
         loweredIr: JsLoweredIrPipelineArtifact,
@@ -113,12 +140,17 @@ class JsIrLoweringFacade(
             loweredIr.context,
             moduleToName = runIf(isEsModules) {
                 loweredIr.allModules.associateWith {
-                    "./${getJsModuleArtifactName(testServices, it.safeName)}".minifyIfNeed()
+                    "./${getJsModuleArtifactName(testServices, it.safeName)}".minifyPathForWindowsIfNeeded()
                 }
             } ?: emptyMap(),
         )
-        val translationModes = JsEnvironmentConfigurator.getTranslationModesForTest(testServices, module)
-        val compilationOut = transformer.generateModule(loweredIr.allModules, translationModes, isEsModules)
+        val artifactConfigurations = JsEnvironmentConfigurator
+            .getTranslationModesForTest(testServices, module)
+            .map {
+                createArtifactConfiguration(loweredIr.configuration, it, module)
+            }
+        val compilationOut =
+            transformer.generateModule(loweredIr.allModules, artifactConfigurations, relativeRequirePath = isEsModules, outJsProgram = true)
         return BinaryArtifacts.Js.JsIrArtifact(outputFile, compilationOut).dump(module)
     }
 
@@ -143,22 +175,22 @@ class JsIrLoweringFacade(
 
 
         if (dontSkipRegularMode) {
-            for ((mode, output) in compilerResult.outputs.entries) {
+            for ((mode, output) in compilerResult.entries) {
                 val outputFile = File(
                     JsEnvironmentConfigurator.getJsModuleArtifactPath(testServices, module.name, mode, firstTimeCompilation)
                         .finalizePath(moduleKind)
                 )
 
-                output.writeTo(outputFile, moduleId, moduleKind, mode.granularity)
+                output.writeTo(outputFile)
 
                 if (delegateTranspilationToExternalTool) {
-                    SwcRunner.exec(outputFile.parentFile, moduleKind, mode, sourceMapsEnabled)
+                    SwcRunner.exec(output.rootDir, moduleKind, mode, sourceMapsEnabled)
                 }
             }
         }
 
         if (generateDts) {
-            val tsFiles = compilerResult.outputs.entries.associate { it.value.getFullTsDefinition(moduleId, moduleKind) to it.key }
+            val tsFiles = compilerResult.entries.associate { it.value.getFullTsDefinition(moduleId, moduleKind) to it.key }
             val tsDefinitions = tsFiles.entries.singleOrNull()?.key
                 ?: error("[${tsFiles.values.joinToString { it.name }}] make different TypeScript")
 
@@ -185,36 +217,22 @@ class JsIrLoweringFacade(
             }
     }
 
-    private fun CompilationOutputs.writeTo(
-        outputFile: File,
-        moduleId: String,
-        moduleKind: ModuleKind,
-        granularity: JsGenerationGranularity,
-    ) {
-        val rootDir = outputFile.parentFile
-        val tmpBuildDir = rootDir.resolve("tmp-build")
-        // CompilationOutputs keeps the `outputDir` clean by removing all outdated JS and other unknown files.
-        // To ensure that useful files around `outputFile`, such as irdump, are not removed, use `tmpBuildDir` instead.
-        val artifactConfiguration = WebArtifactConfiguration(
-            moduleKind,
-            moduleId,
-            tmpBuildDir,
-            outputFile.nameWithoutExtension,
-            granularity,
-            TsCompilationStrategy.NONE
-        )
-        val allJsFiles = writeAll(artifactConfiguration).filter {
+    private val CompilationOutputs.rootDir: File
+        get() = artifactConfiguration.outputDirectory.parentFile
+
+    private fun CompilationOutputs.writeTo(outputFile: File) {
+        val allJsFiles = writeAll().filter {
             it.extension == "js" || it.extension == "mjs"
         }
 
         val mainModuleFile = allJsFiles.last()
-        mainModuleFile.fixJsFile(rootDir, outputFile, moduleId, moduleKind)
+        mainModuleFile.fixJsFile(rootDir, outputFile, artifactConfiguration.moduleName, artifactConfiguration.moduleKind)
 
-        dependencies.map { it.first }.zip(allJsFiles.dropLast(1)).forEach { (depModuleId, builtJsFilePath) ->
+        dependencies.map { it.artifactConfiguration.moduleName }.zip(allJsFiles.dropLast(1)).forEach { (depModuleId, builtJsFilePath) ->
             val newFile = outputFile.augmentWithModuleName(depModuleId)
-            builtJsFilePath.fixJsFile(rootDir, newFile, depModuleId, moduleKind)
+            builtJsFilePath.fixJsFile(rootDir, newFile, depModuleId, artifactConfiguration.moduleKind)
         }
-        tmpBuildDir.deleteRecursively()
+        artifactConfiguration.outputDirectory.deleteRecursively()
     }
 
     private fun File.write(text: String) {
@@ -231,32 +249,10 @@ fun String.augmentWithModuleName(moduleName: String): String {
     }
 
     return if (suffix == ESM_EXTENSION) {
-        replaceAfterLast(File.separator, moduleName.minifyIfNeed().replace("./", "")).removeSuffix(suffix) + suffix
+        replaceAfterLast(File.separator, moduleName.minifyPathForWindowsIfNeeded().replace("./", "")).removeSuffix(suffix) + suffix
     } else {
         return removeSuffix("_v5$suffix") + "-${moduleName}_v5$suffix"
     }
-}
-
-fun String.finalizePath(moduleKind: ModuleKind): String {
-    return plus(moduleKind.jsExtension).minifyIfNeed()
-}
-
-// D8 ignores Windows settings related to extending of maximum path symbols count
-// The hack should be deleted when D8 fixes the bug.
-// The issue is here: https://bugs.chromium.org/p/v8/issues/detail?id=13318
-fun String.minifyIfNeed(): String {
-    if (!isWindows) return this
-    val delimiter = if (contains('\\')) '\\' else '/'
-    val directoryPath = substringBeforeLast(delimiter)
-    val fileFullName = substringAfterLast(delimiter)
-    val fileName = fileFullName.substringBeforeLast('.')
-
-    if (fileName.length <= 80) return this
-
-    val fileExtension = fileFullName.substringAfterLast('.')
-    val extensionPart = if (fileExtension.isEmpty()) "" else ".$fileExtension"
-
-    return "$directoryPath$delimiter${fileName.cityHash64().toULong().toString(16)}$extensionPart"
 }
 
 fun File.augmentWithModuleName(moduleName: String): File = File(absolutePath.augmentWithModuleName(moduleName))
