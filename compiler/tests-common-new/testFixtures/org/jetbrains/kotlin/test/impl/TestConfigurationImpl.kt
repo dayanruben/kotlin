@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.test.directives.model.ComposedDirectivesContainer
 import org.jetbrains.kotlin.test.directives.model.DirectivesContainer
 import org.jetbrains.kotlin.test.directives.model.RegisteredDirectives
 import org.jetbrains.kotlin.test.model.AfterAnalysisChecker
+import org.jetbrains.kotlin.test.model.GroupingTestIsolator
 import org.jetbrains.kotlin.test.model.ResultingArtifact
 import org.jetbrains.kotlin.test.model.ServicesAndDirectivesContainer
 import org.jetbrains.kotlin.test.model.TestFailureSuppressor
@@ -147,12 +148,12 @@ sealed class TestConfigurationImplBase<Step : TestStep<*, *>>(
 
     // ---------------------------------- utils ----------------------------------
 
-    private fun ServicesAndDirectivesContainer.registerDirectivesAndServices() {
+    protected fun ServicesAndDirectivesContainer.registerDirectivesAndServices() {
         allDirectives += directiveContainers
         testServices.register(additionalServices, skipAlreadyRegistered = true)
     }
 
-    private fun List<ServicesAndDirectivesContainer>.registerDirectivesAndServices() {
+    protected fun List<ServicesAndDirectivesContainer>.registerDirectivesAndServices() {
         this.forEach { it.registerDirectivesAndServices() }
     }
 }
@@ -174,6 +175,7 @@ class NonGroupingPhaseTestConfigurationImpl(
     failureSuppressors: List<Constructor<TestFailureSuppressor>>,
     compilerConfigurationProvider: ((TestServices, Disposable, List<AbstractEnvironmentConfigurator>) -> CompilerConfigurationProvider)?,
     runtimeClasspathProviders: List<Constructor<RuntimeClasspathProvider>>,
+    groupingTestIsolators: List<Constructor<GroupingTestIsolator>>,
     metaInfoHandlerEnabled: Boolean,
     directives: List<DirectivesContainer>,
     defaultRegisteredDirectives: RegisteredDirectives,
@@ -185,7 +187,11 @@ class NonGroupingPhaseTestConfigurationImpl(
     additionalSourceProviders, preAnalysisHandlers, moduleStructureTransformers, metaTestConfigurators, afterAnalysisCheckers,
     failureSuppressors, compilerConfigurationProvider, runtimeClasspathProviders, metaInfoHandlerEnabled, directives,
     defaultRegisteredDirectives, additionalServices
-), NonGroupingPhaseTestConfiguration
+), NonGroupingPhaseTestConfiguration {
+    override val groupingTestIsolators: List<GroupingTestIsolator> = groupingTestIsolators.map { it.invoke(testServices) }.also {
+        it.registerDirectivesAndServices()
+    }
+}
 
 @OptIn(TestInfrastructureInternals::class)
 class GroupingPhaseTestConfigurationImpl(
@@ -221,3 +227,20 @@ class GroupingPhaseTestConfigurationImpl(
 
 @TestInfrastructureInternals
 val TestServices.testConfiguration: TestConfigurationImplBase<*> by TestServices.testServiceAccessor()
+
+@OptIn(TestInfrastructureInternals::class)
+fun TestServices.shouldIsolateTestInGroupingConfiguration(testModuleStructure: TestModuleStructure): Boolean {
+    return (testConfiguration as NonGroupingPhaseTestConfiguration).groupingTestIsolators.any {
+        it.shouldIsolateTestInGroupingConfiguration(testModuleStructure)
+    }
+}
+
+@OptIn(TestInfrastructureInternals::class)
+fun TestServices.shouldIsolateTestInGroupingConfiguration(): Boolean =
+    (testConfiguration as NonGroupingPhaseTestConfiguration).shouldIsolateTestInGroupingConfiguration()
+
+
+fun NonGroupingPhaseTestConfiguration.shouldIsolateTestInGroupingConfiguration(): Boolean =
+    groupingTestIsolators.any {
+        it.shouldIsolateTestInGroupingConfiguration()
+    }
