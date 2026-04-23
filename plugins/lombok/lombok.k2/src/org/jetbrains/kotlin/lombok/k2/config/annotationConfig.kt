@@ -10,12 +10,11 @@ import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.FirAnnotationContainer
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.DirectDeclarationsAccess
+import org.jetbrains.kotlin.fir.declarations.getAnnotationByClassId
 import org.jetbrains.kotlin.fir.declarations.getBooleanArgument
 import org.jetbrains.kotlin.fir.declarations.getStringArgument
 import org.jetbrains.kotlin.fir.declarations.getStringArrayArgument
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
-import org.jetbrains.kotlin.fir.types.classLikeLookupTagIfAny
-import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.lombok.config.AccessLevel
 import org.jetbrains.kotlin.lombok.config.LombokConfig
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.ACCESS
@@ -25,6 +24,9 @@ import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.BUILDER_METHOD_NA
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.BUILD_METHOD_NAME
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.CHAIN
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.CHAIN_CONFIG
+import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.FIELD_IS_STATIC_CONFIG
+import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.FIELD_NAME_CONFIG
+import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.FLAG_USAGE_CONFIG
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.FLUENT
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.FLUENT_CONFIG
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.IGNORE_NULL_COLLECTIONS
@@ -34,6 +36,7 @@ import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.PREFIX_CONFIG
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.SETTER_PREFIX
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.STATIC_CONSTRUCTOR
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.STATIC_NAME
+import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.TOPIC
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.TO_BUILDER
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.VALUE
 import org.jetbrains.kotlin.lombok.utils.LombokNames
@@ -47,16 +50,12 @@ import org.jetbrains.kotlin.name.ClassId
  *
  */
 
-fun List<FirAnnotation>.findAnnotation(classId: ClassId): FirAnnotation? {
-    return firstOrNull { it.annotationTypeRef.coneType.classLikeLookupTagIfAny?.classId == classId }
-}
-
 abstract class ConeAnnotationCompanion<T>(val name: ClassId) {
 
     abstract fun extract(annotation: FirAnnotation, session: FirSession): T
 
     fun getOrNull(annotated: FirAnnotationContainer, session: FirSession): T? {
-        return annotated.annotations.findAnnotation(name)?.let { this.extract(it, session) }
+        return annotated.annotations.getAnnotationByClassId(name, session)?.let { this.extract(it, session) }
     }
 }
 
@@ -68,13 +67,13 @@ abstract class ConeAnnotationAndConfigCompanion<T>(val annotationName: ClassId) 
      * Get from annotation or config or default
      */
     fun get(annotated: FirAnnotationContainer, config: LombokConfig, session: FirSession): T =
-        extract(annotated.annotations.findAnnotation(annotationName), config, session)
+        extract(annotated.getAnnotationByClassId(annotationName, session), config, session)
 
     /**
      * If element is annotated, get from it or config or default
      */
     fun getIfAnnotated(annotated: FirAnnotationContainer, config: LombokConfig, session: FirSession): T? =
-        annotated.annotations.findAnnotation(annotationName)?.let { annotation ->
+        annotated.annotations.getAnnotationByClassId(annotationName, session)?.let { annotation ->
             extract(annotation, config, session)
         }
 
@@ -103,39 +102,39 @@ object ConeLombokAnnotations {
         }
     }
 
-    sealed class AbstractAccessor(val visibility: AccessLevel)
+    sealed class AbstractAccessor(val visibility: Visibility?)
 
-    class Getter(visibility: AccessLevel = AccessLevel.PUBLIC) : AbstractAccessor(visibility) {
+    class Getter(visibility: Visibility? = Visibilities.Public) : AbstractAccessor(visibility) {
         companion object : ConeAnnotationCompanion<Getter>(LombokNames.GETTER_ID) {
             override fun extract(annotation: FirAnnotation, session: FirSession): Getter = Getter(
-                visibility = annotation.getAccessLevel()
+                visibility = annotation.getVisibility(VALUE)
             )
         }
     }
 
-    class Setter(visibility: AccessLevel = AccessLevel.PUBLIC) : AbstractAccessor(visibility) {
+    class Setter(visibility: Visibility? = Visibilities.Public) : AbstractAccessor(visibility) {
         companion object : ConeAnnotationCompanion<Setter>(LombokNames.SETTER_ID) {
             override fun extract(annotation: FirAnnotation, session: FirSession): Setter = Setter(
-                visibility = annotation.getAccessLevel()
+                visibility = annotation.getVisibility(VALUE)
             )
         }
     }
 
-    class With(val visibility: AccessLevel = AccessLevel.PUBLIC) {
+    class With(val visibility: Visibility? = Visibilities.Public) {
         companion object : ConeAnnotationCompanion<With>(LombokNames.WITH_ID) {
             override fun extract(annotation: FirAnnotation, session: FirSession): With = With(
-                visibility = annotation.getAccessLevel()
+                visibility = annotation.getVisibility(VALUE)
             )
         }
     }
 
     interface ConstructorAnnotation {
-        val visibility: Visibility
+        val visibility: Visibility?
         val staticName: String?
     }
 
     class NoArgsConstructor(
-        override val visibility: Visibility,
+        override val visibility: Visibility?,
         override val staticName: String?
     ) : ConstructorAnnotation {
         companion object : ConeAnnotationCompanion<NoArgsConstructor>(LombokNames.NO_ARGS_CONSTRUCTOR_ID) {
@@ -149,7 +148,7 @@ object ConeLombokAnnotations {
     }
 
     class AllArgsConstructor(
-        override val visibility: Visibility = Visibilities.Public,
+        override val visibility: Visibility? = Visibilities.Public,
         override val staticName: String? = null
     ) : ConstructorAnnotation {
         companion object : ConeAnnotationCompanion<AllArgsConstructor>(LombokNames.ALL_ARGS_CONSTRUCTOR_ID) {
@@ -163,7 +162,7 @@ object ConeLombokAnnotations {
     }
 
     class RequiredArgsConstructor(
-        override val visibility: Visibility = Visibilities.Public,
+        override val visibility: Visibility? = Visibilities.Public,
         override val staticName: String? = null
     ) : ConstructorAnnotation {
         companion object : ConeAnnotationCompanion<RequiredArgsConstructor>(LombokNames.REQUIRED_ARGS_CONSTRUCTOR_ID) {
@@ -211,7 +210,7 @@ object ConeLombokAnnotations {
         val buildMethodName: String,
         val builderMethodName: String,
         val requiresToBuilder: Boolean,
-        val visibility: AccessLevel,
+        val visibility: Visibility?,
         val setterPrefix: String?,
         val hasSpecifiedBuilderClassName: Boolean,
     ) {
@@ -243,7 +242,7 @@ object ConeLombokAnnotations {
         buildMethodName: String,
         builderMethodName: String,
         requiresToBuilder: Boolean,
-        visibility: AccessLevel,
+        visibility: Visibility?,
         setterPrefix: String?,
         hasSpecifiedBuilderClassName: Boolean,
     ) : AbstractBuilder(
@@ -265,7 +264,7 @@ object ConeLombokAnnotations {
                     buildMethodName = getBuildMethodName(annotation),
                     builderMethodName = getBuilderMethodName(annotation),
                     requiresToBuilder = getRequiresToBuilder(annotation),
-                    visibility = annotation?.getAccessLevel(ACCESS) ?: AccessLevel.PUBLIC,
+                    visibility = annotation.getVisibility(ACCESS),
                     setterPrefix = getSetterPrefix(annotation),
                     hasSpecifiedBuilderClassName = specifiedBuilderClassName != null,
                 )
@@ -285,7 +284,7 @@ object ConeLombokAnnotations {
         buildMethodName,
         builderMethodName,
         requiresToBuilder,
-        AccessLevel.PUBLIC,
+        Visibilities.Public,
         setterPrefix,
         hasSpecifiedBuilderClassName,
     ) {
@@ -312,6 +311,36 @@ object ConeLombokAnnotations {
                 return Singular(
                     singularName = annotation.getStringArgument(VALUE),
                     allowNull = annotation.getBooleanArgument(IGNORE_NULL_COLLECTIONS) ?: false
+                )
+            }
+        }
+    }
+
+    class Log(
+        val visibility: Visibility?,
+        val topic: String,
+        val fieldName: String,
+        val fieldIsStatic: Boolean,
+        val flagUsage: FlagUsageValue?,
+    ) {
+        enum class FlagUsageValue {
+            Warning,
+            Error,
+        }
+
+        companion object : ConeAnnotationAndConfigCompanion<Log>(LombokNames.LOG_ID) {
+            override fun extract(
+                annotation: FirAnnotation?,
+                config: LombokConfig,
+                session: FirSession,
+            ): Log {
+                return Log(
+                    visibility = annotation.getVisibility(ACCESS, defaultAccessLevel = AccessLevel.PRIVATE),
+                    topic = annotation?.getStringArgument(TOPIC) ?: "",
+                    fieldName = config.getString(FIELD_NAME_CONFIG) ?: "log",
+                    fieldIsStatic = config.getBoolean(FIELD_IS_STATIC_CONFIG) ?: true,
+                    flagUsage = config.getString(FLAG_USAGE_CONFIG)
+                        ?.let { str -> FlagUsageValue.entries.find { it.name.equals(str, ignoreCase = true) } },
                 )
             }
         }

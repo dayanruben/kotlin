@@ -125,6 +125,7 @@
 /compiler/container/ "Kotlin Frontend"
 /compiler/daemon/ "Build Tools API"
 /compiler/fir/ "Kotlin Frontend"
+/compiler/fir/analysis-tests/testData/builtIns/ "Kotlin Libraries"
 /compiler/fir/checkers/src/org/jetbrains/kotlin/fir/analysis/diagnostics/FirErrorsDefaultMessages.kt alejandro.serrano.mena@jetbrains.com brian.norman@jetbrains.com ilya.chernikov@jetbrains.com kirill.rakhman@jetbrains.com
 /compiler/fir/checkers/checkers.jvm/src/org/jetbrains/kotlin/fir/analysis/diagnostics/jvm/FirJvmErrorsDefaultMessages.kt alejandro.serrano.mena@jetbrains.com brian.norman@jetbrains.com ilya.chernikov@jetbrains.com kirill.rakhman@jetbrains.com
 /compiler/fir/checkers/checkers.native/src/org/jetbrains/kotlin/fir/analysis/diagnostics/native/FirNativeErrorsDefaultMessages.kt alejandro.serrano.mena@jetbrains.com brian.norman@jetbrains.com ilya.chernikov@jetbrains.com kirill.rakhman@jetbrains.com
@@ -172,7 +173,6 @@
 /compiler/test-infrastructure-utils.common/ "Kotlin Frontend"
 /compiler/test-engine-sandbox/ "Kotlin Frontend" "Kotlin Common Backend"
 
-/compiler/testData/builtin-classes/ "Kotlin Libraries"
 /compiler/testData/checkLocalVariablesTable/ "Kotlin JVM"
 /compiler/testData/cli/ "Kotlin Frontend"
 /compiler/testData/cli/js/ "Kotlin JS" "Kotlin Frontend"
@@ -216,12 +216,10 @@
 /compiler/testData/ir/klibLayout/ "Kotlin Common Backend"
 /compiler/testData/ir/sourceRanges/ "Kotlin Frontend"
 /compiler/testData/klib/ "Kotlin Common Backend"
-/compiler/testData/kotlinClassFinder/ "Kotlin Frontend"
 /compiler/testData/loadJava/ "Kotlin Frontend"
 /compiler/testData/loadJava8/ "Kotlin Frontend"
 /compiler/testData/loadJavaPackageAnnotations/ "Kotlin Frontend"
 /compiler/testData/moduleProtoBuf/ "Kotlin JVM"
-/compiler/testData/modules.xml/ "Kotlin Frontend"
 /compiler/testData/reflection/ "Kotlin Libraries" alexander.udalov@jetbrains.com
 /compiler/testData/serialization/builtinsSerializer/ "Kotlin Frontend"
 /compiler/testData/serialization/klib/ "Kotlin Common Backend"

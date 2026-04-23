@@ -14,6 +14,7 @@ import kotlin.Suppress
 import kotlin.collections.List
 import kotlin.collections.MutableMap
 import kotlin.collections.MutableSet
+import kotlin.collections.emptyList
 import kotlin.collections.mutableMapOf
 import kotlin.collections.mutableSetOf
 import org.jetbrains.kotlin.buildtools.`internal`.DeepCopyable
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.buildtools.`internal`.arguments.WasmArgumentsImpl.Co
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.WasmArgumentsImpl.Companion.X_WASM_DEBUGGER_CUSTOM_FORMATTERS
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.WasmArgumentsImpl.Companion.X_WASM_DEBUG_FRIENDLY
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.WasmArgumentsImpl.Companion.X_WASM_DEBUG_INFO
+import org.jetbrains.kotlin.buildtools.`internal`.arguments.WasmArgumentsImpl.Companion.X_WASM_DISABLE_ARRAY_RANGE_CHECKS_SAFE_ELIMINATION
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.WasmArgumentsImpl.Companion.X_WASM_ENABLE_ARRAY_RANGE_CHECKS
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.WasmArgumentsImpl.Companion.X_WASM_ENABLE_ASSERTS
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.WasmArgumentsImpl.Companion.X_WASM_GENERATE_CLOSED_WORLD_MULTIMODULE
@@ -50,7 +52,8 @@ import org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION as KC_VERSION
 
 internal class WasmArgumentsImpl(
   private val adapter: WasmArgumentValueAdapter? = null,
-) : CommonJsAndWasmArgumentsImpl(adapter),
+  restrictedArgViolations: List<RestrictedArgViolation> = emptyList(),
+) : CommonJsAndWasmArgumentsImpl(adapter, restrictedArgViolations),
     WasmArguments,
     WasmArguments.Builder,
     DeepCopyable<WasmArgumentsImpl> {
@@ -83,7 +86,7 @@ internal class WasmArgumentsImpl(
 
   public operator fun contains(key: WasmArgument<*>): Boolean = key.id in optionsMap
 
-  override fun deepCopy(): WasmArgumentsImpl = WasmArgumentsImpl(adapter).also { newArgs -> newArgs.applyArgumentStrings(toArgumentStrings()) }
+  override fun deepCopy(): WasmArgumentsImpl = WasmArgumentsImpl(adapter, restrictedArgViolations.toList()).also { newArgs -> newArgs.applyCompilerArguments(toCompilerArguments()) }
 
   override fun build(): WasmArguments = deepCopy()
 
@@ -100,6 +103,7 @@ internal class WasmArgumentsImpl(
     if (X_WASM_DEBUG_FRIENDLY in this) { arguments.forceDebugFriendlyCompilation = get(X_WASM_DEBUG_FRIENDLY)}
     if (X_WASM_DEBUG_INFO in this) { arguments.wasmDebug = get(X_WASM_DEBUG_INFO)}
     if (X_WASM_DEBUGGER_CUSTOM_FORMATTERS in this) { arguments.debuggerCustomFormatters = get(X_WASM_DEBUGGER_CUSTOM_FORMATTERS)}
+    if (X_WASM_DISABLE_ARRAY_RANGE_CHECKS_SAFE_ELIMINATION in this) { arguments.wasmDisableArrayRangeChecksSafeElimination = get(X_WASM_DISABLE_ARRAY_RANGE_CHECKS_SAFE_ELIMINATION)}
     if (X_WASM_ENABLE_ARRAY_RANGE_CHECKS in this) { arguments.wasmEnableArrayRangeChecks = get(X_WASM_ENABLE_ARRAY_RANGE_CHECKS)}
     if (X_WASM_ENABLE_ASSERTS in this) { arguments.wasmEnableAsserts = get(X_WASM_ENABLE_ASSERTS)}
     if (X_WASM_GENERATE_CLOSED_WORLD_MULTIMODULE in this) { arguments.wasmGenerateClosedWorldMultimodule = get(X_WASM_GENERATE_CLOSED_WORLD_MULTIMODULE)}
@@ -126,6 +130,7 @@ internal class WasmArgumentsImpl(
     try { this[X_WASM_DEBUG_FRIENDLY] = arguments.forceDebugFriendlyCompilation } catch (_: NoSuchMethodError) {  }
     try { this[X_WASM_DEBUG_INFO] = arguments.wasmDebug } catch (_: NoSuchMethodError) {  }
     try { this[X_WASM_DEBUGGER_CUSTOM_FORMATTERS] = arguments.debuggerCustomFormatters } catch (_: NoSuchMethodError) {  }
+    try { this[X_WASM_DISABLE_ARRAY_RANGE_CHECKS_SAFE_ELIMINATION] = arguments.wasmDisableArrayRangeChecksSafeElimination } catch (_: NoSuchMethodError) {  }
     try { this[X_WASM_ENABLE_ARRAY_RANGE_CHECKS] = arguments.wasmEnableArrayRangeChecks } catch (_: NoSuchMethodError) {  }
     try { this[X_WASM_ENABLE_ASSERTS] = arguments.wasmEnableAsserts } catch (_: NoSuchMethodError) {  }
     try { this[X_WASM_GENERATE_CLOSED_WORLD_MULTIMODULE] = arguments.wasmGenerateClosedWorldMultimodule } catch (_: NoSuchMethodError) {  }
@@ -151,6 +156,7 @@ internal class WasmArgumentsImpl(
     if (X_WASM_DEBUG_FRIENDLY in this) { arguments.forceDebugFriendlyCompilation = get(X_WASM_DEBUG_FRIENDLY)}
     if (X_WASM_DEBUG_INFO in this) { arguments.wasmDebug = get(X_WASM_DEBUG_INFO)}
     if (X_WASM_DEBUGGER_CUSTOM_FORMATTERS in this) { arguments.debuggerCustomFormatters = get(X_WASM_DEBUGGER_CUSTOM_FORMATTERS)}
+    if (X_WASM_DISABLE_ARRAY_RANGE_CHECKS_SAFE_ELIMINATION in this) { arguments.wasmDisableArrayRangeChecksSafeElimination = get(X_WASM_DISABLE_ARRAY_RANGE_CHECKS_SAFE_ELIMINATION)}
     if (X_WASM_ENABLE_ARRAY_RANGE_CHECKS in this) { arguments.wasmEnableArrayRangeChecks = get(X_WASM_ENABLE_ARRAY_RANGE_CHECKS)}
     if (X_WASM_ENABLE_ASSERTS in this) { arguments.wasmEnableAsserts = get(X_WASM_ENABLE_ASSERTS)}
     if (X_WASM_GENERATE_CLOSED_WORLD_MULTIMODULE in this) { arguments.wasmGenerateClosedWorldMultimodule = get(X_WASM_GENERATE_CLOSED_WORLD_MULTIMODULE)}
@@ -212,6 +218,9 @@ internal class WasmArgumentsImpl(
 
     public val X_WASM_DEBUGGER_CUSTOM_FORMATTERS: WasmArgument<Boolean> =
         WasmArgument("X_WASM_DEBUGGER_CUSTOM_FORMATTERS")
+
+    public val X_WASM_DISABLE_ARRAY_RANGE_CHECKS_SAFE_ELIMINATION: WasmArgument<Boolean> =
+        WasmArgument("X_WASM_DISABLE_ARRAY_RANGE_CHECKS_SAFE_ELIMINATION")
 
     public val X_WASM_ENABLE_ARRAY_RANGE_CHECKS: WasmArgument<Boolean> =
         WasmArgument("X_WASM_ENABLE_ARRAY_RANGE_CHECKS")
