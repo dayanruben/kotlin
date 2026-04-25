@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.*
 import org.jetbrains.kotlin.test.services.impl.ModuleStructureExtractorImpl
 import org.jetbrains.kotlin.test.utils.TestDisposable
+import org.jetbrains.kotlin.utils.addToStdlib.applyIf
 
 @OptIn(TestInfrastructureInternals::class)
 sealed class TestConfigurationImplBase<Step : TestStep<*, *>>(
@@ -229,18 +230,15 @@ class GroupingPhaseTestConfigurationImpl(
 val TestServices.testConfiguration: TestConfigurationImplBase<*> by TestServices.testServiceAccessor()
 
 @OptIn(TestInfrastructureInternals::class)
-fun TestServices.shouldIsolateTestInGroupingConfiguration(testModuleStructure: TestModuleStructure): Boolean {
-    return (testConfiguration as NonGroupingPhaseTestConfiguration).groupingTestIsolators.any {
-        it.shouldIsolateTestInGroupingConfiguration(testModuleStructure)
+fun TestServices.shouldIsolateTestInGroupingConfiguration(testModuleStructure: TestModuleStructure, fileGenerationPhase: Boolean): Boolean {
+    val groupingTestIsolators = (testConfiguration as NonGroupingPhaseTestConfiguration).groupingTestIsolators
+        .applyIf(fileGenerationPhase) { filter { it.affectsFileGenerators } }
+    return groupingTestIsolators.any {
+        it.computeBatchToken(testModuleStructure) == GroupingTestIsolator.BatchToken.Isolated
     }
 }
 
 @OptIn(TestInfrastructureInternals::class)
-fun TestServices.shouldIsolateTestInGroupingConfiguration(): Boolean =
-    (testConfiguration as NonGroupingPhaseTestConfiguration).shouldIsolateTestInGroupingConfiguration()
-
-
-fun NonGroupingPhaseTestConfiguration.shouldIsolateTestInGroupingConfiguration(): Boolean =
-    groupingTestIsolators.any {
-        it.shouldIsolateTestInGroupingConfiguration()
-    }
+fun TestServices.shouldIsolateTestInGroupingConfiguration(fileGenerationPhase: Boolean): Boolean {
+    return shouldIsolateTestInGroupingConfiguration(moduleStructure, fileGenerationPhase)
+}
