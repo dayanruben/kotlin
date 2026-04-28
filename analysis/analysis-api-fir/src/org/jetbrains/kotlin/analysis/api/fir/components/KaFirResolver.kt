@@ -13,6 +13,11 @@ import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.*
 import org.jetbrains.kotlin.analysis.api.fir.references.*
+import org.jetbrains.kotlin.analysis.api.fir.references.FirReferenceResolveHelper.getQualifierSelected
+import org.jetbrains.kotlin.analysis.api.fir.references.FirReferenceResolveHelper.getSymbolsByNameArgumentExpression
+import org.jetbrains.kotlin.analysis.api.fir.references.FirReferenceResolveHelper.getSymbolsByResolvedImport
+import org.jetbrains.kotlin.analysis.api.fir.references.FirReferenceResolveHelper.getSymbolsForResolvedQualifier
+import org.jetbrains.kotlin.analysis.api.fir.references.FirReferenceResolveHelper.getSymbolsForResolvedTypeRef
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirArrayOfSymbolProvider.arrayOfSymbol
 import org.jetbrains.kotlin.analysis.api.fir.utils.firSymbol
 import org.jetbrains.kotlin.analysis.api.fir.utils.processEqualsFunctions
@@ -29,15 +34,16 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFir
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirSafe
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.resolveToFirSymbolOfTypeSafe
 import org.jetbrains.kotlin.analysis.low.level.api.fir.resolver.AllCandidatesResolver
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.errorWithFirSpecificEntries
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.findStringPlusSymbol
 import org.jetbrains.kotlin.fir.FirElement
+import org.jetbrains.kotlin.fir.FirPackageDirective
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
@@ -85,6 +91,7 @@ import org.jetbrains.kotlin.toKtPsiSourceElement
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions.EQUALS
+import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.exceptions.*
@@ -218,6 +225,10 @@ internal class KaFirResolver(
 
     private fun resolveSymbol(psi: KtElement): KaSymbolResolutionAttempt? = when (psi) {
         is KDocName -> resolveKDocName(psi)
+        is KtNameReferenceExpression if psi.parent is KtValueArgumentName -> {
+            getSymbolsByNameArgumentExpression(psi, analysisSession, firSymbolBuilder).ifNotEmpty(::KaBaseSymbolResolutionSuccess)
+        }
+
         else -> psi.getOrBuildFirWithAdjustments()?.unwrapSafeCall()?.toKaSymbolResolutionAttempt(psi)
     }
 
@@ -239,11 +250,16 @@ internal class KaFirResolver(
     }
 
     private fun FirElement.toKaSymbolResolutionAttempt(psi: KtElement): KaSymbolResolutionAttempt? = when (this) {
+        is FirResolvedTypeRef if psi is KtSimpleNameExpression -> toKaSymbolResolutionAttempt(psi)
+        is FirReference -> toKaSymbolResolutionAttempt(psi)
         is FirDiagnosticHolder -> toKaSymbolResolutionError(psi)
         is FirResolvable -> toKaSymbolResolutionAttempt(psi)
-        is FirReference -> toKaSymbolResolutionAttempt(psi)
         is FirReturnExpression -> toKaSymbolResolutionAttempt(psi)
-        is FirResolvedQualifier -> toKaSymbolResolutionAttempt()
+        is FirTypeParameter -> toKaSymbolResolutionAttempt()
+        is FirResolvedReifiedParameterReference -> toKaSymbolResolutionAttempt()
+        is FirResolvedQualifier if psi is KtSimpleNameExpression -> toKaSymbolResolutionAttempt(psi)
+        is FirPackageDirective if psi is KtSimpleNameExpression -> toKaSymbolResolutionAttempt(psi)
+        is FirResolvedImport if psi is KtSimpleNameExpression -> toKaSymbolResolutionAttempt(psi)
         else -> null
     }
 
@@ -334,10 +350,6 @@ internal class KaFirResolver(
     }
 
     private fun FirReference.toKaSymbolResolutionAttempt(psi: KtElement): KaSymbolResolutionAttempt? {
-        if (this is FirDiagnosticHolder) {
-            return toKaSymbolResolutionError(psi)
-        }
-
         val firSymbolToBuild = when (this) {
             is FirSuperReference -> {
                 val resolvedTypeRef = superTypeRef as? FirResolvedTypeRef ?: return null
@@ -359,6 +371,10 @@ internal class KaFirResolver(
 
                 else -> symbol
             }
+        }
+
+        if (this is FirDiagnosticHolder) {
+            return toKaSymbolResolutionError(psi)
         }
 
         val symbol = when (val symbol = firSymbolToBuild?.buildSymbol(firSymbolBuilder)) {
@@ -384,23 +400,74 @@ internal class KaFirResolver(
      */
     private fun invokeFunctionReceiver(psi: KtNameReferenceExpression): KaSymbolResolutionAttempt? {
         val callExpression = psi.getContainingCallExpressionForCalleeExpression() ?: return null
-        val implicitInvokeCall = callExpression.getOrBuildFirSafe<FirImplicitInvokeCall>(analysisSession.resolutionFacade) ?: return null
-        return implicitInvokeCall.explicitReceiver?.toKaSymbolResolutionAttempt(psi)
+        val implicitInvokeCall = callExpression.getOrBuildFir(analysisSession.resolutionFacade)
+            ?.unwrapSafeCall() as? FirImplicitInvokeCall
+
+        return implicitInvokeCall?.explicitReceiver?.toKaSymbolResolutionAttempt(psi)
     }
 
-    /**
-     * TODO: support corner cases such as packages
-     *
-     * @see FirReferenceResolveHelper
-     */
-    private fun FirResolvedQualifier.toKaSymbolResolutionAttempt(): KaSymbolResolutionAttempt? {
-        val referencedSymbol = when (val symbol = symbol) {
-            // Note: we want to consider the companion object only for regular class qualifiers (and not for typealiased ones)
-            is FirRegularClassSymbol if (resolvedToCompanionObject) -> symbol.companionObjectSymbol
-            else -> symbol
+    private fun FirResolvedQualifier.toKaSymbolResolutionAttempt(psi: KtSimpleNameExpression): KaSymbolResolutionAttempt? {
+        return getSymbolsForResolvedQualifier(
+            fir = this,
+            expression = psi,
+            session = analysisSession.firSession,
+            symbolBuilder = firSymbolBuilder,
+        ).ifNotEmpty(::KaBaseSymbolResolutionSuccess)
+    }
+
+    @Suppress("UnusedReceiverParameter")
+    private fun FirPackageDirective.toKaSymbolResolutionAttempt(psi: KtSimpleNameExpression): KaSymbolResolutionAttempt? {
+        val packageFqName = getQualifierSelected(psi, forQualifiedType = false)
+        return firSymbolBuilder.createPackageSymbolIfOneExists(packageFqName)?.let(::KaBaseSymbolResolutionSuccess)
+    }
+
+    private fun FirTypeParameter.toKaSymbolResolutionAttempt(): KaSymbolResolutionAttempt {
+        return KaBaseSymbolResolutionSuccess(firSymbolBuilder.buildSymbol(symbol))
+    }
+
+    private fun FirResolvedReifiedParameterReference.toKaSymbolResolutionAttempt(): KaSymbolResolutionAttempt {
+        return KaBaseSymbolResolutionSuccess(firSymbolBuilder.buildSymbol(symbol))
+    }
+
+    private fun FirResolvedImport.toKaSymbolResolutionAttempt(psi: KtSimpleNameExpression): KaSymbolResolutionAttempt? {
+        return getSymbolsByResolvedImport(
+            expression = psi,
+            builder = firSymbolBuilder,
+            fir = this,
+            session = analysisSession.firSession,
+        ).ifNotEmpty(::KaBaseSymbolResolutionSuccess)
+    }
+
+    private fun FirResolvedTypeRef.toKaSymbolResolutionAttempt(psi: KtSimpleNameExpression): KaSymbolResolutionAttempt? {
+        val resolvedTypeSymbols = getSymbolsForResolvedTypeRef(
+            expression = psi,
+            fir = this,
+            session = analysisSession.firSession,
+            symbolBuilder = firSymbolBuilder,
+        )
+
+        val resolutionError = (this as? FirDiagnosticHolder)?.toKaSymbolResolutionError(psi)?.let { resolutionError ->
+            val name = psi.getReferencedNameAsName()
+            KaBaseSymbolResolutionError(
+                backingDiagnostic = resolutionError.diagnostic,
+                // TODO(KT-85949): replace filtering with a proper error/symbols once the issue is fixed.
+                // For now it is used to get rid of unrelated classifiers from the result.
+                // No need to check packages since they cannot be candidates
+                backingCandidateSymbols = resolutionError.candidateSymbols.filter { it is KaNamedSymbol && it.name == name },
+            )
         }
 
-        return referencedSymbol?.buildSymbol(firSymbolBuilder)?.let(::KaBaseSymbolResolutionSuccess)
+        // Resolved symbols might properly detect usages of nested elements,
+        // but at the same time, if they found error symbols, the error result has to be preserved
+        val errorCandidates = resolutionError?.candidateSymbols
+        if (errorCandidates != null &&
+            errorCandidates.size == resolvedTypeSymbols.size &&
+            errorCandidates.toHashSet().containsAll(resolvedTypeSymbols)
+        ) {
+            return resolutionError
+        }
+
+        return resolvedTypeSymbols.ifNotEmpty(::KaBaseSymbolResolutionSuccess) ?: resolutionError
     }
 
     private fun FirDiagnosticHolder.toKaSymbolResolutionError(psi: KtElement): KaSymbolResolutionError =
@@ -460,6 +527,8 @@ internal class KaFirResolver(
         val resolveFragmentOfCall = psiToResolve == containingBinaryExpressionForLhs || psiToResolve == containingUnaryExpressionForIncOrDec
         return when (val fir = psiToResolve.getOrBuildFirWithAdjustments()) {
             null -> emptyList()
+            // Type references are not supposed to be covered by the call resolution. The symbol resolution will be used instead
+            is FirResolvedTypeRef if psiToResolve is KtSimpleNameExpression -> emptyList()
             is FirDiagnosticHolder -> fir.onError(psiToResolve, resolveFragmentOfCall)
             else -> {
                 fir.onSuccess(
@@ -1062,7 +1131,13 @@ internal class KaFirResolver(
                 )
             }
 
-            is FirPropertyAccessExpression, is FirCallableReferenceAccess, is FirFunctionCall, is FirErrorExpression -> when (partiallyAppliedSymbol.symbol) {
+            is FirPropertyAccessExpression,
+            is FirCallableReferenceAccess,
+            is FirFunctionCall,
+            is FirErrorExpression,
+            is FirResolvedErrorReference,
+                -> when (partiallyAppliedSymbol.symbol) {
+
                 is KaVariableSymbol -> {
                     @Suppress("UNCHECKED_CAST") // safe because of the above check on targetKtSymbol
                     KaBaseSimpleVariableAccessCall(

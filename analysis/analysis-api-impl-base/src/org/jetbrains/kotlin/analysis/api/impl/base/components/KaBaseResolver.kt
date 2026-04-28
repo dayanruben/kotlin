@@ -57,18 +57,15 @@ abstract class KaBaseResolver<T : KaSession> : KaBaseSessionComponent<T>(), KaRe
      * In reality, the reuse of call resolution is actually a benefit because its result is cached and
      * effectively reused at all entry points into the resolver API
      */
-    private fun KtResolvableCall.tryResolveSymbolsForResolvableCall(): KaSymbolResolutionAttempt? {
-        return when (val callAttempt = tryResolveCall()) {
-            is KaSingleCallResolutionAttempt -> callAttempt.toSingleSymbolResolutionAttempt()
-            is KaMultiCallResolutionAttempt -> callAttempt.toSymbolResolutionAttempt()
-
-            null -> when (this) {
-                // Name reference expressions are special since they might represent not only calls
-                // but also types
-                is KtNameReferenceExpression -> tryResolveSymbolsForElement()
-                else -> null
-            }
-        }
+    private fun KtResolvableCall.tryResolveSymbolsForResolvableCall(): KaSymbolResolutionAttempt? = when (this) {
+        // Name reference expressions are special since they might represent not only calls but types as well.
+        // Also, in some cases the result is more specific for symbols (e.g., it prefers classes to constructors)
+        is KtNameReferenceExpression -> tryResolveSymbolsForElement()
+        else -> null
+    } ?: when (val callAttempt = tryResolveCall()) {
+        is KaSingleCallResolutionAttempt -> callAttempt.toSingleSymbolResolutionAttempt()
+        is KaMultiCallResolutionAttempt -> callAttempt.toSymbolResolutionAttempt()
+        null -> null
     }
 
     /**
@@ -79,7 +76,10 @@ abstract class KaBaseResolver<T : KaSession> : KaBaseSessionComponent<T>(), KaRe
     private fun KtOperationReferenceExpression.tryResolveSymbolsForOperationReference(): KaSymbolResolutionAttempt? {
         val resolvableCall = parent as? KtResolvableCall ?: return null
         return when (val callAttempt = resolvableCall.tryResolveCall()) {
-            is KaSingleCallResolutionAttempt -> callAttempt.toSingleSymbolResolutionAttempt()
+            is KaCallResolutionError -> callAttempt.toSingleSymbolResolutionAttempt()
+
+            // Single variable access is not expected to be a result of the symbol resolve (the assignment use case)
+            is KaCallResolutionSuccess if callAttempt.call !is KaVariableAccessCall -> callAttempt.toSingleSymbolResolutionAttempt()
             is KaMultiCallResolutionAttempt -> when (callAttempt) {
                 is KaCompoundArrayAccessCallResolutionAttempt -> mergeSymbolAttempts(
                     listOf(
@@ -131,7 +131,6 @@ abstract class KaBaseResolver<T : KaSession> : KaBaseSessionComponent<T>(), KaRe
     final override fun KtDestructuringDeclarationEntry.resolveSymbol(): KaCallableSymbol? = resolveSymbolSafe()
     final override fun KtQualifiedExpression.resolveSymbol(): KaCallableSymbol? = resolveSymbolSafe()
     final override fun KtConstructorCalleeExpression.resolveSymbol(): KaConstructorSymbol? = resolveSymbolSafe()
-    final override fun KtNameReferenceExpression.resolveSymbol(): KaDeclarationSymbol? = resolveSymbolSafe()
     final override fun KtInstanceExpressionWithLabel.resolveSymbol(): KaDeclarationSymbol? = resolveSymbolSafe()
 
     final override fun KtReference.resolveToSymbol(): KaSymbol? = withPsiValidityAssertion(element) {

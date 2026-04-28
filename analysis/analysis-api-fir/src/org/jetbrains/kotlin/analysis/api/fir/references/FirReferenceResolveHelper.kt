@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.analysis.api.fir.*
-import org.jetbrains.kotlin.analysis.api.fir.references.FirReferenceResolveHelper.getSymbolsByResolvedImport
 import org.jetbrains.kotlin.analysis.api.fir.utils.processEqualsFunctions
 import org.jetbrains.kotlin.analysis.api.impl.base.util.unexpectedElementError
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
@@ -147,14 +146,12 @@ internal object FirReferenceResolveHelper {
         return symbolBuilder.createPackageSymbolIfOneExists(getQualifierSelected(expression, forQualifiedType))
     }
 
-    private fun getQualifierSelected(
-        expression: KtSimpleNameExpression,
-        forQualifiedType: Boolean,
-    ): FqName {
+    fun getQualifierSelected(expression: KtSimpleNameExpression, forQualifiedType: Boolean): FqName {
         val qualified = when {
             forQualifiedType -> expression.parent?.takeIf { it is KtUserType && it.referenceExpression === expression }
             else -> expression.getQualifiedExpressionForSelector()
         }
+
         return when (qualified) {
             null -> FqName(expression.getReferencedName())
             else -> {
@@ -370,11 +367,11 @@ internal object FirReferenceResolveHelper {
         return emptyList()
     }
 
-    private fun getSymbolsByNameArgumentExpression(
+    fun getSymbolsByNameArgumentExpression(
         expression: KtSimpleNameExpression,
         analysisSession: KaFirSession,
         symbolBuilder: KaSymbolByFirBuilder,
-    ): Collection<KaSymbol> {
+    ): List<KaSymbol> {
         val ktValueArgumentName = expression.parent as? KtValueArgumentName ?: return emptyList()
         val ktValueArgument = ktValueArgumentName.parent as? KtValueArgument ?: return emptyList()
         val ktValueArgumentList = ktValueArgument.parent as? KtValueArgumentList ?: return emptyList()
@@ -501,7 +498,7 @@ internal object FirReferenceResolveHelper {
      *
      * [getSymbolsByResolvedImport] only covers simple imports, but not star imports.
      */
-    private fun getSymbolsByResolvedImport(
+    fun getSymbolsByResolvedImport(
         expression: KtSimpleNameExpression,
         builder: KaSymbolByFirBuilder,
         fir: FirResolvedImport,
@@ -549,12 +546,12 @@ internal object FirReferenceResolveHelper {
         }
     }
 
-    private fun getSymbolsForResolvedTypeRef(
+    fun getSymbolsForResolvedTypeRef(
         fir: FirResolvedTypeRef,
         expression: KtSimpleNameExpression,
         session: FirSession,
         symbolBuilder: KaSymbolByFirBuilder,
-    ): Collection<KaSymbol> {
+    ): List<KaSymbol> {
         if (!expression.isPartOfUserTypeRefQualifier()) {
             return listOfNotNull(fir.toTargetSymbol(session, symbolBuilder))
         }
@@ -590,7 +587,7 @@ internal object FirReferenceResolveHelper {
         expression: KtSimpleNameExpression,
         session: FirSession,
         symbolBuilder: KaSymbolByFirBuilder,
-    ): Collection<KaSymbol> {
+    ): List<KaSymbol> {
         return when (typeRef) {
             null -> emptyList()
             is FirErrorTypeRef -> {
@@ -613,12 +610,12 @@ internal object FirReferenceResolveHelper {
         }
     }
 
-    private fun getSymbolsForResolvedQualifier(
+    fun getSymbolsForResolvedQualifier(
         fir: FirResolvedQualifier,
         expression: KtSimpleNameExpression,
         session: FirSession,
         symbolBuilder: KaSymbolByFirBuilder,
-    ): Collection<KaSymbol> {
+    ): List<KaSymbol> {
         val referencedSymbol = when (val symbol = fir.symbol) {
             // Note: we want to consider the companion object only for regular class qualifiers (and not for typealiased ones)
             is FirRegularClassSymbol if (fir.resolvedToCompanionObject) -> symbol.companionObjectSymbol
@@ -757,7 +754,7 @@ internal object FirReferenceResolveHelper {
      * Returns the segments of a qualified access PSI. For example, given `foo.bar.OuterClass.InnerClass`, this returns `["foo", "bar",
      * "OuterClass", "InnerClass"]`.
      */
-    private fun KtDotQualifiedExpression.fqNameSegments(): List<String>? {
+    fun KtDotQualifiedExpression.fqNameSegments(): List<String>? {
         val qualifiers = generateSequence(this as KtExpression) { (it as? KtDotQualifiedExpression)?.receiverExpression }
             .map { (it as? KtDotQualifiedExpression)?.selectorExpression ?: it }
             .toList()
