@@ -312,7 +312,6 @@ fun Project.configureTests() {
         val notCacheableTestProjects: List<String> = listOf(
             ":analysis:analysis-api-standalone:analysis-api-standalone-native",
             ":analysis:low-level-api-fir:low-level-api-fir-native-compiler-tests",
-            ":compiler",
             ":compiler:android-tests",
             ":compiler:arguments",
             ":compiler:build-tools:kotlin-build-tools-api",
@@ -334,7 +333,6 @@ fun Project.configureTests() {
             ":jps:jps-plugin",
             ":kotlin-annotation-processing",
             ":kotlin-annotation-processing-base",
-            ":kotlin-atomicfu-compiler-plugin",
             ":kotlin-build-common",
             ":kotlin-compiler-client-embeddable",
             ":kotlin-compiler-embeddable",
@@ -389,10 +387,8 @@ fun Project.configureTests() {
             ":native:objcexport-header-generator-k1",
 
             ":native:unsafe-mem", // KTI-3068.
-            ":plugins:compose-compiler-plugin:compiler-hosted",
             ":plugins:compose-compiler-plugin:compiler-hosted:integration-tests",
             ":plugins:jvm-abi-gen",
-            ":plugins:plugins-interactions-testing",
             ":plugins:scripting:scripting-tests",
             ":repo:artifacts-tests",
             ":repo:codebase-tests",
