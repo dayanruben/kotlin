@@ -94,7 +94,8 @@ internal class WasmArgumentsImpl(
   override fun build(): WasmArguments = deepCopy()
 
   @Suppress("DEPRECATION")
-  public fun toCompilerArguments(arguments: KotlinWasmCompilerArguments = KotlinWasmCompilerArguments()): KotlinWasmCompilerArguments {
+  public fun toCompilerArguments(): KotlinWasmCompilerArguments {
+    val arguments = KotlinWasmCompilerArguments()
     super.toCompilerArguments(arguments)
     val unknownArgs = optionsMap.keys.filter { it !in knownArguments }
     if (unknownArgs.isNotEmpty()) {
@@ -121,6 +122,7 @@ internal class WasmArgumentsImpl(
     if (X_WASM_USE_NEW_EXCEPTION_PROPOSAL in this) { arguments.wasmUseNewExceptionProposal = get(X_WASM_USE_NEW_EXCEPTION_PROPOSAL)}
     if (X_WASM_USE_TRAPS_INSTEAD_OF_EXCEPTIONS in this) { arguments.wasmUseTrapsInsteadOfExceptions = get(X_WASM_USE_TRAPS_INSTEAD_OF_EXCEPTIONS)}
     arguments.internalArguments = parseCommandLineArguments<KotlinWasmCompilerArguments>(internalArguments.toList()).internalArguments
+    populateExplicitArguments(arguments)
     return arguments
   }
 

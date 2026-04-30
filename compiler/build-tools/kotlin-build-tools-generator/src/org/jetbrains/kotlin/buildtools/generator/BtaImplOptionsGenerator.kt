@@ -143,7 +143,12 @@ internal class BtaImplOptionsGenerator(
                         MemberName("org.jetbrains.kotlin.cli.common.arguments", "parseCommandLineArguments"),
                         level.getCompilerArgumentsClassName()
                     )
-
+                    if (!generateCompatLayer) {
+                        toCompilerConverterFun.addStatement(
+                            "%M(arguments)",
+                            MemberName("org.jetbrains.kotlin.buildtools.internal.arguments", "populateExplicitArguments")
+                        )
+                    }
                     constructorSpecBuilder.addStatement("applyCompilerArguments(%T())", level.getCompilerArgumentsClassName())
                 }
 
@@ -866,13 +871,11 @@ private fun toCompilerConverterFunBuilder(
     parentClass: TypeName?,
 ): FunSpec.Builder = FunSpec.builder("toCompilerArguments").apply {
     val compilerArgumentsClass = level.getCompilerArgumentsClassName()
-    addParameter(
-        ParameterSpec.builder("arguments", compilerArgumentsClass).apply {
-            if (level.isLeaf()) {
-                defaultValue("%T()", compilerArgumentsClass)
-            }
-        }.build()
-    )
+    if (!level.isLeaf()) {
+        addParameter("arguments", compilerArgumentsClass)
+    } else {
+        addStatement("val arguments = %T()", compilerArgumentsClass)
+    }
     annotation<Suppress> {
         addMember("%S", "DEPRECATION")
     }

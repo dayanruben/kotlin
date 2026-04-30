@@ -183,7 +183,8 @@ internal class JvmCompilerArgumentsImpl(
   override fun build(): JvmCompilerArguments = deepCopy()
 
   @Suppress("DEPRECATION")
-  public fun toCompilerArguments(arguments: K2JVMCompilerArguments = K2JVMCompilerArguments()): K2JVMCompilerArguments {
+  public fun toCompilerArguments(): K2JVMCompilerArguments {
+    val arguments = K2JVMCompilerArguments()
     super.toCompilerArguments(arguments)
     val unknownArgs = optionsMap.keys.filter { it !in knownArguments }
     if (unknownArgs.isNotEmpty()) {
@@ -269,6 +270,7 @@ internal class JvmCompilerArgumentsImpl(
     if (X_NULLABILITY_ANNOTATIONS in this) { arguments.applyNullabilityAnnotations(get(X_NULLABILITY_ANNOTATIONS))}
     if (X_JSR305 in this) { arguments.applyJsr305(get(X_JSR305))}
     arguments.internalArguments = parseCommandLineArguments<K2JVMCompilerArguments>(internalArguments.toList()).internalArguments
+    populateExplicitArguments(arguments)
     return arguments
   }
 
