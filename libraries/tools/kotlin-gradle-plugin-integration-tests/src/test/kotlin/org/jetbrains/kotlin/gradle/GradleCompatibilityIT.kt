@@ -34,7 +34,6 @@ import kotlin.io.path.pathString
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-@SmokeTest
 @DisplayName("Tests on compatibility with various Gradle versions")
 @JvmGradlePluginTests
 class GradleCompatibilityIT : KGPBaseTest() {

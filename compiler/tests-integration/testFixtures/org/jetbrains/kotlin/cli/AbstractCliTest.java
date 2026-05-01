@@ -32,6 +32,7 @@ import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.function.Supplier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -297,32 +298,25 @@ public abstract class AbstractCliTest extends TestCaseWithTmpdir {
         }
     }
 
+    private static String replaceIfNeeded(String str, String placeholder, Supplier<String> valueSupplier) {
+        if (!str.contains(placeholder)) return str;
+        return str.replace(placeholder, valueSupplier.get());
+    }
+
     private static String replaceTestPaths(@NotNull String str, @NotNull File testDataDir, @NotNull String tempDir) {
-        return str
+        str = str
                 .replace("$TEMP_DIR$", tempDir)
-                .replace(TESTDATA_DIR, testDataDir.getAbsolutePath())
-                .replace("$STDLIB_COMMON_PATH$", ForTestCompileRuntime.stdlibCommonForTests().getAbsolutePath())
-                .replace(
-                        "$FOREIGN_ANNOTATIONS_DIR$",
-                        ForTestCompileRuntime.thirdPartyAnnotations().getAbsolutePath()
-                )
-                .replace(
-                        "$JSR_305_DECLARATIONS$",
-                        ForTestCompileRuntime.thirdPartyJsr305ForTests().getAbsolutePath()
-                )
-                .replace(
-                        "$FOREIGN_JAVA8_ANNOTATIONS_DIR$",
-                        ForTestCompileRuntime.thirdPartyJava8AnnotationsForTests().getAbsolutePath()
-                ).replace(
-                        "$JDK_17$",
-                        KtTestUtil.getJdk17Home().getPath()
-                ).replace(
-                        "$STDLIB_JS$",
-                        ForTestCompileRuntime.stdlibJsForTests().getAbsolutePath()
-                ).replace(
-                        "$STDLIB_WASM_JS$",
-                        ForTestCompileRuntime.stdlibWasmJsForTests().getAbsolutePath()
-                );
+                .replace(TESTDATA_DIR, testDataDir.getAbsolutePath());
+
+        str = replaceIfNeeded(str, "$STDLIB_COMMON_PATH$", () -> ForTestCompileRuntime.stdlibCommonForTests().getAbsolutePath());
+        str = replaceIfNeeded(str, "$FOREIGN_ANNOTATIONS_DIR$", () -> ForTestCompileRuntime.thirdPartyAnnotations().getAbsolutePath());
+        str = replaceIfNeeded(str, "$JSR_305_DECLARATIONS$", () -> ForTestCompileRuntime.thirdPartyJsr305ForTests().getAbsolutePath());
+        str = replaceIfNeeded(str, "$FOREIGN_JAVA8_ANNOTATIONS_DIR$", () -> ForTestCompileRuntime.thirdPartyJava8AnnotationsForTests().getAbsolutePath());
+        str = replaceIfNeeded(str, "$JDK_17$", () -> KtTestUtil.getJdk17Home().getPath());
+        str = replaceIfNeeded(str, "$STDLIB_JS$", () -> ForTestCompileRuntime.stdlibJsForTests().getAbsolutePath());
+        str = replaceIfNeeded(str, "$STDLIB_WASM_JS$", () -> ForTestCompileRuntime.stdlibWasmJsForTests().getAbsolutePath());
+
+        return str;
     }
 
     protected void doJvmTest(@NotNull String fileName) {

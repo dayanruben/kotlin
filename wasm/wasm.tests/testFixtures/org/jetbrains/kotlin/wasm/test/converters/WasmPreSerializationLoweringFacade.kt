@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.cli.pipeline.web.WebKlibInliningPipelinePhase
 import org.jetbrains.kotlin.cli.pipeline.withNewDiagnosticCollector
 import org.jetbrains.kotlin.diagnostics.impl.DiagnosticsCollectorImpl
 import org.jetbrains.kotlin.test.backend.ir.IrBackendInput
+import org.jetbrains.kotlin.test.backend.ir.WasmAfterFrontendBackendInput
 import org.jetbrains.kotlin.test.frontend.fir.Fir2IrCliBasedOutputArtifact
 import org.jetbrains.kotlin.test.model.BackendKinds
 import org.jetbrains.kotlin.test.model.IrPreSerializationLoweringFacade

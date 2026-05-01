@@ -145,6 +145,7 @@ open class GradleArgumentsProvider : ArgumentsProvider {
         val minGradleVersion = GradleVersion.version(versionsAnnotation.minVersion)
         // Max is used for cases when test is annotated with `@GradleTestVersions(minVersion = LATEST)` but MAX_SUPPORTED isn't latest
         val maxGradleVersion = max(GradleVersion.version(versionsAnnotation.maxVersion), minGradleVersion)
+        if (testFederationMode == TestFederationMode.Smoke) return setOf(maxGradleVersion)
 
         val additionalGradleVersions = versionsAnnotation
             .additionalVersions

@@ -18,10 +18,7 @@ import org.jetbrains.kotlin.test.builders.testConfiguration
 import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives.RECOMPILE
 import org.jetbrains.kotlin.test.impl.NonGroupingPhaseTestConfigurationImpl
 import org.jetbrains.kotlin.test.impl.testConfiguration
-import org.jetbrains.kotlin.test.model.AbstractTestFacade
-import org.jetbrains.kotlin.test.model.ArtifactKinds
-import org.jetbrains.kotlin.test.model.BinaryArtifacts
-import org.jetbrains.kotlin.test.model.TestModule
+import org.jetbrains.kotlin.test.model.*
 import org.jetbrains.kotlin.test.services.*
 import org.jetbrains.kotlin.test.services.configuration.JsEnvironmentConfigurator
 import org.jetbrains.kotlin.test.services.configuration.JsSecondStageEnvironmentConfigurator
@@ -68,6 +65,7 @@ abstract class CommonRecompileModuleJsBackendFacade(
             )
             useDirectives(*builder.directives.toTypedArray())
             useAdditionalServices(*builder.additionalServices.toTypedArray())
+            useCustomCompilerConfigurationProvider(::CompilerConfigurationProviderImpl)
             builder.globalDefaultsConfigurators.forEach { globalDefaults(it) }
             builder.defaultDirectiveConfigurators.forEach { defaultDirectives(it) }
 
@@ -106,7 +104,7 @@ abstract class CommonRecompileModuleJsBackendFacade(
             disposeRootInWriteAction(incrementalConfiguration.rootDisposable)
         }
 
-        return BinaryArtifacts.Js.IncrementalJsArtifact(inputArtifact, incrementalArtifact)
+        return IncrementalJsArtifact(inputArtifact, incrementalArtifact)
     }
 
     override fun shouldTransform(module: TestModule): Boolean {

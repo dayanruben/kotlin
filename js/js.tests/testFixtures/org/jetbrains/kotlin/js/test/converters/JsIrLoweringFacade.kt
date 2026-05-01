@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.js.config.artifactConfigurations
 import org.jetbrains.kotlin.js.test.tools.SwcRunner
 import org.jetbrains.kotlin.js.test.utils.jsIrIncrementalDataProvider
 import org.jetbrains.kotlin.js.test.utils.wrapWithModuleEmulationMarkers
+import org.jetbrains.kotlin.test.backend.ir.DeserializedFromKlibBackendInput
 import org.jetbrains.kotlin.test.backend.ir.IrBackendInput
 import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives
 import org.jetbrains.kotlin.test.frontend.fir.processErrorFromCliPhase
@@ -51,7 +52,7 @@ class JsIrLoweringFacade(
 
     override fun transform(module: TestModule, inputArtifact: IrBackendInput): BinaryArtifacts.Js? {
         require(JsEnvironmentConfigurator.isMainModule(module, testServices))
-        require(inputArtifact is IrBackendInput.DeserializedFromKlibBackendInput<*>) {
+        require(inputArtifact is DeserializedFromKlibBackendInput<*>) {
             "JsIrLoweringFacade expects IrBackendInput.DeserializedFromKlibBackendInput as input"
         }
 
@@ -70,11 +71,11 @@ class JsIrLoweringFacade(
                 .finalizePath(JsEnvironmentConfigurator.getModuleKind(testServices, module)),
         )
 
-        return BinaryArtifacts.Js.JsIrArtifact(outputFile, compilerResult, icCache).dump(module, firstTimeCompilation)
+        return JsIrArtifact(outputFile, compilerResult, icCache).dump(module, firstTimeCompilation)
     }
 
     private fun compileIncrementally(
-        inputArtifact: IrBackendInput.DeserializedFromKlibBackendInput<*>,
+        inputArtifact: DeserializedFromKlibBackendInput<*>,
         module: TestModule,
     ): Pair<CompilerResult, Map<String, ByteArray>?> {
         val configuration = inputArtifact.cliArtifact.configuration
@@ -90,7 +91,7 @@ class JsIrLoweringFacade(
         ) to testServices.jsIrIncrementalDataProvider.getCacheForModule(module)
     }
 
-    private fun compileNonIncrementally(inputArtifact: IrBackendInput.DeserializedFromKlibBackendInput<*>): Pair<CompilerResult, Map<String, ByteArray>?>? {
+    private fun compileNonIncrementally(inputArtifact: DeserializedFromKlibBackendInput<*>): Pair<CompilerResult, Map<String, ByteArray>?>? {
         val (irModuleFragment, moduleDependencies, _, _, _) = inputArtifact.cliArtifact.moduleInfo
 
         irModuleFragment.resolveTestPaths()
@@ -111,10 +112,10 @@ class JsIrLoweringFacade(
         files.forEach(jsIrPathReplacer::lower)
     }
 
-    private fun BinaryArtifacts.Js.JsIrArtifact.dump(
+    private fun JsIrArtifact.dump(
         module: TestModule,
         firstTimeCompilation: Boolean = true
-    ): BinaryArtifacts.Js.JsIrArtifact {
+    ): JsIrArtifact {
         val configuration = testServices.compilerConfigurationProvider.getCompilerConfiguration(module)
         val moduleId = configuration.getNotNull(CommonConfigurationKeys.MODULE_NAME)
         val moduleKind = configuration.get(JSConfigurationKeys.MODULE_KIND, ModuleKind.PLAIN)

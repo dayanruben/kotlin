@@ -243,7 +243,7 @@ object StandardLibrariesPathProviderForKotlinProject : KotlinStandardLibrariesPa
     }
 
     private fun extractFromPropertyFiles(prop: String): Collection<File> {
-        return System.getProperty(prop, null)?.split(",")?.map {
+        return System.getProperty(prop, null)?.split(File.pathSeparatorChar)?.map {
             val f = File(it)
             assert(f.exists()) { "$it not found; property: $prop" }
             f

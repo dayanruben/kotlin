@@ -1,5 +1,8 @@
 // WITH_STDLIB
 // TARGET_BACKEND: WASM
+// IGNORE_KLIB_RUNTIME_ERRORS_WITH_CUSTOM_SECOND_STAGE: Wasm-JS:2.3,2.4
+// ^^^ KT-83159 is fixed in 2.4.20-Beta1
+//     Expected <Cannot cast instance of Function0 to kotlin.Function1: incompatible types> but actual <Cannot cast instance of box$lambda to kotlin.Function1: incompatible types>
 
 // FILE: lib.kt
 import kotlin.reflect.KProperty1

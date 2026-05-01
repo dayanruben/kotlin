@@ -201,6 +201,10 @@ projectTests {
         addClasspathProperty(atomicfuJsClasspath, "atomicfuJs.classpath")
         addClasspathProperty(atomicfuJvmClasspath, "atomicfuJvm.classpath")
         addClasspathProperty(atomicfuCompilerPluginForTests, "atomicfu.compiler.plugin")
+
+        // IncrementalK2JVMWithAtomicfuRunnerTestGenerated needs the compiler distribution.
+        @OptIn(KotlinCompilerDistUsage::class)
+        withDist()
     }
 
     nativeTestTask(
@@ -245,10 +249,6 @@ projectTests {
     withMockJdkRuntime()
 
     withMockJDKModifiedRuntime()
-
-    // For test task only, IncrementalK2JVMWithAtomicfuRunnerTestGenerated needs it
-    @OptIn(KotlinCompilerDistUsage::class)
-    withDist()
 }
 
 publish()

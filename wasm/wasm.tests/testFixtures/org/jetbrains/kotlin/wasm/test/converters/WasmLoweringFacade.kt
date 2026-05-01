@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.wasm.WasmTarget
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.test.DebugMode
+import org.jetbrains.kotlin.test.backend.ir.DeserializedFromKlibBackendInput
 import org.jetbrains.kotlin.test.backend.ir.IrBackendInput
 import org.jetbrains.kotlin.test.directives.WasmEnvironmentConfigurationDirectives
 import org.jetbrains.kotlin.test.directives.WasmEnvironmentConfigurationDirectives.FORCE_DEBUG_FRIENDLY_COMPILATION
@@ -69,7 +70,7 @@ class WasmLoweringFacade(
 
     override fun transform(module: TestModule, inputArtifact: IrBackendInput): BinaryArtifacts.Wasm? {
         require(WasmEnvironmentConfigurator.isMainModule(module, testServices))
-        require(inputArtifact is IrBackendInput.DeserializedFromKlibBackendInput<*>)
+        require(inputArtifact is DeserializedFromKlibBackendInput<*>)
 
         val configuration = testServices.compilerConfigurationProvider.getCompilerConfiguration(module)
         val moduleInfo = inputArtifact.moduleInfo
@@ -126,36 +127,36 @@ class WasmLoweringFacade(
             val multiModuleOptimization = configuration.wasmGenerateClosedWorldMultimodule
             val optimisedResult = dceCompilationSet.compilerResult.runThirdPartyOptimizer(multiModule = multiModuleOptimization)
             val optimisedDependencies = dceCompilationSet.compilationDependencies.map {
-                BinaryArtifacts.WasmCompilationSet(
+                WasmCompilationSet(
                     compiledModule = it.compiledModule,
                     compilerResult = it.compilerResult.runThirdPartyOptimizer(multiModule = multiModuleOptimization)
                 )
             }
-            BinaryArtifacts.WasmCompilationSet(
+            WasmCompilationSet(
                 compiledModule = dceCompilationSet.compiledModule,
                 compilerResult = optimisedResult,
                 compilationDependencies = optimisedDependencies
             )
         }
 
-        return BinaryArtifacts.Wasm.CompilationSets(
+        return WasmCompilationSetsBinaryArtifact(
             compilation = compilationSet,
             dceCompilation = dceCompilationSet,
             optimisedCompilation = optimised,
         )
     }
 
-    fun makeCompilationSet(parameters: List<WasmIrModuleConfiguration>): BinaryArtifacts.WasmCompilationSet {
+    fun makeCompilationSet(parameters: List<WasmIrModuleConfiguration>): WasmCompilationSet {
         val compilationSets = parameters.map { current ->
             val linkedModule = linkWasmIr(current)
             val compilerResult = compileWasmIrToBinary(current, linkedModule)
-            BinaryArtifacts.WasmCompilationSet(linkedModule, compilerResult)
+            WasmCompilationSet(linkedModule, compilerResult)
         }
 
         val main = compilationSets.last()
         val dependencies = compilationSets.dropLast(1)
 
-        return BinaryArtifacts.WasmCompilationSet(
+        return WasmCompilationSet(
             main.compiledModule,
             main.compilerResult,
             dependencies
