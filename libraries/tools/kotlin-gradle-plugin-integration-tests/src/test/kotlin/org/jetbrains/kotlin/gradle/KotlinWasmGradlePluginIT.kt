@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.gradle
 
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.gradle.dsl.JsSourceMapEmbedMode
 import org.jetbrains.kotlin.gradle.targets.js.dsl.Distribution
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject
 import org.jetbrains.kotlin.gradle.targets.js.npm.fromSrcPackageJson
@@ -509,6 +510,41 @@ abstract class AbstractKotlinWasmGradlePluginIT : KGPBaseTest() {
                 assertTasksExecuted(":compileProductionExecutableKotlinWasmJs")
                 assertTasksExecuted(":compileProductionExecutableKotlinWasmJsOptimize")
                 assertTasksExecuted(":wasmJsD8ProductionRun")
+            }
+        }
+    }
+
+    @DisplayName("Check js target without sourcemap does not have warning")
+    @GradleTest
+    fun jsTargetWithoutSourceMap(gradleVersion: GradleVersion) {
+        project("new-mpp-wasm-js", gradleVersion) {
+            buildGradleKts.modify {
+                it.replace("<JsEngine>", "browser")
+            }
+
+            buildScriptInjection {
+                @OptIn(ExperimentalWasmDsl::class)
+                kotlinMultiplatform.wasmJs {
+                    compilerOptions {
+                        sourceMap.set(false)
+                        sourceMapEmbedSources.convention(null as JsSourceMapEmbedMode?)
+                    }
+                }
+            }
+
+            build("assemble") {
+                assertTasksExecuted(":compileProductionExecutableKotlinWasmJs")
+                assertTasksExecuted(":compileProductionExecutableKotlinWasmJsOptimize")
+                assertTasksExecuted(":wasmJsBrowserDistribution")
+
+                assertFileInProjectExists("build/compileSync/wasmJs/main/productionExecutable/kotlin/redefined-wasm-module-name.wasm")
+                assertFileInProjectNotExists("build/compileSync/wasmJs/main/productionExecutable/kotlin/redefined-wasm-module-name.wasm.map")
+
+                assertNoBuildWarnings(
+                    setOf(
+                        "This annotation should be used with the compiler argument '-opt-in=kotlin.RequiresOptIn'"
+                    )
+                )
             }
         }
     }

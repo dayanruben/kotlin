@@ -207,7 +207,7 @@ abstract class Kotlin2JsCompile @Inject constructor(
         }
 
         sources { args ->
-            if (!args.sourceMapPrefix.isNullOrEmpty() || sourceMapBaseDir.isPresent) {
+            if (args.sourceMap && (!args.sourceMapPrefix.isNullOrEmpty() || sourceMapBaseDir.isPresent)) {
                 args.sourceMapBaseDirs = sourceMapBaseDir.orElse(projectDirectory).getFile().absolutePath
             }
 
