@@ -71,6 +71,8 @@ abstract class WasmEnvironmentConfigurator(
         fun isMainModule(module: TestModule, testServices: TestServices): Boolean {
             return module == getMainModule(testServices)
         }
+
+        const val WASM_BASE_FILE_NAME = "index"
     }
 
 
@@ -113,6 +115,11 @@ class WasmFirstStageEnvironmentConfigurator(
 
         configuration.libraries = libraries
         configuration.friendLibraries = friends
+
+        if (isMainModule(module, testServices)) {
+            // set the output name to be used by WebKlibSerializationPipelinePhase
+            configuration.perModuleOutputName = WASM_BASE_FILE_NAME
+        }
 
         configuration.klibRelativePathBases = module.directives[KLIB_RELATIVE_PATH_BASES].applyIf(testServices.cliBasedFacadesEnabled) {
             val modulePath = testServices.sourceFileProvider.getKotlinSourceDirectoryForModule(module).canonicalPath

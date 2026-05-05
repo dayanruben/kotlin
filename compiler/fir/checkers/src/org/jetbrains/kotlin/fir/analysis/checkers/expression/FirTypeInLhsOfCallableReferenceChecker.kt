@@ -19,15 +19,19 @@ import org.jetbrains.kotlin.fir.analysis.checkers.extractArgumentsTypeRefAndSour
 import org.jetbrains.kotlin.fir.analysis.checkers.toTypeArgumentsWithSourceInfo
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
+import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.expressions.FirCallableReferenceAccess
 import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
+import org.jetbrains.kotlin.fir.expressions.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.expressions.unwrapSmartcastExpression
 import org.jetbrains.kotlin.fir.isEnabled
 import org.jetbrains.kotlin.fir.resolve.classTypeParameterSymbols
+import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeInvalidStaticReceiverInCallableReference
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeOuterClassArgumentsRequired
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConePlaceholderProjectionInQualifierResolution
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeWrongNumberOfTypeArgumentsError
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
+import org.jetbrains.kotlin.fir.resolve.requiresCompanionBlockOrExtensionLf
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeAliasSymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
@@ -36,11 +40,21 @@ import org.jetbrains.kotlin.fir.types.FirTypeProjectionWithVariance
 import org.jetbrains.kotlin.fir.types.constructType
 import org.jetbrains.kotlin.fir.types.toRegularClassSymbol
 
-object FirTypeArgumentsOfQualifierOfCallableReferenceChecker : FirCallableReferenceAccessChecker(MppCheckerKind.Common) {
+object FirTypeInLhsOfCallableReferenceChecker : FirCallableReferenceAccessChecker(MppCheckerKind.Common) {
 
     context(context: CheckerContext)
     private val innerClassesProperlySupported: Boolean
         get() = LanguageFeature.ProperSupportOfInnerClassesInCallableReferenceLHS.isEnabled()
+
+    context(context: CheckerContext)
+    private fun shouldErrorBeReportedOnInvalidReceiverForStatic(
+        callableReference: FirCallableReferenceAccess,
+        diagnostic: ConeInvalidStaticReceiverInCallableReference,
+    ): Boolean {
+        if (LanguageFeature.ProhibitCallableReferencesToStaticsWithTypeArgumentsOrNullMarkInLhs.isEnabled()) return true
+        if (diagnostic.forObject && !diagnostic.dueToNullableMark) return true
+        return callableReference.toResolvedCallableSymbol()?.requiresCompanionBlockOrExtensionLf() == true
+    }
 
     /**
      * @return max. severity among reported diagnostics
@@ -52,8 +66,9 @@ object FirTypeArgumentsOfQualifierOfCallableReferenceChecker : FirCallableRefere
         classSymbol: FirClassLikeSymbol<*>,
         lhsType: ConeKotlinType,
     ): Severity? {
-        var warningWasReported = false
-        for (diagnostic in expression.nonFatalDiagnostics) {
+        var severity: Severity? = null
+
+        fun checkSingleAndUpdateSeverity(diagnostic: ConeDiagnostic) {
             when (diagnostic) {
                 is ConeWrongNumberOfTypeArgumentsError -> {
                     val positioning =
@@ -84,18 +99,17 @@ object FirTypeArgumentsOfQualifierOfCallableReferenceChecker : FirCallableRefere
                                 positioningStrategy = positioning,
                             )
                         }
-                        warningWasReported = true
-                        continue
+                        severity = severity ?: Severity.WARNING
+                    } else {
+                        reporter.reportOn(
+                            diagnostic.source,
+                            FirErrors.WRONG_NUMBER_OF_TYPE_ARGUMENTS,
+                            diagnostic.desiredCount,
+                            diagnostic.symbol,
+                            positioningStrategy = positioning,
+                        )
+                        severity = Severity.ERROR
                     }
-
-                    reporter.reportOn(
-                        diagnostic.source,
-                        FirErrors.WRONG_NUMBER_OF_TYPE_ARGUMENTS,
-                        diagnostic.desiredCount,
-                        diagnostic.symbol,
-                        positioningStrategy = positioning,
-                    )
-                    return Severity.ERROR
                 }
                 is ConeOuterClassArgumentsRequired -> {
                     reporter.reportOn(
@@ -103,19 +117,39 @@ object FirTypeArgumentsOfQualifierOfCallableReferenceChecker : FirCallableRefere
                         FirErrors.OUTER_CLASS_ARGUMENTS_REQUIRED,
                         diagnostic.symbol,
                     )
-                    return Severity.ERROR
+                    severity = Severity.ERROR
+                }
+                is ConeInvalidStaticReceiverInCallableReference -> {
+                    val isError = shouldErrorBeReportedOnInvalidReceiverForStatic(expression, diagnostic)
+
+                    val factory = FirErrors.INVALID_QUALIFIER_IN_LHS_OF_CALLABLE_REFERENCE_TO_STATIC.run {
+                        if (isError) errorFactory else warningFactory
+                    }
+
+                    val description = if (diagnostic.forObject) {
+                        "bound callable reference"
+                    } else {
+                        "callable reference to static"
+                    }
+
+                    reporter.reportOn(lhs.source, factory, description)
+                    // no need in updating severity
+                }
+                else -> {
                 }
             }
         }
-        return Severity.WARNING.takeIf { warningWasReported }
+
+        for (diagnostic in expression.nonFatalDiagnostics) {
+            checkSingleAndUpdateSeverity(diagnostic)
+        }
+        return severity
     }
 
     context(context: CheckerContext, reporter: DiagnosticReporter)
     override fun check(expression: FirCallableReferenceAccess) {
         val lhs = expression.explicitReceiver?.unwrapSmartcastExpression() as? FirResolvedQualifier ?: return
         val correspondingDeclaration = lhs.symbol ?: return
-        val lhsType = lhs.resolvedLhsTypeForCallableReferenceOrNull ?: return
-
         for (argument in lhs.typeArguments) {
             val errorTypeRef = (argument as? FirTypeProjectionWithVariance)?.typeRef as? FirErrorTypeRef ?: continue
 
@@ -123,6 +157,7 @@ object FirTypeArgumentsOfQualifierOfCallableReferenceChecker : FirCallableRefere
                 reporter.reportOn(argument.source, FirErrors.PLACEHOLDER_PROJECTION_IN_QUALIFIER)
             }
         }
+        val lhsType = lhs.resolvedLhsTypeForCallableReferenceOrNull ?: return
 
         val nonFatalDiagnosticsCheckResult = checkNonFatalDiagnostics(expression, lhs, correspondingDeclaration, lhsType)
         if (nonFatalDiagnosticsCheckResult == Severity.ERROR) return

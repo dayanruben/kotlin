@@ -4198,6 +4198,13 @@ private fun KaDiagnosticConverterBuilder.addConversions94() {
             token,
         )
     }
+    add(FirErrors.INVALID_QUALIFIER_IN_LHS_OF_CALLABLE_REFERENCE_TO_STATIC.warningFactory) { firDiagnostic ->
+        InvalidQualifierInLhsOfCallableReferenceToStaticWarningImpl(
+            firDiagnostic.a,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.INNER_CLASS_OF_GENERIC_THROWABLE_SUBCLASS) { firDiagnostic ->
         InnerClassOfGenericThrowableSubclassImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -5256,6 +5263,13 @@ private fun KaDiagnosticConverterBuilder.addConversions118() {
             token,
         )
     }
+    add(FirErrors.INVALID_QUALIFIER_IN_LHS_OF_CALLABLE_REFERENCE_TO_STATIC.errorFactory) { firDiagnostic ->
+        InvalidQualifierInLhsOfCallableReferenceToStaticErrorImpl(
+            firDiagnostic.a,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.TYPE_PARAMETER_IN_CATCH_CLAUSE) { firDiagnostic ->
         TypeParameterInCatchClauseImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -6102,6 +6116,12 @@ private fun KaDiagnosticConverterBuilder.addConversions134() {
     }
     add(FirErrors.SINGLE_ANONYMOUS_FUNCTION_WITH_NAME.warningFactory) { firDiagnostic ->
         SingleAnonymousFunctionWithNameWarningImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.EXPECTED_TYPEALIAS) { firDiagnostic ->
+        ExpectedTypealiasImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

@@ -1191,6 +1191,12 @@ public class SourceLikeResolveCandidatesByFileFirTreeConsistencyTestGenerated ex
       run("assignOperatorAmbiguity.kt");
     }
 
+    @Test
+    @TestMetadata("enumArrayAsAnnotationArgumentWithMissedValue.kt")
+    public void testEnumArrayAsAnnotationArgumentWithMissedValue() {
+      run("enumArrayAsAnnotationArgumentWithMissedValue.kt");
+    }
+
     @Nested
     @TestMetadata("analysis/analysis-api/testData/components/resolver/allByPsi/withErrors/partiallyUnresolvedTypeQualifier")
     @TestDataPath("$PROJECT_ROOT")

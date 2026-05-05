@@ -79,7 +79,7 @@ class WasmLoweringSingleModuleFacade(testServices: TestServices) :
         configureModuleResolutionMap(configuration, currentSetup)
 
         if (WasmEnvironmentConfigurator.isMainModule(module, testServices)) {
-            configuration.outputName = "index"
+            configuration.outputName = WasmEnvironmentConfigurator.WASM_BASE_FILE_NAME
         }
 
         val irFactory = moduleInfo.symbolTable.irFactory as IrFactoryImplForWasmIC

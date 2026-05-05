@@ -980,13 +980,13 @@ class Fir2IrCallableDeclarationsGenerator(private val c: Fir2IrComponents) : Fir
             || origin == IrDeclarationOrigin.FAKE_OVERRIDE
             // When `firAnnotationContainer` is not in a compile target file, we will not fill contents for
             // this annotation container later. Therefore, we have to set its annotations here.
-            || firAnnotationContainer.isDeclaredInFilesBeingCompiled()
+            || firAnnotationContainer.isDeclaredOutsideFilesBeingCompiled()
         ) {
             annotationGenerator.generate(this, firAnnotationContainer)
         }
     }
 
-    private fun FirAnnotationContainer.isDeclaredInFilesBeingCompiled(): Boolean {
+    private fun FirAnnotationContainer.isDeclaredOutsideFilesBeingCompiled(): Boolean {
         val filesBeingCompiled = filesBeingCompiled
         if (filesBeingCompiled == null || this !is FirDeclaration) return false
         return moduleData.session.firProvider.getContainingFile(symbol) !in filesBeingCompiled

@@ -2084,6 +2084,16 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val owner: KaSymbol
     }
 
+    interface InvalidQualifierInLhsOfCallableReferenceToStaticError : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = InvalidQualifierInLhsOfCallableReferenceToStaticError::class
+        val kind: String
+    }
+
+    interface InvalidQualifierInLhsOfCallableReferenceToStaticWarning : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = InvalidQualifierInLhsOfCallableReferenceToStaticWarning::class
+        val kind: String
+    }
+
     interface NoTypeArgumentsOnRhs : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = NoTypeArgumentsOnRhs::class
         val expectedCount: Int
@@ -4215,6 +4225,10 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
     interface TypealiasExpandsToCompilerRequiredAnnotationWarning : KaFirDiagnostic<KtElement> {
         override val diagnosticClass get() = TypealiasExpandsToCompilerRequiredAnnotationWarning::class
         val annotation: KaClassLikeSymbol
+    }
+
+    interface ExpectedTypealias : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = ExpectedTypealias::class
     }
 
     interface RedundantVisibilityModifier : KaFirDiagnostic<KtModifierListOwner> {

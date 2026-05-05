@@ -59,6 +59,7 @@ fun copyCommonCompilerArguments(from: CommonCompilerArguments, to: CommonCompile
     to.inlineClasses = from.inlineClasses
     @Suppress("DEPRECATION")
     to.intellijPluginRoot = from.intellijPluginRoot
+    to.intrinsicConstEvaluation = from.intrinsicConstEvaluation
     to.kotlinHome = from.kotlinHome
     to.languageVersion = from.languageVersion
     to.lenientMode = from.lenientMode

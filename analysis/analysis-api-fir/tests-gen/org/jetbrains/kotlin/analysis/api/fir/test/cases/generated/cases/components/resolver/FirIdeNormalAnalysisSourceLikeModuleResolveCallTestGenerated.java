@@ -1688,6 +1688,12 @@ public class FirIdeNormalAnalysisSourceLikeModuleResolveCallTestGenerated extend
     public void testDefaultAnnotationArgumentKotlin() {
       run("defaultAnnotationArgumentKotlin.kt");
     }
+
+    @Test
+    @TestMetadata("enumArrayAsAnnotationArgument.kt")
+    public void testEnumArrayAsAnnotationArgument() {
+      run("enumArrayAsAnnotationArgument.kt");
+    }
   }
 
   @Nested
