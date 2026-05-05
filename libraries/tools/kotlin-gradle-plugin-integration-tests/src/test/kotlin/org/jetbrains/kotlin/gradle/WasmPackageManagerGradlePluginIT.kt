@@ -5,9 +5,14 @@
 
 package org.jetbrains.kotlin.gradle
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import org.gradle.kotlin.dsl.support.serviceOf
 import org.gradle.process.ExecOperations
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.gradle.targets.js.NpmVersions
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsPlugin
 import org.jetbrains.kotlin.gradle.targets.js.npm.LockCopyTask.Companion.KOTLIN_JS_STORE
 import org.jetbrains.kotlin.gradle.targets.js.npm.LockCopyTask.Companion.PACKAGE_LOCK
@@ -270,6 +275,7 @@ abstract class WasmPackageManagerGradlePluginIT : KGPBaseTest() {
             // extracted as val to be serializable
             val isYarn = yarn
             val toolingCustomDir = toolingCustomDir
+            val kgpNpmToolingPackageJson = kgpNpmToolingPackageJson
 
             buildScriptInjection {
                 project.rootProject.extensions.getByType(WasmNpmTooling::class.java).apply {
@@ -297,6 +303,10 @@ abstract class WasmPackageManagerGradlePluginIT : KGPBaseTest() {
                 }
 
                 val toolingCustomDir = project.projectDir.resolve(toolingCustomDir)
+                toolingCustomDir.mkdirs()
+
+                // A `package.json` file is required for `npm install` and `yarn install` commands to work.
+                toolingCustomDir.resolve("package.json").writeText(kgpNpmToolingPackageJson)
 
                 if (isYarn) {
                     toolingCustomDir.resolve("yarn.lock").writeText(kgpYarnLockFileContent)
@@ -380,6 +390,31 @@ abstract class WasmPackageManagerGradlePluginIT : KGPBaseTest() {
                 requireNotNull(source) { "Resource not found: $path" }
                 return source.bufferedReader().readText()
             }
+        }
+
+        /**
+         * Create a `package.json` file containing KGP's tooling dependencies.
+         *
+         * @see [org.jetbrains.kotlin.gradle.targets.js.NpmVersions]
+         */
+        private val kgpNpmToolingPackageJson: String by lazy {
+            val json = Json {
+                prettyPrint = true
+            }
+
+            val packageJson: JsonObject =
+                buildJsonObject {
+                    put("name", "kotlin-tooling-dependencies")
+                    put("version", "1.0.0")
+                    put("private", true)
+                    put("dependencies", buildJsonObject {
+                        NpmVersions().allDependencies.forEach { (name, version) ->
+                            put(name, version)
+                        }
+                    })
+                }
+
+            json.encodeToString(JsonObject.serializer(), packageJson)
         }
     }
 }

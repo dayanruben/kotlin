@@ -110,7 +110,8 @@ internal constructor(
                 nodeSetupTask.flatMap { it.nodeDir.file("bin/npm") }
             )
             t.yarnCli.convention(
-                yarnSetupTask.flatMap { it.yarnDir.map { dir -> dir.file("bin/yarn") } }
+                // Must use `.map {}`, not `.flatMap {}` https://github.com/gradle/gradle/issues/37787
+                yarnSetupTask.map { it.yarnDir.get().file("bin/yarn") }
             )
             t.npmToolingProjectDir.convention(extension.npmToolingProjectDir)
             t.updateVersions.convention(false)
