@@ -835,24 +835,27 @@ class BuildReportsIT : KGPBaseTest() {
     )
     @GradleTest
     fun testJsonBuildReport(gradleVersion: GradleVersion) {
-        project("simpleProject", gradleVersion) {
+        project("incrementalMultiproject", gradleVersion) {
+            val relativeJsonReportPath = "report"
+            val listOfSubprojects = listOf("app", "lib")
             build(
                 "compileKotlin",
-                "-Pkotlin.build.report.json.directory=${projectPath.resolve("report").pathString}",
+                "-Pkotlin.build.report.json.directory=$relativeJsonReportPath",
                 buildOptions = defaultBuildOptions.copy(
                     buildReport = listOf(BuildReportType.JSON)
                 )
             ) {
-                val jsonReport = projectPath.getSingleFileInDir("report")
+                val jsonReport = projectPath.getSingleFileInDir(relativeJsonReportPath)
                 val buildExecutionData = readJsonReport(jsonReport)
-                val buildOperationRecords =
-                    buildExecutionData.buildOperationRecord.first { it.path == ":compileKotlin" } as BuildOperationRecordImpl
-                assertEquals(KotlinVersion.DEFAULT, buildOperationRecords.kotlinLanguageVersion)
+                buildExecutionData.findTaskRecordsForSubprojects(listOfSubprojects, "compileKotlin")
+                    .forEach {
+                        assertEquals(KotlinVersion.DEFAULT, it.kotlinLanguageVersion)
+                    }
                 jsonReport.deleteExisting()
             }
 
-            projectPath.resolve("src/main/kotlin/helloWorld.kt").modify {
-                it.replace("internal fun getNames(): List<String?> = names.toList()", "")
+            projectPath.resolve("lib/src/main/kotlin/bar/A.kt").modify {
+                it.replace("fun a() {}", "fun a() = \"aaa\"")
             }
 
             build(
@@ -866,21 +869,39 @@ class BuildReportsIT : KGPBaseTest() {
             ) {
                 val jsonReport = projectPath.getSingleFileInDir("report")
                 val buildExecutionData = readJsonReport(jsonReport)
-                val buildOperationRecords =
-                    buildExecutionData.buildOperationRecord.first { it.path == ":compileKotlin" } as BuildOperationRecordImpl
-                assertEquals(KotlinVersion.DEFAULT, buildOperationRecords.kotlinLanguageVersion)
-                baseExpectedBuildTimeMetrics?.forEach {
-                    assertContains(buildOperationRecords.buildMetrics.buildTimes.buildTimesMapMs().keys, it)
-                }
-                baseExpectedPerformanceBuildMetrics.forEach {
-                    assertContains(buildOperationRecords.buildMetrics.buildPerformanceMetrics.asMap().keys, it)
-                }
-
-                val configurationRecord =
-                    buildExecutionData.buildOperationRecord.first { it.path == ":configuration" } as BuildOperationRecordImpl
-                assertContains(configurationRecord.buildMetrics.buildTimes.buildTimesMapMs().keys, GRADLE_CONFIGURATION_TIME)
+                buildExecutionData.findTaskRecordsForSubprojects(listOfSubprojects, "compileKotlin")
+                    .forEach { buildOperationRecord ->
+                        assertEquals(KotlinVersion.DEFAULT, buildOperationRecord.kotlinLanguageVersion)
+                        baseExpectedBuildTimeMetrics.forEach {
+                            assertContains(buildOperationRecord.buildMetrics.buildTimes.buildTimesMapMs().keys, it)
+                        }
+                        baseExpectedPerformanceBuildMetrics.forEach {
+                            assertContains(buildOperationRecord.buildMetrics.buildPerformanceMetrics.asMap().keys, it)
+                        }
+                    }
+                buildExecutionData.findTaskRecordsForSubprojects(listOfSubprojects, "configuration")
+                    .forEach {
+                        assertContains(it.buildMetrics.buildTimes.buildTimesMapMs().keys, GRADLE_CONFIGURATION_TIME)
+                    }
             }
         }
+    }
+
+    private fun BuildExecutionData.findTaskRecordsForSubprojects(
+        listOfSubprojects: List<String>,
+        taskName: String,
+    ): List<BuildOperationRecordImpl> {
+        val configurationRecords =
+            buildOperationRecord.filter { listOfSubprojects.map { ":$it:$taskName" }.contains(it.path) }
+                .map { it as BuildOperationRecordImpl }
+        assertEquals(
+            listOfSubprojects.size,
+            configurationRecords.size,
+            "Records for '${
+                configurationRecords.joinToString(", ") { it.path }
+            }' were found, but expected '${listOfSubprojects.size}'"
+        )
+        return configurationRecords
     }
 
     @DisplayName("build report should not be overridden")

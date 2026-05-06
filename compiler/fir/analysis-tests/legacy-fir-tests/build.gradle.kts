@@ -1,3 +1,5 @@
+import JdkMajorVersion.JDK_1_8
+import JdkMajorVersion.JDK_21_0
 import TestCompilePaths.KOTLIN_STDLIB_SOURCES_ROOT_PATH
 
 /*
@@ -15,6 +17,8 @@ plugins {
 dependencies {
     testFixturesApi(libs.junit4)
     testFixturesCompileOnly(kotlinTest("junit"))
+    testImplementation(libs.junit.jupiter.api)
+
     testFixturesApi(testFixtures(project(":compiler:tests-common")))
     testFixturesApi(project(":compiler:fir:checkers"))
     testFixturesApi(project(":compiler:fir:checkers:checkers.jvm"))
@@ -22,12 +26,15 @@ dependencies {
     testFixturesApi(project(":compiler:fir:checkers:checkers.native"))
     testFixturesApi(project(":compiler:fir:checkers:checkers.wasm"))
     testFixturesApi(project(":compiler:fir:entrypoint"))
-    testFixturesApi(project(":compiler:frontend"))
 
     testFixturesApi(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
 
     testFixturesCompileOnly(intellijCore())
     testImplementation(intellijCore())
+
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.vintage.engine)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 optInToK1Deprecation()
@@ -39,15 +46,7 @@ sourceSets {
 }
 
 projectTests {
-    testTask(parallel = true, maxHeapSizeMb = 3072, jUnitMode = JUnitMode.JUnit4) {
-        dependsOn(":dist")
-        addClasspathProperty(
-            layout.files(
-                rootDir.resolve("libraries/stdlib/src"), rootDir.resolve("libraries/stdlib/jvm")
-            ),
-            KOTLIN_STDLIB_SOURCES_ROOT_PATH
-        )
-    }
+    testTask(maxHeapSizeMb = 3072, jUnitMode = JUnitMode.JUnit5, defineJDKEnvVariables = listOf(JDK_1_8, JDK_21_0))
 
     testGenerator("org.jetbrains.kotlin.fir.TestGeneratorForLegacyFirTestsKt", generateTestsInBuildDirectory = true)
 
@@ -55,6 +54,7 @@ projectTests {
     withScriptRuntime()
     withMockJdkRuntime()
     withMockJdkAnnotationsJar()
+    withMockJDKModifiedRuntime()
     withAnnotations()
     withThirdPartyAnnotations()
     withThirdPartyJsr305()

@@ -8,14 +8,13 @@ package org.jetbrains.kotlin.cli.jklib.pipeline
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContextImpl
 import org.jetbrains.kotlin.backend.common.linkage.issues.checkNoUnboundSymbols
+import org.jetbrains.kotlin.backend.common.reportLoadingProblemsIfAny
 import org.jetbrains.kotlin.backend.common.serialization.DescriptorByIdSignatureFinderImpl
 import org.jetbrains.kotlin.backend.common.serialization.DeserializationStrategy
 import org.jetbrains.kotlin.backend.common.serialization.signature.IdSignatureDescriptor
 import org.jetbrains.kotlin.backend.jvm.JvmGeneratorExtensionsImpl
 import org.jetbrains.kotlin.builtins.jvm.JvmBuiltIns
 import org.jetbrains.kotlin.builtins.jvm.JvmBuiltInsPackageFragmentProvider
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.ERROR
-import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.jvm.compiler.AllJavaSourcesInProjectScope
 import org.jetbrains.kotlin.cli.jvm.compiler.NoScopeRecordCliBindingTrace
 import org.jetbrains.kotlin.cli.jvm.compiler.VfsBasedProjectEnvironment
@@ -25,6 +24,7 @@ import org.jetbrains.kotlin.cli.pipeline.PipelinePhase
 import org.jetbrains.kotlin.config.CommonConfigurationKeys.MODULE_NAME
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
+import org.jetbrains.kotlin.config.MessageCollectorAccess
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.container.get
@@ -52,7 +52,6 @@ import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.isJklibStdlib
 import org.jetbrains.kotlin.library.loader.KlibLoader
-import org.jetbrains.kotlin.library.loader.reportLoadingProblemsIfAny
 import org.jetbrains.kotlin.library.metadata.KlibMetadataFactories
 import org.jetbrains.kotlin.load.java.lazy.ModuleClassResolver
 import org.jetbrains.kotlin.load.java.structure.JavaClass
@@ -79,7 +78,6 @@ object JKlibIrCompilationPhase :
     override fun executePhase(input: JKlibSerializationArtifact): JKlibIrCompilationArtifact {
         val configuration = input.configuration
         val klib = File(input.outputKlibPath)
-        val messageCollector = configuration.messageCollector
 
         val projectEnvironment = input.projectEnvironment
 
@@ -91,7 +89,7 @@ object JKlibIrCompilationPhase :
         val klibFactories = KlibMetadataFactories({ builtIns }, JavaFlexibleTypeDeserializer)
         val trace = BindingTraceContext(projectContext.project)
 
-        val sortedDependencies = loadLibraries(klibFiles, messageCollector)
+        val sortedDependencies = loadLibraries(klibFiles, configuration)
 
         val jarDepsModuleDescriptor = createJarDependenciesModuleDescriptor(projectEnvironment, projectContext, configuration)
         
@@ -126,7 +124,7 @@ object JKlibIrCompilationPhase :
         ).apply { unboundSymbolGeneration = true }
         val linker = JKlibIrLinker(
             module = mainModule,
-            messageCollector = messageCollector,
+            configuration = configuration,
             irBuiltIns = irBuiltIns,
             symbolTable = symbolTable,
             stubGenerator = stubGenerator,
@@ -139,7 +137,7 @@ object JKlibIrCompilationPhase :
             symbolTable,
             irBuiltIns,
             linker = linker,
-            messageCollector = messageCollector,
+            messageCollector = @OptIn(MessageCollectorAccess::class) /* deprecated in IrPluginContext */ configuration.messageCollector,
         )
 
         // Deserialize modules
@@ -253,11 +251,9 @@ object JKlibIrCompilationPhase :
         return dependenciesContext.module
     }
 
-    private fun loadLibraries(klibFiles: List<String>, collector: MessageCollector): List<KotlinLibrary> {
+    private fun loadLibraries(klibFiles: List<String>, configuration: CompilerConfiguration): List<KotlinLibrary> {
         val loadingResult = KlibLoader { libraryPaths(klibFiles) }.load()
-        loadingResult.reportLoadingProblemsIfAny { _, message ->
-            collector.report(ERROR, message)
-        }
+        loadingResult.reportLoadingProblemsIfAny(configuration, allAsErrors = true)
         return loadingResult.librariesStdlibFirst
     }
 }
