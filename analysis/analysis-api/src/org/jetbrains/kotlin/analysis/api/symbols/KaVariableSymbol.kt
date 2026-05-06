@@ -251,7 +251,7 @@ public sealed class KaPropertySymbol : KaVariableSymbol(), KaTypeParameterOwnerS
      *
      * ### Good to know
      * On Kotlin/JVM compiled properties from annotations classes are compiled without a backing field,
-     * but for sources it still returns **true**.
+     * but for sources it is still **true**.
      *
      * @see backingFieldSymbol
      * @see isDelegatedProperty

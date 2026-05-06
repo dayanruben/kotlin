@@ -59,6 +59,7 @@ internal abstract class BaseCompilationOperationImpl<BtaCompilerArgs : CommonCom
 
     @UseFromImplModuleRestricted
     override fun <V> set(key: BaseCompilationOperation.Option<V>, value: V) {
+        checkOptionIsAvailableForVersion(key)
         options[key] = value
     }
 
@@ -69,10 +70,7 @@ internal abstract class BaseCompilationOperationImpl<BtaCompilerArgs : CommonCom
         options[key] = value
     }
 
-    class Option<V> : BaseOptionWithDefault<V> {
-        constructor(id: String) : super(id)
-        constructor(id: String, default: V) : super(id, default = default)
-    }
+    class Option<V>(id: String, default: V) : BaseOptionWithDefault<V>(id, defaultValue = default)
 
     override fun executeCancellableImpl(projectId: ProjectId, executionPolicy: ExecutionPolicy, logger: KotlinLogger?): CompilationResult {
         val compilerMessageRenderer = this[COMPILER_MESSAGE_RENDERER]

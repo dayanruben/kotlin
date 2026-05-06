@@ -166,7 +166,7 @@ abstract class KaBaseResolver<T : KaSession> : KaBaseSessionComponent<T>(), KaRe
             withResolvableEntry(this@resolveSingleCallSafe)
         }
 
-        val callableSymbol = call.signature.symbol
+        val callableSymbol = call.symbol
         checkWithAttachment(
             callableSymbol is S,
             { "Expected symbol of type ${S::class.simpleName}, got ${callableSymbol::class.simpleName}" },
@@ -267,7 +267,7 @@ abstract class KaBaseResolver<T : KaSession> : KaBaseSessionComponent<T>(), KaRe
     protected fun tryResolveSymbolsForInvokeReference(reference: KtInvokeFunctionReference): KaSymbolResolutionAttempt? =
         when (val callResult = reference.element.tryResolveCall()) {
             // There is no way to distinguish between the error regular and implicit calls, so by default only relevant errors are shown
-            is KaCallResolutionError -> callResult.candidateCalls.filterIsInstance<KaImplicitInvokeCall>().map { it.signature.symbol }
+            is KaCallResolutionError -> callResult.candidateCalls.filterIsInstance<KaImplicitInvokeCall>().map { it.symbol }
                 .ifNotEmpty {
                     KaBaseSymbolResolutionError(
                         backingDiagnostic = callResult.diagnostic,
@@ -276,7 +276,7 @@ abstract class KaBaseResolver<T : KaSession> : KaBaseSessionComponent<T>(), KaRe
                 }
 
             is KaCallResolutionSuccess -> when (val call = callResult.call) {
-                is KaImplicitInvokeCall -> KaBaseSymbolResolutionSuccess(backingSymbol = call.signature.symbol)
+                is KaImplicitInvokeCall -> KaBaseSymbolResolutionSuccess(backingSymbol = call.symbol)
                 else -> null
             }
 
@@ -368,10 +368,10 @@ abstract class KaBaseResolver<T : KaSession> : KaBaseSessionComponent<T>(), KaRe
         mergeSymbolAttempts(attempts.map { it.toSingleSymbolResolutionAttempt() })
 
     private fun KaSingleCallResolutionAttempt.toSingleSymbolResolutionAttempt(): KaSingleSymbolResolutionAttempt = when (this) {
-        is KaCallResolutionSuccess -> KaBaseSymbolResolutionSuccess(backingSymbol = call.signature.symbol)
+        is KaCallResolutionSuccess -> KaBaseSymbolResolutionSuccess(backingSymbol = call.symbol)
         is KaCallResolutionError -> KaBaseSymbolResolutionError(
             backingDiagnostic = diagnostic,
-            backingCandidateSymbols = candidateCalls.map { it.signature.symbol },
+            backingCandidateSymbols = candidateCalls.map { it.symbol },
         )
     }
 

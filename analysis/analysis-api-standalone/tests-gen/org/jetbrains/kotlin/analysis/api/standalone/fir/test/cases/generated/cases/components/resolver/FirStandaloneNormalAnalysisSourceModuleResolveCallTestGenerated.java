@@ -7016,6 +7016,12 @@ public class FirStandaloneNormalAnalysisSourceModuleResolveCallTestGenerated ext
     }
 
     @Test
+    @TestMetadata("invalidLabelOnReturn.kt")
+    public void testInvalidLabelOnReturn() {
+      run("invalidLabelOnReturn.kt");
+    }
+
+    @Test
     @TestMetadata("InvisibleMember.kt")
     public void testInvisibleMember() {
       run("InvisibleMember.kt");

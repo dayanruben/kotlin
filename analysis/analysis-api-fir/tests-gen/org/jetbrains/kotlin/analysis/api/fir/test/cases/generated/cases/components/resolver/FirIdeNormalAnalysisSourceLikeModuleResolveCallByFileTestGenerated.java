@@ -213,6 +213,12 @@ public class FirIdeNormalAnalysisSourceLikeModuleResolveCallByFileTestGenerated 
   }
 
   @Test
+  @TestMetadata("javaQualifierWithTypeArguments.kt")
+  public void testJavaQualifierWithTypeArguments() {
+    run("javaQualifierWithTypeArguments.kt");
+  }
+
+  @Test
   @TestMetadata("labels.kt")
   public void testLabels() {
     run("labels.kt");
@@ -306,6 +312,12 @@ public class FirIdeNormalAnalysisSourceLikeModuleResolveCallByFileTestGenerated 
   @TestMetadata("this.kt")
   public void testThis() {
     run("this.kt");
+  }
+
+  @Test
+  @TestMetadata("thisSmartcasts.kt")
+  public void testThisSmartcasts() {
+    run("thisSmartcasts.kt");
   }
 
   @Test
@@ -1150,6 +1162,18 @@ public class FirIdeNormalAnalysisSourceLikeModuleResolveCallByFileTestGenerated 
     }
 
     @Test
+    @TestMetadata("qualifiedArrayAccess.kt")
+    public void testQualifiedArrayAccess() {
+      run("qualifiedArrayAccess.kt");
+    }
+
+    @Test
+    @TestMetadata("qualifiedImplicitInvokeAccess.kt")
+    public void testQualifiedImplicitInvokeAccess() {
+      run("qualifiedImplicitInvokeAccess.kt");
+    }
+
+    @Test
     @TestMetadata("range.kt")
     public void testRange() {
       run("range.kt");
@@ -1165,6 +1189,12 @@ public class FirIdeNormalAnalysisSourceLikeModuleResolveCallByFileTestGenerated 
     @TestMetadata("unary.kt")
     public void testUnary() {
       run("unary.kt");
+    }
+
+    @Test
+    @TestMetadata("unaryOnObject.kt")
+    public void testUnaryOnObject() {
+      run("unaryOnObject.kt");
     }
   }
 
@@ -1214,9 +1244,39 @@ public class FirIdeNormalAnalysisSourceLikeModuleResolveCallByFileTestGenerated 
     }
 
     @Test
+    @TestMetadata("callableReferenceForConstructorWithTypeArguments.kt")
+    public void testCallableReferenceForConstructorWithTypeArguments() {
+      run("callableReferenceForConstructorWithTypeArguments.kt");
+    }
+
+    @Test
+    @TestMetadata("classLiteralWithArguments.kt")
+    public void testClassLiteralWithArguments() {
+      run("classLiteralWithArguments.kt");
+    }
+
+    @Test
     @TestMetadata("enumArrayAsAnnotationArgumentWithMissedValue.kt")
     public void testEnumArrayAsAnnotationArgumentWithMissedValue() {
       run("enumArrayAsAnnotationArgumentWithMissedValue.kt");
+    }
+
+    @Test
+    @TestMetadata("implicitInvokeFromBinaryExpression.kt")
+    public void testImplicitInvokeFromBinaryExpression() {
+      run("implicitInvokeFromBinaryExpression.kt");
+    }
+
+    @Test
+    @TestMetadata("qualifierWithTypeArgumentsNotProhibited.kt")
+    public void testQualifierWithTypeArgumentsNotProhibited() {
+      run("qualifierWithTypeArgumentsNotProhibited.kt");
+    }
+
+    @Test
+    @TestMetadata("qualifierWithTypeArgumentsProhibited.kt")
+    public void testQualifierWithTypeArgumentsProhibited() {
+      run("qualifierWithTypeArgumentsProhibited.kt");
     }
 
     @Nested

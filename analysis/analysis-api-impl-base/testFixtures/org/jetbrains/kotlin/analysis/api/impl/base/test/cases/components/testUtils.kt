@@ -586,7 +586,7 @@ internal fun assertConsistency(testServices: TestServices, call: KaSingleOrMulti
 
     if (checkTypeArgumentsMapping) {
         val typeArgumentsMapping = call.typeArgumentsMapping
-        val typeParameters = call.signature.symbol.typeParameters
+        val typeParameters = call.symbol.typeParameters
         for (parameterSymbol in typeParameters) {
             val mappedType = typeArgumentsMapping[parameterSymbol]
             assertions.assertNotNull(mappedType) {
