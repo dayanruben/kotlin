@@ -334,9 +334,41 @@ sealed class KtFakeSourceElementKind(final override val shouldSkipErrorTypeRepor
     object WhenCondition : KtFakeSourceElementKind()
 
     /**
-     * for additional FIR built for code fragments
+     * For code fragments, FIR generates a `FirCodeFragment` declaration. For type code fragments, FIR additionally generates a synthetic
+     * anonymous function holding the type reference (see [TypeCodeFragment]). The various fake source element kinds defined in this class
+     * cover these generated FIR elements. Their real source is the corresponding `KtCodeFragment`.
      */
-    object CodeFragment : KtFakeSourceElementKind()
+    sealed class CodeFragment : KtFakeSourceElementKind() {
+        /**
+         * The source kind of the `FirCodeFragment` declaration itself. Its real source is the corresponding `KtCodeFragment`.
+         */
+        object CodeFragmentDeclaration : CodeFragment()
+
+        /**
+         * For `KtTypeCodeFragment`s, FIR generates a synthetic anonymous function holding the type reference.
+         */
+        sealed class TypeCodeFragment : CodeFragment() {
+            /**
+             * The block wrapping the anonymous function expression. Its real source is the corresponding `KtTypeCodeFragment`.
+             */
+            object Block : TypeCodeFragment()
+
+            /**
+             * The expression wrapping the anonymous function. Its real source is the corresponding `KtTypeCodeFragment`.
+             */
+            object AnonymousFunctionExpression : TypeCodeFragment()
+
+            /**
+             * The synthetic anonymous function holding the type reference. Its real source is the corresponding `KtTypeCodeFragment`.
+             */
+            object AnonymousFunction : TypeCodeFragment() {
+                /**
+                 * The single value parameter of [AnonymousFunction]. Its real source is the corresponding `KtTypeCodeFragment`.
+                 */
+                object Parameter : TypeCodeFragment()
+            }
+        }
+    }
 
     /**
      * `when { is Int -> 42 }` --> `when { $subj is Int -> 42 }`

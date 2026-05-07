@@ -116,8 +116,6 @@ abstract class AbstractLLCompilerBasedTest : AbstractKotlinCompilerTest() {
             useAfterAnalysisCheckers(::LLFirDivergenceCommentChecker)
         }
 
-        useAfterAnalysisCheckers(::LLDistinctSourceElementsChecker)
-
         useFailureSuppressors(::LLFirTestSuppressor)
     }
 

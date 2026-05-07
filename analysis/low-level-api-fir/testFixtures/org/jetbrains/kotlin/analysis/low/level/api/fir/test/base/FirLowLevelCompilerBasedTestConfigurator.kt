@@ -32,6 +32,7 @@ object FirLowLevelCompilerBasedTestConfigurator : AnalysisApiTestConfigurator {
     override fun configureTest(builder: TestConfigurationBuilder, disposable: Disposable) {
         builder.apply {
             useAdditionalService { AnalysisApiIndexingConfiguration(AnalysisApiBinaryLibraryIndexingMode.INDEX_STUBS) }
+            configureFirConsistencyChecks()
         }
     }
 

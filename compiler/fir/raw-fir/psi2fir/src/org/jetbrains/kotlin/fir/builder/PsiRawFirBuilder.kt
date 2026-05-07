@@ -1770,7 +1770,7 @@ open class PsiRawFirBuilder(
             // We ask to pass the fileBuilder explicitly despite it's not in use: FirFile should always be a parent
             @Suppress("unused") fileBuilder: FirFileBuilder,
         ): FirCodeFragment = buildCodeFragment {
-            source = file.toFirSourceElement()
+            source = file.toFirSourceElement(KtFakeSourceElementKind.CodeFragment.CodeFragmentDeclaration)
             moduleData = baseModuleData
             origin = FirDeclarationOrigin.Source
             symbol = FirCodeFragmentSymbol()
@@ -1790,13 +1790,17 @@ open class PsiRawFirBuilder(
 
         private fun convertTypeCodeFragmentBlock(file: KtTypeCodeFragment): FirBlock {
             return buildBlock {
+                source = file.toFirSourceElement(KtFakeSourceElementKind.CodeFragment.TypeCodeFragment.Block)
+
                 val functionSymbol = FirAnonymousFunctionSymbol()
 
                 statements += buildAnonymousFunctionExpression {
+                    source = file.toFirSourceElement(KtFakeSourceElementKind.CodeFragment.TypeCodeFragment.AnonymousFunctionExpression)
+
                     anonymousFunction = buildAnonymousFunction {
                         moduleData = baseModuleData
                         origin = FirDeclarationOrigin.Source
-                        source = file.toFirSourceElement(KtFakeSourceElementKind.CodeFragment)
+                        source = file.toFirSourceElement(KtFakeSourceElementKind.CodeFragment.TypeCodeFragment.AnonymousFunction)
                         symbol = functionSymbol
 
                         hasExplicitParameterList = true
@@ -1807,7 +1811,9 @@ open class PsiRawFirBuilder(
                         valueParameters += buildValueParameter {
                             moduleData = baseModuleData
                             origin = FirDeclarationOrigin.Source
-                            source = file.toFirSourceElement(KtFakeSourceElementKind.CodeFragment)
+                            source = file.toFirSourceElement(
+                                KtFakeSourceElementKind.CodeFragment.TypeCodeFragment.AnonymousFunction.Parameter,
+                            )
                             name = StandardNames.DEFAULT_VALUE_PARAMETER
 
                             symbol = FirValueParameterSymbol()

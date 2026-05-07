@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.test.model.AfterAnalysisChecker
 import org.jetbrains.kotlin.test.services.TestServices
 
 /**
- * For all compiler-based tests, this checker ensures that the source elements of FIR declarations are distinct after analysis. See
- * [checkDistinctSourceElements] for more information.
+ * This checker ensures that the source elements of FIR declarations are distinct after analysis. See [checkDistinctSourceElements] for more
+ * information.
  *
  * FIR files are checked in the state they were resolved to, or built fresh and checked as raw FIR if they haven't been resolved yet.
  *
@@ -29,7 +29,17 @@ class LLDistinctSourceElementsChecker(testServices: TestServices) : AfterAnalysi
         val project = testServices.ktTestModuleStructure.project
         for (testModule in testServices.ktTestModuleStructure.mainModules) {
             val resolutionFacade = LLResolutionFacadeService.getInstance(project).getResolutionFacade(testModule.ktModule)
-            val firFiles = testModule.ktFiles.map { it.getOrBuildFirFile(resolutionFacade) }
+
+            val firFiles = testModule.ktFiles
+                .filter { ktFile ->
+                    // In some cases, the test file might be explicitly excluded from the test module's content scope. For example, resolve
+                    // extension tests define test files that are excluded from the module's content scope.
+                    //
+                    // When this happens, `getOrBuildFirFile` fails because we cannot find the `KaModule` for the excluded `KtFile`. Hence,
+                    // we have to filter out such files, as they are not meant to be analyzed.
+                    ktFile.virtualFile in testModule.ktModule.contentScope
+                }
+                .map { it.getOrBuildFirFile(resolutionFacade) }
 
             checkDistinctSourceElements(firFiles) { _, _ -> "Duplicate source elements" }
         }

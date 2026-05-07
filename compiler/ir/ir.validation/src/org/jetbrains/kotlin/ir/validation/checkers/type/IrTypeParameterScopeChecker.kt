@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.util.isTypeOfIntrinsicCall
 import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.ir.validation.checkers.IrTypeChecker
 import org.jetbrains.kotlin.ir.validation.checkers.context.CheckerContext
@@ -37,6 +38,7 @@ object IrTypeParameterScopeChecker : IrTypeChecker {
         element: IrElement,
         typeParameterSymbol: IrTypeParameterSymbol,
     ) {
+        if (element.isTypeOfIntrinsicCall()) return
         if (!context.typeParameterScopeStack.isVisibleInCurrentScope(typeParameterSymbol)) {
             context.error(
                 element,
