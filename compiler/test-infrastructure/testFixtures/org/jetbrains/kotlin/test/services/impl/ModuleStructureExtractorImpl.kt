@@ -340,6 +340,10 @@ class ModuleStructureExtractorImpl(
 
         private fun escapeModuleNameIfNeeded(name: String): String {
             if (ModuleStructureDirectives.ESCAPE_MODULE_NAME !in testServices.defaultDirectives) return name
+            // Don't rename if current or previous modules have def files. Reason: cinterop test data relies on non-renamed modules.
+            if (filesOfCurrentModule.any { it.name.endsWith(".def")}) return name
+            if (mutableFilesListPerModule.any { it.value.any { file -> file.name.endsWith(".def") } }) return name
+
             val (className, methodName, _) = testServices.testInfo
             val classPart = className.substringAfter("$").replace("$", ".")
             return "$classPart.$methodName.$name"

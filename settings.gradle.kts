@@ -506,10 +506,10 @@ include(
 
 include(
     ":compiler:test-infrastructure",
+    ":compiler:test-infrastructure:grouping-test-engine",
     ":compiler:test-infrastructure-utils",
     ":compiler:test-infrastructure-utils.common",
     ":compiler:tests-common-new",
-    ":compiler:test-engine-sandbox"
 )
 
 include(

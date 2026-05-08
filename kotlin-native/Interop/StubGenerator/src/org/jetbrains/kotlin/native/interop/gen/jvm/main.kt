@@ -263,7 +263,14 @@ private fun processCLib(
         cinteropArguments.argParser.printError("-def or -pkg should be provided!")
     }
 
-    val tool = prepareTool(cinteropArguments.target, flavor, runFromDaemon, parseKeyValuePairs(cinteropArguments.overrideKonanProperties), konanDataDir = cinteropArguments.konanDataDir)
+    val tool = prepareTool(
+            cinteropArguments.target,
+            flavor,
+            runFromDaemon,
+            parseKeyValuePairs(cinteropArguments.overrideKonanProperties),
+            konanDataDir = cinteropArguments.konanDataDir,
+            cinteropArguments.konanHome,
+    )
 
     val def = DefFile(defFile, tool.target)
 
@@ -579,7 +586,7 @@ private fun getLibraryResolver(
     return defaultResolver(
         directLibs = cinteropArguments.library,
         target,
-        Distribution(KotlinNativePaths.homePath.absolutePath, konanDataDir = cinteropArguments.konanDataDir)
+        Distribution(cinteropArguments.konanHome ?: KotlinNativePaths.homePath.absolutePath, konanDataDir = cinteropArguments.konanDataDir)
     ).libraryResolver(resolveManifestDependenciesLenient = true)
 }
 
@@ -598,10 +605,17 @@ private fun resolveDependencies(
     return resolvedLibraries
 }
 
-internal fun prepareTool(target: String?, flavor: KotlinPlatform, runFromDaemon: Boolean, propertyOverrides: Map<String, String> = emptyMap(), konanDataDir: String? = null) =
-        ToolConfig(target, flavor, propertyOverrides, konanDataDir).also {
-            if (!runFromDaemon) it.prepare() // Daemon prepares the tool himself. (See KonanToolRunner.kt)
-        }
+internal fun prepareTool(
+        target: String?,
+        flavor: KotlinPlatform,
+        runFromDaemon: Boolean,
+        propertyOverrides: Map<String, String> = emptyMap(),
+        konanDataDir: String? = null,
+        konanHome: String? = null,
+) = ToolConfig(target, flavor, propertyOverrides, konanDataDir, konanHome).also {
+    if (!runFromDaemon) it.prepare() // Daemon prepares the tool himself. (See KonanToolRunner.kt)
+    else require(konanHome == null) { "custom konanHome cannot be specified when running from daemon" }
+}
 
 internal val predefinedObjCClassesIncludingCategories: Set<String> by lazy { setOf("NSView", "UIView") }
 

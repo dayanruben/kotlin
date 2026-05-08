@@ -101,8 +101,19 @@ internal constructor() : DefaultTask() {
         return rootPackage.dependencies.mapValues { (id, _) ->
             val entry = packageLockJson.packages["node_modules/$id"]
                 ?: error("Missing entry for $id in ${npmLockFile.invariantSeparatorsPath}")
-            entry.version
-                ?: error("Missing version for $id in ${npmLockFile.invariantSeparatorsPath}")
+
+            when {
+                // Must use the requested version if the dep is resolved from a git url,
+                // https://docs.npmjs.com/cli/v11/configuring-npm/package-json#git-urls-as-dependencies
+                // because `version` is inaccurate for git URLs
+                // (Example: Kotlin Karma has a git tag of v6.4.5, but the package version is 6.4.4.)
+                entry.resolved != null && entry.resolved.startsWith("git+") ->
+                    packageLockJson.packages[""]?.dependencies?.get(id)
+                entry.version != null ->
+                    entry.version
+                else ->
+                    null
+            } ?: error("Could not find version for $id in ${npmLockFile.invariantSeparatorsPath}. $entry")
         }
     }
 

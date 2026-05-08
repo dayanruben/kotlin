@@ -15,6 +15,8 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.testing.Test
+import org.gradle.kotlin.dsl.dependencies
+import org.gradle.kotlin.dsl.project
 import org.gradle.kotlin.dsl.register
 import org.jetbrains.kotlin.build.project.tests.CollectTestDataTask
 
@@ -137,6 +139,7 @@ abstract class ProjectTestsExtension(val project: Project) {
         maxMetaspaceSizeMb: Int = 512,
         reservedCodeCacheSizeMb: Int = 256,
         defineJDKEnvVariables: List<JdkMajorVersion> = emptyList(),
+        enableGroupingTestEngine: Boolean = false,
         body: Test.() -> Unit = {},
     ): TaskProvider<Test> {
         @Suppress("UNCHECKED_CAST")
@@ -149,6 +152,7 @@ abstract class ProjectTestsExtension(val project: Project) {
             maxMetaspaceSizeMb,
             reservedCodeCacheSizeMb,
             defineJDKEnvVariables,
+            enableGroupingTestEngine,
             skipInLocalBuild = false,
             body
         ) as TaskProvider<Test>
@@ -163,6 +167,7 @@ abstract class ProjectTestsExtension(val project: Project) {
         maxMetaspaceSizeMb: Int = 512,
         reservedCodeCacheSizeMb: Int = 256,
         defineJDKEnvVariables: List<JdkMajorVersion> = emptyList(),
+        enableGroupingTestEngine: Boolean = false,
         skipInLocalBuild: Boolean,
         body: Test.() -> Unit = {},
     ): TaskProvider<out Task> {
@@ -171,6 +176,19 @@ abstract class ProjectTestsExtension(val project: Project) {
         }
         if (jUnitMode == JUnitMode.JUnit5 && parallel != null) {
             throw GradleException("JUnit5 tests are parallel by default and its configured with `junit-platform.properties`, please remove `parallel=$parallel` argument")
+        }
+        if (enableGroupingTestEngine) {
+            when (jUnitMode) {
+                JUnitMode.JUnit4 -> throw GradleException("JUnit4 tests are not supported with grouping test engine. Change the JUnitMode to JUnit5")
+                JUnitMode.JUnit5 -> {
+                    project.dependencies {
+                        add(
+                            configurationName = "testRuntimeOnly",
+                            dependencyNotation = testFixtures(project(":compiler:test-infrastructure:grouping-test-engine")),
+                        )
+                    }
+                }
+            }
         }
         return project.createGeneralTestTask(
             taskName,
