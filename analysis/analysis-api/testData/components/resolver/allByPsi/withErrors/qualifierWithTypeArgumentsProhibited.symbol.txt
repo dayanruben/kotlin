@@ -42,10 +42,16 @@ KtTypeProjection(53,56): 'Int'
   null
 
 KtTypeReference(53,56): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtUserType(53,56): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtNameReferenceExpression(53,56): 'Int'
   KaSymbolResolutionSuccess:
@@ -84,10 +90,16 @@ KtTypeProjection(83,87): 'Long'
   null
 
 KtTypeReference(83,87): 'Long'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Long
+    ]
 
 KtUserType(83,87): 'Long'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Long
+    ]
 
 KtNameReferenceExpression(83,87): 'Long'
   KaSymbolResolutionSuccess:
@@ -122,10 +134,16 @@ KtTypeProjection(113,119): 'String'
   null
 
 KtTypeReference(113,119): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtUserType(113,119): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtNameReferenceExpression(113,119): 'String'
   KaSymbolResolutionSuccess:
@@ -161,10 +179,16 @@ KtTypeProjection(147,154): 'Boolean'
   null
 
 KtTypeReference(147,154): 'Boolean'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Boolean
+    ]
 
 KtUserType(147,154): 'Boolean'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Boolean
+    ]
 
 KtNameReferenceExpression(147,154): 'Boolean'
   KaSymbolResolutionSuccess:
@@ -200,10 +224,16 @@ KtTypeProjection(177,182): 'Short'
   null
 
 KtTypeReference(177,182): 'Short'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Short
+    ]
 
 KtUserType(177,182): 'Short'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Short
+    ]
 
 KtNameReferenceExpression(177,182): 'Short'
   KaSymbolResolutionSuccess:

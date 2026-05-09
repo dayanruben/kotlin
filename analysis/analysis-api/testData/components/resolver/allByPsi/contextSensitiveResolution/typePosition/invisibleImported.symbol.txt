@@ -38,10 +38,16 @@ KtParameter(79,92): 'val x: String'
   null
 
 KtTypeReference(86,92): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtUserType(86,92): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtNameReferenceExpression(86,92): 'String'
   KaSymbolResolutionSuccess:
@@ -53,13 +59,22 @@ KtSuperTypeList(95,103): 'MySealed'
   null
 
 KtSuperTypeEntry(95,103): 'MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed
+    ]
 
 KtTypeReference(95,103): 'MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed
+    ]
 
 KtUserType(95,103): 'MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed
+    ]
 
 KtNameReferenceExpression(95,103): 'MySealed'
   KaSymbolResolutionSuccess:
@@ -80,10 +95,16 @@ KtParameter(120,133): 'val y: String'
   null
 
 KtTypeReference(127,133): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtUserType(127,133): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtNameReferenceExpression(127,133): 'String'
   KaSymbolResolutionSuccess:
@@ -95,13 +116,22 @@ KtSuperTypeList(136,144): 'MySealed'
   null
 
 KtSuperTypeEntry(136,144): 'MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed
+    ]
 
 KtTypeReference(136,144): 'MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed
+    ]
 
 KtUserType(136,144): 'MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed
+    ]
 
 KtNameReferenceExpression(136,144): 'MySealed'
   KaSymbolResolutionSuccess:
@@ -113,10 +143,16 @@ KtNamedFunction(148,226): 'fun MySealed.getOrElse1() = when (this) {'
   null
 
 KtTypeReference(152,160): 'MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed
+    ]
 
 KtUserType(152,160): 'MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed
+    ]
 
 KtNameReferenceExpression(152,160): 'MySealed'
   KaSymbolResolutionSuccess:
@@ -191,10 +227,16 @@ KtWhenConditionIsPattern(194,201): 'is Left'
   null
 
 KtTypeReference(197,201): 'Left'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed.Left
+    ]
 
 KtUserType(197,201): 'Left'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed.Left
+    ]
 
 KtNameReferenceExpression(197,201): 'Left'
   KaSymbolResolutionSuccess:
@@ -215,10 +257,16 @@ KtWhenConditionIsPattern(211,219): 'is Right'
   null
 
 KtTypeReference(214,219): 'Right'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed.Right
+    ]
 
 KtUserType(214,219): 'Right'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed.Right
+    ]
 
 KtNameReferenceExpression(214,219): 'Right'
   KaSymbolResolutionSuccess:
@@ -236,10 +284,16 @@ KtNamedFunction(228,301): 'fun Any.getOrElse2() = when (this) {'
   null
 
 KtTypeReference(232,235): 'Any'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Any
+    ]
 
 KtUserType(232,235): 'Any'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Any
+    ]
 
 KtNameReferenceExpression(232,235): 'Any'
   KaSymbolResolutionSuccess:
@@ -314,10 +368,18 @@ KtWhenConditionIsPattern(269,276): 'is Left'
   null
 
 KtTypeReference(272,276): 'Left'
-  null
+  KaSymbolResolutionError:
+    candidateSymbols = [
+      a/Left
+    ]
+    diagnostic = ERROR<INVISIBLE_REFERENCE: Cannot access 'class Left : Any': it is private in file.>
 
 KtUserType(272,276): 'Left'
-  null
+  KaSymbolResolutionError:
+    candidateSymbols = [
+      a/Left
+    ]
+    diagnostic = ERROR<INVISIBLE_REFERENCE: Cannot access 'class Left : Any': it is private in file.>
 
 KtNameReferenceExpression(272,276): 'Left'
   KaSymbolResolutionError:
@@ -338,10 +400,14 @@ KtWhenConditionIsPattern(286,294): 'is Right'
   null
 
 KtTypeReference(289,294): 'Right'
-  null
+  KaSymbolResolutionError:
+    candidateSymbols = []
+    diagnostic = ERROR<UNRESOLVED_REFERENCE: Unresolved reference 'Right'.>
 
 KtUserType(289,294): 'Right'
-  null
+  KaSymbolResolutionError:
+    candidateSymbols = []
+    diagnostic = ERROR<UNRESOLVED_REFERENCE: Unresolved reference 'Right'.>
 
 KtNameReferenceExpression(289,294): 'Right'
   KaSymbolResolutionError:

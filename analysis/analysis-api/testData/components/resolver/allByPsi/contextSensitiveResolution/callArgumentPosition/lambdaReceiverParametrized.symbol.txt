@@ -20,10 +20,16 @@ KtProperty(115,141): 'val superProp: String = ""'
   null
 
 KtTypeReference(130,136): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtUserType(130,136): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtNameReferenceExpression(130,136): 'String'
   KaSymbolResolutionSuccess:
@@ -71,10 +77,16 @@ KtConstructorCalleeExpression(217,224): 'MyClass'
     ]
 
 KtTypeReference(217,224): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(217,224): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(217,224): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -92,10 +104,16 @@ KtProperty(237,258): 'val prop: String = ""'
   null
 
 KtTypeReference(247,253): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtUserType(247,253): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtNameReferenceExpression(247,253): 'String'
   KaSymbolResolutionSuccess:
@@ -125,10 +143,16 @@ KtConstructorCalleeExpression(292,299): 'MyClass'
     ]
 
 KtTypeReference(292,299): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(292,299): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(292,299): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -146,10 +170,16 @@ KtProperty(312,333): 'val prop: String = ""'
   null
 
 KtTypeReference(322,328): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtUserType(322,328): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtNameReferenceExpression(322,328): 'String'
   KaSymbolResolutionSuccess:
@@ -185,10 +215,16 @@ KtConstructorCalleeExpression(388,393): 'Super'
     ]
 
 KtTypeReference(388,393): 'Super'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Super
+    ]
 
 KtUserType(388,393): 'Super'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Super
+    ]
 
 KtNameReferenceExpression(388,393): 'Super'
   KaSymbolResolutionSuccess:
@@ -206,10 +242,16 @@ KtProperty(406,439): 'val propMyClass: MyClass = TODO()'
   null
 
 KtTypeReference(423,430): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(423,430): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(423,430): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -236,10 +278,16 @@ KtProperty(448,505): 'val propInheritorClass: InheritorClass = InheritorClass()'
   null
 
 KtTypeReference(472,486): 'InheritorClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass.InheritorClass
+    ]
 
 KtUserType(472,486): 'InheritorClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass.InheritorClass
+    ]
 
 KtNameReferenceExpression(472,486): 'InheritorClass'
   KaSymbolResolutionSuccess:
@@ -266,10 +314,16 @@ KtProperty(514,572): 'val propInheritorObject: InheritorObject = InheritorObject
   null
 
 KtTypeReference(539,554): 'InheritorObject'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass.InheritorObject
+    ]
 
 KtUserType(539,554): 'InheritorObject'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass.InheritorObject
+    ]
 
 KtNameReferenceExpression(539,554): 'InheritorObject'
   KaSymbolResolutionSuccess:
@@ -287,10 +341,16 @@ KtProperty(581,602): 'val prop: String = ""'
   null
 
 KtTypeReference(591,597): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtUserType(591,597): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtNameReferenceExpression(591,597): 'String'
   KaSymbolResolutionSuccess:
@@ -308,10 +368,16 @@ KtDeclarationModifierList(611,616): 'const'
   null
 
 KtTypeReference(632,638): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtUserType(632,638): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtNameReferenceExpression(632,638): 'String'
   KaSymbolResolutionSuccess:
@@ -326,10 +392,16 @@ KtProperty(652,685): 'val lazyProp: String by lazy {""}'
   null
 
 KtTypeReference(666,672): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtUserType(666,672): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtNameReferenceExpression(666,672): 'String'
   KaSymbolResolutionSuccess:
@@ -377,10 +449,16 @@ KtParameterList(702,704): '()'
   null
 
 KtTypeReference(706,713): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(706,713): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(706,713): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -437,10 +515,16 @@ KtParameter(808,820): 'l: (T)->Unit'
   null
 
 KtTypeReference(811,820): '(T)->Unit'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Function1
+    ]
 
 KtFunctionType(811,820): '(T)->Unit'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Function1
+    ]
 
 KtParameterList(811,814): '(T)'
   null
@@ -449,10 +533,16 @@ KtParameter(812,813): 'T'
   null
 
 KtTypeReference(812,813): 'T'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      T
+    ]
 
 KtUserType(812,813): 'T'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      T
+    ]
 
 KtNameReferenceExpression(812,813): 'T'
   KaSymbolResolutionSuccess:
@@ -461,10 +551,16 @@ KtNameReferenceExpression(812,813): 'T'
     ]
 
 KtTypeReference(816,820): 'Unit'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Unit
+    ]
 
 KtUserType(816,820): 'Unit'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Unit
+    ]
 
 KtNameReferenceExpression(816,820): 'Unit'
   KaSymbolResolutionSuccess:
@@ -503,10 +599,16 @@ KtTypeProjection(895,902): 'MyClass'
   null
 
 KtTypeReference(895,902): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(895,902): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(895,902): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -530,10 +632,16 @@ KtParameter(906,916): 'i: MyClass'
   null
 
 KtTypeReference(909,916): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(909,916): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(909,916): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -587,10 +695,16 @@ KtTypeProjection(973,980): 'MyClass'
   null
 
 KtTypeReference(973,980): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(973,980): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(973,980): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -614,10 +728,16 @@ KtParameter(984,994): 'i: MyClass'
   null
 
 KtTypeReference(987,994): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(987,994): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(987,994): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -671,10 +791,16 @@ KtTypeProjection(1047,1054): 'MyClass'
   null
 
 KtTypeReference(1047,1054): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1047,1054): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1047,1054): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -698,10 +824,16 @@ KtParameter(1058,1068): 'i: MyClass'
   null
 
 KtTypeReference(1061,1068): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1061,1068): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1061,1068): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -755,10 +887,16 @@ KtTypeProjection(1128,1135): 'MyClass'
   null
 
 KtTypeReference(1128,1135): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1128,1135): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1128,1135): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -782,10 +920,16 @@ KtParameter(1139,1149): 'i: MyClass'
   null
 
 KtTypeReference(1142,1149): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1142,1149): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1142,1149): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -839,10 +983,16 @@ KtTypeProjection(1211,1218): 'MyClass'
   null
 
 KtTypeReference(1211,1218): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1211,1218): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1211,1218): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -866,10 +1016,16 @@ KtParameter(1222,1232): 'i: MyClass'
   null
 
 KtTypeReference(1225,1232): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1225,1232): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1225,1232): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -923,10 +1079,16 @@ KtTypeProjection(1278,1285): 'MyClass'
   null
 
 KtTypeReference(1278,1285): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1278,1285): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1278,1285): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -950,10 +1112,16 @@ KtParameter(1289,1299): 'i: MyClass'
   null
 
 KtTypeReference(1292,1299): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1292,1299): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1292,1299): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -1007,10 +1175,16 @@ KtTypeProjection(1350,1357): 'MyClass'
   null
 
 KtTypeReference(1350,1357): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1350,1357): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1350,1357): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -1034,10 +1208,16 @@ KtParameter(1361,1371): 'i: MyClass'
   null
 
 KtTypeReference(1364,1371): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1364,1371): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1364,1371): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -1091,10 +1271,16 @@ KtTypeProjection(1422,1429): 'MyClass'
   null
 
 KtTypeReference(1422,1429): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1422,1429): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1422,1429): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -1118,10 +1304,16 @@ KtParameter(1433,1443): 'i: MyClass'
   null
 
 KtTypeReference(1436,1443): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1436,1443): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1436,1443): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -1175,10 +1367,16 @@ KtTypeProjection(1494,1501): 'MyClass'
   null
 
 KtTypeReference(1494,1501): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1494,1501): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1494,1501): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -1202,10 +1400,16 @@ KtParameter(1505,1515): 'i: MyClass'
   null
 
 KtTypeReference(1508,1515): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1508,1515): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1508,1515): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -1259,10 +1463,16 @@ KtTypeProjection(1569,1576): 'MyClass'
   null
 
 KtTypeReference(1569,1576): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1569,1576): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1569,1576): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -1286,10 +1496,16 @@ KtParameter(1580,1590): 'i: MyClass'
   null
 
 KtTypeReference(1583,1590): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1583,1590): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1583,1590): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -1343,10 +1559,16 @@ KtTypeProjection(1643,1650): 'MyClass'
   null
 
 KtTypeReference(1643,1650): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1643,1650): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1643,1650): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -1370,10 +1592,16 @@ KtParameter(1654,1664): 'i: MyClass'
   null
 
 KtTypeReference(1657,1664): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1657,1664): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1657,1664): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -1434,10 +1662,16 @@ KtTypeProjection(1712,1719): 'MyClass'
   null
 
 KtTypeReference(1712,1719): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1712,1719): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1712,1719): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -1461,10 +1695,16 @@ KtParameter(1723,1733): 'i: MyClass'
   null
 
 KtTypeReference(1726,1733): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1726,1733): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1726,1733): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -1525,10 +1765,16 @@ KtTypeProjection(1786,1793): 'MyClass'
   null
 
 KtTypeReference(1786,1793): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1786,1793): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1786,1793): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -1552,10 +1798,16 @@ KtParameter(1797,1807): 'i: MyClass'
   null
 
 KtTypeReference(1800,1807): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(1800,1807): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(1800,1807): 'MyClass'
   KaSymbolResolutionSuccess:

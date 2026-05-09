@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.fir.references.FirReferenceResolveHelpe
 import org.jetbrains.kotlin.analysis.api.fir.references.FirReferenceResolveHelper.getSymbolsByResolvedImport
 import org.jetbrains.kotlin.analysis.api.fir.references.FirReferenceResolveHelper.getSymbolsForResolvedQualifier
 import org.jetbrains.kotlin.analysis.api.fir.references.FirReferenceResolveHelper.getSymbolsForResolvedTypeRef
+import org.jetbrains.kotlin.analysis.api.fir.references.FirReferenceResolveHelper.toTargetSymbol
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirArrayOfSymbolProvider.arrayOfSymbol
 import org.jetbrains.kotlin.analysis.api.fir.utils.firSymbol
 import org.jetbrains.kotlin.analysis.api.fir.utils.processEqualsFunctions
@@ -173,8 +174,27 @@ internal class KaFirResolver(
     }
 
     override fun performSymbolResolution(psi: KtElement): KaSymbolResolutionAttempt? = wrapError(psi) {
-        analysisSession.cacheStorage.resolveSymbolCache.value.getOrPut(psi) {
-            resolveSymbol(psi)
+        when (psi) {
+            // A user type redirects to its inner reference expression, which is cached on its own,
+            // so we don't store a duplicate cache entry for the user type itself.
+            is KtUserType -> psi.referenceExpression?.let(::performSymbolResolution)
+            // A nullable type strips the nullability marker and resolves through its inner type element.
+            is KtNullableType -> psi.innerType?.let(::performSymbolResolution)
+            // A type reference delegates to the inner type element. Dynamic and intersection types
+            // are not `KtResolvable`, so this redirect doesn't reach them — for those `typeElement`
+            // values, `performSymbolResolution` falls through and returns `null`.
+            is KtTypeReference -> psi.typeElement?.let(::performSymbolResolution)
+            // A class literal expression (`Foo::class`) resolves to the classifier on its left-hand side.
+            // The receiver is a name reference or qualified expression, both of which are already cached.
+            is KtClassLiteralExpression -> psi.receiverExpression?.let(::performSymbolResolution)
+            // A no-parens super-type entry (`class Foo : Bar`) resolves through its type reference.
+            is KtSuperTypeEntry -> psi.typeReference?.let(::performSymbolResolution)
+            // A delegated super-type entry (`class Foo : Bar by baz`) resolves through its type reference;
+            // the `by` delegate expression is intentionally not the resolution target.
+            is KtDelegatedSuperTypeEntry -> psi.typeReference?.let(::performSymbolResolution)
+            else -> analysisSession.cacheStorage.resolveSymbolCache.value.getOrPut(psi) {
+                resolveSymbol(psi)
+            }
         }
     }
 
@@ -247,7 +267,10 @@ internal class KaFirResolver(
     private fun FirElement.toKaSymbolResolutionAttempt(psi: KtElement): KaSymbolResolutionAttempt? = when (this) {
         is FirResolvedTypeRef if psi is KtSimpleNameExpression -> toKaSymbolResolutionAttempt(psi)
         is FirReference -> toKaSymbolResolutionAttempt(psi)
+
+        // IMPORTANT: all branches above must handle `FirDiagnosticHolder` manually
         is FirDiagnosticHolder -> toKaSymbolResolutionError()
+        is FirResolvedTypeRef if psi is KtFunctionType -> toKaSymbolResolutionAttemptForFunctionType()
         is FirResolvable -> toKaSymbolResolutionAttempt(psi)
         is FirReturnExpression -> toKaSymbolResolutionAttempt()
         is FirTypeParameter -> toKaSymbolResolutionAttempt()
@@ -377,7 +400,7 @@ internal class KaFirResolver(
         }
 
         val symbol = when (val symbol = firSymbolToBuild?.buildSymbol(firSymbolBuilder)) {
-            is KaConstructorSymbol if psi is KtNameReferenceExpression -> with(analysisSession) {
+            is KaConstructorSymbol if (psi is KtNameReferenceExpression || psi is KtEnumEntrySuperclassReferenceExpression) -> with(analysisSession) {
                 // Callee reference for a constructor call is supposed to refer to the class
                 // while the entire call refers to the constructor.
                 // `KaSymbol` instead of `FirSymbol` is checked intentionally to properly support
@@ -435,6 +458,11 @@ internal class KaFirResolver(
             fir = this,
             session = analysisSession.firSession,
         ).ifNotEmpty(::KaBaseSymbolResolutionSuccess)
+    }
+
+    private fun FirResolvedTypeRef.toKaSymbolResolutionAttemptForFunctionType(): KaSymbolResolutionAttempt? {
+        val symbol = toTargetSymbol(analysisSession.firSession, firSymbolBuilder) ?: return null
+        return KaBaseSymbolResolutionSuccess(backingSymbol = symbol)
     }
 
     private fun FirResolvedTypeRef.toKaSymbolResolutionAttempt(psi: KtSimpleNameExpression): KaSymbolResolutionAttempt? {

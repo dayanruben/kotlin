@@ -72,10 +72,16 @@ KtTypeProjection(141,148): 'Boolean'
   null
 
 KtTypeReference(141,148): 'Boolean'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Boolean
+    ]
 
 KtUserType(141,148): 'Boolean'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Boolean
+    ]
 
 KtNameReferenceExpression(141,148): 'Boolean'
   KaSymbolResolutionSuccess:

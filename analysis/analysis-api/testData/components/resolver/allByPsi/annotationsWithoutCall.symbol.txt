@@ -38,10 +38,16 @@ KtConstructorCalleeExpression(37,41): 'Anno'
     ]
 
 KtTypeReference(37,41): 'Anno'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      one/Anno
+    ]
 
 KtUserType(37,41): 'Anno'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      one/Anno
+    ]
 
 KtNameReferenceExpression(37,41): 'Anno'
   KaSymbolResolutionSuccess:

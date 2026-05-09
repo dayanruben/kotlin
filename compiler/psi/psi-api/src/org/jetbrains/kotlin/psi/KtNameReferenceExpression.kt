@@ -62,8 +62,6 @@ import org.jetbrains.kotlin.resolution.KtResolvableCall
  * val o = MyObject
  * //      ^^^^^^^^  resolves to the object `MyObject`
  * ```
- *
- * This is a specialized counterpart of `KtResolvable.resolveSymbol` focused specifically on name reference expressions
  */
 @OptIn(KtExperimentalApi::class)
 class KtNameReferenceExpression : KtExpressionImplStub<KotlinNameReferenceExpressionStub>, KtSimpleNameExpression, KtResolvableCall {

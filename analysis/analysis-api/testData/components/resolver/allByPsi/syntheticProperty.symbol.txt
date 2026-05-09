@@ -11,10 +11,16 @@ KtNamedFunction(0,300): '// WITH_STDLIB'
   null
 
 KtTypeReference(36,45): 'JavaClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /JavaClass
+    ]
 
 KtUserType(36,45): 'JavaClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /JavaClass
+    ]
 
 KtNameReferenceExpression(36,45): 'JavaClass'
   KaSymbolResolutionSuccess:
@@ -29,10 +35,16 @@ KtParameter(50,70): 'javaClass: JavaClass'
   null
 
 KtTypeReference(61,70): 'JavaClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /JavaClass
+    ]
 
 KtUserType(61,70): 'JavaClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /JavaClass
+    ]
 
 KtNameReferenceExpression(61,70): 'JavaClass'
   KaSymbolResolutionSuccess:

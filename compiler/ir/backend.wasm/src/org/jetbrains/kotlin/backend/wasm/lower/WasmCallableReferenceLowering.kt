@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classOrFail
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.getClass
+import org.jetbrains.kotlin.ir.util.isNullable
 import org.jetbrains.kotlin.ir.util.SYNTHETIC_OFFSET
 import org.jetbrains.kotlin.ir.util.createDispatchReceiverParameterWithClassParent
 import org.jetbrains.kotlin.ir.util.primaryConstructor
@@ -295,6 +296,10 @@ class WasmCallableReferenceLowering(val backendContext: WasmBackendContext) : Fi
 
     private fun IrType.eraseIfReferenceType(): IrType {
         if (this.isPrimitiveType() || this.isUnsignedType()) return this
+        // Nullable types are boxed in Wasm, so they must be treated as reference types to avoid
+        // merging with the non-nullable variant. This applies particularly for the case of value
+        // classes which get inlined later.
+        if (this.isNullable()) return backendContext.irBuiltIns.anyNType
         if (this.classifierOrNull is IrTypeParameterSymbol) {
             // At the Wasm level, type parameters are passed as their upper bound, so erase them now
             // to merge properly.
@@ -304,8 +309,7 @@ class WasmCallableReferenceLowering(val backendContext: WasmBackendContext) : Fi
         val clazz = this.getClass() ?: return backendContext.irBuiltIns.anyNType
         if (clazz.isSingleFieldValueClass) {
             val underlyingErased = getInlineClassUnderlyingType(clazz).eraseIfReferenceType()
-            return if (underlyingErased.isPrimitiveType() || underlyingErased.isUnsignedType() ||
-                       underlyingErased.getClass()?.isSingleFieldValueClass == true) {
+            return if (underlyingErased.isPrimitiveType() || underlyingErased.isUnsignedType()) {
                 this
             } else {
                 backendContext.irBuiltIns.anyNType

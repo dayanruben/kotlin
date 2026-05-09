@@ -56,10 +56,16 @@ KtParameter(146,158): 'val error: E'
   null
 
 KtTypeReference(157,158): 'E'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      E
+    ]
 
 KtUserType(157,158): 'E'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      E
+    ]
 
 KtNameReferenceExpression(157,158): 'E'
   KaSymbolResolutionSuccess:
@@ -71,13 +77,22 @@ KtSuperTypeList(161,179): 'Either<E, Nothing>'
   null
 
 KtSuperTypeEntry(161,179): 'Either<E, Nothing>'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Either
+    ]
 
 KtTypeReference(161,179): 'Either<E, Nothing>'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Either
+    ]
 
 KtUserType(161,179): 'Either<E, Nothing>'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Either
+    ]
 
 KtNameReferenceExpression(161,167): 'Either'
   KaSymbolResolutionSuccess:
@@ -92,10 +107,16 @@ KtTypeProjection(168,169): 'E'
   null
 
 KtTypeReference(168,169): 'E'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      E
+    ]
 
 KtUserType(168,169): 'E'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      E
+    ]
 
 KtNameReferenceExpression(168,169): 'E'
   KaSymbolResolutionSuccess:
@@ -107,10 +128,16 @@ KtTypeProjection(171,178): 'Nothing'
   null
 
 KtTypeReference(171,178): 'Nothing'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Nothing
+    ]
 
 KtUserType(171,178): 'Nothing'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Nothing
+    ]
 
 KtNameReferenceExpression(171,178): 'Nothing'
   KaSymbolResolutionSuccess:
@@ -143,10 +170,16 @@ KtParameter(208,220): 'val value: A'
   null
 
 KtTypeReference(219,220): 'A'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      A
+    ]
 
 KtUserType(219,220): 'A'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      A
+    ]
 
 KtNameReferenceExpression(219,220): 'A'
   KaSymbolResolutionSuccess:
@@ -158,13 +191,22 @@ KtSuperTypeList(223,241): 'Either<Nothing, A>'
   null
 
 KtSuperTypeEntry(223,241): 'Either<Nothing, A>'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Either
+    ]
 
 KtTypeReference(223,241): 'Either<Nothing, A>'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Either
+    ]
 
 KtUserType(223,241): 'Either<Nothing, A>'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Either
+    ]
 
 KtNameReferenceExpression(223,229): 'Either'
   KaSymbolResolutionSuccess:
@@ -179,10 +221,16 @@ KtTypeProjection(230,237): 'Nothing'
   null
 
 KtTypeReference(230,237): 'Nothing'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Nothing
+    ]
 
 KtUserType(230,237): 'Nothing'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Nothing
+    ]
 
 KtNameReferenceExpression(230,237): 'Nothing'
   KaSymbolResolutionSuccess:
@@ -194,10 +242,16 @@ KtTypeProjection(239,240): 'A'
   null
 
 KtTypeReference(239,240): 'A'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      A
+    ]
 
 KtUserType(239,240): 'A'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      A
+    ]
 
 KtNameReferenceExpression(239,240): 'A'
   KaSymbolResolutionSuccess:
@@ -218,10 +272,16 @@ KtTypeParameter(253,254): 'A'
   null
 
 KtTypeReference(256,268): 'Either<E, A>'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Either
+    ]
 
 KtUserType(256,268): 'Either<E, A>'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Either
+    ]
 
 KtNameReferenceExpression(256,262): 'Either'
   KaSymbolResolutionSuccess:
@@ -236,10 +296,16 @@ KtTypeProjection(263,264): 'E'
   null
 
 KtTypeReference(263,264): 'E'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      E
+    ]
 
 KtUserType(263,264): 'E'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      E
+    ]
 
 KtNameReferenceExpression(263,264): 'E'
   KaSymbolResolutionSuccess:
@@ -251,10 +317,16 @@ KtTypeProjection(266,267): 'A'
   null
 
 KtTypeReference(266,267): 'A'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      A
+    ]
 
 KtUserType(266,267): 'A'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      A
+    ]
 
 KtNameReferenceExpression(266,267): 'A'
   KaSymbolResolutionSuccess:
@@ -269,10 +341,16 @@ KtParameter(279,289): 'default: A'
   null
 
 KtTypeReference(288,289): 'A'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      A
+    ]
 
 KtUserType(288,289): 'A'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      A
+    ]
 
 KtNameReferenceExpression(288,289): 'A'
   KaSymbolResolutionSuccess:
@@ -358,10 +436,16 @@ KtWhenConditionIsPattern(311,318): 'is Left'
   null
 
 KtTypeReference(314,318): 'Left'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Either.Left
+    ]
 
 KtUserType(314,318): 'Left'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Either.Left
+    ]
 
 KtNameReferenceExpression(314,318): 'Left'
   KaSymbolResolutionSuccess:
@@ -382,10 +466,16 @@ KtWhenConditionIsPattern(334,342): 'is Right'
   null
 
 KtTypeReference(337,342): 'Right'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Either.Right
+    ]
 
 KtUserType(337,342): 'Right'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Either.Right
+    ]
 
 KtNameReferenceExpression(337,342): 'Right'
   KaSymbolResolutionSuccess:

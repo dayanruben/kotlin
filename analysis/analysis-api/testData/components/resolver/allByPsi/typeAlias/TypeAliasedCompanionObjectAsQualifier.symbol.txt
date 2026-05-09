@@ -41,10 +41,16 @@ KtProperty(88,110): 'val property: Int = 10'
   null
 
 KtTypeReference(102,105): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtUserType(102,105): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtNameReferenceExpression(102,105): 'Int'
   KaSymbolResolutionSuccess:
@@ -59,10 +65,16 @@ KtTypeAlias(120,147): 'typealias MyAlias = MyClass'
   null
 
 KtTypeReference(140,147): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      test/MyClass
+    ]
 
 KtUserType(140,147): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      test/MyClass
+    ]
 
 KtNameReferenceExpression(140,147): 'MyClass'
   KaSymbolResolutionSuccess:

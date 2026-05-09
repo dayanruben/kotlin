@@ -17,10 +17,16 @@ KtProperty(21,36): 'var baz: String'
   null
 
 KtTypeReference(30,36): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtUserType(30,36): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtNameReferenceExpression(30,36): 'String'
   KaSymbolResolutionSuccess:
@@ -35,10 +41,16 @@ KtParameterList(48,50): '()'
   null
 
 KtTypeReference(52,59): 'Boolean'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Boolean
+    ]
 
 KtUserType(52,59): 'Boolean'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Boolean
+    ]
 
 KtNameReferenceExpression(52,59): 'Boolean'
   KaSymbolResolutionSuccess:
@@ -56,13 +68,22 @@ KtSuperTypeList(85,89): 'Base'
   null
 
 KtSuperTypeEntry(85,89): 'Base'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Base
+    ]
 
 KtTypeReference(85,89): 'Base'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Base
+    ]
 
 KtUserType(85,89): 'Base'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Base
+    ]
 
 KtNameReferenceExpression(85,89): 'Base'
   KaSymbolResolutionSuccess:
@@ -92,10 +113,16 @@ KtNamedFunction(134,444): 'fun Any.test() {'
   null
 
 KtTypeReference(138,141): 'Any'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Any
+    ]
 
 KtUserType(138,141): 'Any'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Any
+    ]
 
 KtNameReferenceExpression(138,141): 'Any'
   KaSymbolResolutionSuccess:
@@ -176,10 +203,16 @@ KtOperationReferenceExpression(187,189): 'is'
   null
 
 KtTypeReference(190,194): 'Base'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Base
+    ]
 
 KtUserType(190,194): 'Base'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Base
+    ]
 
 KtNameReferenceExpression(190,194): 'Base'
   KaSymbolResolutionSuccess:
@@ -377,10 +410,16 @@ KtOperationReferenceExpression(299,301): 'is'
   null
 
 KtTypeReference(302,306): 'Test'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Test
+    ]
 
 KtUserType(302,306): 'Test'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Test
+    ]
 
 KtNameReferenceExpression(302,306): 'Test'
   KaSymbolResolutionSuccess:

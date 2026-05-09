@@ -35,6 +35,7 @@ org/jetbrains/kotlin/psi/KtBackingField
 org/jetbrains/kotlin/psi/KtCallElement
 org/jetbrains/kotlin/psi/KtCallableReferenceExpression
 org/jetbrains/kotlin/psi/KtClassInitializer
+org/jetbrains/kotlin/psi/KtClassLiteralExpression
 org/jetbrains/kotlin/psi/KtClassOrObject
 org/jetbrains/kotlin/psi/KtCollectionLiteralExpression
 org/jetbrains/kotlin/psi/KtConstructor
@@ -44,6 +45,7 @@ org/jetbrains/kotlin/psi/KtConstructorDelegationReferenceExpression
 org/jetbrains/kotlin/psi/KtContextReceiver
 org/jetbrains/kotlin/psi/KtDeclaration
 org/jetbrains/kotlin/psi/KtDeclarationWithReturnType
+org/jetbrains/kotlin/psi/KtDelegatedSuperTypeEntry
 org/jetbrains/kotlin/psi/KtDestructuringDeclaration
 org/jetbrains/kotlin/psi/KtDestructuringDeclarationEntry
 org/jetbrains/kotlin/psi/KtDoubleColonExpression
@@ -55,10 +57,12 @@ org/jetbrains/kotlin/psi/KtFile
 org/jetbrains/kotlin/psi/KtForExpression
 org/jetbrains/kotlin/psi/KtFunction
 org/jetbrains/kotlin/psi/KtFunctionLiteral
+org/jetbrains/kotlin/psi/KtFunctionType
 org/jetbrains/kotlin/psi/KtInstanceExpressionWithLabel
 org/jetbrains/kotlin/psi/KtLabelReferenceExpression
 org/jetbrains/kotlin/psi/KtNameReferenceExpression
 org/jetbrains/kotlin/psi/KtNamedFunction
+org/jetbrains/kotlin/psi/KtNullableType
 org/jetbrains/kotlin/psi/KtObjectDeclaration
 org/jetbrains/kotlin/psi/KtObjectLiteralExpression
 org/jetbrains/kotlin/psi/KtParameter
@@ -69,6 +73,7 @@ org/jetbrains/kotlin/psi/KtQualifiedExpression
 org/jetbrains/kotlin/psi/KtReturnExpression
 org/jetbrains/kotlin/psi/KtScript
 org/jetbrains/kotlin/psi/KtSuperTypeCallEntry
+org/jetbrains/kotlin/psi/KtSuperTypeEntry
 org/jetbrains/kotlin/psi/KtTypeAlias
 org/jetbrains/kotlin/psi/KtTypeParameter
 org/jetbrains/kotlin/psi/KtTypeReference

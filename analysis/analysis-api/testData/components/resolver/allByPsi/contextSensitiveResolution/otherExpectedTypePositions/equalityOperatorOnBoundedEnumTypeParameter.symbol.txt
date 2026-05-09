@@ -38,10 +38,16 @@ KtParameter(121,125): 'x: X'
   null
 
 KtTypeReference(124,125): 'X'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      X
+    ]
 
 KtUserType(124,125): 'X'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      X
+    ]
 
 KtNameReferenceExpression(124,125): 'X'
   KaSymbolResolutionSuccess:
@@ -50,10 +56,16 @@ KtNameReferenceExpression(124,125): 'X'
     ]
 
 KtTypeReference(128,129): 'X'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      X
+    ]
 
 KtUserType(128,129): 'X'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      X
+    ]
 
 KtNameReferenceExpression(128,129): 'X'
   KaSymbolResolutionSuccess:
@@ -86,10 +98,16 @@ KtTypeParameter(145,155): 'T : MyEnum'
   null
 
 KtTypeReference(149,155): 'MyEnum'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyEnum
+    ]
 
 KtUserType(149,155): 'MyEnum'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyEnum
+    ]
 
 KtNameReferenceExpression(149,155): 'MyEnum'
   KaSymbolResolutionSuccess:
@@ -104,10 +122,16 @@ KtParameter(161,165): 'a: T'
   null
 
 KtTypeReference(164,165): 'T'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      T
+    ]
 
 KtUserType(164,165): 'T'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      T
+    ]
 
 KtNameReferenceExpression(164,165): 'T'
   KaSymbolResolutionSuccess:

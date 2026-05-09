@@ -83,6 +83,12 @@ public class SourceLikeResolveCandidatesByFileFirTreeConsistencyTestGenerated ex
   }
 
   @Test
+  @TestMetadata("classLiterals.kt")
+  public void testClassLiterals() {
+    run("classLiterals.kt");
+  }
+
+  @Test
   @TestMetadata("compare.kt")
   public void testCompare() {
     run("compare.kt");
@@ -302,6 +308,12 @@ public class SourceLikeResolveCandidatesByFileFirTreeConsistencyTestGenerated ex
   @TestMetadata("typeParameters.kt")
   public void testTypeParameters() {
     run("typeParameters.kt");
+  }
+
+  @Test
+  @TestMetadata("typeShapes.kt")
+  public void testTypeShapes() {
+    run("typeShapes.kt");
   }
 
   @Test
@@ -1261,6 +1273,24 @@ public class SourceLikeResolveCandidatesByFileFirTreeConsistencyTestGenerated ex
     @TestMetadata("qualifierWithTypeArgumentsProhibited.kt")
     public void testQualifierWithTypeArgumentsProhibited() {
       run("qualifierWithTypeArgumentsProhibited.kt");
+    }
+
+    @Test
+    @TestMetadata("typeParameterAsDelegatedSuperType.kt")
+    public void testTypeParameterAsDelegatedSuperType() {
+      run("typeParameterAsDelegatedSuperType.kt");
+    }
+
+    @Test
+    @TestMetadata("typeParameterAsSuperCall.kt")
+    public void testTypeParameterAsSuperCall() {
+      run("typeParameterAsSuperCall.kt");
+    }
+
+    @Test
+    @TestMetadata("typeParameterAsSuperType.kt")
+    public void testTypeParameterAsSuperType() {
+      run("typeParameterAsSuperType.kt");
     }
 
     @Nested

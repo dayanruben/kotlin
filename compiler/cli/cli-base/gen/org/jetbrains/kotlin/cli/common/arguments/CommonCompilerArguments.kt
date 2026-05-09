@@ -180,7 +180,7 @@ This flag partially enables functionality of `-Xexplicit-api` flag, so please do
 -Xannotation-default-target=first-only:      use the first of the following allowed targets: '@param:', '@property:', '@field:';
 -Xannotation-default-target=first-only-warn: same as first-only, and raise warnings when both '@param:' and either '@property:' or '@field:' are allowed;
 -Xannotation-default-target=param-property:  use '@param:' target if applicable, and also use the first of either '@property:' or '@field:';
-default: 'first-only-warn' in language version 2.2+, 'first-only' in version 2.1 and before.""",
+default: 'param-property' in language version 2.4+, 'first-only-warn' in language versions 2.2 & 2.3, 'first-only' in version 2.1 and before.""",
     )
     @Disables(LanguageFeature.AnnotationDefaultTargetMigrationWarning, "first-only")
     @Enables(LanguageFeature.AnnotationDefaultTargetMigrationWarning, "first-only-warn")
@@ -691,8 +691,11 @@ with bodies.""",
     @Enables(LanguageFeature.NameBasedDestructuring, "only-syntax")
     @Enables(LanguageFeature.NameBasedDestructuring, "name-mismatch")
     @Enables(LanguageFeature.NameBasedDestructuring, "complete")
+    @Disables(LanguageFeature.DeprecateNameMismatchInShortDestructuringWithParentheses, "only-syntax")
     @Enables(LanguageFeature.DeprecateNameMismatchInShortDestructuringWithParentheses, "name-mismatch")
     @Enables(LanguageFeature.DeprecateNameMismatchInShortDestructuringWithParentheses, "complete")
+    @Disables(LanguageFeature.EnableNameBasedDestructuringShortForm, "only-syntax")
+    @Disables(LanguageFeature.EnableNameBasedDestructuringShortForm, "name-mismatch")
     @Enables(LanguageFeature.EnableNameBasedDestructuringShortForm, "complete")
     var nameBasedDestructuring: String? = null
         set(value) {

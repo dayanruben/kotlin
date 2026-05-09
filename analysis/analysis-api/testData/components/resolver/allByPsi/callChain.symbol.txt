@@ -11,10 +11,16 @@ KtNamedFunction(0,35): 'fun Int.foo(a: Int): Int = this + a'
   null
 
 KtTypeReference(4,7): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtUserType(4,7): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtNameReferenceExpression(4,7): 'Int'
   KaSymbolResolutionSuccess:
@@ -29,10 +35,16 @@ KtParameter(12,18): 'a: Int'
   null
 
 KtTypeReference(15,18): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtUserType(15,18): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtNameReferenceExpression(15,18): 'Int'
   KaSymbolResolutionSuccess:
@@ -41,10 +53,16 @@ KtNameReferenceExpression(15,18): 'Int'
     ]
 
 KtTypeReference(21,24): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtUserType(21,24): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtNameReferenceExpression(21,24): 'Int'
   KaSymbolResolutionSuccess:
@@ -128,13 +146,22 @@ KtNamedFunction(36,80): 'fun Int?.bar(b: kotlin.Int): Int = this ?: b'
   null
 
 KtTypeReference(40,44): 'Int?'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtNullableType(40,44): 'Int?'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtUserType(40,43): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtNameReferenceExpression(40,43): 'Int'
   KaSymbolResolutionSuccess:
@@ -149,13 +176,22 @@ KtParameter(49,62): 'b: kotlin.Int'
   null
 
 KtTypeReference(52,62): 'kotlin.Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtUserType(52,62): 'kotlin.Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtUserType(52,58): 'kotlin'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin
+    ]
 
 KtNameReferenceExpression(52,58): 'kotlin'
   KaSymbolResolutionSuccess:
@@ -170,10 +206,16 @@ KtNameReferenceExpression(59,62): 'Int'
     ]
 
 KtTypeReference(65,68): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtUserType(65,68): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtNameReferenceExpression(65,68): 'Int'
   KaSymbolResolutionSuccess:
@@ -335,10 +377,16 @@ KtOperationReferenceExpression(117,120): 'as?'
   null
 
 KtTypeReference(121,124): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtUserType(121,124): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtNameReferenceExpression(121,124): 'Int'
   KaSymbolResolutionSuccess:

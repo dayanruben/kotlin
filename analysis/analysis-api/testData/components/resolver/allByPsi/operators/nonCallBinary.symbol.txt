@@ -20,13 +20,22 @@ KtProperty(17,35): 'val a: Any? = null'
   null
 
 KtTypeReference(24,28): 'Any?'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Any
+    ]
 
 KtNullableType(24,28): 'Any?'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Any
+    ]
 
 KtUserType(24,27): 'Any'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Any
+    ]
 
 KtNameReferenceExpression(24,27): 'Any'
   KaSymbolResolutionSuccess:
@@ -41,10 +50,16 @@ KtProperty(40,55): 'val b: Any = ""'
   null
 
 KtTypeReference(47,50): 'Any'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Any
+    ]
 
 KtUserType(47,50): 'Any'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Any
+    ]
 
 KtNameReferenceExpression(47,50): 'Any'
   KaSymbolResolutionSuccess:

@@ -301,28 +301,30 @@ public interface KaResolver : KaSessionComponent {
     public fun KtCollectionLiteralExpression.resolveSymbol(): KaNamedFunctionSymbol?
 
     /**
-     * Resolves the constructor symbol referenced by the given [KtEnumEntrySuperclassReferenceExpression].
+     * Resolves the enum class symbol referenced by the given [KtEnumEntrySuperclassReferenceExpression].
      *
      * #### Example
      *
      * ```kotlin
      * enum class EnumWithConstructor(val x: Int) {
      *     Entry(1)
-     * //      ^ resolves to the constructor of `EnumWithConstructor`
+     * //      ^ resolves to the enum class `EnumWithConstructor`
      * }
      * ```
      *
-     * Calling `resolveSymbol()` on a [KtEnumEntrySuperclassReferenceExpression] (``) returns the
-     * [KaConstructorSymbol] of the enum class constructor if resolution succeeds; otherwise, it returns `null`
-     * (e.g., when unresolved or ambiguous).
+     * Calling `resolveSymbol()` on a [KtEnumEntrySuperclassReferenceExpression] returns the [KaNamedClassSymbol] of
+     * the enclosing enum class if resolution succeeds; otherwise, it returns `null` (e.g., when unresolved or ambiguous).
      *
-     * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on enum entry superclass constructor calls
+     * Mirrors how [KtNameReferenceExpression] prefers the class over the constructor: while the surrounding
+     * super-type call ([resolveCall]) maps to the constructor, the reference itself denotes the class.
+     *
+     * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on enum entry super-type references
      *
      * @see tryResolveSymbols
      * @see KtResolvable.resolveSymbol
      */
     @KaExperimentalApi
-    public fun KtEnumEntrySuperclassReferenceExpression.resolveSymbol(): KaConstructorSymbol?
+    public fun KtEnumEntrySuperclassReferenceExpression.resolveSymbol(): KaNamedClassSymbol?
 
     /**
      * Resolves the declaration symbol targeted by the given [KtLabelReferenceExpression].
@@ -521,6 +523,158 @@ public interface KaResolver : KaSessionComponent {
      */
     @KaExperimentalApi
     public fun KtInstanceExpressionWithLabel.resolveSymbol(): KaDeclarationSymbol?
+
+    /**
+     * Resolves the classifier symbol referenced by the given [KtNullableType].
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * val name: String? = null
+     * //        ^^^^^^^  resolves to `kotlin.String`
+     * ```
+     *
+     * Resolution unwraps the nullability marker and recurses into the inner type element. The result is the
+     * [KaClassifierSymbol] of the underlying class, type alias, or type parameter if resolution succeeds;
+     * otherwise, it returns `null` (e.g., when unresolved or when the inner element has no single classifier).
+     *
+     * Unlike [KtUserType], a [KtNullableType] cannot stand for a package qualifier, so the result is always a
+     * classifier when present.
+     *
+     * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on nullable types
+     *
+     * @see tryResolveSymbols
+     * @see KtResolvable.resolveSymbol
+     */
+    @KaExperimentalApi
+    public fun KtNullableType.resolveSymbol(): KaClassifierSymbol?
+
+    /**
+     * Resolves the synthetic function class symbol referenced by the given [KtFunctionType].
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * val a: (Int, String) -> Boolean = TODO()
+     * //     ^^^^^^^^^^^^^^^^^^^^^^^   resolves to `kotlin.Function2`
+     *
+     * val b: suspend () -> Unit = TODO()
+     * //     ^^^^^^^^^^^^^^^^^   resolves to `kotlin.coroutines.SuspendFunction0`
+     * ```
+     *
+     * Returns the [KaClassSymbol] of the corresponding `FunctionN`/`SuspendFunctionN` class (the receiver and
+     * context parameters count as parameters towards the arity), or `null` if resolution fails.
+     *
+     * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on function types
+     *
+     * @see tryResolveSymbols
+     * @see KtResolvable.resolveSymbol
+     */
+    @KaExperimentalApi
+    public fun KtFunctionType.resolveSymbol(): KaClassSymbol?
+
+    /**
+     * Resolves the classifier symbol referenced by the given [KtTypeReference].
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * val a: String = ""
+     * //     ^^^^^^  resolves to `kotlin.String`
+     *
+     * val b: List<Int>? = null
+     * //     ^^^^^^^^^^  resolves to `kotlin.collections.List`
+     *
+     * val c: (Int) -> Int = { it }
+     * //     ^^^^^^^^^^^^  resolves to `kotlin.Function1`
+     * ```
+     *
+     * Resolution delegates to the inner [KtTypeReference.typeElement][org.jetbrains.kotlin.psi.KtTypeReference.typeElement]
+     * and returns the underlying [KaClassifierSymbol] (a class, type alias, or type parameter), or `null`
+     * for type elements that don't denote a single classifier (e.g. `dynamic` and intersection types).
+     *
+     * Unlike [KtUserType], a [KtTypeReference] never stands for the package portion of a qualified path:
+     * the inner qualifier chain is built from raw `KtUserType` nodes and is never wrapped in its own
+     * type reference, so the result is always a classifier when present.
+     *
+     * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on type references
+     *
+     * @see tryResolveSymbols
+     * @see KtResolvable.resolveSymbol
+     */
+    @KaExperimentalApi
+    public fun KtTypeReference.resolveSymbol(): KaClassifierSymbol?
+
+    /**
+     * Resolves the classifier symbol referenced by the given [KtClassLiteralExpression] (`Foo::class`).
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * val a = String::class
+     * //      ^^^^^^^^^^^^^   resolves to `kotlin.String`
+     *
+     * val b = kotlin.String::class
+     * //      ^^^^^^^^^^^^^^^^^^^^   resolves to `kotlin.String`
+     * ```
+     *
+     * Resolution delegates to the receiver expression on the left of `::class`. Returns the underlying
+     * [KaClassifierSymbol] of the referenced class, type alias, or type parameter if resolution succeeds;
+     * otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+     *
+     * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on class literal expressions
+     *
+     * @see tryResolveSymbols
+     * @see KtResolvable.resolveSymbol
+     */
+    @KaExperimentalApi
+    public fun KtClassLiteralExpression.resolveSymbol(): KaClassifierSymbol?
+
+    /**
+     * Resolves the classifier symbol referenced by the given [KtSuperTypeEntry] (the no-parens form `class Foo : Bar`).
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * class Foo : Runnable
+     * //          ^^^^^^^^  resolves to `java.lang.Runnable`
+     * ```
+     *
+     * Resolution delegates to the entry's [KtSuperTypeEntry.getTypeReference]. Returns the underlying
+     * [KaClassifierSymbol] of the supertype if resolution succeeds; otherwise, it returns `null`.
+     *
+     * Companion to [KtSuperTypeCallEntry.resolveSymbol], which returns the [KaConstructorSymbol] for the
+     * `class Foo : Bar()` form.
+     *
+     * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on supertype entries
+     *
+     * @see tryResolveSymbols
+     * @see KtResolvable.resolveSymbol
+     */
+    @KaExperimentalApi
+    public fun KtSuperTypeEntry.resolveSymbol(): KaClassifierSymbol?
+
+    /**
+     * Resolves the classifier symbol referenced by the given [KtDelegatedSuperTypeEntry] (`class Foo : Bar by baz`).
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * class Foo(b: Base) : Base by b
+     * //                   ^^^^      resolves to `Base`
+     * ```
+     *
+     * Resolution delegates to the entry's [KtDelegatedSuperTypeEntry.getTypeReference] — the supertype side of the
+     * `by` clause, not the delegate expression. Returns the underlying [KaClassifierSymbol] if resolution succeeds;
+     * otherwise, it returns `null`.
+     *
+     * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on delegated supertype entries
+     *
+     * @see tryResolveSymbols
+     * @see KtResolvable.resolveSymbol
+     */
+    @KaExperimentalApi
+    public fun KtDelegatedSuperTypeEntry.resolveSymbol(): KaClassifierSymbol?
 
     /**
      * Attempts to resolve the call for the given [KtResolvableCall].
@@ -1453,22 +1607,24 @@ public fun KtCollectionLiteralExpression.resolveSymbol(): KaNamedFunctionSymbol?
 }
 
 /**
- * Resolves the constructor symbol referenced by the given [KtEnumEntrySuperclassReferenceExpression].
+ * Resolves the enum class symbol referenced by the given [KtEnumEntrySuperclassReferenceExpression].
  *
  * #### Example
  *
  * ```kotlin
  * enum class EnumWithConstructor(val x: Int) {
  *     Entry(1)
- * //      ^ resolves to the constructor of `EnumWithConstructor`
+ * //      ^ resolves to the enum class `EnumWithConstructor`
  * }
  * ```
  *
- * Calling `resolveSymbol()` on a [KtEnumEntrySuperclassReferenceExpression] (``) returns the
- * [KaConstructorSymbol] of the enum class constructor if resolution succeeds; otherwise, it returns `null`
- * (e.g., when unresolved or ambiguous).
+ * Calling `resolveSymbol()` on a [KtEnumEntrySuperclassReferenceExpression] returns the [KaNamedClassSymbol] of
+ * the enclosing enum class if resolution succeeds; otherwise, it returns `null` (e.g., when unresolved or ambiguous).
  *
- * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on enum entry superclass constructor calls
+ * Mirrors how [KtNameReferenceExpression] prefers the class over the constructor: while the surrounding
+ * super-type call ([resolveCall]) maps to the constructor, the reference itself denotes the class.
+ *
+ * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on enum entry super-type references
  *
  * @see tryResolveSymbols
  * @see KtResolvable.resolveSymbol
@@ -1477,7 +1633,7 @@ public fun KtCollectionLiteralExpression.resolveSymbol(): KaNamedFunctionSymbol?
 @KaExperimentalApi
 @KaContextParameterApi
 context(session: KaSession)
-public fun KtEnumEntrySuperclassReferenceExpression.resolveSymbol(): KaConstructorSymbol? {
+public fun KtEnumEntrySuperclassReferenceExpression.resolveSymbol(): KaNamedClassSymbol? {
     return with(session) {
         resolveSymbol()
     }
@@ -1725,6 +1881,200 @@ public fun KtConstructorCalleeExpression.resolveSymbol(): KaConstructorSymbol? {
 @KaContextParameterApi
 context(session: KaSession)
 public fun KtInstanceExpressionWithLabel.resolveSymbol(): KaDeclarationSymbol? {
+    return with(session) {
+        resolveSymbol()
+    }
+}
+
+/**
+ * Resolves the classifier symbol referenced by the given [KtNullableType].
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * val name: String? = null
+ * //        ^^^^^^^  resolves to `kotlin.String`
+ * ```
+ *
+ * Resolution unwraps the nullability marker and recurses into the inner type element. The result is the
+ * [KaClassifierSymbol] of the underlying class, type alias, or type parameter if resolution succeeds;
+ * otherwise, it returns `null` (e.g., when unresolved or when the inner element has no single classifier).
+ *
+ * Unlike [KtUserType], a [KtNullableType] cannot stand for a package qualifier, so the result is always a
+ * classifier when present.
+ *
+ * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on nullable types
+ *
+ * @see tryResolveSymbols
+ * @see KtResolvable.resolveSymbol
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(session: KaSession)
+public fun KtNullableType.resolveSymbol(): KaClassifierSymbol? {
+    return with(session) {
+        resolveSymbol()
+    }
+}
+
+/**
+ * Resolves the synthetic function class symbol referenced by the given [KtFunctionType].
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * val a: (Int, String) -> Boolean = TODO()
+ * //     ^^^^^^^^^^^^^^^^^^^^^^^   resolves to `kotlin.Function2`
+ *
+ * val b: suspend () -> Unit = TODO()
+ * //     ^^^^^^^^^^^^^^^^^   resolves to `kotlin.coroutines.SuspendFunction0`
+ * ```
+ *
+ * Returns the [KaClassSymbol] of the corresponding `FunctionN`/`SuspendFunctionN` class (the receiver and
+ * context parameters count as parameters towards the arity), or `null` if resolution fails.
+ *
+ * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on function types
+ *
+ * @see tryResolveSymbols
+ * @see KtResolvable.resolveSymbol
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(session: KaSession)
+public fun KtFunctionType.resolveSymbol(): KaClassSymbol? {
+    return with(session) {
+        resolveSymbol()
+    }
+}
+
+/**
+ * Resolves the classifier symbol referenced by the given [KtTypeReference].
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * val a: String = ""
+ * //     ^^^^^^  resolves to `kotlin.String`
+ *
+ * val b: List<Int>? = null
+ * //     ^^^^^^^^^^  resolves to `kotlin.collections.List`
+ *
+ * val c: (Int) -> Int = { it }
+ * //     ^^^^^^^^^^^^  resolves to `kotlin.Function1`
+ * ```
+ *
+ * Resolution delegates to the inner [KtTypeReference.typeElement][org.jetbrains.kotlin.psi.KtTypeReference.typeElement]
+ * and returns the underlying [KaClassifierSymbol] (a class, type alias, or type parameter), or `null`
+ * for type elements that don't denote a single classifier (e.g. `dynamic` and intersection types).
+ *
+ * Unlike [KtUserType], a [KtTypeReference] never stands for the package portion of a qualified path:
+ * the inner qualifier chain is built from raw `KtUserType` nodes and is never wrapped in its own
+ * type reference, so the result is always a classifier when present.
+ *
+ * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on type references
+ *
+ * @see tryResolveSymbols
+ * @see KtResolvable.resolveSymbol
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(session: KaSession)
+public fun KtTypeReference.resolveSymbol(): KaClassifierSymbol? {
+    return with(session) {
+        resolveSymbol()
+    }
+}
+
+/**
+ * Resolves the classifier symbol referenced by the given [KtClassLiteralExpression] (`Foo::class`).
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * val a = String::class
+ * //      ^^^^^^^^^^^^^   resolves to `kotlin.String`
+ *
+ * val b = kotlin.String::class
+ * //      ^^^^^^^^^^^^^^^^^^^^   resolves to `kotlin.String`
+ * ```
+ *
+ * Resolution delegates to the receiver expression on the left of `::class`. Returns the underlying
+ * [KaClassifierSymbol] of the referenced class, type alias, or type parameter if resolution succeeds;
+ * otherwise, it returns `null` (e.g., when unresolved or ambiguous).
+ *
+ * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on class literal expressions
+ *
+ * @see tryResolveSymbols
+ * @see KtResolvable.resolveSymbol
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(session: KaSession)
+public fun KtClassLiteralExpression.resolveSymbol(): KaClassifierSymbol? {
+    return with(session) {
+        resolveSymbol()
+    }
+}
+
+/**
+ * Resolves the classifier symbol referenced by the given [KtSuperTypeEntry] (the no-parens form `class Foo : Bar`).
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * class Foo : Runnable
+ * //          ^^^^^^^^  resolves to `java.lang.Runnable`
+ * ```
+ *
+ * Resolution delegates to the entry's [KtSuperTypeEntry.getTypeReference]. Returns the underlying
+ * [KaClassifierSymbol] of the supertype if resolution succeeds; otherwise, it returns `null`.
+ *
+ * Companion to [KtSuperTypeCallEntry.resolveSymbol], which returns the [KaConstructorSymbol] for the
+ * `class Foo : Bar()` form.
+ *
+ * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on supertype entries
+ *
+ * @see tryResolveSymbols
+ * @see KtResolvable.resolveSymbol
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(session: KaSession)
+public fun KtSuperTypeEntry.resolveSymbol(): KaClassifierSymbol? {
+    return with(session) {
+        resolveSymbol()
+    }
+}
+
+/**
+ * Resolves the classifier symbol referenced by the given [KtDelegatedSuperTypeEntry] (`class Foo : Bar by baz`).
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * class Foo(b: Base) : Base by b
+ * //                   ^^^^      resolves to `Base`
+ * ```
+ *
+ * Resolution delegates to the entry's [KtDelegatedSuperTypeEntry.getTypeReference] — the supertype side of the
+ * `by` clause, not the delegate expression. Returns the underlying [KaClassifierSymbol] if resolution succeeds;
+ * otherwise, it returns `null`.
+ *
+ * This is a specialized counterpart of [KtResolvable.resolveSymbol] focused specifically on delegated supertype entries
+ *
+ * @see tryResolveSymbols
+ * @see KtResolvable.resolveSymbol
+ */
+// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@KaExperimentalApi
+@KaContextParameterApi
+context(session: KaSession)
+public fun KtDelegatedSuperTypeEntry.resolveSymbol(): KaClassifierSymbol? {
     return with(session) {
         resolveSymbol()
     }

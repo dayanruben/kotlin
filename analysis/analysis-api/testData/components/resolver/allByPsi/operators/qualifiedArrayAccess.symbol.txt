@@ -26,10 +26,16 @@ KtParameter(36,52): 'argument: String'
   null
 
 KtTypeReference(46,52): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtUserType(46,52): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtNameReferenceExpression(46,52): 'String'
   KaSymbolResolutionSuccess:
@@ -44,10 +50,16 @@ KtProperty(60,92): 'val itself: MyClass get() = this'
   null
 
 KtTypeReference(72,79): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(72,79): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(72,79): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -77,13 +89,22 @@ KtProperty(96,137): 'val nullableItself: MyClass? get() = this'
   null
 
 KtTypeReference(116,124): 'MyClass?'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNullableType(116,124): 'MyClass?'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(116,123): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(116,123): 'MyClass'
   KaSymbolResolutionSuccess:
@@ -122,13 +143,22 @@ KtProperty(157,184): 'val s: MyClass? = MyClass()'
   null
 
 KtTypeReference(164,172): 'MyClass?'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNullableType(164,172): 'MyClass?'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtUserType(164,171): 'MyClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MyClass
+    ]
 
 KtNameReferenceExpression(164,171): 'MyClass'
   KaSymbolResolutionSuccess:

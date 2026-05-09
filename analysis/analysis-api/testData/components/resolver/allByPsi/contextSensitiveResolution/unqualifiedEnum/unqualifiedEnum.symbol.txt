@@ -41,10 +41,16 @@ KtParameter(133,142): 's: Sample'
   null
 
 KtTypeReference(136,142): 'Sample'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      test/Sample
+    ]
 
 KtUserType(136,142): 'Sample'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      test/Sample
+    ]
 
 KtNameReferenceExpression(136,142): 'Sample'
   KaSymbolResolutionSuccess:
@@ -53,10 +59,16 @@ KtNameReferenceExpression(136,142): 'Sample'
     ]
 
 KtTypeReference(145,148): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtUserType(145,148): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtNameReferenceExpression(145,148): 'Int'
   KaSymbolResolutionSuccess:
@@ -137,10 +149,16 @@ KtParameter(258,267): 's: Sample'
   null
 
 KtTypeReference(261,267): 'Sample'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      test/Sample
+    ]
 
 KtUserType(261,267): 'Sample'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      test/Sample
+    ]
 
 KtNameReferenceExpression(261,267): 'Sample'
   KaSymbolResolutionSuccess:
@@ -149,10 +167,16 @@ KtNameReferenceExpression(261,267): 'Sample'
     ]
 
 KtTypeReference(270,273): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtUserType(270,273): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtNameReferenceExpression(270,273): 'Int'
   KaSymbolResolutionSuccess:
@@ -323,10 +347,16 @@ KtParameter(466,475): 's: Sample'
   null
 
 KtTypeReference(469,475): 'Sample'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      test/Sample
+    ]
 
 KtUserType(469,475): 'Sample'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      test/Sample
+    ]
 
 KtNameReferenceExpression(469,475): 'Sample'
   KaSymbolResolutionSuccess:
@@ -335,10 +365,16 @@ KtNameReferenceExpression(469,475): 'Sample'
     ]
 
 KtTypeReference(478,481): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtUserType(478,481): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtNameReferenceExpression(478,481): 'Int'
   KaSymbolResolutionSuccess:

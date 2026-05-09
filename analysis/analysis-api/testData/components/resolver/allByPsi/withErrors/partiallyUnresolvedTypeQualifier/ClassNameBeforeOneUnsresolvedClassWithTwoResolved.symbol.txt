@@ -26,16 +26,26 @@ KtProperty(44,65): 'val prop: Foo.Bar.Baz'
   null
 
 KtTypeReference(54,65): 'Foo.Bar.Baz'
-  null
+  KaSymbolResolutionError:
+    candidateSymbols = []
+    diagnostic = ERROR<UNRESOLVED_REFERENCE: Unresolved reference 'Baz'.>
 
 KtUserType(54,65): 'Foo.Bar.Baz'
-  null
+  KaSymbolResolutionError:
+    candidateSymbols = []
+    diagnostic = ERROR<UNRESOLVED_REFERENCE: Unresolved reference 'Baz'.>
 
 KtUserType(54,61): 'Foo.Bar'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Foo.Bar
+    ]
 
 KtUserType(54,57): 'Foo'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Foo
+    ]
 
 KtNameReferenceExpression(54,57): 'Foo'
   KaSymbolResolutionSuccess:
@@ -67,16 +77,26 @@ KtProperty(89,115): 'val localProp: Foo.Bar.Baz'
   null
 
 KtTypeReference(104,115): 'Foo.Bar.Baz'
-  null
+  KaSymbolResolutionError:
+    candidateSymbols = []
+    diagnostic = ERROR<UNRESOLVED_REFERENCE: Unresolved reference 'Baz'.>
 
 KtUserType(104,115): 'Foo.Bar.Baz'
-  null
+  KaSymbolResolutionError:
+    candidateSymbols = []
+    diagnostic = ERROR<UNRESOLVED_REFERENCE: Unresolved reference 'Baz'.>
 
 KtUserType(104,111): 'Foo.Bar'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Foo.Bar
+    ]
 
 KtUserType(104,107): 'Foo'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Foo
+    ]
 
 KtNameReferenceExpression(104,107): 'Foo'
   KaSymbolResolutionSuccess:
@@ -111,10 +131,16 @@ KtParameter(132,151): 'action: (T) -> Unit'
   null
 
 KtTypeReference(140,151): '(T) -> Unit'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Function1
+    ]
 
 KtFunctionType(140,151): '(T) -> Unit'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Function1
+    ]
 
 KtParameterList(140,143): '(T)'
   null
@@ -123,10 +149,16 @@ KtParameter(141,142): 'T'
   null
 
 KtTypeReference(141,142): 'T'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      T
+    ]
 
 KtUserType(141,142): 'T'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      T
+    ]
 
 KtNameReferenceExpression(141,142): 'T'
   KaSymbolResolutionSuccess:
@@ -135,10 +167,16 @@ KtNameReferenceExpression(141,142): 'T'
     ]
 
 KtTypeReference(147,151): 'Unit'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Unit
+    ]
 
 KtUserType(147,151): 'Unit'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Unit
+    ]
 
 KtNameReferenceExpression(147,151): 'Unit'
   KaSymbolResolutionSuccess:
@@ -182,16 +220,26 @@ KtParameter(179,203): 'lambdaParam: Foo.Bar.Baz'
   null
 
 KtTypeReference(192,203): 'Foo.Bar.Baz'
-  null
+  KaSymbolResolutionError:
+    candidateSymbols = []
+    diagnostic = ERROR<UNRESOLVED_REFERENCE: Unresolved reference 'Baz'.>
 
 KtUserType(192,203): 'Foo.Bar.Baz'
-  null
+  KaSymbolResolutionError:
+    candidateSymbols = []
+    diagnostic = ERROR<UNRESOLVED_REFERENCE: Unresolved reference 'Baz'.>
 
 KtUserType(192,199): 'Foo.Bar'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Foo.Bar
+    ]
 
 KtUserType(192,195): 'Foo'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Foo
+    ]
 
 KtNameReferenceExpression(192,195): 'Foo'
   KaSymbolResolutionSuccess:

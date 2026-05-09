@@ -38,10 +38,16 @@ KtParameter(164,180): 'problem: Problem'
   null
 
 KtTypeReference(173,180): 'Problem'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Problem
+    ]
 
 KtUserType(173,180): 'Problem'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Problem
+    ]
 
 KtNameReferenceExpression(173,180): 'Problem'
   KaSymbolResolutionSuccess:
@@ -50,10 +56,16 @@ KtNameReferenceExpression(173,180): 'Problem'
     ]
 
 KtTypeReference(183,189): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtUserType(183,189): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtNameReferenceExpression(183,189): 'String'
   KaSymbolResolutionSuccess:
@@ -152,10 +164,16 @@ KtParameter(350,359): 'x: String'
   null
 
 KtTypeReference(353,359): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtUserType(353,359): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtNameReferenceExpression(353,359): 'String'
   KaSymbolResolutionSuccess:
@@ -164,10 +182,16 @@ KtNameReferenceExpression(353,359): 'String'
     ]
 
 KtTypeReference(362,369): 'Problem'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Problem
+    ]
 
 KtUserType(362,369): 'Problem'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /Problem
+    ]
 
 KtNameReferenceExpression(362,369): 'Problem'
   KaSymbolResolutionSuccess:

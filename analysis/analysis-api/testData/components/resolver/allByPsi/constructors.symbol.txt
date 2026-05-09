@@ -32,10 +32,16 @@ KtParameter(54,60): 'i: Int'
   null
 
 KtTypeReference(57,60): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtUserType(57,60): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtNameReferenceExpression(57,60): 'Int'
   KaSymbolResolutionSuccess:
@@ -65,10 +71,16 @@ KtParameter(78,87): 's: String'
   null
 
 KtTypeReference(81,87): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtUserType(81,87): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtNameReferenceExpression(81,87): 'String'
   KaSymbolResolutionSuccess:
@@ -104,13 +116,22 @@ KtSuperTypeList(131,140): 'BaseClass'
   null
 
 KtSuperTypeEntry(131,140): 'BaseClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      r/BaseClass
+    ]
 
 KtTypeReference(131,140): 'BaseClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      r/BaseClass
+    ]
 
 KtUserType(131,140): 'BaseClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      r/BaseClass
+    ]
 
 KtNameReferenceExpression(131,140): 'BaseClass'
   KaSymbolResolutionSuccess:
@@ -131,10 +152,16 @@ KtParameter(159,166): 'ci: Int'
   null
 
 KtTypeReference(163,166): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtUserType(163,166): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtNameReferenceExpression(163,166): 'Int'
   KaSymbolResolutionSuccess:
@@ -176,10 +203,16 @@ KtParameter(196,206): 'cs: String'
   null
 
 KtTypeReference(200,206): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtUserType(200,206): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtNameReferenceExpression(200,206): 'String'
   KaSymbolResolutionSuccess:
@@ -278,10 +311,16 @@ KtConstructorCalleeExpression(294,303): 'BaseClass'
     ]
 
 KtTypeReference(294,303): 'BaseClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      r/BaseClass
+    ]
 
 KtUserType(294,303): 'BaseClass'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      r/BaseClass
+    ]
 
 KtNameReferenceExpression(294,303): 'BaseClass'
   KaSymbolResolutionSuccess:
@@ -311,10 +350,16 @@ KtParameter(326,335): 's: String'
   null
 
 KtTypeReference(329,335): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtUserType(329,335): 'String'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/String
+    ]
 
 KtNameReferenceExpression(329,335): 'String'
   KaSymbolResolutionSuccess:
@@ -359,10 +404,16 @@ KtParameter(377,383): 'i: Int'
   null
 
 KtTypeReference(380,383): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtUserType(380,383): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtNameReferenceExpression(380,383): 'Int'
   KaSymbolResolutionSuccess:
@@ -377,13 +428,22 @@ KtSuperTypeList(405,423): 'ClassWithType<Int>'
   null
 
 KtSuperTypeEntry(405,423): 'ClassWithType<Int>'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      r/ClassWithType
+    ]
 
 KtTypeReference(405,423): 'ClassWithType<Int>'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      r/ClassWithType
+    ]
 
 KtUserType(405,423): 'ClassWithType<Int>'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      r/ClassWithType
+    ]
 
 KtNameReferenceExpression(405,418): 'ClassWithType'
   KaSymbolResolutionSuccess:
@@ -398,10 +458,16 @@ KtTypeProjection(419,422): 'Int'
   null
 
 KtTypeReference(419,422): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtUserType(419,422): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtNameReferenceExpression(419,422): 'Int'
   KaSymbolResolutionSuccess:

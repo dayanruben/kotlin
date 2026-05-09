@@ -38,10 +38,16 @@ KtConstructorCalleeExpression(122,130): 'MySealed'
     ]
 
 KtTypeReference(122,130): 'MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed
+    ]
 
 KtUserType(122,130): 'MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed
+    ]
 
 KtNameReferenceExpression(122,130): 'MySealed'
   KaSymbolResolutionSuccess:
@@ -74,10 +80,16 @@ KtConstructorCalleeExpression(153,161): 'MySealed'
     ]
 
 KtTypeReference(153,161): 'MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed
+    ]
 
 KtUserType(153,161): 'MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed
+    ]
 
 KtNameReferenceExpression(153,161): 'MySealed'
   KaSymbolResolutionSuccess:
@@ -98,10 +110,16 @@ KtParameter(175,186): 'a: MySealed'
   null
 
 KtTypeReference(178,186): 'MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed
+    ]
 
 KtUserType(178,186): 'MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed
+    ]
 
 KtNameReferenceExpression(178,186): 'MySealed'
   KaSymbolResolutionSuccess:
@@ -122,19 +140,31 @@ KtParameter(214,231): 'b: () -> MySealed'
   null
 
 KtTypeReference(217,231): '() -> MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Function0
+    ]
 
 KtFunctionType(217,231): '() -> MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Function0
+    ]
 
 KtParameterList(217,219): '()'
   null
 
 KtTypeReference(223,231): 'MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed
+    ]
 
 KtUserType(223,231): 'MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed
+    ]
 
 KtNameReferenceExpression(223,231): 'MySealed'
   KaSymbolResolutionSuccess:
@@ -161,19 +191,31 @@ KtParameter(250,260): 'b: () -> T'
   null
 
 KtTypeReference(253,260): '() -> T'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Function0
+    ]
 
 KtFunctionType(253,260): '() -> T'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Function0
+    ]
 
 KtParameterList(253,255): '()'
   null
 
 KtTypeReference(259,260): 'T'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      T
+    ]
 
 KtUserType(259,260): 'T'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      T
+    ]
 
 KtNameReferenceExpression(259,260): 'T'
   KaSymbolResolutionSuccess:
@@ -182,10 +224,16 @@ KtNameReferenceExpression(259,260): 'T'
     ]
 
 KtTypeReference(263,264): 'T'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      T
+    ]
 
 KtUserType(263,264): 'T'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      T
+    ]
 
 KtNameReferenceExpression(263,264): 'T'
   KaSymbolResolutionSuccess:
@@ -224,10 +272,16 @@ KtParameter(286,290): 'x: X'
   null
 
 KtTypeReference(289,290): 'X'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      X
+    ]
 
 KtUserType(289,290): 'X'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      X
+    ]
 
 KtNameReferenceExpression(289,290): 'X'
   KaSymbolResolutionSuccess:
@@ -236,10 +290,16 @@ KtNameReferenceExpression(289,290): 'X'
     ]
 
 KtTypeReference(293,294): 'X'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      X
+    ]
 
 KtUserType(293,294): 'X'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      X
+    ]
 
 KtNameReferenceExpression(293,294): 'X'
   KaSymbolResolutionSuccess:
@@ -272,10 +332,16 @@ KtParameter(314,324): 'b: Boolean'
   null
 
 KtTypeReference(317,324): 'Boolean'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Boolean
+    ]
 
 KtUserType(317,324): 'Boolean'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Boolean
+    ]
 
 KtNameReferenceExpression(317,324): 'Boolean'
   KaSymbolResolutionSuccess:
@@ -491,10 +557,16 @@ KtTypeProjection(536,544): 'MySealed'
   null
 
 KtTypeReference(536,544): 'MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed
+    ]
 
 KtUserType(536,544): 'MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed
+    ]
 
 KtNameReferenceExpression(536,544): 'MySealed'
   KaSymbolResolutionSuccess:
@@ -644,10 +716,16 @@ KtProperty(688,759): 'val z: MySealed = myRun {'
   null
 
 KtTypeReference(695,703): 'MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed
+    ]
 
 KtUserType(695,703): 'MySealed'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      /MySealed
+    ]
 
 KtNameReferenceExpression(695,703): 'MySealed'
   KaSymbolResolutionSuccess:

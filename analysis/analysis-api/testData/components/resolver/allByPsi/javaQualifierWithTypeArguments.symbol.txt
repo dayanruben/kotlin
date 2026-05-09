@@ -41,10 +41,16 @@ KtTypeProjection(57,60): 'Int'
   null
 
 KtTypeReference(57,60): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtUserType(57,60): 'Int'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Int
+    ]
 
 KtNameReferenceExpression(57,60): 'Int'
   KaSymbolResolutionSuccess:
@@ -83,10 +89,16 @@ KtTypeProjection(89,93): 'Long'
   null
 
 KtTypeReference(89,93): 'Long'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Long
+    ]
 
 KtUserType(89,93): 'Long'
-  null
+  KaSymbolResolutionSuccess:
+    symbols = [
+      kotlin/Long
+    ]
 
 KtNameReferenceExpression(89,93): 'Long'
   KaSymbolResolutionSuccess:
