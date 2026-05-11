@@ -51,6 +51,10 @@ projectTests {
             testRetry.maxRetries.set(0)
         }
 
+        testLogging {
+            showStandardStreams = true
+        }
+
         dependsOn(":dist")
         dependsOn(acceptAndroidSdkLicenses)
         val jdkHome = project.getToolchainJdkHomeFor(JdkMajorVersion.JDK_17_0)
