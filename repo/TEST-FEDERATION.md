@@ -27,7 +27,7 @@ A domain is always marked as 'affected' if any file, belonging to the domain, is
 
 Some domains might form a 'Domain/Subdomain' relationship which can be expressed using 'fullyAffectedBy.'
 A domain, which is fully affected by another domain, will always be marked as 'affected' by a set of changes if any of the
-(transitive) dependencies are marked affected. In the example above:
+dependencies are marked affected. In the example above:
 
 A change which marks the 'larger Compiler domain' as affected will also mark the 'Native' domain as affected, while
 a change isolated within the 'Native' domain will not affect the 'Compiler' domain.

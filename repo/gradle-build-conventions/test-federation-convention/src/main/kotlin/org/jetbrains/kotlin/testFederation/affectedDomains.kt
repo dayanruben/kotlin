@@ -10,8 +10,6 @@ import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
-import org.gradle.internal.enterprise.test.FileProperty
-import org.jetbrains.kotlin.tooling.core.withClosure
 import org.jetbrains.kotlin.tooling.core.withLinearClosure
 import java.io.File
 import kotlin.io.path.Path
@@ -80,5 +78,10 @@ private val domainDependees: Map<Domain, List<Domain>> = buildMap<Domain, Mutabl
 }
 
 internal fun Iterable<Domain>.withAffectedDependencies(): Set<Domain> {
-    return withClosure<Domain> { system -> domainDependees[system].orEmpty() }
+    return buildSet {
+        this@withAffectedDependencies.forEach { domain ->
+            add(domain)
+            addAll(domainDependees[domain].orEmpty())
+        }
+    }
 }
