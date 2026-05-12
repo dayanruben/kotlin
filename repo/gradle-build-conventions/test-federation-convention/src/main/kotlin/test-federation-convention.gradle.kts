@@ -19,28 +19,28 @@ if (project.testFederationEnabled.orNull == true) {
         val currentDomain = project.testFederationDomain
         val affectedDomains = project.testFederationAffectedDomains
         val formattedAffectedDomains = affectedDomains.map { domains -> domains.toArgumentString() }
-        val isSmokeTest = project.provider { isSmokeTest }
+        val smokeTestConfig = project.provider { smokeTestConfig }.orElse(SmokeTestConfig.Default)
 
         /* If the task itself is marked as 'isSmokeTest', then it always has to be fully executed */
-        val testFederationMode = project.testFederationMode.zip(isSmokeTest.orElse(false)) { mode, isSmokeTest ->
-            if (isSmokeTest) TestFederationMode.Full
-            else mode
-        }
+        val testFederationMode = project.testFederationMode
 
         inputs.property(TEST_FEDERATION_MODE_KEY, testFederationMode)
-        inputs.property(TEST_FEDERATION_AFFECTED_DOMAINS_KEY, formattedAffectedDomains)
-        inputs.property("test.federation.isSmokeTest", isSmokeTest).optional(true)
+        inputs.property(SMOKE_TEST_CONFIG_KEY, smokeTestConfig)
+
+        /*
+        We only use the exact set of domains as input to the test task if we're actually running in smoke test mode.
+        This will allow for safely re-using build caches of any 'full mode' run.
+         */
+        inputs.property(TEST_FEDERATION_AFFECTED_DOMAINS_KEY, testFederationMode.zip(affectedDomains) { mode, domains ->
+            if (mode == TestFederationMode.Smoke) domains.toArgumentString() else "*"
+        })
 
         val testFederationRuntime = testFederationRuntime
 
         doFirst {
             this as Test
 
-            val isSmokeTest = isSmokeTest.orNull
-            if (isSmokeTest == true) {
-                logger.quiet("$path is marked as 'isSmokeTest'")
-            }
-
+            val smokeTestConfig = smokeTestConfig.get()
 
             logger.quiet("Current Domain: '${currentDomain.get()}'")
             logger.quiet("Affected Domains: '${formattedAffectedDomains.get()}'")
@@ -49,26 +49,45 @@ if (project.testFederationEnabled.orNull == true) {
             systemProperty(TEST_FEDERATION_MODE_KEY, testFederationMode.get().name)
             environment(TEST_FEDERATION_MODE_ENV_KEY, testFederationMode.get().name)
 
-            systemProperty(TEST_FEDERATION_AFFECTED_DOMAINS_KEY, formattedAffectedDomains.get())
-            environment(TEST_FEDERATION_AFFECTED_DOMAINS_ENV_KEY, formattedAffectedDomains.get())
-
-            /* The test task was explicitly marked as 'isSmokeTest=false', therefore, won't further execute in smoke mode */
-            if (isSmokeTest == false && testFederationMode.get() == TestFederationMode.Smoke) {
-                throw StopExecutionException("Test task is marked as 'isSmokeTest=false' and therefore won't run in SmokeTest mode")
+            /*
+            We will only provide the 'affected domains' to the test task if we're actually running in smoke test mode.
+            This will allow for safely re-using build caches of any 'full mode' run.
+            */
+            if (testFederationMode.get() == TestFederationMode.Smoke) {
+                systemProperty(TEST_FEDERATION_AFFECTED_DOMAINS_KEY, formattedAffectedDomains.get())
+                environment(TEST_FEDERATION_AFFECTED_DOMAINS_ENV_KEY, formattedAffectedDomains.get())
             }
 
-            /* If the task itself is marked as 'isSmokeTest', then all tests within are considered a smoke test, no filters apply */
-            if (testFederationMode.get() == TestFederationMode.Smoke) {
-                val testFramework = testFramework
-                if (testFramework is JUnitPlatformTestFramework) {
-                    testFramework.options.includeTags("smoke")
-                    affectedDomains.get().forEach { domain ->
-                        testFramework.options.includeTags("affectedBy:${domain.name}")
-                    }
-                }
+            if (smokeTestConfig is SmokeTestConfig.Enabled) {
+                systemProperty(TEST_FEDERATION_AUTO_SMOKE_TEST_PERCENTAGE_KEY, smokeTestConfig.autoSmokeTestPercentage)
+                environment(TEST_FEDERATION_AUTO_SMOKE_TEST_PERCENTAGE_ENV_KEY, smokeTestConfig.autoSmokeTestPercentage)
+            }
 
-                if (testFramework is JUnitTestFramework) {
-                    testFramework.options.includeCategories("org.jetbrains.kotlin.testFederation.SmokeTest")
+            /* The test task was explicitly marked as 'isSmokeTest=false', therefore, won't further execute in smoke mode */
+            if (smokeTestConfig is SmokeTestConfig.Disabled && testFederationMode.get() == TestFederationMode.Smoke) {
+                throw StopExecutionException("The test task is disabled in Smoke Test mode")
+            }
+
+            if (testFederationMode.get() == TestFederationMode.Smoke) {
+                smokeTestConfig as SmokeTestConfig.Enabled
+
+                /*
+                If we only execute tagged smoke/contract tests, then we can already add those tags as includes.
+                The 'SmokeTestExecutionCondition' would also filter relevant tests, however adding a filter here can lead to
+                a better rendering of the executed tests.
+                */
+                if (smokeTestConfig.autoSmokeTestPercentage == 0) {
+                    val testFramework = testFramework
+                    if (testFramework is JUnitPlatformTestFramework) {
+                        testFramework.options.includeTags("smoke")
+                        affectedDomains.get().forEach { domain ->
+                            testFramework.options.includeTags("affectedBy:${domain.name}")
+                        }
+                    }
+
+                    if (testFramework is JUnitTestFramework) {
+                        testFramework.options.includeCategories("org.jetbrains.kotlin.testFederation.SmokeTest")
+                    }
                 }
 
                 println("##teamcity[addBuildTag 'Test Federation Mode: Smoke']")

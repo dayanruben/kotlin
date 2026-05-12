@@ -479,16 +479,16 @@ private fun KaSession.tryToMapKotlinCollectionMethodToJavaMethod(
     allSupertypes: List<KaClassType>,
 ): PsiMethod? {
     val name = kotlinCollectionFunction.name.asString()
-    if (name == "addAll") {
-        // "addAll" has two overloads from different types with different number of parameters
-        return if (kotlinCollectionFunction.valueParameters.size == 1) {
-            getJavaCollectionClass(allSupertypes)?.methods?.find { it.name == name }
-        } else {
-            getJavaListClass(allSupertypes)?.methods?.find { it.name == name && it.parameterList.parametersCount == 2 }
-        }
-    }
+    val parameterCount = kotlinCollectionFunction.valueParameters.size
+
+    fun PsiClass.findMatchingMethod(): PsiMethod? =
+        methods.find { it.name == name && it.parameterList.parametersCount == parameterCount }
 
     val javaClass = when (name) {
+        "addAll" -> {
+            // "addAll" has two overloads from different types with different number of parameters
+            if (parameterCount == 1) getJavaCollectionClass(allSupertypes) else getJavaListClass(allSupertypes)
+        }
         "contains", "containsAll", "removeAll", "retainAll" -> getJavaCollectionClass(allSupertypes)
         "indexOf", "lastIndexOf" -> getJavaListClass(allSupertypes)
         "get", "containsKey", "containsValue", "getOrDefault", "putAll" -> getJavaMapClass(allSupertypes)
@@ -502,7 +502,7 @@ private fun KaSession.tryToMapKotlinCollectionMethodToJavaMethod(
         else -> null
     }
 
-    return javaClass?.methods?.find { it.name == name }
+    return javaClass?.findMatchingMethod()
 }
 
 private fun KaSession.getJavaCollectionClass(allSupertypes: List<KaClassType>): PsiClass? =

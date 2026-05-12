@@ -273,6 +273,18 @@ public class FirStandaloneNormalAnalysisSourceModuleResolveCallByFileTestGenerat
   }
 
   @Test
+  @TestMetadata("primaryConstructorVsCompanionInvoke.kt")
+  public void testPrimaryConstructorVsCompanionInvoke() {
+    run("primaryConstructorVsCompanionInvoke.kt");
+  }
+
+  @Test
+  @TestMetadata("primaryConstructorVsCompanionInvokeOnNestedClass.kt")
+  public void testPrimaryConstructorVsCompanionInvokeOnNestedClass() {
+    run("primaryConstructorVsCompanionInvokeOnNestedClass.kt");
+  }
+
+  @Test
   @TestMetadata("providedDelegate.kt")
   public void testProvidedDelegate() {
     run("providedDelegate.kt");

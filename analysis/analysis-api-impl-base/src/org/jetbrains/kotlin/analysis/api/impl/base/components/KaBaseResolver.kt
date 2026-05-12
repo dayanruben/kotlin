@@ -433,6 +433,7 @@ abstract class KaBaseResolver<T : KaSession> : KaBaseSessionComponent<T>(), KaRe
         return KaBaseCompoundSymbolResolutionError(backingAttempts = merged)
     }
 
+    @KaImplementationDetail
     protected companion object {
         private val nonCallBinaryOperator: TokenSet = TokenSet.create(
             KtTokens.ELVIS,

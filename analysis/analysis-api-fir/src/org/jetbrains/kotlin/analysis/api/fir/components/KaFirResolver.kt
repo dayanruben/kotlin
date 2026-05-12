@@ -50,6 +50,8 @@ import org.jetbrains.kotlin.fir.diagnostics.FirDiagnosticHolder
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildFunctionCall
 import org.jetbrains.kotlin.fir.references.*
+import org.jetbrains.kotlin.fir.references.builder.buildSimpleNamedReference
+import org.jetbrains.kotlin.fir.references.impl.FirSimpleNamedReference
 import org.jetbrains.kotlin.fir.resolve.FirResolvedSymbolOrigin
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.calls.candidate.Candidate
@@ -2074,12 +2076,31 @@ internal class KaFirResolver(
         resolveFragmentOfCall: Boolean,
     ): List<KaCallCandidate> {
         // If a function call is resolved to an implicit invoke call, the FirImplicitInvokeCall will have the `invoke()` function as the
-        // callee and the variable as the explicit receiver. To correctly get all candidates, we need to get the original function
+        // callee and the variable/qualifier as the explicit receiver. To correctly get all candidates, we need to get the original function
         // call's explicit receiver (if there is any) and callee (i.e., the variable).
-        val unwrappedExplicitReceiver = explicitReceiver?.unwrapSmartcastExpression()
-        val isUnwrappedImplicitInvokeCall = this is FirImplicitInvokeCall && unwrappedExplicitReceiver is FirPropertyAccessExpression
+        val unwrappedExplicitReceiver = explicitReceiver?.unwrapSmartcastExpression()?.takeIf {
+            it is FirPropertyAccessExpression || it is FirResolvedQualifier
+        }
+
+        val isUnwrappedImplicitInvokeCall = this is FirImplicitInvokeCall && unwrappedExplicitReceiver != null
         val originalFunctionCall = if (isUnwrappedImplicitInvokeCall) {
-            val originalCallee = unwrappedExplicitReceiver.calleeReference.safeAs<FirNamedReference>() ?: return emptyList()
+            val originalExplicitReceiver = when (unwrappedExplicitReceiver) {
+                is FirPropertyAccessExpression -> unwrappedExplicitReceiver.explicitReceiver
+                is FirResolvedQualifier -> unwrappedExplicitReceiver.explicitParent
+                else -> errorWithFirSpecificEntries(
+                    "Unsupported receiver type: ${unwrappedExplicitReceiver::class.simpleName}",
+                    fir = this,
+                )
+            }
+
+            val originalCalleeReference = when (unwrappedExplicitReceiver) {
+                is FirPropertyAccessExpression -> unwrappedExplicitReceiver.calleeReference
+                is FirResolvedQualifier -> buildSimpleNamedReference {
+                    source = unwrappedExplicitReceiver.source
+                    name = unwrappedExplicitReceiver.relativeClassFqName?.shortName() ?: return emptyList()
+                }
+            }
+
             buildFunctionCall {
                 // NOTE: We only need to copy the explicit receiver and not the dispatch and extension receivers as only the explicit
                 // receiver is needed by the resolver. The dispatch and extension receivers are only assigned after resolution when a
@@ -2087,9 +2108,9 @@ internal class KaFirResolver(
                 source = this@collectCallCandidates.source
                 annotations.addAll(this@collectCallCandidates.annotations)
                 typeArguments.addAll(this@collectCallCandidates.typeArguments)
-                explicitReceiver = unwrappedExplicitReceiver.explicitReceiver
+                explicitReceiver = originalExplicitReceiver
                 argumentList = this@collectCallCandidates.argumentList
-                calleeReference = originalCallee
+                calleeReference = originalCalleeReference
             }
         } else {
             this

@@ -128,7 +128,6 @@ class WasmBackendContext(
 
     override val partialLinkageSupport = createPartialLinkageSupportForLowerings(
         configuration.partialLinkageConfig,
-        irBuiltIns,
         diagnosticReporter
     )
 
