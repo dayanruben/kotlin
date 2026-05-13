@@ -137,7 +137,7 @@ if (!project.hasProperty("versions.kotlin-native")) {
     } else if (kotlinBuildProperties.isKotlinNativeEnabled.get()) {
         kotlinBuildProperties.defaultSnapshotVersion.get()
     } else {
-        "2.4.0-dev-6762"
+        "2.4.20-dev-3418"
     }
 }
 
@@ -959,7 +959,6 @@ tasks {
     }
 
     testLifecycleTask("scriptingJvmTest") {
-        dependsOn("dist")
         dependsOn(":kotlin-scripting-compiler:test")
         dependsOn(":kotlin-scripting-common:test")
         dependsOn(":kotlin-scripting-jvm:test")

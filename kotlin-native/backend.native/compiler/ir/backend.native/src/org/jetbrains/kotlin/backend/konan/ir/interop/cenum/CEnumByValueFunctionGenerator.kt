@@ -21,23 +21,20 @@ import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.util.*
-import org.jetbrains.kotlin.ir.util.irCall
 import org.jetbrains.kotlin.psi2ir.generators.GeneratorContext
-import org.jetbrains.kotlin.util.OperatorNameConventions
 
 /**
  * Generate IR for function that returns appropriate enum entry for the provided integral value.
  */
 @OptIn(ObsoleteDescriptorBasedAPI::class)
 internal class CEnumByValueFunctionGenerator(
-        context: GeneratorContext,
-        private val symbols: BackendNativeSymbols
+        context: GeneratorContext
 ) : DescriptorToIrTranslationMixin {
 
     override val irBuiltIns: IrBuiltIns = context.irBuiltIns
     override val symbolTable: SymbolTable = context.symbolTable
     override val typeTranslator: TypeTranslator = context.typeTranslator
-    override val postLinkageSteps: MutableList<() -> Unit> = mutableListOf()
+    override val postLinkageSteps: MutableList<(IrBuiltIns, BackendNativeSymbols) -> Unit> = mutableListOf()
 
     fun generateByValueFunction(
             companionIrClass: IrClass,
@@ -57,7 +54,7 @@ internal class CEnumByValueFunctionGenerator(
         //      i++
         // }
         // throw NPE
-        postLinkageSteps.add {
+        postLinkageSteps.add { irBuiltIns, symbols ->
             byValueIrFunction.body = irBuiltIns.createIrBuilder(byValueIrFunction.symbol, SYNTHETIC_OFFSET, SYNTHETIC_OFFSET).irBlockBody {
                 +irReturn(irBlock {
                     val values = irTemporary(irCall(valuesIrFunctionSymbol), isMutable = true)

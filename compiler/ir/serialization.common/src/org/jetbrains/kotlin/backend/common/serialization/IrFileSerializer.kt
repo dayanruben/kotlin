@@ -1384,6 +1384,11 @@ open class IrFileSerializer(
         }
         isInsideInline = isInsideInlineBefore
 
+        (function as? IrSimpleFunction)?.companionExtensionClass?.let { companionExtensionClass ->
+            requireAbiAtLeast(KlibAbiCompatibilityLevel.ABI_LEVEL_2_4, { "Companion extension class" }) { function }
+            proto.companionExtensionClass = serializeIrSymbol(companionExtensionClass)
+        }
+
         return proto.build()
     }
 

@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.backend.konan.ir.interop.cenum.CEnumVarClassGenerato
 import org.jetbrains.kotlin.backend.konan.ir.interop.cstruct.CStructVarClassGenerator
 import org.jetbrains.kotlin.backend.konan.ir.interop.cstruct.CStructVarCompanionGenerator
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.symbols.*
@@ -34,8 +35,7 @@ import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
  */
 @OptIn(ObsoleteDescriptorBasedAPI::class)
 internal class IrProviderForCEnumAndCStructStubs(
-        context: GeneratorContext,
-        symbols: BackendNativeSymbols
+        context: GeneratorContext
 ) {
 
     /**
@@ -44,17 +44,17 @@ internal class IrProviderForCEnumAndCStructStubs(
     private val symbolTable: SymbolTable = context.symbolTable
 
     private val cEnumByValueFunctionGenerator =
-            CEnumByValueFunctionGenerator(context, symbols)
+            CEnumByValueFunctionGenerator(context)
     private val cEnumCompanionGenerator =
             CEnumCompanionGenerator(context, cEnumByValueFunctionGenerator)
     private val cEnumVarClassGenerator =
-            CEnumVarClassGenerator(context, symbols)
+            CEnumVarClassGenerator(context)
     private val cEnumClassGenerator =
             CEnumClassGenerator(context, cEnumCompanionGenerator, cEnumVarClassGenerator)
     private val cStructCompanionGenerator =
-            CStructVarCompanionGenerator(context, symbols)
+            CStructVarCompanionGenerator(context)
     private val cStructClassGenerator =
-            CStructVarClassGenerator(context, cStructCompanionGenerator, symbols)
+            CStructVarClassGenerator(context, cStructCompanionGenerator)
 
     fun isCEnumOrCStruct(declarationDescriptor: DeclarationDescriptor): Boolean =
             declarationDescriptor.run { findCEnumDescriptor() ?: findCStructDescriptor() } != null
@@ -80,13 +80,13 @@ internal class IrProviderForCEnumAndCStructStubs(
      * We postpone generation of bodies until IR linkage is complete.
      * This way we ensure that all used symbols are resolved.
      */
-    fun generateBodies() {
-        cEnumCompanionGenerator.invokePostLinkageSteps()
-        cEnumByValueFunctionGenerator.invokePostLinkageSteps()
-        cEnumClassGenerator.invokePostLinkageSteps()
-        cEnumVarClassGenerator.invokePostLinkageSteps()
-        cStructClassGenerator.invokePostLinkageSteps()
-        cStructCompanionGenerator.invokePostLinkageSteps()
+    fun generateBodies(irBuiltIns: IrBuiltIns, symbols: BackendNativeSymbols) {
+        cEnumCompanionGenerator.invokePostLinkageSteps(irBuiltIns, symbols)
+        cEnumByValueFunctionGenerator.invokePostLinkageSteps(irBuiltIns, symbols)
+        cEnumClassGenerator.invokePostLinkageSteps(irBuiltIns, symbols)
+        cEnumVarClassGenerator.invokePostLinkageSteps(irBuiltIns, symbols)
+        cStructClassGenerator.invokePostLinkageSteps(irBuiltIns, symbols)
+        cStructCompanionGenerator.invokePostLinkageSteps(irBuiltIns, symbols)
     }
 
     fun getDeclaration(descriptor: DeclarationDescriptor, idSignature: IdSignature, file: IrFile, symbolKind: BinarySymbolData.SymbolKind): IrSymbolOwner {

@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.test.TestInfrastructureInternals
 import org.jetbrains.kotlin.test.backend.handlers.IrValidationErrorChecker
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilderBase
-import org.jetbrains.kotlin.test.builders.nonGroupingPhaseTestRunner
+import org.jetbrains.kotlin.test.builders.nonGroupingStageTestRunner
 import org.jetbrains.kotlin.test.directives.ConfigurationDirectives
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives
 import org.jetbrains.kotlin.test.frontend.classic.handlers.ClassicUnstableAndK2LanguageFeaturesSkipConfigurator
@@ -124,7 +124,7 @@ abstract class AbstractKotlinCompilerTest {
     }
 
     fun initTestRunner(@TestDataFile filePath: String): NonGroupingTestRunner {
-        return nonGroupingPhaseTestRunner(filePath, configuration).also {
+        return nonGroupingStageTestRunner(filePath, configuration).also {
             testRunner = it
         }
     }

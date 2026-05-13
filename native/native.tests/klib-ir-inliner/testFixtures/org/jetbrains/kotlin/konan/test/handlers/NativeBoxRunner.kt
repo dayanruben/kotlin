@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.konan.test.blackbox.testRunSettings
 import org.jetbrains.kotlin.native.executors.Executor
 import org.jetbrains.kotlin.test.WrappedException
 import org.jetbrains.kotlin.test.backend.handlers.NativeBinaryArtifactHandler
-import org.jetbrains.kotlin.test.groupingPhaseInputs
+import org.jetbrains.kotlin.test.groupingStageInputs
 import org.jetbrains.kotlin.test.model.*
 import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.BatchingPackageInserter
@@ -59,7 +59,7 @@ class NativeBoxRunner(testServices: TestServices) : NativeBinaryArtifactHandler(
     }
 }
 
-class NativeBoxRunnerGroupingPhase(testServices: TestServices) : GroupingPhaseHandler<BinaryArtifacts.Native>(
+class NativeBoxRunnerGroupingStage(testServices: TestServices) : GroupingStageHandler<BinaryArtifacts.Native>(
     testServices,
     failureDisablesNextSteps = false,
     doNotRunIfThereWerePreviousFailures = false
@@ -223,7 +223,7 @@ class PrettyResultsHandler(
         } else {
             findFailedTestsWithoutTCLogger(output)
         }
-        val phaseInputs = testServices.groupingPhaseInputs
+        val phaseInputs = testServices.groupingStageInputs
 
         if (phaseInputs.size == 1) {
             check(failedTests.size <= 1) {

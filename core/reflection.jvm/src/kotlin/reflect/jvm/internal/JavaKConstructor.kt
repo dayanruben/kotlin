@@ -10,6 +10,7 @@ import java.lang.reflect.Type
 import java.lang.reflect.TypeVariable
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 import kotlin.jvm.internal.CallableReference
+import kotlin.metadata.Modality
 import kotlin.reflect.KType
 import kotlin.reflect.full.createDefaultType
 import kotlin.reflect.jvm.internal.calls.Caller
@@ -48,6 +49,8 @@ internal class JavaKConstructor(
     override val returnType: KType by lazy(PUBLICATION) {
         (container as KClassImpl<*>).createDefaultType()
     }
+
+    override val modality: Modality get() = Modality.FINAL
 
     override val isPrimaryConstructor: Boolean get() = false
 

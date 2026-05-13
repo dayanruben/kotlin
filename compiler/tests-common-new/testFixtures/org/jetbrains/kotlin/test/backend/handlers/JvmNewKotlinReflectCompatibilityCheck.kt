@@ -209,9 +209,13 @@ class RunInAlienClassLoader {
             if (kClass.java.isInterface) "interface" else "class",
         ).joinToString(separator = " ")
         indented("KClass: $statuses ${kClass.qualifiedName ?: kClass.jvmName} : $superclasses") {
+            if (kClass.constructors.isNotEmpty()) {
+                indented("constructors:") {
+                    dumpKCallables(kClass.constructors)
+                }
+            }
             indented("members:") {
-                val kCallables = kClass.members
-                dumpKCallables(kCallables)
+                dumpKCallables(kClass.members)
             }
             indented("declaredMembers:") {
                 dumpKCallables(kClass.declaredMembers)

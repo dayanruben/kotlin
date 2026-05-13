@@ -18,9 +18,9 @@ import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrModuleFragmentImpl
 import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
-import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
 import org.jetbrains.kotlin.ir.util.DeclarationStubGenerator
 import org.jetbrains.kotlin.ir.util.IdSignature
+import org.jetbrains.kotlin.ir.util.KotlinMangler
 import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.library.KotlinAbiVersion
 import org.jetbrains.kotlin.library.KotlinLibrary
@@ -36,7 +36,7 @@ class JKlibIrLinker(
     irBuiltIns: IrBuiltIns,
     symbolTable: SymbolTable,
     val stubGenerator: DeclarationStubGenerator,
-    val mangler: JKlibDescriptorMangler,
+    val descriptorMangler: JKlibDescriptorMangler,
 ) : KotlinIrLinker(module, configuration, irBuiltIns, symbolTable, emptyList()) {
     override val returnUnboundSymbolsIfSignatureNotFound
         get() = false
@@ -55,11 +55,12 @@ class JKlibIrLinker(
         return symbol.descriptor.isJavaDescriptor()
     }
 
+    override val irMangler: KotlinMangler.IrMangler = JKlibIrMangler()
+
     override val fakeOverrideBuilder = IrLinkerFakeOverrideProvider(
         linker = this,
         symbolTable = symbolTable,
-        mangler = JKlibIrMangler(),
-        typeSystem = IrTypeSystemContextImpl(builtIns),
+        mangler = irMangler,
         friendModules = emptyMap(),
         partialLinkageSupport = partialLinkageSupport,
         // Do not construct fake overrides for Java classes. These classes are created with the
@@ -116,7 +117,7 @@ class JKlibIrLinker(
 
         private val descriptorFinder = DescriptorByIdSignatureFinderImpl(
             moduleDescriptor,
-            mangler,
+            descriptorMangler,
             DescriptorByIdSignatureFinderImpl.LookupMode.MODULE_ONLY,
         )
 
@@ -173,7 +174,7 @@ class JKlibIrLinker(
 
         private val descriptorByIdSignatureFinder = DescriptorByIdSignatureFinderImpl(
             moduleDescriptor,
-            mangler,
+            descriptorMangler,
             DescriptorByIdSignatureFinderImpl.LookupMode.MODULE_ONLY,
         )
 

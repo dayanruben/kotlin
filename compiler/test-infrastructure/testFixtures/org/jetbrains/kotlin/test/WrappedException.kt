@@ -5,10 +5,10 @@
 
 package org.jetbrains.kotlin.test
 
-import org.jetbrains.kotlin.test.model.AbstractGroupingPhaseTestFacade
+import org.jetbrains.kotlin.test.model.AbstractGroupingStageTestFacade
 import org.jetbrains.kotlin.test.model.AbstractTestFacade
 import org.jetbrains.kotlin.test.model.AnalysisHandler
-import org.jetbrains.kotlin.test.model.GroupingPhaseHandler
+import org.jetbrains.kotlin.test.model.GroupingStageHandler
 import org.jetbrains.kotlin.test.model.TestModule
 
 sealed class WrappedException(
@@ -40,7 +40,7 @@ sealed class WrappedException(
 
     class FromGroupingFacade(
         cause: Throwable,
-        val facade: AbstractGroupingPhaseTestFacade<*, *>,
+        val facade: AbstractGroupingStageTestFacade<*, *>,
     ) : WrappedException(cause, 0, 1) {
         override val failedModule: TestModule?
             get() = null
@@ -68,7 +68,7 @@ sealed class WrappedException(
 
     class FromGroupingHandler(
         cause: Throwable,
-        val handler: GroupingPhaseHandler<*>,
+        val handler: GroupingStageHandler<*>,
     ) : WrappedException(cause, 1, 3) {
         override val failedModule: TestModule? get() = null
 

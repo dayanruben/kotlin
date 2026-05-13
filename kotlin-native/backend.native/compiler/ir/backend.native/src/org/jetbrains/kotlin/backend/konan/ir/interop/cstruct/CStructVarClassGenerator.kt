@@ -21,15 +21,14 @@ import org.jetbrains.kotlin.psi2ir.generators.GeneratorContext
 @OptIn(ObsoleteDescriptorBasedAPI::class)
 internal class CStructVarClassGenerator(
         context: GeneratorContext,
-        private val companionGenerator: CStructVarCompanionGenerator,
-        private val symbols: BackendNativeSymbols
+        private val companionGenerator: CStructVarCompanionGenerator
 ) : DescriptorToIrTranslationMixin {
 
     override val irBuiltIns: IrBuiltIns = context.irBuiltIns
     override val symbolTable: SymbolTable = context.symbolTable
     override val typeTranslator: TypeTranslator = context.typeTranslator
     val irFactory: IrFactory = context.irFactory
-    override val postLinkageSteps: MutableList<() -> Unit> = mutableListOf()
+    override val postLinkageSteps: MutableList<(IrBuiltIns, BackendNativeSymbols) -> Unit> = mutableListOf()
 
     fun findOrGenerateCStruct(classDescriptor: ClassDescriptor, parent: IrDeclarationContainer): IrClass {
         val irClassSymbol = symbolTable.descriptorExtension.referenceClass(classDescriptor)
@@ -70,7 +69,7 @@ internal class CStructVarClassGenerator(
 
     private fun createPrimaryConstructor(irClass: IrClass): IrConstructor {
         return createConstructor(irClass.descriptor.unsubstitutedPrimaryConstructor!!).also { irConstructor ->
-            postLinkageSteps.add {
+            postLinkageSteps.add { irBuiltIns, symbols ->
                 irConstructor.body = irBuiltIns.createIrBuilder(irConstructor.symbol, SYNTHETIC_OFFSET, SYNTHETIC_OFFSET).irBlockBody {
                     +IrDelegatingConstructorCallImpl.fromSymbolOwner(
                             startOffset, endOffset,
@@ -86,7 +85,7 @@ internal class CStructVarClassGenerator(
 
     private fun createSecondaryConstructor(descriptor: ClassConstructorDescriptor): IrConstructor {
         return createConstructor(descriptor).also {
-            postLinkageSteps.add {
+            postLinkageSteps.add { irBuiltIns, _ ->
                 it.body = irBuiltIns.createIrBuilder(it.symbol, SYNTHETIC_OFFSET, SYNTHETIC_OFFSET).irBlockBody {
                     // Empty. The real body is constructed at the call site by the interop lowering phase.
                 }

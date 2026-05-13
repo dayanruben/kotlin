@@ -1,7 +1,6 @@
 package org.jetbrains.kotlin.backend.konan
 
 import org.jetbrains.kotlin.backend.common.linkage.issues.checkNoUnboundSymbols
-import org.jetbrains.kotlin.backend.common.linkage.partial.createPartialLinkageSupportForLinker
 import org.jetbrains.kotlin.backend.common.linkage.partial.partialLinkageConfig
 import org.jetbrains.kotlin.backend.common.overrides.FakeOverrideChecker
 import org.jetbrains.kotlin.backend.common.phaser.KotlinBackendIrHolder
@@ -119,7 +118,7 @@ internal fun LinkKlibsContext.linkKlibs(
     val irDeserializer = run {
         val exportedDependencies = (moduleDescriptor.getExportedDependencies(config) + libraryToCacheModule?.let { listOf(it) }.orEmpty()).distinct()
         val irProviderForCEnumsAndCStructs =
-                IrProviderForCEnumAndCStructStubs(generatorContext, symbols)
+                IrProviderForCEnumAndCStructStubs(generatorContext)
         val cInteropModuleDeserializerFactory = KonanCInteropModuleDeserializerFactory(
                 cachedLibraries = config.cachedLibraries,
                 cenumsProvider = irProviderForCEnumsAndCStructs,
@@ -152,13 +151,10 @@ internal fun LinkKlibsContext.linkKlibs(
                 stubGenerator = stubGenerator,
                 cInteropModuleDeserializerFactory = cInteropModuleDeserializerFactory,
                 exportedDependencies = exportedDependencies,
-                partialLinkageSupport = createPartialLinkageSupportForLinker(
-                        partialLinkageConfig = config.configuration.partialLinkageConfig,
-                        builtIns = generatorContext.irBuiltIns,
-                        diagnosticReporter = irDiagnosticReporter,
-                ),
+                partialLinkageConfig = config.configuration.partialLinkageConfig,
+                irDiagnosticReporter = irDiagnosticReporter,
                 libraryBeingCached = config.libraryToCache,
-                externalOverridabilityConditions = listOf(IrObjCOverridabilityCondition)
+                externalOverridabilityConditions = listOf(IrObjCOverridabilityCondition),
         ).also { linker ->
 
             // context.config.librariesWithDependencies could change at each iteration.
@@ -197,7 +193,7 @@ internal fun LinkKlibsContext.linkKlibs(
                 irProviderForCEnumsAndCStructs.referenceAllEnumsAndStructsFrom(libraryToCacheModule)
 
             translator.addPostprocessingStep {
-                irProviderForCEnumsAndCStructs.generateBodies()
+                irProviderForCEnumsAndCStructs.generateBodies(linker.builtIns, symbols)
             }
         }
     }

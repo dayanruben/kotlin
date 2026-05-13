@@ -224,6 +224,7 @@ class ScriptingWithCliCompilerTest {
                         K2JVMCompilerArguments::useFirLT.cliArgument("false"),
                         K2JVMCompilerArguments::allowAnyScriptsInSourceRoots.cliArgument,
                         K2JVMCompilerArguments::verbose.cliArgument,
+                        K2JVMCompilerArguments::noStdlib.cliArgument,
                         "$TEST_DATA_DIR/compiler/mixedCompilation/nonScript.kt",
                         scriptPath,
                     )

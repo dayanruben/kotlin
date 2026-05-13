@@ -9,8 +9,8 @@ import com.intellij.openapi.Disposable
 import org.jetbrains.kotlin.test.*
 import org.jetbrains.kotlin.test.backend.handlers.UpdateTestDataHandler
 import org.jetbrains.kotlin.test.directives.model.DirectivesContainer
-import org.jetbrains.kotlin.test.impl.GroupingPhaseTestConfigurationImpl
-import org.jetbrains.kotlin.test.impl.NonGroupingPhaseTestConfigurationImpl
+import org.jetbrains.kotlin.test.impl.GroupingStageTestConfigurationImpl
+import org.jetbrains.kotlin.test.impl.NonGroupingStageTestConfigurationImpl
 import org.jetbrains.kotlin.test.model.*
 import org.jetbrains.kotlin.test.services.*
 import org.jetbrains.kotlin.util.PrivateForInline
@@ -188,7 +188,7 @@ abstract class TestConfigurationBuilderBase<Self : TestConfigurationBuilderBase<
 
 @DefaultsDsl
 @OptIn(TestInfrastructureInternals::class, PrivateForInline::class)
-sealed class OnePhaseTestConfigurationBuilderBase<Self, C> : TestConfigurationBuilderBase<Self, C>()
+sealed class OneStageTestConfigurationBuilderBase<Self, C> : TestConfigurationBuilderBase<Self, C>()
         where Self : TestConfigurationBuilderBase<Self, C>,
               C : TestConfiguration<*>
 {
@@ -203,8 +203,8 @@ sealed class OnePhaseTestConfigurationBuilderBase<Self, C> : TestConfigurationBu
 }
 
 @OptIn(PrivateForInline::class)
-class NonGroupingPhaseTestConfigurationBuilder :
-    OnePhaseTestConfigurationBuilderBase<NonGroupingPhaseTestConfigurationBuilder, NonGroupingPhaseTestConfiguration>() {
+class NonGroupingStageTestConfigurationBuilder :
+    OneStageTestConfigurationBuilderBase<NonGroupingStageTestConfigurationBuilder, NonGroupingStageTestConfiguration>() {
     lateinit var testInfo: KotlinTestInfo
     lateinit var startingArtifactFactory: (TestModule) -> ResultingArtifact<*>
     private val groupingTestIsolators: MutableList<Constructor<GroupingTestIsolator>> = mutableListOf()
@@ -215,8 +215,8 @@ class NonGroupingPhaseTestConfigurationBuilder :
 
     fun <I : ResultingArtifact<I>, O : ResultingArtifact<O>> facadeStep(
         facade: Constructor<AbstractTestFacade<I, O>>,
-    ): TestStepBuilder.FacadeStepBuilder.NonGroupingPhase<I, O> {
-        return TestStepBuilder.FacadeStepBuilder.NonGroupingPhase(facade).also {
+    ): TestStepBuilder.FacadeStepBuilder.NonGroupingStage<I, O> {
+        return TestStepBuilder.FacadeStepBuilder.NonGroupingStage(facade).also {
             steps.add(it)
         }
     }
@@ -224,11 +224,11 @@ class NonGroupingPhaseTestConfigurationBuilder :
     inline fun <InputArtifact, InputArtifactKind> handlersStep(
         artifactKind: InputArtifactKind,
         compilationStage: CompilationStage,
-        init: TestStepBuilder.HandlersStepBuilder.NonGroupingPhase<InputArtifact, InputArtifactKind>.() -> Unit,
-    ): TestStepBuilder.HandlersStepBuilder.NonGroupingPhase<InputArtifact, InputArtifactKind>
+        init: TestStepBuilder.HandlersStepBuilder.NonGroupingStage<InputArtifact, InputArtifactKind>.() -> Unit,
+    ): TestStepBuilder.HandlersStepBuilder.NonGroupingStage<InputArtifact, InputArtifactKind>
             where InputArtifact : ResultingArtifact<InputArtifact>,
                   InputArtifactKind : TestArtifactKind<InputArtifact> {
-        return TestStepBuilder.HandlersStepBuilder.NonGroupingPhase(artifactKind, compilationStage).also {
+        return TestStepBuilder.HandlersStepBuilder.NonGroupingStage(artifactKind, compilationStage).also {
             it.init()
             steps += it
         }
@@ -238,8 +238,8 @@ class NonGroupingPhaseTestConfigurationBuilder :
         name: String,
         artifactKind: InputArtifactKind,
         compilationStage: CompilationStage,
-        init: TestStepBuilder.HandlersStepBuilder.NonGroupingPhase<InputArtifact, InputArtifactKind>.() -> Unit,
-    ): TestStepBuilder.HandlersStepBuilder.NonGroupingPhase<InputArtifact, InputArtifactKind>
+        init: TestStepBuilder.HandlersStepBuilder.NonGroupingStage<InputArtifact, InputArtifactKind>.() -> Unit,
+    ): TestStepBuilder.HandlersStepBuilder.NonGroupingStage<InputArtifact, InputArtifactKind>
             where InputArtifact : ResultingArtifact<InputArtifact>,
                   InputArtifactKind : TestArtifactKind<InputArtifact> {
         val previouslyContainedStep = namedStepOfType<InputArtifact, InputArtifactKind>(name)
@@ -257,7 +257,7 @@ class NonGroupingPhaseTestConfigurationBuilder :
         name: String,
         artifactKind: InputArtifactKind,
         skipMissingStep: Boolean = false,
-        init: TestStepBuilder.HandlersStepBuilder.NonGroupingPhase<InputArtifact, InputArtifactKind>.() -> Unit,
+        init: TestStepBuilder.HandlersStepBuilder.NonGroupingStage<InputArtifact, InputArtifactKind>.() -> Unit,
     ) where InputArtifact : ResultingArtifact<InputArtifact>,
             InputArtifactKind : TestArtifactKind<InputArtifact> {
         val step = namedStepOfType<InputArtifact, InputArtifactKind>(name)
@@ -269,11 +269,11 @@ class NonGroupingPhaseTestConfigurationBuilder :
         step.apply(init)
     }
 
-    fun <InputArtifact, InputArtifactKind> namedStepOfType(name: String): TestStepBuilder.HandlersStepBuilder.NonGroupingPhase<InputArtifact, InputArtifactKind>?
+    fun <InputArtifact, InputArtifactKind> namedStepOfType(name: String): TestStepBuilder.HandlersStepBuilder.NonGroupingStage<InputArtifact, InputArtifactKind>?
             where InputArtifact : ResultingArtifact<InputArtifact>,
                   InputArtifactKind : TestArtifactKind<InputArtifact> {
         @Suppress("UNCHECKED_CAST")
-        return namedSteps[name] as TestStepBuilder.HandlersStepBuilder.NonGroupingPhase<InputArtifact, InputArtifactKind>?
+        return namedSteps[name] as TestStepBuilder.HandlersStepBuilder.NonGroupingStage<InputArtifact, InputArtifactKind>?
     }
 
     fun enableMetaInfoHandler() {
@@ -281,7 +281,7 @@ class NonGroupingPhaseTestConfigurationBuilder :
     }
 
     @OptIn(TestInfrastructureInternals::class)
-    override fun build(testDataPath: String): NonGroupingPhaseTestConfiguration {
+    override fun build(testDataPath: String): NonGroupingStageTestConfiguration {
         applyConditionalConfigurations(testDataPath)
 
         // UpdateTestDataHandler should be _the very last_ handler at all times to avoid false-positive test data changes,
@@ -289,7 +289,7 @@ class NonGroupingPhaseTestConfigurationBuilder :
         useFailureSuppressors(::UpdateTestDataHandler)
 
         @Suppress("UNCHECKED_CAST")
-        return NonGroupingPhaseTestConfigurationImpl(
+        return NonGroupingStageTestConfigurationImpl(
             testInfo,
             defaultsProviderBuilder.build(),
             assertions,
@@ -315,7 +315,7 @@ class NonGroupingPhaseTestConfigurationBuilder :
         )
     }
 
-    class ReadOnlyBuilder(private val builder: NonGroupingPhaseTestConfigurationBuilder, val testDataPath: String) {
+    class ReadOnlyBuilder(private val builder: NonGroupingStageTestConfigurationBuilder, val testDataPath: String) {
         val assertions: AssertionsService
             get() = builder.assertions
         val sourcePreprocessors: List<Constructor<SourceFilePreprocessor>>
@@ -345,18 +345,18 @@ class NonGroupingPhaseTestConfigurationBuilder :
     }
 }
 
-typealias TestConfigurationBuilder = NonGroupingPhaseTestConfigurationBuilder
+typealias TestConfigurationBuilder = NonGroupingStageTestConfigurationBuilder
 
 @OptIn(PrivateForInline::class)
-class GroupingPhaseTestConfigurationBuilder :
-    OnePhaseTestConfigurationBuilderBase<GroupingPhaseTestConfigurationBuilder, GroupingPhaseTestConfiguration>() {
+class GroupingStageTestConfigurationBuilder :
+    OneStageTestConfigurationBuilderBase<GroupingStageTestConfigurationBuilder, GroupingStageTestConfiguration>() {
     lateinit var testInfo: KotlinTestInfo
-    val mergerWorkers: MutableList<Constructor<GroupingPhaseInputsMerger.Worker>> = mutableListOf()
+    val mergerWorkers: MutableList<Constructor<GroupingStageInputsMerger.Worker>> = mutableListOf()
 
     fun <I : ResultingArtifact<I>, O : ResultingArtifact<O>> facadeStep(
-        facade: Constructor<AbstractGroupingPhaseTestFacade<I, O>>,
-    ): TestStepBuilder.FacadeStepBuilder.GroupingPhase<I, O> {
-        return TestStepBuilder.FacadeStepBuilder.GroupingPhase(facade).also {
+        facade: Constructor<AbstractGroupingStageTestFacade<I, O>>,
+    ): TestStepBuilder.FacadeStepBuilder.GroupingStage<I, O> {
+        return TestStepBuilder.FacadeStepBuilder.GroupingStage(facade).also {
             steps.add(it)
         }
     }
@@ -364,11 +364,11 @@ class GroupingPhaseTestConfigurationBuilder :
     inline fun <InputArtifact, InputArtifactKind> handlersStep(
         artifactKind: InputArtifactKind,
         compilationStage: CompilationStage,
-        init: TestStepBuilder.HandlersStepBuilder.GroupingPhase<InputArtifact, InputArtifactKind>.() -> Unit,
-    ): TestStepBuilder.HandlersStepBuilder.GroupingPhase<InputArtifact, InputArtifactKind>
+        init: TestStepBuilder.HandlersStepBuilder.GroupingStage<InputArtifact, InputArtifactKind>.() -> Unit,
+    ): TestStepBuilder.HandlersStepBuilder.GroupingStage<InputArtifact, InputArtifactKind>
             where InputArtifact : ResultingArtifact<InputArtifact>,
                   InputArtifactKind : TestArtifactKind<InputArtifact> {
-        return TestStepBuilder.HandlersStepBuilder.GroupingPhase(artifactKind, compilationStage).also {
+        return TestStepBuilder.HandlersStepBuilder.GroupingStage(artifactKind, compilationStage).also {
             it.init()
             steps += it
         }
@@ -378,8 +378,8 @@ class GroupingPhaseTestConfigurationBuilder :
         name: String,
         artifactKind: InputArtifactKind,
         compilationStage: CompilationStage,
-        init: TestStepBuilder.HandlersStepBuilder.GroupingPhase<InputArtifact, InputArtifactKind>.() -> Unit,
-    ): TestStepBuilder.HandlersStepBuilder.GroupingPhase<InputArtifact, InputArtifactKind>
+        init: TestStepBuilder.HandlersStepBuilder.GroupingStage<InputArtifact, InputArtifactKind>.() -> Unit,
+    ): TestStepBuilder.HandlersStepBuilder.GroupingStage<InputArtifact, InputArtifactKind>
             where InputArtifact : ResultingArtifact<InputArtifact>,
                   InputArtifactKind : TestArtifactKind<InputArtifact> {
         val previouslyContainedStep = namedStepOfType<InputArtifact, InputArtifactKind>(name)
@@ -397,7 +397,7 @@ class GroupingPhaseTestConfigurationBuilder :
         name: String,
         artifactKind: InputArtifactKind,
         skipMissingStep: Boolean = false,
-        init: TestStepBuilder.HandlersStepBuilder.GroupingPhase<InputArtifact, InputArtifactKind>.() -> Unit,
+        init: TestStepBuilder.HandlersStepBuilder.GroupingStage<InputArtifact, InputArtifactKind>.() -> Unit,
     ) where InputArtifact : ResultingArtifact<InputArtifact>,
             InputArtifactKind : TestArtifactKind<InputArtifact> {
         val step = namedStepOfType<InputArtifact, InputArtifactKind>(name)
@@ -409,19 +409,19 @@ class GroupingPhaseTestConfigurationBuilder :
         step.apply(init)
     }
 
-    fun <InputArtifact, InputArtifactKind> namedStepOfType(name: String): TestStepBuilder.HandlersStepBuilder.GroupingPhase<InputArtifact, InputArtifactKind>?
+    fun <InputArtifact, InputArtifactKind> namedStepOfType(name: String): TestStepBuilder.HandlersStepBuilder.GroupingStage<InputArtifact, InputArtifactKind>?
             where InputArtifact : ResultingArtifact<InputArtifact>,
                   InputArtifactKind : TestArtifactKind<InputArtifact> {
         @Suppress("UNCHECKED_CAST")
-        return namedSteps[name] as TestStepBuilder.HandlersStepBuilder.GroupingPhase<InputArtifact, InputArtifactKind>?
+        return namedSteps[name] as TestStepBuilder.HandlersStepBuilder.GroupingStage<InputArtifact, InputArtifactKind>?
     }
 
-    fun withMergerWorker(worker: Constructor<GroupingPhaseInputsMerger.Worker>) {
+    fun withMergerWorker(worker: Constructor<GroupingStageInputsMerger.Worker>) {
         mergerWorkers += worker
     }
 
     @OptIn(TestInfrastructureInternals::class)
-    override fun build(testDataPath: String): GroupingPhaseTestConfiguration {
+    override fun build(testDataPath: String): GroupingStageTestConfiguration {
         applyConditionalConfigurations(testDataPath)
 
         // UpdateTestDataHandler should be _the very last_ handler at all times to avoid false-positive test data changes,
@@ -429,11 +429,11 @@ class GroupingPhaseTestConfigurationBuilder :
         useFailureSuppressors(::UpdateTestDataHandler)
 
         @Suppress("UNCHECKED_CAST")
-        return GroupingPhaseTestConfigurationImpl(
+        return GroupingStageTestConfigurationImpl(
             testInfo,
             defaultsProviderBuilder.build(),
             assertions,
-            steps as List<TestStepBuilder<*, *, TestStep.GroupingPhaseStep<*, *>>>,
+            steps as List<TestStepBuilder<*, *, TestStep.GroupingStageStep<*, *>>>,
             sourcePreprocessors,
             additionalMetaInfoProcessors,
             environmentConfigurators,
@@ -456,27 +456,27 @@ class GroupingPhaseTestConfigurationBuilder :
 
 @DefaultsDsl
 @OptIn(TestInfrastructureInternals::class, PrivateForInline::class)
-class TwoPhaseTestConfigurationBuilder {
-    val nonGroupingPhaseBuilder = NonGroupingPhaseTestConfigurationBuilder()
-    val groupingPhaseBuilder = GroupingPhaseTestConfigurationBuilder()
+class TwoStageTestConfigurationBuilder {
+    val nonGroupingStageBuilder = NonGroupingStageTestConfigurationBuilder()
+    val groupingStageBuilder = GroupingStageTestConfigurationBuilder()
 
     fun commonConfiguration(init: TestConfigurationBuilderBase<*, *>.() -> Unit) {
-        nonGroupingPhaseBuilder.apply(init)
-        groupingPhaseBuilder.apply(init)
+        nonGroupingStageBuilder.apply(init)
+        groupingStageBuilder.apply(init)
     }
 
-    fun nonGroupingPhase(init: NonGroupingPhaseTestConfigurationBuilder.() -> Unit) {
-        nonGroupingPhaseBuilder.apply(init)
+    fun nonGroupingStage(init: NonGroupingStageTestConfigurationBuilder.() -> Unit) {
+        nonGroupingStageBuilder.apply(init)
     }
 
-    fun groupingPhase(init: GroupingPhaseTestConfigurationBuilder.() -> Unit) {
-        groupingPhaseBuilder.apply(init)
+    fun groupingStage(init: GroupingStageTestConfigurationBuilder.() -> Unit) {
+        groupingStageBuilder.apply(init)
     }
 }
 
 inline fun testConfiguration(
     testDataPath: String,
-    init: NonGroupingPhaseTestConfigurationBuilder.() -> Unit,
-): NonGroupingPhaseTestConfiguration {
-    return NonGroupingPhaseTestConfigurationBuilder().apply(init).build(testDataPath)
+    init: NonGroupingStageTestConfigurationBuilder.() -> Unit,
+): NonGroupingStageTestConfiguration {
+    return NonGroupingStageTestConfigurationBuilder().apply(init).build(testDataPath)
 }

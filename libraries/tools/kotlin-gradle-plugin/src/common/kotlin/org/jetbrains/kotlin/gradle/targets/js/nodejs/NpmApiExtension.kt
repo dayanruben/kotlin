@@ -31,4 +31,6 @@ interface NpmApiExtension<out Env : PackageManagerEnvironment, out NpmApi : NpmA
     val postInstallTasks: ListProperty<TaskProvider<*>>
 }
 
+@Deprecated("No longer used. Scheduled for removal in Kotlin 2.3.", ReplaceWith("NpmApiExtension<*, *>"))
+@Suppress("unused")
 typealias NpmApiExt = NpmApiExtension<PackageManagerEnvironment, NpmApiExecution<PackageManagerEnvironment>>

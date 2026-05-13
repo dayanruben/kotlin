@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.analysis.test.framework.utils.singleOrZeroValue
 import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.NonGroupingPhaseTestConfiguration
+import org.jetbrains.kotlin.test.NonGroupingStageTestConfiguration
 import org.jetbrains.kotlin.test.TestInfrastructureInternals
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.builders.testConfiguration
@@ -504,13 +504,13 @@ abstract class AbstractAnalysisApiBasedTest : TestWithDisposable(), ManagedTest 
         }
     }
 
-    private fun createTestConfiguration(): NonGroupingPhaseTestConfiguration {
+    private fun createTestConfiguration(): NonGroupingStageTestConfiguration {
         val testConfiguration = testConfiguration(testDataPath.toString(), configure)
         Disposer.register(disposable, testConfiguration.rootDisposable)
         return testConfiguration
     }
 
-    private fun createAndRegisterTestModuleStructure(testConfiguration: NonGroupingPhaseTestConfiguration) {
+    private fun createAndRegisterTestModuleStructure(testConfiguration: NonGroupingStageTestConfiguration) {
         val moduleStructure = testConfiguration.moduleStructureExtractor.splitTestDataByModules(
             testDataPath.toString(),
             testConfiguration.directives,
@@ -519,7 +519,7 @@ abstract class AbstractAnalysisApiBasedTest : TestWithDisposable(), ManagedTest 
         testServices.register(TestModuleStructure::class, moduleStructure)
     }
 
-    private fun prepareToTheAnalysis(testConfiguration: NonGroupingPhaseTestConfiguration) {
+    private fun prepareToTheAnalysis(testConfiguration: NonGroupingStageTestConfiguration) {
         val moduleStructure = testServices.moduleStructure
         val artifactsProvider = ArtifactsProvider()
         testServices.registerArtifactsProvider(artifactsProvider)
@@ -532,7 +532,7 @@ abstract class AbstractAnalysisApiBasedTest : TestWithDisposable(), ManagedTest 
         }
     }
 
-    private fun onTestFinished(testConfiguration: NonGroupingPhaseTestConfiguration, isFailure: Boolean) {
+    private fun onTestFinished(testConfiguration: NonGroupingStageTestConfiguration, isFailure: Boolean) {
         testConfiguration.afterAnalysisCheckers.forEach { it.check(isFailure) }
     }
 

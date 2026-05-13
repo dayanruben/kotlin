@@ -470,6 +470,39 @@ class IncrementalCompilationTest : AbstractNativeSimpleTest() {
         runExecutableAndVerify(main1.testCase, main1.testExecutable)
     }
 
+    // This test is from #KT-86133
+    @Test
+    @TestMetadata("reifiedInlineFun")
+    fun reifiedInlineFun() = withRootDir(ForTestCompileRuntime.transformTestDataPath("$TEST_SUITE_PATH/reifiedInlineFun")) {
+        val lib = compileLibrary("lib") {
+            "lib/lib.file1.kt" copyTo "lib.file1.kt"
+            "lib/lib.file2.kt" copyTo "lib.file2.kt"
+        }
+        val main = compileToExecutable("main", lib) { "main/main.kt" copyTo "main.kt" }
+
+        // Check, <lib> has been compiled to cache.
+        assertTrue(main.executableFile.exists())
+        val libFile1KtCacheDir = getLibraryFileCache("lib", "lib/lib.file1.kt", "test")
+        val libFile2KtCacheDir = getLibraryFileCache("lib", "lib/lib.file2.kt", "test")
+        assertTrue(libFile1KtCacheDir.exists())
+        assertTrue(libFile2KtCacheDir.exists())
+        val modified1 = libFile1KtCacheDir.lastModified()
+        val modified2 = libFile2KtCacheDir.lastModified()
+        runExecutableAndVerify(main.testCase, main.testExecutable)
+
+        val lib1 = compileLibrary("lib") {
+            "lib/lib.file1.1.kt" copyTo "lib.file1.kt"
+            "lib/lib.file2.kt" copyTo "lib.file2.kt"
+        }
+        val main1 = compileToExecutable("main", lib1) { "main/main.1.kt" copyTo "main.kt" }
+        assertTrue(main1.executableFile.exists())
+        assertTrue(libFile1KtCacheDir.exists())
+        assertTrue(libFile2KtCacheDir.exists())
+        assertNotEquals(modified1, libFile1KtCacheDir.lastModified())
+        assertNotEquals(modified2, libFile2KtCacheDir.lastModified())
+        runExecutableAndVerify(main1.testCase, main1.testExecutable)
+    }
+
     // This is a reproducer for #KT-81708
     @Test
     @TestMetadata("inlineFunSameLibAddFile")

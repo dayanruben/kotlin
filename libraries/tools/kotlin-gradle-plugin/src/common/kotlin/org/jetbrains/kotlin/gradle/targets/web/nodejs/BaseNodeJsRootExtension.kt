@@ -106,7 +106,7 @@ abstract class BaseNodeJsRootExtension internal constructor(
     val rootProjectDir
         get() = project.rootDir
 
-    val packageManagerExtension: Property<NpmApiExt> = project.objects.property()
+    val packageManagerExtension: Property<NpmApiExtension<*, *>> = project.objects.property()
 
     val taskRequirements: TasksRequirements
         get() = resolver.tasksRequirements

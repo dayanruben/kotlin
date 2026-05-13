@@ -2088,6 +2088,8 @@ internal class CodeGeneratorVisitor(
         val inlinedBlockScope = InlinedBlockScope(value)
         generateDebugTrambolineIf("inline", value)
 
+        // Even though the function was inlined, the edge [caller -> callee] still needs to be recorded (generally).
+        value.inlinedFunctionSymbol?.let { generationState.dependenciesTracker.add(it.owner) }
         return using(inlinedBlockScope) {
             evaluateContainerExpression(value, resultSlot)
         }

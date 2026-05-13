@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -36,18 +36,19 @@ class WasmTypeScriptCompilationHandler(testServices: TestServices) : AbstractWas
         val outputDir = testServices.getWasmTestOutputDirectoryForMode(defaultMode)
         val outputJsFile = compiledTypeScriptOutput(testServices, defaultMode, JavaScript.DOT_EXTENSION)
 
+        val dtsFiles = modulesToArtifact.values.map { artifact ->
+            require(artifact is WasmCompilationSetsBinaryArtifact)
+            File(outputDir, artifact.compilation.compilerResult.baseFileName + ".d.mts").also { tsFile ->
+                artifact.compilation.compilerResult.dts?.let {
+                    tsFile.parentFile.mkdirs()
+                    tsFile.writeText(it)
+                }
+            }
+        }
+
         TypeScriptCompilation(
             testServices,
-            modulesToArtifact,
-            { artifact ->
-                require(artifact is WasmCompilationSetsBinaryArtifact)
-                File(outputDir, artifact.compilation.compilerResult.baseFileName + ".d.mts").also { tsFile ->
-                    artifact.compilation.compilerResult.dts?.let {
-                        tsFile.parentFile.mkdirs()
-                        tsFile.writeText(it)
-                    }
-                }
-            },
+            dtsFiles,
             mainTsFile,
             outputJsFile,
             File(allDirectives[WasmEnvironmentConfigurationDirectives.PATH_TO_NODE_DIR].first()),

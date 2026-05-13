@@ -191,6 +191,34 @@ class CompilerReferenceIndexIT : KGPDaemonsBaseTest() {
         }
     }
 
+    @GradleTest
+    @DisplayName("Enabling CRI invalidates compileKotlin UP-TO-DATE state. KT-86118")
+    fun testEnablingCriInvalidatesCompileKotlinUpToDate(gradleVersion: GradleVersion) {
+        project("kotlinProject", gradleVersion) {
+            val lookups = projectPath / "build/kotlin/compileKotlin/cacheable" / DATA_PATH / LOOKUPS_FILENAME
+
+            build("assemble", buildOptions = buildOptions.copy(generateCompilerRefIndex = false)) {
+                assertTasksExecuted(":compileKotlin")
+            }
+            assertFileNotExists(lookups)
+
+            build("assemble", buildOptions = buildOptions.copy(generateCompilerRefIndex = true)) {
+                assertTasksExecuted(":compileKotlin")
+            }
+            assertFilesExist(lookups)
+        }
+    }
+
+    @GradleTest
+    @DisplayName("Enabling CRI does not fail Kotlin/Native compile tasks. KT-86118")
+    fun testEnablingCriDoesNotFailNativeCompile(gradleVersion: GradleVersion) {
+        nativeProject("native-simple-project", gradleVersion) {
+            build("assemble") {
+                assertNoDiagnostic(KotlinToolingDiagnostics.GeneratingCompilerRefIndexWithoutBuildToolsApi)
+            }
+        }
+    }
+
     private fun hashCode(fqName: String): Int = FqName(fqName).hashCode()
 
     private fun TestProject.deserializeCriData(): Triple<List<LookupEntry>, List<FileIdToPathEntry>, List<SubtypeEntry>> {

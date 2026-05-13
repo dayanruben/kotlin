@@ -16,6 +16,7 @@ import org.opentest4j.TestAbortedException
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 @Tag("sanity")
 @Tag("aggregate")
@@ -77,7 +78,7 @@ class CustomWasmJsCompilerSecondStageSanity :
         }
         // Frontend errors are not suppressed when testing within one major compiler version
         assertIs<IllegalStateException>(exception)
-        assertContains(exception.message!!, "WRONG_JS_INTEROP_TYPE")
+        assertContains(exception.message!!, "UNRESOLVED_REFERENCE: Unresolved reference 'FAIL'. at mutedDueToFrontendErrorWithCustom1stStage.kt:")
     }
 
     @Test

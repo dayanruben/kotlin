@@ -47,18 +47,24 @@ internal class ExportModelGenerator(private val config: TypeScriptExportConfig) 
                 @OptIn(KaNonPublicApi::class)
                 val fileName = declaration.klibSourceFileName ?: continue
 
-                val key = FileArtifactKey(packageFqName, fileName)
+                val key = FileArtifactKey(packageFqName, fileName.removeSuffix(".kt"))
                 computeIfAbsent(key) { _ -> mutableListOf() }.addAll(exportTopLevelDeclaration(declaration))
             }
         }
 
         return ProcessedModule(
             library,
-            fileMap.mapValues { (key, exports) ->
-                when {
-                    exports.isEmpty() -> emptyList()
-                    !this.config.generateNamespacesForPackages || key.packageFqName.isRoot -> exports.compactIfPossible()
-                    else -> listOf(ExportedNamespace(key.packageFqName.asString(), exports.compactIfPossible()))
+            buildMap {
+                for ((key, exports) in fileMap) {
+                    when {
+                        exports.isEmpty() -> continue
+                        !this@ExportModelGenerator.config.generateNamespacesForPackages || key.packageFqName.isRoot -> {
+                            this[key] = exports.compactIfPossible()
+                        }
+                        else -> {
+                            this[key] = listOf(ExportedNamespace(key.packageFqName.asString(), exports.compactIfPossible()))
+                        }
+                    }
                 }
             },
             jsOutputName = config.outputName ?: library.libraryName.safeModuleName,

@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.konan.test.blackbox.support.settings.KotlinNativeTar
 import org.jetbrains.kotlin.konan.test.blackbox.support.settings.OptimizationMode
 import org.jetbrains.kotlin.konan.test.blackbox.support.settings.withPlatformLibs
 import org.jetbrains.kotlin.konan.test.blackbox.testRunSettings
-import org.jetbrains.kotlin.test.GroupingPhaseInputArtifact
+import org.jetbrains.kotlin.test.GroupingStageInputArtifact
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives
 import org.jetbrains.kotlin.test.directives.NativeEnvironmentConfigurationDirectives.WITH_PLATFORM_LIBS
 import org.jetbrains.kotlin.test.klib.CustomKlibCompilerException
@@ -98,9 +98,9 @@ class NativeCompilerSecondStageFacade private constructor(
     class Grouping(
         val testServices: TestServices,
         private val customNativeCompilerSettings: CustomNativeCompilerSettings
-    ) : AbstractGroupingPhaseTestFacade<GroupingPhaseInputArtifact, BinaryArtifacts.Native>() {
-        override fun transform(inputArtifact: GroupingPhaseInputArtifact): BinaryArtifacts.Native {
-            val servicesOfSomeModule = inputArtifact.nonGroupingPhaseOutputs.first().testServices
+    ) : AbstractGroupingStageTestFacade<GroupingStageInputArtifact, BinaryArtifacts.Native>() {
+        override fun transform(inputArtifact: GroupingStageInputArtifact): BinaryArtifacts.Native {
+            val servicesOfSomeModule = inputArtifact.nonGroupingStageOutputs.first().testServices
             val someModule = servicesOfSomeModule.moduleStructure.modules.last()
             var someLibrary: File? = null
             val freeArgs = someModule.directives[FREE_COMPILER_ARGS]
@@ -108,7 +108,7 @@ class NativeCompilerSecondStageFacade private constructor(
             val regularDependencies = mutableSetOf<String>()
             val friendDependencies = mutableSetOf<String>()
             val mainLibraries = mutableListOf<String>()
-            for ((services, _) in inputArtifact.nonGroupingPhaseOutputs) {
+            for ((services, _) in inputArtifact.nonGroupingStageOutputs) {
                 val mainModule = services.moduleStructure.modules.last()
                 mainModule.collectDependencies(services).let { (regular, friend) ->
                     regularDependencies += regular
@@ -156,8 +156,8 @@ class NativeCompilerSecondStageFacade private constructor(
             }
         }
 
-        override val inputKind: TestArtifactKind<GroupingPhaseInputArtifact>
-            get() = GroupingPhaseInputArtifact.Kind
+        override val inputKind: TestArtifactKind<GroupingStageInputArtifact>
+            get() = GroupingStageInputArtifact.Kind
         override val outputKind: TestArtifactKind<BinaryArtifacts.Native>
             get() = ArtifactKinds.Native
     }

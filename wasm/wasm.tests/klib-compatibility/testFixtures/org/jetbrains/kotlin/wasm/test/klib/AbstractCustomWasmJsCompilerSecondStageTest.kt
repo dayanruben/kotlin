@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.wasm.test.klib
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.js.test.klib.customWasmJsCompilerSettings
 import org.jetbrains.kotlin.js.test.klib.defaultLanguageVersion
-import org.jetbrains.kotlin.js.test.preprocessors.JsExportBoxPreprocessor
 import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
 import org.jetbrains.kotlin.platform.wasm.WasmTarget
 import org.jetbrains.kotlin.test.FirParser
@@ -36,6 +35,7 @@ import org.jetbrains.kotlin.wasm.test.blackbox.CustomWasmJsCompilerSecondStageFa
 import org.jetbrains.kotlin.wasm.test.commonConfigurationForWasmFirstStageTest
 import org.jetbrains.kotlin.wasm.test.commonConfigurationForWasmSecondStageTest
 import org.jetbrains.kotlin.wasm.test.handlers.WasmFolderBoxRunner
+import org.jetbrains.kotlin.wasm.test.preprocessors.WasmJsExportBoxPreprocessor
 import org.junit.jupiter.api.Tag
 import java.io.File
 
@@ -61,7 +61,7 @@ open class AbstractCustomWasmJsCompilerSecondStageTest(val testDataRoot: String 
     }
 
     override fun configure(builder: TestConfigurationBuilder) = with(builder) {
-        useSourcePreprocessor(::JsExportBoxPreprocessor)
+        useSourcePreprocessor(::WasmJsExportBoxPreprocessor)
         useMetaTestConfigurators(::UnsupportedFeaturesTestConfigurator)
         useDirectives(WasmEnvironmentConfigurationDirectives)
         defaultDirectives {

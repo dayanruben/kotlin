@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives
 import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives.DELEGATE_JS_TRANSPILATION
 import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives.DISABLE_ES6_ARROWS
 import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives.ES6_MODE
-import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives.GENERATE_DTS
 import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives.GENERATE_INLINE_ANONYMOUS_FUNCTIONS
 import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives.GENERATE_STRICT_IMPLICIT_EXPORT
 import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives.KEEP
@@ -27,6 +26,7 @@ import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives
 import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives.SAFE_EXTERNAL_BOOLEAN
 import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives.SAFE_EXTERNAL_BOOLEAN_DIAGNOSTIC
 import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives.SOURCE_MAP_EMBED_SOURCES
+import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives.TS_COMPILATION_STRATEGY
 import org.jetbrains.kotlin.test.model.ArtifactKinds
 import org.jetbrains.kotlin.test.model.DependencyRelation
 import org.jetbrains.kotlin.test.model.TestModule
@@ -67,7 +67,7 @@ open class JsSecondStageEnvironmentConfigurator(testServices: TestServices) : Js
                     outputDirectory = tmpBuildDir,
                     outputName = outputFile.nameWithoutExtension,
                     granularity = mode.granularity,
-                    tsCompilationStrategy = TsCompilationStrategy.NONE, // TS generation is handled separately in JsIrLoweringFacade
+                    tsCompilationStrategy = module.directives[TS_COMPILATION_STRATEGY].lastOrNull() ?: TsCompilationStrategy.NONE,
                     production = mode.production,
                     minimizedMemberNames = mode.minimizedMemberNames,
                 )
@@ -125,7 +125,7 @@ open class JsSecondStageEnvironmentConfigurator(testServices: TestServices) : Js
         if (GENERATE_STRICT_IMPLICIT_EXPORT in module.directives) {
             configuration.generateStrictImplicitExport = true
         }
-        if (GENERATE_DTS in module.directives) {
+        if ((module.directives[TS_COMPILATION_STRATEGY].lastOrNull() ?: TsCompilationStrategy.NONE) != TsCompilationStrategy.NONE) {
             configuration.generateDts = true
         }
         if (ES6_MODE in module.directives || DELEGATE_JS_TRANSPILATION in module.directives) {

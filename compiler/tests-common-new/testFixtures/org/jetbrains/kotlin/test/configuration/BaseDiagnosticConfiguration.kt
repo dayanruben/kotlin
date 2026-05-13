@@ -154,7 +154,7 @@ fun TestConfigurationBuilder.baseFirDiagnosticTestConfiguration(
     configureCommonDiagnosticTestPaths()
 }
 
-fun TestStepBuilder.HandlersStepBuilder.NonGroupingPhase<FirOutputArtifact, FrontendKinds.FIR>.setupHandlersForDiagnosticTest() {
+fun TestStepBuilder.HandlersStepBuilder.NonGroupingStage<FirOutputArtifact, FrontendKinds.FIR>.setupHandlersForDiagnosticTest() {
     useHandlers(
         ::FirDiagnosticsHandler,
         ::FirDumpHandler,

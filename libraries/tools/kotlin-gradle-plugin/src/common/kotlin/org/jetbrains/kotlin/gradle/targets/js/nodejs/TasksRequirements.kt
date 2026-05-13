@@ -16,6 +16,7 @@ class TasksRequirements : Serializable {
     private val _byTask = mutableMapOf<String, Set<RequiredKotlinJsDependency>>()
     private val byCompilation = mutableMapOf<String, MutableSet<NpmDependencyDeclaration>>()
 
+    @Deprecated("No longer used. Scheduled for removal in Kotlin 2.7.")
     val byTask: Map<String, Set<RequiredKotlinJsDependency>>
         get() = _byTask
 

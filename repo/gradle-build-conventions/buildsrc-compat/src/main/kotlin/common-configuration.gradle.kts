@@ -354,7 +354,6 @@ fun Project.configureTests() {
             ":kotlin-native:tools:kdumputil",
             ":kotlin-power-assert-runtime", // TODO(KTI-3056): 'test-inputs-check' cannot be combined with 'multiplatform' projects
             ":kotlin-scripting-common",
-            ":kotlin-scripting-compiler",
             ":kotlin-scripting-dependencies",
             ":kotlin-scripting-dependencies-maven",
             ":kotlin-scripting-dependencies-maven-all",

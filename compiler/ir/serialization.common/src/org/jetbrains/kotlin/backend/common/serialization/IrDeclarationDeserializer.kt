@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.InlineClassRepresentation
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.MultiFieldValueClassRepresentation
-import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.*
@@ -28,6 +27,7 @@ import org.jetbrains.kotlin.ir.expressions.IrBody
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
 import org.jetbrains.kotlin.ir.expressions.impl.IrCompositeImpl
 import org.jetbrains.kotlin.ir.symbols.*
+import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.types.impl.*
 import org.jetbrains.kotlin.ir.util.*
@@ -67,7 +67,8 @@ import org.jetbrains.kotlin.backend.common.serialization.proto.IrValueParameter 
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrVariable as ProtoVariable
 
 class IrDeclarationDeserializer(
-    builtIns: IrBuiltIns,
+    private val unitType: IrType,
+    private val nothingType: IrType,
     private val symbolTable: SymbolTable,
     val irFactory: IrFactory,
     private val libraryFile: IrLibraryFile,
@@ -84,7 +85,8 @@ class IrDeclarationDeserializer(
         settings.deserializeFunctionBodies == DeserializeFunctionBodies.ALL
 
     private val bodyDeserializer = IrBodyDeserializer(
-        builtIns = builtIns,
+        unitType = unitType,
+        nothingType = nothingType,
         irFactory = irFactory,
         libraryFile = libraryFile,
         declarationDeserializer = this,
@@ -620,6 +622,8 @@ class IrDeclarationDeserializer(
                         isInfix = flags.isInfix,
                         isExternal = flags.isExternal || isEffectivelyExternal,
                         isFakeOverride = flags.isFakeOverride,
+                        companionExtensionClass = proto.base.companionExtensionClass.takeIf { proto.base.hasCompanionExtensionClass() }
+                            ?.let { symbol -> deserializeIrSymbol(symbol).checkSymbolType(CLASS_SYMBOL) }
                     )
                 }
             }.apply {
