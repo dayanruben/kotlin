@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.testFederation.smokeTestConfig
 
 plugins {
     kotlin("jvm")
+    id("test-inputs-check")
 }
 
 val generateSources = tasks.register<GenerateTestFederationRuntimeCodeTask>("generateTestFederationSources")
@@ -31,7 +32,7 @@ kotlin.target.compilations.all {
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
 
-    /* Used by the ContractAndSmokeTest and 'PseudoTest' for testing the test federations behavior */
+    /* Used by the TestFederationFunctionalTest and 'PseudoTest' for testing the test federations behavior */
     providers.environmentVariable("_PSEUDO_TEST_").orNull?.let { value ->
         smokeTestConfig = when (value) {
             "RunAllTests" -> SmokeTestConfig.RunAllTests
@@ -55,28 +56,4 @@ dependencies {
     testImplementation(libs.junit.jupiter.engine)
     testImplementation(libs.junit.platform.launcher)
     testImplementation(libs.junit.jupiter.api)
-}
-
-
-/* Create build test */
-val functionalTestCompilation = kotlin.target.compilations.create("functionalTest") {
-    associateWith(kotlin.target.compilations.getByName("main"))
-}
-
-val functionalTest = tasks.register<Test>("functionalTest") {
-    useJUnitPlatform()
-    workingDir = project.rootDir
-    javaLauncher = getToolchainLauncherFor(JdkMajorVersion.JDK_21_0)
-    classpath = project.files(functionalTestCompilation.output.classesDirs, functionalTestCompilation.runtimeDependencyFiles)
-    testClassesDirs = functionalTestCompilation.output.classesDirs
-    testLogging {
-        showStandardStreams = true
-    }
-
-    smokeTestConfig = SmokeTestConfig.RunAllTests
-}
-
-dependencies {
-    functionalTestCompilation.implementationConfigurationName(kotlin("stdlib"))
-    functionalTestCompilation.implementationConfigurationName(kotlin("test-junit5"))
 }

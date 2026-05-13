@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.fir.references.FirNamedReference
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ContextSensitiveResolutionMightBeUsed
+import org.jetbrains.kotlin.fir.resolve.diagnostics.ContextSensitiveResolutionMightBeUsedInsteadOfImport
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
@@ -227,6 +228,10 @@ class FirDiagnosticsHandler(testServices: TestServices) : FirAnalysisHandler(tes
                     if (ContextSensitiveResolutionMightBeUsed in element.nonFatalDiagnostics) {
                         consumer.report(KtDebugInfoDiagnostics.CSR_MIGHT_BE_USED, element.conversionTypeRef.source)
                     }
+
+                    if (ContextSensitiveResolutionMightBeUsedInsteadOfImport in element.nonFatalDiagnostics) {
+                        consumer.report(KtDebugInfoDiagnostics.CSR_MIGHT_BE_USED_INSTEAD_OF_IMPORT, element.conversionTypeRef.source)
+                    }
                 }
 
                 if (shouldRenderDynamic && element is FirResolvable) {
@@ -245,6 +250,10 @@ class FirDiagnosticsHandler(testServices: TestServices) : FirAnalysisHandler(tes
             ) {
                 if (ContextSensitiveResolutionMightBeUsed in nonFatalDiagnostics) {
                     consumer.report(KtDebugInfoDiagnostics.CSR_MIGHT_BE_USED, element.source)
+                }
+
+                if (ContextSensitiveResolutionMightBeUsedInsteadOfImport in nonFatalDiagnostics) {
+                    consumer.report(KtDebugInfoDiagnostics.CSR_MIGHT_BE_USED_INSTEAD_OF_IMPORT, element.source)
                 }
             }
 
@@ -474,6 +483,7 @@ private class DebugDiagnosticConsumer(
 
         private val FORCE_REPORTING = setOf(
             KtDebugInfoDiagnostics.CSR_MIGHT_BE_USED,
+            KtDebugInfoDiagnostics.CSR_MIGHT_BE_USED_INSTEAD_OF_IMPORT,
         )
     }
 
@@ -836,6 +846,7 @@ val TestServices.firDiagnosticCollectorService: FirDiagnosticCollectorService by
 private object KtDebugInfoDiagnostics : KtDiagnosticsContainer() {
     val DYNAMIC by debugInfo0()
     val CSR_MIGHT_BE_USED by debugInfo0()
+    val CSR_MIGHT_BE_USED_INSTEAD_OF_IMPORT by debugInfo0()
     val EXPRESSION_TYPE by debugInfo1()
     val CALL by debugInfo1()
     val CALLABLE_OWNER by debugInfo1()
@@ -846,6 +857,7 @@ private object KtDebugInfoDiagnostics : KtDiagnosticsContainer() {
         override val MAP: KtDiagnosticFactoryToRendererMap by KtDiagnosticFactoryToRendererMap("DebugInfo") {
             it.put(DYNAMIC, "")
             it.put(CSR_MIGHT_BE_USED, "")
+            it.put(CSR_MIGHT_BE_USED_INSTEAD_OF_IMPORT, "")
             it.put(EXPRESSION_TYPE, "{0}", TO_STRING)
             it.put(CALL, "{0}", TO_STRING)
             it.put(CALLABLE_OWNER, "{0}", TO_STRING)

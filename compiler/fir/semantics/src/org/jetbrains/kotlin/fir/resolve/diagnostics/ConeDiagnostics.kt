@@ -500,5 +500,10 @@ class ConeImplicitPropertyTypeMakesBehaviorOrderDependant(
  */
 object ContextSensitiveResolutionMightBeUsed : ConeDiagnostic {
     override val reason: String
-        get() = "Context-sensitive resolution might be used"
+        get() = "Context-sensitive resolution might be used instead of full explicit qualifier"
+}
+
+object ContextSensitiveResolutionMightBeUsedInsteadOfImport : ConeDiagnostic {
+    override val reason: String
+        get() = "Resolved through import, but context-sensitive resolution might be used"
 }

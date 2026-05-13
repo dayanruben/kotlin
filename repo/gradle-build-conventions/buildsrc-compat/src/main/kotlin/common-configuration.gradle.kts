@@ -337,8 +337,6 @@ fun Project.configureTests() {
             ":kotlin-daemon-client",
             ":kotlin-gradle-plugin",
             ":kotlin-gradle-plugin-dsl-codegen",
-            ":kotlin-gradle-plugin-idea",
-            ":kotlin-gradle-plugin-idea-proto",
             ":kotlin-gradle-plugin-integration-tests",
             ":kotlin-gradle-statistics",
             ":kotlin-main-kts",
@@ -365,8 +363,6 @@ fun Project.configureTests() {
             ":kotlin-stdlib-jdk8",
             ":kotlin-stdlib:samples",
             ":kotlin-test",
-            ":kotlin-tooling-core",
-            ":kotlin-tooling-metadata",
             ":kotlin-util-klib",
             ":kotlinx-metadata-klib",
             ":libraries:tools:abi-validation:abi-tools",
@@ -391,7 +387,6 @@ fun Project.configureTests() {
             ":tools:binary-compatibility-validator",
             ":tools:ide-plugin-dependencies-validator",
             ":tools:jdk-api-validator",
-            ":repo:test-federation-runtime",
             ":benchmarks",
         )
         val projectPath = project.path

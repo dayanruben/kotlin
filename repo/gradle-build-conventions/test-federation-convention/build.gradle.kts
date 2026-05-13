@@ -54,14 +54,15 @@ tasks.withType<Test>().configureEach {
     useJUnitPlatform()
 
     /* The shape of the entire repo is considered an input. Always re-run this task */
-    outputs.upToDateWhen { false }
-    outputs.doNotCacheIf("Always run this tests") { true }
+    doNotTrackState("The shape of the entire repo is considered as input (DomainsDump)")
 
     workingDir = gradle.linearClosure { it.parent }.last().rootProject.isolated.projectDirectory.asFile
 
     inputs.file(workingDir.resolve("repo/domains.yaml"))
         .withPathSensitivity(PathSensitivity.RELATIVE)
         .withPropertyName("domains.yaml")
+
+    environment("GRADLE_USER_HOME", gradle.gradleUserHomeDir.absolutePath)
 }
 
 dependencies {
@@ -76,4 +77,5 @@ dependencies {
     testImplementation(kotlin("test-junit5", libs.versions.kotlin.`for`.gradle.plugins.compilation.get()))
     testImplementation(libs.jgit)
     testImplementation(libs.opentest4j)
+    testImplementation(gradleTestKit())
 }
