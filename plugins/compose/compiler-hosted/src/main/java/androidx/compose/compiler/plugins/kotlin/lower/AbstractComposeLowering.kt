@@ -230,10 +230,6 @@ abstract class AbstractComposeLowering(
         return symbol.owner.hasComposableAnnotation() || isComposableLambdaInvoke()
     }
 
-    fun IrCall.isSyntheticComposableCall(): Boolean {
-        return context.irTrace[ComposeWritableSlices.IS_SYNTHETIC_COMPOSABLE_CALL, this] == true
-    }
-
     fun IrCall.isComposableLambdaInvoke(): Boolean {
         if (!isInvoke()) return false
         return dispatchReceiver?.type?.let {
@@ -242,11 +238,7 @@ abstract class AbstractComposeLowering(
     }
 
     fun IrCall.isComposableSingletonGetter(): Boolean {
-        return context.irTrace[ComposeWritableSlices.IS_COMPOSABLE_SINGLETON, this] == true
-    }
-
-    fun IrClass.isComposableSingletonClass(): Boolean {
-        return context.irTrace[ComposeWritableSlices.IS_COMPOSABLE_SINGLETON_CLASS, this] == true
+        return this.isComposableSingleton
     }
 
     fun Stability.irStableExpression(
@@ -1040,7 +1032,7 @@ abstract class AbstractComposeLowering(
 
             is IrFunctionExpression,
             is IrTypeOperatorCall ->
-                context.irTrace[ComposeWritableSlices.IS_STATIC_FUNCTION_EXPRESSION, this] ?: false
+                this.isStaticFunctionExpression
 
             is IrGetField ->
                 // K2 sometimes produces `IrGetField` for reads from constant properties
@@ -1049,7 +1041,7 @@ abstract class AbstractComposeLowering(
             is IrBlock -> {
                 // Check the slice in case the block was generated as expression
                 // (e.g. inlined intrinsic remember call)
-                context.irTrace[ComposeWritableSlices.IS_STATIC_EXPRESSION, this] ?: false
+                this.isStaticExpression
             }
             else -> false
         }
@@ -1185,7 +1177,7 @@ abstract class AbstractComposeLowering(
                     // thus it is static.
                     return true
                 }
-                if (context.irTrace[ComposeWritableSlices.IS_COMPOSABLE_SINGLETON, this] == true) {
+                if (this.isComposableSingleton) {
                     return true
                 }
 
@@ -1287,10 +1279,7 @@ abstract class AbstractComposeLowering(
 
     @OptIn(ObsoleteDescriptorBasedAPI::class)
     fun IrSimpleFunction.sourceKey(): Int {
-        val info = context.irTrace[
-            ComposeWritableSlices.DURABLE_FUNCTION_KEY,
-            this
-        ]
+        val info = this.durableFunctionKey
         if (info != null) {
             info.used = true
             return info.key

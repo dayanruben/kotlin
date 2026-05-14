@@ -611,7 +611,7 @@ class ComposableFunctionBodyTransformer(
             ?: error("Expected a FunctionScope but none exist. \n${printScopeStack()}")
 
     override fun visitClass(declaration: IrClass): IrStatement {
-        if (declaration.isComposableSingletonClass()) {
+        if (declaration.isComposableSingletonClass) {
             return declaration
         }
         return inScope(Scope.ClassScope(declaration.name)) {
@@ -3000,7 +3000,7 @@ class ComposableFunctionBodyTransformer(
             property?.transformChildrenVoid()
         }
 
-        if (expression is IrCall && (expression.isComposableCall() || expression.isSyntheticComposableCall())) {
+        if (expression is IrCall && expression.isComposableCall()) {
             return visitComposableCall(expression)
         }
 
@@ -3378,7 +3378,7 @@ class ComposableFunctionBodyTransformer(
                 stabilityInferencer.stabilityOf(expr.type, fileContainingDependent = fileContainingRememberCall).knownStable() &&
                 inputArgMetas.all { it.isStatic }
             ) {
-                context.irTrace.record(ComposeWritableSlices.IS_STATIC_EXPRESSION, expr, true)
+                expr.isStaticExpression = true
             }
         }
     }
@@ -4088,7 +4088,7 @@ class ComposableFunctionBodyTransformer(
             val inComposableCall: Boolean
                 get() = (parent as? CallScope)?.expression?.let { call ->
                     with(transformer) {
-                        call is IrCall && (call.isComposableCall() || call.isSyntheticComposableCall())
+                        call is IrCall && call.isComposableCall()
                     }
                 } == true
 
