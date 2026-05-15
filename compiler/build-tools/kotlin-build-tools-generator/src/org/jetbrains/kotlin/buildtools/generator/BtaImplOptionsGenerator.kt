@@ -110,7 +110,6 @@ internal class BtaImplOptionsGenerator(
                         applyCompilerArgumentsFun = applyCompilerArgumentsFun,
                         toCompilerConverterFun = toCompilerConverterFun,
                         toCompilerArgumentsAffectingOutcomeFun = toCompilerArgumentsAffectingOutcomeFun,
-                        defaultsInitializer = defaultsInitializer,
                     )
                 }.build())
 
@@ -225,7 +224,6 @@ internal class BtaImplOptionsGenerator(
         applyCompilerArgumentsFun: FunSpec.Builder,
         toCompilerConverterFun: FunSpec.Builder,
         toCompilerArgumentsAffectingOutcomeFun: FunSpec.Builder,
-        defaultsInitializer: CodeBlock.Builder,
     ) {
         arguments.forEach { argument ->
             val name = argument.extractName()
@@ -504,11 +502,21 @@ internal class BtaImplOptionsGenerator(
         when {
             type.isGeneratedEnum -> {
                 add(maybeGetNullabilitySign(argument))
-                add(
-                    $$".let { %T.entries.firstOrNull { entry -> entry.stringValue == it } ?: throw %M(\"Unknown -$${argument.name} value: $it\") }",
-                    argumentTypeParameter.copy(nullable = false),
-                    MemberName("org.jetbrains.kotlin.buildtools.api", "CompilerArgumentsParseException"),
-                )
+                if (!generateCompatLayer) {
+                    add(
+                        $$".let { %T.entries.firstOrNull { entry -> entry.stringValue.equals(it, true) }?.also { entry -> %M(_restrictedArgViolations, arguments::%N, entry.stringValue, it) } ?: throw %M(\"Unknown -$${argument.name} value: $it\") }",
+                        argumentTypeParameter.copy(nullable = false),
+                        MemberName(targetPackage, "checkCaseMatches"),
+                        effectiveCompilerName,
+                        MemberName("org.jetbrains.kotlin.buildtools.api", "CompilerArgumentsParseException"),
+                    )
+                } else {
+                    add(
+                        $$".let { %T.entries.firstOrNull { entry -> entry.stringValue.equals(it, true) } ?: throw %M(\"Unknown -$${argument.name} value: $it\") }",
+                        argumentTypeParameter.copy(nullable = false),
+                        MemberName("org.jetbrains.kotlin.buildtools.api", "CompilerArgumentsParseException"),
+                    )
+                }
             }
             argument.valueType.origin is IntType -> {
                 add(maybeGetNullabilitySign(argument))
@@ -561,7 +569,7 @@ internal class BtaImplOptionsGenerator(
                 """.trimIndent()
             )
             returns(listTypeNameOf<String>())
-            addStatement("return toCompilerArgumentsAffectingOutcome().compilerToArgumentStrings().sorted()")
+            addStatement("return toCompilerArgumentsAffectingOutcome().compilerToArgumentStrings(allowArgFileInValues = false).sorted()")
         }
     }
 
@@ -796,6 +804,25 @@ internal class BtaImplOptionsGenerator(
             MemberName(targetPackage, "checkNoneContains", isExtension = true)
         )
     }
+
+    private fun TypeSpec.Builder.maybeAddToArgumentsStringFun(level: KotlinCompilerArgumentsLevel, parentClass: TypeName?) {
+        if (!level.isLeaf()) {
+            return
+        }
+        function("toArgumentStrings") {
+            addModifiers(KModifier.OVERRIDE)
+            if (parentClass == null) {
+                addModifiers(KModifier.OPEN)
+            }
+            returns(listTypeNameOf<String>())
+            if (generateCompatLayer) {
+                addStatement("val arguments = toCompilerArguments().compilerToArgumentStrings()")
+            } else {
+                addStatement("val arguments = toCompilerArguments().compilerToArgumentStrings(allowArgFileInValues = false)")
+            }
+            addStatement("return arguments")
+        }
+    }
 }
 
 internal fun FunSpec.Builder.addSafeSetStatement(
@@ -829,21 +856,6 @@ internal fun FunSpec.Builder.addSafeSetStatement(
 }
 
 private fun maybeGetNullabilitySign(argument: BtaCompilerArgument<*>): String = (if (argument.valueType.isNullable) "?" else "")
-
-private fun TypeSpec.Builder.maybeAddToArgumentsStringFun(level: KotlinCompilerArgumentsLevel, parentClass: TypeName?) {
-    if (!level.isLeaf()) {
-        return
-    }
-    function("toArgumentStrings") {
-        addModifiers(KModifier.OVERRIDE)
-        if (parentClass == null) {
-            addModifiers(KModifier.OPEN)
-        }
-        returns(listTypeNameOf<String>())
-        addStatement("val arguments = toCompilerArguments().compilerToArgumentStrings()")
-        addStatement("return arguments")
-    }
-}
 
 private fun toCompilerArgumentsAffectingOutcomeFunBuilder(
     level: KotlinCompilerArgumentsLevel,
@@ -962,6 +974,7 @@ private fun applyCompilerArgumentsFunBuilder(
     annotation<Suppress> {
         addMember("%S", "DEPRECATION")
     }
+    addModifiers(KModifier.PROTECTED)
 }
 
 private fun KotlinCompilerArgumentsLevel.getCompilerArgumentsClassName(): ClassName {

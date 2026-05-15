@@ -211,7 +211,12 @@ testing {
                 }
                 targets.all {
                     projectTests {
-                        testTask(taskName = testTask.name, jUnitMode = JUnitMode.JUnit5, skipInLocalBuild = false) {
+                        testTask(
+                            taskName = testTask.name,
+                            jUnitMode = JUnitMode.JUnit5,
+                            javaLauncher = JdkMajorVersion.JDK_1_8,
+                            skipInLocalBuild = false
+                        ) {
                             @OptIn(TemporaryTestFederationApi::class)
                             smokeTestConfig = SmokeTestConfig.RunAllTests
 
@@ -247,8 +252,14 @@ testing {
             targets.all {
                 if (businessLogicTestSuits.any { testTask.name.startsWith(it) }) {
                     projectTests {
-                        testTask(taskName = testTask.name, jUnitMode = JUnitMode.JUnit5, skipInLocalBuild = false) {
+                        testTask(
+                            taskName = testTask.name,
+                            jUnitMode = JUnitMode.JUnit5,
+                            javaLauncher = JdkMajorVersion.JDK_1_8,
+                            skipInLocalBuild = false
+                        ) {
                             systemProperty("kotlin.build-tools-api.log.level", "DEBUG")
+
                         }
                     }
                 }
