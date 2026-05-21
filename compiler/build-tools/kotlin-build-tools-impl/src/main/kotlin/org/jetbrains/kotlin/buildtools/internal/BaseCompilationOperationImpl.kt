@@ -51,7 +51,7 @@ import java.rmi.RemoteException
 
 internal abstract class BaseCompilationOperationImpl<BtaCompilerArgs : CommonCompilerArgumentsImpl, CompilerArgs : CommonCompilerArguments>(
     override val compilerArguments: BtaCompilerArgs,
-    private val buildIdToSessionFlagFile: MutableMap<ProjectId, File>,
+    protected val buildIdToSessionFlagFile: MutableMap<ProjectId, File>,
 ) : CancellableBuildOperationImpl<CompilationResult>(), BaseCompilationOperation, BaseCompilationOperation.Builder {
 
     @UseFromImplModuleRestricted
@@ -181,16 +181,19 @@ internal abstract class BaseCompilationOperationImpl<BtaCompilerArgs : CommonCom
             }
         }
 
-        val (daemon, sessionId) = KotlinCompilerRunnerUtils.newDaemonConnection(
-            compilerId,
-            clientIsAliveFile,
-            sessionIsAliveFlagFile,
-            loggerAdapter,
-            loggerAdapter.kotlinLogger.isDebugEnabled || System.getProperty("kotlin.daemon.debug.log")?.toBooleanStrictOrNull() ?: true,
-            daemonJVMOptions = jvmOptions,
-            daemonOptions = daemonOptions,
-            daemonLogOptions = daemonLogOptions,
-        ) ?: return ExitCode.INTERNAL_ERROR.asCompilationResult
+        (
+            val daemon = compileService, val sessionId
+        ) =
+            KotlinCompilerRunnerUtils.newDaemonConnection(
+                compilerId,
+                clientIsAliveFile,
+                sessionIsAliveFlagFile,
+                loggerAdapter,
+                loggerAdapter.kotlinLogger.isDebugEnabled || System.getProperty("kotlin.daemon.debug.log")?.toBooleanStrictOrNull() ?: true,
+                daemonJVMOptions = jvmOptions,
+                daemonOptions = daemonOptions,
+                daemonLogOptions = daemonLogOptions,
+            ) ?: return ExitCode.INTERNAL_ERROR.asCompilationResult
         onCancel {
             daemon.cancelCompilation(sessionId, compilationId)
         }

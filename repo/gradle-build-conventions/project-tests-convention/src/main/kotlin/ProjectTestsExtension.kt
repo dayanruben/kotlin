@@ -117,6 +117,22 @@ abstract class ProjectTestsExtension(val project: Project) {
         project.tasks.withType(Test::class.java).configureEach { withPluginSandboxJar() }
     }
 
+    fun withLombokCompilerPluginJar() {
+        project.tasks.withType(Test::class.java).configureEach { withLombokCompilerPluginJar() }
+    }
+
+    fun withAllOpenCompilerPluginJar() {
+        project.tasks.withType(Test::class.java).configureEach { withAllOpenCompilerPluginJar() }
+    }
+
+    fun withNoArgCompilerPluginJar() {
+        project.tasks.withType(Test::class.java).configureEach { withNoArgCompilerPluginJar() }
+    }
+
+    fun withMainKtsJar() {
+        project.tasks.withType(Test::class.java).configureEach { withMainKtsJar() }
+    }
+
     // -------------------- testData configuration --------------------
 
     internal abstract val testDataFiles: ListProperty<Directory>

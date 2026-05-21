@@ -143,6 +143,10 @@ projectTests {
     withMockJdkAnnotationsJar()
     withStdlibCommon()
     withJsRuntime()
+    withLombokCompilerPluginJar()
+    withAllOpenCompilerPluginJar()
+    withNoArgCompilerPluginJar()
+    withMainKtsJar()
 }
 
 testsJar()
