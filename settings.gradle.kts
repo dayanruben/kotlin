@@ -2,6 +2,7 @@ import java.io.File
 import java.util.Properties
 
 pluginManagement {
+    includeBuild("repo/kotlin-build-helpers")
     includeBuild("repo/gradle-settings-conventions")
     includeBuild("repo/gradle-build-conventions")
 
@@ -42,6 +43,7 @@ pluginManagement {
 
 plugins {
     id("internal-gradle-setup") // it's recommended to apply this plugin at first, as it changes the local.properties file
+    id("kotlin-build-helpers")
     id("kotlin-bootstrap")
     id("develocity")
     id("jvm-toolchain-provisioning")
