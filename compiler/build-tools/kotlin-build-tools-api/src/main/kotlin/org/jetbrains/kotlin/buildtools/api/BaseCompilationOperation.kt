@@ -99,6 +99,7 @@ public interface BaseCompilationOperation : BuildOperation<CompilationResult> {
          * file:///path/to/File.kt:10:5 Unresolved reference: foo
          *
          * @see CompilerMessageRenderer
+         * @see CompilerMessageRendererWithDiagnosticId
          */
         @JvmField
         public val COMPILER_MESSAGE_RENDERER: Option<CompilerMessageRenderer> = Option("COMPILER_MESSAGE_RENDERER", KotlinReleaseVersion(2, 4, 0))
