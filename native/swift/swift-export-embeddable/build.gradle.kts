@@ -35,6 +35,13 @@ dependencies {
     embedded(project(":analysis:analysis-api-standalone:analysis-api-standalone-base")) { isTransitive = false }
     embedded(project(lowLevelApiFir)) { isTransitive = false }
     embedded(project(":analysis:symbol-light-classes")) { isTransitive = false }
+    embedded(project(":analysis:kt-references")) { isTransitive = false }
+    embedded(project(":analysis:analysis-internal-utils")) { isTransitive = false }
+    embedded(project(":analysis:decompiled:decompiler-native")) { isTransitive = false }
+    embedded(project(":analysis:decompiled:decompiler-to-psi")) { isTransitive = false }
+    embedded(project(":analysis:decompiled:light-classes-for-decompiled")) { isTransitive = false }
+    embedded(project(":analysis:decompiled:decompiler-to-stubs")) { isTransitive = false }
+    embedded(project(":analysis:decompiled:decompiler-to-file-stubs")) { isTransitive = false }
 
     val projectsToInheritDependenciesFrom = configurations.runtimeClasspath.get().copy()
     projectsToInheritDependenciesFrom.dependencies.clear()
@@ -222,6 +229,7 @@ projectTests {
     testData(project(":native:swift:swift-export-standalone-integration-tests:simple").isolated, "testData")
     testData(project(":native:swift:swift-export-standalone-integration-tests:external").isolated, "testData")
     testData(project(":native:swift:swift-export-standalone-integration-tests:coroutines").isolated, "testData")
+    testData(rootProject.isolated, "native/native.tests/testData/framework")
 
     nativeTestTask(
         "testSimpleITWithEmbeddable",

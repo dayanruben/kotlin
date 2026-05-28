@@ -31,9 +31,10 @@ import org.jetbrains.kotlin.name.Name
 object FirLombokConflictingLogFieldChecker : FirRegularClassChecker(MppCheckerKind.Common) {
     context(context: CheckerContext, reporter: DiagnosticReporter)
     override fun check(declaration: FirRegularClass) {
-        val log = context.session.lombokService.getLog(declaration.symbol) ?: return
+        val lombokService = context.session.lombokService
+        val logs = lombokService.getLogs(declaration.symbol).takeIf { it.isNotEmpty() } ?: return
 
-        val container = if (log.fieldIsStatic) {
+        val container = if (lombokService.config.logFieldIsStatic) {
             if (declaration.isCompanion) {
                 declaration.symbol
             } else {
@@ -43,16 +44,17 @@ object FirLombokConflictingLogFieldChecker : FirRegularClassChecker(MppCheckerKi
             declaration.symbol
         }
 
-        val fieldName = Name.identifier(log.fieldName)
+        val fieldName = Name.identifier(lombokService.config.logFieldName)
         val declaredMemberScope = context.session.declaredMemberScope(container, memberRequiredPhase = null)
-        var hasConflict = false
-        declaredMemberScope.processPropertiesByName(fieldName) {
-            hasConflict = hasConflict || it.isRelevantForConflictsCheck && !it.origin.isLogger
+
+        for (log in logs) {
+            var hasConflict = false
+            declaredMemberScope.processPropertiesByName(fieldName) {
+                hasConflict = hasConflict || it.isRelevantForConflictsCheck && !it.origin.isLogger(log.annotation)
+            }
+            if (!hasConflict) continue
+
+            reporter.reportOn(log.annotation.source, LombokFirDiagnostics.LOG_PROPERTY_ALREADY_EXISTS, fieldName, context)
         }
-        if (!hasConflict) return
-
-        val source = declaration.annotations.getAnnotationByClassId(LombokNames.LOG_ID, context.session)!!.source ?: return
-
-        reporter.reportOn(source, LombokFirDiagnostics.LOG_PROPERTY_ALREADY_EXISTS, fieldName, context)
     }
 }

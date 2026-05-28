@@ -122,9 +122,23 @@ import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ConvertAsColumn
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ConvertAsFrame
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ConvertNotNull
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameAddAll
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameBuilderFill
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameBuilderFillIndexed
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameBuilderFillValue
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameBuilderInvoke0
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameBuilderNulls
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameBuilderRandomBoolean
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameBuilderRandomDouble
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameBuilderRandomDoubleRange
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameBuilderRandomFloat
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameBuilderRandomInt
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameBuilderRandomIntRange
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameBuilderRandomLong
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameBuilderRandomLongRange
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameCumSum
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameCumSum0
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameGenerator
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameGetColumns
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameOf0
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameOf3
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.DataFrameOfPairs
@@ -144,6 +158,7 @@ import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ExcludeJoinWith
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ExplodeColumns
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.FillNaNs0
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.FillNulls0
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.FilterIsInstance
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.FilterJoin
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.FilterJoinWith
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.First0
@@ -323,6 +338,7 @@ import org.jetbrains.kotlinx.dataframe.plugin.impl.api.TakeLast0
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.TakeLast1
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.TakeLast2
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ToDataFrameDslAdd
+import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ToDataFrameDslIntoPath
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ToDataFrameDslIntoString
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ToSpecificType
 import org.jetbrains.kotlinx.dataframe.plugin.impl.api.ToSpecificTypePattern
@@ -485,6 +501,7 @@ private fun String.loadImpl(isTest: Boolean): Interpreter<*>? {
         "RenameMapping" -> RenameMapping()
         "Select0" -> Select0()
         "SelectString" -> SelectString()
+        "DataFrameGetColumns" -> DataFrameGetColumns()
         "Distinct0" -> Select0()
         "NestedSelect" -> NestedSelect()
         "Expr0" -> Expr0()
@@ -605,11 +622,25 @@ private fun String.loadImpl(isTest: Boolean): Interpreter<*>? {
         "toDataFrameDefault" -> ToDataFrameDefault()
         "ToDataFrameDslStringInvoke" -> ToDataFrameDslStringInvoke()
         "ToDataFrameDslIntoString" -> ToDataFrameDslIntoString()
+        "ToDataFrameDslIntoPath" -> ToDataFrameDslIntoPath()
         "ToDataFrameDslAdd" -> ToDataFrameDslAdd()
         "DataFrameOf0" -> DataFrameOf0()
         "DataFrameOfPairs" -> DataFrameOfPairs()
+        "DataFrameGenerator" -> DataFrameGenerator()
         "ColumnOfPairs" -> ColumnOfPairs()
         "DataFrameBuilderInvoke0" -> DataFrameBuilderInvoke0()
+        "DataFrameBuilderRandomInt" -> DataFrameBuilderRandomInt()
+        "DataFrameBuilderRandomIntRange" -> DataFrameBuilderRandomIntRange()
+        "DataFrameBuilderRandomDouble" -> DataFrameBuilderRandomDouble()
+        "DataFrameBuilderRandomDoubleRange" -> DataFrameBuilderRandomDoubleRange()
+        "DataFrameBuilderRandomFloat" -> DataFrameBuilderRandomFloat()
+        "DataFrameBuilderRandomLong" -> DataFrameBuilderRandomLong()
+        "DataFrameBuilderRandomLongRange" -> DataFrameBuilderRandomLongRange()
+        "DataFrameBuilderRandomBoolean" -> DataFrameBuilderRandomBoolean()
+        "DataFrameBuilderNulls" -> DataFrameBuilderNulls()
+        "DataFrameBuilderFillIndexed" -> DataFrameBuilderFillIndexed()
+        "DataFrameBuilderFill" -> DataFrameBuilderFill()
+        "DataFrameBuilderFillValue" -> DataFrameBuilderFillValue()
         "ToDataFrameColumn" -> ToDataFrameColumn()
         "FillNulls0" -> FillNulls0()
         "FillNaNs0" -> FillNaNs0()
@@ -746,6 +777,7 @@ private fun String.loadImpl(isTest: Boolean): Interpreter<*>? {
         "ParseString" -> ParseString()
         "ParseDefault" -> ParseDefault()
         "Require0" -> Require0()
+        "FilterIsInstance" -> FilterIsInstance()
         else -> if (isTest) error(this) else null
     }
 }

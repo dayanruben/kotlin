@@ -17,32 +17,41 @@ import org.jetbrains.kotlin.fir.declarations.getStringArrayArgument
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.lombok.config.AccessLevel
 import org.jetbrains.kotlin.lombok.config.LombokConfig
+import org.jetbrains.kotlin.lombok.k2.config.ConeLombokAnnotations.ToString.CallSuperMode
+import org.jetbrains.kotlin.lombok.k2.config.ConeLombokAnnotations.parseFlagUsage
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.ACCESS
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.BUILDER_CLASS_NAME
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.BUILDER_CLASS_NAME_CONFIG
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.BUILDER_METHOD_NAME
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.BUILD_METHOD_NAME
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.CHAIN
-import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.CHAIN_CONFIG
-import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.FIELD_IS_STATIC_CONFIG
-import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.FIELD_NAME_CONFIG
+import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.ACCESSORS_CHAIN_CONFIG
+import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.LOG_FIELD_IS_STATIC_CONFIG
+import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.LOG_FIELD_NAME_CONFIG
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.LOG_FLAG_USAGE_CONFIG
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.FLUENT
-import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.FLUENT_CONFIG
+import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.ACCESSORS_FLUENT_CONFIG
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.IGNORE_NULL_COLLECTIONS
-import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.NO_IS_PREFIX_CONFIG
+import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.GETTER_NO_IS_PREFIX_CONFIG
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.PREFIX
-import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.PREFIX_CONFIG
+import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.ACCESSORS_PREFIX_CONFIG
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.SETTER_PREFIX
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.STATIC_CONSTRUCTOR
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.STATIC_NAME
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.CALL_SUPER
+import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.COMMONS_LOG_FLAG_USAGE_CONFIG
+import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.FLOGGER_LOG_FLAG_USAGE_CONFIG
+import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.JBOSS_LOG_FLAG_USAGE_CONFIG
+import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.LOG4J2_LOG_FLAG_USAGE_CONFIG
+import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.XSLF4J_LOG_FLAG_USAGE_CONFIG
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.DO_NOT_USE_GETTERS
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.EXCLUDE
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.INCLUDE_FIELD_NAMES
+import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.JAVA_UTIL_LOG_FLAG_USAGE_CONFIG
+import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.LOG4J_LOG_FLAG_USAGE_CONFIG
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.ONLY_EXPLICITLY_INCLUDED
+import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.SLF4J_LOG_FLAG_USAGE_CONFIG
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.TO_STRING_CALL_SUPER_CONFIG
-import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.TO_STRING_DO_NOT_USE_GETTERS_CONFIG
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.TO_STRING_FLAG_USAGE_CONFIG
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.TO_STRING_INCLUDE_FIELD_NAMES_CONFIG
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.TO_STRING_ONLY_EXPLICITLY_INCLUDED_CONFIG
@@ -51,6 +60,9 @@ import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.TO_BUILDER
 import org.jetbrains.kotlin.lombok.k2.config.LombokConfigNames.VALUE
 import org.jetbrains.kotlin.lombok.utils.LombokNames
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 /*
  * Lombok has two ways of configuration - lombok.config file and directly in annotations. Annotations has priority.
@@ -67,26 +79,58 @@ abstract class ConeAnnotationCompanion<T>(val name: ClassId) {
     }
 }
 
-abstract class ConeAnnotationAndConfigCompanion<T>(val annotationName: ClassId) {
-    abstract fun extract(annotation: FirAnnotation, config: LombokConfig, session: FirSession): T
-
-    /**
-     * If element is annotated, get from it or config or default
-     */
-    fun getIfAnnotated(annotated: FirAnnotationContainer, config: LombokConfig, session: FirSession): T? =
-        annotated.annotations.getAnnotationByClassId(annotationName, session)?.let { annotation ->
-            extract(annotation, config, session)
+class GlobalConfig(
+    val accessorsFluent: Boolean,
+    val accessorsChain: Boolean,
+    val accessorsPrefix: List<String>,
+    val getterNoIsPrefix: Boolean,
+    val builderClassName: String,
+    val logFieldName: String,
+    val logFieldIsStatic: Boolean,
+    val logFlagUsage: FlagUsageValue?,
+    val javaUtilLogFlagUsage: FlagUsageValue?,
+    val slf4jLogFlagUsage: FlagUsageValue?,
+    val log4jLogFlagUsage: FlagUsageValue?,
+    val commonsLogFlagUsage: FlagUsageValue?,
+    val floggerLogFlagUsage: FlagUsageValue?,
+    val jbossLogFlagUsage: FlagUsageValue?,
+    val log4j2LogFlagUsage: FlagUsageValue?,
+    val xslf4jLogFlagUsage: FlagUsageValue?,
+    val toStringIncludeFieldNames: Boolean,
+    val toStringCallSuper: CallSuperMode,
+    val toStringOnlyExplicitlyIncluded: Boolean,
+    val toStringFlagUsage: FlagUsageValue?,
+) {
+    companion object {
+        fun extract(config: LombokConfig): GlobalConfig {
+            return GlobalConfig(
+                accessorsFluent = config.getBoolean(ACCESSORS_FLUENT_CONFIG) ?: false,
+                accessorsChain = config.getBoolean(ACCESSORS_CHAIN_CONFIG) ?: false,
+                accessorsPrefix = config.getMultiString(ACCESSORS_PREFIX_CONFIG) ?: emptyList(),
+                getterNoIsPrefix = config.getBoolean(GETTER_NO_IS_PREFIX_CONFIG) ?: false,
+                builderClassName = config.getString(BUILDER_CLASS_NAME_CONFIG) ?: "*Builder",
+                logFieldName = config.getString(LOG_FIELD_NAME_CONFIG) ?: "log",
+                logFieldIsStatic = config.getBoolean(LOG_FIELD_IS_STATIC_CONFIG) ?: true,
+                logFlagUsage = parseFlagUsage(config, LOG_FLAG_USAGE_CONFIG),
+                javaUtilLogFlagUsage = parseFlagUsage(config, JAVA_UTIL_LOG_FLAG_USAGE_CONFIG),
+                slf4jLogFlagUsage = parseFlagUsage(config, SLF4J_LOG_FLAG_USAGE_CONFIG),
+                log4jLogFlagUsage = parseFlagUsage(config, LOG4J_LOG_FLAG_USAGE_CONFIG),
+                commonsLogFlagUsage = parseFlagUsage(config, COMMONS_LOG_FLAG_USAGE_CONFIG),
+                floggerLogFlagUsage = parseFlagUsage(config, FLOGGER_LOG_FLAG_USAGE_CONFIG),
+                jbossLogFlagUsage = parseFlagUsage(config, JBOSS_LOG_FLAG_USAGE_CONFIG),
+                log4j2LogFlagUsage = parseFlagUsage(config, LOG4J2_LOG_FLAG_USAGE_CONFIG),
+                xslf4jLogFlagUsage = parseFlagUsage(config, XSLF4J_LOG_FLAG_USAGE_CONFIG),
+                toStringIncludeFieldNames = config.getBoolean(TO_STRING_INCLUDE_FIELD_NAMES_CONFIG) ?: true,
+                toStringCallSuper = run {
+                    val callSuperValue = config.getString(TO_STRING_CALL_SUPER_CONFIG)
+                    CallSuperMode.entries.find { it.name.equals(callSuperValue, ignoreCase = true) }
+                        ?: CallSuperMode.Skip
+                },
+                toStringOnlyExplicitlyIncluded = config.getBoolean(TO_STRING_ONLY_EXPLICITLY_INCLUDED_CONFIG) ?: false,
+                toStringFlagUsage = parseFlagUsage(config, TO_STRING_FLAG_USAGE_CONFIG),
+            )
         }
-}
-
-abstract class ConeConfigCompanion<T> {
-    abstract fun extract(config: LombokConfig, session: FirSession): T
-
-    /**
-     * Get from config or default
-     */
-    fun get(config: LombokConfig, session: FirSession): T =
-        extract(config, session)
+    }
 }
 
 @OptIn(DirectDeclarationsAccess::class)
@@ -106,24 +150,6 @@ object ConeLombokAnnotations {
                 val prefix = annotation.getStringArrayArgument(PREFIX)
 
                 return Accessors(fluent, chain, prefix, annotation)
-            }
-        }
-    }
-
-    class GlobalAccessors(
-        val fluent: Boolean,
-        val chain: Boolean,
-        val prefix: List<String>,
-        val noIsPrefix: Boolean,
-    ) {
-        companion object : ConeConfigCompanion<GlobalAccessors>() {
-            override fun extract(config: LombokConfig, session: FirSession): GlobalAccessors {
-                val fluent = config.getBoolean(FLUENT_CONFIG) ?: false
-                val chain = config.getBoolean(CHAIN_CONFIG) ?: false
-                val prefix = config.getMultiString(PREFIX_CONFIG) ?: emptyList()
-                val noIsPrefix = config.getBoolean(NO_IS_PREFIX_CONFIG) ?: false
-
-                return GlobalAccessors(fluent, chain, prefix, noIsPrefix)
             }
         }
     }
@@ -245,7 +271,7 @@ object ConeLombokAnnotations {
     }
 
     sealed class AbstractBuilder(
-        val builderClassName: String,
+        val builderClassName: String?,
         val buildMethodName: String,
         val builderMethodName: String,
         val requiresToBuilder: Boolean,
@@ -254,23 +280,16 @@ object ConeLombokAnnotations {
         val hasSpecifiedBuilderClassName: Boolean,
         annotation: FirAnnotation,
     ) : ConeLombokAnnotation(annotation) {
-        companion object {
-            private const val DEFAULT_BUILD_METHOD_NAME = "build"
-            private const val DEFAULT_BUILDER_METHOD_NAME = "builder"
-            private const val DEFAULT_REQUIRES_TO_BUILDER = false
-            const val DEFAULT_BUILDER_CLASS_NAME = "*Builder"
-        }
-
-        abstract class BuilderConeAnnotationAndConfigCompanion<T : AbstractBuilder>(annotationName: ClassId) :
-            ConeAnnotationAndConfigCompanion<T>(annotationName) {
+        abstract class BuilderConeAnnotationCompanion<T : AbstractBuilder>(annotationName: ClassId) :
+            ConeAnnotationCompanion<T>(annotationName) {
             protected fun getBuildMethodName(annotation: FirAnnotation): String =
-                annotation.getStringArgument(BUILD_METHOD_NAME) ?: DEFAULT_BUILD_METHOD_NAME
+                annotation.getStringArgument(BUILD_METHOD_NAME) ?: "build"
 
             protected fun getBuilderMethodName(annotation: FirAnnotation): String =
-                annotation.getStringArgument(BUILDER_METHOD_NAME) ?: DEFAULT_BUILDER_METHOD_NAME
+                annotation.getStringArgument(BUILDER_METHOD_NAME) ?: "builder"
 
             protected fun getRequiresToBuilder(annotation: FirAnnotation): Boolean =
-                annotation.getBooleanArgument(TO_BUILDER) ?: DEFAULT_REQUIRES_TO_BUILDER
+                annotation.getBooleanArgument(TO_BUILDER) ?: false
 
             protected fun getSetterPrefix(annotation: FirAnnotation): String? =
                 annotation.getStringArgument(SETTER_PREFIX)
@@ -278,7 +297,7 @@ object ConeLombokAnnotations {
     }
 
     class Builder(
-        builderClassName: String,
+        builderClassName: String?,
         buildMethodName: String,
         builderMethodName: String,
         requiresToBuilder: Boolean,
@@ -296,13 +315,11 @@ object ConeLombokAnnotations {
         hasSpecifiedBuilderClassName,
         annotation,
     ) {
-        companion object : BuilderConeAnnotationAndConfigCompanion<Builder>(LombokNames.BUILDER_ID) {
-            override fun extract(annotation: FirAnnotation, config: LombokConfig, session: FirSession): Builder {
+        companion object : BuilderConeAnnotationCompanion<Builder>(LombokNames.BUILDER_ID) {
+            override fun extract(annotation: FirAnnotation, session: FirSession): Builder {
                 val specifiedBuilderClassName = annotation.getStringArgument(BUILDER_CLASS_NAME)
                 return Builder(
-                    builderClassName = specifiedBuilderClassName
-                        ?: config.getString(BUILDER_CLASS_NAME_CONFIG)
-                        ?: DEFAULT_BUILDER_CLASS_NAME,
+                    builderClassName = specifiedBuilderClassName,
                     buildMethodName = getBuildMethodName(annotation),
                     builderMethodName = getBuilderMethodName(annotation),
                     requiresToBuilder = getRequiresToBuilder(annotation),
@@ -316,7 +333,7 @@ object ConeLombokAnnotations {
     }
 
     class SuperBuilder(
-        builderClassName: String,
+        builderClassName: String?,
         buildMethodName: String,
         builderMethodName: String,
         requiresToBuilder: Boolean,
@@ -333,10 +350,10 @@ object ConeLombokAnnotations {
         hasSpecifiedBuilderClassName,
         annotation,
     ) {
-        companion object : BuilderConeAnnotationAndConfigCompanion<SuperBuilder>(LombokNames.SUPER_BUILDER_ID) {
-            override fun extract(annotation: FirAnnotation, config: LombokConfig, session: FirSession): SuperBuilder {
+        companion object : BuilderConeAnnotationCompanion<SuperBuilder>(LombokNames.SUPER_BUILDER_ID) {
+            override fun extract(annotation: FirAnnotation, session: FirSession): SuperBuilder {
                 return SuperBuilder(
-                    builderClassName = config.getString(BUILDER_CLASS_NAME_CONFIG) ?: DEFAULT_BUILDER_CLASS_NAME,
+                    builderClassName = null,
                     buildMethodName = getBuildMethodName(annotation),
                     builderMethodName = getBuilderMethodName(annotation),
                     requiresToBuilder = getRequiresToBuilder(annotation),
@@ -364,66 +381,155 @@ object ConeLombokAnnotations {
         }
     }
 
-    interface FlagUsage {
-        val flagUsage: FlagUsageValue?
-    }
-
     fun parseFlagUsage(config: LombokConfig, key: String): FlagUsageValue? {
         return config.getString(key)
             ?.let { str -> FlagUsageValue.entries.find { it.name.equals(str, ignoreCase = true) } }
     }
 
-    class Log(
-        val visibility: Visibility?,
-        val topic: String,
-        val fieldName: String,
-        val fieldIsStatic: Boolean,
-        override val flagUsage: FlagUsageValue?,
+    sealed class AbstractLog(
         annotation: FirAnnotation,
-    ) : FlagUsage, ConeLombokAnnotation(annotation) {
-        companion object : ConeAnnotationAndConfigCompanion<Log>(LombokNames.LOG_ID) {
-            override fun extract(annotation: FirAnnotation, config: LombokConfig, session: FirSession): Log {
-                return Log(
-                    visibility = annotation.getVisibility(ACCESS, defaultAccessLevel = AccessLevel.PRIVATE),
-                    topic = annotation.getStringArgument(TOPIC) ?: "",
-                    fieldName = config.getString(FIELD_NAME_CONFIG) ?: "log",
-                    fieldIsStatic = config.getBoolean(FIELD_IS_STATIC_CONFIG) ?: true,
-                    flagUsage = parseFlagUsage(config, LOG_FLAG_USAGE_CONFIG),
-                    annotation = annotation,
-                )
-            }
+        val loggerClassId: ClassId,
+        val factoryClassId: ClassId = loggerClassId,
+        val getMethodName: Name = DEFAULT_GET_METHOD_NAME,
+        initializeTopic: Boolean = true,
+    ) : ConeLombokAnnotation(annotation) {
+        companion object {
+            val DEFAULT_GET_METHOD_NAME = Name.identifier("getLogger")
+        }
+
+        val visibility: Visibility? = annotation.getVisibility(ACCESS, defaultAccessLevel = AccessLevel.PRIVATE)
+        val topic: String = runIf(initializeTopic) { annotation.getStringArgument(TOPIC) } ?: ""
+    }
+
+    class Log(annotation: FirAnnotation) : AbstractLog(
+        annotation,
+        loggerClassId = LOG_LOGGER_CLASS_ID,
+    ) {
+        companion object : ConeAnnotationCompanion<Log>(LombokNames.LOG_ID) {
+            val LOG_LOGGER_CLASS_ID = ClassId.fromString("java.util.logging/Logger")
+
+            override fun extract(annotation: FirAnnotation, session: FirSession): Log = Log(annotation)
+        }
+    }
+
+    class Slf4jLog(annotation: FirAnnotation) : AbstractLog(
+        annotation,
+        loggerClassId = SLF4J_LOGGER_CLASS_ID,
+        factoryClassId = SLF4J_FACTORY_CLASS_ID,
+    ) {
+        companion object : ConeAnnotationCompanion<Slf4jLog>(LombokNames.SLF4J_ID) {
+            private val SLF4J_FQ_NAME = FqName("org.slf4j")
+            val SLF4J_LOGGER_CLASS_ID = ClassId(SLF4J_FQ_NAME, Name.identifier("Logger"))
+            val SLF4J_FACTORY_CLASS_ID = ClassId(SLF4J_FQ_NAME, Name.identifier("LoggerFactory"))
+
+            override fun extract(annotation: FirAnnotation, session: FirSession): Slf4jLog = Slf4jLog(annotation)
+        }
+    }
+
+    class Log4jLog(annotation: FirAnnotation) : AbstractLog(
+        annotation,
+        loggerClassId = LOG4J_LOGGER_CLASS_ID,
+    ) {
+        companion object : ConeAnnotationCompanion<Log4jLog>(LombokNames.LOG4J_ID) {
+            val LOG4J_LOGGER_CLASS_ID = ClassId.fromString("org.apache.log4j/Logger")
+
+            override fun extract(annotation: FirAnnotation, session: FirSession): Log4jLog = Log4jLog(annotation)
+        }
+    }
+
+    class CommonsLog(annotation: FirAnnotation) : AbstractLog(
+        annotation,
+        loggerClassId = COMMONS_LOGGER_CLASS_ID,
+        factoryClassId = COMMONS_FACTORY_CLASS_ID,
+        getMethodName = COMMONS_GET_METHOD_NAME,
+    ) {
+        companion object : ConeAnnotationCompanion<CommonsLog>(LombokNames.COMMONS_LOG_ID) {
+            private val COMMONS_LOG_FQ_NAME = FqName("org.apache.commons.logging")
+            val COMMONS_LOGGER_CLASS_ID = ClassId(COMMONS_LOG_FQ_NAME, Name.identifier("Log"))
+            val COMMONS_FACTORY_CLASS_ID = ClassId(COMMONS_LOG_FQ_NAME, Name.identifier("LogFactory"))
+            val COMMONS_GET_METHOD_NAME = Name.identifier("getLog")
+
+            override fun extract(annotation: FirAnnotation, session: FirSession): CommonsLog = CommonsLog(annotation)
+        }
+    }
+
+    class FloggerLog(annotation: FirAnnotation) : AbstractLog(
+        annotation,
+        loggerClassId = FLOGGER_LOGGER_CLASS_ID,
+        getMethodName = FLOGGER_GET_METHOD_NAME,
+        initializeTopic = false,
+    ) {
+        companion object : ConeAnnotationCompanion<FloggerLog>(LombokNames.FLOGGER_ID) {
+            val FLOGGER_LOGGER_CLASS_ID = ClassId.fromString("com.google.common.flogger/FluentLogger")
+            val FLOGGER_GET_METHOD_NAME = Name.identifier("forEnclosingClass")
+
+            override fun extract(annotation: FirAnnotation, session: FirSession): FloggerLog = FloggerLog(annotation)
+        }
+    }
+
+    class JBossLog(annotation: FirAnnotation) : AbstractLog(
+        annotation,
+        loggerClassId = JBOSS_LOGGER_CLASS_ID,
+    ) {
+        companion object : ConeAnnotationCompanion<JBossLog>(LombokNames.JBOSS_LOG_ID) {
+            val JBOSS_LOGGER_CLASS_ID = ClassId.fromString("org.jboss.logging/Logger")
+
+            override fun extract(annotation: FirAnnotation, session: FirSession): JBossLog = JBossLog(annotation)
+        }
+    }
+
+    class Log4j2Log(annotation: FirAnnotation) : AbstractLog(
+        annotation,
+        loggerClassId = LOG4J2_LOGGER_CLASS_ID,
+        factoryClassId = LOG4J2_FACTORY_CLASS_ID,
+    ) {
+        companion object : ConeAnnotationCompanion<Log4j2Log>(LombokNames.LOG4J2_ID) {
+            private val LOG4J2_FQ_NAME = FqName("org.apache.logging.log4j")
+            val LOG4J2_LOGGER_CLASS_ID = ClassId(LOG4J2_FQ_NAME, Name.identifier("Logger"))
+            val LOG4J2_FACTORY_CLASS_ID = ClassId(LOG4J2_FQ_NAME, Name.identifier("LogManager"))
+
+            override fun extract(annotation: FirAnnotation, session: FirSession): Log4j2Log = Log4j2Log(annotation)
+        }
+    }
+
+    class XSlf4jLog(annotation: FirAnnotation) : AbstractLog(
+        annotation,
+        loggerClassId = XSLF4J_LOGGER_CLASS_ID,
+        factoryClassId = XSLF4J_FACTORY_CLASS_ID,
+        getMethodName = XSLF4J_GET_METHOD_NAME,
+    ) {
+        companion object : ConeAnnotationCompanion<XSlf4jLog>(LombokNames.XSLF4J_ID) {
+            private val XSLF4J_FQ_NAME = FqName("org.slf4j.ext")
+            val XSLF4J_LOGGER_CLASS_ID = ClassId(XSLF4J_FQ_NAME, Name.identifier("XLogger"))
+            val XSLF4J_FACTORY_CLASS_ID = ClassId(XSLF4J_FQ_NAME, Name.identifier("XLoggerFactory"))
+            val XSLF4J_GET_METHOD_NAME = Name.identifier("getXLogger")
+
+            override fun extract(annotation: FirAnnotation, session: FirSession): XSlf4jLog = XSlf4jLog(annotation)
         }
     }
 
     class ToString(
-        val includeFieldNames: Boolean,
-        val callSuper: CallSuperMode,
+        val includeFieldNames: Boolean?,
+        val callSuper: CallSuperMode?,
         val doNotUseGetters: Boolean?,
-        val onlyExplicitlyIncluded: Boolean,
+        val onlyExplicitlyIncluded: Boolean?,
         val excludeFields: Set<String>,
-        override val flagUsage: FlagUsageValue?,
         annotation: FirAnnotation,
-    ) : FlagUsage, ConeLombokAnnotation(annotation) {
+    ) : ConeLombokAnnotation(annotation) {
         enum class CallSuperMode {
             Skip,
             Call,
             Warn
         }
 
-        companion object : ConeAnnotationAndConfigCompanion<ToString>(LombokNames.TO_STRING_ID) {
-            override fun extract(annotation: FirAnnotation, config: LombokConfig, session: FirSession): ToString {
-                val callSuperConfigValue = config.getString(TO_STRING_CALL_SUPER_CONFIG)
+        companion object : ConeAnnotationCompanion<ToString>(LombokNames.TO_STRING_ID) {
+            override fun extract(annotation: FirAnnotation, session: FirSession): ToString {
                 return ToString(
-                    includeFieldNames = annotation.getBooleanArgument(INCLUDE_FIELD_NAMES)
-                        ?: config.getBoolean(TO_STRING_INCLUDE_FIELD_NAMES_CONFIG) ?: true,
-                    callSuper = annotation.getBooleanArgument(CALL_SUPER)?.let { if (it) CallSuperMode.Call else CallSuperMode.Skip }
-                        ?: CallSuperMode.entries.find { it.name.equals(callSuperConfigValue, ignoreCase = true) }
-                        ?: CallSuperMode.Skip,
+                    includeFieldNames = annotation.getBooleanArgument(INCLUDE_FIELD_NAMES),
+                    callSuper = annotation.getBooleanArgument(CALL_SUPER)?.let { if (it) CallSuperMode.Call else CallSuperMode.Skip },
                     doNotUseGetters = annotation.getBooleanArgument(DO_NOT_USE_GETTERS),
-                    onlyExplicitlyIncluded = annotation.getBooleanArgument(ONLY_EXPLICITLY_INCLUDED)
-                        ?: config.getBoolean(TO_STRING_ONLY_EXPLICITLY_INCLUDED_CONFIG) ?: false,
+                    onlyExplicitlyIncluded = annotation.getBooleanArgument(ONLY_EXPLICITLY_INCLUDED),
                     excludeFields = annotation.getStringArrayArgument(EXCLUDE)?.toSet() ?: emptySet(),
-                    flagUsage = parseFlagUsage(config, TO_STRING_FLAG_USAGE_CONFIG),
                     annotation = annotation,
                 )
             }

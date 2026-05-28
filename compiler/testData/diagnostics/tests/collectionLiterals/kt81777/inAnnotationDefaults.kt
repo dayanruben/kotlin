@@ -1,5 +1,6 @@
 // RUN_PIPELINE_TILL: FRONTEND
 // ISSUE: KT-81777, KT-76150
+// LATEST_LV_DIFFERENCE
 
 annotation class LamInt(val e: Int <!INITIALIZER_TYPE_MISMATCH!>=<!> <!ANNOTATION_PARAMETER_DEFAULT_VALUE_MUST_BE_CONSTANT!>[{}]<!>)
 annotation class LamIntArray(val e: IntArray = [<!ARGUMENT_TYPE_MISMATCH!>{}<!>])
