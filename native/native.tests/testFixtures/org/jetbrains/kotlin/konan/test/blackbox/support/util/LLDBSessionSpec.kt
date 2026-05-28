@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.konan.test.blackbox.support.util
 
+import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.konan.test.blackbox.support.settings.KotlinNativeTargets
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.directives.model.RegisteredDirectives
@@ -24,14 +25,19 @@ abstract class LLDBSessionSpec {
         this += "-o"
         this += "command script import ${prettyPrinters.absolutePath}"
         this += "-o"
-        this += "command script import ${File("native/native.tests/scripts/konan_lldb_test_helper.py").absolutePath}"
+        val testHelper = ForTestCompileRuntime.transformTestDataPath("native/native.tests/testData/scripts/konan_lldb_test_helper.py")
+        this += "command script import ${testHelper.absolutePath}"
     }
 
     abstract fun checkLLDBOutput(output: String, nativeTargets: KotlinNativeTargets): Boolean
 
     protected fun sanityCheckLLDBOutput(output: String) {
-        assertFalse(PYTHON_EXCEPTION_HEADER in output) {
-            "Unhandled python exception in debugger: ${output.substring(output.indexOf(PYTHON_EXCEPTION_HEADER))}"
+        // Ideally, we should just check that stderr is empty.
+        // Tracked in KT-86532.
+        for (prefix in listOf(PYTHON_EXCEPTION_HEADER, "warning:")) {
+            assertFalse(prefix in output) {
+                "Unexpected output in debugger: ${output.substring(output.indexOf(prefix))}"
+            }
         }
     }
 

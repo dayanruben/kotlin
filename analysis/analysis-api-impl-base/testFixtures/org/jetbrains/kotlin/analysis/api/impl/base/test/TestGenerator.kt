@@ -36,9 +36,10 @@ import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.javaInt
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.kdocProvider.AbstractKDocProviderTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.klibSourceFileProvider.AbstractGetKlibSourceFileNameTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.readWriteAccess.AbstractReadWriteAccessTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.relationProvider.AbstractGetExpectsForActualTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.relationProvider.AbstractGetExpectsForActualByCoordinatesTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.relationProvider.AbstractHasConflictingSignatureWithTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.relationProvider.AbstractOriginalConstructorIfTypeAliasedTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.relationProvider.AbstractGetExpectsForActualByMarkerTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.resolveExtensionInfoProvider.AbstractResolveExtensionInfoProviderTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.resolver.*
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.scopeProvider.*
@@ -175,7 +176,11 @@ fun AnalysisApiTestGroup.generateAnalysisApiTests() {
     }
 
     group(filter = testModuleKindIs(TestModuleKind.SourceLike)) {
-        generateAnalysisApiComponentsTests()
+        generateAnalysisApiComponentsTestsForSourceLike()
+    }
+
+    group(filter = testModuleKindIs(TestModuleKind.LibraryBinary, TestModuleKind.LibrarySource)) {
+        generateAnalysisApiComponentsTestsForLibraries()
     }
 
     component(
@@ -359,7 +364,7 @@ private fun AnalysisApiTestGroup.generateAnalysisApiNonComponentsTests() {
     }
 }
 
-private fun AnalysisApiTestGroup.generateAnalysisApiComponentsTests() {
+private fun AnalysisApiTestGroup.generateAnalysisApiComponentsTestsForSourceLike() {
     component("analysisScopeProvider", filter = analysisSessionModeIs(AnalysisSessionMode.Normal)) {
         test<AbstractCanBeAnalysedTest> {
             model(it, "canBeAnalysed")
@@ -668,7 +673,11 @@ private fun AnalysisApiTestGroup.generateAnalysisApiComponentsTests() {
             model(it, "originalConstructorIfTypeAliased")
         }
 
-        test<AbstractGetExpectsForActualTest> {
+        test<AbstractGetExpectsForActualByMarkerTest> {
+            model(it, "getExpectsForActual")
+        }
+
+        test<AbstractGetExpectsForActualByCoordinatesTest> {
             model(it, "getExpectsForActual")
         }
 
@@ -763,6 +772,18 @@ private fun AnalysisApiTestGroup.generateAnalysisApiComponentsTests() {
     component("kdocProvider") {
         test<AbstractKDocProviderTest> {
             model(it, "kdoc")
+        }
+    }
+}
+
+private fun AnalysisApiTestGroup.generateAnalysisApiComponentsTestsForLibraries() {
+    /**
+     * [AbstractGetExpectsForActualByCoordinatesTest] performs [org.jetbrains.kotlin.codegen.optimization.common.analyze] for
+     * library declarations – it's prohibited in Standalone (see KT-76042).
+     */
+    component("relationProvider", filter = analysisApiModeIs(AnalysisApiMode.Ide)) {
+        test<AbstractGetExpectsForActualByCoordinatesTest> {
+            model(it, "getExpectsForActual", excludeDirsRecursively = listOf("incorrectMatching"))
         }
     }
 }
