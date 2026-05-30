@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.builtins.CompanionObjectMapping
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.functions.FunctionClassDescriptor
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
+import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.ClassDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.EmptyPackageFragmentDescriptor
@@ -77,9 +78,11 @@ internal class KClassImpl<T : Any>(
     inner class Data : KDeclarationContainerImpl.Data() {
         val kmClass: KmClass? by lazy(PUBLICATION) {
             if (loadMetadataDirectly) {
-                jClass.getAnnotation(Metadata::class.java)?.let { metadata ->
+                val metadata = jClass.getAnnotation(Metadata::class.java)
+                if (metadata != null && classId.outerClassId !in CompanionObjectMapping.classIds)
                     (KotlinClassMetadata.readLenient(metadata) as? KotlinClassMetadata.Class)?.kmClass
-                }
+                else
+                    readBuiltinClassMetadata(classId)
             } else {
                 val descriptor = descriptor
                 if (descriptor is FunctionClassDescriptor) {
@@ -329,7 +332,7 @@ internal class KClassImpl<T : Any>(
                 }
                 val jClassWrappedIfPossible = jClass.wrapperByPrimitive ?: jClass
                 if (Serializable::class.java.isAssignableFrom(jClassWrappedIfPossible) && StandardKTypes.SERIALIZABLE !in result &&
-                    qualifiedName?.startsWith("kotlin.") == true
+                    qualifiedName?.startsWith("kotlin.") == true && (jClass.isArray || JavaToKotlinClassMap.isMappedKotlinClass(classId))
                 ) {
                     result += StandardKTypes.SERIALIZABLE
                 }

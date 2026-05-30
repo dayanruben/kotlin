@@ -344,12 +344,12 @@ private fun doCompileWithK2(
     val projectEnvironment = context.environment.toVfsBasedProjectEnvironment()
     val compilerEnvironment = ModuleCompilerEnvironment(projectEnvironment, diagnosticsReporter)
 
-    var librariesScope = projectEnvironment.getSearchScopeForProjectLibraries()
-    val incrementalCompilationScope = createIncrementalCompilationScope(
+    val [librariesScope, incrementalCompilationContext] = prepareIncrementalCompilationContextAndLibrariesScope(
         configuration,
         projectEnvironment,
+        previousStepsSymbolProviders = emptyList(),
         incrementalExcludesScope = null
-    )?.also { librariesScope -= it }
+    )
 
     val session = prepareJvmSessionsForScripting(
         projectEnvironment,
@@ -359,15 +359,7 @@ private fun doCompileWithK2(
         friendPaths = emptyList(),
         librariesScope,
         isScript = { false },
-        createProviderAndScopeForIncrementalCompilation = { files ->
-            createContextForIncrementalCompilation(
-                configuration,
-                projectEnvironment,
-                compilerEnvironment.projectEnvironment.getSearchScopeBySourceFiles(files.map { KtPsiSourceFile(it) }),
-                emptyList(),
-                incrementalCompilationScope
-            )
-        }
+        incrementalCompilationContext,
     ).single().session
 
     (configuration.scriptingHostConfiguration as? ScriptingHostConfiguration)?.get(ScriptingHostConfiguration.configureFirSession)?.also {
@@ -475,11 +467,11 @@ private fun prepareJvmSessionsForScripting(
     friendPaths: List<String>,
     librariesScope: AbstractProjectFileSearchScope,
     isScript: (KtFile) -> Boolean,
-    createProviderAndScopeForIncrementalCompilation: (List<KtFile>) -> IncrementalCompilationContext?,
+    incrementalCompilationContext: IncrementalCompilationContext?,
 ): List<SessionWithSources<KtFile>> {
     val extensionRegistrars = configuration.getCompilerExtensions(FirExtensionRegistrar)
     return MinimizedFrontendContext(projectEnvironment, MessageCollector.NONE, extensionRegistrars, configuration).prepareJvmSessions(
         files, rootModuleNameAsString, friendPaths, librariesScope, isCommonSourceForPsi, isScript,
-        fileBelongsToModuleForPsi, createProviderAndScopeForIncrementalCompilation
+        fileBelongsToModuleForPsi, incrementalCompilationContext
     )
 }

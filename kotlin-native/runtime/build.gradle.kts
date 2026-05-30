@@ -757,7 +757,7 @@ val stdlibBuildTask by tasks.registering(KonanCompileTask::class) {
             "-Xexpect-actual-classes",
             "-Xklib-ir-inliner=intra-module",
             "-Xcontext-parameters",
-            "-Xname-based-destructuring=only-syntax",
+            "-Xname-based-destructuring=complete",
             "-module-name", KOTLIN_NATIVE_STDLIB_NAME,
             "-opt-in=kotlin.RequiresOptIn",
             "-opt-in=kotlin.contracts.ExperimentalContracts",
@@ -828,8 +828,9 @@ cacheableTargetNames.forEach { targetName ->
 
         this.klib.fileProvider(nativeStdlib.map { it.destinationDir })
         this.target.set(targetName)
+        this.makePerFileCache.set(true)
         // This path is used in `:kotlin-native:${targetName}StdlibCache`
-        this.outputDirectory.set(layout.buildDirectory.dir("cache/$targetName/$targetName-gSTATIC-system/$KOTLIN_NATIVE_STDLIB_NAME-cache"))
+        this.outputDirectory.set(layout.buildDirectory.dir("cache/$targetName/$targetName-gSTATIC-system/$KOTLIN_NATIVE_STDLIB_NAME-per-file-cache"))
     }
 }
 

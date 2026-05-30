@@ -119,12 +119,12 @@ object JvmFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, J
             }
         }
 
-        var librariesScope = environment.getSearchScopeForProjectLibraries()
-        val incrementalCompilationScope = createIncrementalCompilationScope(
+        val [librariesScope, incrementalCompilationContext] = prepareIncrementalCompilationContextAndLibrariesScope(
             configuration,
             environment,
+            previousStepsSymbolProviders = emptyList(),
             incrementalExcludesScope = sourceScope
-        )?.also { librariesScope -= it }
+        )
 
         val moduleName = when {
             chunk.modules.size > 1 -> chunk.modules.joinToString(separator = "+") { it.getModuleName() }
@@ -147,16 +147,7 @@ object JvmFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, J
             isCommonSource = sources.isCommonSourceForLt,
             isScript = { ((it as? KtPsiSourceFile)?.psiFile as? KtFile)?.isScript() == true },
             fileBelongsToModule = sources.fileBelongsToModuleForLt,
-            createProviderAndScopeForIncrementalCompilation = { files ->
-                val scope = environment.getSearchScopeBySourceFiles(files)
-                createContextForIncrementalCompilation(
-                    configuration,
-                    environment,
-                    scope,
-                    previousStepsSymbolProviders = emptyList(),
-                    incrementalCompilationScope
-                )
-            }
+            incrementalCompilationContext,
         )
 
         val countFilesAndLines = if (perfManager == null) null else perfManager::addSourcesStats
@@ -304,7 +295,7 @@ object JvmFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, J
         isCommonSource: (F) -> Boolean,
         isScript: (F) -> Boolean,
         fileBelongsToModule: (F, String) -> Boolean,
-        createProviderAndScopeForIncrementalCompilation: (List<F>) -> IncrementalCompilationContext?,
+        incrementalCompilationContext: IncrementalCompilationContext?,
     ): List<SessionWithSources<F>> {
         val extensionRegistrars = configuration.getCompilerExtensions(FirExtensionRegistrar)
         val javaSourcesScope = projectEnvironment.getSearchScopeForProjectJavaSources()
@@ -343,7 +334,7 @@ object JvmFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, J
                     context,
                 )
             },
-            createSourceSession = { moduleFiles, moduleData, isForLeafHmppModule, sessionConfigurator ->
+            createSourceSession = { moduleData, isForLeafHmppModule, sessionConfigurator ->
                 FirJvmSessionFactory.createSourceSession(
                     moduleData,
                     javaSourcesScope,
@@ -357,10 +348,9 @@ object JvmFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, J
                         if (firJvmIncrementalCompilationSymbolProvidersIsInitialized) firJvmIncrementalCompilationSymbolProviders
                         else {
                             firJvmIncrementalCompilationSymbolProvidersIsInitialized = true
-                            createProviderAndScopeForIncrementalCompilation(moduleFiles)
-                                ?.createSymbolProviders(session, moduleData, projectEnvironment)?.also {
-                                    firJvmIncrementalCompilationSymbolProviders = it
-                                }
+                            incrementalCompilationContext?.createSymbolProviders(session, moduleData, projectEnvironment)?.also {
+                                firJvmIncrementalCompilationSymbolProviders = it
+                            }
                         }
                     },
                     extensionRegistrars,
