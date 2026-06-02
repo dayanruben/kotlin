@@ -66,9 +66,7 @@ class IrParcelSerializerFactory(private val symbols: AndroidSymbols, private val
         fun getChild(elementType: IrType, allowDataClasses: Boolean = false) =
             get(elementType, scope, parcelizeType, strict(), inDataClass = inDataClass || allowDataClasses)
 
-        scope.getCustomSerializer(irType)?.let { parceler ->
-            return IrCustomParcelSerializer(parceler)
-        }
+        scope.getCustomSerializer(irType)?.let { return it }
 
         val classifier = irType.erasedUpperBound
         val classifierFqName = classifier.fqNameWhenAvailable?.asString()
@@ -248,7 +246,11 @@ class IrParcelSerializerFactory(private val symbols: AndroidSymbols, private val
                         }
 
                     if (simpleSerializer != null) {
-                        return simpleSerializer
+                        return if (classifierFqName in BuiltinParcelableTypes.IMMUTABLE_LIST_FQNAMES) {
+                            wrapNullableSerializerIfNeeded(irType, simpleSerializer)
+                        } else {
+                            simpleSerializer
+                        }
                     }
                 }
 
