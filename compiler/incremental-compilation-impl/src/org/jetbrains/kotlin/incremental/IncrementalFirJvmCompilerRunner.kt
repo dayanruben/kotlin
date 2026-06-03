@@ -102,7 +102,7 @@ open class IncrementalFirJvmCompilerRunner(
         @OptIn(PipelineArtifact.CliPipelineInternals::class)
         val incrementalCompilationConfiguration = baseCompilationConfiguration.withCompilerConfiguration(
             baseCompilationConfiguration.configuration.copy().apply {
-                // JVMConfigurationKeys.MODULES and JVMConfigurationKeys.MODULE_CHUNK seems to be unrelevant
+                // JVMConfigurationKeys.MODULES and JVMConfigurationKeys.MODULE_CHUNK seem to be unrelevant
                 // and generally not used in the new pipeline
                 val hmppCliModuleStructure = get(CommonConfigurationKeys.HMPP_MODULE_STRUCTURE)
                 val kotlinContentRoots = sourcesToCompile.map {
@@ -151,12 +151,12 @@ open class IncrementalFirJvmCompilerRunner(
             return ExitCode.COMPILATION_ERROR to sourcesToCompile
         } catch (_: CompilationCanceledException) {
             collector.report(CompilerMessageSeverity.INFO, "Compilation was canceled", null)
-            return ExitCode.OK to emptyList()
+            return ExitCode.OK to sourcesToCompile
         } catch (e: RuntimeException) {
             val cause = e.cause
             if (cause is CompilationCanceledException) {
                 collector.report(CompilerMessageSeverity.INFO, "Compilation was canceled", null)
-                return ExitCode.OK to emptyList()
+                return ExitCode.OK to sourcesToCompile
             } else {
                 throw e
             }

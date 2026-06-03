@@ -77,6 +77,7 @@ plugins {
     id("project-tests-convention") apply false
     id("test-federation-convention") apply false
     id("test-data-manager-root")
+    id("nodejs-configuration") apply false
 }
 
 val isTeamcityBuild = project.kotlinBuildProperties.isTeamcityBuild
@@ -121,6 +122,8 @@ rootProject.apply {
     from(rootProject.file("gradle/compilerModules.gradle.kts"))
     from(rootProject.file("gradle/retryPublishing.gradle.kts"))
 }
+
+pluginManager.apply("nodejs-configuration")
 
 IdeVersionConfigurator.setCurrentIde(project)
 
@@ -656,7 +659,7 @@ tasks {
     testLifecycleTask("toolsTest") {
         dependsOn(":tools:kotlinp-jvm:test")
         dependsOn(":native:kotlin-klib-commonizer:test")
-//        dependsOn(":native:kotlin-klib-commonizer-api:test")
+        dependsOn(":native:kotlin-klib-commonizer-api:test")
         dependsOn(":kotlin-tooling-core:check")
         dependsOn(":kotlin-tooling-metadata:check")
         dependsOn(":compiler:build-tools:kotlin-build-tools-api:check")

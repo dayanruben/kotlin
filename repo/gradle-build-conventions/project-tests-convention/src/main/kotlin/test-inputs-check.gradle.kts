@@ -53,6 +53,11 @@ tasks.withType<Test>().configureEach {
         } else null
 
         @Suppress("UNCHECKED_CAST")
+        val wasmNodeJsExecutable = if (project.extra.has("wasm.javascript.engine.path.NodeJs")) {
+            project.extra["wasm.javascript.engine.path.NodeJs"] as Provider<String>
+        } else null
+
+        @Suppress("UNCHECKED_CAST")
         val binaryenExecutable = if (project.extra.has("binaryen.path")) {
             project.extra["binaryen.path"] as Provider<String>
         } else null
@@ -266,7 +271,9 @@ tasks.withType<Test>().configureEach {
                         .replace("{{all_permissions_for_gradle_ro_dep_cache}}", allPermissionsForGradleRoDepCache ?: "")
                         .replace(
                             "{{build_dir}}",
-                            """permission java.io.FilePermission "${buildDir.get().asFile.absolutePath}/-", "read,write,execute,delete";"""
+                            """
+                                permission java.io.FilePermission "${buildDir.get().asFile.absolutePath}/-", "read,write,execute,delete";
+                            """.trimIndent()
                         )
                         .replace("{{java_library_paths}}", javaLibraryPaths.joinToString("\n    "))
                         .replace(
@@ -280,6 +287,9 @@ tasks.withType<Test>().configureEach {
                                     append("""permission java.io.FilePermission "${it.get()}", "execute";""")
                                 }
                                 nodeJsExecutable?.let {
+                                    append("""permission java.io.FilePermission "${it.get()}", "execute";""")
+                                }
+                                wasmNodeJsExecutable?.let {
                                     append("""permission java.io.FilePermission "${it.get()}", "execute";""")
                                 }
                                 binaryenExecutable?.let {

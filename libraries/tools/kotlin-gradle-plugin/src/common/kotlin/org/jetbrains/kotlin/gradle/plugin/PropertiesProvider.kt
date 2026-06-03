@@ -61,6 +61,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.uklibs.consumption.KmpResolutionSt
 import org.jetbrains.kotlin.gradle.plugin.mpp.uklibs.publication.KmpPublicationStrategy
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinIrJsGeneratedTSValidationStrategy
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrOutputGranularity
+import org.jetbrains.kotlin.gradle.tasks.CInteropProcess
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilerExecutionStrategy
 import org.jetbrains.kotlin.gradle.utils.NativeCompilerDownloader
 import org.jetbrains.kotlin.gradle.utils.localProperties
@@ -500,6 +501,9 @@ internal class PropertiesProvider private constructor(private val project: Proje
     val appleIgnoreXcodeVersionCompatibility: Boolean
         get() = booleanProperty(PropertyNames.KOTLIN_APPLE_XCODE_COMPATIBILITY_NOWARN) ?: false
 
+    val cocoapodsSwiftPMMigrationNowarn: Boolean
+        get() = booleanProperty(PropertyNames.KOTLIN_NATIVE_COCOAPODS_SWIFTPM_MIGRATION_NOWARN) ?: false
+
     val appleCreateSymbolicLinkToFrameworkInBuiltProductsDir: Boolean
         get() = booleanProperty(PropertyNames.KOTLIN_APPLE_CREATE_SYMBOLIC_LINK_TO_FRAMEWORK_IN_BUILT_PRODUCTS_DIR) ?: true
 
@@ -625,6 +629,12 @@ internal class PropertiesProvider private constructor(private val project: Proje
      */
     val disableSwiftPMImport: Boolean
         get() = booleanProperty(PropertyNames.KOTLIN_DISABLE_SWIFTPM_IMPORT) ?: false
+
+    /**
+     * Speed up findMacros in SwiftPM import cinterops: KT-85797
+     */
+    val swiftPMMacroCollectingMode: CInteropProcess.MacroNamesCollectingMode
+        get() = enumProperty(PropertyNames.KOTLIN_SWIFTPM_MACRO_COLLECTING_MODE, CInteropProcess.MacroNamesCollectingMode.LIBCLANGEXT_PARALLEL)
 
     /**
      * Suppress Xcode integration checks that SwiftPM does during the embedAndSign integration
@@ -774,6 +784,7 @@ internal class PropertiesProvider private constructor(private val project: Proje
             property("kotlin.apple.createSymbolicLinkToFrameworkInBuiltProductsDir")
         val KOTLIN_APPLE_COPY_DSYM_DURING_ARCHIVING = property("kotlin.apple.copyDsymDuringArchiving")
         val KOTLIN_APPLE_XCODE_COMPATIBILITY_NOWARN = property("kotlin.apple.xcodeCompatibility.nowarn")
+        val KOTLIN_NATIVE_COCOAPODS_SWIFTPM_MIGRATION_NOWARN = property("kotlin.native.cocoapods.swiftpmMigration.nowarn")
         val KOTLIN_APPLE_COCOAPODS_EXECUTABLE = property("kotlin.apple.cocoapods.bin")
         val KOTLIN_APPLE_ALLOW_EMBED_AND_SIGN_WITH_COCOAPODS =
             property("kotlin.apple.deprecated.allowUsingEmbedAndSignWithCocoaPodsDependencies")
@@ -821,6 +832,7 @@ internal class PropertiesProvider private constructor(private val project: Proje
         val KOTLIN_CLASSLOADER_CACHE_TIMEOUT = property("$KOTLIN_INTERNAL_NAMESPACE.classloaderCache.timeoutSeconds")
         val ABI_VALIDATION_BANNED_TARGETS = property(ABI_VALIDATION_BANNED_TARGETS_NAME)
         val KOTLIN_PARSE_INLINED_LOCAL_CLASSES = property("$KOTLIN_INTERNAL_NAMESPACE.classpathSnapshot.parseInlinedLocalClasses")
+        val KOTLIN_SWIFTPM_MACRO_COLLECTING_MODE = property("$KOTLIN_INTERNAL_NAMESPACE.swiftPMCinteropMacroNamesCollectingMode")
 
         val FUNCTIONAL_TEST_MODE_PROPERTY = "$KOTLIN_INTERNAL_NAMESPACE.functionalTestMode"
     }
