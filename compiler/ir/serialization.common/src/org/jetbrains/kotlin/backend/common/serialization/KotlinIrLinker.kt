@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.ir.util.toIdSignature
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.uniqueName
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
@@ -92,6 +93,10 @@ abstract class KotlinIrLinker(
         get() = partialLinkageSupport.isEnabled
 
     open val moduleDependencyTracker: IrModuleDependencyTracker get() = IrModuleDependencyTracker.DISABLED
+
+    // Represents the fact that the linkage process was finished.
+    // In case if a symbol was asked after deserialization, we would like to make sure that it is correctly and fully linked.
+    private var finished = false
 
     fun deserializeOrReturnUnboundIrSymbolIfPartialLinkageEnabled(
         idSignature: IdSignature,
@@ -207,14 +212,22 @@ abstract class KotlinIrLinker(
         return symbol.owner as IrDeclaration
     }
 
-    override fun tryReferencingSimpleFunctionByLocalSignature(file: IrFile, idSignature: IdSignature): IrSimpleFunctionSymbol? {
-        if (idSignature.isPubliclyVisible) return null
+    override fun tryReferencingSimpleFunctionByLocalSignature(file: IrFile?, idSignature: IdSignature): IrSimpleFunctionSymbol? {
+        if (idSignature.isPubliclyVisible || file == null) return null
         return resolveModuleDeserializer(file)?.referenceSimpleFunctionByLocalSignature(file, idSignature)
     }
 
-    override fun tryReferencingPropertyByLocalSignature(file: IrFile, idSignature: IdSignature): IrPropertySymbol? {
-        if (idSignature.isPubliclyVisible) return null
+    override fun tryReferencingPropertyByLocalSignature(file: IrFile?, idSignature: IdSignature): IrPropertySymbol? {
+        if (idSignature.isPubliclyVisible || file == null) return null
         return resolveModuleDeserializer(file)?.referencePropertyByLocalSignature(file, idSignature)
+    }
+
+    override fun getSymbolAndPutIntoQueue(signature: IdSignature, kind: IrDeserializer.TopLevelSymbolKind): IrSymbol? {
+        return deserializersForModules.values.firstNotNullOfOrNull {
+            it.tryDeserializeIrSymbol(signature, topLevelKindToSymbolKind(kind))
+        }.also {
+            if (finished) deserializeAllReachableTopLevels()
+        }
     }
 
     protected open fun createCurrentModuleDeserializer(moduleFragment: IrModuleFragment): IrModuleDeserializer =
@@ -234,6 +247,7 @@ abstract class KotlinIrLinker(
     }
 
     override fun postProcess(irBuiltIns: IrBuiltIns, inOrAfterLinkageStep: Boolean) {
+        finished = finished || inOrAfterLinkageStep
         if (inOrAfterLinkageStep) {
             // We have to exclude classifiers with unbound symbols in supertypes and in type parameter upper bounds from F.O. generation
             // to avoid failing with `Symbol for <signature> is unbound` error or generating fake overrides with incorrect signatures.
@@ -343,6 +357,12 @@ abstract class KotlinIrLinker(
             if (it in dirtyFiles) DeserializationStrategy.ALL
             else DeserializationStrategy.WITH_INLINE_BODIES
         })
+    }
+
+    fun getAllMatchingSignatures(callableId: CallableId, signatureKind: IrDeserializer.TopLevelSymbolKind): List<IdSignature> {
+        return deserializersForModules.flatMap { [_, moduleDeserializer] ->
+            moduleDeserializer.getAllMatchingSignatures(callableId, signatureKind)
+        }
     }
 }
 

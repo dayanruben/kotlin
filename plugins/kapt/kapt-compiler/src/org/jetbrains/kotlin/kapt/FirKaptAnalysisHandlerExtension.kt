@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.messages.OutputMessageUtil
 import org.jetbrains.kotlin.cli.common.modules.ModuleChunk
 import org.jetbrains.kotlin.cli.common.output.writeAll
-import org.jetbrains.kotlin.cli.jvm.compiler.KotlinToJVMBytecodeCompiler
 import org.jetbrains.kotlin.cli.jvm.config.JavaSourceRoot
 import org.jetbrains.kotlin.cli.jvm.config.JvmClasspathRoot
 import org.jetbrains.kotlin.cli.pipeline.ConfigurationPipelineArtifact
@@ -50,7 +49,6 @@ import java.io.File
  * This extension implements K2 kapt by invoking the compiler in the "skip bodies" / suppress-errors mode, and translating the resulting
  * in-memory class files to Java sources, correcting error types.
  */
-@OptIn(LegacyK2CliPipeline::class)
 open class FirKaptAnalysisHandlerExtension(
     private val kaptLogger: MessageCollectorBackedKaptLogger? = null,
 ) : FirAnalysisHandlerExtension() {
@@ -223,7 +221,7 @@ open class FirKaptAnalysisHandlerExtension(
         // so we need to create an empty diagnostics collector once again
         val configurationForBackend = configuration.copy().apply {
             diagnosticsCollector = DiagnosticsCollectorImpl()
-            put(KotlinToJVMBytecodeCompiler.customClassBuilderFactory, builderFactory)
+            put(JvmBackendPipelinePhase.customClassBuilderFactory, builderFactory)
         }
         val backendOutput = JvmBackendPipelinePhase.executePhase(fir2IrOutput.withCompilerConfiguration(configurationForBackend))
         val generationState = backendOutput.outputs.singleOrNull() ?: return null

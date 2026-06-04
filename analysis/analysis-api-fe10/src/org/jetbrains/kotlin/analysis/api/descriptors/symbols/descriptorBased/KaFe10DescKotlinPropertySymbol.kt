@@ -158,7 +158,7 @@ internal class KaFe10DescKotlinPropertySymbol(
             return bindingContext[BindingContext.BACKING_FIELD_REQUIRED, descriptor] == true
         }
 
-    override val isDelegatedProperty: Boolean
+    override val isDelegated: Boolean
         get() = withValidityAssertion { descriptor.isDelegated }
 
     override fun createPointer(): KaSymbolPointer<KaKotlinPropertySymbol> = withValidityAssertion {
