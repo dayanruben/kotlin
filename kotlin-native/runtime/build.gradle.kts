@@ -731,6 +731,9 @@ val hostAssemble by tasks.registering {
 
 tasks.named("clean", Delete::class) {
     this.delete(layout.buildDirectory)
+
+    // Make sure `clean` always run, when requested.
+    this.outputs.upToDateWhen { false }
 }
 
 // region: Stdlib
@@ -830,7 +833,8 @@ cacheableTargetNames.forEach { targetName ->
         this.target.set(targetName)
         this.makePerFileCache.set(true)
         // This path is used in `:kotlin-native:${targetName}StdlibCache`
-        this.outputDirectory.set(layout.buildDirectory.dir("cache/$targetName/$targetName-gSTATIC-system/$KOTLIN_NATIVE_STDLIB_NAME-per-file-cache"))
+        this.cacheDirectory.set(layout.buildDirectory.dir("cache/$targetName/$targetName-gSTATIC-system"))
+        this.cacheName.set(KOTLIN_NATIVE_STDLIB_NAME)
     }
 }
 

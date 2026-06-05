@@ -11,6 +11,9 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompileCommon
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 // Contains common configuration that should be applied to all projects
+plugins {
+    id("implicit-dependencies")
+}
 
 // Common Group and version
 val kotlinVersion: String by rootProject.extra
@@ -19,9 +22,7 @@ version = kotlinVersion
 
 project.configureJvmDefaultToolchain()
 project.addEmbeddedConfigurations()
-project.addImplicitDependenciesConfiguration()
 project.configureJavaCompile()
-project.configureJavaBasePlugin()
 project.configureKotlinCompilationOptions()
 project.configureArtifacts()
 project.configureTests()
@@ -32,21 +33,6 @@ project.configureTests()
 // therefore it is disabled by default
 // buildDir = File(commonBuildDir, project.name)
 
-fun Project.addImplicitDependenciesConfiguration() {
-    configurations.maybeCreate("implicitDependencies").apply {
-        isCanBeConsumed = false
-        isCanBeResolved = false
-    }
-
-    if (kotlinBuildProperties.isInIdeaSync.get()) {
-        afterEvaluate {
-            // IDEA manages to download dependencies from `implicitDependencies`, even if it is created with `isCanBeResolved = false`
-            // Clear `implicitDependencies` to avoid downloading unnecessary dependencies during import
-            configurations.implicitDependencies.get().dependencies.clear()
-        }
-    }
-}
-
 fun Project.addEmbeddedConfigurations() {
     configurations.maybeCreate("embedded").apply {
         isCanBeConsumed = false
@@ -54,15 +40,6 @@ fun Project.addEmbeddedConfigurations() {
         attributes {
             attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.JAVA_RUNTIME))
             attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements.JAR))
-        }
-    }
-
-    configurations.maybeCreate("embeddedElements").apply {
-        extendsFrom(configurations["embedded"])
-        isCanBeConsumed = true
-        isCanBeResolved = false
-        attributes {
-            attribute(Usage.USAGE_ATTRIBUTE, objects.named("embedded-java-runtime"))
         }
     }
 }
@@ -79,31 +56,8 @@ fun Project.configureJavaCompile() {
     }
 }
 
-fun Project.configureJavaBasePlugin() {
-    plugins.withId("java-base") {
-        fun File.toProjectRootRelativePathOrSelf() = (relativeToOrNull(rootDir)?.takeUnless { it.startsWith("..") } ?: this).path
-
-        fun FileCollection.printClassPath(role: String) =
-            println("${project.path} $role classpath:\n  ${joinToString("\n  ") { it.toProjectRootRelativePathOrSelf() }}")
-
-        val javaExtension = javaPluginExtension()
-        tasks {
-            register("printCompileClasspath") { doFirst { javaExtension.sourceSets["main"].compileClasspath.printClassPath("compile") } }
-            register("printRuntimeClasspath") { doFirst { javaExtension.sourceSets["main"].runtimeClasspath.printClassPath("runtime") } }
-            register("printTestCompileClasspath") { doFirst { javaExtension.sourceSets["test"].compileClasspath.printClassPath("test compile") } }
-            register("printTestRuntimeClasspath") { doFirst { javaExtension.sourceSets["test"].runtimeClasspath.printClassPath("test runtime") } }
-        }
-    }
-}
-
 val projectsUsedInIntelliJKotlinPlugin: Array<String> by rootProject.extra
 val kotlinApiVersionForProjectsUsedInIntelliJKotlinPlugin: String by rootProject.extra
-
-/**
- * In all specified modules `-XXexplicit-return-types` flag will be added to warn about
- *   not specified return types for public declarations
- */
-val modulesWithRequiredExplicitTypes: Array<String> by rootProject.extra
 
 fun Project.configureKotlinCompilationOptions() {
     plugins.withType<KotlinBasePluginWrapper> {
@@ -141,9 +95,6 @@ fun Project.configureKotlinCompilationOptions() {
 
                 if (project.path in projectsUsedInIntelliJKotlinPlugin) {
                     apiVersion.set(KotlinVersion.fromVersion(kotlinApiVersionForProjectsUsedInIntelliJKotlinPlugin))
-                }
-                if (project.path in modulesWithRequiredExplicitTypes) {
-                    freeCompilerArgs.add("-XXexplicit-return-types=warning")
                 }
             }
 
@@ -302,17 +253,6 @@ fun Project.configureArtifacts() {
             ignore("kotlin/KotlinVersionCurrentValue.class")
         }
     }
-
-    fun Task.listConfigurationContents(configName: String) {
-        doFirst {
-            project.configurations.findByName(configName)?.let {
-                println("$configName configuration files:\n${it.allArtifacts.files.files.joinToString("\n  ", "  ")}")
-            }
-        }
-    }
-
-    tasks.register("listArchives") { listConfigurationContents("archives") }
-    tasks.register("listDistJar") { listConfigurationContents("distJar") }
 }
 
 fun Project.configureTests() {

@@ -68,7 +68,6 @@ import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.TypeApproximatorConfiguration
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.applyIf
-import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.mapToIndex
 
 class FirElementSerializer private constructor(
@@ -97,7 +96,11 @@ class FirElementSerializer private constructor(
             builder.addDeclarationProto(declaration, actualizedExpectDeclarations) {}
         }
 
-        return finalizePackagePartProto(file.packageFqName, builder, actualizedExpectDeclarations)
+        for (declaration in providedDeclarationsService.getProvidedTopLevelDeclarations(file)) {
+            builder.addDeclarationProto(declaration, actualizedExpectDeclarations) {}
+        }
+
+        return finalizePackagePartProto(file.packageFqName, builder)
     }
 
     @RequiresOptIn(level = RequiresOptIn.Level.ERROR)
@@ -117,7 +120,7 @@ class FirElementSerializer private constructor(
         for (declaration in declarations) {
             builder.addDeclarationProto(declaration, actualizedExpectDeclarations) {}
         }
-        return finalizePackagePartProto(packageFqName, builder, actualizedExpectDeclarations)
+        return finalizePackagePartProto(packageFqName, builder)
     }
 
     private fun ProtoBuf.Package.Builder.addDeclarationProto(
@@ -142,16 +145,8 @@ class FirElementSerializer private constructor(
     private fun finalizePackagePartProto(
         packageFqName: FqName,
         builder: ProtoBuf.Package.Builder,
-        actualizedExpectDeclarations: Set<FirDeclaration>?,
     ): ProtoBuf.Package.Builder {
         extension.serializePackage(packageFqName, builder, versionRequirementTable, this)
-        // Next block will process declarations from plugins.
-        // Such declarations don't belong to any file, so there is no need to call `extension.processFile`.
-        for (declaration in providedDeclarationsService.getProvidedTopLevelDeclarations(packageFqName, scopeSession)) {
-            builder.addDeclarationProto(declaration, actualizedExpectDeclarations) {
-                error("Unsupported top-level declaration type: ${it.render()}")
-            }
-        }
 
         typeTable.serialize()?.let { builder.typeTable = it }
         versionRequirementTable?.serialize()?.let { builder.versionRequirementTable = it }
@@ -226,7 +221,7 @@ class FirElementSerializer private constructor(
             }
 
             val providedConstructors = providedDeclarationsService
-                .getProvidedConstructors(classSymbol, scopeSession)
+                .getProvidedConstructors(classSymbol)
                 .sortedWith(FirCallableDeclarationComparator)
             for (constructor in providedConstructors) {
                 builder.addConstructor(constructorProto(constructor))
@@ -234,7 +229,7 @@ class FirElementSerializer private constructor(
         }
 
         val providedCallables = providedDeclarationsService
-            .getProvidedCallables(classSymbol, scopeSession)
+            .getProvidedCallables(classSymbol)
             .sortedWith(FirCallableDeclarationComparator)
 
         /*
@@ -278,6 +273,7 @@ class FirElementSerializer private constructor(
         }
 
         val companionObject = regularClass?.companionObjectSymbol?.fir
+            ?: providedDeclarationsService.getProvidedCompanionObject(classSymbol)
         if (companionObject != null) {
             builder.companionObjectName = getSimpleNameIndex(companionObject.name)
         }
@@ -440,16 +436,21 @@ class FirElementSerializer private constructor(
      * Order of nested classifiers:
      *   - declared classifiers in declaration order
      *   - generated classifiers in sorted order
+     *   - provided classifiers in sorted order
+     *   - provided companion object if present
      */
     fun computeNestedClassifiersForClass(classSymbol: FirClassSymbol<*>): List<FirClassifierSymbol<*>> {
-        val scope = session.nestedClassifierScope(classSymbol.fir) ?: return emptyList()
+        val scope = session.nestedClassifierScope(classSymbol.fir)
         return buildList {
             val indexByDeclaration = classSymbol.fir.declarations.filterIsInstance<FirClassLikeDeclaration>().mapToIndex()
-            val [declared, nonDeclared] = scope.getClassifierNames()
-                .mapNotNull { scope.getSingleClassifier(it)?.fir as FirClassLikeDeclaration? }
+            val [declared, nonDeclared] = scope?.getClassifierNames().orEmpty()
+                .mapNotNull { scope?.getSingleClassifier(it)?.fir as FirClassLikeDeclaration? }
                 .partition { it in indexByDeclaration }
             declared.sortedBy { indexByDeclaration.getValue(it) }.mapTo(this) { it.symbol }
             nonDeclared.sortedWith(FirMemberDeclarationComparator).mapTo(this) { it.symbol }
+            val providedService = session.providedDeclarationsForMetadataService
+            providedService.getProvidedNestedClasses(classSymbol).sortedWith(FirMemberDeclarationComparator).mapTo(this) { it.symbol }
+            providedService.getProvidedCompanionObject(classSymbol)?.let { add(it.symbol) }
         }
     }
 
@@ -1428,11 +1429,18 @@ class FirElementSerializer private constructor(
         ): FirElementSerializer {
             val parentClassId = klass.symbol.classId.outerClassId
             val parent = if (parentClassId != null && !klass.isLocal) {
-                val parentClass = session.symbolProvider.getClassLikeSymbolByClassId(parentClassId)!!.fir as FirRegularClass
-                parentSerializer ?: create(
-                    session, scopeSession, parentClass, extension, null, typeApproximator,
-                    languageVersionSettings, produceHeaderKlib
-                )
+                // Lazy-evaluate the parent lookup: when a caller already supplies parentSerializer
+                // (which is the common path from ClassCodegen for nested classes, including
+                // plugin-generated nested classes whose outer is also plugin-generated and therefore
+                // NOT registered in session.symbolProvider), there's no need to resolve the outer
+                // class through the symbol provider.
+                parentSerializer ?: run {
+                    val parentClass = session.symbolProvider.getClassLikeSymbolByClassId(parentClassId)!!.fir as FirRegularClass
+                    create(
+                        session, scopeSession, parentClass, extension, parentSerializer = null, typeApproximator,
+                        languageVersionSettings, produceHeaderKlib
+                    )
+                }
             } else {
                 createTopLevel(session, scopeSession, extension, typeApproximator, languageVersionSettings, produceHeaderKlib)
             }

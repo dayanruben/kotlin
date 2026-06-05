@@ -49,7 +49,6 @@ import org.jetbrains.kotlin.ir.generator.model.ListField.Mutability.MutableList
 import org.jetbrains.kotlin.ir.generator.model.ListField.Mutability.Var
 import org.jetbrains.kotlin.ir.generator.model.SimpleField
 import org.jetbrains.kotlin.ir.generator.model.symbol.Symbol
-import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
@@ -748,8 +747,11 @@ object IrTree : AbstractTreeBuilder() {
         parent(constructorCall)
         parent(type<AnnotationMarker>())
 
-        +field("annotationClassSymbol", classSymbol, nullable = true, mutable = false)
+        +referencedSymbol("classSymbol", classSymbol, mutable = false)
         +field("argumentMapping", StandardTypes.map.withArgs(type<Name>(), expression), nullable = true)
+        +referencedSymbol("symbol", type = constructorSymbol) {
+            optInAnnotation = deprecatedCompilerApi.withArgument("deprecatedSince", "org.jetbrains.kotlin.CompilerVersionOfApiDeprecation._2_4_20")
+        }
     }
     val getSingletonValue: Element by element(Expression) {
         nameInVisitorMethod = "SingletonReference"

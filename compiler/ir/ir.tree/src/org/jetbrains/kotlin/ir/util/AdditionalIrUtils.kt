@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.ir.util
 
+import org.jetbrains.kotlin.DeprecatedCompilerApi
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
@@ -128,19 +129,16 @@ fun <S : IrSymbol> IrOverridableDeclaration<S>.overrides(other: IrOverridableDec
     return false
 }
 
-private val IrAnnotation.annotationClass
-    get() = this.symbol.owner.constructedClass
-
-fun IrAnnotation.isAnnotationWithEqualFqName(fqName: FqName): Boolean {
-    annotationClassSymbol?.let {
-        return it.hasEqualFqName(fqName)
-    }
-    return if (symbol.isBound) {
-        annotationClass.hasEqualFqName(fqName)
+@OptIn(DeprecatedCompilerApi::class)
+fun IrAnnotation.isAnnotationWithEqualFqName(fqName: FqName): Boolean =
+    if (symbol.isBound) {
+        classSymbol.owner.hasEqualFqName(fqName)
     } else {
         symbol.hasEqualFqName(fqName.child(SpecialNames.INIT))
     }
-}
+
+val IrAnnotation.classId: ClassId
+    get() = classSymbol.owner.classIdOrFail
 
 val IrClass.packageFqName: FqName?
     get() = symbol.signature?.packageFqName() ?: parent.getPackageFragment()?.packageFqName
@@ -176,7 +174,7 @@ fun IrSymbol.hasTopLevelEqualFqName(packageName: String, declarationName: String
     }
 }
 
-fun List<IrAnnotation>.hasAnnotation(classId: ClassId): Boolean = hasAnnotation(classId.asSingleFqName())
+fun List<IrAnnotation>.hasAnnotation(classId: ClassId): Boolean = any { it.classId == classId }
 
 fun List<IrAnnotation>.hasAnnotation(fqName: FqName): Boolean =
     any { it.isAnnotationWithEqualFqName(fqName) }
