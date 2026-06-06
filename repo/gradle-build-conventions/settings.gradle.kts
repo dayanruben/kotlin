@@ -44,3 +44,6 @@ include(":test-data-manager-convention")
 include(":utilities")
 include(":test-federation-convention")
 include(":repo-test-fixtures")
+include(":java-flight-recorder")
+include(":test-inputs-check-v2")
+

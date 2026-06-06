@@ -71,7 +71,7 @@ sealed class TestRunner<Step : TestStep<*, *>, Configuration : TestConfiguration
             val thereWereCriticalExceptionsOnPreviousSteps = failuresInterceptor.allFailedExceptions.any { it.failureDisablesNextSteps }
             when (val result = runStep.run(step, inputArtifact, thereWereCriticalExceptionsOnPreviousSteps)) {
                 is TestStep.StepResult.Artifact<*> -> {
-                    require(step is TestStep.FacadeStep<*, *>)
+                    checkTestInfrastructure(step is TestStep.FacadeStep<*, *>) { "Step must be FacadeStep" }
                     onArtifactResult(result.outputArtifact)
                     inputArtifact = result.outputArtifact
                 }
@@ -144,11 +144,15 @@ sealed class TestRunner<Step : TestStep<*, *>, Configuration : TestConfiguration
         }
 
         fun filterFailedExceptions(failedExceptions: List<WrappedException>): List<Throwable> {
-            return testConfiguration.failureSuppressors
-                .fold(failedExceptions) { assertions, suppressor ->
+            // Failures coming from the test infrastructure itself must never be suppressed (e.g. by IGNORE_BACKEND),
+            // otherwise an infra problem would be masked as a green test, hiding the real (unknown) test status.
+            val [infrastructureFailures, suppressableFailures] = failedExceptions.partition { it.isTestInfrastructureFailure }
+            val notSuppressedFailures = testConfiguration.failureSuppressors
+                .fold(suppressableFailures) { assertions, suppressor ->
                     if (assertions.isEmpty()) return@fold assertions
                     suppressor.suppressIfNeeded(assertions)
                 }
+            return (infrastructureFailures + notSuppressedFailures)
                 .sorted()
                 .map { it.cause }
         }
@@ -268,7 +272,7 @@ class NonGroupingTestRunner(
             },
             onArtifactResult = { artifactsProvider.registerArtifact(module, it) },
             onHandlersResult = { step ->
-                require(step is TestStep.NonGroupingStep.HandlersStep<*>)
+                checkTestInfrastructure(step is TestStep.NonGroupingStep.HandlersStep<*>) { "Step must be HandlersStep" }
                 allRanHandlers += step.handlers
             }
         )

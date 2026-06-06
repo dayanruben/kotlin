@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.konan.test.klib
 
+import org.jetbrains.kotlin.buildtools.api.arguments.ExperimentalCompilerArgument
+import org.jetbrains.kotlin.buildtools.api.arguments.enums.VerifyIrMode
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2NativeCompilerArguments
@@ -21,6 +23,8 @@ import org.jetbrains.kotlin.konan.test.blackbox.support.settings.OptimizationMod
 import org.jetbrains.kotlin.konan.test.blackbox.support.settings.withPlatformLibs
 import org.jetbrains.kotlin.konan.test.blackbox.testRunSettings
 import org.jetbrains.kotlin.test.GroupingStageInputArtifact
+import org.jetbrains.kotlin.test.TestInfrastructureException
+import org.jetbrains.kotlin.test.checkTestInfrastructure
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives
 import org.jetbrains.kotlin.test.directives.NativeEnvironmentConfigurationDirectives.WITH_PLATFORM_LIBS
 import org.jetbrains.kotlin.test.klib.CustomKlibCompilerException
@@ -35,6 +39,7 @@ import org.jetbrains.kotlin.test.services.configuration.NativeEnvironmentConfigu
 import org.jetbrains.kotlin.test.services.moduleStructure
 import org.jetbrains.kotlin.test.services.temporaryDirectoryManager
 import org.jetbrains.kotlin.test.services.testInfo
+import org.jetbrains.kotlin.test.testInfraError
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.PrintStream
@@ -50,6 +55,7 @@ class NativeCompilerSecondStageFacade private constructor(
     class NonGrouping(
         testServices: TestServices,
         private val customNativeCompilerSettings: CustomNativeCompilerSettings,
+        private val isCompatibilityTesting: Boolean,
     ) : CustomKlibCompilerSecondStageFacade<BinaryArtifacts.Native>(testServices) {
         override val outputKind get() = ArtifactKinds.Native
         override fun isMainModule(module: TestModule): Boolean {
@@ -67,11 +73,14 @@ class NativeCompilerSecondStageFacade private constructor(
         ): BinaryArtifacts.Native {
             val facade = NativeCompilerSecondStageFacade(testServices, customNativeCompilerSettings)
             val compilerConfiguration = testServices.compilerConfigurationProvider.getCompilerConfiguration(module, CompilationStage.SECOND)
-            require(compilerConfiguration.konanTarget == facade.kotlinNativeTargets.testTarget.name) {
+            // Test-infrastructure invariant violation (not a failure of the code under test): throw a
+            // TestInfrastructureException so it is never masked by failure suppressors (e.g. an IGNORE_BACKEND directive).
+            checkTestInfrastructure(compilerConfiguration.konanTarget == facade.kotlinNativeTargets.testTarget.name) {
                 "Internal error: konanTargets in `compilerConfiguration`(${compilerConfiguration.konanTarget}) " +
                         "and `facade.kotlinNativeTargets`(${facade.kotlinNativeTargets.testTarget.name}) don't match.\n" +
                         "Check, if NativeSecondStageEnvironmentConfigurator has calculated `konanTarget` properly."
             }
+            @OptIn(ExperimentalCompilerArgument::class)
             val (exitCode, output, executableFile) = facade.runCli(
                 dirName = File(mainLibrary).name,
                 executableFileName = "${module.name}.${facade.executableExtension}",
@@ -83,6 +92,7 @@ class NativeCompilerSecondStageFacade private constructor(
                 withPlatformLibs = module.directives.contains(WITH_PLATFORM_LIBS),
                 customLanguageFeatures = module.directives[LanguageSettingsDirectives.LANGUAGE],
                 freeArgs = module.directives[FREE_COMPILER_ARGS] + customArgs,
+                verifyIrMode = if (isCompatibilityTesting) VerifyIrMode.NONE else VerifyIrMode.ERROR,
             )
 
             if (exitCode == ExitCode.OK) {
@@ -134,6 +144,7 @@ class NativeCompilerSecondStageFacade private constructor(
             // limit of 260 characters for executable file path. So we use the hash of the module name
             // instead.
             val moduleNameHash = someModule.name.hashCode().toHexString()
+            @OptIn(ExperimentalCompilerArgument::class)
             val (exitCode, output, executableFile) = facade.runCli(
                 dirName = someLibrary!!.resolveSibling(moduleNameHash).absolutePath,
                 executableFileName = "$moduleNameHash.${facade.executableExtension}",
@@ -145,6 +156,7 @@ class NativeCompilerSecondStageFacade private constructor(
                 withPlatformLibs = someModule.directives.contains(WITH_PLATFORM_LIBS),
                 customLanguageFeatures = someModule.directives[LanguageSettingsDirectives.LANGUAGE],
                 freeArgs = freeArgs + "-Xklib-duplicated-unique-name-strategy=allow-all-with-warning",
+                verifyIrMode = VerifyIrMode.ERROR,
             )
 
             if (exitCode == ExitCode.OK) {
@@ -185,6 +197,7 @@ class NativeCompilerSecondStageFacade private constructor(
 
     data class CliRunResult(val exitCode: ExitCode, val output: ByteArrayOutputStream, val executableFile: File)
 
+    @OptIn(ExperimentalCompilerArgument::class)
     fun runCli(
         dirName: String,
         executableFileName: String,
@@ -195,7 +208,8 @@ class NativeCompilerSecondStageFacade private constructor(
         enableAssertions: Boolean,
         withPlatformLibs: Boolean,
         customLanguageFeatures: List<String>,
-        freeArgs: List<String>
+        freeArgs: List<String>,
+        verifyIrMode: VerifyIrMode = VerifyIrMode.ERROR,
     ): CliRunResult {
         val executableFile = getNativeArtifactsOutputDir(testServices, dirName).resolve(executableFileName)
 
@@ -210,7 +224,7 @@ class NativeCompilerSecondStageFacade private constructor(
                     K2NativeCompilerArguments::kotlinHome.cliArgument, nativeHome.absolutePath,
                     optimizationArgument.cliArgument,
                     K2NativeCompilerArguments::binaryOptions.cliArgument("runtimeAssertionsMode=panic"),
-                    K2NativeCompilerArguments::verifyIr.cliArgument("error"),
+                    K2NativeCompilerArguments::verifyIr.cliArgument(verifyIrMode.name),
                     K2NativeCompilerArguments::llvmVariant.cliArgument("dev"),
                     K2NativeCompilerArguments::produce.cliArgument, "program",
                     K2NativeCompilerArguments::outputName.cliArgument, executableFile.path,
@@ -251,7 +265,11 @@ internal fun TestModule.fileCheckStage(): String? {
     if (!directives.contains(FILECHECK_STAGE))
         return null
     return directives[FILECHECK_STAGE].singleOrNull()
-        ?: error("Exactly one argument for FILECHECK directive is needed: LLVM stage name to dump bitcode after, in files: $files")
+    // Test-infrastructure invariant violation (not a failure of the code under test): throw a
+    // TestInfrastructureException so it is never masked by failure suppressors (e.g. an IGNORE_BACKEND directive).
+        ?: testInfraError(
+            "Exactly one argument for FILECHECK directive is needed: LLVM stage name to dump bitcode after, in files: $files"
+        )
 }
 
 /**

@@ -10,6 +10,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.gradle.kotlin.dsl.kotlin
 import org.gradle.testkit.runner.BuildResult
+import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftimport.GenerateSyntheticLinkageImportProject
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftimport.FetchSyntheticImportProjectPackages
@@ -290,6 +291,7 @@ fun createLocalSwiftPackageWithBinaryTarget(
 internal fun createSwiftPmGitRepoWithTags(
     reposRoot: Path,
     packageName: String,
+    source: String,
     tags: List<String>,
     fileByTag: Map<String, Map<String, String>> = emptyMap(),
 ): Path {
@@ -309,9 +311,7 @@ internal fun createSwiftPmGitRepoWithTags(
 
     // Seed sources dir
     repoDir.resolve("Sources/$packageName").createDirectories()
-    repoDir.resolve("Sources/$packageName/$packageName.swift").writeText(
-        "public struct $packageName { public static let v = \"seed\" }\n"
-    )
+    repoDir.resolve("Sources/$packageName/$packageName.swift").writeText(source)
 
     runGit("add", ".", repoDir = repoDir)
     runGit("commit", "--quiet", "-m", "init", repoDir = repoDir)
@@ -451,7 +451,7 @@ internal fun TestProject.initSwiftPmProject(
     }
 }
 
-private fun KotlinMultiplatformExtension.configureSwiftPmTestArgs(
+internal fun KotlinMultiplatformExtension.configureSwiftPmTestArgs(
     cacheDirFile: File,
 ) {
     project.tasks
@@ -527,10 +527,13 @@ internal fun Set<String>.assertExactTaskGraph(vararg tasks : String) {
 internal fun LockFileTestFixture.createRepo(
     name: String,
     tags: List<String>,
+    @Language("Swift")
+    source: String = "public struct $name { public static let v = \"seed\" }\n"
 ): Path {
     return createSwiftPmGitRepoWithTags(
         reposRoot = reposRoot,
         packageName = name,
+        source = source,
         tags = tags,
     )
 }
@@ -899,7 +902,31 @@ internal fun runGit(vararg args: String, repoDir: Path): String {
 @Serializable
 data class SwiftPackageDump(
     val name: String,
+    val dependencies: List<SwiftPackageDumpDependency> = emptyList(),
     val targets: List<SwiftPackageDumpTarget> = emptyList(),
+)
+
+@Serializable
+data class SwiftPackageDumpDependency(
+    val fileSystem: List<SwiftPackageDumpFileSystemDependency>? = null,
+    val sourceControl: List<SwiftPackageDumpSourceControlDependency>? = null,
+)
+
+@Serializable
+data class SwiftPackageDumpFileSystemDependency(
+    val identity: String,
+    val path: String,
+)
+
+@Serializable
+data class SwiftPackageDumpSourceControlDependency(
+    val identity: String,
+    val location: SwiftPackageDumpSourceControlLocation,
+)
+
+@Serializable
+data class SwiftPackageDumpSourceControlLocation(
+    val remote: List<String>? = null,
 )
 
 

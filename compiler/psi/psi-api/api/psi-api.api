@@ -208,6 +208,13 @@ public class org/jetbrains/kotlin/idea/KotlinModuleFileType : com/intellij/opena
 	public fun isReadOnly ()Z
 }
 
+public abstract interface class org/jetbrains/kotlin/idea/references/KtReference : com/intellij/psi/PsiPolyVariantReference {
+	public synthetic fun getElement ()Lcom/intellij/psi/PsiElement;
+	public abstract fun getElement ()Lorg/jetbrains/kotlin/psi/KtElement;
+	public abstract fun getResolver ()Lcom/intellij/psi/impl/source/resolve/ResolveCache$PolyVariantResolver;
+	public abstract fun getResolvesByNames ()Ljava/util/Collection;
+}
+
 public class org/jetbrains/kotlin/kdoc/lexer/KDocToken : org/jetbrains/kotlin/lexer/KtToken {
 	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/String;I)V
@@ -4261,6 +4268,14 @@ public final class org/jetbrains/kotlin/psi/utils/OperatorTokens {
 	public static final fun operationName (Lorg/jetbrains/kotlin/lexer/KtToken;)Lorg/jetbrains/kotlin/name/Name;
 	public static final fun operationName (Lorg/jetbrains/kotlin/lexer/KtToken;ZZ)Lorg/jetbrains/kotlin/name/Name;
 	public static final fun operationToken (Lorg/jetbrains/kotlin/name/Name;)Lorg/jetbrains/kotlin/lexer/KtToken;
+}
+
+public abstract interface class org/jetbrains/kotlin/references/KotlinPsiReferenceProviderContributor {
+	public abstract fun getElementClass ()Ljava/lang/Class;
+	public abstract fun getReferenceProvider ()Lorg/jetbrains/kotlin/references/KotlinPsiReferenceProviderContributor$ReferenceProvider;
+}
+
+public abstract interface class org/jetbrains/kotlin/references/KotlinPsiReferenceProviderContributor$ReferenceProvider : kotlin/jvm/functions/Function1 {
 }
 
 public class org/jetbrains/kotlin/resolve/StatementFilter {
