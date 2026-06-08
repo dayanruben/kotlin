@@ -52,6 +52,7 @@ import org.jetbrains.kotlin.utils.newHashMapWithExpectedSize
 internal class ClassGenerator(
     declarationGenerator: DeclarationGenerator
 ) : DeclarationGeneratorExtension(declarationGenerator) {
+    @OptIn(ValueClassBackendAgnosticApi::class)
     fun generateClass(ktClassOrObject: KtPureClassOrObject, visibility_: DescriptorVisibility? = null): IrClass {
         val classDescriptor = ktClassOrObject.findClassDescriptor(this.context.bindingContext)
         val startOffset = ktClassOrObject.getStartOffsetOfClassDeclarationOrNull() ?: ktClassOrObject.pureStartOffset
@@ -93,7 +94,7 @@ internal class ClassGenerator(
                 type.toIrType() as? IrSimpleType ?: error("Value class underlying type is not a simple type: $classDescriptor")
             }
 
-            if (irClass.isSingleFieldValueClass && ktClassOrObject is KtClassOrObject) {
+            if (irClass.isSingleFieldValueClass(treatFullValueClassesWithOneFieldAsBasic = false) && ktClassOrObject is KtClassOrObject) {
                 generateAdditionalMembersForSingleFieldValueClasses(irClass, ktClassOrObject)
             }
 
@@ -101,7 +102,7 @@ internal class ClassGenerator(
                 generateAdditionalMembersForDataClass(irClass, ktClassOrObject)
             }
 
-            if (irClass.isMultiFieldValueClass && ktClassOrObject is KtClassOrObject) {
+            if (irClass.isJvmInlineMultiFieldValueClass && ktClassOrObject is KtClassOrObject) {
                 generateAdditionalMembersForMultiFieldValueClasses(irClass, ktClassOrObject)
             }
 

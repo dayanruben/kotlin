@@ -195,7 +195,7 @@ class JvmSyntheticAccessorGenerator(context: JvmBackendContext) :
         if (constructor.hiddenConstructorMangledParams != null) return true
         return constructor.isOrShouldBeHiddenDueToOrigin &&
                 !DescriptorVisibilities.isPrivate(constructor.visibility) &&
-                !constructor.constructedClass.isValue &&
+                !constructor.constructedClass.isBasicValueClass &&
                 ((constructor.originalConstructorOfThisMfvcConstructorReplacement ?: constructor).hasMangledParameters() ||
                         constructor.isNonExposedConstructorOfOrdinaryClass()) &&
                 !constructor.constructedClass.isAnonymousObject

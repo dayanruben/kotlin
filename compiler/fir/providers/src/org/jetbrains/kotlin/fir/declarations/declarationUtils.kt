@@ -26,6 +26,8 @@ import org.jetbrains.kotlin.fir.types.isNullableAny
 import org.jetbrains.kotlin.fir.unwrapSubstitutionOverrides
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.PrivateForInline
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 /**
  * Returns all constructors of a given class, including generated ones. Resolve phase is not guaranteed.
@@ -255,21 +257,18 @@ fun FirBasedSymbol<*>.isAnnotationConstructor(session: FirSession): Boolean {
     return getConstructedClass(session)?.classKind == ClassKind.ANNOTATION_CLASS
 }
 
+@OptIn(ExperimentalContracts::class)
 fun FirBasedSymbol<*>.isPrimaryConstructorOfInlineOrValueClass(session: FirSession): Boolean {
+    contract { returns(true) implies (this@isPrimaryConstructorOfInlineOrValueClass is FirConstructorSymbol) }
     if (this !is FirConstructorSymbol) return false
-    return getConstructedClass(session)?.isInlineOrValueClass() == true && this.isPrimary
+    val constructedClass = getConstructedClass(session) ?: return false
+    return constructedClass.isInlineOrValue && this.isPrimary
 }
 
 fun FirConstructorSymbol.getConstructedClass(session: FirSession): FirRegularClassSymbol? {
     return resolvedReturnTypeRef.coneType
         .fullyExpandedType(session)
         .toRegularClassSymbol(session)
-}
-
-fun FirRegularClassSymbol.isInlineOrValueClass(): Boolean {
-    if (this.classKind != ClassKind.CLASS) return false
-
-    return isInlineOrValue
 }
 
 @PrivateForInline

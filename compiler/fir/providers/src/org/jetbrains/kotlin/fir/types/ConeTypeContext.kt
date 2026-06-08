@@ -532,11 +532,18 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
     }
 
     override fun TypeConstructorMarker.isInlineClass(): Boolean {
+        if (toFirRegularClass()?.isFullValueClass == true) return false
         val fields = getValueClassProperties() ?: return false
         return this@ConeTypeContext.valueClassLoweringKind(fields) == ValueClassKind.Inline
     }
 
-    override fun TypeConstructorMarker.isMultiFieldValueClass(): Boolean {
+    override fun TypeConstructorMarker.isJvmInlineMultiFieldValueClass(): Boolean {
+        val jvmInlineAnnotationClassId = session.annotationPlatformSupport.jvmInlineAnnotationClassId ?: return false
+        val regularClass = toFirRegularClass()
+        if (regularClass != null) {
+            if (regularClass.isFullValueClass) return false
+            if (!regularClass.symbol.hasAnnotation(jvmInlineAnnotationClassId, session)) return false
+        }
         val fields = getValueClassProperties() ?: return false
         return isMultiFieldValueClassRecursionAware(fields, visited = hashSetOf())
     }
@@ -577,9 +584,9 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
     @Suppress("NOTHING_TO_INLINE")
     private inline fun ConeTypeParameterLookupTag.bounds(): List<FirTypeRef> = symbol.resolvedBounds
 
-    override fun KotlinTypeMarker.getUnsubstitutedUnderlyingType(): ConeKotlinType? {
+    override fun KotlinTypeMarker.getUnsubstitutedUnderlyingTypeInJvm(): ConeKotlinType? {
         require(this is ConeKotlinType)
-        return unsubstitutedUnderlyingTypeForInlineClass(session)
+        return unsubstitutedUnderlyingTypeForInlineClassInJvm(session)
     }
 
     override fun TypeConstructorMarker.getPrimitiveType(): PrimitiveType? =

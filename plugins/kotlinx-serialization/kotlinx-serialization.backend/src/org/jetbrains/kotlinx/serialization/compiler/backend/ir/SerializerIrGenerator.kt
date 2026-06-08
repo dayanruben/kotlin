@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.backend.jvm.functionByName
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.codegen.CompilationException
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.ValueClassBackendAgnosticApi
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.builders.*
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationDescriptorSerializerPlugin
 import org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationPluginContext
@@ -630,6 +632,7 @@ open class SerializerIrGenerator(
 
 
     companion object {
+        @OptIn(ValueClassBackendAgnosticApi::class)
         fun generate(
             irClass: IrClass,
             context: SerializationPluginContext,
@@ -637,11 +640,9 @@ open class SerializerIrGenerator(
         ) {
             val serializableDesc = getSerializableClassDescriptorBySerializer(irClass) ?: return
             val generator = when {
-                serializableDesc.isEnumWithLegacyGeneratedSerializer() -> SerializerForEnumsGenerator(
-                    irClass,
-                    context
-                )
-                serializableDesc.isSingleFieldValueClass -> SerializerForInlineClassGenerator(irClass, context)
+                serializableDesc.isEnumWithLegacyGeneratedSerializer() -> SerializerForEnumsGenerator(irClass, context)
+                serializableDesc.isSingleFieldValueClass(treatFullValueClassesWithOneFieldAsBasic = !context.platform.isJvm()) ->
+                    SerializerForInlineClassGenerator(irClass, context)
                 else -> SerializerIrGenerator(irClass, context, metadataPlugin)
             }
             generator.generate()
