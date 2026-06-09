@@ -15,7 +15,6 @@ dependencies {
     testFixturesImplementation(project(":analysis:analysis-internal-utils"))
     testFixturesImplementation(project(":compiler:psi:psi-api"))
     testFixturesApi(testFixtures(project(":compiler:psi:psi-api")))
-    testFixturesImplementation(project(":analysis:kt-references"))
     testFixturesApi(testFixtures(project(":compiler:tests-common-new")))
     testFixturesApi(testFixtures(project(":compiler:tests-common")))
     testFixturesImplementation(project(":analysis:analysis-api-platform-interface"))
@@ -24,6 +23,7 @@ dependencies {
     testFixturesImplementation(project(":analysis:analysis-api-impl-base"))
     testFixturesImplementation(project(":analysis:decompiled:decompiler-to-psi"))
     testFixturesImplementation(project(":analysis:decompiled:decompiler-to-file-stubs"))
+    testFixturesImplementation(project(":wasm:wasm.frontend"))
     testFixturesApi(testFixtures(project(":analysis:test-data-manager")))
 }
 

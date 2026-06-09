@@ -1,7 +1,11 @@
+val descriptorsCompilerModules = arrayOf(
+    ":core:descriptors",
+).also { extra["descriptorsCompilerModules"] = it }
+
 /**
  * Common modules, used by K1 frontend, K2 frontend, backends, AA and CLI
  */
-val commonCompilerModules = arrayOf(
+val commonCompilerModules = descriptorsCompilerModules + arrayOf(
     ":compiler:psi:psi-api",
     ":compiler:psi:psi-impl",
     ":compiler:psi:psi-utils",
@@ -83,9 +87,7 @@ val firCompilerModules = arrayOf(
 val fe10CompilerModules = arrayOf(
     ":compiler",
     ":core:descriptors.runtime",
-    ":core:descriptors",
     ":core:descriptors.jvm",
-    ":compiler:light-classes",
     ":compiler:resolution",
     ":compiler:serialization",
     ":compiler:frontend",
@@ -99,7 +101,6 @@ val fe10CompilerModules = arrayOf(
     ":js:js.frontend",
     ":native:frontend.native",
     ":wasm:wasm.frontend",
-    ":compiler:backend.common.jvm",
 ).also { extra["fe10CompilerModules"] = it }
 
 /**
@@ -189,7 +190,6 @@ val cliCompilerModules = arrayOf(
 
 val analysisApiModules = arrayOf(
     ":analysis:analysis-api",
-    ":analysis:analysis-api-fe10",
     ":analysis:analysis-api-fir",
     ":analysis:analysis-api-impl-base",
     ":analysis:analysis-api-platform-interface",
@@ -197,7 +197,6 @@ val analysisApiModules = arrayOf(
     ":analysis:analysis-api-standalone:analysis-api-fir-standalone-base",
     ":analysis:analysis-api-standalone",
     ":analysis:analysis-test-framework",
-    ":analysis:kt-references",
     ":analysis:light-classes-base",
     ":analysis:low-level-api-fir",
     ":analysis:stubs",
@@ -211,7 +210,6 @@ val analysisApiModules = arrayOf(
     ":analysis:decompiled:decompiler-native",
     ":analysis:decompiled:decompiler-to-psi",
     ":analysis:decompiled:light-classes-for-decompiled",
-    ":analysis:kt-references",
 ).also { extra["analysisApiModules"] = it }
 
 extra["compilerModules"] =

@@ -43,6 +43,7 @@ dependencies {
     testCompileOnly(project(":compiler:cli"))
     testCompileOnly(intellijPlatformUtil())
     testImplementation(project(":compiler:incremental-compilation-impl"))
+    testImplementation(project(":native:kotlin-native-utils"))
     testImplementation(kotlinTest("junit"))
 }
 
@@ -86,7 +87,7 @@ generatedSourcesTask(
             generationRoot.toString(),
             version.toString(),
             "impl",
-            "jvmCompilerArguments,wasmArguments,jsArguments",
+            "jvmCompilerArguments,wasmArguments,jsArguments,metadataArguments",
         )
     },
 )

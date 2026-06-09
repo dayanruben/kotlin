@@ -8,15 +8,12 @@ package org.jetbrains.kotlin.test.frontend.fir
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.search.ProjectScope
-import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.backend.common.loadMetadataKlibs
 import org.jetbrains.kotlin.cli.common.contentRoots
 import org.jetbrains.kotlin.cli.jvm.compiler.PsiBasedProjectFileSearchScope
 import org.jetbrains.kotlin.cli.jvm.compiler.TopDownAnalyzerFacadeForJVM
 import org.jetbrains.kotlin.cli.jvm.compiler.VfsBasedProjectEnvironment
-import org.jetbrains.kotlin.cli.jvm.compiler.unregisterFinders
 import org.jetbrains.kotlin.cli.jvm.config.JvmClasspathRoot
 import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.config.jvmModularRoots
@@ -269,8 +266,6 @@ open class FirFrontendFacade(testServices: TestServices) : FrontendFacade<FirOut
 
         val project = compilerConfigurationProvider.getProject(module)
 
-        PsiElementFinder.EP.getPoint(project).unregisterFinders<JavaElementFinder>()
-
         val parser = module.directives.singleValue(FirDiagnosticsDirectives.FIR_PARSER)
 
         val keepNonKtFiles = FirDiagnosticsDirectives.HAS_CUSTOM_EXTENSION_FILES in module.directives
@@ -361,7 +356,7 @@ open class FirFrontendFacade(testServices: TestServices) : FrontendFacade<FirOut
                         createJvmContext = { jvmSessionFactoryContext },
                         createJsContext = { FirJsSessionFactory.Context(configuration) }
                     ),
-                    isForLeafHmppModule = false,
+                    kmpModuleKind = KmpModuleKind.SingleModule,
                     init = sessionConfigurator,
                 ).also(::registerExtraComponents)
             }
@@ -374,7 +369,7 @@ open class FirFrontendFacade(testServices: TestServices) : FrontendFacade<FirOut
                     configuration,
                     jvmSessionFactoryContext!!,
                     needRegisterJavaElementFinder = true,
-                    isForLeafHmppModule = false,
+                    kmpModuleKind = KmpModuleKind.SingleModule,
                     init = sessionConfigurator,
                 ).also(::registerExtraComponents)
             }
@@ -391,7 +386,7 @@ open class FirFrontendFacade(testServices: TestServices) : FrontendFacade<FirOut
                     moduleData,
                     extensionRegistrars,
                     configuration,
-                    isForLeafHmppModule = false,
+                    kmpModuleKind = KmpModuleKind.SingleModule,
                     init = sessionConfigurator
                 ).also(::registerExtraComponents)
             }

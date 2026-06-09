@@ -958,6 +958,21 @@ fun ConeKotlinType.fullyExpandedClassId(session: FirSession): ClassId? {
     return fullyExpandedType(session).classId
 }
 
+context(_: SessionHolder)
+fun ConeKotlinType.forEachClassId(f: (ClassId) -> Unit) {
+    when (this) {
+        is ConeFlexibleType -> lowerBound.forEachClassId(f)
+        is ConeDefinitelyNotNullType -> original.forEachClassId(f)
+        is ConeCapturedType -> constructor.supertypes?.forEach { it.forEachClassId(f) }
+        is ConeIntersectionType -> intersectedTypes.forEach { it.forEachClassId(f) }
+        is ConeTypeParameterType -> lookupTag.symbol.resolvedBounds.forEach { it.coneType.forEachClassId(f) }
+        is ConeLookupTagBasedType -> fullyExpandedType().classId?.let(f)
+        is ConeStubTypeForTypeVariableInSubtyping,
+        is ConeTypeVariableType,
+        is ConeIntegerLiteralType -> {}
+    }
+}
+
 @OptIn(ExperimentalContracts::class)
 fun ConeKotlinType.hasDiagnosticKind(kind: DiagnosticKind): Boolean {
     contract { returns(true) implies (this@hasDiagnosticKind is ConeErrorType) }
@@ -1155,4 +1170,17 @@ fun canBeEvaluated(expression: FirExpression, allowErrors: Boolean = true): Bool
         is FirEvaluatorResult.ResolutionError -> allowErrors
         else -> false
     }
+}
+
+/**
+ * @return true if the symbol is the constructor of one of 9 array classes (`Array<T>`,
+ * `IntArray`, `FloatArray`, ...) which takes the size and an initializer lambda as parameters.
+ * Such constructors are marked as `inline` but they are not loaded as such because the `inline`
+ * flag is not stored for constructors in the binary metadata. Therefore, we pretend that they
+ * are inline.
+ */
+fun FirFunctionSymbol<*>.isArrayLambdaConstructor(): Boolean {
+    return this is FirConstructorSymbol &&
+            valueParameterSymbols.size == 2 &&
+            resolvedReturnType.isArrayOrPrimitiveArray
 }

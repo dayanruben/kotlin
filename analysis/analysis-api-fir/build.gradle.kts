@@ -13,7 +13,13 @@ plugins {
 }
 
 dependencies {
+    implementation(project(":core:descriptors"))
+    implementation(project(":core:language.targets.jvm"))
+    implementation(project(":compiler:backend.common.jvm"))
     implementation(project(":compiler:ir.tree"))
+    implementation(project(":compiler:frontend"))
+    implementation(project(":compiler:frontend.java"))
+    implementation(project(":compiler:ir.psi2ir"))
     api(project(":compiler:fir:entrypoint"))
     api(project(":analysis:low-level-api-fir"))
     api(project(":analysis:analysis-api"))
@@ -23,7 +29,6 @@ dependencies {
     api(intellijCore())
     implementation(project(":analysis:analysis-api-platform-interface"))
     implementation(project(":analysis:analysis-internal-utils"))
-    implementation(project(":analysis:kt-references"))
     implementation(project(":analysis:symbol-light-classes"))
     implementation(project(":native:native.config"))
     implementation(libs.caffeine)

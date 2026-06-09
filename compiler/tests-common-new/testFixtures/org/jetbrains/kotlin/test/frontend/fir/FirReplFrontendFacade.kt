@@ -7,13 +7,10 @@ package org.jetbrains.kotlin.test.frontend.fir
 
 import com.intellij.openapi.vfs.StandardFileSystems.FILE_PROTOCOL
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.search.ProjectScope.getLibrariesScope
-import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.cli.jvm.compiler.PsiBasedProjectFileSearchScope
 import org.jetbrains.kotlin.cli.jvm.compiler.TopDownAnalyzerFacadeForJVM
 import org.jetbrains.kotlin.cli.jvm.compiler.VfsBasedProjectEnvironment
-import org.jetbrains.kotlin.cli.jvm.compiler.unregisterFinders
 import org.jetbrains.kotlin.cli.pipeline.jvm.JvmFrontendPipelinePhase.createLibraryListForJvm
 import org.jetbrains.kotlin.compiler.plugin.getCompilerExtensions
 import org.jetbrains.kotlin.fir.*
@@ -21,6 +18,7 @@ import org.jetbrains.kotlin.fir.checkers.registerExperimentalCheckers
 import org.jetbrains.kotlin.fir.checkers.registerExtraCommonCheckers
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.session.FirJvmSessionFactory
+import org.jetbrains.kotlin.fir.session.KmpModuleKind
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -147,8 +145,6 @@ open class FirReplFrontendFacade(testServices: TestServices) : FrontendFacade<Fi
         val compilerConfiguration = compilerConfigurationProvider.getCompilerConfiguration(module)
         val project = compilerConfigurationProvider.getProject(module)
 
-        PsiElementFinder.EP.getPoint(project).unregisterFinders<JavaElementFinder>()
-
         val ktFiles = testServices.sourceFileProvider.getKtFilesForSourceFiles(module.files, project)
         val moduleBasedSession = FirJvmSessionFactory.createSourceSession(
             moduleData = moduleData,
@@ -158,7 +154,7 @@ open class FirReplFrontendFacade(testServices: TestServices) : FrontendFacade<Fi
             configuration = compilerConfiguration,
             context = replCompilationEnvironment.jvmSessionFactoryContext,
             needRegisterJavaElementFinder = true,
-            isForLeafHmppModule = false,
+            kmpModuleKind = KmpModuleKind.SingleModule,
         ) {
             if (FirDiagnosticsDirectives.WITH_EXTRA_CHECKERS in module.directives) {
                 registerExtraCommonCheckers()

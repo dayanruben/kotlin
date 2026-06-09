@@ -164,13 +164,11 @@ val mppProjects by extra {
 
 val projectsWithOptInToUnsafeCastFunctionsFromAddToStdLib by extra {
     listOf(
-        ":analysis:analysis-api-fe10",
         ":analysis:analysis-api-fir",
         ":analysis:decompiled:light-classes-for-decompiled",
         ":analysis:symbol-light-classes",
         ":compiler",
         ":compiler:backend.js",
-        ":compiler:light-classes",
         ":jps:jps-common",
         ":js:js.tests",
         ":kotlin-build-common",

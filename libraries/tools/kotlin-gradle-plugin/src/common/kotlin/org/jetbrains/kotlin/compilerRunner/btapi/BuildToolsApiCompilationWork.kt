@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.compilerRunner.btapi.js.JsKlibIncrementalConfigurati
 import org.jetbrains.kotlin.compilerRunner.btapi.js.JsLinkingBuildOperationFactory
 import org.jetbrains.kotlin.compilerRunner.btapi.jvm.JvmBuildOperationFactory
 import org.jetbrains.kotlin.compilerRunner.btapi.jvm.JvmIncrementalConfigurationStrategy
+import org.jetbrains.kotlin.compilerRunner.btapi.metadata.MetadataKlibBuildOperationFactory
 import org.jetbrains.kotlin.compilerRunner.btapi.wasm.WasmKlibBuildOperationFactory
 import org.jetbrains.kotlin.compilerRunner.btapi.wasm.WasmKlibIncrementalConfigurationStrategy
 import org.jetbrains.kotlin.compilerRunner.btapi.wasm.WasmLinkingBuildOperationFactory
@@ -159,7 +160,7 @@ internal abstract class BuildToolsApiCompilationWork @Inject constructor(
         val exceptionReportingKotlinLogger = ExceptionReportingKotlinLogger()
         val printingLogger =
             CapturingDelegatingKotlinLogger(
-                getTaskLogger(taskPath, null, BuildToolsApiCompilationWork::class.java.simpleName, true),
+                getTaskLogger(taskPath, "${workArguments.taskPath} ", BuildToolsApiCompilationWork::class.java.simpleName, true),
                 workArguments.reportingSettings.buildReportMode,
             )
         val log: KotlinLogger = CompositeKotlinLogger(
@@ -301,6 +302,14 @@ private fun createRunner(
         BtaToolchain.WASM_LINKING -> BtaCompilerRunner(
             metrics,
             WasmLinkingBuildOperationFactory(compilerArgs),
+            IncrementalConfigurationStrategy.Default,
+            daemonJvmArgs,
+            compilerArgumentsLogLevel,
+            generateCompilerRefIndex,
+        )
+        BtaToolchain.METADATA -> BtaCompilerRunner(
+            metrics,
+            MetadataKlibBuildOperationFactory(compilerArgs),
             IncrementalConfigurationStrategy.Default,
             daemonJvmArgs,
             compilerArgumentsLogLevel,
