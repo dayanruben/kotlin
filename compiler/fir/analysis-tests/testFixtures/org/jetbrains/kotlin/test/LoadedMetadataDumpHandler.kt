@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.fir.renderer.FirRenderer
 import org.jetbrains.kotlin.fir.resolve.providers.firProvider
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.ir.backend.js.loadWebKlibs
-import org.jetbrains.kotlin.js.resolve.JsPlatformAnalyzerServices
 import org.jetbrains.kotlin.library.loader.KlibPlatformChecker
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -52,7 +51,6 @@ import org.jetbrains.kotlin.test.util.trimTrailingWhitespacesAndRemoveRedundantE
 import org.jetbrains.kotlin.test.utils.MultiModuleInfoDumper
 import org.jetbrains.kotlin.test.utils.withExtension
 import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
-import org.jetbrains.kotlin.wasm.resolve.WasmPlatformAnalyzerServices
 import java.io.File
 
 class JvmLoadedMetadataDumpHandler(testServices: TestServices) : AbstractLoadedMetadataDumpHandler<BinaryArtifacts.Jvm>(
@@ -104,7 +102,7 @@ class KlibJsLoadedMetadataDumpHandler(testServices: TestServices) : AbstractLoad
     override val targetPlatform: TargetPlatform
         get() = JsPlatforms.defaultJsPlatform
     override val platformAnalyzerServices: PlatformDependentAnalyzerServices
-        get() = JsPlatformAnalyzerServices
+        get() = shouldNotBeCalled()
     override val dependencyKind: DependencyKind
         get() = DependencyKind.Binary
 
@@ -141,7 +139,7 @@ class KlibWasmJsLoadedMetadataDumpHandler(testServices: TestServices) : Abstract
     override val targetPlatform: TargetPlatform
         get() = WasmPlatforms.wasmJs
     override val platformAnalyzerServices: PlatformDependentAnalyzerServices
-        get() = WasmPlatformAnalyzerServices
+        get() = shouldNotBeCalled()
     override val dependencyKind: DependencyKind
         get() = DependencyKind.Binary
 

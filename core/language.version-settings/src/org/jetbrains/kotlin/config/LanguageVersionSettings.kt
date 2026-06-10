@@ -17,7 +17,9 @@ sealed class LanguageFeatureBehaviorAfterSinceVersion {
 }
 
 /**
- * @property sinceVersion determines in which Language Version the feature becomes enabled by default
+ * @property sinceVersion
+ * Determines in which Language Version the feature becomes enabled by default. If `null`, then it means LV is
+ * not decided yet. When comparing `sinceVersion` fields, `null` should be considered greater than any version.
  * @property sinceApiVersion determines minimal API Version required for using the feature
  * @property enabledInProgressiveMode
  * If 'true', then this feature will be automatically enabled under '-progressive' mode if `sinceKotlin` is set.
@@ -544,16 +546,13 @@ enum class LanguageFeature(
     InferThrowableTypeParameterToUpperBound(KOTLIN_2_5, "KT-82961"),
 
     EagerLambdaAnalysis(sinceVersion = KOTLIN_2_5, "KT-51107") {
-        fun versionCheck() {
-            sinceVersion?.let {
-                require(CallCompletionRefinementsFor25.sinceVersion != null && CallCompletionRefinementsFor25.sinceVersion <= it)
-                require(UnitConversionsOnArbitraryExpressions.sinceVersion != null && UnitConversionsOnArbitraryExpressions.sinceVersion <= it)
-                require(InferThrowableTypeParameterToUpperBound.sinceVersion != null && InferThrowableTypeParameterToUpperBound.sinceVersion <= it)
-            }
-        }
-
-        init {
-            versionCheck()
+        context(context: CrossFeatureChecksResultsCollector)
+        override fun crossFeatureChecks() {
+            checkEnabledNotEarlierThan(
+                CallCompletionRefinementsFor25,
+                UnitConversionsOnArbitraryExpressions,
+                InferThrowableTypeParameterToUpperBound,
+            )
         }
     },
 
@@ -629,22 +628,9 @@ enum class LanguageFeature(
 
     CompanionBlocksAndExtensions(sinceVersion = null, issue = "KT-11968", forcesPreReleaseBinaries = true, forcesPreReleaseBinariesBefore = KOTLIN_2_5, enabledInLatestLVTests = true),
     ProhibitCallableReferencesToStaticsWithTypeArgumentsOrNullMarkInLhs(sinceVersion = null, enabledInProgressiveMode = true, issue = "KT-84956") {
-        fun companionBlocksVersionCheck() {
-            val companionBlocks = CompanionBlocksAndExtensions
-            if (companionBlocks.sinceVersion != null) {
-                require(sinceVersion != null && sinceVersion > companionBlocks.sinceVersion) {
-                    "Set $this.sinceVersion to ${companionBlocks.sinceVersion} + 1."
-                }
-            }
-            if (sinceVersion != null) {
-                require(companionBlocks.sinceVersion != null) {
-                    "Do not enable $this without $companionBlocks."
-                }
-            }
-        }
-
-        init {
-            companionBlocksVersionCheck()
+        context(context: CrossFeatureChecksResultsCollector)
+        override fun crossFeatureChecks() {
+            checkEnabledLaterThan(CompanionBlocksAndExtensions, sinceVersionMustBeSet = true)
         }
     },
 
@@ -667,7 +653,13 @@ enum class LanguageFeature(
     // K1 support only. We keep it, as it's currently unclear what to do with this feature in K2
     DisableCheckingChangedProgressionsResolve(sinceVersion = null, "KT-49276"),
 
-    CollectionLiterals(sinceVersion = null, issue = "KT-80489", enabledInLatestLVTests = true),
+    CollectionLiteralsBasedAnnotationResolution(sinceVersion = null, issue = "KT-85535", enabledInLatestLVTests = true),
+    CollectionLiterals(sinceVersion = null, issue = "KT-80489", enabledInLatestLVTests = true) {
+        context(context: CrossFeatureChecksResultsCollector)
+        override fun crossFeatureChecks() {
+            checkEnabledNotEarlierThan(CollectionLiteralsBasedAnnotationResolution)
+        }
+    },
     ProperFieldAccessGenerationForFieldAccessShadowedByKotlinProperty(sinceVersion = null, "KT-56386"),
     IrCrossModuleInlinerBeforeKlibSerialization(sinceVersion = null, sinceApiVersion = ApiVersion.KOTLIN_2_3, forcesPreReleaseBinaries = true, issue = "KT-79717"),
     UnnamedLocalVariables(sinceVersion = null, forcesPreReleaseBinaries = false, issue = "KT-74809"),
@@ -681,6 +673,7 @@ enum class LanguageFeature(
     TreatProvideDelegateAsConventionName(sinceVersion = null, "KT-83538"),
     ExportKDocDocumentationToKlib(sinceVersion = null, "KT-83921"),
     FullValueClasses(sinceVersion = null, "KT-84904"),
+    JsExportingSuspendLambdas(sinceVersion = null, "KT-80188"),
     ;
 
     constructor(
@@ -725,6 +718,10 @@ enum class LanguageFeature(
      * Please, see [enabledInProgressiveMode] in [LanguageFeature] for more details.
      */
     val actuallyEnabledInProgressiveMode: Boolean get() = enabledInProgressiveMode && sinceVersion != null
+
+    context(context: CrossFeatureChecksResultsCollector)
+    internal open fun crossFeatureChecks() {
+    }
 
     companion object {
         @JvmStatic

@@ -491,6 +491,7 @@ tasks {
 
     testLifecycleTask("nativeImageCompilerTest") {
         dependsOn(":kotlin-compiler-native-image:nativeImageBoxTest")
+        dependsOn(":kotlin-compiler-native-image:nativeImageSmokeTest")
     }
 
     testLifecycleTask("jsCompilerTest") {
@@ -549,6 +550,7 @@ tasks {
             dependsOn(":kotlin-native:common:env:check")
             dependsOn(":kotlin-native:common:files:check")
             dependsOn(":kotlin-native:libclangInterop:check")
+            dependsOn(":kotlin-native:libllvmext:check")
             dependsOn(":kotlin-native:llvmInterop:check")
         }
     }
@@ -612,6 +614,7 @@ tasks {
         dependsOn(":core:language.targets:check")
         dependsOn(":core:language.targets.jvm:check")
         dependsOn(":core:language.version-settings:check")
+        dependsOn(":core:language.version-settings:test")
     }
 
     testLifecycleTask("miscTest") {

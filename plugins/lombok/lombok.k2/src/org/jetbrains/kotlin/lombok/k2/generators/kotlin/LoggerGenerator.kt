@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.lombok.k2.generators.kotlin
 
-import org.jetbrains.kotlin.GeneratedDeclarationKey
 import org.jetbrains.kotlin.descriptors.isObject
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.caches.FirCache
@@ -25,7 +24,6 @@ import org.jetbrains.kotlin.fir.extensions.FirDeclarationPredicateRegistrar
 import org.jetbrains.kotlin.fir.extensions.MemberGenerationContext
 import org.jetbrains.kotlin.fir.extensions.NestedClassGenerationContext
 import org.jetbrains.kotlin.fir.extensions.predicate.DeclarationPredicate
-import org.jetbrains.kotlin.fir.plugin.createCompanionObject
 import org.jetbrains.kotlin.fir.plugin.createDefaultPrivateConstructor
 import org.jetbrains.kotlin.fir.plugin.createMemberProperty
 import org.jetbrains.kotlin.fir.references.builder.buildResolvedNamedReference
@@ -33,10 +31,8 @@ import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.toClassSymbol
 import org.jetbrains.kotlin.fir.resolve.toSymbol
-import org.jetbrains.kotlin.fir.scopes.processAllClassifiers
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.*
-import org.jetbrains.kotlin.fir.toFirResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
 import org.jetbrains.kotlin.fir.types.classId
 import org.jetbrains.kotlin.fir.types.constructClassLikeType
@@ -45,13 +41,14 @@ import org.jetbrains.kotlin.fir.types.lowerBoundIfFlexible
 import org.jetbrains.kotlin.fir.types.resolvedType
 import org.jetbrains.kotlin.lombok.k2.config.ConeLombokAnnotations
 import org.jetbrains.kotlin.lombok.k2.config.lombokService
+import org.jetbrains.kotlin.lombok.k2.generators.LombokDeclarationKey
 import org.jetbrains.kotlin.lombok.utils.LombokNames
 import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.name.SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.utils.addIfNotNull
 
-class LoggerGeneratorKey(val logAnnotation: FirAnnotation) : GeneratedDeclarationKey()
+class LoggerGeneratorKey(val logAnnotation: FirAnnotation) : LombokDeclarationKey()
 
 /**
  * Checks if the declaration origin is a logger annotation.
@@ -91,7 +88,18 @@ class LoggerGenerator(session: FirSession) : FirDeclarationGenerationExtension(s
     }
 
     private val companionObjectsCache: FirCache<FirClassSymbol<*>, FirRegularClassSymbol?, NestedClassGenerationContext> =
-        session.firCachesFactory.createCache(::initializeCompanionObjectIfNeeded)
+        session.firCachesFactory.createCache { owner: FirClassSymbol<*>, context: NestedClassGenerationContext ->
+            initializeCompanionObjectIfNeeded(owner, context) {
+                // Don't generate the companion if the `owner` isn't marked with `@Log`, `@Slf4j` or another annotation
+                // or if config specifies the logger mustn't be static
+                val firstLog = session.lombokService.getLogs(owner).firstOrNull()
+                if (firstLog == null || !session.lombokService.config.logFieldIsStatic) {
+                    return@initializeCompanionObjectIfNeeded null
+                }
+
+                return@initializeCompanionObjectIfNeeded LoggerGeneratorKey(firstLog.annotation)
+            }
+        }
     private val logPropertiesCache: FirCache<FirClassSymbol<*>, FirPropertySymbol?, MemberGenerationContext> =
         session.firCachesFactory.createCache(::initializeLogPropertyIfNeeded)
 
@@ -110,48 +118,17 @@ class LoggerGenerator(session: FirSession) : FirDeclarationGenerationExtension(s
         return companionObjectsCache.getValue(owner, context)
     }
 
-    private fun initializeCompanionObjectIfNeeded(owner: FirClassSymbol<*>, context: NestedClassGenerationContext): FirRegularClassSymbol? {
-        // Ignore local classes and anonymous objects to prevent potential exceptions
-        if (owner.isLocal) {
-            return null
-        }
-
-        // Check for already existing companion or normal objects
-        if (owner.classKind.isObject) {
-            return null
-        }
-
-        var companionAlreadyExists = false
-        context.declaredScope?.processAllClassifiers {
-            companionAlreadyExists = companionAlreadyExists || (it as? FirClassLikeSymbol)?.isCompanion == true
-        }
-        if (companionAlreadyExists) {
-            return null
-        }
-
-        // Don't generate the companion if the `owner` isn't marked with `@Log`, `@Slf4j` or another annotation
-        // or if config specifies the logger mustn't be static
-        val firstLog = session.lombokService.getLogs(owner).firstOrNull()
-        if (firstLog == null || !session.lombokService.config.logFieldIsStatic) {
-            return null
-        }
-
-        return createCompanionObject(owner, LoggerGeneratorKey(firstLog.annotation)).symbol
-    }
-
     override fun getCallableNamesForClass(classSymbol: FirClassSymbol<*>, context: MemberGenerationContext): Set<Name> {
         return buildSet {
-            if (classSymbol.origin.isLogger()) {
-                add(SpecialNames.INIT) // Generated companion needs a constructor
+            if (classSymbol.needsConstructorIfGeneratedCompanion<LoggerGeneratorKey>()) {
+                add(SpecialNames.INIT)
             }
             addIfNotNull(logPropertiesCache.getValue(classSymbol, context)?.name)
         }
     }
 
     override fun generateConstructors(context: MemberGenerationContext): List<FirConstructorSymbol> {
-        val origin = (context.owner.origin as? FirDeclarationOrigin.Plugin)?.key as? LoggerGeneratorKey ?: return emptyList()
-        val constructor = createDefaultPrivateConstructor(context.owner, origin)
-        return listOf(constructor.symbol)
+        return listOfNotNull(createConstructorIfGeneratedCompanion<LoggerGeneratorKey>(context.owner))
     }
 
     override fun generateProperties(callableId: CallableId, context: MemberGenerationContext?): List<FirPropertySymbol> {
@@ -230,21 +207,8 @@ class LoggerGenerator(session: FirSession) : FirDeclarationGenerationExtension(s
             visibility = log.visibility
         }.also { logProperty ->
             if (config.logFieldIsStatic) {
-                // Add `@JvmStatic` annotation call
                 logProperty.replaceAnnotations(
-                    listOf(
-                        buildAnnotationCall {
-                            annotationTypeRef =
-                                JvmStandardClassIds.Annotations.JvmStatic.constructClassLikeType().toFirResolvedTypeRef()
-                            calleeReference = buildResolvedNamedReference {
-                                name = JvmStandardClassIds.Annotations.JvmStatic.shortClassName
-                                resolvedSymbol =
-                                    session.symbolProvider.getClassLikeSymbolByClassId(JvmStandardClassIds.Annotations.JvmStatic)
-                                        ?: return null
-                            }
-                            containingDeclarationSymbol = logProperty.symbol
-                        }
-                    )
+                    listOf(logProperty.symbol.tryBuildingJvmStaticAnnotationCall(session) ?: return null)
                 )
             }
 

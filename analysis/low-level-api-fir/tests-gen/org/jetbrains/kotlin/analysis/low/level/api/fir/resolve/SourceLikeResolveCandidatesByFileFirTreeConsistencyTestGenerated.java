@@ -1196,6 +1196,12 @@ public class SourceLikeResolveCandidatesByFileFirTreeConsistencyTestGenerated ex
     }
 
     @Test
+    @TestMetadata("assignOnObject.kt")
+    public void testAssignOnObject() {
+      run("assignOnObject.kt");
+    }
+
+    @Test
     @TestMetadata("augmentedAssignment.kt")
     public void testAugmentedAssignment() {
       run("augmentedAssignment.kt");
@@ -1253,6 +1259,18 @@ public class SourceLikeResolveCandidatesByFileFirTreeConsistencyTestGenerated ex
     @TestMetadata("unary.kt")
     public void testUnary() {
       run("unary.kt");
+    }
+
+    @Test
+    @TestMetadata("unaryOnComplexLiterals.kt")
+    public void testUnaryOnComplexLiterals() {
+      run("unaryOnComplexLiterals.kt");
+    }
+
+    @Test
+    @TestMetadata("unaryOnLiterals.kt")
+    public void testUnaryOnLiterals() {
+      run("unaryOnLiterals.kt");
     }
 
     @Test
