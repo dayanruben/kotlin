@@ -243,6 +243,8 @@ include(
     ":dependencies:android-sdk",
     ":dependencies:tools-jar-api",
     ":dependencies:intellij-core",
+    ":dependencies:intellij-java-psi-api",
+    ":dependencies:intellij-core-implementation",
     ":dependencies:bootstrap:kotlin-stdlib-bootstrap",
     ":dependencies:bootstrap:kotlin-build-tools-api-bootstrap",
     ":dependencies:bootstrap:kotlin-build-tools-impl-bootstrap",
@@ -600,6 +602,15 @@ include(
 )
 
 include(
+    ":prepare:analysis-api:kotlin-analysis-api",
+    ":prepare:analysis-api:kotlin-analysis-api-surface",
+    ":prepare:analysis-api:kotlin-analysis-api-platform-interface",
+    ":prepare:analysis-api:kotlin-analysis-api-implementation",
+    ":prepare:analysis-api:kotlin-analysis-api-intellij-api-surface-components",
+    ":prepare:analysis-api:kotlin-analysis-api-intellij-implementation-components",
+)
+
+include(
     ":compiler:build-tools:kotlin-build-tools-api",
     ":compiler:build-tools:kotlin-build-tools-impl",
     ":compiler:build-tools:kotlin-build-tools-compat",
@@ -683,7 +694,6 @@ include(
     ":analysis:decompiled:decompiler-js",
     ":analysis:decompiled:decompiler-native",
     ":analysis:decompiled:light-classes-for-decompiled",
-    ":prepare:analysis-api-test-framework",
     ":tools:ide-plugin-dependencies-validator"
 )
 

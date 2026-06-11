@@ -121,6 +121,7 @@ val irCompilerModules = arrayOf(
  * Modules of JVM backend
  */
 val jvmCompilerModules = arrayOf(
+    ":compiler:backend.common.jvm",
     ":compiler:backend",
     ":compiler:backend.jvm",
     ":compiler:backend.jvm.lower",
@@ -178,6 +179,17 @@ val irCompilerModulesForIDE = arrayOf(
     ":compiler:ir.validation",
 ).also { extra["irCompilerModulesForIDE"] = it }
 
+val analysisApiSurfaceDependencies by extra {
+    listOf(
+        ":core:names",
+        ":core:language.model",
+        ":core:language.targets",
+        ":core:language.targets.jvm",
+        ":core:language.version-settings",
+        ":compiler:psi:psi-api",
+    )
+}
+
 val cliCompilerModules = arrayOf(
     ":compiler:arguments.common",
     ":compiler:cli-base",
@@ -225,17 +237,29 @@ extra["compilerModules"] =
     cliCompilerModules +
     ":analysis:light-classes-base"
 
+val analysisApiArtifacts by extra {
+    listOf(
+        ":prepare:analysis-api:kotlin-analysis-api",
+        ":prepare:analysis-api:kotlin-analysis-api-surface",
+        ":prepare:analysis-api:kotlin-analysis-api-platform-interface",
+        ":prepare:analysis-api:kotlin-analysis-api-implementation",
+        ":prepare:analysis-api:kotlin-analysis-api-intellij-api-surface-components",
+        ":prepare:analysis-api:kotlin-analysis-api-intellij-implementation-components",
+    )
+}
+
 /**
  * An array of projects used in the IntelliJ Kotlin Plugin.
  *
  * Experimental declarations from Kotlin stdlib cannot be used in those projects to avoid stdlib binary compatibility problems.
  * See KT-62510 for details.
  */
-val projectsUsedInIntelliJKotlinPlugin =
+val projectsDependingOnStableStdlib =
     fe10CompilerModules +
             commonCompilerModules +
             firCompilerModules +
             irCompilerModulesForIDE +
+            analysisApiArtifacts.toTypedArray() +
             analysisApiModules +
             cliCompilerModules +
             jvmCompilerModules + // used by K1 plugin
@@ -331,7 +355,7 @@ val projectsUsedInIntelliJKotlinPlugin =
                 ":analysis:analysis-tools:deprecated-k1-frontend-internals-for-ide-generated",
             )
 
-extra["projectsUsedInIntelliJKotlinPlugin"] = projectsUsedInIntelliJKotlinPlugin
+extra["projectsDependingOnStableStdlib"] = projectsDependingOnStableStdlib
 
 // They are embedded just because we don't publish those dependencies as separate Maven artifacts (yet)
 extra["kotlinJpsPluginEmbeddedDependencies"] = listOf(

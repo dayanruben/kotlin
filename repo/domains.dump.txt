@@ -121,6 +121,7 @@ AnalysisApi:
  - compiler/psi/psi-frontend-utils
  - compiler/psi/psi-impl
  - compiler/psi/psi-utils
+ - prepare/analysis-api
 
 SwiftExport:
  - native/swift
@@ -177,7 +178,6 @@ Maven:
  - libraries/tools/maven-archetypes
 
 IntelliJ:
- - prepare/analysis-api-test-framework
  - prepare/ide-plugin-dependencies
 
 BuildInfrastructure:
