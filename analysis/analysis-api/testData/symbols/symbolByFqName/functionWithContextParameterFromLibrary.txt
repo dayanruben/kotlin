@@ -1,12 +1,10 @@
 KaNamedFunctionSymbol:
   annotations: []
   callableId: one/foo
-  compilerVisibility: Public
   contextParameters: [
     KaContextParameterSymbol:
       annotations: []
       callableId: null
-      compilerVisibility: Public
       contextReceivers: []
       isActual: false
       isCompanion: false
@@ -28,12 +26,11 @@ KaNamedFunctionSymbol:
       getContainingFileSymbol: null
       getContainingJvmClassName: one.LibraryKt
       getContainingModule: KaLibraryModule "Library library"
-      deprecationStatus: null
+      deprecation: null
       importableFqName: null
     KaContextParameterSymbol:
       annotations: []
       callableId: null
-      compilerVisibility: Public
       contextReceivers: []
       isActual: false
       isCompanion: false
@@ -55,7 +52,7 @@ KaNamedFunctionSymbol:
       getContainingFileSymbol: null
       getContainingJvmClassName: one.LibraryKt
       getContainingModule: KaLibraryModule "Library library"
-      deprecationStatus: null
+      deprecation: null
       importableFqName: null
   ]
   contextReceivers: [
@@ -103,6 +100,6 @@ KaNamedFunctionSymbol:
   getContainingJvmClassName: one.LibraryKt
   canBeOperator: false
   getContainingModule: KaLibraryModule "Library library"
-  deprecationStatus: null
+  deprecation: null
   returnValueStatus: Unspecified
   importableFqName: one.foo

@@ -6,7 +6,6 @@ KaPropertyGetterSymbol:
       psi: KtAnnotationEntry
   ]
   callableId: null
-  compilerVisibility: Public
   contextReceivers: []
   hasStableParameterNames: true
   isActual: false
@@ -26,7 +25,6 @@ KaPropertyGetterSymbol:
         psi: KtAnnotationEntry
     ]
     callableId: null
-    compilerVisibility: Public
     contextReceivers: []
     isActual: false
     isCompanion: false
@@ -52,7 +50,7 @@ KaPropertyGetterSymbol:
     getContainingFileSymbol: KaFileSymbol(getterWithReceiverAndAnnotations.kt)
     getContainingJvmClassName: GetterWithReceiverAndAnnotationsKt
     getContainingModule: KaSourceModule "Sources of main"
-    deprecationStatus: null
+    deprecation: null
     importableFqName: null
   returnType: KaUsualClassType:
     annotations: []
@@ -63,5 +61,5 @@ KaPropertyGetterSymbol:
   getContainingFileSymbol: KaFileSymbol(getterWithReceiverAndAnnotations.kt)
   getContainingJvmClassName: GetterWithReceiverAndAnnotationsKt
   getContainingModule: KaSourceModule "Sources of main"
-  deprecationStatus: null
+  deprecation: null
   importableFqName: null

@@ -1,7 +1,6 @@
 KaConstructorSymbol:
   annotations: []
   callableId: null
-  compilerVisibility: Public
   containingClassId: one/Anno
   contextReceivers: []
   hasStableParameterNames: true
@@ -24,14 +23,12 @@ KaConstructorSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
-      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: KaKotlinPropertySymbol:
         annotations: []
         backingFieldSymbol: KaBackingFieldSymbol:
           annotations: []
           callableId: null
-          compilerVisibility: Private
           contextReceivers: []
           isActual: false
           isCompanion: false
@@ -59,16 +56,14 @@ KaConstructorSymbol:
           getContainingFileSymbol: KaFileSymbol(propertyFromAnnotationWithVarargAndDefaultValueJs.kt)
           getContainingJvmClassName: null
           getContainingModule: KaSourceModule "Sources of main"
-          deprecationStatus: null
+          deprecation: null
           importableFqName: null
         callableId: one/Anno.value
-        compilerVisibility: Public
         contextParameters: []
         contextReceivers: []
         getter: KaPropertyGetterSymbol:
           annotations: []
           callableId: null
-          compilerVisibility: Public
           contextReceivers: []
           hasStableParameterNames: true
           isActual: false
@@ -96,7 +91,7 @@ KaConstructorSymbol:
           getContainingFileSymbol: KaFileSymbol(propertyFromAnnotationWithVarargAndDefaultValueJs.kt)
           getContainingJvmClassName: null
           getContainingModule: KaSourceModule "Sources of main"
-          deprecationStatus: null
+          deprecation: null
           importableFqName: null
         hasBackingField: true
         hasGetter: true
@@ -133,7 +128,7 @@ KaConstructorSymbol:
         getContainingFileSymbol: KaFileSymbol(propertyFromAnnotationWithVarargAndDefaultValueJs.kt)
         getContainingJvmClassName: null
         getContainingModule: KaSourceModule "Sources of main"
-        deprecationStatus: null
+        deprecation: null
         javaGetterName: getValue
         javaSetterName: null
         isInline: false
@@ -164,14 +159,14 @@ KaConstructorSymbol:
       getContainingFileSymbol: KaFileSymbol(propertyFromAnnotationWithVarargAndDefaultValueJs.kt)
       getContainingJvmClassName: null
       getContainingModule: KaSourceModule "Sources of main"
-      deprecationStatus: null
+      deprecation: null
       importableFqName: null
   ]
   visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(propertyFromAnnotationWithVarargAndDefaultValueJs.kt)
   getContainingJvmClassName: null
   getContainingModule: KaSourceModule "Sources of main"
-  deprecationStatus: null
+  deprecation: null
   importableFqName: one.Anno
 
 KaNamedClassSymbol:
@@ -179,7 +174,6 @@ KaNamedClassSymbol:
   classId: one/Anno
   classKind: ANNOTATION_CLASS
   companionObject: null
-  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -202,6 +196,6 @@ KaNamedClassSymbol:
   visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(propertyFromAnnotationWithVarargAndDefaultValueJs.kt)
   getContainingModule: KaSourceModule "Sources of main"
-  annotationApplicableTargets: [CLASS, ANNOTATION_CLASS, PROPERTY, FIELD, LOCAL_VARIABLE, VALUE_PARAMETER, CONSTRUCTOR, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER, BACKING_FIELD]
-  deprecationStatus: null
+  applicableAnnotationTargets: [CLASS, ANNOTATION_CLASS, PROPERTY, FIELD, LOCAL_VARIABLE, VALUE_PARAMETER, CONSTRUCTOR, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER]
+  deprecation: null
   importableFqName: one.Anno

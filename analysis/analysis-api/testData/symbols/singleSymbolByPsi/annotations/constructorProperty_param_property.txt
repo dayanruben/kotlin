@@ -8,7 +8,6 @@ KaValueParameterSymbol:
       psi: KtAnnotationEntry
   ]
   callableId: null
-  compilerVisibility: Public
   contextReceivers: []
   generatedPrimaryConstructorProperty: KaKotlinPropertySymbol:
     annotations: [
@@ -27,7 +26,6 @@ KaValueParameterSymbol:
           psi: KtAnnotationEntry
       ]
       callableId: null
-      compilerVisibility: Private
       contextReceivers: []
       isActual: false
       isCompanion: false
@@ -55,16 +53,14 @@ KaValueParameterSymbol:
       getContainingFileSymbol: KaFileSymbol(constructorProperty_param_property.kt)
       getContainingJvmClassName: MyClass
       getContainingModule: KaSourceModule "Sources of main"
-      deprecationStatus: null
+      deprecation: null
       importableFqName: null
     callableId: /MyClass.prop
-    compilerVisibility: Public
     contextParameters: []
     contextReceivers: []
     getter: KaPropertyGetterSymbol:
       annotations: []
       callableId: null
-      compilerVisibility: Public
       contextReceivers: []
       hasStableParameterNames: true
       isActual: false
@@ -92,7 +88,7 @@ KaValueParameterSymbol:
       getContainingFileSymbol: KaFileSymbol(constructorProperty_param_property.kt)
       getContainingJvmClassName: MyClass
       getContainingModule: KaSourceModule "Sources of main"
-      deprecationStatus: null
+      deprecation: null
       importableFqName: null
     hasBackingField: true
     hasGetter: true
@@ -122,7 +118,6 @@ KaValueParameterSymbol:
     setter: KaPropertySetterSymbol:
       annotations: []
       callableId: null
-      compilerVisibility: Public
       contextReceivers: []
       hasStableParameterNames: true
       isActual: false
@@ -139,7 +134,6 @@ KaValueParameterSymbol:
       parameter: KaValueParameterSymbol:
         annotations: []
         callableId: null
-        compilerVisibility: Public
         contextReceivers: []
         generatedPrimaryConstructorProperty: null
         hasDeclaredDefaultValue: false
@@ -168,7 +162,7 @@ KaValueParameterSymbol:
         getContainingFileSymbol: KaFileSymbol(constructorProperty_param_property.kt)
         getContainingJvmClassName: null
         getContainingModule: KaSourceModule "Sources of main"
-        deprecationStatus: null
+        deprecation: null
         importableFqName: null
       receiverParameter: null
       returnType: KaUsualClassType:
@@ -179,7 +173,6 @@ KaValueParameterSymbol:
         KaValueParameterSymbol:
           annotations: []
           callableId: null
-          compilerVisibility: Public
           contextReceivers: []
           generatedPrimaryConstructorProperty: null
           hasDeclaredDefaultValue: false
@@ -208,7 +201,7 @@ KaValueParameterSymbol:
           getContainingFileSymbol: KaFileSymbol(constructorProperty_param_property.kt)
           getContainingJvmClassName: null
           getContainingModule: KaSourceModule "Sources of main"
-          deprecationStatus: null
+          deprecation: null
           importableFqName: null
       ]
       visibility: PUBLIC
@@ -219,7 +212,7 @@ KaValueParameterSymbol:
       getContainingFileSymbol: KaFileSymbol(constructorProperty_param_property.kt)
       getContainingJvmClassName: MyClass
       getContainingModule: KaSourceModule "Sources of main"
-      deprecationStatus: null
+      deprecation: null
       importableFqName: null
     typeParameters: []
     visibility: PUBLIC
@@ -230,7 +223,7 @@ KaValueParameterSymbol:
     getContainingFileSymbol: KaFileSymbol(constructorProperty_param_property.kt)
     getContainingJvmClassName: MyClass
     getContainingModule: KaSourceModule "Sources of main"
-    deprecationStatus: null
+    deprecation: null
     javaGetterName: getProp
     javaSetterName: setProp
     isInline: false
@@ -261,5 +254,5 @@ KaValueParameterSymbol:
   getContainingFileSymbol: KaFileSymbol(constructorProperty_param_property.kt)
   getContainingJvmClassName: MyClass
   getContainingModule: KaSourceModule "Sources of main"
-  deprecationStatus: null
+  deprecation: null
   importableFqName: null

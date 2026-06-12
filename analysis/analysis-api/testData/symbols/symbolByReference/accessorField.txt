@@ -6,7 +6,6 @@ KaBackingFieldSymbol:
       psi: KtAnnotationEntry
   ]
   callableId: null
-  compilerVisibility: Private
   contextReceivers: []
   isActual: false
   isCompanion: false
@@ -30,5 +29,5 @@ KaBackingFieldSymbol:
   getContainingFileSymbol: KaFileSymbol(accessorField.kt)
   getContainingJvmClassName: AccessorFieldKt
   getContainingModule: KaSourceModule "Sources of main"
-  deprecationStatus: null
+  deprecation: null
   importableFqName: null

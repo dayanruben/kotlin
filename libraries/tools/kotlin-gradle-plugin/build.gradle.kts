@@ -692,7 +692,18 @@ tasks.withType<Test>().configureEach {
     testClassesDirs = functionalTestSourceSet.output.classesDirs
     classpath = functionalTestSourceSet.runtimeClasspath
     workingDir = projectDir
-    dependsOnKotlinGradlePluginInstall()
+
+    // Publish Kotlin build artifacts to <root>/build/repo and pass its path to the test JVM.
+    // Content is tracked via classpath normalization (jar/metadata hashes, no absolute paths).
+    // Both dev and CI use the same path — no maven.repo.local involved.
+    dependsOnKotlinGradlePluginPublishToBuildRepo()
+    val buildRepoDir = rootProject.layout.buildDirectory.dir("repo")
+    addClasspathDirectoryProperty(
+        directory = buildRepoDir,
+        classpath = project.fileTree(buildRepoDir) { exclude("**/*.md5", "**/*.sha1") },
+        property = "kotlinBuildRepo",
+    )
+
     androidSdkProvisioner {
         provideToThisTaskAsSystemProperty(ProvisioningType.SDK)
         dependsOn(acceptLicensesTask)
@@ -713,19 +724,6 @@ tasks.withType<Test>().configureEach {
         rootProject.layout.projectDirectory.file("kotlin-native/konan/konan.properties"),
         "konanProperties"
     )
-
-    //region custom Maven Local directory
-    // The Maven Local dir that Gradle uses can be customised via system property `maven.repo.local`.
-    // The functional tests require artifacts are published to Maven Local.
-    // To make sure the tests uses the same `maven.repo.local` as is configured
-    // in the buildscript, forward the value of `maven.repo.local` into the test process.
-    val mavenRepoLocal = providers.systemProperty("maven.repo.local").orNull
-    if (mavenRepoLocal != null) {
-        // Only set `maven.repo.local` if it's present in the buildscript,
-        // to avoid `maven.repo.local` being `null`.
-        systemProperty("maven.repo.local", mavenRepoLocal)
-    }
-    //endregion
 }
 
 dependencies {

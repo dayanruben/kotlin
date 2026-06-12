@@ -4,7 +4,6 @@ KaNamedFunctionSymbol:
       psi: KtAnnotationEntry
   ]
   callableId: /twoContracts
-  compilerVisibility: Public
   contextParameters: []
   contextReceivers: []
   contractEffects: [
@@ -24,7 +23,6 @@ KaNamedFunctionSymbol:
                     KaValueParameterSymbol:
                       annotations: []
                       callableId: null
-                      compilerVisibility: Public
                       contextReceivers: []
                       generatedPrimaryConstructorProperty: null
                       hasDeclaredDefaultValue: false
@@ -53,7 +51,7 @@ KaNamedFunctionSymbol:
                       getContainingFileSymbol: KaFileSymbol(twoContracts.kt)
                       getContainingJvmClassName: TwoContractsKt
                       getContainingModule: KaSourceModule "Sources of main"
-                      deprecationStatus: null
+                      deprecation: null
                       importableFqName: null
               isNegated: false
           right:
@@ -64,7 +62,6 @@ KaNamedFunctionSymbol:
                     KaValueParameterSymbol:
                       annotations: []
                       callableId: null
-                      compilerVisibility: Public
                       contextReceivers: []
                       generatedPrimaryConstructorProperty: null
                       hasDeclaredDefaultValue: false
@@ -93,7 +90,7 @@ KaNamedFunctionSymbol:
                       getContainingFileSymbol: KaFileSymbol(twoContracts.kt)
                       getContainingJvmClassName: TwoContractsKt
                       getContainingModule: KaSourceModule "Sources of main"
-                      deprecationStatus: null
+                      deprecation: null
                       importableFqName: null
               isNegated: true
           operation: AND
@@ -104,7 +101,6 @@ KaNamedFunctionSymbol:
             KaValueParameterSymbol:
               annotations: []
               callableId: null
-              compilerVisibility: Public
               contextReceivers: []
               generatedPrimaryConstructorProperty: null
               hasDeclaredDefaultValue: false
@@ -138,9 +134,9 @@ KaNamedFunctionSymbol:
               getContainingFileSymbol: KaFileSymbol(twoContracts.kt)
               getContainingJvmClassName: TwoContractsKt
               getContainingModule: KaSourceModule "Sources of main"
-              deprecationStatus: null
+              deprecation: null
               importableFqName: null
-      occurrencesRange: EXACTLY_ONCE
+      invocationKind: EXACTLY_ONCE
   ]
   hasStableParameterNames: true
   isActual: false
@@ -170,7 +166,6 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
-      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDeclaredDefaultValue: false
@@ -199,12 +194,11 @@ KaNamedFunctionSymbol:
       getContainingFileSymbol: KaFileSymbol(twoContracts.kt)
       getContainingJvmClassName: TwoContractsKt
       getContainingModule: KaSourceModule "Sources of main"
-      deprecationStatus: null
+      deprecation: null
       importableFqName: null
     KaValueParameterSymbol:
       annotations: []
       callableId: null
-      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDeclaredDefaultValue: false
@@ -233,12 +227,11 @@ KaNamedFunctionSymbol:
       getContainingFileSymbol: KaFileSymbol(twoContracts.kt)
       getContainingJvmClassName: TwoContractsKt
       getContainingModule: KaSourceModule "Sources of main"
-      deprecationStatus: null
+      deprecation: null
       importableFqName: null
     KaValueParameterSymbol:
       annotations: []
       callableId: null
-      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDeclaredDefaultValue: false
@@ -272,7 +265,7 @@ KaNamedFunctionSymbol:
       getContainingFileSymbol: KaFileSymbol(twoContracts.kt)
       getContainingJvmClassName: TwoContractsKt
       getContainingModule: KaSourceModule "Sources of main"
-      deprecationStatus: null
+      deprecation: null
       importableFqName: null
   ]
   visibility: PUBLIC
@@ -280,6 +273,6 @@ KaNamedFunctionSymbol:
   getContainingJvmClassName: TwoContractsKt
   canBeOperator: false
   getContainingModule: KaSourceModule "Sources of main"
-  deprecationStatus: null
+  deprecation: null
   returnValueStatus: Unspecified
   importableFqName: twoContracts

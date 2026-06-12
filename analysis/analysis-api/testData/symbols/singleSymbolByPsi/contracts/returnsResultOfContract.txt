@@ -4,7 +4,6 @@ KaNamedFunctionSymbol:
       psi: KtAnnotationEntry
   ]
   callableId: /myLet
-  compilerVisibility: Public
   contextParameters: []
   contextReceivers: []
   contractEffects: [
@@ -15,7 +14,6 @@ KaNamedFunctionSymbol:
             KaValueParameterSymbol:
               annotations: []
               callableId: null
-              compilerVisibility: Public
               contextReceivers: []
               generatedPrimaryConstructorProperty: null
               hasDeclaredDefaultValue: false
@@ -51,9 +49,9 @@ KaNamedFunctionSymbol:
               getContainingFileSymbol: KaFileSymbol(returnsResultOfContract.kt)
               getContainingJvmClassName: ReturnsResultOfContractKt
               getContainingModule: KaSourceModule "Sources of main"
-              deprecationStatus: null
+              deprecation: null
               importableFqName: null
-      occurrencesRange: EXACTLY_ONCE
+      invocationKind: EXACTLY_ONCE
     KaContractReturnsResultOfEffectDeclaration:
       valueParameterReference:
         KaContractExplicitParameterValue:
@@ -61,7 +59,6 @@ KaNamedFunctionSymbol:
             KaValueParameterSymbol:
               annotations: []
               callableId: null
-              compilerVisibility: Public
               contextReceivers: []
               generatedPrimaryConstructorProperty: null
               hasDeclaredDefaultValue: false
@@ -97,7 +94,7 @@ KaNamedFunctionSymbol:
               getContainingFileSymbol: KaFileSymbol(returnsResultOfContract.kt)
               getContainingJvmClassName: ReturnsResultOfContractKt
               getContainingModule: KaSourceModule "Sources of main"
-              deprecationStatus: null
+              deprecation: null
               importableFqName: null
   ]
   hasStableParameterNames: true
@@ -121,7 +118,6 @@ KaNamedFunctionSymbol:
   receiverParameter: KaReceiverParameterSymbol:
     annotations: []
     callableId: null
-    compilerVisibility: Public
     contextReceivers: []
     isActual: false
     isCompanion: false
@@ -143,7 +139,7 @@ KaNamedFunctionSymbol:
     getContainingFileSymbol: KaFileSymbol(returnsResultOfContract.kt)
     getContainingJvmClassName: ReturnsResultOfContractKt
     getContainingModule: KaSourceModule "Sources of main"
-    deprecationStatus: null
+    deprecation: null
     importableFqName: null
   returnType: KaTypeParameterType:
     annotations: []
@@ -151,7 +147,6 @@ KaNamedFunctionSymbol:
   typeParameters: [
     KaTypeParameterSymbol:
       annotations: []
-      compilerVisibility: Local
       isActual: false
       isExpect: false
       isExternal: false
@@ -165,11 +160,10 @@ KaNamedFunctionSymbol:
       visibility: LOCAL
       getContainingFileSymbol: KaFileSymbol(returnsResultOfContract.kt)
       getContainingModule: KaSourceModule "Sources of main"
-      deprecationStatus: null
+      deprecation: null
       importableFqName: null
     KaTypeParameterSymbol:
       annotations: []
-      compilerVisibility: Local
       isActual: false
       isExpect: false
       isExternal: false
@@ -183,14 +177,13 @@ KaNamedFunctionSymbol:
       visibility: LOCAL
       getContainingFileSymbol: KaFileSymbol(returnsResultOfContract.kt)
       getContainingModule: KaSourceModule "Sources of main"
-      deprecationStatus: null
+      deprecation: null
       importableFqName: null
   ]
   valueParameters: [
     KaValueParameterSymbol:
       annotations: []
       callableId: null
-      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDeclaredDefaultValue: false
@@ -226,7 +219,7 @@ KaNamedFunctionSymbol:
       getContainingFileSymbol: KaFileSymbol(returnsResultOfContract.kt)
       getContainingJvmClassName: ReturnsResultOfContractKt
       getContainingModule: KaSourceModule "Sources of main"
-      deprecationStatus: null
+      deprecation: null
       importableFqName: null
   ]
   visibility: PUBLIC
@@ -234,6 +227,6 @@ KaNamedFunctionSymbol:
   getContainingJvmClassName: ReturnsResultOfContractKt
   canBeOperator: false
   getContainingModule: KaSourceModule "Sources of main"
-  deprecationStatus: null
+  deprecation: null
   returnValueStatus: MustUse
   importableFqName: myLet

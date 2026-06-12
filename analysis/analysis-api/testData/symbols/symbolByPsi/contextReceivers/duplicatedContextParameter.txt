@@ -1,12 +1,10 @@
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /bar
-  compilerVisibility: Public
   contextParameters: [
     KaContextParameterSymbol:
       annotations: []
       callableId: null
-      compilerVisibility: Public
       contextReceivers: []
       isActual: false
       isCompanion: false
@@ -28,12 +26,11 @@ KaNamedFunctionSymbol:
       getContainingFileSymbol: KaFileSymbol(duplicatedContextParameter.kt)
       getContainingJvmClassName: DuplicatedContextParameterKt
       getContainingModule: KaSourceModule "Sources of main"
-      deprecationStatus: null
+      deprecation: null
       importableFqName: null
     KaContextParameterSymbol:
       annotations: []
       callableId: null
-      compilerVisibility: Public
       contextReceivers: []
       isActual: false
       isCompanion: false
@@ -55,7 +52,7 @@ KaNamedFunctionSymbol:
       getContainingFileSymbol: KaFileSymbol(duplicatedContextParameter.kt)
       getContainingJvmClassName: DuplicatedContextParameterKt
       getContainingModule: KaSourceModule "Sources of main"
-      deprecationStatus: null
+      deprecation: null
       importableFqName: null
   ]
   contextReceivers: [
@@ -103,7 +100,7 @@ KaNamedFunctionSymbol:
   getContainingJvmClassName: DuplicatedContextParameterKt
   canBeOperator: false
   getContainingModule: KaSourceModule "Sources of main"
-  deprecationStatus: null
+  deprecation: null
   returnValueStatus: Unspecified
   importableFqName: bar
 
@@ -112,7 +109,6 @@ KaKotlinPropertySymbol:
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
-    compilerVisibility: Private
     contextReceivers: []
     isActual: false
     isCompanion: false
@@ -136,15 +132,13 @@ KaKotlinPropertySymbol:
     getContainingFileSymbol: KaFileSymbol(duplicatedContextParameter.kt)
     getContainingJvmClassName: DuplicatedContextParameterKt
     getContainingModule: KaSourceModule "Sources of main"
-    deprecationStatus: null
+    deprecation: null
     importableFqName: null
   callableId: /foo
-  compilerVisibility: Public
   contextParameters: [
     KaContextParameterSymbol:
       annotations: []
       callableId: null
-      compilerVisibility: Public
       contextReceivers: []
       isActual: false
       isCompanion: false
@@ -166,12 +160,11 @@ KaKotlinPropertySymbol:
       getContainingFileSymbol: KaFileSymbol(duplicatedContextParameter.kt)
       getContainingJvmClassName: DuplicatedContextParameterKt
       getContainingModule: KaSourceModule "Sources of main"
-      deprecationStatus: null
+      deprecation: null
       importableFqName: null
     KaContextParameterSymbol:
       annotations: []
       callableId: null
-      compilerVisibility: Public
       contextReceivers: []
       isActual: false
       isCompanion: false
@@ -193,7 +186,7 @@ KaKotlinPropertySymbol:
       getContainingFileSymbol: KaFileSymbol(duplicatedContextParameter.kt)
       getContainingJvmClassName: DuplicatedContextParameterKt
       getContainingModule: KaSourceModule "Sources of main"
-      deprecationStatus: null
+      deprecation: null
       importableFqName: null
   ]
   contextReceivers: [
@@ -213,7 +206,6 @@ KaKotlinPropertySymbol:
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
-    compilerVisibility: Public
     contextReceivers: []
     hasStableParameterNames: true
     isActual: false
@@ -237,7 +229,7 @@ KaKotlinPropertySymbol:
     getContainingFileSymbol: KaFileSymbol(duplicatedContextParameter.kt)
     getContainingJvmClassName: DuplicatedContextParameterKt
     getContainingModule: KaSourceModule "Sources of main"
-    deprecationStatus: null
+    deprecation: null
     importableFqName: null
   hasBackingField: false
   hasGetter: true
@@ -270,7 +262,7 @@ KaKotlinPropertySymbol:
   getContainingFileSymbol: KaFileSymbol(duplicatedContextParameter.kt)
   getContainingJvmClassName: DuplicatedContextParameterKt
   getContainingModule: KaSourceModule "Sources of main"
-  deprecationStatus: null
+  deprecation: null
   javaGetterName: getFoo
   javaSetterName: null
   isInline: false

@@ -1,7 +1,6 @@
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /foo
-  compilerVisibility: Public
   contextParameters: []
   contextReceivers: []
   contractEffects: []
@@ -35,7 +34,7 @@ KaNamedFunctionSymbol:
   getContainingJvmClassName: null
   canBeOperator: false
   getContainingModule: KaScriptModule "Script script.kts"
-  deprecationStatus: null
+  deprecation: null
   returnValueStatus: Unspecified
   importableFqName: foo
 
@@ -44,7 +43,6 @@ KaKotlinPropertySymbol:
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
-    compilerVisibility: Private
     contextReceivers: []
     isActual: false
     isCompanion: false
@@ -68,16 +66,14 @@ KaKotlinPropertySymbol:
     getContainingFileSymbol: KaFileSymbol(script.kts)
     getContainingJvmClassName: null
     getContainingModule: KaScriptModule "Script script.kts"
-    deprecationStatus: null
+    deprecation: null
     importableFqName: null
   callableId: /b
-  compilerVisibility: Public
   contextParameters: []
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
-    compilerVisibility: Public
     contextReceivers: []
     hasStableParameterNames: true
     isActual: false
@@ -101,7 +97,7 @@ KaKotlinPropertySymbol:
     getContainingFileSymbol: KaFileSymbol(script.kts)
     getContainingJvmClassName: null
     getContainingModule: KaScriptModule "Script script.kts"
-    deprecationStatus: null
+    deprecation: null
     importableFqName: null
   hasBackingField: true
   hasGetter: true
@@ -134,7 +130,7 @@ KaKotlinPropertySymbol:
   getContainingFileSymbol: KaFileSymbol(script.kts)
   getContainingJvmClassName: null
   getContainingModule: KaScriptModule "Script script.kts"
-  deprecationStatus: null
+  deprecation: null
   javaGetterName: getB
   javaSetterName: null
   isInline: false
@@ -143,7 +139,6 @@ KaKotlinPropertySymbol:
 KaNamedFunctionSymbol:
   annotations: []
   callableId: /C.member
-  compilerVisibility: Public
   contextParameters: []
   contextReceivers: []
   contractEffects: []
@@ -181,7 +176,7 @@ KaNamedFunctionSymbol:
   getContainingJvmClassName: C
   canBeOperator: false
   getContainingModule: KaScriptModule "Script script.kts"
-  deprecationStatus: null
+  deprecation: null
   returnValueStatus: Unspecified
   importableFqName: null
 
@@ -190,7 +185,6 @@ KaKotlinPropertySymbol:
   backingFieldSymbol: KaBackingFieldSymbol:
     annotations: []
     callableId: null
-    compilerVisibility: Private
     contextReceivers: []
     isActual: false
     isCompanion: false
@@ -218,16 +212,14 @@ KaKotlinPropertySymbol:
     getContainingFileSymbol: KaFileSymbol(script.kts)
     getContainingJvmClassName: C
     getContainingModule: KaScriptModule "Script script.kts"
-    deprecationStatus: null
+    deprecation: null
     importableFqName: null
   callableId: /C.prop
-  compilerVisibility: Public
   contextParameters: []
   contextReceivers: []
   getter: KaPropertyGetterSymbol:
     annotations: []
     callableId: null
-    compilerVisibility: Public
     contextReceivers: []
     hasStableParameterNames: true
     isActual: false
@@ -255,7 +247,7 @@ KaKotlinPropertySymbol:
     getContainingFileSymbol: KaFileSymbol(script.kts)
     getContainingJvmClassName: C
     getContainingModule: KaScriptModule "Script script.kts"
-    deprecationStatus: null
+    deprecation: null
     importableFqName: null
   hasBackingField: true
   hasGetter: true
@@ -292,7 +284,7 @@ KaKotlinPropertySymbol:
   getContainingFileSymbol: KaFileSymbol(script.kts)
   getContainingJvmClassName: C
   getContainingModule: KaScriptModule "Script script.kts"
-  deprecationStatus: null
+  deprecation: null
   javaGetterName: getProp
   javaSetterName: null
   isInline: false
@@ -303,7 +295,6 @@ KaNamedClassSymbol:
   classId: C
   classKind: CLASS
   companionObject: null
-  compilerVisibility: Public
   contextReceivers: []
   isActual: false
   isData: false
@@ -326,13 +317,12 @@ KaNamedClassSymbol:
   visibility: PUBLIC
   getContainingFileSymbol: KaFileSymbol(script.kts)
   getContainingModule: KaScriptModule "Script script.kts"
-  annotationApplicableTargets: null
-  deprecationStatus: null
+  applicableAnnotationTargets: null
+  deprecation: null
   importableFqName: C
 
 KaScriptSymbol:
   annotations: []
-  compilerVisibility: Local
   isActual: false
   isExpect: false
   isExternal: false
@@ -343,5 +333,5 @@ KaScriptSymbol:
   visibility: LOCAL
   getContainingFileSymbol: KaFileSymbol(script.kts)
   getContainingModule: KaScriptModule "Script script.kts"
-  deprecationStatus: null
+  deprecation: null
   importableFqName: null

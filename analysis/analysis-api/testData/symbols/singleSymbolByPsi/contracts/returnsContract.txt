@@ -4,7 +4,6 @@ KaNamedFunctionSymbol:
       psi: KtAnnotationEntry
   ]
   callableId: /check
-  compilerVisibility: Public
   contextParameters: []
   contextReceivers: []
   contractEffects: [
@@ -19,7 +18,6 @@ KaNamedFunctionSymbol:
                 KaValueParameterSymbol:
                   annotations: []
                   callableId: null
-                  compilerVisibility: Public
                   contextReceivers: []
                   generatedPrimaryConstructorProperty: null
                   hasDeclaredDefaultValue: false
@@ -48,7 +46,7 @@ KaNamedFunctionSymbol:
                   getContainingFileSymbol: KaFileSymbol(returnsContract.kt)
                   getContainingJvmClassName: ReturnsContractKt
                   getContainingModule: KaSourceModule "Sources of main"
-                  deprecationStatus: null
+                  deprecation: null
                   importableFqName: null
   ]
   hasStableParameterNames: true
@@ -79,7 +77,6 @@ KaNamedFunctionSymbol:
     KaValueParameterSymbol:
       annotations: []
       callableId: null
-      compilerVisibility: Public
       contextReceivers: []
       generatedPrimaryConstructorProperty: null
       hasDeclaredDefaultValue: false
@@ -108,7 +105,7 @@ KaNamedFunctionSymbol:
       getContainingFileSymbol: KaFileSymbol(returnsContract.kt)
       getContainingJvmClassName: ReturnsContractKt
       getContainingModule: KaSourceModule "Sources of main"
-      deprecationStatus: null
+      deprecation: null
       importableFqName: null
   ]
   visibility: PUBLIC
@@ -116,6 +113,6 @@ KaNamedFunctionSymbol:
   getContainingJvmClassName: ReturnsContractKt
   canBeOperator: false
   getContainingModule: KaSourceModule "Sources of main"
-  deprecationStatus: null
+  deprecation: null
   returnValueStatus: Unspecified
   importableFqName: check
