@@ -95,6 +95,8 @@ object Synthetics {
         val jsExceptionTagFuncType = FunctionHeapTypeSymbol(jsExceptionTagFuncTypeSignature)
         val parameterlessNoReturnFunctionType = FunctionHeapTypeSymbol(parameterlessNoReturnFunctionTypeSignature)
         val associatedObjectGetterType = FunctionHeapTypeSymbol(associatedObjectGetterTypeSignature)
+
+        val wasmContFunctionType = ContFunctionHeapTypeSymbol(1)
     }
 
 }

@@ -153,7 +153,8 @@ class WasmCompiledModuleFragment(
     fun linkWasmCompiledFragments(
         multimoduleOptions: MultimoduleCompileOptions?,
         exceptionTagType: ExceptionTagType,
-        wasmCommandModuleInitialization: Boolean
+        wasmCommandModuleInitialization: Boolean,
+        useStackSwitching: Boolean
     ): WasmModule {
         val definedDeclarations = getDefinedDeclarationsFromFragments()
 
@@ -198,8 +199,7 @@ class WasmCompiledModuleFragment(
 
         val globals = getGlobals(definedDeclarations)
 
-        val tags = getTags(definedDeclarations, exceptionTagType)
-        require(tags.size <= 1) { "Having more than 1 tag is not supported" }
+        val tags = getTags(definedDeclarations, exceptionTagType, useStackSwitching)
 
         val [importedTags, definedTags] = tags.partition { it.importPair != null }
 
@@ -266,7 +266,11 @@ class WasmCompiledModuleFragment(
         definedDeclarations.gcTypes[Synthetics.GcTypes.specialSlotITableType.value] = specialSlotITableType
     }
 
-    private fun getTags(definedDeclarations: DefinedDeclarationsResolver, exceptionTagType: ExceptionTagType): List<WasmTag> {
+    private fun getTags(
+        definedDeclarations: DefinedDeclarationsResolver,
+        exceptionTagType: ExceptionTagType,
+        useStackSwitching: Boolean,
+    ): List<WasmTag> {
         val exceptionTag = when (exceptionTagType) {
             ExceptionTagType.TRAP -> null
             ExceptionTagType.JS_TAG -> {
@@ -288,7 +292,15 @@ class WasmCompiledModuleFragment(
                 WasmTag(Synthetics.FunctionHeapTypes.jsExceptionTagFuncType)
             }
         }
-        return listOfNotNull(exceptionTag)
+
+        val contTagType = useStackSwitching.takeIf { it }?.run {
+            val kotlinAnyRefType = WasmRefNullType(Synthetics.HeapTypes.anyBuiltInType)
+            val contTagFuncType = WasmFunctionType(listOf(kotlinAnyRefType), listOf())
+            definedDeclarations.contFunctionTypes[Synthetics.FunctionHeapTypes.wasmContFunctionType.arity] = contTagFuncType
+            WasmTag(Synthetics.FunctionHeapTypes.wasmContFunctionType)
+        }
+
+        return listOfNotNull(exceptionTag, contTagType)
     }
 
     private fun getTypes(definedDeclarations: DefinedDeclarationsResolver): List<RecursiveTypeGroup> {
@@ -304,12 +316,21 @@ class WasmCompiledModuleFragment(
             }
         }
 
+        // Rebind cont function types to canonical (if found)
+        val contFunctionTypes = definedDeclarations.contFunctionTypes
+        for (contFunctionType in contFunctionTypes) {
+            val canonicalSignature = reversedFunctionTypeMap[contFunctionType.value] ?: continue
+            contFunctionTypes[contFunctionType.key] = allFunctionTypes.getValue(canonicalSignature)
+        }
+
         val heapTypeResolver: (WasmHeapType.Type) -> WasmTypeDeclaration = definedDeclarations::resolve
 
         val recursiveGroups = with(RecursiveGroupBuilder(heapTypeResolver)) {
             addTypes(definedDeclarations.gcTypes.values.toSet())
             addTypes(definedDeclarations.vTableGcTypes.values.toSet())
             addTypes(allFunctionTypes.values.toSet())
+            addTypes(definedDeclarations.contTypes.values.toSet())
+            addTypes(definedDeclarations.contFunctionTypes.values.toSet())
             build()
         }
 
@@ -853,6 +874,9 @@ class WasmCompiledModuleFragment(
             putAllChecked(fragmentTypes.definedVTableGcTypes, resolver.vTableGcTypes, "vTableGcTypes")
             // functionTypes are deduplicated by WASM signature structure, duplicates are expected and equivalent
             resolver.functionTypes.putAll(fragmentTypes.definedFunctionTypes)
+            // contTypes and contFunctionTypes are keyed by arity; duplicates across fragments are identical
+            resolver.contTypes.putAll(fragmentTypes.contTypes)
+            resolver.contFunctionTypes.putAll(fragmentTypes.contFunctionTypes)
         }
 
         rebindEquivalentFunctions(resolver.functions)
