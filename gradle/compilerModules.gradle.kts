@@ -6,6 +6,7 @@ val descriptorsCompilerModules = arrayOf(
  * Common modules, used by K1 frontend, K2 frontend, backends, AA and CLI
  */
 val commonCompilerModules = descriptorsCompilerModules + arrayOf(
+    ":analysis:light-classes-base",
     ":compiler:psi:psi-api",
     ":compiler:psi:psi-impl",
     ":compiler:psi:psi-utils",
@@ -201,28 +202,28 @@ val cliCompilerModules = arrayOf(
     ":kotlin-build-common",
 ).also { extra["cliCompilerModules"] = it }
 
+/**
+ * The array of Analysis API modules that aren't part of [commonCompilerModules] (e.g., `:compiler:psi:psi-api`).
+ * It only covers production modules and is used only as a part of [projectsDependingOnStableStdlib].
+ */
 val analysisApiModules = arrayOf(
     ":analysis:analysis-api",
     ":analysis:analysis-api-fir",
     ":analysis:analysis-api-impl-base",
     ":analysis:analysis-api-platform-interface",
-    ":analysis:analysis-api-standalone:analysis-api-standalone-base",
-    ":analysis:analysis-api-standalone:analysis-api-fir-standalone-base",
     ":analysis:analysis-api-standalone",
-    ":analysis:analysis-test-framework",
-    ":analysis:light-classes-base",
+    ":analysis:analysis-api-standalone:analysis-api-fir-standalone-base",
+    ":analysis:analysis-api-standalone:analysis-api-standalone-base",
+    ":analysis:analysis-internal-utils",
+    ":analysis:decompiled:decompiler-js",
+    ":analysis:decompiled:decompiler-native",
+    ":analysis:decompiled:decompiler-to-file-stubs",
+    ":analysis:decompiled:decompiler-to-psi",
+    ":analysis:decompiled:decompiler-to-stubs",
+    ":analysis:decompiled:light-classes-for-decompiled",
     ":analysis:low-level-api-fir",
     ":analysis:stubs",
     ":analysis:symbol-light-classes",
-    ":analysis:analysis-internal-utils",
-    ":analysis:light-classes-base",
-    ":analysis:decompiled",
-    ":analysis:decompiled:decompiler-to-stubs",
-    ":analysis:decompiled:decompiler-to-file-stubs",
-    ":analysis:decompiled:decompiler-js",
-    ":analysis:decompiled:decompiler-native",
-    ":analysis:decompiled:decompiler-to-psi",
-    ":analysis:decompiled:light-classes-for-decompiled",
 ).also { extra["analysisApiModules"] = it }
 
 extra["compilerModules"] =
@@ -234,8 +235,7 @@ extra["compilerModules"] =
     jsCompilerModules +
     wasmCompilerModules +
     nativeCompilerModules +
-    cliCompilerModules +
-    ":analysis:light-classes-base"
+    cliCompilerModules
 
 val analysisApiArtifacts by extra {
     listOf(
