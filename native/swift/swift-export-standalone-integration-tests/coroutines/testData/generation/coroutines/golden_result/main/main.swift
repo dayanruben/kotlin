@@ -12,6 +12,8 @@ public protocol FunctionalInterfaceWithSuspendFunction: KotlinRuntime.KotlinBase
 @objc(_FunctionalInterfaceWithSuspendFunction)
 public protocol _FunctionalInterfaceWithSuspendFunction {
 }
+public protocol __FunctionalInterfaceWithSuspendFunction: KotlinRuntimeSupport._KotlinBridgeable {
+}
 public final class Foo: KotlinRuntime.KotlinBase {
     public init() {
         let __kt = __root___Foo_init_allocate()
@@ -72,7 +74,7 @@ public func alwaysFails() async throws -> Swift.Never {
             return { (arg0: Swift.Bool) in return { originalBlock({ arg0; fatalError() }()); return true }() }
         }(), {
             let originalBlock: (Swift.Optional<KotlinRuntime.KotlinBase>) -> Swift.Void = exception
-            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
+            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res?: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
         }(), cancellation.__externalRCRef())
     }
 }
@@ -148,7 +150,7 @@ public func produce_function() -> (Swift.Int32) async throws -> Swift.Int32 {
             return { (arg0: Swift.Int32) in return { originalBlock(arg0); return true }() }
         }(), {
             let originalBlock: (Swift.Optional<KotlinRuntime.KotlinBase>) -> Swift.Void = exception
-            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
+            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res?: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
         }(), cancellation.__externalRCRef())
     } }
     }()
@@ -163,7 +165,7 @@ public func produce_function_typealias() async throws -> main.AliasedFunctionTyp
         }()); return true }() }
         }(), {
             let originalBlock: (Swift.Optional<KotlinRuntime.KotlinBase>) -> Swift.Void = exception
-            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
+            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res?: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
         }(), cancellation.__externalRCRef())
     }
 }
@@ -179,13 +181,13 @@ public func produce_suspend_function() async throws -> (Swift.Double) async thro
                 return { (arg0: Swift.Int32) in return { originalBlock(arg0); return true }() }
             }(), {
                 let originalBlock: (Swift.Optional<KotlinRuntime.KotlinBase>) -> Swift.Void = exception
-                return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
+                return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res?: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
             }(), cancellation.__externalRCRef())
         } }
         }()); return true }() }
         }(), {
             let originalBlock: (Swift.Optional<KotlinRuntime.KotlinBase>) -> Swift.Void = exception
-            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
+            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res?: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
         }(), cancellation.__externalRCRef())
     }
 }
@@ -201,13 +203,13 @@ public func produce_suspend_function_typealias() async throws -> main.AliasedAsy
                 return { (arg0: Swift.Int64) in return { originalBlock(arg0); return true }() }
             }(), {
                 let originalBlock: (Swift.Optional<KotlinRuntime.KotlinBase>) -> Swift.Void = exception
-                return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
+                return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res?: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
             }(), cancellation.__externalRCRef())
         } }
         }()); return true }() }
         }(), {
             let originalBlock: (Swift.Optional<KotlinRuntime.KotlinBase>) -> Swift.Void = exception
-            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
+            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res?: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
         }(), cancellation.__externalRCRef())
     }
 }
@@ -223,13 +225,13 @@ public func retunsListOfSuspend() async throws -> [() async throws -> Swift.Void
                 return { (arg0: Swift.Bool) in return { originalBlock({ arg0; return () }()); return true }() }
             }(), {
                 let originalBlock: (Swift.Optional<KotlinRuntime.KotlinBase>) -> Swift.Void = exception
-                return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
+                return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res?: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
             }(), cancellation.__externalRCRef())
         } }
         }() }); return true }() }
         }(), {
             let originalBlock: (Swift.Optional<KotlinRuntime.KotlinBase>) -> Swift.Void = exception
-            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
+            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res?: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
         }(), cancellation.__externalRCRef())
     }
 }
@@ -240,7 +242,7 @@ public func returnSuspendGeneric() async throws -> any KotlinRuntimeSupport._Kot
             return { (arg0: Swift.UnsafeMutableRawPointer) in return { originalBlock(KotlinRuntime.KotlinBase.__createBridgeable(externalRCRef: arg0)); return true }() }
         }(), {
             let originalBlock: (Swift.Optional<KotlinRuntime.KotlinBase>) -> Swift.Void = exception
-            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
+            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res?: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
         }(), cancellation.__externalRCRef())
     }
 }
@@ -253,7 +255,7 @@ public func returnSuspendUnit() -> () async throws -> Swift.Void {
             return { (arg0: Swift.Bool) in return { originalBlock({ arg0; return () }()); return true }() }
         }(), {
             let originalBlock: (Swift.Optional<KotlinRuntime.KotlinBase>) -> Swift.Void = exception
-            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
+            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res?: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
         }(), cancellation.__externalRCRef())
     } }
     }()
@@ -265,7 +267,7 @@ public func returnUnit() async throws -> Swift.Void {
             return { (arg0: Swift.Bool) in return { originalBlock({ arg0; return () }()); return true }() }
         }(), {
             let originalBlock: (Swift.Optional<KotlinRuntime.KotlinBase>) -> Swift.Void = exception
-            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
+            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res?: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
         }(), cancellation.__externalRCRef())
     }
 }
@@ -276,7 +278,7 @@ public func returnsList() async throws -> [Swift.String] {
             return { (arg0: Any) in return { originalBlock(arg0 as! Swift.Array<Swift.String>); return true }() }
         }(), {
             let originalBlock: (Swift.Optional<KotlinRuntime.KotlinBase>) -> Swift.Void = exception
-            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
+            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res?: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
         }(), cancellation.__externalRCRef())
     }
 }
@@ -292,17 +294,17 @@ public func returnsListOfSuspendNullables() async throws -> [(() async throws ->
                 return { (arg0: Swift.Bool) in return { originalBlock({ arg0; return () }()); return true }() }
             }(), {
                 let originalBlock: (Swift.Optional<KotlinRuntime.KotlinBase>) -> Swift.Void = exception
-                return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
+                return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res?: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
             }(), cancellation.__externalRCRef())
         } }
         }() }() }); return true }() }
         }(), {
             let originalBlock: (Swift.Optional<KotlinRuntime.KotlinBase>) -> Swift.Void = exception
-            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
+            return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res?: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
         }(), cancellation.__externalRCRef())
     }
 }
-extension main.FunctionalInterfaceWithSuspendFunction where Self : KotlinRuntimeSupport._KotlinBridgeable {
+extension main.FunctionalInterfaceWithSuspendFunction where Self : main.__FunctionalInterfaceWithSuspendFunction {
     public func emit() async throws -> Swift.Void {
         try await withKotlinContinuation { continuation, exception, cancellation in
             let _: Bool = FunctionalInterfaceWithSuspendFunction_emit(self.__externalRCRef(), {
@@ -310,14 +312,14 @@ extension main.FunctionalInterfaceWithSuspendFunction where Self : KotlinRuntime
                 return { (arg0: Swift.Bool) in return { originalBlock({ arg0; return () }()); return true }() }
             }(), {
                 let originalBlock: (Swift.Optional<KotlinRuntime.KotlinBase>) -> Swift.Void = exception
-                return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
+                return { (arg0: Swift.UnsafeMutableRawPointer?) in return { originalBlock({ switch arg0 { case nil: .none; case let res?: KotlinRuntime.KotlinBase.__createClassWrapper(externalRCRef: res); } }()); return true }() }
             }(), cancellation.__externalRCRef())
         }
     }
 }
 extension main.FunctionalInterfaceWithSuspendFunction {
 }
-extension KotlinRuntimeSupport._KotlinExistential: main.FunctionalInterfaceWithSuspendFunction where Wrapped : main._FunctionalInterfaceWithSuspendFunction {
+extension KotlinRuntimeSupport._KotlinExistential: main.FunctionalInterfaceWithSuspendFunction, main.__FunctionalInterfaceWithSuspendFunction where Wrapped : main._FunctionalInterfaceWithSuspendFunction {
 }
 extension KotlinRuntimeSupport._KotlinExistentialPenBox: main._FunctionalInterfaceWithSuspendFunction {
 }

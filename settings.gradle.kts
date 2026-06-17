@@ -1,5 +1,4 @@
-import java.io.File
-import java.util.Properties
+import java.util.*
 
 pluginManagement {
     includeBuild("repo/kotlin-build-helpers")
@@ -29,6 +28,7 @@ pluginManagement {
                 includeGroup("com.android.tools")
             }
         }
+
         mavenCentral {
             url = uri("https://cache-redirector.jetbrains.com/maven-central")
         }
@@ -99,6 +99,33 @@ dependencyResolutionManagement {
             from(files("plugins/compose/compose-runtime-snapshot-versions.toml"))
         }
     }
+    repositories {
+        intellijRepository(versionProperties["versions.intellijSdk"].toString())
+        intellijDependencies()
+        kotlinDependencies()
+        teamcityRepository()
+        googleAndroidRepository()
+        gradleLibsReleases()
+        gradlePluginPortalRepository()
+        litmuskt()
+        kotlinIdePluginDependencies()
+        mozillaReleases()
+        kotlinFileDependenciesJsc()
+        githubRelease("WasmEdge", "WasmEdge", revisionPrefix = "", groupAlias = "org.wasmedge")
+        githubRelease("bytecodealliance", "wasmtime", groupAlias = "dev.wasmtime")
+        githubCommit("webassembly", "testsuite")
+        githubRelease("webassembly", "wabt", revisionPrefix = "")
+        githubTag("google", "breakpad")
+        githubCommit("google", "googletest")
+        nodeJs()
+        yarnDistributions()
+        binaryenDistributions()
+        d8Distributions()
+        androidRepository()
+        androidSystemImages()
+        mavenCentral()
+    }
+    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
 }
 
 val buildProperties = getKotlinBuildPropertiesForSettings(settings)

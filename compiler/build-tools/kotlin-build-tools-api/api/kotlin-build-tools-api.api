@@ -194,6 +194,10 @@ public abstract class org/jetbrains/kotlin/buildtools/api/KotlinBuildToolsExcept
 	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
+public final class org/jetbrains/kotlin/buildtools/api/KotlinCompilationProcessFailedException : org/jetbrains/kotlin/buildtools/api/KotlinBuildToolsException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
 public abstract interface class org/jetbrains/kotlin/buildtools/api/KotlinLogger {
 	public abstract fun debug (Ljava/lang/String;)V
 	public abstract fun error (Ljava/lang/String;Ljava/lang/Throwable;)V
@@ -1974,6 +1978,7 @@ public final class org/jetbrains/kotlin/buildtools/api/wasm/WasmHistoryBasedIncr
 }
 
 public final class org/jetbrains/kotlin/buildtools/api/wasm/WasmHistoryBasedIncrementalCompilationConfiguration$Option : org/jetbrains/kotlin/buildtools/api/internal/BaseOption {
+	public final fun getAvailableSinceVersion ()Lorg/jetbrains/kotlin/buildtools/api/KotlinReleaseVersion;
 }
 
 public abstract interface class org/jetbrains/kotlin/buildtools/api/wasm/WasmIncrementalCompilationConfiguration {
@@ -2021,6 +2026,7 @@ public final class org/jetbrains/kotlin/buildtools/api/wasm/operations/WasmKlibC
 }
 
 public final class org/jetbrains/kotlin/buildtools/api/wasm/operations/WasmKlibCompilationOperation$Option : org/jetbrains/kotlin/buildtools/api/internal/BaseOption {
+	public final fun getAvailableSinceVersion ()Lorg/jetbrains/kotlin/buildtools/api/KotlinReleaseVersion;
 }
 
 public final class org/jetbrains/kotlin/buildtools/api/wasm/operations/WasmKlibCompilationOperationKt {
@@ -2046,5 +2052,6 @@ public abstract interface class org/jetbrains/kotlin/buildtools/api/wasm/operati
 }
 
 public final class org/jetbrains/kotlin/buildtools/api/wasm/operations/WasmLinkingOperation$Option : org/jetbrains/kotlin/buildtools/api/internal/BaseOption {
+	public final fun getAvailableSinceVersion ()Lorg/jetbrains/kotlin/buildtools/api/KotlinReleaseVersion;
 }
 
