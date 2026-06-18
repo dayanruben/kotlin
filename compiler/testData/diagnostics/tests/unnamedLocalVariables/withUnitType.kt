@@ -1,6 +1,7 @@
 // ISSUE: KT-84618
 // RUN_PIPELINE_TILL: BACKEND
 // LANGUAGE: +UnnamedLocalVariables +NameBasedDestructuring
+// LATEST_LV_DIFFERENCE
 
 // FILE: JavaUtils.java
 
@@ -100,6 +101,7 @@ fun testWithExplicit() {
 
     arrayOf(Unit).myForEach { _: Unit -> }
     arrayOf(MyPair()).myForEach { (_: Unit, _: Unit?) -> }
+    arrayOf(MyPair()).myForEach { [_: Unit, _: Unit?] -> }
     arrayOf(Unit).myForEachIndexed { _: Int, _: Unit -> }
 }
 

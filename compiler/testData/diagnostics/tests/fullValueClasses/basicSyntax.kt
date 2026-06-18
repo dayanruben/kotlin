@@ -1,3 +1,4 @@
+// LATEST_LV_DIFFERENCE
 // LANGUAGE: +FullValueClasses, -EnableNameBasedDestructuringShortForm
 // RUN_PIPELINE_TILL: FRONTEND
 // WITH_STDLIB

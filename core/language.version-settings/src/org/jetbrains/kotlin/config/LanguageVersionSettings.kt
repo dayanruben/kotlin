@@ -554,7 +554,7 @@ enum class LanguageFeature(
 
     ExpectActualClasses(sinceVersion = null, "KT-62885"),
 
-    DataClassCopyRespectsConstructorVisibility(sinceVersion = null, "KT-11914"), // KT-11914 Deprecation phase 3
+    DataClassCopyRespectsConstructorVisibility(sinceVersion = null, issue = "KT-11914", enabledInLatestLVTests = true), // KT-11914 Deprecation phase 3
 
     // Disabled for an indefinite time as we've moved it forward a version twice already, and
     // it's probably better to go the other way around, and only enable it once we're ready.
@@ -609,21 +609,21 @@ enum class LanguageFeature(
     ProhibitAllMultipleDefaultsInheritedFromSupertypes(sinceVersion = null, enabledInProgressiveMode = false, NO_ISSUE_SPECIFIED),
     FunctionalTypeWithExtensionAsSupertype(sinceVersion = null, NO_ISSUE_SPECIFIED),
     ContextReceivers(sinceVersion = null, NO_ISSUE_SPECIFIED),
-    CallableReferencesToContextual(sinceVersion = null, testOnly = true, issue = "KT-54594"),
+    CallableReferencesToContextual(sinceVersion = null, testOnly = true, issue = "KT-54594", enabledInLatestLVTests = true),
     JvmInlineMultiFieldValueClasses(sinceVersion = null, forcesPreReleaseBinaries = true, issue = NO_ISSUE_SPECIFIED),
     JavaSamConversionEqualsHashCode(sinceVersion = null, forcesPreReleaseBinaries = true, issue = NO_ISSUE_SPECIFIED),
     AllowAnyAsAnActualTypeForExpectInterface(sinceVersion = null, issue = "KT-79308"),
 
     CompanionBlocksAndExtensions(sinceVersion = null, issue = "KT-11968", forcesPreReleaseBinaries = true, forcesPreReleaseBinariesBefore = KOTLIN_2_5, enabledInLatestLVTests = true),
-    ProhibitCallableReferencesToStaticsWithTypeArgumentsOrNullMarkInLhs(sinceVersion = null, enabledInProgressiveMode = true, issue = "KT-84956") {
+    ProhibitCallableReferencesToStaticsWithTypeArgumentsOrNullMarkInLhs(sinceVersion = null, enabledInProgressiveMode = true, issue = "KT-84956", enabledInLatestLVTests = true) {
         context(context: CrossFeatureChecksResultsCollector)
         override fun crossFeatureChecks() {
             checkEnabledLaterThan(CompanionBlocksAndExtensions, sinceVersionMustBeSet = true)
         }
     },
 
-    DeprecateNameMismatchInShortDestructuringWithParentheses(sinceVersion = null, "KT-19627"),
-    EnableNameBasedDestructuringShortForm(sinceVersion = null, "KT-19627"),
+    DeprecateNameMismatchInShortDestructuringWithParentheses(sinceVersion = null, issue = "KT-19627", enabledInLatestLVTests = true),
+    EnableNameBasedDestructuringShortForm(sinceVersion = null, issue = "KT-19627", enabledInLatestLVTests = true),
     LocalTypeAliases(sinceVersion = null, forcesPreReleaseBinaries = true, issue = "KT-81404"),
 
     // We don't want to turn it on by default (so to show an error instead of a warning) until there will be a possibility to export declarations from libraries
@@ -636,7 +636,7 @@ enum class LanguageFeature(
     ReferencesToSyntheticJavaProperties(sinceVersion = null, testOnly = true, issue = "KT-8575"),
     ImplicitSignedToUnsignedIntegerConversion(sinceVersion = null, testOnly = true, issue = "KT-56583"),
     ForbidInferringTypeVariablesIntoEmptyIntersection(sinceVersion = null, enabledInProgressiveMode = true, "KT-51221"),
-    IntrinsicConstEvaluation(sinceVersion = null, issue = "KT-49303"),
+    IntrinsicConstEvaluation(sinceVersion = null, issue = "KT-49303", enabledInLatestLVTests = true),
 
     // K1 support only. We keep it, as it's currently unclear what to do with this feature in K2
     DisableCheckingChangedProgressionsResolve(sinceVersion = null, "KT-49276"),
@@ -650,8 +650,8 @@ enum class LanguageFeature(
     },
     ProperFieldAccessGenerationForFieldAccessShadowedByKotlinProperty(sinceVersion = null, "KT-56386"),
     IrCrossModuleInlinerBeforeKlibSerialization(sinceVersion = null, sinceApiVersion = ApiVersion.KOTLIN_2_3, forcesPreReleaseBinaries = true, issue = "KT-79717"),
-    UnnamedLocalVariables(sinceVersion = null, forcesPreReleaseBinaries = false, issue = "KT-74809"),
-    ContextSensitiveResolutionUsingExpectedType(sinceVersion = null, "KT-16768"),
+    UnnamedLocalVariables(sinceVersion = null, forcesPreReleaseBinaries = false, issue = "KT-74809", enabledInLatestLVTests = true),
+    ContextSensitiveResolutionUsingExpectedType(sinceVersion = null, issue = "KT-16768", enabledInLatestLVTests = true),
     DisableWarningsForValueBasedJavaClasses(sinceVersion = null, "KT-70722"),
     DisableWarningsForIdentitySensitiveOperationsOnValueClassesAndPrimitives(sinceVersion = null, "KT-70722"),
     ExportKlibToOlderAbiVersion(sinceVersion = null, forcesPreReleaseBinaries = true, issue = "KT-76131"),
@@ -660,7 +660,7 @@ enum class LanguageFeature(
     JvmLoadAnnotationsOnAnnotationProperties(sinceVersion = null, "KT-22463"),
     TreatProvideDelegateAsConventionName(sinceVersion = null, "KT-83538"),
     ExportKDocDocumentationToKlib(sinceVersion = null, "KT-83921"),
-    FullValueClasses(sinceVersion = null, forcesPreReleaseBinaries = true, issue = "KT-84904"),
+    FullValueClasses(sinceVersion = null, forcesPreReleaseBinaries = true, issue = "KT-84904", enabledInLatestLVTests = true),
     JsExportingSuspendLambdas(sinceVersion = null, "KT-80188"),
 
     UnitConversionsOnArbitraryExpressions(sinceVersion = null, issue = "KT-84393", enabledInLatestLVTests = true),
