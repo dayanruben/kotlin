@@ -239,6 +239,11 @@ public class ForTestCompileRuntime {
     }
 
     @NotNull
+    public static List<File> kotlinNativeImagePluginsRuntimeForTests() {
+        return getFilesFromProperty(KOTLIN_NATIVE_IMAGE_PLUGINS_RUNTIME);
+    }
+
+    @NotNull
     public static List<File> kotlinCompilerEmbeddableClasspathForTests() {
         return getFilesFromProperty(KOTLIN_COMPILER_EMBEDDABLE_CLASSPATH);
     }
@@ -291,5 +296,9 @@ public class ForTestCompileRuntime {
 
     public static @NotNull File mainKtsJar() {
         return getFileFromProperty(MAIN_KTS_JAR_PATH);
+    }
+
+    public static List<File> parcelizeRuntimeForTests() {
+        return getFilesFromProperty(PARCELIZE_COMPILER_PLUGIN_CLASSPATH);
     }
 }

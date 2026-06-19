@@ -58,7 +58,6 @@ dependencies {
         to.attribute(Attribute.of("artifactType", String::class.java), "jar")
     }
     embedded(project(":plugins:parcelize:parcelize-compiler:parcelize.common")) { isTransitive = false }
-    embedded(project(":plugins:parcelize:parcelize-compiler:parcelize.k1")) { isTransitive = false }
     embedded(project(":plugins:parcelize:parcelize-compiler:parcelize.k2")) { isTransitive = false }
     embedded(project(":plugins:parcelize:parcelize-compiler:parcelize.backend")) { isTransitive = false }
     embedded(project(":plugins:parcelize:parcelize-compiler:parcelize.cli")) { isTransitive = false }
@@ -66,17 +65,14 @@ dependencies {
     testFixturesApi(platform(libs.junit.bom))
     testFixturesApi(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
-
-    testFixturesApi(intellijCore())
+    testRuntimeOnly(libs.junit.vintage.engine)
 
     testFixturesApi(project(":plugins:parcelize:parcelize-compiler:parcelize.cli"))
 
-    testFixturesApi(project(":compiler:frontend"))
-    testFixturesApi(project(":compiler:fir:plugin-utils"))
-    testFixturesApi(project(":plugins:parcelize:parcelize-runtime"))
-
     testFixturesApi(testFixtures(project(":compiler:tests-common-new")))
     testFixturesImplementation(testFixtures(project(":generators:test-generator")))
+    testFixturesApi(project(":compiler:incremental-compilation-impl"))
+    testFixturesApi(testFixtures(project(":compiler:incremental-compilation-impl")))
 
     testRuntimeOnly(commonDependency("org.codehaus.woodstox:stax2-api"))
     testRuntimeOnly(commonDependency("com.fasterxml:aalto-xml"))
@@ -110,8 +106,6 @@ sourceSets {
     "testFixtures" { projectDefault() }
 }
 
-optInToK1Deprecation()
-
 runtimeJar()
 sourcesJar()
 javadocJar()
@@ -138,6 +132,15 @@ projectTests {
         addClasspathProperty(robolectricClasspath, "robolectric.classpath")
         addClasspathProperty(layoutLib, "layoutLib.path")
         addClasspathProperty(layoutLibApi, "layoutLibApi.path")
+        addClasspathProperty("parcelizePlugin.jar") {
+            from(tasks.jar)
+        }
+
+        testInputsCheck {
+            with(extraPermissions) {
+                add("permission java.util.PropertyPermission \"kotlin.incremental.compilation\", \"write\";")
+            }
+        }
 
         val robolectricDependencyDir: Provider<Directory> = robolectricDependencyDir
         val projectDir = projectDir

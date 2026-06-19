@@ -198,6 +198,8 @@ object StandardClassIds {
         val DslMarker = "DslMarker".baseId()
         val IntroducedAt = "IntroducedAt".baseId()
 
+        val LowPriorityInOverloadResolution = "LowPriorityInOverloadResolution".internalId()
+
         val ConsistentCopyVisibility = "ConsistentCopyVisibility".baseId()
         val ExposedCopyVisibility = "ExposedCopyVisibility".baseId()
 
@@ -234,6 +236,8 @@ object StandardClassIds {
 
         val MustUseReturnValues = "MustUseReturnValues".baseId()
         val IgnorableReturnValue = "IgnorableReturnValue".baseId()
+
+        val EqualityBound = "EqualityBound".baseId()
 
         val AccessibleLateinitPropertyLiteral = "AccessibleLateinitPropertyLiteral".internalId()
 

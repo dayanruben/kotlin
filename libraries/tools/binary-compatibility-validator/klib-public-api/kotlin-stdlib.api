@@ -227,6 +227,13 @@ open annotation class kotlin/DslMarker : kotlin/Annotation { // kotlin/DslMarker
     constructor <init>() // kotlin/DslMarker.<init>|<init>(){}[0]
 }
 
+open annotation class kotlin/EqualityBound : kotlin/Annotation { // kotlin/EqualityBound|null[0]
+    constructor <init>(kotlin.reflect/KClass<*>) // kotlin/EqualityBound.<init>|<init>(kotlin.reflect.KClass<*>){}[0]
+
+    final val bound // kotlin/EqualityBound.bound|{}bound[0]
+        final fun <get-bound>(): kotlin.reflect/KClass<*> // kotlin/EqualityBound.bound.<get-bound>|<get-bound>(){}[0]
+}
+
 open annotation class kotlin/ExperimentalContextParameters : kotlin/Annotation { // kotlin/ExperimentalContextParameters|null[0]
     constructor <init>() // kotlin/ExperimentalContextParameters.<init>|<init>(){}[0]
 }
@@ -10020,6 +10027,11 @@ open annotation class kotlin.native/CName : kotlin/Annotation { // kotlin.native
 // Targets: [native]
 open annotation class kotlin.native/EagerInitialization : kotlin/Annotation { // kotlin.native/EagerInitialization|null[0]
     constructor <init>() // kotlin.native/EagerInitialization.<init>|<init>(){}[0]
+}
+
+// Targets: [native]
+open annotation class kotlin.native/ForceNativeThreadState : kotlin/Annotation { // kotlin.native/ForceNativeThreadState|null[0]
+    constructor <init>() // kotlin.native/ForceNativeThreadState.<init>|<init>(){}[0]
 }
 
 // Targets: [native]

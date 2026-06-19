@@ -137,7 +137,6 @@ val jvmCompilerModules = arrayOf(
 val jsCompilerModules = arrayOf(
     ":compiler:backend.js",
     ":js:js.sourcemap",
-    ":js:js.serializer",
     ":js:js.parser",
     ":js:js.translator",
     ":js:typescript-export-model",
@@ -264,23 +263,19 @@ val projectsDependingOnStableStdlib =
             cliCompilerModules +
             jvmCompilerModules + // used by K1 plugin
             arrayOf(
-                ":js:js.serializer",
                 ":native:binary-options",
 
                 ":kotlin-allopen-compiler-plugin.cli",
                 ":kotlin-allopen-compiler-plugin.common",
-                ":kotlin-allopen-compiler-plugin.k1",
                 ":kotlin-allopen-compiler-plugin.k2",
 
                 ":kotlin-assignment-compiler-plugin.cli",
                 ":kotlin-assignment-compiler-plugin.common",
-                ":kotlin-assignment-compiler-plugin.k1",
                 ":kotlin-assignment-compiler-plugin.k2",
 
                 ":plugins:parcelize:parcelize-compiler:parcelize.backend",
                 ":plugins:parcelize:parcelize-compiler:parcelize.cli",
                 ":plugins:parcelize:parcelize-compiler:parcelize.common",
-                ":plugins:parcelize:parcelize-compiler:parcelize.k1",
                 ":plugins:parcelize:parcelize-compiler:parcelize.k2",
                 ":plugins:parcelize:parcelize-runtime",
 
@@ -288,12 +283,10 @@ val projectsDependingOnStableStdlib =
 
                 ":kotlin-sam-with-receiver-compiler-plugin.cli",
                 ":kotlin-sam-with-receiver-compiler-plugin.common",
-                ":kotlin-sam-with-receiver-compiler-plugin.k1",
                 ":kotlin-sam-with-receiver-compiler-plugin.k2",
 
                 ":kotlinx-serialization-compiler-plugin.cli",
                 ":kotlinx-serialization-compiler-plugin.common",
-                ":kotlinx-serialization-compiler-plugin.k1",
                 ":kotlinx-serialization-compiler-plugin.k2",
                 ":kotlinx-serialization-compiler-plugin.backend",
 
@@ -304,18 +297,15 @@ val projectsDependingOnStableStdlib =
 
                 ":kotlin-lombok-compiler-plugin.cli",
                 ":kotlin-lombok-compiler-plugin.common",
-                ":kotlin-lombok-compiler-plugin.k1",
                 ":kotlin-lombok-compiler-plugin.k2",
 
                 ":kotlin-noarg-compiler-plugin.cli",
                 ":kotlin-noarg-compiler-plugin.common",
-                ":kotlin-noarg-compiler-plugin.k1",
                 ":kotlin-noarg-compiler-plugin.k2",
                 ":kotlin-noarg-compiler-plugin.backend",
 
                 ":kotlin-sam-with-receiver-compiler-plugin.cli",
                 ":kotlin-sam-with-receiver-compiler-plugin.common",
-                ":kotlin-sam-with-receiver-compiler-plugin.k1",
                 ":kotlin-sam-with-receiver-compiler-plugin.k2",
 
                 ":kotlin-dataframe-compiler-plugin.cli",
@@ -377,7 +367,6 @@ extra["kotlinJpsPluginEmbeddedDependencies"] = listOf(
     ":core:descriptors",
     ":core:descriptors.jvm",
     ":compiler:backend.common.jvm",
-    ":js:js.serializer",
     ":core:deserialization",
     ":core:deserialization.common",
     ":core:deserialization.common.jvm",

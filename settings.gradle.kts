@@ -214,7 +214,6 @@ include(
     ":compiler:jklib.tests",
     ":js:js.ast",
     ":js:js.sourcemap",
-    ":js:js.serializer",
     ":js:js.parser",
     ":js:js.config",
     ":js:js.frontend.common",
@@ -291,7 +290,6 @@ include(
     ":kotlin-allopen-compiler-plugin",
     ":kotlin-allopen-compiler-plugin.embeddable",
     ":kotlin-allopen-compiler-plugin.common",
-    ":kotlin-allopen-compiler-plugin.k1",
     ":kotlin-allopen-compiler-plugin.k2",
     ":kotlin-allopen-compiler-plugin.cli"
 )
@@ -300,7 +298,6 @@ include(
     ":kotlin-noarg-compiler-plugin",
     ":kotlin-noarg-compiler-plugin.embeddable",
     ":kotlin-noarg-compiler-plugin.common",
-    ":kotlin-noarg-compiler-plugin.k1",
     ":kotlin-noarg-compiler-plugin.k2",
     ":kotlin-noarg-compiler-plugin.backend",
     ":kotlin-noarg-compiler-plugin.cli"
@@ -320,7 +317,6 @@ include(
     ":kotlin-sam-with-receiver-compiler-plugin",
     ":kotlin-sam-with-receiver-compiler-plugin.embeddable",
     ":kotlin-sam-with-receiver-compiler-plugin.common",
-    ":kotlin-sam-with-receiver-compiler-plugin.k1",
     ":kotlin-sam-with-receiver-compiler-plugin.k2",
     ":kotlin-sam-with-receiver-compiler-plugin.cli"
 )
@@ -328,7 +324,6 @@ include(
 include(
     ":kotlin-assignment-compiler-plugin",
     ":kotlin-assignment-compiler-plugin.common",
-    ":kotlin-assignment-compiler-plugin.k1",
     ":kotlin-assignment-compiler-plugin.k2",
     ":kotlin-assignment-compiler-plugin.cli",
     ":kotlin-assignment-compiler-plugin.embeddable"
@@ -548,7 +543,6 @@ include(
 include(
     ":plugins:parcelize:parcelize-compiler",
     ":plugins:parcelize:parcelize-compiler:parcelize.common",
-    ":plugins:parcelize:parcelize-compiler:parcelize.k1",
     ":plugins:parcelize:parcelize-compiler:parcelize.k2",
     ":plugins:parcelize:parcelize-compiler:parcelize.backend",
     ":plugins:parcelize:parcelize-compiler:parcelize.cli",
@@ -560,7 +554,6 @@ include(
     ":kotlin-lombok-compiler-plugin",
     ":kotlin-lombok-compiler-plugin.embeddable",
     ":kotlin-lombok-compiler-plugin.common",
-    ":kotlin-lombok-compiler-plugin.k1",
     ":kotlin-lombok-compiler-plugin.k2",
     ":kotlin-lombok-compiler-plugin.cli",
     ":kotlin-lombok"
@@ -570,7 +563,6 @@ include(
     ":kotlinx-serialization-compiler-plugin",
     ":kotlinx-serialization-compiler-plugin.embeddable",
     ":kotlinx-serialization-compiler-plugin.common",
-    ":kotlinx-serialization-compiler-plugin.k1",
     ":kotlinx-serialization-compiler-plugin.k2",
     ":kotlinx-serialization-compiler-plugin.backend",
     ":kotlinx-serialization-compiler-plugin.cli",
@@ -854,21 +846,18 @@ project(":kotlin-parcelize-compiler").projectDir = File("$rootDir/prepare/parcel
 project(":kotlin-allopen-compiler-plugin").projectDir = File("$rootDir/plugins/allopen")
 project(":kotlin-allopen-compiler-plugin.embeddable").projectDir = File("$rootDir/plugins/allopen/allopen.embeddable")
 project(":kotlin-allopen-compiler-plugin.common").projectDir = File("$rootDir/plugins/allopen/allopen.common")
-project(":kotlin-allopen-compiler-plugin.k1").projectDir = File("$rootDir/plugins/allopen/allopen.k1")
 project(":kotlin-allopen-compiler-plugin.k2").projectDir = File("$rootDir/plugins/allopen/allopen.k2")
 project(":kotlin-allopen-compiler-plugin.cli").projectDir = File("$rootDir/plugins/allopen/allopen.cli")
 
 project(":kotlin-lombok-compiler-plugin").projectDir = File("$rootDir/plugins/lombok")
 project(":kotlin-lombok-compiler-plugin.embeddable").projectDir = File("$rootDir/plugins/lombok/lombok.embeddable")
 project(":kotlin-lombok-compiler-plugin.cli").projectDir = File("$rootDir/plugins/lombok/lombok.cli")
-project(":kotlin-lombok-compiler-plugin.k1").projectDir = File("$rootDir/plugins/lombok/lombok.k1")
 project(":kotlin-lombok-compiler-plugin.k2").projectDir = File("$rootDir/plugins/lombok/lombok.k2")
 project(":kotlin-lombok-compiler-plugin.common").projectDir = File("$rootDir/plugins/lombok/lombok.common")
 
 project(":kotlin-noarg-compiler-plugin").projectDir = File("$rootDir/plugins/noarg")
 project(":kotlin-noarg-compiler-plugin.embeddable").projectDir = File("$rootDir/plugins/noarg/noarg.embeddable")
 project(":kotlin-noarg-compiler-plugin.common").projectDir = File("$rootDir/plugins/noarg/noarg.common")
-project(":kotlin-noarg-compiler-plugin.k1").projectDir = File("$rootDir/plugins/noarg/noarg.k1")
 project(":kotlin-noarg-compiler-plugin.k2").projectDir = File("$rootDir/plugins/noarg/noarg.k2")
 project(":kotlin-noarg-compiler-plugin.backend").projectDir = File("$rootDir/plugins/noarg/noarg.backend")
 project(":kotlin-noarg-compiler-plugin.cli").projectDir = File("$rootDir/plugins/noarg/noarg.cli")
@@ -890,13 +879,11 @@ project(":kotlin-sam-with-receiver-compiler-plugin").projectDir = File("$rootDir
 project(":kotlin-sam-with-receiver-compiler-plugin.embeddable").projectDir =
     File("$rootDir/plugins/sam-with-receiver/sam-with-receiver.embeddable")
 project(":kotlin-sam-with-receiver-compiler-plugin.common").projectDir = File("$rootDir/plugins/sam-with-receiver/sam-with-receiver.common")
-project(":kotlin-sam-with-receiver-compiler-plugin.k1").projectDir = File("$rootDir/plugins/sam-with-receiver/sam-with-receiver.k1")
 project(":kotlin-sam-with-receiver-compiler-plugin.k2").projectDir = File("$rootDir/plugins/sam-with-receiver/sam-with-receiver.k2")
 project(":kotlin-sam-with-receiver-compiler-plugin.cli").projectDir = File("$rootDir/plugins/sam-with-receiver/sam-with-receiver.cli")
 
 project(":kotlin-assignment-compiler-plugin").projectDir = File("$rootDir/plugins/assign-plugin")
 project(":kotlin-assignment-compiler-plugin.common").projectDir = File("$rootDir/plugins/assign-plugin/assign-plugin.common")
-project(":kotlin-assignment-compiler-plugin.k1").projectDir = File("$rootDir/plugins/assign-plugin/assign-plugin.k1")
 project(":kotlin-assignment-compiler-plugin.k2").projectDir = File("$rootDir/plugins/assign-plugin/assign-plugin.k2")
 project(":kotlin-assignment-compiler-plugin.cli").projectDir = File("$rootDir/plugins/assign-plugin/assign-plugin.cli")
 project(":kotlin-assignment-compiler-plugin.embeddable").projectDir = File("$rootDir/plugins/assign-plugin/assign-plugin.embeddable")
@@ -985,7 +972,6 @@ project(":kotlinx-serialization-compiler-plugin.embeddable").projectDir =
 project(":kotlinx-serialization-compiler-plugin.cli").projectDir = File("$rootDir/plugins/kotlinx-serialization/kotlinx-serialization.cli")
 project(":kotlinx-serialization-compiler-plugin.backend").projectDir =
     File("$rootDir/plugins/kotlinx-serialization/kotlinx-serialization.backend")
-project(":kotlinx-serialization-compiler-plugin.k1").projectDir = File("$rootDir/plugins/kotlinx-serialization/kotlinx-serialization.k1")
 project(":kotlinx-serialization-compiler-plugin.k2").projectDir = File("$rootDir/plugins/kotlinx-serialization/kotlinx-serialization.k2")
 project(":kotlinx-serialization-compiler-plugin.common").projectDir =
     File("$rootDir/plugins/kotlinx-serialization/kotlinx-serialization.common")

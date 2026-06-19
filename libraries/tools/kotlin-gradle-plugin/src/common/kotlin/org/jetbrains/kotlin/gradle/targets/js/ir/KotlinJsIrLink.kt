@@ -24,6 +24,8 @@ import org.jetbrains.kotlin.gradle.plugin.statistics.CompileKotlinWasmIrLinkMetr
 import org.jetbrains.kotlin.gradle.plugin.statistics.UsesBuildFusService
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsBinaryMode
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsBinaryMode.DEVELOPMENT
+import org.jetbrains.kotlin.gradle.targets.wasm.WasmCompilationMode
+import org.jetbrains.kotlin.gradle.targets.wasm.WasmCompilationMode.Companion.toArgument
 import org.jetbrains.kotlin.gradle.tasks.K2MultiplatformStructure
 import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
 import org.jetbrains.kotlin.gradle.utils.KotlinJsCompilerOptionsDefault
@@ -152,8 +154,19 @@ abstract class KotlinJsIrLink @Inject constructor(
                 CompileKotlinJsIrLinkMetrics.collectMetrics(args, incrementalJsIr, it)
             }
         } else {
+            val openWorldMultiModule = args.wasmIncludedModuleOnly ||
+                    args.freeArgs.contains(WASM_INCLUDED_MODULE_ONLY)
+            val closedWorldMultiModule = args.wasmGenerateClosedWorldMultimodule ||
+                    args.freeArgs.contains(WASM_GENERATE_CLOSED_WORLD_MULTIMODULE)
+
+            val wasmCompilerMode = when {
+                openWorldMultiModule -> WasmCompilationMode.MULTIMODULE_OPEN_WORLD
+                closedWorldMultiModule -> WasmCompilationMode.MULTIMODULE_CLOSED_WORLD
+                else -> WasmCompilationMode.MONOLITH
+            }.toArgument()
+
             buildFusService.orNull?.reportFusMetrics {
-                CompileKotlinWasmIrLinkMetrics.collectMetrics(incrementalWasm, it)
+                CompileKotlinWasmIrLinkMetrics.collectMetrics(incrementalWasm, wasmCompilerMode, it)
             }
         }
     }

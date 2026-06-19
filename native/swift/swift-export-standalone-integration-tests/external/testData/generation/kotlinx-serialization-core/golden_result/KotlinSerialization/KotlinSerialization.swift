@@ -1,6 +1,6 @@
 @_exported import ExportedKotlinPackages
-import KotlinRuntime
 import KotlinStdlib
+import KotlinRuntime
 import KotlinRuntimeSupport
 @_implementationOnly import KotlinBridges_KotlinSerialization
 
@@ -12,6 +12,7 @@ public typealias encoding = ExportedKotlinPackages.kotlinx.serialization.encodin
 public typealias BinaryFormat = ExportedKotlinPackages.kotlinx.serialization.BinaryFormat
 public typealias _BinaryFormat = ExportedKotlinPackages.kotlinx.serialization._BinaryFormat
 public typealias __BinaryFormat = ExportedKotlinPackages.kotlinx.serialization.__BinaryFormat
+@_spi(kotlinx$serialization$ExperimentalSerializationApi)
 public typealias ContextualSerializer = ExportedKotlinPackages.kotlinx.serialization.ContextualSerializer
 public typealias DeserializationStrategy = ExportedKotlinPackages.kotlinx.serialization.DeserializationStrategy
 public typealias _DeserializationStrategy = ExportedKotlinPackages.kotlinx.serialization._DeserializationStrategy
@@ -19,8 +20,11 @@ public typealias __DeserializationStrategy = ExportedKotlinPackages.kotlinx.seri
 public typealias KSerializer = ExportedKotlinPackages.kotlinx.serialization.KSerializer
 public typealias _KSerializer = ExportedKotlinPackages.kotlinx.serialization._KSerializer
 public typealias __KSerializer = ExportedKotlinPackages.kotlinx.serialization.__KSerializer
+@_spi(kotlinx$serialization$ExperimentalSerializationApi)
 public typealias MissingFieldException = ExportedKotlinPackages.kotlinx.serialization.MissingFieldException
+@_spi(kotlinx$serialization$InternalSerializationApi)
 public typealias PolymorphicSerializer = ExportedKotlinPackages.kotlinx.serialization.PolymorphicSerializer
+@_spi(kotlinx$serialization$InternalSerializationApi)
 public typealias SealedClassSerializer = ExportedKotlinPackages.kotlinx.serialization.SealedClassSerializer
 public typealias SerialFormat = ExportedKotlinPackages.kotlinx.serialization.SerialFormat
 public typealias _SerialFormat = ExportedKotlinPackages.kotlinx.serialization._SerialFormat
@@ -410,6 +414,49 @@ extension ExportedKotlinPackages.kotlinx.serialization {
 }
 extension ExportedKotlinPackages.kotlinx.serialization.`internal` {
     @_spi(kotlinx$serialization$InternalSerializationApi)
+    public enum AbstractCollectionSerializer_SealedType: KotlinRuntimeSupport.SealedType {
+        @_spi(kotlinx$serialization$InternalSerializationApi)
+        case mapLikeSerializer(ExportedKotlinPackages.kotlinx.serialization.`internal`.MapLikeSerializer_SealedType)
+        case unknown(ExportedKotlinPackages.kotlinx.serialization.`internal`.AbstractCollectionSerializer_SealedType.Unknown)
+        @_spi(kotlinx$serialization$InternalSerializationApi)
+        public struct Unknown: KotlinRuntimeSupport.SealedType {
+            public let value: ExportedKotlinPackages.kotlinx.serialization.`internal`.AbstractCollectionSerializer
+            init(
+                _ value: ExportedKotlinPackages.kotlinx.serialization.`internal`.AbstractCollectionSerializer
+            ) {
+                self.value = value
+            }
+        }
+        public var value: ExportedKotlinPackages.kotlinx.serialization.`internal`.AbstractCollectionSerializer {
+            get {
+                switch self {
+                case let .mapLikeSerializer(type): type.value
+                case let .unknown(type): type.value
+                }
+            }
+        }
+    }
+    @_spi(kotlinx$serialization$InternalSerializationApi)
+    public enum MapLikeSerializer_SealedType: KotlinRuntimeSupport.SealedType {
+        case unknown(ExportedKotlinPackages.kotlinx.serialization.`internal`.MapLikeSerializer_SealedType.Unknown)
+        @_spi(kotlinx$serialization$InternalSerializationApi)
+        public struct Unknown: KotlinRuntimeSupport.SealedType {
+            public let value: ExportedKotlinPackages.kotlinx.serialization.`internal`.MapLikeSerializer
+            init(
+                _ value: ExportedKotlinPackages.kotlinx.serialization.`internal`.MapLikeSerializer
+            ) {
+                self.value = value
+            }
+        }
+        public var value: ExportedKotlinPackages.kotlinx.serialization.`internal`.MapLikeSerializer {
+            get {
+                switch self {
+                case let .unknown(type): type.value
+                }
+            }
+        }
+    }
+    @_spi(kotlinx$serialization$InternalSerializationApi)
     public protocol GeneratedSerializer: KotlinRuntime.KotlinBase, ExportedKotlinPackages.kotlinx.serialization.KSerializer, ExportedKotlinPackages.kotlinx.serialization.`internal`._GeneratedSerializer {
         @_spi(kotlinx$serialization$InternalSerializationApi)
         func childSerializers() -> ExportedKotlinPackages.kotlin.Array
@@ -449,6 +496,10 @@ extension ExportedKotlinPackages.kotlinx.serialization.`internal` {
             options: KotlinRuntime.KotlinBaseConstructionOptions
         ) {
             super.init(__externalRCRefUnsafe: __externalRCRefUnsafe, options: options);
+        }
+        @_spi(kotlinx$serialization$InternalSerializationApi)
+        open func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.`internal`.AbstractCollectionSerializer_SealedType {
+            .unknown(.init(self))
         }
     }
     @_spi(kotlinx$serialization$InternalSerializationApi)
@@ -560,6 +611,14 @@ extension ExportedKotlinPackages.kotlinx.serialization.`internal` {
             options: KotlinRuntime.KotlinBaseConstructionOptions
         ) {
             super.init(__externalRCRefUnsafe: __externalRCRefUnsafe, options: options);
+        }
+        @_spi(kotlinx$serialization$InternalSerializationApi)
+        open func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.`internal`.MapLikeSerializer_SealedType {
+            .unknown(.init(self))
+        }
+        @_spi(kotlinx$serialization$InternalSerializationApi) @_disfavoredOverload
+        public final override func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.`internal`.AbstractCollectionSerializer_SealedType {
+            .mapLikeSerializer(sealedType())
         }
     }
     @_spi(kotlinx$serialization$InternalSerializationApi)
@@ -956,6 +1015,24 @@ extension ExportedKotlinPackages.kotlinx.serialization.`internal` {
     }
 }
 extension ExportedKotlinPackages.kotlinx.serialization.modules {
+    public enum SerializersModule_SealedType: KotlinRuntimeSupport.SealedType {
+        case unknown(ExportedKotlinPackages.kotlinx.serialization.modules.SerializersModule_SealedType.Unknown)
+        public struct Unknown: KotlinRuntimeSupport.SealedType {
+            public let value: ExportedKotlinPackages.kotlinx.serialization.modules.SerializersModule
+            init(
+                _ value: ExportedKotlinPackages.kotlinx.serialization.modules.SerializersModule
+            ) {
+                self.value = value
+            }
+        }
+        public var value: ExportedKotlinPackages.kotlinx.serialization.modules.SerializersModule {
+            get {
+                switch self {
+                case let .unknown(type): type.value
+                }
+            }
+        }
+    }
     @_spi(kotlinx$serialization$ExperimentalSerializationApi)
     public protocol SerializersModuleCollector: KotlinRuntime.KotlinBase, ExportedKotlinPackages.kotlinx.serialization.modules._SerializersModuleCollector {
     }
@@ -985,6 +1062,9 @@ extension ExportedKotlinPackages.kotlinx.serialization.modules {
             options: KotlinRuntime.KotlinBaseConstructionOptions
         ) {
             super.init(__externalRCRefUnsafe: __externalRCRefUnsafe, options: options);
+        }
+        open func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.modules.SerializersModule_SealedType {
+            .unknown(.init(self))
         }
     }
     @_spi(kotlinx$serialization$ExperimentalSerializationApi)
@@ -1034,6 +1114,102 @@ extension ExportedKotlinPackages.kotlinx.serialization.modules {
     }
 }
 extension ExportedKotlinPackages.kotlinx.serialization.descriptors {
+    @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+    public enum PolymorphicKind_SealedType: KotlinRuntimeSupport.SealedType {
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        case `open`(ExportedKotlinPackages.kotlinx.serialization.descriptors.PolymorphicKind.OPEN_SealedType)
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        case sealed(ExportedKotlinPackages.kotlinx.serialization.descriptors.PolymorphicKind.SEALED_SealedType)
+        public var value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PolymorphicKind {
+            get {
+                switch self {
+                case let .`open`(type): type.value
+                case let .sealed(type): type.value
+                }
+            }
+        }
+    }
+    @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+    public enum PrimitiveKind_SealedType: KotlinRuntimeSupport.SealedType {
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        case boolean(ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.BOOLEAN_SealedType)
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        case byte(ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.BYTE_SealedType)
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        case char(ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.CHAR_SealedType)
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        case double(ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.DOUBLE_SealedType)
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        case float(ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.FLOAT_SealedType)
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        case int(ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.INT_SealedType)
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        case long(ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.LONG_SealedType)
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        case short(ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.SHORT_SealedType)
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        case string(ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.STRING_SealedType)
+        public var value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind {
+            get {
+                switch self {
+                case let .boolean(type): type.value
+                case let .byte(type): type.value
+                case let .char(type): type.value
+                case let .double(type): type.value
+                case let .float(type): type.value
+                case let .int(type): type.value
+                case let .long(type): type.value
+                case let .short(type): type.value
+                case let .string(type): type.value
+                }
+            }
+        }
+    }
+    @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+    public enum SerialKind_SealedType: KotlinRuntimeSupport.SealedType {
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        case polymorphicKind(ExportedKotlinPackages.kotlinx.serialization.descriptors.PolymorphicKind_SealedType)
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        case primitiveKind(ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind_SealedType)
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        case contextual(ExportedKotlinPackages.kotlinx.serialization.descriptors.SerialKind.CONTEXTUAL_SealedType)
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        case `enum`(ExportedKotlinPackages.kotlinx.serialization.descriptors.SerialKind.ENUM_SealedType)
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        case structureKind(ExportedKotlinPackages.kotlinx.serialization.descriptors.StructureKind_SealedType)
+        public var value: ExportedKotlinPackages.kotlinx.serialization.descriptors.SerialKind {
+            get {
+                switch self {
+                case let .polymorphicKind(type): type.value
+                case let .primitiveKind(type): type.value
+                case let .contextual(type): type.value
+                case let .`enum`(type): type.value
+                case let .structureKind(type): type.value
+                }
+            }
+        }
+    }
+    @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+    public enum StructureKind_SealedType: KotlinRuntimeSupport.SealedType {
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        case `class`(ExportedKotlinPackages.kotlinx.serialization.descriptors.StructureKind.CLASS_SealedType)
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        case list(ExportedKotlinPackages.kotlinx.serialization.descriptors.StructureKind.LIST_SealedType)
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        case map(ExportedKotlinPackages.kotlinx.serialization.descriptors.StructureKind.MAP_SealedType)
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        case object(ExportedKotlinPackages.kotlinx.serialization.descriptors.StructureKind.OBJECT_SealedType)
+        public var value: ExportedKotlinPackages.kotlinx.serialization.descriptors.StructureKind {
+            get {
+                switch self {
+                case let .`class`(type): type.value
+                case let .list(type): type.value
+                case let .map(type): type.value
+                case let .object(type): type.value
+                }
+            }
+        }
+    }
     public protocol SerialDescriptor: KotlinRuntime.KotlinBase, ExportedKotlinPackages.kotlinx.serialization.descriptors._SerialDescriptor {
         @_spi(kotlinx$serialization$ExperimentalSerializationApi)
         var annotations: [any ExportedKotlinPackages.kotlin.Annotation] {
@@ -1152,6 +1328,10 @@ extension ExportedKotlinPackages.kotlinx.serialization.descriptors {
             private init() {
                 fatalError()
             }
+            @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+            public override func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.PolymorphicKind_SealedType {
+                .`open`(.init(self))
+            }
         }
         @_spi(kotlinx$serialization$ExperimentalSerializationApi)
         public final class SEALED: ExportedKotlinPackages.kotlinx.serialization.descriptors.PolymorphicKind {
@@ -1171,12 +1351,42 @@ extension ExportedKotlinPackages.kotlinx.serialization.descriptors {
             private init() {
                 fatalError()
             }
+            @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+            public override func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.PolymorphicKind_SealedType {
+                .sealed(.init(self))
+            }
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        public struct OPEN_SealedType: KotlinRuntimeSupport.SealedType {
+            public let value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PolymorphicKind.OPEN
+            init(
+                _ value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PolymorphicKind.OPEN
+            ) {
+                self.value = value
+            }
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        public struct SEALED_SealedType: KotlinRuntimeSupport.SealedType {
+            public let value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PolymorphicKind.SEALED
+            init(
+                _ value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PolymorphicKind.SEALED
+            ) {
+                self.value = value
+            }
         }
         package override init(
             __externalRCRefUnsafe: Swift.UnsafeMutableRawPointer?,
             options: KotlinRuntime.KotlinBaseConstructionOptions
         ) {
             super.init(__externalRCRefUnsafe: __externalRCRefUnsafe, options: options);
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        open func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.PolymorphicKind_SealedType {
+            fatalError("must implement sealedType in subclass")
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi) @_disfavoredOverload
+        public final override func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.SerialKind_SealedType {
+            .polymorphicKind(sealedType())
         }
     }
     @_spi(kotlinx$serialization$ExperimentalSerializationApi)
@@ -1199,6 +1409,10 @@ extension ExportedKotlinPackages.kotlinx.serialization.descriptors {
             private init() {
                 fatalError()
             }
+            @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+            public override func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind_SealedType {
+                .boolean(.init(self))
+            }
         }
         @_spi(kotlinx$serialization$ExperimentalSerializationApi)
         public final class BYTE: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind {
@@ -1217,6 +1431,10 @@ extension ExportedKotlinPackages.kotlinx.serialization.descriptors {
             }
             private init() {
                 fatalError()
+            }
+            @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+            public override func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind_SealedType {
+                .byte(.init(self))
             }
         }
         @_spi(kotlinx$serialization$ExperimentalSerializationApi)
@@ -1237,6 +1455,10 @@ extension ExportedKotlinPackages.kotlinx.serialization.descriptors {
             private init() {
                 fatalError()
             }
+            @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+            public override func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind_SealedType {
+                .char(.init(self))
+            }
         }
         @_spi(kotlinx$serialization$ExperimentalSerializationApi)
         public final class DOUBLE: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind {
@@ -1255,6 +1477,10 @@ extension ExportedKotlinPackages.kotlinx.serialization.descriptors {
             }
             private init() {
                 fatalError()
+            }
+            @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+            public override func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind_SealedType {
+                .double(.init(self))
             }
         }
         @_spi(kotlinx$serialization$ExperimentalSerializationApi)
@@ -1275,6 +1501,10 @@ extension ExportedKotlinPackages.kotlinx.serialization.descriptors {
             private init() {
                 fatalError()
             }
+            @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+            public override func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind_SealedType {
+                .float(.init(self))
+            }
         }
         @_spi(kotlinx$serialization$ExperimentalSerializationApi)
         public final class INT: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind {
@@ -1293,6 +1523,10 @@ extension ExportedKotlinPackages.kotlinx.serialization.descriptors {
             }
             private init() {
                 fatalError()
+            }
+            @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+            public override func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind_SealedType {
+                .int(.init(self))
             }
         }
         @_spi(kotlinx$serialization$ExperimentalSerializationApi)
@@ -1313,6 +1547,10 @@ extension ExportedKotlinPackages.kotlinx.serialization.descriptors {
             private init() {
                 fatalError()
             }
+            @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+            public override func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind_SealedType {
+                .long(.init(self))
+            }
         }
         @_spi(kotlinx$serialization$ExperimentalSerializationApi)
         public final class SHORT: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind {
@@ -1331,6 +1569,10 @@ extension ExportedKotlinPackages.kotlinx.serialization.descriptors {
             }
             private init() {
                 fatalError()
+            }
+            @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+            public override func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind_SealedType {
+                .short(.init(self))
             }
         }
         @_spi(kotlinx$serialization$ExperimentalSerializationApi)
@@ -1351,12 +1593,105 @@ extension ExportedKotlinPackages.kotlinx.serialization.descriptors {
             private init() {
                 fatalError()
             }
+            @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+            public override func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind_SealedType {
+                .string(.init(self))
+            }
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        public struct BOOLEAN_SealedType: KotlinRuntimeSupport.SealedType {
+            public let value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.BOOLEAN
+            init(
+                _ value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.BOOLEAN
+            ) {
+                self.value = value
+            }
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        public struct BYTE_SealedType: KotlinRuntimeSupport.SealedType {
+            public let value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.BYTE
+            init(
+                _ value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.BYTE
+            ) {
+                self.value = value
+            }
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        public struct CHAR_SealedType: KotlinRuntimeSupport.SealedType {
+            public let value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.CHAR
+            init(
+                _ value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.CHAR
+            ) {
+                self.value = value
+            }
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        public struct DOUBLE_SealedType: KotlinRuntimeSupport.SealedType {
+            public let value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.DOUBLE
+            init(
+                _ value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.DOUBLE
+            ) {
+                self.value = value
+            }
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        public struct FLOAT_SealedType: KotlinRuntimeSupport.SealedType {
+            public let value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.FLOAT
+            init(
+                _ value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.FLOAT
+            ) {
+                self.value = value
+            }
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        public struct INT_SealedType: KotlinRuntimeSupport.SealedType {
+            public let value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.INT
+            init(
+                _ value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.INT
+            ) {
+                self.value = value
+            }
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        public struct LONG_SealedType: KotlinRuntimeSupport.SealedType {
+            public let value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.LONG
+            init(
+                _ value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.LONG
+            ) {
+                self.value = value
+            }
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        public struct SHORT_SealedType: KotlinRuntimeSupport.SealedType {
+            public let value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.SHORT
+            init(
+                _ value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.SHORT
+            ) {
+                self.value = value
+            }
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        public struct STRING_SealedType: KotlinRuntimeSupport.SealedType {
+            public let value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.STRING
+            init(
+                _ value: ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind.STRING
+            ) {
+                self.value = value
+            }
         }
         package override init(
             __externalRCRefUnsafe: Swift.UnsafeMutableRawPointer?,
             options: KotlinRuntime.KotlinBaseConstructionOptions
         ) {
             super.init(__externalRCRefUnsafe: __externalRCRefUnsafe, options: options);
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        open func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.PrimitiveKind_SealedType {
+            fatalError("must implement sealedType in subclass")
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi) @_disfavoredOverload
+        public final override func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.SerialKind_SealedType {
+            .primitiveKind(sealedType())
         }
     }
     @_spi(kotlinx$serialization$ExperimentalSerializationApi)
@@ -1379,6 +1714,10 @@ extension ExportedKotlinPackages.kotlinx.serialization.descriptors {
             private init() {
                 fatalError()
             }
+            @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+            public override func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.SerialKind_SealedType {
+                .contextual(.init(self))
+            }
         }
         @_spi(kotlinx$serialization$ExperimentalSerializationApi)
         public final class ENUM: ExportedKotlinPackages.kotlinx.serialization.descriptors.SerialKind {
@@ -1398,6 +1737,28 @@ extension ExportedKotlinPackages.kotlinx.serialization.descriptors {
             private init() {
                 fatalError()
             }
+            @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+            public override func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.SerialKind_SealedType {
+                .`enum`(.init(self))
+            }
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        public struct CONTEXTUAL_SealedType: KotlinRuntimeSupport.SealedType {
+            public let value: ExportedKotlinPackages.kotlinx.serialization.descriptors.SerialKind.CONTEXTUAL
+            init(
+                _ value: ExportedKotlinPackages.kotlinx.serialization.descriptors.SerialKind.CONTEXTUAL
+            ) {
+                self.value = value
+            }
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        public struct ENUM_SealedType: KotlinRuntimeSupport.SealedType {
+            public let value: ExportedKotlinPackages.kotlinx.serialization.descriptors.SerialKind.ENUM
+            init(
+                _ value: ExportedKotlinPackages.kotlinx.serialization.descriptors.SerialKind.ENUM
+            ) {
+                self.value = value
+            }
         }
         @_spi(kotlinx$serialization$ExperimentalSerializationApi)
         open func hashCode() -> Swift.Int32 {
@@ -1412,6 +1773,10 @@ extension ExportedKotlinPackages.kotlinx.serialization.descriptors {
             options: KotlinRuntime.KotlinBaseConstructionOptions
         ) {
             super.init(__externalRCRefUnsafe: __externalRCRefUnsafe, options: options);
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        open func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.SerialKind_SealedType {
+            fatalError("must implement sealedType in subclass")
         }
     }
     @_spi(kotlinx$serialization$ExperimentalSerializationApi)
@@ -1434,6 +1799,10 @@ extension ExportedKotlinPackages.kotlinx.serialization.descriptors {
             private init() {
                 fatalError()
             }
+            @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+            public override func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.StructureKind_SealedType {
+                .`class`(.init(self))
+            }
         }
         @_spi(kotlinx$serialization$ExperimentalSerializationApi)
         public final class LIST: ExportedKotlinPackages.kotlinx.serialization.descriptors.StructureKind {
@@ -1452,6 +1821,10 @@ extension ExportedKotlinPackages.kotlinx.serialization.descriptors {
             }
             private init() {
                 fatalError()
+            }
+            @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+            public override func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.StructureKind_SealedType {
+                .list(.init(self))
             }
         }
         @_spi(kotlinx$serialization$ExperimentalSerializationApi)
@@ -1472,6 +1845,10 @@ extension ExportedKotlinPackages.kotlinx.serialization.descriptors {
             private init() {
                 fatalError()
             }
+            @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+            public override func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.StructureKind_SealedType {
+                .map(.init(self))
+            }
         }
         @_spi(kotlinx$serialization$ExperimentalSerializationApi)
         public final class OBJECT: ExportedKotlinPackages.kotlinx.serialization.descriptors.StructureKind {
@@ -1491,12 +1868,60 @@ extension ExportedKotlinPackages.kotlinx.serialization.descriptors {
             private init() {
                 fatalError()
             }
+            @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+            public override func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.StructureKind_SealedType {
+                .object(.init(self))
+            }
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        public struct CLASS_SealedType: KotlinRuntimeSupport.SealedType {
+            public let value: ExportedKotlinPackages.kotlinx.serialization.descriptors.StructureKind.CLASS
+            init(
+                _ value: ExportedKotlinPackages.kotlinx.serialization.descriptors.StructureKind.CLASS
+            ) {
+                self.value = value
+            }
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        public struct LIST_SealedType: KotlinRuntimeSupport.SealedType {
+            public let value: ExportedKotlinPackages.kotlinx.serialization.descriptors.StructureKind.LIST
+            init(
+                _ value: ExportedKotlinPackages.kotlinx.serialization.descriptors.StructureKind.LIST
+            ) {
+                self.value = value
+            }
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        public struct MAP_SealedType: KotlinRuntimeSupport.SealedType {
+            public let value: ExportedKotlinPackages.kotlinx.serialization.descriptors.StructureKind.MAP
+            init(
+                _ value: ExportedKotlinPackages.kotlinx.serialization.descriptors.StructureKind.MAP
+            ) {
+                self.value = value
+            }
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        public struct OBJECT_SealedType: KotlinRuntimeSupport.SealedType {
+            public let value: ExportedKotlinPackages.kotlinx.serialization.descriptors.StructureKind.OBJECT
+            init(
+                _ value: ExportedKotlinPackages.kotlinx.serialization.descriptors.StructureKind.OBJECT
+            ) {
+                self.value = value
+            }
         }
         package override init(
             __externalRCRefUnsafe: Swift.UnsafeMutableRawPointer?,
             options: KotlinRuntime.KotlinBaseConstructionOptions
         ) {
             super.init(__externalRCRefUnsafe: __externalRCRefUnsafe, options: options);
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi)
+        open func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.StructureKind_SealedType {
+            fatalError("must implement sealedType in subclass")
+        }
+        @_spi(kotlinx$serialization$ExperimentalSerializationApi) @_disfavoredOverload
+        public final override func sealedType() -> ExportedKotlinPackages.kotlinx.serialization.descriptors.SerialKind_SealedType {
+            .structureKind(sealedType())
         }
     }
     @_spi(kotlinx$serialization$ExperimentalSerializationApi) @available(*, unavailable, message: "Declaration uses unsupported types")
