@@ -43,8 +43,6 @@ fun CompilerConfiguration.setupFromArguments(arguments: K2NativeCompilerArgument
     arguments.kotlinHome?.let { put(KONAN_HOME, it) }
 
     konanNoDefaultLibs = arguments.nodefaultlibs || !arguments.libraryToAddToCache.isNullOrEmpty()
-    @Suppress("DEPRECATION")
-    konanNoEndorsedLibs = arguments.noendorsedlibs || !arguments.libraryToAddToCache.isNullOrEmpty()
     konanNoStdlib = arguments.nostdlib || !arguments.libraryToAddToCache.isNullOrEmpty()
     konanDontCompressKlib = arguments.nopack
     put(NOMAIN, arguments.nomain)
@@ -358,6 +356,7 @@ internal fun CompilerConfiguration.setupCommonOptionsForCaches(config: NativeSec
     put(BinaryOptions.gc, config.gc)
     put(BinaryOptions.gcSchedulerType, config.gcSchedulerType)
     put(BinaryOptions.runtimeAssertionsMode, config.runtimeAssertsMode)
+    put(BinaryOptions.swiftExport, config.swiftExport)
     put(CommonConfigurationKeys.PARALLEL_BACKEND_THREADS, config.threadsCount)
     putIfNotNull(KONAN_DATA_DIR, config.distribution.localKonanDir.absolutePath)
     putIfNotNull(BinaryOptions.minidumpLocation, config.minidumpLocation)
