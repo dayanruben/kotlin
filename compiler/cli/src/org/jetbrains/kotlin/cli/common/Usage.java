@@ -17,11 +17,15 @@
 package org.jetbrains.kotlin.cli.common;
 
 import com.intellij.openapi.util.SystemInfo;
+import kotlin.KotlinVersion;
 import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.cli.common.arguments.*;
 
-import java.lang.reflect.Field;
+import java.util.stream.Stream;
+
+import static org.jetbrains.kotlin.cli.common.UtilsKt.parseKotlinVersion;
+import static org.jetbrains.kotlin.cli.common.arguments.ParseCommandLineArgumentsKt.getArgumentsInfo;
 
 public class Usage {
     public static final String BAT_DELIMITER_CHARACTERS_NOTE =
@@ -29,6 +33,7 @@ public class Usage {
 
     // The magic number 29 corresponds to the similar padding width in javac and scalac command line compilers
     private static final int OPTION_NAME_PADDING_WIDTH = 29;
+    private static final String PADDING_STRING = StringsKt.repeat(" ", OPTION_NAME_PADDING_WIDTH);
 
     @NotNull
     public static <A extends CommonCompilerArguments> String render(@NotNull CLICompiler<A> compiler, @NotNull A arguments) {
@@ -36,13 +41,10 @@ public class Usage {
         StringBuilder sb = new StringBuilder();
         appendln(sb, "Usage: " + compiler.executableScriptFileName() + " <options> <source files>");
         appendln(sb, "where " + (extraHelp ? "advanced" : "possible") + " options include:");
-        Class<?> klass = arguments.getClass();
-        while (klass != Object.class) {
-            for (Field field : klass.getDeclaredFields()) {
-                fieldUsage(sb, field, extraHelp);
-            }
-            klass = klass.getSuperclass();
-        }
+
+        // Use distinct because same arguments can be bound to different names (shortName, deprecatedName)
+        Stream<ArgumentField> argumentFields = getArgumentsInfo(arguments.getClass()).getCliArgNameToArguments().values().stream().distinct();
+        argumentFields.forEach(argumentField -> fieldUsage(sb, argumentField, extraHelp));
 
         if (extraHelp) {
             appendln(sb, "");
@@ -66,9 +68,8 @@ public class Usage {
         return sb.toString();
     }
 
-    private static void fieldUsage(@NotNull StringBuilder sb, @NotNull Field field, boolean extraHelp) {
-        Argument argument = field.getAnnotation(Argument.class);
-        if (argument == null) return;
+    private static void fieldUsage(@NotNull StringBuilder sb, @NotNull ArgumentField argumentField, boolean extraHelp) {
+        Argument argument = argumentField.getArgument();
 
         if (argument.isObsolete()) return;
         if (ParseCommandLineArgumentsKt.isInternal(argument)) return;
@@ -99,7 +100,27 @@ public class Usage {
         }
 
         sb.append(" ");
-        appendln(sb, argument.description().replace("\n", "\n" + StringsKt.repeat(" ", OPTION_NAME_PADDING_WIDTH)));
+
+        appendln(sb, argument.description().replace("\n", "\n" + PADDING_STRING));
+
+        kotlin.Deprecated deprecatedAnnotation = argumentField.getDeprecatedAnnotation();
+        if (deprecatedAnnotation != null) {
+            sb.append(PADDING_STRING);
+            sb.append("The option is ");
+            // The value is generated automatically based on KotlinReleaseVersion entries, thus it's expected to be always valid.
+            KotlinVersion argDeprecatedVersion = parseKotlinVersion(argument.deprecatedVersion());
+            boolean isAlreadyDeprecated = argDeprecatedVersion.compareTo(KotlinVersion.CURRENT) <= 0;
+            sb.append(isAlreadyDeprecated ? "deprecated since " : "will be deprecated in ");
+            sb.append("Kotlin ").append(argDeprecatedVersion).append('.');
+            if (isAlreadyDeprecated) {
+                sb.append(" It will be removed in one of the future releases.");
+            }
+            String message = deprecatedAnnotation.message();
+            if (!message.isEmpty()) {
+                sb.append(' ').append(message.replace("\n", "\n" + PADDING_STRING));
+            }
+            sb.append('\n');
+        }
     }
 
     private static void renderOptionJUsage(@NotNull StringBuilder sb) {

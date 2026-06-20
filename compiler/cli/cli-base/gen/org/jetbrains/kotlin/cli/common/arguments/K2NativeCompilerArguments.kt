@@ -308,10 +308,11 @@ This library must be one of the ones passed with '-library'.""",
             field = if (value.isNullOrEmpty()) null else value
         }
 
-    @Deprecated("This flag is deprecated")
+    @all:Deprecated("Use '-Xadd-light-debug=enable' instead.")
     @Argument(
         value = "-Xg0",
-        description = "Add light debug information. This option has been deprecated. Please use '-Xadd-light-debug=enable' instead.",
+        description = "Add light debug information.",
+        deprecatedVersion = "1.5.20",
     )
     var lightDebugDeprecated: Boolean = false
         set(value) {
@@ -788,13 +789,13 @@ This library must be one of the ones passed with '-library'.""",
             field = value
         }
 
-    @Deprecated("This flag is deprecated")
+    @all:Deprecated("")
     @Argument(
         value = "-library-version",
         shortName = "-lv",
         valueDescription = "<version>",
-        description = """The library version.
-Note: This option is deprecated and will be removed in one of the future releases.""",
+        description = "The library version.",
+        deprecatedVersion = "2.0.20",
     )
     var libraryVersion: String? = null
         set(value) {
@@ -897,10 +898,11 @@ Note: This option is deprecated and will be removed in one of the future release
             field = value
         }
 
-    @Deprecated("This flag is deprecated")
+    @all:Deprecated("The dist no longer has any endorsed libraries.")
     @Argument(
         value = "-no-endorsed-libs",
-        description = "Don't link endorsed libraries from the dist automatically. This option has been deprecated, as the dist no longer has any endorsed libraries.",
+        description = "Don't link endorsed libraries from the dist automatically.",
+        deprecatedVersion = "1.9.20",
     )
     var noendorsedlibs: Boolean = false
         set(value) {

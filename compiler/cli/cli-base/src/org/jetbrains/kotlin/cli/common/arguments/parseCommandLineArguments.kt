@@ -43,6 +43,7 @@ annotation class Argument(
     val valueDescription: String = "",
     val description: String,
     val isObsolete: Boolean = false,
+    val deprecatedVersion: String = "",
 ) {
     @RequiresOptIn(
         message = "The raw delimiter value needs to be resolved. See 'resolvedDelimiter'. Using the raw value requires opt-in",
@@ -141,6 +142,7 @@ data class ArgumentField(
     val argument: Argument,
     val enablesAnnotations: List<Enables>,
     val disablesAnnotations: List<Disables>,
+    val deprecatedAnnotation: Deprecated?,
 ) {
     val changesLanguageFeatures: Boolean
         get() = enablesAnnotations.isNotEmpty() || disablesAnnotations.isNotEmpty()
@@ -161,20 +163,23 @@ fun getArgumentsInfo(klass: Class<*>): ArgumentsInfo {
     return argumentsCache.getOrPut(klass) {
         ArgumentsInfo(
             cliArgNameToArguments = buildMap {
-                val superclass = klass.superclass
-                if (CommonToolArguments::class.java.isAssignableFrom(superclass)) {
-                    putAll(getArgumentsInfo(superclass).cliArgNameToArguments)
-                }
                 for (field in klass.declaredFields) {
                     val argument = field.getAnnotation(Argument::class.java) ?: continue
                     val enablesAnnotations = field.getAnnotationsByType(Enables::class.java).toList()
                     val disablesAnnotations = field.getAnnotationsByType(Disables::class.java).toList()
                     val getter = klass.getMethod(JvmAbi.getterName(field.name))
                     val setter = klass.getMethod(JvmAbi.setterName(field.name), field.type)
-                    val argumentField = ArgumentField(getter, setter, argument, enablesAnnotations, disablesAnnotations)
+                    val deprecatedAnnotation =
+                        getter.getAnnotation(Deprecated::class.java) // Check the getter because `@Deprecated` doesn't have `FIELD` target
+                    val argumentField =
+                        ArgumentField(getter, setter, argument, enablesAnnotations, disablesAnnotations, deprecatedAnnotation)
                     for (key in listOf(argument.value, argument.shortName, argument.deprecatedName)) {
                         if (key.isNotEmpty()) put(key, argumentField)
                     }
+                }
+                val superclass = klass.superclass
+                if (CommonToolArguments::class.java.isAssignableFrom(superclass)) {
+                    putAll(getArgumentsInfo(superclass).cliArgNameToArguments)
                 }
             },
             defaultArgsConstructor = klass.constructors.find { it.parameters.isEmpty() },
