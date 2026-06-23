@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.components.irOrFail
 import org.jetbrains.kotlin.library.metadata.resolver.KotlinLibraryResolveResult
 import org.jetbrains.kotlin.protobuf.ExtensionRegistryLite
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrFile as ProtoFile
 
 data class FileWithFqName(val filePath: String, val fqName: String)
@@ -52,11 +53,12 @@ fun KotlinLibrary.getFileFqNames(filePaths: List<String>): List<String> {
         fileReader.deserializeFileEntryName(fileEntry) to (it.index to fileReader)
     }
     return filePaths.map { filePath ->
-        val [index, fileReader] = filePathToIndexAndReader[filePath] ?: error("No file with path $filePath is found in klib $location")
+        val [index, fileReader] = filePathToIndexAndReader[filePath] ?: error("No file with path $filePath is found in klib $path")
         fileReader.deserializeFqName(fileProtos[index].fqNameList)
     }
 }
 
+@OptIn(K1Deprecation::class)
 class CacheSupport(
         private val configuration: CompilerConfiguration,
         private val resolvedLibraries: KotlinLibraryResolveResult,
@@ -178,7 +180,7 @@ class CacheSupport(
                 for (dependency in dependencies) {
                     if (!cachedLibraries.isLibraryCached(dependency) && dependency != libraryToCache?.klib) {
                         val description = if (cache != null) "cached (in ${cache.path})" else "going to be cached"
-                        configuration.reportCompilationErrorAndThrow("${library.location} is $description, but its dependency isn't: ${dependency.location}")
+                        configuration.reportCompilationErrorAndThrow("${library.path} is $description, but its dependency isn't: ${dependency.path}")
                     }
                 }
             }
@@ -188,7 +190,7 @@ class CacheSupport(
         libraryToCache?.klib?.let {
             val cache = cachedLibraries.getLibraryCache(it)
             if (cache is CachedLibraries.Cache.Monolithic) {
-                configuration.reportCompilationErrorAndThrow("can't cache library '${it.location}' " +
+                configuration.reportCompilationErrorAndThrow("can't cache library '${it.path}' " +
                         "that is already cached in '${cache.path}'")
             }
         }

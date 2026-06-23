@@ -10,6 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.builtins.jvm.JvmBuiltIns
 import org.jetbrains.kotlin.builtins.jvm.JvmBuiltInsPackageFragmentProvider
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.K1_DEPRECATION_WARNING
 import org.jetbrains.kotlin.cli.jvm.config.ClassicFrontendSpecificJvmConfigurationKeys
 import org.jetbrains.kotlin.config.*
@@ -69,6 +70,7 @@ import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.storage.StorageManager
 import kotlin.reflect.KFunction1
 
+@OptIn(K1Deprecation::class)
 object TopDownAnalyzerFacadeForJVM {
     @JvmStatic
     @JvmOverloads
@@ -306,6 +308,7 @@ object TopDownAnalyzerFacadeForJVM {
 
 // From serialization.js....klib.kt
 
+@OptIn(K1Deprecation::class)
 private val jvmFactories = KlibMetadataFactories(
     { storageManager -> JvmBuiltIns(storageManager, JvmBuiltIns.Kind.FROM_DEPENDENCIES) },
     NullFlexibleTypeDeserializer
@@ -314,13 +317,14 @@ private val jvmFactories = KlibMetadataFactories(
 private fun getKlibModules(klibList: List<KotlinLibrary>, dependencyModule: ModuleDescriptorImpl?): List<ModuleDescriptorImpl> {
     val descriptorMap = mutableMapOf<String, ModuleDescriptorImpl>()
     return klibList.map { library ->
-        descriptorMap.getOrPut(library.location.path) { getModuleDescriptorByLibrary(library, descriptorMap, dependencyModule) }
+        descriptorMap.getOrPut(library.path.toString()) { getModuleDescriptorByLibrary(library, descriptorMap, dependencyModule) }
     }
 }
 
+@OptIn(K1Deprecation::class)
 private fun getModuleDescriptorByLibrary(
-    current: KotlinLibrary, mapping:
-    Map<String, ModuleDescriptorImpl>,
+    current: KotlinLibrary,
+    mapping: Map<String, ModuleDescriptorImpl>,
     dependencyModule: ModuleDescriptorImpl?
 ): ModuleDescriptorImpl {
     val module = jvmFactories.DefaultDeserializedDescriptorFactory.createDescriptorOptionalBuiltIns(

@@ -11,7 +11,10 @@ import org.jetbrains.kotlin.backend.common.loadMetadataKlibs
 import org.jetbrains.kotlin.cli.common.*
 import org.jetbrains.kotlin.cli.common.fir.FirDiagnosticsCompilerResultsReporter
 import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
-import org.jetbrains.kotlin.cli.jvm.compiler.*
+import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
+import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
+import org.jetbrains.kotlin.cli.jvm.compiler.prepareIncrementalCompilationContextAndLibrariesScope
+import org.jetbrains.kotlin.cli.jvm.compiler.toVfsBasedProjectEnvironment
 import org.jetbrains.kotlin.cli.jvm.config.JvmClasspathRoot
 import org.jetbrains.kotlin.cli.jvm.config.K2MetadataConfigurationKeys
 import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
@@ -31,6 +34,7 @@ import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.pipeline.*
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.util.PhaseType
 import org.jetbrains.kotlin.util.PotentiallyIncorrectPhaseTimeMeasurement
@@ -60,6 +64,8 @@ object MetadataFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifa
         ).all
 
         val perfManager = configuration.perfManager
+
+        @OptIn(K1Deprecation::class)
         val environment = KotlinCoreEnvironment.createForProduction(
             rootDisposable,
             configuration,
@@ -77,7 +83,6 @@ object MetadataFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifa
         val [librariesScope, incrementalCompilationContext] = prepareIncrementalCompilationContextAndLibrariesScope(
             configuration,
             projectEnvironment,
-            previousStepsSymbolProviders = emptyList(),
             incrementalExcludesScope = null
         )
 

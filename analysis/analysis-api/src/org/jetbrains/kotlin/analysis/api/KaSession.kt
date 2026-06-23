@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolProvider
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
@@ -44,24 +45,11 @@ import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
  * created in.
  *
  * It is forbidden to store an analysis session in a variable, parameter, or property. From the [analyze] block which provides the analysis
- * session, the analysis session should be passed to functions via an extension receiver, or as an ordinary parameter. For example:
+ * session, the analysis session should be passed to functions via an context parameter. For example:
  *
  * ```kotlin
- * fun KaSession.foo() { ... }
- * ```
- *
- * **Class context receivers** should not be used to pass analysis sessions. While a context receiver on a class will make the analysis
- * session available in the constructor, it will also be captured by the class as a property. This behavior is easy to miss and a high risk
- * for unintentional leakage. For example:
- *
- * ```kotlin
- * // DO NOT DO THIS
- * context(KaSession)
- * class Usage {
- *     fun foo() {
- *         // The `KaSession` is available here.
- *     }
- * }
+ * context(session: KaSession)
+ * fun foo() { ... }
  * ```
  *
  * ### [PsiElement] as input

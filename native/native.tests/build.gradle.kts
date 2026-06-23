@@ -120,5 +120,3 @@ projectTests {
         javaLauncher.set(project.getToolchainLauncherFor(JdkMajorVersion.JDK_11_0))
     }
 }
-
-optInToK1Deprecation()

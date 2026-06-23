@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.konan.library.isImplicitlyLoadedFromKotlinNativeDist
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
+import org.jetbrains.kotlin.K1Deprecation
 
 internal fun KotlinLibrary.getAllTransitiveDependencies(allLibraries: Map<String, KotlinLibrary>): List<KotlinLibrary> {
     val allDependencies = mutableSetOf<KotlinLibrary>()
@@ -65,6 +66,7 @@ class CacheBuilder(
             && (config.isFinalBinary || config.produce.isFullCache)
             && (autoCacheableFrom.isNotEmpty() || icEnabled)
 
+    @OptIn(K1Deprecation::class)
     private val allLibraries by lazy { config.resolvedLibraries.getFullList() }
     private val uniqueNameToLibrary by lazy { allLibraries.associateBy { it.uniqueName } }
     private val uniqueNameToHash = mutableMapOf<String, FingerprintHash>()
@@ -146,7 +148,7 @@ class CacheBuilder(
             val anyCachedFile = File(cache.path).listFiles.firstOrNull()?.name ?: return@filter false
             (cache.getMetadata(anyCachedFile).compilerFingerprint != currentCompilerFingerprint).also { stale ->
                 if (stale) configuration.reportLog(
-                        "Incremental cache for ${library.location} was produced by a different compiler version; rebuilding it")
+                        "Incremental cache for ${library.path} was produced by a different compiler version; rebuilding it")
             }
         }
 
@@ -164,6 +166,7 @@ class CacheBuilder(
             if (library in needFullRebuild) continue
             val cache = caches[library] ?: continue
             if (cache !is CachedLibraries.Cache.PerFile) {
+                @OptIn(K1Deprecation::class)
                 require(library.isCInteropLibrary())
                 continue
             }
@@ -211,11 +214,11 @@ class CacheBuilder(
 
         configuration.reportLog("IC analysis results")
         configuration.reportLog("    CACHED:")
-        icedLibraries.filter { caches[it] != null }.forEach { configuration.reportLog("        ${it.location}") }
+        icedLibraries.filter { caches[it] != null }.forEach { configuration.reportLog("        ${it.path}") }
         configuration.reportLog("    CLEAN BUILD:")
-        icedLibraries.filter { caches[it] == null }.forEach { configuration.reportLog("        ${it.location}") }
+        icedLibraries.filter { caches[it] == null }.forEach { configuration.reportLog("        ${it.path}") }
         configuration.reportLog("    FULL REBUILD:")
-        icedLibraries.filter { it in needFullRebuild }.forEach { configuration.reportLog("        ${it.location}") }
+        icedLibraries.filter { it in needFullRebuild }.forEach { configuration.reportLog("        ${it.path}") }
         configuration.reportLog("    ADDED FILES:")
         addedFiles.forEach { configuration.reportLog("        $it") }
         configuration.reportLog("    REMOVED FILES:")
@@ -278,6 +281,7 @@ class CacheBuilder(
     }
 
     private fun KotlinLibrary.getPerFileCachedBinaryFilePaths(cacheRoot: Path, filesToCache: List<String>): List<Path> {
+        @OptIn(K1Deprecation::class)
         require(!isExternal && !isCInteropLibrary()) {
             "Can be only invoked per-file library cache."
         }
@@ -299,15 +303,16 @@ class CacheBuilder(
         val dependencies = library.getAllTransitiveDependencies(uniqueNameToLibrary)
         val dependencyCaches = dependencies.map {
             cacheRootDirectories[it] ?: run {
-                configuration.reportLog("SKIPPING ${library.location} as some of the dependencies aren't cached")
+                configuration.reportLog("SKIPPING ${library.path} as some of the dependencies aren't cached")
                 return emptyList()
             }
         }
 
-        configuration.reportLog("CACHING ${library.location}")
+        configuration.reportLog("CACHING ${library.path}")
         filesToCache.forEach { configuration.reportLog("    $it") }
 
         // Produce monolithic caches for external libraries for now.
+        @OptIn(K1Deprecation::class)
         val makePerFileCache = !isExternal && !library.isCInteropLibrary()
 
         val libraryCacheDirectory = when {
@@ -435,7 +440,7 @@ class CacheBuilder(
                     ?: run {
                         @Suppress("IncorrectFormatting") val extraUserInfo =
                                 """
-                                    Failed to build cache for ${library.location}.
+                                    Failed to build cache for ${library.path}.
                                     As a workaround, please try to disable ${
                                         if (makePerFileCache)
                                             "incremental compilation (kotlin.incremental.native=false)"
@@ -467,7 +472,7 @@ class CacheBuilder(
             val libraries = dependencies.filter { it.isExplicitlySpecifiedByUserInCLIArgument }.map { it.libraryFile.absolutePath }
             val cachedLibraries = dependencies.zip(dependencyCaches).associate { it.first.libraryFile.absolutePath to it.second }
             configuration.reportLog(
-                    "-p static_cache -Xadd-cache=${library.location} \\\n" +
+                    "-p static_cache -Xadd-cache=${library.path} \\\n" +
                             libraries.joinToString("\n") { "-library $it \\" } + "\n" +
                             cachedLibraries.entries.joinToString("\n") { "-Xcached-library=${it.key},${it.value} \\" } + "\n" +
                             "-Xcache-directory=${libraryCacheDirectory.absolutePath}\n"

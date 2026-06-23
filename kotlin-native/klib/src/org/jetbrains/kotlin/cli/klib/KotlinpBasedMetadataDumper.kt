@@ -14,6 +14,7 @@ import kotlin.metadata.internal.common.KmModuleFragment
 import kotlinx.metadata.klib.KlibModuleMetadata
 import kotlinx.metadata.klib.className
 import kotlinx.metadata.klib.fqName
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.backend.konan.serialization.KonanIdSignaturer
 import org.jetbrains.kotlin.backend.konan.serialization.KonanManglerDesc
 import org.jetbrains.kotlin.descriptors.*
@@ -100,7 +101,7 @@ internal class KotlinpBasedMetadataDumper(
             private val metadata = library.metadata
             override val moduleHeaderData get() = metadata.moduleHeaderData
             override val metadataVersion = KlibMetadataVersion((library.metadataVersion?.toArray()
-                    ?: error("No metadata version specified in ${library.location}")))
+                    ?: error("No metadata version specified in ${library.path}")))
             override fun packageMetadata(fqName: String, partName: String) = metadata.getPackageFragment(fqName, partName)
             override fun packageMetadataParts(fqName: String) = metadata.getPackageFragmentNames(fqName)
         }
@@ -217,6 +218,7 @@ private class SignaturesCollector(private val renderer: IdSignatureRenderer) : D
         returnType = type.id()
     )
 
+    @OptIn(K1Deprecation::class)
     private fun FunctionDescriptor.id(ignoreParameterNames: Boolean = false) = FunctionId(
         qualifiedName = qualifiedName(),
         contextReceivers = contextReceiverParameters.map { it.type.id() },
@@ -244,6 +246,7 @@ private class SignaturesCollector(private val renderer: IdSignatureRenderer) : D
         return TypeId(simpleType.classifierId(), simpleType.arguments.map { it.id() })
     }
 
+    @OptIn(K1Deprecation::class)
     private fun ValueParameterDescriptor.id(ignoreName: Boolean) =
         if (ignoreName) ParameterId(type.id(), isVararg) else ParameterId(name.asString(), type.id(), isVararg)
 

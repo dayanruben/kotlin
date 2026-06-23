@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.library
 
 import org.jetbrains.kotlin.library.components.KlibIrComponent
 import org.jetbrains.kotlin.library.components.KlibMetadataComponent
+import java.nio.file.Path
 import org.jetbrains.kotlin.konan.file.File as KlibFile
 
 /**
@@ -28,9 +29,12 @@ import org.jetbrains.kotlin.konan.file.File as KlibFile
  */
 interface Klib {
     /**
-     * The [KlibFile] that points to the library location on the file system.
+     * The [Path] that points to the library location on the file system.
+     *
+     * This path is exactly the same "raw" path as was supplied by the user in compiler's CLI invocation.
+     * To get the absolute path use an additional [Path.toAbsolutePath] call.
      */
-    val location: KlibFile
+    val path: Path
 
     /**
      * Read/write attributes associated with the current instance of [Klib].
@@ -72,8 +76,8 @@ interface KlibComponent {
  * The layout of a [KlibComponent]: Implementations of this abstract class provide access to the component's files by
  * the paths computed from the given [root].
  *
- * Important: The [root] is not necessarily the same as [Klib.location]. For example, a Klib could be a ZIP archive file.
- * In this case [root] points to the root of the virtual file system inside the archive, whereas [Klib.location] points
+ * Important: The [root] is not necessarily the same as [Klib.path]. For example, a Klib could be a ZIP archive file.
+ * In this case [root] points to the root of the virtual file system inside the archive, whereas [Klib.path] points
  * to the archive file itself. So, it is highly important to compute paths exactly based on [root].
  */
 abstract class KlibComponentLayout(val root: KlibFile)

@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.konan.test
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.konan.properties.Properties
 import org.jetbrains.kotlin.konan.properties.propertyList
 import org.jetbrains.kotlin.konan.test.blackbox.AbstractNativeSimpleTest
@@ -20,6 +21,8 @@ import org.jetbrains.kotlin.library.metadata.parseModuleHeader
 import org.jetbrains.kotlin.name.FqName
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.nio.file.Path
+import java.nio.file.Paths
 import org.jetbrains.kotlin.konan.file.File as KlibFile
 
 class UsedLibrariesComputationTest : AbstractNativeSimpleTest() {
@@ -110,6 +113,7 @@ class UsedLibrariesComputationTest : AbstractNativeSimpleTest() {
 
         // Compute used libraries using metadata proto header.
         val usedLibraries: Set<MockKotlinLibrary> = allLibraries.filter { library ->
+            @OptIn(K1Deprecation::class)
             val header = parseModuleHeader(library.metadata.moduleHeaderData)
             val nonEmptyPackageNames = buildSet {
                 addAll(header.packageFragmentNameList)
@@ -145,7 +149,7 @@ class UsedLibrariesComputationTest : AbstractNativeSimpleTest() {
             return null
         }
 
-        override val location: KlibFile get() = KlibFile(".")
+        override val path: Path get() = Paths.get(".")
         override val attributes: KlibAttributes get() = error("Not supported")
 
         override val versions: KotlinLibraryVersioning get() = error("Not supported")

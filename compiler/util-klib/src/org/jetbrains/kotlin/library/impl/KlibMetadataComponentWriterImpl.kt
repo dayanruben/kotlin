@@ -5,16 +5,21 @@
 
 package org.jetbrains.kotlin.library.impl
 
+import org.jetbrains.kotlin.library.SerializedFragment
+import org.jetbrains.kotlin.library.SerializedFragmentWithSource
 import org.jetbrains.kotlin.library.SerializedMetadata
 import org.jetbrains.kotlin.library.components.KlibMetadataComponentLayout
 import org.jetbrains.kotlin.library.writer.KlibComponentWriter
+import org.jetbrains.kotlin.library.writer.KlibWrittenMetadataPackageFragmentTracker
+import kotlin.io.path.Path
 import org.jetbrains.kotlin.konan.file.File as KlibFile
 
 /**
  * An implementation of [KlibComponentWriter] that writes [SerializedMetadata] to the constructed Klib library.
  */
 internal class KlibMetadataComponentWriterImpl(
-    private val metadata: SerializedMetadata
+    private val metadata: SerializedMetadata,
+    private val fragmentTracker: KlibWrittenMetadataPackageFragmentTracker?,
 ) : KlibComponentWriter {
     override fun writeTo(root: KlibFile) {
         val layout = KlibMetadataComponentLayout(root)
@@ -27,16 +32,24 @@ internal class KlibMetadataComponentWriterImpl(
             packageFragmentDir.mkdirs()
 
             val shortPackageName: String = packageFqName.substringAfterLast(".")
-            val packageFragmentParts: List<ByteArray> = metadata.fragments[index]
+            val packageFragmentParts: List<SerializedFragment> = metadata.fragments[index]
 
             val padding: Int = packageFragmentParts.size.toString().length
             fun withPadding(packageFragmentPartIndex: Int) = String.format("%0${padding}d", packageFragmentPartIndex)
 
             packageFragmentParts.forEachIndexed { packageFragmentPartIndex, packageFragmentPart ->
-                layout.getPackageFragmentFile(
+                val packageFragmentFile = layout.getPackageFragmentFile(
                     packageFqName = packageFqName,
                     partName = "${withPadding(packageFragmentPartIndex)}_$shortPackageName"
-                ).writeBytes(packageFragmentPart)
+                )
+                packageFragmentFile.writeBytes(packageFragmentPart.content)
+
+                if (fragmentTracker != null && packageFragmentPart is SerializedFragmentWithSource) {
+                    fragmentTracker.recordSourceFile(
+                        packageFragmentPart.sourceFilePath?.let { Path(it) },
+                        packageFragmentFile.javaPath()
+                    )
+                }
             }
         }
     }

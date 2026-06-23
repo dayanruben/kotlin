@@ -6,9 +6,9 @@
 package org.jetbrains.kotlin.cli.jvm.compiler
 
 import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
 import org.jetbrains.kotlin.fir.session.IncrementalCompilationContext
 import org.jetbrains.kotlin.fir.session.environment.AbstractProjectFileSearchScope
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.load.kotlin.incremental.IncrementalPackagePartProvider
 import org.jetbrains.kotlin.modules.TargetId
 
@@ -27,21 +27,20 @@ private fun createIncrementalCompilationScope(
     }
 }
 
+@OptIn(K1Deprecation::class)
 fun prepareIncrementalCompilationContextAndLibrariesScope(
     configuration: CompilerConfiguration,
     projectEnvironment: VfsBasedProjectEnvironment,
-    previousStepsSymbolProviders: List<FirSymbolProvider>,
     incrementalExcludesScope: AbstractProjectFileSearchScope?
 ): Pair<AbstractProjectFileSearchScope, IncrementalCompilationContext?> {
     val incrementalCompilationScope = createIncrementalCompilationScope(configuration, projectEnvironment, incrementalExcludesScope)
 
     val originalLibrariesScope = projectEnvironment.getSearchScopeForProjectLibraries()
-    if (incrementalCompilationScope == null && previousStepsSymbolProviders.isEmpty()) return originalLibrariesScope to null
+    if (incrementalCompilationScope == null) return originalLibrariesScope to null
     val targetIds = configuration.modules.map(::TargetId)
     val incrementalComponents = configuration.incrementalCompilationComponents!!
 
     val context = IncrementalCompilationContext(
-        previousFirSessionsSymbolProviders = previousStepsSymbolProviders,
         precompiledBinariesPackagePartProvider = IncrementalPackagePartProvider(
             configuration.languageVersionSettings,
             targetIds.map(incrementalComponents::getIncrementalCache)
@@ -59,10 +58,6 @@ fun prepareIncrementalCompilationContextAndLibrariesScope(
      *
      * See also the corresponding comment in `IncrementalJvmCompilerRunnerBase.performWorkBeforeCompilation`
      */
-    val librariesScope = if (incrementalCompilationScope != null) {
-        originalLibrariesScope - incrementalCompilationScope
-    } else {
-        originalLibrariesScope
-    }
+    val librariesScope = originalLibrariesScope - incrementalCompilationScope
     return librariesScope to context
 }

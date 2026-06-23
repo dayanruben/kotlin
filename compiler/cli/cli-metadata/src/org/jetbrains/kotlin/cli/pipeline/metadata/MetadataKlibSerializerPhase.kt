@@ -13,14 +13,18 @@ import org.jetbrains.kotlin.cli.pipeline.PipelinePhase
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.config.perfManager
+import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.moduleData
 import org.jetbrains.kotlin.fir.packageFqName
 import org.jetbrains.kotlin.fir.resolve.providers.firProvider
 import org.jetbrains.kotlin.fir.serialization.FirKLibSerializerExtension
 import org.jetbrains.kotlin.fir.serialization.serializeSingleFirFile
 import org.jetbrains.kotlin.konan.file.File
+import org.jetbrains.kotlin.library.SerializedFragment
+import org.jetbrains.kotlin.library.SerializedFragmentWithSource
 import org.jetbrains.kotlin.library.SerializedMetadata
 import org.jetbrains.kotlin.library.loadSizeInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.library.metadata.KlibMetadataHeaderFlags
 import org.jetbrains.kotlin.library.metadata.KlibMetadataProtoBuf
 import org.jetbrains.kotlin.util.metadataVersion
@@ -33,7 +37,7 @@ object MetadataKlibInMemorySerializerPhase : PipelinePhase<MetadataFrontendPipel
     override fun executePhase(input: MetadataFrontendPipelineArtifact): MetadataInMemorySerializationArtifact {
         (val firResult = frontendOutput, val configuration, val _ = sourceFiles) = input
         val metadataVersion = configuration.metadataVersion()
-        val fragments = mutableMapOf<String, MutableList<ByteArray>>()
+        val fragments = mutableMapOf<String, MutableList<SerializedFragment>>()
 
         val analysisResult = firResult.outputs
         for (output in analysisResult) {
@@ -53,7 +57,8 @@ object MetadataKlibInMemorySerializerPhase : PipelinePhase<MetadataFrontendPipel
                     ),
                     languageVersionSettings,
                 )
-                fragments.getOrPut(firFile.packageFqName.asString()) { mutableListOf() }.add(packageFragment.toByteArray())
+                fragments.getOrPut(firFile.packageFqName.asString()) { mutableListOf() }
+                    .add(createSerializedFragment(input.isForIncrementalCompilation, packageFragment.toByteArray(), firFile))
             }
         }
 
@@ -61,11 +66,12 @@ object MetadataKlibInMemorySerializerPhase : PipelinePhase<MetadataFrontendPipel
         header.moduleName = analysisResult.last().session.moduleData.name.asString()
 
         if (configuration.languageVersionSettings.isPreRelease()) {
+            @OptIn(K1Deprecation::class)
             header.flags = KlibMetadataHeaderFlags.PRE_RELEASE
         }
 
         val fragmentNames = mutableListOf<String>()
-        val fragmentParts = mutableListOf<List<ByteArray>>()
+        val fragmentParts = mutableListOf<List<SerializedFragment>>()
 
         for ([fqName, fragment] in fragments.entries.sortedBy { it.key }) {
             fragmentNames += fqName
@@ -77,6 +83,13 @@ object MetadataKlibInMemorySerializerPhase : PipelinePhase<MetadataFrontendPipel
         val serializedMetadata = SerializedMetadata(module, fragmentParts, fragmentNames, metadataVersion.toArray())
         return MetadataInMemorySerializationArtifact(serializedMetadata, configuration)
     }
+
+    private fun createSerializedFragment(isForIncrementalCompilation: Boolean, content: ByteArray, firFile: FirFile) =
+        if (isForIncrementalCompilation) {
+            SerializedFragmentWithSource(content, firFile.sourceFile?.path)
+        } else {
+            SerializedFragment(content)
+        }
 }
 
 object MetadataKlibFileWriterPhase : PipelinePhase<MetadataInMemorySerializationArtifact, MetadataSerializationArtifact>(
