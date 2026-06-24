@@ -4587,7 +4587,11 @@ extension ExportedKotlinPackages.kotlin {
             return { kotlin_Throwable_printStackTrace(self.__externalRCRef()); return () }()
         }
         open func toString() -> Swift.String {
-            return kotlin_Throwable_toString(self.__externalRCRef())
+            if Self.self == ExportedKotlinPackages.kotlin.Throwable.self {
+                return kotlin_Throwable_toString(self.__externalRCRef())
+            } else {
+                return kotlin_Throwable_toString_direct(self.__externalRCRef())
+            }
         }
         public init(
             message: Swift.String?,
@@ -6649,16 +6653,32 @@ extension ExportedKotlinPackages.kotlin {
     }
     open class Number: KotlinRuntime.KotlinBase {
         open func toDouble() -> Swift.Double {
-            return kotlin_Number_toDouble(self.__externalRCRef())
+            if Self.self == ExportedKotlinPackages.kotlin.Number.self {
+                return kotlin_Number_toDouble(self.__externalRCRef())
+            } else {
+                fatalError("Cannot invoke the inherited implementation of abstract member 'ExportedKotlinPackages.kotlin.Number.toDouble': a Swift subclass must override it and must not call super.")
+            }
         }
         open func toFloat() -> Swift.Float {
-            return kotlin_Number_toFloat(self.__externalRCRef())
+            if Self.self == ExportedKotlinPackages.kotlin.Number.self {
+                return kotlin_Number_toFloat(self.__externalRCRef())
+            } else {
+                fatalError("Cannot invoke the inherited implementation of abstract member 'ExportedKotlinPackages.kotlin.Number.toFloat': a Swift subclass must override it and must not call super.")
+            }
         }
         open func toLong() -> Swift.Int64 {
-            return kotlin_Number_toLong(self.__externalRCRef())
+            if Self.self == ExportedKotlinPackages.kotlin.Number.self {
+                return kotlin_Number_toLong(self.__externalRCRef())
+            } else {
+                fatalError("Cannot invoke the inherited implementation of abstract member 'ExportedKotlinPackages.kotlin.Number.toLong': a Swift subclass must override it and must not call super.")
+            }
         }
         open func toInt() -> Swift.Int32 {
-            return kotlin_Number_toInt(self.__externalRCRef())
+            if Self.self == ExportedKotlinPackages.kotlin.Number.self {
+                return kotlin_Number_toInt(self.__externalRCRef())
+            } else {
+                fatalError("Cannot invoke the inherited implementation of abstract member 'ExportedKotlinPackages.kotlin.Number.toInt': a Swift subclass must override it and must not call super.")
+            }
         }
         @available(*, deprecated, message: """
 Direct conversion to Char is deprecated. Use toInt().toChar() or Char constructor instead.
@@ -6666,13 +6686,25 @@ If you override toChar() function in your Number inheritor, it's recommended to 
 See https://youtrack.jetbrains.com/issue/KT-46465 for details about the migration. Replacement: this.toInt().toChar()
 """)
         open func toChar() -> Swift.Unicode.UTF16.CodeUnit {
-            return kotlin_Number_toChar(self.__externalRCRef())
+            if Self.self == ExportedKotlinPackages.kotlin.Number.self {
+                return kotlin_Number_toChar(self.__externalRCRef())
+            } else {
+                return kotlin_Number_toChar_direct(self.__externalRCRef())
+            }
         }
         open func toShort() -> Swift.Int16 {
-            return kotlin_Number_toShort(self.__externalRCRef())
+            if Self.self == ExportedKotlinPackages.kotlin.Number.self {
+                return kotlin_Number_toShort(self.__externalRCRef())
+            } else {
+                fatalError("Cannot invoke the inherited implementation of abstract member 'ExportedKotlinPackages.kotlin.Number.toShort': a Swift subclass must override it and must not call super.")
+            }
         }
         open func toByte() -> Swift.Int8 {
-            return kotlin_Number_toByte(self.__externalRCRef())
+            if Self.self == ExportedKotlinPackages.kotlin.Number.self {
+                return kotlin_Number_toByte(self.__externalRCRef())
+            } else {
+                fatalError("Cannot invoke the inherited implementation of abstract member 'ExportedKotlinPackages.kotlin.Number.toByte': a Swift subclass must override it and must not call super.")
+            }
         }
         package init() {
             fatalError()
@@ -6708,7 +6740,11 @@ extension ExportedKotlinPackages.kotlin.collections {
             return kotlin_collections_IntIterator_next(self.__externalRCRef())
         }
         open func nextInt() -> Swift.Int32 {
-            return kotlin_collections_IntIterator_nextInt(self.__externalRCRef())
+            if Self.self == ExportedKotlinPackages.kotlin.collections.IntIterator.self {
+                return kotlin_collections_IntIterator_nextInt(self.__externalRCRef())
+            } else {
+                fatalError("Cannot invoke the inherited implementation of abstract member 'ExportedKotlinPackages.kotlin.collections.IntIterator.nextInt': a Swift subclass must override it and must not call super.")
+            }
         }
         package init() {
             fatalError()
@@ -6725,7 +6761,11 @@ extension ExportedKotlinPackages.kotlin.collections {
             return kotlin_collections_CharIterator_next(self.__externalRCRef())
         }
         open func nextChar() -> Swift.Unicode.UTF16.CodeUnit {
-            return kotlin_collections_CharIterator_nextChar(self.__externalRCRef())
+            if Self.self == ExportedKotlinPackages.kotlin.collections.CharIterator.self {
+                return kotlin_collections_CharIterator_nextChar(self.__externalRCRef())
+            } else {
+                fatalError("Cannot invoke the inherited implementation of abstract member 'ExportedKotlinPackages.kotlin.collections.CharIterator.nextChar': a Swift subclass must override it and must not call super.")
+            }
         }
         package init() {
             fatalError()
@@ -7154,7 +7194,15 @@ extension ExportedKotlinPackages.kotlin.time {
         ) -> (any KotlinRuntimeSupport._KotlinBridgeable)? {
             return { switch kotlin_time_Duration_toComponents__TypesOfArguments__U28Swift_Int64_U20Swift_Int32_U20Swift_Int32_U20Swift_Int32_U20Swift_Int32U29202D_U20Swift_Optional_anyU20KotlinRuntimeSupport__KotlinBridgeable___(self.__externalRCRef(), {
                 let originalBlock: (Swift.Int64, Swift.Int32, Swift.Int32, Swift.Int32, Swift.Int32) -> Swift.Optional<any KotlinRuntimeSupport._KotlinBridgeable> = action
-                return { (arg0: Swift.Int64, arg1: Swift.Int32, arg2: Swift.Int32, arg3: Swift.Int32, arg4: Swift.Int32) in return originalBlock(arg0, arg1, arg2, arg3, arg4).map { it in it.__externalRCRef() } ?? nil }
+                return { (arg0: Swift.Int64, arg1: Swift.Int32, arg2: Swift.Int32, arg3: Swift.Int32, arg4: Swift.Int32) in
+                    let _arg0: Swift.Int64 = arg0
+                    let _arg1: Swift.Int32 = arg1
+                    let _arg2: Swift.Int32 = arg2
+                    let _arg3: Swift.Int32 = arg3
+                    let _arg4: Swift.Int32 = arg4
+                    let _result = originalBlock(_arg0, _arg1, _arg2, _arg3, _arg4)
+                    return _result.map { it in it.__externalRCRef() } ?? nil
+                }
             }()) { case nil: .none; case let res?: KotlinRuntime.KotlinBase.__createBridgeable(externalRCRef: res); } }()
         }
         public func toComponents(
@@ -7162,7 +7210,14 @@ extension ExportedKotlinPackages.kotlin.time {
         ) -> (any KotlinRuntimeSupport._KotlinBridgeable)? {
             return { switch kotlin_time_Duration_toComponents__TypesOfArguments__U28Swift_Int64_U20Swift_Int32_U20Swift_Int32_U20Swift_Int32U29202D_U20Swift_Optional_anyU20KotlinRuntimeSupport__KotlinBridgeable___(self.__externalRCRef(), {
                 let originalBlock: (Swift.Int64, Swift.Int32, Swift.Int32, Swift.Int32) -> Swift.Optional<any KotlinRuntimeSupport._KotlinBridgeable> = action
-                return { (arg0: Swift.Int64, arg1: Swift.Int32, arg2: Swift.Int32, arg3: Swift.Int32) in return originalBlock(arg0, arg1, arg2, arg3).map { it in it.__externalRCRef() } ?? nil }
+                return { (arg0: Swift.Int64, arg1: Swift.Int32, arg2: Swift.Int32, arg3: Swift.Int32) in
+                    let _arg0: Swift.Int64 = arg0
+                    let _arg1: Swift.Int32 = arg1
+                    let _arg2: Swift.Int32 = arg2
+                    let _arg3: Swift.Int32 = arg3
+                    let _result = originalBlock(_arg0, _arg1, _arg2, _arg3)
+                    return _result.map { it in it.__externalRCRef() } ?? nil
+                }
             }()) { case nil: .none; case let res?: KotlinRuntime.KotlinBase.__createBridgeable(externalRCRef: res); } }()
         }
         public func toComponents(
@@ -7170,7 +7225,13 @@ extension ExportedKotlinPackages.kotlin.time {
         ) -> (any KotlinRuntimeSupport._KotlinBridgeable)? {
             return { switch kotlin_time_Duration_toComponents__TypesOfArguments__U28Swift_Int64_U20Swift_Int32_U20Swift_Int32U29202D_U20Swift_Optional_anyU20KotlinRuntimeSupport__KotlinBridgeable___(self.__externalRCRef(), {
                 let originalBlock: (Swift.Int64, Swift.Int32, Swift.Int32) -> Swift.Optional<any KotlinRuntimeSupport._KotlinBridgeable> = action
-                return { (arg0: Swift.Int64, arg1: Swift.Int32, arg2: Swift.Int32) in return originalBlock(arg0, arg1, arg2).map { it in it.__externalRCRef() } ?? nil }
+                return { (arg0: Swift.Int64, arg1: Swift.Int32, arg2: Swift.Int32) in
+                    let _arg0: Swift.Int64 = arg0
+                    let _arg1: Swift.Int32 = arg1
+                    let _arg2: Swift.Int32 = arg2
+                    let _result = originalBlock(_arg0, _arg1, _arg2)
+                    return _result.map { it in it.__externalRCRef() } ?? nil
+                }
             }()) { case nil: .none; case let res?: KotlinRuntime.KotlinBase.__createBridgeable(externalRCRef: res); } }()
         }
         public func toComponents(
@@ -7178,7 +7239,12 @@ extension ExportedKotlinPackages.kotlin.time {
         ) -> (any KotlinRuntimeSupport._KotlinBridgeable)? {
             return { switch kotlin_time_Duration_toComponents__TypesOfArguments__U28Swift_Int64_U20Swift_Int32U29202D_U20Swift_Optional_anyU20KotlinRuntimeSupport__KotlinBridgeable___(self.__externalRCRef(), {
                 let originalBlock: (Swift.Int64, Swift.Int32) -> Swift.Optional<any KotlinRuntimeSupport._KotlinBridgeable> = action
-                return { (arg0: Swift.Int64, arg1: Swift.Int32) in return originalBlock(arg0, arg1).map { it in it.__externalRCRef() } ?? nil }
+                return { (arg0: Swift.Int64, arg1: Swift.Int32) in
+                    let _arg0: Swift.Int64 = arg0
+                    let _arg1: Swift.Int32 = arg1
+                    let _result = originalBlock(_arg0, _arg1)
+                    return _result.map { it in it.__externalRCRef() } ?? nil
+                }
             }()) { case nil: .none; case let res?: KotlinRuntime.KotlinBase.__createBridgeable(externalRCRef: res); } }()
         }
         public func toDouble(
@@ -7374,15 +7440,27 @@ extension ExportedKotlinPackages.kotlin.ranges {
             }
         }
         open func iterator() -> ExportedKotlinPackages.kotlin.collections.CharIterator {
-            return ExportedKotlinPackages.kotlin.collections.CharIterator.__createClassWrapper(externalRCRef: kotlin_ranges_CharProgression_iterator(self.__externalRCRef()))
+            if Self.self == ExportedKotlinPackages.kotlin.ranges.CharProgression.self {
+                return ExportedKotlinPackages.kotlin.collections.CharIterator.__createClassWrapper(externalRCRef: kotlin_ranges_CharProgression_iterator(self.__externalRCRef()))
+            } else {
+                return ExportedKotlinPackages.kotlin.collections.CharIterator.__createClassWrapper(externalRCRef: kotlin_ranges_CharProgression_iterator_direct(self.__externalRCRef()))
+            }
         }
         open func isEmpty() -> Swift.Bool {
-            return kotlin_ranges_CharProgression_isEmpty(self.__externalRCRef())
+            if Self.self == ExportedKotlinPackages.kotlin.ranges.CharProgression.self {
+                return kotlin_ranges_CharProgression_isEmpty(self.__externalRCRef())
+            } else {
+                return kotlin_ranges_CharProgression_isEmpty_direct(self.__externalRCRef())
+            }
         }
         open func equals(
             other: (any KotlinRuntimeSupport._KotlinBridgeable)?
         ) -> Swift.Bool {
-            return kotlin_ranges_CharProgression_equals__TypesOfArguments__Swift_Optional_anyU20KotlinRuntimeSupport__KotlinBridgeable___(self.__externalRCRef(), other.map { it in it.__externalRCRef() } ?? nil)
+            if Self.self == ExportedKotlinPackages.kotlin.ranges.CharProgression.self {
+                return kotlin_ranges_CharProgression_equals__TypesOfArguments__Swift_Optional_anyU20KotlinRuntimeSupport__KotlinBridgeable___(self.__externalRCRef(), other.map { it in it.__externalRCRef() } ?? nil)
+            } else {
+                return kotlin_ranges_CharProgression_equals__TypesOfArguments__Swift_Optional_anyU20KotlinRuntimeSupport__KotlinBridgeable____direct(self.__externalRCRef(), other.map { it in it.__externalRCRef() } ?? nil)
+            }
         }
         public static func ==(
             this: ExportedKotlinPackages.kotlin.ranges.CharProgression,
@@ -7391,10 +7469,18 @@ extension ExportedKotlinPackages.kotlin.ranges {
             this.equals(other: other)
         }
         open func hashCode() -> Swift.Int32 {
-            return kotlin_ranges_CharProgression_hashCode(self.__externalRCRef())
+            if Self.self == ExportedKotlinPackages.kotlin.ranges.CharProgression.self {
+                return kotlin_ranges_CharProgression_hashCode(self.__externalRCRef())
+            } else {
+                return kotlin_ranges_CharProgression_hashCode_direct(self.__externalRCRef())
+            }
         }
         open func toString() -> Swift.String {
-            return kotlin_ranges_CharProgression_toString(self.__externalRCRef())
+            if Self.self == ExportedKotlinPackages.kotlin.ranges.CharProgression.self {
+                return kotlin_ranges_CharProgression_toString(self.__externalRCRef())
+            } else {
+                return kotlin_ranges_CharProgression_toString_direct(self.__externalRCRef())
+            }
         }
         package override init(
             __externalRCRefUnsafe: Swift.UnsafeMutableRawPointer?,
@@ -7530,12 +7616,20 @@ extension ExportedKotlinPackages.kotlin.ranges {
             return KotlinRuntime.KotlinBase.__createProtocolWrapper(externalRCRef: kotlin_ranges_UIntProgression_iterator(self.__externalRCRef())) as! any ExportedKotlinPackages.kotlin.collections.Iterator
         }
         open func isEmpty() -> Swift.Bool {
-            return kotlin_ranges_UIntProgression_isEmpty(self.__externalRCRef())
+            if Self.self == ExportedKotlinPackages.kotlin.ranges.UIntProgression.self {
+                return kotlin_ranges_UIntProgression_isEmpty(self.__externalRCRef())
+            } else {
+                return kotlin_ranges_UIntProgression_isEmpty_direct(self.__externalRCRef())
+            }
         }
         open func equals(
             other: (any KotlinRuntimeSupport._KotlinBridgeable)?
         ) -> Swift.Bool {
-            return kotlin_ranges_UIntProgression_equals__TypesOfArguments__Swift_Optional_anyU20KotlinRuntimeSupport__KotlinBridgeable___(self.__externalRCRef(), other.map { it in it.__externalRCRef() } ?? nil)
+            if Self.self == ExportedKotlinPackages.kotlin.ranges.UIntProgression.self {
+                return kotlin_ranges_UIntProgression_equals__TypesOfArguments__Swift_Optional_anyU20KotlinRuntimeSupport__KotlinBridgeable___(self.__externalRCRef(), other.map { it in it.__externalRCRef() } ?? nil)
+            } else {
+                return kotlin_ranges_UIntProgression_equals__TypesOfArguments__Swift_Optional_anyU20KotlinRuntimeSupport__KotlinBridgeable____direct(self.__externalRCRef(), other.map { it in it.__externalRCRef() } ?? nil)
+            }
         }
         public static func ==(
             this: ExportedKotlinPackages.kotlin.ranges.UIntProgression,
@@ -7544,10 +7638,18 @@ extension ExportedKotlinPackages.kotlin.ranges {
             this.equals(other: other)
         }
         open func hashCode() -> Swift.Int32 {
-            return kotlin_ranges_UIntProgression_hashCode(self.__externalRCRef())
+            if Self.self == ExportedKotlinPackages.kotlin.ranges.UIntProgression.self {
+                return kotlin_ranges_UIntProgression_hashCode(self.__externalRCRef())
+            } else {
+                return kotlin_ranges_UIntProgression_hashCode_direct(self.__externalRCRef())
+            }
         }
         open func toString() -> Swift.String {
-            return kotlin_ranges_UIntProgression_toString(self.__externalRCRef())
+            if Self.self == ExportedKotlinPackages.kotlin.ranges.UIntProgression.self {
+                return kotlin_ranges_UIntProgression_toString(self.__externalRCRef())
+            } else {
+                return kotlin_ranges_UIntProgression_toString_direct(self.__externalRCRef())
+            }
         }
         package override init(
             __externalRCRefUnsafe: Swift.UnsafeMutableRawPointer?,
@@ -7683,12 +7785,20 @@ extension ExportedKotlinPackages.kotlin.ranges {
             return KotlinRuntime.KotlinBase.__createProtocolWrapper(externalRCRef: kotlin_ranges_ULongProgression_iterator(self.__externalRCRef())) as! any ExportedKotlinPackages.kotlin.collections.Iterator
         }
         open func isEmpty() -> Swift.Bool {
-            return kotlin_ranges_ULongProgression_isEmpty(self.__externalRCRef())
+            if Self.self == ExportedKotlinPackages.kotlin.ranges.ULongProgression.self {
+                return kotlin_ranges_ULongProgression_isEmpty(self.__externalRCRef())
+            } else {
+                return kotlin_ranges_ULongProgression_isEmpty_direct(self.__externalRCRef())
+            }
         }
         open func equals(
             other: (any KotlinRuntimeSupport._KotlinBridgeable)?
         ) -> Swift.Bool {
-            return kotlin_ranges_ULongProgression_equals__TypesOfArguments__Swift_Optional_anyU20KotlinRuntimeSupport__KotlinBridgeable___(self.__externalRCRef(), other.map { it in it.__externalRCRef() } ?? nil)
+            if Self.self == ExportedKotlinPackages.kotlin.ranges.ULongProgression.self {
+                return kotlin_ranges_ULongProgression_equals__TypesOfArguments__Swift_Optional_anyU20KotlinRuntimeSupport__KotlinBridgeable___(self.__externalRCRef(), other.map { it in it.__externalRCRef() } ?? nil)
+            } else {
+                return kotlin_ranges_ULongProgression_equals__TypesOfArguments__Swift_Optional_anyU20KotlinRuntimeSupport__KotlinBridgeable____direct(self.__externalRCRef(), other.map { it in it.__externalRCRef() } ?? nil)
+            }
         }
         public static func ==(
             this: ExportedKotlinPackages.kotlin.ranges.ULongProgression,
@@ -7697,10 +7807,18 @@ extension ExportedKotlinPackages.kotlin.ranges {
             this.equals(other: other)
         }
         open func hashCode() -> Swift.Int32 {
-            return kotlin_ranges_ULongProgression_hashCode(self.__externalRCRef())
+            if Self.self == ExportedKotlinPackages.kotlin.ranges.ULongProgression.self {
+                return kotlin_ranges_ULongProgression_hashCode(self.__externalRCRef())
+            } else {
+                return kotlin_ranges_ULongProgression_hashCode_direct(self.__externalRCRef())
+            }
         }
         open func toString() -> Swift.String {
-            return kotlin_ranges_ULongProgression_toString(self.__externalRCRef())
+            if Self.self == ExportedKotlinPackages.kotlin.ranges.ULongProgression.self {
+                return kotlin_ranges_ULongProgression_toString(self.__externalRCRef())
+            } else {
+                return kotlin_ranges_ULongProgression_toString_direct(self.__externalRCRef())
+            }
         }
         package override init(
             __externalRCRefUnsafe: Swift.UnsafeMutableRawPointer?,

@@ -10,7 +10,9 @@ import org.jetbrains.kotlin.buildtools.tests.compilation.assertions.assertClassD
 import org.jetbrains.kotlin.buildtools.tests.compilation.assertions.assertCompiledSources
 import org.jetbrains.kotlin.buildtools.tests.compilation.assertions.assertLogContainsPatterns
 import org.jetbrains.kotlin.buildtools.tests.compilation.model.DefaultStrategyAgnosticCompilationTest
+import org.jetbrains.kotlin.buildtools.tests.compilation.model.DefaultStrategyAndPlatformAgnosticScenarioTest
 import org.jetbrains.kotlin.buildtools.tests.compilation.model.LogLevel
+import org.jetbrains.kotlin.buildtools.tests.compilation.model.ScenarioCreator
 import org.jetbrains.kotlin.buildtools.tests.compilation.scenario.jvmScenario
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.jupiter.api.DisplayName
@@ -123,6 +125,171 @@ class AnnotationChangesTest : BaseCompilationTest() {
                     setOf(
                         "public void someMethod();", // bridge method
                     )
+                )
+            }
+        }
+    }
+
+    @DefaultStrategyAndPlatformAgnosticScenarioTest
+    @DisplayName("KT-60584: RequiresOptIn level change should be propagated to callers transitively (same module)")
+    @TestMetadata("ic-scenarios/kt-60584/function-call/same-module")
+    fun testRequiresOptInLevelChangeRecompilesUsagesSameModule(scenario: ScenarioCreator) {
+        scenario {
+            val mod = module("ic-scenarios/kt-60584/function-call/same-module")
+            mod.compile()
+
+            mod.replaceFileWithVersion("Ann.kt", "change-to-error")
+            mod.compile {
+                expectFail()
+                assertCompiledSources("Ann.kt", "Foo.kt", "Main.kt")
+                assertLogContainsPatterns(
+                    LogLevel.ERROR,
+                    ".*Main\\.kt:7:5 This declaration needs opt-in\\..*".toRegex()
+                )
+            }
+        }
+    }
+
+    @DefaultStrategyAndPlatformAgnosticScenarioTest
+    @DisplayName("KT-60584: RequiresOptIn level change should be propagated to callers transitively (cross module)")
+    @TestMetadata("ic-scenarios/kt-60584/function-call/cross-module")
+    fun requiresOptInLevelChangeRecompilesUsagesCrossModule(scenario: ScenarioCreator) {
+        scenario {
+            val lib = module("ic-scenarios/kt-60584/function-call/cross-module/lib")
+            val app = module("ic-scenarios/kt-60584/function-call/cross-module/app", listOf(lib))
+            lib.compile()
+            app.compile()
+
+            lib.replaceFileWithVersion("Ann.kt", "change-to-error")
+            lib.compile {
+                assertCompiledSources("Ann.kt", "Foo.kt")
+            }
+            app.compile {
+                expectFail()
+                assertCompiledSources("Main.kt")
+                assertLogContainsPatterns(
+                    LogLevel.ERROR,
+                    ".*Main\\.kt:7:5 This declaration needs opt-in\\..*".toRegex()
+                )
+            }
+        }
+    }
+
+    @DefaultStrategyAndPlatformAgnosticScenarioTest
+    @DisplayName("KT-60584: RequiresOptIn level change should be propagated to opt-in property assignments transitively (same module)")
+    @TestMetadata("ic-scenarios/kt-60584/property-assignment")
+    fun testRequiresOptInLevelChangeRecompilesPropertyAssignment(scenario: ScenarioCreator) {
+        scenario {
+            val mod = module("ic-scenarios/kt-60584/property-assignment")
+            mod.compile()
+
+            mod.replaceFileWithVersion("Ann.kt", "change-to-error")
+            mod.compile {
+                expectFail()
+                assertCompiledSources("Ann.kt", "Bar.kt", "Main.kt")
+                assertLogContainsPatterns(
+                    LogLevel.ERROR,
+                    ".*Main\\.kt:7:5 This declaration needs opt-in\\..*".toRegex()
+                )
+            }
+        }
+    }
+
+    @DefaultStrategyAndPlatformAgnosticScenarioTest
+    @DisplayName("KT-60584: RequiresOptIn level change should be propagated to delegated constructor calls transitively (same module)")
+    @TestMetadata("ic-scenarios/kt-60584/delegated-constructor")
+    fun testRequiresOptInLevelChangeRecompilesDelegatedConstructorCall(scenario: ScenarioCreator) {
+        scenario {
+            val mod = module("ic-scenarios/kt-60584/delegated-constructor")
+            mod.compile()
+
+            mod.replaceFileWithVersion("Ann.kt", "change-to-error")
+            mod.compile {
+                expectFail()
+                assertCompiledSources("Ann.kt", "Base.kt", "Main.kt")
+                assertLogContainsPatterns(
+                    LogLevel.ERROR,
+                    ".*Main\\.kt:\\d+:\\d+ This declaration needs opt-in\\..*".toRegex()
+                )
+            }
+        }
+    }
+
+    @DefaultStrategyAndPlatformAgnosticScenarioTest
+    @DisplayName("KT-60584: RequiresOptIn level change should be propagated through explicit type arguments transitively (same module)")
+    @TestMetadata("ic-scenarios/kt-60584/type-argument")
+    fun testRequiresOptInLevelChangeRecompilesTypeArgumentUsage(scenario: ScenarioCreator) {
+        scenario {
+            val mod = module("ic-scenarios/kt-60584/type-argument")
+            mod.compile()
+
+            mod.replaceFileWithVersion("Ann.kt", "change-to-error")
+            mod.compile {
+                expectFail()
+                assertCompiledSources("Ann.kt", "Marked.kt", "Main.kt")
+                assertLogContainsPatterns(
+                    LogLevel.ERROR,
+                    ".*Main\\.kt:7:5 This declaration needs opt-in\\..*".toRegex()
+                )
+            }
+        }
+    }
+
+    @DefaultStrategyAndPlatformAgnosticScenarioTest
+    @DisplayName("KT-60584: RequiresOptIn level change should be propagated to type references transitively (same module)")
+    @TestMetadata("ic-scenarios/kt-60584/type-ref")
+    fun testRequiresOptInLevelChangeRecompilesTypeReference(scenario: ScenarioCreator) {
+        scenario {
+            val mod = module("ic-scenarios/kt-60584/type-ref")
+            mod.compile()
+
+            mod.replaceFileWithVersion("Ann.kt", "change-to-error")
+            mod.compile {
+                expectFail()
+                assertCompiledSources("Ann.kt", "C.kt", "Main.kt")
+                assertLogContainsPatterns(
+                    LogLevel.ERROR,
+                    ".*Main\\.kt:\\d+:\\d+ This declaration needs opt-in\\..*".toRegex()
+                )
+            }
+        }
+    }
+
+    @DefaultStrategyAndPlatformAgnosticScenarioTest
+    @DisplayName("KT-60584: RequiresOptIn level change should be propagated to qualifier accesses transitively (same module)")
+    @TestMetadata("ic-scenarios/kt-60584/qualifier")
+    fun testRequiresOptInLevelChangeRecompilesQualifierAccess(scenario: ScenarioCreator) {
+        scenario {
+            val mod = module("ic-scenarios/kt-60584/qualifier")
+            mod.compile()
+
+            mod.replaceFileWithVersion("Ann.kt", "change-to-error")
+            mod.compile {
+                expectFail()
+                assertCompiledSources("Ann.kt", "Obj.kt", "Main.kt")
+                assertLogContainsPatterns(
+                    LogLevel.ERROR,
+                    ".*Main\\.kt:\\d+:\\d+ This declaration needs opt-in\\..*".toRegex()
+                )
+            }
+        }
+    }
+
+    @DefaultStrategyAndPlatformAgnosticScenarioTest
+    @DisplayName("KT-60584: RequiresOptIn level change should be propagated to overrides transitively (same module)")
+    @TestMetadata("ic-scenarios/kt-60584/override")
+    fun testRequiresOptInLevelChangeRecompilesOverride(scenario: ScenarioCreator) {
+        scenario {
+            val mod = module("ic-scenarios/kt-60584/override")
+            mod.compile()
+
+            mod.replaceFileWithVersion("Ann.kt", "change-to-error")
+            mod.compile {
+                expectFail()
+                assertCompiledSources("Ann.kt", "Base.kt", "Main.kt")
+                assertLogContainsPatterns(
+                    LogLevel.ERROR,
+                    ".*Main\\.kt:\\d+:\\d+ Base declaration of supertype .* needs opt-in\\..*".toRegex()
                 )
             }
         }

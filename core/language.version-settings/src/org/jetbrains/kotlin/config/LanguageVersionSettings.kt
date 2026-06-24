@@ -526,6 +526,7 @@ enum class LanguageFeature(
     ReportTypeVarianceConflictsInDnnAndFlexible(sinceVersion = KOTLIN_2_5, enabledInProgressiveMode = true, "KTLC-392"),
     ProperSupportOfInnerClassesInCallableReferenceLHS(sinceVersion = KOTLIN_2_5, "KTLC-388"),
     DontIgnoreUpperBoundViolatedOnImplicitArguments(KOTLIN_2_5, "KTLC-287"),
+    AllowAnnotationsOnArgumentsOfAnnotations(KOTLIN_2_5, "KT-87016"),
     ReportDeprecationsOfOuterImportedClasses(sinceVersion = KOTLIN_2_5, enabledInProgressiveMode = true, "KTLC-397"),
     ForbidUpperBoundsViolationOnTypeOperatorAndParameterBounds(KOTLIN_2_5, enabledInProgressiveMode = true, "KTLC-358"),
     ForbidUselessTypeArgumentsIn25(sinceVersion = KOTLIN_2_5, enabledInProgressiveMode = true, "KTLC-390"),
@@ -611,7 +612,7 @@ enum class LanguageFeature(
     ContextReceivers(sinceVersion = null, NO_ISSUE_SPECIFIED),
     StrictEquals(sinceVersion = null, testOnly = true, issue = "KT-83683"),
     CallableReferencesToContextual(sinceVersion = null, testOnly = true, issue = "KT-54594", enabledInLatestLVTests = true),
-    JavaSamConversionEqualsHashCode(sinceVersion = null, forcesPreReleaseBinaries = true, issue = NO_ISSUE_SPECIFIED),
+    JavaSamConversionEqualsHashCode(sinceVersion = null, forcesPreReleaseBinaries = true, issue = "KT-19318"),
     AllowAnyAsAnActualTypeForExpectInterface(sinceVersion = null, issue = "KT-79308"),
 
     CompanionBlocksAndExtensions(sinceVersion = null, issue = "KT-11968", forcesPreReleaseBinaries = true, forcesPreReleaseBinariesBefore = KOTLIN_2_5, enabledInLatestLVTests = true),

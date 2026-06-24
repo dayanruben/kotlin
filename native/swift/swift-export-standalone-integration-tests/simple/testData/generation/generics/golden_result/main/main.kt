@@ -191,6 +191,13 @@ public fun StringProducer_produce(self: kotlin.native.internal.NativePtr): kotli
     return _result.objcPtr()
 }
 
+@ExportedBridge("StringProducer_produce_direct", nonVirtualTargetMethod = "produce")
+public fun StringProducer_produce_direct(self: kotlin.native.internal.NativePtr): kotlin.native.internal.NativePtr {
+    val __self = kotlin.native.internal.ref.dereferenceExternalRCRef(self) as StringProducer
+    val _result = run { __self.produce() }
+    return _result.objcPtr()
+}
+
 @ExportedBridge("__root___A")
 public fun __root___A(): kotlin.native.internal.NativePtr {
     val _result = run { A<kotlin.Any?>() }
@@ -379,7 +386,8 @@ public fun __root___customFilter__TypesOfArgumentsE__Swift_Array_Swift_Optional_
     val __predicate = run {
         val kotlinFun = convertBlockPtrToKotlinFunction<(kotlin.native.internal.NativePtr)->Boolean>(predicate);
         { arg0: kotlin.Any? ->
-            val _result = kotlinFun(if (arg0 == null) kotlin.native.internal.NativePtr.NULL else kotlin.native.internal.ref.createRetainedExternalRCRef(arg0))
+            val _arg0 = if (arg0 == null) kotlin.native.internal.NativePtr.NULL else kotlin.native.internal.ref.createRetainedExternalRCRef(arg0)
+            val _result = kotlinFun(_arg0)
             _result
         }
     }
@@ -400,7 +408,8 @@ public fun __root___produceBoxUpperBound__TypesOfArguments__U28main_BoxU29202D_U
     val __box = run {
         val kotlinFun = convertBlockPtrToKotlinFunction<(kotlin.native.internal.NativePtr)->Boolean>(box);
         { arg0: Box<kotlin.Any?> ->
-            val _result = kotlinFun(kotlin.native.internal.ref.createRetainedExternalRCRef(arg0))
+            val _arg0 = kotlin.native.internal.ref.createRetainedExternalRCRef(arg0)
+            val _result = kotlinFun(_arg0)
             run<Unit> { _result }
         }
     }
