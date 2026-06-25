@@ -14,11 +14,7 @@ import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.lombok.LombokConfigurationKeys.LOMBOK_CONFIG_FILE
 import org.jetbrains.kotlin.lombok.LombokPluginNames.CONFIG_OPTION_NAME
 import org.jetbrains.kotlin.lombok.LombokPluginNames.PLUGIN_ID
-import org.jetbrains.kotlin.lombok.k2.FirLombokCommonRegistrar
-import org.jetbrains.kotlin.lombok.k2.FirLombokJavaRegistrar
-import org.jetbrains.kotlin.lombok.k2.FirLombokKotlinRegistrar
-import org.jetbrains.kotlin.lombok.k2.LombokCliDiagnostics
-import org.jetbrains.kotlin.lombok.k2.generators.kotlin.ir.LombokIrGenerationExtension
+import org.jetbrains.kotlin.lombok.generators.kotlin.ir.LombokIrGenerationExtension
 import java.io.File
 
 class LombokComponentRegistrar : CompilerPluginRegistrar() {

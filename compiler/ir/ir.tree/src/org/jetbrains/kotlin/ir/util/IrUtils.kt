@@ -343,6 +343,8 @@ tailrec fun IrDeclaration.getPackageFragment(): IrPackageFragment {
         ?: (parent as IrDeclaration).getPackageFragment()
 }
 
+fun IrAnnotation.isAnnotation(classId: ClassId): Boolean = isAnnotationWithEqualFqName(classId.asSingleFqName())
+
 // Just delegate to IrAnnotation.isAnnotationWithEqualFqName(FqName) which is capable to correctly handle unbound symbols.
 fun IrAnnotation.isAnnotation(name: FqName): Boolean = isAnnotationWithEqualFqName(name)
 
@@ -1064,7 +1066,7 @@ object SetDeclarationsParentVisitor : IrVisitor<Unit, IrDeclarationParent>() {
 
 
 val IrFunction.isStatic: Boolean
-    get() = parent is IrClass && dispatchReceiverParameter == null
+    get() = parent is IrClass && dispatchReceiverParameter == null && this.visibility != DescriptorVisibilities.LOCAL
 
 val IrDeclaration.isTopLevel: Boolean
     get() {

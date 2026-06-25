@@ -1,11 +1,10 @@
-description = "Lombok compiler plugin (K2)"
+description = "Lombok compiler plugin"
 
 plugins {
     kotlin("jvm")
 }
 
 dependencies {
-    implementation(project(":kotlin-lombok-compiler-plugin.common"))
     implementation(project(":compiler:frontend.common-psi"))
     implementation(project(":compiler:psi:psi-api"))
     implementation(project(":core:compiler.common.jvm"))

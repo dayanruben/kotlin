@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.builtins.jvm.JvmBuiltIns
 import org.jetbrains.kotlin.builtins.jvm.JvmBuiltInsPackageFragmentProvider
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.K1_DEPRECATION_WARNING
-import org.jetbrains.kotlin.cli.jvm.config.ClassicFrontendSpecificJvmConfigurationKeys
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.container.ComponentProvider
 import org.jetbrains.kotlin.container.StorageComponentContainer
@@ -70,7 +69,7 @@ import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.storage.StorageManager
 import kotlin.reflect.KFunction1
 
-@OptIn(K1Deprecation::class)
+@K1Deprecation
 object TopDownAnalyzerFacadeForJVM {
     @JvmStatic
     @JvmOverloads
@@ -227,7 +226,7 @@ object TopDownAnalyzerFacadeForJVM {
             partProvider, languageVersionSettings,
             useBuiltInsProvider = true,
             configureJavaClassFinder = configureJavaClassFinder,
-            javaClassTracker = configuration[ClassicFrontendSpecificJvmConfigurationKeys.JAVA_CLASSES_TRACKER],
+            javaClassTracker = null,
             implicitsResolutionFilter = implicitsResolutionFilter
         ).apply {
             initJvmBuiltInsForTopDownAnalysis()
@@ -308,12 +307,13 @@ object TopDownAnalyzerFacadeForJVM {
 
 // From serialization.js....klib.kt
 
-@OptIn(K1Deprecation::class)
+@K1Deprecation
 private val jvmFactories = KlibMetadataFactories(
     { storageManager -> JvmBuiltIns(storageManager, JvmBuiltIns.Kind.FROM_DEPENDENCIES) },
     NullFlexibleTypeDeserializer
 )
 
+@K1Deprecation
 private fun getKlibModules(klibList: List<KotlinLibrary>, dependencyModule: ModuleDescriptorImpl?): List<ModuleDescriptorImpl> {
     val descriptorMap = mutableMapOf<String, ModuleDescriptorImpl>()
     return klibList.map { library ->
@@ -321,7 +321,7 @@ private fun getKlibModules(klibList: List<KotlinLibrary>, dependencyModule: Modu
     }
 }
 
-@OptIn(K1Deprecation::class)
+@K1Deprecation
 private fun getModuleDescriptorByLibrary(
     current: KotlinLibrary,
     mapping: Map<String, ModuleDescriptorImpl>,

@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.library.writer.KlibWrittenMetadataPackageFragmentTra
 import org.jetbrains.kotlin.library.writer.includeIr
 import org.jetbrains.kotlin.library.writer.includeMetadata
 import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.io.File
@@ -233,7 +233,8 @@ class KlibWriterTest : AbstractKlibWriterTest<NewKlibWriterParameters>(::NewKlib
 
         val layout = KlibMetadataComponentLayout(KlibFile(klibDir.path))
         val expectedMappings = listOf(
-            Path("/src/a.kt") to layout.getPackageFragmentFile(packageFqName = "", partName = "0_").javaPath(),
+            null to layout.getPackageFragmentFile(packageFqName = "", partName = "0_").javaPath(),
+            Path("/src/a.kt") to layout.getPackageFragmentFile(packageFqName = "", partName = "a").javaPath(),
             null to layout.getPackageFragmentFile(packageFqName = "foo.bar", partName = "0_bar").javaPath(),
         )
 
@@ -241,6 +242,50 @@ class KlibWriterTest : AbstractKlibWriterTest<NewKlibWriterParameters>(::NewKlib
             expectedMappings.map { (source, output) -> source to output },
             recordedMappings.map { (source, output) -> source to output },
         )
+    }
+
+    @Test
+    fun `Fragments source file with the same name and package reports`() {
+        val content = ByteArray(10)
+
+        assertThrows<IllegalStateException> {
+            writeKlib(
+                NewKlibWriterParameters().apply {
+                    metadata = SerializedMetadata(
+                        module = content,
+                        fragments = listOf(
+                            listOf(
+                                SerializedFragmentWithSource(content, "/src/x/a.kt"),
+                                SerializedFragmentWithSource(content, "/src/y/a.kt"),
+                            ),
+                        ),
+                        fragmentNames = listOf("foo.bar"),
+                        metadataVersion = MetadataVersion.INSTANCE.toArray(),
+                    )
+                }
+            )
+        }
+    }
+
+    @Test
+    fun `Existing files removal control`() {
+        fun newWriter(allowIncrementalOverwriting: Boolean) = KlibWriter {
+            manifest {
+                moduleName("sample")
+                versions(MOCK_VERSIONS)
+                platformAndTargets(BuiltInsPlatform.COMMON)
+            }
+            allowIncrementalOverwriting(allowIncrementalOverwriting)
+        }
+
+        val klibDir = createNewKlibDir()
+        val staleFile = File(klibDir, "stale.txt").apply { writeText("stale") }
+
+        newWriter(true).writeTo(klibDir.path)
+        assertTrue(staleFile.exists(), "Pre-existing file must be preserved when allowIncrementalOverwriting = true")
+
+        newWriter(false).writeTo(klibDir.path)
+        assertFalse(staleFile.exists(), "Pre-existing file must be removed when allowIncrementalOverwriting = false")
     }
 
     override fun writeKlib(parameters: NewKlibWriterParameters): File {

@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.io.URLUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KtPsiSourceFile
 import org.jetbrains.kotlin.cli.CliDiagnostics.COMPILER_ARGUMENTS_ERROR
 import org.jetbrains.kotlin.cli.CliDiagnostics.COMPILER_PLUGIN_INITIALIZATION_ERROR
@@ -22,8 +23,7 @@ import org.jetbrains.kotlin.cli.CliDiagnostics.ROOTS_RESOLUTION_WARNING
 import org.jetbrains.kotlin.cli.common.*
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.config.KotlinSourceRoot
-import org.jetbrains.kotlin.K1Deprecation
-import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
+import org.jetbrains.kotlin.cli.common.messages.SyntaxErrorReporter
 import org.jetbrains.kotlin.cli.common.modules.ModuleChunk
 import org.jetbrains.kotlin.cli.jvm.compiler.*
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment.Companion.configureProjectEnvironment
@@ -55,9 +55,10 @@ import org.jetbrains.kotlin.modules.Module
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtImplementationDetail
+import org.jetbrains.kotlin.psi.hmppModuleName
+import org.jetbrains.kotlin.psi.isCommonSource
 import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver
-import org.jetbrains.kotlin.resolve.multiplatform.hmppModuleName
-import org.jetbrains.kotlin.resolve.multiplatform.isCommonSource
 import org.jetbrains.kotlin.util.PhaseType
 import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
 import org.jetbrains.kotlin.utils.fileUtils.descendantRelativeTo
@@ -226,7 +227,7 @@ object JvmFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, J
 
                 val sources = {
                     val ktFiles = kotlinCoreEnvironment.getSourceFiles()
-                    ktFiles.forEach { AnalyzerWithCompilerReport.reportSyntaxErrors(it, diagnosticReporter) }
+                    ktFiles.forEach { SyntaxErrorReporter.reportSyntaxErrors(it, diagnosticReporter) }
                     groupKtFiles(ktFiles)
                 }
 
@@ -235,7 +236,6 @@ object JvmFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, J
         }.takeUnless { CheckCompilationErrors.CheckDiagnosticCollector.checkHasErrors(configuration) }
     }
 
-    @OptIn(K1Deprecation::class)
     private fun groupKtFiles(ktFiles: List<KtFile>): GroupedKtSources {
         val platformSources = mutableSetOf<KtPsiSourceFile>()
         val commonSources = mutableSetOf<KtPsiSourceFile>()
@@ -243,6 +243,7 @@ object JvmFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, J
 
         for (ktFile in ktFiles) {
             val sourceFile = KtPsiSourceFile(ktFile)
+            @OptIn(KtImplementationDetail::class)
             when (val moduleName = ktFile.hmppModuleName) {
                 null -> when {
                     ktFile.isCommonSource == true -> commonSources.add(sourceFile)
@@ -286,9 +287,10 @@ object JvmFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, J
             ?.mapTo(destination) { it::class.qualifiedName }
     }
 
-    @OptIn(K1Deprecation::class)
     private fun checkIfScriptsInCommonSources(configuration: CompilerConfiguration, ktFiles: List<KtFile>): Boolean {
         val lastHmppModule = configuration.hmppModuleStructure?.modules?.lastOrNull()
+
+        @OptIn(KtImplementationDetail::class)
         val commonScripts = ktFiles.filter { it.isScript() && (it.isCommonSource == true || it.hmppModuleName != lastHmppModule?.name) }
         if (commonScripts.isNotEmpty()) {
             val cwd = File(".").absoluteFile
@@ -551,17 +553,19 @@ object JvmFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, J
 
     // ----------------------- Project environment utils -----------------------
 
-    @OptIn(K1Deprecation::class)
     fun createProjectEnvironment(
         configuration: CompilerConfiguration,
         parentDisposable: Disposable,
-        configFiles: EnvironmentConfigFiles
+        configFiles: EnvironmentConfigFiles,
     ): VfsBasedProjectEnvironment {
         setupIdeaStandaloneExecution()
+
+        @OptIn(K1Deprecation::class)
         val appEnv = KotlinCoreEnvironment.getOrCreateApplicationEnvironment(parentDisposable, configuration)
         // TODO: get rid of projEnv too - seems that all needed components could be easily extracted
         val projectEnvironment = KotlinCoreEnvironment.ProjectEnvironment(parentDisposable, appEnv, configuration)
 
+        @OptIn(K1Deprecation::class)
         projectEnvironment.configureProjectEnvironment(configuration, configFiles)
 
         val project = projectEnvironment.project
@@ -705,7 +709,7 @@ object JvmFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, J
     private fun createCoreEnvironment(
         rootDisposable: Disposable,
         configuration: CompilerConfiguration,
-        targetDescription: String
+        targetDescription: String,
     ): KotlinCoreEnvironment? {
         val perfManager = configuration.perfManager
         perfManager?.targetDescription = targetDescription

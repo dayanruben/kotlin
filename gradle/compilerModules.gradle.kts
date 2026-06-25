@@ -17,6 +17,7 @@ val commonCompilerModules = descriptorsCompilerModules + arrayOf(
     ":compiler:util",
     ":compiler:config",
     ":compiler:config.jvm",
+    ":compiler:serialization.common",
     ":compiler:compiler.version",
     ":compiler:resolution.common",
     ":compiler:resolution.common.jvm",
@@ -296,7 +297,6 @@ val projectsDependingOnStableStdlib =
                 ":plugins:js-plain-objects:compiler-plugin:js-plain-objects.backend",
 
                 ":kotlin-lombok-compiler-plugin.cli",
-                ":kotlin-lombok-compiler-plugin.common",
                 ":kotlin-lombok-compiler-plugin.k2",
 
                 ":kotlin-noarg-compiler-plugin.cli",
