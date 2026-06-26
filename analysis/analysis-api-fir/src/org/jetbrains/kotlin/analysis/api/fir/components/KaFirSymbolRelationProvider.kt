@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -251,7 +251,7 @@ internal class KaFirSymbolRelationProvider(
 
     override val KaSymbol.containingFile: KaFileSymbol?
         get() = withValidityAssertion {
-            if (this is KaFileSymbol) {
+            if (this is KaFileSymbol || this is KaPackageSymbol) {
                 return null
             }
 
@@ -261,7 +261,13 @@ internal class KaFirSymbolRelationProvider(
 
     override val KaSymbol.containingModule: KaModule
         get() = withValidityAssertion {
-            getContainingKtModule(analysisSession.resolutionFacade)
+            when (this) {
+                is KaFirSymbol<*> -> firSymbol.getContainingKtModule(resolutionFacade)
+                is KaPackageSymbol -> analysisSession.useSiteModule
+                else -> errorWithAttachment("Unsupported symbol type: ${this::class.simpleName}") {
+                    withSymbolAttachment("symbol", analysisSession, this@containingModule)
+                }
+            }
         }
 
     private fun getContainingPsi(symbol: KaSymbol): KtDeclaration? {
@@ -641,7 +647,7 @@ internal class KaFirSymbolRelationProvider(
 
     private inline fun <reified P : KaSymbol, R : KaSymbol> KaDeclarationSymbol.getExpectsForActualParent(
         actualParent: P?,
-        transformer: (P) -> R?
+        transformer: (P) -> R?,
     ): List<R> {
         return with(analysisSession) { (actualParent as? KaDeclarationSymbol)?.getExpectsForActual() }
             .orEmpty()
@@ -652,7 +658,7 @@ internal class KaFirSymbolRelationProvider(
     private fun computeExpectsForLibraryClass(
         actualSymbol: FirClassLikeSymbol<*>,
         actualModule: KaModule,
-        expectDeclarationProvider: KotlinDeclarationProvider
+        expectDeclarationProvider: KotlinDeclarationProvider,
     ): List<FirClassLikeSymbol<*>> {
         val implementingPlatform = actualModule.targetPlatform
 
@@ -678,7 +684,7 @@ internal class KaFirSymbolRelationProvider(
     private fun computeExpectsForLibraryCallable(
         actualSymbol: FirCallableSymbol<*>,
         actualModule: KaModule,
-        expectDeclarationProvider: KotlinDeclarationProvider
+        expectDeclarationProvider: KotlinDeclarationProvider,
     ): List<FirCallableSymbol<*>> {
         @OptIn(ClassIdBasedLocality::class)
         val callableId = actualSymbol.callableId?.takeUnless { it.isLocal } ?: return emptyList()

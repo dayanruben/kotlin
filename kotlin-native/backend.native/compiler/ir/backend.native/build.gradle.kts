@@ -1,6 +1,9 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
+    id("common-configuration")
+    id("test-federation-convention")
+    id("com.autonomousapps.dependency-analysis")
     kotlin("jvm")
     id("project-tests-convention")
     id("test-inputs-check-v2")
@@ -48,6 +51,7 @@ dependencies {
     implementation(project(":native:binary-options"))
     implementation(project(":compiler:cli:cli-native-klib"))
     implementation(project(":native:native.config"))
+    implementation(project(":native:cinterop.deserialization"))
     implementation(project(":kotlinx-metadata-klib"))
     compileOnly(project(":kotlin-metadata")) // Only to fix IDE reporting unresolved references (KTI-3323).
 

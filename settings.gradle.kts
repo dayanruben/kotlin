@@ -37,6 +37,7 @@ pluginManagement {
 
     plugins {
         id("de.undercouch.download") version "5.1.0"
+        id("com.autonomousapps.dependency-analysis") version "3.6.1"
     }
 }
 
@@ -48,6 +49,12 @@ plugins {
     id("jvm-toolchain-provisioning")
     id("kotlin-daemon-config")
     id("cache-redirector")
+}
+
+gradle.lifecycle.afterProject {
+    if (plugins.hasPlugin("java-base") && !plugins.hasPlugin("common-configuration")) {
+        throw GradleException("common-configuration plugin should be applied to all projects")
+    }
 }
 
 val versionPropertiesFile = File(rootProject.projectDir, "gradle/versions.properties")
@@ -123,6 +130,8 @@ dependencyResolutionManagement {
         d8Distributions()
         androidRepository()
         androidSystemImages()
+        val mirrorRepo: String? = settings.providers.systemProperty("maven.repository.mirror").orNull
+        mirrorRepo?.let(::maven)
         mavenCentral()
     }
     repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
@@ -243,6 +252,7 @@ include(
     ":native:external-projects-test-utils:testLibraryC",
     ":native:external-projects-test-utils:testInternalLibrary",
     ":native:external-projects-test-utils:testExtensionsLibrary",
+    ":native:cinterop.deserialization",
     ":core:names",
     ":core:language.model",
     ":core:language.targets",

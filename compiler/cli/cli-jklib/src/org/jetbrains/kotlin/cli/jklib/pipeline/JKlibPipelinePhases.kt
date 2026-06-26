@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.cli.common.*
 import org.jetbrains.kotlin.cli.common.arguments.K2JKlibCompilerArguments
 import org.jetbrains.kotlin.cli.common.config.addKotlinSourceRoot
 import org.jetbrains.kotlin.cli.diagnosticFactoriesStorage
+import org.jetbrains.kotlin.cli.jklib.config.jklibCompileIr
 import org.jetbrains.kotlin.cli.jklib.config.jklibOutputDestination
 import org.jetbrains.kotlin.cli.jklib.prepareJKlibSessions
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
@@ -41,8 +42,8 @@ import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.pipeline.*
 import org.jetbrains.kotlin.ir.IrDiagnosticReporter
 import org.jetbrains.kotlin.ir.KtDiagnosticReporterWithImplicitIrBasedContext
+import org.jetbrains.kotlin.ir.backend.jklib.JKlibIrMangler
 import org.jetbrains.kotlin.ir.backend.jklib.JKlibModuleSerializer
-import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrMangler
 import org.jetbrains.kotlin.library.KlibFormat
 import org.jetbrains.kotlin.library.KotlinAbiVersion
 import org.jetbrains.kotlin.library.KotlinLibraryVersioning
@@ -60,7 +61,9 @@ import org.jetbrains.kotlin.util.metadataVersion
 import org.jetbrains.kotlin.utils.KotlinPaths
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.File
-
+import kotlin.io.path.Path
+import kotlin.io.path.absolute
+import kotlin.io.path.pathString
 
 object JKlibConfigurationPhase : AbstractConfigurationPhase<K2JKlibCompilerArguments>(
     name = "JKlibConfigurationPhase",
@@ -167,6 +170,7 @@ object JKlibConfigurationUpdater : ConfigurationUpdater<K2JKlibCompilerArguments
         configuration.renderDiagnosticInternalName = arguments.renderInternalDiagnosticNames
 
         arguments.destination?.let { configuration.jklibOutputDestination = it }
+        configuration.jklibCompileIr = arguments.compileIr
         arguments.friendModules?.let { configuration.friendPaths = it.split(File.pathSeparator).filterNot(String::isEmpty) }
     }
 }
@@ -291,8 +295,7 @@ private fun AllModulesFrontendOutput.convertToIrAndActualize(
         fir2IrExtensions,
         fir2IrConfiguration,
         irGeneratorExtensions,
-        // TODO(KT-86203): Check if JKlibIrMangler should not be used here.
-        JvmIrMangler,
+        JKlibIrMangler(),
         FirJvmVisibilityConverter,
         DefaultBuiltIns.Instance,
         ::JvmIrTypeSystemContext,
@@ -313,7 +316,7 @@ object JKlibKlibSerializationPhase : PipelinePhase<JKlibFir2IrPipelineArtifact, 
         val fir2IrResult = input.result
         val configuration = input.configuration
         val diagnosticsReporter = configuration.diagnosticsCollector
-        val destination = File(configuration.jklibOutputDestination ?: "result.klib")
+        val destination = Path(configuration.jklibOutputDestination ?: "result.klib").absolute()
 
         val serializerOutput = serializeModuleIntoKlib(
             moduleName = fir2IrResult.irModuleFragment.name.asString(),
@@ -344,7 +347,9 @@ object JKlibKlibSerializationPhase : PipelinePhase<JKlibFir2IrPipelineArtifact, 
         )
 
         KlibWriter {
-            format(KlibFormat.ZipArchive)
+            // Skip ZIP archive creation and write directly to a directory for better performance when the generated Klib is immediately
+            // deserialized.
+            format(if (configuration.jklibCompileIr) KlibFormat.Directory else KlibFormat.ZipArchive)
             manifest {
                 moduleName(configuration.moduleName ?: JvmProtoBufUtil.DEFAULT_MODULE_NAME)
                 versions(versions)
@@ -352,11 +357,11 @@ object JKlibKlibSerializationPhase : PipelinePhase<JKlibFir2IrPipelineArtifact, 
             }
             includeMetadata(serializerOutput.serializedMetadata ?: error("expected serialized metadata"))
             includeIr(serializerOutput.serializedIr)
-        }.writeTo(destination.absolutePath)
+        }.writeTo(destination)
 
 
         return JKlibSerializationArtifact(
-            destination.absolutePath,
+            destination.pathString,
             configuration,
             input.projectEnvironment,
             input.rootDisposable,

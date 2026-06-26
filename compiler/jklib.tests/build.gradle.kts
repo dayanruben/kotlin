@@ -1,4 +1,7 @@
 plugins {
+    id("common-configuration")
+    id("test-federation-convention")
+    id("com.autonomousapps.dependency-analysis")
     kotlin("jvm")
     id("project-tests-convention")
     id("test-inputs-check")
@@ -9,6 +12,7 @@ dependencies {
     testFixturesApi(testFixtures(project(":generators:test-generator")))
     testFixturesApi(testFixtures(project(":compiler:tests-integration")))
     testFixturesImplementation(project(":compiler:cli-jklib"))
+    testFixturesImplementation(project(":compiler:ir.serialization.jklib"))
 
     testFixturesApi("org.junit.jupiter:junit-jupiter")
 }
@@ -30,10 +34,10 @@ projectTests {
 
     testTask(
         jUnitMode = JUnitMode.JUnit5,
-        defineJDKEnvVariables = listOf(JdkMajorVersion.JDK_1_8, JdkMajorVersion.JDK_11_0)
+        defineJDKEnvVariables = listOf(JdkMajorVersion.JDK_1_8, JdkMajorVersion.JDK_11_0, JdkMajorVersion.JDK_17_0)
     ) {
         val klibProvider = objects.newInstance<SystemPropertyClasspathProvider>().apply {
-            property.set("kotlin.stdlib.jvm.ir.klib")
+            property.set("kotlin.stdlib.jklib.for.test")
             classpath.from(stdlibJvmIr.elements.map { it.filter { it.asFile.name.endsWith(".klib") } })
         }
         jvmArgumentProviders.add(klibProvider)
