@@ -44,6 +44,7 @@ val commonCompilerModules = descriptorsCompilerModules + arrayOf(
     ":kotlin-util-io",
     ":kotlin-util-klib",
     ":kotlin-util-klib-abi",
+    ":kotlin-util-klib-metadata",
     ":compiler:build-tools:kotlin-build-statistics",
     ":js:js.config",
     ":js:js.frontend.common",
@@ -99,7 +100,6 @@ val fe10CompilerModules = arrayOf(
     ":core:deserialization",
     ":compiler:frontend:cfg",
     ":compiler:ir.psi2ir",
-    ":kotlin-util-klib-metadata",
     ":compiler:javac-wrapper",
     ":js:js.frontend",
     ":native:frontend.native",
@@ -202,16 +202,20 @@ val cliCompilerModules = arrayOf(
     ":kotlin-build-common",
 ).also { extra["cliCompilerModules"] = it }
 
+val analysisApiSurfaceModules = arrayOf(
+    ":analysis:analysis-api",
+    ":analysis:analysis-api-standalone",
+).also { extra["analysisApiSurfaceModules"] = it }
+
 /**
  * The array of Analysis API modules that aren't part of [commonCompilerModules] (e.g., `:compiler:psi:psi-api`).
  * It only covers production modules and is used only as a part of [projectsDependingOnStableStdlib].
  */
 val analysisApiModules = arrayOf(
-    ":analysis:analysis-api",
+    *analysisApiSurfaceModules,
     ":analysis:analysis-api-fir",
     ":analysis:analysis-api-impl-base",
     ":analysis:analysis-api-platform-interface",
-    ":analysis:analysis-api-standalone",
     ":analysis:analysis-api-standalone:analysis-api-fir-standalone-base",
     ":analysis:analysis-api-standalone:analysis-api-standalone-base",
     ":analysis:analysis-internal-utils",
@@ -245,6 +249,16 @@ val analysisApiArtifacts by extra {
         ":prepare:analysis-api:kotlin-analysis-api-implementation",
         ":prepare:analysis-api:kotlin-analysis-api-intellij-api-surface-components",
         ":prepare:analysis-api:kotlin-analysis-api-intellij-implementation-components",
+        ":prepare:analysis-api:kotlin-analysis-api-allopen-compiler-plugin-support",
+        ":prepare:analysis-api:kotlin-analysis-api-assignment-compiler-plugin-support",
+        ":prepare:analysis-api:kotlin-analysis-api-compose-compiler-plugin-support",
+        ":prepare:analysis-api:kotlin-analysis-api-dataframe-compiler-plugin-support",
+        ":prepare:analysis-api:kotlin-analysis-api-js-plain-objects-compiler-plugin-support",
+        ":prepare:analysis-api:kotlin-analysis-api-kotlinx-serialization-compiler-plugin-support",
+        ":prepare:analysis-api:kotlin-analysis-api-lombok-compiler-plugin-support",
+        ":prepare:analysis-api:kotlin-analysis-api-noarg-compiler-plugin-support",
+        ":prepare:analysis-api:kotlin-analysis-api-parcelize-compiler-plugin-support",
+        ":prepare:analysis-api:kotlin-analysis-api-sam-with-receiver-compiler-plugin-support",
     )
 }
 

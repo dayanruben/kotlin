@@ -40,7 +40,7 @@ public inline fun CharSequence.elementAtOrElse(index: Int, defaultValue: (Int) -
 /**
  * Returns a character at the given [index] or `null` if the [index] is out of bounds of this char sequence.
  * 
- * @sample samples.collections.Collections.Elements.elementAtOrNull
+ * @sample samples.text.Strings.elementAtOrNull
  */
 @kotlin.internal.InlineOnly
 public inline fun CharSequence.elementAtOrNull(index: Int): Char? {
@@ -156,6 +156,8 @@ public fun CharSequence.getOrNull(index: Int): Char? {
 
 /**
  * Returns index of the first character matching the given [predicate], or -1 if the char sequence does not contain such character.
+ * 
+ * @sample samples.text.Strings.indexOfFirst
  */
 public inline fun CharSequence.indexOfFirst(predicate: (Char) -> Boolean): Int {
     for (index in indices) {
@@ -168,6 +170,8 @@ public inline fun CharSequence.indexOfFirst(predicate: (Char) -> Boolean): Int {
 
 /**
  * Returns index of the last character matching the given [predicate], or -1 if the char sequence does not contain such character.
+ * 
+ * @sample samples.text.Strings.indexOfLast
  */
 public inline fun CharSequence.indexOfLast(predicate: (Char) -> Boolean): Int {
     for (index in indices.reversed()) {

@@ -233,6 +233,10 @@ object Elements : TemplateGroupBase() {
             inlineOnly()
             body { "return storage.indexOfFirst { predicate(it.to${primitive!!.name}()) }" }
         }
+
+        specialFor(CharSequences) {
+            sample("${f.sampleClass}.indexOfFirst")
+        }
     }
 
     val f_indexOfLast = fn("indexOfLast(predicate: (T) -> Boolean)") {
@@ -282,6 +286,10 @@ object Elements : TemplateGroupBase() {
         specialFor(ArraysOfUnsigned) {
             inlineOnly()
             body { "return storage.indexOfLast { predicate(it.to${primitive!!.name}()) }" }
+        }
+
+        specialFor(CharSequences) {
+            sample("${f.sampleClass}.indexOfLast")
         }
     }
 
@@ -469,6 +477,9 @@ object Elements : TemplateGroupBase() {
         specialFor(CharSequences, Lists, ArraysOfObjects, ArraysOfPrimitives, ArraysOfUnsigned) {
             inlineOnly()
             body { "return this.getOrNull(index)" }
+        }
+        specialFor(CharSequences) {
+            sample("samples.text.Strings.elementAtOrNull")
         }
     }
 

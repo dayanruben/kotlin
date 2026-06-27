@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.ir.declarations
 
 import org.jetbrains.kotlin.CompilerVersionOfApiDeprecation
 import org.jetbrains.kotlin.DeprecatedForRemovalCompilerApi
-import org.jetbrains.kotlin.descriptors.BasicValueClassRepresentation
 import org.jetbrains.kotlin.descriptors.FullValueClassRepresentation
 import org.jetbrains.kotlin.descriptors.InlineClassRepresentation
 import org.jetbrains.kotlin.descriptors.ValueClassBackendAgnosticApi
@@ -50,14 +49,11 @@ fun IrElement.copyAttributes(other: IrElement, includeAll: Boolean = false) {
  * the class is a full value class compatible with inline classes; otherwise, `false`.
  */
 @ValueClassBackendAgnosticApi
-fun IrClass.isSingleFieldValueClass(treatCompatibleFullValueClassesAsInline: Boolean): Boolean =
+fun IrClass.isInlineClass(treatCompatibleFullValueClassesAsInline: Boolean): Boolean =
     inlineClassRepresentation(treatCompatibleFullValueClassesAsInline) != null
 
 val IrClass.isFullValueClass: Boolean
     get() = valueClassRepresentation is FullValueClassRepresentation<*>
-
-val IrClass.isBasicValueClass: Boolean
-    get() = valueClassRepresentation is BasicValueClassRepresentation<*>
 
 fun IrClass.addMember(member: IrDeclaration) {
     declarations.add(member)
