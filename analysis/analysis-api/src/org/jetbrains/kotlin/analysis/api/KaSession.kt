@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
+import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolProvider
@@ -171,15 +172,24 @@ public interface KaSession : KaLifetimeOwner,
  *
  * @see KaModuleProvider.getModule
  */
-public fun KaSession.getModule(element: PsiElement): KaModule =
-    KaModuleProvider.getModule(useSiteModule.project, element, useSiteModule)
+@Deprecated(
+    "Use `kaModule` instead",
+    ReplaceWith(
+        "element.kaModule",
+        imports = ["org.jetbrains.kotlin.analysis.api.projectStructure.kaModule"],
+    )
+)
+public fun KaSession.getModule(element: PsiElement): KaModule = element.kaModule
 
 /**
  * The [KaModule] from whose perspective the analysis is performed. The use-site module defines the resolution scope of the [KaSession],
  * which signifies *where* symbols are located (such as sources, dependencies, and so on) and *which* symbols can be found in the first
  * place.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.session' endpoint instead.",
+    replaceWith = ReplaceWith("useSiteModule", "org.jetbrains.kotlin.analysis.api.session.useSiteModule"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val useSiteModule: KaModule
@@ -188,7 +198,10 @@ public val useSiteModule: KaModule
 /**
  * The [KaSession] of the current analysis context.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.session' endpoint instead.",
+    replaceWith = ReplaceWith("useSiteSession", "org.jetbrains.kotlin.analysis.api.session.useSiteSession"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val useSiteSession: KaSession
@@ -197,7 +210,10 @@ public val useSiteSession: KaSession
 /**
  * Returns the restored [KaSymbol] (possibly a new symbol instance) if the pointer is still valid, or `null` otherwise.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.symbols.pointers' endpoint instead.",
+    replaceWith = ReplaceWith("this.restoreSymbol()", "org.jetbrains.kotlin.analysis.api.symbols.pointers.restoreSymbol"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public fun <S : KaSymbol> KaSymbolPointer<S>.restoreSymbol(): S? {
@@ -209,8 +225,11 @@ public fun <S : KaSymbol> KaSymbolPointer<S>.restoreSymbol(): S? {
 /**
  * Returns the restored [KaType] (possibly a new type instance) if the pointer is still valid, or `null` otherwise.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
 @KaExperimentalApi
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.restore()", "org.jetbrains.kotlin.analysis.api.types.restore"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public fun <T : KaType> KaTypePointer<T>.restore(): T? {

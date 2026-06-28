@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.analysis.api.internals
 
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 
 /**
  * An internal facade that aggregates the Analysis API implementation behind every public
@@ -24,9 +25,63 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 @KaImplementationDetail
 @SubclassOptInRequired(KaImplementationDetail::class)
 public interface KaInternals {
+    public val analysisScopeProvider: KaInternalsAnalysisScopeProvider
+
+    public val completionCandidateChecker: KaInternalsCompletionCandidateChecker
+
+    public val compilerFacility: KaInternalsCompilerFacility
+
+    public val compilerPluginGeneratedDeclarationsProvider: KaInternalsCompilerPluginGeneratedDeclarationsProvider
+
+    public val dataFlowProvider: KaInternalsDataFlowProvider
+
+    public val diagnosticProvider: KaInternalsDiagnosticProvider
+
+    public val evaluator: KaInternalsEvaluator
+
+    public val expressionInformationProvider: KaInternalsExpressionInformationProvider
+
+    public val expressionTypeProvider: KaInternalsExpressionTypeProvider
+
+    public val javaInteroperabilityComponent: KaInternalsJavaInteroperabilityComponent
+
+    public val kDocProvider: KaInternalsKDocProvider
+
+    public val legacyTypeCreator: KaInternalsTypeCreator
+
+    public val referenceShortener: KaInternalsReferenceShortener
+
+    public val renderer: KaInternalsRenderer
+
+    public val resolveExtensionInfoProvider: KaInternalsResolveExtensionInfoProvider
+
     public val resolver: KaInternalsResolver
 
+    public val scopeProvider: KaInternalsScopeProvider
+
+    public val signatureSubstitutor: KaInternalsSignatureSubstitutor
+
+    public val sourceProvider: KaInternalsSourceProvider
+
+    public val substitutorProvider: KaInternalsSubstitutorProvider
+
+    public val symbolInformationProvider: KaInternalsSymbolInformationProvider
+
+    public val symbolProvider: KaInternalsSymbolProvider
+
+    public val symbolRelationProvider: KaInternalsSymbolRelationProvider
+
+    public val typeCreatorProvider: KaInternalsTypeCreatorProvider
+
+    public val typeInformationProvider: KaInternalsTypeInformationProvider
+
+    public val typeProvider: KaInternalsTypeProvider
+
     public val typeRelationChecker: KaInternalsTypeRelationChecker
+
+    public val useSiteModule: KaModule
+
+    public val visibilityChecker: KaInternalsVisibilityChecker
 }
 
 /**

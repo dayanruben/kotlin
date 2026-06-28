@@ -5,12 +5,7 @@
 
 package org.jetbrains.kotlin.analysis.api.components
 
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
-import org.jetbrains.kotlin.analysis.api.KaCustomContextParameterBridge
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
-import org.jetbrains.kotlin.analysis.api.KaNoContextParameterBridgeRequired
-import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
@@ -19,7 +14,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.StandardClassIds
 
 @KaSessionComponentImplementationDetail
 @SubclassOptInRequired(KaSessionComponentImplementationDetail::class)
@@ -145,67 +139,67 @@ public interface KaTypeInformationProvider : KaSessionComponent {
     /**
      * Whether the [KaType] is a [Unit] type.
      */
-    public val KaType.isUnitType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.UNIT) }
+    public val KaType.isUnitType: Boolean get() = withValidityAssertion { isClassType(org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.UNIT) }
 
     /**
      * Whether the [KaType] is an [Int] type.
      */
-    public val KaType.isIntType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.INT) }
+    public val KaType.isIntType: Boolean get() = withValidityAssertion { isClassType(org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.INT) }
 
     /**
      * Whether the [KaType] is a [Long] type.
      */
-    public val KaType.isLongType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.LONG) }
+    public val KaType.isLongType: Boolean get() = withValidityAssertion { isClassType(org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.LONG) }
 
     /**
      * Whether the [KaType] is a [Short] type.
      */
-    public val KaType.isShortType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.SHORT) }
+    public val KaType.isShortType: Boolean get() = withValidityAssertion { isClassType(org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.SHORT) }
 
     /**
      * Whether the [KaType] is a [Byte] type.
      */
-    public val KaType.isByteType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.BYTE) }
+    public val KaType.isByteType: Boolean get() = withValidityAssertion { isClassType(org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.BYTE) }
 
     /**
      * Whether the [KaType] is a [Float] type.
      */
-    public val KaType.isFloatType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.FLOAT) }
+    public val KaType.isFloatType: Boolean get() = withValidityAssertion { isClassType(org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.FLOAT) }
 
     /**
      * Whether the [KaType] is a [Double] type.
      */
-    public val KaType.isDoubleType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.DOUBLE) }
+    public val KaType.isDoubleType: Boolean get() = withValidityAssertion { isClassType(org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.DOUBLE) }
 
     /**
      * Whether the [KaType] is a [Char] type.
      */
-    public val KaType.isCharType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.CHAR) }
+    public val KaType.isCharType: Boolean get() = withValidityAssertion { isClassType(org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.CHAR) }
 
     /**
      * Whether the [KaType] is a [Boolean] type.
      */
-    public val KaType.isBooleanType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.BOOLEAN) }
+    public val KaType.isBooleanType: Boolean get() = withValidityAssertion { isClassType(org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.BOOLEAN) }
 
     /**
      * Whether the [KaType] is a [String] type.
      */
-    public val KaType.isStringType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.STRING) }
+    public val KaType.isStringType: Boolean get() = withValidityAssertion { isClassType(org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.STRING) }
 
     /**
      * Whether the [KaType] is a [CharSequence] type.
      */
-    public val KaType.isCharSequenceType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.CHAR_SEQUENCE) }
+    public val KaType.isCharSequenceType: Boolean get() = withValidityAssertion { isClassType(org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.CHAR_SEQUENCE) }
 
     /**
      * Whether the [KaType] is an [Any] type.
      */
-    public val KaType.isAnyType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.ANY) }
+    public val KaType.isAnyType: Boolean get() = withValidityAssertion { isClassType(org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.ANY) }
 
     /**
      * Whether the [KaType] is a [Nothing] type.
      */
-    public val KaType.isNothingType: Boolean get() = withValidityAssertion { isClassType(KaStandardTypeClassIds.NOTHING) }
+    public val KaType.isNothingType: Boolean get() = withValidityAssertion { isClassType(org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.NOTHING) }
 
     /**
      * Whether the [KaType] is a [UInt] type.
@@ -289,7 +283,7 @@ public interface KaTypeInformationProvider : KaSessionComponent {
     public val KaType.isPrimitive: Boolean
         get() = withValidityAssertion {
             if (this !is KaClassType) return false
-            return this.classId in KaStandardTypeClassIds.PRIMITIVES
+            return this.classId in org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.PRIMITIVES
         }
 
     /**
@@ -323,6 +317,8 @@ public interface KaTypeInformationProvider : KaSessionComponent {
 }
 
 /**
+ * **The type has been moved to a new package. Use [org.jetbrains.kotlin.analysis.api.types.KaFunctionTypeFamily] instead.**
+ *
  * Describes a family of numbered function types such as `Function0`, `Function1`, ..., `FunctionN`.
  *
  * Kotlin has the following built-in function type families:
@@ -336,132 +332,141 @@ public interface KaTypeInformationProvider : KaSessionComponent {
  * @see KaTypeInformationProvider.functionTypeFamily
  * @see KaBuiltinFunctionTypeFamilies
  */
+@KaObsoleteComponentApi
 @KaExperimentalApi
 @SubclassOptInRequired(KaImplementationDetail::class)
-public interface KaFunctionTypeFamily {
+public interface KaFunctionTypeFamily : org.jetbrains.kotlin.analysis.api.types.KaFunctionTypeFamily {
     /**
      * Whether this family represents reflection function types (`KFunction`, `KSuspendFunction`).
      */
-    public val isReflect: Boolean
+    override val isReflect: Boolean
 
     /**
      * Whether this family represents suspend function types (`SuspendFunction`, `KSuspendFunction`).
      */
-    public val isSuspend: Boolean
+    override val isSuspend: Boolean
 
     /**
      * Whether function types in this family can be inlined by the compiler.
      *
      * For built-in families, `Function` and `SuspendFunction` are inlinable, while `KFunction` and `KSuspendFunction` are not.
      */
-    public val isInlinable: Boolean
+    override val isInlinable: Boolean
 
     /**
      * The maximum number of parameters supported by function types in this family.
      */
-    public val maxArity: Int
+    override val maxArity: Int
 
     /**
      * Whether function references with a simple function type (e.g., `Function0`, `KFunction0`) can be converted to this family.
      */
-    public val supportsConversionFromSimpleFunctionType: Boolean
+    override val supportsConversionFromSimpleFunctionType: Boolean
 
     /**
      * The class name prefix shared by all types in this family.
      *
      * For example, `"Function"` for the `Function` family, `"SuspendFunction"` for the `SuspendFunction` family.
      */
-    public val nameBase: String
+    override val nameBase: String
 
     /**
      * Returns the [ClassId] of the function type interface for the given [arity].
      *
      * For example, `classId(2)` on the `Function` family returns the [ClassId] for `kotlin.Function2`.
      */
-    public fun classId(arity: Int): ClassId
+    override fun classId(arity: Int): ClassId
 }
 
 /**
+ * **The type has been moved to a new package. Use [org.jetbrains.kotlin.analysis.api.types.KaBuiltinFunctionTypeFamilies] instead.**
+ *
  * Provides access to the four built-in [function type families][KaFunctionTypeFamily].
  *
  * @see KaTypeInformationProvider.builtinFunctionTypeFamilies
  */
+@KaObsoleteComponentApi
 @KaExperimentalApi
 @SubclassOptInRequired(KaImplementationDetail::class)
-public interface KaBuiltinFunctionTypeFamilies {
+public interface KaBuiltinFunctionTypeFamilies : org.jetbrains.kotlin.analysis.api.types.KaBuiltinFunctionTypeFamilies {
     /**
      * The `Function` family representing regular function types
      * (e.g., `Function0`, `Function1`, ..., `FunctionN`).
      */
-    public val function: KaFunctionTypeFamily
+    override val function: KaFunctionTypeFamily
 
     /**
      * The `SuspendFunction` family representing suspend function types
      * (e.g., `SuspendFunction0`, `SuspendFunction1`, ..., `SuspendFunctionN`).
      */
-    public val suspendFunction: KaFunctionTypeFamily
+    override val suspendFunction: KaFunctionTypeFamily
 
     /**
      * The `KFunction` family representing reflection types for regular functions
      * (e.g., `KFunction0`, `KFunction1`, ..., `KFunctionN`).
      */
-    public val kFunction: KaFunctionTypeFamily
+    override val kFunction: KaFunctionTypeFamily
 
     /**
      * The `KSuspendFunction` family representing reflection types for suspend functions
      * (e.g., `KSuspendFunction0`, `KSuspendFunction1`, ..., `KSuspendFunctionN`).
      */
-    public val kSuspendFunction: KaFunctionTypeFamily
+    override val kSuspendFunction: KaFunctionTypeFamily
 }
 
 /**
  * The object contains [ClassId]s of well known Kotlin types.
  */
+@Deprecated(
+    message = "Use 'org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds' instead.",
+    replaceWith = ReplaceWith("KaStandardTypeClassIds", "org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds"),
+)
 public object KaStandardTypeClassIds {
     /** The [Unit] class ID. */
-    public val UNIT: ClassId get() = StandardClassIds.Unit
+    public val UNIT: ClassId get() = org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.UNIT
 
     /** The [Int] class ID. */
-    public val INT: ClassId get() = StandardClassIds.Int
+    public val INT: ClassId get() = org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.INT
 
     /** The [Long] class ID. */
-    public val LONG: ClassId get() = StandardClassIds.Long
+    public val LONG: ClassId get() = org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.LONG
 
     /** The [Short] class ID. */
-    public val SHORT: ClassId get() = StandardClassIds.Short
+    public val SHORT: ClassId get() = org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.SHORT
 
     /** The [Byte] class ID. */
-    public val BYTE: ClassId get() = StandardClassIds.Byte
+    public val BYTE: ClassId get() = org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.BYTE
 
     /** The [Float] class ID. */
-    public val FLOAT: ClassId get() = StandardClassIds.Float
+    public val FLOAT: ClassId get() = org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.FLOAT
 
     /** The [Double] class ID. */
-    public val DOUBLE: ClassId get() = StandardClassIds.Double
+    public val DOUBLE: ClassId get() = org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.DOUBLE
 
     /** The [Char] class ID. */
-    public val CHAR: ClassId get() = StandardClassIds.Char
+    public val CHAR: ClassId get() = org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.CHAR
 
     /** The [Boolean] class ID. */
-    public val BOOLEAN: ClassId get() = StandardClassIds.Boolean
+    public val BOOLEAN: ClassId get() = org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.BOOLEAN
 
     /** The [String] class ID. */
-    public val STRING: ClassId get() = StandardClassIds.String
+    public val STRING: ClassId get() = org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.STRING
 
     /** The [CharSequence] class ID. */
-    public val CHAR_SEQUENCE: ClassId get() = StandardClassIds.CharSequence
+    public val CHAR_SEQUENCE: ClassId get() = org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.CHAR_SEQUENCE
 
     /** The [Any] class ID. */
-    public val ANY: ClassId get() = StandardClassIds.Any
+    public val ANY: ClassId get() = org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.ANY
 
     /** The [Nothing] class ID. */
-    public val NOTHING: ClassId get() = StandardClassIds.Nothing
+    public val NOTHING: ClassId get() = org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.NOTHING
 
     /** A set of primitive class IDs. */
-    public val PRIMITIVES: Set<ClassId> = setOf(INT, LONG, SHORT, BYTE, FLOAT, DOUBLE, CHAR, BOOLEAN)
+    public val PRIMITIVES: Set<ClassId> get() = org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.PRIMITIVES
 }
 
 @Deprecated("Use `KaStandardTypeClassIds` instead", ReplaceWith("KaStandardTypeClassIds"))
+@Suppress("DEPRECATION")
 public object DefaultTypeClassIds {
     /** The [Unit] class ID. */
     public val UNIT: ClassId get() = KaStandardTypeClassIds.UNIT
@@ -525,7 +530,10 @@ public val KaType.functionTypeKind: FunctionTypeKind?
  * Whether the [KaType] is denotable. A [denotable type](https://kotlinlang.org/spec/type-system.html#type-kinds) can be expressed in
  * Kotlin code, as opposed to being only constructible via compiler type operations (such as type inference).
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isDenotable", "org.jetbrains.kotlin.analysis.api.types.isDenotable"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isDenotable: Boolean
@@ -535,7 +543,10 @@ public val KaType.isDenotable: Boolean
  * Whether the [KaType] is a [functional interface type](https://kotlinlang.org/docs/fun-interfaces.html), such as [Runnable]. Such
  * types are also known as SAM types.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isFunctionalInterface", "org.jetbrains.kotlin.analysis.api.types.isFunctionalInterface"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isFunctionalInterface: Boolean
@@ -549,7 +560,10 @@ public val KaType.isFunctionalInterface: Boolean
  *
  * @see KaBuiltinFunctionTypeFamilies
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.functionTypeFamily", "org.jetbrains.kotlin.analysis.api.types.functionTypeFamily"),
+)
 @KaExperimentalApi
 @KaContextParameterApi
 context(session: KaSession)
@@ -559,7 +573,10 @@ public val KaType.functionTypeFamily: KaFunctionTypeFamily?
 /**
  * Whether the [KaType] is a [kotlin.Function] type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isFunctionType", "org.jetbrains.kotlin.analysis.api.types.isFunctionType"),
+)
 @OptIn(KaExperimentalApi::class)
 @KaContextParameterApi
 context(session: KaSession)
@@ -569,7 +586,10 @@ public val KaType.isFunctionType: Boolean
 /**
  * Whether the [KaType] is a [kotlin.reflect.KFunction] type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isKFunctionType", "org.jetbrains.kotlin.analysis.api.types.isKFunctionType"),
+)
 @OptIn(KaExperimentalApi::class)
 @KaContextParameterApi
 context(session: KaSession)
@@ -580,7 +600,10 @@ public val KaType.isKFunctionType: Boolean
  * Whether the [KaType] is a [suspend function](https://kotlinlang.org/spec/asynchronous-programming-with-coroutines.html#suspending-functions)
  * type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isSuspendFunctionType", "org.jetbrains.kotlin.analysis.api.types.isSuspendFunctionType"),
+)
 @OptIn(KaExperimentalApi::class)
 @KaContextParameterApi
 context(session: KaSession)
@@ -590,7 +613,10 @@ public val KaType.isSuspendFunctionType: Boolean
 /**
  * Whether the [KaType] is a `KSuspendFunction` type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isKSuspendFunctionType", "org.jetbrains.kotlin.analysis.api.types.isKSuspendFunctionType"),
+)
 @OptIn(KaExperimentalApi::class)
 @KaContextParameterApi
 context(session: KaSession)
@@ -608,7 +634,10 @@ public val KaType.isKSuspendFunctionType: Boolean
  * A public value of type `T : Any?` can potentially be `null`. But one cannot assign `null` to such a variable because the instantiated
  * type may not be nullable.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isNullable", "org.jetbrains.kotlin.analysis.api.types.isNullable"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isNullable: Boolean
@@ -632,7 +661,10 @@ public val KaType.isNullable: Boolean
  *
  * To explicitly check whether a type can potentially hold `null`, use [isNullable].
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isMarkedNullable", "org.jetbrains.kotlin.analysis.api.types.isMarkedNullable"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isMarkedNullable: Boolean
@@ -645,7 +677,10 @@ public val KaType.isMarkedNullable: Boolean
  * Note that a flexible / dynamic type has a flexible nullability when the lower bound is non-nullable and the upper bound is nullable.
  * E.g. `T!` has `T` as the lower bound and `T?` as the upper bound, hence it has a flexible nullability.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.hasFlexibleNullability", "org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.hasFlexibleNullability: Boolean
@@ -654,7 +689,10 @@ public val KaType.hasFlexibleNullability: Boolean
 /**
  * Whether the [KaType] is a [Unit] type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isUnitType", "org.jetbrains.kotlin.analysis.api.types.isUnitType"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isUnitType: Boolean
@@ -663,7 +701,10 @@ public val KaType.isUnitType: Boolean
 /**
  * Whether the [KaType] is an [Int] type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isIntType", "org.jetbrains.kotlin.analysis.api.types.isIntType"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isIntType: Boolean
@@ -672,7 +713,10 @@ public val KaType.isIntType: Boolean
 /**
  * Whether the [KaType] is a [Long] type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isLongType", "org.jetbrains.kotlin.analysis.api.types.isLongType"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isLongType: Boolean
@@ -681,7 +725,10 @@ public val KaType.isLongType: Boolean
 /**
  * Whether the [KaType] is a [Short] type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isShortType", "org.jetbrains.kotlin.analysis.api.types.isShortType"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isShortType: Boolean
@@ -690,7 +737,10 @@ public val KaType.isShortType: Boolean
 /**
  * Whether the [KaType] is a [Byte] type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isByteType", "org.jetbrains.kotlin.analysis.api.types.isByteType"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isByteType: Boolean
@@ -699,7 +749,10 @@ public val KaType.isByteType: Boolean
 /**
  * Whether the [KaType] is a [Float] type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isFloatType", "org.jetbrains.kotlin.analysis.api.types.isFloatType"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isFloatType: Boolean
@@ -708,7 +761,10 @@ public val KaType.isFloatType: Boolean
 /**
  * Whether the [KaType] is a [Double] type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isDoubleType", "org.jetbrains.kotlin.analysis.api.types.isDoubleType"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isDoubleType: Boolean
@@ -717,7 +773,10 @@ public val KaType.isDoubleType: Boolean
 /**
  * Whether the [KaType] is a [Char] type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isCharType", "org.jetbrains.kotlin.analysis.api.types.isCharType"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isCharType: Boolean
@@ -726,7 +785,10 @@ public val KaType.isCharType: Boolean
 /**
  * Whether the [KaType] is a [Boolean] type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isBooleanType", "org.jetbrains.kotlin.analysis.api.types.isBooleanType"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isBooleanType: Boolean
@@ -735,7 +797,10 @@ public val KaType.isBooleanType: Boolean
 /**
  * Whether the [KaType] is a [String] type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isStringType", "org.jetbrains.kotlin.analysis.api.types.isStringType"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isStringType: Boolean
@@ -744,7 +809,10 @@ public val KaType.isStringType: Boolean
 /**
  * Whether the [KaType] is a [CharSequence] type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isCharSequenceType", "org.jetbrains.kotlin.analysis.api.types.isCharSequenceType"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isCharSequenceType: Boolean
@@ -753,7 +821,10 @@ public val KaType.isCharSequenceType: Boolean
 /**
  * Whether the [KaType] is an [Any] type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isAnyType", "org.jetbrains.kotlin.analysis.api.types.isAnyType"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isAnyType: Boolean
@@ -762,7 +833,10 @@ public val KaType.isAnyType: Boolean
 /**
  * Whether the [KaType] is a [Nothing] type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isNothingType", "org.jetbrains.kotlin.analysis.api.types.isNothingType"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isNothingType: Boolean
@@ -771,7 +845,10 @@ public val KaType.isNothingType: Boolean
 /**
  * Whether the [KaType] is a [UInt] type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isUIntType", "org.jetbrains.kotlin.analysis.api.types.isUIntType"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isUIntType: Boolean
@@ -780,7 +857,10 @@ public val KaType.isUIntType: Boolean
 /**
  * Whether the [KaType] is a [ULong] type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isULongType", "org.jetbrains.kotlin.analysis.api.types.isULongType"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isULongType: Boolean
@@ -789,7 +869,10 @@ public val KaType.isULongType: Boolean
 /**
  * Whether the [KaType] is a [UShort] type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isUShortType", "org.jetbrains.kotlin.analysis.api.types.isUShortType"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isUShortType: Boolean
@@ -798,7 +881,10 @@ public val KaType.isUShortType: Boolean
 /**
  * Whether the [KaType] is a [UByte] type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isUByteType", "org.jetbrains.kotlin.analysis.api.types.isUByteType"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isUByteType: Boolean
@@ -807,7 +893,10 @@ public val KaType.isUByteType: Boolean
 /**
  * The class symbol backing the given [KaType], if available.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.expandedSymbol", "org.jetbrains.kotlin.analysis.api.types.expandedSymbol"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.expandedSymbol: KaClassSymbol?
@@ -835,7 +924,10 @@ public val KaType.expandedSymbol: KaClassSymbol?
  *
  * @see KaType.abbreviation
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.fullyExpandedType", "org.jetbrains.kotlin.analysis.api.types.fullyExpandedType"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.fullyExpandedType: KaType
@@ -844,7 +936,10 @@ public val KaType.fullyExpandedType: KaType
 /**
  * Whether the [KaType] is an array or a primitive array type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isArrayOrPrimitiveArray", "org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isArrayOrPrimitiveArray: Boolean
@@ -853,7 +948,10 @@ public val KaType.isArrayOrPrimitiveArray: Boolean
 /**
  * Whether the [KaType] is an array or a primitive array type, and its element is also an array type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isNestedArray", "org.jetbrains.kotlin.analysis.api.types.isNestedArray"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isNestedArray: Boolean
@@ -862,8 +960,6 @@ public val KaType.isNestedArray: Boolean
 /**
  * Checks whether the given [KaType] is a class type with the given [ClassId].
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
-@KaContextParameterApi
 context(session: KaSession)
 public fun KaType.isClassType(classId: ClassId): Boolean {
     return with(session) {
@@ -876,7 +972,10 @@ public fun KaType.isClassType(classId: ClassId): Boolean {
 /**
  * Whether the [KaType] is a primitive type.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.isPrimitive", "org.jetbrains.kotlin.analysis.api.types.isPrimitive"),
+)
 @KaContextParameterApi
 context(session: KaSession)
 public val KaType.isPrimitive: Boolean
@@ -885,7 +984,10 @@ public val KaType.isPrimitive: Boolean
 /**
  * The default initializer for the given [KaType], or `null` if the type is neither nullable, a primitive, nor a string.
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("this.defaultInitializer", "org.jetbrains.kotlin.analysis.api.types.defaultInitializer"),
+)
 @KaExperimentalApi
 @KaContextParameterApi
 context(session: KaSession)
@@ -895,7 +997,10 @@ public val KaType.defaultInitializer: String?
 /**
  * Provides access to the built-in [function type families][KaFunctionTypeFamily].
  */
-// Auto-generated bridge. DO NOT EDIT MANUALLY!
+@Deprecated(
+    message = "Use the 'org.jetbrains.kotlin.analysis.api.types' endpoint instead.",
+    replaceWith = ReplaceWith("builtinFunctionTypeFamilies", "org.jetbrains.kotlin.analysis.api.types.builtinFunctionTypeFamilies"),
+)
 @KaExperimentalApi
 @KaContextParameterApi
 context(session: KaSession)
