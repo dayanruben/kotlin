@@ -356,7 +356,6 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPLICIT_FIELD_VI
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPLICIT_TYPE_ARGUMENTS_IN_PROPERTY_ACCESS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPLICIT_TYPE_ARGUMENTS_IN_PROPERTY_ACCESS_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPOSED_FUNCTION_RETURN_TYPE
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPOSED_PACKAGE_PRIVATE_TYPE_FROM_INTERNAL_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPOSED_PARAMETER_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPOSED_PROPERTY_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR_ERROR
@@ -461,10 +460,10 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INCORRECT_TYPE_PA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INC_DEC_SHOULD_NOT_RETURN_UNIT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INEFFICIENT_EQUALS_OVERRIDING_IN_VALUE_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INFERENCE_ERROR
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INFERRED_INVISIBLE_REIFIED_TYPE_ARGUMENT
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INFERRED_INVISIBLE_RETURN_TYPE
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INFERRED_INVISIBLE_VARARG_TYPE_ARGUMENT
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INFERRED_INVISIBLE_WHEN_TYPE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INFERRED_INVISIBLE_REIFIED_TYPE_ARGUMENT_WARNING
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INFERRED_INVISIBLE_RETURN_TYPE_WARNING
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INFERRED_INVISIBLE_VARARG_TYPE_ARGUMENT_WARNING
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INFERRED_INVISIBLE_WHEN_TYPE_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INFERRED_TYPE_VARIABLE_INTO_EMPTY_INTERSECTION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INFERRED_TYPE_VARIABLE_INTO_POSSIBLE_EMPTY_INTERSECTION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INFIX_MODIFIER_REQUIRED
@@ -1659,15 +1658,6 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             TO_STRING,
             TO_STRING,
         )
-        map.put(
-            EXPOSED_PACKAGE_PRIVATE_TYPE_FROM_INTERNAL_WARNING,
-            "''{0}'' declaration exposes ''{3}'' type{2} ''{1}''."
-                .toDeprecationWarningMessage(LanguageFeature.ForbidExposingPackagePrivateInInternal),
-            TO_STRING,
-            DECLARATION_NAME,
-            TO_STRING,
-            TO_STRING,
-        )
 
         // Modifiers
         map.put(REPEATED_MODIFIER, "Repeated ''{0}''.", TO_STRING)
@@ -2353,20 +2343,20 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             "Redundant '?'.",
         )
         map.put(
-            INFERRED_INVISIBLE_REIFIED_TYPE_ARGUMENT,
+            INFERRED_INVISIBLE_REIFIED_TYPE_ARGUMENT_WARNING,
             "Type argument for reified type parameter ''{0}'' is inferred as invisible in this scope type ''{1}''.",
             SYMBOL,
             RENDER_TYPE,
         )
         map.put(
-            INFERRED_INVISIBLE_VARARG_TYPE_ARGUMENT,
+            INFERRED_INVISIBLE_VARARG_TYPE_ARGUMENT_WARNING,
             "Type argument for type parameter ''{0}'' used as type of vararg parameter ''{2}'' is inferred as invisible in this scope type ''{1}''.",
             SYMBOL,
             RENDER_TYPE,
             DECLARATION_NAME,
         )
         map.put(
-            INFERRED_INVISIBLE_RETURN_TYPE,
+            INFERRED_INVISIBLE_RETURN_TYPE_WARNING,
             "Inferred return type ''{1}'' for ''{0}'' is not visible in this scope.",
             DECLARATION_NAME,
             RENDER_TYPE,
@@ -3445,7 +3435,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             "Guard statements are only allowed in 'when' with subject."
         )
         map.put(
-            INFERRED_INVISIBLE_WHEN_TYPE,
+            INFERRED_INVISIBLE_WHEN_TYPE_WARNING,
             "Inferred type ''{0}'' for {1} expression is not visible in this scope.",
             RENDER_TYPE,
             STRING,

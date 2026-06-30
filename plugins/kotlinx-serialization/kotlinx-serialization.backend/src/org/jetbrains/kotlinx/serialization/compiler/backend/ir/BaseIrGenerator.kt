@@ -189,16 +189,18 @@ abstract class BaseIrGenerator(private val currentClass: IrClass, final override
         cachedChildSerializerByIndex: (Int) -> IrExpression?,
         genericGetter: ((Int, IrType) -> IrExpression)?
     ) {
+        val ownerType = objectToSerialize.type
 
-        fun IrSerializableProperty.irGet(): IrExpression {
-            val ownerType = objectToSerialize.symbol.owner.type
-            val propertyType = this.type
-            return getProperty(irGet(ownerType, objectToSerialize.symbol), ir, propertyType)
-        }
+        fun IrSerializableProperty.irGet(substitutedPropertyType: IrType): IrExpression = getProperty(
+            receiver = irGet(ownerType, objectToSerialize.symbol),
+            property = ir,
+            expectedPropertyType = substitutedPropertyType
+        )
 
         for ([index, property] in serializableProperties.withIndex()) {
             if (index < ignoreIndexTo) continue
             // output.writeXxxElementValue(classDesc, index, value)
+            val substitutedPropertyType = property.getSubstitutedType(ownerType.classOrFail.owner, currentClass)
             val elementCall = formEncodeDecodePropertyCall(
                 irGet(localOutput),
                 property, { innerSerial, sti ->
@@ -208,17 +210,18 @@ abstract class BaseIrGenerator(private val currentClass: IrClass, final override
                         irGet(localSerialDesc),
                         irInt(index),
                         innerSerial,
-                        property.irGet()
+                        property.irGet(substitutedPropertyType)
                     )
                 }, {
                     val f =
                         kOutputClass.functionByName("${CallingConventions.encode}${it.elementMethodPrefix}${CallingConventions.elementPostfix}")
                     val args: MutableList<IrExpression> = mutableListOf(irGet(localSerialDesc), irInt(index))
-                    if (it.elementMethodPrefix != "Unit") args.add(property.irGet())
+                    if (it.elementMethodPrefix != "Unit") args.add(property.irGet(substitutedPropertyType))
                     f to args
                 },
                 cachedChildSerializerByIndex(index),
-                genericGetter
+                genericGetter,
+                substitutedPropertyType = substitutedPropertyType,
             )
 
             // check for call to .shouldEncodeElementDefault
@@ -230,7 +233,7 @@ abstract class BaseIrGenerator(private val currentClass: IrClass, final override
                 // emit call right away
                 +elementCall
             } else {
-                val partB = irNotEquals(property.irGet(), initializerAdapter(initializer))
+                val partB = irNotEquals(property.irGet(substitutedPropertyType), initializerAdapter(initializer))
 
                 val condition = if (encodeDefaults == false) {
                     // drop default without call to .shouldEncodeElementDefault
@@ -258,19 +261,20 @@ abstract class BaseIrGenerator(private val currentClass: IrClass, final override
         whenDoNot: (sti: IrSerialTypeInfo) -> FunctionWithArgs,
         cachedSerializer: IrExpression?,
         genericGetter: ((Int, IrType) -> IrExpression)? = null,
-        returnTypeHint: IrType? = null
+        returnTypeHint: IrType? = null,
+        substitutedPropertyType: IrType,
     ): IrExpression {
         val sti = getIrSerialTypeInfo(property, compilerContext)
         val innerSerial = cachedSerializer ?: serializerInstance(
             sti.serializer,
             compilerContext,
-            property.type,
+            substitutedPropertyType,
             property.genericIndex,
             property.ir.parentClassOrNull,
             genericGetter
         )
         val [functionToCall, args: List<IrExpression>] = if (innerSerial != null) whenHaveSerializer(innerSerial, sti) else whenDoNot(sti)
-        val typeArgs = if (functionToCall.owner.typeParameters.isNotEmpty()) listOf(property.type) else listOf()
+        val typeArgs = if (functionToCall.owner.typeParameters.isNotEmpty()) listOf(substitutedPropertyType) else listOf()
         return irInvoke(functionToCall, listOf(encoder) + args, typeArgs, returnTypeHint)
     }
 
@@ -305,6 +309,7 @@ abstract class BaseIrGenerator(private val currentClass: IrClass, final override
                 symbol,
                 listOf(irBuilder.irGetObject(companionClass)) + adjustedArgs.takeIf { it.size == nonDispatchParameters.size }.orEmpty(),
                 adjustedTypeArgs.takeIf { it.size == typeParameters.size }.orEmpty(),
+                kSerializerType(thisIrType)
             )
         }
     }
@@ -332,7 +337,8 @@ abstract class BaseIrGenerator(private val currentClass: IrClass, final override
         generator: SerializerIrGenerator,
         dispatchReceiverParameter: IrValueParameter,
         property: IrSerializableProperty,
-        cachedSerializer: IrExpression?
+        cachedSerializer: IrExpression?,
+        substitutedPropertyType: IrType,
     ): IrExpression? {
         val nullableSerClass = compilerContext.finderForBuiltins().findProperties(SerialEntityNames.wrapIntoNullableCallableId).single()
 
@@ -349,7 +355,7 @@ abstract class BaseIrGenerator(private val currentClass: IrClass, final override
             serializerInstance(
                 serializerClassSymbol,
                 compilerContext,
-                property.type,
+                substitutedPropertyType,
                 genericIndex = property.genericIndex,
                 property.ir.parentClassOrNull,
             ) { it, _ ->
@@ -358,7 +364,7 @@ abstract class BaseIrGenerator(private val currentClass: IrClass, final override
             }
         }
 
-        return serializerExpression?.let { expr -> wrapWithNullableSerializerIfNeeded(property.type, expr, nullableSerClass) }
+        return serializerExpression?.let { expr -> wrapWithNullableSerializerIfNeeded(substitutedPropertyType, expr, nullableSerClass) }
     }
 
     context(irBuilder: IrBuilderWithScope) internal fun wrapWithNullableSerializerIfNeeded(
@@ -436,7 +442,13 @@ abstract class BaseIrGenerator(private val currentClass: IrClass, final override
 
         return { index: Int ->
             if (cacheableSerializers[index]) {
-                val lazyDelegate = irInvoke(compilerContext.arrayValueGetter.symbol, irGet(variable), irInt(index))
+                val arrayType = (variable.type as IrSimpleType).arguments.last().typeOrFail
+                val lazyDelegate = irInvoke(
+                    compilerContext.arrayValueGetter.symbol,
+                    irGet(variable),
+                    irInt(index),
+                    returnTypeHint = arrayType
+                )
                 irInvoke(
                     compilerContext.lazyValueGetter,
                     lazyDelegate,
@@ -492,10 +504,7 @@ abstract class BaseIrGenerator(private val currentClass: IrClass, final override
 
     // create serializers for type arguments if all arguments are classes, `null` otherwise
     private fun IrBuilderWithScope.createSerializerOnlyForClasses(type: IrSimpleType, serializableClass: IrClass): List<IrExpression>? {
-        // arguments contain star projections or type parameter
-        if (!type.arguments.all { it is IrSimpleType && it.typeOrNull?.isTypeParameter() != true }) {
-            return null
-        }
+        if (type.containsTypeParameter()) return null
 
         return type.arguments.map { argumentType ->
             if (argumentType !is IrSimpleType) return null
@@ -511,6 +520,12 @@ abstract class BaseIrGenerator(private val currentClass: IrClass, final override
                 null
             ) ?: return null // we can't create serializer
         }
+    }
+
+    private fun IrType.containsTypeParameter(): Boolean {
+        if (this !is IrSimpleType) return false
+        if (isTypeParameter()) return true
+        return arguments.any { it.typeOrNull?.containsTypeParameter() == true }
     }
 
     private fun IrSimpleType.checkTypeArgumentsHasSelf(itselfClass: IrClassSymbol): Boolean {

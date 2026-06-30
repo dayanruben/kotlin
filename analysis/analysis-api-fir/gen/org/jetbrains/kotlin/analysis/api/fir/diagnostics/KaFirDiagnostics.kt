@@ -1393,14 +1393,6 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val restrictingVisibility: EffectiveVisibility
     }
 
-    interface ExposedPackagePrivateTypeFromInternalWarning : KaFirDiagnostic<KtElement> {
-        override val diagnosticClass get() = ExposedPackagePrivateTypeFromInternalWarning::class
-        val elementVisibility: EffectiveVisibility
-        val restrictingDeclaration: KaClassLikeSymbol
-        val relationToType: RelationToType
-        val restrictingVisibility: EffectiveVisibility
-    }
-
     interface RepeatedModifier : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = RepeatedModifier::class
         val modifier: KtModifierKeywordToken
@@ -2469,23 +2461,10 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = RedundantNullable::class
     }
 
-    interface InferredInvisibleReifiedTypeArgumentError : KaFirDiagnostic<KtElement> {
-        override val diagnosticClass get() = InferredInvisibleReifiedTypeArgumentError::class
-        val typeParameter: KaTypeParameterSymbol
-        val typeArgumentType: KaType
-    }
-
     interface InferredInvisibleReifiedTypeArgumentWarning : KaFirDiagnostic<KtElement> {
         override val diagnosticClass get() = InferredInvisibleReifiedTypeArgumentWarning::class
         val typeParameter: KaTypeParameterSymbol
         val typeArgumentType: KaType
-    }
-
-    interface InferredInvisibleVarargTypeArgumentError : KaFirDiagnostic<KtElement> {
-        override val diagnosticClass get() = InferredInvisibleVarargTypeArgumentError::class
-        val typeParameter: KaTypeParameterSymbol
-        val typeArgumentType: KaType
-        val valueParameter: KaSymbol
     }
 
     interface InferredInvisibleVarargTypeArgumentWarning : KaFirDiagnostic<KtElement> {
@@ -2493,12 +2472,6 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         val typeParameter: KaTypeParameterSymbol
         val typeArgumentType: KaType
         val valueParameter: KaSymbol
-    }
-
-    interface InferredInvisibleReturnTypeError : KaFirDiagnostic<KtElement> {
-        override val diagnosticClass get() = InferredInvisibleReturnTypeError::class
-        val calleeSymbol: KaSymbol
-        val returnType: KaType
     }
 
     interface InferredInvisibleReturnTypeWarning : KaFirDiagnostic<KtElement> {
@@ -4067,12 +4040,6 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface WhenGuardWithoutSubject : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = WhenGuardWithoutSubject::class
-    }
-
-    interface InferredInvisibleWhenTypeError : KaFirDiagnostic<KtElement> {
-        override val diagnosticClass get() = InferredInvisibleWhenTypeError::class
-        val whenType: KaType
-        val syntaxConstructionName: String
     }
 
     interface InferredInvisibleWhenTypeWarning : KaFirDiagnostic<KtElement> {

@@ -594,7 +594,6 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val EXPOSED_SUPER_CLASS by exposedVisibilityError<KtElement>()
         val EXPOSED_TYPE_PARAMETER_BOUND by exposedVisibilityError<KtElement>()
         val EXPOSED_TYPE_PARAMETER_BOUND_DEPRECATION_WARNING by exposedVisibilityWarning<KtElement>()
-        val EXPOSED_PACKAGE_PRIVATE_TYPE_FROM_INTERNAL_WARNING by exposedVisibilityWarning<KtElement>()
     }
 
     val MODIFIERS by object : DiagnosticGroup("Modifiers") {
@@ -1214,22 +1213,16 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val NULLABLE_ON_DEFINITELY_NOT_NULLABLE by error<KtElement>()
         val REDUNDANT_NULLABLE by warning<KtElement>(PositioningStrategy.REDUNDANT_NULLABLE)
 
-        val INFERRED_INVISIBLE_REIFIED_TYPE_ARGUMENT by deprecationError<KtElement>(
-            LanguageFeature.ForbidInferOfInvisibleTypeAsReifiedVarargOrReturnType
-        ) {
+        val INFERRED_INVISIBLE_REIFIED_TYPE_ARGUMENT_WARNING by warning<KtElement> {
             parameter<FirTypeParameterSymbol>("typeParameter")
             parameter<ConeKotlinType>("typeArgumentType")
         }
-        val INFERRED_INVISIBLE_VARARG_TYPE_ARGUMENT by deprecationError<KtElement>(
-            LanguageFeature.ForbidInferOfInvisibleTypeAsReifiedVarargOrReturnType
-        ) {
+        val INFERRED_INVISIBLE_VARARG_TYPE_ARGUMENT_WARNING by warning<KtElement> {
             parameter<FirTypeParameterSymbol>("typeParameter")
             parameter<ConeKotlinType>("typeArgumentType")
             parameter<FirValueParameterSymbol>("valueParameter")
         }
-        val INFERRED_INVISIBLE_RETURN_TYPE by deprecationError<KtElement>(
-            LanguageFeature.ForbidInferOfInvisibleTypeAsReifiedVarargOrReturnType
-        ) {
+        val INFERRED_INVISIBLE_RETURN_TYPE_WARNING by warning<KtElement> {
             parameter<FirBasedSymbol<*>>("calleeSymbol")
             parameter<ConeKotlinType>("returnType")
         }
@@ -2008,9 +2001,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
 
         val COMMA_IN_WHEN_CONDITION_WITH_WHEN_GUARD by error<PsiElement>(PositioningStrategy.WHEN_GUARD)
         val WHEN_GUARD_WITHOUT_SUBJECT by error<PsiElement>(PositioningStrategy.WHEN_GUARD)
-        val INFERRED_INVISIBLE_WHEN_TYPE by deprecationError<KtElement>(
-            LanguageFeature.ForbidInferOfInvisibleTypeAsReifiedVarargOrReturnType
-        ) {
+        val INFERRED_INVISIBLE_WHEN_TYPE_WARNING by warning<KtElement> {
             parameter<ConeKotlinType>("whenType")
             parameter<String>("syntaxConstructionName")
         }

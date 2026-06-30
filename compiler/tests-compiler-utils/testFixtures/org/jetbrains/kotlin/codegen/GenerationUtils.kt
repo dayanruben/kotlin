@@ -91,7 +91,7 @@ object GenerationUtils {
             FirParser.Psi,
         )
 
-        val fir2IrExtensions = JvmFir2IrExtensions(configuration)
+        val fir2IrExtensions = JvmFir2IrExtensions()
         val diagnosticReporter = DiagnosticsCollectorImpl()
         firAnalyzerFacade.runResolution()
         val irGenerationExtensions = configuration.getCompilerExtensions(IrGenerationExtension)
@@ -112,7 +112,7 @@ object GenerationUtils {
         )
         val backendInput = JvmIrCodegenFactory.BackendInput(
             moduleFragment, pluginContext.irBuiltIns, symbolTable, components.irProviders,
-            fir2IrExtensions, FirJvmBackendExtension(components, actualizedExpectDeclarations = null), pluginContext,
+            debuggerExtensions = null, FirJvmBackendExtension(components, actualizedExpectDeclarations = null), pluginContext,
         )
         JvmIrCodegenFactory(configuration).generateModule(generationState, backendInput)
         return generationState

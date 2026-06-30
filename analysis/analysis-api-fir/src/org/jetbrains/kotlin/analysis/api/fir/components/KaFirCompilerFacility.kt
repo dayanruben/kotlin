@@ -91,12 +91,10 @@ import org.jetbrains.kotlin.ir.descriptors.IrBasedDeclarationDescriptor
 import org.jetbrains.kotlin.ir.descriptors.IrBasedReceiverParameterDescriptor
 import org.jetbrains.kotlin.ir.descriptors.IrBasedValueParameterDescriptor
 import org.jetbrains.kotlin.ir.descriptors.IrBasedVariableDescriptor
-import org.jetbrains.kotlin.ir.expressions.IrAnnotation
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.types.IrSimpleType
-import org.jetbrains.kotlin.ir.util.StubGeneratorExtensions
 import org.jetbrains.kotlin.ir.util.classId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -869,7 +867,6 @@ internal class KaFirCompilerFacility(
         codegenFactory: JvmIrCodegenFactory,
         generateClassFilter: GenerationState.GenerateClassFilter,
         diagnosticsCollector: BaseDiagnosticsCollector,
-        jvmGeneratorExtensions: JvmGeneratorExtensions,
         compiledCodeProvider: CompiledCodeProvider,
     ): KaCompilationResult {
         val matchingClassNames = mutableSetOf<String>()
@@ -906,7 +903,7 @@ internal class KaFirCompilerFacility(
             fir2IrResult.pluginContext.irBuiltIns,
             fir2IrResult.symbolTable,
             fir2IrResult.components.irProviders,
-            CompilerFacilityJvmGeneratorExtensions(jvmGeneratorExtensions),
+            CompilerFacilityJvmDebuggerExtensions(),
             FirJvmBackendExtension(fir2IrResult.components, null),
             fir2IrResult.pluginContext,
         )
@@ -975,7 +972,7 @@ internal class KaFirCompilerFacility(
             put(CommonConfigurationKeys.LANGUAGE_VERSION_SETTINGS, session.languageVersionSettings)
         }
 
-        val baseFir2IrExtensions = JvmFir2IrExtensions(configuration)
+        val baseFir2IrExtensions = JvmFir2IrExtensions()
 
         val fir2IrExtensions = when {
             codeFragmentMappings != null && chunk.mainFile != null -> {
@@ -1056,7 +1053,6 @@ internal class KaFirCompilerFacility(
             codegenFactory,
             generateClassFilter,
             diagnosticsCollector,
-            baseFir2IrExtensions,
             compiledCodeProvider
         )
 
@@ -1302,11 +1298,7 @@ internal class KaFirCompilerFacility(
         }
     }
 
-    private class CompilerFacilityJvmGeneratorExtensions(
-        private val delegate: JvmGeneratorExtensions
-    ) : StubGeneratorExtensions(), JvmGeneratorExtensions by delegate {
-        override fun generateRawTypeAnnotation(): IrAnnotation? = delegate.generateRawTypeAnnotation()
-
+    private class CompilerFacilityJvmDebuggerExtensions : JvmDebuggerExtensions {
         /**
          * This method is used from `org.jetbrains.kotlin.backend.jvm.lower.SpecialAccessLowering.visitCall`
          * (via generateReflectiveAccessForGetter) and it is called for the private access member lowered to the getter/setter call.

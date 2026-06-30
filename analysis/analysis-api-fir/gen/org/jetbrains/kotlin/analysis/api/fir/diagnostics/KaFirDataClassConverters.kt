@@ -1602,7 +1602,7 @@ private fun KaDiagnosticConverterBuilder.addConversions32() {
             token,
         )
     }
-    add(FirErrors.INFERRED_INVISIBLE_RETURN_TYPE.warningFactory) { firDiagnostic ->
+    add(FirErrors.INFERRED_INVISIBLE_RETURN_TYPE_WARNING) { firDiagnostic ->
         InferredInvisibleReturnTypeWarningImpl(
             firSymbolBuilder.buildSymbol(firDiagnostic.a),
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
@@ -4070,7 +4070,7 @@ private fun KaDiagnosticConverterBuilder.addConversions90() {
             token,
         )
     }
-    add(FirErrors.INFERRED_INVISIBLE_WHEN_TYPE.warningFactory) { firDiagnostic ->
+    add(FirErrors.INFERRED_INVISIBLE_WHEN_TYPE_WARNING) { firDiagnostic ->
         InferredInvisibleWhenTypeWarningImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firDiagnostic.b,
@@ -4251,14 +4251,6 @@ private fun KaDiagnosticConverterBuilder.addConversions94() {
             token,
         )
     }
-    add(FirErrors.INFERRED_INVISIBLE_WHEN_TYPE.errorFactory) { firDiagnostic ->
-        InferredInvisibleWhenTypeErrorImpl(
-            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
-            firDiagnostic.b,
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
     add(FirErrors.NO_SET_METHOD) { firDiagnostic ->
         NoSetMethodImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -4294,15 +4286,6 @@ private fun KaDiagnosticConverterBuilder.addConversions96() {
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
             firDiagnostic.c,
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
-    add(FirErrors.INFERRED_INVISIBLE_VARARG_TYPE_ARGUMENT.errorFactory) { firDiagnostic ->
-        InferredInvisibleVarargTypeArgumentErrorImpl(
-            firSymbolBuilder.classifierBuilder.buildTypeParameterSymbol(firDiagnostic.a),
-            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
-            firSymbolBuilder.buildSymbol(firDiagnostic.c),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -4437,14 +4420,6 @@ private fun KaDiagnosticConverterBuilder.addConversions99() {
     }
     add(FirErrors.EXPANSIVE_INHERITANCE) { firDiagnostic ->
         ExpansiveInheritanceImpl(
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
-    add(FirErrors.INFERRED_INVISIBLE_REIFIED_TYPE_ARGUMENT.errorFactory) { firDiagnostic ->
-        InferredInvisibleReifiedTypeArgumentErrorImpl(
-            firSymbolBuilder.classifierBuilder.buildTypeParameterSymbol(firDiagnostic.a),
-            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -4981,16 +4956,6 @@ private fun KaDiagnosticConverterBuilder.addConversions110() {
             token,
         )
     }
-    add(FirErrors.EXPOSED_PACKAGE_PRIVATE_TYPE_FROM_INTERNAL_WARNING) { firDiagnostic ->
-        ExposedPackagePrivateTypeFromInternalWarningImpl(
-            firDiagnostic.a,
-            firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firDiagnostic.b),
-            firDiagnostic.c,
-            firDiagnostic.d,
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
     add(FirErrors.INCONSISTENT_TYPE_PARAMETERS_IN_OF_OVERLOADS) { firDiagnostic ->
         InconsistentTypeParametersInOfOverloadsImpl(
             firSymbolBuilder.functionBuilder.buildNamedFunctionSymbol(firDiagnostic.a),
@@ -5043,7 +5008,7 @@ private fun KaDiagnosticConverterBuilder.addConversions110() {
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions111() {
-    add(FirErrors.INFERRED_INVISIBLE_REIFIED_TYPE_ARGUMENT.warningFactory) { firDiagnostic ->
+    add(FirErrors.INFERRED_INVISIBLE_REIFIED_TYPE_ARGUMENT_WARNING) { firDiagnostic ->
         InferredInvisibleReifiedTypeArgumentWarningImpl(
             firSymbolBuilder.classifierBuilder.buildTypeParameterSymbol(firDiagnostic.a),
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
@@ -5232,7 +5197,7 @@ private fun KaDiagnosticConverterBuilder.addConversions116() {
             token,
         )
     }
-    add(FirErrors.INFERRED_INVISIBLE_VARARG_TYPE_ARGUMENT.warningFactory) { firDiagnostic ->
+    add(FirErrors.INFERRED_INVISIBLE_VARARG_TYPE_ARGUMENT_WARNING) { firDiagnostic ->
         InferredInvisibleVarargTypeArgumentWarningImpl(
             firSymbolBuilder.classifierBuilder.buildTypeParameterSymbol(firDiagnostic.a),
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
@@ -8695,14 +8660,6 @@ private fun KaDiagnosticConverterBuilder.addConversions196() {
     add(FirErrors.PLATFORM_CLASS_MAPPED_TO_KOTLIN) { firDiagnostic ->
         PlatformClassMappedToKotlinImpl(
             firDiagnostic.a,
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
-    add(FirErrors.INFERRED_INVISIBLE_RETURN_TYPE.errorFactory) { firDiagnostic ->
-        InferredInvisibleReturnTypeErrorImpl(
-            firSymbolBuilder.buildSymbol(firDiagnostic.a),
-            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
