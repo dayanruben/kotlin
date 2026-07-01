@@ -124,6 +124,12 @@ internal class NewInferenceErrorImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.NewInferenceError
 
+internal class EscapingCapturedVariableImpl(
+    override val variable: KaVariableSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KaFirDiagnostic.EscapingCapturedVariable
+
 internal class OtherErrorImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,

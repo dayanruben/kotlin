@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 // Contains common configuration that should be applied to all projects
 plugins {
     id("implicit-dependencies")
+    id("java-instrumentation")
 }
 
 // Common Group and version
@@ -29,6 +30,8 @@ project.configureArtifacts()
 project.configureTests()
 project.checkNoApiDependenciesOnK1Modules()
 project.configureMigratedRootSettings()
+project.configureJsCacheRedirector()
+project.configurePublishingRetry()
 
 // There are problems with common build dir:
 //  - some tests (in particular js and binary-compatibility-validator depend on the fixed (default) location

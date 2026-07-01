@@ -3,10 +3,8 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-allprojects {
-    afterEvaluate {
-        configureJavaInstrumentation()
-    }
+afterEvaluate {
+    configureJavaInstrumentation()
 }
 
 // Hide window of instrumentation tasks
