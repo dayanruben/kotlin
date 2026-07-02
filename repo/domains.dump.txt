@@ -46,6 +46,7 @@ Compiler:
  - compiler/test-security-manager
  - compiler/testData
  - compiler/testFixtures
+ - compiler/testResources
  - compiler/tests
  - compiler/tests-against-klib
  - compiler/tests-common
@@ -149,6 +150,9 @@ Compiler, CompilerPlugins:
  - plugins/plugin-sandbox
  - plugins/scripting
 
+Js, SwiftExport:
+ - libraries/tools/analysis-api-based-klib-reader
+
 Gradle:
  - libraries/tools/gradle
  - libraries/tools/kotlin-gradle-build-metrics
@@ -228,7 +232,6 @@ Unknown:
  - libraries/scripting
  - libraries/tools/abi-comparator
  - libraries/tools/abi-validation
- - libraries/tools/analysis-api-based-klib-reader
  - libraries/tools/atomicfu
  - libraries/tools/binary-compatibility-validator
  - libraries/tools/dukat

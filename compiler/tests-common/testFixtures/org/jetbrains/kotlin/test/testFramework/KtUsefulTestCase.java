@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.types.AbstractTypeChecker;
 import org.jetbrains.kotlin.types.FlexibleTypeImpl;
 import org.junit.Assert;
 import org.junit.ComparisonFailure;
+import org.junit.jupiter.api.TestInfo;
 import org.opentest4j.AssertionFailedError;
 import org.opentest4j.FileInfo;
 
@@ -735,6 +736,11 @@ public abstract class KtUsefulTestCase extends TestCase {
         return StringUtil.isEmpty(name) ? "" : lowercaseFirstLetter(name, lowercaseFirstLetter);
     }
 
+    @NotNull
+    public static String getTestName(@Nullable TestInfo testInfo) {
+        return getTestName(testInfo.getTestMethod().get().getName(), true);
+    }
+
     public static @NotNull String lowercaseFirstLetter(@NotNull String name, boolean lowercaseFirstLetter) {
         if (lowercaseFirstLetter && !isAllUppercaseName(name)) {
             name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
@@ -757,7 +763,11 @@ public abstract class KtUsefulTestCase extends TestCase {
 
     @NotNull
     protected String getTestDirectoryName() {
-        final String testName = getTestName(true);
+        return getTestDirectoryName(getName());
+    }
+
+    public static String getTestDirectoryName(String name) {
+        String testName = getTestName(name, true);
         return testName.replaceAll("_.*", "");
     }
 
