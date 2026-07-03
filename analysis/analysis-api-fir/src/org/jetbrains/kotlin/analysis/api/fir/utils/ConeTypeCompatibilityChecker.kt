@@ -1,9 +1,9 @@
 /*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.fir.analysis.checkers
+package org.jetbrains.kotlin.analysis.api.fir.utils
 
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.Modality
@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.types.Variance
+import kotlin.collections.iterator
 
 /**
  * Checks if a given collection of [ConeKotlinType] are compatible. In other words, the types are compatible if it's possible at all to
@@ -44,7 +45,7 @@ import org.jetbrains.kotlin.types.Variance
  * covariant and contravariant bounds is empty. For example, a range like `[Collection, List]` is empty and hence invalid because `List` is
  * not a super class/interface of `Collection`
  */
-object ConeTypeCompatibilityChecker {
+internal object ConeTypeCompatibilityChecker {
 
     private val javaClassClassId = ClassId.fromString("java/lang/Class")
     private val kotlinClassClassId = ClassId.fromString("kotlin/reflect/KClass")
@@ -104,7 +105,15 @@ object ConeTypeCompatibilityChecker {
             is ConeClassLikeType -> true
             is ConeDefinitelyNotNullType -> original.isConcreteType()
             is ConeIntersectionType -> intersectedTypes.all { it.isConcreteType() }
-            else -> false
+
+            is ConeFlexibleType,
+            is ConeCapturedType,
+            is ConeTypeVariableType,
+            is ConeStubType,
+            is ConeTypeParameterType,
+            is ConeIntegerLiteralType,
+            is ConeLookupTagBasedType
+                -> false
         }
     }
 
@@ -206,7 +215,7 @@ object ConeTypeCompatibilityChecker {
 
     /**
      * Checks whether the given classes are compatible. In other words, check if it's possible for objects of the given classes to be
-     * considered equal by [Any.equals].
+     * considered equal by [equals].
      *
      * @return null if this check is inconclusive
      */

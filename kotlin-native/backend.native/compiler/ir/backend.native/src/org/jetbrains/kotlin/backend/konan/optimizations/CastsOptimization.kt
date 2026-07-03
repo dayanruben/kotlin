@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.backend.konan.optimizations
 
 import org.jetbrains.kotlin.backend.common.BodyLoweringPass
+import org.jetbrains.kotlin.backend.common.ir.isPure
 import org.jetbrains.kotlin.backend.common.ir.isUnconditional
 import org.jetbrains.kotlin.backend.common.lower.at
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
@@ -381,6 +382,19 @@ internal class CastsOptimization(val context: Context) : BodyLoweringPass {
         UNKNOWN
     }
 
+    // Replaces a statically resolved type operator with [value], evaluating [argument] beforehand
+    // for its side effects unless it is pure (KT-86947).
+    private fun IrBuilderWithScope.keepingSideEffectsOf(
+            argument: IrExpression,
+            value: IrBuilderWithScope.() -> IrExpression,
+    ): IrExpression = when {
+        argument.isPure(anyVariable = true) -> value()
+        else -> irBlock {
+            +argument
+            +value()
+        }
+    }
+
     override fun lower(irBody: IrBody, container: IrDeclaration) {
         val typeCheckResults = mutableMapOf<IrTypeOperatorCall, TypeCheckResult>()
         try {
@@ -401,27 +415,28 @@ internal class CastsOptimization(val context: Context) : BodyLoweringPass {
                     TypeCheckResult.ALWAYS_SUCCEEDS -> true
                     TypeCheckResult.NEVER_SUCCEEDS -> false
                 }
+                irBuilder.at(expression)
                 return when (expression.operator) {
-                    IrTypeOperator.INSTANCEOF -> irBuilder.at(expression).irBoolean(typeCheckResult)
-                    IrTypeOperator.NOT_INSTANCEOF -> irBuilder.at(expression).irBoolean(!typeCheckResult)
+                    IrTypeOperator.INSTANCEOF -> irBuilder.keepingSideEffectsOf(expression.argument) { irBoolean(typeCheckResult) }
+                    IrTypeOperator.NOT_INSTANCEOF -> irBuilder.keepingSideEffectsOf(expression.argument) { irBoolean(!typeCheckResult) }
                     IrTypeOperator.CAST, IrTypeOperator.IMPLICIT_CAST, IrTypeOperator.SAFE_CAST -> when {
-                        typeCheckResult -> irBuilder.at(expression).irBlock(origin = STATEMENT_ORIGIN_NO_CAST_NEEDED) {
+                        typeCheckResult -> irBuilder.irBlock(origin = STATEMENT_ORIGIN_NO_CAST_NEEDED) {
                             +irImplicitCast(expression.argument, expression.typeOperand)
                         }
-                        else -> if (expression.operator == IrTypeOperator.SAFE_CAST)
-                            irBuilder.at(expression).irNull()
-                        else
-                            irBuilder.at(expression).irCall(throwClassCastException).apply {
-                                val typeOperandClass = expression.typeOperand.erasedUpperBound
-                                val typeOperandClassReference = IrClassReferenceImpl(
-                                        startOffset, endOffset,
-                                        context.symbols.nativePtrType,
-                                        typeOperandClass.symbol,
-                                        typeOperandClass.defaultType
-                                )
-                                arguments[0] = expression.argument
-                                arguments[1] = typeOperandClassReference
-                            }
+                        expression.operator == IrTypeOperator.SAFE_CAST -> {
+                            irBuilder.keepingSideEffectsOf(expression.argument) { irNull() }
+                        }
+                        else -> irBuilder.irCall(throwClassCastException).apply {
+                            val typeOperandClass = expression.typeOperand.erasedUpperBound
+                            val typeOperandClassReference = IrClassReferenceImpl(
+                                    startOffset, endOffset,
+                                    context.symbols.nativePtrType,
+                                    typeOperandClass.symbol,
+                                    typeOperandClass.defaultType
+                            )
+                            arguments[0] = expression.argument
+                            arguments[1] = typeOperandClassReference
+                        }
                     }
                     else -> error("Unexpected type operator: ${expression.operator}")
                 }
@@ -475,7 +490,7 @@ internal class CastsOptimization(val context: Context) : BodyLoweringPass {
     private inner class TypeCheckResolver(val typeCheckResults: MutableMap<IrTypeOperatorCall, TypeCheckResult>) : IrVisitor<VisitorResult, Predicate>() {
         val leafTerms = mutableListOf<LeafTerm>()
         val simpleTermsMap = mutableMapOf<Pair<IrValueDeclaration, IrClass?>, Int>()
-        val complexTermsMap = mutableMapOf<IrElement, Int>()
+        val complexTermsMap = mutableMapOf<IrValueDeclaration, Int>()
         val complexTermsMask = CustomBitSet()
 
         // It's convenient to think of the predicate as a stack of sub-predicates which get anded to get the result.
@@ -602,13 +617,24 @@ internal class CastsOptimization(val context: Context) : BodyLoweringPass {
                     leafTerms.size - 1
                 }
 
+        fun newComplexTerm(element: IrElement): Int {
+            leafTerms.add(ComplexTerm(element, currentDepth))
+            val termIndex = leafTerms.size - 1
+            complexTermsMask.set((termIndex setTo true).bitIndex)
+            complexTermsMask.set((termIndex setTo false).bitIndex)
+            return termIndex
+        }
+
         fun buildComplexTerm(element: IrElement): Int =
-                complexTermsMap.getOrPut(element) {
-                    leafTerms.add(ComplexTerm(element, currentDepth))
-                    val termIndex = leafTerms.size - 1
-                    complexTermsMask.set((termIndex setTo true).bitIndex)
-                    complexTermsMask.set((termIndex setTo false).bitIndex)
-                    termIndex
+                if (element is IrValueDeclaration) {
+                    // A value declaration (a parameter, a phi node, ...) denotes the same value everywhere it is
+                    // read, including across loop iterations, so all its reads must share one term.
+                    complexTermsMap.getOrPut(element) { newComplexTerm(element) }
+                } else {
+                    // An arbitrary expression (e.g. an unknown call) denotes a fresh dynamic value on each evaluation
+                    // (since IR nodes are all different), so it must NOT be memoized: reusing its term across loop iterations
+                    // conflates different evaluations of the same call site (KT-86959).
+                    newComplexTerm(element)
                 }
 
         fun IrExpression.isNullConst() = this is IrConst && this.value == null
@@ -718,10 +744,13 @@ internal class CastsOptimization(val context: Context) : BodyLoweringPass {
                 val (predicate, variable) = expression.argument.accept(this, Predicate.Empty)
                 result.predicate = predicate
                 return if (variable == null) {
+                    // Mark as unknown as an earlier loop iteration might have resolved to a variable
+                    // and could have had the type check computed (see KT-86948).
+                    typeCheckResults[expression] = TypeCheckResult.UNKNOWN
                     null
                 } else {
                     tryOptimizeTypeCheck(expression, variable, predicate)
-                    return NullablePredicate(
+                    NullablePredicate(
                             ifNull = buildIsNotSubtypeOfPredicate(variable, expression.typeOperand),
                             ifNotNull = buildIsSubtypeOfPredicate(variable, expression.typeOperand)
                     )
@@ -774,6 +803,9 @@ internal class CastsOptimization(val context: Context) : BodyLoweringPass {
             if (expression is IrTypeOperatorCall && expression.isTypeCheck()) {
                 val (predicate, variable) = expression.argument.accept(this, Predicate.Empty)
                 return if (variable == null) {
+                    // Mark as unknown as an earlier loop iteration might have resolved to a variable
+                    // and could have had the type check computed (see KT-86948).
+                    typeCheckResults[expression] = TypeCheckResult.UNKNOWN
                     val term = buildComplexTerm(expression)
                     BooleanPredicate(
                             ifTrue = Predicates.and(Predicates.disjunctionOf(term setTo true), predicate),
@@ -1208,7 +1240,11 @@ internal class CastsOptimization(val context: Context) : BodyLoweringPass {
              */
             (val argumentPredicate = predicate, val argumentVariable = variable) = expression.argument.accept(this, data)
             if (expression.isCast() || expression.isTypeCheck() || expression.operator == IrTypeOperator.SAFE_CAST) {
-                if (argumentVariable != null) {
+                if (argumentVariable == null) {
+                    // Mark as unknown as an earlier loop iteration might have resolved to a variable
+                    // and could have had the type check computed (see KT-86948).
+                    typeCheckResults[expression] = TypeCheckResult.UNKNOWN
+                } else {
                     tryOptimizeTypeCheck(expression, argumentVariable, argumentPredicate)
 
                     return if (expression.isCast())

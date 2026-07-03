@@ -26,11 +26,16 @@ dependencies {
     implementation(project(":analysis:analysis-api-standalone"))
 
     implementation(project(":libraries:tools:analysis-api-based-klib-reader"))
+    implementation(project(":kotlin-util-klib"))
     compileOnly(project(":kotlin-util-klib-metadata"))
 }
 
 sourceSets {
     "main" { projectDefault() }
+}
+
+tasks.named("check") {
+    dependsOn(":native:swift:swift-export-standalone-integration-tests:check")
 }
 
 publish()

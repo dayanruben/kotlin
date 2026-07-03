@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.codegen.extensions.ClassGeneratorExtensionAdapter
 import org.jetbrains.kotlin.codegen.inline.GlobalInlineContext
 import org.jetbrains.kotlin.codegen.inline.InlineCache
 import org.jetbrains.kotlin.codegen.optimization.OptimizationClassBuilderFactory
-import org.jetbrains.kotlin.codegen.serialization.JvmSerializationBindings
 import org.jetbrains.kotlin.compiler.plugin.getCompilerExtensions
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.incrementalCompilationComponents
@@ -23,15 +22,13 @@ import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptorWithAccessors
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.impl.DiagnosticsCollectorImpl
+import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.load.kotlin.incremental.components.IncrementalCache
 import org.jetbrains.kotlin.modules.TargetId
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.TypeApproximator
-import org.jetbrains.kotlin.K1Deprecation
-import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.org.objectweb.asm.Type
 import java.lang.reflect.InvocationTargetException
 
@@ -88,15 +85,11 @@ class GenerationState(
         configuration.getCompilerExtensions(ClassFileFactoryFinalizerExtension),
     )
 
-    val globalSerializationBindings = JvmSerializationBindings()
     lateinit var mapInlineClass: (ClassDescriptor) -> Type
 
     lateinit var reportDuplicateClassNameError: (JvmDeclarationOrigin, String, JvmDeclarationOrigin) -> Unit
 
     lateinit var isDeclarationGeneratedForCompilerPlugin: (IrDeclaration) -> Boolean
-
-    @OptIn(K1Deprecation::class)
-    val typeApproximator: TypeApproximator = TypeApproximator(module.builtIns, config.languageVersionSettings)
 
     val newFragmentCaptureParameters: MutableList<Triple<String, KotlinType, DeclarationDescriptor>> = mutableListOf()
 

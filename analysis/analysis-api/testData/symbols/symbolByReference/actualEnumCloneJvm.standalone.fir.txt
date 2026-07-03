@@ -1,6 +1,6 @@
 KaNamedFunctionSymbol:
   annotations: []
-  callableId: kotlin/Cloneable.clone
+  callableId: kotlin/Enum.clone
   contextParameters: []
   contextReceivers: []
   contractEffects: []
@@ -39,9 +39,9 @@ KaNamedFunctionSymbol:
     ]
     type: kotlin/Enum<E>
   getContainingFileSymbol: null
-  getContainingJvmClassName: null
+  getContainingJvmClassName: kotlin.Enum
   canBeOperator: false
-  getContainingModule: KaLibraryModule "Library kotlin-stdlib-js"
+  getContainingModule: KaBuiltinsModule "Builtins for JVM (1.8)"
   deprecation: null
-  returnValueStatus: Unspecified
+  returnValueStatus: MustUse
   importableFqName: null

@@ -13,11 +13,8 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.isNullable
 import org.jetbrains.kotlin.ir.util.render
-import org.jetbrains.kotlin.load.java.SpecialGenericSignatures.SpecialSignatureInfo
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils.isSubclass
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
@@ -87,12 +84,7 @@ private fun generateNullCheckForNonSafeAs(v: InstructionAdapter, type: IrType, u
     }
 }
 
-fun SpecialSignatureInfo.replaceValueParametersIn(sourceSignature: String?): String? =
-    valueParametersSignature?.let { sourceSignature?.replace("^\\(.*\\)".toRegex(), "($it)") }
-
 class JvmKotlinType(val type: Type, val kotlinType: KotlinTypeMarker? = null)
-
-fun KtExpression?.kotlinType(bindingContext: BindingContext) = this?.let(bindingContext::getType)
 
 fun FunctionDescriptor.isGenericToArray(): Boolean {
     if (name.asString() != "toArray") return false

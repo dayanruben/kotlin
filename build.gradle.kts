@@ -80,16 +80,9 @@ plugins {
 
 val isTeamcityBuild = project.kotlinBuildProperties.isTeamcityBuild
 
-val defaultSnapshotVersion: String by extra
 findProperty("deployVersion")?.let {
     assert(findProperty("build.number") != null) { "`build.number` parameter is expected to be explicitly set with the `deployVersion`" }
 }
-val buildNumber by extra(findProperty("build.number")?.toString() ?: defaultSnapshotVersion)
-val kotlinVersion by extra(
-    findProperty("deployVersion")?.toString()?.let { deploySnapshotStr ->
-        if (deploySnapshotStr != "default.snapshot") deploySnapshotStr else defaultSnapshotVersion
-    } ?: buildNumber
-)
 
 val kotlinLanguageVersion: String by extra
 val kotlinApiVersionForModulesUsedInIDE: String by extra
@@ -130,7 +123,7 @@ if (!project.hasProperty("versions.kotlin-native")) {
      * compilations (including in KGP tests).
      */
     extra["versions.kotlin-native"] = if (kotlinBuildProperties.alignKotlinNativeVersionInTCBuilds) {
-        kotlinVersion
+        kotlinBuildProperties.kotlinVersion.get()
     } else if (kotlinBuildProperties.isKotlinNativeEnabled.get()) {
         kotlinBuildProperties.defaultSnapshotVersion.get()
     } else {
@@ -222,13 +215,23 @@ val dist = tasks.register("dist") {
 
 tasks.register("createIdeaHomeForTests") {
     val ideaBuildNumberFileForTests = ideaBuildNumberFileForTests()
-    val intellijSdkVersion = rootProject.extra["versions.intellijSdk"]
+    val intellijSdkVersion = kotlinBuildProperties.versionsProperty("intellijSdk").get()
     outputs.dir(ideaHomePathForTests())
     doFirst {
         with(ideaBuildNumberFileForTests.get().asFile) {
             parentFile.mkdirs()
             writeText("IC-$intellijSdkVersion")
         }
+    }
+}
+
+val publishedMark: NamedDomainObjectProvider<DependencyScopeConfiguration> = configurations.dependencyScope("fakePublishpublishedMark")
+val publishedMarkElements: NamedDomainObjectProvider<ResolvableConfiguration> = configurations.resolvable("publishedMarkClasspath").apply {
+    configure { extendsFrom(publishedMark) }
+}
+dependencies {
+    allprojects.forEach { p ->
+        add(publishedMark.name, project(p.path, configuration = "publishedMark"))
     }
 }
 
@@ -645,17 +648,12 @@ tasks {
 
     // 'mvnPublish' is required for local bootstrap
     if (!kotlinBuildProperties.isTeamcityBuild.get()) {
-        val localPublishTask = register("publish") {
+        register("publish") {
             group = "publishing"
+            inputs.files(publishedMarkElements.get().incoming.artifactView { lenient(true) }.files)
+                .withPathSensitivity(PathSensitivity.NONE)
+                .withPropertyName("publishedMarks")
             finalizedBy(mvnPublishTask)
-        }
-
-        subprojects {
-            tasks.configureEach {
-                if (name == "publish") {
-                    localPublishTask.get().dependsOn(this)
-                }
-            }
         }
     }
 
@@ -679,7 +677,7 @@ tasks {
 val zipCompiler by tasks.registering(Zip::class) {
     dependsOn(dist)
     destinationDirectory.set(file(distDir))
-    archiveFileName.set("kotlin-compiler-$kotlinVersion.zip")
+    archiveFileName.set("kotlin-compiler-${project.version}.zip")
 
     from(distKotlinHomeDir)
     into("kotlinc")
