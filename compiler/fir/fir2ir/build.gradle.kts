@@ -79,6 +79,9 @@ projectTests {
     testData(project(":compiler").isolated, "testData/ir")
     testData(project(":compiler").isolated, "testData/klib")
     testData(project(":compiler").isolated, "testData/debug")
+    testData(project(":compiler").isolated, "testData/checkLocalVariablesTable")
+    testData(project(":compiler").isolated, "testData/writeSignature")
+    testData(project(":compiler").isolated, "testData/writeFlags")
     testData(project(":compiler:tests-spec").isolated, "testData/codegen")
     testTask(
         jUnitMode = JUnitMode.JUnit5,
