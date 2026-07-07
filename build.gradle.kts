@@ -4,7 +4,6 @@ import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootEnvSpec
 import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnPlugin
 import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnRootEnvSpec
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import org.jetbrains.kotlin.testFederation.TestFederationInferAffectedDomainsTask
 
 buildscript {
@@ -110,7 +109,6 @@ rootProject.apply {
     from(rootProject.file("gradle/versions.gradle.kts"))
     from(rootProject.file("gradle/checkArtifacts.gradle.kts"))
     from(rootProject.file("gradle/checkCacheability.gradle.kts"))
-    from(rootProject.file("gradle/compilerModules.gradle.kts"))
 }
 
 pluginManager.apply("nodejs-configuration")
@@ -237,6 +235,7 @@ dependencies {
 
 tasks {
     register("compileAll") {
+        doNotTrackState("This is just a lifecycle task to compile all, we don't want to hash the inputs.")
         /*
          * Build cache tests don't work properly with KMP projects,
          * so such projects are temporarily excluded from them (KTI-2822)
@@ -247,14 +246,16 @@ tasks {
             ":plugins:plugin-sandbox:plugin-annotations",
             ":kotlin-power-assert-runtime",
         )
-        allprojects
+        val projectsToRun = allprojects
             .filter {
                 excludedNativePrefixes.none(it.path::startsWith) || kotlinBuildProperties.isKotlinNativeEnabled.get()
-            }
-            .forEach {
-                dependsOn(it.tasks.withType<KotlinCompilationTask<*>>())
-                dependsOn(it.tasks.withType<JavaCompile>())
-            }
+            }.map { it.path }
+        val conf: FileCollection = configurations.detachedConfiguration(
+            *projectsToRun.map {
+                this.project.dependencies.project(it, configuration = "compileAll")
+            }.toTypedArray()
+        ).incoming.artifactView { lenient(true) }.files
+        inputs.files(conf).withNormalizer(ClasspathNormalizer::class.java)
     }
 
     named<Delete>("clean") {
@@ -426,6 +427,7 @@ tasks {
         // see comments on the task in kotlin-scripting-jvm-host-test
 //        dependsOn(":kotlin-scripting-jvm-host-test:embeddableTest")
         dependsOn(":kotlin-main-kts-test:test")
+        dependsOn(":kotlin-scripting-jsr223-test:test")
     }
 
     testLifecycleTask("scriptingTest") {
@@ -610,13 +612,13 @@ tasks {
 
     registerSpecialPublishingTasks(
         nameSuffix = "IdeArtifacts",
-        artifactProjectList = @Suppress("UNCHECKED_CAST") (rootProject.extra["compilerArtifactsForIde"] as List<String>),
+        artifactProjectList = @Suppress("UNCHECKED_CAST") (CompilerModules.compilerArtifactsForIde),
         latch = Project::idePluginPublishingLatch
     )
 
     registerSpecialPublishingTasks(
         nameSuffix = "AnalysisApiArtifacts",
-        artifactProjectList = @Suppress("UNCHECKED_CAST") (rootProject.extra["analysisApiArtifacts"] as List<String>),
+        artifactProjectList = @Suppress("UNCHECKED_CAST") (CompilerModules.analysisApiArtifacts),
         latch = Project::analysisApiPublishingLatch
     )
 
