@@ -80,10 +80,10 @@ internal class KotlinPlaywrightJsTestFramework(
         abstract val name: Property<String>
 
         @get:Input
-        val timeout: Property<Duration> = objects.property<Duration>().convention(Duration.ofMinutes(1))
+        val timeout: Property<Duration> = objects.property<Duration>()
 
         @get:Input
-        val headless: Property<Boolean> = objects.property<Boolean>().convention(true)
+        val headless: Property<Boolean> = objects.property<Boolean>()
 
         @get:Input
         val launchArgs: ListProperty<String> = objects.listProperty()
@@ -184,13 +184,13 @@ internal class KotlinPlaywrightJsTestFramework(
         customBrowserExecutable = customBrowserExecutable.asPathOrNull
     )
 
-    private fun BrowserRunnerInput.buildRunnerUrl(baseUrl: String, cliArgs: List<String>): String {
+    private fun BrowserRunnerInput.buildRunnerUrl(baseUrl: URI, cliArgs: List<String>): URI {
         val runnerConfig = KotlinBrowserRunnerConfig(
             timeout = timeout.get(),
             testsFinishedMarker = finishMarker.get(),
             kotlinTestCliArguments = cliArgs
         )
-        return runnerConfig.buildUrlWithConfigState(URI(baseUrl)).toString()
+        return runnerConfig.buildUrlWithConfigState(baseUrl)
     }
 
     companion object {

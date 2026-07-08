@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.gradle.ExperimentalJsTestDsl
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.jetbrains.kotlin.gradle.testbase.*
 import org.jetbrains.kotlin.gradle.uklibs.applyMultiplatform
+import org.jetbrains.kotlin.gradle.uklibs.include
 import org.jetbrains.kotlin.gradle.util.isTeamCityRun
 import kotlin.io.path.moveTo
 import org.junit.jupiter.api.Assumptions.assumeFalse
@@ -21,9 +22,8 @@ import org.junit.jupiter.api.DisplayName
 import kotlin.test.Ignore
 import kotlin.test.assertContains
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.toJavaDuration
 
-@JsGradlePluginTests
+@JsBrowserGradlePluginTests
 class JsBrowserTestsIT : KGPBaseTest() {
 
     @GradleTest
@@ -214,7 +214,7 @@ class JsBrowserTestsIT : KGPBaseTest() {
                 )
                 assertTasksExecuted(":prepareWebpackBundleForKotlinJsTests")
                 assertTasksFailed(":jsBrowserTest")
-                assertOutputContains("""Execute JS tests with chromium runner at URL: file.*kotlinJsTest/dist/test.html""".toRegex())
+                assertOutputContains("""Execute JS tests with chromium runner at URL: http.*:prepareWebpackBundleForKotlinJsTests/test/test.html""".toRegex())
                 assertOutputContains("chromium.JsBrowserSmokeTest.assertFails[js, browser] FAILED")
                 assertOutputContains("2 tests completed, 1 failed")
                 // TODO: KT-86778 Add verification of test report
@@ -224,7 +224,6 @@ class JsBrowserTestsIT : KGPBaseTest() {
 
     @DisplayName("KT-86958: Unclear error for js test failure on timeout")
     @GradleTest
-    @Ignore("Currently fails due to missing infra on CI, see KTI-3326")
     fun `prints clear error message when a test times out`(gradleVersion: GradleVersion) {
         project("empty", gradleVersion = gradleVersion) {
             plugins {
@@ -238,7 +237,7 @@ class JsBrowserTestsIT : KGPBaseTest() {
                             @OptIn(ExperimentalJsTestDsl::class)
                             with(test) {
                                 chromium {
-                                    it.timeout.set(1234.milliseconds.toJavaDuration())
+                                    it.timeout.set(1234.milliseconds)
                                 }
                             }
                         }
@@ -276,6 +275,67 @@ class JsBrowserTestsIT : KGPBaseTest() {
                 assertTasksFailed(":jsBrowserTest")
                 assertOutputContains("chromium.JsBrowserTimeoutTest.test[js, browser] FAILED")
                 assertOutputContains("com.microsoft.playwright.TimeoutError: Timeout 1234ms exceeded")
+            }
+        }
+    }
+
+    @GradleTest
+    fun `two subprojects should reuse single http server for tests`(gradleVersion: GradleVersion) {
+        project(
+            "empty",
+            gradleVersion = gradleVersion,
+            buildOptions = defaultBuildOptions
+                .copy(logLevel = LogLevel.DEBUG)
+                .disableIsolatedProjectsBecauseOfJsAndWasmKT75899(),
+        ) {
+            plugins {
+                kotlin("multiplatform") apply false
+            }
+
+            val subprojectA = project("empty", gradleVersion)
+            val subprojectB = project("empty", gradleVersion)
+
+            include(subprojectA, "subprojectA")
+            include(subprojectB, "subprojectB")
+
+            for (subproject in listOf(subprojectA, subprojectB)) {
+                subproject.plugins {
+                    kotlin("multiplatform")
+                }
+                subproject.buildScriptInjection {
+                    project.applyMultiplatform {
+                        js {
+                            browser {
+                                @OptIn(ExperimentalJsTestDsl::class)
+                                test {
+                                    it.chromium {}
+                                }
+                            }
+                        }
+                        sourceSets.commonTest.dependencies {
+                            implementation(kotlin("test"))
+                        }
+                        sourceSets.commonTest.get().compileSource(
+                            """
+                            import kotlin.test.*
+                            
+                            class JsBrowserSmokeTest {
+                                @Test
+                                fun assertOk() {
+                                    assertTrue(42 == 42)
+                                }
+                            }
+                            """.trimIndent()
+                        )
+                    }
+                }
+            }
+
+            build(
+                ":subprojectA:jsBrowserTest",
+                ":subprojectB:jsBrowserTest"
+            ) {
+                assertOutputContainsExactlyTimes("HTTP server for js tests started at", 1)
             }
         }
     }

@@ -25,6 +25,21 @@ func swiftCanOverrideKotlinSuspendMethod() async throws {
     #expect(try await callGreet(base: base, name: "C") == "Kotlin: C")
 }
 
+// A Swift override of a Kotlin `suspend` method with a `vararg` parameter. The reverse async bridge
+// must call the variadic Swift method with the runtime array it received from Kotlin.
+@Test
+func swiftCanOverrideKotlinSuspendVarargMethod() async throws {
+    class SwiftVararg: AsyncVararg {
+        override func join(parts: String...) async throws -> String {
+            return "Swift: " + parts.joined(separator: ",")
+        }
+    }
+
+    #expect(try await callJoin(v: SwiftVararg()) == "Swift: a,b,c")
+    // The original Kotlin class is untouched.
+    #expect(try await callJoin(v: AsyncVararg()) == "Kotlin: a,b,c")
+}
+
 // The non-virtual ("_direct") forward async bridge: a Swift subclass that overrides only `greet`
 // must still be able to inherit `count` without infinitely recursing through the patched vtable slot.
 @Test
@@ -67,6 +82,24 @@ func swiftCanOverrideKotlinSuspendInterfaceMethod() async throws {
 
     let base = AsyncSpeakerBase()
     #expect(try await callSpeak(s: base) == "Kotlin speaks")
+}
+
+// A Swift class that inherits a Kotlin class and first-adopts a Kotlin `suspend`-interface, inheriting
+// its DEFAULT method (does not override `describe`). The inherited default must dispatch non-virtually
+// (via the `_direct` async bridge) so it never recurses through the patched itable; its open self-call
+// to `tag()` must reach the Swift override.
+@Test
+func swiftInheritsKotlinSuspendInterfaceDefault() async throws {
+    class MyAsyncDefaulter: AsyncSpeakerBase, AsyncDefaulter {
+        func tag() async throws -> String { "swift-tag" }
+        // describe() intentionally NOT overridden -> inherits the Kotlin async default.
+    }
+    let d = MyAsyncDefaulter()
+
+    // Direct Swift dispatch: inherited async default runs; its open self-call reaches the Swift override.
+    #expect(try await d.describe() == "default-describe(swift-tag)")
+    // Kotlin-side dispatch must terminate (no infinite recursion) and yield the same result.
+    #expect(try await callAsyncDescribe(d: d) == "default-describe(swift-tag)")
 }
 
 // A Swift override that throws: the error must travel back through the reverse bridge's exception
