@@ -80,6 +80,8 @@ object JVM_DIAGNOSTICS_LIST : DiagnosticList("FirJvmErrors") {
         }
 
         val CONFLICT_VERSION_AND_JVM_OVERLOADS_ANNOTATION by warning<PsiElement>()
+
+        val INTERFACE_COMPANION_BLOCK_PROPERTY_PRIVATE_FIELD by error<PsiElement>(PositioningStrategy.DECLARATION_SIGNATURE)
     }
 
     val TYPES by object : DiagnosticGroup("Types") {
@@ -117,6 +119,10 @@ object JVM_DIAGNOSTICS_LIST : DiagnosticList("FirJvmErrors") {
             parameter<ConeKotlinType>("actualType")
             parameter<ConeKotlinType>("expectedType")
         }
+        val JAVA_CLASS_PROPERTY_REFERENCE by deprecationError<PsiElement>(
+            featureForError = ForbidJavaClassPropertyReferences,
+            positioningStrategy = PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED,
+        )
 
         val UNEXHAUSTIVE_WHEN_BASED_ON_JAVA_ANNOTATIONS by warning<PsiElement>(PositioningStrategy.WHEN_EXPRESSION) {
             parameter<ConeKotlinType>("subjectType")

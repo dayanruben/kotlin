@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.gradle.testbase.*
 import org.jetbrains.kotlin.gradle.testing.prettyPrinted
 import org.jetbrains.kotlin.gradle.uklibs.applyMultiplatform
 import org.jetbrains.kotlin.gradle.uklibs.include
+import org.jetbrains.kotlin.konan.target.Xcode
+import org.jetbrains.kotlin.konan.target.XcodeVersion
 import kotlin.test.assertEquals
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.condition.OS
@@ -232,11 +234,13 @@ class SwiftPMImportPopularSwiftPMDependenciesTests : KGPBaseTest() {
                 }
             }
         """.trimIndent(),
-        isStatic = isStatic
+        isStatic = isStatic,
+        // FIXME: KT-87246 - remove this parameter after Xcode 27 is stable
+        checkForObjCRuntimeWarnings = Xcode.findCurrent().version.major < 27
     ) { _ ->
         swiftPackage(
             url = url("https://github.com/RevenueCat/purchases-ios-spm.git"),
-            version = exact("5.49.0"),
+            version = exact("5.79.0"),
             products = listOf(product("RevenueCat")),
         )
     }
@@ -437,8 +441,10 @@ class SwiftPMImportPopularSwiftPMDependenciesTests : KGPBaseTest() {
         expectedCinteropAPIs = mapOf(
             "socks5_tunnel" to """
         swiftPMImport.emptyxcode/hev_socks5_tunnel_main_from_file|hev_socks5_tunnel_main_from_file(kotlin.String?;kotlin.Int){}[1]
+        swiftPMImport.emptyxcode/hev_socks5_tunnel_main_from_file|hev_socks5_tunnel_main_from_file(kotlinx.cinterop.CValuesRef<kotlinx.cinterop.ByteVarOf<kotlin.Byte>>?;kotlin.Int){}[1]
         swiftPMImport.emptyxcode/hev_socks5_tunnel_main_from_str|hev_socks5_tunnel_main_from_str(kotlinx.cinterop.CValuesRef<kotlinx.cinterop.UByteVarOf<kotlin.UByte>>?;kotlin.UInt;kotlin.Int){}[1]
         swiftPMImport.emptyxcode/hev_socks5_tunnel_main|hev_socks5_tunnel_main(kotlin.String?;kotlin.Int){}[1]
+        swiftPMImport.emptyxcode/hev_socks5_tunnel_main|hev_socks5_tunnel_main(kotlinx.cinterop.CValuesRef<kotlinx.cinterop.ByteVarOf<kotlin.Byte>>?;kotlin.Int){}[1]
         swiftPMImport.emptyxcode/hev_socks5_tunnel_quit|hev_socks5_tunnel_quit(){}[1]
         swiftPMImport.emptyxcode/hev_socks5_tunnel_stats|hev_socks5_tunnel_stats(kotlinx.cinterop.CValuesRef<kotlinx.cinterop.ULongVarOf<kotlin.ULong>>?;kotlinx.cinterop.CValuesRef<kotlinx.cinterop.ULongVarOf<kotlin.ULong>>?;kotlinx.cinterop.CValuesRef<kotlinx.cinterop.ULongVarOf<kotlin.ULong>>?;kotlinx.cinterop.CValuesRef<kotlinx.cinterop.ULongVarOf<kotlin.ULong>>?){}[1]
     """.trimIndent(),
@@ -769,7 +775,9 @@ class SwiftPMImportPopularSwiftPMDependenciesTests : KGPBaseTest() {
                 }
             }
         """.trimIndent(),
-        isStatic = isStatic
+        isStatic = isStatic,
+        // FIXME: KT-87246 - remove this parameter after Xcode 27 is stable
+        checkForObjCRuntimeWarnings = Xcode.findCurrent().version.major < 27
     ) { _ ->
         swiftPackage(
             url = url("https://github.com/openid/AppAuth-iOS.git"),
@@ -1153,6 +1161,8 @@ class SwiftPMImportPopularSwiftPMDependenciesTests : KGPBaseTest() {
         swiftSnippet: String = "",
         ktSnippet: String = "",
         isStatic: Boolean,
+        // FIXME: Remove this parameter after stable Xcode 27 deploys
+        checkForObjCRuntimeWarnings: Boolean = true,
         synchronizeLockFileWithXcodeProject: Boolean = true,
         expectedPackageManifest: String? = null,
         beforeBuild: (TestProject.() -> Unit)? = null,
@@ -1196,7 +1206,10 @@ class SwiftPMImportPopularSwiftPMDependenciesTests : KGPBaseTest() {
             val derivedDataPath = projectPath.resolve("dd")
             testXcodeLinkage(derivedDataPath)
             val appPath = derivedDataPath.resolve("Build/Products/Debug-iphonesimulator/emptyxcode.app")
-            assertApplicationRunsAndObjCRuntimeDoesntEmitInStderr(appPath)
+            assertApplicationRunsAndObjCRuntimeDoesntEmitInStderr(
+                appPath,
+                checkForObjCRuntimeWarnings = checkForObjCRuntimeWarnings
+            )
             if (expectedPackageManifest != null) {
                 testPackageManifest(expectedPackageManifest)
             }

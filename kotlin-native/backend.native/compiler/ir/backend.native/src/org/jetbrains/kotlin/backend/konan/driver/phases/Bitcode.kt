@@ -38,15 +38,25 @@ internal data class WriteBitcodeFileInput(
         val outputFile: File,
 ) : LlvmIrHolder
 
+internal data class InsertEntryPointAliasInput(
+        override val llvmModule: LLVMModuleRef,
+        val entryPointName: String,
+) : LlvmIrHolder
+
+internal val InsertEntryPointAliasPhase = createSimpleNamedCompilerPhase<NativeBackendPhaseContext, InsertEntryPointAliasInput>(
+        "InsertEntryPointAlias"
+) { _, (llvmModule, entryPointName) ->
+    // Insert `_main` after pipeline, so we won't worry about optimizations corrupting entry point.
+    insertAliasToEntryPoint(llvmModule, entryPointName)
+}
+
 /**
  * Write in-memory LLVM module to filesystem as a bitcode.
  */
 internal val WriteBitcodeFilePhase = createSimpleNamedCompilerPhase<NativeBackendPhaseContext, WriteBitcodeFileInput>(
         "WriteBitcodeFile",
         postactions = getDefaultLlvmModuleActions(),
-) { context, (llvmModule, outputFile) ->
-    // Insert `_main` after pipeline, so we won't worry about optimizations corrupting entry point.
-    insertAliasToEntryPoint(context, llvmModule)
+) { _, (llvmModule, outputFile) ->
     LLVMWriteBitcodeToFile(llvmModule, outputFile.canonicalPath)
 }
 

@@ -1126,6 +1126,12 @@ private fun KaDiagnosticConverterBuilder.addConversions20() {
             token,
         )
     }
+    add(FirJvmErrors.JAVA_CLASS_PROPERTY_REFERENCE.warningFactory) { firDiagnostic ->
+        JavaClassPropertyReferenceWarningImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirWebCommonErrors.NESTED_JS_EXPORT) { firDiagnostic ->
         NestedJsExportImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -5186,6 +5192,12 @@ private fun KaDiagnosticConverterBuilder.addConversions115() {
             token,
         )
     }
+    add(FirErrors.INTERFACE_COMPANION_BLOCK_VAR) { firDiagnostic ->
+        InterfaceCompanionBlockVarImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions116() {
@@ -6580,6 +6592,12 @@ private fun KaDiagnosticConverterBuilder.addConversions144() {
             token,
         )
     }
+    add(FirJvmErrors.JAVA_CLASS_PROPERTY_REFERENCE.errorFactory) { firDiagnostic ->
+        JavaClassPropertyReferenceErrorImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions145() {
@@ -6669,6 +6687,12 @@ private fun KaDiagnosticConverterBuilder.addConversions146() {
     }
     add(FirErrors.ITERATOR_ON_NULLABLE) { firDiagnostic ->
         IteratorOnNullableImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.INTERFACE_COMPANION_BLOCK_PROPERTY_PRIVATE_FIELD) { firDiagnostic ->
+        InterfaceCompanionBlockPropertyPrivateFieldImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

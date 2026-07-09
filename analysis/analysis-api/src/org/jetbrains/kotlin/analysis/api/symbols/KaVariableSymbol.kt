@@ -360,10 +360,14 @@ public sealed class KaPropertySymbol : KaVariableSymbol(), KaTypeParameterOwnerS
      *
      * `Foo.name` is declared in `Foo`'s primary constructor. The compiler generates a corresponding property which is accessible via the
      * class's [member scope][org.jetbrains.kotlin.analysis.api.components.KaScopeProvider.memberScope], as well as the primary
-     * constructor's value parameters via [KaValueParameterSymbol.generatedPrimaryConstructorProperty].
+     * constructor's value parameters via [KaValueParameterSymbol.primaryConstructorProperty].
      *
      * In contrast, `Foo.count` is not declared in the primary constructor.
      */
+    @Deprecated(
+        "Use `KaKotlinProperty.primaryConstructorParameter` instead.",
+        ReplaceWith("primaryConstructorParameter != null")
+    )
     public abstract val isFromPrimaryConstructor: Boolean
 
     /**
@@ -418,6 +422,31 @@ public abstract class KaKotlinPropertySymbol : KaPropertySymbol() {
      * Whether the property is a [compile-time constant](https://kotlinlang.org/docs/properties.html#compile-time-constants).
      */
     public abstract val isConst: Boolean
+
+    /**
+     * The associated [KaValueParameterSymbol] if this property is generated from a primary constructor parameter.
+     *
+     * Properties may be declared directly in the primary constructor of a class. The compiler generates a property from such a declaration,
+     * which is initialized with the argument passed to the corresponding primary constructor parameter.
+     *
+     * #### Example
+     *
+     * ```kotlin
+     * class Foo(val name: String) {
+     *     val count: Int = 5
+     * }
+     * ```
+     *
+     * `Foo.name` is declared in `Foo`'s primary constructor. The compiler generates a corresponding property which is accessible via the
+     * class's [member scope][org.jetbrains.kotlin.analysis.api.components.KaScopeProvider.memberScope], as well as the primary
+     * constructor's value parameters via [KaValueParameterSymbol.generatedPrimaryConstructorProperty].
+     *
+     * In contrast, `Foo.count` is not declared in the primary constructor.
+     *
+     * @see isFromPrimaryConstructor
+     * @see KaValueParameterSymbol.generatedPrimaryConstructorProperty
+     */
+    public abstract val primaryConstructorParameter: KaValueParameterSymbol?
 
     abstract override fun createPointer(): KaSymbolPointer<KaKotlinPropertySymbol>
 }
@@ -498,6 +527,11 @@ public abstract class KaSyntheticJavaPropertySymbol : KaPropertySymbol() {
     @KaExperimentalApi
     final override val contextReceivers: List<KaContextReceiver> get() = withValidityAssertion { emptyList() }
     final override val backingFieldSymbol: KaBackingFieldSymbol? get() = withValidityAssertion { null }
+
+    @Deprecated(
+        "Use `KaKotlinProperty.primaryConstructorParameter` instead.",
+        ReplaceWith("primaryConstructorParameter != null")
+    )
     final override val isFromPrimaryConstructor: Boolean get() = withValidityAssertion { false }
     override val origin: KaSymbolOrigin get() = withValidityAssertion { KaSymbolOrigin.JAVA_SYNTHETIC_PROPERTY }
 
@@ -668,9 +702,18 @@ public abstract class KaValueParameterSymbol : KaParameterSymbol() {
      * The associated generated [KaPropertySymbol] if this value parameter corresponds to a `val` or `var` property declaration in a primary
      * constructor.
      *
-     * @see KaPropertySymbol.isFromPrimaryConstructor
+     * @see KaKotlinPropertySymbol.primaryConstructorParameter
      */
-    public open val generatedPrimaryConstructorProperty: KaKotlinPropertySymbol? get() = null
+    @Deprecated("Property was renamed. Use 'primaryConstructorProperty' instead.", ReplaceWith("primaryConstructorProperty"))
+    public open val generatedPrimaryConstructorProperty: KaKotlinPropertySymbol? get() = primaryConstructorProperty
+
+    /**
+     * The associated generated [KaPropertySymbol] if this value parameter corresponds to a `val` or `var` property declaration in a primary
+     * constructor.
+     *
+     * @see KaKotlinPropertySymbol.primaryConstructorParameter
+     */
+    public open val primaryConstructorProperty: KaKotlinPropertySymbol? get() = null
 
     abstract override fun createPointer(): KaSymbolPointer<KaValueParameterSymbol>
 }

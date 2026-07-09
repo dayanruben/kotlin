@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.config.moduleName
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.descriptors.VariableDescriptorWithAccessors
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.impl.DiagnosticsCollectorImpl
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
@@ -40,7 +39,7 @@ class GenerationState(
     val generateDeclaredClassFilter: GenerateClassFilter? = null,
     val targetId: TargetId? = null,
     moduleName: String? = configuration.moduleName,
-    val jvmBackendClassResolver: JvmBackendClassResolver = JvmBackendClassResolverForModuleWithDependencies(module),
+    val jvmBackendClassResolver: JvmBackendClassResolver,
     val ignoreErrors: Boolean = false,
     diagnosticReporter: DiagnosticReporter? = null,
     compiledCodeProvider: CompiledCodeProvider = CompiledCodeProvider.Empty
@@ -66,10 +65,8 @@ class GenerationState(
         components.getIncrementalCache(targetId)
     }
 
-    val moduleName: String = moduleName ?: JvmCodegenUtil.getModuleName(module)
+    val moduleName: String = moduleName ?: ModuleNameUtil.getModuleName(module)
     val classBuilderMode: ClassBuilderMode = builderFactory.classBuilderMode
-
-    val localDelegatedProperties: MutableMap<Type, List<VariableDescriptorWithAccessors>> = mutableMapOf()
 
     val globalInlineContext: GlobalInlineContext = GlobalInlineContext()
     val factory: ClassFileFactory = ClassFileFactory(
