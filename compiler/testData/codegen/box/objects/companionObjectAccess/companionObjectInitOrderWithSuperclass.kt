@@ -1,5 +1,6 @@
-// ISSUE: KT-86521 Native: init order of companion objects is different from JVM
-// IGNORE_BACKEND: NATIVE
+// LANGUAGE: +CompanionBlocksAndExtensions
+// ^ On Native `CompanionBlocksAndExtensions` language feature enables the JVM-like initialization.
+//   See nativeCompanionInitOrderLegacy for Native behavior without the language feature.
 // ISSUE: KT-84267 K/Wasm: init order of companion objects is different from JVM
 // IGNORE_KLIB_RUNTIME_ERRORS_WITH_CUSTOM_SECOND_STAGE: JS,Wasm-js:2.3,2.4
 // ^^^KT-84267 is fixed in 2.4.20-beta1 for WASM

@@ -1,5 +1,4 @@
-import org.gradle.api.artifacts.ProjectDependency
-import org.gradle.api.artifacts.VersionCatalogsExtension
+import org.gradle.accessors.dm.LibrariesForLibs
 import org.gradle.api.internal.file.collections.DefaultConfigurableFileCollection
 import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
@@ -109,7 +108,7 @@ val kotlinApiVersionForProjectsDependingOnStableStdlib: Provider<String> = proje
 
 fun Project.configureKotlinCompilationOptions() {
     plugins.withType<KotlinBasePluginWrapper> {
-        val kotlinLanguageVersion: String by rootProject.extra
+        val kotlinLanguageVersion: Provider<String> = project.providers.gradleProperty("kotlinLanguageVersion")
         val renderDiagnosticNames by extra(project.kotlinBuildProperties.renderDiagnosticNames.get())
 
         tasks.withType<KotlinCompilationTask<*>>().configureEach {
@@ -137,8 +136,8 @@ fun Project.configureKotlinCompilationOptions() {
                 }
 
                 freeCompilerArgs.addAll(commonCompilerArgs)
-                languageVersion.set(KotlinVersion.fromVersion(kotlinLanguageVersion))
-                apiVersion.set(KotlinVersion.fromVersion(kotlinLanguageVersion))
+                languageVersion.set(kotlinLanguageVersion.map{ KotlinVersion.fromVersion(it) })
+                apiVersion.set(kotlinLanguageVersion.map { KotlinVersion.fromVersion(it) })
                 freeCompilerArgs.add("-Xskip-prerelease-check")
 
                 if (project.path in CompilerModules.projectsDependingOnStableStdlib) {
@@ -171,7 +170,20 @@ fun Project.configureKotlinCompilationOptions() {
             }
         }
 
-        val projectsWithOptInToUnsafeCastFunctionsFromAddToStdLib: List<String> by rootProject.extra
+        val projectsWithOptInToUnsafeCastFunctionsFromAddToStdLib = listOf(
+            ":analysis:analysis-api-fir",
+            ":analysis:decompiled:light-classes-for-decompiled",
+            ":analysis:symbol-light-classes",
+            ":compiler",
+            ":compiler:backend.js",
+            ":jps:jps-common",
+            ":js:js.tests",
+            ":kotlin-build-common",
+            ":kotlin-gradle-plugin",
+            ":kotlin-scripting-jvm-host-test",
+            ":native:kotlin-klib-commonizer",
+        )
+
 
         tasks.withType<KotlinJvmCompile>().configureEach {
             compilerOptions {
@@ -212,12 +224,8 @@ private fun Project.shouldUseOldJvmDefaultArgument(): Boolean {
     return isOldCompilerVersion
 }
 
-private val kotlinCompilerVersionForGradle = rootProject.extensions
-    .getByType(VersionCatalogsExtension::class.java)
-    .named("libs")
-    .findVersion("kotlin-for-gradle-plugins-compilation")
-    .get()
-    .displayName
+private val libs = project.the<LibrariesForLibs>()
+private val kotlinCompilerVersionForGradle = libs.versions.kotlin.`for`.gradle.plugins.compilation.get()
 
 private fun Project.skipArgumentForOlderKotlinCompilerVersion(): Boolean {
     @OptIn(ExperimentalBuildToolsApi::class, ExperimentalKotlinGradlePluginApi::class)
@@ -368,6 +376,7 @@ fun Project.configureTests() {
 
             ":plugins:compose-compiler-plugin:compiler-hosted:integration-tests",
             ":plugins:scripting:scripting-tests",
+            ":repo:auto-code-review", // Runs processes, traverses all repo files. Quick.
             ":repo:artifacts-tests",
             ":repo:codebase-tests",
             ":tools:binary-compatibility-validator",
@@ -434,10 +443,7 @@ fun Project.configureTests() {
     }
     // Aggregate task for build related checks
     tasks.register("checkBuild")
-    val mppProjects: List<String> by rootProject.extra
-    if (path !in mppProjects) {
-        configureTestRetriesForTestTasks()
-    }
+    configureTestRetriesForTestTasks()
 }
 
 // TODO: migrate remaining modules to the new JVM default scheme.

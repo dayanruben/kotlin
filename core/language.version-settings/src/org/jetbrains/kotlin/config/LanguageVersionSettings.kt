@@ -537,12 +537,20 @@ enum class LanguageFeature(
     WrapContinuationForTailCallFunctions(KOTLIN_2_5, sinceApiVersion = ApiVersion.KOTLIN_2_5, issue = "KT-74051"),
     ForbidOperatorEqualsInEnumEntriesAndAnonymousObjects(KOTLIN_2_5, enabledInProgressiveMode = true, "KT-86143"),
     ForbidAnnotationsTypeArgumentsAndParenthesesForPackageQualifier(sinceVersion = KOTLIN_2_5, enabledInProgressiveMode = true, "KTLC-396"),
+    FixApplicabilityOfEmptyIntersection(sinceVersion = KOTLIN_2_5, "KT-86740"),
     EnhancementsOfSecondIncorporationKind25(KOTLIN_2_5, "KT-85879"),
     NameBasedDestructuring(sinceVersion = KOTLIN_2_5, "KT-19627"),
     JsAllowExportingAnnotationClasses(sinceVersion = KOTLIN_2_5, "KT-85599"),
     JsAllowExportingStarProjection(sinceVersion = KOTLIN_2_5, "KT-83462"),
     AllowReturnsResultOfContract(sinceVersion = KOTLIN_2_5, sinceApiVersion = ApiVersion.KOTLIN_2_4, issue = "KT-85948", forcesPreReleaseBinaries = true),
     ForbidAliasedRepeatedAnnotationsOnExpressionsInMultiplatform(sinceVersion = KOTLIN_2_5, "KTLC-409"),
+    ProhibitIllegalNotNullSmartCastsInEqualities(KOTLIN_2_5, "KTLC-410"),
+    ProhibitNotNullSmartCastsBasedOnFlexibleComponentsInEqualities(KOTLIN_2_5, "KTLC-410") {
+        context(context: CrossFeatureChecksResultsCollector)
+        override fun crossFeatureChecks() {
+            checkEnabledNotEarlierThan(ProhibitIllegalNotNullSmartCastsInEqualities)
+        }
+    },
 
     CallCompletionRefinementsFor25(sinceVersion = KOTLIN_2_5, "KT-86042"),
 
@@ -554,6 +562,7 @@ enum class LanguageFeature(
 
     ReportReificationProblemsInDnnAndFlexible(sinceVersion = KOTLIN_2_6, enabledInProgressiveMode = true, "KTLC-399"),
     ForbidJavaClassPropertyReferences(sinceVersion = KOTLIN_2_6, enabledInProgressiveMode = true, "KTLC-375"),
+    ReportSubclassCantCallCompanionProtectedNonStaticWithGenerics(sinceVersion = KOTLIN_2_6, enabledInProgressiveMode = true, "KTLC-412"),
 
     // End of 2.* language features --------------------------------------------------
 
