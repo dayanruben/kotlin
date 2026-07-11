@@ -547,7 +547,7 @@
                     "name": "2.5",
                     "releaseVersionsMetadata": {
                         "introducedVersion": "2.2.20",
-                        "stabilizedVersion": null,
+                        "stabilizedVersion": "2.5.0",
                         "deprecatedVersion": null,
                         "removedVersion": null
                     }
@@ -556,6 +556,15 @@
                     "name": "2.6",
                     "releaseVersionsMetadata": {
                         "introducedVersion": "2.4.20",
+                        "stabilizedVersion": null,
+                        "deprecatedVersion": null,
+                        "removedVersion": null
+                    }
+                },
+                {
+                    "name": "2.7",
+                    "releaseVersionsMetadata": {
+                        "introducedVersion": "2.5.0",
                         "stabilizedVersion": null,
                         "deprecatedVersion": null,
                         "removedVersion": null
