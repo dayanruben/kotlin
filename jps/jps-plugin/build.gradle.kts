@@ -63,6 +63,7 @@ dependencies {
     testRuntimeOnly("com.jetbrains.intellij.platform:lang:$intellijVersion") { isTransitive = false }
     testRuntimeOnly("com.jetbrains.intellij.platform:lang-impl:$intellijVersion") { isTransitive = false }
     testRuntimeOnly("com.jetbrains.intellij.platform:util-ex:$intellijVersion") { isTransitive = false }
+    testRuntimeOnly("com.jetbrains.intellij.platform:locking-impl:$intellijVersion") { isTransitive = false }
     testRuntimeOnly(libs.gson)
     testRuntimeOnly(intellijJDom())
     testRuntimeOnly(libs.kotlinx.coroutines.core.jvm)
@@ -108,23 +109,23 @@ idea {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(21))
     }
 }
 
 tasks.compileJava {
-    sourceCompatibility = "1.8"
-    targetCompatibility = "1.8"
+    sourceCompatibility = "11"
+    targetCompatibility = "11"
 }
 
 tasks.compileKotlin {
-    compilerOptions.jvmTarget = JvmTarget.JVM_1_8
+    compilerOptions.jvmTarget = JvmTarget.JVM_11
 }
 
 projectTests {
     testTask(
         jUnitMode = JUnitMode.JUnit5,
-        javaLauncher = JdkMajorVersion.JDK_17_0,
+        javaLauncher = JdkMajorVersion.JDK_21_0,
         defineJDKEnvVariables = listOf(JdkMajorVersion.JDK_11_0)
     ) {
         // do not replace with compile/runtime dependency,
@@ -152,11 +153,14 @@ projectTests {
             "--add-opens=java.base/java.lang=ALL-UNNAMED",
             "--add-opens=java.desktop/javax.swing=ALL-UNNAMED",
             "--add-opens=java.base/java.io=ALL-UNNAMED",
+            // additions for SDK 261
+            "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+            "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
         )
     }
 
     testGenerator("org.jetbrains.kotlin.jps.GenerateJpsPluginTestsKt", doNotSetFixturesSourceSetDependency = true) {
-        javaLauncher = project.getToolchainLauncherFor(JdkMajorVersion.JDK_17_0)
+        javaLauncher = project.getToolchainLauncherFor(JdkMajorVersion.JDK_21_0)
     }
 
     withJvmStdlibAndReflect()
