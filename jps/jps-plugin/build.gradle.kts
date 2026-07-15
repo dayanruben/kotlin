@@ -23,10 +23,7 @@ dependencies {
     CompilerModules.kotlinJpsPluginMavenDependencies
         .forEach { implementation(project(it)) }
 
-    @Suppress("UNCHECKED_CAST")
-    rootProject.extra["kotlinJpsPluginMavenDependenciesNonTransitiveLibs"]
-        .let { it as List<String> }
-        .forEach { implementation(it) { isTransitive = false } }
+    implementation(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
 
     implementation(project(":jps:jps-common"))
     compileOnly(libs.intellij.fastutil)
@@ -76,8 +73,8 @@ dependencies {
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
-    testRuntimeOnly(libs.junit.vintage.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
+    testRuntimeOnly(libs.junit4) // needed for `com.intellij.tests.JUnit5TestSessionListener` from intellij test framework
 
     CompilerModules.compilerModules.forEach {
         testRuntimeOnly(project(it))
@@ -96,6 +93,7 @@ sourceSets {
         Ide.IJ {
             java.srcDirs("jps-tests/test")
             java.srcDirs("jps-tests/tests-gen")
+            resources.srcDir("jps-tests/testResources")
         }
     }
 }
@@ -124,7 +122,6 @@ tasks.compileKotlin {
 
 projectTests {
     testTask(
-        jUnitMode = JUnitMode.JUnit5,
         javaLauncher = JdkMajorVersion.JDK_21_0,
         defineJDKEnvVariables = listOf(JdkMajorVersion.JDK_11_0)
     ) {

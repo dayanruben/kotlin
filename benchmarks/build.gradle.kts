@@ -18,12 +18,10 @@ dependencies {
     testImplementation(intellijCore())
     testImplementation(libs.kotlinx.benchmark.runtime)
 
-    testFixturesApi(libs.junit4)
     testFixturesApi(platform(libs.junit.bom))
     testFixturesApi(libs.junit.jupiter.api)
     testFixturesApi(libs.junit.platform.launcher)
     testRuntimeOnly(libs.junit.jupiter.engine)
-    testRuntimeOnly(libs.junit.vintage.engine)
 
     testFixturesApi(testFixtures(project(":compiler:tests-integration")))
 }
@@ -81,12 +79,8 @@ tasks.withType<JmhBytecodeGeneratorTask>().configureEach {
 }
 
 projectTests {
-    testTask(
-        parallel = false, // Disable parallelization to get more robust performance measurements
-        jUnitMode = JUnitMode.JUnit4
-    ) {
+    testTask {
         workingDir = rootDir
-        useJUnitPlatform()
     }
 
     withJvmStdlibAndReflect()
