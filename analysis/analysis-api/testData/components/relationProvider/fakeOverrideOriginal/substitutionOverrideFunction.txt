@@ -1,6 +1,7 @@
 IS_THE_SAME_SYMBOL: false
 FAKE_OVERRIDE_ORIGINAL:
   KaNamedFunctionSymbol:
+    anchorPsi: KtNamedFunction
     annotations: []
     callableId: test/Base.foo
     contextParameters: []
@@ -24,6 +25,8 @@ FAKE_OVERRIDE_ORIGINAL:
     modality: OPEN
     name: foo
     origin: SOURCE
+    psi: KtNamedFunction
+    realPsi: KtNamedFunction
     receiverParameter: null
     returnType: KaTypeParameterType:
       annotations: []
@@ -31,6 +34,7 @@ FAKE_OVERRIDE_ORIGINAL:
     typeParameters: []
     valueParameters: [
       KaValueParameterSymbol:
+        anchorPsi: KtParameter
         annotations: []
         callableId: null
         contextParameters: []
@@ -53,6 +57,8 @@ FAKE_OVERRIDE_ORIGINAL:
         name: t
         origin: SOURCE
         primaryConstructorProperty: null
+        psi: KtParameter
+        realPsi: KtParameter
         receiverParameter: null
         returnType: KaTypeParameterType:
           annotations: []

@@ -1,6 +1,7 @@
 IS_THE_SAME_SYMBOL: true
 FAKE_OVERRIDE_ORIGINAL:
   KaBackingFieldSymbol:
+    anchorPsi: KtProperty
     annotations: []
     callableId: null
     contextParameters: []
@@ -18,6 +19,8 @@ FAKE_OVERRIDE_ORIGINAL:
     name: field
     origin: PROPERTY_BACKING_FIELD
     owningProperty: KaKotlinPropertySymbol(test/MyClass.value)
+    psi: null
+    realPsi: null
     receiverParameter: null
     returnType: KaUsualClassType:
       annotations: []

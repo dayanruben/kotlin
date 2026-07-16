@@ -1,6 +1,7 @@
 IS_THE_SAME_SYMBOL: true
 FAKE_OVERRIDE_ORIGINAL:
   KaPropertySetterSymbol:
+    anchorPsi: KtProperty
     annotations: []
     callableId: null
     contextParameters: []
@@ -18,6 +19,7 @@ FAKE_OVERRIDE_ORIGINAL:
     modality: FINAL
     origin: SOURCE
     parameter: KaValueParameterSymbol:
+      anchorPsi: KtProperty
       annotations: []
       callableId: null
       contextParameters: []
@@ -40,6 +42,8 @@ FAKE_OVERRIDE_ORIGINAL:
       name: value
       origin: SOURCE
       primaryConstructorProperty: null
+      psi: null
+      realPsi: null
       receiverParameter: null
       returnType: KaUsualClassType:
         annotations: []
@@ -47,6 +51,8 @@ FAKE_OVERRIDE_ORIGINAL:
         type: kotlin/Int
       typeParameters: []
       visibility: PUBLIC
+    psi: null
+    realPsi: null
     receiverParameter: null
     returnType: KaUsualClassType:
       annotations: []
@@ -55,6 +61,7 @@ FAKE_OVERRIDE_ORIGINAL:
     typeParameters: []
     valueParameters: [
       KaValueParameterSymbol:
+        anchorPsi: KtProperty
         annotations: []
         callableId: null
         contextParameters: []
@@ -77,6 +84,8 @@ FAKE_OVERRIDE_ORIGINAL:
         name: value
         origin: SOURCE
         primaryConstructorProperty: null
+        psi: null
+        realPsi: null
         receiverParameter: null
         returnType: KaUsualClassType:
           annotations: []

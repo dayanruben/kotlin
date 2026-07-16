@@ -1,6 +1,7 @@
 IS_THE_SAME_SYMBOL: false
 FAKE_OVERRIDE_ORIGINAL:
   KaReceiverParameterSymbol:
+    anchorPsi: KtTypeReference
     annotations: []
     callableId: null
     contextParameters: []
@@ -17,6 +18,8 @@ FAKE_OVERRIDE_ORIGINAL:
     name: <receiver>
     origin: SOURCE
     owningCallableSymbol: KaNamedFunctionSymbol(test/A.foo)
+    psi: KtTypeReference
+    realPsi: KtTypeReference
     receiverParameter: null
     returnType: KaUsualClassType:
       annotations: []

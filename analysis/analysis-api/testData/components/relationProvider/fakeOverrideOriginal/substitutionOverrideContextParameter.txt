@@ -1,6 +1,7 @@
 IS_THE_SAME_SYMBOL: false
 FAKE_OVERRIDE_ORIGINAL:
   KaContextParameterSymbol:
+    anchorPsi: KtParameter
     annotations: []
     callableId: null
     contextParameters: []
@@ -16,6 +17,8 @@ FAKE_OVERRIDE_ORIGINAL:
     modality: FINAL
     name: c
     origin: SOURCE
+    psi: KtParameter
+    realPsi: KtParameter
     receiverParameter: null
     returnType: KaTypeParameterType:
       annotations: []

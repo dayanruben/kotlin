@@ -1,6 +1,7 @@
 IS_THE_SAME_SYMBOL: false
 FAKE_OVERRIDE_ORIGINAL:
   KaNamedFunctionSymbol:
+    anchorPsi: KtNamedFunction
     annotations: []
     callableId: test/I.foo
     contextParameters: []
@@ -24,6 +25,8 @@ FAKE_OVERRIDE_ORIGINAL:
     modality: ABSTRACT
     name: foo
     origin: SOURCE
+    psi: KtNamedFunction
+    realPsi: KtNamedFunction
     receiverParameter: null
     returnType: KaUsualClassType:
       annotations: []

@@ -9,6 +9,7 @@ KtDotQualifiedExpression(257,274): 's.foo(this@usage)'
       ]
       dispatchReceiver = KaImplicitReceiverValue:
         symbol = KaReceiverParameterSymbol:
+          anchorPsi: KtFunctionLiteral
           annotations: []
           callableId: null
           contextParameters: []
@@ -25,6 +26,8 @@ KtDotQualifiedExpression(257,274): 's.foo(this@usage)'
           name: <receiver>
           origin: SOURCE
           owningCallableSymbol: KaAnonymousFunctionSymbol(<local>/<no name provided>)
+          psi: KtFunctionLiteral
+          realPsi: KtFunctionLiteral
           receiverParameter: null
           returnType: KaUsualClassType:
             annotations: []

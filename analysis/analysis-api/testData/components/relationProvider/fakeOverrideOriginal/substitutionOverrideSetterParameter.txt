@@ -1,6 +1,7 @@
 IS_THE_SAME_SYMBOL: false
 FAKE_OVERRIDE_ORIGINAL:
   KaValueParameterSymbol:
+    anchorPsi: KtParameter
     annotations: []
     callableId: null
     contextParameters: []
@@ -23,6 +24,8 @@ FAKE_OVERRIDE_ORIGINAL:
     name: value
     origin: SOURCE
     primaryConstructorProperty: null
+    psi: KtParameter
+    realPsi: KtParameter
     receiverParameter: null
     returnType: KaTypeParameterType:
       annotations: []

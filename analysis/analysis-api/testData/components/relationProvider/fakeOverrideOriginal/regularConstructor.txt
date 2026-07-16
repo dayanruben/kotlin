@@ -1,6 +1,7 @@
 IS_THE_SAME_SYMBOL: true
 FAKE_OVERRIDE_ORIGINAL:
   KaConstructorSymbol:
+    anchorPsi: KtSecondaryConstructor
     annotations: []
     callableId: null
     containingClassId: test/MyClass
@@ -16,6 +17,8 @@ FAKE_OVERRIDE_ORIGINAL:
     location: CLASS
     modality: FINAL
     origin: SOURCE
+    psi: KtSecondaryConstructor
+    realPsi: KtSecondaryConstructor
     receiverParameter: null
     returnType: KaUsualClassType:
       annotations: []
@@ -24,6 +27,7 @@ FAKE_OVERRIDE_ORIGINAL:
     typeParameters: []
     valueParameters: [
       KaValueParameterSymbol:
+        anchorPsi: KtParameter
         annotations: []
         callableId: null
         contextParameters: []
@@ -46,6 +50,8 @@ FAKE_OVERRIDE_ORIGINAL:
         name: x
         origin: SOURCE
         primaryConstructorProperty: null
+        psi: KtParameter
+        realPsi: KtParameter
         receiverParameter: null
         returnType: KaUsualClassType:
           annotations: []

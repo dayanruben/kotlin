@@ -1512,7 +1512,7 @@ inline fun <reified T> convertTo(value: Any): T {
     }
 }
 
-private fun Any?.toIrConstOrNull(irType: IrType, startOffset: Int = SYNTHETIC_OFFSET, endOffset: Int = SYNTHETIC_OFFSET): IrConst? {
+public fun Any?.toIrConstOrNull(irType: IrType, startOffset: Int = SYNTHETIC_OFFSET, endOffset: Int = SYNTHETIC_OFFSET): IrConst? {
     if (this == null) return IrConstImpl.constNull(startOffset, endOffset, irType)
 
     val constType = irType.makeNotNull().removeAnnotations()
@@ -1609,7 +1609,7 @@ fun IrFunctionAccessExpression.receiverAndArgs(): List<IrExpression> {
     return arguments.filterNotNull()
 }
 
-val IrFunction.propertyIfAccessor: IrDeclaration
+val IrFunction.propertyIfAccessor: IrDeclarationWithName
     get() = (this as? IrSimpleFunction)?.correspondingPropertySymbol?.owner ?: this
 
 /**

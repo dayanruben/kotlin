@@ -1,6 +1,7 @@
 IS_THE_SAME_SYMBOL: false
 FAKE_OVERRIDE_ORIGINAL:
   KaPropertyGetterSymbol:
+    anchorPsi: KtPropertyAccessor
     annotations: []
     callableId: null
     contextParameters: []
@@ -17,6 +18,8 @@ FAKE_OVERRIDE_ORIGINAL:
     location: PROPERTY
     modality: OPEN
     origin: SOURCE
+    psi: KtPropertyAccessor
+    realPsi: KtPropertyAccessor
     receiverParameter: null
     returnType: KaTypeParameterType:
       annotations: []

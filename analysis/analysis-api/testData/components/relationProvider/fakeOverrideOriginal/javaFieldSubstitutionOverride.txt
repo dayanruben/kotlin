@@ -1,6 +1,7 @@
 IS_THE_SAME_SYMBOL: false
 FAKE_OVERRIDE_ORIGINAL:
   KaJavaFieldSymbol:
+    anchorPsi: PsiFieldImpl
     annotations: []
     callableId: test/JavaBase.value
     contextParameters: []
@@ -17,6 +18,8 @@ FAKE_OVERRIDE_ORIGINAL:
     modality: FINAL
     name: value
     origin: JAVA_SOURCE
+    psi: PsiFieldImpl
+    realPsi: PsiFieldImpl
     receiverParameter: null
     returnType: KaFlexibleType:
       annotations: []
