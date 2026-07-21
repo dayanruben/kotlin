@@ -792,19 +792,6 @@ Kotlin reports a warning every time you use one of them. You can use this flag t
 
 
     compilerArgument {
-        name = "Xcontext-receivers"
-        description = "Enable experimental context receivers.".asReleaseDependent()
-        valueType = BooleanType.defaultFalse
-
-        additionalAnnotations(Enables(LanguageFeature.ContextReceivers))
-
-        lifecycle(
-            introducedVersion = KotlinReleaseVersion.v1_6_20,
-        )
-    }
-
-
-    compilerArgument {
         name = "Xcontext-parameters"
         description = "Enable experimental context parameters.".asReleaseDependent()
         valueType = BooleanType.defaultFalse
@@ -826,6 +813,19 @@ Kotlin reports a warning every time you use one of them. You can use this flag t
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v2_4_0,
+        )
+    }
+
+
+    compilerArgument {
+        name = "Xcallable-references-to-contextual"
+        description = "Enable callable references to contextual declarations.".asReleaseDependent()
+        valueType = BooleanType.defaultFalse
+
+        additionalAnnotations(Enables(LanguageFeature.CallableReferencesToContextual))
+
+        lifecycle(
+            introducedVersion = KotlinReleaseVersion.v2_5_0,
         )
     }
 
