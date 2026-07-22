@@ -43,6 +43,7 @@ where advanced options include:
   -Xindy-allow-annotated-lambdas Allow using 'invokedynamic' for lambda expressions with annotations
   -Xir-do-not-clear-binding-context
                              When using the IR backend, do not clear BindingContext between 'psi2ir' and lowerings.
+  -Xjava-direct              Experimental direct java support.
   -Xjava-package-prefix      Package prefix for Java files.
   -Xjava-source-roots=<path> Paths to directories with Java source files.
   -Xjdk-release=<version>    Compile against the specified JDK API version, similarly to javac's '-release'. This requires JDK 9 or newer.
@@ -219,6 +220,7 @@ where advanced options include:
                              Use the 'warning' level to issue warnings instead of errors.
   -Xexplicit-backing-fields  Enable experimental language support for explicit backing fields.
   -Xexplicit-context-arguments Enable explicit passing of context arguments using named argument syntax.
+  -Xfir-aggressive-pruning   Enable or disable FirAggressivePruningProcessor, which prunes unreachable private members during body resolve.
   -Xfragment-dependency=<fragment name>:<path>
                              Declare common klib dependencies for the specific fragment.
                              This argument is required for any HMPP module except the platform leaf module: it takes dependencies from -cp/-libraries.

@@ -25,6 +25,7 @@ where advanced options include:
   -Xplatform-arguments-in-main-function
                              JS expression that will be executed in runtime and be put as an Array<String> parameter of the main function
   -Xsuspend-lambda-exporting Enable exporting suspend lambdas to JavaScript/TypeScript.
+  -Xts-export-untyped-as-unknown Export 'dynamic' and 'Any' Kotlin types as 'unknown' TypeScript type.
   -Xir-dce-dump-reachability-info-to-file=<path>
                              Dump reachability information collected about declarations while performing DCE to a file. The format will be chosen automatically based on the file extension. Supported output formats include JSON for .json, a JS const initialized with a plain object containing information for .js, and plain text for all other file types.
   -Xir-dump-declaration-ir-sizes-to-file=<path>
@@ -183,6 +184,7 @@ where advanced options include:
                              Use the 'warning' level to issue warnings instead of errors.
   -Xexplicit-backing-fields  Enable experimental language support for explicit backing fields.
   -Xexplicit-context-arguments Enable explicit passing of context arguments using named argument syntax.
+  -Xfir-aggressive-pruning   Enable or disable FirAggressivePruningProcessor, which prunes unreachable private members during body resolve.
   -Xfragment-dependency=<fragment name>:<path>
                              Declare common klib dependencies for the specific fragment.
                              This argument is required for any HMPP module except the platform leaf module: it takes dependencies from -cp/-libraries.

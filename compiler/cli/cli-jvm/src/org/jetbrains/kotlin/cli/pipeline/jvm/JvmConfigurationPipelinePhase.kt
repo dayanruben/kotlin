@@ -96,6 +96,7 @@ object JvmConfigurationUpdater : ConfigurationUpdater<K2JVMCompilerArguments>() 
         } else {
             configuration.configureContentRootsFromClassPath(arguments)
         }
+
         configuration.put(JVMConfigurationKeys.DISABLE_STANDARD_SCRIPT_DEFINITION, arguments.disableStandardScript)
 
         if (arguments.script || arguments.expression != null) {
@@ -122,6 +123,7 @@ object JvmConfigurationUpdater : ConfigurationUpdater<K2JVMCompilerArguments>() 
         inlineConstTracker = services[InlineConstTracker::class.java]
         enumWhenTracker = services[EnumWhenTracker::class.java]
         fileMappingTracker = services[ICFileMappingTracker::class.java]
+        icMetadataTracker = services[ICJvmMetadataTracker::class.java]
         incrementalCompilationComponents = services[IncrementalCompilationComponents::class.java]
     }
 
