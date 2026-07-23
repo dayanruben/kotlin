@@ -1,5 +1,9 @@
+// ISSUE: KT-87009
 // IGNORE_BACKEND: JS_IR, JS_IR_ES6, WASM_JS, WASM_WASI
+// DISABLE_IR_VISIBILITY_CHECKS: ANY
 // FULL_JDK
+
+package foo
 
 class C {
     companion object {
@@ -38,13 +42,15 @@ object ThrowsMyErrorObject {
 }
 
 fun box(): String {
+    @Suppress("INVISIBLE_REFERENCE")
     try {
         C()
         return "FAIL 1.1: should throw"
-    } catch (e: Error /* ExceptionInInitializerError */) {
+    } catch (e: ExceptionInInitializerError) {
         val cause = e.cause
         if (cause !is IllegalStateException) return "FAIL 1.2: cause must be IllegalStateException, was ${cause?.let { it::class }}"
         if (cause.message != "C.never") return "FAIL 1.3: message must be 'C.never', was '${cause.message}'"
+        if (e.message != null) return "FAIL 1.4: message must be null, got ${e.message}"
     }
 
     try {
@@ -54,19 +60,22 @@ fun box(): String {
         if (BACKEND_UNDER_TEST != "ANDROID") {
             val expectedMessage = when (BACKEND_UNDER_TEST) {
                 "NATIVE" -> "There was an error during file or class initialization"
-                else -> "Could not initialize class C"
+                "JS_IR", "JS_IR_ES6" -> "Could not initialize class C"
+                else -> "Could not initialize class foo.C"
             }
             if (e.message != expectedMessage) return "FAIL 2.2: message must be '$expectedMessage', was '${e.message}'"
         }
     }
 
+    @Suppress("INVISIBLE_REFERENCE")
     val childEIIE = try {
         Child()
         return "FAIL 3.1: should throw"
-    } catch (e: Error /* ExceptionInInitializerError */) {
+    } catch (e: ExceptionInInitializerError) {
         val cause = e.cause
         if (cause !is IllegalStateException) return "FAIL 3.2: cause must be IllegalStateException, was ${cause?.let { it::class }}"
         if (cause.message != "Parent.never") return "FAIL 3.3: message must be 'Parent.never', was '${cause.message}'"
+        if (e.message != null) return "FAIL 3.4: message must be null, got ${e.message}"
         e
     }
 
@@ -77,7 +86,8 @@ fun box(): String {
         if (BACKEND_UNDER_TEST != "ANDROID") {
             val expectedMessage = when (BACKEND_UNDER_TEST) {
                 "NATIVE" -> "There was an error during file or class initialization"
-                else -> "Could not initialize class Child"
+                "JS_IR", "JS_IR_ES6" -> "Could not initialize class Child"
+                else -> "Could not initialize class foo.Child"
             }
             if (e.message != expectedMessage) return "FAIL 4.2: message must be '$expectedMessage', was '${e.message}'"
         }
@@ -90,19 +100,22 @@ fun box(): String {
         if (BACKEND_UNDER_TEST != "ANDROID") {
             val expectedMessage = when (BACKEND_UNDER_TEST) {
                 "NATIVE" -> "There was an error during file or class initialization"
-                else -> "Could not initialize class Parent"
+                "JS_IR", "JS_IR_ES6" -> "Could not initialize class Parent"
+                else -> "Could not initialize class foo.Parent"
             }
             if (e.message != expectedMessage) return "FAIL 5.2: message must be '$expectedMessage', was '${e.message}'"
         }
     }
 
+    @Suppress("INVISIBLE_REFERENCE")
     try {
         O.foo()
         return "FAIL 6.1: should throw"
-    } catch (e: Error /* ExceptionInInitializerError */) {
+    } catch (e: ExceptionInInitializerError) {
         val cause = e.cause
         if (cause !is IllegalStateException) return "FAIL 6.2: cause must be IllegalStateException, was ${cause?.let { it::class }}"
         if (cause.message != "O.never") return "FAIL 6.3: message must be 'O.never', was '${cause.message}'"
+        if (e.message != null) return "FAIL 6.4: message must be null, got ${e.message}"
     }
 
     try {
@@ -112,7 +125,8 @@ fun box(): String {
         if (BACKEND_UNDER_TEST != "ANDROID") {
             val expectedMessage = when (BACKEND_UNDER_TEST) {
                 "NATIVE" -> "There was an error during file or class initialization"
-                else -> "Could not initialize class O"
+                "JS_IR", "JS_IR_ES6" -> "Could not initialize class O"
+                else -> "Could not initialize class foo.O"
             }
             if (e.message != expectedMessage) return "FAIL 7.2: message must be '$expectedMessage', was '${e.message}'"
         }
@@ -133,7 +147,8 @@ fun box(): String {
         if (BACKEND_UNDER_TEST != "ANDROID") {
             val expectedMessage = when (BACKEND_UNDER_TEST) {
                 "NATIVE" -> "There was an error during file or class initialization"
-                else -> "Could not initialize class ThrowsMyErrorWithCompanion"
+                "JS_IR", "JS_IR_ES6" -> "Could not initialize class ThrowsMyErrorWithCompanion"
+                else -> "Could not initialize class foo.ThrowsMyErrorWithCompanion"
             }
             if (e.message != expectedMessage) return "FAIL 9.2: message must be '$expectedMessage', was '${e.message}'"
         }
@@ -154,7 +169,8 @@ fun box(): String {
         if (BACKEND_UNDER_TEST != "ANDROID") {
             val expectedMessage = when (BACKEND_UNDER_TEST) {
                 "NATIVE" -> "There was an error during file or class initialization"
-                else -> "Could not initialize class ThrowsMyErrorObject"
+                "JS_IR", "JS_IR_ES6" -> "Could not initialize class ThrowsMyErrorObject"
+                else -> "Could not initialize class foo.ThrowsMyErrorObject"
             }
             if (e.message != expectedMessage) return "FAIL 11.3: message must be '$expectedMessage', was '${e.message}'"
         }

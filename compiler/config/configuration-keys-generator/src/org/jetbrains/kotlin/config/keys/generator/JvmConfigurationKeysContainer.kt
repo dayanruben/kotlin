@@ -51,7 +51,6 @@ object JvmConfigurationKeysContainer : KeysContainer("org.jetbrains.kotlin.confi
     val ENABLE_JVM_PREVIEW by key<Boolean>()
     val NO_REFLECT by key<Boolean>("Don't automatically include kotlin-reflect.jar into the output if the output is a jar.")
     val VALIDATE_BYTECODE by key<Boolean>()
-    val LINK_VIA_SIGNATURES by key<Boolean>("Link JVM IR symbols via signatures, instead of by descriptors on the K1 frontend.")
     val ENABLE_DEBUG_MODE by key<Boolean>()
     val ENHANCED_COROUTINES_DEBUGGING by key<Boolean>("Mark compiled generated code in coroutines.")
     val NO_NEW_JAVA_ANNOTATION_TARGETS by key<Boolean>("Do not generate Java 1.8+ targets for Kotlin annotation classes.")
@@ -62,5 +61,6 @@ object JvmConfigurationKeysContainer : KeysContainer("org.jetbrains.kotlin.confi
     val IGNORED_ANNOTATIONS_FOR_BRIDGES by key<List<String>>("Annotations fqNames that shall be skipped while copying the annotations from the target to the bridge functions.")
     val COMMON_FRAGMENTS_OUTPUT_DIR by key<File>("Path to outputs of common fragments metadata for KMP JVM IC", throwOnNull = false)
     val IC_METADATA_TRACKER by key<ICJvmMetadataTracker>("Tracks generated in-module JVM metadata for KMP JVM IC", throwOnNull = false)
+    val USE_IC_CLASSPATH_METADATA by key<Boolean>("Enable classpath metadata for KMP incremental compilation")
     val USE_JAVA_DIRECT by key<Boolean>("Use java-direct as frontend Java facade")
 }

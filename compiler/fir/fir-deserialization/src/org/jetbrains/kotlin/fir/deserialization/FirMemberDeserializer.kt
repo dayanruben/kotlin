@@ -908,6 +908,10 @@ class FirMemberDeserializer(private val c: FirDeserializationContext) {
                     index,
                 )
                 valueParameterKind = kind
+            }.also { parameter ->
+                proto.equalityBoundType(c.typeTable)?.let { type ->
+                    parameter.equalityBoundType = c.typeDeserializer.type(type)
+                }
             }
         }
     }

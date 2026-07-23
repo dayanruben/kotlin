@@ -75,11 +75,6 @@ where advanced options include:
                                                              A lambda object created using 'LambdaMetafactory.metafactory' will have a different 'toString()'.
                              -Xlambdas=class                 Generate lambdas as explicit classes.
                              The default value is 'indy' if language version is 2.0+, and 'class' otherwise.
-  -Xlink-via-signatures      Link JVM IR symbols via signatures instead of descriptors.
-                             This mode is slower, but it can be useful for troubleshooting problems with the JVM IR backend.
-                             This option is deprecated and will be deleted in future versions.
-                             It has no effect when -language-version is 2.0 or higher.
-                             The option is deprecated since Kotlin 2.0.0. It will be removed in one of the future releases.
   -Xmodule-path=<path>       Paths to Java 9+ modules.
   -Xmultifile-parts-inherit  Compile multifile classes as a hierarchy of parts and a facade.
   -Xno-call-assertions       Don't generate not-null assertions for arguments of platform types.
@@ -135,6 +130,8 @@ where advanced options include:
   -Xuse-14-inline-classes-mangling-scheme
                              Use the scheme for inline class mangling from version 1.4 instead of the one from 1.4.30.
   -Xuse-fast-jar-file-system Use the fast implementation of Jar FS. This may speed up compilation time, but it is experimental.
+  -Xuse-ic-classpath-metadata Use classpath metadata for incremental compilation.
+                             This is used solely for incremental compilation and should not be used directly.
   -Xuse-inline-scopes-numbers Use inline scopes numbers for inline marker variables.
   -Xuse-old-class-files-reading Use the old implementation for reading class files. This may slow down the compilation and cause problems with Groovy interop.
                              This can be used in the event of problems with the new implementation.

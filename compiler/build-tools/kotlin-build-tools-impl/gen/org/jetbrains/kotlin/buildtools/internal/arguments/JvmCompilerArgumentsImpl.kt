@@ -104,6 +104,7 @@ import org.jetbrains.kotlin.buildtools.`internal`.arguments.JvmCompilerArguments
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.JvmCompilerArgumentsImpl.Companion.X_TYPE_ENHANCEMENT_IMPROVEMENTS_STRICT_MODE
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.JvmCompilerArgumentsImpl.Companion.X_USE_14_INLINE_CLASSES_MANGLING_SCHEME
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.JvmCompilerArgumentsImpl.Companion.X_USE_FAST_JAR_FILE_SYSTEM
+import org.jetbrains.kotlin.buildtools.`internal`.arguments.JvmCompilerArgumentsImpl.Companion.X_USE_IC_CLASSPATH_METADATA
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.JvmCompilerArgumentsImpl.Companion.X_USE_INLINE_SCOPES_NUMBERS
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.JvmCompilerArgumentsImpl.Companion.X_USE_JAVAC
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.JvmCompilerArgumentsImpl.Companion.X_USE_K2_KAPT
@@ -228,7 +229,7 @@ internal class JvmCompilerArgumentsImpl(
     if (X_JVM_EXPOSE_BOXED in this) { arguments.jvmExposeBoxed = get(X_JVM_EXPOSE_BOXED)}
     try { if (X_KLIB in this) { arguments.setUsingReflection("klibLibraries", get(X_KLIB)?.map { it.absolutePathStringOrThrow() }?.also { list -> list.checkNoneContains("${File.pathSeparator}") }?.joinToString(File.pathSeparator))} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_KLIB. Current compiler version is: $KC_VERSION, but the argument was removed in 2.5.0""").initCause(e) }
     if (X_LAMBDAS in this) { arguments.lambdas = get(X_LAMBDAS)?.stringValue}
-    if (X_LINK_VIA_SIGNATURES in this) { arguments.linkViaSignatures = get(X_LINK_VIA_SIGNATURES)}
+    try { if (X_LINK_VIA_SIGNATURES in this) { arguments.setUsingReflection("linkViaSignatures", get(X_LINK_VIA_SIGNATURES))} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_LINK_VIA_SIGNATURES. Current compiler version is: $KC_VERSION, but the argument was removed in 2.5.0""").initCause(e) }
     if (X_MODULE_PATH in this) { arguments.javaModulePath = get(X_MODULE_PATH)?.map { it.absolutePathStringOrThrow() }?.also { list -> list.checkNoneContains("${File.pathSeparator}") }?.joinToString(File.pathSeparator)}
     if (X_MULTIFILE_PARTS_INHERIT in this) { arguments.inheritMultifileParts = get(X_MULTIFILE_PARTS_INHERIT)}
     if (X_NO_CALL_ASSERTIONS in this) { arguments.noCallAssertions = get(X_NO_CALL_ASSERTIONS)}
@@ -251,6 +252,7 @@ internal class JvmCompilerArgumentsImpl(
     if (X_TYPE_ENHANCEMENT_IMPROVEMENTS_STRICT_MODE in this) { arguments.typeEnhancementImprovementsInStrictMode = get(X_TYPE_ENHANCEMENT_IMPROVEMENTS_STRICT_MODE)}
     if (X_USE_14_INLINE_CLASSES_MANGLING_SCHEME in this) { arguments.useOldInlineClassesManglingScheme = get(X_USE_14_INLINE_CLASSES_MANGLING_SCHEME)}
     if (X_USE_FAST_JAR_FILE_SYSTEM in this) { arguments.useFastJarFileSystem = get(X_USE_FAST_JAR_FILE_SYSTEM)}
+    if (X_USE_IC_CLASSPATH_METADATA in this) { arguments.useIcClasspathMetadata = get(X_USE_IC_CLASSPATH_METADATA)}
     if (X_USE_INLINE_SCOPES_NUMBERS in this) { arguments.useInlineScopesNumbers = get(X_USE_INLINE_SCOPES_NUMBERS)}
     try { if (X_USE_JAVAC in this) { arguments.setUsingReflection("useJavac", get(X_USE_JAVAC))} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_USE_JAVAC. Current compiler version is: $KC_VERSION, but the argument was removed in 2.4.0""").initCause(e) }
     try { if (X_USE_K2_KAPT in this) { arguments.setUsingReflection("useK2Kapt", get(X_USE_K2_KAPT))} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_USE_K2_KAPT. Current compiler version is: $KC_VERSION, but the argument was removed in 2.3.0""").initCause(e) }
@@ -318,7 +320,7 @@ internal class JvmCompilerArgumentsImpl(
     try { this[X_JVM_EXPOSE_BOXED] = arguments.jvmExposeBoxed } catch (_: NoSuchMethodError) {  }
     try { this[X_KLIB] = arguments.getUsingReflection<String?>("klibLibraries")?.split(File.pathSeparator)?.map { Path(it) } } catch (_: NoSuchMethodError) {  }
     try { this[X_LAMBDAS] = arguments.lambdas?.let { LambdasMode.entries.firstOrNull { entry -> entry.stringValue.equals(it, true) }?.also { entry -> checkCaseMatches(_restrictedArgViolations, arguments::lambdas, entry.stringValue, it) } ?: throw CompilerArgumentsParseException("Unknown -Xlambdas value: $it") } } catch (ex: CompilerArgumentsParseException) { _argumentValidationErrors.add(ex.message ?: "Error parsing compiler arguments") } catch (_: NoSuchMethodError) {  }
-    try { this[X_LINK_VIA_SIGNATURES] = arguments.linkViaSignatures } catch (_: NoSuchMethodError) {  }
+    try { this[X_LINK_VIA_SIGNATURES] = arguments.getUsingReflection<Boolean>("linkViaSignatures") } catch (_: NoSuchMethodError) {  }
     try { this[X_MODULE_PATH] = arguments.javaModulePath?.split(File.pathSeparator)?.map { Path(it) } } catch (_: NoSuchMethodError) {  }
     try { this[X_MULTIFILE_PARTS_INHERIT] = arguments.inheritMultifileParts } catch (_: NoSuchMethodError) {  }
     try { this[X_NO_CALL_ASSERTIONS] = arguments.noCallAssertions } catch (_: NoSuchMethodError) {  }
@@ -341,6 +343,7 @@ internal class JvmCompilerArgumentsImpl(
     try { this[X_TYPE_ENHANCEMENT_IMPROVEMENTS_STRICT_MODE] = arguments.typeEnhancementImprovementsInStrictMode } catch (_: NoSuchMethodError) {  }
     try { this[X_USE_14_INLINE_CLASSES_MANGLING_SCHEME] = arguments.useOldInlineClassesManglingScheme } catch (_: NoSuchMethodError) {  }
     try { this[X_USE_FAST_JAR_FILE_SYSTEM] = arguments.useFastJarFileSystem } catch (_: NoSuchMethodError) {  }
+    try { this[X_USE_IC_CLASSPATH_METADATA] = arguments.useIcClasspathMetadata } catch (_: NoSuchMethodError) {  }
     try { this[X_USE_INLINE_SCOPES_NUMBERS] = arguments.useInlineScopesNumbers } catch (_: NoSuchMethodError) {  }
     try { this[X_USE_JAVAC] = arguments.getUsingReflection<Boolean>("useJavac") } catch (_: NoSuchMethodError) {  }
     try { this[X_USE_K2_KAPT] = arguments.getUsingReflection<Boolean?>("useK2Kapt") } catch (_: NoSuchMethodError) {  }
@@ -405,7 +408,7 @@ internal class JvmCompilerArgumentsImpl(
     if (X_JVM_EXPOSE_BOXED in this) { arguments.jvmExposeBoxed = get(X_JVM_EXPOSE_BOXED)}
     try { if (X_KLIB in this) { arguments.setUsingReflection("klibLibraries", get(X_KLIB)?.map { it.absolutePathStringOrThrow() }?.also { list -> list.checkNoneContains("${File.pathSeparator}") }?.joinToString(File.pathSeparator))} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_KLIB. Current compiler version is: $KC_VERSION, but the argument was removed in 2.5.0""").initCause(e) }
     if (X_LAMBDAS in this) { arguments.lambdas = get(X_LAMBDAS)?.stringValue}
-    if (X_LINK_VIA_SIGNATURES in this) { arguments.linkViaSignatures = get(X_LINK_VIA_SIGNATURES)}
+    try { if (X_LINK_VIA_SIGNATURES in this) { arguments.setUsingReflection("linkViaSignatures", get(X_LINK_VIA_SIGNATURES))} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_LINK_VIA_SIGNATURES. Current compiler version is: $KC_VERSION, but the argument was removed in 2.5.0""").initCause(e) }
     if (X_MODULE_PATH in this) { arguments.javaModulePath = get(X_MODULE_PATH)?.map { it.absolutePathStringOrThrow() }?.also { list -> list.checkNoneContains("${File.pathSeparator}") }?.joinToString(File.pathSeparator)}
     if (X_MULTIFILE_PARTS_INHERIT in this) { arguments.inheritMultifileParts = get(X_MULTIFILE_PARTS_INHERIT)}
     if (X_NO_CALL_ASSERTIONS in this) { arguments.noCallAssertions = get(X_NO_CALL_ASSERTIONS)}
@@ -428,6 +431,7 @@ internal class JvmCompilerArgumentsImpl(
     if (X_TYPE_ENHANCEMENT_IMPROVEMENTS_STRICT_MODE in this) { arguments.typeEnhancementImprovementsInStrictMode = get(X_TYPE_ENHANCEMENT_IMPROVEMENTS_STRICT_MODE)}
     if (X_USE_14_INLINE_CLASSES_MANGLING_SCHEME in this) { arguments.useOldInlineClassesManglingScheme = get(X_USE_14_INLINE_CLASSES_MANGLING_SCHEME)}
     if (X_USE_FAST_JAR_FILE_SYSTEM in this) { arguments.useFastJarFileSystem = get(X_USE_FAST_JAR_FILE_SYSTEM)}
+    if (X_USE_IC_CLASSPATH_METADATA in this) { arguments.useIcClasspathMetadata = get(X_USE_IC_CLASSPATH_METADATA)}
     if (X_USE_INLINE_SCOPES_NUMBERS in this) { arguments.useInlineScopesNumbers = get(X_USE_INLINE_SCOPES_NUMBERS)}
     try { if (X_USE_JAVAC in this) { arguments.setUsingReflection("useJavac", get(X_USE_JAVAC))} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_USE_JAVAC. Current compiler version is: $KC_VERSION, but the argument was removed in 2.4.0""").initCause(e) }
     try { if (X_USE_K2_KAPT in this) { arguments.setUsingReflection("useK2Kapt", get(X_USE_K2_KAPT))} } catch (e: NoSuchMethodError) { throw IllegalStateException("""Compiler parameter not recognized: X_USE_K2_KAPT. Current compiler version is: $KC_VERSION, but the argument was removed in 2.3.0""").initCause(e) }
@@ -658,6 +662,9 @@ internal class JvmCompilerArgumentsImpl(
 
     public val X_USE_FAST_JAR_FILE_SYSTEM: JvmCompilerArgument<Boolean?> =
         JvmCompilerArgument("X_USE_FAST_JAR_FILE_SYSTEM")
+
+    public val X_USE_IC_CLASSPATH_METADATA: JvmCompilerArgument<Boolean> =
+        JvmCompilerArgument("X_USE_IC_CLASSPATH_METADATA")
 
     public val X_USE_INLINE_SCOPES_NUMBERS: JvmCompilerArgument<Boolean> =
         JvmCompilerArgument("X_USE_INLINE_SCOPES_NUMBERS")

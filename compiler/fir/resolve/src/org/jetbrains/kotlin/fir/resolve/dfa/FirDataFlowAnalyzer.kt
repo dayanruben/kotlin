@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.contracts.description.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
+import org.jetbrains.kotlin.fir.declarations.utils.equalityBoundType
 import org.jetbrains.kotlin.fir.declarations.utils.isReplSnippetDeclaration
 import org.jetbrains.kotlin.fir.declarations.utils.lambdaArgumentParent
 import org.jetbrains.kotlin.fir.expressions.*
@@ -29,11 +30,13 @@ import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.unwrapAtoms
 import org.jetbrains.kotlin.fir.scopes.impl.toConeType
+import org.jetbrains.kotlin.fir.declarations.utils.equalityBoundTypeOfParameter
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirEnumEntrySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.types.ConstantValueKind
@@ -754,6 +757,7 @@ abstract class FirDataFlowAnalyzer(
 
         context.processEqNotNullContracts()
         context.processEqContractsBasedOnPrimitiveEquals()
+        context.processEqContractBasedOnEqualityBound()
         context.processEqContractsForExhaustiveness()
     }
 
@@ -844,6 +848,24 @@ abstract class FirDataFlowAnalyzer(
         addEqualityImplications(rightOperandVariable, leftOperand)
     }
 
+    private fun ProcessEqContext.processEqContractBasedOnEqualityBound() {
+        if (rightOperandVariable !is RealVariable) return
+        val boundForRhs = components.equalsOverrideContractCalculator.computeTypeForEqualityBoundBasedContract(leftOperand.resolvedType)
+        if (boundForRhs != null) {
+            flow.addImplication((expressionVariable eq isEq) implies (rightOperandVariable typeEq boundForRhs))
+        }
+    }
+
+    private fun processDirectEqualsCall(flow: MutableFlow, expression: FirFunctionCall, callee: FirNamedFunction) {
+        callee.equalityBoundTypeOfParameter?.let { boundType ->
+            val argument = expression.arguments.singleOrNull() ?: return
+            val argumentVariable = flow.getVariableIfUsedOrReal(argument)
+            if (argumentVariable !is RealVariable) return
+            val expressionVariable = SyntheticVariable(expression)
+            flow.addImplication((expressionVariable eq true) implies (argumentVariable typeEq boundType))
+        }
+    }
+
     private inner class ProcessEqContext(
         val flow: MutableFlow,
         val leftOperand: FirExpression,
@@ -856,9 +878,7 @@ abstract class FirDataFlowAnalyzer(
         val equalsContract by lazy(LazyThreadSafetyMode.NONE) {
             when {
                 operation != FirOperation.EQ && operation != FirOperation.NOT_EQ -> EqualsOverrideContract.SAFE_FOR_SMART_CAST
-                else -> computeEqualsOverrideContract(
-                    leftOperand.resolvedType, components.session, components.scopeSession, trustExpectClasses = false,
-                )
+                else -> components.equalsOverrideContractCalculator.computeFor(leftOperand.resolvedType)
             }
         }
     }
@@ -1082,6 +1102,7 @@ abstract class FirDataFlowAnalyzer(
         graphBuilder.exitQualifiedAccessExpression(qualifiedAccessExpression).mergeIncomingFlow { _, flow ->
             processConditionalContract(flow, qualifiedAccessExpression, callArgsExit = null)
             processBackingFieldAccess(flow, qualifiedAccessExpression)
+            processEqualsParameterAccess(flow, qualifiedAccessExpression)
         }
     }
 
@@ -1283,6 +1304,14 @@ abstract class FirDataFlowAnalyzer(
             return exitBooleanNot(flow, qualifiedAccess as FirFunctionCall)
         }
 
+        if (qualifiedAccess is FirFunctionCall &&
+            callee is FirNamedFunction &&
+            callee.isEquals(session) &&
+            LanguageFeature.StrictEquals.isEnabled()
+        ) {
+            processDirectEqualsCall(flow, qualifiedAccess, callee)
+        }
+
         val originalFunction = callee.originalIfFakeOverride()
         val contractDescription = (originalFunction?.symbol ?: callee.symbol).resolvedContractDescription ?: return
 
@@ -1393,6 +1422,15 @@ abstract class FirDataFlowAnalyzer(
         val variable = flow.getOrCreateVariable(qualifiedAccess) ?: return
         val returnType = components.returnTypeCalculator.tryCalculateReturnType(fieldSymbol).coneType
         flow.addTypeStatement(variable typeEq returnType)
+    }
+
+    private fun processEqualsParameterAccess(flow: MutableFlow, qualifiedAccess: FirQualifiedAccessExpression) {
+        if (LanguageFeature.StrictEquals.isDisabled()) return
+        val callee = qualifiedAccess.calleeReference as? FirResolvedNamedReference ?: return
+        val symbol = callee.resolvedSymbol as? FirValueParameterSymbol ?: return
+        val boundType = symbol.equalityBoundType ?: return
+        val variable = flow.getOrCreateVariable(qualifiedAccess) ?: return
+        flow.addTypeStatement(variable typeEq boundType)
     }
 
     private fun getSubstitutor(

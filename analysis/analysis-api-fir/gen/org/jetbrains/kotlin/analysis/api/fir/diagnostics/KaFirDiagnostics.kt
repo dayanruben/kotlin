@@ -383,6 +383,10 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = PlaceholderProjectionInQualifier::class
     }
 
+    interface PlaceholderProjectionInTyperef : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = PlaceholderProjectionInTyperef::class
+    }
+
     interface DuplicateParameterNameInFunctionType : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = DuplicateParameterNameInFunctionType::class
     }
@@ -4780,8 +4784,8 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = CompanionBlockMemberExtension::class
     }
 
-    interface InterfaceCompanionBlockVar : KaFirDiagnostic<PsiElement> {
-        override val diagnosticClass get() = InterfaceCompanionBlockVar::class
+    interface PrivateConstInInterface : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = PrivateConstInInterface::class
     }
 
     interface IllegalCompanionBlock : KaFirDiagnostic<PsiElement> {
@@ -4945,10 +4949,6 @@ sealed interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     interface ConflictVersionAndJvmOverloadsAnnotation : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = ConflictVersionAndJvmOverloadsAnnotation::class
-    }
-
-    interface InterfaceCompanionBlockPropertyPrivateField : KaFirDiagnostic<PsiElement> {
-        override val diagnosticClass get() = InterfaceCompanionBlockPropertyPrivateField::class
     }
 
     interface JavaTypeMismatch : KaFirDiagnostic<KtExpression> {

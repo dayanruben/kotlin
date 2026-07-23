@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.scopes.impl
 
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
@@ -362,6 +363,9 @@ class FirTypeIntersectionScopeContext(
             markAsOverride = true
         ).apply {
             originalForIntersectionOverrideAttr = keyFir
+            if (session.languageVersionSettings.supportsFeature(LanguageFeature.StrictEquals)) {
+                setEqualityBoundTypeFromOverridden(mostSpecific, session)
+            }
         }
         return newSymbol
     }

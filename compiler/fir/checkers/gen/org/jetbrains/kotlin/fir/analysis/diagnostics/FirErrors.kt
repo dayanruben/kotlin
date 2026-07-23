@@ -219,6 +219,7 @@ object FirErrors : KtDiagnosticsContainer() {
     val NO_THIS: KtDiagnosticFactory0 = KtDiagnosticFactory0("NO_THIS", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class, getRendererFactory())
     val API_NOT_AVAILABLE: KtDiagnosticFactory2<ApiVersion, ApiVersion> = KtDiagnosticFactory2("API_NOT_AVAILABLE", ERROR, SourceElementPositioningStrategies.SELECTOR_BY_QUALIFIED, PsiElement::class, getRendererFactory())
     val PLACEHOLDER_PROJECTION_IN_QUALIFIER: KtDiagnosticFactory0 = KtDiagnosticFactory0("PLACEHOLDER_PROJECTION_IN_QUALIFIER", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class, getRendererFactory())
+    val PLACEHOLDER_PROJECTION_IN_TYPEREF: KtDiagnosticFactory0 = KtDiagnosticFactory0("PLACEHOLDER_PROJECTION_IN_TYPEREF", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class, getRendererFactory())
     val DUPLICATE_PARAMETER_NAME_IN_FUNCTION_TYPE: KtDiagnosticFactory0 = KtDiagnosticFactory0("DUPLICATE_PARAMETER_NAME_IN_FUNCTION_TYPE", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class, getRendererFactory())
     val MISSING_DEPENDENCY_CLASS: KtDiagnosticFactory1<ConeKotlinType> = KtDiagnosticFactory1("MISSING_DEPENDENCY_CLASS", ERROR, SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED, PsiElement::class, getRendererFactory())
     val MISSING_DEPENDENCY_CLASS_IN_EXPRESSION_TYPE: KtDiagnosticFactory1<ConeKotlinType> = KtDiagnosticFactory1("MISSING_DEPENDENCY_CLASS_IN_EXPRESSION_TYPE", WARNING, SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED, PsiElement::class, getRendererFactory())
@@ -1131,7 +1132,7 @@ object FirErrors : KtDiagnosticsContainer() {
 
     // Companion Blocks & Extensions
     val COMPANION_BLOCK_MEMBER_EXTENSION: KtDiagnosticFactory0 = KtDiagnosticFactory0("COMPANION_BLOCK_MEMBER_EXTENSION", ERROR, SourceElementPositioningStrategies.DECLARATION_SIGNATURE, PsiElement::class, getRendererFactory())
-    val INTERFACE_COMPANION_BLOCK_VAR: KtDiagnosticFactory0 = KtDiagnosticFactory0("INTERFACE_COMPANION_BLOCK_VAR", ERROR, SourceElementPositioningStrategies.VAL_OR_VAR_NODE, PsiElement::class, getRendererFactory())
+    val PRIVATE_CONST_IN_INTERFACE: KtDiagnosticFactory0 = KtDiagnosticFactory0("PRIVATE_CONST_IN_INTERFACE", ERROR, SourceElementPositioningStrategies.VISIBILITY_MODIFIER, PsiElement::class, getRendererFactory())
     val ILLEGAL_COMPANION_BLOCK: KtDiagnosticFactory1<FirBasedSymbol<*>> = KtDiagnosticFactory1("ILLEGAL_COMPANION_BLOCK", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class, getRendererFactory())
     val COMPANION_BLOCK_NESTED: KtDiagnosticFactory0 = KtDiagnosticFactory0("COMPANION_BLOCK_NESTED", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class, getRendererFactory())
     val ILLEGAL_COMPANION_BLOCK_MEMBER: KtDiagnosticFactory1<FirBasedSymbol<*>> = KtDiagnosticFactory1("ILLEGAL_COMPANION_BLOCK_MEMBER", ERROR, SourceElementPositioningStrategies.DECLARATION_SIGNATURE, PsiElement::class, getRendererFactory())

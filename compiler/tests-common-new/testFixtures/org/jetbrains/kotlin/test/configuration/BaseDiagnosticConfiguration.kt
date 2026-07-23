@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.test.configuration
 
-import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -24,6 +23,7 @@ import org.jetbrains.kotlin.test.cli.CliDirectives.CHECK_COMPILER_OUTPUT
 import org.jetbrains.kotlin.test.directives.CodegenTestDirectives.IGNORE_DEXING
 import org.jetbrains.kotlin.test.directives.ConfigurationDirectives.WITH_STDLIB
 import org.jetbrains.kotlin.test.directives.DiagnosticsDirectives.DIAGNOSTICS
+import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives
 import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives.DISABLE_WITH_PARSER
 import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives.DUMP_VFIR
 import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives.USE_LATEST_LANGUAGE_VERSION
@@ -33,7 +33,6 @@ import org.jetbrains.kotlin.test.directives.JvmEnvironmentConfigurationDirective
 import org.jetbrains.kotlin.test.directives.JvmEnvironmentConfigurationDirectives.WITH_REFLECT
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.ALLOW_DANGEROUS_LANGUAGE_VERSION_TESTING
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.ALLOW_KOTLIN_PACKAGE
-import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.API_VERSION
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.EXPLICIT_API_MODE
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.EXPLICIT_RETURN_TYPES_MODE
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.HEADER_MODE
@@ -259,6 +258,12 @@ fun TestConfigurationBuilder.configureCommonDiagnosticTestPaths() {
         }
     }
 
+    forTestsMatching("compiler/testData/diagnostics/tests/contextSensitiveResolutionUsingExpectedType/*") {
+        defaultDirectives {
+            LANGUAGE with "+ContextSensitiveResolutionUsingExpectedType"
+        }
+    }
+
     forTestsMatching(
         "compiler/testData/diagnostics/tests/extraCheckers/*" or
                 "compiler/testData/diagnostics/tests/controlFlowAnalysis/deadCode/*"
@@ -316,7 +321,7 @@ fun TestConfigurationBuilder.configureCommonDiagnosticTestPaths() {
     forTestsMatching("compiler/testData/diagnostics/tests/strictEquals/enabled/*") {
         defaultDirectives {
             LANGUAGE + "+StrictEquals"
-            API_VERSION with ApiVersion.KOTLIN_2_5
+            FirDiagnosticsDirectives.RENDER_SPECIFIC_FIR_DECLARATION_ATTRIBUTES + "EqualityBoundType"
         }
     }
 

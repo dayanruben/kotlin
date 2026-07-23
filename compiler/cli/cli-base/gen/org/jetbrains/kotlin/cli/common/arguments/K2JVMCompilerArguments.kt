@@ -364,21 +364,6 @@ The default value is 'indy' if language version is 2.0+, and 'class' otherwise."
             field = if (value.isNullOrEmpty()) null else value
         }
 
-    @all:Deprecated("")
-    @Argument(
-        value = "-Xlink-via-signatures",
-        description = """Link JVM IR symbols via signatures instead of descriptors.
-This mode is slower, but it can be useful for troubleshooting problems with the JVM IR backend.
-This option is deprecated and will be deleted in future versions.
-It has no effect when -language-version is 2.0 or higher.""",
-        deprecatedVersion = "2.0.0",
-    )
-    var linkViaSignatures: Boolean = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
     @Argument(
         value = "-Xmodule-path",
         valueDescription = "<path>",
@@ -635,6 +620,17 @@ See KT-45671 for more details.""",
         description = "Use the fast implementation of Jar FS. This may speed up compilation time, but it is experimental.",
     )
     var useFastJarFileSystem: Boolean? = null
+        set(value) {
+            checkFrozen()
+            field = value
+        }
+
+    @Argument(
+        value = "-Xuse-ic-classpath-metadata",
+        description = """Use classpath metadata for incremental compilation.
+This is used solely for incremental compilation and should not be used directly.""",
+    )
+    var useIcClasspathMetadata: Boolean = false
         set(value) {
             checkFrozen()
             field = value

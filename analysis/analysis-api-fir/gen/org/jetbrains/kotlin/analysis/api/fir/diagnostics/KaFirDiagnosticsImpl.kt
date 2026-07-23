@@ -446,6 +446,11 @@ internal class PlaceholderProjectionInQualifierImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.PlaceholderProjectionInQualifier
 
+internal class PlaceholderProjectionInTyperefImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.PlaceholderProjectionInTyperef
+
 internal class DuplicateParameterNameInFunctionTypeImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
@@ -5737,10 +5742,10 @@ internal class CompanionBlockMemberExtensionImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.CompanionBlockMemberExtension
 
-internal class InterfaceCompanionBlockVarImpl(
+internal class PrivateConstInInterfaceImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.InterfaceCompanionBlockVar
+) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.PrivateConstInInterface
 
 internal class IllegalCompanionBlockImpl(
     override val parent: KaSymbol,
@@ -5941,11 +5946,6 @@ internal class ConflictVersionAndJvmOverloadsAnnotationImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.ConflictVersionAndJvmOverloadsAnnotation
-
-internal class InterfaceCompanionBlockPropertyPrivateFieldImpl(
-    firDiagnostic: KtPsiDiagnostic,
-    token: KaLifetimeToken,
-) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.InterfaceCompanionBlockPropertyPrivateField
 
 internal class JavaTypeMismatchImpl(
     override val expectedType: KaType,

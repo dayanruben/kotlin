@@ -1,5 +1,8 @@
-// IGNORE_BACKEND: JS_IR, JS_IR_ES6, WASM_JS, WASM_WASI
+// ISSUE: KT-87009
+// DISABLE_IR_VISIBILITY_CHECKS: ANY
 // FULL_JDK
+
+package foo
 
 enum class Color(val s: String) {
     BLACK("black"),
@@ -14,13 +17,15 @@ enum class ThrowsMyError(val s: String) {
 }
 
 fun box(): String {
+    @Suppress("INVISIBLE_REFERENCE")
     try {
         Color.BLACK
         return "FAIL 1.1: should throw"
-    } catch (e: Error /* ExceptionInInitializerError */) {
+    } catch (e: ExceptionInInitializerError) {
         val cause = e.cause
         if (cause !is IllegalStateException) return "FAIL 1.2: cause must be IllegalStateException, was ${cause?.let { it::class }}"
         if (cause.message != "miku is not a color") return "FAIL 1.3: message must be 'miku is not a color', was '${cause.message}'"
+        if (e.message != null) return "FAIL 1.4: message must be null, got ${e.message}"
     }
 
     try {
@@ -30,7 +35,8 @@ fun box(): String {
         if (BACKEND_UNDER_TEST != "ANDROID") {
             val expectedMessage = when (BACKEND_UNDER_TEST) {
                 "NATIVE" -> "There was an error during file or class initialization"
-                else -> "Could not initialize class Color"
+                "JS_IR", "JS_IR_ES6" -> "Could not initialize class Color"
+                else -> "Could not initialize class foo.Color"
             }
             if (e.message != expectedMessage) return "FAIL 2.2: message must be '$expectedMessage', was '${e.message}'"
         }
@@ -51,7 +57,8 @@ fun box(): String {
         if (BACKEND_UNDER_TEST != "ANDROID") {
             val expectedMessage = when (BACKEND_UNDER_TEST) {
                 "NATIVE" -> "There was an error during file or class initialization"
-                else -> "Could not initialize class ThrowsMyError"
+                "JS_IR", "JS_IR_ES6" -> "Could not initialize class ThrowsMyError"
+                else -> "Could not initialize class foo.ThrowsMyError"
             }
             if (e.message != expectedMessage) return "FAIL 4.2: message must be '$expectedMessage', was '${e.message}'"
         }

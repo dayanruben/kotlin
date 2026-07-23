@@ -137,10 +137,6 @@ object JVMConfigurationKeys {
     @JvmField
     val VALIDATE_BYTECODE = CompilerConfigurationKey.create<Boolean>("VALIDATE_BYTECODE")
 
-    // Link JVM IR symbols via signatures, instead of by descriptors on the K1 frontend.
-    @JvmField
-    val LINK_VIA_SIGNATURES = CompilerConfigurationKey.create<Boolean>("LINK_VIA_SIGNATURES")
-
     @JvmField
     val ENABLE_DEBUG_MODE = CompilerConfigurationKey.create<Boolean>("ENABLE_DEBUG_MODE")
 
@@ -179,6 +175,10 @@ object JVMConfigurationKeys {
     // Tracks generated in-module JVM metadata for KMP JVM IC
     @JvmField
     val IC_METADATA_TRACKER = CompilerConfigurationKey.create<ICJvmMetadataTracker>("IC_METADATA_TRACKER")
+
+    // Enable classpath metadata for KMP incremental compilation
+    @JvmField
+    val USE_IC_CLASSPATH_METADATA = CompilerConfigurationKey.create<Boolean>("USE_IC_CLASSPATH_METADATA")
 
     // Use java-direct as frontend Java facade
     @JvmField
@@ -334,10 +334,6 @@ var CompilerConfiguration.validateBytecode: Boolean
     get() = getBoolean(JVMConfigurationKeys.VALIDATE_BYTECODE)
     set(value) { put(JVMConfigurationKeys.VALIDATE_BYTECODE, value) }
 
-var CompilerConfiguration.linkViaSignatures: Boolean
-    get() = getBoolean(JVMConfigurationKeys.LINK_VIA_SIGNATURES)
-    set(value) { put(JVMConfigurationKeys.LINK_VIA_SIGNATURES, value) }
-
 var CompilerConfiguration.enableDebugMode: Boolean
     get() = getBoolean(JVMConfigurationKeys.ENABLE_DEBUG_MODE)
     set(value) { put(JVMConfigurationKeys.ENABLE_DEBUG_MODE, value) }
@@ -377,6 +373,10 @@ var CompilerConfiguration.commonFragmentsOutputDir: File?
 var CompilerConfiguration.icMetadataTracker: ICJvmMetadataTracker?
     get() = get(JVMConfigurationKeys.IC_METADATA_TRACKER)
     set(value) { putIfNotNull(JVMConfigurationKeys.IC_METADATA_TRACKER, value) }
+
+var CompilerConfiguration.useIcClasspathMetadata: Boolean
+    get() = getBoolean(JVMConfigurationKeys.USE_IC_CLASSPATH_METADATA)
+    set(value) { put(JVMConfigurationKeys.USE_IC_CLASSPATH_METADATA, value) }
 
 var CompilerConfiguration.useJavaDirect: Boolean
     get() = getBoolean(JVMConfigurationKeys.USE_JAVA_DIRECT)

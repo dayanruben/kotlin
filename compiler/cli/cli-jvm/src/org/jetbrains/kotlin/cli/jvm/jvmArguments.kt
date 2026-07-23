@@ -148,6 +148,7 @@ fun CompilerConfiguration.setupJvmSpecificArguments(arguments: K2JVMCompilerArgu
     put(JVMConfigurationKeys.IGNORED_ANNOTATIONS_FOR_BRIDGES, arguments.ignoredAnnotationsForBridges?.toList().orEmpty())
     arguments.commonFragmentsMetadataDestination?.let { commonFragmentsOutputDir = File(it) }
 
+    put(JVMConfigurationKeys.USE_IC_CLASSPATH_METADATA, arguments.useIcClasspathMetadata)
     put(JVMConfigurationKeys.USE_JAVA_DIRECT, arguments.javaDirect)
 }
 
@@ -304,9 +305,6 @@ fun CompilerConfiguration.configureAdvancedJvmOptions(arguments: K2JVMCompilerAr
     put(JVMConfigurationKeys.NO_SOURCE_DEBUG_EXTENSION, arguments.noSourceDebugExtension)
 
     put(JVMConfigurationKeys.VALIDATE_BYTECODE, arguments.validateBytecode)
-
-    @Suppress("DEPRECATION")
-    put(JVMConfigurationKeys.LINK_VIA_SIGNATURES, arguments.linkViaSignatures)
 
     put(JVMConfigurationKeys.ENABLE_DEBUG_MODE, arguments.enableDebugMode)
     put(JVMConfigurationKeys.ENHANCED_COROUTINES_DEBUGGING, arguments.enhancedCoroutinesDebugging)

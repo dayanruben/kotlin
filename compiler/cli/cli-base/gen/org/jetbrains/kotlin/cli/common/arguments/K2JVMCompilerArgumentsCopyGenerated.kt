@@ -50,8 +50,6 @@ fun copyK2JVMCompilerArguments(from: K2JVMCompilerArguments, to: K2JVMCompilerAr
     to.jvmExposeBoxed = from.jvmExposeBoxed
     to.jvmTarget = from.jvmTarget
     to.lambdas = from.lambdas
-    @Suppress("DEPRECATION")
-    to.linkViaSignatures = from.linkViaSignatures
     to.moduleName = from.moduleName
     to.noCallAssertions = from.noCallAssertions
     to.noJdk = from.noJdk
@@ -78,6 +76,7 @@ fun copyK2JVMCompilerArguments(from: K2JVMCompilerArguments, to: K2JVMCompilerAr
     to.suppressMissingBuiltinsError = from.suppressMissingBuiltinsError
     to.typeEnhancementImprovementsInStrictMode = from.typeEnhancementImprovementsInStrictMode
     to.useFastJarFileSystem = from.useFastJarFileSystem
+    to.useIcClasspathMetadata = from.useIcClasspathMetadata
     to.useInlineScopesNumbers = from.useInlineScopesNumbers
     to.useOldClassFilesReading = from.useOldClassFilesReading
     to.useOldInlineClassesManglingScheme = from.useOldInlineClassesManglingScheme
