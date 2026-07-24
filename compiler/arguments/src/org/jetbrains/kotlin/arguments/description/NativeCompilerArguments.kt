@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.arguments.dsl.base.compilerArgumentsLevel
 import org.jetbrains.kotlin.arguments.dsl.defaultFalse
 import org.jetbrains.kotlin.arguments.dsl.defaultNull
 import org.jetbrains.kotlin.arguments.dsl.defaultOne
+import org.jetbrains.kotlin.arguments.dsl.previous
 import org.jetbrains.kotlin.arguments.dsl.types.BooleanType
 import org.jetbrains.kotlin.arguments.dsl.types.IntType
 import org.jetbrains.kotlin.arguments.dsl.types.StringArrayType
@@ -321,17 +322,6 @@ val actualNativeArguments by compilerArgumentsLevel(CompilerArgumentsLevelNames.
     }
 
     // Advanced options with -X prefix
-
-    compilerArgument {
-        name = "Xbundle-id"
-        description = "Bundle ID to be set in the Info.plist file of the produced framework. This option is deprecated. Please use '-Xbinary=bundleId=<id>'.".asReleaseDependent()
-        valueType = StringType.defaultNull
-        valueDescription = "<id>".asReleaseDependent()
-
-        lifecycle(
-            introducedVersion = KotlinReleaseVersion.v1_6_20,
-        )
-    }
 
     compilerArgument {
         name = "Xcache-directory"
@@ -850,17 +840,6 @@ The default value is 1.""".asReleaseDependent()
     }
 
     compilerArgument {
-        name = "Xdestroy-runtime-mode"
-        description = "When to destroy the runtime – 'legacy' and 'on-shutdown' are currently supported. Note that 'legacy' mode is deprecated and will be removed.".asReleaseDependent()
-        valueType = StringType.defaultNull
-        valueDescription = "<mode>".asReleaseDependent()
-
-        lifecycle(
-            introducedVersion = KotlinReleaseVersion.v1_5_20,
-        )
-    }
-
-    compilerArgument {
         name = "Xgc"
         description = "GC to use – 'noop', 'stms', and 'cms' are currently supported. This works only with '-memory-model experimental'.".asReleaseDependent()
         valueType = StringType.defaultNull
@@ -880,21 +859,6 @@ The default value is 1.""".asReleaseDependent()
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v1_6_0,
-        )
-    }
-
-    compilerArgument {
-        name = "Xworker-exception-handling"
-        description = "Unhandled exception processing in 'Worker.executeAfter'. Possible values: 'legacy' and 'use-hook'. The default value is 'legacy' and for '-memory-model experimental', the default value is 'use-hook'.".asReleaseDependent()
-        valueType = StringType.defaultNull
-        valueDescription = "<mode>".asReleaseDependent()
-
-        lifecycle(
-            introducedVersion = KotlinReleaseVersion.v1_6_0,
-            deprecatedVersion = KotlinReleaseVersion.v2_4_20,
-            // The CLI arguments generation is broken if use a future `removedVersion`.
-            // TODO: uncomment after switching to 2.5 or after fixing of KT-87495
-            // removedVersion = KotlinReleaseVersion.v2_5_0,
         )
     }
 

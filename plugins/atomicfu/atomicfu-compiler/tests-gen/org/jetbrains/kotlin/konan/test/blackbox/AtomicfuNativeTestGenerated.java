@@ -237,6 +237,53 @@ public class AtomicfuNativeTestGenerated extends AbstractNativeCodegenBoxTest {
   }
 
   @Nested
+  @TestMetadata("plugins/atomicfu/atomicfu-compiler/testData/box/companion_blocks")
+  @TestDataPath("$PROJECT_ROOT")
+  @Tag("atomicfu-native")
+  @EnforcedHostTarget()
+  @UseExtTestCaseGroupProvider()
+  public class Companion_blocks {
+    private void run(String fileName) {
+      runTest("plugins/atomicfu/atomicfu-compiler/testData/box/companion_blocks/" + fileName);
+    }
+
+    @Test
+    public void testAllFilesPresentInCompanion_blocks() {
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("plugins/atomicfu/atomicfu-compiler/testData/box/companion_blocks"), Pattern.compile("^(.+)\\.kt$"), null, true);
+    }
+
+    @Test
+    @TestMetadata("ComanionTraces.kt")
+    public void testComanionTraces() {
+      run("ComanionTraces.kt");
+    }
+
+    @Test
+    @TestMetadata("CompanionBlockProperties.kt")
+    public void testCompanionBlockProperties() {
+      run("CompanionBlockProperties.kt");
+    }
+
+    @Test
+    @TestMetadata("CompanionExtensionProperties.kt")
+    public void testCompanionExtensionProperties() {
+      run("CompanionExtensionProperties.kt");
+    }
+
+    @Test
+    @TestMetadata("CompanionFunctions.kt")
+    public void testCompanionFunctions() {
+      run("CompanionFunctions.kt");
+    }
+
+    @Test
+    @TestMetadata("DelegatedCompanionProperties.kt")
+    public void testDelegatedCompanionProperties() {
+      run("DelegatedCompanionProperties.kt");
+    }
+  }
+
+  @Nested
   @TestMetadata("plugins/atomicfu/atomicfu-compiler/testData/box/context_parameters")
   @TestDataPath("$PROJECT_ROOT")
   @Tag("atomicfu-native")

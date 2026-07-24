@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.arguments.dsl.defaultEmpty
 import org.jetbrains.kotlin.arguments.dsl.defaultFalse
 import org.jetbrains.kotlin.arguments.dsl.defaultNull
 import org.jetbrains.kotlin.arguments.dsl.defaultTrue
+import org.jetbrains.kotlin.arguments.dsl.previous
 import org.jetbrains.kotlin.arguments.dsl.types.*
 import org.jetbrains.kotlin.cli.common.arguments.Disables
 import org.jetbrains.kotlin.cli.common.arguments.Enables
@@ -91,11 +92,17 @@ val actualCommonCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLev
     compilerArgument {
         name = "Xrepl"
         compilerName = "repl"
-        description = "Run Kotlin REPL (deprecated)".asReleaseDependent()
+        val introducedVersion = KotlinReleaseVersion.v2_2_0
+        description = ReleaseDependent(
+            "Run Kotlin REPL.",
+            introducedVersion..KotlinReleaseVersion.v2_4_20 to "Run Kotlin REPL (deprecated)"
+        )
         valueType = BooleanType.defaultFalse
+        deprecatedMessage = "REPL is deprecated."
 
         lifecycle(
-            introducedVersion = KotlinReleaseVersion.v2_2_0,
+            introducedVersion = introducedVersion,
+            deprecatedVersion = introducedVersion, // According to https://github.com/JetBrains/kotlin/commit/79a2a82637064e19f81e1d837b5b7f6ff20988be
         )
     }
 
@@ -618,12 +625,18 @@ val actualCommonCompilerArguments by compilerArgumentsLevel(CompilerArgumentsLev
     compilerArgument {
         name = "Xuse-fir-ic"
         compilerName = "useFirIC"
-        description =
-            "Compile using frontend IR internal incremental compilation.\nWarning: This feature is not yet production-ready.".asReleaseDependent()
+        val introducedVersion = KotlinReleaseVersion.v1_7_0
+        val deprecatedVersion = KotlinReleaseVersion.v2_5_0 // Preparation for KT-75879
+        val commonDescriptionPart = "Compile using frontend IR internal incremental compilation."
+        description = ReleaseDependent(
+            commonDescriptionPart,
+            introducedVersion..deprecatedVersion.previous!! to "$commonDescriptionPart\nWarning: This feature is not yet production-ready.",
+        )
         valueType = BooleanType.defaultFalse
 
         lifecycle(
-            introducedVersion = KotlinReleaseVersion.v1_7_0,
+            introducedVersion = introducedVersion,
+            deprecatedVersion = deprecatedVersion,
         )
     }
 
@@ -736,19 +749,6 @@ This flag partially enables functionality of `-Xexplicit-api` flag, so please do
             introducedVersion = KotlinReleaseVersion.v1_5_0,
         )
     }
-
-
-    compilerArgument {
-        name = "Xsuppress-api-version-greater-than-language-version-error"
-        description =
-            "Suppress error about API version greater than language version.\nWarning: This is temporary solution (see KT-63712) intended to be used only for stdlib build.".asReleaseDependent()
-        valueType = BooleanType.defaultFalse
-
-        lifecycle(
-            introducedVersion = KotlinReleaseVersion.v2_0_0,
-        )
-    }
-
 
     compilerArgument {
         name = "Xexpect-actual-classes"
@@ -1071,23 +1071,6 @@ The argument should be used only if the new compilation scheme is enabled with -
     }
 
     compilerArgument {
-        name = "Xfragment-incremental-classpath"
-        compilerName = "fragmentIncrementalClasspath"
-        valueDescription = "<fragment name>:<path>".asReleaseDependent()
-        description = """
-            Declare common klib incremental dependencies (results from the previous compilation) for the specific fragment.    
-            This argument can be specified for any HMPP module except the platform leaf module: it takes incremental
-              dependencies from the platform specific incremental service.
-        """.trimIndent().asReleaseDependent()
-        valueType = StringArrayType.defaultNull
-        delimiter = KotlinCompilerArgument.Delimiter.None
-
-        lifecycle(
-            introducedVersion = KotlinReleaseVersion.v2_4_20,
-        )
-    }
-
-    compilerArgument {
         name = "Xseparate-kmp-compilation"
         compilerName = "separateKmpCompilationScheme"
         description =
@@ -1168,16 +1151,24 @@ The argument should be used only if the new compilation scheme is enabled with -
 
     @OptIn(ExperimentalArgumentApi::class)
     compilerArgument {
+        val introducedVersion = KotlinReleaseVersion.v2_1_0
+        val deprecatedVersion = KotlinReleaseVersion.v2_2_0 // According to https://github.com/JetBrains/kotlin/commit/533d2f5ba6e6d2759d92d59b6004ee433214e262
+        val commonDescriptionPart = "Suppress specified warning module-wide."
         name = "Xsuppress-warning"
         compilerName = "suppressedDiagnostics"
-        description =
-            "Suppress specified warning module-wide. This option is deprecated in favor of \"-Xwarning-level\" flag".asReleaseDependent()
+        description = ReleaseDependent(
+            commonDescriptionPart,
+            deprecatedVersion..KotlinReleaseVersion.v2_4_20 to "$commonDescriptionPart This option is deprecated in favor of \"-Xwarning-level\" flag",
+            introducedVersion..deprecatedVersion.previous!! to commonDescriptionPart,
+        )
         valueDescription = "<WARNING_NAME>".asReleaseDependent()
         valueType = StringArrayType.defaultNull
         argumentType = StringListType.defaultEmpty
+        deprecatedMessage = "Use '-Xwarning-level=<WARNING_NAME>:disabled' instead (and the same for other warnings)."
 
         lifecycle(
-            introducedVersion = KotlinReleaseVersion.v2_1_0,
+            introducedVersion = introducedVersion,
+            deprecatedVersion = deprecatedVersion,
         )
     }
 

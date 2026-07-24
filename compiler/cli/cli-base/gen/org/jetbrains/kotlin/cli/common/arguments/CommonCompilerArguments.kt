@@ -579,20 +579,6 @@ The argument should be used only if the new compilation scheme is enabled with -
         }
 
     @Argument(
-        value = "-Xfragment-incremental-classpath",
-        valueDescription = "<fragment name>:<path>",
-        description = """Declare common klib incremental dependencies (results from the previous compilation) for the specific fragment.    
-This argument can be specified for any HMPP module except the platform leaf module: it takes incremental
-  dependencies from the platform specific incremental service.""",
-        delimiter = Argument.Delimiters.none,
-    )
-    var fragmentIncrementalClasspath: Array<String> = emptyArray()
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @Argument(
         value = "-Xfragment-refines",
         valueDescription = "<fromModuleName>:<onModuleName>",
         description = "Declare that <fromModuleName> refines <onModuleName> with the dependsOn/refines relation.",
@@ -942,9 +928,11 @@ with bodies.""",
             field = value
         }
 
+    @all:Deprecated("REPL is deprecated.")
     @Argument(
         value = "-Xrepl",
-        description = "Run Kotlin REPL (deprecated)",
+        description = "Run Kotlin REPL.",
+        deprecatedVersion = "2.2.0",
     )
     var repl: Boolean = false
         set(value) {
@@ -1034,17 +1022,6 @@ with bodies.""",
         }
 
     @Argument(
-        value = "-Xsuppress-api-version-greater-than-language-version-error",
-        description = """Suppress error about API version greater than language version.
-Warning: This is temporary solution (see KT-63712) intended to be used only for stdlib build.""",
-    )
-    var suppressApiVersionGreaterThanLanguageVersionError: Boolean = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @Argument(
         value = "-Xsuppress-version-warnings",
         description = "Suppress warnings about outdated, inconsistent, or experimental language or API versions.",
     )
@@ -1054,10 +1031,12 @@ Warning: This is temporary solution (see KT-63712) intended to be used only for 
             field = value
         }
 
+    @all:Deprecated("Use '-Xwarning-level=<WARNING_NAME>:disabled' instead (and the same for other warnings).")
     @Argument(
         value = "-Xsuppress-warning",
         valueDescription = "<WARNING_NAME>",
-        description = "Suppress specified warning module-wide. This option is deprecated in favor of \"-Xwarning-level\" flag",
+        description = "Suppress specified warning module-wide.",
+        deprecatedVersion = "2.2.0",
     )
     var suppressedDiagnostics: Array<String> = emptyArray()
         set(value) {
@@ -1088,10 +1067,11 @@ Warning: This is temporary solution (see KT-63712) intended to be used only for 
             field = value
         }
 
+    @all:Deprecated("")
     @Argument(
         value = "-Xuse-fir-ic",
-        description = """Compile using frontend IR internal incremental compilation.
-Warning: This feature is not yet production-ready.""",
+        description = "Compile using frontend IR internal incremental compilation.",
+        deprecatedVersion = "2.5.0",
     )
     var useFirIC: Boolean = false
         set(value) {

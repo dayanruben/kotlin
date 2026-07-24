@@ -374,7 +374,6 @@ public final class org/jetbrains/kotlin/buildtools/api/abi/KlibTargetType : java
 	public static final field TVOS_X64 Lorg/jetbrains/kotlin/buildtools/api/abi/KlibTargetType;
 	public static final field WASM_JS Lorg/jetbrains/kotlin/buildtools/api/abi/KlibTargetType;
 	public static final field WASM_WASI Lorg/jetbrains/kotlin/buildtools/api/abi/KlibTargetType;
-	public static final field WATCHOS_ARM32 Lorg/jetbrains/kotlin/buildtools/api/abi/KlibTargetType;
 	public static final field WATCHOS_ARM64 Lorg/jetbrains/kotlin/buildtools/api/abi/KlibTargetType;
 	public static final field WATCHOS_DEVICE_ARM64 Lorg/jetbrains/kotlin/buildtools/api/abi/KlibTargetType;
 	public static final field WATCHOS_SIMULATOR_ARM64 Lorg/jetbrains/kotlin/buildtools/api/abi/KlibTargetType;
@@ -779,6 +778,7 @@ public abstract interface annotation class org/jetbrains/kotlin/buildtools/api/a
 public abstract interface class org/jetbrains/kotlin/buildtools/api/arguments/JsCompilerArguments : org/jetbrains/kotlin/buildtools/api/arguments/CommonJsAndWasmArguments {
 	public static final field Companion Lorg/jetbrains/kotlin/buildtools/api/arguments/JsCompilerArguments$Companion;
 	public static final field X_SUSPEND_LAMBDA_EXPORTING Lorg/jetbrains/kotlin/buildtools/api/arguments/JsCompilerArguments$JsCompilerArgument;
+	public static final field X_TYPED_ARRAYS Lorg/jetbrains/kotlin/buildtools/api/arguments/JsCompilerArguments$JsCompilerArgument;
 	public abstract fun get (Lorg/jetbrains/kotlin/buildtools/api/arguments/JsCompilerArguments$JsCompilerArgument;)Ljava/lang/Object;
 }
 

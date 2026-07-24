@@ -16,7 +16,7 @@
 
 package androidx.compose.compiler.plugins.kotlin.inference
 
-import org.junit.Assert.*
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -155,9 +155,9 @@ class TestBindings {
         cBindings.onChange { cChanges++ }
 
         fun expect(a: Int, b: Int, c: Int) {
-            assertEquals(aChanges, a)
-            assertEquals(bChanges, b)
-            assertEquals(cChanges, c)
+            assertEquals(a, aChanges)
+            assertEquals(b, bChanges)
+            assertEquals(c, cChanges)
         }
 
         val aOpen = aBindings.open()
