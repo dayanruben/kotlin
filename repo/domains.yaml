@@ -11,6 +11,10 @@ Compiler:
     - "jps/**"
   exclude:
     - "compiler/psi/**"
+    - "compiler/build-tools/**"
+    - "compiler/incremental-compilation-*/**"
+    - "compiler/daemon/**"
+    - "compiler/compiler-runner-unshaded/**"
   fullyAffectedBy:
     - CoreLibs
 
@@ -42,8 +46,15 @@ Native:
 CoreLibs:
   include:
     - "libraries/stdlib/**"
+    - "libraries/tools/kotlin-annotations-jvm/**"
+    - "core/metadata*/**"
+    - "core/reflect*/**"
+    # Old reflect
+    - "core/descriptors.runtime/**"
+    - "libraries/kotlinx-metadata/**"
     - "libraries/reflect/**"
     - "libraries/kotlin.test/**"
+    - "libraries/tools/jdk-api-validator"
 
 AnalysisApi:
   include:
@@ -55,6 +66,16 @@ AnalysisApi:
   fullyAffectedBy:
     - Compiler
     - CoreLibs
+
+BuildToolsApi:
+  include:
+    - "build-common/**"
+    - "compiler/build-tools/**"
+    - "compiler/incremental-compilation-*/**"
+    - "compiler/daemon/**"
+    - "compiler/compiler-runner-unshaded/**"
+  fullyAffectedBy:
+    - Compiler
 
 SwiftExport:
   include:
@@ -71,7 +92,9 @@ CompilerPlugins:
 
 Gradle:
   include:
+    - "build-common/**"
     - "libraries/tools/*gradle*/**"
+    - "compiler/build-tools/kotlin-build-statistics/**"
 
 Maven:
   include:

@@ -1,6 +1,3 @@
-import org.jetbrains.kotlin.testFederation.SmokeTestConfig
-import org.jetbrains.kotlin.testFederation.TemporaryTestFederationApi
-import org.jetbrains.kotlin.testFederation.smokeTestConfig
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 
 plugins {
@@ -73,8 +70,8 @@ val scriptingCompilerPluginResolvable = configurations.resolvable("scriptingComp
     extendsFrom(scriptingCompilerPlugin.get())
 }
 
-val unpackedResources by configurations.dependencyScope("unpackedResources")
-val unpackedResourcesResolvable by configurations.resolvable("unpackedResourcesResolvable") {
+val unpackedResources = configurations.dependencyScope("unpackedResources")
+val unpackedResourcesResolvable = configurations.resolvable("unpackedResourcesResolvable") {
     // Wire the dependency declarations
     extendsFrom(unpackedResources)
     // These attributes must be compatible with the producer
@@ -89,6 +86,7 @@ dependencies {
     compileOnly(project(":compiler:build-tools:kotlin-build-tools-api"))
     compileOnly(project(":compiler:build-tools:kotlin-build-tools-compat"))
     api(testFixtures(project(":compiler:test-infrastructure-utils"))) // for `@TestDataPath`/`@TestMetadata`
+    api(testFederationRuntime)
 
     api(platform(libs.junit.bom))
     compileOnly(libs.junit.jupiter.engine)
@@ -122,22 +120,20 @@ kotlin {
 
 val compatibilityTestsVersions = listOf(
     BuildToolsVersion(KotlinToolingVersion(project.version.toString()), isCurrent = true),
-    BuildToolsVersion(KotlinToolingVersion(2, 1, 20, null)),
     BuildToolsVersion(KotlinToolingVersion(2, 2, 21, null)),
     BuildToolsVersion(KotlinToolingVersion(2, 3, 0, null)),
     BuildToolsVersion(KotlinToolingVersion(2, 3, 10, null)),
     BuildToolsVersion(KotlinToolingVersion(2, 3, 20, null)),
     BuildToolsVersion(KotlinToolingVersion(2, 4, 0, null)),
+    BuildToolsVersion(KotlinToolingVersion(2, 4, 10, null))
 )
 
 val compatibilityTestsExcludedVersions = listOf(
+    BuildToolsVersion(KotlinToolingVersion(2, 4, 20, "Beta1")),
     BuildToolsVersion(KotlinToolingVersion(2, 3, 21, null)),
     BuildToolsVersion(KotlinToolingVersion(2, 2, 20, null)),
     BuildToolsVersion(KotlinToolingVersion(2, 2, 10, null)),
     BuildToolsVersion(KotlinToolingVersion(2, 2, 0, null)),
-    BuildToolsVersion(KotlinToolingVersion(2, 1, 21, null)),
-    BuildToolsVersion(KotlinToolingVersion(2, 1, 10, null)),
-    BuildToolsVersion(KotlinToolingVersion(2, 1, 0, null)),
 )
 
 class BuildToolsVersion(val version: KotlinToolingVersion, val isCurrent: Boolean = false) {
@@ -278,9 +274,6 @@ testing {
                             javaLauncher = JdkMajorVersion.JDK_1_8,
                             skipInLocalBuild = false
                         ) {
-                            @OptIn(TemporaryTestFederationApi::class)
-                            smokeTestConfig = SmokeTestConfig.RunAllTests
-
                             ensureExecutedAgainstExpectedBuildToolsImplVersion(implVersion)
                             systemProperty("kotlin.build-tools-api.log.level", "DEBUG")
                         }
