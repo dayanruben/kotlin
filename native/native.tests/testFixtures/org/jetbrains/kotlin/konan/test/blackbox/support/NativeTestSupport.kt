@@ -44,8 +44,6 @@ import kotlin.reflect.KParameter
 import kotlin.reflect.full.findAnnotation
 import kotlin.time.Duration
 
-const val KLIB_IR_INLINER = "klibIrInliner"
-
 class NativeBlackBoxTestSupport : BeforeEachCallback {
     /**
      * Note: [BeforeEachCallback.beforeEach] allows accessing test instances while [BeforeAllCallback.beforeAll] which may look
@@ -285,11 +283,12 @@ object NativeTestSupport {
             default = CompilerOutputInterceptor.DEFAULT
         )
 
+    /*
+     * KT-81022: Tests are performed only with "ON" cross-module IR inliner setting, which is the default since 2.5
+     * This trivial function is kept just for the convenience of trying out compilation without the cross-module IR inliner
+     */
     private fun computeKlibIrInlinerMode(tags: Set<String>): KlibIrInlinerMode =
-        if (tags.contains(KLIB_IR_INLINER))
-            KlibIrInlinerMode.ON
-        else
-            KlibIrInlinerMode.OFF
+        KlibIrInlinerMode.ON
 
     private fun computeGCType(enforcedProperties: EnforcedProperties): GCType =
         ClassLevelProperty.GC_TYPE

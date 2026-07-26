@@ -89,3 +89,7 @@ internal actual open class ExceptionInInitializerError : Error {
     constructor(message: String) : super(message)
     actual constructor(cause: Throwable) : super(null, cause)
 }
+
+internal actual open class NoClassDefFoundError : Error {
+    actual constructor(message: String?) : super(message)
+}

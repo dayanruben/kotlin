@@ -7,11 +7,13 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":generators:tree-generator-common"))
+    implementation(project(":core:language.version-settings"))
+    implementation(project(":generators"))
+    implementation(project(":compiler:arguments"))
 }
 
 application {
-    mainClass.set("org.jetbrains.kotlin.sir.tree.generator.MainKt")
+    mainClass.set("org.jetbrains.kotlin.diagnostics.rendering.generator.FeatureToFlagMapGeneratorKt")
 }
 
 sourceSets {
