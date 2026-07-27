@@ -104,11 +104,16 @@ dependencyResolutionManagement {
         }
     }
     repositories {
+        val composeRuntimeSnapshotVersions = Properties().apply {
+            file("plugins/compose/compose-runtime-snapshot-versions.toml").inputStream().use { load(it) }
+        }
+
         intellijRepository(buildProperties.versionsProperty("intellijSdk").get())
         intellijDependencies()
         kotlinDependencies()
         teamcityRepository()
         googleAndroidRepository()
+        composeRuntimeSnapshotVersions.getProperty("snapshot-id")?.let { androidxSnapshotRepository(it.trim('"')) }
         gradleLibsReleases()
         gradlePluginPortalRepository()
         litmuskt()
@@ -618,6 +623,7 @@ include(
     ":prepare:ide-plugin-dependencies:analysis-api-platform-interface-for-ide",
     ":prepare:ide-plugin-dependencies:symbol-light-classes-for-ide",
     ":prepare:ide-plugin-dependencies:analysis-api-standalone-for-ide",
+    ":prepare:ide-plugin-dependencies:analysis-api-test-framework-for-ide",
     ":prepare:ide-plugin-dependencies:kotlin-compiler-ir-for-ide",
     ":prepare:ide-plugin-dependencies:kotlin-compiler-common-for-ide",
     ":prepare:ide-plugin-dependencies:kotlin-compiler-fe10-for-ide",
