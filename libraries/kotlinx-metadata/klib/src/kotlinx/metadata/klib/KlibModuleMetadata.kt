@@ -16,34 +16,40 @@ import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
 import org.jetbrains.kotlin.metadata.deserialization.NameResolverImpl
 import org.jetbrains.kotlin.serialization.ApproximatingStringTable
+import kotlin.metadata.KmType
 
 /**
- * Allows to modify the way fragments of the single package are read by [KlibModuleMetadata.readStrict] and [KlibModuleMetadata.readLenient].
- * For example, it may be convenient to join fragments into a single one.
+ * The strategy that allows customizing the already read Km* entities.
  */
 interface KlibModuleFragmentReadStrategy {
-    fun processModuleParts(parts: List<KmModuleFragment>): List<KmModuleFragment>
+    /**
+     * Allows to modify the way fragments of the single package are read by [KlibModuleMetadata.readStrict] and
+     * [KlibModuleMetadata.readLenient]. For example, it may be convenient to join fragments into a single one.
+     */
+    fun processModuleParts(parts: List<KmModuleFragment>): List<KmModuleFragment> = parts
+
+    /**
+     * Allows post-processing [KmType] after deserializing it.
+     */
+    fun processType(type: KmType) {}
 
     companion object {
-        val DEFAULT = object : KlibModuleFragmentReadStrategy {
-            override fun processModuleParts(parts: List<KmModuleFragment>) =
-                parts
-        }
+        val DEFAULT = object : KlibModuleFragmentReadStrategy {}
     }
 }
 
 /**
- * Allows to modify the way module fragments are written by [KlibModuleMetadata.write].
- * For example, splitting big fragments into several small one allows to improve IDE performance.
+ * The strategy that allows customizing Km* entities before writing them.
  */
 interface KlibModuleFragmentWriteStrategy {
-    fun processPackageParts(parts: List<KmModuleFragment>): List<KmModuleFragment>
+    /**
+     * Allows to modify the way module fragments are written by [KlibModuleMetadata.write].
+     * For example, splitting big fragments into several small one allows to improve IDE performance.
+     */
+    fun processPackageParts(parts: List<KmModuleFragment>): List<KmModuleFragment> = parts
 
     companion object {
-        val DEFAULT = object : KlibModuleFragmentWriteStrategy {
-            override fun processPackageParts(parts: List<KmModuleFragment>): List<KmModuleFragment> =
-                parts
-        }
+        val DEFAULT = object : KlibModuleFragmentWriteStrategy {}
     }
 }
 
@@ -126,7 +132,10 @@ class KlibModuleMetadata(
                 library.packageMetadataParts(packageFqName).map { part ->
                     val packageFragment = parsePackageFragment(library.packageMetadata(packageFqName, part))
                     val nameResolver = NameResolverImpl(packageFragment.strings, packageFragment.qualifiedNames)
-                    packageFragment.toKmModuleFragment(nameResolver)
+                    val typeExt = if (readStrategy !== KlibModuleFragmentReadStrategy.DEFAULT)
+                        KlibTypeReadExtension(readStrategy::processType)
+                    else null
+                    packageFragment.toKmModuleFragment(nameResolver, listOfNotNull(typeExt))
                 }.let(readStrategy::processModuleParts)
             }
             return KlibModuleMetadata(

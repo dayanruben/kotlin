@@ -2,6 +2,7 @@
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
+import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFramework
 import org.gradle.api.publish.internal.PublicationInternal
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.withType
@@ -12,6 +13,8 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.GenerateProjectStructureMetadata
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsTargetDsl
 import org.jetbrains.kotlin.library.KOTLINTEST_MODULE_NAME
+import org.jetbrains.kotlin.testFederation.SmokeTestConfig
+import org.jetbrains.kotlin.testFederation.smokeTestConfig
 import plugins.configureDefaultPublishing
 import plugins.configureKotlinPomAttributes
 import plugins.publishing.configureMultiModuleMavenPublishing
@@ -334,6 +337,7 @@ tasks {
                     filter.excludePatterns += "*ContributorTest"
                 }
                 testClassesDirs = testCompilation.output.classesDirs
+
                 when (framework) {
                     JvmTestFramework.JUnit -> useJUnit()
                     JvmTestFramework.JUnit5 -> useJUnitPlatform()
@@ -589,6 +593,10 @@ publishing {
     }
 }
 
+tasks.withType<Test>().configureEach {
+    smokeTestConfig = if (testFramework is JUnitPlatformTestFramework) SmokeTestConfig.Default
+    else SmokeTestConfig.Disabled
+}
 
 tasks.withType<GenerateModuleMetadata> {
     val publication = publication.get() as MavenPublication

@@ -124,7 +124,7 @@ class JKlibIrLinker(
 
     private inner class MetadataJVMModuleDeserializer(
         moduleDescriptor: ModuleDescriptor,
-    ) : IrModuleDeserializer(moduleDescriptor, KotlinAbiVersion.CURRENT) {
+    ) : IrModuleDeserializer(KotlinAbiVersion.CURRENT) {
         override val klib: KotlinLibrary get() = error("'klib' is not available for ${this::class.java}")
 
         override fun contains(idSig: IdSignature): Boolean = resolveDescriptor(idSig) != null
@@ -172,9 +172,6 @@ class JKlibIrLinker(
         }
 
         override val moduleFragment: IrModuleFragment = IrModuleFragmentImpl(moduleDescriptor)
-
-        override val kind
-            get() = IrModuleDeserializerKind.SYNTHETIC
     }
     private inner class JKlibModuleDeserializer(
         moduleDescriptor: ModuleDescriptor,
@@ -200,7 +197,7 @@ class JKlibIrLinker(
         override fun contains(idSig: IdSignature): Boolean =
             super.contains(idSig) || descriptorByIdSignatureFinder.findDescriptorBySignature(idSig) != null
 
-        override fun getDefinedPackageNames(): Set<FqName> = getPackagesFqNames(moduleDescriptor)
+        override fun getDefinedPackageNames(): Set<FqName> = getPackagesFqNames(moduleFragment.descriptor)
 
         private fun getPackagesFqNames(module: ModuleDescriptor): Set<FqName> {
             val result = mutableSetOf<FqName>()
@@ -232,35 +229,6 @@ class JKlibIrLinker(
             val symbol = (stubGenerator.generateMemberStub(descriptor) as IrSymbolOwner).symbol
             deserializedSymbols[idSig] = symbol
             return symbol
-        }
-    }
-
-    override fun createCurrentModuleDeserializer(
-        moduleFragment: IrModuleFragment,
-    ): IrModuleDeserializer = JvmCurrentModuleDeserializer(moduleFragment)
-
-    private inner class JvmCurrentModuleDeserializer(
-        moduleFragment: IrModuleFragment,
-    ) : CurrentModuleDeserializer(moduleFragment) {
-        override fun declareIrSymbol(symbol: IrSymbol) {
-            val descriptor = symbol.descriptor
-
-            if (descriptor.isJavaDescriptor()) {
-                // Wrap java declaration with lazy ir
-                if (symbol is IrFieldSymbol) {
-                    declareJavaFieldStub(symbol)
-                } else {
-                    stubGenerator.generateMemberStub(descriptor)
-                }
-                return
-            }
-
-            if (descriptor.isCleanDescriptor()) {
-                stubGenerator.generateMemberStub(descriptor)
-                return
-            }
-
-            super.declareIrSymbol(symbol)
         }
     }
 

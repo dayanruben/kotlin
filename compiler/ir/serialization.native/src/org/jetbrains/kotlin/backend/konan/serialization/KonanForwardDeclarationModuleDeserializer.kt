@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.backend.konan.serialization
 
 import org.jetbrains.kotlin.backend.common.serialization.IrModuleDeserializer
-import org.jetbrains.kotlin.backend.common.serialization.IrModuleDeserializerKind
 import org.jetbrains.kotlin.backend.common.serialization.encodings.BinarySymbolData
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
@@ -30,7 +29,6 @@ import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.ir.util.addChild
 import org.jetbrains.kotlin.ir.util.createThisReceiverParameter
 import org.jetbrains.kotlin.library.KotlinAbiVersion
-import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.library.metadata.impl.isForwardDeclarationModule
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -39,13 +37,12 @@ import org.jetbrains.kotlin.name.NativeForwardDeclarationKind
 internal class KonanForwardDeclarationModuleDeserializer(
     moduleDescriptor: ModuleDescriptor,
     private val linker: KonanIrLinker,
-) : IrModuleDeserializer(moduleDescriptor, KotlinAbiVersion.Companion.CURRENT) {
+) : IrModuleDeserializer(KotlinAbiVersion.Companion.CURRENT) {
     init {
         require(moduleDescriptor.isForwardDeclarationModule)
     }
 
     override val klib get() = error("'klib' is not available for ${this::class.java}")
-    override val kind get() = IrModuleDeserializerKind.SYNTHETIC
     override val moduleFragment: IrModuleFragment = IrModuleFragmentImpl(moduleDescriptor)
     private val symbolTable = linker.symbolTable
     private val declaredClasses = mutableMapOf<IdSignature.CommonSignature, IrClass?>()
@@ -111,7 +108,7 @@ internal class KonanForwardDeclarationModuleDeserializer(
 
     private fun getOrCreateContainingPackage(packageFqName: FqName): IrExternalPackageFragment {
         return declaredPackageFragments.computeIfAbsent(packageFqName) {
-            val descriptor = EmptyPackageFragmentDescriptor(moduleDescriptor, packageFqName)
+            val descriptor = EmptyPackageFragmentDescriptor(moduleFragment.descriptor, packageFqName)
             IrExternalPackageFragmentImpl(IrExternalPackageFragmentSymbolImpl(descriptor), packageFqName, moduleFragment)
         }
     }

@@ -7,10 +7,13 @@ package org.jetbrains.kotlin.sir.providers.impl.BridgeProvider
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.BOOLEAN
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.BYTE
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.CHAR
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.INT
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.LONG
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.SHORT
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds.STRING
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 import org.jetbrains.kotlin.builtins.StandardNames.RANGES_PACKAGE_FQ_NAME
 import org.jetbrains.kotlin.name.ClassId
@@ -42,7 +45,7 @@ public class SirCustomTypeTranslatorImpl(
         var swiftType: SirNominalType
         return context(session) {
             when {
-                isStringType -> {
+                classId == STRING -> {
                     swiftType = SirNominalType(SirSwiftModule.string)
                     AsObjCBridged(swiftType, CType.NSString).wrapper()
                 }
@@ -136,24 +139,24 @@ public class SirCustomTypeTranslatorImpl(
     context(kaSession: KaSession)
     private fun KaUsualClassType.toPrimitiveTypeBridge(): SirCustomTypeTranslator.BridgeWrapper? {
         val declaration = when {
-            isCharType -> SirSwiftModule.utf16CodeUnit
+            classId == CHAR -> SirSwiftModule.utf16CodeUnit
 
-            isByteType -> SirSwiftModule.int8
-            isShortType -> SirSwiftModule.int16
-            isIntType -> SirSwiftModule.int32
-            isLongType -> SirSwiftModule.int64
+            classId == BYTE -> SirSwiftModule.int8
+            classId == SHORT -> SirSwiftModule.int16
+            classId == INT -> SirSwiftModule.int32
+            classId == LONG -> SirSwiftModule.int64
 
-            isUByteType -> SirSwiftModule.uint8
-            isUShortType -> SirSwiftModule.uint16
-            isUIntType -> SirSwiftModule.uint32
-            isULongType -> SirSwiftModule.uint64
+            classId == StandardClassIds.UByte -> SirSwiftModule.uint8
+            classId == StandardClassIds.UShort -> SirSwiftModule.uint16
+            classId == StandardClassIds.UInt -> SirSwiftModule.uint32
+            classId == StandardClassIds.ULong -> SirSwiftModule.uint64
 
-            isBooleanType -> SirSwiftModule.bool
+            classId == BOOLEAN -> SirSwiftModule.bool
 
-            isDoubleType -> SirSwiftModule.double
-            isFloatType -> SirSwiftModule.float
+            classId == KaStandardTypeClassIds.DOUBLE -> SirSwiftModule.double
+            classId == KaStandardTypeClassIds.FLOAT -> SirSwiftModule.float
 
-            isUnitType -> SirSwiftModule.void
+            classId == KaStandardTypeClassIds.UNIT -> SirSwiftModule.void
             else -> return null
         }
         return SirNominalType(declaration).toBridge()

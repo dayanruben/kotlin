@@ -40,12 +40,37 @@ tasks.withType<Test>().configureEach {
     doFirst {
         this as Test
 
+        val testFramework = testFramework
         val smokeTestConfig = smokeTestConfig.get()
 
         logger.quiet("Current Domain: '${currentDomain.get()}'")
         logger.quiet("Affected Domains: '${formattedAffectedDomains.get()}'")
         logger.quiet("Domain Test Mode: '${testFederationMode.get()}'")
 
+        /* The test task was explicitly marked as 'isSmokeTest=false', therefore, won't further execute in smoke mode */
+        if (smokeTestConfig is SmokeTestConfig.Disabled && testFederationMode.get() == TestFederationMode.Smoke) {
+            throw StopExecutionException("The test task is disabled in Smoke Test mode")
+        }
+
+        /*
+        The test task is not using JUnit5 and is scheduled for 'full mode' -> No further configuration required. Just run the vanilla task
+        (we allow non JUnit5 for 'full' test mode, but not for Smoke Test mode)
+        This effectively only allows non JUnit5 tests with SmokeTestConfig.Disabled
+        */
+        if (testFramework !is JUnitPlatformTestFramework && testFederationMode.get() == TestFederationMode.Full) {
+            return@doFirst
+        }
+
+        /*
+         At this point: Assert that JUnit5 is used, as 'Smoke Test' configurations use JUnit5 features.
+         */
+        if (testFramework !is JUnitPlatformTestFramework) {
+            error("Unsupported 'testFramework': $testFramework; Expected 'JUnitPlatformTestFramework'")
+        }
+
+        /*
+        Configure the test environment
+         */
         systemProperty(TEST_FEDERATION_MODE_KEY, testFederationMode.get().name)
         environment(TEST_FEDERATION_MODE_ENV_KEY, testFederationMode.get().name)
 
@@ -66,11 +91,6 @@ tasks.withType<Test>().configureEach {
             environment(TEST_FEDERATION_AUTO_SMOKE_TEST_PERCENTAGE_ENV_KEY, smokeTestConfig.autoSmokeTestPercentage)
         }
 
-        /* The test task was explicitly marked as 'isSmokeTest=false', therefore, won't further execute in smoke mode */
-        if (smokeTestConfig is SmokeTestConfig.Disabled && testFederationMode.get() == TestFederationMode.Smoke) {
-            throw StopExecutionException("The test task is disabled in Smoke Test mode")
-        }
-
         /* Set TeamCity tags */
         if (testFederationMode.get() == TestFederationMode.Smoke) {
             println("##teamcity[addBuildTag 'Mode: Smoke']")
@@ -81,7 +101,7 @@ tasks.withType<Test>().configureEach {
             println("##teamcity[addBuildTag 'Mode: Full']")
         }
 
-        /* Configuring junit includes / categories */
+        /* Configuring junit includes */
         if (testFederationMode.get() == TestFederationMode.Smoke) {
             smokeTestConfig as SmokeTestConfig.Enabled
 
@@ -91,30 +111,16 @@ tasks.withType<Test>().configureEach {
             a better rendering of the executed tests.
             */
             if (smokeTestConfig.autoSmokeTestPercentage == 0) {
-                val testFramework = testFramework
-                if (testFramework is JUnitPlatformTestFramework) {
-                    testFramework.options.includeTags("smoke")
-                    affectedDomains.get().forEach { domain ->
-                        testFramework.options.includeTags("affectedBy:${domain.name}")
-                    }
-                }
-
-                if (testFramework is JUnitTestFramework) {
-                    testFramework.options.includeCategories("org.jetbrains.kotlin.testFederation.SmokeTest")
+                testFramework.options.includeTags("smoke")
+                affectedDomains.get().forEach { domain ->
+                    testFramework.options.includeTags("affectedBy:${domain.name}")
                 }
             }
         }
 
         /* Exclude nightly tests if not specifically running in 'nightly'  mode */
-        val testFramework = testFramework
         if (!areNightlyTestsEnabled.get()) {
-            if (testFramework is JUnitPlatformTestFramework) {
-                testFramework.options.excludeTags("nightly", "org.jetbrains.kotlin.testFederation.NightlyTest")
-            }
-
-            if (testFramework is JUnitTestFramework) {
-                testFramework.options.excludeCategories("org.jetbrains.kotlin.testFederation.NightlyTest")
-            }
+            testFramework.options.excludeTags("nightly", "org.jetbrains.kotlin.testFederation.NightlyTest")
         }
 
         /* Ensure that the test federation runtime is always available on the classpath (and the extension is enabled) */
@@ -123,6 +129,11 @@ tasks.withType<Test>().configureEach {
         /* Check if classpath contains test federation runtime */
         if (!classpath.files.containsAll(testFederationRuntime.files)) {
             error("Test Federation Runtime is not available on the classpath")
+        }
+
+        /* Check if classpath contains vintage engine and report it as unsupported */
+        if (classpath.files.any { file -> file.name.contains("junit-vintage-engine") }) {
+            error("Unsupported 'junit-vintage-engine' found in classpath. Please remove this dependency")
         }
     }
 }

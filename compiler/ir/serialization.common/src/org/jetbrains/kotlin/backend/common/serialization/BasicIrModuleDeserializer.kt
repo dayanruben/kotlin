@@ -41,7 +41,7 @@ abstract class BasicIrModuleDeserializer(
     libraryAbiVersion: KotlinAbiVersion,
     private val allowErrorNodes: Boolean = false,
     private val deserializeTypeAliases: Boolean = false,
-) : IrModuleDeserializer(moduleDescriptor, libraryAbiVersion) {
+) : IrModuleDeserializer(libraryAbiVersion) {
 
     private val fileToDeserializerMap = mutableMapOf<IrFile, IrFileDeserializer>()
 
@@ -90,11 +90,11 @@ abstract class BasicIrModuleDeserializer(
 
     override fun referenceSimpleFunctionByLocalSignature(file: IrFile, idSignature: IdSignature): IrSimpleFunctionSymbol =
         fileToDeserializerMap[file]?.symbolDeserializer?.referenceSimpleFunctionByLocalSignature(idSignature)
-            ?: error("No deserializer for file $file in module ${moduleDescriptor.name}")
+            ?: error("No deserializer for file $file in module ${moduleFragment.name}")
 
     override fun referencePropertyByLocalSignature(file: IrFile, idSignature: IdSignature): IrPropertySymbol =
         fileToDeserializerMap[file]?.symbolDeserializer?.referencePropertyByLocalSignature(idSignature)
-            ?: error("No deserializer for file $file in module ${moduleDescriptor.name}")
+            ?: error("No deserializer for file $file in module ${moduleFragment.name}")
 
     // TODO: fix to topLevel checker
     override fun contains(idSig: IdSignature): Boolean = idSig.topLevelSignature() in moduleReversedFileIndex
@@ -110,7 +110,7 @@ abstract class BasicIrModuleDeserializer(
     }
 
     override fun deserializedSymbolNotFound(idSig: IdSignature): Nothing {
-        error("No file for ${idSig.topLevelSignature()} (@ $idSig) in module $moduleDescriptor")
+        error("No file for ${idSig.topLevelSignature()} (@ $idSig) in module ${moduleFragment.name}")
     }
 
     private fun deserializeIrFile(
@@ -168,15 +168,6 @@ abstract class BasicIrModuleDeserializer(
     override fun deserializeReachableDeclarations() {
         moduleDeserializationState.deserializeReachableDeclarations()
     }
-
-    override fun signatureDeserializerForFile(fileName: String): IdSignatureDeserializer {
-        val fileDeserializer = fileToDeserializerMap.entries.find { it.key.fileEntry.name == fileName }?.value
-            ?: error("No file deserializer for $fileName")
-
-        return fileDeserializer.symbolDeserializer.signatureDeserializer
-    }
-
-    override val kind get() = IrModuleDeserializerKind.DESERIALIZED
 
     private inner class ModuleDeserializationState {
         /**

@@ -11,7 +11,6 @@ import kotlinx.metadata.klib.fqName
 import org.jetbrains.kotlin.backend.common.linkage.IrDeserializer.TopLevelSymbolKind
 import org.jetbrains.kotlin.backend.common.serialization.CompatibilityMode
 import org.jetbrains.kotlin.backend.common.serialization.IrModuleDeserializer
-import org.jetbrains.kotlin.backend.common.serialization.IrModuleDeserializerKind
 import org.jetbrains.kotlin.backend.common.serialization.encodings.BinarySymbolData
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.SourceElement
@@ -69,7 +68,7 @@ internal class KonanInteropModuleDeserializer(
         override val klib: KotlinLibrary,
         private val isLibraryCached: Boolean,
         private val linker: KonanIrLinker,
-) : IrModuleDeserializer(moduleDescriptor, klib.versions.abiVersion ?: KotlinAbiVersion.CURRENT) {
+) : IrModuleDeserializer(klib.versions.abiVersion ?: KotlinAbiVersion.CURRENT) {
     init {
         require(klib.isCInteropLibrary())
     }
@@ -84,7 +83,6 @@ internal class KonanInteropModuleDeserializer(
 
     override fun getDefinedPackageNames(): Set<FqName> = setOf(definedPackageFqName)
 
-    override val kind get() = IrModuleDeserializerKind.DESERIALIZED
     override val moduleFragment: IrModuleFragment = IrModuleFragmentImpl(moduleDescriptor)
     private var externalIrPackageFragment: IrExternalPackageFragment? = null
     private var typeDefinitionsIrFile: IrFile? = null
@@ -242,7 +240,7 @@ internal class KonanInteropModuleDeserializer(
 
     private fun getOrCreateContainingPackageFragment(forKmDeclaration: Any): IrPackageFragment {
         val containerSource = KlibDeserializedContainerSource(klib, moduleHeaderProto, deserializationConfiguration, definedPackageFqName, null)
-        val descriptor = DeserializedSecondStageInteropPackageDescriptor(moduleDescriptor, definedPackageFqName, containerSource)
+        val descriptor = DeserializedSecondStageInteropPackageDescriptor(moduleFragment.descriptor, definedPackageFqName, containerSource)
         if (forKmDeclaration is KmClass && forKmDeclaration.inheritsFromCStructOrEnum() && !isLibraryCached) {
             // Most declarations from C-interop Klib are just stubs which shouldn't be lowered, so they are
             // put inside IrExternalPackageFragment, the same way as on the first stage of compilation.

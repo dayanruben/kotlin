@@ -15,44 +15,28 @@ import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseFunctionType
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseSessionComponent
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.analysis.api.types.builtinFunctionTypeFamilies as builtinFunctionTypeFamiliesEndpoint
 import org.jetbrains.kotlin.analysis.api.types.defaultInitializer as defaultInitializerEndpoint
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol as expandedSymbolEndpoint
 import org.jetbrains.kotlin.analysis.api.types.fullyExpandedType as fullyExpandedTypeEndpoint
 import org.jetbrains.kotlin.analysis.api.types.functionTypeFamily as functionTypeFamilyEndpoint
 import org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability as hasFlexibleNullabilityEndpoint
-import org.jetbrains.kotlin.analysis.api.types.isAnyType as isAnyTypeEndpoint
 import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray as isArrayOrPrimitiveArrayEndpoint
-import org.jetbrains.kotlin.analysis.api.types.isBooleanType as isBooleanTypeEndpoint
-import org.jetbrains.kotlin.analysis.api.types.isByteType as isByteTypeEndpoint
-import org.jetbrains.kotlin.analysis.api.types.isCharSequenceType as isCharSequenceTypeEndpoint
-import org.jetbrains.kotlin.analysis.api.types.isCharType as isCharTypeEndpoint
 import org.jetbrains.kotlin.analysis.api.types.isDenotable as isDenotableEndpoint
-import org.jetbrains.kotlin.analysis.api.types.isDoubleType as isDoubleTypeEndpoint
-import org.jetbrains.kotlin.analysis.api.types.isFloatType as isFloatTypeEndpoint
 import org.jetbrains.kotlin.analysis.api.types.isFunctionType as isFunctionTypeEndpoint
 import org.jetbrains.kotlin.analysis.api.types.isFunctionalInterface as isFunctionalInterfaceEndpoint
-import org.jetbrains.kotlin.analysis.api.types.isIntType as isIntTypeEndpoint
 import org.jetbrains.kotlin.analysis.api.types.isKFunctionType as isKFunctionTypeEndpoint
 import org.jetbrains.kotlin.analysis.api.types.isKSuspendFunctionType as isKSuspendFunctionTypeEndpoint
-import org.jetbrains.kotlin.analysis.api.types.isLongType as isLongTypeEndpoint
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable as isMarkedNullableEndpoint
 import org.jetbrains.kotlin.analysis.api.types.isNestedArray as isNestedArrayEndpoint
-import org.jetbrains.kotlin.analysis.api.types.isNothingType as isNothingTypeEndpoint
 import org.jetbrains.kotlin.analysis.api.types.isNullable as isNullableEndpoint
-import org.jetbrains.kotlin.analysis.api.types.isPrimitive as isPrimitiveEndpoint
-import org.jetbrains.kotlin.analysis.api.types.isShortType as isShortTypeEndpoint
-import org.jetbrains.kotlin.analysis.api.types.isStringType as isStringTypeEndpoint
 import org.jetbrains.kotlin.analysis.api.types.isSuspendFunctionType as isSuspendFunctionTypeEndpoint
-import org.jetbrains.kotlin.analysis.api.types.isUByteType as isUByteTypeEndpoint
-import org.jetbrains.kotlin.analysis.api.types.isUIntType as isUIntTypeEndpoint
-import org.jetbrains.kotlin.analysis.api.types.isULongType as isULongTypeEndpoint
-import org.jetbrains.kotlin.analysis.api.types.isUShortType as isUShortTypeEndpoint
-import org.jetbrains.kotlin.analysis.api.types.isUnitType as isUnitTypeEndpoint
 
 /**
  * Routes the legacy [KaTypeInformationProvider] surface through the new public `context(session: KaSession)` type-information endpoints,
@@ -112,55 +96,89 @@ internal class KaTypeInformationProviderBridge(
         get() = context(analysisSession) { hasFlexibleNullabilityEndpoint }
 
     override val KaType.isUnitType: Boolean
-        get() = context(analysisSession) { isUnitTypeEndpoint }
+        get() = context(analysisSession) {
+            classId == KaStandardTypeClassIds.UNIT
+        }
 
     override val KaType.isIntType: Boolean
-        get() = context(analysisSession) { isIntTypeEndpoint }
+        get() = context(analysisSession) {
+            classId == KaStandardTypeClassIds.INT
+        }
 
     override val KaType.isLongType: Boolean
-        get() = context(analysisSession) { isLongTypeEndpoint }
+        get() = context(analysisSession) {
+            classId == KaStandardTypeClassIds.LONG
+        }
 
     override val KaType.isShortType: Boolean
-        get() = context(analysisSession) { isShortTypeEndpoint }
+        get() = context(analysisSession) {
+            classId == KaStandardTypeClassIds.SHORT
+        }
 
     override val KaType.isByteType: Boolean
-        get() = context(analysisSession) { isByteTypeEndpoint }
+        get() = context(analysisSession) {
+            classId == KaStandardTypeClassIds.BYTE
+        }
 
     override val KaType.isFloatType: Boolean
-        get() = context(analysisSession) { isFloatTypeEndpoint }
+        get() = context(analysisSession) {
+            classId == KaStandardTypeClassIds.FLOAT
+        }
 
     override val KaType.isDoubleType: Boolean
-        get() = context(analysisSession) { isDoubleTypeEndpoint }
+        get() = context(analysisSession) {
+            classId == KaStandardTypeClassIds.DOUBLE
+        }
 
     override val KaType.isCharType: Boolean
-        get() = context(analysisSession) { isCharTypeEndpoint }
+        get() = context(analysisSession) {
+            classId == KaStandardTypeClassIds.CHAR
+        }
 
     override val KaType.isBooleanType: Boolean
-        get() = context(analysisSession) { isBooleanTypeEndpoint }
+        get() = context(analysisSession) {
+            classId == KaStandardTypeClassIds.BOOLEAN
+        }
 
     override val KaType.isStringType: Boolean
-        get() = context(analysisSession) { isStringTypeEndpoint }
+        get() = context(analysisSession) {
+            classId == KaStandardTypeClassIds.STRING
+        }
 
     override val KaType.isCharSequenceType: Boolean
-        get() = context(analysisSession) { isCharSequenceTypeEndpoint }
+        get() = context(analysisSession) {
+            classId == KaStandardTypeClassIds.CHAR_SEQUENCE
+        }
 
     override val KaType.isAnyType: Boolean
-        get() = context(analysisSession) { isAnyTypeEndpoint }
+        get() = context(analysisSession) {
+            classId == KaStandardTypeClassIds.ANY
+        }
 
     override val KaType.isNothingType: Boolean
-        get() = context(analysisSession) { isNothingTypeEndpoint }
+        get() = context(analysisSession) {
+            classId == KaStandardTypeClassIds.NOTHING
+        }
 
     override val KaType.isUIntType: Boolean
-        get() = context(analysisSession) { isUIntTypeEndpoint }
+        get() = context(analysisSession) {
+            classId == StandardClassIds.UInt
+        }
 
     override val KaType.isULongType: Boolean
-        get() = context(analysisSession) { isULongTypeEndpoint }
+        get() = context(analysisSession) {
+            classId == StandardClassIds.ULong
+        }
 
     override val KaType.isUShortType: Boolean
-        get() = context(analysisSession) { isUShortTypeEndpoint }
+        get() = context(analysisSession) {
+            classId == StandardClassIds.UShort
+        }
 
     override val KaType.isUByteType: Boolean
-        get() = context(analysisSession) { isUByteTypeEndpoint }
+        get() = context(analysisSession) {
+            classId == StandardClassIds.UByte
+        }
 
     override val KaType.expandedSymbol: KaClassSymbol?
         get() = context(analysisSession) { expandedSymbolEndpoint }
@@ -183,7 +201,9 @@ internal class KaTypeInformationProviderBridge(
     }
 
     override val KaType.isPrimitive: Boolean
-        get() = context(analysisSession) { isPrimitiveEndpoint }
+        get() = context(analysisSession) {
+            classId in KaStandardTypeClassIds.PRIMITIVES
+        }
 
     @KaExperimentalApi
     override val KaType.defaultInitializer: String?

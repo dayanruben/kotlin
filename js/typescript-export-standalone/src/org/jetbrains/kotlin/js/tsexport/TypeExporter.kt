@@ -53,7 +53,7 @@ internal class TypeExporter(
 
     context(_: KaSession)
     private fun exportTypeOrAlias(type: KaType, inlineClassesShouldBeUnboxed: Boolean): ExportedType {
-        if (config.exportUntypedAsUnknown && (type is KaDynamicType || type.isAnyType))
+        if (config.exportUntypedAsUnknown && (type is KaDynamicType || type.classId == KaStandardTypeClassIds.ANY))
             return Primitive.Unknown
 
         if (type is KaDynamicType || type in currentlyProcessedTypes)
@@ -78,33 +78,33 @@ internal class TypeExporter(
     internal fun exportSpecializedArrayWithElementType(type: KaType): ExportedType = with(type) {
         when {
             isMarkedNullable -> Array(exportType(type))
-            isByteType -> Primitive.ByteArray
-            isShortType -> Primitive.ShortArray
-            isIntType -> Primitive.IntArray
-            isFloatType -> Primitive.FloatArray
-            isDoubleType -> Primitive.DoubleArray
-            isLongType -> if (config.compileLongAsBigInt) Primitive.LongArray else ErrorType("LongArray")
-            isBooleanType -> ErrorType("BooleanArray")
-            isCharType -> ErrorType("CharArray")
+            classId == KaStandardTypeClassIds.BYTE -> Primitive.ByteArray
+            classId == KaStandardTypeClassIds.SHORT -> Primitive.ShortArray
+            classId == KaStandardTypeClassIds.INT -> Primitive.IntArray
+            classId == KaStandardTypeClassIds.FLOAT -> Primitive.FloatArray
+            classId == KaStandardTypeClassIds.DOUBLE -> Primitive.DoubleArray
+            classId == KaStandardTypeClassIds.LONG -> if (config.compileLongAsBigInt) Primitive.LongArray else ErrorType("LongArray")
+            classId == KaStandardTypeClassIds.BOOLEAN -> ErrorType("BooleanArray")
+            classId == KaStandardTypeClassIds.CHAR -> ErrorType("CharArray")
             else -> Array(exportType(type))
         }
     }
 
     context(_: KaSession)
     private fun exportSimpleNonNullableType(type: KaType, inlineClassesShouldBeUnboxed: Boolean): ExportedType {
-        if (type.isBooleanType)
+        if (type.classId == KaStandardTypeClassIds.BOOLEAN)
             return Primitive.Boolean
-        if (type.isLongType || type.isULongType)
+        if (type.classId == KaStandardTypeClassIds.LONG || type.classId == StandardClassIds.ULong)
             return if (config.compileLongAsBigInt) Primitive.BigInt else ErrorType("Long")
-        if (type.isPrimitive && !type.isCharType)
+        if (type.classId in KaStandardTypeClassIds.PRIMITIVES && type.classId != KaStandardTypeClassIds.CHAR)
             return Primitive.Number
-        if (type.isStringType)
+        if (type.classId == KaStandardTypeClassIds.STRING)
             return Primitive.String
-        if (type.isAnyType)
+        if (type.classId == KaStandardTypeClassIds.ANY)
             return Primitive.Any
-        if (type.isUnitType)
+        if (type.classId == KaStandardTypeClassIds.UNIT)
             return Primitive.Unit
-        if (type.isNothingType)
+        if (type.classId == KaStandardTypeClassIds.NOTHING)
             return Primitive.Nothing
         type.arrayElementType?.let {
             return if (type.classId == StandardClassIds.Array) {
