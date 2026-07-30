@@ -44,6 +44,26 @@ class LauncherScriptTest : TestCaseWithTmpdir() {
         workDirectory: File? = null,
         environment: Map<String, String> = mapOf("JAVA_HOME" to KtTestUtil.getJdk8Home().absolutePath),
     ) {
+        runProcess(
+            executableName,
+            *args,
+            checkStdout = { stdout -> assertEquals(expectedStdout.trim(), stdout.trim()) },
+            checkStderr = { stderr -> assertEquals(expectedStderr.trim(), stderr.trim()) },
+            expectedExitCode = expectedExitCode,
+            workDirectory = workDirectory,
+            environment = environment
+        )
+    }
+
+    private fun runProcess(
+        executableName: String,
+        vararg args: String,
+        checkStdout: (String) -> Unit,
+        checkStderr: (String) -> Unit,
+        expectedExitCode: Int,
+        workDirectory: File? = null,
+        environment: Map<String, String> = mapOf("JAVA_HOME" to KtTestUtil.getJdk8Home().absolutePath),
+    ) {
         val executableFileName = if (SystemInfo.isWindows) "$executableName.bat" else executableName
         val launcherFile = File(PathUtil.kotlinPathsForDistDirectory.homePath, "bin/$executableFileName")
         assertTrue(launcherFile.exists()) { "Launcher script not found, run dist task: ${launcherFile.absolutePath}" }
@@ -58,22 +78,27 @@ class LauncherScriptTest : TestCaseWithTmpdir() {
         pb.environment().putAll(environment)
         pb.directory(workDirectory)
         val process = pb.start()
-        val stdout =
-            AbstractCliTest.getNormalizedCompilerOutput(
-                StringUtil.convertLineSeparators(process.inputStream.bufferedReader().use { it.readText() }),
-                null, testDataDirectory, tmpdir.absolutePath
-            )
+        /*
+         * If the compiler invocation throws an exception, then the stderr could be bigger than pipe buffer (64 kb).
+         * If it happens, trying to read from stdout first could clog the buffer and cause a deadlock. So the stderr should be read first.
+         */
         val stderr =
             AbstractCliTest.getNormalizedCompilerOutput(
                 StringUtil.convertLineSeparators(process.errorStream.bufferedReader().use { it.readText() }),
                 null, testDataDirectory, tmpdir.absolutePath
             ).replace("Picked up [_A-Z]+:.*\n".toRegex(), "")
                 .replace("The system cannot find the file specified", "No such file or directory") // win -> unix
+        val stdout =
+            AbstractCliTest.getNormalizedCompilerOutput(
+                StringUtil.convertLineSeparators(process.inputStream.bufferedReader().use { it.readText() }),
+                null, testDataDirectory, tmpdir.absolutePath
+            )
         process.waitFor(10, TimeUnit.SECONDS)
         val exitCode = process.exitValue()
         try {
-            assertEquals(expectedStdout.trim(), stdout.trim())
-            assertEquals(expectedStderr.trim(), stderr.trim())
+            checkStdout(stdout.trim())
+            checkStderr(stderr.trim())
+
             assertEquals(expectedExitCode, exitCode)
         } catch (e: Throwable) {
             System.err.println("exit code $exitCode")
@@ -722,4 +747,24 @@ Caused by: java.lang.AssertionError: assert
         runProcess("kapt", "-version", expectedStderr = info)
     }
 
+    @Test
+    fun testStackOverflowWithBigLimit() {
+        val code = buildString {
+            appendLine("class Foo() {")
+            append("    val i = ")
+            val pluses = (1..700).joinToString(separator = " + ") { "1" }
+            appendLine(pluses)
+            appendLine("}")
+        }
+        val file = tmpdir.resolve("test.kt").also { it.writeText(code) }
+        runProcess(
+            "kotlinc", file.absolutePath,
+            expectedExitCode = 2,
+            checkStdout = { stdOut -> assertTrue(stdOut.isBlank()) },
+            checkStderr = { stdErr ->
+                assertFalse(stdErr.contains("java.lang.NoClassDefFoundError"))
+                assertTrue(stdErr.contains("java.lang.StackOverflowError"))
+            },
+        )
+    }
 }

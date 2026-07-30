@@ -17,6 +17,9 @@ import org.jetbrains.kotlin.codegen.mangleNameIfNeeded
 import org.jetbrains.kotlin.codegen.state.JvmBackendConfig
 import org.jetbrains.kotlin.config.JvmDefaultMode
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.config.ValhallaSupportMode.*
+import org.jetbrains.kotlin.config.isKotlinValhallaValueClass
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.KotlinRetention
 import org.jetbrains.kotlin.ir.IrBuiltIns
@@ -61,6 +64,9 @@ import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.commons.Method
 import java.io.File
 import java.lang.annotation.RetentionPolicy
+
+fun IrClass.isKotlinValhallaValueClass(languageVersionSettings: LanguageVersionSettings): Boolean =
+    valueClassRepresentation.isKotlinValhallaValueClass(languageVersionSettings)
 
 fun IrDeclaration.getJvmNameFromAnnotation(): String? {
     // TODO lower @JvmName and @JvmExposeBoxed?

@@ -454,7 +454,15 @@ internal object KotlinToolingDiagnostics {
         operator fun invoke(
             libraries: Collection<File>,
             resolvedByMavenCoordinates: String? = null,
-        ) = build {
+        ) = build(
+            /* Reporting the diagnostic only once per build requires a good 'id' including the params as input */
+            idSuffix = run {
+                var idHash = resolvedByMavenCoordinates.hashCode()
+                libraries.forEach { path ->
+                    idHash = 31 * idHash + path.path.hashCode()
+                }
+                idHash.toString()
+            }) {
             title("Unsupported Kotlin Archive (.kar) used")
                 .description(buildString {
                     appendLine("${libraries.size} use(s) the '.kar' format, which is not supported by this version of Kotlin.")
@@ -2016,10 +2024,10 @@ internal object KotlinToolingDiagnostics {
         operator fun invoke(): ToolingDiagnostic = build {
             title("ABI Validation: no Maven publishing plugin")
                 .description {
-                    "Source of binaries is set to Maven publications, but maven publishing plugin is not applied."
+                    "The binaries source is set to Maven publications, but the Maven publishing plugin is not applied."
                 }
                 .solution {
-                    "Apply `maven-publish` plugin and create Maven publication, or specify `kotlin.abiValidation { binariesSource = MAIN_COMPILATION }` to use output of the main compilation tasks"
+                    "Apply the `maven-publish` plugin and create a Maven publication, or specify `kotlin.abiValidation { binariesSource = MAIN_COMPILATION }` to use the output of the main compilation tasks."
                 }
         }
     }
@@ -2028,10 +2036,10 @@ internal object KotlinToolingDiagnostics {
         operator fun invoke(): ToolingDiagnostic = build {
             title("ABI Validation: Android target unsupported with Maven binary sources mode")
                 .description {
-                    "Android targets are not supported by ABI validation when Maven binary sources mode is enabled"
+                    "Android targets are not supported by ABI validation when the Maven binary sources mode is enabled"
                 }
                 .solution {
-                    "Specify `kotlin.abiValidation { binariesSource = MAIN_COMPILATION }` to use output of the main compilation tasks"
+                    "Specify `kotlin.abiValidation { binariesSource = MAIN_COMPILATION }` to use the output of the main compilation tasks."
                 }
         }
     }
