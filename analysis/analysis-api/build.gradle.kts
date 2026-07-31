@@ -8,7 +8,7 @@ plugins {
     kotlin("jvm")
     id("kotlin-git.gradle-build-conventions.foreign-class-usage-checker")
     id("project-tests-convention")
-    id("test-inputs-check-v2")
+    id("test-inputs-check")
 }
 
 kotlin {
@@ -25,7 +25,6 @@ dependencies {
     compileOnly(project(":core:compiler.common"))
     compileOnly(project(":core:compiler.common.jvm"))
     compileOnly(project(":core:compiler.common.js"))
-    compileOnly(project(":compiler:psi:psi-utils"))
     implementation(kotlinxCollectionsImmutable())
 
     api(intellijCore())

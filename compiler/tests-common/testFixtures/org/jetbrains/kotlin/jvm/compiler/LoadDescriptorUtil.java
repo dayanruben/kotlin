@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.analyzer.AnalysisResult;
 import org.jetbrains.kotlin.cli.common.output.OutputUtilsKt;
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles;
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment;
-import org.jetbrains.kotlin.cli.jvm.javac.JavacWrapperRegistrarKt;
 import org.jetbrains.kotlin.codegen.GenerationUtils;
 import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime;
 import org.jetbrains.kotlin.codegen.state.GenerationState;
@@ -80,7 +79,6 @@ public class LoadDescriptorUtil {
             @NotNull ConfigurationKind configurationKind,
             boolean isBinaryRoot,
             boolean usePsiClassReading,
-            boolean useJavacWrapper,
             boolean withForeignAnnotations,
             @Nullable LanguageVersionSettings explicitLanguageVersionSettings
     ) {
@@ -91,7 +89,6 @@ public class LoadDescriptorUtil {
                 configurationKind,
                 isBinaryRoot,
                 usePsiClassReading,
-                useJavacWrapper,
                 withForeignAnnotations,
                 explicitLanguageVersionSettings,
                 Collections.emptyList(),
@@ -107,7 +104,6 @@ public class LoadDescriptorUtil {
             @NotNull ConfigurationKind configurationKind,
             boolean isBinaryRoot,
             boolean usePsiClassReading,
-            boolean useJavacWrapper,
             boolean withForeignAnnotations,
             @Nullable LanguageVersionSettings explicitLanguageVersionSettings,
             @NotNull List<File> additionalClasspath,
@@ -135,16 +131,12 @@ public class LoadDescriptorUtil {
         CompilerConfiguration configuration =
                 KotlinTestUtils.newConfiguration(configurationKind, testJdkKind, javaBinaryRoots, javaSourceRoots);
         configuration.put(JVMConfigurationKeys.USE_PSI_CLASS_FILES_READING, usePsiClassReading);
-        configuration.put(JVMConfigurationKeys.USE_JAVAC, useJavacWrapper);
         if (explicitLanguageVersionSettings != null) {
             configuration.put(CommonConfigurationKeys.LANGUAGE_VERSION_SETTINGS, explicitLanguageVersionSettings);
         }
         KotlinCoreEnvironment environment =
                 KotlinCoreEnvironment.createForTests(disposable, configuration, EnvironmentConfigFiles.JVM_CONFIG_FILES);
         configureEnvironment.accept(environment);
-        if (useJavacWrapper) {
-            JavacWrapperRegistrarKt.registerJavac(environment);
-        }
         @SuppressWarnings("deprecation")
         AnalysisResult analysisResult = JvmResolveUtil.analyze(environment);
 

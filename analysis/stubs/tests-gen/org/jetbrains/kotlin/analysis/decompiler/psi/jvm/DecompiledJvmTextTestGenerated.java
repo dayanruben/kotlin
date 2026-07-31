@@ -2055,6 +2055,12 @@ public class DecompiledJvmTextTestGenerated extends AbstractDecompiledJvmTextTes
       }
 
       @Test
+      @TestMetadata("arrayClassLiterals.kt")
+      public void testArrayClassLiterals() {
+        run("arrayClassLiterals.kt");
+      }
+
+      @Test
       @TestMetadata("arrays.kt")
       public void testArrays() {
         run("arrays.kt");
@@ -2064,6 +2070,18 @@ public class DecompiledJvmTextTestGenerated extends AbstractDecompiledJvmTextTes
       @TestMetadata("arraysWithNonConstantValue.kt")
       public void testArraysWithNonConstantValue() {
         run("arraysWithNonConstantValue.kt");
+      }
+
+      @Test
+      @TestMetadata("binaryOperatorTokens.kt")
+      public void testBinaryOperatorTokens() {
+        run("binaryOperatorTokens.kt");
+      }
+
+      @Test
+      @TestMetadata("binaryOperatorTokensWithNonConstantValue.kt")
+      public void testBinaryOperatorTokensWithNonConstantValue() {
+        run("binaryOperatorTokensWithNonConstantValue.kt");
       }
 
       @Test
@@ -2091,6 +2109,12 @@ public class DecompiledJvmTextTestGenerated extends AbstractDecompiledJvmTextTes
       }
 
       @Test
+      @TestMetadata("escapedLiterals.kt")
+      public void testEscapedLiterals() {
+        run("escapedLiterals.kt");
+      }
+
+      @Test
       @TestMetadata("intVarargLiterals.kt")
       public void testIntVarargLiterals() {
         run("intVarargLiterals.kt");
@@ -2103,9 +2127,33 @@ public class DecompiledJvmTextTestGenerated extends AbstractDecompiledJvmTextTes
       }
 
       @Test
+      @TestMetadata("negativeLiterals.kt")
+      public void testNegativeLiterals() {
+        run("negativeLiterals.kt");
+      }
+
+      @Test
       @TestMetadata("nestedAnnotation.kt")
       public void testNestedAnnotation() {
         run("nestedAnnotation.kt");
+      }
+
+      @Test
+      @TestMetadata("nonStubbedOperands.kt")
+      public void testNonStubbedOperands() {
+        run("nonStubbedOperands.kt");
+      }
+
+      @Test
+      @TestMetadata("nonStubbedOperandsWithNonConstantValue.kt")
+      public void testNonStubbedOperandsWithNonConstantValue() {
+        run("nonStubbedOperandsWithNonConstantValue.kt");
+      }
+
+      @Test
+      @TestMetadata("postfixOperators.kt")
+      public void testPostfixOperators() {
+        run("postfixOperators.kt");
       }
 
       @Test
@@ -2121,9 +2169,27 @@ public class DecompiledJvmTextTestGenerated extends AbstractDecompiledJvmTextTes
       }
 
       @Test
+      @TestMetadata("specialFloatingPointLiterals.kt")
+      public void testSpecialFloatingPointLiterals() {
+        run("specialFloatingPointLiterals.kt");
+      }
+
+      @Test
       @TestMetadata("stringLiterals.kt")
       public void testStringLiterals() {
         run("stringLiterals.kt");
+      }
+
+      @Test
+      @TestMetadata("unaryOperators.kt")
+      public void testUnaryOperators() {
+        run("unaryOperators.kt");
+      }
+
+      @Test
+      @TestMetadata("unsignedLiterals.kt")
+      public void testUnsignedLiterals() {
+        run("unsignedLiterals.kt");
       }
     }
   }

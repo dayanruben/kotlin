@@ -9,7 +9,6 @@ plugins {
     kotlin("jvm")
     id("java-test-fixtures")
     id("project-tests-convention")
-    //id("test-inputs-check")
 }
 
 val otherCompilerModules = CompilerModules.compilerModules.filter { it != path }
@@ -39,8 +38,6 @@ dependencies {
     testFixturesApi(testFixtures(project(":generators:test-generator")))
     testFixturesApi(project(":compiler:ir.tree")) // used for deepCopyWithSymbols call that is removed by proguard from the compiler TODO: make it more straightforward
     testFixturesApi(project(":kotlin-scripting-compiler"))
-    testFixturesImplementation(project(":compiler:cli-jvm:javac-integration"))
-    testImplementation(project(":compiler:cli-jvm:javac-integration"))
 
     otherCompilerModules.forEach {
         testCompileOnly(project(it))
@@ -106,17 +103,6 @@ projectTests {
                 classpath.from(testSourceSet.output.classesDirs)
             }
         )
-        /*testInputsCheck {
-            extraPermissions.addAll(
-                "permission java.io.FilePermission \"\$JDK_1_8, \$JDK_1_8\", \"read\";",
-                "permission java.io.FilePermission \"abacaba\", \"read\";",
-                "permission java.io.FilePermission \"/non-existing-path\", \"read\";",
-                "permission java.io.FilePermission \"not/existing/path\", \"read\";",
-                "permission java.io.FilePermission \"non-existing-path.jar\", \"read\";",
-                "permission java.io.FilePermission \"path/to/nonexistent.kts\", \"read\";",
-                "permission java.util.PropertyPermission \"kotlin.language.settings\", \"write\";",
-            )
-        }*/
         addClasspathProperty(antLauncherJar, "kotlin.ant.classpath")
         systemProperty("kotlin.ant.launcher.class", "org.apache.tools.ant.Main")
 

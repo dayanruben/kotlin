@@ -206,12 +206,10 @@ include(
     ":compiler:backend",
     ":compiler:plugin-api",
     ":compiler:java-direct",
-    ":compiler:javac-wrapper",
     ":compiler:cli:cli-arguments-generator",
     ":compiler:cli-base",
     ":compiler:cli",
     ":compiler:cli-jvm",
-    ":compiler:cli-jvm:javac-integration",
     ":compiler:cli-js",
     ":compiler:cli-jklib",
     ":compiler:cli-metadata",
@@ -523,7 +521,6 @@ include(
     ":compiler:fir:fir-js",
     ":compiler:fir:fir-native",
     ":compiler:fir:modularized-tests",
-    ":compiler:fir:dump",
     ":compiler:fir:checkers",
     ":compiler:fir:checkers:checkers.jvm",
     ":compiler:fir:checkers:checkers.js",
@@ -806,7 +803,6 @@ project(":kotlin-preloader").projectDir = File("$rootDir/compiler/preloader")
 project(":kotlin-build-common").projectDir = File("$rootDir/build-common")
 project(":compiler:cli-base").projectDir = File("$rootDir/compiler/cli/cli-base")
 project(":compiler:cli-jvm").projectDir = File("$rootDir/compiler/cli/cli-jvm")
-project(":compiler:cli-jvm:javac-integration").projectDir = File("$rootDir/compiler/cli/cli-jvm/javac-integration")
 project(":compiler:cli-js").projectDir = File("$rootDir/compiler/cli/cli-js")
 project(":compiler:cli-metadata").projectDir = File("$rootDir/compiler/cli/cli-metadata")
 project(":compiler:cli-jklib").projectDir = File("$rootDir/compiler/cli/cli-jklib")
@@ -1070,5 +1066,3 @@ if (buildProperties.isKotlinNativeEnabled.get()) {
     include(":native:native.tests:cli-tests")
     include(":kotlin-native:tools:minidump-analyzer")
 }
-
-include("compiler:test-security-manager")

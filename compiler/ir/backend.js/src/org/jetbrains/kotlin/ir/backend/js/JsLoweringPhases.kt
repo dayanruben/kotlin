@@ -207,7 +207,7 @@ val jsLowerings: List<NamedCompilerPhase<JsIrBackendContext, IrModuleFragment, I
     ::RangeContainsLowering,
     ::ForLoopsLowering,
     ::PrimitiveCompanionLowering,
-    ::PropertyLazyInitLowering,
+    ::JsPropertyLazyInitLowering,
     ::RemoveInitializersForLazyProperties,
     ::JsPropertyAccessorInlineLowering,
     ::CopyAccessorBodyLowerings,
@@ -257,5 +257,6 @@ val optimizationLoweringList: List<NamedCompilerPhase<JsIrBackendContext, IrModu
     ::PurifyObjectInstanceGettersLowering,
     ::InlineObjectsWithPureInitializationLowering,
     ::MoveCallableFactoriesToDeclarationsLowering,
-    ::DeduplicateCallableReferenceFactoriesLowering
+    ::DeduplicateCallableReferenceFactoriesLowering,
+    ::WhileConditionFoldingLowering,
 )

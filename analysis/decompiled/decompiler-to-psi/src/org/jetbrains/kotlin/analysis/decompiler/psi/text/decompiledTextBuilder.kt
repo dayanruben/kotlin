@@ -49,7 +49,7 @@ internal fun buildDecompiledText(fileStub: KotlinFileStubImpl): String = buildIn
         }
 
         override fun visitClassOrObject(classOrObject: KtClassOrObject) {
-            withSuffix(" ") { process(classOrObject.modifierList) }
+            printDeclarationModifierList(classOrObject.modifierList)
             when (classOrObject) {
                 is KtObjectDeclaration -> append("object")
                 is KtClass -> when {
@@ -111,12 +111,12 @@ internal fun buildDecompiledText(fileStub: KotlinFileStubImpl): String = buildIn
         }
 
         override fun visitEnumEntry(enumEntry: KtEnumEntry) {
-            withSuffix(" ") { process(enumEntry.modifierList) }
+            printDeclarationModifierList(enumEntry.modifierList)
             append(enumEntry.name?.quoteIfNeeded())
         }
 
         override fun visitNamedFunction(function: KtNamedFunction) {
-            withSuffix(" ") { process(function.modifierList) }
+            printDeclarationModifierList(function.modifierList)
             append("fun ")
             withSuffix(" ") { process(function.typeParameterList) }
             withSuffix(".") {
@@ -150,7 +150,7 @@ internal fun buildDecompiledText(fileStub: KotlinFileStubImpl): String = buildIn
         }
 
         override fun visitTypeAlias(typeAlias: KtTypeAlias) {
-            withSuffix(" ") { process(typeAlias.modifierList) }
+            printDeclarationModifierList(typeAlias.modifierList)
             append("typealias ")
             append(typeAlias.name?.quoteIfNeeded())
             typeAlias.typeParameterList?.accept(this)
@@ -159,7 +159,13 @@ internal fun buildDecompiledText(fileStub: KotlinFileStubImpl): String = buildIn
         }
 
         override fun visitConstructor(constructor: KtConstructor<*>) {
-            withSuffix(" ") { process(constructor.modifierList) }
+            if (constructor is KtSecondaryConstructor) {
+                printDeclarationModifierList(constructor.modifierList)
+            } else {
+                // A primary constructor is printed on the same line as its class
+                withSuffix(" ") { process(constructor.modifierList) }
+            }
+
             append("constructor")
             constructor.valueParameterList?.accept(this)
             if (constructor is KtSecondaryConstructor) {
@@ -435,7 +441,7 @@ internal fun buildDecompiledText(fileStub: KotlinFileStubImpl): String = buildIn
         }
 
         override fun visitProperty(property: KtProperty) {
-            withSuffix(" ") { process(property.modifierList) }
+            printDeclarationModifierList(property.modifierList)
 
             if (property.isVar) {
                 append("var ")
@@ -477,7 +483,7 @@ internal fun buildDecompiledText(fileStub: KotlinFileStubImpl): String = buildIn
         }
 
         override fun visitPropertyAccessor(accessor: KtPropertyAccessor) {
-            withSuffix(" ") { process(accessor.modifierList) }
+            printDeclarationModifierList(accessor.modifierList)
             if (accessor.isGetter) {
                 append("get")
             } else {
@@ -529,10 +535,31 @@ internal fun buildDecompiledText(fileStub: KotlinFileStubImpl): String = buildIn
         override fun visitModifierList(list: KtModifierList) {
             appendBlocks(
                 separator = " ",
-                { process(list.contextParameterList) },
                 { printAnnotations(list) },
+                { process(list.contextParameterList) },
                 { printModifiers(list) },
             )
+        }
+
+        /**
+         * Prints the modifier list of a declaration, unlike [visitModifierList] which is also used for types.
+         *
+         * Annotations are printed one per line: a compiled declaration may have a lot of them, and their arguments
+         * are rendered with fully qualified names, so keeping everything on a single line makes the declaration
+         * itself hard to spot.
+         */
+        fun printDeclarationModifierList(list: KtModifierList?) {
+            if (list == null) return
+
+            withSuffix("\n") {
+                appendBlocks(
+                    separator = "\n",
+                    { printAnnotations(list, separator = "\n") },
+                    { process(list.contextParameterList) },
+                )
+            }
+
+            withSuffix(" ") { printModifiers(list) }
         }
 
         override fun visitContextParameterList(contextParameterList: KtContextParameterList) {
@@ -553,14 +580,14 @@ internal fun buildDecompiledText(fileStub: KotlinFileStubImpl): String = buildIn
 
         override fun visitReferenceExpression(expression: KtReferenceExpression) {
             if (expression is KtSimpleNameExpression) {
-                append(expression.getReferencedName())
+                append(expression.getReferencedName().quoteIfNeeded())
             } else {
                 visitElement(expression)
             }
         }
 
-        fun printAnnotations(container: KtAnnotationsContainer) {
-            appendCollection(container.annotationEntries, separator = " ", skipIfEmpty = true) {
+        fun printAnnotations(container: KtAnnotationsContainer, separator: String = " ") {
+            appendCollection(container.annotationEntries, separator = separator, skipIfEmpty = true) {
                 process(it)
             }
         }
@@ -583,6 +610,69 @@ internal fun buildDecompiledText(fileStub: KotlinFileStubImpl): String = buildIn
             }
 
             annotationEntry.typeReference?.accept(this)
+            process(annotationEntry.valueArgumentList)
+        }
+
+        override fun visitValueArgumentList(list: KtValueArgumentList) {
+            appendCollection(list.arguments, prefix = "(", postfix = ")") {
+                process(it)
+            }
+        }
+
+        override fun visitArgument(argument: KtValueArgument) {
+            withSuffix(" = ") { process(argument.getArgumentName()?.referenceExpression) }
+            process(argument.getArgumentExpression())
+        }
+
+        override fun visitTypeArgumentList(typeArgumentList: KtTypeArgumentList) {
+            appendCollection(typeArgumentList.arguments, prefix = "<", postfix = ">") {
+                appendBlocks(
+                    separator = " ",
+                    { it.projectionKind.token?.value?.let(::append) },
+                    { process(it.typeReference) },
+                )
+            }
+        }
+
+        override fun visitConstantExpression(expression: KtConstantExpression) {
+            append(expression.text)
+        }
+
+        override fun visitStringTemplateExpression(expression: KtStringTemplateExpression) {
+            append('"')
+            for (entry in expression.entries) {
+                append(entry.text)
+            }
+
+            append('"')
+        }
+
+        override fun visitPrefixExpression(expression: KtPrefixExpression) {
+            append(expression.operationReference.getReferencedName())
+            process(expression.baseExpression)
+        }
+
+        override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
+            process(expression.receiverExpression)
+            append('.')
+            process(expression.selectorExpression)
+        }
+
+        override fun visitCallExpression(expression: KtCallExpression) {
+            process(expression.calleeExpression)
+            process(expression.typeArgumentList)
+            process(expression.valueArgumentList)
+        }
+
+        override fun visitClassLiteralExpression(expression: KtClassLiteralExpression) {
+            process(expression.receiverExpression)
+            append("::class")
+        }
+
+        override fun visitCollectionLiteralExpression(expression: KtCollectionLiteralExpression) {
+            appendCollection(expression.getInnerExpressions(), prefix = "[", postfix = "]") {
+                process(it)
+            }
         }
 
         override fun visitElement(element: PsiElement) {
