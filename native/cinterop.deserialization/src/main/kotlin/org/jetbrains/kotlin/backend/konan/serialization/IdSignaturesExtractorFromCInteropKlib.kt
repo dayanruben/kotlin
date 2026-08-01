@@ -39,6 +39,9 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.types.error.ErrorModuleDescriptor
 import org.jetbrains.kotlin.utils.mapToSetOrEmpty
+import kotlin.metadata.ClassName
+import kotlin.metadata.KmAnnotation
+import kotlin.metadata.KmAnnotationArgument
 import kotlin.metadata.KmClass
 import kotlin.metadata.KmClassifier
 import kotlin.metadata.KmType
@@ -54,7 +57,7 @@ class IdSignaturesExtractorFromCInteropKlib(private val library: KotlinLibrary) 
 
     override fun extractAllPublicSignatures(): ExtractedSignatures {
         val [allReferencedClasses: Set<ClassId>, metadataModule] = readMetadataModule(
-            loadOnlyTopLevelReferencedSignatures = false
+            loadOnlyTopLevelReferencedClassIds = false
         )
 
         // All declared classes, including nested classes/companion objects, etc.
@@ -100,7 +103,7 @@ class IdSignaturesExtractorFromCInteropKlib(private val library: KotlinLibrary) 
 
     override fun extractOnlyTopLevelPublicSignatures(): ExtractedSignatures {
         val [onlyTopLevelReferencedClasses, metadataModule] = readMetadataModule(
-            loadOnlyTopLevelReferencedSignatures = true
+            loadOnlyTopLevelReferencedClassIds = true
         )
 
         val transformer = createTransformer { null }
@@ -131,8 +134,8 @@ class IdSignaturesExtractorFromCInteropKlib(private val library: KotlinLibrary) 
         )
     }
 
-    private fun readMetadataModule(loadOnlyTopLevelReferencedSignatures: Boolean): Pair<Set<ClassId>, KlibModuleMetadata> {
-        val strategy = KlibModuleFragmentReadStrategyImpl(loadOnlyTopLevelReferencedSignatures)
+    private fun readMetadataModule(loadOnlyTopLevelReferencedClassIds: Boolean): Pair<Set<ClassId>, KlibModuleMetadata> {
+        val strategy = KlibModuleFragmentReadStrategyImpl(loadOnlyTopLevelReferencedClassIds)
 
         val metadataModule = KlibModuleMetadata.readLenient(
             library = MetadataLibraryProviderImpl(library = library),
@@ -183,22 +186,45 @@ class IdSignaturesExtractorFromCInteropKlib(private val library: KotlinLibrary) 
     }
 
     private class KlibModuleFragmentReadStrategyImpl(
-        private val loadOnlyTopLevelReferencedSignatures: Boolean
+        private val loadOnlyTopLevelReferencedClassIds: Boolean
     ) : KlibModuleFragmentReadStrategy {
 
         val referencedClassIds: Set<ClassId>
             field = hashSetOf()
 
         override fun processType(type: KmType) {
-            val className = (type.classifier as? KmClassifier.Class)?.name ?: return
+            processReferencedClassName((type.classifier as? KmClassifier.Class)?.name ?: return)
+        }
 
-            if (!className.isLocalClassName()) {
-                // Extract class ID from a metadata type.
-                val classId = ClassId.fromString(className)
+        override fun processAnnotation(annotation: KmAnnotation) {
+            processReferencedClassName(annotation.className)
+            annotation.arguments.values.forEach(::processAnnotationArgument)
+        }
 
-                if (!loadOnlyTopLevelReferencedSignatures || !classId.isNestedClass) {
-                    referencedClassIds += classId
-                }
+        private fun processAnnotationArgument(argument: KmAnnotationArgument) {
+            when (argument) {
+                is KmAnnotationArgument.LiteralValue<*> -> /* nothing to do */ Unit
+                is KmAnnotationArgument.AnnotationValue -> processAnnotation(argument.annotation)
+                is KmAnnotationArgument.ArrayValue -> argument.elements.forEach(::processAnnotationArgument)
+                is KmAnnotationArgument.KClassValue -> processReferencedClassName(argument.className)
+                is KmAnnotationArgument.ArrayKClassValue -> processReferencedClassName(argument.className)
+                is KmAnnotationArgument.EnumValue -> processReferencedClassName(
+                    if (loadOnlyTopLevelReferencedClassIds)
+                        argument.enumClassName
+                    else
+                        argument.enumClassName + "." + argument.enumEntryName
+                )
+            }
+        }
+
+        private fun processReferencedClassName(className: ClassName) {
+            if (className.isLocalClassName()) return
+
+            // Extract class ID from a String.
+            val classId = ClassId.fromString(className)
+
+            if (!loadOnlyTopLevelReferencedClassIds || !classId.isNestedClass) {
+                referencedClassIds += classId
             }
         }
     }

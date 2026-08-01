@@ -280,9 +280,10 @@ class FirElementSerializer private constructor(
                 builder.inlineClassUnderlyingPropertyName = getSimpleNameIndex(representation.underlyingPropertyName)
 
                 val property = callableMembers.single {
-                    it is FirProperty && it.receiverParameter == null && it.contextParameters.isEmpty() &&
-                            it.name == representation.underlyingPropertyName
+                    it is FirProperty && it.fromPrimaryConstructor == true
                 }
+
+                assert((property as FirProperty).name == representation.underlyingPropertyName)
 
                 if (!property.visibility.isPublicAPI) {
                     if (useTypeTable()) {
@@ -902,7 +903,7 @@ class FirElementSerializer private constructor(
         if (parameter.isVararg) {
             val delegatedTypeAttrs = (parameter.returnTypeRef as? FirResolvedTypeRef)?.delegatedTypeRef?.coneTypeOrNull?.attributes
             val varargElementType = parameter.returnTypeRef.coneType.varargElementType().applyIf(delegatedTypeAttrs != null) {
-                withAttributes(delegatedTypeAttrs!!)
+                withAttributes(delegatedTypeAttrs)
             }
 
             if (useTypeTable()) {

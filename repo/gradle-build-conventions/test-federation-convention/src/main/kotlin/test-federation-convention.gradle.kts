@@ -1,4 +1,3 @@
-import org.gradle.api.internal.tasks.testing.junit.JUnitTestFramework
 import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFramework
 import org.jetbrains.kotlin.testFederation.*
 
@@ -13,12 +12,12 @@ val testFederationRuntime = configurations.detachedConfiguration(dependencies.pr
 }.incoming.files
 
 tasks.withType<Test>().configureEach {
-    val currentDomain = project.testFederationDomain
+    val currentDomain = project.testFederationDomains
     val affectedDomains = project.testFederationAffectedDomains
     val areNightlyTestsEnabled = project.areNightlyTestsEnabled
 
     val formattedAffectedDomains = affectedDomains.map { domains -> domains.toArgumentString() }
-    val smokeTestConfig = project.provider { smokeTestConfig }.orElse(SmokeTestConfig.Default)
+    val smokeTestConfig = smokeTestConfig
 
     /* If the task itself is marked as 'isSmokeTest', then it always has to be fully executed */
     val testFederationMode = project.testFederationMode

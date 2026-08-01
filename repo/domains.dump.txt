@@ -12,7 +12,6 @@ Compiler:
  - compiler/backend.common.jvm
  - compiler/build.gradle.kts
  - compiler/cli
- - compiler/compiler-runner
  - compiler/compiler.version
  - compiler/config
  - compiler/config.jvm
@@ -23,11 +22,21 @@ Compiler:
  - compiler/frontend.common-psi
  - compiler/frontend.common.jvm
  - compiler/frontend.java
- - compiler/ir
+ - compiler/ir/ReadMe.md
+ - compiler/ir/backend.common
+ - compiler/ir/backend.jvm
+ - compiler/ir/code-rules.md
+ - compiler/ir/ir.actualization
+ - compiler/ir/ir.inline
+ - compiler/ir/ir.psi2ir
+ - compiler/ir/ir.tree
+ - compiler/ir/ir.validation
+ - compiler/ir/serialization.common
+ - compiler/ir/serialization.jklib
+ - compiler/ir/serialization.jvm
  - compiler/java-direct
  - compiler/jklib.tests
  - compiler/multiplatform-parsing
- - compiler/plugin-api
  - compiler/preloader
  - compiler/psi/parser
  - compiler/resolution
@@ -77,9 +86,12 @@ Compiler:
  - jps
 
 Wasm:
+ - compiler/ir/backend.wasm
  - wasm
 
 Js:
+ - compiler/ir/backend.js
+ - compiler/ir/serialization.js
  - js/ReadMe.md
  - js/js.ast
  - js/js.config
@@ -97,6 +109,9 @@ Js:
  - js/typescript-printer
 
 Native:
+ - compiler/ir/backend.native
+ - compiler/ir/ir.objcinterop
+ - compiler/ir/serialization.native
  - kotlin-native
  - native/analysis-api-based-export-common
  - native/analysis-api-based-test-utils
@@ -117,21 +132,12 @@ Native:
  - native/unsafe-mem
  - native/utils
 
-Js, Wasm:
- - js/js.translator/testData
-
-Compiler, CoreLibs:
- - core/descriptors.runtime
- - core/metadata
- - core/metadata.jvm
- - core/reflection.common.jvm
- - core/reflection.jvm
-
 CoreLibs:
  - libraries/kotlin.test
  - libraries/kotlinx-metadata
  - libraries/reflect
  - libraries/stdlib
+ - libraries/tools/jdk-api-validator
  - libraries/tools/kotlin-annotations-jvm
 
 AnalysisApi:
@@ -158,6 +164,7 @@ BuildToolsApi:
  - compiler/build-tools/kotlin-build-tools-jdk-utils
  - compiler/build-tools/kotlin-build-tools-version-coverage-check
  - compiler/build-tools/util-kotlinpoet
+ - compiler/compiler-runner
  - compiler/compiler-runner-unshaded
  - compiler/daemon
  - compiler/incremental-compilation-impl
@@ -166,6 +173,7 @@ SwiftExport:
  - native/swift
 
 CompilerPlugins:
+ - compiler/plugin-api
  - plugins/allopen
  - plugins/assign-plugin
  - plugins/atomicfu
@@ -182,13 +190,6 @@ CompilerPlugins:
  - plugins/power-assert
  - plugins/sam-with-receiver
  - plugins/test-plugins
-
-Compiler, CompilerPlugins:
- - plugins/plugin-sandbox
- - plugins/scripting
-
-Js, SwiftExport:
- - libraries/tools/analysis-api-based-klib-reader
 
 Gradle:
  - libraries/tools/gradle
@@ -273,7 +274,6 @@ Unknown:
  - libraries/tools/binary-compatibility-validator
  - libraries/tools/dukat
  - libraries/tools/ide-plugin-dependencies-validator
- - libraries/tools/jdk-api-validator
  - libraries/tools/js-plain-objects
  - libraries/tools/klib-abi-reader
  - libraries/tools/kotlin-allopen
@@ -321,8 +321,25 @@ Unknown:
  - tests
  - third-party
 
-BuildToolsApi, Compiler, Gradle:
- - build-common
+Js, Wasm:
+ - js/js.translator/testData
+
+Compiler, CoreLibs:
+ - core/descriptors.runtime
+ - core/metadata
+ - core/metadata.jvm
+ - core/reflection.common.jvm
+ - core/reflection.jvm
+
+Js, SwiftExport:
+ - libraries/tools/analysis-api-based-klib-reader
+
+AnalysisApi, CompilerPlugins:
+ - plugins/plugin-sandbox
+ - plugins/scripting
 
 BuildToolsApi, Gradle:
  - compiler/build-tools/kotlin-build-statistics
+
+BuildToolsApi, Compiler, Gradle:
+ - build-common

@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
@@ -200,10 +199,6 @@ public interface KaTypeProvider : KaSessionComponent {
     @KaExperimentalApi
     public val KaValueParameterSymbol.varargArrayType: KaType?
 
-    @KaNoContextParameterBridgeRequired
-    @Deprecated("Use `defaultType` from `KaClassifierSymbol` directly", level = DeprecationLevel.HIDDEN)
-    public val KaNamedClassSymbol.defaultType: KaType get() = defaultType
-
     /**
      * The common supertype of the given [KaType]s.
      *
@@ -258,7 +253,7 @@ public interface KaTypeProvider : KaSessionComponent {
     @Deprecated(
         "Use `withNullability(Boolean)` instead",
         ReplaceWith("withNullability(newNullability.isNullable)"),
-        level = DeprecationLevel.ERROR
+        level = DeprecationLevel.HIDDEN
     )
     @Suppress("DEPRECATION_ERROR")
     public fun KaType.withNullability(newNullability: KaTypeNullability): KaType =
