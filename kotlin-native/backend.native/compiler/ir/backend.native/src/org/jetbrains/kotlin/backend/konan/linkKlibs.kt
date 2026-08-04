@@ -4,7 +4,6 @@ import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.backend.common.IrBuiltInsForLinker
 import org.jetbrains.kotlin.backend.common.linkage.issues.checkNoUnboundSymbols
 import org.jetbrains.kotlin.backend.common.linkage.partial.partialLinkageConfig
-import org.jetbrains.kotlin.backend.common.overrides.FakeOverrideChecker
 import org.jetbrains.kotlin.backend.common.phaser.KotlinBackendIrHolder
 import org.jetbrains.kotlin.backend.common.serialization.DeserializationStrategy
 import org.jetbrains.kotlin.backend.common.serialization.IrModuleDeserializer
@@ -26,7 +25,6 @@ import org.jetbrains.kotlin.ir.objcinterop.IrObjCOverridabilityCondition
 import org.jetbrains.kotlin.ir.util.ExternalDependenciesGenerator
 import org.jetbrains.kotlin.ir.util.ReferenceSymbolTable
 import org.jetbrains.kotlin.ir.util.SymbolTable
-import org.jetbrains.kotlin.konan.config.fakeOverrideValidator
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.isHeader
 import org.jetbrains.kotlin.library.metadata.DeserializedKlibModuleOrigin
@@ -105,10 +103,6 @@ internal fun LinkKlibsContext.linkKlibs(
 
     val modules = irLinker.modules
 
-    if (config.configuration.fakeOverrideValidator) {
-        val fakeOverrideChecker = FakeOverrideChecker(KonanManglerIr, KonanManglerDesc)
-        modules.values.forEach { fakeOverrideChecker.check(it) }
-    }
     // IR linker deserializes files in the order they lie on the disk, which might be inconvenient,
     // so to make the pipeline more deterministic, the files are to be sorted.
     // This concerns in the first place global initializers order for the eager initialization strategy,
@@ -123,10 +117,6 @@ internal fun LinkKlibsContext.linkKlibs(
             irBuiltIns.kFunctionN(arity)
             irBuiltIns.kSuspendFunctionN(arity)
         }
-    }
-
-    modules.values.forEach { module ->
-        module.files.forEach { it.metadata = DescriptorMetadataSource.File(listOf(module.descriptor)) }
     }
 
     return if (libraryToCache == null) {
