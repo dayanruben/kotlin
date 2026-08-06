@@ -4560,7 +4560,7 @@ private fun KaDiagnosticConverterBuilder.addConversions102() {
         UnresolvedReferenceImpl(
             firDiagnostic.a,
             firDiagnostic.b,
-            firDiagnostic.c?.let { firSymbolBuilder.typeBuilder.buildKtType(it) },
+            firDiagnostic.c?.let { firSymbolBuilder.typeBuilder.buildKtType(it.type) },
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -7570,6 +7570,7 @@ private fun KaDiagnosticConverterBuilder.addConversions170() {
     add(FirErrors.UNRESOLVED_REFERENCE_WRONG_RECEIVER) { firDiagnostic ->
         UnresolvedReferenceWrongReceiverImpl(
             firSymbolBuilder.buildSymbol(firDiagnostic.a),
+            firDiagnostic.b,
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

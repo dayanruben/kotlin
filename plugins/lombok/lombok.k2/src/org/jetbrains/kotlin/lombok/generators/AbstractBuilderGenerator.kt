@@ -49,13 +49,14 @@ import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.jvm.FirJavaTypeRef
 import org.jetbrains.kotlin.load.java.structure.*
 import org.jetbrains.kotlin.lombok.LombokNames
-import org.jetbrains.kotlin.lombok.LombokNames.TABLE
+import org.jetbrains.kotlin.lombok.LombokNames.TABLE_ID
 import org.jetbrains.kotlin.lombok.config.ConeLombokAnnotations.AbstractBuilder
 import org.jetbrains.kotlin.lombok.config.ConeLombokAnnotations.Singular
 import org.jetbrains.kotlin.lombok.config.LombokService
 import org.jetbrains.kotlin.lombok.config.lombokService
 import org.jetbrains.kotlin.lombok.generators.kotlin.buildJvmStaticAnnotationCallOrError
 import org.jetbrains.kotlin.lombok.generators.kotlin.createConstructorIfGeneratedCompanion
+import org.jetbrains.kotlin.lombok.generators.kotlin.findAnnotationOnPropertyOrField
 import org.jetbrains.kotlin.lombok.generators.kotlin.isCompanionNeeded
 import org.jetbrains.kotlin.lombok.generators.kotlin.needsConstructorIfGeneratedCompanion
 import org.jetbrains.kotlin.lombok.java.*
@@ -74,6 +75,8 @@ sealed class BuilderDeclarationType {
     }
 
     object Field : BuilderDeclarationType()
+
+    class DefaultFlagField(val fieldName: Name) : BuilderDeclarationType()
 
     sealed class Function : BuilderDeclarationType() {
         object Setter : Function()
@@ -324,6 +327,8 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
                 val singularAnnotation = item.getAnnotationByClassId(LombokNames.SINGULAR_ID, session)
                     ?: (item.symbol as? FirPropertySymbol)?.backingFieldSymbol?.getAnnotationByClassId(LombokNames.SINGULAR_ID, session)
                 val singular: Singular? = singularAnnotation?.let { Singular.extract(it, session) }
+                val hasBuilderDefault = (item.symbol as? FirPropertySymbol)
+                    ?.findAnnotationOnPropertyOrField(LombokNames.BUILDER_DEFAULT_ID, session) != null
 
                 generatedVariables.addIfNonClashing(item.name, existingVariableNames) {
                     if (builderSymbol.hasJavaOrigin) {
@@ -359,6 +364,21 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
                             key = BuilderGeneratorKey(BuilderDeclarationType.Field),
                             name = it,
                             returnType = fieldType,
+                            isVal = false,
+                        ) {
+                            modality = Modality.FINAL
+                            visibility = Visibilities.Private
+                        }.symbol
+                    }
+                }
+
+                if (!builderSymbol.hasJavaOrigin && hasBuilderDefault && singular == null) {
+                    generatedVariables.addIfNonClashing(Name.identifier(item.name.identifier + $$"$set"), existingVariableNames) {
+                        createMemberProperty(
+                            owner = builderSymbol,
+                            key = BuilderGeneratorKey(BuilderDeclarationType.DefaultFlagField(item.name)),
+                            name = it,
+                            returnType = session.builtinTypes.booleanType.coneType,
                             isVal = false,
                         ) {
                             modality = Modality.FINAL
@@ -654,9 +674,15 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
                 StandardClassIds.List, StandardClassIds.MutableList,
                 StandardClassIds.Collection, StandardClassIds.MutableCollection,
                 StandardClassIds.Iterable, StandardClassIds.MutableIterable,
+                LombokNames.IMMUTABLE_LIST_ID, LombokNames.IMMUTABLE_COLLECTION_ID,
                     -> StandardClassIds.MutableList
-                StandardClassIds.Set, StandardClassIds.MutableSet -> StandardClassIds.MutableSet
-                StandardClassIds.Map, StandardClassIds.MutableMap -> StandardClassIds.MutableMap
+                StandardClassIds.Set, StandardClassIds.MutableSet,
+                LombokNames.IMMUTABLE_SET_ID, LombokNames.IMMUTABLE_SORTED_SET_ID,
+                    -> StandardClassIds.MutableSet
+                StandardClassIds.Map, StandardClassIds.MutableMap,
+                LombokNames.IMMUTABLE_MAP_ID, LombokNames.IMMUTABLE_BI_MAP_ID, LombokNames.IMMUTABLE_SORTED_MAP_ID,
+                    -> StandardClassIds.MutableMap
+                LombokNames.IMMUTABLE_TABLE_ID -> TABLE_ID
                 else -> null
             }
         return mutableCollectionClassId?.constructClassLikeType(
@@ -675,33 +701,37 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
     ) {
         val typeRef = item.returnTypeRef
 
-        val typeName = when (typeRef) {
-            is FirJavaTypeRef -> ((typeRef.type as? JavaClassifierType)?.classifier as? JavaClass)?.fqName?.asString()
-            is FirResolvedTypeRef -> typeRef.coneType.classId?.asFqNameString()
+        val typeId = when (typeRef) {
+            is FirJavaTypeRef -> ((typeRef.type as? JavaClassifierType)?.classifier as? JavaClass)?.fqName?.let(ClassId::topLevel)
+            is FirResolvedTypeRef -> typeRef.coneType.classId
             else -> return
         }
 
-        val nameInSingularForm = (singular.singularName ?: Singulars.autoSingularize(item.name.identifier))?.let(Name::identifier) ?: return
+        // Early return and report `CANNOT_SINGULARIZE_NAME` if explicit name isn't specified and singularization fails
+        val nameInSingularForm = (singular.singularName
+            ?: runIf(session.lombokService.config.singularAuto) { Singulars.autoSingularize(item.name.identifier) })
+            ?.let(Name::identifier)
+            ?: return
 
         val valueParameters: List<ConeLombokValueParameter>
         val collectionType: SingularAddAllParameterType
         val typeArgumentRefs: List<FirTypeRef>
 
-        when (typeName) {
-            in LombokNames.SUPPORTED_COLLECTIONS -> {
+        when (typeId) {
+            in LombokNames.SUPPORTED_COLLECTION_IDS -> {
                 val parameterTypeRef = typeRef.parameterType(0, substitutor) ?: return
                 valueParameters = listOf(
                     ConeLombokValueParameter(nameInSingularForm, parameterTypeRef)
                 )
 
-                collectionType = when (typeName) {
-                    in LombokNames.SUPPORTED_GUAVA_COLLECTIONS -> SingularAddAllParameterType.Iterable
+                collectionType = when (typeId) {
+                    in LombokNames.SUPPORTED_GUAVA_COLLECTION_IDS -> SingularAddAllParameterType.Iterable
                     else -> SingularAddAllParameterType.Collection
                 }
                 typeArgumentRefs = listOf(parameterTypeRef)
             }
 
-            in LombokNames.SUPPORTED_MAPS -> {
+            in LombokNames.SUPPORTED_MAP_IDS -> {
                 val keyTypeRef = typeRef.parameterType(0, substitutor) ?: return
                 val valueTypeRef = typeRef.parameterType(1, substitutor) ?: return
                 valueParameters = listOf(
@@ -713,7 +743,7 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
                 typeArgumentRefs = listOf(keyTypeRef, valueTypeRef)
             }
 
-            in LombokNames.SUPPORTED_TABLES -> {
+            in LombokNames.SUPPORTED_TABLE_IDS -> {
                 val rowKeyTypeRef = typeRef.parameterType(0, substitutor) ?: return
                 val columnKeyTypeRef = typeRef.parameterType(1, substitutor) ?: return
                 val valueType = typeRef.parameterType(2, substitutor) ?: return
@@ -728,10 +758,12 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
                 typeArgumentRefs = listOf(rowKeyTypeRef, columnKeyTypeRef, valueType)
             }
 
-            else -> return
+            else -> return // Early return and report `UNSUPPORTED_SINGULAR_TYPE`
         }
 
         val builderType = getBuilderType(builderSymbol)?.toFirResolvedTypeRef() ?: return
+
+        // Early return in case of `AccessLevel.NONE` is used (it means not generating anything at all)
         val visibility = builder.builderFunctionsVisibility ?: return
 
         addIfNonClashing(nameInSingularForm.toMethodName(builder), existingFunctionNames) {
@@ -765,7 +797,7 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
                     SingularAddAllParameterType.Iterable -> StandardClassIds.Iterable
                     SingularAddAllParameterType.Collection -> StandardClassIds.Collection
                     SingularAddAllParameterType.Map -> StandardClassIds.Map
-                    SingularAddAllParameterType.Table -> ClassId.topLevel(TABLE)
+                    SingularAddAllParameterType.Table -> TABLE_ID
                 }
                 baseType.constructClassLikeType(
                     typeArgumentRefs.map { (it as FirResolvedTypeRef).coneType }.toTypedArray(),

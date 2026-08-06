@@ -34,8 +34,6 @@ org.jetbrains.kotlin.psi.stubs.elements.KtConstantExpressionElementType.Companio
 org.jetbrains.kotlin.psi.stubs.elements.KtContextReceiverElementType
 org.jetbrains.kotlin.psi.stubs.elements.KtContractEffectElementType
 org.jetbrains.kotlin.psi.stubs.elements.KtContractEffectListElementType
-org.jetbrains.kotlin.psi.stubs.elements.KtDotQualifiedExpressionElementType
-org.jetbrains.kotlin.psi.stubs.elements.KtDotQualifiedExpressionElementType:constructor(String)
 org.jetbrains.kotlin.psi.stubs.elements.KtEnumEntrySuperClassReferenceExpressionElementType
 org.jetbrains.kotlin.psi.stubs.elements.KtFileElementType
 org.jetbrains.kotlin.psi.stubs.elements.KtFileStubBuilder
@@ -63,7 +61,6 @@ org.jetbrains.kotlin.psi.stubs.elements.KtScriptElementType
 org.jetbrains.kotlin.psi.stubs.elements.KtScriptInitializerElementType
 org.jetbrains.kotlin.psi.stubs.elements.KtSecondaryConstructorElementType
 org.jetbrains.kotlin.psi.stubs.elements.KtStringInterpolationPrefixElementType
-org.jetbrains.kotlin.psi.stubs.elements.KtStringTemplateExpressionElementType
 org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes:ANNOTATION
 org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes:ANNOTATION_ENTRY
@@ -111,6 +108,7 @@ org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes:MODIFIER_LIST
 org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes:NULL
 org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes:NULLABLE_TYPE
 org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes:OBJECT_DECLARATION
+org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes:OBJECT_LITERAL
 org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes:OPERATION_REFERENCE
 org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes:PACKAGE_DIRECTIVE
 org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes:PARENTHESIZED

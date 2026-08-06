@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.testFederation.TestBuildResult.TestResult
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
 import java.nio.file.Path
+import kotlin.collections.filterNot
 import kotlin.io.path.Path
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
@@ -248,6 +249,38 @@ class TestFederationFunctionalTest {
     }
 
     @Test
+    fun `test - build with test federation disabled - build with test federation enabled (full) and smoke+runAllTests - reuses build caches`(@TempDir cache: Path) {
+        val buildCacheArgs = buildCacheArgs(cache)
+
+        cleanTest()
+        runTestBuild(
+            mode = TestFederationMode.Full,
+            smokeTestConfig = "RunAllTests",
+            affected = Domain.entries.toTypedArray(),
+            additionalCliArgs = buildCacheArgs,
+            rerun = false,
+            testFederationEnabled = false
+        ).apply {
+            assertEquals(TaskOutcome.SUCCESS, buildResult.requireTask(":repo:test-federation-runtime:test").outcome)
+            cache.listDirectoryEntries().filterNot { it.name == "gc.properties" }.ifEmpty {
+                fail("No build cache entries produced after first build")
+            }
+        }
+
+        cleanTest()
+        runTestBuild(
+            mode = TestFederationMode.Smoke,
+            smokeTestConfig = "RunAllTests",
+            affected = Domain.entries.toTypedArray(),
+            additionalCliArgs = buildCacheArgs,
+            rerun = false,
+            testFederationEnabled = true
+        ).apply {
+            assertEquals(TaskOutcome.FROM_CACHE, buildResult.requireTask(":repo:test-federation-runtime:test").outcome)
+        }
+    }
+
+    @Test
     fun `test - build with test federation enabled - build in smoke mode - cant reuse caches`(@TempDir cache: Path) {
         val buildCacheArgs = buildCacheArgs(cache)
 
@@ -383,9 +416,15 @@ private fun runTestBuild(
     val tests = output.mapNotNull { line ->
         val match = testResultRegex.matchEntire(line) ?: return@mapNotNull null
         TestResult(match.groupValues[1], match.groupValues[2], match.groupValues[3])
-    }
 
-    return TestBuildResult(buildResult, tests.toSet())
+    }
+        /**
+         * Can be removed again after:
+         * https://youtrack.jetbrains.com/issue/KT-88303
+         */
+        .filterNot { it.status == "SKIPPED" }.toSet()
+
+    return TestBuildResult(buildResult, tests)
 }
 
 private fun cleanTest(): BuildResult {
