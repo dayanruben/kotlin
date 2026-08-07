@@ -52,6 +52,7 @@ import org.jetbrains.kotlin.ir.validation.checkers.expression.IrCrossFileFieldUs
 import org.jetbrains.kotlin.ir.validation.checkers.expression.IrValueAccessScopeChecker
 import org.jetbrains.kotlin.ir.validation.checkers.symbol.IrVisibilityChecker
 import org.jetbrains.kotlin.ir.validation.checkers.type.IrTypeParameterScopeChecker
+import org.jetbrains.kotlin.ir.validation.withBasicChecks
 import org.jetbrains.kotlin.ir.visitors.IrTransformer
 import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
@@ -514,7 +515,8 @@ private class Fir2IrPipeline(
             module,
             irBuiltIns,
             IrValidatorConfig(checkTreeConsistency = true, checkUnboundSymbols = true)
-                .withBasicFirstStageChecks()
+                .withBasicChecks()
+                .withVarargChecks()
                 //.withTypeChecks() // TODO: Re-enable checking types (KT-68663)
                 .withCheckers(
                     IrCallValueArgumentCountChecker,
@@ -524,20 +526,17 @@ private class Fir2IrPipeline(
                     IrVisibilityChecker.Strict,
                     IrClassSuperTypesChecker,
                 )
-                .withVarargChecks()
                 .applyIf(extension == null) {
                     // KT-80065: This checker is known to trigger on a lot of internal and external compiler plugins,
                     //  while most of them, somehow, work. It is disabled for now, not to cause too much breakage.
                     withCheckers(IrCallTypeArgumentCountChecker)
                 }
-                .applyIf(
+                .applyIf(validateForKlibSerialization) {
                     // On JVM we may sometimes generate non-private fields (KT-71243), and we allow plugins to do so too.
-                    validateForKlibSerialization
-                ) {
                     withCheckers(IrFieldVisibilityChecker)
                 }
                 .applyIf(validateForKlibSerialization) {
-                    // Serializing IrExpressionBody in IrFunction.body is not supported
+                    // Serializing IrExpressionBody in IrFunction.body is not supported.
                     withCheckers(IrExpressionBodyInFunctionChecker)
                 }
                 .withCheckersByName(

@@ -4,6 +4,7 @@
  */
 
 import org.gradle.api.Action
+import org.gradle.api.DefaultTask
 import org.gradle.api.Task
 import org.gradle.api.tasks.TaskContainer
 
@@ -21,8 +22,15 @@ fun Task.dependsOnAll(task: String, projects: List<String>) {
  * IntelliJ IDEA will recognize it as a test task and show the test execution UI.
  */
 fun TaskContainer.testLifecycleTask(name: String, action: Action<Task>) {
-    register(name) {
+    register(name, TestLifecycleTask::class.java) {
         extensions.extraProperties["idea.internal.test"] = "true"
         action.execute(this)
+    }
+}
+
+internal abstract class TestLifecycleTask : DefaultTask() {
+    init {
+        group = "verification"
+        description = "Lifecycle Test Task"
     }
 }

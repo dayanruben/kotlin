@@ -276,6 +276,7 @@ class KotlinCoreEnvironment private constructor(
             packagePartProviders,
             SingleJavaFileRootsIndex(singleJavaFileRoots),
             configuration.getBoolean(JVMConfigurationKeys.USE_PSI_CLASS_FILES_READING),
+            javaModuleFinder,
             perfManager,
         )
 
@@ -292,7 +293,7 @@ class KotlinCoreEnvironment private constructor(
             updateClasspath(roots.map { JavaSourceRoot(it, null) })
         })
 
-        project.setupHighestLanguageLevel(isValhallaSupportEnabled = configuration.languageVersionSettings.isValhallaSupportEnabled())
+        project.setupHighestLanguageLevel()
     }
 
     private fun collectAdditionalSources(project: MockProject) {
