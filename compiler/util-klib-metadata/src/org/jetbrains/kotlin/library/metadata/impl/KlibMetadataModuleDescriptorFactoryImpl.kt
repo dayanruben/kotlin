@@ -74,25 +74,7 @@ class KlibMetadataModuleDescriptorFactoryImpl(
         return moduleDescriptor
     }
 
-    override fun createCachedPackageFragmentProvider(
-        byteArrays: List<ByteArray>,
-        storageManager: StorageManager,
-        moduleDescriptor: ModuleDescriptor,
-        configuration: DeserializationConfiguration,
-        lookupTracker: LookupTracker
-    ): PackageFragmentProvider {
-        val deserializedPackageFragments = byteArrays.map { byteArray ->
-            KlibMetadataCachedPackageFragment(byteArray, storageManager, moduleDescriptor)
-        }
-
-        val provider = PackageFragmentProviderImpl(deserializedPackageFragments)
-
-        @OptIn(K1Deprecation::class)
-        return initializePackageFragmentProvider(provider, deserializedPackageFragments, storageManager,
-            moduleDescriptor, configuration, null, lookupTracker)
-    }
-
-    override fun createPackageFragmentProvider(
+    private fun createPackageFragmentProvider(
         library: KotlinLibrary,
         storageManager: StorageManager,
         moduleDescriptor: ModuleDescriptor,

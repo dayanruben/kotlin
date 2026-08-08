@@ -1500,6 +1500,12 @@ public class CompiledJvmStubsTestGenerated extends AbstractCompiledJvmStubsTest 
     }
 
     @Test
+    @TestMetadata("differentDefaultValues.kt")
+    public void testDifferentDefaultValues() {
+      run("differentDefaultValues.kt");
+    }
+
+    @Test
     @TestMetadata("forParameters.kt")
     public void testForParameters() {
       run("forParameters.kt");
@@ -1642,6 +1648,44 @@ public class CompiledJvmStubsTestGenerated extends AbstractCompiledJvmStubsTest 
       @TestMetadata("validExpressions.kt")
       public void testValidExpressions() {
         run("validExpressions.kt");
+      }
+    }
+
+    @Nested
+    @TestMetadata("compiler/psi/psi-impl/testData/psi/annotation/classes")
+    @TestDataPath("$PROJECT_ROOT")
+    public class Classes {
+      private void run(String fileName) {
+        runTest("compiler/psi/psi-impl/testData/psi/annotation/classes/" + fileName);
+      }
+
+      @Test
+      public void testAllFilesPresentInClasses() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/psi/psi-impl/testData/psi/annotation/classes"), Pattern.compile("^(.+)\\.(kt)$"), null, true);
+      }
+
+      @Test
+      @TestMetadata("annotated.kt")
+      public void testAnnotated() {
+        run("annotated.kt");
+      }
+
+      @Test
+      @TestMetadata("documented.kt")
+      public void testDocumented() {
+        run("documented.kt");
+      }
+
+      @Test
+      @TestMetadata("plain.kt")
+      public void testPlain() {
+        run("plain.kt");
+      }
+
+      @Test
+      @TestMetadata("withMembers.kt")
+      public void testWithMembers() {
+        run("withMembers.kt");
       }
     }
 

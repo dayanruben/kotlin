@@ -37,13 +37,11 @@ internal fun getExportedLibraries(
     configuration: CompilerConfiguration,
     resolvedLibraries: KotlinLibraryResolveResult,
     resolver: SearchPathResolver<KotlinLibrary>,
-    report: Boolean
 ): List<KotlinLibrary> = getFeaturedLibraries(
         configuration.exportedLibraries,
         resolvedLibraries,
         resolver,
-        if (report) FeaturedLibrariesReporter.forExportedLibraries(configuration) else FeaturedLibrariesReporter.Silent,
-        allowDefaultLibs = false
+        FeaturedLibrariesReporter.forExportedLibraries(configuration),
 )
 
 internal fun getIncludedLibraries(
@@ -54,7 +52,6 @@ internal fun getIncludedLibraries(
         includedLibraryFiles.toSet(),
         resolvedLibraries,
         FeaturedLibrariesReporter.forIncludedLibraries(configuration),
-        allowDefaultLibs = false
 )
 
 private sealed class FeaturedLibrariesReporter {
@@ -68,11 +65,6 @@ private sealed class FeaturedLibrariesReporter {
             isFromKotlinNativeDistribution -> "Default"
             else -> "Unknown kind"
         }
-
-    object Silent: FeaturedLibrariesReporter() {
-        override fun reportIllegalKind(library: KotlinLibrary) {}
-        override fun reportNotIncludedLibraries(includedLibraries: List<KotlinLibrary>, remainingFeaturedLibraries: Set<Path>) {}
-    }
 
     abstract class BaseReporter(val configuration: CompilerConfiguration) : FeaturedLibrariesReporter() {
         protected abstract fun illegalKindMessage(kind: String, libraryName: String): String
@@ -118,19 +110,9 @@ private sealed class FeaturedLibrariesReporter {
             "Following libraries are specified to be exported with -Xexport-library, but not included to the build:"
     }
 
-    private class CoveredLibraryReporter(configuration: CompilerConfiguration): BaseReporter(configuration) {
-        override fun illegalKindMessage(kind: String, libraryName: String): String =
-            "Cannot provide the code coverage for the $kind library $libraryName."
-
-        override fun notIncludedLibraryMessageTitle(): String =
-            "The code coverage is enabled for the following libraries, but they are not included to the build:"
-    }
-
     companion object {
         fun forExportedLibraries(configuration: CompilerConfiguration): FeaturedLibrariesReporter =
                 ExportedLibrariesReporter(configuration)
-        fun forCoveredLibraries(configuration: CompilerConfiguration): FeaturedLibrariesReporter =
-                CoveredLibraryReporter(configuration)
         fun forIncludedLibraries(configuration: CompilerConfiguration): FeaturedLibrariesReporter =
                 IncludedLibrariesReporter(configuration)
     }
@@ -141,19 +123,16 @@ private fun getFeaturedLibraries(
         resolvedLibraries: KotlinLibraryResolveResult,
         resolver: SearchPathResolver<KotlinLibrary>,
         reporter: FeaturedLibrariesReporter,
-        allowDefaultLibs: Boolean
 ) = getFeaturedLibraries(
         featuredLibraries.toUnresolvedLibraries.map { resolver.resolve(it).path }.toSet(),
         resolvedLibraries,
         reporter,
-        allowDefaultLibs
 )
 
 private fun getFeaturedLibraries(
         featuredLibraryPaths: Set<Path>,
         resolvedLibraries: KotlinLibraryResolveResult,
         reporter: FeaturedLibrariesReporter,
-        allowDefaultLibs: Boolean
 ) : List<KotlinLibrary> {
     val remainingFeaturedLibraries = featuredLibraryPaths.toMutableSet()
     val result = mutableListOf<KotlinLibrary>()
@@ -164,7 +143,7 @@ private fun getFeaturedLibraries(
         val libraryPath = library.path
         if (libraryPath in featuredLibraryPaths) {
             remainingFeaturedLibraries.remove(libraryPath)
-            if (library.isCInteropLibrary() || (!allowDefaultLibs && library.isFromKotlinNativeDistribution)) {
+            if (library.isCInteropLibrary() || library.isFromKotlinNativeDistribution) {
                 reporter.reportIllegalKind(library)
             } else {
                 result += library
