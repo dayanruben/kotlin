@@ -98,6 +98,13 @@ public class KtParameter extends KtNamedDeclarationStub<KotlinParameterStub> imp
      */
     @Override
     @Nullable
+    @kotlin.Deprecated(
+            message = "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils.setParameterTypeReference(this, typeRef)' instead.",
+            replaceWith = @kotlin.ReplaceWith(
+                    expression = "this.setParameterTypeReference(typeRef)",
+                    imports = "org.jetbrains.kotlin.idea.base.psi.setParameterTypeReference"
+            )
+    )
     @Deprecated
     public KtTypeReference setTypeReference(@Nullable KtTypeReference typeRef) {
         return KtPsiMutationService.getInstance().setParameterTypeReference(this, typeRef);

@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.buildtools.internal.BaseIncrementalCompilationConfig
 import org.jetbrains.kotlin.buildtools.internal.BaseIncrementalCompilationConfigurationImpl.Companion.UNSAFE_INCREMENTAL_COMPILATION_FOR_MULTIPLATFORM
 import org.jetbrains.kotlin.buildtools.internal.arguments.CommonCompilerArgumentsImpl.Companion.LANGUAGE_VERSION
 import org.jetbrains.kotlin.buildtools.internal.arguments.CommonCompilerArgumentsImpl.Companion.X_USE_FIR_IC
-import org.jetbrains.kotlin.buildtools.internal.arguments.JvmCompilerArgumentValueAdapter
 import org.jetbrains.kotlin.buildtools.internal.arguments.JvmCompilerArgumentsImpl
 import org.jetbrains.kotlin.buildtools.internal.arguments.absolutePathStringOrThrow
 import org.jetbrains.kotlin.buildtools.internal.jvm.HasSnapshotBasedIcOptionsAccessor
@@ -54,7 +53,7 @@ internal class JvmCompilationOperationImpl private constructor(
     override val options: Options = Options(JvmCompilationOperation::class),
     override val sources: List<Path>,
     override val destinationDirectory: Path,
-    compilerArguments: JvmCompilerArgumentsImpl = JvmCompilerArgumentsImpl(JvmCompilerArgumentValueAdapter.getOrNull()),
+    compilerArguments: JvmCompilerArgumentsImpl = JvmCompilerArgumentsImpl(),
     private val compilerVersion: String,
 ) : BaseCompilationOperationImpl<JvmCompilerArgumentsImpl, K2JVMCompilerArguments>(compilerArguments),
     JvmCompilationOperation,
@@ -64,7 +63,7 @@ internal class JvmCompilationOperationImpl private constructor(
     constructor(
         sources: List<Path>,
         destinationDirectory: Path,
-        compilerArguments: JvmCompilerArgumentsImpl = JvmCompilerArgumentsImpl(JvmCompilerArgumentValueAdapter.getOrNull()),
+        compilerArguments: JvmCompilerArgumentsImpl = JvmCompilerArgumentsImpl(),
         compilerVersion: String,
     ) : this(
         options = Options(JvmCompilationOperation::class),
@@ -118,7 +117,7 @@ internal class JvmCompilationOperationImpl private constructor(
     @Deprecated(
         "The shrunkClasspathSnapshot parameter is no longer required.",
         replaceWith = ReplaceWith("snapshotBasedIcConfigurationBuilder(workingDirectory, sourcesChanges, dependenciesSnapshotFiles)"),
-        level = DeprecationLevel.WARNING
+        level = DeprecationLevel.ERROR
     )
     override fun snapshotBasedIcConfigurationBuilder(
         workingDirectory: Path,
@@ -146,7 +145,7 @@ internal class JvmCompilationOperationImpl private constructor(
             /**
              * The filename "shrunk-classpath-snapshot.bin" is a placeholder.
              * ClasspathSnapshotFiles uses only the parent directory (workingDirectory) to create the actual file.
-             * This logic will be cleaned up with KT-83937.
+             * This logic will be cleaned up with KT-88357.
              */
             workingDirectory.resolve("shrunk-classpath-snapshot.bin")
         )
