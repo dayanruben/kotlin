@@ -461,15 +461,15 @@ extension main.Bazzable {
 extension main.ContainerProtocol where Self : main.__ContainerProtocol {
 }
 extension main.ContainerProtocol {
-    typealias NestedClass = main._ContainerProtocol_NestedClass
-    typealias NestedProtocol = main._ContainerProtocol_NestedProtocol
+    public typealias NestedClass = main._ContainerProtocol_NestedClass
+    public typealias NestedProtocol = main._ContainerProtocol_NestedProtocol
 }
 @_documentation(visibility: internal)
 extension ExportedKotlinPackages.packagewithprotocols.ContainerProtocol where Self : ExportedKotlinPackages.packagewithprotocols.__ContainerProtocol {
 }
 extension ExportedKotlinPackages.packagewithprotocols.ContainerProtocol {
-    typealias NestedClass = main._ExportedKotlinPackages_packagewithprotocols_ContainerProtocol_NestedClass
-    typealias NestedProtocol = main._ExportedKotlinPackages_packagewithprotocols_ContainerProtocol_NestedProtocol
+    public typealias NestedClass = main._ExportedKotlinPackages_packagewithprotocols_ContainerProtocol_NestedClass
+    public typealias NestedProtocol = main._ExportedKotlinPackages_packagewithprotocols_ContainerProtocol_NestedProtocol
 }
 @_documentation(visibility: internal)
 extension main.Foeble where Self : main.__Foeble {
@@ -496,12 +496,12 @@ extension main.SealedBazzable where Self : main.__SealedBazzable {
     public func sealedType() -> main.SealedBazzable_SealedType {
         fatalError("must implement sealedType in subclass")
     }
+}
+extension main.SealedBazzable {
     @_disfavoredOverload
     public func sealedType() -> main.SealedFoeble_SealedType {
         .sealedBazzable(sealedType())
     }
-}
-extension main.SealedBazzable {
 }
 @_documentation(visibility: internal)
 extension main.SealedFoeble where Self : main.__SealedFoeble {
@@ -510,36 +510,36 @@ extension main.SealedFoeble where Self : main.__SealedFoeble {
     }
 }
 extension main.SealedFoeble {
-    typealias SealedBarable = main._SealedFoeble_SealedBarable
-    typealias SealedBarable_SealedType = main.SealedBarable_SealedType
-    typealias SomeBarable = main._SealedFoeble_SomeBarable
-    typealias SomeFoeble = main._SealedFoeble_SomeFoeble
-    typealias _SealedFoeble_SomeBarable_SealedType = main._SealedFoeble_SomeBarable_SealedType
-    typealias _SealedFoeble_SomeFoeble_SealedType = main._SealedFoeble_SomeFoeble_SealedType
+    public typealias SealedBarable = main._SealedFoeble_SealedBarable
+    public typealias SealedBarable_SealedType = main.SealedBarable_SealedType
+    public typealias SomeBarable = main._SealedFoeble_SomeBarable
+    public typealias SomeFoeble = main._SealedFoeble_SomeFoeble
+    public typealias _SealedFoeble_SomeBarable_SealedType = main._SealedFoeble_SomeBarable_SealedType
+    public typealias _SealedFoeble_SomeFoeble_SealedType = main._SealedFoeble_SomeFoeble_SealedType
 }
 @_documentation(visibility: internal)
 extension main.SiblingProtocol where Self : main.__SiblingProtocol {
 }
 extension main.SiblingProtocol {
-    typealias NestedClass = main._SiblingProtocol_NestedClass
+    public typealias NestedClass = main._SiblingProtocol_NestedClass
 }
 @_documentation(visibility: internal)
 extension ExportedKotlinPackages.packagewithprotocols.SiblingProtocol where Self : ExportedKotlinPackages.packagewithprotocols.__SiblingProtocol {
 }
 extension ExportedKotlinPackages.packagewithprotocols.SiblingProtocol {
-    typealias NestedClass = main._ExportedKotlinPackages_packagewithprotocols_SiblingProtocol_NestedClass
+    public typealias NestedClass = main._ExportedKotlinPackages_packagewithprotocols_SiblingProtocol_NestedClass
 }
 @_documentation(visibility: internal)
 extension main._ContainerProtocol_NestedProtocol where Self : main.___ContainerProtocol_NestedProtocol {
 }
 extension main._ContainerProtocol_NestedProtocol {
-    typealias NestedClass = main.__ContainerProtocol_NestedProtocol_NestedClass
+    public typealias NestedClass = main.__ContainerProtocol_NestedProtocol_NestedClass
 }
 @_documentation(visibility: internal)
 extension main._ExportedKotlinPackages_packagewithprotocols_ContainerProtocol_NestedProtocol where Self : main.___ExportedKotlinPackages_packagewithprotocols_ContainerProtocol_NestedProtocol {
 }
 extension main._ExportedKotlinPackages_packagewithprotocols_ContainerProtocol_NestedProtocol {
-    typealias NestedClass = main.__ExportedKotlinPackages_packagewithprotocols_ContainerProtocol_NestedProtocol_NestedClass
+    public typealias NestedClass = main.__ExportedKotlinPackages_packagewithprotocols_ContainerProtocol_NestedProtocol_NestedClass
 }
 @_documentation(visibility: internal)
 extension KotlinRuntimeSupport._KotlinExistential: main.ContainerProtocol, main.__ContainerProtocol where Wrapped : main._ContainerProtocol {
@@ -630,12 +630,12 @@ extension main._SealedFoeble_SealedBarable where Self : main.___SealedFoeble_Sea
     public func sealedType() -> main.SealedBarable_SealedType {
         fatalError("must implement sealedType in subclass")
     }
+}
+extension main._SealedFoeble_SealedBarable {
     @_disfavoredOverload
     public func sealedType() -> main.SealedFoeble_SealedType {
         .sealedBarable(sealedType())
     }
-}
-extension main._SealedFoeble_SealedBarable {
 }
 extension ExportedKotlinPackages.packagewithprotocols {
     public enum ENUM_WITH_INTERFACE_INHERITANCE: KotlinRuntimeSupport._KotlinBridgeable, Swift.CaseIterable, Swift.LosslessStringConvertible, Swift.RawRepresentable {

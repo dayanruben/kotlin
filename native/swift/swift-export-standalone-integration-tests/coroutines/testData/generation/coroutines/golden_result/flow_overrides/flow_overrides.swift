@@ -28,16 +28,16 @@ extension ExportedKotlinPackages.namespace.I1 where Self : ExportedKotlinPackage
     }
 }
 extension ExportedKotlinPackages.namespace.I1 {
-    typealias I2 = flow_overrides._ExportedKotlinPackages_namespace_I1_I2
-    typealias _ExportedKotlinPackages_namespace_I1_I2_SealedType = flow_overrides._ExportedKotlinPackages_namespace_I1_I2_SealedType
+    public typealias I2 = flow_overrides._ExportedKotlinPackages_namespace_I1_I2
+    public typealias _ExportedKotlinPackages_namespace_I1_I2_SealedType = flow_overrides._ExportedKotlinPackages_namespace_I1_I2_SealedType
 }
 @_documentation(visibility: internal)
 extension flow_overrides._ExportedKotlinPackages_namespace_I1_I2 where Self : flow_overrides.___ExportedKotlinPackages_namespace_I1_I2 {
+}
+extension flow_overrides._ExportedKotlinPackages_namespace_I1_I2 {
     public func sealedType() -> ExportedKotlinPackages.namespace.I1_SealedType {
         .i2(.init(self))
     }
-}
-extension flow_overrides._ExportedKotlinPackages_namespace_I1_I2 {
 }
 @_documentation(visibility: internal)
 extension KotlinRuntimeSupport._KotlinExistential: ExportedKotlinPackages.namespace.I1, ExportedKotlinPackages.namespace.__I1 where Wrapped : ExportedKotlinPackages.namespace._I1 {

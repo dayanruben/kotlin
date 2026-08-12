@@ -114,18 +114,18 @@ public final class _ExportedKotlinPackages_org_kotlin_foo_QueryResult_Value: Kot
 }
 @_documentation(visibility: internal)
 extension ExportedKotlinPackages.org.kotlin.foo.InterfaceC where Self : ExportedKotlinPackages.org.kotlin.foo.__InterfaceC {
+}
+extension ExportedKotlinPackages.org.kotlin.foo.InterfaceC {
     public func sealedType() -> ExportedKotlinPackages.org.kotlin.foo.SealedInterfaceA_SealedType {
         .interfaceC(.init(self))
     }
-}
-extension ExportedKotlinPackages.org.kotlin.foo.InterfaceC {
 }
 @_documentation(visibility: internal)
 extension ExportedKotlinPackages.org.kotlin.foo.QueryResult where Self : ExportedKotlinPackages.org.kotlin.foo.__QueryResult {
 }
 extension ExportedKotlinPackages.org.kotlin.foo.QueryResult {
-    typealias AsyncValue = common._ExportedKotlinPackages_org_kotlin_foo_QueryResult_AsyncValue
-    typealias Value = common._ExportedKotlinPackages_org_kotlin_foo_QueryResult_Value
+    public typealias AsyncValue = common._ExportedKotlinPackages_org_kotlin_foo_QueryResult_AsyncValue
+    public typealias Value = common._ExportedKotlinPackages_org_kotlin_foo_QueryResult_Value
 }
 @_documentation(visibility: internal)
 extension ExportedKotlinPackages.org.kotlin.foo.SealedInterfaceA where Self : ExportedKotlinPackages.org.kotlin.foo.__SealedInterfaceA {
@@ -137,11 +137,11 @@ extension ExportedKotlinPackages.org.kotlin.foo.SealedInterfaceA {
 }
 @_documentation(visibility: internal)
 extension ExportedKotlinPackages.org.kotlin.foo.SealedInterfaceB where Self : ExportedKotlinPackages.org.kotlin.foo.__SealedInterfaceB {
+}
+extension ExportedKotlinPackages.org.kotlin.foo.SealedInterfaceB {
     public func sealedType() -> ExportedKotlinPackages.org.kotlin.foo.SealedInterfaceA_SealedType {
         .sealedInterfaceB(.init(self))
     }
-}
-extension ExportedKotlinPackages.org.kotlin.foo.SealedInterfaceB {
 }
 @_documentation(visibility: internal)
 extension KotlinRuntimeSupport._KotlinExistential: ExportedKotlinPackages.org.kotlin.foo.QueryResult, ExportedKotlinPackages.org.kotlin.foo.__QueryResult where Wrapped : ExportedKotlinPackages.org.kotlin.foo._QueryResult {

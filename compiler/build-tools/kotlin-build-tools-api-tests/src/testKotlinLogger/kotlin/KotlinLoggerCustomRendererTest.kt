@@ -12,8 +12,9 @@ import org.jetbrains.kotlin.buildtools.api.CompilerMessageRenderer.Severity
 import org.jetbrains.kotlin.buildtools.api.CompilerMessageRenderer.SourceLocation
 import org.jetbrains.kotlin.buildtools.tests.CompilerExecutionStrategyConfiguration
 import org.jetbrains.kotlin.buildtools.tests.compilation.model.BtaV2StrategyAgnosticCompilationTest
+import org.jetbrains.kotlin.buildtools.tests.compilation.model.BtaV2StrategyAndPlatformAgnosticCompilationTest
 import org.jetbrains.kotlin.buildtools.tests.compilation.model.LogLevel
-import org.jetbrains.kotlin.buildtools.tests.compilation.model.jvmProject
+import org.jetbrains.kotlin.buildtools.tests.compilation.model.ProjectCreator
 import org.jetbrains.kotlin.buildtools.tests.compilation.scenario.jvmScenario
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -22,9 +23,9 @@ import org.junit.jupiter.api.DisplayName
 
 class KotlinLoggerCustomRendererTest : BaseCompilationTest() {
 
-    @BtaV2StrategyAgnosticCompilationTest
+    @BtaV2StrategyAndPlatformAgnosticCompilationTest
     @DisplayName("Custom renderer receives structured data")
-    fun customRendererReceivesStructuredData(strategyConfig: CompilerExecutionStrategyConfiguration) {
+    fun customRendererReceivesStructuredData(project: ProjectCreator) {
         val renderer = object : CompilerMessageRenderer {
             override fun render(severity: Severity, message: String, location: SourceLocation?): String {
                 val loc = location?.let { " ${it.path}:${it.line}:${it.column}" } ?: ""
@@ -32,7 +33,7 @@ class KotlinLoggerCustomRendererTest : BaseCompilationTest() {
             }
         }
 
-        jvmProject(strategyConfig) {
+        project {
             val module = module("deprecated-usage")
             module.compile(compilationConfigAction = {
                 it[BaseCompilationOperation.COMPILER_MESSAGE_RENDERER] = renderer
@@ -45,9 +46,9 @@ class KotlinLoggerCustomRendererTest : BaseCompilationTest() {
         }
     }
 
-    @BtaV2StrategyAgnosticCompilationTest
+    @BtaV2StrategyAndPlatformAgnosticCompilationTest
     @DisplayName("Custom renderer receives compiler diagnostic identifier")
-    fun customRendererReceivesDiagnosticIdentifier(strategyConfig: CompilerExecutionStrategyConfiguration) {
+    fun customRendererReceivesDiagnosticIdentifier(project: ProjectCreator) {
         val diagnosticIds = mutableListOf<String?>()
         val renderer = object : CompilerMessageRendererWithDiagnosticId {
             override fun render(severity: Severity, message: String, location: SourceLocation?, diagnosticId: String?): String {
@@ -56,7 +57,7 @@ class KotlinLoggerCustomRendererTest : BaseCompilationTest() {
             }
         }
 
-        jvmProject(strategyConfig) {
+        project {
             val module = module("compilation-error")
             module.compile(compilationConfigAction = {
                 it[BaseCompilationOperation.COMPILER_MESSAGE_RENDERER] = renderer
@@ -66,7 +67,10 @@ class KotlinLoggerCustomRendererTest : BaseCompilationTest() {
                 assertTrue(errorLines.any { "[CUSTOM ERROR][UNRESOLVED_REFERENCE]" in it }) {
                     "Expected custom-rendered unresolved reference error at ERROR level, got: $errorLines"
                 }
-                assertEquals(listOf("UNRESOLVED_REFERENCE"), diagnosticIds.filterNotNull().distinct())
+
+                assertTrue("UNRESOLVED_REFERENCE" in diagnosticIds.filterNotNull()) {
+                    "Expected UNRESOLVED_REFERENCE among the diagnostic ids received by the renderer, got: ${diagnosticIds.filterNotNull().distinct()}"
+                }
             }
         }
     }

@@ -282,7 +282,10 @@ internal class SirBridgedProtocolImplementationFromKtSymbol(
                     else -> {}
                 }
             }
-            targetProtocol.sealedTypeFunctions.forEach { add(SirRelocatedFunction(it)) }
+            targetProtocol.sealedTypeFunctions.forEach {
+                if (it !is SirSealedTypeFunction.Sealed) return@forEach
+                add(SirRelocatedFunction(it))
+            }
         }.onEach { it.parent = this@SirBridgedProtocolImplementationFromKtSymbol }
     }
 }
@@ -538,7 +541,6 @@ internal class SirAuxiliaryProtocolDeclarationsFromKtSymbol(
             .map { declaration ->
                 buildTypealias {
                     origin = SirOrigin.Trampoline(declaration)
-                    visibility = SirVisibility.INTERNAL // visibility modifiers are disallowed in protocols
                     // FIXME: we make here the best effort to restore the original name of a relocated declaration
                     name = declaration.kaSymbolOrNull<KaDeclarationSymbol>()?.sirDeclarationName() ?: declaration.name
                     type = SirNominalType(declaration) // Has to be nominal even for protocol declarations
@@ -556,8 +558,12 @@ internal class SirAuxiliaryProtocolDeclarationsFromKtSymbol(
         fun createSpiTrap(name: String) =
             SirFunctionBody(listOf("fatalError(\"'${name}' is an @_spi requirement that must be implemented by Swift conformers\")"))
 
-        val defaultFunctions = members.filterIsInstance<SirFunctionFromKtSymbol>().mapNotNull { function ->
-            function.directDispatchProtocolWitnessOrNull() ?: runIf(isSpiMember(function)) {
+        val defaultFunctions = members.filterIsInstance<SirFunction>().mapNotNull { function ->
+            when (function) {
+                is SirFunctionFromKtSymbol -> function.directDispatchProtocolWitnessOrNull()
+                // TODO: Support direct dispatch protocol witness on SirFunctionFromKtPropertySymbol (KT-87795)
+                else -> null
+            } ?: runIf(isSpiMember(function)) {
                 buildFunctionCopy(function) {
                     origin = SirOrigin.Trampoline(function)
                     isOverride = false
@@ -568,14 +574,17 @@ internal class SirAuxiliaryProtocolDeclarationsFromKtSymbol(
             }
         }
 
-        val defaultVariables = members.filterIsInstance<SirAbstractVariableFromKtSymbol>().mapNotNull { variable ->
-            variable.directDispatchProtocolWitnessOrNull() ?: runIf(isSpiMember(variable)) {
+        val defaultVariables = members.filterIsInstance<SirVariable>().mapNotNull { variable ->
+            when (variable) {
+                is SirAbstractVariableFromKtSymbol -> variable.directDispatchProtocolWitnessOrNull()
+                else -> null
+            } ?: runIf(isSpiMember(variable)) {
                 buildVariableCopy(variable) {
                     origin = SirOrigin.Trampoline(variable)
                     isOverride = false
                     modality = SirModality.UNSPECIFIED
                     bridges.clear()
-                    getter = variable.getter.let { getter ->
+                    getter = variable.getter?.let { getter ->
                         buildGetterCopy(getter) {
                             origin = SirOrigin.Trampoline(getter)
                             bridges.clear()
@@ -596,7 +605,12 @@ internal class SirAuxiliaryProtocolDeclarationsFromKtSymbol(
             }
         }
 
-        (typeAliases + defaultFunctions + defaultVariables).onEach { it.parent = this }.toMutableList()
+        val sealedTypeLeafFunctions = targetProtocol.sealedTypeFunctions.mapNotNull {
+            if (it !is SirSealedTypeFunction.Leaf) return@mapNotNull null
+            SirRelocatedFunction(it)
+        }
+
+        (typeAliases + defaultFunctions + defaultVariables + sealedTypeLeafFunctions).onEach { it.parent = this }.toMutableList()
     }
 }
 
