@@ -5,11 +5,32 @@ package org.jetbrains.kotlin.testFederation
 import org.junit.jupiter.api.Tag
 
 /**
-* Will mark tests as 'affected by' the given domain [Domain.Compiler].
-* Such tests will run, additionally, for all commits affecting the Compiler domain.
+* Will mark tests as 'affected by' the given domain [Domain.CompilerInfrastructure].
+* Such tests will run, additionally, for all commits affecting the CompilerInfrastructure domain.
 */
-@Tag("affectedBy:Compiler")
-annotation class AffectedByCompiler
+@Tag("affectedBy:CompilerInfrastructure")
+annotation class AffectedByCompilerInfrastructure
+
+/**
+* Will mark tests as 'affected by' the given domain [Domain.Frontend].
+* Such tests will run, additionally, for all commits affecting the Frontend domain.
+*/
+@Tag("affectedBy:Frontend")
+annotation class AffectedByFrontend
+
+/**
+* Will mark tests as 'affected by' the given domain [Domain.CommonBackend].
+* Such tests will run, additionally, for all commits affecting the CommonBackend domain.
+*/
+@Tag("affectedBy:CommonBackend")
+annotation class AffectedByCommonBackend
+
+/**
+* Will mark tests as 'affected by' the given domain [Domain.Jvm].
+* Such tests will run, additionally, for all commits affecting the Jvm domain.
+*/
+@Tag("affectedBy:Jvm")
+annotation class AffectedByJvm
 
 /**
 * Will mark tests as 'affected by' the given domain [Domain.Wasm].
@@ -103,7 +124,10 @@ annotation class AffectedByBuildInfrastructure
 annotation class AffectedByUnknown
 
 fun affectedByAnnotationOf(domain: Domain) = when (domain) {
-    Domain.Compiler -> AffectedByCompiler::class
+    Domain.CompilerInfrastructure -> AffectedByCompilerInfrastructure::class
+    Domain.Frontend -> AffectedByFrontend::class
+    Domain.CommonBackend -> AffectedByCommonBackend::class
+    Domain.Jvm -> AffectedByJvm::class
     Domain.Wasm -> AffectedByWasm::class
     Domain.Js -> AffectedByJs::class
     Domain.Native -> AffectedByNative::class
