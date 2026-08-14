@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.StubElement
 import com.intellij.util.io.StringRef
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.decompiler.stub.flags.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -22,7 +23,6 @@ import org.jetbrains.kotlin.metadata.jvm.JvmProtoBuf
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.protobuf.MessageLite
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 import org.jetbrains.kotlin.psi.stubs.impl.*
 import org.jetbrains.kotlin.serialization.deserialization.AnnotatedCallableKind
 import org.jetbrains.kotlin.serialization.deserialization.ProtoContainer
@@ -48,7 +48,7 @@ fun createDeclarationsStubs(
     functionProtos: List<ProtoBuf.Function>,
     propertyProtos: List<ProtoBuf.Property>,
 ) {
-    val isInsideClassBody = parentStub.elementType == KtStubElementTypes.CLASS_BODY
+    val isInsideClassBody = parentStub.elementType == KtNodeTypes.CLASS_BODY
     var currentCompanionBlockBody: StubElement<out PsiElement>? = null
     fun wrapIntoCompanionBlockOnDemand(
         flags: Int,
@@ -102,13 +102,13 @@ fun createDeclarationsStubs(
 private fun buildCompanionBlockWithBody(parentStub: StubElement<out PsiElement>): StubElement<out PsiElement> {
     val companionBlockStub = KotlinPlaceHolderStubImpl<KtCompanionBlock>(
         parentStub,
-        KtStubElementTypes.COMPANION_BLOCK,
+        KtNodeTypes.COMPANION_BLOCK,
     )
 
     // Parser treats companion keyword as a modifier, so we need to create a modifier list stub for it
     createModifierListStub(companionBlockStub, listOf(KtTokens.COMPANION_KEYWORD), ProtoBuf.ReturnValueStatus.UNSPECIFIED)
 
-    return KotlinPlaceHolderStubImpl<KtClassBody>(companionBlockStub, KtStubElementTypes.CLASS_BODY)
+    return KotlinPlaceHolderStubImpl<KtClassBody>(companionBlockStub, KtNodeTypes.CLASS_BODY)
 }
 
 fun createTypeAliasesStubs(
@@ -218,7 +218,7 @@ abstract class CallableClsStubBuilder(
 
         val contextReceiverListStub = KotlinPlaceHolderStubImpl<KtContextParameterList>(
             modifierListStub,
-            KtStubElementTypes.CONTEXT_PARAMETER_LIST,
+            KtNodeTypes.CONTEXT_PARAMETER_LIST,
         )
 
         typeStubBuilder.createValueParameterStubs(
@@ -486,7 +486,7 @@ private class PropertyClsStubBuilder(
 
         // Getter with a body expect to have a value parameter list
         if (isNotDefault) {
-            KotlinPlaceHolderStubImpl<KtParameterList>(getterStub, KtStubElementTypes.VALUE_PARAMETER_LIST)
+            KotlinPlaceHolderStubImpl<KtParameterList>(getterStub, KtNodeTypes.VALUE_PARAMETER_LIST)
         }
     }
 

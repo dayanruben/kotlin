@@ -2526,6 +2526,12 @@ public class CompiledJvmStubsTestGenerated extends AbstractCompiledJvmStubsTest 
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/psi/psi-impl/testData/psi/contracts/good"), Pattern.compile("^(.+)\\.(kt)$"), null, true);
       }
 
+      @Test
+      @TestMetadata("returnValueContracts.kt")
+      public void testReturnValueContracts() {
+        run("returnValueContracts.kt");
+      }
+
       @Nested
       @TestMetadata("compiler/psi/psi-impl/testData/psi/contracts/good/callsInPlace")
       @TestDataPath("$PROJECT_ROOT")
@@ -3345,6 +3351,88 @@ public class CompiledJvmStubsTestGenerated extends AbstractCompiledJvmStubsTest 
   }
 
   @Nested
+  @TestMetadata("compiler/psi/psi-impl/testData/psi/inlineClasses")
+  @TestDataPath("$PROJECT_ROOT")
+  public class InlineClasses {
+    private void run(String fileName) {
+      runTest("compiler/psi/psi-impl/testData/psi/inlineClasses/" + fileName);
+    }
+
+    @Test
+    public void testAllFilesPresentInInlineClasses() {
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/psi/psi-impl/testData/psi/inlineClasses"), Pattern.compile("^(.+)\\.(kt)$"), null, true);
+    }
+
+    @Test
+    @TestMetadata("inlineClassPrivateProperty.kt")
+    public void testInlineClassPrivateProperty() {
+      run("inlineClassPrivateProperty.kt");
+    }
+
+    @Test
+    @TestMetadata("inlineClassPublicProperty.kt")
+    public void testInlineClassPublicProperty() {
+      run("inlineClassPublicProperty.kt");
+    }
+
+    @Test
+    @TestMetadata("inlineClassWithEscapedPropertyName.kt")
+    public void testInlineClassWithEscapedPropertyName() {
+      run("inlineClassWithEscapedPropertyName.kt");
+    }
+
+    @Test
+    @TestMetadata("inlineClassWithSameNamedProperties.kt")
+    public void testInlineClassWithSameNamedProperties() {
+      run("inlineClassWithSameNamedProperties.kt");
+    }
+
+    @Test
+    @TestMetadata("inlineClassWithTypeParameter.kt")
+    public void testInlineClassWithTypeParameter() {
+      run("inlineClassWithTypeParameter.kt");
+    }
+
+    @Nested
+    @TestMetadata("compiler/psi/psi-impl/testData/psi/inlineClasses/jvmAbi")
+    @TestDataPath("$PROJECT_ROOT")
+    public class JvmAbi {
+      private void run(String fileName) {
+        runTest("compiler/psi/psi-impl/testData/psi/inlineClasses/jvmAbi/" + fileName);
+      }
+
+      @Test
+      public void testAllFilesPresentInJvmAbi() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/psi/psi-impl/testData/psi/inlineClasses/jvmAbi"), Pattern.compile("^(.+)\\.(kt)$"), null, true);
+      }
+
+      @Test
+      @TestMetadata("jvmAbiInlineClassWithPrivateConstructor.kt")
+      public void testJvmAbiInlineClassWithPrivateConstructor() {
+        run("jvmAbiInlineClassWithPrivateConstructor.kt");
+      }
+
+      @Test
+      @TestMetadata("jvmAbiInlineClassWithPrivateProperty.kt")
+      public void testJvmAbiInlineClassWithPrivateProperty() {
+        run("jvmAbiInlineClassWithPrivateProperty.kt");
+      }
+
+      @Test
+      @TestMetadata("jvmAbiInlineClassWithPublicConstructor.kt")
+      public void testJvmAbiInlineClassWithPublicConstructor() {
+        run("jvmAbiInlineClassWithPublicConstructor.kt");
+      }
+
+      @Test
+      @TestMetadata("jvmAbiInlineClassWithTypeParameterUnderlyingType.kt")
+      public void testJvmAbiInlineClassWithTypeParameterUnderlyingType() {
+        run("jvmAbiInlineClassWithTypeParameterUnderlyingType.kt");
+      }
+    }
+  }
+
+  @Nested
   @TestMetadata("compiler/psi/psi-impl/testData/psi/kdoc")
   @TestDataPath("$PROJECT_ROOT")
   public class Kdoc {
@@ -3589,6 +3677,124 @@ public class CompiledJvmStubsTestGenerated extends AbstractCompiledJvmStubsTest 
     @TestMetadata("TwoTags.kt")
     public void testTwoTags() {
       run("TwoTags.kt");
+    }
+  }
+
+  @Nested
+  @TestMetadata("compiler/psi/psi-impl/testData/psi/multiFieldValueClasses")
+  @TestDataPath("$PROJECT_ROOT")
+  public class MultiFieldValueClasses {
+    private void run(String fileName) {
+      runTest("compiler/psi/psi-impl/testData/psi/multiFieldValueClasses/" + fileName);
+    }
+
+    @Test
+    public void testAllFilesPresentInMultiFieldValueClasses() {
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/psi/psi-impl/testData/psi/multiFieldValueClasses"), Pattern.compile("^(.+)\\.(kt)$"), null, true);
+    }
+
+    @Test
+    @TestMetadata("fullValueClassObject.kt")
+    public void testFullValueClassObject() {
+      run("fullValueClassObject.kt");
+    }
+
+    @Test
+    @TestMetadata("fullValueClassWithEscapedPropertyName.kt")
+    public void testFullValueClassWithEscapedPropertyName() {
+      run("fullValueClassWithEscapedPropertyName.kt");
+    }
+
+    @Test
+    @TestMetadata("fullValueClassWithInapplicablePropertyTypes.kt")
+    public void testFullValueClassWithInapplicablePropertyTypes() {
+      run("fullValueClassWithInapplicablePropertyTypes.kt");
+    }
+
+    @Test
+    @TestMetadata("fullValueClassWithMultipleProperties.kt")
+    public void testFullValueClassWithMultipleProperties() {
+      run("fullValueClassWithMultipleProperties.kt");
+    }
+
+    @Test
+    @TestMetadata("fullValueClassWithSameNamedProperties.kt")
+    public void testFullValueClassWithSameNamedProperties() {
+      run("fullValueClassWithSameNamedProperties.kt");
+    }
+
+    @Test
+    @TestMetadata("fullValueClassWithSecondaryConstructor.kt")
+    public void testFullValueClassWithSecondaryConstructor() {
+      run("fullValueClassWithSecondaryConstructor.kt");
+    }
+
+    @Test
+    @TestMetadata("fullValueClassWithSingleProperty.kt")
+    public void testFullValueClassWithSingleProperty() {
+      run("fullValueClassWithSingleProperty.kt");
+    }
+
+    @Test
+    @TestMetadata("fullValueClassWithSuperClass.kt")
+    public void testFullValueClassWithSuperClass() {
+      run("fullValueClassWithSuperClass.kt");
+    }
+
+    @Test
+    @TestMetadata("fullValueClassWithTypeParameter.kt")
+    public void testFullValueClassWithTypeParameter() {
+      run("fullValueClassWithTypeParameter.kt");
+    }
+
+    @Test
+    @TestMetadata("fullValueClassWithoutProperties.kt")
+    public void testFullValueClassWithoutProperties() {
+      run("fullValueClassWithoutProperties.kt");
+    }
+
+    @Nested
+    @TestMetadata("compiler/psi/psi-impl/testData/psi/multiFieldValueClasses/jvmAbi")
+    @TestDataPath("$PROJECT_ROOT")
+    public class JvmAbi {
+      private void run(String fileName) {
+        runTest("compiler/psi/psi-impl/testData/psi/multiFieldValueClasses/jvmAbi/" + fileName);
+      }
+
+      @Test
+      public void testAllFilesPresentInJvmAbi() {
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/psi/psi-impl/testData/psi/multiFieldValueClasses/jvmAbi"), Pattern.compile("^(.+)\\.(kt)$"), null, true);
+      }
+
+      @Test
+      @TestMetadata("jvmAbiFullValueClassWithPrivateConstructor.kt")
+      public void testJvmAbiFullValueClassWithPrivateConstructor() {
+        run("jvmAbiFullValueClassWithPrivateConstructor.kt");
+      }
+
+      @Test
+      @TestMetadata("jvmAbiFullValueClassWithPrivateConstructorAndPublicProperties.kt")
+      public void testJvmAbiFullValueClassWithPrivateConstructorAndPublicProperties() {
+        run("jvmAbiFullValueClassWithPrivateConstructorAndPublicProperties.kt");
+      }
+
+      @Test
+      @TestMetadata("jvmAbiFullValueClassWithPrivateProperty.kt")
+      public void testJvmAbiFullValueClassWithPrivateProperty() {
+        run("jvmAbiFullValueClassWithPrivateProperty.kt");
+      }
+
+      @Test
+      @TestMetadata("jvmAbiFullValueClassWithPublicConstructor.kt")
+      public void testJvmAbiFullValueClassWithPublicConstructor() {
+        run("jvmAbiFullValueClassWithPublicConstructor.kt");
+      }
+
+      @Test
+      @TestMetadata("jvmAbiFullValueClassWithoutProperties.kt")
+      public void testJvmAbiFullValueClassWithoutProperties() {
+        run("jvmAbiFullValueClassWithoutProperties.kt");
+      }
     }
   }
 
