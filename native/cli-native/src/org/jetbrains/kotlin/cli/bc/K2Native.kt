@@ -112,47 +112,46 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
 
         configuration.perfManager = performanceManager
         try {
-            setupCommonArguments(configuration, arguments)
-            configuration.setupFromArguments(arguments)
-            if (CheckDiagnosticCollector.checkHasErrorsAndReportToMessageCollector(configuration)) {
-                return ExitCode.COMPILATION_ERROR
-            }
+            withRootDisposable { rootDisposable ->
+                setupCommonArguments(configuration, arguments)
+                configuration.setupFromArguments(arguments, rootDisposable)
+                if (CheckDiagnosticCollector.checkHasErrorsAndReportToMessageCollector(configuration)) {
+                    return ExitCode.COMPILATION_ERROR
+                }
 
-            val canceledStatus = services[CompilationCanceledStatus::class.java]
-            ProgressIndicatorAndCompilationCanceledStatus.setCompilationCanceledStatus(canceledStatus)
+                val canceledStatus = services[CompilationCanceledStatus::class.java]
+                ProgressIndicatorAndCompilationCanceledStatus.setCompilationCanceledStatus(canceledStatus)
 
-            val rootDisposable = Disposer.newDisposable("Disposable for ${CLICompiler::class.simpleName}.execImpl")
-            try {
-                setIdeaIoUseFallback()
+                try {
+                    setIdeaIoUseFallback()
 
-                val code = doExecute(arguments, configuration, rootDisposable, services)
+                    val code = doExecute(arguments, configuration, rootDisposable, services)
 
-                performanceManager.notifyCompilationFinished()
-                if (arguments.reportPerf) {
-                    collector.report(LOGGING, "PERF: " + performanceManager.getTargetInfo())
-                    performanceManager.forEachStringMeasurement {
-                        collector.report(LOGGING, "PERF: $it", null)
+                    performanceManager.notifyCompilationFinished()
+                    if (arguments.reportPerf) {
+                        collector.report(LOGGING, "PERF: " + performanceManager.getTargetInfo())
+                        performanceManager.forEachStringMeasurement {
+                            collector.report(LOGGING, "PERF: $it", null)
+                        }
+                    }
+
+                    if (arguments.dumpPerf != null) {
+                        performanceManager.dumpPerformanceReport(arguments.dumpPerf!!)
+                    }
+
+                    return if (CheckDiagnosticCollector.checkHasErrorsAndReportToMessageCollector(configuration)) ExitCode.COMPILATION_ERROR else code
+                } catch (e: CompilationCanceledException) {
+                    collector.reportCompilationCancelled(e)
+                    return ExitCode.OK
+                } catch (e: RuntimeException) {
+                    val cause = e.cause
+                    if (cause is CompilationCanceledException) {
+                        collector.reportCompilationCancelled(cause)
+                        return ExitCode.OK
+                    } else {
+                        throw e
                     }
                 }
-
-                if (arguments.dumpPerf != null) {
-                    performanceManager.dumpPerformanceReport(arguments.dumpPerf!!)
-                }
-
-                return if (CheckDiagnosticCollector.checkHasErrorsAndReportToMessageCollector(configuration)) ExitCode.COMPILATION_ERROR else code
-            } catch (e: CompilationCanceledException) {
-                collector.reportCompilationCancelled(e)
-                return ExitCode.OK
-            } catch (e: RuntimeException) {
-                val cause = e.cause
-                if (cause is CompilationCanceledException) {
-                    collector.reportCompilationCancelled(cause)
-                    return ExitCode.OK
-                } else {
-                    throw e
-                }
-            } finally {
-                disposeRootInWriteAction(rootDisposable)
             }
         } catch (_: CompilationErrorException) {
             return ExitCode.COMPILATION_ERROR
@@ -310,7 +309,7 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                     spawnedConfiguration.messageCollector = configuration.messageCollector
                     spawnedConfiguration.perfManager = spawnedPerfManager
                     spawnedConfiguration.setupCommonArguments(spawnedArguments, this@K2Native::createMetadataVersion)
-                    spawnedConfiguration.setupFromArguments(spawnedArguments)
+                    spawnedConfiguration.setupFromArguments(spawnedArguments, rootDisposable)
                     spawnedConfiguration.setupPartialLinkageConfig(configuration.partialLinkageConfig)
                     configuration.get(CommonConfigurationKeys.USE_FIR)?.let {
                         spawnedConfiguration.put(CommonConfigurationKeys.USE_FIR, it)
@@ -393,6 +392,15 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                 if (doMainNoExit(K2Native(), args, messageRenderer) != ExitCode.OK) {
                     throw KonanCompilationException("Compilation finished with errors")
                 }
+            }
+        }
+
+        private inline fun <T> withRootDisposable(block: (rootDisposable: Disposable) -> T): T {
+            val rootDisposable = Disposer.newDisposable("Disposable for ${CLICompiler::class.simpleName}.execImpl")
+            try {
+                return block(rootDisposable)
+            } finally {
+                disposeRootInWriteAction(rootDisposable)
             }
         }
     }

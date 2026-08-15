@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.js.testOld.utils;
@@ -28,8 +17,6 @@ import org.junit.jupiter.api.Assertions;
 
 import java.io.File;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static kotlin.test.AssertionsKt.assertFalse;
 import static kotlin.test.AssertionsKt.assertTrue;
@@ -44,7 +31,7 @@ public class DirectiveTestUtils {
 
     private static final DirectiveHandler FUNCTION_CONTAINS_NO_CALLS = new DirectiveHandler("CHECK_CONTAINS_NO_CALLS") {
         @Override
-        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments) throws Exception {
+        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments, File sourceFile) throws Exception {
             Set<String> exceptNames = new HashSet<>();
             String exceptNamesArg = arguments.findNamedArgument("except");
             if (exceptNamesArg != null) {
@@ -59,35 +46,35 @@ public class DirectiveTestUtils {
 
     private static final DirectiveHandler FUNCTION_NOT_CALLED = new DirectiveHandler("CHECK_NOT_CALLED") {
         @Override
-        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments) throws Exception {
+        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments, File sourceFile) throws Exception {
             checkFunctionNotCalled(ast, arguments.getFirst(), arguments.findNamedArgument("except"));
         }
     };
 
     private static final DirectiveHandler PROPERTY_NOT_USED = new DirectiveHandler("PROPERTY_NOT_USED") {
         @Override
-        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments) throws Exception {
+        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments, File sourceFile) throws Exception {
             checkPropertyNotUsed(ast, arguments.getFirst(), arguments.findNamedArgument("scope"), false, false);
         }
     };
 
     private static final DirectiveHandler PROPERTY_NOT_READ_FROM = new DirectiveHandler("PROPERTY_NOT_READ_FROM") {
         @Override
-        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments) throws Exception {
+        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments, File sourceFile) throws Exception {
             checkPropertyNotUsed(ast, arguments.getFirst(), arguments.findNamedArgument("scope"), false, true);
         }
     };
 
     private static final DirectiveHandler PROPERTY_NOT_WRITTEN_TO = new DirectiveHandler("PROPERTY_NOT_WRITTEN_TO") {
         @Override
-        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments) throws Exception {
+        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments, File sourceFile) throws Exception {
             checkPropertyNotUsed(ast, arguments.getFirst(), arguments.findNamedArgument("scope"), true, false);
         }
     };
 
     private static final DirectiveHandler PROPERTY_WRITE_COUNT = new DirectiveHandler("PROPERTY_WRITE_COUNT") {
         @Override
-        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments) throws Exception {
+        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments, File sourceFile) throws Exception {
             checkPropertyWriteCount(ast, arguments.getNamedArgument("name"), arguments.findNamedArgument("scope"),
                                     Integer.parseInt(arguments.getNamedArgument("count")));
         }
@@ -95,7 +82,7 @@ public class DirectiveTestUtils {
 
     private static final DirectiveHandler PROPERTY_READ_COUNT = new DirectiveHandler("PROPERTY_READ_COUNT") {
         @Override
-        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments) throws Exception {
+        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments, File sourceFile) throws Exception {
             checkPropertyReadCount(ast, arguments.getNamedArgument("name"), arguments.findNamedArgument("scope"),
                                    Integer.parseInt(arguments.getNamedArgument("count")));
         }
@@ -103,11 +90,11 @@ public class DirectiveTestUtils {
 
     private static final DirectiveHandler EXPECT_GENERATED_JS = new DirectiveHandler("EXPECT_GENERATED_JS") {
         @Override
-        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments) {
+        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments, File sourceFile) {
             List<String> functionNames = arguments.findNamedListArgument("function");
             List<String> classesNames = arguments.findNamedListArgument("class");
             String expected = arguments.getNamedArgument("expect");
-            File expectedFile = new File(arguments.sourceFile.getParentFile(), expected);
+            File expectedFile = new File(sourceFile.getParentFile(), expected);
             StringBuilder code = new StringBuilder();
             for (String functionName : functionNames) {
                 code.append(AstSearchUtil.getFunction(ast, functionName));
@@ -124,21 +111,21 @@ public class DirectiveTestUtils {
 
     private static final DirectiveHandler CLASS_EXISTS = new DirectiveHandler("CHECK_CLASS_EXISTS") {
         @Override
-        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments) {
+        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments, File sourceFile) {
             AstSearchUtil.getClass(ast, arguments.getFirst());
         }
     };
 
     private static final DirectiveHandler FUNCTION_EXISTS = new DirectiveHandler("CHECK_FUNCTION_EXISTS") {
         @Override
-        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments) throws Exception {
+        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments, File sourceFile) throws Exception {
             AstSearchUtil.getFunction(ast, arguments.getFirst());
         }
     };
 
     private static final DirectiveHandler FUNCTION_CALLED_IN_SCOPE = new DirectiveHandler("CHECK_CALLED_IN_SCOPE") {
         @Override
-        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments) throws Exception {
+        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments, File sourceFile) throws Exception {
             // Be more restrictive, check qualified match by default
             checkCalledInScope(ast, arguments.getNamedArgument("function"), arguments.getNamedArgument("scope"),
                                parseBooleanArgument(arguments, "qualified", true));
@@ -147,7 +134,7 @@ public class DirectiveTestUtils {
 
     private static final DirectiveHandler FUNCTION_NOT_CALLED_IN_SCOPE = new DirectiveHandler("CHECK_NOT_CALLED_IN_SCOPE") {
         @Override
-        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments) throws Exception {
+        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments, File sourceFile) throws Exception {
             // Be more restrictive, check unqualified match by default
             checkNotCalledInScope(ast, arguments.getNamedArgument("function"), arguments.getNamedArgument("scope"),
                                   parseBooleanArgument(arguments, "qualified", false));
@@ -156,7 +143,7 @@ public class DirectiveTestUtils {
 
     private static final DirectiveHandler FUNCTION_CALLED_TIMES = new DirectiveHandler("FUNCTION_CALLED_TIMES") {
         @Override
-        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments) throws Exception {
+        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments, File sourceFile) throws Exception {
             int expectedCount = Integer.parseInt(arguments.getNamedArgument("count"));
             String functionName = arguments.getFirst();
             CallCounter counter = CallCounter.countCalls(ast);
@@ -169,35 +156,6 @@ public class DirectiveTestUtils {
         String value = arguments.findNamedArgument(name);
         return value != null ? Boolean.parseBoolean(value) : defaultValue;
     }
-
-    private static final DirectiveHandler FUNCTIONS_HAVE_SAME_LINES = new DirectiveHandler("CHECK_FUNCTIONS_HAVE_SAME_LINES") {
-        @Override
-        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments) throws Exception {
-            String code1 = getFunctionCode(ast, arguments.getPositionalArgument(0));
-            String code2 = getFunctionCode(ast, arguments.getPositionalArgument(1));
-
-            String regexMatch = arguments.findNamedArgument("match");
-            String regexReplace = arguments.findNamedArgument("replace");
-
-            code1 = applyRegex(code1, regexMatch, regexReplace);
-            code2 = applyRegex(code2, regexMatch, regexReplace);
-
-            assertEquals(code1, code2);
-        }
-
-        @NotNull
-        String getFunctionCode(@NotNull JsNode ast, @NotNull String functionName) {
-            JsFunction function = AstSearchUtil.getFunction(ast, functionName);
-            return function.getBody().toString();
-        }
-
-        @NotNull
-        String applyRegex(@NotNull String code, @Nullable String match, @Nullable String replace) {
-            if (match == null || replace == null) return code;
-
-            return code.replaceAll(match, replace);
-        }
-    };
 
     private static abstract class NodeExistenceDirective extends DirectiveHandler {
         private boolean isElementExists = false;
@@ -221,7 +179,7 @@ public class DirectiveTestUtils {
         }
 
         @Override
-        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments) throws Exception {
+        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments, File sourceFile) throws Exception {
             loadArguments(arguments);
             getJsVisitorForElement().accept(ast);
             assertExistence();
@@ -249,7 +207,7 @@ public class DirectiveTestUtils {
         }
 
         @Override
-        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments) throws Exception {
+        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments, File sourceFile) throws Exception {
             String functionName = arguments.getNamedArgument("function");
             String countStr = arguments.findNamedArgument("count");
             String maxCountStr = arguments.findNamedArgument("max");
@@ -311,30 +269,13 @@ public class DirectiveTestUtils {
 
     private static final DirectiveHandler COUNT_IF = new CountNodesDirective<>("CHECK_IF_COUNT", JsIf.class);
 
-    private static final DirectiveHandler COUNT_TERNARY_OPERATOR =
-            new CountNodesDirective<>("CHECK_TERNARY_OPERATOR_COUNT", JsConditional.class);
-
-    private static final DirectiveHandler COUNT_BINOPS = new CountNodesDirective<JsBinaryOperation>("CHECK_BINOP_COUNT",
-                                                                                                        JsBinaryOperation.class) {
-        @Override
-        protected int getActualCountFor(@NotNull JsBinaryOperation node, @NotNull ArgumentsHelper arguments) {
-            String symbol = arguments.findNamedArgument("symbol");
-            if (symbol == null) {
-                return 1;
-            }
-            return node.getOperator().getSymbol().equals(symbol) ? 1 : 0;
-        }
-    };
-
     private static final DirectiveHandler COUNT_SUPER = new CountNodesDirective<>("CHECK_SUPER_COUNT", JsSuperRef.class);
-
-    private static final DirectiveHandler COUNT_DEBUGGER = new CountNodesDirective<>("CHECK_DEBUGGER_COUNT", JsDebugger.class);
 
     private static final DirectiveHandler COUNT_STRING_LITERALS = new CountNodesDirective<>("CHECK_STRING_LITERAL_COUNT", JsStringLiteral.class);
 
     private static final DirectiveHandler NOT_REFERENCED = new DirectiveHandler("CHECK_NOT_REFERENCED") {
         @Override
-        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments) throws Exception {
+        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments, File sourceFile) throws Exception {
             String reference = arguments.getPositionalArgument(0);
 
             JsVisitor visitor = new RecursiveJsVisitor() {
@@ -412,45 +353,9 @@ public class DirectiveTestUtils {
 
     };
 
-    private static final DirectiveHandler ONLY_THIS_QUALIFIED_REFERENCES = new DirectiveHandler("ONLY_THIS_QUALIFIED_REFERENCES") {
-        @Override
-        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments) throws Exception {
-            String fieldName = arguments.getPositionalArgument(0);
-            QualifiedReferenceCollector collector = new QualifiedReferenceCollector(fieldName);
-            ast.accept(collector);
-            assertTrue(collector.hasReferences, "No reference to field '" + fieldName + "' found");
-            assertTrue(collector.allReferencesQualifiedByThis,
-                       "There are references to field '" + fieldName + "' not qualified by 'this' literal");
-        }
-    };
-
-    static class QualifiedReferenceCollector extends RecursiveJsVisitor {
-        private final String nameToSearch;
-        boolean hasReferences;
-        boolean allReferencesQualifiedByThis = true;
-
-        public QualifiedReferenceCollector(String nameToSearch) {
-            this.nameToSearch = nameToSearch;
-        }
-
-        @Override
-        public void visitNameRef(@NotNull JsNameRef nameRef) {
-            super.visitNameRef(nameRef);
-            JsName name = nameRef.getName();
-            if (name == null) return;
-
-            if (name.getIdent().equals(nameToSearch)) {
-                hasReferences = true;
-                if (!(nameRef.getQualifier() instanceof JsThisRef)) {
-                    allReferencesQualifiedByThis = false;
-                }
-            }
-        }
-    }
-
     private static final DirectiveHandler HAS_NO_CAPTURED_VARS = new DirectiveHandler("HAS_NO_CAPTURED_VARS") {
         @Override
-        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments) throws Exception {
+        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments, File sourceFile) throws Exception {
             String functionName = arguments.getNamedArgument("function");
 
             Set<String> except = new HashSet<>();
@@ -470,31 +375,6 @@ public class DirectiveTestUtils {
         }
     };
 
-    private static final DirectiveHandler DECLARES_VARIABLE = new DirectiveHandler("DECLARES_VARIABLE") {
-        @Override
-        void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments) throws Exception {
-            String functionName = arguments.getNamedArgument("function");
-            String varName = arguments.getNamedArgument("name");
-            List<JsFunction> functions = AstSearchUtil.getFunctions(ast, functionName);
-            boolean[] varDeclared = new boolean[1];
-            for (JsFunction function : functions) {
-                function.accept(new RecursiveJsVisitor() {
-                    @Override
-                    public void visit(@NotNull JsVars.JsVar x) {
-                        super.visit(x);
-                        if (x.getName().getIdent().equals(varName)) {
-                            varDeclared[0] = true;
-                        }
-                    }
-                });
-                if (varDeclared[0])
-                    break;
-            }
-
-            assertTrue(varDeclared[0], "Function " + functionName + " does not declare variable " + varName);
-        }
-    };
-
     private static final List<DirectiveHandler> DIRECTIVE_HANDLERS = Arrays.asList(
             EXPECT_GENERATED_JS,
             FUNCTION_CONTAINS_NO_CALLS,
@@ -509,8 +389,6 @@ public class DirectiveTestUtils {
             FUNCTION_EXISTS,
             FUNCTION_CALLED_IN_SCOPE,
             FUNCTION_NOT_CALLED_IN_SCOPE,
-            FUNCTIONS_HAVE_SAME_LINES,
-            ONLY_THIS_QUALIFIED_REFERENCES,
             CHECK_COMMENT_EXISTS,
             COUNT_LABELS,
             COUNT_VARS,
@@ -519,14 +397,10 @@ public class DirectiveTestUtils {
             COUNT_NEW,
             COUNT_CASES,
             COUNT_IF,
-            COUNT_TERNARY_OPERATOR,
-            COUNT_BINOPS,
             COUNT_SUPER,
-            COUNT_DEBUGGER,
             COUNT_STRING_LITERALS,
             NOT_REFERENCED,
-            HAS_NO_CAPTURED_VARS,
-            DECLARES_VARIABLE
+            HAS_NO_CAPTURED_VARS
     );
 
     public static void processDirectives(
@@ -633,28 +507,10 @@ public class DirectiveTestUtils {
 
     private abstract static class DirectiveHandler {
 
-        private final static String TARGET_BACKENDS = "TARGET_BACKENDS";
-
-        private final static String IGNORED_BACKENDS = "IGNORED_BACKENDS";
-
         @NotNull private final String directive;
 
         DirectiveHandler(@NotNull String directive) {
             this.directive = "// " + directive + ": ";
-        }
-
-        private static boolean containsBackend(
-                @NotNull TargetBackend targetBackend,
-                @NotNull String backendsParameterName,
-                @NotNull ArgumentsHelper arguments,
-                boolean ifNotSpecified
-        ) {
-            String backendsArg = arguments.findNamedArgument(backendsParameterName);
-            if (backendsArg != null) {
-                List<String> backends = Arrays.asList(backendsArg.split(";"));
-                return backends.contains(targetBackend.name());
-            }
-            return ifNotSpecified;
         }
 
         /**
@@ -672,16 +528,14 @@ public class DirectiveTestUtils {
         ) throws Exception {
             List<String> directiveEntries = findLinesWithPrefixesRemoved(sourceCode, directive);
             for (String directiveEntry : directiveEntries) {
-                ArgumentsHelper arguments = new ArgumentsHelper(directiveEntry, sourceFile);
-                if (!containsBackend(targetBackend, TARGET_BACKENDS, arguments, true) ||
-                    containsBackend(targetBackend, IGNORED_BACKENDS, arguments, false)) {
-                    continue;
+                ArgumentsHelper arguments = new ArgumentsHelper(directiveEntry);
+                if (arguments.shouldRunWithBackend(targetBackend)) {
+                    processEntry(ast, arguments, sourceFile);
                 }
-                processEntry(ast, arguments);
             }
         }
 
-        abstract void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments) throws Exception;
+        abstract void processEntry(@NotNull JsNode ast, @NotNull ArgumentsHelper arguments, File sourceFile) throws Exception;
 
         @Override
         public String toString() {
@@ -691,73 +545,6 @@ public class DirectiveTestUtils {
         @NotNull
         String getName() {
             return directive;
-        }
-    }
-
-    /**
-     * Arguments format: ((namedArg|positionalArg)\s+)*`
-     *
-     * Where: namedArg -- 'key=value' or 'key="spaced value"'
-     *        positionalArg -- 'value'
-     *
-     * Neither key, nor value should contain spaces.
-     */
-    private static class ArgumentsHelper {
-        private final List<String> positionalArguments = new ArrayList<>();
-        private final Map<String, String> namedArguments = new HashMap<>();
-        private final String entry;
-        private final Pattern argumentsPattern = Pattern.compile("[\\w$_;\\.]+(=((\".*?\")|[\\w$_;\\.]+))?");
-        final File sourceFile;
-        ArgumentsHelper(@NotNull String directiveEntry, @NotNull File directiveSourceFile) {
-            entry = directiveEntry;
-            sourceFile = directiveSourceFile;
-
-            Matcher matcher = argumentsPattern.matcher(directiveEntry);
-
-            while (matcher.find()) {
-                String argument = matcher.group();
-                String[] keyVal = argument.split("=");
-                switch (keyVal.length) {
-                    case 1: positionalArguments.add(keyVal[0]); break;
-                    case 2:
-                        String value = keyVal[1];
-                        if (value.charAt(0) == '"') {
-                            value = value.substring(1, value.length() - 1);
-                        }
-                        namedArguments.put(keyVal[0], value);
-                        break;
-                    default: throw new AssertionError("Wrong argument format: " + argument);
-                }
-            }
-        }
-
-        @NotNull
-        String getFirst() {
-            return getPositionalArgument(0);
-        }
-
-        @NotNull
-        String getPositionalArgument(int index) {
-            assert positionalArguments.size() > index: "Argument at index `" + index + "` not found in entry: " + entry;
-            return positionalArguments.get(index);
-        }
-
-        @NotNull
-        String getNamedArgument(@NotNull String name) {
-            assert namedArguments.containsKey(name): "Argument `" + name + "` not found in entry: " + entry;
-            return namedArguments.get(name);
-        }
-
-        @Nullable
-        String findNamedArgument(@NotNull String name) {
-            return namedArguments.get(name);
-        }
-
-        @NotNull
-        List<String> findNamedListArgument(@NotNull String name) {
-            String value = findNamedArgument(name);
-            if (value == null) return Collections.emptyList();
-            return StringUtil.split(value, ";");
         }
     }
 }

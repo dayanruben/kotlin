@@ -187,7 +187,7 @@ internal class DependenciesTrackerImpl(
 
         init {
             val immediateBitcodeDependencies = topSortedLibraries
-                    .filter { (it.isExplicitlySpecifiedByUserInCLIArgument && !context.config.purgeUserLibs) || bitcodeIsUsed(it) }
+                    .filter { it.isExplicitlySpecifiedByUserInCLIArgument || bitcodeIsUsed(it) }
             for (library in immediateBitcodeDependencies) {
                 if (library == context.config.libraryToCache?.klib) continue
                 val cache = context.config.cachedLibraries.getLibraryCache(library)
@@ -213,7 +213,7 @@ internal class DependenciesTrackerImpl(
                         }
                     }
 
-                    if (filesUsed.isEmpty() || library in config.includedLibraries) {
+                    if (filesUsed.isEmpty() || library in config.loadedKlibs.included) {
                         // This is the case when we depend on the whole module rather than on a number of files.
                         moduleDependencies.add(library)
                         addAllDependencies(cache)
@@ -319,7 +319,7 @@ internal class DependenciesTrackerImpl(
             topSortedLibraries.mapNotNull { allBitcodeDependencies[it] }
         }
 
-        val nativeDependenciesToLink = topSortedLibraries.filter { (it.isExplicitlySpecifiedByUserInCLIArgument && !context.config.purgeUserLibs) || it in usedNativeDependencies }
+        val nativeDependenciesToLink = topSortedLibraries.filter { it.isExplicitlySpecifiedByUserInCLIArgument || it in usedNativeDependencies }
 
         val allNativeDependencies = (nativeDependenciesToLink +
                 allCachedBitcodeDependencies.map { it.library } // Native dependencies are per library
@@ -337,7 +337,7 @@ internal class DependenciesTrackerImpl(
             }
 
             // Apply some DCE:
-            return (library.isExplicitlySpecifiedByUserInCLIArgument && !context.config.purgeUserLibs) || bitcodeIsUsed(library)
+            return library.isExplicitlySpecifiedByUserInCLIArgument || bitcodeIsUsed(library)
         }
     }
 
