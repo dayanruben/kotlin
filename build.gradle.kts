@@ -270,7 +270,7 @@ tasks {
     }
 
     // === Build: GradlePluginTests ===
-    val gradlePluginTest = testLifecycleTask("gradlePluginTest") {
+    testLifecycleTask("gradlePluginTest") {
         gradlePluginProjects.forEach {
             dependsOn("$it:check")
         }
@@ -281,14 +281,17 @@ tasks {
         dependsOn(":kotlin-gradle-plugin-integration-tests:check")
     }
 
-    // === Build: JVMCompilerTests ===
-    val jvmCompilerTest = testLifecycleTask("jvmCompilerTest") {
-        dependsOn(
-            ":compiler:tests-common-new:test",
-            ":compiler:container:test",
-            ":compiler:tests-java8:test",
-            ":compiler:tests-spec:test",
-        )
+    // === Build: JvmMiscTests ===
+    testLifecycleTask("jvmCompilerTest") {
+        dependsOn(":compiler:tests-common-new:test")
+        dependsOn(":compiler:container:test")
+        dependsOn(":compiler:tests-java8:test")
+        dependsOn(":compiler:tests-spec:test")
+    }
+
+    // === Build: JvmCodegenTests ===
+    val jvmCodegenTest = testLifecycleTask("jvmCodegenTest") {
+        dependsOn(":compiler:fir:fir2ir:aggregateTests")
     }
 
     // === could be dropped ===
@@ -380,13 +383,18 @@ tasks {
         dependsOn(":native:native.tests:klib-ir-inliner:check")
     }
 
-    // === Build: FirCompilerTests ===
-    testLifecycleTask("firCompilerTest") {
+    // === Build: CompilerFrontendTests ===
+    val compilerFrontendTest = testLifecycleTask("compilerFrontendTest") {
         dependsOn(":compiler:fir:raw-fir:psi2fir:test")
         dependsOn(":compiler:fir:raw-fir:light-tree2fir:test")
         dependsOn(":compiler:fir:analysis-tests:test")
         dependsOn(":compiler:fir:analysis-tests:legacy-fir-tests:test")
-        dependsOn(":compiler:fir:fir2ir:aggregateTests")
+    }
+
+    // === TO BE DELETED === Build: FirCompilerTests ===
+    testLifecycleTask("firCompilerTest") {
+        dependsOn(compilerFrontendTest)
+        dependsOn(jvmCodegenTest)
     }
 
     // === Build: FirCompilerNightlyTests ===
@@ -438,7 +446,7 @@ tasks {
 
     // === Build: CheckBuildTest (used only in `configurationCacheSmokeTests`) ===
     // === Build: MiscCompilerTests ===
-    val miscCompilerTest = testLifecycleTask("miscCompilerTest") {
+    testLifecycleTask("miscCompilerTest") {
         dependsOn(":compiler:test")
         dependsOn(":compiler:tests-integration:test")
         dependsOn(":compiler:java-direct:test")
@@ -457,12 +465,6 @@ tasks {
         dependsOn(":core:language.targets.jvm:check")
         dependsOn(":core:language.version-settings:check")
         dependsOn(":core:language.version-settings:test")
-    }
-
-    // === intermediate task ===
-    val compilerTest = testLifecycleTask("compilerTest") {
-        dependsOn(jvmCompilerTest)
-        dependsOn(miscCompilerTest)
     }
 
     // === intermediate task ===
@@ -505,36 +507,15 @@ tasks {
     }
 
     // === Build: BuildToolsApiTests ===
-    val buildToolsApiTest = testLifecycleTask("buildToolsApiTest") {
+    testLifecycleTask("buildToolsApiTest") {
         dependsOn(":compiler:build-tools:kotlin-build-tools-api:check")
         dependsOn(":compiler:build-tools:kotlin-build-tools-api-tests:check")
         dependsOn(":compiler:build-tools:kotlin-build-tools-api-forward-tests:check")
     }
 
     // === Build: AnalysisApiTests ===
-    val frontendApiTests = testLifecycleTask("frontendApiTests") {
+    testLifecycleTask("frontendApiTests") {
         dependsOn(":analysis:analysisAllTests")
-    }
-
-    // === unused ===
-    testLifecycleTask("distTest") {
-        dependsOn(compilerTest)
-        dependsOn(frontendApiTests)
-        dependsOn(toolsTest)
-        dependsOn(gradlePluginTest)
-        dependsOn(examplesTest)
-        dependsOn(buildToolsApiTest)
-    }
-
-    // === could be dropped ===
-    testLifecycleTask("specTest") {
-        dependsOn(dist)
-        dependsOn(":compiler:tests-spec:test")
-    }
-
-    // === could be dropped ===
-    testLifecycleTask("androidCodegenTest") {
-        dependsOn(":compiler:android-tests:test")
     }
 
     // === Build: CheckBuildTest (used only in `configurationCacheSmokeTests`) ===
