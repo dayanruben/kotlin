@@ -6,25 +6,19 @@
 package org.jetbrains.kotlin.cli.pipeline.web
 
 import org.jetbrains.kotlin.cli.CliDiagnostics.JS_IC_ERROR
-import org.jetbrains.kotlin.cli.js.IcCachesArtifacts
-import org.jetbrains.kotlin.cli.js.IcCachesConfigurationData
-import org.jetbrains.kotlin.cli.js.prepareIcCaches
 import org.jetbrains.kotlin.cli.pipeline.CheckCompilationErrors
 import org.jetbrains.kotlin.cli.pipeline.ConfigurationPipelineArtifact
 import org.jetbrains.kotlin.cli.pipeline.PipelinePhase
 import org.jetbrains.kotlin.cli.pipeline.executePhaseIsolatedWithActions
-import org.jetbrains.kotlin.cli.pipeline.web.wasm.WasmCompilationMode.Companion.wasmCompilationMode
 import org.jetbrains.kotlin.cli.report
 import org.jetbrains.kotlin.cli.reportInfo
 import org.jetbrains.kotlin.cli.reportLog
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.perfManager
-import org.jetbrains.kotlin.ir.backend.js.ic.IncrementalCacheGuard
-import org.jetbrains.kotlin.ir.backend.js.ic.acquireAndRelease
-import org.jetbrains.kotlin.ir.backend.js.ic.tryAcquireAndRelease
+import org.jetbrains.kotlin.ir.backend.js.ic.*
 import org.jetbrains.kotlin.js.config.*
 import org.jetbrains.kotlin.util.PhaseType
-import org.jetbrains.kotlin.wasm.config.WasmConfigurationKeys
+import java.io.File
 
 abstract class WebBackendPipelinePhase<Output : WebBackendPipelineArtifact, IntermediateOutput>(
     name: String
@@ -79,20 +73,6 @@ abstract class WebBackendPipelinePhase<Output : WebBackendPipelineArtifact, Inte
             }
             prepareIcCaches(
                 cacheDirectory = cacheDirectory,
-                icConfigurationData = when {
-                    configuration.wasmCompilation -> {
-                        IcCachesConfigurationData.Wasm(
-                            wasmDebug = configuration.getBoolean(WasmConfigurationKeys.WASM_DEBUG),
-                            generateWat = configuration.getBoolean(WasmConfigurationKeys.WASM_GENERATE_WAT),
-                            generateDebugInformation =
-                                configuration.getBoolean(WasmConfigurationKeys.WASM_GENERATE_DWARF) || configuration.sourceMap,
-                            mode = configuration.wasmCompilationMode()
-                        )
-                    }
-                    else -> IcCachesConfigurationData.Js(
-                        granularity = artifactConfiguration.granularity
-                    )
-                },
                 outputDir = configuration.outputDir!!,
                 targetConfiguration = configuration,
                 artifactConfiguration = artifactConfiguration,
@@ -111,10 +91,66 @@ abstract class WebBackendPipelinePhase<Output : WebBackendPipelineArtifact, Inte
         }
     }
 
+    private fun prepareIcCaches(
+        cacheDirectory: String,
+        outputDir: File,
+        targetConfiguration: CompilerConfiguration,
+        artifactConfiguration: WebArtifactConfiguration,
+    ): List<ModuleArtifact> {
+
+        targetConfiguration.reportLog("")
+        targetConfiguration.reportLog("Building cache:")
+        targetConfiguration.reportLog("to: $outputDir")
+        targetConfiguration.reportLog("cache directory: $cacheDirectory")
+        targetConfiguration.reportLog(targetConfiguration.libraries.toString())
+
+        val start = System.currentTimeMillis()
+
+        val cacheUpdater = createCacheUpdater(cacheDirectory, targetConfiguration, artifactConfiguration)
+
+        val artifacts = cacheUpdater.actualizeCaches()
+
+        targetConfiguration.reportLog("IC rebuilt overall time: ${System.currentTimeMillis() - start}ms")
+        for ([event, duration] in cacheUpdater.getStopwatchLastLaps()) {
+            targetConfiguration.reportLog("  $event: ${(duration / 1e6).toInt()}ms")
+        }
+
+        var libIndex = 0
+        for ([libFile, srcFiles] in cacheUpdater.getDirtyFileLastStats()) {
+            val singleState = srcFiles.values.firstOrNull()?.singleOrNull()?.let { singleState ->
+                singleState.takeIf { srcFiles.values.all { it.singleOrNull() == singleState } }
+            }
+
+            val [msg, showFiles] = when {
+                singleState == DirtyFileState.NON_MODIFIED_IR -> continue
+                singleState == DirtyFileState.REMOVED_FILE -> "removed" to emptyMap()
+                singleState == DirtyFileState.ADDED_FILE -> "built clean" to emptyMap()
+                srcFiles.values.any { it.singleOrNull() == DirtyFileState.NON_MODIFIED_IR } -> "partially rebuilt" to srcFiles
+                else -> "fully rebuilt" to srcFiles
+            }
+            targetConfiguration.reportLog("${++libIndex}) module [${File(libFile.path).name}] was $msg")
+            var fileIndex = 0
+            for ([srcFile, stat] in showFiles) {
+                val filteredStats = stat.filter { it != DirtyFileState.NON_MODIFIED_IR }
+                val statStr = filteredStats.takeIf { it.isNotEmpty() }?.joinToString { it.str } ?: continue
+                // Use index, because MessageCollector ignores already reported messages
+                targetConfiguration.reportLog("  $libIndex.${++fileIndex}) file [${File(srcFile.path).name}]: ($statStr)")
+            }
+        }
+
+        return artifacts
+    }
+
+    protected abstract fun createCacheUpdater(
+        cacheDirectory: String,
+        configuration: CompilerConfiguration,
+        artifactConfiguration: WebArtifactConfiguration,
+    ): CacheUpdater
+
     protected abstract val klibLoadingPhase: WebIrLoadingPipelinePhase
 
     abstract fun compileIncrementally(
-        icCaches: IcCachesArtifacts,
+        icCaches: List<ModuleArtifact>,
         configuration: CompilerConfiguration,
     ): IntermediateOutput?
 

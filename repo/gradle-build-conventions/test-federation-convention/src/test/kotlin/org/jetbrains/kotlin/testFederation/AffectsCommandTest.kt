@@ -11,6 +11,17 @@ import kotlin.test.assertEquals
 class AffectsCommandTest {
 
     @Test
+    fun `test - command contributes to affected domains after expansion`() {
+        val changedDomains = inferChangedDomains(emptyList())
+
+        assertEquals(emptySet(), changedDomains)
+        assertEquals(
+            setOf(Domain.CommonBackend),
+            inferAffectedDomains(changedDomains, listOf("^affects: CommonBackend")),
+        )
+    }
+
+    @Test
     fun `test - no command`() {
         assertEquals(emptySet(), resolveAffectedDomainsFromCommitMessages(listOf("no affects command")))
     }
