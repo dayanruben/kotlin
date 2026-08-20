@@ -99,7 +99,7 @@ dependencies {
 }
 
 projectTests {
-    testTask(maxHeapSizeMb = 1024) {
+    testTask(maxHeapSize = testMaxHeapSizeSmall) {
         workingDir = rootDir
         jvmArgs("--add-opens=jdk.jdi/com.sun.tools.jdi=ALL-UNNAMED")
         environment("CI", kotlinBuildProperties.isTeamcityBuild.get())

@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import kotlin.ReplaceWith;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.KtStubBasedElementTypes;
@@ -51,16 +52,19 @@ public class KtEnumEntry extends KtClass implements KtDeclarationWithReturnType 
         return initializerList.getInitializers();
     }
 
+    /** Returns {@code true} if this enum entry has a supertype initializer, as in {@code ENTRY()} or {@code ENTRY(value)}. */
     public boolean hasInitializer() {
         return !getSuperTypeListEntries().isEmpty();
     }
 
+    /** Always {@code null}: an enum entry is not a class semantically, so it has no {@link ClassId}. */
     @Nullable
     @Override
     public ClassId getClassId() {
         return null;
     }
 
+    /** Returns the initializer list holding the constructor arguments of this enum entry, or {@code null} if it passes no arguments. */
     @Nullable
     @SuppressWarnings("deprecation") // KT-78356
     public KtInitializerList getInitializerList() {
@@ -122,7 +126,7 @@ public class KtEnumEntry extends KtClass implements KtDeclarationWithReturnType 
     @NotNull
     @kotlin.Deprecated(
             message = "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils.addEnumEntrySemicolon(this)' instead.",
-            replaceWith = @kotlin.ReplaceWith(
+            replaceWith = @ReplaceWith(
                     expression = "this.addEnumEntrySemicolon()",
                     imports = "org.jetbrains.kotlin.idea.base.psi.addEnumEntrySemicolon"
             )
@@ -142,6 +146,7 @@ public class KtEnumEntry extends KtClass implements KtDeclarationWithReturnType 
         return visitor.visitEnumEntry(this, data);
     }
 
+    /** Always {@code null}: an enum entry has no type reference. */
     @Nullable
     @Override
     public KtTypeReference getTypeReference() {

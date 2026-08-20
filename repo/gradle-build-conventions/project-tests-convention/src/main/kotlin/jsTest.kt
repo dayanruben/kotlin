@@ -25,6 +25,7 @@ fun ProjectTestsExtension.jsTestTask(
     taskName = taskName,
     skipInLocalBuild = skipInLocalBuild,
     enableGroupingTestEngine = enableGroupingTestEngine,
+    maxHeapSize = testMaxHeapSizeLarge
 ) {
 
     val project = this@jsTestTask.project

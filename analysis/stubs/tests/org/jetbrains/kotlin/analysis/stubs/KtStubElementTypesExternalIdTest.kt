@@ -5,8 +5,8 @@
 
 package org.jetbrains.kotlin.analysis.stubs
 
-import com.intellij.psi.stubs.ObjectStubSerializer
 import org.jetbrains.kotlin.psi.KtImplementationDetail
+import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementType
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -15,12 +15,15 @@ class KtStubElementTypesExternalIdTest {
     @Test
     @OptIn(KtImplementationDetail::class)
     fun testExternalIds() {
-        val clazz = KtStubElementTypes::class.java
-        for (declaredField in clazz.declaredFields) {
-            val stubSerializer = declaredField.get(null) as? ObjectStubSerializer<*, *> ?: continue
-            val name = declaredField.name
-            val externalId = stubSerializer.externalId
-            assertEquals("kotlin.$name", externalId)
+        for (declaredField in KtStubElementTypes::class.java.declaredFields) {
+            val elementType = declaredField.get(null) as KtStubElementType<*, *>
+            val fieldName = declaredField.name
+
+            // StubElementTypeHolderEP explicitly says that the debug name must be the same as the field
+            assertEquals(fieldName, elementType.toString())
+
+            val externalId = elementType.externalId
+            assertEquals("kotlin.$fieldName", externalId)
         }
     }
 }

@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import kotlin.ReplaceWith;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.KtNodeTypes;
@@ -75,10 +76,15 @@ public class KtProperty extends KtTypeParameterListOwnerStub<KotlinPropertyStub>
         return !isTopLevel() && !isMember();
     }
 
+    /**
+     * Returns {@code true} if this property is a member of a class, object, or script (as opposed to a local variable or a
+     * top-level property).
+     */
     public boolean isMember() {
         return KtPsiUtilKt.getContainingClassOrScript(this) != null;
     }
 
+    /** Returns {@code true} if this property is declared directly at the top level of a file. */
     public boolean isTopLevel() {
         KotlinPropertyStub stub = getGreenStub();
         if (stub != null) {
@@ -88,12 +94,14 @@ public class KtProperty extends KtTypeParameterListOwnerStub<KotlinPropertyStub>
         return isKtFile(getParent());
     }
 
+    /** Always {@code null}: a property has no value parameter list. */
     @Nullable
     @Override
     public KtParameterList getValueParameterList() {
         return null;
     }
 
+    /** Always empty: a property has no value parameters. */
     @NotNull
     @Override
     public List<KtParameter> getValueParameters() {
@@ -161,7 +169,7 @@ public class KtProperty extends KtTypeParameterListOwnerStub<KotlinPropertyStub>
     @Nullable
     @kotlin.Deprecated(
             message = "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils.setPropertyTypeReference(this, typeRef)' instead.",
-            replaceWith = @kotlin.ReplaceWith(
+            replaceWith = @ReplaceWith(
                     expression = "this.setPropertyTypeReference(typeRef)",
                     imports = "org.jetbrains.kotlin.idea.base.psi.setPropertyTypeReference"
             )
@@ -177,16 +185,19 @@ public class KtProperty extends KtTypeParameterListOwnerStub<KotlinPropertyStub>
         return findChildByType(KtTokens.COLON);
     }
 
+    /** Returns the {@code =} token that precedes the initializer, or {@code null} if this property has no initializer. */
     @Nullable
     public PsiElement getEqualsToken() {
         return findChildByType(KtTokens.EQ);
     }
 
+    /** Returns the explicitly declared accessors (getter and/or setter), in source order; empty if none are declared. */
     @NotNull
     public List<KtPropertyAccessor> getAccessors() {
         return getStubOrPsiChildrenAsList(KtStubBasedElementTypes.PROPERTY_ACCESSOR);
     }
 
+    /** Returns the explicitly declared getter, or {@code null} if the property uses the default getter. */
     @Nullable
     public KtPropertyAccessor getGetter() {
         for (KtPropertyAccessor accessor : getAccessors()) {
@@ -196,6 +207,7 @@ public class KtProperty extends KtTypeParameterListOwnerStub<KotlinPropertyStub>
         return null;
     }
 
+    /** Returns the explicitly declared setter, or {@code null} if the property is read-only or uses the default setter. */
     @Nullable
     public KtPropertyAccessor getSetter() {
         for (KtPropertyAccessor accessor : getAccessors()) {
@@ -205,6 +217,7 @@ public class KtProperty extends KtTypeParameterListOwnerStub<KotlinPropertyStub>
         return null;
     }
 
+    /** Returns the explicit backing field declaration ({@code field ...}), or {@code null} if this property has none. */
     @Nullable
     public KtBackingField getFieldDeclaration() {
         for (KtBackingField field : getStubOrPsiChildrenAsList(KtStubBasedElementTypes.BACKING_FIELD)) {
@@ -214,6 +227,7 @@ public class KtProperty extends KtTypeParameterListOwnerStub<KotlinPropertyStub>
         return null;
     }
 
+    /** Returns {@code true} if this property is delegated (declared with {@code by}). */
     public boolean hasDelegate() {
         KotlinPropertyStub stub = getGreenStub();
         if (stub != null) {
@@ -223,6 +237,7 @@ public class KtProperty extends KtTypeParameterListOwnerStub<KotlinPropertyStub>
         return getDelegate() != null;
     }
 
+    /** Returns the property delegate ({@code by ...}), or {@code null} if this property is not delegated. */
     @Nullable
     public KtPropertyDelegate getDelegate() {
         KotlinPropertyStub stub = getGreenStub();
@@ -233,6 +248,7 @@ public class KtProperty extends KtTypeParameterListOwnerStub<KotlinPropertyStub>
         return (KtPropertyDelegate) findChildByType(PROPERTY_DELEGATE);
     }
 
+    /** Returns {@code true} if this property is delegated and the delegate expression is present. */
     public boolean hasDelegateExpression() {
         KotlinPropertyStub stub = getGreenStub();
         if (stub != null) {
@@ -242,6 +258,7 @@ public class KtProperty extends KtTypeParameterListOwnerStub<KotlinPropertyStub>
         return getDelegateExpression() != null;
     }
 
+    /** Returns the delegate expression (the part after {@code by}), or {@code null} if this property is not delegated. */
     @Nullable
     public KtExpression getDelegateExpression() {
         KotlinPropertyStub stub = getGreenStub();
@@ -285,6 +302,7 @@ public class KtProperty extends KtTypeParameterListOwnerStub<KotlinPropertyStub>
         return PsiTreeUtil.getNextSiblingOfType(findChildByType(EQ), KtExpression.class);
     }
 
+    /** Returns {@code true} if this property has either a delegate expression or an initializer. */
     public boolean hasDelegateExpressionOrInitializer() {
         return hasDelegateExpression() || hasInitializer();
     }
@@ -296,7 +314,7 @@ public class KtProperty extends KtTypeParameterListOwnerStub<KotlinPropertyStub>
     @Nullable
     @kotlin.Deprecated(
             message = "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils.setPropertyInitializer(this, initializer)' instead.",
-            replaceWith = @kotlin.ReplaceWith(
+            replaceWith = @ReplaceWith(
                     expression = "this.setPropertyInitializer(initializer)",
                     imports = "org.jetbrains.kotlin.idea.base.psi.setPropertyInitializer"
             )
@@ -306,6 +324,10 @@ public class KtProperty extends KtTypeParameterListOwnerStub<KotlinPropertyStub>
         return KtPsiMutationService.getInstance().setPropertyInitializer(this, initializer);
     }
 
+    /**
+     * Returns the delegate expression if this property is delegated, otherwise the initializer expression, or {@code null} if the property
+     * has neither.
+     */
     @Nullable
     public KtExpression getDelegateExpressionOrInitializer() {
         KtExpression expression = getDelegateExpression();
@@ -328,12 +350,18 @@ public class KtProperty extends KtTypeParameterListOwnerStub<KotlinPropertyStub>
         return ItemPresentationProviders.getItemPresentation(this);
     }
 
-    @SuppressWarnings({"unused", "MethodMayBeStatic"}) //keep for compatibility with potential plugins
+    /**
+     * Always returns {@code false}: changes inside a property never affect the out-of-code-block modification count.
+     *
+     * <p>Kept for compatibility with potential plugins.
+     */
+    @SuppressWarnings({"unused", "MethodMayBeStatic"})
     public boolean shouldChangeModificationCount(PsiElement place) {
         // Suppress Java check for out-of-block
         return false;
     }
 
+    /** Returns {@code true} if this property has a body: an initializer, a delegate, or an accessor with a body. */
     public boolean hasBody() {
         if (hasDelegateExpressionOrInitializer()) return true;
         KtPropertyAccessor getter = getGetter();

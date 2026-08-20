@@ -9,6 +9,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.TokenSet;
+import kotlin.ReplaceWith;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.KtStubBasedElementTypes;
@@ -18,6 +19,20 @@ import org.jetbrains.kotlin.psi.stubs.KotlinModifierListStub;
 
 import java.util.List;
 
+/**
+ * Represents the list of modifiers and annotations that precede a declaration or other {@link KtModifierListOwner}.
+ *
+ * <p>A modifier list groups plain modifier keywords (such as {@code public}, {@code inline}, {@code suspend}), annotation entries, and the
+ * {@code context(...)} parameter list. Whether a specific modifier is present can be tested with
+ * {@link #hasModifier(KtModifierKeywordToken)}.
+ *
+ * <h3>Example:</h3>
+ * <pre>{@code
+ *    @JvmStatic private inline fun foo() {}
+ * // ^_______________________^
+ * // The modifier list ('@JvmStatic private inline')
+ * }</pre>
+ */
 public abstract class KtModifierList extends KtElementImplStub<KotlinModifierListStub> implements KtAnnotationsContainer {
 
     public KtModifierList(@NotNull KotlinModifierListStub stub, @NotNull IStubElementType nodeType) {
@@ -66,7 +81,7 @@ public abstract class KtModifierList extends KtElementImplStub<KotlinModifierLis
      */
     @kotlin.Deprecated(
             message = "Use 'getContextParameterList()' instead. This method is obsolete and exists for compatibility reasons only.",
-            replaceWith = @kotlin.ReplaceWith(
+            replaceWith = @ReplaceWith(
                     expression = "contextParameterList",
                     imports = {}
             )
@@ -80,7 +95,7 @@ public abstract class KtModifierList extends KtElementImplStub<KotlinModifierLis
     /**
      * Returns the list of all {@link KtContextParameterList} declared in this modifier list.
      * <p>
-     * This method is indented only for handling error cases since valid code cannot have more than one context parameter list.
+     * This method is intended only for handling error cases since valid code cannot have more than one context parameter list.
      * <p>
      * Prefer {@link #getContextParameterList()} where it is possible.
      */
@@ -97,7 +112,7 @@ public abstract class KtModifierList extends KtElementImplStub<KotlinModifierLis
     @NotNull
     @kotlin.Deprecated(
             message = "Use 'getContextParameterLists()' instead. This method is obsolete and exists for compatibility reasons only.",
-            replaceWith = @kotlin.ReplaceWith(
+            replaceWith = @ReplaceWith(
                     expression = "contextParameterLists",
                     imports = {}
             )
@@ -114,6 +129,7 @@ public abstract class KtModifierList extends KtElementImplStub<KotlinModifierLis
         return KtPsiUtilKt.collectAnnotationEntriesFromStubOrPsi(this);
     }
 
+    /** Returns {@code true} if this modifier list contains the given modifier keyword. */
     public boolean hasModifier(@NotNull KtModifierKeywordToken tokenType) {
         KotlinModifierListStub stub = getStub();
         if (stub != null) {
@@ -122,17 +138,20 @@ public abstract class KtModifierList extends KtElementImplStub<KotlinModifierLis
         return getModifier(tokenType) != null;
     }
 
+    /** Returns the token for the given modifier keyword, or {@code null} if this modifier list does not contain it. */
     @Nullable
     public PsiElement getModifier(@NotNull KtModifierKeywordToken tokenType) {
         return findChildByType(tokenType);
     }
 
+    /** Returns the first token whose type is in the given set, or {@code null} if none is present. */
     @Nullable
     public PsiElement getModifier(@NotNull TokenSet tokenTypes) {
         return findChildByType(tokenTypes);
     }
 
 
+    /** Returns the element that owns this modifier list (the declaration or other {@link KtModifierListOwner} it belongs to). */
     public PsiElement getOwner() {
         return getParentByStub();
     }

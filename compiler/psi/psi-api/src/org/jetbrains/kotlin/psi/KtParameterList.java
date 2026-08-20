@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import kotlin.ReplaceWith;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.KtStubBasedElementTypes;
@@ -54,6 +55,7 @@ public class KtParameterList extends KtElementImplStub<KotlinPlaceHolderStub<KtP
         return visitor.visitParameterList(this, data);
     }
 
+    /** Returns the parameters in this list, in source order; empty if there are none. */
     @NotNull
     public List<KtParameter> getParameters() {
         return getStubOrPsiChildrenAsList(KtStubBasedElementTypes.VALUE_PARAMETER);
@@ -66,7 +68,7 @@ public class KtParameterList extends KtElementImplStub<KotlinPlaceHolderStub<KtP
     @NotNull
     @kotlin.Deprecated(
             message = "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils.appendParameter(this, parameter)' instead.",
-            replaceWith = @kotlin.ReplaceWith(
+            replaceWith = @ReplaceWith(
                     expression = "this.appendParameter(parameter)",
                     imports = "org.jetbrains.kotlin.idea.base.psi.appendParameter"
             )
@@ -83,7 +85,7 @@ public class KtParameterList extends KtElementImplStub<KotlinPlaceHolderStub<KtP
     @NotNull
     @kotlin.Deprecated(
             message = "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils.insertParameterBefore(this, parameter, anchor)' instead.",
-            replaceWith = @kotlin.ReplaceWith(
+            replaceWith = @ReplaceWith(
                     expression = "this.insertParameterBefore(parameter, anchor)",
                     imports = "org.jetbrains.kotlin.idea.base.psi.insertParameterBefore"
             )
@@ -100,7 +102,7 @@ public class KtParameterList extends KtElementImplStub<KotlinPlaceHolderStub<KtP
     @NotNull
     @kotlin.Deprecated(
             message = "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils.insertParameterAfter(this, parameter, anchor)' instead.",
-            replaceWith = @kotlin.ReplaceWith(
+            replaceWith = @ReplaceWith(
                     expression = "this.insertParameterAfter(parameter, anchor)",
                     imports = "org.jetbrains.kotlin.idea.base.psi.insertParameterAfter"
             )
@@ -116,7 +118,7 @@ public class KtParameterList extends KtElementImplStub<KotlinPlaceHolderStub<KtP
      */
     @kotlin.Deprecated(
             message = "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils.deleteParameter(this, parameter)' instead.",
-            replaceWith = @kotlin.ReplaceWith(
+            replaceWith = @ReplaceWith(
                     expression = "this.deleteParameter(parameter)",
                     imports = "org.jetbrains.kotlin.idea.base.psi.deleteParameter"
             )
@@ -132,7 +134,7 @@ public class KtParameterList extends KtElementImplStub<KotlinPlaceHolderStub<KtP
      */
     @kotlin.Deprecated(
             message = "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils.deleteParameter(this, index)' instead.",
-            replaceWith = @kotlin.ReplaceWith(
+            replaceWith = @ReplaceWith(
                     expression = "this.deleteParameter(index)",
                     imports = "org.jetbrains.kotlin.idea.base.psi.deleteParameter"
             )
@@ -142,27 +144,35 @@ public class KtParameterList extends KtElementImplStub<KotlinPlaceHolderStub<KtP
         KtPsiMutationService.getInstance().deleteParameter(this, index);
     }
 
+    /**
+     * Returns the function-like declaration that owns this parameter list, or {@code null} if the list belongs to a function type (which is
+     * not a declaration).
+     */
     public KtDeclarationWithBody getOwnerFunction() {
         PsiElement parent = getParentByStub();
         if (!(parent instanceof KtDeclarationWithBody)) return null;
         return (KtDeclarationWithBody) parent;
     }
 
+    /** Returns the closing parenthesis, or {@code null} if it is absent (for example, a parenthesis-less lambda parameter list). */
     @Nullable
     public PsiElement getRightParenthesis() {
         return findChildByType(KtTokens.RPAR);
     }
 
+    /** Returns the opening parenthesis, or {@code null} if it is absent (for example, a parenthesis-less lambda parameter list). */
     @Nullable
     public PsiElement getLeftParenthesis() {
         return findChildByType(KtTokens.LPAR);
     }
 
+    /** Returns the first comma separating parameters, or {@code null} if there is at most one parameter. */
     @Nullable
     public PsiElement getFirstComma() {
         return findChildByType(KtTokens.COMMA);
     }
 
+    /** Returns the trailing comma after the last parameter, or {@code null} if there is none. */
     @Nullable
     public PsiElement getTrailingComma() {
         PsiElement parentElement = getParent();

@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.psi;
 
 import com.intellij.lang.ASTNode;
+import kotlin.ReplaceWith;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.KtStubBasedElementTypes;
@@ -25,13 +26,13 @@ import org.jetbrains.kotlin.psi.stubs.KotlinPlaceHolderStub;
 import java.util.List;
 
 /**
- * A group of annotation entries applied to the same use-site target. Can be used to avoid writing use-site target multiple times.
- * <p>
- * Syntax examples:
- * <ul>
- *     <li>{@code @file:[Annotation1, Annotation2]}</li>
- *     <li>{@code @set:[Inject, Autowire]}</li>
- * </ul>
+ * Represents a bracketed group of annotation entries applied to the same use-site target, which avoids repeating the target for each entry.
+ *
+ * <h3>Example:</h3>
+ * <pre>{@code
+ *    @set:[Inject, Autowire]
+ * // ^_____________________^
+ * }</pre>
  * <p>
  * For a single annotation entry, see {@link KtAnnotationEntry}.
  */
@@ -50,10 +51,15 @@ public class KtAnnotation extends KtElementImplStub<KotlinPlaceHolderStub<KtAnno
         return visitor.visitAnnotation(this, data);
     }
 
+    /** Returns the individual annotation entries in this bracketed group, in source order. */
     public List<KtAnnotationEntry> getEntries() {
         return getStubOrPsiChildrenAsList(KtStubBasedElementTypes.ANNOTATION_ENTRY);
     }
 
+    /**
+     * Returns the shared use-site target applied to all entries in this group (as in {@code @set:[...]}), or {@code null} if no use-site
+     * target is specified.
+     */
     @Nullable
     @SuppressWarnings("deprecation") // KT-78356
     public KtAnnotationUseSiteTarget getUseSiteTarget() {
@@ -66,7 +72,7 @@ public class KtAnnotation extends KtElementImplStub<KotlinPlaceHolderStub<KtAnno
      */
     @kotlin.Deprecated(
             message = "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils.removeAnnotationEntry(this, entry)' instead.",
-            replaceWith = @kotlin.ReplaceWith(
+            replaceWith = @ReplaceWith(
                     expression = "this.removeAnnotationEntry(entry)",
                     imports = "org.jetbrains.kotlin.idea.base.psi.removeAnnotationEntry"
             )

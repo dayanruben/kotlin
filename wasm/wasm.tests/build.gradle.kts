@@ -363,7 +363,7 @@ projectTests {
             taskName = taskName,
             skipInLocalBuild = skipInLocalBuild,
             enableGroupingTestEngine = true,
-            maxHeapSizeMb = 6144
+            maxHeapSize = testMaxHeapSizeLarge,
         ) {
             with(d8KotlinBuild) {
                 setupV8()

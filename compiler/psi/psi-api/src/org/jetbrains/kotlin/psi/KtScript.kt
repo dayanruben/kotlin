@@ -16,12 +16,13 @@ import org.jetbrains.kotlin.psi.stubs.elements.KtTokenSets
 
 /**
  * Represents a Kotlin script file containing top-level statements and declarations.
- * 
+ *
  * ### Example:
  *
  * // script.kts
  * ```kotlin
- * val x = 1 println(x)
+ * val x = 1
+ * println(x)
  * ```
  *
  * Note: this class is not intended to be extended and is marked `open` solely for backward compatibility.
@@ -63,6 +64,9 @@ open class KtScript : KtNamedDeclarationStub<KotlinScriptStub>, KtDeclarationCon
 
     override fun getName(): String = fqName.shortName().asString()
 
+    /**
+     * The block holding the script's top-level statements and declarations.
+     */
     val blockExpression: KtBlockExpression
         get() = findNotNullChildByClass(KtBlockExpression::class.java)
 

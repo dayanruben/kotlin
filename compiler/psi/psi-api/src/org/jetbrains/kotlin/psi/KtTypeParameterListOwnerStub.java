@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.stubs.IStubElementType;
+import kotlin.ReplaceWith;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.KtStubBasedElementTypes;
@@ -15,6 +16,14 @@ import org.jetbrains.kotlin.psi.stubs.KotlinStubWithFqName;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Base implementation of {@link KtTypeParameterListOwner} that may be backed either by the AST tree or by a stub.
+ *
+ * <p>This is an internal implementation base class of the Kotlin PSI, not intended for direct use or subclassing outside of the PSI
+ * implementation. See {@link KtElementImplStub} for details on stub backing.
+ *
+ * @param <T> the type of stub backing this declaration, carrying its fully qualified name
+ */
 public abstract class KtTypeParameterListOwnerStub<T extends KotlinStubWithFqName<?>>
         extends KtNamedDeclarationStub<T> implements KtTypeParameterListOwner {
     public KtTypeParameterListOwnerStub(@NotNull T stub, @NotNull IStubElementType nodeType) {
@@ -63,7 +72,7 @@ public abstract class KtTypeParameterListOwnerStub<T extends KotlinStubWithFqNam
      */
     @kotlin.Deprecated(
             message = "Use 'KtModifierList.getContextParameterList()' (via 'getModifierList()') instead. This method is obsolete and exists for compatibility reasons only.",
-            replaceWith = @kotlin.ReplaceWith(
+            replaceWith = @ReplaceWith(
                     expression = "modifierList?.contextParameterList",
                     imports = {}
             )
@@ -89,7 +98,7 @@ public abstract class KtTypeParameterListOwnerStub<T extends KotlinStubWithFqNam
      */
     @kotlin.Deprecated(
             message = "Use 'KtModifierList.getContextParameterLists()' (via 'getModifierList()') instead. This method is obsolete and exists for compatibility reasons only.",
-            replaceWith = @kotlin.ReplaceWith(
+            replaceWith = @ReplaceWith(
                     expression = "modifierList?.contextParameterLists.orEmpty()",
                     imports = {}
             )

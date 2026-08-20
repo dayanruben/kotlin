@@ -9,6 +9,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import kotlin.ReplaceWith;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.KtStubBasedElementTypes;
@@ -40,6 +41,10 @@ public class KtTypeParameter extends KtNamedDeclarationStub<KotlinTypeParameterS
         return visitor.visitTypeParameter(this, data);
     }
 
+    /**
+     * Returns the declaration-site variance of this type parameter: {@link Variance#OUT_VARIANCE} for {@code out},
+     * {@link Variance#IN_VARIANCE} for {@code in}, or {@link Variance#INVARIANT} if no variance modifier is present.
+     */
     @NotNull
     public Variance getVariance() {
         KtModifierList modifierList = getModifierList();
@@ -57,7 +62,7 @@ public class KtTypeParameter extends KtNamedDeclarationStub<KotlinTypeParameterS
     @Nullable
     @kotlin.Deprecated(
             message = "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils.setTypeParameterExtendsBound(this, typeReference)' instead.",
-            replaceWith = @kotlin.ReplaceWith(
+            replaceWith = @ReplaceWith(
                     expression = "this.setTypeParameterExtendsBound(typeReference)",
                     imports = "org.jetbrains.kotlin.idea.base.psi.setTypeParameterExtendsBound"
             )
@@ -67,6 +72,11 @@ public class KtTypeParameter extends KtNamedDeclarationStub<KotlinTypeParameterS
         return KtPsiMutationService.getInstance().setTypeParameterExtendsBound(this, typeReference);
     }
 
+    /**
+     * Returns the inline upper bound written after {@code :} (as in {@code <T : Comparable<T>>}), or {@code null} if this type parameter
+     * has no inline bound. Bounds declared in a {@code where} clause are exposed via {@link
+     * KtTypeParameterListOwner#getTypeConstraints()} instead.
+     */
     @Nullable
     @SuppressWarnings("deprecation") // KT-78356
     public KtTypeReference getExtendsBound() {

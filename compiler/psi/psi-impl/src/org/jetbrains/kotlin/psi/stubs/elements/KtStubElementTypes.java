@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.*;
 @KtImplementationDetail
 public interface KtStubElementTypes {
     @NotNull KtClassElementType CLASS = KtClassElementType.INSTANCE;
-    @NotNull KtFunctionElementType FUNCTION = new KtFunctionElementType("FUN");
+    @NotNull KtFunctionElementType FUNCTION = new KtFunctionElementType();
     @NotNull KtPropertyElementType PROPERTY = new KtPropertyElementType("PROPERTY");
     @NotNull KtPropertyAccessorElementType PROPERTY_ACCESSOR = KtPropertyAccessorElementType.INSTANCE;
     @NotNull KtBackingFieldElementType BACKING_FIELD = new KtBackingFieldElementType("BACKING_FIELD");
@@ -93,10 +93,6 @@ public interface KtStubElementTypes {
             new KtPlaceHolderStubElementType<>("DYNAMIC_TYPE", KtDynamicType.class);
 
     @NotNull KtFunctionTypeElementType FUNCTION_TYPE = new KtFunctionTypeElementType("FUNCTION_TYPE");
-
-    @NotNull KtTypeCodeFragmentType TYPE_CODE_FRAGMENT = new KtTypeCodeFragmentType();
-    @NotNull KtExpressionCodeFragmentType EXPRESSION_CODE_FRAGMENT = new KtExpressionCodeFragmentType();
-    @NotNull KtBlockCodeFragmentType BLOCK_CODE_FRAGMENT = new KtBlockCodeFragmentType();
 
     @NotNull KtTypeProjectionElementType TYPE_PROJECTION = new KtTypeProjectionElementType("TYPE_PROJECTION");
 
