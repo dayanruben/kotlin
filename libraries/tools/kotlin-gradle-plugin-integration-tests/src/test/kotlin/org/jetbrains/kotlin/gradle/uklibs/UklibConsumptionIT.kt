@@ -302,9 +302,12 @@ class UklibConsumptionIT : KGPBaseTest() {
         return project(
             "empty",
             gradleVersion,
-            buildOptions = defaultBuildOptions.copy(
-                androidVersion = androidVersion,
-            ).disableIsolatedProjectsBecauseOfJsAndWasmKT75899(),
+            buildOptions = defaultBuildOptions
+                .copy(
+                    androidVersion = androidVersion,
+                )
+                .disableIsolatedProjectsBecauseOfJsAndWasmKT75899()
+                .suppressAgpWarningIsProperty(gradleVersion)
         ) {
             if (androidVersion != null) addAgpToBuildScriptCompilationClasspath(androidVersion)
             addKgpToBuildScriptCompilationClasspath()
@@ -1351,7 +1354,10 @@ class UklibConsumptionIT : KGPBaseTest() {
                     sourceSets.commonMain.get().compileSource("class Common")
                 }
             }
-        }.publish(publisherConfiguration = PublisherConfiguration(group = "producer"))
+        }.publish(
+            publisherConfiguration = PublisherConfiguration(group = "producer"),
+            deriveBuildOptions = { buildOptions.disableIsolatedProjectsBecauseOfJsAndWasmKT75899() }
+        )
 
         val consumer = project(
             "empty",

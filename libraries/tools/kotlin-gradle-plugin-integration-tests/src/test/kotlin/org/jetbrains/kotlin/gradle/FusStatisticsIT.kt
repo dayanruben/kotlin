@@ -58,15 +58,15 @@ class FusStatisticsIT : KGPBaseTest() {
     @JvmGradlePluginTests
     @DisplayName("for dokka")
     @GradleTest
-    @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_8_0, TestVersions.Gradle.G_8_2],
-    )
     fun testDokka(gradleVersion: GradleVersion) {
         project(
             "simpleProject",
             gradleVersion,
             // TODO: KT-70336 dokka doesn't support Configuration Cache
-            buildOptions = defaultBuildOptions.copy(configurationCache = BuildOptions.ConfigurationCacheValue.DISABLED)
+            buildOptions = defaultBuildOptions.copy(
+                configurationCache = BuildOptions.ConfigurationCacheValue.DISABLED,
+                isolatedProjects = IsolatedProjectsMode.DISABLED,
+            )
         ) {
             assertNoErrorFilesCreated {
                 applyDokka(TestVersions.ThirdPartyDependencies.DOKKA)
@@ -84,9 +84,6 @@ class FusStatisticsIT : KGPBaseTest() {
     @JvmGradlePluginTests
     @DisplayName("for dokka v2 html doc")
     @GradleTest
-    @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_8_0, TestVersions.Gradle.G_8_2],
-    )
     fun testDokkaV2HtmlDoc(gradleVersion: GradleVersion) {
         val expectedDokkaFusMetrics = arrayOf(
             "ENABLED_DOKKA",
@@ -100,9 +97,6 @@ class FusStatisticsIT : KGPBaseTest() {
     @JvmGradlePluginTests
     @DisplayName("for dokka v2 javadoc")
     @GradleTest
-    @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_8_0, TestVersions.Gradle.G_8_2],
-    )
     fun testDokkaV2Javadoc(gradleVersion: GradleVersion) {
         val expectedDokkaFusMetrics = arrayOf(
             "ENABLED_DOKKA_JAVADOC",
@@ -172,9 +166,6 @@ class FusStatisticsIT : KGPBaseTest() {
     @NativeGradlePluginTests
     @DisplayName("Verify that the metric for applying the Cocoapods plugin is being collected")
     @GradleTest
-    @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_8_2],
-    )
     fun testMetricCollectingOfApplyingCocoapodsPlugin(gradleVersion: GradleVersion) {
         project("native-cocoapods-template", gradleVersion) {
             assertNoErrorFilesCreated {
@@ -189,9 +180,6 @@ class FusStatisticsIT : KGPBaseTest() {
     @NativeGradlePluginTests
     @DisplayName("Verify that the metric for native incremental compilation")
     @GradleTest
-    @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_8_2],
-    )
     fun testMetricCollectingForNative(gradleVersion: GradleVersion) {
         nativeProject(
             "native-incremental-simple", gradleVersion, buildOptions = defaultBuildOptions.copy(
@@ -213,9 +201,6 @@ class FusStatisticsIT : KGPBaseTest() {
     @JvmGradlePluginTests
     @DisplayName("Ensure that the metric are not collected if plugins were not applied to simple project")
     @GradleTest
-    @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_8_2],
-    )
     fun testAppliedPluginsMetricsAreNotCollectedInSimpleProject(gradleVersion: GradleVersion) {
         project("simpleProject", gradleVersion) {
             assertNoErrorFilesCreated {
@@ -232,9 +217,6 @@ class FusStatisticsIT : KGPBaseTest() {
     @JvmGradlePluginTests
     @DisplayName("for project with buildSrc")
     @GradleTest
-    @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_8_0, TestVersions.Gradle.G_8_2]
-    )
     fun testProjectWithBuildSrcForGradleVersion7(gradleVersion: GradleVersion) {
         //KT-64022 there are different build instances in buildSrc and rest project:
         project(
@@ -255,36 +237,9 @@ class FusStatisticsIT : KGPBaseTest() {
         }
     }
 
-    @DisplayName("for project with included build")
-    @GradleTest
-    @JvmGradlePluginTests
-    @GradleTestVersions(
-        maxVersion = TestVersions.Gradle.G_8_0
-    )
-    fun testProjectWithIncludedBuild(gradleVersion: GradleVersion) {
-        //KT-64022
-        //there are a different build instances in buildSrc and rest project
-
-        project("instantExecutionWithIncludedBuildPlugin", gradleVersion) {
-            build("compileKotlin", "-Pkotlin.session.logger.root.path=$projectPath") {
-                fusStatisticsDirectory.assertAllFusReportContains(*expectedMetrics)
-            }
-            fusStatisticsDirectory.listDirectoryEntries().forEach {
-                assertTrue(it.deleteIfExists())
-            }
-
-            build("compileKotlin", "-Pkotlin.session.logger.root.path=$projectPath") {
-                fusStatisticsDirectory.assertAllFusReportContains(*expectedMetrics)
-            }
-        }
-    }
-
     @JvmGradlePluginTests
     @DisplayName("for failed build")
     @GradleTest
-    @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_8_0, TestVersions.Gradle.G_8_2],
-    )
     fun testFusStatisticsForFailedBuild(gradleVersion: GradleVersion) {
         project(
             "simpleProject",
@@ -313,9 +268,6 @@ class FusStatisticsIT : KGPBaseTest() {
     @JvmGradlePluginTests
     @DisplayName("fus metric for multiproject")
     @GradleTest
-    @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_8_0, TestVersions.Gradle.G_8_2],
-    )
     fun testFusStatisticsForMultiproject(gradleVersion: GradleVersion) {
         project(
             "incrementalMultiproject", gradleVersion,
@@ -344,9 +296,6 @@ class FusStatisticsIT : KGPBaseTest() {
     @JvmGradlePluginTests
     @DisplayName("test configuration time ksp metrics")
     @GradleTest
-    @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_8_0, TestVersions.Gradle.G_8_2],
-    )
     fun testFusStatisticsForKsp(gradleVersion: GradleVersion) {
         project("empty", gradleVersion) {
             plugins {
@@ -365,9 +314,6 @@ class FusStatisticsIT : KGPBaseTest() {
     @JvmGradlePluginTests
     @DisplayName("fus metric for jvm feature flags")
     @GradleTest
-    @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_8_0, TestVersions.Gradle.G_8_2],
-    )
     fun testFusStatisticsForJvmMultiprojectWithFeatureFlags(gradleVersion: GradleVersion) {
         project(
             "incrementalMultiproject", gradleVersion,
@@ -434,9 +380,6 @@ class FusStatisticsIT : KGPBaseTest() {
     @JvmGradlePluginTests
     @DisplayName("general fields with configuration cache")
     @GradleTest
-    @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_8_0, TestVersions.Gradle.G_8_2],
-    )
     fun testFusStatisticsWithConfigurationCache(gradleVersion: GradleVersion) {
         testFusStatisticsWithConfigurationCache(gradleVersion, IsolatedProjectsMode.DISABLED)
     }
@@ -444,9 +387,6 @@ class FusStatisticsIT : KGPBaseTest() {
     @JvmGradlePluginTests
     @DisplayName("general fields with configuration cache and project isolation")
     @GradleTest
-    @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_8_0, TestVersions.Gradle.G_8_2],
-    )
     fun testFusStatisticsWithConfigurationCacheAndProjectIsolation(gradleVersion: GradleVersion) {
         testFusStatisticsWithConfigurationCache(gradleVersion, IsolatedProjectsMode.ENABLED)
     }
@@ -502,9 +442,6 @@ class FusStatisticsIT : KGPBaseTest() {
     @JvmGradlePluginTests
     @DisplayName("configuration type metrics")
     @GradleTest
-    @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_8_0, TestVersions.Gradle.G_8_2],
-    )
     fun testConfigurationTypeFusMetrics(gradleVersion: GradleVersion) {
         project("simpleProject", gradleVersion) {
             assertNoErrorFilesCreated {
@@ -537,8 +474,6 @@ class FusStatisticsIT : KGPBaseTest() {
     @JvmGradlePluginTests
     @GradleTest
     @GradleTestVersions(
-        minVersion = TestVersions.Gradle.G_8_2,
-        additionalVersions = [TestVersions.Gradle.G_8_2],
         // Kover triggers deprecation in Gradle 9.6.0 https://github.com/Kotlin/kotlinx-kover/issues/813
         maxVersion = TestVersions.Gradle.G_9_5,
     )
@@ -572,9 +507,6 @@ class FusStatisticsIT : KGPBaseTest() {
 
     @MppGradlePluginTests
     @GradleTest
-    @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_8_2],
-    )
     fun testWasmIncrementalStatisticCollection(gradleVersion: GradleVersion) {
         project(
             "new-mpp-wasm-test",
@@ -608,8 +540,17 @@ class FusStatisticsIT : KGPBaseTest() {
         project(
             "empty",
             gradleVersion,
-            // KT-75899 Support Gradle Project Isolation in KGP JS & Wasm
-            buildOptions = defaultBuildOptions.disableIsolatedProjectsBecauseOfJsAndWasmKT75899(),
+            buildOptions = defaultBuildOptions
+                .copy(
+                    configurationCache = if (gradleVersion == GradleVersion.version(TestVersions.Gradle.G_8_14)) {
+                        // FIXME: KT-88448
+                        BuildOptions.ConfigurationCacheValue.DISABLED
+                    } else {
+                        BuildOptions.ConfigurationCacheValue.ENABLED
+                    }
+                )
+                // KT-75899 Support Gradle Project Isolation in KGP JS & Wasm
+                .disableIsolatedProjectsBecauseOfJsAndWasmKT75899(),
         ) {
             addKgpToBuildScriptCompilationClasspath()
             buildScriptInjection {
@@ -659,9 +600,6 @@ class FusStatisticsIT : KGPBaseTest() {
     @DisplayName("native compiler arguments")
     @GradleTest
     @NativeGradlePluginTests
-    @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_8_2],
-    )
     fun testNativeCompilerArguments(gradleVersion: GradleVersion) {
         nativeProject("native-incremental-simple", gradleVersion) {
             buildGradleKts.appendText(
@@ -691,9 +629,6 @@ class FusStatisticsIT : KGPBaseTest() {
     @DisplayName("native swift export - happy path")
     @GradleTest
     @NativeGradlePluginTests
-    @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_8_2],
-    )
     fun testSwiftExportIsReported(gradleVersion: GradleVersion, @TempDir testBuildDir: Path) {
         project("empty", gradleVersion) {
             assertNoErrorFilesCreated {
@@ -724,9 +659,6 @@ class FusStatisticsIT : KGPBaseTest() {
     @DisplayName("native swift export - unhappy path")
     @GradleTest
     @NativeGradlePluginTests
-    @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_8_2],
-    )
     fun testSwiftExportIsNotReportedWithoutNeed(gradleVersion: GradleVersion) {
         project("empty", gradleVersion) {
             plugins {
@@ -754,10 +686,6 @@ class FusStatisticsIT : KGPBaseTest() {
     @DisplayName("add configuration metrics after build was finish")
     @GradleTest
     @MppGradlePluginTests
-    @GradleTestVersions(
-        //test uses internal internal method `org.gradle.internal.extensions.core.serviceOf`
-        minVersion = TestVersions.Gradle.G_8_11,
-    )
     fun addConfigurationMetricsAfterFlowActionWasCalled(gradleVersion: GradleVersion) {
         project(
             "multiplatformFlowAction",
@@ -776,9 +704,6 @@ class FusStatisticsIT : KGPBaseTest() {
     @DisplayName("add configuration metrics after build was finish")
     @GradleTest
     @JvmGradlePluginTests
-    @GradleTestVersions(
-        minVersion = TestVersions.Gradle.G_8_2,
-    )
     fun concurrencyModificationExceptionTest(gradleVersion: GradleVersion) {
         val rounds = 100
         //TODO KT-79408 fix finish file already exists error
@@ -800,7 +725,8 @@ class FusStatisticsIT : KGPBaseTest() {
                 build("clean", buildOptions = buildOptions)
             }
 
-            assertEquals(getExpectedFusFilesCount(gradleVersion, rounds), fusStatisticsDirectory.filterKotlinFusFiles().size)
+            //every submodule will create a separate file. There are two modules in the project
+            assertEquals(rounds * 2, fusStatisticsDirectory.filterKotlinFusFiles().size)
 
             fusStatisticsDirectory.assertFusReportContains(
                 "CONFIGURATION_IMPLEMENTATION_COUNT",
@@ -898,16 +824,6 @@ class FusStatisticsIT : KGPBaseTest() {
                 }
             }
         }
-    }
-
-    private fun getExpectedFusFilesCount(gradleVersion: GradleVersion, rounds: Int): Int {
-        val expectedFiles = if (gradleVersion >= GradleVersion.version(TestVersions.Gradle.G_8_9)) {
-            //every submodule will create a separate file. There are two modules in the project
-            rounds * 2
-        } else {
-            rounds
-        }
-        return expectedFiles
     }
 
     @DisplayName("FUS should not break project configuration for included build")

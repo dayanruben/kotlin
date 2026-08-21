@@ -105,7 +105,10 @@ class JsBrowserTestsWithPlaywrightIT : KGPBaseTest() {
         project(
             "empty",
             gradleVersion = gradleVersion,
-            buildOptions = defaultBuildOptions.copy(configurationCache = ConfigurationCacheValue.DISABLED)
+            buildOptions = defaultBuildOptions.copy(
+                configurationCache = ConfigurationCacheValue.DISABLED,
+                isolatedProjects = BuildOptions.IsolatedProjectsMode.DISABLED,
+            )
         ) {
             addKgpToBuildScriptCompilationClasspath()
             buildScriptInjection {
@@ -496,7 +499,6 @@ class JsBrowserTestsWithPlaywrightIT : KGPBaseTest() {
     }
 
     @GradleTest
-    @GradleTestVersions(additionalVersions = [TestVersions.Gradle.G_8_2])
     fun `verify playwright install browsers executed only once for multiple js targets`(gradleVersion: GradleVersion) {
         project(
             "empty",

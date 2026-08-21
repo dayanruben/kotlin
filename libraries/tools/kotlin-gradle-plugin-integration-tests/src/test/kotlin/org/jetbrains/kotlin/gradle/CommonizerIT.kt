@@ -124,9 +124,6 @@ open class CommonizerIT : KGPBaseTest() {
         nativeProject(
             "commonizeCurlInterop",
             gradleVersion,
-            // with CC enabled on Gradle 7 `CInteropCommonizerTask.getAllInteropGroupsForUpToDateCheck` nested input
-            // always fails the up-to-date check
-            buildOptions = defaultBuildOptions.disableConfigurationCacheForGradle7(gradleVersion),
         ) {
 
             configureCommonizerTargets()
@@ -849,7 +846,14 @@ open class CommonizerIT : KGPBaseTest() {
         gradleVersion: GradleVersion,
         commonSourceSetName: String,
     ) {
-        project("empty", gradleVersion) {
+        project(
+            "empty",
+            gradleVersion,
+            buildOptions = defaultBuildOptions.copy(
+                configurationCache = BuildOptions.ConfigurationCacheValue.DISABLED,
+                isolatedProjects = BuildOptions.IsolatedProjectsMode.DISABLED,
+            )
+        ) {
             plugins {
                 kotlin("multiplatform")
             }
@@ -948,7 +952,6 @@ open class CommonizerIT : KGPBaseTest() {
                     }
             }.buildAndReturn(
                 ":compileKotlinLinuxX64",
-                configurationCache = BuildOptions.ConfigurationCacheValue.DISABLED,
             )
 
             val sharedSourceSetDeps = fragmentDependencies[commonSourceSetName].orEmpty()

@@ -7,6 +7,7 @@
 
 package org.jetbrains.kotlin.gradle.testbase
 
+import org.gradle.api.JavaVersion
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.logging.configuration.WarningMode
 import org.gradle.internal.logging.LoggingConfigurationBuildOptions.StacktraceOption
@@ -34,7 +35,7 @@ data class BuildOptions(
     val warningMode: WarningMode = WarningMode.Fail,
     val ignoreWarningModeSeverityOverride: Boolean? = null, // Do not change ToolingDiagnostic severity when warningMode is defined as Fail
     val configurationCache: ConfigurationCacheValue = ConfigurationCacheValue.ENABLED,
-    val isolatedProjects: IsolatedProjectsMode = IsolatedProjectsMode.AUTO,
+    val isolatedProjects: IsolatedProjectsMode = IsolatedProjectsMode.ENABLED,
     val configurationCacheProblems: ConfigurationCacheProblems = ConfigurationCacheProblems.FAIL,
     val parallel: Boolean = true,
     val incremental: Boolean? = null,
@@ -110,7 +111,7 @@ data class BuildOptions(
         /** Explicitly/forcefully enable Configuration Cache */
         ENABLED,
 
-        /** AUTO means unspecified by default, but enabled on macOS with Gradle >= 8.0 */
+        /** AUTO means unspecified by default but enabled on macOS */
         AUTO,
 
         /** Gradle, depending on its version, will decide whether to enable Configuration Cache */
@@ -119,15 +120,12 @@ data class BuildOptions(
         fun toBooleanFlag(gradleVersion: GradleVersion): Boolean? = when (this) {
             DISABLED -> false
             ENABLED -> true
-            AUTO -> if (HostManager.hostIsMac && gradleVersion >= GradleVersion.version(TestVersions.Gradle.G_8_0)) true else null
+            AUTO -> if (HostManager.hostIsMac) true else null
             UNSPECIFIED -> null
         }
     }
 
     enum class IsolatedProjectsMode {
-
-        /** Enable Gradle Isolated Projects For [TestVersions.Gradle.G_8_5]; Disabled in other cases */
-        AUTO,
 
         /** Always disable Isolated Projects */
         DISABLED,
@@ -136,8 +134,6 @@ data class BuildOptions(
         ENABLED;
 
         fun toBooleanFlag(gradleVersion: GradleVersion) = when (this) {
-            // according to https://docs.gradle.org/current/userguide/isolated_projects.html#how_do_i_use_it
-            AUTO -> gradleVersion >= GradleVersion.version(TestVersions.Gradle.G_8_5)
             DISABLED -> false
             ENABLED -> true
         }
@@ -473,14 +469,6 @@ fun BuildOptions.withBundledKotlinNative() = copy(
     )
 )
 
-fun BuildOptions.disableConfigurationCacheForGradle7(
-    currentGradleVersion: GradleVersion,
-) = if (currentGradleVersion < GradleVersion.version(TestVersions.Gradle.G_8_0)) {
-    copy(configurationCache = BuildOptions.ConfigurationCacheValue.DISABLED)
-} else {
-    this
-}
-
 fun BuildOptions.disableKlibsCrossCompilation() = copy(
     nativeOptions = nativeOptions.copy(enableKlibsCrossCompilation = false)
 )
@@ -491,28 +479,6 @@ fun BuildOptions.disableIsolatedProjects() = copy(isolatedProjects = IsolatedPro
 
 // KT-75899: Support Gradle Project Isolation in KGP JS & Wasm
 fun BuildOptions.disableIsolatedProjectsBecauseOfJsAndWasmKT75899() = disableIsolatedProjects()
-
-/**
- * Before 8.12 Gradle fails IP CC serialization with "cannot access 'Project.group' functionality on another project"
- */
-fun BuildOptions.disableIsolatedProjectsBecauseOfSubprojectGroupAccessInPublicationBeforeGradle12(
-    currentGradleVersion: GradleVersion,
-) = copy(
-    isolatedProjects =
-        if (currentGradleVersion > GradleVersion.version(TestVersions.Gradle.G_8_11)) isolatedProjects
-        else IsolatedProjectsMode.DISABLED
-)
-
-// KMP dependencies checker does not work with Gradle isolated projects feature in older Gradle releases
-fun BuildOptions.disableIsolatedProjectsForKmpDependenciesChecker(
-    gradleVersion: GradleVersion,
-) = copy(
-    isolatedProjects = if (gradleVersion < GradleVersion.version(TestVersions.Gradle.G_8_12)) {
-        IsolatedProjectsMode.DISABLED
-    } else {
-        isolatedProjects
-    }
-)
 
 fun BuildOptions.suppressWarningForOldKotlinVersion(
     currentGradleVersion: GradleVersion,
@@ -545,5 +511,29 @@ fun BuildOptions.suppressAgpWarningSinceGradle814(
         else -> this
     }
 }
+
+// https://issuetracker.google.com/issues/399393875, was fixed in AGP 8.11.0
+fun BuildOptions.suppressAgpWarningIsProperty(
+    currentGradleVersion: GradleVersion,
+): BuildOptions {
+    val currentAgpVersion = androidVersion?.let { TestVersions.AgpCompatibilityMatrix.fromVersion(it) }
+    return if (currentAgpVersion != null && currentAgpVersion < TestVersions.AgpCompatibilityMatrix.AGP_811) {
+        suppressDeprecationWarningsSinceGradleVersion(
+            gradleVersion = TestVersions.Gradle.G_8_14,
+            currentGradleVersion = currentGradleVersion,
+            reason = "APG produces deprecation warning for is-property: https://issuetracker.google.com/issues/399393875"
+        )
+    } else this
+}
+
+fun BuildOptions.suppressDeprecatedJdkWarningWithGradle814(
+    currentGradleVersion: GradleVersion,
+    jdk: JdkVersions.ProvidedJdk
+): BuildOptions = if (currentGradleVersion == GradleVersion.version(TestVersions.Gradle.G_8_14) &&
+    jdk.version < JavaVersion.VERSION_17
+) {
+    // Gradle does not produce runtime warning in 'summary' mode, which still fails the build
+    copy(warningMode = WarningMode.None)
+} else this
 
 fun rerunTask(taskName: String) = arrayOf(taskName, "--rerun")
