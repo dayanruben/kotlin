@@ -20,7 +20,7 @@ import kotlin.contracts.contract
 /**
  * Represents an attempt to resolve [KtResolvableCall].
  *
- * [KaCallResolutionAttempt] represents either a [single call attempt][KaSingleCallResolutionAttempt]
+ * [KaCallResolutionAttempt] represents either a [simple call attempt][KaSimpleCallResolutionAttempt]
  * or a [multi-call attempt][KaMultiCallResolutionAttempt].
  *
  * @see KaResolver.tryResolveCall
@@ -30,13 +30,28 @@ import kotlin.contracts.contract
 public sealed interface KaCallResolutionAttempt : KaLifetimeOwner
 
 /**
- * Represents an attempt to resolve a single call (as opposed to a [multi-call][KaMultiCallResolutionAttempt]),
+ * Represents an attempt to resolve a simple call (as opposed to a [multi-call][KaMultiCallResolutionAttempt]),
  * which is either a [success][KaCallResolutionSuccess] or an [error][KaCallResolutionError].
  *
- * Both [KaCallResolutionSuccess.call] and [KaCallResolutionError.candidateCalls] always contain [KaSingleCall]s.
+ * Both [KaCallResolutionSuccess.call] and [KaCallResolutionError.candidateCalls] always contain [KaSimpleCall]s.
  */
 @KaExperimentalApi
-public sealed interface KaSingleCallResolutionAttempt : KaCallResolutionAttempt
+public sealed interface KaSimpleCallResolutionAttempt : KaCallResolutionAttempt
+
+/**
+ * The former name of [KaSimpleCallResolutionAttempt].
+ *
+ * @see KaSimpleCallResolutionAttempt
+ */
+@Deprecated(
+    message = "Use 'KaSimpleCallResolutionAttempt' instead",
+    replaceWith = ReplaceWith(
+        expression = "KaSimpleCallResolutionAttempt",
+        imports = ["org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCallResolutionAttempt"],
+    ),
+)
+@KaExperimentalApi
+public typealias KaSingleCallResolutionAttempt = KaSimpleCallResolutionAttempt
 
 /**
  * Represents an error that occurred during the resolution of a [KtResolvableCall]
@@ -60,7 +75,7 @@ public sealed interface KaSingleCallResolutionAttempt : KaCallResolutionAttempt
  */
 @KaExperimentalApi
 @SubclassOptInRequired(KaImplementationDetail::class)
-public interface KaCallResolutionError : KaSingleCallResolutionAttempt {
+public interface KaCallResolutionError : KaSimpleCallResolutionAttempt {
     /**
      * The diagnostic associated with the error
      */
@@ -69,11 +84,11 @@ public interface KaCallResolutionError : KaSingleCallResolutionAttempt {
     /**
      * The list of candidate calls that were considered during the resolution. Can be empty
      */
-    public val candidateCalls: List<KaSingleCall<*, *>>
+    public val candidateCalls: List<KaSimpleCall<*, *>>
 }
 
 /**
- * Represents a successful resolution of a single [KtResolvableCall].
+ * Represents a successful resolution of a simple [KtResolvableCall].
  *
  * For compound calls (e.g., `i += 1`, `for (x in list)`), see [KaMultiCallResolutionAttempt] instead.
  *
@@ -82,18 +97,18 @@ public interface KaCallResolutionError : KaSingleCallResolutionAttempt {
  */
 @KaExperimentalApi
 @SubclassOptInRequired(KaImplementationDetail::class)
-public interface KaCallResolutionSuccess : KaSingleCallResolutionAttempt {
+public interface KaCallResolutionSuccess : KaSimpleCallResolutionAttempt {
     /**
-     * The resolved [KaSingleCall].
+     * The resolved [KaSimpleCall].
      */
-    public val call: KaSingleCall<*, *>
+    public val call: KaSimpleCall<*, *>
 }
 
 /**
  * Represents an attempt to resolve a compound (multi) call, such as a for-loop, delegated property access,
  * or compound assignment. The assembled [call] is always a [KaMultiCall].
  *
- * Contains individual [KaSingleCallResolutionAttempt]s for each sub-call, preserving resolution results
+ * Contains individual [KaSimpleCallResolutionAttempt]s for each sub-call, preserving resolution results
  * independently — even if one sub-call fails, the results of other sub-calls are still available.
  */
 @KaExperimentalApi
@@ -108,7 +123,7 @@ public sealed interface KaMultiCallResolutionAttempt : KaCallResolutionAttempt {
     /**
      * The list of individual resolution attempts for each sub-call.
      */
-    public val attempts: List<KaSingleCallResolutionAttempt>
+    public val attempts: List<KaSimpleCallResolutionAttempt>
 }
 
 /**
@@ -131,21 +146,21 @@ public interface KaForLoopCallResolutionAttempt : KaMultiCallResolutionAttempt {
      *
      * @see KaForLoopCall.iteratorCall
      */
-    public val iteratorCallAttempt: KaSingleCallResolutionAttempt
+    public val iteratorCallAttempt: KaSimpleCallResolutionAttempt
 
     /**
      * The resolution attempt for the `hasNext()` call.
      *
      * @see KaForLoopCall.hasNextCall
      */
-    public val hasNextCallAttempt: KaSingleCallResolutionAttempt
+    public val hasNextCallAttempt: KaSimpleCallResolutionAttempt
 
     /**
      * The resolution attempt for the `next()` call.
      *
      * @see KaForLoopCall.nextCall
      */
-    public val nextCallAttempt: KaSingleCallResolutionAttempt
+    public val nextCallAttempt: KaSimpleCallResolutionAttempt
 }
 
 /**
@@ -168,21 +183,21 @@ public interface KaDelegatedPropertyCallResolutionAttempt : KaMultiCallResolutio
      *
      * @see KaDelegatedPropertyCall.valueGetterCall
      */
-    public val valueGetterCallAttempt: KaSingleCallResolutionAttempt
+    public val valueGetterCallAttempt: KaSimpleCallResolutionAttempt
 
     /**
      * The resolution attempt for the `setValue()` call. `null` for `val` properties.
      *
      * @see KaDelegatedPropertyCall.valueSetterCall
      */
-    public val valueSetterCallAttempt: KaSingleCallResolutionAttempt?
+    public val valueSetterCallAttempt: KaSimpleCallResolutionAttempt?
 
     /**
      * The resolution attempt for the `provideDelegate()` call. `null` if not applicable.
      *
      * @see KaDelegatedPropertyCall.provideDelegateCall
      */
-    public val provideDelegateCallAttempt: KaSingleCallResolutionAttempt?
+    public val provideDelegateCallAttempt: KaSimpleCallResolutionAttempt?
 }
 
 /**
@@ -208,14 +223,14 @@ public interface KaCompoundVariableAccessCallResolutionAttempt : KaMultiCallReso
      *
      * @see KaCompoundVariableAccessCall.variableCall
      */
-    public val variableCallAttempt: KaSingleCallResolutionAttempt
+    public val variableCallAttempt: KaSimpleCallResolutionAttempt
 
     /**
      * The resolution attempt for the operation call (e.g. `plus`, `inc`).
      *
      * @see KaCompoundAccessCall.operationCall
      */
-    public val operationCallAttempt: KaSingleCallResolutionAttempt
+    public val operationCallAttempt: KaSimpleCallResolutionAttempt
 }
 
 /**
@@ -241,21 +256,21 @@ public interface KaCompoundArrayAccessCallResolutionAttempt : KaMultiCallResolut
      *
      * @see KaCompoundArrayAccessCall.getterCall
      */
-    public val getterCallAttempt: KaSingleCallResolutionAttempt
+    public val getterCallAttempt: KaSimpleCallResolutionAttempt
 
     /**
      * The resolution attempt for the operation call (e.g. `plus`, `inc`).
      *
      * @see KaCompoundAccessCall.operationCall
      */
-    public val operationCallAttempt: KaSingleCallResolutionAttempt
+    public val operationCallAttempt: KaSimpleCallResolutionAttempt
 
     /**
      * The resolution attempt for the `set()` call.
      *
      * @see KaCompoundArrayAccessCall.setterCall
      */
-    public val setterCallAttempt: KaSingleCallResolutionAttempt
+    public val setterCallAttempt: KaSimpleCallResolutionAttempt
 }
 
 /**
@@ -278,15 +293,42 @@ private interface KaMultiUnknownCallResolutionAttempt : KaMultiCallResolutionAtt
  *   succeeded, or the combined calls from individual [attempts][KaMultiCallResolutionAttempt.attempts] otherwise.
  */
 @KaExperimentalApi
-public val KaCallResolutionAttempt.calls: List<KaSingleOrMultiCall>
+public val KaCallResolutionAttempt.calls: List<KaSimpleOrMultiCall>
     get() = if (this is KaCallResolutionError) {
         candidateCalls
     } else {
         fold(
             onSuccess = ::listOf,
-            onFailure = { it.flatMap(KaSingleCallResolutionAttempt::calls) },
+            onFailure = { it.flatMap(KaSimpleCallResolutionAttempt::calls) },
         )
     }
+
+/**
+ * The only call of [calls], or `null` if the attempt has no calls or more than one.
+ *
+ * Unlike [successful], a call is also returned for a failed resolution which considered exactly one candidate.
+ *
+ * #### Example
+ *
+ * ```kotlin
+ * class Foo {
+ *    private fun bar() {}
+ * }
+ *
+ * fun usage(foo: Foo) {
+ *    foo.bar()
+ * //     ^^^^^
+ * }
+ * ```
+ *
+ * `bar()` is resolved to a [KaCallResolutionError], so [successful] is `null`, while [single] is the `bar` candidate call.
+ *
+ * @see calls
+ * @see successful
+ */
+@KaExperimentalApi
+public val KaCallResolutionAttempt.single: KaSimpleOrMultiCall?
+    get() = calls.singleOrNull()
 
 /**
  * The resolved call if the resolution succeeded, or `null` if it failed.
@@ -297,8 +339,24 @@ public val KaCallResolutionAttempt.calls: List<KaSingleOrMultiCall>
  *   if all sub-calls succeeded, or `null` otherwise.
  */
 @KaExperimentalApi
-public val KaCallResolutionAttempt.successfulCall: KaSingleOrMultiCall?
+public val KaCallResolutionAttempt.successful: KaSimpleOrMultiCall?
     get() = fold(onSuccess = { it }, onFailure = { null })
+
+/**
+ * The former name of [successful].
+ *
+ * @see successful
+ */
+@Deprecated(
+    message = "Use 'successful' instead",
+    replaceWith = ReplaceWith(
+        expression = "successful",
+        imports = ["org.jetbrains.kotlin.analysis.api.resolution.successful"],
+    ),
+)
+@KaExperimentalApi
+public val KaCallResolutionAttempt.successfulCall: KaSimpleOrMultiCall?
+    get() = successful
 
 /**
  * Folds over a [KaCallResolutionAttempt] depending on whether the resolution succeeded.
@@ -312,8 +370,8 @@ public val KaCallResolutionAttempt.successfulCall: KaSingleOrMultiCall?
 @KaExperimentalApi
 @OptIn(ExperimentalContracts::class)
 public inline fun <T> KaCallResolutionAttempt.fold(
-    onSuccess: (KaSingleOrMultiCall) -> T,
-    onFailure: (List<KaSingleCallResolutionAttempt>) -> T,
+    onSuccess: (KaSimpleOrMultiCall) -> T,
+    onFailure: (List<KaSimpleCallResolutionAttempt>) -> T,
 ): T {
     contract {
         callsInPlace(onSuccess, InvocationKind.AT_MOST_ONCE)

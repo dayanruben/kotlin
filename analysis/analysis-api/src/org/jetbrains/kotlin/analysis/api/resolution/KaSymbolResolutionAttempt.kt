@@ -19,7 +19,7 @@ import kotlin.contracts.contract
 /**
  * This interface represents an attempt on resolving some [KtResolvable] through [KaResolver.tryResolveSymbols] API.
  *
- * [KaSymbolResolutionAttempt] represents either a [single symbol attempt][KaSingleSymbolResolutionAttempt]
+ * [KaSymbolResolutionAttempt] represents either a [simple symbol attempt][KaSimpleSymbolResolutionAttempt]
  * or a [compound error][KaCompoundSymbolResolutionError].
  *
  * @see KaResolver.tryResolveSymbols
@@ -28,13 +28,28 @@ import kotlin.contracts.contract
 public sealed interface KaSymbolResolutionAttempt : KaLifetimeOwner
 
 /**
- * Represents an attempt to resolve a single symbol, which is either a [success][KaSymbolResolutionSuccess]
- * or an [error][KaSymbolResolutionError].
+ * Represents an attempt to resolve a simple (non-compound) [KtResolvable], which is either
+ * a [success][KaSymbolResolutionSuccess] or an [error][KaSymbolResolutionError].
  *
  * @see KaSymbolResolutionAttempt
  */
 @KaExperimentalApi
-public sealed interface KaSingleSymbolResolutionAttempt : KaSymbolResolutionAttempt
+public sealed interface KaSimpleSymbolResolutionAttempt : KaSymbolResolutionAttempt
+
+/**
+ * The former name of [KaSimpleSymbolResolutionAttempt].
+ *
+ * @see KaSimpleSymbolResolutionAttempt
+ */
+@Deprecated(
+    message = "Use 'KaSimpleSymbolResolutionAttempt' instead",
+    replaceWith = ReplaceWith(
+        expression = "KaSimpleSymbolResolutionAttempt",
+        imports = ["org.jetbrains.kotlin.analysis.api.resolution.KaSimpleSymbolResolutionAttempt"],
+    ),
+)
+@KaExperimentalApi
+public typealias KaSingleSymbolResolutionAttempt = KaSimpleSymbolResolutionAttempt
 
 /**
  * Represents a successful resolution result.
@@ -48,7 +63,7 @@ public sealed interface KaSingleSymbolResolutionAttempt : KaSymbolResolutionAtte
  */
 @KaExperimentalApi
 @SubclassOptInRequired(KaImplementationDetail::class)
-public interface KaSymbolResolutionSuccess : KaSingleSymbolResolutionAttempt {
+public interface KaSymbolResolutionSuccess : KaSimpleSymbolResolutionAttempt {
     /**
      * The non-empty list of resolved symbols
      */
@@ -75,7 +90,7 @@ public interface KaSymbolResolutionSuccess : KaSingleSymbolResolutionAttempt {
  */
 @KaExperimentalApi
 @SubclassOptInRequired(KaImplementationDetail::class)
-public interface KaSymbolResolutionError : KaSingleSymbolResolutionAttempt {
+public interface KaSymbolResolutionError : KaSimpleSymbolResolutionAttempt {
     /**
      * Defines a reason why this attempt is unsuccessful
      */
@@ -110,7 +125,7 @@ public interface KaSymbolResolutionError : KaSingleSymbolResolutionAttempt {
  * - At least two entries in total
  *
  * When all sub-calls succeed, [KaSymbolResolutionSuccess] is returned instead.
- * When a single call fails, [KaSymbolResolutionError] is returned instead.
+ * When a simple call fails, [KaSymbolResolutionError] is returned instead.
  *
  * Unlike [KaMultiCallResolutionAttempt], this type does not distinguish between specific compound call kinds
  * (for-loop, delegated property, etc.) — it simply holds a flat list of sub-call resolution attempts.
@@ -127,7 +142,7 @@ public interface KaCompoundSymbolResolutionError : KaSymbolResolutionAttempt {
      * At least two entries in total.
      */
     @KaExperimentalApi
-    public val attempts: List<KaSingleSymbolResolutionAttempt>
+    public val attempts: List<KaSimpleSymbolResolutionAttempt>
 }
 
 /**
@@ -153,7 +168,7 @@ public val KaSymbolResolutionAttempt.symbols: List<KaSymbol>
 /**
  * The resolved symbols if the resolution succeeded, or an empty list if it failed.
  *
- * @see KaCallResolutionAttempt.successfulCall
+ * @see KaCallResolutionAttempt.successful
  */
 @KaExperimentalApi
 public val KaSymbolResolutionAttempt.successfulSymbols: List<KaSymbol>
@@ -170,7 +185,7 @@ public val KaSymbolResolutionAttempt.successfulSymbols: List<KaSymbol>
 @OptIn(ExperimentalContracts::class)
 public inline fun <T> KaSymbolResolutionAttempt.fold(
     onSuccess: (List<KaSymbol>) -> T,
-    onFailure: (List<KaSingleSymbolResolutionAttempt>) -> T,
+    onFailure: (List<KaSimpleSymbolResolutionAttempt>) -> T,
 ): T {
     contract {
         callsInPlace(onSuccess, InvocationKind.AT_MOST_ONCE)

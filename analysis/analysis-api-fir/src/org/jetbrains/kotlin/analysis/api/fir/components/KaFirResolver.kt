@@ -939,13 +939,13 @@ internal class KaFirResolver(
         fir: FirResolvable,
         candidate: Candidate?,
         resolveFragmentOfCall: Boolean,
-    ): KaSingleOrMultiCall? = createKaCallResolutionAttempt(
+    ): KaSimpleOrMultiCall? = createKaCallResolutionAttempt(
         psi = psi,
         fir = fir,
         calleeReference = fir.calleeReference,
         candidate = candidate,
         resolveFragmentOfCall = resolveFragmentOfCall,
-    )?.successfulCall
+    )?.successful
 
     private fun Candidate.toFirTypeArgumentsMapping(symbol: FirCallableSymbol<*>): Map<FirTypeParameterSymbol, ConeKotlinType> {
         val typeParameters = symbol.typeParameterSymbols.ifEmpty { return emptyMap() }
@@ -1046,7 +1046,7 @@ internal class KaFirResolver(
         calleeReference: FirReference?,
         candidate: Candidate?,
         mappingResult: TypeArgumentsMappingResult,
-    ): KaSingleCall<*, *>? {
+    ): KaSimpleCall<*, *>? {
         val targetSymbol = mappingResult.targetSymbol
         val firTypeArgumentsMapping = mappingResult.firTypeArgumentsMapping
         val typeArgumentsMapping = mappingResult.typeArgumentsMapping
@@ -1394,7 +1394,7 @@ internal class KaFirResolver(
 
 
         val operationError = findErrorCall(firOperationCall, psi)
-        val operationAttempt: KaSingleCallResolutionAttempt
+        val operationAttempt: KaSimpleCallResolutionAttempt
         val compoundOperation: KaCompoundOperation?
 
         if (operationError != null) {
@@ -1570,10 +1570,10 @@ internal class KaFirResolver(
     }
 
     /**
-     * Resolves a [FirFunctionCall] into a [KaSingleCallResolutionAttempt].
+     * Resolves a [FirFunctionCall] into a [KaSimpleCallResolutionAttempt].
      * If the call has an error, returns [KaCallResolutionError]; otherwise builds a [KaCallResolutionSuccess].
      */
-    private fun resolveSingleSubCall(call: FirFunctionCall, psi: KtElement): KaSingleCallResolutionAttempt {
+    private fun resolveSingleSubCall(call: FirFunctionCall, psi: KtElement): KaSimpleCallResolutionAttempt {
         findErrorCall(call, psi)?.let { return it }
 
         return when (val kaCall = buildNamedFunctionCall(call)) {
@@ -1706,7 +1706,7 @@ internal class KaFirResolver(
 
         // Build getter call or error
         val getterError = findErrorCall(firGetCall, psi)
-        val getterAttempt: KaSingleCallResolutionAttempt
+        val getterAttempt: KaSimpleCallResolutionAttempt
         if (getterError != null) {
             getterAttempt = getterError
         } else {
@@ -1732,7 +1732,7 @@ internal class KaFirResolver(
 
         // Build operation call or error
         val operationError = findErrorCall(firOperationCall, psi)
-        val operationAttempt: KaSingleCallResolutionAttempt
+        val operationAttempt: KaSimpleCallResolutionAttempt
         val compoundOperation: KaCompoundOperation?
         if (operationError != null) {
             operationAttempt = operationError
@@ -1761,7 +1761,7 @@ internal class KaFirResolver(
 
         // Build setter call or error
         val setterError = findErrorCall(firCall, psi)
-        val setterAttempt: KaSingleCallResolutionAttempt
+        val setterAttempt: KaSimpleCallResolutionAttempt
         if (setterError != null) {
             setterAttempt = setterError
         } else {
